@@ -2180,9 +2180,17 @@ Reference answers to real RPG and worldbuilding questions, indexed at https://co
 
 **Direct answer:** A good random encounter presents a situation the party can respond to in more than one way, and it tells them something about where they are. A wandering monster with no context and no options is a dice-rolling interruption; the same creature, given a reason for being there and something it currently wants, becomes a scene. The test is whether "fight it" is one option among several rather than the only one.
 
+### [What RPG feels like D&D but is simpler?](https://codexcryptica.com/answers/what-rpg-feels-like-dnd-but-is-simpler)
+
+**Direct answer:** If you want a game that preserves the recognisable classes, d20 rolls, and heroic party structure of D&D with a fraction of the rules overhead, Shadowdark is the closest direct match. If you want faster combat with tactile skill checks and reactive defence rolls, Dragonbane provides that heroic fantasy feel on a roll-under d20 engine. For tables wanting near-zero onboarding and rapid improvisation, EZD6 runs on six-sided dice pools without character sheet bookkeeping. Groups wanting classless, equipment-driven play should consider Knave, whilst Cairn strips away dice rolling in combat entirely to focus on clever problem-solving. The right choice depends on which specific part of D&D your table finds burdensome: character sheet complexity, combat duration, or preparation time.
+
 ### [What RPG should I play for an over-the-top space opera?](https://codexcryptica.com/answers/what-rpg-should-i-play-for-an-over-the-top-space-opera)
 
 **Direct answer:** There is no single best system for over-the-top space opera: the right pick depends on the table experience your group wants. For cinematic crew drama with jobs, flashbacks and a shared ship, Scum and Villainy fits best; for colourful tactical science-fantasy with deep character builds and proper starship combat, Starfinder Second Edition; for fast pulpy action your group can bend to any setting, Savage Worlds with its Science Fiction Companion; and for rules-light gonzo science-fantasy with almost no prep, Solar Blades and Cosmic Spells. Systems named here belong to their publishers; naming one is not an endorsement of Codex Cryptica by that publisher, or the reverse.
+
+### [What RPG system is good for solo play?](https://codexcryptica.com/answers/what-rpg-system-is-good-for-solo-play)
+
+**Direct answer:** The best RPG for solo play depends less on genre than on how you want the game to feel mechanically. If you want narrative momentum driven by quest vows and built-in oracles, Ironsworn provides the most cohesive dedicated engine. If you prefer procedural dungeon crawling without story writing, your choice scales by mechanical crunch: Four Against Darkness offers light party survival, 2D6 Dungeon adds character depth, D100 Dungeon delivers crunchy simulation with optional overland hexcrawling, and Ker Nethalas provides dark atmospheric survival in a vast necropolis. Players wanting the feel of a traditional RPG with built-in solo support can look to tactical systems such as Riftbreakers Second Edition or the sci-fi derelict horror of Across a Thousand Dead Worlds, while those wishing to run classic old-school modules alone can use Scarlet Heroes as a dedicated solo engine or as an overlay for sandbox systems like Worlds Without Number. Systems named here belong to their respective publishers; mentioning one is not an endorsement of Codex Cryptica by that publisher, or the reverse.
 
 ### [What RPG system should we try instead of D&D?](https://codexcryptica.com/answers/what-rpg-system-should-we-try-instead-of-dnd)
 
@@ -2199,6 +2207,10 @@ Reference answers to real RPG and worldbuilding questions, indexed at https://co
 ### [What should I look for in an RPG campaign manager?](https://codexcryptica.com/answers/what-should-i-look-for-in-an-rpg-campaign-manager)
 
 **Direct answer:** There's no single best campaign manager: the right one depends on what kind of game you run and what actually causes you friction. Before comparing named tools, it's worth being clear on the dimensions that matter: how it organises notes and relationships, whether it handles maps or VTT play, how easily data gets in and out, whether it runs locally or requires the cloud, how well it adapts to a system you didn't design it for, and whether it slows you down or speeds you up during an actual session.
+
+### [What TTRPG should I use for a fantasy dungeon crawl?](https://codexcryptica.com/answers/what-ttrpg-should-i-use-for-a-fantasy-dungeon-crawl)
+
+**Direct answer:** There is no single best system for fantasy dungeon crawling: the right pick depends on the crawl your group wants. For fast, dangerous old-school exploration with modern rules, Shadowdark; for gonzo magic and lethal funnel play, Dungeon Crawl Classics; for a game where the dungeon itself is the whole campaign, His Majesty the Worm; for very light, improvisable play, EZD6; for grim, stylish doom, Mörk Borg; and for tactical combat with deep character builds, Pathfinder Second Edition or D&D itself.
 
 ### [Where do I start if I have never played a tabletop RPG before?](https://codexcryptica.com/answers/where-do-i-start-if-i-have-never-played-a-tabletop-rpg)
 
