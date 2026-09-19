@@ -47,6 +47,7 @@
 **Learning:** When extracting encapsulated `$state` from a Svelte 5 component into a separate module (as in `use-canvas-drawing.svelte.ts`), the returned object must expose that state via property getters (e.g., `get isDrawingMode() { return isDrawingMode; }`) rather than plain destructured values, or reactive read access breaks in the consuming template.
 
 **Action:** Future agents extracting logic from Svelte 5 `.svelte` files into `.svelte.ts` files must follow the pattern of internal `$state` variables combined with a returned object that exposes them via getters.
+
 ## 2024-05-24 - Extracted flattened grouped entities logic
 
 **Learning:** Svelte 5 `$derived` macros handle reactive tracking (like proxy arrays, Sets, and Maps) perfectly even when they are passed into and processed by standard, non-reactive `.ts` helper functions, allowing you to extract complex data transformation logic safely out of `.svelte` files without losing reactivity.
