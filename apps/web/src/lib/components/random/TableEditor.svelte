@@ -387,8 +387,6 @@
     open={showGenerateDialog}
     mode="append"
     existingTableName={source.name}
-    selectionMode={isRanged ? "ranged" : "weighted"}
-    existingRowCount={entries.length}
     onAccept={handleAcceptGenerated}
     onClose={() => (showGenerateDialog = false)}
   />
