@@ -101,7 +101,7 @@ export function flattenGroupedEntities(
   groupedEntities: ExplorerGroupedEntities | null,
   collapsedLabelGroups: Set<string>,
   collapsedCategoryGroups: Set<string>,
-  getCategoryLabel: (id: string) => string
+  getCategoryLabel: (id: string) => string,
 ): GroupEntry[] {
   if (!groupedEntities) return [];
   const entries: GroupEntry[] = [];
