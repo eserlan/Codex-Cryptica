@@ -281,3 +281,7 @@
 
 **Learning:** Chained array methods like `array.filter(condition).map(transformation)` allocate intermediate arrays which can cause garbage collection pressure, especially when executed frequently or on large collections (like iterating over canvas nodes or entities in the vault).
 **Action:** Replace `.filter().map()` chains with single imperative `for...of` loops and array `push` on the hot paths for better performance without sacrificing readability, applying it to elements like mapping nodes.
+
+## 2025-02-23 - Optimize Canvas Drawing Path
+**Learning:** Using chained `.map().join()` in hot pointer event paths like free-hand drawing generates large amounts of intermediate string arrays, causing frequent garbage collection and frame drops.
+**Action:** Replace `.map().join()` with imperative loops (e.g. `for (const point of points) { path += ... }`) in hot frontend logic loops to significantly decrease GC pressure.
