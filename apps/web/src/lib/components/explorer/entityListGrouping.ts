@@ -79,3 +79,101 @@ export function groupEntitiesForExplorer(
     unlabeled,
   };
 }
+
+export type GroupEntry =
+  | {
+      kind: "group";
+      id: string;
+      groupType: "label" | "category" | "unlabeled";
+      groupKey: string;
+      title: string;
+      count: number;
+      collapsed: boolean;
+    }
+  | {
+      kind: "entity";
+      id: string;
+      groupKey: string;
+      entity: Entity;
+    };
+
+export function flattenGroupedEntities(
+  groupedEntities: ExplorerGroupedEntities | null,
+  collapsedLabelGroups: Set<string>,
+  collapsedCategoryGroups: Set<string>,
+  getCategoryLabel: (id: string) => string
+): GroupEntry[] {
+  if (!groupedEntities) return [];
+  const entries: GroupEntry[] = [];
+
+  if (groupedEntities.type === "label") {
+    for (const label of groupedEntities.sortedKeys) {
+      const items = groupedEntities.groups.get(label) ?? [];
+      const collapsed = collapsedLabelGroups.has(label);
+      entries.push({
+        kind: "group",
+        id: `label:${label}`,
+        groupType: "label",
+        groupKey: label,
+        title: label,
+        count: items.length,
+        collapsed,
+      });
+      if (!collapsed) {
+        for (const entity of items) {
+          entries.push({
+            kind: "entity",
+            id: `${entity.id}:${label}`,
+            groupKey: label,
+            entity,
+          });
+        }
+      }
+    }
+    if (groupedEntities.unlabeled.length > 0) {
+      entries.push({
+        kind: "group",
+        id: "label:unlabeled",
+        groupType: "unlabeled",
+        groupKey: "unlabeled",
+        title: "Unlabeled",
+        count: groupedEntities.unlabeled.length,
+        collapsed: false,
+      });
+      for (const entity of groupedEntities.unlabeled) {
+        entries.push({
+          kind: "entity",
+          id: `${entity.id}:unlabeled`,
+          groupKey: "unlabeled",
+          entity,
+        });
+      }
+    }
+  } else {
+    for (const categoryId of groupedEntities.sortedKeys) {
+      const items = groupedEntities.groups.get(categoryId) ?? [];
+      const collapsed = collapsedCategoryGroups.has(categoryId);
+      entries.push({
+        kind: "group",
+        id: `category:${categoryId}`,
+        groupType: "category",
+        groupKey: categoryId,
+        title: getCategoryLabel(categoryId),
+        count: items.length,
+        collapsed,
+      });
+      if (!collapsed) {
+        for (const entity of items) {
+          entries.push({
+            kind: "entity",
+            id: `${entity.id}:${categoryId}`,
+            groupKey: categoryId,
+            entity,
+          });
+        }
+      }
+    }
+  }
+
+  return entries;
+}
