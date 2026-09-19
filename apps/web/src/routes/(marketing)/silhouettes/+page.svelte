@@ -228,7 +228,7 @@
     class="fixed bottom-6 right-6 z-50 flex items-center gap-2.5 px-4 py-3 rounded-xl bg-theme-surface/95 border border-theme-accent/60 shadow-2xl text-theme-primary text-xs font-medium backdrop-blur-md animate-in fade-in slide-in-from-bottom-3 duration-200"
   >
     <span
-      class="icon-[lucide--check-circle-2] h-4 w-4 text-theme-accent shrink-0"
+      aria-hidden="true" class="icon-[lucide--check-circle-2] h-4 w-4 text-theme-accent shrink-0"
     ></span>
     <span>{toastMessage}</span>
   </aside>
@@ -252,7 +252,7 @@
       <div
         class="inline-flex items-center gap-2 px-3.5 py-1 rounded-full text-xs font-semibold bg-theme-surface border border-theme-border/80 shadow-xs"
       >
-        <span class="icon-[lucide--sparkles] h-3.5 w-3.5 text-theme-accent"
+        <span aria-hidden="true" class="icon-[lucide--sparkles] h-3.5 w-3.5 text-theme-accent"
         ></span>
         <span class="text-theme-muted">Free &amp; Open Assets</span>
         <span class="text-theme-border">•</span>
@@ -287,7 +287,7 @@
             <span
               class="text-xs font-semibold uppercase tracking-wider text-theme-muted flex items-center gap-1.5"
             >
-              <span class="icon-[lucide--palette] h-3.5 w-3.5 text-theme-accent"
+              <span aria-hidden="true" class="icon-[lucide--palette] h-3.5 w-3.5 text-theme-accent"
               ></span>
               Live Theme Palette Preview
             </span>
@@ -340,7 +340,7 @@
       <!-- Search Input -->
       <div class="relative">
         <span
-          class="icon-[lucide--search] absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-theme-muted pointer-events-none"
+          aria-hidden="true" class="icon-[lucide--search] absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-theme-muted pointer-events-none"
         ></span>
         <input
           type="text"
@@ -369,7 +369,7 @@
           <div
             class="text-[11px] font-semibold uppercase tracking-wider text-theme-muted flex items-center gap-1"
           >
-            <span class="icon-[lucide--swords] h-3 w-3 text-theme-accent"
+            <span aria-hidden="true" class="icon-[lucide--swords] h-3 w-3 text-theme-accent"
             ></span>
             Genre
           </div>
@@ -397,7 +397,7 @@
           <div
             class="text-[11px] font-semibold uppercase tracking-wider text-theme-muted flex items-center gap-1"
           >
-            <span class="icon-[lucide--layout-grid] h-3 w-3 text-theme-accent"
+            <span aria-hidden="true" class="icon-[lucide--layout-grid] h-3 w-3 text-theme-accent"
             ></span>
             Category
           </div>
@@ -454,7 +454,7 @@
             class="py-16 text-center rounded-2xl border border-dashed border-theme-border/80 bg-theme-surface/40 p-8 space-y-3"
           >
             <span
-              class="icon-[lucide--search-x] h-10 w-10 mx-auto text-theme-muted/50"
+              aria-hidden="true" class="icon-[lucide--search-x] h-10 w-10 mx-auto text-theme-muted/50"
             ></span>
             <div class="space-y-1">
               <h3 class="text-base font-semibold text-theme-primary">
@@ -502,7 +502,7 @@
                   <div
                     class="absolute top-2 right-2 w-4 h-4 rounded-full bg-theme-accent text-theme-accent-contrast flex items-center justify-center shadow-xs"
                   >
-                    <span class="icon-[lucide--check] h-2.5 w-2.5"></span>
+                    <span aria-hidden="true" class="icon-[lucide--check] h-2.5 w-2.5"></span>
                   </div>
                 {/if}
 
@@ -553,7 +553,7 @@
           <!-- Preview Header -->
           <div class="flex items-center justify-between">
             <div class="flex items-center gap-2">
-              <span class="icon-[lucide--eye] h-4 w-4 text-theme-accent"></span>
+              <span aria-hidden="true" class="icon-[lucide--eye] h-4 w-4 text-theme-accent"></span>
               <span
                 class="text-xs font-bold uppercase tracking-wider text-theme-primary"
               >
@@ -670,7 +670,7 @@
                 onclick={handleDownloadSvg}
                 class="w-full py-2.5 px-3 rounded-xl text-xs font-semibold bg-theme-accent text-theme-accent-contrast hover:opacity-90 transition-opacity flex items-center justify-center gap-1.5 shadow-sm cursor-pointer"
               >
-                <span class="icon-[lucide--download] h-4 w-4"></span>
+                <span aria-hidden="true" class="icon-[lucide--download] h-4 w-4"></span>
                 Download SVG
               </button>
 
@@ -681,11 +681,11 @@
                 class="w-full py-2.5 px-3 rounded-xl text-xs font-semibold bg-theme-base border border-theme-border/80 text-theme-primary hover:border-theme-accent hover:text-theme-accent transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
               >
                 {#if copiedAction === "svg"}
-                  <span class="icon-[lucide--check] h-4 w-4 text-theme-accent"
+                  <span aria-hidden="true" class="icon-[lucide--check] h-4 w-4 text-theme-accent"
                   ></span>
                   Copied!
                 {:else}
-                  <span class="icon-[lucide--code] h-4 w-4"></span>
+                  <span aria-hidden="true" class="icon-[lucide--code] h-4 w-4"></span>
                   Copy SVG
                 {/if}
               </button>
@@ -698,11 +698,11 @@
               class="w-full py-2 px-3 rounded-xl text-xs font-medium bg-theme-base/60 border border-theme-border/60 text-theme-muted hover:text-theme-primary hover:border-theme-border transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
             >
               {#if copiedAction === "cdn"}
-                <span class="icon-[lucide--check] h-3.5 w-3.5 text-theme-accent"
+                <span aria-hidden="true" class="icon-[lucide--check] h-3.5 w-3.5 text-theme-accent"
                 ></span>
                 <span>Copied CDN link to clipboard!</span>
               {:else}
-                <span class="icon-[lucide--link] h-3.5 w-3.5"></span>
+                <span aria-hidden="true" class="icon-[lucide--link] h-3.5 w-3.5"></span>
                 <span>Copy Cloudflare CDN Link</span>
               {/if}
             </button>
@@ -724,7 +724,7 @@
         <div
           class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-theme-base border border-theme-border text-theme-accent"
         >
-          <span class="icon-[lucide--shield-check] h-3.5 w-3.5"></span>
+          <span aria-hidden="true" class="icon-[lucide--shield-check] h-3.5 w-3.5"></span>
           Integrated with Codex Cryptica Vault
         </div>
 
@@ -748,14 +748,14 @@
             href="{base}/free-rpg-campaign-manager"
             class="px-5 py-2.5 rounded-xl text-xs font-bold bg-theme-accent text-theme-accent-contrast hover:opacity-90 transition-opacity flex items-center gap-2 shadow-md"
           >
-            <span class="icon-[lucide--castle] h-4 w-4"></span>
+            <span aria-hidden="true" class="icon-[lucide--castle] h-4 w-4"></span>
             Explore Campaign Workspace
           </a>
           <a
             href="{base}/tools"
             class="px-5 py-2.5 rounded-xl text-xs font-semibold bg-theme-base border border-theme-border text-theme-primary hover:border-theme-accent transition-colors flex items-center gap-2"
           >
-            <span class="icon-[lucide--wrench] h-4 w-4"></span>
+            <span aria-hidden="true" class="icon-[lucide--wrench] h-4 w-4"></span>
             Browse All RPG Tools &amp; Generators
           </a>
         </div>

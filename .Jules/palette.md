@@ -191,3 +191,13 @@
 
 **Learning:** Added missing aria-hidden to decorative icons to prevent screen readers from reading confusing CSS class names.
 **Action:** Always add aria-hidden="true" to purely decorative icons (like <span class="icon-[...]">) in Svelte components.
+
+## 2024-05-21 - Silhouettes App Button Accessibility
+
+**Learning:** Found several decorative icon elements (`<span class="icon-[lucide--...]"></span>`) inside context-rich interactive elements and notifications in the Silhouettes gallery page (`apps/web/src/routes/(marketing)/silhouettes/+page.svelte`) that already had clear text descriptions or context but missed `aria-hidden="true"`. This caused screen readers to redundantly announce confusing CSS class names.
+**Action:** Always add `aria-hidden="true"` to inner decorative icon spans within interactive elements that are already labeled (via inner text) or inside visual status indicators like toast notifications.
+
+## 2024-05-22 - Staging File Contamination during Tests
+
+**Learning:** Running `bun run build` can inadvertently modify or generate files like `sitemap.xml`, `llms-full.txt`, and `bun.lock`, which may get staged and pollute the PR scope.
+**Action:** Always verify `git status` and specifically unstage/revert unrelated files (e.g., using `git rm --cached <file>` followed by `git checkout HEAD -- <file>`) before committing to keep the PR focused.
