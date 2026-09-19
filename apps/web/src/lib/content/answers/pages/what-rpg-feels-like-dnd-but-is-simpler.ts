@@ -170,6 +170,7 @@ export const whatRpgFeelsLikeDndButIsSimpler: AnswerConfigInput = {
     "what-ttrpg-should-i-use-for-a-fantasy-dungeon-crawl",
     "what-rpg-system-is-good-for-solo-play",
     "where-do-i-start-if-i-have-never-played-a-tabletop-rpg",
+    "what-rpg-should-i-use-for-tactical-combat",
   ],
   discovery: {
     id: "answer-simpler-dnd-alternative",
