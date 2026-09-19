@@ -1,5 +1,5 @@
 {
-  "updated_at": 1789855586,
+  "updated_at": 1789856759,
   "candidates": [
     {
       "id": "reddit-35104395212-i-put-every-superhero-generator-in-one-p",
@@ -52,14 +52,14 @@
       "created_at": 1789747980
     },
     {
-      "id": "reddit-35472170780-my-puzzles-kept-stalling-the-game-so-i-b",
-      "title": "My puzzles kept stalling the game, so I built a hub for puzzles that don't",
-      "body": "You plan a clever puzzle, put it down mid-session, and the table just sits there. One clue feels too obvious, the next feels invisible, and you end up handing them the answer to keep things moving.\n\nI built a single crawlable hub on Codex Cryptica that collects stall-proof puzzle design in one place so you can run puzzles that keep moving even when the first idea fails.\n\nExplore the hub: https://codexcryptica.com/topics/puzzles\n\nIt pulls together:\n- stall-proof design principles for puzzles that do not block the story\n- a 3-step hint ladder for giving hints without spoiling the solution\n- three worked examples you can run: The Bell Beneath Blackglass (fantasy), The Null-Key Reliquary (cyberpunk), and The Venting Helix (derelict hazard) each with layered clues, alternate solutions, and failure costs\n- direct link to the puzzle generator when you want a fresh one quickly\n\nI kept the examples detailed enough to run as written, which makes the page longer to skim. Not sure yet if that is the right call or if a shorter pickup version would get used more.\n\nWhat is a puzzle that actually landed at your table, and what was the clue or extra route that made it click?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/announcements/release-35472170780-0.png)\n\n---\n*Posted automatically via release pipeline. Feedback and discussion welcome!*\n<!-- id:35472170780 -->",
-      "url": "https://codexcryptica.com/topics/puzzles",
-      "image_url": "https://assets.codexcryptica.com/announcements/release-35472170780-0.png",
+      "id": "reddit-35472170780-smoother-freehand-drawing-on-the-canvas",
+      "title": "Smoother freehand drawing on the Canvas",
+      "body": "Freehand drawing on the Canvas used to feel a step behind your pointer, especially on longer, faster strokes. You would drag and the line would hitch a little before it caught up.\n\nI switched the drawing path generation from a chained map/join to a single imperative loop so strokes track your pointer more directly.\n\nThere is no new tool or setting, just a more responsive stroke:\n- quick drags catch up faster instead of segmenting behind\n- long strokes hitch less as the point list grows\n- erasing, color and width all work the same as before\n\nIt is a small, focused fix rather than a full redraw of the drawing engine, so very long freehand paths can still get heavy. I wanted to ship the cheap win first and see how far it gets.\n\nDo you use freehand mostly for rough region shapes or tighter detail work, and where did you feel the lag most?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/images/help-blog/canvas.png)\n\n---\n*Posted automatically via release pipeline. Feedback and discussion welcome!*\n<!-- id:35472170780 -->",
+      "url": "",
+      "image_url": "https://assets.codexcryptica.com/images/help-blog/canvas.png",
       "source_id": "35472170780",
       "status": "approved",
-      "created_at": 1789855585
+      "created_at": 1789856758
     }
   ]
 }
