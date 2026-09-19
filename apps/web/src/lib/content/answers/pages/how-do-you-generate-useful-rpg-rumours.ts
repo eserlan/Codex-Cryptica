@@ -178,6 +178,7 @@ export const howDoYouGenerateUsefulRpgRumours: AnswerConfigInput = {
     "what-should-an-rpg-settlement-contain",
     "how-do-you-track-unresolved-plot-hooks-in-an-rpg-campaign",
     "how-to-write-an-in-world-newspaper-for-an-rpg",
+    "how-do-i-turn-an-rpg-idea-into-an-adventure",
   ],
   labels: ["fantasy", "rumour"],
   discovery: {

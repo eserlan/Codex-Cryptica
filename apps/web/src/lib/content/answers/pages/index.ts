@@ -5,6 +5,7 @@ import { howDoIFindATabletopRpgGroupToPlayWith } from "./how-do-i-find-a-tableto
 import { howDoIGetPlayersToEngageWithMyCampaignWorld } from "./how-do-i-get-players-to-engage-with-my-campaign-world";
 import { howDoIRunASuccessfulSessionZero } from "./how-do-i-run-a-successful-session-0";
 import { howDoIStartGmingForTheFirstTime } from "./how-do-i-start-gming-for-the-first-time";
+import { howDoITurnAnRpgIdeaIntoAnAdventure } from "./how-do-i-turn-an-rpg-idea-into-an-adventure";
 import { howDoYouBuildAPointCrawlForAnRpg } from "./how-do-you-build-a-point-crawl-for-an-rpg";
 import { howDoYouCreateABelievableFictionalReligion } from "./how-do-you-create-a-believable-fictional-religion";
 import { howDoYouCreateAFantasyCityThatFeelsAlive } from "./how-do-you-create-a-fantasy-city-that-feels-alive";
@@ -87,6 +88,7 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     howDoIGetPlayersToEngageWithMyCampaignWorld,
     howDoIRunASuccessfulSessionZero,
     howDoIStartGmingForTheFirstTime,
+    howDoITurnAnRpgIdeaIntoAnAdventure,
     howDoYouBuildAPointCrawlForAnRpg,
     howDoYouCreateABelievableFictionalReligion,
     howDoYouCreateAFantasyCityThatFeelsAlive,

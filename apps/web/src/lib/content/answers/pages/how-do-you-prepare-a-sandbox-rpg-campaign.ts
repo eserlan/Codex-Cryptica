@@ -141,6 +141,7 @@ export const howDoYouPrepareASandboxRpgCampaign: AnswerConfigInput = {
     "how-do-you-run-an-rpg-campaign-in-one-city",
     "how-to-create-rumours-for-a-fantasy-town",
     "how-do-you-handle-players-going-off-script-as-a-gm",
+    "how-do-i-turn-an-rpg-idea-into-an-adventure",
   ],
   discovery: {
     id: "answer-sandbox-campaign-prep",
