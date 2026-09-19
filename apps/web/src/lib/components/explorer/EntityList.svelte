@@ -2,7 +2,10 @@
   import { tick } from "svelte";
   import { vault } from "$lib/stores/vault.svelte";
   import { categories } from "$lib/stores/categories.svelte";
-  import { groupEntitiesForExplorer, flattenGroupedEntities } from "./entityListGrouping";
+  import {
+    groupEntitiesForExplorer,
+    flattenGroupedEntities,
+  } from "./entityListGrouping";
   import {
     buildEntityTree,
     flattenVisibleEntityTree,
@@ -25,7 +28,7 @@
   import EntityListItem from "./EntityListItem.svelte";
   import EntityListSearch from "./EntityListSearch.svelte";
   import EntityListFilterBar from "./EntityListFilterBar.svelte";
-    import EntityEmptyState from "./EntityEmptyState.svelte";
+  import EntityEmptyState from "./EntityEmptyState.svelte";
   import EntitySearchEmptyState from "./EntitySearchEmptyState.svelte";
   import { sortExplorerEntities } from "./entityListSorting";
   import { browserPerformanceRecorder } from "$lib/services/performance/browser-performance-capture";
@@ -36,7 +39,6 @@
     getExplorerPageItems,
     paginateExplorerGroups,
   } from "./entityExplorerPagination";
-
 
   let {
     onSelect,
@@ -224,8 +226,14 @@
       searchQuery.trim() !== "",
     ),
   );
-  const groupedEntries = $derived(flattenGroupedEntities(groupedEntities, collapsedLabelGroups, collapsedCategoryGroups, getCategoryLabel));
-
+  const groupedEntries = $derived(
+    flattenGroupedEntities(
+      groupedEntities,
+      collapsedLabelGroups,
+      collapsedCategoryGroups,
+      getCategoryLabel,
+    ),
+  );
 
   const pageSize = ENTITY_EXPLORER_PAGE_SIZE;
   let page = $state(1);
