@@ -5,7 +5,6 @@ import {
   inverseFamilyType,
   wouldCreateCycle,
 } from "@codex/family-engine";
-import { vault } from "../vault.svelte";
 
 const CHARACTER_TYPE = "character";
 
@@ -42,8 +41,8 @@ export async function addFamilyLink(
   sourceId: string,
   targetId: string,
   type: FamilyConnectionType,
-  targetLabel?: string,
-  deps: FamilyMutationVault = vault,
+  targetLabel: string | undefined,
+  deps: FamilyMutationVault,
 ): Promise<FamilyMutationResult> {
   if (sourceId === targetId) {
     return { ok: false, error: "A character cannot be linked to themselves." };
@@ -163,7 +162,7 @@ export async function removeFamilyLink(
   sourceId: string,
   targetId: string,
   type: FamilyConnectionType,
-  deps: FamilyMutationVault = vault,
+  deps: FamilyMutationVault,
 ): Promise<FamilyMutationResult> {
   await deps.removeConnection(sourceId, targetId, type);
   await deps.removeConnection(targetId, sourceId, inverseFamilyType(type));

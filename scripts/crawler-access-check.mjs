@@ -20,19 +20,12 @@
  */
 import fs from "node:fs";
 import {
-  CLUSTER_TARGETS,
-  CRAWLER_READINESS_DISCLAIMER,
-  discoverClusterTargetRoutes,
   downgradeKnownGaps,
   errorsOnly,
-  evaluateClusterLinks,
-  evaluateClusterRouteResponse,
   evaluateCrawlResponse,
   expectationFor,
   findSearchCrawler,
   findDisallowedSitemapPaths,
-  formatClusterFailureDetail,
-  formatClusterSummaryTable,
   isPathAllowed,
   parseRobotsTxt,
   pickRepresentativeRoutes,
@@ -40,6 +33,15 @@ import {
   SEARCH_CRAWLERS,
   warningsOnly,
 } from "../apps/web/src/lib/seo/crawler-access.ts";
+import {
+  CLUSTER_TARGETS,
+  CRAWLER_READINESS_DISCLAIMER,
+  discoverClusterTargetRoutes,
+  evaluateClusterLinks,
+  evaluateClusterRouteResponse,
+  formatClusterFailureDetail,
+  formatClusterSummaryTable,
+} from "../apps/web/src/lib/seo/crawler-access-clusters.ts";
 
 const DEFAULT_BASE = "https://codexcryptica.com";
 const REQUEST_TIMEOUT_MS = 20_000;
@@ -439,11 +441,7 @@ const warnings = warningsOnly(allFindings);
 
 if (asJson) {
   console.log(
-    JSON.stringify(
-      { base, crawler, clusterSummaries, results },
-      null,
-      2,
-    ),
+    JSON.stringify({ base, crawler, clusterSummaries, results }, null, 2),
   );
 } else {
   console.log(`${crawler.name} access check — ${base}\n`);
