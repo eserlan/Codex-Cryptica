@@ -18,35 +18,32 @@ export type CategoryGroupedEntities = {
 export type ExplorerGroupedEntities =
   LabelGroupedEntities | CategoryGroupedEntities;
 
-export function groupEntitiesForExplorer(
-  entities: Entity[],
-  viewMode: ExplorerViewMode,
-): ExplorerGroupedEntities | null {
-  if (viewMode === "list") return null;
+function sortGroupKeys(groups: Map<string, Entity[]>): string[] {
+  return Array.from(groups.keys()).sort((a, b) =>
+    (a ?? "").localeCompare(b ?? ""),
+  );
+}
 
-  if (viewMode === "category") {
-    const groups = new Map<string, Entity[]>();
+function groupEntitiesByCategory(entities: Entity[]): CategoryGroupedEntities {
+  const groups = new Map<string, Entity[]>();
 
-    for (const entity of entities) {
-      let categoryGroup = groups.get(entity.type);
-      if (!categoryGroup) {
-        categoryGroup = [];
-        groups.set(entity.type, categoryGroup);
-      }
-      categoryGroup.push(entity);
+  for (const entity of entities) {
+    let categoryGroup = groups.get(entity.type);
+    if (!categoryGroup) {
+      categoryGroup = [];
+      groups.set(entity.type, categoryGroup);
     }
-
-    const sortedKeys = Array.from(groups.keys()).sort((a, b) =>
-      (a ?? "").localeCompare(b ?? ""),
-    );
-
-    return {
-      type: "category",
-      groups,
-      sortedKeys,
-    };
+    categoryGroup.push(entity);
   }
 
+  return {
+    type: "category",
+    groups,
+    sortedKeys: sortGroupKeys(groups),
+  };
+}
+
+function groupEntitiesByLabel(entities: Entity[]): LabelGroupedEntities {
   const groups = new Map<string, Entity[]>();
   const unlabeled: Entity[] = [];
 
@@ -56,7 +53,6 @@ export function groupEntitiesForExplorer(
       continue;
     }
 
-    // Deduplicate labels for this entity to prevent duplicate entries in the same group
     const uniqueLabels = new Set(entity.labels);
     for (const label of uniqueLabels) {
       let labelGroup = groups.get(label);
@@ -68,16 +64,25 @@ export function groupEntitiesForExplorer(
     }
   }
 
-  const sortedKeys = Array.from(groups.keys()).sort((a, b) =>
-    (a ?? "").localeCompare(b ?? ""),
-  );
-
   return {
     type: "label",
     groups,
-    sortedKeys,
+    sortedKeys: sortGroupKeys(groups),
     unlabeled,
   };
+}
+
+export function groupEntitiesForExplorer(
+  entities: Entity[],
+  viewMode: ExplorerViewMode,
+): ExplorerGroupedEntities | null {
+  if (viewMode === "list") return null;
+
+  if (viewMode === "category") {
+    return groupEntitiesByCategory(entities);
+  }
+
+  return groupEntitiesByLabel(entities);
 }
 
 export type GroupEntry =
@@ -97,6 +102,90 @@ export type GroupEntry =
       entity: Entity;
     };
 
+function appendGroupEntries(
+  entries: GroupEntry[],
+  groupKey: string,
+  title: string,
+  groupType: "label" | "category" | "unlabeled",
+  items: Entity[],
+  collapsed: boolean,
+): void {
+  entries.push({
+    kind: "group",
+    id: `${groupType}:${groupKey}`,
+    groupType,
+    groupKey,
+    title,
+    count: items.length,
+    collapsed,
+  });
+
+  if (collapsed) return;
+
+  for (const entity of items) {
+    entries.push({
+      kind: "entity",
+      id: `${entity.id}:${groupKey}`,
+      groupKey,
+      entity,
+    });
+  }
+}
+
+function flattenLabelGroups(
+  grouped: LabelGroupedEntities,
+  collapsedGroups: Set<string>,
+): GroupEntry[] {
+  const entries: GroupEntry[] = [];
+
+  for (const label of grouped.sortedKeys) {
+    const items = grouped.groups.get(label) ?? [];
+    appendGroupEntries(
+      entries,
+      label,
+      label,
+      "label",
+      items,
+      collapsedGroups.has(label),
+    );
+  }
+
+  if (grouped.unlabeled.length > 0) {
+    appendGroupEntries(
+      entries,
+      "unlabeled",
+      "Unlabeled",
+      "unlabeled",
+      grouped.unlabeled,
+      false,
+    );
+  }
+
+  return entries;
+}
+
+function flattenCategoryGroups(
+  grouped: CategoryGroupedEntities,
+  collapsedGroups: Set<string>,
+  getCategoryLabel: (id: string) => string,
+): GroupEntry[] {
+  const entries: GroupEntry[] = [];
+
+  for (const categoryId of grouped.sortedKeys) {
+    const items = grouped.groups.get(categoryId) ?? [];
+    appendGroupEntries(
+      entries,
+      categoryId,
+      getCategoryLabel(categoryId),
+      "category",
+      items,
+      collapsedGroups.has(categoryId),
+    );
+  }
+
+  return entries;
+}
+
 export function flattenGroupedEntities(
   groupedEntities: ExplorerGroupedEntities | null,
   collapsedLabelGroups: Set<string>,
@@ -104,76 +193,14 @@ export function flattenGroupedEntities(
   getCategoryLabel: (id: string) => string,
 ): GroupEntry[] {
   if (!groupedEntities) return [];
-  const entries: GroupEntry[] = [];
 
   if (groupedEntities.type === "label") {
-    for (const label of groupedEntities.sortedKeys) {
-      const items = groupedEntities.groups.get(label) ?? [];
-      const collapsed = collapsedLabelGroups.has(label);
-      entries.push({
-        kind: "group",
-        id: `label:${label}`,
-        groupType: "label",
-        groupKey: label,
-        title: label,
-        count: items.length,
-        collapsed,
-      });
-      if (!collapsed) {
-        for (const entity of items) {
-          entries.push({
-            kind: "entity",
-            id: `${entity.id}:${label}`,
-            groupKey: label,
-            entity,
-          });
-        }
-      }
-    }
-    if (groupedEntities.unlabeled.length > 0) {
-      entries.push({
-        kind: "group",
-        id: "label:unlabeled",
-        groupType: "unlabeled",
-        groupKey: "unlabeled",
-        title: "Unlabeled",
-        count: groupedEntities.unlabeled.length,
-        collapsed: false,
-      });
-      for (const entity of groupedEntities.unlabeled) {
-        entries.push({
-          kind: "entity",
-          id: `${entity.id}:unlabeled`,
-          groupKey: "unlabeled",
-          entity,
-        });
-      }
-    }
-  } else {
-    for (const categoryId of groupedEntities.sortedKeys) {
-      const items = groupedEntities.groups.get(categoryId) ?? [];
-      const collapsed = collapsedCategoryGroups.has(categoryId);
-      entries.push({
-        kind: "group",
-        id: `category:${categoryId}`,
-        groupType: "category",
-        groupKey: categoryId,
-        title: getCategoryLabel(categoryId),
-        count: items.length,
-        collapsed,
-      });
-      if (!collapsed) {
-        for (const entity of items) {
-          entries.push({
-            kind: "entity",
-            id: `${entity.id}:${categoryId}`,
-            groupKey: categoryId,
-            entity,
-          });
-        }
-      }
-    }
+    return flattenLabelGroups(groupedEntities, collapsedLabelGroups);
   }
 
-  return entries;
+  return flattenCategoryGroups(
+    groupedEntities,
+    collapsedCategoryGroups,
+    getCategoryLabel,
+  );
 }
