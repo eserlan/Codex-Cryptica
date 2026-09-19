@@ -214,6 +214,7 @@ export const AnswerConfigSchema = z.object({
       /^\d{4}-\d{2}-\d{2}$/,
       "publishedAt must be an ISO date string (YYYY-MM-DD)",
     ),
+  relatedTopics: z.array(AnswerLinkSchema).default([]),
   relatedTools: z.array(AnswerLinkSchema).default([]),
   relatedForPages: z.array(AnswerLinkSchema).default([]),
   /** Slugs of other answers. Validated against the registry by its tests. */

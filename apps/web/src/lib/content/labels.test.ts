@@ -154,6 +154,7 @@ describe("public label content aggregation (#2762, #2863)", () => {
     expect(groups.get("generator")?.length).toBe(1);
     expect(groups.get("answer")?.length).toBe(2);
     expect(groups.get("example")?.length).toBe(3);
+    expect(groups.get("topic")?.length).toBe(1);
   });
 
   it("aggregates genre theme content", () => {

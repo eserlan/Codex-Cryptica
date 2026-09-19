@@ -110,13 +110,15 @@ export const howDoYouDesignRpgPuzzlesThatDoNotStallTheGame: AnswerConfigInput =
       linkText: "Try the puzzle generator",
       href: "/generators/puzzle",
     },
-    relatedTools: [
+    relatedTopics: [
       {
         title: "Puzzle topic hub",
         description:
           "The complete RPG puzzle cluster: stall-proof design, hint ladders, worked examples with alternate solutions, and the puzzle generator.",
         href: "/topics/puzzles",
       },
+    ],
+    relatedTools: [
       {
         title: "Puzzle generator",
         description:
