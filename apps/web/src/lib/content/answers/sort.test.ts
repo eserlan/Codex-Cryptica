@@ -34,6 +34,7 @@ function createMockAnswer(
         paragraphs: ["Paragraph text."],
       },
     ],
+    relatedTopics: [],
     relatedTools: [],
     relatedForPages: [],
     relatedAnswers: [],

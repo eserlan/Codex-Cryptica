@@ -1,48 +1,38 @@
 import { safeJsonLd } from "$lib/utils/json-ld";
 import { buildAbsoluteUrl } from "$lib/seo/site";
-import { HEIST_TOPIC_CONFIG } from "./heists";
+import type { TopicHubConfig } from "./types";
 
 /**
- * `CollectionPage` structured data representing the Heist topic hub as an
+ * `CollectionPage` structured data representing a topic hub as an
  * authoritative collection of related guides, worked examples, and generation tools.
  */
-export function buildHeistTopicJsonLd(): string {
+export function buildTopicJsonLd(config: TopicHubConfig): string {
   const items = [
-    ...HEIST_TOPIC_CONFIG.coreGuides.map((guide) => ({
-      name: guide.title,
-      url: buildAbsoluteUrl(guide.href),
-      description: guide.description,
-    })),
-    ...HEIST_TOPIC_CONFIG.workedExamples.map((example) => ({
-      name: example.title,
-      url: buildAbsoluteUrl(example.href),
-      description: example.description,
-    })),
-    ...HEIST_TOPIC_CONFIG.generators.map((tool) => ({
-      name: tool.title,
-      url: buildAbsoluteUrl(tool.href),
-      description: tool.description,
-    })),
-  ];
+    ...config.coreGuides,
+    ...config.workedExamples,
+    ...config.generators,
+  ].map((entry) => ({
+    name: entry.title,
+    url: buildAbsoluteUrl(entry.href),
+    description: entry.description,
+  }));
 
   return safeJsonLd({
     "@context": "https://schema.org",
     "@type": "CollectionPage",
-    name: HEIST_TOPIC_CONFIG.title,
-    headline: HEIST_TOPIC_CONFIG.title,
-    description: HEIST_TOPIC_CONFIG.description,
-    url: buildAbsoluteUrl(HEIST_TOPIC_CONFIG.canonicalPath),
+    name: config.title,
+    headline: config.title,
+    description: config.description,
+    url: buildAbsoluteUrl(config.canonicalPath),
     about: {
       "@type": "Thing",
-      name: "Tabletop RPG Heists",
-      description:
-        "Designing, preparing, and running heist adventures in tabletop roleplaying games.",
+      name: config.structuredData.aboutName,
+      description: config.structuredData.aboutDescription,
     },
     mainEntity: {
       "@type": "ItemList",
-      name: "RPG Heist Resources & Tools",
-      description:
-        "Curated collection of RPG heist frameworks, target design checklists, worked examples, and generation tools.",
+      name: config.structuredData.itemListName,
+      description: config.structuredData.itemListDescription,
       itemListElement: items.map((item, index) => ({
         "@type": "ListItem",
         position: index + 1,
@@ -58,9 +48,9 @@ export function buildHeistTopicJsonLd(): string {
 }
 
 /**
- * `BreadcrumbList` structured data for `/topics/heists`.
+ * `BreadcrumbList` structured data for a topic hub: Home > Explore > hub.
  */
-export function buildHeistTopicBreadcrumbJsonLd(): string {
+export function buildTopicBreadcrumbJsonLd(config: TopicHubConfig): string {
   return safeJsonLd({
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
@@ -80,8 +70,8 @@ export function buildHeistTopicBreadcrumbJsonLd(): string {
       {
         "@type": "ListItem",
         position: 3,
-        name: "RPG Heists Topic Hub",
-        item: buildAbsoluteUrl(HEIST_TOPIC_CONFIG.canonicalPath),
+        name: config.structuredData.breadcrumbLabel,
+        item: buildAbsoluteUrl(config.canonicalPath),
       },
     ],
   });

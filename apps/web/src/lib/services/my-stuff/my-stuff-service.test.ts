@@ -55,6 +55,7 @@ const mockAnswer: AnswerConfig = {
     href: "/solutions/campaign-manager",
   },
   relatedAnswers: [],
+  relatedTopics: [],
   relatedTools: [],
   relatedForPages: [],
   labels: [],

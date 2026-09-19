@@ -72,7 +72,7 @@ const GOVERNED_BLOG_PATHS = [
 ] as const;
 
 /** Topic hubs that act as crawlable cluster entry points (#3118). */
-const TOPIC_PATHS = ["/topics/heists"] as const;
+const TOPIC_PATHS = ["/topics/heists", "/topics/puzzles"] as const;
 
 export function listGovernedPaths(): string[] {
   return [

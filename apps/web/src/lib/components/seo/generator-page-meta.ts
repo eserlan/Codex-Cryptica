@@ -375,6 +375,10 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
         label: "How to Design RPG Puzzles (Guide)",
       },
       {
+        href: "/topics/puzzles",
+        label: "RPG Puzzles Topic Hub",
+      },
+      {
         href: "/answers/how-do-you-give-hints-for-an-rpg-puzzle-without-giving-away-the-answer",
         label: "How to Give Puzzle Hints Without Spoiling It (Guide)",
       },

@@ -10,6 +10,7 @@ import { AnswerConfigSchema, type AnswerConfig } from "./schema";
 import { answers } from "./pages";
 import { getAllLandingPageSlugs } from "../for/registry";
 import { HEIST_TOPIC_CONFIG } from "../topics/heists";
+import { PUZZLE_TOPIC_CONFIG } from "../topics/puzzles";
 import { solutions } from "$lib/config/seo-pages";
 import { featuresConfig } from "$lib/config/seo-features";
 import { match as isGeneratorSlug } from "../../../params/generator_slug";
@@ -374,9 +375,23 @@ describe("published answers", () => {
   it("points every answer at a live Codex surface", () => {
     for (const answer of published) {
       const outbound =
-        answer.relatedTools.length + answer.relatedForPages.length;
+        answer.relatedTopics.length +
+        answer.relatedTools.length +
+        answer.relatedForPages.length;
       expect(outbound, `${answer.slug} links nowhere`).toBeGreaterThan(0);
     }
+  });
+
+  it("keeps topic hubs out of the tool links", () => {
+    const puzzleAnswers = published.filter((answer) =>
+      answer.relatedTopics.some((topic) => topic.href === "/topics/puzzles"),
+    );
+    expect(puzzleAnswers).toHaveLength(2);
+    expect(
+      puzzleAnswers.every((answer) =>
+        answer.relatedTools.every((tool) => tool.href !== "/topics/puzzles"),
+      ),
+    ).toBe(true);
   });
 
   it("only links to routes the site actually publishes", () => {
@@ -384,7 +399,10 @@ describe("published answers", () => {
     // hand-written href is the easiest thing on these pages to get wrong, so
     // it is checked against the same registries the routes are built from.
     const forSlugs = new Set(getAllLandingPageSlugs());
-    const topicPaths = new Set([HEIST_TOPIC_CONFIG.canonicalPath]);
+    const topicPaths = new Set([
+      HEIST_TOPIC_CONFIG.canonicalPath,
+      PUZZLE_TOPIC_CONFIG.canonicalPath,
+    ]);
     const toolPages = new Set([
       "cyberpunk-nomad-clan-generator",
       "dnd-npc-generator",
@@ -422,6 +440,7 @@ describe("published answers", () => {
 
     for (const answer of published) {
       const hrefs = [
+        ...answer.relatedTopics.map((topic) => topic.href),
         ...answer.relatedTools.map((t) => t.href),
         ...answer.relatedForPages.map((p) => p.href),
         ...(answer.codexConnection ? [answer.codexConnection.href] : []),

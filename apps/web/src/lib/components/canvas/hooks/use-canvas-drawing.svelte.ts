@@ -38,7 +38,12 @@ export function useCanvasDrawing(logic: {
     const [first, ...rest] = drawing.points;
     if (!first) return "";
     const points = rest.length > 0 ? rest : [{ x: first.x + 0.01, y: first.y }];
-    return `M ${first.x} ${first.y} ${points.map((point) => `L ${point.x} ${point.y}`).join(" ")}`;
+    // ⚡ Bolt Optimization: Replace chained .map().join() with an imperative loop
+    let path = `M ${first.x} ${first.y}`;
+    for (const point of points) {
+      path += ` L ${point.x} ${point.y}`;
+    }
+    return path;
   }
 
   function cancelActiveDrawing() {

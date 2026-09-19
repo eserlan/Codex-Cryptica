@@ -44,6 +44,16 @@ export function getPublicContentByLabel(label: string): PublicLabelResult[] {
     });
   }
 
+  if (label === "puzzle") {
+    results.push({
+      kind: "topic",
+      title: "Designing and Running RPG Puzzles",
+      summary:
+        "The central cluster hub for tabletop RPG puzzles: stall-proof design, hint ladders, worked examples with alternate solutions, and the puzzle generator.",
+      href: "/topics/puzzles",
+    });
+  }
+
   for (const answer of getAllAnswers()) {
     const matches =
       (answer.labels as string[]).includes(label) ||
