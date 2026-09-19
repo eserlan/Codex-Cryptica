@@ -130,6 +130,7 @@ export const howDoYouRunFactionsInASandboxCampaign: AnswerConfigInput = {
     "how-do-you-run-an-rpg-campaign-in-one-city",
     "how-do-you-handle-players-going-off-script-as-a-gm",
     "how-do-you-run-a-scene-with-multiple-npcs",
+    "how-do-i-turn-an-rpg-idea-into-an-adventure",
   ],
   discovery: {
     id: "answer-run-factions-sandbox",
