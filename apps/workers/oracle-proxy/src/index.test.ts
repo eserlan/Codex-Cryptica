@@ -1,5 +1,5 @@
 import { beforeEach, afterEach, describe, it, expect, vi } from "vitest";
-import { DEFAULT_CF_IMAGE_MODEL } from "../../../../packages/oracle-engine/src/image-defaults";
+import { DEFAULT_CF_IMAGE_MODEL } from "./image-defaults";
 import worker, { isOriginAllowed } from "./index";
 
 describe("Oracle Proxy Worker CORS", () => {

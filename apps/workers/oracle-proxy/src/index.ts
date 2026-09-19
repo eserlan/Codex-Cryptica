@@ -10,7 +10,7 @@
  * - ALLOW_CLOUDFLARE_PAGES_PREVIEW_ORIGINS: Optional opt-in for Pages previews
  */
 
-import { DEFAULT_CF_IMAGE_MODEL } from "../../../../packages/oracle-engine/src/image-defaults";
+import { DEFAULT_CF_IMAGE_MODEL } from "./image-defaults";
 import {
   handlePublishVault,
   handleGetBundle,
