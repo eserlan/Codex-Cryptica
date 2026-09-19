@@ -1,5 +1,5 @@
 {
-  "updated_at": 1789747981,
+  "updated_at": 1789855586,
   "candidates": [
     {
       "id": "reddit-35104395212-i-put-every-superhero-generator-in-one-p",
@@ -50,6 +50,16 @@
       "source_id": "35366852566",
       "status": "approved",
       "created_at": 1789747980
+    },
+    {
+      "id": "reddit-35472170780-my-puzzles-kept-stalling-the-game-so-i-b",
+      "title": "My puzzles kept stalling the game, so I built a hub for puzzles that don't",
+      "body": "You plan a clever puzzle, put it down mid-session, and the table just sits there. One clue feels too obvious, the next feels invisible, and you end up handing them the answer to keep things moving.\n\nI built a single crawlable hub on Codex Cryptica that collects stall-proof puzzle design in one place so you can run puzzles that keep moving even when the first idea fails.\n\nExplore the hub: https://codexcryptica.com/topics/puzzles\n\nIt pulls together:\n- stall-proof design principles for puzzles that do not block the story\n- a 3-step hint ladder for giving hints without spoiling the solution\n- three worked examples you can run: The Bell Beneath Blackglass (fantasy), The Null-Key Reliquary (cyberpunk), and The Venting Helix (derelict hazard) each with layered clues, alternate solutions, and failure costs\n- direct link to the puzzle generator when you want a fresh one quickly\n\nI kept the examples detailed enough to run as written, which makes the page longer to skim. Not sure yet if that is the right call or if a shorter pickup version would get used more.\n\nWhat is a puzzle that actually landed at your table, and what was the clue or extra route that made it click?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/announcements/release-35472170780-0.png)\n\n---\n*Posted automatically via release pipeline. Feedback and discussion welcome!*\n<!-- id:35472170780 -->",
+      "url": "https://codexcryptica.com/topics/puzzles",
+      "image_url": "https://assets.codexcryptica.com/announcements/release-35472170780-0.png",
+      "source_id": "35472170780",
+      "status": "approved",
+      "created_at": 1789855585
     }
   ]
 }
