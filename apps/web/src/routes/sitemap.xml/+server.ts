@@ -63,6 +63,11 @@ export async function GET() {
       changefreq: "weekly",
       priority: "0.8",
     },
+    {
+      path: "/topics/puzzles",
+      changefreq: "weekly",
+      priority: "0.8",
+    },
 
     {
       path: "/tools/vampire-clan-generator",

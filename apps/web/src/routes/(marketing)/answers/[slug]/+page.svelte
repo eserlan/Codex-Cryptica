@@ -34,7 +34,8 @@
   let related = $derived(data.related);
   let canonical = $derived(buildAbsoluteUrl(answerPath(answer)));
   let hasFurtherReading = $derived(
-    answer.relatedTools.length +
+    answer.relatedTopics.length +
+      answer.relatedTools.length +
       answer.relatedForPages.length +
       related.length >
       0,
@@ -374,6 +375,40 @@
         <h2 class="mb-6 font-header text-xl font-bold text-theme-text">
           Related
         </h2>
+
+        {#if answer.relatedTopics.length > 0}
+          <h3
+            class="mb-3 font-mono text-xs uppercase tracking-[0.18em] text-theme-muted"
+          >
+            Topic Hubs
+          </h3>
+          <ul class="mb-8 grid list-none gap-4 sm:grid-cols-2">
+            {#each answer.relatedTopics as topic (topic.href)}
+              <li>
+                <a
+                  href="{cleanBase}{topic.href}"
+                  class="group block h-full border border-theme-border bg-theme-surface p-4 transition-colors hover:border-theme-primary/50"
+                  style:background-image="var(--bg-texture-overlay)"
+                  use:trackDiscoveryClick={{
+                    sourceKind: "answer",
+                    sourceId: answer.slug,
+                    placement: "related_topic",
+                    ...classifyDiscoveryTarget(topic.href),
+                  }}
+                >
+                  <span
+                    class="block font-header text-sm font-bold text-theme-text transition-colors group-hover:text-theme-primary"
+                    >{topic.title}</span
+                  >
+                  <span
+                    class="mt-1 block text-base leading-relaxed text-theme-muted"
+                    >{topic.description}</span
+                  >
+                </a>
+              </li>
+            {/each}
+          </ul>
+        {/if}
 
         {#if answer.relatedTools.length > 0}
           <h3

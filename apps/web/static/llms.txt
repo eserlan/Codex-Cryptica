@@ -32,6 +32,7 @@ Codex Cryptica is local-first: vault data is stored locally by default and does 
 ## Topic Hubs
 
 - [Running and Designing RPG Heists](https://codexcryptica.com/topics/heists): Complete resource cluster for tabletop heists: four-phase running framework, target design checklist, worked genre examples, and heist generation tools.
+- [Designing and Running RPG Puzzles](https://codexcryptica.com/topics/puzzles): RPG puzzle design, hint ladders, worked examples with alternate solutions, and a table-ready puzzle generator.
 
 ## Solution Pages
 
