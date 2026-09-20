@@ -46,6 +46,17 @@ describe("buildSystemInstruction", () => {
     expect(text).toMatch(/what is missing/i);
   });
 
+  it("shows the exact JSON shape with an example, so the model does not have to guess", () => {
+    expect(text).toMatch(/Example of the shape/i);
+    expect(text).toContain('"peopleWhoCare": [');
+    expect(text).toContain('"conflictsWith"');
+    expect(text).toContain('"creatorQuestions": [');
+  });
+
+  it("says the same rules apply on every reply, since the provider does not remember them", () => {
+    expect(text).toMatch(/every reply/i);
+  });
+
   it("describes follow-up turns and the whatChanged line", () => {
     expect(text).toMatch(/whatChanged/);
     expect(text).toMatch(/The creator answers/);

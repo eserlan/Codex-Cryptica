@@ -17,7 +17,6 @@
     saveToCodex as defaultSaveToCodex,
     type SaveToCodex,
   } from "$lib/services/idea-developer/save-to-codex";
-  import ConversationNotice from "./ConversationNotice.svelte";
   import DevelopmentResult from "./DevelopmentResult.svelte";
   import FollowUpComposer from "./FollowUpComposer.svelte";
   import NoticeBanner from "./NoticeBanner.svelte";
@@ -74,12 +73,11 @@
     <FollowUpComposer {store} />
     <NoticeBanner notice={store.notice} />
     <div class="flex flex-col gap-3">
-      <ConversationNotice />
       <div class="flex flex-wrap items-center gap-3">
         <button
           type="button"
           onclick={saveToCodexClicked}
-          class="inline-flex items-center gap-2 rounded-lg bg-theme-primary px-4 py-2 text-xs font-bold uppercase tracking-widest text-theme-bg transition-opacity hover:opacity-90"
+          class="min-h-11 justify-center inline-flex items-center gap-2 rounded-lg bg-theme-primary px-4 py-2 text-sm font-bold uppercase tracking-wider text-theme-bg transition-opacity hover:opacity-90"
         >
           <span class="icon-[lucide--save] h-4 w-4" aria-hidden="true"></span>
           Save to your Codex
@@ -87,7 +85,7 @@
         <button
           type="button"
           onclick={() => store.clear()}
-          class="inline-flex items-center gap-2 rounded-lg border border-theme-border bg-theme-surface px-3 py-2 text-xs font-bold uppercase tracking-widest text-theme-text transition-colors hover:border-theme-primary/50"
+          class="min-h-11 justify-center inline-flex items-center gap-2 rounded-lg border border-theme-border bg-theme-surface px-3 py-2 text-sm font-bold uppercase tracking-wider text-theme-text transition-colors hover:border-theme-primary/50"
         >
           <span class="icon-[lucide--rotate-ccw] h-4 w-4" aria-hidden="true"
           ></span>
@@ -97,7 +95,7 @@
       {#if saveMessage}
         <p
           role="alert"
-          class="rounded-lg border border-theme-border/70 bg-theme-surface/50 p-3 text-sm text-theme-text"
+          class="rounded-lg border border-theme-border/70 bg-theme-surface/50 p-3 text-base text-theme-text"
         >
           {saveMessage}
         </p>
@@ -113,34 +111,34 @@
     <div class="flex flex-col gap-2">
       <label
         for="idea-developer-input"
-        class="font-mono text-xs font-bold uppercase tracking-[0.24em] text-theme-primary"
+        class="font-mono text-sm font-bold uppercase tracking-[0.24em] text-theme-primary"
       >
         Your RPG idea
       </label>
       <textarea
         id="idea-developer-input"
         aria-label="Your RPG idea"
-        class="min-h-40 w-full rounded-xl border border-theme-border bg-theme-bg/50 p-3 text-sm text-theme-text placeholder:text-theme-muted/70 focus:border-theme-primary focus:outline-none"
+        class="min-h-40 w-full rounded-xl border border-theme-border bg-theme-bg/50 p-3 text-base text-theme-text placeholder:text-theme-muted/70 focus:border-theme-primary focus:outline-none"
         placeholder="A town where everything is made from dragon parts, but there are no dragons nearby."
         value={store.ideaDraft}
         readonly={submitting}
         oninput={(event) => store.setIdea(event.currentTarget.value)}
       ></textarea>
-      <p class="text-right text-xs text-theme-muted">
+      <p class="text-right text-sm text-theme-muted">
         {store.ideaDraft.length} / {MAX_IDEA_LENGTH}
       </p>
     </div>
 
     <fieldset class="flex flex-col gap-2" disabled={submitting}>
       <legend
-        class="font-mono text-xs font-bold uppercase tracking-[0.24em] text-theme-primary"
+        class="font-mono text-sm font-bold uppercase tracking-[0.24em] text-theme-primary"
       >
         How should it look at your idea?
       </legend>
       <div class="grid gap-2 sm:grid-cols-2">
         {#each modes as mode (mode.id)}
           <label
-            class="flex cursor-pointer items-start gap-2 rounded-lg border p-3 text-sm transition-colors {store.mode ===
+            class="flex cursor-pointer items-start gap-2 rounded-lg border p-3 text-base transition-colors {store.mode ===
             mode.id
               ? 'border-theme-primary bg-theme-primary/10'
               : 'border-theme-border/70 bg-theme-surface/40 hover:border-theme-primary/40'}"
@@ -151,11 +149,11 @@
               value={mode.id}
               checked={store.mode === mode.id}
               onchange={() => isModeId(mode.id) && store.setMode(mode.id)}
-              class="mt-1"
+              class="mt-1 h-5 w-5"
             />
             <span>
               <span class="block font-bold text-theme-text">{mode.label}</span>
-              <span class="block text-xs text-theme-muted"
+              <span class="block text-sm text-theme-muted"
                 >{mode.description}</span
               >
             </span>
@@ -170,7 +168,7 @@
           type="button"
           disabled={!canSubmit}
           onclick={() => store.submit()}
-          class="inline-flex items-center gap-2 rounded-lg bg-theme-primary px-4 py-2 text-xs font-bold uppercase tracking-widest text-theme-bg transition-opacity disabled:cursor-not-allowed disabled:opacity-50"
+          class="min-h-11 justify-center inline-flex items-center gap-2 rounded-lg bg-theme-primary px-4 py-2 text-sm font-bold uppercase tracking-wider text-theme-bg transition-opacity disabled:cursor-not-allowed disabled:opacity-50"
         >
           <span class="icon-[lucide--sparkles] h-4 w-4" aria-hidden="true"
           ></span>
@@ -180,13 +178,12 @@
           <button
             type="button"
             onclick={() => store.cancel()}
-            class="inline-flex items-center gap-2 rounded-lg border border-theme-border bg-theme-surface px-3 py-2 text-xs font-bold uppercase tracking-widest text-theme-text"
+            class="min-h-11 justify-center inline-flex items-center gap-2 rounded-lg border border-theme-border bg-theme-surface px-3 py-2 text-sm font-bold uppercase tracking-wider text-theme-text"
           >
             Cancel
           </button>
         {/if}
       </div>
-      <ConversationNotice />
     </div>
 
     <ProgressLine running={submitting} />

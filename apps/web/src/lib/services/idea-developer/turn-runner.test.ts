@@ -275,7 +275,7 @@ describe("TurnRunner later turns", () => {
     expect(params.generationConfig.responseMimeType).toBe("application/json");
   });
 
-  it("sends neither the idea nor earlier turns, and no system instruction", async () => {
+  it("sends the system instruction again, because the provider does not carry it over", async () => {
     const send = vi.fn().mockResolvedValue({ id: "i-2", text: withChanged() });
     await runnerWith(send).runFollowUpTurn({
       kind: "answer-questions",
@@ -285,10 +285,16 @@ describe("TurnRunner later turns", () => {
       turnIndex: 1,
     });
     const params = send.mock.calls[0][0];
-    expect(params.systemInstruction).toBeUndefined();
+    // The Responses API does not carry `instructions` across previous_response_id,
+    // so without this the model forgets the sections and the whatChanged rule.
+    expect(params.systemInstruction).toMatch(/develop the user's idea/i);
+    expect(params.systemInstruction).toContain("whatChanged");
     expect(params.input).toContain("The creator answers:");
     expect(params.input).toContain("The dragons left long ago.");
-    expect(JSON.stringify(params)).not.toContain("A town.");
+    expect(params.input).not.toContain("A town.");
+    expect(params.systemInstruction).not.toContain(
+      "The dragons left long ago.",
+    );
   });
 
   it("frames each kind and keeps user text out of the system instruction", async () => {
@@ -303,7 +309,9 @@ describe("TurnRunner later turns", () => {
     expect(send.mock.calls[0][0].input).toMatch(
       /^The creator asks for this change:/,
     );
-    expect(send.mock.calls[0][0].systemInstruction).toBeUndefined();
+    expect(send.mock.calls[0][0].systemInstruction).not.toContain(
+      "Make the Warden softer.",
+    );
   });
 
   it("sends the new emphasis for a mode switch and records that mode", async () => {
@@ -413,5 +421,54 @@ describe("TurnRunner replay", () => {
     expect(params.input).toContain("They left.");
     expect(params.input).toContain("Make the Warden softer.");
     expect(params.storeConversation).toBe(true);
+  });
+});
+
+describe("TurnRunner asks again when a reply is unusable", () => {
+  it("tells the model what was wrong on the second try, keeping the user's text", async () => {
+    const withChange = JSON.stringify({
+      ...JSON.parse(validJson),
+      whatChanged: "Sharpened the rivals.",
+    });
+    const send = vi
+      .fn()
+      .mockResolvedValueOnce({ id: "i-2", text: validJson })
+      .mockResolvedValueOnce({ id: "i-3", text: withChange });
+    const outcome = await runnerWith(send).runFollowUpTurn({
+      kind: "answer-questions",
+      text: "SECRET-USER-TEXT",
+      mode: "develop",
+      previousInteractionId: "i-1",
+      turnIndex: 1,
+    });
+    expect(outcome.kind).toBe("development");
+    const first = send.mock.calls[0][0].input as string;
+    const second = send.mock.calls[1][0].input as string;
+    expect(first).not.toMatch(/was not usable/i);
+    expect(second).toMatch(/was not usable/i);
+    expect(second).toMatch(/whatChanged/);
+    expect(second).toContain("SECRET-USER-TEXT");
+  });
+
+  it("logs why a reply was rejected, but never the reply or any idea text", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const send = vi.fn().mockResolvedValue({
+      id: "i-1",
+      text: '{"secretIdeaEcho":"SECRET-USER-TEXT"}',
+    });
+    await runnerWith(send).runFirstTurn({ idea: "SECRET-USER-TEXT" });
+    expect(warn).toHaveBeenCalled();
+    const logged = JSON.stringify(warn.mock.calls);
+    expect(logged).toMatch(/Idea Developer/);
+    expect(logged).not.toContain("SECRET-USER-TEXT");
+    warn.mockRestore();
+  });
+
+  it("gives the model room to finish, since reasoning tokens count against the limit", async () => {
+    const send = vi.fn().mockResolvedValue({ id: "i-1", text: validJson });
+    await runnerWith(send).runFirstTurn({ idea: "A town." });
+    expect(
+      send.mock.calls[0][0].generationConfig.maxOutputTokens,
+    ).toBeGreaterThanOrEqual(8000);
   });
 });

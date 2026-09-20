@@ -1,9 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   CREATOR_QUESTIONS_MAX,
-  CREATOR_QUESTIONS_MIN,
   PEOPLE_WHO_CARE_MAX,
-  PEOPLE_WHO_CARE_MIN,
   validateDevelopmentShape,
 } from "./types";
 
@@ -50,19 +48,27 @@ describe("validateDevelopmentShape", () => {
     expect(result.ok).toBe(false);
   });
 
-  it.each([[PEOPLE_WHO_CARE_MIN - 1], [PEOPLE_WHO_CARE_MAX + 1]])(
-    "rejects %i people who care",
-    (count) => {
-      const people = Array.from({ length: count }, (_, i) => person(i));
-      const result = validateDevelopmentShape(
-        valid({ peopleWhoCare: people }),
-        {
-          turnIndex: 0,
-        },
-      );
-      expect(result.ok).toBe(false);
-    },
-  );
+  it("rejects too few people who care", () => {
+    const result = validateDevelopmentShape(
+      valid({ peopleWhoCare: [person(1)] }),
+      { turnIndex: 0 },
+    );
+    expect(result.ok).toBe(false);
+  });
+
+  it("trims extra people to the maximum instead of rejecting a good answer", () => {
+    const people = Array.from({ length: PEOPLE_WHO_CARE_MAX + 2 }, (_, i) =>
+      person(i),
+    );
+    const result = validateDevelopmentShape(valid({ peopleWhoCare: people }), {
+      turnIndex: 0,
+    });
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.value.peopleWhoCare).toHaveLength(PEOPLE_WHO_CARE_MAX);
+      expect(result.value.peopleWhoCare[0].name).toBe("Person 0");
+    }
+  });
 
   it("rejects a person whose conflict is empty", () => {
     const people = [person(1), { ...person(2), conflictsWith: "" }];
@@ -72,20 +78,28 @@ describe("validateDevelopmentShape", () => {
     expect(result.ok).toBe(false);
   });
 
-  it.each([[CREATOR_QUESTIONS_MIN - 1], [CREATOR_QUESTIONS_MAX + 1]])(
-    "rejects %i creator questions",
-    (count) => {
-      const questions = Array.from(
-        { length: count },
-        (_, i) => `Question ${i}?`,
-      );
-      const result = validateDevelopmentShape(
-        valid({ creatorQuestions: questions }),
-        { turnIndex: 0 },
-      );
-      expect(result.ok).toBe(false);
-    },
-  );
+  it("rejects too few creator questions", () => {
+    const result = validateDevelopmentShape(
+      valid({ creatorQuestions: ["Only one?"] }),
+      { turnIndex: 0 },
+    );
+    expect(result.ok).toBe(false);
+  });
+
+  it("trims extra creator questions to the maximum", () => {
+    const questions = Array.from(
+      { length: CREATOR_QUESTIONS_MAX + 3 },
+      (_, i) => `Question ${i}?`,
+    );
+    const result = validateDevelopmentShape(
+      valid({ creatorQuestions: questions }),
+      { turnIndex: 0 },
+    );
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.value.creatorQuestions).toHaveLength(CREATOR_QUESTIONS_MAX);
+    }
+  });
 
   it("rejects fewer than two player directions", () => {
     const result = validateDevelopmentShape(
@@ -95,17 +109,53 @@ describe("validateDevelopmentShape", () => {
     expect(result.ok).toBe(false);
   });
 
-  it("rejects two directions with the same title, trimmed and case-insensitive", () => {
+  it("drops a repeated direction and keeps the rest when enough remain", () => {
     const result = validateDevelopmentShape(
       valid({
         playerDirections: [
           { title: "Follow it", description: "a" },
           { title: "  follow IT ", description: "b" },
+          { title: "Search it", description: "c" },
+        ],
+      }),
+      { turnIndex: 0 },
+    );
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.value.playerDirections.map((d) => d.title)).toEqual([
+        "Follow it",
+        "Search it",
+      ]);
+    }
+  });
+
+  it("rejects when repeated directions leave fewer than two", () => {
+    const result = validateDevelopmentShape(
+      valid({
+        playerDirections: [
+          { title: "Follow it", description: "a" },
+          { title: "follow it", description: "b" },
         ],
       }),
       { turnIndex: 0 },
     );
     expect(result.ok).toBe(false);
+  });
+
+  it("accepts a list of strings where a sentence was expected", () => {
+    const result = validateDevelopmentShape(
+      valid({
+        peopleWhoCare: [
+          { ...person(1), wants: ["Scales", "Peace"] },
+          { ...person(2), conflictsWith: ["Mara", "The Warden"] },
+        ],
+      }),
+      { turnIndex: 0 },
+    );
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.value.peopleWhoCare[0].wants).toBe("Scales; Peace");
+    }
   });
 
   it("requires whatChanged after the first turn and rejects it when empty", () => {

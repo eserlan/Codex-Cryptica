@@ -29,7 +29,8 @@ import {
 
 /** The registry key, not a provider model id — the proxy resolves it. */
 export const IDEA_DEVELOPER_MODEL = "luna-fast";
-const MAX_OUTPUT_TOKENS = 4096;
+/** Reasoning tokens count against this limit, so leave room to finish the reply. */
+const MAX_OUTPUT_TOKENS = 8192;
 
 export interface TurnRunnerClient {
   sendInteraction: (params: {
@@ -150,6 +151,11 @@ function offeredGenerators(): OfferedGenerator[] {
   }));
 }
 
+/** Asks again, saying what was wrong with the last reply. */
+function withRepairNote(input: string, reason: string): string {
+  return `${input}\n\nYour previous reply was not usable: ${reason} Reply again with the full JSON object exactly as specified, with every field, and nothing else.`;
+}
+
 export class TurnRunner {
   constructor(private readonly client: TurnRunnerClient = aiClientManager) {}
 
@@ -181,7 +187,8 @@ export class TurnRunner {
 
   /**
    * A turn after the first. The provider holds the earlier turns, so only the
-   * new input is sent, with the previous interaction id.
+   * new input is sent, with the previous interaction id. The system instruction
+   * is sent again because the provider does not remember it between turns.
    */
   async runFollowUpTurn(params: FollowUpParams): Promise<TurnOutcome> {
     const emphasis =
@@ -190,6 +197,11 @@ export class TurnRunner {
       {
         model: IDEA_DEVELOPER_MODEL,
         input: buildFollowUpInput(params.kind, params.text, { emphasis }),
+        // The provider does not carry `instructions` across previous_response_id,
+        // so the rules (sections, JSON shape, whatChanged) go with every turn.
+        systemInstruction: buildSystemInstruction({
+          generators: offeredGenerators(),
+        }),
         previousInteractionId: params.previousInteractionId,
         storeConversation: true,
         generationConfig: GENERATION_CONFIG,
@@ -230,10 +242,11 @@ export class TurnRunner {
     request: Parameters<TurnRunnerClient["sendInteraction"]>[0],
     parse: { turnIndex: number; mode: ModeId },
   ): Promise<TurnOutcome> {
+    let toSend = request;
     for (let attempt = 0; attempt < 2; attempt++) {
       let reply: { id: string; text: string };
       try {
-        reply = await this.client.sendInteraction(request);
+        reply = await this.client.sendInteraction(toSend);
       } catch (err) {
         return mapError(err);
       }
@@ -257,6 +270,12 @@ export class TurnRunner {
           interactionId: reply.id,
         };
       }
+      // The reason is a fixed sentence about the shape, never the reply or the idea.
+      console.warn("[Idea Developer] Reply rejected:", parsed.reason);
+      toSend = {
+        ...request,
+        input: withRepairNote(request.input, parsed.reason),
+      };
     }
     return failure("invalid-output");
   }

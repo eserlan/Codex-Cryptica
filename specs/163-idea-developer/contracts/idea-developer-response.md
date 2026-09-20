@@ -29,14 +29,14 @@ Returned on every turn (full development each time).
 
 ## Validation rules (deterministic)
 
-| Rule                                                                                                                                                                    | Spec           |
-| ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------- |
-| All fields present and non-empty; `whatChanged` required on turns after the first and absent on the first                                                               | FR-003, FR-034 |
-| `peopleWhoCare` length 2 to 4, each with non-empty `conflictsWith`                                                                                                      | FR-006         |
-| `playerDirections` length at least 2, distinct titles (compared case-insensitively, trimmed)                                                                            | FR-007         |
-| `creatorQuestions` length 2 to 4, each non-empty                                                                                                                        | FR-008         |
-| No extra keys whose names match score-like patterns (`score`, `rating`, `grade`, `rank`, `out of`) and no text of the form `n/10`, `n out of 10`, `n%` used as a rating | FR-009         |
-| `generatorKey` in the catalogue, otherwise dropped; top up to at least 2 from the default set; cap at 5                                                                 | FR-013, FR-015 |
+| Rule                                                                                                                                                                                                     | Spec           |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------- |
+| All fields present and non-empty; `whatChanged` required on turns after the first and absent on the first                                                                                                | FR-003, FR-034 |
+| `peopleWhoCare` at least 2 usable entries (each with non-empty `conflictsWith`); more than 4 are trimmed to the first 4                                                                                  | FR-006         |
+| `playerDirections` at least 2 after dropping unusable and repeated titles (compared case-insensitively, trimmed)                                                                                         | FR-007         |
+| `creatorQuestions` at least 2 non-empty; more than 4 are trimmed to the first 4                                                                                                                          | FR-008         |
+| No key named `score`, `rating` or `grade` at any depth, and no text such as `n/10`, `n out of 10`, `score of n` or `rating: n`. (`rank` is an ordinary field; "3 out of 100 households" is not a rating) | FR-009         |
+| `generatorKey` in the catalogue, otherwise dropped; top up to at least 2 from the default set; cap at 5                                                                                                  | FR-013, FR-015 |
 
 ## Failure handling
 

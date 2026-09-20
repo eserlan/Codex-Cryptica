@@ -19,6 +19,7 @@ vi.mock("$lib/services/analytics/idea-developer-tracking", () => ({
 }));
 
 import Page from "./+page.svelte";
+import { IDEA_DEVELOPER_COPY } from "$lib/content/idea-developer-notice";
 import { ideaDeveloperStore } from "$lib/stores/idea-developer.svelte";
 
 beforeEach(() => {
@@ -33,13 +34,37 @@ afterEach(() => {
 });
 
 describe("Idea Developer page", () => {
-  it("renders the tool with the notice beside the submit button", () => {
+  it("shows the notice at the bottom of the page, below the tool", () => {
     render(Page);
+    const notice = screen.getByTestId("conversation-notice");
+    const tool = screen.getByTestId("submit-area");
+    const explainer = document.getElementById("how-it-works")!;
+    const after = Node.DOCUMENT_POSITION_FOLLOWING;
+    expect(tool.compareDocumentPosition(notice) & after).toBeTruthy();
+    expect(explainer.compareDocumentPosition(notice) & after).toBeTruthy();
+  });
+
+  it("does not hide the notice behind a collapsed section, dialog or hidden element", () => {
+    render(Page);
+    const notice = screen.getByTestId("conversation-notice");
     expect(
-      screen.getByRole("heading", { level: 1, name: /develop your rpg idea/i }),
-    ).toBeTruthy();
-    const area = screen.getByTestId("submit-area");
-    expect(area.contains(screen.getByTestId("conversation-notice"))).toBe(true);
+      notice.closest(
+        "details, dialog, [role='dialog'], [hidden], [aria-hidden='true']",
+      ),
+    ).toBeNull();
+  });
+
+  it("links the notice to the privacy page and the help entry", () => {
+    render(Page);
+    const copy = IDEA_DEVELOPER_COPY.notice;
+    expect(
+      screen
+        .getByRole("link", { name: copy.privacyLabel })
+        .getAttribute("href"),
+    ).toBe(copy.privacyHref);
+    expect(
+      screen.getByRole("link", { name: copy.helpLabel }).getAttribute("href"),
+    ).toBe(copy.helpHref);
   });
 
   it("says what the tool does and does not do", () => {

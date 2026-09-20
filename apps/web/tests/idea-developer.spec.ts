@@ -68,22 +68,55 @@ test.describe("Idea Developer", () => {
     ).toBeVisible();
   });
 
-  test("shows the notice beside the submit button before anything is typed", async ({
+  test("shows the notice at the bottom of the page, visible without opening anything", async ({
     page,
   }) => {
     await open(page);
-    const area = page.getByTestId("submit-area");
-    await expect(area).toBeVisible();
-    await expect(
-      area.getByRole("button", { name: /develop my idea/i }),
-    ).toBeVisible();
-    await expect(area.getByTestId("conversation-notice")).toBeVisible();
-    await expect(area.getByTestId("conversation-notice")).toContainText(
-      /sent to an AI service/i,
-    );
-    await expect(area.getByTestId("conversation-notice")).toContainText(
-      /Codex Cryptica does not keep it/i,
-    );
+    const notice = page.getByTestId("conversation-notice");
+    await notice.scrollIntoViewIfNeeded();
+    await expect(notice).toBeVisible();
+    await expect(notice).toContainText(/sent to an AI service/i);
+    await expect(notice).toContainText(/Codex Cryptica does not keep it/i);
+    // It sits below the tool, not beside the submit button.
+    const submit = await page
+      .getByRole("button", { name: /develop my idea/i })
+      .boundingBox();
+    const box = await notice.boundingBox();
+    expect(box!.y).toBeGreaterThan(submit!.y + submit!.height);
+  });
+
+  test("is readable on a phone: text of at least 14px, inputs of at least 16px, tall buttons", async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await open(page);
+    const measured = await page.evaluate(() => {
+      const main = document.querySelector("main")!;
+      const small: string[] = [];
+      const walker = document.createTreeWalker(main, NodeFilter.SHOW_TEXT);
+      let node: Node | null;
+      while ((node = walker.nextNode())) {
+        const text = node.textContent?.trim();
+        const el = node.parentElement;
+        if (!text || !el) continue;
+        const style = getComputedStyle(el);
+        if (style.display === "none" || style.visibility === "hidden") continue;
+        const px = parseFloat(style.fontSize);
+        if (px < 14) small.push(`${px}px: ${text.slice(0, 40)}`);
+      }
+      const area = document.querySelector("textarea")!;
+      const buttons = [...main.querySelectorAll("button")].map((b) =>
+        Math.round(b.getBoundingClientRect().height),
+      );
+      return {
+        small,
+        textarea: parseFloat(getComputedStyle(area).fontSize),
+        shortest: Math.min(...buttons),
+      };
+    });
+    expect(measured.small).toEqual([]);
+    expect(measured.textarea).toBeGreaterThanOrEqual(16);
+    expect(measured.shortest).toBeGreaterThanOrEqual(44);
   });
 
   test("keeps submit disabled until there is an idea, and shows the length limit", async ({

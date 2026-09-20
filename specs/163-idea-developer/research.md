@@ -181,3 +181,19 @@ Method: for each `generate*` method in `apps/web/src/lib/services/seo/generator-
 | adventure-generator | `generateAdventure`     | **no**            | no                        |
 
 Also not reading hub context: names, dungeon, plot twist, world, star system, constellation, alien race, creature. The FR-013 wording that named "scenario" and "adventure" generators is corrected accordingly. If the adventure generator later reads hub context, it can be added to `GENERATOR_CATALOGUE` with one entry.
+
+## R23. Live-test failure: "The response wasn't in the expected shape" (2026-09-20)
+
+- **Cause (very likely)**: later turns sent no system instruction. The [OpenAI API reference](https://developers.openai.com/api/reference/cli/resources/responses/methods/create) says that with `previous_response_id`, "the instructions from a previous response will not be carried over". So after turn one the model no longer had the sections, the JSON shape or the `whatChanged` rule, and replied in a shape the validator rejected. The unit tests mocked the client, so they could not see this.
+- **Fixes**: the system instruction is sent on every turn (it never contains user text); it now includes an example JSON shape and says the rules apply to every reply.
+- **Tolerance**: extra people or questions are trimmed rather than rejected; repeated or unusable directions are dropped; a list of strings is accepted where a sentence is expected; JSON wrapped in a sentence is found; `rank` is no longer treated as a score; "3 out of 100" is no longer read as a rating.
+- **Retry**: the second attempt says what was wrong with the first ("Your previous reply was not usable: ..."). The reason is logged as a fixed sentence about the shape, never the reply or idea text.
+- **Output room**: the limit rose from 4,096 to 8,192 tokens, because reasoning tokens count against it and a truncated reply is invalid JSON.
+- **Still to verify with a live model**: that follow-up turns now succeed. The cause is inferred from the docs and the code, not from the failing reply.
+
+## R24. Notice at the bottom, and phone text sizes (2026-09-20)
+
+- **Owner feedback**: the notice beside the submit button was too prominent, and text was very small on a phone.
+- **Decision**: the notice moves to the bottom of the page under the tool, in a quiet style (no box, muted text, a top rule). FR-038 and SC-021 are reworded to match. It remains visible on the page and not behind a dialog, checkbox or collapsed section.
+- **Trade-off, for the record**: this is less prominent at the moment of submitting than the original design. A one-line pointer beside the button is an option if a stronger disclosure is wanted later; it was not added.
+- **Sizes**: every text size went up one step (nothing under 14px; inputs 16px so phones do not zoom in on focus), buttons are at least 44px tall, and a test fails if `text-xs` returns.

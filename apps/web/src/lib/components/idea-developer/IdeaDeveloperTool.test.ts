@@ -6,7 +6,6 @@ import IdeaDeveloperTool from "./IdeaDeveloperTool.svelte";
 import { IdeaDeveloperStore } from "$lib/stores/idea-developer.svelte";
 import type { StartResult } from "$lib/services/idea-developer/idea-developer-service";
 import type { StorageLike } from "$lib/utils/runtime-deps";
-import { IDEA_DEVELOPER_COPY } from "$lib/content/idea-developer-notice";
 
 // Stub Element.prototype.animate for JSDOM / Svelte 5 transitions compatibility
 // (the existing save modal fades in).
@@ -89,38 +88,11 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-describe("IdeaDeveloperTool notice (FR-038)", () => {
-  it("shows the notice beside the submit button before any submit", () => {
+describe("IdeaDeveloperTool and the notice", () => {
+  it("leaves the notice to the page, so it does not crowd the tool", () => {
     setup();
-    const notice = screen.getByText(IDEA_DEVELOPER_COPY.notice.text);
-    const area = screen.getByTestId("submit-area");
-    expect(area.contains(notice)).toBe(true);
-    expect(area.contains(submitButton())).toBe(true);
-  });
-
-  it("does not hide the notice in a collapsed element, dialog or hidden container", () => {
-    setup();
-    const notice = screen.getByText(IDEA_DEVELOPER_COPY.notice.text);
-    expect(
-      notice.closest(
-        "details, dialog, [role='dialog'], [hidden], [aria-hidden='true']",
-      ),
-    ).toBeNull();
-  });
-
-  it("links to the fuller explanation", () => {
-    setup();
-    const link = screen.getByRole("link", {
-      name: IDEA_DEVELOPER_COPY.notice.privacyLabel,
-    });
-    expect(link.getAttribute("href")).toBe(
-      IDEA_DEVELOPER_COPY.notice.privacyHref,
-    );
-    expect(
-      screen
-        .getByRole("link", { name: IDEA_DEVELOPER_COPY.notice.helpLabel })
-        .getAttribute("href"),
-    ).toBe(IDEA_DEVELOPER_COPY.notice.helpHref);
+    expect(screen.queryByTestId("conversation-notice")).toBeNull();
+    expect(screen.getByTestId("submit-area")).toBeTruthy();
   });
 });
 

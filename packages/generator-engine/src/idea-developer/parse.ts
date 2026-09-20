@@ -19,18 +19,37 @@ export interface ParseOptions {
   mode?: ModeId;
 }
 
-const SCORE_KEYS = /^(score|rating|grade|rank)s?$/i;
+// Only the plain words for marking an idea; "rank" is an ordinary field (a title).
+const SCORE_KEYS = /^(score|rating|grade)s?$/i;
 const RATING_TEXT = [
-  // "7/10", "8 out of 10", "3 out of 5"
-  /\b\d+(?:\.\d+)?\s*(?:\/|out of)\s*(?:5|10|100)\b/i,
-  // "score of 9", "rating: 4", "grade 7"
-  /\b(?:score|rating|grade)s?\s*(?:of|:|is|=)?\s*\d/i,
+  // "7/10", "8 out of 10" (a ten-point rating; not "3 out of 100 households")
+  /\b\d+(?:\.\d+)?\s*(?:\/|out of)\s*10\b/i,
+  // "score of 9", "rating: 4", "grade is 7"
+  /\b(?:score|rating|grade)s?\s*(?:of|:|is|=)\s*\d/i,
 ];
 
 function stripFence(text: string): string {
   const trimmed = text.trim();
   const fenced = /^```(?:json)?\s*([\s\S]*?)\s*```$/i.exec(trimmed);
   return fenced ? fenced[1] : trimmed;
+}
+
+/** The text from the first "{" to the last "}", for a reply wrapped in a sentence. */
+function outermostObject(text: string): string | null {
+  const start = text.indexOf("{");
+  const end = text.lastIndexOf("}");
+  return start >= 0 && end > start ? text.slice(start, end + 1) : null;
+}
+
+function parseJson(text: string): unknown {
+  const cleaned = stripFence(text);
+  try {
+    return JSON.parse(cleaned);
+  } catch {
+    const inner = outermostObject(cleaned);
+    if (!inner) throw new Error("no JSON");
+    return JSON.parse(inner);
+  }
 }
 
 function hasRatingText(value: string): boolean {
@@ -68,7 +87,7 @@ export function parseDevelopmentResponse(
 ): ParseResult {
   let raw: unknown;
   try {
-    raw = JSON.parse(stripFence(text));
+    raw = parseJson(text);
   } catch {
     return { kind: "invalid", reason: "The response was not valid JSON." };
   }

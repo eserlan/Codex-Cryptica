@@ -95,8 +95,17 @@ export interface ShapeOptions {
 
 type Read<T> = { ok: true; value: T } | { ok: false; reason: string };
 
+/** A non-empty string, or a list of strings joined into one (models sometimes send a list). */
 function text(value: unknown): string | null {
-  return typeof value === "string" && value.trim() ? value.trim() : null;
+  if (typeof value === "string") return value.trim() || null;
+  if (Array.isArray(value)) {
+    const parts = value
+      .filter((part): part is string => typeof part === "string")
+      .map((part) => part.trim())
+      .filter(Boolean);
+    return parts.length > 0 ? parts.join("; ") : null;
+  }
+  return null;
 }
 
 function bad(reason: string): { ok: false; reason: string } {
@@ -152,18 +161,17 @@ function readPerson(entry: unknown): PersonWhoCares | null {
     : null;
 }
 
+/** Keeps the usable people; a model that adds a fifth is trimmed, not rejected. */
 function readPeople(raw: unknown): Read<PersonWhoCares[]> {
-  const list = asList(raw);
-  if (list.length < PEOPLE_WHO_CARE_MIN || list.length > PEOPLE_WHO_CARE_MAX) {
+  const people = asList(raw)
+    .map(readPerson)
+    .filter((person): person is PersonWhoCares => person !== null);
+  if (people.length < PEOPLE_WHO_CARE_MIN) {
     return bad(
       `peopleWhoCare needs ${PEOPLE_WHO_CARE_MIN} to ${PEOPLE_WHO_CARE_MAX} entries.`,
     );
   }
-  const people = list.map(readPerson);
-  if (people.some((person) => person === null)) {
-    return bad("Each person needs a name, role, want and conflict.");
-  }
-  return good(people as PersonWhoCares[]);
+  return good(people.slice(0, PEOPLE_WHO_CARE_MAX));
 }
 
 function readDirection(entry: unknown): PlayerDirection | null {
@@ -173,38 +181,34 @@ function readDirection(entry: unknown): PlayerDirection | null {
   return title && description ? { title, description } : null;
 }
 
+/** Drops unusable and repeated directions; at least two must remain. */
 function readDirections(raw: unknown): Read<PlayerDirection[]> {
-  const list = asList(raw);
-  if (list.length < PLAYER_DIRECTIONS_MIN) {
+  const seen = new Set<string>();
+  const directions = asList(raw)
+    .map(readDirection)
+    .filter((direction): direction is PlayerDirection => {
+      if (!direction) return false;
+      const key = direction.title.toLowerCase();
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  if (directions.length < PLAYER_DIRECTIONS_MIN) {
     return bad(`playerDirections needs at least ${PLAYER_DIRECTIONS_MIN}.`);
   }
-  const directions = list.map(readDirection);
-  if (directions.some((direction) => direction === null)) {
-    return bad("Each player direction needs a title and description.");
-  }
-  const found = directions as PlayerDirection[];
-  const titles = new Set(found.map((d) => d.title.toLowerCase()));
-  if (titles.size !== found.length) {
-    return bad("Player direction titles must differ.");
-  }
-  return good(found);
+  return good(directions);
 }
 
 function readQuestions(raw: unknown): Read<string[]> {
-  const list = asList(raw);
-  if (
-    list.length < CREATOR_QUESTIONS_MIN ||
-    list.length > CREATOR_QUESTIONS_MAX
-  ) {
+  const questions = asList(raw)
+    .map(text)
+    .filter((question): question is string => question !== null);
+  if (questions.length < CREATOR_QUESTIONS_MIN) {
     return bad(
       `creatorQuestions needs ${CREATOR_QUESTIONS_MIN} to ${CREATOR_QUESTIONS_MAX} entries.`,
     );
   }
-  const questions = list.map(text);
-  if (questions.some((question) => question === null)) {
-    return bad("Creator questions must not be empty.");
-  }
-  return good(questions as string[]);
+  return good(questions.slice(0, CREATOR_QUESTIONS_MAX));
 }
 
 function readSuggestions(raw: unknown): GeneratorSuggestion[] {

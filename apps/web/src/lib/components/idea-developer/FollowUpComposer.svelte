@@ -21,12 +21,12 @@
   );
 
   const button =
-    "inline-flex items-center gap-2 rounded-lg border border-theme-border bg-theme-surface px-3 py-2 text-xs font-bold uppercase tracking-widest text-theme-text transition-colors hover:border-theme-primary/50 disabled:cursor-not-allowed disabled:opacity-50";
+    "inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-theme-border bg-theme-surface px-3 py-2 text-sm font-bold uppercase tracking-wider text-theme-text transition-colors hover:border-theme-primary/50 disabled:cursor-not-allowed disabled:opacity-50";
 </script>
 
 {#if store.capped}
   <p
-    class="rounded-lg border border-theme-border/70 bg-theme-surface/50 p-3 text-sm text-theme-text"
+    class="rounded-lg border border-theme-border/70 bg-theme-surface/50 p-3 text-base text-theme-text"
   >
     This conversation has reached its limit. Start a new one, or copy the result
     to keep it.
@@ -38,30 +38,30 @@
   >
     <h2
       id="keep-developing"
-      class="font-header text-base font-bold text-theme-text"
+      class="font-header text-lg font-bold text-theme-text"
     >
       Keep developing
     </h2>
-    <p class="text-xs text-theme-muted">
+    <p class="text-sm text-theme-muted">
       Answer the questions above, ask for a change, or look at it another way.
       {left} follow-ups left in this conversation.
     </p>
     <label
       for="idea-developer-follow-up"
-      class="font-mono text-xs font-bold uppercase tracking-[0.24em] text-theme-primary"
+      class="font-mono text-sm font-bold uppercase tracking-[0.24em] text-theme-primary"
     >
       Your answers or requested change
     </label>
     <textarea
       id="idea-developer-follow-up"
       aria-label="Your answers or requested change"
-      class="min-h-24 w-full rounded-xl border border-theme-border bg-theme-bg/50 p-3 text-sm text-theme-text placeholder:text-theme-muted/70 focus:border-theme-primary focus:outline-none"
+      class="min-h-24 w-full rounded-xl border border-theme-border bg-theme-bg/50 p-3 text-base text-theme-text placeholder:text-theme-muted/70 focus:border-theme-primary focus:outline-none"
       placeholder="Answer any of the questions, or say what you'd like changed."
       value={store.followUpText}
       readonly={running}
       oninput={(event) => store.setFollowUp(event.currentTarget.value)}
     ></textarea>
-    <p class="text-right text-xs text-theme-muted">
+    <p class="text-right text-sm text-theme-muted">
       {store.followUpText.length} / {MAX_IDEA_LENGTH}
     </p>
     <div class="flex flex-wrap items-center gap-2">

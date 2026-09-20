@@ -37,6 +37,33 @@ function generatorInstruction(generators: OfferedGenerator[]): string {
   return `generatorSuggestions: 2 to 5 objects { "generatorKey", "reason" }. Use only these keys, each with a one-sentence reason it fits this idea:\n${list}`;
 }
 
+/** A concrete example of the reply, so the model does not have to guess field names. */
+function exampleShape(generators: OfferedGenerator[]): string {
+  const suggestion =
+    generators.length > 0
+      ? `[{ "generatorKey": "${generators[0].key}", "reason": "..." }]`
+      : "[]";
+  return [
+    "Example of the shape (replace every value with your own; keep these field names exactly):",
+    "{",
+    '  "alreadyInteresting": "...",',
+    '  "centralQuestion": "...?",',
+    '  "makeItMove": "...",',
+    '  "peopleWhoCare": [',
+    '    { "name": "...", "role": "...", "wants": "...", "conflictsWith": "..." },',
+    '    { "name": "...", "role": "...", "wants": "...", "conflictsWith": "..." }',
+    "  ],",
+    '  "playerDirections": [',
+    '    { "title": "...", "description": "..." },',
+    '    { "title": "...", "description": "..." }',
+    "  ],",
+    '  "consequences": "...",',
+    '  "creatorQuestions": [ "...?", "...?" ],',
+    `  "generatorSuggestions": ${suggestion}`,
+    "}",
+  ].join("\n");
+}
+
 export function buildSystemInstruction(
   options: SystemInstructionOptions = {},
 ): string {
@@ -56,7 +83,9 @@ export function buildSystemInstruction(
     "consequences: what progresses if nobody intervenes.",
     "creatorQuestions: 2 to 4 questions that leave the important creative decisions to the creator. Do not repeat a question the creator has already answered.",
     generatorInstruction(generators),
+    exampleShape(generators),
     "Never give a score, grade, rating or ranking of the idea, in any field or in words.",
+    "These rules apply to every reply in this conversation, including follow-ups. Always reply with the full JSON object, never with only the parts that changed.",
     'After the first turn, later messages ask you to continue: "The creator answers: ..." (fold the answers in), "The creator asks for this change: ..." (change that part and keep the rest recognisable), or a new emphasis. Reply each time with the full JSON object again, plus a "whatChanged" field: one short line saying what changed. Do not include "whatChanged" on the first turn.',
   ].join("\n\n");
 }

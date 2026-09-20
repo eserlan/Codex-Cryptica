@@ -4,17 +4,17 @@ How the service talks to the model across turns. Uses `aiClientManager.sendInter
 
 ## Request per turn
 
-| `sendInteraction` param | First turn                                                                                                | Later turns                                                        |
-| ----------------------- | --------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
-| `model`                 | `luna-fast`                                                                                               | `luna-fast`                                                        |
-| `systemInstruction`     | The tool's fixed instruction (develop, do not replace; eight sections; no scores; idea is delimited data) | Omitted (held by the provider's conversation)                      |
-| `input`                 | Mode emphasis + the delimited idea                                                                        | Turn text framed by kind (see below) + mode emphasis if it changed |
-| `previousInteractionId` | none                                                                                                      | The id returned by the previous turn                               |
-| `storeConversation`     | `true` (required for chaining)                                                                            | `true`                                                             |
-| `generationConfig`      | `{ responseMimeType: "application/json", maxOutputTokens }`                                               | same                                                               |
-| `signal`                | AbortController for cancel                                                                                | same                                                               |
+| `sendInteraction` param | First turn                                                                                                                           | Later turns                                                                                                                                                                 |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `model`                 | `luna-fast`                                                                                                                          | `luna-fast`                                                                                                                                                                 |
+| `systemInstruction`     | The tool's fixed instruction (develop, do not replace; eight sections with an example JSON shape; no scores; idea is delimited data) | **Sent again.** The Responses API does not carry `instructions` across `previous_response_id`, so omitting it made the model forget the sections and the `whatChanged` rule |
+| `input`                 | Mode emphasis + the delimited idea                                                                                                   | Turn text framed by kind (see below) + mode emphasis if it changed                                                                                                          |
+| `previousInteractionId` | none                                                                                                                                 | The id returned by the previous turn                                                                                                                                        |
+| `storeConversation`     | `true` (required for chaining)                                                                                                       | `true`                                                                                                                                                                      |
+| `generationConfig`      | `{ responseMimeType: "application/json", maxOutputTokens }`                                                                          | same                                                                                                                                                                        |
+| `signal`                | AbortController for cancel                                                                                                           | same                                                                                                                                                                        |
 
-The idea and earlier turns are **not** resent on later turns.
+The idea and earlier turns are **not** resent on later turns. Only the fixed system instruction is, and it never contains user text.
 
 ## Turn framing (later turns)
 
@@ -32,14 +32,14 @@ User text is always delimited as data and never appended to the system instructi
 
 ## Errors
 
-| Case                                                    | Behaviour                                                                                     |
-| ------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
-| Invalid JSON or rule failure                            | Retry the same turn once; then fail with input kept (FR-026)                                  |
-| `InteractionExpiredError` (409 `INTERACTION_NOT_FOUND`) | Replay (below), then continue transparently (FR-037)                                          |
-| Limiter or bot check refuses                            | No request is made; plain-language message with a retry time                                  |
-| Network or provider error                               | Fail with input kept; the turn is `failed` and does not count toward the cap                  |
-| Bot check (session or challenge) failure                | Distinct plain-language message that keeps the input and offers retry; no turn recorded (R18) |
-| Abort                                                   | Turn is `cancelled`; conversation state is unchanged                                          |
+| Case                                                    | Behaviour                                                                                                                                                                                                                      |
+| ------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Invalid JSON or rule failure                            | Ask again once with the reason appended ("Your previous reply was not usable: ..."), then fail with input kept (FR-026). The reason is logged to the console as a fixed sentence about the shape, never the reply or idea text |
+| `InteractionExpiredError` (409 `INTERACTION_NOT_FOUND`) | Replay (below), then continue transparently (FR-037)                                                                                                                                                                           |
+| Limiter or bot check refuses                            | No request is made; plain-language message with a retry time                                                                                                                                                                   |
+| Network or provider error                               | Fail with input kept; the turn is `failed` and does not count toward the cap                                                                                                                                                   |
+| Bot check (session or challenge) failure                | Distinct plain-language message that keeps the input and offers retry; no turn recorded (R18)                                                                                                                                  |
+| Abort                                                   | Turn is `cancelled`; conversation state is unchanged                                                                                                                                                                           |
 
 ## Replay
 

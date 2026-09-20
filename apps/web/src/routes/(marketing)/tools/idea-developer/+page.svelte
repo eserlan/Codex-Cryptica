@@ -2,6 +2,7 @@
   import { onMount } from "svelte";
   import { base } from "$app/paths";
   import SeoHead from "$lib/components/seo/SeoHead.svelte";
+  import ConversationNotice from "$lib/components/idea-developer/ConversationNotice.svelte";
   import IdeaDeveloperTool from "$lib/components/idea-developer/IdeaDeveloperTool.svelte";
   import { buildAbsoluteUrl } from "$lib/seo/site";
   import { ideaDeveloperTracker } from "$lib/services/analytics/idea-developer-tracking";
@@ -42,7 +43,7 @@
   <main class="mx-auto max-w-2xl break-words px-4 py-12 sm:px-6 sm:py-20">
     <header class="mb-8">
       <p
-        class="mb-3 font-mono text-xs font-bold uppercase tracking-[0.24em] text-theme-primary"
+        class="mb-3 font-mono text-sm font-bold uppercase tracking-[0.24em] text-theme-primary"
       >
         Idea Developer
       </p>
@@ -64,11 +65,11 @@
       id="how-it-works"
       class="mt-12 rounded-xl border border-theme-border/70 bg-theme-surface/50 p-5"
     >
-      <h2 class="font-header text-base font-bold text-theme-text">
+      <h2 class="font-header text-lg font-bold text-theme-text">
         What it does, and what it doesn't
       </h2>
       <ul
-        class="mt-3 flex list-disc flex-col gap-2 pl-5 text-sm text-theme-muted"
+        class="mt-3 flex list-disc flex-col gap-2 pl-5 text-base text-theme-muted"
       >
         <li>
           It develops your idea: what's already interesting, the central
@@ -97,5 +98,9 @@
         </li>
       </ul>
     </section>
+
+    <div class="mt-8">
+      <ConversationNotice />
+    </div>
   </main>
 </div>

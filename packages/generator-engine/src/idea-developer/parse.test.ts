@@ -71,7 +71,7 @@ describe("parseDevelopmentResponse", () => {
     );
   });
 
-  it.each(["score", "rating", "grade", "rank"])(
+  it.each(["score", "rating", "grade"])(
     "rejects a response with a %s key, even nested",
     (key) => {
       const top = parseDevelopmentResponse(json(valid({ [key]: 7 })), {
@@ -182,5 +182,46 @@ describe("parseDevelopmentResponse", () => {
     if (result.kind !== "development")
       throw new Error("expected a development");
     expect(result.development.whatChanged).toBeUndefined();
+  });
+
+  it("allows an ordinary field called rank, such as a title in an organisation", () => {
+    const withRank = valid({
+      peopleWhoCare: [
+        { ...person(1), rank: "Captain" },
+        { ...person(2), rank: "Lieutenant" },
+      ],
+    });
+    expect(
+      parseDevelopmentResponse(json(withRank), { turnIndex: 0 }).kind,
+    ).toBe("development");
+  });
+
+  it("does not mistake counts in the story for a rating", () => {
+    for (const line of [
+      "Three out of five villagers have left.",
+      "About 3 out of 100 households still keep a dragon-bone door.",
+      "They arrive at 5/2 in the old calendar.",
+    ]) {
+      const result = parseDevelopmentResponse(
+        json(valid({ consequences: line })),
+        { turnIndex: 0 },
+      );
+      expect(result.kind, line).toBe("development");
+    }
+  });
+
+  it("finds the JSON when the model wraps it in a sentence", () => {
+    const wrapped =
+      "Here is the development:\n" + json(valid()) + "\nHope that helps.";
+    expect(parseDevelopmentResponse(wrapped, { turnIndex: 0 }).kind).toBe(
+      "development",
+    );
+  });
+
+  it("still rejects text that has no JSON at all", () => {
+    expect(
+      parseDevelopmentResponse("Sorry, I can't do that.", { turnIndex: 0 })
+        .kind,
+    ).toBe("invalid");
   });
 });
