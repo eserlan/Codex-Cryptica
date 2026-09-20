@@ -81,6 +81,26 @@ export const howDoYouPrepareASandboxRpgCampaign: AnswerConfigInput = {
       ],
     },
   ],
+  systemsThatSupportThis: [
+    {
+      system: "Worlds Without Number",
+      rationale:
+        "Faction rules give every power assets, goals and a turn procedure that runs between sessions, while world and site tags turn preparation into playable situations instead of fixed plots.",
+      href: "https://www.drivethrurpg.com/product/348809/Worlds-Without-Number-Free-Edition",
+    },
+    {
+      system: "Stars Without Number",
+      rationale:
+        "Sector generation uses world tags that bundle hooks, enemies and complications, and factions act on a between-sessions turn structure, giving a science-fiction instance of the same sandbox machinery.",
+      href: "https://www.drivethrurpg.com/en/product/230009/Stars-Without-Number-Revised-Edition-Free-Version",
+    },
+    {
+      system: "Forbidden Lands",
+      rationale:
+        "Travel runs as a hex crawl where entering a new hex triggers exploration activities and mishap rolls, so journeys produce events through procedure rather than narration.",
+      href: "https://freeleaguepublishing.com/games/forbidden-lands/",
+    },
+  ],
   codexConnection: {
     heading: "Managing a living sandbox without prep fatigue",
     paragraphs: [
