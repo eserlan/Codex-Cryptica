@@ -6,11 +6,20 @@ const development = {
   alreadyInteresting: "a",
   centralQuestion: "b",
   makeItMove: "c",
-  peopleWhoCare: [],
-  playerDirections: [],
+  peopleWhoCare: [
+    { name: "A", role: "one", wants: "x", conflictsWith: "B" },
+    { name: "B", role: "two", wants: "y", conflictsWith: "A" },
+  ],
+  playerDirections: [
+    { title: "One", description: "x" },
+    { title: "Two", description: "y" },
+  ],
   consequences: "d",
-  creatorQuestions: [],
-  generatorSuggestions: [],
+  creatorQuestions: ["q1", "q2"],
+  generatorSuggestions: [
+    { generatorKey: "settlement", reason: "r1" },
+    { generatorKey: "npc", reason: "r2" },
+  ],
 };
 
 const conversation = {
@@ -102,6 +111,70 @@ describe("session storage", () => {
           ideaDraft: "x",
           mode: "develop",
           conversation: malformed,
+        }),
+      );
+      expect(parsed?.conversation).toBeNull();
+    }
+  });
+
+  it("drops a conversation whose result violates section bounds", () => {
+    for (const latest of [
+      { ...development, peopleWhoCare: [] },
+      { ...development, playerDirections: [] },
+      { ...development, creatorQuestions: ["only one"] },
+      { ...development, generatorSuggestions: [] },
+      {
+        ...development,
+        playerDirections: [
+          { title: "Same", description: "x" },
+          { title: " same ", description: "y" },
+        ],
+      },
+    ]) {
+      const parsed = parseStoredSession(
+        JSON.stringify({
+          version: 1,
+          ideaDraft: "x",
+          mode: "develop",
+          conversation: { ...conversation, latest },
+        }),
+      );
+      expect(parsed?.conversation).toBeNull();
+    }
+  });
+
+  it("drops a conversation with too many turns or overlong turn text", () => {
+    const tooManyTurns = Array.from({ length: 9 }, (_, index) => ({
+      kind: "idea",
+      mode: "develop",
+      text: `Turn ${index}`,
+      status: "done",
+    }));
+    for (const turns of [
+      tooManyTurns,
+      [
+        {
+          kind: "idea",
+          mode: "develop",
+          text: "x".repeat(4001),
+          status: "done",
+        },
+      ],
+      [
+        {
+          kind: "answer-questions",
+          mode: "develop",
+          text: "",
+          status: "done",
+        },
+      ],
+    ]) {
+      const parsed = parseStoredSession(
+        JSON.stringify({
+          version: 1,
+          ideaDraft: "x",
+          mode: "develop",
+          conversation: { ...conversation, turns },
         }),
       );
       expect(parsed?.conversation).toBeNull();

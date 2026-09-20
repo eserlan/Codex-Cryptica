@@ -1,7 +1,14 @@
 import {
   isModeId,
+  CREATOR_QUESTIONS_MAX,
+  CREATOR_QUESTIONS_MIN,
+  GENERATOR_SUGGESTIONS_MAX,
+  GENERATOR_SUGGESTIONS_MIN,
   MAX_CONVERSATION_TURNS,
   MAX_IDEA_LENGTH,
+  PEOPLE_WHO_CARE_MAX,
+  PEOPLE_WHO_CARE_MIN,
+  PLAYER_DIRECTIONS_MIN,
   TURN_KINDS,
   type Conversation,
   type Development,
@@ -58,7 +65,13 @@ function readPerson(value: unknown): PersonWhoCares | null {
 }
 
 function readPeople(value: unknown): PersonWhoCares[] | null {
-  if (!Array.isArray(value)) return null;
+  if (
+    !Array.isArray(value) ||
+    value.length < PEOPLE_WHO_CARE_MIN ||
+    value.length > PEOPLE_WHO_CARE_MAX
+  ) {
+    return null;
+  }
   const people = value.map(readPerson);
   return people.every((person): person is PersonWhoCares => person !== null)
     ? people
@@ -74,17 +87,30 @@ function readDirection(value: unknown): PlayerDirection | null {
 }
 
 function readDirections(value: unknown): PlayerDirection[] | null {
-  if (!Array.isArray(value)) return null;
+  if (!Array.isArray(value) || value.length < PLAYER_DIRECTIONS_MIN) {
+    return null;
+  }
   const directions = value.map(readDirection);
-  return directions.every(
-    (direction): direction is PlayerDirection => direction !== null,
-  )
-    ? directions
-    : null;
+  if (
+    !directions.every(
+      (direction): direction is PlayerDirection => direction !== null,
+    )
+  ) {
+    return null;
+  }
+  const titles = new Set(
+    directions.map((direction) => direction.title.trim().toLowerCase()),
+  );
+  return titles.size === directions.length ? directions : null;
 }
 
 function readQuestions(value: unknown): string[] | null {
-  return Array.isArray(value) && value.every(nonEmptyText) ? value : null;
+  return Array.isArray(value) &&
+    value.length >= CREATOR_QUESTIONS_MIN &&
+    value.length <= CREATOR_QUESTIONS_MAX &&
+    value.every(nonEmptyText)
+    ? value
+    : null;
 }
 
 function readSuggestion(
@@ -100,7 +126,13 @@ function readSuggestion(
 function readSuggestions(
   value: unknown,
 ): Development["generatorSuggestions"] | null {
-  if (!Array.isArray(value)) return null;
+  if (
+    !Array.isArray(value) ||
+    value.length < GENERATOR_SUGGESTIONS_MIN ||
+    value.length > GENERATOR_SUGGESTIONS_MAX
+  ) {
+    return null;
+  }
   const suggestions = value.map(readSuggestion);
   return suggestions.every(
     (suggestion): suggestion is Development["generatorSuggestions"][number] =>
@@ -179,7 +211,8 @@ function readTurn(value: unknown): Turn | null {
     !TURN_STATUSES.includes(status as TurnStatus) ||
     !isModeId(value.mode) ||
     typeof value.text !== "string" ||
-    value.text.length > MAX_IDEA_LENGTH
+    value.text.length > MAX_IDEA_LENGTH ||
+    (kind !== "switch-mode" && !nonEmptyText(value.text))
   ) {
     return null;
   }
