@@ -143,6 +143,7 @@ export const howDoITurnAnRpgIdeaIntoAnAdventure: AnswerConfigInput = {
     "how-do-you-run-factions-in-a-sandbox-campaign",
     "how-do-you-generate-useful-rpg-rumours",
     "how-do-you-prepare-a-sandbox-rpg-campaign",
+    "is-my-rpg-campaign-idea-good",
   ],
   discovery: {
     id: "answer-turn-rpg-idea-into-adventure",
@@ -164,6 +165,13 @@ export const howDoITurnAnRpgIdeaIntoAnAdventure: AnswerConfigInput = {
       "answer-quest-hooks-without-railroading",
       "answer-write-one-shot-adventure",
       "answer-run-factions-sandbox",
+    ],
+    acknowledgedOverlap: [
+      {
+        with: "answer-is-my-rpg-campaign-idea-good",
+        reason:
+          "This page is the step-by-step procedure for building the playable situation; the other page diagnoses whether an idea is workable and which piece is missing.",
+      },
     ],
   },
   seo: {
