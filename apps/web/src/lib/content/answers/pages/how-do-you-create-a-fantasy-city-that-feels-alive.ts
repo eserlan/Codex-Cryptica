@@ -147,6 +147,7 @@ export const howDoYouCreateAFantasyCityThatFeelsAlive: AnswerConfigInput = {
     "how-do-you-run-an-rpg-campaign-in-one-city",
     "how-to-create-rumours-for-a-fantasy-town",
     "how-many-npcs-does-an-rpg-town-need",
+    "how-do-i-expand-a-simple-rpg-campaign-idea",
   ],
   labels: ["fantasy", "rumour"],
   discovery: {
