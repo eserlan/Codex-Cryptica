@@ -114,6 +114,12 @@ user-authored content.
 | `generator_share_opened`           | A shared generator snapshot loads successfully                                         | `generator_type`, `source`, `share_id`                                                                                                     |
 | `generator_share_remix_clicked`    | A visitor follows the shared-result Remix CTA                                          | `generator_type`, `source`, `share_id`                                                                                                     |
 | `generator_share_generate_clicked` | A visitor follows the originating generator CTA                                        | `generator_type`, `source`, `share_id`                                                                                                     |
+| `idea_developer_arrived`           | The Idea Developer opens from a "Develop your idea" link that carries a source         | `source_kind` (`answer` \| `tools` \| `other`), `source_id` (plain slug), `suggested_mode` (`assess` \| `develop`, when present)           |
+| `idea_developer_submitted`         | The first turn of an Idea Developer conversation is sent                               | `mode`                                                                                                                                     |
+| `idea_developer_turn_submitted`    | A later turn (answers, a requested change, or a mode switch) is sent                   | `turn_kind`, `turn_index`, `mode`                                                                                                          |
+| `idea_developer_result_shown`      | A validated development is shown                                                       | `mode`, `turn_index`, `suggestion_count`                                                                                                   |
+| `idea_developer_generator_opened`  | A suggested generator link is followed                                                 | `generator_key`, `position`                                                                                                                |
+| `idea_developer_signup_started`    | "Save to your Codex" is chosen on the result                                           | `placement` (`result`)                                                                                                                     |
 
 Every event also carries `first_touch` and `latest_touch` objects when
 attribution has been captured for the current browser. Their shape is
@@ -239,6 +245,30 @@ never fires `answer_share_completed`.
 metadata (most do) — omitted otherwise, same optional-property convention
 as `first_touch`/`latest_touch`. No article content (title, question,
 description) is ever sent; only the stable slug and intent id.
+
+### Idea Developer funnel (#3228)
+
+The public Idea Developer at `/tools/idea-developer` reports six funnel steps
+so the answer, tool and generator or Codex journey can be measured. The events
+are defined in `idea-developer-tracking.ts` and sent through `trackEvent()`, so
+they are fail-silent and carry the same attribution as every other event.
+
+**Privacy boundary.** Only a page identifier, enumerated values and counts are
+sent. Each payload is built from named fields, so idea text, follow-up text,
+the development, and the AI provider's conversation reference cannot reach an
+event even if a caller passes them. A test feeds a marker string through every
+event and asserts it never appears in a payload.
+
+**Public pages only.** These events are called only from the marketing tool
+page and its own store and components. A boundary test asserts nothing under
+the authenticated app imports them (see "Scope boundary" above).
+
+**Expected dashboard mappings.** Read the funnel as
+`idea_developer_arrived` → `idea_developer_submitted` →
+`idea_developer_result_shown` → (`idea_developer_turn_submitted`,
+`idea_developer_generator_opened`, `idea_developer_signup_started`). Segment
+`idea_developer_arrived` by `source_id` to compare the three answers that link
+to the tool.
 
 ### "Was this useful?" feedback (#3038)
 

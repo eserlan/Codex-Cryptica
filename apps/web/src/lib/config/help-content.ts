@@ -12,6 +12,7 @@ export interface GuideStep {
 }
 
 import { loadHelpArticles, type HelpArticle } from "$lib/content/loader";
+import { IDEA_DEVELOPER_COPY } from "$lib/content/idea-developer-notice";
 
 export type { HelpArticle };
 
@@ -648,6 +649,12 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
     content:
       "Generate NPCs, factions, settlements, dungeons, and magic items directly inside your vault. Search by generator name, category, or description to find the right tool quickly. Star generators you use often to keep them at the top; favourites are saved in this browser only. Use Refine on a generated result or a Session Hub entry to ask for a focused change, review the new version, refine it again, or use it. Confirming replaces the source draft with the accepted revision while keeping its lineage.",
     icon: "icon-[lucide--wand-2]",
+  },
+  "idea-developer": {
+    id: "idea-developer",
+    title: IDEA_DEVELOPER_COPY.help.title,
+    content: IDEA_DEVELOPER_COPY.help.body,
+    icon: "icon-[lucide--lightbulb]",
   },
   "secret-society-generator": {
     id: "secret-society-generator",

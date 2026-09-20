@@ -3,6 +3,8 @@ import { FEATURE_HINTS, HINT_KEYS } from "./help-content";
 import { loadBlogArticles, loadHelpArticles } from "$lib/content/loader";
 
 // T061: in-app generators feature hint is registered (US5)
+import { IDEA_DEVELOPER_COPY } from "$lib/content/idea-developer-notice";
+
 describe("help-content feature hints", () => {
   it("includes the Lineage controls hint", () => {
     expect(FEATURE_HINTS["lineage-controls"]).toMatchObject({
@@ -84,5 +86,14 @@ describe("help-content feature hints", () => {
         ).toBe(true);
       }
     }
+  });
+
+  it("FEATURE_HINTS carries the Idea Developer help from the shared copy", () => {
+    expect(FEATURE_HINTS["idea-developer"]).toMatchObject({
+      id: "idea-developer",
+      title: IDEA_DEVELOPER_COPY.help.title,
+      content: IDEA_DEVELOPER_COPY.help.body,
+    });
+    expect(FEATURE_HINTS["idea-developer"].icon).toMatch(/^icon-\[lucide--/);
   });
 });

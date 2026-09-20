@@ -74,11 +74,14 @@ This file is the Codex-facing instruction layer for this repository.
 <!-- SPECKIT START -->
 
 For additional context about technologies to be used, project structure,
-shell commands, and other important information, read the [current plan](./specs/2815-smart-copy/plan.md).
+shell commands, and other important information, read the [current plan](./specs/163-idea-developer/plan.md).
 
 <!-- SPECKIT END -->
 
 ## Active Technologies
+
+- TypeScript 6.0.3, Svelte 5 Runes, SvelteKit 2, Bun 1.3.14 + Existing `@codex/ai-engine`, `generator-engine`, `zod`, Session Hub store, Zaraz analytics; no new dependency (163-idea-developer)
+- Browser `sessionStorage` (Session Hub drafts, tool restore) and `localStorage` (usage-limit timestamps); nothing server-side (163-idea-developer)
 
 - TypeScript 6.0.3, Svelte 5.55.9 Runes, SvelteKit 2.60.1, Bun 1.3.14 + Existing browser Clipboard API, `marked` 18.0.4, `dompurify` 3.4.2, existing generator document-layout helpers; no new dependency (2815-smart-copy)
 - N/A — clipboard payloads are transient and browser-local (2815-smart-copy)
