@@ -1,10 +1,6 @@
 import { BUILT_IN_STAT_SHEET_TEMPLATES } from "./stat-sheet-builtins";
 import { getDB } from "../utils/idb";
-import {
-  DEFAULT_ITEM_TABLE_COLUMNS,
-  type StatSheetTemplate,
-  type StatSheetField,
-} from "schema";
+import { type StatSheetTemplate, type StatSheetField } from "schema";
 import { vaultRegistry } from "./vault-registry.svelte";
 import { type IdGenerator, systemIdGenerator } from "$lib/utils/runtime-deps";
 import {
