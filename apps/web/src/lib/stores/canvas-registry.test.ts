@@ -19,13 +19,6 @@ vi.mock("./vault/io", () => ({
   deleteCanvasFromDisk: vi.fn().mockResolvedValue(undefined),
 }));
 
-vi.mock("./vault.svelte", () => ({
-  vault: {
-    activeVaultId: null,
-    canvases: {},
-  },
-}));
-
 vi.mock("../utils/opfs", () => ({
   getVaultDir: vi
     .fn()

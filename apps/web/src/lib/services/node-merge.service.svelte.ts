@@ -6,12 +6,11 @@ import {
   mergeFrontmatter,
   concatenateBody,
 } from "../../../../../packages/editor-core/src/operations/merge-utils";
-// Node merging reads vault state and is also invoked by Oracle; keep this intentional cycle.
-// fallow-ignore-next-line circular-dependency
-import { vault } from "../stores/vault.svelte";
+import { vault as defaultVault } from "../stores/vault.svelte";
 import { textGenerationService } from "@codex/ai-engine";
 import { TIER_MODES } from "schema";
 import type { LocalEntity } from "../stores/vault/types";
+import { getOracleApiKey, getOracleTier } from "../stores/oracle/hooks";
 
 export type { IMergedContentProposal };
 
@@ -21,14 +20,40 @@ export interface IMergeRequest {
   strategy: "ai" | "concat";
 }
 
+export interface VaultLike {
+  entities: Record<string, any>;
+  isGuest?: boolean;
+  status?: string;
+  selectedEntityId?: string | null;
+  updateEntity(id: string, updates: Partial<LocalEntity>): Promise<unknown>;
+  deleteEntity(id: string): Promise<unknown>;
+  batchUpdate(updates: Record<string, Partial<LocalEntity>>): Promise<unknown>;
+}
+
+export interface NodeMergeServiceDeps {
+  getApiKey?: () => string | null;
+  getTier?: () => "lite" | "advanced";
+  vault?: VaultLike;
+}
+
 export class NodeMergeService {
+  private deps: Required<NodeMergeServiceDeps>;
+
+  constructor(deps?: NodeMergeServiceDeps) {
+    this.deps = {
+      getApiKey: deps?.getApiKey ?? (() => getOracleApiKey()),
+      getTier: deps?.getTier ?? (() => getOracleTier()),
+      vault: deps?.vault ?? defaultVault,
+    };
+  }
+
   /**
    * Fetches the full content of the specified nodes.
    */
   async fetchNodeContent(nodeIds: string[]): Promise<INodeContent[]> {
     const contents: INodeContent[] = [];
     for (const id of nodeIds) {
-      const entity = vault.entities[id];
+      const entity = this.deps.vault.entities[id];
       if (entity) {
         const snap = $state.snapshot(entity);
         // Construct frontmatter from entity properties
@@ -47,11 +72,13 @@ export class NodeMergeService {
           id: snap.id,
           frontmatter,
           body: snap.content || "",
-          connections: snap.connections.map((c) => ({
-            source: id,
-            target: c.target,
-            label: c.label || "",
-          })),
+          connections: snap.connections.map(
+            (c: { target: string; label?: string }) => ({
+              source: id,
+              target: c.target,
+              label: c.label || "",
+            }),
+          ),
         });
       }
     }
@@ -76,9 +103,8 @@ export class NodeMergeService {
     let suggestedBody: string;
 
     if (strategy === "ai") {
-      const { oracle } = await import("../stores/oracle.svelte");
-      const apiKey = oracle.effectiveApiKey || "";
-      const modelName = TIER_MODES[oracle.tier];
+      const apiKey = this.deps.getApiKey() || "";
+      const modelName = TIER_MODES[this.deps.getTier()];
 
       // We pass the "raw" entity-like structure that aiService expects (title, type, content, lore)
       // fetchNodeContent returns INodeContent.
@@ -97,7 +123,7 @@ export class NodeMergeService {
         modelName,
         mapToAiEntity(targetContent),
         sources.map(mapToAiEntity),
-        { isGuest: vault.isGuest },
+        { isGuest: this.deps.vault.isGuest },
       );
 
       suggestedFrontmatter = mergeFrontmatter(targetContent, sources);
@@ -132,8 +158,11 @@ export class NodeMergeService {
    * Checks if any of the nodes are currently open/selected, which implies potential unsaved changes.
    */
   checkUnsavedChanges(nodeIds: string[]): boolean {
-    if (vault.status !== "idle") return true;
-    if (vault.selectedEntityId && nodeIds.includes(vault.selectedEntityId)) {
+    if (this.deps.vault.status !== "idle") return true;
+    if (
+      this.deps.vault.selectedEntityId &&
+      nodeIds.includes(this.deps.vault.selectedEntityId)
+    ) {
       // Logic could be stricter: only if dirty. But we don't have access to dirty state here easily.
       // Warn if selected.
       return true;
@@ -155,7 +184,7 @@ export class NodeMergeService {
       outgoingConnections,
     } = finalContent;
 
-    const targetEntity = vault.entities[targetId];
+    const targetEntity = this.deps.vault.entities[targetId];
     if (!targetEntity) throw new Error(`Target entity ${targetId} not found`);
 
     const snapTarget = $state.snapshot(targetEntity);
@@ -183,7 +212,10 @@ export class NodeMergeService {
     // New connections from sources
     // Filter out connections that already exist on target
     const newConnections = outgoingConnections.filter(
-      (newC) => !existingConnections.some((exC) => exC.target === newC.target),
+      (newC) =>
+        !existingConnections.some(
+          (exC: { target: string }) => exC.target === newC.target,
+        ),
     );
 
     // Also filter out connections pointing to deleted source nodes!
@@ -204,7 +236,7 @@ export class NodeMergeService {
     updates.connections = finalConnections;
 
     // Apply Update
-    await vault.updateEntity(targetId, updates);
+    await this.deps.vault.updateEntity(targetId, updates);
 
     // 2. Determine Source Nodes to Delete
     const toDelete = sourceIds.filter((id) => id !== targetId);
@@ -217,7 +249,7 @@ export class NodeMergeService {
 
     // 4. Delete Source Nodes
     for (const id of toDelete) {
-      await vault.deleteEntity(id);
+      await this.deps.vault.deleteEntity(id);
     }
   }
 
@@ -225,20 +257,20 @@ export class NodeMergeService {
    * Finds and replaces links in referencing files.
    */
   async updateBacklinks(sourceIds: string[], targetId: string): Promise<void> {
-    const targetEntity = vault.entities[targetId];
+    const targetEntity = this.deps.vault.entities[targetId];
     if (!targetEntity) return;
     const snapTarget = $state.snapshot(targetEntity);
 
     // Pre-calculate source titles to ensure they are available
     const sourceTitlesMap: Record<string, string> = {};
     for (const sId of sourceIds) {
-      if (vault.entities[sId]) {
-        sourceTitlesMap[sId] = vault.entities[sId].title;
+      if (this.deps.vault.entities[sId]) {
+        sourceTitlesMap[sId] = this.deps.vault.entities[sId].title;
       }
     }
 
     const updates: Record<string, Partial<LocalEntity>> = {};
-    const snapEntities = $state.snapshot(vault.entities);
+    const snapEntities = $state.snapshot(this.deps.vault.entities);
 
     for (const id in snapEntities) {
       const entity = snapEntities[id];
@@ -305,7 +337,7 @@ export class NodeMergeService {
     }
 
     if (Object.keys(updates).length > 0) {
-      await vault.batchUpdate(updates);
+      await this.deps.vault.batchUpdate(updates);
     }
   }
 }
