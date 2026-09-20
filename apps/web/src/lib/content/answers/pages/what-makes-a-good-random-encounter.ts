@@ -109,7 +109,7 @@ export const whatMakesAGoodRandomEncounter: AnswerConfigInput = {
       system: "Old-School Essentials",
       rationale:
         "Dungeon and wilderness checks produce encounters resolved through full reaction, surprise, distance and morale procedures, so a random result becomes a negotiated situation instead of an automatic fight.",
-      href: "https://oldschoolessentials.necroticgnome.com/srd/index.php/Encounters",
+      href: "https://osesrd.opengamingnetwork.com/adventuring/",
     },
     {
       system: "Forbidden Lands",

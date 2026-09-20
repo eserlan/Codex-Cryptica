@@ -778,6 +778,23 @@ describe("published answers", () => {
       expect(ref.rationale.match(/[.!?](?:\s|$)/g)).toHaveLength(1);
     }
   });
+
+  it("uses the current OSE SRD for time and encounter references", () => {
+    expect(
+      answers[
+        "how-do-you-keep-track-of-time-in-a-tabletop-campaign"
+      ].systemsThatSupportThis?.find(
+        (reference) => reference.system === "Old-School Essentials",
+      )?.href,
+    ).toBe("https://osesrd.opengamingnetwork.com/adventuring/");
+    expect(
+      answers[
+        "what-makes-a-good-random-encounter"
+      ].systemsThatSupportThis?.find(
+        (reference) => reference.system === "Old-School Essentials",
+      )?.href,
+    ).toBe("https://osesrd.opengamingnetwork.com/adventuring/");
+  });
 });
 
 describe("answer structured data", () => {

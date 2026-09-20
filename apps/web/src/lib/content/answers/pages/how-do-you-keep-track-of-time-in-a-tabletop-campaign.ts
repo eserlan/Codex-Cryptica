@@ -104,7 +104,7 @@ export const howDoYouKeepTrackOfTimeInATabletopCampaign: AnswerConfigInput = {
       system: "Old-School Essentials",
       rationale:
         "Dungeon exploration runs on ten-minute turns with a wandering-monster check tied to elapsed turns, making time a tracked resource that spends itself rather than background colour.",
-      href: "https://oldschoolessentials.necroticgnome.com/srd/index.php/Time,_Weight,_and_Movement",
+      href: "https://osesrd.opengamingnetwork.com/adventuring/",
     },
     {
       system: "Shadowdark RPG",
