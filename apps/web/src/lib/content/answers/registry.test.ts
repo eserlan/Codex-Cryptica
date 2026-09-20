@@ -458,15 +458,18 @@ describe("published answers", () => {
     } as const;
 
     for (const [slug, mode] of Object.entries(expected)) {
-      const connection = answers[slug].codexConnection;
+      const answer = answers[slug];
+      expect(answer, slug).toBeDefined();
+      if (!answer) throw new Error(`Missing answer: ${slug}`);
+      const connection = answer.codexConnection;
       expect(connection, slug).toBeDefined();
       expect(connection?.href, slug).toBe(
         `/tools/idea-developer?from=answer&source=${slug}&mode=${mode}`,
       );
       expect(connection?.linkText, slug).toMatch(/Idea Developer/);
-      expect(answers[slug].discovery.relatedIntents, slug).toContain(
-        "tool-idea-developer",
-      );
+      const discovery = answer.discovery;
+      if (!discovery) throw new Error(`Missing discovery entry: ${slug}`);
+      expect(discovery.relatedIntents, slug).toContain("tool-idea-developer");
     }
   });
 
