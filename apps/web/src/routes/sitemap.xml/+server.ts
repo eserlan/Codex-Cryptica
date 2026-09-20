@@ -10,196 +10,63 @@ import { GENERATOR_SLUGS } from "../../params/generator_slug";
 import { getAllLandingPageSlugs } from "$lib/content/for/registry";
 import { getAllAnswers, answerPath } from "$lib/content/answers/registry";
 import { getAllExamples, examplePath } from "$lib/content/examples/registry";
+import {
+  STATIC_SITEMAP_ROUTES,
+  configPageRoutes,
+  contentRoute,
+  renderSitemapDocument,
+  renderSitemapUrl,
+} from "$lib/seo/sitemap-routes";
 
+// fallow-ignore-next-line unused-export
 export const prerender = true;
 
 const origin = "https://codexcryptica.com";
 
-const escapeXml = (value: string) =>
-  value
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&apos;");
-
 export async function GET() {
   const blogArticles = loadLocalBlogArticles();
 
-  const staticRoutes = [
-    { path: "/", changefreq: "weekly", priority: "1.0" },
-    { path: "/blog", changefreq: "weekly", priority: "0.9" },
-    { path: "/for", changefreq: "weekly", priority: "0.9" },
-    { path: "/answers", changefreq: "weekly", priority: "0.8" },
-    { path: "/examples", changefreq: "weekly", priority: "0.8" },
-    { path: "/explore", changefreq: "monthly", priority: "0.5" },
-    { path: "/features", changefreq: "monthly", priority: "0.8" },
-    { path: "/tools", changefreq: "weekly", priority: "0.9" },
-    { path: "/migrations", changefreq: "weekly", priority: "0.9" },
-    { path: "/generators", changefreq: "weekly", priority: "0.9" },
-    {
-      path: "/free-rpg-campaign-manager",
-      changefreq: "monthly",
-      priority: "0.9",
-    },
-    { path: "/worldbuilding-tool", changefreq: "monthly", priority: "0.8" },
-    {
-      path: "/ai-rpg-campaign-manager",
-      changefreq: "monthly",
-      priority: "0.8",
-    },
-    {
-      path: "/responsible-ai-worldbuilding",
-      changefreq: "monthly",
-      priority: "0.8",
-    },
-    {
-      path: "/resources/castle-floorplans",
-      changefreq: "monthly",
-      priority: "0.6",
-    },
-    {
-      path: "/topics/heists",
-      changefreq: "weekly",
-      priority: "0.8",
-    },
-    {
-      path: "/topics/puzzles",
-      changefreq: "weekly",
-      priority: "0.8",
-    },
-
-    {
-      path: "/tools/vampire-clan-generator",
-      changefreq: "monthly",
-      priority: "0.8",
-    },
-    {
-      path: "/tools/quest-hook-generator",
-      changefreq: "monthly",
-      priority: "0.8",
-    },
-    {
-      path: "/tools/fantasy-name-generator",
-      changefreq: "monthly",
-      priority: "0.8",
-    },
-    { path: "/llms.txt", changefreq: "weekly", priority: "0.7" },
-    { path: "/llms-full.txt", changefreq: "weekly", priority: "0.7" },
-    { path: "/terms", changefreq: "yearly", priority: "0.5" },
-    { path: "/privacy", changefreq: "yearly", priority: "0.5" },
-  ];
-
-  // Solutions pages
-  const solutionRoutes = Object.keys(solutions).map((slug) => ({
-    path: `/solutions/${slug}`,
-    changefreq: "monthly",
-    priority: "0.8",
-  }));
-
-  // Comparison pages
-  const comparisonRoutes = Object.keys(comparisons).map((slug) => ({
-    path: `/vs/${slug}`,
-    changefreq: "monthly",
-    priority: "0.8",
-  }));
-
-  // Feature pages
-  const featureRoutes = Object.keys(featuresConfig).map((slug) => ({
-    path: `/features/${slug}`,
-    changefreq: "monthly",
-    priority: "0.8",
-  }));
-
-  // Generator pages — derived from GENERATOR_SLUGS (the route matcher's own
-  // slug list) rather than a hand-maintained copy, so a new generator can't
-  // silently go missing from the sitemap the way /generators/puzzle did (#2850).
-  const generatorRoutes = GENERATOR_SLUGS.map((slug) => ({
-    path: `/generators/${slug}`,
-    changefreq: "monthly",
-    priority: "0.8",
-  }));
-
-  // Theme hub pages — derived from VALID_HUB_THEMES to stay in sync with the route matcher
-  const themeHubRoutes = [...VALID_HUB_THEMES].map((theme) => ({
-    path: `/generators/${theme}`,
-    changefreq: "monthly",
-    priority: "0.8",
-  }));
-
-  // Import pages
-  const importRoutes = Object.keys(importsConfig).map((slug) => ({
-    path: `/import/${slug}`,
-    changefreq: "monthly",
-    priority: "0.8",
-  }));
-
-  // Landing pages (/for/[slug])
-  const landingPageRoutes = getAllLandingPageSlugs().map((slug) => ({
-    path: `/for/${slug}`,
-    changefreq: "monthly",
-    priority: "0.8",
-  }));
-
-  // Answer pages (/answers/[slug]). Keyed off answerPath rather than the slug
-  // so a page that canonicalises to another URL is never listed under one its
-  // own <link rel="canonical"> disowns.
-  const answerRoutes = getAllAnswers().map((answer) => ({
-    path: answerPath(answer),
-    changefreq: "monthly",
-    priority: "0.8",
-  }));
-
-  // Curated example pages (/examples/[slug]), keyed off the canonical path.
-  const exampleRoutes = getAllExamples().map((example) => ({
-    path: examplePath(example),
-    changefreq: "monthly",
-    priority: "0.8",
-  }));
-
   const allStatic = [
-    ...staticRoutes,
-    ...solutionRoutes,
-    ...comparisonRoutes,
-    ...featureRoutes,
-    ...generatorRoutes,
-    ...themeHubRoutes,
-    ...importRoutes,
-    ...landingPageRoutes,
-    ...answerRoutes,
-    ...exampleRoutes,
+    ...STATIC_SITEMAP_ROUTES,
+    ...configPageRoutes({ solutions, comparisons }),
+    ...Object.keys(featuresConfig).map((slug) =>
+      contentRoute(`/features/${slug}`),
+    ),
+    // Generator pages — derived from GENERATOR_SLUGS (the route matcher's own
+    // slug list) rather than a hand-maintained copy, so a new generator can't
+    // silently go missing from the sitemap the way /generators/puzzle did (#2850).
+    ...GENERATOR_SLUGS.map((slug) => contentRoute(`/generators/${slug}`)),
+    // Theme hub pages — derived from VALID_HUB_THEMES to stay in sync with the route matcher
+    ...[...VALID_HUB_THEMES].map((theme) =>
+      contentRoute(`/generators/${theme}`),
+    ),
+    ...Object.keys(importsConfig).map((slug) =>
+      contentRoute(`/import/${slug}`),
+    ),
+    // Landing pages (/for/[slug])
+    ...getAllLandingPageSlugs().map((slug) => contentRoute(`/for/${slug}`)),
+    // Answer pages (/answers/[slug]). Keyed off answerPath rather than the slug
+    // so a page that canonicalises to another URL is never listed under one its
+    // own <link rel="canonical"> disowns.
+    ...getAllAnswers().map((answer) => contentRoute(answerPath(answer))),
+    // Curated example pages (/examples/[slug]), keyed off the canonical path.
+    ...getAllExamples().map((example) => contentRoute(examplePath(example))),
   ];
 
-  const staticUrls = allStatic
-    .map(
-      (route) => `  <url>
-    <loc>${escapeXml(`${origin}${route.path}`)}</loc>
-    <changefreq>${route.changefreq}</changefreq>
-    <priority>${route.priority}</priority>
-  </url>`,
-    )
-    .join("\n");
+  const staticRows = allStatic.map((route) =>
+    renderSitemapUrl({ ...route, loc: `${origin}${route.path}` }),
+  );
 
-  const blogUrls = blogArticles
-    .map(
-      (article) => `  <url>
-    <loc>${escapeXml(`${origin}/blog/${article.slug}`)}</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-    <lastmod>${escapeXml(new Date(article.publishedAt).toISOString())}</lastmod>
-  </url>`,
-    )
-    .join("\n");
+  const blogRows = blogArticles.map((article) =>
+    renderSitemapUrl({
+      loc: `${origin}/blog/${article.slug}`,
+      changefreq: "monthly",
+      priority: "0.8",
+      lastmod: new Date(article.publishedAt).toISOString(),
+    }),
+  );
 
-  const xml = `<?xml version="1.0" encoding="UTF-8"?>
-<?xml-stylesheet type="text/xsl" href="/sitemap.xsl"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${staticUrls}
-${blogUrls}
-</urlset>
-`;
-
-  return new Response(xml, {
+  return new Response(renderSitemapDocument([...staticRows, ...blogRows]), {
     headers: {
       "Content-Type": "application/xml",
       "Cache-Control": "max-age=0, s-maxage=3600",
