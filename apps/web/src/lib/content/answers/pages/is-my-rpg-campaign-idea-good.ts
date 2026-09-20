@@ -7,7 +7,7 @@ export const isMyRpgCampaignIdeaGood: AnswerConfigInput = {
   question: "Is my RPG campaign idea good?",
   kind: "framework",
   shortAnswer:
-    "An idea does not need to be original to be good, because tables run familiar premises well all the time. It needs to make the players curious, put something at risk, give several people competing goals, and leave the party with things to do. Test yours with five questions: what does it make players want to know, what changes if nobody acts, who wants what, what can the players do, and what discovery would shift the situation.",
+    "An idea does not need to be original to be good, because tables run familiar premises well all the time. It needs to make the players curious, put something at risk, give several people competing goals, and leave the party with things to do. Test it with five questions: curiosity, pressure, competing goals, player actions and discovery.",
   sections: [
     {
       kind: "prose",
@@ -22,7 +22,7 @@ export const isMyRpgCampaignIdeaGood: AnswerConfigInput = {
       kind: "list",
       heading: "Five questions to test an idea",
       intro:
-        "Answer each in a sentence or two. A blank or vague answer shows you where the idea needs work.",
+        "The five are curiosity, pressure, competing goals, player actions and discovery. Answer each in a sentence or two; a blank or vague answer shows where the idea needs work.",
       items: [
         {
           term: "What does it make players curious about?",
@@ -98,7 +98,7 @@ export const isMyRpgCampaignIdeaGood: AnswerConfigInput = {
   codexConnection: {
     heading: "Developing the idea without replacing it",
     paragraphs: [
-      "Once an idea passes the five questions, its pieces (the town, the guild, the temple, the foreman, the discovery) need to stay connected as play changes them. In Codex Cryptica you can save each as an entity and link them, so you can see which factions a decision touches.",
+      "Once an idea passes the five questions, its pieces (the town, the guild, the temple, the foreman, the discovery) need to stay connected as play changes them, which is where paper notes start to strain over several sessions. In Codex Cryptica you can save each as an entity and link them, so you can see which factions a decision touches.",
       "The generators can fill whichever question is still empty: a faction for competing goals, a rumour set for conflicting explanations, a settlement for a place with pressures attached, or an adventure concept when you want a full situation. They work from what you already have, and you can discard anything that does not fit your idea.",
     ],
     linkText: "Develop your idea with the adventure generator",
