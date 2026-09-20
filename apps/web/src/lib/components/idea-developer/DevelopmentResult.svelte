@@ -5,12 +5,17 @@
     getMode,
     type Development,
   } from "generator-engine";
+  import {
+    clipboardService as defaultClipboardService,
+    type ClipboardService,
+  } from "$lib/services/ClipboardService";
   import GeneratorLinks from "./GeneratorLinks.svelte";
 
   let {
     development,
     ideaText,
     onGeneratorOpen,
+    clipboardService = defaultClipboardService,
   }: {
     development: Development;
     ideaText: string;
@@ -18,6 +23,7 @@
       generatorKey: string;
       position: number;
     }) => void;
+    clipboardService?: Pick<ClipboardService, "copyContent">;
   } = $props();
 
   const modeLabel = $derived(getMode(development.mode)?.label);
@@ -28,11 +34,15 @@
   async function copy() {
     copyFailed = false;
     try {
-      await navigator.clipboard.writeText(
-        developmentToText(development, ideaText),
-      );
-      copied = true;
-      setTimeout(() => (copied = false), 2000);
+      const success = await clipboardService.copyContent({
+        markdown: developmentToText(development, ideaText),
+      });
+      if (success) {
+        copied = true;
+        setTimeout(() => (copied = false), 2000);
+      } else {
+        copyFailed = true;
+      }
     } catch {
       copyFailed = true;
     }

@@ -15,6 +15,7 @@ export const IDEA_DEVELOPER_COPY = {
     text: "Your idea is sent to an AI service to write the response. The service keeps this conversation while you continue, so earlier turns are not sent again. Codex Cryptica does not keep it. Start a new conversation to stop continuing this one.",
     privacyHref: "/privacy",
     privacyLabel: "What happens to my idea?",
+    helpHref: "/help/idea-developer",
     helpLabel: "How this works",
   },
   help: {

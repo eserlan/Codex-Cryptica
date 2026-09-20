@@ -69,10 +69,11 @@ function setup(
     interactionId: "i-1",
     ideaText: "A town made of dragon parts.",
   },
+  extraProps: Record<string, unknown> = {},
 ) {
   const service = { start: vi.fn().mockReturnValue(Promise.resolve(result)) };
   const store = new IdeaDeveloperStore(service as never, memoryStorage());
-  render(IdeaDeveloperTool, { props: { store } });
+  render(IdeaDeveloperTool, { props: { store, ...extraProps } });
   return { store, service };
 }
 
@@ -115,6 +116,11 @@ describe("IdeaDeveloperTool notice (FR-038)", () => {
     expect(link.getAttribute("href")).toBe(
       IDEA_DEVELOPER_COPY.notice.privacyHref,
     );
+    expect(
+      screen
+        .getByRole("link", { name: IDEA_DEVELOPER_COPY.notice.helpLabel })
+        .getAttribute("href"),
+    ).toBe(IDEA_DEVELOPER_COPY.notice.helpHref);
   });
 });
 
@@ -175,9 +181,8 @@ describe("IdeaDeveloperTool running a turn", () => {
   });
 
   it("copies the full result", async () => {
-    const writeText = vi.fn().mockResolvedValue(undefined);
-    vi.stubGlobal("navigator", { ...navigator, clipboard: { writeText } });
-    setup();
+    const copyContent = vi.fn().mockResolvedValue(true);
+    setup(undefined, { clipboardService: { copyContent } });
     await fireEvent.input(textbox(), {
       target: { value: "A town made of dragon parts." },
     });
@@ -185,10 +190,12 @@ describe("IdeaDeveloperTool running a turn", () => {
     await fireEvent.click(
       await screen.findByRole("button", { name: /copy result/i }),
     );
-    expect(writeText).toHaveBeenCalledTimes(1);
-    const copied = writeText.mock.calls[0][0] as string;
-    expect(copied).toContain("A town made of dragon parts.");
-    expect(copied).toContain("Where do the parts come from?");
+    expect(copyContent).toHaveBeenCalledWith({
+      markdown: expect.stringContaining("A town made of dragon parts."),
+    });
+    expect(copyContent.mock.calls[0][0].markdown).toContain(
+      "Where do the parts come from?",
+    );
   });
 
   it("offers a new conversation once there is a result", async () => {

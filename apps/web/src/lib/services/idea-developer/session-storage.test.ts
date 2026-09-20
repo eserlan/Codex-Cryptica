@@ -84,6 +84,30 @@ describe("session storage", () => {
     }
   });
 
+  it("drops a conversation whose stored result or turn shape is malformed", () => {
+    for (const malformed of [
+      { ...conversation, latest: true },
+      {
+        ...conversation,
+        turns: [{ kind: "idea", mode: "develop", text: "A town." }],
+      },
+      {
+        ...conversation,
+        latest: { ...development, peopleWhoCare: "not a list" },
+      },
+    ]) {
+      const parsed = parseStoredSession(
+        JSON.stringify({
+          version: 1,
+          ideaDraft: "x",
+          mode: "develop",
+          conversation: malformed,
+        }),
+      );
+      expect(parsed?.conversation).toBeNull();
+    }
+  });
+
   it("treats a non-string draft as empty", () => {
     const parsed = parseStoredSession(
       JSON.stringify({

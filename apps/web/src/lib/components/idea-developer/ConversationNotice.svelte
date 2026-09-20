@@ -21,7 +21,7 @@
         >{notice.privacyLabel}</a
       >
       <a
-        href="#how-it-works"
+        href={notice.helpHref}
         class="font-bold text-theme-primary underline underline-offset-2"
         >{notice.helpLabel}</a
       >

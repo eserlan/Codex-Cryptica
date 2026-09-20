@@ -10,6 +10,10 @@
   } from "$lib/services/analytics/idea-developer-tracking";
   import SaveToCodexModal from "$lib/components/seo/SaveToCodexModal.svelte";
   import {
+    clipboardService as defaultClipboardService,
+    type ClipboardService,
+  } from "$lib/services/ClipboardService";
+  import {
     saveToCodex as defaultSaveToCodex,
     type SaveToCodex,
   } from "$lib/services/idea-developer/save-to-codex";
@@ -23,10 +27,12 @@
     store = ideaDeveloperStore,
     saveToCodex = defaultSaveToCodex,
     tracker = ideaDeveloperTracker,
+    clipboardService = defaultClipboardService,
   }: {
     store?: IdeaDeveloperStore;
     saveToCodex?: Pick<SaveToCodex, "save">;
     tracker?: Pick<IdeaDeveloperTracker, "signupStarted" | "generatorOpened">;
+    clipboardService?: Pick<ClipboardService, "copyContent">;
   } = $props();
 
   const SAVE_QUERY =
@@ -63,6 +69,7 @@
       development={store.conversation.latest}
       ideaText={store.conversation.ideaText}
       onGeneratorOpen={(opened) => tracker.generatorOpened(opened)}
+      {clipboardService}
     />
     <FollowUpComposer {store} />
     <NoticeBanner notice={store.notice} />
