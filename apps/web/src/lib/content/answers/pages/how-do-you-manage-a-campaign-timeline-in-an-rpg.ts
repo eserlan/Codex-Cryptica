@@ -83,6 +83,20 @@ export const howDoYouManageACampaignTimelineInAnRpg: AnswerConfigInput = {
       ],
     },
   ],
+  systemsThatSupportThis: [
+    {
+      system: "Pendragon",
+      rationale:
+        "Play runs one adventure per game year followed by a Winter Phase of ageing, training, marriage and manor management, making generational turnover the core loop rather than an epilogue.",
+      href: "https://www.chaosium.com/pendragon/",
+    },
+    {
+      system: "Ars Magica",
+      rationale:
+        "Covenant life advances in three-month seasons, with each magus choosing one seasonal activity such as laboratory work or study, so years of research and ageing accumulate through explicit procedure.",
+      href: "https://www.atlas-games.com/arsmagica/",
+    },
+  ],
   codexConnection: {
     heading: "Timeline entries that stay linked to the world",
     paragraphs: [
