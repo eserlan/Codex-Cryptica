@@ -113,6 +113,26 @@ export const howDoIRunASuccessfulSessionZero: AnswerConfigInput = {
       ],
     },
   ],
+  systemsThatSupportThis: [
+    {
+      system: "Fate Core",
+      rationale:
+        "Character creation runs through three phases, and in the second and third each player writes their character into another character's story as a guest star, so the party reaches session one with shared history already written into their aspects.",
+      href: "https://fate-srd.com/fate-core/character-creation",
+    },
+    {
+      system: "Beyond the Wall and Other Adventures",
+      rationale:
+        "Each playbook generates its character through rolls on shared-history tables, then the group builds their home village together from those results, so the setting and the party's ties come out of the same setup procedure.",
+      href: "https://www.flatlandgames.com/btw/",
+    },
+    {
+      system: "Kids on Bikes",
+      rationale:
+        "Setup begins with the group building their town together, then ties every character to that town and to each other through relationship questions, making the shared location part of character creation instead of backdrop.",
+      href: "https://renegadegamestudios.com/pdf-kids-on-bikes-core-rulebook-second-edition/",
+    },
+  ],
   codexConnection: {
     heading: "How Codex Cryptica handles this",
     paragraphs: [
