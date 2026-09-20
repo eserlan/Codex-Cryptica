@@ -10,7 +10,9 @@ import type { BulkMutationResult } from "./vault/bulk-results";
 import {
   saveTranscriptToDisk,
   loadTranscriptsForCharacterFromDisk,
+  loadPublishRegistryFromDisk,
 } from "./vault/io";
+import { getPublishRegistry, savePublishRegistry } from "./vault/registry";
 import { getDB } from "../utils/idb";
 import { VaultLifecycleManager } from "./vault/lifecycle";
 import { EntityStore } from "./vault/entity-store.svelte";
@@ -313,6 +315,19 @@ export class VaultStore {
     return this.serviceRegistry.services;
   }
 
+  #publishRegistryLoaders = new Set<
+    (vId: string, handle: FileSystemDirectoryHandle) => Promise<void>
+  >();
+
+  registerPublishRegistryLoader(
+    loader: (vId: string, handle: FileSystemDirectoryHandle) => Promise<void>,
+  ): () => void {
+    this.#publishRegistryLoaders.add(loader);
+    return () => {
+      this.#publishRegistryLoaders.delete(loader);
+    };
+  }
+
   constructor(
     public repository = new VaultRepository(fileIOAdapter),
     private assetManager = new AssetManager(assetIOAdapter, imageProcessor),
@@ -359,9 +374,30 @@ export class VaultStore {
       loadMaps: (vId) => mapRegistry.loadFromVault(vId),
       loadCanvases: (vId) => canvasRegistry.loadFromVault(vId),
       loadPublishRegistry: async (vId, handle) => {
-        const { publishingService } =
-          await import("../services/publishing/PublishingService.svelte");
-        await publishingService.loadFromVault(vId, handle);
+        try {
+          const diskRegistry = await loadPublishRegistryFromDisk(handle);
+          if (diskRegistry) {
+            const idbRegistry = await getPublishRegistry(vId);
+            if (
+              !idbRegistry ||
+              diskRegistry.publishedAt > (idbRegistry.publishedAt ?? "")
+            ) {
+              await savePublishRegistry(diskRegistry);
+            }
+          }
+        } catch (e) {
+          console.error(
+            "[Vault] Failed to reconcile publish registry from disk:",
+            e,
+          );
+        }
+        for (const loader of this.#publishRegistryLoaders) {
+          try {
+            await loader(vId, handle);
+          } catch (e) {
+            console.error("[Vault] Publish registry loader failed:", e);
+          }
+        }
       },
       updateEntityCount: (vId, count) =>
         vaultRegistry.updateEntityCount(vId, count),

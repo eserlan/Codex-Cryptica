@@ -11,6 +11,57 @@
     "packages/*/src/index.ts",
     "scripts/**/*.{js,mjs,ts}"
   ],
+  "dynamicallyLoaded": [
+    "apps/web/src/lib/components/settings/*.svelte",
+    "apps/web/src/lib/components/dialogs/*.svelte",
+    "apps/web/src/lib/components/modals/*.svelte",
+    "apps/web/src/lib/components/debug/*.svelte",
+    "apps/web/src/lib/components/help/*.svelte",
+    "apps/web/src/lib/components/oracle/OracleWindow.svelte",
+    "apps/web/src/lib/components/entity-detail/DetailSoundBite.svelte",
+    "apps/web/src/lib/components/timeline/EraEditor.svelte"
+  ],
+  "ignoreDependencies": [
+    "@capacitor/android",
+    "@capacitor/ios",
+    "@capacitor/keyboard",
+    "@capacitor/splash-screen",
+    "@iconify-json/carbon",
+    "@iconify-json/game-icons",
+    "@iconify-json/heroicons",
+    "@iconify-json/lucide",
+    "@iconify-json/mdi",
+    "@iconify-json/ph",
+    "@emnapi/core",
+    "@emnapi/runtime",
+    "gitmoji-cli",
+    "potrace",
+    "js-yaml",
+    "ts-morph"
+  ],
+  "ignoreUnresolvedImports": [
+    "../workers/search.worker?worker",
+    "../p2p-protocol",
+    "../data-model"
+  ],
+  "ignoreExports": [
+    {
+      "file": "apps/web/src/lib/components/seo/ConstellationChart.svelte",
+      "exports": ["exportPng"]
+    },
+    {
+      "file": "apps/web/src/lib/components/seo/StarSystemDiagram.svelte",
+      "exports": ["exportPng"]
+    },
+    {
+      "file": "apps/web/src/lib/components/modals/__tests__/ZenViewStub.svelte",
+      "exports": ["requestClose"]
+    },
+    {
+      "file": "apps/web/src/lib/components/zen/ZenView.svelte",
+      "exports": ["requestClose"]
+    }
+  ],
   "audit": {
     "gate": "new-only",
     "css": true

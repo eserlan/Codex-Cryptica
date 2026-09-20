@@ -392,11 +392,6 @@ export class CanvasRegistryStore {
 
     this.canvases[id] = canvasData;
 
-    const { vault } = await import("./vault.svelte");
-    if (vault.activeVaultId) {
-      vault.canvases[id] = canvasData;
-    }
-
     await this.saveCanvas(id);
     return slug;
   }

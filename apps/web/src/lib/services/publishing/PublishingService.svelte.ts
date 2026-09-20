@@ -2,8 +2,6 @@ import { GuestExporter } from "@codex/vault-engine";
 import type { PublishRegistry } from "schema";
 import { getPublishTurnstileToken } from "./turnstile";
 import { retryWithBackoff } from "$lib/utils/retry";
-// Publishing includes world metadata while vault owns publisher lifecycle; keep this intentional cycle.
-// fallow-ignore-next-line circular-dependency
 import { worldStore } from "$lib/stores/world.svelte";
 
 export interface PublishingServiceDeps {
@@ -52,16 +50,19 @@ export class PublishingService {
     const diskRegistry = await loadPublishRegistryFromDisk(vaultHandle);
     if (!diskRegistry) return;
     const idbRegistry = await this.deps.getPublishRegistry(vaultId);
-    if (
-      !idbRegistry ||
-      diskRegistry.publishedAt > (idbRegistry.publishedAt ?? "")
-    ) {
+    const registryToUse =
+      !idbRegistry || diskRegistry.publishedAt > (idbRegistry.publishedAt ?? "")
+        ? diskRegistry
+        : idbRegistry;
+
+    if (registryToUse === diskRegistry) {
       await this.deps.savePublishRegistry(diskRegistry);
-      this.publishedVaults = {
-        ...this.publishedVaults,
-        [vaultId]: diskRegistry,
-      };
     }
+
+    this.publishedVaults = {
+      ...this.publishedVaults,
+      [vaultId]: registryToUse,
+    };
   }
 
   private isLocalPath(path: string): boolean {
@@ -576,3 +577,9 @@ export const publishingService: PublishingService =
     themeStore,
     notificationStore,
   }));
+
+if (typeof vault?.registerPublishRegistryLoader === "function") {
+  vault.registerPublishRegistryLoader((vId, handle) =>
+    publishingService.loadFromVault(vId, handle),
+  );
+}

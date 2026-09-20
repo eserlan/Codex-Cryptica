@@ -81,6 +81,26 @@ export const howDoYouCreateQuestHooksWithoutRailroading: AnswerConfigInput = {
       ],
     },
   ],
+  systemsThatSupportThis: [
+    {
+      system: "Dungeon World",
+      rationale:
+        "Fronts organise dangers with impulses and grim portents that advance whenever the players look away, so the GM prepares pressures that keep moving rather than a plot the party must follow.",
+      href: "https://www.dungeonworldsrd.com/gamemastering/fronts/",
+    },
+    {
+      system: "Apocalypse World",
+      rationale:
+        "The MC builds threats with impulses, stakes and countdown clocks, then answers them through moves triggered by what the players actually do, so preparation is a set of loaded situations instead of a scripted story.",
+      href: "https://lumpley.games/apocalypseworld/",
+    },
+    {
+      system: "Blades in the Dark",
+      rationale:
+        "Progress clocks track faction projects, dangers and opportunities as filling segments, so consequences and openings advance visibly without fixing which route the crew takes through them.",
+      href: "https://bladesinthedark.com/progress-clocks",
+    },
+  ],
   codexConnection: {
     heading: "Track living hooks and consequences in Codex Cryptica",
     paragraphs: [

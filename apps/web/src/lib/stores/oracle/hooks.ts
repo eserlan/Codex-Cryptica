@@ -30,6 +30,16 @@ export function getOracleApiKey(): string | null {
   return apiKeyProvider();
 }
 
+let tierProvider: () => "lite" | "advanced" = () => "lite";
+
+export function setOracleTierProvider(provider: () => "lite" | "advanced") {
+  tierProvider = provider;
+}
+
+export function getOracleTier(): "lite" | "advanced" {
+  return tierProvider();
+}
+
 export function setConnectionProposer(proposer: ConnectionProposer | null) {
   connectionProposer = proposer;
 }

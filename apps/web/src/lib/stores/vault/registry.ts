@@ -94,10 +94,26 @@ export async function updateLastOpened(id: string): Promise<void> {
   }
 }
 
+export type RegistryRefreshListener = () => void | Promise<void>;
+
+const refreshListeners = new Set<RegistryRefreshListener>();
+
+export function onRegistryRefresh(
+  listener: RegistryRefreshListener,
+): () => void {
+  refreshListeners.add(listener);
+  return () => {
+    refreshListeners.delete(listener);
+  };
+}
+
 const triggerRefresh = debounce(async () => {
-  const { vaultRegistry } = await import("../vault-registry.svelte");
-  if (vaultRegistry) {
-    await vaultRegistry.refreshVaults();
+  for (const listener of refreshListeners) {
+    try {
+      await listener();
+    } catch (error) {
+      console.error("[vault-registry] Refresh listener failed", error);
+    }
   }
 }, 100);
 
