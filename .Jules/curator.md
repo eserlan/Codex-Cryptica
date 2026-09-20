@@ -53,9 +53,3 @@
 **Learning:** Svelte 5 `$derived` macros handle reactive tracking (like proxy arrays, Sets, and Maps) perfectly even when they are passed into and processed by standard, non-reactive `.ts` helper functions, allowing you to extract complex data transformation logic safely out of `.svelte` files without losing reactivity.
 
 **Action:** When a `.svelte` UI component contains complex data flattening or grouping loops inside a `$derived.by` block, it is highly safe and recommended to extract that entire logical block into a separate `.ts` utility function to reduce god-file size.
-
-## 2026-09-20 - Extracting large constant arrays from Svelte 5 stores
-
-**Learning:** When a `.svelte.ts` store file becomes a 'god file' due to massive inline constant data arrays (like `BUILT_IN_STAT_SHEET_TEMPLATES`), extracting the data into a sibling `.ts` file significantly improves the file's readability and makes the actual state logic easier to grok. The extraction is safe and tests require minimal mock updates.
-
-**Action:** Identify large data structures (constants, predefined schemas) embedded in store files and extract them into dedicated `[feature]-builtins.ts` or `[feature]-constants.ts` files to enforce Bounded Responsibility.
