@@ -104,6 +104,26 @@ export const whatMakesAGoodRandomEncounter: AnswerConfigInput = {
       ],
     },
   ],
+  systemsThatSupportThis: [
+    {
+      system: "Old-School Essentials",
+      rationale:
+        "Dungeon and wilderness checks produce encounters resolved through full reaction, surprise, distance and morale procedures, so a random result becomes a negotiated situation instead of an automatic fight.",
+      href: "https://osesrd.opengamingnetwork.com/adventuring/",
+    },
+    {
+      system: "Forbidden Lands",
+      rationale:
+        "Each journey leg combines the travellers' exploration activities with mishap and encounter rolls against the terrain, tying whatever appears to what the party was doing when it arrived.",
+      href: "https://freeleaguepublishing.com/games/forbidden-lands/",
+    },
+    {
+      system: "The One Ring",
+      rationale:
+        "Travel runs through journey phases with assigned roles and hazard events drawn per leg, so the road itself is a structured sequence of choices and setbacks rather than a montage between scenes.",
+      href: "https://freeleaguepublishing.com/games/the-one-ring/",
+    },
+  ],
   codexConnection: {
     heading: "Encounters that connect to the rest of the world",
     paragraphs: [
