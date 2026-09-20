@@ -7,14 +7,14 @@ export const howDoITurnAnRpgIdeaIntoAnAdventure: AnswerConfigInput = {
   question: "How do I turn an RPG idea into an adventure?",
   kind: "framework",
   shortAnswer:
-    "Add pressure, people and choices to the idea. A premise only describes what is true, so it becomes an adventure when something changes, someone wants a thing they cannot simply take, someone stands in the way, and the players have several ways to get involved that lead to different outcomes. Prepare those pieces and what happens if the party does nothing, then leave the order of events for the table to decide.",
+    "Add pressure, people, choices and consequences. Something changes that makes your premise unstable; people want incompatible things because of it; give the players several ways to intervene; then decide what happens if nobody does. Prepare those conditions and leave the order of events for the table to decide.",
   sections: [
     {
       kind: "prose",
       heading:
         "A premise tells you what is true; a situation asks for a decision",
       paragraphs: [
-        "Most GMs who bring an idea to the table have prepared the wrong half of it. They have a setting with a history, a strange location, an NPC with a secret or a mystery with an answer, and all of it is interesting. The players arrive, look around, ask good questions and then ask what they are supposed to do. Nothing in the material requires a decision, so the session drifts through pleasant conversation.",
+        "Most GMs who bring an idea to the table have prepared only half of it. They have a setting with a history, a strange location, an NPC with a secret or a mystery with an answer, and all of it is interesting. The players arrive, look around, ask good questions and then ask what they are supposed to do. Nothing in the material requires a decision, so the session drifts through pleasant conversation.",
         "The gap is between lore and a playable situation. Lore stays the same however the players behave. A situation is unstable: it is already moving, several people have a stake in it, and the party can push it in more than one direction. The steps below work whether the idea is a setting, an NPC, a location or a mystery, and whether you want a one-shot or the first arc of a campaign.",
       ],
     },
@@ -22,7 +22,7 @@ export const howDoITurnAnRpgIdeaIntoAnAdventure: AnswerConfigInput = {
       kind: "list",
       heading: "Five steps from premise to playable",
       intro:
-        "Work through these in order, and stop when you can answer each question in a sentence or two.",
+        "The model is premise, pressure, people, choices, consequences. Work through them in order, and stop when you can answer each in a sentence or two.",
       items: [
         {
           term: "Premise",
@@ -71,7 +71,7 @@ export const howDoITurnAnRpgIdeaIntoAnAdventure: AnswerConfigInput = {
       kind: "prose",
       heading: "Prepare the situation and leave the order open",
       paragraphs: [
-        "When you catch yourself writing that the party will find the cut, then meet the foreman, then confront the guild, rewrite each sentence as a condition: if the party reaches the cut, this is what they see; if the guild learns they have been there, this is what it does. The material is the same, and the party can meet it in any order.",
+        "This is where the model pays off against railroading. You are not preparing less, you are preparing conditions instead of a sequence. When you catch yourself writing that the party will find the cut, then meet the foreman, then confront the guild, rewrite each sentence as a condition: if the party reaches the cut, this is what they see; if the guild learns they have been there, this is what it does. The material is the same, and the party can meet it in any order.",
         "A very short game can carry a more fixed path, because there is no time for the world to move independently. Even then, keep at least two ways to reach each important piece of information so that one missed clue does not end the evening.",
       ],
       cta: {
@@ -95,9 +95,9 @@ export const howDoITurnAnRpgIdeaIntoAnAdventure: AnswerConfigInput = {
     },
   ],
   codexConnection: {
-    heading: "Keeping the pressure, people and consequences together",
+    heading: "Keeping the moving parts together across sessions",
     paragraphs: [
-      "Once an idea has a pressure, a few parties with competing needs and a set of consequences, those pieces have to stay connected as play changes them. In Codex Cryptica you can save the town, the guild, the temple and the foreman as entities and link them, so when the party sides with the temple you can see at a glance what that changes for the guild.",
+      "You can run the model on paper, and for a one-shot that is often enough. It gets harder over several sessions, when the pressure moves, the parties change what they want and old consequences start to land. In Codex Cryptica you can save the town, the guild, the temple and the foreman as entities and link them, so when the party sides with the temple you can see at a glance what that changes for the guild.",
       "The generators can supply whichever piece you are missing: an adventure concept with stakes and opposition, a faction with its own needs, or rumours that give each competing explanation a voice.",
     ],
     linkText: "Already have an idea? Develop it with Codex Cryptica",
@@ -143,6 +143,7 @@ export const howDoITurnAnRpgIdeaIntoAnAdventure: AnswerConfigInput = {
     "how-do-you-run-factions-in-a-sandbox-campaign",
     "how-do-you-generate-useful-rpg-rumours",
     "how-do-you-prepare-a-sandbox-rpg-campaign",
+    "is-my-rpg-campaign-idea-good",
   ],
   discovery: {
     id: "answer-turn-rpg-idea-into-adventure",
@@ -164,6 +165,13 @@ export const howDoITurnAnRpgIdeaIntoAnAdventure: AnswerConfigInput = {
       "answer-quest-hooks-without-railroading",
       "answer-write-one-shot-adventure",
       "answer-run-factions-sandbox",
+    ],
+    acknowledgedOverlap: [
+      {
+        with: "answer-is-my-rpg-campaign-idea-good",
+        reason:
+          "This page is the step-by-step procedure for building the playable situation; the other page diagnoses whether an idea is workable and which piece is missing.",
+      },
     ],
   },
   seo: {

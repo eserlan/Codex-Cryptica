@@ -131,6 +131,7 @@ export const howDoYouRunFactionsInASandboxCampaign: AnswerConfigInput = {
     "how-do-you-handle-players-going-off-script-as-a-gm",
     "how-do-you-run-a-scene-with-multiple-npcs",
     "how-do-i-turn-an-rpg-idea-into-an-adventure",
+    "is-my-rpg-campaign-idea-good",
   ],
   discovery: {
     id: "answer-run-factions-sandbox",

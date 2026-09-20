@@ -57,6 +57,7 @@ import { howToCreateACyberpunkCityDistrict } from "./how-to-create-a-cyberpunk-c
 import { howToCreateASciFiStarSystemForAnRpg } from "./how-to-create-a-sci-fi-star-system-for-an-rpg";
 import { howToCreateRumoursForAFantasyTown } from "./how-to-create-rumours-for-a-fantasy-town";
 import { howToWriteAnInWorldNewspaperForAnRpg } from "./how-to-write-an-in-world-newspaper-for-an-rpg";
+import { isMyRpgCampaignIdeaGood } from "./is-my-rpg-campaign-idea-good";
 import { pointCrawlVsHexCrawl } from "./point-crawl-vs-hex-crawl";
 import { whatIsAPointCrawl } from "./what-is-a-point-crawl";
 import { whatKindOfShipShouldAPirateCrewStartWith } from "./what-kind-of-ship-should-a-pirate-crew-start-with";
@@ -140,6 +141,7 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     howToCreateASciFiStarSystemForAnRpg,
     howToCreateRumoursForAFantasyTown,
     howToWriteAnInWorldNewspaperForAnRpg,
+    isMyRpgCampaignIdeaGood,
     pointCrawlVsHexCrawl,
     whatIsAPointCrawl,
     whatKindOfShipShouldAPirateCrewStartWith,
