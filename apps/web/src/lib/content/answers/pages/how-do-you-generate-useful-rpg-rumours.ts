@@ -180,6 +180,7 @@ export const howDoYouGenerateUsefulRpgRumours: AnswerConfigInput = {
     "how-to-write-an-in-world-newspaper-for-an-rpg",
     "how-do-i-turn-an-rpg-idea-into-an-adventure",
     "is-my-rpg-campaign-idea-good",
+    "how-do-i-expand-a-simple-rpg-campaign-idea",
   ],
   labels: ["fantasy", "rumour"],
   discovery: {
