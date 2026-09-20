@@ -13,6 +13,13 @@ import {
   examplePath,
 } from "../apps/web/src/lib/content/examples/registry.ts";
 import { GENERATOR_SLUGS } from "../apps/web/src/params/generator_slug.ts";
+import {
+  STATIC_SITEMAP_ROUTES,
+  configPageRoutes,
+  contentRoute,
+  renderSitemapDocument,
+  renderSitemapUrl,
+} from "../apps/web/src/lib/seo/sitemap-routes.ts";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const blogDir = join(repoRoot, "apps/web/src/lib/content/blog");
@@ -22,62 +29,6 @@ const defaultOrigin = "https://codexcryptica.com";
 const origin = (process.env.VITE_PUBLIC_APP_URL || defaultOrigin)
   .trim()
   .replace(/\/+$/, "");
-
-const escapeXml = (value) =>
-  value
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&apos;");
-
-const staticRoutes = [
-  { path: "/", changefreq: "weekly", priority: "1.0" },
-  { path: "/blog", changefreq: "weekly", priority: "0.9" },
-  { path: "/explore", changefreq: "monthly", priority: "0.5" },
-  { path: "/features", changefreq: "monthly", priority: "0.8" },
-  { path: "/tools", changefreq: "weekly", priority: "0.9" },
-  {
-    path: "/free-rpg-campaign-manager",
-    changefreq: "monthly",
-    priority: "0.9",
-  },
-  { path: "/worldbuilding-tool", changefreq: "monthly", priority: "0.8" },
-  { path: "/ai-rpg-campaign-manager", changefreq: "monthly", priority: "0.8" },
-  {
-    path: "/resources/castle-floorplans",
-    changefreq: "monthly",
-    priority: "0.6",
-  },
-  {
-    path: "/topics/heists",
-    changefreq: "weekly",
-    priority: "0.8",
-  },
-  {
-    path: "/topics/puzzles",
-    changefreq: "weekly",
-    priority: "0.8",
-  },
-  // /tools/dnd-npc-generator and /tools/faction-generator are 301 stubs to
-  // /generators/npc and /generators/faction. Static hosting prerenders them as
-  // empty meta-refresh pages, so listing them handed discovery crawlers two
-  // content-free URLs (#2567). The redirects stay; only the sitemap entries go.
-  {
-    path: "/tools/quest-hook-generator",
-    changefreq: "monthly",
-    priority: "0.8",
-  },
-  {
-    path: "/tools/fantasy-name-generator",
-    changefreq: "monthly",
-    priority: "0.8",
-  },
-  { path: "/llms.txt", changefreq: "weekly", priority: "0.7" },
-  { path: "/llms-full.txt", changefreq: "weekly", priority: "0.7" },
-  { path: "/terms", changefreq: "yearly", priority: "0.5" },
-  { path: "/privacy", changefreq: "yearly", priority: "0.5" },
-];
 
 const buildUrl = (path) =>
   `${origin}${path.startsWith("/") ? path : `/${path}`}`;
@@ -118,116 +69,51 @@ const listBlogEntries = async () => {
 };
 
 const buildXml = async (entries) => {
-  const urls = entries
-    .map(
-      (entry) => `  <url>
-    <loc>${escapeXml(entry.loc)}</loc>
-    <changefreq>${entry.changefreq}</changefreq>
-    <priority>${entry.priority}</priority>
-    <lastmod>${escapeXml(entry.lastmod)}</lastmod>
-  </url>`,
-    )
-    .join("\n");
-
-  // Solutions pages
-  const solutionRoutes = Object.keys(solutions).map((slug) => ({
-    path: `/solutions/${slug}`,
-    changefreq: "monthly",
-    priority: "0.8",
-  }));
-
-  // Comparison pages
-  const comparisonRoutes = Object.keys(comparisons).map((slug) => ({
-    path: `/vs/${slug}`,
-    changefreq: "monthly",
-    priority: "0.8",
-  }));
+  const blogRows = entries.map(renderSitemapUrl);
 
   // Generator pages — derived from GENERATOR_SLUGS so this stops drifting
   // from the route matcher's own slug list (see #2850).
-  const generatorRoutes = GENERATOR_SLUGS.map((slug) => ({
-    path: `/generators/${slug}`,
-    changefreq: "monthly",
-    priority: "0.8",
-  }));
+  const generatorRoutes = GENERATOR_SLUGS.map((slug) =>
+    contentRoute(`/generators/${slug}`),
+  );
 
-  // Landing pages (/for/[slug])
-  let landingPageRoutes = [
-    { path: "/for", changefreq: "weekly", priority: "0.9" },
-  ];
-
-  try {
-    const slugs = getAllLandingPageSlugs();
-    for (const slug of slugs) {
-      landingPageRoutes.push({
-        path: `/for/${slug}`,
-        changefreq: "weekly",
-        priority: "0.8",
-      });
+  // Registry-backed pages (/for, /answers, /examples). A registry that fails to
+  // load is skipped with a warning so the rest of the sitemap still builds.
+  const fromRegistry = (label, read) => {
+    try {
+      return read();
+    } catch (e) {
+      console.warn(`[generate-sitemap] Could not read ${label} registry:`, e);
+      return [];
     }
-  } catch (e) {
-    console.warn("[generate-sitemap] Could not read landing page registry:", e);
-  }
-
-  // Answer pages (/answers/[slug])
-  const answerRoutes = [
-    { path: "/answers", changefreq: "weekly", priority: "0.8" },
-  ];
-
-  try {
-    for (const answer of getAllAnswers()) {
-      answerRoutes.push({
-        path: answerPath(answer),
-        changefreq: "monthly",
-        priority: "0.8",
-      });
-    }
-  } catch (e) {
-    console.warn("[generate-sitemap] Could not read answer registry:", e);
-  }
-
-  // Curated example pages (/examples/[slug])
-  const exampleRoutes = [
-    { path: "/examples", changefreq: "weekly", priority: "0.8" },
-  ];
-
-  try {
-    for (const example of getAllExamples()) {
-      exampleRoutes.push({
-        path: examplePath(example),
-        changefreq: "monthly",
-        priority: "0.8",
-      });
-    }
-  } catch (e) {
-    console.warn("[generate-sitemap] Could not read example registry:", e);
-  }
+  };
+  const landingPageRoutes = fromRegistry("landing page", () =>
+    getAllLandingPageSlugs().map((slug) => ({
+      ...contentRoute(`/for/${slug}`),
+      changefreq: "weekly",
+    })),
+  );
+  const answerRoutes = fromRegistry("answer", () =>
+    getAllAnswers().map((answer) => contentRoute(answerPath(answer))),
+  );
+  const exampleRoutes = fromRegistry("example", () =>
+    getAllExamples().map((example) => contentRoute(examplePath(example))),
+  );
 
   const allStatic = [
-    ...staticRoutes,
-    ...solutionRoutes,
-    ...comparisonRoutes,
+    ...STATIC_SITEMAP_ROUTES,
+    ...configPageRoutes({ solutions, comparisons }),
     ...generatorRoutes,
     ...landingPageRoutes,
     ...answerRoutes,
     ...exampleRoutes,
   ];
 
-  return `<?xml version="1.0" encoding="UTF-8"?>
-<?xml-stylesheet type="text/xsl" href="/sitemap.xsl"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${allStatic
-  .map(
-    (route) => `  <url>
-    <loc>${escapeXml(buildUrl(route.path))}</loc>
-    <changefreq>${route.changefreq}</changefreq>
-    <priority>${route.priority}</priority>
-  </url>`,
-  )
-  .concat(urls ? [urls] : [])
-  .join("\n")}
-</urlset>
-`;
+  const staticRows = allStatic.map((route) =>
+    renderSitemapUrl({ ...route, loc: buildUrl(route.path) }),
+  );
+
+  return renderSitemapDocument([...staticRows, ...blogRows]);
 };
 
 async function main() {
