@@ -1,3 +1,4 @@
+import { loadOracleForVault } from "../oracle/hooks";
 import { getDB } from "../../utils/idb";
 import type { LocalEntity } from "./types";
 import { buildSearchKeywords } from "@codex/search-orchestrator";
@@ -213,8 +214,7 @@ export class VaultLifecycleManager {
         this.deps.clearStorageCache();
 
         // Load Oracle chat history for the new vault
-        const { oracle } = await import("../oracle.svelte");
-        await oracle.loadForVault(id);
+        await loadOracleForVault(id);
 
         await this.deps.themeStore.loadForVault(id);
         await statSheetTemplates.loadForVault(id);

@@ -1,4 +1,6 @@
 import { DeckService } from "random-source-engine";
+// The default random-source store is vault-backed; keep this intentional app-store cycle.
+// fallow-ignore-next-line circular-dependency
 import { vault } from "$lib/stores/vault.svelte";
 import { RandomSourceStore } from "$lib/stores/random-source-store.svelte";
 import { VaultDeckStateStore } from "$lib/stores/deck-state-store";

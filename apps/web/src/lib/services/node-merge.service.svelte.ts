@@ -6,6 +6,8 @@ import {
   mergeFrontmatter,
   concatenateBody,
 } from "../../../../../packages/editor-core/src/operations/merge-utils";
+// Node merging reads vault state and is also invoked by Oracle; keep this intentional cycle.
+// fallow-ignore-next-line circular-dependency
 import { vault } from "../stores/vault.svelte";
 import { textGenerationService } from "@codex/ai-engine";
 import { TIER_MODES } from "schema";

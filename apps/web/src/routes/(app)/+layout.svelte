@@ -71,6 +71,8 @@
   import { initAudioEngine } from "@codex/audio-engine";
   import { debugStore } from "$lib/stores/debug.svelte";
   import { oracle } from "$lib/stores/oracle.svelte";
+  import "$lib/stores/proposer.svelte";
+  import "$lib/cloud-bridge/p2p/guest-bootstrap";
   import { oracleBridge } from "$lib/cloud-bridge/oracle-bridge";
   import { aiClientManager } from "@codex/ai-engine";
   import { writeOpfsFile, deleteOpfsEntry } from "$lib/utils/opfs";
@@ -718,6 +720,8 @@
       <main
         class="relative flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden"
       >
+        <!-- Tailwind provides this utility; Fallow cannot resolve generated v4 classes here. -->
+        <!-- fallow-ignore-next-line css-broken-reference -->
         <div
           class="min-h-0 min-w-0 flex-1 flex flex-col h-full overflow-y-auto"
           inert={(isEntityExplorerWorkspace &&
