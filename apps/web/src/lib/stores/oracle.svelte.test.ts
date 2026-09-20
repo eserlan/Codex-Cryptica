@@ -9,6 +9,8 @@ import { oracleBridge } from "../cloud-bridge/oracle-bridge";
 import * as Comlink from "comlink";
 import { notificationStore } from "$lib/stores/ui/notification.svelte";
 
+import { setConnectionProposer } from "./oracle/hooks";
+
 vi.mock("comlink", () => ({
   proxy: vi.fn((x) => x),
   releaseProxy: Symbol("releaseProxy"),
@@ -79,12 +81,10 @@ vi.mock("./vault.svelte", () => ({
   },
 }));
 
-vi.mock("./proposer.svelte", () => ({
-  proposerStore: {
-    analyzeEntityById: mockAnalyzeEntityById,
-    analyzeAndApplyEntityById: mockAnalyzeAndApplyEntityById,
-  },
-}));
+setConnectionProposer({
+  analyzeEntityById: mockAnalyzeEntityById,
+  analyzeAndApplyEntityById: mockAnalyzeAndApplyEntityById,
+});
 
 vi.mock("@codex/ai-engine", () => ({
   contextRetrievalService: {

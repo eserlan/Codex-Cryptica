@@ -71,6 +71,8 @@
   import { initAudioEngine } from "@codex/audio-engine";
   import { debugStore } from "$lib/stores/debug.svelte";
   import { oracle } from "$lib/stores/oracle.svelte";
+  import "$lib/stores/proposer.svelte";
+  import "$lib/cloud-bridge/p2p/guest-bootstrap";
   import { oracleBridge } from "$lib/cloud-bridge/oracle-bridge";
   import { aiClientManager } from "@codex/ai-engine";
   import { writeOpfsFile, deleteOpfsEntry } from "$lib/utils/opfs";

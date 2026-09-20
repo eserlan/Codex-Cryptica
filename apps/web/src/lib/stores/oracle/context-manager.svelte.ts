@@ -3,6 +3,7 @@ import { oracleBridge } from "../../cloud-bridge/oracle-bridge";
 import * as Comlink from "comlink";
 import { appEventBus } from "@codex/events";
 import { interactionSessions } from "@codex/ai-engine";
+import { getConnectionProposer } from "./hooks";
 import type { OracleUiSnapshot, IOracleStore } from "./types";
 import { createRandomSourceOracleAdapter } from "$lib/features/random/oracle-adapter.svelte";
 
@@ -234,7 +235,7 @@ export class OracleContextManager {
           entityId: string,
           options?: { apply?: boolean; analysisText?: string },
         ) => {
-          const { proposerStore } = await import("../proposer.svelte");
+          const proposerStore = getConnectionProposer();
           if (options?.apply) {
             return proposerStore.analyzeAndApplyEntityById(
               entityId,

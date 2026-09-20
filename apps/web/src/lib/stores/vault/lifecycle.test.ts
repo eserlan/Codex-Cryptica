@@ -52,8 +52,8 @@ vi.mock("../theme.svelte", () => ({
   themeStore: mockThemeStore,
 }));
 
-vi.mock("../oracle.svelte", () => ({
-  oracle: mockOracle,
+vi.mock("../oracle/hooks", () => ({
+  loadOracleForVault: (id: string) => mockOracle.loadForVault(id),
 }));
 
 vi.mock("$app/environment", () => ({
