@@ -14,13 +14,22 @@ import type {
 const development = {
   mode: "develop" as const,
   alreadyInteresting: "a",
-  centralQuestion: "b",
+  centralQuestion: "b?",
   makeItMove: "c",
-  peopleWhoCare: [],
-  playerDirections: [],
+  peopleWhoCare: [
+    { name: "Mara", role: "Smith", wants: "Scales", conflictsWith: "Warden" },
+    { name: "Warden", role: "Guard", wants: "Peace", conflictsWith: "Mara" },
+  ],
+  playerDirections: [
+    { title: "Follow it", description: "Trace it." },
+    { title: "Search it", description: "Find it." },
+  ],
   consequences: "d",
-  creatorQuestions: [],
-  generatorSuggestions: [],
+  creatorQuestions: ["Who?", "Why?"],
+  generatorSuggestions: [
+    { generatorKey: "npc", reason: "A person." },
+    { generatorKey: "faction", reason: "A group." },
+  ],
 };
 
 function memoryStorage(): StorageLike & { data: Map<string, string> } {
