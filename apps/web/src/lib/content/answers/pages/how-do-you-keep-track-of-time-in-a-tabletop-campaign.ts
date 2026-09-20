@@ -99,6 +99,26 @@ export const howDoYouKeepTrackOfTimeInATabletopCampaign: AnswerConfigInput = {
       ],
     },
   ],
+  systemsThatSupportThis: [
+    {
+      system: "Old-School Essentials",
+      rationale:
+        "Dungeon exploration runs on ten-minute turns with a wandering-monster check tied to elapsed turns, making time a tracked resource that spends itself rather than background colour.",
+      href: "https://oldschoolessentials.necroticgnome.com/srd/index.php/Time,_Weight,_and_Movement",
+    },
+    {
+      system: "Shadowdark RPG",
+      rationale:
+        "A lit torch burns for one hour of real table time, so resource pressure comes from the clock on the wall rather than any currency the characters carry.",
+      href: "https://www.thearcanelibrary.com/pages/shadowdark",
+    },
+    {
+      system: "Torchbearer",
+      rationale:
+        "Every test advances the Grind track toward the next condition, so each roll visibly spends the expedition's remaining margin of food, light and health.",
+      href: "https://www.torchbearerrpg.com/",
+    },
+  ],
   codexConnection: {
     heading: "Chronicle campaign timelines in Codex Cryptica",
     paragraphs: [
