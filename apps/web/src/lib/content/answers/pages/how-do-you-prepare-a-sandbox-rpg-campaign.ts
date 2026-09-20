@@ -143,6 +143,7 @@ export const howDoYouPrepareASandboxRpgCampaign: AnswerConfigInput = {
     "how-do-you-handle-players-going-off-script-as-a-gm",
     "how-do-i-turn-an-rpg-idea-into-an-adventure",
     "is-my-rpg-campaign-idea-good",
+    "how-do-i-expand-a-simple-rpg-campaign-idea",
   ],
   discovery: {
     id: "answer-sandbox-campaign-prep",
