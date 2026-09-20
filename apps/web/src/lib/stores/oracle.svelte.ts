@@ -41,6 +41,7 @@ import {
 } from "./oracle/types";
 import { OracleUiManager } from "./oracle/ui-manager.svelte";
 import { OracleChatManager } from "./oracle/chat-manager.svelte";
+import { setOracleApiKeyProvider, setOracleVaultLoader } from "./oracle/hooks";
 import { OracleContextManager } from "./oracle/context-manager.svelte";
 import { OracleActionManager } from "./oracle/action-manager.svelte";
 import { OracleSettingsManager } from "./oracle/settings-manager.svelte";
@@ -557,6 +558,9 @@ const ORACLE_KEY = "__codex_oracle_instance__";
 export const oracle: OracleStore =
   (globalThis as any)[ORACLE_KEY] ??
   ((globalThis as any)[ORACLE_KEY] = new OracleStore());
+
+setOracleApiKeyProvider(() => oracle.effectiveApiKey);
+setOracleVaultLoader((vaultId) => oracle.loadForVault(vaultId));
 
 if (typeof window !== "undefined") {
   (window as any).oracle = oracle;

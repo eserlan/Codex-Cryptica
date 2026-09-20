@@ -14,11 +14,9 @@ export class GuestCharChatResponseHandler extends BaseHandler<GuestHandlerContex
   async handle(
     message: P2PMessage,
     _connection: P2PConnection,
-    _context: GuestHandlerContext,
+    context: GuestHandlerContext,
   ): Promise<void> {
-    // Lazy import avoids circular deps — guestChatStore imports p2pGuestService
-    const { guestChatStore } =
-      await import("../../../stores/guest-chat.svelte");
+    const { guestChatStore } = context;
 
     if (message.type === "GUEST_CHAR_CHAT_CHUNK") {
       guestChatStore.handleChatChunk(message.requestId, message.partial);

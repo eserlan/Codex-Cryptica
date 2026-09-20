@@ -179,6 +179,7 @@ export const howDoYouGenerateUsefulRpgRumours: AnswerConfigInput = {
     "how-do-you-track-unresolved-plot-hooks-in-an-rpg-campaign",
     "how-to-write-an-in-world-newspaper-for-an-rpg",
     "how-do-i-turn-an-rpg-idea-into-an-adventure",
+    "is-my-rpg-campaign-idea-good",
   ],
   labels: ["fantasy", "rumour"],
   discovery: {

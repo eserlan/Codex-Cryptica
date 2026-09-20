@@ -34,7 +34,10 @@ const {
 }));
 
 vi.mock("./vault.svelte", () => ({ vault: mockVault }));
-vi.mock("./oracle.svelte", () => ({ oracle: mockOracle }));
+vi.mock("./oracle/hooks", () => ({
+  getOracleApiKey: () => mockOracle.effectiveApiKey,
+  setConnectionProposer: vi.fn(),
+}));
 vi.mock("./debug.svelte", () => ({ debugStore: mockDebugStore }));
 vi.mock("./vault/events.svelte", () => ({ vaultEventBus: mockVaultEventBus }));
 vi.mock("../cloud-bridge/proposer-bridge", () => ({

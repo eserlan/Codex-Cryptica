@@ -1,7 +1,10 @@
 <script lang="ts">
   import type { CanvasFile } from "@codex/canvas-engine";
-  import { NodeResizer, type NodeProps } from "@xyflow/svelte";
-  import type { ResizeParams } from "@xyflow/system";
+  import {
+    NodeResizer,
+    type NodeProps,
+    type ResizeParams,
+  } from "@xyflow/svelte";
   import { vault } from "$lib/stores/vault.svelte";
 
   let { data, selected, width, height }: NodeProps = $props();

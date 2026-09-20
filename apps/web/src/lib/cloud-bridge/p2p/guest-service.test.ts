@@ -40,6 +40,24 @@ vi.mock("../../stores/theme.svelte", () => ({
 import { P2PGuestService } from "./guest-service";
 import { MockClientTransport } from "./transport/mock-client-transport";
 import { guestStore } from "../../stores/guest.svelte";
+import { registerGuestStores } from "./guest-stores-registry";
+import { vault } from "../../stores/vault.svelte";
+import { sessionModeStore } from "../../stores/ui/session-mode.svelte";
+import { notificationStore } from "../../stores/ui/notification.svelte";
+import { modalUIStore } from "../../stores/ui/modal-ui.svelte";
+import { mapStore } from "../../stores/map.svelte";
+import { themeStore } from "../../stores/theme.svelte";
+
+registerGuestStores({
+  vault,
+  sessionModeStore,
+  notificationStore,
+  modalUIStore,
+  mapSession: mockMapSession,
+  mapStore,
+  themeStore,
+  guestChatStore: { handleChatChunk: vi.fn(), handleChatDone: vi.fn() },
+} as any);
 
 describe("P2PGuestService (facade)", () => {
   let transport: MockClientTransport;

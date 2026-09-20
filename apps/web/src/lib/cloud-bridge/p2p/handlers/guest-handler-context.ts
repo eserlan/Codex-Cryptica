@@ -8,6 +8,7 @@ import type {
   GuestPresenceStatus,
   GuestStore,
 } from "../../../stores/guest.svelte";
+import type { guestChatStore } from "../../../stores/guest-chat.svelte";
 import type { modalUIStore } from "../../../stores/ui/modal-ui.svelte";
 import type { MapAssetUrlCache } from "./map-asset-url-cache";
 import type { P2PClientTransport } from "../transport/client-transport";
@@ -26,8 +27,8 @@ export interface GuestSessionCallbacks {
 }
 
 /**
- * Ambient dependencies injected into every guest handler. Lazy-imported store
- * references resolved once on join.
+ * Ambient dependencies injected into every guest handler. Store references are
+ * registered by the app layout and resolved once on join.
  */
 export interface GuestHandlerContext {
   vault: typeof vault;
@@ -37,6 +38,7 @@ export interface GuestHandlerContext {
   mapSession: typeof mapSession;
   mapStore: typeof mapStore;
   themeStore: typeof themeStore;
+  guestChatStore: typeof guestChatStore;
   guestStore: GuestStore;
   transport: P2PClientTransport;
   assetCache: MapAssetUrlCache;

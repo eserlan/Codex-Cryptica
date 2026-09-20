@@ -135,6 +135,8 @@ vi.mock("@codex/gdrive-sync", () => ({
   initGDriveSync: vi.fn(),
   configureGDriveSync: vi.fn(),
 }));
+vi.mock("$lib/stores/proposer.svelte", () => ({}));
+vi.mock("$lib/cloud-bridge/p2p/guest-bootstrap", () => ({}));
 vi.mock("$lib/config/help-content", () => ({
   HELP_ARTICLES: [{ id: "family-tree" }],
 }));
