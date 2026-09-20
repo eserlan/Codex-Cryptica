@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { SectionNode as SectionNodeType } from "@codex/stat-sheet-engine";
   import type { PresentationRenderContext } from "../types";
+  // fallow-ignore-next-line circular-dependency
   import PresentationRenderer from "../PresentationRenderer.svelte";
   import InlineContent from "../InlineContent.svelte";
 
