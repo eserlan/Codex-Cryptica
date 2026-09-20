@@ -36,7 +36,7 @@ All planning unknowns are resolved here. Nothing in the plan is marked NEEDS CLA
 
 - **Decision**: New `usage-limiter.ts`: a cooldown between turns and a cap per rolling period, kept in `localStorage`, with injected storage and clock.
 - **Rationale**: The user asked for an in-browser limit alongside Turnstile. It is content-free (timestamps only) and needs no account or identifier (FR-025). It is a courtesy and cost guard, not a security boundary; the enforceable limits are Turnstile and the edge limiters.
-- **Defaults** (tunable constants): 10-second cooldown, 20 turns per hour. Every turn counts, so a full 8-turn conversation uses less than half the hourly cap.
+- **Defaults** (tunable constants): 10-second cooldown, 60 turns per hour. Every turn counts, so a full 30-turn conversation uses half the hourly cap.
 - **Failure mode**: if storage is unavailable, the limiter allows the request and relies on the edge limits.
 
 ## R5. Turnstile
@@ -114,7 +114,7 @@ All planning unknowns are resolved here. Nothing in the plan is marked NEEDS CLA
 - **`whatChanged`**: one line, required on turns after the first, absent on the first.
 - **System instruction**: set once. On the first turn it is sent as `systemInstruction`; the provider applies it to the conversation. The service does not rely on that persisting across a replay, so replay rebuilds it.
 - **Replay on expiry**: on `InteractionExpiredError` the service builds a single first-turn input from the original idea, the ordered turns (kind and text) and the latest development, sends it without `previousInteractionId`, and continues from the new id. This costs one large input and is expected to be rare.
-- **Turn cap**: 8 turns per conversation (constant, tunable). At the cap the UI offers a new conversation or copy.
+- **Turn cap**: 30 turns per conversation (constant, tunable), not shown to the user (R27). At the cap the UI offers a new conversation or copy.
 - **Mode per turn**: the mode can change between turns. This is also how later modes ("Challenge it", "Explore alternatives") will arrive: as more turn options on the same conversation.
 - **Hub**: one draft per conversation, updated in place through `updateEntity`. The draft's `summary` keeps leading with the idea; `content` holds the current development; a small counter label such as `turn-3` is avoided (Principle XII favours labels for categories, not counters). The draft is not duplicated per turn.
 - **Cancel**: `sendInteraction` accepts an `AbortSignal`, so an in-flight turn can be cancelled; a cancelled turn does not advance the conversation or count toward the turn cap.
@@ -210,3 +210,11 @@ Also not reading hub context: names, dungeon, plot twist, world, star system, co
 - **Measured, at 390px in a real browser** (with a saved result seeded into the page, since the first check only measured the empty tool): 18 pieces of text at 14px, 32 at 16px, only headings at 18px. My first check measured only the empty state and allowed 14px, so it passed while the result view was still small.
 - **Change**: a phone-first scale. The unprefixed class is the phone size (reading text 18px, labels and buttons 16px, h2 20px, inputs 18px) and `sm:` steps back down, so desktop looks as before. Two browser tests measure the empty and the result states; the class guard now fails on any unprefixed `text-xs` or `text-sm`.
 - **Guidelines**: the rule now lives in `docs/STYLE_GUIDE.md` ("Mobile Typography & Touch Targets"), Constitution Principle VI item 4 (v1.7.0) and `AGENTS.md`, so it does not have to be rediscovered per feature. Existing dense in-app components are not changed retroactively.
+
+## R27. Turn limit raised to 30 and kept out of sight (2026-09-20)
+
+- **Owner feedback**: remove the turn limitation, or at least make it invisible and raise it to 30.
+- **Decision**: keep a limit, because an unbounded conversation is unbounded cost, but raise it from 8 to 30 and never show it until it is reached. Removed: the "N follow-ups left" line, "Turn N of M" (now just "Turn N"), and the turn count in the help and privacy text. A test fails if any of that wording comes back. If someone does reach 30, the tool still says so in plain language and offers a new conversation or copying, because silently refusing would be worse.
+- **The other limit**: the per-browser cap of 20 turns an hour would have stopped a 30-turn conversation partway, showing a different visible wall. It is now 60 (two whole conversations), with a test that it stays at least twice the turn limit. The 10-second cooldown between turns is unchanged.
+- **Cost to know about**: with the provider holding the conversation, each turn is billed for the whole history so far, so cost per turn grows through a long conversation. A full 30-turn conversation costs noticeably more than eight short ones. Worth watching once real use starts; the cap is the backstop.
+- **Recovery and storage**: if the provider drops a conversation, replay rebuilds it from up to 30 turns of the user's text (each capped at 4,000 characters), which is large but bounded. The tab's saved copy is well under the browser's storage limit.

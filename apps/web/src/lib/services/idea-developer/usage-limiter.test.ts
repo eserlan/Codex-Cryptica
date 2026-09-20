@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { MAX_CONVERSATION_TURNS } from "generator-engine";
 import type { StorageLike } from "$lib/utils/runtime-deps";
 import {
   IdeaDeveloperUsageLimiter,
@@ -134,5 +135,11 @@ describe("IdeaDeveloperUsageLimiter", () => {
     const { limiter, storage } = setup();
     storage.data.set(USAGE_STORAGE_KEY, "{not json");
     expect(limiter.check().allowed).toBe(true);
+  });
+
+  it("lets at least two whole conversations through in an hour, so the limit is not met mid-conversation", () => {
+    expect(USAGE_MAX_PER_PERIOD).toBeGreaterThanOrEqual(
+      MAX_CONVERSATION_TURNS * 2,
+    );
   });
 });

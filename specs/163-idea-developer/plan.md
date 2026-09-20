@@ -154,7 +154,7 @@ Full reasoning is in [research.md](./research.md).
 5. **Usage limit**: per-browser cooldown plus a rolling cap in `localStorage` with injected clock, in addition to Turnstile and the existing edge limits.
 6. **Generator suggestions**: the catalogue holds only generators that exist and are verified to read hub context (verified in T041: faction, rumour, settlement, npc, secret-society, quest; `adventure-generator` is excluded because it does not read hub context); the model returns catalogue keys only; anything else is dropped; an empty result falls back to a default set (FR-013, FR-015).
 7. **Turn kinds**: `answer-questions`, `change-part`, `switch-mode`, plus the opening `idea` turn. All produce the same eight sections plus a one-line `whatChanged`. One conversation is one Session Hub draft, updated in place.
-8. **Turn cap**: a named constant (proposed 8 turns per conversation) with a plain-language message and a new-conversation action when reached.
+8. **Turn cap**: a named constant (30 turns per conversation, not shown to the user) with a plain-language message and a new-conversation action when reached.
 9. **Numeric-score guard**: the parser rejects responses containing score-like fields, and the prompt forbids them (FR-009).
 
 ## Risks and Open Items

@@ -47,7 +47,7 @@ Build one first-turn input from: the original idea, the ordered `done` turns (ki
 
 ## Limits
 
-- Turn cap per conversation: 8 `done` turns (constant).
+- Turn cap per conversation: 30 `done` turns (constant). It is not shown to the user; only reaching it produces a message.
 - One turn in flight at a time.
 - Per-turn: bot check and the per-browser limiter.
 

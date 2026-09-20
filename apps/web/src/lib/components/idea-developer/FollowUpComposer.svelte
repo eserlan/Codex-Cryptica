@@ -4,7 +4,6 @@
     getMode,
     isModeId,
     listModes,
-    remainingTurns,
   } from "generator-engine";
   import type { IdeaDeveloperStore } from "$lib/stores/idea-developer.svelte";
   import ProgressLine from "./ProgressLine.svelte";
@@ -15,9 +14,6 @@
   const hasText = $derived(store.followUpText.trim().length > 0);
   const otherModes = $derived(
     listModes().filter((mode) => mode.id !== store.conversationMode),
-  );
-  const left = $derived(
-    store.conversation ? remainingTurns(store.conversation.turns) : 0,
   );
 
   const button =
@@ -44,7 +40,6 @@
     </h2>
     <p class="text-lg sm:text-sm text-theme-muted">
       Answer the questions above, ask for a change, or look at it another way.
-      {left} follow-ups left in this conversation.
     </p>
     <label
       for="idea-developer-follow-up"

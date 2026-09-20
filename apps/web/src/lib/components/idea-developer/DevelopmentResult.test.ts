@@ -85,11 +85,10 @@ describe("DevelopmentResult marks what changed", () => {
         ideaText: "A town.",
         changed: [],
         turn: 2,
-        maxTurns: 8,
       },
     });
     expect(screen.getByTestId("mode-label").textContent).toMatch(
-      /assess mode.*turn 2 of 8/i,
+      /^assess mode\s*·\s*turn 2$/i,
     );
   });
 });

@@ -17,7 +17,7 @@ For an arrival from an answer, open
 1. Paste: "A town where everything is made from dragon parts, but there are no dragons nearby."
 2. Choose **Develop**, submit. Expect all eight sections, the original idea quoted beside the result, 2 to 4 people who care, 2 to 4 creator questions, 2 to 5 generator links, and no score.
 3. Answer two of the creator questions and continue. Expect the updated development, a one-line "what changed", no need to re-enter the idea, and the same Session Hub draft updated (not a second one). Then ask for a change to one part, then switch to the other mode.
-4. Continue to the turn cap: the tool says so and offers a new conversation. Start one and confirm earlier turns no longer influence it.
+4. The turn limit (30) is not shown anywhere while you continue, so it is covered by unit tests rather than by hand. To see the message, temporarily lower `MAX_CONVERSATION_TURNS` in `packages/generator-engine/src/idea-developer/types.ts`. Start a new conversation and confirm earlier turns no longer influence it.
 5. Choose **Assess** for the same idea in a new conversation. Expect the same sections, with emphasis on what is interesting and what is unanswered, and no new factions invented.
 6. Choose **Save to your Codex**: the existing save modal opens with the conversation's draft and nothing new is stored by the tool.
 7. Open the Session Hub: the development appears as a draft. Open a suggested generator: it uses the idea as session context. Check the link contains no idea text.

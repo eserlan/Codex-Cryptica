@@ -1,6 +1,5 @@
 <script lang="ts">
   import {
-    MAX_CONVERSATION_TURNS,
     MAX_IDEA_LENGTH,
     countDoneTurns,
     isModeId,
@@ -110,7 +109,6 @@
         ideaText={store.conversation.ideaText}
         changed={store.changedSections}
         turn={countDoneTurns(store.conversation.turns)}
-        maxTurns={MAX_CONVERSATION_TURNS}
         {clipboardService}
       />
     </div>

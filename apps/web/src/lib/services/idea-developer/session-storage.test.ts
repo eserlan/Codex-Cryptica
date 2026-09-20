@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { MAX_CONVERSATION_TURNS } from "generator-engine";
 import { parseStoredSession, serialiseSession } from "./session-storage";
 
 const development = {
@@ -144,12 +145,15 @@ describe("session storage", () => {
   });
 
   it("drops a conversation with too many turns or overlong turn text", () => {
-    const tooManyTurns = Array.from({ length: 9 }, (_, index) => ({
-      kind: "idea",
-      mode: "develop",
-      text: `Turn ${index}`,
-      status: "done",
-    }));
+    const tooManyTurns = Array.from(
+      { length: MAX_CONVERSATION_TURNS + 1 },
+      (_, index) => ({
+        kind: "idea",
+        mode: "develop",
+        text: `Turn ${index}`,
+        status: "done",
+      }),
+    );
     for (const turns of [
       tooManyTurns,
       [

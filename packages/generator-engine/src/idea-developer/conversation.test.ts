@@ -4,7 +4,6 @@ import {
   buildReplayInput,
   canContinue,
   countDoneTurns,
-  remainingTurns,
 } from "./conversation";
 import { buildSystemInstruction } from "./prompt";
 import { emphasisFor } from "./modes";
@@ -91,9 +90,8 @@ describe("turn cap", () => {
     );
   });
 
-  it("says how many turns are left", () => {
-    expect(remainingTurns(done(3))).toBe(MAX_CONVERSATION_TURNS - 3);
-    expect(remainingTurns(done(MAX_CONVERSATION_TURNS + 2))).toBe(0);
+  it("allows a long conversation: 30 completed turns", () => {
+    expect(MAX_CONVERSATION_TURNS).toBe(30);
   });
 });
 

@@ -1,16 +1,10 @@
 <script lang="ts">
   import { getMode, type ModeId } from "generator-engine";
 
-  let {
-    mode,
-    turn,
-    maxTurns,
-  }: { mode: ModeId; turn?: number; maxTurns?: number } = $props();
+  let { mode, turn }: { mode: ModeId; turn?: number } = $props();
 
   const label = $derived(getMode(mode)?.label);
-  const turnText = $derived(
-    turn && maxTurns ? ` · Turn ${turn} of ${maxTurns}` : "",
-  );
+  const turnText = $derived(turn ? ` · Turn ${turn}` : "");
 </script>
 
 {#if label}

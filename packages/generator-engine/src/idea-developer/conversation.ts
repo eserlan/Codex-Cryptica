@@ -51,10 +51,6 @@ export function canContinue(turns: Turn[]): boolean {
   return countDoneTurns(turns) < MAX_CONVERSATION_TURNS;
 }
 
-export function remainingTurns(turns: Turn[]): number {
-  return Math.max(0, MAX_CONVERSATION_TURNS - countDoneTurns(turns));
-}
-
 export interface PendingTurn {
   kind: FollowUpKind;
   text: string;

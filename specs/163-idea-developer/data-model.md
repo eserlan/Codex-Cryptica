@@ -29,7 +29,7 @@ One idea and its turns.
 | Field                   | Rule                                                                                                                       |
 | ----------------------- | -------------------------------------------------------------------------------------------------------------------------- |
 | `ideaText`              | The opening idea; shown read-only beside every result. Changes go through a `change-part` turn (FR-034 and the edge case). |
-| `turns`                 | Ordered `Turn` list, at most the turn cap (proposed 8).                                                                    |
+| `turns`                 | Ordered `Turn` list, at most the turn cap (30, not shown to the user).                                                     |
 | `previousInteractionId` | The provider's reference for continuing; string or null. Never placed in a link, event or log.                             |
 | `latest`                | The latest validated `Development`, or absent.                                                                             |
 | `hubDraftId`            | The Session Hub entity for this conversation.                                                                              |
@@ -101,7 +101,7 @@ Content-free limiter state in `localStorage`.
 | `version`    | `1`.                                                                                                                     |
 | `timestamps` | Epoch-millisecond timestamps of recent turns (every turn counts), pruned to the rolling period. No text, no identifiers. |
 
-Defaults: 10-second cooldown, 20 turns per hour (raised from 10 now that a conversation spans several turns; tunable). If storage is unavailable the limiter allows the request and the edge limits apply.
+Defaults: 10-second cooldown, 60 turns per hour (room for two whole conversations of 30, so the hourly limit is not met mid-conversation; tunable). If storage is unavailable the limiter allows the request and the edge limits apply.
 
 ## FunnelEvent
 

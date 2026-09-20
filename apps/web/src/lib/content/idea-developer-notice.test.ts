@@ -47,8 +47,12 @@ describe("IDEA_DEVELOPER_COPY", () => {
     }
   });
 
-  it("tells people about the turn limit in the help text", () => {
-    expect(IDEA_DEVELOPER_COPY.help.body).toMatch(/for up to \d+ turns/);
+  it("does not put a turn count in the help or privacy text, so the limit stays out of sight", () => {
+    const { help, privacy } = surfaces();
+    for (const text of [help, privacy]) {
+      expect(text).not.toMatch(/\bup to \d+\b/i);
+      expect(text).not.toMatch(/\b\d+ turns\b/i);
+    }
   });
 
   it("keeps the inline notice short enough to sit beside the submit button", () => {

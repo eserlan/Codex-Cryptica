@@ -31,8 +31,11 @@ export const GENERATOR_SUGGESTIONS_MAX = 5;
 
 /** Longest idea, or later turn text, accepted in characters. */
 export const MAX_IDEA_LENGTH = 4000;
-/** Completed turns allowed in one conversation. */
-export const MAX_CONVERSATION_TURNS = 8;
+/**
+ * Completed turns allowed in one conversation. A safeguard against runaway cost,
+ * not something to tell the user about: it is only mentioned if they reach it.
+ */
+export const MAX_CONVERSATION_TURNS = 30;
 
 export interface PersonWhoCares {
   name: string;

@@ -736,7 +736,7 @@ describe("IdeaDeveloperTool after a follow-up turn", () => {
       screen.getByText(/sections updated: central question/i),
     ).toBeTruthy();
     expect(screen.getByTestId("mode-label").textContent).toMatch(
-      /assess mode.*turn 2 of 8/i,
+      /^assess mode\s*·\s*turn 2$/i,
     );
   });
 
@@ -779,6 +779,59 @@ describe("IdeaDeveloperTool after a follow-up turn", () => {
     expect(scrollIntoView).not.toHaveBeenCalled();
     expect(document.activeElement).not.toBe(
       screen.getByTestId("result-anchor"),
+    );
+  });
+});
+
+describe("IdeaDeveloperTool keeps the turn limit out of sight until it is reached", () => {
+  async function developed() {
+    const service = {
+      start: vi.fn().mockResolvedValue({
+        status: "ok",
+        development,
+        interactionId: "i-1",
+        ideaText: "A town made of dragon parts.",
+        hubDraftId: "hub-1",
+      }),
+      continue: vi.fn(),
+    };
+    const store = new IdeaDeveloperStore(service as never, memoryStorage(), {
+      remove: vi.fn(),
+      exists: () => true,
+    } as never);
+    render(IdeaDeveloperTool, { props: { store } });
+    await fireEvent.input(textbox(), {
+      target: { value: "A town made of dragon parts." },
+    });
+    await fireEvent.click(submitButton());
+    await screen.findByText("Where do the parts come from?");
+    return { store };
+  }
+
+  it("does not say how many turns are left, or what the limit is", async () => {
+    await developed();
+    const page = document.body.textContent ?? "";
+    expect(page).not.toMatch(/follow-ups? left/i);
+    expect(page).not.toMatch(/turns? left/i);
+    expect(page).not.toMatch(/\bof \d+\b/i);
+    expect(page).not.toMatch(/\blimit\b/i);
+  });
+
+  it("does not say it even when only a few turns remain", async () => {
+    const { store } = await developed();
+    const turns = Array.from({ length: MAX_CONVERSATION_TURNS - 2 }, () => ({
+      kind: "answer-questions" as const,
+      mode: "develop" as const,
+      text: "x",
+      status: "done" as const,
+    }));
+    store.conversation = {
+      ...store.conversation!,
+      turns: [...store.conversation!.turns, ...turns],
+    };
+    await screen.findByText(/turn \d+/i);
+    expect(document.body.textContent).not.toMatch(
+      /\blimit\b|turns? left|\bof \d+\b/i,
     );
   });
 });

@@ -16,16 +16,14 @@
     ideaText,
     changed = null,
     turn,
-    maxTurns,
     clipboardService,
   }: {
     development: Development;
     ideaText: string;
     /** Sections this turn changed; null when there is nothing to compare. */
     changed?: ComparedSection[] | null;
-    /** Which turn this is, and the most a conversation allows. */
+    /** Which turn this is. */
     turn?: number;
-    maxTurns?: number;
     clipboardService?: Pick<ClipboardService, "copyContent">;
   } = $props();
 
@@ -48,7 +46,7 @@
     </p>
   </blockquote>
 
-  <ResultLabel mode={development.mode} {turn} {maxTurns} />
+  <ResultLabel mode={development.mode} {turn} />
 
   <ChangeSummary whatChanged={development.whatChanged} {changed} />
 

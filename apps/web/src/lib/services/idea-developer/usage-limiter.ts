@@ -16,7 +16,8 @@ import {
 export const USAGE_STORAGE_KEY = "idea-developer-usage";
 export const USAGE_COOLDOWN_MS = 10_000;
 export const USAGE_PERIOD_MS = 60 * 60 * 1000;
-export const USAGE_MAX_PER_PERIOD = 20;
+/** Room for two whole conversations, so nobody meets this mid-conversation. */
+export const USAGE_MAX_PER_PERIOD = 60;
 
 export type UsageCheck =
   | { allowed: true }
