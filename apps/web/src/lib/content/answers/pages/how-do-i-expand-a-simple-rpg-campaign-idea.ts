@@ -37,7 +37,7 @@ export const howDoIExpandASimpleRpgCampaignIdea: AnswerConfigInput = {
         },
         {
           term: "What does everyone believe that may be wrong?",
-          text: "A shared assumption that could be false is the cheapest secret you can write. It gives you a discovery to hold in reserve.",
+          text: "A shared assumption that could be false is one of the easiest useful secrets to write. It gives you a discovery to hold in reserve.",
         },
         {
           term: "What changed recently?",
@@ -78,7 +78,7 @@ export const howDoIExpandASimpleRpgCampaignIdea: AnswerConfigInput = {
         },
         {
           term: "What the players meet first",
-          text: "A carvers' market where the licence fees have just gone up, a chapel built inside a ribcage that people avoid, and a fisher who sells a bone fragment she says was not dug from the town's quarry.",
+          text: "A carvers' market where bone prices have jumped after a licence increase, a chapel built inside a ribcage that people avoid, and a fisher who sells a bone fragment she says was not dug from the town's quarry.",
         },
         {
           term: "What stays open",
@@ -92,10 +92,10 @@ export const howDoIExpandASimpleRpgCampaignIdea: AnswerConfigInput = {
     },
     {
       kind: "prose",
-      heading: "Develop the idea, do not replace it",
+      heading: "Expanding an idea is not outlining a campaign",
       paragraphs: [
-        "When you add material, check that the original still comes through. If a player could summarise the idea after the first session and you would recognise your own sentence, the expansion is working. If the added detail has started to compete with the image you began with, cut it back.",
-        "You can also leave things unfinished on purpose. A question you have not answered can be settled by what the players investigate, which usually makes it feel more connected to them than anything you decided in advance.",
+        "You do not need to plan a campaign from beginning to end. Once several people want incompatible things and the situation keeps changing without the players, you have something that can produce several adventures: factions react, consequences create new problems, and the questions you left open become arcs when the party goes looking. Add new places and characters only as play reaches them, and expand again when the table shows which direction matters.",
+        "This page deepens the situation with people, tensions, beliefs and consequences. Turning that situation into a session, with an opening scene, hooks, obstacles and stakes, is a separate job.",
       ],
       cta: {
         text: "Read how to turn an RPG idea into an adventure",
