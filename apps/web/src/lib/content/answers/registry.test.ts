@@ -408,6 +408,7 @@ describe("published answers", () => {
       "dnd-npc-generator",
       "faction-generator",
       "fantasy-name-generator",
+      "idea-developer",
       "quest-hook-generator",
       "rpg-npc-generator",
       "vampire-clan-generator",
@@ -425,7 +426,8 @@ describe("published answers", () => {
     const sectionIndexes = ["answers", "tools", "generators", "for"];
 
     const isLive = (href: string): boolean => {
-      const [section, slug, ...rest] = href.replace(/^\//, "").split("/");
+      const path = href.split(/[?#]/, 1)[0];
+      const [section, slug, ...rest] = path.replace(/^\//, "").split("/");
       if (rest.length > 0) return false;
       if (!slug) return sectionIndexes.includes(section);
       return Object.hasOwn(sectionChecks, section)
@@ -445,6 +447,26 @@ describe("published answers", () => {
           true,
         );
       }
+    }
+  });
+
+  it("sends the three idea-development answers to the Idea Developer", () => {
+    const expected = {
+      "is-my-rpg-campaign-idea-good": "assess",
+      "how-do-i-turn-an-rpg-idea-into-an-adventure": "develop",
+      "how-do-i-expand-a-simple-rpg-campaign-idea": "develop",
+    } as const;
+
+    for (const [slug, mode] of Object.entries(expected)) {
+      const connection = answers[slug].codexConnection;
+      expect(connection, slug).toBeDefined();
+      expect(connection?.href, slug).toBe(
+        `/tools/idea-developer?from=answer&source=${slug}&mode=${mode}`,
+      );
+      expect(connection?.linkText, slug).toMatch(/Idea Developer/);
+      expect(answers[slug].discovery.relatedIntents, slug).toContain(
+        "tool-idea-developer",
+      );
     }
   });
 

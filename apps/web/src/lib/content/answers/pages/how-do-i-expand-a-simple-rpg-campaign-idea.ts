@@ -120,11 +120,11 @@ export const howDoIExpandASimpleRpgCampaignIdea: AnswerConfigInput = {
   codexConnection: {
     heading: "Keeping an expanded idea connected",
     paragraphs: [
-      "As an idea grows, the people, places and beliefs you add need to stay linked to the seed and to each other. In Codex Cryptica you can save the town, the carver families, the fisher and the bone that was cut with a tool as entities, and connect them so you can see who is touched by each new discovery.",
-      "The generators can supply a missing piece without replacing what you have: a faction for the licensing families, rumours that tell the same event two ways, a settlement for a nearby place, or a secret to sit behind the shared belief. Keep what fits your idea and drop the rest.",
+      "Start the Idea Developer in Develop mode and paste the simple seed you want to expand. It adds pressure, people with competing interests, player directions and consequences, while leaving the important creative decisions open for you.",
+      "Use the questions to decide what the expanded idea means at your table. You can answer them or ask for a change, then follow one of the suggested generators when you need a settlement, faction, NPC, rumour, secret society or quest.",
     ],
-    linkText: "Develop your idea with the adventure generator",
-    href: "/generators/adventure-generator",
+    linkText: "Expand this idea with the Idea Developer",
+    href: "/tools/idea-developer?from=answer&source=how-do-i-expand-a-simple-rpg-campaign-idea&mode=develop",
   },
   relatedTools: [
     {
@@ -197,6 +197,7 @@ export const howDoIExpandASimpleRpgCampaignIdea: AnswerConfigInput = {
     relatedIntents: [
       "answer-is-my-rpg-campaign-idea-good",
       "answer-turn-rpg-idea-into-adventure",
+      "tool-idea-developer",
       "generator-adventure-generator",
       "generator-adventure-idea-generator",
       "answer-run-factions-sandbox",
