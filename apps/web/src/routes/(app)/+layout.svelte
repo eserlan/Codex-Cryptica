@@ -720,6 +720,8 @@
       <main
         class="relative flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden"
       >
+        <!-- Tailwind provides this utility; Fallow cannot resolve generated v4 classes here. -->
+        <!-- fallow-ignore-next-line css-broken-reference -->
         <div
           class="min-h-0 min-w-0 flex-1 flex flex-col h-full overflow-y-auto"
           inert={(isEntityExplorerWorkspace &&
