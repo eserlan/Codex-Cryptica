@@ -42,6 +42,20 @@ test.describe("Idea Developer", () => {
     });
   });
 
+  test("is linked from the tools index and the link works", async ({
+    page,
+  }) => {
+    await open(page, "/tools");
+    const link = page.getByRole("link", { name: /idea developer/i });
+    await expect(link).toBeVisible();
+    await expect(link).toHaveAttribute("href", /\/tools\/idea-developer$/);
+    await link.click();
+    await expect(page).toHaveURL(/\/tools\/idea-developer$/);
+    await expect(
+      page.getByRole("heading", { level: 1, name: /develop your rpg idea/i }),
+    ).toBeVisible();
+  });
+
   test("loads with its own title and canonical", async ({ page }) => {
     await open(page);
     await expect(page).toHaveTitle(/Idea Developer/);

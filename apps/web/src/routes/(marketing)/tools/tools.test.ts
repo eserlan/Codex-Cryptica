@@ -41,4 +41,28 @@ describe("Tools directory", () => {
     expect(source).toContain('href: "/import/scabard"');
     expect(source).toContain('href: "/import/thread-weaver"');
   });
+
+  it("links the Idea Developer next to the adventure generator, in the adventure group", () => {
+    const source = readFileSync(
+      join(process.cwd(), "src/routes/(marketing)/tools/+page.svelte"),
+      "utf8",
+    );
+
+    const group = source.indexOf('title: "Adventure & Worldbuilding"');
+    const developer = source.indexOf('href: "/tools/idea-developer"');
+    const adventure = source.indexOf('href: "/generators/adventure-generator"');
+    expect(developer).toBeGreaterThan(group);
+    expect(adventure).toBeGreaterThan(group);
+    expect(Math.abs(developer - adventure)).toBeLessThan(1200);
+    expect(source).toContain('label: "Idea Developer"');
+    expect(source).toContain("develops it instead of replacing it");
+  });
+
+  it("gives the Idea Developer a route that exists", () => {
+    const route = join(
+      process.cwd(),
+      "src/routes/(marketing)/tools/idea-developer/+page.svelte",
+    );
+    expect(readFileSync(route, "utf8")).toContain("IdeaDeveloperTool");
+  });
 });
