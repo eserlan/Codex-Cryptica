@@ -42,7 +42,7 @@
     },
     "apps/web": {
       "name": "web",
-      "version": "0.32.56",
+      "version": "0.32.61",
       "dependencies": {
         "@capacitor/app": "^8.1.1",
         "@capacitor/core": "^8.5.0",
@@ -396,6 +396,7 @@
         "mammoth": "^1.12.0",
         "schema": "workspace:*",
         "turndown": "^7.2.4",
+        "zod": "^4.4.3",
       },
       "devDependencies": {
         "@types/node": "^26.1.0",
