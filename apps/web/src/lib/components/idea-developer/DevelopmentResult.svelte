@@ -9,20 +9,14 @@
     clipboardService as defaultClipboardService,
     type ClipboardService,
   } from "$lib/services/ClipboardService";
-  import GeneratorLinks from "./GeneratorLinks.svelte";
 
   let {
     development,
     ideaText,
-    onGeneratorOpen,
     clipboardService = defaultClipboardService,
   }: {
     development: Development;
     ideaText: string;
-    onGeneratorOpen?: (opened: {
-      generatorKey: string;
-      position: number;
-    }) => void;
     clipboardService?: Pick<ClipboardService, "copyContent">;
   } = $props();
 
@@ -165,11 +159,6 @@
       These are yours to answer. The tool doesn't decide them for you.
     </p>
   </section>
-
-  <GeneratorLinks
-    suggestions={development.generatorSuggestions}
-    onOpen={onGeneratorOpen}
-  />
 
   <div class="flex flex-wrap items-center gap-3">
     <button

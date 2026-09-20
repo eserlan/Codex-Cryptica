@@ -163,7 +163,7 @@ After the first development, the user carries on with the same idea. They can an
 
 - **FR-001**: Visitors MUST be able to use the tool without an account.
 - **FR-002**: Users MUST be able to paste or type a freeform RPG idea and submit it for development.
-- **FR-003**: The result MUST contain these sections, in this order: what's already interesting, central question, make it move, people who care, things the players could do, consequences, questions for the creator, develop further.
+- **FR-003**: The result MUST contain these sections, in this order: what's already interesting, central question, make it move, people who care, things the players could do, consequences, questions for the creator, develop further. By the project owner's decision, the "develop further" generator links are shown after the "keep developing" controls rather than inside the result, so they stay available when the turn limit is reached.
 - **FR-004**: The result MUST preserve the recognisable core of the submitted idea and MUST show the original idea alongside the result.
 - **FR-005**: The result MUST NOT replace the idea with a different premise, and MUST NOT present a single finished plot.
 - **FR-006**: "People who care" MUST contain 2 to 4 factions or roles with incompatible interests.

@@ -19,6 +19,7 @@
   } from "$lib/services/idea-developer/save-to-codex";
   import DevelopmentResult from "./DevelopmentResult.svelte";
   import FollowUpComposer from "./FollowUpComposer.svelte";
+  import GeneratorLinks from "./GeneratorLinks.svelte";
   import NoticeBanner from "./NoticeBanner.svelte";
   import ProgressLine from "./ProgressLine.svelte";
 
@@ -67,11 +68,14 @@
     <DevelopmentResult
       development={store.conversation.latest}
       ideaText={store.conversation.ideaText}
-      onGeneratorOpen={(opened) => tracker.generatorOpened(opened)}
       {clipboardService}
     />
     <FollowUpComposer {store} />
     <NoticeBanner notice={store.notice} />
+    <GeneratorLinks
+      suggestions={store.conversation.latest.generatorSuggestions}
+      onOpen={(opened) => tracker.generatorOpened(opened)}
+    />
     <div class="flex flex-col gap-3">
       <div class="flex flex-wrap items-center gap-3">
         <button

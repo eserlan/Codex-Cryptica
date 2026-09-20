@@ -197,3 +197,9 @@ Also not reading hub context: names, dungeon, plot twist, world, star system, co
 - **Decision**: the notice moves to the bottom of the page under the tool, in a quiet style (no box, muted text, a top rule). FR-038 and SC-021 are reworded to match. It remains visible on the page and not behind a dialog, checkbox or collapsed section.
 - **Trade-off, for the record**: this is less prominent at the moment of submitting than the original design. A one-line pointer beside the button is an option if a stronger disclosure is wanted later; it was not added.
 - **Sizes**: every text size went up one step (nothing under 14px; inputs 16px so phones do not zoom in on focus), buttons are at least 44px tall, and a test fails if `text-xs` returns.
+
+## R25. Generators after "Keep developing" (2026-09-20)
+
+- **Owner feedback**: put the generators under the keep-developing section.
+- **Change**: the "Develop further" links moved out of the result and now follow the composer and its notices, before the save and new-conversation actions. Order: result (with Copy), Keep developing, Develop further, then actions.
+- **Effect**: the links stay on screen when the turn limit is reached, so the user still has somewhere to go when the composer is replaced by the limit message. A test covers both the order and the limit case.

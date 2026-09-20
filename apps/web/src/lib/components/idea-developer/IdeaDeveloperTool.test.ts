@@ -321,6 +321,37 @@ describe("IdeaDeveloperTool develop further and saving", () => {
     return { store };
   }
 
+  it("puts the generators after the keep-developing controls, not inside the result", async () => {
+    await developed();
+    const keep = screen.getByRole("heading", { name: /keep developing/i });
+    const further = screen.getByRole("heading", { name: /develop further/i });
+    const result = screen.getByTestId("development-result");
+    const after = Node.DOCUMENT_POSITION_FOLLOWING;
+    expect(keep.compareDocumentPosition(further) & after).toBeTruthy();
+    expect(result.contains(further)).toBe(false);
+    // and the actions come last
+    const save = screen.getByRole("button", { name: /save to your codex/i });
+    expect(further.compareDocumentPosition(save) & after).toBeTruthy();
+  });
+
+  it("still offers the generators once the turn limit is reached", async () => {
+    const { store } = await developed();
+    const turns = Array.from({ length: MAX_CONVERSATION_TURNS - 1 }, () => ({
+      kind: "answer-questions" as const,
+      mode: "develop" as const,
+      text: "x",
+      status: "done" as const,
+    }));
+    store.conversation = {
+      ...store.conversation!,
+      turns: [...store.conversation!.turns, ...turns],
+    };
+    expect(await screen.findByText(/reached its limit/i)).toBeTruthy();
+    expect(
+      screen.getByRole("heading", { name: /develop further/i }),
+    ).toBeTruthy();
+  });
+
   it("shows generator links under develop further", async () => {
     await developed();
     expect(
