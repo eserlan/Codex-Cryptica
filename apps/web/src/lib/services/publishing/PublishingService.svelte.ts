@@ -50,16 +50,19 @@ export class PublishingService {
     const diskRegistry = await loadPublishRegistryFromDisk(vaultHandle);
     if (!diskRegistry) return;
     const idbRegistry = await this.deps.getPublishRegistry(vaultId);
-    if (
-      !idbRegistry ||
-      diskRegistry.publishedAt > (idbRegistry.publishedAt ?? "")
-    ) {
+    const registryToUse =
+      !idbRegistry || diskRegistry.publishedAt > (idbRegistry.publishedAt ?? "")
+        ? diskRegistry
+        : idbRegistry;
+
+    if (registryToUse === diskRegistry) {
       await this.deps.savePublishRegistry(diskRegistry);
-      this.publishedVaults = {
-        ...this.publishedVaults,
-        [vaultId]: diskRegistry,
-      };
     }
+
+    this.publishedVaults = {
+      ...this.publishedVaults,
+      [vaultId]: registryToUse,
+    };
   }
 
   private isLocalPath(path: string): boolean {

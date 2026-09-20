@@ -324,6 +324,18 @@ describe("PublishingService", () => {
       expect(service.publishedVaults["vault-1"].publishId).toBe("disk-pub-999");
     });
 
+    it("hydrates in-memory state when disk reconciliation already updated IDB", async () => {
+      registryStore["vault-1"] = diskRegistry;
+      const service = new PublishingService(deps);
+      const handle = makeMockHandle(diskRegistry);
+
+      await service.loadFromVault("vault-1", handle);
+
+      expect(service.publishedVaults["vault-1"]).toMatchObject({
+        publishId: "disk-pub-999",
+      });
+    });
+
     it("keeps IDB registry when it is newer than disk", async () => {
       const newerIdb = {
         ...diskRegistry,
