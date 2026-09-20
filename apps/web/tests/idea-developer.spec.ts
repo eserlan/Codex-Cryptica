@@ -85,38 +85,156 @@ test.describe("Idea Developer", () => {
     expect(box!.y).toBeGreaterThan(submit!.y + submit!.height);
   });
 
-  test("is readable on a phone: text of at least 14px, inputs of at least 16px, tall buttons", async ({
-    page,
-  }) => {
-    await page.setViewportSize({ width: 390, height: 844 });
-    await open(page);
-    const measured = await page.evaluate(() => {
-      const main = document.querySelector("main")!;
-      const small: string[] = [];
-      const walker = document.createTreeWalker(main, NodeFilter.SHOW_TEXT);
-      let node: Node | null;
-      while ((node = walker.nextNode())) {
-        const text = node.textContent?.trim();
-        const el = node.parentElement;
-        if (!text || !el) continue;
-        const style = getComputedStyle(el);
-        if (style.display === "none" || style.visibility === "hidden") continue;
-        const px = parseFloat(style.fontSize);
-        if (px < 14) small.push(`${px}px: ${text.slice(0, 40)}`);
+  const PHONE = { width: 390, height: 844 };
+
+  /** Sizes of every visible piece of text, the text areas, and the buttons. */
+  async function measure(page: Page) {
+    return page.evaluate(() => {
+      // The quiet notice, form labels and small-caps eyebrows are chrome: held
+      // to the 16px floor, not the 18px reading size.
+      const CHROME =
+        '[data-testid="conversation-notice"], label, legend, [class*="uppercase"]';
+
+      function visibleText(root: Element): Array<[string, HTMLElement]> {
+        const found: Array<[string, HTMLElement]> = [];
+        const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+        for (let n = walker.nextNode(); n; n = walker.nextNode()) {
+          const text = n.textContent?.trim();
+          const el = n.parentElement;
+          if (!text || !el) continue;
+          const style = getComputedStyle(el);
+          if (style.display !== "none" && style.visibility !== "hidden") {
+            found.push([text, el]);
+          }
+        }
+        return found;
       }
-      const area = document.querySelector("textarea")!;
-      const buttons = [...main.querySelectorAll("button")].map((b) =>
-        Math.round(b.getBoundingClientRect().height),
-      );
+
+      const size = (el: Element) => parseFloat(getComputedStyle(el).fontSize);
+      const describe = (text: string, el: Element) =>
+        `${size(el)}px: ${text.slice(0, 40)}`;
+
+      const main = document.querySelector("main")!;
+      const texts = visibleText(main);
       return {
-        small,
-        textarea: parseFloat(getComputedStyle(area).fontSize),
-        shortest: Math.min(...buttons),
+        under16: texts
+          .filter(([, el]) => size(el) < 16)
+          .map(([text, el]) => describe(text, el)),
+        longUnder18: texts
+          .filter(([text]) => text.length >= 30)
+          .filter(([, el]) => size(el) < 18 && !el.closest(CHROME))
+          .map(([text, el]) => describe(text, el)),
+        smallestArea: Math.min(
+          ...[...document.querySelectorAll("textarea")].map(size),
+        ),
+        shortestButton: Math.min(
+          ...[...main.querySelectorAll("button")].map((b) =>
+            Math.round(b.getBoundingClientRect().height),
+          ),
+        ),
+        // Bigger text must not push the page wider than the phone.
+        sidewaysScroll:
+          document.documentElement.scrollWidth > window.innerWidth,
       };
     });
-    expect(measured.small).toEqual([]);
-    expect(measured.textarea).toBeGreaterThanOrEqual(16);
-    expect(measured.shortest).toBeGreaterThanOrEqual(44);
+  }
+
+  test("is readable on a phone before anything is typed: nothing under 16px, body text 18px, tall buttons", async ({
+    page,
+  }) => {
+    await page.setViewportSize(PHONE);
+    await open(page);
+    const m = await measure(page);
+    expect(m.under16).toEqual([]);
+    expect(m.longUnder18).toEqual([]);
+    expect(m.smallestArea).toBeGreaterThanOrEqual(16);
+    expect(m.shortestButton).toBeGreaterThanOrEqual(44);
+    expect(m.sidewaysScroll).toBe(false);
+  });
+
+  test("is readable on a phone with a result on screen too", async ({
+    page,
+  }) => {
+    await page.setViewportSize(PHONE);
+    const development = {
+      mode: "develop",
+      whatChanged: "Sharpened the rivals.",
+      alreadyInteresting:
+        "Everything is made from dragon parts, yet there are no dragons nearby.",
+      centralQuestion: "Where do the parts come from?",
+      makeItMove: "The last shipment is late and the smiths are running out.",
+      peopleWhoCare: [
+        {
+          name: "Mara",
+          role: "Smith",
+          wants: "More scales",
+          conflictsWith: "The Warden",
+        },
+        {
+          name: "The Warden",
+          role: "Guard",
+          wants: "Nothing new enters",
+          conflictsWith: "Mara",
+        },
+      ],
+      playerDirections: [
+        {
+          title: "Follow the shipment",
+          description: "Trace it back along the road.",
+        },
+        {
+          title: "Search the cellars",
+          description: "Find where the old stock is kept.",
+        },
+      ],
+      consequences: "The town runs dry within a season.",
+      creatorQuestions: ["Who built the town?", "Are dragons extinct?"],
+      generatorSuggestions: [
+        { generatorKey: "npc", reason: "A person with a stake in it." },
+        { generatorKey: "faction", reason: "A group that wants the parts." },
+      ],
+    };
+    await page.addInitScript((latest) => {
+      try {
+        sessionStorage.setItem(
+          "idea-developer-session",
+          JSON.stringify({
+            version: 1,
+            ideaDraft: "",
+            mode: "develop",
+            conversation: {
+              ideaText: "A town of dragon parts.",
+              turns: [
+                {
+                  kind: "idea",
+                  mode: "develop",
+                  text: "A town of dragon parts.",
+                  status: "done",
+                },
+                {
+                  kind: "answer-questions",
+                  mode: "develop",
+                  text: "They left.",
+                  status: "done",
+                },
+              ],
+              previousInteractionId: "i-1",
+              latest,
+            },
+          }),
+        );
+      } catch {
+        /* ignore */
+      }
+    }, development);
+    await open(page);
+    await expect(page.getByText("Where do the parts come from?")).toBeVisible();
+    const m = await measure(page);
+    expect(m.under16).toEqual([]);
+    expect(m.longUnder18).toEqual([]);
+    expect(m.smallestArea).toBeGreaterThanOrEqual(16);
+    expect(m.shortestButton).toBeGreaterThanOrEqual(44);
+    expect(m.sidewaysScroll).toBe(false);
   });
 
   test("keeps submit disabled until there is an idea, and shows the length limit", async ({

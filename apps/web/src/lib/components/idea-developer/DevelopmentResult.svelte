@@ -2,45 +2,36 @@
   import {
     DEVELOPMENT_SECTION_TITLES as titles,
     developmentToText,
-    getMode,
+    type ComparedSection,
     type Development,
   } from "generator-engine";
-  import {
-    clipboardService as defaultClipboardService,
-    type ClipboardService,
-  } from "$lib/services/ClipboardService";
+  import { type ClipboardService } from "$lib/services/ClipboardService";
+  import ChangeSummary from "./ChangeSummary.svelte";
+  import CopyButton from "./CopyButton.svelte";
+  import ResultLabel from "./ResultLabel.svelte";
+  import UpdatedBadge from "./UpdatedBadge.svelte";
 
   let {
     development,
     ideaText,
-    clipboardService = defaultClipboardService,
+    changed = null,
+    turn,
+    maxTurns,
+    clipboardService,
   }: {
     development: Development;
     ideaText: string;
+    /** Sections this turn changed; null when there is nothing to compare. */
+    changed?: ComparedSection[] | null;
+    /** Which turn this is, and the most a conversation allows. */
+    turn?: number;
+    maxTurns?: number;
     clipboardService?: Pick<ClipboardService, "copyContent">;
   } = $props();
 
-  const modeLabel = $derived(getMode(development.mode)?.label);
-
-  let copied = $state(false);
-  let copyFailed = $state(false);
-
-  async function copy() {
-    copyFailed = false;
-    try {
-      const success = await clipboardService.copyContent({
-        markdown: developmentToText(development, ideaText),
-      });
-      if (success) {
-        copied = true;
-        setTimeout(() => (copied = false), 2000);
-      } else {
-        copyFailed = true;
-      }
-    } catch {
-      copyFailed = true;
-    }
-  }
+  const isChanged = (key: ComparedSection) => changed?.includes(key) ?? false;
+  const sectionClass = (key: ComparedSection) =>
+    isChanged(key) ? "border-l-4 border-theme-primary pl-3" : "";
 </script>
 
 <div class="flex flex-col gap-5" data-testid="development-result">
@@ -48,65 +39,76 @@
     class="rounded-xl border border-theme-border/70 bg-theme-surface/50 p-4"
   >
     <p
-      class="font-mono text-sm font-bold uppercase tracking-[0.24em] text-theme-primary"
+      class="font-mono text-base sm:text-sm font-bold uppercase tracking-[0.24em] text-theme-primary"
     >
       Your idea
     </p>
-    <p class="mt-2 whitespace-pre-wrap text-base text-theme-text">{ideaText}</p>
+    <p class="mt-2 whitespace-pre-wrap text-lg sm:text-base text-theme-text">
+      {ideaText}
+    </p>
   </blockquote>
 
-  {#if modeLabel}
-    <p
-      class="font-mono text-sm font-bold uppercase tracking-[0.24em] text-theme-muted"
-      data-testid="mode-label"
-    >
-      {modeLabel} mode
-    </p>
-  {/if}
+  <ResultLabel mode={development.mode} {turn} {maxTurns} />
 
-  {#if development.whatChanged}
-    <p
-      class="rounded-lg border border-theme-primary/30 bg-theme-primary/10 px-3 py-2 text-base text-theme-text"
-    >
-      <span class="font-bold">What changed:</span>
-      {development.whatChanged}
-    </p>
-  {/if}
+  <ChangeSummary whatChanged={development.whatChanged} {changed} />
 
-  <section aria-labelledby="dev-interesting">
+  <section
+    aria-labelledby="dev-interesting"
+    class={sectionClass("alreadyInteresting")}
+  >
     <h2
       id="dev-interesting"
-      class="font-header text-lg font-bold text-theme-text"
+      class="font-header text-xl sm:text-lg font-bold text-theme-text"
     >
-      {titles.alreadyInteresting}
+      {titles.alreadyInteresting}<UpdatedBadge
+        show={isChanged("alreadyInteresting")}
+      />
     </h2>
-    <p class="mt-1 text-base text-theme-muted">
+    <p class="mt-1 text-lg sm:text-base text-theme-muted">
       {development.alreadyInteresting}
     </p>
   </section>
 
-  <section aria-labelledby="dev-question">
-    <h2 id="dev-question" class="font-header text-lg font-bold text-theme-text">
-      {titles.centralQuestion}
+  <section
+    aria-labelledby="dev-question"
+    class={sectionClass("centralQuestion")}
+  >
+    <h2
+      id="dev-question"
+      class="font-header text-xl sm:text-lg font-bold text-theme-text"
+    >
+      {titles.centralQuestion}<UpdatedBadge
+        show={isChanged("centralQuestion")}
+      />
     </h2>
-    <p class="mt-1 text-base text-theme-muted">{development.centralQuestion}</p>
+    <p class="mt-1 text-lg sm:text-base text-theme-muted">
+      {development.centralQuestion}
+    </p>
   </section>
 
-  <section aria-labelledby="dev-move">
-    <h2 id="dev-move" class="font-header text-lg font-bold text-theme-text">
-      {titles.makeItMove}
+  <section aria-labelledby="dev-move" class={sectionClass("makeItMove")}>
+    <h2
+      id="dev-move"
+      class="font-header text-xl sm:text-lg font-bold text-theme-text"
+    >
+      {titles.makeItMove}<UpdatedBadge show={isChanged("makeItMove")} />
     </h2>
-    <p class="mt-1 text-base text-theme-muted">{development.makeItMove}</p>
+    <p class="mt-1 text-lg sm:text-base text-theme-muted">
+      {development.makeItMove}
+    </p>
   </section>
 
-  <section aria-labelledby="dev-people">
-    <h2 id="dev-people" class="font-header text-lg font-bold text-theme-text">
-      {titles.peopleWhoCare}
+  <section aria-labelledby="dev-people" class={sectionClass("peopleWhoCare")}>
+    <h2
+      id="dev-people"
+      class="font-header text-xl sm:text-lg font-bold text-theme-text"
+    >
+      {titles.peopleWhoCare}<UpdatedBadge show={isChanged("peopleWhoCare")} />
     </h2>
     <ul class="mt-2 grid gap-2 sm:grid-cols-2">
       {#each development.peopleWhoCare as person, index (index)}
         <li
-          class="rounded-lg border border-theme-border/60 bg-theme-surface/40 p-3 text-base"
+          class="rounded-lg border border-theme-border/60 bg-theme-surface/40 p-3 text-lg sm:text-base"
         >
           <p class="font-bold text-theme-text">
             {person.name}
@@ -119,13 +121,21 @@
     </ul>
   </section>
 
-  <section aria-labelledby="dev-players">
-    <h2 id="dev-players" class="font-header text-lg font-bold text-theme-text">
-      {titles.playerDirections}
+  <section
+    aria-labelledby="dev-players"
+    class={sectionClass("playerDirections")}
+  >
+    <h2
+      id="dev-players"
+      class="font-header text-xl sm:text-lg font-bold text-theme-text"
+    >
+      {titles.playerDirections}<UpdatedBadge
+        show={isChanged("playerDirections")}
+      />
     </h2>
     <ul class="mt-2 flex flex-col gap-2">
       {#each development.playerDirections as direction, index (index)}
-        <li class="text-base">
+        <li class="text-lg sm:text-base">
           <span class="font-bold text-theme-text">{direction.title}</span>
           <span class="block text-theme-muted">{direction.description}</span>
         </li>
@@ -133,49 +143,45 @@
     </ul>
   </section>
 
-  <section aria-labelledby="dev-consequences">
+  <section
+    aria-labelledby="dev-consequences"
+    class={sectionClass("consequences")}
+  >
     <h2
       id="dev-consequences"
-      class="font-header text-lg font-bold text-theme-text"
+      class="font-header text-xl sm:text-lg font-bold text-theme-text"
     >
-      {titles.consequences}
+      {titles.consequences}<UpdatedBadge show={isChanged("consequences")} />
     </h2>
-    <p class="mt-1 text-base text-theme-muted">{development.consequences}</p>
+    <p class="mt-1 text-lg sm:text-base text-theme-muted">
+      {development.consequences}
+    </p>
   </section>
 
-  <section aria-labelledby="dev-questions">
+  <section
+    aria-labelledby="dev-questions"
+    class={sectionClass("creatorQuestions")}
+  >
     <h2
       id="dev-questions"
-      class="font-header text-lg font-bold text-theme-text"
+      class="font-header text-xl sm:text-lg font-bold text-theme-text"
     >
-      {titles.creatorQuestions}
+      {titles.creatorQuestions}<UpdatedBadge
+        show={isChanged("creatorQuestions")}
+      />
     </h2>
-    <ul class="mt-2 list-disc pl-5 text-base text-theme-muted">
+    <ul class="mt-2 list-disc pl-5 text-lg sm:text-base text-theme-muted">
       {#each development.creatorQuestions as question, index (index)}
         <li>{question}</li>
       {/each}
     </ul>
-    <p class="mt-2 text-sm text-theme-muted">
+    <p class="mt-2 text-lg sm:text-sm text-theme-muted">
       These are yours to answer. The tool doesn't decide them for you.
     </p>
   </section>
 
-  <div class="flex flex-wrap items-center gap-3">
-    <button
-      type="button"
-      onclick={copy}
-      class="min-h-11 justify-center inline-flex items-center gap-2 rounded-lg border border-theme-border bg-theme-surface px-3 py-2 text-sm font-bold uppercase tracking-wider text-theme-text transition-colors hover:border-theme-primary/50"
-    >
-      <span class="icon-[lucide--copy] h-4 w-4" aria-hidden="true"></span>
-      Copy result
-    </button>
-    {#if copied}
-      <span class="text-sm text-theme-muted" role="status">Copied</span>
-    {/if}
-    {#if copyFailed}
-      <span class="text-sm text-theme-muted" role="alert"
-        >Couldn't copy. Select the text and copy it instead.</span
-      >
-    {/if}
-  </div>
+  <CopyButton
+    text={developmentToText(development, ideaText)}
+    {clipboardService}
+  />
 </div>

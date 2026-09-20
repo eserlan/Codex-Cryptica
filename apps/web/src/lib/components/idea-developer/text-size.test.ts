@@ -26,18 +26,20 @@ describe("Idea Developer text sizes", () => {
   });
 
   it.each(files.map((f) => [f.split("/").slice(-2).join("/"), f]))(
-    "%s uses no text smaller than 14px",
+    "%s uses no phone text below 16px",
     (_name, file) => {
       const source = readFileSync(file, "utf8");
-      expect(source).not.toMatch(/\btext-xs\b/);
-      const arbitrary = [...source.matchAll(/\btext-\[(\d+)px\]/g)].map((m) =>
-        Number(m[1]),
-      );
-      expect(arbitrary.filter((px) => px < 14)).toEqual([]);
+      // Phone-first: an unprefixed size is the phone size. Only `sm:` and up
+      // may step down to text-sm.
+      expect(source).not.toMatch(/(?<![\w:-])text-(xs|sm)(?![\w-])/);
+      const arbitrary = [
+        ...source.matchAll(/(?<![\w:-])text-\[(\d+)px\]/g),
+      ].map((m) => Number(m[1]));
+      expect(arbitrary.filter((px) => px < 16)).toEqual([]);
     },
   );
 
-  it("sets both text areas to at least 16px so phones do not zoom in on focus", () => {
+  it("sets both text areas to 18px on a phone (never under 16px, so it does not zoom)", () => {
     for (const name of [
       "IdeaDeveloperTool.svelte",
       "FollowUpComposer.svelte",
@@ -45,8 +47,8 @@ describe("Idea Developer text sizes", () => {
       const source = readFileSync(join(components, name), "utf8");
       const textarea =
         source.match(/<textarea[\s\S]*?><\/textarea>/)?.[0] ?? "";
-      expect(textarea, name).toMatch(/\btext-base\b/);
-      expect(textarea, name).not.toMatch(/\btext-sm\b/);
+      expect(textarea, name).toMatch(/(?<![\w:-])text-lg(?![\w-])/);
+      expect(textarea, name).not.toMatch(/(?<![\w:-])text-(xs|sm)(?![\w-])/);
     }
   });
 
@@ -55,7 +57,7 @@ describe("Idea Developer text sizes", () => {
     for (const name of [
       "IdeaDeveloperTool.svelte",
       "FollowUpComposer.svelte",
-      "DevelopmentResult.svelte",
+      "CopyButton.svelte",
     ]) {
       const source = readFileSync(join(components, name), "utf8");
       // A button either has its classes inline, or uses a shared class string.

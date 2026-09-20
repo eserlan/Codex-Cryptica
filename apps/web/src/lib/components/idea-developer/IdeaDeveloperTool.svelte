@@ -1,5 +1,11 @@
 <script lang="ts">
-  import { MAX_IDEA_LENGTH, isModeId, listModes } from "generator-engine";
+  import {
+    MAX_CONVERSATION_TURNS,
+    MAX_IDEA_LENGTH,
+    countDoneTurns,
+    isModeId,
+    listModes,
+  } from "generator-engine";
   import {
     ideaDeveloperStore,
     type IdeaDeveloperStore,
@@ -40,11 +46,39 @@
 
   const modes = listModes();
   let showSaveModal = $state(false);
+  let anchor = $state<HTMLElement | null>(null);
+  let wantsView = $state(false);
+  let seenTurns: number | null = null;
+  let started = false;
   let saveMessage = $state<string | null>(null);
 
   const submitting = $derived(store.status === "submitting");
   const active = $derived(store.status === "active");
   const canSubmit = $derived(store.ideaDraft.trim().length > 0 && !submitting);
+
+  // When a turn completes, bring the updated result into view. The buttons that
+  // start a turn are below the result, so without this the change happens out of
+  // sight. Not done for a conversation restored after a reload.
+  $effect(() => {
+    const turns = store.conversation
+      ? countDoneTurns(store.conversation.turns)
+      : null;
+    if (started && turns !== null && turns !== seenTurns) wantsView = true;
+    started = true;
+    seenTurns = turns;
+  });
+
+  $effect(() => {
+    if (!wantsView || !anchor) return;
+    wantsView = false;
+    const calm =
+      window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
+    anchor.focus({ preventScroll: true });
+    anchor.scrollIntoView?.({
+      behavior: calm ? "auto" : "smooth",
+      block: "start",
+    });
+  });
 
   // Drop the tab's copy if the user removes this conversation's Session Hub draft.
   $effect(() => {
@@ -65,11 +99,21 @@
 
 <div class="flex flex-col gap-4">
   {#if active && store.conversation?.latest}
-    <DevelopmentResult
-      development={store.conversation.latest}
-      ideaText={store.conversation.ideaText}
-      {clipboardService}
-    />
+    <div
+      bind:this={anchor}
+      tabindex="-1"
+      class="scroll-mt-6 outline-none"
+      data-testid="result-anchor"
+    >
+      <DevelopmentResult
+        development={store.conversation.latest}
+        ideaText={store.conversation.ideaText}
+        changed={store.changedSections}
+        turn={countDoneTurns(store.conversation.turns)}
+        maxTurns={MAX_CONVERSATION_TURNS}
+        {clipboardService}
+      />
+    </div>
     <FollowUpComposer {store} />
     <NoticeBanner notice={store.notice} />
     <GeneratorLinks
@@ -81,7 +125,7 @@
         <button
           type="button"
           onclick={saveToCodexClicked}
-          class="min-h-11 justify-center inline-flex items-center gap-2 rounded-lg bg-theme-primary px-4 py-2 text-sm font-bold uppercase tracking-wider text-theme-bg transition-opacity hover:opacity-90"
+          class="min-h-11 justify-center inline-flex items-center gap-2 rounded-lg bg-theme-primary px-4 py-2 text-base sm:text-sm font-bold uppercase tracking-wider text-theme-bg transition-opacity hover:opacity-90"
         >
           <span class="icon-[lucide--save] h-4 w-4" aria-hidden="true"></span>
           Save to your Codex
@@ -89,7 +133,7 @@
         <button
           type="button"
           onclick={() => store.clear()}
-          class="min-h-11 justify-center inline-flex items-center gap-2 rounded-lg border border-theme-border bg-theme-surface px-3 py-2 text-sm font-bold uppercase tracking-wider text-theme-text transition-colors hover:border-theme-primary/50"
+          class="min-h-11 justify-center inline-flex items-center gap-2 rounded-lg border border-theme-border bg-theme-surface px-3 py-2 text-base sm:text-sm font-bold uppercase tracking-wider text-theme-text transition-colors hover:border-theme-primary/50"
         >
           <span class="icon-[lucide--rotate-ccw] h-4 w-4" aria-hidden="true"
           ></span>
@@ -99,7 +143,7 @@
       {#if saveMessage}
         <p
           role="alert"
-          class="rounded-lg border border-theme-border/70 bg-theme-surface/50 p-3 text-base text-theme-text"
+          class="rounded-lg border border-theme-border/70 bg-theme-surface/50 p-3 text-lg sm:text-base text-theme-text"
         >
           {saveMessage}
         </p>
@@ -115,34 +159,34 @@
     <div class="flex flex-col gap-2">
       <label
         for="idea-developer-input"
-        class="font-mono text-sm font-bold uppercase tracking-[0.24em] text-theme-primary"
+        class="font-mono text-base sm:text-sm font-bold uppercase tracking-[0.24em] text-theme-primary"
       >
         Your RPG idea
       </label>
       <textarea
         id="idea-developer-input"
         aria-label="Your RPG idea"
-        class="min-h-40 w-full rounded-xl border border-theme-border bg-theme-bg/50 p-3 text-base text-theme-text placeholder:text-theme-muted/70 focus:border-theme-primary focus:outline-none"
+        class="min-h-40 w-full rounded-xl border border-theme-border bg-theme-bg/50 p-3 text-lg sm:text-base text-theme-text placeholder:text-theme-muted/70 focus:border-theme-primary focus:outline-none"
         placeholder="A town where everything is made from dragon parts, but there are no dragons nearby."
         value={store.ideaDraft}
         readonly={submitting}
         oninput={(event) => store.setIdea(event.currentTarget.value)}
       ></textarea>
-      <p class="text-right text-sm text-theme-muted">
+      <p class="text-right text-base sm:text-sm text-theme-muted">
         {store.ideaDraft.length} / {MAX_IDEA_LENGTH}
       </p>
     </div>
 
     <fieldset class="flex flex-col gap-2" disabled={submitting}>
       <legend
-        class="font-mono text-sm font-bold uppercase tracking-[0.24em] text-theme-primary"
+        class="font-mono text-base sm:text-sm font-bold uppercase tracking-[0.24em] text-theme-primary"
       >
         How should it look at your idea?
       </legend>
       <div class="grid gap-2 sm:grid-cols-2">
         {#each modes as mode (mode.id)}
           <label
-            class="flex cursor-pointer items-start gap-2 rounded-lg border p-3 text-base transition-colors {store.mode ===
+            class="flex cursor-pointer items-start gap-2 rounded-lg border p-3 text-lg sm:text-base transition-colors {store.mode ===
             mode.id
               ? 'border-theme-primary bg-theme-primary/10'
               : 'border-theme-border/70 bg-theme-surface/40 hover:border-theme-primary/40'}"
@@ -157,7 +201,7 @@
             />
             <span>
               <span class="block font-bold text-theme-text">{mode.label}</span>
-              <span class="block text-sm text-theme-muted"
+              <span class="block text-lg sm:text-sm text-theme-muted"
                 >{mode.description}</span
               >
             </span>
@@ -172,7 +216,7 @@
           type="button"
           disabled={!canSubmit}
           onclick={() => store.submit()}
-          class="min-h-11 justify-center inline-flex items-center gap-2 rounded-lg bg-theme-primary px-4 py-2 text-sm font-bold uppercase tracking-wider text-theme-bg transition-opacity disabled:cursor-not-allowed disabled:opacity-50"
+          class="min-h-11 justify-center inline-flex items-center gap-2 rounded-lg bg-theme-primary px-4 py-2 text-base sm:text-sm font-bold uppercase tracking-wider text-theme-bg transition-opacity disabled:cursor-not-allowed disabled:opacity-50"
         >
           <span class="icon-[lucide--sparkles] h-4 w-4" aria-hidden="true"
           ></span>
@@ -182,7 +226,7 @@
           <button
             type="button"
             onclick={() => store.cancel()}
-            class="min-h-11 justify-center inline-flex items-center gap-2 rounded-lg border border-theme-border bg-theme-surface px-3 py-2 text-sm font-bold uppercase tracking-wider text-theme-text"
+            class="min-h-11 justify-center inline-flex items-center gap-2 rounded-lg border border-theme-border bg-theme-surface px-3 py-2 text-base sm:text-sm font-bold uppercase tracking-wider text-theme-text"
           >
             Cancel
           </button>

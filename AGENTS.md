@@ -31,7 +31,7 @@ This file is the Codex-facing instruction layer for this repository.
 
 ## Repository Rules
 
-- **Style Guide Adherence**: ALWAYS read and adhere to [docs/STYLE_GUIDE.md](file:///home/espen/proj/remotecodexarcana/docs/STYLE_GUIDE.md). All UI components MUST use Svelte 5 Runes, Tailwind 4 semantic tokens (e.g., `text-theme-primary`), and follow the documented DI (Dependency Injection) and transition/animation patterns.
+- **Style Guide Adherence**: ALWAYS read and adhere to [docs/STYLE_GUIDE.md](file:///home/espen/proj/remotecodexarcana/docs/STYLE_GUIDE.md). All UI components MUST use Svelte 5 Runes, Tailwind 4 semantic tokens (e.g., `text-theme-primary`), and follow the documented DI (Dependency Injection) and transition/animation patterns. All UI MUST also meet the phone floor in its "Mobile Typography & Touch Targets" section (no text a user reads or taps under 16px below 640px, sentences 18px, inputs 16px or more, touch targets 44px or more), verified in a real browser.
 - **Icon Usage**: NEVER use `lucide-svelte` components. ALWAYS use the Iconify utility pattern: `class="icon-[lucide--name] h-4 w-4"`.
 - Follow the constitution's library-first, TDD, privacy, DI, and documentation principles.
 - Do not commit implementation changes without tests for the affected behavior.

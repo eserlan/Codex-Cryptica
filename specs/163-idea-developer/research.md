@@ -203,3 +203,10 @@ Also not reading hub context: names, dungeon, plot twist, world, star system, co
 - **Owner feedback**: put the generators under the keep-developing section.
 - **Change**: the "Develop further" links moved out of the result and now follow the composer and its notices, before the save and new-conversation actions. Order: result (with Copy), Keep developing, Develop further, then actions.
 - **Effect**: the links stay on screen when the turn limit is reached, so the user still has somewhere to go when the composer is replaced by the limit message. A test covers both the order and the limit case.
+
+## R26. Phone text was still too small (2026-09-20)
+
+- **Owner feedback**: "Text is still small on phone", after the first size bump.
+- **Measured, at 390px in a real browser** (with a saved result seeded into the page, since the first check only measured the empty tool): 18 pieces of text at 14px, 32 at 16px, only headings at 18px. My first check measured only the empty state and allowed 14px, so it passed while the result view was still small.
+- **Change**: a phone-first scale. The unprefixed class is the phone size (reading text 18px, labels and buttons 16px, h2 20px, inputs 18px) and `sm:` steps back down, so desktop looks as before. Two browser tests measure the empty and the result states; the class guard now fails on any unprefixed `text-xs` or `text-sm`.
+- **Guidelines**: the rule now lives in `docs/STYLE_GUIDE.md` ("Mobile Typography & Touch Targets"), Constitution Principle VI item 4 (v1.7.0) and `AGENTS.md`, so it does not have to be rediscovered per feature. Existing dense in-app components are not changed retroactively.

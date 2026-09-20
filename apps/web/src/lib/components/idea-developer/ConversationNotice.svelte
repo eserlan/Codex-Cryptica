@@ -5,7 +5,7 @@
 </script>
 
 <div
-  class="border-t border-theme-border/40 pt-5 text-sm text-theme-muted"
+  class="border-t border-theme-border/40 pt-5 text-base sm:text-sm text-theme-muted"
   data-testid="conversation-notice"
 >
   <p class="leading-relaxed">{notice.text}</p>

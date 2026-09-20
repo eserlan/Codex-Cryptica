@@ -43,7 +43,7 @@
   <main class="mx-auto max-w-2xl break-words px-4 py-12 sm:px-6 sm:py-20">
     <header class="mb-8">
       <p
-        class="mb-3 font-mono text-sm font-bold uppercase tracking-[0.24em] text-theme-primary"
+        class="mb-3 font-mono text-base sm:text-sm font-bold uppercase tracking-[0.24em] text-theme-primary"
       >
         Idea Developer
       </p>
@@ -52,7 +52,9 @@
       >
         Develop your RPG idea
       </h1>
-      <p class="mt-4 max-w-2xl font-light text-theme-muted">
+      <p
+        class="mt-4 max-w-2xl text-lg sm:text-base font-light text-theme-muted"
+      >
         Paste the idea you already have. The Idea Developer builds on it and
         keeps it recognisably yours, then asks you the questions only you can
         answer.
@@ -65,11 +67,11 @@
       id="how-it-works"
       class="mt-12 rounded-xl border border-theme-border/70 bg-theme-surface/50 p-5"
     >
-      <h2 class="font-header text-lg font-bold text-theme-text">
+      <h2 class="font-header text-xl sm:text-lg font-bold text-theme-text">
         What it does, and what it doesn't
       </h2>
       <ul
-        class="mt-3 flex list-disc flex-col gap-2 pl-5 text-base text-theme-muted"
+        class="mt-3 flex list-disc flex-col gap-2 pl-5 text-lg sm:text-base text-theme-muted"
       >
         <li>
           It develops your idea: what's already interesting, the central

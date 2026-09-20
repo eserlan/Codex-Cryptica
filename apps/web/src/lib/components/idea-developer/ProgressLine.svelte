@@ -17,5 +17,7 @@
 </script>
 
 {#if running}
-  <p role="status" class="text-base text-theme-muted">{messages[index]}</p>
+  <p role="status" class="text-lg sm:text-base text-theme-muted">
+    {messages[index]}
+  </p>
 {/if}

@@ -1,22 +1,19 @@
 <!--
 Sync Impact Report
-- Version change: 1.5.0 -> 1.6.0
-- Modified principles: None
-- Added sections: XIV. Bounded Responsibility (No God Files) — promotes the practice
-  already established by ADR 003 and docs/STYLE_GUIDE.md into a checkable principle
-  (new principle = minor bump)
+- Version change: 1.6.0 -> 1.7.0
+- Modified principles: VI. Clean Implementation (AI Guardrails) — added item 4, a phone
+  readability floor (new normative rule under an existing principle = minor bump)
+- Added sections: None
 - Removed sections: None
 - Templates requiring updates:
-  - ✅ Updated .specify/templates/plan-template.md; added a Bounded Responsibility
-    Check to the Constitution Check gate, mirroring the Discovery Intent Check, so
-    the trigger is answered at plan time rather than discovered in review.
-  - ✅ Verified .specify/templates/spec-template.md; specs describe behaviour, not
-    file layout, so no conflicting guidance.
-  - ✅ Verified .specify/templates/tasks-template.md; no conflicting guidance. A
-    decomposition task is situational and belongs to the plan that finds it, not to
-    every feature's task list.
-- Follow-up TODOs: None. The principle is scoped to files a change touches, so no
-  retroactive audit of the 136 existing files over the trigger is implied.
+  - ✅ Verified .specify/templates/plan-template.md; its Constitution Check gate takes its
+    rows from this file, so no template change is needed.
+  - ✅ Verified .specify/templates/spec-template.md and tasks-template.md; no conflicting
+    guidance.
+  - ✅ Updated docs/STYLE_GUIDE.md (new "Mobile Typography & Touch Targets" section that
+    holds the numbers) and AGENTS.md (points agents at it).
+- Follow-up TODOs: None. Existing dense in-app components are not audited retroactively;
+  the style guide requires the floor when a change touches them.
 -->
 
 # Codex-Arcana Constitution
@@ -63,6 +60,7 @@ To maintain build integrity and code quality, AI agents MUST:
 1.  **Style Guide**: Adhere strictly to `@docs/STYLE_GUIDE.md` for all visual, behavioral, and architectural patterns (including Svelte 5 Runes, Tailwind 4 tokens, and Data Safety).
 2.  **Implementation Hygiene**: Prefix unused variables/parameters with `_` and ensure comprehensive type definitions (e.g. `node` types) in workspace packages.
 3.  **Validation**: Every code change MUST be verified with `bun run lint` and `bun run test` before considering the task complete.
+4.  **Phone Readability**: New or changed UI MUST be readable and usable on a phone, following the "Mobile Typography & Touch Targets" section of `@docs/STYLE_GUIDE.md`: no text a user reads or taps under 16px below 640px wide, sentences at 18px, text inputs never under 16px, touch targets at least 44px tall, and no sideways scroll. This MUST be verified by measuring computed sizes in a real browser, not only in jsdom.
 
 ### VII. User Documentation
 
@@ -129,4 +127,4 @@ Size is reported for human review, never enforced by a line-count lint rule — 
 
 This constitution is the ultimate arbiter of engineering quality. All implementation plans and code reviews must verify alignment with these principles.
 
-**Version**: 1.6.0 | **Ratified**: 2026-05-23 | **Last Amended**: 2026-09-01
+**Version**: 1.7.0 | **Ratified**: 2026-05-23 | **Last Amended**: 2026-09-20

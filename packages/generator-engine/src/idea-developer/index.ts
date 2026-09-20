@@ -7,3 +7,4 @@ export * from "./generator-catalogue";
 export * from "./suggestions";
 export * from "./to-hub-draft";
 export * from "./conversation";
+export * from "./diff";

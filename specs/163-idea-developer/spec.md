@@ -262,7 +262,7 @@ After the first development, the user carries on with the same idea. They can an
 - **SC-020**: In tested runs, 0 records of idea, turn or result text exist on Codex Cryptica's own storage or logs (SC-011 extended to turns).
 - **SC-021**: In a review of the tool page (desktop and phone width), the notice is on the page in every case, is not hidden behind anything the visitor must open, and the notice, help entry and privacy page agree on what is kept, by whom, and how to end the conversation.
 - **SC-022**: In tested runs, choosing "Save to your Codex" opens the existing save flow with the conversation's draft in 100% of cases, and the tool writes no new stored record.
-- **SC-023**: On a phone-width screen, all text on the tool page is at least 14px, text inputs are at least 16px (so phones do not zoom in on focus), and every button is at least 44px tall.
+- **SC-023**: On a phone-width screen (390px), in every state the page can be in (empty, and with a result on screen), no text is under 16px, every sentence is at least 18px (form labels, small-caps eyebrows and the quiet privacy notice may be 16px), text inputs are at least 16px, every button is at least 44px tall, and the page does not scroll sideways. This is the phone floor in the style guide.
 - **SC-024**: A reply that is not quite in the expected shape (a fifth person, a repeated direction, a list where a sentence was expected, text around the JSON) is accepted after tidying, and one that is unusable is asked for again once, with the reason, before the user sees an error.
 
 ## Assumptions

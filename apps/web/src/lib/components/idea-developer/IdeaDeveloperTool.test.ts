@@ -674,3 +674,111 @@ describe("IdeaDeveloperTool funnel events", () => {
     expect(tracker.signupStarted).not.toHaveBeenCalled();
   });
 });
+
+describe("IdeaDeveloperTool after a follow-up turn", () => {
+  const second = {
+    ...development,
+    mode: "assess" as const,
+    whatChanged: "Looked at it as an assessment.",
+    centralQuestion: "Who is quietly buying the parts?",
+  };
+
+  async function developed() {
+    const scrollIntoView = vi.fn();
+    Element.prototype.scrollIntoView = scrollIntoView;
+    const service = {
+      start: vi.fn().mockResolvedValue({
+        status: "ok",
+        development,
+        interactionId: "i-1",
+        ideaText: "A town made of dragon parts.",
+        hubDraftId: "hub-1",
+      }),
+      continue: vi.fn().mockResolvedValue({
+        status: "ok",
+        development: second,
+        interactionId: "i-2",
+        turn: { kind: "switch-mode", mode: "assess", text: "", status: "done" },
+      }),
+    };
+    const store = new IdeaDeveloperStore(service as never, memoryStorage(), {
+      remove: vi.fn(),
+      exists: () => true,
+    } as never);
+    render(IdeaDeveloperTool, { props: { store } });
+    await fireEvent.input(textbox(), {
+      target: { value: "A town made of dragon parts." },
+    });
+    await fireEvent.click(submitButton());
+    await screen.findByText("Where do the parts come from?");
+    return { store, scrollIntoView };
+  }
+
+  it("brings the updated result into view and focuses it", async () => {
+    const { scrollIntoView } = await developed();
+    scrollIntoView.mockClear();
+    await fireEvent.click(
+      screen.getByRole("button", { name: /continue in assess/i }),
+    );
+    await screen.findByText("Who is quietly buying the parts?");
+    await vi.waitFor(() => expect(scrollIntoView).toHaveBeenCalled());
+    expect(document.activeElement).toBe(screen.getByTestId("result-anchor"));
+  });
+
+  it("marks the section that changed and says which turn this is", async () => {
+    await developed();
+    await fireEvent.click(
+      screen.getByRole("button", { name: /continue in assess/i }),
+    );
+    await screen.findByText("Who is quietly buying the parts?");
+    expect(screen.getAllByText("Updated")).toHaveLength(1);
+    expect(
+      screen.getByText(/sections updated: central question/i),
+    ).toBeTruthy();
+    expect(screen.getByTestId("mode-label").textContent).toMatch(
+      /assess mode.*turn 2 of 8/i,
+    );
+  });
+
+  it("does not steal focus just because a saved conversation was restored", async () => {
+    const storage = memoryStorage();
+    const service = {
+      start: vi.fn().mockResolvedValue({
+        status: "ok",
+        development: {
+          ...development,
+          generatorSuggestions: [
+            { generatorKey: "npc", reason: "A person." },
+            { generatorKey: "faction", reason: "A group." },
+          ],
+        },
+        interactionId: "i-1",
+        ideaText: "A town.",
+        hubDraftId: "hub-1",
+      }),
+    };
+    const first = new IdeaDeveloperStore(service as never, storage, {
+      remove: vi.fn(),
+      exists: () => true,
+    } as never);
+    first.setIdea("A town.");
+    await first.submit();
+    cleanup();
+    const scrollIntoView = vi.fn();
+    Element.prototype.scrollIntoView = scrollIntoView;
+    const restored = new IdeaDeveloperStore(
+      { start: vi.fn() } as never,
+      storage,
+      {
+        remove: vi.fn(),
+        exists: () => true,
+      } as never,
+    );
+    render(IdeaDeveloperTool, { props: { store: restored } });
+    await screen.findByText("Where do the parts come from?");
+    expect(scrollIntoView).not.toHaveBeenCalled();
+    expect(document.activeElement).not.toBe(
+      screen.getByTestId("result-anchor"),
+    );
+  });
+});

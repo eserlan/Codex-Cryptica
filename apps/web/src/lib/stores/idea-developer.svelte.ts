@@ -1,8 +1,11 @@
 import {
   DEFAULT_MODE,
   canContinue,
+  changedSections as compareSections,
   countDoneTurns,
+  type ComparedSection,
   type Conversation,
+  type Development,
   type FollowUpKind,
   type ModeId,
 } from "generator-engine";
@@ -64,6 +67,11 @@ export class IdeaDeveloperStore {
   followUpText = $state("");
   /** True while a turn after the first is running. */
   turnRunning = $state(false);
+  /**
+   * The result before the latest turn, kept in memory only so the view can show
+   * what that turn changed. Not saved: after a reload there is nothing to compare.
+   */
+  previous = $state<Development | null>(null);
 
   private controller: AbortController | null = null;
   /**
@@ -110,6 +118,16 @@ export class IdeaDeveloperStore {
     const turns = this.conversation?.turns ?? [];
     const last = [...turns].reverse().find((turn) => turn.status === "done");
     return last?.mode ?? this.mode;
+  }
+
+  /**
+   * The sections the latest turn changed, worked out by comparing the two
+   * results. Null when there is nothing to compare (a first result).
+   */
+  get changedSections(): ComparedSection[] | null {
+    const latest = this.conversation?.latest;
+    if (!latest || !this.previous) return null;
+    return compareSections(this.previous, latest);
   }
 
   /** Whether the turn cap has been reached for this conversation. */
@@ -185,6 +203,7 @@ export class IdeaDeveloperStore {
     this.status = "empty";
     this.ideaDraft = "";
     this.conversation = null;
+    this.previous = null;
     this.notice = null;
     this.followUpText = "";
     this.turnRunning = false;
@@ -264,6 +283,7 @@ export class IdeaDeveloperStore {
   ): void {
     if (result.status === "ok") {
       this.tracker.resultShown(resultShown(result, turnIndex));
+      this.previous = conversation.latest ?? null;
       this.conversation = extendConversation(conversation, result);
       this.followUpText = "";
     } else if (result.status !== "cancelled") {

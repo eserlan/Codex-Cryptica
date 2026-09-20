@@ -774,3 +774,74 @@ describe("IdeaDeveloperStore ignores results that arrive after a clear", () => {
     expect(store.conversation?.previousInteractionId).toBe("i-second");
   });
 });
+
+describe("IdeaDeveloperStore shows what changed between turns", () => {
+  const changedDev = {
+    ...development,
+    whatChanged: "Looked at it as an assessment.",
+    centralQuestion: "Who is quietly buying the parts?",
+    consequences: "The Warden loses the town.",
+  };
+
+  async function withTurn(next: ContinueResult) {
+    const service = {
+      start: vi.fn().mockResolvedValue(ok({ hubDraftId: "hub-1" })),
+      continue: vi.fn().mockResolvedValue(next),
+    };
+    const store = new IdeaDeveloperStore(service as never, memoryStorage(), {
+      remove: vi.fn(),
+      exists: () => true,
+    } as never);
+    store.setIdea("A town.");
+    await store.submit();
+    return { store, service };
+  }
+
+  const okTurn = (dev = changedDev): ContinueResult => ({
+    status: "ok",
+    development: dev,
+    interactionId: "i-2",
+    turn: { kind: "switch-mode", mode: "assess", text: "", status: "done" },
+  });
+
+  it("has nothing to compare on the first result", async () => {
+    const { store } = await withTurn(okTurn());
+    expect(store.previous).toBeNull();
+    expect(store.changedSections).toBeNull();
+  });
+
+  it("keeps the previous result and lists the sections that changed", async () => {
+    const { store } = await withTurn(okTurn());
+    await store.continueConversation("switch-mode", "assess");
+    expect(store.previous).toEqual(development);
+    expect(store.changedSections).toEqual(["centralQuestion", "consequences"]);
+  });
+
+  it("says nothing changed when the new result matches the old one", async () => {
+    const { store } = await withTurn(
+      okTurn({ ...development, whatChanged: "Same." }),
+    );
+    await store.continueConversation("switch-mode", "assess");
+    expect(store.changedSections).toEqual([]);
+  });
+
+  it("keeps the earlier comparison if a later turn fails", async () => {
+    const { store, service } = await withTurn(okTurn());
+    await store.continueConversation("switch-mode", "assess");
+    service.continue.mockResolvedValue({
+      status: "failed",
+      failure: { code: "unknown", message: "Nope." },
+    });
+    store.setFollowUp("x");
+    await store.continueConversation("answer-questions");
+    expect(store.changedSections).toEqual(["centralQuestion", "consequences"]);
+  });
+
+  it("forgets the comparison when the conversation is cleared", async () => {
+    const { store } = await withTurn(okTurn());
+    await store.continueConversation("switch-mode", "assess");
+    store.clear();
+    expect(store.previous).toBeNull();
+    expect(store.changedSections).toBeNull();
+  });
+});

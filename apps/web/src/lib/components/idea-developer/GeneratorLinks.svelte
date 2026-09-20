@@ -25,10 +25,13 @@
 </script>
 
 <section aria-labelledby="dev-further" data-testid="generator-links">
-  <h2 id="dev-further" class="font-header text-lg font-bold text-theme-text">
+  <h2
+    id="dev-further"
+    class="font-header text-xl sm:text-lg font-bold text-theme-text"
+  >
     {titles.developFurther}
   </h2>
-  <p class="mt-1 text-sm text-theme-muted">
+  <p class="mt-1 text-lg sm:text-sm text-theme-muted">
     Your idea comes with you: the generators read this draft from your Session
     Hub as context.
   </p>
@@ -38,7 +41,7 @@
         <a
           href="{cleanBase}/generators/{item.entry.slug}"
           onclick={() => onOpen?.({ generatorKey: item.entry.key, position })}
-          class="block h-full rounded-lg border border-theme-border/60 bg-theme-surface/40 p-3 text-base transition-colors hover:border-theme-primary/50"
+          class="block h-full rounded-lg border border-theme-border/60 bg-theme-surface/40 p-3 text-lg sm:text-base transition-colors hover:border-theme-primary/50"
         >
           <span class="flex items-center gap-2 font-bold text-theme-text">
             {item.entry.label}
