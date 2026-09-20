@@ -1,10 +1,8 @@
 <script lang="ts">
   import { resolve } from "$app/paths";
   import type { StatSheetTemplate } from "schema";
-  import {
-    statSheetTemplates,
-    BUILT_IN_STAT_SHEET_TEMPLATES,
-  } from "$lib/stores/stat-sheet-templates.svelte";
+  import { statSheetTemplates } from "$lib/stores/stat-sheet-templates.svelte";
+  import { BUILT_IN_STAT_SHEET_TEMPLATES } from "$lib/stores/stat-sheet-builtins";
   import { categories } from "$lib/stores/categories.svelte";
   import { notificationStore } from "$lib/stores/ui/notification.svelte";
   import { vaultRegistry } from "$lib/stores/vault-registry.svelte";

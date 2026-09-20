@@ -14,10 +14,8 @@ vi.mock("./vault-registry.svelte", () => ({
   },
 }));
 
-import {
-  StatSheetTemplateStore,
-  BUILT_IN_STAT_SHEET_TEMPLATES,
-} from "./stat-sheet-templates.svelte";
+import { StatSheetTemplateStore } from "./stat-sheet-templates.svelte";
+import { BUILT_IN_STAT_SHEET_TEMPLATES } from "./stat-sheet-builtins";
 
 describe("StatSheetTemplateStore", () => {
   let store: StatSheetTemplateStore;
