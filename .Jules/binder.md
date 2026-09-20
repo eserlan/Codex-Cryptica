@@ -216,3 +216,9 @@
 
 **Learning:** Replaced a hard-coded infrastructure dependency (`crypto.randomUUID()`) inside `OracleAnalyzer` with an injected `IdGenerator`. By providing a default argument (`systemIdGenerator`), the refactoring was achieved safely, keeping production behavior the same.
 **Action:** Always verify if a dependency can be injected, especially those touching time, ids and browser-only globals. Make sure to define it as a class property to avoid TS compilation errors.
+
+## 2025-02-12 - Injected ID generation into DocxParser
+
+**Learning:** Hidden, hardcoded dependencies like `crypto.randomUUID()` in parsing layers (`DocxParser`) make it harder to deterministically test asset generation. This repository prefers using the `@codex/runtime` `systemIdGenerator` as a default parameter for classes.
+
+**Action:** Whenever introducing classes that generate IDs in this repository, inject an `IdGenerator` via the constructor with a default of `systemIdGenerator` to enable isolated testing without mocking globals.
