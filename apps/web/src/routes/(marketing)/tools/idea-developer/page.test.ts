@@ -1,6 +1,12 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { cleanup, render, screen, waitFor } from "@testing-library/svelte";
+import {
+  cleanup,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/svelte";
 
 /**
  * The route page wires the tool to the arrival link and to analytics. The
@@ -57,13 +63,14 @@ describe("Idea Developer page", () => {
   it("links the notice to the privacy page and the help entry", () => {
     render(Page);
     const copy = IDEA_DEVELOPER_COPY.notice;
+    const notice = within(screen.getByTestId("conversation-notice"));
     expect(
-      screen
+      notice
         .getByRole("link", { name: copy.privacyLabel })
         .getAttribute("href"),
     ).toBe(copy.privacyHref);
     expect(
-      screen.getByRole("link", { name: copy.helpLabel }).getAttribute("href"),
+      notice.getByRole("link", { name: copy.helpLabel }).getAttribute("href"),
     ).toBe(copy.helpHref);
   });
 
