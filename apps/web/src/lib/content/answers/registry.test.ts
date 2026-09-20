@@ -413,29 +413,24 @@ describe("published answers", () => {
       "vampire-clan-generator",
     ]);
 
+    const sectionChecks: Record<string, (slug: string) => boolean> = {
+      answers: (slug) => getAllAnswerSlugs().includes(slug),
+      for: (slug) => forSlugs.has(slug),
+      generators: (slug) => isGeneratorSlug(slug),
+      tools: (slug) => toolPages.has(slug),
+      solutions: (slug) => slug in solutions,
+      features: (slug) => slug in featuresConfig,
+      topics: (slug) => topicPaths.has(`/topics/${slug}`),
+    };
+    const sectionIndexes = ["answers", "tools", "generators", "for"];
+
     const isLive = (href: string): boolean => {
       const [section, slug, ...rest] = href.replace(/^\//, "").split("/");
       if (rest.length > 0) return false;
-      if (!slug)
-        return ["answers", "tools", "generators", "for"].includes(section);
-      switch (section) {
-        case "answers":
-          return getAllAnswerSlugs().includes(slug);
-        case "for":
-          return forSlugs.has(slug);
-        case "generators":
-          return isGeneratorSlug(slug);
-        case "tools":
-          return toolPages.has(slug);
-        case "solutions":
-          return slug in solutions;
-        case "features":
-          return slug in featuresConfig;
-        case "topics":
-          return topicPaths.has(`/${section}/${slug}`);
-        default:
-          return false;
-      }
+      if (!slug) return sectionIndexes.includes(section);
+      return Object.hasOwn(sectionChecks, section)
+        ? sectionChecks[section](slug)
+        : false;
     };
 
     for (const answer of published) {

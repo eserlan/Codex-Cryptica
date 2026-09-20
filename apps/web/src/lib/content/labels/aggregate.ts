@@ -20,6 +20,71 @@ export interface PublicLabelResult {
   href: string;
 }
 
+const TOPIC_HUBS: Record<string, PublicLabelResult> = {
+  heist: {
+    kind: "topic",
+    title: "Running and Designing RPG Heists",
+    summary:
+      "The central cluster hub for tabletop RPG heists: core running frameworks, prize design checklists, worked examples across genres, and generator tools.",
+    href: "/topics/heists",
+  },
+  puzzle: {
+    kind: "topic",
+    title: "Designing and Running RPG Puzzles",
+    summary:
+      "The central cluster hub for tabletop RPG puzzles: stall-proof design, hint ladders, worked examples with alternate solutions, and the puzzle generator.",
+    href: "/topics/puzzles",
+  },
+};
+
+const answerResults = (label: string, isCluster: boolean) =>
+  getAllAnswers()
+    .filter(
+      (answer) =>
+        (answer.labels as string[]).includes(label) ||
+        (isCluster && (answer.discovery?.clusters ?? []).includes(label)),
+    )
+    .map((answer): PublicLabelResult => ({
+      kind: "answer",
+      title: answer.question,
+      summary: answer.shortAnswer,
+      href: answerPath(answer),
+    }));
+
+const landingPageResults = (label: string) =>
+  getAllLandingPages()
+    .filter((page) => landingPageLabels(page).includes(label))
+    .map((page): PublicLabelResult => ({
+      kind: "for",
+      title: page.hero.title,
+      summary: page.hero.tagline,
+      href: getLandingPageCanonicalUrl(page),
+    }));
+
+const exampleResults = (label: string, isCluster: boolean) =>
+  getAllExamples()
+    .filter(
+      (example) =>
+        (example.labels as string[]).includes(label) ||
+        (isCluster && example.kind === label),
+    )
+    .map((example): PublicLabelResult => ({
+      kind: "example",
+      title: example.title,
+      summary: example.summary,
+      href: examplePath(example),
+    }));
+
+const generatorResults = (label: string) =>
+  Object.values(slugMeta)
+    .filter((entry) => entry.labels?.includes(label))
+    .map((entry): PublicLabelResult => ({
+      kind: "generator",
+      title: entry.pageTitle,
+      summary: entry.metaDescription,
+      href: entry.canonicalPath,
+    }));
+
 /**
  * Public content across every family tagged with `label` (#2762). Mirrors
  * `groupExamplesByKind` in spirit — a small read-only aggregation, not a new
@@ -32,75 +97,15 @@ export function getPublicContentByLabel(label: string): PublicLabelResult[] {
   }
 
   const isCluster = isContentClusterSlug(label);
-  const results: PublicLabelResult[] = [];
+  const hub = Object.hasOwn(TOPIC_HUBS, label) ? [TOPIC_HUBS[label]] : [];
 
-  if (label === "heist") {
-    results.push({
-      kind: "topic",
-      title: "Running and Designing RPG Heists",
-      summary:
-        "The central cluster hub for tabletop RPG heists: core running frameworks, prize design checklists, worked examples across genres, and generator tools.",
-      href: "/topics/heists",
-    });
-  }
-
-  if (label === "puzzle") {
-    results.push({
-      kind: "topic",
-      title: "Designing and Running RPG Puzzles",
-      summary:
-        "The central cluster hub for tabletop RPG puzzles: stall-proof design, hint ladders, worked examples with alternate solutions, and the puzzle generator.",
-      href: "/topics/puzzles",
-    });
-  }
-
-  for (const answer of getAllAnswers()) {
-    const matches =
-      (answer.labels as string[]).includes(label) ||
-      (isCluster && (answer.discovery?.clusters ?? []).includes(label));
-    if (!matches) continue;
-    results.push({
-      kind: "answer",
-      title: answer.question,
-      summary: answer.shortAnswer,
-      href: answerPath(answer),
-    });
-  }
-
-  for (const page of getAllLandingPages()) {
-    if (!landingPageLabels(page).includes(label)) continue;
-    results.push({
-      kind: "for",
-      title: page.hero.title,
-      summary: page.hero.tagline,
-      href: getLandingPageCanonicalUrl(page),
-    });
-  }
-
-  for (const example of getAllExamples()) {
-    const matches =
-      (example.labels as string[]).includes(label) ||
-      (isCluster && example.kind === label);
-    if (!matches) continue;
-    results.push({
-      kind: "example",
-      title: example.title,
-      summary: example.summary,
-      href: examplePath(example),
-    });
-  }
-
-  for (const entry of Object.values(slugMeta)) {
-    if (!entry.labels?.includes(label)) continue;
-    results.push({
-      kind: "generator",
-      title: entry.pageTitle,
-      summary: entry.metaDescription,
-      href: entry.canonicalPath,
-    });
-  }
-
-  return results;
+  return [
+    ...hub,
+    ...answerResults(label, isCluster),
+    ...landingPageResults(label),
+    ...exampleResults(label, isCluster),
+    ...generatorResults(label),
+  ];
 }
 
 /** Results grouped by content kind, for a sectioned discovery view. */
