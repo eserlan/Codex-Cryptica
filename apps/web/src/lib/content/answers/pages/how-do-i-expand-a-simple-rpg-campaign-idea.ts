@@ -173,6 +173,7 @@ export const howDoIExpandASimpleRpgCampaignIdea: AnswerConfigInput = {
     },
   ],
   relatedAnswers: [
+    "is-my-rpg-campaign-idea-good",
     "how-do-i-turn-an-rpg-idea-into-an-adventure",
     "how-do-you-generate-useful-rpg-rumours",
     "how-do-you-create-a-fantasy-faction",
@@ -194,6 +195,7 @@ export const howDoIExpandASimpleRpgCampaignIdea: AnswerConfigInput = {
     uniqueValue:
       "Starts from a very small seed such as one sentence or image and expands it through relationships, beliefs and consequences instead of lore, keeping the result recognisably the user's own idea.",
     relatedIntents: [
+      "answer-is-my-rpg-campaign-idea-good",
       "answer-turn-rpg-idea-into-adventure",
       "generator-adventure-generator",
       "generator-adventure-idea-generator",

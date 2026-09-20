@@ -150,6 +150,7 @@ export const isMyRpgCampaignIdeaGood: AnswerConfigInput = {
     "how-do-you-run-factions-in-a-sandbox-campaign",
     "how-do-you-generate-useful-rpg-rumours",
     "how-do-you-prepare-a-sandbox-rpg-campaign",
+    "how-do-i-expand-a-simple-rpg-campaign-idea",
   ],
   discovery: {
     id: "answer-is-my-rpg-campaign-idea-good",
