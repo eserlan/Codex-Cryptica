@@ -41,4 +41,16 @@ describe("GeneratorPageFormFields extraction", () => {
     expect(pageSource).toContain("{trigger}");
     expect(pageSource).toContain("{/snippet}");
   });
+
+  it("dispatches each form group through a dedicated snippet", () => {
+    for (const snippet of [
+      "coreFormFields",
+      "socialFormFields",
+      "identityFormFields",
+      "storyFormFields",
+      "worldFormFields",
+    ]) {
+      expect(rendererSource).toContain(`{@render ${snippet}()}`);
+    }
+  });
 });
