@@ -1,5 +1,8 @@
-import { type StatSheetTemplate, type StatSheetField } from "schema";
-import { DEFAULT_ITEM_TABLE_COLUMNS } from "@codex/stat-sheet-engine";
+import {
+  DEFAULT_ITEM_TABLE_COLUMNS,
+  type StatSheetTemplate,
+  type StatSheetField,
+} from "schema";
 
 /**
  * Shared row shape for D&D 5e Actions/Bonus Actions/Reactions (#2873): a
