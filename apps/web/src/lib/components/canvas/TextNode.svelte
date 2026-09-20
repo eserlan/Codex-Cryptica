@@ -1,6 +1,9 @@
 <script lang="ts">
-  import { NodeResizer, type NodeProps } from "@xyflow/svelte";
-  import type { ResizeParams } from "@xyflow/system";
+  import {
+    NodeResizer,
+    type NodeProps,
+    type ResizeParams,
+  } from "@xyflow/svelte";
   import { vault } from "$lib/stores/vault.svelte";
   import {
     DEFAULT_CANVAS_TEXT_BACKGROUND,
