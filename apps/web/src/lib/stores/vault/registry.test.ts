@@ -8,6 +8,7 @@ import {
   updateLastOpened,
   updateLastInternalChange,
   onDurableVaultChange,
+  onRegistryRefresh,
 } from "./registry";
 import { getDB } from "../../utils/idb";
 import { systemClock } from "../../utils/runtime-deps";
@@ -250,5 +251,35 @@ describe("onDurableVaultChange (#3189)", () => {
     } finally {
       unsub();
     }
+  });
+
+  describe("onRegistryRefresh", () => {
+    it("notifies listeners on debounced refresh and allows unsubscribe", async () => {
+      vi.useFakeTimers();
+      try {
+        vi.mocked(getDB).mockResolvedValue({
+          get: async () => ({ id: "v1" }),
+          put: async () => {},
+        } as any);
+
+        let refreshCount = 0;
+        const unsub = onRegistryRefresh(() => {
+          refreshCount++;
+        });
+
+        await updateLastInternalChange("v1");
+        vi.advanceTimersByTime(150);
+
+        expect(refreshCount).toBe(1);
+
+        unsub();
+        await updateLastInternalChange("v1");
+        vi.advanceTimersByTime(150);
+
+        expect(refreshCount).toBe(1);
+      } finally {
+        vi.useRealTimers();
+      }
+    });
   });
 });

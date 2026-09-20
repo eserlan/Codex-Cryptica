@@ -18,6 +18,14 @@ class VaultRegistryStore {
     this.availableVaults.find((v) => v.id === this.activeVaultId),
   );
 
+  constructor() {
+    if (typeof registry.onRegistryRefresh === "function") {
+      registry.onRegistryRefresh(() => {
+        void this.refreshVaults();
+      });
+    }
+  }
+
   get rootHandle() {
     return this.#opfsRoot;
   }

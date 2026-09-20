@@ -2,8 +2,6 @@ import { GuestExporter } from "@codex/vault-engine";
 import type { PublishRegistry } from "schema";
 import { getPublishTurnstileToken } from "./turnstile";
 import { retryWithBackoff } from "$lib/utils/retry";
-// Publishing includes world metadata while vault owns publisher lifecycle; keep this intentional cycle.
-// fallow-ignore-next-line circular-dependency
 import { worldStore } from "$lib/stores/world.svelte";
 
 export interface PublishingServiceDeps {
@@ -576,3 +574,9 @@ export const publishingService: PublishingService =
     themeStore,
     notificationStore,
   }));
+
+if (typeof vault?.registerPublishRegistryLoader === "function") {
+  vault.registerPublishRegistryLoader((vId, handle) =>
+    publishingService.loadFromVault(vId, handle),
+  );
+}

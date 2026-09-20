@@ -19,6 +19,7 @@ vi.mock("./vault/registry", () => ({
   getVault: vi.fn(),
   listVaults: vi.fn().mockResolvedValue([]),
   updateLastOpened: vi.fn().mockResolvedValue(undefined),
+  onRegistryRefresh: vi.fn().mockReturnValue(() => {}),
 }));
 
 import { getDB } from "../utils/idb";
