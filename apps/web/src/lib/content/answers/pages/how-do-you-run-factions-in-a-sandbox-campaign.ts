@@ -83,6 +83,26 @@ export const howDoYouRunFactionsInASandboxCampaign: AnswerConfigInput = {
       ],
     },
   ],
+  systemsThatSupportThis: [
+    {
+      system: "Worlds Without Number",
+      rationale:
+        "Factions hold rated assets across cunning, force and wealth, pursue written goals, and act in a dedicated faction turn between sessions, so rival powers move whether or not the party engages them.",
+      href: "https://www.drivethrurpg.com/product/348809/Worlds-Without-Number-Free-Edition",
+    },
+    {
+      system: "Blades in the Dark",
+      rationale:
+        "Every faction carries Tier, Hold and a status toward the crew while its projects run on progress clocks, so the criminal ecosystem advances on defined tracks the crew can read and disturb.",
+      href: "https://bladesinthedark.com/faction-game",
+    },
+    {
+      system: "Reign",
+      rationale:
+        "The Company rules give any organisation five stats and resolve its clashes in monthly Company actions, modelling conflicts from village outfits to realm-spanning religions at a scale individuals never touch.",
+      href: "https://shop.arcdream.com/collections/physical-products/products/reign-enchiridion-paperback-1",
+    },
+  ],
   codexConnection: {
     heading: "Keeping faction pressure straight across a sandbox",
     paragraphs: [
