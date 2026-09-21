@@ -70,7 +70,14 @@ describe("generator save payloads", () => {
 
     const drafts = buildHubSaveDrafts(
       [second],
-      { two: { resultEntityId: "two", usedEntityIds: ["one", "missing"] } },
+      {
+        two: {
+          resultEntityId: "two",
+          usedEntityIds: ["one", "missing"],
+          offeredEntityIds: ["one", "missing"],
+          trimmed: false,
+        },
+      },
       [first, second],
     );
 
