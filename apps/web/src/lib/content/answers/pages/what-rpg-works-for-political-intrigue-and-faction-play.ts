@@ -124,7 +124,7 @@ export const whatRpgWorksForPoliticalIntrigueAndFactionPlay: AnswerConfigInput =
         system: "Reign",
         rationale:
           "Company rules give organisations their own qualities and rolls, so factions act as mechanical participants alongside characters.",
-        href: "https://arcdream.com/home/2018/07/greg-stolzes-reign-second-edition-now-on-kickstarter/",
+        href: "https://atomicovermind.com/reign/",
       },
       {
         system: "Vampire: The Masquerade",
@@ -178,6 +178,7 @@ export const whatRpgWorksForPoliticalIntrigueAndFactionPlay: AnswerConfigInput =
     ],
     relatedAnswers: [
       "what-rpg-system-should-we-try-instead-of-dnd",
+      "how-do-i-run-political-intrigue-and-faction-play",
       "what-rpg-should-i-play-for-investigative-horror",
       "what-rpg-should-i-use-for-tactical-combat",
       "how-do-you-create-a-fantasy-faction",

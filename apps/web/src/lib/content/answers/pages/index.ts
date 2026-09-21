@@ -5,6 +5,7 @@ import { howDoIExpandASimpleRpgCampaignIdea } from "./how-do-i-expand-a-simple-r
 import { howDoIFindATabletopRpgGroupToPlayWith } from "./how-do-i-find-a-tabletop-rpg-group-to-play-with";
 import { howDoIGetPlayersToEngageWithMyCampaignWorld } from "./how-do-i-get-players-to-engage-with-my-campaign-world";
 import { howDoIRunASuccessfulSessionZero } from "./how-do-i-run-a-successful-session-0";
+import { howDoIRunPoliticalIntrigueAndFactionPlay } from "./how-do-i-run-political-intrigue-and-faction-play";
 import { howDoIStartGmingForTheFirstTime } from "./how-do-i-start-gming-for-the-first-time";
 import { howDoITurnAnRpgIdeaIntoAnAdventure } from "./how-do-i-turn-an-rpg-idea-into-an-adventure";
 import { howDoYouBuildAPointCrawlForAnRpg } from "./how-do-you-build-a-point-crawl-for-an-rpg";
@@ -92,6 +93,7 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     howDoIFindATabletopRpgGroupToPlayWith,
     howDoIGetPlayersToEngageWithMyCampaignWorld,
     howDoIRunASuccessfulSessionZero,
+    howDoIRunPoliticalIntrigueAndFactionPlay,
     howDoIStartGmingForTheFirstTime,
     howDoITurnAnRpgIdeaIntoAnAdventure,
     howDoYouBuildAPointCrawlForAnRpg,
