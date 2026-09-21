@@ -25,24 +25,24 @@ export const whatRpgWorksForPoliticalIntrigueAndFactionPlay: AnswerConfigInput =
           "These games produce different kinds of political play. Find the description closest to your group's best scheming evenings.",
         items: [
           {
-            term: "Criminal factions and territory",
-            text: "Blades in the Dark. The crew sheet tracks turf, claims and standing with every faction in the haunted city of Doskvol, and faction clocks advance rival schemes between scores whether the crew interferes or not. Entanglements and wanted levels turn heat from the authorities into fresh trouble, while downtime activities let the crew recover, scheme and consolidate. Pick it when the politics are about crews, turf and debts rather than thrones.",
+            term: "Criminal factions and territory → Blades in the Dark",
+            text: "The crew sheet tracks turf, claims and standing with every faction in the haunted city of Doskvol, and faction clocks advance rival schemes between scores whether the crew interferes or not. Entanglements and wanted levels turn heat from the authorities into fresh trouble, while downtime activities let the crew recover, scheme and consolidate. Pick it when the politics are about crews, turf and debts rather than thrones.",
           },
           {
-            term: "Courtly alliances and social manoeuvring",
-            text: "Court of Blades. This Forged in the Dark game from A Couple of Drakes sets play in a renaissance court where the characters serve great houses and scheme for influence, favour and reputation. Play moves between court scenes, missions for a house and downtime manoeuvres, so social positioning is the main arena rather than a pause between fights. Pick it when the group wants balls, duels of etiquette and shifting patronage.",
+            term: "Court intrigue and patronage → Court of Blades",
+            text: "A Forged in the Dark game from A Couple of Drakes set in a renaissance court where the characters serve great houses and scheme for influence, favour and reputation. Play moves between court scenes, missions for a house and downtime manoeuvres, so social positioning is the main arena rather than a pause between fights. Pick it when the group wants balls, duels of etiquette and shifting patronage.",
           },
           {
-            term: "Character-belief-driven political drama",
-            text: "Burning Wheel. Each character's Beliefs, Instincts and Traits are written on the sheet and rewarded with Artha when they drive play, so ideological conflict comes from the characters rather than the plot. The Duel of Wits gives social conflict its own structured resolution with stated stakes, while Circles, Resources, affiliations and reputations decide who a character can call on and what their word is worth. Pick it when the politics should hurt because the characters care, and expect a system that asks a lot of its players.",
+            term: "Politics driven by personal convictions → Burning Wheel",
+            text: "Each character's Beliefs, Instincts and Traits are written on the sheet and rewarded with Artha when they drive play, so ideological conflict comes from the characters rather than the plot. The Duel of Wits gives social conflict its own structured resolution with stated stakes, while Circles, Resources, affiliations and reputations decide who a character can call on and what their word is worth. Pick it when the politics should hurt because the characters care, and expect a system that asks a lot of its players.",
           },
           {
-            term: "Organisation-level strategy",
-            text: "Reign. Greg Stolze's One Roll Engine game pairs ordinary character action with Company rules in which organisations have their own qualities and roll against rival groups, so a guild, temple or rebellion acts as a mechanical participant rather than set dressing. Players can direct a company's moves alongside their characters' scenes, which suits campaigns about wars, successions and trade leagues. The Company chapter was written to sit loosely on top of other systems too, so some groups borrow it alone. Pick it when the campaign is about what organisations do, not only what individuals say.",
+            term: "Organisation-level strategy → Reign",
+            text: "Greg Stolze's One Roll Engine game pairs ordinary character action with Company rules in which organisations have their own qualities and roll against rival groups, so a guild, temple or rebellion acts as a mechanical participant rather than set dressing. Players can direct a company's moves alongside their characters' scenes, which suits campaigns about wars, successions and trade leagues. The Company chapter was written to sit loosely on top of other systems too, so some groups borrow it alone. Pick it when the campaign is about what organisations do, not only what individuals say.",
           },
           {
-            term: "Supernatural social politics",
-            text: "Vampire: The Masquerade. The characters are undead schemers in a society of clans and sects where status, boons and debts are the working currency and Hunger and Humanity pull every decision towards monstrosity. Elysium gatherings, prestation debts and sect rivalry give social scenes hard consequences without needing a battlefield. Pick it when the group wants personal horror braided into its politics, and check which edition the table will use since procedures differ across them.",
+            term: "Supernatural status and debt → Vampire: The Masquerade",
+            text: "The characters are undead schemers in a society of clans and sects where status, boons and debts are the working currency and Hunger and Humanity pull every decision towards monstrosity. Elysium gatherings, prestation debts and sect rivalry give social scenes hard consequences without needing a battlefield. Pick it when the group wants personal horror braided into its politics, and check which edition the table will use since procedures differ across them.",
           },
         ],
       },
@@ -50,8 +50,8 @@ export const whatRpgWorksForPoliticalIntrigueAndFactionPlay: AnswerConfigInput =
         kind: "prose",
         heading: "What makes a system good at intrigue",
         paragraphs: [
-          "Look past social skills on the character sheet. Nearly every game lets a character lie or persuade; few make the lie matter next month. A system that supports intrigue keeps factions persistent between sessions, so a snubbed guild remembers the snub. It tracks standing, reputation, obligations or debt in a form the whole table can see. It gives downtime or faction turns a procedure, so rivals act while the party is busy elsewhere and the world answers their schemes.",
-          "It should also put pressure on choices. Scarcity of money, blood, soldiers or favours forces characters to accept help with strings attached, and that is where alliances get interesting. Consequences need to stick to relationships: lost status, burned contacts, a patron who now owns a piece of the party. If the rules record none of that, the GM carries the whole web in private notes and the players can safely ignore it.",
+          "Look past social skills on the character sheet. Nearly every game lets a character lie or persuade; useful intrigue mechanics make some part of the political situation persistent and visible, so a snubbed guild remembers the snub. That can be faction clocks, written Beliefs with stated stakes, prestation debts, or a relationship map the table maintains together.",
+          "Pressure matters as much as persistence. Scarcity of money, blood, soldiers or favours pushes characters to accept help with strings attached, and that is where alliances get interesting. Decide how much of that political state the group wants the rules to track, and pick the system that tracks that part.",
         ],
       },
       {
@@ -96,8 +96,8 @@ export const whatRpgWorksForPoliticalIntrigueAndFactionPlay: AnswerConfigInput =
           "Name which politics you want: court drama, faction strategy, criminal struggle, ideological conflict or supernatural society.",
           "Decide whether players scheme as individuals only, or also direct organisations with their own moves.",
           "Agree how social defeat should feel, from a lost debate with stated stakes to a burned contact or a debt owed.",
-          "Check how much between-session bookkeeping the GM will accept, since mechanical factions need their turns resolved.",
-          "Run a quickstart scenario with one negotiation and one betrayal, and confirm the table enjoys losing gracefully.",
+          "Decide how much political state the group wants the rules to track, whether that is faction clocks, Company stats, debts, reputations or Beliefs.",
+          "Run a short scenario containing one negotiation and one political setback, and see whether failure creates complications the group wants to pursue.",
         ],
       },
     ],
@@ -107,6 +107,12 @@ export const whatRpgWorksForPoliticalIntrigueAndFactionPlay: AnswerConfigInput =
         rationale:
           "Crew sheets, faction status and faction clocks make turf, standing and rival schemes visible procedures rather than GM notes.",
         href: "https://bladesinthedark.com/",
+      },
+      {
+        system: "Court of Blades",
+        rationale:
+          "Court phases, house service and influence mechanics make social positioning the main arena rather than a pause between fights.",
+        href: "https://acoupleofdrakes.itch.io/court-of-blades",
       },
       {
         system: "Burning Wheel",
