@@ -1,5 +1,5 @@
 {
-  "updated_at": 1790016233,
+  "updated_at": 1790018008,
   "candidates": [
     {
       "id": "reddit-35104395212-i-put-every-superhero-generator-in-one-p",
@@ -62,14 +62,14 @@
       "created_at": 1789856758
     },
     {
-      "id": "reddit-35633775268-vaults-now-auto-sync-to-cloud-backup-whe",
-      "title": "Vaults now auto-sync to Cloud Backup when Cloud Save is on",
-      "body": "The old flow was easy to forget. You closed the tab after a session, assumed the vault pushed, and next time you noticed a gap.\n\nI changed Cloud Save so local vault changes auto-sync in the background when it is enabled, with retry and backoff and a flush on lifecycle events so closing quickly does not drop the write.\n\n- No manual push needed for normal edits, the sync queues and retries on flaky connections\n- Backoff and lifecycle flush hardening so a quick close or tab swap is less likely to lose the last change\n- Still local-first, the vault stays yours locally and the cloud copy is just a backup, not the source of truth\n\nI did not add a per-edit progress toast for every small change, it got noisy fast. If you want explicit confirmation, the Vault Backup settings still show last sync state. That quietness is a tradeoff I will revisit if people miss the feedback.\n\nHow do you handle backup at your table today, manual push after each session or just hope the autosave caught it?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/images/help-blog/sync.png)\n\n---\n*Posted automatically via release pipeline. Feedback and discussion welcome!*\n<!-- id:35633775268 -->",
-      "url": "",
-      "image_url": "https://assets.codexcryptica.com/images/help-blog/sync.png",
+      "id": "reddit-35633775268-new-topic-hubs-for-puzzles-and-heists-pl",
+      "title": "New topic hubs for Puzzles and Heists, plus a Starship Campaigns pack for sci-fi tables",
+      "body": "Jumping between a puzzle guide, a heist example and a generator that might help is slow when they live on separate pages.\n\nI put the clusters together as topic hubs so you can learn, see a worked example and generate from one place. Puzzles is new at /topics/puzzles and Heists now shares the same hub component, plus a starship-campaigns content pack for the /for side.\n\nExplore it here: https://codexcryptica.com/topics/puzzles\n\n- Puzzle hub with the stall-proof design guide, the hint ladder, worked examples with alternate solutions, and the puzzle generator in one flow\n- Heist hub reworked onto the shared component with genre-specific worked examples and the heist generator wired in\n- Starship Campaigns pack for sci-fi GMs who need crew, ship debt and sector heat in one workflow, linked from /for\n\nThe hub shape is still narrow, it covers puzzles and heists well but not every adjacent structure like traps or chases yet. I kept it tight rather than call everything a hub.\n\nWhen you prep a puzzle or a heist, do you start from a worked example and reskin it, or from a blank page with the generator?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/announcements/release-35633775268-4.png)\n\n---\n*Posted automatically via release pipeline. Feedback and discussion welcome!*\n<!-- id:35633775268 -->",
+      "url": "https://codexcryptica.com/topics/puzzles",
+      "image_url": "https://assets.codexcryptica.com/announcements/release-35633775268-4.png",
       "source_id": "35633775268",
       "status": "approved",
-      "created_at": 1790016232
+      "created_at": 1790018008
     }
   ]
 }
