@@ -173,6 +173,7 @@ export const howDoYouRunAConspiracyCampaign: AnswerConfigInput = {
     "how-do-you-create-a-secret-society-for-an-rpg-campaign",
     "how-do-you-run-a-scene-with-multiple-npcs",
     "what-rpg-should-i-play-for-investigative-horror",
+    "what-rpg-works-for-political-intrigue-and-faction-play",
   ],
   discovery: {
     id: "answer-conspiracy-campaign",

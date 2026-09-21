@@ -182,6 +182,7 @@ export const whatRpgShouldIPlayForInvestigativeHorror: AnswerConfigInput = {
     "how-do-you-run-a-conspiracy-campaign",
     "how-do-you-generate-useful-rpg-rumours",
     "how-do-you-create-a-secret-society-for-an-rpg-campaign",
+    "what-rpg-works-for-political-intrigue-and-faction-play",
   ],
   discovery: {
     id: "answer-investigative-horror-system-selection",
@@ -210,6 +211,11 @@ export const whatRpgShouldIPlayForInvestigativeHorror: AnswerConfigInput = {
         with: "answer-tactical-combat-system-selection",
         reason:
           "Sibling vibe-to-system chooser for tactical combat; this page owns investigative-horror system choice and links across rather than repeating the pattern.",
+      },
+      {
+        with: "answer-political-intrigue-system-selection",
+        reason:
+          "Sibling vibe-to-system chooser for political intrigue; this page owns investigative-horror system choice and links across rather than repeating the pattern.",
       },
       {
         with: "answer-run-mystery-without-railroading",

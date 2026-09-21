@@ -157,6 +157,7 @@ export const howDoYouCreateASecretSocietyForAnRpgCampaign: AnswerConfigInput = {
     "how-do-you-organise-npc-relationships",
     "how-do-you-create-a-believable-fictional-religion",
     "what-rpg-should-i-play-for-investigative-horror",
+    "what-rpg-works-for-political-intrigue-and-faction-play",
   ],
   discovery: {
     id: "answer-secret-society",
