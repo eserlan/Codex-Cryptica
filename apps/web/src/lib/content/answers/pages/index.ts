@@ -71,6 +71,7 @@ import { whatRpgShouldIPlayForInvestigativeHorror } from "./what-rpg-should-i-pl
 import { whatRpgShouldIUseForTacticalCombat } from "./what-rpg-should-i-use-for-tactical-combat";
 import { whatRpgSystemIsGoodForSoloPlay } from "./what-rpg-system-is-good-for-solo-play";
 import { whatRpgSystemShouldWeTryInsteadOfDnd } from "./what-rpg-system-should-we-try-instead-of-dnd";
+import { whatRpgWorksForPoliticalIntrigueAndFactionPlay } from "./what-rpg-works-for-political-intrigue-and-faction-play";
 import { whatShouldANewDndPlayerLearnFirst } from "./what-should-a-new-dnd-player-learn-first";
 import { whatShouldAnRpgSettlementContain } from "./what-should-an-rpg-settlement-contain";
 import { whatShouldILookForInAnRpgCampaignManager } from "./what-should-i-look-for-in-an-rpg-campaign-manager";
@@ -157,6 +158,7 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     whatRpgShouldIUseForTacticalCombat,
     whatRpgSystemIsGoodForSoloPlay,
     whatRpgSystemShouldWeTryInsteadOfDnd,
+    whatRpgWorksForPoliticalIntrigueAndFactionPlay,
     whatShouldANewDndPlayerLearnFirst,
     whatShouldAnRpgSettlementContain,
     whatShouldILookForInAnRpgCampaignManager,

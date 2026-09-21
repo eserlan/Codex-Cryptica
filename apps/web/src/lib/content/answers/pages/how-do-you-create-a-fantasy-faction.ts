@@ -157,6 +157,7 @@ export const howDoYouCreateAFantasyFaction: AnswerConfigInput = {
     "how-do-you-use-player-backstories-in-an-rpg-campaign-world",
     "how-do-you-run-a-scene-with-multiple-npcs",
     "how-do-i-expand-a-simple-rpg-campaign-idea",
+    "what-rpg-works-for-political-intrigue-and-faction-play",
   ],
   discovery: {
     id: "answer-fantasy-faction",
