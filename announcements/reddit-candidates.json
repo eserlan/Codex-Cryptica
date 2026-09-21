@@ -1,5 +1,5 @@
 {
-  "updated_at": 1789856759,
+  "updated_at": 1790014893,
   "candidates": [
     {
       "id": "reddit-35104395212-i-put-every-superhero-generator-in-one-p",
@@ -60,6 +60,16 @@
       "source_id": "35472170780",
       "status": "approved",
       "created_at": 1789856758
+    },
+    {
+      "id": "reddit-35633775268-superhero-comic-book-is-now-a-full-genre",
+      "title": "Superhero / Comic Book is now a full genre \u2014 origins, villain schemes and crisis events without prompt wrangling",
+      "body": "If you have tried to run Masks, Mutants and Masterminds or a homebrew supers game with normal fantasy generators, you know the gap. You get taverns and kingdoms when you need power sources, secret identities and a city that actually reacts to capes.\n\nI built Superhero / Comic Book as a first-class genre. Pick it as a theme and the generators speak that language directly, no extra prompting.\n\nStart on the hub: https://codexcryptica.com/generators/superhero\n\n- Origin generator that separates the event, the hook you can run, and the lasting consequence, so a backstory is not just a paragraph\n- Villain Scheme and Comic Book Event generators wired to a shared Power Scale (Street to Multiversal) that changes the steering text, not just a label\n- Quest, Settlement, Nation, Social Hub, Plot Twist and Secret Society all with real supers content, plus a four-colour visual skin for the hub\n\nTradeoff I am still watching: the six-step scale is opinionated. Street means one thing in a neighbourhood game and another at a table that treats City as street. It works best if you treat it as starting tone and edit from there.\n\nWhat power level does your table actually live at most nights, and what kind of villain still feels threatening there?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/announcements/release-35633775268-3.png)\n\n---\n*Posted automatically via release pipeline. Feedback and discussion welcome!*\n<!-- id:35633775268 -->",
+      "url": "https://codexcryptica.com/generators/superhero",
+      "image_url": "https://assets.codexcryptica.com/announcements/release-35633775268-3.png",
+      "source_id": "35633775268",
+      "status": "approved",
+      "created_at": 1790014892
     }
   ]
 }
