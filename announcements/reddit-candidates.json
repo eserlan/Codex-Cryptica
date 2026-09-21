@@ -1,5 +1,5 @@
 {
-  "updated_at": 1790018008,
+  "updated_at": 1790019748,
   "candidates": [
     {
       "id": "reddit-35104395212-i-put-every-superhero-generator-in-one-p",
@@ -62,14 +62,14 @@
       "created_at": 1789856758
     },
     {
-      "id": "reddit-35633775268-new-topic-hubs-for-puzzles-and-heists-pl",
-      "title": "New topic hubs for Puzzles and Heists, plus a Starship Campaigns pack for sci-fi tables",
-      "body": "Jumping between a puzzle guide, a heist example and a generator that might help is slow when they live on separate pages.\n\nI put the clusters together as topic hubs so you can learn, see a worked example and generate from one place. Puzzles is new at /topics/puzzles and Heists now shares the same hub component, plus a starship-campaigns content pack for the /for side.\n\nExplore it here: https://codexcryptica.com/topics/puzzles\n\n- Puzzle hub with the stall-proof design guide, the hint ladder, worked examples with alternate solutions, and the puzzle generator in one flow\n- Heist hub reworked onto the shared component with genre-specific worked examples and the heist generator wired in\n- Starship Campaigns pack for sci-fi GMs who need crew, ship debt and sector heat in one workflow, linked from /for\n\nThe hub shape is still narrow, it covers puzzles and heists well but not every adjacent structure like traps or chases yet. I kept it tight rather than call everything a hub.\n\nWhen you prep a puzzle or a heist, do you start from a worked example and reskin it, or from a blank page with the generator?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/announcements/release-35633775268-4.png)\n\n---\n*Posted automatically via release pipeline. Feedback and discussion welcome!*\n<!-- id:35633775268 -->",
-      "url": "https://codexcryptica.com/topics/puzzles",
-      "image_url": "https://assets.codexcryptica.com/announcements/release-35633775268-4.png",
+      "id": "reddit-35633775268-answer-batch-picking-systems-for-horror-",
+      "title": "Answer batch: picking systems for horror and tactics, plus turning a vague idea into a session",
+      "body": "Two questions keep coming up. Which system actually fits the kind of horror or tactical play we want, and is this campaign idea we like actually runnable?\n\nI wrote a batch that answers both directly instead of another ranked list. The core is a trilogy on ideas and two system pickers that start from your table's preferences.\n\nStart with the idea check: https://codexcryptica.com/answers/is-my-rpg-campaign-idea-good\n\n- What RPG should I play for investigative horror \u2014 CoC vs Delta Green vs Vaesen vs Trail of Cthulhu vs Brindlewood Bay, chosen by who the investigators are and how you want clues to flow\n- What RPG should I use for tactical combat, and simpler D&D alternatives plus a fantasy dungeon crawl guide, each framed by play style not popularity\n- Campaign idea trilogy: is my idea good, how to expand a simple idea, and how to turn an idea into an adventure, with the same five-question test through all three\n- Seven older answers enriched with system references, and extra guides for solo play, space opera and chases so the examples point at real rules\n\nThese are longer reads than the old short answers. They try to give you a decision you can make with your group, not just information to sort through.\n\nWhich of the three idea questions is hardest at your table \u2014 knowing if an idea is good, expanding it, or shaping it into something you can actually run next week?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/announcements/release-35633775268-5.png)\n\n---\n*Posted automatically via release pipeline. Feedback and discussion welcome!*\n<!-- id:35633775268 -->",
+      "url": "https://codexcryptica.com/answers/is-my-rpg-campaign-idea-good",
+      "image_url": "https://assets.codexcryptica.com/announcements/release-35633775268-5.png",
       "source_id": "35633775268",
       "status": "approved",
-      "created_at": 1790018008
+      "created_at": 1790019748
     }
   ]
 }
