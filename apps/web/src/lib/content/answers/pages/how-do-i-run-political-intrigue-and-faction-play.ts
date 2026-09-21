@@ -14,7 +14,7 @@ export const howDoIRunPoliticalIntrigueAndFactionPlay: AnswerConfigInput = {
       heading: "Start with conflicts, not lore",
       paragraphs: [
         "The minimum useful faction is not a page of history. It is a short record of what the faction wants right now, why it cannot wait, what it is afraid of, what it controls that others need, where it is vulnerable, what it claims in public, what it actually needs in private, and what it will do next if nobody interferes. Eight lines like that produce more playable politics than a thousand years of fictional kings.",
-        "Three to five such factions are enough for a whole campaign. Fewer, and the players have nobody to play off against each other; more, and nobody at the table can remember who wants what. Put the party where those interests overlap: owing one faction, needed by another, and standing in the way of a third. A faction the party never meets, owes nothing to, and blocks nobody is scenery, however detailed its backstory.",
+        "Three to five active factions is a useful starting point. Fewer can work when their internal divisions matter, and a long campaign can support more once the table already understands the core relationships, especially since the party itself often becomes another force. Introduce the web gradually rather than asking players to memorise it all at once. Put the party where those interests overlap: owing one faction, needed by another, and standing in the way of a third. A faction the party never meets, owes nothing to, and blocks nobody is scenery, however detailed its backstory.",
       ],
     },
     {
@@ -41,7 +41,7 @@ export const howDoIRunPoliticalIntrigueAndFactionPlay: AnswerConfigInput = {
         },
         {
           term: "Outside threats",
-          text: "War, monsters, plague, a foreign power, a rebellion, a criminal syndicate, something unnatural stirring. A shared danger forces rivals to bargain with each other, which is where intrigue lives.",
+          text: "War, monsters, plague, a foreign power, a rebellion, a criminal syndicate, something unnatural stirring. A shared danger can force rivals to bargain with each other, which is where intrigue lives.",
         },
       ],
     },
@@ -55,7 +55,7 @@ export const howDoIRunPoliticalIntrigueAndFactionPlay: AnswerConfigInput = {
     },
     {
       kind: "prose",
-      heading: "Keep information uneven, but never scarce",
+      heading: "Keep information uneven, but actionable",
       paragraphs: [
         "Not everyone should know the same truth. For any important secret, decide what everyone believes, what one faction knows, what another merely suspects, what is deliberately false, and what nobody has noticed yet. Rumours should vary in reliability: some true, some half true, some planted. Players who can weigh sources make deductions; players who are lied to constantly stop trying.",
         "Sophistication is not the same as obscurity. The table needs enough understandable information to choose between real options, so reveal politics through play rather than hoarding it: meetings and audiences, rumours, intercepted messages, witnesses, visible consequences, faction representatives, public announcements, and NPCs whose behaviour quietly changes. If the players cannot describe two factions' goals from memory, the answer is more legibility, not more secrets.",
@@ -65,11 +65,11 @@ export const howDoIRunPoliticalIntrigueAndFactionPlay: AnswerConfigInput = {
       kind: "list",
       heading: "Let factions move without the party",
       intro:
-        "Political play dies when every faction freezes until visited. Give each active faction a next move and advance it between sessions, visibly. The mechanism matters less than the principle, so use whatever fits the table: fronts, clocks, faction turns, event timelines, or plain dated notes. A harbour vote in seven days might look like this:",
+        "Political play dies when every faction freezes until visited. Give each active faction a next move. Advance it when time passes, when the party commits elsewhere, or when events create an opening, and make the result visible. The mechanism matters less than the principle, so use whatever fits the table: fronts, clocks, faction turns, event timelines, in-session developments, or plain dated notes. A harbour vote in seven days might look like this:",
       items: [
         {
           term: "House Vey → control the harbour vote",
-          text: "Pressure: a trade debt falls due in six days. Current move: bribing guild delegates with forgiven loans. If unopposed, it secures a voting bloc and names the regent.",
+          text: "Pressure: a trade debt falls due in six days. Current move: bribing guild delegates with promised debt forgiveness. If unopposed, it secures a voting bloc and names the regent.",
         },
         {
           term: "Dock Union → stop privatisation",
@@ -77,19 +77,21 @@ export const howDoIRunPoliticalIntrigueAndFactionPlay: AnswerConfigInput = {
         },
         {
           term: "Temple → preserve public order",
-          text: "Pressure: unrest rising in the lower town. Current move: endorsing a compromise candidate acceptable to both sides. If unopposed, the temple crowns the winner and banks influence over whoever loses.",
+          text: "Pressure: unrest rising in the lower town. Current move: offering its blessing to whichever candidate keeps the peace. The council appoints the regent, but only the temple's blessing makes the streets accept the appointment, which is why every faction courts it. If unopposed, the temple legitimises the winner and banks influence over whoever loses.",
         },
         {
           term: "Why it works",
           text: "Each entry names a goal, a pressure, one current move, and the price of ignoring it. When the party chases one thread, the other two still advance, and next session opens with their consequences.",
         },
       ],
+      outro:
+        "A faction's goal is not sacred. If its leverage disappears, its leader dies, an ally betrays it, or a greater threat appears, update what it wants. Factions should answer the changed situation rather than blindly following the original plan.",
     },
     {
       kind: "list",
       heading: "Consequences that are not combat",
       intro:
-        "Political failure should rarely produce a fight, and violence should create political fallout rather than resetting the board. Draw on consequences like these:",
+        "Political failure does not need to default to a fight, and violence should create political fallout rather than resetting the board. Draw on consequences like these:",
       items: [
         {
           term: "Standing shifts",
@@ -198,7 +200,7 @@ export const howDoIRunPoliticalIntrigueAndFactionPlay: AnswerConfigInput = {
       items: [
         {
           term: "House Vey",
-          text: "Goal: put its cousin on the regency council with a controlling vote. Pressure: a trade debt falls due the day before the vote. Leverage: forgiven loans owed by two guild delegates. Fear: exposure of the smuggling fleet that pays for everything. Public line: stability and lawful succession. Private need: six more days of cash flow. Next move: buy a third delegate tonight.",
+          text: "Goal: put its cousin on the regency council with a controlling vote. Pressure: a trade debt falls due the day before the vote. Leverage: promised debt forgiveness for two guild delegates. Fear: exposure of the smuggling fleet that pays for everything. Public line: stability and lawful succession. Private need: six more days of cash flow. Next move: buy a third delegate tonight.",
         },
         {
           term: "The Dock Union",
@@ -210,7 +212,7 @@ export const howDoIRunPoliticalIntrigueAndFactionPlay: AnswerConfigInput = {
         },
         {
           term: "If the party does nothing",
-          text: "House Vey buys its third delegate, the union marches and the vigil holds, and the temple crowns the compromise candidate while Vey quietly controls the harbour purse. The party returns to higher prices, new patrols, and a union that remembers who stayed home.",
+          text: "Vey buys its third delegate and gets its cousin named regent, but only by accepting the temple's grain guarantee as the price of its blessing. The union marches anyway, the docks close, and Vey's new government begins unpopular, broke, and dependent on temple charity. The party returns to doubled prices, new patrols, and a union that remembers who stayed home.",
         },
         {
           term: "Discoverable leverage",
@@ -222,7 +224,7 @@ export const howDoIRunPoliticalIntrigueAndFactionPlay: AnswerConfigInput = {
         },
         {
           term: "The council scene",
-          text: "The session builds to the temple vigil, where all three factions appear in public with incompatible demands: Vey wants the vote held early, the union wants privatisation struck from the agenda, the temple wants a sworn peace first. The party holds the ledger, the organiser's testimony, or the grain, and whatever they reveal or withhold decides which demand collapses.",
+          text: "The session builds to the temple vigil, where all three factions appear in public with incompatible demands: Vey wants the vote held early, the union wants privatisation struck from the agenda, the temple wants a sworn peace first. The party holds the ledger, the organiser's testimony, or the grain, and what they reveal or withhold changes who has room to bargain, whose public position becomes costly to maintain, and which compromises remain possible.",
         },
         {
           term: "Two possible consequences",
@@ -256,7 +258,7 @@ export const howDoIRunPoliticalIntrigueAndFactionPlay: AnswerConfigInput = {
   codexConnection: {
     heading: "Let Codex Cryptica hold the web while you run it",
     paragraphs: [
-      "Codex Cryptica does not run the rules of political play for any system. What it holds is everything those rules act upon: factions with goals and pressures, the NPCs who speak for them, the council vote that forces a decision, and the rumours and secrets that travel between sessions.",
+      "Codex Cryptica does not run the rules of political play for any system. What it can hold is much of the campaign material those rules act upon: factions with goals and pressures, the NPCs who speak for them, the council vote that forces a decision, and the rumours and secrets that travel between sessions.",
       "Build the factions first and note their goals and next moves, create the rumours and secrets around them, then put one decision with a deadline in front of the players. The worksheet above becomes the prep; the linked material becomes what the table actually touches.",
     ],
     linkText: "Generate the factions",
@@ -355,7 +357,7 @@ export const howDoIRunPoliticalIntrigueAndFactionPlay: AnswerConfigInput = {
   seo: {
     title: "How do I run political intrigue and faction play? | Codex Cryptica",
     description:
-      "A system-neutral workflow for political campaigns: incompatible factions, pressures, leverage, uneven information, and a reusable prep worksheet.",
+      "Learn how to run political intrigue in any tabletop RPG using active factions, pressure, leverage, uneven information, meaningful consequences and a reusable GM worksheet.",
     image:
       "https://assets.codexcryptica.com/og/how-do-i-run-political-intrigue-and-faction-play.jpg",
     imageAlt:
