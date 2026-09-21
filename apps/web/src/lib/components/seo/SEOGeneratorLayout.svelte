@@ -80,6 +80,10 @@
   } from "./generator-page-identity";
   import { generatorShareService } from "$lib/services/sharing/GeneratorShareService";
   import {
+    buildGeneratorSavePayload,
+    buildHubSaveDrafts,
+  } from "$lib/components/seo/generator-save";
+  import {
     trackGeneratorShareCreated,
     trackGeneratorShareLinkCopied,
     trackGeneratorShareCompleted,
@@ -561,29 +565,11 @@
       item_count: entitiesToSave.length,
     });
     try {
-      const draftsToSave = entitiesToSave.map((e) => {
-        const prov = sessionHubStore.provenance[e.id];
-        let references: string[] | undefined;
-        if (prov && prov.usedEntityIds.length > 0) {
-          references = prov.usedEntityIds
-            .map(
-              (uid) =>
-                sessionHubStore.entities.find((en) => en.id === uid)?.title,
-            )
-            .filter((title): title is string => !!title);
-        }
-
-        return {
-          type: e.type,
-          kind: e.kind,
-          title: e.title,
-          content: e.content,
-          lore: e.lore,
-          labels: e.labels,
-          status: e.status,
-          references,
-        };
-      });
+      const draftsToSave = buildHubSaveDrafts(
+        entitiesToSave,
+        sessionHubStore.provenance,
+        sessionHubStore.entities,
+      );
       localStorage.setItem(
         "__codex_pending_import",
         JSON.stringify(draftsToSave),
@@ -616,24 +602,6 @@
     });
 
     try {
-      const isAdventure =
-        generatedData.kind === "adventure" ||
-        generatedData.labels?.includes("adventure");
-
-      const content = isAdventure
-        ? generatedData.summary
-          ? `*${generatedData.summary}*`
-          : ""
-        : generatedData.summary
-          ? `*${generatedData.summary}*\n\n${documentLayout.content}`
-          : documentLayout.content;
-
-      const lore = isAdventure
-        ? [generatedData.content, generatedData.lore]
-            .filter(Boolean)
-            .join("\n\n")
-        : documentLayout.lore;
-
       // Best-effort: a rasterization failure must never block saving the
       // draft itself, so this is caught separately from the payload write.
       let mapImageDataUrl: string | undefined;
@@ -653,16 +621,11 @@
         }
       }
 
-      const payload = {
-        type: isAdventure ? "note" : generatedData.type,
-        kind: generatedData.kind,
-        title: generatedData.title,
-        content,
-        lore,
-        labels: generatedData.labels,
-        status: generatedData.status,
-        ...(mapImageDataUrl ? { mapImageDataUrl } : {}),
-      };
+      const payload = buildGeneratorSavePayload(
+        generatedData,
+        documentLayout,
+        mapImageDataUrl,
+      );
 
       localStorage.setItem("__codex_pending_import", JSON.stringify(payload));
       // #1796: fires at this outbound-click moment only — see
@@ -672,7 +635,7 @@
         generatorType,
         isHubBatch: false,
         itemCount: 1,
-        relatedEntityCount: countRelatedEntities(content, undefined),
+        relatedEntityCount: countRelatedEntities(payload.content, undefined),
       });
       redirectQuery = `?utm_source=generator-${generatedData.type}&utm_medium=save-to-vault&utm_campaign=seo-funnel`;
       showSaveModal = true;

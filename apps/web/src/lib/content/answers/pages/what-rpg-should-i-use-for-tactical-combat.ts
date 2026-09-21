@@ -173,6 +173,7 @@ export const whatRpgShouldIUseForTacticalCombat: AnswerConfigInput = {
     "what-rpg-feels-like-dnd-but-is-simpler",
     "how-do-i-balance-rpg-combat-encounters-without-a-tpk",
     "how-do-you-make-a-boss-fight-memorable-in-a-tabletop-rpg",
+    "what-rpg-should-i-play-for-investigative-horror",
   ],
   discovery: {
     id: "answer-tactical-combat-system-selection",

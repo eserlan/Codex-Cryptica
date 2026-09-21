@@ -67,6 +67,7 @@ import { whatMakesAGoodHeistTargetInATabletopRpg } from "./what-makes-a-good-hei
 import { whatMakesAGoodRandomEncounter } from "./what-makes-a-good-random-encounter";
 import { whatRpgFeelsLikeDndButIsSimpler } from "./what-rpg-feels-like-dnd-but-is-simpler";
 import { whatRpgShouldIPlayForAnOverTheTopSpaceOpera } from "./what-rpg-should-i-play-for-an-over-the-top-space-opera";
+import { whatRpgShouldIPlayForInvestigativeHorror } from "./what-rpg-should-i-play-for-investigative-horror";
 import { whatRpgShouldIUseForTacticalCombat } from "./what-rpg-should-i-use-for-tactical-combat";
 import { whatRpgSystemIsGoodForSoloPlay } from "./what-rpg-system-is-good-for-solo-play";
 import { whatRpgSystemShouldWeTryInsteadOfDnd } from "./what-rpg-system-should-we-try-instead-of-dnd";
@@ -152,6 +153,7 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     whatMakesAGoodRandomEncounter,
     whatRpgFeelsLikeDndButIsSimpler,
     whatRpgShouldIPlayForAnOverTheTopSpaceOpera,
+    whatRpgShouldIPlayForInvestigativeHorror,
     whatRpgShouldIUseForTacticalCombat,
     whatRpgSystemIsGoodForSoloPlay,
     whatRpgSystemShouldWeTryInsteadOfDnd,

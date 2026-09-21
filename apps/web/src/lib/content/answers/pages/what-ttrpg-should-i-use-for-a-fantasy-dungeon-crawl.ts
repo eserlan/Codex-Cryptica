@@ -175,6 +175,7 @@ export const whatTtrpgShouldIUseForAFantasyDungeonCrawl: AnswerConfigInput = {
     "how-do-you-design-rpg-puzzles-that-do-not-stall-the-game",
     "what-rpg-feels-like-dnd-but-is-simpler",
     "what-rpg-should-i-use-for-tactical-combat",
+    "what-rpg-should-i-play-for-investigative-horror",
   ],
   discovery: {
     id: "answer-dungeon-crawl-system-selection",

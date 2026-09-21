@@ -1,11 +1,12 @@
 import type { FileParser, ParseResult, ImportAsset } from "../types";
+import { type IdGenerator, systemIdGenerator } from "@codex/runtime";
 
 const IMAGE_LOAD_TIMEOUT = 1000;
 
 export class DocxParser implements FileParser {
   // private turndown: TurndownService; // Remove static type dependency if possible, or use 'any' for lazy
 
-  constructor() {
+  constructor(private idGenerator: IdGenerator = systemIdGenerator) {
     // Lazy init in parse
   }
 
@@ -45,7 +46,7 @@ export class DocxParser implements FileParser {
         convertImage: (mammoth.images as any).inline((element: any) => {
           return element.read().then(async (buffer: any) => {
             const blob = new Blob([buffer], { type: element.contentType });
-            const id = crypto.randomUUID();
+            const id = this.idGenerator.uuid();
             const filename = `image-${id}.${element.contentType.split("/")[1]}`;
 
             // Detect dimensions

@@ -158,6 +158,7 @@ export const whatRpgSystemShouldWeTryInsteadOfDnd: AnswerConfigInput = {
     "what-ttrpg-should-i-use-for-a-fantasy-dungeon-crawl",
     "what-rpg-feels-like-dnd-but-is-simpler",
     "what-rpg-should-i-use-for-tactical-combat",
+    "what-rpg-should-i-play-for-investigative-horror",
   ],
   discovery: {
     id: "answer-system-selection",
