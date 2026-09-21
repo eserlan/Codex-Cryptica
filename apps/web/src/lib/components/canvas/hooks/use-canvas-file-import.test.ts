@@ -5,6 +5,7 @@ import {
   useCanvasFileImport,
   formatFileFailure,
   centerScreenPosition,
+  imageFileFromBlob,
 } from "./use-canvas-file-import.svelte";
 
 function makeDeps(
@@ -45,6 +46,17 @@ describe("formatFileFailure", () => {
     expect(formatFileFailure(file, "too_large")).toBe(
       "notes.txt is larger than 10 MB.",
     );
+  });
+});
+
+describe("imageFileFromBlob", () => {
+  it("generates a deterministic filename using the injected clock", () => {
+    const fakeClock = { now: () => 1234567890 };
+    const blob = new Blob(["test"], { type: "image/png" });
+    const file = imageFileFromBlob(blob, "image/png", fakeClock);
+
+    expect(file.name).toBe("pasted-image-1234567890.png");
+    expect(file.type).toBe("image/png");
   });
 });
 
