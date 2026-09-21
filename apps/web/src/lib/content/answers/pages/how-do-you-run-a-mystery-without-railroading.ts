@@ -132,6 +132,7 @@ export const howDoYouRunAMysteryWithoutRailroading: AnswerConfigInput = {
     "how-do-you-create-quest-hooks-without-railroading",
     "how-do-you-create-a-secret-society-for-an-rpg-campaign",
     "how-do-you-handle-players-going-off-script-as-a-gm",
+    "what-rpg-should-i-play-for-investigative-horror",
   ],
   discovery: {
     id: "answer-run-mystery-without-railroading",
