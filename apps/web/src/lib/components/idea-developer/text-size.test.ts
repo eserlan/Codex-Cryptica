@@ -58,6 +58,7 @@ describe("Idea Developer text sizes", () => {
       "IdeaDeveloperTool.svelte",
       "FollowUpComposer.svelte",
       "CopyButton.svelte",
+      "UpdatedButton.svelte",
     ]) {
       const source = readFileSync(join(components, name), "utf8");
       // A button either has its classes inline, or uses a shared class string.

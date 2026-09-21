@@ -108,6 +108,7 @@
         development={store.conversation.latest}
         ideaText={store.conversation.ideaText}
         changed={store.changedSections}
+        previous={store.previous}
         turn={countDoneTurns(store.conversation.turns)}
         {clipboardService}
       />

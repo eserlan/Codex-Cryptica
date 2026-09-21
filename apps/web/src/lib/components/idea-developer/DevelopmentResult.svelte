@@ -9,12 +9,13 @@
   import ChangeSummary from "./ChangeSummary.svelte";
   import CopyButton from "./CopyButton.svelte";
   import ResultLabel from "./ResultLabel.svelte";
-  import UpdatedBadge from "./UpdatedBadge.svelte";
+  import SectionHeading from "./SectionHeading.svelte";
 
   let {
     development,
     ideaText,
     changed = null,
+    previous = null,
     turn,
     clipboardService,
   }: {
@@ -22,12 +23,28 @@
     ideaText: string;
     /** Sections this turn changed; null when there is nothing to compare. */
     changed?: ComparedSection[] | null;
+    /** The result before this turn, so a changed section can show what it was. */
+    previous?: Development | null;
     /** Which turn this is. */
     turn?: number;
     clipboardService?: Pick<ClipboardService, "copyContent">;
   } = $props();
 
   const isChanged = (key: ComparedSection) => changed?.includes(key) ?? false;
+
+  // Which changed sections have their earlier version showing.
+  let openSections = $state<ComparedSection[]>([]);
+  const isOpen = (key: ComparedSection) => openSections.includes(key);
+  const toggle = (key: ComparedSection) => {
+    openSections = isOpen(key)
+      ? openSections.filter((k) => k !== key)
+      : [...openSections, key];
+  };
+  // A new result starts with everything closed.
+  $effect(() => {
+    void development;
+    openSections = [];
+  });
   const sectionClass = (key: ComparedSection) =>
     isChanged(key) ? "border-l-4 border-theme-primary pl-3" : "";
 </script>
@@ -54,14 +71,15 @@
     aria-labelledby="dev-interesting"
     class={sectionClass("alreadyInteresting")}
   >
-    <h2
+    <SectionHeading
       id="dev-interesting"
-      class="font-header text-xl sm:text-lg font-bold text-theme-text"
-    >
-      {titles.alreadyInteresting}<UpdatedBadge
-        show={isChanged("alreadyInteresting")}
-      />
-    </h2>
+      title={titles.alreadyInteresting}
+      sectionKey="alreadyInteresting"
+      changed={isChanged("alreadyInteresting")}
+      {previous}
+      open={isOpen("alreadyInteresting")}
+      ontoggle={() => toggle("alreadyInteresting")}
+    />
     <p class="mt-1 text-lg sm:text-base text-theme-muted">
       {development.alreadyInteresting}
     </p>
@@ -71,38 +89,45 @@
     aria-labelledby="dev-question"
     class={sectionClass("centralQuestion")}
   >
-    <h2
+    <SectionHeading
       id="dev-question"
-      class="font-header text-xl sm:text-lg font-bold text-theme-text"
-    >
-      {titles.centralQuestion}<UpdatedBadge
-        show={isChanged("centralQuestion")}
-      />
-    </h2>
+      title={titles.centralQuestion}
+      sectionKey="centralQuestion"
+      changed={isChanged("centralQuestion")}
+      {previous}
+      open={isOpen("centralQuestion")}
+      ontoggle={() => toggle("centralQuestion")}
+    />
     <p class="mt-1 text-lg sm:text-base text-theme-muted">
       {development.centralQuestion}
     </p>
   </section>
 
   <section aria-labelledby="dev-move" class={sectionClass("makeItMove")}>
-    <h2
+    <SectionHeading
       id="dev-move"
-      class="font-header text-xl sm:text-lg font-bold text-theme-text"
-    >
-      {titles.makeItMove}<UpdatedBadge show={isChanged("makeItMove")} />
-    </h2>
+      title={titles.makeItMove}
+      sectionKey="makeItMove"
+      changed={isChanged("makeItMove")}
+      {previous}
+      open={isOpen("makeItMove")}
+      ontoggle={() => toggle("makeItMove")}
+    />
     <p class="mt-1 text-lg sm:text-base text-theme-muted">
       {development.makeItMove}
     </p>
   </section>
 
   <section aria-labelledby="dev-people" class={sectionClass("peopleWhoCare")}>
-    <h2
+    <SectionHeading
       id="dev-people"
-      class="font-header text-xl sm:text-lg font-bold text-theme-text"
-    >
-      {titles.peopleWhoCare}<UpdatedBadge show={isChanged("peopleWhoCare")} />
-    </h2>
+      title={titles.peopleWhoCare}
+      sectionKey="peopleWhoCare"
+      changed={isChanged("peopleWhoCare")}
+      {previous}
+      open={isOpen("peopleWhoCare")}
+      ontoggle={() => toggle("peopleWhoCare")}
+    />
     <ul class="mt-2 grid gap-2 sm:grid-cols-2">
       {#each development.peopleWhoCare as person, index (index)}
         <li
@@ -123,14 +148,15 @@
     aria-labelledby="dev-players"
     class={sectionClass("playerDirections")}
   >
-    <h2
+    <SectionHeading
       id="dev-players"
-      class="font-header text-xl sm:text-lg font-bold text-theme-text"
-    >
-      {titles.playerDirections}<UpdatedBadge
-        show={isChanged("playerDirections")}
-      />
-    </h2>
+      title={titles.playerDirections}
+      sectionKey="playerDirections"
+      changed={isChanged("playerDirections")}
+      {previous}
+      open={isOpen("playerDirections")}
+      ontoggle={() => toggle("playerDirections")}
+    />
     <ul class="mt-2 flex flex-col gap-2">
       {#each development.playerDirections as direction, index (index)}
         <li class="text-lg sm:text-base">
@@ -145,12 +171,15 @@
     aria-labelledby="dev-consequences"
     class={sectionClass("consequences")}
   >
-    <h2
+    <SectionHeading
       id="dev-consequences"
-      class="font-header text-xl sm:text-lg font-bold text-theme-text"
-    >
-      {titles.consequences}<UpdatedBadge show={isChanged("consequences")} />
-    </h2>
+      title={titles.consequences}
+      sectionKey="consequences"
+      changed={isChanged("consequences")}
+      {previous}
+      open={isOpen("consequences")}
+      ontoggle={() => toggle("consequences")}
+    />
     <p class="mt-1 text-lg sm:text-base text-theme-muted">
       {development.consequences}
     </p>
@@ -160,14 +189,15 @@
     aria-labelledby="dev-questions"
     class={sectionClass("creatorQuestions")}
   >
-    <h2
+    <SectionHeading
       id="dev-questions"
-      class="font-header text-xl sm:text-lg font-bold text-theme-text"
-    >
-      {titles.creatorQuestions}<UpdatedBadge
-        show={isChanged("creatorQuestions")}
-      />
-    </h2>
+      title={titles.creatorQuestions}
+      sectionKey="creatorQuestions"
+      changed={isChanged("creatorQuestions")}
+      {previous}
+      open={isOpen("creatorQuestions")}
+      ontoggle={() => toggle("creatorQuestions")}
+    />
     <ul class="mt-2 list-disc pl-5 text-lg sm:text-base text-theme-muted">
       {#each development.creatorQuestions as question, index (index)}
         <li>{question}</li>

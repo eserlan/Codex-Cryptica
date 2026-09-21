@@ -223,6 +223,7 @@ After the first development, the user carries on with the same idea. They can an
 - **FR-039**: The privacy page and the tool's help entry MUST describe the same behaviour as the notice, in the same plain terms, including what "start a new conversation" and "clear" do and do not remove (they clear the tab's copy and stop continuing the conversation; the provider's own retention window still applies to what was already sent).
 - **FR-040**: The result MUST offer a "Save to your Codex" action that hands the conversation's Session Hub draft to the existing save flow used by the public generators. It MUST NOT add persistence of its own. The one copy that flow leaves in the browser (a pending import, kept until the app imports it) MUST be disclosed in the help and privacy text, and choosing the action counts as the sign-up or continue-in-app funnel step (FR-020).
 - **FR-041**: While a turn is running, the tool MUST show a clear progress state (for example the thematic loading messages the public generators already use), disable submitting another turn, and offer a way to cancel.
+- **FR-042**: A section that the latest turn changed MUST be marked, and the marker MUST be a button that, when pressed, shows that section's version from before the turn (and hides it when pressed again). The earlier version is kept in memory only, is not saved with the tab's session, and is gone after a reload or a new turn. If there is no earlier version, the marker is only a label.
 
 ### Key Entities
 
@@ -264,6 +265,7 @@ After the first development, the user carries on with the same idea. They can an
 - **SC-022**: In tested runs, choosing "Save to your Codex" opens the existing save flow with the conversation's draft in 100% of cases, and the tool writes no new stored record.
 - **SC-023**: On a phone-width screen (390px), in every state the page can be in (empty, and with a result on screen), no text is under 16px, every sentence is at least 18px (form labels, small-caps eyebrows and the quiet privacy notice may be 16px), text inputs are at least 16px, every button is at least 44px tall, and the page does not scroll sideways. This is the phone floor in the style guide.
 - **SC-024**: A reply that is not quite in the expected shape (a fifth person, a repeated direction, a list where a sentence was expected, text around the JSON) is accepted after tidying, and one that is unusable is asked for again once, with the reason, before the user sees an error.
+- **SC-025**: In tested runs, after a follow-up turn, every section marked as updated can be pressed to show its previous text, and no section that did not change has such a button.
 
 ## Assumptions
 

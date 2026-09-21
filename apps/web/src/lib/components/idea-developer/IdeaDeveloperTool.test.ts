@@ -740,6 +740,22 @@ describe("IdeaDeveloperTool after a follow-up turn", () => {
     );
   });
 
+  it("lets you press Updated to see the version before this turn", async () => {
+    await developed();
+    await fireEvent.click(
+      screen.getByRole("button", { name: /continue in assess/i }),
+    );
+    await screen.findByText("Who is quietly buying the parts?");
+    // the earlier question has been replaced on screen...
+    expect(screen.queryByText("Where do the parts come from?")).toBeNull();
+    await fireEvent.click(screen.getByRole("button", { name: /updated/i }));
+    // ...and is one press away
+    expect(
+      await screen.findByText("Where do the parts come from?"),
+    ).toBeTruthy();
+    expect(screen.getByText(/before this turn/i)).toBeTruthy();
+  });
+
   it("does not steal focus just because a saved conversation was restored", async () => {
     const storage = memoryStorage();
     const service = {

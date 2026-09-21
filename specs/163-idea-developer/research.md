@@ -218,3 +218,11 @@ Also not reading hub context: names, dungeon, plot twist, world, star system, co
 - **The other limit**: the per-browser cap of 20 turns an hour would have stopped a 30-turn conversation partway, showing a different visible wall. It is now 60 (two whole conversations), with a test that it stays at least twice the turn limit. The 10-second cooldown between turns is unchanged.
 - **Cost to know about**: with the provider holding the conversation, each turn is billed for the whole history so far, so cost per turn grows through a long conversation. A full 30-turn conversation costs noticeably more than eight short ones. Worth watching once real use starts; the cap is the backstop.
 - **Recovery and storage**: if the provider drops a conversation, replay rebuilds it from up to 30 turns of the user's text (each capped at 4,000 characters), which is large but bounded. The tab's saved copy is well under the browser's storage limit.
+
+## R28. Updated is a button that shows the previous version (2026-09-21)
+
+- **Owner feedback**: after a revise the tool said it had changed but not what, so it looked as if nothing had. Suggested: make the label pressable and show the previous version.
+- **Why the badge was not enough**: it says a section differs (after ignoring spacing and letter case) but not how, so a real revision and a reworded sentence look the same, and the user cannot tell whether the model actually did what was asked.
+- **Change**: the marker is now a button ("Updated · See before") that opens a "Before this turn" panel under that section's heading, showing the earlier text (or list of people, directions or questions) in the same form as now. It is per section, closes when a new result arrives, and is only a plain label if there is no earlier version. It uses the in-memory `previous` result already kept for the comparison, so nothing new is saved.
+- **Not done**: a word-by-word highlight of what differs inside a section. The panel shows the whole earlier section next to the whole current one. A highlight would make small edits easier to spot and is a reasonable next step if the side-by-side is not enough.
+- **Open question**: if the model often returns near-identical text for a requested change, that is a prompt or quality issue rather than a display one, and needs a live look.
