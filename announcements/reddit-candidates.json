@@ -1,5 +1,5 @@
 {
-  "updated_at": 1790014893,
+  "updated_at": 1790016233,
   "candidates": [
     {
       "id": "reddit-35104395212-i-put-every-superhero-generator-in-one-p",
@@ -62,14 +62,14 @@
       "created_at": 1789856758
     },
     {
-      "id": "reddit-35633775268-superhero-comic-book-is-now-a-full-genre",
-      "title": "Superhero / Comic Book is now a full genre \u2014 origins, villain schemes and crisis events without prompt wrangling",
-      "body": "If you have tried to run Masks, Mutants and Masterminds or a homebrew supers game with normal fantasy generators, you know the gap. You get taverns and kingdoms when you need power sources, secret identities and a city that actually reacts to capes.\n\nI built Superhero / Comic Book as a first-class genre. Pick it as a theme and the generators speak that language directly, no extra prompting.\n\nStart on the hub: https://codexcryptica.com/generators/superhero\n\n- Origin generator that separates the event, the hook you can run, and the lasting consequence, so a backstory is not just a paragraph\n- Villain Scheme and Comic Book Event generators wired to a shared Power Scale (Street to Multiversal) that changes the steering text, not just a label\n- Quest, Settlement, Nation, Social Hub, Plot Twist and Secret Society all with real supers content, plus a four-colour visual skin for the hub\n\nTradeoff I am still watching: the six-step scale is opinionated. Street means one thing in a neighbourhood game and another at a table that treats City as street. It works best if you treat it as starting tone and edit from there.\n\nWhat power level does your table actually live at most nights, and what kind of villain still feels threatening there?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/announcements/release-35633775268-3.png)\n\n---\n*Posted automatically via release pipeline. Feedback and discussion welcome!*\n<!-- id:35633775268 -->",
-      "url": "https://codexcryptica.com/generators/superhero",
-      "image_url": "https://assets.codexcryptica.com/announcements/release-35633775268-3.png",
+      "id": "reddit-35633775268-vaults-now-auto-sync-to-cloud-backup-whe",
+      "title": "Vaults now auto-sync to Cloud Backup when Cloud Save is on",
+      "body": "The old flow was easy to forget. You closed the tab after a session, assumed the vault pushed, and next time you noticed a gap.\n\nI changed Cloud Save so local vault changes auto-sync in the background when it is enabled, with retry and backoff and a flush on lifecycle events so closing quickly does not drop the write.\n\n- No manual push needed for normal edits, the sync queues and retries on flaky connections\n- Backoff and lifecycle flush hardening so a quick close or tab swap is less likely to lose the last change\n- Still local-first, the vault stays yours locally and the cloud copy is just a backup, not the source of truth\n\nI did not add a per-edit progress toast for every small change, it got noisy fast. If you want explicit confirmation, the Vault Backup settings still show last sync state. That quietness is a tradeoff I will revisit if people miss the feedback.\n\nHow do you handle backup at your table today, manual push after each session or just hope the autosave caught it?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/images/help-blog/sync.png)\n\n---\n*Posted automatically via release pipeline. Feedback and discussion welcome!*\n<!-- id:35633775268 -->",
+      "url": "",
+      "image_url": "https://assets.codexcryptica.com/images/help-blog/sync.png",
       "source_id": "35633775268",
       "status": "approved",
-      "created_at": 1790014892
+      "created_at": 1790016232
     }
   ]
 }
