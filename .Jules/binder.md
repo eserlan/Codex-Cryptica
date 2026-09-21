@@ -222,3 +222,8 @@
 **Learning:** Hidden, hardcoded dependencies like `crypto.randomUUID()` in parsing layers (`DocxParser`) make it harder to deterministically test asset generation. This repository prefers using the `@codex/runtime` `systemIdGenerator` as a default parameter for classes.
 
 **Action:** Whenever introducing classes that generate IDs in this repository, inject an `IdGenerator` via the constructor with a default of `systemIdGenerator` to enable isolated testing without mocking globals.
+
+## 2026-09-21 - Injecting Clock for File Generation
+
+**Learning:** Hardcoded Date.now() in utility functions (like file name generation) prevents deterministic testing of the exact outputs.
+**Action:** Inject a Clock interface with a systemClock default to create a clean seam for deterministic assertions without changing production behavior.

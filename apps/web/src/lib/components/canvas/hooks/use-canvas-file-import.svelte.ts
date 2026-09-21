@@ -5,6 +5,7 @@ import type {
   FileImportResult,
 } from "@codex/vault-engine";
 import { createFlowFileNode } from "../canvas-workspace-helpers";
+import { type Clock, systemClock } from "@codex/runtime";
 
 export interface CanvasFileImportDeps {
   vault: {
@@ -39,9 +40,13 @@ export function formatFileFailure(file: File, reason: FileImportFailureReason) {
   return `${file.name || "A file"} ${descriptions[reason] || "could not be added"}.`;
 }
 
-export function imageFileFromBlob(blob: Blob, mimeType: string) {
+export function imageFileFromBlob(
+  blob: Blob,
+  mimeType: string,
+  clock: Clock = systemClock,
+) {
   const extension = mimeType.split("/")[1]?.split("+")[0] || "png";
-  return new File([blob], `pasted-image-${Date.now()}.${extension}`, {
+  return new File([blob], `pasted-image-${clock.now()}.${extension}`, {
     type: mimeType,
   });
 }
