@@ -11,54 +11,60 @@ export const whatRpgShouldIPlayForInvestigativeHorror: AnswerConfigInput = {
   sections: [
     {
       kind: "prose",
-      heading: "Start from the investigation your group wants",
+      heading: "Start with the investigation your group wants",
       paragraphs: [
-        "Groups who ask for investigative horror are usually picturing different evenings. One table wants ordinary people finding things humanity was not meant to know, and paying for it. Another wants trained professionals containing something unnatural before the public learns it exists. A third wants candle-lit folklore, village secrets, and monsters with motives the party can almost sympathise with. The system decides which of those evenings the rules produce, so name the investigation before comparing books.",
-        "Three practical questions separate the games below. First, who are the investigators: fragile amateurs or capable professionals. Second, what happens when a clue roll fails: does the trail go cold, or do the rules protect the flow of information. Third, how much horror the table wants aimed at the characters: slow dread that erodes them, or sharp shocks that can end them. Answer those with the group and the list below narrows quickly.",
+        "Groups who ask for investigative horror often want different evenings. One table wants ordinary people confronting truths that unsettle them; another wants trained agents containing an unnatural conspiracy; a third wants folklore, village secrets, and creatures with motives the investigators can understand. The rules determine which kind of investigation the group gets.",
+        "Four questions narrow the choice: who are the investigators, can a missed roll stall the clue trail, how dangerous should the horror feel, and does the GM want to set the culprit in advance or discover the solution with the players? The recommendations below use those differences.",
       ],
     },
     {
       kind: "list",
-      heading: "If you want...",
-      intro:
-        "Each of these produces a different kind of investigative horror. Find the row that describes your group's best evenings.",
+      heading: "Choose by the kind of investigation",
       items: [
         {
-          term: "Classic cosmic-horror investigation",
-          text: "Call of Cthulhu. Chaosium's long-running game casts the party as 1920s antiquarians, journalists, doctors and dilettantes facing the Mythos with percentile skills and a Sanity track that records what the truth costs. Research, library work and interviews drive play, combat is something to avoid, and published campaigns are famously long and lethal. Pick this when the group wants fragile investigators and the weight of tradition behind them.",
+          term: "Classic cosmic horror → Call of Cthulhu",
+          text: "Chaosium's percentile game puts ordinary investigators against the Mythos, with research, interviews, and Sanity shaping a 1920s investigation. Adventures range from single-session scenarios to multi-mystery campaigns, and dangerous encounters can cost investigators their lives. Choose it for the period setting and vulnerable characters.",
         },
         {
-          term: "Modern conspiracy and federal-agent horror",
-          text: "Delta Green. Arc Dream's game puts the party inside an illegal government conspiracy: competent agents with tradecraft skills who exploit their positions to cover up unnatural incursions. Bonds with family and friends act as the Sanity safety net and wear down across operations, while the Lethality rating makes heavy weapons brutally final for anyone nearby. Play alternates between missions and Home scenes where ordinary life frays. Pick this for X-Files pressure with genuine consequences.",
+          term: "Modern conspiracy horror → Delta Green",
+          text: "Arc Dream's modern game casts the investigators as capable agents who investigate unnatural incidents for a secret government programme. Bonds connect Sanity loss to family and friends, while the Lethality rules make some firearm encounters decisive. Choose it for professional investigators whose operations strain their lives at home.",
         },
         {
-          term: "Folklore and monster investigation",
-          text: "Vaesen. Free League's Nordic horror game sets the party as members of a Society investigating creatures from Scandinavian folklore: church grim, changelings, water spirits with comprehensible motives. It runs on the Year Zero Engine's dice pools, structures each case as a Mystery with scenes that escalate toward a confrontation, and gives the party a shared headquarters to develop between cases. Pick this when the group wants monsters it can understand rather than truths that destroy understanding.",
+          term: "Folklore investigation → Vaesen",
+          text: "Free League's Nordic horror game follows Society members investigating folkloric beings through structured Mysteries that build towards a confrontation. A shared headquarters gives the group a home between cases. Choose it for local folklore, human motives, and a recurring group of investigators.",
         },
         {
-          term: "Investigations that cannot stall on a missed roll",
-          text: "Trail of Cthulhu. Pelgrane Press built this 1930s game on the GUMSHOE system, which starts from one design promise: finding a core clue is never gated behind a die roll, so the challenge sits in interpreting clues rather than discovering them. Investigative spends buy extra detail, while the split between Stability (short-term composure) and Sanity (long-term grasp on reality) tracks two different kinds of damage. Purist and Pulp modes tune the lethality. Pick this when the group has been burned by dead-end mysteries.",
+          term: "Reliable clue flow → Trail of Cthulhu",
+          text: "Pelgrane Press's GUMSHOE game gives a core clue without a roll when an investigator uses a relevant ability; point spends can reveal more detail. Stability and Sanity track different kinds of harm, while Purist and Pulp modes adjust the danger. Choose it when the group wants to interpret evidence without a failed clue roll creating a dead end.",
         },
         {
-          term: "Collaborative mystery-first horror",
-          text: "Brindlewood Bay. Jason Cordova's cosy mystery game casts the players as elderly amateur sleuths in a New England town, and it never pre-solves the murder: the GM prepares clues without fixing a culprit, and the Theorize move lets the table assemble its own solution from what play produced. A slow-burn Dark Conspiracy thread adds cosmic horror across sessions for groups that want it. Pick this when the group would rather build the answer together than guess the answer the GM wrote down.",
+          term: "Build the solution together → Brindlewood Bay",
+          text: "The GM prepares the town, suspects, and flexible clues without fixing the culprit. The Theorize move lets the players propose a solution from the evidence, with the rules adding complications when appropriate. A slow-burn Dark Conspiracy can bring cosmic horror into later sessions. Choose it when the group wants to discover the answer together.",
         },
       ],
     },
     {
       kind: "prose",
-      heading: "What should the investigation mechanics do",
+      heading: "How should clues reach the players?",
       paragraphs: [
-        "Every investigative system has to answer one design question: who guarantees the clue reaches the table. Traditional percentile systems leave it to the dice, which means a failed Library Use roll can quietly bury the one lead the session needed. Groups that enjoy that tension call it stakes; groups that have sat through a stalled evening call it a design flaw. Know which reaction your table has before choosing.",
-        "The games above answer differently. Trail of Cthulhu removes the question by rule: core clues arrive free, and points buy depth rather than access. Brindlewood Bay dissolves it from the other direction: with no pre-written solution, there is no required clue to miss, and the Theorize move turns scattered findings into a verdict the table owns. Call of Cthulhu and Delta Green keep the traditional roll, so the GM carries more responsibility for placing backup routes to the same truth. Vaesen sits between, with Mystery structures that schedule scenes and escalate pressure whether or not the party reads every sign correctly.",
+        "A missed roll can stall a mystery if one lead carries the only route forward. Call of Cthulhu and Delta Green use traditional skill checks, so GMs can keep another route to essential information ready. Some groups enjoy the risk of a failed roll; others prefer to lose time or take a cost rather than lose the trail.",
+        "Trail of Cthulhu protects access to core clues when an investigator uses a relevant ability, without a roll. Brindlewood Bay leaves the culprit open, and Theorize lets the group use gathered clues to propose a solution. Vaesen gives the GM a structured Mystery with clues and escalating threats. These approaches change whether players hunt for clues, interpret them, or shape the answer.",
+      ],
+    },
+    {
+      kind: "prose",
+      heading: "How much mystery prep does the GM want?",
+      paragraphs: [
+        "Call of Cthulhu, Delta Green, Trail of Cthulhu, and Vaesen all support prepared cases with facts for the investigators to uncover. The GM may need to know which clues matter and prepare another route when the group misses or ignores one. Trail of Cthulhu's core-clue rule protects access when an investigator uses a relevant ability, but the GM still needs to understand the case and its clue structure.",
+        "Brindlewood Bay shifts that work: the GM prepares suspects and flexible clues but not a culprit. The Theorize move lets the players assemble and test a solution from the evidence. Choose a fixed-answer game if the GM enjoys arranging revelations; choose Brindlewood Bay if they prefer to prepare the material and discover the answer with the players.",
       ],
     },
     {
       kind: "prose",
       heading: "How lethal should the horror be",
       paragraphs: [
-        "Lethality in horror is a tone control, not a difficulty slider. Call of Cthulhu investigators are ordinary people, so a single confrontation can end a character the player spent weeks developing; the game expects replacements and says so. Delta Green agents are far more capable, yet the Lethality rules and the slow erosion of Bonds mean competence buys a longer fall rather than safety. Decide whether the table finds meaning in that arc or just frustration.",
-        "The other three games offer gentler defaults with their own costs. Trail of Cthulhu's Pulp mode lets investigators survive what Purist mode would end, but survival still spends Stability the character may not recover. Vaesen characters are resilient society members, and the horror lands more through moral pressure and the countdown inside each Mystery than through body counts. Brindlewood Bay is the softest table here: elderly sleuths rarely die, and the price of a wrong theory is narrative rather than fatal, which suits groups that want dread without funerals.",
+        "Lethality changes how vulnerable the investigators feel. Call of Cthulhu characters are ordinary people, and a dangerous fight can kill them. If a campaign loses an investigator, agree whether the group wants to introduce another character or would rather avoid that risk. Delta Green agents are trained, but firearms remain dangerous and Sanity loss can wear down their Bonds and home lives.",
+        "Trail of Cthulhu's Purist and Pulp modes let the GM set different levels of danger; Stability can still take a toll after a character survives an encounter. Vaesen can put danger in the pressure and countdown of a Mystery as well as in direct threats. Brindlewood Bay puts pressure on the case, the community, and the Dark Conspiracy, which may suit groups that want the mystery to carry more of the tension.",
       ],
     },
     {
@@ -82,7 +88,7 @@ export const whatRpgShouldIPlayForInvestigativeHorror: AnswerConfigInput = {
         },
         {
           term: "Why it works",
-          text: "Nobody ranked the systems. Each table matched the premise to the investigation it enjoys: painstaking research with real risk, interpretation under pressure, or collective storytelling. The same disappearance produced three different evenings because the mechanics asked different questions.",
+          text: "Each version puts the GM's preparation in a different place: backup leads for a fixed mystery, core clues for investigators to interpret, or flexible evidence for a theory the group creates. The right system depends on which kind of preparation and play the group wants.",
         },
       ],
     },
@@ -91,11 +97,11 @@ export const whatRpgShouldIPlayForInvestigativeHorror: AnswerConfigInput = {
       heading: "Before you commit to a horror system",
       intro: "Work through these with the group before buying rulebooks:",
       items: [
-        "Ask whether the table wants fragile amateurs or competent professionals, since that choice colours every session.",
-        "Agree on what a failed clue roll should mean: a stalled trail, a costlier route, or something the rules prevent entirely.",
-        "Check the lethality tolerance honestly, including how the group feels about replacing a developed character mid-campaign.",
-        "Run a starter scenario or quickstart first; clue flow and Sanity pressure show up in play, not in reviews.",
-        "Confirm the GM's prep appetite, since pre-solved mysteries demand careful clue placement while collaborative ones demand improvisation.",
+        "Choose who the investigators are, from vulnerable amateurs to trained agents or community sleuths.",
+        "Decide whether essential clues can be missed, or whether the rules should preserve access to them.",
+        "Agree how much character danger the group wants and how it would handle losing an investigator.",
+        "Choose whether the GM wants a fixed culprit and clue trail or a solution assembled during play.",
+        "Read a quickstart or starter mystery and note the preparation it asks of the GM.",
       ],
     },
   ],
@@ -197,7 +203,7 @@ export const whatRpgShouldIPlayForInvestigativeHorror: AnswerConfigInput = {
       "horror rpg with good investigation mechanics",
     ],
     uniqueValue:
-      "Matches five mechanically distinct systems to the investigation each produces, so a group picks by clue handling, lethality and horror tone rather than by popularity.",
+      "Compares five investigative horror systems by investigator role, clue flow, lethality, and how much of the mystery the GM prepares before play.",
     userJob: "evaluate",
     relatedIntents: [
       "answer-system-selection",
@@ -221,7 +227,7 @@ export const whatRpgShouldIPlayForInvestigativeHorror: AnswerConfigInput = {
   seo: {
     title: "What RPG should I play for investigative horror? | Codex Cryptica",
     description:
-      "Pick an investigative horror RPG by clue handling, lethality and tone: Call of Cthulhu, Delta Green, Vaesen, Trail of Cthulhu or Brindlewood Bay.",
+      "Compare five investigative horror RPGs by investigator roles, clue flow, danger, and how much of the mystery the GM prepares.",
     image:
       "https://assets.codexcryptica.com/og/what-rpg-should-i-play-for-investigative-horror-v2.jpg",
     imageAlt:
