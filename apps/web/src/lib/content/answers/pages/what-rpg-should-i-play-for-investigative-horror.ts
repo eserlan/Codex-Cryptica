@@ -223,8 +223,8 @@ export const whatRpgShouldIPlayForInvestigativeHorror: AnswerConfigInput = {
     description:
       "Pick an investigative horror RPG by clue handling, lethality and tone: Call of Cthulhu, Delta Green, Vaesen, Trail of Cthulhu or Brindlewood Bay.",
     image:
-      "https://assets.codexcryptica.com/og/what-rpg-should-i-play-for-investigative-horror.jpg",
+      "https://assets.codexcryptica.com/og/what-rpg-should-i-play-for-investigative-horror-v2.jpg",
     imageAlt:
-      "A candle-lit investigator's study with a red-string conspiracy board, a magnifying glass over an occult symbol, and a shadowy figure at a fogged window",
+      "A candle-lit investigator's desk covered in case notes, with pinned photographs and a foggy harbour beyond the window",
   },
 };
