@@ -169,6 +169,7 @@ export const howDoYouPrepAWeeklyRpgSessionQuickly: AnswerConfigInput = {
     "how-do-you-make-a-tabletop-rpg-session-more-engaging",
     "how-do-you-recap-a-ttrpg-session",
     "can-you-play-a-tabletop-rpg-in-30-minute-sessions",
+    "how-do-i-organise-gm-notes-for-in-person-play",
   ],
   discovery: {
     id: "answer-prep-weekly-session-quickly",

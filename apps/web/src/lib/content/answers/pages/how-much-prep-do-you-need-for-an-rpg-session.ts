@@ -158,6 +158,7 @@ export const howMuchPrepDoYouNeedForAnRpgSession: AnswerConfigInput = {
     "how-do-you-run-dnd-for-a-large-group-of-players",
     "can-you-play-a-tabletop-rpg-in-30-minute-sessions",
     "what-rpg-system-is-good-for-solo-play",
+    "how-do-i-organise-gm-notes-for-in-person-play",
   ],
   discovery: {
     id: "answer-session-prep",
