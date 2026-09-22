@@ -8,14 +8,14 @@ export const howDoIOrganiseGmNotesForInPersonPlay: AnswerConfigInput = {
     "How do I organise my GM notes and references when running an RPG in person?",
   kind: "comparison",
   shortAnswer:
-    "Bring a session-facing subset to the table, not the whole campaign file: one page of what might matter tonight, a few reference pages you can reach without scrolling, somewhere to catch names and decisions as they happen, and a place the session gets filed afterwards. Paper, tablet and laptop all do that job, so choose by how fast you need an answer and how much screen you want sitting between you and the players.",
+    "Bring a session-facing subset to the table, not your whole campaign archive. Keep one sheet or screen for tonight's scenes, names, open threads and the rules you use most; somewhere separate for fast live notes; then file what matters back into the campaign record afterwards. Paper, tablet and laptop can all work; the useful test is how quickly you can find something without slowing the table down.",
   sections: [
     {
       kind: "prose",
       heading: "Your campaign file and your table sheet do different jobs",
       paragraphs: [
-        "Campaign notes are organised for later retrieval: one durable page per person, place and faction, plus a dated log of what happened. That structure suits storage and fights you at the table, where the question is always narrower. In the next ten minutes, what might matter?",
-        "The friction GMs report is rarely missing notes. It is scrolling a two-year document while four people wait, hunting a map three folders deep, or finding that the NPC's name only ever went into last week's log.",
+        "Campaign notes are organised for later retrieval: one consistent home for each important person, place and faction, plus a dated log of what happened. That structure suits storage and fights you at the table, where the question is always narrower. In the next ten minutes, what might matter?",
+        "The friction is rarely missing notes. It is scrolling a two-year document while four people wait, hunting a map three folders deep, or finding that the NPC's name only ever went into last week's log.",
       ],
     },
     {
@@ -30,7 +30,7 @@ export const howDoIOrganiseGmNotesForInPersonPlay: AnswerConfigInput = {
         },
         {
           term: "Session dashboard",
-          text: "Only what is likely to matter tonight: the scenes you plan to run, the names likely to come up, the numbers you will be asked for. It should fit one screen or one sheet.",
+          text: "Only what is likely to matter tonight: the scenes you plan to run, the names likely to come up, the numbers you will be asked for. Aim for one page or one screen.",
         },
         {
           term: "Live notes",
@@ -56,15 +56,15 @@ export const howDoIOrganiseGmNotesForInPersonPlay: AnswerConfigInput = {
         },
         {
           term: "Printed cheat sheets and binder",
-          text: "Print only what the next session needs: a name index, a map, the half-dozen tables you actually use. Strongest option for rules-heavy play, because the page you need is already open and the screen barrier disappears entirely. It costs preparation time and a growing stack of paper, and searching a pile older than a few sessions is slow.",
+          text: "Print only what the next session needs: a name index, a map, the half-dozen tables you actually use. Particularly effective for rules-heavy play when the references are predictable, because the page you need is already open and the screen barrier disappears entirely. It costs preparation time and a growing stack of paper, and searching a pile older than a few sessions is slow.",
         },
         {
           term: "Tablet",
-          text: "Holds the entire campaign at a fraction of a laptop's footprint and lies flat, so eye contact survives. Faster to search than paper, easy to sketch a map on, workable for live notes with a keyboard attached. The screen is still a barrier and apps still interrupt, which silencing the device mostly fixes. Best when you want depth without bulk.",
+          text: "Holds the entire campaign at a fraction of a laptop's footprint and lies flat, so eye contact survives. Faster to search than paper, easy to sketch a map on, workable for live notes with a keyboard attached. Notifications and app switching can still break concentration, so a dedicated focus mode helps. Best when you want depth without bulk.",
         },
         {
           term: "Laptop",
-          text: "Best search, easiest typing for long live notes, and it handles PDFs, maps and virtual tabletops without compromise. It is also the largest object you can put on the table, and a raised lid is a wall. Rules-heavy games that need a rulebook PDF and a tracker tend to land here anyway, which is a reason to be honest about the wall.",
+          text: "Best search, easiest typing for long live notes, and it handles PDFs, maps and virtual tabletops without compromise. It is also the bulkiest of these options, and a raised lid is a wall. A rules-heavy game that needs a rulebook PDF and a tracker can make a laptop worthwhile, which is a reason to be honest about the wall.",
         },
         {
           term: "Hybrid setup",
@@ -76,7 +76,7 @@ export const howDoIOrganiseGmNotesForInPersonPlay: AnswerConfigInput = {
       kind: "prose",
       heading: "What belongs on a GM session sheet",
       paragraphs: [
-        "One page, copied out of tonight's material rather than linked to it: a line of what happened last time, the scenes you intend to run with a single goal each, the names and places likely to be mentioned with one line each, the rules you always have to look up, the current numbers players ask about, and the open threads you want in play.",
+        "Aim for one page, copied out of tonight's material rather than linked to it: a line of what happened last time, the scenes you intend to run with a single goal each, the names and places likely to be mentioned with one line each, the rules you always have to look up, the current numbers players ask about, and the open threads you want in play.",
         "Too much is any amount you would have to read rather than glance at. If you are reading a paragraph to answer a question you just asked yourself, the sheet is carrying campaign material instead of session material.",
         "Turning campaign notes into session notes is copy and trim. Pull the entity pages that could matter tonight, take the two or three lines you need from each, and leave the links behind. Anything you catch yourself copying twice belongs on the sheet permanently; the rest goes back in the file.",
       ],
@@ -85,7 +85,7 @@ export const howDoIOrganiseGmNotesForInPersonPlay: AnswerConfigInput = {
       kind: "prose",
       heading: "Keeping NPC, faction and location references findable",
       paragraphs: [
-        "Give every NPC, faction and location one page with the same shape: two sentences you can read aloud cold at the top, then connections, what the players know, and open threads. At the table you want one place per thing, not a folder you search.",
+        "Give every NPC, faction and location one page with the same shape: two lines that tell you what this thing is and why it matters right now, then connections, what the players know, and open threads. At the table you want one place per thing, not a folder you search.",
         "Two short lists carry most of the load during play. The first is an alphabetical name index for the session, people, places and factions, one line each. The second is what is currently in play: active debts, open threats, promises made, events already scheduled. Print both, or keep them as the first page you open.",
         "A single NPC reduced to what tonight needs looks like the table card below, which is the shape worth aiming for whenever a character is about to matter.",
       ],
@@ -122,7 +122,7 @@ export const howDoIOrganiseGmNotesForInPersonPlay: AnswerConfigInput = {
       items: [
         "Build the session sheet from tonight's campaign pages, one line per name you expect to come up.",
         "Open or print only the reference you need for this session and leave the rest of the campaign file closed.",
-        "Decide before play where live notes will go, and keep that place empty and one reach away.",
+        "Decide before play where live notes will go, and keep it empty and within reach.",
         "Put the rules sections you always look up in one physical place or one bookmark folder.",
         "Charge everything, then test it cold: pull one reference as though the session had already started.",
         "Silence every device at the table that could interrupt you while you are running the game.",
@@ -175,7 +175,7 @@ export const howDoIOrganiseGmNotesForInPersonPlay: AnswerConfigInput = {
       "gm screen or binder for tabletop rpg",
     ],
     uniqueValue:
-      "Splits the table setup into four jobs (prep and reference, session dashboard, live notes, campaign record), then compares paper, printed binder, tablet, laptop and hybrid on footprint, speed of access, searchability, screen barrier, offline reliability and rules weight, ending in a one-page session sheet built by copying out of any campaign file.",
+      "Splits the table setup into four jobs (prep and reference, session dashboard, live notes, campaign record), then compares paper, printed binder, tablet, laptop and hybrid on footprint, speed of access, searchability, screen barrier, offline reliability and rules weight, ending in a session sheet built by copying out of any campaign file.",
     userJob: "adopt-workflow",
     relatedIntents: [
       "answer-session-prep",
@@ -193,7 +193,7 @@ export const howDoIOrganiseGmNotesForInPersonPlay: AnswerConfigInput = {
   seo: {
     title: "How do I organise GM notes for in-person play? | Codex Cryptica",
     description:
-      "Compare paper, printed binders, tablets, laptops and hybrids on table space, speed of access, searchability and distraction, then build a one-page GM session sheet.",
+      "Compare paper, printed binders, tablets, laptops and hybrids on table space, speed of access, searchability and distraction, then build a focused GM session sheet.",
     image:
       "https://assets.codexcryptica.com/og/how-do-i-organise-gm-notes-for-in-person-play.jpg",
     imageAlt:
