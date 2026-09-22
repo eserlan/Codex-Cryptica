@@ -51,10 +51,7 @@
   import { connectionModeStore } from "$lib/stores/ui/connection-mode.svelte";
   import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
   import type { DelveEdgeData, DelveRoomNodeData } from "generator-engine";
-  import {
-    delveAreaEnhancementService,
-    isPlaceholderDelveAreaName,
-  } from "$lib/services/delve-area-enhancement";
+  import { isPlaceholderDelveAreaName } from "$lib/services/delve-area-enhancement";
   import { delveDossierService } from "$lib/services/delve-dossier-service";
   import { notificationStore } from "$lib/stores/ui/notification.svelte";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
@@ -71,6 +68,7 @@
   } from "./canvas-workspace-helpers";
   import { exportCanvasImage } from "./canvas-image-export";
   import { openOrCreateSourceEntity } from "./canvas-source-entity";
+  import { useCanvasAreaEnhancement } from "./canvas-area-enhancement.svelte";
 
   import type {
     DelveCanvasEdge,
@@ -123,12 +121,6 @@
       rotationLogic.isRotatingNode,
   );
   let selectedRoomId = $state<string | null>(null);
-  let isRestockingRoom = $state(false);
-  let roomEnhancementError = $state<string | null>(null);
-  let isAutoPopulating = $state(false);
-  let autoPopulationCompleted = $state(0);
-  let autoPopulationTotal = $state(0);
-  let autoPopulationMessage = $state<string | null>(null);
   let isFinalizingDossier = $state(false);
   let isExportingCanvas = $state(false);
   let canvasExportElement = $state<HTMLDivElement>();
@@ -141,6 +133,13 @@
         candidate.id === selectedRoomId && candidate.type === "delveRoom",
     );
     return (node?.data as unknown as DelveRoomNodeData | undefined) ?? null;
+  });
+
+  const areaEnhancement = useCanvasAreaEnhancement({
+    vault,
+    canvasRegistry,
+    logic,
+    updateRoomData: saveRoomData,
   });
 
   let selectedAdventureNodeId = $state<string | null>(null);
@@ -385,7 +384,7 @@
     }
 
     autoPopulationCanvasId = currentCanvas.id;
-    untrack(() => void populateCanvasAreas(currentCanvas));
+    untrack(() => void areaEnhancement.populateCanvasAreas(currentCanvas));
   });
 
   // Pruning
@@ -426,7 +425,7 @@
       rotationLogic.selectedRotationNodeId = node.id;
     }
     if (node.type === "delveRoom") {
-      roomEnhancementError = null;
+      areaEnhancement.clearRoomEnhancementError();
       selectedRoomId = node.id;
       return;
     }
@@ -533,135 +532,6 @@
         ? { ...node, data: { ...node.data, ...updated } }
         : node,
     );
-  }
-
-  function getNearbyAreas(room: DelveRoomNodeData): DelveRoomNodeData[] {
-    const connectedIds = new Set<string>();
-    for (const edge of logic.edges) {
-      if (edge.source === room.id) connectedIds.add(edge.target);
-      if (edge.target === room.id) connectedIds.add(edge.source);
-    }
-
-    return logic.nodes
-      .filter(
-        (node) =>
-          node.type === "delveRoom" &&
-          node.id !== room.id &&
-          (connectedIds.has(node.id) ||
-            (node.data as unknown as DelveRoomNodeData).sectorId ===
-              room.sectorId),
-      )
-      .slice(0, 8)
-      .map((node) => node.data as unknown as DelveRoomNodeData);
-  }
-
-  async function enhanceRoom(room: DelveRoomNodeData) {
-    if (!canvas) return;
-    isRestockingRoom = true;
-    roomEnhancementError = null;
-    try {
-      const updated = await delveAreaEnhancementService.enhanceArea({
-        canvas,
-        room,
-        nearbyAreas: getNearbyAreas(room),
-      });
-      saveRoomData(updated);
-    } catch (error) {
-      roomEnhancementError =
-        error instanceof Error
-          ? error.message
-          : "AI enhancement failed. The Area was not changed.";
-    } finally {
-      isRestockingRoom = false;
-    }
-  }
-
-  async function populateCanvasAreas(targetCanvas: Canvas) {
-    isAutoPopulating = true;
-    autoPopulationMessage = null;
-    autoPopulationCompleted = 0;
-    autoPopulationTotal = targetCanvas.nodes.filter(
-      (node) =>
-        node.type === "delveRoom" &&
-        (!(node.data as unknown as DelveRoomNodeData).aiEnhancedAt ||
-          isPlaceholderDelveAreaName(
-            node.data as unknown as DelveRoomNodeData,
-          )),
-    ).length;
-
-    try {
-      const result = await delveAreaEnhancementService.populateAllAreas(
-        targetCanvas,
-        ({ completed, total, updatedAreas }) => {
-          autoPopulationCompleted = completed;
-          autoPopulationTotal = total;
-          if (updatedAreas.length === 0) return;
-          const updates = new Map(
-            updatedAreas.map((area) => [area.id, area] as const),
-          );
-          logic.nodes = logic.nodes.map((node) => {
-            const update = updates.get(node.id);
-            return update
-              ? { ...node, data: { ...node.data, ...update } }
-              : node;
-          });
-        },
-      );
-
-      const populationStatus =
-        result.failed > 0 || result.failedPassages > 0 ? "partial" : "complete";
-      const enhancedEdges = new Map(
-        result.edges.map((edge) => [edge.id, edge] as const),
-      );
-      logic.edges = logic.edges.map((edge) => {
-        const update = enhancedEdges.get(edge.id);
-        return update
-          ? { ...edge, data: { ...(edge.data ?? {}), ...(update.data ?? {}) } }
-          : edge;
-      });
-      const metadata = {
-        ...(targetCanvas.metadata ?? {}),
-        areaPopulationStatus: populationStatus,
-        areaPopulationCompleted: result.completed,
-        areaPopulationTotal: result.total,
-        areaPopulationUpdatedAt: Date.now(),
-      };
-      const updatedCanvas = {
-        ...targetCanvas,
-        nodes: flowNodesToCanvasNodes(logic.nodes),
-        edges: logic.edges.map((edge) => flowEdgeToCanvasEdge(edge)),
-        metadata,
-      };
-      vault.canvases[targetCanvas.id!] = updatedCanvas;
-      canvasRegistry.canvases[targetCanvas.id!] = updatedCanvas;
-      await vault.saveCanvas(targetCanvas.id!);
-
-      if (result.failed > 0 || result.failedPassages > 0) {
-        const failures = [
-          result.failed > 0
-            ? `${result.failed} Area${result.failed === 1 ? "" : "s"}`
-            : "",
-          result.failedPassages > 0
-            ? `${result.failedPassages} passage${
-                result.failedPassages === 1 ? "" : "s"
-              }`
-            : "",
-        ]
-          .filter(Boolean)
-          .join(" and ");
-        autoPopulationMessage = `${failures} could not be enhanced. They will retry next time this canvas opens.`;
-      }
-    } catch (err) {
-      console.error(
-        "[DelveAutoPopulation] Error during canvas auto-population:",
-        err,
-      );
-      const detail =
-        err instanceof Error && err.message ? ` (${err.message})` : "";
-      autoPopulationMessage = `Automatic AI population paused${detail}. Existing Area details were preserved and it will retry next time.`;
-    } finally {
-      isAutoPopulating = false;
-    }
   }
 
   function onEdgeContextMenu({
@@ -1022,7 +892,7 @@
       </SvelteFlow>
     </div>
 
-    {#if isAutoPopulating}
+    {#if areaEnhancement.isAutoPopulating}
       <div
         class="absolute bottom-5 left-1/2 z-30 -translate-x-1/2 inline-flex items-center gap-2 rounded-full border border-theme-primary/40 bg-theme-bg/95 px-4 py-2 text-xs font-mono text-theme-text shadow-xl"
         role="status"
@@ -1034,15 +904,15 @@
         ></span>
         Populating Areas with Location-aware AI…
         <span class="text-theme-primary">
-          {autoPopulationCompleted}/{autoPopulationTotal}
+          {areaEnhancement.autoPopulationCompleted}/{areaEnhancement.autoPopulationTotal}
         </span>
       </div>
-    {:else if autoPopulationMessage}
+    {:else if areaEnhancement.autoPopulationMessage}
       <div
         class="absolute bottom-5 left-1/2 z-30 max-w-md -translate-x-1/2 rounded-lg border border-amber-500/40 bg-theme-bg/95 px-4 py-2 text-xs text-amber-300 shadow-xl"
         role="status"
       >
-        {autoPopulationMessage}
+        {areaEnhancement.autoPopulationMessage}
       </div>
     {/if}
   </div>
@@ -1144,10 +1014,10 @@
   <RoomStockingDrawer
     isOpen={selectedRoomData !== null}
     roomData={selectedRoomData}
-    isRegenerating={isRestockingRoom}
-    errorMessage={roomEnhancementError}
+    isRegenerating={areaEnhancement.isRestockingRoom}
+    errorMessage={areaEnhancement.roomEnhancementError}
     onSave={saveRoomData}
-    onRegenerateAi={enhanceRoom}
+    onRegenerateAi={(room) => areaEnhancement.enhanceRoom(room, canvas)}
     onClose={() => (selectedRoomId = null)}
   />
 
