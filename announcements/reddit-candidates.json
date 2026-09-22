@@ -1,5 +1,5 @@
 {
-  "updated_at": 1790040755,
+  "updated_at": 1790042002,
   "candidates": [
     {
       "id": "reddit-35104395212-i-put-every-superhero-generator-in-one-p",
@@ -72,14 +72,14 @@
       "created_at": 1790019748
     },
     {
-      "id": "reddit-35675340370-what-rpg-works-for-political-intrigue-an",
-      "title": "What RPG works for political intrigue and faction play? I compared five",
-      "body": "Everyone says they want political intrigue until you sit down to run it. One group means whispered favours in a palace gallery, another means turf maps and debts between crews, a third means characters whose beliefs collide until someone pays a price. Try to run all three in the same generic system and it flattens to persuasion checks.\n\nI built a comparison that matches what your group actually wants from intrigue to the system that tracks that thing mechanically.\n\nRead the guide: https://codexcryptica.com/answers/what-rpg-works-for-political-intrigue-and-faction-play\n\n* Blades in the Dark for criminal crews, turf and faction clocks that tick between scores whether you interfere or not\n* Court of Blades for renaissance court play where service to a house and influence matter more than fights\n* Burning Wheel for belief-driven drama, with Duel of Wits and Artha tied to written convictions\n* Reign for organisation-level strategy where companies have their own qualities and roll against each other\n* Vampire: The Masquerade for supernatural status and prestation debts, where Hunger and Humanity press every deal\n\nTradeoff I am still weighing: this is not a tier list and it leans on the table naming what kind of politics they like, which is harder to answer cold than a simple recommendation. I also have not run every edition of Vampire to the same depth, so I note where procedures differ.\n\nWhich kind of intrigue has actually held your table longest, the court whisper, the turf grab, or the belief collision?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/announcements/release-35675340370-0.png)\n\n---\n*Posted automatically via release pipeline. Feedback and discussion welcome!*\n<!-- id:35675340370 -->",
-      "url": "https://codexcryptica.com/answers/what-rpg-works-for-political-intrigue-and-faction-play",
-      "image_url": "https://assets.codexcryptica.com/announcements/release-35675340370-0.png",
+      "id": "reddit-35675340370-how-i-run-political-intrigue-without-the",
+      "title": "How I run political intrigue without the faction web turning to mush",
+      "body": "The common failure with faction play is not lack of lore. It is five detailed groups that all politely wait until the party visits, and players who cannot name what any of them wants.\n\nI wrote a system-neutral framework for 3 to 5 competing factions with incompatible goals, built around pressures, leverage and moves between sessions.\n\nFull framework: https://codexcryptica.com/answers/how-do-i-run-political-intrigue-and-faction-play\n\n* an eight-line faction record: goal, pressure, what it offers, what it fears, what it controls, what it will not do, what it claims in public versus what it needs, and its next move if nobody interferes\n* five pressures that force action now: time, resources, relationships, reputation and outside threats\n* trading information, obligations and leverage as choices rather than obedience keys, so a secret changes costs instead of auto-compelling an NPC\n* letting factions move without the party, with a worked harbour vote where three groups advance while the players chase one thread\n* keeping politics legible: a short opening recap, visible consequences, and separating what is known, rumoured and just player theory\n\nIt cross-links into the existing faction cluster so you can follow through to building a faction, running a conspiracy or tracking faction turns. Honest limit: I aimed for a starting web you can hold in memory, not a simulation for a dozen factions. If you already run eight plus, you will need to phase them in rather than track everything at once.\n\nWhat has kept your faction web legible at the table, or what made it collapse into confusion?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/announcements/release-35675340370-1.png)\n\n---\n*Posted automatically via release pipeline. Feedback and discussion welcome!*\n<!-- id:35675340370 -->",
+      "url": "https://codexcryptica.com/answers/how-do-i-run-political-intrigue-and-faction-play",
+      "image_url": "https://assets.codexcryptica.com/announcements/release-35675340370-1.png",
       "source_id": "35675340370",
       "status": "approved",
-      "created_at": 1790040755
+      "created_at": 1790042002
     }
   ]
 }
