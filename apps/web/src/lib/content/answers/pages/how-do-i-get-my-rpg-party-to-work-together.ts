@@ -13,7 +13,7 @@ export const howDoIGetMyRpgPartyToWorkTogether: AnswerConfigInput = {
       kind: "prose",
       heading: "Find out what is pulling the group apart",
       paragraphs: [
-        "A party that argues over a route may need a fair way to decide. Characters who have no reason to remain together need a shared stake. Players who want different kinds of campaign need a conversation about expectations. These can look alike during a session, but encounter design only addresses the last two when the issue is actually in the fiction.",
+        "A party that argues over a route may need a fair way to decide. Characters who have no reason to remain together need a shared stake. Players who want different kinds of campaign need a conversation about expectations. These can look alike during a session, but the response depends on the cause: conversation addresses table problems, while encounter design addresses a lack of shared stakes in the fiction.",
         "Notice the repeated pattern before changing the adventure. Are the characters strangers with separate goals? Do players know how to set one another up? Does one voice settle every choice? Is someone being ignored or disrespected? Disagreement is not itself a problem; it becomes one when the group cannot make a decision or a player no longer wants to take part.",
       ],
     },
