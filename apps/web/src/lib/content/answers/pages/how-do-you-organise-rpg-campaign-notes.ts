@@ -157,6 +157,7 @@ export const howDoYouOrganiseRpgCampaignNotes: AnswerConfigInput = {
     "how-do-you-recap-a-ttrpg-session",
     "how-do-you-run-a-campaign-when-you-only-play-once-a-month",
     "how-much-campaign-lore-should-players-be-expected-to-remember",
+    "how-do-i-organise-gm-notes-for-in-person-play",
   ],
   discovery: {
     id: "answer-campaign-notes",

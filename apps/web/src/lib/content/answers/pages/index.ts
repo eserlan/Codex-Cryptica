@@ -4,6 +4,7 @@ import { howDoIBalanceRpgCombatEncountersWithoutATpk } from "./how-do-i-balance-
 import { howDoIExpandASimpleRpgCampaignIdea } from "./how-do-i-expand-a-simple-rpg-campaign-idea";
 import { howDoIFindATabletopRpgGroupToPlayWith } from "./how-do-i-find-a-tabletop-rpg-group-to-play-with";
 import { howDoIGetPlayersToEngageWithMyCampaignWorld } from "./how-do-i-get-players-to-engage-with-my-campaign-world";
+import { howDoIOrganiseGmNotesForInPersonPlay } from "./how-do-i-organise-gm-notes-for-in-person-play";
 import { howDoIRunASuccessfulSessionZero } from "./how-do-i-run-a-successful-session-0";
 import { howDoIRunPoliticalIntrigueAndFactionPlay } from "./how-do-i-run-political-intrigue-and-faction-play";
 import { howDoIStartGmingForTheFirstTime } from "./how-do-i-start-gming-for-the-first-time";
@@ -92,6 +93,7 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     howDoIExpandASimpleRpgCampaignIdea,
     howDoIFindATabletopRpgGroupToPlayWith,
     howDoIGetPlayersToEngageWithMyCampaignWorld,
+    howDoIOrganiseGmNotesForInPersonPlay,
     howDoIRunASuccessfulSessionZero,
     howDoIRunPoliticalIntrigueAndFactionPlay,
     howDoIStartGmingForTheFirstTime,
