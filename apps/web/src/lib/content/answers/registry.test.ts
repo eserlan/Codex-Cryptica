@@ -559,6 +559,22 @@ describe("published answers", () => {
     );
   });
 
+  it("separates table problems from fictional party-cohesion problems", () => {
+    const partyCohesionAnswer =
+      answers["how-do-i-get-my-rpg-party-to-work-together"];
+    const diagnosis = partyCohesionAnswer.sections[0];
+
+    expect(diagnosis.kind).toBe("prose");
+    if (diagnosis.kind !== "prose") return;
+
+    expect(diagnosis.paragraphs[0]).toContain(
+      "conversation addresses table problems",
+    );
+    expect(diagnosis.paragraphs[0]).toContain(
+      "encounter design addresses a lack of shared stakes in the fiction",
+    );
+  });
+
   it("publishes the heist answer with the expected system references", () => {
     const heistAnswer = answers["how-do-you-run-a-heist-in-a-tabletop-rpg"];
     expect(heistAnswer).toBeDefined();

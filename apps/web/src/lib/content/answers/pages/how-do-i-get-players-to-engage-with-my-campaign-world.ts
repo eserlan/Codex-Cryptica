@@ -114,6 +114,7 @@ export const howDoIGetPlayersToEngageWithMyCampaignWorld: AnswerConfigInput = {
     "how-do-you-use-player-backstories-in-an-rpg-campaign-world",
     "how-do-i-start-gming-for-the-first-time",
     "how-do-you-make-a-tabletop-rpg-session-more-engaging",
+    "how-do-i-get-my-rpg-party-to-work-together",
   ],
   discovery: {
     id: "answer-player-engagement",
