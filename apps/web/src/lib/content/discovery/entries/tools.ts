@@ -142,4 +142,18 @@ export const toolEntries: DiscoveryEntryInput[] = [
     indexable: true,
     status: "live",
   },
+  {
+    id: "tool-idea-developer",
+    pageKind: "tool",
+    canonicalPath: "/tools/idea-developer",
+    primaryIntent: "develop my rpg idea",
+    intentAliases: ["expand rpg campaign idea tool", "rpg idea developer"],
+    userJob: "create",
+    uniqueValue:
+      "Takes the reader's own premise and develops it — what is already interesting, pressure, people, player choices and consequences — where the adventure-idea generator invents a new premise instead.",
+    parentCluster: "adventure-design",
+    relatedIntents: ["generator-adventure-idea-generator"],
+    indexable: true,
+    status: "planned",
+  },
 ];

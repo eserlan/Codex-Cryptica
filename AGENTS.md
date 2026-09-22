@@ -31,7 +31,7 @@ This file is the Codex-facing instruction layer for this repository.
 
 ## Repository Rules
 
-- **Style Guide Adherence**: ALWAYS read and adhere to [docs/STYLE_GUIDE.md](file:///home/espen/proj/remotecodexarcana/docs/STYLE_GUIDE.md). All UI components MUST use Svelte 5 Runes, Tailwind 4 semantic tokens (e.g., `text-theme-primary`), and follow the documented DI (Dependency Injection) and transition/animation patterns.
+- **Style Guide Adherence**: ALWAYS read and adhere to [docs/STYLE_GUIDE.md](file:///home/espen/proj/remotecodexarcana/docs/STYLE_GUIDE.md). All UI components MUST use Svelte 5 Runes, Tailwind 4 semantic tokens (e.g., `text-theme-primary`), and follow the documented DI (Dependency Injection) and transition/animation patterns. All UI MUST also meet the phone floor in its "Mobile Typography & Touch Targets" section (no text a user reads or taps under 16px below 640px, sentences 18px, inputs 16px or more, touch targets 44px or more), verified in a real browser.
 - **Icon Usage**: NEVER use `lucide-svelte` components. ALWAYS use the Iconify utility pattern: `class="icon-[lucide--name] h-4 w-4"`.
 - Follow the constitution's library-first, TDD, privacy, DI, and documentation principles.
 - Do not commit implementation changes without tests for the affected behavior.
@@ -74,11 +74,14 @@ This file is the Codex-facing instruction layer for this repository.
 <!-- SPECKIT START -->
 
 For additional context about technologies to be used, project structure,
-shell commands, and other important information, read the [current plan](./specs/2815-smart-copy/plan.md).
+shell commands, and other important information, read the [current plan](./specs/163-idea-developer/plan.md).
 
 <!-- SPECKIT END -->
 
 ## Active Technologies
+
+- TypeScript 6.0.3, Svelte 5 Runes, SvelteKit 2, Bun 1.3.14 + Existing `@codex/ai-engine`, `generator-engine`, `zod`, Session Hub store, Zaraz analytics; no new dependency (163-idea-developer)
+- Browser `sessionStorage` (Session Hub drafts, tool restore) and `localStorage` (usage-limit timestamps); nothing server-side (163-idea-developer)
 
 - TypeScript 6.0.3, Svelte 5.55.9 Runes, SvelteKit 2.60.1, Bun 1.3.14 + Existing browser Clipboard API, `marked` 18.0.4, `dompurify` 3.4.2, existing generator document-layout helpers; no new dependency (2815-smart-copy)
 - N/A — clipboard payloads are transient and browser-local (2815-smart-copy)

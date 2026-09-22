@@ -97,11 +97,11 @@ export const howDoITurnAnRpgIdeaIntoAnAdventure: AnswerConfigInput = {
   codexConnection: {
     heading: "Keeping the moving parts together across sessions",
     paragraphs: [
-      "You can run the model on paper, and for a one-shot that is often enough. It gets harder over several sessions, when the pressure moves, the parties change what they want and old consequences start to land. In Codex Cryptica you can save the town, the guild, the temple and the foreman as entities and link them, so when the party sides with the temple you can see at a glance what that changes for the guild.",
-      "The generators can supply whichever piece you are missing: an adventure concept with stakes and opposition, a faction with its own needs, or rumours that give each competing explanation a voice.",
+      "If you have a premise but have not yet made it playable, start the Idea Developer in Develop mode and paste that premise. It turns the model into a first draft of pressure, people, player choices and consequences while keeping the original situation recognisable.",
+      "Use the result as a set of conditions rather than a fixed plot. Check the questions it asks, answer the ones that matter to your table, and then take the draft into a generator when one missing piece needs more detail.",
     ],
-    linkText: "Already have an idea? Develop it with Codex Cryptica",
-    href: "/generators/adventure-generator",
+    linkText: "Develop this premise with the Idea Developer",
+    href: "/tools/idea-developer?from=answer&source=how-do-i-turn-an-rpg-idea-into-an-adventure&mode=develop",
   },
   relatedTools: [
     {
@@ -161,6 +161,7 @@ export const howDoITurnAnRpgIdeaIntoAnAdventure: AnswerConfigInput = {
     uniqueValue:
       "Starts from a finished idea rather than a blank page and shows how to add pressure, people, choices and consequences so a static premise becomes a playable situation without scripting the plot.",
     relatedIntents: [
+      "tool-idea-developer",
       "generator-adventure-generator",
       "generator-adventure-idea-generator",
       "answer-quest-hooks-without-railroading",

@@ -33,6 +33,7 @@ const TOOL_PAGES = [
   "dnd-npc-generator",
   "faction-generator",
   "fantasy-name-generator",
+  "idea-developer",
   "quest-hook-generator",
   "rpg-npc-generator",
   "vampire-clan-generator",

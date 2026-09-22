@@ -68,3 +68,11 @@ already-sent lore are retained server-side instead of re-uploaded each turn. See
   `{ id, text }`. An expired id → `409 INTERACTION_NOT_FOUND`, which the client
   recovers from by resetting and replaying full history + lore once.
 - State is in-memory; local chat history remains the source of truth.
+
+## See also
+
+- [Idea Developer: vault-aware version (design)](./idea-developer-vault-aware-design.md):
+  how a signed-in Idea Developer could ground an idea in a compact, inspectable
+  slice of the vault, reusing the conversation-state and lore-delta approach
+  described above. The public Idea Developer at `/tools/idea-developer` follows
+  the same replay-on-expiry pattern with a conversation the AI provider holds.

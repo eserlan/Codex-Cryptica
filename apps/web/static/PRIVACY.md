@@ -27,6 +27,14 @@ If you use any AI feature (Lore Oracle chat, entity generation/revision, connect
 - **Data Usage:** According to Google's and OpenAI's standard API terms, data sent via their paid/tier-based APIs is typically not used to train their global models.
 - **Opt-out:** You can disable all AI features by enabling "AI Disabled" in the settings.
 
+### What happens to my idea?
+
+When you use the Idea Developer, your idea and any follow-up you type are sent to an AI service to write each response. The service keeps this conversation while you continue, so earlier turns are not sent again. Codex Cryptica does not keep it.
+
+Your browser tab keeps your idea, the turns so far and the latest result until you close the tab. Start a new conversation or clear to remove that copy and stop continuing the old conversation. That does not promise the AI service has erased what it already received; its own retention period applies (currently about 30 days). If you choose Save to your Codex, a copy of that draft is also kept in this browser until the app imports it.
+
+If you choose to share a draft from the Session Hub, that text is sent to Codex Cryptica's snapshot service, and only then.
+
 ## 4. Analytics and Telemetry
 
 **Nothing inside your vault is ever tracked.** Creating, editing, connecting, or deleting anything in your campaign — lore, chronicles, entities, maps — generates no analytics of any kind.

@@ -1,8 +1,10 @@
 import { describe, it, expect } from "vitest";
-import { FEATURE_HINTS, HINT_KEYS } from "./help-content";
+import { FEATURE_HINTS, HELP_ARTICLES, HINT_KEYS } from "./help-content";
 import { loadBlogArticles, loadHelpArticles } from "$lib/content/loader";
 
 // T061: in-app generators feature hint is registered (US5)
+import { IDEA_DEVELOPER_COPY } from "$lib/content/idea-developer-notice";
+
 describe("help-content feature hints", () => {
   it("includes the Lineage controls hint", () => {
     expect(FEATURE_HINTS["lineage-controls"]).toMatchObject({
@@ -84,5 +86,24 @@ describe("help-content feature hints", () => {
         ).toBe(true);
       }
     }
+  });
+
+  it("FEATURE_HINTS carries the Idea Developer help from the shared copy", () => {
+    expect(FEATURE_HINTS["idea-developer"]).toMatchObject({
+      id: "idea-developer",
+      title: IDEA_DEVELOPER_COPY.help.title,
+      content: IDEA_DEVELOPER_COPY.help.body,
+    });
+    expect(FEATURE_HINTS["idea-developer"].icon).toMatch(/^icon-\[lucide--/);
+  });
+
+  it("has a help article for the link in the Idea Developer notice, so it does not 404", () => {
+    const slug = IDEA_DEVELOPER_COPY.notice.helpHref.replace(/^\/help\//, "");
+    expect(IDEA_DEVELOPER_COPY.notice.helpHref).toMatch(/^\/help\/[a-z0-9-]+$/);
+    const article = HELP_ARTICLES.find((a) => a.id === slug);
+    expect(article, `no help article with id "${slug}"`).toBeDefined();
+    expect(article!.title).toBe(IDEA_DEVELOPER_COPY.help.title);
+    // Word for word, so the article, the hint and the notice cannot drift.
+    expect(article!.content).toContain(IDEA_DEVELOPER_COPY.help.body);
   });
 });

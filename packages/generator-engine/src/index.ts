@@ -671,3 +671,4 @@ export {
   type Lexicon,
   type Trait,
 } from "./smart";
+export * from "./idea-developer";

@@ -98,11 +98,11 @@ export const isMyRpgCampaignIdeaGood: AnswerConfigInput = {
   codexConnection: {
     heading: "Developing the idea without replacing it",
     paragraphs: [
-      "Once an idea passes the five questions, its pieces (the town, the guild, the temple, the foreman, the discovery) need to stay connected as play changes them, which is where paper notes start to strain over several sessions. In Codex Cryptica you can save each as an entity and link them, so you can see which factions a decision touches.",
-      "The generators can fill whichever question is still empty: a faction for competing goals, a rumour set for conflicting explanations, a settlement for a place with pressures attached, or an adventure concept when you want a full situation. They work from what you already have, and you can discard anything that does not fit your idea.",
+      "Start the Idea Developer in Assess mode and paste the premise you already have. It shows what is working, which part of the situation is thin, and what would make it playable without replacing the idea with a different one.",
+      "Read the questions it leaves open as decisions for you, not as missing homework for the tool to invent. Once you know which answer you want to develop, you can continue the conversation or take the resulting draft into a generator.",
     ],
-    linkText: "Develop your idea with the adventure generator",
-    href: "/generators/adventure-generator",
+    linkText: "Develop this idea with the Idea Developer",
+    href: "/tools/idea-developer?from=answer&source=is-my-rpg-campaign-idea-good&mode=assess",
   },
   relatedTools: [
     {
@@ -168,6 +168,7 @@ export const isMyRpgCampaignIdeaGood: AnswerConfigInput = {
       "Gives a five-question diagnostic for judging a campaign idea by what it does at the table instead of how original it is, and shows which missing piece to fix first.",
     relatedIntents: [
       "answer-turn-rpg-idea-into-adventure",
+      "tool-idea-developer",
       "generator-adventure-generator",
       "generator-adventure-idea-generator",
       "answer-quest-hooks-without-railroading",

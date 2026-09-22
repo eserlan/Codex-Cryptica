@@ -96,16 +96,51 @@ All marketing, landing, feature, and directory pages under `(marketing)` must fo
 1. **Paper/Parchment Surface Texture**: Container shells and cards MUST include `style:background-image="var(--bg-texture-overlay)"` over `bg-theme-bg` to preserve Codex Cryptica's tactile, book-like aesthetic.
 2. **Typography Standards**:
    - **Main Headings (H1/H2/H3)**: MUST use the serif display font (`font-header font-bold text-theme-text`). Never use sans-serif `font-extrabold` for primary page headings.
-   - **Eyebrows**: MUST use monospace (`font-mono text-xs font-bold uppercase tracking-[0.24em] text-theme-primary`).
+   - **Eyebrows**: MUST use monospace (`font-mono text-base sm:text-sm font-bold uppercase tracking-[0.24em] text-theme-primary`; 16px on phones, see [Mobile Typography & Touch Targets](#mobile-typography--touch-targets)).
    - **Mobile H1 Scale**: Keep H1 font sizes restrained on mobile (`text-3xl sm:text-4xl lg:text-5xl`) to ensure long titles fit naturally without taking up the entire first viewport.
-   - **Body Copy**: `font-body font-light text-theme-muted` with comfortable reading measures (`max-w-2xl`).
-3. **Editorial Hero Flow**: Avoid generic SaaS hero templates (centered H1 + centered subtext + separate bordered quote card). Format problem statements as editorial prose under a serif sub-heading (`<h2 class="font-header text-base font-bold text-theme-text">...</h2>`) inside a soft parchment container (`bg-theme-surface/50 border border-theme-border/70`).
+   - **Body Copy**: `font-body font-light text-lg sm:text-base text-theme-muted` (18px on phones) with comfortable reading measures (`max-w-2xl`).
+3. **Editorial Hero Flow**: Avoid generic SaaS hero templates (centered H1 + centered subtext + separate bordered quote card). Format problem statements as editorial prose under a serif sub-heading (`<h2 class="font-header text-xl sm:text-lg font-bold text-theme-text">...</h2>`) inside a soft parchment container (`bg-theme-surface/50 border border-theme-border/70`).
 4. **Card Language**: Reuse CC's parchment card styling (`bg-theme-surface border border-theme-border rounded-xl shadow-md`) with texture overlay and primary icon pills (`w-10 h-10 rounded-xl bg-theme-primary/10 border border-theme-primary/20`).
 5. **Restrained Spacing**: Keep vertical section padding to `py-12 sm:py-16` and section gaps to `mb-14` / `mb-16`.
 
+## Mobile Typography & Touch Targets
+
+Text that reads comfortably on a desktop monitor is often too small on a phone. This was reported on the Idea Developer, where measured sizes were 14px for labels and hints and 16px for body text. Phones are the primary way many people read the public pages, so these rules are binding (Constitution, Principle VI).
+
+### Phone-first sizing
+
+Tailwind is mobile-first: the **unprefixed class is the phone size**, and `sm:` (640px and up) steps it back down. Write the phone size first.
+
+| Role                                                                           | Phone (below 640px) | From `sm:` up | Classes                            |
+| ------------------------------------------------------------------------------ | ------------------- | ------------- | ---------------------------------- |
+| Reading text: paragraphs, list items, card text, sentences of help or hints    | 18px                | 16px          | `text-lg sm:text-base`             |
+| Supporting chrome: form labels, eyebrows, counters, badges, buttons, link rows | 16px                | 14px          | `text-base sm:text-sm`             |
+| Section headings (h2, h3)                                                      | 20px                | 18px          | `text-xl sm:text-lg`               |
+| Page heading (h1)                                                              | 30px                | 36px and up   | `text-3xl sm:text-4xl lg:text-5xl` |
+| Text inputs and textareas                                                      | 18px                | 16px          | `text-lg sm:text-base`             |
+
+### Rules
+
+1. **Nothing a user reads or taps is under 16px on a phone.** No unprefixed `text-xs`, `text-sm` or `text-[Npx]` below 16px. Smaller sizes are allowed only from `sm:` up.
+2. **Text inputs are never under 16px.** Below that, iOS zooms the whole page when the field gets focus.
+3. **Sentences are 18px on a phone.** Labels, eyebrows and a deliberately quiet footnote (for example a privacy notice) may sit at the 16px floor, never lower.
+4. **Touch targets are at least 44px tall** (`min-h-11`), with the label centred (`justify-center`).
+5. **Bigger text must not break the layout.** No sideways scroll at 390px wide. Let rows wrap (`flex-wrap`) and avoid `whitespace-nowrap` on anything a phone user needs to read.
+
+### Existing dense components
+
+Some in-app chrome (the Label Badge and Tab Bar examples below use `text-[10px]`) is deliberately dense. It may stay as it is until it is next changed. When a change touches it, anything a user reads or taps MUST meet the floor above. New components MUST NOT copy those sizes.
+
+### Verify in a real browser
+
+jsdom does not compute the final font size, so a unit test alone cannot prove this. Use both:
+
+- a **class guard** unit test that fails on an unprefixed `text-xs` or `text-sm` (see `apps/web/src/lib/components/idea-developer/text-size.test.ts`);
+- a **Playwright measurement** at 390×844 that reads the computed size of every visible text node, textarea and button, in each state the page can be in, including one with content on screen (see the `measure` helper in `apps/web/tests/idea-developer.spec.ts`).
+
 ## Living Examples
 
-These snippets represent the most common UI building blocks used across the application.
+These snippets represent the most common UI building blocks used across the application. **Their sizes are desktop sizes.** On a phone, apply [Mobile Typography & Touch Targets](#mobile-typography--touch-targets): write the phone size as the unprefixed class and step down at `sm:`.
 
 ### Entity Action Card
 

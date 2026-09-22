@@ -254,6 +254,13 @@
               icon: "icon-[lucide--map]",
             },
             {
+              href: "/tools/idea-developer",
+              label: "Idea Developer",
+              summary:
+                "Paste an idea you already have. It develops it instead of replacing it: pressure, people who clash, choices for the players, and questions only you can answer.",
+              icon: "icon-[lucide--lightbulb]",
+            },
+            {
               href: "/generators/magic-item",
               label: "Magic Item Generator",
               summary:
