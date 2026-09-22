@@ -174,6 +174,7 @@ export const whatRpgShouldIUseForTacticalCombat: AnswerConfigInput = {
     "how-do-i-balance-rpg-combat-encounters-without-a-tpk",
     "how-do-you-make-a-boss-fight-memorable-in-a-tabletop-rpg",
     "what-rpg-should-i-play-for-investigative-horror",
+    "what-rpg-works-for-political-intrigue-and-faction-play",
   ],
   discovery: {
     id: "answer-tactical-combat-system-selection",

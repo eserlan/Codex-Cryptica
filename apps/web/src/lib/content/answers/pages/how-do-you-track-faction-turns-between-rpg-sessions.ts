@@ -157,6 +157,8 @@ export const howDoYouTrackFactionTurnsBetweenRpgSessions: AnswerConfigInput = {
     "how-do-you-organise-npc-relationships",
     "how-do-you-track-unresolved-plot-hooks-in-an-rpg-campaign",
     "how-do-you-run-a-scene-with-multiple-npcs",
+    "what-rpg-works-for-political-intrigue-and-faction-play",
+    "how-do-i-run-political-intrigue-and-faction-play",
   ],
   discovery: {
     id: "answer-track-faction-turns-between-sessions",
