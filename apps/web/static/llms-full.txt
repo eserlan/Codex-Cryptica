@@ -1944,6 +1944,10 @@ Reference answers to real RPG and worldbuilding questions, indexed at https://co
 
 **Direct answer:** Players engage with lore when it does something to their characters, not when it's explained to them. A piece of history becomes interesting the moment it can be wanted, feared, changed, lost or exploited. The fix is rarely 'more worldbuilding' or 'better exposition'; it's turning what already exists into choices, connecting it to what the characters already want, and letting player decisions visibly move it. And roleplaying isn't the same thing as performing dialogue in character: a player making a sharp decision in third person is roleplaying just as much as one doing voices.
 
+### [How do I organise my GM notes and references when running an RPG in person?](https://codexcryptica.com/answers/how-do-i-organise-gm-notes-for-in-person-play)
+
+**Direct answer:** Bring a session-facing subset to the table, not the whole campaign file: one page of what might matter tonight, a few reference pages you can reach without scrolling, somewhere to catch names and decisions as they happen, and a place the session gets filed afterwards. Paper, tablet and laptop all do that job, so choose by how fast you need an answer and how much screen you want sitting between you and the players.
+
 ### [How do I run a successful Session 0?](https://codexcryptica.com/answers/how-do-i-run-a-successful-session-0)
 
 **Direct answer:** A good Session 0 aligns the group on what kind of game they're actually playing, sets boundaries and expectations before anyone's invested in a bad assumption, and gives the characters concrete reasons to be in a party together. It isn't paperwork; done well, it produces the campaign's first real material: the premise, the party's connections, and the first hook, rather than a form everyone fills in and forgets.
@@ -2558,4 +2562,3 @@ Codex Cryptica provides specialized, tailored landing pages, knowledge graphs, a
 **Summary:** One world, one hex map, one set of consequences — however many players turn up, and whenever they do.
 
 **Overview:** In a West Marches game you are the only person who has seen the whole map. Six players went out in March and named a ruin; four different players go back in September and need to know what the first group found, who they annoyed, and which road is now watched. The world keeps moving between expeditions, and none of it is written down anywhere the next party can use.
-
