@@ -11,6 +11,10 @@ import {
   flowNodesToCanvasNodes,
 } from "./canvas-workspace-helpers";
 
+type AreaPopulationResult = Awaited<
+  ReturnType<typeof delveAreaEnhancementService.populateAllAreas>
+>;
+
 export interface CanvasAreaEnhancementDeps {
   service?: Pick<
     typeof delveAreaEnhancementService,
@@ -92,6 +96,82 @@ export function useCanvasAreaEnhancement({
     roomEnhancementError = null;
   }
 
+  function updatePopulationProgress({
+    completed,
+    total,
+    updatedAreas,
+  }: AreaPopulationProgress) {
+    autoPopulationCompleted = completed;
+    autoPopulationTotal = total;
+    if (updatedAreas.length === 0) return;
+
+    const updates = new Map(
+      updatedAreas.map((area) => [area.id, area] as const),
+    );
+    logic.nodes = logic.nodes.map((node) => {
+      const update = updates.get(node.id);
+      return update ? { ...node, data: { ...node.data, ...update } } : node;
+    });
+  }
+
+  function persistPopulationResult(
+    targetCanvas: Canvas,
+    result: AreaPopulationResult,
+  ) {
+    const enhancedEdges = new Map(
+      result.edges.map((edge) => [edge.id, edge] as const),
+    );
+    logic.edges = logic.edges.map((edge) => {
+      const update = enhancedEdges.get(edge.id);
+      return update
+        ? { ...edge, data: { ...(edge.data ?? {}), ...(update.data ?? {}) } }
+        : edge;
+    });
+
+    const metadata = {
+      ...(targetCanvas.metadata ?? {}),
+      areaPopulationStatus:
+        result.failed > 0 || result.failedPassages > 0 ? "partial" : "complete",
+      areaPopulationCompleted: result.completed,
+      areaPopulationTotal: result.total,
+      areaPopulationUpdatedAt: Date.now(),
+    };
+    const updatedCanvas = {
+      ...targetCanvas,
+      nodes: flowNodesToCanvasNodes(logic.nodes),
+      edges: logic.edges.map((edge) => flowEdgeToCanvasEdge(edge)),
+      metadata,
+    };
+    vault.canvases[targetCanvas.id!] = updatedCanvas;
+    canvasRegistry.canvases[targetCanvas.id!] = updatedCanvas;
+  }
+
+  function getPopulationFailureMessage(result: AreaPopulationResult) {
+    if (result.failed === 0 && result.failedPassages === 0) return null;
+
+    const failures = [
+      result.failed > 0
+        ? `${result.failed} Area${result.failed === 1 ? "" : "s"}`
+        : "",
+      result.failedPassages > 0
+        ? `${result.failedPassages} passage${result.failedPassages === 1 ? "" : "s"}`
+        : "",
+    ]
+      .filter(Boolean)
+      .join(" and ");
+    return `${failures} could not be enhanced. They will retry next time this canvas opens.`;
+  }
+
+  function reportPopulationError(error: unknown) {
+    console.error(
+      "[DelveAutoPopulation] Error during canvas auto-population:",
+      error,
+    );
+    const detail =
+      error instanceof Error && error.message ? ` (${error.message})` : "";
+    autoPopulationMessage = `Automatic AI population paused${detail}. Existing Area details were preserved and it will retry next time.`;
+  }
+
   async function populateCanvasAreas(targetCanvas: Canvas) {
     isAutoPopulating = true;
     autoPopulationMessage = null;
@@ -108,73 +188,13 @@ export function useCanvasAreaEnhancement({
     try {
       const result = await service.populateAllAreas(
         targetCanvas,
-        ({ completed, total, updatedAreas }: AreaPopulationProgress) => {
-          autoPopulationCompleted = completed;
-          autoPopulationTotal = total;
-          if (updatedAreas.length === 0) return;
-          const updates = new Map(
-            updatedAreas.map((area) => [area.id, area] as const),
-          );
-          logic.nodes = logic.nodes.map((node) => {
-            const update = updates.get(node.id);
-            return update
-              ? { ...node, data: { ...node.data, ...update } }
-              : node;
-          });
-        },
+        updatePopulationProgress,
       );
-
-      const populationStatus =
-        result.failed > 0 || result.failedPassages > 0 ? "partial" : "complete";
-      const enhancedEdges = new Map(
-        result.edges.map((edge) => [edge.id, edge] as const),
-      );
-      logic.edges = logic.edges.map((edge) => {
-        const update = enhancedEdges.get(edge.id);
-        return update
-          ? { ...edge, data: { ...(edge.data ?? {}), ...(update.data ?? {}) } }
-          : edge;
-      });
-      const metadata = {
-        ...(targetCanvas.metadata ?? {}),
-        areaPopulationStatus: populationStatus,
-        areaPopulationCompleted: result.completed,
-        areaPopulationTotal: result.total,
-        areaPopulationUpdatedAt: Date.now(),
-      };
-      const updatedCanvas = {
-        ...targetCanvas,
-        nodes: flowNodesToCanvasNodes(logic.nodes),
-        edges: logic.edges.map((edge) => flowEdgeToCanvasEdge(edge)),
-        metadata,
-      };
-      vault.canvases[targetCanvas.id!] = updatedCanvas;
-      canvasRegistry.canvases[targetCanvas.id!] = updatedCanvas;
+      persistPopulationResult(targetCanvas, result);
       await vault.saveCanvas(targetCanvas.id!);
-
-      if (result.failed > 0 || result.failedPassages > 0) {
-        const failures = [
-          result.failed > 0
-            ? `${result.failed} Area${result.failed === 1 ? "" : "s"}`
-            : "",
-          result.failedPassages > 0
-            ? `${result.failedPassages} passage${
-                result.failedPassages === 1 ? "" : "s"
-              }`
-            : "",
-        ]
-          .filter(Boolean)
-          .join(" and ");
-        autoPopulationMessage = `${failures} could not be enhanced. They will retry next time this canvas opens.`;
-      }
+      autoPopulationMessage = getPopulationFailureMessage(result);
     } catch (err) {
-      console.error(
-        "[DelveAutoPopulation] Error during canvas auto-population:",
-        err,
-      );
-      const detail =
-        err instanceof Error && err.message ? ` (${err.message})` : "";
-      autoPopulationMessage = `Automatic AI population paused${detail}. Existing Area details were preserved and it will retry next time.`;
+      reportPopulationError(err);
     } finally {
       isAutoPopulating = false;
     }

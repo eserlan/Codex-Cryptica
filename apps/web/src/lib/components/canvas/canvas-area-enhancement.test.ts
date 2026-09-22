@@ -2,6 +2,7 @@
 
 import type { Canvas } from "@codex/canvas-engine";
 import { describe, expect, it, vi } from "vitest";
+import type { AreaPopulationProgress } from "$lib/services/delve-area-enhancement";
 import { useCanvasAreaEnhancement } from "./canvas-area-enhancement.svelte";
 
 function room(id: string, sectorId = "sector-1", name = id) {
@@ -37,14 +38,19 @@ function makeDeps(overrides: Record<string, unknown> = {}) {
         ...source,
         name: "Enhanced room",
       })),
-      populateAllAreas: vi.fn(async () => ({
-        nodes: canvas.nodes,
-        edges: canvas.edges,
-        completed: 1,
-        total: 1,
-        failed: 0,
-        failedPassages: 0,
-      })),
+      populateAllAreas: vi.fn(
+        async (
+          _targetCanvas: Canvas,
+          _onProgress: (progress: AreaPopulationProgress) => void,
+        ) => ({
+          nodes: canvas.nodes,
+          edges: canvas.edges,
+          completed: 1,
+          total: 1,
+          failed: 0,
+          failedPassages: 0,
+        }),
+      ),
     },
     vault: {
       canvases: { [canvas.id!]: canvas },
@@ -111,10 +117,31 @@ describe("useCanvasAreaEnhancement", () => {
     const deps = makeDeps();
     const enhancement = useCanvasAreaEnhancement(deps);
 
+    deps.service.populateAllAreas.mockImplementationOnce(
+      async (
+        _targetCanvas: Canvas,
+        onProgress: (progress: AreaPopulationProgress) => void,
+      ) => {
+        onProgress({
+          completed: 1,
+          total: 1,
+          updatedAreas: [room("room-1", "sector-1", "Updated room")],
+        });
+        return {
+          nodes: deps.canvas.nodes,
+          edges: deps.canvas.edges,
+          completed: 1,
+          total: 1,
+          failed: 0,
+          failedPassages: 0,
+        };
+      },
+    );
+
     await enhancement.populateCanvasAreas(deps.canvas);
 
     expect(deps.vault.saveCanvas).toHaveBeenCalledWith("canvas-1");
-    expect(deps.canvas.metadata).toEqual(
+    expect(deps.vault.canvases["canvas-1"].metadata).toEqual(
       expect.objectContaining({
         areaPopulationStatus: "complete",
         areaPopulationCompleted: 1,
@@ -122,5 +149,42 @@ describe("useCanvasAreaEnhancement", () => {
     );
     expect(enhancement.isAutoPopulating).toBe(false);
     expect(enhancement.autoPopulationMessage).toBeNull();
+  });
+
+  it("reports partial area and passage failures after persisting progress", async () => {
+    const deps = makeDeps();
+    deps.service.populateAllAreas.mockResolvedValueOnce({
+      nodes: deps.canvas.nodes,
+      edges: deps.canvas.edges,
+      completed: 1,
+      total: 3,
+      failed: 1,
+      failedPassages: 2,
+    });
+    const enhancement = useCanvasAreaEnhancement(deps);
+
+    await enhancement.populateCanvasAreas(deps.canvas);
+
+    expect(deps.vault.saveCanvas).toHaveBeenCalledWith("canvas-1");
+    expect(enhancement.autoPopulationMessage).toBe(
+      "1 Area and 2 passages could not be enhanced. They will retry next time this canvas opens.",
+    );
+    expect(enhancement.isAutoPopulating).toBe(false);
+  });
+
+  it("preserves existing data and reports population errors", async () => {
+    const deps = makeDeps();
+    deps.service.populateAllAreas.mockRejectedValueOnce(
+      new Error("Oracle unavailable"),
+    );
+    const enhancement = useCanvasAreaEnhancement(deps);
+
+    await enhancement.populateCanvasAreas(deps.canvas);
+
+    expect(deps.vault.saveCanvas).not.toHaveBeenCalled();
+    expect(enhancement.autoPopulationMessage).toBe(
+      "Automatic AI population paused (Oracle unavailable). Existing Area details were preserved and it will retry next time.",
+    );
+    expect(enhancement.isAutoPopulating).toBe(false);
   });
 });
