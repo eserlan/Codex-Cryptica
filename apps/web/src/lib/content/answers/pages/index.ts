@@ -3,6 +3,7 @@ import { canYouPlayATabletopRpgIn30MinuteSessions } from "./can-you-play-a-table
 import { howDoIBalanceRpgCombatEncountersWithoutATpk } from "./how-do-i-balance-rpg-combat-encounters-without-a-tpk";
 import { howDoIExpandASimpleRpgCampaignIdea } from "./how-do-i-expand-a-simple-rpg-campaign-idea";
 import { howDoIFindATabletopRpgGroupToPlayWith } from "./how-do-i-find-a-tabletop-rpg-group-to-play-with";
+import { howDoIGetMyRpgPartyToWorkTogether } from "./how-do-i-get-my-rpg-party-to-work-together";
 import { howDoIGetPlayersToEngageWithMyCampaignWorld } from "./how-do-i-get-players-to-engage-with-my-campaign-world";
 import { howDoIRunASuccessfulSessionZero } from "./how-do-i-run-a-successful-session-0";
 import { howDoIRunPoliticalIntrigueAndFactionPlay } from "./how-do-i-run-political-intrigue-and-faction-play";
@@ -91,6 +92,7 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     howDoIBalanceRpgCombatEncountersWithoutATpk,
     howDoIExpandASimpleRpgCampaignIdea,
     howDoIFindATabletopRpgGroupToPlayWith,
+    howDoIGetMyRpgPartyToWorkTogether,
     howDoIGetPlayersToEngageWithMyCampaignWorld,
     howDoIRunASuccessfulSessionZero,
     howDoIRunPoliticalIntrigueAndFactionPlay,

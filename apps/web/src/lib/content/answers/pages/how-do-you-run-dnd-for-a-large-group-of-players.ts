@@ -217,6 +217,11 @@ export const howDoYouRunDndForALargeGroupOfPlayers: AnswerConfigInput = {
         reason:
           "Both sit in the session-prep cluster and touch crowded scenes, but this answer is about running many players at once regardless of NPC count, while the multi-NPC answer addresses running many NPCs at once regardless of party size.",
       },
+      {
+        with: "answer-party-cohesion",
+        reason:
+          "This answer covers pacing and spotlight at a crowded table; the party-cohesion answer covers shared stakes and cooperation for parties of any size. The discovery audit's vocabulary match is only the generic phrase 'players up'.",
+      },
     ],
   },
   seo: {

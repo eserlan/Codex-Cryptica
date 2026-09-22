@@ -129,6 +129,7 @@ export const howDoYouHandlePlayersGoingOffScriptAsAGm: AnswerConfigInput = {
     "how-much-rule-of-cool-should-a-dm-allow",
     "how-do-i-start-gming-for-the-first-time",
     "how-do-you-make-a-tabletop-rpg-session-more-engaging",
+    "how-do-i-get-my-rpg-party-to-work-together",
   ],
   discovery: {
     id: "answer-players-going-off-script",
