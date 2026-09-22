@@ -80,6 +80,7 @@ import { whatShouldAnRpgSettlementContain } from "./what-should-an-rpg-settlemen
 import { whatShouldILookForInAnRpgCampaignManager } from "./what-should-i-look-for-in-an-rpg-campaign-manager";
 import { whatTtrpgShouldIUseForAFantasyDungeonCrawl } from "./what-ttrpg-should-i-use-for-a-fantasy-dungeon-crawl";
 import { whereDoIStartIfIHaveNeverPlayedATabletopRpg } from "./where-do-i-start-if-i-have-never-played-a-tabletop-rpg";
+import { xpLevelingVsMilestoneLeveling } from "./xp-leveling-vs-milestone-leveling";
 
 /**
  * The published answer library.
@@ -170,6 +171,7 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     whatShouldILookForInAnRpgCampaignManager,
     whatTtrpgShouldIUseForAFantasyDungeonCrawl,
     whereDoIStartIfIHaveNeverPlayedATabletopRpg,
+    xpLevelingVsMilestoneLeveling,
   ]
     .map((answer) => AnswerConfigSchema.parse(answer))
     .map((answer) => [answer.slug, answer]),

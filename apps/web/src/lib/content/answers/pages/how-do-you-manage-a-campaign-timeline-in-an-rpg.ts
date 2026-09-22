@@ -130,6 +130,7 @@ export const howDoYouManageACampaignTimelineInAnRpg: AnswerConfigInput = {
     "how-do-you-track-faction-turns-between-rpg-sessions",
     "how-do-you-help-players-remember-what-happened-in-a-ttrpg-campaign",
     "how-do-you-recap-a-ttrpg-session",
+    "xp-leveling-vs-milestone-leveling",
   ],
   discovery: {
     id: "answer-manage-campaign-timeline",
