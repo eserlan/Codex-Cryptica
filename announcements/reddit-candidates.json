@@ -1,5 +1,5 @@
 {
-  "updated_at": 1790197920,
+  "updated_at": 1790199420,
   "candidates": [
     {
       "id": "reddit-35104395212-i-put-every-superhero-generator-in-one-p",
@@ -82,14 +82,14 @@
       "created_at": 1790042002
     },
     {
-      "id": "reddit-35914173197-political-intrigue-roles-that-give-every",
-      "title": "Political intrigue roles that give everyone something to do",
-      "body": "In intrigue games the diplomat talks, the spy sneaks, and the rest of the party watches. If a role only gathers information, it turns into exposition and the table drifts.\n\nI put together a set of intrigue and social role guides that give each archetype one concrete way to change the scene and one clear way it can go wrong.\n\nStart here: /answers/how-do-i-run-character-roles-in-a-political-intrigue-rpg\n\nIt includes:\n- diplomats, nobles and courtiers played through access and obligation rather than a single persuasion roll\n- spies and infiltrators where cover has maintenance costs and a handler who checks in\n- journalists and media characters where a story filed creates debts, editors and published consequences\n- faction and court structures from /answers/how-do-i-run-political-intrigue-and-faction-play so intrigue is not just one NPC talking\n\nThe guides lean on pressure and relationships, not on long hidden lore dumps. That keeps intrigue playable, but it means you need named NPCs with wants on the table early rather than revealing everything late.\n\nWhich intrigue role has been hardest to keep engaging for the whole party in your games?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/announcements/release-35914173197-5.png)\n\n---\n*Posted automatically via release pipeline. Feedback and discussion welcome!*\n<!-- id:35914173197 -->",
-      "url": "https://codexcryptica.com/answers/how-do-i-run-political-intrigue-and-faction-play",
-      "image_url": "https://assets.codexcryptica.com/announcements/release-35914173197-5.png",
+      "id": "reddit-35914173197-giving-specialists-spotlight-without-spl",
+      "title": "Giving specialists spotlight without splitting the party",
+      "body": "Rogues scout ahead. Investigators chase the clue. Both are great character beats and both can leave the rest of the table with nothing to do while one player plays alone in a corridor or an archive.\n\nI wrote a spotlight series that keeps the specialist moment but anchors its outcome back in the room where the party is.\n\nCore guide: /answers/how-do-i-give-specialist-characters-spotlight\n\nIt walks through:\n- rogues and scouts who recon in short beats that return with a choice the party has to make, not a solved map\n- investigators from /answers/how-do-i-run-an-investigator-without-sidelining-the-party who share findings as playable leads the group can pull on\n- party cohesion tools from /answers/how-do-i-get-my-rpg-party-to-work-together so spotlight rotates instead of isolates\n- when to cut back to the party and force a decision rather than letting a scene run solo until it resolves\n\nThe tradeoff I kept is that scouting still carries risk. If recon is always safe and perfect, there is no reason to bring the party. A short, costly look ahead felt more useful than a free peek.\n\nWhat do you do at your table to give your specialist a moment without the rest of the party waiting in the tavern?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/announcements/release-35914173197-6.png)\n\n---\n*Posted automatically via release pipeline. Feedback and discussion welcome!*\n<!-- id:35914173197 -->",
+      "url": "https://codexcryptica.com/answers/how-do-i-give-specialist-characters-spotlight",
+      "image_url": "https://assets.codexcryptica.com/announcements/release-35914173197-6.png",
       "source_id": "35914173197",
       "status": "approved",
-      "created_at": 1790197919
+      "created_at": 1790199420
     }
   ]
 }
