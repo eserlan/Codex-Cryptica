@@ -14,7 +14,6 @@ export const howDoIGiveSpecialistCharactersSpotlight: AnswerConfigInput = {
       kind: "prose",
       heading: "Spotlight is attention, not isolation",
       paragraphs: [
-        "Spotlight means giving one character a distinctive contribution, not giving them a separate game.",
         "A specialist often has abilities that invite a scene built around one character: tracing a network intrusion, questioning a witness, presenting a case at court, or slipping past a guard. The imbalance starts when everyone else can only wait for the specialist to finish. This can happen even when the specialist player is trying to be considerate; the adventure has made their skill the only route forward.",
         "A useful scene gives the specialist a moment to do something distinctive, then makes the result matter to the group. Their skill might reveal a vulnerability, identify a suspect, or win an audience. The rest of the party can then choose how to use that opening, protect it, challenge its cost, or deal with the response. Keep the expert's competence real, while making sure the problem has more than one meaningful point of contact.",
         "Watch for repeated waiting, decisions that only one character can make, and discoveries that arrive too late for anyone else to act on. Those are signs to change the scene structure, not to make the specialist less capable.",
