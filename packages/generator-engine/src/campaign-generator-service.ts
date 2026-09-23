@@ -176,6 +176,28 @@ function parseGenericGeneratorOutput(
         parsed.content.trim().length > 0));
   if (!isValidShape) return null;
 
+  const observanceFields = [
+    "name",
+    "type",
+    "when",
+    "observers",
+    "traditions",
+    "tension",
+  ] as const;
+  const observances = Array.isArray(parsed.observances)
+    ? parsed.observances.every(
+        (entry) =>
+          entry !== null &&
+          typeof entry === "object" &&
+          observanceFields.every((field) => {
+            const value = (entry as Record<string, unknown>)[field];
+            return typeof value === "string" && value.trim().length > 0;
+          }),
+      )
+      ? parsed.observances
+      : undefined
+    : undefined;
+
   return {
     title: parsed.title as string,
     summary: parsed.summary as string,
@@ -193,6 +215,7 @@ function parseGenericGeneratorOutput(
         )
       : undefined,
     starType: typeof parsed.starType === "string" ? parsed.starType : undefined,
+    observances,
   };
 }
 

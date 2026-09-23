@@ -587,6 +587,60 @@ describe("AI policy (US2)", () => {
     expect(d.labels).toContain("Witch");
   });
 
+  it("preserves valid AI-generated observances in campaign drafts", async () => {
+    const observances = [
+      {
+        name: "Lantern Tide",
+        type: "Memorial",
+        when: "The first calm night after the autumn equinox",
+        observers: "Harbour families",
+        traditions: "Carry covered lanterns to the quay",
+        tension: "A new ledger disputes the official account.",
+      },
+    ];
+    const aiGateway = {
+      complete: vi.fn(async () =>
+        JSON.stringify({
+          title: "Lantern Tide",
+          summary: "A harbour remembrance.",
+          lore: "The rope crews kept the gate open.",
+          labels: ["observance"],
+          observances,
+        }),
+      ),
+    };
+    const svc = new CampaignGeneratorService({
+      aiPolicy: { isEnabled: true, isAvailable: true },
+      aiGateway,
+    });
+
+    const generated = await svc.generateDraft(run("holiday", { useAI: true }));
+
+    expect(generated.observances).toEqual(observances);
+  });
+
+  it("drops malformed AI observances instead of trusting their shape", async () => {
+    const aiGateway = {
+      complete: vi.fn(async () =>
+        JSON.stringify({
+          title: "Lantern Tide",
+          summary: "A harbour remembrance.",
+          lore: "The rope crews kept the gate open.",
+          labels: ["observance"],
+          observances: [{ name: "Incomplete entry", tension: 42 }],
+        }),
+      ),
+    };
+    const svc = new CampaignGeneratorService({
+      aiPolicy: { isEnabled: true, isAvailable: true },
+      aiGateway,
+    });
+
+    const generated = await svc.generateDraft(run("holiday", { useAI: true }));
+
+    expect(generated.observances).toBeUndefined();
+  });
+
   it("parses the internal dungeon generator's AI-specific response shape", async () => {
     const aiGateway = {
       complete: vi.fn(async () =>
