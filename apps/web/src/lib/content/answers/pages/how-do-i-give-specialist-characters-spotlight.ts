@@ -114,6 +114,8 @@ export const howDoIGiveSpecialistCharactersSpotlight: AnswerConfigInput = {
     "how-do-i-get-my-rpg-party-to-work-together",
     "how-do-you-run-dnd-for-a-large-group-of-players",
     "how-do-i-run-spies-and-infiltrators-in-an-rpg",
+    "how-do-i-run-an-investigator-without-sidelining-the-party",
+    "how-do-i-run-a-journalist-or-media-character-in-an-rpg",
   ],
   discovery: {
     id: "answer-specialist-character-spotlight",
@@ -158,6 +160,11 @@ export const howDoIGiveSpecialistCharactersSpotlight: AnswerConfigInput = {
         with: "answer-run-hackers-netrunners",
         reason:
           "This answer gives reusable scene patterns for any specialist; the hacker answer applies that goal to digital intrusions, visible security pressure, and ways the physical crew can affect the hack.",
+      },
+      {
+        with: "answer-run-investigator-without-sidelining-party",
+        reason:
+          "This answer gives scene patterns for specialists generally; the investigator answer focuses specifically on distributing clues and interpretation while keeping detective expertise meaningful.",
       },
     ],
   },

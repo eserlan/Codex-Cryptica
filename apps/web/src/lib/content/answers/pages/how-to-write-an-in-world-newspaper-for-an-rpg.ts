@@ -167,6 +167,7 @@ export const howToWriteAnInWorldNewspaperForAnRpg: AnswerConfigInput = {
     "how-to-create-rumours-for-a-fantasy-town",
     "how-do-you-generate-useful-rpg-rumours",
     "how-do-you-run-character-roles-in-a-cyberpunk-rpg",
+    "how-do-i-run-a-journalist-or-media-character-in-an-rpg",
   ],
   seo: {
     title:

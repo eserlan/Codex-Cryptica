@@ -151,6 +151,7 @@ export const howDoIRunSpiesAndInfiltratorsInAnRpg: AnswerConfigInput = {
     "how-do-i-run-political-intrigue-and-faction-play",
     "how-do-you-run-factions-in-a-sandbox-campaign",
     "how-do-i-run-hackers-or-netrunners-without-splitting-the-party",
+    "how-do-i-run-an-investigator-without-sidelining-the-party",
   ],
   discovery: {
     id: "answer-run-spies-infiltrators-rpg",
@@ -200,6 +201,11 @@ export const howDoIRunSpiesAndInfiltratorsInAnRpg: AnswerConfigInput = {
         with: "answer-run-factions-sandbox",
         reason:
           "The sandbox faction answer tracks organisations' ongoing moves; this answer is about a particular covert operation and its team roles, security, and consequences.",
+      },
+      {
+        with: "answer-run-investigator-without-sidelining-party",
+        reason:
+          "This answer structures covert access and operation roles; the investigator answer concerns clue interpretation and detective competence during a broader investigation.",
       },
     ],
   },

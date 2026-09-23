@@ -310,6 +310,7 @@ export const howDoIRunPoliticalIntrigueAndFactionPlay: AnswerConfigInput = {
     "how-do-you-run-a-conspiracy-campaign",
     "how-do-you-create-a-secret-society-for-an-rpg-campaign",
     "how-do-i-run-spies-and-infiltrators-in-an-rpg",
+    "how-do-i-run-a-journalist-or-media-character-in-an-rpg",
   ],
   discovery: {
     id: "answer-run-political-intrigue",
