@@ -36,6 +36,13 @@ describe("public holiday generator", () => {
     expect(prompt.userMessage).toContain("exactly 6 observances");
     expect(prompt.userMessage).toContain("Lanterns for the Returning Tide");
     expect(prompt.userMessage).toContain("consistency pass");
+    expect(prompt.userMessage).toContain(
+      "Missing context is an invitation to make grounded choices",
+    );
+    expect(prompt.userMessage).toContain(
+      "Do not abbreviate later entries to headings and metadata",
+    );
+    expect(prompt.userMessage).toContain("arbitrary coloured threads");
   });
 
   it("generates deterministic, structured single and calendar results", () => {
