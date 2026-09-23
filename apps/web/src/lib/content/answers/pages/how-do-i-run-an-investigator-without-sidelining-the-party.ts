@@ -189,6 +189,11 @@ export const howDoIRunAnInvestigatorWithoutSideliningTheParty: AnswerConfigInput
       ],
       acknowledgedOverlap: [
         {
+          with: "answer-run-diplomats-nobles-courtiers",
+          reason:
+            "Both answers give system-agnostic guidance for a specialist PC, but the diplomat answer structures negotiation, status, and durable agreements while this answer structures clue discovery, interpretation, and shared decisions in investigations.",
+        },
+        {
           with: "answer-specialist-character-spotlight",
           reason:
             "The specialist spotlight answer covers scene structures for any expert role; this answer focuses on clue access, inference, and decision-making around an investigator character.",
