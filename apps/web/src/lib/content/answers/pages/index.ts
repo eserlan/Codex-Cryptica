@@ -10,6 +10,7 @@ import { howDoIOrganiseGmNotesForInPersonPlay } from "./how-do-i-organise-gm-not
 import { howDoIRunASuccessfulSessionZero } from "./how-do-i-run-a-successful-session-0";
 import { howDoIRunHackersOrNetrunnersWithoutSplittingTheParty } from "./how-do-i-run-hackers-or-netrunners-without-splitting-the-party";
 import { howDoIRunPoliticalIntrigueAndFactionPlay } from "./how-do-i-run-political-intrigue-and-faction-play";
+import { howDoIRunSpiesAndInfiltratorsInAnRpg } from "./how-do-i-run-spies-and-infiltrators-in-an-rpg";
 import { howDoIStartGmingForTheFirstTime } from "./how-do-i-start-gming-for-the-first-time";
 import { howDoITurnAnRpgIdeaIntoAnAdventure } from "./how-do-i-turn-an-rpg-idea-into-an-adventure";
 import { howDoYouBuildAPointCrawlForAnRpg } from "./how-do-you-build-a-point-crawl-for-an-rpg";
@@ -104,6 +105,7 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     howDoIRunASuccessfulSessionZero,
     howDoIRunHackersOrNetrunnersWithoutSplittingTheParty,
     howDoIRunPoliticalIntrigueAndFactionPlay,
+    howDoIRunSpiesAndInfiltratorsInAnRpg,
     howDoIStartGmingForTheFirstTime,
     howDoITurnAnRpgIdeaIntoAnAdventure,
     howDoYouBuildAPointCrawlForAnRpg,

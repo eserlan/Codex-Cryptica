@@ -113,6 +113,7 @@ export const howDoIGiveSpecialistCharactersSpotlight: AnswerConfigInput = {
     "how-do-you-make-a-tabletop-rpg-session-more-engaging",
     "how-do-i-get-my-rpg-party-to-work-together",
     "how-do-you-run-dnd-for-a-large-group-of-players",
+    "how-do-i-run-spies-and-infiltrators-in-an-rpg",
   ],
   discovery: {
     id: "answer-specialist-character-spotlight",

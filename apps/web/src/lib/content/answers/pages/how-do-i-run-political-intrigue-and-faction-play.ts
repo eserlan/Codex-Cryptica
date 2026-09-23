@@ -309,6 +309,7 @@ export const howDoIRunPoliticalIntrigueAndFactionPlay: AnswerConfigInput = {
     "how-do-you-track-faction-turns-between-rpg-sessions",
     "how-do-you-run-a-conspiracy-campaign",
     "how-do-you-create-a-secret-society-for-an-rpg-campaign",
+    "how-do-i-run-spies-and-infiltrators-in-an-rpg",
   ],
   discovery: {
     id: "answer-run-political-intrigue",

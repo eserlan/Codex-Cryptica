@@ -154,6 +154,7 @@ export const howDoYouRunFactionsInASandboxCampaign: AnswerConfigInput = {
     "is-my-rpg-campaign-idea-good",
     "what-rpg-works-for-political-intrigue-and-faction-play",
     "how-do-i-run-political-intrigue-and-faction-play",
+    "how-do-i-run-spies-and-infiltrators-in-an-rpg",
   ],
   discovery: {
     id: "answer-run-factions-sandbox",
