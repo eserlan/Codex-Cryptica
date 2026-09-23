@@ -145,6 +145,7 @@ export const howDoIRunHackersOrNetrunnersWithoutSplittingTheParty: AnswerConfigI
     relatedAnswers: [
       "how-do-i-give-specialist-characters-spotlight",
       "how-do-you-run-character-roles-in-a-cyberpunk-rpg",
+      "how-do-i-run-spies-and-infiltrators-in-an-rpg",
     ],
     discovery: {
       id: "answer-run-hackers-netrunners",

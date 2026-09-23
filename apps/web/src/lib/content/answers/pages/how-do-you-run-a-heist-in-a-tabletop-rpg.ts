@@ -191,6 +191,7 @@ export const howDoYouRunAHeistInATabletopRpg: AnswerConfigInput = {
     "how-do-you-write-a-one-shot-adventure",
     "how-do-you-run-a-chase-in-a-tabletop-rpg",
     "how-do-you-run-character-roles-in-a-cyberpunk-rpg",
+    "how-do-i-run-spies-and-infiltrators-in-an-rpg",
   ],
   discovery: {
     id: "answer-run-heist-in-tabletop-rpg",
