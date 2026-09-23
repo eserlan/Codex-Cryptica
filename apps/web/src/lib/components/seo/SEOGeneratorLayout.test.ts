@@ -674,6 +674,29 @@ describe("SEOGeneratorLayout Theming Sync", () => {
       expect(mockGenerate).not.toHaveBeenCalled();
     });
 
+    it("does not request a local seed when the generator requires AI", async () => {
+      const mockGenerate = vi.fn().mockResolvedValue({
+        type: "note" as const,
+        title: "Idea development",
+        content: "content",
+        lore: "",
+        labels: [],
+        status: "draft" as const,
+      });
+
+      render(SEOGeneratorLayout, {
+        props: {
+          canonicalPath: "/tools/idea-developer",
+          generate: mockGenerate,
+          formFields: noopSnippet,
+          aiModeRequired: true,
+        },
+      });
+
+      await new Promise((resolve) => setTimeout(resolve, 50));
+      expect(mockGenerate).not.toHaveBeenCalled();
+    });
+
     it("triggerExplicitAutoGenerate() fires a real (AI-on-by-default) generation, not a throwaway example", async () => {
       const mockGenerate = vi.fn().mockResolvedValue({
         type: "note" as const,

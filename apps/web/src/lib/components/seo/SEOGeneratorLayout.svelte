@@ -303,7 +303,7 @@
   }
 
   async function handleGenerateOnMount() {
-    if (isAutoDrafting || generatedData) return;
+    if (aiModeRequired || isAutoDrafting || generatedData) return;
     isAutoDrafting = true;
     errorMessage = null;
     try {
