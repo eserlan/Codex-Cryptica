@@ -252,7 +252,13 @@
     contextMenu = null;
   });
 
-  const selectedVisible = $derived(rows.filter((e) => selectedIds.has(e.id)));
+  const selectedVisible = $derived.by(() => {
+    const result = [];
+    for (const e of rows) {
+      if (selectedIds.has(e.id)) result.push(e);
+    }
+    return result;
+  });
   const allSelected = $derived(
     rows.length > 0 && rows.every((e) => selectedIds.has(e.id)),
   );
@@ -404,9 +410,11 @@
       try {
         const result = await vault.bulkDelete(targetIds);
         const succeededIds = new Set(result.succeededIds);
-        selectedIds = new Set(
-          [...selectedIds].filter((id) => !succeededIds.has(id)),
-        );
+        const next = new Set<string>();
+        for (const id of selectedIds) {
+          if (!succeededIds.has(id)) next.add(id);
+        }
+        selectedIds = next;
         if (result.failedIds.length > 0 || result.cancelledIds.length > 0) {
           notificationStore.notify(
             `Deleted ${result.succeededIds.length} entities; ${

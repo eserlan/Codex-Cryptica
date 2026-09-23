@@ -136,7 +136,10 @@ export function layoutLineage(
   for (const unit of units.values()) {
     for (const childId of unit.childUnitIds) hasParent.add(childId);
   }
-  const roots = [...units.keys()].filter((id) => !hasParent.has(id));
+  const roots: string[] = [];
+  for (const id of units.keys()) {
+    if (!hasParent.has(id)) roots.push(id);
+  }
 
   function positionSubtree(unitId: string, centerX: number) {
     const unit = units.get(unitId)!;

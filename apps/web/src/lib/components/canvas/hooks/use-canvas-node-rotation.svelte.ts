@@ -73,9 +73,10 @@ export function useCanvasNodeRotation(
       x: event.clientX,
       y: event.clientY,
     });
-    const matching = [...touchRotationPointers.entries()].filter(
-      ([, pointer]) => pointer.nodeId === nodeId,
-    );
+    const matching: [number, { nodeId: string; x: number; y: number }][] = [];
+    for (const entry of touchRotationPointers.entries()) {
+      if (entry[1].nodeId === nodeId) matching.push(entry);
+    }
     if (matching.length !== 2 || touchRotationGesture) return;
 
     const [[firstId, first], [secondId, second]] = matching;

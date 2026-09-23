@@ -286,3 +286,8 @@
 
 **Learning:** Using chained `.map().join()` in hot pointer event paths like free-hand drawing generates large amounts of intermediate string arrays, causing frequent garbage collection and frame drops.
 **Action:** Replace `.map().join()` with imperative loops (e.g. `for (const point of points) { path += ... }`) in hot frontend logic loops to significantly decrease GC pressure.
+
+## 2026-10-31 - Replace Set/Map iterator `.filter()` chains with imperative loops
+
+**Learning:** When using syntax like `[...mySet].filter(x => ...)` or `new Set([...mySet].filter(x => ...))` in reactive blocks, the JavaScript engine first exhausts the iterator to allocate a full array of all elements. It then iterates over that array again, creating another intermediate array for the filtered results. In hot paths (like Svelte `$derived` blocks managing thousands of vault items or nodes), this dual-allocation creates severe garbage collection latency.
+**Action:** Replace `[...iterator].filter()` with a single imperative loop. For Arrays, use `for...of` pushing into an array; for Sets, use `for...of` adding into a new Set. This reduces the time complexity from multiple passes to a single pass and entirely eliminates the initial spread array allocation.

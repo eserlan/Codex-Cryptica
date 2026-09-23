@@ -23,7 +23,10 @@
   // import on an entry that no longer exists.
   $effect(() => {
     const live = new Set(shelf.entries.map((entry) => entry.id));
-    const pruned = new Set([...selected].filter((id) => live.has(id)));
+    const pruned = new Set<string>();
+    for (const id of selected) {
+      if (live.has(id)) pruned.add(id);
+    }
     if (pruned.size !== selected.size) selected = pruned;
   });
 
