@@ -186,6 +186,7 @@ export const whatRpgWorksForPoliticalIntrigueAndFactionPlay: AnswerConfigInput =
       "how-do-you-track-faction-turns-between-rpg-sessions",
       "how-do-you-run-a-conspiracy-campaign",
       "how-do-you-create-a-secret-society-for-an-rpg-campaign",
+      "how-do-i-run-a-diplomat-noble-or-courtier-in-an-rpg",
     ],
     discovery: {
       id: "answer-political-intrigue-system-selection",
