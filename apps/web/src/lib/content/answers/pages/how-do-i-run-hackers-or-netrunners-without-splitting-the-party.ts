@@ -13,17 +13,43 @@ export const howDoIRunHackersOrNetrunnersWithoutSplittingTheParty: AnswerConfigI
     sections: [
       {
         kind: "prose",
-        heading: "Put shared stakes in the digital scene",
+        heading: "Keep the hack inside the shared scene",
         paragraphs: [
-          "A hacker can work alone in the fiction without leaving the other players with nothing to do. The table stalls when only the hacker can see progress, every result changes an invisible status, and the rest of the crew has no decision until the intrusion ends. Let the specialist control the digital approach, then make its effects change a place, person, or choice the whole group cares about.",
-          "Start from what the crew needs in the physical scene. A locked door, a camera grid, a transfer of evidence, or a hostile system keeping a lift sealed gives the intrusion a visible job. Map only the network elements that can change play, then put those choices in front of the crew.",
+          "A hacker can work alone in the fiction without leaving the other players waiting. Avoid: several private hacking checks → invisible progress → private resource loss → everyone else waits. Prefer: specialist choice → visible consequence → crew decision → changed options for the hacker.",
+          "Keep the game's hacking procedure intact. Change how you frame the scene and cut between characters, not the specialist mechanics that make the hacker distinct. Shared play means the other characters get decisions and consequential actions; they do not all need hacking rolls. The hacker keeps ownership of the specialist problem.",
+          "Start with what the crew needs in the physical scene: a door opened, a camera blinded, evidence copied, or a lift released. Map only the network elements that can change play, then make those changes visible to the crew.",
+        ],
+      },
+      {
+        kind: "list",
+        heading: "Use this scene loop",
+        items: [
+          {
+            term: "Choose",
+            text: "The hacker makes a meaningful specialist choice.",
+          },
+          {
+            term: "Resolve",
+            text: "Use the game's own hacking rules.",
+          },
+          {
+            term: "Show",
+            text: "Make the change visible in the physical or shared situation.",
+          },
+          {
+            term: "Respond",
+            text: "Let another character react or change access, security, or time.",
+          },
+          {
+            term: "Return",
+            text: "Go back to the hacker when that response changes their options.",
+          },
         ],
       },
       {
         kind: "list",
         heading: "Give the intrusion a shared objective and pressure",
-        intro:
-          "Before play, decide four things. Keep them small enough to explain in a sentence:",
+        intro: "Before play, set four things the table can grasp quickly:",
         items: [
           {
             term: "The target",
@@ -31,15 +57,15 @@ export const howDoIRunHackersOrNetrunnersWithoutSplittingTheParty: AnswerConfigI
           },
           {
             term: "The obstacle",
-            text: "Choose the part that makes the approach uncertain: missing credentials, a segmented system, an exposed access point, or a security process that notices unusual activity. Let the hacker decide how to tackle it using the rules of the game.",
+            text: "Choose what makes the approach uncertain: missing credentials, a segmented system, an exposed access point, or security that notices unusual activity. The hacker decides how to tackle it using the game's rules.",
           },
           {
             term: "The response",
-            text: "Put something in motion that the crew can recognise, such as a guard checking the access panel, a security operator reviewing an alert, or evidence beginning to move off-site. A clock or alarm track can help if the game already uses one; otherwise, describe what changes when pressure rises.",
+            text: "Put a visible response in motion: a guard checks the access panel, an operator reviews an alert, or evidence starts moving off-site. Use a clock or alarm track if the game has one; otherwise describe what changes as pressure rises.",
           },
           {
             term: "The result",
-            text: "Decide what success changes in the room and what failure or partial success puts at risk. A denied door, a camera feed switching off, a trace appearing on the terminal, or an alert reaching a patrol gives everyone something to react to.",
+            text: "Decide what success changes and what failure or partial success risks. A denied door, a dead camera feed, a trace on the terminal, or an alert reaching a patrol gives the crew something to react to.",
           },
         ],
       },
@@ -48,15 +74,15 @@ export const howDoIRunHackersOrNetrunnersWithoutSplittingTheParty: AnswerConfigI
         heading:
           "Cut between the hacker and the crew when the situation changes",
         paragraphs: [
-          "Let the hacker make a meaningful choice, resolve it with the system's rules, and say what has changed. Then turn to the other characters while that change is still live. A guard responding to an alert gives the scout a problem; a door unlocked by the hack gives the infiltrator a route; a physical cable or access badge gives the technician a way to help. When one of their actions changes access or pressure, return to the hacker with that new information.",
-          "You do not need to switch speakers after every die roll. Cut when the result creates a new risk, reveals a choice, or changes what another character can do. If the game has a structured hacking procedure or initiative order, use it. The scene framing should connect those mechanics to the rest of the table, not replace them with a second set of rules.",
+          "After a hacking result changes the situation, turn to the crew while that change is live. An alert gives the scout a patrol to track; an unlocked door gives the infiltrator a route; a physical cable gives the technician a choice. Return to the hacker when the crew's response changes access or pressure.",
+          "Cut when a result creates a risk, reveals a choice, or changes what someone can do, not after every roll. Keep any structured hacking procedure or initiative order the game uses.",
         ],
       },
       {
         kind: "list",
         heading: "Give the physical crew ways to affect the hack",
         intro:
-          "Other characters can affect the intrusion without making the specialist's choices for them:",
+          "Give the crew consequential actions around the intrusion, while the hacker makes the digital choices:",
         items: [
           {
             term: "Create access",
@@ -64,15 +90,15 @@ export const howDoIRunHackersOrNetrunnersWithoutSplittingTheParty: AnswerConfigI
           },
           {
             term: "Manage the physical response",
-            text: "A face can misdirect the security operator, a scout can track the patrol, and another character can keep an alarmed door from sealing. Their actions change the crew's options while the hacker still resolves the digital obstacle using the game's rules.",
+            text: "A face can misdirect the operator, a scout can track the patrol, or another character can hold an alarmed door. These actions change access, security, or time; they do not require another hacking roll.",
           },
           {
             term: "Protect the connection",
-            text: "A technician might keep power running, move the terminal out of sight, or decide whether to disconnect an exposed device. Each option should carry a consequence the group can weigh.",
+            text: "A technician can keep power on, hide the terminal, or choose whether to disconnect an exposed device. Give each option a consequence the group can weigh.",
           },
           {
             term: "Act on what the hack reveals",
-            text: "Once the specialist uncovers a route, name, or vulnerability, ask what the crew wants to do with it. The hacker supplies an opportunity; the party still chooses whether to use it, preserve it, or leave before security closes in.",
+            text: "When the hacker finds a route, name, or vulnerability, ask what the crew will do with it: use it, preserve it, or leave before security closes in.",
           },
         ],
       },
@@ -80,15 +106,15 @@ export const howDoIRunHackersOrNetrunnersWithoutSplittingTheParty: AnswerConfigI
         kind: "prose",
         heading: "Keep both competence and consequence in play",
         paragraphs: [
-          "A successful hack should matter. If it opens the route or exposes useful information, do not add another identical barrier just to keep the hacker busy. Leave the next problem to the crew: getting through the door, deciding which evidence to take, or dealing with the person who noticed the intrusion.",
-          "A failed attempt should change the situation rather than vanish into a private resource cost. An alert can bring a guard closer, a partial copy can identify the missing file, or an access point can be burned. Use a consequence that follows from the fiction and the system's rules. The hacker remains capable, but the choice about what to risk belongs to the player and the crew.",
+          "Let success matter: if the hack opens a route or exposes information, do not add the same barrier again to keep the hacker busy. Give the crew the next decision, such as which evidence to take or how to handle the person who noticed.",
+          "Let failure change the situation, not disappear into a private resource cost. An alert can bring a guard closer, a partial copy can reveal the missing file, or an access point can be burned. Follow the fiction and the system's rules; keep the hacker capable and let the player choose what to risk.",
         ],
       },
       {
         kind: "prose",
         heading: "Use a solo hack when the result matters to the group",
         paragraphs: [
-          "A short solo scene can fit when the hacker is the only character with access or when the rest of the crew has a separate task under pressure. Tell the player what the intrusion can change and what may happen if it goes wrong, then resolve the meaningful choice with the game's procedure. Return to the group with a changed situation or a decision they can act on. If the solo operation needs more than one exchange, give the other characters concurrent work and cut between them at the points where their actions can affect access or security.",
+          "A solo hack is fine when it returns quickly to the group as a changed situation, actionable discovery, or shared decision. It can fit when only the hacker has access or the crew has another task under pressure. State what the intrusion can change and what is at risk, then use the game's procedure. If it takes more than one exchange, give the others concurrent work and cut in when their actions can change access or security.",
           "Ask how much hidden information the players want before running private details. The hacker can keep a discovery from their characters without making the other players sit through a long sequence of unseen results.",
         ],
       },
@@ -105,7 +131,7 @@ export const howDoIRunHackersOrNetrunnersWithoutSplittingTheParty: AnswerConfigI
           },
           {
             term: "The shared-scene version",
-            text: "The hacker uses a stolen service credential to reach the archive, but the access notice sends the guard towards the corridor. The scout submits a false badge-reader fault, redirecting the guard to the wrong wing; the request leaves a name for security to check later. The technician can hold the service panel open so the hacker can copy the records, or close it before the operator traces the connection. The hacker must choose whether to stop and erase the access trail or keep copying and risk being traced. The crew choose to copy, so they get the records, but security now has the scout's name.",
+            text: "The hacker uses a stolen service credential to reach the archive, but the access notice sends the guard towards the corridor. The scout poses as a lost courier and talks the guard into escorting them towards reception, giving the hacker time. The technician can hold the service panel open so the hacker can copy the records, or close it before the operator traces the connection. The hacker keeps copying and accepts the trace risk; the crew gets the records, while security can identify the scout and investigate the access trail.",
           },
           {
             term: "Why it works",
@@ -117,12 +143,12 @@ export const howDoIRunHackersOrNetrunnersWithoutSplittingTheParty: AnswerConfigI
         kind: "checklist",
         heading: "Before you run a hacking scene",
         items: [
-          "What physical goal can the network change, and what will the players see when it changes?",
-          "What is the one obstacle that makes the hacker's approach uncertain?",
-          "Who or what responds to intrusion, and how will that pressure become visible?",
-          "What can the other characters do to change access, security, or the consequences?",
-          "What does success make possible, and what does a failed or partial result put at risk?",
-          "If the hacker acts alone for a beat, what decision or new information will bring the scene back to the group?",
+          "What physical goal does the crew want, and what meaningful specialist choice can the hacker make?",
+          "What obstacle makes the approach uncertain, and which game rules resolve it?",
+          "What will visibly change in the shared situation after the result?",
+          "How can another character change access, security, or time in response?",
+          "What new options or risks should that response give the hacker?",
+          "If the hacker acts alone, what actionable result will quickly return the scene to the group?",
         ],
       },
     ],
