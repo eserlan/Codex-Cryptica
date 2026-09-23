@@ -1,5 +1,5 @@
 {
-  "updated_at": 1790196634,
+  "updated_at": 1790197920,
   "candidates": [
     {
       "id": "reddit-35104395212-i-put-every-superhero-generator-in-one-p",
@@ -82,14 +82,14 @@
       "created_at": 1790042002
     },
     {
-      "id": "reddit-35914173197-cyberpunk-roles-without-the-solo-hacker-",
-      "title": "Cyberpunk roles without the solo hacker scene",
-      "body": "Cyberpunk crews love the mix of netrunner, fixer, media, medic, solo and driver. At the table that mix often means one player runs a private mini game while everyone else waits. The netrunner fights ICE alone, the solo clears a corridor alone, the driver waits in the van.\n\nI wrote a cyberpunk roles guide that ties every specialist action to something the whole crew can see happening in the room. Private skill in, physical consequence out.\n\nThe main piece: /answers/how-do-you-run-character-roles-in-a-cyberpunk-rpg\n\nIt covers:\n- how to interleave a hack with the physical scene so a failed check locks a door or flips an alarm the crew can react to\n- fixers and brokers who trade favours with a visible cost instead of unlimited contacts\n- media and journalist play where a published story creates a public consequence the party has to handle\n- tech, medic and solo beats that buy time or make a plan work without turning the whole job into a combat encounter\n\nPair it with /answers/how-do-i-run-hackers-or-netrunners-without-splitting-the-party and /answers/how-to-create-a-cyberpunk-city-district if you want the district itself to push back.\n\nI did not flatten every role to the same shared skill list. That would keep the table together but lose what makes cyberpunk feel like cyberpunk. The tension is keeping the specialty while keeping the scene shared.\n\nHow do you keep netrunner or hacker scenes from becoming a solo game at your table?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/og/cyberpunk-red.jpg)\n\n---\n*Posted automatically via release pipeline. Feedback and discussion welcome!*\n<!-- id:35914173197 -->",
-      "url": "https://codexcryptica.com/answers/how-do-i-run-hackers-or-netrunners-without-splitting-the-party",
-      "image_url": "https://assets.codexcryptica.com/og/cyberpunk-red.jpg",
+      "id": "reddit-35914173197-political-intrigue-roles-that-give-every",
+      "title": "Political intrigue roles that give everyone something to do",
+      "body": "In intrigue games the diplomat talks, the spy sneaks, and the rest of the party watches. If a role only gathers information, it turns into exposition and the table drifts.\n\nI put together a set of intrigue and social role guides that give each archetype one concrete way to change the scene and one clear way it can go wrong.\n\nStart here: /answers/how-do-i-run-character-roles-in-a-political-intrigue-rpg\n\nIt includes:\n- diplomats, nobles and courtiers played through access and obligation rather than a single persuasion roll\n- spies and infiltrators where cover has maintenance costs and a handler who checks in\n- journalists and media characters where a story filed creates debts, editors and published consequences\n- faction and court structures from /answers/how-do-i-run-political-intrigue-and-faction-play so intrigue is not just one NPC talking\n\nThe guides lean on pressure and relationships, not on long hidden lore dumps. That keeps intrigue playable, but it means you need named NPCs with wants on the table early rather than revealing everything late.\n\nWhich intrigue role has been hardest to keep engaging for the whole party in your games?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/announcements/release-35914173197-5.png)\n\n---\n*Posted automatically via release pipeline. Feedback and discussion welcome!*\n<!-- id:35914173197 -->",
+      "url": "https://codexcryptica.com/answers/how-do-i-run-political-intrigue-and-faction-play",
+      "image_url": "https://assets.codexcryptica.com/announcements/release-35914173197-5.png",
       "source_id": "35914173197",
       "status": "approved",
-      "created_at": 1790196634
+      "created_at": 1790197919
     }
   ]
 }
