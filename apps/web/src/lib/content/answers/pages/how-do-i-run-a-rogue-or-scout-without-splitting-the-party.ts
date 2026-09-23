@@ -8,42 +8,42 @@ export const howDoIRunARogueOrScoutWithoutSplittingTheParty: AnswerConfigInput =
     question: "How do I run a rogue or scout without splitting the party?",
     kind: "framework",
     shortAnswer:
-      "Give the scout a clear question, resolve only the uncertain part of their reconnaissance, then bring the result back while the party can still choose what to do. Let the rogue gain useful information, position, or access, while companions watch exits, prepare a diversion, or change the conditions outside. A failed stealth or scouting roll can raise suspicion, cost time, or close a route without automatically leaving the scout alone in a fight.",
+      "Characters can be apart without excluding their players. Let the scout move ahead, but keep each solo beat short: resolve its uncertainty, then return information, pressure, or a choice to the group while they can still act. The rogue earns useful information, position, or access; companions can watch exits, prepare a diversion, or change the conditions outside.",
     sections: [
       {
         kind: "prose",
         heading: "Scouting should create a choice for the party",
         paragraphs: [
-          "A rogue slipping ahead can make a tense scene. It becomes a table problem when each door, corridor, and guard triggers another private check while the rest of the players wait. It can also leave the scout in danger with no way for anyone else to affect what happens. The useful distinction is between characters being physically apart and players being shut out of the situation.",
-          "Before the scout moves, agree what they want to learn: where the guards change watch, whether the side entrance is trapped, or what lies beyond the courtyard. Keep the objective small enough to resolve before the information goes stale. The scout's expertise should earn a real edge, such as a safer route or a detail others would miss; the discovery should still leave the group with something to decide.",
+          "A rogue can move ahead without splitting the players from the scene. The problem starts when the scout gets a long private sequence and everyone else loses meaningful decisions. Resolve reconnaissance in short beats that return information, pressure, or choices to the group.",
+          "Give the scout a focused question: where do the guards change watch, is the side entrance trapped, or what lies beyond the courtyard? The scout's expertise should earn a real edge, while the discovery leaves the group with something to decide.",
         ],
       },
       {
         kind: "list",
         heading: "Use a short scouting loop",
         intro:
-          "Cut back when the situation changes, not after the rogue has finished every possible check:",
+          "Cut back to the group when the scout learns something actionable, the risk changes, or another character can meaningfully affect what happens next:",
         ordered: true,
         items: [
           {
             term: "Set the question",
-            text: "Ask what the scout needs to find out, how far ahead they will go, what signal means they need help, and where they will fall back to. A clear objective and return plan keep reconnaissance from turning into a private tour of the whole location.",
+            text: "Agree what the scout wants to learn, how far ahead they will go, what signal means they need help, and where they will fall back.",
           },
           {
-            term: "Show the approach and its risk",
-            text: "Describe the route, patrol, obstacle, or deadline that could affect the scout's plan. Let the player choose where to move and what risk to take before asking for a roll.",
+            term: "Show the approach and risk",
+            text: "Describe the route, patrol, obstacle, or deadline. Let the player choose where to move and what risk to take before asking for a roll.",
           },
           {
-            term: "Resolve the uncertain part",
-            text: "Use the game's stealth, perception, trap, or lock rules for the meaningful uncertainty. Routine movement through a place the party has already made safe can be summarised rather than rolled out step by step.",
+            term: "Resolve the uncertainty",
+            text: "Use the game's rules for the meaningful uncertainty. Summarise routine movement through a place the party has already made safe instead of rolling it step by step.",
           },
           {
-            term: "Return useful information in time",
-            text: "Tell the group what the scout learns while there is still room to act on it. A patrol changing direction matters more before the party chooses its route than after the guard has already raised an alarm.",
+            term: "Return useful information",
+            text: "Tell the group what the scout learns while there is still room to act. A patrol change matters before the party chooses its route, not after the alarm is raised.",
           },
           {
             term: "Let the party change the next beat",
-            text: "The others can create a distraction, cover an exit, hold a door, identify a symbol, or choose a different route. Their decisions should affect what the scout can safely attempt next.",
+            text: "The others can distract a guard, cover an exit, hold a door, identify a symbol, or choose another route. Their decisions affect what the scout can safely attempt next.",
           },
         ],
       },
@@ -51,8 +51,8 @@ export const howDoIRunARogueOrScoutWithoutSplittingTheParty: AnswerConfigInput =
         kind: "prose",
         heading: "Keep traps and locks from becoming solo gates",
         paragraphs: [
-          "A trap can be a discovery, a hazard, or a choice about risk. Let the scout's expertise reveal a useful fact, such as where the trigger sits or what it protects. The party can then decide whether to disarm it, find another route, trigger it from a distance, or use it against a pursuer. Failure might spring the trap, cost time, or make the scout's presence known; it need not erase every other option.",
-          "Locks work the same way. If opening one is routine for the character and nothing can change as a result, resolve it quickly. If the lock matters, show what makes it difficult and what the group can do while the rogue works: keep watch, search for another entrance, hold off a patrol, or decide whether there is time to force it. Do not make every obstacle a skill gate that only the rogue can touch, but do not take away the rogue's earned competence to manufacture teamwork either.",
+          "Let the scout's expertise reveal access, information, or a safer option: where a trap's trigger sits, what it protects, or how to disarm it. Then give the group a decision, such as whether to disarm it, find another route, trigger it from a distance, or use it against a pursuer. Failure can spring the trap, cost time, or reveal the scout without erasing every other option.",
+          "Treat locks the same way. Compress routine openings when nothing can change; when a lock matters, show the risk and let the group decide how to help, find another entrance, or spend time forcing it. The rogue remains distinctly competent without making every obstacle a solo gate or requiring everyone to handle it.",
           "Some players enjoy private scouting scenes and some prefer everyone to hear the same information. Check what this table likes. When a detail must remain secret from the characters, keep the private exchange short and bring play back to a shared pressure or decision.",
         ],
       },
@@ -89,7 +89,7 @@ export const howDoIRunARogueOrScoutWithoutSplittingTheParty: AnswerConfigInput =
         items: [
           {
             term: "The isolated version",
-            text: "The GM and rogue play through each corridor with separate stealth, perception, and trap checks. The scout spots two guards and a wire across the side entrance, but returns after the reeve's men have arrived. The other players had no chance to decide whether to wait, make a diversion, or take another route.",
+            text: "The GM and rogue play through each corridor with separate stealth, perception, and trap checks. The scout spots two guards and a wire across the side entrance, but returns only after the reeve's men arrive. The information comes too late for the other players to decide whether to wait, make a diversion, or take another route.",
           },
           {
             term: "The shared scouting scene",
@@ -106,14 +106,12 @@ export const howDoIRunARogueOrScoutWithoutSplittingTheParty: AnswerConfigInput =
         heading: "Before the scout moves ahead",
         intro: "Keep the objective narrow and the group involved:",
         items: [
-          "What specific question is the scout trying to answer?",
-          "What signal and fallback point has the party agreed before the scout leaves?",
-          "What useful edge does the rogue's skill or equipment provide?",
-          "What pressure could change while the scout acts, and how will the player notice it?",
-          "When will the information return to the group, before it stops being useful?",
-          "What can the other characters do that changes the scout's access, cover, or escape?",
-          "If a roll goes badly, what changes besides simply starting a fight?",
-          "Can routine movement or a familiar obstacle be resolved without another roll?",
+          "What is the scout trying to learn, and what edge does their expertise provide?",
+          "What can change while they act, and what signal or fallback keeps them connected to the group?",
+          "When do we cut back, before the information or opportunity goes stale?",
+          "What can the party do with the information or to change the next beat?",
+          "If a roll goes badly, what changes besides starting a fight?",
+          "What routine action can be compressed instead of rolled out?",
         ],
       },
     ],
