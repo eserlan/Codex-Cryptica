@@ -14,12 +14,46 @@ export const howDoIRunSpiesAndInfiltratorsInAnRpg: AnswerConfigInput = {
       heading: "Infiltration isolates characters by design",
       paragraphs: [
         "A spy may be the only character who can pass as a clerk, enter a guarded archive, or speak with a source without attracting attention. That can make a strong scene for the player, but a long sequence of private checks leaves everyone else watching. The problem is sharper when the infiltrator returns with information after the important choices have already passed.",
-        "Treat the operation as one shared problem with actions happening in different places. The infiltrator can take the risk only they can take, while the rest of the team changes the conditions around them. Give each action a clear effect on access, time, suspicion, or the information available. Cut between those actions whenever the situation changes, rather than resolving one character's entire operation in isolation.",
+        "Physical separation is fine. The problem is when only one player can affect what happens next. Treat the operation as one shared problem with actions happening in different places: the infiltrator takes the risk only they can take while the rest of the team changes the conditions around them. Give each action a clear effect on access, time, suspicion, or the information available, and cut between actions when the situation changes.",
+        "This page focuses on running infiltration scenes and covert operations. For spycraft that continues between missions, track cover identities, handlers, assets, dead drops, and divided loyalties as relationships that can change; a compromised identity can reshape who trusts the team and which routes remain open.",
       ],
     },
     {
       kind: "list",
-      heading: "Build the operation around shared roles",
+      heading: "Use a shared operation loop",
+      intro:
+        "Keep the scene moving through this loop, using your game's own stealth, disguise, clock, heat, or flashback rules:",
+      ordered: true,
+      items: [
+        {
+          term: "Establish cover or access",
+          text: "Show how the infiltrator gets close to the target and what makes that access credible.",
+        },
+        {
+          term: "Reveal the immediate pressure",
+          text: "Make the next deadline, suspicion, or security change visible to the group.",
+        },
+        {
+          term: "Let the infiltrator act",
+          text: "Resolve the meaningful risk in front of them, with the system's procedures.",
+        },
+        {
+          term: "Cut to the support team",
+          text: "When the situation changes, show what the others can do with the new information.",
+        },
+        {
+          term: "Choose together",
+          text: "Decide what risk to take, which objective matters most, or whether to spend more time.",
+        },
+        {
+          term: "Escalate, adapt, or extract",
+          text: "Carry the choice into the next beat, changing the plan or leaving with what the team has gained.",
+        },
+      ],
+    },
+    {
+      kind: "list",
+      heading: "Build the operation around shared jobs",
       intro:
         "Choose the roles that fit this job; one character can take more than one:",
       items: [
@@ -69,11 +103,11 @@ export const howDoIRunSpiesAndInfiltratorsInAnRpg: AnswerConfigInput = {
         },
         {
           term: "Let exposure change the situation",
-          text: "A compromised identity can close a route, put an ally under scrutiny, or make the target feed the spy false information. Avoid treating exposure as an automatic combat encounter; the team can still bargain, retreat, improvise, or pursue the objective another way.",
+          text: "A failed cover or stealth check need not expose the spy at once. Suspicion can rise through extra questions, an escort, restricted access, a flagged credential, a guard remembering the spy's face, or a route being closed for a future visit. A compromised identity can put an ally under scrutiny or make the target feed the spy false information. Exposure should create new choices, not automatically start a combat encounter; the team can bargain, retreat, improvise, or pursue the objective another way.",
         },
         {
           term: "Handle betrayal with player trust",
-          text: "A character's divided loyalties can produce strong play when the player has agreed to that tension. Establish expectations for secret notes, concealed plans, and character-versus-character conflict before the operation. Do not use hidden objectives to take away another player's agency or spring a real-world trust test on the table.",
+          text: "Agree how secret plans and character-versus-character tension will work before play. Hidden objectives must not override another player's agency or turn the game into an out-of-game trust test.",
         },
       ],
     },
@@ -98,7 +132,7 @@ export const howDoIRunSpiesAndInfiltratorsInAnRpg: AnswerConfigInput = {
         },
         {
           term: "The shared operation",
-          text: "The spy learns the ledger is in the ambassador's study, but the courier has been called forward early. Outside, the mechanic can keep the service lift stalled, buying time but drawing staff to the basement. The lookout sees the courier's driver leave the car and head for the reception. The spy can copy the relevant pages quickly, take the whole ledger and risk being caught, or photograph a page that names a local source. The party decides to delay the courier by exposing the service interruption, while the spy copies the source's page and leaves the ledger behind. They get the lead, but embassy staff now know the service system was tampered with.",
+          text: "The spy learns the ledger is in the ambassador's study, but the courier has been called forward early. Outside, the mechanic can keep the service lift stalled, buying time but drawing staff to the basement. The lookout sees the courier's driver leave the car and head for the reception. The spy can copy the relevant pages quickly, take the whole ledger and risk being caught, or photograph a page that names a local source. The party decides to escalate the planned outage by triggering the building's visible maintenance protocol, drawing more staff to the lift and delaying the courier. The spy copies the source's page and leaves the ledger behind. They get the lead, but embassy staff now know the service system was tampered with.",
         },
         {
           term: "Why it works",
