@@ -146,6 +146,7 @@ export const howDoIRunHackersOrNetrunnersWithoutSplittingTheParty: AnswerConfigI
       "how-do-i-give-specialist-characters-spotlight",
       "how-do-you-run-character-roles-in-a-cyberpunk-rpg",
       "how-do-i-run-spies-and-infiltrators-in-an-rpg",
+      "how-do-i-run-a-journalist-or-media-character-in-an-rpg",
     ],
     discovery: {
       id: "answer-run-hackers-netrunners",
@@ -176,6 +177,11 @@ export const howDoIRunHackersOrNetrunnersWithoutSplittingTheParty: AnswerConfigI
           with: "answer-cyberpunk-party-roles",
           reason:
             "The cyberpunk roles answer gives brief guidance for several archetypes; this answer develops the hacker's scene procedure in depth and keeps it useful beyond cyberpunk games.",
+        },
+        {
+          with: "answer-run-investigator-without-sidelining-party",
+          reason:
+            "The investigator answer focuses on sharing clue discovery and interpretation; this answer focuses on connecting a hacker's digital intrusion to physical access and security pressure.",
         },
       ],
     },
