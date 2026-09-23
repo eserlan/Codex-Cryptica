@@ -120,6 +120,7 @@
     initialDraft = null,
     variant = "default",
     generateLabel = undefined,
+    busyLabel = undefined,
     inputHint = "Set your inputs — your draft updates to the right",
     backHref = undefined,
     backLabel = undefined,
@@ -129,6 +130,11 @@
     clipboardService = defaultClipboardService,
     autoGenerateExplicit = false,
     initialDraftIsUserGenerated = false,
+    explainerText = undefined,
+    showGeneratorSwitcher = true,
+    aiModeRequired = false,
+    aiDataNotice = undefined,
+    offlineMessage = undefined,
   }: {
     canonicalPath?: string;
     pageTitle?: string;
@@ -155,6 +161,7 @@
     initialDraft?: GeneratorOutput | null;
     variant?: "default" | "names";
     generateLabel?: string;
+    busyLabel?: string;
     inputHint?: string;
     onLinkToHub?: () => void;
     onGeneratePlotTwist?: (data: GeneratorOutput) => void;
@@ -167,6 +174,13 @@
     autoGenerateExplicit?: boolean;
     /** Enables actions when a public result was explicitly opened as a remix. */
     initialDraftIsUserGenerated?: boolean;
+    /** Replaces the generator-specific explainer strip for focused public tools. */
+    explainerText?: string;
+    showGeneratorSwitcher?: boolean;
+    /** Hides the local-mode toggle when the workflow cannot operate without AI. */
+    aiModeRequired?: boolean;
+    aiDataNotice?: string;
+    offlineMessage?: string;
     backHref?: string;
     backLabel?: string;
   } = $props();
@@ -933,7 +947,8 @@
       <p
         class="text-xs font-bold text-theme-text/75 uppercase tracking-widest font-header"
       >
-        Generate campaign-ready {generatedNoun} in seconds — no account required.
+        {explainerText ??
+          `Generate campaign-ready ${generatedNoun} in seconds — no account required.`}
       </p>
       <span
         class="hidden md:inline-flex h-px flex-1 bg-gradient-to-r from-theme-primary/35 via-theme-border/30 to-transparent"
@@ -964,7 +979,9 @@
           ></span>
           {backLabel ?? "All generators"}
         </a>
-        <GeneratorSwitcherMenu {canonicalPath} {eyebrow} />
+        {#if showGeneratorSwitcher}
+          <GeneratorSwitcherMenu {canonicalPath} {eyebrow} />
+        {/if}
         <h1
           class="font-header font-bold text-lg uppercase tracking-wider text-theme-primary mb-4"
           id="generator-title"
@@ -1005,12 +1022,11 @@
               <p
                 class="text-[10px] font-bold uppercase tracking-wider font-header text-theme-primary"
               >
-                Local Mode
+                {aiModeRequired ? "AI required" : "Local Mode"}
               </p>
               <p class="text-[10px] text-theme-text/70 leading-snug">
-                You're offline. Codex will generate from built-in tables and
-                save drafts locally. Reconnect to use AI Lore Co-Author mode
-                again.
+                {offlineMessage ??
+                  "You're offline. Codex will generate from built-in tables and save drafts locally. Reconnect to use AI Lore Co-Author mode again."}
               </p>
             </div>
           </div>
@@ -1026,10 +1042,15 @@
           }}
         >
           {@render formFields(() => void handleGenerate())}
+          {#if aiModeRequired && aiDataNotice}
+            <p class="text-[10px] text-theme-muted leading-relaxed" role="note">
+              {aiDataNotice}
+            </p>
+          {/if}
 
           <button
             type="submit"
-            disabled={isBusy}
+            disabled={isBusy || (aiModeRequired && !isOnline)}
             aria-busy={isBusy}
             class="w-full py-3 mt-4 bg-theme-primary text-theme-bg font-bold uppercase font-header tracking-widest text-xs rounded-xl shadow-lg hover:brightness-110 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
             id="generate-button"
@@ -1040,48 +1061,50 @@
                 class="icon-[lucide--loader-2] animate-spin w-4 h-4"
                 aria-hidden="true"
               ></span>
-              Forging...
+              {busyLabel ?? "Forging..."}
             {:else}
               {generateLabel ?? `Generate ${generatedSingular}`}
             {/if}
           </button>
 
-          <div class="flex flex-col gap-1 pt-1">
-            <div class="flex items-center gap-2">
-              <input
-                type="checkbox"
-                id="ai-toggle"
-                bind:checked={useAI}
-                disabled={!isOnline}
-                aria-describedby="ai-toggle-hint"
-                class="w-4 h-4 rounded border-theme-border/60 bg-theme-bg/60 text-theme-primary focus:ring-theme-primary/40 focus:outline-none flex-shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
-              />
-              <label
-                for="ai-toggle"
-                class="text-[10px] font-bold uppercase tracking-wider text-theme-muted flex items-center gap-1 {isOnline
-                  ? 'cursor-pointer'
-                  : 'opacity-50 cursor-not-allowed'}"
+          {#if !aiModeRequired}
+            <div class="flex flex-col gap-1 pt-1">
+              <div class="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  id="ai-toggle"
+                  bind:checked={useAI}
+                  disabled={!isOnline}
+                  aria-describedby="ai-toggle-hint"
+                  class="w-4 h-4 rounded border-theme-border/60 bg-theme-bg/60 text-theme-primary focus:ring-theme-primary/40 focus:outline-none flex-shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
+                />
+                <label
+                  for="ai-toggle"
+                  class="text-[10px] font-bold uppercase tracking-wider text-theme-muted flex items-center gap-1 {isOnline
+                    ? 'cursor-pointer'
+                    : 'opacity-50 cursor-not-allowed'}"
+                >
+                  <span
+                    class="icon-[lucide--sparkles] text-theme-primary w-3.5 h-3.5"
+                  ></span>
+                  AI Lore Co-Author Mode
+                </label>
+              </div>
+              <p
+                id="ai-toggle-hint"
+                class="text-[9px] text-theme-muted/70 leading-snug pl-6"
               >
-                <span
-                  class="icon-[lucide--sparkles] text-theme-primary w-3.5 h-3.5"
-                ></span>
-                AI Lore Co-Author Mode
-              </label>
+                {#if !isOnline}
+                  Offline: using fast local tables. Reconnect to enable AI Lore
+                  Co-Author mode.
+                {:else if useAI}
+                  AI writes unique, rich lore on each generate.
+                {:else}
+                  Fast offline mode — local tables only, no AI.
+                {/if}
+              </p>
             </div>
-            <p
-              id="ai-toggle-hint"
-              class="text-[9px] text-theme-muted/70 leading-snug pl-6"
-            >
-              {#if !isOnline}
-                Offline: using fast local tables. Reconnect to enable AI Lore
-                Co-Author mode.
-              {:else if useAI}
-                AI writes unique, rich lore on each generate.
-              {:else}
-                Fast offline mode — local tables only, no AI.
-              {/if}
-            </p>
-          </div>
+          {/if}
         </form>
 
         {#if errorMessage}

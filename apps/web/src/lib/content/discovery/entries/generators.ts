@@ -416,6 +416,14 @@ export const generatorEntries: DiscoveryEntryInput[] = [
     uniqueValue:
       "Full adventure concepts — initial situation, stakes, opposition and resolution paths — for any genre.",
     parentCluster: "adventure-design",
+    relatedIntents: ["tools-idea-developer"],
+    acknowledgedOverlap: [
+      {
+        with: "tools-idea-developer",
+        reason:
+          "This generator creates a new adventure from a blank start; the Idea Developer works on the user's existing premise and is specifically designed to preserve its core.",
+      },
+    ],
     indexable: true,
     status: "live",
   },
