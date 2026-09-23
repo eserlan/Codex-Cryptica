@@ -53,3 +53,8 @@
 **Learning:** Svelte 5 `$derived` macros handle reactive tracking (like proxy arrays, Sets, and Maps) perfectly even when they are passed into and processed by standard, non-reactive `.ts` helper functions, allowing you to extract complex data transformation logic safely out of `.svelte` files without losing reactivity.
 
 **Action:** When a `.svelte` UI component contains complex data flattening or grouping loops inside a `$derived.by` block, it is highly safe and recommended to extract that entire logical block into a separate `.ts` utility function to reduce god-file size.
+
+## 2026-09-23 - Extract Inline Modals
+
+**Learning:** When large Svelte components (like `SourceWorkspace.svelte`) contain inline modal definitions (`{#if contextMenuTarget} <div class="fixed...">...</div> {/if}`), these inline modals heavily inflate the overall file size and increase component nesting, masking the core logic flow. They can be cleanly extracted into independent `<ComponentModal>.svelte` sub-components that manage their own internal styling, while taking data triggers (like `target`, `impact`) and semantic event callbacks (`onConfirm`, `onCancel`) as `$props`.
+**Action:** Extract large or complex inline modal markup blocks into dedicated sub-components. Ensure you manage lifecycle bounds carefully — for example, if an action accesses the object triggering the modal, perform the action _before_ invoking `onClose()` (which typically clears the target object back in the parent component and triggers destruction) to avoid null reference errors.
