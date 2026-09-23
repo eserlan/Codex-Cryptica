@@ -9,57 +9,73 @@ export const howDoIRunAnInvestigatorWithoutSideliningTheParty: AnswerConfigInput
       "How do I run an investigator or detective without making other PCs irrelevant?",
     kind: "framework",
     shortAnswer:
-      "Let the investigator excel at finding and connecting evidence, but make sure the rest of the party can contribute context, access, expertise, and action. Put essential clues in more than one place, make rolls determine cost or detail rather than whether the mystery can continue, and give the group a choice after each important discovery. The investigator should reduce uncertainty, not decide the whole case alone.",
+      "Let the investigator reduce uncertainty; let the party decide what to do with what they learn. The investigator can excel at finding evidence and noticing what it suggests without owning the group's interpretation or next move. Give the party multiple routes to necessary conclusions, and let failed rolls change the information's quality, cost, timing, or safety rather than stop the investigation.",
     sections: [
       {
         kind: "prose",
-        heading: "Separate finding a clue from solving the case",
+        heading: "Share the work without shrinking the investigator",
         paragraphs: [
           "A detective character can dominate an investigation when one skill check controls every useful fact, and the GM then asks that player to explain what it all means. The rest of the party has little to do if clues arrive one at a time, only through the investigator, or after the scene where they mattered. Even a capable investigator can become a bottleneck when the adventure treats expertise as exclusive permission to learn.",
-          "Separate the work into three stages: find evidence, interpret what it suggests, and decide what to do. The investigator can be faster, safer, or more precise at the first two without owning every stage. A medic recognises the wound pattern, a local knows the victim's routines, a social character gets a witness talking, and the group weighs which lead to pursue. Let expertise add useful detail while keeping conclusions and action open to the table.",
         ],
       },
       {
         kind: "list",
-        heading: "Give the investigator an edge without exclusive access",
+        heading: "Three stages of an investigation",
+        ordered: true,
         intro:
-          "Use these distinctions when deciding what an ability or roll should change:",
+          "Let the investigator reduce uncertainty; let the party decide what to do with what they learn:",
         items: [
           {
-            term: "Make essential clues findable",
-            text: "If a character uses a relevant ability on a clue-bearing scene, provide the information needed to keep investigating. Let the roll decide how long it takes, what extra detail they notice, whether they attract attention, or what resource it costs. A missed roll should complicate the work, not erase the only route to the next scene.",
+            term: "Find evidence",
+            text: "Make essential clues discoverable through more than one route. The investigator can be faster, safer, or more precise, while other characters contribute access, context, practical knowledge, or social skill.",
           },
           {
-            term: "Give expertise greater depth",
-            text: "The specialist may identify that a wound came from a narrow blade, recognise an unfamiliar toxin, or spot that a witness is repeating a rehearsed phrase. Give the basic observation to anyone who looks closely; let the specialist name what it implies or notice a detail that makes the next question sharper.",
+            term: "Interpret what it suggests",
+            text: "Give the investigator stronger factual detail, contradictions, likely implications, and things they can rule out. The players decide what theory best fits the evidence.",
           },
           {
-            term: "Distribute different kinds of evidence",
-            text: "Place physical traces, social knowledge, records, local history, and sensory details in the mystery. No single character needs to own each source. Invite each player to say what their character notices or knows, then use relevant abilities to add detail rather than exclude everyone else.",
+            term: "Decide what to do",
+            text: "Once the group has enough to act, let the players choose which lead to pursue and what risks to accept. The investigator's informed view helps the decision without making it for them.",
+          },
+        ],
+      },
+      {
+        kind: "list",
+        heading: "Give expertise an edge without exclusive access",
+        intro:
+          "Keep the clue, the benefit of expertise, and the players' theory distinct:",
+        items: [
+          {
+            term: "Core clue",
+            text: "Give enough information to keep the investigation moving when a character searches a relevant clue-bearing scene. A relevant ability should not be exclusive permission to find the essential fact.",
           },
           {
-            term: "Keep interpretations contestable",
-            text: "A clue can support more than one explanation without becoming meaningless. Tell the players what is observed and what remains uncertain. The investigator can explain the strongest inference, while other characters test it against what they know about the suspect, setting, or victim.",
+            term: "Specialist detail",
+            text: "Expertise can add precision, context, speed, confidence, or reduce the cost. A specialist might identify the narrow blade that made a wound, recognise an unfamiliar toxin, or spot that a witness repeats a rehearsed phrase. These details sharpen the next question without settling the whole theory.",
           },
           {
-            term: "Turn discoveries into shared decisions",
-            text: "Once a lead is clear enough to act on, ask the party what it wants to do. They might question a witness, protect a suspect, search a dangerous site, or go public with incomplete evidence. The investigator supplies an informed view; the group chooses what risk to accept.",
+            term: "Player interpretation",
+            text: "Facts can be clear while their significance remains uncertain. State what was observed separately from what it may imply. A clue need not support several meanings by default, and the GM should not change an established fact when the players form a wrong theory.",
+          },
+          {
+            term: "Different contributions",
+            text: "Physical traces, witness accounts, records, local knowledge, and practical expertise can each add something. Aim for varied contributions across the investigation and meaningful group decisions after discoveries; no one needs to contribute a clue in every scene.",
           },
         ],
       },
       {
         kind: "prose",
-        heading: "Prepare a clue network, not a single detective's route",
+        heading: "Keep the investigator from becoming a bottleneck",
         paragraphs: [
-          "Write down the conclusions the party needs to reach and the clues that support each one. Connect each conclusion to several independent sources, and make sure different characters can access or interpret those sources in different ways. This is not a requirement that every clue point to every suspect; it is a check that no single missed scene, failed roll, or absent specialist breaks the investigation.",
-          "Keep evidence distinct from interpretation. A wet boot print is evidence; whose boot made it is an inference. If the players misread the inference, let the evidence remain available for them to reconsider. The suspect's plans can move forward while they investigate, so a wrong theory has consequences without making the GM secretly force them back onto a prescribed route.",
+          "For each necessary conclusion, provide support from multiple independent clues or routes, ideally involving different kinds of expertise. A physical trace, a witness statement, a document, specialist knowledge, or an environmental clue can each give the group another way forward. Different PCs may find or enrich those clues, so one absent specialist or missed scene does not stall the case.",
+          "This section focuses on sharing the investigator's role; for the wider scenario structure, see [how to run a mystery without railroading](/answers/how-do-you-run-a-mystery-without-railroading).",
         ],
       },
       {
         kind: "list",
         heading: "Use failure to change certainty, cost, or danger",
         intro:
-          "When a roll goes badly, preserve the next useful choice and change what it costs:",
+          "Failure should change the quality, cost, timing, or safety of the information, not decide whether the investigation is allowed to continue. Preserve the next useful choice and change what it costs:",
         items: [
           {
             term: "Cost",
@@ -120,7 +136,7 @@ export const howDoIRunAnInvestigatorWithoutSideliningTheParty: AnswerConfigInput
       {
         system: "GUMSHOE",
         rationale:
-          "Investigative abilities provide core clues without a roll when a character uses the relevant ability, shifting uncertainty towards interpretation and what the group does with the evidence.",
+          "These games illustrate different ways systems can support investigation; they are examples, not a universal recommendation. In GUMSHOE, investigative abilities provide core clues without a roll when a character uses the relevant ability, shifting uncertainty towards interpretation and what the group does with the evidence.",
         href: "https://pelgranepress.com/gumshoe/files/GUMSHOE%20SRD%20CC%20version.pdf",
       },
       {
