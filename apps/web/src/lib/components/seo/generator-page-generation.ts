@@ -48,6 +48,7 @@ export interface GenerationContext {
   puzzle: Record<string, unknown>;
   councilVote: Record<string, unknown>;
   heist: Record<string, unknown>;
+  holiday: Record<string, unknown>;
   secretSociety: Record<string, unknown>;
   tavern: Record<string, unknown>;
   kingdom: Record<string, unknown>;
@@ -150,6 +151,13 @@ export function createGeneratorHandlers(
       } as never),
     heist: (useAI) =>
       engine.generateHeist({ ...(ctx.heist as object), useAI } as never),
+    holiday: (useAI) =>
+      engine.generateHoliday({
+        ...(ctx.holiday as object),
+        genre: ctx.getActiveTheme(),
+        useAI,
+        avoidNames: collectSessionNames(ctx.getSessionEntities() as never[]),
+      } as never),
     "secret-society": (useAI) =>
       engine.generateSecretSociety({
         ...(ctx.secretSociety as object),

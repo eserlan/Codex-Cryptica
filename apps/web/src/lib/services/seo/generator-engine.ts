@@ -70,6 +70,10 @@ import {
   generateCouncilVoteLocal,
   buildHeistPrompt,
   generateHeistLocal,
+  buildHolidayPrompt,
+  parseHolidayResponse,
+  generateHolidayLocal,
+  type HolidayGeneratorOptions,
   buildSecretSocietyPrompt,
   parseSecretSocietyResponse,
   generateSecretSocietyLocal,
@@ -175,7 +179,7 @@ export {
 // NPC content data now lives in the generator-engine package (#1351); re-export
 // it here so existing SEO consumers (form fields, random-idea) keep importing
 // from this module.
-export { npcConfig, npcThemeConfig } from "generator-engine";
+export { npcConfig, npcThemeConfig, holidayConfig } from "generator-engine";
 export {
   factionConfig,
   themeIdToLabel,
@@ -562,6 +566,36 @@ export class DefaultGeneratorEngine {
         return parseArtifactResponse(text, resolved);
       },
       () => generateArtifactLocal(artifactOptions),
+    );
+  }
+
+  async generateHoliday(
+    options: HolidayGeneratorOptions & { useAI?: boolean } = {},
+  ): Promise<GeneratorOutput> {
+    const { useAI, ...holidayOptions } = options;
+    const recentInputs = generationInputHistoryStore.recent("holiday");
+    return this.runWithAIFallback(
+      useAI,
+      async () => {
+        const { systemInstruction, userMessage, resolved } = buildHolidayPrompt(
+          holidayOptions,
+          getSessionContext() + formatRecentInputsNote(recentInputs),
+        );
+        generationInputHistoryStore.record(
+          "holiday",
+          summarizeResolvedInputs({
+            genre: resolved.genre,
+            scope: resolved.scope,
+            tone: resolved.tone,
+            count: resolved.count,
+          }),
+        );
+        return parseHolidayResponse(
+          await this.runModel(systemInstruction, userMessage),
+          resolved,
+        );
+      },
+      () => generateHolidayLocal(holidayOptions),
     );
   }
 

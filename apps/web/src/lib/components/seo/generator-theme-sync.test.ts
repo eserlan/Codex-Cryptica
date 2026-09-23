@@ -20,6 +20,7 @@ function context(slug: string): GeneratorThemeSyncContext {
     encounter: state(),
     councilVote: state(),
     heist: state(),
+    holiday: state(),
     secretSociety: state(),
     socialHub: state(),
     nation: state(),
@@ -51,6 +52,12 @@ describe("syncGeneratorTheme", () => {
     syncGeneratorTheme(state);
     expect(state.faction.theme).toBe("Blood Noir");
     expect(state.setActiveTheme).not.toHaveBeenCalled();
+  });
+
+  it("syncs holiday form theme with the visible theme", () => {
+    const state = context("holiday");
+    syncGeneratorTheme(state);
+    expect(state.holiday.genre).toBe("Blood Noir");
   });
 
   it("updates the visible theme for form-driven generators", () => {

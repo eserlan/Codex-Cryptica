@@ -649,6 +649,13 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
       "Generate NPCs, factions, settlements, dungeons, and magic items directly inside your vault. Search by generator name, category, or description to find the right tool quickly. Star generators you use often to keep them at the top; favourites are saved in this browser only. Use Refine on a generated result or a Session Hub entry to ask for a focused change, review the new version, refine it again, or use it. Confirming replaces the source draft with the accepted revision while keeping its lineage.",
     icon: "icon-[lucide--wand-2]",
   },
+  "holiday-generator": {
+    id: "holiday-generator",
+    title: "Holidays & Festivals",
+    content:
+      "Create one observance or a connected calendar of 6, 10, or 14 days. Add a society's culture, seasons, beliefs, political history, important people, or events as context; the generator treats those details as candidates, not a checklist. Each observance includes traditions, who observes it, what outsiders misunderstand, and a table-ready tension. Review the note before saving it to your vault.",
+    icon: "icon-[lucide--calendar-heart]",
+  },
   "secret-society-generator": {
     id: "secret-society-generator",
     title: "Secret Societies & Cults",

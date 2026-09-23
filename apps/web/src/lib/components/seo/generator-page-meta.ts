@@ -1161,6 +1161,55 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
       "tabletop plot reversals",
     ],
   },
+  holiday: {
+    pageTitle:
+      "Holiday & Festival Generator | RPG Culture Calendar Creator | Codex Cryptica",
+    metaDescription:
+      "Create culturally grounded holidays, festivals, memorials, and coherent calendars for any RPG setting. Add important people and history, then generate one observance or a connected calendar.",
+    introTitle: "Holiday & Festival Generator",
+    eyebrow: "Worldbuilding Calendar Generator",
+    introText:
+      "Create observances that feel like they grew from a society's history, climate, beliefs, and conflicts. Generate one memorable day or a coherent calendar, from celebratory festivals to contested memorials, without needing an account.",
+    canonicalPath: "/generators/holiday",
+    ogImage:
+      "https://assets.codexcryptica.com/screenshots/generator-holiday.jpg",
+    ogImageAlt:
+      "Holiday and festival generator showing a culturally grounded observance and calendar details",
+    keywords: [
+      "rpg holiday generator",
+      "fantasy festival generator",
+      "worldbuilding calendar generator",
+      "fictional holidays",
+      "rpg festival generator",
+    ],
+    faqs: [
+      {
+        question: "Can I generate a full calendar?",
+        answer:
+          "Yes. Choose a calendar size to create a connected set of observances with a coherent mix, shared cultural motifs, and timing distributed across the society's year.",
+      },
+      {
+        question: "Can I include historical figures and events?",
+        answer:
+          "Yes. Add people or events as optional context. The generator treats them as candidates and only builds observances around those a culture might plausibly commemorate.",
+      },
+      {
+        question: "Does it only create cheerful festivals?",
+        answer:
+          "No. Results can include holy days, fasts, memorials, civic holidays, market fairs, rites of passage, celestial observances, and contested or secret traditions.",
+      },
+    ],
+    relatedLinks: [
+      {
+        href: "/answers/how-do-you-create-a-believable-fictional-religion",
+        label: "Create a believable fictional religion",
+      },
+      {
+        href: "/answers/how-do-you-run-political-intrigue-and-faction-play",
+        label: "Run political intrigue and faction play",
+      },
+    ],
+  },
   personality: {
     pageTitle:
       "Personality Generator | Free RPG Character Personality Tool | Codex Cryptica",
