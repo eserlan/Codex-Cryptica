@@ -4,7 +4,6 @@
   const cleanBase = base === "/" ? "" : base;
   import { fade } from "svelte/transition";
   import type { GeneratorOutput } from "$lib/services/seo/generator-engine";
-  import { resolveEntitySilhouette } from "schema";
   import type { MarkdownSectionForCopy } from "$lib/components/seo/markdown-sections";
   import { tick } from "svelte";
   import type { Snippet } from "svelte";
@@ -79,6 +78,7 @@
     resolveGeneratedSingular,
   } from "./generator-page-identity";
   import { generatorShareService } from "$lib/services/sharing/GeneratorShareService";
+  import { createGeneratorPageSharing } from "./generator-page-sharing";
   import {
     buildGeneratorSavePayload,
     buildHubSaveDrafts,
@@ -263,6 +263,17 @@
   // it's available immediately, before any generation happens, unlike
   // generatedData.type which only exists after a successful generate() call.
   const generatorType = $derived(resolveGeneratorType(canonicalPath, eyebrow));
+
+  const pageSharing = createGeneratorPageSharing({
+    getGeneratorType: () => generatorType,
+    getTheme: () => theme,
+    getWorldTheme: () => worldTheme,
+    getCanonicalPath: () => canonicalPath,
+    getOgImage: () => ogImage,
+    createShare: (input) => generatorShareService.create(input),
+    revokeShare: (shareId) => generatorShareService.revoke(shareId),
+    onShareCreated: trackGeneratorShareCreated,
+  });
 
   const generatedNoun = $derived(resolveGeneratedNoun(eyebrow));
 
@@ -746,61 +757,10 @@
     return { generatorType, source };
   }
 
-  async function prepareGeneratorShare(
-    source: GeneratorShareSource,
-    document: {
-      title: string;
-      summary?: string;
-      labels?: string[];
-      content: string;
-      lore?: string;
-      summaryIncludedInContent?: boolean;
-      /** Entity/session sub-kind, when known — sharpens the silhouette guess. */
-      type?: string;
-    },
-  ) {
-    const worldThemeContext = theme || worldTheme;
-    const silhouette = resolveEntitySilhouette(
-      {
-        type: document.type || generatorType,
-        title: document.title,
-        labels: document.labels,
-        content: document.content,
-        lore: document.lore,
-      },
-      { worldTheme: worldThemeContext },
-    ).id;
-    const share = await generatorShareService.create({
-      generatorId: generatorType,
-      title: document.title,
-      content: buildGeneratorMarkdown(document),
-      metadata: {
-        description:
-          document.summary ||
-          document.content
-            .replace(/[#*_\n]/g, " ")
-            .trim()
-            .slice(0, 280),
-        theme: worldThemeContext,
-        labels: document.labels?.slice(0, 8),
-        generatorPath: canonicalPath || "/generators",
-        imageUrl: ogImage.startsWith("https://") ? ogImage : undefined,
-        silhouette,
-      },
-    });
-    trackGeneratorShareCreated(shareEvent(source));
-    return {
-      url: share.url,
-      title: document.title,
-      text: share.share.metadata.description || "Created with Codex Cryptica",
-      cleanup: () => generatorShareService.revoke(share.share.shareId),
-    };
-  }
-
   function prepareCurrentOutputShare() {
     if (!generatedData)
       throw new Error("There is no generated result to share.");
-    return prepareGeneratorShare("current_output", {
+    return pageSharing.prepareCurrentOutputShare({
       title: generatedData.title,
       summary: generatedData.summary,
       labels: generatedData.labels,
@@ -810,18 +770,7 @@
   }
 
   function prepareSessionEntityShare(entity: SessionEntity) {
-    return prepareGeneratorShare("session_hub_detail", {
-      title: entity.title,
-      summary: entity.summary,
-      labels: entity.labels,
-      content: entity.content,
-      lore: entity.lore,
-      type: entity.type,
-      summaryIncludedInContent: Boolean(
-        entity.summary &&
-        entity.content.trim().startsWith(`*${entity.summary.trim()}*`),
-      ),
-    });
+    return pageSharing.prepareSessionEntityShare(entity);
   }
 
   function handleContainerKeydown(event: KeyboardEvent) {
