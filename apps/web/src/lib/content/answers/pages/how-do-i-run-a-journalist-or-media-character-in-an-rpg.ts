@@ -9,21 +9,54 @@ export const howDoIRunAJournalistOrMediaCharacterInAnRpg: AnswerConfigInput = {
     "How do I make a journalist or Media character matter in an RPG campaign?",
   kind: "framework",
   shortAnswer:
-    "Give a journalist more to do than find clues: make access, source trust, credibility, deadlines and audience shape what they can learn and publish. Let a story change how people act, but make publication a consequential choice rather than an automatic victory. Keep the player in control of what their character reports, involve the whole party in gathering and protecting evidence, and let different accounts conflict without making the facts arbitrary.",
+    "An investigator changes what the party knows. A journalist can also change who else knows it, and what they do next. Build play around access, verification, publication, and reaction; the reporter owns what to publish, while the party helps gather evidence, protect sources, and handle the fallout.",
   sections: [
     {
       kind: "prose",
       heading: "A journalist investigates, then changes who knows",
       paragraphs: [
-        "An investigator asks what happened. A journalist or Media character also asks who will believe it, who can be reached, what can be proved, and what publication will do. Their distinctive power is not simply access to clues: it is the ability to make information public, connect people who would otherwise remain isolated, and force powerful groups to answer. That influence is never a universal mind-control ability. A true story can be ignored, contested, delayed, or used by someone with a different agenda.",
-        "This works beyond cyberpunk RED's Media role. In investigative horror, a reporter may risk a source to establish a pattern. In a modern or political campaign, an exposé may shift a public meeting or draw a witness out of hiding. In a superhero game, footage can change whether a neighbourhood trusts the heroes. Keep the system's own rules for contacts, reputation, investigation, and social influence; use the structures here to make their consequences visible rather than adding a new universal subsystem.",
+        "An investigator changes what the party knows. A journalist can also change who else knows it, and what they do next. Their work connects sources, evidence, and audiences, then puts the response into play.",
+        "This works beyond Cyberpunk RED's Media role. A reporter might risk a source to establish a pattern in investigative horror, draw a witness out in a political campaign, or change whether a neighbourhood trusts its heroes. Keep the system's own rules for contacts, reputation, investigation, and influence. Use this framework to structure choices and consequences.",
+      ],
+    },
+    {
+      kind: "list",
+      heading: "Use a reporting loop",
+      intro:
+        "Return to this loop whenever a story develops. It structures scenes and campaign consequences; the game keeps its own mechanics.",
+      ordered: true,
+      items: [
+        {
+          term: "Get access",
+          text: "Reach a source, document, location, or institution.",
+        },
+        {
+          term: "Establish what is known",
+          text: "Separate testimony and evidence from uncertainty.",
+        },
+        {
+          term: "Verify or corroborate",
+          text: "Decide what the available evidence can support.",
+        },
+        {
+          term: "Choose what to publish",
+          text: "The player decides what to publish, delay, share privately, or withhold.",
+        },
+        {
+          term: "Show who reacts",
+          text: "Let audiences, factions, sources, and institutions respond.",
+        },
+        {
+          term: "Turn reaction into play",
+          text: "Change access, bring in sources, build pressure, or open and close doors.",
+        },
       ],
     },
     {
       kind: "list",
       heading: "Make the reporting process playable",
       intro:
-        "Use a few concrete pressures that suit the campaign. Track them in notes or through the rules already in use; do not turn every story into a second character sheet.",
+        "Use a few concrete pressures that suit the campaign. Track them in notes or through the rules already in use.",
       items: [
         {
           term: "Access",
@@ -31,7 +64,7 @@ export const howDoIRunAJournalistOrMediaCharacterInAnRpg: AnswerConfigInput = {
         },
         {
           term: "Source trust and safety",
-          text: "Record what a source knows, what they want, what they fear, and what identifying them could cost. A source can be sincere and still mistaken; show why they believe their account rather than using unreliability as a surprise punishment.",
+          text: "For an important source, note what they know, what they think it means, what they want, what they fear, what could expose them, and what would build or break their trust. A source can be sincere and mistaken; show why they believe their account.",
         },
         {
           term: "Evidence and credibility",
@@ -43,17 +76,17 @@ export const howDoIRunAJournalistOrMediaCharacterInAnRpg: AnswerConfigInput = {
         },
         {
           term: "Audience and consequence",
-          text: "Decide who is likely to hear the story and what they can do with it. Publication might bring a witness forward, damage a reputation, prompt a faction to retaliate, open a door, or harden opposition. The response follows from the people and institutions involved, not from a guaranteed universal reach score.",
+          text: "Decide who is likely to hear the story and what they can do with it. Publication might bring a witness forward, damage a reputation, prompt retaliation, open a door, or harden opposition.",
         },
       ],
     },
     {
       kind: "prose",
-      heading: "Make truth a decision, not a victory button",
+      heading: "Make publication a decision, not a victory button",
       paragraphs: [
-        "A consequential story presents choices: publish a well-supported account that identifies a vulnerable source, hold it until corroboration arrives, release a narrower version, or take the evidence to someone who can act without broadcasting it. The GM should make the likely stakes legible, then let the player choose. Do not require the journalist to publish every discovery, and do not make publication itself resolve the central problem. It can change the public situation while leaving the party with hard work to do.",
-        "Use sources with competing interests, not a hidden answer key. One witness may accurately describe what they saw but be wrong about who ordered it; a company spokesperson may state a true fact while omitting its context. Keep the underlying facts consistent, flag uncertainty, and give players ways to test claims. Misinformation is fair when its origin and telltale limits can be investigated, not when the GM changes reality to defeat a successful investigation.",
-        "Keep the crew in the story. Other characters can verify records, negotiate access, protect a source, check a location, provide expertise, or plan for the response. Cut between those actions and the reporter's interviews. Not every session needs a private interview: a source can send a voice message, an editor can make a demand during another scene, and a public reaction can arrive while the party is already dealing with the fallout.",
+        "Make the likely stakes legible, then let the player choose whether to publish, wait, narrow the story, share it privately, or withhold it. The reporter owns that editorial decision; the rest of the party can verify evidence, protect sources, secure access, offer expertise, and prepare for the response. A good story changes the situation; it does not end it. It might draw out a witness, trigger an inquiry, provoke retaliation, or open and close access, leaving the group with new choices to face.",
+        "People can be wrong, biased, selective, or deceptive; the underlying reality should not move because the players investigated successfully. A witness may describe what they saw accurately but be wrong about who ordered it. Flag uncertainty and give players ways to test claims.",
+        "Keep the crew in the story by cutting between the reporter's interviews and the party's other work. A source can send a voice message, an editor can make a demand during another scene, or public reaction can arrive while the party handles the fallout.",
       ],
     },
     {
@@ -69,11 +102,27 @@ export const howDoIRunAJournalistOrMediaCharacterInAnRpg: AnswerConfigInput = {
         },
         {
           term: "The consequential-choice version",
-          text: "The group can corroborate the worker's account by comparing public inspection dates with a second set of site photographs. The worker asks not to be named; the reporter's editor wants a publishable account before a council vote tomorrow. The party can protect the worker while seeking another source, publish a narrower story about the missing inspections, take the documents to a councillor who may delay the vote, or publish now and accept that the contractor will know where the leak came from. Each path changes who can act and what risks follow. The reporter decides what to publish; the others help secure evidence, protect the source, or prepare for the response.",
+          text: "The worker asks not to be named, and the editor wants a publishable account before tomorrow's council vote. The reporter chooses what to do; the party can help secure evidence, protect the source, and prepare for the response.",
+        },
+        {
+          term: "Corroborate before publication",
+          text: "Compare inspection dates with a second set of site photographs. The stronger account costs time and may expose the search for evidence.",
+        },
+        {
+          term: "Publish a narrower verified story",
+          text: "Report the missing inspections without naming the worker. The claim is safer to support, but the contractor can challenge its scope.",
+        },
+        {
+          term: "Share the documents privately",
+          text: "Take them to a councillor who may delay the vote. This could prompt action without a public story, but leaves the councillor to decide what to do next.",
+        },
+        {
+          term: "Publish now",
+          text: "Put pressure on the contractor before the vote, while accepting the risk that they identify the source.",
         },
         {
           term: "Consequences and next hooks",
-          text: "A narrower story draws a second worker out but gives the contractor time to challenge the evidence. A protected source keeps their job for now and asks the party for help moving a copy of the records. A public accusation triggers an inquiry while the contractor pressures the editor and tries to discredit the reporter. The facts remain stable; the characters' choices shape who knows them and what happens next.",
+          text: "A narrower story draws a second worker out but gives the contractor time to challenge it. Taking the documents to a councillor may delay the vote, but leaves the next move to them. A public accusation triggers an inquiry while the contractor pressures the editor and tries to discredit the reporter. The facts remain stable; the characters' choices shape who knows them and what happens next.",
         },
       ],
     },
