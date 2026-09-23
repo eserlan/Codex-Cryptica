@@ -166,6 +166,7 @@ export const howDoIRunAJournalistOrMediaCharacterInAnRpg: AnswerConfigInput = {
     "how-to-write-an-in-world-newspaper-for-an-rpg",
     "how-do-i-run-hackers-or-netrunners-without-splitting-the-party",
     "how-do-i-run-a-diplomat-noble-or-courtier-in-an-rpg",
+    "how-do-i-run-character-roles-in-a-political-intrigue-rpg",
   ],
   discovery: {
     id: "answer-journalist-media-character-rpg",
@@ -209,6 +210,11 @@ export const howDoIRunAJournalistOrMediaCharacterInAnRpg: AnswerConfigInput = {
         with: "answer-run-political-intrigue",
         reason:
           "The political intrigue answer runs competing faction agendas; this one treats journalism as a specialist role that can change what the public and factions know without replacing faction play.",
+      },
+      {
+        with: "answer-run-character-roles-political-intrigue",
+        reason:
+          "The political roles page gives brief advice for several archetypes in a faction campaign; this answer details the reporting loop, source safety, publication choices, and public response.",
       },
       {
         with: "answer-investigative-horror-system-selection",

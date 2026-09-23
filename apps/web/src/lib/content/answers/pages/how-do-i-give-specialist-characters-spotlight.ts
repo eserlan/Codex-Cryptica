@@ -153,6 +153,7 @@ export const howDoIGiveSpecialistCharactersSpotlight: AnswerConfigInput = {
     "how-do-i-run-an-investigator-without-sidelining-the-party",
     "how-do-i-run-a-journalist-or-media-character-in-an-rpg",
     "how-do-i-run-a-diplomat-noble-or-courtier-in-an-rpg",
+    "how-do-i-run-character-roles-in-a-political-intrigue-rpg",
   ],
   discovery: {
     id: "answer-specialist-character-spotlight",
@@ -202,6 +203,11 @@ export const howDoIGiveSpecialistCharactersSpotlight: AnswerConfigInput = {
         with: "answer-run-investigator-without-sidelining-party",
         reason:
           "This answer gives scene patterns for specialists generally; the investigator answer focuses specifically on distributing clues and interpretation while keeping detective expertise meaningful.",
+      },
+      {
+        with: "answer-run-character-roles-political-intrigue",
+        reason:
+          "The political roles page applies specialist spotlight ideas to a cast of political archetypes and their obligations; this answer provides the general scene-design framework across genres.",
       },
     ],
   },

@@ -187,6 +187,7 @@ export const whatRpgWorksForPoliticalIntrigueAndFactionPlay: AnswerConfigInput =
       "how-do-you-run-a-conspiracy-campaign",
       "how-do-you-create-a-secret-society-for-an-rpg-campaign",
       "how-do-i-run-a-diplomat-noble-or-courtier-in-an-rpg",
+      "how-do-i-run-character-roles-in-a-political-intrigue-rpg",
     ],
     discovery: {
       id: "answer-political-intrigue-system-selection",
@@ -228,6 +229,11 @@ export const whatRpgWorksForPoliticalIntrigueAndFactionPlay: AnswerConfigInput =
           with: "answer-track-faction-turns-between-sessions",
           reason:
             "That page teaches GMs to resolve faction turns inside a chosen campaign; this one helps groups choose a system whose rules support faction play.",
+        },
+        {
+          with: "answer-run-character-roles-political-intrigue",
+          reason:
+            "This page compares systems for political play; the roles guide provides system-agnostic advice for running different PCs inside a political campaign.",
         },
       ],
     },
