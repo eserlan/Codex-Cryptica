@@ -227,3 +227,9 @@
 
 **Learning:** Hardcoded Date.now() in utility functions (like file name generation) prevents deterministic testing of the exact outputs.
 **Action:** Inject a Clock interface with a systemClock default to create a clean seam for deterministic assertions without changing production behavior.
+
+## 2026-09-23 - Scope DI injection properly
+
+**Learning:** When identifying targets for dependency injection (like `new Date()`), do not assume the target is within a class scope where `this` is accessible. Standalone helper functions often contain these hidden dependencies and must be patched to accept the dependency as a parameter rather than relying on class-level properties.
+
+**Action:** Always verify the lexical scope (using `grep` with context flags or `cat`) to determine if the target resides in a class method or a top-level standalone function before formulating an execution plan.
