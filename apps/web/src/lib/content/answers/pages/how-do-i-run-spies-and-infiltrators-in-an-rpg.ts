@@ -187,6 +187,7 @@ export const howDoIRunSpiesAndInfiltratorsInAnRpg: AnswerConfigInput = {
     "how-do-i-run-hackers-or-netrunners-without-splitting-the-party",
     "how-do-i-run-an-investigator-without-sidelining-the-party",
     "how-do-i-run-a-diplomat-noble-or-courtier-in-an-rpg",
+    "how-do-i-run-character-roles-in-a-political-intrigue-rpg",
   ],
   discovery: {
     id: "answer-run-spies-infiltrators-rpg",
@@ -241,6 +242,11 @@ export const howDoIRunSpiesAndInfiltratorsInAnRpg: AnswerConfigInput = {
         with: "answer-run-investigator-without-sidelining-party",
         reason:
           "This answer structures covert access and operation roles; the investigator answer concerns clue interpretation and detective competence during a broader investigation.",
+      },
+      {
+        with: "answer-run-character-roles-political-intrigue",
+        reason:
+          "The political roles page positions spies among several archetypes in faction campaigns; this answer is the in-depth guide to covert access, team-supported infiltration, and exposure.",
       },
     ],
   },

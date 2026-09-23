@@ -209,6 +209,11 @@ export const howDoIRunHackersOrNetrunnersWithoutSplittingTheParty: AnswerConfigI
           reason:
             "The investigator answer focuses on sharing clue discovery and interpretation; this answer focuses on connecting a hacker's digital intrusion to physical access and security pressure.",
         },
+        {
+          with: "answer-run-character-roles-political-intrigue",
+          reason:
+            "The political roles answer gives short guidance for a cross-system cast within political campaigns; this page is a focused procedure for connecting digital hacking scenes to physical crew action.",
+        },
       ],
     },
     seo: {
