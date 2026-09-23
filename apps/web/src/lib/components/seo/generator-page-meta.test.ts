@@ -65,6 +65,10 @@ describe("generator-page-meta completeness and social preview tags", () => {
       "https://assets.codexcryptica.com/screenshots/generator-holiday.jpg",
     );
     expect(slugMeta.holiday.ogImageAlt).toBeTruthy();
+    expect(slugMeta.holiday.relatedLinks).toContainEqual({
+      href: "/answers/how-do-i-run-political-intrigue-and-faction-play",
+      label: "Run political intrigue and faction play",
+    });
   });
 
   it("preserves the Council Vote FAQs and related generators", () => {

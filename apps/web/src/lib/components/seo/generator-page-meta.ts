@@ -1205,7 +1205,7 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
         label: "Create a believable fictional religion",
       },
       {
-        href: "/answers/how-do-you-run-political-intrigue-and-faction-play",
+        href: "/answers/how-do-i-run-political-intrigue-and-faction-play",
         label: "Run political intrigue and faction play",
       },
     ],
