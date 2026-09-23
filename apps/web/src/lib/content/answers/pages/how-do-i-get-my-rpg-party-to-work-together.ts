@@ -169,6 +169,7 @@ export const howDoIGetMyRpgPartyToWorkTogether: AnswerConfigInput = {
     "how-do-you-make-a-tabletop-rpg-session-more-engaging",
     "how-do-you-handle-players-going-off-script-as-a-gm",
     "how-do-i-give-specialist-characters-spotlight",
+    "how-do-you-run-character-roles-in-a-cyberpunk-rpg",
   ],
   discovery: {
     id: "answer-party-cohesion",

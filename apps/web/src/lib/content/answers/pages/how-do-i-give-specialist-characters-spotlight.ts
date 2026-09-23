@@ -108,6 +108,7 @@ export const howDoIGiveSpecialistCharactersSpotlight: AnswerConfigInput = {
     },
   ],
   relatedAnswers: [
+    "how-do-you-run-character-roles-in-a-cyberpunk-rpg",
     "how-do-you-make-a-tabletop-rpg-session-more-engaging",
     "how-do-i-get-my-rpg-party-to-work-together",
     "how-do-you-run-dnd-for-a-large-group-of-players",

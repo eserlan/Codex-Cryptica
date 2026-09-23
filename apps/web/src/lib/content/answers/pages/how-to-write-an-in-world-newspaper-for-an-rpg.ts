@@ -166,6 +166,7 @@ export const howToWriteAnInWorldNewspaperForAnRpg: AnswerConfigInput = {
     "what-should-an-rpg-settlement-contain",
     "how-to-create-rumours-for-a-fantasy-town",
     "how-do-you-generate-useful-rpg-rumours",
+    "how-do-you-run-character-roles-in-a-cyberpunk-rpg",
   ],
   seo: {
     title:

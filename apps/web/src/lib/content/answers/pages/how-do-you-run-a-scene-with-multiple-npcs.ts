@@ -155,6 +155,7 @@ export const howDoYouRunASceneWithMultipleNpcs: AnswerConfigInput = {
     "how-do-you-run-a-conspiracy-campaign",
     "how-do-you-create-a-fantasy-faction",
     "how-do-you-run-dnd-for-a-large-group-of-players",
+    "how-do-you-run-character-roles-in-a-cyberpunk-rpg",
   ],
   discovery: {
     id: "answer-run-scene-multiple-npcs",
