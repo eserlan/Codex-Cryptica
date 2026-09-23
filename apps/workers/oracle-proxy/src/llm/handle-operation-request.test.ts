@@ -162,8 +162,7 @@ describe("handleLlmOperationStreamRequest", () => {
     const events = await readSseEvents(response);
     expect(events[0]).toEqual({ type: "started" });
     expect(events.slice(1, -1)).toEqual([
-      { type: "delta", text: "Hello" },
-      { type: "delta", text: ", world" },
+      { type: "delta", text: "Hello, world" },
     ]);
     expect(events.at(-1)).toEqual({
       type: "complete",
