@@ -1,5 +1,5 @@
 {
-  "updated_at": 1790194870,
+  "updated_at": 1790196634,
   "candidates": [
     {
       "id": "reddit-35104395212-i-put-every-superhero-generator-in-one-p",
@@ -82,14 +82,14 @@
       "created_at": 1790042002
     },
     {
-      "id": "reddit-35914173197-idea-developer-turn-a-vague-spark-into-a",
-      "title": "Idea Developer: turn a vague spark into a campaign you can actually run",
-      "body": "You have a one sentence premise you like. A haunted mirror, a city that forgets, a heist that has to happen during a coronation. Then prep stalls because you are not sure what the pressure is, who wants what, or where the players start.\n\nI built an Idea Developer in Tools that takes that spark and shapes it into a structured, adventure-ready concept without replacing the core you cared about. It is one sentence in, structured situation out.\n\nTry it here: /tools/idea-developer\n\nIt gives you:\n- preserved core pulled from your own idea so the result stays recognisable\n- competing interests and what each group wants right now\n- player choices with tradeoffs, not a single plot to follow\n- consequences if the party acts and if they wait\n- a playable opening you can drop straight into session one, or a set of questions when you just want to assess the idea\n\nIt needs an internet connection and AI mode to run, and it avoids assuming a ruleset unless you name one. I kept it system neutral on purpose, which means it will not write stat blocks for you. That felt like a fair trade for keeping the premise yours.\n\nWhat is a campaign spark you have sat on because you could not decide how to start it?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/announcements/release-35914173197-4.png)\n\n---\n*Posted automatically via release pipeline. Feedback and discussion welcome!*\n<!-- id:35914173197 -->",
-      "url": "https://codexcryptica.com/tools/idea-developer",
-      "image_url": "https://assets.codexcryptica.com/announcements/release-35914173197-4.png",
+      "id": "reddit-35914173197-cyberpunk-roles-without-the-solo-hacker-",
+      "title": "Cyberpunk roles without the solo hacker scene",
+      "body": "Cyberpunk crews love the mix of netrunner, fixer, media, medic, solo and driver. At the table that mix often means one player runs a private mini game while everyone else waits. The netrunner fights ICE alone, the solo clears a corridor alone, the driver waits in the van.\n\nI wrote a cyberpunk roles guide that ties every specialist action to something the whole crew can see happening in the room. Private skill in, physical consequence out.\n\nThe main piece: /answers/how-do-you-run-character-roles-in-a-cyberpunk-rpg\n\nIt covers:\n- how to interleave a hack with the physical scene so a failed check locks a door or flips an alarm the crew can react to\n- fixers and brokers who trade favours with a visible cost instead of unlimited contacts\n- media and journalist play where a published story creates a public consequence the party has to handle\n- tech, medic and solo beats that buy time or make a plan work without turning the whole job into a combat encounter\n\nPair it with /answers/how-do-i-run-hackers-or-netrunners-without-splitting-the-party and /answers/how-to-create-a-cyberpunk-city-district if you want the district itself to push back.\n\nI did not flatten every role to the same shared skill list. That would keep the table together but lose what makes cyberpunk feel like cyberpunk. The tension is keeping the specialty while keeping the scene shared.\n\nHow do you keep netrunner or hacker scenes from becoming a solo game at your table?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/og/cyberpunk-red.jpg)\n\n---\n*Posted automatically via release pipeline. Feedback and discussion welcome!*\n<!-- id:35914173197 -->",
+      "url": "https://codexcryptica.com/answers/how-do-i-run-hackers-or-netrunners-without-splitting-the-party",
+      "image_url": "https://assets.codexcryptica.com/og/cyberpunk-red.jpg",
       "source_id": "35914173197",
       "status": "approved",
-      "created_at": 1790194870
+      "created_at": 1790196634
     }
   ]
 }
