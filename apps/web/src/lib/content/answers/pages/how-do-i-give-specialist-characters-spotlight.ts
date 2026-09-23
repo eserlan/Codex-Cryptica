@@ -8,7 +8,7 @@ export const howDoIGiveSpecialistCharactersSpotlight: AnswerConfigInput = {
     "How do I give specialist characters spotlight without sidelining the party?",
   kind: "framework",
   shortAnswer:
-    "Let the specialist use their expertise to change the situation, then give the whole party a meaningful response to that change. Build scenes with shared stakes, parallel ways to contribute, and decisions that need more than one character's judgement. A brief solo moment can work when it has a clear purpose and returns useful information or a consequential choice to the group.",
+    "Spotlight means giving one character a distinctive contribution, not a separate game. Let the specialist use their expertise to change the situation, then give the whole party a meaningful response to that change. Build scenes with shared stakes, intersecting ways to contribute, and decisions that need more than one character's judgement. A brief solo moment can work when it has a clear purpose and returns useful information or a consequential choice to the group.",
   sections: [
     {
       kind: "prose",
@@ -21,9 +21,37 @@ export const howDoIGiveSpecialistCharactersSpotlight: AnswerConfigInput = {
     },
     {
       kind: "list",
+      heading: "Use a shared spotlight loop",
+      intro:
+        "Bring the result back to the table, then return to the specialist when it creates a new choice for them:",
+      items: [
+        {
+          term: "The specialist acts",
+          text: "Let them do something distinctive that shows why their niche matters.",
+        },
+        {
+          term: "The situation changes",
+          text: "Reveal access, information, leverage, danger, or an opportunity.",
+        },
+        {
+          term: "Others respond",
+          text: "Give another character room to act, protect, challenge, exploit, or redirect the opening.",
+        },
+        {
+          term: "The party decides",
+          text: "Let the group choose together which risk or consequence to accept.",
+        },
+        {
+          term: "Return to the specialist",
+          text: "When the changed situation gives them a new meaningful choice, put the focus back on their expertise.",
+        },
+      ],
+    },
+    {
+      kind: "list",
       heading: "Scene patterns that share the action",
       intro:
-        "Choose a pattern that fits the situation; no single scene needs to give every character equal time.",
+        "Choose a pattern that fits the situation. Equal spotlight does not mean every character acts or rolls in every scene, gets an equivalent version of the specialist's ability, or receives identical screen time. Keep the specialist's niche theirs, give others meaningful choices, and bring the result back to shared play.",
       items: [
         {
           term: "Open the door, then pass the choice",
@@ -31,7 +59,7 @@ export const howDoIGiveSpecialistCharactersSpotlight: AnswerConfigInput = {
         },
         {
           term: "Run parallel objectives",
-          text: "While one character handles the specialist task, give others active work under the same pressure. An investigator interviews the archivist as an ally watches the exit and another checks whether a rival is removing evidence. Cut between actions rather than making the table wait for a long resolution.",
+          text: "While one character handles the specialist task, give others active work under the same pressure, then connect the results through a shared clock, consequence, information, access, or decision. An investigator interviews the archivist as an ally watches the exit and another checks whether a rival is removing evidence; what they learn or notice changes what the investigator can ask or risk. Parallel scenes work when one character's result changes another character's options, not when they become separate mini-games. Cut between actions rather than making the table wait for a long resolution.",
         },
         {
           term: "Make different strengths change the same problem",
@@ -52,8 +80,9 @@ export const howDoIGiveSpecialistCharactersSpotlight: AnswerConfigInput = {
       heading: "Keep competence meaningful without making it a bottleneck",
       paragraphs: [
         "Do not solve spotlight imbalance by making the specialist fail at the thing their character is built to do. Let expertise produce a real advantage: a cleaner route, better information, a safer approach, or a choice others would not have. The tension can come from what the party does with that advantage, what it costs, or who notices.",
-        "Avoid making every obstacle depend on one character's single roll or private information. If a task genuinely belongs to one specialist, prepare a clear outcome and a useful next decision. For larger problems, include several ways to contribute, and let different approaches reveal different risks rather than treating one skill as the only key.",
-        "Agree expectations with the players when the campaign regularly includes private scenes or specialist procedures. Ask how much table time those scenes should take, whether players want to hear information their characters do not know, and what kind of spotlight each person enjoys. Some players like a quiet supporting role; others want frequent decisions. Check rather than assume.",
+        "A particular scene can genuinely require the specialist; preserving their niche does not mean every obstacle needs a substitute route. The campaign should not depend on one character always being present or succeeding at one roll, though. If they are absent or fail, prepare another route forward with a greater cost, delay, uncertainty, or risk.",
+        "Support does not mean giving everyone a weaker copy of the specialist's task. The hacker owns the intrusion while the crew handles physical access and security; the investigator owns specialist analysis while others bring context, access, or action; the diplomat owns negotiation leverage while others create facts, pressure, guarantees, or consequences.",
+        "Ask about the spotlight each player enjoys: how often they want it, whether private scenes suit them, how they feel about players knowing what their characters do not, and whether they like leading decisions or supporting others.",
       ],
     },
     {
@@ -73,7 +102,7 @@ export const howDoIGiveSpecialistCharactersSpotlight: AnswerConfigInput = {
         },
         {
           term: "Why it works",
-          text: "The hacker's expertise reveals an opportunity the others could not find, but the information arrives while there is still time to act. Each character has a useful role, and the consequence belongs to the whole group rather than ending with a private success roll.",
+          text: "The hacker's expertise reveals an opportunity the others could not find, but the information arrives while there is still time to act. Each character has a useful role, and the consequence belongs to the whole group rather than ending with a private success roll. In a fantasy court, a diplomat might instead win an audience, leaving the party to decide what promise or risk they can accept.",
         },
       ],
     },
@@ -86,8 +115,15 @@ export const howDoIGiveSpecialistCharactersSpotlight: AnswerConfigInput = {
         "Can another character help, protect the specialist, pursue a parallel objective, or act on the result?",
         "Will useful information reach the group while there is still a decision to make?",
         "If this needs a solo scene, what is its purpose and how will you return to the group?",
-        "Does the challenge have another meaningful approach, so one character is not the campaign's permanent gatekeeper?",
+        "Can this scene depend on the specialist while the campaign still has another route forward if they are absent or fail, at a cost, delay, or added risk?",
         "Have you checked what kind of spotlight the players actually want?",
+      ],
+    },
+    {
+      kind: "prose",
+      heading: "Apply the loop to each role",
+      paragraphs: [
+        "The structure stays the same while the specialist's contribution changes: hackers alter systems and security, investigators alter certainty, journalists alter who knows, spies alter access, and diplomats alter agreements and obligations. Each role-specific guide applies this shared framework to its own kind of expertise and the choices it creates for the party.",
       ],
     },
   ],

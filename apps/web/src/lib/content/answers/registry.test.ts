@@ -778,6 +778,18 @@ describe("published answers", () => {
     expect(sitemap).toContain(`https://codexcryptica.com${route}`);
   });
 
+  it("does not repeat the specialist spotlight lead in the article body", () => {
+    const answer = answers["how-do-i-give-specialist-characters-spotlight"];
+    const openingSection = answer.sections[0];
+
+    expect(openingSection.kind).toBe("prose");
+    if (openingSection.kind === "prose") {
+      expect(openingSection.paragraphs).not.toContain(
+        "Spotlight means giving one character a distinctive contribution, not giving them a separate game.",
+      );
+    }
+  });
+
   it("publishes the solo rpg system answer with complete framework sections, R2 image, and verified system references", () => {
     const answer = answers["what-rpg-system-is-good-for-solo-play"];
     expect(answer).toBeDefined();
