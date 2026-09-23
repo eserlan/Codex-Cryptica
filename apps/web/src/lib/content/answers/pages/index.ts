@@ -7,6 +7,7 @@ import { howDoIGetMyRpgPartyToWorkTogether } from "./how-do-i-get-my-rpg-party-t
 import { howDoIGetPlayersToEngageWithMyCampaignWorld } from "./how-do-i-get-players-to-engage-with-my-campaign-world";
 import { howDoIGiveSpecialistCharactersSpotlight } from "./how-do-i-give-specialist-characters-spotlight";
 import { howDoIOrganiseGmNotesForInPersonPlay } from "./how-do-i-organise-gm-notes-for-in-person-play";
+import { howDoIRunAJournalistOrMediaCharacterInAnRpg } from "./how-do-i-run-a-journalist-or-media-character-in-an-rpg";
 import { howDoIRunASuccessfulSessionZero } from "./how-do-i-run-a-successful-session-0";
 import { howDoIRunHackersOrNetrunnersWithoutSplittingTheParty } from "./how-do-i-run-hackers-or-netrunners-without-splitting-the-party";
 import { howDoIRunPoliticalIntrigueAndFactionPlay } from "./how-do-i-run-political-intrigue-and-faction-play";
@@ -101,6 +102,7 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     howDoIGetPlayersToEngageWithMyCampaignWorld,
     howDoIGiveSpecialistCharactersSpotlight,
     howDoIOrganiseGmNotesForInPersonPlay,
+    howDoIRunAJournalistOrMediaCharacterInAnRpg,
     howDoIRunASuccessfulSessionZero,
     howDoIRunHackersOrNetrunnersWithoutSplittingTheParty,
     howDoIRunPoliticalIntrigueAndFactionPlay,

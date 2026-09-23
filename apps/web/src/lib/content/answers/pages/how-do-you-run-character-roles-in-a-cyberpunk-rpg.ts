@@ -30,7 +30,7 @@ export const howDoYouRunCharacterRolesInACyberpunkRpg: AnswerConfigInput = {
         },
         {
           term: "Media or journalist",
-          text: "A journalist changes a scene by turning information into something the crew can trade on: a recording that could run tonight, a source who can be burned, a story already sitting in an editor's queue. Keep a running note of what has been published, who the sources were, and what it cost the journalist's standing, then bring in a named editor or outlet who pushes back when the story gets dangerous or inconvenient. The role fails when it only explains the plot to the table; if the character never creates a public consequence the crew has to react to, the journalist is doing exposition instead of playing a role.",
+          text: "A journalist turns information into a public act with a cost: a source may be exposed, a deadline may force a choice, and an editor or outlet may demand evidence before publication. Treat access, credibility, source trust, and audience reach as pressures the character can build or spend, not as a universal points subsystem. Let publication change reputations, bring witnesses forward, close doors, or prompt a faction's response; the story should create a new decision, not automatically settle the conflict. Protect the player's choice of what to report and when, and make sources and competing accounts uncertain without secretly changing established facts. Involve the crew in finding proof, protecting people, securing access, and handling fallout. For a broader procedure across investigative horror, political and modern games, see the journalist and Media guide.",
         },
         {
           term: "Fixer or broker",
@@ -139,6 +139,7 @@ export const howDoYouRunCharacterRolesInACyberpunkRpg: AnswerConfigInput = {
   ],
   relatedAnswers: [
     "how-do-i-give-specialist-characters-spotlight",
+    "how-do-i-run-a-journalist-or-media-character-in-an-rpg",
     "how-do-i-run-hackers-or-netrunners-without-splitting-the-party",
     "how-do-you-run-a-heist-in-a-tabletop-rpg",
     "how-do-i-get-my-rpg-party-to-work-together",
