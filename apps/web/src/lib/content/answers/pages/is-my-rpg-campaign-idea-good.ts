@@ -99,12 +99,18 @@ export const isMyRpgCampaignIdeaGood: AnswerConfigInput = {
     heading: "Developing the idea without replacing it",
     paragraphs: [
       "Once an idea passes the five questions, its pieces (the town, the guild, the temple, the foreman, the discovery) need to stay connected as play changes them, which is where paper notes start to strain over several sessions. In Codex Cryptica you can save each as an entity and link them, so you can see which factions a decision touches.",
-      "The generators can fill whichever question is still empty: a faction for competing goals, a rumour set for conflicting explanations, a settlement for a place with pressures attached, or an adventure concept when you want a full situation. They work from what you already have, and you can discard anything that does not fit your idea.",
+      "Generators can fill a missing piece — a faction with competing goals, rumours with conflicting explanations, or a settlement with pressure attached. If you want help working from the premise itself, the Idea Developer can assess or develop it while keeping its recognisable core; you can discard any suggestion that does not fit.",
     ],
-    linkText: "Develop your idea with the adventure generator",
-    href: "/generators/adventure-generator",
+    linkText: "Develop your idea with the Idea Developer",
+    href: "/tools/idea-developer",
   },
   relatedTools: [
+    {
+      title: "Idea Developer",
+      description:
+        "Work directly from an existing premise to assess it, develop it, or make it playable without discarding its core.",
+      href: "/tools/idea-developer",
+    },
     {
       title: "Adventure generator",
       description:
@@ -172,12 +178,18 @@ export const isMyRpgCampaignIdeaGood: AnswerConfigInput = {
       "generator-adventure-idea-generator",
       "answer-quest-hooks-without-railroading",
       "answer-run-factions-sandbox",
+      "tools-idea-developer",
     ],
     acknowledgedOverlap: [
       {
         with: "answer-turn-rpg-idea-into-adventure",
         reason:
           "This page diagnoses whether an idea is workable and which piece is missing; the other page is the step-by-step procedure for building the playable situation.",
+      },
+      {
+        with: "tools-idea-developer",
+        reason:
+          "This page helps the reader assess an idea themselves; the interactive tool works directly on the premise to produce optional development while preserving its core.",
       },
     ],
   },

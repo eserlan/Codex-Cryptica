@@ -142,6 +142,7 @@ export const howDoIStartGmingForTheFirstTime: AnswerConfigInput = {
     "how-do-you-make-a-tabletop-rpg-session-more-engaging",
     "how-do-you-run-dnd-for-a-large-group-of-players",
     "can-you-play-a-tabletop-rpg-in-30-minute-sessions",
+    "how-do-i-organise-gm-notes-for-in-person-play",
   ],
   discovery: {
     id: "answer-first-time-gm-hub",

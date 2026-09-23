@@ -502,7 +502,27 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://codexcryptica.com/answers/how-do-i-get-my-rpg-party-to-work-together</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://codexcryptica.com/answers/how-do-i-get-players-to-engage-with-my-campaign-world</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://codexcryptica.com/answers/how-do-i-give-specialist-characters-spotlight</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://codexcryptica.com/answers/how-do-i-organise-gm-notes-for-in-person-play</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://codexcryptica.com/answers/how-do-i-run-a-rogue-or-scout-without-splitting-the-party</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>

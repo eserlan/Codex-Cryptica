@@ -155,6 +155,7 @@ export const howDoYouKeepTrackOfTimeInATabletopCampaign: AnswerConfigInput = {
     "how-do-you-start-worldbuilding-from-scratch",
     "how-to-write-an-in-world-newspaper-for-an-rpg",
     "how-do-you-manage-a-campaign-timeline-in-an-rpg",
+    "xp-leveling-vs-milestone-leveling",
   ],
   discovery: {
     id: "answer-track-time-in-campaign",

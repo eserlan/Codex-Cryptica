@@ -3,9 +3,19 @@ import { canYouPlayATabletopRpgIn30MinuteSessions } from "./can-you-play-a-table
 import { howDoIBalanceRpgCombatEncountersWithoutATpk } from "./how-do-i-balance-rpg-combat-encounters-without-a-tpk";
 import { howDoIExpandASimpleRpgCampaignIdea } from "./how-do-i-expand-a-simple-rpg-campaign-idea";
 import { howDoIFindATabletopRpgGroupToPlayWith } from "./how-do-i-find-a-tabletop-rpg-group-to-play-with";
+import { howDoIGetMyRpgPartyToWorkTogether } from "./how-do-i-get-my-rpg-party-to-work-together";
 import { howDoIGetPlayersToEngageWithMyCampaignWorld } from "./how-do-i-get-players-to-engage-with-my-campaign-world";
+import { howDoIGiveSpecialistCharactersSpotlight } from "./how-do-i-give-specialist-characters-spotlight";
+import { howDoIOrganiseGmNotesForInPersonPlay } from "./how-do-i-organise-gm-notes-for-in-person-play";
+import { howDoIRunADiplomatNobleOrCourtierInAnRpg } from "./how-do-i-run-a-diplomat-noble-or-courtier-in-an-rpg";
+import { howDoIRunAJournalistOrMediaCharacterInAnRpg } from "./how-do-i-run-a-journalist-or-media-character-in-an-rpg";
+import { howDoIRunARogueOrScoutWithoutSplittingTheParty } from "./how-do-i-run-a-rogue-or-scout-without-splitting-the-party";
 import { howDoIRunASuccessfulSessionZero } from "./how-do-i-run-a-successful-session-0";
+import { howDoIRunAnInvestigatorWithoutSideliningTheParty } from "./how-do-i-run-an-investigator-without-sidelining-the-party";
+import { howDoIRunCharacterRolesInAPoliticalIntrigueRpg } from "./how-do-i-run-character-roles-in-a-political-intrigue-rpg";
+import { howDoIRunHackersOrNetrunnersWithoutSplittingTheParty } from "./how-do-i-run-hackers-or-netrunners-without-splitting-the-party";
 import { howDoIRunPoliticalIntrigueAndFactionPlay } from "./how-do-i-run-political-intrigue-and-faction-play";
+import { howDoIRunSpiesAndInfiltratorsInAnRpg } from "./how-do-i-run-spies-and-infiltrators-in-an-rpg";
 import { howDoIStartGmingForTheFirstTime } from "./how-do-i-start-gming-for-the-first-time";
 import { howDoITurnAnRpgIdeaIntoAnAdventure } from "./how-do-i-turn-an-rpg-idea-into-an-adventure";
 import { howDoYouBuildAPointCrawlForAnRpg } from "./how-do-you-build-a-point-crawl-for-an-rpg";
@@ -44,6 +54,7 @@ import { howDoYouRunAHeistInATabletopRpg } from "./how-do-you-run-a-heist-in-a-t
 import { howDoYouRunAMysteryWithoutRailroading } from "./how-do-you-run-a-mystery-without-railroading";
 import { howDoYouRunASceneWithMultipleNpcs } from "./how-do-you-run-a-scene-with-multiple-npcs";
 import { howDoYouRunAnRpgCampaignInOneCity } from "./how-do-you-run-an-rpg-campaign-in-one-city";
+import { howDoYouRunCharacterRolesInACyberpunkRpg } from "./how-do-you-run-character-roles-in-a-cyberpunk-rpg";
 import { howDoYouRunDndForALargeGroupOfPlayers } from "./how-do-you-run-dnd-for-a-large-group-of-players";
 import { howDoYouRunFactionsInASandboxCampaign } from "./how-do-you-run-factions-in-a-sandbox-campaign";
 import { howDoYouStartWorldbuildingFromScratch } from "./how-do-you-start-worldbuilding-from-scratch";
@@ -78,6 +89,7 @@ import { whatShouldAnRpgSettlementContain } from "./what-should-an-rpg-settlemen
 import { whatShouldILookForInAnRpgCampaignManager } from "./what-should-i-look-for-in-an-rpg-campaign-manager";
 import { whatTtrpgShouldIUseForAFantasyDungeonCrawl } from "./what-ttrpg-should-i-use-for-a-fantasy-dungeon-crawl";
 import { whereDoIStartIfIHaveNeverPlayedATabletopRpg } from "./where-do-i-start-if-i-have-never-played-a-tabletop-rpg";
+import { xpLevelingVsMilestoneLeveling } from "./xp-leveling-vs-milestone-leveling";
 
 /**
  * The published answer library.
@@ -91,9 +103,19 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     howDoIBalanceRpgCombatEncountersWithoutATpk,
     howDoIExpandASimpleRpgCampaignIdea,
     howDoIFindATabletopRpgGroupToPlayWith,
+    howDoIGetMyRpgPartyToWorkTogether,
     howDoIGetPlayersToEngageWithMyCampaignWorld,
+    howDoIGiveSpecialistCharactersSpotlight,
+    howDoIOrganiseGmNotesForInPersonPlay,
+    howDoIRunADiplomatNobleOrCourtierInAnRpg,
+    howDoIRunAJournalistOrMediaCharacterInAnRpg,
+    howDoIRunARogueOrScoutWithoutSplittingTheParty,
     howDoIRunASuccessfulSessionZero,
+    howDoIRunAnInvestigatorWithoutSideliningTheParty,
+    howDoIRunCharacterRolesInAPoliticalIntrigueRpg,
+    howDoIRunHackersOrNetrunnersWithoutSplittingTheParty,
     howDoIRunPoliticalIntrigueAndFactionPlay,
+    howDoIRunSpiesAndInfiltratorsInAnRpg,
     howDoIStartGmingForTheFirstTime,
     howDoITurnAnRpgIdeaIntoAnAdventure,
     howDoYouBuildAPointCrawlForAnRpg,
@@ -132,6 +154,7 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     howDoYouRunAMysteryWithoutRailroading,
     howDoYouRunASceneWithMultipleNpcs,
     howDoYouRunAnRpgCampaignInOneCity,
+    howDoYouRunCharacterRolesInACyberpunkRpg,
     howDoYouRunDndForALargeGroupOfPlayers,
     howDoYouRunFactionsInASandboxCampaign,
     howDoYouStartWorldbuildingFromScratch,
@@ -166,6 +189,7 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     whatShouldILookForInAnRpgCampaignManager,
     whatTtrpgShouldIUseForAFantasyDungeonCrawl,
     whereDoIStartIfIHaveNeverPlayedATabletopRpg,
+    xpLevelingVsMilestoneLeveling,
   ]
     .map((answer) => AnswerConfigSchema.parse(answer))
     .map((answer) => [answer.slug, answer]),

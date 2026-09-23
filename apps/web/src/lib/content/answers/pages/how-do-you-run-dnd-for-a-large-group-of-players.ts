@@ -179,6 +179,7 @@ export const howDoYouRunDndForALargeGroupOfPlayers: AnswerConfigInput = {
     "how-do-i-balance-rpg-combat-encounters-without-a-tpk",
     "how-do-you-run-a-scene-with-multiple-npcs",
     "can-you-play-a-tabletop-rpg-in-30-minute-sessions",
+    "how-do-i-give-specialist-characters-spotlight",
   ],
   discovery: {
     id: "answer-large-group-dnd",
@@ -216,6 +217,11 @@ export const howDoYouRunDndForALargeGroupOfPlayers: AnswerConfigInput = {
         with: "answer-run-scene-multiple-npcs",
         reason:
           "Both sit in the session-prep cluster and touch crowded scenes, but this answer is about running many players at once regardless of NPC count, while the multi-NPC answer addresses running many NPCs at once regardless of party size.",
+      },
+      {
+        with: "answer-party-cohesion",
+        reason:
+          "This answer covers pacing and spotlight at a crowded table; the party-cohesion answer covers shared stakes and cooperation for parties of any size. The discovery audit's vocabulary match is only the generic phrase 'players up'.",
       },
     ],
   },

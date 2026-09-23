@@ -155,6 +155,7 @@ export const howDoYouRunASceneWithMultipleNpcs: AnswerConfigInput = {
     "how-do-you-run-a-conspiracy-campaign",
     "how-do-you-create-a-fantasy-faction",
     "how-do-you-run-dnd-for-a-large-group-of-players",
+    "how-do-you-run-character-roles-in-a-cyberpunk-rpg",
   ],
   discovery: {
     id: "answer-run-scene-multiple-npcs",
@@ -189,6 +190,11 @@ export const howDoYouRunASceneWithMultipleNpcs: AnswerConfigInput = {
         with: "answer-large-group-dnd",
         reason:
           "Both sit in the session-prep cluster and touch crowded scenes, but this answer is about running many NPCs at once regardless of party size, while the large-group answer addresses running many players at once regardless of NPC count.",
+      },
+      {
+        with: "answer-specialist-character-spotlight",
+        reason:
+          "This answer structures scenes around several non-player characters; the specialist-spotlight answer structures scenes around a player character's specialist ability and the rest of the party's choices.",
       },
     ],
   },

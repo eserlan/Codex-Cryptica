@@ -98,12 +98,18 @@ export const howDoITurnAnRpgIdeaIntoAnAdventure: AnswerConfigInput = {
     heading: "Keeping the moving parts together across sessions",
     paragraphs: [
       "You can run the model on paper, and for a one-shot that is often enough. It gets harder over several sessions, when the pressure moves, the parties change what they want and old consequences start to land. In Codex Cryptica you can save the town, the guild, the temple and the foreman as entities and link them, so when the party sides with the temple you can see at a glance what that changes for the guild.",
-      "The generators can supply whichever piece you are missing: an adventure concept with stakes and opposition, a faction with its own needs, or rumours that give each competing explanation a voice.",
+      "If you already have a premise, the Idea Developer can assess or expand it while keeping its core. Generators can also supply a missing piece: an adventure concept with stakes and opposition, a faction with its own needs, or rumours that give each competing explanation a voice.",
     ],
-    linkText: "Already have an idea? Develop it with Codex Cryptica",
-    href: "/generators/adventure-generator",
+    linkText: "Already have an idea? Develop it with the Idea Developer",
+    href: "/tools/idea-developer",
   },
   relatedTools: [
+    {
+      title: "Idea Developer",
+      description:
+        "Work directly with an existing RPG premise to assess, develop, or make it playable without replacing its core.",
+      href: "/tools/idea-developer",
+    },
     {
       title: "Adventure generator",
       description:
@@ -166,12 +172,18 @@ export const howDoITurnAnRpgIdeaIntoAnAdventure: AnswerConfigInput = {
       "answer-quest-hooks-without-railroading",
       "answer-write-one-shot-adventure",
       "answer-run-factions-sandbox",
+      "tools-idea-developer",
     ],
     acknowledgedOverlap: [
       {
         with: "answer-is-my-rpg-campaign-idea-good",
         reason:
           "This page is the step-by-step procedure for building the playable situation; the other page diagnoses whether an idea is workable and which piece is missing.",
+      },
+      {
+        with: "tools-idea-developer",
+        reason:
+          "This Answer teaches a reusable method; the tool applies AI to a supplied premise and returns a structured draft the user can adapt.",
       },
     ],
   },

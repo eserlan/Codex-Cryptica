@@ -164,6 +164,7 @@ export const howDoYouPrepareASandboxRpgCampaign: AnswerConfigInput = {
     "how-do-i-turn-an-rpg-idea-into-an-adventure",
     "is-my-rpg-campaign-idea-good",
     "how-do-i-expand-a-simple-rpg-campaign-idea",
+    "xp-leveling-vs-milestone-leveling",
   ],
   discovery: {
     id: "answer-sandbox-campaign-prep",

@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { describe, it, expect } from "vitest";
 import {
   getAnswer,
@@ -408,6 +410,7 @@ describe("published answers", () => {
       "dnd-npc-generator",
       "faction-generator",
       "fantasy-name-generator",
+      "idea-developer",
       "quest-hook-generator",
       "rpg-npc-generator",
       "vampire-clan-generator",
@@ -556,6 +559,22 @@ describe("published answers", () => {
     ).toBe(true);
     expect(shortSessionAnswer.seo.image).toMatch(
       /^https:\/\/assets\.codexcryptica\.com\/.+\.jpg$/,
+    );
+  });
+
+  it("separates table problems from fictional party-cohesion problems", () => {
+    const partyCohesionAnswer =
+      answers["how-do-i-get-my-rpg-party-to-work-together"];
+    const diagnosis = partyCohesionAnswer.sections[0];
+
+    expect(diagnosis.kind).toBe("prose");
+    if (diagnosis.kind !== "prose") return;
+
+    expect(diagnosis.paragraphs[0]).toContain(
+      "conversation addresses table problems",
+    );
+    expect(diagnosis.paragraphs[0]).toContain(
+      "encounter design addresses a lack of shared stakes in the fiction",
     );
   });
 
@@ -736,6 +755,38 @@ describe("published answers", () => {
       expect(ref.href).toMatch(/^https?:\/\//);
       expect(ref.rationale.length).toBeGreaterThan(0);
       expect(ref.rationale.match(/[.!?](?:\s|$)/g)).toHaveLength(1);
+    }
+  });
+
+  it("keeps the specialist spotlight answer in the checked-in discovery indexes", () => {
+    const route = "/answers/how-do-i-give-specialist-characters-spotlight";
+    const staticLlms = readFileSync(
+      resolve(process.cwd(), "static/llms-full.txt"),
+      "utf8",
+    );
+    const rootLlms = readFileSync(
+      resolve(process.cwd(), "../../llms-full.txt"),
+      "utf8",
+    );
+    const sitemap = readFileSync(
+      resolve(process.cwd(), "static/sitemap.xml"),
+      "utf8",
+    );
+
+    expect(staticLlms).toContain(route);
+    expect(rootLlms).toContain(route);
+    expect(sitemap).toContain(`https://codexcryptica.com${route}`);
+  });
+
+  it("does not repeat the specialist spotlight lead in the article body", () => {
+    const answer = answers["how-do-i-give-specialist-characters-spotlight"];
+    const openingSection = answer.sections[0];
+
+    expect(openingSection.kind).toBe("prose");
+    if (openingSection.kind === "prose") {
+      expect(openingSection.paragraphs).not.toContain(
+        "Spotlight means giving one character a distinctive contribution, not giving them a separate game.",
+      );
     }
   });
 

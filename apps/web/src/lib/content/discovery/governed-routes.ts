@@ -29,6 +29,7 @@ import { GENERATOR_SLUGS } from "../../../params/generator_slug";
 
 /** `/tools/[page]` landing pages, which are individual route directories. */
 const TOOL_PAGES = [
+  "idea-developer",
   "cyberpunk-nomad-clan-generator",
   "dnd-npc-generator",
   "faction-generator",

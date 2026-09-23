@@ -1940,9 +1940,25 @@ Reference answers to real RPG and worldbuilding questions, indexed at https://co
 
 **Direct answer:** Finding a tabletop RPG group comes down to three main routes: using a dedicated group-finding platform with structured filters (for system, schedule, language, and play format), tapping into local offline communities like friendly game stores, conventions, and clubs, or building a table yourself with friends or fellow players. Selecting the right route depends on whether you are looking for an in-person or online game, and taking a few minutes to check group fit and table expectations beforehand makes joining a new group substantially smoother.
 
+### [How do I get my RPG party to work together?](https://codexcryptica.com/answers/how-do-i-get-my-rpg-party-to-work-together)
+
+**Direct answer:** Give the characters a reason to stay together, situations where combining their strengths helps, and decisions whose outcomes affect the whole group. First work out whether the trouble comes from the fiction, unclear player expectations, or one person dominating decisions; talk with the players when it is a table issue, and use shared objectives and consequences when the characters simply lack ties.
+
 ### [How do I get players to engage with my campaign world?](https://codexcryptica.com/answers/how-do-i-get-players-to-engage-with-my-campaign-world)
 
 **Direct answer:** Players engage with lore when it does something to their characters, not when it's explained to them. A piece of history becomes interesting the moment it can be wanted, feared, changed, lost or exploited. The fix is rarely 'more worldbuilding' or 'better exposition'; it's turning what already exists into choices, connecting it to what the characters already want, and letting player decisions visibly move it. And roleplaying isn't the same thing as performing dialogue in character: a player making a sharp decision in third person is roleplaying just as much as one doing voices.
+
+### [How do I give specialist characters spotlight without sidelining the party?](https://codexcryptica.com/answers/how-do-i-give-specialist-characters-spotlight)
+
+**Direct answer:** Let the specialist use their expertise to change the situation, then give the whole party a meaningful response to that change. Build scenes with shared stakes, parallel ways to contribute, and decisions that need more than one character's judgement. A brief solo moment can work when it has a clear purpose and returns useful information or a consequential choice to the group.
+
+### [How do I organise my GM notes and references when running an RPG in person?](https://codexcryptica.com/answers/how-do-i-organise-gm-notes-for-in-person-play)
+
+**Direct answer:** Bring a session-facing subset to the table, not the whole campaign file: one page of what might matter tonight, a few reference pages you can reach without scrolling, somewhere to catch names and decisions as they happen, and a place the session gets filed afterwards. Paper, tablet and laptop all do that job, so choose by how fast you need an answer and how much screen you want sitting between you and the players.
+
+### [How do I run a rogue or scout without splitting the party?](https://codexcryptica.com/answers/how-do-i-run-a-rogue-or-scout-without-splitting-the-party)
+
+**Direct answer:** Give the scout a clear question, resolve only the uncertain part of their reconnaissance, then bring the result back while the party can still choose what to do. Let the rogue gain useful information, position, or access, while companions watch exits, prepare a diversion, or change the conditions outside. A failed stealth or scouting roll can raise suspicion, cost time, or close a route without automatically leaving the scout alone in a fight.
 
 ### [How do I run a successful Session 0?](https://codexcryptica.com/answers/how-do-i-run-a-successful-session-0)
 
@@ -2558,4 +2574,3 @@ Codex Cryptica provides specialized, tailored landing pages, knowledge graphs, a
 **Summary:** One world, one hex map, one set of consequences — however many players turn up, and whenever they do.
 
 **Overview:** In a West Marches game you are the only person who has seen the whole map. Six players went out in March and named a ruin; four different players go back in September and need to know what the first group found, who they annoyed, and which road is now watched. The world keeps moving between expeditions, and none of it is written down anywhere the next party can use.
-

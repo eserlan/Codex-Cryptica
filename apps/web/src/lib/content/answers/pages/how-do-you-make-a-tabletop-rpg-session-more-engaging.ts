@@ -169,6 +169,8 @@ export const howDoYouMakeATabletopRpgSessionMoreEngaging: AnswerConfigInput = {
     "how-do-you-run-a-scene-with-multiple-npcs",
     "how-do-you-run-dnd-for-a-large-group-of-players",
     "can-you-play-a-tabletop-rpg-in-30-minute-sessions",
+    "how-do-i-get-my-rpg-party-to-work-together",
+    "how-do-i-give-specialist-characters-spotlight",
   ],
   discovery: {
     id: "answer-session-engagement",
