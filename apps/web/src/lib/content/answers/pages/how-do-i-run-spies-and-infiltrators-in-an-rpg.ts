@@ -152,6 +152,7 @@ export const howDoIRunSpiesAndInfiltratorsInAnRpg: AnswerConfigInput = {
     "how-do-you-run-factions-in-a-sandbox-campaign",
     "how-do-i-run-hackers-or-netrunners-without-splitting-the-party",
     "how-do-i-run-an-investigator-without-sidelining-the-party",
+    "how-do-i-run-a-diplomat-noble-or-courtier-in-an-rpg",
   ],
   discovery: {
     id: "answer-run-spies-infiltrators-rpg",

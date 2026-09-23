@@ -116,6 +116,7 @@ export const howDoIRunAJournalistOrMediaCharacterInAnRpg: AnswerConfigInput = {
     "how-do-i-run-political-intrigue-and-faction-play",
     "how-to-write-an-in-world-newspaper-for-an-rpg",
     "how-do-i-run-hackers-or-netrunners-without-splitting-the-party",
+    "how-do-i-run-a-diplomat-noble-or-courtier-in-an-rpg",
   ],
   discovery: {
     id: "answer-journalist-media-character-rpg",

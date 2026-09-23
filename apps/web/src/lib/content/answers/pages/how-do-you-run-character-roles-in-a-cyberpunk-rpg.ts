@@ -8,49 +8,53 @@ export const howDoYouRunCharacterRolesInACyberpunkRpg: AnswerConfigInput = {
   question: "How do you run character roles in a cyberpunk RPG?",
   kind: "framework",
   shortAnswer:
-    "Run each cyberpunk specialist role by tying its objective to something the whole crew can see happening in the room, not to a private mini-game the table waits out. A netrunner's slice should open a door the crew is standing at, a fixer's favour should carry a cost that surfaces later, and a solo's combat skill should still depend on the crew's plan rather than replace it. Give every role one concrete way to change a scene and one realistic way it can go wrong, then let those roles collide inside a single shared job instead of each running in its own lane.",
+    "Run each cyberpunk specialist role by tying its objective to something the whole crew can see happening in the room, rather than to a private side scene that leaves the table waiting. A netrunner's slice can open a door the crew is standing at, a fixer's favour can carry a cost that surfaces later, and a solo's combat skill can support the crew's plan rather than replace it. Give each role a concrete way to change a scene and a realistic way it can go wrong, then let those roles collide inside a shared job.",
   sections: [
     {
       kind: "prose",
       heading: "Why cyberpunk rosters split the table",
       paragraphs: [
-        "A cyberpunk crew usually mixes skills a fantasy party does not: one player runs code, one runs contacts, one runs a gun, one runs a van. That variety is the genre's appeal, but it also creates a specific table failure, where each specialist retreats into a scene only they can play while the rest of the group waits for their turn to matter again. A netrunner fighting intrusion countermeasures alone while the rest of the crew has nothing to react to is not a cyberpunk scene; it is the table watching one player roll dice.",
-        "The fix is not to flatten every role down to the same shared skill list. It is to make every specialist action land somewhere the whole crew can react to: a door the netrunner opens, a guard the solo pulls off a chokepoint, a contact the fixer burns. Treat the specialist's private skill as the input and the physical scene as the output, and the table stays in one place.",
+        "A cyberpunk crew can mix very different kinds of expertise: one player runs code, one runs contacts, one runs a gun, one runs a van. These are genre archetypes rather than required classes: your game may give them different names or combine several into one character. That variety is part of the genre's appeal, but it can leave each specialist in a separate scene while the rest of the group waits for their turn to matter. A netrunner fighting intrusion countermeasures alone may fit the fiction, but at the table it can leave everyone else watching one player roll dice.",
+        "Keep each role distinct, but make its specialist action land somewhere the whole crew can react to: a door the netrunner opens, a guard the solo pulls off a chokepoint, a contact the fixer burns. Treat the specialist's private skill as input and the shared physical scene as output, so the group can see what changed and decide what to do next.",
       ],
     },
     {
       kind: "list",
       heading: "Running each specialist role at the table",
       intro:
-        "Use the same pattern for every archetype: name how the role changes the scene, use a technique that keeps the rest of the table involved, and know the failure that turns the role into a liability instead of a solution.",
+        "For each archetype, identify what it changes, how the rest of the crew can affect the scene, and a failure mode that creates play rather than ending it.",
       items: [
         {
           term: "Hacker or netrunner",
-          text: "A netrunner's action changes the room whenever it opens a locked door, blinds a camera, or scrambles a guard's radio, so keep the digital slice interleaved with what the crew standing there can see and hear. Narrate each exchange in short beats and give a failed check an immediate physical cost, such as a door that stays sealed or an alarm light shifting to amber, rather than letting the failure only cost the netrunner a resource nobody else at the table can see. Watch for the moment the hack turns into a private side scene while the rest of the table waits; when that happens, cut back to the physical room and force a decision from the whole crew.",
+          text: "Contribution: Open a door, blind a camera, or scramble a guard's radio. Technique: Resolve the hack in short beats and cut back whenever the room changes, giving the crew something they can see and act on. Watch for: A private run of checks with only invisible resource costs; make a setback affect access, time, or security instead.",
         },
         {
           term: "Media or journalist",
-          text: "A journalist turns information into a public act with a cost: a source may be exposed, a deadline may force a choice, and an editor or outlet may demand evidence before publication. Treat access, credibility, source trust, and audience reach as pressures the character can build or spend, not as a universal points subsystem. Let publication change reputations, bring witnesses forward, close doors, or prompt a faction's response; the story should create a new decision, not automatically settle the conflict. Protect the player's choice of what to report and when, and make sources and competing accounts uncertain without secretly changing established facts. Involve the crew in finding proof, protecting people, securing access, and handling fallout. For a broader procedure across investigative horror, political and modern games, see the journalist and Media guide.",
+          text: "Contribution: Turn evidence into public pressure, while putting a source, deadline, or reputation at stake. Technique: Involve the crew in finding proof, protecting sources, and handling fallout; let publication create a new choice rather than settle the conflict. Watch for: Treating credibility as a universal points system or changing established facts to manufacture doubt. For more, see the journalist and Media guide.",
         },
         {
           term: "Fixer or broker",
-          text: "A fixer changes a scene by producing the one contact, favour, or door nobody else at the table can open, and each use should cost something visible: a debt owed, a reputation spent, a rival who now knows the crew's business. Track favours openly rather than letting the fixer draw on an unlimited supply. The failure mode is a fixer who can solve any problem with a single phone call; once a contact stops having a price, the player skips the scene instead of playing it.",
+          text: "Contribution: Bring access, contacts, or favours the crew cannot get elsewhere. Technique: Make a favour change what the crew can do now, and record any debt or reputation cost. Watch for: A common failure mode is a contact who solves problems without a price, bypassing the scene instead of creating a choice.",
         },
         {
           term: "Corporate insider",
-          text: "An insider changes a scene through access: a badge, a login, a standing meeting that gets the crew somewhere they otherwise could not walk into. Attach real expectations to that access, a superior who checks in, an audit, a colleague who notices an absence, so using it means weighing two loyalties rather than spending a free pass. Without any scrutiny attached, the role turns into an unlimited keycard instead of a person under pressure.",
+          text: "Contribution: Use a badge, login, or scheduled meeting to get the crew through a corporate door. Technique: Put expectations alongside the access, such as a superior checking in or a colleague noticing an absence. Watch for: A free pass with no scrutiny, which makes the insider an unlimited keycard instead of a person under pressure.",
         },
         {
-          term: "Tech specialist or medic",
-          text: "This role changes a scene by making the crew's plan physically possible: stabilising an injury mid-job, keeping a rig running past its limits, or jury-rigging a door the netrunner cannot open from outside. Give their expertise a visible cost when pushed hard, such as a patient who is stable but unable to run, or gear that works once and then fails. If a fix never carries a consequence, the crew stops planning around the specialist's limits and the role becomes background flavour.",
+          term: "Tech, medic, or support specialist",
+          text: "Contribution: Keep the plan physically possible, from stabilising an injury to keeping a rig running or jury-rigging a door. Technique: Make rushed or risky work leave a visible cost, such as a patient who cannot run or gear that will fail after one more use. Watch for: Expertise that only matters in downtime or never changes what the crew must plan around.",
         },
         {
           term: "Solo or enforcer",
-          text: "A solo changes a scene by removing an obstacle the rest of the crew cannot survive removing themselves: a guard, a locked door, thirty seconds of cover bought with violence. Give them a moment to show competence that is not a full combat encounter, holding a corridor alone, disarming one threat, buying time while a specialist finishes their part. If every scene becomes a fight because the solo is at the table, the other roles stop having anything to do.",
+          text: "Contribution: Remove a threat or buy the crew time, such as holding a corridor while a specialist finishes. Technique: Give the solo brief chances to show competence without making every obstacle a full combat encounter. Watch for: Violence becoming the default answer, leaving the other roles with less to do.",
         },
         {
           term: "Nomad, driver, or operator",
-          text: "This role changes a scene through movement: an extraction route, a supply run, a vehicle that has to reach a specific place on time. Keep the contribution visible with a real logistics problem, a checkpoint, a convoy schedule, a distinctive vehicle that draws attention, rather than narrating travel as a skip. If the driver only appears as a taxi between scenes, give the drive itself a complication now and then so the role earns time at the table outside the getaway.",
+          text: "Contribution: Make movement and logistics matter through an extraction route, supply run, or time-sensitive drive. Technique: Put a checkpoint, convoy schedule, or attention-drawing vehicle in the crew's path. Watch for: The driver becoming a taxi between scenes; give the route a complication when it can change the job.",
+        },
+        {
+          term: "Face, negotiator, or social infiltrator",
+          text: "Contribution: Get the crew access, time, or cooperation through conversation rather than a fixer contact. Technique: Give the negotiation an immediate stake, such as a guard's suspicion, a witness's safety, or a deadline the speaker can alter. Watch for: One roll settling the whole exchange; let success improve the crew's position while preserving meaningful decisions for everyone.",
         },
       ],
     },
@@ -82,7 +86,7 @@ export const howDoYouRunCharacterRolesInACyberpunkRpg: AnswerConfigInput = {
         },
         {
           term: "Why it works",
-          text: "Every specialist's success or failure changes a condition the others are working inside, the cleared cameras, the pending favour, the reluctant tech, the blocked route, so the crew experiences one mission with shared stakes instead of four separate scenes that happen to share a location.",
+          text: "The specialists' successes and setbacks change conditions the others are working inside: cleared cameras, a pending favour, a reluctant tech, and a blocked route. The crew experiences one mission with shared stakes instead of separate scenes that happen to share a location.",
         },
       ],
     },
@@ -93,9 +97,9 @@ export const howDoYouRunCharacterRolesInACyberpunkRpg: AnswerConfigInput = {
         "Before the session, check that each specialist has a reason to be in the same room as the rest of the crew:",
       items: [
         "Every role has one concrete way its success changes what the other players can do next.",
-        "Every role has a cost attached to using its speciality: a debt, an audit, a burned source, damaged gear.",
-        "No specialist action is scripted to run on its own without cutting back to the physical scene.",
-        "The mission's central problem needs at least two different roles to solve, not one specialist working alone.",
+        "Decide what cost may follow a role's speciality: a debt, an audit, a burned source, or damaged gear.",
+        "Keep specialist-only sequences brief, and cut back to the shared scene when the situation changes.",
+        "Give the mission's central problem at least two viable role-based approaches.",
         "You know what happens if a specialist's roll fails, and it changes the scene rather than only costing that player a resource.",
         "At least one consequence from the mission will follow the crew, or one specific member, into the next session.",
       ],
@@ -146,6 +150,7 @@ export const howDoYouRunCharacterRolesInACyberpunkRpg: AnswerConfigInput = {
     "how-to-create-a-cyberpunk-city-district",
     "how-do-you-run-a-scene-with-multiple-npcs",
     "how-to-write-an-in-world-newspaper-for-an-rpg",
+    "how-do-i-run-a-diplomat-noble-or-courtier-in-an-rpg",
   ],
   discovery: {
     id: "answer-cyberpunk-party-roles",
@@ -202,7 +207,7 @@ export const howDoYouRunCharacterRolesInACyberpunkRpg: AnswerConfigInput = {
     title:
       "How do you run character roles in a cyberpunk RPG? | Codex Cryptica",
     description:
-      "A cross-system guide to running the netrunner, fixer, journalist, insider, medic, solo, and driver at the table, plus a worked mission and prep checklist.",
+      "A cross-system guide to running the netrunner, fixer, journalist, corporate insider, support specialist, solo, driver, and face at the table, with a worked mission and prep checklist.",
     image:
       "https://assets.codexcryptica.com/og/how-do-you-run-character-roles-in-a-cyberpunk-rpg.jpg",
     imageAlt:

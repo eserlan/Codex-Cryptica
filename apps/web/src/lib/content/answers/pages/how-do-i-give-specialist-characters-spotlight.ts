@@ -116,6 +116,7 @@ export const howDoIGiveSpecialistCharactersSpotlight: AnswerConfigInput = {
     "how-do-i-run-spies-and-infiltrators-in-an-rpg",
     "how-do-i-run-an-investigator-without-sidelining-the-party",
     "how-do-i-run-a-journalist-or-media-character-in-an-rpg",
+    "how-do-i-run-a-diplomat-noble-or-courtier-in-an-rpg",
   ],
   discovery: {
     id: "answer-specialist-character-spotlight",
