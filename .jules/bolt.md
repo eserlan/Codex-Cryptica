@@ -291,3 +291,8 @@
 
 **Learning:** When using syntax like `[...mySet].filter(x => ...)` or `new Set([...mySet].filter(x => ...))` in reactive blocks, the JavaScript engine first exhausts the iterator to allocate a full array of all elements. It then iterates over that array again, creating another intermediate array for the filtered results. In hot paths (like Svelte `$derived` blocks managing thousands of vault items or nodes), this dual-allocation creates severe garbage collection latency.
 **Action:** Replace `[...iterator].filter()` with a single imperative loop. For Arrays, use `for...of` pushing into an array; for Sets, use `for...of` adding into a new Set. This reduces the time complexity from multiple passes to a single pass and entirely eliminates the initial spread array allocation.
+
+## 2026-10-31 - Focus on eliminating intermediate arrays, avoid pure syntax rewrites
+
+**Learning:** When acting as the 'Bolt' persona, avoid refactoring simple object iterations like `Object.keys(obj).filter(...)` or array filters into traditional `for...in` or `for...of` loops unless operating on massive data structures or verifiable hot paths, as it's often rejected in code review as an unmeasurable micro-optimization that harms readability.
+**Action:** Focus instead on chained array methods like `.map().filter()` that explicitly allocate unused intermediate objects or arrays (e.g., mapping strings to trim them before filtering out empty ones), as replacing these with a single imperative loop offers a clearer memory optimization without sacrificing readability.
