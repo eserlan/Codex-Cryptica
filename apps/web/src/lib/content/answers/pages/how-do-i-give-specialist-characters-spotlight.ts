@@ -154,6 +154,7 @@ export const howDoIGiveSpecialistCharactersSpotlight: AnswerConfigInput = {
     "how-do-i-run-a-journalist-or-media-character-in-an-rpg",
     "how-do-i-run-a-diplomat-noble-or-courtier-in-an-rpg",
     "how-do-i-run-character-roles-in-a-political-intrigue-rpg",
+    "how-do-i-run-a-rogue-or-scout-without-splitting-the-party",
   ],
   discovery: {
     id: "answer-specialist-character-spotlight",
@@ -208,6 +209,11 @@ export const howDoIGiveSpecialistCharactersSpotlight: AnswerConfigInput = {
         with: "answer-run-character-roles-political-intrigue",
         reason:
           "The political roles page applies specialist spotlight ideas to a cast of political archetypes and their obligations; this answer provides the general scene-design framework across genres.",
+      },
+      {
+        with: "answer-run-rogue-scout-without-splitting-party",
+        reason:
+          "This answer provides general scene structures for specialists; the rogue and scout guide applies them to brief reconnaissance, stealth, traps, and group choices.",
       },
     ],
   },

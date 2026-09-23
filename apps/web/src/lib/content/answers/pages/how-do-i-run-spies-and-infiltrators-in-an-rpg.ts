@@ -188,6 +188,7 @@ export const howDoIRunSpiesAndInfiltratorsInAnRpg: AnswerConfigInput = {
     "how-do-i-run-an-investigator-without-sidelining-the-party",
     "how-do-i-run-a-diplomat-noble-or-courtier-in-an-rpg",
     "how-do-i-run-character-roles-in-a-political-intrigue-rpg",
+    "how-do-i-run-a-rogue-or-scout-without-splitting-the-party",
   ],
   discovery: {
     id: "answer-run-spies-infiltrators-rpg",
@@ -247,6 +248,11 @@ export const howDoIRunSpiesAndInfiltratorsInAnRpg: AnswerConfigInput = {
         with: "answer-run-character-roles-political-intrigue",
         reason:
           "The political roles page positions spies among several archetypes in faction campaigns; this answer is the in-depth guide to covert access, team-supported infiltration, and exposure.",
+      },
+      {
+        with: "answer-run-rogue-scout-without-splitting-party",
+        reason:
+          "The rogue and scout guide focuses on short reconnaissance scenes and the choices a scout's findings create; this answer handles sustained infiltration operations, cover, exposure, and outside-team work.",
       },
     ],
   },
