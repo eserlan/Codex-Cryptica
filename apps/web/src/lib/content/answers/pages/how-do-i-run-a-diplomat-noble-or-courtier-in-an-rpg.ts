@@ -200,6 +200,16 @@ export const howDoIRunADiplomatNobleOrCourtierInAnRpg: AnswerConfigInput = {
         reason:
           "The journalist answer makes public reporting a specialist source of influence; this answer covers negotiated agreements, formal authority, and court or diplomatic access.",
       },
+      {
+        with: "answer-run-hackers-netrunners",
+        reason:
+          "The hacker answer structures a digital intrusion around shared physical stakes; this answer structures a diplomat's negotiation around status, authority, and commitments. Both serve specialist characters, but their scene procedures and campaign roles are distinct.",
+      },
+      {
+        with: "answer-run-spies-infiltrators-rpg",
+        reason:
+          "The spy answer focuses on covert access, cover, and an outside team's infiltration roles; this answer focuses on formal negotiation, political authority, and durable agreements. Their shared specialist-role framing does not make their user jobs interchangeable.",
+      },
     ],
   },
   seo: {
