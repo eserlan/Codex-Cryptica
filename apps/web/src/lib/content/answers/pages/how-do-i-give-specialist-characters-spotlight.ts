@@ -108,6 +108,7 @@ export const howDoIGiveSpecialistCharactersSpotlight: AnswerConfigInput = {
     },
   ],
   relatedAnswers: [
+    "how-do-i-run-hackers-or-netrunners-without-splitting-the-party",
     "how-do-you-run-character-roles-in-a-cyberpunk-rpg",
     "how-do-you-make-a-tabletop-rpg-session-more-engaging",
     "how-do-i-get-my-rpg-party-to-work-together",
@@ -128,6 +129,7 @@ export const howDoIGiveSpecialistCharactersSpotlight: AnswerConfigInput = {
     relatedIntents: [
       "answer-session-engagement",
       "answer-party-cohesion",
+      "answer-run-hackers-netrunners",
       "answer-large-group-dnd",
     ],
     acknowledgedOverlap: [
@@ -150,6 +152,11 @@ export const howDoIGiveSpecialistCharactersSpotlight: AnswerConfigInput = {
         with: "answer-run-scene-multiple-npcs",
         reason:
           "The multiple-NPCs answer structures scenes around several non-player characters; this answer structures scenes around a player character's specialist ability and the rest of the party's choices.",
+      },
+      {
+        with: "answer-run-hackers-netrunners",
+        reason:
+          "This answer gives reusable scene patterns for any specialist; the hacker answer applies that goal to digital intrusions, visible security pressure, and ways the physical crew can affect the hack.",
       },
     ],
   },

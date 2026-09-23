@@ -8,6 +8,7 @@ import { howDoIGetPlayersToEngageWithMyCampaignWorld } from "./how-do-i-get-play
 import { howDoIGiveSpecialistCharactersSpotlight } from "./how-do-i-give-specialist-characters-spotlight";
 import { howDoIOrganiseGmNotesForInPersonPlay } from "./how-do-i-organise-gm-notes-for-in-person-play";
 import { howDoIRunASuccessfulSessionZero } from "./how-do-i-run-a-successful-session-0";
+import { howDoIRunHackersOrNetrunnersWithoutSplittingTheParty } from "./how-do-i-run-hackers-or-netrunners-without-splitting-the-party";
 import { howDoIRunPoliticalIntrigueAndFactionPlay } from "./how-do-i-run-political-intrigue-and-faction-play";
 import { howDoIStartGmingForTheFirstTime } from "./how-do-i-start-gming-for-the-first-time";
 import { howDoITurnAnRpgIdeaIntoAnAdventure } from "./how-do-i-turn-an-rpg-idea-into-an-adventure";
@@ -101,6 +102,7 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     howDoIGiveSpecialistCharactersSpotlight,
     howDoIOrganiseGmNotesForInPersonPlay,
     howDoIRunASuccessfulSessionZero,
+    howDoIRunHackersOrNetrunnersWithoutSplittingTheParty,
     howDoIRunPoliticalIntrigueAndFactionPlay,
     howDoIStartGmingForTheFirstTime,
     howDoITurnAnRpgIdeaIntoAnAdventure,

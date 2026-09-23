@@ -139,6 +139,7 @@ export const howDoYouRunCharacterRolesInACyberpunkRpg: AnswerConfigInput = {
   ],
   relatedAnswers: [
     "how-do-i-give-specialist-characters-spotlight",
+    "how-do-i-run-hackers-or-netrunners-without-splitting-the-party",
     "how-do-you-run-a-heist-in-a-tabletop-rpg",
     "how-do-i-get-my-rpg-party-to-work-together",
     "how-to-create-a-cyberpunk-city-district",
@@ -153,7 +154,6 @@ export const howDoYouRunCharacterRolesInACyberpunkRpg: AnswerConfigInput = {
       "how do i run the different specialist roles in a cyberpunk rpg",
       "how to run cyberpunk character roles",
       "cyberpunk party roles guide for gms",
-      "how to run a netrunner at the table",
       "how to run a fixer at the table",
     ],
     userJob: "adopt-workflow",
@@ -164,6 +164,7 @@ export const howDoYouRunCharacterRolesInACyberpunkRpg: AnswerConfigInput = {
       "answer-cyberpunk-city-district",
       "answer-run-heist-in-tabletop-rpg",
       "answer-party-cohesion",
+      "answer-run-hackers-netrunners",
       "answer-specialist-character-spotlight",
       "answer-run-scene-multiple-npcs",
       "example-nkiru-okafor",
@@ -173,6 +174,11 @@ export const howDoYouRunCharacterRolesInACyberpunkRpg: AnswerConfigInput = {
         with: "answer-specialist-character-spotlight",
         reason:
           "The spotlight answer offers scene structures for any specialist role across genres; this answer gives cyberpunk-specific techniques and failure modes for a broader crew of distinct archetypes.",
+      },
+      {
+        with: "answer-run-hackers-netrunners",
+        reason:
+          "This cyberpunk roles answer summarises what each crew archetype contributes; the hacker answer is a focused procedure for running digital scenes across genres without leaving the physical crew idle.",
       },
       {
         with: "for-cyberpunk-red",
