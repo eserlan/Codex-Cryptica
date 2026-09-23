@@ -136,6 +136,7 @@ export const howToCreateACyberpunkCityDistrict: AnswerConfigInput = {
   relatedAnswers: [
     "what-should-an-rpg-settlement-contain",
     "how-do-you-run-an-rpg-campaign-in-one-city",
+    "how-do-you-run-character-roles-in-a-cyberpunk-rpg",
   ],
   labels: ["cyberpunk"],
   discovery: {
