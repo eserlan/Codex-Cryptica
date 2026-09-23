@@ -154,16 +154,59 @@ function promptMetrics(params: {
  * required fields — the caller decides what "invalid" means next (retry,
  * fall through to local generation, etc.), this function only classifies.
  */
+function holidayValueToMarkdown(value: unknown): string {
+  if (typeof value === "string") return value;
+  if (Array.isArray(value))
+    return value.map((item) => `- ${holidayValueToMarkdown(item)}`).join("\n");
+  if (value && typeof value === "object")
+    return Object.entries(value)
+      .map(
+        ([key, item]) =>
+          `### ${key.replace(/([A-Z])/g, " $1").replace(/^./, (c) => c.toUpperCase())}\n\n${holidayValueToMarkdown(item)}`,
+      )
+      .join("\n\n");
+  return value == null ? "" : String(value);
+}
+
+function holidayFieldToText(value: unknown): string {
+  if (Array.isArray(value)) return value.map(holidayValueToMarkdown).join("; ");
+  return typeof value === "string" ? value : "";
+}
+
+function normalizeHolidayGenericOutput(parsed: Record<string, unknown>): void {
+  if (typeof parsed.content !== "string")
+    parsed.content = holidayValueToMarkdown(parsed.content);
+  if (typeof parsed.lore !== "string")
+    parsed.lore = holidayValueToMarkdown(parsed.lore);
+  if (!Array.isArray(parsed.observances)) return;
+
+  parsed.observances = parsed.observances.map((item) => {
+    if (!item || typeof item !== "object") return item;
+    const observance = item as Record<string, unknown>;
+    return {
+      ...observance,
+      name: holidayFieldToText(observance.name),
+      type: holidayFieldToText(observance.type),
+      when: holidayFieldToText(observance.when),
+      observers: holidayFieldToText(observance.observers),
+      traditions: holidayFieldToText(observance.traditions),
+      tension: holidayFieldToText(observance.tension),
+    };
+  });
+}
+
 function parseGenericGeneratorOutput(
   raw: string,
   generatorId: string,
 ): GeneratorOutput | null {
-  let parsed: Partial<GeneratorOutput>;
+  let parsed: Record<string, unknown>;
   try {
-    parsed = JSON.parse(raw) as Partial<GeneratorOutput>;
+    parsed = JSON.parse(raw) as Record<string, unknown>;
   } catch {
     return null;
   }
+
+  if (generatorId === "holiday") normalizeHolidayGenericOutput(parsed);
 
   const requiresCompleteSocietyDossier = generatorId === "secret-society";
   const isValidShape =
