@@ -12,6 +12,21 @@
     <priority>0.9</priority>
   </url>
   <url>
+    <loc>https://codexcryptica.com/for</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://codexcryptica.com/answers</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://codexcryptica.com/examples</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://codexcryptica.com/explore</loc>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
@@ -23,6 +38,16 @@
   </url>
   <url>
     <loc>https://codexcryptica.com/tools</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://codexcryptica.com/migrations</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://codexcryptica.com/generators</loc>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
@@ -42,6 +67,11 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://codexcryptica.com/responsible-ai-worldbuilding</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://codexcryptica.com/resources/castle-floorplans</loc>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
@@ -54,6 +84,11 @@
   <url>
     <loc>https://codexcryptica.com/topics/puzzles</loc>
     <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://codexcryptica.com/tools/vampire-clan-generator</loc>
+    <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
@@ -377,11 +412,6 @@
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://codexcryptica.com/for</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.9</priority>
-  </url>
-  <url>
     <loc>https://codexcryptica.com/for/vampire-the-masquerade</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
@@ -482,17 +512,17 @@
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://codexcryptica.com/answers</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
     <loc>https://codexcryptica.com/answers/can-you-play-a-tabletop-rpg-in-30-minute-sessions</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://codexcryptica.com/answers/how-do-i-balance-rpg-combat-encounters-without-a-tpk</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://codexcryptica.com/answers/how-do-i-expand-a-simple-rpg-campaign-idea</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
@@ -522,7 +552,17 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://codexcryptica.com/answers/how-do-i-run-political-intrigue-and-faction-play</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://codexcryptica.com/answers/how-do-i-start-gming-for-the-first-time</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://codexcryptica.com/answers/how-do-i-turn-an-rpg-idea-into-an-adventure</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
@@ -782,6 +822,11 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://codexcryptica.com/answers/is-my-rpg-campaign-idea-good</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://codexcryptica.com/answers/point-crawl-vs-hex-crawl</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
@@ -822,6 +867,11 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://codexcryptica.com/answers/what-rpg-should-i-play-for-investigative-horror</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://codexcryptica.com/answers/what-rpg-should-i-use-for-tactical-combat</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
@@ -833,6 +883,11 @@
   </url>
   <url>
     <loc>https://codexcryptica.com/answers/what-rpg-system-should-we-try-instead-of-dnd</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://codexcryptica.com/answers/what-rpg-works-for-political-intrigue-and-faction-play</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
@@ -862,8 +917,8 @@
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://codexcryptica.com/examples</loc>
-    <changefreq>weekly</changefreq>
+    <loc>https://codexcryptica.com/answers/xp-leveling-vs-milestone-leveling</loc>
+    <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
@@ -1100,13 +1155,13 @@
     <lastmod>2026-03-05T12:00:00.000Z</lastmod>
   </url>
   <url>
-    <loc>https://codexcryptica.com/blog/gm-guide-data-sovereignty</loc>
+    <loc>https://codexcryptica.com/blog/spatial-intelligence</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
     <lastmod>2026-03-01T10:00:00.000Z</lastmod>
   </url>
   <url>
-    <loc>https://codexcryptica.com/blog/spatial-intelligence</loc>
+    <loc>https://codexcryptica.com/blog/gm-guide-data-sovereignty</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
     <lastmod>2026-03-01T10:00:00.000Z</lastmod>

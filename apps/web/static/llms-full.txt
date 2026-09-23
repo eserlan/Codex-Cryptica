@@ -1936,6 +1936,10 @@ Reference answers to real RPG and worldbuilding questions, indexed at https://co
 
 **Direct answer:** Encounter balance isn't only a monster-versus-party maths problem. A fight rated 'appropriate' by the book can still read as unwinnable if the action economy is lopsided, the party is already worn down, or there's no way to retreat, negotiate or achieve the objective some other way. Use your system's encounter-building rules as the starting point, then layer judgement on top: compare effective actions on each side, telegraph anything unusually dangerous, give the fight a goal beyond zeroing every enemy's HP, and build in pressure you can turn up or down as play reveals how the party is actually doing.
 
+### [How do I expand a simple RPG campaign idea?](https://codexcryptica.com/answers/how-do-i-expand-a-simple-rpg-campaign-idea)
+
+**Direct answer:** Expand outward from the original idea through relationships and consequences, and skip the encyclopaedia. Ask what tension sits at the centre, who gains from it, who is hurt by it, what everyone believes that may be wrong, what changed recently, and what happens if nobody acts. Then choose three people, places or things that make the idea tangible at the table, and leave the deeper answers as questions for play to settle.
+
 ### [How do I find a tabletop RPG group to play with?](https://codexcryptica.com/answers/how-do-i-find-a-tabletop-rpg-group-to-play-with)
 
 **Direct answer:** Finding a tabletop RPG group comes down to three main routes: using a dedicated group-finding platform with structured filters (for system, schedule, language, and play format), tapping into local offline communities like friendly game stores, conventions, and clubs, or building a table yourself with friends or fellow players. Selecting the right route depends on whether you are looking for an in-person or online game, and taking a few minutes to check group fit and table expectations beforehand makes joining a new group substantially smoother.
@@ -1956,9 +1960,17 @@ Reference answers to real RPG and worldbuilding questions, indexed at https://co
 
 **Direct answer:** A good Session 0 aligns the group on what kind of game they're actually playing, sets boundaries and expectations before anyone's invested in a bad assumption, and gives the characters concrete reasons to be in a party together. It isn't paperwork; done well, it produces the campaign's first real material: the premise, the party's connections, and the first hook, rather than a form everyone fills in and forgets.
 
+### [How do I run political intrigue and faction play in an RPG?](https://codexcryptica.com/answers/how-do-i-run-political-intrigue-and-faction-play)
+
+**Direct answer:** Start with three to five factions that want incompatible things. Give each one a goal, a pressure forcing it to act now, something it can offer, something it fears, and a next move it will make if nobody interferes. Put the player characters where those interests overlap, let factions keep acting when the party does nothing, and treat information, obligations and leverage as seriously as combat power.
+
 ### [How do I start GMing for the first time?](https://codexcryptica.com/answers/how-do-i-start-gming-for-the-first-time)
 
 **Direct answer:** Pick a system or a beginner-friendly published scenario you can actually run soon, prepare the next session rather than an entire world, and hold at least a short Session 0 to align expectations before play. Build only the NPCs, places, factions, and conflicts the players are likely to encounter, expect them to go off script and prepare situations rather than a fixed plot, and focus on clear choices, pacing, and spotlight over elaborate lore or performance. After the first session, keep only the notes that actually became real at the table. You do not need voices, acting skill, encyclopedic rules knowledge, or hours of prep to run a good first session.
+
+### [How do I turn an RPG idea into an adventure?](https://codexcryptica.com/answers/how-do-i-turn-an-rpg-idea-into-an-adventure)
+
+**Direct answer:** Add pressure, people, choices and consequences. Something changes that makes your premise unstable; people want incompatible things because of it; give the players several ways to intervene; then decide what happens if nobody does. Prepare those conditions and leave the order of events for the table to decide.
 
 ### [How do you build a point crawl for an RPG?](https://codexcryptica.com/answers/how-do-you-build-a-point-crawl-for-an-rpg)
 
@@ -2164,6 +2176,10 @@ Reference answers to real RPG and worldbuilding questions, indexed at https://co
 
 **Direct answer:** Write an in-world RPG newspaper as a playable handout: give it a local headline, two or three public facts, a recognisable editorial voice, one clear bias, a rumour marked by its source, and a hook the players can pursue. Keep the truth behind each item in your GM notes, then connect names, places and dates to the campaign so the paper changes when the world does.
 
+### [Is my RPG campaign idea good?](https://codexcryptica.com/answers/is-my-rpg-campaign-idea-good)
+
+**Direct answer:** An idea does not need to be original to be good, because tables run familiar premises well all the time. It needs to make the players curious, put something at risk, give several people competing goals, and leave the party with things to do. Test it with five questions: curiosity, pressure, competing goals, player actions and discovery.
+
 ### [Point crawl vs hex crawl: which should you use?](https://codexcryptica.com/answers/point-crawl-vs-hex-crawl)
 
 **Direct answer:** Use a point crawl when play is about choosing between known or rumoured destinations and routes, with each journey carrying a clear cost. Use a hex crawl when finding the landscape is itself the game: the party chooses a direction, exposes unknown ground, and manages time and supplies across a broad region. Neither is more open by default; they make different parts of exploration visible at the table.
@@ -2196,6 +2212,10 @@ Reference answers to real RPG and worldbuilding questions, indexed at https://co
 
 **Direct answer:** There is no single best system for over-the-top space opera: the right pick depends on the table experience your group wants. For cinematic crew drama with jobs, flashbacks and a shared ship, Scum and Villainy fits best; for colourful tactical science-fantasy with deep character builds and proper starship combat, Starfinder Second Edition; for fast pulpy action your group can bend to any setting, Savage Worlds with its Science Fiction Companion; and for rules-light gonzo science-fantasy with almost no prep, Solar Blades and Cosmic Spells. Systems named here belong to their publishers; naming one is not an endorsement of Codex Cryptica by that publisher, or the reverse.
 
+### [What RPG should I play for investigative horror?](https://codexcryptica.com/answers/what-rpg-should-i-play-for-investigative-horror)
+
+**Direct answer:** The right investigative horror system depends on the investigation your group wants. For classic cosmic horror with fragile researchers, Call of Cthulhu. For modern conspiracy horror played by competent federal agents, Delta Green. For folklore mysteries in a mythic Scandinavia, Vaesen. For investigations that cannot stall on a missed roll, Trail of Cthulhu. For collaborative mysteries where even the GM discovers the solution in play, Brindlewood Bay.
+
 ### [What RPG should I use for tactical combat?](https://codexcryptica.com/answers/what-rpg-should-i-use-for-tactical-combat)
 
 **Direct answer:** Tactical can mean deep character builds, positioning on a grid, party teamwork, or fast decisions with little rules weight, and different games serve each. For fantasy teamwork and build depth, Pathfinder Second Edition is the usual first pick. For mech combat where the map and your loadout decide everything, Lancer. For arena-style fantasy fights with roles and cooldown-style abilities, ICON. If you like D&D fights but want them faster, Dragonbane keeps meaningful choices with far less bookkeeping.
@@ -2207,6 +2227,10 @@ Reference answers to real RPG and worldbuilding questions, indexed at https://co
 ### [What RPG system should we try instead of D&D?](https://codexcryptica.com/answers/what-rpg-system-should-we-try-instead-of-dnd)
 
 **Direct answer:** There's no single best alternative: the right system depends on the kind of play your group actually wants, not on which game is most popular. Start from genre and play style (how tactical, how rules-heavy, how much character-build optimisation, what kind of story structure) rather than a ranked list, and you'll land on something that fits rather than something that's merely well-known. Systems named on this page belong to their respective publishers; mentioning one here isn't an endorsement of Codex Cryptica by that publisher, or the reverse.
+
+### [What RPG works for political intrigue and faction play?](https://codexcryptica.com/answers/what-rpg-works-for-political-intrigue-and-faction-play)
+
+**Direct answer:** The right system for political intrigue depends on which politics your group wants. For criminal crews seizing turf, Blades in the Dark. For courtly alliances and social manoeuvring, Court of Blades. For character-belief-driven drama resolved through social conflict, Burning Wheel. For organisation-level strategy where players direct factions as well as characters, Reign. For supernatural social politics built on status and debt, Vampire: The Masquerade.
 
 ### [What should a new D&D player learn first?](https://codexcryptica.com/answers/what-should-a-new-dnd-player-learn-first)
 
@@ -2227,6 +2251,10 @@ Reference answers to real RPG and worldbuilding questions, indexed at https://co
 ### [Where do I start if I have never played a tabletop RPG before?](https://codexcryptica.com/answers/where-do-i-start-if-i-have-never-played-a-tabletop-rpg)
 
 **Direct answer:** You need less than it looks like: a game or beginner ruleset, a small group (or a solo-friendly option), some way to resolve uncertainty (usually dice), and one short scenario to try. You don't need to read a large rulebook cover to cover first, own special gear, or already know the jargon. You can start as a player in someone else's game, or as the GM running a short beginner adventure for others; both are completely valid entry points, and neither requires the other to happen first.
+
+### [XP vs milestone levelling: which should I use?](https://codexcryptica.com/answers/xp-leveling-vs-milestone-leveling)
+
+**Direct answer:** Use XP levelling when you want progress to be visible and tied to what characters accomplish; use milestones when you want levels to follow agreed campaign goals or story developments. XP can reward the wrong behaviour if its sources are narrow, while milestones can feel arbitrary if players cannot see what moves them forward. Choose the reward signal and pace your group wants, not a universal winner.
 
 
 ## Curated Generator Examples

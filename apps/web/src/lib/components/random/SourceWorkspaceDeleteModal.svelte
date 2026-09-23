@@ -34,7 +34,9 @@
       <div
         class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-red-500/15 text-red-500"
       >
-        <span aria-hidden="true" class="icon-[lucide--alert-triangle] h-5 w-5"
+        <span
+          aria-hidden="true"
+          class="icon-[lucide--alert-triangle] h-5 w-5"
         ></span>
       </div>
       <div class="flex-1 min-w-0">

@@ -2,12 +2,7 @@
   import { onMount, type Snippet } from "svelte";
   import { base } from "$app/paths";
   import { page } from "$app/state";
-  import {
-    browserStorage,
-    systemIdGenerator,
-    type IdGenerator,
-    type StorageLike,
-  } from "$lib/utils/runtime-deps";
+  import { browserStorage, systemIdGenerator, type IdGenerator, type StorageLike } from "$lib/utils/runtime-deps";
   import { browser } from "$app/environment";
   import type {
     Diagnostic,
@@ -32,11 +27,7 @@
   } from "./source-workspace";
   import EmptyState from "$lib/components/ui/EmptyState.svelte";
   import { createLongPressTracker } from "./long-press-tracker";
-  import {
-    collectLabels,
-    countOf,
-    filterSources,
-  } from "./source-workspace-filter";
+  import { collectLabels, countOf, filterSources } from "./source-workspace-filter";
   import SourceWorkspaceDeleteModal from "./SourceWorkspaceDeleteModal.svelte";
   import SourceWorkspaceRenameModal from "./SourceWorkspaceRenameModal.svelte";
   import SourceWorkspaceContextMenu from "./SourceWorkspaceContextMenu.svelte";
@@ -229,11 +220,7 @@
 
   function handleItemTouchStart(e: TouchEvent, source: RandomSource) {
     const touch = e.touches?.[0];
-    longPress.handleTouchStart(
-      source,
-      touch?.clientX ?? 0,
-      touch?.clientY ?? 0,
-    );
+    longPress.handleTouchStart(source, touch?.clientX ?? 0, touch?.clientY ?? 0);
   }
 
   function handleItemTouchMove(e: TouchEvent) {
