@@ -5,6 +5,7 @@ import { howDoIExpandASimpleRpgCampaignIdea } from "./how-do-i-expand-a-simple-r
 import { howDoIFindATabletopRpgGroupToPlayWith } from "./how-do-i-find-a-tabletop-rpg-group-to-play-with";
 import { howDoIGetMyRpgPartyToWorkTogether } from "./how-do-i-get-my-rpg-party-to-work-together";
 import { howDoIGetPlayersToEngageWithMyCampaignWorld } from "./how-do-i-get-players-to-engage-with-my-campaign-world";
+import { howDoIGiveSpecialistCharactersSpotlight } from "./how-do-i-give-specialist-characters-spotlight";
 import { howDoIOrganiseGmNotesForInPersonPlay } from "./how-do-i-organise-gm-notes-for-in-person-play";
 import { howDoIRunASuccessfulSessionZero } from "./how-do-i-run-a-successful-session-0";
 import { howDoIRunPoliticalIntrigueAndFactionPlay } from "./how-do-i-run-political-intrigue-and-faction-play";
@@ -96,6 +97,7 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     howDoIFindATabletopRpgGroupToPlayWith,
     howDoIGetMyRpgPartyToWorkTogether,
     howDoIGetPlayersToEngageWithMyCampaignWorld,
+    howDoIGiveSpecialistCharactersSpotlight,
     howDoIOrganiseGmNotesForInPersonPlay,
     howDoIRunASuccessfulSessionZero,
     howDoIRunPoliticalIntrigueAndFactionPlay,

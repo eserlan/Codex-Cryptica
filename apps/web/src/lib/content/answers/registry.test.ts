@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { describe, it, expect } from "vitest";
 import {
   getAnswer,
@@ -408,6 +410,7 @@ describe("published answers", () => {
       "dnd-npc-generator",
       "faction-generator",
       "fantasy-name-generator",
+      "idea-developer",
       "quest-hook-generator",
       "rpg-npc-generator",
       "vampire-clan-generator",
@@ -753,6 +756,26 @@ describe("published answers", () => {
       expect(ref.rationale.length).toBeGreaterThan(0);
       expect(ref.rationale.match(/[.!?](?:\s|$)/g)).toHaveLength(1);
     }
+  });
+
+  it("keeps the specialist spotlight answer in the checked-in discovery indexes", () => {
+    const route = "/answers/how-do-i-give-specialist-characters-spotlight";
+    const staticLlms = readFileSync(
+      resolve(process.cwd(), "static/llms-full.txt"),
+      "utf8",
+    );
+    const rootLlms = readFileSync(
+      resolve(process.cwd(), "../../llms-full.txt"),
+      "utf8",
+    );
+    const sitemap = readFileSync(
+      resolve(process.cwd(), "static/sitemap.xml"),
+      "utf8",
+    );
+
+    expect(staticLlms).toContain(route);
+    expect(rootLlms).toContain(route);
+    expect(sitemap).toContain(`https://codexcryptica.com${route}`);
   });
 
   it("publishes the solo rpg system answer with complete framework sections, R2 image, and verified system references", () => {
