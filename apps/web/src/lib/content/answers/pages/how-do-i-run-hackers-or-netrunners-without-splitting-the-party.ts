@@ -173,6 +173,7 @@ export const howDoIRunHackersOrNetrunnersWithoutSplittingTheParty: AnswerConfigI
       "how-do-you-run-character-roles-in-a-cyberpunk-rpg",
       "how-do-i-run-spies-and-infiltrators-in-an-rpg",
       "how-do-i-run-a-journalist-or-media-character-in-an-rpg",
+      "how-do-i-run-a-rogue-or-scout-without-splitting-the-party",
     ],
     discovery: {
       id: "answer-run-hackers-netrunners",
@@ -192,6 +193,7 @@ export const howDoIRunHackersOrNetrunnersWithoutSplittingTheParty: AnswerConfigI
       relatedIntents: [
         "answer-specialist-character-spotlight",
         "answer-cyberpunk-party-roles",
+        "answer-run-rogue-scout-without-splitting-party",
       ],
       acknowledgedOverlap: [
         {
@@ -213,6 +215,11 @@ export const howDoIRunHackersOrNetrunnersWithoutSplittingTheParty: AnswerConfigI
           with: "answer-run-character-roles-political-intrigue",
           reason:
             "The political roles answer gives short guidance for a cross-system cast within political campaigns; this page is a focused procedure for connecting digital hacking scenes to physical crew action.",
+        },
+        {
+          with: "answer-run-rogue-scout-without-splitting-party",
+          reason:
+            "The rogue and scout guide covers physical reconnaissance, stealth, and hazards when a scout moves ahead; this page focuses on digital intrusion and the crew's physical actions around it.",
         },
       ],
     },

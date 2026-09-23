@@ -180,6 +180,7 @@ export const howDoIRunAnInvestigatorWithoutSideliningTheParty: AnswerConfigInput
       "what-rpg-should-i-play-for-investigative-horror",
       "how-do-i-run-spies-and-infiltrators-in-an-rpg",
       "how-do-you-run-a-conspiracy-campaign",
+      "how-do-i-run-a-rogue-or-scout-without-splitting-the-party",
     ],
     discovery: {
       id: "answer-run-investigator-without-sidelining-party",
@@ -233,6 +234,11 @@ export const howDoIRunAnInvestigatorWithoutSideliningTheParty: AnswerConfigInput
           with: "answer-run-hackers-netrunners",
           reason:
             "The hacker answer connects digital intrusion to physical security pressure; this answer covers clue discovery and interpretation across investigative roles and genres.",
+        },
+        {
+          with: "answer-run-rogue-scout-without-splitting-party",
+          reason:
+            "Both pages preserve a specialist's competence while keeping the party involved; this one covers evidence and interpretation, while the rogue and scout guide covers physical reconnaissance, stealth, and hazards.",
         },
       ],
     },
