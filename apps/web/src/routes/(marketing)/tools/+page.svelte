@@ -21,10 +21,22 @@
 
   const toolSections: ToolSection[] = [
     {
-      title: "RPG Generators",
+      title: "RPG Tools",
       description:
-        "Generate campaign-ready drafts, then copy them or save them into a local Codex Cryptica vault.",
+        "Develop an idea you already have, generate new campaign material, then copy it or save it into a local Codex Cryptica vault.",
       groups: [
+        {
+          title: "Develop an existing idea",
+          links: [
+            {
+              href: "/tools/idea-developer",
+              label: "RPG Idea Developer",
+              summary:
+                "Assess, develop, explore alternatives, make playable, or challenge a premise while keeping its recognisable core.",
+              icon: "icon-[lucide--lightbulb]",
+            },
+          ],
+        },
         {
           title: "Characters & NPCs",
           links: [

@@ -126,6 +126,45 @@ export const toolEntries: DiscoveryEntryInput[] = [
     status: "live",
   },
   {
+    id: "tools-idea-developer",
+    pageKind: "tool",
+    canonicalPath: "/tools/idea-developer",
+    primaryIntent: "develop an existing rpg idea",
+    intentAliases: [
+      "make my rpg campaign idea playable",
+      "improve an existing tabletop campaign premise",
+      "develop my rpg idea with ai",
+    ],
+    userJob: "create",
+    uniqueValue:
+      "Develops a premise the user already cares about into a playable situation, with modes to assess, expand, explore alternatives, make playable, or challenge it while keeping its recognisable core intact.",
+    parentCluster: "adventure-design",
+    relatedIntents: [
+      "answer-turn-rpg-idea-into-adventure",
+      "answer-is-my-rpg-campaign-idea-good",
+      "generator-adventure-generator",
+    ],
+    acknowledgedOverlap: [
+      {
+        with: "answer-turn-rpg-idea-into-adventure",
+        reason:
+          "Both help turn an existing premise into play, but this page is an interactive AI tool that works directly on the user's text; the Answer is a system-neutral method the reader can use themselves.",
+      },
+      {
+        with: "answer-is-my-rpg-campaign-idea-good",
+        reason:
+          "The Answer teaches a self-guided diagnostic; this tool applies AI directly to the supplied idea and returns optional development, so the user is choosing between learning a method and using an interactive workspace.",
+      },
+      {
+        with: "generator-adventure-generator",
+        reason:
+          "The generator creates a new adventure from a blank start; this tool develops the user's own existing premise and is designed to preserve its core.",
+      },
+    ],
+    indexable: true,
+    status: "live",
+  },
+  {
     id: "tool-silhouettes",
     pageKind: "tool",
     canonicalPath: "/silhouettes",
