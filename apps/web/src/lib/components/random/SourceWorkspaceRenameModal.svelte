@@ -44,8 +44,7 @@
         <div
           class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-theme-primary/15 text-theme-primary"
         >
-          <span aria-hidden="true" class="icon-[lucide--pencil] h-5 w-5"
-          ></span>
+          <span aria-hidden="true" class="icon-[lucide--pencil] h-5 w-5"></span>
         </div>
         <div class="flex-1 min-w-0">
           <h3
@@ -119,8 +118,7 @@
         </button>
         <button
           type="submit"
-          disabled={!draft.trim() ||
-            draft.trim() === target.name}
+          disabled={!draft.trim() || draft.trim() === target.name}
           class="inline-flex items-center gap-1.5 rounded-lg bg-theme-primary px-4 py-1.5 font-header text-xs font-bold uppercase tracking-wider text-theme-bg shadow-sm transition-all hover:bg-theme-primary/90 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
           data-testid="modal-rename-confirm"
         >
