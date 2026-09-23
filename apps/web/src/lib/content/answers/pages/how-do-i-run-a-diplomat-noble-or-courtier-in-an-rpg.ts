@@ -144,6 +144,7 @@ export const howDoIRunADiplomatNobleOrCourtierInAnRpg: AnswerConfigInput = {
     "how-do-you-run-character-roles-in-a-cyberpunk-rpg",
     "how-do-i-run-a-journalist-or-media-character-in-an-rpg",
     "how-do-i-run-spies-and-infiltrators-in-an-rpg",
+    "how-do-i-run-character-roles-in-a-political-intrigue-rpg",
   ],
   discovery: {
     id: "answer-run-diplomats-nobles-courtiers",
@@ -209,6 +210,11 @@ export const howDoIRunADiplomatNobleOrCourtierInAnRpg: AnswerConfigInput = {
         with: "answer-run-spies-infiltrators-rpg",
         reason:
           "The spy answer focuses on covert access, cover, and an outside team's infiltration roles; this answer focuses on formal negotiation, political authority, and durable agreements. Their shared specialist-role framing does not make their user jobs interchangeable.",
+      },
+      {
+        with: "answer-run-character-roles-political-intrigue",
+        reason:
+          "The political roles page gives brief genre-level guidance for a range of PCs; this answer is the detailed procedure for negotiation, status, authority, and commitments.",
       },
     ],
   },

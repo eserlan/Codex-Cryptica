@@ -170,6 +170,7 @@ export const howDoIGetMyRpgPartyToWorkTogether: AnswerConfigInput = {
     "how-do-you-handle-players-going-off-script-as-a-gm",
     "how-do-i-give-specialist-characters-spotlight",
     "how-do-you-run-character-roles-in-a-cyberpunk-rpg",
+    "how-do-i-run-a-rogue-or-scout-without-splitting-the-party",
   ],
   discovery: {
     id: "answer-party-cohesion",
@@ -205,6 +206,11 @@ export const howDoIGetMyRpgPartyToWorkTogether: AnswerConfigInput = {
         with: "answer-player-engagement",
         reason:
           "Player engagement covers investment in the campaign world; this answer focuses on party cohesion, group decisions, and collaborative play between characters.",
+      },
+      {
+        with: "answer-run-rogue-scout-without-splitting-party",
+        reason:
+          "This answer addresses cooperation and shared stakes generally; the rogue and scout guide focuses on keeping one character's reconnaissance connected to the party's choices.",
       },
     ],
   },

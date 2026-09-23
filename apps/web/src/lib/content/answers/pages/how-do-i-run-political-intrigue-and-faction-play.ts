@@ -312,6 +312,7 @@ export const howDoIRunPoliticalIntrigueAndFactionPlay: AnswerConfigInput = {
     "how-do-i-run-spies-and-infiltrators-in-an-rpg",
     "how-do-i-run-a-journalist-or-media-character-in-an-rpg",
     "how-do-i-run-a-diplomat-noble-or-courtier-in-an-rpg",
+    "how-do-i-run-character-roles-in-a-political-intrigue-rpg",
   ],
   discovery: {
     id: "answer-run-political-intrigue",
@@ -352,6 +353,11 @@ export const howDoIRunPoliticalIntrigueAndFactionPlay: AnswerConfigInput = {
         with: "answer-political-intrigue-system-selection",
         reason:
           "That page helps groups choose a system with political mechanics; this one teaches the table workflow inside any system, including D&D.",
+      },
+      {
+        with: "answer-run-character-roles-political-intrigue",
+        reason:
+          "This answer structures campaign-level faction conflicts and political pressure; the roles page explains how different PCs contribute inside those situations without duplicating the campaign framework.",
       },
     ],
   },
