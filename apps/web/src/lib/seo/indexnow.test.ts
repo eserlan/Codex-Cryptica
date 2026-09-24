@@ -139,7 +139,7 @@ describe("IndexNow Cluster Resolution (#3164)", () => {
       expect(routes).toContain(hub);
     }
 
-    expect(routes.length).toBe(13);
+    expect(routes).toHaveLength(8 + CATALOGUE_HUBS.length);
   });
 });
 
