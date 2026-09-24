@@ -19,7 +19,7 @@ export const piratesHighSeas: LandingPageConfig = {
     tagline:
       "Keep your ships, crews, islands, hoards, and grudges connected across every sea your players sail.",
     problemStatement:
-      "A high seas campaign runs on trade routes, borrowed loyalties, and a rumour about buried treasure that someone will kill to reach first. When the crew sails back to a port they wronged, or a rival captain turns up with your old quartermaster, you need the whole web of ships, islands, and debts in one place—not scattered across ship logs and session notes.",
+      "A high seas campaign turns on trade routes, old debts, and treasure rivals will kill to claim. When the crew returns to a port they wronged or a rival captain arrives with their old quartermaster, keep ships, islands, debts, and relationships together in Codex Cryptica, not scattered across ship logs and session notes. The same workflow suits privateers, smugglers, merchant crews, naval patrols, and treasure hunters.",
   },
   useCases: [
     {
@@ -37,13 +37,13 @@ export const piratesHighSeas: LandingPageConfig = {
     {
       title: "Captains, Armadas & Rival Fleets",
       description:
-        "Keep naval squadrons, pirate captains, quartermasters, and trading companies visible as their interests collide at sea.",
+        "Keep naval squadrons, pirate captains, quartermasters, and trading companies visible, with their debts, bounties, and blockades in view.",
       icon: "icon-[lucide--flag]",
     },
     {
       title: "Hidden Hoards & Rumours",
       description:
-        "Follow a treasure map, forged letter of marque, or half-remembered tale from the first whisper in a tavern to the reckoning on the beach.",
+        "Follow a treasure map, forged letter of marque, or tavern rumour to the beach. A prize taken today can change who controls a port, who hunts the crew, and which captain offers help next session.",
       icon: "icon-[lucide--gem]",
     },
   ],
@@ -84,17 +84,38 @@ export const piratesHighSeas: LandingPageConfig = {
       {
         label: "The Salt Tithe Mutiny",
         sublabel: "Crew Crisis",
-        relation: "Threatens to split",
+        relation: "Is threatened by",
         category: "event",
       },
     ],
   },
   recommendedTools: [
     {
+      title: "What kind of ship should a pirate crew start with?",
+      description:
+        "Choose a starter hull, crew size, ownership trouble, and upgrades that create useful pirate-campaign pressure.",
+      href: "/answers/what-kind-of-ship-should-a-pirate-crew-start-with",
+      badge: "Answer",
+    },
+    {
       title: "Ship Generator",
       description:
         "Create sloops, brigantines, and galleons with crews, complications, and secrets.",
       href: "/generators/ship-generator",
+      badge: "Generator",
+    },
+    {
+      title: "Settlement Generator",
+      description:
+        "Build harbour towns, free ports, and island colonies with the trade and trouble that define them.",
+      href: "/generators/settlement",
+      badge: "Generator",
+    },
+    {
+      title: "Faction Generator",
+      description:
+        "Create naval squadrons, trading companies, and pirate brotherhoods with competing agendas.",
+      href: "/generators/faction",
       badge: "Generator",
     },
     {
@@ -110,20 +131,6 @@ export const piratesHighSeas: LandingPageConfig = {
         "Open pirate-ready generators for the captains, ports, and factions around your crew.",
       href: "/generators/pirate",
       badge: "Hub",
-    },
-    {
-      title: "Settlement Generator",
-      description:
-        "Build harbour towns, free ports, and island colonies with the trade and trouble that define them.",
-      href: "/generators/settlement",
-      badge: "Generator",
-    },
-    {
-      title: "Faction Generator",
-      description:
-        "Create naval squadrons, trading companies, and pirate brotherhoods with competing agendas.",
-      href: "/generators/faction",
-      badge: "Generator",
     },
   ],
   cta: {
