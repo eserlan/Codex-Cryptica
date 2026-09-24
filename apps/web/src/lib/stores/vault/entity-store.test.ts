@@ -1319,7 +1319,6 @@ describe("EntityStore", () => {
         },
         content: "Hydrated content from disk",
       });
-
       await store.internalLoadContent("hero");
 
       // Verifies content is hydrated, but in-memory parent is preserved!
@@ -1345,6 +1344,31 @@ describe("EntityStore", () => {
       expect(
         store.graphEntities.find((entity) => entity.id === "hero")?.parent,
       ).toBe("place");
+    });
+
+    it("updates inbound connections when connection metadata is restored", async () => {
+      const markdownUtils = await import("../../utils/markdown");
+      const opfsUtils = await import("../../utils/opfs");
+      vi.mocked(opfsUtils.readFileAsText).mockResolvedValue("file");
+      vi.mocked(markdownUtils.parseMarkdown).mockReturnValue({
+        metadata: {
+          id: "hero",
+          title: "Hero",
+          type: "character",
+          connections: [{ target: "place", type: "knows", strength: 1 }],
+        },
+        content: "Hydrated content from disk",
+      });
+      (repository.entities.hero as any).connections = undefined;
+
+      await store.internalLoadContent("hero");
+
+      expect(store.inboundConnections.place).toEqual([
+        {
+          sourceId: "hero",
+          connection: { target: "place", type: "knows", strength: 1 },
+        },
+      ]);
     });
 
     it("leaves indexes untouched when a load only adds content", async () => {

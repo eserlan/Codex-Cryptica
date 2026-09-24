@@ -218,11 +218,24 @@ export class EntityStore {
     this.initializeInboundConnections();
 
     this.loader.registerStoreCallbacks?.({
-      onMetadataRestored: (oldEntity, newEntity) =>
+      onMetadataRestored: (oldEntity, newEntity) => {
+        // Hydrated connections bypass the mutation service, so keep the
+        // reverse lookup used by focus-view traversal in sync incrementally.
+        for (const connection of oldEntity.connections ?? []) {
+          this.patchRemoveConnection(
+            oldEntity.id,
+            connection.target,
+            connection.type,
+          );
+        }
+        for (const connection of newEntity.connections ?? []) {
+          this.patchAddConnection(newEntity.id, connection.target, connection);
+        }
         this.handleEntitiesUpdate(
           { [oldEntity.id]: oldEntity },
           { [newEntity.id]: newEntity },
-        ),
+        );
+      },
     });
 
     if (this._eventBusUnsubscribe) {
