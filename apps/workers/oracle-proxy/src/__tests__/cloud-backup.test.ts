@@ -898,6 +898,47 @@ describe("schema v2 storage (#3354)", () => {
     });
   });
 
+  it("adds a special entity id to an existing delta shard", async () => {
+    const env = makeEnv();
+    const { backupId, ownerCode } = await enable(env);
+    const commit = await handleCommitCloudBackup(
+      post(
+        {
+          vaultTitle: "The Saltmere Fens",
+          bundle: { entities: [{ id: "seed-91", title: "Seed" }] },
+          assetIds: [],
+        },
+        ownerCode,
+      ),
+      env,
+      backupId,
+    );
+    const commitBody = (await commit.json()) as any;
+
+    expect(cloudBackupShardOf("seed-91")).toBe(cloudBackupShardOf("__proto__"));
+    const deltaResponse = await handleCloudBackupDelta(
+      post(
+        {
+          vaultTitle: "The Saltmere Fens",
+          baseLastPushedAt: commitBody.manifest.lastPushedAt,
+          upserts: [{ id: "__proto__", title: "Prototype" }],
+          deletes: [],
+        },
+        ownerCode,
+      ),
+      env,
+      backupId,
+    );
+
+    expect(deltaResponse.status).toBe(200);
+    expect(await bundleOf(env, backupId, ownerCode)).toMatchObject({
+      entities: [
+        { id: "seed-91", title: "Seed" },
+        { id: "__proto__", title: "Prototype" },
+      ],
+    });
+  });
+
   it("drops shards of entities removed by a later full commit", async () => {
     const env = makeEnv();
     const { backupId, ownerCode } = await enableAndCommit(env);

@@ -805,10 +805,10 @@ async function applyEntityDelta(
 
   const shards = new Map<string, Shard>();
   for (const name of touched) {
+    const existing = await readJson<Shard>(env, getShardKey(backupId, name));
     shards.set(
       name,
-      (await readJson<Shard>(env, getShardKey(backupId, name))) ??
-        Object.create(null),
+      Object.assign(Object.create(null) as Shard, existing ?? {}),
     );
   }
 
