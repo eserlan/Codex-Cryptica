@@ -24,6 +24,8 @@ import {
 } from "$lib/stores/cloud-backup.svelte";
 import { buildCloudBackupPayload } from "$lib/services/cloud-backup-payload";
 import { onDurableVaultChange } from "$lib/stores/vault/registry";
+import { vaultEventBus } from "$lib/stores/vault/events.svelte";
+import { CloudBackupDirtyStore } from "$lib/stores/cloud-backup-dirty";
 import { writeOpfsFile } from "$lib/utils/opfs";
 import {
   handleVersionSkewReload,
@@ -192,6 +194,7 @@ export function initializeGlobalListeners(_calendarStore?: any) {
       storage: cloudBackupBrowserStorage(),
       fetch: ((url: string, init?: any) => fetch(url, init)) as never,
     },
+    dirty: new CloudBackupDirtyStore(),
     // Everything the consent screen promises: entities, maps, canvases and
     // the media all three reference.
     buildPayload: async (_vaultId: string, signal?: AbortSignal) =>
@@ -281,17 +284,27 @@ export function initializeGlobalListeners(_calendarStore?: any) {
   // Automatic cloud backup (#3189): durable writes schedule a debounced
   // guarded push, and lifecycle events flush it. The subscription lives for
   // the app lifetime; the store itself stays inert while backup is off.
-  const unsubDurableChanges = onDurableVaultChange((changedVaultId) => {
-    if (changedVaultId === vault.activeVaultId) {
-      cloudBackupStore.notifyLocalChange(changedVaultId);
-    }
+  // Each write also records what it touched (#3354), so a push can send only
+  // the changes. Files re-read from disk join the next upload without
+  // scheduling one on their own.
+  const unsubDurableChanges = onDurableVaultChange((changedVaultId, change) => {
+    void cloudBackupStore.recordLocalChange(changedVaultId, change);
   });
+  const unsubSyncedChanges = vaultEventBus.subscribe((event) => {
+    if (event.type !== "SYNC_CHUNK_READY") return;
+    void cloudBackupStore.recordLocalChange(
+      event.vaultId,
+      { kind: "entity", ids: event.newOrChangedIds },
+      { schedule: false },
+    );
+  }, "cloud-backup-sync-chunks");
   cloudBackupStore.startAutoSyncListeners();
 
   return () => {
     unsubOracle();
     unsubFlushSaves();
     unsubDurableChanges();
+    unsubSyncedChanges();
     window.removeEventListener("vault-switched", hydrateCloudBackup);
     cloudBackupStore.destroy();
     window.removeEventListener("error", handleGlobalError);

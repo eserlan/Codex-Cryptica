@@ -17,6 +17,8 @@ import {
 } from "@codex/cloud-backup-sync";
 import type { LocalCloudBackupRecord } from "schema";
 import { onlineStatus } from "./online.svelte";
+import type { CloudBackupDirtyStore } from "./cloud-backup-dirty";
+import type { DurableVaultChange } from "./vault/registry";
 
 /**
  * Cloud Backup status store (spec 162, issue #2593).
@@ -105,6 +107,12 @@ export interface CloudBackupDeps {
       mimeType: string,
     ) => Promise<void>;
   };
+  /**
+   * Changed-item tracking for incremental uploads (#3354). Optional so the
+   * store stays usable without it; with it, every successful upload clears
+   * exactly the changes it carried.
+   */
+  dirty?: CloudBackupDirtyStore;
   /** Quiet period before an auto-push; overridable in tests. */
   debounceMs?: number;
   /** Wait before retrying a failed auto-push; overridable in tests. */
@@ -148,6 +156,12 @@ export class CloudBackupStore {
   private pushing = false;
   /** The in-flight snapshot build, aborted by `disable`. */
   private activeBuild: AbortController | null = null;
+  /**
+   * Vault whose first backup is being built. Its record is not enabled yet,
+   * but an edit made meanwhile must still be tracked or it would be missing
+   * from both the first backup and the change set.
+   */
+  private enablingVaultId: string | null = null;
   private autoPending = false;
   private autoTimer: ReturnType<typeof setTimeout> | null = null;
   private autoListenersAttached = false;
@@ -195,6 +209,7 @@ export class CloudBackupStore {
     if (!this.deps) return false;
     this.status = "syncing";
     this.errorMessage = null;
+    this.enablingVaultId = vaultId;
 
     try {
       const payload = await this.deps.buildPayload(vaultId);
@@ -217,6 +232,8 @@ export class CloudBackupStore {
       this.errorMessage =
         error instanceof Error ? error.message : "Could not read this vault.";
       return false;
+    } finally {
+      this.enablingVaultId = null;
     }
   }
 
@@ -232,6 +249,9 @@ export class CloudBackupStore {
     this.autoState = "idle";
     if (!this.deps) return;
     await disableCloudBackup(this.deps.runtime, vaultId);
+    // Changes made while off are never recorded, so the pending set would be
+    // incomplete by the time backup is re-enabled — which re-uploads in full.
+    await this.deps.dirty?.clearVault(vaultId);
     this.status = "off";
     this.errorMessage = null;
   }
@@ -453,6 +473,36 @@ export class CloudBackupStore {
   // ------------------------------------------------------------------
 
   /**
+   * Records what a durable write touched (#3354) and schedules a push for the
+   * active vault. Nothing is recorded for a vault whose backup is off (FR-022).
+   * With `schedule: false` the change only joins the next upload — used for
+   * files re-read from disk, which should not trigger an upload on their own.
+   * Never throws: this runs after the local write has already succeeded.
+   */
+  async recordLocalChange(
+    vaultId: string,
+    change?: DurableVaultChange,
+    opts: { schedule?: boolean } = {},
+  ): Promise<void> {
+    if (!this.deps) return;
+    try {
+      const record = await getLocalCloudBackupRecord(
+        this.deps.runtime,
+        vaultId,
+      );
+      if (!record?.enabled && this.enablingVaultId !== vaultId) return;
+      await this.deps.dirty?.record(vaultId, change);
+    } catch (error) {
+      // A lost row is caught by the full-upload fallbacks; a thrown error here
+      // would surface as a failed save for a save that succeeded.
+      console.warn("[CloudBackup] Could not record a change", error);
+    }
+    if (opts.schedule !== false && vaultId === this.deps.activeVaultId()) {
+      this.notifyLocalChange(vaultId);
+    }
+  }
+
+  /**
    * Called when a durable local write lands (wired once from app init via
    * `onDurableVaultChange`). Schedules a debounced guarded push when backup
    * is enabled; never uploads anything synchronously and never throws.
@@ -672,13 +722,19 @@ export class CloudBackupStore {
     const record = await getLocalCloudBackupRecord(this.deps!.runtime, vaultId);
     if (!record?.enabled) return BACKUP_OFF;
 
+    // Taken before building, so anything changed after this point stays
+    // pending even though the snapshot may happen to include it.
+    const sent = (await this.deps!.dirty?.snapshot(vaultId)) ?? [];
+
     // Live for the whole push, so a disable during the build *or* the upload
     // registers and the caller does not flip the status back from "off".
     const push = new AbortController();
     this.activeBuild = push;
     try {
       const out = await this.uploadSnapshot(vaultId, opts, push.signal);
-      return push.signal.aborted ? BACKUP_OFF : out;
+      if (push.signal.aborted) return BACKUP_OFF;
+      if (out.ok) await this.deps!.dirty?.clearSent(sent);
+      return out;
     } finally {
       if (this.activeBuild === push) this.activeBuild = null;
     }
