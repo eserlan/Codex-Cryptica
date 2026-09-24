@@ -188,7 +188,6 @@ export const whatRpgWorksForPoliticalIntrigueAndFactionPlay: AnswerConfigInput =
       "how-do-you-create-a-secret-society-for-an-rpg-campaign",
       "how-do-i-run-a-diplomat-noble-or-courtier-in-an-rpg",
       "how-do-i-run-character-roles-in-a-political-intrigue-rpg",
-      "how-do-i-build-a-believable-constitutional-crisis-or-coup",
     ],
     discovery: {
       id: "answer-political-intrigue-system-selection",

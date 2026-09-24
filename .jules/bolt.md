@@ -286,8 +286,3 @@
 
 **Learning:** Using chained `.map().join()` in hot pointer event paths like free-hand drawing generates large amounts of intermediate string arrays, causing frequent garbage collection and frame drops.
 **Action:** Replace `.map().join()` with imperative loops (e.g. `for (const point of points) { path += ... }`) in hot frontend logic loops to significantly decrease GC pressure.
-
-## 2025-03-02 - Avoid chained array generation over iterators with regex matchAll
-
-**Learning:** When parsing large string payloads like sitemaps using `string.matchAll(regex)`, constructing an intermediate array via `[...string.matchAll(...)].map(...)` eagerly forces the JS engine to evaluate the entire iterator into an intermediate array of match objects, map it, and then discard the initial array. For massive strings, this spikes unnecessary garbage collection pressure and increases memory overhead.
-**Action:** Replace `[...iterator].map(...)` chains with a single imperative `for...of` loop over the iterator directly. This processes the regex matches lazily and pushes directly into the final array/map, avoiding the intermediate allocation entirely.

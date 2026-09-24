@@ -30,6 +30,17 @@ export function getPositions(count: number, compact = false): GraphPosition[] {
       cx: COMPACT_VIEWBOX.width / 2,
       cy: COMPACT_VIEWBOX.height / 2,
     };
+    if (count > 6) {
+      return [
+        hub,
+        { cx: 75, cy: 50 }, // Top Left (Node 1)
+        { cx: 245, cy: 50 }, // Top Right (Node 2)
+        { cx: 250, cy: 190 }, // Right (Node 3)
+        { cx: 220, cy: 370 }, // Bottom Right (Node 4)
+        { cx: 100, cy: 370 }, // Bottom Left (Node 5)
+        { cx: 70, cy: 190 }, // Left (Node 6)
+      ];
+    }
     if (count <= 5) {
       return [
         hub,
@@ -55,6 +66,17 @@ export function getPositions(count: number, compact = false): GraphPosition[] {
     cx: WIDE_VIEWBOX.width / 2,
     cy: WIDE_VIEWBOX.height / 2,
   };
+  if (count > 6) {
+    return [
+      hub,
+      { cx: 85, cy: 45 }, // Top Left (Node 1)
+      { cx: 455, cy: 45 }, // Top Right (Node 2)
+      { cx: 465, cy: 180 }, // Right (Node 3)
+      { cx: 380, cy: 245 }, // Bottom Right (Node 4)
+      { cx: 160, cy: 245 }, // Bottom Left (Node 5)
+      { cx: 75, cy: 180 }, // Left (Node 6)
+    ];
+  }
   if (count <= 5) {
     return [
       hub,
