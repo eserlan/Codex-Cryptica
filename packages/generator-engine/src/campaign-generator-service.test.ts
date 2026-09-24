@@ -628,6 +628,8 @@ describe("AI policy (US2)", () => {
           content: {
             overview: "A festival shaped by shared cisterns and terrace labor.",
             expandedObservance: {
+              name: "The First Spill",
+              type: "Seasonal civic festival",
               traditions: [
                 "Open the measured sluice.",
                 "Record repair pledges.",
@@ -661,7 +663,10 @@ describe("AI policy (US2)", () => {
 
     expect(generated.title).toBe("The First Spill of Neshur");
     expect(generated.content).toContain("shared cisterns and terrace labor");
-    expect(generated.content).toContain("Open the measured sluice.");
+    expect(generated.content).toContain("## Calendar overview");
+    expect(generated.content).toContain("### The First Spill");
+    expect(generated.content).toContain("#### Traditions");
+    expect(generated.content).toContain("- Open the measured sluice.");
     expect(generated.lore).toContain("Neshur depends on shared meltwater.");
     expect(generated.observances?.[0]?.observers).toBe(
       "Channel crews; Terrace farmers",

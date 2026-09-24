@@ -173,9 +173,71 @@ function holidayFieldToText(value: unknown): string {
   return typeof value === "string" ? value : "";
 }
 
+function holidayMarkdownField(label: string, value: unknown): string {
+  const text = holidayFieldToText(value);
+  if (!text) return "";
+  if (Array.isArray(value))
+    return `#### ${label}\n\n${value.map((item) => `- ${holidayFieldToText(item)}`).join("\n")}`;
+  return `#### ${label}\n\n${text}`;
+}
+
+function formatHolidayObservance(value: unknown): string {
+  if (!value || typeof value !== "object") return "";
+  const item = value as Record<string, unknown>;
+  const title = holidayFieldToText(item.name) || "Observance";
+  const details = [
+    item.type && `**Type:** ${holidayFieldToText(item.type)}`,
+    item.when && `**When:** ${holidayFieldToText(item.when)}`,
+    item.observers && `**Observed by:** ${holidayFieldToText(item.observers)}`,
+    holidayMarkdownField("Origin", item.origin),
+    holidayMarkdownField("Traditions", item.traditions),
+    holidayMarkdownField("Food, dress and symbols", item.foodOrDress),
+    holidayMarkdownField("Taboos", item.taboos),
+    holidayMarkdownField("Regional variations", item.variations),
+    holidayMarkdownField(
+      "What outsiders misunderstand",
+      item.outsiderMisunderstanding,
+    ),
+    holidayMarkdownField("What people believe", item.publicBelief),
+    holidayMarkdownField(
+      "Hidden history",
+      item.hiddenTruth ?? item.optionalHiddenTruth,
+    ),
+    holidayMarkdownField("At the table", item.tension),
+  ].filter(
+    (part): part is string => typeof part === "string" && part.length > 0,
+  );
+  return `### ${title}\n\n${details.join("\n\n")}`;
+}
+
+function formatHolidayContent(
+  content: unknown,
+  observances: unknown[],
+): string {
+  if (!content || typeof content !== "object" || Array.isArray(content))
+    return typeof content === "string"
+      ? content
+      : holidayValueToMarkdown(content);
+
+  const data = content as Record<string, unknown>;
+  const overview = holidayFieldToText(data.overview);
+  const expanded = Array.isArray(data.expandedObservances)
+    ? data.expandedObservances
+    : data.expandedObservance
+      ? [data.expandedObservance]
+      : observances;
+  return [
+    overview ? `## Calendar overview\n\n${overview}` : "",
+    ...expanded.map(formatHolidayObservance),
+  ]
+    .filter(Boolean)
+    .join("\n\n");
+}
+
 function normalizeHolidayGenericOutput(parsed: Record<string, unknown>): void {
-  if (typeof parsed.content !== "string")
-    parsed.content = holidayValueToMarkdown(parsed.content);
+  if (Array.isArray(parsed.observances))
+    parsed.content = formatHolidayContent(parsed.content, parsed.observances);
+  else parsed.content = formatHolidayContent(parsed.content, []);
   if (typeof parsed.lore !== "string")
     parsed.lore = holidayValueToMarkdown(parsed.lore);
   if (!Array.isArray(parsed.observances)) return;
