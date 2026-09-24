@@ -144,15 +144,21 @@ export function runTestChanged({
       const relativeFiles = files.map((f) =>
         relative("apps/web", f).replace(/\\/g, "/"),
       );
-      try {
-        execFileSync("bunx", ["vitest", "run", ...relativeFiles], {
-          cwd: resolve(cwd, "apps/web"),
-          stdio: "inherit",
-        });
-        console.log(`✅ ${workspace} tests passed.`);
-      } catch {
-        allPassed = false;
-        console.error(`❌ ${workspace} tests failed.`);
+      // Vitest incorrectly tries to run playwright E2E files if they match the glob or are passed directly. Filter them out.
+      const vitestFiles = relativeFiles.filter(f => !f.includes('tests/'));
+      if (vitestFiles.length === 0) {
+        console.log(`✅ ${workspace} unit tests passed (no vitest files affected).`);
+      } else {
+        try {
+          execFileSync("bunx", ["vitest", "run", ...vitestFiles], {
+            cwd: resolve(cwd, "apps/web"),
+            stdio: "inherit",
+          });
+          console.log(`✅ ${workspace} tests passed.`);
+        } catch {
+          allPassed = false;
+          console.error(`❌ ${workspace} tests failed.`);
+        }
       }
     } else {
       // For packages or root, use bun test
