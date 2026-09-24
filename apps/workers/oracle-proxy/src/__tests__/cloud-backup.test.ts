@@ -852,6 +852,52 @@ describe("schema v2 storage (#3354)", () => {
     expect(bundle.entities).toEqual([{ id: "e1", title: "Alder Cass" }]);
   });
 
+  it("preserves entity ids that are special object property names", async () => {
+    const env = makeEnv();
+    const { backupId, ownerCode } = await enable(env);
+    const commit = await handleCommitCloudBackup(
+      post(
+        {
+          vaultTitle: "The Saltmere Fens",
+          bundle: { entities: [{ id: "__proto__", title: "Prototype" }] },
+          assetIds: [],
+        },
+        ownerCode,
+      ),
+      env,
+      backupId,
+    );
+    const commitBody = (await commit.json()) as any;
+
+    expect(await bundleOf(env, backupId, ownerCode)).toMatchObject({
+      entities: [{ id: "__proto__", title: "Prototype" }],
+    });
+    const index = JSON.parse(
+      env.BUCKET.store.get(getIndexKey(backupId))!.body as string,
+    );
+    expect(index.entityHashes["__proto__"]).toBe(
+      await hashCloudBackupEntity({ id: "__proto__", title: "Prototype" }),
+    );
+
+    const deltaResponse = await handleCloudBackupDelta(
+      post(
+        {
+          vaultTitle: "The Saltmere Fens",
+          baseLastPushedAt: commitBody.manifest.lastPushedAt,
+          upserts: [{ id: "__proto__", title: "Updated prototype" }],
+          deletes: [],
+        },
+        ownerCode,
+      ),
+      env,
+      backupId,
+    );
+    expect(deltaResponse.status).toBe(200);
+    expect(await bundleOf(env, backupId, ownerCode)).toMatchObject({
+      entities: [{ id: "__proto__", title: "Updated prototype" }],
+    });
+  });
+
   it("drops shards of entities removed by a later full commit", async () => {
     const env = makeEnv();
     const { backupId, ownerCode } = await enableAndCommit(env);
@@ -1063,5 +1109,30 @@ describe("POST /delta (#3354)", () => {
     expect(bundle.maps).toEqual([{ id: "m1" }]);
     expect(bundle.canvases).toEqual([]);
     expect(bundle.entities).toEqual([{ id: "e1", title: "Alder Cass" }]);
+  });
+
+  it("counts bundle-section growth against the vault size limit", async () => {
+    const env = makeEnv();
+    const { backupId, ownerCode, manifest } = await enableAndCommit(env);
+    // Leave roughly one megabyte below the cap before the delta adds its maps.
+    await env.BUCKET.put(
+      getAssetKey(backupId, "near-limit.bin"),
+      new Uint8Array(49 * 1024 * 1024),
+    );
+    const previousBundle = env.BUCKET.store.get(getBundleKey(backupId))!.body;
+
+    const res = await handleCloudBackupDelta(
+      post(
+        delta(manifest.lastPushedAt, { maps: ["x".repeat(2 * 1024 * 1024)] }),
+        ownerCode,
+      ),
+      env,
+      backupId,
+    );
+
+    expect(res.status).toBe(413);
+    expect(env.BUCKET.store.get(getBundleKey(backupId))!.body).toBe(
+      previousBundle,
+    );
   });
 });

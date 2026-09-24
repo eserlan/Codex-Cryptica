@@ -380,7 +380,7 @@ function groupByShard(entities: EntityRecord[]): Map<string, Shard> {
   const shards = new Map<string, Shard>();
   for (const entity of entities) {
     const name = cloudBackupShardOf(entity.id);
-    const shard = shards.get(name) ?? {};
+    const shard = shards.get(name) ?? Object.create(null);
     shard[entity.id] = entity;
     shards.set(name, shard);
   }
@@ -390,7 +390,7 @@ function groupByShard(entities: EntityRecord[]): Map<string, Shard> {
 async function hashEntities(
   entities: EntityRecord[],
 ): Promise<Record<string, string>> {
-  const hashes: Record<string, string> = {};
+  const hashes: Record<string, string> = Object.create(null);
   for (const entity of entities) {
     hashes[entity.id] = await hashCloudBackupEntity(entity);
   }
@@ -807,7 +807,8 @@ async function applyEntityDelta(
   for (const name of touched) {
     shards.set(
       name,
-      (await readJson<Shard>(env, getShardKey(backupId, name))) ?? {},
+      (await readJson<Shard>(env, getShardKey(backupId, name))) ??
+        Object.create(null),
     );
   }
 
@@ -815,7 +816,10 @@ async function applyEntityDelta(
     env,
     getIndexKey(backupId),
   );
-  const hashes = { ...(index?.entityHashes ?? {}) };
+  const hashes = Object.assign(
+    Object.create(null) as Record<string, string>,
+    index?.entityHashes ?? {},
+  );
   for (const id of delta.deletes) {
     delete shards.get(cloudBackupShardOf(id))![id];
     delete hashes[id];
@@ -841,6 +845,55 @@ async function shardGrowth(
       (existing?.size ?? 0);
   }
   return growth;
+}
+
+async function indexGrowth(
+  env: CloudBackupEnv,
+  backupId: string,
+  hashes: Record<string, string>,
+): Promise<number> {
+  const existing = await env.BUCKET.head(getIndexKey(backupId));
+  return (
+    new TextEncoder().encode(JSON.stringify({ entityHashes: hashes })).length -
+    (existing?.size ?? 0)
+  );
+}
+
+async function prepareBundleSections(
+  env: CloudBackupEnv,
+  backupId: string,
+  delta: CloudBackupDelta,
+): Promise<{
+  bundle: Record<string, unknown> | null;
+  growth: number;
+}> {
+  const sections = {
+    ...(delta.maps ? { maps: delta.maps } : {}),
+    ...(delta.canvases ? { canvases: delta.canvases } : {}),
+    ...(delta.assetManifest ? { assetManifest: delta.assetManifest } : {}),
+  };
+  if (Object.keys(sections).length === 0) return { bundle: null, growth: 0 };
+
+  const key = getBundleKey(backupId);
+  const [bundle, existing] = await Promise.all([
+    readJson<Record<string, unknown>>(env, key),
+    env.BUCKET.head(key),
+  ]);
+  const nextBundle = { ...(bundle ?? {}), ...sections };
+  return {
+    bundle: nextBundle,
+    growth:
+      new TextEncoder().encode(JSON.stringify(nextBundle)).length -
+      (existing?.size ?? 0),
+  };
+}
+
+async function writeBundleSections(
+  env: CloudBackupEnv,
+  backupId: string,
+  bundle: Record<string, unknown> | null,
+): Promise<void> {
+  if (bundle) await writeJson(env, getBundleKey(backupId), bundle);
 }
 
 /**
@@ -895,9 +948,12 @@ export async function handleCloudBackupDelta(
   }
 
   const { shards, hashes } = await applyEntityDelta(env, backupId, delta);
+  const bundleUpdate = await prepareBundleSections(env, backupId, delta);
   const projected =
     (await storedBytes(env, backupId)) +
-    (await shardGrowth(env, backupId, shards));
+    (await shardGrowth(env, backupId, shards)) +
+    (await indexGrowth(env, backupId, hashes)) +
+    bundleUpdate.growth;
   if (projected > CLOUD_BACKUP_LIMITS.maxVaultBytes) {
     return json(
       request,
@@ -914,7 +970,7 @@ export async function handleCloudBackupDelta(
 
   await writeShards(env, backupId, shards, false);
   await writeIndex(env, backupId, hashes);
-  await applyBundleSections(env, backupId, delta);
+  await writeBundleSections(env, backupId, bundleUpdate.bundle);
 
   const committed: CloudBackupManifest = {
     ...manifest,
@@ -934,24 +990,6 @@ export async function handleCloudBackupDelta(
   }
 
   return json(request, { manifest: committed });
-}
-
-/** Replaces the small non-entity sections of `bundle.json` a delta carries. */
-async function applyBundleSections(
-  env: CloudBackupEnv,
-  backupId: string,
-  delta: CloudBackupDelta,
-): Promise<void> {
-  const sections = {
-    ...(delta.maps ? { maps: delta.maps } : {}),
-    ...(delta.canvases ? { canvases: delta.canvases } : {}),
-    ...(delta.assetManifest ? { assetManifest: delta.assetManifest } : {}),
-  };
-  if (Object.keys(sections).length === 0) return;
-  const bundle =
-    (await readJson<Record<string, unknown>>(env, getBundleKey(backupId))) ??
-    {};
-  await writeJson(env, getBundleKey(backupId), { ...bundle, ...sections });
 }
 
 /** GET /api/cloud-backup/{backupId}/assets/{assetId} */
