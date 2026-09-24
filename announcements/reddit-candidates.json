@@ -1,5 +1,5 @@
 {
-  "updated_at": 1790242590,
+  "updated_at": 1790259852,
   "candidates": [
     {
       "id": "reddit-35104395212-i-put-every-superhero-generator-in-one-p",
@@ -100,6 +100,16 @@
       "source_id": "35976242466",
       "status": "approved",
       "created_at": 1790242590
+    },
+    {
+      "id": "reddit-36011198722-holiday-festival-generator-traditions-wi",
+      "title": "Holiday & Festival Generator: traditions with hooks for any settlement",
+      "body": "Most settlements have a tavern and a temple and nothing the players remember a week later. I wanted festivals that explain why the town is acting weird right now, not just window dressing.\n\nI built a Holiday & Festival Generator that makes a believable holiday or tradition with history, customs and a playable hook in seconds.\n\nTry it with your current settlements: https://codexcryptica.com/generators\n\nIt can generate:\n- a calendar anchor tied to harvest, faith, founding or disaster\n- the core custom, taboo or ritual locals actually observe\n- who runs it, who profits and who wants it changed\n- a hook or complication you can drop straight into your next session\n- output saved to your vault and linkable to the settlement or faction that owns it\n\nTradeoff I made: it leans into grounded folk patterns so results feel usable at the table, which means truly alien or abstract cultural logic will still need your edit.\n\nWhich settlement in your campaign most needs a festival that explains why everything is closed, crowded or tense this week?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/announcements/release-36011198722-0.png)\n\n---\n*Posted automatically via release pipeline. Feedback and discussion welcome!*\n<!-- id:36011198722 -->",
+      "url": "https://codexcryptica.com/tools/holiday-festival-generator",
+      "image_url": "https://assets.codexcryptica.com/announcements/release-36011198722-0.png",
+      "source_id": "36011198722",
+      "status": "approved",
+      "created_at": 1790259852
     }
   ]
 }
