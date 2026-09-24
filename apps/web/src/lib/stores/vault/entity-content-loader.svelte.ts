@@ -44,6 +44,23 @@ function normalizeDiskMetadata(
   return normalized;
 }
 
+/** Loaded prose merged onto a record, restoring disk metadata missing from memory. */
+function mergeLoadedContent(
+  base: LocalEntity,
+  diskMetadata: Record<string, unknown> | undefined,
+  content: string,
+  lore: string,
+): { entity: LocalEntity; metadataRestored: boolean } {
+  const restored = restoreMissingMetadata(
+    base as unknown as Record<string, unknown>,
+    normalizeDiskMetadata(diskMetadata),
+  );
+  return {
+    entity: { ...base, ...restored, content, lore } as LocalEntity,
+    metadataRestored: Object.keys(restored).length > 0,
+  };
+}
+
 export interface ContentLoaderDependencies {
   repository: VaultRepository;
   activeVaultId: () => string | null;
@@ -307,22 +324,48 @@ export class EntityContentLoader {
     content: string,
     lore: string,
   ): LocalEntity {
-    const restored = restoreMissingMetadata(
-      base as unknown as Record<string, unknown>,
-      normalizeDiskMetadata(diskMetadata),
-    );
-    const updatedEntity = {
-      ...base,
-      ...restored,
+    const { entity: updatedEntity, metadataRestored } = mergeLoadedContent(
+      base,
+      diskMetadata,
       content,
       lore,
-    } as LocalEntity;
+    );
     this.deps.repository.entities[id] = updatedEntity;
     this.markContentLoaded(id);
-    if (Object.keys(restored).length > 0) {
+    if (metadataRestored) {
       this._onMetadataRestored?.(base, updatedEntity);
     }
     return updatedEntity;
+  }
+
+  /**
+   * Reads an entity's full body without writing it into the live store.
+   *
+   * For whole-vault consumers such as Cloud Backup: loading every entity
+   * through `loadEntityContent` would replace every reactive record, wake
+   * every consumer of them and keep all bodies in memory for the session.
+   * OPFS is canonical; the content cache covers vaults it cannot read. Returns
+   * `null` when neither has a body, and throws when the read itself fails.
+   */
+  async readFullEntity(id: string): Promise<LocalEntity | null> {
+    const entity = this.entities[id];
+    if (!entity) return null;
+    const fromDisk = await this._readFromOpfs(id);
+    if (fromDisk) {
+      return mergeLoadedContent(
+        entity,
+        fromDisk.metadata,
+        fromDisk.content,
+        fromDisk.lore,
+      ).entity;
+    }
+    const vaultId = this.deps.activeVaultId();
+    const cached = vaultId
+      ? await cacheService.getEntityContent(vaultId, id)
+      : null;
+    return cached
+      ? { ...entity, content: cached.content, lore: cached.lore }
+      : null;
   }
 
   private async _readFromOpfs(

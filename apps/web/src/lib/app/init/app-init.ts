@@ -194,7 +194,7 @@ export function initializeGlobalListeners(_calendarStore?: any) {
     },
     // Everything the consent screen promises: entities, maps, canvases and
     // the media all three reference.
-    buildPayload: async (_vaultId: string) =>
+    buildPayload: async (_vaultId: string, signal?: AbortSignal) =>
       buildCloudBackupPayload(
         vault.vaultName || "Vault",
         Object.values(vault.entities ?? {}),
@@ -205,9 +205,9 @@ export function initializeGlobalListeners(_calendarStore?: any) {
           // preview rather than the entity's markdown.
           hydrateEntities: {
             isContentLoaded: (id: string) => vault.isContentLoaded(id),
-            loadEntityContent: (id: string) => vault.loadEntityContent(id),
-            getEntity: (id: string) => vault.entities?.[id] as never,
+            readFullEntity: (id: string) => vault.readFullEntity(id),
           },
+          signal,
         },
         {
           maps: mapRegistry.allMaps ?? [],
