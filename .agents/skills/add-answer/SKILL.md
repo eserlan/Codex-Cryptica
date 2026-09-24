@@ -92,6 +92,11 @@ Every public answer page is governed by the Discovery Intent Registry:
    - Aspect ratio: `16:9`.
    - Evocative, atmospheric tabletop RPG illustration matching Codex's aesthetic.
    - **Tool fallback order:** try the `agy` CLI first. If `agy` reports its image-generation quota is exhausted, fall back to `codex`. If `codex` also fails, fall back to Claude Code's own image generation. Only move to the next tool once the current one has failed or is out of quota.
+   - **`agy` invocation syntax (headless):**
+     ```sh
+     agy --dangerously-skip-permissions --print="Generate an image of <description>. Aspect ratio 16:9. Save the generated image to /tmp/<slug>.jpg"
+     ```
+     _Note: `--dangerously-skip-permissions` is required in headless `--print` mode so tool permission requests (like file saving) are auto-approved without prompting._
 2. Upload directly to R2 using wrangler:
    ```sh
    bunx wrangler r2 object put \

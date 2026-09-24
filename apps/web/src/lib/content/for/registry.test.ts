@@ -910,6 +910,63 @@ describe("Landing Page Registry", () => {
     });
   });
 
+  describe("Pirate & High Seas Pack", () => {
+    it("is registered as a pirate-themed genre guide linking relevant generators", () => {
+      const pirates = getLandingPage("pirates-high-seas");
+
+      expect(pirates).toBeDefined();
+      expect(pirates?.kind).toBe("genre");
+      expect(pirates?.theme).toBe("pirate");
+      expect(pirates?.hub).toBe("pirate");
+      expect(pirates?.recommendedTools).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ href: "/generators/ship-generator" }),
+          expect.objectContaining({ href: "/generators/pirate" }),
+          expect.objectContaining({ href: "/generators/faction" }),
+          expect.objectContaining({ href: "/generators/settlement" }),
+        ]),
+      );
+    });
+
+    it("uses a hub-and-spoke graph where every spoke has a relation and category", () => {
+      const [hub, ...spokes] =
+        getLandingPage("pirates-high-seas")!.exampleGraph!.steps;
+
+      expect(hub.label).toBe("The Gilded Heron");
+      expect(spokes.length).toBeGreaterThanOrEqual(4);
+      for (const spoke of spokes) {
+        expect(spoke.relation, `${spoke.label} has no relation`).toBeTruthy();
+        expect(spoke.category, `${spoke.label} has no category`).toBeDefined();
+      }
+    });
+
+    it("presents a pirate campaign path and keeps the mutiny relation directional", () => {
+      const pirates = getLandingPage("pirates-high-seas")!;
+
+      expect(pirates.hero.problemStatement).toContain(
+        "privateers, smugglers, merchant crews, naval patrols, and treasure hunters",
+      );
+      expect(pirates.useCases[3].description).toContain(
+        "A prize taken today can change who controls a port",
+      );
+      expect(pirates.recommendedTools.map((tool) => tool.href)).toEqual([
+        "/answers/what-kind-of-ship-should-a-pirate-crew-start-with",
+        "/generators/ship-generator",
+        "/generators/settlement",
+        "/generators/faction",
+        "/examples/letters-of-marque-expired-pirate-adventure",
+        "/generators/pirate",
+      ]);
+      expect(pirates.exampleGraph?.steps.at(-1)?.relation).toBe(
+        "Is threatened by",
+      );
+    });
+
+    it("returns undefined for a misspelled slug", () => {
+      expect(getLandingPage("pirate-high-seas")).toBeUndefined();
+    });
+  });
+
   describe("Tactical Mecha RPG Pack", () => {
     it("is registered as a Lancer-themed genre guide", () => {
       const mecha = getLandingPage("mecha-rpgs");

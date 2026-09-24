@@ -154,6 +154,9 @@ export const howDoYouRunFactionsInASandboxCampaign: AnswerConfigInput = {
     "is-my-rpg-campaign-idea-good",
     "what-rpg-works-for-political-intrigue-and-faction-play",
     "how-do-i-run-political-intrigue-and-faction-play",
+    "how-do-i-run-spies-and-infiltrators-in-an-rpg",
+    "how-do-i-run-a-diplomat-noble-or-courtier-in-an-rpg",
+    "how-do-i-run-character-roles-in-a-political-intrigue-rpg",
   ],
   discovery: {
     id: "answer-run-factions-sandbox",
@@ -181,6 +184,11 @@ export const howDoYouRunFactionsInASandboxCampaign: AnswerConfigInput = {
         with: "answer-track-faction-turns-between-sessions",
         reason:
           "That page provides the concrete five-step downtime procedure (intent, action, outcome, consequence, history) for resolving off-screen faction clashes and updating the campaign timeline. This page covers running factions as continuous active pressure in a sandbox using the goal/resource/rival/scheduled-move concept.",
+      },
+      {
+        with: "answer-run-character-roles-political-intrigue",
+        reason:
+          "This answer tracks factions as ongoing sandbox actors; the political roles page focuses on how PCs with different archetypes influence live political scenes and decisions.",
       },
     ],
   },

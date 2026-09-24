@@ -171,6 +171,29 @@ export function isLlmOperationStreamRequest(body: any): boolean {
  * bytes are sent, a plain JSON error matching the buffered handler's shape)
  * and is expected to fall back to the buffered request/response path itself.
  */
+async function* batchDeltaEvents(
+  source: AsyncGenerator<GenerationEvent>,
+  batchSize: number,
+): AsyncGenerator<GenerationEvent> {
+  let pendingText = "";
+  for await (const event of source) {
+    if (event.type !== "delta") {
+      if (pendingText) yield { type: "delta", text: pendingText };
+      pendingText = "";
+      yield event;
+      if (event.type === "complete" || event.type === "error") return;
+      continue;
+    }
+
+    pendingText += event.text;
+    if (pendingText.length >= batchSize) {
+      yield { type: "delta", text: pendingText };
+      pendingText = "";
+    }
+  }
+  if (pendingText) yield { type: "delta", text: pendingText };
+}
+
 export async function handleLlmOperationStreamRequest(
   body: any,
   corsHeaders: Record<string, string>,
@@ -235,14 +258,24 @@ export async function handleLlmOperationStreamRequest(
     );
   }
 
-  const generator = streamAdaptor(llmRequest, model, env, signal);
+  const source = streamAdaptor(llmRequest, model, env, signal);
+  const generator = batchDeltaEvents(source, 512);
   const encoder = new TextEncoder();
 
   const stream = new ReadableStream<Uint8Array>({
     async pull(controller) {
-      let next: IteratorResult<GenerationEvent>;
       try {
-        next = await generator.next();
+        const next = await generator.next();
+        if (next.done) {
+          controller.close();
+          return;
+        }
+        controller.enqueue(
+          encoder.encode(`data: ${JSON.stringify(next.value)}\n\n`),
+        );
+        if (next.value.type === "complete" || next.value.type === "error") {
+          controller.close();
+        }
       } catch {
         controller.enqueue(
           encoder.encode(
@@ -253,21 +286,11 @@ export async function handleLlmOperationStreamRequest(
           ),
         );
         controller.close();
-        return;
-      }
-      if (next.done) {
-        controller.close();
-        return;
-      }
-      controller.enqueue(
-        encoder.encode(`data: ${JSON.stringify(next.value)}\n\n`),
-      );
-      if (next.value.type === "complete" || next.value.type === "error") {
-        controller.close();
       }
     },
     cancel() {
       void generator.return?.(undefined);
+      void source.return?.(undefined);
     },
   });
 

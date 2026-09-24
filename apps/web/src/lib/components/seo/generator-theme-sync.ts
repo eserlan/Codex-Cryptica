@@ -17,6 +17,7 @@ export interface GeneratorThemeSyncContext {
   encounter: ThemeState;
   councilVote: ThemeState;
   heist: ThemeState;
+  holiday: ThemeState;
   secretSociety: ThemeState;
   socialHub: ThemeState;
   nation: ThemeState;
@@ -56,6 +57,7 @@ export function syncGeneratorTheme({
   encounter,
   councilVote,
   heist,
+  holiday,
   secretSociety,
   socialHub,
   nation,
@@ -89,6 +91,7 @@ export function syncGeneratorTheme({
   else if (slug === "encounter") encounter.genre = activeTheme;
   else if (slug === "council-vote") councilVote.genre = activeTheme;
   else if (slug === "heist") heist.genre = activeTheme;
+  else if (slug === "holiday") holiday.genre = activeTheme;
   else if (slug === "secret-society") secretSociety.theme = activeTheme;
   else if (slug === "social-hub")
     setActiveTheme(mapSocialHubGenre(socialHub.genre ?? ""));

@@ -51,6 +51,16 @@ export {
   type PublicGeneratorOutput,
 } from "./public-generator-adapters";
 export {
+  holidayConfig,
+  resolveHoliday,
+  buildHolidayPrompt,
+  parseHolidayResponse,
+  generateHolidayLocal,
+  type HolidayGeneratorOptions,
+  type ResolvedHoliday,
+  type HolidayPrompt,
+} from "./public-holiday";
+export {
   buildRandomTablePrompt,
   parseRandomTableResponse,
   generateRandomTableLocal,

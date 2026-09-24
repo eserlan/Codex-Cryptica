@@ -462,13 +462,21 @@
                     <button
                       type="button"
                       disabled={revokingShareId === item.shareId}
+                      aria-busy={revokingShareId === item.shareId}
                       class="px-3 py-1.5 text-xs font-header font-medium rounded-lg border border-theme-border/60 hover:border-red-500/40 text-theme-muted hover:text-red-400 transition-colors inline-flex items-center gap-1.5 disabled:opacity-50"
                       onclick={() => handleRevokeShare(item)}
                     >
-                      <span
-                        class="icon-[lucide--trash-2] h-3.5 w-3.5"
-                        aria-hidden="true"
-                      ></span>
+                      {#if revokingShareId === item.shareId}
+                        <span
+                          class="icon-[lucide--loader-2] h-3.5 w-3.5 animate-spin"
+                          aria-hidden="true"
+                        ></span>
+                      {:else}
+                        <span
+                          class="icon-[lucide--trash-2] h-3.5 w-3.5"
+                          aria-hidden="true"
+                        ></span>
+                      {/if}
                       <span
                         >{revokingShareId === item.shareId
                           ? "Revoking..."

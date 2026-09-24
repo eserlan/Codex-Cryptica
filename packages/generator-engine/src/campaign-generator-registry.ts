@@ -135,6 +135,13 @@ import {
   type HeistGeneratorOptions,
 } from "./public-heist";
 import {
+  buildHolidayPrompt,
+  generateHolidayLocal,
+  parseHolidayResponse,
+  holidayConfig,
+  type HolidayGeneratorOptions,
+} from "./public-holiday";
+import {
   buildCreaturePrompt,
   generateCreatureLocal,
   creatureConfig,
@@ -177,6 +184,7 @@ export const GENERATOR_ENTITY_TYPE: Record<GeneratorId, string> = {
   "random-table": "table",
   encounter: "note",
   heist: "note",
+  holiday: "note",
 };
 
 /** Fallback category used when a mapped category is absent from the campaign. */
@@ -283,6 +291,7 @@ function mapOutputToDraft(
       primaryLanguageTitle: request.vaultContext?.selectedLanguage?.title,
       bodies: output.bodies ? [...output.bodies] : undefined,
       starType: output.starType,
+      observances: output.observances ? [...output.observances] : undefined,
       pattern: output.pattern,
       interpretations: output.interpretations
         ? [...output.interpretations]
@@ -1019,12 +1028,55 @@ function encounterPrompt(request: GeneratorRunRequest): string {
   return buildCampaignEncounterPrompt(request).userMessage;
 }
 
+// Holiday shares its prompt and local fallback with the public generator; this
+// adapter adds only the campaign theme and bounded vault context.
+function holidayOptions(request: GeneratorRunRequest): HolidayGeneratorOptions {
+  const ctx = request.vaultContext;
+  return {
+    genre:
+      ctx?.themeName ?? themeIdToLabel[request.themeId] ?? "Classic Fantasy",
+    scope: optionString(request, "scope", "A culture"),
+    culture: optionString(request, "culture", ""),
+    climate: optionString(request, "climate", ""),
+    religion: optionString(request, "religion", ""),
+    history: optionString(request, "history", ""),
+    importantPeople: optionString(request, "importantPeople", ""),
+    importantEvents: optionString(request, "importantEvents", ""),
+    tone: optionString(request, "tone", "Mixed"),
+    setSize: optionString(request, "setSize", "A calendar of 6 observances"),
+    includeControversial: request.options.includeControversial === true,
+    avoidNames: [...(ctx?.bannedNames ?? []), ...(ctx?.existingTitles ?? [])],
+  };
+}
+
+function generateHoliday(
+  request: GeneratorRunRequest,
+  rawText?: string,
+): GeneratorOutput {
+  const options = holidayOptions(request);
+  const result = rawText
+    ? parseHolidayResponse(rawText, buildHolidayPrompt(options).resolved)
+    : generateHolidayLocal(options);
+  return {
+    title: result.title,
+    summary: result.summary ?? "",
+    lore: result.lore,
+    content: result.content,
+    labels: result.labels,
+    observances: result.observances,
+  };
+}
+
+function holidayPrompt(request: GeneratorRunRequest): string {
+  const prompt = buildHolidayPrompt(holidayOptions(request));
+  const context = contextChain(request);
+  return `${context}\n\n${prompt.userMessage}`;
+}
+
 // Heist reuses the public generator's prompt and local fallback wholesale
-// (the encounter/adventure pattern), so the framework from the heist answer
-// page — score, prize, casing intel, three security rings, alarm track,
-// complications, compromised getaway, flashbacks — stays defined in exactly
-// one place for both surfaces. Only the vault-grounding context chain is
-// added on top here.
+// (the encounter/adventure pattern), so its score, security rings, alarm track,
+// complications, compromised getaway, and flashbacks stay defined once for
+// both surfaces. Only the vault-grounding context chain is added here.
 function heistOptions(request: GeneratorRunRequest): HeistGeneratorOptions {
   return {
     genre: optionString(
@@ -3371,6 +3423,88 @@ const REGISTRY: Record<GeneratorId, CampaignGeneratorDefinition> = {
     generate: generateCouncilVote,
     mapOutputToDraft: mapOutputToDraft("council-vote"),
     buildPrompt: councilVoteFoundationPrompt,
+  },
+  holiday: {
+    id: "holiday",
+    label: "Holiday & Festival",
+    description:
+      "Create a culturally grounded holiday, memorial, festival, or coherent calendar of observances.",
+    entityType: GENERATOR_ENTITY_TYPE.holiday,
+    defaultInstruction:
+      "Create culturally grounded observances with specific traditions, social significance, and table-useful consequences.",
+    icon: "lucide:calendar-heart",
+    options: [
+      {
+        id: "scope",
+        label: "Scope",
+        control: "select",
+        choices: holidayConfig.scopes.map((value) => ({ value, label: value })),
+        defaultValue: "A culture",
+      },
+      {
+        id: "setSize",
+        label: "Calendar size",
+        control: "select",
+        choices: holidayConfig.setSizes.map((value) => ({
+          value,
+          label: value,
+        })),
+        defaultValue: "A calendar of 6 observances",
+      },
+      {
+        id: "culture",
+        label: "Culture or society",
+        control: "textarea",
+        defaultValue: "",
+      },
+      {
+        id: "climate",
+        label: "Climate and seasons",
+        control: "text",
+        defaultValue: "",
+      },
+      {
+        id: "religion",
+        label: "Religion or cosmology",
+        control: "text",
+        defaultValue: "",
+      },
+      {
+        id: "history",
+        label: "Political or historical background",
+        control: "textarea",
+        defaultValue: "",
+      },
+      {
+        id: "importantPeople",
+        label: "Important people",
+        control: "textarea",
+        defaultValue: "",
+      },
+      {
+        id: "importantEvents",
+        label: "Important events",
+        control: "textarea",
+        defaultValue: "",
+      },
+      {
+        id: "tone",
+        label: "Tone",
+        control: "select",
+        choices: holidayConfig.tones.map((value) => ({ value, label: value })),
+        defaultValue: "Mixed",
+      },
+      {
+        id: "includeControversial",
+        label: "Include a controversial or secret observance",
+        control: "checkbox",
+        defaultValue: false,
+      },
+    ],
+    defaults: { ...holidayConfig },
+    generate: generateHoliday,
+    mapOutputToDraft: mapOutputToDraft("holiday"),
+    buildPrompt: holidayPrompt,
   },
   heist: {
     id: "heist",

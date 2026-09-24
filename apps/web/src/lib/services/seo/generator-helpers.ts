@@ -476,6 +476,14 @@ export interface GeneratorOutput {
   interpretations?: ConstellationInterpretation[];
   /** Night-sky mode's full set of constellations for one culture. */
   nightSky?: NightSkyData;
+  observances?: Array<{
+    name: string;
+    type: string;
+    when: string;
+    observers: string;
+    traditions: string;
+    tension: string;
+  }>;
   /** Dominant conflict domain of a generated BBEG villain (e.g. "Cult Ritual"), tracked for session variety. */
   conflictDomain?: string;
 }
