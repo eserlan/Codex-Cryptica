@@ -1,5 +1,5 @@
 {
-  "updated_at": 1790269475,
+  "updated_at": 1790288970,
   "candidates": [
     {
       "id": "reddit-35104395212-i-put-every-superhero-generator-in-one-p",
@@ -120,6 +120,16 @@
       "source_id": "36011198722",
       "status": "approved",
       "created_at": 1790269475
+    },
+    {
+      "id": "reddit-36067410949-a-wasteland-hub-where-water-shortages-st",
+      "title": "A wasteland hub where water shortages start the plot",
+      "body": "My last few wasteland games fell into the same loop: go out, scavenge, come back, repeat. Settlements felt interchangeable because nothing connected water, fuel and the people demanding a cut.\n\nI built a dedicated post-apocalyptic hub that keeps those pressures linked, so a single shortage can pull the whole table in.\n\nYou can start from it here: https://codexcryptica.com/for/post-apocalyptic-rpgs\n\nIt gives you:\n\n- settlements and the supply lines they depend on, with who controls water, food, fuel and medicine\n- raider gangs, militias and councils tied by tribute, truces and rival claims that can fail\n- radiation zones, ruined tech sites and mutant threats that change which routes are actually usable\n- a Dustbridge example web you can copy, from failing pump to scout to last filter core\n- direct jumps into wasteland generators for people, factions, settlements and ruins, plus maps, timelines and oracles to keep consequences visible between sessions\n\nTradeoff I am still tuning: the hub leans into scarcity and hazard on purpose, so if you run something softer like solarpunk some of the pressure tables will feel too harsh.\n\nWhich settlement in your wasteland would your players refuse to abandon, and what happens to it when the next supply run fails?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/announcements/dungeon-silo-zero-seven.jpg)\n\n---\n*Posted automatically via release pipeline. Feedback and discussion welcome!*\n<!-- id:36067410949 -->",
+      "url": "https://codexcryptica.com/for/post-apocalyptic-rpgs",
+      "image_url": "https://assets.codexcryptica.com/announcements/dungeon-silo-zero-seven.jpg",
+      "source_id": "36067410949",
+      "status": "approved",
+      "created_at": 1790288970
     }
   ]
 }
