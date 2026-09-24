@@ -88,7 +88,7 @@
         {/each}
       </nav>
 
-      <div class="flex items-center gap-2 shrink-0">
+      <div class="flex items-center gap-1 sm:gap-2 shrink-0">
         {#if DISCORD_URL}
           <a
             href={DISCORD_URL}
@@ -131,7 +131,7 @@
         </a>
         <a
           href={ctaHref}
-          class="min-h-[24px] px-4 sm:px-5 py-2.5 bg-theme-primary text-theme-bg font-bold font-header text-xs rounded-lg hover:brightness-110 active:brightness-95 shadow-sm transition-all whitespace-nowrap focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-accent"
+          class="min-h-[24px] px-3 sm:px-5 py-2.5 bg-theme-primary text-theme-bg font-bold font-header text-xs rounded-lg hover:brightness-110 active:brightness-95 shadow-sm transition-all whitespace-nowrap focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-accent"
           id="nav-cta-btn"
           data-testid="shell-cta"
           onclick={() => {
@@ -143,7 +143,7 @@
         </a>
         <a
           href="{cleanBase}/generators"
-          class="md:hidden inline-flex items-center gap-1.5 min-h-[44px] px-2 rounded-lg text-theme-muted hover:text-theme-primary hover:bg-theme-bg transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-accent font-header text-xs"
+          class="md:hidden inline-flex items-center justify-center gap-1.5 min-h-[44px] min-w-[44px] px-2 rounded-lg text-theme-muted hover:text-theme-primary hover:bg-theme-bg transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-accent font-header text-xs"
           aria-label="Generators"
           title="Generators"
           aria-current={isCurrent("/generators")}
@@ -151,18 +151,18 @@
         >
           <span aria-hidden="true" class="icon-[lucide--sparkles] w-4 h-4 block"
           ></span>
-          <span>Generators</span>
+          <span class="hidden sm:inline">Generators</span>
         </a>
         <a
           href="{cleanBase}/explore"
-          class="md:hidden inline-flex items-center gap-1.5 min-h-[44px] px-2 rounded-lg text-theme-muted hover:text-theme-primary hover:bg-theme-bg transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-accent font-header text-xs"
+          class="md:hidden inline-flex items-center justify-center gap-1.5 min-h-[44px] min-w-[44px] px-2 rounded-lg text-theme-muted hover:text-theme-primary hover:bg-theme-bg transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-accent font-header text-xs"
           aria-label="Explore Codex Cryptica"
           title="Explore"
           data-testid="shell-explore-link"
         >
           <span aria-hidden="true" class="icon-[lucide--compass] w-4 h-4 block"
           ></span>
-          <span>Explore</span>
+          <span class="hidden sm:inline">Explore</span>
         </a>
       </div>
     </div>
