@@ -185,11 +185,11 @@ test.describe("Bulk Labeling and Selection Actions", () => {
 
       // Wait for the vault store to index the label so it appears in the dropdown.
       await expect(async () => {
-          const isIndexed = await page.evaluate((label) => {
-             const vault = (window as any).vault;
-             return vault?.labelIndex?.includes(label) === true;
-          }, l);
-          expect(isIndexed).toBe(true);
+        const isIndexed = await page.evaluate((label) => {
+          const vault = (window as any).vault;
+          return vault?.labelIndex?.includes(label) === true;
+        }, l);
+        expect(isIndexed).toBe(true);
       }).toPass({ timeout: 10000 });
 
       // Small delay to prevent race conditions in VaultStore when adding many labels rapidly
