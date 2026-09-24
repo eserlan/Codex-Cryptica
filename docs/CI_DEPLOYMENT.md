@@ -93,8 +93,6 @@ Trigger:
 Behavior:
 
 - Checks whether the current version bump is a major/minor release
-- Builds the app
-- Creates a portable zip artifact
 - Generates user-focused release notes from the in-app changelog
   (`scripts/generate-release-notes.mjs` diffs `releases.json` against its
   content at the previous release tag, so notes cover exactly the changelog
