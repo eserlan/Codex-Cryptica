@@ -7,6 +7,7 @@ import {
 } from "@codex/entity-shelf";
 import { appEventBus as defaultAppEventBus } from "@codex/events";
 import { SHELF_EVENTS } from "$lib/events/shelf";
+import { systemClock, type Clock } from "$lib/utils/runtime-deps";
 import { idbShelfStore } from "./idb-shelf-store.svelte";
 import {
   vaultRecordCodec,
@@ -27,6 +28,7 @@ export interface ShelfStoreDeps {
   vault: ShelfVaultDeps;
   service?: EntityShelfService;
   appEventBus?: typeof defaultAppEventBus;
+  clock?: Clock;
 }
 
 /** Warn once the shelf passes this share of the browser's reported allowance (FR-025). */
@@ -49,8 +51,10 @@ export class ShelfStore {
   private unsubscribe: (() => void) | null = null;
   private progressTimer: ReturnType<typeof setTimeout> | null = null;
   private progressVisible = false;
+  private clock: Clock;
 
   constructor(private readonly deps: ShelfStoreDeps) {
+    this.clock = deps.clock ?? systemClock;
     this.bus = deps.appEventBus ?? defaultAppEventBus;
     const vault = new WebShelfVault(deps.vault);
     this.service =
@@ -195,7 +199,7 @@ export class ShelfStore {
       type: SHELF_EVENTS.CHANGED,
       domain: "shelf",
       payload: {},
-      metadata: { timestamp: Date.now(), sync: true },
+      metadata: { timestamp: this.clock.now(), sync: true },
     });
   }
 }
