@@ -1,5 +1,5 @@
 {
-  "updated_at": 1790263995,
+  "updated_at": 1790265795,
   "candidates": [
     {
       "id": "reddit-35104395212-i-put-every-superhero-generator-in-one-p",
@@ -112,14 +112,14 @@
       "created_at": 1790262495
     },
     {
-      "id": "reddit-36014807190-ai-rpg-idea-developer-turn-a-one-line-sp",
-      "title": "AI RPG Idea Developer: turn a one-line spark into a runnable pitch",
-      "body": "I get a lot of \"cool concept, no session\" ideas. A line like \"haunted lighthouse that moves\" sits in my notes for months because turning it into something I can run takes an hour I do not have that night.\n\nI added an AI RPG Idea Developer inside the app that takes a single spark and fleshes it into a runnable campaign idea you can keep working on.\n\nYou will find it in the app at https://codexcryptica.com/oracle \u2014 it runs off the same vault context the other tools use.\n\nWhat it hands back:\n- a premise with stakes, location, and who is already involved\n- 3-4 factions or NPCs with what they want and what they hide\n- an opening scene and two follow-on complications\n- a save-to-vault draft so it is not lost after you close the tab\n\nIt is deliberately narrow. It helps you from spark to playable outline, not from spark to fully written adventure. I would rather you get three usable pitches than one generic 10-page doc.\n\nWhat one-liner have you been stuck on that you wish actually became a session?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/screenshots/generator-adventure-idea-generator.jpg)\n\n---\n*Posted automatically via release pipeline. Feedback and discussion welcome!*\n<!-- id:36014807190 -->",
-      "url": "https://codexcryptica.com/generators/adventure-idea-generator",
-      "image_url": "https://assets.codexcryptica.com/screenshots/generator-adventure-idea-generator.jpg",
+      "id": "reddit-36014807190-supers-expansion-origins-events-and-vill",
+      "title": "Supers expansion: Origins, Events, and Villain Schemes plus genre support across the app",
+      "body": "Supers games break a lot of generic tools. An origin that works for fantasy reads wrong for a comic book table, and a villain plan that is just \"steal the artifact\" misses the whole point of a scheme.\n\nI expanded the superhero/comic book side: three new generators \u2014 Origin, Comic Book Event, and Villain Scheme \u2014 plus Supers-aware content across quest, settlement, nation, faction, and secret society.\n\nYou can browse the supers set from the generators hub: https://codexcryptica.com/generators\n\nWhat is new to try:\n- Origin generator with power source, public cover, and the complication that follows the character\n- Comic Book Event generator for crossover-scale incidents, not just street jobs\n- Villain Scheme generator that lays out goal, public move, hidden move, and what happens if no one stops it\n- Supers-flavoured outputs in quest hooks and polity/factions so your city and factions feel like they belong to the same genre\n\nNot every supers tone is in there yet. Right now it leans classic comic book rather than grim or parody, so tell me where it misses your table.\n\nWhat supers trope do you still have to write by hand every time?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/announcements/release-36014807190-1.png)\n\n---\n*Posted automatically via release pipeline. Feedback and discussion welcome!*\n<!-- id:36014807190 -->",
+      "url": "https://codexcryptica.com/generators/origin",
+      "image_url": "https://assets.codexcryptica.com/announcements/release-36014807190-1.png",
       "source_id": "36014807190",
       "status": "approved",
-      "created_at": 1790263994
+      "created_at": 1790265795
     }
   ]
 }
