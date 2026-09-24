@@ -19,6 +19,7 @@ import { westMarches } from "./west-marches";
 import { sandboxCampaigns } from "./sandbox-campaigns";
 import { mechaRpgs } from "./mecha-rpgs";
 import { starshipCampaigns } from "./starship-campaigns";
+import { piratesHighSeas } from "./pirates-high-seas";
 
 export const packs: Record<string, LandingPageConfig> = {
   "vampire-the-masquerade": vampireTheMasquerade,
@@ -39,6 +40,7 @@ export const packs: Record<string, LandingPageConfig> = {
   "sandbox-campaigns": sandboxCampaigns,
   "mecha-rpgs": mechaRpgs,
   "starship-campaigns": starshipCampaigns,
+  "pirates-high-seas": piratesHighSeas,
   traveller,
   conspiracy,
 };
