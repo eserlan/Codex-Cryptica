@@ -41,6 +41,7 @@ describe("test-changed", () => {
 
   test("identifies web E2E specs for the Playwright runner", () => {
     expect(isPlaywrightTest("apps/web/tests/bulk-labels.spec.ts")).toBe(true);
+    expect(isPlaywrightTest("apps/web\\tests\\bulk-labels.spec.ts")).toBe(true);
     expect(isPlaywrightTest("apps/web/src/lib/example.spec.ts")).toBe(false);
     expect(isPlaywrightTest("apps/web/tests/example.test.ts")).toBe(false);
   });
