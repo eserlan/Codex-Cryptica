@@ -940,6 +940,28 @@ describe("Landing Page Registry", () => {
       }
     });
 
+    it("presents a pirate campaign path and keeps the mutiny relation directional", () => {
+      const pirates = getLandingPage("pirates-high-seas")!;
+
+      expect(pirates.hero.problemStatement).toContain(
+        "privateers, smugglers, merchant crews, naval patrols, and treasure hunters",
+      );
+      expect(pirates.useCases[3].description).toContain(
+        "A prize taken today can change who controls a port",
+      );
+      expect(pirates.recommendedTools.map((tool) => tool.href)).toEqual([
+        "/answers/what-kind-of-ship-should-a-pirate-crew-start-with",
+        "/generators/ship-generator",
+        "/generators/settlement",
+        "/generators/faction",
+        "/examples/letters-of-marque-expired-pirate-adventure",
+        "/generators/pirate",
+      ]);
+      expect(pirates.exampleGraph?.steps.at(-1)?.relation).toBe(
+        "Is threatened by",
+      );
+    });
+
     it("returns undefined for a misspelled slug", () => {
       expect(getLandingPage("pirate-high-seas")).toBeUndefined();
     });
