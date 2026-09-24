@@ -1,5 +1,5 @@
 {
-  "updated_at": 1790268580,
+  "updated_at": 1790269475,
   "candidates": [
     {
       "id": "reddit-35104395212-i-put-every-superhero-generator-in-one-p",
@@ -102,16 +102,6 @@
       "created_at": 1790242590
     },
     {
-      "id": "reddit-36011198722-site-search-on-explore-find-any-generato",
-      "title": "Site Search on Explore: find any generator, answer or tool instantly",
-      "body": "I was scrolling through sections to find the right generator and guessing which hub it lived in. That was slower than it needed to be.\n\nI added site search to /explore so you can find any generator, answer guide or tool instantly instead of browsing manually.\n\nTry it here: https://codexcryptica.com/explore\n\nIt now:\n- searches across generators, answer guides and tools from one input\n- groups results so the actual tool comes first, not a mention in passing\n- stays keyboard reachable so you do not leave the flow\n- lives on the explore page you already use to browse\n\nIt only indexes the public surfaces for now, so your private vault notes and campaign content will not show up there.\n\nWhat were you last hunting for on the site that took too long to find by browsing?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/announcements/release-36011198722-2.png)\n\n---\n*Posted automatically via release pipeline. Feedback and discussion welcome!*\n<!-- id:36011198722 -->",
-      "url": "https://codexcryptica.com/explore",
-      "image_url": "https://assets.codexcryptica.com/announcements/release-36011198722-2.png",
-      "source_id": "36011198722",
-      "status": "approved",
-      "created_at": 1790262495
-    },
-    {
       "id": "reddit-36014807190-20-new-campaign-craft-guides-specialists",
       "title": "20+ new Campaign Craft guides: specialists, spies, hackers, and keeping the party together",
       "body": "The common campaign stall I see is not rules, it is spotlight. One specialist takes over, the rogue has nothing to do in the social arc, or the party has no reason to stay together after level three.\n\nI wrote a Campaign Craft cluster \u2014 20+ new answer guides that deal with those craft problems in plain terms, with tables and before/after examples.\n\nBrowse the whole set: https://codexcryptica.com/answers\n\nA few of the new ones:\n- specialist spotlight and rogue/scout play that does not steal the session\n- investigator, spies, hackers, and cyberpunk role advice\n- diplomat talk and political intrigue you can run without a lecture\n- base-building, XP vs milestone, party cohesion options\n- in-person note-taking that actually survives the session\n\nThey are reference guides, not rules. I kept them system-neutral where I could and noted where a system does it differently.\n\nWhich specialist at your table is hardest to give a fair turn without sidelining everyone else?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/og/how-do-you-run-a-heist-in-a-tabletop-rpg.jpg)\n\n---\n*Posted automatically via release pipeline. Feedback and discussion welcome!*\n<!-- id:36014807190 -->",
@@ -120,6 +110,16 @@
       "source_id": "36014807190",
       "status": "approved",
       "created_at": 1790268580
+    },
+    {
+      "id": "reddit-36011198722-new-for-page-hubs-pirate-high-seas-and-s",
+      "title": "New For-page hubs: Pirate & High Seas and Starship Campaigns",
+      "body": "Running a nautical or starship campaign means pulling ships, crews, ports, contracts and hazards together from a dozen different pages.\n\nI put two new hubs in /for for that, one for Pirate & High Seas and one for Starship Campaigns. Each curates the generators, tables and guidance for that campaign style in one place.\n\nBrowse them here: https://codexcryptica.com/for\n\nEach hub brings together:\n- ship and crew generators with quirks, history and roles\n- ports, trade routes and contracts tuned for piracy, privateering or starship jobs\n- hazards, encounters and faction pressure for travel where the map is the mission\n- direct links to related answer guides and worked examples\n- curated tables you can roll at the table without digging through other genres\n\nThey are hubs, not a new ship combat system, so you still run the mechanics in your system of choice. I kept them focused on prep and jobs rather than trying to replace your rules.\n\nAre you running more salt and sail or vacuum and thrusters right now, and what kind of job or voyage do you need more support for?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/announcements/release-36011198722-5.png)\n\n---\n*Posted automatically via release pipeline. Feedback and discussion welcome!*\n<!-- id:36011198722 -->",
+      "url": "https://codexcryptica.com/for/pirate-and-high-seas",
+      "image_url": "https://assets.codexcryptica.com/announcements/release-36011198722-5.png",
+      "source_id": "36011198722",
+      "status": "approved",
+      "created_at": 1790269475
     }
   ]
 }
