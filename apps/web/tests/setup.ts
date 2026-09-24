@@ -26,7 +26,7 @@ const getStore = (instance: any) => {
 };
 
 // Ensure Storage class exists
-if (typeof Storage === "undefined") {
+if (typeof Storage === "undefined" || typeof window === "undefined") {
   (global as any).Storage = class Storage {
     get length() {
       return getStore(this).size;

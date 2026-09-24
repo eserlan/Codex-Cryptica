@@ -36,6 +36,23 @@ describe("LandingPageGraphPreview Layout & Positions", () => {
     }
   });
 
+  it.each([false, true])(
+    "keeps every node distinct in 7-step graphs (compact=%s)",
+    (compact) => {
+      const positions = getPositions(7, compact);
+      expect(positions).toHaveLength(7);
+      for (let i = 0; i < positions.length; i++) {
+        for (let j = i + 1; j < positions.length; j++) {
+          const d = distance(positions[i], positions[j]);
+          expect(
+            d,
+            `Nodes ${i} and ${j} are overlapping (distance: ${d}px)`,
+          ).toBeGreaterThan(60);
+        }
+      }
+    },
+  );
+
   it("verifies all registered landing page graphs render with non-overlapping node positions", () => {
     const pages = getAllLandingPages().filter((p) => p.exampleGraph);
     for (const page of pages) {

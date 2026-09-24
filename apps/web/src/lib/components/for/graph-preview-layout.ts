@@ -16,7 +16,7 @@ export const COMPACT_VIEWBOX: GraphViewBox = { width: 320, height: 400 };
 
 /**
  * Computes 2D viewBox node coordinates for landing page graph previews.
- * Supports up to 5 steps (4 spokes) and 6 steps (5 spokes) with non-overlapping positions.
+ * Supports up to 6 steps (5 spokes) and 7 steps (6 spokes) with non-overlapping positions.
  *
  * `compact` swaps in a taller, narrower layout (matching COMPACT_VIEWBOX) so relation
  * badges — which sit at the midpoint of each hub-to-node spoke — get more room to
@@ -39,6 +39,16 @@ export function getPositions(count: number, compact = false): GraphPosition[] {
         { cx: 75, cy: 322 }, // Bottom Left (Node 4)
       ];
     }
+    if (count <= 6) {
+      return [
+        hub,
+        { cx: 75, cy: 70 }, // Top Left (Node 1)
+        { cx: 245, cy: 70 }, // Top Right (Node 2)
+        { cx: 250, cy: 260 }, // Right (Node 3)
+        { cx: 160, cy: 370 }, // Bottom Center (Node 4)
+        { cx: 70, cy: 260 }, // Left (Node 5)
+      ];
+    }
     return [
       hub,
       { cx: 75, cy: 70 }, // Top Left (Node 1)
@@ -46,6 +56,7 @@ export function getPositions(count: number, compact = false): GraphPosition[] {
       { cx: 250, cy: 260 }, // Right (Node 3)
       { cx: 160, cy: 370 }, // Bottom Center (Node 4)
       { cx: 70, cy: 260 }, // Left (Node 5)
+      { cx: 160, cy: 45 }, // Top Center (Node 6)
     ];
   }
 
@@ -64,6 +75,16 @@ export function getPositions(count: number, compact = false): GraphPosition[] {
       { cx: 105, cy: 220 }, // Bottom Left (Node 4)
     ];
   }
+  if (count <= 6) {
+    return [
+      hub,
+      { cx: 85, cy: 65 }, // Top Left (Node 1)
+      { cx: 455, cy: 75 }, // Top Right (Node 2)
+      { cx: 445, cy: 215 }, // Bottom Right (Node 3)
+      { cx: 270, cy: 225 }, // Bottom Center (Node 4)
+      { cx: 95, cy: 215 }, // Bottom Left (Node 5)
+    ];
+  }
   return [
     hub,
     { cx: 85, cy: 65 }, // Top Left (Node 1)
@@ -71,5 +92,6 @@ export function getPositions(count: number, compact = false): GraphPosition[] {
     { cx: 445, cy: 215 }, // Bottom Right (Node 3)
     { cx: 270, cy: 225 }, // Bottom Center (Node 4)
     { cx: 95, cy: 215 }, // Bottom Left (Node 5)
+    { cx: 270, cy: 35 }, // Top Center (Node 6)
   ];
 }

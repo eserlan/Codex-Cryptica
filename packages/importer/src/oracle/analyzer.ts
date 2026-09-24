@@ -15,6 +15,13 @@ import { type IdGenerator, systemIdGenerator } from "@codex/runtime";
 const CHUNK_SIZE = 50000;
 const OVERLAP_SIZE = 2000;
 
+function throwIfAnalysisAborted(signal?: AbortSignal): void {
+  if (signal?.aborted) {
+    console.log("[OracleAnalyzer] Analysis aborted by user.");
+    throw new Error("Analysis Aborted");
+  }
+}
+
 export class OracleAnalyzer implements OracleAnalyzerEngine {
   private modelFactory: (
     modelName: string,
@@ -53,10 +60,7 @@ export class OracleAnalyzer implements OracleAnalyzerEngine {
     const completedSet = new Set(options?.completedIndices || []);
 
     for (let i = 0; i < chunks.length; i++) {
-      if (options?.signal?.aborted) {
-        console.log("[OracleAnalyzer] Analysis aborted by user.");
-        throw new Error("Analysis Aborted");
-      }
+      throwIfAnalysisAborted(options?.signal);
       const chunk = chunks[i];
 
       if (completedSet.has(i)) {
@@ -76,6 +80,8 @@ export class OracleAnalyzer implements OracleAnalyzerEngine {
       if (options?.onChunkActive) {
         options.onChunkActive(i);
       }
+
+      throwIfAnalysisAborted(options?.signal);
 
       if (options?.onProgress) {
         options.onProgress(i + 1, chunks.length);

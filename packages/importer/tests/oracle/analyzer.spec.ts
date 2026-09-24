@@ -248,5 +248,6 @@ describe("OracleAnalyzer", () => {
     await expect(analyzer.analyze(text, options)).rejects.toThrow(
       "Analysis Aborted",
     );
+    expect(mockGenerateContent).not.toHaveBeenCalled();
   });
 });

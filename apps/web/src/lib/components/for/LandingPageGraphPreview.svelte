@@ -295,6 +295,7 @@
         {@const pos = positions[i % positions.length]}
         {@const color = getNodeColor(step)}
         {@const isHub = i === 0}
+        {@const isTopSpoke = steps.length === 7 && i === 6}
         {@const isSelected = i === selectedIndex}
         {@const r = (isHub ? 38 : 28) * scale}
 
@@ -340,12 +341,12 @@
                The hub label sits above its node: relation badges land at the
                midpoint of every spoke, which crowds the space below the hub. -->
           <text
-            x={pos.cx}
-            y={pos.cy + (isHub ? -54 : 48) * scale}
+            x={pos.cx + (isTopSpoke ? 42 * scale : 0)}
+            y={pos.cy + (isHub ? -54 : isTopSpoke ? 4 : 48) * scale}
             font-family="var(--font-header, serif)"
             font-size={(isHub ? 21 : 17) * scale}
             font-weight="700"
-            text-anchor="middle"
+            text-anchor={isTopSpoke ? "start" : "middle"}
             fill={isSelected ? p.selectedLabel : "#ffffff"}
             style="filter: drop-shadow(0px 2px 6px rgba(0, 0, 0, 0.95));"
           >
