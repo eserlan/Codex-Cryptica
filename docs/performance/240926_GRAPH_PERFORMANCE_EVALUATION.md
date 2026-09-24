@@ -64,4 +64,4 @@ Consider adding a five-second, pointer-stationary idle check to [`large-graph.sp
 | [`110826_GRAPH_LARGE_VAULT_PERF.md`](./110826_GRAPH_LARGE_VAULT_PERF.md)                               | 11 Aug 2026   | Large-vault graph work and performance-mode behavior.        |
 | [`110826_LARGE_VAULT_TIMELINE.md`](./110826_LARGE_VAULT_TIMELINE.md)                                   | 11 Aug 2026   | Date-heavy Timeline fixture and benchmark.                   |
 
-The filenames use the date of their latest repository change in `ddmmyy` format; the assessment also retains its original investigation date in its own text where available.
+The filenames use the date of each document's latest substantive content change before this archive move, in `ddmmyy` format. The assessment also retains its original investigation date in its own text where available.
