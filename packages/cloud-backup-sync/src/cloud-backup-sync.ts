@@ -386,6 +386,8 @@ export interface VaultDeltaPayload {
   vaultTitle: string;
   upserts: { id: string }[];
   deletes: string[];
+  /** Complete set of currently referenced media, used to prune removed files. */
+  assetIds: string[];
   /** Present only when maps changed; replaces the backup's maps whole. */
   maps?: unknown[];
   /** Present only when canvases changed; replaces the backup's canvases whole. */

@@ -91,6 +91,7 @@ describe("incremental backup round trip (#3354)", () => {
         vaultTitle: "Round Trip",
         upserts: [local.e3, local.e77, local.fresh],
         deletes: ["e10"],
+        assetIds: [],
       },
       base,
     );
@@ -103,7 +104,12 @@ describe("incremental backup round trip (#3354)", () => {
     const second = await pushDeltaToCloudBackup(
       runtime,
       "v",
-      { vaultTitle: "Round Trip", upserts: [local.e3], deletes: ["fresh"] },
+      {
+        vaultTitle: "Round Trip",
+        upserts: [local.e3],
+        deletes: ["fresh"],
+        assetIds: [],
+      },
       base,
     );
     expect(second.ok).toBe(true);
@@ -127,7 +133,7 @@ describe("incremental backup round trip (#3354)", () => {
     const stale = await pushDeltaToCloudBackup(
       runtime,
       "v",
-      { vaultTitle: "Round Trip", upserts: [], deletes: ["a"] },
+      { vaultTitle: "Round Trip", upserts: [], deletes: ["a"], assetIds: [] },
       "1999-01-01T00:00:00.000Z",
     );
     expect(stale).toMatchObject({ ok: false, conflict: true });

@@ -23,8 +23,10 @@ import {
   cloudBackupBrowserStorage,
 } from "$lib/stores/cloud-backup.svelte";
 import {
+  assetIdForPath,
   buildCloudBackupDelta,
   buildCloudBackupPayload,
+  collectAssetPaths,
 } from "$lib/services/cloud-backup-payload";
 import { onDurableVaultChange } from "$lib/stores/vault/registry";
 import { vaultEventBus } from "$lib/stores/vault/events.svelte";
@@ -234,6 +236,10 @@ export function initializeGlobalListeners(_calendarStore?: any) {
             readFullEntity: (id: string) => vault.readFullEntity(id),
           },
           uploadedAssetIds,
+          referencedAssetIds: collectAssetPaths(
+            Object.values(vault.entities ?? {}) as never[],
+            mapRegistry.allMaps ?? [],
+          ).map(assetIdForPath),
           signal,
         },
         {

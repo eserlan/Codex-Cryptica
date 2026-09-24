@@ -247,6 +247,8 @@ export interface CloudBackupDeltaDeps {
   hydrateEntities: EntityHydrator;
   /** Asset ids already uploaded; a delta never carries media (see below). */
   uploadedAssetIds: ReadonlySet<string>;
+  /** Current asset references across the vault, used to prune removed media. */
+  referencedAssetIds: readonly string[];
   signal?: AbortSignal;
 }
 
@@ -254,6 +256,8 @@ export interface CloudBackupDelta {
   vaultTitle: string;
   upserts: LocalEntity[];
   deletes: string[];
+  /** Full current reference set; the worker prunes assets absent from it. */
+  assetIds: string[];
   maps?: unknown[];
   canvases?: unknown[];
 }
@@ -295,6 +299,7 @@ export async function buildCloudBackupDelta(
   return {
     vaultTitle,
     ...entities,
+    assetIds: [...deps.referencedAssetIds],
     ...(maps ? { maps } : {}),
     ...(changes.some((change) => change.kind === "canvas")
       ? { canvases: [...(content.canvases ?? [])] }

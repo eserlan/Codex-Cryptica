@@ -438,6 +438,7 @@ describe("buildCloudBackupDelta (#3354)", () => {
           },
         },
         uploadedAssetIds: new Set<string>(["known.png"]),
+        referencedAssetIds: ["known.png"],
       },
     };
   };
@@ -463,6 +464,7 @@ describe("buildCloudBackupDelta (#3354)", () => {
       "full e3",
     ]);
     expect(delta?.deletes).toEqual([]);
+    expect(delta?.assetIds).toEqual(["known.png"]);
     expect(delta).not.toHaveProperty("maps");
     expect(delta).not.toHaveProperty("canvases");
   });
@@ -494,6 +496,20 @@ describe("buildCloudBackupDelta (#3354)", () => {
     expect(delta?.deletes).toEqual(["e0", "never-existed"]);
     expect(delta?.upserts).toEqual([]);
     expect(vault.reads).toEqual([]);
+  });
+
+  it("sends the current asset references so deleted media is pruned", async () => {
+    const vault = vaultOf(0);
+    vault.deps.referencedAssetIds = ["still-used.png"];
+
+    const delta = await buildCloudBackupDelta(
+      "Vault",
+      [change("deleted", true)],
+      vault.deps as never,
+    );
+
+    expect(delta?.deletes).toEqual(["deleted"]);
+    expect(delta?.assetIds).toEqual(["still-used.png"]);
   });
 
   it("includes maps and canvases whole only when they changed", async () => {

@@ -1076,6 +1076,31 @@ describe("POST /delta (#3354)", () => {
     expect(bundle.entities).toEqual([{ id: "e1", title: "Alder Cass" }]);
   });
 
+  it("prunes assets that are no longer referenced after a delta", async () => {
+    const env = makeEnv();
+    const { backupId, ownerCode, manifest } = await enableAndCommit(env);
+    await env.BUCKET.put(
+      getAssetKey(backupId, "orphan.png"),
+      new Uint8Array([1]),
+    );
+    await env.BUCKET.put(
+      getAssetKey(backupId, "kept.png"),
+      new Uint8Array([2]),
+    );
+
+    const res = await handleCloudBackupDelta(
+      post(delta(manifest.lastPushedAt, { assetIds: ["kept.png"] }), ownerCode),
+      env,
+      backupId,
+    );
+
+    expect(res.status).toBe(200);
+    expect(env.BUCKET.store.has(getAssetKey(backupId, "orphan.png"))).toBe(
+      false,
+    );
+    expect(env.BUCKET.store.has(getAssetKey(backupId, "kept.png"))).toBe(true);
+  });
+
   it("counts bundle-section growth against the vault size limit", async () => {
     const env = makeEnv();
     const { backupId, ownerCode, manifest } = await enableAndCommit(env);
