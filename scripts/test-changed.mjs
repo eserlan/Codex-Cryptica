@@ -104,6 +104,15 @@ export function groupTestsByWorkspace(testFiles) {
   return groups;
 }
 
+/**
+ * Playwright E2E specs live in apps/web/tests and run in their own CI job.
+ * Handing one to vitest fails with "No test files found", so they are not
+ * unit-test targets.
+ */
+export function isUnitTestFile(file) {
+  return !file.replace(/\\/g, "/").startsWith("apps/web/tests/");
+}
+
 export function runTestChanged({
   base,
   head = "HEAD",
@@ -119,7 +128,7 @@ export function runTestChanged({
     }
   }
 
-  const allTestFiles = Array.from(testFilesSet);
+  const allTestFiles = Array.from(testFilesSet).filter(isUnitTestFile);
 
   if (allTestFiles.length === 0) {
     console.log("✨ No test files affected by changed files.");
