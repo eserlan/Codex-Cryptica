@@ -1,5 +1,5 @@
 {
-  "updated_at": 1790239404,
+  "updated_at": 1790240973,
   "candidates": [
     {
       "id": "reddit-35104395212-i-put-every-superhero-generator-in-one-p",
@@ -92,14 +92,14 @@
       "created_at": 1790200920
     },
     {
-      "id": "reddit-35976242466-i-built-a-holiday-festival-generator-so-",
-      "title": "I built a Holiday & Festival Generator so my calendars stop feeling like Earth with different names",
-      "body": "Most of my worlds had detailed maps and pantheons, but the calendar was always thin. A generic harvest festival with no history behind it, no tension about who keeps it, and nothing for players to do except watch the locals celebrate.\n\nI built a Holiday & Festival Generator that treats each observance as cultural fallout \u2014 beliefs, history, climate, and local conflicts shaping why the day matters and who cares about it.\n\nTry it here: https://codexcryptica.com/generators/holiday\n\nIt can generate:\n\n- a single observance or a full calendar where dates connect and overlap\n- traditions, taboos, food, dress, and who celebrates versus who avoids it\n- hook-ready situations and named people tied to the day so you can drop it into a session\n- holy days, fasts, memorials, market fairs, rites of passage, and contested or secret traditions\n\nI kept the output structured as short bullet lore so streamed previews stay readable. The tradeoff is it is fast to scan at prep time, but you will want to add your own sensory detail before it hits the table.\n\nWhat is one festival or memorial in your world that would change how a session plays if the party happened to arrive on that day?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/announcements/release-35976242466-0.png)\n\n---\n*Posted automatically via release pipeline. Feedback and discussion welcome!*\n<!-- id:35976242466 -->",
-      "url": "https://codexcryptica.com/generators/holiday",
-      "image_url": "https://assets.codexcryptica.com/announcements/release-35976242466-0.png",
+      "id": "reddit-35976242466-i-built-an-ai-rpg-idea-developer-to-test",
+      "title": "I built an AI RPG Idea Developer to test my own half-baked campaign sparks before I prep them",
+      "body": "You know the half-formed idea you keep in a note. \"A library that collects stolen memories\" or \"a cult that thinks the gods already left.\" You can feel it might work, but you cannot tell if it has pressure, clear choices for players, or just vibes.\n\nI built an AI RPG Idea Developer that takes your own premise and develops it instead of replacing it \u2014 what is already strong, where the tension lives, and what your players would actually do.\n\nTry it here: https://codexcryptica.com/tools/idea-developer\n\nIt gives you:\n\n- what is already interesting and what is still vague in your premise\n- a central question, the pressure bearing down, and the people who care\n- concrete things players could do and what happens if they try them\n- questions back to you to tighten the concept before you write further\n- follow-up turns where you can answer, redirect, or switch between Assess and Develop, plus links to generators for the next piece\n\nIt is AI-guided and per-browser limited, and it works best with a specific spark. Broad prompts like \"a cool dungeon\" come back broad. It stays in your tab until you save it, but it does call the model to develop the idea, which is worth knowing before you paste something private.\n\nWhat is one campaign spark you have been sitting on that you are not sure holds up yet?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/announcements/release-35976242466-1.png)\n\n---\n*Posted automatically via release pipeline. Feedback and discussion welcome!*\n<!-- id:35976242466 -->",
+      "url": "https://codexcryptica.com/tools/idea-developer",
+      "image_url": "https://assets.codexcryptica.com/announcements/release-35976242466-1.png",
       "source_id": "35976242466",
       "status": "approved",
-      "created_at": 1790239404
+      "created_at": 1790240973
     }
   ]
 }
