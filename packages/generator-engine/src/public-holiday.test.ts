@@ -7,6 +7,12 @@ import {
 } from "./public-holiday";
 
 describe("public holiday generator", () => {
+  it("asks for string content and lore so previews can stream them", () => {
+    const { userMessage } = buildHolidayPrompt({});
+    expect(userMessage).toContain("single Markdown string");
+    expect(userMessage).toContain("never a nested object or array");
+  });
+
   it("resolves one observance and calendar sizes from the form", () => {
     expect(
       resolveHoliday({ setSize: "A calendar of 10 observances" }).count,
