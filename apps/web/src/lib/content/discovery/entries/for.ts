@@ -255,7 +255,7 @@ export const forEntries: DiscoveryEntryInput[] = [
     audience: "Game masters running post-apocalyptic and wasteland campaigns",
     userJob: "adopt-workflow",
     uniqueValue:
-      "A survival-campaign workflow connecting settlements, rival factions, radiation zones, mutant threats, and the scarce resources that make each group depend on or endanger another.",
+      "A survival-campaign workflow connecting settlements, rival factions, shifting hazards, and scarce resources to show how each dependency exposes one group to another.",
     parentCluster: "genre-guides",
     relatedIntents: ["hub-post-apocalyptic", "example-silo-zero-seven"],
     indexable: true,
