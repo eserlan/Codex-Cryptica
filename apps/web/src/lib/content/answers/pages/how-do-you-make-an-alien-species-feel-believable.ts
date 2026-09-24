@@ -154,13 +154,6 @@ export const howDoYouMakeAnAlienSpeciesFeelBelievable: AnswerConfigInput = {
       "answer-worldbuilding-from-scratch",
       "answer-fictional-language",
     ],
-    acknowledgedOverlap: [
-      {
-        with: "answer-constitutional-crisis-or-coup",
-        reason:
-          "This page designs the biology and culture of a species; the constitutional crisis page designs the institutional fault lines of a government. They share the word believable but serve different worldbuilding jobs.",
-      },
-    ],
   },
   seo: {
     title: "How do you make an alien species feel believable? | Codex Cryptica",

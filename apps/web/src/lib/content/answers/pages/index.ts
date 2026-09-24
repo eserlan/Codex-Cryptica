@@ -1,7 +1,6 @@
 import { AnswerConfigSchema, type AnswerConfig } from "../schema";
 import { canYouPlayATabletopRpgIn30MinuteSessions } from "./can-you-play-a-tabletop-rpg-in-30-minute-sessions";
 import { howDoIBalanceRpgCombatEncountersWithoutATpk } from "./how-do-i-balance-rpg-combat-encounters-without-a-tpk";
-import { howDoIBuildABelievableConstitutionalCrisisOrCoup } from "./how-do-i-build-a-believable-constitutional-crisis-or-coup";
 import { howDoIExpandASimpleRpgCampaignIdea } from "./how-do-i-expand-a-simple-rpg-campaign-idea";
 import { howDoIFindATabletopRpgGroupToPlayWith } from "./how-do-i-find-a-tabletop-rpg-group-to-play-with";
 import { howDoIGetMyRpgPartyToWorkTogether } from "./how-do-i-get-my-rpg-party-to-work-together";
@@ -103,7 +102,6 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
   [
     canYouPlayATabletopRpgIn30MinuteSessions,
     howDoIBalanceRpgCombatEncountersWithoutATpk,
-    howDoIBuildABelievableConstitutionalCrisisOrCoup,
     howDoIExpandASimpleRpgCampaignIdea,
     howDoIFindATabletopRpgGroupToPlayWith,
     howDoIGetMyRpgPartyToWorkTogether,

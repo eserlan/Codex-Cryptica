@@ -159,7 +159,6 @@ export const howDoYouTrackFactionTurnsBetweenRpgSessions: AnswerConfigInput = {
     "how-do-you-run-a-scene-with-multiple-npcs",
     "what-rpg-works-for-political-intrigue-and-faction-play",
     "how-do-i-run-political-intrigue-and-faction-play",
-    "how-do-i-build-a-believable-constitutional-crisis-or-coup",
   ],
   discovery: {
     id: "answer-track-faction-turns-between-sessions",
