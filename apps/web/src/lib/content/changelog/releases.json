@@ -1,5 +1,21 @@
 [
   {
+    "version": "0.33.0",
+    "title": "The Generators & Campaign Craft Update",
+    "date": "2026-09-24",
+    "type": "minor",
+    "highlights": [
+      "A Bigger Generator Library: Create rumours, heists, constellations, personalities, holidays and festivals, and superhero stories, with more ways to bring your setting to life.",
+      "A Better Way to Find Generators: Browse clearer categories, favourite the tools you use most, and search quickly from your campaign workspace.",
+      "My Stuff: Keep generated creations in a personal library, then share them with a link or remix a shared result for your own campaign.",
+      "Cloud Save Sync: When Cloud Save is enabled, changes to your vault sync automatically, helping keep your backup up to date.",
+      "New Worlds to Explore: Build pirate adventures and starship campaigns with dedicated content packs, or use the Superhero theme and generators for comic-book worlds.",
+      "AI RPG Idea Developer: Turn a rough campaign premise into a more developed adventure direction while keeping your original idea at the centre.",
+      "Partner Generator Handoffs: Send characters, creatures, and other creations to compatible tools, so you can keep building without starting over.",
+      "More Table-Ready Guidance: Explore new practical RPG guides for campaign roles, investigation, political intrigue, character advancement, and choosing a game system, alongside faster search across Explore."
+    ]
+  },
+  {
     "version": "0.32.0",
     "title": "The Solo Adventure & Cloud Backup Update",
     "date": "2026-09-03",
