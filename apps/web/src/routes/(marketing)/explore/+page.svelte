@@ -6,6 +6,7 @@
   import SeoHead from "$lib/components/seo/SeoHead.svelte";
   import { buildAbsoluteUrl } from "$lib/seo/site";
   import ExploreLabelResults from "$lib/components/explore/ExploreLabelResults.svelte";
+  import ExploreSearch from "$lib/components/explore/ExploreSearch.svelte";
   import ExploreSectionList from "$lib/components/explore/ExploreSectionList.svelte";
   import { EXPLORE_SECTIONS } from "$lib/components/explore/explore-sections";
   import { themeStore } from "$lib/stores/theme.svelte";
@@ -73,6 +74,8 @@
   // A ?label= filter view is dynamic and thin by construction, so it stays
   // out of the crawl graph (mirrors /worlds's own dynamic/unindexed status).
   const isLabelView = $derived(Boolean(data.label));
+
+  let searchQuery = $state("");
 </script>
 
 <svelte:head>
@@ -140,7 +143,10 @@
         {cleanBase}
       />
     {:else}
-      <ExploreSectionList sections={EXPLORE_SECTIONS} {cleanBase} />
+      <ExploreSearch {cleanBase} bind:query={searchQuery} />
+      {#if !searchQuery.trim()}
+        <ExploreSectionList sections={EXPLORE_SECTIONS} {cleanBase} />
+      {/if}
     {/if}
 
     <div class="flex justify-center">
