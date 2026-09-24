@@ -1,5 +1,5 @@
 {
-  "updated_at": 1790262495,
+  "updated_at": 1790263995,
   "candidates": [
     {
       "id": "reddit-35104395212-i-put-every-superhero-generator-in-one-p",
@@ -102,16 +102,6 @@
       "created_at": 1790242590
     },
     {
-      "id": "reddit-36014807190-holiday-festival-generator-festivals-tha",
-      "title": "Holiday & Festival Generator: festivals that actually get used at the table",
-      "body": "Most settlement festivals end up as \"there is a harvest feast\" and then nothing happens. I kept skipping them in prep because they had no work for the players to do.\n\nI built a Holiday & Festival Generator that makes a complete festival for any settlement or calendar \u2014 not just a name and date.\n\nIt is on the generators hub alongside the rest of the toolkit: https://codexcryptica.com/generators\n\nWhat it gives you:\n- traditions and rites with who leads them and who argues about them\n- foods, drinks, and small crafts tied to the place that made them\n- taboos, costs, or duties that create friction on the day itself\n- two to three adventure hooks that only work during the festival\n- a one-paragraph framing you can drop straight into session notes\n\nTradeoff I kept: it does not sync with your in-app calendar yet. You get the festival as text to place yourself. That felt more useful than a half-automatic date that breaks other timelines.\n\nWhat festival at your table actually pulled players in instead of just flavour text?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/announcements/release-36014807190-0.png)\n\n---\n*Posted automatically via release pipeline. Feedback and discussion welcome!*\n<!-- id:36014807190 -->",
-      "url": "https://codexcryptica.com/generators/holiday-festival-generator",
-      "image_url": "https://assets.codexcryptica.com/announcements/release-36014807190-0.png",
-      "source_id": "36014807190",
-      "status": "approved",
-      "created_at": 1790261563
-    },
-    {
       "id": "reddit-36011198722-site-search-on-explore-find-any-generato",
       "title": "Site Search on Explore: find any generator, answer or tool instantly",
       "body": "I was scrolling through sections to find the right generator and guessing which hub it lived in. That was slower than it needed to be.\n\nI added site search to /explore so you can find any generator, answer guide or tool instantly instead of browsing manually.\n\nTry it here: https://codexcryptica.com/explore\n\nIt now:\n- searches across generators, answer guides and tools from one input\n- groups results so the actual tool comes first, not a mention in passing\n- stays keyboard reachable so you do not leave the flow\n- lives on the explore page you already use to browse\n\nIt only indexes the public surfaces for now, so your private vault notes and campaign content will not show up there.\n\nWhat were you last hunting for on the site that took too long to find by browsing?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/announcements/release-36011198722-2.png)\n\n---\n*Posted automatically via release pipeline. Feedback and discussion welcome!*\n<!-- id:36011198722 -->",
@@ -120,6 +110,16 @@
       "source_id": "36011198722",
       "status": "approved",
       "created_at": 1790262495
+    },
+    {
+      "id": "reddit-36014807190-ai-rpg-idea-developer-turn-a-one-line-sp",
+      "title": "AI RPG Idea Developer: turn a one-line spark into a runnable pitch",
+      "body": "I get a lot of \"cool concept, no session\" ideas. A line like \"haunted lighthouse that moves\" sits in my notes for months because turning it into something I can run takes an hour I do not have that night.\n\nI added an AI RPG Idea Developer inside the app that takes a single spark and fleshes it into a runnable campaign idea you can keep working on.\n\nYou will find it in the app at https://codexcryptica.com/oracle \u2014 it runs off the same vault context the other tools use.\n\nWhat it hands back:\n- a premise with stakes, location, and who is already involved\n- 3-4 factions or NPCs with what they want and what they hide\n- an opening scene and two follow-on complications\n- a save-to-vault draft so it is not lost after you close the tab\n\nIt is deliberately narrow. It helps you from spark to playable outline, not from spark to fully written adventure. I would rather you get three usable pitches than one generic 10-page doc.\n\nWhat one-liner have you been stuck on that you wish actually became a session?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/screenshots/generator-adventure-idea-generator.jpg)\n\n---\n*Posted automatically via release pipeline. Feedback and discussion welcome!*\n<!-- id:36014807190 -->",
+      "url": "https://codexcryptica.com/generators/adventure-idea-generator",
+      "image_url": "https://assets.codexcryptica.com/screenshots/generator-adventure-idea-generator.jpg",
+      "source_id": "36014807190",
+      "status": "approved",
+      "created_at": 1790263994
     }
   ]
 }
