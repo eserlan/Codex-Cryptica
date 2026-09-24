@@ -60,10 +60,32 @@ export const AUTO_SYNC_DEBOUNCE_MS = 5000;
 /** Wait before retrying a failed auto-push (default 30s). */
 export const AUTO_SYNC_RETRY_MS = 30000;
 
+interface SnapshotOutcome {
+  ok: boolean;
+  notEnabled?: boolean;
+  conflict?: boolean;
+  remoteAt?: string | null;
+  error?: string;
+}
+
+const BACKUP_OFF: SnapshotOutcome = {
+  ok: false,
+  notEnabled: true,
+  error: "Cloud backup is off.",
+};
+
 export interface CloudBackupDeps {
   runtime: CloudBackupRuntime;
-  /** Builds the whole-vault snapshot. Injected so this store stays vault-agnostic. */
-  buildPayload: (vaultId: string) => Promise<VaultBundlePayload>;
+  /**
+   * Builds the whole-vault snapshot. Injected so this store stays
+   * vault-agnostic. The signal aborts when backup is disabled mid-build, so a
+   * large vault does not keep reading every entity for a push that will never
+   * be sent.
+   */
+  buildPayload: (
+    vaultId: string,
+    signal?: AbortSignal,
+  ) => Promise<VaultBundlePayload>;
   activeVaultId: () => string | null;
   /**
    * Vault-writing side of restore. Injected rather than imported so this store
@@ -124,6 +146,10 @@ export class CloudBackupStore {
 
   private deps: CloudBackupDeps | null = null;
   private pushing = false;
+  /** The in-flight snapshot build, aborted by `disable`. */
+  private activeBuild: AbortController | null = null;
+  /** Lets `disable` persist its off record after any cancelled push settles. */
+  private activePush: Promise<SnapshotOutcome> | null = null;
   private autoPending = false;
   private autoTimer: ReturnType<typeof setTimeout> | null = null;
   private autoListenersAttached = false;
@@ -200,6 +226,10 @@ export class CloudBackupStore {
   async disable(vaultId: string) {
     // Disabling stops automation cold: no pending push may survive it, or
     // "off" would stop meaning "nothing leaves the device".
+    this.activeBuild?.abort();
+    await this.activePush?.catch(() => undefined);
+    this.activeBuild = null;
+    this.activePush = null;
     this.clearAutoTimer();
     this.autoPending = false;
     this.autoConflictRemoteAt = null;
@@ -487,6 +517,7 @@ export class CloudBackupStore {
 
   private async completeAutoSync(vaultId: string): Promise<boolean> {
     const out = await this.pushSnapshot(vaultId, { guarded: true });
+    if (out.notEnabled) return this.stopAutoSyncBackupOff();
     if (out.ok) {
       this.autoPending = false;
       this.autoState = "saved";
@@ -494,19 +525,32 @@ export class CloudBackupStore {
       this.errorMessage = null;
       return true;
     }
-    if (out.conflict) {
-      this.autoPending = false;
-      this.autoState = "conflict";
-      this.autoConflictRemoteAt = out.remoteAt ?? null;
-      this.errorMessage = out.error ?? "Cloud backup failed.";
-      return false;
-    }
+    if (out.conflict) return this.pauseAutoSyncOnConflict(out);
     // Ordinary failure: local data is untouched; stay pending and retry
     // with backoff. Offline flips to the offline state instead.
     this.autoPending = true;
     this.autoState = onlineStatus.current ? "retrying" : "offline";
     this.errorMessage = out.error ?? "Cloud backup failed.";
     this.scheduleAutoPush(this.deps?.retryMs ?? AUTO_SYNC_RETRY_MS);
+    return false;
+  }
+
+  /**
+   * Off is a stop, not a failure: retrying would rebuild the whole-vault
+   * snapshot on a timer for a push that can never be sent.
+   */
+  private stopAutoSyncBackupOff(): false {
+    this.autoPending = false;
+    this.autoState = "idle";
+    this.status = "off";
+    return false;
+  }
+
+  private pauseAutoSyncOnConflict(out: SnapshotOutcome): false {
+    this.autoPending = false;
+    this.autoState = "conflict";
+    this.autoConflictRemoteAt = out.remoteAt ?? null;
+    this.errorMessage = out.error ?? "Cloud backup failed.";
     return false;
   }
 
@@ -626,15 +670,40 @@ export class CloudBackupStore {
   private async pushSnapshot(
     vaultId: string,
     opts: { guarded: boolean },
-  ): Promise<{
-    ok: boolean;
-    notEnabled?: boolean;
-    conflict?: boolean;
-    remoteAt?: string | null;
-    error?: string;
-  }> {
+  ): Promise<SnapshotOutcome> {
+    const push = new AbortController();
+    this.activeBuild = push;
+    const operation = (async () => {
+      // Check before building: the snapshot reads every entity, so learning that
+      // backup is off only at upload time costs a whole-vault read.
+      const record = await getLocalCloudBackupRecord(
+        this.deps!.runtime,
+        vaultId,
+      );
+      if (push.signal.aborted || !record?.enabled) return BACKUP_OFF;
+
+      return this.uploadSnapshot(vaultId, opts, push.signal);
+    })();
+    this.activePush = operation;
+    try {
+      const out = await operation;
+      return push.signal.aborted ? BACKUP_OFF : out;
+    } finally {
+      if (this.activeBuild === push) {
+        this.activeBuild = null;
+        this.activePush = null;
+      }
+    }
+  }
+
+  private async uploadSnapshot(
+    vaultId: string,
+    opts: { guarded: boolean },
+    signal: AbortSignal,
+  ): Promise<SnapshotOutcome> {
     const deps = this.deps!;
-    const payload = await deps.buildPayload(vaultId);
+    const payload = await deps.buildPayload(vaultId, signal);
+    if (signal.aborted) return BACKUP_OFF;
     this.skippedAssets =
       (payload as { skippedAssets?: string[] }).skippedAssets ?? [];
     this.skippedEntities =
@@ -658,6 +727,7 @@ export class CloudBackupStore {
       {
         skipAssetUploadIds,
         ...(opts.guarded ? { expectLastPushedAt: this.lastPushedAt } : {}),
+        signal,
       },
     );
     if (!result.ok) {
@@ -668,8 +738,7 @@ export class CloudBackupStore {
         error: result.error,
       };
     }
-    if (!result.value)
-      return { ok: false, notEnabled: true, error: "Cloud backup is off." };
+    if (!result.value) return BACKUP_OFF;
     this.hashCache = freshHashes;
     this.saveHashCache(vaultId);
     this.lastPushedAt = result.value.lastPushedAt;

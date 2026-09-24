@@ -135,6 +135,54 @@ describe("pushVaultToCloudBackup", () => {
     expect(calls).toHaveLength(0);
   });
 
+  it("aborts an in-flight asset upload without restoring the enabled record", async () => {
+    const { runtime, calls } = await enabled();
+    const controller = new AbortController();
+    let markStarted: () => void = () => {};
+    let finishUpload: () => void = () => {};
+    const started = new Promise<void>((resolve) => (markStarted = resolve));
+    runtime.fetch = vi.fn(async (url: string, init?: any) => {
+      calls.push({ url, init });
+      markStarted();
+      await new Promise<void>((resolve) => (finishUpload = resolve));
+      return {
+        ok: true,
+        status: 200,
+        json: async () => ({ manifest: MANIFEST }),
+        arrayBuffer: async () => new ArrayBuffer(0),
+      };
+    }) as any;
+
+    const pushing = pushVaultToCloudBackup(
+      runtime,
+      "v-1",
+      {
+        ...PAYLOAD,
+        assets: [
+          {
+            assetId: "portrait.png",
+            bytes: new Uint8Array([1]),
+            mimeType: "image/png",
+          },
+        ],
+      },
+      undefined,
+      { signal: controller.signal },
+    );
+    await started;
+    expect(calls[0].init.signal).toBe(controller.signal);
+
+    await disableCloudBackup(runtime, "v-1");
+    controller.abort();
+    finishUpload();
+
+    expect(await pushing).toEqual({ ok: true, value: null });
+    expect(calls).toHaveLength(1);
+    expect((await getLocalCloudBackupRecord(runtime, "v-1"))?.enabled).toBe(
+      false,
+    );
+  });
+
   it("reports a failure as an error state rather than throwing", async () => {
     // The caller is on the save path: an exception there would be the bug.
     const { runtime } = await enabled();

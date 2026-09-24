@@ -294,6 +294,10 @@ export class EntityStore {
     return this.loader.internalLoadContent(id);
   }
 
+  readFullEntity(id: string): Promise<LocalEntity | null> {
+    return this.loader.readFullEntity(id);
+  }
+
   isContentLoaded(id: string) {
     return this.loader.isContentLoaded(id);
   }
