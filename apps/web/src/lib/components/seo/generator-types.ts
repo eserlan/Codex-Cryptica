@@ -42,6 +42,7 @@ export type ValidSlug =
   | "creature"
   | "encounter"
   | "heist"
+  | "holiday"
   | "personality";
 
 export type SlugMetaEntry = {

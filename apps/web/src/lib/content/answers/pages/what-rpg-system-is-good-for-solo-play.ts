@@ -204,6 +204,7 @@ export const whatRpgSystemIsGoodForSoloPlay: AnswerConfigInput = {
     "how-do-you-track-unresolved-plot-hooks-in-an-rpg-campaign",
     "can-you-play-a-tabletop-rpg-in-30-minute-sessions",
     "what-rpg-feels-like-dnd-but-is-simpler",
+    "what-ttrpgs-let-you-build-and-upgrade-a-base",
   ],
   discovery: {
     id: "answer-solo-rpg-system-selection",
@@ -226,6 +227,7 @@ export const whatRpgSystemIsGoodForSoloPlay: AnswerConfigInput = {
       "answer-system-selection",
       "answer-dungeon-crawl-system-selection",
       "for-solo-worldbuilding",
+      "answer-base-building-system-selection",
     ],
     acknowledgedOverlap: [
       {
@@ -247,6 +249,11 @@ export const whatRpgSystemIsGoodForSoloPlay: AnswerConfigInput = {
         with: "answer-simpler-dnd-alternative",
         reason:
           "That page evaluates group systems for simpler fantasy adventure; this page evaluates systems and emulators specifically for solo play.",
+      },
+      {
+        with: "answer-base-building-system-selection",
+        reason:
+          "The base-building answer evaluates games by persistent home and upgrade rules; this page evaluates systems for solitary play without a GM or group.",
       },
     ],
   },

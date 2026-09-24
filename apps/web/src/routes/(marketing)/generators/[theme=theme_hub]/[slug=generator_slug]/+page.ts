@@ -48,6 +48,7 @@ const validSlugs = new Set([
   "creature",
   "encounter",
   "heist",
+  "holiday",
   "personality",
 ]);
 

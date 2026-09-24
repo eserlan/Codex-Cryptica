@@ -587,6 +587,117 @@ describe("AI policy (US2)", () => {
     expect(d.labels).toContain("Witch");
   });
 
+  it("preserves valid AI-generated observances in campaign drafts", async () => {
+    const observances = [
+      {
+        name: "Lantern Tide",
+        type: "Memorial",
+        when: "The first calm night after the autumn equinox",
+        observers: "Harbour families",
+        traditions: "Carry covered lanterns to the quay",
+        tension: "A new ledger disputes the official account.",
+      },
+    ];
+    const aiGateway = {
+      complete: vi.fn(async () =>
+        JSON.stringify({
+          title: "Lantern Tide",
+          summary: "A harbour remembrance.",
+          lore: "The rope crews kept the gate open.",
+          labels: ["observance"],
+          observances,
+        }),
+      ),
+    };
+    const svc = new CampaignGeneratorService({
+      aiPolicy: { isEnabled: true, isAvailable: true },
+      aiGateway,
+    });
+
+    const generated = await svc.generateDraft(run("holiday", { useAI: true }));
+
+    expect(generated.observances).toEqual(observances);
+  });
+
+  it("normalizes structured holiday AI output before creating a campaign draft", async () => {
+    const aiGateway = {
+      complete: vi.fn(async () =>
+        JSON.stringify({
+          title: "The First Spill of Neshur",
+          summary: "A spring water-opening festival.",
+          content: {
+            overview: "A festival shaped by shared cisterns and terrace labor.",
+            expandedObservance: {
+              name: "The First Spill",
+              type: "Seasonal civic festival",
+              traditions: [
+                "Open the measured sluice.",
+                "Record repair pledges.",
+              ],
+            },
+          },
+          lore: { setting: "Neshur depends on shared meltwater." },
+          observances: [
+            {
+              name: "The First Spill",
+              type: "Seasonal civic festival",
+              when: "The first reliable thaw",
+              observers: ["Channel crews", "Terrace farmers"],
+              traditions: [
+                "Open the measured sluice.",
+                "Record repair pledges.",
+              ],
+              tension: "A lower channel is leaking.",
+              taboos: ["Do not take water before the measure."],
+            },
+          ],
+        }),
+      ),
+    };
+    const svc = new CampaignGeneratorService({
+      aiPolicy: { isEnabled: true, isAvailable: true },
+      aiGateway,
+    });
+
+    const generated = await svc.generateDraft(run("holiday", { useAI: true }));
+
+    expect(generated.title).toBe("The First Spill of Neshur");
+    expect(generated.content).toContain("shared cisterns and terrace labor");
+    expect(generated.content).toContain("## Calendar overview");
+    expect(generated.content).toContain("### The First Spill");
+    expect(generated.content).toContain("#### Traditions");
+    expect(generated.content).toContain("- Open the measured sluice.");
+    expect(generated.lore).toContain("Neshur depends on shared meltwater.");
+    expect(generated.observances?.[0]?.observers).toBe(
+      "Channel crews; Terrace farmers",
+    );
+    expect(generated.observances?.[0]?.traditions).toContain(
+      "Record repair pledges.",
+    );
+  });
+
+  it("drops malformed AI observances instead of trusting their shape", async () => {
+    const aiGateway = {
+      complete: vi.fn(async () =>
+        JSON.stringify({
+          title: "Lantern Tide",
+          summary: "A harbour remembrance.",
+          lore: "The rope crews kept the gate open.",
+          labels: ["observance"],
+          observances: [{ name: "Incomplete entry", tension: 42 }],
+        }),
+      ),
+    };
+    const svc = new CampaignGeneratorService({
+      aiPolicy: { isEnabled: true, isAvailable: true },
+      aiGateway,
+    });
+
+    const generated = await svc.generateDraft(run("holiday", { useAI: true }));
+
+    expect(generated.observances).toBeUndefined();
+  });
+
   it("parses the internal dungeon generator's AI-specific response shape", async () => {
     const aiGateway = {
       complete: vi.fn(async () =>
@@ -1732,6 +1843,55 @@ describe("generateDraftStream", () => {
     for await (const event of gen) events.push(event);
     return events;
   }
+
+  it("turns structured holiday completion payloads into a final campaign draft", async () => {
+    const json = JSON.stringify({
+      title: "The First Spill of Neshur",
+      summary: "A spring water-opening festival.",
+      content: {
+        overview: "A festival shaped by shared cisterns.",
+        expandedObservance: { traditions: ["Open the measured sluice."] },
+      },
+      lore: { setting: "Neshur depends on shared meltwater." },
+      observances: [
+        {
+          name: "The First Spill",
+          type: "Seasonal civic festival",
+          when: "The first reliable thaw",
+          observers: ["Channel crews", "Terrace farmers"],
+          traditions: ["Open the measured sluice."],
+          tension: "A lower channel is leaking.",
+        },
+      ],
+    });
+    const completeStream = fakeCompleteStream(
+      json,
+      "The First Spill of Neshur",
+    );
+    const svc = new CampaignGeneratorService({
+      aiPolicy: { isEnabled: true, isAvailable: true },
+      aiGateway: { complete: vi.fn(), completeStream },
+    });
+
+    const events = await collect(
+      svc.generateDraftStream(run("holiday", { useAI: true })),
+    );
+    const finalDraft = events.find((event) => event.type === "draft")?.draft as
+      | {
+          title: string;
+          content?: string;
+          lore?: string;
+          observances?: Array<{ traditions: string }>;
+        }
+      | undefined;
+
+    expect(finalDraft?.title).toBe("The First Spill of Neshur");
+    expect(finalDraft?.content).toContain("shared cisterns");
+    expect(finalDraft?.lore).toContain("shared meltwater");
+    expect(finalDraft?.observances?.[0]?.traditions).toContain(
+      "Open the measured sluice.",
+    );
+  });
 
   it("streams delta/field events and yields one final draft event matching generateDraft's output", async () => {
     const json = aiJson("Aric Dawnward");

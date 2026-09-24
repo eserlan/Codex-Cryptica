@@ -2,6 +2,28 @@ import type { GeneratorOutput } from "$lib/services/seo/generator-engine";
 import type { ValidSlug } from "./generator-page-meta";
 
 export const slugDrafts: Partial<Record<ValidSlug, GeneratorOutput>> = {
+  holiday: {
+    type: "note",
+    title: "Lanterns for the Returning Tide",
+    summary:
+      "A harbour remembrance for neighbours who kept the river gate open and those who did not return.",
+    content:
+      "## Lanterns for the Returning Tide\n\n**Type:** Memorial and seasonal observance\n\n**When:** The first calm night after the autumn equinox\n\nAt dusk, families carry covered lanterns to the quay and leave one place empty at supper. The official account credits the governor; dock families remember the rope crews who disobeyed the closure order.\n\n### At the table\nA newly found gate ledger names the official who ordered the rescue route closed. The governor's heir is due to lead this year's procession.",
+    lore: "## GM Notes\nThe ledger is authentic. The rope crews kept the river gate open against orders, but later records credited the governor.",
+    labels: ["holiday-generator", "observance", "memorial"],
+    status: "draft",
+    observances: [
+      {
+        name: "Lanterns for the Returning Tide",
+        type: "Memorial and seasonal observance",
+        when: "The first calm night after the autumn equinox",
+        observers: "Harbour families and river pilots",
+        traditions:
+          "Carry covered lanterns to the quay and leave one place empty at supper",
+        tension: "A newly found gate ledger challenges the official account.",
+      },
+    ],
+  },
   npc: {
     type: "character",
     title: "Zephyrus Gray",
