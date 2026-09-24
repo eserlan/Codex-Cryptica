@@ -731,6 +731,57 @@ describe("automatic background sync (#3189)", () => {
     expect(store.autoConflictRemoteAt).toBeNull();
   });
 
+  it("builds nothing and stops retrying when the record is disabled", async () => {
+    const buildPayload = vi.fn(async () => ({
+      vaultTitle: "The Saltmere Fens",
+      bundle: { entities: [] },
+    }));
+    const h = harness([ENABLE], { debounceMs: 20, retryMs: 30, buildPayload });
+    await h.store.enable("v-1");
+    buildPayload.mockClear();
+    h.calls.length = 0;
+    // Disabled elsewhere (another tab, or a stale in-memory status).
+    const record = await h.storage.read("v-1");
+    await h.storage.write("v-1", { ...(record as object), enabled: false });
+
+    h.store.notifyLocalChange("v-1");
+    await vi.advanceTimersByTimeAsync(500);
+
+    expect(buildPayload).not.toHaveBeenCalled();
+    expect(h.calls).toEqual([]);
+    expect(h.store.status).toBe("off");
+    expect(h.store.autoState).toBe("idle");
+  });
+
+  it("aborts an in-flight build on disable and stays off", async () => {
+    let buildSignal: AbortSignal | undefined;
+    let finishBuild: () => void = () => {};
+    const buildPayload = vi.fn(
+      async (_vaultId: string, signal?: AbortSignal) => {
+        buildSignal = signal;
+        await new Promise<void>((resolve) => (finishBuild = resolve));
+        return { vaultTitle: "The Saltmere Fens", bundle: { entities: [] } };
+      },
+    );
+    const h = harness([ENABLE], { debounceMs: 20, retryMs: 30 });
+    await h.store.enable("v-1");
+    h.calls.length = 0;
+    (h.store as any).deps.buildPayload = buildPayload;
+
+    const saving = h.store.backUpNow();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(buildPayload).toHaveBeenCalledTimes(1);
+
+    await h.store.disable("v-1");
+    expect(buildSignal?.aborted).toBe(true);
+    finishBuild();
+
+    expect(await saving).toBe(false);
+    await vi.advanceTimersByTimeAsync(500);
+    expect(h.store.status).toBe("off");
+    expect(h.calls.some((url) => url.endsWith("/commit"))).toBe(false);
+  });
+
   it("disable() cancels pending automation cold", async () => {
     const { store, calls } = await enabledHarness();
     calls.length = 0;
