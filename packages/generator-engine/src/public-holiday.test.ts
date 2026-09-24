@@ -13,6 +13,12 @@ describe("public holiday generator", () => {
     expect(userMessage).toContain("never a nested object or array");
   });
 
+  it("asks for short scannable lore and summary rather than dense prose", () => {
+    const { userMessage } = buildHolidayPrompt({});
+    expect(userMessage).toContain("scannable GM reference");
+    expect(userMessage).toContain("one or two plain sentences");
+  });
+
   it("resolves one observance and calendar sizes from the form", () => {
     expect(
       resolveHoliday({ setSize: "A calendar of 10 observances" }).count,
