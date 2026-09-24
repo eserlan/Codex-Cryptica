@@ -29,6 +29,21 @@ export function restoreMissingMetadata(
   return restored;
 }
 
+/** Drops the id, sanitizes the parent and strips undefined values from disk frontmatter. */
+function normalizeDiskMetadata(
+  metadata: Record<string, unknown> | undefined,
+): Record<string, unknown> {
+  const normalized: Record<string, unknown> = { ...(metadata || {}) };
+  delete normalized.id;
+  if (normalized.parent) {
+    normalized.parent = sanitizeId(normalized.parent as string);
+  }
+  for (const key of Object.keys(normalized)) {
+    if (normalized[key] === undefined) delete normalized[key];
+  }
+  return normalized;
+}
+
 export interface ContentLoaderDependencies {
   repository: VaultRepository;
   activeVaultId: () => string | null;
@@ -43,6 +58,10 @@ export class EntityContentLoader {
   private _contentVerifiedIds = $state(new Set<string>());
   private _loadingPromises = new Map<string, Promise<void>>();
   private _unsubscribe: () => void;
+  private _onMetadataRestored?: (
+    oldEntity: LocalEntity,
+    newEntity: LocalEntity,
+  ) => void;
 
   constructor(private deps: ContentLoaderDependencies) {
     this._unsubscribe = vaultEventBus.subscribe((event) => {
@@ -64,6 +83,21 @@ export class EntityContentLoader {
 
   destroy() {
     this._unsubscribe();
+  }
+
+  /**
+   * Content loads write the repository record directly, bypassing index
+   * maintenance. That is intended for prose, but metadata restored from disk
+   * (labels, parent, images, …) must still reach the secondary and graph
+   * indexes, so the owning store registers a handler for that case.
+   */
+  registerStoreCallbacks(callbacks: {
+    onMetadataRestored?: (
+      oldEntity: LocalEntity,
+      newEntity: LocalEntity,
+    ) => void;
+  }) {
+    this._onMetadataRestored = callbacks.onMetadataRestored;
   }
 
   get entities() {
@@ -125,25 +159,14 @@ export class EntityContentLoader {
 
           const { content: freshContent, metadata: freshMetadata } =
             parseMarkdown(text);
-          const mergedMetadata: any = { ...(freshMetadata || {}) };
-          delete mergedMetadata.id;
-          if (mergedMetadata.parent) {
-            mergedMetadata.parent = sanitizeId(mergedMetadata.parent);
-          }
-          for (const key of Object.keys(mergedMetadata)) {
-            if (mergedMetadata[key] === undefined) {
-              delete mergedMetadata[key];
-            }
-          }
           const latestGuest = this.entities[id] ?? currentEntity;
-          this.deps.repository.entities[id] = {
-            ...latestGuest,
-            ...restoreMissingMetadata(latestGuest, mergedMetadata),
-            content: freshContent || latestGuest.content || "",
-            lore: "",
-          } as LocalEntity;
-          this._contentLoadedIds.add(id);
-          this._contentVerifiedIds.add(id);
+          this.applyLoadedContent(
+            id,
+            latestGuest,
+            freshMetadata,
+            freshContent || latestGuest.content || "",
+            "",
+          );
         } catch (err) {
           debugStore.warn(
             `[EntityContentLoader] Guest content fetch failed for ${id}`,
@@ -220,28 +243,13 @@ export class EntityContentLoader {
             const finalLore = result.lore || entityToUpdate.lore || "";
             const path = entityToUpdate._path || [`${id}.md`];
 
-            // Normalize and merge metadata
-            const mergedMetadata: any = { ...(result.metadata || {}) };
-            delete mergedMetadata.id;
-            if (mergedMetadata.parent) {
-              mergedMetadata.parent = sanitizeId(mergedMetadata.parent);
-            }
-            for (const key of Object.keys(mergedMetadata)) {
-              if (mergedMetadata[key] === undefined) {
-                delete mergedMetadata[key];
-              }
-            }
-
-            const updatedEntity = {
-              ...entityToUpdate,
-              ...restoreMissingMetadata(entityToUpdate, mergedMetadata),
-              content: finalContent,
-              lore: finalLore,
-            } as LocalEntity;
-
-            this.deps.repository.entities[id] = updatedEntity;
-            this._contentLoadedIds.add(id);
-            this._contentVerifiedIds.add(id);
+            const updatedEntity = this.applyLoadedContent(
+              id,
+              entityToUpdate,
+              result.metadata,
+              finalContent,
+              finalLore,
+            );
 
             debugStore.log(
               `[EntityContentLoader] Verified ${id} from source: contentLen=${finalContent.length}, loreLen=${finalLore.length}`,
@@ -287,6 +295,36 @@ export class EntityContentLoader {
     return loadPromise.finally(() => this._loadingPromises.delete(id));
   }
 
+  /**
+   * Writes loaded prose onto the record, restoring disk metadata missing from
+   * memory. Only a restore is routed to the index handler: content alone must
+   * not wake graph or secondary-index consumers.
+   */
+  private applyLoadedContent(
+    id: string,
+    base: LocalEntity,
+    diskMetadata: Record<string, unknown> | undefined,
+    content: string,
+    lore: string,
+  ): LocalEntity {
+    const restored = restoreMissingMetadata(
+      base as unknown as Record<string, unknown>,
+      normalizeDiskMetadata(diskMetadata),
+    );
+    const updatedEntity = {
+      ...base,
+      ...restored,
+      content,
+      lore,
+    } as LocalEntity;
+    this.deps.repository.entities[id] = updatedEntity;
+    this.markContentLoaded(id);
+    if (Object.keys(restored).length > 0) {
+      this._onMetadataRestored?.(base, updatedEntity);
+    }
+    return updatedEntity;
+  }
+
   private async _readFromOpfs(
     id: string,
   ): Promise<{ content: string; lore: string; metadata?: any } | null> {
@@ -307,26 +345,13 @@ export class EntityContentLoader {
     try {
       const result = await this._readFromOpfs(id);
       if (result) {
-        const mergedMetadata = { ...(result.metadata || {}) };
-        delete mergedMetadata.id;
-        if (mergedMetadata.parent) {
-          mergedMetadata.parent = sanitizeId(mergedMetadata.parent);
-        }
-        for (const key of Object.keys(mergedMetadata)) {
-          if (mergedMetadata[key] === undefined) {
-            delete mergedMetadata[key];
-          }
-        }
-
-        const latest = this.entities[id] ?? currentEntity;
-        this.deps.repository.entities[id] = {
-          ...latest,
-          ...restoreMissingMetadata(latest, mergedMetadata),
-          content: result.content,
-          lore: result.lore,
-        };
-        this._contentLoadedIds.add(id);
-        this._contentVerifiedIds.add(id);
+        this.applyLoadedContent(
+          id,
+          this.entities[id] ?? currentEntity,
+          result.metadata,
+          result.content,
+          result.lore,
+        );
       }
     } catch (err) {
       debugStore.error(

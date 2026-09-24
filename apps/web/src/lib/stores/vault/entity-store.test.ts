@@ -1328,6 +1328,46 @@ describe("EntityStore", () => {
       );
       expect(repository.entities.hero.parent).toBe("parent-node");
     });
+
+    it("propagates metadata restored from disk to the graph slice", async () => {
+      const markdownUtils = await import("../../utils/markdown");
+      const opfsUtils = await import("../../utils/opfs");
+      vi.mocked(opfsUtils.readFileAsText).mockResolvedValue("file");
+      vi.mocked(markdownUtils.parseMarkdown).mockReturnValue({
+        metadata: { id: "hero", title: "Hero", parent: "place" },
+        content: "Hydrated content from disk",
+      });
+      const previousVersion = store.graphStructureVersion;
+
+      await store.internalLoadContent("hero");
+
+      expect(store.graphStructureVersion).toBeGreaterThan(previousVersion);
+      expect(
+        store.graphEntities.find((entity) => entity.id === "hero")?.parent,
+      ).toBe("place");
+    });
+
+    it("leaves indexes untouched when a load only adds content", async () => {
+      const markdownUtils = await import("../../utils/markdown");
+      const opfsUtils = await import("../../utils/opfs");
+      vi.mocked(opfsUtils.readFileAsText).mockResolvedValue("file");
+      vi.mocked(markdownUtils.parseMarkdown).mockReturnValue({
+        metadata: { id: "hero", title: "Hero", type: "character" },
+        content: "Hydrated content from disk",
+      });
+      const previousGraphEntities = store.graphEntities;
+      const previousAllEntities = store.allEntities;
+      const previousVersion = store.graphStructureVersion;
+
+      await store.internalLoadContent("hero");
+
+      expect(repository.entities.hero.content).toBe(
+        "Hydrated content from disk",
+      );
+      expect(store.graphEntities).toBe(previousGraphEntities);
+      expect(store.allEntities).toBe(previousAllEntities);
+      expect(store.graphStructureVersion).toBe(previousVersion);
+    });
   });
 
   describe("flushPendingSaves", () => {

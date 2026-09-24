@@ -217,6 +217,14 @@ export class EntityStore {
     this.rebuildIndexes();
     this.initializeInboundConnections();
 
+    this.loader.registerStoreCallbacks?.({
+      onMetadataRestored: (oldEntity, newEntity) =>
+        this.handleEntitiesUpdate(
+          { [oldEntity.id]: oldEntity },
+          { [newEntity.id]: newEntity },
+        ),
+    });
+
     if (this._eventBusUnsubscribe) {
       this._eventBusUnsubscribe();
     }
