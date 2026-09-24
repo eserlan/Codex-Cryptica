@@ -48,6 +48,7 @@
       language: "loot-lore",
       "news-sheet": "loot-lore",
       "random-table": "loot-lore",
+      holiday: "loot-lore",
     };
 
   export function resolveGeneratorSection(gen: {

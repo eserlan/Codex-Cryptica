@@ -37,6 +37,13 @@
     settlementSummary: string,
   ): GeneratorCard[] => [
     {
+      slug: "holiday",
+      label: "Holiday & Festival Generator",
+      summary:
+        "Create observances shaped by a culture's history, climate, beliefs, and conflicts.",
+      icon: "icon-[lucide--calendar-heart]",
+    },
+    {
       slug: "npc",
       label: "NPC Generator",
       summary:

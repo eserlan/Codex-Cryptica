@@ -140,6 +140,13 @@
           title: "Adventure & Worldbuilding",
           links: [
             {
+              href: "/generators/holiday",
+              label: "Holiday & Festival Generator",
+              summary:
+                "Create culturally grounded holidays, festivals, memorials, and coherent calendars for any setting.",
+              icon: "icon-[lucide--calendar-heart]",
+            },
+            {
               href: "/generators/star-system",
               label: "Star System Generator",
               summary:

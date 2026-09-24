@@ -45,6 +45,7 @@ const allExpectedSlugs: ValidSlug[] = [
   "creature",
   "encounter",
   "heist",
+  "holiday",
   "personality",
 ];
 
@@ -54,6 +55,20 @@ describe("generator-page-meta completeness and social preview tags", () => {
       "https://assets.codexcryptica.com/screenshots/generator-puzzle.png",
     );
     expect(slugMeta.puzzle.ogImage).not.toContain("generator-quest");
+  });
+
+  it("describes the Holiday generator's calendar mode and social preview", () => {
+    expect(slugMeta.holiday.faqs).toContainEqual(
+      expect.objectContaining({ question: "Can I generate a full calendar?" }),
+    );
+    expect(slugMeta.holiday.ogImage).toBe(
+      "https://assets.codexcryptica.com/screenshots/generator-holiday.jpg",
+    );
+    expect(slugMeta.holiday.ogImageAlt).toBeTruthy();
+    expect(slugMeta.holiday.relatedLinks).toContainEqual({
+      href: "/answers/how-do-i-run-political-intrigue-and-faction-play",
+      label: "Run political intrigue and faction play",
+    });
   });
 
   it("preserves the Council Vote FAQs and related generators", () => {

@@ -64,6 +64,18 @@ export interface PublicGeneratorOutput {
   /** Night-sky mode's full set of constellations for one culture. */
   nightSky?: NightSkyData;
   /**
+   * Optional structured observance calendar so clients can retain the coherent
+   * relationship between a calendar overview and its individual entries.
+   */
+  observances?: Array<{
+    name: string;
+    type: string;
+    when: string;
+    observers: string;
+    traditions: string;
+    tension: string;
+  }>;
+  /**
    * Short label for the dominant conflict domain driving a BBEG villain's
    * plan (e.g. "Political Corruption", "Cult Ritual"). Used to track domain
    * variety across a session so repeated generations don't default to the
@@ -93,6 +105,7 @@ function toPublic(draft: GeneratedDraft): PublicGeneratorOutput {
     lore: draft.lore,
     labels: [...(draft.labels ?? [])],
     status: "active",
+    observances: draft.observances ? [...draft.observances] : undefined,
     languageProfile: draft.languageProfile,
     languageProfileVersion: draft.languageProfileVersion,
   };

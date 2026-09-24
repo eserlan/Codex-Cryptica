@@ -24,6 +24,16 @@ describe("help-content feature hints", () => {
   });
 
   // T023 (143-cif-importer): CIF import help entry
+  it("documents the Holiday & Festival generator modes and context", () => {
+    expect(FEATURE_HINTS["holiday-generator"]).toMatchObject({
+      id: "holiday-generator",
+      title: "Holidays & Festivals",
+      content: expect.stringContaining(
+        "connected calendar of 6, 10, or 14 days",
+      ),
+    });
+  });
+
   it("FEATURE_HINTS includes a cif-importer entry mentioning offline import and family links", () => {
     expect(FEATURE_HINTS["cif-importer"]).toBeDefined();
     expect(FEATURE_HINTS["cif-importer"].id).toBe("cif-importer");
