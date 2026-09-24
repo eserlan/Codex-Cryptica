@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
+  CLOUD_BACKUP_SHARD_COUNT,
+  CloudBackupDeltaSchema,
+  canonicalJson,
+  cloudBackupShardOf,
+  hashCloudBackupEntity,
   CopyrightReportSchema,
   DirectoryPageSchema,
   DirectoryQuerySchema,
@@ -441,5 +446,45 @@ describe("CC Cloud Backup schemas (spec 162)", () => {
     it("bounds the admin lookup scan", () => {
       expect(CLOUD_BACKUP_LIMITS.maxLookupScanKeys).toBe(1_000);
     });
+  });
+});
+
+describe("cloud backup incremental helpers (#3354)", () => {
+  it("assigns every id a stable, in-range, padded shard", () => {
+    const shard = cloudBackupShardOf("alder-cass");
+    expect(cloudBackupShardOf("alder-cass")).toBe(shard);
+    expect(shard).toMatch(/^\d{2}$/);
+    const used = new Set(
+      Array.from({ length: 2000 }, (_, i) => cloudBackupShardOf(`e${i}`)),
+    );
+    expect(used.size).toBe(CLOUD_BACKUP_SHARD_COUNT);
+  });
+
+  it("hashes independently of key order but not of content", async () => {
+    const a = { id: "x", title: "T", meta: { b: 1, a: [2, { d: 1, c: 0 }] } };
+    const b = { meta: { a: [2, { c: 0, d: 1 }], b: 1 }, title: "T", id: "x" };
+    expect(canonicalJson(a)).toBe(canonicalJson(b));
+    expect(await hashCloudBackupEntity(a)).toBe(await hashCloudBackupEntity(b));
+    expect(await hashCloudBackupEntity({ ...a, title: "U" })).not.toBe(
+      await hashCloudBackupEntity(a),
+    );
+  });
+
+  it("accepts a delta and rejects entities without ids", () => {
+    const base = {
+      vaultTitle: "V",
+      baseLastPushedAt: "2026-09-24T00:00:00.000Z",
+      deletes: [],
+    };
+    expect(
+      CloudBackupDeltaSchema.safeParse({
+        ...base,
+        upserts: [{ id: "a", extra: 1 }],
+      }).success,
+    ).toBe(true);
+    expect(
+      CloudBackupDeltaSchema.safeParse({ ...base, upserts: [{ title: "a" }] })
+        .success,
+    ).toBe(false);
   });
 });

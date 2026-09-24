@@ -544,9 +544,94 @@ export const CloudBackupManifestSchema = z.object({
   createdAt: z.string(),
   lastPushedAt: z.string(),
   entityCount: z.number().int().nonnegative().optional(),
+  /**
+   * Schema v2 only (#3354): entities live in this many shard objects. Stored so
+   * a later change to the default can never misread existing shards.
+   */
+  shardCount: z.number().int().positive().optional(),
 });
 
 export type CloudBackupManifest = z.infer<typeof CloudBackupManifestSchema>;
+
+/**
+ * Storage layouts. v1 keeps every entity inside one `bundle.json`; v2 (#3354)
+ * shards entities so an incremental upload rewrites only what it touched.
+ */
+export const CLOUD_BACKUP_SCHEMA_V1 = 1;
+export const CLOUD_BACKUP_SCHEMA_V2 = 2;
+
+/**
+ * Entity shards per v2 backup. One object per entity would cost one R2 read
+ * per entity on restore, past the Worker's per-request subrequest limit for
+ * large vaults; 64 keeps a restore at a few dozen reads while a small edit
+ * rewrites roughly 1/64 of the vault per touched shard.
+ */
+export const CLOUD_BACKUP_SHARD_COUNT = 64;
+
+/** Stable shard name for an entity id: FNV-1a 32-bit, zero-padded. */
+export function cloudBackupShardOf(
+  entityId: string,
+  shardCount = CLOUD_BACKUP_SHARD_COUNT,
+): string {
+  let hash = 0x811c9dc5;
+  for (let i = 0; i < entityId.length; i++) {
+    hash ^= entityId.charCodeAt(i);
+    hash = Math.imul(hash, 0x01000193);
+  }
+  const width = String(shardCount - 1).length;
+  return String((hash >>> 0) % shardCount).padStart(width, "0");
+}
+
+/** JSON with object keys sorted at every depth, so equal values hash equally. */
+export function canonicalJson(value: unknown): string {
+  return JSON.stringify(value, (_key, inner) => {
+    if (!inner || typeof inner !== "object" || Array.isArray(inner)) {
+      return inner;
+    }
+    return Object.fromEntries(
+      Object.keys(inner)
+        .sort()
+        .map((key) => [key, (inner as Record<string, unknown>)[key]]),
+    );
+  });
+}
+
+/**
+ * Content hash of one backed-up entity: SHA-256 hex of its canonical JSON.
+ * Computed identically by the client and the worker, so the idle consistency
+ * check can compare them without transferring bodies.
+ */
+export async function hashCloudBackupEntity(entity: unknown): Promise<string> {
+  const digest = await crypto.subtle.digest(
+    "SHA-256",
+    new TextEncoder().encode(canonicalJson(entity)),
+  );
+  return [...new Uint8Array(digest)]
+    .map((byte) => byte.toString(16).padStart(2, "0"))
+    .join("");
+}
+
+const CloudBackupEntitySchema = z
+  .object({ id: z.string().min(1).max(255) })
+  .passthrough();
+
+/**
+ * Body of `POST /api/cloud-backup/{backupId}/delta` (#3354): the entities
+ * changed since `baseLastPushedAt`, plus whole replacements for the small
+ * non-entity sections when they changed.
+ */
+export const CloudBackupDeltaSchema = z.object({
+  vaultTitle: z.string().min(1).max(CLOUD_BACKUP_LIMITS.maxTitleLength),
+  baseLastPushedAt: z.string().min(1),
+  upserts: z.array(CloudBackupEntitySchema),
+  deletes: z.array(z.string().min(1).max(255)),
+  maps: z.array(z.unknown()).optional(),
+  canvases: z.array(z.unknown()).optional(),
+  assetManifest: z.array(z.unknown()).optional(),
+  assetIds: z.array(z.string()).optional(),
+});
+
+export type CloudBackupDelta = z.infer<typeof CloudBackupDeltaSchema>;
 
 /**
  * Client-side, per-vault record in IndexedDB. Survives reloads so the user is

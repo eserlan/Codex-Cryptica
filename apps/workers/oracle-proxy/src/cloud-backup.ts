@@ -16,7 +16,13 @@
  */
 import {
   CLOUD_BACKUP_LIMITS,
+  CLOUD_BACKUP_SCHEMA_V2,
+  CLOUD_BACKUP_SHARD_COUNT,
+  CloudBackupDeltaSchema,
   CloudBackupManifestSchema,
+  cloudBackupShardOf,
+  hashCloudBackupEntity,
+  type CloudBackupDelta,
   type CloudBackupManifest,
 } from "../../../../packages/schema/src/publishing";
 
@@ -38,6 +44,20 @@ export function getManifestKey(backupId: string): string {
 
 export function getBundleKey(backupId: string): string {
   return `${PREFIX}${backupId}/bundle.json`;
+}
+
+/** v2 (#3354): one shard of entities, `{ [entityId]: entity }`. */
+export function getShardKey(backupId: string, shard: string): string {
+  return `${PREFIX}${backupId}/entities/${shard}.json`;
+}
+
+/**
+ * v2 (#3354): `{ entityHashes: { [entityId]: sha256 } }`. Kept out of the
+ * manifest on purpose — every authorised request reads the manifest, and a
+ * per-entity hash map would make each of them pay for the whole vault's index.
+ */
+export function getIndexKey(backupId: string): string {
+  return `${PREFIX}${backupId}/index.json`;
 }
 
 export function getAssetKey(backupId: string, assetId: string): string {
@@ -202,6 +222,24 @@ function tooLargeToRead(request: Request, limit: number): Response | null {
   return null;
 }
 
+/** A size-checked JSON body, or the 413/400 response to return instead. */
+async function readJsonBody(
+  request: Request,
+): Promise<{ body: unknown } | { response: Response }> {
+  const oversized = tooLargeToRead(
+    request,
+    CLOUD_BACKUP_LIMITS.maxJsonBodyBytes,
+  );
+  if (oversized) return { response: oversized };
+  try {
+    return { body: await request.json() };
+  } catch {
+    return {
+      response: json(request, { error: { message: "Invalid JSON" } }, 400),
+    };
+  }
+}
+
 /** Bytes already stored for a backup, so the vault ceiling can be enforced. */
 async function storedBytes(
   env: CloudBackupEnv,
@@ -288,20 +326,174 @@ async function commitSnapshot(
   payload: BackupPayload,
   manifest: CloudBackupManifest,
   ownerCodeHash: string,
-): Promise<void> {
-  await env.BUCKET.put(getBundleKey(backupId), JSON.stringify(payload.bundle), {
-    httpMetadata: { contentType: "application/json" },
-  });
+): Promise<CloudBackupManifest> {
+  const entities = bundleEntities(payload.bundle);
+  let committed = manifest;
+  if (entities) {
+    // Schema v2 (#3354): shard the entities so later uploads can be deltas.
+    const { entities: _entities, ...rest } = payload.bundle as Record<
+      string,
+      unknown
+    >;
+    await writeShards(env, backupId, groupByShard(entities), true);
+    await writeIndex(env, backupId, await hashEntities(entities));
+    await writeJson(env, getBundleKey(backupId), rest);
+    committed = {
+      ...manifest,
+      schemaVersion: CLOUD_BACKUP_SCHEMA_V2,
+      shardCount: CLOUD_BACKUP_SHARD_COUNT,
+      entityCount: entities.length,
+    };
+  } else {
+    await writeJson(env, getBundleKey(backupId), payload.bundle);
+  }
 
-  await env.BUCKET.put(getManifestKey(backupId), JSON.stringify(manifest), {
-    httpMetadata: { contentType: "application/json" },
-    customMetadata: { ownerCodeHash, vaultTitle: manifest.vaultTitle },
-  });
+  await writeManifest(env, backupId, committed, ownerCodeHash);
 
   const keep = new Set(
     (payload.assetIds ?? []).map((id) => getAssetKey(backupId, id)),
   );
   await pruneAssets(env, backupId, keep);
+  return committed;
+}
+
+/* ----------------------------------------------------- v2 entity shards -- */
+
+type EntityRecord = { id: string } & Record<string, unknown>;
+type Shard = Record<string, EntityRecord>;
+
+/** The bundle's entity list when it is shardable; otherwise stored as v1. */
+function bundleEntities(bundle: unknown): EntityRecord[] | null {
+  const entities = (bundle as { entities?: unknown } | null)?.entities;
+  if (!Array.isArray(entities)) return null;
+  return entities.every(
+    (entity) =>
+      !!entity &&
+      typeof entity === "object" &&
+      typeof (entity as { id?: unknown }).id === "string",
+  )
+    ? (entities as EntityRecord[])
+    : null;
+}
+
+function groupByShard(entities: EntityRecord[]): Map<string, Shard> {
+  const shards = new Map<string, Shard>();
+  for (const entity of entities) {
+    const name = cloudBackupShardOf(entity.id);
+    const shard = shards.get(name) ?? {};
+    shard[entity.id] = entity;
+    shards.set(name, shard);
+  }
+  return shards;
+}
+
+async function hashEntities(
+  entities: EntityRecord[],
+): Promise<Record<string, string>> {
+  const hashes: Record<string, string> = {};
+  for (const entity of entities) {
+    hashes[entity.id] = await hashCloudBackupEntity(entity);
+  }
+  return hashes;
+}
+
+async function readJson<T>(
+  env: CloudBackupEnv,
+  key: string,
+): Promise<T | null> {
+  const object = await env.BUCKET.get(key);
+  if (!object) return null;
+  const text =
+    typeof object.text === "function"
+      ? await object.text()
+      : new TextDecoder().decode(object.body);
+  return JSON.parse(text) as T;
+}
+
+async function writeJson(
+  env: CloudBackupEnv,
+  key: string,
+  value: unknown,
+): Promise<void> {
+  await env.BUCKET.put(key, JSON.stringify(value), {
+    httpMetadata: { contentType: "application/json" },
+  });
+}
+
+async function writeManifest(
+  env: CloudBackupEnv,
+  backupId: string,
+  manifest: CloudBackupManifest,
+  ownerCodeHash: string,
+): Promise<void> {
+  await env.BUCKET.put(getManifestKey(backupId), JSON.stringify(manifest), {
+    httpMetadata: { contentType: "application/json" },
+    customMetadata: { ownerCodeHash, vaultTitle: manifest.vaultTitle },
+  });
+}
+
+async function writeIndex(
+  env: CloudBackupEnv,
+  backupId: string,
+  entityHashes: Record<string, string>,
+): Promise<void> {
+  await writeJson(env, getIndexKey(backupId), { entityHashes });
+}
+
+/**
+ * Writes the given shards; an empty shard is deleted rather than stored. With
+ * `replaceAll`, any existing shard not in the map is removed too, which is how
+ * a full commit drops entities that no longer exist.
+ */
+async function writeShards(
+  env: CloudBackupEnv,
+  backupId: string,
+  shards: Map<string, Shard>,
+  replaceAll: boolean,
+): Promise<void> {
+  for (const [name, shard] of shards) {
+    const key = getShardKey(backupId, name);
+    if (Object.keys(shard).length === 0) await env.BUCKET.delete(key);
+    else await writeJson(env, key, shard);
+  }
+  if (!replaceAll) return;
+  const keep = new Set(
+    [...shards.keys()].map((name) => getShardKey(backupId, name)),
+  );
+  for (const key of await listKeys(
+    env,
+    `${getBackupPrefix(backupId)}entities/`,
+  )) {
+    if (!keep.has(key)) await env.BUCKET.delete(key);
+  }
+}
+
+async function listKeys(
+  env: CloudBackupEnv,
+  prefix: string,
+): Promise<string[]> {
+  const keys: string[] = [];
+  let listed = await env.BUCKET.list({ prefix });
+  for (;;) {
+    for (const object of listed.objects) keys.push(object.key);
+    if (!listed.truncated) break;
+    listed = await env.BUCKET.list({ prefix, cursor: listed.cursor });
+  }
+  return keys;
+}
+
+/** Every entity of a v2 backup, assembled from its shards. */
+async function readAllEntities(
+  env: CloudBackupEnv,
+  backupId: string,
+): Promise<EntityRecord[]> {
+  const entities: EntityRecord[] = [];
+  const keys = await listKeys(env, `${getBackupPrefix(backupId)}entities/`);
+  for (const key of keys.sort()) {
+    const shard = await readJson<Shard>(env, key);
+    if (shard) entities.push(...Object.values(shard));
+  }
+  return entities;
 }
 
 /** Removes assets under the backup that the new snapshot does not include. */
@@ -486,18 +678,9 @@ export async function handleCommitCloudBackup(
   const auth = await authorize(request, env, backupId);
   if ("response" in auth) return auth.response;
 
-  const oversized = tooLargeToRead(
-    request,
-    CLOUD_BACKUP_LIMITS.maxJsonBodyBytes,
-  );
-  if (oversized) return oversized;
-
-  let body: unknown;
-  try {
-    body = await request.json();
-  } catch {
-    return json(request, { error: { message: "Invalid JSON" } }, 400);
-  }
+  const read = await readJsonBody(request);
+  if ("response" in read) return read.response;
+  const { body } = read;
 
   const validated = validatePayload(request, body);
   if ("response" in validated) return validated.response;
@@ -514,9 +697,15 @@ export async function handleCommitCloudBackup(
 
   // `authorize` already proved the presented code matches, and a commit never
   // changes it — carry the stored hash through rather than re-deriving it.
-  await commitSnapshot(env, backupId, payload, manifest, auth.ownerCodeHash);
+  const committed = await commitSnapshot(
+    env,
+    backupId,
+    payload,
+    manifest,
+    auth.ownerCodeHash,
+  );
 
-  return json(request, { manifest });
+  return json(request, { manifest: committed });
 }
 
 /** GET /api/cloud-backup/{backupId}/status */
@@ -551,16 +740,218 @@ export async function handleGetCloudBackupBundle(
   const auth = await authorize(request, env, backupId);
   if ("response" in auth) return auth.response;
 
-  const object = await env.BUCKET.get(getBundleKey(backupId));
-  if (!object) return notFoundOrUnauthorized(request);
+  const bundle = await readJson<Record<string, unknown>>(
+    env,
+    getBundleKey(backupId),
+  );
+  if (!bundle) return notFoundOrUnauthorized(request);
 
-  const text =
-    typeof object.text === "function"
-      ? await object.text()
-      : new TextDecoder().decode(object.body);
+  // v2 keeps entities in shards; restore clients see the same shape either way.
+  if (auth.manifest.schemaVersion === CLOUD_BACKUP_SCHEMA_V2) {
+    bundle.entities = await readAllEntities(env, backupId);
+  }
 
   // A pure read: lastPushedAt is deliberately untouched.
-  return json(request, { manifest: auth.manifest, bundle: JSON.parse(text) });
+  return json(request, { manifest: auth.manifest, bundle });
+}
+
+/**
+ * GET /api/cloud-backup/{backupId}/index (#3354) — per-entity content hashes of
+ * a v2 backup, for the client's idle consistency check. Hashes only, never
+ * content. A v1 backup has no index and returns an empty map.
+ */
+export async function handleGetCloudBackupIndex(
+  request: Request,
+  env: CloudBackupEnv,
+  backupId: string,
+): Promise<Response> {
+  if (!env.BUCKET) {
+    return json(request, { error: { message: "Storage unavailable" } }, 500);
+  }
+  const auth = await authorize(request, env, backupId);
+  if ("response" in auth) return auth.response;
+
+  const index = await readJson<{ entityHashes: Record<string, string> }>(
+    env,
+    getIndexKey(backupId),
+  );
+  return json(request, {
+    lastPushedAt: auth.manifest.lastPushedAt,
+    entityHashes: index?.entityHashes ?? {},
+  });
+}
+
+/* ----------------------------------------------------------------- delta -- */
+
+function conflict(
+  request: Request,
+  code: "full_push_required" | "diverged",
+  message: string,
+  lastPushedAt: string,
+): Response {
+  return json(request, { error: { code, message, lastPushedAt } }, 409);
+}
+
+/** Applies a delta's upserts and deletes to only the shards they touch. */
+async function applyEntityDelta(
+  env: CloudBackupEnv,
+  backupId: string,
+  delta: CloudBackupDelta,
+): Promise<{ shards: Map<string, Shard>; hashes: Record<string, string> }> {
+  const touched = new Set<string>();
+  for (const entity of delta.upserts)
+    touched.add(cloudBackupShardOf(entity.id));
+  for (const id of delta.deletes) touched.add(cloudBackupShardOf(id));
+
+  const shards = new Map<string, Shard>();
+  for (const name of touched) {
+    shards.set(
+      name,
+      (await readJson<Shard>(env, getShardKey(backupId, name))) ?? {},
+    );
+  }
+
+  const index = await readJson<{ entityHashes: Record<string, string> }>(
+    env,
+    getIndexKey(backupId),
+  );
+  const hashes = { ...(index?.entityHashes ?? {}) };
+  for (const id of delta.deletes) {
+    delete shards.get(cloudBackupShardOf(id))![id];
+    delete hashes[id];
+  }
+  for (const entity of delta.upserts as EntityRecord[]) {
+    shards.get(cloudBackupShardOf(entity.id))![entity.id] = entity;
+    hashes[entity.id] = await hashCloudBackupEntity(entity);
+  }
+  return { shards, hashes };
+}
+
+/** Bytes the changed shards add to the stored total, for the vault ceiling. */
+async function shardGrowth(
+  env: CloudBackupEnv,
+  backupId: string,
+  shards: Map<string, Shard>,
+): Promise<number> {
+  let growth = 0;
+  for (const [name, shard] of shards) {
+    const existing = await env.BUCKET.head(getShardKey(backupId, name));
+    growth +=
+      new TextEncoder().encode(JSON.stringify(shard)).length -
+      (existing?.size ?? 0);
+  }
+  return growth;
+}
+
+/**
+ * POST /api/cloud-backup/{backupId}/delta (#3354) — publishes only what changed.
+ *
+ * Refuses (409) unless the backup is already v2 and the client computed the
+ * delta against the current remote (`baseLastPushedAt`), so a delta can never
+ * land on a copy it does not describe. Same write order as a full commit:
+ * shards and index, then `bundle.json` if its sections changed, then the
+ * manifest, then prune.
+ */
+export async function handleCloudBackupDelta(
+  request: Request,
+  env: CloudBackupEnv,
+  backupId: string,
+): Promise<Response> {
+  if (!env.BUCKET) {
+    return json(request, { error: { message: "Storage unavailable" } }, 500);
+  }
+
+  const auth = await authorize(request, env, backupId);
+  if ("response" in auth) return auth.response;
+
+  const read = await readJsonBody(request);
+  if ("response" in read) return read.response;
+  const { body } = read;
+  const parsed = CloudBackupDeltaSchema.safeParse(body);
+  if (
+    !parsed.success ||
+    (parsed.data.assetIds ?? []).some((id) => !isValidAssetId(id))
+  ) {
+    return json(request, { error: { message: "Invalid delta" } }, 400);
+  }
+  const delta = parsed.data;
+
+  const { manifest } = auth;
+  if (manifest.schemaVersion !== CLOUD_BACKUP_SCHEMA_V2) {
+    return conflict(
+      request,
+      "full_push_required",
+      "This backup needs one full upload before it can accept changes.",
+      manifest.lastPushedAt,
+    );
+  }
+  if (delta.baseLastPushedAt !== manifest.lastPushedAt) {
+    return conflict(
+      request,
+      "diverged",
+      "The cloud backup changed since this upload was prepared.",
+      manifest.lastPushedAt,
+    );
+  }
+
+  const { shards, hashes } = await applyEntityDelta(env, backupId, delta);
+  const projected =
+    (await storedBytes(env, backupId)) +
+    (await shardGrowth(env, backupId, shards));
+  if (projected > CLOUD_BACKUP_LIMITS.maxVaultBytes) {
+    return json(
+      request,
+      {
+        error: {
+          message: "This vault is too large to back up.",
+          limitBytes: CLOUD_BACKUP_LIMITS.maxVaultBytes,
+          actualBytes: projected,
+        },
+      },
+      413,
+    );
+  }
+
+  await writeShards(env, backupId, shards, false);
+  await writeIndex(env, backupId, hashes);
+  await applyBundleSections(env, backupId, delta);
+
+  const committed: CloudBackupManifest = {
+    ...manifest,
+    vaultTitle: delta.vaultTitle,
+    entityCount: Object.keys(hashes).length,
+    sizeBytes: await storedBytes(env, backupId),
+    lastPushedAt: new Date().toISOString(),
+  };
+  await writeManifest(env, backupId, committed, auth.ownerCodeHash);
+
+  if (delta.assetIds) {
+    await pruneAssets(
+      env,
+      backupId,
+      new Set(delta.assetIds.map((id) => getAssetKey(backupId, id))),
+    );
+  }
+
+  return json(request, { manifest: committed });
+}
+
+/** Replaces the small non-entity sections of `bundle.json` a delta carries. */
+async function applyBundleSections(
+  env: CloudBackupEnv,
+  backupId: string,
+  delta: CloudBackupDelta,
+): Promise<void> {
+  const sections = {
+    ...(delta.maps ? { maps: delta.maps } : {}),
+    ...(delta.canvases ? { canvases: delta.canvases } : {}),
+    ...(delta.assetManifest ? { assetManifest: delta.assetManifest } : {}),
+  };
+  if (Object.keys(sections).length === 0) return;
+  const bundle =
+    (await readJson<Record<string, unknown>>(env, getBundleKey(backupId))) ??
+    {};
+  await writeJson(env, getBundleKey(backupId), { ...bundle, ...sections });
 }
 
 /** GET /api/cloud-backup/{backupId}/assets/{assetId} */
