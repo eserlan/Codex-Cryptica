@@ -1,5 +1,5 @@
 {
-  "updated_at": 1790240973,
+  "updated_at": 1790242590,
   "candidates": [
     {
       "id": "reddit-35104395212-i-put-every-superhero-generator-in-one-p",
@@ -92,14 +92,14 @@
       "created_at": 1790200920
     },
     {
-      "id": "reddit-35976242466-i-built-an-ai-rpg-idea-developer-to-test",
-      "title": "I built an AI RPG Idea Developer to test my own half-baked campaign sparks before I prep them",
-      "body": "You know the half-formed idea you keep in a note. \"A library that collects stolen memories\" or \"a cult that thinks the gods already left.\" You can feel it might work, but you cannot tell if it has pressure, clear choices for players, or just vibes.\n\nI built an AI RPG Idea Developer that takes your own premise and develops it instead of replacing it \u2014 what is already strong, where the tension lives, and what your players would actually do.\n\nTry it here: https://codexcryptica.com/tools/idea-developer\n\nIt gives you:\n\n- what is already interesting and what is still vague in your premise\n- a central question, the pressure bearing down, and the people who care\n- concrete things players could do and what happens if they try them\n- questions back to you to tighten the concept before you write further\n- follow-up turns where you can answer, redirect, or switch between Assess and Develop, plus links to generators for the next piece\n\nIt is AI-guided and per-browser limited, and it works best with a specific spark. Broad prompts like \"a cool dungeon\" come back broad. It stays in your tab until you save it, but it does call the model to develop the idea, which is worth knowing before you paste something private.\n\nWhat is one campaign spark you have been sitting on that you are not sure holds up yet?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/announcements/release-35976242466-1.png)\n\n---\n*Posted automatically via release pipeline. Feedback and discussion welcome!*\n<!-- id:35976242466 -->",
-      "url": "https://codexcryptica.com/tools/idea-developer",
-      "image_url": "https://assets.codexcryptica.com/announcements/release-35976242466-1.png",
+      "id": "reddit-35976242466-13-new-answer-guides-giving-specialists-",
+      "title": "13 new answer guides: giving specialists spotlight without splitting the party",
+      "body": "You know the moment. The rogue wants to scout ahead, the hacker wants to jack in, the spy wants a solo infiltration, and suddenly you are running two tables. Or you want political intrigue, but intrigue stalls without clear factions and moves players can make.\n\nI wrote 13 long-form answer guides as a single batch to give you a framework for each of those pressure points, not just theory.\n\nBrowse them here: https://codexcryptica.com/answers\n\nThey cover:\n\n- giving specialists spotlight without splitting the party \u2014 rogue/scout, hacker/netrunner, spy/infiltrator, investigator, diplomat/noble/courtier, journalist/media\n- running character roles in political intrigue and cyberpunk campaigns, and keeping faction play playable\n- keeping a party together at the table and at the fiction level\n- XP versus milestone leveling, and what base-building systems actually add to a campaign\n- GM notes for in-person play when time and table space are tight\n\nEach guide has a table or checklist and a worked before/after so you can see the change in practice, and they link to the related generators where you want to build the thing after reading.\n\nThey are frameworks, not rules. Every table's contract about spotlight and pacing is different, so you will still need to tune the dial for your group.\n\nWhich of those specialist roles causes the most friction at your table, and what have you tried so far to keep everyone involved?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/announcements/release-35976242466-2.png)\n\n---\n*Posted automatically via release pipeline. Feedback and discussion welcome!*\n<!-- id:35976242466 -->",
+      "url": "https://codexcryptica.com/answers/how-do-i-give-specialist-characters-spotlight",
+      "image_url": "https://assets.codexcryptica.com/announcements/release-35976242466-2.png",
       "source_id": "35976242466",
       "status": "approved",
-      "created_at": 1790240973
+      "created_at": 1790242590
     }
   ]
 }
