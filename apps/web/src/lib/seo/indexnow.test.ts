@@ -116,12 +116,15 @@ describe("IndexNow Cluster Resolution (#3164)", () => {
   it("resolves the heist cluster and appends catalogue hubs", () => {
     const routes = resolveClusterRoutes("heist");
 
-    // Must include the 7 heist canonical routes
+    // Must include the 8 heist canonical routes
     expect(routes).toContain(
       "/answers/how-do-you-run-a-heist-in-a-tabletop-rpg",
     );
     expect(routes).toContain(
       "/answers/what-makes-a-good-heist-target-in-a-tabletop-rpg",
+    );
+    expect(routes).toContain(
+      "/answers/how-do-i-run-spies-and-infiltrators-in-an-rpg",
     );
     expect(routes).toContain(
       "/examples/the-breakwater-vault-space-western-heist",
@@ -136,7 +139,7 @@ describe("IndexNow Cluster Resolution (#3164)", () => {
       expect(routes).toContain(hub);
     }
 
-    expect(routes.length).toBe(12);
+    expect(routes.length).toBe(13);
   });
 });
 
