@@ -1,5 +1,5 @@
 {
-  "updated_at": 1790259852,
+  "updated_at": 1790261214,
   "candidates": [
     {
       "id": "reddit-35104395212-i-put-every-superhero-generator-in-one-p",
@@ -102,14 +102,14 @@
       "created_at": 1790242590
     },
     {
-      "id": "reddit-36011198722-holiday-festival-generator-traditions-wi",
-      "title": "Holiday & Festival Generator: traditions with hooks for any settlement",
-      "body": "Most settlements have a tavern and a temple and nothing the players remember a week later. I wanted festivals that explain why the town is acting weird right now, not just window dressing.\n\nI built a Holiday & Festival Generator that makes a believable holiday or tradition with history, customs and a playable hook in seconds.\n\nTry it with your current settlements: https://codexcryptica.com/generators\n\nIt can generate:\n- a calendar anchor tied to harvest, faith, founding or disaster\n- the core custom, taboo or ritual locals actually observe\n- who runs it, who profits and who wants it changed\n- a hook or complication you can drop straight into your next session\n- output saved to your vault and linkable to the settlement or faction that owns it\n\nTradeoff I made: it leans into grounded folk patterns so results feel usable at the table, which means truly alien or abstract cultural logic will still need your edit.\n\nWhich settlement in your campaign most needs a festival that explains why everything is closed, crowded or tense this week?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/announcements/release-36011198722-0.png)\n\n---\n*Posted automatically via release pipeline. Feedback and discussion welcome!*\n<!-- id:36011198722 -->",
-      "url": "https://codexcryptica.com/tools/holiday-festival-generator",
-      "image_url": "https://assets.codexcryptica.com/announcements/release-36011198722-0.png",
+      "id": "reddit-36011198722-ai-rpg-idea-developer-from-vague-premise",
+      "title": "AI RPG Idea Developer: from vague premise to structured outline",
+      "body": "I had a lot of half premises in my notes that never became sessions because I did not know what to do next with them.\n\nI added an AI RPG Idea Developer directly in the app. You paste a vague premise and it expands the concept, tests the idea, and outlines next steps so you can start prepping.\n\nFind it with the other generators: https://codexcryptica.com/generators\n\nIt gives you:\n- an expanded concept with stakes, cast and pressure\n- a quick test of the idea for holes and player fit\n- a beat or scene outline you can edit before you save anything\n- a next steps checklist so you know what to prep first\n- everything stays local until you decide to keep it\n\nIt does not write canon for you. The draft is a starting point and you will want to rewrite the parts that do not match your lore, which is intentional so your world stays yours.\n\nWhat premise has been sitting in your notes that you would run through this first?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/announcements/release-36011198722-1.png)\n\n---\n*Posted automatically via release pipeline. Feedback and discussion welcome!*\n<!-- id:36011198722 -->",
+      "url": "https://codexcryptica.com/tools/ai-rpg-idea-developer",
+      "image_url": "https://assets.codexcryptica.com/announcements/release-36011198722-1.png",
       "source_id": "36011198722",
       "status": "approved",
-      "created_at": 1790259852
+      "created_at": 1790261214
     }
   ]
 }
