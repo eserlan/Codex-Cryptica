@@ -1,5 +1,5 @@
 {
-  "updated_at": 1790265795,
+  "updated_at": 1790266864,
   "candidates": [
     {
       "id": "reddit-35104395212-i-put-every-superhero-generator-in-one-p",
@@ -112,14 +112,14 @@
       "created_at": 1790262495
     },
     {
-      "id": "reddit-36014807190-supers-expansion-origins-events-and-vill",
-      "title": "Supers expansion: Origins, Events, and Villain Schemes plus genre support across the app",
-      "body": "Supers games break a lot of generic tools. An origin that works for fantasy reads wrong for a comic book table, and a villain plan that is just \"steal the artifact\" misses the whole point of a scheme.\n\nI expanded the superhero/comic book side: three new generators \u2014 Origin, Comic Book Event, and Villain Scheme \u2014 plus Supers-aware content across quest, settlement, nation, faction, and secret society.\n\nYou can browse the supers set from the generators hub: https://codexcryptica.com/generators\n\nWhat is new to try:\n- Origin generator with power source, public cover, and the complication that follows the character\n- Comic Book Event generator for crossover-scale incidents, not just street jobs\n- Villain Scheme generator that lays out goal, public move, hidden move, and what happens if no one stops it\n- Supers-flavoured outputs in quest hooks and polity/factions so your city and factions feel like they belong to the same genre\n\nNot every supers tone is in there yet. Right now it leans classic comic book rather than grim or parody, so tell me where it misses your table.\n\nWhat supers trope do you still have to write by hand every time?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/announcements/release-36014807190-1.png)\n\n---\n*Posted automatically via release pipeline. Feedback and discussion welcome!*\n<!-- id:36014807190 -->",
-      "url": "https://codexcryptica.com/generators/origin",
-      "image_url": "https://assets.codexcryptica.com/announcements/release-36014807190-1.png",
+      "id": "reddit-36014807190-new-for-packs-pirate-high-seas-and-stars",
+      "title": "New /for packs: Pirate & High Seas and Starship Campaigns",
+      "body": "Running pirates or starship campaigns usually means hunting across five different generators and three blog posts to get the right pieces. I wanted one place to start.\n\nI added two dedicated /for packs \u2014 Pirate & High Seas and Starship Campaigns \u2014 that bundle the relevant generators and guides for each style of play.\n\nStart from the pack index: https://codexcryptica.com/for\n\nEach pack collects:\n- the generators you will actually need for that campaign (ships, crews, settlements, factions)\n- the answer guides that match the genre, so rulings and prep have context\n- a path from first session to ongoing campaign without app-hopping\n\nThey are landing pages, not new apps. If you already use the generators, nothing changes \u2014 the packs just make them easier to find for a new table.\n\nWhich are you more likely to run next \u2014 a pirate port crawl or a long-haul starship job, and what tool is missing for it?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/announcements/release-36014807190-4.png)\n\n---\n*Posted automatically via release pipeline. Feedback and discussion welcome!*\n<!-- id:36014807190 -->",
+      "url": "https://codexcryptica.com/for/pirate-high-seas",
+      "image_url": "https://assets.codexcryptica.com/announcements/release-36014807190-4.png",
       "source_id": "36014807190",
       "status": "approved",
-      "created_at": 1790265795
+      "created_at": 1790266864
     }
   ]
 }
