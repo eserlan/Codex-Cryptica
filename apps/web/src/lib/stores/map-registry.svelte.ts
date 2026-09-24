@@ -65,7 +65,7 @@ class MapRegistryStore {
         const vaultDir = await getVaultDir(vaultRegistry.rootHandle!, vaultId);
         await saveMapsToDisk(vaultDir, this.maps);
 
-        await updateLastInternalChange(vaultId);
+        await updateLastInternalChange(vaultId, { kind: "maps" });
 
         this.status = "idle";
       } catch (err) {
@@ -118,7 +118,7 @@ class MapRegistryStore {
 
         await saveMapsToDisk(vaultDir, this.maps);
 
-        await updateLastInternalChange(activeVaultId);
+        await updateLastInternalChange(activeVaultId, { kind: "maps" });
       } catch (err: any) {
         console.error("[MapRegistryStore] Failed to delete map files", err);
         this.status = "error";

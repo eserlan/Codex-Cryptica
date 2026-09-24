@@ -118,3 +118,94 @@ apps/web/src/lib/
 ## Complexity Tracking
 
 _No unjustified Constitution Check violations — table omitted._
+
+---
+
+## Amendment 2026-09-24: Incremental entity sync (#3354)
+
+**Spec**: FR-018 (amended), FR-021–FR-023, SC-009 (amended), SC-012, SC-013. **Depends on**: #3353 (`readFullEntity`, abortable snapshot builds).
+
+### Summary
+
+Automatic sync (#3189) made every edit re-send the whole vault: the client read every entity body to build a full snapshot, and the worker replaced one `bundle.json`. Media was already incremental via the content-hash cache. This amendment makes entities incremental too: the client tracks which entities changed in a persisted set, reads and sends only those, and the worker merges them into a sharded store. Full uploads remain for the cases where the changed set cannot be trusted (FR-023).
+
+```text
+entity save ──► updateLastInternalChange ──► onDurableVaultChange({ vaultId, kind, ids, deleted })
+                                                  │  (backup enabled only)
+                                                  ▼
+                                    IndexedDB cloudBackupDirty  [vaultId, kind, id] → version
+                                                  │  debounce (#3189)
+                                                  ▼
+      needsFullPush / first / v1 remote? ──yes──► full snapshot ──► POST /commit (writes v2)
+                                                  │ no
+                                                  ▼
+                 snapshot dirty rows ──► readFullEntity(ids) ──► POST /delta { upserts, deletes }
+                                                  │ 200                     │ 409 (diverged / v1)
+                                                  ▼                         ▼
+                     delete rows whose version still matches      pause (diverged) or full commit (v1)
+```
+
+### Design decisions
+
+| Decision                                                        | Why                                                                                                                                                                                                                                                                                       |
+| --------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Track changes explicitly, not by hashing every entity each push | Hashing needs every body, which is the whole-vault read this removes. Change events already exist at the one durable-write chokepoint (`updateLastInternalChange`).                                                                                                                       |
+| Persist the set in IndexedDB                                    | The close-time flush is best-effort (#3189). An in-memory set would lose the last edits of a session that ends before its upload.                                                                                                                                                         |
+| Version-guarded clearing                                        | Clearing "everything sent" would drop an edit that lands mid-upload. Deleting a row only when its version is unchanged keeps it for the next upload (FR-022).                                                                                                                             |
+| Tombstones in the same store                                    | Deletions otherwise survive in the remote copy and come back on restore (SC-013).                                                                                                                                                                                                         |
+| 64 shards, not one object per entity                            | One object per entity makes a restore cost one R2 read per entity, beyond the Worker's per-request subrequest limit for large vaults. 64 shards keep a restore at ~66 reads and a small delta at a few shard rewrites, each around 1/64 of the vault, so worker CPU scales with the edit. |
+| Worker merges shards, not the client                            | A client-side merge would need to download shards first. The worker already holds them; the client sends only what changed.                                                                                                                                                               |
+| `/delta` refuses v1 and diverged bases with 409                 | Keeps the delta path simple (v2 only, exact base). The client falls back to a full commit for v1 and to the existing conflict pause for divergence.                                                                                                                                       |
+| Bulk changes set `needsFullPush` instead of enumerating ids     | Import, reload from disk and restore bypass per-entity saves. A full upload is always correct; a partial one from an incomplete id list silently loses data.                                                                                                                              |
+| Idle consistency check against `entityHashes`                   | Safety net for a code path that forgets to mark a change. Compares only entities whose bodies are already in memory, so it never triggers a whole-vault read.                                                                                                                             |
+
+### Constitution re-check
+
+- **V. Privacy**: unchanged exception. The same data goes to the same place; less of it per upload. Change tracking is local-only, and nothing is recorded while backup is off (FR-022), so "off means nothing leaves the device" still holds (SC-002).
+- **III. Simplicity**: one new object store, one new endpoint, fixed shard count. Rejected: per-entity objects (subrequest limit), client-side shard merging (extra downloads), CRDT/field-level merge (out of scope).
+- **VIII. DI**: the dirty-set store is injected into `CloudBackupStore` like the existing runtime/storage, so tests use an in-memory implementation.
+- **II. TDD**: every task below lands test-first; the SC-012 read/request counts and SC-013 round-trip are asserted, not observed manually.
+
+### Touched files
+
+```text
+apps/web/src/lib/stores/vault/registry.ts           # change records on onDurableVaultChange
+apps/web/src/lib/stores/vault/entity-persistence.ts # emit entity ids / deletions
+apps/web/src/lib/utils/entity-db.ts (or idb.ts)      # cloudBackupDirty object store + migration
+apps/web/src/lib/stores/cloud-backup-dirty.ts        # NEW — dirty-set repository (DI)
+apps/web/src/lib/stores/cloud-backup.svelte.ts       # choose full vs delta; version-guarded clear
+apps/web/src/lib/services/cloud-backup-payload.ts    # delta payload builder
+apps/web/src/lib/app/init/app-init.ts                # wiring; needsFullPush on bulk events
+packages/cloud-backup-sync/src/cloud-backup-sync.ts  # pushDelta(); 409 → full fallback
+packages/schema/src/publishing.ts                    # manifest v2 fields, delta request schema
+apps/workers/oracle-proxy/src/cloud-backup.ts        # v2 commit, /delta, sharded /bundle
+```
+
+### Rollout (three PRs, each shippable)
+
+1. **Change tracking (web only).** Change records, dirty store, bulk-change flags. Uploads stay full; tests assert the set is correct. No protocol change.
+2. **Worker v2.** Sharded commit, `/delta`, shard-assembling `/bundle`, v1 still readable. Deployed before any client sends deltas; full uploads migrate backups to v2.
+3. **Client delta uploads + consistency check.** Switch the automatic and manual paths to `/delta` when eligible, with the 409 fallbacks.
+
+### Risks
+
+- **A write path that skips `updateLastInternalChange`** would leave remote copies stale. Mitigation: the idle consistency check (FR-023) plus a test enumerating persistence entry points.
+- **Two tabs of the same vault** both record into the shared store, which is safe (each write gets a unique stamp, and rows clear only on an exact match), but both may upload. Automatic sync has no cross-tab coordination today; the optimistic-concurrency guard turns a duplicate delta into a 409 pause rather than a lost write. Add a `navigator.locks` upload lock in PR 3 if duplicate uploads show up in practice.
+- **Shard hot spots** in a vault whose ids hash unevenly: acceptable at 64 shards and a 50 MB vault ceiling; revisit only if a shard approaches the 8 MB body limit.
+
+### As built (2026-09-24)
+
+Differences from the design above, each for a concrete reason:
+
+| Planned                                             | Built                                                                                                               | Why                                                                                                                              |
+| --------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| `entityHashes` on the manifest                      | Separate `index.json`, served by `GET /index`                                                                       | Every authorised request parses the manifest; a per-entity map (~130 KB at 1,600 entities) would tax all of them                 |
+| `needsFullPush` on `LocalCloudBackupRecord`         | A `full` row in the same `cloud_backup_dirty` store                                                                 | One store to snapshot and clear; the flag clears with the upload that honoured it, using the same version guard                  |
+| Numeric per-vault version                           | Unique string stamp per write                                                                                       | Only equality matters; avoids coordinating a counter across tabs                                                                 |
+| Bulk events set `needsFullPush`                     | Disk re-reads record their exact `newOrChangedIds` (without scheduling an upload); undescribed writes record `full` | Sync chunks already say which files changed, so a precise record is available; re-enable uploads in full anyway                  |
+| Delta carries changed assets and the asset manifest | Delta carries no media; an unknown image reference forces a full upload                                             | Image changes are rare next to text edits, and only a full upload can rebuild the asset manifest and prune correctly             |
+| Deltas for every push                               | Automatic pushes only; "Save to cloud" and "keep mine" stay full; >200 changed entities → full                      | Explicit actions keep their existing full-snapshot semantics; past ~200 entities a full upload is no larger and stays under 8 MB |
+| —                                                   | An automatic push with no recorded changes sends nothing                                                            | Removes the full upload the startup catch-up used to make on every app open                                                      |
+| Three PRs                                           | Two: worker, then client                                                                                            | The client falls back to a full upload on a 404 from `/delta`, so the worker no longer has to deploy first                       |
+
+The consistency check runs once per session, 60 s after a vault with backup on opens. It records missing, extra, and changed-while-loaded entities, and never reads an unloaded body.

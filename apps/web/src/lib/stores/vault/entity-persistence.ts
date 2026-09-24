@@ -310,7 +310,10 @@ export class EntityPersistenceService {
       // Disk write succeeded — clear any prior failure bookkeeping for this id.
       this._failedSaveRetries.delete(id);
 
-      await updateLastInternalChange(vaultIdAtStart);
+      await updateLastInternalChange(vaultIdAtStart, {
+        kind: "entity",
+        ids: [latestEntity.id],
+      });
 
       const path = latestEntity._path || [`${latestEntity.id}.md`];
       const cached = await cacheService.set(

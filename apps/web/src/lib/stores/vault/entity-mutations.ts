@@ -387,7 +387,11 @@ export class EntityMutationService {
           this.entities = entities;
           if (this.deps.onEntityDelete) this.deps.onEntityDelete(id);
 
-          await updateLastInternalChange(activeVaultId);
+          await updateLastInternalChange(activeVaultId, {
+            kind: "entity",
+            ids: [id],
+            deleted: true,
+          });
 
           modifiedIds.forEach((mId) => {
             const modEntity = this.entities[mId];
@@ -570,7 +574,11 @@ export class EntityMutationService {
         await cacheService.remove(`${vaultId}:${path.join("/")}`);
         await removeLocalEntityFile(localHandle, path);
       }
-      await updateLastInternalChange(vaultId);
+      await updateLastInternalChange(vaultId, {
+        kind: "entity",
+        ids: [...deletedIds],
+        deleted: true,
+      });
       await this.deps.updateEntityCount(
         vaultId,
         Object.keys(this.entities).length,

@@ -198,6 +198,28 @@ describe("onDurableVaultChange (#3189)", () => {
     unsub();
   });
 
+  it("passes along what the write touched (#3354)", async () => {
+    vi.mocked(getDB).mockResolvedValue({
+      get: async () => ({ id: "v1" }),
+      put: async () => {},
+    } as any);
+    const seen: unknown[] = [];
+    const unsub = onDurableVaultChange((id, change) => seen.push([id, change]));
+
+    await updateLastInternalChange("v1", {
+      kind: "entity",
+      ids: ["a"],
+      deleted: true,
+    });
+    await updateLastInternalChange("v1");
+
+    expect(seen).toEqual([
+      ["v1", { kind: "entity", ids: ["a"], deleted: true }],
+      ["v1", undefined],
+    ]);
+    unsub();
+  });
+
   it("stops notifying after unsubscribe", async () => {
     vi.mocked(getDB).mockResolvedValue({
       get: async () => ({ id: "v1" }),

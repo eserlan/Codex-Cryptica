@@ -2,6 +2,8 @@ import { describe, expect, it, vi } from "vitest";
 import {
   buildCloudBackupPayload,
   hydrateEntityContent,
+  buildCloudBackupDelta,
+  DELTA_MAX_ENTITIES,
   collectAssetPaths,
   isLocalAssetPath,
   assetIdForPath,
@@ -411,5 +413,150 @@ describe("buildCloudBackupPayload content fidelity", () => {
 
     expect(payload.bundle.entities).toHaveLength(1);
     expect(payload.skippedEntities).toEqual([]);
+  });
+});
+
+describe("buildCloudBackupDelta (#3354)", () => {
+  const vaultOf = (count: number, extra: Record<string, any> = {}) => {
+    const records: Record<string, any> = {};
+    for (let i = 0; i < count; i++) {
+      records[`e${i}`] = { id: `e${i}`, title: `E${i}`, content: "preview" };
+    }
+    Object.assign(records, extra);
+    const reads: string[] = [];
+    return {
+      records,
+      reads,
+      deps: {
+        getEntity: (id: string) => records[id],
+        hydrateEntities: {
+          isContentLoaded: (id: string) => id === "loaded",
+          readFullEntity: async (id: string) => {
+            reads.push(id);
+            if (id === "unreadable") throw new Error("gone");
+            return { ...records[id], content: `full ${id}` };
+          },
+        },
+        uploadedAssetIds: new Set<string>(["known.png"]),
+        referencedAssetIds: ["known.png"],
+      },
+    };
+  };
+  const change = (id: string, deleted = false) => ({
+    kind: "entity" as const,
+    id,
+    deleted,
+  });
+
+  it("reads only the changed entities of a large vault", async () => {
+    const vault = vaultOf(1600);
+
+    const delta = await buildCloudBackupDelta(
+      "Vault",
+      [change("e1"), change("e2"), change("e3")],
+      vault.deps as never,
+    );
+
+    expect(vault.reads).toEqual(["e1", "e2", "e3"]);
+    expect(delta?.upserts.map((e: any) => e.content)).toEqual([
+      "full e1",
+      "full e2",
+      "full e3",
+    ]);
+    expect(delta?.deletes).toEqual([]);
+    expect(delta?.assetIds).toEqual(["known.png"]);
+    expect(delta).not.toHaveProperty("maps");
+    expect(delta).not.toHaveProperty("canvases");
+  });
+
+  it("uses an already-loaded body without reading it again", async () => {
+    const vault = vaultOf(0, {
+      loaded: { id: "loaded", title: "L", content: "in memory" },
+    });
+
+    const delta = await buildCloudBackupDelta(
+      "Vault",
+      [change("loaded")],
+      vault.deps as never,
+    );
+
+    expect(vault.reads).toEqual([]);
+    expect((delta?.upserts[0] as any).content).toBe("in memory");
+  });
+
+  it("sends tombstones and vanished entities as deletes", async () => {
+    const vault = vaultOf(2);
+
+    const delta = await buildCloudBackupDelta(
+      "Vault",
+      [change("e0", true), change("never-existed")],
+      vault.deps as never,
+    );
+
+    expect(delta?.deletes).toEqual(["e0", "never-existed"]);
+    expect(delta?.upserts).toEqual([]);
+    expect(vault.reads).toEqual([]);
+  });
+
+  it("sends the current asset references so deleted media is pruned", async () => {
+    const vault = vaultOf(0);
+    vault.deps.referencedAssetIds = ["still-used.png"];
+
+    const delta = await buildCloudBackupDelta(
+      "Vault",
+      [change("deleted", true)],
+      vault.deps as never,
+    );
+
+    expect(delta?.deletes).toEqual(["deleted"]);
+    expect(delta?.assetIds).toEqual(["still-used.png"]);
+  });
+
+  it("includes maps and canvases whole only when they changed", async () => {
+    const vault = vaultOf(0);
+
+    const delta = await buildCloudBackupDelta(
+      "Vault",
+      [
+        { kind: "maps", id: "*", deleted: false },
+        { kind: "canvas", id: "c1", deleted: false },
+      ],
+      vault.deps as never,
+      { maps: [{ id: "m1" }], canvases: [{ id: "c1" }, { id: "c2" }] },
+    );
+
+    expect(delta?.maps).toEqual([{ id: "m1" }]);
+    expect(delta?.canvases).toEqual([{ id: "c1" }, { id: "c2" }]);
+  });
+
+  it("asks for a full upload when it cannot send a faithful delta", async () => {
+    const vault = vaultOf(DELTA_MAX_ENTITIES + 1, {
+      pictured: { id: "pictured", title: "P", image: "new.png" },
+      known: { id: "known", title: "K", image: "known.png" },
+      unreadable: { id: "unreadable", title: "U" },
+    });
+    const deps = vault.deps as never;
+    const many = Object.keys(vault.records)
+      .slice(0, DELTA_MAX_ENTITIES + 1)
+      .map((id) => change(id));
+
+    expect(
+      await buildCloudBackupDelta(
+        "Vault",
+        [{ kind: "full", id: "*", deleted: false }],
+        deps,
+      ),
+    ).toBeNull();
+    expect(await buildCloudBackupDelta("Vault", many, deps)).toBeNull();
+    expect(
+      await buildCloudBackupDelta("Vault", [change("pictured")], deps),
+    ).toBeNull();
+    expect(
+      await buildCloudBackupDelta("Vault", [change("unreadable")], deps),
+    ).toBeNull();
+    // An image the backup already holds does not force a full upload.
+    expect(
+      await buildCloudBackupDelta("Vault", [change("known")], deps),
+    ).not.toBeNull();
   });
 });

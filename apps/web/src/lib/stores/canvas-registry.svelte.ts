@@ -180,7 +180,11 @@ export class CanvasRegistryStore {
       );
       await deleteCanvasFromDisk(vaultDir, id);
 
-      await updateLastInternalChange(vaultRegistry.activeVaultId!);
+      await updateLastInternalChange(vaultRegistry.activeVaultId!, {
+        kind: "canvas",
+        ids: [id],
+        deleted: true,
+      });
 
       const nextCanvases = { ...this.canvases };
       delete nextCanvases[id];
@@ -230,7 +234,10 @@ export class CanvasRegistryStore {
         const vaultDir = await getVaultDir(vaultRegistry.rootHandle!, vaultId);
         await saveCanvasToDisk(vaultDir, id, data);
 
-        await updateLastInternalChange(vaultId);
+        await updateLastInternalChange(vaultId, {
+          kind: "canvas",
+          ids: [id],
+        });
 
         this.status = "idle";
       } catch (err) {

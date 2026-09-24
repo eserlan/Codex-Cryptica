@@ -25,6 +25,11 @@ vi.mock("./vault/events.svelte", () => {
 import { CloudBackupStore } from "./cloud-backup.svelte";
 import { vaultEventBus } from "./vault/events.svelte";
 import { createMemoryStorage } from "@codex/cloud-backup-sync";
+import { hashCloudBackupEntity } from "schema";
+import {
+  CloudBackupDirtyStore,
+  memoryDirtyStorage,
+} from "./cloud-backup-dirty";
 
 const MANIFEST = {
   schemaVersion: 1,
@@ -793,5 +798,273 @@ describe("automatic background sync (#3189)", () => {
 
     expect(store.autoState).toBe("idle");
     expect(calls).toEqual([]);
+  });
+});
+
+describe("changed-item tracking (#3354)", () => {
+  beforeEach(() => {
+    onlineState.current = true;
+    localStorage.clear();
+  });
+
+  const rowsOf = async (dirty: CloudBackupDirtyStore) =>
+    (await dirty.snapshot("v-1")).map((row) => `${row.kind}:${row.id}`).sort();
+
+  function trackedHarness(extra: Record<string, unknown> = {}) {
+    const dirty = new CloudBackupDirtyStore(memoryDirtyStorage());
+    const h = harness([ENABLE], {
+      debounceMs: 20,
+      retryMs: 30,
+      dirty,
+      ...extra,
+    });
+    return { ...h, dirty };
+  }
+
+  it("records nothing and sends nothing while backup is off", async () => {
+    const { store, calls, dirty } = trackedHarness();
+    await store.hydrate("v-1");
+
+    await store.recordLocalChange("v-1", { kind: "entity", ids: ["a"] });
+    await vi.advanceTimersByTimeAsync(200);
+
+    expect(await rowsOf(dirty)).toEqual([]);
+    expect(calls).toEqual([]);
+  });
+
+  it("clears what a push sent, keeping an edit made mid-push", async () => {
+    let releaseBuild: () => void = () => {};
+    let building = false;
+    const buildPayload = vi.fn(async () => {
+      if (building) await new Promise<void>((r) => (releaseBuild = r));
+      return { vaultTitle: "The Saltmere Fens", bundle: { entities: [] } };
+    });
+    const { store, dirty } = trackedHarness({ buildPayload });
+    await store.enable("v-1");
+
+    await store.recordLocalChange(
+      "v-1",
+      { kind: "entity", ids: ["a", "b"] },
+      { schedule: false },
+    );
+    building = true;
+    const saving = store.backUpNow();
+    await vi.advanceTimersByTimeAsync(0);
+    // "b" is edited again while the snapshot is being built.
+    await store.recordLocalChange(
+      "v-1",
+      { kind: "entity", ids: ["b"] },
+      { schedule: false },
+    );
+    releaseBuild();
+    expect(await saving).toBe(true);
+
+    expect(await rowsOf(dirty)).toEqual(["entity:b"]);
+  });
+
+  it("clears pending changes when backup is turned off", async () => {
+    const { store, dirty } = trackedHarness();
+    await store.enable("v-1");
+    await store.recordLocalChange(
+      "v-1",
+      { kind: "entity", ids: ["a"] },
+      { schedule: false },
+    );
+
+    await store.disable("v-1");
+
+    expect(await rowsOf(dirty)).toEqual([]);
+  });
+
+  it("tracks edits made while the first backup is being built", async () => {
+    const ref: { store?: CloudBackupStore } = {};
+    const buildPayload = vi.fn(async () => {
+      await ref.store!.recordLocalChange(
+        "v-1",
+        { kind: "entity", ids: ["mid-enable"] },
+        { schedule: false },
+      );
+      return { vaultTitle: "The Saltmere Fens", bundle: { entities: [] } };
+    });
+    const h = trackedHarness({ buildPayload });
+    ref.store = h.store;
+
+    expect(await h.store.enable("v-1")).toBe(true);
+    expect(await rowsOf(h.dirty)).toEqual(["entity:mid-enable"]);
+  });
+
+  it("schedules an upload for edits but not for files re-read from disk", async () => {
+    const { store, calls } = trackedHarness();
+    await store.enable("v-1");
+    calls.length = 0;
+
+    await store.recordLocalChange(
+      "v-1",
+      { kind: "entity", ids: ["from-disk"] },
+      { schedule: false },
+    );
+    await vi.advanceTimersByTimeAsync(200);
+    expect(calls.some((url) => url.endsWith("/commit"))).toBe(false);
+
+    await store.recordLocalChange("v-1", { kind: "entity", ids: ["edited"] });
+    await vi.advanceTimersByTimeAsync(200);
+    expect(calls.some((url) => url.endsWith("/commit"))).toBe(true);
+  });
+});
+
+describe("incremental uploads (#3354)", () => {
+  beforeEach(() => {
+    onlineState.current = true;
+    localStorage.clear();
+  });
+
+  const DELTA = { vaultTitle: "The Saltmere Fens", upserts: [], deletes: [] };
+
+  async function deltaHarness(
+    responses: { ok: boolean; status: number; body: unknown }[] = [],
+    extra: Record<string, unknown> = {},
+  ) {
+    const dirty = new CloudBackupDirtyStore(memoryDirtyStorage());
+    const buildDelta = vi.fn(async () => DELTA);
+    const buildPayload = vi.fn(async () => ({
+      vaultTitle: "The Saltmere Fens",
+      bundle: { entities: [] },
+    }));
+    const h = harness([ENABLE, ...responses], {
+      debounceMs: 20,
+      retryMs: 30,
+      dirty,
+      buildDelta,
+      buildPayload,
+      ...extra,
+    });
+    await h.store.enable("v-1");
+    h.calls.length = 0;
+    buildPayload.mockClear();
+    return { ...h, dirty, buildDelta, buildPayload };
+  }
+
+  it("sends only the recorded changes and clears them", async () => {
+    const h = await deltaHarness();
+
+    await h.store.recordLocalChange("v-1", { kind: "entity", ids: ["a"] });
+    await vi.advanceTimersByTimeAsync(100);
+
+    expect(h.buildDelta).toHaveBeenCalledTimes(1);
+    expect((h.buildDelta.mock.calls[0] as any[])[1]).toMatchObject([
+      { kind: "entity", id: "a" },
+    ]);
+    expect(h.buildPayload).not.toHaveBeenCalled();
+    expect(h.calls.some((url) => url.endsWith("/delta"))).toBe(true);
+    expect(h.calls.some((url) => url.endsWith("/commit"))).toBe(false);
+    expect(await h.dirty.snapshot("v-1")).toEqual([]);
+    expect(h.store.autoState).toBe("saved");
+  });
+
+  it("falls back to a full upload when the backup cannot take a delta", async () => {
+    const h = await deltaHarness([
+      {
+        ok: false,
+        status: 409,
+        body: { error: { code: "full_push_required" } },
+      },
+    ]);
+
+    await h.store.recordLocalChange("v-1", { kind: "entity", ids: ["a"] });
+    await vi.advanceTimersByTimeAsync(100);
+
+    expect(h.calls.filter((url) => /\/(delta|commit)$/.test(url))).toEqual([
+      "https://worker.test/api/cloud-backup/b-1/delta",
+      "https://worker.test/api/cloud-backup/b-1/commit",
+    ]);
+    expect(h.buildPayload).toHaveBeenCalledTimes(1);
+    expect(await h.dirty.snapshot("v-1")).toEqual([]);
+  });
+
+  it("uploads in full when the builder asks for it", async () => {
+    const h = await deltaHarness();
+    h.buildDelta.mockResolvedValueOnce(null as never);
+
+    await h.store.recordLocalChange("v-1", { kind: "entity", ids: ["a"] });
+    await vi.advanceTimersByTimeAsync(100);
+
+    expect(h.calls.some((url) => url.endsWith("/delta"))).toBe(false);
+    expect(h.calls.some((url) => url.endsWith("/commit"))).toBe(true);
+  });
+
+  it("sends nothing for an automatic push with nothing recorded", async () => {
+    const h = await deltaHarness();
+
+    h.store.notifyLocalChange("v-1");
+    await vi.advanceTimersByTimeAsync(100);
+
+    expect(h.calls).toEqual([]);
+    expect(h.buildDelta).not.toHaveBeenCalled();
+  });
+
+  it("keeps Save to cloud a full upload", async () => {
+    const h = await deltaHarness();
+    await h.store.recordLocalChange(
+      "v-1",
+      { kind: "entity", ids: ["a"] },
+      { schedule: false },
+    );
+
+    expect(await h.store.backUpNow()).toBe(true);
+
+    expect(h.buildDelta).not.toHaveBeenCalled();
+    expect(h.calls.some((url) => url.endsWith("/commit"))).toBe(true);
+    expect(await h.dirty.snapshot("v-1")).toEqual([]);
+  });
+
+  it("pauses on a diverged remote and keeps the changes", async () => {
+    const h = await deltaHarness([
+      {
+        ok: false,
+        status: 409,
+        body: { error: { code: "diverged", lastPushedAt: "2099-01-01" } },
+      },
+    ]);
+
+    await h.store.recordLocalChange("v-1", { kind: "entity", ids: ["a"] });
+    await vi.advanceTimersByTimeAsync(100);
+
+    expect(h.store.autoState).toBe("conflict");
+    expect((await h.dirty.snapshot("v-1")).map((row) => row.id)).toEqual(["a"]);
+  });
+
+  it("marks missing, extra and stale entities from the remote index", async () => {
+    const same = { id: "same", title: "Same" };
+    const stale = { id: "stale", title: "Edited here" };
+    const unloaded = { id: "unloaded", title: "Preview only" };
+    const h = await deltaHarness([], {
+      reconcileDelayMs: 10,
+      listLocalEntities: () => [
+        { id: "same", loaded: true, entity: same },
+        { id: "stale", loaded: true, entity: stale },
+        { id: "unloaded", loaded: false, entity: unloaded },
+        { id: "local-only", loaded: false, entity: { id: "local-only" } },
+      ],
+    });
+    h.queue.push({
+      ok: true,
+      status: 200,
+      body: {
+        entityHashes: {
+          same: await hashCloudBackupEntity(same),
+          stale: "old-hash",
+          unloaded: "differs-but-not-loaded",
+          "remote-only": "h",
+        },
+      },
+    });
+
+    const recorded = await h.store.reconcileWithRemote("v-1");
+
+    expect(recorded).toBe(3);
+    const rows = (await h.dirty.snapshot("v-1"))
+      .map((row) => `${row.id}${row.deleted ? ":deleted" : ""}`)
+      .sort();
+    expect(rows).toEqual(["local-only", "remote-only:deleted", "stale"]);
   });
 });
