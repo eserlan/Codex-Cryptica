@@ -564,6 +564,7 @@ describe("pushDeltaToCloudBackup (#3354)", () => {
     vaultTitle: "The Saltmere Fens",
     upserts: [{ id: "e1" }],
     deletes: ["gone"],
+    assetIds: [],
   };
   const BASE = MANIFEST.lastPushedAt;
 
@@ -587,6 +588,41 @@ describe("pushDeltaToCloudBackup (#3354)", () => {
     const record = await getLocalCloudBackupRecord(runtime, "v-1");
     expect(record?.lastPushedAt).toBe(pushed.lastPushedAt);
     expect(record?.status).toBe("idle");
+  });
+
+  it("aborts an in-flight delta without marking the backup as failed", async () => {
+    const { runtime, calls } = await enabled();
+    const controller = new AbortController();
+    let markStarted: () => void = () => {};
+    const started = new Promise<void>((resolve) => (markStarted = resolve));
+    runtime.fetch = vi.fn(async (url: string, init?: any) => {
+      calls.push({ url, init });
+      markStarted();
+      await new Promise<void>((_resolve, reject) => {
+        init.signal.addEventListener(
+          "abort",
+          () => reject(new DOMException("Aborted", "AbortError")),
+          { once: true },
+        );
+      });
+      throw new Error("unreachable");
+    }) as any;
+
+    const pushing = pushDeltaToCloudBackup(
+      runtime,
+      "v-1",
+      DELTA,
+      BASE,
+      controller.signal,
+    );
+    await started;
+    controller.abort();
+
+    expect(await pushing).toEqual({ ok: true, value: null });
+    expect(calls[0].init.signal).toBe(controller.signal);
+    expect((await getLocalCloudBackupRecord(runtime, "v-1"))?.status).toBe(
+      "idle",
+    );
   });
 
   it("asks for a full upload for a v1 backup or a worker without the route", async () => {

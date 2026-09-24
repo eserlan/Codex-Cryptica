@@ -887,7 +887,9 @@ export class CloudBackupStore {
       signal,
     );
     if (signal.aborted) return BACKUP_OFF;
-    const out = delta ? await this.sendDelta(vaultId, delta, base) : null;
+    const out = delta
+      ? await this.sendDelta(vaultId, delta, base, signal)
+      : null;
     return out ?? this.uploadSnapshot(vaultId, opts, signal);
   }
 
@@ -896,12 +898,14 @@ export class CloudBackupStore {
     vaultId: string,
     delta: VaultDeltaPayload,
     base: string,
+    signal: AbortSignal,
   ): Promise<SnapshotOutcome | null> {
     const result = await pushDeltaToCloudBackup(
       this.deps!.runtime,
       vaultId,
       delta,
       base,
+      signal,
     );
     if (!result.ok) {
       if ("fullPushRequired" in result) return null;

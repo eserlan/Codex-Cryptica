@@ -430,59 +430,122 @@ export async function pushDeltaToCloudBackup(
   vaultId: string,
   delta: VaultDeltaPayload,
   baseLastPushedAt: string,
+  signal?: AbortSignal,
 ): Promise<
   | CloudBackupOutcome<CloudBackupManifest | null>
   | { ok: false; fullPushRequired: true; error: string }
 > {
   const record = await readRecord(runtime, vaultId);
   if (!record || !record.enabled) return { ok: true, value: null };
+  if (signal?.aborted) return { ok: true, value: null };
 
   await runtime.storage.write(vaultId, { ...record, status: "syncing" });
-  const response = await runtime.fetch(
-    `${runtime.baseUrl}/api/cloud-backup/${record.backupId}/delta`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${record.ownerCode}`,
+  try {
+    const response = await runtime.fetch(
+      `${runtime.baseUrl}/api/cloud-backup/${record.backupId}/delta`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${record.ownerCode}`,
+        },
+        body: JSON.stringify({ ...delta, baseLastPushedAt }),
+        signal,
       },
-      body: JSON.stringify({ ...delta, baseLastPushedAt }),
-    },
-  );
-
-  if (!response.ok) {
-    const body = (await response.json().catch(() => null)) as {
-      error?: { code?: string; message?: string; lastPushedAt?: string };
-    } | null;
-    const code = body?.error?.code;
-    if (response.status === 404 || code === "full_push_required") {
-      // Not a failed backup: the caller retries in full straight away.
-      await runtime.storage.write(vaultId, record);
-      return {
-        ok: false,
-        fullPushRequired: true,
-        error: body?.error?.message ?? "A full upload is required.",
-      };
+    );
+    if (await restoreDeltaRecordAfterAbort(runtime, vaultId, record, signal)) {
+      return { ok: true, value: null };
     }
-    await runtime.storage.write(vaultId, { ...record, status: "error" });
-    return {
-      ok: false,
-      error: body?.error?.message ?? `Request failed (${response.status})`,
-      status: response.status,
-      ...(code === "diverged"
-        ? {
-            conflict: true,
-            remoteLastPushedAt: body?.error?.lastPushedAt ?? null,
-          }
-        : {}),
-    };
+    return response.ok
+      ? applyDeltaSuccess(runtime, vaultId, record, delta, response, signal)
+      : applyDeltaFailure(runtime, vaultId, record, response, signal);
+  } catch (error) {
+    if (await restoreDeltaRecordAfterAbort(runtime, vaultId, record, signal)) {
+      return { ok: true, value: null };
+    }
+    throw error;
   }
+}
 
+async function restoreDeltaRecordAfterAbort(
+  runtime: CloudBackupRuntime,
+  vaultId: string,
+  record: LocalCloudBackupRecord,
+  signal?: AbortSignal,
+): Promise<boolean> {
+  if (!signal?.aborted) return false;
+  await runtime.storage.write(vaultId, record);
+  return true;
+}
+
+async function applyDeltaFailure(
+  runtime: CloudBackupRuntime,
+  vaultId: string,
+  record: LocalCloudBackupRecord,
+  response: Awaited<ReturnType<CloudBackupRuntime["fetch"]>>,
+  signal?: AbortSignal,
+): Promise<
+  | CloudBackupOutcome<CloudBackupManifest | null>
+  | { ok: false; fullPushRequired: true; error: string }
+> {
+  const body = (await response.json().catch(() => null)) as {
+    error?: { code?: string; message?: string; lastPushedAt?: string };
+  } | null;
+  if (await restoreDeltaRecordAfterAbort(runtime, vaultId, record, signal)) {
+    return { ok: true, value: null };
+  }
+  const code = body?.error?.code;
+  const fullPushRequired =
+    response.status === 404 || code === "full_push_required";
+  const outcome = fullPushRequired
+    ? fullPushDeltaFailure(body?.error?.message)
+    : ordinaryDeltaFailure(response.status, code, body?.error);
+  await runtime.storage.write(
+    vaultId,
+    fullPushRequired ? record : { ...record, status: "error" },
+  );
+  return outcome;
+}
+
+function fullPushDeltaFailure(message?: string) {
+  return {
+    ok: false as const,
+    fullPushRequired: true as const,
+    error: message ?? "A full upload is required.",
+  };
+}
+
+function ordinaryDeltaFailure(
+  status: number,
+  code?: string,
+  error?: { message?: string; lastPushedAt?: string },
+) {
+  return {
+    ok: false as const,
+    error: error?.message ?? `Request failed (${status})`,
+    status,
+    ...(code === "diverged"
+      ? { conflict: true, remoteLastPushedAt: error?.lastPushedAt ?? null }
+      : {}),
+  };
+}
+
+async function applyDeltaSuccess(
+  runtime: CloudBackupRuntime,
+  vaultId: string,
+  record: LocalCloudBackupRecord,
+  delta: VaultDeltaPayload,
+  response: Awaited<ReturnType<CloudBackupRuntime["fetch"]>>,
+  signal?: AbortSignal,
+): Promise<CloudBackupOutcome<CloudBackupManifest | null>> {
   const manifest = (
     (await response.json().catch(() => null)) as {
       manifest?: CloudBackupManifest;
     } | null
   )?.manifest;
+  if (await restoreDeltaRecordAfterAbort(runtime, vaultId, record, signal)) {
+    return { ok: true, value: null };
+  }
   if (!manifest?.lastPushedAt) {
     await runtime.storage.write(vaultId, { ...record, status: "error" });
     return {
