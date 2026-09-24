@@ -212,6 +212,8 @@ export class CloudBackupStore {
    */
   private enablingVaultId: string | null = null;
   private reconcileTimer: ReturnType<typeof setTimeout> | null = null;
+  /** Lets `disable` persist its off record after any cancelled push settles. */
+  private activePush: Promise<SnapshotOutcome> | null = null;
   private autoPending = false;
   private autoTimer: ReturnType<typeof setTimeout> | null = null;
   private autoListenersAttached = false;
@@ -345,7 +347,9 @@ export class CloudBackupStore {
     // Disabling stops automation cold: no pending push may survive it, or
     // "off" would stop meaning "nothing leaves the device".
     this.activeBuild?.abort();
+    await this.activePush?.catch(() => undefined);
     this.activeBuild = null;
+    this.activePush = null;
     this.clearAutoTimer();
     this.clearReconcileTimer();
     this.autoPending = false;
@@ -822,26 +826,38 @@ export class CloudBackupStore {
     vaultId: string,
     opts: { guarded: boolean },
   ): Promise<SnapshotOutcome> {
-    // Check before building: the snapshot reads every entity, so learning that
-    // backup is off only at upload time costs a whole-vault read.
-    const record = await getLocalCloudBackupRecord(this.deps!.runtime, vaultId);
-    if (!record?.enabled) return BACKUP_OFF;
-
-    // Taken before building, so anything changed after this point stays
-    // pending even though the snapshot may happen to include it.
-    const sent = (await this.deps!.dirty?.snapshot(vaultId)) ?? [];
-
-    // Live for the whole push, so a disable during the build *or* the upload
-    // registers and the caller does not flip the status back from "off".
     const push = new AbortController();
     this.activeBuild = push;
-    try {
+    const operation = (async () => {
+      // Check before building: the snapshot reads every entity, so learning
+      // that backup is off only at upload time costs a whole-vault read.
+      const record = await getLocalCloudBackupRecord(
+        this.deps!.runtime,
+        vaultId,
+      );
+      if (push.signal.aborted || !record?.enabled) return BACKUP_OFF;
+
+      // Taken before building, so anything changed after this point stays
+      // pending even though the snapshot may happen to include it.
+      const sent = (await this.deps!.dirty?.snapshot(vaultId)) ?? [];
+      if (push.signal.aborted) return BACKUP_OFF;
+
+      // Keep the cancellation guard live through upload, including delta
+      // writes, so disable can wait before persisting the off record.
       const out = await this.uploadChanges(vaultId, opts, sent, push.signal);
       if (push.signal.aborted) return BACKUP_OFF;
       if (out.ok) await this.deps!.dirty?.clearSent(sent);
       return out;
+    })();
+    this.activePush = operation;
+    try {
+      const out = await operation;
+      return push.signal.aborted ? BACKUP_OFF : out;
     } finally {
-      if (this.activeBuild === push) this.activeBuild = null;
+      if (this.activeBuild === push) {
+        this.activeBuild = null;
+        this.activePush = null;
+      }
     }
   }
 
@@ -932,6 +948,7 @@ export class CloudBackupStore {
       {
         skipAssetUploadIds,
         ...(opts.guarded ? { expectLastPushedAt: this.lastPushedAt } : {}),
+        signal,
       },
     );
     if (!result.ok) {

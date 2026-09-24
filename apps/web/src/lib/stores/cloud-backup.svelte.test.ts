@@ -777,9 +777,10 @@ describe("automatic background sync (#3189)", () => {
     await vi.advanceTimersByTimeAsync(0);
     expect(buildPayload).toHaveBeenCalledTimes(1);
 
-    await h.store.disable("v-1");
+    const disabling = h.store.disable("v-1");
     expect(buildSignal?.aborted).toBe(true);
     finishBuild();
+    await disabling;
 
     expect(await saving).toBe(false);
     await vi.advanceTimersByTimeAsync(500);
