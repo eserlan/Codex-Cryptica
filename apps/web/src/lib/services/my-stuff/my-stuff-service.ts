@@ -1,6 +1,11 @@
 import { getAnswer } from "$lib/content/answers/registry";
 import { resolveOracleProxyUrl } from "$lib/config/oracle-proxy";
-import { browserStorage, type StorageLike } from "$lib/utils/runtime-deps";
+import {
+  browserStorage,
+  systemClock,
+  type StorageLike,
+  type Clock,
+} from "$lib/utils/runtime-deps";
 import { buildAbsoluteUrl } from "$lib/seo/site";
 import type {
   LikedAnswerItem,
@@ -20,6 +25,7 @@ export const CATEGORY_LABELS: Record<string, string> = {
 };
 
 export interface MyStuffServiceDeps {
+  clock?: Clock;
   storage?: StorageLike;
   getAnswerFn?: typeof getAnswer;
   fetch?: typeof fetch;
@@ -41,7 +47,10 @@ function getAllStorageKeys(storage: StorageLike): string[] {
   return [];
 }
 
-function parseStoredShare(item: unknown): SharedGeneratorItem | null {
+function parseStoredShare(
+  item: unknown,
+  clock: Clock,
+): SharedGeneratorItem | null {
   if (!item || typeof item !== "object") return null;
 
   const record = item as Record<string, unknown>;
@@ -61,7 +70,7 @@ function parseStoredShare(item: unknown): SharedGeneratorItem | null {
   const createdAt =
     typeof record.createdAt === "string" && record.createdAt.trim()
       ? record.createdAt
-      : new Date().toISOString();
+      : new Date(clock.now()).toISOString();
   const url =
     typeof record.url === "string" && /^https?:\/\//i.test(record.url)
       ? record.url
@@ -96,6 +105,7 @@ function parseStoredShare(item: unknown): SharedGeneratorItem | null {
 }
 
 export class MyStuffService {
+  private readonly clock: Clock;
   private readonly storage: StorageLike;
   private readonly getAnswerFn: typeof getAnswer;
   private readonly fetcher: typeof fetch;
@@ -103,6 +113,7 @@ export class MyStuffService {
 
   constructor(deps: MyStuffServiceDeps = {}) {
     this.storage = deps.storage ?? browserStorage;
+    this.clock = deps.clock ?? systemClock;
     this.getAnswerFn = deps.getAnswerFn ?? getAnswer;
     this.fetcher =
       deps.fetch ??
@@ -162,7 +173,7 @@ export class MyStuffService {
         const parsed = JSON.parse(rawShares);
         if (Array.isArray(parsed)) {
           for (const item of parsed) {
-            const share = parseStoredShare(item);
+            const share = parseStoredShare(item, this.clock);
             if (!share) continue;
             items.push(share);
             seenShareIds.add(share.shareId);
@@ -186,7 +197,7 @@ export class MyStuffService {
                 title: "Shared Result",
                 generatorId: "generator",
                 hasDescriptiveMetadata: false,
-                createdAt: new Date().toISOString(),
+                createdAt: new Date(this.clock.now()).toISOString(),
                 url: buildAbsoluteUrl(`/share/${shareId}`),
                 managementToken: token,
               });

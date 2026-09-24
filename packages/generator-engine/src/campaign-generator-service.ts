@@ -154,16 +154,121 @@ function promptMetrics(params: {
  * required fields — the caller decides what "invalid" means next (retry,
  * fall through to local generation, etc.), this function only classifies.
  */
+function holidayValueToMarkdown(value: unknown): string {
+  if (typeof value === "string") return value;
+  if (Array.isArray(value))
+    return value.map((item) => `- ${holidayValueToMarkdown(item)}`).join("\n");
+  if (value && typeof value === "object")
+    return Object.entries(value)
+      .map(
+        ([key, item]) =>
+          `### ${key.replace(/([A-Z])/g, " $1").replace(/^./, (c) => c.toUpperCase())}\n\n${holidayValueToMarkdown(item)}`,
+      )
+      .join("\n\n");
+  return value == null ? "" : String(value);
+}
+
+function holidayFieldToText(value: unknown): string {
+  if (Array.isArray(value)) return value.map(holidayValueToMarkdown).join("; ");
+  return typeof value === "string" ? value : "";
+}
+
+function holidayMarkdownField(label: string, value: unknown): string {
+  const text = holidayFieldToText(value);
+  if (!text) return "";
+  if (Array.isArray(value))
+    return `#### ${label}\n\n${value.map((item) => `- ${holidayFieldToText(item)}`).join("\n")}`;
+  return `#### ${label}\n\n${text}`;
+}
+
+function formatHolidayObservance(value: unknown): string {
+  if (!value || typeof value !== "object") return "";
+  const item = value as Record<string, unknown>;
+  const title = holidayFieldToText(item.name) || "Observance";
+  const details = [
+    item.type && `**Type:** ${holidayFieldToText(item.type)}`,
+    item.when && `**When:** ${holidayFieldToText(item.when)}`,
+    item.observers && `**Observed by:** ${holidayFieldToText(item.observers)}`,
+    holidayMarkdownField("Origin", item.origin),
+    holidayMarkdownField("Traditions", item.traditions),
+    holidayMarkdownField("Food, dress and symbols", item.foodOrDress),
+    holidayMarkdownField("Taboos", item.taboos),
+    holidayMarkdownField("Regional variations", item.variations),
+    holidayMarkdownField(
+      "What outsiders misunderstand",
+      item.outsiderMisunderstanding,
+    ),
+    holidayMarkdownField("What people believe", item.publicBelief),
+    holidayMarkdownField(
+      "Hidden history",
+      item.hiddenTruth ?? item.optionalHiddenTruth,
+    ),
+    holidayMarkdownField("At the table", item.tension),
+  ].filter(
+    (part): part is string => typeof part === "string" && part.length > 0,
+  );
+  return `### ${title}\n\n${details.join("\n\n")}`;
+}
+
+function formatHolidayContent(
+  content: unknown,
+  observances: unknown[],
+): string {
+  if (!content || typeof content !== "object" || Array.isArray(content))
+    return typeof content === "string"
+      ? content
+      : holidayValueToMarkdown(content);
+
+  const data = content as Record<string, unknown>;
+  const overview = holidayFieldToText(data.overview);
+  const expanded = Array.isArray(data.expandedObservances)
+    ? data.expandedObservances
+    : data.expandedObservance
+      ? [data.expandedObservance]
+      : observances;
+  return [
+    overview ? `## Calendar overview\n\n${overview}` : "",
+    ...expanded.map(formatHolidayObservance),
+  ]
+    .filter(Boolean)
+    .join("\n\n");
+}
+
+function normalizeHolidayGenericOutput(parsed: Record<string, unknown>): void {
+  if (Array.isArray(parsed.observances))
+    parsed.content = formatHolidayContent(parsed.content, parsed.observances);
+  else parsed.content = formatHolidayContent(parsed.content, []);
+  if (typeof parsed.lore !== "string")
+    parsed.lore = holidayValueToMarkdown(parsed.lore);
+  if (!Array.isArray(parsed.observances)) return;
+
+  parsed.observances = parsed.observances.map((item) => {
+    if (!item || typeof item !== "object") return item;
+    const observance = item as Record<string, unknown>;
+    return {
+      ...observance,
+      name: holidayFieldToText(observance.name),
+      type: holidayFieldToText(observance.type),
+      when: holidayFieldToText(observance.when),
+      observers: holidayFieldToText(observance.observers),
+      traditions: holidayFieldToText(observance.traditions),
+      tension: holidayFieldToText(observance.tension),
+    };
+  });
+}
+
 function parseGenericGeneratorOutput(
   raw: string,
   generatorId: string,
 ): GeneratorOutput | null {
-  let parsed: Partial<GeneratorOutput>;
+  let parsed: Record<string, unknown>;
   try {
-    parsed = JSON.parse(raw) as Partial<GeneratorOutput>;
+    parsed = JSON.parse(raw) as Record<string, unknown>;
   } catch {
     return null;
   }
+
+  if (generatorId === "holiday") normalizeHolidayGenericOutput(parsed);
 
   const requiresCompleteSocietyDossier = generatorId === "secret-society";
   const isValidShape =
@@ -175,6 +280,28 @@ function parseGenericGeneratorOutput(
         typeof parsed.content === "string" &&
         parsed.content.trim().length > 0));
   if (!isValidShape) return null;
+
+  const observanceFields = [
+    "name",
+    "type",
+    "when",
+    "observers",
+    "traditions",
+    "tension",
+  ] as const;
+  const observances = Array.isArray(parsed.observances)
+    ? parsed.observances.every(
+        (entry) =>
+          entry !== null &&
+          typeof entry === "object" &&
+          observanceFields.every((field) => {
+            const value = (entry as Record<string, unknown>)[field];
+            return typeof value === "string" && value.trim().length > 0;
+          }),
+      )
+      ? parsed.observances
+      : undefined
+    : undefined;
 
   return {
     title: parsed.title as string,
@@ -193,6 +320,7 @@ function parseGenericGeneratorOutput(
         )
       : undefined,
     starType: typeof parsed.starType === "string" ? parsed.starType : undefined,
+    observances,
   };
 }
 

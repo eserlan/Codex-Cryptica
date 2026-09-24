@@ -23,6 +23,7 @@
     puzzleConfig,
     councilVoteConfig,
     heistConfig,
+    holidayConfig,
     secretSocietyConfig,
     socialHubConfig,
     kingdomConfig,
@@ -317,6 +318,19 @@
     tone: councilVoteConfig.tones[0],
     antagonistInfluence: councilVoteConfig.antagonistInfluences[0],
     campaignContext: "",
+  });
+  let holiday = $state({
+    genre: factionConfig.themes[0],
+    scope: holidayConfig.scopes[0],
+    setSize: holidayConfig.setSizes[0],
+    tone: holidayConfig.tones[0],
+    culture: "",
+    climate: "",
+    religion: "",
+    history: "",
+    importantPeople: "",
+    importantEvents: "",
+    includeControversial: false,
   });
   let heist = $state({
     genre: factionConfig.themes[0],
@@ -722,6 +736,7 @@
       encounter,
       councilVote,
       heist,
+      holiday,
       secretSociety,
       socialHub,
       nation,
@@ -878,6 +893,7 @@
     puzzle,
     councilVote,
     heist,
+    holiday,
     secretSociety,
     tavern,
     kingdom,
@@ -983,6 +999,7 @@
       bind:puzzle
       bind:councilVote
       bind:heist
+      bind:holiday
       bind:secretSociety
       bind:kingdom
       bind:nation

@@ -137,6 +137,7 @@ export const FEATURE_GROUPS: FeatureGroup[] = [
       "in-app-generators",
       "generator-sharing",
       "secret-society-generator",
+      "holiday-generator",
       "proposer-discovery",
       "draft-review",
       "oracle-connection-modes",

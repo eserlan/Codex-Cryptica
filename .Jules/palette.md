@@ -201,3 +201,8 @@
 
 **Learning:** Running `bun run build` can inadvertently modify or generate files like `sitemap.xml`, `llms-full.txt`, and `bun.lock`, which may get staged and pollute the PR scope.
 **Action:** Always verify `git status` and specifically unstage/revert unrelated files (e.g., using `git rm --cached <file>` followed by `git checkout HEAD -- <file>`) before committing to keep the PR focused.
+
+## 2026-09-24 - Add loading spinners and aria-busy to revoke share buttons
+
+**Learning:** Buttons handling asynchronous state (like revoking shared generators in `my-stuff`) need visual loading spinners (rather than just text changes) and `aria-busy` to effectively communicate their loading state to visual and screen reader users.
+**Action:** Always add `aria-busy={isLoading}` and swap static icons to animated spinners (`icon-[lucide--loader-2] animate-spin`) during active states for async actions.

@@ -133,6 +133,7 @@ export const howDoYouRunAMysteryWithoutRailroading: AnswerConfigInput = {
     "how-do-you-create-a-secret-society-for-an-rpg-campaign",
     "how-do-you-handle-players-going-off-script-as-a-gm",
     "what-rpg-should-i-play-for-investigative-horror",
+    "how-do-i-run-an-investigator-without-sidelining-the-party",
   ],
   discovery: {
     id: "answer-run-mystery-without-railroading",
@@ -148,7 +149,18 @@ export const howDoYouRunAMysteryWithoutRailroading: AnswerConfigInput = {
     userJob: "adopt-workflow",
     uniqueValue:
       "A non-linear investigation framework combining the Three-Clue Rule with proactive culprit timelines to ensure mystery sessions never stall.",
-    relatedIntents: ["answer-conspiracy-campaign", "answer-rpg-puzzles"],
+    relatedIntents: [
+      "answer-conspiracy-campaign",
+      "answer-rpg-puzzles",
+      "answer-run-investigator-without-sidelining-party",
+    ],
+    acknowledgedOverlap: [
+      {
+        with: "answer-run-investigator-without-sidelining-party",
+        reason:
+          "This answer covers resilient mystery structure and clue redundancy; the investigator answer focuses on sharing clue discovery and interpretation among PCs while preserving a detective's expertise.",
+      },
+    ],
   },
   seo: {
     title: "How to Run a Mystery Without Railroading | Codex Cryptica",

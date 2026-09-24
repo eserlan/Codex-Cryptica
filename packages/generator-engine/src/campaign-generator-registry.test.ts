@@ -71,7 +71,27 @@ describe("registry lookup", () => {
       "random-table",
       "encounter",
       "heist",
+      "holiday",
     ]);
+  });
+
+  it("generates a grounded holiday calendar and preserves structured observances", () => {
+    const request = run("holiday", {
+      options: {
+        scope: "A culture",
+        setSize: "A calendar of 6 observances",
+        culture: "Orbital dockworkers",
+      },
+    });
+    const generator = getGenerator("holiday");
+    expect(GENERATOR_ENTITY_TYPE.holiday).toBe("note");
+    expect(generator.buildPrompt(request)).toContain("Orbital dockworkers");
+    expect(generator.buildPrompt(request)).toContain("exactly 6 observances");
+    const output = generator.generate(request);
+    expect(output.observances).toHaveLength(6);
+    expect(
+      generator.mapOutputToDraft(output, request).observances,
+    ).toHaveLength(6);
   });
 
   it("offers Space Western in the Ship generator's genre selector", () => {
@@ -1642,6 +1662,7 @@ describe("generator id -> vault category mapping (FR-041)", () => {
       "random-table": "table",
       encounter: "note",
       heist: "note",
+      holiday: "note",
     });
   });
 

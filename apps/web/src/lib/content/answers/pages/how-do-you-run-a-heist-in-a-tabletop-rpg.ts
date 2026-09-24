@@ -190,6 +190,9 @@ export const howDoYouRunAHeistInATabletopRpg: AnswerConfigInput = {
     "how-do-you-keep-track-of-time-in-a-tabletop-campaign",
     "how-do-you-write-a-one-shot-adventure",
     "how-do-you-run-a-chase-in-a-tabletop-rpg",
+    "how-do-you-run-character-roles-in-a-cyberpunk-rpg",
+    "how-do-i-run-spies-and-infiltrators-in-an-rpg",
+    "how-do-i-run-a-rogue-or-scout-without-splitting-the-party",
   ],
   discovery: {
     id: "answer-run-heist-in-tabletop-rpg",
@@ -210,6 +213,13 @@ export const howDoYouRunAHeistInATabletopRpg: AnswerConfigInput = {
       "answer-rpg-puzzles",
       "answer-prep-weekly-session-quickly",
       "answer-heist-target-design",
+    ],
+    acknowledgedOverlap: [
+      {
+        with: "answer-run-rogue-scout-without-splitting-party",
+        reason:
+          "This answer covers the full heist score and its preparation; the rogue and scout guide handles the narrower reconnaissance scene and how its discoveries return decisions to the party.",
+      },
     ],
   },
   seo: {

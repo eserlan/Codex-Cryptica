@@ -116,6 +116,13 @@
       group: "Adventure & Worldbuilding",
       items: [
         {
+          href: "/generators/holiday",
+          label: "Holiday & Festival Generator",
+          summary:
+            "Create culturally grounded holidays, memorials, festivals, or a coherent calendar shaped by a society's history and beliefs.",
+          icon: "icon-[lucide--calendar-heart]",
+        },
+        {
           href: "/generators/quest",
           label: "Quest Hook Generator",
           summary:

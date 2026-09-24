@@ -12,21 +12,6 @@ import {
   buildArtifactPrompt,
   parseArtifactResponse,
   generateArtifactLocal,
-  buildFactionPrompt,
-  parseFactionResponse,
-  generateFactionLocal,
-  buildFactionRosterPrompt,
-  parseFactionRosterResponse,
-  generateFactionRosterLocal,
-  buildVampirePrompt,
-  parseVampireResponse,
-  generateVampireLocal,
-  buildNomadClanPrompt,
-  parseNomadClanResponse,
-  generateNomadClanLocal,
-  buildDarkFactionPrompt,
-  parseDarkFactionResponse,
-  generateDarkFactionLocal,
   buildSocialHubPrompt,
   parseSocialHubResponse,
   generateSocialHubLocal,
@@ -70,6 +55,10 @@ import {
   generateCouncilVoteLocal,
   buildHeistPrompt,
   generateHeistLocal,
+  buildHolidayPrompt,
+  parseHolidayResponse,
+  generateHolidayLocal,
+  type HolidayGeneratorOptions,
   buildSecretSocietyPrompt,
   parseSecretSocietyResponse,
   generateSecretSocietyLocal,
@@ -164,6 +153,7 @@ import {
 import { assessLanguageOutput } from "./language-output-assessment";
 import { runSeoHeistGeneration } from "./heist-generation-orchestration";
 import { WorldGenerationService } from "./world-generation";
+import { FactionGenerationService } from "./faction-generation";
 
 export {
   nameTable,
@@ -175,7 +165,7 @@ export {
 // NPC content data now lives in the generator-engine package (#1351); re-export
 // it here so existing SEO consumers (form fields, random-idea) keep importing
 // from this module.
-export { npcConfig, npcThemeConfig } from "generator-engine";
+export { npcConfig, npcThemeConfig, holidayConfig } from "generator-engine";
 export {
   factionConfig,
   themeIdToLabel,
@@ -252,9 +242,23 @@ import type { GeneratorOutput } from "./generator-helpers";
 export class DefaultGeneratorEngine {
   private transport: GeneratorAITransport;
   private readonly worldGeneration: WorldGenerationService;
+  private readonly factionGeneration: FactionGenerationService;
 
   constructor(private clientManager = aiClientManager) {
     this.transport = new GeneratorAITransport(clientManager);
+    this.factionGeneration = new FactionGenerationService({
+      runWithAIFallback: this.runWithAIFallback.bind(this),
+      runModel: this.runModel.bind(this),
+      getSessionContext,
+      recentInputs: generationInputHistoryStore.recent.bind(
+        generationInputHistoryStore,
+      ),
+      recordInputs: generationInputHistoryStore.record.bind(
+        generationInputHistoryStore,
+      ),
+      summarizeResolvedInputs,
+      formatRecentInputsNote,
+    });
     this.worldGeneration = new WorldGenerationService({
       runWithAIFallback: this.runWithAIFallback.bind(this),
       runModel: this.runModel.bind(this),
@@ -341,129 +345,34 @@ export class DefaultGeneratorEngine {
     );
   }
 
-  /** Faction generation delegates to the generator-engine package (#1351). */
-  async generateFaction(
-    options: FactionGeneratorOptions & { useAI?: boolean } = {},
-  ): Promise<GeneratorOutput> {
-    const { useAI, ...factionOptions } = options;
-    const recentInputs = generationInputHistoryStore.recent("faction");
-    return this.runWithAIFallback(
-      useAI,
-      async () => {
-        const { systemInstruction, userMessage, resolved } = buildFactionPrompt(
-          factionOptions,
-          getSessionContext() + formatRecentInputsNote(recentInputs),
-        );
-        generationInputHistoryStore.record(
-          "faction",
-          summarizeResolvedInputs(resolved),
-        );
-        const text = await this.runModel(systemInstruction, userMessage);
-        return parseFactionResponse(text, resolved);
-      },
-      () => generateFactionLocal(factionOptions),
-    );
+  /** Faction generation delegates to the faction-generation service. */
+  generateFaction(options: FactionGeneratorOptions & { useAI?: boolean } = {}) {
+    return this.factionGeneration.generateFaction(options);
   }
 
   /** Faction roster generation (#2808): notable members of a faction. */
-  async generateFactionRoster(
+  generateFactionRoster(
     options: FactionRosterGeneratorOptions & { useAI?: boolean } = {},
-  ): Promise<GeneratorOutput> {
-    const { useAI, ...rosterOptions } = options;
-    const recentInputs = generationInputHistoryStore.recent("faction-roster");
-    return this.runWithAIFallback(
-      useAI,
-      async () => {
-        const { systemInstruction, userMessage, resolved } =
-          buildFactionRosterPrompt(
-            rosterOptions,
-            getSessionContext() + formatRecentInputsNote(recentInputs),
-          );
-        generationInputHistoryStore.record(
-          "faction-roster",
-          summarizeResolvedInputs(resolved),
-        );
-        const text = await this.runModel(systemInstruction, userMessage);
-        return parseFactionRosterResponse(text, resolved);
-      },
-      () => generateFactionRosterLocal(rosterOptions),
-    );
+  ) {
+    return this.factionGeneration.generateFactionRoster(options);
   }
 
-  /** Vampire clan generation delegates to the generator-engine package (#1351). */
-  async generateVampireClan(
+  generateVampireClan(
     options: VampireGeneratorOptions & { useAI?: boolean } = {},
-  ): Promise<GeneratorOutput> {
-    const { useAI, ...vampireOptions } = options;
-    const recentInputs = generationInputHistoryStore.recent("vampire-clan");
-    return this.runWithAIFallback(
-      useAI,
-      async () => {
-        const { systemInstruction, userMessage, resolved } = buildVampirePrompt(
-          vampireOptions,
-          getSessionContext() + formatRecentInputsNote(recentInputs),
-        );
-        generationInputHistoryStore.record(
-          "vampire-clan",
-          summarizeResolvedInputs(resolved),
-        );
-        const text = await this.runModel(systemInstruction, userMessage);
-        return parseVampireResponse(text, resolved);
-      },
-      () => generateVampireLocal(vampireOptions),
-    );
+  ) {
+    return this.factionGeneration.generateVampireClan(options);
   }
 
-  /** Nomad clan generation delegates to the generator-engine package (#1570). */
-  async generateNomadClan(
+  generateNomadClan(
     options: NomadClanGeneratorOptions & { useAI?: boolean } = {},
-  ): Promise<GeneratorOutput> {
-    const { useAI, ...nomadOptions } = options;
-    const recentInputs = generationInputHistoryStore.recent("nomad-clan");
-    return this.runWithAIFallback(
-      useAI,
-      async () => {
-        const { systemInstruction, userMessage, resolved } =
-          buildNomadClanPrompt(
-            nomadOptions,
-            getSessionContext() + formatRecentInputsNote(recentInputs),
-          );
-        generationInputHistoryStore.record(
-          "nomad-clan",
-          summarizeResolvedInputs(resolved),
-        );
-        const text = await this.runModel(systemInstruction, userMessage);
-        return parseNomadClanResponse(text, resolved);
-      },
-      () => generateNomadClanLocal(nomadOptions),
-    );
+  ) {
+    return this.factionGeneration.generateNomadClan(options);
   }
 
-  /** Dark fantasy / grimdark faction generation delegates to the generator-engine package (#1136). */
-  async generateDarkFaction(
+  generateDarkFaction(
     options: DarkFactionGeneratorOptions & { useAI?: boolean } = {},
-  ): Promise<GeneratorOutput> {
-    const { useAI, ...darkFactionOptions } = options;
-    const recentInputs = generationInputHistoryStore.recent(
-      "dark-fantasy-faction",
-    );
-    return this.runWithAIFallback(
-      useAI,
-      async () => {
-        const { systemInstruction, userMessage, resolved } =
-          buildDarkFactionPrompt(
-            darkFactionOptions,
-            getSessionContext() + formatRecentInputsNote(recentInputs),
-          );
-        generationInputHistoryStore.record(
-          "dark-fantasy-faction",
-          summarizeResolvedInputs(resolved),
-        );
-        const text = await this.runModel(systemInstruction, userMessage);
-        return parseDarkFactionResponse(text, resolved);
-      },
-      () => generateDarkFactionLocal(darkFactionOptions),
-    );
+  ) {
+    return this.factionGeneration.generateDarkFaction(options);
   }
 
   /** Settlement generation delegates to the generator-engine package (#1351). */
@@ -562,6 +471,36 @@ export class DefaultGeneratorEngine {
         return parseArtifactResponse(text, resolved);
       },
       () => generateArtifactLocal(artifactOptions),
+    );
+  }
+
+  async generateHoliday(
+    options: HolidayGeneratorOptions & { useAI?: boolean } = {},
+  ): Promise<GeneratorOutput> {
+    const { useAI, ...holidayOptions } = options;
+    const recentInputs = generationInputHistoryStore.recent("holiday");
+    return this.runWithAIFallback(
+      useAI,
+      async () => {
+        const { systemInstruction, userMessage, resolved } = buildHolidayPrompt(
+          holidayOptions,
+          getSessionContext() + formatRecentInputsNote(recentInputs),
+        );
+        generationInputHistoryStore.record(
+          "holiday",
+          summarizeResolvedInputs({
+            genre: resolved.genre,
+            scope: resolved.scope,
+            tone: resolved.tone,
+            count: resolved.count,
+          }),
+        );
+        return parseHolidayResponse(
+          await this.runModel(systemInstruction, userMessage),
+          resolved,
+        );
+      },
+      () => generateHolidayLocal(holidayOptions),
     );
   }
 

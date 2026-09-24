@@ -142,6 +142,7 @@ export const whatShouldAnRpgSettlementContain: AnswerConfigInput = {
     },
   ],
   relatedAnswers: [
+    "what-ttrpgs-let-you-build-and-upgrade-a-base",
     "how-do-you-create-a-fictional-language-for-an-rpg",
     "what-is-a-point-crawl",
     "how-do-you-create-a-fantasy-faction",
@@ -164,7 +165,10 @@ export const whatShouldAnRpgSettlementContain: AnswerConfigInput = {
     intentAliases: ["how to design a fantasy town", "rpg town prep checklist"],
     uniqueValue:
       "Prep sized to what gets used (a reason to exist, four enterable places, three wants, one unsolved problem) plus what to leave out.",
-    relatedIntents: ["generator-settlement"],
+    relatedIntents: [
+      "generator-settlement",
+      "answer-base-building-system-selection",
+    ],
     acknowledgedOverlap: [
       {
         with: "answer-cyberpunk-city-district",
@@ -175,6 +179,11 @@ export const whatShouldAnRpgSettlementContain: AnswerConfigInput = {
         with: "answer-npcs-per-town",
         reason:
           "This answer covers everything a settlement needs (locations, economy, problem) and gives a rough people count; the NPC count answer isolates how many named NPCs specifically, at what scale, and when to add more.",
+      },
+      {
+        with: "answer-base-building-system-selection",
+        reason:
+          "This answer guides settlement content and prep; the base-building comparison evaluates which game rules support developing a settlement or other home over time.",
       },
     ],
   },

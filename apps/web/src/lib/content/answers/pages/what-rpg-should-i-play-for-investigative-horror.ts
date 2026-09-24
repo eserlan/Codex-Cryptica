@@ -189,6 +189,8 @@ export const whatRpgShouldIPlayForInvestigativeHorror: AnswerConfigInput = {
     "how-do-you-generate-useful-rpg-rumours",
     "how-do-you-create-a-secret-society-for-an-rpg-campaign",
     "what-rpg-works-for-political-intrigue-and-faction-play",
+    "how-do-i-run-an-investigator-without-sidelining-the-party",
+    "how-do-i-run-a-journalist-or-media-character-in-an-rpg",
   ],
   discovery: {
     id: "answer-investigative-horror-system-selection",
@@ -227,6 +229,11 @@ export const whatRpgShouldIPlayForInvestigativeHorror: AnswerConfigInput = {
         with: "answer-run-mystery-without-railroading",
         reason:
           "That page teaches GMs to run mysteries inside a chosen system; this one helps groups choose a system for investigative horror.",
+      },
+      {
+        with: "answer-run-investigator-without-sidelining-party",
+        reason:
+          "This page compares systems for investigative horror; the investigator answer gives system-agnostic scene guidance for sharing clues and decisions among player characters.",
       },
     ],
   },

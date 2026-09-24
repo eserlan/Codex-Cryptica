@@ -47,6 +47,7 @@
     {
       label: "Worldbuilding",
       items: [
+        { label: "Holiday & Festival Generator", path: "/generators/holiday" },
         { label: "Faction Generator", path: "/generators/faction" },
         {
           label: "Faction Roster Generator",

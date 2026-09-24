@@ -1948,9 +1948,17 @@ Reference answers to real RPG and worldbuilding questions, indexed at https://co
 
 **Direct answer:** Players engage with lore when it does something to their characters, not when it's explained to them. A piece of history becomes interesting the moment it can be wanted, feared, changed, lost or exploited. The fix is rarely 'more worldbuilding' or 'better exposition'; it's turning what already exists into choices, connecting it to what the characters already want, and letting player decisions visibly move it. And roleplaying isn't the same thing as performing dialogue in character: a player making a sharp decision in third person is roleplaying just as much as one doing voices.
 
+### [How do I give specialist characters spotlight without sidelining the party?](https://codexcryptica.com/answers/how-do-i-give-specialist-characters-spotlight)
+
+**Direct answer:** Let the specialist use their expertise to change the situation, then give the whole party a meaningful response to that change. Build scenes with shared stakes, parallel ways to contribute, and decisions that need more than one character's judgement. A brief solo moment can work when it has a clear purpose and returns useful information or a consequential choice to the group.
+
 ### [How do I organise my GM notes and references when running an RPG in person?](https://codexcryptica.com/answers/how-do-i-organise-gm-notes-for-in-person-play)
 
 **Direct answer:** Bring a session-facing subset to the table, not the whole campaign file: one page of what might matter tonight, a few reference pages you can reach without scrolling, somewhere to catch names and decisions as they happen, and a place the session gets filed afterwards. Paper, tablet and laptop all do that job, so choose by how fast you need an answer and how much screen you want sitting between you and the players.
+
+### [How do I run a rogue or scout without splitting the party?](https://codexcryptica.com/answers/how-do-i-run-a-rogue-or-scout-without-splitting-the-party)
+
+**Direct answer:** Give the scout a clear question, resolve only the uncertain part of their reconnaissance, then bring the result back while the party can still choose what to do. Let the rogue gain useful information, position, or access, while companions watch exits, prepare a diversion, or change the conditions outside. A failed stealth or scouting roll can raise suspicion, cost time, or close a route without automatically leaving the scout alone in a fight.
 
 ### [How do I run a successful Session 0?](https://codexcryptica.com/answers/how-do-i-run-a-successful-session-0)
 
@@ -2223,6 +2231,10 @@ Reference answers to real RPG and worldbuilding questions, indexed at https://co
 ### [What TTRPG should I use for a fantasy dungeon crawl?](https://codexcryptica.com/answers/what-ttrpg-should-i-use-for-a-fantasy-dungeon-crawl)
 
 **Direct answer:** There is no single best system for fantasy dungeon crawling: the right pick depends on the crawl your group wants. For fast, dangerous old-school exploration with modern rules, Shadowdark; for gonzo magic and lethal funnel play, Dungeon Crawl Classics; for a game where the dungeon itself is the whole campaign, His Majesty the Worm; for very light, improvisable play, EZD6; for grim, stylish doom, Mörk Borg; and for tactical combat with deep character builds, Pathfinder Second Edition or D&D itself.
+
+### [What TTRPGs let you build and upgrade a base?](https://codexcryptica.com/answers/what-ttrpgs-let-you-build-and-upgrade-a-base)
+
+**Direct answer:** Choose by the kind of base you want to play around: Mutant: Year Zero and Stonetop make community development central, Salvage Union gives the group a mobile home, Blades in the Dark advances a crew and its lair, and Forbidden Lands treats a stronghold as an optional long-term project. Check whether base development is the campaign's main loop, a crew-progression subsystem, or a lighter addition before choosing. Systems named here belong to their respective publishers; mentioning one is not an endorsement of Codex Cryptica by that publisher, or the reverse.
 
 ### [Where do I start if I have never played a tabletop RPG before?](https://codexcryptica.com/answers/where-do-i-start-if-i-have-never-played-a-tabletop-rpg)
 
