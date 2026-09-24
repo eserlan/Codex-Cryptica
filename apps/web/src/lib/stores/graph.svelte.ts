@@ -121,6 +121,11 @@ export class GraphStore {
     // Also passes validIds to GraphTransformer to skip set reconstruction.
     const visibleEntities: Entity[] = [];
     const validIds = new Set<string>();
+    // Lookups for the focus cull come from the graph slice, never the reactive
+    // `vault.entities` record: reading `vault.entities[id]` subscribes this
+    // derivation to every rendered record, so a content-only load (which
+    // replaces the record) would rebuild and re-sync the whole focus view.
+    const visibleById = new Map<string, Entity>();
 
     const count = allEntities.length;
     for (let i = 0; i < count; i++) {
@@ -131,13 +136,11 @@ export class GraphStore {
       ) {
         visibleEntities.push(entity);
         validIds.add(entity.id);
+        visibleById.set(entity.id, entity);
       }
     }
 
     // Focus-view culling: render a target-sized set around the focal node.
-    // Built from `renderIds` via the entities record (O(rendered)) rather than
-    // an O(N) Map build + O(N) filter, so a content edit in a large vault
-    // doesn't re-walk all 1600 entities to produce the same small set.
     try {
       if (this.focusViewActive && visibleEntities.length > 0) {
         const focal = this.resolveFocalId(visibleEntities, validIds);
@@ -147,12 +150,12 @@ export class GraphStore {
             this.focusDepth,
             validIds,
             visibleEntities,
+            visibleById,
           );
           if (renderIds.size !== validIds.size) {
-            const byId = this.vault.entities;
             const renderEntities: Entity[] = [];
             for (const id of renderIds) {
-              const entity = byId[id];
+              const entity = visibleById.get(id);
               if (entity) renderEntities.push(entity);
             }
             const result = GraphTransformer.entitiesToElements(
@@ -364,12 +367,12 @@ export class GraphStore {
     depth: number,
     validIds: Set<string>,
     visibleEntities: Entity[],
+    visibleById: ReadonlyMap<string, Entity>,
   ): Set<string> {
     const targetCount = this.getFocusTargetCount(depth, validIds.size);
     const result = new Set<string>([focalId]);
     let frontier: string[] = [focalId];
     const inbound = this.vault.inboundConnections ?? {};
-    const entities = this.vault.entities;
 
     // BFS outward until either the target render count is reached or the
     // reachable neighborhood is exhausted. `depth` is a detail *level*
@@ -380,7 +383,7 @@ export class GraphStore {
     while (frontier.length > 0) {
       const next: string[] = [];
       for (const id of frontier) {
-        const connections = entities[id]?.connections;
+        const connections = visibleById.get(id)?.connections;
         if (connections) {
           for (let j = 0; j < connections.length; j++) {
             const target = connections[j].target;
