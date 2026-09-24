@@ -313,6 +313,7 @@ export const howDoIRunPoliticalIntrigueAndFactionPlay: AnswerConfigInput = {
     "how-do-i-run-a-journalist-or-media-character-in-an-rpg",
     "how-do-i-run-a-diplomat-noble-or-courtier-in-an-rpg",
     "how-do-i-run-character-roles-in-a-political-intrigue-rpg",
+    "how-do-i-build-a-believable-constitutional-crisis-or-coup",
   ],
   discovery: {
     id: "answer-run-political-intrigue",
@@ -339,6 +340,11 @@ export const howDoIRunPoliticalIntrigueAndFactionPlay: AnswerConfigInput = {
       "answer-conspiracy-campaign",
     ],
     acknowledgedOverlap: [
+      {
+        with: "answer-constitutional-crisis-or-coup",
+        reason:
+          "That page is setting-facing and designs the institutional fault lines behind a political crisis; this one is table-facing and covers running factions, leverage and scenes in play.",
+      },
       {
         with: "answer-run-factions-sandbox",
         reason:

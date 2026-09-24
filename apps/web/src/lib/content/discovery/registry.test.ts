@@ -445,6 +445,18 @@ describe("the committed registry", () => {
     );
   });
 
+  it("gives post-apocalyptic campaign workflow its own discovery intent", () => {
+    expect(
+      findIntentOwner("post-apocalyptic campaign worldbuilding", registry)?.id,
+    ).toBe("for-post-apocalyptic-rpgs");
+    expect(
+      getEntryByPath("/for/post-apocalyptic-rpgs", registry)?.userJob,
+    ).toBe("adopt-workflow");
+    expect(
+      findIntentOwner("post-apocalyptic rpg generators", registry)?.id,
+    ).toBe("hub-post-apocalyptic");
+  });
+
   it("gives tactical mecha campaigns their own operation-level workflow intent", () => {
     expect(findIntentOwner("mecha rpg campaign manager", registry)?.id).toBe(
       "for-mecha-rpgs",

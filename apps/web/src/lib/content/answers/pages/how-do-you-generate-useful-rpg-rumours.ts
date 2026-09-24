@@ -182,6 +182,7 @@ export const howDoYouGenerateUsefulRpgRumours: AnswerConfigInput = {
     "is-my-rpg-campaign-idea-good",
     "how-do-i-expand-a-simple-rpg-campaign-idea",
     "what-rpg-should-i-play-for-investigative-horror",
+    "how-do-i-build-a-believable-constitutional-crisis-or-coup",
   ],
   labels: ["fantasy", "rumour"],
   discovery: {

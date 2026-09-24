@@ -109,6 +109,45 @@ describe("EntityPersistenceService disk-write resilience", () => {
     expect(cacheSet).toHaveBeenCalledTimes(1);
   });
 
+  it("reports the saved entity id with the durable change (#3354)", async () => {
+    const { updateLastInternalChange } = await import("./registry");
+    vi.mocked(updateLastInternalChange).mockClear();
+    const entities = { hero: { id: "hero", title: "Hero", connections: [] } };
+    const { svc } = makeService(
+      vi.fn(async () => {}),
+      entities,
+    );
+
+    const scheduledSave = svc.scheduleSave(entities.hero as any);
+    const flush = svc.flushPendingSaves();
+    await vi.advanceTimersByTimeAsync(50);
+    await Promise.all([scheduledSave, flush]);
+
+    expect(updateLastInternalChange).toHaveBeenCalledWith("v1", {
+      kind: "entity",
+      ids: ["hero"],
+    });
+  });
+
+  it("reports no durable change when the disk write fails", async () => {
+    const { updateLastInternalChange } = await import("./registry");
+    vi.mocked(updateLastInternalChange).mockClear();
+    const entities = { hero: { id: "hero", title: "Hero", connections: [] } };
+    const { svc } = makeService(
+      vi.fn(async () => {
+        throw new Error("disk full");
+      }),
+      entities,
+    );
+
+    const scheduledSave = svc.scheduleSave(entities.hero as any);
+    const flush = svc.flushPendingSaves();
+    await vi.advanceTimersByTimeAsync(150);
+    await Promise.all([scheduledSave, flush]);
+
+    expect(updateLastInternalChange).not.toHaveBeenCalled();
+  });
+
   it("does not write the cache when the disk write ultimately fails", async () => {
     const saveToDisk = vi.fn(async () => {
       throw new Error("permanent OPFS error");

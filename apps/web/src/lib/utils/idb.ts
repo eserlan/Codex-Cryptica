@@ -160,6 +160,28 @@ interface CodexDB extends DBSchema {
     key: string; // importId
     value: ImportJournal;
   };
+  // Items changed since the last successful cloud backup upload (#3354), so
+  // automatic sync can send only those. Written only while backup is enabled.
+  cloud_backup_dirty: {
+    key: [string, string, string]; // [vaultId, kind, id]
+    value: CloudBackupDirtyRow;
+    indexes: {
+      "by-vault": string;
+    };
+  };
+}
+
+/**
+ * One changed item awaiting cloud backup (#3354). `kind: "full"` (id `*`)
+ * means the change set cannot be trusted and the next upload must be full.
+ */
+export interface CloudBackupDirtyRow {
+  vaultId: string;
+  kind: "entity" | "canvas" | "maps" | "full";
+  id: string;
+  /** Unique per write; a row is cleared only if it still holds the sent stamp. */
+  version: string;
+  deleted: boolean;
 }
 
 export const DB_NAME = "CodexCryptica";
@@ -172,7 +194,7 @@ export const DB_NAME = "CodexCryptica";
 // Bumped to 24 to add a by-speaker index on guest_chat_transcripts, so a
 // character's chat history can be queried both as the AI-voiced participant
 // and as the human's speaker character (#2302).
-export const DB_VERSION = 24;
+export const DB_VERSION = 25;
 
 // Cached on `globalThis` (not a plain module-level `let`) so that a Vite HMR
 // update to this file can't leave two separate connection-promise slots
@@ -343,6 +365,13 @@ export function getDB(): Promise<IDBPDatabase<CodexDB>> {
 
           if (!db.objectStoreNames.contains("shelf_journal")) {
             db.createObjectStore("shelf_journal", { keyPath: "importId" });
+          }
+
+          if (!db.objectStoreNames.contains("cloud_backup_dirty")) {
+            const store = db.createObjectStore("cloud_backup_dirty", {
+              keyPath: ["vaultId", "kind", "id"],
+            });
+            store.createIndex("by-vault", "vaultId");
           }
         },
         blocked() {

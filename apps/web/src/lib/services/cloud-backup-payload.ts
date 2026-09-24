@@ -28,22 +28,27 @@ export interface CloudBackupPayloadDeps {
    * which for a warm start is a 280-character preview, not the lore.
    */
   hydrateEntities?: EntityHydrator;
+  /** Stops entity reads and asset fetches once backup is disabled mid-build. */
+  signal?: AbortSignal;
 }
 
 /**
- * The vault's on-demand content loader, narrowed to what a backup needs.
+ * The vault's content reader, narrowed to what a backup needs.
  *
  * `vault.entities[id].content` is only the real markdown once the entity has
  * been hydrated; before that a warm start seeds it from the IndexedDB cache
  * with `contentPreview` — whitespace-collapsed and cut at 280 characters. A
  * snapshot of the live map therefore captures full lore for whatever the user
  * happened to open this session and a stub for everything else.
+ *
+ * Reads go straight into the snapshot, never through the live store: loading
+ * a whole vault into reactive records wakes every consumer of them once per
+ * entity and pinned a large vault's CPU for minutes (#3350).
  */
 export interface EntityHydrator {
   isContentLoaded: (id: string) => boolean;
-  loadEntityContent: (id: string) => Promise<void>;
-  /** Reads the entity back after loading; the store replaces rather than mutates. */
-  getEntity: (id: string) => LocalEntity | undefined;
+  /** Full entity from source, `null` when it has no body, throws on a failed read. */
+  readFullEntity: (id: string) => Promise<LocalEntity | null>;
 }
 
 /** Entity loads in flight at once. Bounded so a large vault cannot stampede OPFS. */
@@ -115,7 +120,7 @@ export function collectAssetPaths(
  * Replaces every entity in the list with its fully-hydrated self.
  *
  * Entities the vault has already loaded pass through untouched. The rest are
- * loaded through the vault's own deduplicating loader, bounded so a 5k-entity
+ * read from source without touching the live store, bounded so a 5k-entity
  * vault does not open five thousand OPFS reads at once. An entity that cannot
  * be read keeps whatever it had and is reported, matching the asset contract:
  * a partial backup is allowed, a silently partial one is not.
@@ -124,6 +129,7 @@ export async function hydrateEntityContent(
   entities: readonly LocalEntity[],
   hydrator: EntityHydrator,
   concurrency = HYDRATION_CONCURRENCY,
+  signal?: AbortSignal,
 ): Promise<{ entities: LocalEntity[]; skippedEntities: string[] }> {
   const hydrated = [...entities];
   const skippedEntities: string[] = [];
@@ -133,13 +139,10 @@ export async function hydrateEntityContent(
 
   let cursor = 0;
   const worker = async () => {
-    while (cursor < pending.length) {
+    while (cursor < pending.length && !signal?.aborted) {
       const { entity, index } = pending[cursor++];
       try {
-        await hydrator.loadEntityContent(entity.id);
-        // The store swaps the record rather than mutating it, so the loaded
-        // body is only visible by reading the entity back.
-        hydrated[index] = hydrator.getEntity(entity.id) ?? entity;
+        hydrated[index] = (await hydrator.readFullEntity(entity.id)) ?? entity;
       } catch {
         skippedEntities.push(entity.id);
       }
@@ -168,7 +171,12 @@ export async function buildCloudBackupPayload(
   // warm-start preview. Asset collection reads the hydrated list too, since
   // hydration can replace the records it scans.
   if (deps.hydrateEntities) {
-    const result = await hydrateEntityContent(list, deps.hydrateEntities);
+    const result = await hydrateEntityContent(
+      list,
+      deps.hydrateEntities,
+      HYDRATION_CONCURRENCY,
+      deps.signal,
+    );
     list = result.entities;
     skippedEntities.push(...result.skippedEntities);
   }
@@ -182,6 +190,7 @@ export async function buildCloudBackupPayload(
   const skippedAssets: string[] = [];
 
   for (const path of collectAssetPaths(list, maps)) {
+    if (deps.signal?.aborted) break;
     try {
       const url = await deps.resolveImageUrl(path);
       if (!url) throw new Error("unresolved");
@@ -215,4 +224,134 @@ export async function buildCloudBackupPayload(
     skippedAssets,
     skippedEntities,
   };
+}
+
+/* ---------------------------------------------------------------- delta -- */
+
+/**
+ * Past this many changed entities a full upload is simpler and no larger, and
+ * it keeps a delta body well inside the worker's JSON limit.
+ */
+export const DELTA_MAX_ENTITIES = 200;
+
+/** A changed item awaiting upload, as recorded by the dirty-set store. */
+export interface CloudBackupChange {
+  kind: "entity" | "canvas" | "maps" | "full";
+  id: string;
+  deleted: boolean;
+}
+
+export interface CloudBackupDeltaDeps {
+  /** The entity as held in memory, or undefined once it no longer exists. */
+  getEntity: (id: string) => LocalEntity | undefined;
+  hydrateEntities: EntityHydrator;
+  /** Asset ids already uploaded; a delta never carries media (see below). */
+  uploadedAssetIds: ReadonlySet<string>;
+  /** Current asset references across the vault, used to prune removed media. */
+  referencedAssetIds: readonly string[];
+  signal?: AbortSignal;
+}
+
+export interface CloudBackupDelta {
+  vaultTitle: string;
+  upserts: LocalEntity[];
+  deletes: string[];
+  /** Full current reference set; the worker prunes assets absent from it. */
+  assetIds: string[];
+  maps?: unknown[];
+  canvases?: unknown[];
+}
+
+/**
+ * Builds an incremental upload from the recorded changes (#3354), reading only
+ * the changed entities.
+ *
+ * Returns `null` when the change set calls for a full upload instead: a
+ * `full` marker, too many changes, an entity that cannot be read, or media the
+ * backup does not hold yet. A delta deliberately carries no media — image
+ * changes are rare next to text edits, and a full upload already knows how to
+ * rebuild the asset manifest and prune what is gone.
+ */
+export async function buildCloudBackupDelta(
+  vaultTitle: string,
+  changes: readonly CloudBackupChange[],
+  deps: CloudBackupDeltaDeps,
+  content: { maps?: readonly unknown[]; canvases?: readonly unknown[] } = {},
+): Promise<CloudBackupDelta | null> {
+  const entityChanges = changes.filter((change) => change.kind === "entity");
+  if (
+    changes.some((change) => change.kind === "full") ||
+    entityChanges.length > DELTA_MAX_ENTITIES
+  ) {
+    return null;
+  }
+
+  const entities = await readChangedEntities(entityChanges, deps);
+  if (!entities) return null;
+
+  const maps = changes.some((change) => change.kind === "maps")
+    ? [...(content.maps ?? [])]
+    : undefined;
+  if (referencesNewMedia(entities.upserts, maps, deps.uploadedAssetIds)) {
+    return null;
+  }
+
+  return {
+    vaultTitle,
+    ...entities,
+    assetIds: [...deps.referencedAssetIds],
+    ...(maps ? { maps } : {}),
+    ...(changes.some((change) => change.kind === "canvas")
+      ? { canvases: [...(content.canvases ?? [])] }
+      : {}),
+  };
+}
+
+/**
+ * Splits entity changes into full records to upload and ids to delete, or
+ * `null` when a read fails or the build is aborted. Tombstones and entities
+ * that no longer exist are deletes; loaded bodies are used as they are.
+ */
+async function readChangedEntities(
+  changes: readonly CloudBackupChange[],
+  deps: CloudBackupDeltaDeps,
+): Promise<{ upserts: LocalEntity[]; deletes: string[] } | null> {
+  const upserts: LocalEntity[] = [];
+  const deletes: string[] = [];
+  for (const { id, deleted } of changes) {
+    if (deps.signal?.aborted) return null;
+    const current = deps.getEntity(id);
+    if (deleted || !current) {
+      deletes.push(id);
+      continue;
+    }
+    const full = await readFullOrNull(id, current, deps.hydrateEntities);
+    if (!full) return null;
+    upserts.push(full);
+  }
+  return { upserts, deletes };
+}
+
+async function readFullOrNull(
+  id: string,
+  current: LocalEntity,
+  hydrator: EntityHydrator,
+): Promise<LocalEntity | null> {
+  if (hydrator.isContentLoaded(id)) return current;
+  try {
+    return (await hydrator.readFullEntity(id)) ?? current;
+  } catch {
+    return null;
+  }
+}
+
+/** True when an upload would reference media the backup does not hold yet. */
+function referencesNewMedia(
+  entities: readonly LocalEntity[],
+  maps: readonly unknown[] | undefined,
+  uploaded: ReadonlySet<string>,
+): boolean {
+  return collectAssetPaths(entities, maps ?? []).some(
+    (path) => !uploaded.has(assetIdForPath(path)),
+  );
 }

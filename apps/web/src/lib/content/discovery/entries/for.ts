@@ -244,6 +244,24 @@ export const forEntries: DiscoveryEntryInput[] = [
     status: "live",
   },
   {
+    id: "for-post-apocalyptic-rpgs",
+    pageKind: "for",
+    canonicalPath: "/for/post-apocalyptic-rpgs",
+    primaryIntent: "post-apocalyptic campaign worldbuilding",
+    intentAliases: [
+      "wasteland rpg campaign organiser",
+      "post-apocalyptic campaign notes",
+    ],
+    audience: "Game masters running post-apocalyptic and wasteland campaigns",
+    userJob: "adopt-workflow",
+    uniqueValue:
+      "A survival-campaign workflow connecting settlements, rival factions, shifting hazards, and scarce resources to show how each dependency exposes one group to another.",
+    parentCluster: "genre-guides",
+    relatedIntents: ["hub-post-apocalyptic", "example-silo-zero-seven"],
+    indexable: true,
+    status: "live",
+  },
+  {
     id: "for-mecha-rpgs",
     pageKind: "for",
     canonicalPath: "/for/mecha-rpgs",

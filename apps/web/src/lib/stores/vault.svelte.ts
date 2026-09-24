@@ -618,6 +618,14 @@ export class VaultStore {
     if (sessionModeStore.isGuestMode) return true;
     return this.entityStore.isContentLoaded(id);
   }
+
+  /**
+   * Reads an entity with its full body without writing it into the store.
+   * For whole-vault snapshots; see `EntityContentLoader.readFullEntity`.
+   */
+  readFullEntity(id: string): Promise<LocalEntity | null> {
+    return this.entityStore.readFullEntity(id);
+  }
   createEntity(
     type: Entity["type"],
     title: string,

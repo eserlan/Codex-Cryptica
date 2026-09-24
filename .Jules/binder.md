@@ -233,3 +233,9 @@
 **Learning:** When identifying targets for dependency injection (like `new Date()`), do not assume the target is within a class scope where `this` is accessible. Standalone helper functions often contain these hidden dependencies and must be patched to accept the dependency as a parameter rather than relying on class-level properties.
 
 **Action:** Always verify the lexical scope (using `grep` with context flags or `cat`) to determine if the target resides in a class method or a top-level standalone function before formulating an execution plan.
+
+## 2024-03-24 - Inject Clock into Store Events
+
+**Learning:** When a store emits events with timestamps (like `ShelfStore` announcing changes), injecting a `Clock` dependency makes the emitted timestamps predictable and testable.
+
+**Action:** Pass `clock: Clock = systemClock` into store dependencies instead of hardcoding `Date.now()` inside event generation methods.

@@ -302,7 +302,14 @@ export const siloZeroSeven: ExampleConfigInput = {
       href: "/answers/how-do-you-design-rpg-puzzles-that-do-not-stall-the-game",
     },
   ],
-  relatedForPages: [],
+  relatedForPages: [
+    {
+      title: "Codex Cryptica for Post-Apocalyptic RPGs",
+      description:
+        "See how to connect wasteland settlements, factions, hazards, and scarce supplies across a survival campaign.",
+      href: "/for/post-apocalyptic-rpgs",
+    },
+  ],
   relatedExamples: [],
   sourceUrl: "https://github.com/eserlan/Codex-Cryptica/discussions/2662",
   seo: {

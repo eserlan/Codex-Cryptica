@@ -515,12 +515,12 @@ export function pickRepresentativeRoutes(
   sitemapXml: string,
   perFamily = 1,
 ): string[] {
-  const locs = [...sitemapXml.matchAll(/<loc>\s*([^<\s]+)\s*<\/loc>/g)].map(
-    (match) => match[1],
-  );
+  const locs = sitemapXml.matchAll(/<loc>\s*([^<\s]+)\s*<\/loc>/g);
 
   const seen = new Map<string, string[]>();
-  for (const loc of locs) {
+  // ⚡ Bolt Optimization: Replace chained [...matchAll].map() with an imperative loop
+  for (const match of locs) {
+    const loc = match[1];
     let path: string;
     try {
       path = new URL(loc).pathname;
@@ -601,11 +601,11 @@ export function isDisallowedSitemapPath(pathname: string): boolean {
  * Extract all normalized pathnames declared in `<loc>` tags of a sitemap XML string.
  */
 export function extractSitemapPaths(sitemapXml: string): string[] {
-  const locs = [...sitemapXml.matchAll(/<loc>\s*([^<\s]+)\s*<\/loc>/g)].map(
-    (match) => match[1],
-  );
+  const locs = sitemapXml.matchAll(/<loc>\s*([^<\s]+)\s*<\/loc>/g);
   const paths: string[] = [];
-  for (const loc of locs) {
+  // ⚡ Bolt Optimization: Replace chained [...matchAll].map() with an imperative loop
+  for (const match of locs) {
+    const loc = match[1];
     try {
       paths.push(new URL(loc, "https://example.com").pathname);
     } catch {

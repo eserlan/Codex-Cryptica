@@ -43,9 +43,25 @@ Publishes the staged snapshot (FR-018). Authenticated via `Authorization: Bearer
 
 Writes the bundle, then the manifest, then prunes every asset the snapshot does not name — which is how a deleted image eventually leaves storage. The manifest lands after the bundle because until it does the backup still describes the previous, complete state; the prune runs last because deleting first would leave a bundle whose media is gone.
 
-- **Request body**: `{ vaultTitle: string, bundle: <vault export shape>, assetIds?: string[] }` — always a full snapshot (last-write-wins whole-vault replace, per spec Assumptions), never a delta. The bundle is text only (entities, maps, canvases, asset manifest), so it stays small.
+- **Request body**: `{ vaultTitle: string, bundle: <vault export shape>, assetIds?: string[] }` — a full snapshot. Used for every full upload of FR-023; incremental uploads use `/delta` below. The bundle is text only (entities, maps, canvases, asset manifest), so it stays small.
+- **Storage** _(#3354)_: writes schema v2 — entities split into shards, their hashes in `index.json`, rest of the bundle in `bundle.json` — then deletes any shard no longer populated. A v1 backup becomes v2 on its first full commit.
 - **Response 200**: `{ manifest: CloudBackupManifest }` with `sizeBytes` measured from what is actually stored.
 - **Errors**: `400` invalid bundle shape or asset list; `404` unknown `backupId` or wrong code; `413` body larger than 8 MB.
+
+## POST /api/cloud-backup/{backupId}/delta _(#3354)_
+
+Publishes an incremental change to a **v2** backup (FR-021). Same auth, guard and ordering as commit: touched shards, then `bundle.json` if maps/canvases/assets changed, then the manifest, then prune.
+
+- **Request body**: `{ vaultTitle: string, baseLastPushedAt: string, upserts: Entity[], deletes: string[], maps?: unknown[], canvases?: unknown[], assetManifest?: [...], assetIds?: string[] }`. `maps`/`canvases`/`assetManifest`, when present, replace their v2 `bundle.json` fields whole (they are few and small).
+- **Behaviour**: rejects with `409` when `baseLastPushedAt` differs from the manifest's `lastPushedAt` (same divergence rule as the guarded push), so a delta never lands on a remote it was not computed against. Reads and rewrites only the shards containing an upserted or deleted id; updates `index.json` hashes for exactly those ids. A delta never carries media: the client sends one only when every image its entities and maps reference is already stored, and otherwise uploads in full.
+- **Response 200**: `{ manifest: CloudBackupManifest }`.
+- **Errors**: `400` invalid shape; `404` unknown backup or wrong code; `409` diverged base **or the backup is still v1** (client falls back to a full commit); `413` body larger than 8 MB or the vault would exceed 50 MB.
+
+## GET /api/cloud-backup/{backupId}/index _(#3354)_
+
+- **Auth**: `Authorization: Bearer {ownerCode}`.
+- **Response 200**: `{ lastPushedAt: string, entityHashes: { [entityId]: string } }`. Hashes only, never content. Empty for a v1 backup.
+- **Errors**: `404`, same undifferentiated shape as status.
 
 ## GET /api/cloud-backup/{backupId}/status
 
@@ -58,7 +74,7 @@ Writes the bundle, then the manifest, then prunes every asset the snapshot does 
 Restore (FR-006). Read-only; does not mutate `lastPushedAt` or any state.
 
 - **Auth**: `Authorization: Bearer {ownerCode}`.
-- **Response 200**: `{ manifest: CloudBackupManifest, bundle: <vault export shape> }`
+- **Response 200**: `{ manifest: CloudBackupManifest, bundle: <vault export shape> }`. For a v2 backup the worker assembles `bundle.entities` from the shards, so restore clients see the same shape for both versions.
 - **Errors**: `401`, `404` (same undifferentiated shape as status).
 
 ## GET /api/cloud-backup/{backupId}/assets/{assetId}

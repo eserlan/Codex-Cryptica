@@ -967,6 +967,69 @@ describe("Landing Page Registry", () => {
     });
   });
 
+  describe("Post-Apocalyptic & Wasteland Pack", () => {
+    it("uses the apocalyptic theme and links survival-relevant generators", () => {
+      const wasteland = getLandingPage("post-apocalyptic-rpgs");
+
+      expect(wasteland).toBeDefined();
+      expect(wasteland?.kind).toBe("genre");
+      expect(wasteland?.theme).toBe("apocalyptic");
+      expect(wasteland?.hub).toBe("post-apocalyptic");
+      expect(wasteland?.recommendedTools.map((tool) => tool.href)).toEqual(
+        expect.arrayContaining([
+          "/generators/post-apocalyptic",
+          "/generators/settlement",
+          "/generators/faction",
+          "/generators/dungeon-generator",
+          "/generators/npc",
+          "/examples/silo-zero-seven-fallout-repository",
+        ]),
+      );
+    });
+
+    it("connects settlements to the pressures that keep a wasteland campaign moving", () => {
+      const wasteland = getLandingPage("post-apocalyptic-rpgs")!;
+      const copy = JSON.stringify(wasteland);
+      const [hub, ...spokes] = wasteland.exampleGraph!.steps;
+
+      expect(copy).toMatch(/water|fuel|medicine/i);
+      expect(copy).toMatch(/radiation/i);
+      expect(copy).toMatch(/raider/i);
+      expect(copy).toMatch(/mutant/i);
+      expect(hub.category).toBe("location");
+      expect(spokes.length).toBeGreaterThanOrEqual(5);
+      for (const spoke of spokes) {
+        expect(spoke.relation, `${spoke.label} has no relation`).toBeTruthy();
+        expect(spoke.category, `${spoke.label} has no category`).toBeDefined();
+      }
+
+      expect(wasteland.hero.tagline).toMatch(/dependency chains/i);
+      expect(copy).toMatch(/disease|infected areas/i);
+      expect(copy).toMatch(/extreme weather|toxic weather/i);
+      expect(copy).toMatch(/hostile machines|machine patrols/i);
+      expect(wasteland.useCases.map(({ title }) => title)).toContain(
+        "Hazard Zones & Altered Threats",
+      );
+      expect(spokes.map(({ relation }) => relation)).toContain(
+        "Gets clean water from",
+      );
+      expect(spokes.map(({ relation }) => relation)).toContain(
+        "Uses as supply-route scout",
+      );
+      expect(spokes.map(({ relation }) => relation)).toContain(
+        "Needs for pump repairs",
+      );
+      expect(wasteland.recommendedTools.map(({ href }) => href)).toEqual([
+        "/generators/settlement",
+        "/generators/faction",
+        "/generators/npc",
+        "/generators/dungeon-generator",
+        "/examples/silo-zero-seven-fallout-repository",
+        "/generators/post-apocalyptic",
+      ]);
+    });
+  });
+
   describe("Tactical Mecha RPG Pack", () => {
     it("is registered as a Lancer-themed genre guide", () => {
       const mecha = getLandingPage("mecha-rpgs");

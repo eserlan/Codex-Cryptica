@@ -3,6 +3,7 @@
 **Feature Branch**: `162-cc-cloud-backup`
 **Created**: 2026-08-31
 **Status**: Draft
+**Amended**: 2026-09-24 — automatic background sync (#3189) reconciled into FR-018/SC-009; incremental entity sync added (#3354, FR-021–FR-023, SC-012–SC-013)
 **Input**: User description: "Support opt-in cloud backup to Codex Cryptica Cloud via Cloudflare R2 with explicit user permission and zero third-party sharing (GitHub issue #2593)"
 
 ## User Scenarios & Testing _(mandatory)_
@@ -21,7 +22,8 @@ A vault owner who wants peace of mind against losing their lore (device loss, br
 2. **Given** the consent screen is showing, **When** the user closes it or declines without confirming, **Then** no vault data is sent anywhere and cloud backup remains off.
 3. **Given** the user confirms consent, **When** confirmation completes, **Then** the system performs an initial backup of the vault and the user can see that backup succeeded (status and a last-synced time).
 4. **Given** cloud backup is off, **When** the app runs normally (editing, browsing, generating lore), **Then** no vault data is transmitted to cloud backup infrastructure.
-5. **Given** cloud backup is enabled, **When** the user presses "Save to cloud", **Then** the vault's current state is uploaded, replacing the prior remote backup — the same directional, "local wins", explicitly-triggered model already used for the Google Drive mirror, with no automatic upload on save and no background polling.
+5. **Given** cloud backup is enabled, **When** the user edits the vault and editing settles, **Then** the change is uploaded automatically a few seconds later, and "Save to cloud" remains available to upload immediately — local stays authoritative, and nothing is ever pulled from the cloud without an explicit restore (#3189).
+6. **Given** cloud backup is enabled and a backup already exists, **When** the user edits a few entities, **Then** only those entities (plus any changed maps, canvases and media) are read and uploaded, not the whole vault (#3354).
 
 ---
 
@@ -113,15 +115,20 @@ A user who lost their vault's ownership code contacts Codex Cryptica support. Su
 - **FR-015**: The system MUST provide a support-only lookup that returns a vault backup's metadata (title, size, last-backup time) — never its content — when queried by an identifying detail such as the vault title, and MUST return no result if no single backup matches.
 - **FR-016**: The system MUST NOT provide any way to list, browse, or enumerate vault backups in bulk; only single, targeted lookups by an identifying detail are permitted.
 - **FR-017**: Support MUST be able to re-issue a fresh ownership code for a backup located via lookup, so a user who lost their code can regain self-service access without support ever handling the vault's content.
-- **FR-018**: After the initial backup, uploading a newer copy MUST be an explicit user action ("Save to cloud"), replacing the prior remote backup. The system MUST NOT upload automatically on save, on a timer, or in the background — mirroring the existing Google Drive mirror, which is likewise driven by explicit Save and Load actions.
+- **FR-018** _(amended by #3189)_: While backup is enabled, durable local writes MUST schedule a debounced automatic upload, and "Save to cloud" MUST remain available as an immediate manual upload. Automatic uploads MUST be guarded against overwriting a newer remote copy (pausing on divergence until the user chooses), MUST stop immediately and completely when backup is disabled — including any upload or snapshot build already in progress — and MUST NOT poll the server or pull anything. With backup off, nothing is uploaded under any trigger (FR-001, SC-002).
 - **FR-019**: A failed upload (e.g., no connectivity) MUST NOT block, delay, or roll back any local work; the vault's cloud backup status MUST simply reflect that the last save failed or is stale until the next successful one.
 - **FR-020**: The system MUST persist, per vault, whether CC Cloud backup is enabled and its ownership code in local storage that survives page reloads and app restarts, so the user is never re-prompted for consent or re-asked to re-enable it after the first time — matching how the Google Drive folder association is already persisted in IndexedDB.
+
+- **FR-021** _(#3354)_: After the first successful backup, an automatic or manual upload MUST read and send only the entities changed or deleted since the last successful upload, plus changed maps, canvases and media. Reading every entity to build an upload is only permitted for a full upload (FR-023).
+- **FR-022** _(#3354)_: The set of changed entities MUST survive page reloads, crashes and closed tabs, and an entity edited while an upload is in flight MUST be included in the next upload rather than lost. Changes MUST NOT be recorded while backup is off.
+- **FR-023** _(#3354)_: The system MUST fall back to a full upload when it cannot trust the changed set: the first backup, an upgrade of a backup stored in the older whole-vault format, re-enabling after a disable, resolving a conflict with "keep mine", and any bulk change that bypasses per-entity saves (import, reload from disk, restore). A periodic idle-time consistency check MUST mark as changed any entity whose remote copy no longer matches the local one.
 
 ### Key Entities
 
 - **Cloud Backup**: The remote copy of one vault's data held in Codex Cryptica's own cloud storage. Attributes: owning vault, ownership code (opaque, generated once at first enable, no linked user account), current status (idle/syncing/error), last successful backup time, size.
 - **Consent Record**: The user's explicit opt-in decision for a given vault. Attributes: vault, whether granted, when granted, when (if ever) revoked.
 - **Restore Operation**: A one-time action reconstructing a vault's local data from its Cloud Backup. Attributes: target vault, source backup, outcome (succeeded/failed/cancelled).
+- **Changed-Entity Record** _(#3354)_: A persisted note that one entity, map or canvas in a backed-up vault has changed (or been deleted) since the last successful upload. Attributes: vault, item kind, item id, change version, whether it is a deletion. Removed only once an upload containing that version succeeds.
 - **Support Lookup**: A single, targeted support query against Cloud Backup metadata by an identifying detail (e.g., vault title). Attributes: search detail used, matched backup (if exactly one), outcome (recovered/no match/ambiguous), whether a fresh ownership code was issued. Never carries vault content.
 
 ## Success Criteria _(mandatory)_
@@ -138,7 +145,9 @@ A user who lost their vault's ownership code contacts Codex Cryptica support. Su
 - **SC-008**: 100% of support lookup attempts that don't resolve to exactly one matching vault return no result — bulk browsing of vault backups is never possible, tested or otherwise.
 - **SC-010**: A vault at or under the published size limit (50 MB total, including media) backs up successfully; one above it is refused with a clear, actionable message naming the limit, and the previous backup is left intact. Individual files are capped at 5 MB.
 - **SC-011**: Backing up a vault at the size limit never exceeds the upload service's memory ceiling: media is sent one file per request rather than in a single combined body, so peak memory is bounded by the largest single file rather than by the vault.
-- **SC-009**: Pressing "Save to cloud" updates the stored copy and the displayed last-saved time, and no upload occurs without that action — verified by watching for network activity across normal editing and saving.
+- **SC-009** _(amended by #3189)_: With backup enabled, an edit is reflected in the stored copy and the displayed last-saved time within a few seconds of editing settling, and pressing "Save to cloud" uploads immediately. With backup disabled — including mid-upload — no further upload request is sent, verified by watching network activity across normal editing and saving.
+- **SC-012** _(#3354)_: After editing 3 entities in a 1,600-entity vault, the next upload reads 3 entity files and sends 3 entities, not the whole vault; its client-side work does not grow with vault size.
+- **SC-013** _(#3354)_: A vault restored from a backup built by any mix of full and incremental uploads — including deletions and edits made during an upload — matches the local vault exactly (extends SC-003).
 
 ## Assumptions
 
@@ -146,4 +155,4 @@ These decisions were not yet confirmed with a stakeholder; they are reasonable d
 
 - **Cross-device identity**: Codex Cryptica has no authenticated user-account concept, so ownership follows the pattern already used for the public template marketplace: enabling cloud backup generates an opaque ownership code for that vault, which is stored locally on the enabling device and required (as a bearer credential) for every later status/restore/disable/delete request. There is no separate login step. To restore on a second device, the user must bring that code with them (e.g., by copying it from Settings), the same way marketplace listing owners keep their listing's owner token to edit or unpublish it later.
 - **Encryption/access model**: Vault data at rest is protected by server-side access control (scoped to the vault's ownership code above) plus standard transport security (TLS); no independent client-side/end-to-end encryption layer is assumed. If true zero-knowledge storage is required, this changes the technical design significantly and should be confirmed before planning.
-- **Conflict handling**: When the same vault is backed up from two devices around the same time, the system uses a last-write-wins whole-vault snapshot — the most recent completed backup replaces the prior one, with no field-level merge. This mirrors how the existing Google Drive mirror sync already behaves, so it introduces no new mental model for users.
+- **Conflict handling**: When the same vault is backed up from two devices around the same time, automatic uploads are guarded: an upload that finds a newer remote copy pauses instead of overwriting, and the user chooses. Once chosen, the result is last-write-wins at entity granularity (incremental uploads replace whole entities; there is no field-level merge), and "keep mine" performs a full upload (FR-023).

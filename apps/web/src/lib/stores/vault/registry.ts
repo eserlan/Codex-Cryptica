@@ -117,7 +117,23 @@ const triggerRefresh = debounce(async () => {
   }
 }, 100);
 
-export async function updateLastInternalChange(id: string): Promise<void> {
+/**
+ * What a durable write touched (#3354), so incremental cloud backup can upload
+ * only that. Maps are persisted as one metadata file, so they carry no ids.
+ */
+export type DurableVaultChange =
+  | { kind: "entity"; ids: string[]; deleted?: boolean }
+  | { kind: "canvas"; ids: string[]; deleted?: boolean }
+  | { kind: "maps" };
+
+/**
+ * Records a durable write. Callers pass `change` describing what they wrote; a
+ * write reported without one is treated by listeners as touching anything.
+ */
+export async function updateLastInternalChange(
+  id: string,
+  change?: DurableVaultChange,
+): Promise<void> {
   const db = await getDB();
   const vault = await db.get("vaults", id);
   if (vault) {
@@ -126,11 +142,14 @@ export async function updateLastInternalChange(id: string): Promise<void> {
 
     // Trigger debounced refresh
     triggerRefresh();
-    notifyDurableChangeListeners(id);
+    notifyDurableChangeListeners(id, change);
   }
 }
 
-export type DurableVaultChangeListener = (vaultId: string) => void;
+export type DurableVaultChangeListener = (
+  vaultId: string,
+  change?: DurableVaultChange,
+) => void;
 
 const durableChangeListeners = new Set<DurableVaultChangeListener>();
 
@@ -151,10 +170,13 @@ export function onDurableVaultChange(
   };
 }
 
-function notifyDurableChangeListeners(vaultId: string): void {
+function notifyDurableChangeListeners(
+  vaultId: string,
+  change?: DurableVaultChange,
+): void {
   for (const listener of durableChangeListeners) {
     try {
-      listener(vaultId);
+      listener(vaultId, change);
     } catch (error) {
       console.error("[vault-registry] Durable-change listener failed", error);
     }

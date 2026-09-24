@@ -1319,7 +1319,6 @@ describe("EntityStore", () => {
         },
         content: "Hydrated content from disk",
       });
-
       await store.internalLoadContent("hero");
 
       // Verifies content is hydrated, but in-memory parent is preserved!
@@ -1327,6 +1326,106 @@ describe("EntityStore", () => {
         "Hydrated content from disk",
       );
       expect(repository.entities.hero.parent).toBe("parent-node");
+    });
+
+    it("propagates metadata restored from disk to the graph slice", async () => {
+      const markdownUtils = await import("../../utils/markdown");
+      const opfsUtils = await import("../../utils/opfs");
+      vi.mocked(opfsUtils.readFileAsText).mockResolvedValue("file");
+      vi.mocked(markdownUtils.parseMarkdown).mockReturnValue({
+        metadata: { id: "hero", title: "Hero", parent: "place" },
+        content: "Hydrated content from disk",
+      });
+      const previousVersion = store.graphStructureVersion;
+
+      await store.internalLoadContent("hero");
+
+      expect(store.graphStructureVersion).toBeGreaterThan(previousVersion);
+      expect(
+        store.graphEntities.find((entity) => entity.id === "hero")?.parent,
+      ).toBe("place");
+    });
+
+    it("updates inbound connections when connection metadata is restored", async () => {
+      const markdownUtils = await import("../../utils/markdown");
+      const opfsUtils = await import("../../utils/opfs");
+      vi.mocked(opfsUtils.readFileAsText).mockResolvedValue("file");
+      vi.mocked(markdownUtils.parseMarkdown).mockReturnValue({
+        metadata: {
+          id: "hero",
+          title: "Hero",
+          type: "character",
+          connections: [{ target: "place", type: "knows", strength: 1 }],
+        },
+        content: "Hydrated content from disk",
+      });
+      (repository.entities.hero as any).connections = undefined;
+
+      await store.internalLoadContent("hero");
+
+      expect(store.inboundConnections.place).toEqual([
+        {
+          sourceId: "hero",
+          connection: { target: "place", type: "knows", strength: 1 },
+        },
+      ]);
+    });
+
+    it("leaves indexes untouched when a load only adds content", async () => {
+      const markdownUtils = await import("../../utils/markdown");
+      const opfsUtils = await import("../../utils/opfs");
+      vi.mocked(opfsUtils.readFileAsText).mockResolvedValue("file");
+      vi.mocked(markdownUtils.parseMarkdown).mockReturnValue({
+        metadata: { id: "hero", title: "Hero", type: "character" },
+        content: "Hydrated content from disk",
+      });
+      const previousGraphEntities = store.graphEntities;
+      const previousAllEntities = store.allEntities;
+      const previousVersion = store.graphStructureVersion;
+
+      await store.internalLoadContent("hero");
+
+      expect(repository.entities.hero.content).toBe(
+        "Hydrated content from disk",
+      );
+      expect(store.graphEntities).toBe(previousGraphEntities);
+      expect(store.allEntities).toBe(previousAllEntities);
+      expect(store.graphStructureVersion).toBe(previousVersion);
+    });
+  });
+
+  describe("readFullEntity", () => {
+    it("reads the full body from OPFS without writing to the store", async () => {
+      const markdownUtils = await import("../../utils/markdown");
+      const opfsUtils = await import("../../utils/opfs");
+      vi.mocked(opfsUtils.readFileAsText).mockResolvedValue("file");
+      vi.mocked(markdownUtils.parseMarkdown).mockReturnValue({
+        metadata: { id: "hero", title: "Hero", lore: "Deep lore" },
+        content: "Full chronicle",
+      });
+      const before = repository.entities.hero;
+      const graphVersion = store.graphStructureVersion;
+
+      const full = await store.readFullEntity("hero");
+
+      expect(full?.content).toBe("Full chronicle");
+      expect(full?.lore).toBe("Deep lore");
+      expect(repository.entities.hero).toBe(before);
+      expect(store.isContentLoaded("hero")).toBe(false);
+      expect(store.graphStructureVersion).toBe(graphVersion);
+    });
+
+    it("falls back to the content cache, and returns null with no body", async () => {
+      const opfsUtils = await import("../../utils/opfs");
+      const { cacheService } = await import("../../services/cache.svelte");
+      vi.mocked(opfsUtils.readFileAsText).mockResolvedValue("");
+      vi.mocked(cacheService.getEntityContent)
+        .mockResolvedValueOnce({ content: "Cached body", lore: "" })
+        .mockResolvedValueOnce(null);
+
+      expect((await store.readFullEntity("hero"))?.content).toBe("Cached body");
+      expect(await store.readFullEntity("hero")).toBeNull();
+      expect(await store.readFullEntity("nonexistent")).toBeNull();
     });
   });
 
