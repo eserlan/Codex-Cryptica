@@ -190,5 +190,22 @@ apps/workers/oracle-proxy/src/cloud-backup.ts        # v2 commit, /delta, sharde
 ### Risks
 
 - **A write path that skips `updateLastInternalChange`** would leave remote copies stale. Mitigation: the idle consistency check (FR-023) plus a test enumerating persistence entry points.
-- **Two tabs of the same vault** both record into the shared store, which is safe (versions are monotonic per vault in IndexedDB), but both may upload. Automatic sync has no cross-tab coordination today; the optimistic-concurrency guard turns a duplicate delta into a 409 pause rather than a lost write. Add a `navigator.locks` upload lock in PR 3 if duplicate uploads show up in practice.
+- **Two tabs of the same vault** both record into the shared store, which is safe (each write gets a unique stamp, and rows clear only on an exact match), but both may upload. Automatic sync has no cross-tab coordination today; the optimistic-concurrency guard turns a duplicate delta into a 409 pause rather than a lost write. Add a `navigator.locks` upload lock in PR 3 if duplicate uploads show up in practice.
 - **Shard hot spots** in a vault whose ids hash unevenly: acceptable at 64 shards and a 50 MB vault ceiling; revisit only if a shard approaches the 8 MB body limit.
+
+### As built (2026-09-24)
+
+Differences from the design above, each for a concrete reason:
+
+| Planned                                             | Built                                                                                                               | Why                                                                                                                              |
+| --------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| `entityHashes` on the manifest                      | Separate `index.json`, served by `GET /index`                                                                       | Every authorised request parses the manifest; a per-entity map (~130 KB at 1,600 entities) would tax all of them                 |
+| `needsFullPush` on `LocalCloudBackupRecord`         | A `full` row in the same `cloud_backup_dirty` store                                                                 | One store to snapshot and clear; the flag clears with the upload that honoured it, using the same version guard                  |
+| Numeric per-vault version                           | Unique string stamp per write                                                                                       | Only equality matters; avoids coordinating a counter across tabs                                                                 |
+| Bulk events set `needsFullPush`                     | Disk re-reads record their exact `newOrChangedIds` (without scheduling an upload); undescribed writes record `full` | Sync chunks already say which files changed, so a precise record is available; re-enable uploads in full anyway                  |
+| Delta carries changed assets and the asset manifest | Delta carries no media; an unknown image reference forces a full upload                                             | Image changes are rare next to text edits, and only a full upload can rebuild the asset manifest and prune correctly             |
+| Deltas for every push                               | Automatic pushes only; "Save to cloud" and "keep mine" stay full; >200 changed entities → full                      | Explicit actions keep their existing full-snapshot semantics; past ~200 entities a full upload is no larger and stays under 8 MB |
+| —                                                   | An automatic push with no recorded changes sends nothing                                                            | Removes the full upload the startup catch-up used to make on every app open                                                      |
+| Three PRs                                           | Two: worker, then client                                                                                            | The client falls back to a full upload on a 404 from `/delta`, so the worker no longer has to deploy first                       |
+
+The consistency check runs once per session, 60 s after a vault with backup on opens. It records missing, extra, and changed-while-loaded entities, and never reads an unloaded body.

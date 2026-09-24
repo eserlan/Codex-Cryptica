@@ -22,7 +22,10 @@ import {
   cloudBackupStore,
   cloudBackupBrowserStorage,
 } from "$lib/stores/cloud-backup.svelte";
-import { buildCloudBackupPayload } from "$lib/services/cloud-backup-payload";
+import {
+  buildCloudBackupDelta,
+  buildCloudBackupPayload,
+} from "$lib/services/cloud-backup-payload";
 import { onDurableVaultChange } from "$lib/stores/vault/registry";
 import { vaultEventBus } from "$lib/stores/vault/events.svelte";
 import { CloudBackupDirtyStore } from "$lib/stores/cloud-backup-dirty";
@@ -217,6 +220,33 @@ export function initializeGlobalListeners(_calendarStore?: any) {
           canvases: canvasRegistry.allCanvases ?? [],
         },
       ),
+    // Incremental uploads (#3354): only the recorded changes are read.
+    buildDelta: async (_vaultId, changes, uploadedAssetIds, signal) =>
+      buildCloudBackupDelta(
+        vault.vaultName || "Vault",
+        changes,
+        {
+          // Same boundary widening as the full payload above: the store's
+          // record is structurally compatible but not nominally LocalEntity.
+          getEntity: (id: string) => vault.entities?.[id] as never,
+          hydrateEntities: {
+            isContentLoaded: (id: string) => vault.isContentLoaded(id),
+            readFullEntity: (id: string) => vault.readFullEntity(id),
+          },
+          uploadedAssetIds,
+          signal,
+        },
+        {
+          maps: mapRegistry.allMaps ?? [],
+          canvases: canvasRegistry.allCanvases ?? [],
+        },
+      ),
+    listLocalEntities: () =>
+      Object.values(vault.entities ?? {}).map((entity) => ({
+        id: entity.id,
+        loaded: vault.isContentLoaded(entity.id),
+        entity,
+      })),
     activeVaultId: () => vault.activeVaultId ?? null,
     restore: {
       createVault: (name: string) => vault.createVault(name),

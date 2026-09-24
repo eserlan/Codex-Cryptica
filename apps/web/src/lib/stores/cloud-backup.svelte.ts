@@ -10,14 +10,20 @@ import {
   formatRecoveryKey,
   listKnownCloudBackups,
   planAssetUploads,
+  pushDeltaToCloudBackup,
+  fetchCloudBackupIndex,
+  type VaultDeltaPayload,
   type KnownCloudBackup,
   createMemoryStorage,
   type CloudBackupRuntime,
   type VaultBundlePayload,
 } from "@codex/cloud-backup-sync";
-import type { LocalCloudBackupRecord } from "schema";
+import { hashCloudBackupEntity, type LocalCloudBackupRecord } from "schema";
 import { onlineStatus } from "./online.svelte";
-import type { CloudBackupDirtyStore } from "./cloud-backup-dirty";
+import type {
+  CloudBackupDirtyRow,
+  CloudBackupDirtyStore,
+} from "./cloud-backup-dirty";
 import type { DurableVaultChange } from "./vault/registry";
 
 /**
@@ -61,6 +67,9 @@ export type CloudAutoSyncState =
 export const AUTO_SYNC_DEBOUNCE_MS = 5000;
 /** Wait before retrying a failed auto-push (default 30s). */
 export const AUTO_SYNC_RETRY_MS = 30000;
+
+/** Wait after a vault opens before the once-per-session consistency check. */
+export const RECONCILE_DELAY_MS = 60_000;
 
 interface SnapshotOutcome {
   ok: boolean;
@@ -113,10 +122,50 @@ export interface CloudBackupDeps {
    * exactly the changes it carried.
    */
   dirty?: CloudBackupDirtyStore;
+  /**
+   * Builds an incremental upload from recorded changes, or `null` when they
+   * call for a full upload (#3354). `uploadedAssetIds` are the media the
+   * backup already holds; a delta never carries media.
+   */
+  buildDelta?: (
+    vaultId: string,
+    changes: readonly CloudBackupDirtyRow[],
+    uploadedAssetIds: ReadonlySet<string>,
+    signal: AbortSignal,
+  ) => Promise<VaultDeltaPayload | null>;
+  /**
+   * Local entities for the idle consistency check (#3354). `entity` is the
+   * full record when `loaded`; unloaded bodies are never read for the check.
+   */
+  listLocalEntities?: () => { id: string; loaded: boolean; entity: unknown }[];
+  /** Delay before the once-per-session consistency check; tests shorten it. */
+  reconcileDelayMs?: number;
   /** Quiet period before an auto-push; overridable in tests. */
   debounceMs?: number;
   /** Wait before retrying a failed auto-push; overridable in tests. */
   retryMs?: number;
+}
+
+/**
+ * Entities to mark for the consistency check: any the remote lacks or holds
+ * differently (bodies compared only when already loaded here), and any the
+ * remote holds that no longer exist locally.
+ */
+async function diffAgainstRemote(
+  local: { id: string; loaded: boolean; entity: unknown }[],
+  remote: Record<string, string>,
+): Promise<{ upserts: string[]; deletes: string[] }> {
+  const upserts: string[] = [];
+  const present = new Set<string>();
+  for (const { id, loaded, entity } of local) {
+    present.add(id);
+    const stale =
+      !(id in remote) ||
+      (loaded && (await hashCloudBackupEntity(entity)) !== remote[id]);
+    if (stale) upserts.push(id);
+  }
+  const deletes = Object.keys(remote).filter((id) => !present.has(id));
+  return { upserts, deletes };
 }
 
 export class CloudBackupStore {
@@ -162,6 +211,7 @@ export class CloudBackupStore {
    * from both the first backup and the change set.
    */
   private enablingVaultId: string | null = null;
+  private reconcileTimer: ReturnType<typeof setTimeout> | null = null;
   private autoPending = false;
   private autoTimer: ReturnType<typeof setTimeout> | null = null;
   private autoListenersAttached = false;
@@ -182,6 +232,7 @@ export class CloudBackupStore {
     // describing the vault the user has left.
     this.errorMessage = null;
     this.clearAutoTimer();
+    this.clearReconcileTimer();
     this.autoPending = false;
     this.autoConflictRemoteAt = null;
     this.autoState = "idle";
@@ -191,7 +242,59 @@ export class CloudBackupStore {
     this.loadHashCache(vaultId);
     // Catch-up: sync resumes when the user returns, guarded so a newer
     // remote can never be overwritten by a stale return.
-    if (this.status !== "off") this.notifyLocalChange(vaultId);
+    if (this.status !== "off") {
+      this.notifyLocalChange(vaultId);
+      this.scheduleReconcile(vaultId);
+    }
+  }
+
+  /** Runs the consistency check once, after the vault has settled. */
+  private scheduleReconcile(vaultId: string): void {
+    this.clearReconcileTimer();
+    if (!this.deps?.listLocalEntities || !this.deps.dirty) return;
+    this.reconcileTimer = setTimeout(() => {
+      this.reconcileTimer = null;
+      void this.reconcileWithRemote(vaultId);
+    }, this.deps.reconcileDelayMs ?? RECONCILE_DELAY_MS);
+  }
+
+  private clearReconcileTimer(): void {
+    if (this.reconcileTimer) {
+      clearTimeout(this.reconcileTimer);
+      this.reconcileTimer = null;
+    }
+  }
+
+  /**
+   * Idle consistency check (FR-023): marks as changed anything the remote
+   * holds differently — missing, extra, or a different body for an entity
+   * already loaded here. Catches a write path that failed to report a change.
+   * Compares hashes only, and never reads an entity body just for the check.
+   * Returns how many changes it recorded.
+   */
+  async reconcileWithRemote(vaultId: string): Promise<number> {
+    const deps = this.deps;
+    if (!deps?.dirty || !deps.listLocalEntities) return 0;
+    const index = await fetchCloudBackupIndex(deps.runtime, vaultId);
+    if (!index.ok || this.status === "off") return 0;
+
+    const { upserts, deletes } = await diffAgainstRemote(
+      deps.listLocalEntities(),
+      index.value,
+    );
+    if (upserts.length > 0) {
+      await deps.dirty.record(vaultId, { kind: "entity", ids: upserts });
+    }
+    if (deletes.length > 0) {
+      await deps.dirty.record(vaultId, {
+        kind: "entity",
+        ids: deletes,
+        deleted: true,
+      });
+    }
+    const recorded = upserts.length + deletes.length;
+    if (recorded > 0) this.notifyLocalChange(vaultId);
+    return recorded;
   }
 
   private applyRecord(record: LocalCloudBackupRecord | null) {
@@ -244,6 +347,7 @@ export class CloudBackupStore {
     this.activeBuild?.abort();
     this.activeBuild = null;
     this.clearAutoTimer();
+    this.clearReconcileTimer();
     this.autoPending = false;
     this.autoConflictRemoteAt = null;
     this.autoState = "idle";
@@ -465,6 +569,7 @@ export class CloudBackupStore {
   destroy() {
     this.stopAutoSyncListeners();
     this.clearAutoTimer();
+    this.clearReconcileTimer();
     this.deps = null;
   }
 
@@ -731,13 +836,69 @@ export class CloudBackupStore {
     const push = new AbortController();
     this.activeBuild = push;
     try {
-      const out = await this.uploadSnapshot(vaultId, opts, push.signal);
+      const out = await this.uploadChanges(vaultId, opts, sent, push.signal);
       if (push.signal.aborted) return BACKUP_OFF;
       if (out.ok) await this.deps!.dirty?.clearSent(sent);
       return out;
     } finally {
       if (this.activeBuild === push) this.activeBuild = null;
     }
+  }
+
+  /**
+   * Sends only the recorded changes when it can (#3354), otherwise a full
+   * snapshot. Only automatic, guarded pushes go incremental: "Save to cloud"
+   * and "keep mine" are explicit and stay full. With nothing recorded, an
+   * automatic push has nothing to send.
+   */
+  private async uploadChanges(
+    vaultId: string,
+    opts: { guarded: boolean },
+    sent: readonly CloudBackupDirtyRow[],
+    signal: AbortSignal,
+  ): Promise<SnapshotOutcome> {
+    const deps = this.deps!;
+    const base = this.lastPushedAt;
+    if (!opts.guarded || !deps.dirty || !deps.buildDelta || !base) {
+      return this.uploadSnapshot(vaultId, opts, signal);
+    }
+    if (sent.length === 0) return { ok: true };
+
+    const delta = await deps.buildDelta(
+      vaultId,
+      sent,
+      new Set(Object.keys(this.hashCache)),
+      signal,
+    );
+    if (signal.aborted) return BACKUP_OFF;
+    const out = delta ? await this.sendDelta(vaultId, delta, base) : null;
+    return out ?? this.uploadSnapshot(vaultId, opts, signal);
+  }
+
+  /** Publishes a delta; `null` means the backup needs a full upload instead. */
+  private async sendDelta(
+    vaultId: string,
+    delta: VaultDeltaPayload,
+    base: string,
+  ): Promise<SnapshotOutcome | null> {
+    const result = await pushDeltaToCloudBackup(
+      this.deps!.runtime,
+      vaultId,
+      delta,
+      base,
+    );
+    if (!result.ok) {
+      if ("fullPushRequired" in result) return null;
+      return {
+        ok: false,
+        conflict: result.conflict,
+        remoteAt: result.remoteLastPushedAt,
+        error: result.error,
+      };
+    }
+    if (!result.value) return BACKUP_OFF;
+    this.lastPushedAt = result.value.lastPushedAt;
+    return { ok: true };
   }
 
   private async uploadSnapshot(

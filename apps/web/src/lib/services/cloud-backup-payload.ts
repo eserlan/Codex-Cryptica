@@ -225,3 +225,128 @@ export async function buildCloudBackupPayload(
     skippedEntities,
   };
 }
+
+/* ---------------------------------------------------------------- delta -- */
+
+/**
+ * Past this many changed entities a full upload is simpler and no larger, and
+ * it keeps a delta body well inside the worker's JSON limit.
+ */
+export const DELTA_MAX_ENTITIES = 200;
+
+/** A changed item awaiting upload, as recorded by the dirty-set store. */
+export interface CloudBackupChange {
+  kind: "entity" | "canvas" | "maps" | "full";
+  id: string;
+  deleted: boolean;
+}
+
+export interface CloudBackupDeltaDeps {
+  /** The entity as held in memory, or undefined once it no longer exists. */
+  getEntity: (id: string) => LocalEntity | undefined;
+  hydrateEntities: EntityHydrator;
+  /** Asset ids already uploaded; a delta never carries media (see below). */
+  uploadedAssetIds: ReadonlySet<string>;
+  signal?: AbortSignal;
+}
+
+export interface CloudBackupDelta {
+  vaultTitle: string;
+  upserts: LocalEntity[];
+  deletes: string[];
+  maps?: unknown[];
+  canvases?: unknown[];
+}
+
+/**
+ * Builds an incremental upload from the recorded changes (#3354), reading only
+ * the changed entities.
+ *
+ * Returns `null` when the change set calls for a full upload instead: a
+ * `full` marker, too many changes, an entity that cannot be read, or media the
+ * backup does not hold yet. A delta deliberately carries no media — image
+ * changes are rare next to text edits, and a full upload already knows how to
+ * rebuild the asset manifest and prune what is gone.
+ */
+export async function buildCloudBackupDelta(
+  vaultTitle: string,
+  changes: readonly CloudBackupChange[],
+  deps: CloudBackupDeltaDeps,
+  content: { maps?: readonly unknown[]; canvases?: readonly unknown[] } = {},
+): Promise<CloudBackupDelta | null> {
+  const entityChanges = changes.filter((change) => change.kind === "entity");
+  if (
+    changes.some((change) => change.kind === "full") ||
+    entityChanges.length > DELTA_MAX_ENTITIES
+  ) {
+    return null;
+  }
+
+  const entities = await readChangedEntities(entityChanges, deps);
+  if (!entities) return null;
+
+  const maps = changes.some((change) => change.kind === "maps")
+    ? [...(content.maps ?? [])]
+    : undefined;
+  if (referencesNewMedia(entities.upserts, maps, deps.uploadedAssetIds)) {
+    return null;
+  }
+
+  return {
+    vaultTitle,
+    ...entities,
+    ...(maps ? { maps } : {}),
+    ...(changes.some((change) => change.kind === "canvas")
+      ? { canvases: [...(content.canvases ?? [])] }
+      : {}),
+  };
+}
+
+/**
+ * Splits entity changes into full records to upload and ids to delete, or
+ * `null` when a read fails or the build is aborted. Tombstones and entities
+ * that no longer exist are deletes; loaded bodies are used as they are.
+ */
+async function readChangedEntities(
+  changes: readonly CloudBackupChange[],
+  deps: CloudBackupDeltaDeps,
+): Promise<{ upserts: LocalEntity[]; deletes: string[] } | null> {
+  const upserts: LocalEntity[] = [];
+  const deletes: string[] = [];
+  for (const { id, deleted } of changes) {
+    if (deps.signal?.aborted) return null;
+    const current = deps.getEntity(id);
+    if (deleted || !current) {
+      deletes.push(id);
+      continue;
+    }
+    const full = await readFullOrNull(id, current, deps.hydrateEntities);
+    if (!full) return null;
+    upserts.push(full);
+  }
+  return { upserts, deletes };
+}
+
+async function readFullOrNull(
+  id: string,
+  current: LocalEntity,
+  hydrator: EntityHydrator,
+): Promise<LocalEntity | null> {
+  if (hydrator.isContentLoaded(id)) return current;
+  try {
+    return (await hydrator.readFullEntity(id)) ?? current;
+  } catch {
+    return null;
+  }
+}
+
+/** True when an upload would reference media the backup does not hold yet. */
+function referencesNewMedia(
+  entities: readonly LocalEntity[],
+  maps: readonly unknown[] | undefined,
+  uploaded: ReadonlySet<string>,
+): boolean {
+  return collectAssetPaths(entities, maps ?? []).some(
+    (path) => !uploaded.has(assetIdForPath(path)),
+  );
+}

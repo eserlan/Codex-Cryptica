@@ -179,29 +179,33 @@ _Note: T013–T015 all edit `cloud-backup.test.ts`, so they are deliberately not
 
 ### PR 1 — Change tracking (web only; uploads stay full)
 
-- [ ] T065 Write tests for `CloudBackupDirtyStore` (record, version bump, tombstone, snapshot, version-guarded clear, clear-on-disable) in `apps/web/src/lib/stores/cloud-backup-dirty.test.ts`
-- [ ] T066 Add the `cloudBackupDirty` IndexedDB object store with an upgrade migration, and implement `CloudBackupDirtyStore` in `apps/web/src/lib/stores/cloud-backup-dirty.ts`
-- [ ] T067 Extend `onDurableVaultChange` to deliver `{ vaultId, kind, ids, deleted }` and thread entity ids and deletions from entity persistence, with map and canvas ids from their registries, in `apps/web/src/lib/stores/vault/registry.ts` and callers; test in `registry.test.ts`
-- [ ] T068 Record changes only while backup is enabled, and clear rows plus set `needsFullPush` on disable, in `apps/web/src/lib/stores/cloud-backup.svelte.ts`; test that nothing is recorded while off (FR-022, SC-002)
-- [ ] T069 Set `needsFullPush` on import, reload from disk, sync chunks, restore and re-enable, in `apps/web/src/lib/app/init/app-init.ts`; test each trigger
-- [ ] T070 Test that every persistence entry point that calls `updateLastInternalChange` reports the ids it wrote (guards the main risk in plan.md)
+- [x] T065 Write tests for `CloudBackupDirtyStore` (record, version bump, tombstone, snapshot, version-guarded clear, clear-on-disable) in `apps/web/src/lib/stores/cloud-backup-dirty.test.ts`
+- [x] T066 Add the `cloudBackupDirty` IndexedDB object store with an upgrade migration, and implement `CloudBackupDirtyStore` in `apps/web/src/lib/stores/cloud-backup-dirty.ts`
+- [x] T067 Extend `onDurableVaultChange` to deliver `{ vaultId, kind, ids, deleted }` and thread entity ids and deletions from entity persistence, with map and canvas ids from their registries, in `apps/web/src/lib/stores/vault/registry.ts` and callers; test in `registry.test.ts`
+- [x] T068 Record changes only while backup is enabled, and clear rows plus set `needsFullPush` on disable, in `apps/web/src/lib/stores/cloud-backup.svelte.ts`; test that nothing is recorded while off (FR-022, SC-002)
+- [x] T069 Set `needsFullPush` on import, reload from disk, sync chunks, restore and re-enable, in `apps/web/src/lib/app/init/app-init.ts`; test each trigger
+- [x] T070 Test that every persistence entry point that calls `updateLastInternalChange` reports the ids it wrote (guards the main risk in plan.md)
 
 ### PR 2 — Worker schema v2
 
-- [ ] T071 Write worker tests: full commit writes 64-shard v2 plus `entityHashes`; v1 backups still restore; `/bundle` assembles shards into the v1 response shape, in `apps/workers/oracle-proxy/src/__tests__/cloud-backup.test.ts`
-- [ ] T072 Write worker tests for `POST /delta`: upsert, delete, touched-shards-only writes, `entityHashes` updated for exactly those ids, `409` on diverged base and on v1, `413` on size, auth parity with commit
-- [ ] T073 Add manifest v2 fields and the delta request schema to `packages/schema/src/publishing.ts`
-- [ ] T074 Implement v2 commit, `/delta` and sharded `/bundle` in `apps/workers/oracle-proxy/src/cloud-backup.ts`; deploy before PR 3
+- [x] T071 Write worker tests: full commit writes 64-shard v2 plus `entityHashes`; v1 backups still restore; `/bundle` assembles shards into the v1 response shape, in `apps/workers/oracle-proxy/src/__tests__/cloud-backup.test.ts`
+- [x] T072 Write worker tests for `POST /delta`: upsert, delete, touched-shards-only writes, `entityHashes` updated for exactly those ids, `409` on diverged base and on v1, `413` on size, auth parity with commit
+- [x] T073 Add manifest v2 fields and the delta request schema to `packages/schema/src/publishing.ts`
+- [x] T074 Implement v2 commit, `/delta` and sharded `/bundle` in `apps/workers/oracle-proxy/src/cloud-backup.ts`; deploy before PR 3
 
 ### PR 3 — Client delta uploads
 
-- [ ] T075 Write package tests for `pushDeltaToCloudBackup` (success, 409-v1 → caller falls back to a full push, 409-diverged → conflict) in `packages/cloud-backup-sync/src/`
-- [ ] T076 Implement `pushDeltaToCloudBackup` in `packages/cloud-backup-sync/src/cloud-backup-sync.ts`
-- [ ] T077 Build the delta payload from a dirty snapshot using `readFullEntity`, in `apps/web/src/lib/services/cloud-backup-payload.ts`; test that only dirty ids are read (SC-012)
-- [ ] T078 Choose full versus delta in `CloudBackupStore` (first, v1, `needsFullPush`, keep-mine → full), and apply version-guarded clearing after success; test an edit landing mid-upload is sent next time (FR-022)
-- [ ] T079 Add the idle consistency check against `entityHashes` for in-memory entities only; test that a mismatch is marked and that it never triggers a whole-vault read
-- [ ] T080 Round-trip test: full upload, then edits, deletes and a mid-upload edit through deltas, then restore, equals the local vault (SC-013)
+- [x] T075 Write package tests for `pushDeltaToCloudBackup` (success, 409-v1 → caller falls back to a full push, 409-diverged → conflict) in `packages/cloud-backup-sync/src/`
+- [x] T076 Implement `pushDeltaToCloudBackup` in `packages/cloud-backup-sync/src/cloud-backup-sync.ts`
+- [x] T077 Build the delta payload from a dirty snapshot using `readFullEntity`, in `apps/web/src/lib/services/cloud-backup-payload.ts`; test that only dirty ids are read (SC-012)
+- [x] T078 Choose full versus delta in `CloudBackupStore` (first, v1, `needsFullPush`, keep-mine → full), and apply version-guarded clearing after success; test an edit landing mid-upload is sent next time (FR-022)
+- [x] T079 Add the idle consistency check against `entityHashes` for in-memory entities only; test that a mismatch is marked and that it never triggers a whole-vault read
+- [x] T080 Round-trip test: full upload, then edits, deletes and a mid-upload edit through deltas, then restore, equals the local vault (SC-013)
 - [ ] T081 Re-profile the 1,600-entity fixture: a 3-entity edit reads 3 files and sends 3 entities (SC-012); record the result in `docs/performance/`
+
+---
+
+**As built (2026-09-24)**: shipped as two PRs rather than three — the worker (T071–T074) and the client (T065–T070, T075–T080) — because the client falls back to a full upload when the worker lacks `/delta`, removing the deploy-order constraint. Deviations are recorded in plan.md → "As built". T081 (re-profile the real vault) is pending until deploy.
 
 ---
 

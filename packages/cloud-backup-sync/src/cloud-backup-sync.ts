@@ -381,6 +381,137 @@ export async function pushVaultToCloudBackup(
   return { ok: true, value: result.value };
 }
 
+/** The changed-only part of a vault, for `pushDeltaToCloudBackup` (#3354). */
+export interface VaultDeltaPayload {
+  vaultTitle: string;
+  upserts: { id: string }[];
+  deletes: string[];
+  /** Present only when maps changed; replaces the backup's maps whole. */
+  maps?: unknown[];
+  /** Present only when canvases changed; replaces the backup's canvases whole. */
+  canvases?: unknown[];
+}
+
+/**
+ * Publishes only what changed since `baseLastPushedAt` (#3354).
+ *
+ * `fullPushRequired` means the backup cannot take a delta — still in the older
+ * whole-vault format, or a worker without the delta route — and the caller
+ * should send a full snapshot instead. Both answer 404 for an unknown route and
+ * for a wrong code; a full push re-checks the code, so a 404 falls back too.
+ */
+export async function pushDeltaToCloudBackup(
+  runtime: CloudBackupRuntime,
+  vaultId: string,
+  delta: VaultDeltaPayload,
+  baseLastPushedAt: string,
+): Promise<
+  | CloudBackupOutcome<CloudBackupManifest | null>
+  | { ok: false; fullPushRequired: true; error: string }
+> {
+  const record = await readRecord(runtime, vaultId);
+  if (!record || !record.enabled) return { ok: true, value: null };
+
+  await runtime.storage.write(vaultId, { ...record, status: "syncing" });
+  const response = await runtime.fetch(
+    `${runtime.baseUrl}/api/cloud-backup/${record.backupId}/delta`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${record.ownerCode}`,
+      },
+      body: JSON.stringify({ ...delta, baseLastPushedAt }),
+    },
+  );
+
+  if (!response.ok) {
+    const body = (await response.json().catch(() => null)) as {
+      error?: { code?: string; message?: string; lastPushedAt?: string };
+    } | null;
+    const code = body?.error?.code;
+    if (response.status === 404 || code === "full_push_required") {
+      // Not a failed backup: the caller retries in full straight away.
+      await runtime.storage.write(vaultId, record);
+      return {
+        ok: false,
+        fullPushRequired: true,
+        error: body?.error?.message ?? "A full upload is required.",
+      };
+    }
+    await runtime.storage.write(vaultId, { ...record, status: "error" });
+    return {
+      ok: false,
+      error: body?.error?.message ?? `Request failed (${response.status})`,
+      status: response.status,
+      ...(code === "diverged"
+        ? {
+            conflict: true,
+            remoteLastPushedAt: body?.error?.lastPushedAt ?? null,
+          }
+        : {}),
+    };
+  }
+
+  const manifest = (
+    (await response.json().catch(() => null)) as {
+      manifest?: CloudBackupManifest;
+    } | null
+  )?.manifest;
+  if (!manifest?.lastPushedAt) {
+    await runtime.storage.write(vaultId, { ...record, status: "error" });
+    return {
+      ok: false,
+      error: "The backup service returned an unreadable response.",
+    };
+  }
+  await runtime.storage.write(vaultId, {
+    ...record,
+    status: "idle",
+    lastPushedAt: manifest.lastPushedAt,
+    vaultTitle: delta.vaultTitle,
+  });
+  return { ok: true, value: manifest };
+}
+
+/**
+ * Per-entity content hashes of a v2 backup (#3354), for the idle consistency
+ * check. Hashes only — the response never carries vault content.
+ */
+export async function fetchCloudBackupIndex(
+  runtime: CloudBackupRuntime,
+  vaultId: string,
+): Promise<CloudBackupOutcome<Record<string, string>>> {
+  const record = await readRecord(runtime, vaultId);
+  if (!record?.enabled) return { ok: false, error: "Cloud backup is off." };
+  const response = await runtime.fetch(
+    `${runtime.baseUrl}/api/cloud-backup/${record.backupId}/index`,
+    { headers: { Authorization: `Bearer ${record.ownerCode}` } },
+  );
+  if (!response.ok) {
+    return {
+      ok: false,
+      error: await errorFrom(response),
+      status: response.status,
+    };
+  }
+  const body = (await response.json().catch(() => null)) as {
+    entityHashes?: unknown;
+  } | null;
+  const hashes = body?.entityHashes;
+  return {
+    ok: true,
+    value:
+      hashes && typeof hashes === "object"
+        ? Object.fromEntries(
+            Object.entries(hashes).filter(
+              ([, value]) => typeof value === "string",
+            ) as [string, string][],
+          )
+        : {},
+  };
+}
+
 /**
  * Reads just the remote lastPushedAt for the optimistic-concurrency guard.
  * Returns null (not an error) when the remote has no timestamp yet.

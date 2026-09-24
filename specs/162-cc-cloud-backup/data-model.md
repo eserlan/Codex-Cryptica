@@ -4,23 +4,23 @@
 
 Stored at `cloud-backup/{backupId}/manifest.json`. `{backupId}` is a server-generated UUID, opaque and unrelated to the ownership code.
 
-| Field           | Type          | Notes                                                                                                                         |
-| --------------- | ------------- | ----------------------------------------------------------------------------------------------------------------------------- |
-| `schemaVersion` | number        | `1`: single `bundle.json`. `2` _(#3354)_: sharded entities (below). The worker reads both; any full commit writes `2`         |
-| `backupId`      | string (UUID) | Matches the R2 key; never shown to end users                                                                                  |
-| `vaultTitle`    | string        | Plaintext, since it's the only field the admin lookup (Story 4) can match on                                                  |
-| `sizeBytes`     | number        | Reported in status UI (FR-008)                                                                                                |
-| `createdAt`     | ISO datetime  | First backup                                                                                                                  |
-| `lastPushedAt`  | ISO datetime  | Updated on every push-on-save                                                                                                 |
-| `entityCount`   | number        | Optional, for status display richness                                                                                         |
-| `shardCount`    | number        | _v2 only._ Fixed at `64`; stored so a later change never misreads existing shards                                             |
-| `entityHashes`  | object        | _v2 only._ `{ [entityId]: contentHash }` — SHA-256 of the entity's canonical JSON. Drives the idle consistency check (FR-023) |
+| Field           | Type          | Notes                                                                                                                 |
+| --------------- | ------------- | --------------------------------------------------------------------------------------------------------------------- |
+| `schemaVersion` | number        | `1`: single `bundle.json`. `2` _(#3354)_: sharded entities (below). The worker reads both; any full commit writes `2` |
+| `backupId`      | string (UUID) | Matches the R2 key; never shown to end users                                                                          |
+| `vaultTitle`    | string        | Plaintext, since it's the only field the admin lookup (Story 4) can match on                                          |
+| `sizeBytes`     | number        | Reported in status UI (FR-008)                                                                                        |
+| `createdAt`     | ISO datetime  | First backup                                                                                                          |
+| `lastPushedAt`  | ISO datetime  | Updated on every push-on-save                                                                                         |
+| `entityCount`   | number        | Optional, for status display richness                                                                                 |
+| `shardCount`    | number        | _v2 only._ Fixed at `64`; stored so a later change never misreads existing shards                                     |
 
 Stored as R2 object `customMetadata` (not in the JSON body, so lookups don't require downloading/parsing the body): `ownerCodeHash` (SHA-256 hex, per research.md §1).
 
 The vault's actual content (entities, labels, notes, media) lives in sibling keys:
 
 - `cloud-backup/{backupId}/bundle.json` — **v1**: entities/labels/notes, same export shape the local/Drive sync already produces. **v2**: the same shape minus `entities` (maps, canvases, asset manifest).
+- `cloud-backup/{backupId}/index.json` — **v2** _(#3354)_: `{ entityHashes: { [entityId]: sha256 } }`, SHA-256 of each entity's canonical JSON. Kept out of the manifest because every authorised request reads the manifest. Served hashes-only by `GET /index` for the idle consistency check (FR-023).
 - `cloud-backup/{backupId}/entities/{shard}.json` — **v2** _(#3354)_: `{ [entityId]: Entity }` for every entity whose id hashes to that shard (`fnv1a(id) % shardCount`, zero-padded, e.g. `07.json`). Sharded rather than one object per entity so a restore costs 64 R2 reads, not one per entity, staying inside the Worker's subrequest limit.
 - `cloud-backup/{backupId}/assets/{assetId}` — media, mirroring `published/{publishId}/assets/{assetId}`'s existing layout.
 
@@ -35,30 +35,34 @@ The vault's actual content (entities, labels, notes, media) lives in sibling key
 
 Per vault, mirrors the shape of the existing `PublishRegistry` (`packages/schema/src/publishing.ts`) used by the guest-vault-r2 feature, and is what makes FR-020 (persist across reloads) possible.
 
-| Field           | Type                             | Notes                                                                                                                                                                                                    |
-| --------------- | -------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `vaultId`       | string                           | Local vault identifier, foreign key into the existing vault registry. On restore this points at the **newly created** vault (FR-006a), not the vault the user had open                                   |
-| `backupId`      | string (UUID)                    | From the manifest, needed to address the R2 keys directly                                                                                                                                                |
-| `ownerCode`     | string                           | The raw, unhashed credential — this is the one copy of it that exists outside the user's own memory/notes; losing this record without having copied the code elsewhere is unrecoverable (spec edge case) |
-| `enabled`       | boolean                          | Reflects the user's current opt-in state; `false` after disable, record itself is not deleted (so re-enabling resumes rather than re-consenting)                                                         |
-| `status`        | `"idle" \| "syncing" \| "error"` | Drives the Settings UI status indicator (FR-008)                                                                                                                                                         |
-| `lastPushedAt`  | ISO datetime \| null             | Mirrors the manifest's `lastPushedAt`, cached locally so status can render without a network round-trip                                                                                                  |
-| `consentedAt`   | ISO datetime                     | When the consent screen was confirmed (FR-002/FR-003)                                                                                                                                                    |
-| `needsFullPush` | boolean                          | _(#3354)_ Set by the bulk-change, re-enable and conflict paths of FR-023; cleared by a successful full upload                                                                                            |
+| Field          | Type                             | Notes                                                                                                                                                                                                    |
+| -------------- | -------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `vaultId`      | string                           | Local vault identifier, foreign key into the existing vault registry. On restore this points at the **newly created** vault (FR-006a), not the vault the user had open                                   |
+| `backupId`     | string (UUID)                    | From the manifest, needed to address the R2 keys directly                                                                                                                                                |
+| `ownerCode`    | string                           | The raw, unhashed credential — this is the one copy of it that exists outside the user's own memory/notes; losing this record without having copied the code elsewhere is unrecoverable (spec edge case) |
+| `enabled`      | boolean                          | Reflects the user's current opt-in state; `false` after disable, record itself is not deleted (so re-enabling resumes rather than re-consenting)                                                         |
+| `status`       | `"idle" \| "syncing" \| "error"` | Drives the Settings UI status indicator (FR-008)                                                                                                                                                         |
+| `lastPushedAt` | ISO datetime \| null             | Mirrors the manifest's `lastPushedAt`, cached locally so status can render without a network round-trip                                                                                                  |
+| `consentedAt`  | ISO datetime                     | When the consent screen was confirmed (FR-002/FR-003)                                                                                                                                                    |
 
-## CloudBackupDirtyEntry (client-side, IndexedDB) _(#3354)_
+## CloudBackupDirtyRow (client-side, IndexedDB) _(#3354)_
 
-New object store `cloudBackupDirty`, key `[vaultId, kind, id]`. One row per changed item since the last successful upload (FR-021, FR-022).
+Object store `cloud_backup_dirty` (DB version 25), key `[vaultId, kind, id]`, index `by-vault`. One row per item changed since the last successful upload (FR-021, FR-022).
 
-| Field     | Type                            | Notes                                                |
-| --------- | ------------------------------- | ---------------------------------------------------- |
-| `vaultId` | string                          | Local vault id                                       |
-| `kind`    | `"entity" \| "map" \| "canvas"` | What changed                                         |
-| `id`      | string                          | Item id                                              |
-| `version` | number                          | Monotonic per vault; bumped on every recorded change |
-| `deleted` | boolean                         | Tombstone: send as a delete, not an upsert           |
+| Field     | Type                                       | Notes                                                                                                 |
+| --------- | ------------------------------------------ | ----------------------------------------------------------------------------------------------------- |
+| `vaultId` | string                                     | Local vault id                                                                                        |
+| `kind`    | `"entity" \| "canvas" \| "maps" \| "full"` | `maps` has id `*` (maps persist as one file). `full` (id `*`) marks that the next upload must be full |
+| `id`      | string                                     | Item id                                                                                               |
+| `version` | string                                     | Unique stamp per write (`crypto.randomUUID()`)                                                        |
+| `deleted` | boolean                                    | Tombstone: send as a delete, not an upsert                                                            |
 
-**Rules**: rows are written only while the vault's backup is enabled. An upload snapshots the rows it sends; after a successful commit each row is deleted **only if its `version` still matches the snapshot**, so an edit made mid-upload stays pending. Disabling backup clears the vault's rows and sets `needsFullPush`, since changes made while off are not tracked.
+**Rules**:
+
+- Rows are written only while the vault's backup is enabled, or while its first backup is being built (so an edit during `enable` is not lost).
+- A durable write with no change description records a `full` row rather than guessing.
+- An upload snapshots the rows before building. After a successful commit or delta, each row is deleted **only if it still holds the stamp that was sent**, so an edit made mid-upload stays pending.
+- Disabling backup clears the vault's rows. Re-enabling uploads in full, so no marker is needed.
 
 ## ConsentRecord
 

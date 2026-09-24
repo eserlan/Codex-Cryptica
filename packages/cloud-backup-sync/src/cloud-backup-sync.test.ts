@@ -9,6 +9,8 @@ import {
   getCloudBackupOwnershipCode,
   getLocalCloudBackupRecord,
   listKnownCloudBackups,
+  pushDeltaToCloudBackup,
+  fetchCloudBackupIndex,
 } from "./cloud-backup-sync";
 import { createMemoryStorage, type CloudBackupRuntime } from "./runtime";
 
@@ -506,5 +508,109 @@ describe("one backup per vault", () => {
     const known = await listKnownCloudBackups(runtime);
     expect(known[0].vaultTitle).toBe("The Drowned Fens");
     expect(known[0].backupId).toBe("b-1");
+  });
+});
+
+describe("pushDeltaToCloudBackup (#3354)", () => {
+  const DELTA = {
+    vaultTitle: "The Saltmere Fens",
+    upserts: [{ id: "e1" }],
+    deletes: ["gone"],
+  };
+  const BASE = MANIFEST.lastPushedAt;
+
+  it("posts only the changes against the base and records the new time", async () => {
+    const pushed = { ...MANIFEST, lastPushedAt: "2026-09-01T00:00:00.000Z" };
+    const { runtime, calls } = await enabled({
+      ok: true,
+      status: 200,
+      body: { manifest: pushed },
+    });
+
+    const result = await pushDeltaToCloudBackup(runtime, "v-1", DELTA, BASE);
+
+    expect(result.ok).toBe(true);
+    expect(calls).toHaveLength(1);
+    expect(calls[0].url).toBe("https://worker.test/api/cloud-backup/b-1/delta");
+    expect(JSON.parse(calls[0].init.body)).toEqual({
+      ...DELTA,
+      baseLastPushedAt: BASE,
+    });
+    const record = await getLocalCloudBackupRecord(runtime, "v-1");
+    expect(record?.lastPushedAt).toBe(pushed.lastPushedAt);
+    expect(record?.status).toBe("idle");
+  });
+
+  it("asks for a full upload for a v1 backup or a worker without the route", async () => {
+    for (const refusal of [
+      {
+        ok: false,
+        status: 409,
+        body: { error: { code: "full_push_required" } },
+      },
+      { ok: false, status: 404, body: null },
+    ]) {
+      const { runtime } = await enabled(refusal);
+      const result = await pushDeltaToCloudBackup(runtime, "v-1", DELTA, BASE);
+      expect(result).toMatchObject({ ok: false, fullPushRequired: true });
+      expect(
+        (await getLocalCloudBackupRecord(runtime, "v-1"))?.status,
+      ).not.toBe("error");
+    }
+  });
+
+  it("reports a diverged remote as a conflict", async () => {
+    const { runtime } = await enabled({
+      ok: false,
+      status: 409,
+      body: {
+        error: {
+          code: "diverged",
+          message: "changed",
+          lastPushedAt: "2026-09-02T00:00:00.000Z",
+        },
+      },
+    });
+
+    const result = await pushDeltaToCloudBackup(runtime, "v-1", DELTA, BASE);
+
+    expect(result).toMatchObject({
+      ok: false,
+      conflict: true,
+      remoteLastPushedAt: "2026-09-02T00:00:00.000Z",
+    });
+  });
+
+  it("sends nothing while backup is off", async () => {
+    const { runtime, calls } = await enabled();
+    await disableCloudBackup(runtime, "v-1");
+
+    const result = await pushDeltaToCloudBackup(runtime, "v-1", DELTA, BASE);
+
+    expect(result).toEqual({ ok: true, value: null });
+    expect(calls).toEqual([]);
+  });
+});
+
+describe("fetchCloudBackupIndex (#3354)", () => {
+  it("returns only string hashes", async () => {
+    const { runtime, calls } = await enabled({
+      ok: true,
+      status: 200,
+      body: { entityHashes: { a: "h1", b: 42 } },
+    });
+
+    const result = await fetchCloudBackupIndex(runtime, "v-1");
+
+    expect(result).toEqual({ ok: true, value: { a: "h1" } });
+    expect(calls[0].url).toBe("https://worker.test/api/cloud-backup/b-1/index");
+  });
+
+  it("does not contact the server while backup is off", async () => {
+    const { runtime, calls } = await enabled();
+    await disableCloudBackup(runtime, "v-1");
+
+    expect((await fetchCloudBackupIndex(runtime, "v-1")).ok).toBe(false);
+    expect(calls).toEqual([]);
   });
 });
