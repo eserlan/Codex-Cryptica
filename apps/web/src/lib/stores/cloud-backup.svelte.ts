@@ -148,6 +148,8 @@ export class CloudBackupStore {
   private pushing = false;
   /** The in-flight snapshot build, aborted by `disable`. */
   private activeBuild: AbortController | null = null;
+  /** Lets `disable` persist its off record after any cancelled push settles. */
+  private activePush: Promise<SnapshotOutcome> | null = null;
   private autoPending = false;
   private autoTimer: ReturnType<typeof setTimeout> | null = null;
   private autoListenersAttached = false;
@@ -225,7 +227,9 @@ export class CloudBackupStore {
     // Disabling stops automation cold: no pending push may survive it, or
     // "off" would stop meaning "nothing leaves the device".
     this.activeBuild?.abort();
+    await this.activePush?.catch(() => undefined);
     this.activeBuild = null;
+    this.activePush = null;
     this.clearAutoTimer();
     this.autoPending = false;
     this.autoConflictRemoteAt = null;
@@ -667,20 +671,28 @@ export class CloudBackupStore {
     vaultId: string,
     opts: { guarded: boolean },
   ): Promise<SnapshotOutcome> {
-    // Check before building: the snapshot reads every entity, so learning that
-    // backup is off only at upload time costs a whole-vault read.
-    const record = await getLocalCloudBackupRecord(this.deps!.runtime, vaultId);
-    if (!record?.enabled) return BACKUP_OFF;
-
-    // Live for the whole push, so a disable during the build *or* the upload
-    // registers and the caller does not flip the status back from "off".
     const push = new AbortController();
     this.activeBuild = push;
+    const operation = (async () => {
+      // Check before building: the snapshot reads every entity, so learning that
+      // backup is off only at upload time costs a whole-vault read.
+      const record = await getLocalCloudBackupRecord(
+        this.deps!.runtime,
+        vaultId,
+      );
+      if (push.signal.aborted || !record?.enabled) return BACKUP_OFF;
+
+      return this.uploadSnapshot(vaultId, opts, push.signal);
+    })();
+    this.activePush = operation;
     try {
-      const out = await this.uploadSnapshot(vaultId, opts, push.signal);
+      const out = await operation;
       return push.signal.aborted ? BACKUP_OFF : out;
     } finally {
-      if (this.activeBuild === push) this.activeBuild = null;
+      if (this.activeBuild === push) {
+        this.activeBuild = null;
+        this.activePush = null;
+      }
     }
   }
 
@@ -715,6 +727,7 @@ export class CloudBackupStore {
       {
         skipAssetUploadIds,
         ...(opts.guarded ? { expectLastPushedAt: this.lastPushedAt } : {}),
+        signal,
       },
     );
     if (!result.ok) {

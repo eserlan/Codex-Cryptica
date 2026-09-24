@@ -239,6 +239,8 @@ export interface SnapshotUploadOptions {
    * pruned. Skipped assets count as uploaded for progress purposes.
    */
   skipAssetUploadIds?: ReadonlySet<string> | readonly string[];
+  /** Cancels remaining uploads and prevents an aborted push from rewriting local status. */
+  signal?: AbortSignal;
 }
 
 async function uploadSnapshot(
@@ -247,12 +249,13 @@ async function uploadSnapshot(
   payload: VaultBundlePayload,
   onProgress?: (progress: UploadProgress) => void,
   options?: SnapshotUploadOptions,
-): Promise<CloudBackupOutcome<CloudBackupManifest>> {
+): Promise<CloudBackupOutcome<CloudBackupManifest | null>> {
   const assets = payload.assets ?? [];
   const auth = `Bearer ${record.ownerCode}`;
   const skip = new Set(options?.skipAssetUploadIds ?? []);
 
   for (const [index, asset] of assets.entries()) {
+    options?.signal?.throwIfAborted();
     if (!skip.has(asset.assetId)) {
       const response = await runtime.fetch(
         `${runtime.baseUrl}/api/cloud-backup/${record.backupId}/assets/${encodeURIComponent(asset.assetId)}`,
@@ -263,8 +266,10 @@ async function uploadSnapshot(
             Authorization: auth,
           },
           body: asset.bytes,
+          signal: options?.signal,
         },
       );
+      options?.signal?.throwIfAborted();
       if (!response.ok) {
         return {
           ok: false,
@@ -276,6 +281,7 @@ async function uploadSnapshot(
     onProgress?.({ uploaded: index + 1, total: assets.length });
   }
 
+  options?.signal?.throwIfAborted();
   const response = await runtime.fetch(
     `${runtime.baseUrl}/api/cloud-backup/${record.backupId}/commit`,
     {
@@ -286,8 +292,10 @@ async function uploadSnapshot(
         bundle: payload.bundle,
         assetIds: assets.map((asset) => asset.assetId),
       }),
+      signal: options?.signal,
     },
   );
+  options?.signal?.throwIfAborted();
 
   if (!response.ok) {
     return {
@@ -333,52 +341,67 @@ export async function pushVaultToCloudBackup(
 ): Promise<CloudBackupOutcome<CloudBackupManifest | null>> {
   const record = await readRecord(runtime, vaultId);
   if (!record || !record.enabled) return { ok: true, value: null };
+  try {
+    options?.signal?.throwIfAborted();
 
-  if (options?.expectLastPushedAt !== undefined) {
-    const remote = await readRemoteLastPushedAt(runtime, record);
-    if (!remote.ok) {
-      await runtime.storage.write(vaultId, { ...record, status: "error" });
-      return remote;
-    }
-    // Any divergence aborts: a newer remote is a conflict, while an older
-    // or missing remote means our record is stale and must not overwrite.
-    if (remote.value !== options.expectLastPushedAt) {
-      await runtime.storage.write(vaultId, { ...record, status: "error" });
-      const newerRemote = detectConflict(
-        options.expectLastPushedAt,
-        remote.value,
+    if (options?.expectLastPushedAt !== undefined) {
+      const remote = await readRemoteLastPushedAt(
+        runtime,
+        record,
+        options.signal,
       );
-      return {
-        ok: false,
-        error: newerRemote
-          ? "Another device updated this backup. Automatic sync paused so nothing is overwritten."
-          : "The cloud backup changed unexpectedly. Automatic sync paused.",
-        conflict: true,
-        remoteLastPushedAt: remote.value,
-      };
+      options?.signal?.throwIfAborted();
+      if (!remote.ok) {
+        await runtime.storage.write(vaultId, { ...record, status: "error" });
+        return remote;
+      }
+      // Any divergence aborts: a newer remote is a conflict, while an older
+      // or missing remote means our record is stale and must not overwrite.
+      if (remote.value !== options.expectLastPushedAt) {
+        await runtime.storage.write(vaultId, { ...record, status: "error" });
+        const newerRemote = detectConflict(
+          options.expectLastPushedAt,
+          remote.value,
+        );
+        return {
+          ok: false,
+          error: newerRemote
+            ? "Another device updated this backup. Automatic sync paused so nothing is overwritten."
+            : "The cloud backup changed unexpectedly. Automatic sync paused.",
+          conflict: true,
+          remoteLastPushedAt: remote.value,
+        };
+      }
     }
+
+    options?.signal?.throwIfAborted();
+    await runtime.storage.write(vaultId, { ...record, status: "syncing" });
+
+    const result = await uploadSnapshot(runtime, record, payload, onProgress, {
+      skipAssetUploadIds: options?.skipAssetUploadIds,
+      signal: options?.signal,
+    });
+    options?.signal?.throwIfAborted();
+    if (!result.ok) {
+      // Visible failure, never a silent stale success (FR-011). The local save
+      // has already happened and is untouched by this.
+      await runtime.storage.write(vaultId, { ...record, status: "error" });
+      return result;
+    }
+    if (result.value === null) return { ok: true, value: null };
+
+    await runtime.storage.write(vaultId, {
+      ...record,
+      status: "idle",
+      lastPushedAt: result.value.lastPushedAt,
+      // A renamed vault should show under its current name, not the old one.
+      vaultTitle: payload.vaultTitle,
+    });
+    return { ok: true, value: result.value };
+  } catch (error) {
+    if (options?.signal?.aborted) return { ok: true, value: null };
+    throw error;
   }
-
-  await runtime.storage.write(vaultId, { ...record, status: "syncing" });
-
-  const result = await uploadSnapshot(runtime, record, payload, onProgress, {
-    skipAssetUploadIds: options?.skipAssetUploadIds,
-  });
-  if (!result.ok) {
-    // Visible failure, never a silent stale success (FR-011). The local save
-    // has already happened and is untouched by this.
-    await runtime.storage.write(vaultId, { ...record, status: "error" });
-    return result;
-  }
-
-  await runtime.storage.write(vaultId, {
-    ...record,
-    status: "idle",
-    lastPushedAt: result.value.lastPushedAt,
-    // A renamed vault should show under its current name, not the old one.
-    vaultTitle: payload.vaultTitle,
-  });
-  return { ok: true, value: result.value };
 }
 
 /**
@@ -388,18 +411,20 @@ export async function pushVaultToCloudBackup(
 async function fetchBackupStatus(
   runtime: CloudBackupRuntime,
   record: Pick<LocalCloudBackupRecord, "backupId" | "ownerCode">,
+  signal?: AbortSignal,
 ): Promise<Awaited<ReturnType<CloudBackupRuntime["fetch"]>>> {
   return runtime.fetch(
     `${runtime.baseUrl}/api/cloud-backup/${record.backupId}/status`,
-    { headers: { Authorization: `Bearer ${record.ownerCode}` } },
+    { headers: { Authorization: `Bearer ${record.ownerCode}` }, signal },
   );
 }
 
 async function readRemoteLastPushedAt(
   runtime: CloudBackupRuntime,
   record: Pick<LocalCloudBackupRecord, "backupId" | "ownerCode">,
+  signal?: AbortSignal,
 ): Promise<CloudBackupOutcome<string | null>> {
-  const response = await fetchBackupStatus(runtime, record);
+  const response = await fetchBackupStatus(runtime, record, signal);
   if (!response.ok) {
     return {
       ok: false,
