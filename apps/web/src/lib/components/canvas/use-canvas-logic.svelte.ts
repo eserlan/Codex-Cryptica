@@ -14,6 +14,7 @@ import {
 import { vault } from "$lib/stores/vault.svelte";
 import { canvasRegistry } from "$lib/stores/canvas-registry.svelte";
 import { debugStore } from "$lib/stores/debug.svelte";
+import { useCanvasCategories } from "./use-canvas-categories.svelte";
 import {
   buildCanvasSavePayload,
   createFlowEdgeFromConnection,
@@ -41,7 +42,7 @@ export function createCanvasLogic(
   let nodes = $state<Node[]>([]);
   let edges = $state<Edge[]>([]);
   let drawings = $state<CanvasDrawing[]>([]);
-  let activeCategories = $state(new Set<string>());
+  const categoryLogic = useCanvasCategories();
   let isConnecting = $state(false);
   let hasInitialized = $state(false);
 
@@ -162,20 +163,6 @@ export function createCanvasLogic(
       explicitVaultId: currentVaultId,
     });
     await canvasRegistry.touch(currentCanvasId);
-  }
-
-  // Categories Logic
-  function toggleCategoryFilter(categoryId: string) {
-    if (activeCategories.has(categoryId)) {
-      activeCategories.delete(categoryId);
-    } else {
-      activeCategories.add(categoryId);
-    }
-    activeCategories = new Set(activeCategories);
-  }
-
-  function clearCategoryFilters() {
-    activeCategories = new Set();
   }
 
   // Mutations
@@ -496,7 +483,7 @@ export function createCanvasLogic(
       drawings = val;
     },
     get activeCategories() {
-      return activeCategories;
+      return categoryLogic.activeCategories;
     },
     get isConnecting() {
       return isConnecting;
@@ -529,8 +516,8 @@ export function createCanvasLogic(
       return screenToFlowPosition;
     },
 
-    toggleCategoryFilter,
-    clearCategoryFilters,
+    toggleCategoryFilter: categoryLogic.toggleCategoryFilter,
+    clearCategoryFilters: categoryLogic.clearCategoryFilters,
     onConnect,
     onReconnect,
     handleAddAdventureNode,

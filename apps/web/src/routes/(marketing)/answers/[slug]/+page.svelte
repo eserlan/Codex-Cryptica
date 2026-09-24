@@ -269,6 +269,52 @@
               </dl>
             {/if}
           </div>
+        {:else if section.kind === "table"}
+          {#if section.heading}
+            <h2
+              class="mb-4 font-header text-xl font-bold text-theme-text sm:text-2xl"
+            >
+              {section.heading}
+            </h2>
+          {/if}
+          <div class="overflow-x-auto border border-theme-border">
+            <table
+              class="w-full min-w-[40rem] border-collapse text-left text-sm"
+            >
+              <thead class="bg-theme-surface text-theme-text">
+                <tr>
+                  {#each section.headers as heading}
+                    <th
+                      scope="col"
+                      class="border-b border-theme-border px-3 py-2 font-header font-bold"
+                    >
+                      {heading}
+                    </th>
+                  {/each}
+                </tr>
+              </thead>
+              <tbody>
+                {#each section.rows as row}
+                  <tr class="border-b border-theme-border last:border-b-0">
+                    {#each row as cell, cellIndex}
+                      {#if cellIndex === 0}
+                        <th
+                          scope="row"
+                          class="px-3 py-2 align-top font-header font-bold text-theme-text"
+                        >
+                          {cell}
+                        </th>
+                      {:else}
+                        <td class="px-3 py-2 align-top text-theme-muted">
+                          {cell}
+                        </td>
+                      {/if}
+                    {/each}
+                  </tr>
+                {/each}
+              </tbody>
+            </table>
+          </div>
         {:else if section.kind === "checklist"}
           <h2
             class="mb-4 font-header text-xl font-bold text-theme-text sm:text-2xl"

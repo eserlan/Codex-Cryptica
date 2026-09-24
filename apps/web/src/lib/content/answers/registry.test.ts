@@ -8,7 +8,11 @@ import {
   getRelatedAnswers,
   answerPath,
 } from "./registry";
-import { AnswerConfigSchema, type AnswerConfig } from "./schema";
+import {
+  AnswerConfigSchema,
+  AnswerTableBlockSchema,
+  type AnswerConfig,
+} from "./schema";
 import { answers } from "./pages";
 import { getAllLandingPageSlugs } from "../for/registry";
 import { HEIST_TOPIC_CONFIG } from "../topics/heists";
@@ -482,6 +486,35 @@ describe("published answers", () => {
         `${answer.slug} has no example block`,
       ).toBe(true);
     }
+  });
+
+  it("publishes the base-building decision table with consistent columns", () => {
+    const answer = answers["what-ttrpgs-let-you-build-and-upgrade-a-base"];
+    const table = answer.sections.find((section) => section.kind === "table");
+
+    expect(table).toBeDefined();
+    if (!table || table.kind !== "table") return;
+    expect(table.headers).toEqual([
+      "System",
+      "Base model",
+      "How central?",
+      "Upgrade style",
+      "Best fit",
+    ]);
+    expect(table.rows).toHaveLength(5);
+    expect(table.rows.every((row) => row.length === table.headers.length)).toBe(
+      true,
+    );
+  });
+
+  it("rejects comparison table rows that do not match the column count", () => {
+    const result = AnswerTableBlockSchema.safeParse({
+      kind: "table",
+      headers: ["System", "Best fit"],
+      rows: [["Stonetop"]],
+    });
+
+    expect(result.success).toBe(false);
   });
 
   it("uses British English spellings, not American ones", () => {

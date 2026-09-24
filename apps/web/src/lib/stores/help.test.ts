@@ -208,8 +208,12 @@ describe("HelpStore", () => {
   });
 
   // T060: in-app generators help article is registered (US5)
-  it("in-app-generators help article is present in HELP_ARTICLES", () => {
-    expect(HELP_ARTICLES.some((a) => a.id === "in-app-generators")).toBe(true);
+  it("in-app-generators help article explains holiday calendar generation", () => {
+    const article = HELP_ARTICLES.find((a) => a.id === "in-app-generators");
+    expect(article).toBeDefined();
+    expect(article!.content).toContain("Holiday & Festival");
+    expect(article!.content).toContain("calendar size");
+    expect(article!.content).toContain("important people or events");
   });
 
   it("in-app-generators article is discoverable by search", () => {

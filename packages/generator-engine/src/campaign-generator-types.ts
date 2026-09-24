@@ -41,7 +41,8 @@ export type GeneratorId =
   | "creature"
   | "random-table"
   | "encounter"
-  | "heist";
+  | "heist"
+  | "holiday";
 
 export const SUPPORTED_GENERATOR_IDS: readonly GeneratorId[] = [
   "npc",
@@ -72,6 +73,7 @@ export const SUPPORTED_GENERATOR_IDS: readonly GeneratorId[] = [
   "random-table",
   "encounter",
   "heist",
+  "holiday",
 ] as const;
 
 /** A user-configurable field for a generator. */
@@ -128,6 +130,14 @@ export interface GeneratorOutput {
   bodies?: StarSystemBody[];
   /** Star-system generator's primary star spectral class, e.g. "G", "Neutron Star". */
   starType?: string;
+  observances?: Array<{
+    name: string;
+    type: string;
+    when: string;
+    observers: string;
+    traditions: string;
+    tension: string;
+  }>;
   /**
    * Structured star-pattern data for the constellation generator, driving a
    * future star-chart diagram. Absent for every other generator.
@@ -251,6 +261,14 @@ export interface GeneratedDraft {
   interpretations?: ConstellationInterpretation[];
   /** Carried through from {@link GeneratorOutput.nightSky}. */
   nightSky?: NightSkyData;
+  observances?: Array<{
+    name: string;
+    type: string;
+    when: string;
+    observers: string;
+    traditions: string;
+    tension: string;
+  }>;
   /**
    * Source and direct neighbor entity references supplied from the vault context
    * that grounded this generation.

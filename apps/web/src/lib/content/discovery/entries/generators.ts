@@ -241,6 +241,30 @@ export const generatorEntries: DiscoveryEntryInput[] = [
     status: "live",
   },
   {
+    id: "generator-holiday",
+    pageKind: "generator",
+    canonicalPath: "/generators/holiday",
+    primaryIntent: "rpg holiday and festival generator",
+    intentAliases: [
+      "fictional holiday generator",
+      "worldbuilding calendar generator",
+      "fantasy festival generator",
+      "holiday calendar generator for a tabletop rpg",
+    ],
+    userJob: "create",
+    uniqueValue:
+      "Generates a culturally coherent single observance or calendar set shaped by history, climate, beliefs, politics, and supplied people or events, including traditions and playable tensions rather than names alone.",
+    indexable: true,
+    status: "live",
+    acknowledgedOverlap: [
+      {
+        with: "answer-fictional-religion",
+        reason:
+          "The fictional religion answer explains how to design a belief system; this generator creates observances for any culture or institution, including civic, seasonal, memorial, and secular days, from optional world context.",
+      },
+    ],
+  },
+  {
     id: "generator-bbeg-generator",
     pageKind: "generator",
     canonicalPath: "/generators/bbeg-generator",

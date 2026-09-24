@@ -21,7 +21,8 @@ export interface RandomIdeaCategory {
     | "deity"
     | "creature"
     | "encounter"
-    | "origin";
+    | "origin"
+    | "holiday";
   label: string;
   generate: (
     engine: DefaultGeneratorEngine,
@@ -165,6 +166,12 @@ export const randomIdeaCategories: RandomIdeaCategory[] = [
     label: "Encounter",
     generate: (engine, useAI, theme) =>
       engine.generateEncounter({ genre: theme, useAI }),
+  },
+  {
+    key: "holiday",
+    label: "Holiday & Festival",
+    generate: (engine, useAI, theme) =>
+      engine.generateHoliday({ genre: theme, useAI }),
   },
   {
     // Superhero / Comic Book only, by design (#3111) — ignores the rolled

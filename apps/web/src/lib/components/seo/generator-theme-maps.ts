@@ -43,6 +43,7 @@ export const GENERATOR_SLUGS_WITH_THEME = new Set([
   "creature",
   "encounter",
   "heist",
+  "holiday",
   "personality",
 ]);
 
@@ -161,6 +162,7 @@ export const SLUGS_USING_STORED_THEME = new Set([
   "creature",
   "encounter",
   "heist",
+  "holiday",
   "constellation",
   "personality",
 ]);

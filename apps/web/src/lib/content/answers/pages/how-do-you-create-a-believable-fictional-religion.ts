@@ -138,6 +138,12 @@ export const howDoYouCreateABelievableFictionalReligion: AnswerConfigInput = {
       href: "/generators/pantheon-generator",
     },
     {
+      title: "Holiday & festival generator",
+      description:
+        "Create religious observances, memorials and civic traditions shaped by a culture's history and beliefs.",
+      href: "/generators/holiday",
+    },
+    {
       title: "Secret society generator",
       description:
         "For heresies, mystery cults and the orders a church would rather not acknowledge.",

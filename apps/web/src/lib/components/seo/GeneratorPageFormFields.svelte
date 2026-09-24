@@ -9,6 +9,7 @@
   import PuzzleFormFields from "$lib/components/seo/PuzzleFormFields.svelte";
   import CouncilVoteFormFields from "$lib/components/seo/CouncilVoteFormFields.svelte";
   import HeistFormFields from "$lib/components/seo/HeistFormFields.svelte";
+  import HolidayFormFields from "$lib/components/seo/HolidayFormFields.svelte";
   import SecretSocietyFormFields from "$lib/components/seo/SecretSocietyFormFields.svelte";
   import SettlementFormFields from "$lib/components/seo/SettlementFormFields.svelte";
   import MagicItemFormFields from "$lib/components/seo/MagicItemFormFields.svelte";
@@ -47,6 +48,19 @@
   };
   type ModeState = StringState & { mode: "dossier" | "table-card" };
   type ConstellationState = StringState & { mode: "single" | "night-sky" };
+  type HolidayState = {
+    genre: string;
+    scope: string;
+    setSize: string;
+    tone: string;
+    culture: string;
+    climate: string;
+    religion: string;
+    history: string;
+    importantPeople: string;
+    importantEvents: string;
+    includeControversial: boolean;
+  };
 
   let {
     slug,
@@ -67,6 +81,7 @@
     puzzle = $bindable(),
     councilVote = $bindable(),
     heist = $bindable(),
+    holiday = $bindable(),
     secretSociety = $bindable(),
     kingdom = $bindable(),
     nation = $bindable(),
@@ -120,6 +135,7 @@
     puzzle: StringState;
     councilVote: StringState;
     heist: StringState;
+    holiday: HolidayState;
     secretSociety: StringState;
     kingdom: StringState;
     nation: StringState;
@@ -166,6 +182,7 @@
     "faction",
     "faction-roster",
     "quest",
+    "holiday",
   ]);
   const socialSlugs = new Set([
     "personality",
@@ -269,6 +286,21 @@
       bind:scope={faction.scope}
       bind:alignment={faction.alignment}
       bind:campaignContext={faction.campaignContext}
+      onSurprise={trigger}
+    />
+  {:else if slug === "holiday"}
+    <HolidayFormFields
+      bind:theme={activeTheme}
+      bind:scope={holiday.scope}
+      bind:setSize={holiday.setSize}
+      bind:tone={holiday.tone}
+      bind:culture={holiday.culture}
+      bind:climate={holiday.climate}
+      bind:religion={holiday.religion}
+      bind:history={holiday.history}
+      bind:importantPeople={holiday.importantPeople}
+      bind:importantEvents={holiday.importantEvents}
+      bind:includeControversial={holiday.includeControversial}
       onSurprise={trigger}
     />
   {:else if slug === "faction-roster"}

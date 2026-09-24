@@ -644,6 +644,23 @@ describe("DefaultGeneratorEngine", () => {
     });
   });
 
+  describe("generateHoliday", () => {
+    it("generates either one observance or a coherent local calendar", async () => {
+      const one = await engine.generateHoliday({
+        setSize: "One observance",
+        useAI: false,
+      });
+      const calendar = await engine.generateHoliday({
+        setSize: "A calendar of 6 observances",
+        useAI: false,
+      });
+      expect(one.type).toBe("note");
+      expect(one.observances).toHaveLength(1);
+      expect(calendar.observances).toHaveLength(6);
+      expect(calendar.content).toContain("Calendar overview");
+    });
+  });
+
   describe("generateQuestHook", () => {
     it("should generate quest hook details locally when useAI is false", async () => {
       const res = await engine.generateQuestHook({

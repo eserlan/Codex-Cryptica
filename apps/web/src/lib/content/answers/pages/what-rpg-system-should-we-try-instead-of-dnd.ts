@@ -160,6 +160,7 @@ export const whatRpgSystemShouldWeTryInsteadOfDnd: AnswerConfigInput = {
     "what-rpg-should-i-use-for-tactical-combat",
     "what-rpg-should-i-play-for-investigative-horror",
     "what-rpg-works-for-political-intrigue-and-faction-play",
+    "what-ttrpgs-let-you-build-and-upgrade-a-base",
   ],
   discovery: {
     id: "answer-system-selection",
@@ -180,6 +181,14 @@ export const whatRpgSystemShouldWeTryInsteadOfDnd: AnswerConfigInput = {
       "for-pathfinder-2e",
       "for-call-of-cthulhu",
       "for-cyberpunk-red",
+      "answer-base-building-system-selection",
+    ],
+    acknowledgedOverlap: [
+      {
+        with: "answer-base-building-system-selection",
+        reason:
+          "This answer provides a broad play-style and genre chooser; the base-building answer compares specific home-base progression procedures and how much of a campaign they occupy.",
+      },
     ],
   },
 

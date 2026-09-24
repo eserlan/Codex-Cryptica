@@ -24,6 +24,7 @@ describe("randomIdeaCategories", () => {
       "encounter",
       "faction",
       "heist",
+      "holiday",
       "minor-magic-item",
       "nation",
       "npc",
@@ -65,6 +66,7 @@ describe("randomIdeaCategories", () => {
       generateCreature: vi.fn().mockResolvedValue("creature-result"),
       generateEncounter: vi.fn().mockResolvedValue("encounter-result"),
       generateOrigin: vi.fn().mockResolvedValue("origin-result"),
+      generateHoliday: vi.fn().mockResolvedValue("holiday-result"),
     } as unknown as DefaultGeneratorEngine;
     const theme = "Cyberpunk / Corporate";
 
@@ -143,6 +145,10 @@ describe("randomIdeaCategories", () => {
     });
     expect(engine.generateOrigin).toHaveBeenCalledWith({
       useAI: true,
+    });
+    expect(engine.generateHoliday).toHaveBeenCalledWith({
+      useAI: true,
+      genre: theme,
     });
   });
 

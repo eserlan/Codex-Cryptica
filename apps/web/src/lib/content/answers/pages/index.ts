@@ -88,6 +88,7 @@ import { whatShouldANewDndPlayerLearnFirst } from "./what-should-a-new-dnd-playe
 import { whatShouldAnRpgSettlementContain } from "./what-should-an-rpg-settlement-contain";
 import { whatShouldILookForInAnRpgCampaignManager } from "./what-should-i-look-for-in-an-rpg-campaign-manager";
 import { whatTtrpgShouldIUseForAFantasyDungeonCrawl } from "./what-ttrpg-should-i-use-for-a-fantasy-dungeon-crawl";
+import { whatTtrpgsLetYouBuildAndUpgradeABase } from "./what-ttrpgs-let-you-build-and-upgrade-a-base";
 import { whereDoIStartIfIHaveNeverPlayedATabletopRpg } from "./where-do-i-start-if-i-have-never-played-a-tabletop-rpg";
 import { xpLevelingVsMilestoneLeveling } from "./xp-leveling-vs-milestone-leveling";
 
@@ -188,6 +189,7 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     whatShouldAnRpgSettlementContain,
     whatShouldILookForInAnRpgCampaignManager,
     whatTtrpgShouldIUseForAFantasyDungeonCrawl,
+    whatTtrpgsLetYouBuildAndUpgradeABase,
     whereDoIStartIfIHaveNeverPlayedATabletopRpg,
     xpLevelingVsMilestoneLeveling,
   ]

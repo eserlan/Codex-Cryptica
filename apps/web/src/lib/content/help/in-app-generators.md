@@ -1,13 +1,25 @@
 ---
 id: in-app-generators
 title: In-App Campaign Generators
-tags: [generator, create, entities, npc, faction, settlement, magic-item]
+tags:
+  [
+    generator,
+    create,
+    entities,
+    npc,
+    faction,
+    settlement,
+    magic-item,
+    holidays,
+    festivals,
+    calendar,
+  ]
 rank: 7
 ---
 
 ## Generate Campaign Entities From Inside Your Vault
 
-The **Campaign Generators** let you create NPCs, factions, settlements, and magic items directly inside your active campaign vault. Every draft is previewed before it touches your data — no surprise saves.
+The **Campaign Generators** let you create NPCs, factions, settlements, magic items, and more directly inside your active campaign vault. The **Holiday & Festival** generator creates one observance or a connected calendar. Every draft is previewed before it touches your data — no surprise saves.
 
 ### How to Open the Generator
 
@@ -17,9 +29,9 @@ The **Campaign Generators** let you create NPCs, factions, settlements, and magi
 
 ### Configuring a Generator
 
-1. Pick a generator type: **NPC**, **Faction**, **Settlement**, or **Magic Item**.
-2. Adjust any available options (race, type, rarity, etc.).
-3. Click **Generate** to produce a draft. With AI enabled, the Oracle writes the draft for you; if AI is unavailable or turned off, generators fall back to a built-in local template — so you always get a result, no AI key required.
+1. Pick a generator type, such as **NPC**, **Faction**, **Settlement**, **Magic Item**, or **Holiday & Festival**.
+2. Adjust any available options (race, type, rarity, calendar size, etc.). For a holiday calendar, choose a scope and size, then optionally add cultural, seasonal, religious, or historical context and important people or events.
+3. Click **Generate** to produce a draft. Holiday calendars include individual observances with traditions, timing, who observes them, and table-ready tensions. With AI enabled, the Oracle writes the draft for you; if AI is unavailable or turned off, generators fall back to a built-in local template — so you always get a result, no AI key required.
 
 ### Reviewing and Saving
 
