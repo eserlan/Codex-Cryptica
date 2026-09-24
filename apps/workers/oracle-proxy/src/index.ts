@@ -61,6 +61,8 @@ import {
   handleCloudBackupAssetUpload,
   handleGetCloudBackupStatus,
   handleGetCloudBackupBundle,
+  handleGetCloudBackupIndex,
+  handleCloudBackupDelta,
   handleGetCloudBackupAsset,
   handleDeleteCloudBackup,
   handleCloudBackupAdminLookup,
@@ -405,6 +407,10 @@ export default {
             return handleGetCloudBackupStatus(request, env, backupId);
           if (parts[4] === "bundle" && request.method === "GET")
             return handleGetCloudBackupBundle(request, env, backupId);
+          if (parts[4] === "index" && request.method === "GET")
+            return handleGetCloudBackupIndex(request, env, backupId);
+          if (parts[4] === "delta" && request.method === "POST")
+            return handleCloudBackupDelta(request, env, backupId);
         }
         // /api/cloud-backup/{backupId}/assets/{assetId}
         if (parts.length === 6 && parts[4] === "assets") {

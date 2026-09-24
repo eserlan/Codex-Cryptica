@@ -5,6 +5,8 @@ import {
   handleCloudBackupAssetUpload,
   handleGetCloudBackupStatus,
   handleGetCloudBackupBundle,
+  handleGetCloudBackupIndex,
+  handleCloudBackupDelta,
   handleGetCloudBackupAsset,
   handleDeleteCloudBackup,
   handleCloudBackupAdminLookup,
@@ -15,8 +17,15 @@ import {
   getManifestKey,
   getBundleKey,
   getAssetKey,
+  getIndexKey,
+  getShardKey,
   type CloudBackupEnv,
 } from "../cloud-backup";
+import {
+  CLOUD_BACKUP_SCHEMA_V2,
+  cloudBackupShardOf,
+  hashCloudBackupEntity,
+} from "../../../../../packages/schema/src/publishing";
 
 /**
  * In-memory R2 stand-in, following the convention in
@@ -463,9 +472,9 @@ describe("enable, upload and commit", () => {
     );
     expect(res.status).toBe(200);
 
-    const bundle = JSON.parse(
-      env.BUCKET.store.get(getBundleKey(backupId))!.body as string,
-    );
+    const { bundle } = (await (
+      await handleGetCloudBackupBundle(get(ownerCode), env, backupId)
+    ).json()) as any;
     expect(bundle.entities).toHaveLength(1);
     expect(bundle.entities[0].id).toBe("e2");
     // A commit listing no assets clears the previous ones, so deletions
@@ -811,5 +820,360 @@ describe("operator delete", () => {
         key.startsWith(`cloud-backup/${backupId}/`),
       ),
     ).toBe(true);
+  });
+});
+
+/* ------------------------------------------ incremental entity sync -- */
+
+describe("schema v2 storage (#3354)", () => {
+  const bundleOf = async (env: CloudBackupEnv, id: string, code: string) =>
+    (
+      (await (
+        await handleGetCloudBackupBundle(get(code), env, id)
+      ).json()) as any
+    ).bundle;
+
+  it("shards entities on a full commit and restores the same bundle", async () => {
+    const env = makeEnv();
+    const { backupId, ownerCode, manifest } = await enableAndCommit(env);
+
+    expect((manifest as any).schemaVersion).toBe(CLOUD_BACKUP_SCHEMA_V2);
+    expect((manifest as any).entityCount).toBe(1);
+    const stored = JSON.parse(
+      env.BUCKET.store.get(getBundleKey(backupId))!.body as string,
+    );
+    expect(stored.entities).toBeUndefined();
+    expect(
+      env.BUCKET.store.has(getShardKey(backupId, cloudBackupShardOf("e1"))),
+    ).toBe(true);
+
+    const bundle = await bundleOf(env, backupId, ownerCode);
+    expect(bundle.schemaVersion).toBe(1);
+    expect(bundle.entities).toEqual([{ id: "e1", title: "Alder Cass" }]);
+  });
+
+  it("preserves entity ids that are special object property names", async () => {
+    const env = makeEnv();
+    const { backupId, ownerCode } = await enable(env);
+    const commit = await handleCommitCloudBackup(
+      post(
+        {
+          vaultTitle: "The Saltmere Fens",
+          bundle: { entities: [{ id: "__proto__", title: "Prototype" }] },
+          assetIds: [],
+        },
+        ownerCode,
+      ),
+      env,
+      backupId,
+    );
+    const commitBody = (await commit.json()) as any;
+
+    expect(await bundleOf(env, backupId, ownerCode)).toMatchObject({
+      entities: [{ id: "__proto__", title: "Prototype" }],
+    });
+    const index = JSON.parse(
+      env.BUCKET.store.get(getIndexKey(backupId))!.body as string,
+    );
+    expect(index.entityHashes["__proto__"]).toBe(
+      await hashCloudBackupEntity({ id: "__proto__", title: "Prototype" }),
+    );
+
+    const deltaResponse = await handleCloudBackupDelta(
+      post(
+        {
+          vaultTitle: "The Saltmere Fens",
+          baseLastPushedAt: commitBody.manifest.lastPushedAt,
+          upserts: [{ id: "__proto__", title: "Updated prototype" }],
+          deletes: [],
+        },
+        ownerCode,
+      ),
+      env,
+      backupId,
+    );
+    expect(deltaResponse.status).toBe(200);
+    expect(await bundleOf(env, backupId, ownerCode)).toMatchObject({
+      entities: [{ id: "__proto__", title: "Updated prototype" }],
+    });
+  });
+
+  it("adds a special entity id to an existing delta shard", async () => {
+    const env = makeEnv();
+    const { backupId, ownerCode } = await enable(env);
+    const commit = await handleCommitCloudBackup(
+      post(
+        {
+          vaultTitle: "The Saltmere Fens",
+          bundle: { entities: [{ id: "seed-91", title: "Seed" }] },
+          assetIds: [],
+        },
+        ownerCode,
+      ),
+      env,
+      backupId,
+    );
+    const commitBody = (await commit.json()) as any;
+
+    expect(cloudBackupShardOf("seed-91")).toBe(cloudBackupShardOf("__proto__"));
+    const deltaResponse = await handleCloudBackupDelta(
+      post(
+        {
+          vaultTitle: "The Saltmere Fens",
+          baseLastPushedAt: commitBody.manifest.lastPushedAt,
+          upserts: [{ id: "__proto__", title: "Prototype" }],
+          deletes: [],
+        },
+        ownerCode,
+      ),
+      env,
+      backupId,
+    );
+
+    expect(deltaResponse.status).toBe(200);
+    expect(await bundleOf(env, backupId, ownerCode)).toMatchObject({
+      entities: [
+        { id: "seed-91", title: "Seed" },
+        { id: "__proto__", title: "Prototype" },
+      ],
+    });
+  });
+
+  it("drops shards of entities removed by a later full commit", async () => {
+    const env = makeEnv();
+    const { backupId, ownerCode } = await enableAndCommit(env);
+    await handleCommitCloudBackup(
+      post(
+        {
+          vaultTitle: "The Saltmere Fens",
+          bundle: { entities: [{ id: "only", title: "Only" }] },
+          assetIds: [],
+        },
+        ownerCode,
+      ),
+      env,
+      backupId,
+    );
+
+    const bundle = await bundleOf(env, backupId, ownerCode);
+    expect(bundle.entities.map((e: any) => e.id)).toEqual(["only"]);
+    if (cloudBackupShardOf("e1") !== cloudBackupShardOf("only")) {
+      expect(
+        env.BUCKET.store.has(getShardKey(backupId, cloudBackupShardOf("e1"))),
+      ).toBe(false);
+    }
+  });
+
+  it("still restores a v1 backup stored as a single bundle", async () => {
+    const env = makeEnv();
+    const { backupId, ownerCode } = await enableAndCommit(env);
+    // Simulate a backup written before #3354.
+    const raw = JSON.parse(
+      env.BUCKET.store.get(getManifestKey(backupId))!.body as string,
+    );
+    await env.BUCKET.put(
+      getManifestKey(backupId),
+      JSON.stringify({ ...raw, schemaVersion: 1 }),
+      {
+        customMetadata: env.BUCKET.store.get(getManifestKey(backupId))!
+          .customMetadata,
+      },
+    );
+    await env.BUCKET.put(
+      getBundleKey(backupId),
+      JSON.stringify({ entities: [{ id: "legacy", title: "Legacy" }] }),
+    );
+
+    const bundle = await bundleOf(env, backupId, ownerCode);
+    expect(bundle.entities).toEqual([{ id: "legacy", title: "Legacy" }]);
+  });
+
+  it("serves per-entity hashes, never content, from /index", async () => {
+    const env = makeEnv();
+    const { backupId, ownerCode } = await enableAndCommit(env);
+
+    const res = await handleGetCloudBackupIndex(get(ownerCode), env, backupId);
+    const body = (await res.json()) as any;
+    expect(body.entityHashes).toEqual({
+      e1: await hashCloudBackupEntity({ id: "e1", title: "Alder Cass" }),
+    });
+    expect(JSON.stringify(body)).not.toContain("Alder Cass");
+    expect(
+      (await handleGetCloudBackupIndex(get("wrong"), env, backupId)).status,
+    ).toBe(404);
+  });
+});
+
+describe("POST /delta (#3354)", () => {
+  const delta = (base: string, extra: Record<string, unknown> = {}) => ({
+    vaultTitle: "The Saltmere Fens",
+    baseLastPushedAt: base,
+    upserts: [],
+    deletes: [],
+    ...extra,
+  });
+  const bundleOf = async (env: CloudBackupEnv, id: string, code: string) =>
+    (
+      (await (
+        await handleGetCloudBackupBundle(get(code), env, id)
+      ).json()) as any
+    ).bundle;
+
+  it("applies upserts and deletes and moves lastPushedAt", async () => {
+    const env = makeEnv();
+    const { backupId, ownerCode, manifest } = await enableAndCommit(env);
+
+    const res = await handleCloudBackupDelta(
+      post(
+        delta(manifest.lastPushedAt, {
+          upserts: [{ id: "e2", title: "Nell" }],
+          deletes: ["e1"],
+        }),
+        ownerCode,
+      ),
+      env,
+      backupId,
+    );
+    expect(res.status).toBe(200);
+    const after = ((await res.json()) as any).manifest;
+    expect(after.entityCount).toBe(1);
+    expect(after.lastPushedAt >= manifest.lastPushedAt).toBe(true);
+
+    const bundle = await bundleOf(env, backupId, ownerCode);
+    expect(bundle.entities).toEqual([{ id: "e2", title: "Nell" }]);
+    const index = JSON.parse(
+      env.BUCKET.store.get(getIndexKey(backupId))!.body as string,
+    );
+    expect(Object.keys(index.entityHashes)).toEqual(["e2"]);
+  });
+
+  it("rewrites only the shards it touches", async () => {
+    const env = makeEnv();
+    const { backupId, ownerCode } = await enableAndCommit(env);
+    const ids = Array.from({ length: 40 }, (_, i) => `n${i}`);
+    const all = await handleCommitCloudBackup(
+      post(
+        {
+          vaultTitle: "The Saltmere Fens",
+          bundle: { entities: ids.map((id) => ({ id, title: id })) },
+          assetIds: [],
+        },
+        ownerCode,
+      ),
+      env,
+      backupId,
+    );
+    const base = ((await all.json()) as any).manifest.lastPushedAt;
+
+    const writes: string[] = [];
+    const put = env.BUCKET.put.bind(env.BUCKET);
+    env.BUCKET.put = (async (key: string, ...rest: any[]) => {
+      writes.push(key);
+      return (put as any)(key, ...rest);
+    }) as any;
+
+    await handleCloudBackupDelta(
+      post(
+        delta(base, { upserts: [{ id: "n3", title: "Changed" }] }),
+        ownerCode,
+      ),
+      env,
+      backupId,
+    );
+
+    const shardWrites = writes.filter((key) => key.includes("/entities/"));
+    expect(shardWrites).toEqual([
+      getShardKey(backupId, cloudBackupShardOf("n3")),
+    ]);
+    expect(writes).not.toContain(getBundleKey(backupId));
+  });
+
+  it("refuses a diverged base without writing", async () => {
+    const env = makeEnv();
+    const { backupId, ownerCode } = await enableAndCommit(env);
+    const before = new Map(env.BUCKET.store);
+
+    const res = await handleCloudBackupDelta(
+      post(delta("2000-01-01T00:00:00.000Z", { deletes: ["e1"] }), ownerCode),
+      env,
+      backupId,
+    );
+    expect(res.status).toBe(409);
+    expect(((await res.json()) as any).error.code).toBe("diverged");
+    expect(env.BUCKET.store).toEqual(before);
+  });
+
+  it("asks for a full upload when the backup is still v1", async () => {
+    const env = makeEnv();
+    const opened = await enable(env);
+
+    const res = await handleCloudBackupDelta(
+      post(delta(opened.manifest.lastPushedAt), opened.ownerCode),
+      env,
+      opened.backupId,
+    );
+    expect(res.status).toBe(409);
+    expect(((await res.json()) as any).error.code).toBe("full_push_required");
+  });
+
+  it("rejects a malformed delta and a wrong code", async () => {
+    const env = makeEnv();
+    const { backupId, ownerCode, manifest } = await enableAndCommit(env);
+
+    const bad = await handleCloudBackupDelta(
+      post({ vaultTitle: "x", upserts: "nope" }, ownerCode),
+      env,
+      backupId,
+    );
+    expect(bad.status).toBe(400);
+    const wrong = await handleCloudBackupDelta(
+      post(delta(manifest.lastPushedAt), "not-the-code"),
+      env,
+      backupId,
+    );
+    expect(wrong.status).toBe(404);
+  });
+
+  it("replaces maps and canvases when a delta carries them", async () => {
+    const env = makeEnv();
+    const { backupId, ownerCode, manifest } = await enableAndCommit(env);
+
+    await handleCloudBackupDelta(
+      post(
+        delta(manifest.lastPushedAt, { maps: [{ id: "m1" }], canvases: [] }),
+        ownerCode,
+      ),
+      env,
+      backupId,
+    );
+    const bundle = await bundleOf(env, backupId, ownerCode);
+    expect(bundle.maps).toEqual([{ id: "m1" }]);
+    expect(bundle.canvases).toEqual([]);
+    expect(bundle.entities).toEqual([{ id: "e1", title: "Alder Cass" }]);
+  });
+
+  it("counts bundle-section growth against the vault size limit", async () => {
+    const env = makeEnv();
+    const { backupId, ownerCode, manifest } = await enableAndCommit(env);
+    // Leave roughly one megabyte below the cap before the delta adds its maps.
+    await env.BUCKET.put(
+      getAssetKey(backupId, "near-limit.bin"),
+      new Uint8Array(49 * 1024 * 1024),
+    );
+    const previousBundle = env.BUCKET.store.get(getBundleKey(backupId))!.body;
+
+    const res = await handleCloudBackupDelta(
+      post(
+        delta(manifest.lastPushedAt, { maps: ["x".repeat(2 * 1024 * 1024)] }),
+        ownerCode,
+      ),
+      env,
+      backupId,
+    );
+
+    expect(res.status).toBe(413);
+    expect(env.BUCKET.store.get(getBundleKey(backupId))!.body).toBe(
+      previousBundle,
+    );
   });
 });
