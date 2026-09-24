@@ -221,6 +221,29 @@ export const forEntries: DiscoveryEntryInput[] = [
     status: "live",
   },
   {
+    id: "for-pirates-high-seas",
+    pageKind: "for",
+    canonicalPath: "/for/pirates-high-seas",
+    primaryIntent: "pirate campaign worldbuilding",
+    intentAliases: [
+      "pirate rpg campaign manager",
+      "high seas campaign notes",
+      "naval campaign organiser",
+    ],
+    audience: "Pirate and naval game masters",
+    userJob: "adopt-workflow",
+    uniqueValue:
+      "Ship logs, island charts, rival fleets, captains and hidden hoards kept as one connected web of maritime trade routes and grudges.",
+    parentCluster: "genre-guides",
+    relatedIntents: [
+      "hub-pirate",
+      "answer-starter-ship-pirate",
+      "example-letters-of-marque-expired",
+    ],
+    indexable: true,
+    status: "live",
+  },
+  {
     id: "for-mecha-rpgs",
     pageKind: "for",
     canonicalPath: "/for/mecha-rpgs",

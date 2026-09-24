@@ -4,6 +4,8 @@ import { getLandingPageCanonicalUrl } from "../for/canonical";
 import { getAllExamples, examplePath } from "../examples/registry";
 import { slugMeta } from "$lib/components/seo/generator-page-meta";
 import { isContentClusterSlug, isPublicLabel } from "../labels";
+import { HUB_THEME_LABELS, HUB_THEME_SLUGS } from "../hub-themes";
+import { getEntryByPath } from "../discovery/registry";
 
 /**
  * "world" is produced by the `/explore` loader (from the public directory
@@ -117,4 +119,64 @@ export function groupPublicLabelResults(
     groups.set(result.kind, [...(groups.get(result.kind) ?? []), result]);
   }
   return groups;
+}
+
+/**
+ * A public page plus the extra words a visitor might type to find it (labels
+ * and, for `/for` guides, the discovery registry's intent aliases). Feeds
+ * `/explore` search (#3339).
+ */
+export interface SearchablePublicContent extends PublicLabelResult {
+  keywords: string[];
+}
+
+/** Every public answer, guide, example and generator, unfiltered. */
+export function getAllPublicContent(): SearchablePublicContent[] {
+  return [
+    ...getAllAnswers().map((answer): SearchablePublicContent => ({
+      kind: "answer",
+      title: answer.question,
+      summary: answer.shortAnswer,
+      href: answerPath(answer),
+      keywords: [...answer.labels],
+    })),
+    ...getAllLandingPages().map((page): SearchablePublicContent => {
+      const entry = getEntryByPath(`/for/${page.slug}`);
+      return {
+        kind: "for",
+        title: page.hero.title,
+        summary: page.hero.tagline,
+        href: getLandingPageCanonicalUrl(page),
+        keywords: [
+          ...landingPageLabels(page),
+          ...(entry ? [entry.primaryIntent, ...entry.intentAliases] : []),
+        ],
+      };
+    }),
+    ...getAllExamples().map((example): SearchablePublicContent => ({
+      kind: "example",
+      title: example.title,
+      summary: example.summary,
+      href: examplePath(example),
+      keywords: [...example.labels],
+    })),
+    ...Object.values(slugMeta).map((entry): SearchablePublicContent => ({
+      kind: "generator",
+      title: entry.pageTitle,
+      summary: entry.metaDescription,
+      href: entry.canonicalPath,
+      keywords: [...(entry.labels ?? [])],
+    })),
+    ...HUB_THEME_SLUGS.map((slug): SearchablePublicContent => ({
+      kind: "generator",
+      title: `${HUB_THEME_LABELS[slug]} Generators`,
+      summary: `Generators suited to a ${HUB_THEME_LABELS[slug]} campaign.`,
+      href: `/generators/${slug}`,
+      keywords: [slug],
+    })),
+    ...Object.values(TOPIC_HUBS).map((hub): SearchablePublicContent => ({
+      ...hub,
+      keywords: [],
+    })),
+  ];
 }

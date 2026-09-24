@@ -77,6 +77,9 @@ describe("public label content aggregation (#2762, #2863)", () => {
       "/answers/what-makes-a-good-heist-target-in-a-tabletop-rpg",
     );
     expect(paths).toContain(
+      "/answers/how-do-i-run-spies-and-infiltrators-in-an-rpg",
+    );
+    expect(paths).toContain(
       "/examples/the-breakwater-vault-space-western-heist",
     );
     expect(paths).toContain("/examples/the-dawnheart-diadem-fantasy-heist");
@@ -85,7 +88,7 @@ describe("public label content aggregation (#2762, #2863)", () => {
 
     const groups = groupPublicLabelResults(results);
     expect(groups.get("generator")?.length).toBe(1);
-    expect(groups.get("answer")?.length).toBe(2);
+    expect(groups.get("answer")?.length).toBe(3);
     expect(groups.get("example")?.length).toBe(3);
     expect(groups.get("topic")?.length).toBe(1);
   });

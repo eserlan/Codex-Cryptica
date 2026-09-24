@@ -1,5 +1,9 @@
 import { describe, expect, test } from "bun:test";
-import { findCoLocatedTests, groupTestsByWorkspace } from "./test-changed.mjs";
+import {
+  findCoLocatedTests,
+  groupTestsByWorkspace,
+  isUnitTestFile,
+} from "./test-changed.mjs";
 
 describe("test-changed", () => {
   test("finds test file directly if given a test file", () => {
@@ -33,5 +37,17 @@ describe("test-changed", () => {
       "packages/schema/src/bar.test.ts",
     ]);
     expect(groups.get("root")).toEqual(["scripts/baz.test.ts"]);
+  });
+
+  test("excludes Playwright specs from unit-test targets", () => {
+    expect(isUnitTestFile("apps/web/tests/bulk-labels.spec.ts")).toBe(false);
+    expect(isUnitTestFile("apps/web\\tests\\bulk-labels.spec.ts")).toBe(false);
+  });
+
+  test("keeps vitest and bun test files as unit-test targets", () => {
+    expect(isUnitTestFile("apps/web/src/lib/foo.test.ts")).toBe(true);
+    expect(isUnitTestFile("packages/adventure-engine/tests/core.test.ts")).toBe(
+      true,
+    );
   });
 });
