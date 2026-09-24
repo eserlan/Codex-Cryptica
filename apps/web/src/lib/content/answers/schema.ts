@@ -127,11 +127,32 @@ export const AnswerChecklistBlockSchema = z.object({
   items: z.array(z.string().min(1)).min(2),
 });
 
+/** A compact comparison table for parallel options or systems. */
+export const AnswerTableBlockSchema = z
+  .object({
+    kind: z.literal("table"),
+    heading: blockHeading.optional(),
+    headers: z.array(z.string().min(1)).min(2),
+    rows: z.array(z.array(z.string().min(1)).min(2)).min(1),
+  })
+  .superRefine((table, context) => {
+    table.rows.forEach((row, index) => {
+      if (row.length !== table.headers.length) {
+        context.addIssue({
+          code: "custom",
+          path: ["rows", index],
+          message: "Every row must have one cell per table heading",
+        });
+      }
+    });
+  });
+
 export const AnswerBlockSchema = z.discriminatedUnion("kind", [
   AnswerProseBlockSchema,
   AnswerListBlockSchema,
   AnswerExampleBlockSchema,
   AnswerChecklistBlockSchema,
+  AnswerTableBlockSchema,
 ]);
 export type AnswerBlock = z.infer<typeof AnswerBlockSchema>;
 

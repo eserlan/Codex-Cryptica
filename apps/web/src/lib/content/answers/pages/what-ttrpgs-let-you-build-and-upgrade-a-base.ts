@@ -7,7 +7,7 @@ export const whatTtrpgsLetYouBuildAndUpgradeABase: AnswerConfigInput = {
   question: "What TTRPGs let you build and upgrade a base?",
   kind: "comparison",
   shortAnswer:
-    "Choose by the kind of base you want to play around: Mutant: Year Zero and Stonetop make community development central, Salvage Union gives the group a mobile home, Blades in the Dark advances a crew and its lair, and Forbidden Lands treats a stronghold as an optional long-term project. Check whether base development is the campaign's main loop, a crew-progression subsystem, or a lighter addition before choosing. Systems named here belong to their respective publishers; mentioning one is not an endorsement of Codex Cryptica by that publisher, or the reverse.",
+    "Choose by the kind of base and campaign role you want: Mutant: Year Zero and Stonetop make community development a core loop; Salvage Union and Blades in the Dark offer a recurring subsystem, centred on a mobile home or crew lair; Forbidden Lands makes a stronghold an optional project. Systems named here belong to their respective publishers; mentioning one is not an endorsement of Codex Cryptica by that publisher, or the reverse.",
   sections: [
     {
       kind: "prose",
@@ -18,10 +18,58 @@ export const whatTtrpgsLetYouBuildAndUpgradeABase: AnswerConfigInput = {
       ],
     },
     {
+      kind: "table",
+      heading: "Compare the base at a glance",
+      headers: [
+        "System",
+        "Base model",
+        "How central?",
+        "Upgrade style",
+        "Best fit",
+      ],
+      rows: [
+        [
+          "Mutant: Year Zero",
+          "Ark community",
+          "Core loop",
+          "Shared projects and development tracks",
+          "Rebuilding a settlement while exploring",
+        ],
+        [
+          "Stonetop",
+          "Home village",
+          "Core loop",
+          "Improvement projects with requirements",
+          "A community the PCs adventure for",
+        ],
+        [
+          "Salvage Union",
+          "Mobile crawler community",
+          "Recurring subsystem",
+          "Salvage, upkeep and crawler technology",
+          "A travelling home that grows with the crew",
+        ],
+        [
+          "Blades in the Dark",
+          "Crew lair and assets",
+          "Recurring subsystem",
+          "Crew advancement and upgrades",
+          "Scores first, HQ progression second",
+        ],
+        [
+          "Forbidden Lands",
+          "Stronghold",
+          "Optional project",
+          "Treasure and resources spent on facilities",
+          "Sandbox exploration with an earned home",
+        ],
+      ],
+    },
+    {
       kind: "list",
       heading: "Choose the kind of base you want",
       intro:
-        "These games offer distinct models, from a community at the centre of play to a stronghold the party may build later:",
+        "The table shows each game's role; these notes explain what its rules put into play:",
       items: [
         {
           term: "A community the campaign is about: Mutant: Year Zero",
@@ -49,29 +97,29 @@ export const whatTtrpgsLetYouBuildAndUpgradeABase: AnswerConfigInput = {
       kind: "prose",
       heading: "Check how the base changes play",
       paragraphs: [
-        "The most important distinction is centrality. Mutant: Year Zero, Stonetop, and Salvage Union put the community or its mobile home close to the campaign's core. Blades in the Dark gives the crew recurring headquarters and upgrades while scores remain the main jobs. Forbidden Lands offers a stronghold as a possible reward and project within a wider exploration campaign.",
-        "Then look at the actual progression procedure. Do improvements unlock new actions, people, facilities, and places to go, or mainly add a rating? What resources or advancement buy them, and how often does the game return to that choice? Check whether the players make decisions for the whole community, a crew, or their characters, and whether upkeep or outside pressure creates choices as well as benefits.",
-        "A base can be fictional colour, a light upgrade track, or a major mechanical loop. Fictional colour gives the party a named home but no procedure for improving or using it. A light track adds occasional capabilities between missions. A major loop returns to projects, needs, and development throughout the campaign. Read the relevant chapter or quickstart before buying; a pitch about a home base does not tell you how much table time its upkeep takes or how much those rules shape play.",
+        "Classify base development as a core loop if it drives the campaign's adventures, a recurring subsystem if it returns as one part of play, or an optional project if the group can pursue it without making it a regular focus.",
+        "To judge another game, check what changes mechanically when the base improves, what resources pay for improvements, who makes those decisions, and how often the procedure returns to the table. Ask whether the base can also create costs, threats, or new adventures. These answers show how much play the rules give the base beyond fictional colour or an occasional bonus.",
+        "Read the relevant chapter or quickstart before buying. A pitch about a home base does not tell you how often its rules return or how much they shape play.",
       ],
     },
     {
       kind: "example",
       heading: "Worked example: picking a game for a home base",
       paragraphs: [
-        "A group wants the characters' home to change because of their adventures. The GM is considering Stonetop and checks whether its settlement rules will create useful choices at the table.",
+        "A group wants its adventures to change its home, but disagrees about how central that home should be. The same requirement points to different games depending on the campaign role they want:",
       ],
       items: [
         {
-          term: "The vague choice",
-          text: "They choose a game because its description mentions a stronghold, then discover that the base is an occasional reward rather than a source of regular settlement decisions. The game may be good, but it does not give the group the community story they expected.",
+          term: "Core loop",
+          text: "Choose Stonetop or Mutant: Year Zero if community development should drive adventures: the village or Ark gives the group shared projects and pressures to respond to.",
         },
         {
-          term: "Choose by campaign loop",
-          text: "The group chooses the village's mill as a long-term project and checks the Steading sheet: it needs a suitable site and a reliable power source, as well as communal work and supplies. For this example, the GM establishes that the only nearby waterwheel site is used by a neighbouring hamlet. The players can negotiate access, find another power source, or change projects; the base rules have given them a concrete next problem to solve.",
+          term: "Recurring subsystem",
+          text: "Choose Salvage Union if the home should travel with the crew and grow through salvage. Choose Blades in the Dark if scores stay primary and crew upgrades support that progression; its lair is not a room-by-room construction game.",
         },
         {
-          term: "Why it works",
-          text: "The mill is not a free-standing bonus on a sheet: its requirements point towards a place, a community need, and a decision the players can act on. Comparing systems this way reveals whether base development will keep producing play or remain an occasional reward.",
+          term: "Optional project",
+          text: "Choose Forbidden Lands if the group wants a stronghold to emerge later from sandbox exploration, without making it a regular campaign focus.",
         },
       ],
     },
@@ -81,12 +129,10 @@ export const whatTtrpgsLetYouBuildAndUpgradeABase: AnswerConfigInput = {
       intro: "Compare the rules with the campaign the group wants to play:",
       items: [
         "Is the base a community, a lair, a mobile home, a stronghold, or something else?",
-        "Is its development the main campaign loop, a recurring subsystem, or an optional goal?",
+        "Is development a core loop, a recurring subsystem, or an optional project?",
         "What can an upgrade change beyond a numerical bonus?",
-        "Who chooses improvements, and what rules or resources pay for them?",
-        "Does upkeep or the surrounding world create choices as well as benefits?",
-        "Can the base be threatened or changed in ways the players can respond to?",
-        "Have you read the actual advancement rules, rather than choosing from a genre label?",
+        "What resources pay for upgrades, and who chooses them?",
+        "Can the base create new problems or adventures, or be threatened, damaged, or lost?",
       ],
     },
   ],
