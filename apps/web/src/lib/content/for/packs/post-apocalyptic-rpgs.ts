@@ -8,7 +8,7 @@ export const postApocalypticRpgs: LandingPageConfig = {
   seo: {
     title: "Codex Cryptica for Post-Apocalyptic RPG Campaigns",
     description:
-      "Keep wasteland settlements, raider factions, radiation zones, mutant threats, and scarce supplies connected across your post-apocalyptic campaign.",
+      "Connect post-apocalyptic settlements, factions, scarce supplies, and hazards from radiation to disease, extreme weather, and hostile machines.",
     image: "https://assets.codexcryptica.com/og/post-apocalyptic-rpgs.jpg",
     imageAlt:
       "A fortified wasteland settlement gathers around a water pump beneath a radioactive storm, with threats approaching across the desert",
@@ -17,9 +17,9 @@ export const postApocalypticRpgs: LandingPageConfig = {
     eyebrow: "Wasteland Campaigns & Survival Webs",
     title: "Codex Cryptica for Post-Apocalyptic RPGs",
     tagline:
-      "Track the settlements, factions, hazards, and dwindling supplies that make every journey through the wasteland matter.",
+      "Follow the dependency chains behind survival: who controls clean water, where it travels, who relies on it, and what happens when supply breaks.",
     problemStatement:
-      "A water shortage in one settlement can start a feud with the people guarding the aquifer; a raider truce can collapse when the next dust season ruins the trade route; and a radiation zone can make the only safe road too dangerous to use. Keep the people, places, supplies, and threats connected, so the consequences of survival choices are easy to follow between sessions.",
+      "A water shortage can spark a feud over the aquifer; a raider truce can collapse when dust season damages the trade route, and a radiation zone can make the safest road too dangerous. Link the people, places, supplies, and threats behind those choices, so their consequences carry between sessions.",
   },
   useCases: [
     {
@@ -35,9 +35,9 @@ export const postApocalypticRpgs: LandingPageConfig = {
       icon: "icon-[lucide--users]",
     },
     {
-      title: "Radiation Zones & Mutant Threats",
+      title: "Hazard Zones & Altered Threats",
       description:
-        "Map contaminated ruins, dangerous routes, and creatures that change where people can travel, scavenge, or settle.",
+        "Map radiation, infected areas, toxic weather, machine patrols, and other threats that change where people can travel, scavenge, or settle.",
       icon: "icon-[lucide--radiation]",
     },
     {
@@ -60,7 +60,7 @@ export const postApocalypticRpgs: LandingPageConfig = {
       {
         label: "The Greywater Pump",
         sublabel: "Last reliable water source",
-        relation: "Depends on for clean water",
+        relation: "Gets clean water from",
         category: "location",
       },
       {
@@ -84,25 +84,18 @@ export const postApocalypticRpgs: LandingPageConfig = {
       {
         label: "Mara Venn",
         sublabel: "Water-route scout",
-        relation: "Relies on to guide supply runs",
+        relation: "Uses as supply-route scout",
         category: "character",
       },
       {
         label: "The Last Filter Core",
         sublabel: "Salvaged purifier part",
-        relation: "Needs to repair the pump with",
+        relation: "Needs for pump repairs",
         category: "item",
       },
     ],
   },
   recommendedTools: [
-    {
-      title: "Post-Apocalyptic Generators",
-      description:
-        "Open the wasteland generator hub for people, settlements, factions, ruins, and adventure hooks.",
-      href: "/generators/post-apocalyptic",
-      badge: "Hub",
-    },
     {
       title: "Settlement Generator",
       description:
@@ -127,7 +120,7 @@ export const postApocalypticRpgs: LandingPageConfig = {
     {
       title: "Dungeon Generator",
       description:
-        "Turn a ruined bunker, sealed shelter, or dangerous site into an explorable location with factions and hazards.",
+        "Create an explorable post-collapse site, from bunkers, vaults, and shelters to ruined facilities or sealed research sites, with factions and hazards.",
       href: "/generators/dungeon-generator",
       badge: "Generator",
     },
@@ -137,6 +130,13 @@ export const postApocalypticRpgs: LandingPageConfig = {
         "Explore a four-sector shelter with two factions, a failing water system, and a secret buried in its records.",
       href: "/examples/silo-zero-seven-fallout-repository",
       badge: "Example",
+    },
+    {
+      title: "Post-Apocalyptic Generators",
+      description:
+        "Browse the full generator hub for people, settlements, factions, ruins, and adventure hooks.",
+      href: "/generators/post-apocalyptic",
+      badge: "Hub",
     },
   ],
   cta: {

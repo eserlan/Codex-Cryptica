@@ -1002,6 +1002,31 @@ describe("Landing Page Registry", () => {
         expect(spoke.relation, `${spoke.label} has no relation`).toBeTruthy();
         expect(spoke.category, `${spoke.label} has no category`).toBeDefined();
       }
+
+      expect(wasteland.hero.tagline).toMatch(/dependency chains/i);
+      expect(copy).toMatch(/disease|infected areas/i);
+      expect(copy).toMatch(/extreme weather|toxic weather/i);
+      expect(copy).toMatch(/hostile machines|machine patrols/i);
+      expect(wasteland.useCases.map(({ title }) => title)).toContain(
+        "Hazard Zones & Altered Threats",
+      );
+      expect(spokes.map(({ relation }) => relation)).toContain(
+        "Gets clean water from",
+      );
+      expect(spokes.map(({ relation }) => relation)).toContain(
+        "Uses as supply-route scout",
+      );
+      expect(spokes.map(({ relation }) => relation)).toContain(
+        "Needs for pump repairs",
+      );
+      expect(wasteland.recommendedTools.map(({ href }) => href)).toEqual([
+        "/generators/settlement",
+        "/generators/faction",
+        "/generators/npc",
+        "/generators/dungeon-generator",
+        "/examples/silo-zero-seven-fallout-repository",
+        "/generators/post-apocalyptic",
+      ]);
     });
   });
 
