@@ -105,6 +105,17 @@ The following high-impact candidate specifications target performance, scaling, 
 
 ## 🏛️ Historical Roadmap & Release Timeline
 
+### v0.33.0 — The Generators & Campaign Craft Update (2026-09-24)
+
+- **Highlights**: A wider public and in-app generator library (rumours, heists, constellations, personality, holidays and festivals, and superhero stories); easier generator discovery with categories, favourites, and quick search; the local-first My Stuff library with shareable and remixable creations; automatic vault sync when Cloud Save is enabled; dedicated Pirate & High Seas and Starship campaign content packs plus the Superhero theme; the AI RPG Idea Developer; partner-generator handoffs; new system-neutral and system-aware RPG guides; and search across Explore.
+- **Associated Specifications**:
+  - [131-in-app-rpg-generators](./131-in-app-rpg-generators/spec.md) (In-app campaign generators)
+  - [137-standalone-generator-session-hub](./137-standalone-generator-session-hub/spec.md) (Standalone generator results and sessions)
+  - [155-genre-system-landing-pages](./155-genre-system-landing-pages/spec.md) (Public genre and system landing pages)
+  - [162-cc-cloud-backup](./162-cc-cloud-backup/spec.md) (Cloud Save and vault backup)
+  - [139-public-world-directory](./139-public-world-directory/spec.md) (Public discovery and search foundations)
+  - [2336-smart-deterministic-generators](./2336-smart-deterministic-generators/plan.md) (Generator foundations)
+
 ### v0.32.0 — The Solo Adventure & Cloud Backup Update (2026-09-03)
 
 - **Highlights**: Solo Adventure Mode (Oracle-run GM sessions, live transcript, dice/tools drawer), opt-in encrypted CC Cloud vault backup, an auto-matched vector silhouette library for portrait-less entities, a Random Tables & Card Decks toolset with chat-inline rolls and import/export, a VTT overhaul (tile deck restock, inline notes, adjustable sidebar, per-player Token Vision fog of war), several new offline-capable generators (BBEG/villain, star system, artifact, minor magic item, creature, encounter, social hub), reusable stat sheet presentations, and Markdown table paste/editing in entity content.
