@@ -104,6 +104,13 @@ export function groupTestsByWorkspace(testFiles) {
   return groups;
 }
 
+export function isPlaywrightTest(filePath) {
+  const normalized = filePath.replace(/\\/g, "/");
+  return (
+    normalized.startsWith("apps/web/tests/") && normalized.endsWith(".spec.ts")
+  );
+}
+
 export function runTestChanged({
   base,
   head = "HEAD",
@@ -140,19 +147,36 @@ export function runTestChanged({
     );
 
     if (workspace === "apps/web") {
-      // In apps/web, vitest runs relative to apps/web directory
-      const relativeFiles = files.map((f) =>
-        relative("apps/web", f).replace(/\\/g, "/"),
-      );
-      try {
-        execFileSync("bunx", ["vitest", "run", ...relativeFiles], {
-          cwd: resolve(cwd, "apps/web"),
-          stdio: "inherit",
-        });
-        console.log(`✅ ${workspace} tests passed.`);
-      } catch {
-        allPassed = false;
-        console.error(`❌ ${workspace} tests failed.`);
+      const playwrightFiles = files
+        .filter(isPlaywrightTest)
+        .map((f) => relative("apps/web", f).replace(/\\/g, "/"));
+      const vitestFiles = files
+        .filter((f) => !isPlaywrightTest(f))
+        .map((f) => relative("apps/web", f).replace(/\\/g, "/"));
+
+      for (const { runner, files: runnerFiles, command } of [
+        {
+          runner: "Vitest",
+          files: vitestFiles,
+          command: ["bunx", "vitest", "run", ...vitestFiles],
+        },
+        {
+          runner: "Playwright",
+          files: playwrightFiles,
+          command: ["bunx", "playwright", "test", ...playwrightFiles],
+        },
+      ]) {
+        if (runnerFiles.length === 0) continue;
+        try {
+          execFileSync(command[0], command.slice(1), {
+            cwd: resolve(cwd, "apps/web"),
+            stdio: "inherit",
+          });
+          console.log(`✅ ${workspace} ${runner} tests passed.`);
+        } catch {
+          allPassed = false;
+          console.error(`❌ ${workspace} ${runner} tests failed.`);
+        }
       }
     } else {
       // For packages or root, use bun test

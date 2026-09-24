@@ -245,10 +245,20 @@ jobs:
           FULL: ${{ needs.select-validation.outputs.full }}
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
         run: |
+          if [ -n "$BASE_SHA" ] && git diff --name-only "$BASE_SHA" HEAD -- apps/web/tests | rg -q '\.spec\.ts$'; then
+            bunx playwright install --with-deps chromium
+          fi
+
           if [ "$FULL" = "true" ] || [ -z "$BASE_SHA" ]; then
             for workspace in $WORKSPACES; do
               bun run --filter "$workspace" test
             done
+            if [ -n "$BASE_SHA" ] && git diff --name-only "$BASE_SHA" HEAD -- apps/web/tests | rg -q '\.spec\.ts$'; then
+              mapfile -t playwright_files < <(git diff --name-only "$BASE_SHA" HEAD -- apps/web/tests | rg '\.spec\.ts$')
+              pushd apps/web
+              bunx playwright test "${playwright_files[@]#apps/web/}"
+              popd
+            fi
           else
             bun scripts/test-changed.mjs --base "$BASE_SHA"
           fi
