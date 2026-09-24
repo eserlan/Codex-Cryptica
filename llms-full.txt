@@ -2232,6 +2232,10 @@ Reference answers to real RPG and worldbuilding questions, indexed at https://co
 
 **Direct answer:** There is no single best system for fantasy dungeon crawling: the right pick depends on the crawl your group wants. For fast, dangerous old-school exploration with modern rules, Shadowdark; for gonzo magic and lethal funnel play, Dungeon Crawl Classics; for a game where the dungeon itself is the whole campaign, His Majesty the Worm; for very light, improvisable play, EZD6; for grim, stylish doom, Mörk Borg; and for tactical combat with deep character builds, Pathfinder Second Edition or D&D itself.
 
+### [What TTRPGs let you build and upgrade a base?](https://codexcryptica.com/answers/what-ttrpgs-let-you-build-and-upgrade-a-base)
+
+**Direct answer:** Choose by the kind of base you want to play around: Mutant: Year Zero and Stonetop make community development central, Salvage Union gives the group a mobile home, Blades in the Dark advances a crew and its lair, and Forbidden Lands treats a stronghold as an optional long-term project. Check whether base development is the campaign's main loop, a crew-progression subsystem, or a lighter addition before choosing. Systems named here belong to their respective publishers; mentioning one is not an endorsement of Codex Cryptica by that publisher, or the reverse.
+
 ### [Where do I start if I have never played a tabletop RPG before?](https://codexcryptica.com/answers/where-do-i-start-if-i-have-never-played-a-tabletop-rpg)
 
 **Direct answer:** You need less than it looks like: a game or beginner ruleset, a small group (or a solo-friendly option), some way to resolve uncertainty (usually dice), and one short scenario to try. You don't need to read a large rulebook cover to cover first, own special gear, or already know the jargon. You can start as a player in someone else's game, or as the GM running a short beginner adventure for others; both are completely valid entry points, and neither requires the other to happen first.
