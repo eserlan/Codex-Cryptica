@@ -28,22 +28,27 @@ export interface CloudBackupPayloadDeps {
    * which for a warm start is a 280-character preview, not the lore.
    */
   hydrateEntities?: EntityHydrator;
+  /** Stops entity reads and asset fetches once backup is disabled mid-build. */
+  signal?: AbortSignal;
 }
 
 /**
- * The vault's on-demand content loader, narrowed to what a backup needs.
+ * The vault's content reader, narrowed to what a backup needs.
  *
  * `vault.entities[id].content` is only the real markdown once the entity has
  * been hydrated; before that a warm start seeds it from the IndexedDB cache
  * with `contentPreview` — whitespace-collapsed and cut at 280 characters. A
  * snapshot of the live map therefore captures full lore for whatever the user
  * happened to open this session and a stub for everything else.
+ *
+ * Reads go straight into the snapshot, never through the live store: loading
+ * a whole vault into reactive records wakes every consumer of them once per
+ * entity and pinned a large vault's CPU for minutes (#3350).
  */
 export interface EntityHydrator {
   isContentLoaded: (id: string) => boolean;
-  loadEntityContent: (id: string) => Promise<void>;
-  /** Reads the entity back after loading; the store replaces rather than mutates. */
-  getEntity: (id: string) => LocalEntity | undefined;
+  /** Full entity from source, `null` when it has no body, throws on a failed read. */
+  readFullEntity: (id: string) => Promise<LocalEntity | null>;
 }
 
 /** Entity loads in flight at once. Bounded so a large vault cannot stampede OPFS. */
@@ -115,7 +120,7 @@ export function collectAssetPaths(
  * Replaces every entity in the list with its fully-hydrated self.
  *
  * Entities the vault has already loaded pass through untouched. The rest are
- * loaded through the vault's own deduplicating loader, bounded so a 5k-entity
+ * read from source without touching the live store, bounded so a 5k-entity
  * vault does not open five thousand OPFS reads at once. An entity that cannot
  * be read keeps whatever it had and is reported, matching the asset contract:
  * a partial backup is allowed, a silently partial one is not.
@@ -124,6 +129,7 @@ export async function hydrateEntityContent(
   entities: readonly LocalEntity[],
   hydrator: EntityHydrator,
   concurrency = HYDRATION_CONCURRENCY,
+  signal?: AbortSignal,
 ): Promise<{ entities: LocalEntity[]; skippedEntities: string[] }> {
   const hydrated = [...entities];
   const skippedEntities: string[] = [];
@@ -133,13 +139,10 @@ export async function hydrateEntityContent(
 
   let cursor = 0;
   const worker = async () => {
-    while (cursor < pending.length) {
+    while (cursor < pending.length && !signal?.aborted) {
       const { entity, index } = pending[cursor++];
       try {
-        await hydrator.loadEntityContent(entity.id);
-        // The store swaps the record rather than mutating it, so the loaded
-        // body is only visible by reading the entity back.
-        hydrated[index] = hydrator.getEntity(entity.id) ?? entity;
+        hydrated[index] = (await hydrator.readFullEntity(entity.id)) ?? entity;
       } catch {
         skippedEntities.push(entity.id);
       }
@@ -168,7 +171,12 @@ export async function buildCloudBackupPayload(
   // warm-start preview. Asset collection reads the hydrated list too, since
   // hydration can replace the records it scans.
   if (deps.hydrateEntities) {
-    const result = await hydrateEntityContent(list, deps.hydrateEntities);
+    const result = await hydrateEntityContent(
+      list,
+      deps.hydrateEntities,
+      HYDRATION_CONCURRENCY,
+      deps.signal,
+    );
     list = result.entities;
     skippedEntities.push(...result.skippedEntities);
   }
@@ -182,6 +190,7 @@ export async function buildCloudBackupPayload(
   const skippedAssets: string[] = [];
 
   for (const path of collectAssetPaths(list, maps)) {
+    if (deps.signal?.aborted) break;
     try {
       const url = await deps.resolveImageUrl(path);
       if (!url) throw new Error("unresolved");
