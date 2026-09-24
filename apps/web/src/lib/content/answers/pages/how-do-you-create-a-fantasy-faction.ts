@@ -159,6 +159,7 @@ export const howDoYouCreateAFantasyFaction: AnswerConfigInput = {
     "how-do-i-expand-a-simple-rpg-campaign-idea",
     "what-rpg-works-for-political-intrigue-and-faction-play",
     "how-do-i-run-political-intrigue-and-faction-play",
+    "how-do-i-build-a-believable-constitutional-crisis-or-coup",
   ],
   discovery: {
     id: "answer-fantasy-faction",

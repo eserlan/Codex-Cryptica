@@ -144,6 +144,7 @@ export const howDoYouStartWorldbuildingFromScratch: AnswerConfigInput = {
     "how-do-you-make-an-alien-species-feel-believable",
     "how-to-create-a-sci-fi-star-system-for-an-rpg",
     "how-do-i-start-gming-for-the-first-time",
+    "how-do-i-build-a-believable-constitutional-crisis-or-coup",
   ],
   discovery: {
     id: "answer-worldbuilding-from-scratch",
