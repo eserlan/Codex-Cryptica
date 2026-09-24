@@ -1,5 +1,5 @@
 {
-  "updated_at": 1790261563,
+  "updated_at": 1790262495,
   "candidates": [
     {
       "id": "reddit-35104395212-i-put-every-superhero-generator-in-one-p",
@@ -102,16 +102,6 @@
       "created_at": 1790242590
     },
     {
-      "id": "reddit-36011198722-ai-rpg-idea-developer-from-vague-premise",
-      "title": "AI RPG Idea Developer: from vague premise to structured outline",
-      "body": "I had a lot of half premises in my notes that never became sessions because I did not know what to do next with them.\n\nI added an AI RPG Idea Developer directly in the app. You paste a vague premise and it expands the concept, tests the idea, and outlines next steps so you can start prepping.\n\nFind it with the other generators: https://codexcryptica.com/generators\n\nIt gives you:\n- an expanded concept with stakes, cast and pressure\n- a quick test of the idea for holes and player fit\n- a beat or scene outline you can edit before you save anything\n- a next steps checklist so you know what to prep first\n- everything stays local until you decide to keep it\n\nIt does not write canon for you. The draft is a starting point and you will want to rewrite the parts that do not match your lore, which is intentional so your world stays yours.\n\nWhat premise has been sitting in your notes that you would run through this first?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/announcements/release-36011198722-1.png)\n\n---\n*Posted automatically via release pipeline. Feedback and discussion welcome!*\n<!-- id:36011198722 -->",
-      "url": "https://codexcryptica.com/tools/ai-rpg-idea-developer",
-      "image_url": "https://assets.codexcryptica.com/announcements/release-36011198722-1.png",
-      "source_id": "36011198722",
-      "status": "approved",
-      "created_at": 1790261214
-    },
-    {
       "id": "reddit-36014807190-holiday-festival-generator-festivals-tha",
       "title": "Holiday & Festival Generator: festivals that actually get used at the table",
       "body": "Most settlement festivals end up as \"there is a harvest feast\" and then nothing happens. I kept skipping them in prep because they had no work for the players to do.\n\nI built a Holiday & Festival Generator that makes a complete festival for any settlement or calendar \u2014 not just a name and date.\n\nIt is on the generators hub alongside the rest of the toolkit: https://codexcryptica.com/generators\n\nWhat it gives you:\n- traditions and rites with who leads them and who argues about them\n- foods, drinks, and small crafts tied to the place that made them\n- taboos, costs, or duties that create friction on the day itself\n- two to three adventure hooks that only work during the festival\n- a one-paragraph framing you can drop straight into session notes\n\nTradeoff I kept: it does not sync with your in-app calendar yet. You get the festival as text to place yourself. That felt more useful than a half-automatic date that breaks other timelines.\n\nWhat festival at your table actually pulled players in instead of just flavour text?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/announcements/release-36014807190-0.png)\n\n---\n*Posted automatically via release pipeline. Feedback and discussion welcome!*\n<!-- id:36014807190 -->",
@@ -120,6 +110,16 @@
       "source_id": "36014807190",
       "status": "approved",
       "created_at": 1790261563
+    },
+    {
+      "id": "reddit-36011198722-site-search-on-explore-find-any-generato",
+      "title": "Site Search on Explore: find any generator, answer or tool instantly",
+      "body": "I was scrolling through sections to find the right generator and guessing which hub it lived in. That was slower than it needed to be.\n\nI added site search to /explore so you can find any generator, answer guide or tool instantly instead of browsing manually.\n\nTry it here: https://codexcryptica.com/explore\n\nIt now:\n- searches across generators, answer guides and tools from one input\n- groups results so the actual tool comes first, not a mention in passing\n- stays keyboard reachable so you do not leave the flow\n- lives on the explore page you already use to browse\n\nIt only indexes the public surfaces for now, so your private vault notes and campaign content will not show up there.\n\nWhat were you last hunting for on the site that took too long to find by browsing?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/announcements/release-36011198722-2.png)\n\n---\n*Posted automatically via release pipeline. Feedback and discussion welcome!*\n<!-- id:36011198722 -->",
+      "url": "https://codexcryptica.com/explore",
+      "image_url": "https://assets.codexcryptica.com/announcements/release-36011198722-2.png",
+      "source_id": "36011198722",
+      "status": "approved",
+      "created_at": 1790262495
     }
   ]
 }
