@@ -160,6 +160,7 @@ export const howDoYouTrackFactionTurnsBetweenRpgSessions: AnswerConfigInput = {
     "what-rpg-works-for-political-intrigue-and-faction-play",
     "how-do-i-run-political-intrigue-and-faction-play",
     "how-do-i-build-a-believable-constitutional-crisis-or-coup",
+    "how-do-i-make-a-player-base-matter-in-an-rpg-campaign",
   ],
   discovery: {
     id: "answer-track-faction-turns-between-sessions",
