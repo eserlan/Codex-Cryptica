@@ -33,13 +33,15 @@ const EXTERNAL_URL = /^https?:\/\//i;
 const thumbnailKey = (path: string) => `thumbnail:${path}`;
 
 /** File name an external image is cached under in `.cache/external_images`. */
-function externalCacheName(url: string): string {
-  return (
-    url
-      .replace(/[^a-z0-9]/gi, "_")
-      .toLowerCase()
-      .slice(-100) + ".cache"
+async function externalCacheName(url: string): Promise<string> {
+  const digest = await crypto.subtle.digest(
+    "SHA-256",
+    new TextEncoder().encode(url),
   );
+  const hash = Array.from(new Uint8Array(digest), (byte) =>
+    byte.toString(16).padStart(2, "0"),
+  ).join("");
+  return `${hash}.cache`;
 }
 
 export class AssetManager {
@@ -330,7 +332,7 @@ export class AssetManager {
     url: string,
   ): Promise<Blob | null> {
     try {
-      const name = externalCacheName(url);
+      const name = await externalCacheName(url);
       const dir = await this.externalDir(vaultHandle);
       try {
         return await this.ioAdapter.readOpfsBlob([name], dir);
@@ -355,7 +357,10 @@ export class AssetManager {
     vaultHandle: FileSystemDirectoryHandle,
     url: string,
   ): Promise<Blob | null> {
-    const name = externalCacheName(url).replace(/\.cache$/, ".thumb.webp");
+    const name = (await externalCacheName(url)).replace(
+      /\.cache$/,
+      ".thumb.webp",
+    );
     try {
       return await this.ioAdapter.readOpfsBlob(
         [name],

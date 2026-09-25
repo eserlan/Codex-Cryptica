@@ -204,6 +204,30 @@ describe("AssetManager", () => {
     });
 
     describe("external URLs", () => {
+      it("keeps case-sensitive URLs in separate persistent cache files", async () => {
+        mockIO.readOpfsBlob.mockRejectedValue(new Error("Not in cache"));
+        (global.fetch as any).mockResolvedValue({
+          ok: true,
+          blob: () => Promise.resolve(new Blob(["remote"])),
+        });
+        const vaultHandle = { name: "v1" } as any;
+
+        await assetManager.resolveImageUrl(
+          vaultHandle,
+          "https://example.com/images/Avatar.png",
+        );
+        await assetManager.resolveImageUrl(
+          vaultHandle,
+          "https://example.com/images/avatar.png",
+        );
+
+        const cachePaths = mockIO.writeOpfsFile.mock.calls.map((call) =>
+          call[0].join("/"),
+        );
+        expect(cachePaths).toHaveLength(2);
+        expect(cachePaths[0]).not.toBe(cachePaths[1]);
+      });
+
       it("should return blob URL if no vaultHandle and fetch succeeds (Demo Mode)", async () => {
         (global.fetch as any).mockResolvedValueOnce({
           ok: true,
