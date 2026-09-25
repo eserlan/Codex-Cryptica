@@ -23,11 +23,17 @@ const pendingTokenRequests = new Map<
   (token: CachedToken | null) => void
 >();
 
-function requestTokenFromMainThread(): Promise<CachedToken | null> {
+function requestTokenFromMainThread(
+  forceRefresh: boolean,
+): Promise<CachedToken | null> {
   const id = crypto.randomUUID();
   return new Promise((resolve) => {
     pendingTokenRequests.set(id, resolve);
-    self.postMessage({ type: "REQUEST_SESSION_TOKEN", id });
+    self.postMessage({
+      type: "REQUEST_SESSION_TOKEN",
+      id,
+      payload: { forceRefresh },
+    });
   });
 }
 

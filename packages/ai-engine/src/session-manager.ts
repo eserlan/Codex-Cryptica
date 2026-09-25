@@ -137,7 +137,8 @@ export class AiSessionManager {
    * Worker asking for a fresh token needs the expiry too, so it can tell
    * later whether that snapshot is still good without asking again.
    */
-  async getTokenSnapshot(): Promise<CachedToken | null> {
+  async getTokenSnapshot(forceRefresh = false): Promise<CachedToken | null> {
+    if (forceRefresh) this.invalidate();
     await this.getToken();
     return this.cached;
   }
@@ -242,7 +243,9 @@ function defaultStorage(): AiSessionManagerOptions["storage"] {
 export class RelayedSessionToken implements SessionTokenSource {
   private cached: CachedToken | null = null;
   private readonly now: () => number;
-  private pullToken: (() => Promise<CachedToken | null>) | null = null;
+  private pullToken:
+    ((forceRefresh: boolean) => Promise<CachedToken | null>) | null = null;
+  private forceRefreshOnPull = false;
 
   /**
    * Dedupes concurrent callers onto one pull, the same way
@@ -268,7 +271,9 @@ export class RelayedSessionToken implements SessionTokenSource {
    * request/response for the Proposer worker, a Comlink-proxied callback for
    * the Oracle worker).
    */
-  setPuller(pullToken: (() => Promise<CachedToken | null>) | null): void {
+  setPuller(
+    pullToken: ((forceRefresh: boolean) => Promise<CachedToken | null>) | null,
+  ): void {
     this.pullToken = pullToken;
   }
 
@@ -279,9 +284,13 @@ export class RelayedSessionToken implements SessionTokenSource {
 
     if (!this.inFlight) {
       const pull = this.pullToken;
-      this.inFlight = pull()
+      const forceRefresh = this.forceRefreshOnPull;
+      this.inFlight = pull(forceRefresh)
         .then((token) => {
           this.cached = token;
+          if (token && !this.isExpiring(token)) {
+            this.forceRefreshOnPull = false;
+          }
           return token;
         })
         .catch(() => null)
@@ -295,12 +304,13 @@ export class RelayedSessionToken implements SessionTokenSource {
   }
 
   /**
-   * A relay has nothing local to discard beyond its cached snapshot — the
-   * real invalidation (and re-handshake) happens on the main thread, which
-   * will relay the fresh token back via {@link setToken} once it lands.
+   * A relay has nothing local to discard beyond its cached snapshot. Mark the
+   * next pull as a forced refresh so the main-thread manager also discards a
+   * server-rejected token before minting its replacement.
    */
   invalidate(): void {
     this.cached = null;
+    this.forceRefreshOnPull = true;
   }
 
   private isExpiring(token: CachedToken): boolean {

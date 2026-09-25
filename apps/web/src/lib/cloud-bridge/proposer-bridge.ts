@@ -11,7 +11,8 @@ export class ProposerBridge {
     string,
     { resolve: (val: any) => void; reject: (err: any) => void }
   >();
-  private tokenProvider: (() => Promise<CachedToken | null>) | null = null;
+  private tokenProvider:
+    ((forceRefresh: boolean) => Promise<CachedToken | null>) | null = null;
 
   constructor(
     deps: { idGenerator?: IdGenerator; worker?: Worker | null } = {},
@@ -31,7 +32,11 @@ export class ProposerBridge {
     worker.onmessage = (event) => {
       const { type, payload, id } = event.data;
       if (type === "REQUEST_SESSION_TOKEN") {
-        void this.respondToTokenRequest(worker, id);
+        void this.respondToTokenRequest(
+          worker,
+          id,
+          payload?.forceRefresh === true,
+        );
         return;
       }
       if (id && this.pendingRequests.has(id)) {
@@ -57,8 +62,17 @@ export class ProposerBridge {
   private async respondToTokenRequest(
     worker: Worker,
     id: string,
+    forceRefresh: boolean,
   ): Promise<void> {
-    const token = this.tokenProvider ? await this.tokenProvider() : null;
+    let token: CachedToken | null = null;
+    try {
+      token = this.tokenProvider
+        ? await this.tokenProvider(forceRefresh)
+        : null;
+    } catch {
+      // Always resolve the worker's correlated pull. A failed handshake is
+      // represented as no token, matching the normal unauthenticated path.
+    }
     worker.postMessage({ type: "SESSION_TOKEN_RESPONSE", id, payload: token });
   }
 
@@ -68,7 +82,7 @@ export class ProposerBridge {
    * `session-bootstrap.ts`.
    */
   public setTokenProvider(
-    provider: (() => Promise<CachedToken | null>) | null,
+    provider: ((forceRefresh: boolean) => Promise<CachedToken | null>) | null,
   ): void {
     this.tokenProvider = provider;
   }

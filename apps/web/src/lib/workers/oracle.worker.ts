@@ -52,7 +52,9 @@ class OracleWorker {
    * nothing valid cached, `RelayedSessionToken.getToken()` calls this
    * provider to pull a fresh snapshot on demand instead of giving up.
    */
-  setSessionTokenProvider(provider: () => Promise<CachedToken | null>): void {
+  setSessionTokenProvider(
+    provider: (forceRefresh: boolean) => Promise<CachedToken | null>,
+  ): void {
     this.sessionToken.setPuller(provider);
   }
 

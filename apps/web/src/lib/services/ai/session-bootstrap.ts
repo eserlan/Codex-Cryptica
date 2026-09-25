@@ -64,9 +64,13 @@ function relayTokenToWorkers(token: CachedToken | null): void {
  * that expires, between two pushes now asks for a snapshot immediately
  * before its next request instead of waiting on the next mint/refresh/clear.
  */
-function provideTokenSnapshot(): Promise<CachedToken | null> {
+function provideTokenSnapshot(
+  forceRefresh = false,
+): Promise<CachedToken | null> {
   const manager = ensureSessionManager();
-  return manager ? manager.getTokenSnapshot() : Promise.resolve(null);
+  return manager
+    ? manager.getTokenSnapshot(forceRefresh)
+    : Promise.resolve(null);
 }
 
 function ensureSessionManager(): AiSessionManager | null {

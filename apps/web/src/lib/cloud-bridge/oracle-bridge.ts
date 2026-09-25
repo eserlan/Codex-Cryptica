@@ -49,7 +49,9 @@ export class OracleBridge {
    * manager on demand — see `session-bootstrap.ts` and
    * `RelayedSessionToken.setPuller`.
    */
-  public setTokenProvider(provider: () => Promise<CachedToken | null>): void {
+  public setTokenProvider(
+    provider: (forceRefresh: boolean) => Promise<CachedToken | null>,
+  ): void {
     this.api?.setSessionTokenProvider(Comlink.proxy(provider));
   }
 

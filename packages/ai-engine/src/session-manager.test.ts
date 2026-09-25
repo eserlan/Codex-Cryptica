@@ -325,6 +325,22 @@ describe("AiSessionManager", () => {
     });
   });
 
+  it("getTokenSnapshot can invalidate a rejected but unexpired token", async () => {
+    const fetcher = sessionFetcher() as unknown as typeof fetch;
+    const manager = new AiSessionManager({
+      proxyUrl: PROXY_URL,
+      solveChallenge: async () => "challenge-abc",
+      fetcher,
+      storage: memoryStorage(),
+      now: () => 1_000_000_000,
+    });
+    await manager.getToken();
+
+    const snapshot = await manager.getTokenSnapshot(true);
+
+    expect(snapshot?.token).toBe("token-2");
+  });
+
   it("getTokenSnapshot resolves null when the handshake fails", async () => {
     vi.spyOn(console, "warn").mockImplementation(() => {});
     const manager = new AiSessionManager({
@@ -472,6 +488,21 @@ describe("RelayedSessionToken", () => {
     relay.setPuller(() => Promise.reject(new Error("worker unreachable")));
 
     expect(await relay.getToken()).toBeNull();
+  });
+
+  it("requests a forced refresh after local invalidation", async () => {
+    const pull = vi
+      .fn()
+      .mockResolvedValue({ token: "pulled-1", expiresAt: 9_999_999_999 });
+    const relay = new RelayedSessionToken();
+    relay.setPuller(pull);
+
+    relay.invalidate();
+    expect(await relay.getToken()).toBe("pulled-1");
+    expect(pull).toHaveBeenCalledWith(true);
+
+    await relay.getToken();
+    expect(pull).toHaveBeenCalledTimes(1);
   });
 
   it("prefers an already-cached token over pulling", async () => {

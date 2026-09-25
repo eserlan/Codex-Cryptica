@@ -118,12 +118,16 @@ describe("ProposerBridge", () => {
     bridge.setTokenProvider(provider);
 
     mockWorker.onmessage({
-      data: { type: "REQUEST_SESSION_TOKEN", id: "req-pull-1" },
+      data: {
+        type: "REQUEST_SESSION_TOKEN",
+        id: "req-pull-1",
+        payload: { forceRefresh: true },
+      },
     });
     await Promise.resolve();
     await Promise.resolve();
 
-    expect(provider).toHaveBeenCalled();
+    expect(provider).toHaveBeenCalledWith(true);
     expect(mockWorker.postMessage).toHaveBeenCalledWith({
       type: "SESSION_TOKEN_RESPONSE",
       id: "req-pull-1",
@@ -143,6 +147,25 @@ describe("ProposerBridge", () => {
     expect(mockWorker.postMessage).toHaveBeenCalledWith({
       type: "SESSION_TOKEN_RESPONSE",
       id: "req-pull-2",
+      payload: null,
+    });
+  });
+
+  it("answers a worker's token pull request with null when the provider rejects", async () => {
+    const bridge = new ProposerBridge({ worker: mockWorker });
+    bridge.setTokenProvider(() =>
+      Promise.reject(new Error("handshake failed")),
+    );
+
+    mockWorker.onmessage({
+      data: { type: "REQUEST_SESSION_TOKEN", id: "req-pull-failure" },
+    });
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(mockWorker.postMessage).toHaveBeenCalledWith({
+      type: "SESSION_TOKEN_RESPONSE",
+      id: "req-pull-failure",
       payload: null,
     });
   });
