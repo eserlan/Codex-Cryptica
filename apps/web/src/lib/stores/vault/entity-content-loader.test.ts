@@ -36,4 +36,16 @@ describe("restoreMissingMetadata", () => {
     const disk = { labels: ["a"], tags: ["b"] };
     expect(restoreMissingMetadata(entity, disk)).toEqual({});
   });
+
+  it("ignores empty disk values, which say nothing a missing key does not", () => {
+    const entity = { title: "Hero" };
+    const disk = { tags: [], aliases: [], summary: "", parent: null };
+    expect(restoreMissingMetadata(entity, disk)).toEqual({});
+  });
+
+  it("still restores non-empty values alongside empty ones", () => {
+    const entity = { title: "Hero" };
+    const disk = { tags: [], labels: ["npc"] };
+    expect(restoreMissingMetadata(entity, disk)).toEqual({ labels: ["npc"] });
+  });
 });

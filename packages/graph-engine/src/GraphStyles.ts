@@ -2,6 +2,14 @@ import type { StylingTemplate } from "schema";
 import type { Category } from "schema";
 import { getGraphStyle as getBaseStyle } from "./transformer";
 
+/**
+ * Rendered elements (nodes + edges) above which style transitions are turned
+ * off. Selecting a node dims every other element; with transitions on, each of
+ * those becomes its own per-frame Cytoscape animation — about 1.7 s of main
+ * thread for a 500-node focus view — for a 200 ms fade nobody can follow.
+ */
+export const MAX_TRANSITION_ELEMENTS = 400;
+
 export const getGraphStyles = (
   theme: StylingTemplate,
   categories: Category[],
@@ -9,6 +17,7 @@ export const getGraphStyles = (
   timelineMode: boolean,
   showLabels: boolean,
   performanceMode = false,
+  animateTransitions = true,
 ) => {
   const baseStyle = getBaseStyle(
     theme,
@@ -158,6 +167,10 @@ export const getGraphStyles = (
       ]
     : [];
 
+  const transitionStyles = animateTransitions
+    ? []
+    : [{ selector: "node, edge", style: { "transition-duration": 0 } }];
+
   return [
     ...baseStyle,
     ...chatIndicatorStyles,
@@ -165,5 +178,6 @@ export const getGraphStyles = (
     ...labelOverrides,
     ...lodStyles,
     ...performanceStyles,
+    ...transitionStyles,
   ];
 };

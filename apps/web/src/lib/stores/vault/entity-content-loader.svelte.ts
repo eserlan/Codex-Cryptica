@@ -21,12 +21,24 @@ export function restoreMissingMetadata(
   const restored: Record<string, unknown> = {};
   for (const key of Object.keys(diskMetadata)) {
     const value = diskMetadata[key];
-    if (value === undefined) continue;
+    // An empty value on disk (`tags: []`) says nothing a missing key does not.
+    // Treating it as a restore made every first content load look like a
+    // metadata change, which rebuilt the whole graph (see isEmptyMetadataValue).
+    if (value === undefined || isEmptyMetadataValue(value)) continue;
     if (!(key in entity) || entity[key] === undefined) {
       restored[key] = value;
     }
   }
   return restored;
+}
+
+/** `null`, `""` and `[]` carry no information over an absent key. */
+function isEmptyMetadataValue(value: unknown): boolean {
+  return (
+    value === null ||
+    value === "" ||
+    (Array.isArray(value) && value.length === 0)
+  );
 }
 
 /** Drops the id, sanitizes the parent and strips undefined values from disk frontmatter. */

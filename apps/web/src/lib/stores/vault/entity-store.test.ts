@@ -1371,6 +1371,32 @@ describe("EntityStore", () => {
       ]);
     });
 
+    it("keeps inbound lists when a restore leaves connections unchanged", async () => {
+      const markdownUtils = await import("../../utils/markdown");
+      const opfsUtils = await import("../../utils/opfs");
+      const connection = { target: "place", type: "knows", strength: 1 };
+      (repository.entities.hero as any).connections = [connection];
+      store.initializeInboundConnections();
+      const placeInbound = store.inboundConnections.place;
+      vi.mocked(opfsUtils.readFileAsText).mockResolvedValue("file");
+      vi.mocked(markdownUtils.parseMarkdown).mockReturnValue({
+        metadata: {
+          id: "hero",
+          title: "Hero",
+          parent: "place",
+          connections: [{ ...connection }],
+        },
+        content: "Hydrated content from disk",
+      });
+
+      await store.internalLoadContent("hero");
+
+      // The restore (parent) is applied, but the reverse lookup is not
+      // rebuilt: replacing it re-derives the whole focus graph.
+      expect(repository.entities.hero.parent).toBe("place");
+      expect(store.inboundConnections.place).toBe(placeInbound);
+    });
+
     it("leaves indexes untouched when a load only adds content", async () => {
       const markdownUtils = await import("../../utils/markdown");
       const opfsUtils = await import("../../utils/opfs");
