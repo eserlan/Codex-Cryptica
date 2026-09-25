@@ -89,6 +89,30 @@ describe("SEOGeneratorLayout Theming Sync", () => {
     expect(setThemeSpy).toHaveBeenCalledWith("cyberpunk");
   });
 
+  it("widens the form column only for pages that opt in with wideForm", () => {
+    const generate = vi.fn().mockResolvedValue({});
+    const narrow = render(SEOGeneratorLayout, {
+      props: { generate, formFields: noopSnippet, autoGenerateExplicit: true },
+    });
+    expect(narrow.container.querySelector(".lg\\:col-span-5")).toBeNull();
+    expect(narrow.container.querySelectorAll(".lg\\:col-span-3")).toHaveLength(
+      2,
+    );
+    narrow.unmount();
+
+    const wide = render(SEOGeneratorLayout, {
+      props: {
+        generate,
+        formFields: noopSnippet,
+        autoGenerateExplicit: true,
+        wideForm: true,
+      },
+    });
+    expect(wide.container.querySelector(".lg\\:col-span-5")).not.toBeNull();
+    expect(wide.container.querySelector(".lg\\:col-span-7")).not.toBeNull();
+    expect(wide.container.querySelector(".lg\\:col-span-12")).not.toBeNull();
+  });
+
   it("does NOT call themeStore.setTheme when isThemeCustomizable is false", async () => {
     themeStore.currentThemeId = "workspace";
     const setThemeSpy = vi
