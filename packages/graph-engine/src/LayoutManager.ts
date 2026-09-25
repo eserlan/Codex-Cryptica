@@ -474,28 +474,7 @@ export class LayoutManager {
     let randomize = isExitingTimeline || isExitingMode;
     const isManualRedraw = reason === "UI Redraw Button" && isForced;
 
-    // Fast-path: stable incremental updates (e.g. window resize, non-forced edits)
-    // skip full-graph position scanning and collinearity checks.
-    if (
-      options.stableLayout &&
-      !isForced &&
-      !isInitial &&
-      !reseed &&
-      !randomize &&
-      !isManualRedraw
-    ) {
-      this.fitOnly(options);
-      return;
-    }
-
     const cyNodes = this.cy.nodes();
-
-    // Detect full-clump (all nodes at origin) — force randomize so fcose can spread them.
-    // Also detect all-pending (every node has .pending-layout, meaning no coords were saved).
-    // Both checks are kept intentionally:
-    //   - pendingCount catches fresh vaults where transformer sets the class on all nodes
-    //   - nodesAtOrigin catches legacy vaults whose coords were saved as (0,0) — those nodes
-    //     take the hasValidCoords path in transformer.ts and land at origin WITHOUT the class
     const positions: { x: number; y: number }[] = [];
     let nodesAtOrigin = 0;
     cyNodes.forEach((n) => {
@@ -503,6 +482,29 @@ export class LayoutManager {
       positions.push(p);
       if (!p || (p.x === 0 && p.y === 0)) nodesAtOrigin++;
     });
+    const isDegenerateSlash = isLayoutCollinear(positions);
+
+    // Fast-path: stable incremental updates (e.g. window resize, non-forced edits)
+    // skip the remaining layout checks when the current positions are healthy.
+    if (
+      options.stableLayout &&
+      !isForced &&
+      !isInitial &&
+      !reseed &&
+      !randomize &&
+      !isManualRedraw &&
+      !isDegenerateSlash
+    ) {
+      this.fitOnly(options);
+      return;
+    }
+
+    // Detect full-clump (all nodes at origin) — force randomize so fcose can spread them.
+    // Also detect all-pending (every node has .pending-layout, meaning no coords were saved).
+    // Both checks are kept intentionally:
+    //   - pendingCount catches fresh vaults where transformer sets the class on all nodes
+    //   - nodesAtOrigin catches legacy vaults whose coords were saved as (0,0) — those nodes
+    //     take the hasValidCoords path in transformer.ts and land at origin WITHOUT the class
     const pendingCount = this.cy.nodes(".pending-layout").length;
 
     // Heal a degenerate "diagonal slash" — saved coords collapsed onto a line.
@@ -511,8 +513,6 @@ export class LayoutManager {
     // (or fit-only) over the persisted diagonal, which would preserve the slash.
     // A legitimate fcose layout is never collinear, so forcing a randomized
     // re-solve whenever we detect collinearity is safe across all paths.
-    const isDegenerateSlash = isLayoutCollinear(positions);
-
     const needsInitialSolve =
       isInitial &&
       cyNodes.length > 1 &&
