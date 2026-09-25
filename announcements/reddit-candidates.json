@@ -1,16 +1,6 @@
 {
-  "updated_at": 1790364445,
+  "updated_at": 1790365466,
   "candidates": [
-    {
-      "id": "reddit-36177007535-pacing-a-one-shot-to-land-on-time",
-      "title": "Pacing a one-shot to land on time",
-      "body": "I keep watching one-shots hit the last 30 minutes with no climax in sight, so we either rush the ending or call it with no epilogue.\n\nI built a pacing guide that budgets backward from your hard stop using six beats and a halfway checkpoint.\n\nWhat it gives you:\n- six named beats with minute budgets scaled to your total runtime\n- a halfway checkpoint to tell if you are ahead or behind\n- an elastic middle encounter you can stretch or trim without moving the plot\n- a short cut list for when you are behind that keeps the climax and epilogue intact\n\nI kept it system neutral, so you will still need to adjust the minute counts if your table runs slow combat or long roleplay scenes.\n\nWhere do your one-shots usually slip, early investigation sprawl or the middle fight that eats the clock?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/announcements/release-36177007535-0.png)",
-      "url": "https://codexcryptica.com/answers/how-do-i-pace-an-rpg-one-shot",
-      "image_url": "https://assets.codexcryptica.com/announcements/release-36177007535-0.png",
-      "source_id": "36177007535",
-      "status": "approved",
-      "created_at": 1790363189
-    },
     {
       "id": "reddit-36168046733-tables-now-parse-4d6kh3-2-and-other-keep",
       "title": "Tables now parse 4d6kh3+2 and other keep/modifier rolls",
@@ -20,6 +10,16 @@
       "source_id": "36168046733",
       "status": "approved",
       "created_at": 1790364445
+    },
+    {
+      "id": "reddit-36177007535-table-dice-now-handle-4d6kh3-and-2d20kh1",
+      "title": "Table dice now handle 4d6kh3 and 2d20kh1 with modifiers",
+      "body": "I wanted tables to roll stat arrays and advantage odds directly, but I was stuck on single-die formulas or working around it with an outside roller.\n\nI added multi-die formulas with keep-highest / keep-lowest and modifiers straight in table dice fields.\n\nNow you can:\n- write 4d6kh3 for stat generation without a workaround\n- use 2d20kh1 and 2d20kl1 for advantage style rolls\n- add modifiers after the keep so the math lands where you expect\n- keep existing tables as-is, the new syntax only matters if you use it\n\nIt covers the common table cases. Really nested or conditional rolls are still better in a full dice roller.\n\nWhich of your tables would you switch to 4d6kh3 or 2d20kh1 first, stat blocks, loot, or something else?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/images/blog/oracle-capabilities/oracle-roll-command.png)",
+      "url": "",
+      "image_url": "https://assets.codexcryptica.com/images/blog/oracle-capabilities/oracle-roll-command.png",
+      "source_id": "36177007535",
+      "status": "approved",
+      "created_at": 1790365466
     }
   ]
 }
