@@ -60,9 +60,10 @@ One timestamped item within a journal (FR-002, FR-003, FR-014).
         start()                          end()
 (none) ────────► "active" ──────────────────────► "ended"
                     ▲                                 │
-                    │         (no transition back —    │
-                    └── resume() [no-op state change,  │
-                        already active] ────────────────┘
+                    │         (no status change —      │
+                    └── open() [marks controlState     │
+                        "open" for this browser        │
+                        session] ───────────────────────┘
                                                     (terminal;
                                                   a new start()
                                                  creates a NEW
@@ -71,7 +72,7 @@ One timestamped item within a journal (FR-002, FR-003, FR-014).
 ```
 
 - `start()`: only valid when no `SessionJournal` for this `vaultId` currently has `status: "active"`. If one exists, `start()` is a no-op that resolves to the existing active journal (this _is_ "resume" from the caller's point of view — FR-013, matching the spec's Assumption that Start/Open/Resume is a single per-vault control state, not three independent actions).
-- `resume()`: purely a UI/read affordance — opens the existing active journal. No state field changes.
+- `open()`: purely a UI/session affordance, not a `SessionJournal` field change — it flips this browser session's `controlState` from `"resume"` to `"open"` once the user has actually opened the already-active journal (contracts/session-journal-store-api.md). Naming this the same as the public contract's method avoids the drift an earlier draft of this document had (calling it `resume()` here while the contract calls it `open()` — same concept, one name).
 - `end()`: valid only when `status === "active"`. Sets `status: "ended"`, `endedAt: now()`. Terminal — an ended journal never transitions again (FR-007, FR-008).
 
 ## Persistence Mapping (`apps/web/src/lib/utils/idb.ts`)
@@ -97,7 +98,7 @@ if (!db.objectStoreNames.contains("session_journals")) {
 }
 ```
 
-**Why one record per journal, not one per entry**: FR-011 requires surviving concurrent tabs "at the entry level" without losing an entire journal; a whole-journal document keeps writes simple (single `put`) at the cost of last-write-wins granularity being "whole journal" rather than "single entry" in the rare concurrent-tab case. This matches the spec's Assumption that concurrent-tab conflict resolution is intentionally out of scope for this slice, and mirrors how `canvases` and `dice_history` store whole small documents rather than field-level records. If a future slice needs finer-grained concurrent writes, splitting `entries` into their own keyed store (`[journalId, entryId]`) is a compatible follow-up, not a breaking change to this shape.
+**Why one record per journal, not one per entry**: a whole-journal document keeps reads and the schema simple (single key, single `put`), mirroring how `canvases` and `dice_history` store whole small documents rather than field-level records. Storing one record per journal does **not** by itself satisfy FR-011's no-silent-entry-loss guarantee across tabs, though — a naive `put` of a whole document built from a tab's own stale in-memory state would silently overwrite an entry another tab added in the meantime. FR-011 is satisfied instead by a read-merge-write discipline at the store layer, not by the storage shape: every mutating `SessionJournalStore` method (`appendEntry`, `createSection`, `renameSection`, `end`) re-reads the current record from `session_journals` immediately before merging its change and writing back, rather than trusting the store's own `$state` as the source of truth for what to write. Two tabs can still race on the exact same field of the exact same entry (last write wins there, which FR-011 explicitly allows), but neither tab's `put` is built from data old enough to not know about the other tab's already-saved entry. If a future slice needs true concurrent-write throughput (not just correctness), splitting `entries` into their own keyed store (`[journalId, entryId]`) is a compatible follow-up, not a breaking change to this shape.
 
 ## Cloud Backup Mapping (FR-016)
 

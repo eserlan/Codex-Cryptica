@@ -61,6 +61,10 @@ class SessionJournalStore {
 }
 ```
 
+## Concurrency guarantee (FR-011)
+
+`start()`, `open()`, `end()`, `appendEntry()`, `createSection()`, and `renameSection()` all read the current record fresh from `session_journals` immediately before merging their change and writing back — never from `current`/`$state` alone. This is what makes FR-011's cross-tab guarantee true in practice: a `put` is always built from the latest persisted data, so a tab that has been open longer can never silently overwrite an entry or section a different tab already saved. See `data-model.md`'s Persistence Mapping for why the storage shape alone doesn't provide this — the store layer does.
+
 ## Cloud backup wiring (FR-016)
 
 `allJournals` and `importSessionJournals` (a new hook on `cloud-backup.svelte.ts`'s existing `restore` dependency object, alongside `importMaps`/`importCanvases`) are the only two new surfaces cloud backup needs from this feature. See `data-model.md`'s Cloud Backup Mapping section and `research.md`'s corresponding Decision for the full wiring.

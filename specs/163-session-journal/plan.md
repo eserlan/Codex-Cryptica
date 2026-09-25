@@ -99,14 +99,18 @@ apps/web/src/lib/
 │   └── app-init.ts                      # +sessionJournals in buildPayload wiring (FR-016)
 └── components/
     ├── quicknote/
-    │   ├── QuickNoteScratchpad.svelte    # +three-state Start/Open/Resume control
-    │   ├── SessionJournalView.svelte      # new: entry list, add-note field, sections
+    │   ├── QuickNoteScratchpad.svelte      # +three-state Start/Open/Resume control
+    │   ├── QuickNoteScratchpad.test.ts      # existing suite, extended for the new control
+    │   ├── SessionJournalView.svelte        # new: entry list, add-note field, sections
     │   └── SessionJournalView.test.ts
     └── settings/
-        └── CloudBackupSettings.svelte    # consent copy: name session journals (FR-016)
+        └── CloudBackupSettings.svelte      # consent copy: name session journals (FR-016)
+
+apps/web/src/lib/config/
+└── help-content.ts                        # +Session Journal entry (Constitution VII)
 
 packages/cloud-backup-sync/src/
-└── cloud-backup-sync.ts                 # +sessionJournals bundle/delta field (FR-016)
+└── cloud-backup-sync.ts                   # +sessionJournals bundle/delta field (FR-016)
 ```
 
 **Structure Decision**: New pure-logic package `packages/session-journal-engine` (Constitution I), thin store glue in `apps/web/src/lib/stores/session-journal.svelte.ts` persisting through the existing shared `idb.ts` schema, and UI additions confined to the existing `apps/web/src/lib/components/quicknote/` directory (no new top-level UI area — this slice is explicitly Quicknote-only per spec scope; the global indicator is #3407's job). Cloud backup inclusion (FR-016) is wired entirely through existing extension points in `cloud-backup-sync`, `cloud-backup.svelte.ts`, `app-init.ts`, and `CloudBackupSettings.svelte` — no new backup mechanism, no new consent flow.
