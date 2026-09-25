@@ -281,6 +281,142 @@ describe("LayoutManager", () => {
     expect(mockCy.animate).toHaveBeenCalled();
   });
 
+  it("fast-paths stable incremental updates after checking for degenerate positions", async () => {
+    const emptyPending: any = {
+      nonempty: vi.fn().mockReturnValue(false),
+      forEach: vi.fn(),
+      removeClass: vi.fn(),
+      removeData: vi.fn(),
+      filter: vi.fn().mockReturnThis(),
+      not: vi.fn().mockReturnThis(),
+      length: 0,
+    };
+    const nodes = makeNodes([
+      { x: 100, y: 100 },
+      { x: 200, y: 200 },
+    ]);
+    (nodes as any).removeData = vi.fn();
+    (nodes as any).removeClass = vi.fn();
+    (nodes as any).nonempty = vi.fn().mockReturnValue(true);
+    (nodes as any).not = vi.fn().mockReturnValue(emptyPending);
+
+    mockCy.nodes.mockImplementation((selector?: string) =>
+      selector === ".pending-layout" ? emptyPending : nodes,
+    );
+
+    const onPositionsUpdated = vi.fn();
+
+    await layoutManager.apply(
+      {
+        reason: "Window Resize",
+        isInitial: false,
+        isForced: false,
+      },
+      {
+        timelineMode: false,
+        timelineAxis: "x",
+        timelineScale: 1,
+        orbitMode: false,
+        centralNodeId: null,
+        stableLayout: true,
+        isGuest: false,
+        onPositionsUpdated,
+      },
+    );
+
+    // Healthy positions use fit-only without starting a worker layout.
+    expect(capturedPostMessage).toBeNull();
+    expect(nodes[0].position).toHaveBeenCalled();
+    // Since pendingNodes is empty, onPositionsUpdated should not have been called
+    expect(onPositionsUpdated).not.toHaveBeenCalled();
+    // Entire cy.nodes() shouldn't have removeData called when pendingNodes is empty
+    expect((nodes as any).removeData).not.toHaveBeenCalled();
+  });
+
+  it("re-solves a collinear graph on a stable non-forced update", async () => {
+    const emptyPending: any = {
+      nonempty: vi.fn().mockReturnValue(false),
+      forEach: vi.fn(),
+      removeClass: vi.fn(),
+      removeData: vi.fn(),
+      filter: vi.fn().mockReturnThis(),
+      not: vi.fn().mockReturnThis(),
+      length: 0,
+    };
+    const nodes = makeNodes(
+      Array.from({ length: 12 }, (_, index) => ({
+        x: index * 100,
+        y: index * 100,
+      })),
+    );
+    (nodes as any).removeData = vi.fn();
+    (nodes as any).removeClass = vi.fn();
+    (nodes as any).nonempty = vi.fn().mockReturnValue(true);
+    (nodes as any).not = vi.fn().mockReturnValue(emptyPending);
+    mockCy.nodes.mockImplementation((selector?: string) =>
+      selector === ".pending-layout" ? emptyPending : nodes,
+    );
+
+    await layoutManager.apply(
+      { reason: "Window Resize", isInitial: false, isForced: false },
+      {
+        timelineMode: false,
+        timelineAxis: "x",
+        timelineScale: 1,
+        orbitMode: false,
+        centralNodeId: null,
+        stableLayout: true,
+        isGuest: false,
+      },
+    );
+
+    expect(capturedPostMessage?.options.randomize).toBe(true);
+  });
+
+  it("does not fast-path stable layout when forced (isForced: true)", async () => {
+    const emptyPending: any = {
+      nonempty: vi.fn().mockReturnValue(false),
+      forEach: vi.fn(),
+      removeClass: vi.fn(),
+      removeData: vi.fn(),
+      filter: vi.fn().mockReturnThis(),
+      not: vi.fn().mockReturnThis(),
+      length: 0,
+    };
+    const nodes = makeNodes([
+      { x: 100, y: 100 },
+      { x: 200, y: 200 },
+    ]);
+    (nodes as any).removeData = vi.fn();
+    (nodes as any).removeClass = vi.fn();
+    (nodes as any).nonempty = vi.fn().mockReturnValue(true);
+    (nodes as any).not = vi.fn().mockReturnValue(emptyPending);
+
+    mockCy.nodes.mockImplementation((selector?: string) =>
+      selector === ".pending-layout" ? emptyPending : nodes,
+    );
+
+    await layoutManager.apply(
+      {
+        reason: "Elements Update",
+        isInitial: false,
+        isForced: true,
+      },
+      {
+        timelineMode: false,
+        timelineAxis: "x",
+        timelineScale: 1,
+        orbitMode: false,
+        centralNodeId: null,
+        stableLayout: true,
+        isGuest: false,
+      },
+    );
+
+    // With isForced: true, the fast-path is skipped, so node positions ARE inspected
+    expect(nodes[0].position).toHaveBeenCalled();
+  });
+
   it("should keep the camera still for preserve-policy stable updates", async () => {
     const onLayoutStop = vi.fn();
 

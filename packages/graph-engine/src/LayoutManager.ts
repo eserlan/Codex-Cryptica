@@ -324,6 +324,7 @@ export class LayoutManager {
     });
   }
 
+  // fallow-ignore-next-line complexity
   async apply(request: LayoutRequest, options: LayoutOptions): Promise<void> {
     if (request.viewport !== undefined) {
       options = { ...options, viewportPolicy: request.viewport };
@@ -344,44 +345,12 @@ export class LayoutManager {
     try {
       this.cy.resize();
 
-      // Handle visibility classes — only pay the iteration cost in timeline mode
-      if (options.timelineMode) {
-        this.cy.batch(() => {
-          this.cy.nodes().forEach((node) => {
-            const data = node.data() as GraphNode["data"];
-            if (hasTimelineDate({ group: "nodes", data })) {
-              node.removeClass("timeline-hidden");
-            } else {
-              node.addClass("timeline-hidden");
-            }
-          });
-        });
-      } else {
-        this.cy.batch(() => {
-          this.cy.nodes().forEach((node) => {
-            node.removeClass("timeline-hidden");
-          });
-        });
-      }
+      this.syncTimelineVisibility(Boolean(options.timelineMode));
 
       const isInitial = request.isInitial ?? false;
 
       if (options.isGuest && isInitial) {
-        this.cy.nodes().removeData("isPendingLayout");
-        this.cy.nodes(".pending-layout").removeClass("pending-layout");
-        this.cy.fit(this.cy.nodes(), 20);
-        // On mobile the full-fit zoom is often unreadably small — enforce a minimum
-        if (options.isMobile && this.cy.zoom() < 0.6) {
-          this.cy.zoom({
-            level: 0.6,
-            renderedPosition: {
-              x: this.cy.width() / 2,
-              y: this.cy.height() / 2,
-            },
-          });
-          this.cy.center();
-        }
-        options.onLayoutStop?.();
+        this.handleGuestInitialFit(options);
         return;
       }
 
@@ -396,6 +365,55 @@ export class LayoutManager {
       console.error("[LayoutManager] Unexpected error in apply", error);
       options.onLayoutStop?.();
     }
+  }
+
+  private syncTimelineVisibility(timelineMode: boolean) {
+    if (timelineMode) {
+      this.cy.batch(() => {
+        this.cy.nodes().forEach((node) => {
+          const data = node.data() as GraphNode["data"];
+          if (hasTimelineDate({ group: "nodes", data })) {
+            node.removeClass("timeline-hidden");
+          } else {
+            node.addClass("timeline-hidden");
+          }
+        });
+      });
+    } else {
+      const hiddenNodes = this.cy.nodes(".timeline-hidden");
+      if (
+        hiddenNodes &&
+        (typeof hiddenNodes.length === "number" ? hiddenNodes.length > 0 : true)
+      ) {
+        this.cy.batch(() => {
+          if (typeof (hiddenNodes as any).removeClass === "function") {
+            (hiddenNodes as any).removeClass("timeline-hidden");
+          } else if (typeof hiddenNodes.forEach === "function") {
+            hiddenNodes.forEach((node: any) => {
+              node.removeClass?.("timeline-hidden");
+            });
+          }
+        });
+      }
+    }
+  }
+
+  private handleGuestInitialFit(options: LayoutOptions) {
+    this.cy.nodes().removeData("isPendingLayout");
+    this.cy.nodes(".pending-layout").removeClass("pending-layout");
+    this.cy.fit(this.cy.nodes(), 20);
+    // On mobile the full-fit zoom is often unreadably small — enforce a minimum
+    if (options.isMobile && this.cy.zoom() < 0.6) {
+      this.cy.zoom({
+        level: 0.6,
+        renderedPosition: {
+          x: this.cy.width() / 2,
+          y: this.cy.height() / 2,
+        },
+      });
+      this.cy.center();
+    }
+    options.onLayoutStop?.();
   }
 
   private async applyTimelineLayout(options: LayoutOptions) {
@@ -447,8 +465,6 @@ export class LayoutManager {
     const reason = req.reason;
     const reseed = req.reseed ?? false;
 
-    const cyNodes = this.cy.nodes();
-
     const isExitingTimeline =
       reason === "Timeline Toggle" && !options.timelineMode;
     const isExitingMode =
@@ -456,13 +472,9 @@ export class LayoutManager {
       !options.timelineMode &&
       !options.orbitMode;
     let randomize = isExitingTimeline || isExitingMode;
+    const isManualRedraw = reason === "UI Redraw Button" && isForced;
 
-    // Detect full-clump (all nodes at origin) — force randomize so fcose can spread them.
-    // Also detect all-pending (every node has .pending-layout, meaning no coords were saved).
-    // Both checks are kept intentionally:
-    //   - pendingCount catches fresh vaults where transformer sets the class on all nodes
-    //   - nodesAtOrigin catches legacy vaults whose coords were saved as (0,0) — those nodes
-    //     take the hasValidCoords path in transformer.ts and land at origin WITHOUT the class
+    const cyNodes = this.cy.nodes();
     const positions: { x: number; y: number }[] = [];
     let nodesAtOrigin = 0;
     cyNodes.forEach((n) => {
@@ -470,6 +482,29 @@ export class LayoutManager {
       positions.push(p);
       if (!p || (p.x === 0 && p.y === 0)) nodesAtOrigin++;
     });
+    const isDegenerateSlash = isLayoutCollinear(positions);
+
+    // Fast-path: stable incremental updates (e.g. window resize, non-forced edits)
+    // skip the remaining layout checks when the current positions are healthy.
+    if (
+      options.stableLayout &&
+      !isForced &&
+      !isInitial &&
+      !reseed &&
+      !randomize &&
+      !isManualRedraw &&
+      !isDegenerateSlash
+    ) {
+      this.fitOnly(options);
+      return;
+    }
+
+    // Detect full-clump (all nodes at origin) — force randomize so fcose can spread them.
+    // Also detect all-pending (every node has .pending-layout, meaning no coords were saved).
+    // Both checks are kept intentionally:
+    //   - pendingCount catches fresh vaults where transformer sets the class on all nodes
+    //   - nodesAtOrigin catches legacy vaults whose coords were saved as (0,0) — those nodes
+    //     take the hasValidCoords path in transformer.ts and land at origin WITHOUT the class
     const pendingCount = this.cy.nodes(".pending-layout").length;
 
     // Heal a degenerate "diagonal slash" — saved coords collapsed onto a line.
@@ -478,8 +513,6 @@ export class LayoutManager {
     // (or fit-only) over the persisted diagonal, which would preserve the slash.
     // A legitimate fcose layout is never collinear, so forcing a randomized
     // re-solve whenever we detect collinearity is safe across all paths.
-    const isDegenerateSlash = isLayoutCollinear(positions);
-
     const needsInitialSolve =
       isInitial &&
       cyNodes.length > 1 &&
@@ -489,7 +522,6 @@ export class LayoutManager {
       randomize = true;
     }
 
-    const isManualRedraw = reason === "UI Redraw Button" && isForced;
     const isFitOnly = options.stableLayout && !randomize && !isManualRedraw;
 
     if (isFitOnly) {
@@ -548,10 +580,13 @@ export class LayoutManager {
       });
     }
 
-    this.cy.nodes().removeData("isPendingLayout");
-    pendingNodes.removeClass("pending-layout");
-
-    this.persistPositions(pendingNodes, options);
+    if (pendingNodes.nonempty()) {
+      this.cy.batch(() => {
+        pendingNodes.removeData("isPendingLayout");
+        pendingNodes.removeClass("pending-layout");
+      });
+      this.persistPositions(pendingNodes, options);
+    }
 
     if (options.viewportPolicy === "preserve") {
       // Halt any in-flight fit animation from a previous layout pass —

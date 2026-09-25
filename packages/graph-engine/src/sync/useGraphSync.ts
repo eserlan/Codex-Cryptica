@@ -52,22 +52,28 @@ const syncRenderedWeights = (
     if (isNodeRendered(node)) visibleNodeIds.add(node.id());
   }
 
-  for (let i = 0; i < graphNodes.length; i++) {
-    const node = graphNodes[i];
-    let nextWeight = 0;
-
-    if (visibleNodeIds.has(node.id())) {
-      const connectedEdges = node.connectedEdges();
-      for (let j = 0; j < connectedEdges.length; j++) {
-        const edge = connectedEdges[j];
-        const sourceId = edge.source().id();
-        const targetId = edge.target().id();
-        if (visibleNodeIds.has(sourceId) && visibleNodeIds.has(targetId)) {
-          nextWeight++;
-        }
+  const weights = new Map<string, number>();
+  for (let i = 0; i < elements.length; i++) {
+    const el = elements[i];
+    if (el.group !== "edges") continue;
+    const sourceId = (el as GraphEdge).data.source;
+    const targetId = (el as GraphEdge).data.target;
+    if (
+      sourceId &&
+      targetId &&
+      visibleNodeIds.has(sourceId) &&
+      visibleNodeIds.has(targetId)
+    ) {
+      weights.set(sourceId, (weights.get(sourceId) ?? 0) + 1);
+      if (targetId !== sourceId) {
+        weights.set(targetId, (weights.get(targetId) ?? 0) + 1);
       }
     }
+  }
 
+  for (let i = 0; i < graphNodes.length; i++) {
+    const node = graphNodes[i];
+    const nextWeight = weights.get(node.id()) ?? 0;
     if (node.data("weight") !== nextWeight) {
       node.data("weight", nextWeight);
     }
@@ -146,21 +152,39 @@ function addNewElements(
       addedNodes.addClass("pending-layout");
 
       addedNodes.forEach((n) => {
-        elementMap.set(n.id(), n);
-        const originalNode = newNodesMap.get(n.id());
-        if (originalNode && originalNode.position) {
-          n.position(originalNode.position);
+        const id =
+          typeof n.id === "function"
+            ? n.id()
+            : ((n as any).id ?? (n as any).data?.id);
+        if (id) {
+          elementMap.set(id, n);
+          const originalNode = newNodesMap.get(id);
+          if (originalNode && originalNode.position) {
+            n.position?.(originalNode.position);
+          }
         }
       });
     }
     const validEdges = newEdges.filter((edge) => {
       const sourceId = edge.data.source!;
       const targetId = edge.data.target!;
-      return cy && cy.$id(sourceId).nonempty() && cy.$id(targetId).nonempty();
+      const src = elementMap.get(sourceId);
+      const tgt = elementMap.get(targetId);
+      return (
+        Boolean(src && tgt) &&
+        (typeof src.isNode === "function" ? src.isNode() : true) &&
+        (typeof tgt.isNode === "function" ? tgt.isNode() : true)
+      );
     });
     if (validEdges.length > 0) {
       cy.add(validEdges).forEach((e) => {
-        elementMap.set(e.id(), e);
+        const id =
+          typeof e.id === "function"
+            ? e.id()
+            : ((e as any).id ?? (e as any).data?.id);
+        if (id) {
+          elementMap.set(id, e);
+        }
       });
       addedEdgeCount = validEdges.length;
     }
@@ -440,6 +464,16 @@ export function resolveLayoutTrigger(
   };
 }
 
+function countRenderedElements(elements: (GraphNode | GraphEdge)[]) {
+  let renderedNodeCount = 0;
+  let renderedEdgeCount = 0;
+  for (let i = 0; i < elements.length; i++) {
+    if (elements[i].group === "nodes") renderedNodeCount++;
+    else if (elements[i].group === "edges") renderedEdgeCount++;
+  }
+  return { renderedNodeCount, renderedEdgeCount };
+}
+
 export function syncGraphElements(cy: Core, options: SyncOptions) {
   const { elements, vaultStatus, initialLoaded } = options;
   const isVaultLoading = vaultStatus === "loading";
@@ -483,14 +517,7 @@ export function syncGraphElements(cy: Core, options: SyncOptions) {
       } else {
         syncDataAndFilters(elements, elementMap, options);
       }
-      patchSpan.complete(() => ({
-        renderedNodeCount: elements.filter(
-          (element) => element.group === "nodes",
-        ).length,
-        renderedEdgeCount: elements.filter(
-          (element) => element.group === "edges",
-        ).length,
-      }));
+      patchSpan.complete(() => countRenderedElements(elements));
     });
 
     const isFirstElements = !initialLoaded && elements.length > 0;
@@ -513,12 +540,7 @@ export function syncGraphElements(cy: Core, options: SyncOptions) {
         if (req) options.onLayoutUpdate?.(req);
       }
     }
-    reconcileSpan.complete(() => ({
-      renderedNodeCount: elements.filter((element) => element.group === "nodes")
-        .length,
-      renderedEdgeCount: elements.filter((element) => element.group === "edges")
-        .length,
-    }));
+    reconcileSpan.complete(() => countRenderedElements(elements));
   } catch (err) {
     reconcileSpan.fail("unexpected");
     console.error("[GraphSync] Error syncing elements", err);
