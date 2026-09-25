@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { validateSource } from "../src/validation";
-import type { RandomSource } from "../src/types";
+import type { DieSpec, RandomSource } from "../src/types";
 
 const ranged = (
   entries: RandomSource["entries"],
@@ -122,6 +122,103 @@ describe("validateSource", () => {
       ["creature"],
     );
     expect(diags.find((d) => d.code === "broken-reference")).toBeUndefined();
+  });
+});
+
+describe("validateSource — multi-die tables (#3403)", () => {
+  const rangedDie = (
+    entries: RandomSource["entries"],
+    die: DieSpec,
+  ): RandomSource => ({
+    id: "t",
+    name: "T",
+    kind: "table",
+    labels: [],
+    selection: { mode: "ranged", die },
+    entries,
+  });
+
+  it("checks coverage against the die's computed range, not its sides", () => {
+    const diags = validateSource(
+      rangedDie(
+        [
+          { id: "a", text: "x", range: { min: 2, max: 7 } },
+          { id: "b", text: "y", range: { min: 8, max: 12 } },
+        ],
+        { sides: 6, count: 2 },
+      ),
+      [],
+    );
+    expect(diags.find((d) => d.code === "range-gap")).toBeUndefined();
+    expect(diags.find((d) => d.code === "range-overlap")).toBeUndefined();
+  });
+
+  it("flags a gap left by a range that assumes single-die bounds", () => {
+    const diags = validateSource(
+      rangedDie([{ id: "a", text: "x", range: { min: 1, max: 6 } }], {
+        sides: 6,
+        count: 2,
+      }),
+      [],
+    );
+    // 2d6's range is 2-12; a 1-6 entry leaves 7-12 uncovered and never
+    // reaches 1, which the die can no longer roll.
+    const gap = diags.find((d) => d.code === "range-gap");
+    expect(gap).toBeDefined();
+  });
+
+  it("computes an unreachable entry against keep-highest's narrower range", () => {
+    const diags = validateSource(
+      rangedDie([{ id: "a", text: "x", range: { min: 1, max: 2 } }], {
+        sides: 6,
+        count: 4,
+        keepHighest: 3,
+      }),
+      [],
+    );
+    // 4d6kh3's minimum is 3, so 1-2 can never come up.
+    expect(diags.find((d) => d.code === "unreachable-entry")).toBeDefined();
+  });
+
+  it("warns when a die keeps both the highest and the lowest dice", () => {
+    const diags = validateSource(
+      rangedDie([{ id: "a", text: "x", range: { min: 2, max: 12 } }], {
+        sides: 6,
+        count: 2,
+        keepHighest: 1,
+        keepLowest: 1,
+      }),
+      [],
+    );
+    expect(diags.find((d) => d.code === "invalid-die")).toBeDefined();
+  });
+
+  it("warns when a die keeps more dice than it rolls", () => {
+    const diags = validateSource(
+      rangedDie([{ id: "a", text: "x", range: { min: 1, max: 12 } }], {
+        sides: 6,
+        count: 2,
+        keepHighest: 5,
+      }),
+      [],
+    );
+    expect(diags.find((d) => d.code === "invalid-die")).toBeDefined();
+  });
+
+  it("stays quiet about keep-consistency on an ordinary single die", () => {
+    const diags = validateSource(
+      ranged([{ id: "a", text: "x", range: { min: 1, max: 10 } }]),
+      [],
+    );
+    expect(diags.find((d) => d.code === "invalid-die")).toBeUndefined();
+  });
+
+  it("reports an excessive imported count without expanding its outcome range", () => {
+    const diags = validateSource(
+      rangedDie([], { sides: 6, count: 1_000_000_000 }),
+      [],
+    );
+    expect(diags.find((d) => d.code === "invalid-die")).toBeDefined();
   });
 });
 
