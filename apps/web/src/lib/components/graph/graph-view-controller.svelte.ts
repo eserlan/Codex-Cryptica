@@ -491,7 +491,7 @@ export class GraphViewController {
     if (this.imageManager) {
       this.imageManager.destroy({
         releaseImageUrl: (path: string) =>
-          this.deps.vault.releaseImageUrl(path),
+          this.deps.vault.releaseThumbnailUrl(path),
       } as any);
       this.imageManager = undefined;
     }
@@ -893,9 +893,10 @@ export class GraphViewController {
         this.imageManager!.sync({
           showImages:
             this.deps.graph.showImages && !this.deps.graph.perfStylingActive,
-          resolveImageUrl: (path) => this.deps.vault.resolveImageUrl(path),
+          // Nodes paint at tens of pixels: full photos cost seconds per redraw.
+          resolveImageUrl: (path) => this.deps.vault.resolveThumbnailUrl(path),
           releaseImageUrl: (path: string) =>
-            this.deps.vault.releaseImageUrl(path),
+            this.deps.vault.releaseThumbnailUrl(path),
           // Both inputs of the glyph colour: the theme and the (user-editable)
           // category colours it derives the tones from. Serialised rather than
           // concatenated because category ids are user-authored — two
@@ -1019,7 +1020,7 @@ export class GraphViewController {
       if (this.imageManager)
         this.imageManager.destroy({
           releaseImageUrl: (path: string) =>
-            this.deps.vault.releaseImageUrl(path),
+            this.deps.vault.releaseThumbnailUrl(path),
         } as any);
       return;
     }

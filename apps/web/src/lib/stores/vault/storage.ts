@@ -7,6 +7,16 @@ export interface StorageDependencies {
 
 export class VaultStorageManager {
   private _vaultHandle: FileSystemDirectoryHandle | undefined = undefined;
+  /**
+   * The folder-handle read in flight. Resolving a vault's images asks for the
+   * handle once per image, concurrently — hundreds of identical IndexedDB reads
+   * on load — so concurrent callers share one. Nothing is kept once it settles,
+   * so a folder the user has just picked is read fresh.
+   */
+  private folderHandleRead: {
+    vaultId: string;
+    handle: Promise<FileSystemDirectoryHandle | undefined>;
+  } | null = null;
 
   constructor(private deps: StorageDependencies) {}
 
@@ -31,10 +41,26 @@ export class VaultStorageManager {
     }
   }
 
-  async getActiveFolderHandle(
+  getActiveFolderHandle(
     activeVaultId: string | null,
   ): Promise<FileSystemDirectoryHandle | undefined> {
-    if (!activeVaultId) return undefined;
+    if (!activeVaultId) return Promise.resolve(undefined);
+    if (this.folderHandleRead?.vaultId === activeVaultId) {
+      return this.folderHandleRead.handle;
+    }
+    const read = {
+      vaultId: activeVaultId,
+      handle: this.readFolderHandle(activeVaultId).finally(() => {
+        if (this.folderHandleRead === read) this.folderHandleRead = null;
+      }),
+    };
+    this.folderHandleRead = read;
+    return read.handle;
+  }
+
+  private async readFolderHandle(
+    activeVaultId: string,
+  ): Promise<FileSystemDirectoryHandle | undefined> {
     try {
       const db = await getDB();
       let handle = await db.get("settings", `folderHandle_${activeVaultId}`);
