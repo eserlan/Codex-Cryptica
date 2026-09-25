@@ -1,4 +1,15 @@
 {
-  "updated_at": 1790328148,
-  "candidates": []
+  "updated_at": 1790358172,
+  "candidates": [
+    {
+      "id": "reddit-36168046733-session-prep-kept-starting-from-a-blank-",
+      "title": "Session prep kept starting from a blank note",
+      "body": "I had a loose idea like \"haunted canal district\" on Monday and by Thursday I was still staring at an empty note trying to turn it into something I could run.\n\nI built a Session Prep Builder that walks through a few guided questions and turns the idea into a playable outline. It keeps your core premise but shapes it into structure you can actually bring to the table.\n\nWhat you get out of it:\n- an opening hook framed for your party, not a generic pitch\n- 3 to 5 scenes with beats and exits so you know what happens if they go sideways\n- NPCs with wants and leverage you can drop straight into your vault\n- a one-page outline you can edit before game, not a locked block of text\n\nIt still needs your call on tone and difficulty for your group. I left it so you tweak the output instead of it guessing your system math.\n\nWhere does your prep usually stall, getting the hook down or turning the hook into scenes?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/announcements/release-36168046733-0.png)",
+      "url": "https://codexcryptica.com/tools/session-prep-builder",
+      "image_url": "https://assets.codexcryptica.com/announcements/release-36168046733-0.png",
+      "source_id": "36168046733",
+      "status": "approved",
+      "created_at": 1790358171
+    }
+  ]
 }
