@@ -7,49 +7,64 @@ export const howDoIMakeAPlayerBaseMatterInAnRpgCampaign: AnswerConfigInput = {
   question: "How do I make a player base matter in an RPG campaign?",
   kind: "how-to",
   shortAnswer:
-    "Give the base three things: capabilities the party uses to make choices, people who want something from it, and a way to change because of what the party did. A stronghold, crew headquarters or ship matters when it gives the players options they could not get elsewhere, ties them to residents and factions with their own agendas, and can be damaged, neglected or improved by the campaign. If it only hands out bonuses, it stays a menu.",
+    "Use four anchors: a purpose the players choose; capabilities that open options; people and relationships that matter to them; and change and consequences, including improvements, vulnerabilities and the world's reactions. A stronghold, crew headquarters or ship matters when returning gives the players meaningful options, familiar people and visible evidence of what they changed. If it only hands out bonuses, it stays a menu.",
   sections: [
     {
       kind: "prose",
       heading: "Why bases turn into scenery",
       paragraphs: [
-        "A base usually fails quietly. The party earns a keep, a hideout or a ship, spends some downtime there, buys an upgrade, and then the adventure happens somewhere else. Nothing in the base ever asks the players a question, so they stop asking anything of it. It becomes a place to heal and a list of bonuses.",
-        "More rooms and a longer upgrade table rarely help. A base matters when leaving it alone would cost the party something and using it well opens something they could not otherwise reach. Capabilities give the players reasons to go home. People and obligations give the base a claim on the party. Change over time gives every return trip something to look at.",
+        "A base usually fails quietly. The party earns a keep, a hideout or a ship, spends some downtime there, buys an upgrade, and then the adventure happens somewhere else. If the GM makes every decision about what the place is for, it can feel like another job assigned to the party rather than something they own.",
+        "Ask what the players want the place to become and what they chose to invest in: a room, resident, ship system, policy, promise or reputation. A base matters when returning gives them meaningful options, familiar people and visible evidence of what their choices changed. Pressure and neglect can create play, but absence does not always need to bring a penalty.",
       ],
     },
     {
       kind: "list",
-      heading: "Give the base jobs",
+      heading: "Use a homecoming loop",
       intro:
-        "List what the base can do for the party, in the fiction and at the table. Three well-chosen jobs usually beat ten small ones, and different jobs can pull the party in different directions:",
+        "When the party returns, use three questions to prepare a short, repeatable base scene:",
       items: [
         {
-          term: "Recovery and downtime",
-          text: "A safe place to heal, rest, train or wait out a problem. Decide what it costs, whether that is time, supplies or the attention of somebody who would rather be doing something else.",
+          term: "What changed while they were away?",
+          text: "Show one development, whether it came from the party's earlier choices, a resident's work or an outside event.",
         },
         {
-          term: "Storage and logistics",
-          text: "Somewhere to keep treasure, ships, prisoners, evidence or a dangerous artefact. Anything stored is something a rival might want to take.",
+          term: "Who is waiting, and what do they want?",
+          text: "Bring forward a resident, neighbour or faction with a clear stake in the base.",
         },
         {
-          term: "Research, crafting or production",
-          text: "The base turns time and resources into something the party could not buy: a specialist item, a translated text, a repaired engine, a batch of potions.",
+          term: "What can the players choose to engage with?",
+          text: "Offer an option, project or problem; then resolve one meaningful base decision, update the place and let that choice affect later play.",
+        },
+      ],
+    },
+    {
+      kind: "prose",
+      heading: "Choose how much campaign time the base gets",
+      paragraphs: [
+        "Ask the group how much table time they want to spend on the base. If they mainly want a home and a recurring cast, keep upkeep light and focus on a scene or decision when they return. If they enjoy management, projects and politics, give those systems more time. Do not punish the group for ignoring a subsystem they never wanted.",
+      ],
+    },
+    {
+      kind: "list",
+      heading: "Give the base four jobs",
+      intro:
+        "Choose the jobs that fit the purpose the players picked. Each should give them a useful option, not just a bonus:",
+      items: [
+        {
+          term: "Recover",
+          text: "Rest, healing, training or refuge. Decide what the group wants this to look like and keep any costs proportionate to the campaign's desired management weight.",
         },
         {
-          term: "Information",
-          text: "Messengers, informants, a library, a signal post. A base that collects rumours gives the GM a natural way to hand out leads.",
+          term: "Prepare",
+          text: "Research, crafting, storage and logistics: keep supplies, protect evidence, translate a text, repair an engine or make something the party could not simply buy.",
         },
         {
-          term: "Recruitment and allies",
-          text: "A place where specialists, hirelings, apprentices or crew arrive, and where their loyalty is tested.",
+          term: "Reach",
+          text: "Information, recruitment, reputation and travel: hear rumours, meet specialists, gain standing or reach somewhere otherwise out of range.",
         },
         {
-          term: "Standing and reach",
-          text: "Legitimacy, reputation, travel range or a claim to territory. This is often the job players notice least until somebody challenges it.",
-        },
-        {
-          term: "Refuge and missions",
-          text: "Somewhere to retreat when things go wrong and somewhere to launch expeditions from. Both make the base a hub the campaign radiates from.",
+          term: "Launch",
+          text: "Missions, expeditions, diplomacy and operations: give the party somewhere to begin plans and draw the wider campaign towards them.",
         },
       ],
     },
@@ -57,7 +72,7 @@ export const howDoIMakeAPlayerBaseMatterInAnRpgCampaign: AnswerConfigInput = {
       kind: "list",
       heading: "Give it people, not just rooms",
       intro:
-        "The quickest way to make a base matter is to fill it with people who have needs. A steward with a grievance does more for a keep than another wing on the floor plan:",
+        "Let the players choose or shape at least one person, relationship or shared promise they want to protect. Then make the connections visible: someone cares about the base, so they have a stake in it; that stake creates pressure or an opportunity; the players choose how to respond; and the choice changes the relationship.",
       items: [
         {
           term: "Named residents and staff",
@@ -81,7 +96,7 @@ export const howDoIMakeAPlayerBaseMatterInAnRpgCampaign: AnswerConfigInput = {
       kind: "list",
       heading: "Let upgrades open new play",
       intro:
-        "An upgrade that adds a bonus is easily forgotten. An upgrade that adds a decision changes what the table talks about. Ask what each improvement lets the party try, and what it now obliges them to handle:",
+        "Let upgrades express what the players want the base to become. An improvement that opens a new decision is easier to remember than a bonus: ask what the group chose to prioritise, what it lets them try, and what new responsibility they are willing to take on.",
       items: [
         {
           term: "A workshop",
@@ -109,15 +124,15 @@ export const howDoIMakeAPlayerBaseMatterInAnRpgCampaign: AnswerConfigInput = {
       kind: "prose",
       heading: "Make it vulnerable without making it annoying",
       paragraphs: [
-        "A base that can never be threatened has no stakes, and a base that is regularly burned down teaches players not to invest. Most threats work best when they offer a choice: a rival cuts the supply road, a fever spreads through the lower rooms, a debt falls due, a faction demands a favour in exchange for protection. The party can respond, bargain, delay or pay, and each answer changes something.",
-        "Damage can also create work rather than punishment. A breached wall becomes a mission to find masons and stone, a lost cargo becomes a debt, a captured crew member becomes a rescue. Telegraph threats where you can, give the players real control over how the base defends itself, and let neglect have believable consequences rather than sudden ones. Destroying years of player investment in one roll is rarely a good use of a campaign's goodwill.",
+        "A base can be threatened without making every absence costly. A rival might cut the supply road, a fever might spread through the lower rooms, or a faction might offer protection in exchange for a favour. Give the players a chance to respond, bargain, delay or decline; the situation can change, but not every open problem needs to become a penalty.",
+        "Damage can create play rather than erase investment: a breached wall becomes a search for masons and stone, lost cargo becomes a debt, and a captured crew member becomes a rescue. Telegraph serious threats where you can and let the players decide how the base defends itself. Destroying years of player investment in one roll is rarely a good use of a campaign's goodwill.",
       ],
     },
     {
       kind: "list",
       heading: "Tie it to the wider campaign",
       intro:
-        "A base should be visible from outside. When the surrounding world reacts to it, the party can tell it matters. Draw on effects like these:",
+        "Let the base's relationships carry its effects into the wider campaign. A resident, neighbour or faction has a stake; that creates pressure or an opportunity; the players choose what to do; and the choice changes how that person or group relates to the base. For example:",
       items: [
         {
           term: "Factions court or pressure it",
@@ -149,32 +164,24 @@ export const howDoIMakeAPlayerBaseMatterInAnRpgCampaign: AnswerConfigInput = {
       kind: "example",
       heading: "Worked example: a fantasy stronghold",
       paragraphs: [
-        "The party has cleared a ruined tower on a river crossing and been granted the land around it. The base could easily become a place to rest. Here is the same tower with the framework applied.",
+        "The party has cleared a ruined tower on a river crossing and been granted the land around it. They decide the tower should protect trade rather than collect tolls. That purpose shapes who joins them, what they build and how the valley responds.",
       ],
       items: [
         {
-          term: "Weak version",
-          text: "The tower gives a free long rest and a storage chest. The GM mentions it when the party passes, and upgrades are a shopping list of walls and beds.",
+          term: "Player-chosen purpose",
+          text: "The players want the tower to keep river trade safe and open. They choose a policy of free passage instead of tolls.",
         },
         {
           term: "Capabilities",
-          text: "It controls the crossing, so the party can tax or protect river traffic. Its cellar holds a cistern that can hide a small group. Its old signal fire can call the valley garrison, if anyone knows the code.",
+          text: "The tower controls the crossing, its cellar cistern can hide a small group, and its old signal fire can call the valley garrison if someone knows the code. The party chooses to repair the gatehouse to protect the road.",
         },
         {
-          term: "People and factions",
-          text: "Steward Hale wants the land farmed and hates soldiers. The Ferrymen's Guild wants the crossing left toll-free. A lowland lord wants the tower back and has a legal claim through a dead cousin.",
+          term: "People and stake",
+          text: "The players appoint Steward Hale, who wants the land farmed but distrusts soldiers. Their free-passage promise wins the Ferrymen's Guild's support, while a lowland lord claims the tower through a dead cousin.",
         },
         {
-          term: "Vulnerabilities and current project",
-          text: "Grain runs short before winter, and the bridge piers are cracked. The current project is repairing the bridge, which the Ferrymen would rather not see finished.",
-        },
-        {
-          term: "An upgrade that changes play",
-          text: "A working gatehouse lets the party hold the crossing against a small force, and it also makes the tower a legitimate target for the lowland lord's men.",
-        },
-        {
-          term: "Why it works",
-          text: "The party's return trip is now a meeting with a steward, a guild delegate and a legal notice. Every choice about the bridge or the toll changes who helps them next.",
+          term: "Change and consequence",
+          text: "Grain runs short before winter and the bridge piers are cracked. Repairing the gatehouse gives the players a way to defend the crossing, but the lord now treats the tower as a threat. Hale and the guild respond differently to how the party handles the shortage and the claim.",
         },
       ],
     },
@@ -182,32 +189,24 @@ export const howDoIMakeAPlayerBaseMatterInAnRpgCampaign: AnswerConfigInput = {
       kind: "example",
       heading: "Worked example: a criminal crew headquarters",
       paragraphs: [
-        "The party runs jobs out of a back room above a chandler's shop in a harbour district. The space could be a filing cabinet with a bed in it. This version has weight.",
+        "The crew operates from a back room above a chandler's shop. Its purpose and investments are the crew's choice:",
       ],
       items: [
         {
-          term: "Weak version",
-          text: "The room is a safehouse where the party plans jobs and sleeps off injuries. Heat is a number that goes down when they lie low.",
+          term: "Player-chosen purpose",
+          text: "The crew decides whether the headquarters is mainly a safehouse, an intelligence hub or a smuggling operation, and picks upgrades to match.",
         },
         {
-          term: "Capabilities",
-          text: "A fence downstairs can move stolen goods quietly. A tunnel to the old customs cellar gives a private way out. A wall of ledgers means the crew knows who owes whom in the district.",
+          term: "Capability",
+          text: "A fence downstairs moves stolen goods quietly; a tunnel to the old customs cellar gives the crew a private exit.",
         },
         {
-          term: "People and factions",
-          text: "Madame Orlo runs the chandler's and takes a cut. A watch sergeant is paid to look elsewhere and is getting nervous. A rival crew wants the fence's contacts.",
+          term: "Person and stake",
+          text: "Madame Orlo runs the chandler's and takes a cut. A watch sergeant paid to look elsewhere is getting nervous.",
         },
         {
-          term: "Vulnerabilities and unresolved problem",
-          text: "Anyone who watches the shop long enough can tell when the crew is home. The unresolved problem is that one ledger is missing, and someone wants it enough to search the shop at night.",
-        },
-        {
-          term: "An upgrade that changes play",
-          text: "Buying the shop's neighbouring lease would let the crew hide a second exit and store more goods, and it would also mean owning a visible piece of the district that the watch can raid.",
-        },
-        {
-          term: "Why it works",
-          text: "The headquarters generates jobs, informers and pressure. Coming home means facing a nervous sergeant or a missing ledger, and the crew's growth makes the place both more useful and more exposed.",
+          term: "Change and consequence",
+          text: "The crew can buy the neighbouring lease for a second exit and more storage. That makes the base more useful, but easier for the watch to target; meanwhile, a missing ledger draws someone to search the shop at night.",
         },
       ],
     },
@@ -215,32 +214,24 @@ export const howDoIMakeAPlayerBaseMatterInAnRpgCampaign: AnswerConfigInput = {
       kind: "example",
       heading: "Worked example: a sci-fi ship as a mobile base",
       paragraphs: [
-        "The party owns a battered freighter that carries them between stations. Run it as a home rather than as transport.",
+        "The crew owns a battered freighter. They choose what kind of home it will be by deciding which ship system to improve first:",
       ],
       items: [
         {
-          term: "Weak version",
-          text: "The ship is a stat block that gets the party to the next scenario. Repairs are a fee the GM charges, and the crew is a list of skills.",
+          term: "Player-chosen purpose",
+          text: "The crew may prioritise range, medical capacity, cargo, stealth or another role that fits the campaign they want to play.",
         },
         {
-          term: "Capabilities",
-          text: "A sealed cargo bay lets the party carry sensitive freight. A patched-together sensor array reads better than it should. A medical bay can stabilise wounded passengers.",
+          term: "Capability",
+          text: "They invest in a medical bay that can stabilise wounded passengers, choosing care and refuge over extra cargo space.",
         },
         {
-          term: "People and factions",
-          text: "Engineer Prue holds the ship together and wants a proper refit. A station broker owns the ship's lien. A family of passengers is paying for passage and has not said what they are running from.",
+          term: "Person and stake",
+          text: "Engineer Prue wants a proper refit. A family paying for passage has not said what they are running from, and the passengers now depend on the crew's medical facilities.",
         },
         {
-          term: "Vulnerabilities and current project",
-          text: "The drive core is overdue for maintenance, and the lien means the ship can be seized in some ports. The current project is replacing the drive core, which needs parts that only one faction sells.",
-        },
-        {
-          term: "An upgrade that changes play",
-          text: "A jump-capable drive would let the party reach systems no one else can easily follow them to, and it would also draw attention from the faction that sells the parts.",
-        },
-        {
-          term: "Why it works",
-          text: "Every stop is a chance for the ship to be cared for, threatened or used. The crew's needs, the lien and the passengers keep it a home the players are invested in.",
+          term: "Change and consequence",
+          text: "The drive core needs maintenance and a lien lets a broker seize the ship in some ports. The crew can refit the drive to extend their range, but only one faction sells the parts; choosing how to spend their resources changes who they rely on and where they can go.",
         },
       ],
     },
@@ -248,23 +239,23 @@ export const howDoIMakeAPlayerBaseMatterInAnRpgCampaign: AnswerConfigInput = {
       kind: "checklist",
       heading: "Base design checklist",
       intro:
-        "For every base, sketch these before play. The numbers are a starting point rather than a rule, and short notes are enough:",
+        "For every base, sketch these before play. Short notes are enough, and adjust the detail to the table time the group wants to spend on it:",
       items: [
-        "Three capabilities the party can use to make choices, not just receive bonuses.",
-        "Three people or factions who care about the base, and what each of them wants from it.",
-        "Two vulnerabilities, including one the party can see coming.",
-        "One current project the party or its residents are working on.",
-        "One unresolved problem that will come up whether or not the party goes looking for it.",
-        "One upgrade that would materially change future play, and what it would cost the party to take it.",
-        "One way the wider world already reacts to the base.",
+        "What do the players want the base to be for?",
+        "What two or three capabilities make it useful?",
+        "Who lives there or cares about it?",
+        "What project or choice can change it?",
+        "What one visible vulnerability or stake can create play?",
+        "How does the wider world react to it?",
+        "How much table time does the group want to spend managing it?",
       ],
     },
   ],
   codexConnection: {
     heading: "Keep the base, its people and its obligations linked",
     paragraphs: [
-      "A base that matters is a set of connections: rooms tied to residents, residents tied to factions, factions tied to problems. Codex Cryptica keeps each of those as its own entry with links between them, so when the party returns you can see who is waiting, what is unresolved and what has changed.",
-      "Start with the location, generate the settlement or ship around it, add the factions and NPCs who have a stake, and write down the current project and the open problem. The checklist above becomes the opening page of the base's entry.",
+      "A base that matters is a set of connections: rooms tied to residents, residents tied to factions, factions tied to problems. Codex Cryptica keeps each of those as its own entry with links between them, so when the party returns you can see who is waiting, what is unresolved and what has changed because of the players' choices.",
+      "Start with the purpose the players chose, then add the location, residents and factions they care about, alongside one project or open problem they want to pursue. The checklist above becomes the opening page of the base's entry.",
     ],
     linkText: "Generate a settlement",
     href: "/generators/settlement",
@@ -338,7 +329,7 @@ export const howDoIMakeAPlayerBaseMatterInAnRpgCampaign: AnswerConfigInput = {
       "how to make a spaceship feel like home in an rpg",
     ],
     uniqueValue:
-      "A system-neutral GM technique for making a stronghold, headquarters, settlement or ship drive play: jobs for the base, people with stakes, upgrades that open decisions, believable vulnerability, wider-world reactions, and a compact design checklist with three worked examples.",
+      "A system-neutral way to make a stronghold, headquarters, settlement or ship feel player-owned: choose its purpose and capabilities, connect people and stakes to player decisions, use a homecoming loop, and match base management to the group's desired campaign weight, with three genre examples and a compact checklist.",
     userJob: "adopt-workflow",
     relatedIntents: [
       "answer-base-building-system-selection",
@@ -362,7 +353,7 @@ export const howDoIMakeAPlayerBaseMatterInAnRpgCampaign: AnswerConfigInput = {
   seo: {
     title: "How to Make a Player Base Matter in an RPG | Codex Cryptica",
     description:
-      "Make a stronghold, headquarters or ship drive play: give it jobs, people with stakes, upgrades that open decisions, believable vulnerability and a design checklist.",
+      "Make a stronghold, headquarters or ship feel player-owned with a chosen purpose, useful capabilities, people with stakes, a homecoming loop and a practical checklist.",
     image:
       "https://assets.codexcryptica.com/og/how-do-i-make-a-player-base-matter-in-an-rpg-campaign.jpg",
     imageAlt:
