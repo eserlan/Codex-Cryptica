@@ -1,5 +1,5 @@
 {
-  "updated_at": 1790292365,
+  "updated_at": 1790296776,
   "candidates": [
     {
       "id": "reddit-35104395212-i-put-every-superhero-generator-in-one-p",
@@ -122,14 +122,14 @@
       "created_at": 1790269475
     },
     {
-      "id": "reddit-36067410949-coups-that-feel-political-not-just-one-v",
-      "title": "Coups that feel political, not just one villain pulling a lever",
-      "body": "My coups never felt political. A general ignored an order, a single roll decided it, and the rest of the government just watched.\n\nI wanted something that felt more like institutions arguing about who is actually allowed to rule, so I wrote an Answer guide that treats legal authority, practical power and legitimacy as three different things that can point at three different people.\n\nIt is here: https://codexcryptica.com/answers/how-do-i-build-a-believable-constitutional-crisis-or-coup\n\nYou get:\n\n- questions that show where power really sits, from who can give orders to who can stop pay reaching soldiers and who controls what people hear\n- a way to split the state into bodies with different loyalties, dependencies and switching conditions instead of one government block\n- competing claims to legitimacy so merchants, soldiers, farmers and clergy can honestly back different actors\n- triggers and clocks that force the mismatch into the open, plus a check that every response costs something\n- a worked Republic of Karrow example played two ways depending on whether provincial governors or the capital hold the pay chests\n\nI left the outcome open on purpose. The guide gives you pressures and branches, not a chosen winner. If you want a clean hero versus villain coup this will feel overbuilt.\n\nIn your setting, who actually handles the money that pays the troops, and what would make them side with someone else?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/announcements/council-vote-hero-v1.jpg)\n\n---\n*Posted automatically via release pipeline. Feedback and discussion welcome!*\n<!-- id:36067410949 -->",
-      "url": "https://codexcryptica.com/answers/how-do-i-build-a-believable-constitutional-crisis-or-coup",
-      "image_url": "https://assets.codexcryptica.com/announcements/council-vote-hero-v1.jpg",
+      "id": "reddit-36067410949-cloud-backup-that-stops-re-uploading-you",
+      "title": "Cloud Backup that stops re-uploading your whole vault",
+      "body": "Running a vault with a few thousand entities used to make the tab stutter on backup. It was hydrating everything, re-uploading everything, and pinning the CPU while it did it.\n\nI reworked Cloud Backup to upload only what changed, through sharded v2 storage and a delta endpoint, without pulling the whole vault into memory first.\n\nThere is no new page for this one, it is just faster and cooler in the background:\n\n- only dirty entities upload, so a small edit does not push the whole vault\n- sharded v2 storage on the worker instead of one big object per backup\n- no whole-vault hydration blocking the main thread during sync\n- pruned assets after delta uploads, so deleted images do not linger\n- lower CPU and battery use on large vaults in my local tests, especially on the second and later syncs\n\nOpen uncertainty: I have tested this up to a few thousand entities locally, but vaults with a lot of heavy attachments may still feel slow on the very first upload after the switch. I am still collecting real-world numbers there.\n\nDo you have a vault big enough that backup used to freeze the tab, and has that pause gone away in your last few syncs?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/images/help-blog/sync.png)\n\n---\n*Posted automatically via release pipeline. Feedback and discussion welcome!*\n<!-- id:36067410949 -->",
+      "url": "",
+      "image_url": "https://assets.codexcryptica.com/images/help-blog/sync.png",
       "source_id": "36067410949",
       "status": "approved",
-      "created_at": 1790292365
+      "created_at": 1790296776
     }
   ]
 }
