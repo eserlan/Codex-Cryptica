@@ -76,6 +76,35 @@ describe("RandomSourceEngine.roll", () => {
     const die = out.chain[0].dieValue!;
     expect(out.finalText).toBe(die <= 50 ? "Low" : "High");
   });
+
+  it("selects by range using a multi-die formula (#3403)", () => {
+    const src: RandomSource = {
+      id: "t",
+      name: "T",
+      kind: "table",
+      labels: [],
+      selection: {
+        mode: "ranged",
+        die: { sides: 6, count: 4, keepHighest: 3 },
+      },
+      entries: [
+        { id: "a", text: "Low", range: { min: 3, max: 10 } },
+        { id: "b", text: "High", range: { min: 11, max: 18 } },
+      ],
+    };
+    for (let i = 0; i < 30; i++) {
+      const out = engine().roll(src, emptyCtx);
+      const die = out.chain[0].dieValue!;
+      expect(die).toBeGreaterThanOrEqual(3);
+      expect(die).toBeLessThanOrEqual(18);
+      expect(out.finalText).toBe(die <= 10 ? "Low" : "High");
+      const [part] = out.chain[0].rollParts ?? [];
+      expect(part?.type).toBe("dice");
+      expect(part?.rolls).toHaveLength(3);
+      expect(part?.dropped).toHaveLength(1);
+      expect(part?.value).toBe(die);
+    }
+  });
 });
 
 describe("RandomSourceEngine.rollMany", () => {

@@ -95,3 +95,68 @@ describe("parseRandomSource / serialiseRandomSource", () => {
     expect(result.value.entries?.[0].text).toBe("left | right");
   });
 });
+
+describe("parseRandomSource / serialiseRandomSource — multi-die formulas (#3403)", () => {
+  const multiDieTable: RandomSource = {
+    ...rangedTable,
+    id: "t3",
+    selection: {
+      mode: "ranged",
+      die: { sides: 6, count: 4, keepHighest: 3, modifier: 2 },
+    },
+    entries: [
+      { id: "e1", text: "A rusted blade", range: { min: 5, max: 12 } },
+      { id: "e2", text: "A sealed letter", range: { min: 13, max: 20 } },
+    ],
+  };
+
+  it("round-trips a multi-die, keep-highest, modifier formula", () => {
+    const result = parseRandomSource(serialiseRandomSource(multiDieTable));
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.value).toEqual(multiDieTable);
+  });
+
+  it("writes the canonical formula into frontmatter", () => {
+    const serialised = serialiseRandomSource(multiDieTable);
+    expect(serialised).toContain("selection: ranged 4d6kh3+2");
+  });
+
+  it("reads a legacy 'ranged dN' file exactly as before", () => {
+    const legacy = [
+      "---",
+      "id: t2",
+      "name: Loot d100",
+      "kind: table",
+      "labels: []",
+      "selection: ranged d100",
+      "---",
+      "| id | range | result |",
+      "| --- | --- | --- |",
+      "| e1 | 1-100 | Anything |",
+    ].join("\n");
+    const result = parseRandomSource(legacy);
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.value.selection).toEqual({
+      mode: "ranged",
+      die: { sides: 100 },
+    });
+  });
+
+  it("reports an error for an unreadable die expression", () => {
+    const broken = [
+      "---",
+      "id: t2",
+      "name: Broken",
+      "kind: table",
+      "labels: []",
+      "selection: ranged 1d20 - 1d4",
+      "---",
+      "| id | range | result |",
+      "| --- | --- | --- |",
+    ].join("\n");
+    const result = parseRandomSource(broken);
+    expect(result.ok).toBe(false);
+  });
+});

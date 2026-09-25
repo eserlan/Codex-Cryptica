@@ -5,6 +5,7 @@ import type {
   Spread,
   TableEntry,
 } from "./types";
+import { dieFormula, parseDieNotation } from "./dice-notation";
 
 /**
  * Vault file format for a Random Source: YAML frontmatter plus a Markdown
@@ -67,7 +68,7 @@ export function serialiseRandomSource(source: RandomSource): string {
   if (source.kind === "table" && source.selection) {
     fm.push(
       source.selection.mode === "ranged"
-        ? `selection: ranged d${source.selection.die.sides}`
+        ? `selection: ranged ${dieFormula(source.selection.die)}`
         : "selection: weighted",
     );
   }
@@ -167,11 +168,15 @@ export function parseRandomSource(markdown: string): ParseResult<RandomSource> {
     const selectionRaw = fm.get("selection") ?? "weighted";
     let selection: SelectionMode;
     if (selectionRaw.startsWith("ranged")) {
-      const sides = Number(selectionRaw.replace(/[^0-9]/g, ""));
-      if (!Number.isFinite(sides) || sides <= 0) {
-        return { ok: false, error: "Ranged table has no valid die" };
+      const notation = selectionRaw.slice("ranged".length).trim();
+      const parsed = parseDieNotation(notation);
+      if (!parsed.ok) {
+        return {
+          ok: false,
+          error: `Ranged table has no valid die: ${parsed.error}`,
+        };
       }
-      selection = { mode: "ranged", die: { sides } };
+      selection = { mode: "ranged", die: parsed.value };
     } else {
       selection = { mode: "weighted" };
     }

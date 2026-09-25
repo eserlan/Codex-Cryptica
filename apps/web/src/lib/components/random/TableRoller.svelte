@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { RandomSource, RollOutcome } from "random-source-engine";
+  import { dieFormula } from "random-source-engine";
   import { randomSources } from "$lib/features/random";
   import type { RandomSourceStore } from "$lib/stores/random-source-store.svelte";
   import {
@@ -69,6 +70,13 @@
     if (source.selection?.mode === "ranged") return source.selection.die.sides;
     return (source.entries ?? []).reduce((sum, e) => sum + (e.weight ?? 1), 0);
   });
+
+  /** The die notation shown and recorded, e.g. `d6` or `4d6kh3+2`. */
+  const dieLabel = $derived(
+    source.selection?.mode === "ranged"
+      ? dieFormula(source.selection.die)
+      : `d${dieSides}`,
+  );
 
   const hasEntries = $derived((source.entries ?? []).length > 0);
   const resultText = $derived(outcome?.finalText ?? "");
@@ -150,15 +158,17 @@
 
   /** Writes the roll into the shared roll history (FR-018). */
   async function record(result: RollOutcome) {
-    const value = result.chain[0]?.dieValue;
+    const root = result.chain[0];
+    const value = root?.dieValue;
     await history.addResult(
       {
         total: value ?? 0,
         parts:
-          value === undefined
+          root?.rollParts ??
+          (value === undefined
             ? []
-            : [{ type: "dice", sides: dieSides, rolls: [value], value }],
-        formula: `d${dieSides}`,
+            : [{ type: "dice", sides: dieSides, rolls: [value], value }]),
+        formula: dieLabel,
         timestamp: clock.now(),
       },
       "table",
@@ -216,7 +226,7 @@
         <span
           class="mt-1.5 text-[8px] font-bold uppercase tracking-tighter text-theme-muted"
         >
-          d{dieSides}
+          {dieLabel}
         </span>
       </div>
       <p

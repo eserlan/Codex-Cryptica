@@ -160,6 +160,7 @@ export const howMuchPrepDoYouNeedForAnRpgSession: AnswerConfigInput = {
     "what-rpg-system-is-good-for-solo-play",
     "how-do-i-organise-gm-notes-for-in-person-play",
     "how-do-i-prepare-an-rpg-session-step-by-step",
+    "how-do-i-pace-an-rpg-one-shot",
   ],
   discovery: {
     id: "answer-session-prep",

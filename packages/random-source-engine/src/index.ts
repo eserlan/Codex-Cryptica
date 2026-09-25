@@ -1,6 +1,7 @@
 export * from "./types";
 export * from "./engine";
 export * from "./selection";
+export * from "./dice-notation";
 export * from "./resolver";
 export * from "./parser";
 export * from "./validation";

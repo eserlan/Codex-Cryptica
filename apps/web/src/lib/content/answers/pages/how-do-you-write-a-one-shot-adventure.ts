@@ -166,6 +166,8 @@ export const howDoYouWriteAOneShotAdventure: AnswerConfigInput = {
     "how-do-you-make-a-boss-fight-memorable-in-a-tabletop-rpg",
     "how-do-i-turn-an-rpg-idea-into-an-adventure",
     "how-do-i-prepare-an-rpg-session-step-by-step",
+    "how-do-i-write-a-good-call-of-cthulhu-one-shot",
+    "how-do-i-pace-an-rpg-one-shot",
   ],
   discovery: {
     id: "answer-write-one-shot-adventure",
@@ -175,13 +177,17 @@ export const howDoYouWriteAOneShotAdventure: AnswerConfigInput = {
       "how to prep a one-shot rpg",
       "writing a one shot dnd adventure",
       "one shot adventure structure",
-      "pacing a one shot session",
       "designing a single session tabletop adventure",
     ],
     userJob: "adopt-workflow",
     uniqueValue:
       "Provides a structured four-beat single-session framework with elastic encounters to guarantee tabletop adventures finish on time without rushed finales.",
     acknowledgedOverlap: [
+      {
+        with: "answer-pace-rpg-one-shot",
+        reason:
+          "This cornerstone page provides the overall four-beat scenario structure, whereas the pacing answer focuses specifically on table-time budgeting, checkpoints, and real-time pruning.",
+      },
       {
         with: "answer-run-heist-in-tabletop-rpg",
         reason:

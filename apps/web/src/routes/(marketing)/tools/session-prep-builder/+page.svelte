@@ -125,6 +125,8 @@
   introTitle="Build your next session"
   introText="Start from the hook or situation you already have. Answer a few questions, or let AI answer them, and get a one-page run sheet you can read at the table. Then adjust any section until it fits."
   explainerText="Prepare a situation, not a script. Answer what you know, let AI draft the rest, then adjust what does not fit."
+  ogImage="https://assets.codexcryptica.com/screenshots/session-prep-builder.jpg"
+  ogImageAlt="The Session Prep Builder tool showing the guided question workflow and run sheet preparation"
   showGeneratorSwitcher={false}
   singleColumn
   initialDraft={exampleDraft}
