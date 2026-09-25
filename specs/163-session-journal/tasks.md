@@ -199,7 +199,7 @@ Per plan.md's Project Structure: a new pure-logic package `packages/session-jour
 - [x] T054 Manually walk through quickstart.md's Story 5 verification in a running app (desktop and phone-width, guest mode, vault switch, reload → Resume). This is also where FR-022's route-navigation survival is verified — jsdom cannot route — so navigate the journal control between at least two different routes with the panel closed and reopened, and confirm journal content, control state and last-selected tab are unchanged. Unit tests cannot show that the control is reachable and correctly stacked against the panel overlay
 - [x] T055 Run `bunx fallow audit --format json --quiet --explain --gate-marker agent --base staging` and resolve any introduced findings before pushing
 - [x] T056 Run the `codex-review` specialist review on the slice 2 changes (AGENTS.md PR Quality Gate) and address findings
-- [ ] T057 Update PR #3422's description, and check off #3407's acceptance criteria once verified, so the issue and PR match what shipped
+- [x] T057 Update the slice 2 PR (#3429) description, and check off #3407's acceptance criteria once verified, so the issue and PR match what shipped
 
 ---
 
