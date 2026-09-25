@@ -21,6 +21,7 @@ import { howDoIRunPoliticalIntrigueAndFactionPlay } from "./how-do-i-run-politic
 import { howDoIRunSpiesAndInfiltratorsInAnRpg } from "./how-do-i-run-spies-and-infiltrators-in-an-rpg";
 import { howDoIStartGmingForTheFirstTime } from "./how-do-i-start-gming-for-the-first-time";
 import { howDoITurnAnRpgIdeaIntoAnAdventure } from "./how-do-i-turn-an-rpg-idea-into-an-adventure";
+import { howDoIWriteAGoodCallOfCthulhuOneShot } from "./how-do-i-write-a-good-call-of-cthulhu-one-shot";
 import { howDoYouBuildAPointCrawlForAnRpg } from "./how-do-you-build-a-point-crawl-for-an-rpg";
 import { howDoYouCreateABelievableFictionalReligion } from "./how-do-you-create-a-believable-fictional-religion";
 import { howDoYouCreateAFantasyCityThatFeelsAlive } from "./how-do-you-create-a-fantasy-city-that-feels-alive";
@@ -126,6 +127,7 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     howDoIRunSpiesAndInfiltratorsInAnRpg,
     howDoIStartGmingForTheFirstTime,
     howDoITurnAnRpgIdeaIntoAnAdventure,
+    howDoIWriteAGoodCallOfCthulhuOneShot,
     howDoYouBuildAPointCrawlForAnRpg,
     howDoYouCreateABelievableFictionalReligion,
     howDoYouCreateAFantasyCityThatFeelsAlive,
