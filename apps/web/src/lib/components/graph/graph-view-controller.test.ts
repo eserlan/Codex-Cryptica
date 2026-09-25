@@ -115,6 +115,7 @@ describe("GraphViewController", () => {
 
   beforeEach(() => {
     deps = {
+      clock: { now: () => 1000 },
       graph: {
         elements: [],
         timelineMode: false,
@@ -295,7 +296,7 @@ describe("GraphViewController", () => {
       if (val !== undefined) scratchStore[key] = val;
       return scratchStore[key];
     }) as any;
-    mockCy.scratch("_lastCxtTap", Date.now());
+    mockCy.scratch("_lastCxtTap", 1000);
 
     const mockNode = {
       id: () => "node-1",
