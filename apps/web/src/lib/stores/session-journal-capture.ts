@@ -10,7 +10,7 @@ export const SESSION_JOURNAL_CAPTURE_LISTENER = "session-journal-capture";
 
 /** The slice of `SessionJournalStore` the listener needs. */
 export interface JournalCaptureTarget {
-  readonly current: { status: string } | undefined;
+  readonly current: { id: string; vaultId: string; status: string } | undefined;
   readonly activeSectionId: string | undefined;
   appendEntry(entry: JournalEntryInput): Promise<unknown>;
 }
@@ -75,7 +75,8 @@ export class SessionJournalCapture {
     // A safeguard: capture events are never relayed, so this should not fire
     // (FR-031). If one ever arrives from another tab, that tab captured it.
     if (event.metadata?.remote) return;
-    if (this.store.current?.status !== "active") return;
+    const journal = this.store.current;
+    if (journal?.status !== "active") return;
 
     const result = captureToEntryInput(
       event.payload,
@@ -83,12 +84,28 @@ export class SessionJournalCapture {
     );
     if (!result.ok) return;
 
-    this.queue = this.queue.then(() => this.save(result.input));
+    this.queue = this.queue.then(() =>
+      this.save(result.input, journal.id, journal.vaultId),
+    );
   }
 
-  private async save(input: JournalEntryInput): Promise<void> {
-    // The journal may have ended while earlier entries were being saved.
-    if (this.store.current?.status !== "active") return;
+  private async save(
+    input: JournalEntryInput,
+    journalId: string,
+    vaultId: string,
+  ): Promise<void> {
+    // The journal may have ended, changed, or the user may have switched
+    // vaults while earlier entries were being saved. Never carry a roll into
+    // a different journal that became active while it waited in the queue.
+    const current = this.store.current;
+    if (
+      current?.status !== "active" ||
+      current.id !== journalId ||
+      current.vaultId !== vaultId ||
+      !this.isCaptureAllowed()
+    ) {
+      return;
+    }
     try {
       await this.store.appendEntry(input);
     } catch (error) {

@@ -9,7 +9,11 @@ import {
 function fakeStore(overrides: Record<string, unknown> = {}) {
   const appended: any[] = [];
   const store = {
-    current: { status: "active" } as { status: string } | undefined,
+    current: {
+      id: "journal-1",
+      vaultId: "vault-1",
+      status: "active",
+    } as { id: string; vaultId: string; status: string } | undefined,
     activeSectionId: undefined as string | undefined,
     appendEntry: vi.fn(async (input: any) => {
       appended.push(input);
@@ -190,6 +194,32 @@ describe("SessionJournalCapture", () => {
       await flush();
       expect(store.appendEntry).not.toHaveBeenCalled();
       expect(log).not.toHaveBeenCalled();
+    });
+
+    it("when another journal becomes active before a queued entry is saved", async () => {
+      let release!: () => void;
+      const firstSave = new Promise<void>((resolve) => (release = resolve));
+      const appended: any[] = [];
+      const { store } = fakeStore({
+        appendEntry: vi.fn(async (input: any) => {
+          if (input.content === "first") await firstSave;
+          appended.push(input);
+        }),
+      });
+      make(store);
+
+      publish(bus, { entryType: "dice-roll", content: "first" });
+      publish(bus, { entryType: "dice-roll", content: "from old journal" });
+      await flush();
+      store.current = {
+        id: "journal-2",
+        vaultId: "vault-2",
+        status: "active",
+      };
+      release();
+      await flush();
+
+      expect(appended.map((entry) => entry.content)).toEqual(["first"]);
     });
 
     it("in a guest session (FR-033)", async () => {

@@ -13,7 +13,7 @@ const publish = (bus: AppEventBus) =>
 const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
 
 const makeStore = () => ({
-  current: { status: "active" },
+  current: { id: "journal-1", vaultId: "vault-1", status: "active" },
   activeSectionId: undefined,
   appendEntry: vi.fn().mockResolvedValue(undefined),
 });
