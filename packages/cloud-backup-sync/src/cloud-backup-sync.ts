@@ -40,6 +40,37 @@ export interface UploadProgress {
   total: number;
 }
 
+/**
+ * Privacy-safe stage timing: counts, bytes and milliseconds only, never
+ * content. Shared vocabulary so the app can attribute a save across layers —
+ * `hydrate`/`build` are measured where the snapshot is assembled, `hash`
+ * where unchanged media is detected, `serialize`/`upload` where it leaves.
+ * Exists to answer "is the main thread the bottleneck" with numbers.
+ */
+export type CloudBackupTimingStage =
+  "hydrate" | "build" | "hash" | "serialize" | "upload";
+
+export interface CloudBackupTiming {
+  stage: CloudBackupTimingStage;
+  durationMs: number;
+  /** Items processed (entities hydrated, assets hashed, files uploaded). */
+  count?: number;
+  /** Bytes processed (asset bytes read, commit body length). */
+  bytes?: number;
+}
+
+/** Monotonic clock that survives environments without `performance`. */
+function nowMs(): number {
+  return typeof performance !== "undefined" ? performance.now() : Date.now();
+}
+
+/**
+ * Asset PUTs in flight at once. Mirrors the hydration bound: enough to stop a
+ * media-heavy save taking the sum of every round trip, few enough not to
+ * stampede the worker or the browser's per-host connection limit.
+ */
+export const ASSET_UPLOAD_CONCURRENCY = 8;
+
 export type CloudBackupOutcome<T> =
   | { ok: true; value: T }
   | {
@@ -217,6 +248,60 @@ export async function enableCloudBackup(
 }
 
 /**
+ * Links a local vault to an existing backup (attach).
+ *
+ * The third path beside "set up" (a brand-new backup) and "load into a new
+ * vault" (restore): a vault that is already on this device adopts the cloud
+ * copy identified by a recovery key, so the next save pushes there instead of
+ * forking a second backup alongside it.
+ *
+ * The key is verified first — a status read with the ownership code — and
+ * nothing is written when the backup cannot be reached, so a mistyped key
+ * never links a vault to nowhere. Linking is the deliberate act that data may
+ * leave the device, so it stamps consent like enabling does. The stored
+ * `lastPushedAt` is the remote timestamp at attach time, which is what lets
+ * the guarded auto-push pause on later divergence instead of overwriting it.
+ */
+export async function attachCloudBackup(
+  runtime: CloudBackupRuntime,
+  vaultId: string,
+  credentials: { backupId: string; ownerCode: string },
+  opts: { vaultTitle?: string } = {},
+): Promise<CloudBackupOutcome<LocalCloudBackupRecord>> {
+  const existing = await readRecord(runtime, vaultId);
+  if (existing?.enabled && existing.backupId !== credentials.backupId) {
+    // Overwriting this silently would fork the vault onto a second backup
+    // while the first keeps billing storage; the user must detach first.
+    return {
+      ok: false,
+      error:
+        "This vault is already backing up to a different cloud copy. Turn backup off first, then attach.",
+    };
+  }
+
+  // Same read the guarded push uses: unreachable or wrong key fails here,
+  // before anything is written. A missing stamp means "never pushed".
+  const remote = await readRemoteLastPushedAt(runtime, credentials);
+  if (!remote.ok) {
+    return { ok: false, error: remote.error, status: remote.status };
+  }
+
+  const title = opts.vaultTitle ?? existing?.vaultTitle;
+  const record: LocalCloudBackupRecord = {
+    vaultId,
+    backupId: credentials.backupId,
+    ownerCode: credentials.ownerCode,
+    enabled: true,
+    status: "idle",
+    lastPushedAt: remote.value,
+    consentedAt: existing?.consentedAt ?? nowIso(runtime),
+    ...(title !== undefined ? { vaultTitle: title } : {}),
+  };
+  await runtime.storage.write(vaultId, record);
+  return { ok: true, value: record };
+}
+
+/**
  * Uploads the vault's current state, replacing the previous backup (FR-018).
  *
  * Explicitly triggered — the user presses "Save to cloud"; nothing here runs on
@@ -241,6 +326,8 @@ export interface SnapshotUploadOptions {
   skipAssetUploadIds?: ReadonlySet<string> | readonly string[];
   /** Cancels remaining uploads and prevents an aborted push from rewriting local status. */
   signal?: AbortSignal;
+  /** Stage timings for the worker-or-not question; same pattern as `onProgress`. */
+  onTiming?: (timing: CloudBackupTiming) => void;
 }
 
 async function uploadSnapshot(
@@ -253,49 +340,96 @@ async function uploadSnapshot(
   const assets = payload.assets ?? [];
   const auth = `Bearer ${record.ownerCode}`;
   const skip = new Set(options?.skipAssetUploadIds ?? []);
+  const uploadStartedAt = nowMs();
 
-  for (const [index, asset] of assets.entries()) {
-    options?.signal?.throwIfAborted();
-    if (!skip.has(asset.assetId)) {
-      const response = await runtime.fetch(
-        `${runtime.baseUrl}/api/cloud-backup/${record.backupId}/assets/${encodeURIComponent(asset.assetId)}`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": asset.mimeType || "application/octet-stream",
-            Authorization: auth,
-          },
-          body: asset.bytes,
-          signal: options?.signal,
-        },
-      );
+  // Bounded concurrency: strictly sequential PUTs make a media-heavy save
+  // take the sum of every round trip (measured 29s for 15 files). PUTs are
+  // idempotent — same id, same bytes — so completion order is irrelevant
+  // and only the finished count is reported.
+  let cursor = 0;
+  let completed = 0;
+  const failures: { error: string; status: number }[] = [];
+  const worker = async () => {
+    while (cursor < assets.length && failures.length === 0) {
       options?.signal?.throwIfAborted();
-      if (!response.ok) {
-        return {
-          ok: false,
-          error: await errorFrom(response),
-          status: response.status,
-        };
+      const asset = assets[cursor++];
+      if (!skip.has(asset.assetId)) {
+        const response = await runtime.fetch(
+          `${runtime.baseUrl}/api/cloud-backup/${record.backupId}/assets/${encodeURIComponent(asset.assetId)}`,
+          {
+            method: "PUT",
+            headers: {
+              "Content-Type": asset.mimeType || "application/octet-stream",
+              Authorization: auth,
+            },
+            body: asset.bytes,
+            signal: options?.signal,
+          },
+        );
+        if (failures.length > 0) return;
+        if (!response.ok) {
+          // First failure wins; the rest stop picking up work and the commit
+          // below never runs, so a half-uploaded snapshot is never published.
+          failures.push({
+            error: await errorFrom(response),
+            status: response.status,
+          });
+          return;
+        }
       }
+      completed += 1;
+      onProgress?.({ uploaded: completed, total: assets.length });
     }
-    onProgress?.({ uploaded: index + 1, total: assets.length });
+  };
+
+  await Promise.all(
+    Array.from(
+      { length: Math.min(ASSET_UPLOAD_CONCURRENCY, assets.length) },
+      worker,
+    ),
+  );
+  options?.signal?.throwIfAborted();
+  const firstFailure = failures[0];
+  if (firstFailure) {
+    return {
+      ok: false,
+      error: firstFailure.error,
+      status: firstFailure.status,
+    };
   }
 
   options?.signal?.throwIfAborted();
+  // Timed apart from the network: stringify is the one synchronous,
+  // main-thread, size-proportional block in this function.
+  const serializeStartedAt = nowMs();
+  const commitBody = JSON.stringify({
+    vaultTitle: payload.vaultTitle,
+    bundle: payload.bundle,
+    assetIds: assets.map((asset) => asset.assetId),
+  });
+  options?.onTiming?.({
+    stage: "serialize",
+    durationMs: nowMs() - serializeStartedAt,
+    bytes: commitBody.length,
+  });
   const response = await runtime.fetch(
     `${runtime.baseUrl}/api/cloud-backup/${record.backupId}/commit`,
     {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: auth },
-      body: JSON.stringify({
-        vaultTitle: payload.vaultTitle,
-        bundle: payload.bundle,
-        assetIds: assets.map((asset) => asset.assetId),
-      }),
+      body: commitBody,
       signal: options?.signal,
     },
   );
   options?.signal?.throwIfAborted();
+  options?.onTiming?.({
+    stage: "upload",
+    durationMs: nowMs() - uploadStartedAt,
+    count: assets.length,
+    bytes:
+      commitBody.length +
+      assets.reduce((total, asset) => total + asset.bytes.length, 0),
+  });
 
   if (!response.ok) {
     return {
@@ -380,6 +514,7 @@ export async function pushVaultToCloudBackup(
     const result = await uploadSnapshot(runtime, record, payload, onProgress, {
       skipAssetUploadIds: options?.skipAssetUploadIds,
       signal: options?.signal,
+      onTiming: options?.onTiming,
     });
     options?.signal?.throwIfAborted();
     if (!result.ok) {

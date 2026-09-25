@@ -136,6 +136,40 @@ describe("buildCloudBackupPayload", () => {
     expect(result.skippedAssets).toEqual([]);
   });
 
+  it("emits hydrate and build timings with counts", async () => {
+    const timings: { stage: string; count?: number }[] = [];
+    const result = await buildCloudBackupPayload(
+      "V",
+      [entity("e1", "assets/map.png")],
+      {
+        resolveImageUrl: async () => "blob:x",
+        fetch: okFetch,
+        hydrateEntities: {
+          isContentLoaded: () => false,
+          readFullEntity: async (id: string) => entity(id),
+        },
+        onTiming: (timing) => timings.push(timing),
+      },
+    );
+
+    expect(result.bundle.entities).toHaveLength(1);
+    expect(timings.map((timing) => timing.stage)).toEqual(["hydrate", "build"]);
+    for (const timing of timings) {
+      expect(timing.count).toBe(1);
+    }
+  });
+
+  it("emits no hydrate stage when there is nothing to hydrate", async () => {
+    const timings: { stage: string }[] = [];
+    await buildCloudBackupPayload("V", [entity("e1")], {
+      resolveImageUrl: async () => "blob:x",
+      fetch: okFetch,
+      onTiming: (timing) => timings.push(timing),
+    });
+
+    expect(timings.map((timing) => timing.stage)).toEqual(["build"]);
+  });
+
   it("records the manifest so restore knows where each file belongs", async () => {
     const result = await buildCloudBackupPayload(
       "V",

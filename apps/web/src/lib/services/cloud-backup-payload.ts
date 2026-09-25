@@ -1,4 +1,10 @@
 import type { LocalEntity } from "$lib/stores/vault/types";
+import type { CloudBackupTiming } from "@codex/cloud-backup-sync";
+
+/** Monotonic clock for stage timings; counts, bytes and ms only, never content. */
+function nowMs(): number {
+  return typeof performance !== "undefined" ? performance.now() : Date.now();
+}
 
 /**
  * Builds the whole-vault snapshot that Cloud Backup uploads (spec 162).
@@ -30,6 +36,8 @@ export interface CloudBackupPayloadDeps {
   hydrateEntities?: EntityHydrator;
   /** Stops entity reads and asset fetches once backup is disabled mid-build. */
   signal?: AbortSignal;
+  /** Stage timings for the worker-or-not question; same pattern as `onProgress`. */
+  onTiming?: (timing: CloudBackupTiming) => void;
 }
 
 /**
@@ -166,11 +174,13 @@ export async function buildCloudBackupPayload(
 ): Promise<CloudBackupPayloadResult> {
   let list = entities as readonly LocalEntity[];
   const skippedEntities: string[] = [];
+  const buildStartedAt = nowMs();
 
   // Before anything else: the snapshot must hold real markdown, not the
   // warm-start preview. Asset collection reads the hydrated list too, since
   // hydration can replace the records it scans.
   if (deps.hydrateEntities) {
+    const hydrateStartedAt = nowMs();
     const result = await hydrateEntityContent(
       list,
       deps.hydrateEntities,
@@ -179,6 +189,11 @@ export async function buildCloudBackupPayload(
     );
     list = result.entities;
     skippedEntities.push(...result.skippedEntities);
+    deps.onTiming?.({
+      stage: "hydrate",
+      durationMs: nowMs() - hydrateStartedAt,
+      count: entities.length,
+    });
   }
 
   const maps = content.maps ?? [];
@@ -188,6 +203,7 @@ export async function buildCloudBackupPayload(
   const assetManifest: { assetId: string; path: string; mimeType: string }[] =
     [];
   const skippedAssets: string[] = [];
+  let assetBytesTotal = 0;
 
   for (const path of collectAssetPaths(list, maps)) {
     if (deps.signal?.aborted) break;
@@ -203,6 +219,7 @@ export async function buildCloudBackupPayload(
       const mimeType = blob.type || "application/octet-stream";
       assets.push({ assetId, bytes, mimeType });
       assetManifest.push({ assetId, path, mimeType });
+      assetBytesTotal += bytes.length;
     } catch {
       // One unreadable image must not cost the user their whole backup. It is
       // recorded so the caller can say what was left out rather than implying
@@ -210,6 +227,13 @@ export async function buildCloudBackupPayload(
       skippedAssets.push(path);
     }
   }
+
+  deps.onTiming?.({
+    stage: "build",
+    durationMs: nowMs() - buildStartedAt,
+    count: list.length,
+    bytes: assetBytesTotal,
+  });
 
   return {
     vaultTitle,
@@ -250,6 +274,8 @@ export interface CloudBackupDeltaDeps {
   /** Current asset references across the vault, used to prune removed media. */
   referencedAssetIds: readonly string[];
   signal?: AbortSignal;
+  /** Stage timings for the worker-or-not question; same pattern as `onProgress`. */
+  onTiming?: (timing: CloudBackupTiming) => void;
 }
 
 export interface CloudBackupDelta {
@@ -286,8 +312,14 @@ export async function buildCloudBackupDelta(
     return null;
   }
 
+  const buildStartedAt = nowMs();
   const entities = await readChangedEntities(entityChanges, deps);
   if (!entities) return null;
+  deps.onTiming?.({
+    stage: "build",
+    durationMs: nowMs() - buildStartedAt,
+    count: entities.upserts.length + entities.deletes.length,
+  });
 
   const maps = changes.some((change) => change.kind === "maps")
     ? [...(content.maps ?? [])]

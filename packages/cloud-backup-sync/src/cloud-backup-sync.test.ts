@@ -1,5 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import {
+  ASSET_UPLOAD_CONCURRENCY,
+  attachCloudBackup,
   enableCloudBackup,
   pushVaultToCloudBackup,
   getCloudBackupStatus,
@@ -456,6 +458,74 @@ describe("chunked upload", () => {
     expect(seen).toEqual(["1/2", "2/2"]);
   });
 
+  it("uploads assets concurrently, bounded, committing last", async () => {
+    const h = await enabled();
+    let inFlight = 0;
+    let maxInFlight = 0;
+    const urls: string[] = [];
+    h.runtime.fetch = (async (url: string) => {
+      urls.push(url);
+      if (url.endsWith("/commit")) {
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({ manifest: MANIFEST }),
+          arrayBuffer: async () => new ArrayBuffer(0),
+        };
+      }
+      inFlight += 1;
+      maxInFlight = Math.max(maxInFlight, inFlight);
+      await new Promise((resolve) => setTimeout(resolve, 5));
+      inFlight -= 1;
+      return {
+        ok: true,
+        status: 200,
+        json: async () => ({}),
+        arrayBuffer: async () => new ArrayBuffer(0),
+      };
+    }) as never;
+
+    const result = await pushVaultToCloudBackup(h.runtime, "v-1", {
+      ...PAYLOAD,
+      assets: Array.from(
+        { length: ASSET_UPLOAD_CONCURRENCY + 2 },
+        (_, index) => ({
+          assetId: `f${index}.png`,
+          bytes: bytes(3),
+          mimeType: "image/png",
+        }),
+      ),
+    });
+
+    expect(result.ok).toBe(true);
+    expect(maxInFlight).toBeGreaterThan(1);
+    expect(maxInFlight).toBeLessThanOrEqual(ASSET_UPLOAD_CONCURRENCY);
+    expect(urls.at(-1)).toContain("/commit");
+  });
+
+  it("fails fast without committing when any asset fails among several", async () => {
+    const h = await enabled(
+      { ok: true, status: 200, body: { manifest: MANIFEST } },
+      {
+        ok: false,
+        status: 413,
+        body: { error: { message: "This file is too large to back up." } },
+      },
+    );
+    const result = await pushVaultToCloudBackup(h.runtime, "v-1", {
+      ...PAYLOAD,
+      assets: [
+        { assetId: "a.png", bytes: bytes(3), mimeType: "image/png" },
+        { assetId: "b.png", bytes: bytes(3), mimeType: "image/png" },
+      ],
+    });
+
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.status).toBe(413);
+    expect(h.calls.some((call) => call.url.endsWith("/commit"))).toBe(false);
+  });
+
   it("sends only the title on enable, never the vault content", async () => {
     const { runtime, calls } = makeRuntime([enableResponse]);
     await enableCloudBackup(runtime, "v-9", PAYLOAD);
@@ -673,6 +743,135 @@ describe("pushDeltaToCloudBackup (#3354)", () => {
 
     expect(result).toEqual({ ok: true, value: null });
     expect(calls).toEqual([]);
+  });
+});
+
+describe("attachCloudBackup", () => {
+  const STATUS = {
+    ok: true,
+    status: 200,
+    body: {
+      status: "idle",
+      lastPushedAt: MANIFEST.lastPushedAt,
+      sizeBytes: 512,
+    },
+  };
+  const CREDS = { backupId: "b-1", ownerCode: "code-1" };
+
+  it("verifies the key, then links the vault to that backup", async () => {
+    const { runtime, calls } = makeRuntime([STATUS]);
+    const result = await attachCloudBackup(runtime, "v-1", CREDS, {
+      vaultTitle: "The Saltmere Fens",
+    });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.value.backupId).toBe("b-1");
+    expect(result.value.ownerCode).toBe("code-1");
+    expect(result.value.enabled).toBe(true);
+    expect(result.value.lastPushedAt).toBe(MANIFEST.lastPushedAt);
+    expect(result.value.consentedAt).toBe("2026-08-31T12:00:00.000Z");
+    expect(calls[0].url).toBe(
+      "https://worker.test/api/cloud-backup/b-1/status",
+    );
+    const stored = await getLocalCloudBackupRecord(runtime, "v-1");
+    expect(stored?.backupId).toBe("b-1");
+    expect(stored?.enabled).toBe(true);
+  });
+
+  it("writes nothing when the key is wrong", async () => {
+    const { runtime, calls } = makeRuntime([
+      {
+        ok: false,
+        status: 404,
+        body: { error: { message: "Backup not found" } },
+      },
+    ]);
+    const result = await attachCloudBackup(runtime, "v-1", CREDS);
+
+    expect(result).toEqual({
+      ok: false,
+      error: "Backup not found",
+      status: 404,
+    });
+    expect(await getLocalCloudBackupRecord(runtime, "v-1")).toBeNull();
+    expect(calls).toHaveLength(1);
+  });
+
+  it("refuses to re-link a vault that already backs up elsewhere", async () => {
+    const h = makeRuntime([enableResponse, STATUS]);
+    await enableCloudBackup(h.runtime, "v-1", PAYLOAD);
+    h.calls.length = 0;
+
+    const result = await attachCloudBackup(h.runtime, "v-1", {
+      backupId: "b-9",
+      ownerCode: "other-code",
+    });
+
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.error).toContain("different cloud copy");
+    // Refused before any request: the existing link is untouched.
+    expect(h.calls).toEqual([]);
+    expect((await getLocalCloudBackupRecord(h.runtime, "v-1"))?.backupId).toBe(
+      "b-1",
+    );
+  });
+
+  it("re-attaching the same backup succeeds without forking", async () => {
+    const h = makeRuntime([enableResponse, STATUS]);
+    await enableCloudBackup(h.runtime, "v-1", PAYLOAD);
+
+    const result = await attachCloudBackup(h.runtime, "v-1", CREDS);
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.value.backupId).toBe("b-1");
+    expect(result.value.consentedAt).toBe("2026-08-31T12:00:00.000Z");
+  });
+});
+
+describe("save timings", () => {
+  it("emits serialize and upload timings on a push", async () => {
+    const h = await enabled();
+    const timings: { stage: string; durationMs: number }[] = [];
+    const result = await pushVaultToCloudBackup(
+      h.runtime,
+      "v-1",
+      {
+        ...PAYLOAD,
+        assets: [
+          { assetId: "a", bytes: new Uint8Array([1, 2, 3]), mimeType: "x" },
+        ],
+      },
+      undefined,
+      { onTiming: (timing) => timings.push(timing) },
+    );
+
+    expect(result.ok).toBe(true);
+    expect(timings.map((timing) => timing.stage)).toEqual([
+      "serialize",
+      "upload",
+    ]);
+    for (const timing of timings) {
+      expect(timing.durationMs).toBeGreaterThanOrEqual(0);
+      expect(Number.isFinite(timing.durationMs)).toBe(true);
+    }
+  });
+
+  it("emits nothing when the vault was never enabled", async () => {
+    const { runtime } = makeRuntime();
+    const timings: unknown[] = [];
+    const result = await pushVaultToCloudBackup(
+      runtime,
+      "v-1",
+      PAYLOAD,
+      undefined,
+      { onTiming: (timing) => timings.push(timing) },
+    );
+
+    expect(result).toEqual({ ok: true, value: null });
+    expect(timings).toEqual([]);
   });
 });
 

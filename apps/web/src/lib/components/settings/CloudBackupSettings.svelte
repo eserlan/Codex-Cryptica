@@ -8,6 +8,7 @@
    * provider — and how to get rid of it.
    */
   import { cloudBackupStore } from "$lib/stores/cloud-backup.svelte";
+  import CloudBackupAttach from "$lib/components/settings/CloudBackupAttach.svelte";
   import { parseRecoveryKey } from "@codex/cloud-backup-sync";
   import { vault } from "$lib/stores/vault.svelte";
   import { vaultRegistry } from "$lib/stores/vault-registry.svelte";
@@ -79,6 +80,12 @@
           minute: "2-digit",
         })}`;
   }
+
+  /** The local name of the open vault, so an attached backup lists under it. */
+  const currentVaultName = $derived(
+    vaultRegistry.availableVaults.find((candidate) => candidate.id === vaultId)
+      ?.name,
+  );
 
   const lastPushed = $derived(
     cloudBackupStore.lastPushedAt
@@ -365,6 +372,10 @@
         </button>
       </div>
     </div>
+  {/if}
+
+  {#if !isOn}
+    <CloudBackupAttach {vaultId} vaultName={currentVaultName} />
   {/if}
 
   <button

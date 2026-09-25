@@ -248,6 +248,64 @@ describe("enable", () => {
   });
 });
 
+describe("attachToExistingBackup", () => {
+  it("links the open vault to the existing backup", async () => {
+    const { store, storage } = harness();
+    const ok = await store.attachToExistingBackup(
+      "v-1",
+      "b-1",
+      "code-1",
+      "The Saltmere Fens",
+    );
+
+    expect(ok).toBe(true);
+    expect(store.status).toBe("idle");
+    expect(store.consented).toBe(true);
+    expect(store.lastPushedAt).toBe(MANIFEST.lastPushedAt);
+    expect(store.errorMessage).toBeNull();
+    const stored = (await storage.read("v-1")) as { backupId: string };
+    expect(stored.backupId).toBe("b-1");
+  });
+
+  it("surfaces a wrong key without linking anything", async () => {
+    const { store, storage } = harness([], {}, [
+      {
+        ok: false,
+        status: 404,
+        body: { error: { message: "Backup not found" } },
+      },
+    ]);
+    const ok = await store.attachToExistingBackup("v-1", "b-9", "bad");
+
+    expect(ok).toBe(false);
+    expect(store.status).toBe("off");
+    expect(store.errorMessage).toBe("Backup not found");
+    expect(await storage.read("v-1")).toBeNull();
+  });
+});
+
+describe("save timings", () => {
+  it("records hash, serialize and upload stages on a manual save", async () => {
+    const timings: { stage: string; durationMs: number }[] = [];
+    const { store } = harness([ENABLE], {
+      timing: (timing: { stage: string; durationMs: number }) =>
+        timings.push(timing),
+    });
+    await store.enable("v-1");
+    expect(timings).toEqual([]);
+
+    expect(await store.backUpNow()).toBe(true);
+    expect(timings.map((timing) => timing.stage)).toEqual([
+      "hash",
+      "serialize",
+      "upload",
+    ]);
+    for (const timing of timings) {
+      expect(timing.durationMs).toBeGreaterThanOrEqual(0);
+    }
+  });
+});
+
 describe("saving is explicit", () => {
   it("uploads when the user asks, and reports success", async () => {
     const { store, calls } = harness([ENABLE]);
