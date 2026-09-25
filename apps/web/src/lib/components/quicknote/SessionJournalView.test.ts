@@ -313,3 +313,76 @@ describe("SessionJournalView — repeated submission", () => {
     await waitFor(() => expect(append).toHaveBeenCalledTimes(1));
   });
 });
+
+describe("SessionJournalView — automatic entries and the current section (slice 3)", () => {
+  it("shows captured entries differently from typed notes", async () => {
+    const store = newStore("vault-auto-view");
+    await store.start();
+    await store.appendEntry({ type: "manual-note", content: "A typed note" });
+    await store.appendEntry({
+      type: "dice-roll",
+      content: "Rolled 1d20: 14",
+      sourceRef: { total: 14 },
+    });
+    render(SessionJournalView, { props: { store } });
+
+    const rows = await screen.findAllByTestId("journal-entry");
+    expect(rows).toHaveLength(2);
+    expect(rows[0].getAttribute("data-automatic")).toBe("false");
+    expect(rows[1].getAttribute("data-automatic")).toBe("true");
+    expect(screen.getAllByTestId("journal-entry-label")).toHaveLength(1);
+  });
+
+  it("reads the current section from the store, so it survives the view being closed", async () => {
+    const store = newStore("vault-auto-section");
+    await store.start();
+    const first = await store.createSection("One");
+    await store.createSection("Two");
+    store.setActiveSection(first.id);
+
+    const { unmount } = render(SessionJournalView, { props: { store } });
+    expect(
+      (screen.getByTestId("journal-note-section") as HTMLSelectElement).value,
+    ).toBe(first.id);
+    unmount();
+
+    // The panel was closed; a capture would use the same section.
+    expect(store.activeSectionId).toBe(first.id);
+
+    render(SessionJournalView, { props: { store } });
+    expect(
+      (screen.getByTestId("journal-note-section") as HTMLSelectElement).value,
+    ).toBe(first.id);
+  });
+
+  it("writes a section choice back to the store, and 'No section' clears it", async () => {
+    const store = newStore("vault-auto-choose");
+    await store.start();
+    const section = await store.createSection("The Market");
+    store.setActiveSection(undefined);
+    render(SessionJournalView, { props: { store } });
+
+    const select = screen.getByTestId("journal-note-section");
+    await fireEvent.change(select, { target: { value: section.id } });
+    expect(store.activeSectionId).toBe(section.id);
+
+    await fireEvent.change(select, { target: { value: "" } });
+    expect(store.activeSectionId).toBeUndefined();
+  });
+
+  it("puts a typed note in the store's current section", async () => {
+    const store = newStore("vault-auto-typed");
+    await store.start();
+    const section = await store.createSection("Chapter");
+    render(SessionJournalView, { props: { store } });
+
+    await fireEvent.input(screen.getByTestId("journal-note-input"), {
+      target: { value: "Into the chapter" },
+    });
+    await fireEvent.click(screen.getByTestId("journal-note-submit"));
+
+    await waitFor(() =>
+      expect(store.current?.entries[0].sectionId).toBe(section.id),
+    );
+  });
+});

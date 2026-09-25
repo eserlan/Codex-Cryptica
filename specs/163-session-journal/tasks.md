@@ -1,5 +1,5 @@
 ---
-description: "Task list for Session Journal (slice 1: data model, persistence & lifecycle; slice 2: global access point)"
+description: "Task list for Session Journal (slice 1: data model, persistence & lifecycle; slice 2: global access point; slice 3: automatic capture)"
 ---
 
 # Tasks: Session Journal (data model, persistence & lifecycle)
@@ -10,6 +10,8 @@ description: "Task list for Session Journal (slice 1: data model, persistence & 
 **Tests**: Included as first-class tasks — this repo's Constitution (Principle II, TDD) and AGENTS.md ("Do not commit implementation changes without tests for the affected behavior... cover both the expected success path and at least one meaningful negative, cancellation, or failure path") require them, not an optional add-on.
 
 **Organization**: Tasks are grouped by user story (spec.md) to enable independent implementation and testing of each story.
+
+**Slice 3 note**: Phases 10–11 (T058–T079) add User Story 6 / slice 3 (#3408) on branch `163-session-journal-slice-3`.
 
 **Slice 2 note**: Phases 8–9 (T041–T057) add User Story 5 / slice 2 (#3407) on this same branch. Phases 1–7 are slice 1 and are complete.
 
@@ -196,10 +198,57 @@ Per plan.md's Project Structure: a new pure-logic package `packages/session-jour
 - [x] T051 [P] Run `bun run lint:changed` (or `bun scripts/lint-changed.mjs`) and fix any findings in the files touched by T041–T050
 - [x] T052 [P] Run `bunx svelte-check --tsconfig ./tsconfig.json --threshold error` inside `apps/web` and fix any errors
 - [x] T053 Run `bun run test:changed` (or `bun scripts/test-changed.mjs`) and confirm T041–T045 pass together with the slice 1 tests, not just in isolation
-- [ ] T054 Manually walk through quickstart.md's Story 5 verification in a running app (desktop and phone-width, guest mode, vault switch, reload → Resume). This is also where FR-022's route-navigation survival is verified — jsdom cannot route — so navigate the journal control between at least two different routes with the panel closed and reopened, and confirm journal content, control state and last-selected tab are unchanged. Unit tests cannot show that the control is reachable and correctly stacked against the panel overlay
+- [x] T054 Manually walk through quickstart.md's Story 5 verification in a running app (desktop and phone-width, guest mode, vault switch, reload → Resume). This is also where FR-022's route-navigation survival is verified — jsdom cannot route — so navigate the journal control between at least two different routes with the panel closed and reopened, and confirm journal content, control state and last-selected tab are unchanged. Unit tests cannot show that the control is reachable and correctly stacked against the panel overlay
 - [x] T055 Run `bunx fallow audit --format json --quiet --explain --gate-marker agent --base staging` and resolve any introduced findings before pushing
 - [x] T056 Run the `codex-review` specialist review on the slice 2 changes (AGENTS.md PR Quality Gate) and address findings
-- [ ] T057 Update PR #3422's description, and check off #3407's acceptance criteria once verified, so the issue and PR match what shipped
+- [x] T057 Update the slice 2 PR (#3429) description, and check off #3407's acceptance criteria once verified, so the issue and PR match what shipped
+
+---
+
+## Phase 10: User Story 6 - Rolls, draws and table results land in the journal by themselves (Priority: P1) — Slice 3, #3408
+
+**Goal**: Every dice roll, card draw and table or oracle result the app records is added, once, to the active journal as a distinct automatic entry, through one shared event interface, with no change to the roll tools.
+
+**Independent Test**: Start a journal, make a roll, a draw and a table roll with the panel closed, open the journal, and confirm each appears once, in order, marked as automatic (quickstart.md's Story 6 verification).
+
+**Prerequisite**: Phases 1–9 are merged into staging (slices 1 and 2). Slice 3 lives on branch `163-session-journal-slice-3`.
+
+### Tests for User Story 6 ⚠️
+
+> Write these first and confirm they fail before the implementation tasks.
+
+- [x] T058 [P] [US6] Unit test the pure capture logic in `packages/session-journal-engine/tests/capture.test.ts` (no mocks; the input is the structural `CapturableRoll` from the contract, so the tests need no app types). Assert that the summary contains the formula and total, not its exact wording: success — a dice result becomes a `dice-roll` payload with a summary containing the formula and total and a `sourceRef` with formula, total and parts; a table result becomes `table-result` with source id, name, kind and the result text; a deck draw becomes `card-draw` naming each card and marking reversed ones; `captureToEntryInput` passes a valid payload through with the given `sectionId`; negative — a blank summary or blank type yields `undefined`/`{ ok: false }`; a summary over 500 characters is cut to 500 ending in an ellipsis (and exactly 500 is left alone); a result text over 1,000 characters, a draw of more than 30 cards, and a reference over 4 KB serialised are each bounded as FR-027 says; a `sourceRef` carrying a resolution chain, a function or a circular value is reduced to plain JSON-safe data without the chain and without throwing (FR-027)
+- [x] T059 [P] [US6] Unit test the emitter in `apps/web/src/lib/stores/dice-history.test.ts` with an injected bus spy: success — `addResult` emits exactly one `JOURNAL:CAPTURE` for each of a modal roll, a chat roll, a table roll and a deck draw, with the right `entryType` and payload (FR-026), and the emitted event's `metadata` has a `timestamp` and no `sync` (FR-031); negative — a bus whose `emit` throws does not stop the roll being pushed to history or persisted (FR-030); an IndexedDB write failure still emits the capture (the roll happened); history trimming past 100 entries and `init()` emit nothing; the existing one-argument constructor still works
+- [x] T060 [P] [US6] Unit test the listener in a new `apps/web/src/lib/stores/session-journal-capture.test.ts` with a fake store and a real `AppEventBus`: success — an event with an active journal calls `appendEntry` with the right type, content, `sourceRef` and `sectionId: store.activeSectionId` (FR-025, FR-032); ten events emitted back to back are appended in order, none dropped (FR-031); an entry type the listener has never seen is appended unchanged with no listener code change (SC-011); the subscription survives `bus.reset()` (named); `stop()` unsubscribes; negative — no journal, an ended journal, or an unloaded store appends nothing and does not throw (FR-029); `isCaptureAllowed() === false` appends nothing (FR-033); an event with `metadata.remote` appends nothing (FR-031, a safeguard: capture events are never relayed because they do not set `sync`); a malformed payload appends nothing; `appendEntry` rejecting is caught and logged and nothing is thrown or surfaced (FR-030)
+- [x] T061 [P] [US6] Store test in `apps/web/src/lib/stores/session-journal.svelte.test.ts` for `activeSectionId`: success — `createSection` makes the new section active; `setActiveSection` switches to another existing section; negative — `setActiveSection` with an unknown id is ignored; `end()` and a vault change clear it; an id whose section no longer exists reads as `undefined`; a freshly constructed store over a journal that has sections starts with `undefined`, i.e. it is not persisted across a reload (FR-032)
+- [x] T062 [P] [US6] Component tests in `apps/web/src/lib/components/quicknote/SessionJournalView.test.ts` and a new `JournalEntryRow.test.ts`: success — `dice-roll`, `card-draw` and `table-result` entries render with their own label and icon and differ from a `manual-note`; a manual note renders exactly as before; the section chosen in the view is read from and written to the store, so it survives the view being unmounted and remounted; negative — an entry with an unknown `type` still renders, in the generic automatic style, and a captured entry's text is rendered as text, not as HTML (FR-028)
+
+### Implementation for User Story 6
+
+- [x] T063 [US6] Add `@codex/events` (`workspace:*`) to `packages/session-journal-engine/package.json`, run `bun install`, and create `packages/session-journal-engine/src/events.ts` with `JOURNAL_EVENTS` and the `AppEventRegistry` registration per contracts/session-journal-store-api.md; export it from `src/index.ts`
+- [x] T064 [US6] Create `packages/session-journal-engine/src/capture.ts` with `buildCaptureFromRoll` and `captureToEntryInput` (pure, no I/O, never throws), and export it from `src/index.ts` (depends on T063; makes T058 pass)
+- [x] T065 [US6] Add the injected `bus` (default `appEventBus`) to `DiceHistoryStore` in `apps/web/src/lib/stores/dice-history.svelte.ts` and emit one capture per recorded roll inside `addResult`, after the in-memory push and before persistence, in try/catch (depends on T064; makes T059 pass)
+- [x] T066 [US6] Add `activeSectionId` and `setActiveSection()` to `SessionJournalStore` in `apps/web/src/lib/stores/session-journal.svelte.ts`: set by `createSection`, cleared by `end()` and a vault change, unknown ids ignored (makes T061 pass)
+- [x] T067 [US6] Create `apps/web/src/lib/stores/session-journal-capture.ts` with the `SessionJournalCapture` class per the contract: named subscription, guards in the documented order, all failures caught and logged (depends on T064, T066; makes T060 pass)
+- [x] T068 [US6] Create `apps/web/src/lib/components/quicknote/JournalEntryRow.svelte` (one entry, manual or automatic, with a label and Iconify icon per type and a generic fallback, text rendered as text) and change `SessionJournalView.svelte` to render entries through it and to use `store.activeSectionId`/`setActiveSection` instead of its local `activeSectionId`; the section `<select>` at `SessionJournalView.svelte:238` changes from `bind:value` on local state to `value={store.activeSectionId}` plus an `onchange` that calls `setActiveSection`, because a store getter cannot be bound (depends on T066; makes T062 pass)
+- [x] T069 [US6] Wire the listener the way the Oracle's is wired: a new `apps/web/src/lib/listeners/session-journal-events.ts` exports `initSessionJournalCapture()` (with its own test in `session-journal-events.test.ts`), which constructs and starts the `SessionJournalCapture` with `isCaptureAllowed: () => !sessionModeStore.isGuestMode`; `app-init.ts` calls it beside `initOracleEventListeners()` and stops it in its cleanup, and `app/event-registrations.ts` imports `session-journal-engine` so the event type is registered (depends on T067)
+- [x] T070 [US6] In a new `apps/web/src/lib/stores/session-journal-capture.integration.test.ts` (its own file, so the IndexedDB fake does not leak into T060), add the end-to-end and durability tests. Wiring: a real `DiceHistoryStore` and `AppEventBus` with a real `SessionJournalCapture` over a fake store — one `addResult` produces one appended entry (success), and the same call with no active journal produces none and does not throw (negative). Durability (FR-034): a captured entry, appended through a real `SessionJournalStore` over the in-memory IndexedDB fake used in `session-journal.svelte.test.ts`, survives constructing a fresh store for the same vault, keeps its order relative to typed notes, appears in an ended journal, is refused after `end()`, and reaches the cloud backup payload builder input (`allJournals`) with its `sourceRef` intact
+- [x] T071 [P] [US6] Update the copy in plain language (Constitution VII, IX): the `session-journal` entry in `apps/web/src/lib/config/help-content.ts` and the Session Journal section of `apps/web/src/lib/content/help/quicknote.md` to say that rolls, card draws and table results are added automatically while a journal is running, and what each looks like
+
+**Checkpoint**: User Story 6 is complete — slice 3's scope (#3408) is done.
+
+---
+
+## Phase 11: Slice 3 Polish & Cross-Cutting Concerns
+
+- [x] T072 [P] Run `bun run lint:changed` and fix any findings in the files touched by T058–T071
+- [x] T073 [P] Run `bunx svelte-check --tsconfig ./tsconfig.json --threshold error` inside `apps/web` and fix any errors; also type-check `packages/session-journal-engine`
+- [x] T074 Run `bun run test:changed` and confirm T058–T070 pass together with the slice 1 and 2 tests, and that the roll tools' own existing tests (dice roller, table and deck views, Oracle dice executor, oracle adapter, stat sheet actions) pass unchanged, which is the regression check for FR-035
+- [x] T075 Run `bun run test:coverage` inside `packages/session-journal-engine` and confirm the new `capture.ts` and `events.ts` meet Constitution X's 70% goal; add cases for any uncovered branch
+- [x] T076 Manually walk through quickstart.md's Story 6 verification in a running app, checking each producer path in FR-026 by hand (dice roller, Oracle `/roll`, table roll and re-roll, deck draw, Oracle table and deck commands, stat sheet field roll), plus burst rolls, ended journal, no journal, reload, and a second tab open on the same vault (no double capture). Also confirm the roll tools show no new buttons, prompts or messages and that their roll history and chat output are unchanged (FR-035)
+- [x] T077 Run `bunx fallow audit --format json --quiet --explain --gate-marker agent --base staging` and resolve any introduced findings
+- [x] T078 Run the `codex-review` specialist review on the slice 3 changes and address findings
+- [x] T079 Open the slice 3 PR, and check off #3408's acceptance criteria once verified, so the issue and PR match what shipped
 
 ---
 
@@ -216,6 +265,8 @@ Per plan.md's Project Structure: a new pure-logic package `packages/session-jour
 - **Polish (Phase 7)**: Depends on every user story phase being complete.
 - **User Story 5 (Phase 8, slice 2)**: Depends on US1's `SessionJournalStore`/`SessionJournalView` and US3's `open()`/`controlState` (all already built). Touches `quicknote.svelte.ts`, `QuickNoteScratchpad.svelte`, `nav-items.ts`, `ActivityBar.svelte`, `MobileMenu.svelte` and help content, with no file overlap with US2, US3 or US4. Inside the phase: T046 → T047/T048 → T049.
 - **Slice 2 Polish (Phase 9)**: Depends on Phase 8.
+- **User Story 6 (Phase 10, slice 3)**: Depends on US1's `appendEntry`, US3's `current`/`end()` and US2's sections (all built). Touches the engine package (`events.ts`, `capture.ts`), `dice-history.svelte.ts`, `session-journal.svelte.ts`, `SessionJournalView.svelte`, new `JournalEntryRow.svelte` and `session-journal-capture.ts`, `app-init.ts` and help content, with no overlap with the roll tools' own components. Inside the phase: T063 → T064 → T065/T067; T066 → T067/T068; T067 → T069.
+- **Slice 3 Polish (Phase 11)**: Depends on Phase 10.
 
 ### Parallel Opportunities
 
@@ -224,6 +275,7 @@ Per plan.md's Project Structure: a new pure-logic package `packages/session-jour
 - US4 (Phase 6) has no file overlap with US2 or US3 and could be built in parallel with either by a second contributor, once Foundational and US1 are done.
 - T035 and T036 (Polish) can run in parallel; T037–T040 are sequential (each depends on the previous succeeding).
 - Phase 8: T041–T045 (tests) touch different files and can be written in parallel; T050 (help content) is independent of T046–T049. T051 and T052 (slice 2 Polish) can run in parallel; T053–T057 are sequential.
+- Phase 10: T058–T062 (tests) touch different files and can be written in parallel; T066 is independent of T063–T065; T071 is independent of T070; T070 follows T060 because they share a file. T072 and T073 (slice 3 Polish) can run in parallel; T074–T079 are sequential.
 
 ---
 

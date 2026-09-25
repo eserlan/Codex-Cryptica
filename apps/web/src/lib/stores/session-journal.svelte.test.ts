@@ -411,3 +411,80 @@ describe("SessionJournalStore — end/resume (US3)", () => {
     expect(reopened.controlState).toBe("open");
   });
 });
+
+describe("SessionJournalStore — current section (slice 3, FR-032)", () => {
+  const newStore = (vaultId: string) =>
+    new SessionJournalStore(
+      fakeVaultRegistry(vaultId) as any,
+      fakeIds(`sec-${vaultId}`),
+      fakeClock(),
+    );
+
+  it("starts with no current section", async () => {
+    const store = newStore("vault-sec-none");
+    await store.start();
+    expect(store.activeSectionId).toBeUndefined();
+  });
+
+  it("makes a newly created section the current one", async () => {
+    const store = newStore("vault-sec-create");
+    await store.start();
+    const section = await store.createSection("Arrival");
+    expect(store.activeSectionId).toBe(section.id);
+  });
+
+  it("switches to another existing section", async () => {
+    const store = newStore("vault-sec-switch");
+    await store.start();
+    const first = await store.createSection("One");
+    await store.createSection("Two");
+    store.setActiveSection(first.id);
+    expect(store.activeSectionId).toBe(first.id);
+  });
+
+  it("can be cleared back to no section", async () => {
+    const store = newStore("vault-sec-clear");
+    await store.start();
+    await store.createSection("One");
+    store.setActiveSection(undefined);
+    expect(store.activeSectionId).toBeUndefined();
+  });
+
+  it("ignores an id that is not a section of the journal (negative)", async () => {
+    const store = newStore("vault-sec-unknown");
+    await store.start();
+    const section = await store.createSection("One");
+    store.setActiveSection("not-a-section");
+    expect(store.activeSectionId).toBe(section.id);
+  });
+
+  it("is cleared when the journal ends (negative)", async () => {
+    const store = newStore("vault-sec-end");
+    await store.start();
+    await store.createSection("One");
+    await store.end();
+    expect(store.activeSectionId).toBeUndefined();
+  });
+
+  it("is not saved: a fresh store over the same journal starts with none (FR-032)", async () => {
+    const first = newStore("vault-sec-reload");
+    await first.start();
+    await first.createSection("One");
+    expect(first.activeSectionId).toBeDefined();
+
+    const reloaded = newStore("vault-sec-reload");
+    await reloaded.listJournals();
+    expect(reloaded.current?.sections).toHaveLength(1);
+    expect(reloaded.activeSectionId).toBeUndefined();
+  });
+
+  it("is never a section of another journal (negative)", async () => {
+    const store = newStore("vault-sec-other");
+    await store.start();
+    const section = await store.createSection("One");
+    await store.end();
+    await store.start();
+    expect(store.activeSectionId).not.toBe(section.id);
+    expect(store.activeSectionId).toBeUndefined();
+  });
+});

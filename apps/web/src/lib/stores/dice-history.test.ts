@@ -198,3 +198,150 @@ describe("DiceHistoryStore", () => {
     expect(store.history[0].id).toBe("local");
   });
 });
+
+describe("DiceHistoryStore journal capture (slice 3, FR-026/FR-030/FR-031)", () => {
+  let bus: { emit: ReturnType<typeof vi.fn> };
+  let store: DiceHistoryStore;
+
+  const rollResult = (total: number): RollResult => ({
+    total,
+    timestamp: 1_000,
+    formula: "2d6+3",
+    parts: [
+      { type: "dice", sides: 6, rolls: [3, 5], value: 8 },
+      { type: "modifier", value: 3 },
+    ],
+  });
+
+  const captured = () =>
+    bus.emit.mock.calls
+      .map(([event]) => event)
+      .filter((event) => event.type === "JOURNAL:CAPTURE");
+
+  beforeEach(async () => {
+    const db = await getDB();
+    await db.clear("dice_history");
+    bus = { emit: vi.fn() };
+    store = new DiceHistoryStore(undefined, bus as any);
+  });
+
+  it("emits exactly one dice-roll capture for a modal roll", async () => {
+    await store.addResult(rollResult(11), "modal");
+
+    expect(captured()).toHaveLength(1);
+    const event = captured()[0];
+    expect(event.domain).toBe("journal");
+    expect(event.payload.entryType).toBe("dice-roll");
+    expect(event.payload.content).toContain("2d6+3");
+    expect(event.payload.content).toContain("11");
+  });
+
+  it("emits one capture for a chat roll, with the label of a stat sheet field", async () => {
+    await store.addResult(rollResult(9), "chat");
+    await store.addResult(rollResult(14), "modal", { label: "Strength" });
+
+    expect(captured()).toHaveLength(2);
+    expect(captured()[1].payload.content).toContain("Strength");
+  });
+
+  it("emits a table-result capture for a table roll", async () => {
+    await store.addResult(rollResult(4), "table", {
+      label: "Encounters",
+      source: {
+        sourceId: "t1",
+        sourceName: "Encounters",
+        kind: "table",
+        finalText: "2 goblins arguing",
+      },
+    });
+
+    expect(captured()).toHaveLength(1);
+    expect(captured()[0].payload.entryType).toBe("table-result");
+    expect(captured()[0].payload.content).toContain("2 goblins arguing");
+  });
+
+  it("emits a card-draw capture for a deck draw", async () => {
+    await store.addResult(rollResult(1), "table", {
+      source: {
+        sourceId: "d1",
+        sourceName: "Tarot",
+        kind: "deck",
+        finalText: "",
+        drawnCards: [{ cardId: "c1", title: "The Tower", reversed: true }],
+      },
+    });
+
+    expect(captured()).toHaveLength(1);
+    expect(captured()[0].payload.entryType).toBe("card-draw");
+    expect(captured()[0].payload.content).toContain("The Tower (reversed)");
+  });
+
+  it("never marks the event for cross-tab relay (FR-031)", async () => {
+    await store.addResult(rollResult(11), "modal");
+
+    const { metadata } = captured()[0];
+    expect(typeof metadata.timestamp).toBe("number");
+    expect(metadata.sync).toBeUndefined();
+    expect(metadata.remote).toBeUndefined();
+  });
+
+  it("still records the roll when emitting throws (negative, FR-030)", async () => {
+    bus.emit.mockImplementation(() => {
+      throw new Error("bus down");
+    });
+    const logged = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    await expect(
+      store.addResult(rollResult(11), "modal"),
+    ).resolves.toBeUndefined();
+
+    expect(store.history).toHaveLength(1);
+    expect(store.history[0].total).toBe(11);
+    expect(logged).toHaveBeenCalled();
+    logged.mockRestore();
+  });
+
+  it("still emits when persisting the roll fails, because the roll happened (negative)", async () => {
+    const db = await getDB();
+    const put = vi.spyOn(db, "put").mockRejectedValueOnce(new Error("full"));
+
+    await expect(store.addResult(rollResult(11), "modal")).rejects.toThrow(
+      "full",
+    );
+
+    expect(captured()).toHaveLength(1);
+    put.mockRestore();
+  });
+
+  it("emits nothing for history trimming or init (negative)", async () => {
+    for (let i = 0; i < 101; i++) {
+      await store.addResult(rollResult(i), "modal");
+    }
+    expect(captured()).toHaveLength(101);
+
+    bus.emit.mockClear();
+    await store.init(true);
+    expect(bus.emit).not.toHaveBeenCalled();
+  });
+
+  it("emits nothing for a table result with no text (negative)", async () => {
+    await store.addResult(rollResult(1), "table", {
+      source: {
+        sourceId: "t1",
+        sourceName: "Empty",
+        kind: "table",
+        finalText: "  ",
+      },
+    });
+
+    expect(captured()).toHaveLength(0);
+    expect(store.history).toHaveLength(1);
+  });
+
+  it("keeps working with the original one-argument constructor", async () => {
+    const plain = new DiceHistoryStore();
+    await expect(
+      plain.addResult(rollResult(5), "modal"),
+    ).resolves.toBeUndefined();
+  });
+});

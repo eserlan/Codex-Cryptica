@@ -1,6 +1,13 @@
 import { getDB } from "../utils/idb";
 import type { RollResult } from "dice-engine";
-import { type IdGenerator, systemIdGenerator } from "$lib/utils/runtime-deps";
+import { appEventBus, type AppEventBus } from "@codex/events";
+import { JOURNAL_EVENTS, buildCaptureFromRoll } from "session-journal-engine";
+import {
+  type Clock,
+  type IdGenerator,
+  systemClock,
+  systemIdGenerator,
+} from "$lib/utils/runtime-deps";
 
 /**
  * A roll or draw sourced from a random table or card deck (#2247).
@@ -37,9 +44,17 @@ export class DiceHistoryStore {
   history = $state<ContextualRollResult[]>([]);
   private _initStarted = false;
   private idGenerator: IdGenerator;
+  private bus: AppEventBus;
+  private clock: Clock;
 
-  constructor(idGenerator: IdGenerator = systemIdGenerator) {
+  constructor(
+    idGenerator: IdGenerator = systemIdGenerator,
+    bus: AppEventBus = appEventBus,
+    clock: Clock = systemClock,
+  ) {
     this.idGenerator = idGenerator;
+    this.bus = bus;
+    this.clock = clock;
     // Auto-initialize on the client so persisted history is available
     if (typeof window !== "undefined") {
       void this.init();
@@ -80,6 +95,7 @@ export class DiceHistoryStore {
     };
 
     this.history.push(contextual);
+    this.publishJournalCapture(contextual);
 
     // Persist
     const db = await getDB();
@@ -91,6 +107,27 @@ export class DiceHistoryStore {
       if (removed) {
         await db.delete("dice_history", removed.id);
       }
+    }
+  }
+
+  /**
+   * Every roll, table result and deck draw passes through here, so this is
+   * the one place that tells the Session Journal about them (#3408). The
+   * event is local to this tab: it never sets `metadata.sync` (FR-031). A
+   * failure here must never reach the roll itself (FR-030).
+   */
+  private publishJournalCapture(roll: ContextualRollResult): void {
+    try {
+      const payload = buildCaptureFromRoll(roll);
+      if (!payload) return;
+      this.bus.emit({
+        type: JOURNAL_EVENTS.CAPTURE,
+        domain: "journal",
+        payload,
+        metadata: { timestamp: this.clock.now() },
+      });
+    } catch (error) {
+      console.error("[DiceHistory] Could not publish journal capture:", error);
     }
   }
 

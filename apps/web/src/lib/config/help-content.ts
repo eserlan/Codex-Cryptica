@@ -765,7 +765,7 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
     id: "session-journal",
     title: "Session Journal",
     content:
-      "Keep a running record of what happens during play, separate from Quicknote/Scratchpad's transient working notes. Start a Session Journal from the Session Journal button in the toolbar (or the Journal tab of the Quicknote panel), add timestamped notes as the session unfolds, and optionally break a long session into named sections (chapters or scenes). End the session when you're done — the journal stays around afterward, and you can resume an unfinished one exactly where you left off next time. If cloud backup is enabled for this vault, journals are included in what gets backed up and restored, same as your entities, maps, and canvases.",
+      "Keep a running record of what happens during play, separate from Quicknote/Scratchpad's transient working notes. Start a Session Journal from the Session Journal button in the toolbar (or the Journal tab of the Quicknote panel), add timestamped notes as the session unfolds, and optionally break a long session into named sections (chapters or scenes). While a journal is running, your dice rolls, card draws and table results are added to it for you, marked so you can tell them from your own notes. End the session when you're done — the journal stays around afterward, and you can resume an unfinished one exactly where you left off next time. If cloud backup is enabled for this vault, journals are included in what gets backed up and restored, same as your entities, maps, and canvases.",
     icon: "icon-[lucide--book-open]",
   },
   "presentation-templates": {
