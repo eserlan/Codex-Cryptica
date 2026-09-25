@@ -12,6 +12,27 @@ import { systemClock } from "$lib/utils/runtime-deps";
 const sessionToken = new RelayedSessionToken();
 aiClientManager.setSessionManager(sessionToken);
 
+// Closes the race where this worker is created (or its relayed token
+// expires) before the next push-based "SESSION_TOKEN" message arrives: when
+// there's nothing valid cached, RelayedSessionToken.getToken() calls this to
+// ask the main thread for a fresh snapshot right now, over the same
+// postMessage channel, correlated by a request id — see ProposerBridge's
+// "REQUEST_SESSION_TOKEN" handler.
+const pendingTokenRequests = new Map<
+  string,
+  (token: CachedToken | null) => void
+>();
+
+function requestTokenFromMainThread(): Promise<CachedToken | null> {
+  const id = crypto.randomUUID();
+  return new Promise((resolve) => {
+    pendingTokenRequests.set(id, resolve);
+    self.postMessage({ type: "REQUEST_SESSION_TOKEN", id });
+  });
+}
+
+sessionToken.setPuller(requestTokenFromMainThread);
+
 function normalizeTargetId(value: string): string {
   return value
     .toLowerCase()
@@ -195,16 +216,43 @@ ${targetsList}`;
   return proposals;
 }
 
+/**
+ * Handles the two session-token message types, both of which are exempt from
+ * the id-required guard below (a push has no request to correlate a response
+ * to; a pull response is keyed by an id this worker generated itself, not
+ * one from a pending ANALYZE request). Split out of `self.onmessage` to keep
+ * that handler's own branching — and complexity score — from growing with
+ * every message type this worker learns to handle.
+ *
+ * Returns whether `type` was a session-token message, so the caller knows
+ * whether to fall through to the rest of its handling.
+ */
+function handleSessionTokenMessage(
+  type: string,
+  id: string | undefined,
+  payload: unknown,
+): boolean {
+  if (type === "SESSION_TOKEN") {
+    sessionToken.setToken((payload as CachedToken | null) ?? null);
+    return true;
+  }
+
+  if (type === "SESSION_TOKEN_RESPONSE") {
+    const resolve = id ? pendingTokenRequests.get(id) : undefined;
+    if (resolve) {
+      pendingTokenRequests.delete(id!);
+      resolve((payload as CachedToken | null) ?? null);
+    }
+    return true;
+  }
+
+  return false;
+}
+
 self.onmessage = async (e: MessageEvent) => {
   const { type, payload, id } = e.data || {};
 
-  // Fire-and-forget push from the main thread's session manager — has no
-  // request id to correlate a response to, so it's handled before the
-  // id-required guard below.
-  if (type === "SESSION_TOKEN") {
-    sessionToken.setToken((payload as CachedToken | null) ?? null);
-    return;
-  }
+  if (handleSessionTokenMessage(type, id, payload)) return;
 
   if (!type || !id) {
     console.warn("ProposerWorker: Received malformed message", e.data);

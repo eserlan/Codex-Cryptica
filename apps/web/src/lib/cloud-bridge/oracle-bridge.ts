@@ -44,6 +44,16 @@ export class OracleBridge {
   }
 
   /**
+   * Registers a Comlink-proxied hook the worker's `RelayedSessionToken` can
+   * call to pull a fresh token snapshot from the main thread's real session
+   * manager on demand — see `session-bootstrap.ts` and
+   * `RelayedSessionToken.setPuller`.
+   */
+  public setTokenProvider(provider: () => Promise<CachedToken | null>): void {
+    this.api?.setSessionTokenProvider(Comlink.proxy(provider));
+  }
+
+  /**
    * Proxies all TextGenerationService methods to the worker.
    */
   public get textGeneration(): TextGenerationService {

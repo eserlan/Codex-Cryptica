@@ -110,6 +110,43 @@ describe("ProposerBridge", () => {
     expect(() => bridge.setSessionToken(null)).not.toThrow();
   });
 
+  it("answers a worker's token pull request using the registered provider", async () => {
+    const bridge = new ProposerBridge({ worker: mockWorker });
+    const provider = vi
+      .fn()
+      .mockResolvedValue({ token: "pulled-1", expiresAt: 999 });
+    bridge.setTokenProvider(provider);
+
+    mockWorker.onmessage({
+      data: { type: "REQUEST_SESSION_TOKEN", id: "req-pull-1" },
+    });
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(provider).toHaveBeenCalled();
+    expect(mockWorker.postMessage).toHaveBeenCalledWith({
+      type: "SESSION_TOKEN_RESPONSE",
+      id: "req-pull-1",
+      payload: { token: "pulled-1", expiresAt: 999 },
+    });
+  });
+
+  it("answers a worker's token pull request with null when no provider is wired", async () => {
+    new ProposerBridge({ worker: mockWorker });
+
+    mockWorker.onmessage({
+      data: { type: "REQUEST_SESSION_TOKEN", id: "req-pull-2" },
+    });
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(mockWorker.postMessage).toHaveBeenCalledWith({
+      type: "SESSION_TOKEN_RESPONSE",
+      id: "req-pull-2",
+      payload: null,
+    });
+  });
+
   it("rejects pending requests when terminated", async () => {
     const mockIdGen = { uuid: vi.fn().mockReturnValue("req-term") };
     const bridge = new ProposerBridge({

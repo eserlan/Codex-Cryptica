@@ -44,6 +44,18 @@ class OracleWorker {
     this.sessionToken.setToken(token);
   }
 
+  /**
+   * Called via Comlink once, right after the worker is created, with a
+   * Comlink-proxied callback into the main thread's real session manager.
+   * Closes the race where this worker is created (or its relayed token
+   * expires) before the next push-based `setSessionToken` call: when there's
+   * nothing valid cached, `RelayedSessionToken.getToken()` calls this
+   * provider to pull a fresh snapshot on demand instead of giving up.
+   */
+  setSessionTokenProvider(provider: () => Promise<CachedToken | null>): void {
+    this.sessionToken.setPuller(provider);
+  }
+
   private emit(event: OracleWorkerEvent) {
     this.eventBus.postMessage(event);
   }

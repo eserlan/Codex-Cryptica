@@ -128,6 +128,20 @@ export class AiSessionManager {
     this.onTokenChange?.(null);
   }
 
+  /**
+   * Resolves once a valid token is available (running the handshake if
+   * needed) and returns the full snapshot — token and expiry — rather than
+   * just the bearer string {@link getToken} returns.
+   *
+   * Used to answer a {@link RelayedSessionToken}'s on-demand pull request: a
+   * Worker asking for a fresh token needs the expiry too, so it can tell
+   * later whether that snapshot is still good without asking again.
+   */
+  async getTokenSnapshot(): Promise<CachedToken | null> {
+    await this.getToken();
+    return this.cached;
+  }
+
   private isExpiring(token: CachedToken): boolean {
     return token.expiresAt - EXPIRY_SKEW_SECONDS <= this.now() / 1000;
   }
@@ -211,16 +225,32 @@ function defaultStorage(): AiSessionManagerOptions["storage"] {
  * therefore its own separate `aiClientManager` instance; none of them have a
  * `document`, so none can solve a challenge or mint a token on their own.
  *
- * This class holds no logic beyond "remember the last value I was told" —
- * the main thread's real `AiSessionManager` (via its `onTokenChange` hook)
- * is what actually mints and refreshes tokens; this just relays the result
- * across the Worker boundary. `getToken()` returns `null` once the relayed
- * token is expiring, same skew as `AiSessionManager`, so a worker never
- * knowingly sends a request with a token that's about to be rejected.
+ * This class relies mostly on "remember the last value I was told" — the
+ * main thread's real `AiSessionManager` (via its `onTokenChange` hook) is
+ * what actually mints and refreshes tokens; `setToken` just relays the
+ * result across the Worker boundary. `getToken()` returns `null` once the
+ * relayed token is expiring, same skew as `AiSessionManager`, so a worker
+ * never knowingly sends a request with a token that's about to be rejected.
+ *
+ * That push alone leaves a gap: a Worker created (or a token that expires)
+ * between two main-thread token changes has nothing cached and would 401
+ * until the next push. An optional puller, set via {@link setPuller}, closes
+ * it — when there's no valid cached token, `getToken` asks the puller for a
+ * fresh snapshot on demand instead of giving up. A relay with no puller
+ * behaves exactly as before.
  */
 export class RelayedSessionToken implements SessionTokenSource {
   private cached: CachedToken | null = null;
   private readonly now: () => number;
+  private pullToken: (() => Promise<CachedToken | null>) | null = null;
+
+  /**
+   * Dedupes concurrent callers onto one pull, the same way
+   * `AiSessionManager.inFlight` dedupes concurrent handshakes — several
+   * requests racing in before the first pull resolves must not each trigger
+   * their own round trip to the main thread.
+   */
+  private inFlight: Promise<CachedToken | null> | null = null;
 
   constructor(now: () => number = () => Date.now()) {
     this.now = now;
@@ -231,13 +261,37 @@ export class RelayedSessionToken implements SessionTokenSource {
     this.cached = token;
   }
 
+  /**
+   * Registers the on-demand pull hook. Set once, right after the worker is
+   * created — see `ProposerBridge`/`OracleBridge` on the main-thread side and
+   * their respective `*.worker.ts` for the transport (postMessage
+   * request/response for the Proposer worker, a Comlink-proxied callback for
+   * the Oracle worker).
+   */
+  setPuller(pullToken: (() => Promise<CachedToken | null>) | null): void {
+    this.pullToken = pullToken;
+  }
+
   async getToken(): Promise<string | null> {
     const cached = this.cached;
-    if (!cached) return null;
-    if (cached.expiresAt - EXPIRY_SKEW_SECONDS <= this.now() / 1000) {
-      return null;
+    if (cached && !this.isExpiring(cached)) return cached.token;
+    if (!this.pullToken) return null;
+
+    if (!this.inFlight) {
+      const pull = this.pullToken;
+      this.inFlight = pull()
+        .then((token) => {
+          this.cached = token;
+          return token;
+        })
+        .catch(() => null)
+        .finally(() => {
+          this.inFlight = null;
+        });
     }
-    return cached.token;
+
+    const pulled = await this.inFlight;
+    return pulled && !this.isExpiring(pulled) ? pulled.token : null;
   }
 
   /**
@@ -247,5 +301,9 @@ export class RelayedSessionToken implements SessionTokenSource {
    */
   invalidate(): void {
     this.cached = null;
+  }
+
+  private isExpiring(token: CachedToken): boolean {
+    return token.expiresAt - EXPIRY_SKEW_SECONDS <= this.now() / 1000;
   }
 }

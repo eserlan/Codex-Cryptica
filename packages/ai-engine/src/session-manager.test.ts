@@ -307,6 +307,38 @@ describe("AiSessionManager", () => {
     expect(onTokenChange).toHaveBeenCalledWith(null);
   });
 
+  it("getTokenSnapshot runs the handshake and returns the full cached snapshot", async () => {
+    const manager = new AiSessionManager({
+      proxyUrl: PROXY_URL,
+      solveChallenge: async () => "challenge-abc",
+      fetcher: sessionFetcher(
+        1_800,
+        () => 1_000_000_000,
+      ) as unknown as typeof fetch,
+      storage: memoryStorage(),
+      now: () => 1_000_000_000,
+    });
+
+    expect(await manager.getTokenSnapshot()).toEqual({
+      token: "token-1",
+      expiresAt: 1_000_000_000 / 1000 + 1_800,
+    });
+  });
+
+  it("getTokenSnapshot resolves null when the handshake fails", async () => {
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+    const manager = new AiSessionManager({
+      proxyUrl: PROXY_URL,
+      solveChallenge: async () => {
+        throw new Error("widget failed");
+      },
+      fetcher: sessionFetcher() as unknown as typeof fetch,
+      storage: memoryStorage(),
+    });
+
+    expect(await manager.getTokenSnapshot()).toBeNull();
+  });
+
   it("does not fire onTokenChange when a handshake fails", async () => {
     vi.spyOn(console, "warn").mockImplementation(() => {});
     const onTokenChange = vi.fn();
@@ -362,6 +394,98 @@ describe("RelayedSessionToken", () => {
     const relay = new RelayedSessionToken();
     relay.setToken({ token: "relayed-1", expiresAt: 9_999_999_999 });
     relay.setToken(null);
+    expect(await relay.getToken()).toBeNull();
+  });
+
+  it("pulls a fresh snapshot on demand when nothing valid is cached yet", async () => {
+    // Covers the residual gap: a Worker created before the first push ever
+    // fires has nothing cached, but can still ask the main thread directly.
+    const pull = vi
+      .fn()
+      .mockResolvedValue({ token: "pulled-1", expiresAt: 9_999_999_999 });
+    const relay = new RelayedSessionToken();
+    relay.setPuller(pull);
+
+    expect(await relay.getToken()).toBe("pulled-1");
+    expect(pull).toHaveBeenCalledTimes(1);
+  });
+
+  it("caches a pulled snapshot instead of pulling again while it's still valid", async () => {
+    const pull = vi
+      .fn()
+      .mockResolvedValue({ token: "pulled-1", expiresAt: 9_999_999_999 });
+    const relay = new RelayedSessionToken();
+    relay.setPuller(pull);
+
+    await relay.getToken();
+    await relay.getToken();
+    await relay.getToken();
+
+    expect(pull).toHaveBeenCalledTimes(1);
+  });
+
+  it("dedupes concurrent callers onto a single pull", async () => {
+    let resolvePull!: (token: { token: string; expiresAt: number }) => void;
+    const pull = vi.fn(
+      () =>
+        new Promise<{ token: string; expiresAt: number }>((resolve) => {
+          resolvePull = resolve;
+        }),
+    );
+    const relay = new RelayedSessionToken();
+    relay.setPuller(pull);
+
+    const pending = Promise.all([
+      relay.getToken(),
+      relay.getToken(),
+      relay.getToken(),
+    ]);
+    resolvePull({ token: "pulled-1", expiresAt: 9_999_999_999 });
+
+    expect(await pending).toEqual(["pulled-1", "pulled-1", "pulled-1"]);
+    expect(pull).toHaveBeenCalledTimes(1);
+  });
+
+  it("pulls again once the previously pulled snapshot is expiring", async () => {
+    let now = 1_000_000_000;
+    const pull = vi
+      .fn()
+      .mockImplementationOnce(async () => ({
+        token: "pulled-1",
+        expiresAt: now / 1000 + 40,
+      }))
+      .mockImplementationOnce(async () => ({
+        token: "pulled-2",
+        expiresAt: now / 1000 + 40,
+      }));
+    const relay = new RelayedSessionToken(() => now);
+    relay.setPuller(pull);
+
+    expect(await relay.getToken()).toBe("pulled-1");
+    now += 15_000;
+    expect(await relay.getToken()).toBe("pulled-2");
+    expect(pull).toHaveBeenCalledTimes(2);
+  });
+
+  it("resolves null instead of throwing when the pull rejects", async () => {
+    const relay = new RelayedSessionToken();
+    relay.setPuller(() => Promise.reject(new Error("worker unreachable")));
+
+    expect(await relay.getToken()).toBeNull();
+  });
+
+  it("prefers an already-cached token over pulling", async () => {
+    const pull = vi.fn();
+    const relay = new RelayedSessionToken();
+    relay.setPuller(pull);
+    relay.setToken({ token: "pushed-1", expiresAt: 9_999_999_999 });
+
+    expect(await relay.getToken()).toBe("pushed-1");
+    expect(pull).not.toHaveBeenCalled();
+  });
+
+  it("still returns null with no cached token and no puller wired", async () => {
+    const relay = new RelayedSessionToken();
     expect(await relay.getToken()).toBeNull();
   });
 });
