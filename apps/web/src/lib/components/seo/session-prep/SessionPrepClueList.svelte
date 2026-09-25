@@ -81,15 +81,15 @@
         aria-label="Ways to find this fact, one per line"
         class={prepFieldClass}
       ></textarea>
-      <label class="flex items-center gap-1.5 text-[11px] text-theme-muted">
+      <label class="flex items-center gap-1.5 text-sm text-theme-muted">
         <input type="checkbox" bind:checked={clue.critical} disabled={locked} />
         Progress depends on this
       </label>
       {#if bottlenecks.has(clue.id)}
         <div
-          class="flex flex-wrap items-center gap-2 rounded-lg border border-theme-accent/40 bg-theme-accent/10 px-2 py-1.5"
+          class="flex flex-wrap items-center gap-2 rounded-lg border border-theme-accent/40 bg-theme-accent/10 px-2.5 py-2"
         >
-          <p class="flex-1 text-[11px] leading-snug text-theme-text">
+          <p class="flex-1 text-sm leading-snug text-theme-text">
             This fact looks needed for progress but has only one way to be
             found.
           </p>
@@ -97,7 +97,7 @@
             type="button"
             onclick={() => onSuggestRoutes(clue.id)}
             disabled={aiDisabled}
-            class="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-theme-primary transition hover:brightness-110 disabled:opacity-50"
+            class="flex items-center gap-1 text-xs font-bold uppercase tracking-wider text-theme-primary transition hover:brightness-110 disabled:opacity-50"
           >
             <span
               class={routesInFlight === clue.id
@@ -108,7 +108,7 @@
             Suggest more ways
           </button>
           {#if routeErrors[clue.id]}
-            <p role="alert" class="w-full text-[11px] text-theme-danger">
+            <p role="alert" class="w-full text-sm text-theme-danger">
               {routeErrors[clue.id]}
             </p>
           {/if}

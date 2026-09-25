@@ -19,12 +19,12 @@
   <span class="{link.icon} mt-0.5 h-5 w-5 shrink-0 text-theme-primary"></span>
   <span class="flex flex-col">
     <span
-      class="font-header text-sm font-bold text-theme-text group-hover:text-theme-primary"
+      class="font-header text-base font-bold text-theme-text group-hover:text-theme-primary"
     >
       {link.label}
     </span>
     {#if link.summary}
-      <span class="mt-0.5 text-sm text-theme-muted">
+      <span class="mt-1 text-sm leading-relaxed text-theme-muted">
         {link.summary}
       </span>
     {/if}
