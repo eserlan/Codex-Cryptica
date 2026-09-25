@@ -157,6 +157,7 @@ export const whatShouldAnRpgSettlementContain: AnswerConfigInput = {
     "how-many-npcs-does-an-rpg-town-need",
     "how-to-create-rumours-for-a-fantasy-town",
     "how-do-you-generate-useful-rpg-rumours",
+    "how-do-i-make-a-player-base-matter-in-an-rpg-campaign",
   ],
   discovery: {
     id: "answer-settlement-contents",
