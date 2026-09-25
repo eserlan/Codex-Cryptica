@@ -114,4 +114,35 @@ describe("getGraphStyles", () => {
     expect(edgeStyle?.style["text-wrap"]).toBe("ellipsis");
     expect(dimmedEdgeStyle?.style.label).toBe("");
   });
+
+  it("turns transitions off when asked, and leaves them on by default", () => {
+    const off = getGraphStyles(
+      mockTemplate,
+      mockCategories,
+      true,
+      false,
+      true,
+      false,
+      false,
+    );
+    const on = getGraphStyles(
+      mockTemplate,
+      mockCategories,
+      true,
+      false,
+      true,
+      false,
+    );
+    const disabling = (styles: any[]) =>
+      styles.filter(
+        (rule) =>
+          rule.selector === "node, edge" &&
+          rule.style?.["transition-duration"] === 0,
+      );
+
+    expect(disabling(off)).toHaveLength(1);
+    // Last, so it overrides the base node and edge transitions.
+    expect(off[off.length - 1]).toBe(disabling(off)[0]);
+    expect(disabling(on)).toHaveLength(0);
+  });
 });
