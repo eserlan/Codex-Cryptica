@@ -7,14 +7,14 @@ export const whatShouldPlayersBeAbleToUpgradeInAnRpgBase: AnswerConfigInput = {
   question: "What should players be able to upgrade in an RPG base?",
   kind: "framework",
   shortAnswer:
-    "Let players upgrade the parts of a base that change what they can attempt, who they deal with, or what they must look after: capabilities, defences, reach, people and services, standing, supplies and information. A forge, a hidden dock or a sensor array is worth building when it opens new actions and brings a cost or complication with it. An upgrade that only adds a small bonus is usually decoration, so offer fewer, larger choices with more than one good path.",
+    "Let players upgrade the parts of a base that change what they can attempt, who they deal with, or what they can protect: capabilities, defences, reach, people and services, standing, supplies and information. A forge, hidden dock or sensor array earns its place when it opens new actions, changes future choices or creates relationships. Costs and complications can add play, but they need not come with every upgrade. A passive bonus can help, but works best alongside a visible capability or choice. Offer fewer, larger choices with more than one good path.",
   sections: [
     {
       kind: "prose",
       heading: "Why upgrade lists go flat",
       paragraphs: [
         "Most base upgrade lists start as a reward table. Walls add defence, a library adds a bonus to research, a better galley improves recovery. Each item is reasonable, and after a few purchases the base is stronger without being any more interesting. Players stop reading the list because nothing on it changes what happens next session.",
-        "A useful test is to imagine the upgrade missing. If the campaign would play the same way without it, the upgrade is a number. If the players would have to find a different route, a different ally or a different answer to a problem, the upgrade is doing work. Build the list from the second kind and let the first kind stay in the background as flavour.",
+        "A useful test is to imagine the upgrade missing. If the campaign would play the same way without it, the upgrade may be only a number. If it gives the group a new route, ally or answer to a problem, it is doing visible work. A passive bonus can still be useful, but it should usually reinforce a capability or choice rather than be the whole reason the upgrade exists.",
       ],
     },
     {
@@ -24,7 +24,7 @@ export const whatShouldPlayersBeAbleToUpgradeInAnRpgBase: AnswerConfigInput = {
         "Category",
         "The question it answers",
         "Example upgrades",
-        "Typical cost or complication",
+        "Possible cost, dependency or consequence",
       ],
       rows: [
         [
@@ -37,7 +37,7 @@ export const whatShouldPlayersBeAbleToUpgradeInAnRpgBase: AnswerConfigInput = {
           "Safety and resilience",
           "What can the base survive?",
           "Walls or armour plating, watch posts, infirmary, backup power, stores, escape routes, flood or fire protection",
-          "Staffing, upkeep, and a stronger base drawing a more serious attacker",
+          "Staffing or upkeep if the group wants to track it; a stronger base may draw a more serious attacker",
         ],
         [
           "Reach",
@@ -49,7 +49,7 @@ export const whatShouldPlayersBeAbleToUpgradeInAnRpgBase: AnswerConfigInput = {
           "People and services",
           "Who becomes available?",
           "Artisans, healers, spies, scholars, guards, merchants, diplomats, residents or crew specialists",
-          "Wages, loyalty, personal wants, and people who can be threatened or bribed",
+          "Wages or personal wants; people may also be threatened or bribed",
         ],
         [
           "Standing and political power",
@@ -61,7 +61,7 @@ export const whatShouldPlayersBeAbleToUpgradeInAnRpgBase: AnswerConfigInput = {
           "Economy and logistics",
           "How does the base sustain itself?",
           "Farms and granaries, workshops, market rights, salvage processing, fuel or power supply",
-          "Supply chains that can be cut, taxes, bad harvests, labour disputes",
+          "Supply chains, taxes, bad harvests or labour disputes",
         ],
         [
           "Information",
@@ -82,16 +82,16 @@ export const whatShouldPlayersBeAbleToUpgradeInAnRpgBase: AnswerConfigInput = {
           text: "Name something the party can now try that they could not before: forge a key from a wax impression, reach an island in one tide, hear about a raid before it lands.",
         },
         {
-          term: "What new problem or obligation can it create?",
-          text: "A workshop can catch fire. An infirmary attracts wounded strangers. A spy network costs money every month and occasionally sells the party out.",
+          term: "What new relationship or complication might it create?",
+          text: "A workshop may depend on a craftsperson or rare material. An infirmary can simply save lives, though it might also draw people seeking care. A spy network may create a new source or a risk of leaks. These are possible hooks, not required drawbacks.",
         },
         {
           term: "Who in the world notices or cares?",
           text: "A guild, a lord, a rival crew, a customs office, the neighbours. If nobody would react, the upgrade has no hooks outside the walls.",
         },
         {
-          term: "What does it cost to build or maintain?",
-          text: "Coin is the obvious answer and often the dullest. Time, materials from a particular place, a specialist who must be persuaded, or a favour owed to a faction all give the build a story.",
+          term: "What does it take to build, and does it need upkeep?",
+          text: "A build requirement can be coin, time, materials from a particular place, a specialist or a faction's favour; it can give the project a story. Treat upkeep separately: wages, fuel or maintenance belong in the campaign only if recurring management is part of the fun.",
         },
         {
           term: "How does it alter future adventures?",
@@ -103,46 +103,39 @@ export const whatShouldPlayersBeAbleToUpgradeInAnRpgBase: AnswerConfigInput = {
     },
     {
       kind: "list",
-      heading: "Ways to make upgrades available",
+      heading: "Five ways to make upgrades available",
       intro:
         "How players earn an upgrade shapes what they chase between sessions. Each model suits a different campaign, and most tables do well mixing two or three:",
       items: [
         {
-          term: "Resources and treasure",
-          text: "Upgrades cost coin, salvage or trade goods. Simple to run and easy to understand, though it can turn the base into a shop if nothing else is involved.",
+          term: "Pay for it",
+          text: "Spend coin, salvage or trade goods. Simple to run, though it can turn the base into a shop if nothing else is involved.",
         },
         {
-          term: "Downtime projects",
-          text: "Building takes time between adventures, and someone has to oversee it. Good for tables that already use downtime, and it creates natural moments for things to go wrong mid-build.",
+          term: "Work on it",
+          text: "Use downtime or projects to build between adventures, and attract residents, crew or labourers if the work needs them. Oversight can matter if the table wants to play it out; the build need not go wrong by default.",
         },
         {
-          term: "Mission objectives",
-          text: "The upgrade requires something the party must go and get: a master shipwright, a surveyed site, a stolen blueprint, a charter signed by a reluctant official. This turns the upgrade list into a source of adventures.",
+          term: "Adventure for it",
+          text: "Require a mission or discovery: recruit a master shipwright, survey a site, recover a blueprint or learn an old technique. The project can point towards an adventure.",
         },
         {
-          term: "Reputation and faction relationships",
-          text: "Some upgrades only become possible once a faction trusts the party, or tolerates them. The guild will not send artisans to a hold that cheated them last season.",
+          term: "Earn permission or access",
+          text: "Tie some upgrades to reputation or faction relationships. The guild may send artisans only once it trusts the party or accepts an apology for last season's betrayal.",
         },
         {
-          term: "Population and workforce",
-          text: "The base can only run what it has people for. Attracting residents, crew or labourers becomes a goal in itself, and every new arrival brings wants of their own.",
-        },
-        {
-          term: "Discoveries and blueprints",
-          text: "Exploration finds plans, techniques or ancient machinery that make an upgrade possible. Good for campaigns where the world outside the base is the main event.",
-        },
-        {
-          term: "Tiered prerequisites",
-          text: "A dry dock needs a harbour wall first; a spy network needs a trusted handler. Tiers give players a sense of direction, though long chains can harden into a single correct path.",
+          term: "Build prerequisites",
+          text: "Make one facility depend on another: a dry dock may need a harbour wall, or a spy network a trusted handler. Tiers give direction, but long chains can harden into one correct path.",
         },
       ],
     },
     {
       kind: "prose",
-      heading: "Keep more than one good path",
+      heading: "Player priorities and more than one good path",
       paragraphs: [
-        "Players invest in a base when their choices shape it. If one sequence of upgrades is obviously best, the group will follow it and the base will look the same as every other group's. Offer two or three options at each step that pull in different directions: a stronger wall or a better-paid watch, a trading post or a hidden dock, a research wing or a training yard. Each should be good at something different, and each should bring its own complications.",
-        "Let the fiction propose upgrades too. When a player says the crew needs somewhere to keep a prisoner, or the village needs a well that does not freeze, that request is often a better upgrade than anything on a prepared list. Ask what it would take, name the cost, and add it.",
+        "Players invest in a base when their choices shape it. A group that builds a clinic, an intelligence network and guest quarters is creating a different kind of stronghold from one that builds walls, barracks and siege workshops. Ask: what does choosing this upgrade say about the base the players want?",
+        "Keep more than one good path. If one sequence is obviously best, the group will follow it and the base will look like every other group's. Offer two or three options that pull in different directions: a stronger wall or a better-paid watch, a trading post or a hidden dock, a research wing or a training yard. Each should be good at something different; complications are optional.",
+        "Let the fiction propose upgrades too. When a player says the crew needs somewhere to keep a prisoner, or the village needs a well that does not freeze, that request may be better than anything on a prepared list. Agree a clear build requirement and add it.",
       ],
     },
     {
@@ -170,7 +163,7 @@ export const whatShouldPlayersBeAbleToUpgradeInAnRpgBase: AnswerConfigInput = {
       kind: "example",
       heading: "Cross-genre upgrades that change play",
       paragraphs: [
-        "The same pattern holds outside fantasy strongholds. Each upgrade below gives the party something to do and something to handle:",
+        "The same pattern holds outside fantasy strongholds. Each upgrade below changes what the group can do; some also create a complication:",
       ],
       items: [
         {
@@ -183,11 +176,11 @@ export const whatShouldPlayersBeAbleToUpgradeInAnRpgBase: AnswerConfigInput = {
         },
         {
           term: "Settlement: a clinic",
-          text: "Wounded characters and residents recover faster, and the settlement becomes known as a place of care. Refugees start to arrive, food runs short sooner, and the healer asks the party to escort a supply caravan.",
+          text: "Wounded characters and residents recover faster, and the settlement becomes known as a place of care. That benefit may be enough on its own; if the campaign wants another hook, refugees might arrive or the healer might ask for an escort.",
         },
         {
           term: "Why these work",
-          text: "None of them is a bigger number. Each one changes where the party goes, who they meet, or what they have to protect.",
+          text: "None is only a bigger number. Each creates a visible capability, even when it does not add a new problem to solve.",
         },
       ],
     },
@@ -202,7 +195,7 @@ export const whatShouldPlayersBeAbleToUpgradeInAnRpgBase: AnswerConfigInput = {
         },
         {
           term: "Upgrades that only grant passive modifiers",
-          text: "A bonus is fine as part of an upgrade. Pair it with a new action, person or obligation so the table has something to do with it.",
+          text: "A bonus is fine as part of an upgrade. It works best when it reinforces a visible capability or choice, but it need not come with an obligation or complication.",
         },
         {
           term: "A mandatory correct build path",
@@ -213,8 +206,8 @@ export const whatShouldPlayersBeAbleToUpgradeInAnRpgBase: AnswerConfigInput = {
           text: "Describe the new building, the new faces and the new noise. If the players cannot picture the change, they will not remember it.",
         },
         {
-          term: "No maintenance or consequences",
-          text: "A base that never needs anything stops being a concern. Light upkeep, a supply that can be interrupted, or a person who needs something keeps it in the conversation.",
+          term: "Upkeep by default",
+          text: "Recurring costs are useful only when the group wants ongoing management. Settle one-time build requirements separately, and let a facility simply work if tracking its upkeep would add bookkeeping without play.",
         },
         {
           term: "Upgrades as punishment magnets",
@@ -227,17 +220,31 @@ export const whatShouldPlayersBeAbleToUpgradeInAnRpgBase: AnswerConfigInput = {
       ],
     },
     {
-      kind: "checklist",
-      heading: "Before you offer the next upgrade",
-      intro: "Check the options you are about to put in front of the players:",
+      kind: "list",
+      heading: "Build a quick upgrade menu",
+      intro:
+        "Before the next base-planning session, prepare two or three options:",
       items: [
-        "Each option passes at least two of the five design questions.",
-        "At least two options pull in different directions, and neither is clearly best.",
-        "Each option names who in the world will notice it.",
-        "The cost includes something other than coin: time, materials from a specific place, a person, or a favour.",
-        "Any ongoing upkeep is light enough that the table will actually track it.",
-        "You can describe how the base looks, sounds or feels different once it is built.",
-        "At least one option could lead directly to an adventure.",
+        {
+          term: "Offer different priorities",
+          text: "Give the options distinct strengths, with no single correct choice.",
+        },
+        {
+          term: "Name the capability",
+          text: "State what new action, protection or reach each upgrade provides.",
+        },
+        {
+          term: "Make the build requirement concrete",
+          text: "Name the materials, work, person or permission needed. Include ongoing upkeep only if recurring management suits the campaign.",
+        },
+        {
+          term: "Show who will notice",
+          text: "Name a person, faction or neighbour who may care, without making their reaction a required penalty.",
+        },
+        {
+          term: "Leave room for another idea",
+          text: "Invite the players to propose an alternative that fits the fiction.",
+        },
       ],
     },
   ],
