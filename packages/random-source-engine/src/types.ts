@@ -1,3 +1,5 @@
+import type { PartResult } from "dice-engine";
+
 /**
  * Content model for random tables and card decks (feature 157).
  *
@@ -138,6 +140,8 @@ export interface ResolutionNode {
   sourceKind: "table" | "deck";
   /** Tables only. */
   dieValue?: number;
+  /** Dice engine breakdown for ranged-table rolls, including kept/dropped dice. */
+  rollParts?: PartResult[];
   text: string;
   /**
    * The selected entry's raw text, before references were substituted. Kept so

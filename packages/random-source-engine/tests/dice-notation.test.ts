@@ -109,6 +109,16 @@ describe("parseDieNotation", () => {
     expect(result.ok).toBe(false);
   });
 
+  it("rejects a dice count that would make a table roll unbounded", () => {
+    const result = parseDieNotation("1000000000d6");
+    expect(result.ok).toBe(false);
+  });
+
+  it("rejects formulas whose possible result range is too large to validate", () => {
+    const result = parseDieNotation("2d10000");
+    expect(result.ok).toBe(false);
+  });
+
   it("round-trips through dieFormula", () => {
     for (const notation of [
       "d6",

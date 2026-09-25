@@ -98,6 +98,11 @@ describe("RandomSourceEngine.roll", () => {
       expect(die).toBeGreaterThanOrEqual(3);
       expect(die).toBeLessThanOrEqual(18);
       expect(out.finalText).toBe(die <= 10 ? "Low" : "High");
+      const [part] = out.chain[0].rollParts ?? [];
+      expect(part?.type).toBe("dice");
+      expect(part?.rolls).toHaveLength(3);
+      expect(part?.dropped).toHaveLength(1);
+      expect(part?.value).toBe(die);
     }
   });
 });

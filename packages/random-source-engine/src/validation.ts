@@ -1,6 +1,12 @@
 import type { Diagnostic, DieSpec, RandomSource } from "./types";
 import { findBraceProblems, parseReferences } from "./resolver";
-import { dieFormula, dieRange } from "./dice-notation";
+import {
+  dieFormula,
+  dieRange,
+  isBoundedDieSpec,
+  MAX_TABLE_DIE_COUNT,
+  MAX_TABLE_DIE_RANGE,
+} from "./dice-notation";
 
 /**
  * Source validation.
@@ -44,67 +50,75 @@ export function validateSource(
   if (source.selection?.mode === "ranged") {
     const die = source.selection.die;
     const { keepHighest, keepLowest } = die;
-
-    if (keepHighest !== undefined && keepLowest !== undefined) {
-      diagnostics.push({
-        severity: "warning",
-        code: "invalid-die",
-        message:
-          "This die keeps both the highest and the lowest dice, which is not possible. Keeping the highest wins.",
-      });
-    }
-    const kept = keepHighest ?? keepLowest;
     const count = die.count ?? 1;
-    if (kept !== undefined && kept > count) {
-      diagnostics.push({
-        severity: "warning",
-        code: "invalid-die",
-        message: `This die keeps ${kept} dice but only rolls ${count}, so the extra keep does nothing.`,
-      });
-    }
 
     const { min: low, max: high } = dieRange(die);
-    const dieLabel = describeDie(die);
-    const covered = new Map<number, number>();
-
-    for (const entry of entries) {
-      if (!entry.range) continue;
-      const { min, max } = entry.range;
-      if (min > high || max > high || min < low) {
+    if (!isBoundedDieSpec(die)) {
+      diagnostics.push({
+        severity: "warning",
+        code: "invalid-die",
+        message: `This die must use a whole-number range of at most ${MAX_TABLE_DIE_RANGE} possible results and roll no more than ${MAX_TABLE_DIE_COUNT} dice.`,
+      });
+    } else {
+      if (keepHighest !== undefined && keepLowest !== undefined) {
         diagnostics.push({
           severity: "warning",
-          code: "unreachable-entry",
-          message: `"${truncate(entry.text)}" covers ${min}-${max}, which is outside a ${dieLabel} roll, so it can never come up.`,
-          entryId: entry.id,
+          code: "invalid-die",
+          message:
+            "This die keeps both the highest and the lowest dice, which is not possible. Keeping the highest wins.",
         });
-        continue;
       }
-      for (let v = min; v <= max; v++) {
-        covered.set(v, (covered.get(v) ?? 0) + 1);
+      const kept = keepHighest ?? keepLowest;
+      if (kept !== undefined && kept > count) {
+        diagnostics.push({
+          severity: "warning",
+          code: "invalid-die",
+          message: `This die keeps ${kept} dice but only rolls ${count}, so the extra keep does nothing.`,
+        });
       }
-    }
 
-    const gaps: number[] = [];
-    const overlaps: number[] = [];
-    for (let v = low; v <= high; v++) {
-      const count = covered.get(v) ?? 0;
-      if (count === 0) gaps.push(v);
-      if (count > 1) overlaps.push(v);
-    }
+      const dieLabel = describeDie(die);
+      const covered = new Map<number, number>();
 
-    if (gaps.length > 0) {
-      diagnostics.push({
-        severity: "warning",
-        code: "range-gap",
-        message: `Nothing happens on ${describeValues(gaps)}. Those rolls have no result.`,
-      });
-    }
-    if (overlaps.length > 0) {
-      diagnostics.push({
-        severity: "warning",
-        code: "range-overlap",
-        message: `More than one entry claims ${describeValues(overlaps)}. The first match wins.`,
-      });
+      for (const entry of entries) {
+        if (!entry.range) continue;
+        const { min, max } = entry.range;
+        if (min > high || max > high || min < low) {
+          diagnostics.push({
+            severity: "warning",
+            code: "unreachable-entry",
+            message: `"${truncate(entry.text)}" covers ${min}-${max}, which is outside a ${dieLabel} roll, so it can never come up.`,
+            entryId: entry.id,
+          });
+          continue;
+        }
+        for (let v = min; v <= max; v++) {
+          covered.set(v, (covered.get(v) ?? 0) + 1);
+        }
+      }
+
+      const gaps: number[] = [];
+      const overlaps: number[] = [];
+      for (let v = low; v <= high; v++) {
+        const count = covered.get(v) ?? 0;
+        if (count === 0) gaps.push(v);
+        if (count > 1) overlaps.push(v);
+      }
+
+      if (gaps.length > 0) {
+        diagnostics.push({
+          severity: "warning",
+          code: "range-gap",
+          message: `Nothing happens on ${describeValues(gaps)}. Those rolls have no result.`,
+        });
+      }
+      if (overlaps.length > 0) {
+        diagnostics.push({
+          severity: "warning",
+          code: "range-overlap",
+          message: `More than one entry claims ${describeValues(overlaps)}. The first match wins.`,
+        });
+      }
     }
   }
 

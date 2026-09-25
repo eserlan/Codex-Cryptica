@@ -8,6 +8,8 @@
   import {
     cleanDieSpec,
     dieRange,
+    MAX_TABLE_DIE_COUNT,
+    isBoundedDieSpec,
     parseReferences,
     toRanged,
     toWeighted,
@@ -163,8 +165,10 @@
 
   function updateDie(changes: Partial<DieSpec>) {
     const next = { ...die, ...changes };
-    if (!Number.isFinite(next.sides) || next.sides < 1) return;
-    update({ selection: { mode: "ranged", die: cleanDieSpec(next) } });
+    if (!Number.isSafeInteger(next.sides) || next.sides < 1) return;
+    const cleaned = cleanDieSpec(next);
+    if (!isBoundedDieSpec(cleaned)) return;
+    update({ selection: { mode: "ranged", die: cleaned } });
   }
 
   function setDieSides(sides: number) {
@@ -172,7 +176,8 @@
   }
 
   function setDieCount(count: number) {
-    if (!Number.isFinite(count) || count < 1) return;
+    if (!Number.isFinite(count) || count < 1 || count > MAX_TABLE_DIE_COUNT)
+      return;
     updateDie({ count });
   }
 
@@ -241,6 +246,7 @@
           <input
             type="number"
             min="1"
+            max={MAX_TABLE_DIE_COUNT}
             title="Number of dice"
             aria-label="Number of dice"
             class="w-14 rounded border border-theme-border bg-theme-bg px-2 py-1.5 text-center font-header text-sm text-theme-text focus:border-theme-primary focus:outline-none"

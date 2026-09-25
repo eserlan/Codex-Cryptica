@@ -2,6 +2,10 @@ import type { DicePart, ModifierPart } from "dice-engine";
 import { diceParser } from "dice-engine";
 import type { DieSpec, Range } from "./types";
 
+/** Keep local table rolls and synchronous coverage checks bounded. */
+export const MAX_TABLE_DIE_COUNT = 1_000;
+export const MAX_TABLE_DIE_RANGE = 10_000;
+
 /**
  * Multi-die table rolls (#3403): a `DieSpec` is a single dice-engine dice
  * group plus an optional flat modifier — `NdX`, `NdXkhY`, `NdXklY`, each with
@@ -43,6 +47,23 @@ export function dieRange(die: DieSpec): Range {
   const kept = die.keepHighest ?? die.keepLowest ?? count;
   const modifier = die.modifier ?? 0;
   return { min: kept * 1 + modifier, max: kept * die.sides + modifier };
+}
+
+/** Whether the die has safe, bounded inputs for local rolling and validation. */
+export function isBoundedDieSpec(die: DieSpec): boolean {
+  const count = die.count ?? 1;
+  const { min, max } = dieRange(die);
+  return (
+    Number.isSafeInteger(die.sides) &&
+    die.sides >= 1 &&
+    Number.isSafeInteger(count) &&
+    count >= 1 &&
+    count <= MAX_TABLE_DIE_COUNT &&
+    Number.isSafeInteger(min) &&
+    Number.isSafeInteger(max) &&
+    max - min + 1 >= 1 &&
+    max - min + 1 <= MAX_TABLE_DIE_RANGE
+  );
 }
 
 /** Why a single dice group can't become a `DieSpec`, or `undefined` if it can. */
@@ -109,12 +130,36 @@ export function parseDieNotation(input: string): DieNotationResult {
   const dice = diceParts[0];
   const error = dicePartError(dice);
   if (error) return { ok: false, error };
+  if (!Number.isSafeInteger(dice.count) || dice.count > MAX_TABLE_DIE_COUNT) {
+    return {
+      ok: false,
+      error: `A table die can't roll more than ${MAX_TABLE_DIE_COUNT} dice at once.`,
+    };
+  }
+  if (!Number.isSafeInteger(dice.sides) || dice.sides < 1) {
+    return {
+      ok: false,
+      error: "A table die needs a positive whole number of sides.",
+    };
+  }
 
   const modifier = parts
     .filter((p): p is ModifierPart => p.type === "modifier")
     .reduce((sum, m) => sum + m.value, 0);
 
-  return { ok: true, value: toDieSpec(dice, modifier) };
+  const value = toDieSpec(dice, modifier);
+  const range = dieRange(value);
+  if (
+    !Number.isSafeInteger(range.min) ||
+    !Number.isSafeInteger(range.max) ||
+    range.max - range.min + 1 > MAX_TABLE_DIE_RANGE
+  ) {
+    return {
+      ok: false,
+      error: `A table die's possible results can't span more than ${MAX_TABLE_DIE_RANGE} numbers.`,
+    };
+  }
+  return { ok: true, value };
 }
 
 /**

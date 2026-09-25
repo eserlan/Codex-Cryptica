@@ -212,6 +212,14 @@ describe("validateSource — multi-die tables (#3403)", () => {
     );
     expect(diags.find((d) => d.code === "invalid-die")).toBeUndefined();
   });
+
+  it("reports an excessive imported count without expanding its outcome range", () => {
+    const diags = validateSource(
+      rangedDie([], { sides: 6, count: 1_000_000_000 }),
+      [],
+    );
+    expect(diags.find((d) => d.code === "invalid-die")).toBeDefined();
+  });
 });
 
 describe("validateSource — malformed reference syntax", () => {

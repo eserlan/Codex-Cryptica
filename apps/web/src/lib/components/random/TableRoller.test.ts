@@ -140,6 +140,55 @@ describe("TableRoller result actions", () => {
     );
   });
 
+  it("records the actual multi-die breakdown in roll history", async () => {
+    const addResult = vi.fn(async () => {});
+    const multiDieSource: RandomSource = {
+      ...source,
+      selection: {
+        mode: "ranged",
+        die: { sides: 6, count: 4, keepHighest: 3, modifier: 2 },
+      },
+    };
+    const multiDieOutcome: RollOutcome = {
+      ...outcome,
+      chain: [
+        {
+          ...outcome.chain[0],
+          dieValue: 14,
+          rollParts: [
+            {
+              type: "dice",
+              sides: 6,
+              rolls: [5, 4, 3],
+              dropped: [1],
+              value: 12,
+            },
+            { type: "modifier", value: 2 },
+          ],
+        },
+      ],
+    };
+    renderRoller({
+      source: multiDieSource,
+      sources: { roll: vi.fn(() => multiDieOutcome) },
+      history: { addResult },
+    });
+
+    await fireEvent.click(screen.getByTestId("roll-table"));
+
+    await waitFor(() =>
+      expect(addResult).toHaveBeenCalledWith(
+        expect.objectContaining({
+          total: 14,
+          formula: "4d6kh3+2",
+          parts: multiDieOutcome.chain[0].rollParts,
+        }),
+        "table",
+        expect.anything(),
+      ),
+    );
+  });
+
   it("pins a rolled result to the map as a note titled after the table", async () => {
     const addNote = vi.fn(() => ({ id: "token-1" }));
     const session = { mapId: "map-1", vttEnabled: true, addNote };

@@ -1,6 +1,6 @@
-import type { DiceEngine } from "dice-engine";
+import type { DiceEngine, RollResult } from "dice-engine";
 import type { DieSpec, TableEntry } from "./types";
-import { dieFormula } from "./dice-notation";
+import { dieFormula, isBoundedDieSpec } from "./dice-notation";
 
 /**
  * Weighted selection over `DiceEngine`.
@@ -90,6 +90,13 @@ export function rollRaw(sides: number, dice: DiceEngine): number {
  * (#3403), the same unbiased path `rollRaw` uses for a plain single die.
  */
 export function rollDie(die: DieSpec, dice: DiceEngine): number {
-  if (die.sides <= 0) throw new Error("rollDie requires a positive side count");
-  return dice.evaluate(dieFormula(die)).total;
+  return rollDieResult(die, dice).total;
+}
+
+/** Rolls a table die and preserves its breakdown for result history. */
+export function rollDieResult(die: DieSpec, dice: DiceEngine): RollResult {
+  if (!isBoundedDieSpec(die)) {
+    throw new Error("rollDie requires a bounded, whole-number table die");
+  }
+  return dice.evaluate(dieFormula(die));
 }

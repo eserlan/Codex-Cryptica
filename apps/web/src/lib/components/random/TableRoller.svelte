@@ -158,14 +158,16 @@
 
   /** Writes the roll into the shared roll history (FR-018). */
   async function record(result: RollOutcome) {
-    const value = result.chain[0]?.dieValue;
+    const root = result.chain[0];
+    const value = root?.dieValue;
     await history.addResult(
       {
         total: value ?? 0,
         parts:
-          value === undefined
+          root?.rollParts ??
+          (value === undefined
             ? []
-            : [{ type: "dice", sides: dieSides, rolls: [value], value }],
+            : [{ type: "dice", sides: dieSides, rolls: [value], value }]),
         formula: dieLabel,
         timestamp: clock.now(),
       },

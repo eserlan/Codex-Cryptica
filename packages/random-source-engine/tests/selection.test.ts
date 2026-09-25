@@ -154,4 +154,9 @@ describe("rollDie (#3403)", () => {
     const dice = new DiceEngine(seededCrypto());
     expect(() => rollDie({ sides: 0 }, dice)).toThrow();
   });
+
+  it("throws before attempting an excessive dice count", () => {
+    const dice = new DiceEngine(seededCrypto());
+    expect(() => rollDie({ sides: 6, count: 1_000_000_000 }, dice)).toThrow();
+  });
 });
