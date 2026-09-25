@@ -36,7 +36,7 @@ import {
   markSearchEntityFocusHandled,
 } from "../search/search-focus";
 import type { LocalEntity } from "$lib/stores/vault/types";
-import { systemClock } from "$lib/utils/runtime-deps";
+import { systemClock, type Clock } from "$lib/utils/runtime-deps";
 import {
   browserPerformanceCapture,
   browserPerformanceRecorder,
@@ -79,6 +79,7 @@ export function resolveViewport(
 }
 
 export interface GraphViewDependencies {
+  clock?: Clock;
   graph: typeof graphStore;
   vault: typeof vaultStore;
   debugStore: typeof debugStoreType;
@@ -179,6 +180,7 @@ export class GraphViewController {
   private searchFocusListener: ((event: Event) => void) | null = null;
 
   private deps: GraphViewDependencies;
+  private clock: Clock;
 
   constructor(
     options: { selectedId: string | null },
@@ -186,6 +188,7 @@ export class GraphViewController {
   ) {
     this.selectedId = options.selectedId;
     this.deps = deps;
+    this.clock = deps.clock ?? systemClock;
   }
 
   setVisibilityInputs = (inputs: GraphVisibilityInputs) => {
@@ -319,7 +322,7 @@ export class GraphViewController {
             typeof node?.cy === "function" ? node.cy() : this.cy;
           const lastCxtTap =
             (cyInstance?.scratch?.("_lastCxtTap") as number | undefined) ?? 0;
-          if (Date.now() - lastCxtTap < 400) {
+          if (this.clock.now() - lastCxtTap < 400) {
             return;
           }
 

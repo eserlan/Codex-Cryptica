@@ -173,12 +173,12 @@
 
 **Action:** Continue replacing hardcoded `crypto.randomUUID()` calls within UI components by destructing optional dependency props (with `systemIdGenerator` as the default) from the `$props()` rune to improve testability.
 
-## $(date +%Y-%m-%d) - Injectable clock in AdventureSessionRepository
+## 2026-09-25 - Injectable clock in AdventureSessionRepository
 
 **Learning:** `new Date().toISOString()` is a hidden, hard-coded time dependency that complicates testing file update tracking logic.
 **Action:** Expose time functions via optional parameters like `now: () => number = () => Date.now()` inside class constructors to allow precise test assertions without global mocking or relying on arbitrary timing tolerances.
 
-## $(date +%Y-%m-%d) - Inject UIPersistence into GeneratorPageContent
+## 2026-09-25 - Inject UIPersistence into GeneratorPageContent
 
 **Learning:** Direct `localStorage.getItem` access inside large Svelte 5 page components (`GeneratorPageContent.svelte`) makes the initialization logic hard to test in isolation, as it assumes browser context or requires global mocking.
 
@@ -195,7 +195,7 @@
 
 **Action:** When injecting `systemClock` into classes that generate string dates, always explicitly wrap the output of `clock.now()` in a `Date` object before calling `.toISOString()`.
 
-## $(date +%Y-%m-%d) - Inject IdGenerator into UI Components
+## 2026-09-25 - Inject IdGenerator into UI Components
 
 **Learning:** Svelte 5 components using `$props()` can accept dependency injection boundaries with optional typed dependencies and production defaults (like `systemIdGenerator` from `@codex/runtime` via `$lib/utils/runtime-deps.ts`). Relying heavily on hardcoded `crypto.randomUUID()` within UI components forces tests to implement flaky random UUID mocks. Injecting `idGenerator` avoids Vitest global pollution and creates a deterministic test boundary without requiring complicated DI framework constructs.
 
@@ -239,3 +239,8 @@
 **Learning:** When a store emits events with timestamps (like `ShelfStore` announcing changes), injecting a `Clock` dependency makes the emitted timestamps predictable and testable.
 
 **Action:** Pass `clock: Clock = systemClock` into store dependencies instead of hardcoding `Date.now()` inside event generation methods.
+
+## 2026-09-25 - Replaced Date.now() with systemClock in GraphViewController
+
+**Learning:** Hardcoded `Date.now()` inside UI component logic (like debounce/throttle bounds in `GraphViewController`) makes timing interactions difficult to test.
+**Action:** Injected an optional `clock: Clock` via `GraphViewDependencies` (defaulting to `@codex/runtime` `systemClock`) to decouple the controller from global time.
