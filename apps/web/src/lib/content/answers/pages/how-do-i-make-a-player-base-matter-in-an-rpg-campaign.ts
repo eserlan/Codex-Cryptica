@@ -314,6 +314,7 @@ export const howDoIMakeAPlayerBaseMatterInAnRpgCampaign: AnswerConfigInput = {
     "how-do-you-organise-npc-relationships",
     "how-do-you-prepare-a-sandbox-rpg-campaign",
     "what-kind-of-ship-should-a-sci-fi-rpg-party-start-with",
+    "what-should-players-be-able-to-upgrade-in-an-rpg-base",
   ],
   discovery: {
     id: "answer-make-player-base-matter",
@@ -347,6 +348,11 @@ export const howDoIMakeAPlayerBaseMatterInAnRpgCampaign: AnswerConfigInput = {
         with: "answer-settlement-contents",
         reason:
           "That page lists what a settlement should contain as a place; this one covers how a party's own base earns a lasting role in the campaign.",
+      },
+      {
+        with: "answer-base-upgrade-ideas",
+        reason:
+          "That page gives a focused framework for choosing upgrade options; this one covers how a base's purpose, people and homecoming scenes can matter across a campaign.",
       },
     ],
   },
