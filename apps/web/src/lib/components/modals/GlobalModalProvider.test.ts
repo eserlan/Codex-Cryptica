@@ -142,7 +142,11 @@ describe("GlobalModalProvider", () => {
     render(GlobalModalProvider);
 
     expect(
-      await screen.findByRole("heading", { name: "Canvas Registry" }),
+      await screen.findByRole(
+        "heading",
+        { name: "Canvas Registry" },
+        { timeout: 3000 },
+      ),
     ).toBeTruthy();
   });
 

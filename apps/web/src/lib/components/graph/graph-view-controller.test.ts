@@ -142,6 +142,7 @@ describe("GraphViewController", () => {
         resolveImageUrl: vi.fn(),
         batchUpdate: vi.fn(),
         graphStructureVersion: 0,
+        entities: {},
       },
       debugStore: {
         log: vi.fn(),
@@ -685,6 +686,79 @@ describe("GraphViewController", () => {
         reseed: true,
       });
       vi.useRealTimers();
+    });
+  });
+
+  describe("saving positions the vault does not have", () => {
+    const at = (x: number, y: number) => ({
+      metadata: { coordinates: { x, y } },
+    });
+
+    /** Runs a layout and returns the positions callback the controller gave it. */
+    async function positionsCallback(request: Record<string, unknown>) {
+      const container = document.createElement("div");
+      await controller.init(container, {});
+      controller.loadPhase = "ready";
+      await controller.applyCurrentLayout(request as any);
+      const calls = (controller.layoutManager as any).apply.mock.calls;
+      return calls[calls.length - 1][1].onPositionsUpdated as (
+        updates: Record<string, unknown>,
+        meta?: { healed?: boolean },
+      ) => void;
+    }
+
+    beforeEach(() => {
+      deps.vault.entities = { placed: at(5, 5), unplaced: { metadata: {} } };
+    });
+
+    it("saves only missing positions from a focus-view solve", async () => {
+      deps.graph.focusViewActive = true;
+      const onPositions = await positionsCallback({
+        reason: "Elements Update",
+      });
+
+      onPositions({ placed: at(100, 100), unplaced: at(40, 40) });
+
+      expect(deps.vault.batchUpdate).toHaveBeenCalledTimes(1);
+      expect(deps.vault.batchUpdate).toHaveBeenCalledWith({
+        unplaced: at(40, 40),
+      });
+    });
+
+    it("saves nothing from focus view when every position is already saved", async () => {
+      deps.graph.focusViewActive = true;
+      const onPositions = await positionsCallback({
+        reason: "Elements Update",
+      });
+
+      onPositions({ placed: at(100, 100) });
+
+      expect(deps.vault.batchUpdate).not.toHaveBeenCalled();
+    });
+
+    it("keeps missing positions from the initial solve in full-graph mode", async () => {
+      const onPositions = await positionsCallback({
+        reason: "Initial Load",
+        isInitial: true,
+      });
+
+      onPositions({ placed: at(100, 100), unplaced: at(40, 40) });
+
+      expect(deps.vault.batchUpdate).toHaveBeenCalledWith({
+        unplaced: at(40, 40),
+      });
+    });
+
+    it("saves nothing while the vault is still loading", async () => {
+      deps.graph.focusViewActive = true;
+      deps.vault.status = "loading";
+      const onPositions = await positionsCallback({
+        reason: "Elements Update",
+      });
+
+      onPositions({ unplaced: at(40, 40) });
+
+      expect(deps.vault.batchUpdate).not.toHaveBeenCalled();
     });
   });
 

@@ -175,6 +175,138 @@ describe("SearchIndexPersistence", () => {
       }
     });
 
+    it("coalesces saves requested while an export is actively in flight into at most one trailing export", async () => {
+      const callbacks: Array<() => void> = [];
+      const originalRequestIdleCallback = globalThis.requestIdleCallback;
+      const originalCancelIdleCallback = globalThis.cancelIdleCallback;
+      globalThis.requestIdleCallback = vi.fn((callback: () => void) => {
+        callbacks.push(callback);
+        return callbacks.length;
+      }) as any;
+      globalThis.cancelIdleCallback = vi.fn() as any;
+
+      let resolveFirstExport!: (value: any) => void;
+      const firstExportPromise = new Promise((res) => {
+        resolveFirstExport = res;
+      });
+
+      let resolveSecondExport!: (value: any) => void;
+      const secondExportPromise = new Promise((res) => {
+        resolveSecondExport = res;
+      });
+
+      let exportCount = 0;
+      mockApi.exportIndexCompressed = vi.fn().mockImplementation(() => {
+        exportCount++;
+        if (exportCount === 1) return firstExportPromise;
+        return secondExportPromise;
+      });
+
+      try {
+        // Start first save and trigger its idle callback so persistIndex starts
+        const firstSave = persistence.saveIndex("vault-1");
+        expect(callbacks.length).toBe(1);
+        callbacks[0]();
+        await Promise.resolve();
+        await Promise.resolve();
+
+        // First export is now in-flight
+        expect(mockApi.exportIndexCompressed).toHaveBeenCalledTimes(1);
+
+        // While first export is in flight, simulate rapid batch updates
+        const trailingSave1 = persistence.saveIndex("vault-1");
+        const trailingSave2 = persistence.saveIndex("vault-1");
+        const trailingSave3 = persistence.saveIndex("vault-1");
+
+        // Subsequent saves must not have triggered concurrent exports
+        expect(mockApi.exportIndexCompressed).toHaveBeenCalledTimes(1);
+
+        // Trigger the latest scheduled callback for the trailing save
+        const latestCallback = callbacks[callbacks.length - 1];
+        latestCallback();
+
+        // Still only 1 export because the trailing callback waits for the active save to finish
+        expect(mockApi.exportIndexCompressed).toHaveBeenCalledTimes(1);
+
+        // Complete the first export
+        resolveFirstExport({
+          format: "fflate-json-v1",
+          data: new Uint8Array([1]),
+          keyCount: 5,
+        });
+        await firstSave;
+
+        // Allow microtasks to run so the trailing save can begin its export
+        await new Promise((res) => setTimeout(res, 10));
+        expect(mockApi.exportIndexCompressed).toHaveBeenCalledTimes(2);
+
+        // Complete the second export
+        resolveSecondExport({
+          format: "fflate-json-v1",
+          data: new Uint8Array([2]),
+          keyCount: 10,
+        });
+        await Promise.all([trailingSave1, trailingSave2, trailingSave3]);
+
+        // Total exports across all 4 save calls should be exactly 2
+        expect(mockApi.exportIndexCompressed).toHaveBeenCalledTimes(2);
+      } finally {
+        if (originalRequestIdleCallback) {
+          globalThis.requestIdleCallback = originalRequestIdleCallback;
+        } else {
+          delete (globalThis as any).requestIdleCallback;
+        }
+        if (originalCancelIdleCallback) {
+          globalThis.cancelIdleCallback = originalCancelIdleCallback;
+        } else {
+          delete (globalThis as any).cancelIdleCallback;
+        }
+      }
+    });
+
+    it("cancelPendingSave cancels any pending idle callback and increments generation", async () => {
+      const callbacks: Array<() => void> = [];
+      const originalRequestIdleCallback = globalThis.requestIdleCallback;
+      const originalCancelIdleCallback = globalThis.cancelIdleCallback;
+      globalThis.requestIdleCallback = vi.fn((callback: () => void) => {
+        callbacks.push(callback);
+        return callbacks.length;
+      }) as any;
+      globalThis.cancelIdleCallback = vi.fn() as any;
+
+      mockApi.exportIndexCompressed = vi.fn().mockResolvedValue({
+        format: "fflate-json-v1",
+        data: new Uint8Array([1]),
+        keyCount: 5,
+      });
+
+      try {
+        const savePromise = persistence.saveIndex("vault-1");
+        expect(callbacks.length).toBe(1);
+
+        persistence.cancelPendingSave("vault-1");
+        expect(globalThis.cancelIdleCallback).toHaveBeenCalledTimes(1);
+
+        // Even if the canceled callback somehow executed, it should be a no-op
+        callbacks[0]();
+        await savePromise;
+
+        expect(mockApi.exportIndexCompressed).not.toHaveBeenCalled();
+        expect(mockDb.searchIndex.put).not.toHaveBeenCalled();
+      } finally {
+        if (originalRequestIdleCallback) {
+          globalThis.requestIdleCallback = originalRequestIdleCallback;
+        } else {
+          delete (globalThis as any).requestIdleCallback;
+        }
+        if (originalCancelIdleCallback) {
+          globalThis.cancelIdleCallback = originalCancelIdleCallback;
+        } else {
+          delete (globalThis as any).cancelIdleCallback;
+        }
+      }
+    });
+
     it("should compress index data and save it as a Blob", async () => {
       const mockIndexData = { keyCount: 5, segments: { a: 1, b: 2 } };
       mockApi.exportIndex.mockResolvedValue(mockIndexData);

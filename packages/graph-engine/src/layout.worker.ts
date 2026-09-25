@@ -35,11 +35,15 @@ function getDegreeAwareLayoutOptions(options: Record<string, any>) {
   return {
     ...options,
     nodeRepulsion: (node: any) => {
+      const precomputed = Number(node.data("_repulsion"));
+      if (precomputed) return precomputed;
       const degree = Number(node.data("_degree")) || 0;
       // Hubs repel much harder so they carve out space between clusters
       return baseRepulsion * (1 + Math.min(4.0, Math.sqrt(degree) * 0.55));
     },
     idealEdgeLength: (edge: any) => {
+      const precomputed = Number(edge.data("_idealLength"));
+      if (precomputed) return precomputed;
       const sourceDegree = Number(edge.source().data("_degree")) || 0;
       const targetDegree = Number(edge.target().data("_degree")) || 0;
       const maxDegree = Math.max(sourceDegree, targetDegree);
@@ -58,7 +62,7 @@ function removeOverlaps(
   cy: Core,
   actualRadii: Float64Array,
   padding = 18,
-  maxIter = 32,
+  maxIter = 16,
 ) {
   const nodes = cy.nodes();
   const n = nodes.length;

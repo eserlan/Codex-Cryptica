@@ -1,47 +1,5 @@
-export const BANNED_NAMES = [
-  "Aethel",
-  "Aethelgard",
-  "Vance",
-  "Vane",
-  "Elara",
-  "Valerius",
-  "Kael",
-  "Kaelen",
-  "Caelen",
-  "Theron",
-  "Zara",
-  "Aldric",
-  "Kane",
-  "Drake",
-  "Maren",
-  "Cross",
-  "Vale",
-  "Stone",
-  "Grey",
-  "Ash",
-  "Cole",
-  "Thorne",
-  "Voss",
-  "Julian",
-  "Julianne",
-  "Halloway",
-  "Oakhaven",
-  "Oakhollow",
-  "Millbrook",
-  "Riverdale",
-  "Verdant",
-  "Verdant Reach",
-  "Silas",
-  "Vesper",
-  "Sterling",
-  "Blackwood",
-  "Ironwood",
-  "Ravenscroft",
-] as const;
-
-export const NAME_BAN_PROMPT =
-  `Names must never include: ${BANNED_NAMES.join(", ")}. ` +
-  `Avoid all similar generic fantasy placeholders and common English monosyllable surnames.`;
+import { BANNED_NAMES, NAME_BAN_PROMPT } from "./naming-policy";
+export { BANNED_NAMES, NAME_BAN_PROMPT };
 
 // ---------------------------------------------------------------------------
 // Theme-keyed content data (ported from seo npc.ts)

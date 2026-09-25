@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { FEATURE_HINTS, HINT_KEYS } from "./help-content";
-import { loadBlogArticles, loadHelpArticles } from "$lib/content/loader";
+import { loadHelpArticles } from "$lib/content/loader";
+import { loadLocalBlogArticles } from "$lib/content/blog-content";
 
 // T061: in-app generators feature hint is registered (US5)
 describe("help-content feature hints", () => {
@@ -78,7 +79,7 @@ describe("help-content feature hints", () => {
   });
 
   it("all blog links in help articles correspond to valid blog post slugs", () => {
-    const blogArticles = loadBlogArticles();
+    const blogArticles = loadLocalBlogArticles();
     const validSlugs = new Set(blogArticles.map((b) => b.slug));
     const helpArticles = loadHelpArticles();
 

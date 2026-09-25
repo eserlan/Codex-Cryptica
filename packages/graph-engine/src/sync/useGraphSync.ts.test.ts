@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { syncGraphElements, resolveLayoutTrigger } from "./useGraphSync";
 import type { Core } from "cytoscape";
+import cytoscape from "cytoscape";
 import type { LayoutRequest } from "../LayoutManager";
 import {
   PerformanceRecorder,
@@ -51,6 +52,7 @@ describe("syncGraphElements", () => {
         }));
         return {
           addClass: vi.fn(),
+          data: vi.fn(),
           forEach: vi.fn((cb) => mapped.forEach(cb)),
         };
       }),
@@ -168,6 +170,40 @@ describe("syncGraphElements", () => {
         JSON.stringify(a) === JSON.stringify(b),
     });
     expect(mockCy.add).toHaveBeenCalled();
+  });
+
+  it("keeps placement data separate from the visibility class on added nodes", () => {
+    const cy = cytoscape({ headless: true });
+    try {
+      syncGraphElements(cy, {
+        elements: [
+          {
+            group: "nodes",
+            data: { id: "saved" },
+            position: { x: 100, y: 200 },
+          },
+          {
+            group: "nodes",
+            data: { id: "unplaced", isPendingLayout: true },
+            position: { x: 500, y: 600 },
+          },
+          { group: "nodes", data: { id: "missing" } },
+        ] as any[],
+        vaultStatus: "idle",
+        initialLoaded: true,
+        isTemporalMetadataEqual: (a, b) => a === b,
+        focusMembershipOnly: true,
+        skipRenderedWeightSync: true,
+      });
+
+      expect(cy.$id("saved").hasClass("pending-layout")).toBe(true);
+      expect(cy.$id("saved").data("isPendingLayout")).toBeUndefined();
+      expect(cy.$id("saved").position()).toEqual({ x: 100, y: 200 });
+      expect(cy.$id("unplaced").data("isPendingLayout")).toBe(true);
+      expect(cy.$id("missing").data("isPendingLayout")).toBe(true);
+    } finally {
+      cy.destroy();
+    }
   });
 
   it("adds only the focus-membership delta without patching retained data", () => {
