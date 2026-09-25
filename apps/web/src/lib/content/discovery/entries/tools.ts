@@ -165,6 +165,48 @@ export const toolEntries: DiscoveryEntryInput[] = [
     status: "live",
   },
   {
+    id: "tools-session-prep-builder",
+    pageKind: "tool",
+    canonicalPath: "/tools/session-prep-builder",
+    primaryIntent: "build a table-ready session run sheet from a hook",
+    intentAliases: [
+      "rpg session prep tool",
+      "gm run sheet builder",
+      "plan my next rpg session with ai",
+      "session prep template tool",
+      "turn a hook into a session plan",
+    ],
+    userJob: "create",
+    uniqueValue:
+      "A guided builder that turns the GM's own hook or current situation into playable prep (pressure, people, places, discoverable information, consequences and reserve material) and a one-page run sheet. AI drafts only the empty steps or suggests options for one step, and flags needed facts that have only one discovery route.",
+    parentCluster: "session-prep",
+    relatedIntents: [
+      "answer-prepare-session-step-by-step",
+      "answer-prep-weekly-session-quickly",
+      "answer-session-prep",
+      "tools-idea-developer",
+    ],
+    acknowledgedOverlap: [
+      {
+        with: "answer-prepare-session-step-by-step",
+        reason:
+          "The Answer teaches the nine-step prep method for the reader to follow themselves; this tool is an interactive workspace that applies the same steps to the GM's own hook and produces a run sheet.",
+      },
+      {
+        with: "tools-idea-developer",
+        reason:
+          "The Idea Developer works on a campaign or adventure premise; this builder prepares the next single session from a hook or current situation and outputs a table-ready run sheet.",
+      },
+      {
+        with: "generator-adventure-generator",
+        reason:
+          "The generator creates a new adventure from a blank start; this builder starts from the GM's existing situation and prepares one session.",
+      },
+    ],
+    indexable: true,
+    status: "live",
+  },
+  {
     id: "tool-silhouettes",
     pageKind: "tool",
     canonicalPath: "/silhouettes",

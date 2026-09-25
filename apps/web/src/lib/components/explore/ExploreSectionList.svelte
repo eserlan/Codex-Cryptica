@@ -18,7 +18,7 @@
         {section.title}
       </h2>
       {#if section.description}
-        <p class="mt-1 font-light text-sm text-theme-muted">
+        <p class="mt-1 text-base font-light leading-relaxed text-theme-muted">
           {section.description}
         </p>
       {/if}

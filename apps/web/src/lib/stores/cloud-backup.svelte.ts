@@ -1,4 +1,6 @@
 import {
+  attachCloudBackup,
+  type CloudBackupTiming,
   enableCloudBackup,
   pushVaultToCloudBackup,
   disableCloudBackup,
@@ -140,6 +142,11 @@ export interface CloudBackupDeps {
   listLocalEntities?: () => { id: string; loaded: boolean; entity: unknown }[];
   /** Delay before the once-per-session consistency check; tests shorten it. */
   reconcileDelayMs?: number;
+  /**
+   * Stage timings for the worker-or-not question (counts, bytes, ms — never
+   * content). Unset in tests and anywhere else that should stay silent.
+   */
+  timing?: (timing: CloudBackupTiming) => void;
   /** Quiet period before an auto-push; overridable in tests. */
   debounceMs?: number;
   /** Wait before retrying a failed auto-push; overridable in tests. */
@@ -340,6 +347,65 @@ export class CloudBackupStore {
     } finally {
       this.enablingVaultId = null;
     }
+  }
+
+  /**
+   * Links the open vault to an existing cloud backup (attach).
+   *
+   * The counterpart to `enable` (a new backup) and `restoreIntoNewVault` (a
+   * new vault): a vault that is already on this device adopts the cloud copy
+   * for its future saves. The baseline is the remote timestamp at attach
+   * time, so the guarded auto-push pauses — instead of overwriting — if
+   * another device commits in between. The full-push marker is persisted
+   * before attaching, so a storage failure cannot leave the new link relying
+   * on stale change rows from a different backup.
+   */
+  async attachToExistingBackup(
+    vaultId: string,
+    backupId: string,
+    ownerCode: string,
+    vaultTitle?: string,
+  ): Promise<boolean> {
+    if (!this.deps) return false;
+    try {
+      // Persist this before linking the backup. A missing marker would let
+      // stale rows describe changes to an unrelated remote snapshot.
+      await this.deps.dirty?.requireFullPush(vaultId);
+    } catch (error) {
+      this.errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Could not prepare a full cloud backup.";
+      return false;
+    }
+
+    let result: Awaited<ReturnType<typeof attachCloudBackup>>;
+    try {
+      result = await attachCloudBackup(
+        this.deps.runtime,
+        vaultId,
+        { backupId, ownerCode },
+        vaultTitle !== undefined ? { vaultTitle } : {},
+      );
+    } catch (error) {
+      this.errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Could not reach this cloud backup.";
+      return false;
+    }
+    if (!result.ok) {
+      this.errorMessage = result.error;
+      return false;
+    }
+    this.applyRecord(result.value);
+    this.hashCache = {};
+    this.saveHashCache(vaultId);
+    this.autoPending = false;
+    this.autoConflictRemoteAt = null;
+    this.autoState = "idle";
+    this.errorMessage = null;
+    return true;
   }
 
   /** Stops future pushes. Local only — the remote copy is untouched (FR-009). */
@@ -933,15 +999,10 @@ export class CloudBackupStore {
       (payload as { skippedAssets?: string[] }).skippedAssets ?? [];
     this.skippedEntities =
       (payload as { skippedEntities?: string[] }).skippedEntities ?? [];
-    let skipAssetUploadIds: string[] = [];
-    let freshHashes: Record<string, string> = {};
-    try {
-      const plan = await planAssetUploads(payload.assets ?? [], this.hashCache);
-      skipAssetUploadIds = plan.skippedIds;
-      freshHashes = plan.hashes;
-    } catch {
-      // Hashing unavailable (no WebCrypto): upload everything, as before.
-    }
+    const { skipAssetUploadIds, freshHashes } = await this.planUploads(
+      payload.assets ?? [],
+      deps.timing,
+    );
     const result = await pushVaultToCloudBackup(
       deps.runtime,
       vaultId,
@@ -953,6 +1014,7 @@ export class CloudBackupStore {
         skipAssetUploadIds,
         ...(opts.guarded ? { expectLastPushedAt: this.lastPushedAt } : {}),
         signal,
+        onTiming: deps.timing,
       },
     );
     if (!result.ok) {
@@ -968,6 +1030,37 @@ export class CloudBackupStore {
     this.saveHashCache(vaultId);
     this.lastPushedAt = result.value.lastPushedAt;
     return { ok: true };
+  }
+
+  /**
+   * Detects unchanged media so the upload can skip known bytes. Timed apart
+   * from the network: hashing is the CPU-proportional block on this side of
+   * the upload. Falls back to uploading everything when hashing is
+   * unavailable (no WebCrypto), as before.
+   */
+  private async planUploads(
+    assets: { assetId: string; bytes: Uint8Array; mimeType: string }[],
+    timing?: (timing: CloudBackupTiming) => void,
+  ): Promise<{
+    skipAssetUploadIds: string[];
+    freshHashes: Record<string, string>;
+  }> {
+    const hashStartedAt = performance.now();
+    try {
+      const plan = await planAssetUploads(assets, this.hashCache);
+      timing?.({
+        stage: "hash",
+        durationMs: performance.now() - hashStartedAt,
+        count: assets.length,
+        bytes: assets.reduce((total, asset) => total + asset.bytes.length, 0),
+      });
+      return {
+        skipAssetUploadIds: plan.skippedIds,
+        freshHashes: plan.hashes,
+      };
+    } catch {
+      return { skipAssetUploadIds: [], freshHashes: {} };
+    }
   }
 
   private hashCacheKey(vaultId: string): string {

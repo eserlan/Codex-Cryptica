@@ -61,6 +61,8 @@ const GOLDEN_ANGLE = Math.PI * (3 - Math.sqrt(5));
 // seed spiral immediately and lets fcose refine it in the worker, so a large
 // import shows a spread graph instead of an invisible origin clump for seconds.
 const SEED_FIRST_NODE_COUNT = 600;
+export const PENDING_LAYOUT_SELECTOR =
+  "node[isPendingLayout], edge[isPendingLayout], .pending-layout";
 
 interface SerializedLayoutNode {
   data: { id: string; _w: number; _h: number; [key: string]: unknown };
@@ -324,6 +326,7 @@ export class LayoutManager {
     });
   }
 
+  // fallow-ignore-next-line complexity
   async apply(request: LayoutRequest, options: LayoutOptions): Promise<void> {
     if (request.viewport !== undefined) {
       options = { ...options, viewportPolicy: request.viewport };
@@ -344,44 +347,12 @@ export class LayoutManager {
     try {
       this.cy.resize();
 
-      // Handle visibility classes — only pay the iteration cost in timeline mode
-      if (options.timelineMode) {
-        this.cy.batch(() => {
-          this.cy.nodes().forEach((node) => {
-            const data = node.data() as GraphNode["data"];
-            if (hasTimelineDate({ group: "nodes", data })) {
-              node.removeClass("timeline-hidden");
-            } else {
-              node.addClass("timeline-hidden");
-            }
-          });
-        });
-      } else {
-        this.cy.batch(() => {
-          this.cy.nodes().forEach((node) => {
-            node.removeClass("timeline-hidden");
-          });
-        });
-      }
+      this.syncTimelineVisibility(Boolean(options.timelineMode));
 
       const isInitial = request.isInitial ?? false;
 
       if (options.isGuest && isInitial) {
-        this.cy.nodes().removeData("isPendingLayout");
-        this.cy.nodes(".pending-layout").removeClass("pending-layout");
-        this.cy.fit(this.cy.nodes(), 20);
-        // On mobile the full-fit zoom is often unreadably small — enforce a minimum
-        if (options.isMobile && this.cy.zoom() < 0.6) {
-          this.cy.zoom({
-            level: 0.6,
-            renderedPosition: {
-              x: this.cy.width() / 2,
-              y: this.cy.height() / 2,
-            },
-          });
-          this.cy.center();
-        }
-        options.onLayoutStop?.();
+        this.handleGuestInitialFit(options);
         return;
       }
 
@@ -396,6 +367,66 @@ export class LayoutManager {
       console.error("[LayoutManager] Unexpected error in apply", error);
       options.onLayoutStop?.();
     }
+  }
+
+  private syncTimelineVisibility(timelineMode: boolean) {
+    if (timelineMode) {
+      this.cy.batch(() => {
+        this.cy.nodes().forEach((node) => {
+          const data = node.data() as GraphNode["data"];
+          if (hasTimelineDate({ group: "nodes", data })) {
+            node.removeClass("timeline-hidden");
+          } else {
+            node.addClass("timeline-hidden");
+          }
+        });
+      });
+    } else {
+      const hiddenNodes = this.cy.nodes(".timeline-hidden");
+      if (
+        hiddenNodes &&
+        (typeof hiddenNodes.length === "number" ? hiddenNodes.length > 0 : true)
+      ) {
+        this.cy.batch(() => {
+          if (typeof (hiddenNodes as any).removeClass === "function") {
+            (hiddenNodes as any).removeClass("timeline-hidden");
+          } else if (typeof hiddenNodes.forEach === "function") {
+            hiddenNodes.forEach((node: any) => {
+              node.removeClass?.("timeline-hidden");
+            });
+          }
+        });
+      }
+    }
+  }
+
+  private clearPendingLayout(): void {
+    const pendingNodes = this.cy.nodes(PENDING_LAYOUT_SELECTOR);
+    pendingNodes.removeData?.("isPendingLayout");
+    pendingNodes.removeClass?.("pending-layout");
+    if (typeof this.cy.edges === "function") {
+      const pendingEdges = this.cy.edges(PENDING_LAYOUT_SELECTOR);
+      pendingEdges.removeData?.("isPendingLayout");
+      pendingEdges.removeClass?.("pending-layout");
+    }
+  }
+
+  private handleGuestInitialFit(options: LayoutOptions) {
+    this.cy.nodes().removeData("isPendingLayout");
+    this.clearPendingLayout();
+    this.cy.fit(this.cy.nodes(), 20);
+    // On mobile the full-fit zoom is often unreadably small — enforce a minimum
+    if (options.isMobile && this.cy.zoom() < 0.6) {
+      this.cy.zoom({
+        level: 0.6,
+        renderedPosition: {
+          x: this.cy.width() / 2,
+          y: this.cy.height() / 2,
+        },
+      });
+      this.cy.center();
+    }
+    options.onLayoutStop?.();
   }
 
   private async applyTimelineLayout(options: LayoutOptions) {
@@ -447,8 +478,6 @@ export class LayoutManager {
     const reason = req.reason;
     const reseed = req.reseed ?? false;
 
-    const cyNodes = this.cy.nodes();
-
     const isExitingTimeline =
       reason === "Timeline Toggle" && !options.timelineMode;
     const isExitingMode =
@@ -456,21 +485,28 @@ export class LayoutManager {
       !options.timelineMode &&
       !options.orbitMode;
     let randomize = isExitingTimeline || isExitingMode;
+    const isManualRedraw = reason === "UI Redraw Button" && isForced;
+
+    const cyNodes = this.cy.nodes();
 
     // Detect full-clump (all nodes at origin) — force randomize so fcose can spread them.
-    // Also detect all-pending (every node has .pending-layout, meaning no coords were saved).
+    // Also detect unplaced nodes (nodes marked with isPendingLayout or at origin).
     // Both checks are kept intentionally:
-    //   - pendingCount catches fresh vaults where transformer sets the class on all nodes
+    //   - pending data catches fresh/imported vaults with no saved coordinates
     //   - nodesAtOrigin catches legacy vaults whose coords were saved as (0,0) — those nodes
-    //     take the hasValidCoords path in transformer.ts and land at origin WITHOUT the class
+    //     take the hasValidCoords path in transformer.ts and land at origin WITHOUT the pending flag
     const positions: { x: number; y: number }[] = [];
+    let unplacedCount = 0;
     let nodesAtOrigin = 0;
     cyNodes.forEach((n) => {
       const p = n.position();
       positions.push(p);
-      if (!p || (p.x === 0 && p.y === 0)) nodesAtOrigin++;
+      const isOrigin = !p || (p.x === 0 && p.y === 0);
+      if (isOrigin) nodesAtOrigin++;
+      if (isOrigin || Boolean(n.data?.("isPendingLayout"))) {
+        unplacedCount++;
+      }
     });
-    const pendingCount = this.cy.nodes(".pending-layout").length;
 
     // Heal a degenerate "diagonal slash" — saved coords collapsed onto a line.
     // This is checked on *every* force pass, not just the initial one: a vault
@@ -480,16 +516,37 @@ export class LayoutManager {
     // re-solve whenever we detect collinearity is safe across all paths.
     const isDegenerateSlash = isLayoutCollinear(positions);
 
+    // Stable updates can skip the worker solve, but still inspect positions so
+    // a persisted diagonal layout is repaired instead of being preserved.
+    if (
+      options.stableLayout &&
+      !isForced &&
+      !isInitial &&
+      !reseed &&
+      !randomize &&
+      !isManualRedraw &&
+      !isDegenerateSlash
+    ) {
+      this.fitOnly(options);
+      return;
+    }
+
+    const isMajorityAtOrigin =
+      nodesAtOrigin === cyNodes.length ||
+      (nodesAtOrigin > 0 && nodesAtOrigin >= Math.ceil(cyNodes.length * 0.5));
+    const isMajorityUnplaced =
+      unplacedCount === cyNodes.length ||
+      (unplacedCount > 0 && unplacedCount >= Math.ceil(cyNodes.length * 0.5));
+
     const needsInitialSolve =
       isInitial &&
       cyNodes.length > 1 &&
-      (pendingCount === cyNodes.length || nodesAtOrigin === cyNodes.length);
+      (isMajorityAtOrigin || isMajorityUnplaced);
 
     if (!randomize && (needsInitialSolve || isDegenerateSlash)) {
       randomize = true;
     }
 
-    const isManualRedraw = reason === "UI Redraw Button" && isForced;
     const isFitOnly = options.stableLayout && !randomize && !isManualRedraw;
 
     if (isFitOnly) {
@@ -510,11 +567,11 @@ export class LayoutManager {
   private fitOnly(options: LayoutOptions): void {
     this.cy.resize();
 
-    const pendingNodes = this.cy.nodes(".pending-layout");
-    if (pendingNodes.nonempty()) {
+    const unplacedNodes = this.cy.nodes("node[isPendingLayout]");
+    if (unplacedNodes.nonempty()) {
       // Snap new nodes to sensible positions before revealing them so the
       // viewport doesn't jump to include their far-away spiral seed positions.
-      const placedNodes = this.cy.nodes().not(pendingNodes);
+      const placedNodes = this.cy.nodes().not(unplacedNodes);
       let fallbackX = 0;
       let fallbackY = 0;
       if (placedNodes.nonempty()) {
@@ -527,8 +584,8 @@ export class LayoutManager {
         fallbackY /= placedNodes.length;
       }
 
-      pendingNodes.forEach((node) => {
-        const neighbors = node.neighborhood().nodes().not(pendingNodes);
+      unplacedNodes.forEach((node) => {
+        const neighbors = node.neighborhood().nodes().not(unplacedNodes);
         if (neighbors.nonempty()) {
           let sumX = 0;
           let sumY = 0;
@@ -548,10 +605,8 @@ export class LayoutManager {
       });
     }
 
-    this.cy.nodes().removeData("isPendingLayout");
-    pendingNodes.removeClass("pending-layout");
-
-    this.persistPositions(pendingNodes, options);
+    this.cy.batch(() => this.clearPendingLayout());
+    if (unplacedNodes.nonempty()) this.persistPositions(unplacedNodes, options);
 
     if (options.viewportPolicy === "preserve") {
       // Halt any in-flight fit animation from a previous layout pass —
@@ -564,6 +619,7 @@ export class LayoutManager {
     }
   }
 
+  // fallow-ignore-next-line complexity
   private async solveAndFit(
     options: LayoutOptions,
     shouldRandomize: boolean,
@@ -588,14 +644,49 @@ export class LayoutManager {
 
     // Serialize graph for the worker — copy only what the worker needs so the
     // postMessage payload stays small regardless of how much data edges carry.
-    const edges = Array.from(this.cy.edges()).map((e) => ({
-      data: { id: e.id(), source: e.source().id(), target: e.target().id() },
-    }));
+    const rawEdges = Array.from(this.cy.edges());
+    const rawEdgeCount = rawEdges.length;
+    const edgeSources = new Array<string>(rawEdgeCount);
+    const edgeTargets = new Array<string>(rawEdgeCount);
+    const edgeIds = new Array<string>(rawEdgeCount);
     const degrees = new Map<string, number>();
-    for (const edge of edges) {
-      degrees.set(edge.data.source, (degrees.get(edge.data.source) ?? 0) + 1);
-      degrees.set(edge.data.target, (degrees.get(edge.data.target) ?? 0) + 1);
+
+    for (let i = 0; i < rawEdgeCount; i++) {
+      const e = rawEdges[i];
+      const src = e.source().id();
+      const tgt = e.target().id();
+      edgeIds[i] = e.id();
+      edgeSources[i] = src;
+      edgeTargets[i] = tgt;
+      degrees.set(src, (degrees.get(src) ?? 0) + 1);
+      degrees.set(tgt, (degrees.get(tgt) ?? 0) + 1);
     }
+
+    const baseRepulsion = Number(baseOptions.nodeRepulsion) || 250000;
+    const baseEdgeLength = Number(baseOptions.idealEdgeLength) || 180;
+
+    const edges = new Array(rawEdgeCount);
+    for (let i = 0; i < rawEdgeCount; i++) {
+      const src = edgeSources[i];
+      const tgt = edgeTargets[i];
+      const srcDeg = degrees.get(src) ?? 0;
+      const tgtDeg = degrees.get(tgt) ?? 0;
+      const maxDeg = Math.max(srcDeg, tgtDeg);
+      const minDeg = Math.min(srcDeg, tgtDeg);
+      let idealLength = baseEdgeLength;
+      if (minDeg >= 5) idealLength = baseEdgeLength * 3.5;
+      else if (maxDeg >= 5) idealLength = baseEdgeLength * 0.8;
+
+      edges[i] = {
+        data: {
+          id: edgeIds[i],
+          source: src,
+          target: tgt,
+          _idealLength: idealLength,
+        },
+      };
+    }
+
     let maxDegree = 0;
     for (const degree of degrees.values()) {
       if (degree > maxDegree) {
@@ -607,14 +698,18 @@ export class LayoutManager {
       const p = n.position();
       const w = n.width();
       const h = n.height();
-      const layoutSize = getLayoutCollisionSize(w, h, degrees.get(n.id()) ?? 0);
+      const deg = degrees.get(n.id()) ?? 0;
+      const layoutSize = getLayoutCollisionSize(w, h, deg);
       const position = shouldRandomize
         ? seededLayoutPosition(n.id(), index, cyNodes.length, ar)
         : { x: p.x, y: p.y };
+      const nodeRepulsion =
+        baseRepulsion * (1 + Math.min(4.0, Math.sqrt(deg) * 0.55));
       return {
         data: {
           id: n.id(),
-          _degree: degrees.get(n.id()) ?? 0,
+          _degree: deg,
+          _repulsion: nodeRepulsion,
           _w: layoutSize.width,
           _h: layoutSize.height,
         },
@@ -666,11 +761,14 @@ export class LayoutManager {
     );
 
     if (!positions || this.cy.destroyed()) {
-      // Worker failed/timed out. If we already revealed the seed spiral, keep it
-      // and persist so a reload doesn't re-clump (better than the invisible
-      // origin pile the old path left behind).
-      if (seedFirst && !this.cy.destroyed()) {
-        this.persistPositions(this.cy.nodes(), options, healed);
+      // Worker failed/timed out. Reveal any pending elements so they don't remain invisible.
+      if (!this.cy.destroyed()) {
+        this.cy.batch(() => {
+          this.clearPendingLayout();
+        });
+        if (seedFirst) {
+          this.persistPositions(this.cy.nodes(), options, healed);
+        }
       }
       options.onLayoutStop?.();
       return;
@@ -687,6 +785,7 @@ export class LayoutManager {
           node.removeClass("pending-layout");
         }
       }
+      this.clearPendingLayout();
     });
 
     options.onLayoutComputed?.(Math.round(performance.now() - layoutStartTime));

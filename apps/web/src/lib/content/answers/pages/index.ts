@@ -9,6 +9,7 @@ import { howDoIGetPlayersToEngageWithMyCampaignWorld } from "./how-do-i-get-play
 import { howDoIGiveSpecialistCharactersSpotlight } from "./how-do-i-give-specialist-characters-spotlight";
 import { howDoIMakeAPlayerBaseMatterInAnRpgCampaign } from "./how-do-i-make-a-player-base-matter-in-an-rpg-campaign";
 import { howDoIOrganiseGmNotesForInPersonPlay } from "./how-do-i-organise-gm-notes-for-in-person-play";
+import { howDoIPrepareAnRpgSessionStepByStep } from "./how-do-i-prepare-an-rpg-session-step-by-step";
 import { howDoIRunADiplomatNobleOrCourtierInAnRpg } from "./how-do-i-run-a-diplomat-noble-or-courtier-in-an-rpg";
 import { howDoIRunAJournalistOrMediaCharacterInAnRpg } from "./how-do-i-run-a-journalist-or-media-character-in-an-rpg";
 import { howDoIRunARogueOrScoutWithoutSplittingTheParty } from "./how-do-i-run-a-rogue-or-scout-without-splitting-the-party";
@@ -20,6 +21,7 @@ import { howDoIRunPoliticalIntrigueAndFactionPlay } from "./how-do-i-run-politic
 import { howDoIRunSpiesAndInfiltratorsInAnRpg } from "./how-do-i-run-spies-and-infiltrators-in-an-rpg";
 import { howDoIStartGmingForTheFirstTime } from "./how-do-i-start-gming-for-the-first-time";
 import { howDoITurnAnRpgIdeaIntoAnAdventure } from "./how-do-i-turn-an-rpg-idea-into-an-adventure";
+import { howDoIWriteAGoodCallOfCthulhuOneShot } from "./how-do-i-write-a-good-call-of-cthulhu-one-shot";
 import { howDoYouBuildAPointCrawlForAnRpg } from "./how-do-you-build-a-point-crawl-for-an-rpg";
 import { howDoYouCreateABelievableFictionalReligion } from "./how-do-you-create-a-believable-fictional-religion";
 import { howDoYouCreateAFantasyCityThatFeelsAlive } from "./how-do-you-create-a-fantasy-city-that-feels-alive";
@@ -89,6 +91,7 @@ import { whatRpgWorksForPoliticalIntrigueAndFactionPlay } from "./what-rpg-works
 import { whatShouldANewDndPlayerLearnFirst } from "./what-should-a-new-dnd-player-learn-first";
 import { whatShouldAnRpgSettlementContain } from "./what-should-an-rpg-settlement-contain";
 import { whatShouldILookForInAnRpgCampaignManager } from "./what-should-i-look-for-in-an-rpg-campaign-manager";
+import { whatShouldPlayersBeAbleToUpgradeInAnRpgBase } from "./what-should-players-be-able-to-upgrade-in-an-rpg-base";
 import { whatTtrpgShouldIUseForAFantasyDungeonCrawl } from "./what-ttrpg-should-i-use-for-a-fantasy-dungeon-crawl";
 import { whatTtrpgsLetYouBuildAndUpgradeABase } from "./what-ttrpgs-let-you-build-and-upgrade-a-base";
 import { whereDoIStartIfIHaveNeverPlayedATabletopRpg } from "./where-do-i-start-if-i-have-never-played-a-tabletop-rpg";
@@ -112,6 +115,7 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     howDoIGiveSpecialistCharactersSpotlight,
     howDoIMakeAPlayerBaseMatterInAnRpgCampaign,
     howDoIOrganiseGmNotesForInPersonPlay,
+    howDoIPrepareAnRpgSessionStepByStep,
     howDoIRunADiplomatNobleOrCourtierInAnRpg,
     howDoIRunAJournalistOrMediaCharacterInAnRpg,
     howDoIRunARogueOrScoutWithoutSplittingTheParty,
@@ -123,6 +127,7 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     howDoIRunSpiesAndInfiltratorsInAnRpg,
     howDoIStartGmingForTheFirstTime,
     howDoITurnAnRpgIdeaIntoAnAdventure,
+    howDoIWriteAGoodCallOfCthulhuOneShot,
     howDoYouBuildAPointCrawlForAnRpg,
     howDoYouCreateABelievableFictionalReligion,
     howDoYouCreateAFantasyCityThatFeelsAlive,
@@ -192,6 +197,7 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     whatShouldANewDndPlayerLearnFirst,
     whatShouldAnRpgSettlementContain,
     whatShouldILookForInAnRpgCampaignManager,
+    whatShouldPlayersBeAbleToUpgradeInAnRpgBase,
     whatTtrpgShouldIUseForAFantasyDungeonCrawl,
     whatTtrpgsLetYouBuildAndUpgradeABase,
     whereDoIStartIfIHaveNeverPlayedATabletopRpg,

@@ -8,6 +8,7 @@
    * provider — and how to get rid of it.
    */
   import { cloudBackupStore } from "$lib/stores/cloud-backup.svelte";
+  import CloudBackupAttach from "$lib/components/settings/CloudBackupAttach.svelte";
   import { parseRecoveryKey } from "@codex/cloud-backup-sync";
   import { vault } from "$lib/stores/vault.svelte";
   import { vaultRegistry } from "$lib/stores/vault-registry.svelte";
@@ -79,6 +80,12 @@
           minute: "2-digit",
         })}`;
   }
+
+  /** The local name of the open vault, so an attached backup lists under it. */
+  const currentVaultName = $derived(
+    vaultRegistry.availableVaults.find((candidate) => candidate.id === vaultId)
+      ?.name,
+  );
 
   const lastPushed = $derived(
     cloudBackupStore.lastPushedAt
@@ -251,6 +258,145 @@
 
 <svelte:window onkeydown={handleConsentKeydown} />
 
+{#snippet restorePanel()}
+  {#if showRestore}
+    <div class="flex flex-col gap-3 border border-theme-border p-4">
+      {#if cloudBackupStore.knownBackups.length > 0}
+        <div class="flex flex-col gap-2">
+          <p class="text-sm text-theme-muted">
+            Backups this device already has the key to:
+          </p>
+          <ul class="flex flex-col gap-1">
+            {#each cloudBackupStore.knownBackups as backup (backup.backupId)}
+              <li>
+                <button
+                  type="button"
+                  onclick={() => (restoreKey = backup.recoveryKey)}
+                  class="flex w-full items-baseline justify-between gap-3 border border-theme-border px-3 py-2 text-left transition-colors hover:border-theme-primary/40"
+                >
+                  <span class="text-sm text-theme-text"
+                    >{backupLabel(backup)}</span
+                  >
+                  <span
+                    class="font-mono text-[10px] uppercase text-theme-muted"
+                  >
+                    {savedAt(backup.lastPushedAt)}
+                  </span>
+                </button>
+              </li>
+            {/each}
+          </ul>
+        </div>
+      {/if}
+
+      <p class="text-sm text-theme-muted">
+        Or paste a recovery key from another device — the "Copy recovery key"
+        button in its Settings. The vault is loaded into a new vault, so nothing
+        you have open is replaced.
+      </p>
+      <label class="flex flex-col gap-1 text-xs text-theme-muted">
+        Recovery key
+        <input
+          bind:value={restoreKey}
+          placeholder="backup-id:ownership-code"
+          class="border border-theme-border bg-theme-bg px-3 py-2 font-mono text-sm text-theme-text"
+        />
+      </label>
+      <button
+        type="button"
+        onclick={runRestore}
+        disabled={busy || !restoreKey.trim()}
+        class="self-start bg-theme-primary px-4 py-2 text-xs font-bold uppercase tracking-wider text-theme-bg disabled:opacity-50"
+      >
+        Load from cloud
+      </button>
+    </div>
+  {/if}
+{/snippet}
+
+{#snippet consentDialog()}
+  {#if showConsent}
+    <div class="fixed inset-0 z-[200] flex items-center justify-center p-4">
+      <button
+        type="button"
+        class="absolute inset-0 h-full w-full bg-black/85 backdrop-blur-md"
+        aria-label="Cancel cloud backup setup"
+        onclick={() => (showConsent = false)}
+      ></button>
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="cloud-consent-title"
+        tabindex="-1"
+        use:focusTrap
+        class="relative flex max-h-[85vh] w-full max-w-lg flex-col overflow-y-auto border border-theme-border bg-theme-surface p-6"
+      >
+        <h2
+          id="cloud-consent-title"
+          class="font-header text-lg font-bold text-theme-text"
+        >
+          Before you turn on cloud backup
+        </h2>
+
+        <div
+          class="mt-4 flex flex-col gap-3 text-sm leading-relaxed text-theme-muted"
+        >
+          <p>
+            <strong class="text-theme-text">What gets stored:</strong> everything
+            in this vault — your entities, labels, notes, maps, canvases and the images
+            they use.
+          </p>
+          <p>
+            <strong class="text-theme-text">Where:</strong> Codex Cryptica Cloud,
+            which runs on third-party hosting infrastructure.
+          </p>
+          <p>
+            <strong class="text-theme-text">Who can read it:</strong> the backup is
+            not end-to-end encrypted, so Codex Cryptica and its hosting provider are
+            technically able to read its contents. It is never sold, forwarded to
+            anyone else, or used to train AI.
+          </p>
+          <p>
+            <strong class="text-theme-text">Your recovery key:</strong> turning this
+            on creates a key that is the only way back to your backup. There are no
+            accounts and no password reset. Copy it somewhere safe — if you lose it,
+            and cannot tell support your vault's title, the backup is unreachable
+            for good.
+          </p>
+          <p>
+            <strong class="text-theme-text">Support access:</strong> if you lose the
+            key, our support staff can look up a vault's title, size and last backup
+            time to help you recover it. They cannot read your vault's contents.
+          </p>
+          <p>
+            <strong class="text-theme-text">Turning it off:</strong> you can stop
+            backing up, or permanently delete the stored copy, at any time from this
+            screen.
+          </p>
+        </div>
+
+        <div class="mt-6 flex flex-wrap justify-end gap-2">
+          <button
+            type="button"
+            onclick={() => (showConsent = false)}
+            class="px-4 py-2 text-xs font-bold uppercase tracking-wider text-theme-muted transition-colors hover:text-theme-text"
+          >
+            Not now
+          </button>
+          <button
+            type="button"
+            onclick={confirmConsent}
+            disabled={busy}
+            class="bg-theme-primary px-5 py-2 text-xs font-bold uppercase tracking-wider text-theme-bg transition-colors hover:bg-theme-primary/90 disabled:opacity-50"
+          >
+            I understand — turn it on
+          </button>
+        </div>
+      </div>
+    </div>
+  {/if}
+{/snippet}
+
 <section class="flex flex-col gap-4" aria-labelledby="cloud-backup-heading">
   <div class="flex items-start justify-between gap-4">
     <div>
@@ -367,6 +513,10 @@
     </div>
   {/if}
 
+  {#if !isOn}
+    <CloudBackupAttach {vaultId} vaultName={currentVaultName} />
+  {/if}
+
   <button
     type="button"
     onclick={openRestore}
@@ -375,137 +525,6 @@
     Load a vault from the cloud
   </button>
 
-  {#if showRestore}
-    <div class="flex flex-col gap-3 border border-theme-border p-4">
-      {#if cloudBackupStore.knownBackups.length > 0}
-        <div class="flex flex-col gap-2">
-          <p class="text-sm text-theme-muted">
-            Backups this device already has the key to:
-          </p>
-          <ul class="flex flex-col gap-1">
-            {#each cloudBackupStore.knownBackups as backup (backup.backupId)}
-              <li>
-                <button
-                  type="button"
-                  onclick={() => (restoreKey = backup.recoveryKey)}
-                  class="flex w-full items-baseline justify-between gap-3 border border-theme-border px-3 py-2 text-left transition-colors hover:border-theme-primary/40"
-                >
-                  <span class="text-sm text-theme-text"
-                    >{backupLabel(backup)}</span
-                  >
-                  <span
-                    class="font-mono text-[10px] uppercase text-theme-muted"
-                  >
-                    {savedAt(backup.lastPushedAt)}
-                  </span>
-                </button>
-              </li>
-            {/each}
-          </ul>
-        </div>
-      {/if}
-
-      <p class="text-sm text-theme-muted">
-        Or paste a recovery key from another device — the "Copy recovery key"
-        button in its Settings. The vault is loaded into a new vault, so nothing
-        you have open is replaced.
-      </p>
-      <label class="flex flex-col gap-1 text-xs text-theme-muted">
-        Recovery key
-        <input
-          bind:value={restoreKey}
-          placeholder="backup-id:ownership-code"
-          class="border border-theme-border bg-theme-bg px-3 py-2 font-mono text-sm text-theme-text"
-        />
-      </label>
-      <button
-        type="button"
-        onclick={runRestore}
-        disabled={busy || !restoreKey.trim()}
-        class="self-start bg-theme-primary px-4 py-2 text-xs font-bold uppercase tracking-wider text-theme-bg disabled:opacity-50"
-      >
-        Load from cloud
-      </button>
-    </div>
-  {/if}
+  {@render restorePanel()}
 </section>
-
-{#if showConsent}
-  <div class="fixed inset-0 z-[200] flex items-center justify-center p-4">
-    <button
-      type="button"
-      class="absolute inset-0 h-full w-full bg-black/85 backdrop-blur-md"
-      aria-label="Cancel cloud backup setup"
-      onclick={() => (showConsent = false)}
-    ></button>
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="cloud-consent-title"
-      tabindex="-1"
-      use:focusTrap
-      class="relative flex max-h-[85vh] w-full max-w-lg flex-col overflow-y-auto border border-theme-border bg-theme-surface p-6"
-    >
-      <h2
-        id="cloud-consent-title"
-        class="font-header text-lg font-bold text-theme-text"
-      >
-        Before you turn on cloud backup
-      </h2>
-
-      <div
-        class="mt-4 flex flex-col gap-3 text-sm leading-relaxed text-theme-muted"
-      >
-        <p>
-          <strong class="text-theme-text">What gets stored:</strong> everything in
-          this vault — your entities, labels, notes, maps, canvases and the images
-          they use.
-        </p>
-        <p>
-          <strong class="text-theme-text">Where:</strong> Codex Cryptica Cloud, which
-          runs on third-party hosting infrastructure.
-        </p>
-        <p>
-          <strong class="text-theme-text">Who can read it:</strong> the backup is
-          not end-to-end encrypted, so Codex Cryptica and its hosting provider are
-          technically able to read its contents. It is never sold, forwarded to anyone
-          else, or used to train AI.
-        </p>
-        <p>
-          <strong class="text-theme-text">Your recovery key:</strong> turning this
-          on creates a key that is the only way back to your backup. There are no
-          accounts and no password reset. Copy it somewhere safe — if you lose it,
-          and cannot tell support your vault's title, the backup is unreachable for
-          good.
-        </p>
-        <p>
-          <strong class="text-theme-text">Support access:</strong> if you lose the
-          key, our support staff can look up a vault's title, size and last backup
-          time to help you recover it. They cannot read your vault's contents.
-        </p>
-        <p>
-          <strong class="text-theme-text">Turning it off:</strong> you can stop backing
-          up, or permanently delete the stored copy, at any time from this screen.
-        </p>
-      </div>
-
-      <div class="mt-6 flex flex-wrap justify-end gap-2">
-        <button
-          type="button"
-          onclick={() => (showConsent = false)}
-          class="px-4 py-2 text-xs font-bold uppercase tracking-wider text-theme-muted transition-colors hover:text-theme-text"
-        >
-          Not now
-        </button>
-        <button
-          type="button"
-          onclick={confirmConsent}
-          disabled={busy}
-          class="bg-theme-primary px-5 py-2 text-xs font-bold uppercase tracking-wider text-theme-bg transition-colors hover:bg-theme-primary/90 disabled:opacity-50"
-        >
-          I understand — turn it on
-        </button>
-      </div>
-    </div>
-  </div>
-{/if}
+{@render consentDialog()}

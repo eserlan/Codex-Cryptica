@@ -89,6 +89,62 @@ describe("SEOGeneratorLayout Theming Sync", () => {
     expect(setThemeSpy).toHaveBeenCalledWith("cyberpunk");
   });
 
+  it("widens the form column only for pages that opt in with wideForm", () => {
+    const generate = vi.fn().mockResolvedValue({});
+    const narrow = render(SEOGeneratorLayout, {
+      props: { generate, formFields: noopSnippet, autoGenerateExplicit: true },
+    });
+    expect(narrow.container.querySelector(".lg\\:col-span-5")).toBeNull();
+    expect(narrow.container.querySelectorAll(".lg\\:col-span-3")).toHaveLength(
+      2,
+    );
+    narrow.unmount();
+
+    const wide = render(SEOGeneratorLayout, {
+      props: {
+        generate,
+        formFields: noopSnippet,
+        autoGenerateExplicit: true,
+        wideForm: true,
+      },
+    });
+    expect(wide.container.querySelector(".lg\\:col-span-5")).not.toBeNull();
+    expect(wide.container.querySelector(".lg\\:col-span-7")).not.toBeNull();
+    expect(wide.container.querySelector(".lg\\:col-span-12")).not.toBeNull();
+  });
+
+  it("stacks form, output and table notes in one column with singleColumn", () => {
+    const { container } = render(SEOGeneratorLayout, {
+      props: {
+        generate: vi.fn().mockResolvedValue({}),
+        formFields: noopSnippet,
+        autoGenerateExplicit: true,
+        singleColumn: true,
+      },
+    });
+    expect(container.querySelectorAll(".lg\\:col-span-12")).toHaveLength(3);
+    expect(container.querySelector(".lg\\:col-span-5")).toBeNull();
+    expect(container.querySelector(".lg\\:col-span-3")).toBeNull();
+  });
+
+  it("leaves submitting to the form fields when showSubmitButton is false", async () => {
+    const generate = vi.fn().mockResolvedValue({});
+    const { container } = render(SEOGeneratorLayout, {
+      props: {
+        generate,
+        formFields: noopSnippet,
+        autoGenerateExplicit: true,
+        showSubmitButton: false,
+      },
+    });
+    expect(container.querySelector("#generate-button")).toBeNull();
+    expect(container.querySelector("#ai-toggle")).toBeNull();
+
+    // An implicit submit (Enter in a lone input) must not start a generation.
+    await fireEvent.submit(container.querySelector("form")!);
+    expect(generate).not.toHaveBeenCalled();
+  });
+
   it("does NOT call themeStore.setTheme when isThemeCustomizable is false", async () => {
     themeStore.currentThemeId = "workspace";
     const setThemeSpy = vi

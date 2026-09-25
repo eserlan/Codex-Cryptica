@@ -417,6 +417,7 @@ describe("published answers", () => {
       "idea-developer",
       "quest-hook-generator",
       "rpg-npc-generator",
+      "session-prep-builder",
       "vampire-clan-generator",
     ]);
 

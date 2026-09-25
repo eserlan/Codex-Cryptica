@@ -7,7 +7,7 @@ import type {
   TableEntry,
 } from "./types";
 import { MAX_RESOLUTION_DEPTH } from "./types";
-import { rollRaw, selectIndex, weightsOf } from "./selection";
+import { rollDieResult, selectIndex, weightsOf } from "./selection";
 import { parseReferences } from "./resolver";
 
 /**
@@ -105,15 +105,16 @@ export class RandomSourceEngine {
     if (entries.length === 0) return undefined;
 
     if (source.selection?.mode === "ranged") {
-      const sides = source.selection.die.sides;
-      const value = rollRaw(sides, this.dice);
-      node.dieValue = value;
+      const roll = rollDieResult(source.selection.die, this.dice);
+      node.dieValue = roll.total;
+      node.rollParts = roll.parts;
       const hit = entries.find(
-        (e) => e.range && value >= e.range.min && value <= e.range.max,
+        (e) =>
+          e.range && roll.total >= e.range.min && roll.total <= e.range.max,
       );
       // A gap in coverage is a validation warning, not a roll failure: fall
       // back to the nearest entry rather than returning nothing.
-      return (hit ?? nearest(entries, value)).text;
+      return (hit ?? nearest(entries, roll.total)).text;
     }
 
     const weights = weightsOf(entries);

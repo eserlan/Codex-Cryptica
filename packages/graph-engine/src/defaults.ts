@@ -29,7 +29,7 @@ export const DEFAULT_LAYOUT_OPTIONS = {
  * layout loosely cohesive.
  */
 export const getDynamicLayoutOptions = (nodeCount: number) => {
-  const quality = nodeCount > 500 ? "draft" : "default";
+  const quality = nodeCount >= 500 ? "draft" : "default";
 
   const edgeLength = Math.min(450, 90 + Math.sqrt(nodeCount) * 9);
 
@@ -41,8 +41,13 @@ export const getDynamicLayoutOptions = (nodeCount: number) => {
   // collapsing into one mixed ball; floor is low so large graphs stay cohesive
   const gravity = Math.max(0.005, 0.05 - nodeCount * 0.00015);
 
-  // Draft quality uses a coarser algorithm — fewer iterations still converge
-  const numIter = nodeCount > 200 ? 1200 : DEFAULT_LAYOUT_OPTIONS.numIter;
+  // Draft quality uses a coarser multi-level coarsening algorithm — 800 iterations is plenty for convergence
+  const numIter =
+    quality === "draft"
+      ? 800
+      : nodeCount > 200
+        ? 1200
+        : DEFAULT_LAYOUT_OPTIONS.numIter;
 
   return {
     ...DEFAULT_LAYOUT_OPTIONS,

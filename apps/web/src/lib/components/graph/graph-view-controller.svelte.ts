@@ -1,4 +1,5 @@
 import { untrack } from "svelte";
+import { unsavedPositionUpdates } from "./position-persistence";
 import type { Core } from "cytoscape";
 import {
   initGraph,
@@ -491,7 +492,7 @@ export class GraphViewController {
     if (this.imageManager) {
       this.imageManager.destroy({
         releaseImageUrl: (path: string) =>
-          this.deps.vault.releaseImageUrl(path),
+          this.deps.vault.releaseThumbnailUrl(path),
       } as any);
       this.imageManager = undefined;
     }
@@ -596,16 +597,27 @@ export class GraphViewController {
               this.needsVisibilityReconcile = true;
               return;
             }
-            // Never bulk-persist positions from a focus-view (culled) solve. The
-            // rendered set is a partial view of the vault, so its solved layout
-            // isn't a meaningful full-graph layout to save — and persisting it is
-            // catastrophically expensive on large vaults: each coordinate save of
-            // a lazily-loaded entity forces a full content load + disk write, so
-            // a 500-node heal/solve serialized hundreds of store mutations and
-            // wedged the main thread for minutes (#1576). Full-graph mode
-            // ("Show full graph") still persists and heals normally.
-            if (this.deps.graph.focusViewActive) return;
             const notLoading = this.deps.vault.status !== "loading";
+            // Always keep positions for entities that have none yet, in any
+            // view and on the first solve. Otherwise a vault shown in focus
+            // view never kept its layout and re-solved it on every load. Only
+            // missing positions are filled in, so a partial or randomised
+            // solve never overwrites a saved layout, and coordinate-only saves
+            // no longer load entity content (the #1576 cascade that kept
+            // focus-view solves from saving at all).
+            const unsaved = unsavedPositionUpdates(
+              updates as Record<string, Partial<LocalEntity>>,
+              (id) => this.deps.vault.entities[id],
+            );
+            // Focus view shows a partial set: never rewrite saved positions
+            // from it. Full-graph mode ("Show full graph") persists and heals
+            // as before.
+            if (this.deps.graph.focusViewActive) {
+              if (notLoading && Object.keys(unsaved).length > 0) {
+                this.deps.vault.batchUpdate(unsaved);
+              }
+              return;
+            }
             const isReady = this.loadPhase === "ready" && notLoading;
             // Persist the initial layout when it heals a degenerate vault — either
             // a runtime re-solve (meta.healed) or the first solve of a vault whose
@@ -621,6 +633,8 @@ export class GraphViewController {
               this.deps.vault.batchUpdate(
                 updates as Record<string, Partial<LocalEntity>>,
               );
+            } else if (notLoading && Object.keys(unsaved).length > 0) {
+              this.deps.vault.batchUpdate(unsaved);
             }
           },
         },
@@ -893,9 +907,10 @@ export class GraphViewController {
         this.imageManager!.sync({
           showImages:
             this.deps.graph.showImages && !this.deps.graph.perfStylingActive,
-          resolveImageUrl: (path) => this.deps.vault.resolveImageUrl(path),
+          // Nodes paint at tens of pixels: full photos cost seconds per redraw.
+          resolveImageUrl: (path) => this.deps.vault.resolveThumbnailUrl(path),
           releaseImageUrl: (path: string) =>
-            this.deps.vault.releaseImageUrl(path),
+            this.deps.vault.releaseThumbnailUrl(path),
           // Both inputs of the glyph colour: the theme and the (user-editable)
           // category colours it derives the tones from. Serialised rather than
           // concatenated because category ids are user-authored — two
@@ -1019,7 +1034,7 @@ export class GraphViewController {
       if (this.imageManager)
         this.imageManager.destroy({
           releaseImageUrl: (path: string) =>
-            this.deps.vault.releaseImageUrl(path),
+            this.deps.vault.releaseThumbnailUrl(path),
         } as any);
       return;
     }

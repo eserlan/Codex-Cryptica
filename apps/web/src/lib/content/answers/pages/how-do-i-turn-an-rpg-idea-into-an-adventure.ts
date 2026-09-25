@@ -151,6 +151,7 @@ export const howDoITurnAnRpgIdeaIntoAnAdventure: AnswerConfigInput = {
     "how-do-you-prepare-a-sandbox-rpg-campaign",
     "is-my-rpg-campaign-idea-good",
     "how-do-i-expand-a-simple-rpg-campaign-idea",
+    "how-do-i-prepare-an-rpg-session-step-by-step",
   ],
   discovery: {
     id: "answer-turn-rpg-idea-into-adventure",
@@ -175,6 +176,11 @@ export const howDoITurnAnRpgIdeaIntoAnAdventure: AnswerConfigInput = {
       "tools-idea-developer",
     ],
     acknowledgedOverlap: [
+      {
+        with: "answer-prepare-session-step-by-step",
+        reason:
+          "That page turns a hook or current situation into material for the next single session; this one develops a premise into a playable adventure situation.",
+      },
       {
         with: "answer-is-my-rpg-campaign-idea-good",
         reason:

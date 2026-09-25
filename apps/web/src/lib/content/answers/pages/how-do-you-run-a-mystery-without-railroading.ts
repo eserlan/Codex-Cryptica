@@ -134,6 +134,8 @@ export const howDoYouRunAMysteryWithoutRailroading: AnswerConfigInput = {
     "how-do-you-handle-players-going-off-script-as-a-gm",
     "what-rpg-should-i-play-for-investigative-horror",
     "how-do-i-run-an-investigator-without-sidelining-the-party",
+    "how-do-i-prepare-an-rpg-session-step-by-step",
+    "how-do-i-write-a-good-call-of-cthulhu-one-shot",
   ],
   discovery: {
     id: "answer-run-mystery-without-railroading",

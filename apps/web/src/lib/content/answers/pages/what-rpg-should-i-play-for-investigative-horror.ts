@@ -191,6 +191,7 @@ export const whatRpgShouldIPlayForInvestigativeHorror: AnswerConfigInput = {
     "what-rpg-works-for-political-intrigue-and-faction-play",
     "how-do-i-run-an-investigator-without-sidelining-the-party",
     "how-do-i-run-a-journalist-or-media-character-in-an-rpg",
+    "how-do-i-write-a-good-call-of-cthulhu-one-shot",
   ],
   discovery: {
     id: "answer-investigative-horror-system-selection",

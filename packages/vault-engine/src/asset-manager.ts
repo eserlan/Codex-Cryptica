@@ -21,9 +21,48 @@ export interface IAssetIOAdapter {
   isNotFoundError(err: any): boolean;
 }
 
+/** Longest side of a generated thumbnail; matches uploaded images' `_thumb`. */
+const THUMBNAIL_SIZE = 200;
+
+/** Thumbnails generated at once, so a vault of photos is not decoded together. */
+const THUMBNAIL_CONCURRENCY = 2;
+
+const EXTERNAL_URL = /^https?:\/\//i;
+
+/** Cache-key namespace for thumbnail URLs, distinct from their originals. */
+const thumbnailKey = (path: string) => `thumbnail:${path}`;
+
+/** File name an external image is cached under in `.cache/external_images`. */
+async function externalCacheName(url: string): Promise<string> {
+  const digest = await crypto.subtle.digest(
+    "SHA-256",
+    new TextEncoder().encode(url),
+  );
+  const hash = Array.from(new Uint8Array(digest), (byte) =>
+    byte.toString(16).padStart(2, "0"),
+  ).join("");
+  return `${hash}.cache`;
+}
+
+/**
+ * The name external images were cached under before names were hashed. Still
+ * read so existing caches survive: for an expired link (Discord attachment
+ * URLs expire) or a deleted image, the cached copy is the only one left.
+ */
+function legacyExternalCacheName(url: string): string {
+  return (
+    url
+      .replace(/[^a-z0-9]/gi, "_")
+      .toLowerCase()
+      .slice(-100) + ".cache"
+  );
+}
+
 export class AssetManager {
   private urlCache = new Map<string, { url: string; refs: number }>();
   private resolving = new Map<string, Promise<string>>();
+  private activeThumbnails = 0;
+  private thumbnailWaiters: (() => void)[] = [];
 
   constructor(
     private ioAdapter: IAssetIOAdapter,
@@ -124,54 +163,9 @@ export class AssetManager {
             }
           }
 
-          try {
-            const cacheDir = await this.ioAdapter.getDirectoryHandle(
-              vaultHandle,
-              [".cache"],
-              true,
-            );
-            const externalDir = await this.ioAdapter.getDirectoryHandle(
-              cacheDir,
-              ["external_images"],
-              true,
-            );
-
-            const safeName =
-              cleanPath
-                .replace(/[^a-z0-9]/gi, "_")
-                .toLowerCase()
-                .slice(-100) + ".cache";
-
-            try {
-              const blob = await this.ioAdapter.readOpfsBlob(
-                [safeName],
-                externalDir,
-              );
-              url = URL.createObjectURL(blob);
-            } catch {
-              let blob: Blob;
-              try {
-                const response = await this.fetcher(cleanPath, {
-                  mode: "cors",
-                });
-                if (!response.ok)
-                  throw new Error(`Fetch failed: ${response.status}`);
-                blob = await response.blob();
-              } catch {
-                return cleanPath;
-              }
-
-              await this.ioAdapter.writeOpfsFile(
-                [".cache", "external_images", safeName],
-                blob,
-                vaultHandle,
-                vaultHandle.name,
-              );
-              url = URL.createObjectURL(blob);
-            }
-          } catch {
-            return cleanPath;
-          }
+          const blob = await this.readOrFetchExternal(vaultHandle, cleanPath);
+          if (!blob) return cleanPath;
+          url = URL.createObjectURL(blob);
         } else if (fileFetcher) {
           // 3. P2P / Guest Mode remote fetcher
           try {
@@ -239,6 +233,217 @@ export class AssetManager {
 
     this.resolving.set(cleanPath, resolutionPromise);
     return resolutionPromise;
+  }
+
+  /**
+   * A graph-sized version of an image.
+   *
+   * Uploaded images already have a `_thumb.webp` beside them, so local paths
+   * resolve as usual. Imported entities usually point at external images and
+   * set `thumbnail` to the same full-size URL; painting those at tens of pixels
+   * cost seconds per graph redraw. For them a thumbnail is generated once, with
+   * the same generator uploads use, and cached beside the cached original.
+   * Anything that cannot be read (no CORS, fetch failure) falls back to the
+   * normal resolution.
+   */
+  resolveThumbnailUrl(
+    vaultHandle: FileSystemDirectoryHandle | undefined,
+    path: string,
+    fileFetcher?: (path: string) => Promise<Blob>,
+    fallbackHandle?: FileSystemDirectoryHandle,
+  ): Promise<string> {
+    const cleanPath = (path ?? "").trim();
+    if (!vaultHandle || !EXTERNAL_URL.test(cleanPath)) {
+      return this.resolveImageUrl(
+        vaultHandle,
+        cleanPath,
+        fileFetcher,
+        fallbackHandle,
+      );
+    }
+    const key = thumbnailKey(cleanPath);
+    const ongoing = this.resolving.get(key);
+    if (ongoing) return ongoing;
+    const existing = this.urlCache.get(key);
+    if (existing) {
+      existing.refs++;
+      return Promise.resolve(existing.url);
+    }
+
+    const resolution = (async () => {
+      try {
+        const thumbnail = await this.readOrCreateExternalThumbnail(
+          vaultHandle,
+          cleanPath,
+        );
+        if (!thumbnail) {
+          return this.resolveImageUrl(
+            vaultHandle,
+            cleanPath,
+            fileFetcher,
+            fallbackHandle,
+          );
+        }
+        const url = URL.createObjectURL(thumbnail);
+        this.urlCache.set(key, { url, refs: 1 });
+        return url;
+      } finally {
+        this.resolving.delete(key);
+      }
+    })();
+    this.resolving.set(key, resolution);
+    return resolution;
+  }
+
+  /**
+   * Copies an external image into the vault as if it had been uploaded —
+   * WebP plus a `_thumb` — so the entity no longer depends on the remote host
+   * and dense views get a real thumbnail. Reuses the cached copy when the image
+   * was already fetched. Returns `null` when it cannot be read (no CORS, gone).
+   */
+  async importExternalImage(
+    vaultHandle: FileSystemDirectoryHandle | undefined,
+    url: string,
+    entityId: string,
+  ): Promise<{ image: string; thumbnail: string } | null> {
+    const cleanUrl = url.trim();
+    if (!vaultHandle || !EXTERNAL_URL.test(cleanUrl)) return null;
+    const blob = await this.readOrFetchExternal(vaultHandle, cleanUrl);
+    if (!blob) return null;
+    try {
+      return await this.saveImageToVault(vaultHandle, blob, entityId);
+    } catch {
+      return null;
+    }
+  }
+
+  /** Releases a URL from `resolveThumbnailUrl`, whichever form it resolved to. */
+  releaseThumbnailUrl(path: string) {
+    const cleanPath = path.trim();
+    this.releaseImageUrl(
+      this.urlCache.has(thumbnailKey(cleanPath))
+        ? thumbnailKey(cleanPath)
+        : cleanPath,
+    );
+  }
+
+  private async externalDir(vaultHandle: FileSystemDirectoryHandle) {
+    const cacheDir = await this.ioAdapter.getDirectoryHandle(
+      vaultHandle,
+      [".cache"],
+      true,
+    );
+    return this.ioAdapter.getDirectoryHandle(
+      cacheDir,
+      ["external_images"],
+      true,
+    );
+  }
+
+  /** The cached copy of an external image, fetching and caching it if needed. */
+  private async readOrFetchExternal(
+    vaultHandle: FileSystemDirectoryHandle,
+    url: string,
+  ): Promise<Blob | null> {
+    try {
+      const name = await externalCacheName(url);
+      const dir = await this.externalDir(vaultHandle);
+      try {
+        return await this.ioAdapter.readOpfsBlob([name], dir);
+      } catch {
+        const legacy = await this.migrateLegacyExternal(vaultHandle, url, name);
+        if (legacy) return legacy;
+        const response = await this.fetcher(url, { mode: "cors" });
+        if (!response.ok) return null;
+        const blob = await response.blob();
+        await this.ioAdapter.writeOpfsFile(
+          [".cache", "external_images", name],
+          blob,
+          vaultHandle,
+          vaultHandle.name,
+        );
+        return blob;
+      }
+    } catch {
+      return null;
+    }
+  }
+
+  /**
+   * Adopts a copy cached under the legacy name: returns it and writes it under
+   * the hashed name so later reads are direct. The legacy file is left as is —
+   * two URLs differing only in case could share it.
+   */
+  private async migrateLegacyExternal(
+    vaultHandle: FileSystemDirectoryHandle,
+    url: string,
+    name: string,
+  ): Promise<Blob | null> {
+    let blob: Blob;
+    try {
+      blob = await this.ioAdapter.readOpfsBlob(
+        [legacyExternalCacheName(url)],
+        await this.externalDir(vaultHandle),
+      );
+    } catch {
+      return null;
+    }
+    await this.ioAdapter
+      .writeOpfsFile(
+        [".cache", "external_images", name],
+        blob,
+        vaultHandle,
+        vaultHandle.name,
+      )
+      .catch(() => {});
+    return blob;
+  }
+
+  private async readOrCreateExternalThumbnail(
+    vaultHandle: FileSystemDirectoryHandle,
+    url: string,
+  ): Promise<Blob | null> {
+    const name = (await externalCacheName(url)).replace(
+      /\.cache$/,
+      ".thumb.webp",
+    );
+    try {
+      return await this.ioAdapter.readOpfsBlob(
+        [name],
+        await this.externalDir(vaultHandle),
+      );
+    } catch {
+      // Not generated yet.
+    }
+    const original = await this.readOrFetchExternal(vaultHandle, url);
+    if (!original) return null;
+    try {
+      const thumbnail = await this.withThumbnailSlot(() =>
+        this.imageProcessor.generateThumbnail(original, THUMBNAIL_SIZE),
+      );
+      await this.ioAdapter.writeOpfsFile(
+        [".cache", "external_images", name],
+        thumbnail,
+        vaultHandle,
+        vaultHandle.name,
+      );
+      return thumbnail;
+    } catch {
+      return null;
+    }
+  }
+
+  private async withThumbnailSlot<T>(task: () => Promise<T>): Promise<T> {
+    while (this.activeThumbnails >= THUMBNAIL_CONCURRENCY) {
+      await new Promise<void>((resolve) => this.thumbnailWaiters.push(resolve));
+    }
+    this.activeThumbnails++;
+    try {
+      return await task();
+    } finally {
+      this.activeThumbnails--;
+      this.thumbnailWaiters.shift()?.();
+    }
   }
 
   releaseImageUrl(path: string) {

@@ -4,6 +4,20 @@ import "../event-registrations";
 import { debugStore } from "../../stores/debug.svelte";
 import { IS_STAGING } from "../../config";
 import { resolveOracleProxyUrl } from "../../config/oracle-proxy";
+import type { CloudBackupTiming } from "@codex/cloud-backup-sync";
+
+/**
+ * Silent stage timings for the worker-or-not question (counts, bytes and ms
+ * only — never content). `console.debug` stays hidden unless Verbose logging
+ * is on, so this ships without noise and reads with numbers when profiling.
+ */
+function timeCloudBackupSave(timing: CloudBackupTiming): void {
+  console.debug(
+    `[CloudBackup:${timing.stage}] ${timing.durationMs.toFixed(1)}ms` +
+      (timing.count !== undefined ? ` count=${timing.count}` : "") +
+      (timing.bytes !== undefined ? ` bytes=${timing.bytes}` : ""),
+  );
+}
 import { requestPersistentStorage } from "$lib/utils/persistent-storage";
 import { initOracleEventListeners } from "../../listeners/oracle-events";
 import { notificationStore } from "$lib/stores/ui/notification.svelte";
@@ -200,6 +214,7 @@ export function initializeGlobalListeners(_calendarStore?: any) {
       fetch: ((url: string, init?: any) => fetch(url, init)) as never,
     },
     dirty: new CloudBackupDirtyStore(),
+    timing: timeCloudBackupSave,
     // Everything the consent screen promises: entities, maps, canvases and
     // the media all three reference.
     buildPayload: async (_vaultId: string, signal?: AbortSignal) =>
@@ -216,6 +231,7 @@ export function initializeGlobalListeners(_calendarStore?: any) {
             readFullEntity: (id: string) => vault.readFullEntity(id),
           },
           signal,
+          onTiming: timeCloudBackupSave,
         },
         {
           maps: mapRegistry.allMaps ?? [],
@@ -236,6 +252,7 @@ export function initializeGlobalListeners(_calendarStore?: any) {
             readFullEntity: (id: string) => vault.readFullEntity(id),
           },
           uploadedAssetIds,
+          onTiming: timeCloudBackupSave,
           referencedAssetIds: collectAssetPaths(
             Object.values(vault.entities ?? {}) as never[],
             mapRegistry.allMaps ?? [],

@@ -181,6 +181,7 @@ export const howDoIRunAnInvestigatorWithoutSideliningTheParty: AnswerConfigInput
       "how-do-i-run-spies-and-infiltrators-in-an-rpg",
       "how-do-you-run-a-conspiracy-campaign",
       "how-do-i-run-a-rogue-or-scout-without-splitting-the-party",
+      "how-do-i-write-a-good-call-of-cthulhu-one-shot",
     ],
     discovery: {
       id: "answer-run-investigator-without-sidelining-party",

@@ -125,8 +125,8 @@ export class GraphImageManager {
           return;
         }
 
-        // Apply in smaller batches to prevent massive style churn
-        const batchSize = options.batchSize ?? 10;
+        // Apply in batches to prevent massive style churn while avoiding excessive batch overhead
+        const batchSize = options.batchSize ?? 100;
         for (let i = 0; i < results.length; i += batchSize) {
           const chunk = results.slice(i, i + batchSize);
           this.cy.batch(() => {

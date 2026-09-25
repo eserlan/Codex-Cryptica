@@ -35,6 +35,13 @@
                 "Assess, develop, explore alternatives, make playable, or challenge a premise while keeping its recognisable core.",
               icon: "icon-[lucide--lightbulb]",
             },
+            {
+              href: "/tools/session-prep-builder",
+              label: "Session Prep Builder",
+              summary:
+                "Turn a hook or campaign situation into pressure, people, places, clues and a one-page run sheet, with AI drafting only what you leave empty.",
+              icon: "icon-[lucide--clipboard-list]",
+            },
           ],
         },
         {

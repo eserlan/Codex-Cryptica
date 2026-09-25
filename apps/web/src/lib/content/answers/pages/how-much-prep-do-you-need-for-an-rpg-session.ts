@@ -159,6 +159,7 @@ export const howMuchPrepDoYouNeedForAnRpgSession: AnswerConfigInput = {
     "can-you-play-a-tabletop-rpg-in-30-minute-sessions",
     "what-rpg-system-is-good-for-solo-play",
     "how-do-i-organise-gm-notes-for-in-person-play",
+    "how-do-i-prepare-an-rpg-session-step-by-step",
   ],
   discovery: {
     id: "answer-session-prep",
@@ -169,7 +170,6 @@ export const howMuchPrepDoYouNeedForAnRpgSession: AnswerConfigInput = {
       "how much should a gm prep",
       "how much prep for a dnd session",
       "how long should session prep take",
-      "how to prep an rpg session",
       "low prep gming",
     ],
     uniqueValue:
@@ -178,6 +178,13 @@ export const howMuchPrepDoYouNeedForAnRpgSession: AnswerConfigInput = {
       "answer-campaign-notes",
       "answer-random-encounter",
       "answer-npc-relationships",
+    ],
+    acknowledgedOverlap: [
+      {
+        with: "answer-prepare-session-step-by-step",
+        reason:
+          "That page is the step-by-step procedure for producing a session's prep from a hook; this one answers how much prep is enough and separates essential prep from worldbuilding.",
+      },
     ],
   },
 
