@@ -567,7 +567,7 @@ export class LayoutManager {
   private fitOnly(options: LayoutOptions): void {
     this.cy.resize();
 
-    const unplacedNodes = this.cy.nodes(PENDING_LAYOUT_SELECTOR);
+    const unplacedNodes = this.cy.nodes("node[isPendingLayout]");
     if (unplacedNodes.nonempty()) {
       // Snap new nodes to sensible positions before revealing them so the
       // viewport doesn't jump to include their far-away spiral seed positions.

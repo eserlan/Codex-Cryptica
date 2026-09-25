@@ -274,8 +274,12 @@
                   onclick={() => (restoreKey = backup.recoveryKey)}
                   class="flex w-full items-baseline justify-between gap-3 border border-theme-border px-3 py-2 text-left transition-colors hover:border-theme-primary/40"
                 >
-                  <span class="text-sm text-theme-text">{backupLabel(backup)}</span>
-                  <span class="font-mono text-[10px] uppercase text-theme-muted">
+                  <span class="text-sm text-theme-text"
+                    >{backupLabel(backup)}</span
+                  >
+                  <span
+                    class="font-mono text-[10px] uppercase text-theme-muted"
+                  >
                     {savedAt(backup.lastPushedAt)}
                   </span>
                 </button>
@@ -338,8 +342,8 @@
           class="mt-4 flex flex-col gap-3 text-sm leading-relaxed text-theme-muted"
         >
           <p>
-            <strong class="text-theme-text">What gets stored:</strong> everything in
-            this vault — your entities, labels, notes, maps, canvases and the images
+            <strong class="text-theme-text">What gets stored:</strong> everything
+            in this vault — your entities, labels, notes, maps, canvases and the images
             they use.
           </p>
           <p>
@@ -356,8 +360,8 @@
             <strong class="text-theme-text">Your recovery key:</strong> turning this
             on creates a key that is the only way back to your backup. There are no
             accounts and no password reset. Copy it somewhere safe — if you lose it,
-            and cannot tell support your vault's title, the backup is unreachable for
-            good.
+            and cannot tell support your vault's title, the backup is unreachable
+            for good.
           </p>
           <p>
             <strong class="text-theme-text">Support access:</strong> if you lose the
