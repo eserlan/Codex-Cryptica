@@ -65,20 +65,30 @@ export class SessionPrepService {
   }
 
   /** Replaces one step with a fresh AI draft that fits the rest of the prep. */
-  redraftStep(
+  async redraftStep(
     prep: SessionPrep,
     step: SessionPrepStep,
     request?: SessionPrepRequest,
   ): Promise<SessionPrep> {
-    return this.draftSteps(clearSessionPrepStep(prep, step), [step], request);
+    // Validate the original prep before clearing the requested step. The
+    // cleared working copy may otherwise be empty when this was the only
+    // section the GM had filled in.
+    validate(prep);
+    return this.draftSteps(
+      clearSessionPrepStep(prep, step),
+      [step],
+      request,
+      true,
+    );
   }
 
   private async draftSteps(
     prep: SessionPrep,
     steps: SessionPrepStep[],
     request?: SessionPrepRequest,
+    allowEmpty = false,
   ): Promise<SessionPrep> {
-    validate(prep);
+    validate(prep, allowEmpty);
     if (steps.length === 0) return prep;
     const raw = await this.run(
       buildSessionPrepDraftPrompt(prep, steps, request),
@@ -124,8 +134,8 @@ export class SessionPrepService {
   }
 }
 
-function validate(prep: SessionPrep): void {
-  if (!hasSessionPrepContent(prep)) {
+function validate(prep: SessionPrep, allowEmpty = false): void {
+  if (!allowEmpty && !hasSessionPrepContent(prep)) {
     throw new Error("Add a hook or fill in a step to get started.");
   }
   if (prep.seed.length > SESSION_PREP_SEED_MAX_LENGTH) {

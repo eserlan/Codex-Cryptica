@@ -133,6 +133,28 @@ describe("SessionPrepService.draftStep", () => {
 });
 
 describe("SessionPrepService.redraftStep", () => {
+  it("redrafts the only populated step without a hook", async () => {
+    const { service, transport } = makeService({ pressure: "A new threat" });
+    const prep = createEmptySessionPrep();
+    prep.pressure = "A threat arrives at dawn.";
+
+    const result = await service.redraftStep(prep, "pressure");
+
+    expect(transport.runModel).toHaveBeenCalledOnce();
+    expect(result.pressure).toBe("A new threat");
+    expect(result.seed).toBe("");
+    expect(prep.pressure).toBe("A threat arrives at dawn.");
+  });
+
+  it("still rejects a redraft when the original prep has no content", async () => {
+    const { service, transport } = makeService({ start: "An opening" });
+
+    await expect(
+      service.redraftStep(createEmptySessionPrep(), "start"),
+    ).rejects.toThrow("Add a hook");
+    expect(transport.runModel).not.toHaveBeenCalled();
+  });
+
   it("replaces the chosen step and keeps the others", async () => {
     const { service, transport } = makeService({ start: "A new opening" });
     const prep = partialPrep();
