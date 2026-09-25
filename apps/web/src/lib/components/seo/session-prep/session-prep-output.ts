@@ -5,6 +5,7 @@ import {
   toRunSheetMarkdown,
   toSessionPrepLore,
   type SessionPrep,
+  type SessionPrepGuidance,
 } from "generator-engine";
 import type { GeneratorOutput } from "$lib/services/seo/generator-engine";
 import type { SessionPrepService } from "$lib/services/seo/session-prep-service";
@@ -16,7 +17,15 @@ import type { SessionPrepService } from "$lib/services/seo/session-prep-service"
  */
 export async function buildSessionPrep(
   prep: SessionPrep,
-  { useAI, service }: { useAI: boolean; service: SessionPrepService },
+  {
+    useAI,
+    service,
+    guidance,
+  }: {
+    useAI: boolean;
+    service: SessionPrepService;
+    guidance?: SessionPrepGuidance;
+  },
 ): Promise<{ prep: SessionPrep; output: GeneratorOutput }> {
   const wantsDraft =
     useAI &&
@@ -25,7 +34,7 @@ export async function buildSessionPrep(
   if (!wantsDraft) return { prep, output: toSessionPrepOutput(prep) };
 
   try {
-    const drafted = await service.draft(prep);
+    const drafted = await service.draft(prep, { guidance });
     return { prep: drafted, output: toSessionPrepOutput(drafted) };
   } catch (error) {
     if (!toRunSheetMarkdown(prep)) throw error;
@@ -43,7 +52,7 @@ export function toSessionPrepOutput(
   const content = toRunSheetMarkdown(prep);
   if (!content) {
     throw new Error(
-      "Fill in at least one step, or turn on AI to draft the steps from your hook.",
+      "Answer at least one question, or let AI answer them from your hook.",
     );
   }
   return {

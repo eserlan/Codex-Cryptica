@@ -3,6 +3,7 @@
   generics="T extends { id: string; source: import('generator-engine').PrepSource }"
 >
   import PrepAiTag from "./PrepAiTag.svelte";
+  import { autosize } from "./prep-autosize";
   import {
     prepAddClass,
     prepFieldClass,
@@ -37,7 +38,7 @@
   const classFor = (field: ItemField) =>
     [
       prepFieldClass,
-      field.multiline ? "resize-y" : "",
+      field.multiline ? "resize-none" : "",
       field.wide ? "@lg:col-span-2" : "",
     ].join(" ");
 
@@ -57,7 +58,9 @@
       value={valueOf(item, field)}
       oninput={(event) => update(item, field, event)}
       disabled={locked}
-      rows="2"
+      {@attach autosize(() => valueOf(item, field))}
+      rows="1"
+      placeholder={field.label}
       aria-label={field.label}
       class={classFor(field)}
     ></textarea>

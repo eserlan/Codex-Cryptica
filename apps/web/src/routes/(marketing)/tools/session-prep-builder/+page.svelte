@@ -8,7 +8,11 @@
   } from "$lib/components/seo/session-prep/session-prep-output";
   import { createSessionPrepService } from "$lib/services/seo/session-prep-service";
   import { onlineStatus } from "$lib/stores/online.svelte";
-  import { createEmptySessionPrep, type SessionPrep } from "generator-engine";
+  import {
+    createEmptySessionPrep,
+    type SessionPrep,
+    type SessionPrepGuidance,
+  } from "generator-engine";
   import type { GeneratorOutput } from "$lib/services/seo/generator-engine";
 
   const service = createSessionPrepService();
@@ -17,6 +21,14 @@
   let prep = $state<SessionPrep>(createEmptySessionPrep());
   let isBuilding = $state(false);
   let isFormAiBusy = $state(false);
+  /** Set by the form just before it submits; read once by `generate`. */
+  let pendingBuild: { fillEmpty: boolean; guidance?: SessionPrepGuidance } = {
+    fillEmpty: false,
+  };
+  let builtPrep = $state<string | null>(null);
+  const hasUnbuiltChanges = $derived(
+    builtPrep !== null && JSON.stringify(prep) !== builtPrep,
+  );
 
   async function generate({
     useAI,
@@ -28,13 +40,16 @@
         "AI is still working on a step. Build the run sheet when it finishes.",
       );
     }
+    const { fillEmpty, guidance } = pendingBuild;
+    pendingBuild = { fillEmpty: false };
     isBuilding = true;
     try {
       const result = await buildSessionPrep(
         $state.snapshot(prep) as SessionPrep,
-        { useAI, service },
+        { useAI: useAI && fillEmpty, service, guidance },
       );
       prep = result.prep;
+      builtPrep = JSON.stringify(result.prep);
       return result.output;
     } finally {
       isBuilding = false;
@@ -60,22 +75,22 @@
     {
       question: "Does the builder write my session for me?",
       answer:
-        "No. It prepares a situation you can run: pressure, people, places, information, complications and consequences. It never sets a scene order or a planned ending, and AI only fills steps you leave empty or options you choose to add.",
+        "No. It prepares a situation you can run: pressure, people, places, information, complications and consequences. It never sets a scene order or a planned ending, and AI only answers the questions you hand to it or adds options you choose.",
     },
     {
       question: "Will AI change what I have already written?",
       answer:
-        "No. Drafting fills only empty steps. Suggestions appear as options beside a step, and nothing changes until you pick one. Anything the AI added is marked so you can edit or remove it.",
+        "Not unless you ask. AI answers only the questions you leave empty. Suggestions appear as options beside a section, and nothing changes until you pick one. Redrafting a whole section happens only when you press Redraft, and you can undo it. Anything the AI added is marked so you can edit or remove it.",
     },
     {
       question: "Can I use it without AI?",
       answer:
-        "Yes. Turn AI off, or go offline, and fill in the steps yourself. The builder still flags needed facts that have only one way to be found and turns your steps into a one-page run sheet.",
+        "Yes. Answer the questions yourself, online or offline, and build. The builder still flags needed facts that have only one way to be found and turns your answers into a one-page run sheet you can keep adjusting.",
     },
     {
       question: "What happens to what I type?",
       answer:
-        "When you use AI, your hook and prep are sent to Google's Gemini API to generate suggestions. Codex analytics do not collect their text. If you save the run sheet, it is stored in a local vault on your device. Avoid submitting sensitive information.",
+        "When you use AI, your hook, your prep, any notes you give the AI and the ideas you turned down are sent to Google's Gemini API to generate suggestions. Codex analytics do not collect their text. If you save the run sheet, it is stored in a local vault on your device. Avoid submitting sensitive information.",
     },
     {
       question: "Do I need an account?",
@@ -85,11 +100,17 @@
   ];
 </script>
 
-{#snippet formFields(_submit: () => void)}
+{#snippet formFields(submit: () => void)}
   <SessionPrepBuilderForm
     bind:prep
     onBusyChange={(busy) => (isFormAiBusy = busy)}
+    onBuild={(options) => {
+      pendingBuild = options;
+      submit();
+    }}
     {service}
+    hasBuilt={builtPrep !== null}
+    {hasUnbuiltChanges}
     disabled={isBuilding}
     online={onlineStatus.current}
   />
@@ -102,16 +123,15 @@
   keywords={["session prep builder", "RPG run sheet", "GM session prep tool"]}
   eyebrow="Session Prep Builder"
   introTitle="Build your next session"
-  introText="Start from the hook or situation you already have. Work through the prep steps, let AI draft what you leave empty, and get a one-page run sheet you can read at the table."
-  explainerText="Prepare a situation, not a script. Fill what you know, let AI draft the rest, keep what fits."
+  introText="Start from the hook or situation you already have. Answer a few questions, or let AI answer them, and get a one-page run sheet you can read at the table. Then adjust any section until it fits."
+  explainerText="Prepare a situation, not a script. Answer what you know, let AI draft the rest, then adjust what does not fit."
   showGeneratorSwitcher={false}
-  wideForm
+  singleColumn
   initialDraft={exampleDraft}
-  aiDataNotice="With AI on, your hook and prep are sent to Google's Gemini API. Codex analytics do not collect their text. Saved run sheets stay in a local vault on your device. Avoid submitting sensitive information."
-  offlineMessage="AI drafting needs an internet connection. You can still fill the steps yourself and build the run sheet."
-  inputHint="Fill any steps you know. With AI on, building drafts the empty ones first."
-  generateLabel="Build my run sheet"
-  busyLabel="Building your run sheet..."
+  aiDataNotice="With AI on, your hook, prep, notes to the AI and turned-down ideas are sent to Google's Gemini API. Codex analytics do not collect their text. Saved run sheets stay in a local vault on your device. Avoid submitting sensitive information."
+  offlineMessage="AI answers need an internet connection. You can still answer the questions yourself and build the run sheet."
+  inputHint="Answer each question yourself, or let AI answer it."
+  showSubmitButton={false}
   backHref="/tools"
   backLabel="All tools"
   {relatedLinks}

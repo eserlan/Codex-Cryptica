@@ -223,6 +223,19 @@ export function mergeDraftIntoPrep(
   return next;
 }
 
+/** Empties one step so AI can redraft it; the rest of the prep is untouched. */
+export function clearSessionPrepStep(
+  prep: SessionPrep,
+  step: SessionPrepStep,
+): SessionPrep {
+  const next = structuredClone(prep);
+  if (step === "start" || step === "pressure") next[step] = "";
+  else if (step === "consequences") {
+    next.consequences = createEmptySessionPrep().consequences;
+  } else next[step] = [];
+  return next;
+}
+
 export type SessionPrepSuggestion =
   | { step: "start" | "pressure"; options: string[] }
   | { step: "people"; options: PrepPersonDraft[] }
