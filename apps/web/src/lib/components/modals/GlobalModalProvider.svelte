@@ -9,6 +9,7 @@
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
   import { notificationStore } from "$lib/stores/ui/notification.svelte";
   import { loreMergeStore } from "$lib/stores/ui/lore-merge.svelte";
+  import { guestChatStore } from "$lib/stores/guest-chat.svelte";
 
   let {
     isMobileMenuOpen = $bindable(false),
@@ -148,17 +149,21 @@
       {/await}
     {/if}
 
-    {#await loadModal(() => import("$lib/components/dice/DiceModal.svelte"), "DiceModal") then DiceModal}
-      {#if DiceModal}
-        <DiceModal />
-      {/if}
-    {/await}
+    {#if modalUIStore.showDiceModal}
+      {#await loadModal(() => import("$lib/components/dice/DiceModal.svelte"), "DiceModal") then DiceModal}
+        {#if DiceModal}
+          <DiceModal />
+        {/if}
+      {/await}
+    {/if}
 
-    {#await loadModal(() => import("$lib/components/canvas/CanvasSelectionModal.svelte"), "CanvasSelectionModal") then CanvasSelectionModal}
-      {#if CanvasSelectionModal}
-        <CanvasSelectionModal />
-      {/if}
-    {/await}
+    {#if modalUIStore.showCanvasSelector}
+      {#await loadModal(() => import("$lib/components/canvas/CanvasSelectionModal.svelte"), "CanvasSelectionModal") then CanvasSelectionModal}
+        {#if CanvasSelectionModal}
+          <CanvasSelectionModal />
+        {/if}
+      {/await}
+    {/if}
 
     {#if isSpecialEnv}
       {#await loadModal(() => import("$lib/components/debug/DebugConsole.svelte"), "DebugConsole") then DebugConsole}
@@ -318,10 +323,12 @@
     {/if}
 
     <!-- Guest Character Chat Modal -->
-    {#await loadModal(() => import("$lib/components/modals/GuestChatModal.svelte"), "GuestChatModal") then GuestChatModal}
-      {#if GuestChatModal}
-        <GuestChatModal />
-      {/if}
-    {/await}
+    {#if guestChatStore.showChatModal}
+      {#await loadModal(() => import("$lib/components/modals/GuestChatModal.svelte"), "GuestChatModal") then GuestChatModal}
+        {#if GuestChatModal}
+          <GuestChatModal />
+        {/if}
+      {/await}
+    {/if}
   {/if}
 {/if}

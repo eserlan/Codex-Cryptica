@@ -204,6 +204,45 @@ describe("AssetManager", () => {
     });
 
     describe("external URLs", () => {
+      it("adopts a copy cached under the legacy name without fetching", async () => {
+        const url = "https://cdn.discordapp.com/attachments/1/2/Map.png";
+        const legacyName =
+          url
+            .replace(/[^a-z0-9]/gi, "_")
+            .toLowerCase()
+            .slice(-100) + ".cache";
+        const cached = new Blob(["only surviving copy"]);
+        mockIO.readOpfsBlob.mockImplementation(async (path: string[]) => {
+          if (path[0] === legacyName) return cached;
+          throw new Error("not found");
+        });
+        (global.fetch as any).mockResolvedValue({ ok: false, status: 404 });
+        const vaultHandle = { name: "v1" } as any;
+
+        const result = await assetManager.resolveImageUrl(vaultHandle, url);
+
+        expect(result).toBe("blob:mock-url");
+        expect(global.fetch).not.toHaveBeenCalled();
+        const written = mockIO.writeOpfsFile.mock.calls[0];
+        expect(written[0][2]).toMatch(/^[0-9a-f]{64}\.cache$/);
+        expect(written[1]).toBe(cached);
+      });
+
+      it("fetches when neither the hashed nor the legacy copy exists", async () => {
+        mockIO.readOpfsBlob.mockRejectedValue(new Error("not found"));
+        (global.fetch as any).mockResolvedValue({
+          ok: true,
+          blob: () => Promise.resolve(new Blob(["remote"])),
+        });
+
+        await assetManager.resolveImageUrl(
+          { name: "v1" } as any,
+          "https://img.example/new.png",
+        );
+
+        expect(global.fetch).toHaveBeenCalledTimes(1);
+      });
+
       it("keeps case-sensitive URLs in separate persistent cache files", async () => {
         mockIO.readOpfsBlob.mockRejectedValue(new Error("Not in cache"));
         (global.fetch as any).mockResolvedValue({
@@ -251,7 +290,7 @@ describe("AssetManager", () => {
       });
 
       it("should fetch and cache external https URLs", async () => {
-        mockIO.readOpfsBlob.mockRejectedValueOnce(new Error("Not in cache"));
+        mockIO.readOpfsBlob.mockRejectedValue(new Error("Not in cache")); // neither hashed nor legacy copy
         (global.fetch as any).mockResolvedValue({
           ok: true,
           blob: () => Promise.resolve(new Blob(["remote"])),
@@ -283,7 +322,7 @@ describe("AssetManager", () => {
       });
 
       it("should return original URL if external fetch fails", async () => {
-        mockIO.readOpfsBlob.mockRejectedValueOnce(new Error("Not in cache"));
+        mockIO.readOpfsBlob.mockRejectedValue(new Error("Not in cache")); // neither hashed nor legacy copy
         (global.fetch as any).mockResolvedValue({ ok: false });
         const result = await assetManager.resolveImageUrl(
           { name: "v1" } as any,
@@ -293,7 +332,7 @@ describe("AssetManager", () => {
       });
 
       it("should return original URL if fetch throws", async () => {
-        mockIO.readOpfsBlob.mockRejectedValueOnce(new Error("Not in cache"));
+        mockIO.readOpfsBlob.mockRejectedValue(new Error("Not in cache")); // neither hashed nor legacy copy
         (global.fetch as any).mockRejectedValueOnce(new Error("Fetch failed"));
         const result = await assetManager.resolveImageUrl(
           { name: "v1" } as any,

@@ -1,5 +1,8 @@
 import { u } from "./user-content";
-import { BANNED_NAMES, bannedNamesInstruction } from "generator-engine";
+import {
+  BANNED_NAMES,
+  bannedNamesInstruction,
+} from "generator-engine/naming-policy";
 
 export function buildCreationLoreSynthesisPrompt(
   query: string,

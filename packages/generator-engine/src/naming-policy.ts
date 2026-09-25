@@ -42,3 +42,48 @@ export function bannedNamesInstruction(names: Iterable<string>): string {
   if (!all.length) return "";
   return `This ban applies only to the "title" of the entity you are generating now — do NOT title it any of these names, or a hyphenated/compound variation of one (e.g. if "Vane" is listed, do not title it "Vane-Smithe"): ${all.join(", ")}. These are existing entities and may still be referenced normally elsewhere (in "lore", "summary", or "connections") whenever they belong in the content — the ban is on reusing the name as this new entity's own title, not on mentioning them.`;
 }
+
+export const BANNED_NAMES = [
+  "Aethel",
+  "Aethelgard",
+  "Vance",
+  "Vane",
+  "Elara",
+  "Valerius",
+  "Kael",
+  "Kaelen",
+  "Caelen",
+  "Theron",
+  "Zara",
+  "Aldric",
+  "Kane",
+  "Drake",
+  "Maren",
+  "Cross",
+  "Vale",
+  "Stone",
+  "Grey",
+  "Ash",
+  "Cole",
+  "Thorne",
+  "Voss",
+  "Julian",
+  "Julianne",
+  "Halloway",
+  "Oakhaven",
+  "Oakhollow",
+  "Millbrook",
+  "Riverdale",
+  "Verdant",
+  "Verdant Reach",
+  "Silas",
+  "Vesper",
+  "Sterling",
+  "Blackwood",
+  "Ironwood",
+  "Ravenscroft",
+] as const;
+
+export const NAME_BAN_PROMPT =
+  `Names must never include: ${BANNED_NAMES.join(", ")}. ` +
+  `Avoid all similar generic fantasy placeholders and common English monosyllable surnames.`;

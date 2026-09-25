@@ -44,6 +44,20 @@ async function externalCacheName(url: string): Promise<string> {
   return `${hash}.cache`;
 }
 
+/**
+ * The name external images were cached under before names were hashed. Still
+ * read so existing caches survive: for an expired link (Discord attachment
+ * URLs expire) or a deleted image, the cached copy is the only one left.
+ */
+function legacyExternalCacheName(url: string): string {
+  return (
+    url
+      .replace(/[^a-z0-9]/gi, "_")
+      .toLowerCase()
+      .slice(-100) + ".cache"
+  );
+}
+
 export class AssetManager {
   private urlCache = new Map<string, { url: string; refs: number }>();
   private resolving = new Map<string, Promise<string>>();
@@ -337,6 +351,8 @@ export class AssetManager {
       try {
         return await this.ioAdapter.readOpfsBlob([name], dir);
       } catch {
+        const legacy = await this.migrateLegacyExternal(vaultHandle, url, name);
+        if (legacy) return legacy;
         const response = await this.fetcher(url, { mode: "cors" });
         if (!response.ok) return null;
         const blob = await response.blob();
@@ -351,6 +367,36 @@ export class AssetManager {
     } catch {
       return null;
     }
+  }
+
+  /**
+   * Adopts a copy cached under the legacy name: returns it and writes it under
+   * the hashed name so later reads are direct. The legacy file is left as is —
+   * two URLs differing only in case could share it.
+   */
+  private async migrateLegacyExternal(
+    vaultHandle: FileSystemDirectoryHandle,
+    url: string,
+    name: string,
+  ): Promise<Blob | null> {
+    let blob: Blob;
+    try {
+      blob = await this.ioAdapter.readOpfsBlob(
+        [legacyExternalCacheName(url)],
+        await this.externalDir(vaultHandle),
+      );
+    } catch {
+      return null;
+    }
+    await this.ioAdapter
+      .writeOpfsFile(
+        [".cache", "external_images", name],
+        blob,
+        vaultHandle,
+        vaultHandle.name,
+      )
+      .catch(() => {});
+    return blob;
   }
 
   private async readOrCreateExternalThumbnail(

@@ -704,4 +704,75 @@ describe("GraphTransformer", () => {
     expect(revealedStyle.style["border-width"]).toBe(4);
     expect(revealedStyle.style["background-clip"]).toBe("node");
   });
+
+  it("marks edges connected to unplaced nodes as pending layout", () => {
+    const entities = [
+      {
+        id: "placed-1",
+        type: "npc",
+        title: "Placed 1",
+        metadata: { coordinates: { x: 100, y: 100 } },
+        connections: [
+          { target: "placed-2", type: "knows" },
+          { target: "unplaced-3", type: "knows" },
+        ],
+      },
+      {
+        id: "placed-2",
+        type: "npc",
+        title: "Placed 2",
+        metadata: { coordinates: { x: 200, y: 200 } },
+        connections: [],
+      },
+      {
+        id: "unplaced-3",
+        type: "npc",
+        title: "Unplaced 3",
+        connections: [],
+      },
+    ] as any;
+
+    const elements = GraphTransformer.entitiesToElements(entities);
+    const edges = elements.filter((e) => e.group === "edges");
+
+    const placedEdge = edges.find((e) => e.data.target === "placed-2");
+    const unplacedEdge = edges.find((e) => e.data.target === "unplaced-3");
+
+    expect((placedEdge?.data as any).isPendingLayout).toBeUndefined();
+    expect(placedEdge?.classes).toBeUndefined();
+
+    expect((unplacedEdge?.data as any).isPendingLayout).toBe(true);
+    expect(unplacedEdge?.classes).toBe("pending-layout");
+  });
+
+  it("includes zero-opacity and events:no rules for pending edges in stylesheet", () => {
+    const mockTemplate = {
+      id: "scifi",
+      tokens: {
+        primary: "#00ffff",
+        background: "#0a0a0a",
+        text: "#ffffff",
+        surface: "#1a1a1a",
+        fontHeader: "Courier",
+        fontBody: "Courier",
+      },
+      graph: {
+        nodeShape: "roundrectangle",
+        nodeBorderWidth: 1,
+        edgeWidth: 1,
+        edgeColor: "#00ffff",
+        edgeStyle: "solid",
+      },
+    } as any;
+
+    const style = getGraphStyle(mockTemplate, [], false);
+    const pendingStyle = style.find(
+      (s) =>
+        s.selector.includes("edge[isPendingLayout]") ||
+        s.selector === ".pending-layout",
+    );
+    expect(pendingStyle).toBeDefined();
+    expect(pendingStyle?.style.opacity).toBe(0);
+    expect(pendingStyle?.style.events).toBe("no");
+  });
 });

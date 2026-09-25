@@ -248,6 +248,131 @@ describe("enable", () => {
   });
 });
 
+describe("attachToExistingBackup", () => {
+  it("links the open vault to the existing backup", async () => {
+    const { store, storage } = harness();
+    const ok = await store.attachToExistingBackup(
+      "v-1",
+      "b-1",
+      "code-1",
+      "The Saltmere Fens",
+    );
+
+    expect(ok).toBe(true);
+    expect(store.status).toBe("idle");
+    expect(store.consented).toBe(true);
+    expect(store.lastPushedAt).toBe(MANIFEST.lastPushedAt);
+    expect(store.errorMessage).toBeNull();
+    const stored = (await storage.read("v-1")) as { backupId: string };
+    expect(stored.backupId).toBe("b-1");
+  });
+
+  it("makes the first automatic sync after attach a full snapshot", async () => {
+    const dirty = new CloudBackupDirtyStore(memoryDirtyStorage());
+    const buildPayload = vi.fn(async () => ({
+      vaultTitle: "The Saltmere Fens",
+      bundle: { entities: [{ id: "existing-local-entity" }] },
+    }));
+    const buildDelta = vi.fn(async () => null);
+    const h = harness([], { dirty, buildPayload, buildDelta, debounceMs: 10 });
+
+    expect(await h.store.attachToExistingBackup("v-1", "b-1", "code-1")).toBe(
+      true,
+    );
+    expect(await dirty.snapshot("v-1")).toMatchObject([
+      { kind: "full", id: "*" },
+    ]);
+
+    await h.store.recordLocalChange("v-1", {
+      kind: "entity",
+      ids: ["edited-local-entity"],
+    });
+    await vi.advanceTimersByTimeAsync(10);
+
+    expect(buildDelta).toHaveBeenCalledWith(
+      "v-1",
+      expect.arrayContaining([
+        expect.objectContaining({ kind: "full", id: "*" }),
+        expect.objectContaining({ kind: "entity", id: "edited-local-entity" }),
+      ]),
+      expect.any(Set),
+      expect.any(AbortSignal),
+    );
+    expect(buildPayload).toHaveBeenCalledTimes(1);
+    expect(h.calls.some((url) => url.endsWith("/delta"))).toBe(false);
+    expect(h.calls.some((url) => url.endsWith("/commit"))).toBe(true);
+  });
+
+  it("surfaces a wrong key without linking anything", async () => {
+    const { store, storage } = harness([], {}, [
+      {
+        ok: false,
+        status: 404,
+        body: { error: { message: "Backup not found" } },
+      },
+    ]);
+    const ok = await store.attachToExistingBackup("v-1", "b-9", "bad");
+
+    expect(ok).toBe(false);
+    expect(store.status).toBe("off");
+    expect(store.errorMessage).toBe("Backup not found");
+    expect(await storage.read("v-1")).toBeNull();
+  });
+
+  it("does not attach when it cannot persist the full-push marker", async () => {
+    const dirtyStorage = {
+      ...memoryDirtyStorage(),
+      put: async () => {
+        throw new Error("dirty store unavailable");
+      },
+    };
+    const dirty = new CloudBackupDirtyStore(dirtyStorage);
+    const h = harness([], { dirty });
+
+    await expect(
+      h.store.attachToExistingBackup("v-1", "b-1", "code-1"),
+    ).resolves.toBe(false);
+    expect(h.store.errorMessage).toBe("dirty store unavailable");
+    expect(h.calls).toEqual([]);
+    expect(await h.storage.read("v-1")).toBeNull();
+  });
+
+  it("surfaces a network failure without rejecting the attach action", async () => {
+    const { store, storage } = harness();
+    (store as any).deps.runtime.fetch = vi.fn(async () => {
+      throw new Error("offline");
+    });
+
+    await expect(
+      store.attachToExistingBackup("v-1", "b-1", "code-1"),
+    ).resolves.toBe(false);
+    expect(store.errorMessage).toBe("offline");
+    expect(await storage.read("v-1")).toBeNull();
+  });
+});
+
+describe("save timings", () => {
+  it("records hash, serialize and upload stages on a manual save", async () => {
+    const timings: { stage: string; durationMs: number }[] = [];
+    const { store } = harness([ENABLE], {
+      timing: (timing: { stage: string; durationMs: number }) =>
+        timings.push(timing),
+    });
+    await store.enable("v-1");
+    expect(timings).toEqual([]);
+
+    expect(await store.backUpNow()).toBe(true);
+    expect(timings.map((timing) => timing.stage)).toEqual([
+      "hash",
+      "serialize",
+      "upload",
+    ]);
+    for (const timing of timings) {
+      expect(timing.durationMs).toBeGreaterThanOrEqual(0);
+    }
+  });
+});
+
 describe("saving is explicit", () => {
   it("uploads when the user asks, and reports success", async () => {
     const { store, calls } = harness([ENABLE]);
