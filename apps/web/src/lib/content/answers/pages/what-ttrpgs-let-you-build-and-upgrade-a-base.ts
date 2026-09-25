@@ -200,6 +200,7 @@ export const whatTtrpgsLetYouBuildAndUpgradeABase: AnswerConfigInput = {
     "what-rpg-system-should-we-try-instead-of-dnd",
     "what-should-an-rpg-settlement-contain",
     "what-rpg-system-is-good-for-solo-play",
+    "how-do-i-make-a-player-base-matter-in-an-rpg-campaign",
   ],
   discovery: {
     id: "answer-base-building-system-selection",
@@ -224,6 +225,11 @@ export const whatTtrpgsLetYouBuildAndUpgradeABase: AnswerConfigInput = {
       "answer-solo-rpg-system-selection",
     ],
     acknowledgedOverlap: [
+      {
+        with: "answer-make-player-base-matter",
+        reason:
+          "That page teaches the table technique for making any base matter in play; this one helps a group choose a system whose rules support developing a base over time.",
+      },
       {
         with: "answer-system-selection",
         reason:

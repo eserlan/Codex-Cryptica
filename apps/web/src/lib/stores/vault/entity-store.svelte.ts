@@ -40,6 +40,27 @@ export interface EntityStoreDependencies {
   ) => void;
 }
 
+/**
+ * Order-independent identity of an entity's outgoing connections, for telling a
+ * real connection change apart from a record that was merely replaced.
+ */
+function connectionSignature(
+  connections: LocalEntity["connections"] | undefined,
+): string {
+  // Full content with sorted keys: the inbound map keeps the connection
+  // objects themselves, so any field difference must trigger a resync.
+  return (connections ?? [])
+    .map((c) =>
+      JSON.stringify(
+        Object.keys(c)
+          .sort()
+          .map((key) => [key, (c as Record<string, unknown>)[key]]),
+      ),
+    )
+    .sort()
+    .join("\n");
+}
+
 export class EntityStore {
   private repository: VaultRepository;
   public loader: EntityContentLoader;
@@ -220,16 +241,14 @@ export class EntityStore {
     this.loader.registerStoreCallbacks?.({
       onMetadataRestored: (oldEntity, newEntity) => {
         // Hydrated connections bypass the mutation service, so keep the
-        // reverse lookup used by focus-view traversal in sync incrementally.
-        for (const connection of oldEntity.connections ?? []) {
-          this.patchRemoveConnection(
-            oldEntity.id,
-            connection.target,
-            connection.type,
-          );
-        }
-        for (const connection of newEntity.connections ?? []) {
-          this.patchAddConnection(newEntity.id, connection.target, connection);
+        // reverse lookup used by focus-view traversal in sync incrementally —
+        // but only when they changed. Re-patching an identical set replaces
+        // every target's inbound list, which rebuilds the graph for nothing.
+        if (
+          connectionSignature(oldEntity.connections) !==
+          connectionSignature(newEntity.connections)
+        ) {
+          this.resyncRestoredConnections(oldEntity, newEntity);
         }
         this.handleEntitiesUpdate(
           { [oldEntity.id]: oldEntity },
@@ -413,6 +432,23 @@ export class EntityStore {
     this.inboundConnections = vaultRelationships.rebuildInboundMap(
       this.entities,
     );
+  }
+
+  /** Replaces an entity's inbound-map contributions after a disk restore. */
+  private resyncRestoredConnections(
+    oldEntity: LocalEntity,
+    newEntity: LocalEntity,
+  ) {
+    for (const connection of oldEntity.connections ?? []) {
+      this.patchRemoveConnection(
+        oldEntity.id,
+        connection.target,
+        connection.type,
+      );
+    }
+    for (const connection of newEntity.connections ?? []) {
+      this.patchAddConnection(newEntity.id, connection.target, connection);
+    }
   }
 
   patchAddConnection(sourceId: string, targetId: string, connection: any) {
