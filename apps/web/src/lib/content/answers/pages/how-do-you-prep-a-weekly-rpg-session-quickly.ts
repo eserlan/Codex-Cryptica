@@ -170,6 +170,7 @@ export const howDoYouPrepAWeeklyRpgSessionQuickly: AnswerConfigInput = {
     "how-do-you-recap-a-ttrpg-session",
     "can-you-play-a-tabletop-rpg-in-30-minute-sessions",
     "how-do-i-organise-gm-notes-for-in-person-play",
+    "how-do-i-prepare-an-rpg-session-step-by-step",
   ],
   discovery: {
     id: "answer-prep-weekly-session-quickly",
@@ -191,6 +192,11 @@ export const howDoYouPrepAWeeklyRpgSessionQuickly: AnswerConfigInput = {
       "answer-npcs-memorable",
     ],
     acknowledgedOverlap: [
+      {
+        with: "answer-prepare-session-step-by-step",
+        reason:
+          "That page teaches the full procedure from hook to run sheet for GMs who do not yet know what to prepare; this one is a timeboxed routine for GMs already running a weekly campaign.",
+      },
       {
         with: "answer-session-prep",
         reason:

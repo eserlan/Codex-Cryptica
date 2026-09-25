@@ -9,6 +9,7 @@ import { howDoIGetPlayersToEngageWithMyCampaignWorld } from "./how-do-i-get-play
 import { howDoIGiveSpecialistCharactersSpotlight } from "./how-do-i-give-specialist-characters-spotlight";
 import { howDoIMakeAPlayerBaseMatterInAnRpgCampaign } from "./how-do-i-make-a-player-base-matter-in-an-rpg-campaign";
 import { howDoIOrganiseGmNotesForInPersonPlay } from "./how-do-i-organise-gm-notes-for-in-person-play";
+import { howDoIPrepareAnRpgSessionStepByStep } from "./how-do-i-prepare-an-rpg-session-step-by-step";
 import { howDoIRunADiplomatNobleOrCourtierInAnRpg } from "./how-do-i-run-a-diplomat-noble-or-courtier-in-an-rpg";
 import { howDoIRunAJournalistOrMediaCharacterInAnRpg } from "./how-do-i-run-a-journalist-or-media-character-in-an-rpg";
 import { howDoIRunARogueOrScoutWithoutSplittingTheParty } from "./how-do-i-run-a-rogue-or-scout-without-splitting-the-party";
@@ -113,6 +114,7 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     howDoIGiveSpecialistCharactersSpotlight,
     howDoIMakeAPlayerBaseMatterInAnRpgCampaign,
     howDoIOrganiseGmNotesForInPersonPlay,
+    howDoIPrepareAnRpgSessionStepByStep,
     howDoIRunADiplomatNobleOrCourtierInAnRpg,
     howDoIRunAJournalistOrMediaCharacterInAnRpg,
     howDoIRunARogueOrScoutWithoutSplittingTheParty,
