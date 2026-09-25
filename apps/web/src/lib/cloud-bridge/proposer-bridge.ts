@@ -11,6 +11,8 @@ export class ProposerBridge {
     string,
     { resolve: (val: any) => void; reject: (err: any) => void }
   >();
+  private tokenProvider:
+    ((forceRefresh: boolean) => Promise<CachedToken | null>) | null = null;
 
   constructor(
     deps: { idGenerator?: IdGenerator; worker?: Worker | null } = {},
@@ -29,6 +31,14 @@ export class ProposerBridge {
   private attachWorkerHandler(worker: Worker) {
     worker.onmessage = (event) => {
       const { type, payload, id } = event.data;
+      if (type === "REQUEST_SESSION_TOKEN") {
+        void this.respondToTokenRequest(
+          worker,
+          id,
+          payload?.forceRefresh === true,
+        );
+        return;
+      }
       if (id && this.pendingRequests.has(id)) {
         const { resolve, reject } = this.pendingRequests.get(id)!;
         if (type === "ERROR") {
@@ -39,6 +49,42 @@ export class ProposerBridge {
         this.pendingRequests.delete(id);
       }
     };
+  }
+
+  /**
+   * Answers the worker's on-demand pull (`requestTokenFromMainThread()` in
+   * `proposer.worker.ts`), fired when its `RelayedSessionToken` has nothing
+   * valid cached — e.g. this worker was created before the main thread ever
+   * minted a token. Resolves `null` when no provider is wired yet; the
+   * worker treats that exactly like an unauthenticated request, same as
+   * today.
+   */
+  private async respondToTokenRequest(
+    worker: Worker,
+    id: string,
+    forceRefresh: boolean,
+  ): Promise<void> {
+    let token: CachedToken | null = null;
+    try {
+      token = this.tokenProvider
+        ? await this.tokenProvider(forceRefresh)
+        : null;
+    } catch {
+      // Always resolve the worker's correlated pull. A failed handshake is
+      // represented as no token, matching the normal unauthenticated path.
+    }
+    worker.postMessage({ type: "SESSION_TOKEN_RESPONSE", id, payload: token });
+  }
+
+  /**
+   * Registers the hook `respondToTokenRequest` calls to fetch a fresh token
+   * snapshot from the main thread's real session manager — see
+   * `session-bootstrap.ts`.
+   */
+  public setTokenProvider(
+    provider: ((forceRefresh: boolean) => Promise<CachedToken | null>) | null,
+  ): void {
+    this.tokenProvider = provider;
   }
 
   private initWorker() {
