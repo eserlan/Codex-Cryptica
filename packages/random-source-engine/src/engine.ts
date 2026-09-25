@@ -7,7 +7,7 @@ import type {
   TableEntry,
 } from "./types";
 import { MAX_RESOLUTION_DEPTH } from "./types";
-import { rollRaw, selectIndex, weightsOf } from "./selection";
+import { rollDie, selectIndex, weightsOf } from "./selection";
 import { parseReferences } from "./resolver";
 
 /**
@@ -105,8 +105,7 @@ export class RandomSourceEngine {
     if (entries.length === 0) return undefined;
 
     if (source.selection?.mode === "ranged") {
-      const sides = source.selection.die.sides;
-      const value = rollRaw(sides, this.dice);
+      const value = rollDie(source.selection.die, this.dice);
       node.dieValue = value;
       const hit = entries.find(
         (e) => e.range && value >= e.range.min && value <= e.range.max,

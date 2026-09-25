@@ -1,5 +1,6 @@
-import type { Diagnostic, RandomSource } from "./types";
+import type { Diagnostic, DieSpec, RandomSource } from "./types";
 import { findBraceProblems, parseReferences } from "./resolver";
+import { dieFormula, dieRange } from "./dice-notation";
 
 /**
  * Source validation.
@@ -41,17 +42,39 @@ export function validateSource(
   // Coverage checks are meaningful only for ranged tables; weighted tables
   // cannot have gaps or overlaps by construction.
   if (source.selection?.mode === "ranged") {
-    const sides = source.selection.die.sides;
+    const die = source.selection.die;
+    const { keepHighest, keepLowest } = die;
+
+    if (keepHighest !== undefined && keepLowest !== undefined) {
+      diagnostics.push({
+        severity: "warning",
+        code: "invalid-die",
+        message:
+          "This die keeps both the highest and the lowest dice, which is not possible. Keeping the highest wins.",
+      });
+    }
+    const kept = keepHighest ?? keepLowest;
+    const count = die.count ?? 1;
+    if (kept !== undefined && kept > count) {
+      diagnostics.push({
+        severity: "warning",
+        code: "invalid-die",
+        message: `This die keeps ${kept} dice but only rolls ${count}, so the extra keep does nothing.`,
+      });
+    }
+
+    const { min: low, max: high } = dieRange(die);
+    const dieLabel = describeDie(die);
     const covered = new Map<number, number>();
 
     for (const entry of entries) {
       if (!entry.range) continue;
       const { min, max } = entry.range;
-      if (min > sides || max > sides || min < 1) {
+      if (min > high || max > high || min < low) {
         diagnostics.push({
           severity: "warning",
           code: "unreachable-entry",
-          message: `"${truncate(entry.text)}" covers ${min}-${max}, which is outside a d${sides} roll, so it can never come up.`,
+          message: `"${truncate(entry.text)}" covers ${min}-${max}, which is outside a ${dieLabel} roll, so it can never come up.`,
           entryId: entry.id,
         });
         continue;
@@ -63,7 +86,7 @@ export function validateSource(
 
     const gaps: number[] = [];
     const overlaps: number[] = [];
-    for (let v = 1; v <= sides; v++) {
+    for (let v = low; v <= high; v++) {
       const count = covered.get(v) ?? 0;
       if (count === 0) gaps.push(v);
       if (count > 1) overlaps.push(v);
@@ -130,6 +153,11 @@ export function validateSource(
 
 function truncate(text: string, max = 40): string {
   return text.length <= max ? text : `${text.slice(0, max - 1)}…`;
+}
+
+/** Plain-language name for a die, e.g. "d10" or "4d6kh3+2". */
+function describeDie(die: DieSpec): string {
+  return dieFormula(die);
 }
 
 /** Renders a value list compactly: "3, 7-9" rather than "3, 7, 8, 9". */

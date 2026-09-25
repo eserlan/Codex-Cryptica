@@ -1,10 +1,17 @@
 <script lang="ts">
   import type {
     Diagnostic,
+    DieSpec,
     RandomSource,
     TableEntry,
   } from "random-source-engine";
-  import { parseReferences, toRanged, toWeighted } from "random-source-engine";
+  import {
+    cleanDieSpec,
+    dieRange,
+    parseReferences,
+    toRanged,
+    toWeighted,
+  } from "random-source-engine";
   import { systemIdGenerator, type IdGenerator } from "$lib/utils/runtime-deps";
   import { computeWindow } from "./virtual-window";
   import FeatureHint from "$lib/components/help/FeatureHint.svelte";
@@ -42,9 +49,21 @@
 
   const entries = $derived(source.entries ?? []);
   const isRanged = $derived(source.selection?.mode === "ranged");
-  const dieSides = $derived(
-    source.selection?.mode === "ranged" ? source.selection.die.sides : 100,
+  const die = $derived<DieSpec>(
+    source.selection?.mode === "ranged" ? source.selection.die : { sides: 100 },
   );
+  const dieSides = $derived(die.sides);
+  const dieCount = $derived(die.count ?? 1);
+  const dieKeepMode = $derived(
+    die.keepHighest !== undefined
+      ? "highest"
+      : die.keepLowest !== undefined
+        ? "lowest"
+        : "none",
+  );
+  const dieKeepAmount = $derived(die.keepHighest ?? die.keepLowest ?? dieCount);
+  const dieModifier = $derived(die.modifier ?? 0);
+  const dieBounds = $derived(dieRange(die));
 
   /** Diagnostics that belong to no particular entry, shown above the list. */
   const generalDiagnostics = $derived(diagnostics.filter((d) => !d.entryId));
@@ -142,9 +161,39 @@
     onChange(mode === "ranged" ? toRanged(source) : toWeighted(source));
   }
 
-  function setDie(sides: number) {
-    if (!Number.isFinite(sides) || sides < 1) return;
-    update({ selection: { mode: "ranged", die: { sides } } });
+  function updateDie(changes: Partial<DieSpec>) {
+    const next = { ...die, ...changes };
+    if (!Number.isFinite(next.sides) || next.sides < 1) return;
+    update({ selection: { mode: "ranged", die: cleanDieSpec(next) } });
+  }
+
+  function setDieSides(sides: number) {
+    updateDie({ sides });
+  }
+
+  function setDieCount(count: number) {
+    if (!Number.isFinite(count) || count < 1) return;
+    updateDie({ count });
+  }
+
+  function setDieKeepMode(mode: "none" | "highest" | "lowest") {
+    if (mode === "none") {
+      updateDie({ keepHighest: undefined, keepLowest: undefined });
+    } else if (mode === "highest") {
+      updateDie({ keepHighest: dieKeepAmount, keepLowest: undefined });
+    } else {
+      updateDie({ keepLowest: dieKeepAmount, keepHighest: undefined });
+    }
+  }
+
+  function setDieKeepAmount(amount: number) {
+    if (dieKeepMode === "highest") updateDie({ keepHighest: amount });
+    else if (dieKeepMode === "lowest") updateDie({ keepLowest: amount });
+  }
+
+  function setDieModifier(modifier: number) {
+    if (!Number.isFinite(modifier)) return;
+    updateDie({ modifier });
   }
 </script>
 
@@ -186,19 +235,70 @@
       <label class="flex flex-col gap-1">
         <span
           class="text-[9px] font-bold font-header uppercase tracking-[0.2em] text-theme-muted"
-          >Die</span
+          >Dice</span
         >
-        <div class="flex items-center gap-1">
+        <div class="flex flex-wrap items-center gap-1">
+          <input
+            type="number"
+            min="1"
+            title="Number of dice"
+            aria-label="Number of dice"
+            class="w-14 rounded border border-theme-border bg-theme-bg px-2 py-1.5 text-center font-header text-sm text-theme-text focus:border-theme-primary focus:outline-none"
+            value={dieCount}
+            oninput={(e) => setDieCount(Number(e.currentTarget.value))}
+            data-testid="table-die-count"
+          />
           <span class="font-header text-sm text-theme-muted">d</span>
           <input
             type="number"
             min="1"
-            class="w-24 rounded border border-theme-border bg-theme-bg px-2 py-1.5 font-header text-sm text-theme-text focus:border-theme-primary focus:outline-none"
+            aria-label="Die sides"
+            class="w-16 rounded border border-theme-border bg-theme-bg px-2 py-1.5 font-header text-sm text-theme-text focus:border-theme-primary focus:outline-none"
             value={dieSides}
-            oninput={(e) => setDie(Number(e.currentTarget.value))}
+            oninput={(e) => setDieSides(Number(e.currentTarget.value))}
             data-testid="table-die"
           />
+          <select
+            class="rounded border border-theme-border bg-theme-bg px-1.5 py-1.5 font-header text-xs text-theme-text focus:border-theme-primary focus:outline-none"
+            value={dieKeepMode}
+            onchange={(e) =>
+              setDieKeepMode(
+                e.currentTarget.value as "none" | "highest" | "lowest",
+              )}
+            data-testid="table-die-keep-mode"
+          >
+            <option value="none">keep all</option>
+            <option value="highest">keep highest</option>
+            <option value="lowest">keep lowest</option>
+          </select>
+          {#if dieKeepMode !== "none"}
+            <input
+              type="number"
+              min="1"
+              max={dieCount}
+              aria-label="Number of dice to keep"
+              class="w-12 rounded border border-theme-border bg-theme-bg px-1.5 py-1.5 text-center font-header text-xs text-theme-text focus:border-theme-primary focus:outline-none"
+              value={dieKeepAmount}
+              oninput={(e) => setDieKeepAmount(Number(e.currentTarget.value))}
+              data-testid="table-die-keep-amount"
+            />
+          {/if}
+          <span class="font-header text-sm text-theme-muted">+</span>
+          <input
+            type="number"
+            aria-label="Modifier"
+            class="w-14 rounded border border-theme-border bg-theme-bg px-1.5 py-1.5 text-center font-header text-sm text-theme-text focus:border-theme-primary focus:outline-none"
+            value={dieModifier}
+            oninput={(e) => setDieModifier(Number(e.currentTarget.value))}
+            data-testid="table-die-modifier"
+          />
         </div>
+        <span
+          class="font-mono text-[10px] text-theme-muted"
+          data-testid="table-die-range"
+        >
+          Rolls {dieBounds.min}–{dieBounds.max}
+        </span>
       </label>
     {/if}
   </div>

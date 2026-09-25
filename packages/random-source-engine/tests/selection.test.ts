@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { DiceEngine } from "dice-engine";
-import { selectIndex, totalWeight, weightsOf } from "../src/selection";
+import { rollDie, selectIndex, totalWeight, weightsOf } from "../src/selection";
 import { seededCrypto } from "./helpers/seeded-crypto";
 import type { TableEntry } from "../src/types";
 
@@ -101,5 +101,57 @@ describe("selectIndex", () => {
   it("throws on an empty weight list rather than returning a bogus index", () => {
     const dice = new DiceEngine(seededCrypto());
     expect(() => selectIndex([], dice)).toThrow();
+  });
+});
+
+describe("rollDie (#3403)", () => {
+  it("stays within a plain single die's range", () => {
+    const dice = new DiceEngine(seededCrypto());
+    for (let i = 0; i < 200; i++) {
+      const value = rollDie({ sides: 6 }, dice);
+      expect(value).toBeGreaterThanOrEqual(1);
+      expect(value).toBeLessThanOrEqual(6);
+    }
+  });
+
+  it("sums a multi-die roll within 2d6's range", () => {
+    const dice = new DiceEngine(seededCrypto(3));
+    const seen = new Set<number>();
+    for (let i = 0; i < 500; i++) {
+      const value = rollDie({ sides: 6, count: 2 }, dice);
+      expect(value).toBeGreaterThanOrEqual(2);
+      expect(value).toBeLessThanOrEqual(12);
+      seen.add(value);
+    }
+    // A real 2d6 visits far more than the two extremes.
+    expect(seen.size).toBeGreaterThan(2);
+  });
+
+  it("keeps keep-highest within its narrower range", () => {
+    const dice = new DiceEngine(seededCrypto(11));
+    for (let i = 0; i < 300; i++) {
+      const value = rollDie({ sides: 6, count: 4, keepHighest: 3 }, dice);
+      expect(value).toBeGreaterThanOrEqual(3);
+      expect(value).toBeLessThanOrEqual(18);
+    }
+  });
+
+  it("applies a positive and negative modifier", () => {
+    const dice = new DiceEngine(seededCrypto(5));
+    for (let i = 0; i < 200; i++) {
+      const value = rollDie({ sides: 6, count: 2, modifier: 3 }, dice);
+      expect(value).toBeGreaterThanOrEqual(5);
+      expect(value).toBeLessThanOrEqual(15);
+    }
+    for (let i = 0; i < 200; i++) {
+      const value = rollDie({ sides: 6, count: 2, modifier: -1 }, dice);
+      expect(value).toBeGreaterThanOrEqual(1);
+      expect(value).toBeLessThanOrEqual(11);
+    }
+  });
+
+  it("throws on a non-positive side count", () => {
+    const dice = new DiceEngine(seededCrypto());
+    expect(() => rollDie({ sides: 0 }, dice)).toThrow();
   });
 });

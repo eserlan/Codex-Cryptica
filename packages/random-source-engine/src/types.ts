@@ -13,9 +13,26 @@ export interface Range {
   max: number;
 }
 
-/** A die, expressed by its number of sides. `d100` is `{ sides: 100 }`. */
+/**
+ * A die, expressed as a dice-engine-compatible expression. `d100` is
+ * `{ sides: 100 }`; `4d6kh3+2` is
+ * `{ sides: 6, count: 4, keepHighest: 3, modifier: 2 }`.
+ *
+ * `count` defaults to 1. At most one of `keepHighest`/`keepLowest` is set —
+ * they roll `count` dice and sum only the named number of them, so a
+ * `keepHighest`/`keepLowest` beyond `count` is meaningless and clamped by
+ * `cleanDieSpec` before it reaches storage.
+ */
 export interface DieSpec {
   sides: number;
+  /** Dice rolled before any keep-highest/lowest is applied. Defaults to 1. */
+  count?: number;
+  /** Sum only the highest N of the rolled dice. */
+  keepHighest?: number;
+  /** Sum only the lowest N of the rolled dice. */
+  keepLowest?: number;
+  /** Added to (or, if negative, subtracted from) the summed roll. */
+  modifier?: number;
 }
 
 /**
@@ -150,6 +167,7 @@ export type DiagnosticCode =
   | "range-gap"
   | "range-overlap"
   | "unreachable-entry"
+  | "invalid-die"
   | "broken-reference"
   | "malformed-reference";
 

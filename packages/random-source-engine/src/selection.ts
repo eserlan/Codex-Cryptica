@@ -1,5 +1,6 @@
 import type { DiceEngine } from "dice-engine";
-import type { TableEntry } from "./types";
+import type { DieSpec, TableEntry } from "./types";
+import { dieFormula } from "./dice-notation";
 
 /**
  * Weighted selection over `DiceEngine`.
@@ -81,4 +82,14 @@ export function rollRaw(sides: number, dice: DiceEngine): number {
   if (sides <= 0) throw new Error("rollRaw requires a positive side count");
   if (sides === 1) return 1;
   return dice.evaluate(`1d${sides}`).total;
+}
+
+/**
+ * Rolls a ranged table's configured die — possibly several dice, a
+ * keep-highest/lowest, and a modifier — via `DiceEngine`'s own grammar
+ * (#3403), the same unbiased path `rollRaw` uses for a plain single die.
+ */
+export function rollDie(die: DieSpec, dice: DiceEngine): number {
+  if (die.sides <= 0) throw new Error("rollDie requires a positive side count");
+  return dice.evaluate(dieFormula(die)).total;
 }
