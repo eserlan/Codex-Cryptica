@@ -306,6 +306,7 @@ export const howDoIPrepareAnRpgSessionStepByStep: AnswerConfigInput = {
     "how-do-i-start-gming-for-the-first-time",
     "how-do-you-run-a-mystery-without-railroading",
     "how-do-you-improvise-npcs-on-the-spot",
+    "how-do-i-pace-an-rpg-one-shot",
   ],
   discovery: {
     id: "answer-prepare-session-step-by-step",
