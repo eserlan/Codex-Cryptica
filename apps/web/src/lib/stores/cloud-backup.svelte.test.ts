@@ -267,6 +267,42 @@ describe("attachToExistingBackup", () => {
     expect(stored.backupId).toBe("b-1");
   });
 
+  it("makes the first automatic sync after attach a full snapshot", async () => {
+    const dirty = new CloudBackupDirtyStore(memoryDirtyStorage());
+    const buildPayload = vi.fn(async () => ({
+      vaultTitle: "The Saltmere Fens",
+      bundle: { entities: [{ id: "existing-local-entity" }] },
+    }));
+    const buildDelta = vi.fn(async () => null);
+    const h = harness([], { dirty, buildPayload, buildDelta, debounceMs: 10 });
+
+    expect(await h.store.attachToExistingBackup("v-1", "b-1", "code-1")).toBe(
+      true,
+    );
+    expect(await dirty.snapshot("v-1")).toMatchObject([
+      { kind: "full", id: "*" },
+    ]);
+
+    await h.store.recordLocalChange("v-1", {
+      kind: "entity",
+      ids: ["edited-local-entity"],
+    });
+    await vi.advanceTimersByTimeAsync(10);
+
+    expect(buildDelta).toHaveBeenCalledWith(
+      "v-1",
+      expect.arrayContaining([
+        expect.objectContaining({ kind: "full", id: "*" }),
+        expect.objectContaining({ kind: "entity", id: "edited-local-entity" }),
+      ]),
+      expect.any(Set),
+      expect.any(AbortSignal),
+    );
+    expect(buildPayload).toHaveBeenCalledTimes(1);
+    expect(h.calls.some((url) => url.endsWith("/delta"))).toBe(false);
+    expect(h.calls.some((url) => url.endsWith("/commit"))).toBe(true);
+  });
+
   it("surfaces a wrong key without linking anything", async () => {
     const { store, storage } = harness([], {}, [
       {
@@ -280,6 +316,19 @@ describe("attachToExistingBackup", () => {
     expect(ok).toBe(false);
     expect(store.status).toBe("off");
     expect(store.errorMessage).toBe("Backup not found");
+    expect(await storage.read("v-1")).toBeNull();
+  });
+
+  it("surfaces a network failure without rejecting the attach action", async () => {
+    const { store, storage } = harness();
+    (store as any).deps.runtime.fetch = vi.fn(async () => {
+      throw new Error("offline");
+    });
+
+    await expect(
+      store.attachToExistingBackup("v-1", "b-1", "code-1"),
+    ).resolves.toBe(false);
+    expect(store.errorMessage).toBe("offline");
     expect(await storage.read("v-1")).toBeNull();
   });
 });

@@ -367,12 +367,21 @@ export class CloudBackupStore {
     vaultTitle?: string,
   ): Promise<boolean> {
     if (!this.deps) return false;
-    const result = await attachCloudBackup(
-      this.deps.runtime,
-      vaultId,
-      { backupId, ownerCode },
-      vaultTitle !== undefined ? { vaultTitle } : {},
-    );
+    let result: Awaited<ReturnType<typeof attachCloudBackup>>;
+    try {
+      result = await attachCloudBackup(
+        this.deps.runtime,
+        vaultId,
+        { backupId, ownerCode },
+        vaultTitle !== undefined ? { vaultTitle } : {},
+      );
+    } catch (error) {
+      this.errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Could not reach this cloud backup.";
+      return false;
+    }
     if (!result.ok) {
       this.errorMessage = result.error;
       return false;
@@ -380,9 +389,19 @@ export class CloudBackupStore {
     try {
       await this.deps.dirty?.clearVault(vaultId);
     } catch (error) {
-      // Same contract as `recordLocalChange`: a lost row is caught by the
-      // full-upload fallbacks, never by failing the attach itself.
+      // A stale row is harmless once the full marker is present below.
       console.warn("[CloudBackup] Could not clear changes on attach", error);
+    }
+    try {
+      // The local vault may differ throughout from the cloud backup it is
+      // adopting. Its first automatic sync must publish a whole snapshot;
+      // only subsequent changes can safely use deltas.
+      await this.deps.dirty?.requireFullPush(vaultId);
+    } catch (error) {
+      console.warn(
+        "[CloudBackup] Could not require a full push on attach",
+        error,
+      );
     }
     this.applyRecord(result.value);
     this.hashCache = {};
