@@ -177,6 +177,7 @@ export const howDoIWriteAGoodCallOfCthulhuOneShot: AnswerConfigInput = {
     "what-rpg-should-i-play-for-investigative-horror",
     "how-do-i-run-an-investigator-without-sidelining-the-party",
     "how-do-you-generate-useful-rpg-rumours",
+    "how-do-i-pace-an-rpg-one-shot",
   ],
   discovery: {
     id: "answer-write-call-of-cthulhu-one-shot",
