@@ -254,6 +254,38 @@ describe("SessionJournalView — end session (US3)", () => {
     expect(screen.queryByTestId("journal-note-input")).toBeNull();
     expect(screen.getByTestId("back-to-current-journal")).toBeTruthy();
   });
+
+  it("clears cached history and selection when the active vault is cleared", async () => {
+    const store = newStore("vault-history-switch");
+    await store.start();
+    await store.appendEntry({
+      type: "manual-note",
+      content: "Prior vault note",
+    });
+    await store.end();
+    render(SessionJournalView, { props: { store } });
+
+    await fireEvent.click(
+      screen.getByRole("button", { name: "Past journals" }),
+    );
+    const journalId = store.current!.id;
+    const historyButton = await screen.findByTestId(
+      `past-journal-${journalId}`,
+    );
+    await fireEvent.click(historyButton);
+    expect(screen.getByTestId("journal-entry").textContent).toContain(
+      "Prior vault note",
+    );
+
+    store.current = undefined;
+    store.allJournals = [];
+
+    await waitFor(() => {
+      expect(screen.queryByText("Prior vault note")).toBeNull();
+      expect(screen.queryByTestId(`past-journal-${journalId}`)).toBeNull();
+      expect(screen.getByTestId("session-journal-control")).toBeTruthy();
+    });
+  });
 });
 
 describe("SessionJournalView — repeated submission", () => {

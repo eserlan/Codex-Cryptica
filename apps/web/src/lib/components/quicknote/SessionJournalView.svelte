@@ -36,6 +36,14 @@
       : undefined) ?? store.current,
   );
 
+  $effect(() => {
+    if (store.allJournals.length === 0) {
+      pastJournals = [];
+      selectedPastJournalId = null;
+      activeSectionId = undefined;
+    }
+  });
+
   const controlLabel = $derived(
     store.controlState === "start"
       ? "Start Session Journal"
