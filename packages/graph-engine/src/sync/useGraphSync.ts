@@ -150,6 +150,7 @@ function addNewElements(
 
       const addedNodes = cy.add(newNodes);
       addedNodes.addClass("pending-layout");
+      addedNodes.data?.("isPendingLayout", true);
 
       addedNodes.forEach((n) => {
         const id =

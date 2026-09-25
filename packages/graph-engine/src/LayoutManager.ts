@@ -61,6 +61,7 @@ const GOLDEN_ANGLE = Math.PI * (3 - Math.sqrt(5));
 // seed spiral immediately and lets fcose refine it in the worker, so a large
 // import shows a spread graph instead of an invisible origin clump for seconds.
 const SEED_FIRST_NODE_COUNT = 600;
+export const PENDING_LAYOUT_SELECTOR = "node[isPendingLayout], .pending-layout";
 
 interface SerializedLayoutNode {
   data: { id: string; _w: number; _h: number; [key: string]: unknown };
@@ -400,7 +401,7 @@ export class LayoutManager {
 
   private handleGuestInitialFit(options: LayoutOptions) {
     this.cy.nodes().removeData("isPendingLayout");
-    this.cy.nodes(".pending-layout").removeClass("pending-layout");
+    this.cy.nodes(PENDING_LAYOUT_SELECTOR).removeClass("pending-layout");
     this.cy.fit(this.cy.nodes(), 20);
     // On mobile the full-fit zoom is often unreadably small — enforce a minimum
     if (options.isMobile && this.cy.zoom() < 0.6) {
@@ -491,19 +492,28 @@ export class LayoutManager {
     const cyNodes = this.cy.nodes();
 
     // Detect full-clump (all nodes at origin) — force randomize so fcose can spread them.
-    // Also detect all-pending (every node has .pending-layout, meaning no coords were saved).
+    // Also detect unplaced nodes (nodes marked with isPendingLayout / .pending-layout or at origin).
     // Both checks are kept intentionally:
-    //   - pendingCount catches fresh vaults where transformer sets the class on all nodes
+    //   - pending layout catches fresh/imported vaults where transformer sets the data/class on nodes
     //   - nodesAtOrigin catches legacy vaults whose coords were saved as (0,0) — those nodes
-    //     take the hasValidCoords path in transformer.ts and land at origin WITHOUT the class
+    //     take the hasValidCoords path in transformer.ts and land at origin WITHOUT the pending flag
     const positions: { x: number; y: number }[] = [];
+    let unplacedCount = 0;
     let nodesAtOrigin = 0;
     cyNodes.forEach((n) => {
       const p = n.position();
       positions.push(p);
-      if (!p || (p.x === 0 && p.y === 0)) nodesAtOrigin++;
+      const isOrigin = !p || (p.x === 0 && p.y === 0);
+      if (isOrigin) nodesAtOrigin++;
+      if (
+        isOrigin ||
+        Boolean(n.data?.("isPendingLayout")) ||
+        Boolean(n.hasClass?.("pending-layout"))
+      ) {
+        unplacedCount++;
+      }
     });
-    const pendingCount = this.cy.nodes(".pending-layout").length;
+    const pendingCount = this.cy.nodes(PENDING_LAYOUT_SELECTOR).length;
 
     // Heal a degenerate "diagonal slash" — saved coords collapsed onto a line.
     // This is checked on *every* force pass, not just the initial one: a vault
@@ -513,10 +523,20 @@ export class LayoutManager {
     // re-solve whenever we detect collinearity is safe across all paths.
     const isDegenerateSlash = isLayoutCollinear(positions);
 
+    const isMajorityPending =
+      pendingCount === cyNodes.length ||
+      (pendingCount > 0 && pendingCount >= Math.ceil(cyNodes.length * 0.5));
+    const isMajorityAtOrigin =
+      nodesAtOrigin === cyNodes.length ||
+      (nodesAtOrigin > 0 && nodesAtOrigin >= Math.ceil(cyNodes.length * 0.5));
+    const isMajorityUnplaced =
+      unplacedCount === cyNodes.length ||
+      (unplacedCount > 0 && unplacedCount >= Math.ceil(cyNodes.length * 0.5));
+
     const needsInitialSolve =
       isInitial &&
       cyNodes.length > 1 &&
-      (pendingCount === cyNodes.length || nodesAtOrigin === cyNodes.length);
+      (isMajorityPending || isMajorityAtOrigin || isMajorityUnplaced);
 
     if (!randomize && (needsInitialSolve || isDegenerateSlash)) {
       randomize = true;
@@ -542,7 +562,7 @@ export class LayoutManager {
   private fitOnly(options: LayoutOptions): void {
     this.cy.resize();
 
-    const pendingNodes = this.cy.nodes(".pending-layout");
+    const pendingNodes = this.cy.nodes(PENDING_LAYOUT_SELECTOR);
     if (pendingNodes.nonempty()) {
       // Snap new nodes to sensible positions before revealing them so the
       // viewport doesn't jump to include their far-away spiral seed positions.
@@ -599,6 +619,7 @@ export class LayoutManager {
     }
   }
 
+  // fallow-ignore-next-line complexity
   private async solveAndFit(
     options: LayoutOptions,
     shouldRandomize: boolean,
@@ -701,11 +722,16 @@ export class LayoutManager {
     );
 
     if (!positions || this.cy.destroyed()) {
-      // Worker failed/timed out. If we already revealed the seed spiral, keep it
-      // and persist so a reload doesn't re-clump (better than the invisible
-      // origin pile the old path left behind).
-      if (seedFirst && !this.cy.destroyed()) {
-        this.persistPositions(this.cy.nodes(), options, healed);
+      // Worker failed/timed out. Reveal any pending nodes so they don't remain invisible.
+      if (!this.cy.destroyed()) {
+        this.cy.batch(() => {
+          const pendingNodes = this.cy.nodes(PENDING_LAYOUT_SELECTOR);
+          pendingNodes.removeData?.("isPendingLayout");
+          pendingNodes.removeClass?.("pending-layout");
+        });
+        if (seedFirst) {
+          this.persistPositions(this.cy.nodes(), options, healed);
+        }
       }
       options.onLayoutStop?.();
       return;

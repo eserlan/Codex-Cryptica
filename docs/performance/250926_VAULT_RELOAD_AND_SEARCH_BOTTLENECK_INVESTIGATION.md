@@ -91,10 +91,42 @@ While initial page load and graph rendering are fast (DOMContentLoaded: 201ms, c
 
 ---
 
+### Finding 4: Graph Reload Layout Bypass & Invisible Nodes Hairball (Priority 1.5 - Visual Critical)
+
+#### Root Cause
+
+1. **Selector Mismatch (`isPendingLayout` vs `.pending-layout`):**
+   - In `transformer.ts`, nodes without saved coordinates received temporary golden-angle spiral seed positions and `(nodeData as any).isPendingLayout = true`. They did NOT receive the class `classes: "pending-layout"`.
+   - In the stylesheet (`transformer.ts`), both `node[isPendingLayout]` and `.pending-layout` were styled with `{ opacity: 0; events: "no" }`.
+   - In `LayoutManager.ts`, lines querying pending nodes used `this.cy.nodes(".pending-layout")`. Because the class was missing, `pendingCount` returned `0` and `pendingNodes` collection was empty.
+2. **Initial Solve Bypass Condition:**
+   - In `LayoutManager.ts`, the check `const needsInitialSolve = isInitial && cyNodes.length > 1 && (pendingCount === cyNodes.length || nodesAtOrigin === cyNodes.length);` required _all_ nodes to be pending or at origin.
+   - In the user's real vault (`big-brin-zieb`), 498 nodes lacked coordinates and 2 nodes had coordinates. Because 498 !== 500 (and `pendingCount` returned 0 due to the selector mismatch), `needsInitialSolve` evaluated to `false`.
+   - With `options.stableLayout = true` on initial load, layout computation was bypassed completely and directed to `fitOnly`.
+   - In `fitOnly`, `pendingNodes` was empty, so `isPendingLayout` was never removed. All 498 unplaced nodes remained at `opacity: 0` in their raw spiral seed positions, while all 1,158 edges were rendered between them, producing a spherical "spiderweb hairball" of criss-crossing lines with only the 2 placed nodes visible.
+
+#### Remediation Plan
+
+1. **Unified Pending Selector (`PENDING_LAYOUT_SELECTOR`):**
+   - Export and use `PENDING_LAYOUT_SELECTOR = "node[isPendingLayout], .pending-layout"` in `LayoutManager.ts`.
+   - Tag newly generated pending elements with both `isPendingLayout: true` and `classes: "pending-layout"` in `transformer.ts` (entities and quicknotes) and `useGraphSync.ts`.
+2. **Majority-Unplaced Layout Detection:**
+   - Update `needsInitialSolve` in `LayoutManager.ts` to trigger a full initial force layout when:
+     - `pendingCount === cyNodes.length` or `nodesAtOrigin === cyNodes.length`, OR
+     - `pendingCount >= cyNodes.length * 0.5`, OR
+     - `nodesAtOrigin >= cyNodes.length * 0.5`, OR
+     - `unplacedCount >= cyNodes.length * 0.5`.
+   - When a vault has mostly unplaced nodes (e.g. 498 / 500), it automatically triggers the worker force layout, calculates positions, clears `isPendingLayout`, fits the viewport, and persists coordinates to entity metadata.
+3. **Defensive Worker Error Recovery:**
+   - In `solveAndFit`, if the layout worker errors or times out, safely clear `isPendingLayout` and `pending-layout` so nodes are never left permanently invisible.
+
+---
+
 ## 4. Implementation Log & Fix Tracking
 
-| Priority | Item                                  | Component                            | Status          | Verification                                                                                                             |
-| :------- | :------------------------------------ | :----------------------------------- | :-------------- | :----------------------------------------------------------------------------------------------------------------------- |
-| **P1**   | Search Index Persistence Coalescing   | `search-index-persistence.ts`        | ✅ **Resolved** | 14/14 unit tests pass; verified in dev server: 40 redundant exports -> 0 on reload, exactly 1 on manual/subsequent save. |
-| **P2**   | Image CORS Fast-Fail / Fallback Cache | `ImageManager` / `GraphImageManager` | ⏳ Pending      | Network latency benchmark                                                                                                |
-| **P3**   | Cache Preload Deduping                | `CacheService`                       | ⏳ Pending      | Trace confirmation                                                                                                       |
+| Priority | Item                                          | Component                            | Status          | Verification                                                                                                                 |
+| :------- | :-------------------------------------------- | :----------------------------------- | :-------------- | :--------------------------------------------------------------------------------------------------------------------------- |
+| **P1**   | Search Index Persistence Coalescing           | `search-index-persistence.ts`        | ✅ **Resolved** | 14/14 unit tests pass; verified in dev server: 40 redundant exports -> 0 on reload, exactly 1 on manual/subsequent save.     |
+| **P1.5** | Graph Reload Layout Bypass & Pending Selector | `LayoutManager.ts`, `transformer.ts` | ✅ **Resolved** | 49/49 graph-engine tests pass; live DevTools validation on 500-node graph confirms all nodes visible and beautifully placed. |
+| **P2**   | Image CORS Fast-Fail / Fallback Cache         | `ImageManager` / `GraphImageManager` | ⏳ Pending      | Network latency benchmark                                                                                                    |
+| **P3**   | Cache Preload Deduping                        | `CacheService`                       | ⏳ Pending      | Trace confirmation                                                                                                           |

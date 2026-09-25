@@ -31,6 +31,7 @@ export interface GraphNode {
     textureVariant?: number;
   };
   position?: { x: number; y: number };
+  classes?: string;
 }
 
 export interface GraphEdge {
@@ -43,6 +44,7 @@ export interface GraphEdge {
     connectionType: string;
     strength?: number;
   };
+  classes?: string;
 }
 
 export type GraphElement = GraphNode | GraphEdge;
@@ -254,6 +256,7 @@ export class GraphTransformer {
         elements.push({
           group: "nodes",
           data: nodeData,
+          classes: "pending-layout",
           position: {
             x: Math.cos(angle) * distance,
             y: Math.sin(angle) * distance,
@@ -333,6 +336,7 @@ export class GraphTransformer {
       elements.push({
         group: "nodes",
         data: nodeData,
+        classes: "pending-layout",
         position: {
           x: Math.cos(angle) * distance,
           y: Math.sin(angle) * distance,

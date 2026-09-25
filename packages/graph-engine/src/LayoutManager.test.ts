@@ -5,10 +5,18 @@ import {
   getLayoutCollisionSize,
   isLayoutCollinear,
   LayoutManager,
+  PENDING_LAYOUT_SELECTOR,
   removeOverlaps,
   type LayoutRequest,
 } from "./LayoutManager";
 import type { Core } from "cytoscape";
+
+const isPendingSelector = (selector?: string) =>
+  selector === ".pending-layout" ||
+  selector === PENDING_LAYOUT_SELECTOR ||
+  (selector != null &&
+    (selector.includes("pending-layout") ||
+      selector.includes("isPendingLayout")));
 
 // ─── Fake Worker ────────────────────────────────────────────────────────────────
 let capturedPostMessage: any = null;
@@ -71,16 +79,23 @@ class SilentWorker {
 
 // ─── Node factory ───────────────────────────────────────────────────────────────
 function makeNodes(positions: Array<{ x: number; y: number }> = []) {
-  return positions.map((pos, i) => ({
-    position: vi.fn().mockReturnValue(pos),
-    data: vi.fn().mockReturnValue({}),
-    id: vi.fn().mockReturnValue(String(i + 1)),
-    addClass: vi.fn(),
-    removeClass: vi.fn(),
-    width: vi.fn().mockReturnValue(60),
-    height: vi.fn().mockReturnValue(60),
-    length: 1,
-  }));
+  return positions.map((pos, i) => {
+    const nodeData: Record<string, any> = { id: String(i + 1) };
+    return {
+      position: vi.fn().mockReturnValue(pos),
+      data: vi
+        .fn()
+        .mockImplementation((key?: string) => (key ? nodeData[key] : nodeData)),
+      id: vi.fn().mockReturnValue(String(i + 1)),
+      addClass: vi.fn(),
+      removeClass: vi.fn(),
+      removeData: vi.fn(),
+      hasClass: vi.fn().mockReturnValue(false),
+      width: vi.fn().mockReturnValue(60),
+      height: vi.fn().mockReturnValue(60),
+      length: 1,
+    };
+  });
 }
 
 describe("LayoutManager", () => {
@@ -117,7 +132,7 @@ describe("LayoutManager", () => {
       nodes: vi
         .fn()
         .mockImplementation((selector?: string) =>
-          selector === ".pending-layout" ? emptyCollection : twoNodes,
+          isPendingSelector(selector) ? emptyCollection : twoNodes,
         ),
       edges: vi.fn().mockReturnValue([]),
       $id: vi.fn().mockReturnValue({ length: 0 }),
@@ -254,7 +269,7 @@ describe("LayoutManager", () => {
     (nodes as any).nonempty = vi.fn().mockReturnValue(true);
     (nodes as any).not = vi.fn().mockReturnValue(emptyPending);
     mockCy.nodes.mockImplementation((selector?: string) =>
-      selector === ".pending-layout" ? emptyPending : nodes,
+      isPendingSelector(selector) ? emptyPending : nodes,
     );
 
     await layoutManager.apply(
@@ -301,7 +316,7 @@ describe("LayoutManager", () => {
     (nodes as any).not = vi.fn().mockReturnValue(emptyPending);
 
     mockCy.nodes.mockImplementation((selector?: string) =>
-      selector === ".pending-layout" ? emptyPending : nodes,
+      isPendingSelector(selector) ? emptyPending : nodes,
     );
 
     const onPositionsUpdated = vi.fn();
@@ -353,7 +368,7 @@ describe("LayoutManager", () => {
     (nodes as any).not = vi.fn().mockReturnValue(emptyPending);
 
     mockCy.nodes.mockImplementation((selector?: string) =>
-      selector === ".pending-layout" ? emptyPending : nodes,
+      isPendingSelector(selector) ? emptyPending : nodes,
     );
 
     await layoutManager.apply(
@@ -944,7 +959,7 @@ describe("LayoutManager", () => {
     });
 
     mockCy.nodes.mockImplementation((selector?: string) =>
-      selector === ".pending-layout" ? pendingNodes : pendingNodes,
+      isPendingSelector(selector) ? pendingNodes : pendingNodes,
     );
 
     await layoutManager.apply(
@@ -984,7 +999,7 @@ describe("LayoutManager", () => {
     const pending = makeNodes(positions);
 
     mockCy.nodes.mockImplementation((selector?: string) =>
-      selector === ".pending-layout" ? pending : bigNodes,
+      isPendingSelector(selector) ? pending : bigNodes,
     );
 
     const seedNode = {
@@ -1032,7 +1047,7 @@ describe("LayoutManager", () => {
       length: 0,
     });
     mockCy.nodes.mockImplementation((selector?: string) =>
-      selector === ".pending-layout" ? pendingNodes : pendingNodes,
+      isPendingSelector(selector) ? pendingNodes : pendingNodes,
     );
 
     const seedNode = {
@@ -1082,7 +1097,7 @@ describe("LayoutManager", () => {
     (placedNodes as any).not = vi.fn().mockReturnValue(emptyPending);
 
     mockCy.nodes.mockImplementation((selector?: string) =>
-      selector === ".pending-layout" ? emptyPending : placedNodes,
+      isPendingSelector(selector) ? emptyPending : placedNodes,
     );
 
     capturedPostMessage = null;
@@ -1130,7 +1145,7 @@ describe("LayoutManager", () => {
     (originNodes as any).not = vi.fn().mockReturnValue(emptyPending);
 
     mockCy.nodes.mockImplementation((selector?: string) =>
-      selector === ".pending-layout" ? emptyPending : originNodes,
+      isPendingSelector(selector) ? emptyPending : originNodes,
     );
 
     capturedPostMessage = null;
@@ -1153,6 +1168,98 @@ describe("LayoutManager", () => {
     // Origin check must trigger force layout even though pendingCount === 0
     expect(capturedPostMessage).not.toBeNull();
     expect(capturedPostMessage.options.randomize).toBe(true);
+  });
+
+  it("runs a real force layout on initial load when the majority of nodes are unplaced (partial coords)", async () => {
+    // 5 nodes: 4 unplaced (marked pending layout), 1 placed
+    const placedNode = makeNodes([{ x: 100, y: 100 }])[0];
+    const pendingNodesList = makeNodes([
+      { x: 10, y: 20 },
+      { x: 30, y: 40 },
+      { x: 50, y: 60 },
+      { x: 70, y: 80 },
+    ]);
+    pendingNodesList.forEach((n) => {
+      n.data = vi
+        .fn()
+        .mockImplementation((key?: string) =>
+          key === "isPendingLayout" ? true : { isPendingLayout: true },
+        );
+      n.hasClass = vi
+        .fn()
+        .mockImplementation((cls: string) => cls === "pending-layout");
+    });
+    const allNodes = [...pendingNodesList, placedNode];
+    (allNodes as any).length = 5;
+
+    const pendingCollection: any = [...pendingNodesList];
+    pendingCollection.length = 4;
+    pendingCollection.nonempty = vi.fn().mockReturnValue(true);
+    pendingCollection.removeData = vi.fn();
+    pendingCollection.removeClass = vi.fn();
+
+    mockCy.nodes.mockImplementation((selector?: string) =>
+      isPendingSelector(selector) ? pendingCollection : allNodes,
+    );
+
+    capturedPostMessage = null;
+    await layoutManager.apply(
+      {
+        reason: "unknown",
+        isInitial: true,
+      },
+      {
+        timelineMode: false,
+        timelineAxis: "x",
+        timelineScale: 1,
+        orbitMode: false,
+        centralNodeId: null,
+        stableLayout: true,
+        isGuest: false,
+      },
+    );
+
+    // Majority unplaced (4/5) must trigger force layout solve even with stableLayout: true
+    expect(capturedPostMessage).not.toBeNull();
+    expect(capturedPostMessage.options.randomize).toBe(true);
+  });
+
+  it("clears pending layout on worker failure so nodes do not remain invisible", async () => {
+    (globalThis as any).Worker = ErrorWorker as any;
+
+    const pendingNodes = makeNodes([
+      { x: 10, y: 20 },
+      { x: 30, y: 40 },
+    ]);
+    (pendingNodes as any).length = 2;
+    (pendingNodes as any).removeData = vi.fn();
+    (pendingNodes as any).removeClass = vi.fn();
+    (pendingNodes as any).nonempty = vi.fn().mockReturnValue(true);
+
+    mockCy.nodes.mockImplementation((selector?: string) =>
+      isPendingSelector(selector) ? pendingNodes : pendingNodes,
+    );
+
+    await layoutManager.apply(
+      { reason: "Load Finalized", isInitial: true, isForced: true },
+      {
+        timelineMode: false,
+        timelineAxis: "x",
+        timelineScale: 1,
+        orbitMode: false,
+        centralNodeId: null,
+        stableLayout: true,
+        isGuest: false,
+      },
+    );
+
+    // Even though worker errored, pending layout state was removed so nodes become visible
+    expect((pendingNodes as any).removeData).toHaveBeenCalledWith(
+      "isPendingLayout",
+    );
+    expect((pendingNodes as any).removeClass).toHaveBeenCalledWith(
+      "pending-layout",
+    );
   });
 
   describe("LayoutRequest call shape (T9 dual-run)", () => {

@@ -51,6 +51,7 @@ describe("syncGraphElements", () => {
         }));
         return {
           addClass: vi.fn(),
+          data: vi.fn(),
           forEach: vi.fn((cb) => mapped.forEach(cb)),
         };
       }),
