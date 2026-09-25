@@ -147,6 +147,44 @@ describe("mergeDraftIntoPrep", () => {
     expect(merged.consequences.failure).toBe("AI failure");
   });
 
+  it("preserves partially authored list items when drafting an empty step", () => {
+    const prep = createEmptySessionPrep("A courier vanished.");
+    prep.people = [
+      {
+        id: "partial-person",
+        name: "",
+        wants: "The ledger returned",
+        doesNext: "",
+        source: "gm",
+      },
+    ];
+
+    const merged = mergeDraftIntoPrep(
+      prep,
+      {
+        people: [
+          {
+            name: "Reeve Callan",
+            wants: "The ledger",
+            doesNext: "Searches the mill",
+          },
+        ],
+      },
+      sequentialIds(),
+    );
+
+    expect(merged.people).toEqual([
+      prep.people[0],
+      {
+        id: "id-1",
+        name: "Reeve Callan",
+        wants: "The ledger",
+        doesNext: "Searches the mill",
+        source: "ai",
+      },
+    ]);
+  });
+
   it("does not mutate the prep it was given", () => {
     const prep = createEmptySessionPrep("hook");
     mergeDraftIntoPrep(prep, { pressure: "Something moves" }, sequentialIds());

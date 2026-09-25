@@ -175,6 +175,17 @@ function asAiItem<T extends object>(item: T, ids: IdFactory) {
   return { ...item, id: ids(), source: "ai" as const };
 }
 
+function hasDraftContent(item: object): boolean {
+  return Object.entries(item).some(([key, value]) => {
+    if (key === "id" || key === "source") return false;
+    if (typeof value === "string") return filled(value);
+    return (
+      Array.isArray(value) &&
+      value.some((entry) => typeof entry === "string" && filled(entry))
+    );
+  });
+}
+
 function fillBlankConsequences(
   target: PrepConsequences,
   source: PrepConsequences | undefined,
@@ -201,7 +212,11 @@ export function mergeDraftIntoPrep(
   for (const step of LIST_STEPS) {
     const items = draft[step];
     if (empty.has(step) && items?.length) {
-      (next[step] as object[]) = items.map((item) => asAiItem(item, ids));
+      const existing = (next[step] as object[]).filter(hasDraftContent);
+      (next[step] as object[]) = [
+        ...existing,
+        ...items.map((item) => asAiItem(item, ids)),
+      ];
     }
   }
   fillBlankConsequences(next.consequences, draft.consequences);
