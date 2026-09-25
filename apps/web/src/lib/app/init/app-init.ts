@@ -32,7 +32,6 @@ import { registerFlushSavesOnHide } from "./flush-saves-on-hide";
 import { vault } from "$lib/stores/vault.svelte";
 import { mapRegistry } from "$lib/stores/map-registry.svelte";
 import { canvasRegistry } from "$lib/stores/canvas-registry.svelte";
-import { sessionJournalStore } from "$lib/stores/session-journal.svelte";
 import { getDB } from "$lib/utils/idb";
 import {
   cloudBackupStore,
@@ -219,8 +218,15 @@ export function initializeGlobalListeners(_calendarStore?: any) {
     timing: timeCloudBackupSave,
     // Everything the consent screen promises: entities, maps, canvases,
     // session journals, and the media the first three reference.
-    buildPayload: async (_vaultId: string, signal?: AbortSignal) =>
-      buildCloudBackupPayload(
+    buildPayload: async (vaultId: string, signal?: AbortSignal) => {
+      // Do not use the store's reactive snapshot here: its initial vault read
+      // is asynchronous, so a backup requested immediately after app startup
+      // could otherwise omit existing journals. Read the requested vault's
+      // persisted records directly for this full snapshot.
+      const sessionJournals = await (
+        await getDB()
+      ).getAllFromIndex("session_journals", "by-vault", vaultId);
+      return buildCloudBackupPayload(
         vault.vaultName || "Vault",
         Object.values(vault.entities ?? {}),
         {
@@ -238,12 +244,13 @@ export function initializeGlobalListeners(_calendarStore?: any) {
         {
           maps: mapRegistry.allMaps ?? [],
           canvases: canvasRegistry.allCanvases ?? [],
-          // Session journals (spec 163-session-journal, FR-016) are only
-          // ever part of a full backup, never the delta below — see
-          // session-journal.svelte.ts's write() for why.
-          sessionJournals: sessionJournalStore.allJournals ?? [],
+          // Session journals are only part of a full backup, never a delta.
+          sessionJournals: sessionJournals.sort(
+            (a, b) => b.startedAt - a.startedAt,
+          ),
         },
-      ),
+      );
+    },
     // Incremental uploads (#3354): only the recorded changes are read.
     buildDelta: async (_vaultId, changes, uploadedAssetIds, signal) =>
       buildCloudBackupDelta(

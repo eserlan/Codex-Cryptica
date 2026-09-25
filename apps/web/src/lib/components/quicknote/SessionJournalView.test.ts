@@ -13,6 +13,28 @@ vi.mock("../../utils/idb", () => {
   const store = new Map<string, any>();
   return {
     getDB: vi.fn().mockResolvedValue({
+      transaction: vi.fn(() => {
+        let finish!: () => void;
+        const done = new Promise<void>((resolve) => (finish = resolve));
+        return {
+          store: {
+            get: async (id: string) => store.get(`session_journals_${id}`),
+            put: async (value: any) => {
+              store.set(`session_journals_${value.id}`, value);
+              finish();
+              return value.id;
+            },
+            index: () => ({
+              getAll: async (vaultId: string) =>
+                [...store.values()].filter(
+                  (value) => value.vaultId === vaultId,
+                ),
+            }),
+          },
+          done,
+          abort: finish,
+        };
+      }),
       get: vi.fn().mockImplementation(async (table: string, key: string) => {
         return store.get(`${table}_${key}`);
       }),
@@ -109,6 +131,14 @@ describe("SessionJournalView — sections (US2)", () => {
         "Arrival in Port Vane",
       ),
     );
+    const createdSectionId = store.current!.sections[0].id;
+    await fireEvent.input(screen.getByTestId("journal-note-input"), {
+      target: { value: "The party arrives" },
+    });
+    await fireEvent.click(screen.getByTestId("journal-note-submit"));
+    await waitFor(() =>
+      expect(store.current?.entries[0]?.sectionId).toBe(createdSectionId),
+    );
 
     await fireEvent.click(screen.getByTestId("journal-section-name"));
     const renameInput = screen.getByTestId(
@@ -121,6 +151,29 @@ describe("SessionJournalView — sections (US2)", () => {
       expect(screen.getByTestId("journal-section-name").textContent).toContain(
         "The Ambush",
       ),
+    );
+  });
+
+  it("associates a new note with the selected section", async () => {
+    const store = newStore("vault-section-entry");
+    await store.start();
+    const section = await store.createSection("The Market");
+    render(SessionJournalView, { props: { store } });
+    await fireEvent.change(screen.getByTestId("journal-note-section"), {
+      target: { value: section.id },
+    });
+
+    const noteInput = screen.getByTestId(
+      "journal-note-input",
+    ) as HTMLInputElement;
+    await fireEvent.input(noteInput, { target: { value: "Met the ferryman" } });
+    await fireEvent.click(screen.getByTestId("journal-note-submit"));
+
+    await waitFor(() =>
+      expect(store.current?.entries[0]?.sectionId).toBe(section.id),
+    );
+    expect(screen.getByTestId("journal-entry").textContent).toContain(
+      "The Market",
     );
   });
 
@@ -174,5 +227,57 @@ describe("SessionJournalView — end session (US3)", () => {
     expect(screen.getByTestId("session-journal-control").textContent).toContain(
       "Start Session Journal",
     );
+  });
+
+  it("opens an ended journal from history so its entries remain readable", async () => {
+    const store = newStore("vault-history");
+    await store.start();
+    await store.appendEntry({ type: "manual-note", content: "The old pact" });
+    await store.end();
+    render(SessionJournalView, { props: { store } });
+
+    await fireEvent.click(
+      screen.getByRole("button", { name: "Past journals" }),
+    );
+    await waitFor(() =>
+      expect(
+        screen.getByTestId(`past-journal-${store.current!.id}`),
+      ).toBeTruthy(),
+    );
+    await fireEvent.click(
+      screen.getByTestId(`past-journal-${store.current!.id}`),
+    );
+
+    expect(screen.getByTestId("journal-entry").textContent).toContain(
+      "The old pact",
+    );
+    expect(screen.queryByTestId("journal-note-input")).toBeNull();
+    expect(screen.getByTestId("back-to-current-journal")).toBeTruthy();
+  });
+});
+
+describe("SessionJournalView — repeated submission", () => {
+  it("does not append the same in-flight note twice", async () => {
+    const store = newStore("vault-repeat");
+    await store.start();
+    let finishAppend!: () => void;
+    const append = vi
+      .spyOn(store, "appendEntry")
+      .mockImplementation(
+        () =>
+          new Promise((resolve) => (finishAppend = () => resolve({} as any))),
+      );
+    render(SessionJournalView, { props: { store } });
+
+    await fireEvent.input(screen.getByTestId("journal-note-input"), {
+      target: { value: "One event" },
+    });
+    const submit = screen.getByTestId("journal-note-submit");
+    await fireEvent.click(submit);
+    await fireEvent.click(submit);
+    expect(append).toHaveBeenCalledTimes(1);
+
+    finishAppend();
+    await waitFor(() => expect(append).toHaveBeenCalledTimes(1));
   });
 });

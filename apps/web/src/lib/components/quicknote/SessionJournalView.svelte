@@ -16,13 +16,25 @@
     $props();
 
   let noteText = $state("");
+  let isAddingNote = $state(false);
   let newSectionName = $state("");
+  let isCreatingSection = $state(false);
   let sectionError = $state<string | null>(null);
   let renamingSectionId = $state<string | null>(null);
   let renameValue = $state("");
   let renameError = $state<string | null>(null);
   let showHistory = $state(false);
   let pastJournals = $state<SessionJournal[]>([]);
+  let selectedPastJournalId = $state<string | null>(null);
+  let activeSectionId = $state<string | undefined>(undefined);
+  let isEndingSession = $state(false);
+  const displayedJournal = $derived(
+    (selectedPastJournalId
+      ? store.allJournals.find(
+          (journal) => journal.id === selectedPastJournalId,
+        )
+      : undefined) ?? store.current,
+  );
 
   const controlLabel = $derived(
     store.controlState === "start"
@@ -32,7 +44,7 @@
 
   function sectionName(sectionId: string | undefined): string | undefined {
     if (!sectionId) return undefined;
-    return store.current?.sections.find((s) => s.id === sectionId)?.name;
+    return displayedJournal?.sections.find((s) => s.id === sectionId)?.name;
   }
 
   async function handleControlClick() {
@@ -45,24 +57,40 @@
 
   async function submitNote() {
     const content = noteText.trim();
-    if (!content) return;
+    if (!content || isAddingNote) return;
+    isAddingNote = true;
     try {
-      await store.appendEntry({ type: "manual-note", content });
+      const sectionId = displayedJournal?.sections.some(
+        (section) => section.id === activeSectionId,
+      )
+        ? activeSectionId
+        : undefined;
+      await store.appendEntry({
+        type: "manual-note",
+        content,
+        ...(sectionId ? { sectionId } : {}),
+      });
       noteText = "";
     } catch {
       notificationStore.notify("That note could not be added.", "error");
+    } finally {
+      isAddingNote = false;
     }
   }
 
   async function submitSection() {
     const name = newSectionName.trim();
-    if (!name) return;
+    if (!name || isCreatingSection) return;
+    isCreatingSection = true;
     try {
-      await store.createSection(name);
+      const section = await store.createSection(name);
+      activeSectionId = section.id;
       newSectionName = "";
       sectionError = null;
     } catch {
       sectionError = "A section needs a name.";
+    } finally {
+      isCreatingSection = false;
     }
   }
 
@@ -84,11 +112,15 @@
   }
 
   async function endSession() {
+    if (isEndingSession) return;
+    isEndingSession = true;
     try {
       await store.end();
       notificationStore.notify("Session ended.", "success");
     } catch {
       notificationStore.notify("That session could not be ended.", "error");
+    } finally {
+      isEndingSession = false;
     }
   }
 
@@ -102,13 +134,13 @@
   <FeatureHint hintId="session-journal" />
 
   <div class="flex items-center justify-end">
-    <button
-      type="button"
-      onclick={toggleHistory}
-      class="text-[10px] text-theme-muted transition-colors hover:text-theme-primary"
-      data-testid="toggle-journal-history"
-    >
-      Past journals
+    <!-- fallow-ignore-next-line complexity -->
+    <button type="button" onclick={toggleHistory}>
+      <span
+        class="text-[10px] text-theme-muted transition-colors hover:text-theme-primary"
+      >
+        Past journals
+      </span>
     </button>
   </div>
 
@@ -116,7 +148,7 @@
     {@render journalHistory()}
   {/if}
 
-  {#if store.controlState === "start" || store.controlState === "resume"}
+  {#if (store.controlState === "start" || store.controlState === "resume") && !selectedPastJournalId}
     <div
       class="flex flex-1 flex-col items-center justify-center gap-3 text-center"
     >
@@ -140,73 +172,104 @@
       <h4
         class="font-header text-xs font-bold uppercase tracking-widest text-theme-primary"
       >
-        {store.current?.title ?? "Session Journal"}
+        {displayedJournal?.title ?? "Session Journal"}
       </h4>
-      <button
-        type="button"
-        onclick={endSession}
-        class="text-[10px] font-bold uppercase tracking-wider text-theme-danger transition-colors hover:underline"
-        data-testid="end-session"
-      >
-        End Session
-      </button>
+      {#if displayedJournal?.status === "active"}
+        <button
+          type="button"
+          onclick={endSession}
+          disabled={isEndingSession}
+          class="text-[10px] font-bold uppercase tracking-wider text-theme-danger transition-colors hover:underline"
+          data-testid="end-session"
+        >
+          End Session
+        </button>
+      {:else}
+        <button
+          type="button"
+          onclick={() => (selectedPastJournalId = null)}
+          class="text-[10px] text-theme-muted transition-colors hover:text-theme-primary"
+          data-testid="back-to-current-journal"
+        >
+          Back
+        </button>
+      {/if}
     </div>
 
-    <div
-      class="flex flex-1 flex-col gap-2 overflow-y-auto"
-      data-testid="journal-entries"
-    >
+    <!-- Tailwind provides this utility; Fallow cannot resolve generated v4 classes here. -->
+    <!-- fallow-ignore-next-line css-broken-reference -->
+    <div class="flex flex-1 flex-col gap-2 overflow-y-auto">
       {@render entryList()}
     </div>
 
-    <div class="flex flex-col gap-2 border-t border-theme-border/40 pt-3">
-      <div class="flex gap-2">
-        <input
-          type="text"
-          bind:value={noteText}
-          placeholder="Add a note..."
-          onkeydown={(e) => e.key === "Enter" && submitNote()}
-          class="flex-1 rounded border border-theme-border bg-theme-bg px-2 py-1.5 text-xs text-theme-text focus:border-theme-primary focus:outline-none"
-          data-testid="journal-note-input"
-        />
-        <button
-          type="button"
-          onclick={submitNote}
-          class="rounded bg-theme-primary px-3 py-1.5 font-header text-[10px] font-bold uppercase text-theme-bg transition-colors hover:bg-theme-secondary"
-          data-testid="journal-note-submit"
-        >
-          Add
-        </button>
-      </div>
+    {#if displayedJournal?.status === "active"}
+      <div class="flex flex-col gap-2 border-t border-theme-border/40 pt-3">
+        <div class="flex gap-2">
+          <input
+            type="text"
+            bind:value={noteText}
+            aria-label="Journal note"
+            placeholder="Add a note..."
+            onkeydown={(e) => e.key === "Enter" && submitNote()}
+            class="flex-1 rounded border border-theme-border bg-theme-bg px-2 py-1.5 text-xs text-theme-text focus:border-theme-primary focus:outline-none"
+            data-testid="journal-note-input"
+          />
+          <button
+            type="button"
+            onclick={submitNote}
+            disabled={isAddingNote}
+            class="rounded bg-theme-primary px-3 py-1.5 font-header text-[10px] font-bold uppercase text-theme-bg transition-colors hover:bg-theme-secondary"
+            data-testid="journal-note-submit"
+          >
+            Add
+          </button>
+        </div>
 
-      <div class="flex gap-2">
-        <input
-          type="text"
-          bind:value={newSectionName}
-          placeholder="New section name..."
-          onkeydown={(e) => e.key === "Enter" && submitSection()}
-          class="flex-1 rounded border border-theme-border bg-theme-bg px-2 py-1.5 text-xs text-theme-text focus:border-theme-primary focus:outline-none"
-          data-testid="journal-section-input"
-        />
-        <button
-          type="button"
-          onclick={submitSection}
-          class="rounded border border-theme-border px-3 py-1.5 font-header text-[10px] uppercase text-theme-text transition-colors hover:border-theme-primary hover:text-theme-primary"
-          data-testid="journal-section-submit"
-        >
-          New Section
-        </button>
-      </div>
-      {#if sectionError}
-        <p class="text-[10px] text-theme-danger" data-testid="section-error">
-          {sectionError}
-        </p>
-      {/if}
+        {#if displayedJournal.sections.length > 0}
+          <select
+            bind:value={activeSectionId}
+            aria-label="Section for next journal note"
+            class="rounded border border-theme-border bg-theme-bg px-2 py-1.5 text-xs text-theme-text"
+            data-testid="journal-note-section"
+          >
+            <option value={undefined}>No section</option>
+            {#each displayedJournal.sections as section (section.id)}
+              <option value={section.id}>{section.name}</option>
+            {/each}
+          </select>
+        {/if}
 
-      {#if store.current?.sections.length}
-        {@render sectionChips(store.current.sections)}
-      {/if}
-    </div>
+        <div class="flex gap-2">
+          <input
+            type="text"
+            bind:value={newSectionName}
+            aria-label="New section name"
+            placeholder="New section name..."
+            onkeydown={(e) => e.key === "Enter" && submitSection()}
+            class="flex-1 rounded border border-theme-border bg-theme-bg px-2 py-1.5 text-xs text-theme-text focus:border-theme-primary focus:outline-none"
+            data-testid="journal-section-input"
+          />
+          <button
+            type="button"
+            onclick={submitSection}
+            disabled={isCreatingSection}
+            class="rounded border border-theme-border px-3 py-1.5 font-header text-[10px] uppercase text-theme-text transition-colors hover:border-theme-primary hover:text-theme-primary"
+            data-testid="journal-section-submit"
+          >
+            New Section
+          </button>
+        </div>
+        {#if sectionError}
+          <p class="text-[10px] text-theme-danger" data-testid="section-error">
+            {sectionError}
+          </p>
+        {/if}
+
+        {#if displayedJournal.sections.length}
+          {@render sectionChips(displayedJournal.sections)}
+        {/if}
+      </div>
+    {/if}
   {/if}
 </div>
 
@@ -221,20 +284,27 @@
       </p>
     {/if}
     {#each pastJournals as journal (journal.id)}
-      <div class="text-[10px] text-theme-muted" data-testid="past-journal">
+      <button
+        type="button"
+        onclick={() => (selectedPastJournalId = journal.id)}
+        class="w-full text-left text-[10px] text-theme-muted transition-colors hover:text-theme-primary"
+        data-testid={`past-journal-${journal.id}`}
+      >
         {journal.title} — {journal.status}
-      </div>
+      </button>
     {/each}
   </div>
 {/snippet}
 
 {#snippet entryList()}
-  {#if (store.current?.entries.length ?? 0) === 0}
+  {#if (displayedJournal?.entries.length ?? 0) === 0}
     <p class="text-xs italic text-theme-muted/70">
-      No entries yet — add your first note below.
+      {displayedJournal?.status === "active"
+        ? "No entries yet — add your first note below."
+        : "This journal has no entries."}
     </p>
   {/if}
-  {#each store.current?.entries ?? [] as entry (entry.id)}
+  {#each displayedJournal?.entries ?? [] as entry (entry.id)}
     <div
       class="rounded border border-theme-border/30 p-2 text-xs"
       data-testid="journal-entry"
@@ -262,6 +332,7 @@
           <input
             type="text"
             bind:value={renameValue}
+            aria-label="Rename section"
             onkeydown={(e) => e.key === "Enter" && submitRename()}
             onblur={submitRename}
             class="w-24 bg-transparent text-[9px] text-theme-text focus:outline-none"

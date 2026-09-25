@@ -49,6 +49,7 @@ export class SessionJournalStore {
   private vaultRegistry: typeof defaultVaultRegistry;
   private ids: IdGenerator;
   private clock: Clock;
+  private loadVersion = 0;
 
   constructor(
     vaultRegistry: typeof defaultVaultRegistry = defaultVaultRegistry,
@@ -64,8 +65,11 @@ export class SessionJournalStore {
         const vaultId = this.vaultRegistry.activeVaultId;
         this.openedInSession = false;
         if (vaultId) {
+          this.current = undefined;
+          this.allJournals = [];
           void this.loadVault(vaultId);
         } else {
+          this.loadVersion += 1;
           this.current = undefined;
           this.allJournals = [];
         }
@@ -80,6 +84,7 @@ export class SessionJournalStore {
   }
 
   private async loadVault(vaultId: string): Promise<void> {
+    const version = ++this.loadVersion;
     try {
       const db = await getDB();
       const journals = await db.getAllFromIndex(
@@ -87,6 +92,14 @@ export class SessionJournalStore {
         "by-vault",
         vaultId,
       );
+      // A vault switch or a newer refresh may have completed while IDB was
+      // resolving. Never let an older snapshot replace the current vault.
+      if (
+        version !== this.loadVersion ||
+        this.vaultRegistry.activeVaultId !== vaultId
+      ) {
+        return;
+      }
       this.allJournals = journals.sort((a, b) => b.startedAt - a.startedAt);
       this.current =
         this.allJournals.find((j) => j.status === "active") ??
@@ -96,26 +109,44 @@ export class SessionJournalStore {
     }
   }
 
-  /** Re-reads one record fresh from IndexedDB — see the class doc's
-   *  Concurrency Guarantee note. */
-  private async readLatest(id: string): Promise<SessionJournal | undefined> {
-    const db = await getDB();
-    return db.get("session_journals", id);
-  }
-
-  private async write(journal: SessionJournal): Promise<void> {
-    const db = await getDB();
-    await db.put("session_journals", journal);
+  private async afterWrite(journal: SessionJournal): Promise<void> {
     await this.loadVault(journal.vaultId);
-
     // No typed `DurableVaultChange` variant exists for a journal edit, and a
     // write reported without one is treated as "could have touched anything"
     // — which conservatively requires the vault's *next* cloud backup push to
-    // be a full one rather than a delta (FR-016). This reuses the existing
-    // fallback deliberately, rather than adding a new delta-aware change
-    // kind: this slice's own scope (spec Assumption) is whole-journal
-    // inclusion in a full backup, not per-edit incremental sync.
+    // be a full one rather than a delta (FR-016).
     void updateLastInternalChange(journal.vaultId);
+  }
+
+  /**
+   * Read, merge, and write inside one readwrite transaction. Separate IDB
+   * get()/put() calls are insufficient: two tabs can otherwise read the same
+   * version and the later put silently erases the earlier tab's update.
+   */
+  private async mutateLatest(
+    id: string,
+    update: (latest: SessionJournal) => SessionJournal,
+  ): Promise<SessionJournal> {
+    const db = await getDB();
+    const tx = db.transaction("session_journals", "readwrite");
+    let journal: SessionJournal;
+    try {
+      const latest = await tx.store.get(id);
+      if (!latest) throw new Error("No active journal.");
+      journal = update(latest);
+      await tx.store.put(journal);
+      await tx.done;
+    } catch (error) {
+      try {
+        tx.abort();
+      } catch {
+        // The transaction may already have completed or aborted.
+      }
+      await tx.done.catch(() => undefined);
+      throw error;
+    }
+    await this.afterWrite(journal);
+    return journal;
   }
 
   /** FR-001, FR-013. Idempotent — returns the existing active journal if one
@@ -129,11 +160,25 @@ export class SessionJournalStore {
     const vaultId = this.vaultRegistry.activeVaultId;
     if (!vaultId) throw new Error("No vault is open.");
 
-    const latest = this.current
-      ? await this.readLatest(this.current.id)
-      : undefined;
-    const journal = startOrResumeJournal(latest, vaultId, this.ids, this.clock);
-    await this.write(journal);
+    const db = await getDB();
+    const tx = db.transaction("session_journals", "readwrite");
+    const journals = await tx.store.index("by-vault").getAll(vaultId);
+    const existing = journals.find((item) => item.status === "active");
+    const journal = startOrResumeJournal(
+      existing,
+      vaultId,
+      this.ids,
+      this.clock,
+    );
+    if (!existing) {
+      await tx.store.put(journal);
+    }
+    await tx.done;
+    if (!existing) {
+      await this.afterWrite(journal);
+    } else {
+      await this.loadVault(vaultId);
+    }
     this.openedInSession = true;
     return journal;
   }
@@ -151,52 +196,48 @@ export class SessionJournalStore {
    *  ended. `entry` omits `id`/`timestamp`; the engine assigns both. */
   async appendEntry(entry: JournalEntryInput): Promise<JournalEntry> {
     if (!this.current) throw new Error("No active journal.");
-    const latest = await this.readLatest(this.current.id);
-    if (!latest) throw new Error("No active journal.");
-
-    const result = engineAppendEntry(latest, entry, this.ids, this.clock);
-    if (!result.ok) throw new Error(result.error);
-
-    await this.write(result.journal);
-    return result.entry;
+    let created: JournalEntry | undefined;
+    await this.mutateLatest(this.current.id, (latest) => {
+      const result = engineAppendEntry(latest, entry, this.ids, this.clock);
+      if (!result.ok) throw new Error(result.error);
+      created = result.entry;
+      return result.journal;
+    });
+    return created!;
   }
 
   /** FR-004. Returns the created section. */
   async createSection(name: string): Promise<JournalSection> {
     if (!this.current) throw new Error("No active journal.");
-    const latest = await this.readLatest(this.current.id);
-    if (!latest) throw new Error("No active journal.");
-
-    const result = engineCreateSection(latest, name, this.ids);
-    if (!result.ok) throw new Error(result.error);
-
-    await this.write(result.journal);
-    return result.section;
+    let created: JournalSection | undefined;
+    await this.mutateLatest(this.current.id, (latest) => {
+      const result = engineCreateSection(latest, name, this.ids);
+      if (!result.ok) throw new Error(result.error);
+      created = result.section;
+      return result.journal;
+    });
+    return created!;
   }
 
   /** FR-005. Rejects (throws) for an empty/whitespace-only name; the
    *  section's prior name is unchanged on rejection. */
   async renameSection(sectionId: string, name: string): Promise<void> {
     if (!this.current) throw new Error("No active journal.");
-    const latest = await this.readLatest(this.current.id);
-    if (!latest) throw new Error("No active journal.");
-
-    const result = engineRenameSection(latest, sectionId, name);
-    if (!result.ok) throw new Error(result.error);
-
-    await this.write(result.journal);
+    await this.mutateLatest(this.current.id, (latest) => {
+      const result = engineRenameSection(latest, sectionId, name);
+      if (!result.ok) throw new Error(result.error);
+      return result.journal;
+    });
   }
 
   /** FR-007. Rejects (throws) if no journal is currently active. */
   async end(): Promise<void> {
     if (!this.current) throw new Error("No active journal.");
-    const latest = await this.readLatest(this.current.id);
-    if (!latest) throw new Error("No active journal.");
-
-    const result = engineEndJournal(latest, this.clock);
-    if (!result.ok) throw new Error(result.error);
-
-    await this.write(result.journal);
+    await this.mutateLatest(this.current.id, (latest) => {
+      const result = engineEndJournal(latest, this.clock);
+      if (!result.ok) throw new Error(result.error);
+      return result.journal;
+    });
   }
 
   /** Supports "browsable afterward" (spec Assumption) — every past journal

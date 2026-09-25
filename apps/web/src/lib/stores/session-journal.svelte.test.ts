@@ -1,4 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
+import { getDB } from "../utils/idb";
 
 // Mock Svelte 5 effects for the test environment before importing the store
 // (SessionJournalStore's constructor uses $effect.root, same as QuickNoteStore's
@@ -8,8 +9,49 @@ import { describe, it, expect, vi } from "vitest";
 
 vi.mock("../utils/idb", () => {
   const store = new Map<string, any>();
+  let transactionTail: Promise<void> = Promise.resolve();
   return {
     getDB: vi.fn().mockResolvedValue({
+      transaction: vi.fn(() => {
+        const previous = transactionTail;
+        let release!: () => void;
+        const done = new Promise<void>((resolve) => (release = resolve));
+        transactionTail = done;
+        let releaseScheduled = false;
+        const finishSoon = () => {
+          if (releaseScheduled) return;
+          releaseScheduled = true;
+          setTimeout(release, 0);
+        };
+        const ready = async () => previous;
+        const txStore = {
+          get: async (id: string) => {
+            await ready();
+            finishSoon();
+            return store.get(`session_journals_${id}`);
+          },
+          put: async (value: any) => {
+            await ready();
+            store.set(`session_journals_${value.id}`, value);
+            release();
+            return value.id;
+          },
+          index: () => ({
+            getAll: async (vaultId: string) => {
+              await ready();
+              finishSoon();
+              return [...store.values()].filter(
+                (value) => value.vaultId === vaultId,
+              );
+            },
+          }),
+        };
+        return {
+          store: txStore,
+          done,
+          abort: release,
+        };
+      }),
       get: vi.fn().mockImplementation(async (table: string, key: string) => {
         return store.get(`${table}_${key}`);
       }),
@@ -84,6 +126,61 @@ describe("SessionJournalStore — vault scoping (FR-012)", () => {
     await store.listJournals();
     expect(store.current).toBeUndefined();
   });
+
+  it("ignores an older vault load that finishes after a switch", async () => {
+    const registry = fakeVaultRegistry(null);
+    const store = new SessionJournalStore(
+      registry as any,
+      fakeIds(),
+      fakeClock(),
+    );
+    let finishOldLoad!: (journals: any[]) => void;
+    const db = await getDB();
+    const originalGetAll = vi
+      .mocked(db.getAllFromIndex)
+      .getMockImplementation()!;
+    vi.mocked(db.getAllFromIndex).mockImplementation(
+      async (_store, _index, vaultId) => {
+        if ((vaultId as unknown as string) === "vault-old") {
+          return new Promise((resolve) => (finishOldLoad = resolve)) as any;
+        }
+        return [
+          {
+            id: "new-journal",
+            vaultId: "vault-new",
+            title: "New vault",
+            status: "active",
+            startedAt: 2,
+            sections: [],
+            entries: [],
+          },
+        ] as any;
+      },
+    );
+
+    registry.activeVaultId = "vault-old";
+    const oldLoad = (store as any).loadVault("vault-old");
+    registry.activeVaultId = "vault-new";
+    await (store as any).loadVault("vault-new");
+    finishOldLoad([
+      {
+        id: "old-journal",
+        vaultId: "vault-old",
+        title: "Old vault",
+        status: "active",
+        startedAt: 1,
+        sections: [],
+        entries: [],
+      },
+    ]);
+    await oldLoad;
+
+    expect(store.current?.vaultId).toBe("vault-new");
+    expect(store.allJournals.map((journal) => journal.vaultId)).toEqual([
+      "vault-new",
+    ]);
+    vi.mocked(db.getAllFromIndex).mockImplementation(originalGetAll);
+  });
 });
 
 describe("SessionJournalStore.start()/appendEntry() (US1)", () => {
@@ -119,7 +216,39 @@ describe("SessionJournalStore.start()/appendEntry() (US1)", () => {
 });
 
 describe("SessionJournalStore — concurrency (FR-011, closes analysis finding F1)", () => {
-  it("does not lose either tab's entry when two store instances append without reloading each other", async () => {
+  it("keeps concurrent starts from creating two active journals", async () => {
+    const vaultId = "vault-start-concurrent";
+    const tabA = new SessionJournalStore(
+      fakeVaultRegistry(vaultId) as any,
+      fakeIds("start-a"),
+      fakeClock(),
+    );
+    const tabB = new SessionJournalStore(
+      fakeVaultRegistry(vaultId) as any,
+      fakeIds("start-b"),
+      fakeClock(),
+    );
+
+    const [journalA, journalB] = await Promise.all([
+      tabA.start(),
+      tabB.start(),
+    ]);
+    const verify = new SessionJournalStore(
+      fakeVaultRegistry(vaultId) as any,
+      fakeIds(),
+      fakeClock(),
+    );
+    await verify.listJournals();
+
+    expect(journalA.id).toBe(journalB.id);
+    expect(tabB.current?.id).toBe(journalA.id);
+    expect(tabB.controlState).toBe("open");
+    expect(
+      verify.allJournals.filter((journal) => journal.status === "active"),
+    ).toHaveLength(1);
+  });
+
+  it("does not lose either tab's entry when two writes overlap", async () => {
     const vaultId = "vault-concurrent";
     const setup = new SessionJournalStore(
       fakeVaultRegistry(vaultId) as any,
@@ -145,8 +274,10 @@ describe("SessionJournalStore — concurrency (FR-011, closes analysis finding F
 
     // Neither tab reloads the other's state before appending — appendEntry's
     // own readLatest() is what has to save this, not the caller.
-    await tabA.appendEntry({ type: "manual-note", content: "From tab A" });
-    await tabB.appendEntry({ type: "manual-note", content: "From tab B" });
+    await Promise.all([
+      tabA.appendEntry({ type: "manual-note", content: "From tab A" }),
+      tabB.appendEntry({ type: "manual-note", content: "From tab B" }),
+    ]);
 
     const verify = new SessionJournalStore(
       fakeVaultRegistry(vaultId) as any,
