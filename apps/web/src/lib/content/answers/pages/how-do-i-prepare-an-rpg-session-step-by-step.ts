@@ -7,21 +7,27 @@ export const howDoIPrepareAnRpgSessionStepByStep: AnswerConfigInput = {
   question: "How do I prepare an RPG session step by step?",
   kind: "how-to",
   shortAnswer:
-    "Prepare a situation rather than a script. Work out where play starts and what pressure is moving tonight, then prep the people who matter and what they want, the places the party is likely to visit, the information they need with more than one way to find it, and how the world reacts to success, failure or delay. Add a short reserve of names and complications, then put it all on one page you can read at the table. The plan should still work when the players choose a route you did not expect.",
+    "Prepare a situation rather than a script. Work out where play starts and what is changing tonight. Prepare the people who matter, places the players might visit and information they can act on; decide how the world reacts to success, failure or delay. Give critical information more than one route, keep a short reserve of names and complications, then put what you need on one page for the table. The plan should still work when the players choose a route you did not expect.",
   sections: [
     {
       kind: "prose",
       heading: "You do not need to write the whole session",
       paragraphs: [
         "Most newer GMs who get stuck here have already done the hard part. They have a hook, they can improvise a conversation, and they know the players will not follow a plan exactly. What they lack is a way to turn one hook into enough material for three or four hours without writing a story the players then have to walk through.",
-        "The answer is to prepare things that respond to the players instead of things that happen to them. People with goals, places with dangers and opportunities, information that can be found several ways, and a problem that gets worse if nobody deals with it. With those in hand, whatever the players try, you have something to say next.",
+        "The answer is to prepare things that respond to the players instead of things that happen to them. People with goals, places with dangers and opportunities, information that can be found several ways, and a situation that changes if nobody deals with it. With those in hand, whatever the players try, you have something to say next.",
+      ],
+    },
+    {
+      kind: "prose",
+      heading: "Nine prep steps in three phases",
+      paragraphs: [
+        "Treat this as a checklist, not a quota. Prep in proportion to uncertainty: spend time on what you do not yet know how to run, and skip or compress what is already clear from the campaign. A combat-heavy session may need stats and terrain but little clue prep; a court session may need people and motives but one location; a journey may need routes, hazards and discoveries instead. Use the steps to find gaps, then stop when you can answer the players' next meaningful question.",
+        "The steps are a prep order, not the order scenes will happen in during play:",
       ],
     },
     {
       kind: "list",
-      heading: "Nine prep steps, from hook to run sheet",
-      intro:
-        "Work through these in order when you prepare. They are prep steps, not the order scenes will happen in during play:",
+      heading: "Understand the situation",
       items: [
         {
           term: "Start from where play begins",
@@ -29,24 +35,36 @@ export const howDoIPrepareAnRpgSessionStepByStep: AnswerConfigInput = {
         },
         {
           term: "Define tonight's pressure",
-          text: "Name the problem, opportunity or threat that is moving whether or not the characters act. Pressure is what stops the session drifting when the players are unsure what to do.",
+          text: "Name what is changing whether or not the characters act. Pressure means motion, not necessarily danger or urgency: a threat getting worse, an opportunity closing, an NPC pursuing a goal, a journey changing, a social event approaching, or any situation that will evolve if nobody intervenes.",
         },
         {
           term: "Prep the important people",
-          text: "Three or four is usually plenty. For each, note what they want, what they know, what they fear and what they will do next if nobody stops them. Skip the life story.",
+          text: "Note what each important person wants, knows, fears and will do next if nobody stops them. The number depends on the session; skip the life story.",
         },
+      ],
+    },
+    {
+      kind: "list",
+      heading: "Prepare what the players can engage with",
+      items: [
         {
           term: "Prep likely places and obstacles",
-          text: "Pick the two or three places the party will probably go. Give each enough to play: what is there, who is there, what can go wrong, and one thing worth finding. Leave the full history out.",
+          text: "Choose the places that matter for this session. One may be enough; a journey may call for several. Give each enough to play: what is there, who is there, what can go wrong, and something worth finding. Leave the full history out.",
         },
         {
           term: "Prepare clues, information and opportunities",
-          text: "List what the players need to learn to make progress, and give each piece at least two or three ways to be found. If progress depends on one conversation or one roll, the session can stall on a bad result.",
+          text: "If the session cannot move without a fact, do not make it depend on one exact action or one successful roll. Give critical information multiple routes; incidental information can stay discoverable in one place.",
         },
         {
           term: "Sketch a few likely situations",
           text: "Write down things that could happen depending on what the players choose: an ambush if they take the road, a bargain if they visit the official, a fire if they wait. These are possibilities, not a scene order.",
         },
+      ],
+    },
+    {
+      kind: "list",
+      heading: "Prepare to react",
+      items: [
         {
           term: "Know how the world reacts",
           text: "For the main pressure, decide what follows if the players succeed, fail, delay, avoid it or try something you did not plan for. One line each is enough.",
@@ -84,7 +102,7 @@ export const howDoIPrepareAnRpgSessionStepByStep: AnswerConfigInput = {
         [
           "Clues",
           "One clue in one place, found one way",
-          "Each important fact can be found in two or three ways",
+          "Critical facts have multiple routes; incidental clues may have one",
         ],
         [
           "Encounters",
@@ -192,7 +210,7 @@ export const howDoIPrepareAnRpgSessionStepByStep: AnswerConfigInput = {
       kind: "list",
       heading: "The 30-minute version",
       intro:
-        "When time is short, run the same steps in small blocks. The timings are an example budget, not a rule; spend longer where your session needs it:",
+        "When time is short, run the same steps in small blocks. The timings are an example budget, not a rule; if one part is already clear, spend its five minutes where the session remains uncertain:",
       items: [
         {
           term: "Five minutes: situation and pressure",
@@ -200,15 +218,15 @@ export const howDoIPrepareAnRpgSessionStepByStep: AnswerConfigInput = {
         },
         {
           term: "Five minutes: important people",
-          text: "Three or four names, each with a want and a next move.",
+          text: "The people who matter, each with a want and a next move.",
         },
         {
           term: "Five minutes: places and challenges",
-          text: "Two or three likely locations, each with one danger and one thing worth finding.",
+          text: "The locations that matter, each with one challenge and one thing worth finding.",
         },
         {
           term: "Five minutes: clues and information",
-          text: "What the players need to learn, and at least two ways to learn each piece.",
+          text: "What the players need to learn, and multiple routes to any critical fact.",
         },
         {
           term: "Five minutes: complications and consequences",
@@ -224,18 +242,17 @@ export const howDoIPrepareAnRpgSessionStepByStep: AnswerConfigInput = {
       kind: "checklist",
       heading: "Reusable session-prep template",
       intro:
-        "Copy these questions into your notes and answer each one in a line or two before every session:",
+        "Use this compressed version of the steps above as a reference. Fill in what is uncertain:",
       items: [
-        "Where do we start?",
-        "What is happening now?",
-        "What gets worse if it is ignored?",
-        "Who matters tonight?",
-        "What does each of them want, and what will they do next?",
-        "Where might the characters go?",
-        "What useful information can they discover, and in how many ways?",
-        "What obstacles and complications are ready?",
-        "How might the world react to success, failure or delay?",
-        "What can I improvise from my short reserve list?",
+        "Start: where are we, and what demands attention?",
+        "Motion: what changes if nobody acts?",
+        "People: who matters, what do they want, and what will they do next?",
+        "Places: where might play go, and what is useful there?",
+        "Information: what must be learnable, and where?",
+        "Complications: what can change the situation?",
+        "Consequences: what follows success, failure or delay?",
+        "Reserve: what names, person or problem can I place anywhere?",
+        "Run sheet: what must be visible at the table?",
       ],
     },
   ],
