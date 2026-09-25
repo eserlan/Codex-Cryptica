@@ -92,6 +92,7 @@ export class SearchIndexPersistence {
     string,
     { handle: number; resolve: () => void }
   >();
+  private activeSaves = new Map<string, Promise<void>>();
 
   constructor(deps: SearchIndexPersistenceDeps) {
     this.db = deps.db;
@@ -247,6 +248,20 @@ export class SearchIndexPersistence {
     return false;
   }
 
+  cancelPendingSave(vaultId: string): void {
+    if (!vaultId) return;
+    const previousIdle = this.idleCallbacks.get(vaultId);
+    if (previousIdle !== undefined) {
+      if (typeof globalThis.cancelIdleCallback === "function") {
+        globalThis.cancelIdleCallback(previousIdle.handle);
+      }
+      previousIdle.resolve();
+      this.idleCallbacks.delete(vaultId);
+    }
+    const generation = (this.saveGenerations.get(vaultId) ?? 0) + 1;
+    this.saveGenerations.set(vaultId, generation);
+  }
+
   async saveIndex(vaultId: string): Promise<void> {
     const generation = (this.saveGenerations.get(vaultId) ?? 0) + 1;
     this.saveGenerations.set(vaultId, generation);
@@ -261,20 +276,40 @@ export class SearchIndexPersistence {
     }
 
     return new Promise<void>((resolve) => {
-      const run = () => {
+      const run = async () => {
         this.idleCallbacks.delete(vaultId);
         if (this.saveGenerations.get(vaultId) !== generation) {
           resolve();
           return;
         }
-        void this.persistIndex(vaultId, generation).finally(resolve);
+
+        const activeSave = this.activeSaves.get(vaultId);
+        if (activeSave) {
+          try {
+            await activeSave;
+          } catch {
+            // Ignore error from prior save; proceed with newest generation.
+          }
+          if (this.saveGenerations.get(vaultId) !== generation) {
+            resolve();
+            return;
+          }
+        }
+
+        const promise = this.persistIndex(vaultId, generation).finally(() => {
+          if (this.activeSaves.get(vaultId) === promise) {
+            this.activeSaves.delete(vaultId);
+          }
+          resolve();
+        });
+        this.activeSaves.set(vaultId, promise);
       };
 
       if (typeof globalThis.requestIdleCallback === "function") {
         const handle = globalThis.requestIdleCallback(run, { timeout: 1500 });
         this.idleCallbacks.set(vaultId, { handle, resolve });
       } else {
-        run();
+        void run();
       }
     });
   }
