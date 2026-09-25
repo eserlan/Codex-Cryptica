@@ -3,7 +3,8 @@
   import { graph } from "$lib/stores/graph.svelte";
   import { vault } from "$lib/stores/vault.svelte";
   import { categories } from "$lib/stores/categories.svelte";
-  import { getGraphStyles } from "graph-engine";
+  import { getGraphStyles, MAX_TRANSITION_ELEMENTS } from "graph-engine";
+  import { NodeHighlight } from "./graph/node-highlight";
 
   import { themeStore } from "$lib/stores/theme.svelte";
   import OrbitControls from "$lib/components/graph/OrbitControls.svelte";
@@ -166,6 +167,7 @@
       graph.timelineMode,
       graph.showLabels,
       graph.perfStylingActive,
+      graph.stats.nodeCount + graph.stats.edgeCount <= MAX_TRANSITION_ELEMENTS,
     ),
   );
 
@@ -361,6 +363,8 @@
     }
   }
 
+  const nodeHighlight = new NodeHighlight();
+
   // Selection & Search Focus
   $effect(() => {
     // Revalidate the root when graph membership changes, while a regular
@@ -399,9 +403,9 @@
           untrack(() => {
             centerOnNode(node, true, focusZoom);
 
-            // Stop animations and clear custom style bypasses on all nodes to prevent sticky/leaky highlight styles
-            currentCy.nodes().stop();
-            currentCy.nodes().removeStyle();
+            // Clear the previous pulse so highlight styles never stick.
+            nodeHighlight.clear(currentCy);
+            nodeHighlight.mark(currentSelectedId);
 
             // Capture original stylesheet values before running override animations
             const origPadding =
@@ -455,8 +459,7 @@
       } else {
         // No node is selected, clear any active node overrides and animations
         untrack(() => {
-          currentCy.nodes().stop();
-          currentCy.nodes().removeStyle();
+          nodeHighlight.clear(currentCy);
           currentCy.$("node:selected").unselect();
         });
         if (controller.pendingSearchFocus) {

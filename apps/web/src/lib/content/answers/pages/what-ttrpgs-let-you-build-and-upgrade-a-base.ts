@@ -227,14 +227,14 @@ export const whatTtrpgsLetYouBuildAndUpgradeABase: AnswerConfigInput = {
     ],
     acknowledgedOverlap: [
       {
-        with: "answer-base-upgrade-ideas",
-        reason:
-          "That page helps a GM design upgrade options in any system; this one helps a group choose a system whose rules already provide base upgrades.",
-      },
-      {
         with: "answer-make-player-base-matter",
         reason:
           "That page teaches the table technique for making any base matter in play; this one helps a group choose a system whose rules support developing a base over time.",
+      },
+      {
+        with: "answer-base-upgrade-ideas",
+        reason:
+          "That page helps GMs design upgrade options for any system; this one helps groups choose a system whose rules support base development.",
       },
       {
         with: "answer-system-selection",

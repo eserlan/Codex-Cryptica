@@ -175,10 +175,24 @@ function addNewElements(
  * equality for temporal metadata, arrays, coordinates and metadata objects),
  * then strips keys that no longer exist.
  */
+/**
+ * Data keys written after the transform by other graph components. A sync
+ * must neither strip them nor overwrite them: doing so on an unchanged graph
+ * emitted ~1,500 `data` events per re-sync (each dirtying a node's style and
+ * waking every data listener) only for the owner to put the value back.
+ */
+const RUNTIME_OWNED_KEYS = new Set([
+  // ImageManager
+  "resolvedImage",
+  "isSilhouette",
+  "appliedSilhouetteKey",
+]);
+
 function patchElementData(
   node: any,
   el: GraphNode | GraphEdge,
   isTemporalMetadataEqual: (a: any, b: any) => boolean,
+  renderedWeightsManaged: boolean,
 ) {
   const currentData = node.data();
   const newData = el.data as Record<string, any>;
@@ -192,6 +206,9 @@ function patchElementData(
     // This prevents nodes that were already placed by LayoutManager from
     // becoming invisible just because Svelte hasn't saved their coordinates yet.
     if (k === "isPendingLayout") continue;
+    // Rendered weights are recomputed after this pass; the transform's
+    // total-connection weight would only be written and then reverted.
+    if (k === "weight" && renderedWeightsManaged) continue;
 
     const newVal = newData[k];
     const curVal = currentData[k];
@@ -234,8 +251,9 @@ function patchElementData(
   // Remove keys that no longer exist in newData (e.g. isPendingLayout)
   for (const k in currentData) {
     if (k !== "id" && !Object.hasOwn(newData, k)) {
-      // Bugfix: Do not strip internal cytoscape properties managed by other components
-      if (k === "resolvedImage") continue;
+      // Do not strip properties managed by other components.
+      if (RUNTIME_OWNED_KEYS.has(k)) continue;
+      if (k === "weight" && renderedWeightsManaged) continue;
 
       node.removeData(k);
       // If the source image path is removed, clear the resolved image so ImageManager can clean up
@@ -355,7 +373,12 @@ function syncDataAndFilters(
     const node = elementMap.get(el.data.id);
     if (!node) return;
 
-    patchElementData(node, el, isTemporalMetadataEqual);
+    patchElementData(
+      node,
+      el,
+      isTemporalMetadataEqual,
+      !options.skipRenderedWeightSync,
+    );
     applyFilterClasses(node, el, ctx);
   });
 
