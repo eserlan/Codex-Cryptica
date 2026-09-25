@@ -99,6 +99,19 @@ if (!db.objectStoreNames.contains("session_journals")) {
 
 **Why one record per journal, not one per entry**: FR-011 requires surviving concurrent tabs "at the entry level" without losing an entire journal; a whole-journal document keeps writes simple (single `put`) at the cost of last-write-wins granularity being "whole journal" rather than "single entry" in the rare concurrent-tab case. This matches the spec's Assumption that concurrent-tab conflict resolution is intentionally out of scope for this slice, and mirrors how `canvases` and `dice_history` store whole small documents rather than field-level records. If a future slice needs finer-grained concurrent writes, splitting `entries` into their own keyed store (`[journalId, entryId]`) is a compatible follow-up, not a breaking change to this shape.
 
+## Cloud Backup Mapping (FR-016)
+
+When a vault has cloud backup enabled (existing, opt-in feature — see research.md), each `SessionJournal` record maps directly into the backup bundle, no transformation:
+
+```ts
+// packages/cloud-backup-sync bundle/delta shape, alongside existing maps/canvases:
+sessionJournals?: SessionJournal[]; // whole-array replace on change, same as maps/canvases
+```
+
+Restore is symmetric: a restored `SessionJournal[]` is written back via a new `importSessionJournals(vaultId, journals)` hook on `cloud-backup.svelte.ts`'s `restore` dependency, mirroring `importMaps`/`importCanvases` exactly — no field remapping, since the IndexedDB record shape and the backup bundle shape are the same `SessionJournal`.
+
+**Explicitly not included**: the player-facing/guest vault export (`GuestExporter`). A journal is GM-private; that export path exists to filter vault content _for players_, which a private journal has no place in (spec FR-016, Edge Cases).
+
 ## Package Boundary
 
 | Location                                            | Contents                                                                                                                                                                                                                       |

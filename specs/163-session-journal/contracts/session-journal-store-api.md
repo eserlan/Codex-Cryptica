@@ -52,8 +52,18 @@ class SessionJournalStore {
    *  for the active vault, newest first. Used by a simple history list, not
    *  required to be paginated in this slice. */
   async listJournals(): Promise<SessionJournal[]>;
+
+  /** FR-016. All journals for the active vault, active and ended alike — the
+   *  same records `listJournals()` resolves, exposed synchronously off
+   *  reactive state so `app-init.ts`'s `buildPayload` wiring can read it the
+   *  same way it reads `mapRegistry.allMaps`/`canvasRegistry.allCanvases`. */
+  readonly allJournals: SessionJournal[];
 }
 ```
+
+## Cloud backup wiring (FR-016)
+
+`allJournals` and `importSessionJournals` (a new hook on `cloud-backup.svelte.ts`'s existing `restore` dependency object, alongside `importMaps`/`importCanvases`) are the only two new surfaces cloud backup needs from this feature. See `data-model.md`'s Cloud Backup Mapping section and `research.md`'s corresponding Decision for the full wiring.
 
 ## Forward-compatibility note for #3408 (automatic capture)
 

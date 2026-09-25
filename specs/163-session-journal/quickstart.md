@@ -20,6 +20,8 @@
 
 **Story 3 — end and resume**: Add entries and a section, end the journal → reload the app → confirm the ended journal and its content are still present and read-only (no way to add further entries to it — FR-007). Separately: start a new journal, add entries, reload the app _without_ ending it → confirm the control reads "Resume Session Journal" and reopening shows every entry/section intact.
 
+**Story 4 — cloud backup survives**: With a vault that has cloud backup enabled and a journal containing entries and a section, trigger a backup, then restore that backup into a new vault (existing cloud-backup UI flow) → confirm the journal appears in the restored vault with every entry/section intact and in order. Separately, confirm the cloud backup consent screen's "What gets stored" copy now names session journals.
+
 ## Verifying the vault-scoping and single-active-journal invariants (FR-012, FR-013)
 
 - Switch vaults (if more than one exists locally) and confirm the journal control and any active journal do not follow you to the other vault — each vault sees only its own.

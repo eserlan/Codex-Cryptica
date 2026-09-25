@@ -55,6 +55,22 @@ At the end of a session, the GM ends the journal. Later — before or during the
 3. **Given** an active journal that was never explicitly ended (e.g. the user closed the tab mid-session), **When** the user returns to Quicknote/Scratchpad, **Then** they see "Resume Session Journal" and reopening it shows every entry and section exactly as left.
 4. **Given** an ended journal, **When** the user starts a new session journal, **Then** a new, separate journal is created and the ended journal's content is untouched.
 
+---
+
+### User Story 4 - Keep the journal when moving to a new device or restoring a cloud backup (Priority: P2)
+
+A GM who uses cloud backup (an existing, opt-in feature of this app) switches devices, or restores their vault from a cloud backup, and expects their session journals to come back along with their entities, maps, and canvases — not to have silently vanished.
+
+**Why this priority**: Journals are a session record a GM may reasonably want to keep as long as any other vault content. Losing them silently on a restore would contradict FR-008's promise that ending a journal "MUST NOT delete or hide" it — an omission from backup has the same user-visible effect as deletion. This is P2, not P1, because it depends on the user already having cloud backup enabled (itself opt-in and not universal), and the core journaling flow (Stories 1-3) delivers full value with purely local persistence.
+
+**Independent Test**: Can be fully tested by enabling cloud backup on a vault with a journal that has entries and sections, triggering a backup, restoring that backup into a new vault, and confirming the journal (with its entries and sections intact) is present in the restored vault.
+
+**Acceptance Scenarios**:
+
+1. **Given** cloud backup is enabled for a vault with an active or ended journal, **When** a backup is taken, **Then** the journal's full content (sections and entries) is included in what gets backed up.
+2. **Given** a cloud backup that includes a journal, **When** the user restores that backup into a new vault, **Then** the journal appears in the restored vault with every entry and section intact, in the same order.
+3. **Given** the cloud backup consent screen, **When** the user reads what gets stored, **Then** session journals are named alongside entities, maps, and canvases — the user is never backing up more than they were told.
+
 ### Edge Cases
 
 - What happens when the user tries to add a note but no journal has ever been started for the vault? The control must offer "Start Session Journal" rather than exposing a note field with nothing to attach it to.
@@ -62,6 +78,7 @@ At the end of a session, the GM ends the journal. Later — before or during the
 - What happens when the vault has more than one past (ended) journal? All of them remain individually accessible; none are overwritten or merged.
 - What happens when the user tries to end a journal that has zero entries? Ending is still allowed — an empty session is a valid (if unusual) outcome and must not be blocked.
 - What happens when two browser tabs have the same vault open and both try to add to the same active journal? The later write must not silently discard the earlier one (see FR-011).
+- What happens to a journal when the GM shares a player-facing/guest view of the vault? Nothing — a journal is the GM's own record and MUST NOT appear in a guest or player-facing export, only in the GM's own cloud backup (see FR-016).
 
 ## Requirements _(mandatory)_
 
@@ -82,6 +99,8 @@ At the end of a session, the GM ends the journal. Later — before or during the
 - **FR-013**: System MUST allow at most one active (non-ended) journal per vault at a time; starting a session while one is already active MUST open/resume that existing journal rather than creating a second, concurrent one.
 - **FR-014**: System MUST record, for each entry, at minimum a unique identifier, a timestamp, an entry type, and its content, so that later slices (automatic capture, promote-to-entity) can add new entry types and source references without a data migration.
 - **FR-015**: System MUST visually and conceptually distinguish the Session Journal from Quicknote/Scratchpad's existing transient notes — a user must never mistake one for the other, and using the journal must not alter or remove the existing Quicknote/Scratchpad note-taking behavior.
+- **FR-016**: When cloud backup is enabled for a vault (an existing, separately opt-in feature), the system MUST include that vault's session journals — full content, not a summary — in what gets backed up and in what a restore brings back, and MUST update the cloud backup consent screen to name session journals among what is stored, per this app's existing privacy-consent requirements. Session journals MUST NOT be included in a player-facing or guest vault export/share, which is a separate, filtered surface than the GM's own cloud backup.
+- **FR-017**: System MUST NOT require cloud backup to be enabled for any of FR-001–FR-015 to work — a journal is fully usable, and durable across reloads, with cloud backup off (FR-016 only adds cross-device/cloud durability on top).
 
 ### Key Entities
 
@@ -98,6 +117,7 @@ At the end of a session, the GM ends the journal. Later — before or during the
 - **SC-003**: A user can distinguish, without hesitation, which control (Quicknote/Scratchpad vs. Session Journal) they are looking at and what each is for, in an unmoderated first-use check.
 - **SC-004**: Ending a session and starting a new one never mixes content between the two — 0% cross-contamination of entries between a closed journal and its successor in testing.
 - **SC-005**: A GM running a multi-hour session can add entries throughout without the journal's presence measurably slowing down any other part of the app they are using at the same time.
+- **SC-006**: For a vault with cloud backup enabled, 100% of a journal's entries and sections are present and in the same order after a restore into a new vault, matching SC-002's local-reload guarantee.
 
 ## Assumptions
 
@@ -106,3 +126,5 @@ At the end of a session, the GM ends the journal. Later — before or during the
 - No delete capability is included in this slice — the source request describes preserving journals, not removing them; deletion (if ever wanted) is a candidate for a future slice.
 - "Vault/campaign context" scopes a journal to a vault, matching how Quicknote/Scratchpad and other vault-local data already work in this app; nothing in the source request suggests a journal should span multiple vaults or be campaign-scoped independent of the vault.
 - Concurrent-tab writes are expected to be rare and low-stakes for a single-user local app; last-write-wins at the individual entry level (FR-011) is an acceptable, simple guarantee rather than building conflict resolution for this slice.
+- Cloud backup inclusion (FR-016) covers the GM's own personal cloud backup/restore only, whole-journal (not per-entry incremental sync) — matching how maps and canvases are already backed up. Per-entry incremental backup uploads, if ever wanted, are a candidate for a future slice, not required here.
+- Session journals are explicitly excluded from any player-facing or guest/shared vault export — the source request frames the journal as the GM's private record ("This is very much like how the Scratchpad works now"), and the app's existing guest-export path already filters vault content by player visibility, which a private GM journal has no meaningful value for.

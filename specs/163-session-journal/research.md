@@ -46,6 +46,23 @@
 
 - Component-driven-only API (e.g. accepting a Svelte event) — rejected, would need a breaking change in slice 3.
 
+## Decision: Cloud backup inclusion reuses the existing bundle/restore extension points, whole-journal
+
+**Decision**: Session journals are included in the existing cloud backup feature by extending its established extension points, not a new mechanism:
+
+- `packages/cloud-backup-sync`'s bundle/delta type gains an optional `sessionJournals?: unknown[]` field, alongside the existing `maps?`/`canvases?` fields (whole-array replace on change, same "present only when changed" delta semantics).
+- `apps/web/src/lib/app/init/app-init.ts`'s `buildPayload` wiring gathers `sessionJournalStore.allJournals` into that field, next to the existing `mapRegistry.allMaps`/`canvasRegistry.allCanvases` lines.
+- `apps/web/src/lib/stores/cloud-backup.svelte.ts`'s `restoreIntoNewVault` gains an `importSessionJournals` optional dependency hook, called the same way `importMaps`/`importCanvases` already are.
+- `CloudBackupSettings.svelte`'s consent copy ("What gets stored: ... your entities, labels, notes, maps, canvases and the images...") is updated to name session journals.
+
+**Rationale**: This is the smallest possible change that satisfies FR-016 — every one of these files already has the exact seam this feature needs (an optional bundle field, an optional restore-import hook, a wiring line, a copy string), because maps and canvases established the pattern first. No new sync mechanism, no new consent flow, and — per Constitution V — no new invocation of the Narrow Exception, since cloud backup is already an established, compliant, opt-in feature this slice extends rather than a new remote-storage decision of its own.
+
+**Alternatives considered**:
+
+- A separate, journal-specific backup/sync path — rejected; would duplicate the entire consent/enable/disable/restore machinery for no benefit, and would risk a user having "cloud backup on" for their vault but not realizing journals follow a different on/off switch.
+- Per-entry incremental backup (rather than whole-journal replace-on-change) — rejected for this slice as unnecessary complexity; matches maps/canvases' existing whole-replace granularity, and the spec's own Assumption already accepts a coarser guarantee for the _local_ concurrent-tab case (FR-011), so a coarser cloud-sync granularity here is consistent, not a downgrade.
+- Including journals in the guest/player-facing vault export (for parity with entities/maps/canvases in `GuestExporter`) — rejected; a session journal is the GM's private record, not vault content a player should ever receive, and `GuestExporter`'s whole purpose is filtering vault content _for_ players. This is a deliberate exclusion, not an oversight (spec FR-016, Edge Cases).
+
 ## Decision: Testing — mock `idb.ts`'s `getDB()`, no `fake-indexeddb`
 
 **Decision**: Unit tests for `session-journal.svelte.ts` mock `getDB()` from `../utils/idb` with an in-memory `Map`-backed fake (`get`/`put`/`delete`), following `calendar.test.ts`'s pattern exactly. Pure logic in `session-journal-engine` is tested with plain Vitest, no mocking needed at all.
