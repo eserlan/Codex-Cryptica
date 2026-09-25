@@ -160,6 +160,7 @@ export const howDoIOrganiseGmNotesForInPersonPlay: AnswerConfigInput = {
     "how-do-you-keep-track-of-npcs-in-a-long-campaign",
     "how-do-you-recap-a-ttrpg-session",
     "how-do-i-start-gming-for-the-first-time",
+    "how-do-i-prepare-an-rpg-session-step-by-step",
   ],
   discovery: {
     id: "answer-in-person-gm-notes",
@@ -183,6 +184,11 @@ export const howDoIOrganiseGmNotesForInPersonPlay: AnswerConfigInput = {
       "answer-campaign-manager-criteria",
     ],
     acknowledgedOverlap: [
+      {
+        with: "answer-prepare-session-step-by-step",
+        reason:
+          "That page covers what to prepare before a session; this one covers how to organise notes and reference material at the table.",
+      },
       {
         with: "answer-campaign-notes",
         reason:
