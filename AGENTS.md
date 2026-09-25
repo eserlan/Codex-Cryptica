@@ -74,11 +74,14 @@ This file is the Codex-facing instruction layer for this repository.
 <!-- SPECKIT START -->
 
 For additional context about technologies to be used, project structure,
-shell commands, and other important information, read the [current plan](./specs/2815-smart-copy/plan.md).
+shell commands, and other important information, read the [current plan](./specs/163-session-journal/plan.md).
 
 <!-- SPECKIT END -->
 
 ## Active Technologies
+
+- TypeScript 6.0.3, Svelte 5 Runes, SvelteKit 2, Bun 1.3.14 + Existing `idb` (via `apps/web/src/lib/utils/idb.ts`), existing `vault-registry.svelte.ts`; new internal workspace package `packages/session-journal-engine` (framework-free); no new third-party dependency (163-session-journal)
+- Browser-local IndexedDB via the shared `CodexDB` schema (new `session_journals` object store, `by-vault` index) — not a new database, not Dexie (163-session-journal)
 
 - TypeScript 6.0.3, Svelte 5.55.9 Runes, SvelteKit 2.60.1, Bun 1.3.14 + Existing browser Clipboard API, `marked` 18.0.4, `dompurify` 3.4.2, existing generator document-layout helpers; no new dependency (2815-smart-copy)
 - N/A — clipboard payloads are transient and browser-local (2815-smart-copy)
@@ -136,6 +139,7 @@ shell commands, and other important information, read the [current plan](./specs
 
 ## Recent Changes
 
+- 163-session-journal: Added TypeScript 6.0.3, Svelte 5 Runes, SvelteKit 2, Bun 1.3.14 + Existing `idb`, `vault-registry.svelte.ts`; new `packages/session-journal-engine`; no new third-party dependency
 - 116-scroll-wheel-date-picker: Added TypeScript 6.0.3, Svelte 5 runes, Bun 1.3.14 workspace + `chronology-engine`, `schema`, Svelte 5, Floating UI, IndexedDB `idb`, existing Tailwind 4 theme tokens
 - 118-graph-important-label: Added TypeScript 6.0.3, Svelte 5 runes, Bun 1.3.14 workspace + Svelte 5, Cytoscape, `graph-engine`, `schema`, existing vault/entity stores, existing Tailwind 4 theme tokens
 
