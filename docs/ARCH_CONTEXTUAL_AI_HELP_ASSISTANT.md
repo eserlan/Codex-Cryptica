@@ -121,22 +121,20 @@ Example:
 
 ```json
 {
-  "route": "/vault/entities/abc123",
+  "route": "/vault/entities/:entityId",
   "area": "entity-editor",
   "entityType": "settlement",
-  "entityId": "abc123",
   "selectedTab": "connections",
   "mode": "edit",
   "vaultEnabled": true,
-  "availableActions": [
-    "add-connection",
-    "open-graph",
-    "create-related-entity"
-  ]
+  "availableActions": ["add-connection", "open-graph", "create-related-entity"]
 }
 ```
 
 This must be a deliberate help context, not a dump of application state.
+Entity identifiers stay in the browser; send a route template rather than a
+route containing a user's identifier. The help flow does not need the actual
+entity ID to explain the current screen or validate a UI action.
 
 #### Context may include
 
@@ -158,6 +156,7 @@ This must be a deliberate help context, not a dump of application state.
 - the entire vault;
 - arbitrary entity text;
 - large state objects;
+- vault, entity, or other stable user-specific identifiers;
 - secrets or credentials;
 - information unrelated to the help question.
 
@@ -618,10 +617,7 @@ Example:
 ```json
 {
   "goal": "Create a faction connected to my settlement",
-  "recentSteps": [
-    "User generated a faction",
-    "User saved faction to vault"
-  ]
+  "recentSteps": ["User generated a faction", "User saved faction to vault"]
 }
 ```
 
