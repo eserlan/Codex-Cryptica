@@ -108,7 +108,7 @@ export const howDoIWriteAGoodCallOfCthulhuOneShot: AnswerConfigInput = {
       intro:
         "Review your scenario notes before starting the session to ensure structural resilience:",
       items: [
-        "Can you summarize the mystery's underlying truth in three sentences?",
+        "Can you summarise the mystery's underlying truth in three sentences?",
         "Do investigators begin the session with an immediate lead rather than searching for a reason to care?",
         "Are there at least three distinct paths or clue types leading to every necessary location?",
         "Does every clue suggest an action, reveal a danger, or force a choice?",
