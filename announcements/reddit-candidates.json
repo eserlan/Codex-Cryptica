@@ -1,5 +1,5 @@
 {
-  "updated_at": 1790296776,
+  "updated_at": 1790325820,
   "candidates": [
     {
       "id": "reddit-35104395212-i-put-every-superhero-generator-in-one-p",
@@ -130,6 +130,16 @@
       "source_id": "36067410949",
       "status": "approved",
       "created_at": 1790296776
+    },
+    {
+      "id": "reddit-36108378604-making-a-player-base-worth-coming-home-t",
+      "title": "Making a player base worth coming home to",
+      "body": "We cleared the ruined tower, handed the party the keys, and watched it fade into the background. It healed them, held their gear, and the real game was always somewhere else.\n\nI wanted a base that keeps pulling the group back without turning into upkeep homework, so I built a new Answer guide that treats a keep, headquarters or ship as jobs, people and consequences instead of scenery.\n\nGuide is here: https://codexcryptica.com/answers/how-do-i-make-a-player-base-matter-in-an-rpg-campaign\n\nWhat it covers:\n- picking three useful jobs for the base from seven options like recovery, storage, research, information and refuge, so coming home is a choice\n- stocking it with people who want something \u2014 stewards, dependants, suppliers and factions with a stake \u2014 rather than just adding rooms\n- using upgrades that open new decisions instead of bonuses, like a gatehouse that holds a crossing but also makes you a target\n- keeping it vulnerable without punishing investment, with threats that bargain or create work instead of wiping the map\n- three worked examples (fantasy stronghold on a river crossing, harbour crew headquarters, battered freighter as mobile base) and a short checklist to sketch the next one\n\nI kept it system-neutral and light on numbers, which means you will still need to tune costs and timelines to your own economy. I am not sure yet where that line sits for very long campaigns.\n\nWhat base has actually stuck at your table, and what did the players have to give up to keep it?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/announcements/release-36108378604-0.png)",
+      "url": "https://codexcryptica.com/answers/how-do-i-make-a-player-base-matter-in-an-rpg-campaign",
+      "image_url": "https://assets.codexcryptica.com/announcements/release-36108378604-0.png",
+      "source_id": "36108378604",
+      "status": "approved",
+      "created_at": 1790325820
     }
   ]
 }
