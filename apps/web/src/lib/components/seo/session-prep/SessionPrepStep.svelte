@@ -54,18 +54,18 @@
     <div>
       <h3
         id={headingId}
-        class="text-xs font-bold uppercase tracking-wider text-theme-text"
+        class="text-sm font-bold uppercase tracking-wider text-theme-text"
       >
         <span class="text-theme-primary">{number}.</span>
         {title}
       </h3>
-      <p class="mt-0.5 text-[11px] leading-snug text-theme-muted">{hint}</p>
+      <p class="mt-0.5 text-sm leading-snug text-theme-muted">{hint}</p>
     </div>
     <button
       type="button"
       onclick={onSuggest}
       disabled={aiDisabled}
-      class="flex shrink-0 items-center gap-1 rounded-lg border border-theme-primary/40 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-theme-primary transition hover:bg-theme-primary/10 disabled:cursor-not-allowed disabled:opacity-50"
+      class="flex shrink-0 items-center gap-1 rounded-lg border border-theme-primary/40 px-2.5 py-1.5 text-xs font-bold uppercase tracking-wider text-theme-primary transition hover:bg-theme-primary/10 disabled:cursor-not-allowed disabled:opacity-50"
       aria-label={`Suggest options for ${title} with AI`}
       title="Suggest options with AI"
     >
@@ -82,16 +82,16 @@
   {@render children()}
 
   {#if error}
-    <p role="alert" class="text-[11px] text-theme-danger">{error}</p>
+    <p role="alert" class="text-sm text-theme-danger">{error}</p>
   {/if}
 
   {#if suggestion && suggestion.options.length > 0}
     <div
-      class="space-y-1.5 rounded-lg border border-theme-primary/30 bg-theme-primary/5 p-2"
+      class="space-y-1.5 rounded-lg border border-theme-primary/30 bg-theme-primary/5 p-2.5"
     >
       <div class="flex items-center justify-between">
         <p
-          class="text-[10px] font-bold uppercase tracking-wider text-theme-primary"
+          class="text-xs font-bold uppercase tracking-wider text-theme-primary"
         >
           AI options: pick any that fit
         </p>
@@ -108,14 +108,14 @@
       <ul class="space-y-1.5">
         {#each suggestion.options as _option, index (index)}
           <li class="flex items-start gap-2">
-            <p class="flex-1 text-xs leading-snug text-theme-text">
+            <p class="flex-1 text-sm leading-snug text-theme-text">
               {describeSuggestionOption(suggestion, index)}
             </p>
             <button
               type="button"
               onclick={() => onAccept(index)}
               disabled={acceptDisabled}
-              class="shrink-0 rounded-md bg-theme-primary px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-theme-bg transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
+              class="shrink-0 rounded-md bg-theme-primary px-2.5 py-1 text-xs font-bold uppercase tracking-wider text-theme-bg transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {acceptLabel}
             </button>

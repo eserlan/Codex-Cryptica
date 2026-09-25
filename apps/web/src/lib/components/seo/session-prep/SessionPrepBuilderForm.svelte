@@ -138,7 +138,7 @@
   <div class="space-y-2">
     <label
       for="prep-seed"
-      class="block text-[10px] font-bold uppercase tracking-wider text-theme-muted"
+      class="block text-xs font-bold uppercase tracking-wider text-theme-muted"
     >
       What is tonight about?
     </label>
@@ -152,16 +152,16 @@
       class="{prepFieldClass} resize-y text-sm leading-relaxed"
       aria-describedby="prep-seed-hint"
     ></textarea>
-    <p id="prep-seed-hint" class="text-[10px] text-theme-muted">
+    <p id="prep-seed-hint" class="text-xs leading-snug text-theme-muted">
       A hook, last session's fallout, or where the campaign stands now. Fill in
       any steps you already know; AI can draft the rest.
     </p>
   </div>
 
   <div
-    class="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-theme-primary/30 bg-theme-primary/10 p-2.5"
+    class="flex flex-wrap items-center justify-between gap-2.5 rounded-xl border border-theme-primary/30 bg-theme-primary/10 p-3"
   >
-    <p class="text-[11px] leading-snug text-theme-text">
+    <p class="text-sm leading-snug text-theme-text">
       {#if emptyCount > 0}
         {emptyCount} of 8 steps are empty. AI fills only those and leaves what you
         wrote alone.
@@ -174,7 +174,7 @@
       type="button"
       onclick={draftEmptySteps}
       disabled={aiDisabled || emptyCount === 0}
-      class="flex items-center gap-1.5 rounded-lg bg-theme-primary px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-theme-bg transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
+      class="flex items-center gap-1.5 rounded-lg bg-theme-primary px-3.5 py-2 text-xs font-bold uppercase tracking-wider text-theme-bg transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
     >
       <span
         class={aiTask === "draft"
@@ -185,12 +185,12 @@
       {aiTask === "draft" ? "Drafting…" : "Draft empty steps"}
     </button>
     {#if errors.draft}
-      <p role="alert" class="w-full text-[11px] text-theme-danger">
+      <p role="alert" class="w-full text-sm text-theme-danger">
         {errors.draft}
       </p>
     {/if}
     {#if !online}
-      <p class="w-full text-[11px] text-theme-muted">
+      <p class="w-full text-sm text-theme-muted">
         You are offline. You can still fill the steps and build the run sheet
         yourself.
       </p>
