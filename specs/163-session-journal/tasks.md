@@ -1,5 +1,5 @@
 ---
-description: "Task list for Session Journal (data model, persistence & lifecycle)"
+description: "Task list for Session Journal (slice 1: data model, persistence & lifecycle; slice 2: global access point)"
 ---
 
 # Tasks: Session Journal (data model, persistence & lifecycle)
@@ -10,6 +10,8 @@ description: "Task list for Session Journal (data model, persistence & lifecycle
 **Tests**: Included as first-class tasks — this repo's Constitution (Principle II, TDD) and AGENTS.md ("Do not commit implementation changes without tests for the affected behavior... cover both the expected success path and at least one meaningful negative, cancellation, or failure path") require them, not an optional add-on.
 
 **Organization**: Tasks are grouped by user story (spec.md) to enable independent implementation and testing of each story.
+
+**Slice 2 note**: Phases 8–9 (T041–T057) add User Story 5 / slice 2 (#3407) on this same branch. Phases 1–7 are slice 1 and are complete.
 
 **Revision note**: This version incorporates `/speckit-analyze`'s findings — F1 (FR-011's cross-tab guarantee needed a read-merge-write discipline the original draft's storage shape alone didn't provide), E1 (the `open()` method and its UI wiring had no owning task), E2 (no task verified Constitution X's coverage goal), and E3 (FR-006's "sections are optional" had no explicit assertion). See T012, T014, T018, T037 below and `data-model.md`/`contracts/session-journal-store-api.md`'s updated Concurrency Guarantee sections.
 
@@ -157,6 +159,50 @@ Per plan.md's Project Structure: a new pure-logic package `packages/session-jour
 
 ---
 
+## Phase 8: User Story 5 - Reach the journal from anywhere in the app during play (Priority: P1) — Slice 2, #3407
+
+**Goal**: A Session Journal control in the app's shared tool chrome shows the FR-010 state and opens the scratchpad panel straight onto its Journal tab from any in-app view.
+
+**Independent Test**: Start a journal, navigate to several views, and from each select the global control; confirm the live, editable journal opens on the Journal tab each time (quickstart.md's Story 5 verification).
+
+**Prerequisite**: Phases 1–6 complete (this branch already has them). No dependency on Phase 7's gates re-running first, but Phase 9 re-runs them for the new changes.
+
+### Tests for User Story 5 ⚠️
+
+> Write these first and confirm they fail before the implementation tasks.
+
+- [x] T041 [P] [US5] Unit test the new tab state in `apps/web/src/lib/stores/quicknote.svelte.test.ts`: success — `openJournal()` from closed opens the panel with `activeTab === "journal"`; `openJournal()` while open on Notes switches the tab without closing; calling it twice leaves the panel open (idempotent, FR-020); `close()` then a plain `open()`/`toggle()` keeps `activeTab === "journal"` (FR-022); negative — `openJournal()` does not create or select a note (`currentNote` stays `null` and `activeNotes` is unchanged, `startNewNote` not called; FR-020/FR-023); `open(note)` for a specific note sets `activeTab === "notes"` even when the panel was last left on Journal; plain `open()` from a fresh state still auto-selects/creates a note exactly as before (FR-023)
+- [x] T042 [P] [US5] Unit test the new item in `apps/web/src/lib/components/layout/nav-items.test.ts`: success — a `session-journal` tool item exists outside guest mode, and its label is "Start Session Journal" / "Open Session Journal" / "Resume Session Journal" for each `controlState` (FR-018, FR-019); its action calls `quickNoteStore.openJournal()`; in the `resume` state the action also calls `sessionJournalStore.open()`; `isToolActive` is true only while the panel is open on the Journal tab; negative — the item is absent in guest mode; in the `start` state the action does **not** call `sessionJournalStore.start()` and no journal is created (FR-021); in the `open` state the action does not call `open()` again
+- [x] T043 [P] [US5] Component tests for the indicator in `apps/web/src/lib/components/layout/ActivityBar.test.ts` and `MobileMenu.test.ts`: success — an indicator with accessible state text renders for the journal item when `controlState` is `open` or `resume`; negative — no indicator in the `start` state, and none at all in guest mode where the item is absent
+- [x] T044 [P] [US5] Component test in a new `apps/web/src/lib/components/quicknote/QuickNoteScratchpad.test.ts` (no test file exists for this component yet): success — the panel renders the Journal view when `quickNoteStore.activeTab === "journal"`, and clicking a tab button updates the store's `activeTab`; negative/regression — the Notes tab still renders and behaves as before (FR-023)
+- [x] T045 [P] [US5] Store test in `apps/web/src/lib/stores/session-journal.svelte.test.ts`: success — after a vault switch, `controlState` reflects the new vault's journal (FR-022); negative — a vault with no journal reports `"start"` even when the previous vault had an active one
+
+### Implementation for User Story 5
+
+- [x] T046 [US5] Add `activeTab = $state<"notes" | "journal">("notes")` and `openJournal()` to `QuickNoteStore` in `apps/web/src/lib/stores/quicknote.svelte.ts`. `openJournal()` sets `isOpen = true` and `activeTab = "journal"` directly and must **not** call `open()` (which auto-selects/creates a note, `quicknote.svelte.ts:107-118`). Make `open(note)` with a note set the tab to `"notes"`, and leave plain `open()`/`toggle()`/`close()` tab-preserving (makes T041 pass; contract: contracts/session-journal-store-api.md "Panel host API")
+- [x] T047 [US5] In `apps/web/src/lib/components/quicknote/QuickNoteScratchpad.svelte`, replace the local `activeTab` `$state` with `quickNoteStore.activeTab`, keeping the existing tab buttons and the FR-015 comment (depends on T046; makes T044 pass)
+- [x] T048 [US5] In `apps/web/src/lib/components/layout/nav-items.ts`, add the `session-journal` tool item: `icon-[lucide--book-open]`, `group: "tool"`, `placement: "overflow"`, only when `!sessionModeStore.isGuestMode`, label/title derived from `sessionJournalStore.controlState`, action per the contract's "Global control wiring"; add the `isToolActive` special case (depends on T046; makes T042 pass)
+- [x] T049 [US5] Add the active-journal indicator to `apps/web/src/lib/components/layout/ActivityBar.svelte` and `MobileMenu.svelte`, mirroring the existing `quicknote` count badge: shown when `tool.id === "session-journal"` and `sessionJournalStore.controlState !== "start"`, with the state carried in the accessible label, not colour alone (depends on T048; makes T043 pass)
+- [x] T050 [P] [US5] Update the copy for the new entry point, in plain language (Constitution VII, IX): (a) the `session-journal` entry in `apps/web/src/lib/config/help-content.ts` (~line 764), whose text currently says to "Start a Session Journal from the Quicknote panel" and is stale once the toolbar control exists; the `FeatureHint hintId="session-journal"` in `SessionJournalView.svelte` reads from this same entry, so it is fixed by the same edit; (b) `apps/web/src/lib/content/help/quicknote.md`, which does not mention the journal yet — add a short pointer to the Session Journal control and its Start/Open/Resume states
+
+**Checkpoint**: User Story 5 is complete — the journal is reachable in one action from any in-app view, and slice 2's scope (#3407) is done.
+
+---
+
+## Phase 9: Slice 2 Polish & Cross-Cutting Concerns
+
+**Purpose**: The repo gates AGENTS.md requires before pushing slice 2, plus the manual pass.
+
+- [x] T051 [P] Run `bun run lint:changed` (or `bun scripts/lint-changed.mjs`) and fix any findings in the files touched by T041–T050
+- [x] T052 [P] Run `bunx svelte-check --tsconfig ./tsconfig.json --threshold error` inside `apps/web` and fix any errors
+- [x] T053 Run `bun run test:changed` (or `bun scripts/test-changed.mjs`) and confirm T041–T045 pass together with the slice 1 tests, not just in isolation
+- [ ] T054 Manually walk through quickstart.md's Story 5 verification in a running app (desktop and phone-width, guest mode, vault switch, reload → Resume). This is also where FR-022's route-navigation survival is verified — jsdom cannot route — so navigate the journal control between at least two different routes with the panel closed and reopened, and confirm journal content, control state and last-selected tab are unchanged. Unit tests cannot show that the control is reachable and correctly stacked against the panel overlay
+- [x] T055 Run `bunx fallow audit --format json --quiet --explain --gate-marker agent --base staging` and resolve any introduced findings before pushing
+- [x] T056 Run the `codex-review` specialist review on the slice 2 changes (AGENTS.md PR Quality Gate) and address findings
+- [ ] T057 Update PR #3422's description, and check off #3407's acceptance criteria once verified, so the issue and PR match what shipped
+
+---
+
 ## Dependencies & Execution Order
 
 ### Phase Dependencies
@@ -168,6 +214,8 @@ Per plan.md's Project Structure: a new pure-logic package `packages/session-jour
 - **User Story 3 (Phase 5)**: Same shape — extends the same store/view files US1 and US2 already created.
 - **User Story 4 (Phase 6)**: Depends on Foundational's types (T003) and US1's store shape (T014); otherwise touches an entirely different part of the codebase (`packages/cloud-backup-sync`, `cloud-backup.svelte.ts`, `app-init.ts`, `CloudBackupSettings.svelte`) and has no file overlap with US2/US3.
 - **Polish (Phase 7)**: Depends on every user story phase being complete.
+- **User Story 5 (Phase 8, slice 2)**: Depends on US1's `SessionJournalStore`/`SessionJournalView` and US3's `open()`/`controlState` (all already built). Touches `quicknote.svelte.ts`, `QuickNoteScratchpad.svelte`, `nav-items.ts`, `ActivityBar.svelte`, `MobileMenu.svelte` and help content, with no file overlap with US2, US3 or US4. Inside the phase: T046 → T047/T048 → T049.
+- **Slice 2 Polish (Phase 9)**: Depends on Phase 8.
 
 ### Parallel Opportunities
 
@@ -175,6 +223,7 @@ Per plan.md's Project Structure: a new pure-logic package `packages/session-jour
 - Within each user story's Tests block, every `[P]`-marked task touches a different file and can run in parallel — but all of them must be written and failing before that story's Implementation tasks begin.
 - US4 (Phase 6) has no file overlap with US2 or US3 and could be built in parallel with either by a second contributor, once Foundational and US1 are done.
 - T035 and T036 (Polish) can run in parallel; T037–T040 are sequential (each depends on the previous succeeding).
+- Phase 8: T041–T045 (tests) touch different files and can be written in parallel; T050 (help content) is independent of T046–T049. T051 and T052 (slice 2 Polish) can run in parallel; T053–T057 are sequential.
 
 ---
 

@@ -3,6 +3,7 @@
 **Feature Branch**: `163-session-journal`
 **Created**: 2026-09-25
 **Status**: Draft
+**Slices**: Slice 1 (#3406, PR #3422) = User Stories 1–4 / FR-001–FR-017. Slice 2 (#3407) = User Story 5 / FR-018–FR-023, built on the same branch. Slices 3 (#3408, automatic capture) and 4 (#3409, promote-to-entity) are still out of scope and will be added here later.
 **Input**: User description: "Session Journal (slice 1 of #3402, tracked as issue #3406): a persistent play log for TTRPG sessions, built on top of the existing Quicknote/Scratchpad experience but serving a different purpose — an ongoing chronological record of what happens during play, rather than transient notes. Scope for this spec (data model, persistence, and lifecycle only — later slices cover the global UI indicator, automatic capture, and promote-to-entity, tracked separately as #3407, #3408, #3409): SessionJournal (id, vault/campaign context, title, startedAt, endedAt, status, sections[], entries[]); JournalEntry (id, timestamp, type, content, optional source metadata/reference, optional linked entity/tool/result); lifecycle (start, resume, end — ended journals preserved and browsable); manual entries only; optional sections/chapters; minimal UI surface reachable only from Quicknote/Scratchpad with a three-state control (Start/Open/Resume); persistence via IndexedDB following the Oracle-store decomposition pattern; Quicknote/Scratchpad stays transient, Session Journal is the chronological record — the two must not be conflated in the UI."
 
 ## User Scenarios & Testing _(mandatory)_
@@ -71,6 +72,27 @@ A GM who uses cloud backup (an existing, opt-in feature of this app) switches de
 2. **Given** a cloud backup that includes a journal, **When** the user restores that backup into a new vault, **Then** the journal appears in the restored vault with every entry and section intact, in the same order.
 3. **Given** the cloud backup consent screen, **When** the user reads what gets stored, **Then** session journals are named alongside entities, maps, and canvases — the user is never backing up more than they were told.
 
+---
+
+### User Story 5 - Reach the journal from anywhere in the app during play (Priority: P1) — Slice 2, #3407
+
+A GM or solo player is mid-session, working in the graph, the map, the timeline or the Oracle, and wants to jot down what just happened without first remembering that the journal lives behind the Quicknote/Scratchpad tab. They see a Session Journal control in the app's always-visible tool chrome that shows whether a journal is running, and one selection takes them straight to it.
+
+**Why this priority**: Slice 1 made the journal exist; this slice makes it usable during real play. A journal that needs three steps to reach (open Notes, switch tab, find the control) gets skipped in the middle of a session, which defeats a "record of what happened".
+
+**Independent Test**: Can be fully tested by starting a journal, navigating to several different app views, and from each one selecting the global Session Journal control and confirming the live, editable journal opens on its Journal tab with the same entries and sections.
+
+**Acceptance Scenarios**:
+
+1. **Given** the user is on any in-app view where Quicknote/Scratchpad is available, **When** they look at the global tool chrome, **Then** a Session Journal control is visible and its label names the current state ("Start Session Journal", "Open Session Journal" or "Resume Session Journal", per FR-010).
+2. **Given** no journal is active, **When** the user selects the control, **Then** the Quicknote/Scratchpad panel opens on the Journal tab showing its Start screen, and no journal is created until the user chooses to start one there.
+3. **Given** an active journal that was already opened this browser session, **When** the user selects the control from a different view than the one they started on, **Then** the panel opens on the Journal tab with the live journal, its entries and sections, ready to add a note.
+4. **Given** an active journal left over after an app reload, **When** the user selects the "Resume Session Journal" control, **Then** the journal opens with every entry and section exactly as left, and the control changes to "Open Session Journal".
+5. **Given** the user last left the panel on its Journal tab and closed it, **When** they reopen it with the Notes tool or Ctrl/Cmd+I, **Then** it reopens on the Journal tab (the selected tab is remembered, same as before this slice). _(The panel's modal backdrop covers the tool chrome while it is open, so a pointer user cannot select the global control from the Notes tab; the open-journal action's behaviour in that case is guaranteed by FR-020 instead.)_
+6. **Given** an active journal, **When** the user navigates between tools and views, **Then** the journal, its control state, and which tab the panel was last on are unchanged.
+7. **Given** the user is in a guest/player-facing session where Quicknote/Scratchpad is unavailable, **When** they look at the tool chrome, **Then** no Session Journal control is shown.
+8. **Given** the user switches to a different vault, **When** the control re-renders, **Then** it reflects that vault's journal state, never the previous vault's (FR-012).
+
 ### Edge Cases
 
 - What happens when the user tries to add a note but no journal has ever been started for the vault? The control must offer "Start Session Journal" rather than exposing a note field with nothing to attach it to.
@@ -79,6 +101,10 @@ A GM who uses cloud backup (an existing, opt-in feature of this app) switches de
 - What happens when the user tries to end a journal that has zero entries? Ending is still allowed — an empty session is a valid (if unusual) outcome and must not be blocked.
 - What happens when two browser tabs have the same vault open and both try to add to the same active journal? The later write must not silently discard the earlier one (see FR-011).
 - What happens to a journal when the GM shares a player-facing/guest view of the vault? Nothing — a journal is the GM's own record and MUST NOT appear in a guest or player-facing export, only in the GM's own cloud backup (see FR-016).
+- What happens when the user selects the global control while a journal note is half-typed and the panel is closed? Saved entries are never lost; an unsent draft in the note field is not guaranteed to survive closing the panel (same as slice 1) — see Assumptions.
+- What happens if the open-journal action is invoked while the panel is already open (for example by keyboard, since the panel's backdrop blocks the pointer from reaching the control)? The panel stays open and switches to the Journal tab; it never toggles closed and never starts a second journal (FR-013, FR-020).
+- What happens in a popup window, VTT fullscreen or Zen pop-out, where the tool chrome is not shown? No Session Journal control is shown there, exactly as for the other tool items; nothing else changes.
+- What happens when a journal is started or ended in another browser tab? This tab's control is not guaranteed to update live; it is correct again on the next load or vault switch (see Assumptions).
 
 ## Requirements _(mandatory)_
 
@@ -101,6 +127,12 @@ A GM who uses cloud backup (an existing, opt-in feature of this app) switches de
 - **FR-015**: System MUST visually and conceptually distinguish the Session Journal from Quicknote/Scratchpad's existing transient notes — a user must never mistake one for the other, and using the journal must not alter or remove the existing Quicknote/Scratchpad note-taking behavior.
 - **FR-016**: When cloud backup is enabled for a vault (an existing, separately opt-in feature), the system MUST include that vault's session journals — full content, not a summary — in what gets backed up and in what a restore brings back, and MUST update the cloud backup consent screen to name session journals among what is stored, per this app's existing privacy-consent requirements. Session journals MUST NOT be included in a player-facing or guest vault export/share, which is a separate, filtered surface than the GM's own cloud backup.
 - **FR-017**: System MUST NOT require cloud backup to be enabled for any of FR-001–FR-015 to work — a journal is fully usable, and durable across reloads, with cloud backup off (FR-016 only adds cross-device/cloud durability on top).
+- **FR-018**: System MUST show a Session Journal control in the app's global tool chrome (the desktop Activity Bar and the mobile menu drawer, via the shared navigation item list) wherever that chrome is shown and Quicknote/Scratchpad is available, and MUST NOT show it where Quicknote/Scratchpad is unavailable (guest/player-facing sessions). The control needs no extra gating for popup, VTT-fullscreen or Zen pop-out windows: the chrome that hosts it is already hidden there.
+- **FR-019**: The global control MUST show exactly the FR-010 state for the active vault ("Start", "Open" or "Resume Session Journal"), derived from the same state the Journal tab uses rather than a second copy, and MUST give an active (non-ended) journal a visible indicator so a running session is noticeable while the panel is closed.
+- **FR-020**: Selecting the global control MUST open the Quicknote/Scratchpad panel on the Journal tab — opening it if closed, switching to the Journal tab if it is open on Notes — and MUST show the same journal view slice 1 built, not a second implementation. The underlying open-journal action MUST be safe to invoke when the panel is already open: it switches to the Journal tab, never closes the panel, and is idempotent. It MUST open the panel without creating or selecting a Quicknote note as a side effect (the panel's normal open path auto-selects or creates a Notes draft, which a journal-only open must not do).
+- **FR-021**: Selecting the global control when the state is "Resume" MUST mark the journal as opened for this browser session (the FR-010 Resume → Open transition). Selecting it when the state is "Start" MUST NOT create a journal; starting stays an explicit action inside the Journal view.
+- **FR-022**: The journal's saved content, its control state, and the panel's selected tab MUST survive in-app navigation between tools and views. The control state MUST follow the active vault (FR-012).
+- **FR-023**: This slice MUST NOT change Quicknote/Scratchpad's Notes tab behaviour (including which note is selected or created when the panel opens from the Notes tool or Ctrl/Cmd+I), its existing open/close shortcut and toolbar behaviour, or the journal's data model, persistence or cloud backup behaviour (FR-001–FR-017).
 
 ### Key Entities
 
@@ -118,6 +150,8 @@ A GM who uses cloud backup (an existing, opt-in feature of this app) switches de
 - **SC-004**: Ending a session and starting a new one never mixes content between the two — 0% cross-contamination of entries between a closed journal and its successor in testing.
 - **SC-005**: A GM running a multi-hour session can add entries throughout without the journal's presence measurably slowing down any other part of the app they are using at the same time.
 - **SC-006**: For a vault with cloud backup enabled, 100% of a journal's entries and sections are present and in the same order after a restore into a new vault, matching SC-002's local-reload guarantee.
+- **SC-007**: From any in-app view where the control is shown, a user with an active journal can reach it, live and editable, in one action (selecting the control), and never needs to open Quicknote/Scratchpad's Notes tab first. A user with no journal reaches the Start screen in one action and has a started journal in two, within SC-001's limit.
+- **SC-008**: In testing, the global control shows the correct state 100% of the time across start, reload, end, and vault-switch sequences, and never differs from the Journal tab's own state.
 
 ## Assumptions
 
@@ -128,3 +162,10 @@ A GM who uses cloud backup (an existing, opt-in feature of this app) switches de
 - Concurrent-tab writes are expected to be rare and low-stakes for a single-user local app; last-write-wins at the individual entry level (FR-011) is an acceptable, simple guarantee rather than building conflict resolution for this slice.
 - Cloud backup inclusion (FR-016) covers the GM's own personal cloud backup/restore only, whole-journal (not per-entry incremental sync) — matching how maps and canvases are already backed up. Per-entry incremental backup uploads, if ever wanted, are a candidate for a future slice, not required here.
 - Session journals are explicitly excluded from any player-facing or guest/shared vault export — the source request frames the journal as the GM's private record ("This is very much like how the Scratchpad works now"), and the app's existing guest-export path already filters vault content by player visibility, which a private GM journal has no meaningful value for.
+- **Slice 2 assumptions (#3407)**:
+  - "Global" means the app's shared tool chrome (the Activity Bar on desktop, the menu drawer on phones, both fed by `nav-items.ts`), which is present on every in-app route. It does not mean a floating widget or a new screen. The Quicknote/Scratchpad panel is already mounted once in the shared app layout, so reaching it from anywhere needs a control that opens it on the Journal tab, not a second panel.
+  - Selecting the control in the "Start" state opens the Start screen instead of creating a journal directly. There is no delete in this journal (see the first assumption block), so an accidental one-click start would leave a permanent empty journal in history.
+  - The panel stays a modal overlay as in slice 1, so it covers the current view while open. A non-modal, docked journal that lets the user keep working underneath is a candidate follow-up, not part of this slice.
+  - Unsent draft text in the note field is not guaranteed to survive closing the panel. Saved entries are always persisted (FR-011); preserving drafts across close is a follow-up if real use shows it matters.
+  - This slice adds no new keyboard shortcut. Ctrl/Cmd+I still toggles the panel as before.
+  - This tab's control does not live-update when another browser tab starts or ends a journal; it is correct on reload or vault switch. Cross-tab live sync of the control is not required.

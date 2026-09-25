@@ -72,3 +72,28 @@ class SessionJournalStore {
 ## Forward-compatibility note for #3408 (automatic capture)
 
 `appendEntry`'s `JournalEntryInput` shape is plain data (no DOM/Svelte types), so a future `AppEventBus` listener can call `sessionJournalStore.appendEntry({ type: "dice-roll", content: ..., sourceRef: {...} })` directly from an event handler without any change to this method's signature. This slice does not add such a listener — it only avoids a signature that would need to change when #3408 does.
+
+## Panel host API (slice 2, #3407)
+
+`SessionJournalStore`'s public API above is unchanged by slice 2. The only new surface is on `QuickNoteStore` (`apps/web/src/lib/stores/quicknote.svelte.ts`), which hosts the panel the journal renders in:
+
+```ts
+class QuickNoteStore {
+  /** Which tab the scratchpad panel is showing. Transient UI state, not
+   *  persisted. Was local `$state` in QuickNoteScratchpad.svelte. */
+  activeTab: "notes" | "journal";
+
+  /** FR-020. Sets isOpen = true and activeTab = "journal" directly. Does NOT
+   *  call open(), which auto-selects/creates a Quicknote note (FR-023). If the
+   *  panel is already open it only switches the tab. Idempotent, never toggles
+   *  the panel closed. Leaves currentNote and activeNotes untouched. */
+  openJournal(): void;
+}
+```
+
+Behaviour changes to existing methods:
+
+- `open(note)` with a specific note sets `activeTab = "notes"`.
+- `open()` and `toggle()` without a note keep the last `activeTab`, exactly as the previous local state did (FR-023). `close()` and a vault switch do not reset `activeTab`.
+
+Global control wiring (in `nav-items.ts`, not a store method): the `session-journal` item's action calls `quickNoteStore.openJournal()`, and additionally `sessionJournalStore.open()` only when `controlState === "resume"` (FR-021). It never calls `sessionJournalStore.start()`.

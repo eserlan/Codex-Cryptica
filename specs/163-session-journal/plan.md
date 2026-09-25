@@ -29,7 +29,7 @@ _GATE: Must pass before Phase 0 research. Re-check after Phase 1 design._
 
 - **I. Library-First** — PASS. Lifecycle/validation/ordering logic extracted into `packages/session-journal-engine`; `apps/web` store is a thin glue layer (see research.md, data-model.md).
 - **II. TDD** — PASS (planned). `session-journal-engine`'s pure functions and `session-journal.svelte.ts`'s store methods each get unit tests before/alongside implementation; tasks.md will sequence tests ahead of or alongside their implementation per user story.
-- **III. Simplicity & YAGNI** — PASS. No new third-party dependency; reuses the existing `idb` package and `vault-registry` pattern rather than introducing a new persistence library. Explicitly does not build the global indicator, automatic capture, or promote-to-entity in this slice (deferred to #3407–#3409, per spec).
+- **III. Simplicity & YAGNI** — PASS. No new third-party dependency; reuses the existing `idb` package and `vault-registry` pattern rather than introducing a new persistence library. Explicitly does not build the global indicator, automatic capture, or promote-to-entity in slice 1 (deferred to #3407–#3409, per spec). The global indicator is now planned as slice 2 — see the Slice 2 Addendum below.
 - **IV. AI-First Extraction** — N/A. This slice has no Oracle/AI interaction.
 - **V. Privacy & Client-Side Processing** — PASS. Journal data is fully browser-local by default (IndexedDB); no remote storage happens unless the user has separately, previously opted into this vault's cloud backup — a pre-existing feature that already satisfies all six conditions of the Narrow Exception. This slice does not invoke the exception itself; it extends an already-compliant surface with one more data type, and re-affirms each condition still holds with journals included: (1) off by default — journals back up only if cloud backup is already enabled, never on their own; (2) informed consent — the consent screen copy is updated to name session journals among what is stored (FR-016), so nothing new is stored silently; (3) reversible — disabling/deleting the existing backup already covers everything in it, journals included, with no separate control needed; (4) local remains authoritative — the store's local IndexedDB copy is unaffected by backup/restore either way; (5) no onward sharing — journals flow through the exact same upload path as entities/maps/canvases, which already satisfies this; (6) internal access — support access to a backup already covers its full content, journals included, under the existing disclosure.
 - **VI. Clean Implementation** — PASS (planned). `bun run lint:changed` / `bun run test:changed` and `svelte-check` will gate the PR per this repo's own AGENTS.md rules.
@@ -118,3 +118,83 @@ packages/cloud-backup-sync/src/
 ## Complexity Tracking
 
 _No Constitution Check violations — this section is not needed._
+
+---
+
+## Slice 2 Addendum: Global Session Journal access point (#3407)
+
+**Spec**: User Story 5, FR-018–FR-023, SC-007–SC-008, and the "Slice 2 assumptions" block in [spec.md](./spec.md). Built on the same branch and spec directory as slice 1; slice 1's data model, persistence and cloud backup are unchanged (FR-023).
+
+### Summary
+
+Slice 1 left the journal reachable only via Quicknote/Scratchpad's Notes → Journal tab path. Slice 2 adds a Session Journal control to the app's shared tool chrome that shows the FR-010 state and opens the scratchpad panel directly on its Journal tab.
+
+The panel is already mounted once in `apps/web/src/routes/(app)/+layout.svelte` (`<QuickNoteScratchpad />`) and is toggled from the `quicknote` tool item in `nav-items.ts` and by Ctrl/Cmd+I. So this slice does **not** need a new panel, a new route, or a second view. It needs two things:
+
+1. The panel's selected tab (`"notes" | "journal"`) is currently local `$state` inside `QuickNoteScratchpad.svelte`, which nothing outside can set. Lift it into `QuickNoteStore` so a global control can open the panel on the Journal tab.
+2. A new tool item in the shared `nav-items.ts` list. Both the Activity Bar (desktop) and the mobile menu drawer already render from that list, so one item appears in both, and it is left out of guest mode the same way the `quicknote` item is.
+
+### Technical Context (delta from slice 1)
+
+**Dependencies**: None new. Reuses `SessionJournalStore.controlState`/`open()` (contract unchanged), `QuickNoteStore`, `nav-items.ts`, `ActivityBar.svelte`, `MobileMenu.svelte`.
+**Storage**: None. No new IndexedDB store, no `DB_VERSION` change, no cloud-backup change. The selected tab is transient in-memory UI state, like `isOpen`.
+**Testing**: Vitest. `QuickNoteStore` gets unit tests for the new tab state. `nav-items.test.ts`, `ActivityBar.test.ts` and `MobileMenu.test.ts` get cases for the new item and indicator. A component test covers `QuickNoteScratchpad` reading the store's tab.
+**Constraints**: Must not change Notes-tab behaviour or the Ctrl/Cmd+I shortcut (FR-023). The item must not be shown in guest mode (FR-018), matching the `quicknote` item's `!sessionModeStore.isGuestMode` guard. On phones the item is `overflow` (reached via the menu drawer), because the bottom bar does not wrap and each extra item narrows every other tap target (comment on `shellClass` in `ActivityBar.svelte`).
+
+### Design decisions
+
+- **Tab state lives in `QuickNoteStore`, with a single `openJournal()` method.** `openJournal()` sets `isOpen = true` and `activeTab = "journal"` **directly**, and never toggles the panel closed (FR-020, idempotent). It deliberately does not call `open()`: `open()` auto-selects the newest note or calls `startNewNote()` when none is selected (`quicknote.svelte.ts:107-118`), so reusing it would create or select a Notes draft every time the journal is opened, breaking FR-023. `open(note)` for a specific note sets `activeTab = "notes"`, because opening a note while the panel was last left on Journal would otherwise show the wrong tab. A plain `open()`/`toggle()` keeps the last tab, which is what the local state did before, so Ctrl/Cmd+I behaviour is unchanged (FR-023). `activeTab` is not reset by `close()` or by a vault switch (it is panel UI state, not vault state); only `controlState` follows the vault (FR-022).
+- **The nav item's action, not the store, decides Resume vs Open.** The action calls `quickNoteStore.openJournal()` and, only when `controlState === "resume"`, `sessionJournalStore.open()` (FR-021), so the Journal view lands on the live journal instead of another Resume screen. In the `start` state it opens the Start screen and never calls `start()` (FR-021; rationale in spec assumptions: no delete exists).
+- **Label and title are derived from `controlState`.** `navItems()` is already read inside `$derived`, so reading `sessionJournalStore.controlState` inside it stays reactive. Because that state is per-vault (`activeVaultId` effect in the store), FR-022's vault-switch requirement needs no extra code.
+- **Active-state indicator, not colour alone.** `ActivityBar.svelte` and `MobileMenu.svelte` already draw a badge for `quicknote` when `quickNoteStore.count > 0`. The journal item gets the same kind of badge whenever `controlState !== "start"`, and the accessible label carries the state text so the state is not colour-only.
+- **`isToolActive` gets a special case** for `session-journal`: active when `quickNoteStore.isOpen && quickNoteStore.activeTab === "journal"`. The default rule (`layoutUIStore.activeSidebarTool === item.id`) would never light it up, the same reason `guest-chat` and `generators` are special-cased today.
+
+### Alternatives considered and rejected
+
+- **A floating always-on journal widget.** Rejected: duplicates the panel, needs its own z-index/overlay handling next to the scratchpad's `z-[100]`/`z-[101]` overlay, and breaks the "same journal view, not a second implementation" rule (FR-020).
+- **A new route or sidebar tool for the journal.** Rejected: journal state would then have two homes (panel and route), and the scratchpad is already mounted at layout level, so it survives navigation without help.
+- **Clicking the control in the `start` state starts a journal immediately.** Rejected: with no delete capability, a mis-click leaves a permanent empty journal. Two actions (control → Start) is still within SC-001's three.
+- **Keeping `activeTab` local and driving it through a DOM event or prop.** Rejected: stores are how this repo shares cross-component UI state, and a store field is directly unit-testable.
+
+### Project Structure (slice 2 changes only)
+
+```text
+apps/web/src/lib/
+├── stores/
+│   └── quicknote.svelte.ts              # +activeTab $state, +openJournal(); open(note) sets tab "notes"
+└── components/
+    ├── layout/
+    │   ├── nav-items.ts                 # +`session-journal` tool item; isToolActive special case
+    │   ├── ActivityBar.svelte           # +active-journal indicator
+    │   └── MobileMenu.svelte            # +active-journal indicator
+    └── quicknote/
+        └── QuickNoteScratchpad.svelte   # local activeTab → quickNoteStore.activeTab
+apps/web/src/lib/content/help/quicknote.md   # mention the global control
+```
+
+Not touched: `SessionJournalView.svelte`, `session-journal.svelte.ts`, `packages/session-journal-engine`, `idb.ts`, cloud-backup files, `+layout.svelte`.
+
+### Constitution Check (slice 2 delta)
+
+- **I. Library-First** — PASS / N/A. No new logic worth extracting: the state derivation stays in `session-journal-engine` via `controlState`; this slice is UI wiring.
+- **II. TDD** — PASS (planned). Tests precede implementation in tasks.md Phase 8, with success and negative paths (see tasks T041–T045).
+- **III. Simplicity & YAGNI** — PASS. One store field, one method, one nav item, one indicator. No new shortcut, no widget, no route, no persistence.
+- **V. Privacy** — PASS / N/A. No new data collected or stored.
+- **VII. User Documentation** — PASS (planned). Help content updated for the new entry point (T050).
+- **VIII. Dependency Injection** — PASS. `QuickNoteStore` keeps its constructor injection; the nav item reads the existing singletons the same way the `quicknote` item does.
+- **IX. Natural Language** — PASS. Labels reuse "Start/Open/Resume Session Journal".
+- **X. Quality & Coverage** — PASS (planned), per T041–T045.
+- **XI. Agent Operational Protocol** — PASS. Assumptions stated in spec.md; changes are surgical.
+- Principles IV, XII and the Discovery Intent check remain N/A (no AI, no tags, no public page).
+
+### Bounded Responsibility Check (slice 2 delta)
+
+No touched file exceeds 500 lines: `nav-items.ts` (256), `ActivityBar.svelte` (103), `MobileMenu.svelte` (280), `QuickNoteScratchpad.svelte` (231), `quicknote.svelte.ts` (423, +~15 lines for the tab state and `openJournal()`). `quicknote.svelte.ts` is the closest to the trigger. Panel-host state (open/close/tab) is still within its single responsibility, "state of the Quicknote/Scratchpad panel and its notes", so no split is planned, but the next feature to add to this file should plan a decomposition.
+
+### Risks
+
+- **`quicknote.svelte.ts` growth.** Mitigated by keeping the addition to a field plus one method.
+- **Tab-state semantics for `open(note)`.** Covered by an explicit negative test (T041).
+- **Overlay stacking.** The panel is a modal overlay (`z-[100]`/`z-[101]`) and the Activity Bar sits at `z-[80]`, so while the panel is open the global control is behind the backdrop and a pointer user cannot select it. That is acceptable: the control's job is to open the panel, and the panel has its own close button and tab buttons. The spec therefore treats "invoked while already open" as a store-level guarantee (FR-020, tested in T041) for keyboard or programmatic callers, not as a user-visible flow.
+- **Popup / fullscreen windows.** Checked in `+layout.svelte`: `<ActivityBar />` renders only when `!isPopup && !isVttFullscreen && !isZenPopout && !guidedModeStore.isGuidedMode`, and the mobile menu is opened from `AppHeader` under the same `!isPopup` gate, while `<QuickNoteScratchpad />` mounts when `!isPopup && !isGuestMode`. So wherever the control is shown the panel is mounted, and the nav item needs only the `!isGuestMode` guard `quicknote` already uses (I2 resolved with no extra gating).
+- **Route-navigation survival (FR-022).** This holds structurally: the panel is mounted once in the layout and both stores are singletons, so route changes do not touch them. jsdom cannot simulate routing, so unit tests cover the store guarantees (tab survives close/reopen, state follows vault) and the manual pass (T054) covers actual navigation.

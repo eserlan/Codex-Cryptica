@@ -1,6 +1,7 @@
 import { base } from "$app/paths";
 import { vault } from "$lib/stores/vault.svelte";
 import { quickNoteStore } from "$lib/stores/quicknote.svelte";
+import { sessionJournalStore } from "$lib/stores/session-journal.svelte";
 import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
 import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
 import { guestVault } from "$lib/stores/guest-vault.svelte";
@@ -46,6 +47,12 @@ export interface NavItem {
   placement: NavPlacement;
 }
 
+const JOURNAL_LABELS = {
+  start: "Start Session Journal",
+  open: "Open Session Journal",
+  resume: "Resume Session Journal",
+} as const;
+
 const stripSlash = (path: string) => path.replace(/\/+$/, "");
 
 /**
@@ -77,6 +84,9 @@ export function isToolActive(item: NavItem): boolean {
   }
   if (item.id === "generators") {
     return modalUIStore.generatorWorkflow.open;
+  }
+  if (item.id === "session-journal") {
+    return quickNoteStore.isOpen && quickNoteStore.activeTab === "journal";
   }
   return layoutUIStore.activeSidebarTool === item.id;
 }
@@ -220,6 +230,27 @@ export function navItems(): NavItem[] {
       label: "Notes",
       title: "QuickNote Scratchpad",
       action: () => quickNoteStore.toggle(),
+      group: "tool",
+      placement: "overflow",
+    });
+
+    // Slice 2 of the Session Journal (#3407): reachable from anywhere, not
+    // only from the Journal tab inside the scratchpad. Selecting it never
+    // starts a journal; that stays an explicit action in the journal view.
+    const journalState = sessionJournalStore.controlState;
+    items.push({
+      id: "session-journal",
+      icon: "icon-[lucide--book-open]",
+      label: JOURNAL_LABELS[journalState],
+      title: `${JOURNAL_LABELS[journalState]} — a running record of your session`,
+      action: () => {
+        // Read at click time, not from the snapshot the item was built with,
+        // so a state change since the last render cannot mark the wrong thing.
+        if (sessionJournalStore.controlState === "resume") {
+          sessionJournalStore.open();
+        }
+        quickNoteStore.openJournal();
+      },
       group: "tool",
       placement: "overflow",
     });
