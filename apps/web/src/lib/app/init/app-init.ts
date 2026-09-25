@@ -32,6 +32,8 @@ import { registerFlushSavesOnHide } from "./flush-saves-on-hide";
 import { vault } from "$lib/stores/vault.svelte";
 import { mapRegistry } from "$lib/stores/map-registry.svelte";
 import { canvasRegistry } from "$lib/stores/canvas-registry.svelte";
+import { sessionJournalStore } from "$lib/stores/session-journal.svelte";
+import { getDB } from "$lib/utils/idb";
 import {
   cloudBackupStore,
   cloudBackupBrowserStorage,
@@ -215,8 +217,8 @@ export function initializeGlobalListeners(_calendarStore?: any) {
     },
     dirty: new CloudBackupDirtyStore(),
     timing: timeCloudBackupSave,
-    // Everything the consent screen promises: entities, maps, canvases and
-    // the media all three reference.
+    // Everything the consent screen promises: entities, maps, canvases,
+    // session journals, and the media the first three reference.
     buildPayload: async (_vaultId: string, signal?: AbortSignal) =>
       buildCloudBackupPayload(
         vault.vaultName || "Vault",
@@ -236,6 +238,10 @@ export function initializeGlobalListeners(_calendarStore?: any) {
         {
           maps: mapRegistry.allMaps ?? [],
           canvases: canvasRegistry.allCanvases ?? [],
+          // Session journals (spec 163-session-journal, FR-016) are only
+          // ever part of a full backup, never the delta below — see
+          // session-journal.svelte.ts's write() for why.
+          sessionJournals: sessionJournalStore.allJournals ?? [],
         },
       ),
     // Incremental uploads (#3354): only the recorded changes are read.
@@ -289,6 +295,21 @@ export function initializeGlobalListeners(_calendarStore?: any) {
           if (!canvas?.id) continue;
           canvasRegistry.canvases[canvas.id] = canvas as never;
           await canvasRegistry.saveCanvas(canvas.id);
+        }
+      },
+      /**
+       * Writes restored session journals directly into IndexedDB rather than
+       * through the store (spec 163-session-journal, FR-016) — a restore
+       * happens once at import time, not through the store's own
+       * start/append/end lifecycle, and `vaultId` on each record is
+       * rewritten to the *new* vault this restore just created, never the
+       * backup's original vault id.
+       */
+      importSessionJournals: async (vaultId: string, journals: unknown[]) => {
+        const db = await getDB();
+        for (const journal of journals as { id?: string }[]) {
+          if (!journal?.id) continue;
+          await db.put("session_journals", { ...journal, vaultId } as never);
         }
       },
       /**

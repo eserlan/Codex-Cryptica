@@ -1,8 +1,17 @@
 <script lang="ts">
   import { quickNoteStore } from "$lib/stores/quicknote.svelte";
   import NoteHistory from "./NoteHistory.svelte";
+  import SessionJournalView from "./SessionJournalView.svelte";
   import { fade, scale } from "svelte/transition";
   import { onDestroy } from "svelte";
+
+  /**
+   * Notes and Journal are deliberately separate tabs, not merged into one
+   * view: Quicknote/Scratchpad's notes stay transient, the Session Journal
+   * is the chronological record — conflating them would defeat the point
+   * of having both (spec 163-session-journal, FR-015).
+   */
+  let activeTab = $state<"notes" | "journal">("notes");
 
   // Auto-save debounce effect
   let debounceTimeout: any;
@@ -73,22 +82,30 @@
     <div
       class="px-5 py-4 border-b border-theme-border/50 bg-theme-bg/30 flex justify-between items-center select-none"
     >
-      <div class="flex items-center gap-2">
-        <span
-          class="icon-[lucide--sparkles] h-5 w-5 text-theme-accent animate-pulse"
-        ></span>
-        <h3
-          class="font-header text-sm text-theme-primary uppercase tracking-wider font-bold"
-        >
-          QuickNote Scratchpad
-        </h3>
+      <div class="flex items-center gap-1">
+        {@render tabButton(
+          "notes",
+          "icon-[lucide--sparkles]",
+          "QuickNote",
+          "quicknote-tab-notes",
+          true,
+        )}
+        {@render tabButton(
+          "journal",
+          "icon-[lucide--book-open]",
+          "Session Journal",
+          "quicknote-tab-journal",
+          false,
+        )}
       </div>
       <div class="flex items-center gap-2">
-        <span
-          class="text-[10px] text-theme-muted px-2 py-0.5 rounded-full bg-theme-bg/50 border border-theme-border/30"
-        >
-          {saveStatus}
-        </span>
+        {#if activeTab === "notes"}
+          <span
+            class="text-[10px] text-theme-muted px-2 py-0.5 rounded-full bg-theme-bg/50 border border-theme-border/30"
+          >
+            {saveStatus}
+          </span>
+        {/if}
         <button
           type="button"
           onclick={() => quickNoteStore.close()}
@@ -101,78 +118,114 @@
     </div>
 
     <!-- Body Layout -->
-    <div class="flex-1 flex min-h-0">
-      <!-- Left sidebar list of notes -->
-      <div class="w-72 flex-shrink-0">
-        <NoteHistory />
+    {#if activeTab === "journal"}
+      <div class="flex-1 flex min-h-0" data-testid="quicknote-journal-panel">
+        <SessionJournalView />
       </div>
-
-      <!-- Right active note editor panel -->
-      <div class="flex-1 flex flex-col bg-theme-bg/10 p-5">
-        {#if quickNoteStore.currentNote}
-          <div class="flex-1 flex flex-col gap-3 min-h-0">
-            <!-- Textarea for Note Content -->
-            <textarea
-              bind:value={quickNoteStore.currentNote.content}
-              placeholder="Dump your thoughts here instantly... Type location lore, NPC concepts, or plot hooks. Auto-saved!"
-              class="flex-1 bg-transparent border-0 text-xs text-theme-text placeholder-theme-muted focus:ring-0 focus:outline-none resize-none font-body leading-relaxed"
-            ></textarea>
-
-            <!-- Bottom Tool Actions -->
-            <div
-              class="flex justify-between items-center border-t border-theme-border/40 pt-4 mt-auto"
-            >
-              <div class="flex gap-2">
-                <!-- Discard/Delete button -->
-                <button
-                  onclick={() => quickNoteStore.discardNote()}
-                  class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-theme-danger/20 bg-theme-danger/10 hover:bg-theme-danger/20 text-theme-danger font-semibold text-xs transition-colors"
-                  title="Discard Note"
-                >
-                  <span class="icon-[lucide--trash-2] h-3.5 w-3.5"></span>
-                  Discard
-                </button>
-              </div>
-
-              <!-- Save / Elevate options -->
-              <div class="flex gap-2">
-                <!-- Elevate to Lore/Wiki -->
-                <button
-                  onclick={async () => {
-                    if (quickNoteStore.currentNote?.id) {
-                      await quickNoteStore.triggerAIElevation(
-                        quickNoteStore.currentNote.id,
-                      );
-                    }
-                  }}
-                  disabled={quickNoteStore.isElevating ||
-                    !quickNoteStore.currentNote.content.trim()}
-                  class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-theme-primary text-theme-bg border border-theme-primary hover:bg-theme-secondary hover:border-theme-secondary font-bold text-[10px] uppercase font-header tracking-widest disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-md"
-                  title="Make Entity with AI"
-                >
-                  <span
-                    class="icon-[lucide--sparkles] h-3.5 w-3.5 {quickNoteStore.isElevating
-                      ? 'animate-spin'
-                      : ''}"
-                  ></span>
-                  {quickNoteStore.isElevating ? "Making..." : "Make Entity"}
-                </button>
-              </div>
-            </div>
-          </div>
-        {:else}
-          <div
-            class="flex-1 flex flex-col items-center justify-center text-center p-6 text-theme-muted"
-          >
-            <span
-              class="icon-[lucide--sticky-note] h-12 w-12 opacity-30 mb-3 text-theme-accent"
-            ></span>
-            <p class="text-xs font-medium">
-              Select a note or create a new one to begin editing.
-            </p>
-          </div>
-        {/if}
-      </div>
-    </div>
+    {:else}
+      {@render notesPanel()}
+    {/if}
   </div>
 {/if}
+
+{#snippet notesPanel()}
+  <div class="flex-1 flex min-h-0">
+    <!-- Left sidebar list of notes -->
+    <div class="w-72 flex-shrink-0">
+      <NoteHistory />
+    </div>
+
+    <!-- Right active note editor panel -->
+    <div class="flex-1 flex flex-col bg-theme-bg/10 p-5">
+      {#if quickNoteStore.currentNote}
+        <div class="flex-1 flex flex-col gap-3 min-h-0">
+          <!-- Textarea for Note Content -->
+          <textarea
+            bind:value={quickNoteStore.currentNote.content}
+            placeholder="Dump your thoughts here instantly... Type location lore, NPC concepts, or plot hooks. Auto-saved!"
+            class="flex-1 bg-transparent border-0 text-xs text-theme-text placeholder-theme-muted focus:ring-0 focus:outline-none resize-none font-body leading-relaxed"
+          ></textarea>
+
+          <!-- Bottom Tool Actions -->
+          <div
+            class="flex justify-between items-center border-t border-theme-border/40 pt-4 mt-auto"
+          >
+            <div class="flex gap-2">
+              <!-- Discard/Delete button -->
+              <button
+                onclick={() => quickNoteStore.discardNote()}
+                class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-theme-danger/20 bg-theme-danger/10 hover:bg-theme-danger/20 text-theme-danger font-semibold text-xs transition-colors"
+                title="Discard Note"
+              >
+                <span class="icon-[lucide--trash-2] h-3.5 w-3.5"></span>
+                Discard
+              </button>
+            </div>
+
+            <!-- Save / Elevate options -->
+            <div class="flex gap-2">
+              <!-- Elevate to Lore/Wiki -->
+              <button
+                onclick={async () => {
+                  if (quickNoteStore.currentNote?.id) {
+                    await quickNoteStore.triggerAIElevation(
+                      quickNoteStore.currentNote.id,
+                    );
+                  }
+                }}
+                disabled={quickNoteStore.isElevating ||
+                  !quickNoteStore.currentNote.content.trim()}
+                class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-theme-primary text-theme-bg border border-theme-primary hover:bg-theme-secondary hover:border-theme-secondary font-bold text-[10px] uppercase font-header tracking-widest disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-md"
+                title="Make Entity with AI"
+              >
+                <span
+                  class="icon-[lucide--sparkles] h-3.5 w-3.5 {quickNoteStore.isElevating
+                    ? 'animate-spin'
+                    : ''}"
+                ></span>
+                {quickNoteStore.isElevating ? "Making..." : "Make Entity"}
+              </button>
+            </div>
+          </div>
+        </div>
+      {:else}
+        <div
+          class="flex-1 flex flex-col items-center justify-center text-center p-6 text-theme-muted"
+        >
+          <span
+            class="icon-[lucide--sticky-note] h-12 w-12 opacity-30 mb-3 text-theme-accent"
+          ></span>
+          <p class="text-xs font-medium">
+            Select a note or create a new one to begin editing.
+          </p>
+        </div>
+      {/if}
+    </div>
+  </div>
+{/snippet}
+
+{#snippet tabButton(
+  tab: "notes" | "journal",
+  icon: string,
+  label: string,
+  testId: string,
+  pulseIcon: boolean,
+)}
+  <button
+    type="button"
+    onclick={() => (activeTab = tab)}
+    class="flex items-center gap-1.5 rounded px-2 py-1 font-header text-xs font-bold uppercase tracking-wider transition-colors {activeTab ===
+    tab
+      ? 'text-theme-primary'
+      : 'text-theme-muted hover:text-theme-text'}"
+    data-testid={testId}
+  >
+    <span
+      aria-hidden="true"
+      class="{icon} h-4 w-4 {pulseIcon && activeTab === tab
+        ? 'animate-pulse text-theme-accent'
+        : ''}"
+    ></span>
+    {label}
+  </button>
+{/snippet}

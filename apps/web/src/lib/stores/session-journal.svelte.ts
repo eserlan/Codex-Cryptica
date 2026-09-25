@@ -1,0 +1,212 @@
+import {
+  appendEntry as engineAppendEntry,
+  createSection as engineCreateSection,
+  endJournal as engineEndJournal,
+  renameSection as engineRenameSection,
+  startOrResumeJournal,
+} from "session-journal-engine";
+import type {
+  JournalEntry,
+  JournalEntryInput,
+  JournalSection,
+  SessionJournal,
+} from "session-journal-engine";
+import { getDB } from "../utils/idb";
+import { vaultRegistry as defaultVaultRegistry } from "./vault-registry.svelte";
+import { updateLastInternalChange } from "./vault/registry";
+import {
+  systemClock,
+  systemIdGenerator,
+  type Clock,
+  type IdGenerator,
+} from "$lib/utils/runtime-deps";
+
+export type SessionJournalControlState = "start" | "open" | "resume";
+
+/**
+ * Session Journal (#3402 slice 1, #3406): start/open/end lifecycle, manual
+ * notes, and optional sections for a persistent per-vault play log, glued to
+ * the shared IndexedDB `session_journals` store.
+ *
+ * Every mutator (`start`, `open`, `appendEntry`, `createSection`,
+ * `renameSection`, `end`) re-reads the current record from IndexedDB
+ * immediately before merging its change and writing back — never from
+ * `current`/`$state` alone. That discipline, not the storage shape, is what
+ * satisfies FR-011's cross-tab guarantee (see
+ * specs/163-session-journal/contracts/session-journal-store-api.md's
+ * Concurrency Guarantee section).
+ */
+export class SessionJournalStore {
+  /** The vault's current journal — active if one exists, else the most
+   *  recently ended one, else undefined. */
+  current = $state<SessionJournal | undefined>(undefined);
+  /** All journals (active and ended) for the active vault, newest first. */
+  allJournals = $state<SessionJournal[]>([]);
+  /** Tracked in-memory only (spec FR-010: "opened" is a browser-session
+   *  affordance, not a persisted field). */
+  private openedInSession = $state(false);
+
+  private vaultRegistry: typeof defaultVaultRegistry;
+  private ids: IdGenerator;
+  private clock: Clock;
+
+  constructor(
+    vaultRegistry: typeof defaultVaultRegistry = defaultVaultRegistry,
+    ids: IdGenerator = systemIdGenerator,
+    clock: Clock = systemClock,
+  ) {
+    this.vaultRegistry = vaultRegistry;
+    this.ids = ids;
+    this.clock = clock;
+
+    $effect.root(() => {
+      $effect(() => {
+        const vaultId = this.vaultRegistry.activeVaultId;
+        this.openedInSession = false;
+        if (vaultId) {
+          void this.loadVault(vaultId);
+        } else {
+          this.current = undefined;
+          this.allJournals = [];
+        }
+      });
+    });
+  }
+
+  /** Derived control state for the three-way UI affordance (spec FR-010). */
+  get controlState(): SessionJournalControlState {
+    if (!this.current || this.current.status === "ended") return "start";
+    return this.openedInSession ? "open" : "resume";
+  }
+
+  private async loadVault(vaultId: string): Promise<void> {
+    try {
+      const db = await getDB();
+      const journals = await db.getAllFromIndex(
+        "session_journals",
+        "by-vault",
+        vaultId,
+      );
+      this.allJournals = journals.sort((a, b) => b.startedAt - a.startedAt);
+      this.current =
+        this.allJournals.find((j) => j.status === "active") ??
+        this.allJournals[0];
+    } catch (e) {
+      console.error("[SessionJournalStore] Failed to load journals:", e);
+    }
+  }
+
+  /** Re-reads one record fresh from IndexedDB — see the class doc's
+   *  Concurrency Guarantee note. */
+  private async readLatest(id: string): Promise<SessionJournal | undefined> {
+    const db = await getDB();
+    return db.get("session_journals", id);
+  }
+
+  private async write(journal: SessionJournal): Promise<void> {
+    const db = await getDB();
+    await db.put("session_journals", journal);
+    await this.loadVault(journal.vaultId);
+
+    // No typed `DurableVaultChange` variant exists for a journal edit, and a
+    // write reported without one is treated as "could have touched anything"
+    // — which conservatively requires the vault's *next* cloud backup push to
+    // be a full one rather than a delta (FR-016). This reuses the existing
+    // fallback deliberately, rather than adding a new delta-aware change
+    // kind: this slice's own scope (spec Assumption) is whole-journal
+    // inclusion in a full backup, not per-edit incremental sync.
+    void updateLastInternalChange(journal.vaultId);
+  }
+
+  /** FR-001, FR-013. Idempotent — returns the existing active journal if one
+   *  already exists for the vault, rather than creating a second one.
+   *  Marks the journal "opened" immediately (FR-010): a user who just
+   *  clicked "Start Session Journal" is already looking at it, not stuck one
+   *  more click away behind "Resume Session Journal". `open()` remains the
+   *  separate action for picking a *pre-existing* active journal back up
+   *  after a reload, when this browser session never called `start()`. */
+  async start(): Promise<SessionJournal> {
+    const vaultId = this.vaultRegistry.activeVaultId;
+    if (!vaultId) throw new Error("No vault is open.");
+
+    const latest = this.current
+      ? await this.readLatest(this.current.id)
+      : undefined;
+    const journal = startOrResumeJournal(latest, vaultId, this.ids, this.clock);
+    await this.write(journal);
+    this.openedInSession = true;
+    return journal;
+  }
+
+  /** FR-009. Marks the current active journal as "opened" for this browser
+   *  session so `controlState` becomes `"open"`. No-op if there is no active
+   *  journal, or it's already open. */
+  open(): void {
+    if (this.current && this.current.status === "active") {
+      this.openedInSession = true;
+    }
+  }
+
+  /** FR-002. Rejects if no journal is active, or if the active journal has
+   *  ended. `entry` omits `id`/`timestamp`; the engine assigns both. */
+  async appendEntry(entry: JournalEntryInput): Promise<JournalEntry> {
+    if (!this.current) throw new Error("No active journal.");
+    const latest = await this.readLatest(this.current.id);
+    if (!latest) throw new Error("No active journal.");
+
+    const result = engineAppendEntry(latest, entry, this.ids, this.clock);
+    if (!result.ok) throw new Error(result.error);
+
+    await this.write(result.journal);
+    return result.entry;
+  }
+
+  /** FR-004. Returns the created section. */
+  async createSection(name: string): Promise<JournalSection> {
+    if (!this.current) throw new Error("No active journal.");
+    const latest = await this.readLatest(this.current.id);
+    if (!latest) throw new Error("No active journal.");
+
+    const result = engineCreateSection(latest, name, this.ids);
+    if (!result.ok) throw new Error(result.error);
+
+    await this.write(result.journal);
+    return result.section;
+  }
+
+  /** FR-005. Rejects (throws) for an empty/whitespace-only name; the
+   *  section's prior name is unchanged on rejection. */
+  async renameSection(sectionId: string, name: string): Promise<void> {
+    if (!this.current) throw new Error("No active journal.");
+    const latest = await this.readLatest(this.current.id);
+    if (!latest) throw new Error("No active journal.");
+
+    const result = engineRenameSection(latest, sectionId, name);
+    if (!result.ok) throw new Error(result.error);
+
+    await this.write(result.journal);
+  }
+
+  /** FR-007. Rejects (throws) if no journal is currently active. */
+  async end(): Promise<void> {
+    if (!this.current) throw new Error("No active journal.");
+    const latest = await this.readLatest(this.current.id);
+    if (!latest) throw new Error("No active journal.");
+
+    const result = engineEndJournal(latest, this.clock);
+    if (!result.ok) throw new Error(result.error);
+
+    await this.write(result.journal);
+  }
+
+  /** Supports "browsable afterward" (spec Assumption) — every past journal
+   *  for the active vault, newest first. */
+  async listJournals(): Promise<SessionJournal[]> {
+    const vaultId = this.vaultRegistry.activeVaultId;
+    if (!vaultId) return [];
+    await this.loadVault(vaultId);
+    return this.allJournals;
+  }
+}
+
+export const sessionJournalStore = new SessionJournalStore();

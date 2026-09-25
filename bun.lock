@@ -106,6 +106,7 @@
         "peerjs": "^1.5.5",
         "random-source-engine": "workspace:*",
         "schema": "workspace:*",
+        "session-journal-engine": "workspace:*",
         "svelte-tiptap": "^3.0.1",
         "tiptap-markdown": "^0.9.0",
         "zod": "^4.4.3",
@@ -526,6 +527,15 @@
       },
       "peerDependencies": {
         "svelte": "^5.0.0",
+      },
+    },
+    "packages/session-journal-engine": {
+      "name": "session-journal-engine",
+      "version": "0.0.0",
+      "devDependencies": {
+        "@vitest/coverage-v8": "^5.0.0",
+        "typescript": "^6.0.3",
+        "vitest": "^5.0.0",
       },
     },
     "packages/spatial-engine": {
@@ -2217,6 +2227,8 @@
     "sdp": ["sdp@3.2.2", "", {}, "sha512-xZocWwfyp4hkbN4hLWxMjmv2Q8aNa9MhmOZ7L9aCZPT+dZsgRr6wZRrSYE3HTdyk/2pZKPSgqI7ns7Een1xMSA=="],
 
     "semver": ["semver@7.7.4", "", { "bin": { "semver": "bin/semver.js" } }, "sha512-vFKC2IEtQnVhpT78h1Yp8wzwrf8CM+MzKMHGJZfBtzhZNycRFnXsHk6E5TxIkkMsgNS7mdX3AGB7x2QM2di4lA=="],
+
+    "session-journal-engine": ["session-journal-engine@workspace:packages/session-journal-engine"],
 
     "set-cookie-parser": ["set-cookie-parser@3.1.0", "", {}, "sha512-kjnC1DXBHcxaOaOXBHBeRtltsDG2nUiUni+jP92M9gYdW12rsmx92UsfpH7o5tDRs7I1ZZPSQJQGv3UaRfCiuw=="],
 
