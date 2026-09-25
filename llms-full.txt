@@ -1956,6 +1956,10 @@ Reference answers to real RPG and worldbuilding questions, indexed at https://co
 
 **Direct answer:** Bring a session-facing subset to the table, not the whole campaign file: one page of what might matter tonight, a few reference pages you can reach without scrolling, somewhere to catch names and decisions as they happen, and a place the session gets filed afterwards. Paper, tablet and laptop all do that job, so choose by how fast you need an answer and how much screen you want sitting between you and the players.
 
+### [How do I pace an RPG one-shot?](https://codexcryptica.com/answers/how-do-i-pace-an-rpg-one-shot)
+
+**Direct answer:** Pace an RPG one-shot by budgeting backward from your hard stop: reserve the final 50 to 70 minutes of usable play for the climax and epilogue, place one explicit checkpoint at the halfway mark to test momentum, and prepare an elastic middle encounter that can expand or vanish entirely depending on the table clock.
+
 ### [How do I run a rogue or scout without splitting the party?](https://codexcryptica.com/answers/how-do-i-run-a-rogue-or-scout-without-splitting-the-party)
 
 **Direct answer:** Give the scout a clear question, resolve only the uncertain part of their reconnaissance, then bring the result back while the party can still choose what to do. Let the rogue gain useful information, position, or access, while companions watch exits, prepare a diversion, or change the conditions outside. A failed stealth or scouting roll can raise suspicion, cost time, or close a route without automatically leaving the scout alone in a fight.

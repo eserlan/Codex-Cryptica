@@ -7,7 +7,7 @@ export const howDoIWriteAGoodCallOfCthulhuOneShot: AnswerConfigInput = {
   question: "How do I write a good Call of Cthulhu one-shot?",
   kind: "framework",
   shortAnswer:
-    "Design backward from a hidden truth, providing at least three redundant clue vectors for every critical deduction so missed rolls never stall the mystery. Structure the session across four escalating phases: an immediate catalyst, an active investigation with multiple leads, an escalating hazard clock that forces action, and a volatile climax that resolves based on player choices rather than complete occult knowledge.",
+    "Design backward from a hidden truth, and give investigators more than one route to facts the scenario needs them to find. For especially critical deductions, three clue vectors are a useful benchmark. Let the threat escalate as the investigation continues, then resolve the crisis through player choices rather than complete occult knowledge.",
   sections: [
     {
       kind: "prose",
@@ -19,9 +19,9 @@ export const howDoIWriteAGoodCallOfCthulhuOneShot: AnswerConfigInput = {
     },
     {
       kind: "list",
-      heading: "The five architectural rules of a single-session scenario",
+      heading: "Principles for a single-session scenario",
       intro:
-        "Build the scenario around five core principles to keep investigation moving and dread mounting:",
+        "Use these principles to keep investigation moving and dread mounting:",
       items: [
         {
           term: "Establish the causal timeline first",
@@ -32,12 +32,16 @@ export const howDoIWriteAGoodCallOfCthulhuOneShot: AnswerConfigInput = {
           text: "Skip the train journey, library card registration, and lengthy patron interviews. Begin with the investigators already gathered outside the flooded quarry, standing over the opened vault, or reading the telegram sent by a missing colleague.",
         },
         {
-          term: "Deploy redundant clue vectors",
-          text: "Never attach an essential discovery to a single Library Use, Spot Hidden, or Psychology roll. Every piece of critical information must be obtainable from at least three distinct sources: physical forensic evidence, witness testimony, written records, or environmental traces.",
+          term: "Give investigators a reason to act together",
+          text: "Spend character-creation effort on a shared reason to get involved, not broad backstory: a common employer or patron, a connection to the victim, professional colleagues, pregenerated investigators with explicit ties, or one shared secret or obligation. This keeps the opening from turning into a debate about why each investigator would stay.",
         },
         {
-          term: "Make every clue alter decisions",
-          text: "Avoid clues that simply provide background mythology. A good clue reveals immediate danger, exposes an antagonist vulnerability, contradicts a safe assumption, or introduces a moral cost to continuing.",
+          term: "Deploy redundant clue vectors",
+          text: "Do not make a necessary fact depend on one exact roll or location. Obvious clues can simply be found when investigators look in the right place; rolls can reveal extra detail, context, or an advantage. Give facts the scenario needs to progress more than one route in. Three distinct clue vectors is a useful benchmark for especially critical deductions, not a Call of Cthulhu rule.",
+        },
+        {
+          term: "Make clues useful",
+          text: "Most clues should change what investigators believe or what they can choose next. Keep pure lore brief unless it deepens dread, foreshadows a cost, or recontextualises the situation.",
         },
         {
           term: "Permit action with partial knowledge",
@@ -47,25 +51,25 @@ export const howDoIWriteAGoodCallOfCthulhuOneShot: AnswerConfigInput = {
     },
     {
       kind: "list",
-      heading: "Pacing the escalation ladder across four hours",
+      heading: "Pacing through four flexible checkpoints",
       intro:
-        "Structure table time by tying psychological tension directly to session milestones:",
+        "For a four-hour example, use rough proportions rather than fixed Call of Cthulhu timings. The dedicated one-shot pacing guide covers exact table-time budgeting.",
       items: [
         {
-          term: "Hour 1: The Mundane Anomaly (Minutes 0 to 60)",
-          text: "Open with a grounded puzzle or crime that seems explainable: an eccentric antiquarian disappears, a cellar wall collapses, or livestock dies along a salt marsh. Establish personal stakes and provide two distinct leads immediately.",
+          term: "Opening quarter: The mundane problem and immediate leads",
+          text: "Open with a grounded puzzle or crime that seems explainable: an eccentric antiquarian disappears, a cellar wall collapses, or livestock dies along a salt marsh. Establish why these investigators are involved and give them immediate leads.",
         },
         {
-          term: "Hour 2: The Unsettling Implication (Minutes 60 to 120)",
-          text: "Investigators uncover evidence that defies rational explanation. Introduce the first Sanity checks through forensic discoveries or bizarre human behaviour. The threat remains obscured, but mundane theories collapse.",
+          term: "Middle investigation: Contradiction and impossible implication",
+          text: "Let investigators uncover evidence that defies rational explanation. The first unmistakably unnatural evidence may appear here; if it warrants a Sanity roll under the rules, this is a natural point for one. Mundane theories begin to collapse.",
         },
         {
-          term: "Hour 3: Active Hostility and Escalation (Minutes 120 to 180)",
-          text: "The threat reacts to the investigation. Cultists set fire to the hotel, strange weather cuts off the road, or a monstrosity stalks the perimeter. Clues now come through defensive action and surviving encounters.",
+          term: "Late escalation: The threat acts directly",
+          text: "The threat reacts to the investigation. Cultists set fire to the hotel, strange weather cuts off the road, or a monstrosity stalks the perimeter. Investigators may now find clues through defensive action and surviving encounters.",
         },
         {
-          term: "Hour 4: The Climax and Aftermath (Minutes 180 to 240)",
-          text: "The confrontation or escape takes place in a volatile environment. Resolve the scenario through decisive player choices: disrupting a ritual, sealing an entrance, or burning the evidence and escaping into the dark.",
+          term: "Protected final quarter: Decision and aftermath",
+          text: "Protect time for a decision, confrontation, escape or containment, and aftermath. Resolve the scenario through player choices: disrupting a ritual, sealing an entrance, or burning the evidence and escaping into the dark.",
         },
       ],
     },
@@ -73,7 +77,7 @@ export const howDoIWriteAGoodCallOfCthulhuOneShot: AnswerConfigInput = {
       kind: "example",
       heading: "Worked scenario: The Drowned Chapel of Blackwood Cove",
       paragraphs: [
-        "Observe how redundant clue vectors, an active countdown clock, and flexible resolution conditions turn a classic coastal horror premise into a finished single-session scenario.",
+        "This example uses several routes to the crypt, an advancing threat, and flexible resolution conditions to turn a coastal horror premise into a single-session scenario.",
       ],
       items: [
         {
@@ -90,29 +94,28 @@ export const howDoIWriteAGoodCallOfCthulhuOneShot: AnswerConfigInput = {
         },
         {
           term: "The Escalation Clock",
-          text: "Every 45 minutes of table time advances the water level. Stage 1: Cold seawater puddles in the hallway. Stage 2: Brackish water floods the cellar knee-deep; parish hymn singing echoes through the vents. Stage 3: The parson and transformed parishioners seal the church exits from outside. Stage 4: High tide submerges the lower levels as the entity stirs.",
+          text: "Choose a trigger that suits the session: the water can rise as fictional time passes, after specific investigator actions or scene transitions, or at table-time checkpoints in a tightly timed one-shot. For example, it might advance through four stages: cold seawater puddles in the hallway; brackish water floods the cellar knee-deep as parish hymns echo through the vents; the parson and transformed parishioners seal the church exits; then high tide submerges the lower levels as the entity stirs. The situation advances even while investigators are deciding.",
         },
         {
           term: "Multiple Valid Endings",
-          text: "Disruption: Investigators shatter the reliquary using sledgehammers from the tool shed, breaking the psychic thrall at the cost of heavy Sanity loss. Containment: They detonate mining explosives to collapse the sea tunnel, sealing the chamber. Escape: They drag surviving villagers onto a fishing dinghy as the church collapses into the surf, escaping with their lives but leaving the horror uncontained.",
+          text: "Disruption: Investigators shatter the reliquary with sledgehammers from the tool shed, disrupting its hold over the parishioners. The Keeper may call for Sanity rolls if the event warrants them under the rules. Containment: They detonate mining explosives to collapse the sea tunnel, sealing the chamber. Escape: They drag surviving villagers onto a fishing dinghy as the church collapses into the surf, escaping with their lives but leaving the horror uncontained.",
         },
         {
           term: "Why it works",
-          text: "No single failed roll prevents the party from reaching the crypt. The rising water acts as an external clock that pushes hesitant players forward. Finally, none of the three viable endings require defeating a cosmic deity in direct melee combat.",
+          text: "No single failed roll prevents the investigators from reaching the crypt. The rising water keeps the situation moving, and none of the three viable endings requires defeating a cosmic deity in direct combat.",
         },
       ],
     },
     {
       kind: "checklist",
       heading: "Keeper preparation checklist",
-      intro:
-        "Review your scenario notes before starting the session to ensure structural resilience:",
+      intro: "Review your scenario notes before starting the session:",
       items: [
         "Can you summarise the mystery's underlying truth in three sentences?",
-        "Do investigators begin the session with an immediate lead rather than searching for a reason to care?",
-        "Are there at least three distinct paths or clue types leading to every necessary location?",
-        "Does every clue suggest an action, reveal a danger, or force a choice?",
-        "Is there an external countdown clock that advances even if players deliberate?",
+        "Do the investigators have a shared reason to be involved from the start?",
+        "Do facts the scenario needs to progress have more than one route in?",
+        "Do most clues change what investigators believe or can choose, with pure lore kept brief unless it deepens dread or recontextualises events?",
+        "Does the situation advance while investigators deliberate, through fictional time, events, or table-time checkpoints?",
         "Can the climax be triggered even if the investigators miss half of the background lore?",
         "Are there multiple viable resolution conditions beyond killing the threat?",
         "Have you identified two scenes that can be excised immediately if table time runs short?",
@@ -123,7 +126,7 @@ export const howDoIWriteAGoodCallOfCthulhuOneShot: AnswerConfigInput = {
     {
       system: "Call of Cthulhu (7th Edition)",
       rationale:
-        "Pushed rolls raise the stakes of failed investigative checks, while Idea rolls ensure critical deductions never stall the table.",
+        "Pushed rolls let investigators risk worse consequences to try again, while Idea rolls can help restart an investigation that has genuinely stalled. Critical scenario progress should still not rely on a single successful roll.",
       href: "https://www.chaosium.com/call-of-cthulhu-rpg/",
     },
     {
@@ -174,6 +177,7 @@ export const howDoIWriteAGoodCallOfCthulhuOneShot: AnswerConfigInput = {
     "what-rpg-should-i-play-for-investigative-horror",
     "how-do-i-run-an-investigator-without-sidelining-the-party",
     "how-do-you-generate-useful-rpg-rumours",
+    "how-do-i-pace-an-rpg-one-shot",
   ],
   discovery: {
     id: "answer-write-call-of-cthulhu-one-shot",
@@ -216,7 +220,7 @@ export const howDoIWriteAGoodCallOfCthulhuOneShot: AnswerConfigInput = {
   seo: {
     title: "How to Write a Call of Cthulhu One-Shot | Codex Cryptica",
     description:
-      "A complete framework for designing single-session Call of Cthulhu mysteries. Master redundant clue webs, escalation clocks, Sanity pacing, and flexible endings.",
+      "A framework for designing single-session Call of Cthulhu mysteries, with resilient clue routes, flexible escalation clocks, Sanity considerations, and multiple endings.",
     image:
       "https://assets.codexcryptica.com/og/how-do-i-write-a-good-call-of-cthulhu-one-shot.jpg",
     imageAlt:
