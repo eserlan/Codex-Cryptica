@@ -169,3 +169,4 @@ A GM or solo player is mid-session, working in the graph, the map, the timeline 
   - Unsent draft text in the note field is not guaranteed to survive closing the panel. Saved entries are always persisted (FR-011); preserving drafts across close is a follow-up if real use shows it matters.
   - This slice adds no new keyboard shortcut. Ctrl/Cmd+I still toggles the panel as before.
   - This tab's control does not live-update when another browser tab starts or ends a journal; it is correct on reload or vault switch. Cross-tab live sync of the control is not required.
+  - Live check finding (T054): the Map (VTT) view has its own layout with no shared tool chrome, so the Session Journal control is not reachable from there. This follows FR-018 (the control lives in the shared chrome) but is a real gap for play at the table; a way to open the journal from the VTT is a candidate follow-up, not part of this slice.
