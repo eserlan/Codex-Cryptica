@@ -245,7 +245,7 @@ export const whatShouldPlayersBeAbleToUpgradeInAnRpgBase: AnswerConfigInput = {
     {
       system: "Blades in the Dark",
       rationale:
-        "The crew sheet lists lair and crew upgrades such as a boat, hidden lair, vault and workshop, bought with crew advancement rather than coin alone.",
+        "The crew sheet lists lair and crew upgrades such as a boat, a hidden lair, a vault and a workshop, which the crew earns through advancement.",
       href: "https://bladesinthedark.com/crew",
     },
     {
