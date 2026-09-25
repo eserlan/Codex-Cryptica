@@ -356,9 +356,9 @@ export class CloudBackupStore {
    * new vault): a vault that is already on this device adopts the cloud copy
    * for its future saves. The baseline is the remote timestamp at attach
    * time, so the guarded auto-push pauses — instead of overwriting — if
-   * another device commits in between. Stale change rows are dropped: they
-   * describe a backup this vault was never linked to, and the first save
-   * after attach goes as a full snapshot anyway.
+   * another device commits in between. The full-push marker is persisted
+   * before attaching, so a storage failure cannot leave the new link relying
+   * on stale change rows from a different backup.
    */
   async attachToExistingBackup(
     vaultId: string,
@@ -367,6 +367,18 @@ export class CloudBackupStore {
     vaultTitle?: string,
   ): Promise<boolean> {
     if (!this.deps) return false;
+    try {
+      // Persist this before linking the backup. A missing marker would let
+      // stale rows describe changes to an unrelated remote snapshot.
+      await this.deps.dirty?.requireFullPush(vaultId);
+    } catch (error) {
+      this.errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Could not prepare a full cloud backup.";
+      return false;
+    }
+
     let result: Awaited<ReturnType<typeof attachCloudBackup>>;
     try {
       result = await attachCloudBackup(
@@ -385,23 +397,6 @@ export class CloudBackupStore {
     if (!result.ok) {
       this.errorMessage = result.error;
       return false;
-    }
-    try {
-      await this.deps.dirty?.clearVault(vaultId);
-    } catch (error) {
-      // A stale row is harmless once the full marker is present below.
-      console.warn("[CloudBackup] Could not clear changes on attach", error);
-    }
-    try {
-      // The local vault may differ throughout from the cloud backup it is
-      // adopting. Its first automatic sync must publish a whole snapshot;
-      // only subsequent changes can safely use deltas.
-      await this.deps.dirty?.requireFullPush(vaultId);
-    } catch (error) {
-      console.warn(
-        "[CloudBackup] Could not require a full push on attach",
-        error,
-      );
     }
     this.applyRecord(result.value);
     this.hashCache = {};

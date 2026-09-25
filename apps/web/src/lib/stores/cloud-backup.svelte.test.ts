@@ -319,6 +319,24 @@ describe("attachToExistingBackup", () => {
     expect(await storage.read("v-1")).toBeNull();
   });
 
+  it("does not attach when it cannot persist the full-push marker", async () => {
+    const dirtyStorage = {
+      ...memoryDirtyStorage(),
+      put: async () => {
+        throw new Error("dirty store unavailable");
+      },
+    };
+    const dirty = new CloudBackupDirtyStore(dirtyStorage);
+    const h = harness([], { dirty });
+
+    await expect(
+      h.store.attachToExistingBackup("v-1", "b-1", "code-1"),
+    ).resolves.toBe(false);
+    expect(h.store.errorMessage).toBe("dirty store unavailable");
+    expect(h.calls).toEqual([]);
+    expect(await h.storage.read("v-1")).toBeNull();
+  });
+
   it("surfaces a network failure without rejecting the attach action", async () => {
     const { store, storage } = harness();
     (store as any).deps.runtime.fetch = vi.fn(async () => {
