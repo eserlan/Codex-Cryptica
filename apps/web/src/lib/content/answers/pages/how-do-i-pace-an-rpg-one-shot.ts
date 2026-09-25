@@ -7,7 +7,7 @@ export const howDoIPaceAnRpgOneShot: AnswerConfigInput = {
   question: "How do I pace an RPG one-shot?",
   kind: "framework",
   shortAnswer:
-    "Pace an RPG one-shot by budgeting backward from your hard stop: reserve the final quarter of the session for the climax and epilogue, place one explicit checkpoint at the halfway mark to test momentum, and prepare an elastic middle encounter that can expand or vanish entirely depending on the table clock.",
+    "Pace an RPG one-shot by budgeting backward from your hard stop: reserve the final 50 to 70 minutes of usable play for the climax and epilogue, place one explicit checkpoint at the halfway mark to test momentum, and prepare an elastic middle encounter that can expand or vanish entirely depending on the table clock.",
   sections: [
     {
       kind: "prose",
@@ -98,7 +98,7 @@ export const howDoIPaceAnRpgOneShot: AnswerConfigInput = {
       heading:
         "Worked table budgets: Three hours of play in a four-hour booking",
       paragraphs: [
-        "These examples allow one hour for arrivals, setup, rules questions, and a break, leaving 180 minutes of play. Adjust the overhead allowance to match your group, then move the beats while keeping the checkpoint near the midpoint and the climax in the final quarter.",
+        "These examples allow one hour for arrivals, setup, rules questions, and a break, leaving 180 minutes of play. Adjust the overhead allowance to match your group, then move the beats while keeping the checkpoint near the midpoint and the climax in the final 50 to 70 minutes.",
       ],
       items: [
         {

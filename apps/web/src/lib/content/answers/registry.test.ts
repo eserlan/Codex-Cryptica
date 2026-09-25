@@ -598,6 +598,9 @@ describe("published answers", () => {
 
   it("keeps the one-shot pacing examples within three hours and in discovery indexes", () => {
     const pacingAnswer = answers["how-do-i-pace-an-rpg-one-shot"];
+    expect(pacingAnswer.shortAnswer).toContain(
+      "final 50 to 70 minutes of usable play",
+    );
     const budgets = pacingAnswer.sections.find(
       (section) =>
         section.kind === "example" &&
