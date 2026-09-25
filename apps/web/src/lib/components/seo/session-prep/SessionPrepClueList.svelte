@@ -1,6 +1,7 @@
 <script lang="ts">
   import { defaultIdFactory, type PrepClue } from "generator-engine";
   import PrepAiTag from "./PrepAiTag.svelte";
+  import { autosize } from "./prep-autosize";
   import {
     prepAddClass,
     prepFieldClass,
@@ -48,14 +49,16 @@
   {#each clues as clue, index (clue.id)}
     <li class="space-y-1.5">
       <div class="flex items-start gap-1.5">
-        <input
+        <textarea
           bind:value={clue.fact}
+          {@attach autosize(() => clue.fact)}
+          rows="1"
           oninput={() => markGm(clue)}
           disabled={locked}
           placeholder="The fact"
           aria-label="The fact"
-          class="{prepFieldClass} flex-1"
-        />
+          class="{prepFieldClass} flex-1 resize-none"
+        ></textarea>
         <PrepAiTag source={clue.source} />
         <button
           type="button"
@@ -76,10 +79,11 @@
           markGm(clue);
         }}
         disabled={locked}
+        {@attach autosize(() => clue.routes.join("\n"))}
         rows="2"
         placeholder="Ways to find it, one per line"
         aria-label="Ways to find this fact, one per line"
-        class={prepFieldClass}
+        class="{prepFieldClass} resize-none"
       ></textarea>
       <label class="flex items-center gap-1.5 text-sm text-theme-muted">
         <input type="checkbox" bind:checked={clue.critical} disabled={locked} />

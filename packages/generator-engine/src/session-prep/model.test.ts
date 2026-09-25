@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  clearSessionPrepStep,
   createEmptySessionPrep,
   emptySessionPrepSteps,
   findSingleRouteClues,
@@ -189,6 +190,31 @@ describe("mergeDraftIntoPrep", () => {
     const prep = createEmptySessionPrep("hook");
     mergeDraftIntoPrep(prep, { pressure: "Something moves" }, sequentialIds());
     expect(prep.pressure).toBe("");
+  });
+});
+
+describe("clearSessionPrepStep", () => {
+  it("empties only the chosen step", () => {
+    const prep = courierPrep();
+    const cleared = clearSessionPrepStep(prep, "people");
+    expect(cleared.people).toEqual([]);
+    expect(cleared.start).toBe(prep.start);
+    expect(cleared.information).toEqual(prep.information);
+    expect(emptySessionPrepSteps(cleared)).toContain("people");
+  });
+
+  it("clears text steps and every consequence without mutating the input", () => {
+    const prep = courierPrep();
+    prep.consequences.success = "The town owes them";
+    expect(clearSessionPrepStep(prep, "start").start).toBe("");
+    expect(clearSessionPrepStep(prep, "consequences").consequences).toEqual({
+      success: "",
+      failure: "",
+      delay: "",
+      avoidance: "",
+    });
+    expect(prep.start).toBe("A riderless horse walks through the gate.");
+    expect(prep.consequences.success).toBe("The town owes them");
   });
 });
 

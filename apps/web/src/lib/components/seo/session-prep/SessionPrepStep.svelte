@@ -13,12 +13,11 @@
     hint,
     suggestion = null,
     error = null,
-    isSuggesting = false,
-    aiDisabled = false,
     acceptDisabled = false,
-    onSuggest,
     onAccept,
     onDismiss,
+    guide,
+    actions,
     children,
   }: {
     step: SessionPrepStep;
@@ -27,12 +26,13 @@
     hint: string;
     suggestion?: SessionPrepSuggestion | null;
     error?: string | null;
-    isSuggesting?: boolean;
-    aiDisabled?: boolean;
     acceptDisabled?: boolean;
-    onSuggest: () => void;
     onAccept: (index: number) => void;
     onDismiss: () => void;
+    /** AI buttons for this step; wizard and adjust modes offer different ones. */
+    actions: Snippet;
+    /** Optional note the GM gives AI before it answers or suggests. */
+    guide?: Snippet;
     children: Snippet;
   } = $props();
 
@@ -48,36 +48,25 @@
 
 <section
   aria-labelledby={headingId}
-  class="@container space-y-2.5 rounded-xl border border-theme-border/50 bg-theme-bg/40 p-3"
+  class="@container space-y-2.5 rounded-xl border border-theme-primary/40 bg-theme-bg/40 p-3"
 >
-  <div class="flex items-start justify-between gap-3">
-    <div>
+  <div class="flex flex-wrap items-start justify-between gap-3">
+    <div class="min-w-0 flex-1 basis-48">
       <h3
         id={headingId}
-        class="text-sm font-bold uppercase tracking-wider text-theme-text"
+        class="text-base font-bold leading-snug text-theme-text"
       >
         <span class="text-theme-primary">{number}.</span>
         {title}
       </h3>
       <p class="mt-0.5 text-sm leading-snug text-theme-muted">{hint}</p>
     </div>
-    <button
-      type="button"
-      onclick={onSuggest}
-      disabled={aiDisabled}
-      class="flex shrink-0 items-center gap-1 rounded-lg border border-theme-primary/40 px-2.5 py-1.5 text-xs font-bold uppercase tracking-wider text-theme-primary transition hover:bg-theme-primary/10 disabled:cursor-not-allowed disabled:opacity-50"
-      aria-label={`Suggest options for ${title} with AI`}
-      title="Suggest options with AI"
-    >
-      <span
-        class={isSuggesting
-          ? "icon-[lucide--loader-circle] h-3.5 w-3.5 animate-spin"
-          : "icon-[lucide--sparkles] h-3.5 w-3.5"}
-        aria-hidden="true"
-      ></span>
-      {isSuggesting ? "Thinking" : "Suggest"}
-    </button>
+    <div class="flex flex-wrap justify-end gap-1.5">
+      {@render actions()}
+    </div>
   </div>
+
+  {@render guide?.()}
 
   {@render children()}
 
@@ -99,7 +88,7 @@
           type="button"
           onclick={onDismiss}
           class="flex items-center p-0.5 text-theme-muted transition hover:text-theme-text"
-          aria-label={`Dismiss suggestions for ${title}`}
+          aria-label="Dismiss these suggestions"
           title="Dismiss"
         >
           <span class="icon-[lucide--x] h-3.5 w-3.5" aria-hidden="true"></span>

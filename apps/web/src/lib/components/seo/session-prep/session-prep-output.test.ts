@@ -31,7 +31,7 @@ describe("toSessionPrepOutput", () => {
 
   it("refuses to build an empty run sheet", () => {
     expect(() => toSessionPrepOutput(createEmptySessionPrep("hook"))).toThrow(
-      "Fill in at least one step",
+      "Answer at least one question",
     );
   });
 });
@@ -65,8 +65,15 @@ describe("buildSessionPrep", () => {
     const drafted: SessionPrep = { ...prep, pressure: "The judge arrives." };
     const service = serviceWith(async () => drafted);
 
-    const result = await buildSessionPrep(prep, { useAI: true, service });
-    expect(service.draft).toHaveBeenCalledOnce();
+    const guidance = {
+      turnedDown: [{ step: "start" as const, text: "A brawl" }],
+    };
+    const result = await buildSessionPrep(prep, {
+      useAI: true,
+      service,
+      guidance,
+    });
+    expect(service.draft).toHaveBeenCalledWith(prep, { guidance });
     expect(result.prep).toBe(drafted);
     expect(result.output.content).toContain("The judge arrives.");
     expect(result.output.aiFallback).toBeUndefined();
