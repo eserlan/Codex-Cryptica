@@ -12,6 +12,7 @@
   import { browser, dev } from "$app/environment";
   import { getGeneratorDocumentLayout } from "$lib/components/seo/generator-document-layout";
   import { splitMarkdownForCopy } from "$lib/components/seo/markdown-sections";
+  import { handleGeneratorInlineCopy } from "$lib/components/seo/generator-inline-copy";
   import {
     buildGeneratorMarkdown,
     buildSectionMarkdown,
@@ -780,34 +781,14 @@
   }
 
   function handleContainerClick(event: MouseEvent) {
-    const target = event.target as HTMLElement;
-    const copyBtn = target.closest("[data-copy-text]");
-    if (copyBtn) {
-      const textToCopy = copyBtn.getAttribute("data-copy-text");
-      if (textToCopy) {
+    handleGeneratorInlineCopy(event, {
+      clipboard: { writeText: (text) => navigator.clipboard.writeText(text) },
+      trackCopy: () =>
         trackPublicGeneratorAction("copy", {
           generator_type: generatorType,
           copy_target: "inline",
-        });
-        navigator.clipboard
-          .writeText(textToCopy)
-          .then(() => {
-            const iconEl = copyBtn.querySelector("span");
-            if (iconEl) {
-              iconEl.className =
-                "icon-[lucide--check] w-3.5 h-3.5 text-green-500 animate-pulse";
-              setTimeout(() => {
-                if (iconEl) {
-                  iconEl.className = "icon-[lucide--copy] w-3.5 h-3.5";
-                }
-              }, 1500);
-            }
-          })
-          .catch((err) => {
-            console.error("Failed to copy text:", err);
-          });
-      }
-    }
+        }),
+    });
   }
 
   async function handleBuildDelveCanvas(data: GeneratorOutput) {

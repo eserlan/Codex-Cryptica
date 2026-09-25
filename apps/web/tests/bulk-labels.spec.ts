@@ -108,6 +108,7 @@ test.describe("Bulk Labeling and Selection Actions", () => {
     await expect(page.getByPlaceholder("Add label...")).toBeVisible();
 
     const labelInput = page.getByPlaceholder("Add label...");
+    await labelInput.focus();
     await labelInput.fill("tag1");
     await labelInput.press("Enter");
     await expect(
@@ -175,13 +176,17 @@ test.describe("Bulk Labeling and Selection Actions", () => {
       "fig6",
     ];
     const labelInput = page.getByPlaceholder("Add label...");
+    await labelInput.focus();
     for (const l of labels) {
       await labelInput.fill(l);
+      await page.waitForTimeout(50);
       await labelInput.press("Enter");
       // Wait for label to be added to the entity (reactive update)
       await expect(
         page.getByTestId("label-badge").filter({ hasText: l }),
       ).toBeVisible({ timeout: 10000 });
+
+      await expect(labelInput).toHaveValue("");
 
       // Wait for the vault store to index the label so it appears in the dropdown.
       await expect(async () => {
