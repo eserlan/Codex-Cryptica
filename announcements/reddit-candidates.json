@@ -1,15 +1,15 @@
 {
-  "updated_at": 1790361477,
+  "updated_at": 1790363129,
   "candidates": [
     {
-      "id": "reddit-36168046733-a-step-by-step-session-prep-workflow-i-c",
-      "title": "A step-by-step session prep workflow I can reuse across systems",
-      "body": "I was either over-writing five pages no one needed or forgetting to prep the next hook, so the session ended flat and I scrambled the week after.\n\nI put together a step-by-step prep guide that works the same whether you run D&D, CoC or something else. It is checklists over prose, so you can adapt it to your system.\n\nIt walks through:\n- picking a hook that ties to an existing thread or NPC\n- sketching scenes with an entry, tension and an out\n- prepping only the NPCs and locations you will actually need\n- a short follow-through pass to seed the next session before you close the note\n\nBecause it is system agnostic you still plug in your own stats and DCs. I did not want it to guess those for you.\n\nWhat part of prep do you skip most often and then feel at the table?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/announcements/release-36168046733-1.png)",
-      "url": "https://codexcryptica.com/answers/how-do-i-prepare-an-rpg-session-step-by-step",
-      "image_url": "https://assets.codexcryptica.com/announcements/release-36168046733-1.png",
+      "id": "reddit-36168046733-letting-players-pick-base-upgrades-that-",
+      "title": "Letting players pick base upgrades that trade resources for story",
+      "body": "My party wanted to upgrade their keep and I had nothing between \"sure, it looks nicer\" and a full spreadsheet. No cost, no consequence, no real choice.\n\nI wrote a player-facing guide for upgrades to a keep, ship or HQ where each improvement trades resources for story. It is built so players can propose something and the table can see what it costs.\n\nInside:\n- upgrade paths grouped by defense, utility, comfort and reach\n- simple resource trades so you can price it in gold, favors or downtime\n- story hooks tied to each upgrade so building the kitchen brings a cook with a problem\n- upkeep and complications so an upgrade is not a one-time win\n\nYou will still need to tune the numbers to your economy. I kept the costs as ranges for that reason.\n\nWhat upgrade have your players asked for that you were not sure how to price or pay off?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/announcements/release-36168046733-2.png)",
+      "url": "https://codexcryptica.com/answers/what-should-players-be-able-to-upgrade-in-an-rpg-base",
+      "image_url": "https://assets.codexcryptica.com/announcements/release-36168046733-2.png",
       "source_id": "36168046733",
       "status": "approved",
-      "created_at": 1790361476
+      "created_at": 1790363129
     }
   ]
 }
