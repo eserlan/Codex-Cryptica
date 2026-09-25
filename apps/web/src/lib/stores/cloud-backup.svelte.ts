@@ -111,6 +111,12 @@ export interface CloudBackupDeps {
     /** Writes the restored maps and canvases back into the new vault. */
     importMaps?: (vaultId: string, maps: unknown[]) => Promise<void>;
     importCanvases?: (vaultId: string, canvases: unknown[]) => Promise<void>;
+    /** Writes the restored session journals back into the new vault (spec
+     *  163-session-journal, FR-016). */
+    importSessionJournals?: (
+      vaultId: string,
+      journals: unknown[],
+    ) => Promise<void>;
     /** Writes one restored media file back into the vault. */
     importAsset?: (
       path: string,
@@ -493,6 +499,7 @@ export class CloudBackupStore {
       const entities = listFrom("entities");
       const maps = listFrom("maps");
       const canvases = listFrom("canvases");
+      const sessionJournals = listFrom("sessionJournals");
       const vaultId = await this.deps.restore.createVault(
         material.manifest.vaultTitle,
       );
@@ -506,6 +513,14 @@ export class CloudBackupStore {
       }
       if (canvases.length > 0 && this.deps.restore.importCanvases) {
         await this.deps.restore.importCanvases(vaultId, canvases);
+      }
+      // Session journals (spec 163-session-journal, FR-016) — same "content
+      // in its own right" reasoning as maps/canvases above.
+      if (
+        sessionJournals.length > 0 &&
+        this.deps.restore.importSessionJournals
+      ) {
+        await this.deps.restore.importSessionJournals(vaultId, sessionJournals);
       }
 
       // Media, so a restored vault does not come back with broken images.

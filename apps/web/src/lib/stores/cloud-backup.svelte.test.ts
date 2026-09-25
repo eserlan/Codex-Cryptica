@@ -100,6 +100,9 @@ function harness(
       importCanvases: async (vaultId: string, canvases: unknown[]) => {
         restoreLog.push(`importCanvases:${vaultId}:${canvases.length}`);
       },
+      importSessionJournals: async (vaultId: string, journals: unknown[]) => {
+        restoreLog.push(`importSessionJournals:${vaultId}:${journals.length}`);
+      },
     },
   });
 
@@ -561,6 +564,48 @@ describe("disable, delete and restore", () => {
       "importMaps:new-vault-id:2",
       "importCanvases:new-vault-id:1",
     ]);
+  });
+
+  it("restores session journals when the bundle has them (spec 163-session-journal, FR-016)", async () => {
+    const { store, restoreLog } = harness([
+      {
+        ok: true,
+        status: 200,
+        body: {
+          manifest: MANIFEST,
+          bundle: {
+            entities: [{ id: "e1" }],
+            sessionJournals: [{ id: "j1" }, { id: "j2" }],
+          },
+        },
+      },
+    ]);
+
+    await store.restoreIntoNewVault("b-1", "code-1");
+    expect(restoreLog).toContain("importSessionJournals:new-vault-id:2");
+  });
+
+  it("does not fail restoring an old backup with no sessionJournals field, or when importSessionJournals is unset", async () => {
+    const { store, restoreLog } = harness(
+      [
+        {
+          ok: true,
+          status: 200,
+          body: {
+            manifest: MANIFEST,
+            bundle: { entities: [{ id: "e1" }] },
+          },
+        },
+      ],
+      {},
+    );
+    (store as any).deps.restore.importSessionJournals = undefined;
+
+    const result = await store.restoreIntoNewVault("b-1", "code-1");
+    expect(result).not.toBeNull();
+    expect(restoreLog.some((l) => l.startsWith("importSessionJournals"))).toBe(
+      false,
+    );
   });
 
   it("creates no vault at all when the download fails", async () => {

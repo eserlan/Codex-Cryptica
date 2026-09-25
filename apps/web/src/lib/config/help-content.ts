@@ -761,6 +761,13 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
       "Keep your encounter tables, loot lists, and oracle decks in the vault and roll them mid-session. A table holds entries you can weight or assign explicit die ranges to. Create custom tables manually, paste external spreadsheets via the Import Wizard, or use 'Generate with AI' to build world-grounded random tables referencing your vault's NPCs, locations, and existing sub-tables. Candidate rows appear in an interactive staging review where you can edit, select, or discard entries before adding them. Write {source_name} inside an entry to pull a result from another table (e.g. {weather}), and click recognized entity chips in roll results to immediately inspect linked world lore. Decks work similarly by dealing cards without replacement. Roll or draw from the Oracle chat with /table and /deck commands.",
     icon: "icon-[lucide--dices]",
   },
+  "session-journal": {
+    id: "session-journal",
+    title: "Session Journal",
+    content:
+      "Keep a running record of what happens during play, separate from Quicknote/Scratchpad's transient working notes. Start a Session Journal from the Quicknote panel, add timestamped notes as the session unfolds, and optionally break a long session into named sections (chapters or scenes). End the session when you're done — the journal stays around afterward, and you can resume an unfinished one exactly where you left off next time. If cloud backup is enabled for this vault, journals are included in what gets backed up and restored, same as your entities, maps, and canvases.",
+    icon: "icon-[lucide--book-open]",
+  },
   "presentation-templates": {
     id: "presentation-templates",
     title: "Presentation Templates",
