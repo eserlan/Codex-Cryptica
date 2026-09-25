@@ -5,10 +5,15 @@
   import { renderMarkdown } from "$lib/utils/markdown";
   import DOMPurify from "dompurify";
   import { slide } from "svelte/transition";
+  import { onMount } from "svelte";
   import HelpHeader from "./HelpHeader.svelte";
   import GettingStartedChecklist from "./GettingStartedChecklist.svelte";
 
   let { isStandalone = false } = $props();
+
+  onMount(() => {
+    void helpStore.ensureIndex();
+  });
 
   const memo = new Map<string, Promise<string>>();
   const parseContent = (content: string) => {

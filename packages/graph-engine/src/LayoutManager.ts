@@ -61,7 +61,8 @@ const GOLDEN_ANGLE = Math.PI * (3 - Math.sqrt(5));
 // seed spiral immediately and lets fcose refine it in the worker, so a large
 // import shows a spread graph instead of an invisible origin clump for seconds.
 const SEED_FIRST_NODE_COUNT = 600;
-export const PENDING_LAYOUT_SELECTOR = "node[isPendingLayout], .pending-layout";
+export const PENDING_LAYOUT_SELECTOR =
+  "node[isPendingLayout], edge[isPendingLayout], .pending-layout";
 
 interface SerializedLayoutNode {
   data: { id: string; _w: number; _h: number; [key: string]: unknown };
@@ -399,9 +400,20 @@ export class LayoutManager {
     }
   }
 
+  private clearPendingLayout(): void {
+    const pendingNodes = this.cy.nodes(PENDING_LAYOUT_SELECTOR);
+    pendingNodes.removeData?.("isPendingLayout");
+    pendingNodes.removeClass?.("pending-layout");
+    if (typeof this.cy.edges === "function") {
+      const pendingEdges = this.cy.edges(PENDING_LAYOUT_SELECTOR);
+      pendingEdges.removeData?.("isPendingLayout");
+      pendingEdges.removeClass?.("pending-layout");
+    }
+  }
+
   private handleGuestInitialFit(options: LayoutOptions) {
     this.cy.nodes().removeData("isPendingLayout");
-    this.cy.nodes(PENDING_LAYOUT_SELECTOR).removeClass("pending-layout");
+    this.clearPendingLayout();
     this.cy.fit(this.cy.nodes(), 20);
     // On mobile the full-fit zoom is often unreadably small — enforce a minimum
     if (options.isMobile && this.cy.zoom() < 0.6) {
@@ -592,11 +604,7 @@ export class LayoutManager {
       });
     }
 
-    this.cy.batch(() => {
-      const pendingNodes = this.cy.nodes(PENDING_LAYOUT_SELECTOR);
-      pendingNodes.removeData?.("isPendingLayout");
-      pendingNodes.removeClass?.("pending-layout");
-    });
+    this.cy.batch(() => this.clearPendingLayout());
     if (unplacedNodes.nonempty()) this.persistPositions(unplacedNodes, options);
 
     if (options.viewportPolicy === "preserve") {
@@ -635,14 +643,49 @@ export class LayoutManager {
 
     // Serialize graph for the worker — copy only what the worker needs so the
     // postMessage payload stays small regardless of how much data edges carry.
-    const edges = Array.from(this.cy.edges()).map((e) => ({
-      data: { id: e.id(), source: e.source().id(), target: e.target().id() },
-    }));
+    const rawEdges = Array.from(this.cy.edges());
+    const rawEdgeCount = rawEdges.length;
+    const edgeSources = new Array<string>(rawEdgeCount);
+    const edgeTargets = new Array<string>(rawEdgeCount);
+    const edgeIds = new Array<string>(rawEdgeCount);
     const degrees = new Map<string, number>();
-    for (const edge of edges) {
-      degrees.set(edge.data.source, (degrees.get(edge.data.source) ?? 0) + 1);
-      degrees.set(edge.data.target, (degrees.get(edge.data.target) ?? 0) + 1);
+
+    for (let i = 0; i < rawEdgeCount; i++) {
+      const e = rawEdges[i];
+      const src = e.source().id();
+      const tgt = e.target().id();
+      edgeIds[i] = e.id();
+      edgeSources[i] = src;
+      edgeTargets[i] = tgt;
+      degrees.set(src, (degrees.get(src) ?? 0) + 1);
+      degrees.set(tgt, (degrees.get(tgt) ?? 0) + 1);
     }
+
+    const baseRepulsion = Number(baseOptions.nodeRepulsion) || 250000;
+    const baseEdgeLength = Number(baseOptions.idealEdgeLength) || 180;
+
+    const edges = new Array(rawEdgeCount);
+    for (let i = 0; i < rawEdgeCount; i++) {
+      const src = edgeSources[i];
+      const tgt = edgeTargets[i];
+      const srcDeg = degrees.get(src) ?? 0;
+      const tgtDeg = degrees.get(tgt) ?? 0;
+      const maxDeg = Math.max(srcDeg, tgtDeg);
+      const minDeg = Math.min(srcDeg, tgtDeg);
+      let idealLength = baseEdgeLength;
+      if (minDeg >= 5) idealLength = baseEdgeLength * 3.5;
+      else if (maxDeg >= 5) idealLength = baseEdgeLength * 0.8;
+
+      edges[i] = {
+        data: {
+          id: edgeIds[i],
+          source: src,
+          target: tgt,
+          _idealLength: idealLength,
+        },
+      };
+    }
+
     let maxDegree = 0;
     for (const degree of degrees.values()) {
       if (degree > maxDegree) {
@@ -654,14 +697,18 @@ export class LayoutManager {
       const p = n.position();
       const w = n.width();
       const h = n.height();
-      const layoutSize = getLayoutCollisionSize(w, h, degrees.get(n.id()) ?? 0);
+      const deg = degrees.get(n.id()) ?? 0;
+      const layoutSize = getLayoutCollisionSize(w, h, deg);
       const position = shouldRandomize
         ? seededLayoutPosition(n.id(), index, cyNodes.length, ar)
         : { x: p.x, y: p.y };
+      const nodeRepulsion =
+        baseRepulsion * (1 + Math.min(4.0, Math.sqrt(deg) * 0.55));
       return {
         data: {
           id: n.id(),
-          _degree: degrees.get(n.id()) ?? 0,
+          _degree: deg,
+          _repulsion: nodeRepulsion,
           _w: layoutSize.width,
           _h: layoutSize.height,
         },
@@ -713,12 +760,10 @@ export class LayoutManager {
     );
 
     if (!positions || this.cy.destroyed()) {
-      // Worker failed/timed out. Reveal any pending nodes so they don't remain invisible.
+      // Worker failed/timed out. Reveal any pending elements so they don't remain invisible.
       if (!this.cy.destroyed()) {
         this.cy.batch(() => {
-          const pendingNodes = this.cy.nodes(PENDING_LAYOUT_SELECTOR);
-          pendingNodes.removeData?.("isPendingLayout");
-          pendingNodes.removeClass?.("pending-layout");
+          this.clearPendingLayout();
         });
         if (seedFirst) {
           this.persistPositions(this.cy.nodes(), options, healed);
@@ -739,6 +784,7 @@ export class LayoutManager {
           node.removeClass("pending-layout");
         }
       }
+      this.clearPendingLayout();
     });
 
     options.onLayoutComputed?.(Math.round(performance.now() - layoutStartTime));

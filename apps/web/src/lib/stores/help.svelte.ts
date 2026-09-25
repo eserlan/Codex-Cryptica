@@ -53,11 +53,22 @@ export class HelpStore {
    * and reactive updates when searchQuery or isInitialized changes.
    */
   searchResults = $derived.by(() => {
-    // If not initialized or index doesn't exist, return all articles
-    if (!this.isInitialized || !this.index) return HELP_ARTICLES;
+    if (!this.isInitialized) return HELP_ARTICLES;
 
     const query = this.searchQuery;
     if (!query) return HELP_ARTICLES;
+
+    if (!this.index) {
+      void this.ensureIndex();
+      const q = query.toLowerCase();
+      return HELP_ARTICLES.filter(
+        (a) =>
+          a.id.toLowerCase().includes(q) ||
+          a.title.toLowerCase().includes(q) ||
+          a.content.toLowerCase().includes(q) ||
+          a.labels.some((l) => l.toLowerCase().includes(q)),
+      );
+    }
 
     const results = this.index.search(query);
     const allMatches = new Set<string>();
@@ -79,8 +90,9 @@ export class HelpStore {
     dismissedHints: [],
   });
 
-  private index: any;
+  private index = $state<any>(null);
   private indexedCount = 0;
+  private isBuildingIndex = false;
 
   constructor(
     onboarding: typeof onboardingStore = onboardingStore,
@@ -120,8 +132,22 @@ export class HelpStore {
       }
     }
 
-    await this.buildIndex();
     this.isInitialized = true;
+  }
+
+  /**
+   * Ensures the FlexSearch index is built, loading flexsearch dynamically.
+   */
+  async ensureIndex(force = false) {
+    if (this.index && !force && this.indexedCount === HELP_ARTICLES.length)
+      return;
+    if (this.isBuildingIndex) return;
+    this.isBuildingIndex = true;
+    try {
+      await this.buildIndex(force);
+    } finally {
+      this.isBuildingIndex = false;
+    }
   }
 
   /**
@@ -144,7 +170,7 @@ export class HelpStore {
       return;
 
     const FlexSearch = (await import("flexsearch")).default;
-    this.index = new FlexSearch.Document({
+    const doc = new FlexSearch.Document({
       tokenize: "forward",
       document: {
         id: "id",
@@ -153,8 +179,9 @@ export class HelpStore {
       },
     });
 
-    HELP_ARTICLES.forEach((article) => this.index.add(article));
+    HELP_ARTICLES.forEach((article) => doc.add(article as any));
     this.indexedCount = HELP_ARTICLES.length;
+    this.index = doc;
   }
 
   private save() {
@@ -258,6 +285,9 @@ export class HelpStore {
 
   setSearchQuery(query: string) {
     this.searchQuery = query;
+    if (query) {
+      void this.ensureIndex();
+    }
   }
 
   toggleArticle(id: string) {
@@ -280,6 +310,7 @@ export class HelpStore {
   }
 
   openHelpToArticle(id: string) {
+    void this.ensureIndex();
     if (this.selectArticle(id)) {
       this.modalUIStore.openSettings("help");
     }

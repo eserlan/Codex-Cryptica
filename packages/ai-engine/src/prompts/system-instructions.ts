@@ -1,4 +1,4 @@
-import { BANNED_NAMES } from "generator-engine";
+import { BANNED_NAMES } from "generator-engine/naming-policy";
 
 export function buildSystemInstruction(
   demoMode: boolean,

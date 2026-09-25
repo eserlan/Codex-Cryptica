@@ -157,6 +157,23 @@ export class GraphTransformer {
     }
     const discardSavedCoords = isLayoutCollinear(savedPositions);
 
+    const placedNodeIds = new Set<string>();
+    if (!discardSavedCoords) {
+      for (let i = 0; i < count; i++) {
+        const id = entities[i]?.id;
+        const c = entities[i]?.metadata?.coordinates;
+        if (
+          id &&
+          c?.x != null &&
+          c?.y != null &&
+          Number.isFinite(c.x) &&
+          Number.isFinite(c.y)
+        ) {
+          placedNodeIds.add(id);
+        }
+      }
+    }
+
     // phyllotaxis spiral distribution for unplaced nodes
     const GOLDEN_ANGLE = Math.PI * (3 - Math.sqrt(5));
     // Initial radius provides a decent base spread even for small graphs
@@ -276,16 +293,25 @@ export class GraphTransformer {
           // Construct a unique edge ID: source-target-type
           const edgeId = `${entity.id}-${conn.target}-${conn.type}`;
 
+          const isEdgePending =
+            !placedNodeIds.has(entity.id) || !placedNodeIds.has(conn.target);
+
+          const edgeData: GraphEdge["data"] & { isPendingLayout?: boolean } = {
+            id: edgeId,
+            source: entity.id,
+            target: conn.target,
+            label: conn.label || conn.type || "",
+            connectionType: conn.type,
+            strength: conn.strength,
+          };
+          if (isEdgePending) {
+            edgeData.isPendingLayout = true;
+          }
+
           elements.push({
             group: "edges",
-            data: {
-              id: edgeId,
-              source: entity.id,
-              target: conn.target,
-              label: conn.label || conn.type || "",
-              connectionType: conn.type,
-              strength: conn.strength,
-            },
+            data: edgeData,
+            classes: isEdgePending ? "pending-layout" : undefined,
           });
           renderedEdgeCount++;
         }
@@ -748,7 +774,7 @@ export const getGraphStyle = (
   // (category colors, revealed borders, and focus-mode opacities)
   const selectionStyles: any[] = [
     {
-      selector: "node[isPendingLayout]",
+      selector: "node[isPendingLayout], edge[isPendingLayout]",
       style: {
         opacity: 0,
         events: "no",

@@ -120,13 +120,63 @@ While initial page load and graph rendering are fast (DOMContentLoaded: 201ms, c
 3. **Defensive Worker Error Recovery:**
    - In `solveAndFit`, if the layout worker errors or times out, safely clear `isPendingLayout` and `pending-layout` so nodes are never left permanently invisible.
 
+### Finding 5: Eager Article, Generator, and Modal Loading on Startup (Priority 1.8 - Network & Boot Optimization)
+
+#### Root Cause
+
+When profiling network traffic on initial app boot before the graph renders, the browser was requesting dozens of unrelated modules:
+
+1. **Blog Markdown Glob in Loader:** In `apps/web/src/lib/content/loader.ts`, `import.meta.glob("./blog/*.md", { eager: true })` ran eagerly at top-level. Merely importing helper types from `loader.ts` caused Vite in dev mode to request every blog post markdown file (`?raw`) immediately on startup.
+2. **Help Content Glob Execution:** In `apps/web/src/lib/config/help-content.ts`, `export const HELP_ARTICLES = loadHelpArticles()` evaluated on import, and `helpStore.init()` eagerly triggered `await this.buildIndex()`, loading all help markdown files and building a search index before the user ever opened help.
+3. **Barrel Import in `generator-engine`:** In `packages/ai-engine`, prompts imported `BANNED_NAMES` from the root barrel `generator-engine`. Because the barrel exported all 35+ generator configurations, Vite eagerly fetched dozens of generator trait, name, and config files on initial app load.
+4. **Modal Eager Loading in `GlobalModalProvider.svelte`:** Modals like `DiceModal`, `CanvasSelectionModal`, and `GuestChatModal` used `{#await loadModal(() => import(...))}` without checking if the modal was actually open (`{#if ...}`), triggering dynamic imports immediately on component mount.
+
+#### Remediation Plan
+
+1. **Purge Eager Blog Glob from `loader.ts`:**
+   - Remove eager glob and dead blog functions from `loader.ts` (blogs already have a dedicated lazy loader in `apps/web/src/lib/content/blog-content.ts`).
+2. **Lazy Proxy for Help Content & Demand Indexing:**
+   - Wrap `HELP_ARTICLES` in a lazy Proxy so reading the array only executes `loadHelpArticles()` when accessed.
+   - Defer `helpStore` search indexing until a query is entered, an article is selected, or `HelpTab` mounts.
+3. **Subpath Export for Banned Names (`naming-policy`):**
+   - Extract `BANNED_NAMES` and `NAME_BAN_PROMPT` into `packages/generator-engine/src/naming-policy.ts` with explicit package export `"./naming-policy"`.
+   - Update `ai-engine` imports to point to `generator-engine/naming-policy`, preventing Vite from loading the 35+ generator modules into the browser bundle.
+4. **Guard Modals in `GlobalModalProvider.svelte`:**
+   - Wrap lazy modal imports with conditional checks (`{#if modalUIStore.showDiceModal}`, `{#if modalUIStore.showCanvasSelector}`, `{#if guestChatStore.showChatModal}`).
+
+### Finding 6: Unplaced Edges Rendered as Spiderweb Hairball During Layout Solve (Priority 1.6 - Visual Critical)
+
+#### Root Cause
+
+During initial reload of a vault with unplaced nodes (e.g. 498 / 500 nodes without saved coordinates):
+
+1. In `transformer.ts`, unplaced nodes received golden-angle spiral seed positions and were marked `isPendingLayout = true` with `classes: "pending-layout"`, styling them with `opacity: 0; events: "no"`.
+2. However, **edges connected to those unplaced nodes were created without `isPendingLayout` or `.pending-layout`**.
+3. In Cytoscape, edges do not inherit opacity from connected nodes; they defaulted to `opacity: 0.6`.
+4. As a result, during the 12-15 seconds while the headless Cytoscape force layout worker was solving positions in the background, Cytoscape rendered all 1,158 visible bezier curves and arrowheads between the unplaced dummy spiral coordinates, producing a dense spherical "spiderweb hairball" of criss-crossing lines pointing at invisible nodes.
+5. In addition, when new edges were synced in `useGraphSync.ts`, their endpoints were not checked for pending state, and `patchElementData` stripped `isPendingLayout` if present on existing elements.
+
+#### Remediation Plan
+
+1. **Tag Edges with Pending Layout in `transformer.ts`:**
+   - Pre-collect `placedNodeIds` (nodes with finite saved coordinates).
+   - If either endpoint of a connection is not in `placedNodeIds`, mark the edge with `isPendingLayout = true` and `classes: "pending-layout"`.
+2. **Hide Pending Edges in Stylesheet:**
+   - Add `node[isPendingLayout], edge[isPendingLayout]` and `.pending-layout` with `{ opacity: 0; events: "no" }`.
+3. **Unified LayoutManager Cleanup:**
+   - Consolidate layout clearing into `clearPendingLayout()` which clears `isPendingLayout` and `pending-layout` from both nodes and edges upon solve completion, fit-only, guest fit, or worker error/timeout fallback.
+4. **Preserve Pending State in `useGraphSync.ts`:**
+   - Skip `isPendingLayout` in `patchElementData` removal loop so sync passes do not strip runtime layout pending flags.
+
 ---
 
 ## 4. Implementation Log & Fix Tracking
 
-| Priority | Item                                          | Component                            | Status          | Verification                                                                                                                 |
-| :------- | :-------------------------------------------- | :----------------------------------- | :-------------- | :--------------------------------------------------------------------------------------------------------------------------- |
-| **P1**   | Search Index Persistence Coalescing           | `search-index-persistence.ts`        | ✅ **Resolved** | 14/14 unit tests pass; verified in dev server: 40 redundant exports -> 0 on reload, exactly 1 on manual/subsequent save.     |
-| **P1.5** | Graph Reload Layout Bypass & Pending Selector | `LayoutManager.ts`, `transformer.ts` | ✅ **Resolved** | 49/49 graph-engine tests pass; live DevTools validation on 500-node graph confirms all nodes visible and beautifully placed. |
-| **P2**   | Image CORS Fast-Fail / Fallback Cache         | `ImageManager` / `GraphImageManager` | ⏳ Pending      | Network latency benchmark                                                                                                    |
-| **P3**   | Cache Preload Deduping                        | `CacheService`                       | ⏳ Pending      | Trace confirmation                                                                                                           |
+| Priority | Item                                           | Component                                                                       | Status          | Verification                                                                                                                                                            |
+| :------- | :--------------------------------------------- | :------------------------------------------------------------------------------ | :-------------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **P1**   | Search Index Persistence Coalescing            | `search-index-persistence.ts`                                                   | ✅ **Resolved** | 14/14 unit tests pass; verified in dev server: 40 redundant exports -> 0 on reload, exactly 1 on manual/subsequent save.                                                |
+| **P1.5** | Graph Reload Layout Bypass & Pending Selector  | `LayoutManager.ts`, `transformer.ts`                                            | ✅ **Resolved** | 49/49 graph-engine tests pass; live DevTools validation on 500-node graph confirms all nodes visible and beautifully placed.                                            |
+| **P1.6** | Unplaced Edges Spiderweb Hairball During Solve | `transformer.ts`, `LayoutManager.ts`, `useGraphSync.ts`                         | ✅ **Resolved** | 23/23 transformer tests, 49/49 layout tests pass; live Chrome DevTools reload screenshot confirms clean "INITIALIZING..." screen with 0 unplaced lines before reveal.   |
+| **P1.8** | Startup Module/Article Eager Load Pruning      | `loader.ts`, `help.svelte.ts`, `generator-engine`, `GlobalModalProvider.svelte` | ✅ **Resolved** | Live Chrome DevTools network audit: 0 blog markdown, 0 help markdown, 0 generator configs requested on boot. All changed tests, lint, and typecheck pass with 0 errors. |
+| **P2**   | Image CORS Fast-Fail / Fallback Cache          | `ImageManager` / `GraphImageManager`                                            | ⏳ Pending      | Network latency benchmark                                                                                                                                               |
+| **P3**   | Cache Preload Deduping                         | `CacheService`                                                                  | ⏳ Pending      | Trace confirmation                                                                                                                                                      |

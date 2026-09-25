@@ -293,6 +293,7 @@ function patchElementData(
     if (k !== "id" && !Object.hasOwn(newData, k)) {
       // Do not strip properties managed by other components.
       if (RUNTIME_OWNED_KEYS.has(k)) continue;
+      if (k === "isPendingLayout") continue;
       if (k === "weight" && renderedWeightsManaged) continue;
 
       node.removeData(k);
