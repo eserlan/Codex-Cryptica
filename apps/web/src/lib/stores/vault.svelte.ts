@@ -5,6 +5,10 @@ import { canvasRegistry } from "./canvas-registry.svelte";
 import { themeStore } from "./theme.svelte";
 import { debugStore } from "./debug.svelte";
 import type { LocalEntity, BatchCreateInput } from "./vault/types";
+import {
+  linksNewExternalImage,
+  localizeExternalImage,
+} from "./vault/external-image-localizer";
 import type { Entity, GuestChatTranscript } from "schema";
 import type { BulkMutationResult } from "./vault/bulk-results";
 import {
@@ -76,6 +80,8 @@ export class VaultStore {
   selectedEntityId = $state<string | null>(null);
   demoVaultName = $state<string | null>(null);
   migrationRequired = $state(false);
+  /** Serialises copies of newly linked external images; see updateEntity. */
+  private imageLocalization: Promise<unknown> = Promise.resolve();
   defaultVisibility = $state<"visible" | "hidden">("visible");
 
   // Callbacks
@@ -647,7 +653,34 @@ export class VaultStore {
     return this.entityStore.createEntity(type, title, initialData);
   }
   updateEntity(id: string, updates: Partial<LocalEntity>) {
-    return this.entityStore.updateEntity(id, updates);
+    const linkedImage = sessionModeStore.isGuestMode
+      ? null
+      : linksNewExternalImage(this.entities[id]?.image, updates);
+    const result = this.entityStore.updateEntity(id, updates);
+    if (linkedImage) {
+      // One at a time: a re-import can relink hundreds of images, and each
+      // copy converts to WebP on the main thread.
+      this.imageLocalization = this.imageLocalization
+        .then(() => result)
+        .then(() =>
+          localizeExternalImage(
+            {
+              getEntity: (entityId) => this.entities[entityId],
+              importExternalImage: (url, entityId) =>
+                this.assetStore.importExternalImage(url, entityId),
+              updateEntity: (entityId, patch) =>
+                this.entityStore.updateEntity(entityId, patch),
+            },
+            id,
+            linkedImage,
+          ),
+        )
+        // A failed save or copy must not stall the images queued after it.
+        .catch((error) =>
+          console.warn("[Vault] Could not copy linked image", error),
+        );
+    }
+    return result;
   }
   batchUpdate(updates: Record<string, Partial<LocalEntity>>) {
     return this.entityStore.batchUpdate(updates);
@@ -774,6 +807,17 @@ export class VaultStore {
   }
   releaseImageUrl(path: string) {
     this.assetStore.releaseImageUrl(path);
+  }
+  /** A small version of an image for dense views such as the graph. */
+  resolveThumbnailUrl(path: string): Promise<string> {
+    if (sessionModeStore.isGuestMode) {
+      return Promise.resolve(guestVault.resolveImageUrl(path) || "");
+    }
+    return this.assetStore.resolveThumbnailUrl(path);
+  }
+  releaseThumbnailUrl(path: string) {
+    if (sessionModeStore.isGuestMode) return;
+    this.assetStore.releaseThumbnailUrl(path);
   }
   saveImageToVault(blob: Blob | File, entityId: string, name?: string) {
     return this.assetStore.saveImageToVault(blob, entityId, name);
