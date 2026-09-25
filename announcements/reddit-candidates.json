@@ -1,16 +1,6 @@
 {
-  "updated_at": 1790363189,
+  "updated_at": 1790364445,
   "candidates": [
-    {
-      "id": "reddit-36168046733-a-step-by-step-session-prep-workflow-i-c",
-      "title": "A step-by-step session prep workflow I can reuse across systems",
-      "body": "I was either over-writing five pages no one needed or forgetting to prep the next hook, so the session ended flat and I scrambled the week after.\n\nI put together a step-by-step prep guide that works the same whether you run D&D, CoC or something else. It is checklists over prose, so you can adapt it to your system.\n\nIt walks through:\n- picking a hook that ties to an existing thread or NPC\n- sketching scenes with an entry, tension and an out\n- prepping only the NPCs and locations you will actually need\n- a short follow-through pass to seed the next session before you close the note\n\nBecause it is system agnostic you still plug in your own stats and DCs. I did not want it to guess those for you.\n\nWhat part of prep do you skip most often and then feel at the table?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/announcements/release-36168046733-1.png)",
-      "url": "https://codexcryptica.com/answers/how-do-i-prepare-an-rpg-session-step-by-step",
-      "image_url": "https://assets.codexcryptica.com/announcements/release-36168046733-1.png",
-      "source_id": "36168046733",
-      "status": "approved",
-      "created_at": 1790361476
-    },
     {
       "id": "reddit-36177007535-pacing-a-one-shot-to-land-on-time",
       "title": "Pacing a one-shot to land on time",
@@ -20,6 +10,16 @@
       "source_id": "36177007535",
       "status": "approved",
       "created_at": 1790363189
+    },
+    {
+      "id": "reddit-36168046733-tables-now-parse-4d6kh3-2-and-other-keep",
+      "title": "Tables now parse 4d6kh3+2 and other keep/modifier rolls",
+      "body": "I kept building chargen and loot tables that needed 4d6 keep highest 3 or a flat +2, and tables only did simple single-die rolls. I had to roll outside and copy it in.\n\nI added multi-die with keep and modifiers directly in tables. You can write the formula in the table and it rolls there.\n\nNow supports:\n- 4d6kh3, 4d6kl3 and similar keep-highest / keep-lowest\n- modifiers like +2, -1 on the same formula\n- mixing it with existing table syntax so old tables still work\n- faster rolls for stats, loot drops and homebrew without leaving the page\n\nThe syntax is compact, so a typo like kh33 will just fail to parse. I will need to make the error message clearer next.\n\nWhat formula do you use most that did not roll in tables before, chargen stats, loot, or something else?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/screenshots/feature-build.jpg)",
+      "url": "",
+      "image_url": "https://assets.codexcryptica.com/screenshots/feature-build.jpg",
+      "source_id": "36168046733",
+      "status": "approved",
+      "created_at": 1790364445
     }
   ]
 }
