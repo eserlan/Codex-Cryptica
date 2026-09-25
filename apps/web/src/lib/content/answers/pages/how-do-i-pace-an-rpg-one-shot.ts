@@ -14,7 +14,7 @@ export const howDoIPaceAnRpgOneShot: AnswerConfigInput = {
       heading: "Budget backward from table time, not fictional time",
       paragraphs: [
         "A four-hour scheduled session rarely contains four hours of play. Setting up character sheets, answering rules queries, ordering food, and taking mid-session breaks routinely consume sixty to ninety minutes. When Game Masters design a scenario for four unbroken hours of action, the table reaches the three-hour mark only halfway through the dungeon, forcing a rushed boss fight or an unfinished cliffhanger.",
-        "Effective pacing treats table time as an unforgiving constraint. Begin by establishing your non-negotiable end time. Subtract twenty minutes for late arrivals and rules refreshers, ten minutes for a mid-session break, forty minutes for the final confrontation, and ten minutes for resolution and epilogue. The remaining window represents your actual playable budget, which must accommodate only three to five core decisions.",
+        "Effective pacing treats table time as an unforgiving constraint. Begin by establishing your non-negotiable end time. For a four-hour booking, allow sixty to ninety minutes for arrivals, rules refreshers, breaks, and other overhead; that leaves 150 to 180 minutes of play. Reserve forty to sixty of those minutes for the climax and about ten for the epilogue. The opening and middle must fit in the time left, usually 80 to 130 minutes, and accommodate only three to five core decisions.",
       ],
     },
     {
@@ -32,20 +32,20 @@ export const howDoIPaceAnRpgOneShot: AnswerConfigInput = {
           text: "Players explore their initial lead, gather preliminary resources, and encounter early opposition. This phase establishes the rules baseline and gives every character a moment to demonstrate competence.",
         },
         {
-          term: "Beat 3: The halfway checkpoint (Minute 90)",
-          text: "By the middle of the session, the party must understand the true nature of the central threat. If the players are still debating who the culprit is or where the vault lies at the 90-minute mark, supply an unambiguous clue immediately.",
+          term: "Beat 3: The halfway checkpoint (75 to 90 minutes of play)",
+          text: "Set this checkpoint halfway through your usable play time. In a four-hour booking with 60 to 90 minutes of overhead, that is about 75 to 90 minutes after play begins. The party should understand the central threat; if they are still debating who the culprit is or where the vault lies, bring an unambiguous clue into their current scene.",
         },
         {
-          term: "Beat 4: The elastic middle (Minutes 90 to 140)",
+          term: "Beat 4: The elastic middle (after the checkpoint to about two-thirds of play time)",
           text: "The accordion phase of the adventure. Prepare secondary encounters, environmental hazards, or rival skirmishes that can be expanded if the group moves fast, or bypassed completely if table time is tight.",
         },
         {
-          term: "Beat 5: The point of no return (Minute 150)",
+          term: "Beat 5: The point of no return (about two-thirds of play time)",
           text: "Force an irreversible decision that propels the party directly into the climax: entering the inner sanctum, sounding the alarm, initiating the heist getaway, or sealing the escape hatch.",
         },
         {
-          term: "Beat 6: The protected climax and aftermath (Minutes 150 to 210)",
-          text: "Never let the climax begin with only fifteen minutes remaining. Reserve forty to sixty minutes for dynamic set-piece encounters, tactical maneuvers, moral resolutions, and a calm five-minute epilogue.",
+          term: "Beat 6: The protected climax and aftermath (final 50 to 70 minutes)",
+          text: "Begin the climax with enough time for a forty-to-sixty-minute finale and about ten minutes for resolution and epilogue. If the clock is too late, cut or shorten an optional scene before starting the climax.",
         },
       ],
     },
@@ -95,26 +95,27 @@ export const howDoIPaceAnRpgOneShot: AnswerConfigInput = {
     },
     {
       kind: "example",
-      heading: "Worked table budgets: Four-hour sessions across three styles",
+      heading:
+        "Worked table budgets: Three hours of play in a four-hour booking",
       paragraphs: [
-        "Compare how the same 240-minute table window is budgeted across different gameplay styles to protect the dramatic climax.",
+        "These examples allow one hour for arrivals, setup, rules questions, and a break, leaving 180 minutes of play. Adjust the overhead allowance to match your group, then move the beats while keeping the checkpoint near the midpoint and the climax in the final quarter.",
       ],
       items: [
         {
           term: "Investigative Horror (e.g. Call of Cthulhu)",
-          text: "0:00 to 0:25: Introductions, character ties, and immediate crime scene. 0:25 to 1:30: Three investigation locations with redundant clues. 1:30 (Checkpoint): The horrifying implication is revealed. 1:30 to 2:15: Elastic middle (cultist ambush or archive research; cuttable if slow). 2:15 to 2:30: Preparation and resource commitment. 2:30 to 3:30: Climax ritual confrontation or desperate escape. 3:30 to 4:00: Sanity fallout, epilogue, and debrief.",
+          text: "0:00 to 0:20: Introductions, character ties, and immediate crime scene. 0:20 to 1:20: Investigation locations with redundant clues. 1:30 (Checkpoint): The horrifying implication is revealed. 1:30 to 2:00: Elastic middle (cultist ambush or archive research; cuttable if slow). 2:00 to 2:10: Preparation and resource commitment. 2:10 to 2:50: Climax ritual confrontation or desperate escape. 2:50 to 3:00: Sanity fallout and epilogue.",
         },
         {
           term: "Action Infiltration (e.g. Blades in the Dark or Cyberpunk)",
-          text: "0:00 to 0:30: Briefing, gear selection, and engagement roll. 0:30 to 1:20: Infiltration and perimeter security breach. 1:20 (Checkpoint): Objective reached, but an unexpected complication arises. 1:20 to 2:10: Elastic middle (alarm response or rival team arrival). 2:10 to 3:20: High-velocity escape set-piece with environmental hazards. 3:20 to 4:00: Payoff, heat tracking, and wrap-up.",
+          text: "0:00 to 0:20: Briefing, gear selection, and engagement roll. 0:20 to 1:20: Infiltration and perimeter security breach. 1:30 (Checkpoint): Objective reached, but an unexpected complication arises. 1:30 to 2:00: Elastic middle (alarm response or rival team arrival). 2:00 to 2:50: High-velocity escape set-piece with environmental hazards. 2:50 to 3:00: Payoff and wrap-up.",
         },
         {
           term: "Tactical Fantasy Dungeon (e.g. D&D or Shadowdark)",
-          text: "0:00 to 0:25: Starting at the dungeon portal with pre-rolled characters. 0:25 to 1:15: Entrance chamber puzzle and light skirmish (Combat 1). 1:15 to 2:00: Trapped crossroads and optional treasure vault (Combat 2, cuttable). 2:00 (Checkpoint): Boss chamber entrance unsealed. 2:00 to 3:20: Boss encounter with environmental terrain and phases (Combat 3). 3:20 to 4:00: Looting, survival tally, and aftermath.",
+          text: "0:00 to 0:15: Start at the dungeon portal with pre-rolled characters. 0:15 to 1:00: Entrance puzzle and light skirmish (Combat 1). 1:00 to 1:25: Trapped crossroads and optional treasure vault (Combat 2, cuttable). 1:30 (Checkpoint): The route to the boss is clear. 1:30 to 2:00: Reach the boss chamber or cut directly there if behind schedule. 2:00 to 2:50: Boss encounter with environmental terrain and phases (Combat 3). 2:50 to 3:00: Loot and aftermath.",
         },
         {
           term: "Why it works",
-          text: "Each archetype features an explicit time checkpoint and an elastic encounter in the second hour. Regardless of how long players deliberate during early scenes, the Game Master knows the exact minute when the table must pivot toward the climax.",
+          text: "Each example reaches its checkpoint near the midpoint, keeps one optional scene that can be cut, and protects the final hour for the climax and wrap-up. If overhead differs, use the same proportions against the play time you actually have.",
         },
       ],
     },
@@ -125,7 +126,7 @@ export const howDoIPaceAnRpgOneShot: AnswerConfigInput = {
         "Review these table-time checks before welcoming players to the session:",
       items: [
         "Have you agreed upon a strict hard stop when players must pack up and leave?",
-        "Did you subtract 60 to 90 minutes of administrative overhead from your total scheduled time?",
+        "Did you subtract 60 to 90 minutes of overhead from the scheduled time before assigning scene beats?",
         "Does the session open with the party already assembled at the crisis point?",
         "Have you scheduled a mid-session checkpoint where the core dilemma must be clear?",
         "Which specific encounter is marked as elastic to be expanded or dropped on the fly?",

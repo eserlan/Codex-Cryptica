@@ -596,6 +596,45 @@ describe("published answers", () => {
     );
   });
 
+  it("keeps the one-shot pacing examples within three hours and in discovery indexes", () => {
+    const pacingAnswer = answers["how-do-i-pace-an-rpg-one-shot"];
+    const budgets = pacingAnswer.sections.find(
+      (section) =>
+        section.kind === "example" &&
+        section.heading ===
+          "Worked table budgets: Three hours of play in a four-hour booking",
+    );
+
+    expect(budgets?.kind).toBe("example");
+    if (!budgets || budgets.kind !== "example") return;
+
+    const schedules = (budgets.items ?? []).filter(
+      (item) => item.term !== "Why it works",
+    );
+    expect(schedules).toHaveLength(3);
+    for (const schedule of schedules) {
+      expect(schedule.text).toContain("1:30 (Checkpoint)");
+      expect(schedule.text).toContain("2:50 to 3:00:");
+    }
+
+    const route = "/answers/how-do-i-pace-an-rpg-one-shot";
+    const staticLlms = readFileSync(
+      resolve(process.cwd(), "static/llms-full.txt"),
+      "utf8",
+    );
+    const rootLlms = readFileSync(
+      resolve(process.cwd(), "../../llms-full.txt"),
+      "utf8",
+    );
+    const sitemap = readFileSync(
+      resolve(process.cwd(), "static/sitemap.xml"),
+      "utf8",
+    );
+    expect(staticLlms).toContain(route);
+    expect(rootLlms).toContain(route);
+    expect(sitemap).toContain(route);
+  });
+
   it("separates table problems from fictional party-cohesion problems", () => {
     const partyCohesionAnswer =
       answers["how-do-i-get-my-rpg-party-to-work-together"];
