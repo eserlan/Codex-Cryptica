@@ -492,9 +492,9 @@ export class LayoutManager {
     const cyNodes = this.cy.nodes();
 
     // Detect full-clump (all nodes at origin) — force randomize so fcose can spread them.
-    // Also detect unplaced nodes (nodes marked with isPendingLayout / .pending-layout or at origin).
+    // Also detect unplaced nodes (nodes marked with isPendingLayout or at origin).
     // Both checks are kept intentionally:
-    //   - pending layout catches fresh/imported vaults where transformer sets the data/class on nodes
+    //   - pending data catches fresh/imported vaults with no saved coordinates
     //   - nodesAtOrigin catches legacy vaults whose coords were saved as (0,0) — those nodes
     //     take the hasValidCoords path in transformer.ts and land at origin WITHOUT the pending flag
     const positions: { x: number; y: number }[] = [];
@@ -505,15 +505,10 @@ export class LayoutManager {
       positions.push(p);
       const isOrigin = !p || (p.x === 0 && p.y === 0);
       if (isOrigin) nodesAtOrigin++;
-      if (
-        isOrigin ||
-        Boolean(n.data?.("isPendingLayout")) ||
-        Boolean(n.hasClass?.("pending-layout"))
-      ) {
+      if (isOrigin || Boolean(n.data?.("isPendingLayout"))) {
         unplacedCount++;
       }
     });
-    const pendingCount = this.cy.nodes(PENDING_LAYOUT_SELECTOR).length;
 
     // Heal a degenerate "diagonal slash" — saved coords collapsed onto a line.
     // This is checked on *every* force pass, not just the initial one: a vault
@@ -523,9 +518,6 @@ export class LayoutManager {
     // re-solve whenever we detect collinearity is safe across all paths.
     const isDegenerateSlash = isLayoutCollinear(positions);
 
-    const isMajorityPending =
-      pendingCount === cyNodes.length ||
-      (pendingCount > 0 && pendingCount >= Math.ceil(cyNodes.length * 0.5));
     const isMajorityAtOrigin =
       nodesAtOrigin === cyNodes.length ||
       (nodesAtOrigin > 0 && nodesAtOrigin >= Math.ceil(cyNodes.length * 0.5));
@@ -536,7 +528,7 @@ export class LayoutManager {
     const needsInitialSolve =
       isInitial &&
       cyNodes.length > 1 &&
-      (isMajorityPending || isMajorityAtOrigin || isMajorityUnplaced);
+      (isMajorityAtOrigin || isMajorityUnplaced);
 
     if (!randomize && (needsInitialSolve || isDegenerateSlash)) {
       randomize = true;
@@ -562,11 +554,11 @@ export class LayoutManager {
   private fitOnly(options: LayoutOptions): void {
     this.cy.resize();
 
-    const pendingNodes = this.cy.nodes(PENDING_LAYOUT_SELECTOR);
-    if (pendingNodes.nonempty()) {
+    const unplacedNodes = this.cy.nodes("node[isPendingLayout]");
+    if (unplacedNodes.nonempty()) {
       // Snap new nodes to sensible positions before revealing them so the
       // viewport doesn't jump to include their far-away spiral seed positions.
-      const placedNodes = this.cy.nodes().not(pendingNodes);
+      const placedNodes = this.cy.nodes().not(unplacedNodes);
       let fallbackX = 0;
       let fallbackY = 0;
       if (placedNodes.nonempty()) {
@@ -579,8 +571,8 @@ export class LayoutManager {
         fallbackY /= placedNodes.length;
       }
 
-      pendingNodes.forEach((node) => {
-        const neighbors = node.neighborhood().nodes().not(pendingNodes);
+      unplacedNodes.forEach((node) => {
+        const neighbors = node.neighborhood().nodes().not(unplacedNodes);
         if (neighbors.nonempty()) {
           let sumX = 0;
           let sumY = 0;
@@ -600,13 +592,12 @@ export class LayoutManager {
       });
     }
 
-    if (pendingNodes.nonempty()) {
-      this.cy.batch(() => {
-        pendingNodes.removeData("isPendingLayout");
-        pendingNodes.removeClass("pending-layout");
-      });
-      this.persistPositions(pendingNodes, options);
-    }
+    this.cy.batch(() => {
+      const pendingNodes = this.cy.nodes(PENDING_LAYOUT_SELECTOR);
+      pendingNodes.removeData?.("isPendingLayout");
+      pendingNodes.removeClass?.("pending-layout");
+    });
+    if (unplacedNodes.nonempty()) this.persistPositions(unplacedNodes, options);
 
     if (options.viewportPolicy === "preserve") {
       // Halt any in-flight fit animation from a previous layout pass —

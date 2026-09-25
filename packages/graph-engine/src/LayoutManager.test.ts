@@ -10,6 +10,7 @@ import {
   type LayoutRequest,
 } from "./LayoutManager";
 import type { Core } from "cytoscape";
+import cytoscape from "cytoscape";
 
 const isPendingSelector = (selector?: string) =>
   selector === ".pending-layout" ||
@@ -943,11 +944,16 @@ describe("LayoutManager", () => {
   // ─── needsSolve / unplaced-node checks ─────────────────────────────────────
 
   it("runs a real force layout on initial load when every node is unplaced", async () => {
-    // All nodes have .pending-layout (pendingCount === total) — fresh vault
+    // All nodes lack saved coordinates and carry the placement data flag.
     const pendingNodes = makeNodes([
       { x: 10, y: 20 },
       { x: 30, y: 40 },
     ]);
+    pendingNodes.forEach((node) =>
+      node.data.mockImplementation((key?: string) =>
+        key === "isPendingLayout" ? true : { isPendingLayout: true },
+      ),
+    );
     (pendingNodes as any).length = 2;
     (pendingNodes as any).removeData = vi.fn();
     (pendingNodes as any).removeClass = vi.fn();
@@ -1122,6 +1128,101 @@ describe("LayoutManager", () => {
     expect(mockCy.animate).toHaveBeenCalled();
   });
 
+  it("fits newly added nodes with saved positions without solving or moving them", async () => {
+    const positions = [
+      { x: 100, y: 200 },
+      { x: 340, y: 180 },
+      { x: 180, y: 430 },
+    ];
+    const cy = cytoscape({
+      headless: true,
+      layout: { name: "preset" },
+      elements: positions.map((position, index) => ({
+        group: "nodes" as const,
+        data: { id: String(index) },
+        position,
+        classes: "pending-layout",
+      })),
+    });
+
+    try {
+      await new LayoutManager(cy).apply(
+        { reason: "Initial Load", isInitial: true },
+        {
+          timelineMode: false,
+          timelineAxis: "x",
+          timelineScale: 1,
+          orbitMode: false,
+          centralNodeId: null,
+          stableLayout: true,
+          isGuest: false,
+          viewportPolicy: "preserve",
+        },
+      );
+
+      expect(capturedPostMessage).toBeNull();
+      expect(cy.nodes().map((node) => node.position())).toEqual(positions);
+      expect(cy.nodes(".pending-layout")).toHaveLength(0);
+    } finally {
+      cy.destroy();
+    }
+  });
+
+  it("reveals an unplaced node on the fit path without moving saved nodes", async () => {
+    const cy = cytoscape({
+      headless: true,
+      layout: { name: "preset" },
+      elements: [
+        {
+          data: { id: "saved-a" },
+          position: { x: 100, y: 200 },
+          classes: "pending-layout",
+        },
+        {
+          data: { id: "saved-b" },
+          position: { x: 340, y: 180 },
+          classes: "pending-layout",
+        },
+        {
+          data: { id: "new", isPendingLayout: true },
+          position: { x: 1000, y: 1000 },
+          classes: "pending-layout",
+        },
+        { data: { id: "edge", source: "saved-a", target: "new" } },
+      ],
+    });
+    const onPositionsUpdated = vi.fn();
+
+    try {
+      await new LayoutManager(cy).apply(
+        { reason: "Elements Update", isInitial: false, hasNewNodes: true },
+        {
+          timelineMode: false,
+          timelineAxis: "x",
+          timelineScale: 1,
+          orbitMode: false,
+          centralNodeId: null,
+          stableLayout: true,
+          isGuest: false,
+          viewportPolicy: "preserve",
+          onPositionsUpdated,
+        },
+      );
+
+      expect(capturedPostMessage).toBeNull();
+      expect(cy.$id("saved-a").position()).toEqual({ x: 100, y: 200 });
+      expect(cy.$id("saved-b").position()).toEqual({ x: 340, y: 180 });
+      expect(cy.$id("new").position()).toEqual({ x: 100, y: 200 });
+      expect(cy.nodes(".pending-layout")).toHaveLength(0);
+      expect(onPositionsUpdated).toHaveBeenCalledWith(
+        expect.objectContaining({ new: expect.any(Object) }),
+        expect.anything(),
+      );
+    } finally {
+      cy.destroy();
+    }
+  });
+
   it("runs a real force layout when all nodes are at origin with valid coords (no pending-layout class)", async () => {
     // Legacy vault: all nodes saved at (0,0) — hasValidCoords path in transformer
     // means they get placed at origin WITHOUT .pending-layout, so pendingCount===0
@@ -1231,6 +1332,11 @@ describe("LayoutManager", () => {
       { x: 10, y: 20 },
       { x: 30, y: 40 },
     ]);
+    pendingNodes.forEach((node) =>
+      node.data.mockImplementation((key?: string) =>
+        key === "isPendingLayout" ? true : { isPendingLayout: true },
+      ),
+    );
     (pendingNodes as any).length = 2;
     (pendingNodes as any).removeData = vi.fn();
     (pendingNodes as any).removeClass = vi.fn();

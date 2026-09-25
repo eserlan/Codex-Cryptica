@@ -113,6 +113,32 @@ function runInRendererBatch(cy: Core, work: () => void) {
   }
 }
 
+function hasFinitePosition(position?: { x: number; y: number }): boolean {
+  return Number.isFinite(position?.x) && Number.isFinite(position?.y);
+}
+
+function addedElementId(node: any): string | undefined {
+  return typeof node.id === "function"
+    ? node.id()
+    : ((node as any).id ?? (node as any).data?.id);
+}
+
+function registerAddedNode(
+  node: any,
+  sourceNodes: Map<string, GraphNode>,
+  elementMap: Map<string, any>,
+): void {
+  const id = addedElementId(node);
+  if (!id) return;
+
+  elementMap.set(id, node);
+  const source = sourceNodes.get(id);
+  if (!hasFinitePosition(source?.position)) {
+    node.data?.("isPendingLayout", true);
+  }
+  if (source?.position) node.position?.(source.position);
+}
+
 /**
  * Pass 2 — Add elements present in the target set but absent from cy.
  * New nodes are tagged `pending-layout` and seeded with any supplied position;
@@ -141,7 +167,7 @@ function addNewElements(
     if (newNodes.length > 0) {
       // ⚡ Bolt Optimization: Replace O(N^2) nested .forEach + .find with an O(N) Map lookup.
       // This avoids N array iterations when applying initial node positions.
-      const newNodesMap = new Map();
+      const newNodesMap = new Map<string, GraphNode>();
       for (let i = 0; i < newNodes.length; i++) {
         if (!newNodesMap.has(newNodes[i].data.id)) {
           newNodesMap.set(newNodes[i].data.id, newNodes[i]);
@@ -150,21 +176,10 @@ function addNewElements(
 
       const addedNodes = cy.add(newNodes);
       addedNodes.addClass("pending-layout");
-      addedNodes.data?.("isPendingLayout", true);
 
-      addedNodes.forEach((n) => {
-        const id =
-          typeof n.id === "function"
-            ? n.id()
-            : ((n as any).id ?? (n as any).data?.id);
-        if (id) {
-          elementMap.set(id, n);
-          const originalNode = newNodesMap.get(id);
-          if (originalNode && originalNode.position) {
-            n.position?.(originalNode.position);
-          }
-        }
-      });
+      addedNodes.forEach((node) =>
+        registerAddedNode(node, newNodesMap, elementMap),
+      );
     }
     const validEdges = newEdges.filter((edge) => {
       const sourceId = edge.data.source!;
