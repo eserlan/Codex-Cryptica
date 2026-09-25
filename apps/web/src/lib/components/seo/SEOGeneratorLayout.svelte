@@ -136,6 +136,9 @@
     aiModeRequired = false,
     aiDataNotice = undefined,
     offlineMessage = undefined,
+    wideForm = false,
+    singleColumn = false,
+    showSubmitButton = true,
   }: {
     canonicalPath?: string;
     pageTitle?: string;
@@ -182,6 +185,16 @@
     aiModeRequired?: boolean;
     aiDataNotice?: string;
     offlineMessage?: string;
+    /** Gives multi-step builders a wider form column; the side panel moves below. */
+    wideForm?: boolean;
+    /** Stacks form, output and table notes in one centred column on desktop. */
+    singleColumn?: boolean;
+    /**
+     * False when the form fields drive the flow themselves (e.g. a wizard) and
+     * call the `submit` they are given. Hides the shared button and AI toggle,
+     * and ignores implicit submits such as Enter in a single-input form.
+     */
+    showSubmitButton?: boolean;
     backHref?: string;
     backLabel?: string;
   } = $props();
@@ -226,6 +239,28 @@
       appliedInitialDraft = initialDraft;
     }
   });
+
+  const SINGLE_COLUMN_CLASS =
+    "lg:col-span-12 lg:w-full lg:max-w-3xl lg:justify-self-center";
+  const columnClasses = $derived(
+    singleColumn
+      ? {
+          form: SINGLE_COLUMN_CLASS,
+          output: SINGLE_COLUMN_CLASS,
+          table: SINGLE_COLUMN_CLASS,
+        }
+      : wideForm
+        ? {
+            form: "lg:col-span-5",
+            output: "lg:col-span-7",
+            table: "lg:col-span-12",
+          }
+        : {
+            form: "lg:col-span-3",
+            output: "lg:col-span-6",
+            table: "lg:col-span-3",
+          },
+  );
 
   let outputCard = $state<HTMLElement | null>(null);
   let starSystemDiagramRef = $state<ReturnType<
@@ -429,7 +464,8 @@
         sessionHubStore.addProvenance(record);
       }
 
-      if (browser && window.innerWidth < 1024 && outputCard) {
+      // Side-by-side layouts already show the output; stacked ones scroll to it.
+      if (browser && (singleColumn || window.innerWidth < 1024) && outputCard) {
         await tick();
         outputCard.scrollIntoView({ behavior: "smooth", block: "start" });
       }
@@ -897,7 +933,7 @@
       generator's empty-state placeholders (#2320).
     -->
     <!-- Parameters Column: positioned on the left on desktop -->
-    <div class="lg:col-span-3 space-y-6 order-1 lg:order-1">
+    <div class="{columnClasses.form} space-y-6 order-1 lg:order-1">
       <div
         class="p-6 bg-theme-surface/40 border border-theme-border/60 rounded-2xl shadow-sm"
       >
@@ -968,7 +1004,7 @@
           method={canonicalPath ? "GET" : undefined}
           onsubmit={(event) => {
             event.preventDefault();
-            void handleGenerate();
+            if (showSubmitButton) void handleGenerate();
           }}
         >
           {@render formFields(() => void handleGenerate())}
@@ -978,26 +1014,28 @@
             </p>
           {/if}
 
-          <button
-            type="submit"
-            disabled={isBusy || (aiModeRequired && !isOnline)}
-            aria-busy={isBusy}
-            class="w-full py-3 mt-4 bg-theme-primary text-theme-bg font-bold uppercase font-header tracking-widest text-xs rounded-xl shadow-lg hover:brightness-110 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
-            id="generate-button"
-            title="Generate a new draft using your current form inputs"
-          >
-            {#if isBusy}
-              <span
-                class="icon-[lucide--loader-2] animate-spin w-4 h-4"
-                aria-hidden="true"
-              ></span>
-              {busyLabel ?? "Forging..."}
-            {:else}
-              {generateLabel ?? `Generate ${generatedSingular}`}
-            {/if}
-          </button>
+          {#if showSubmitButton}
+            <button
+              type="submit"
+              disabled={isBusy || (aiModeRequired && !isOnline)}
+              aria-busy={isBusy}
+              class="w-full py-3 mt-4 bg-theme-primary text-theme-bg font-bold uppercase font-header tracking-widest text-xs rounded-xl shadow-lg hover:brightness-110 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+              id="generate-button"
+              title="Generate a new draft using your current form inputs"
+            >
+              {#if isBusy}
+                <span
+                  class="icon-[lucide--loader-2] animate-spin w-4 h-4"
+                  aria-hidden="true"
+                ></span>
+                {busyLabel ?? "Forging..."}
+              {:else}
+                {generateLabel ?? `Generate ${generatedSingular}`}
+              {/if}
+            </button>
+          {/if}
 
-          {#if !aiModeRequired}
+          {#if showSubmitButton && !aiModeRequired}
             <div class="flex flex-col gap-1 pt-1">
               <div class="flex items-center gap-2">
                 <input
@@ -1060,7 +1098,7 @@
 
     <!-- Output Card Column: middle column on desktop -->
     <div
-      class="lg:col-span-6 flex flex-col order-2 lg:order-2 scroll-mt-20"
+      class="{columnClasses.output} flex flex-col order-2 lg:order-2 scroll-mt-20"
       bind:this={outputCard}
     >
       {#if generatedData?.labels?.includes("star-system") && generatedData.bodies?.length}
@@ -1143,7 +1181,7 @@
     </div>
 
     <!-- At the Table Column: positioned on the right on desktop -->
-    <div class="lg:col-span-3 order-3 lg:order-3">
+    <div class="{columnClasses.table} order-3 lg:order-3">
       <!-- Mobile label — hidden on lg where the sticky card makes the context clear -->
       <p
         class="lg:hidden text-[10px] font-bold uppercase tracking-widest font-header text-theme-muted mb-2"

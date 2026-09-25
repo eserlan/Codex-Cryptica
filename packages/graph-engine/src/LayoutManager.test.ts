@@ -297,7 +297,7 @@ describe("LayoutManager", () => {
     expect(mockCy.animate).toHaveBeenCalled();
   });
 
-  it("fast-paths stable incremental updates (e.g. Window Resize) without inspecting positions or collinearity", async () => {
+  it("checks positions for degenerate layouts before skipping the worker solve", async () => {
     const emptyPending: any = {
       nonempty: vi.fn().mockReturnValue(false),
       forEach: vi.fn(),
@@ -340,13 +340,53 @@ describe("LayoutManager", () => {
       },
     );
 
-    // Fast-path: no worker message, no position extraction / collinearity scan
+    // Healthy positions use fit-only without starting a worker layout.
     expect(capturedPostMessage).toBeNull();
-    expect(nodes[0].position).not.toHaveBeenCalled();
+    expect(nodes[0].position).toHaveBeenCalled();
     // Since pendingNodes is empty, onPositionsUpdated should not have been called
     expect(onPositionsUpdated).not.toHaveBeenCalled();
     // Entire cy.nodes() shouldn't have removeData called when pendingNodes is empty
     expect((nodes as any).removeData).not.toHaveBeenCalled();
+  });
+
+  it("re-solves a collinear graph on a stable non-forced update", async () => {
+    const emptyPending: any = {
+      nonempty: vi.fn().mockReturnValue(false),
+      forEach: vi.fn(),
+      removeClass: vi.fn(),
+      removeData: vi.fn(),
+      filter: vi.fn().mockReturnThis(),
+      not: vi.fn().mockReturnThis(),
+      length: 0,
+    };
+    const nodes = makeNodes(
+      Array.from({ length: 12 }, (_, index) => ({
+        x: index * 100,
+        y: index * 100,
+      })),
+    );
+    (nodes as any).removeData = vi.fn();
+    (nodes as any).removeClass = vi.fn();
+    (nodes as any).nonempty = vi.fn().mockReturnValue(true);
+    (nodes as any).not = vi.fn().mockReturnValue(emptyPending);
+    mockCy.nodes.mockImplementation((selector?: string) =>
+      isPendingSelector(selector) ? emptyPending : nodes,
+    );
+
+    await layoutManager.apply(
+      { reason: "Window Resize", isInitial: false, isForced: false },
+      {
+        timelineMode: false,
+        timelineAxis: "x",
+        timelineScale: 1,
+        orbitMode: false,
+        centralNodeId: null,
+        stableLayout: true,
+        isGuest: false,
+      },
+    );
+
+    expect(capturedPostMessage?.options.randomize).toBe(true);
   });
 
   it("does not fast-path stable layout when forced (isForced: true)", async () => {

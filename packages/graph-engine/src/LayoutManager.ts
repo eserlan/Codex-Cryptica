@@ -487,20 +487,6 @@ export class LayoutManager {
     let randomize = isExitingTimeline || isExitingMode;
     const isManualRedraw = reason === "UI Redraw Button" && isForced;
 
-    // Fast-path: stable incremental updates (e.g. window resize, non-forced edits)
-    // skip full-graph position scanning and collinearity checks.
-    if (
-      options.stableLayout &&
-      !isForced &&
-      !isInitial &&
-      !reseed &&
-      !randomize &&
-      !isManualRedraw
-    ) {
-      this.fitOnly(options);
-      return;
-    }
-
     const cyNodes = this.cy.nodes();
 
     // Detect full-clump (all nodes at origin) — force randomize so fcose can spread them.
@@ -529,6 +515,21 @@ export class LayoutManager {
     // A legitimate fcose layout is never collinear, so forcing a randomized
     // re-solve whenever we detect collinearity is safe across all paths.
     const isDegenerateSlash = isLayoutCollinear(positions);
+
+    // Stable updates can skip the worker solve, but still inspect positions so
+    // a persisted diagonal layout is repaired instead of being preserved.
+    if (
+      options.stableLayout &&
+      !isForced &&
+      !isInitial &&
+      !reseed &&
+      !randomize &&
+      !isManualRedraw &&
+      !isDegenerateSlash
+    ) {
+      this.fitOnly(options);
+      return;
+    }
 
     const isMajorityAtOrigin =
       nodesAtOrigin === cyNodes.length ||
@@ -566,7 +567,7 @@ export class LayoutManager {
   private fitOnly(options: LayoutOptions): void {
     this.cy.resize();
 
-    const unplacedNodes = this.cy.nodes("node[isPendingLayout]");
+    const unplacedNodes = this.cy.nodes(PENDING_LAYOUT_SELECTOR);
     if (unplacedNodes.nonempty()) {
       // Snap new nodes to sensible positions before revealing them so the
       // viewport doesn't jump to include their far-away spiral seed positions.
