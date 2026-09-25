@@ -204,6 +204,30 @@ describe("AssetManager", () => {
     });
 
     describe("external URLs", () => {
+      it("keeps case-sensitive URLs in separate persistent cache files", async () => {
+        mockIO.readOpfsBlob.mockRejectedValue(new Error("Not in cache"));
+        (global.fetch as any).mockResolvedValue({
+          ok: true,
+          blob: () => Promise.resolve(new Blob(["remote"])),
+        });
+        const vaultHandle = { name: "v1" } as any;
+
+        await assetManager.resolveImageUrl(
+          vaultHandle,
+          "https://example.com/images/Avatar.png",
+        );
+        await assetManager.resolveImageUrl(
+          vaultHandle,
+          "https://example.com/images/avatar.png",
+        );
+
+        const cachePaths = mockIO.writeOpfsFile.mock.calls.map((call) =>
+          call[0].join("/"),
+        );
+        expect(cachePaths).toHaveLength(2);
+        expect(cachePaths[0]).not.toBe(cachePaths[1]);
+      });
+
       it("should return blob URL if no vaultHandle and fetch succeeds (Demo Mode)", async () => {
         (global.fetch as any).mockResolvedValueOnce({
           ok: true,
@@ -298,6 +322,128 @@ describe("AssetManager", () => {
         fetcher,
       );
       expect(result).toBe("");
+    });
+  });
+
+  describe("resolveThumbnailUrl", () => {
+    const vault = { name: "vault-1" } as FileSystemDirectoryHandle;
+    const url = "https://img.example/photo.png";
+    const notFound = () => Promise.reject(new Error("not found"));
+
+    it("generates an external image's thumbnail once and caches it in the vault", async () => {
+      mockIO.readOpfsBlob.mockImplementation(notFound);
+      (global.fetch as any).mockResolvedValue({
+        ok: true,
+        blob: async () => new Blob(["full"], { type: "image/png" }),
+      });
+      const manager = new AssetManager(
+        mockIO,
+        mockImageProcessor,
+        global.fetch,
+      );
+
+      const result = await manager.resolveThumbnailUrl(vault, url);
+
+      expect(result).toBe("blob:mock-url");
+      expect(mockImageProcessor.generateThumbnail).toHaveBeenCalledWith(
+        expect.any(Blob),
+        200,
+      );
+      const written = mockIO.writeOpfsFile.mock.calls.map((c) =>
+        c[0].join("/"),
+      );
+      expect(written.some((p) => p.endsWith(".thumb.webp"))).toBe(true);
+      expect(written.some((p) => p.endsWith(".cache"))).toBe(true);
+    });
+
+    it("reads a cached thumbnail without generating or fetching", async () => {
+      mockIO.readOpfsBlob.mockResolvedValue(
+        new Blob(["thumb"], { type: "image/webp" }),
+      );
+
+      await assetManager.resolveThumbnailUrl(vault, url);
+
+      expect(mockImageProcessor.generateThumbnail).not.toHaveBeenCalled();
+      expect(global.fetch).not.toHaveBeenCalled();
+      expect(mockIO.readOpfsBlob.mock.calls[0][0][0]).toMatch(/\.thumb\.webp$/);
+    });
+
+    it("falls back to the original link when the image cannot be read", async () => {
+      mockIO.readOpfsBlob.mockImplementation(notFound);
+      (global.fetch as any).mockRejectedValue(new TypeError("CORS"));
+      const manager = new AssetManager(
+        mockIO,
+        mockImageProcessor,
+        global.fetch,
+      );
+
+      expect(await manager.resolveThumbnailUrl(vault, url)).toBe(url);
+      expect(mockImageProcessor.generateThumbnail).not.toHaveBeenCalled();
+    });
+
+    it("resolves local paths exactly like resolveImageUrl", async () => {
+      const spy = vi.spyOn(assetManager, "resolveImageUrl");
+
+      await assetManager.resolveThumbnailUrl(vault, "images/a_thumb.webp");
+
+      expect(spy).toHaveBeenCalledWith(
+        vault,
+        "images/a_thumb.webp",
+        undefined,
+        undefined,
+      );
+    });
+
+    it("releases the thumbnail URL it handed out", async () => {
+      mockIO.readOpfsBlob.mockResolvedValue(
+        new Blob(["thumb"], { type: "image/webp" }),
+      );
+      await assetManager.resolveThumbnailUrl(vault, url);
+
+      assetManager.releaseThumbnailUrl(url);
+
+      expect(global.URL.revokeObjectURL).toHaveBeenCalledWith("blob:mock-url");
+    });
+  });
+
+  describe("importExternalImage", () => {
+    const vault = { name: "vault-1" } as FileSystemDirectoryHandle;
+
+    it("stores the image like an upload, with a thumbnail", async () => {
+      mockIO.readOpfsBlob.mockResolvedValue(
+        new Blob(["cached"], { type: "image/png" }),
+      );
+
+      const result = await assetManager.importExternalImage(
+        vault,
+        "https://img.example/photo.png",
+        "hero",
+      );
+
+      expect(mockImageProcessor.convertToWebP).toHaveBeenCalled();
+      expect(result?.image).toMatch(/^images\/img_hero_.*\.webp$/);
+      expect(result?.thumbnail).toMatch(/_thumb\.webp$/);
+    });
+
+    it("returns null for local paths and unreadable images", async () => {
+      expect(
+        await assetManager.importExternalImage(vault, "images/a.webp", "hero"),
+      ).toBeNull();
+
+      mockIO.readOpfsBlob.mockRejectedValue(new Error("not found"));
+      (global.fetch as any).mockResolvedValue({ ok: false, status: 404 });
+      const manager = new AssetManager(
+        mockIO,
+        mockImageProcessor,
+        global.fetch,
+      );
+      expect(
+        await manager.importExternalImage(
+          vault,
+          "https://gone.example/x.png",
+          "hero",
+        ),
+      ).toBeNull();
     });
   });
 
