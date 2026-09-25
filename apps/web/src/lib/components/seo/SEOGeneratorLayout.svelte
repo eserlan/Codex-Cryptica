@@ -136,6 +136,7 @@
     aiModeRequired = false,
     aiDataNotice = undefined,
     offlineMessage = undefined,
+    wideForm = false,
   }: {
     canonicalPath?: string;
     pageTitle?: string;
@@ -182,6 +183,8 @@
     aiModeRequired?: boolean;
     aiDataNotice?: string;
     offlineMessage?: string;
+    /** Gives multi-step builders a wider form column; the side panel moves below. */
+    wideForm?: boolean;
     backHref?: string;
     backLabel?: string;
   } = $props();
@@ -897,7 +900,11 @@
       generator's empty-state placeholders (#2320).
     -->
     <!-- Parameters Column: positioned on the left on desktop -->
-    <div class="lg:col-span-3 space-y-6 order-1 lg:order-1">
+    <div
+      class="{wideForm
+        ? 'lg:col-span-5'
+        : 'lg:col-span-3'} space-y-6 order-1 lg:order-1"
+    >
       <div
         class="p-6 bg-theme-surface/40 border border-theme-border/60 rounded-2xl shadow-sm"
       >
@@ -1060,7 +1067,9 @@
 
     <!-- Output Card Column: middle column on desktop -->
     <div
-      class="lg:col-span-6 flex flex-col order-2 lg:order-2 scroll-mt-20"
+      class="{wideForm
+        ? 'lg:col-span-7'
+        : 'lg:col-span-6'} flex flex-col order-2 lg:order-2 scroll-mt-20"
       bind:this={outputCard}
     >
       {#if generatedData?.labels?.includes("star-system") && generatedData.bodies?.length}
@@ -1143,7 +1152,9 @@
     </div>
 
     <!-- At the Table Column: positioned on the right on desktop -->
-    <div class="lg:col-span-3 order-3 lg:order-3">
+    <div
+      class="{wideForm ? 'lg:col-span-12' : 'lg:col-span-3'} order-3 lg:order-3"
+    >
       <!-- Mobile label — hidden on lg where the sticky card makes the context clear -->
       <p
         class="lg:hidden text-[10px] font-bold uppercase tracking-widest font-header text-theme-muted mb-2"

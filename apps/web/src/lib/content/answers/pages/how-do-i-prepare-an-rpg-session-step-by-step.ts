@@ -260,12 +260,18 @@ export const howDoIPrepareAnRpgSessionStepByStep: AnswerConfigInput = {
     heading: "Filling a blank prep slot",
     paragraphs: [
       "When one slot in the template is empty, such as an NPC, a complication, a rumour or a location, generate that one piece and then fit it to the situation you already understand. The generator gives you a starting point; you decide how it connects to tonight's pressure.",
-      "In a Codex Cryptica vault, the people, places and factions from each session stay linked to each other, so next session's prep starts from what already exists rather than a blank page.",
+      "The Session Prep Builder walks through the same steps with your own hook. AI drafts only the steps you leave empty, suggests options for any single step, and points out needed facts that have only one way to be found. The result is a one-page run sheet you can copy or save to a vault, where the people, places and factions stay linked for next session's prep.",
     ],
-    linkText: "Browse the generators",
-    href: "/generators",
+    linkText: "Open the Session Prep Builder",
+    href: "/tools/session-prep-builder",
   },
   relatedTools: [
+    {
+      title: "Session Prep Builder",
+      description:
+        "Turn your hook into a one-page run sheet, with AI drafting only the steps you leave empty.",
+      href: "/tools/session-prep-builder",
+    },
     {
       title: "NPC Generator",
       description:
@@ -324,8 +330,14 @@ export const howDoIPrepareAnRpgSessionStepByStep: AnswerConfigInput = {
       "answer-prep-weekly-session-quickly",
       "answer-turn-rpg-idea-into-adventure",
       "answer-in-person-gm-notes",
+      "tools-session-prep-builder",
     ],
     acknowledgedOverlap: [
+      {
+        with: "tools-session-prep-builder",
+        reason:
+          "This Answer teaches the nine-step prep method for the reader to follow; the tool is an interactive workspace that applies the same steps to the GM's own hook.",
+      },
       {
         with: "answer-session-prep",
         reason:

@@ -553,6 +553,7 @@ export {
 } from "./public-plot-twist";
 export * from "./dungeon";
 export * from "./adventure";
+export * from "./session-prep";
 export * from "./starter-constellation-types";
 export {
   buildWorldPrompt,
