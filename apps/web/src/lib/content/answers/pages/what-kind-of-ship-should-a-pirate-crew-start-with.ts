@@ -168,7 +168,10 @@ export const whatKindOfShipShouldAPirateCrewStartWith: AnswerConfigInput = {
     },
   ],
   relatedForPages: [],
-  relatedAnswers: ["what-kind-of-ship-should-a-sci-fi-rpg-party-start-with"],
+  relatedAnswers: [
+    "what-kind-of-ship-should-a-sci-fi-rpg-party-start-with",
+    "what-should-players-be-able-to-upgrade-in-an-rpg-base",
+  ],
   labels: ["pirate"],
   discovery: {
     id: "answer-starter-ship-pirate",

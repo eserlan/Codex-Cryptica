@@ -89,6 +89,7 @@ import { whatRpgWorksForPoliticalIntrigueAndFactionPlay } from "./what-rpg-works
 import { whatShouldANewDndPlayerLearnFirst } from "./what-should-a-new-dnd-player-learn-first";
 import { whatShouldAnRpgSettlementContain } from "./what-should-an-rpg-settlement-contain";
 import { whatShouldILookForInAnRpgCampaignManager } from "./what-should-i-look-for-in-an-rpg-campaign-manager";
+import { whatShouldPlayersBeAbleToUpgradeInAnRpgBase } from "./what-should-players-be-able-to-upgrade-in-an-rpg-base";
 import { whatTtrpgShouldIUseForAFantasyDungeonCrawl } from "./what-ttrpg-should-i-use-for-a-fantasy-dungeon-crawl";
 import { whatTtrpgsLetYouBuildAndUpgradeABase } from "./what-ttrpgs-let-you-build-and-upgrade-a-base";
 import { whereDoIStartIfIHaveNeverPlayedATabletopRpg } from "./where-do-i-start-if-i-have-never-played-a-tabletop-rpg";
@@ -192,6 +193,7 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     whatShouldANewDndPlayerLearnFirst,
     whatShouldAnRpgSettlementContain,
     whatShouldILookForInAnRpgCampaignManager,
+    whatShouldPlayersBeAbleToUpgradeInAnRpgBase,
     whatTtrpgShouldIUseForAFantasyDungeonCrawl,
     whatTtrpgsLetYouBuildAndUpgradeABase,
     whereDoIStartIfIHaveNeverPlayedATabletopRpg,

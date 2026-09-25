@@ -201,6 +201,7 @@ export const whatTtrpgsLetYouBuildAndUpgradeABase: AnswerConfigInput = {
     "what-should-an-rpg-settlement-contain",
     "what-rpg-system-is-good-for-solo-play",
     "how-do-i-make-a-player-base-matter-in-an-rpg-campaign",
+    "what-should-players-be-able-to-upgrade-in-an-rpg-base",
   ],
   discovery: {
     id: "answer-base-building-system-selection",
@@ -225,6 +226,11 @@ export const whatTtrpgsLetYouBuildAndUpgradeABase: AnswerConfigInput = {
       "answer-solo-rpg-system-selection",
     ],
     acknowledgedOverlap: [
+      {
+        with: "answer-base-upgrade-ideas",
+        reason:
+          "That page helps a GM design upgrade options in any system; this one helps a group choose a system whose rules already provide base upgrades.",
+      },
       {
         with: "answer-make-player-base-matter",
         reason:

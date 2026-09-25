@@ -323,6 +323,7 @@ export const howDoIMakeAPlayerBaseMatterInAnRpgCampaign: AnswerConfigInput = {
     "how-do-you-organise-npc-relationships",
     "how-do-you-prepare-a-sandbox-rpg-campaign",
     "what-kind-of-ship-should-a-sci-fi-rpg-party-start-with",
+    "what-should-players-be-able-to-upgrade-in-an-rpg-base",
   ],
   discovery: {
     id: "answer-make-player-base-matter",
@@ -347,6 +348,11 @@ export const howDoIMakeAPlayerBaseMatterInAnRpgCampaign: AnswerConfigInput = {
       "answer-track-faction-turns-between-sessions",
     ],
     acknowledgedOverlap: [
+      {
+        with: "answer-base-upgrade-ideas",
+        reason:
+          "That page focuses narrowly on designing upgrade options and how players earn them; this one covers how the base as a whole earns a lasting role in the campaign.",
+      },
       {
         with: "answer-base-building-system-selection",
         reason:

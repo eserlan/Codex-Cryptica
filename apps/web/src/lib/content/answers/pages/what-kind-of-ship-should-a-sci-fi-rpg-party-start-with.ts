@@ -196,6 +196,7 @@ export const whatKindOfShipShouldASciFiRpgPartyStartWith: AnswerConfigInput = {
     "what-kind-of-ship-should-a-pirate-crew-start-with",
     "what-rpg-should-i-play-for-an-over-the-top-space-opera",
     "how-do-i-make-a-player-base-matter-in-an-rpg-campaign",
+    "what-should-players-be-able-to-upgrade-in-an-rpg-base",
   ],
   labels: ["sci-fi"],
   discovery: {
