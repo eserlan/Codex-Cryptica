@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 
-import { beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { isToolActive, isViewActive, matchesPath, navItems } from "./nav-items";
 import { discoveryPolicyStore } from "$lib/stores/ui/discovery-policy.svelte";
@@ -8,6 +8,8 @@ import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
 import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
 import { vault } from "$lib/stores/vault.svelte";
 import { vaultRegistry } from "$lib/stores/vault-registry.svelte";
+import { quickNoteStore } from "$lib/stores/quicknote.svelte";
+import { sessionJournalStore } from "$lib/stores/session-journal.svelte";
 
 describe("nav items", () => {
   beforeEach(() => {
@@ -61,6 +63,7 @@ describe("nav items", () => {
         "generators",
         "shelf",
         "quicknote",
+        "session-journal",
         "guest-chat",
       ]);
     });
@@ -81,6 +84,7 @@ describe("nav items", () => {
       expect(ids).not.toContain("generators");
       expect(ids).not.toContain("shelf");
       expect(ids).not.toContain("quicknote");
+      expect(ids).not.toContain("session-journal");
     });
 
     it("drops generators when no vault is initialized", () => {
@@ -134,6 +138,73 @@ describe("nav items", () => {
 
     it("never lights a tool by path", () => {
       expect(isViewActive(byId("oracle")!, "/oracle")).toBe(false);
+    });
+  });
+
+  describe("session journal control (slice 2, #3407)", () => {
+    const setState = (state: "start" | "open" | "resume") =>
+      vi
+        .spyOn(sessionJournalStore, "controlState", "get")
+        .mockReturnValue(state);
+
+    afterEach(() => {
+      vi.restoreAllMocks();
+      quickNoteStore.close();
+      quickNoteStore.activeTab = "notes";
+    });
+
+    it.each([
+      ["start", "Start Session Journal"],
+      ["open", "Open Session Journal"],
+      ["resume", "Resume Session Journal"],
+    ] as const)("labels the %s state", (state, label) => {
+      setState(state);
+      expect(byId("session-journal")?.label).toBe(label);
+    });
+
+    it("opens the panel on the journal tab", () => {
+      setState("open");
+      byId("session-journal")!.action!();
+      expect(quickNoteStore.isOpen).toBe(true);
+      expect(quickNoteStore.activeTab).toBe("journal");
+    });
+
+    it("marks a resumable journal as opened when selected", () => {
+      setState("resume");
+      const open = vi
+        .spyOn(sessionJournalStore, "open")
+        .mockImplementation(() => {});
+      byId("session-journal")!.action!();
+      expect(open).toHaveBeenCalledOnce();
+    });
+
+    it("does not start a journal or re-open in the start/open states (negative)", () => {
+      const start = vi.spyOn(sessionJournalStore, "start");
+      const open = vi.spyOn(sessionJournalStore, "open");
+
+      setState("start");
+      byId("session-journal")!.action!();
+      setState("open");
+      byId("session-journal")!.action!();
+
+      expect(start).not.toHaveBeenCalled();
+      expect(open).not.toHaveBeenCalled();
+    });
+
+    it("is active only while the panel shows the journal tab", () => {
+      setState("open");
+      const item = byId("session-journal")!;
+      expect(isToolActive(item)).toBe(false);
+
+      quickNoteStore.openJournal();
+      expect(isToolActive(item)).toBe(true);
+
+      quickNoteStore.activeTab = "notes";
+      expect(isToolActive(item)).toBe(false);
+
+      quickNoteStore.activeTab = "journal";
+      quickNoteStore.close();
+      expect(isToolActive(item)).toBe(false);
     });
   });
 

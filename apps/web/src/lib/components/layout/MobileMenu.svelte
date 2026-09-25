@@ -7,6 +7,7 @@
   import GuidedModeToggle from "$lib/components/guided/GuidedModeToggle.svelte";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
   import { quickNoteStore } from "$lib/stores/quicknote.svelte";
+  import SessionJournalIndicator from "./SessionJournalIndicator.svelte";
   import { isToolActive, isViewActive, navItems } from "./nav-items";
 
   let { isOpen = $bindable(false) } = $props();
@@ -166,6 +167,10 @@
                   {quickNoteStore.count}
                 </span>
               {/if}
+              <SessionJournalIndicator
+                toolId={tool.id}
+                class="ml-auto bg-theme-primary"
+              />
             </button>
           {/each}
         </div>

@@ -9,9 +9,10 @@
    * Notes and Journal are deliberately separate tabs, not merged into one
    * view: Quicknote/Scratchpad's notes stay transient, the Session Journal
    * is the chronological record — conflating them would defeat the point
-   * of having both (spec 163-session-journal, FR-015).
+   * of having both (spec 163-session-journal, FR-015). The selected tab
+   * lives in quickNoteStore so the global journal control can set it.
    */
-  let activeTab = $state<"notes" | "journal">("notes");
+  const activeTab = $derived(quickNoteStore.activeTab);
 
   // Auto-save debounce effect
   let debounceTimeout: any;
@@ -213,7 +214,7 @@
 )}
   <button
     type="button"
-    onclick={() => (activeTab = tab)}
+    onclick={() => (quickNoteStore.activeTab = tab)}
     class="flex items-center gap-1.5 rounded px-2 py-1 font-header text-xs font-bold uppercase tracking-wider transition-colors {activeTab ===
     tab
       ? 'text-theme-primary'

@@ -1,7 +1,7 @@
 /** @vitest-environment jsdom */
 
 import { fireEvent, render, screen } from "@testing-library/svelte";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import ActivityBar from "./ActivityBar.svelte";
 import { page } from "$app/state";
@@ -12,6 +12,7 @@ import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
 import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
 import { vault } from "$lib/stores/vault.svelte";
 import { vaultRegistry } from "$lib/stores/vault-registry.svelte";
+import { sessionJournalStore } from "$lib/stores/session-journal.svelte";
 
 vi.mock("$lib/stores/theme.svelte", () => ({
   themeStore: {
@@ -118,6 +119,7 @@ describe("ActivityBar", () => {
       "generators",
       "shelf",
       "quicknote",
+      "session-journal",
       "guest-chat",
     ])("hides %s from the bar on a phone", (id) => {
       render(ActivityBar);
@@ -286,5 +288,38 @@ describe("ActivityBar", () => {
     expect(guestChatStore.showChatModal).toBe(true);
     expect(layoutUIStore.leftSidebarOpen).toBe(false);
     expect(layoutUIStore.mainViewMode).toBe("visualization");
+  });
+
+  describe("session journal indicator", () => {
+    afterEach(() => vi.restoreAllMocks());
+
+    const setState = (state: "start" | "open" | "resume") =>
+      vi
+        .spyOn(sessionJournalStore, "controlState", "get")
+        .mockReturnValue(state);
+
+    it.each(["open", "resume"] as const)(
+      "shows an indicator while a journal is %s",
+      (state) => {
+        setState(state);
+        render(ActivityBar);
+        expect(screen.getByTestId("session-journal-indicator")).toBeTruthy();
+      },
+    );
+
+    it("shows no indicator when there is no active journal (negative)", () => {
+      setState("start");
+      render(ActivityBar);
+      expect(screen.getByTestId("activity-bar-session-journal")).toBeTruthy();
+      expect(screen.queryByTestId("session-journal-indicator")).toBeNull();
+    });
+
+    it("shows neither the control nor an indicator in guest mode (negative)", () => {
+      setState("open");
+      sessionModeStore.isGuestMode = true;
+      render(ActivityBar);
+      expect(screen.queryByTestId("activity-bar-session-journal")).toBeNull();
+      expect(screen.queryByTestId("session-journal-indicator")).toBeNull();
+    });
   });
 });

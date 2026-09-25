@@ -32,3 +32,13 @@ When you're ready to turn a fleeting draft into a formal wiki article, let the L
 2. The AI reads your raw draft, retrieves semantic context from your vault, and structures the note into a rich draft entity (determining `Name`, `Type`, `Chronicle`, and `Lore`).
 3. The newly generated draft is loaded into your sidebar review panel, complete with a `discoverySource` back-link referencing your original QuickNote.
 4. When you click **Verify/Approve** on the Svelte sidebar draft banner, the original QuickNote is automatically archived, keeping your scratchpad perfectly clean.
+
+### Session Journal
+
+The scratchpad also has a **Session Journal** tab. It is a running record of what happens during play, separate from your QuickNotes. You can open it from anywhere in the app with the **Session Journal** button in the toolbar (it sits in the menu on a phone). The button tells you what will happen:
+
+- **Start Session Journal**: no journal is running yet. It opens the journal tab, where you choose to start one.
+- **Open Session Journal**: a journal is running. It takes you straight to it.
+- **Resume Session Journal**: you left a journal running last time. It opens with everything just as you left it.
+
+A small dot on the button means a journal is currently running.

@@ -117,6 +117,26 @@ describe("SessionJournalStore — vault scoping (FR-012)", () => {
     expect(storeB.allJournals).toHaveLength(0);
   });
 
+  it("control state follows the vault, never the previous one's (slice 2, FR-022)", async () => {
+    const storeA = new SessionJournalStore(
+      fakeVaultRegistry("vault-ctl-a") as any,
+      fakeIds(),
+      fakeClock(),
+    );
+    await storeA.start();
+    expect(storeA.controlState).not.toBe("start");
+
+    const storeB = new SessionJournalStore(
+      fakeVaultRegistry("vault-ctl-b") as any,
+      fakeIds(),
+      fakeClock(),
+    );
+    await storeB.listJournals();
+    // Negative: a vault with no journal reports "start" even though another
+    // vault has an active one.
+    expect(storeB.controlState).toBe("start");
+  });
+
   it("resolves to no active journal for a vault that has never started one", async () => {
     const store = new SessionJournalStore(
       fakeVaultRegistry("vault-empty") as any,

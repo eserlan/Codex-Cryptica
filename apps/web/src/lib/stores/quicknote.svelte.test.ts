@@ -110,6 +110,68 @@ describe("QuickNoteStore (Svelte 5 Runes)", () => {
     expect(store.isOpen).toBe(false);
   });
 
+  describe("journal tab (slice 2, FR-020/FR-022/FR-023)", () => {
+    it("defaults to the notes tab", () => {
+      expect(store.activeTab).toBe("notes");
+    });
+
+    it("openJournal opens a closed panel on the journal tab", () => {
+      store.openJournal();
+      expect(store.isOpen).toBe(true);
+      expect(store.activeTab).toBe("journal");
+    });
+
+    it("openJournal switches an open notes panel without closing it", async () => {
+      await store.loadNotes("vault-1");
+      store.open();
+      expect(store.activeTab).toBe("notes");
+
+      store.openJournal();
+      expect(store.isOpen).toBe(true);
+      expect(store.activeTab).toBe("journal");
+    });
+
+    it("openJournal is idempotent and never toggles the panel closed", () => {
+      store.openJournal();
+      store.openJournal();
+      expect(store.isOpen).toBe(true);
+      expect(store.activeTab).toBe("journal");
+    });
+
+    it("keeps the journal tab across close and a plain reopen", () => {
+      store.openJournal();
+      store.close();
+      store.toggle();
+      expect(store.isOpen).toBe(true);
+      expect(store.activeTab).toBe("journal");
+    });
+
+    it("openJournal does not select or create a Quicknote note (negative)", async () => {
+      await store.loadNotes("vault-1");
+      store.openJournal();
+      expect(store.currentNote).toBeNull();
+      expect(store.activeNotes).toHaveLength(2);
+
+      const fresh = new QuickNoteStore(mockService, mockVaultRegistry);
+      fresh.openJournal();
+      expect(fresh.currentNote).toBeNull();
+    });
+
+    it("opening a specific note returns to the notes tab (negative)", async () => {
+      await store.loadNotes("vault-1");
+      store.openJournal();
+      store.open(sampleNotes[1]);
+      expect(store.activeTab).toBe("notes");
+      expect(store.currentNote).toEqual(sampleNotes[1]);
+    });
+
+    it("a plain open() still auto-selects the latest note as before", async () => {
+      await store.loadNotes("vault-1");
+      store.open();
+      expect(store.currentNote).toEqual(sampleNotes[0]);
+    });
+  });
+
   it("should filter notes based on search text", async () => {
     await store.loadNotes("vault-1");
     expect(store.filteredNotes).toHaveLength(2);

@@ -22,6 +22,8 @@
 
 **Story 4 — cloud backup survives**: With a vault that has cloud backup enabled and a journal containing entries and a section, trigger a backup, then restore that backup into a new vault (existing cloud-backup UI flow) → confirm the journal appears in the restored vault with every entry/section intact and in order. Separately, confirm the cloud backup consent screen's "What gets stored" copy now names session journals.
 
+**Story 5 — global access (slice 2)**: With no journal, open any non-Notes view (e.g. the graph) → find the Session Journal control in the Activity Bar → label reads "Start Session Journal" and no active indicator is shown → select it → the scratchpad opens on the Journal tab at its Start screen and no journal has been created yet. Start one, add a note, close the panel → the control now reads "Open Session Journal" with an active indicator. Navigate to two other views and select the control from each → the same journal, entries and sections open on the Journal tab. Reload → the control reads "Resume Session Journal"; select it → the journal opens straight to its entries and the control becomes "Open Session Journal". Reopen the panel with Ctrl/Cmd+I and confirm it opens on the Journal tab (the tab is remembered) and that opening the journal from the control did not create a blank Quicknote note. On a phone-width viewport, confirm the control is in the menu drawer. In guest mode, confirm the control is absent. Switch vaults and confirm the control shows the other vault's state.
+
 ## Verifying the vault-scoping and single-active-journal invariants (FR-012, FR-013)
 
 - Switch vaults (if more than one exists locally) and confirm the journal control and any active journal do not follow you to the other vault — each vault sees only its own.
@@ -29,7 +31,7 @@
 
 ## What this slice does not cover (do not test for it here)
 
-- No global/cross-view indicator — the control lives only in Quicknote/Scratchpad (#3407).
+- (Slice 1 note, now superseded) The global cross-view control is slice 2, Story 5 above.
 - No automatic capture of dice rolls, cards, or table results (#3408).
 - No promote-to-entity conversion (#3409).
 - No delete capability for a journal (spec Assumption — out of scope for this slice).
