@@ -30,6 +30,12 @@ import { proposerBridge } from "$lib/cloud-bridge/proposer-bridge";
  * mint a token itself. `onTokenChange` below relays every mint/refresh/clear
  * from this, the one real session manager, into both workers — see
  * `RelayedSessionToken` in `@codex/ai-engine` for the worker-side half.
+ *
+ * That push alone leaves a race: a worker created (or a relayed token that
+ * expires) between two pushes has nothing valid cached until the next one
+ * fires. `provideTokenSnapshot` below closes it — it's wired into both
+ * bridges as a pull hook a worker can call immediately before it sends a
+ * request, instead of only being pushed to.
  */
 
 const PROXY_URL =
@@ -50,6 +56,23 @@ function relayTokenToWorkers(token: CachedToken | null): void {
   proposerBridge.setSessionToken(token);
 }
 
+/**
+ * Answers a Worker's on-demand pull (see `RelayedSessionToken.setPuller`)
+ * with a fresh token snapshot, running the Turnstile handshake if none is
+ * cached yet. This is what closes the residual race `onTokenChange`/
+ * `relayTokenToWorkers` alone can't: a Worker created, or a relayed token
+ * that expires, between two pushes now asks for a snapshot immediately
+ * before its next request instead of waiting on the next mint/refresh/clear.
+ */
+function provideTokenSnapshot(
+  forceRefresh = false,
+): Promise<CachedToken | null> {
+  const manager = ensureSessionManager();
+  return manager
+    ? manager.getTokenSnapshot(forceRefresh)
+    : Promise.resolve(null);
+}
+
 function ensureSessionManager(): AiSessionManager | null {
   if (!browser || !requiresCapabilitySession(PROXY_URL)) return null;
   if (!sessionManager) {
@@ -59,6 +82,8 @@ function ensureSessionManager(): AiSessionManager | null {
       onTokenChange: relayTokenToWorkers,
     });
     aiClientManager.setSessionManager(sessionManager);
+    oracleBridge.setTokenProvider(provideTokenSnapshot);
+    proposerBridge.setTokenProvider(provideTokenSnapshot);
   }
   return sessionManager;
 }
