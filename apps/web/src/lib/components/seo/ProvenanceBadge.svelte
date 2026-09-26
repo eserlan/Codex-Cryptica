@@ -25,6 +25,7 @@
   >
     <span
       class="icon-[lucide--zap] w-3.5 h-3.5 text-theme-primary shrink-0 mt-0.5"
+      aria-hidden="true"
     ></span>
     <div class="flex flex-wrap items-center gap-1.5 leading-tight">
       <span

@@ -72,6 +72,7 @@
     <div class="mb-5 flex justify-center">
       <span
         class="icon-[lucide--globe] w-10 h-10 text-theme-primary animate-pulse"
+        aria-hidden="true"
       ></span>
     </div>
 
