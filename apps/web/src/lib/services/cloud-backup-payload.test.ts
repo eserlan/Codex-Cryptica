@@ -282,6 +282,29 @@ describe("buildCloudBackupPayload with maps and canvases", () => {
   });
 });
 
+describe("buildCloudBackupPayload with session journals (spec 163-session-journal, FR-016)", () => {
+  it("carries session journals in the bundle", async () => {
+    const journal = { id: "j1", vaultId: "v1", status: "active" };
+    const result = await buildCloudBackupPayload(
+      "V",
+      [entity("e1")],
+      { resolveImageUrl: async () => "blob:x", fetch: okFetch },
+      { sessionJournals: [journal] },
+    );
+
+    expect(result.bundle.sessionJournals).toEqual([journal]);
+  });
+
+  it("defaults to an empty array when no journals are passed (old backups, or a vault with none)", async () => {
+    const result = await buildCloudBackupPayload("V", [entity("e1")], {
+      resolveImageUrl: async () => "blob:x",
+      fetch: okFetch,
+    });
+
+    expect(result.bundle.sessionJournals).toEqual([]);
+  });
+});
+
 describe("hydrateEntityContent", () => {
   /**
    * Models the real store: entities start with the 280-char warm-start preview

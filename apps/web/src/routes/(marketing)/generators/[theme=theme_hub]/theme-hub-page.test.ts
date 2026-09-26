@@ -4,6 +4,8 @@ import { render, screen } from "@testing-library/svelte";
 import { describe, expect, it, vi } from "vitest";
 import Page from "./+page.svelte";
 import type { ThemeSlug } from "./+page";
+import { HUB_THEME_SLUGS } from "$lib/content/hub-themes";
+import { getLandingPagesForHub } from "$lib/content/for/registry";
 
 vi.mock("$app/environment", () => ({
   browser: true,
@@ -165,10 +167,29 @@ describe("Generator Theme Hub Page", () => {
     ).toBe("/for/gothic-horror");
   });
 
-  it("omits the guides section on a hub with no landing pages", () => {
+  // Picked from the real registry rather than named, so the test does not break
+  // each time the hub it happened to name gets a landing page (it broke when
+  // steampunk got one). If every hub ever has a guide, there is nothing left to
+  // check here and the test skips.
+  const hubWithoutLandingPages = HUB_THEME_SLUGS.find(
+    (hub) => getLandingPagesForHub(hub).length === 0,
+  );
+
+  it.skipIf(!hubWithoutLandingPages)(
+    "omits the guides section on a hub with no landing pages",
+    () => {
+      render(Page, { props: { data: { theme: hubWithoutLandingPages! } } });
+
+      expect(
+        screen.queryByText(/Campaign guides for these worlds/i),
+      ).toBeNull();
+    },
+  );
+
+  it("shows the guides section on a hub that has landing pages", () => {
     render(Page, { props: { data: { theme: "steampunk" } } });
 
-    expect(screen.queryByText(/Campaign guides for these worlds/i)).toBeNull();
+    expect(screen.getByText(/Campaign guides for these worlds/i)).toBeTruthy();
   });
 
   it("renders a superhero hub with origin, villain scheme, and comic book event generators", () => {

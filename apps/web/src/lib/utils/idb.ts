@@ -1,5 +1,6 @@
 import { openDB, type DBSchema, type IDBPDatabase } from "idb";
 import type { LocalEntity } from "../stores/vault/types";
+import type { SessionJournal } from "session-journal-engine";
 import type { SyncEntry, OpfsStateEntry } from "@codex/sync-engine";
 import type {
   GuestChatTranscript,
@@ -110,6 +111,13 @@ interface CodexDB extends DBSchema {
       "by-vault": string;
     };
   };
+  session_journals: {
+    key: string; // id
+    value: SessionJournal;
+    indexes: {
+      "by-vault": string;
+    };
+  };
   dice_history: {
     key: string; // id
     value: any; // RollResult
@@ -194,7 +202,7 @@ export const DB_NAME = "CodexCryptica";
 // Bumped to 24 to add a by-speaker index on guest_chat_transcripts, so a
 // character's chat history can be queried both as the AI-voiced participant
 // and as the human's speaker character (#2302).
-export const DB_VERSION = 25;
+export const DB_VERSION = 26;
 
 // Cached on `globalThis` (not a plain module-level `let`) so that a Vite HMR
 // update to this file can't leave two separate connection-promise slots
@@ -307,6 +315,13 @@ export function getDB(): Promise<IDBPDatabase<CodexDB>> {
 
           if (!db.objectStoreNames.contains("canvases")) {
             const store = db.createObjectStore("canvases", { keyPath: "id" });
+            store.createIndex("by-vault", "vaultId");
+          }
+
+          if (!db.objectStoreNames.contains("session_journals")) {
+            const store = db.createObjectStore("session_journals", {
+              keyPath: "id",
+            });
             store.createIndex("by-vault", "vaultId");
           }
 

@@ -206,3 +206,8 @@
 
 **Learning:** Buttons handling asynchronous state (like revoking shared generators in `my-stuff`) need visual loading spinners (rather than just text changes) and `aria-busy` to effectively communicate their loading state to visual and screen reader users.
 **Action:** Always add `aria-busy={isLoading}` and swap static icons to animated spinners (`icon-[lucide--loader-2] animate-spin`) during active states for async actions.
+
+## 2024-11-06 - Decorative Icons should use aria-hidden="true"
+
+**Learning:** For accessibility in Svelte components, whenever a button, link, or visual status indicator contains an inner decorative icon (e.g., `<span class="icon-[...]">`) alongside an `aria-label` or descriptive text, ensure the inner icon element explicitly includes `aria-hidden="true"`. This prevents screen readers from redundantly announcing confusing CSS class names.
+**Action:** Always add `aria-hidden="true"` to pure decorative icons like `<span class="icon-[lucide--globe]"></span>` when fixing accessibility.

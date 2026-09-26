@@ -1,7 +1,7 @@
 /** @vitest-environment jsdom */
 
 import { fireEvent, render, screen } from "@testing-library/svelte";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import MobileMenu from "./MobileMenu.svelte";
 import { guidedModeStore } from "$lib/stores/ui/guided-mode.svelte";
 import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
@@ -9,6 +9,7 @@ import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
 import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
 import { vault } from "$lib/stores/vault.svelte";
 import { vaultRegistry } from "$lib/stores/vault-registry.svelte";
+import { sessionJournalStore } from "$lib/stores/session-journal.svelte";
 
 // jsdom has no Web Animations API, which Svelte's transitions drive. The
 // drawer's open and close behaviour is the subject here, not its animation.
@@ -39,6 +40,8 @@ vi.mock("$lib/components/VaultControls.svelte", () => ({
 }));
 
 describe("MobileMenu", () => {
+  afterEach(() => vi.restoreAllMocks());
+
   beforeEach(() => {
     guidedModeStore.setGuidedMode(true);
     sessionModeStore.isGuestMode = false;
@@ -52,14 +55,40 @@ describe("MobileMenu", () => {
   describe("navigation", () => {
     // The drawer is where the items dropped from the phone Activity Bar are
     // reached, so it has to carry all of them.
-    it.each(["random", "generators", "shelf", "quicknote", "guest-chat"])(
-      "offers %s, which the phone bar leaves out",
-      (id) => {
+    it.each([
+      "random",
+      "generators",
+      "shelf",
+      "quicknote",
+      "session-journal",
+      "guest-chat",
+    ])("offers %s, which the phone bar leaves out", (id) => {
+      render(MobileMenu, { isOpen: true });
+
+      expect(screen.getByTestId(`mobile-menu-${id}`)).toBeTruthy();
+    });
+
+    it.each(["open", "resume"] as const)(
+      "shows a journal indicator while a journal is %s",
+      (state) => {
+        vi.spyOn(sessionJournalStore, "controlState", "get").mockReturnValue(
+          state,
+        );
         render(MobileMenu, { isOpen: true });
 
-        expect(screen.getByTestId(`mobile-menu-${id}`)).toBeTruthy();
+        expect(screen.getByTestId("session-journal-indicator")).toBeTruthy();
       },
     );
+
+    it("shows no journal indicator when no journal is active (negative)", () => {
+      vi.spyOn(sessionJournalStore, "controlState", "get").mockReturnValue(
+        "start",
+      );
+      render(MobileMenu, { isOpen: true });
+
+      expect(screen.getByTestId("mobile-menu-session-journal")).toBeTruthy();
+      expect(screen.queryByTestId("session-journal-indicator")).toBeNull();
+    });
 
     it("hides the Generators shortcut when no vault is initialized", () => {
       vault.isInitialized = false;

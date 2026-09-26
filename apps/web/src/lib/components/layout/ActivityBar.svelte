@@ -1,5 +1,6 @@
 <script lang="ts">
   import { quickNoteStore } from "$lib/stores/quicknote.svelte";
+  import SessionJournalIndicator from "./SessionJournalIndicator.svelte";
   import { page } from "$app/state";
   import {
     isToolActive,
@@ -90,6 +91,11 @@
           {quickNoteStore.count}
         </span>
       {/if}
+
+      <SessionJournalIndicator
+        toolId={tool.id}
+        class="absolute -top-0.5 -right-0.5 bg-chrome-accent shadow-md"
+      />
 
       {#if active}
         <div

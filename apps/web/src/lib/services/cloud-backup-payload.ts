@@ -69,6 +69,9 @@ export interface CloudBackupPayloadResult {
     entities: LocalEntity[];
     maps: unknown[];
     canvases: unknown[];
+    /** Session Journal (spec 163-session-journal, FR-016) — the GM's own
+     *  private play log, never included in a player-facing/guest export. */
+    sessionJournals: unknown[];
     assetManifest: { assetId: string; path: string; mimeType: string }[];
   };
   /** Raw bytes per file. Uploaded one request each, never inlined in JSON. */
@@ -170,7 +173,11 @@ export async function buildCloudBackupPayload(
   // compatible but not nominally identical, and this only reads a few fields.
   entities: readonly LocalEntity[] | readonly unknown[],
   deps: CloudBackupPayloadDeps,
-  content: { maps?: readonly unknown[]; canvases?: readonly unknown[] } = {},
+  content: {
+    maps?: readonly unknown[];
+    canvases?: readonly unknown[];
+    sessionJournals?: readonly unknown[];
+  } = {},
 ): Promise<CloudBackupPayloadResult> {
   let list = entities as readonly LocalEntity[];
   const skippedEntities: string[] = [];
@@ -198,6 +205,7 @@ export async function buildCloudBackupPayload(
 
   const maps = content.maps ?? [];
   const canvases = content.canvases ?? [];
+  const sessionJournals = content.sessionJournals ?? [];
   const fetcher = deps.fetch ?? fetch;
   const assets: { assetId: string; bytes: Uint8Array; mimeType: string }[] = [];
   const assetManifest: { assetId: string; path: string; mimeType: string }[] =
@@ -242,6 +250,7 @@ export async function buildCloudBackupPayload(
       entities: list as LocalEntity[],
       maps: maps as unknown[],
       canvases: canvases as unknown[],
+      sessionJournals: sessionJournals as unknown[],
       assetManifest,
     },
     assets,
