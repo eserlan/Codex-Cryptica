@@ -14,6 +14,7 @@
   import { systemClock, type Clock } from "$lib/utils/runtime-deps";
   import { fade } from "svelte/transition";
   import ResolutionChain from "./ResolutionChain.svelte";
+  import DiceBreakdownDisclosure from "$lib/components/dice/DiceBreakdownDisclosure.svelte";
 
   /**
    * Rolls one table and shows the result, the die value behind it, and a way to
@@ -60,6 +61,8 @@
   const canPinToMap = $derived(Boolean(session.mapId));
 
   const dieValue = $derived(outcome?.chain[0]?.dieValue);
+  /** The dice behind `dieValue`, exactly as the engine rolled them (#3443). */
+  const rollParts = $derived(outcome?.chain[0]?.rollParts);
 
   /**
    * The die a value was read off. Ranged tables carry their own; a weighted
@@ -236,6 +239,14 @@
         {outcome.finalText}
       </p>
     </div>
+
+    {#key outcome}
+      <DiceBreakdownDisclosure
+        parts={rollParts}
+        total={dieValue ?? 0}
+        formula={dieLabel}
+      />
+    {/key}
 
     <div class="flex flex-wrap gap-2 border-t border-theme-border/40 pt-3">
       <button
