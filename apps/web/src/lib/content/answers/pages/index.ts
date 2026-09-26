@@ -69,6 +69,7 @@ import { howDoYouUsePlayerBackstoriesInAnRpgCampaignWorld } from "./how-do-you-u
 import { howDoYouWriteAOneShotAdventure } from "./how-do-you-write-a-one-shot-adventure";
 import { howManyNpcsDoesAnRpgTownNeed } from "./how-many-npcs-does-an-rpg-town-need";
 import { howMuchCampaignLoreShouldPlayersBeExpectedToRemember } from "./how-much-campaign-lore-should-players-be-expected-to-remember";
+import { howMuchOfThePlotShouldADmPrepare } from "./how-much-of-the-plot-should-a-dm-prepare";
 import { howMuchPrepDoYouNeedForAnRpgSession } from "./how-much-prep-do-you-need-for-an-rpg-session";
 import { howMuchRuleOfCoolShouldADmAllow } from "./how-much-rule-of-cool-should-a-dm-allow";
 import { howToCreateACyberpunkCityDistrict } from "./how-to-create-a-cyberpunk-city-district";
@@ -176,6 +177,7 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     howDoYouWriteAOneShotAdventure,
     howManyNpcsDoesAnRpgTownNeed,
     howMuchCampaignLoreShouldPlayersBeExpectedToRemember,
+    howMuchOfThePlotShouldADmPrepare,
     howMuchPrepDoYouNeedForAnRpgSession,
     howMuchRuleOfCoolShouldADmAllow,
     howToCreateACyberpunkCityDistrict,

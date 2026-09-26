@@ -161,6 +161,7 @@ export const howMuchPrepDoYouNeedForAnRpgSession: AnswerConfigInput = {
     "how-do-i-organise-gm-notes-for-in-person-play",
     "how-do-i-prepare-an-rpg-session-step-by-step",
     "how-do-i-pace-an-rpg-one-shot",
+    "how-much-of-the-plot-should-a-dm-prepare",
   ],
   discovery: {
     id: "answer-session-prep",
