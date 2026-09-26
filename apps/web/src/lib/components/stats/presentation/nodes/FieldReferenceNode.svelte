@@ -5,6 +5,8 @@
   import ItemTableNode from "./ItemTableNode.svelte";
 
   import { rollStatSheetDiceField } from "$lib/utils/stat-sheet-field-actions";
+  import DiceBreakdownDisclosure from "$lib/components/dice/DiceBreakdownDisclosure.svelte";
+  import type { RollResult } from "dice-engine";
 
   let {
     node,
@@ -18,6 +20,7 @@
     isError?: boolean;
     success?: boolean;
     total?: number;
+    roll?: RollResult;
   }>({
     rolling: false,
     text: null,
@@ -33,6 +36,7 @@
       isError: res.isError,
       success: res.success,
       total: res.total,
+      roll: res.roll,
     };
   }
 
@@ -233,57 +237,66 @@
   </label>
 {:else if field.type === "dice"}
   {#if context.mode === "view"}
-    <button
-      type="button"
-      class="inline-flex items-center gap-1.5 rounded border border-theme-border bg-theme-bg/50 px-2 py-0.5 text-xs text-theme-text transition-colors hover:border-theme-primary hover:text-theme-primary disabled:opacity-50"
-      disabled={rollState.rolling}
-      onclick={handleRoll}
-      data-testid="presentation-field-dice-roll"
-    >
-      <span
-        class="icon-[lucide--dice-5] h-3.5 w-3.5 text-theme-primary"
-        aria-hidden="true"
-      ></span>
-      {#if label}<span class="font-medium">{label}</span>{/if}
-      {#if isNameTargetDice}
-        {#if targetScore !== null}
-          <span
-            class="rounded bg-theme-bg px-1 py-0.5 font-mono text-[11px] text-theme-muted"
-            data-testid="presentation-field-dice-target"
-          >
-            {formattedTargetScore}
-          </span>
-        {/if}
-      {:else}
-        <span class="rounded bg-theme-bg px-1 py-0.5 font-mono text-[11px]">
-          {field.formula ?? "1d20"}
-        </span>
-        {#if targetScore !== null}
-          <span
-            class="rounded bg-theme-bg px-1 py-0.5 font-mono text-[11px] text-theme-muted"
-            data-testid="presentation-field-dice-target"
-          >
-            Target: {targetScore}
-          </span>
-        {/if}
-      {/if}
-      {#if rollState.text}
-        {#if rollState.isError}
-          <span class="font-bold text-theme-danger">{rollState.text}</span>
-        {:else if rollState.success !== undefined}
-          <span
-            class={rollState.success ? "text-emerald-400" : "text-theme-danger"}
-            role="status"
-            aria-label={`${displayRollTotal ?? "Roll"}: ${rollState.success ? "Success" : "Failure"}`}
-            data-testid="presentation-field-dice-outcome"
-          >
-            {displayRollTotal ?? displayRollText}
-          </span>
+    <span class="inline-flex flex-col items-start gap-1">
+      <button
+        type="button"
+        class="inline-flex items-center gap-1.5 rounded border border-theme-border bg-theme-bg/50 px-2 py-0.5 text-xs text-theme-text transition-colors hover:border-theme-primary hover:text-theme-primary disabled:opacity-50"
+        disabled={rollState.rolling}
+        onclick={handleRoll}
+        data-testid="presentation-field-dice-roll"
+      >
+        <span
+          class="icon-[lucide--dice-5] h-3.5 w-3.5 text-theme-primary"
+          aria-hidden="true"
+        ></span>
+        {#if label}<span class="font-medium">{label}</span>{/if}
+        {#if isNameTargetDice}
+          {#if targetScore !== null}
+            <span
+              class="rounded bg-theme-bg px-1 py-0.5 font-mono text-[11px] text-theme-muted"
+              data-testid="presentation-field-dice-target"
+            >
+              {formattedTargetScore}
+            </span>
+          {/if}
         {:else}
-          <span class="font-bold text-theme-primary">{displayRollText}</span>
+          <span class="rounded bg-theme-bg px-1 py-0.5 font-mono text-[11px]">
+            {field.formula ?? "1d20"}
+          </span>
+          {#if targetScore !== null}
+            <span
+              class="rounded bg-theme-bg px-1 py-0.5 font-mono text-[11px] text-theme-muted"
+              data-testid="presentation-field-dice-target"
+            >
+              Target: {targetScore}
+            </span>
+          {/if}
         {/if}
-      {/if}
-    </button>
+        {#if rollState.text}
+          {#if rollState.isError}
+            <span class="font-bold text-theme-danger">{rollState.text}</span>
+          {:else if rollState.success !== undefined}
+            <span
+              class={rollState.success
+                ? "text-emerald-400"
+                : "text-theme-danger"}
+              role="status"
+              aria-label={`${displayRollTotal ?? "Roll"}: ${rollState.success ? "Success" : "Failure"}`}
+              data-testid="presentation-field-dice-outcome"
+            >
+              {displayRollTotal ?? displayRollText}
+            </span>
+          {:else}
+            <span class="font-bold text-theme-primary">{displayRollText}</span>
+          {/if}
+        {/if}
+      </button>
+      <DiceBreakdownDisclosure
+        parts={rollState.roll?.parts}
+        total={rollState.roll?.total ?? 0}
+        formula={rollState.roll?.formula}
+      />
+    </span>
   {:else}
     <span
       class="inline-flex items-center gap-1.5 text-xs text-theme-text opacity-75"

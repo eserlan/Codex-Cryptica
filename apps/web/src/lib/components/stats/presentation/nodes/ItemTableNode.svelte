@@ -7,6 +7,8 @@
   } from "schema";
   import type { PresentationRenderContext } from "../types";
   import { rollStatSheetDiceField } from "$lib/utils/stat-sheet-field-actions";
+  import DiceBreakdownDisclosure from "$lib/components/dice/DiceBreakdownDisclosure.svelte";
+  import type { RollResult } from "dice-engine";
   import { vault } from "$lib/stores/vault.svelte";
 
   const linkableItemTypes = ["item", "weapon", "gear", "artifact", "object"];
@@ -32,7 +34,13 @@
   let rollStateMap = $state<
     Record<
       string,
-      { rolling: boolean; text?: string; success?: boolean; isError?: boolean }
+      {
+        rolling: boolean;
+        text?: string;
+        success?: boolean;
+        isError?: boolean;
+        roll?: RollResult;
+      }
     >
   >({});
   let showItemPicker = $state(false);
@@ -278,6 +286,7 @@
         text: res.text,
         isError: res.isError,
         success: res.success,
+        roll: res.roll,
       };
     } catch {
       rollStateMap[key] = {
@@ -526,6 +535,11 @@
                           >
                         {/if}
                       </button>
+                      <DiceBreakdownDisclosure
+                        parts={rollState?.roll?.parts}
+                        total={rollState?.roll?.total ?? 0}
+                        formula={rollState?.roll?.formula}
+                      />
                     {:else if context.readOnly}
                       <span class="font-mono text-xs text-theme-muted"
                         >{formula}</span

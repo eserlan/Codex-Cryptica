@@ -50,6 +50,72 @@ describe("JournalEntryRow (FR-028)", () => {
     expect(new Set(icons).size).toBe(3);
   });
 
+  describe("roll breakdown (#3443)", () => {
+    const parts = [
+      { type: "dice", sides: 6, rolls: [6, 5, 3], dropped: [1], value: 14 },
+    ];
+
+    it("expands the saved dice of a roll without re-rolling", async () => {
+      render(JournalEntryRow, {
+        props: {
+          entry: {
+            ...entry("dice-roll", "Rolled 4d6kh3: 14"),
+            sourceRef: { formula: "4d6kh3", total: 14, parts },
+          },
+        },
+      });
+
+      await fireEvent.click(screen.getByTestId("dice-disclosure-toggle"));
+
+      expect(
+        screen.getAllByTestId("dice-kept").map((el) => el.textContent),
+      ).toEqual(["6", "5", "3"]);
+      expect(
+        screen.getAllByTestId("dice-dropped").map((el) => el.textContent),
+      ).toEqual(["1"]);
+      expect(screen.getByTestId("dice-breakdown-total").textContent).toBe("14");
+    });
+
+    it("shows the dice behind a table result too", () => {
+      render(JournalEntryRow, {
+        props: {
+          entry: {
+            ...entry("table-result", "Encounters: a merchant"),
+            sourceRef: { total: 14, parts },
+          },
+        },
+      });
+
+      expect(screen.getByTestId("dice-disclosure-toggle")).toBeTruthy();
+    });
+
+    it("offers no breakdown for an older entry with no saved dice (negative)", () => {
+      render(JournalEntryRow, {
+        props: {
+          entry: {
+            ...entry("table-result", "Encounters: a merchant"),
+            sourceRef: { total: 14, formula: "4d6kh3" },
+          },
+        },
+      });
+
+      expect(screen.queryByTestId("dice-disclosure-toggle")).toBeNull();
+    });
+
+    it("ignores a damaged trace rather than showing wrong dice (negative)", () => {
+      render(JournalEntryRow, {
+        props: {
+          entry: {
+            ...entry("dice-roll", "Rolled 2d6: 7"),
+            sourceRef: { total: 7, parts: [{ type: "dice", rolls: "4,3" }] },
+          },
+        },
+      });
+
+      expect(screen.queryByTestId("dice-disclosure-toggle")).toBeNull();
+    });
+  });
+
   it("still shows a type it has never seen, as a generic automatic entry (negative)", () => {
     render(JournalEntryRow, {
       props: { entry: entry("generator-output", "A tavern") },
