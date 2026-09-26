@@ -48,9 +48,13 @@ function parseDicePart(part: Record<string, unknown>) {
   if (part.dropped !== undefined && !isNumberArray(part.dropped)) {
     return undefined;
   }
+  const value = part.value as number;
+  if (Math.abs(value) !== part.rolls.reduce((sum, roll) => sum + roll, 0)) {
+    return undefined;
+  }
   const result: DiceBreakdownPart = {
     type: "dice",
-    value: part.value as number,
+    value,
     rolls: part.rolls,
   };
   if (Number.isFinite(part.sides)) result.sides = part.sides as number;
@@ -75,10 +79,19 @@ function parsePart(raw: unknown): DiceBreakdownPart | undefined {
  */
 export function parseBreakdownParts(
   value: unknown,
+  expectedTotal: unknown,
 ): DiceBreakdownPart[] | undefined {
-  if (!Array.isArray(value) || value.length === 0) return undefined;
+  if (
+    !Array.isArray(value) ||
+    value.length === 0 ||
+    typeof expectedTotal !== "number" ||
+    !Number.isFinite(expectedTotal)
+  ) {
+    return undefined;
+  }
   const parts = value.map(parsePart);
-  return parts.every((part) => part !== undefined)
-    ? (parts as DiceBreakdownPart[])
-    : undefined;
+  if (!parts.every((part) => part !== undefined)) return undefined;
+  const parsedParts = parts as DiceBreakdownPart[];
+  const total = parsedParts.reduce((sum, part) => sum + part.value, 0);
+  return total === expectedTotal ? parsedParts : undefined;
 }

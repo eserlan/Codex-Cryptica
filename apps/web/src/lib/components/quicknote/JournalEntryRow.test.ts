@@ -114,6 +114,24 @@ describe("JournalEntryRow (FR-028)", () => {
 
       expect(screen.queryByTestId("dice-disclosure-toggle")).toBeNull();
     });
+
+    it("hides a trace whose subtotal disagrees with the saved total (negative)", () => {
+      render(JournalEntryRow, {
+        props: {
+          entry: {
+            ...entry("dice-roll", "Rolled 4d6kh3: 14"),
+            sourceRef: {
+              total: 15,
+              parts: [
+                { type: "dice", rolls: [6, 5, 3], dropped: [1], value: 14 },
+              ],
+            },
+          },
+        },
+      });
+
+      expect(screen.queryByTestId("dice-disclosure-toggle")).toBeNull();
+    });
   });
 
   it("still shows a type it has never seen, as a generic automatic entry (negative)", () => {

@@ -47,7 +47,7 @@
   // entries without a trace, and other entry types, show no breakdown.
   const rollParts = $derived(
     entry.type === "dice-roll" || entry.type === "table-result"
-      ? parseBreakdownParts(entry.sourceRef?.parts)
+      ? parseBreakdownParts(entry.sourceRef?.parts, entry.sourceRef?.total)
       : undefined,
   );
   const rollTotal = $derived(
