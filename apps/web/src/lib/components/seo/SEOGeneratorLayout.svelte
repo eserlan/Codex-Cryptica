@@ -34,18 +34,13 @@
   import StarSystemDiagram from "./StarSystemDiagram.svelte";
   import ConstellationChart from "./ConstellationChart.svelte";
   import { blobToDataUrl } from "$lib/utils/svg-export";
-  import { dungeonDelveService } from "$lib/services/dungeon-delve-service";
   import { buildAbsoluteUrl } from "$lib/seo/site";
   import SeoHead from "./SeoHead.svelte";
   import { unregisterDevelopmentServiceWorkers } from "$lib/utils/dev-service-worker";
-  import {
-    createPendingDelveTransfer,
-    PENDING_DELVE_CANVAS_KEY,
-  } from "$lib/services/seo/pending-delve-transfer";
+  import { PENDING_DELVE_CANVAS_KEY } from "$lib/services/seo/pending-delve-transfer";
   import {
     getContextSelection,
     computeProvenance,
-    generateAdventureGraphTopology,
     type SessionEntity,
     type RefinementDocument,
   } from "generator-engine";
@@ -80,6 +75,10 @@
   } from "./generator-page-identity";
   import { generatorShareService } from "$lib/services/sharing/GeneratorShareService";
   import { createGeneratorPageSharing } from "./generator-page-sharing";
+  import {
+    buildAdventureCanvasTransfer,
+    buildDelveCanvasTransfer,
+  } from "./generator-canvas-transfer";
   import {
     buildGeneratorSavePayload,
     buildHubSaveDrafts,
@@ -829,20 +828,7 @@
 
   async function handleBuildDelveCanvas(data: GeneratorOutput) {
     try {
-      const canvasDoc = dungeonDelveService.buildDelveCanvasFromConcept(data);
-      const layout = getGeneratorDocumentLayout(data);
-      const content = data.summary
-        ? `*${data.summary}*\n\n${layout.content}`
-        : layout.content;
-      const transfer = createPendingDelveTransfer(canvasDoc, {
-        type: "location",
-        kind: "dungeon",
-        title: data.title,
-        content,
-        lore: layout.lore,
-        labels: data.labels,
-        status: data.status,
-      });
+      const transfer = buildDelveCanvasTransfer(data);
       localStorage.setItem(PENDING_DELVE_CANVAS_KEY, JSON.stringify(transfer));
       await unregisterDevelopmentServiceWorkers(dev);
       if (dev) {
@@ -859,18 +845,7 @@
 
   async function handleBuildAdventureCanvas(data: GeneratorOutput) {
     try {
-      const canvasDoc = generateAdventureGraphTopology(data);
-      const content = data.summary ? `*${data.summary}*` : "";
-      const lore = [data.content, data.lore].filter(Boolean).join("\n\n");
-      const transfer = createPendingDelveTransfer(canvasDoc as any, {
-        type: "note",
-        kind: "adventure",
-        title: data.title,
-        content,
-        lore,
-        labels: data.labels,
-        status: data.status,
-      });
+      const transfer = buildAdventureCanvasTransfer(data);
       localStorage.setItem(PENDING_DELVE_CANVAS_KEY, JSON.stringify(transfer));
       await unregisterDevelopmentServiceWorkers(dev);
       if (dev) {
