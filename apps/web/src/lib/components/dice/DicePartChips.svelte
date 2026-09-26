@@ -28,9 +28,14 @@
 </script>
 
 <div class="flex flex-wrap items-center gap-1.5">
-  <span class="{getDiceIcon(part.sides)} h-3.5 w-3.5 text-theme-muted"></span>
+  <span
+    aria-hidden="true"
+    class="{getDiceIcon(part.sides)} h-3.5 w-3.5 text-theme-muted"
+  ></span>
   {#each visible as roll, j (j)}
+    <span class="sr-only">Kept die {roll}</span>
     <span
+      aria-hidden="true"
       class="flex h-7 min-w-7 items-center justify-center rounded border border-theme-border bg-theme-bg px-1 font-header text-xs font-bold tabular-nums {tone(
         roll,
       )}"
@@ -41,18 +46,24 @@
     <button
       type="button"
       class="rounded border border-theme-border bg-theme-bg px-2 py-1 text-[10px] font-bold text-theme-muted transition-colors hover:text-theme-primary"
+      aria-expanded={showAll}
       onclick={() => (showAll = !showAll)}
       >{hidden > 0 ? `+${hidden} more` : "Show less"}</button
     >
   {/if}
   {#each part.dropped ?? [] as dropped, k (k)}
+    <span class="sr-only">Dropped die {dropped}</span>
     <span
+      aria-hidden="true"
       class="flex h-7 min-w-7 items-center justify-center rounded border border-dashed border-theme-border/60 px-1 font-header text-xs tabular-nums text-theme-muted line-through"
       data-testid="dice-dropped">{dropped}</span
     >
   {/each}
   <span
     class="px-1 font-header text-xs font-bold tabular-nums text-theme-primary"
-    data-testid="dice-part-total">= {part.value}</span
+    data-testid="dice-part-total"
   >
+    <span class="sr-only">Subtotal {part.value}</span>
+    <span aria-hidden="true">= {part.value}</span>
+  </span>
 </div>

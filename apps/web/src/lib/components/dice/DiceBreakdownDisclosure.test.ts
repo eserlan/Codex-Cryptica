@@ -35,6 +35,8 @@ describe("DiceBreakdownDisclosure", () => {
     expect(
       screen.getAllByTestId("dice-dropped").map((el) => el.textContent),
     ).toEqual(["1"]);
+    expect(screen.getByText("Kept die 6")).not.toBeNull();
+    expect(screen.getByText("Dropped die 1")).not.toBeNull();
     expect(screen.getByTestId("dice-breakdown-total").textContent).toBe("14");
     expect(screen.getByTestId("dice-breakdown-formula").textContent).toBe(
       "4d6kh3",
@@ -52,7 +54,7 @@ describe("DiceBreakdownDisclosure", () => {
     });
     await fireEvent.click(screen.getByTestId("dice-disclosure-toggle"));
 
-    expect(screen.getByTestId("dice-modifier").textContent).toBe("+3");
+    expect(screen.getByText("Modifier +3")).not.toBeNull();
   });
 
   it("shows signed subtotals for subtractive dice parts", async () => {
@@ -67,7 +69,28 @@ describe("DiceBreakdownDisclosure", () => {
 
     expect(
       screen.getAllByTestId("dice-part-total").map((el) => el.textContent),
-    ).toEqual(["= 17", "= -3"]);
+    ).toEqual(["Subtotal 17 = 17", "Subtotal -3 = -3"]);
+  });
+
+  it("keeps the large-pool disclosure available to assistive technology", async () => {
+    render(DiceBreakdownDisclosure, {
+      parts: [
+        {
+          type: "dice",
+          sides: 6,
+          rolls: Array.from({ length: 13 }, (_, index) => (index % 6) + 1),
+          value: 45,
+        },
+      ],
+      total: 45,
+    });
+    await fireEvent.click(screen.getByTestId("dice-disclosure-toggle"));
+
+    const moreToggle = screen.getByRole("button", { name: "+1 more" });
+    expect(moreToggle.getAttribute("aria-expanded")).toBe("false");
+    await fireEvent.click(moreToggle);
+
+    expect(screen.getAllByTestId("dice-kept")).toHaveLength(13);
   });
 
   it("renders nothing for a lone die or a legacy result with no parts", () => {

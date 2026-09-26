@@ -1,9 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  describeBreakdown,
-  formatModifier,
-  hasBreakdownDetail,
-} from "./dice-breakdown";
+import { formatModifier, hasBreakdownDetail } from "./dice-breakdown";
 
 describe("hasBreakdownDetail", () => {
   it("is false for a lone die, so a plain d20 gets no chevron", () => {
@@ -35,38 +31,9 @@ describe("hasBreakdownDetail", () => {
   });
 });
 
-describe("describeBreakdown", () => {
-  it("names kept and dropped dice so they differ without colour", () => {
-    expect(
-      describeBreakdown(
-        [{ type: "dice", sides: 6, rolls: [6, 5, 3], dropped: [1], value: 14 }],
-        14,
-      ),
-    ).toBe("Kept 6, 5, 3; dropped 1; subtotal 14. Total 14");
-  });
-
-  it("includes modifiers and the total", () => {
-    expect(
-      describeBreakdown(
-        [
-          { type: "dice", sides: 6, rolls: [4, 2], value: 6 },
-          { type: "modifier", value: 3 },
-        ],
-        9,
-      ),
-    ).toBe("Dice 4, 2; subtotal 6. Modifier +3. Total 9");
+describe("formatModifier", () => {
+  it("formats positive and negative modifiers with their signs", () => {
+    expect(formatModifier(3)).toBe("+3");
     expect(formatModifier(-2)).toBe("-2");
-  });
-
-  it("preserves the sign of a subtractive dice part", () => {
-    expect(
-      describeBreakdown(
-        [
-          { type: "dice", sides: 20, rolls: [17], value: 17 },
-          { type: "dice", sides: 4, rolls: [3], value: -3 },
-        ],
-        14,
-      ),
-    ).toBe("Dice 17; subtotal 17. Dice 3; subtotal -3. Total 14");
   });
 });

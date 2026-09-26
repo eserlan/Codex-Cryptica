@@ -39,30 +39,3 @@ export function hasBreakdownDetail(
 export function formatModifier(value: number): string {
   return `${value >= 0 ? "+" : "-"}${Math.abs(value)}`;
 }
-
-/**
- * A plain-text reading of the breakdown, used as the accessible description
- * so kept and dropped dice are told apart without relying on colour or
- * strike-through.
- */
-export function describeBreakdown(
-  parts: readonly DiceBreakdownPart[] | undefined,
-  total: number,
-): string {
-  const lines: string[] = [];
-  for (const part of parts ?? []) {
-    if (part.type === "modifier") {
-      lines.push(`Modifier ${formatModifier(part.value)}`);
-      continue;
-    }
-    const kept = (part.rolls ?? []).join(", ");
-    const dropped = part.dropped ?? [];
-    lines.push(
-      dropped.length > 0
-        ? `Kept ${kept}; dropped ${dropped.join(", ")}; subtotal ${part.value}`
-        : `Dice ${kept}; subtotal ${part.value}`,
-    );
-  }
-  lines.push(`Total ${total}`);
-  return lines.join(". ");
-}

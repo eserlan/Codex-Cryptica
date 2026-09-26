@@ -1,7 +1,6 @@
 <script lang="ts">
   import DicePartChips from "./DicePartChips.svelte";
   import {
-    describeBreakdown,
     formatModifier,
     type DiceBreakdownPart,
   } from "$lib/utils/dice-breakdown";
@@ -31,8 +30,6 @@
     /** Draws the bordered panel; off when the host supplies its own frame. */
     framed?: boolean;
   } = $props();
-
-  const summary = $derived(describeBreakdown(parts, total));
 </script>
 
 <div
@@ -50,17 +47,18 @@
     >
   {/if}
 
-  <span class="sr-only">{summary}</span>
-
-  <div class="flex flex-col gap-1.5" aria-hidden="true">
+  <div class="flex flex-col gap-1.5">
     {#each parts as part, i (i)}
       {#if part.type === "dice"}
         <DicePartChips {part} {maxVisible} />
       {:else}
         <span
           class="w-fit rounded border border-theme-border/40 px-2 py-0.5 font-header text-xs font-bold text-theme-muted"
-          data-testid="dice-modifier">{formatModifier(part.value)}</span
+          data-testid="dice-modifier"
         >
+          <span class="sr-only">Modifier {formatModifier(part.value)}</span>
+          <span aria-hidden="true">{formatModifier(part.value)}</span>
+        </span>
       {/if}
     {/each}
   </div>
@@ -68,7 +66,6 @@
   {#if showTotal}
     <div
       class="flex items-baseline gap-1.5 border-t border-theme-border/30 pt-1.5 font-header text-xs text-theme-muted"
-      aria-hidden="true"
     >
       <span class="uppercase tracking-widest">Total</span>
       <span
