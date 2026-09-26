@@ -162,6 +162,7 @@ export const howDoYouTrackFactionTurnsBetweenRpgSessions: AnswerConfigInput = {
     "how-do-i-build-a-believable-constitutional-crisis-or-coup",
     "how-do-i-make-a-player-base-matter-in-an-rpg-campaign",
     "what-should-players-be-able-to-upgrade-in-an-rpg-base",
+    "how-much-of-the-plot-should-a-dm-prepare",
   ],
   discovery: {
     id: "answer-track-faction-turns-between-sessions",

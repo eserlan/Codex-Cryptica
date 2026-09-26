@@ -1,4 +1,9 @@
-import { type IdGenerator, type Clock, systemIdGenerator, systemClock } from "$lib/utils/runtime-deps";
+import {
+  type IdGenerator,
+  type Clock,
+  systemIdGenerator,
+  systemClock,
+} from "$lib/utils/runtime-deps";
 import {
   parseAdventureSession,
   type AdventureSession,
