@@ -1,5 +1,5 @@
 {
-  "updated_at": 1790441428,
+  "updated_at": 1790441516,
   "candidates": [
     {
       "id": "reddit-36168046733-tables-now-parse-4d6kh3-2-and-other-keep",
@@ -22,14 +22,14 @@
       "created_at": 1790365466
     },
     {
-      "id": "reddit-36254739930-session-journal-a-persistent-log-that-ke",
-      "title": "Session Journal: a persistent log that keeps up while you play",
-      "body": "My session notes lived in a scratchpad, a doc, and my head. After a reload or a tab switch, half the actual play was gone and I was reconstructing it from memory.\n\nI built Session Journal as a single chronological log you can start or resume from anywhere and keep running across reloads.\n\nIt stays in the background while you play:\n\n- start, resume and end from the scratchpad, survives reloads and stays in sync across tabs\n- timestamped notes with optional sections to keep scenes or days separated\n- auto-captures dice rolls, card draws and table results as they happen\n- promote any single entry, a whole section or the full journal into a draft vault entity without touching the original log\n\nIt is text-first and local for now, so if your sessions are heavy on hand-drawn maps or images you will still handle those separately. I kept it fast and offline rather than trying to sync media.\n\nWhat is the one thing you always forget to write down mid-session that you wish had just been logged for you?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/screenshots/session-journal.jpg)",
-      "url": "https://github.com/eserlan/Codex-Cryptica/discussions/3439",
-      "image_url": "https://assets.codexcryptica.com/screenshots/session-journal.jpg",
+      "id": "reddit-36254739930-new-hub-steampunk-victorian-industrial-f",
+      "title": "New hub: Steampunk & Victorian Industrial for brass-and-steam campaigns",
+      "body": "My steampunk cities always looked right but felt thin, just gears on top of a fantasy town with no foundries, no patents, no one fighting over who owns the engine.\n\nI built the Steampunk & Victorian Industrial hub as a genre pack that gives you that industrial scaffolding to start a campaign and wires it straight into vault, maps, timelines and oracles.\n\nhttps://codexcryptica.com/for/steampunk-rpgs\n\nInside:\n\n- clockwork inventions and patents with rival claims and field tests\n- industrial guilds and foundries with jobs, debts and sabotage hooks\n- aristocratic houses and airship armadas for social leverage, transport and blockades\n- brass-and-steam conspiracies and a sample campaign web already linked across vault entities\n\nI kept the sample web tight to a single industrial city so it is usable right away, so an empire-wide game will need you to expand it. Still figuring whether folks want more airship route tools next.\n\nWhen you run steampunk, do your players head for the workshop, the guild hall, or the air docks first?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/announcements/release-36254739930-0.png)",
+      "url": "https://codexcryptica.com/for/steampunk-rpgs",
+      "image_url": "https://assets.codexcryptica.com/announcements/release-36254739930-0.png",
       "source_id": "36254739930",
       "status": "approved",
-      "created_at": 1790441428
+      "created_at": 1790441516
     }
   ]
 }
