@@ -7,25 +7,25 @@ export const howMuchOfThePlotShouldADmPrepare: AnswerConfigInput = {
   question: "How much of the plot should a DM prepare?",
   kind: "framework",
   shortAnswer:
-    "Prepare what the world is doing, not what the players will do. Fix the events and pressures that would happen without the party (an army crosses a border, a ritual finishes, a ruler dies), write down the developments that trigger only if something specific happens, and leave every player decision, solution and outcome unwritten. You can plan a long way ahead this way, because you are planning a situation that keeps moving rather than a story the players are expected to walk through.",
+    "Prepare what the world is doing, not what the players will do. Write down what would happen if the players did nothing, then let their actions change it. Note external events, actors' current plans and conditional triggers; keep player-dependent outcomes as questions, not answers. You can plan a long way ahead this way, because you are planning a situation that keeps moving rather than a story the players are expected to walk through.",
   sections: [
     {
       kind: "prose",
       heading: "Plot in a tabletop game is what the players do about the world",
       paragraphs: [
         "A novelist controls every character, so plot means a planned chain of scenes. A GM controls the world and the people in it, but not the player characters, so a chain of scenes prepared in advance only works if the players choose exactly what the GM expected. When they do not, the GM either abandons the notes or steers the table back onto them, and steering is where railroading starts.",
-        "That does not make advance planning a mistake. Many campaigns feel alive because the GM knew a great deal in advance: which faction was about to move, when the harvest would fail, who was plotting against whom. The useful line runs between the world's momentum, which you can prepare, and the party's path through it, which you cannot.",
+        "That does not make advance planning a mistake. Many campaigns feel alive because the GM knew a great deal in advance: which faction was about to move, when the harvest would fail, who was plotting against whom. Wars can begin, rulers can die, alliances can shift and disasters can unfold while factions act independently. This supports player agency as long as the players can affect the causes or consequences, or choose how to respond. The useful line runs between the world's momentum, which you can prepare, and the party's path through it, which you cannot.",
       ],
     },
     {
       kind: "list",
       heading: "Three kinds of prep: firm, conditional and open",
       intro:
-        "Sort everything you are tempted to plan into one of these, and only write down the first two:",
+        "Write events and triggers as plans. Keep player-dependent outcomes as questions rather than answers:",
       items: [
         {
           term: "Prepare firmly",
-          text: "Events and forces that do not depend on the party: a coronation on a known date, an eclipse, an invasion, a famine, a rival's scheduled departure. Give each a rough date or a clear stage of progress. They are the fixed points the players push against.",
+          text: "Firm prep covers external events and scheduled intentions. External events the PCs cannot reasonably prevent include an eclipse, winter or a tidal event. Scheduled intentions are what actors currently plan to do: an army crosses the border on the 12th, a coronation takes place at the festival, a rival sails at dawn or a council votes next week. Even a legal deadline holds only while the law stands. Treat each scheduled event as the default if nobody interferes, not an immutable outcome; note what could delay, redirect or prevent it, and what follows afterwards.",
         },
         {
           term: "Prepare conditionally",
@@ -33,7 +33,7 @@ export const howMuchOfThePlotShouldADmPrepare: AnswerConfigInput = {
         },
         {
           term: "Leave open",
-          text: "What the players choose to engage with, how they solve each problem, which NPCs survive, and how the campaign ends. If you find yourself writing 'then the party...', delete the sentence and write what the world does at that moment instead.",
+          text: "What the players choose to engage with, how they solve each problem, which NPCs survive, and how the campaign ends. These can be useful questions to keep in your notes; leave their answers unwritten. If you find yourself writing 'then the party...', delete the sentence and write what the world does at that moment instead.",
         },
       ],
     },
@@ -46,7 +46,7 @@ export const howMuchOfThePlotShouldADmPrepare: AnswerConfigInput = {
       items: [
         {
           term: "Good campaign prep",
-          text: "On the 12th of Frostfall, the invading army crosses the border. The northern road closes, grain prices in the capital double within a fortnight, and the border lords must choose whether to kneel or resist.",
+          text: "If nothing changes before then, the invading army crosses the border on the 12th of Frostfall. The northern road closes, grain prices in the capital double within a fortnight, and the border lords must choose whether to kneel or resist. If the players assassinate the general, destroy the bridge, negotiate a treaty or warn the border lords, the event and its consequences change accordingly.",
         },
         {
           term: "Over-plotted prep",
@@ -54,7 +54,7 @@ export const howMuchOfThePlotShouldADmPrepare: AnswerConfigInput = {
         },
         {
           term: "Why it works",
-          text: "The first version changes the strategic situation and hands the table a problem. The second writes the players' side of the story before they have sat down, and it collapses the moment they skip the fort.",
+          text: "The first version sets out what happens if nobody interferes, changes the strategic situation and hands the table a problem. The second writes the players' side of the story before they have sat down, and it collapses the moment they skip the fort.",
         },
       ],
     },
@@ -62,15 +62,15 @@ export const howMuchOfThePlotShouldADmPrepare: AnswerConfigInput = {
       kind: "example",
       heading: "Worked example: a campaign timeline with momentum",
       paragraphs: [
-        "Five entries are enough to give a campaign direction. Only the first is a fixed date, and none of them says what the players do.",
+        "Five entries are enough to give a campaign direction. For each future event, write what happens if nobody interferes, then note what could change it. None says what the players do.",
       ],
       items: [
         {
-          term: "Fixed: the coronation of the new Regent",
-          text: "It happens on the last night of the harvest festival whether or not the party attends. Every noble house will be in the city, which makes it the natural place for things to go wrong.",
+          term: "Scheduled: the coronation of the new Regent",
+          text: "The Regent plans to be crowned on the last night of the harvest festival. If nobody changes those plans, every noble house will be in the city, making it the natural place for things to go wrong. The party could still delay or prevent the coronation.",
         },
         {
-          term: "Likely: the Merchant League moves on the docks",
+          term: "Conditional: the Merchant League moves on the docks",
           text: "If the tariff dispute is still unresolved after the coronation, the League closes the harbour. If someone has settled it, the League waits and the pressure shifts to smuggling.",
         },
         {
@@ -87,7 +87,7 @@ export const howMuchOfThePlotShouldADmPrepare: AnswerConfigInput = {
         },
         {
           term: "Why it works",
-          text: "The setting has momentum: dates approach, pressures build, and ignored problems get worse. Because the entries are events and triggers rather than scenes, the party can meet any of them from any direction without the plot needing to bend.",
+          text: "The setting has momentum: dates approach, pressures build, and ignored problems get worse. Because these are default events and triggers rather than scenes, the party can meet any of them from any direction, change what happens and affect how the world responds. The more consequential an event is, the more chances the players should have to hear rumours, see preparations or discover warning signs before it arrives.",
         },
       ],
     },
@@ -95,7 +95,7 @@ export const howMuchOfThePlotShouldADmPrepare: AnswerConfigInput = {
       kind: "prose",
       heading: "How far ahead to plan",
       paragraphs: [
-        "Plan as far ahead as you can name something that would change the world without the party. For most tables that is a rough shape for the campaign's next arc, a sharper picture of the next few sessions, and full detail only for the session in front of you. There is no correct number of sessions; the useful test is whether each planned item is an event or trigger you could reuse if the players went somewhere else.",
+        "Plan as far ahead as you can name something that would change the world without the party. Far ahead, note intentions and pressures; nearer, sharpen the likely consequences and active actors; for the next session, prepare runnable detail. For most tables that is a rough shape for the campaign's next arc, a sharper picture of the next few sessions, and full detail only for the session in front of you. There is no correct number of sessions; the useful test is whether each planned item is an event or trigger you could reuse if the players went somewhere else.",
         "Detail should get thinner the further away it is. A vague pressure two arcs out costs almost nothing to revise, while a fully written scene that the players never reach is prep you cannot get back. If you catch yourself writing dialogue for a scene several sessions ahead, you are probably planning a story instead of a situation.",
       ],
     },
@@ -103,8 +103,8 @@ export const howMuchOfThePlotShouldADmPrepare: AnswerConfigInput = {
       kind: "prose",
       heading: "Revising the plan after player choices",
       paragraphs: [
-        "Player choices should change your timeline, and that is the system working. After each session, check the fixed events first: did anything the party did move a date, remove a cause or make an event unnecessary? Then check each trigger, and mark the ones that fired, the ones that can no longer fire and the ones that need a new consequence.",
-        "Keep the events that still make sense and change their consequences rather than deleting them. If the party killed the envoy the coronation still happens, but now it happens without her and with the northern lords in a different mood.",
+        "Player choices should change your timeline, and that is the system working. After each session, check the external events and scheduled intentions first: did anything the party did move a date, remove a cause or make an event unnecessary? Then check each trigger, and mark the ones that fired, the ones that can no longer fire and the ones that need a new consequence.",
+        "Keep the events that still make sense and change their consequences rather than deleting them. If the party killed the envoy, the coronation can still happen on schedule, but now it takes place without her and with the northern lords in a different mood.",
       ],
     },
     {
@@ -114,7 +114,7 @@ export const howMuchOfThePlotShouldADmPrepare: AnswerConfigInput = {
       items: [
         "Every planned item is either an event with a date or stage, or a trigger with a consequence.",
         "No item depends on the party choosing a particular action, location or ally.",
-        "At least one fixed event will be visible to the players before it happens, so they have a chance to respond.",
+        "The more consequential an event is, the more chance the players have to hear rumours, see preparations or discover warning signs before it happens.",
         "Each conditional entry says what happens if the trigger never fires as well as if it does.",
         "Anything planned more than a few sessions ahead is a pressure or a date, not a scene.",
         "You know which entries to revisit after the next session, and roughly what would change them.",
@@ -195,7 +195,7 @@ export const howMuchOfThePlotShouldADmPrepare: AnswerConfigInput = {
   seo: {
     title: "How much of the plot should a DM prepare? | Codex Cryptica",
     description:
-      "Prepare what the world is doing, not what the players will do. Fixed events, conditional triggers, a worked timeline and how far ahead a DM should plan.",
+      "Prepare what the world is doing, not what the players will do. External events, scheduled intentions, conditional triggers, a worked timeline and how far ahead a DM should plan.",
     image:
       "https://assets.codexcryptica.com/og/how-much-of-the-plot-should-a-dm-prepare.jpg",
     imageAlt:
