@@ -59,8 +59,8 @@ export function describeBreakdown(
     const dropped = part.dropped ?? [];
     lines.push(
       dropped.length > 0
-        ? `Kept ${kept}; dropped ${dropped.join(", ")}`
-        : `Dice ${kept}`,
+        ? `Kept ${kept}; dropped ${dropped.join(", ")}; subtotal ${part.value}`
+        : `Dice ${kept}; subtotal ${part.value}`,
     );
   }
   lines.push(`Total ${total}`);

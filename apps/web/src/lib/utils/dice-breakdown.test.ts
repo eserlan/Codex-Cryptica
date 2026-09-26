@@ -42,7 +42,7 @@ describe("describeBreakdown", () => {
         [{ type: "dice", sides: 6, rolls: [6, 5, 3], dropped: [1], value: 14 }],
         14,
       ),
-    ).toBe("Kept 6, 5, 3; dropped 1. Total 14");
+    ).toBe("Kept 6, 5, 3; dropped 1; subtotal 14. Total 14");
   });
 
   it("includes modifiers and the total", () => {
@@ -54,7 +54,19 @@ describe("describeBreakdown", () => {
         ],
         9,
       ),
-    ).toBe("Dice 4, 2. Modifier +3. Total 9");
+    ).toBe("Dice 4, 2; subtotal 6. Modifier +3. Total 9");
     expect(formatModifier(-2)).toBe("-2");
+  });
+
+  it("preserves the sign of a subtractive dice part", () => {
+    expect(
+      describeBreakdown(
+        [
+          { type: "dice", sides: 20, rolls: [17], value: 17 },
+          { type: "dice", sides: 4, rolls: [3], value: -3 },
+        ],
+        14,
+      ),
+    ).toBe("Dice 17; subtotal 17. Dice 3; subtotal -3. Total 14");
   });
 });

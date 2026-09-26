@@ -51,4 +51,8 @@
       data-testid="dice-dropped">{dropped}</span
     >
   {/each}
+  <span
+    class="px-1 font-header text-xs font-bold tabular-nums text-theme-primary"
+    data-testid="dice-part-total">= {part.value}</span
+  >
 </div>

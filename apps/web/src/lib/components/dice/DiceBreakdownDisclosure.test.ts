@@ -55,6 +55,21 @@ describe("DiceBreakdownDisclosure", () => {
     expect(screen.getByTestId("dice-modifier").textContent).toBe("+3");
   });
 
+  it("shows signed subtotals for subtractive dice parts", async () => {
+    render(DiceBreakdownDisclosure, {
+      parts: [
+        { type: "dice", sides: 20, rolls: [17], value: 17 },
+        { type: "dice", sides: 4, rolls: [3], value: -3 },
+      ],
+      total: 14,
+    });
+    await fireEvent.click(screen.getByTestId("dice-disclosure-toggle"));
+
+    expect(
+      screen.getAllByTestId("dice-part-total").map((el) => el.textContent),
+    ).toEqual(["= 17", "= -3"]);
+  });
+
   it("renders nothing for a lone die or a legacy result with no parts", () => {
     const { unmount } = render(DiceBreakdownDisclosure, {
       parts: [{ type: "dice", sides: 20, rolls: [14], value: 14 }],
