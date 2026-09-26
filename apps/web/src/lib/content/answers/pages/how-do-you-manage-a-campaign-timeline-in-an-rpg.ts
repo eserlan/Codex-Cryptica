@@ -131,6 +131,7 @@ export const howDoYouManageACampaignTimelineInAnRpg: AnswerConfigInput = {
     "how-do-you-help-players-remember-what-happened-in-a-ttrpg-campaign",
     "how-do-you-recap-a-ttrpg-session",
     "xp-leveling-vs-milestone-leveling",
+    "how-much-of-the-plot-should-a-dm-prepare",
   ],
   discovery: {
     id: "answer-manage-campaign-timeline",
