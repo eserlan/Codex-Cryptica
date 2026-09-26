@@ -44,3 +44,13 @@ The scratchpad also has a **Session Journal** tab. It is a running record of wha
 A small dot on the button means a journal is currently running.
 
 While a journal is running, your dice rolls, card draws and random table results are added to it automatically, even when the scratchpad is closed. Each one shows up as its own entry with a label and an icon (**Dice roll**, **Card draw** or **Table result**), so you can tell it from a note you typed. They go into whichever section you have chosen. If no journal is running, nothing is added, and your rolls work exactly as before. Rolls made in the solo Adventure prompt and on the map are not added yet.
+
+### Turning the journal into entities
+
+You can keep any part of a journal in your world. Use **Make entity** on an entry or a section, **Turn journal into a Note** for the whole thing, or **Choose parts** to tick several entries and sections and turn them into one entity together.
+
+1. Pick a type (Note is suggested) and check the name.
+2. Press **Create draft**. The scratchpad closes and the new draft opens so you can edit it.
+3. Approve the draft to keep it, or discard it. Either way, your journal stays exactly as it was, and you can turn the same part into another entity later.
+
+When you end a session, you are offered **Turn into a Note** and **Choose parts**. You don't have to use them; the same choices are always available on any ended journal in **Past journals**.

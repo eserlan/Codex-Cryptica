@@ -3,7 +3,7 @@
 **Feature Branch**: `163-session-journal`
 **Created**: 2026-09-25
 **Status**: Draft
-**Slices**: Slice 1 (#3406, PR #3422) = User Stories 1–4 / FR-001–FR-017. Slice 2 (#3407) = User Story 5 / FR-018–FR-023, built on the same branch. Slice 3 (#3408, automatic capture) = User Story 6 / FR-024–FR-035, built on branch `163-session-journal-slice-3`. Slice 4 (#3409, promote-to-entity) is still out of scope and will be added here later.
+**Slices**: Slice 1 (#3406, PR #3422) = User Stories 1–4 / FR-001–FR-017. Slice 2 (#3407) = User Story 5 / FR-018–FR-023, built on the same branch. Slice 3 (#3408, automatic capture) = User Story 6 / FR-024–FR-035, built on branch `163-session-journal-slice-3`. Slice 4 (#3409, promote-to-entity) = User Story 7 / FR-036–FR-049, built on branch `163-session-journal-slice-4`. Slices 1–3 are merged.
 **Input**: User description: "Session Journal (slice 1 of #3402, tracked as issue #3406): a persistent play log for TTRPG sessions, built on top of the existing Quicknote/Scratchpad experience but serving a different purpose — an ongoing chronological record of what happens during play, rather than transient notes. Scope for this spec (data model, persistence, and lifecycle only — later slices cover the global UI indicator, automatic capture, and promote-to-entity, tracked separately as #3407, #3408, #3409): SessionJournal (id, vault/campaign context, title, startedAt, endedAt, status, sections[], entries[]); JournalEntry (id, timestamp, type, content, optional source metadata/reference, optional linked entity/tool/result); lifecycle (start, resume, end — ended journals preserved and browsable); manual entries only; optional sections/chapters; minimal UI surface reachable only from Quicknote/Scratchpad with a three-state control (Start/Open/Resume); persistence via IndexedDB following the Oracle-store decomposition pattern; Quicknote/Scratchpad stays transient, Session Journal is the chronological record — the two must not be conflated in the UI."
 
 ## User Scenarios & Testing _(mandatory)_
@@ -115,6 +115,29 @@ A GM or solo player is mid-session with a journal running. They roll dice, draw 
 8. **Given** a future feature publishes a journal capture event through the shared interface with an entry type the journal has never seen, **When** the event arrives, **Then** it is added and shown with a generic automatic-entry style, with no change to the journal itself.
 9. **Given** an automatic entry and a typed note side by side, **When** the user reads the journal, **Then** they can tell at a glance which is which without reading the text.
 
+---
+
+### User Story 7 - Turn journal content into vault entities (Priority: P1) — Slice 4, #3409
+
+After (or during) a session, a GM wants the good parts of the journal to become lasting material in their world: a scene as a Note or Event, a tavern brawl's aftermath as a Location, a whole session as a session-report Note. They pick an entry, a section, several parts, or the whole journal, choose what kind of entity it should be, and get a draft entity with the text already filled in, ready to tidy up and approve. The journal itself is never touched.
+
+**Why this priority**: The journal is a record; the world is the payoff. Without this, useful lore stays trapped in a log. It is the last part of the parent request (#3402) and depends on slices 1–3, which are done.
+
+**Independent Test**: Can be fully tested by finishing a journal that has typed notes, a section and a few automatic entries, then turning one entry, one section and the whole journal into entities, and confirming that each becomes a draft entity with the right text and type, that the journal is unchanged, and that ending the session offers these choices without forcing any.
+
+**Acceptance Scenarios**:
+
+1. **Given** a journal entry, **When** the user chooses "Make entity" on it, picks a type (Note by default) and confirms the name, **Then** a draft entity of that type is created with the entry's text as its body, and the user is taken to it to edit.
+2. **Given** a section with entries, **When** the user chooses "Make entity" on the section, **Then** the draft's body holds that section's entries in order, each with its time, with automatic entries marked as such.
+3. **Given** a journal with entries, **When** the user chooses "Turn journal into a Note", **Then** a draft Note is created holding the whole journal in order, with its sections as headings and the journal's title as the name.
+4. **Given** the user chooses "Choose parts" and ticks several entries and/or sections, **When** they confirm, **Then** one draft entity is created holding the chosen parts together in journal order, with nothing repeated.
+5. **Given** a draft entity created from the journal, **When** the user reviews it, **Then** they can edit, approve or discard it through the same draft review used elsewhere in the app, and discarding it changes nothing in the journal.
+6. **Given** any promotion, **When** it finishes, **Then** the journal's entries, sections and status are exactly as before, and the same content can be turned into another entity again.
+7. **Given** the user ends a session, **When** it ends, **Then** the journal is ended as before (one action, always allowed) and the view then offers "Turn into a Note", "Choose parts", or simply leaving it as it is, none required.
+8. **Given** an ended journal opened from the past-journals list, **When** the user looks at it, **Then** the same promote choices are available.
+9. **Given** an empty journal, an empty section, or "Choose parts" with nothing ticked, **When** the user looks at the promote control, **Then** it is disabled and says why in plain language.
+10. **Given** the entity cannot be created (for example the vault is not ready), **When** the user confirms, **Then** they see a plain-language message, the form and their choices stay as they were, and the journal is untouched.
+
 ### Edge Cases
 
 - What happens when the user tries to add a note but no journal has ever been started for the vault? The control must offer "Start Session Journal" rather than exposing a note field with nothing to attach it to.
@@ -133,6 +156,12 @@ A GM or solo player is mid-session with a journal running. They roll dice, draw 
 - What happens when saving a captured entry fails (for example storage is full)? The failure is logged for debugging only; the roll, draw or table result the user asked for still completes and shows as normal, and no error is shown to the user.
 - What happens to rolls made in the solo Adventure mode's own roll prompt, or in the map (VTT) view? They are not part of this slice unless they already go through the shared roll history (see Assumptions).
 - What happens in a guest or player-facing session? Nothing is captured; the journal is the GM's private record and has no control there.
+- What happens when the same entry is turned into an entity twice? Two separate drafts are created; the journal does not track or block repeats.
+- What happens when a name is left blank in the promote form? Creating is blocked with a plain message; nothing is created.
+- What happens when a section that has no entries is chosen? It is treated as having nothing to make (the control is disabled with a reason).
+- What happens when both a section and one of its entries are ticked in "Choose parts"? The entry appears once in the result, in journal order. The two checkboxes stay independent; ticking the section does not tick, disable or restyle its entries.
+- What happens when the journal is long? The body is as long as the journal; there is no limit or truncation, and the user trims it in the draft.
+- What happens to the panel when the draft is created? It closes, so the new draft can be seen and edited right away, as when a Quicknote is turned into an entity.
 
 ## Requirements _(mandatory)_
 
@@ -173,6 +202,20 @@ A GM or solo player is mid-session with a journal running. They roll dice, draw 
 - **FR-033**: System MUST NOT capture anything in a guest or player-facing session.
 - **FR-034**: Captured entries MUST behave like any other entry: they persist across reloads (FR-011), keep chronological order (FR-003), appear read-only in ended journals (FR-007, FR-008), and are included in cloud backup and restore (FR-016) with no extra work.
 - **FR-035**: This slice MUST NOT change what the dice roller, tables, decks, Oracle commands or stat sheets do or show: no new prompts, buttons, toggles or settings on those tools, and their roll history and chat output stay exactly as they are (FR-023 applies).
+- **FR-036**: System MUST let a user turn into a vault entity any one of: a single journal entry, a single section, the whole journal, or a chosen set of entries and sections. A chosen set MUST become one entity holding the chosen parts together in journal order, with an entry that is covered twice (chosen on its own and through its section) appearing once. Ticking a section and ticking its entries are independent choices: ticking one never changes how the other looks or behaves.
+- **FR-037**: The user MUST be able to choose the entity's type from the categories available in the current vault (Note by default) and to edit its name, which is pre-filled (the entry's opening words, the section's name, or the journal's title). A blank name MUST be refused with a plain-language message and nothing created.
+- **FR-038**: The entity's body MUST be readable plain text built from the journal: entries in journal order, each with its local time; automatic entries marked with their label (for example "Dice roll"); section names as headings where the section changes; and, for the whole journal, its title as a heading. The same input MUST always give the same body.
+- **FR-039**: The entity MUST be created as a draft, with a back-reference to where it came from (the journal and the entry, section or selection), and with nothing added beyond the type, name and body: no connections, no AI processing, no field mapping. The user reviews, edits, approves or discards it through the app's existing draft review.
+- **FR-040**: When the draft is created, the Quicknote/Scratchpad panel MUST close, the new draft MUST be opened for the user (as when a Quicknote is turned into an entity), and a short message MUST say that a draft was created and what it is called, because on a page with no entity panel nothing else would show that it worked.
+- **FR-041**: Promotion MUST NOT change, move, hide or delete anything in the journal: its entries, sections, status and end time stay exactly as they were. Turning the same content into an entity again MUST work and create another entity.
+- **FR-042**: The promote choices MUST be available for an active journal and for an ended one, including a past journal opened from the history list.
+- **FR-043**: Ending a session MUST remain a single action that is always allowed, as in slice 1. After it ends, the journal view MUST offer "Turn into a Note", "Choose parts", and leaving the journal as it is, and MUST NOT require any of them. The same actions MUST stay available on the ended journal afterwards.
+- **FR-044**: A promote control that has nothing to make (empty journal, empty section, no parts chosen) MUST be disabled and MUST say why in plain language.
+- **FR-045**: If the entity cannot be created, the user MUST see a plain-language message, the form and their choices MUST stay as they were, and the journal MUST be unchanged. The failure is also logged for debugging.
+- **FR-046**: The promote controls MUST be usable with a keyboard and a screen reader: each has a text label, the form's fields are labelled, the form takes focus when it opens and returns it to the control that opened it when it closes, and no meaning depends on colour alone. Pressing Escape in the form MUST cancel only the form and leave the scratchpad open.
+- **FR-047**: This slice MUST NOT change the journal's data model, its storage, its cloud backup behaviour, or how typed notes and captured entries are added (FR-001–FR-035 apply unchanged).
+- **FR-048**: This slice MUST NOT be available in a guest or player-facing session, where the journal itself is not available. No separate control is added for this: the journal is only reachable through the toolbar control and the Quicknote panel, neither of which exists in a guest session (slice 2, FR-018).
+- **FR-049**: Every promote action MUST work the same for typed notes and for automatic entries (dice rolls, card draws, table results), using the entry's summary text. An entry's structured reference is not used.
 
 ### Key Entities
 
@@ -196,6 +239,10 @@ A GM or solo player is mid-session with a journal running. They roll dice, draw 
 - **SC-010**: With no active journal, rolling, drawing and table rolls create 0 journal entries, start 0 journals, and show 0 new messages or errors, and behave identically to before this slice.
 - **SC-011**: A new kind of capture source can be added by publishing one event through the shared interface, with 0 changes to the journal's store or view code, shown by a test that publishes an entry type the journal has never seen.
 - **SC-012**: A capture failure never changes the outcome of the roll, draw or table result that caused it (0 cases in testing where a failed capture changes what the user sees from the tool).
+- **SC-013**: A user can turn a single entry into a draft entity in three actions or fewer (choose "Make entity", optionally change the type, confirm).
+- **SC-014**: After any promotion, the journal is identical to before it, in 100% of cases in testing, including when the entity could not be created.
+- **SC-015**: Ending a session takes the same single action as before and none of the follow-up choices is required: in testing, a user who ignores them ends up with the ended journal and nothing else changed.
+- **SC-016**: For every scope (entry, section, whole journal, chosen parts) the body produced is the expected text, in journal order, with no entry repeated, in 100% of test cases.
 
 ## Assumptions
 
@@ -224,3 +271,15 @@ A GM or solo player is mid-session with a journal running. They roll dice, draw 
   - Captured data stays in the browser, in the same journal record as typed notes. Nothing new leaves the device; cloud backup behaves as in slice 1 (FR-016).
   - Live check finding (slice 2, T054): the Map (VTT) view has its own layout with no shared tool chrome, so the Session Journal control is not reachable from there. This follows FR-018 (the control lives in the shared chrome) but is a real gap for play at the table; a way to open the journal from the VTT is a candidate follow-up. Rolls made in that view are not captured either way (see the slice 3 assumptions).
 - Live check (slice 3, T076): the dice roller, a table roll and the Oracle `/roll` command were captured with the panel closed; a typed note kept its place among them; ending the journal stopped capture with no error or message; and everything persisted across a reload. The deck-draw path could not be tried live because the test vault has no deck, so it is covered by unit and end-to-end tests only. The roller ignores rapid repeat clicks while it animates, so a live burst was not possible; burst ordering is covered by tests.
+- **Slice 4 assumptions (#3409)**:
+  - "Prefill the entity-creation form, then edit before saving" is met by the app's existing draft flow, the same one Quicknote uses to turn a note into an entity: the entity is created as a draft with the text filled in, opened for the user to edit, and only becomes part of the finished vault when they approve it. No separate creation form is built. The small form in this slice only picks the type and name.
+  - A chosen set of entries and sections becomes one combined entity, not one entity per part. To get several entities the user repeats the action. This reads the issue's "promote selected sections/entries" as one action over the selection.
+  - The entity types offered are the categories the vault already has (Note, Character, Creature, Location, Item, Event, Faction, plus any the user added). This slice creates no new categories.
+  - The default name is the entry's first line cut at a word boundary (about 60 characters), the section's name, or the journal's title; the user can change it.
+  - The body is plain text with simple headings. Times are shown in the user's local time when the entity is made. Nothing is extracted or summarised by AI (a follow-up in the parent issue).
+  - The journal does not remember that something was turned into an entity: no badge, link or duplicate warning on the entry. That is a possible follow-up.
+  - The draft's back-reference records only where it came from; nothing in the app reacts to it in this slice.
+  - Cloud backup treats the new draft like any other entity; no journal or backup changes are needed.
+  - Layout: the scratchpad is a fixed-height panel, so the whole-journal, choose-parts and per-section controls sit behind a small "Make entity" toggle beside the journal title; the per-entry "Make entity" buttons are always visible. Opening the form hides the past-journals list to give it room.
+  - Wording: "promote" is the internal and spec term. In the interface the buttons read "Make entity", "Turn journal into a Note" and "Choose parts", and the post-end offer reads "Turn into a Note".
+  - Live check (slice 4, T097): an entry became an Event draft, a section a Location draft, the whole journal a Note draft, and chosen parts one combined draft, each with the expected text, status and back-reference and each then discarded; the journal was unchanged afterwards and after a reload; ending a session showed the offer with Start still available and no dialog; a past journal offered the same choices; a keyboard-only pass (Enter to open, Escape to cancel) worked and returned focus. The live check found and fixed: Escape also closing the scratchpad; focus not returning after the controls were replaced; a cramped entry list; and the journal view not using the panel's full width. Blank names and the empty-journal, empty-section and empty-selection cases are covered by tests only.

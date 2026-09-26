@@ -1,5 +1,5 @@
 ---
-description: "Task list for Session Journal (slice 1: data model, persistence & lifecycle; slice 2: global access point; slice 3: automatic capture)"
+description: "Task list for Session Journal (slice 1: data model, persistence & lifecycle; slice 2: global access point; slice 3: automatic capture; slice 4: promote to entity)"
 ---
 
 # Tasks: Session Journal (data model, persistence & lifecycle)
@@ -10,6 +10,8 @@ description: "Task list for Session Journal (slice 1: data model, persistence & 
 **Tests**: Included as first-class tasks — this repo's Constitution (Principle II, TDD) and AGENTS.md ("Do not commit implementation changes without tests for the affected behavior... cover both the expected success path and at least one meaningful negative, cancellation, or failure path") require them, not an optional add-on.
 
 **Organization**: Tasks are grouped by user story (spec.md) to enable independent implementation and testing of each story.
+
+**Slice 4 note**: Phases 12–13 (T080–T100) add User Story 7 / slice 4 (#3409) on branch `163-session-journal-slice-4`.
 
 **Slice 3 note**: Phases 10–11 (T058–T079) add User Story 6 / slice 3 (#3408) on branch `163-session-journal-slice-3`.
 
@@ -252,6 +254,52 @@ Per plan.md's Project Structure: a new pure-logic package `packages/session-jour
 
 ---
 
+## Phase 12: User Story 7 - Turn journal content into vault entities (Priority: P1) — Slice 4, #3409
+
+**Goal**: A user can turn one entry, one section, the whole journal, or a chosen set of parts into a draft vault entity with the text filled in, from any journal (active or ended), with the journal left exactly as it was, and ending a session offers this without requiring it.
+
+**Independent Test**: Finish a journal with typed notes, a section and automatic entries; turn an entry, a section and the whole journal into entities; confirm each draft's type and text, that the journal is unchanged, and that ending the session forces nothing (quickstart.md's Story 7 verification).
+
+**Prerequisite**: Slices 1–3 are merged into staging. Slice 4 lives on branch `163-session-journal-slice-4`.
+
+### Tests for User Story 7 ⚠️
+
+> Write these first and confirm they fail before the implementation tasks.
+
+- [x] T080 [P] [US7] Unit test `buildPromotion` in `packages/session-journal-engine/tests/promote.test.ts` (no mocks; a fixed `formatTime` such as `(t) => "T" + t`; journals are deep-frozen so any write throws): success — an entry gives its content as the body (typed note) or `<Label> — <content>` (automatic entry) with the default name from the contract's rules (short text kept, long text cut at a word boundary with `…`, blank text gives `Journal entry`); a section gives its entries as `- <time> — <content>` lines in journal order and the section name as the title; the whole journal gives `# <title>`, entries in order, and `## <section>` headings only where the section changes, including `## No section` after a sectioned entry, and none for a journal without sections; the first entry has no previous entry, so a sectioned first entry gets its heading and an unsectioned first entry gets none; automatic entries use only their `content`, never their `sourceRef`; a selection of entries and sections gives each entry once in journal order without a `#` title, and its title is `<journal title> — selection`; multi-line entries indent continuation lines; the `source` tag is right for each scope; negative — an unknown entry or section id gives "That part of the journal no longer exists."; an empty journal, an empty section and an empty selection give "There is nothing here to turn into an entity yet."; the input journal is unchanged after every call (SC-014); the same input twice gives identical output (FR-038)
+- [x] T081 [P] [US7] Unit test `SessionJournalPromoter` in a new `apps/web/src/lib/stores/session-journal-promoter.test.ts` with injected fakes: success — `promote` calls `createEntity` once with the chosen type, the chosen name, and exactly `{ status: "draft", content, discoverySource }` for each scope, then `openEntity` with the new id, then `closePanel`, in that order, and returns `{ ok: true, entityId }` (FR-039, FR-040); negative — a blank or whitespace name and a blank type return `{ ok: false }` with a plain message and call nothing; `createEntity` rejecting returns `{ ok: false, error }` in plain language, calls the logger once, and calls neither `openEntity` nor `closePanel` (FR-045); a scope with nothing to make returns `{ ok: false }` and creates nothing; the journal passed in (deep-frozen) is unchanged in every case (FR-041); calling `promote` twice for the same entry creates two entities (FR-041)
+- [x] T082 [P] [US7] Unit test the state class in a new `apps/web/src/lib/components/quicknote/journal-promotion.svelte.test.ts`: success — starting selection mode, toggling an entry and a section on and off, `selectionScope()` returning the chosen ids, `hasSelection`, choosing a section and choosing one of its entries staying independent (neither changes the other's state, FR-036), opening and closing the form with a scope, `reset()` clearing everything; negative — opening the form for an empty selection is refused; toggling in a mode that is not selecting does nothing; stopping selection mode clears the choices
+- [x] T083 [P] [US7] Component test for the form in a new `JournalPromoteSheet.test.ts`: success — the name is pre-filled from the engine's default and the type select lists the categories passed in through the `categories` prop with Note chosen; changing the type and pressing "Create draft" calls the handler with that type and name; the preview shows the first 600 characters of the body, with `…` when it is longer and none when it is shorter; the name input has focus when the form opens; Cancel calls the cancel handler; every field has a label; negative — a blank name shows a plain-language message and does not call the handler; a handler result of `{ ok: false, error }` shows the message in an `alert`, keeps the typed values and re-enables the buttons; the Create button is disabled while a request is in flight and a second press does nothing; a scope with nothing to make shows the reason and disables Create
+- [x] T084 [P] [US7] Extend `JournalEntryRow.test.ts`: success — an optional "Make entity" button calls `onPromote` with the entry, for a typed note and for an automatic entry alike (FR-049); in selection mode a checkbox labelled with the entry's opening words toggles selection; negative — with no `onPromote` and not in selection mode neither control renders (rows behave exactly as in slices 1–3, FR-047); every button is `type="button"` and has an accessible name
+- [x] T085 [P] [US7] Extend `SessionJournalView.test.ts` (uses a real store over the fake IndexedDB, plus a fake promoter passed in through the view's `promoter` prop): success — the header offers "Turn journal into a Note", which opens the form with type Note and the journal title, and Create calls the promoter with the whole-journal scope; a section's "Make entity" opens the form for that section; "Choose parts" shows checkboxes, ticking an entry and a section enables the action, and Create passes a selection scope; ending the session shows the post-end offer with "Turn into a Note" and "Choose parts", ignoring it changes nothing, and dismissing hides it; the promote choices are also present on a past journal opened from history and on a reloaded ended journal (FR-042, FR-043); after a successful promote the journal deep-equals what it was (SC-014); after Cancel and after a successful Create, focus is back on the control that opened the form (FR-046); ticking a section leaves its entries' checkboxes unticked and enabled, and ticking one of them as well still gives one entry in the result (FR-036); turning one entry into an entity takes at most three clicks (Make entity, optionally the type, Create; SC-013); negative — an empty journal disables "Turn journal into a Note" with a visible reason; "Choose parts" with nothing ticked is disabled with a reason; a promoter failure shows its message, keeps the form open and leaves the journal untouched; ending a session still needs exactly one action and no choice (SC-015)
+
+### Implementation for User Story 7
+
+- [x] T086 [US7] Create `packages/session-journal-engine/src/promote.ts` with `buildPromotion` and its types per contracts/session-journal-store-api.md ("Promotion"), pure and never throwing, and export it from `src/index.ts` (makes T080 pass)
+- [x] T087 [US7] Create `apps/web/src/lib/stores/session-journal-promoter.ts` with the `SessionJournalPromoter` class and a default singleton wired to `vault.createEntity`, `vault.selectedEntityId` and `quickNoteStore.close()`; user-facing errors in plain language (depends on T086; makes T081 pass)
+- [x] T088 [US7] Create `apps/web/src/lib/components/quicknote/journal-promotion.svelte.ts` (selection mode, chosen entry and section ids, form scope) (makes T082 pass)
+- [x] T089 [US7] Create `JournalPromoteSheet.svelte`: props `journal`, `scope`, `categories` (default `categories.list`), `onSubmit`, `onCancel`, `formatTime`; labelled type select (Note default), name input focused on open, read-only preview of the first 600 characters of the body, Create draft and Cancel buttons (`type="button"`), an `alert` region for errors, disabled while creating (depends on T086; makes T083 pass)
+- [x] T090 [US7] Extend `JournalEntryRow.svelte` with the optional `onPromote` button and the selection checkbox, rendering neither when not given (makes T084 pass)
+- [x] T091 [US7] (Also extracted `JournalComposer.svelte`, `JournalStartScreen.svelte`, `JournalHeader.svelte`, `JournalPromoteActions.svelte`, `JournalPromoteSections.svelte` and `JournalPromoteToggle.svelte` to keep the view under the complexity gate and the 500-line trigger; the promote controls sit behind a "Make entity" toggle, per the live check.) Create `JournalEndedActions.svelte` (the post-end offer, dismissible) and integrate everything in `SessionJournalView.svelte`, which takes an optional `promoter` prop defaulting to the `sessionJournalPromoter` singleton: header actions, per-section "Make entity", selection mode with a section checkbox and entry checkboxes that stay independent, the form, focus returning to the opener on close, remembering the id of the journal just ended so the offer shows for it, and formatting times with the user's local time of day (depends on T087–T090; makes T085 pass)
+- [x] T092 [P] [US7] Update the copy in plain language (Constitution VII, IX): the `session-journal` entry in `apps/web/src/lib/config/help-content.ts` and the Session Journal section of `apps/web/src/lib/content/help/quicknote.md` to explain turning entries, sections or the whole journal into draft entities, that the journal is left as it is, and that the draft is reviewed like any other
+
+**Checkpoint**: User Story 7 is complete — slice 4's scope (#3409) is done, and with it the whole of #3402's MVP.
+
+---
+
+## Phase 13: Slice 4 Polish & Cross-Cutting Concerns
+
+- [x] T093 [P] Run `bun run lint:changed` and fix any findings in the files touched by T080–T092
+- [x] T094 [P] Run `bunx svelte-check --tsconfig ./tsconfig.json --threshold error` inside `apps/web` and fix any errors; also type-check `packages/session-journal-engine`
+- [x] T095 Run `bun run test:changed` and confirm T080–T085 pass together with the slice 1–3 tests (FR-048 needs no test of its own: the journal is unreachable in guest mode, which slice 2's nav-item tests already assert), and that the Quicknote and entity-draft tests that the promoter's collaborators have (`quicknote.svelte.test.ts`, the draft-review tests) pass unchanged
+- [x] T096 Run `bun run test:coverage` inside `packages/session-journal-engine` and confirm the new `promote.ts` meets Constitution X's 70% goal; add cases for any uncovered branch
+- [x] T097 Manually walk through quickstart.md's Story 7 verification in a running app: every scope, ending the session and ignoring the offer, a past journal, blank name, empty journal, a keyboard-only promotion with focus returning, approve and discard of a resulting draft, and reload to confirm the journal is unchanged
+- [x] T098 Run `bunx fallow audit --format json --quiet --explain --gate-marker agent --base staging` and resolve any introduced findings
+- [x] T099 Run the `codex-review` specialist review on the slice 4 changes and address findings
+- [x] T100 Open the slice 4 PR, and check off #3409's acceptance criteria once verified, so the issue and PR match what shipped
+
+---
+
 ## Dependencies & Execution Order
 
 ### Phase Dependencies
@@ -267,6 +315,8 @@ Per plan.md's Project Structure: a new pure-logic package `packages/session-jour
 - **Slice 2 Polish (Phase 9)**: Depends on Phase 8.
 - **User Story 6 (Phase 10, slice 3)**: Depends on US1's `appendEntry`, US3's `current`/`end()` and US2's sections (all built). Touches the engine package (`events.ts`, `capture.ts`), `dice-history.svelte.ts`, `session-journal.svelte.ts`, `SessionJournalView.svelte`, new `JournalEntryRow.svelte` and `session-journal-capture.ts`, `app-init.ts` and help content, with no overlap with the roll tools' own components. Inside the phase: T063 → T064 → T065/T067; T066 → T067/T068; T067 → T069.
 - **Slice 3 Polish (Phase 11)**: Depends on Phase 10.
+- **User Story 7 (Phase 12, slice 4)**: Depends on the journal view and rows from US1–US3 and US6 (all merged). Touches the engine package (`promote.ts`), a new promoter store, new view components, `JournalEntryRow.svelte`, `SessionJournalView.svelte` and help content, with no change to the journal store, storage or cloud backup. Inside the phase: T086 → T087 and T089; T088 and T090 are independent; T091 needs T087–T090.
+- **Slice 4 Polish (Phase 13)**: Depends on Phase 12.
 
 ### Parallel Opportunities
 
@@ -275,7 +325,8 @@ Per plan.md's Project Structure: a new pure-logic package `packages/session-jour
 - US4 (Phase 6) has no file overlap with US2 or US3 and could be built in parallel with either by a second contributor, once Foundational and US1 are done.
 - T035 and T036 (Polish) can run in parallel; T037–T040 are sequential (each depends on the previous succeeding).
 - Phase 8: T041–T045 (tests) touch different files and can be written in parallel; T050 (help content) is independent of T046–T049. T051 and T052 (slice 2 Polish) can run in parallel; T053–T057 are sequential.
-- Phase 10: T058–T062 (tests) touch different files and can be written in parallel; T066 is independent of T063–T065; T071 is independent of T070; T070 follows T060 because they share a file. T072 and T073 (slice 3 Polish) can run in parallel; T074–T079 are sequential.
+- Phase 10: T058–T062 (tests) touch different files and can be written in parallel; T066 is independent of T063–T065; T071 is independent of T070; T070 follows T060 because they share a file.
+- Phase 12: T080–T085 (tests) touch different files and can be written in parallel, except that T084 and the row part of T085 both touch existing test files and should not be edited at the same time as T090/T091. T088, T090 and T092 are independent of each other. T093 and T094 (slice 4 Polish) can run in parallel; T095–T100 are sequential. T072 and T073 (slice 3 Polish) can run in parallel; T074–T079 are sequential.
 
 ---
 
