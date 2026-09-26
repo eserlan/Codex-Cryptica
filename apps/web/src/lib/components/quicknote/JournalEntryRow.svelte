@@ -1,32 +1,50 @@
 <script lang="ts">
-  import type { JournalEntry } from "session-journal-engine";
+  import { entryTypeLabel, type JournalEntry } from "session-journal-engine";
 
   /**
-   * One entry in the Session Journal (#3402 slice 3, #3408). A typed note looks
-   * as it always has; an automatic entry (a roll, draw or table result) is
-   * marked with a label and an icon, so the two are told apart at a glance
-   * without relying on colour (spec 163, FR-028).
+   * One entry in the Session Journal (#3402 slice 3, #3408; promote controls
+   * from slice 4, #3409). A typed note looks as it always has; an automatic
+   * entry (a roll, draw or table result) is marked with a label and an icon, so
+   * the two are told apart at a glance without relying on colour (spec 163,
+   * FR-028).
    */
-  let { entry, sectionName }: { entry: JournalEntry; sectionName?: string } =
-    $props();
+  let {
+    entry,
+    sectionName,
+    onPromote,
+    selectable = false,
+    selected = false,
+    onToggleSelect,
+  }: {
+    entry: JournalEntry;
+    sectionName?: string;
+    /** When given, the row offers "Make entity". */
+    onPromote?: (entry: JournalEntry) => void;
+    /** True while "Choose parts" is on: the row shows a checkbox. */
+    selectable?: boolean;
+    selected?: boolean;
+    onToggleSelect?: (entry: JournalEntry) => void;
+  } = $props();
 
-  const AUTOMATIC_KINDS: Record<string, { label: string; icon: string }> = {
-    "dice-roll": { label: "Dice roll", icon: "icon-[lucide--dices]" },
-    "card-draw": { label: "Card draw", icon: "icon-[lucide--layers]" },
-    "table-result": { label: "Table result", icon: "icon-[lucide--table]" },
+  // The label comes from the engine, so the journal and the text built for an
+  // entity always agree. Only the icon is chosen here. A type the journal has
+  // never seen is still shown, as a generic automatic entry.
+  const ICONS: Record<string, string> = {
+    "dice-roll": "icon-[lucide--dices]",
+    "card-draw": "icon-[lucide--layers]",
+    "table-result": "icon-[lucide--table]",
   };
-  // A type the journal has never seen is still shown, as a generic automatic
-  // entry, so a future source needs no change here.
-  const GENERIC_AUTOMATIC = {
-    label: "Automatic entry",
-    icon: "icon-[lucide--zap]",
-  };
+  const GENERIC_ICON = "icon-[lucide--zap]";
 
-  const isAutomatic = $derived(entry.type !== "manual-note");
+  const label = $derived(entryTypeLabel(entry.type));
+  const isAutomatic = $derived(label !== undefined);
   const kind = $derived(
-    isAutomatic
-      ? (AUTOMATIC_KINDS[entry.type] ?? GENERIC_AUTOMATIC)
-      : undefined,
+    label ? { label, icon: ICONS[entry.type] ?? GENERIC_ICON } : undefined,
+  );
+  const snippet = $derived(
+    entry.content.length > 40
+      ? `${entry.content.slice(0, 40)}…`
+      : entry.content,
   );
 </script>
 
@@ -56,4 +74,30 @@
     {/if}
   </div>
   <p class="text-theme-text">{entry.content}</p>
+  {#if selectable || onPromote}
+    <div class="mt-1.5 flex items-center justify-between gap-2">
+      {#if selectable}
+        <label class="flex items-center gap-1.5 text-[10px] text-theme-muted">
+          <input
+            type="checkbox"
+            checked={selected}
+            onchange={() => onToggleSelect?.(entry)}
+            aria-label={`Choose: ${snippet}`}
+          />
+          Choose
+        </label>
+      {/if}
+      {#if onPromote}
+        <button
+          type="button"
+          onclick={() => onPromote(entry)}
+          aria-label={`Make entity from: ${snippet}`}
+          class="ml-auto font-header text-[9px] font-bold uppercase tracking-wider text-theme-muted transition-colors hover:text-theme-primary"
+          data-testid="journal-entry-promote"
+        >
+          Make entity
+        </button>
+      {/if}
+    </div>
+  {/if}
 </div>

@@ -3,8 +3,20 @@
     sessionJournalStore,
     type SessionJournalStore,
   } from "$lib/stores/session-journal.svelte";
-  import type { SessionJournal } from "session-journal-engine";
+  import { tick } from "svelte";
+  import type { PromotionScope, SessionJournal } from "session-journal-engine";
+  import {
+    sessionJournalPromoter,
+    type SessionJournalPromoter,
+  } from "$lib/stores/session-journal-promoter";
+  import JournalComposer from "./JournalComposer.svelte";
   import JournalEntryRow from "./JournalEntryRow.svelte";
+  import JournalPromoteActions from "./JournalPromoteActions.svelte";
+  import JournalPromoteToggle from "./JournalPromoteToggle.svelte";
+  import JournalPromoteSheet from "./JournalPromoteSheet.svelte";
+  import JournalHeader from "./JournalHeader.svelte";
+  import JournalStartScreen from "./JournalStartScreen.svelte";
+  import { JournalPromotionState } from "./journal-promotion.svelte";
   import FeatureHint from "$lib/components/help/FeatureHint.svelte";
   import { notificationStore } from "$lib/stores/ui/notification.svelte";
 
@@ -13,21 +25,44 @@
    * record of play, distinct from Quicknote/Scratchpad's transient notes
    * (FR-015) — a separate view within the same panel, never the same one.
    */
-  let { store = sessionJournalStore }: { store?: SessionJournalStore } =
+  let {
+    store = sessionJournalStore,
+    promoter = sessionJournalPromoter,
+  }: { store?: SessionJournalStore; promoter?: SessionJournalPromoter } =
     $props();
 
-  let noteText = $state("");
-  let isAddingNote = $state(false);
-  let newSectionName = $state("");
-  let isCreatingSection = $state(false);
-  let sectionError = $state<string | null>(null);
-  let renamingSectionId = $state<string | null>(null);
-  let renameValue = $state("");
-  let renameError = $state<string | null>(null);
   let showHistory = $state(false);
   let pastJournals = $state<SessionJournal[]>([]);
   let selectedPastJournalId = $state<string | null>(null);
   let isEndingSession = $state(false);
+
+  // Turning journal content into entities (slice 4, #3409).
+  const promotion = new JournalPromotionState();
+  let showPromote = $state(false);
+  // Open by hand, or automatically while parts are being chosen.
+  const promoteOpen = $derived(showPromote || promotion.selecting);
+  let formJournalId = $state<string | null>(null);
+  let justEndedId = $state<string | null>(null);
+  // The form replaces the controls that opened it, so the opener itself is
+  // gone when the form closes; remember enough to find its replacement.
+  let formOpenerKey: { testId: string; label: string | null } | null = null;
+  let viewRoot = $state<HTMLElement | null>(null);
+  const formJournal = $derived(
+    formJournalId
+      ? store.allJournals.find((journal) => journal.id === formJournalId)
+      : undefined,
+  );
+  const justEndedJournal = $derived(
+    justEndedId
+      ? store.allJournals.find((journal) => journal.id === justEndedId)
+      : undefined,
+  );
+
+  const formatTime = (timestamp: number) =>
+    new Date(timestamp).toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
   const displayedJournal = $derived(
     (selectedPastJournalId
       ? store.allJournals.find(
@@ -41,6 +76,14 @@
       pastJournals = [];
       selectedPastJournalId = null;
     }
+  });
+
+  // A different journal on screen starts from a clean slate.
+  $effect(() => {
+    void displayedJournal?.id;
+    promotion.reset();
+    showPromote = false;
+    formJournalId = null;
   });
 
   const controlLabel = $derived(
@@ -62,64 +105,13 @@
     }
   }
 
-  async function submitNote() {
-    const content = noteText.trim();
-    if (!content || isAddingNote) return;
-    isAddingNote = true;
-    try {
-      // The current section lives in the store, so typed notes and captured
-      // rolls land in the same place (spec 163, FR-032).
-      const sectionId = store.activeSectionId;
-      await store.appendEntry({
-        type: "manual-note",
-        content,
-        ...(sectionId ? { sectionId } : {}),
-      });
-      noteText = "";
-    } catch {
-      notificationStore.notify("That note could not be added.", "error");
-    } finally {
-      isAddingNote = false;
-    }
-  }
-
-  async function submitSection() {
-    const name = newSectionName.trim();
-    if (!name || isCreatingSection) return;
-    isCreatingSection = true;
-    try {
-      await store.createSection(name);
-      newSectionName = "";
-      sectionError = null;
-    } catch {
-      sectionError = "A section needs a name.";
-    } finally {
-      isCreatingSection = false;
-    }
-  }
-
-  function startRename(sectionId: string, currentName: string) {
-    renamingSectionId = sectionId;
-    renameValue = currentName;
-    renameError = null;
-  }
-
-  async function submitRename() {
-    if (!renamingSectionId) return;
-    try {
-      await store.renameSection(renamingSectionId, renameValue);
-      renamingSectionId = null;
-      renameError = null;
-    } catch {
-      renameError = "A section needs a name.";
-    }
-  }
-
   async function endSession() {
     if (isEndingSession) return;
     isEndingSession = true;
     try {
+      const endingId = store.current?.id ?? null;
       await store.end();
+      justEndedId = endingId;
       notificationStore.notify("Session ended.", "success");
     } catch {
       notificationStore.notify("That session could not be ended.", "error");
@@ -128,13 +120,70 @@
     }
   }
 
+  /** Opens the type-and-name form for `scope` of `journal`, remembering what
+   *  had focus so it can be given back when the form closes (FR-046). */
+  function openForm(journal: SessionJournal, scope: PromotionScope) {
+    if (!promotion.openForm(scope)) return;
+    // Give the form the room the past-journals list was using.
+    showHistory = false;
+    const active = document.activeElement;
+    formOpenerKey =
+      active instanceof HTMLElement && active.dataset.testid
+        ? {
+            testId: active.dataset.testid,
+            label: active.getAttribute("aria-label"),
+          }
+        : null;
+    formJournalId = journal.id;
+  }
+
+  async function closeForm() {
+    promotion.closeForm();
+    formJournalId = null;
+    const key = formOpenerKey;
+    formOpenerKey = null;
+    // Wait for the controls to come back, then give focus to the one that
+    // matches the control the user pressed (FR-046).
+    await tick();
+    if (!key || !viewRoot) return;
+    const candidates = viewRoot.querySelectorAll<HTMLElement>(
+      `[data-testid="${key.testId}"]`,
+    );
+    [...candidates]
+      .find((element) => element.getAttribute("aria-label") === key.label)
+      ?.focus();
+  }
+
+  async function submitForm(type: string, title: string) {
+    const scope = promotion.formScope;
+    if (!formJournal || !scope) return { ok: false as const, error: "" };
+    const result = await promoter.promote(formJournal, scope, {
+      type,
+      title,
+      formatTime,
+    });
+    if (result.ok) closeForm();
+    return result;
+  }
+
+  function chooseEndedParts() {
+    if (!justEndedJournal) return;
+    selectedPastJournalId = justEndedJournal.id;
+    justEndedId = null;
+    promotion.startSelecting();
+  }
+
   async function toggleHistory() {
     showHistory = !showHistory;
     if (showHistory) pastJournals = await store.listJournals();
   }
 </script>
 
-<div class="flex h-full flex-col gap-3 p-5" data-testid="session-journal-view">
+<div
+  class="flex h-full min-w-0 flex-1 flex-col gap-3 p-5"
+  data-testid="session-journal-view"
+  bind:this={viewRoot}
+>
   <FeatureHint hintId="session-journal" />
 
   <div class="flex items-center justify-end">
@@ -152,53 +201,49 @@
     {@render journalHistory()}
   {/if}
 
-  {#if (store.controlState === "start" || store.controlState === "resume") && !selectedPastJournalId}
-    <div
-      class="flex flex-1 flex-col items-center justify-center gap-3 text-center"
-    >
-      <span
-        aria-hidden="true"
-        class="icon-[lucide--book-open] h-10 w-10 text-theme-accent opacity-50"
-      ></span>
-      <button
-        type="button"
-        onclick={handleControlClick}
-        class="rounded-lg bg-theme-primary px-4 py-2 font-header text-xs font-bold uppercase tracking-widest text-theme-bg transition-colors hover:bg-theme-secondary"
-        data-testid="session-journal-control"
-      >
-        {controlLabel}
-      </button>
+  {#if promotion.formScope && formJournal}
+    <div class="flex-1 overflow-auto">
+      <JournalPromoteSheet
+        journal={formJournal}
+        scope={promotion.formScope}
+        {formatTime}
+        onSubmit={submitForm}
+        onCancel={closeForm}
+      />
     </div>
+  {:else if (store.controlState === "start" || store.controlState === "resume") && !selectedPastJournalId}
+    <JournalStartScreen
+      label={controlLabel}
+      onStart={handleControlClick}
+      endedJournal={justEndedJournal}
+      onTurnIntoNote={() =>
+        justEndedJournal && openForm(justEndedJournal, { kind: "journal" })}
+      onChooseParts={chooseEndedParts}
+      onDismiss={() => (justEndedId = null)}
+    />
   {:else}
-    <div
-      class="flex items-center justify-between border-b border-theme-border/40 pb-2"
+    <JournalHeader
+      title={displayedJournal?.title ?? "Session Journal"}
+      active={displayedJournal?.status === "active"}
+      isEnding={isEndingSession}
+      onEnd={endSession}
+      onBack={() => (selectedPastJournalId = null)}
     >
-      <h4
-        class="font-header text-xs font-bold uppercase tracking-widest text-theme-primary"
-      >
-        {displayedJournal?.title ?? "Session Journal"}
-      </h4>
-      {#if displayedJournal?.status === "active"}
-        <button
-          type="button"
-          onclick={endSession}
-          disabled={isEndingSession}
-          class="text-[10px] font-bold uppercase tracking-wider text-theme-danger transition-colors hover:underline"
-          data-testid="end-session"
-        >
-          End Session
-        </button>
-      {:else}
-        <button
-          type="button"
-          onclick={() => (selectedPastJournalId = null)}
-          class="text-[10px] text-theme-muted transition-colors hover:text-theme-primary"
-          data-testid="back-to-current-journal"
-        >
-          Back
-        </button>
-      {/if}
-    </div>
+      {#snippet extras()}
+        <JournalPromoteToggle
+          expanded={promoteOpen}
+          onToggle={() => (showPromote = !showPromote)}
+        />
+      {/snippet}
+    </JournalHeader>
+
+    {#if displayedJournal && promoteOpen}
+      <JournalPromoteActions
+        journal={displayedJournal}
+        {promotion}
+        onOpenForm={(scope) => openForm(displayedJournal, scope)}
+      />
+    {/if}
 
     <!-- Tailwind provides this utility; Fallow cannot resolve generated v4 classes here. -->
     <!-- fallow-ignore-next-line css-broken-reference -->
@@ -207,74 +252,7 @@
     </div>
 
     {#if displayedJournal?.status === "active"}
-      <div class="flex flex-col gap-2 border-t border-theme-border/40 pt-3">
-        <div class="flex gap-2">
-          <input
-            type="text"
-            bind:value={noteText}
-            aria-label="Journal note"
-            placeholder="Add a note..."
-            onkeydown={(e) => e.key === "Enter" && submitNote()}
-            class="flex-1 rounded border border-theme-border bg-theme-bg px-2 py-1.5 text-xs text-theme-text focus:border-theme-primary focus:outline-none"
-            data-testid="journal-note-input"
-          />
-          <button
-            type="button"
-            onclick={submitNote}
-            disabled={isAddingNote}
-            class="rounded bg-theme-primary px-3 py-1.5 font-header text-[10px] font-bold uppercase text-theme-bg transition-colors hover:bg-theme-secondary"
-            data-testid="journal-note-submit"
-          >
-            Add
-          </button>
-        </div>
-
-        {#if displayedJournal.sections.length > 0}
-          <select
-            value={store.activeSectionId ?? ""}
-            onchange={(e) =>
-              store.setActiveSection(e.currentTarget.value || undefined)}
-            aria-label="Section for next journal note"
-            class="rounded border border-theme-border bg-theme-bg px-2 py-1.5 text-xs text-theme-text"
-            data-testid="journal-note-section"
-          >
-            <option value="">No section</option>
-            {#each displayedJournal.sections as section (section.id)}
-              <option value={section.id}>{section.name}</option>
-            {/each}
-          </select>
-        {/if}
-
-        <div class="flex gap-2">
-          <input
-            type="text"
-            bind:value={newSectionName}
-            aria-label="New section name"
-            placeholder="New section name..."
-            onkeydown={(e) => e.key === "Enter" && submitSection()}
-            class="flex-1 rounded border border-theme-border bg-theme-bg px-2 py-1.5 text-xs text-theme-text focus:border-theme-primary focus:outline-none"
-            data-testid="journal-section-input"
-          />
-          <button
-            type="button"
-            onclick={submitSection}
-            disabled={isCreatingSection}
-            class="rounded border border-theme-border px-3 py-1.5 font-header text-[10px] uppercase text-theme-text transition-colors hover:border-theme-primary hover:text-theme-primary"
-            data-testid="journal-section-submit"
-          >
-            New Section
-          </button>
-        </div>
-        {#if sectionError}
-          <p class="text-[10px] text-theme-danger" data-testid="section-error">
-            {sectionError}
-          </p>
-        {/if}
-
-        {#if displayedJournal.sections.length}
-          {@render sectionChips(displayedJournal.sections)}
-        {/if}
-      </div>
+      <JournalComposer {store} journal={displayedJournal} />
     {/if}
   {/if}
 </div>
@@ -311,44 +289,18 @@
     </p>
   {/if}
   {#each displayedJournal?.entries ?? [] as entry (entry.id)}
-    <JournalEntryRow {entry} sectionName={sectionName(entry.sectionId)} />
+    <JournalEntryRow
+      {entry}
+      sectionName={sectionName(entry.sectionId)}
+      onPromote={promotion.selecting || !displayedJournal
+        ? undefined
+        : () =>
+            openForm(displayedJournal, { kind: "entry", entryId: entry.id })}
+      selectable={promotion.selecting}
+      selected={promotion.isEntrySelected(entry.id)}
+      onToggleSelect={() => promotion.toggleEntry(entry.id)}
+    />
   {/each}
-{/snippet}
-
-{#snippet sectionChips(sections: SessionJournal["sections"])}
-  <div class="flex flex-wrap gap-2">
-    {#each sections as section (section.id)}
-      <div
-        class="flex flex-col items-start gap-0.5 rounded-full border border-theme-border/40 px-2 py-0.5"
-      >
-        {#if renamingSectionId === section.id}
-          <input
-            type="text"
-            bind:value={renameValue}
-            aria-label="Rename section"
-            onkeydown={(e) => e.key === "Enter" && submitRename()}
-            onblur={submitRename}
-            class="w-24 bg-transparent text-[9px] text-theme-text focus:outline-none"
-            data-testid="journal-section-rename-input"
-          />
-        {:else}
-          <button
-            type="button"
-            onclick={() => startRename(section.id, section.name)}
-            class="text-[9px] text-theme-text transition-colors hover:text-theme-primary"
-            data-testid="journal-section-name"
-          >
-            {section.name}
-          </button>
-        {/if}
-      </div>
-    {/each}
-  </div>
-  {#if renameError}
-    <p class="text-[10px] text-theme-danger" data-testid="rename-error">
-      {renameError}
-    </p>
-  {/if}
 {/snippet}
 
 <style>

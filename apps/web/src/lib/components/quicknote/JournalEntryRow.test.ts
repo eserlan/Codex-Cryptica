@@ -1,7 +1,7 @@
 /** @vitest-environment jsdom */
 
-import { render, screen } from "@testing-library/svelte";
-import { describe, expect, it } from "vitest";
+import { fireEvent, render, screen } from "@testing-library/svelte";
+import { describe, expect, it, vi } from "vitest";
 import JournalEntryRow from "./JournalEntryRow.svelte";
 
 const entry = (type: string, content = "Something happened") => ({
@@ -81,5 +81,86 @@ describe("JournalEntryRow (FR-028)", () => {
     expect(screen.getByTestId("journal-entry").textContent).toContain(
       "The Ambush",
     );
+  });
+
+  describe("promote and choose controls (slice 4)", () => {
+    it("offers Make entity when given a handler, for typed and automatic entries alike", async () => {
+      for (const type of ["manual-note", "dice-roll"]) {
+        const onPromote = vi.fn();
+        const e = entry(type, "Something happened");
+        const { unmount } = render(JournalEntryRow, {
+          props: { entry: e, onPromote },
+        });
+
+        await fireEvent.click(screen.getByTestId("journal-entry-promote"));
+
+        expect(onPromote).toHaveBeenCalledWith(e);
+        unmount();
+      }
+    });
+
+    it("gives the button and checkbox names that say which entry", () => {
+      render(JournalEntryRow, {
+        props: {
+          entry: entry("manual-note", "The party arrives"),
+          onPromote: vi.fn(),
+          selectable: true,
+        },
+      });
+
+      expect(
+        screen.getByRole("button", {
+          name: "Make entity from: The party arrives",
+        }),
+      ).toBeTruthy();
+      expect(
+        screen.getByRole("checkbox", { name: "Choose: The party arrives" }),
+      ).toBeTruthy();
+    });
+
+    it("shows a checkbox while choosing, reflecting and toggling the choice", async () => {
+      const onToggleSelect = vi.fn();
+      const e = entry("manual-note", "Pick me");
+      render(JournalEntryRow, {
+        props: { entry: e, selectable: true, selected: true, onToggleSelect },
+      });
+
+      const box = screen.getByRole("checkbox") as HTMLInputElement;
+      expect(box.checked).toBe(true);
+
+      await fireEvent.click(box);
+      expect(onToggleSelect).toHaveBeenCalledWith(e);
+    });
+
+    it("renders neither control when not asked, so rows look as before (negative)", () => {
+      render(JournalEntryRow, { props: { entry: entry("manual-note", "Hi") } });
+
+      expect(screen.queryByRole("button")).toBeNull();
+      expect(screen.queryByRole("checkbox")).toBeNull();
+    });
+
+    it("shows the checkbox without a button when only choosing (negative)", () => {
+      render(JournalEntryRow, {
+        props: { entry: entry("manual-note", "Hi"), selectable: true },
+      });
+
+      expect(screen.getByRole("checkbox")).toBeTruthy();
+      expect(screen.queryByRole("button")).toBeNull();
+    });
+
+    it("shortens a long entry in the accessible names", () => {
+      render(JournalEntryRow, {
+        props: {
+          entry: entry("manual-note", "x".repeat(100)),
+          onPromote: vi.fn(),
+        },
+      });
+
+      const name = screen
+        .getByTestId("journal-entry-promote")
+        .getAttribute("aria-label")!;
+      expect(name.length).toBeLessThan(70);
+      expect(name.endsWith("…")).toBe(true);
+    });
   });
 });

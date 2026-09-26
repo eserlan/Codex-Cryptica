@@ -298,3 +298,110 @@ Not touched: the roll tools' components (`DiceVault`, `TableRoller`, `DeckView`,
 - **Bursts of events** contend on one IndexedDB record. Mitigated by slice 1's read-merge-write and serialised transactions, with a burst test (T060).
 - **`bus.reset()` on vault switch** would drop an unnamed listener. Mitigated by the fixed subscription name, with a test that the capture survives a `reset()`.
 - **Payload size.** Table results can be long. Mitigated by the summary cap and by leaving the resolution chain out of `sourceRef` (T058).
+
+---
+
+## Slice 4 Addendum: Promote journal content to vault entities (#3409)
+
+**Spec**: User Story 7, FR-036–FR-049, SC-013–SC-016, and the "Slice 4 assumptions" block in [spec.md](./spec.md). Built on branch `163-session-journal-slice-4`, after slices 1–3 merged. The journal's data model, storage and cloud backup are unchanged (FR-047).
+
+### Summary
+
+Add "make an entity from this" to the journal: per entry, per section, for the whole journal, and over a chosen set of parts, plus a follow-up offer after ending a session. Each creates a draft entity with the text filled in, opened for review.
+
+Findings from the code that shape the design:
+
+- The app already has the flow the issue describes as "prefill, then edit before saving": Quicknote's elevation calls `vault.createEntity(type, title, { status: "draft", content, discoverySource })`, sets `vault.selectedEntityId` to open it, and closes the panel (`quicknote.svelte.ts`, `triggerAIElevation`). A draft shows a review banner in the entity panel and in the explorer, with approve and discard. So no new creation form is needed, only a small type-and-name form in front of that call.
+- `vault.createEntity(type, title, initialData)` takes any category id as `type`; categories come from the `categories` store (`categories.list`, defaults Note, Character, Creature, Location, Item, Event, Faction, plus user-added).
+- Only two things read `discoverySource`: Quicknote, which reacts to values starting `quicknote:` (it archives the source note on approval), and the Kanka importer (`web-vault-writer.ts`), which uses the value as a key to match entities on re-import. A `journal:` value matches neither, so it is inert, which is what FR-039 wants. Because it is identity-like, turning the same entry into an entity twice gives two drafts with the same `discoverySource`; that is harmless, since the importer only ever looks up values it produced itself.
+- `SessionJournalView.svelte` is 356 lines and would grow past a comfortable size with selection state, a form, and post-end actions, so those are extracted (Constitution XIV).
+- End Session (`SessionJournalView.svelte`, `end-session`) ends the journal in one action with no dialog. FR-043 keeps that and adds the follow-up offer after it, so ending is never gated.
+
+### Technical Context (delta)
+
+**Dependencies**: None new. Reuses `session-journal-engine`, the `vault` store's `createEntity` and `selectedEntityId`, `categories`, and `quickNoteStore.close()`.
+**Storage**: None new. No `DB_VERSION` change, no journal record change, no cloud-backup change. The new draft entity is stored like any other.
+**Testing**: bun test for the engine (no mocks), Vitest for the app. Each unit has success and negative cases, and the "journal unchanged" guarantee (FR-041, SC-014) is asserted with a deep-frozen journal so any write throws.
+**Constraints**: No AI, no connections, no field mapping (FR-039). Times are formatted through an injected formatter so the engine stays pure and tests are locale-proof.
+
+### Design decisions
+
+- **Pure logic in `packages/session-journal-engine`** (Constitution I): new `promote.ts` with `buildPromotion(journal, scope, { formatTime })`. `scope` is one of `{ kind: "entry", entryId }`, `{ kind: "section", sectionId }`, `{ kind: "journal" }`, or `{ kind: "selection", entryIds, sectionIds }`. It returns `{ ok: true, title, content, entryCount, source }` or `{ ok: false, error }`. It never throws and never mutates its input. The exact text format is in the contract, so tests and the UI agree.
+- **`SessionJournalPromoter`** in `apps/web/src/lib/stores/session-journal-promoter.ts`, with constructor-injected `createEntity`, `openEntity` and `closePanel` (Constitution VIII) and a default singleton wired to the real `vault` and `quickNoteStore`. `promote(journal, scope, { type, title, formatTime })` validates the name and type, calls `buildPromotion`, creates the draft with `discoverySource: "journal:<journalId>[:entry:<id>|:section:<id>|:selection]"`, opens it, closes the panel, and returns `{ ok: true, entityId }` or `{ ok: false, error }`. It opens and closes only after a successful create, so a failure leaves everything as it was (FR-045).
+- **Dependency injection in the UI.** `SessionJournalView` takes an optional `promoter` prop, defaulting to the `sessionJournalPromoter` singleton, in the same way it takes `store` today, so tests pass a fake without mocking modules. `JournalPromoteSheet` takes a `categories` prop (a list of `{ id, label }`), defaulting to `categories.list`, and an `onSubmit` handler, so it has no store imports of its own beyond that default.
+- **UI state in a small rune class**, `journal-promotion.svelte.ts` (selecting mode, chosen entry and section ids, the scope shown in the form), unit-tested on its own, so the view does not carry that state.
+- **Extractions that keep the view small (Constitution XIV).** `SessionJournalView.svelte` went from 356 to about 330 lines even after gaining the promote flow, by moving three existing blocks into components with unchanged markup and test ids: `JournalComposer.svelte` (typed note, section select, new section, section chips and rename), `JournalStartScreen.svelte` (the Start / Resume button plus the post-end offer) and `JournalHeader.svelte` (title, End Session or Back, and a slot for the toggle). `JournalPromoteActions.svelte` holds the promote buttons and `JournalPromoteSections.svelte` the section chips.
+- **New components** in `apps/web/src/lib/components/quicknote/`: `JournalPromoteSheet.svelte` (type select from `categories.list`, name input, a read-only preview of the first 600 characters of the body, Create and Cancel, error message) and `JournalEndedActions.svelte` (the post-end offer, dismissible). `JournalEntryRow.svelte` gains an optional "Make entity" button and a selection checkbox; section chips gain a "Make entity" button; the view's header gains "Turn journal into a Note" and "Choose parts".
+- **Post-end offer**: the view remembers the id of the journal it just ended and shows `JournalEndedActions` for it until dismissed. It is not persisted; the same actions are always available on any ended journal through the header and rows (FR-042, FR-043), so nothing is lost if the offer is dismissed or the app reloads.
+- **Compact layout (found in the live check).** The scratchpad is a fixed 480px panel, and putting the whole-journal, choose-parts and section controls in a permanent row left room for only about one entry. They now sit behind a "Make entity" toggle in the title row (`aria-expanded`, `aria-controls`), which opens automatically while choosing parts; per-entry buttons stay visible. Opening the form also hides the past-journals list.
+- **Confirmation message.** `SessionJournalPromoter` takes an optional `notify` dependency (wired to the notification store in the singleton) and reports `Created a draft: <name>` after the draft is opened and the panel closed, because on routes without an entity panel the closing scratchpad otherwise gives no sign of success. A failure to show it never turns a success into a failure.
+- **Escape.** The form's Escape handler calls `stopPropagation()`, because the app's global Escape shortcut also closes the scratchpad; without it one keypress cancelled the form and dismissed the whole panel.
+- **Focus return.** The form replaces the controls that opened it, so the opener no longer exists when the form closes. The view records the opener's `data-testid` and `aria-label` and focuses the matching control after the next render.
+- **Selection is independent.** The checkbox on a section and the checkboxes on its entries do not affect each other in the UI (FR-036). The state class keeps two separate lists, and `buildPromotion` removes the overlap, so an entry chosen twice appears once.
+- **Accessibility (FR-046)**: every control is a real `<button type="button">` with visible text or an `aria-label`; the checkbox has a label naming the entry; the form is a labelled group, its name input takes focus on open, and focus returns to the control that opened it on close; errors use `role="alert"`; icons follow the Iconify pattern and are `aria-hidden` beside text.
+
+### Alternatives considered and rejected
+
+- **Build a full entity-creation form with editable body inside the journal.** Rejected: it duplicates the entity panel, and the draft flow already gives "edit before saving".
+- **Create the entity as active straight away.** Rejected: it would skip the review the issue asks for and clutter the vault with unreviewed text; a draft is discardable in one click.
+- **One entity per ticked part.** Rejected for this slice: it needs a type and name per part, which is a much heavier form. Combined output plus repeating the action covers the need (spec assumption).
+- **Mark promoted entries in the journal.** Rejected for this slice: it would change the data model (FR-047) and needs decisions about undoing and duplicates. Left as a follow-up.
+- **Confirm-before-ending dialog with the three outcomes.** Rejected: it would put a gate in front of ending a session, which slice 1 made a single action; the offer comes after ending instead (FR-043).
+
+### Project Structure (slice 4 changes only)
+
+```text
+packages/session-journal-engine/
+├── src/promote.ts                    # NEW: buildPromotion (pure)
+├── src/index.ts                      # export it
+└── tests/promote.test.ts             # NEW
+apps/web/src/lib/
+├── stores/session-journal-promoter.ts        # NEW: SessionJournalPromoter + singleton
+├── components/quicknote/
+│   ├── journal-promotion.svelte.ts           # NEW: selection and form state
+│   ├── JournalPromoteSheet.svelte            # NEW: type + name form with preview
+│   ├── JournalEndedActions.svelte            # NEW: post-end offer
+│   ├── JournalPromoteActions.svelte          # NEW: whole-journal, choose-parts buttons
+│   ├── JournalPromoteSections.svelte         # NEW: section chips with Make entity / checkbox
+│   ├── JournalPromoteToggle.svelte           # NEW: the small Make entity toggle
+│   ├── JournalComposer.svelte                # NEW (extracted): note, section and rename controls
+│   ├── JournalStartScreen.svelte             # NEW (extracted): Start / Resume + post-end offer
+│   ├── JournalHeader.svelte                  # NEW (extracted): title, End Session / Back
+│   ├── JournalEntryRow.svelte                # + Make entity button, selection checkbox
+│   └── SessionJournalView.svelte             # header actions, section buttons, wiring
+├── config/help-content.ts                    # session-journal entry: mention it
+└── content/help/quicknote.md                 # short section
+```
+
+Not touched: `session-journal.svelte.ts`, `idb.ts`, cloud-backup files, `vault` stores, the dice, table and deck tools.
+
+### Constitution Check (slice 4 delta)
+
+- **I. Library-First** — PASS. Text building and scope logic live in `session-journal-engine`.
+- **II. TDD** — PASS (planned). Tests precede implementation in tasks.md Phase 12, each with success and negative paths.
+- **III. Simplicity & YAGNI** — PASS. Reuses the draft flow, adds no form beyond type and name, no AI, no promoted-marker, no per-part entities.
+- **V. Privacy & Client-Side Processing** — PASS. Everything is local; the draft is stored like any entity, and cloud backup is unchanged.
+- **VII. User Documentation** — PASS (planned). Help entry and `quicknote.md` updated.
+- **VIII. Dependency Injection** — PASS. The promoter takes its collaborators in its constructor and exports a singleton.
+- **IX. Natural Language** — PASS. Buttons read "Make entity", "Turn journal into a Note", "Choose parts"; the empty and error messages are plain sentences.
+- **X. Quality & Coverage** — PASS (planned). New engine module covered to the 70% goal.
+- **XI. Agent Operational Protocol** — PASS. Assumptions stated in spec.md; the data model and vault stores are untouched.
+- **XIV. Bounded Responsibility** — see below.
+- IV, XII and the Discovery Intent check remain N/A.
+
+### Bounded Responsibility Check (slice 4 delta)
+
+- [x] Files this slice touches that exceed 500 lines are listed, excluding tests.
+- [x] For each, the single responsibility it still holds is named.
+- [x] New behaviour that does not belong to a listed file has an extraction target.
+- [x] Planned splits carry or gain their own tests.
+
+No touched file is over 500 lines. `SessionJournalView.svelte` (about 356 lines) is the one at risk, so selection state goes to `journal-promotion.svelte.ts`, the form to `JournalPromoteSheet.svelte`, and the post-end offer to `JournalEndedActions.svelte`, each with its own tests; the view only wires them. `help-content.ts` is a data-only module.
+
+### Risks
+
+- **A draft entity is a real file in the vault.** Creating one starts a durable write and, with cloud backup on, a scheduled backup like any entity. Same as Quicknote elevation; discard removes it.
+- **Very long bodies.** A whole long session becomes a long Note. Not truncated (spec edge case); the preview in the form shows only the first 600 characters.
+- **Focus handling** in an overlay panel is easy to get wrong; covered by component tests (T083) and the live check (T097).
+- **`vault.createEntity` failing** (vault not ready, storage error) must leave the form and journal untouched; covered in T081 and T083.
+- **Locale-dependent times** would make tests flaky; the formatter is injected.

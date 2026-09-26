@@ -209,3 +209,95 @@ Handler rules, in order: ignore when `!isCaptureAllowed()`; ignore when `event.m
 ### `DiceHistoryStore` change
 
 `new DiceHistoryStore(idGenerator?, bus?)` — `bus` defaults to the shared `appEventBus`. `addResult` emits exactly one `JOURNAL:CAPTURE` per recorded roll, after the in-memory push and before persistence, inside try/catch. History trimming and `init()` never emit.
+
+## Promotion (slice 4, #3409)
+
+`SessionJournalStore` is unchanged by slice 4 (FR-047).
+
+### Engine: `buildPromotion` (`promote.ts`, pure)
+
+```ts
+type PromotionScope =
+  | { kind: "entry"; entryId: string }
+  | { kind: "section"; sectionId: string }
+  | { kind: "journal" }
+  | { kind: "selection"; entryIds: string[]; sectionIds: string[] };
+
+interface PromotionOptions {
+  /** Local time of day for an entry, e.g. "14:05". Injected so the engine is
+   *  pure and tests do not depend on the machine's locale. */
+  formatTime: (timestamp: number) => string;
+}
+
+type PromotionResult =
+  | {
+      ok: true;
+      /** The default name offered in the form. */
+      title: string;
+      /** Plain text / simple markdown body. */
+      content: string;
+      entryCount: number;
+      /** Back-reference tag, e.g. "journal:j1:entry:e9". */
+      source: string;
+    }
+  | { ok: false; error: string };
+
+function buildPromotion(
+  journal: SessionJournal,
+  scope: PromotionScope,
+  options: PromotionOptions,
+): PromotionResult;
+```
+
+Never throws and never mutates `journal`. Errors: an id that is not in the journal gives "That part of the journal no longer exists."; a scope with no entries (empty journal, empty section, empty selection) gives "There is nothing here to turn into an entity yet."
+
+### Text format
+
+Automatic entries are those whose `type` is not `manual-note`; their label is Dice roll, Card draw, Table result, or Automatic entry. Continuation lines of a multi-line entry are indented two spaces under its list item.
+
+- **Entry**: a typed note's body is its `content`. An automatic entry's body is `<Label> — <content>`.
+- **Line for one entry inside a longer body**: `- <time> — <content>` for a typed note, `- <time> — <Label> — <content>` for an automatic entry.
+- **Section**: the lines of that section's entries, in journal order. No title heading (the section name is the entity name).
+- **Journal**: `# <journal title>`, a blank line, then the entry lines in journal order. A heading `## <section name>` is written before an entry whenever its section differs from the previous entry's, where the first entry has no previous entry (so a sectioned first entry gets its heading and an unsectioned first entry gets none); an entry with no section after a sectioned one is preceded by `## No section`. A journal that has no sections has no `##` headings.
+- **Selection**: chosen entries plus the entries of chosen sections, each once, in journal order, rendered like the journal body without the `#` title line.
+
+The form's preview shows the first 600 characters of the body, followed by `…` when the body is longer. The structured `sourceRef` of an automatic entry is not used; only its `content` is.
+
+Default names: **entry** — its first non-blank line cut to at most 60 characters at the last space at or after character 30 (else at 60), with `…` added when cut, or `Journal entry` if blank; **section** — the section name; **journal** — the journal title; **selection** — `<journal title> — selection`.
+
+Back-reference (`source`): `journal:<journalId>:entry:<entryId>`, `journal:<journalId>:section:<sectionId>`, `journal:<journalId>:selection`, or `journal:<journalId>` for the whole journal.
+
+### App: `SessionJournalPromoter` (`stores/session-journal-promoter.ts`)
+
+The view receives it as an optional `promoter` prop (default: the singleton `sessionJournalPromoter`), and the form receives `categories` as a prop (default: `categories.list`), so both can be tested with fakes.
+
+```ts
+class SessionJournalPromoter {
+  constructor(deps: {
+    createEntity: (
+      type: string,
+      title: string,
+      data: { status: "draft"; content: string; discoverySource: string },
+    ) => Promise<string>;
+    openEntity: (entityId: string) => void;
+    closePanel: () => void;
+    /** Optional. Called after a successful promotion with
+     *  `Created a draft: <name>`. A failure here is logged and never changes
+     *  the result. */
+    notify?: (message: string) => void;
+    log?: (message: string, error: unknown) => void;
+  });
+
+  /** Refuses a blank name or type without creating anything. On success:
+   *  creates the draft, then opens it, then closes the panel, then sends the confirmation message, in that order.
+   *  On any failure returns { ok: false, error } in plain language, logs it,
+   *  and does not open or close anything. Never mutates the journal. */
+  promote(
+    journal: SessionJournal,
+    scope: PromotionScope,
+    input: { type: string; title: string } & PromotionOptions,
+  ): Promise<{ ok: true; entityId: string } | { ok: false; error: string }>;
+}
+```
+
+The created entity carries only `status: "draft"`, `content` and `discoverySource`; no connections, image or stat sheet are supplied (the vault's own default stat sheet for the category is still applied by `vault.createEntity`, as for any entity).
