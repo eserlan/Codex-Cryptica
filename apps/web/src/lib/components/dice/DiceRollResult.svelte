@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { getDiceIcon } from "$lib/utils/dice-icons";
+  import DiceBreakdown from "./DiceBreakdown.svelte";
 
   export interface DiceRollResultData {
     formula: string;
@@ -139,61 +139,12 @@
       </div>
     </div>
 
-    <div class="space-y-3">
-      {#each result.parts as part, i}
-        {#if part.type === "dice"}
-          <div class="flex flex-col gap-1.5">
-            <div class="flex items-center gap-2">
-              {#if part.sides}
-                <span
-                  class="{getDiceIcon(
-                    part.sides,
-                  )} w-3 h-3 text-theme-primary/60"
-                ></span>
-              {/if}
-              <span
-                class="text-[9px] font-bold text-theme-muted uppercase tracking-tighter font-header"
-                >Part {i + 1} breakdown</span
-              >
-            </div>
-            <div class="flex flex-wrap gap-1.5">
-              {#each part.rolls || [] as roll}
-                <div
-                  class="w-8 h-8 flex items-center justify-center rounded-md bg-theme-bg border border-theme-border text-sm font-bold text-theme-text shadow-inner"
-                >
-                  {roll}
-                </div>
-              {/each}
-              {#if part.dropped && part.dropped.length > 0}
-                {#each part.dropped as drop}
-                  <div
-                    class="w-8 h-8 flex items-center justify-center rounded-md bg-theme-bg/30 border border-theme-border/50 text-sm font-bold text-theme-muted/40 line-through"
-                  >
-                    {drop}
-                  </div>
-                {/each}
-              {/if}
-              <div
-                class="h-8 flex items-center px-2 text-xs font-bold text-theme-primary/80 font-header"
-              >
-                = {part.value}
-              </div>
-            </div>
-          </div>
-        {:else}
-          <div
-            class="flex items-center gap-2 bg-theme-primary/5 rounded px-3 py-1.5 border border-theme-primary/10 w-fit"
-          >
-            <span
-              class="text-[10px] font-bold text-theme-muted uppercase font-header"
-              >Modifier</span
-            >
-            <span class="text-sm font-bold text-theme-primary font-header"
-              >{part.value >= 0 ? "+" : "-"}{Math.abs(part.value)}</span
-            >
-          </div>
-        {/if}
-      {/each}
-    </div>
+    <DiceBreakdown
+      parts={result.parts}
+      total={result.total}
+      showFormula={false}
+      showTotal={false}
+      framed={false}
+    />
   </div>
 {/if}

@@ -55,6 +55,56 @@ function renderRoller(overrides: Record<string, unknown> = {}) {
   });
 }
 
+describe("TableRoller dice breakdown (#3443)", () => {
+  const keepHighestOutcome: RollOutcome = {
+    ...outcome,
+    chain: [
+      {
+        ...outcome.chain[0],
+        dieValue: 14,
+        rollParts: [
+          {
+            type: "dice",
+            sides: 6,
+            rolls: [6, 5, 3],
+            dropped: [1],
+            value: 14,
+          },
+        ],
+      },
+    ],
+  };
+
+  it("expands the individual dice behind the value that picked the entry", async () => {
+    renderRoller({
+      sources: {
+        roll: vi.fn(() => keepHighestOutcome),
+        rerollFragment: vi.fn(),
+      },
+    });
+    await fireEvent.click(screen.getByTestId("roll-table"));
+
+    expect(screen.getByTestId("roll-die-value").textContent?.trim()).toBe("14");
+    await fireEvent.click(await screen.findByTestId("dice-disclosure-toggle"));
+
+    expect(
+      screen.getAllByTestId("dice-kept").map((el) => el.textContent),
+    ).toEqual(["6", "5", "3"]);
+    expect(
+      screen.getAllByTestId("dice-dropped").map((el) => el.textContent),
+    ).toEqual(["1"]);
+    expect(screen.getByTestId("dice-breakdown-total").textContent).toBe("14");
+  });
+
+  it("offers no breakdown for a single plain die", async () => {
+    renderRoller();
+    await fireEvent.click(screen.getByTestId("roll-table"));
+
+    await screen.findByTestId("roll-result");
+    expect(screen.queryByTestId("dice-disclosure-toggle")).toBeNull();
+  });
+});
+
 describe("TableRoller result actions", () => {
   it("sends a rolled result to chat and copies its plain text", async () => {
     const addToChat = vi.fn(async () => {});
