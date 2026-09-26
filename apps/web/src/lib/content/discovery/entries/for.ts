@@ -274,7 +274,7 @@ export const forEntries: DiscoveryEntryInput[] = [
       "Game masters running steampunk and Victorian industrial campaigns",
     userJob: "adopt-workflow",
     uniqueValue:
-      "An industrial-intrigue workflow connecting clockwork inventions, guilds, noble houses, airship fleets, and the conspiracies that fight over who controls each patent.",
+      "A steampunk workflow connecting inventions to their inventors, workers, patrons, routes, and the social and industrial consequences of their success or failure.",
     parentCluster: "genre-guides",
     relatedIntents: ["hub-steampunk"],
     indexable: true,
