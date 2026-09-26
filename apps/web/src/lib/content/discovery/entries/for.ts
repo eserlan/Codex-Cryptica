@@ -262,6 +262,25 @@ export const forEntries: DiscoveryEntryInput[] = [
     status: "live",
   },
   {
+    id: "for-steampunk-rpgs",
+    pageKind: "for",
+    canonicalPath: "/for/steampunk-rpgs",
+    primaryIntent: "steampunk campaign worldbuilding",
+    intentAliases: [
+      "victorian industrial rpg campaign organiser",
+      "steampunk campaign notes",
+    ],
+    audience:
+      "Game masters running steampunk and Victorian industrial campaigns",
+    userJob: "adopt-workflow",
+    uniqueValue:
+      "An industrial-intrigue workflow connecting clockwork inventions, guilds, noble houses, airship fleets, and the conspiracies that fight over who controls each patent.",
+    parentCluster: "genre-guides",
+    relatedIntents: ["hub-steampunk"],
+    indexable: true,
+    status: "live",
+  },
+  {
     id: "for-mecha-rpgs",
     pageKind: "for",
     canonicalPath: "/for/mecha-rpgs",
