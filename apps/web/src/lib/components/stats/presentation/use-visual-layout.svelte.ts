@@ -20,25 +20,28 @@ import {
 } from "./visual-card-operations";
 import { syncSourceFromVisualCards } from "./visual-card-serializer";
 import type { StatSheetField } from "schema";
+import { systemIdGenerator } from "$lib/utils/runtime-deps";
 
 export function useVisualLayout({
   source,
   schemaFields,
   fieldDisplayOverrides,
   onSourceUpdate,
+  idGenerator = systemIdGenerator.uuid,
 }: {
   source: () => string;
   schemaFields: () => StatSheetField[];
   fieldDisplayOverrides: () => Record<string, { displayMode?: string; hideLabel?: boolean }>;
   onSourceUpdate: (newSource: string) => void;
+  idGenerator?: () => string;
 }) {
-  let localCards = $state<VisualCard[]>(parseCardsFromSource(source(), schemaFields()));
+  let localCards = $state<VisualCard[]>(parseCardsFromSource(source(), schemaFields(), idGenerator));
 
   let lastSyncedSource = $state(source());
 
   $effect(() => {
     if (source() !== lastSyncedSource) {
-      localCards = parseCardsFromSource(source(), schemaFields());
+      localCards = parseCardsFromSource(source(), schemaFields(), idGenerator);
       lastSyncedSource = source();
     }
   });
@@ -52,7 +55,7 @@ export function useVisualLayout({
   >(null);
 
   function resetFromSource() {
-    localCards = parseCardsFromSource(source(), schemaFields());
+    localCards = parseCardsFromSource(source(), schemaFields(), idGenerator);
   }
 
   function handleSyncSourceFromVisualCards(cards: VisualCard[]) {
@@ -62,7 +65,7 @@ export function useVisualLayout({
   }
 
   function addVisualCard(mode: "grid" | "table" = "grid") {
-    localCards = addVisualCardOp(localCards, mode);
+    localCards = addVisualCardOp(localCards, mode, idGenerator);
     handleSyncSourceFromVisualCards(localCards);
   }
 

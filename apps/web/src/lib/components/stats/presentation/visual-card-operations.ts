@@ -1,4 +1,5 @@
 import type { VisualCard } from "./visual-card-parser";
+import { systemIdGenerator } from "$lib/utils/runtime-deps";
 
 /**
  * Creates a new VisualCard with default settings.
@@ -6,7 +7,7 @@ import type { VisualCard } from "./visual-card-parser";
 export function createVisualCard(
   mode: "grid" | "table" = "grid",
   count: number = 0,
-  idGenerator: () => string = () => Math.random().toString(36).slice(2, 9),
+  idGenerator: () => string = systemIdGenerator.uuid,
 ): VisualCard {
   return {
     id: idGenerator(),
