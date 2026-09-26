@@ -1030,6 +1030,42 @@ describe("Landing Page Registry", () => {
     });
   });
 
+  describe("Steampunk & Victorian Industrial Pack", () => {
+    it("uses the steampunk theme and links industrial-relevant generators", () => {
+      const steampunk = getLandingPage("steampunk-rpgs");
+
+      expect(steampunk).toBeDefined();
+      expect(steampunk?.kind).toBe("genre");
+      expect(steampunk?.theme).toBe("steampunk");
+      expect(steampunk?.hub).toBe("steampunk");
+      expect(steampunk?.recommendedTools.map((tool) => tool.href)).toEqual(
+        expect.arrayContaining([
+          "/generators/steampunk",
+          "/generators/artifact-generator",
+          "/generators/faction",
+          "/generators/ship-generator",
+        ]),
+      );
+    });
+
+    it("connects inventions to the guilds, patrons, and conspiracies around them", () => {
+      const steampunk = getLandingPage("steampunk-rpgs")!;
+      const copy = JSON.stringify(steampunk);
+      const [hub, ...spokes] = steampunk.exampleGraph!.steps;
+
+      expect(copy).toMatch(/clockwork/i);
+      expect(copy).toMatch(/guild/i);
+      expect(copy).toMatch(/airship/i);
+      expect(copy).toMatch(/conspirac/i);
+      expect(hub.category).toBe("item");
+      expect(spokes.length).toBeGreaterThanOrEqual(5);
+      for (const spoke of spokes) {
+        expect(spoke.relation, `${spoke.label} has no relation`).toBeTruthy();
+        expect(spoke.category, `${spoke.label} has no category`).toBeDefined();
+      }
+    });
+  });
+
   describe("Tactical Mecha RPG Pack", () => {
     it("is registered as a Lancer-themed genre guide", () => {
       const mecha = getLandingPage("mecha-rpgs");
@@ -1327,7 +1363,8 @@ describe("Landing Page Registry", () => {
     });
 
     it("returns nothing for a hub with no landing pages", () => {
-      expect(getLandingPagesForHub("steampunk")).toEqual([]);
+      expect(getLandingPagesForHub("lancer").length).toBeGreaterThan(0);
+      expect(getLandingPagesForHub("superhero")).toEqual([]);
       expect(getLandingPagesForHub("not-a-hub")).toEqual([]);
     });
   });

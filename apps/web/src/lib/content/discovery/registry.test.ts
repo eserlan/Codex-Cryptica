@@ -457,6 +457,18 @@ describe("the committed registry", () => {
     ).toBe("hub-post-apocalyptic");
   });
 
+  it("gives steampunk campaign workflow its own discovery intent", () => {
+    expect(
+      findIntentOwner("steampunk campaign worldbuilding", registry)?.id,
+    ).toBe("for-steampunk-rpgs");
+    expect(getEntryByPath("/for/steampunk-rpgs", registry)?.userJob).toBe(
+      "adopt-workflow",
+    );
+    expect(findIntentOwner("steampunk rpg generators", registry)?.id).toBe(
+      "hub-steampunk",
+    );
+  });
+
   it("gives tactical mecha campaigns their own operation-level workflow intent", () => {
     expect(findIntentOwner("mecha rpg campaign manager", registry)?.id).toBe(
       "for-mecha-rpgs",
