@@ -95,6 +95,9 @@ export function buildCaptureFromRoll(
         finalText: text,
         ...(roll.formula ? { formula: roll.formula } : {}),
         total: roll.total,
+        // The dice actually rolled, so the breakdown stays inspectable after
+        // a reload (#3443). Never rebuilt later from the total.
+        ...(roll.parts.length > 0 ? { parts: roll.parts } : {}),
       },
     };
   }

@@ -55,6 +55,40 @@ describe("buildCaptureFromRoll", () => {
     });
   });
 
+  it("keeps the dice behind a table result so the breakdown survives a reload", () => {
+    const parts = [
+      { type: "dice", sides: 6, rolls: [6, 5, 3], dropped: [1], value: 14 },
+    ];
+    const payload = buildCaptureFromRoll({
+      total: 14,
+      parts,
+      formula: "4d6kh3",
+      context: "table",
+      source: {
+        sourceId: "t1",
+        sourceName: "Encounters",
+        kind: "table",
+        finalText: "A travelling merchant",
+      },
+    })!;
+    expect((payload.sourceRef as any).parts).toEqual(parts);
+  });
+
+  it("stores no parts for a table result that has none (negative)", () => {
+    const payload = buildCaptureFromRoll({
+      total: 4,
+      parts: [],
+      context: "table",
+      source: {
+        sourceId: "t1",
+        sourceName: "Encounters",
+        kind: "table",
+        finalText: "Goblins",
+      },
+    })!;
+    expect(payload.sourceRef).not.toHaveProperty("parts");
+  });
+
   it("turns a deck draw into a card-draw payload naming each card", () => {
     const payload = buildCaptureFromRoll({
       total: 2,
