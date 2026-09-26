@@ -91,7 +91,7 @@
       {@render rollHeader(roll)}
 
       {#if roll.source}
-        {@render sourceBody(roll)}
+        {@render sourceBody(roll, roll.source)}
       {:else}
         {@render diceBody(roll)}
       {/if}
@@ -131,7 +131,10 @@
   </div>
 {/snippet}
 
-{#snippet sourceBody(roll: ContextualRollResult)}
+{#snippet sourceBody(
+  roll: ContextualRollResult,
+  source: NonNullable<ContextualRollResult["source"]>,
+)}
   <!-- A table roll or deck draw: the text is the result, and the die
              value is only how it was reached (#2247, FR-018). -->
   <div class="flex items-start gap-4" data-testid="roll-source">
@@ -146,7 +149,7 @@
       <span
         class="text-[8px] font-bold text-theme-muted uppercase tracking-tighter mt-1.5"
       >
-        {roll.source.kind === "deck" ? "Draw" : "Rolled"}
+        {source.kind === "deck" ? "Draw" : "Rolled"}
       </span>
     </div>
     <div class="flex-1 flex flex-col gap-1">
@@ -154,13 +157,13 @@
         class="text-[9px] font-bold text-theme-muted uppercase tracking-widest"
         data-testid="roll-source-name"
       >
-        {roll.source.sourceName}
+        {source.sourceName}
       </span>
       <p
         class="text-sm text-theme-text font-body leading-relaxed whitespace-pre-wrap"
         data-testid="roll-source-text"
       >
-        {roll.source.finalText}
+        {source.finalText}
       </p>
     </div>
   </div>
