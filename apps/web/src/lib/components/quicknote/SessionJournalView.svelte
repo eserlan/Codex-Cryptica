@@ -4,6 +4,7 @@
     type SessionJournalStore,
   } from "$lib/stores/session-journal.svelte";
   import type { SessionJournal } from "session-journal-engine";
+  import JournalEntryRow from "./JournalEntryRow.svelte";
   import FeatureHint from "$lib/components/help/FeatureHint.svelte";
   import { notificationStore } from "$lib/stores/ui/notification.svelte";
 
@@ -26,7 +27,6 @@
   let showHistory = $state(false);
   let pastJournals = $state<SessionJournal[]>([]);
   let selectedPastJournalId = $state<string | null>(null);
-  let activeSectionId = $state<string | undefined>(undefined);
   let isEndingSession = $state(false);
   const displayedJournal = $derived(
     (selectedPastJournalId
@@ -40,7 +40,6 @@
     if (store.allJournals.length === 0) {
       pastJournals = [];
       selectedPastJournalId = null;
-      activeSectionId = undefined;
     }
   });
 
@@ -68,11 +67,9 @@
     if (!content || isAddingNote) return;
     isAddingNote = true;
     try {
-      const sectionId = displayedJournal?.sections.some(
-        (section) => section.id === activeSectionId,
-      )
-        ? activeSectionId
-        : undefined;
+      // The current section lives in the store, so typed notes and captured
+      // rolls land in the same place (spec 163, FR-032).
+      const sectionId = store.activeSectionId;
       await store.appendEntry({
         type: "manual-note",
         content,
@@ -91,8 +88,7 @@
     if (!name || isCreatingSection) return;
     isCreatingSection = true;
     try {
-      const section = await store.createSection(name);
-      activeSectionId = section.id;
+      await store.createSection(name);
       newSectionName = "";
       sectionError = null;
     } catch {
@@ -235,12 +231,14 @@
 
         {#if displayedJournal.sections.length > 0}
           <select
-            bind:value={activeSectionId}
+            value={store.activeSectionId ?? ""}
+            onchange={(e) =>
+              store.setActiveSection(e.currentTarget.value || undefined)}
             aria-label="Section for next journal note"
             class="rounded border border-theme-border bg-theme-bg px-2 py-1.5 text-xs text-theme-text"
             data-testid="journal-note-section"
           >
-            <option value={undefined}>No section</option>
+            <option value="">No section</option>
             {#each displayedJournal.sections as section (section.id)}
               <option value={section.id}>{section.name}</option>
             {/each}
@@ -313,20 +311,7 @@
     </p>
   {/if}
   {#each displayedJournal?.entries ?? [] as entry (entry.id)}
-    <div
-      class="rounded border border-theme-border/30 p-2 text-xs"
-      data-testid="journal-entry"
-    >
-      <div
-        class="flex items-center justify-between text-[9px] text-theme-muted"
-      >
-        <span>{new Date(entry.timestamp).toLocaleTimeString()}</span>
-        {#if sectionName(entry.sectionId)}
-          <span class="text-theme-accent">{sectionName(entry.sectionId)}</span>
-        {/if}
-      </div>
-      <p class="text-theme-text">{entry.content}</p>
-    </div>
+    <JournalEntryRow {entry} sectionName={sectionName(entry.sectionId)} />
   {/each}
 {/snippet}
 

@@ -24,6 +24,8 @@
 
 **Story 5 — global access (slice 2)**: With no journal, open any non-Notes view (e.g. the graph) → find the Session Journal control in the Activity Bar → label reads "Start Session Journal" and no active indicator is shown → select it → the scratchpad opens on the Journal tab at its Start screen and no journal has been created yet. Start one, add a note, close the panel → the control now reads "Open Session Journal" with an active indicator. Navigate to two other views and select the control from each → the same journal, entries and sections open on the Journal tab. Reload → the control reads "Resume Session Journal"; select it → the journal opens straight to its entries and the control becomes "Open Session Journal". Reopen the panel with Ctrl/Cmd+I and confirm it opens on the Journal tab (the tab is remembered) and that opening the journal from the control did not create a blank Quicknote note. On a phone-width viewport, confirm the control is in the menu drawer. In guest mode, confirm the control is absent. Switch vaults and confirm the control shows the other vault's state.
 
+**Story 6 — automatic capture (slice 3)**: Start a journal and leave the Quicknote panel closed. Roll 2d6+3 in the dice roller, type `/roll 1d20` in the Oracle chat, roll on a random table (and re-roll one part of a result), draw from a deck (try a reversed card), and roll a stat sheet field. Open the journal → each result appears once, in the order made, marked as automatic with a label and icon that differ from a typed note; card draws name the cards, table results name the table. Add a typed note between two rolls and confirm the order. Create a section, make a roll → it lands in that section. Make ten rolls quickly → all ten appear, none missing or doubled. Then end the journal and roll again → nothing is added, nothing is shown, and the roll behaves as normal. With no journal ever started, roll → no journal appears and no message is shown. Reload mid-session → captured entries are still there. In guest mode, roll → nothing is captured.
+
 ## Verifying the vault-scoping and single-active-journal invariants (FR-012, FR-013)
 
 - Switch vaults (if more than one exists locally) and confirm the journal control and any active journal do not follow you to the other vault — each vault sees only its own.
@@ -32,6 +34,6 @@
 ## What this slice does not cover (do not test for it here)
 
 - (Slice 1 note, now superseded) The global cross-view control is slice 2, Story 5 above.
-- No automatic capture of dice rolls, cards, or table results (#3408).
+- (Slice 1 note, now superseded) Automatic capture is slice 3, Story 6 above.
 - No promote-to-entity conversion (#3409).
 - No delete capability for a journal (spec Assumption — out of scope for this slice).

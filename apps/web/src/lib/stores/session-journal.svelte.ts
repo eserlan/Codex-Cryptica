@@ -45,6 +45,10 @@ export class SessionJournalStore {
   /** Tracked in-memory only (spec FR-010: "opened" is a browser-session
    *  affordance, not a persisted field). */
   private openedInSession = $state(false);
+  /** The section new entries go into — typed or captured (spec FR-032). Held
+   *  here, not in the view, because most captures happen while the panel is
+   *  closed. In memory only: it starts as no section after a reload. */
+  private selectedSectionId = $state<string | undefined>(undefined);
 
   private vaultRegistry: typeof defaultVaultRegistry;
   private ids: IdGenerator;
@@ -64,6 +68,7 @@ export class SessionJournalStore {
       $effect(() => {
         const vaultId = this.vaultRegistry.activeVaultId;
         this.openedInSession = false;
+        this.selectedSectionId = undefined;
         if (vaultId) {
           this.current = undefined;
           this.allJournals = [];
@@ -75,6 +80,26 @@ export class SessionJournalStore {
         }
       });
     });
+  }
+
+  /** The current section, or undefined for none. A stored id whose section no
+   *  longer exists in the active journal reads as undefined. */
+  get activeSectionId(): string | undefined {
+    const journal = this.current;
+    if (!journal || journal.status !== "active") return undefined;
+    return journal.sections.some((s) => s.id === this.selectedSectionId)
+      ? this.selectedSectionId
+      : undefined;
+  }
+
+  /** Switches the current section. Passing undefined means no section; an id
+   *  that is not a section of the current journal is ignored. */
+  setActiveSection(id: string | undefined): void {
+    if (id === undefined) {
+      this.selectedSectionId = undefined;
+    } else if (this.current?.sections.some((s) => s.id === id)) {
+      this.selectedSectionId = id;
+    }
   }
 
   /** Derived control state for the three-way UI affordance (spec FR-010). */
@@ -216,6 +241,7 @@ export class SessionJournalStore {
       created = result.section;
       return result.journal;
     });
+    this.selectedSectionId = created!.id;
     return created!;
   }
 
@@ -238,6 +264,7 @@ export class SessionJournalStore {
       if (!result.ok) throw new Error(result.error);
       return result.journal;
     });
+    this.selectedSectionId = undefined;
   }
 
   /** Supports "browsable afterward" (spec Assumption) — every past journal

@@ -198,3 +198,103 @@ No touched file exceeds 500 lines: `nav-items.ts` (256), `ActivityBar.svelte` (1
 - **Overlay stacking.** The panel is a modal overlay (`z-[100]`/`z-[101]`) and the Activity Bar sits at `z-[80]`, so while the panel is open the global control is behind the backdrop and a pointer user cannot select it. That is acceptable: the control's job is to open the panel, and the panel has its own close button and tab buttons. The spec therefore treats "invoked while already open" as a store-level guarantee (FR-020, tested in T041) for keyboard or programmatic callers, not as a user-visible flow.
 - **Popup / fullscreen windows.** Checked in `+layout.svelte`: `<ActivityBar />` renders only when `!isPopup && !isVttFullscreen && !isZenPopout && !guidedModeStore.isGuidedMode`, and the mobile menu is opened from `AppHeader` under the same `!isPopup` gate, while `<QuickNoteScratchpad />` mounts when `!isPopup && !isGuestMode`. So wherever the control is shown the panel is mounted, and the nav item needs only the `!isGuestMode` guard `quicknote` already uses (I2 resolved with no extra gating).
 - **Route-navigation survival (FR-022).** This holds structurally: the panel is mounted once in the layout and both stores are singletons, so route changes do not touch them. jsdom cannot simulate routing, so unit tests cover the store guarantees (tab survives close/reopen, state follows vault) and the manual pass (T054) covers actual navigation.
+
+---
+
+## Slice 3 Addendum: Automatic capture of rolls, draws and table results (#3408)
+
+**Spec**: User Story 6, FR-024–FR-035, SC-009–SC-012, and the "Slice 3 assumptions" block in [spec.md](./spec.md). Built on branch `163-session-journal-slice-3`, after slice 1 (#3422) and slice 2 (#3429) merged. Slice 1's persistence and cloud backup are reused unchanged (FR-034).
+
+### Summary
+
+Add a shared "journal capture event" on the existing `@codex/events` bus, a listener that appends those events to the active journal, and one emitter in the place every roll already passes through. The journal view learns to show automatic entries differently from typed notes.
+
+Findings from the code that shape the design:
+
+- Every producer of a dice roll, table roll, deck draw, Oracle chat roll and stat sheet field roll ends in `DiceHistoryStore.addResult` (`apps/web/src/lib/stores/dice-history.svelte.ts`): `DiceVault.svelte` (modal), `TableRoller.svelte` and `DeckView.svelte` (table and deck use views), `features/random/oracle-adapter.svelte.ts` (Oracle table and deck commands), `oracle-engine`'s `dice-executor.ts` (`/roll`), and `utils/stat-sheet-field-actions.ts`. One emitter there covers all of FR-026, and one event per `addResult` call gives "exactly once".
+- `AppEventBus` (`packages/events`) swallows and logs listener errors, sync and async, so a failing listener cannot break an emitter (FR-030). Its `reset()` removes unnamed listeners on vault switch and keeps named ones, so the journal's listener MUST subscribe with a name. `CrossTabBroadcaster` relays only events with `metadata.sync` set (`packages/events/src/CrossTabBroadcaster.ts:33`), so a capture event that leaves `sync` unset stays in the tab that made the roll.
+- `SessionJournalStore.appendEntry` rejects when no journal is active (slice 1 contract), and serialises writes with a read-merge-write discipline (FR-011). The listener guards on `current?.status === "active"` first, as the #3408 issue note suggested, and relies on FR-011 for bursts.
+- The section a typed note goes into is `activeSectionId`, local state inside `SessionJournalView.svelte`. The view is unmounted while the panel is closed, so captures could not know it. It moves into the store (FR-032).
+- Adventure-mode rolls and VTT rolls do not use `addResult` (spec assumption), so they are out of scope.
+
+### Technical Context (delta)
+
+**Dependencies**: None new third-party. `session-journal-engine` gains a workspace dependency on `@codex/events` for event types, the same way `oracle-engine` has one.
+**Storage**: None new. Captured entries are ordinary `JournalEntry` records (`type`, `content`, `sourceRef` were reserved for this in slice 1, FR-014). No `DB_VERSION` change.
+**Testing**: Vitest/bun test. Pure formatting and validation in `session-journal-engine` (no mocks). Store, emitter, listener and view have unit and component tests with success and negative paths.
+**Constraints**: Must not change any roll tool's behaviour or UI (FR-035). Must not add a runtime import from tools to the journal. A capture failure must never reach the user (FR-030). No capture in guest mode (FR-033) or from relayed cross-tab events (FR-031).
+
+### Design decisions
+
+- **Event definition and pure logic live in `packages/session-journal-engine`** (Constitution I). New `events.ts` registers `"JOURNAL:CAPTURE"` in the `AppEventRegistry` under domain `"journal"` with payload `{ entryType: string; content: string; sourceRef?: Record<string, unknown> }`, and exports `JOURNAL_EVENTS`. New `capture.ts` holds pure functions: `buildCaptureFromRoll(roll)` turns a recorded result (dice, table or deck) into a payload or `undefined`; its input `CapturableRoll` is defined structurally in the engine with only the fields it reads (`total`, `parts`, `formula`, `label`, `context`, `source`), so the engine depends on no app or `dice-engine` type; `captureToEntryInput(payload)` validates and bounds it (non-empty type and summary; summary capped at 500 characters; `sourceRef` reduced to plain JSON-safe data without the resolution chain, result text capped at 1,000 characters, at most 30 cards, and at most 4 KB serialised, dropping the largest parts first).
+- **One emitter, in `DiceHistoryStore.addResult`.** It builds the payload with `buildCaptureFromRoll` and emits on an injected bus (constructor parameter, default `appEventBus`, per Constitution VIII), right after the in-memory push and before persistence, inside try/catch. So an IndexedDB failure does not suppress the capture, and an emit failure does not break the roll. History trimming and `init()` do not emit. Existing one-argument constructor calls keep working. The event carries `metadata: { timestamp }` only, never `sync`.
+- **One listener class, `SessionJournalCapture`**, in `apps/web/src/lib/stores/session-journal-capture.ts`. Constructor-injected `store`, `bus`, and an `isCaptureAllowed()` guard (false in guest mode). `start()` subscribes to `"JOURNAL:CAPTURE"` with a fixed name so it survives `bus.reset()`; `stop()` unsubscribes. The handler ignores `metadata.remote`, guards on `store.current?.status === "active"`, validates through `captureToEntryInput`, and calls `store.appendEntry` with `sectionId: store.activeSectionId`. All failures are caught and logged. It knows nothing about dice, tables or decks, which is what makes SC-011 true.
+- **`activeSectionId` moves into `SessionJournalStore`** with `setActiveSection(id)`. `createSection` sets it; it is cleared when the journal ends or the vault changes, and an unknown id is ignored. `SessionJournalView` reads and writes the store's value, so typed notes and captures agree. It is in-memory only: after a reload it is `undefined`, as the view's local state is today. The view's section `<select>` (`bind:value` on local state at `SessionJournalView.svelte:238`) becomes `value={store.activeSectionId}` plus an `onchange` that calls `setActiveSection`, since a store getter cannot be bound.
+- **Rendering split out of the view.** `SessionJournalView.svelte` is 371 lines. Automatic-entry rendering goes into a new `JournalEntryRow.svelte` (one entry, manual or automatic, icon and label per type from a small lookup, generic fallback) rather than growing the view (Constitution XIV). Icons use the Iconify pattern (`icon-[lucide--dices]` for dice, `icon-[lucide--layers]` for cards, `icon-[lucide--table]` for tables, `icon-[lucide--zap]` generic), each with a text label so meaning is not colour-only.
+- **Wiring** follows the Oracle's pattern: `apps/web/src/lib/listeners/session-journal-events.ts` exports `initSessionJournalCapture()`, which builds and starts the listener with `isCaptureAllowed: () => !sessionModeStore.isGuestMode`; `app-init.ts` only calls it beside `initOracleEventListeners()` and stops it on cleanup (two lines and an import).
+
+### Alternatives considered and rejected
+
+- **Each tool emits its own event.** Rejected: six call sites to keep in step, and any new roll path could silently miss capture. The shared history already is the funnel.
+- **The journal store subscribes to the bus itself.** Rejected: it would give a store that is about persistence and lifecycle a second responsibility, and make its tests need a bus. A small listener class keeps both simple.
+- **Subscribe to the roll history's reactive `history` array instead of an event.** Rejected: it couples the journal to one store's internals, and contradicts the #3408 requirement that new sources need only publish through the shared interface.
+- **Store the full table resolution chain in `sourceRef`.** Rejected: unbounded size, and it would ride along into every cloud backup (FR-027).
+- **Capture even when no journal is active and store it for later.** Rejected: contradicts FR-029, and would create records the user never asked for.
+
+### Project Structure (slice 3 changes only)
+
+```text
+packages/session-journal-engine/
+├── package.json                      # +@codex/events workspace dependency
+├── src/
+│   ├── events.ts                     # NEW: JOURNAL:CAPTURE registration and payload type
+│   ├── capture.ts                    # NEW: buildCaptureFromRoll, captureToEntryInput
+│   └── index.ts                      # export the two new modules
+└── tests/capture.test.ts             # NEW
+apps/web/src/lib/
+├── stores/
+│   ├── dice-history.svelte.ts        # +injected bus, emit once per recorded roll
+│   ├── session-journal.svelte.ts     # +activeSectionId, setActiveSection()
+│   └── session-journal-capture.ts    # NEW: listener class
+├── components/quicknote/
+│   ├── SessionJournalView.svelte     # uses store.activeSectionId; renders rows via JournalEntryRow
+│   └── JournalEntryRow.svelte        # NEW: one entry, manual or automatic
+├── listeners/session-journal-events.ts # NEW: initSessionJournalCapture(), like oracle-events.ts
+├── app/init/app-init.ts              # calls it beside initOracleEventListeners() and stops it on cleanup
+├── app/event-registrations.ts        # import session-journal-engine so the event type is registered
+├── config/help-content.ts            # session-journal entry: mention automatic capture
+└── content/help/quicknote.md         # short note on what is captured
+```
+
+Not touched: the roll tools' components (`DiceVault`, `TableRoller`, `DeckView`, `dice-executor`, `oracle-adapter`, stat sheet actions), `idb.ts`, cloud-backup files.
+
+### Constitution Check (slice 3 delta)
+
+- **I. Library-First** — PASS. Event contract and all formatting/validation are in `packages/session-journal-engine`; the app has thin glue.
+- **II. TDD** — PASS (planned). Tests precede implementation in tasks.md Phase 10, each with success and negative paths.
+- **III. Simplicity & YAGNI** — PASS with one flagged addition: a shared event type. That is what #3408 asks for and what SC-011 needs. No settings, no per-source filters, no queueing of events for a later journal.
+- **V. Privacy & Client-Side Processing** — PASS. Captured data is local, in the same record as typed notes. Cloud backup is unchanged, and its consent copy already names session journals; the consent surface need not change because the entry content is the same kind of session data. Guest sessions capture nothing.
+- **VII. User Documentation** — PASS (planned). Help entry and `quicknote.md` updated (T071).
+- **VIII. Dependency Injection** — PASS. `DiceHistoryStore` gains an injected bus; `SessionJournalCapture` takes store, bus and guard in its constructor.
+- **IX. Natural Language** — PASS. Labels are "Dice roll", "Card draw", "Table result"; summaries read as sentences.
+- **X. Quality & Coverage** — PASS (planned). The new engine module is covered to the 70% goal (T075).
+- **XI. Agent Operational Protocol** — PASS. Assumptions are in spec.md; the roll tools are deliberately untouched.
+- **XIV. Bounded Responsibility** — see below.
+- IV, XII and the Discovery Intent check remain N/A.
+
+### Bounded Responsibility Check (slice 3 delta)
+
+- [x] Files this slice touches that exceed 500 lines are listed, excluding tests.
+- [x] For each, the single responsibility it still holds is named.
+- [x] New behaviour that does not belong to a listed file has an extraction target.
+- [x] Planned splits carry or gain their own tests.
+
+`apps/web/src/lib/app/init/app-init.ts` (938 lines) is touched. Responsibility: "construct and connect the app's stores and services at startup." Adding the listener's construction and `start()` is that responsibility; the listener's behaviour lives in its own file, and the change is a few lines. No split planned in this slice; it remains a decomposition candidate for a change that has app-init as its subject. `SessionJournalView.svelte` (371) would grow past a comfortable size with entry styling, so the rendering is extracted to `JournalEntryRow.svelte` now. `dice-history.svelte.ts` (140) and `session-journal.svelte.ts` (253) stay small.
+
+### Risks
+
+- **Double capture.** Capture events do not set `metadata.sync`, so they are never relayed to other tabs (checked in `CrossTabBroadcaster`), and the emitter test asserts `sync` is unset (T059). The listener still ignores any event marked `metadata.remote` as a safeguard, tested in T060.
+- **A roll path that does not use `addResult`** is silently uncaptured. Mitigated by verifying each producer in the live check (T076) and by the assumption that unlisted paths are out of scope.
+- **Bursts of events** contend on one IndexedDB record. Mitigated by slice 1's read-merge-write and serialised transactions, with a burst test (T060).
+- **`bus.reset()` on vault switch** would drop an unnamed listener. Mitigated by the fixed subscription name, with a test that the capture survives a `reset()`.
+- **Payload size.** Table results can be long. Mitigated by the summary cap and by leaving the resolution chain out of `sourceRef` (T058).

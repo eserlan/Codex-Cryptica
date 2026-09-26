@@ -532,6 +532,9 @@
     "packages/session-journal-engine": {
       "name": "session-journal-engine",
       "version": "0.0.0",
+      "dependencies": {
+        "@codex/events": "workspace:*",
+      },
       "devDependencies": {
         "@vitest/coverage-v8": "^5.0.0",
         "typescript": "^6.0.3",

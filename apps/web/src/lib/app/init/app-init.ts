@@ -20,6 +20,7 @@ function timeCloudBackupSave(timing: CloudBackupTiming): void {
 }
 import { requestPersistentStorage } from "$lib/utils/persistent-storage";
 import { initOracleEventListeners } from "../../listeners/oracle-events";
+import { initSessionJournalCapture } from "../../listeners/session-journal-events";
 import { notificationStore } from "$lib/stores/ui/notification.svelte";
 import { configureAIEngine } from "@codex/ai-engine";
 import { searchService } from "@codex/search-orchestrator";
@@ -93,6 +94,8 @@ export function initializeGlobalListeners(_calendarStore?: any) {
 
   // Initialize Oracle action listeners
   const unsubOracle: () => void = initOracleEventListeners();
+  // Rolls, draws and table results go into the active Session Journal.
+  const unsubJournalCapture: () => void = initSessionJournalCapture();
 
   const handleGlobalError = (event: ErrorEvent) => {
     if (
@@ -383,6 +386,7 @@ export function initializeGlobalListeners(_calendarStore?: any) {
 
   return () => {
     unsubOracle();
+    unsubJournalCapture();
     unsubFlushSaves();
     unsubDurableChanges();
     unsubSyncedChanges();

@@ -97,3 +97,115 @@ Behaviour changes to existing methods:
 - `open()` and `toggle()` without a note keep the last `activeTab`, exactly as the previous local state did (FR-023). `close()` and a vault switch do not reset `activeTab`.
 
 Global control wiring (in `nav-items.ts`, not a store method): the `session-journal` item's action calls `quickNoteStore.openJournal()`, and additionally `sessionJournalStore.open()` only when `controlState === "resume"` (FR-021). It never calls `sessionJournalStore.start()`.
+
+## Capture event and store additions (slice 3, #3408)
+
+### The shared event
+
+Defined in `packages/session-journal-engine/src/events.ts`, registered on `@codex/events`:
+
+```ts
+export const JOURNAL_EVENTS = { CAPTURE: "JOURNAL:CAPTURE" } as const;
+
+declare module "@codex/events" {
+  interface AppEventRegistry {
+    "JOURNAL:CAPTURE": AppEventDefinition<
+      "journal",
+      {
+        /** Open string: "dice-roll" | "card-draw" | "table-result" today; any
+         *  future source may add its own without a journal change (FR-014). */
+        entryType: string;
+        /** One-line, plain-language summary. Capped by the engine. */
+        content: string;
+        /** Small, plain, JSON-safe reference to the source. No resolution
+         *  chain, no reactive proxies. Bounded by the engine. */
+        sourceRef?: Record<string, unknown>;
+      }
+    >;
+  }
+}
+```
+
+Publishing is `bus.emit({ type: "JOURNAL:CAPTURE", domain: "journal", payload, metadata: { timestamp } })`. A publisher never imports the journal, and MUST NOT set `metadata.sync`: `CrossTabBroadcaster` relays only `sync` events, and a capture belongs to the tab that made the roll (FR-031).
+
+### Engine functions (`capture.ts`, pure)
+
+```ts
+/** The fields the engine reads from a recorded result. Structural, so the
+ *  engine depends on no app or dice-engine type. */
+interface CapturableRoll {
+  total: number;
+  parts: unknown[];
+  formula?: string;
+  label?: string;
+  context: "chat" | "modal" | "table";
+  source?: {
+    sourceId: string;
+    sourceName: string;
+    kind: "table" | "deck";
+    finalText: string;
+    drawnCards?: Array<{ cardId: string; title: string; reversed: boolean }>;
+  };
+}
+
+/** Limits enforced by captureToEntryInput (FR-027): summary 500 characters
+ *  (ellipsis when cut); result text in sourceRef 1,000 characters; at most 30
+ *  drawn cards; sourceRef at most 4 KB serialised, largest parts dropped
+ *  first. */
+
+/** Recorded dice / table / deck result -> payload, or undefined when there is
+ *  nothing worth recording (blank summary). */
+function buildCaptureFromRoll(
+  roll: CapturableRoll,
+): JournalCapturePayload | undefined;
+
+/** Validate and bound a payload into a JournalEntryInput. Returns
+ *  { ok: false, error } for a blank type or summary; caps the summary;
+ *  reduces sourceRef to plain JSON-safe data. Never throws. */
+function captureToEntryInput(
+  payload: JournalCapturePayload,
+  sectionId?: string,
+): { ok: true; input: JournalEntryInput } | { ok: false; error: string };
+```
+
+### `SessionJournalStore` additions
+
+```ts
+class SessionJournalStore {
+  /** FR-032. The section new entries (typed or captured) go into. Lives here
+   *  so it is known while the panel is closed. Undefined = no section. */
+  readonly activeSectionId: string | undefined;
+
+  /** Ignores an id that is not a section of the current journal. */
+  setActiveSection(id: string | undefined): void;
+}
+```
+
+- `createSection` sets `activeSectionId` to the new section.
+- `activeSectionId` is in memory only: it is `undefined` after a reload (FR-032).
+- `end()` and a vault change clear it. A stored id whose section no longer exists reads as `undefined`.
+- Slice 1's methods and their signatures are unchanged.
+
+### `SessionJournalCapture` (`apps/web/src/lib/stores/session-journal-capture.ts`)
+
+```ts
+class SessionJournalCapture {
+  constructor(deps: {
+    store: Pick<
+      SessionJournalStore,
+      "current" | "activeSectionId" | "appendEntry"
+    >;
+    bus: AppEventBus;
+    isCaptureAllowed: () => boolean; // false in guest mode (FR-033)
+    log?: (message: string, error: unknown) => void;
+  });
+  start(): void; // subscribes as the named listener "session-journal-capture"
+  stop(): void;
+}
+```
+
+Handler rules, in order: ignore when `!isCaptureAllowed()`; ignore when `event.metadata.remote`; ignore unless `store.current?.status === "active"`; validate with `captureToEntryInput`; `await store.appendEntry(input)`; catch and log every failure, surface nothing.
+
+### `DiceHistoryStore` change
+
+`new DiceHistoryStore(idGenerator?, bus?)` — `bus` defaults to the shared `appEventBus`. `addResult` emits exactly one `JOURNAL:CAPTURE` per recorded roll, after the in-memory push and before persistence, inside try/catch. History trimming and `init()` never emit.

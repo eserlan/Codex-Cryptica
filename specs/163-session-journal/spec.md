@@ -3,7 +3,7 @@
 **Feature Branch**: `163-session-journal`
 **Created**: 2026-09-25
 **Status**: Draft
-**Slices**: Slice 1 (#3406, PR #3422) = User Stories 1–4 / FR-001–FR-017. Slice 2 (#3407) = User Story 5 / FR-018–FR-023, built on the same branch. Slices 3 (#3408, automatic capture) and 4 (#3409, promote-to-entity) are still out of scope and will be added here later.
+**Slices**: Slice 1 (#3406, PR #3422) = User Stories 1–4 / FR-001–FR-017. Slice 2 (#3407) = User Story 5 / FR-018–FR-023, built on the same branch. Slice 3 (#3408, automatic capture) = User Story 6 / FR-024–FR-035, built on branch `163-session-journal-slice-3`. Slice 4 (#3409, promote-to-entity) is still out of scope and will be added here later.
 **Input**: User description: "Session Journal (slice 1 of #3402, tracked as issue #3406): a persistent play log for TTRPG sessions, built on top of the existing Quicknote/Scratchpad experience but serving a different purpose — an ongoing chronological record of what happens during play, rather than transient notes. Scope for this spec (data model, persistence, and lifecycle only — later slices cover the global UI indicator, automatic capture, and promote-to-entity, tracked separately as #3407, #3408, #3409): SessionJournal (id, vault/campaign context, title, startedAt, endedAt, status, sections[], entries[]); JournalEntry (id, timestamp, type, content, optional source metadata/reference, optional linked entity/tool/result); lifecycle (start, resume, end — ended journals preserved and browsable); manual entries only; optional sections/chapters; minimal UI surface reachable only from Quicknote/Scratchpad with a three-state control (Start/Open/Resume); persistence via IndexedDB following the Oracle-store decomposition pattern; Quicknote/Scratchpad stays transient, Session Journal is the chronological record — the two must not be conflated in the UI."
 
 ## User Scenarios & Testing _(mandatory)_
@@ -93,6 +93,28 @@ A GM or solo player is mid-session, working in the graph, the map, the timeline 
 7. **Given** the user is in a guest/player-facing session where Quicknote/Scratchpad is unavailable, **When** they look at the tool chrome, **Then** no Session Journal control is shown.
 8. **Given** the user switches to a different vault, **When** the control re-renders, **Then** it reflects that vault's journal state, never the previous vault's (FR-012).
 
+---
+
+### User Story 6 - Dice rolls, card draws and table results land in the journal by themselves (Priority: P1) — Slice 3, #3408
+
+A GM or solo player is mid-session with a journal running. They roll dice, draw cards from a deck and roll on random tables as they play. Without doing anything extra, each result is added to the journal as its own timestamped entry, so the journal reads as a true record of what happened, and they never have to copy a result across by hand.
+
+**Why this priority**: A journal made only of typed notes is a diary. Automatic capture is what makes it a record of play, and it is the main reason the feature exists in the parent request (#3402). It depends on slices 1 and 2, which are done.
+
+**Independent Test**: Can be fully tested by starting a journal, rolling in the dice roller, drawing from a deck, rolling on a table and typing `/roll` in the Oracle chat, then opening the journal and confirming each result appears once, in order, marked as automatic, with the panel never opened in between.
+
+**Acceptance Scenarios**:
+
+1. **Given** an active journal, **When** the user rolls dice (for example 2d6+3 in the dice roller), **Then** a "Dice roll" entry appears with the formula and total, timestamped and in order among any typed notes.
+2. **Given** an active journal, **When** the user draws cards from a deck, **Then** a "Card draw" entry appears naming each card drawn, and marking any that came up reversed.
+3. **Given** an active journal, **When** the user rolls on a random table, **Then** a "Table result" entry appears naming the table and giving the result text. Re-rolling one part of a result adds its own entry.
+4. **Given** an active journal, **When** a roll, draw or table result is made from the Oracle chat (`/roll`, table or deck commands) or from a stat sheet field, **Then** it is captured the same way as one made from the dice roller.
+5. **Given** an active journal and the Quicknote/Scratchpad panel closed, **When** the user makes several rolls in quick succession, **Then** every one appears in the journal in the order it was made, with none lost or overwritten.
+6. **Given** no journal is active (none started, or the last one ended), **When** the user rolls, draws or rolls on a table, **Then** the tool works exactly as it does today, and no entry is created, no journal is started, and no message or error is shown.
+7. **Given** the journal has a current section, **When** a result is captured, **Then** it goes into that same section, as a typed note would.
+8. **Given** a future feature publishes a journal capture event through the shared interface with an entry type the journal has never seen, **When** the event arrives, **Then** it is added and shown with a generic automatic-entry style, with no change to the journal itself.
+9. **Given** an automatic entry and a typed note side by side, **When** the user reads the journal, **Then** they can tell at a glance which is which without reading the text.
+
 ### Edge Cases
 
 - What happens when the user tries to add a note but no journal has ever been started for the vault? The control must offer "Start Session Journal" rather than exposing a note field with nothing to attach it to.
@@ -105,6 +127,12 @@ A GM or solo player is mid-session, working in the graph, the map, the timeline 
 - What happens if the open-journal action is invoked while the panel is already open (for example by keyboard, since the panel's backdrop blocks the pointer from reaching the control)? The panel stays open and switches to the Journal tab; it never toggles closed and never starts a second journal (FR-013, FR-020).
 - What happens in a popup window, VTT fullscreen or Zen pop-out, where the tool chrome is not shown? No Session Journal control is shown there, exactly as for the other tool items; nothing else changes.
 - What happens when a journal is started or ended in another browser tab? This tab's control is not guaranteed to update live; it is correct again on the next load or vault switch (see Assumptions).
+- What happens when a roll happens in a second browser tab of the same vault? Only the tab where the roll was made captures it. Journal capture events are local to the tab that publishes them and are never relayed to other tabs, so nothing is captured twice. As a safeguard, a capture event that does arrive marked as relayed from another tab is ignored.
+- What happens when a table result is very long? The entry summary is cut at 500 characters with an ellipsis and the reference is kept within its size limit (FR-027); the journal never stores an unbounded blob per roll.
+- What happens when the journal is ended between the roll and the moment it would be saved? The entry is dropped quietly (an ended journal takes no entries, FR-007), and the roll itself is unaffected.
+- What happens when saving a captured entry fails (for example storage is full)? The failure is logged for debugging only; the roll, draw or table result the user asked for still completes and shows as normal, and no error is shown to the user.
+- What happens to rolls made in the solo Adventure mode's own roll prompt, or in the map (VTT) view? They are not part of this slice unless they already go through the shared roll history (see Assumptions).
+- What happens in a guest or player-facing session? Nothing is captured; the journal is the GM's private record and has no control there.
 
 ## Requirements _(mandatory)_
 
@@ -133,12 +161,24 @@ A GM or solo player is mid-session, working in the graph, the map, the timeline 
 - **FR-021**: Selecting the global control when the state is "Resume" MUST mark the journal as opened for this browser session (the FR-010 Resume → Open transition). Selecting it when the state is "Start" MUST NOT create a journal; starting stays an explicit action inside the Journal view.
 - **FR-022**: The journal's saved content, its control state, and the panel's selected tab MUST survive in-app navigation between tools and views. The control state MUST follow the active vault (FR-012).
 - **FR-023**: This slice MUST NOT change Quicknote/Scratchpad's Notes tab behaviour (including which note is selected or created when the panel opens from the Notes tool or Ctrl/Cmd+I), its existing open/close shortcut and toolbar behaviour, or the journal's data model, persistence or cloud backup behaviour (FR-001–FR-017).
+- **FR-024**: System MUST provide one shared way for any feature to publish a "journal capture" event, carrying an entry type, a short human-readable summary and an optional structured reference to its source, over the app's existing shared event bus. A feature that publishes through it MUST NOT need to import, know about, or write into the journal.
+- **FR-025**: System MUST add each such event to the active journal as an entry, without opening Quicknote/Scratchpad, changing the current view, or asking the user anything.
+- **FR-026**: System MUST publish a journal capture event for every dice roll, card draw and random table or oracle result the app records, whichever tool it came from: the dice roller, the Oracle chat commands, table rolls and per-part re-rolls, deck draws, and stat sheet field rolls. Exactly one journal capture event MUST be published per recorded result, so nothing is captured twice and nothing that is recorded is missed.
+- **FR-027**: Each captured entry MUST carry both a one-line, plain-language summary (for example "Rolled 2d6+3: 11", "Encounters: 2 goblins arguing", "Drew The Tower (reversed)") and a small structured reference to what produced it (formula, total and parts for dice; source id, name and kind for a table or deck; card titles and reversed flags for a draw), so that later slices do not have to parse prose. The reference MUST be plain data, MUST NOT include a table's full resolution chain, and MUST be bounded in size. Limits: the summary is capped at 500 characters, ending in an ellipsis when cut; a table or deck result text kept in the reference is capped at 1,000 characters; a draw records at most 30 cards; and the whole reference must serialise to no more than 4 KB, with the largest parts dropped first when it would not.
+- **FR-028**: Automatic entries MUST use distinct entry types (`dice-roll`, `card-draw`, `table-result`) and MUST look different from typed notes in the journal, with a plain-language label and an icon per type, without relying on colour alone. An entry of a type the journal does not recognise MUST still be shown, in a generic automatic-entry style.
+- **FR-029**: When no journal is active for the current vault (none started, the latest ended, or the journal not yet loaded), a journal capture event MUST be ignored: no journal is created, no entry is stored, and no error or message is shown to the user.
+- **FR-030**: A failure while capturing (validation, storage, or otherwise) MUST NOT affect the feature that published the event. The roll, draw or table result still completes and is shown as normal, and the failure is logged only.
+- **FR-031**: Each result MUST be captured once. Journal capture events MUST be local to the tab that publishes them: a publisher MUST NOT mark them for relay to other tabs (`metadata.sync`), and as a safeguard the listener MUST ignore any capture event marked as relayed (`metadata.remote`). Several events in quick succession MUST all be stored, in the order they were made, with none overwriting another (FR-011 applies to captured entries).
+- **FR-032**: Captured entries MUST go into the same current section as a typed note would. The current section MUST therefore be held by the journal's store, not by the journal view, so it is known while the panel is closed, which is when most captures happen. A section that no longer exists MUST fall back to no section. The current section is not saved: after an app reload it starts as no section, exactly as for typed notes today, until the user picks or creates one.
+- **FR-033**: System MUST NOT capture anything in a guest or player-facing session.
+- **FR-034**: Captured entries MUST behave like any other entry: they persist across reloads (FR-011), keep chronological order (FR-003), appear read-only in ended journals (FR-007, FR-008), and are included in cloud backup and restore (FR-016) with no extra work.
+- **FR-035**: This slice MUST NOT change what the dice roller, tables, decks, Oracle commands or stat sheets do or show: no new prompts, buttons, toggles or settings on those tools, and their roll history and chat output stay exactly as they are (FR-023 applies).
 
 ### Key Entities
 
 - **SessionJournal**: A single vault's ongoing or completed play-session record. Holds an identifier, the vault it belongs to, a title, when it was started and (if applicable) ended, its status (active or ended), an ordered list of optional sections, and an ordered list of entries.
 - **JournalSection**: An optional, user-named grouping within a journal (e.g. a chapter or scene) that entries can be associated with. A journal may have zero, one, or many sections.
-- **JournalEntry**: One timestamped item within a journal — in this slice, always a manually-written note. Carries an identifier, a timestamp, a type (allowing future automatically-captured types to coexist without changing the shape), its content, and room for an optional reference to where it came from (used only by later slices).
+- **JournalEntry**: One timestamped item within a journal. A manually-written note (slice 1) or an automatically captured roll, draw or table result (slice 3). Carries an identifier, a timestamp, a type (allowing future automatically-captured types to coexist without changing the shape), its content, and room for an optional reference to where it came from (used only by later slices).
 
 ## Success Criteria _(mandatory)_
 
@@ -152,6 +192,10 @@ A GM or solo player is mid-session, working in the graph, the map, the timeline 
 - **SC-006**: For a vault with cloud backup enabled, 100% of a journal's entries and sections are present and in the same order after a restore into a new vault, matching SC-002's local-reload guarantee.
 - **SC-007**: From any in-app view where the control is shown, a user with an active journal can reach it, live and editable, in one action (selecting the control), and never needs to open Quicknote/Scratchpad's Notes tab first. A user with no journal reaches the Start screen in one action and has a started journal in two, within SC-001's limit.
 - **SC-008**: In testing, the global control shows the correct state 100% of the time across start, reload, end, and vault-switch sequences, and never differs from the Journal tab's own state.
+- **SC-009**: While a journal is active, 100% of dice rolls, card draws and table results made through any of the paths in FR-026 appear in the journal exactly once, in the order they were made, in testing.
+- **SC-010**: With no active journal, rolling, drawing and table rolls create 0 journal entries, start 0 journals, and show 0 new messages or errors, and behave identically to before this slice.
+- **SC-011**: A new kind of capture source can be added by publishing one event through the shared interface, with 0 changes to the journal's store or view code, shown by a test that publishes an entry type the journal has never seen.
+- **SC-012**: A capture failure never changes the outcome of the roll, draw or table result that caused it (0 cases in testing where a failed capture changes what the user sees from the tool).
 
 ## Assumptions
 
@@ -169,3 +213,14 @@ A GM or solo player is mid-session, working in the graph, the map, the timeline 
   - Unsent draft text in the note field is not guaranteed to survive closing the panel. Saved entries are always persisted (FR-011); preserving drafts across close is a follow-up if real use shows it matters.
   - This slice adds no new keyboard shortcut. Ctrl/Cmd+I still toggles the panel as before.
   - This tab's control does not live-update when another browser tab starts or ends a journal; it is correct on reload or vault switch. Cross-tab live sync of the control is not required.
+- **Slice 3 assumptions (#3408)**:
+  - The app already funnels dice rolls, table rolls, deck draws, Oracle chat rolls and stat sheet field rolls through one place, the shared roll history (`DiceHistoryStore.addResult`), so capture is triggered once from there, not separately in each tool. Anything that records a result there is captured; anything that does not is out of scope until it does.
+  - Rolls in the solo Adventure mode's own roll prompt, and in the map (VTT) view, do not go through the shared roll history today and are therefore not captured in this slice. Capturing them is a follow-up (they would publish through the same interface).
+  - Capture is always on while a journal is active. There is no per-source switch or setting in this slice; if real use shows too much noise, a filter is a follow-up.
+  - Each re-rolled part of a table result is a real result the user got, so it is captured as its own entry.
+  - Captured entries are read-only like all entries (no editing or deleting individual entries exists in this journal).
+  - The entry summary text is written in English like the rest of the interface; it is built from the result and does not depend on the tool's own display text.
+  - An event published for one vault could in theory arrive just after the user switches vaults. That window is very small, and such an event is added to whichever journal is active for the vault now open. Stamping events with a vault id is a follow-up if it ever matters.
+  - Captured data stays in the browser, in the same journal record as typed notes. Nothing new leaves the device; cloud backup behaves as in slice 1 (FR-016).
+  - Live check finding (slice 2, T054): the Map (VTT) view has its own layout with no shared tool chrome, so the Session Journal control is not reachable from there. This follows FR-018 (the control lives in the shared chrome) but is a real gap for play at the table; a way to open the journal from the VTT is a candidate follow-up. Rolls made in that view are not captured either way (see the slice 3 assumptions).
+- Live check (slice 3, T076): the dice roller, a table roll and the Oracle `/roll` command were captured with the panel closed; a typed note kept its place among them; ending the journal stopped capture with no error or message; and everything persisted across a reload. The deck-draw path could not be tried live because the test vault has no deck, so it is covered by unit and end-to-end tests only. The roller ignores rapid repeat clicks while it animates, so a live burst was not possible; burst ordering is covered by tests.
