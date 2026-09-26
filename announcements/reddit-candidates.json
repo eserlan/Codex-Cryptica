@@ -1,5 +1,5 @@
 {
-  "updated_at": 1790441516,
+  "updated_at": 1790464376,
   "candidates": [
     {
       "id": "reddit-36168046733-tables-now-parse-4d6kh3-2-and-other-keep",
@@ -30,6 +30,16 @@
       "source_id": "36254739930",
       "status": "approved",
       "created_at": 1790441516
+    },
+    {
+      "id": "reddit-36277060972-how-much-plot-should-you-prepare-without",
+      "title": "How much plot should you prepare without scripting your players?",
+      "body": "I kept writing scene chains for the next few sessions and then watching the party walk around them. The notes were not bad, they just assumed what the players would do next.\n\nI built a framework that treats prep as world momentum instead of a scene outline.\n\nIt lives here: https://codexcryptica.com/answers/how-much-of-the-plot-should-a-dm-prepare\n\n- fixed events that happen on a date whether the party is there or not\n- conditional triggers written as if X then Y, with no scene attached\n- a worked five-entry timeline, from a coronation to a harbour closure to a cult ritual, none of which tells the party what to do\n- a short checklist that flags sentences starting with \"then the party...\" and pushes you back to what the world does\n\nTradeoff I am still testing: the timeline asks for more thinking up front than a scene list, but it survives contact with an off-plan session without needing to be rewritten. Not sure yet if the checklist wants a one-page printable version alongside the full guide.\n\nWhat is one fixed event in your current campaign that will happen regardless of where the players go next?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/announcements/release-36277060972-0.png)",
+      "url": "https://codexcryptica.com/answers/how-much-of-the-plot-should-a-dm-prepare",
+      "image_url": "https://assets.codexcryptica.com/announcements/release-36277060972-0.png",
+      "source_id": "36277060972",
+      "status": "approved",
+      "created_at": 1790464376
     }
   ]
 }
