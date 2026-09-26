@@ -244,3 +244,9 @@
 
 **Learning:** Hardcoded `Date.now()` inside UI component logic (like debounce/throttle bounds in `GraphViewController`) makes timing interactions difficult to test.
 **Action:** Injected an optional `clock: Clock` via `GraphViewDependencies` (defaulting to `@codex/runtime` `systemClock`) to decouple the controller from global time.
+
+## 2026-09-26 - visual-card-parser DI
+
+**Learning:** Replaced hard-coded `Math.random()` for ID generation in `parseCardsFromSource` and `createVisualCard` with injected `idGenerator` property defaulting to `systemIdGenerator.uuid`. This reduces tight coupling to the ambient `Math` API and ensures tests can have predictable and deterministic ID structures by passing a mock ID generator.
+
+**Action:** Refactored `visual-card-parser.ts` and `visual-card-operations.ts` to use `idGenerator` seam passed down from `use-visual-layout.svelte.ts`.
