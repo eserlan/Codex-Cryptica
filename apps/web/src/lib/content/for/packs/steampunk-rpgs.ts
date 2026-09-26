@@ -14,12 +14,12 @@ export const steampunkRpgs: LandingPageConfig = {
       "A brass airship drifting above a smoke-stained industrial city at dusk",
   },
   hero: {
-    eyebrow: "Brass & Steam Worldbuilding",
-    title: "Codex Cryptica for Steampunk & Victorian Industrial Campaigns",
+    eyebrow: "Steampunk, Gaslamp & Victorian Industry",
+    title: "Codex Cryptica for Steampunk RPGs",
     tagline:
-      "Keep your inventions, guilds, noble houses, and airship fleets connected across every foggy street and smoking foundry.",
+      "Connect the inventions that change what is possible with the people, places, and power struggles they leave behind.",
     problemStatement:
-      "A steampunk campaign runs on patents, debts, and secrets. When the party's prototype is stolen by a rival guild or a duke's heir turns out to be funding the strike, keep inventions, factories, families, and conspiracies together in Codex Cryptica, not scattered across inventor's notes and session logs. The same workflow suits airship crews, gaslamp investigators, guild intrigue, and industrial-revolution fantasy.",
+      "Steampunk campaigns turn on what invention makes possible—and who gains or loses power when it succeeds. A stolen prototype, strike, noble investment, or act of sabotage can reshape an industrial city, scientific expedition, or airship voyage. In Codex Cryptica, connect inventions to their inventors, workers, patrons, rivals, routes, and consequences, from guild intrigue to gaslamp investigation and weird science.",
   },
   useCases: [
     {
@@ -29,28 +29,28 @@ export const steampunkRpgs: LandingPageConfig = {
       icon: "icon-[lucide--cog]",
     },
     {
-      title: "Industrial Guilds & Foundries",
+      title: "Industry, Guilds & Labour",
       description:
-        "Connect factories, engineers' guilds, and trade unions with the contracts, strikes, and sabotage that set them against one another.",
+        "Connect foundries, engineers' guilds, workers, and trade unions to the contracts, strikes, and sabotage shaping an industrial city.",
       icon: "icon-[lucide--factory]",
     },
     {
-      title: "Aristocracies & Airship Armadas",
+      title: "Patrons, Houses & Influence",
       description:
-        "Keep noble houses, aerial fleets, and captains visible, with their debts, titles, and rivalries in view.",
+        "Track the nobles and investors backing an invention, and the debts, status, and influence they stand to gain or lose.",
       icon: "icon-[lucide--crown]",
     },
     {
-      title: "Brass-and-Steam Conspiracies",
+      title: "Airships, Routes & Conspiracies",
       description:
-        "Follow a forged blueprint, a coded ledger, or a suspicious boiler explosion to the secret society behind it. One reveal can change who funds the city and who hunts the crew.",
+        "Keep airship crews, expedition routes, and rival fleets in view as forged blueprints, sabotage, and hidden societies change the journey.",
       icon: "icon-[lucide--eye]",
     },
   ],
   exampleGraph: {
     title: "Sample Steampunk Campaign Web",
     description:
-      "See how one invention binds a foundry, a noble patron, a rival guild, and the conspiracy that wants it.",
+      "If the Aetherwheel fails, the fleet loses its edge, Lady Ophelia loses her investment, the Cogwrights blame the foundry, the strike gains leverage, and a conspiracy gets its opening.",
     steps: [
       {
         label: "The Aetherwheel Engine",
@@ -84,19 +84,12 @@ export const steampunkRpgs: LandingPageConfig = {
       {
         label: "The Great Boiler Strike",
         sublabel: "Labour Crisis",
-        relation: "Is threatened by",
+        relation: "Is disrupted by",
         category: "event",
       },
     ],
   },
   recommendedTools: [
-    {
-      title: "Steampunk Hub",
-      description:
-        "Open steampunk-ready generators for the inventors, guilds, and airship crews around your campaign.",
-      href: "/generators/steampunk",
-      badge: "Hub",
-    },
     {
       title: "Artifact Generator",
       description:
@@ -131,6 +124,13 @@ export const steampunkRpgs: LandingPageConfig = {
         "Create the hidden hands behind the patents, strikes, and sabotage.",
       href: "/generators/secret-society",
       badge: "Generator",
+    },
+    {
+      title: "Steampunk Hub",
+      description:
+        "Open steampunk-ready generators for the inventors, guilds, and airship crews around your campaign.",
+      href: "/generators/steampunk",
+      badge: "Hub",
     },
   ],
   cta: {
