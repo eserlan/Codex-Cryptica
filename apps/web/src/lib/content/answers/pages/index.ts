@@ -24,6 +24,7 @@ import { howDoIRunPoliticalIntrigueAndFactionPlay } from "./how-do-i-run-politic
 import { howDoIRunSpiesAndInfiltratorsInAnRpg } from "./how-do-i-run-spies-and-infiltrators-in-an-rpg";
 import { howDoIStartGmingForTheFirstTime } from "./how-do-i-start-gming-for-the-first-time";
 import { howDoITurnAnRpgIdeaIntoAnAdventure } from "./how-do-i-turn-an-rpg-idea-into-an-adventure";
+import { howDoITurnEconomicPressuresIntoRpgAdventureHooks } from "./how-do-i-turn-economic-pressures-into-rpg-adventure-hooks";
 import { howDoIWriteAGoodCallOfCthulhuOneShot } from "./how-do-i-write-a-good-call-of-cthulhu-one-shot";
 import { howDoScarcityAndShortagesAffectPricesAndConflictInAnRpgWorld } from "./how-do-scarcity-and-shortages-affect-prices-and-conflict-in-an-rpg-world";
 import { howDoTradeRoutesShapeCitiesAndKingdomsInAnRpgWorld } from "./how-do-trade-routes-shape-cities-and-kingdoms-in-an-rpg-world";
@@ -137,6 +138,7 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     howDoIRunSpiesAndInfiltratorsInAnRpg,
     howDoIStartGmingForTheFirstTime,
     howDoITurnAnRpgIdeaIntoAnAdventure,
+    howDoITurnEconomicPressuresIntoRpgAdventureHooks,
     howDoIWriteAGoodCallOfCthulhuOneShot,
     howDoScarcityAndShortagesAffectPricesAndConflictInAnRpgWorld,
     howDoTradeRoutesShapeCitiesAndKingdomsInAnRpgWorld,

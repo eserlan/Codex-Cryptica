@@ -145,6 +145,7 @@ export const howDoScarcityAndShortagesAffectPricesAndConflictInAnRpgWorld: Answe
       "how-do-trade-routes-shape-cities-and-kingdoms-in-an-rpg-world",
       "how-do-you-create-a-fantasy-faction",
       "how-to-create-rumours-for-a-fantasy-town",
+      "how-do-i-turn-economic-pressures-into-rpg-adventure-hooks",
     ],
     discovery: {
       id: "answer-scarcity-shortages-prices-conflict",
