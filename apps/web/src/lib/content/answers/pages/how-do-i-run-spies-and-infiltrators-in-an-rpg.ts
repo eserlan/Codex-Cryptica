@@ -2,7 +2,7 @@ import type { AnswerConfigInput } from "../schema";
 
 export const howDoIRunSpiesAndInfiltratorsInAnRpg: AnswerConfigInput = {
   slug: "how-do-i-run-spies-and-infiltrators-in-an-rpg",
-  category: "session-prep",
+  category: "running-the-game",
   publishedAt: "2026-09-24",
   question: "How do I run spies and infiltrators in an RPG?",
   kind: "framework",

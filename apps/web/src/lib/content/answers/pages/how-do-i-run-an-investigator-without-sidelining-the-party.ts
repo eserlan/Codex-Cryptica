@@ -3,7 +3,7 @@ import type { AnswerConfigInput } from "../schema";
 export const howDoIRunAnInvestigatorWithoutSideliningTheParty: AnswerConfigInput =
   {
     slug: "how-do-i-run-an-investigator-without-sidelining-the-party",
-    category: "session-prep",
+    category: "running-the-game",
     publishedAt: "2026-09-24",
     question:
       "How do I run an investigator or detective without making other PCs irrelevant?",

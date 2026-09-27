@@ -2,7 +2,7 @@ import type { AnswerConfigInput } from "../schema";
 
 export const howMuchRuleOfCoolShouldADmAllow: AnswerConfigInput = {
   slug: "how-much-rule-of-cool-should-a-dm-allow",
-  category: "session-prep",
+  category: "running-the-game",
   question: "How much Rule of Cool should a DM allow?",
   kind: "framework",
   publishedAt: "2026-09-10",
@@ -169,6 +169,7 @@ export const howMuchRuleOfCoolShouldADmAllow: AnswerConfigInput = {
     "how-do-you-handle-players-going-off-script-as-a-gm",
     "how-do-i-run-a-successful-session-0",
     "how-do-i-balance-rpg-combat-encounters-without-a-tpk",
+    "what-do-you-do-with-murder-hobos-in-an-rpg-campaign",
   ],
   discovery: {
     id: "answer-how-much-rule-of-cool-should-a-dm-allow",

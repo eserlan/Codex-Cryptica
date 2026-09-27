@@ -2,7 +2,7 @@ import type { AnswerConfigInput } from "../schema";
 
 export const howDoYouRunAChaseInATabletopRpg: AnswerConfigInput = {
   slug: "how-do-you-run-a-chase-in-a-tabletop-rpg",
-  category: "session-prep",
+  category: "adventure-design",
   publishedAt: "2026-09-16",
   question: "How do you run a chase in a tabletop RPG?",
   kind: "how-to",

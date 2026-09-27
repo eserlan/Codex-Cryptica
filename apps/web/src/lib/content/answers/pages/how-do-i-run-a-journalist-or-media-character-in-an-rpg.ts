@@ -2,7 +2,7 @@ import type { AnswerConfigInput } from "../schema";
 
 export const howDoIRunAJournalistOrMediaCharacterInAnRpg: AnswerConfigInput = {
   slug: "how-do-i-run-a-journalist-or-media-character-in-an-rpg",
-  category: "session-prep",
+  category: "running-the-game",
   labels: ["modern", "cyberpunk"],
   publishedAt: "2026-09-23",
   question:

@@ -3,7 +3,7 @@ import type { AnswerConfigInput } from "../schema";
 export const howDoYouMakeABossFightMemorableInATabletopRpg: AnswerConfigInput =
   {
     slug: "how-do-you-make-a-boss-fight-memorable-in-a-tabletop-rpg",
-    category: "session-prep",
+    category: "adventure-design",
     publishedAt: "2026-09-13",
     question: "How do you make a boss fight memorable in a tabletop RPG?",
     kind: "framework",

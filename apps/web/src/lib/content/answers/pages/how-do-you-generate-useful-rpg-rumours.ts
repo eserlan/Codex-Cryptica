@@ -2,7 +2,7 @@ import type { AnswerConfigInput } from "../schema";
 
 export const howDoYouGenerateUsefulRpgRumours: AnswerConfigInput = {
   slug: "how-do-you-generate-useful-rpg-rumours",
-  category: "session-prep",
+  category: "running-the-game",
   publishedAt: "2026-09-09",
   question: "How do you generate useful RPG rumours?",
   kind: "framework",

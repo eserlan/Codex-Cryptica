@@ -26,10 +26,12 @@ export const AnswerKindSchema = z.enum([
 ]);
 export type AnswerKind = z.infer<typeof AnswerKindSchema>;
 
-/** The four high-level category buckets used for browsing and navigation. */
+/** The high-level category buckets used for browsing and navigation. */
 export const AnswerCategoryIdSchema = z.enum([
   "getting-started",
   "session-prep",
+  "adventure-design",
+  "running-the-game",
   "worldbuilding",
   "campaign-notes",
 ]);

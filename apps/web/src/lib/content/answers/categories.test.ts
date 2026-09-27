@@ -52,6 +52,21 @@ describe("answer categories", () => {
         "where-do-i-start-if-i-have-never-played-a-tabletop-rpg",
       );
       expect(cat?.id).toBe("getting-started");
+
+      const adventureCat = getAnswerCategory(
+        "how-do-you-run-a-heist-in-a-tabletop-rpg",
+      );
+      expect(adventureCat?.id).toBe("adventure-design");
+
+      const runningCat = getAnswerCategory(
+        "how-do-you-handle-players-going-off-script-as-a-gm",
+      );
+      expect(runningCat?.id).toBe("running-the-game");
+
+      const notesCat = getAnswerCategory(
+        "how-do-you-track-faction-turns-between-rpg-sessions",
+      );
+      expect(notesCat?.id).toBe("campaign-notes");
     });
 
     it("returns undefined for an unknown slug", () => {

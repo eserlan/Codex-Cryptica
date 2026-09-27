@@ -2,7 +2,7 @@ import type { AnswerConfigInput } from "../schema";
 
 export const howDoYouRunCharacterRolesInACyberpunkRpg: AnswerConfigInput = {
   slug: "how-do-you-run-character-roles-in-a-cyberpunk-rpg",
-  category: "session-prep",
+  category: "running-the-game",
   labels: ["cyberpunk"],
   publishedAt: "2026-09-23",
   question: "How do you run character roles in a cyberpunk RPG?",

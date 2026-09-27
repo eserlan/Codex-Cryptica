@@ -2,7 +2,7 @@ import type { AnswerConfigInput } from "../schema";
 
 export const howDoIGetMyRpgPartyToWorkTogether: AnswerConfigInput = {
   slug: "how-do-i-get-my-rpg-party-to-work-together",
-  category: "session-prep",
+  category: "running-the-game",
   publishedAt: "2026-09-22",
   question: "How do I get my RPG party to work together?",
   kind: "framework",
@@ -171,6 +171,7 @@ export const howDoIGetMyRpgPartyToWorkTogether: AnswerConfigInput = {
     "how-do-i-give-specialist-characters-spotlight",
     "how-do-you-run-character-roles-in-a-cyberpunk-rpg",
     "how-do-i-run-a-rogue-or-scout-without-splitting-the-party",
+    "what-do-you-do-with-murder-hobos-in-an-rpg-campaign",
   ],
   discovery: {
     id: "answer-party-cohesion",

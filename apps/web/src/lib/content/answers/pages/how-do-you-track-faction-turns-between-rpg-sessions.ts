@@ -2,7 +2,7 @@ import type { AnswerConfigInput } from "../schema";
 
 export const howDoYouTrackFactionTurnsBetweenRpgSessions: AnswerConfigInput = {
   slug: "how-do-you-track-faction-turns-between-rpg-sessions",
-  category: "session-prep",
+  category: "campaign-notes",
   publishedAt: "2026-09-07",
   question: "How do you track faction turns between RPG sessions?",
   kind: "framework",

@@ -2,7 +2,7 @@ import type { AnswerConfigInput } from "../schema";
 
 export const howDoYouMakeTravelInterestingInATabletopRpg: AnswerConfigInput = {
   slug: "how-do-you-make-travel-interesting-in-a-tabletop-rpg",
-  category: "session-prep",
+  category: "adventure-design",
   publishedAt: "2026-09-04",
   question: "How do you make travel interesting in a tabletop RPG?",
   kind: "framework",

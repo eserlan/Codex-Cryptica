@@ -2,7 +2,7 @@ import type { AnswerConfigInput } from "../schema";
 
 export const howDoITurnAnRpgIdeaIntoAnAdventure: AnswerConfigInput = {
   slug: "how-do-i-turn-an-rpg-idea-into-an-adventure",
-  category: "session-prep",
+  category: "adventure-design",
   publishedAt: "2026-09-20",
   question: "How do I turn an RPG idea into an adventure?",
   kind: "framework",
