@@ -1112,6 +1112,9 @@ describe("Landing Page Registry", () => {
       expect(copy).toMatch(/occult/i);
       expect(hub.category).toBe("location");
       expect(spokes.length).toBeGreaterThanOrEqual(5);
+      expect(
+        spokes.find(({ label }) => label === "The Hollow Choir")?.relation,
+      ).toBe("Lies above");
       for (const spoke of spokes) {
         expect(spoke.relation, `${spoke.label} has no relation`).toBeTruthy();
         expect(spoke.category, `${spoke.label} has no category`).toBeDefined();

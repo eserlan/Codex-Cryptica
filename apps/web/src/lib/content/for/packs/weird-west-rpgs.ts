@@ -84,7 +84,7 @@ export const weirdWestRpgs: LandingPageConfig = {
       {
         label: "The Hollow Choir",
         sublabel: "Something in the Deep Shaft",
-        relation: "Stirs beneath",
+        relation: "Lies above",
         category: "creature",
       },
     ],
