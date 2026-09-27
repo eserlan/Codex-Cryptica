@@ -1,5 +1,5 @@
 {
-  "updated_at": 1790532271,
+  "updated_at": 1790543275,
   "candidates": [
     {
       "id": "reddit-36168046733-tables-now-parse-4d6kh3-2-and-other-keep",
@@ -60,6 +60,16 @@
       "source_id": "36337144583",
       "status": "approved",
       "created_at": 1790532271
+    },
+    {
+      "id": "reddit-36350158307-i-wanted-trade-to-matter-without-trackin",
+      "title": "I wanted trade to matter without tracking every copper",
+      "body": "Every town I made sold the same grain and iron, and prices were whatever felt right in the moment. No reason for a caravan to exist, no reason for a city to be where it is.\n\nI wanted one starting point for believable trade without a spreadsheet, so I built the Economy & Trade hub that connects the pieces before you roll anything.\n\nStart here: https://codexcryptica.com/for/economy-trade\n\nIt pulls together five short guides, linked generators, and a worked trade-web example:\n\n- figure what a settlement actually produces, imports and exports from terrain and position\n- see how trade routes explain where cities and kingdoms grow, choke, or split\n- use scarcity and shortages to move prices and turn a missing good into conflict\n- turn that pressure into hooks with clear winners, losers and two ways in\n- follow a sample web from mine to road to market to see how a block in one place hits another\n\nI kept it table heavy so you can grab an answer fast, which might feel a bit procedural if you run economies very loose.\n\nWhat is the one good your starting town cannot make for itself, and who brings it in?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/announcements/release-36350158307-0.png)",
+      "url": "https://codexcryptica.com/for/economy-trade",
+      "image_url": "https://assets.codexcryptica.com/announcements/release-36350158307-0.png",
+      "source_id": "36350158307",
+      "status": "approved",
+      "created_at": 1790543275
     }
   ]
 }
