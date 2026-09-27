@@ -151,6 +151,12 @@ export const howDoIDecideWhatASettlementProducesImportsAndExports: AnswerConfigI
           "Keep settlements, resources, routes, and the factions taxing them connected.",
         href: "/for/fantasy-worldbuilding",
       },
+      {
+        title: "TTRPG Economy & Trade",
+        description:
+          "Build believable prices, trade, scarcity, wealth, and economic pressures without simulating an entire economy.",
+        href: "/for/economy-trade",
+      },
     ],
     relatedAnswers: [
       "how-do-i-build-a-believable-economy-for-a-fantasy-world",
@@ -181,6 +187,7 @@ export const howDoIDecideWhatASettlementProducesImportsAndExports: AnswerConfigI
         "generator-settlement",
         "generator-world",
         "generator-faction",
+        "for-economy-trade",
       ],
       acknowledgedOverlap: [
         {

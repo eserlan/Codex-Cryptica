@@ -137,6 +137,12 @@ export const howDoITurnEconomicPressuresIntoRpgAdventureHooks: AnswerConfigInput
           "Keep pressures, claimants, prizes, and deadlines connected across a campaign.",
         href: "/for/fantasy-worldbuilding",
       },
+      {
+        title: "TTRPG Economy & Trade",
+        description:
+          "Build believable prices, trade, scarcity, wealth, and economic pressures without simulating an entire economy.",
+        href: "/for/economy-trade",
+      },
     ],
     relatedAnswers: [
       "how-do-i-build-a-believable-economy-for-a-fantasy-world",
@@ -164,6 +170,7 @@ export const howDoITurnEconomicPressuresIntoRpgAdventureHooks: AnswerConfigInput
         "answer-trade-routes-shape-cities-kingdoms",
         "answer-scarcity-shortages-prices-conflict",
         "generator-faction",
+        "for-economy-trade",
       ],
     },
     seo: {
