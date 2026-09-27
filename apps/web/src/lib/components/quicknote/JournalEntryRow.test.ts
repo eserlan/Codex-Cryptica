@@ -249,6 +249,75 @@ describe("JournalEntryRow (FR-028)", () => {
   });
 });
 
+describe("JournalEntryRow — Markdown formatting (#3481)", () => {
+  it("renders bold, italic and a bullet list in a typed note", () => {
+    render(JournalEntryRow, {
+      props: {
+        entry: entry(
+          "manual-note",
+          "**Found a key** in the *drowned crypt*.\n- It is cold to the touch",
+        ),
+      },
+    });
+
+    const content = screen.getByTestId("journal-entry-content");
+    expect(content.querySelector("strong")?.textContent).toBe("Found a key");
+    expect(content.querySelector("em")?.textContent).toBe("drowned crypt");
+    expect(content.querySelector("li")?.textContent).toBe(
+      "It is cold to the touch",
+    );
+  });
+
+  it("turns a single line break into a visible break, not a run-on sentence", () => {
+    render(JournalEntryRow, {
+      props: { entry: entry("manual-note", "Line one\nLine two") },
+    });
+
+    const content = screen.getByTestId("journal-entry-content");
+    expect(content.innerHTML).toContain("<br");
+  });
+
+  it("never interprets an automatic entry's text as Markdown (negative)", () => {
+    render(JournalEntryRow, {
+      props: { entry: entry("dice-roll", "Rolled **2d6**: 9") },
+    });
+
+    expect(screen.queryByTestId("journal-entry-content")).toBeNull();
+    expect(screen.getByText("Rolled **2d6**: 9")).toBeTruthy();
+  });
+
+  it("still renders an older, unformatted plain-text entry correctly", () => {
+    render(JournalEntryRow, {
+      props: { entry: entry("manual-note", "Just plain text, nothing fancy") },
+    });
+
+    expect(screen.getByTestId("journal-entry-content").textContent).toContain(
+      "Just plain text, nothing fancy",
+    );
+  });
+
+  it("offers the formatting toolbar and keeps the edited Markdown on save", async () => {
+    const onEdit = vi.fn().mockResolvedValue({ ok: true } as const);
+    render(JournalEntryRow, {
+      props: { entry: entry("manual-note", "Plain"), onEdit },
+    });
+
+    await fireEvent.click(screen.getByTestId("journal-entry-edit"));
+    expect(screen.getByTestId("markdown-format-toolbar")).toBeTruthy();
+
+    const input = screen.getByTestId(
+      "journal-entry-edit-input",
+    ) as HTMLTextAreaElement;
+    await fireEvent.input(input, { target: { value: "**Plain**" } });
+    await fireEvent.click(screen.getByTestId("journal-entry-edit-save"));
+
+    expect(onEdit).toHaveBeenCalledWith(
+      expect.objectContaining({ content: "Plain" }),
+      "**Plain**",
+    );
+  });
+});
+
 describe("JournalEntryRow — edit, delete and move (#3476)", () => {
   const ok = { ok: true } as const;
 

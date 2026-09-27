@@ -74,9 +74,25 @@ function entryLines(
   ];
 }
 
+/**
+ * Strips the surface Markdown markers this slice's toolbar can produce
+ * (#3481: bold, italic, bullets) from a single line. Used only for the
+ * derived entity title — the promoted body keeps the real Markdown so
+ * formatting still renders once it lands in the entity.
+ */
+function stripInlineMarkdown(line: string): string {
+  return line
+    .replace(/^[-*+]\s+/, "")
+    .replace(/\*\*\*([^*]+)\*\*\*/g, "$1")
+    .replace(/\*\*([^*]+)\*\*/g, "$1")
+    .replace(/\*([^*]+)\*/g, "$1")
+    .replace(/__([^_]+)__/g, "$1")
+    .replace(/_([^_]+)_/g, "$1");
+}
+
 function defaultEntryName(content: string): string {
   const line = content.split("\n").find((l) => l.trim().length > 0);
-  const text = line?.trim() ?? "";
+  const text = stripInlineMarkdown(line?.trim() ?? "").trim();
   if (!text) return FALLBACK_ENTRY_NAME;
   if (text.length <= NAME_MAX) return text;
   const cut = text.slice(0, NAME_MAX);
