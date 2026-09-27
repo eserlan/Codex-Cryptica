@@ -7,14 +7,14 @@ export const whatDoYouDoWithMurderHobosInAnRpgCampaign: AnswerConfigInput = {
   question: "What do you do with murder hobos in your RPG campaign?",
   kind: "framework",
   shortAnswer:
-    "First check whether murder hobo behaviour is actually a problem: if everyone at the table enjoys a violent, chaotic playstyle, there is nothing to fix. If it is derailing the campaign or draining other players' fun, address it out of game first, restate what the table agreed the campaign is about, and only then let believable in-fiction consequences, guards, witnesses, bounties, follow from what already happened. Escalating with tougher enemies to punish the behaviour treats a table disagreement as a combat problem and usually makes it worse.",
+    "First check whether murder hobo behaviour is actually a problem: if everyone at the table enjoys a violent, chaotic playstyle, there is nothing to fix. A violent character can still be played cooperatively; the concern is whether the player's choices repeatedly break agreed expectations, limit other players' agency, or make the game less enjoyable. Address a mismatch out of game, while letting proportionate in-fiction consequences follow from the established world. Escalating with tougher enemies to punish the behaviour treats a table disagreement as a combat problem and usually makes it worse.",
   sections: [
     {
       kind: "prose",
       heading: "The term covers two different things",
       paragraphs: [
-        '"Murder hobo" gets used for any character who fights readily, but that alone is not the issue. A fighter who kills bandits during a fight the table chose to have is playing a combat-capable character, not causing a problem.',
-        "The behaviour worth addressing is different: killing NPCs who posed no threat, attacking shopkeepers or informants the party needed alive, or treating every scene as a prompt for violence regardless of what the group set out to do. The distinction is not how much a character fights. It is whether the choices are closing off the story other players are trying to tell.",
+        '"Murder hobo" gets used for any character who fights readily, but that alone is not the issue. A fighter who kills bandits during a fight the table chose to have is playing a combat-capable character, not causing a problem. A character can be cruel, reckless, or violent while the player supports everyone\'s fun.',
+        "The behaviour worth addressing is a pattern that clashes with what the group agreed to play: for example, repeatedly killing neutral or surrendered NPCs when other players want to talk, investigate, or make moral choices. The character's fictional morality is not the test. Ask whether the player's choices override shared expectations, other players' choices, the agreed tone, or consent around conflict within the party.",
       ],
     },
     {
@@ -24,16 +24,20 @@ export const whatDoYouDoWithMurderHobosInAnRpgCampaign: AnswerConfigInput = {
       intro: "Ask these before changing anything at the table:",
       items: [
         {
-          term: "Is the campaign actually derailing",
-          text: "A dead informant who cannot be replaced, a burned bridge with the one faction the party needed, a plot thread that has nowhere left to go. If the story still has places to go, this is colour, not damage.",
+          term: "Is anyone losing agency or enjoyment",
+          text: "Did another player lose a meaningful scene or character niche? Is the behaviour making someone uncomfortable or frustrated, or repeatedly working against shared party goals? Those are table-impact questions, even if the campaign can adapt easily.",
         },
         {
-          term: "Is anyone else losing their scene",
-          text: "One player built a whole character around talking their way past a guard captain. Another player kills the guard captain before the conversation starts. That is a cost paid by someone else at the table, not by the player who chose it.",
+          term: "Does it fit the agreed tone and boundaries",
+          text: "A grimdark mercenary campaign and a cosy village mystery have different defaults for what a character does to an NPC who annoys them. Check the mismatch against what the table agreed, including any boundaries around intra-party conflict, rather than your own preference.",
         },
         {
-          term: "Does it match the tone everyone signed up for",
-          text: "A grimdark mercenary campaign and a cosy village mystery have different defaults for what a character does to an NPC who annoys them. Check the mismatch is real, not just a difference from your own preference.",
+          term: "Can the scenario adapt if an NPC is lost",
+          text: "If an informant dies or a faction becomes hostile, look for other witnesses, clues, or routes forward. A campaign that adapts easily has avoided plot damage; that does not answer whether the behaviour is costing other players agency, comfort, or enjoyment.",
+        },
+        {
+          term: "Is it working against shared party goals",
+          text: "One player built a character around talking their way past a guard captain. Another kills the captain before the conversation starts. If this repeatedly denies a scene that another player wants to play, discuss that cost together.",
         },
         {
           term: "Is it a pattern or a session",
@@ -65,7 +69,7 @@ export const whatDoYouDoWithMurderHobosInAnRpgCampaign: AnswerConfigInput = {
         },
         {
           term: "NPC treatment",
-          text: "Which NPCs the campaign needs alive to keep functioning, and why, not as a blanket rule against violence.",
+          text: "What level of violence toward neutral, surrendered, helpless, or socially important NPCs fits the campaign everyone agreed to play.",
         },
         {
           term: "PvP and party goals",
@@ -79,9 +83,9 @@ export const whatDoYouDoWithMurderHobosInAnRpgCampaign: AnswerConfigInput = {
     },
     {
       kind: "prose",
-      heading: "Let consequences come from the fiction, not from you",
+      heading: "Use consequences that fit the established world",
       paragraphs: [
-        "Once the conversation has happened, in-world consequences are still fair game, guards who remember a face, a bounty posted in the next town, a faction that hears what happened and stops trusting the party. The difference is that these follow from what the characters actually did, at a scale the world would plausibly produce, rather than being scaled up specifically to punish the player.",
+        "Use consequences that follow from the established world, not consequences invented mainly to punish the player. Witnesses may report a killing, allies may lose trust, local law may investigate, or a victim's associates may react. These consequences can happen as soon as the world would respond; the out-of-game conversation is still needed to address a mismatch at the table. What follows depends on witnesses, local law, the victim's status, faction ties, who cares, and whether anyone can act on what happened. Not every violent act needs a bounty, a revenge squad, or an escalating combat response.",
         "The common advice to just send stronger guards or bounty hunters after them treats the disagreement as a combat encounter to win. It rarely lands that way. The player either fights through the escalation, which confirms the campaign is now about them versus the world, or the table spends a session on a fight that exists only to make a point that was never about combat in the first place.",
       ],
     },
@@ -89,7 +93,7 @@ export const whatDoYouDoWithMurderHobosInAnRpgCampaign: AnswerConfigInput = {
       kind: "example",
       heading: "Worked example: a character keeps killing captured enemies",
       paragraphs: [
-        "A player's character has killed three surrendered bandits across two sessions, each time cutting off a lead the GM had planned to use, a name, a hideout location, a reason the raids started.",
+        "An investigation into bandit raids has several routes forward: a captured bandit may talk, but the party can also follow tracks, study a map or insignia, find stolen orders, hear from another witness, or learn from the faction's reaction. A player's character has executed three surrendered bandits across two sessions. The investigation can adapt, but the table has agreed that captives, interrogation, and moral choices are part of the campaign, and other players are losing scenes they want to play.",
       ],
       items: [
         {
@@ -98,11 +102,11 @@ export const whatDoYouDoWithMurderHobosInAnRpgCampaign: AnswerConfigInput = {
         },
         {
           term: "The conversation-first response",
-          text: "The GM talks to the player outside the session: the investigation needs at least some prisoners alive to go anywhere, and every surrendered enemy killed removes a lead with nothing replacing it. They agree the player's character can still be lethal in a fight, just not to someone who has already surrendered. In the next session, a bandit who does get taken alive gives up the location the GM had been waiting to reveal.",
+          text: "The GM talks to the player outside the session: the investigation has other leads, but the repeated executions are shutting down scenes the rest of the group wants to play after agreeing that captives and their choices matter. They agree how the character can remain violent while leaving room for those scenes. The GM can still let witnesses, local law, or the bandits' allies respond in ways that fit the setting.",
         },
         {
           term: "Why it works",
-          text: "The fix addressed the actual problem, leads disappearing, directly, and let the character stay violent where it did not cost the table anything. Nothing had to escalate for the point to land.",
+          text: "The investigation does not depend on one prisoner, and the conversation addresses the actual problem: a repeated choice is denying other players scenes they agreed to share. The character can remain violent without overriding the group's expectations, and consequences need not become an arms race.",
         },
       ],
     },
@@ -123,7 +127,7 @@ export const whatDoYouDoWithMurderHobosInAnRpgCampaign: AnswerConfigInput = {
     heading: "Keeping consequences connected to what actually happened",
     paragraphs: [
       "Believable consequences depend on remembering what a character actually did to whom, not on inventing a punishment after the fact. Codex Cryptica's campaign graph keeps every NPC, faction, and killed or spared character as a connected entity, so a guard captain's memory of a specific killing, or a faction's growing distrust after a string of incidents, is something you can look up rather than reconstruct from memory.",
-      "The Faction generator can also build out the guards, bounty hunters, or informant networks a consequence needs, with a want and a grievance already attached, so the response reads as the world reacting rather than the GM inventing an obstacle on the spot.",
+      "The Faction generator can also build out witnesses, allies, rivals, victims, or informant networks, with motives and relationships that can shape believable consequences. Alternative witnesses and information routes let an investigation adapt if one NPC disappears, while any response still depends on what the established world would do.",
     ],
     linkText: "Explore the Codex Cryptica campaign graph",
     href: "/for/sandbox-campaigns",
@@ -138,7 +142,7 @@ export const whatDoYouDoWithMurderHobosInAnRpgCampaign: AnswerConfigInput = {
     {
       title: "NPC generator",
       description:
-        "Generate the NPCs a campaign needs to keep functioning, with motives worth protecting rather than discarding.",
+        "Generate NPCs with motives worth engaging with, from witnesses and allies to rivals and victims whose relationships can shape what happens next.",
       href: "/generators/npc",
     },
   ],
