@@ -211,3 +211,9 @@
 
 **Learning:** For accessibility in Svelte components, whenever a button, link, or visual status indicator contains an inner decorative icon (e.g., `<span class="icon-[...]">`) alongside an `aria-label` or descriptive text, ensure the inner icon element explicitly includes `aria-hidden="true"`. This prevents screen readers from redundantly announcing confusing CSS class names.
 **Action:** Always add `aria-hidden="true"` to pure decorative icons like `<span class="icon-[lucide--globe]"></span>` when fixing accessibility.
+
+## 2024-09-27 - Icon-only buttons lacking aria-hidden and aria-label
+
+**Learning:** I noticed that some icon-only buttons or buttons with decorative icons do not have proper `aria-hidden="true"` attributes on the inner `<span>` element (which contains the icon class) or an `aria-label` on the button itself. This violates accessibility rules, as screen readers might announce confusing CSS class names or not understand the button's purpose. I found some examples in `apps/web/src/routes/(app)/+page.svelte`, `apps/web/src/routes/(app)/timeline/+page.svelte`, and `apps/web/src/routes/(app)/guest/[publishId]/+page.svelte`.
+
+**Action:** When adding icons inside buttons, always ensure that the inner `<span>` containing the icon class has `aria-hidden="true"`. Also, ensure that buttons have a descriptive `aria-label` or clear, readable text.
