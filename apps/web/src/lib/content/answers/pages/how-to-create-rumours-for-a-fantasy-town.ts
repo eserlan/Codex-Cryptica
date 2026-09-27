@@ -144,6 +144,7 @@ export const howToCreateRumoursForAFantasyTown: AnswerConfigInput = {
     "how-do-you-generate-useful-rpg-rumours",
     "how-do-i-build-a-believable-economy-for-a-fantasy-world",
     "how-do-i-decide-what-a-settlement-produces-imports-and-exports",
+    "how-do-scarcity-and-shortages-affect-prices-and-conflict-in-an-rpg-world",
   ],
   labels: ["fantasy", "rumour"],
   discovery: {
