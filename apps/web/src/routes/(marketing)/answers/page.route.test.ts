@@ -127,28 +127,33 @@ describe("/answers route", () => {
     expect(formatContainer?.textContent).toContain("Comparisons");
   });
 
-  it("filters answers when a category card or pill is clicked", async () => {
+  it("filters answers when a category directory card is clicked and toggles off when clicked again", async () => {
     const { container } = render(Page, {
       props: { data: { answers: mockAnswers } },
     });
 
-    const adventurePill = container.querySelector(
-      'button[role="tab"][aria-selected="false"]',
-    );
-    expect(adventurePill).toBeTruthy();
-
-    // Click adventure design directory card or pill
+    // Click adventure design directory card
     const adventureCard = Array.from(
       container.querySelectorAll('nav[aria-label="Category directory"] button'),
     ).find((b) => b.textContent?.includes("Adventure & Encounter Design"));
     expect(adventureCard).toBeTruthy();
+    expect(adventureCard?.getAttribute("aria-pressed")).toBe("false");
 
     await fireEvent.click(adventureCard!);
 
     // Should show filtered view with 1 result
+    expect(adventureCard?.getAttribute("aria-pressed")).toBe("true");
+    expect(adventureCard?.textContent).toContain(
+      "Active filter (click to clear)",
+    );
     expect(container.textContent).toContain("Showing 1 of 3 answers");
     expect(container.textContent).toContain("How do you run a heist?");
     expect(container.textContent).not.toContain("What is a point crawl?");
+
+    // Click again to toggle off
+    await fireEvent.click(adventureCard!);
+    expect(adventureCard?.getAttribute("aria-pressed")).toBe("false");
+    expect(container.textContent).toContain("What is a point crawl?");
   });
 
   it("filters answers when search query is entered and shows negative empty state when no match", async () => {
