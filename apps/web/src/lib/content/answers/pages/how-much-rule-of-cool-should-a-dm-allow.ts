@@ -169,6 +169,7 @@ export const howMuchRuleOfCoolShouldADmAllow: AnswerConfigInput = {
     "how-do-you-handle-players-going-off-script-as-a-gm",
     "how-do-i-run-a-successful-session-0",
     "how-do-i-balance-rpg-combat-encounters-without-a-tpk",
+    "what-do-you-do-with-murder-hobos-in-an-rpg-campaign",
   ],
   discovery: {
     id: "answer-how-much-rule-of-cool-should-a-dm-allow",
