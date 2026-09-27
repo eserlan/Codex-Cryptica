@@ -142,6 +142,7 @@ export const howToCreateRumoursForAFantasyTown: AnswerConfigInput = {
     "how-to-write-an-in-world-newspaper-for-an-rpg",
     "how-do-you-track-unresolved-plot-hooks-in-an-rpg-campaign",
     "how-do-you-generate-useful-rpg-rumours",
+    "how-do-i-build-a-believable-economy-for-a-fantasy-world",
   ],
   labels: ["fantasy", "rumour"],
   discovery: {
