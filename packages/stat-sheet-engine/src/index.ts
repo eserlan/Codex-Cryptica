@@ -10,3 +10,4 @@ export * from "./presentation/resolve";
 export * from "./presentation/schema-for-entity";
 export * from "./presentation/built-ins";
 export * from "./presentation/package";
+export * from "./stat-block";
