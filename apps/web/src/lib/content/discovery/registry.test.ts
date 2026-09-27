@@ -493,6 +493,18 @@ describe("the committed registry", () => {
     );
   });
 
+  it("gives starship campaigns their own fleet and bridge crew workflow intent", () => {
+    expect(findIntentOwner("starship campaign management", registry)?.id).toBe(
+      "for-starship-campaigns",
+    );
+    expect(findIntentOwner("fleet operations rpg campaign", registry)?.id).toBe(
+      "for-starship-campaigns",
+    );
+    expect(getEntryByPath("/for/starship-campaigns", registry)?.userJob).toBe(
+      "adopt-workflow",
+    );
+  });
+
   it("seeds every major discovery family", () => {
     const kinds = new Set(registry.map((entry) => entry.pageKind));
     for (const kind of [
