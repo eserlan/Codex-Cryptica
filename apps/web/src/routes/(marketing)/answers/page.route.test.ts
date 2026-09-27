@@ -1,7 +1,7 @@
 /** @vitest-environment jsdom */
 
-import { afterEach, describe, expect, it, vi } from "vitest";
-import { render, fireEvent, waitFor } from "@testing-library/svelte";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { render, fireEvent, screen, waitFor } from "@testing-library/svelte";
 import Page from "./+page.svelte";
 import {
   AnswerConfigSchema,
@@ -67,10 +67,22 @@ const mockAnswers: AnswerConfig[] = [
 ];
 
 describe("/answers route", () => {
+  beforeEach(() => {
+    // Community aggregate is unreachable by default: the page must render
+    // the plain directory (cold start) without network access.
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => {
+        throw new Error("offline");
+      }),
+    );
+  });
+
   afterEach(() => {
     document.head.innerHTML = "";
     window.history.replaceState({}, "", "/");
     vi.restoreAllMocks();
+    vi.unstubAllGlobals();
   });
 
   it("renders page header and category directory cards for all 6 categories", () => {
@@ -199,6 +211,81 @@ describe("/answers route", () => {
     expect(container.textContent).toContain("format: Framework");
     expect(container.textContent).toContain("How do you run a heist?");
     expect(container.textContent).not.toContain("What is a point crawl?");
+  });
+
+  it("shows community favourites when the aggregate meets quorum", async () => {
+    // Favourite display copy resolves through the real answer registry,
+    // independent of the directory data under test.
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => ({
+        ok: true,
+        json: async () => ({
+          items: [
+            { slug: "how-do-you-run-a-heist-in-a-tabletop-rpg", yes: 30 },
+            { slug: "what-is-a-point-crawl", yes: 18 },
+            {
+              slug: "how-do-you-build-a-point-crawl-for-an-rpg",
+              yes: 12,
+            },
+            {
+              slug: "what-makes-a-good-heist-target-in-a-tabletop-rpg",
+              yes: 11,
+            },
+          ],
+        }),
+      })),
+    );
+
+    render(Page, { props: { data: { answers: mockAnswers } } });
+
+    const section = await screen.findByRole("region", {
+      name: "Community favourites",
+    });
+    const links = section.querySelectorAll("a");
+    expect(links).toHaveLength(4);
+    expect(links[0].getAttribute("href")).toContain(
+      "how-do-you-run-a-heist-in-a-tabletop-rpg",
+    );
+    expect(section.textContent).toContain("30 readers found this helpful");
+  });
+
+  it("hides community favourites when the reader is filtering", async () => {
+    window.history.replaceState({}, "", "/answers?q=heist");
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => ({
+        ok: true,
+        json: async () => ({
+          items: [
+            { slug: "how-do-you-run-a-heist", yes: 30 },
+            { slug: "how-to-manage-table-engagement", yes: 18 },
+            { slug: "what-is-a-point-crawl", yes: 12 },
+            { slug: "retired-slug", yes: 50 },
+          ],
+        }),
+      })),
+    );
+
+    render(Page, { props: { data: { answers: mockAnswers } } });
+
+    await waitFor(() => {
+      expect(window.location.search).toContain("q=heist");
+    });
+    expect(
+      screen.queryByRole("region", { name: "Community favourites" }),
+    ).toBeNull();
+  });
+
+  it("renders the directory normally when the aggregate is unreachable", async () => {
+    render(Page, { props: { data: { answers: mockAnswers } } });
+
+    await waitFor(() => {
+      expect(screen.getByText("How do you run a heist?")).toBeTruthy();
+    });
+    expect(
+      screen.queryByRole("region", { name: "Community favourites" }),
+    ).toBeNull();
   });
 
   it("ignores inherited kind names in the URL filter", async () => {

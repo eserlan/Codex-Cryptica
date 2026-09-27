@@ -1,5 +1,10 @@
 <script lang="ts">
   import { UIPersistence } from "$lib/stores/ui/persistence";
+  import {
+    COMMUNITY_MIN_YES,
+    communityAggregates,
+    type CommunityAggregatesService,
+  } from "$lib/services/community/community-aggregates";
 
   const DEFAULT_REASONS = [
     "Too vague",
@@ -26,11 +31,22 @@
     onVote = undefined,
     /** Injectable for testing; defaults to real localStorage (SSR-safe). */
     persistence = new UIPersistence(),
+    /** Registry slug for the anonymous community aggregate (spec 164).
+     * When omitted the component behaves exactly as before: local marker +
+     * onVote only, no network traffic. */
+    slug = undefined,
+    /** Injectable community client; defaults to the shared singleton. */
+    communityService = communityAggregates,
   }: {
     voteKey: string;
     reasons?: readonly string[];
     onVote?: (value: Vote, reason?: string) => void;
     persistence?: UIPersistence;
+    slug?: string;
+    communityService?: Pick<
+      CommunityAggregatesService,
+      "recordVote" | "fetchBySlugs"
+    >;
   } = $props();
 
   function storageKey(key: string): string {
@@ -47,6 +63,8 @@
 
   let stage = $state<Stage>("idle");
   let lastVoteKey: string | undefined;
+  /** Community yes-count, shown only once the public threshold is met. */
+  let helpfulYes = $state<number | null>(null);
 
   // voteKey can change without remounting this component (SvelteKit reuses
   // the same page component instance across e.g. /answers/a -> /answers/b —
@@ -58,11 +76,43 @@
     stage = readStoredVote(voteKey) ? "done" : "idle";
   });
 
+  // Community social proof (spec 164): below-threshold slugs resolve to an
+  // empty list server-side, so nothing misleading can render. Fail-silent:
+  // an unreachable aggregate simply leaves the line hidden.
+  $effect(() => {
+    const currentSlug = slug;
+    helpfulYes = null;
+    if (!currentSlug) return;
+    let cancelled = false;
+    communityService.fetchBySlugs([currentSlug]).then((items) => {
+      if (cancelled) return;
+      const hit = items.find((item) => item.slug === currentSlug);
+      if (hit && hit.yes >= COMMUNITY_MIN_YES) helpfulYes = hit.yes;
+    });
+    return () => {
+      cancelled = true;
+    };
+  });
+
   function submit(value: Vote, reason?: string) {
+    // Capture the previous vote before overwriting so the community
+    // aggregate can move the count instead of double-counting (spec 164).
+    // recordVote never rejects and is deliberately not awaited: the
+    // aggregate is an enhancement, never a gate on the vote UI.
+    const previousVote = readStoredVote(voteKey)?.value;
     const vote: StoredVote = reason ? { value, reason } : { value };
     persistence.write(storageKey(voteKey), vote);
     stage = "done";
     onVote?.(value, reason);
+    if (slug) {
+      void communityService.recordVote({
+        slug,
+        value,
+        // Sending the unchanged value lets the Worker treat selecting the
+        // same answer again as an idempotent no-op.
+        previous: previousVote,
+      });
+    }
   }
 
   function handleYes() {
@@ -99,6 +149,11 @@
   >
     Was this useful?
   </h2>
+  {#if helpfulYes !== null}
+    <p class="mb-4 font-mono text-xs text-theme-muted">
+      {helpfulYes} readers found this helpful
+    </p>
+  {/if}
 
   {#if stage === "idle"}
     <div

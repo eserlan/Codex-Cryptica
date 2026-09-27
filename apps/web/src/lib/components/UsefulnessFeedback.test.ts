@@ -126,6 +126,125 @@ describe("UsefulnessFeedback", () => {
     );
   });
 
+  it("records a community vote without a previous value on first vote", async () => {
+    const persistence = new UIPersistence({ storage: fakeStorage() });
+    const recordVote = vi.fn(async () => true);
+    const communityService = {
+      recordVote,
+      fetchBySlugs: async () => [],
+    };
+
+    render(UsefulnessFeedback, {
+      props: { voteKey: "x", slug: "x", persistence, communityService },
+    });
+
+    await fireEvent.click(screen.getByRole("button", { name: /yes/i }));
+
+    expect(recordVote).toHaveBeenCalledWith({
+      slug: "x",
+      value: "yes",
+      previous: undefined,
+    });
+    expect(screen.getByText("Thanks for the feedback!")).toBeTruthy();
+  });
+
+  it("moves the community vote on change and survives aggregate failure", async () => {
+    const persistence = new UIPersistence({ storage: fakeStorage() });
+    const recordVote = vi.fn(async () => false);
+    const communityService = {
+      recordVote,
+      fetchBySlugs: async () => [],
+    };
+
+    render(UsefulnessFeedback, {
+      props: { voteKey: "x", slug: "x", persistence, communityService },
+    });
+
+    await fireEvent.click(screen.getByRole("button", { name: /yes/i }));
+    await fireEvent.click(
+      screen.getByRole("button", { name: "Change your answer" }),
+    );
+    await fireEvent.click(screen.getByRole("button", { name: /no/i }));
+    await fireEvent.click(screen.getByRole("button", { name: "Skip" }));
+
+    expect(recordVote).toHaveBeenLastCalledWith({
+      slug: "x",
+      value: "no",
+      previous: "yes",
+    });
+    // Aggregate failure never blocks the vote UI.
+    expect(screen.getByText("Thanks for the feedback!")).toBeTruthy();
+  });
+
+  it("sends the current value when a reader reselects the same vote", async () => {
+    const persistence = new UIPersistence({ storage: fakeStorage() });
+    const recordVote = vi.fn(async () => true);
+    const communityService = {
+      recordVote,
+      fetchBySlugs: async () => [],
+    };
+
+    render(UsefulnessFeedback, {
+      props: { voteKey: "x", slug: "x", persistence, communityService },
+    });
+
+    await fireEvent.click(screen.getByRole("button", { name: /yes/i }));
+    await fireEvent.click(
+      screen.getByRole("button", { name: "Change your answer" }),
+    );
+    await fireEvent.click(screen.getByRole("button", { name: /yes/i }));
+
+    expect(recordVote).toHaveBeenLastCalledWith({
+      slug: "x",
+      value: "yes",
+      previous: "yes",
+    });
+  });
+
+  it("shows community proof only once the public threshold is met", async () => {
+    const persistence = new UIPersistence({ storage: fakeStorage() });
+    const communityService = {
+      recordVote: vi.fn(async () => true),
+      fetchBySlugs: async () => [{ slug: "x", yes: 24 }],
+    };
+
+    render(UsefulnessFeedback, {
+      props: { voteKey: "x", slug: "x", persistence, communityService },
+    });
+
+    await screen.findByText("24 readers found this helpful");
+  });
+
+  it("hides community proof below threshold and skips fetch without a slug", async () => {
+    const fetchBySlugs = vi.fn(async () => [{ slug: "x", yes: 9 }]);
+    const persistence = new UIPersistence({ storage: fakeStorage() });
+
+    render(UsefulnessFeedback, {
+      props: {
+        voteKey: "x",
+        slug: "x",
+        persistence,
+        communityService: { recordVote: vi.fn(async () => true), fetchBySlugs },
+      },
+    });
+
+    await vi.waitFor(() => expect(fetchBySlugs).toHaveBeenCalled());
+    expect(screen.queryByText(/readers found this helpful/)).toBeNull();
+
+    const noSlugFetch = vi.fn(async () => []);
+    render(UsefulnessFeedback, {
+      props: {
+        voteKey: "y",
+        persistence: new UIPersistence({ storage: fakeStorage() }),
+        communityService: {
+          recordVote: vi.fn(async () => true),
+          fetchBySlugs: noSlugFetch,
+        },
+      },
+    });
+    expect(noSlugFetch).not.toHaveBeenCalled();
+  });
+
   it("resyncs to the new key's stored vote when voteKey changes (page-instance reuse)", async () => {
     const storage = fakeStorage();
     storage.setItem(

@@ -83,6 +83,16 @@ binding = "BUCKET"
 bucket_name = "codex-cryptica-statics"
 remote = true
 
+# Community answer-usefulness aggregates (spec 164). The database must be
+# created once per environment (`bunx wrangler d1 create
+# codex-answer-aggregates`) and its real id filled in below; until then the
+# handlers answer 500 and the site hides all community counts by design.
+[[d1_databases]]
+binding = "ANSWER_AGGREGATES"
+database_name = "codex-answer-aggregates"
+database_id = "00000000-0000-0000-0000-000000000000"
+migrations_dir = "migrations"
+
 [[ratelimits]]
 name = "PUBLISH_CREATE_RATE_LIMITER"
 namespace_id = "1351"
@@ -99,6 +109,17 @@ namespace_id = "1352"
 
   [ratelimits.simple]
   limit = 300
+  period = 60
+
+# Answer usefulness votes are anonymous public writes (spec 164). Same
+# budget class as generator shares: human-scale votes, tight enough to blunt
+# runaway clients.
+[[ratelimits]]
+name = "ANSWER_FEEDBACK_RATE_LIMITER"
+namespace_id = "1359"
+
+  [ratelimits.simple]
+  limit = 5
   period = 60
 
 # Generator result shares are anonymous public writes. Keep their creation

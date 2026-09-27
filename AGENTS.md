@@ -74,7 +74,7 @@ This file is the Codex-facing instruction layer for this repository.
 <!-- SPECKIT START -->
 
 For additional context about technologies to be used, project structure,
-shell commands, and other important information, read the [current plan](./specs/163-session-journal/plan.md).
+shell commands, and other important information, read the [current plan](./specs/164-answer-community-aggregate/plan.md).
 
 <!-- SPECKIT END -->
 

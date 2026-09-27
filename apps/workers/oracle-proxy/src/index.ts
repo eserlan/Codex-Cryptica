@@ -75,6 +75,13 @@ import {
   handleDeleteGeneratorShare,
   handleGetGeneratorShare,
 } from "./generator-shares";
+import {
+  handleBySlugs as handleAnswerBySlugs,
+  handleTop as handleAnswerTop,
+  handleVote as handleAnswerVote,
+  type D1DatabaseLike,
+} from "./answer-aggregates";
+import { isKnownAnswerSlug } from "./answer-slugs";
 import { handleAssetGallery } from "./asset-gallery";
 
 interface Env {
@@ -104,6 +111,10 @@ interface Env {
     limit: (options: { key: string }) => Promise<{ success: boolean }>;
   };
   TEMPLATE_ADMIN_TOKEN?: string;
+  ANSWER_AGGREGATES?: D1DatabaseLike;
+  ANSWER_FEEDBACK_RATE_LIMITER?: {
+    limit: (options: { key: string }) => Promise<{ success: boolean }>;
+  };
   SHARE_CREATE_RATE_LIMITER?: {
     limit: (options: { key: string }) => Promise<{ success: boolean }>;
   };
@@ -201,6 +212,49 @@ async function handleCachedAssetGallery(
   return response;
 }
 
+/**
+ * Edge-cached public aggregate reads (spec 164). Responses already carry
+ * `Cache-Control: public, max-age=300`; the Cache API put-through covers
+ * edge locations where the CDN would otherwise pass through to D1.
+ * Falls back to a direct read when the Cache API is unavailable (tests).
+ */
+/**
+ * Attaches the Worker's CORS headers to a response (shared by route blocks
+ * that cannot use the handlers' own CORS helpers).
+ */
+function withCorsHeaders(
+  request: Request,
+  env: Env,
+  response: Response,
+): Response {
+  const headers = getCorsHeaders(request.headers, env);
+  for (const [name, value] of Object.entries(headers)) {
+    response.headers.set(name, value);
+  }
+  response.headers.append("Vary", "Origin");
+  return response;
+}
+
+async function handleCachedAggregateRead(
+  request: Request,
+  env: Env,
+  ctx: ExecutionContext,
+  handler: (request: Request, env: Env) => Promise<Response>,
+): Promise<Response> {
+  try {
+    if (typeof caches === "undefined") throw new Error("no cache");
+    const cacheKey = new Request(request.url, { method: "GET" });
+    const cache = caches.default;
+    const cached = await cache.match(cacheKey);
+    if (cached) return cached;
+    const response = await handler(request, env);
+    if (response.ok) ctx.waitUntil(cache.put(cacheKey, response.clone()));
+    return response;
+  } catch {
+    return handler(request, env);
+  }
+}
+
 export default {
   async fetch(
     request: Request,
@@ -223,23 +277,30 @@ export default {
     }
 
     if (pathname.startsWith("/api/starter-tile-decks/")) {
-      const withCors = (response: Response) => {
-        const headers = getCorsHeaders(request.headers, env);
-        for (const [name, value] of Object.entries(headers)) {
-          response.headers.set(name, value);
-        }
-        response.headers.append("Vary", "Origin");
-        return response;
-      };
       if (request.method !== "GET")
-        return withCors(new Response("Method not allowed", { status: 405 }));
+        return withCorsHeaders(
+          request,
+          env,
+          new Response("Method not allowed", { status: 405 }),
+        );
       const parts = pathname.split("/");
       const deckId = parts[3] ? decodeURIComponent(parts[3]) : undefined;
-      if (!deckId) return withCors(new Response("Not found", { status: 404 }));
+      if (!deckId)
+        return withCorsHeaders(
+          request,
+          env,
+          new Response("Not found", { status: 404 }),
+        );
       if (parts.length === 4)
-        return withCors(await handleGetStarterTileDeck(env, deckId));
+        return withCorsHeaders(
+          request,
+          env,
+          await handleGetStarterTileDeck(env, deckId),
+        );
       if (parts.length === 6 && parts[4] === "assets") {
-        return withCors(
+        return withCorsHeaders(
+          request,
+          env,
           await handleGetStarterTileDeck(
             env,
             deckId,
@@ -247,7 +308,11 @@ export default {
           ),
         );
       }
-      return withCors(new Response("Not found", { status: 404 }));
+      return withCorsHeaders(
+        request,
+        env,
+        new Response("Not found", { status: 404 }),
+      );
     }
 
     if (pathname === "/api/session") {
@@ -326,6 +391,57 @@ export default {
         status: 405,
         headers: getCorsHeaders(request.headers, env),
       });
+    }
+
+    if (
+      pathname === "/api/answer-aggregates/vote" ||
+      pathname === "/api/answer-aggregates/top" ||
+      pathname === "/api/answer-aggregates/by-slugs"
+    ) {
+      if (pathname === "/api/answer-aggregates/vote") {
+        const origin = request.headers.get("Origin") || "";
+        if (!isOriginAllowed(origin, env)) {
+          return new Response("Forbidden", {
+            status: 403,
+            headers: getCorsHeaders(request.headers, env),
+          });
+        }
+        if (request.method !== "POST")
+          return withCorsHeaders(
+            request,
+            env,
+            new Response("Method not allowed", { status: 405 }),
+          );
+        const limiter = env.ANSWER_FEEDBACK_RATE_LIMITER;
+        if (limiter) {
+          const ip = request.headers.get("CF-Connecting-IP") || "anonymous";
+          const { success } = await limiter.limit({ key: ip });
+          if (!success) {
+            return new Response(JSON.stringify({ error: "rate_limited" }), {
+              status: 429,
+              headers: {
+                ...getCorsHeaders(request.headers, env),
+                "Content-Type": "application/json",
+                "Retry-After": "60",
+              },
+            });
+          }
+        }
+        return handleAnswerVote(request, env, {
+          isKnownSlug: isKnownAnswerSlug,
+        });
+      }
+      if (request.method !== "GET")
+        return withCorsHeaders(
+          request,
+          env,
+          new Response("Method not allowed", { status: 405 }),
+        );
+      const handler =
+        pathname === "/api/answer-aggregates/top"
+          ? handleAnswerTop
+          : handleAnswerBySlugs;
+      return handleCachedAggregateRead(request, env, ctx, handler);
     }
 
     if (pathname.startsWith("/api/cloud-backup/")) {
