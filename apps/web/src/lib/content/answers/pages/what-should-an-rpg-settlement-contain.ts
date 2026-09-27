@@ -159,6 +159,9 @@ export const whatShouldAnRpgSettlementContain: AnswerConfigInput = {
     "how-do-you-generate-useful-rpg-rumours",
     "how-do-i-make-a-player-base-matter-in-an-rpg-campaign",
     "what-should-players-be-able-to-upgrade-in-an-rpg-base",
+    "how-do-i-build-a-believable-economy-for-a-fantasy-world",
+    "how-do-i-decide-what-a-settlement-produces-imports-and-exports",
+    "how-do-trade-routes-shape-cities-and-kingdoms-in-an-rpg-world",
   ],
   discovery: {
     id: "answer-settlement-contents",

@@ -13,6 +13,7 @@
  */
 import { getDB, type CloudBackupDirtyRow } from "$lib/utils/idb";
 import type { DurableVaultChange } from "./vault/registry";
+import { systemIdGenerator } from "$lib/utils/runtime-deps";
 
 export type { CloudBackupDirtyRow };
 
@@ -38,7 +39,7 @@ const keyOf = (row: CloudBackupDirtyRow): RowKey => [
 export class CloudBackupDirtyStore {
   constructor(
     private readonly storage: CloudBackupDirtyStorage = idbDirtyStorage(),
-    private readonly stamp: () => string = () => crypto.randomUUID(),
+    private readonly stamp: () => string = systemIdGenerator.uuid,
   ) {}
 
   /**

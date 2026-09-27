@@ -250,3 +250,9 @@
 **Learning:** Replaced hard-coded `Math.random()` for ID generation in `parseCardsFromSource` and `createVisualCard` with injected `idGenerator` property defaulting to `systemIdGenerator.uuid`. This reduces tight coupling to the ambient `Math` API and ensures tests can have predictable and deterministic ID structures by passing a mock ID generator.
 
 **Action:** Refactored `visual-card-parser.ts` and `visual-card-operations.ts` to use `idGenerator` seam passed down from `use-visual-layout.svelte.ts`.
+
+## 2026-09-27 - Inject systemIdGenerator instead of crypto.randomUUID()
+
+**Learning:** Found a hardcoded `crypto.randomUUID()` inside the constructor of `CloudBackupDirtyStore` used for generating versions of dirtied rows. Replaced with the app-standard `systemIdGenerator` from `@codex/runtime` via `$lib/utils/runtime-deps`.
+
+**Action:** When refactoring hardcoded crypto/ID logic for DI in stores, inject an `IdGenerator` (or its `uuid` method) with `systemIdGenerator` as the default.

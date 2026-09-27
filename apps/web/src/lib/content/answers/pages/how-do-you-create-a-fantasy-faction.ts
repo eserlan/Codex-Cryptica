@@ -160,6 +160,10 @@ export const howDoYouCreateAFantasyFaction: AnswerConfigInput = {
     "what-rpg-works-for-political-intrigue-and-faction-play",
     "how-do-i-run-political-intrigue-and-faction-play",
     "how-do-i-build-a-believable-constitutional-crisis-or-coup",
+    "how-do-i-build-a-believable-economy-for-a-fantasy-world",
+    "how-do-i-decide-what-a-settlement-produces-imports-and-exports",
+    "how-do-trade-routes-shape-cities-and-kingdoms-in-an-rpg-world",
+    "how-do-scarcity-and-shortages-affect-prices-and-conflict-in-an-rpg-world",
   ],
   discovery: {
     id: "answer-fantasy-faction",

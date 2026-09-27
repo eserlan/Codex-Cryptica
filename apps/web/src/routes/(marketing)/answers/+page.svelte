@@ -331,9 +331,15 @@
                 ? 'text-theme-primary'
                 : 'text-theme-muted/70 group-hover:text-theme-primary'}"
             >
-              <span>{isSelected ? "Active filter" : "Filter by category"}</span>
               <span
-                class="icon-[lucide--arrow-right] h-3 w-3 transition-transform group-hover:translate-x-0.5"
+                >{isSelected
+                  ? "Active filter (click to clear)"
+                  : "Filter by category"}</span
+              >
+              <span
+                class="{isSelected
+                  ? 'icon-[lucide--x]'
+                  : 'icon-[lucide--arrow-right]'} h-3 w-3 transition-transform group-hover:translate-x-0.5"
                 aria-hidden="true"
               ></span>
             </div>
@@ -369,52 +375,40 @@
         {/if}
       </div>
 
-      <!-- Controls row: Category Filter Pills + Sort Dropdown -->
+      <!-- Controls row: Format Chips on the left + Sort Selector on the right -->
       <div
-        class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3"
+        class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-1"
       >
-        <!-- Category Filter Pills -->
+        <!-- Format / Kind Filter Chips -->
         <div
-          class="flex flex-wrap items-center gap-2"
-          role="tablist"
-          aria-label="Filter answers by category"
+          class="flex flex-wrap items-center gap-1.5"
+          role="group"
+          aria-label="Filter answers by format"
         >
-          <button
-            type="button"
-            role="tab"
-            aria-selected={activeCategory === "all"}
-            onclick={() => (activeCategory = "all")}
-            class="inline-flex items-center gap-1.5 rounded-full px-3 py-1 font-mono text-xs font-medium transition-colors {activeCategory ===
-            'all'
-              ? 'bg-theme-primary font-bold text-theme-bg'
-              : 'border border-theme-border bg-theme-surface text-theme-muted hover:border-theme-primary/40 hover:text-theme-text'}"
+          <span
+            class="mr-1 font-mono text-[11px] uppercase tracking-wider text-theme-muted"
           >
-            <span>All</span>
-            <span class="opacity-80">({answers.length})</span>
-          </button>
-
-          {#each ANSWER_CATEGORIES as category (category.id)}
-            {@const count = getCategoryCount(category.id)}
+            Format:
+          </span>
+          {#each KIND_OPTIONS as kindOpt (kindOpt.id)}
+            {@const count = getKindCount(kindOpt.id)}
             <button
               type="button"
-              role="tab"
-              aria-selected={activeCategory === category.id}
-              onclick={() => (activeCategory = category.id)}
-              class="inline-flex items-center gap-1.5 rounded-full px-3 py-1 font-mono text-xs font-medium transition-colors {activeCategory ===
-              category.id
-                ? 'bg-theme-primary font-bold text-theme-bg'
-                : 'border border-theme-border bg-theme-surface text-theme-muted hover:border-theme-primary/40 hover:text-theme-text'}"
+              onclick={() => (activeKind = kindOpt.id)}
+              class="inline-flex items-center gap-1 rounded-md px-2 py-0.5 font-mono text-[11px] transition-colors {activeKind ===
+              kindOpt.id
+                ? 'bg-theme-primary/20 font-bold text-theme-primary ring-1 ring-theme-primary/40'
+                : 'text-theme-muted hover:bg-theme-surface hover:text-theme-text'}"
+              aria-pressed={activeKind === kindOpt.id}
             >
-              <span class="{category.icon} h-3.5 w-3.5" aria-hidden="true"
-              ></span>
-              <span>{category.title}</span>
-              <span class="opacity-80">({count})</span>
+              <span>{kindOpt.label}</span>
+              <span class="opacity-70">({count})</span>
             </button>
           {/each}
         </div>
 
         <!-- Sort Selector -->
-        <div class="flex items-center gap-2 shrink-0 self-end sm:self-auto">
+        <div class="flex items-center gap-2 shrink-0 self-start sm:self-auto">
           <label
             for="answers-sort"
             class="flex items-center gap-1.5 font-mono text-xs text-theme-muted"
@@ -436,33 +430,6 @@
             {/each}
           </select>
         </div>
-      </div>
-
-      <!-- Format / Kind Filter Chips -->
-      <div
-        class="flex flex-wrap items-center gap-1.5 pt-1"
-        aria-label="Filter answers by format"
-      >
-        <span
-          class="mr-1 font-mono text-[11px] uppercase tracking-wider text-theme-muted"
-        >
-          Format:
-        </span>
-        {#each KIND_OPTIONS as kindOpt (kindOpt.id)}
-          {@const count = getKindCount(kindOpt.id)}
-          <button
-            type="button"
-            onclick={() => (activeKind = kindOpt.id)}
-            class="inline-flex items-center gap-1 rounded-md px-2 py-0.5 font-mono text-[11px] transition-colors {activeKind ===
-            kindOpt.id
-              ? 'bg-theme-primary/20 font-bold text-theme-primary ring-1 ring-theme-primary/40'
-              : 'text-theme-muted hover:bg-theme-surface hover:text-theme-text'}"
-            aria-pressed={activeKind === kindOpt.id}
-          >
-            <span>{kindOpt.label}</span>
-            <span class="opacity-70">({count})</span>
-          </button>
-        {/each}
       </div>
     </div>
 

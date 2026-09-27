@@ -324,6 +324,22 @@ describe("orphaned entries", () => {
     const orphans = findOrphanedEntries(listGovernedPaths(), registry);
     expect(orphans.map((finding) => finding.message)).toEqual([]);
   });
+
+  it("records the distinct scope of the fantasy economy and trade routes answers", () => {
+    const economy = getEntryById("answer-believable-fantasy-economy");
+    const tradeRoutes = getEntryById(
+      "answer-trade-routes-shape-cities-kingdoms",
+    );
+
+    expect(economy?.acknowledgedOverlap).toContainEqual({
+      with: "answer-trade-routes-shape-cities-kingdoms",
+      reason: expect.any(String),
+    });
+    expect(tradeRoutes?.acknowledgedOverlap).toContainEqual({
+      with: "answer-believable-fantasy-economy",
+      reason: expect.any(String),
+    });
+  });
 });
 
 describe("audit — judgement warnings", () => {

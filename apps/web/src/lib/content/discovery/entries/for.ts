@@ -421,4 +421,30 @@ export const forEntries: DiscoveryEntryInput[] = [
     indexable: true,
     status: "live",
   },
+  {
+    id: "for-economy-trade",
+    pageKind: "for",
+    canonicalPath: "/for/economy-trade",
+    primaryIntent: "ttrpg economy and trade campaign guide",
+    intentAliases: [
+      "fantasy economy trade hub",
+      "rpg trade scarcity prices guide",
+      "codex cryptica for economy and trade",
+    ],
+    audience: "Game masters running trade-heavy campaigns of any genre",
+    userJob: "adopt-workflow",
+    uniqueValue:
+      "Routes a reader from any of the five economy questions to the generators that produce the towns, factions, and rumours behind the answer, with trade-shaped worked examples.",
+    parentCluster: "economy-trade",
+    relatedIntents: [
+      "answer-believable-fantasy-economy",
+      "answer-settlement-production-imports-exports",
+      "answer-trade-routes-shape-cities-kingdoms",
+      "answer-scarcity-shortages-prices-conflict",
+      "answer-economic-pressures-adventure-hooks",
+      "for-fantasy-worldbuilding",
+    ],
+    indexable: true,
+    status: "live",
+  },
 ];
