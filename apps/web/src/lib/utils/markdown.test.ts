@@ -45,6 +45,16 @@ describe("markdown.ts utility", () => {
       expect(html).not.toContain("<p>");
     });
 
+    it("keeps single newlines as separate paragraphs by default (unchanged behaviour)", () => {
+      const html = renderMarkdown("Line one\nLine two");
+      expect(html).not.toContain("<br");
+    });
+
+    it("turns a single newline into a <br> when breaks is requested (#3481)", () => {
+      const html = renderMarkdown("Line one\nLine two", { breaks: true });
+      expect(html).toContain("<br");
+    });
+
     it("should handle marked.parse errors and return sanitized fallback", async () => {
       // Mock marked.parse to throw an error to test the catch block
       const { marked } = await import("marked");

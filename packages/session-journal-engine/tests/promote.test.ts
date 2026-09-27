@@ -84,6 +84,32 @@ describe("buildPromotion — entry", () => {
     expect(r.ok && r.content).toBe("Dice roll — Rolled 2d6+3: 9");
   });
 
+  it("strips basic Markdown markers from the derived title (#3481)", () => {
+    const j = journal({
+      entries: [entry("e1", 10, "**Found a key** in the *drowned crypt*")],
+    });
+    const r = build({ kind: "entry", entryId: "e1" }, j);
+    expect(r.ok && r.title).toBe("Found a key in the drowned crypt");
+    // The body keeps the real Markdown, so it still renders once promoted.
+    expect(r.ok && r.content).toBe("**Found a key** in the *drowned crypt*");
+  });
+
+  it("strips a leading bullet marker from the derived title", () => {
+    const j = journal({
+      entries: [entry("e1", 10, "- It is cold to the touch")],
+    });
+    const r = build({ kind: "entry", entryId: "e1" }, j);
+    expect(r.ok && r.title).toBe("It is cold to the touch");
+  });
+
+  it("preserves literal intraword underscores in the derived title", () => {
+    const j = journal({
+      entries: [entry("e1", 10, "Use the foo_bar_baz command")],
+    });
+    const r = build({ kind: "entry", entryId: "e1" }, j);
+    expect(r.ok && r.title).toBe("Use the foo_bar_baz command");
+  });
+
   it("names it from the content only, never the label", () => {
     const r = build({ kind: "entry", entryId: "e3" });
     expect(r.ok && r.title).toBe("Rolled 2d6+3: 9");

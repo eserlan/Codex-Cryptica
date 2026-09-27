@@ -4,6 +4,7 @@
   import JournalEntryEditForm from "./JournalEntryEditForm.svelte";
   import JournalEntryActions from "./JournalEntryActions.svelte";
   import { parseBreakdownParts } from "$lib/utils/dice-breakdown";
+  import { renderMarkdown } from "$lib/utils/markdown";
 
   /**
    * One entry in the Session Journal (#3402 slice 3, #3408; promote controls
@@ -104,6 +105,12 @@
       : entry.content,
   );
   const canEdit = $derived(!!onEdit && entry.type === "manual-note");
+  // A typed note may carry basic Markdown (#3481: bold, italic, bullets, and
+  // line breaks via `breaks`); an automatic entry is plain, system-generated
+  // text and is left exactly as it renders today.
+  const renderedContent = $derived(
+    isAutomatic ? undefined : renderMarkdown(entry.content, { breaks: true }),
+  );
 </script>
 
 <div
@@ -138,6 +145,13 @@
       onSave={saveEdit}
       onCancel={cancelEdit}
     />
+  {:else if renderedContent !== undefined}
+    <div
+      class="prose prose-sm max-w-none text-theme-text prose-p:my-1 prose-p:text-theme-text prose-strong:text-theme-text prose-em:text-theme-text prose-ul:my-1 prose-li:my-0 prose-li:text-theme-text prose-li:marker:text-theme-muted"
+      data-testid="journal-entry-content"
+    >
+      {@html renderedContent}
+    </div>
   {:else}
     <p class="text-theme-text">{entry.content}</p>
   {/if}
