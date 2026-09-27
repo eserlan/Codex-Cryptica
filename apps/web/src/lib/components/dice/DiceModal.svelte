@@ -8,6 +8,7 @@
     getCenteredBounds,
     getViewportSize,
     loadSavedBounds,
+    resizePointerDelta,
     saveBounds,
     type WindowBounds,
     MIN_WINDOW_WIDTH,
@@ -120,10 +121,7 @@
 
   function handleResizePointerMove(e: PointerEvent) {
     if (!isResizing) return;
-    const deltaX = e.clientX - resizeStart.x;
-    const deltaY = e.clientY - resizeStart.y;
-
-    const viewport = getViewportSize();
+    const { deltaX, deltaY, viewport } = resizePointerDelta(e, resizeStart);
     const maxAvailableWidth = viewport.width - bounds.x - 8;
     const maxAvailableHeight = viewport.height - bounds.y - 8;
 
