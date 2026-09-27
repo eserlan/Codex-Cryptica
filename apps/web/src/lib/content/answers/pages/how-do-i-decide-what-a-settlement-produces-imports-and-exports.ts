@@ -149,6 +149,7 @@ export const howDoIDecideWhatASettlementProducesImportsAndExports: AnswerConfigI
       "how-do-you-create-a-fantasy-city-that-feels-alive",
       "how-do-you-create-a-fantasy-faction",
       "how-to-create-rumours-for-a-fantasy-town",
+      "how-do-trade-routes-shape-cities-and-kingdoms-in-an-rpg-world",
     ],
     discovery: {
       id: "answer-settlement-production-imports-exports",

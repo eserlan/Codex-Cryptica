@@ -147,6 +147,7 @@ export const howDoIBuildABelievableEconomyForAFantasyWorld: AnswerConfigInput =
       "how-do-you-prepare-a-sandbox-rpg-campaign",
       "how-to-create-rumours-for-a-fantasy-town",
       "how-do-i-decide-what-a-settlement-produces-imports-and-exports",
+      "how-do-trade-routes-shape-cities-and-kingdoms-in-an-rpg-world",
     ],
     discovery: {
       id: "answer-believable-fantasy-economy",
