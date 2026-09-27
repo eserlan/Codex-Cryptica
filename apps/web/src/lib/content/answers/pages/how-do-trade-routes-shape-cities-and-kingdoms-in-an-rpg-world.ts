@@ -137,6 +137,12 @@ export const howDoTradeRoutesShapeCitiesAndKingdomsInAnRpgWorld: AnswerConfigInp
           "Keep routes, toll towns, collectors, and rival paths connected on one map.",
         href: "/for/fantasy-worldbuilding",
       },
+      {
+        title: "TTRPG Economy & Trade",
+        description:
+          "Build believable prices, trade, scarcity, wealth, and economic pressures without simulating an entire economy.",
+        href: "/for/economy-trade",
+      },
     ],
     relatedAnswers: [
       "how-do-i-build-a-believable-economy-for-a-fantasy-world",
@@ -167,6 +173,7 @@ export const howDoTradeRoutesShapeCitiesAndKingdomsInAnRpgWorld: AnswerConfigInp
         "generator-settlement",
         "generator-faction",
         "generator-world",
+        "for-economy-trade",
       ],
     },
     seo: {
