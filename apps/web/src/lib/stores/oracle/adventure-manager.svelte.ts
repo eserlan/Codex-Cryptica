@@ -521,6 +521,9 @@ export class AdventureManager {
       kind: "numeric",
       value: result.total,
       label: `${expression} = ${result.total}`,
+      // The dice as actually rolled, persisted with the outcome so the roll
+      // history can show them later without re-deriving anything (#3443).
+      parts: result.parts,
     });
   }
 

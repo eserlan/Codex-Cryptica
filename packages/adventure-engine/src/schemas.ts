@@ -98,10 +98,20 @@ const newProvisionalFactSchema = provisionalFactSchema
   .omit({ id: true, introducedOnTurnId: true })
   .strict();
 
+const rollTracePartSchema = z.object({
+  type: z.enum(["dice", "modifier"]),
+  value: z.number().finite(),
+  sides: z.number().int().positive().optional(),
+  rolls: z.array(z.number().finite()).max(200).optional(),
+  dropped: z.array(z.number().finite()).max(200).optional(),
+});
+
 const outcomeSchema = z.object({
   kind: z.enum(["narrative", "numeric"]),
   value: z.union([z.string().max(MAX_TEXT_CHARS), z.number().finite()]),
   label: text.optional(),
+  // The rolled dice behind `value`, when there was a real roll (#3443).
+  parts: z.array(rollTracePartSchema).max(50).optional(),
 });
 
 const bandSchema = z.object({

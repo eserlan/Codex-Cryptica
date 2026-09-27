@@ -1,6 +1,8 @@
 <script lang="ts">
   import type { AdventureManager } from "$lib/stores/oracle/adventure-manager.svelte";
 
+  import DiceBreakdownDisclosure from "$lib/components/dice/DiceBreakdownDisclosure.svelte";
+
   let { manager }: { manager: AdventureManager } = $props();
 
   let presetLabel = $state("");
@@ -107,6 +109,13 @@
               >:{/if}
             {entry.resolvedRoll.outcome.label ??
               entry.resolvedRoll.outcome.value}
+            <DiceBreakdownDisclosure
+              parts={entry.resolvedRoll.outcome.parts}
+              total={typeof entry.resolvedRoll.outcome.value === "number"
+                ? entry.resolvedRoll.outcome.value
+                : 0}
+              formula={entry.resolvedRoll.expression}
+            />
           </li>
         {/each}
       </ol>

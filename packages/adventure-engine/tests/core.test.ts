@@ -351,4 +351,139 @@ describe("adventure engine", () => {
       "Success",
     );
   });
+
+  it("persists the rolled dice on the resolved roll, unchanged (#3443)", () => {
+    const pending = applyRollRequest(
+      session(),
+      {
+        kind: "roll-required",
+        uncertainty: "Risk",
+        stakes: "Consequence",
+        dice: {
+          expression: "4d6kh3",
+          outcomeBands: [{ id: "band-1", label: "Any", minimum: 1 }],
+        },
+        sourceRecordIds: [],
+      },
+      { turnId: "roll-1", inputId: "input-1", now },
+    );
+    if (!pending.ok) throw new Error("pending setup failed");
+    const parts = [
+      {
+        type: "dice" as const,
+        sides: 6,
+        rolls: [6, 5, 3],
+        dropped: [1],
+        value: 14,
+      },
+    ];
+    const recorded = recordPendingRollOutcome(
+      pending.value,
+      "input-1",
+      { kind: "numeric", value: 14, parts },
+      { turnId: "record-1", inputId: "input-1", now },
+    );
+    if (!recorded.ok) throw new Error("record setup failed");
+    const resolved = resolveRecordedRoll(
+      recorded.value,
+      {
+        kind: "complete",
+        narration: "The dice fall.",
+        visiblePatch: emptyPatch,
+        hiddenPatch: emptyHiddenPatch,
+        revealSecretIds: [],
+        provisionalFacts: [],
+        sourceRecordIds: [],
+      },
+      {
+        turnId: "turn-1",
+        inputId: "resolution-1",
+        playerAction: "Roll",
+        now,
+      },
+    );
+    if (!resolved.ok) throw new Error("resolve failed");
+    expect(resolved.value.turns[0]?.resolvedRoll?.outcome.parts).toEqual(parts);
+  });
+
+  it("round-trips a resolved roll's parts through parseAdventureSession", () => {
+    const raw = {
+      ...session(),
+      turns: [
+        {
+          id: "turn-1",
+          sequence: 0,
+          inputId: "input-1",
+          playerAction: "Roll",
+          rollOutcome: {
+            kind: "numeric",
+            value: 14,
+            parts: [
+              {
+                type: "dice",
+                sides: 6,
+                rolls: [6, 5, 3],
+                dropped: [1],
+                value: 14,
+              },
+            ],
+          },
+          resolvedRoll: {
+            expression: "4d6kh3",
+            outcome: {
+              kind: "numeric",
+              value: 14,
+              parts: [
+                {
+                  type: "dice",
+                  sides: 6,
+                  rolls: [6, 5, 3],
+                  dropped: [1],
+                  value: 14,
+                },
+              ],
+            },
+          },
+          narration: "The dice fall.",
+          visiblePatch: emptyPatch,
+          hiddenPatch: emptyHiddenPatch,
+          revealedSecretIds: [],
+          sourceRecordIds: [],
+          provisionalFactIds: [],
+          committedAt: now,
+        },
+      ],
+    };
+    const parsed = parseAdventureSession(raw);
+    expect(parsed.turns[0]?.resolvedRoll?.outcome.parts?.[0]?.rolls).toEqual([
+      6, 5, 3,
+    ]);
+  });
+
+  it("rejects a malformed roll trace rather than silently dropping it (negative)", () => {
+    const raw = {
+      ...session(),
+      turns: [
+        {
+          id: "turn-1",
+          sequence: 0,
+          inputId: "input-1",
+          playerAction: "Roll",
+          rollOutcome: {
+            kind: "numeric",
+            value: 14,
+            parts: [{ type: "dice", rolls: "not-an-array", value: 14 }],
+          },
+          narration: "The dice fall.",
+          visiblePatch: emptyPatch,
+          hiddenPatch: emptyHiddenPatch,
+          revealedSecretIds: [],
+          sourceRecordIds: [],
+          provisionalFactIds: [],
+          committedAt: now,
+        },
+      ],
+    };
+    expect(() => parseAdventureSession(raw)).toThrow();
+  });
 });

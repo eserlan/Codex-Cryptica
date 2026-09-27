@@ -1,6 +1,8 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import type { AdventureManager } from "$lib/stores/oracle/adventure-manager.svelte";
+  import DiceBreakdownDisclosure from "$lib/components/dice/DiceBreakdownDisclosure.svelte";
+
   let { manager }: { manager: AdventureManager } = $props();
 
   const generationMessages = [
@@ -48,6 +50,13 @@
             {#if roll.expression}{roll.expression} —{/if}
             {roll.outcome.value}
           </p>
+          <DiceBreakdownDisclosure
+            parts={roll.outcome.parts}
+            total={typeof roll.outcome.value === "number"
+              ? roll.outcome.value
+              : 0}
+            formula={roll.expression}
+          />
         {/if}
       </div>
     {/each}
