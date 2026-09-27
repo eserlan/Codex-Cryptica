@@ -73,6 +73,11 @@
   } from "./cards/entity-card-variant";
   import { openOrCreateSourceEntity } from "./canvas-source-entity";
   import { useCanvasAreaEnhancement } from "./canvas-area-enhancement.svelte";
+  import {
+    bringNodeToFront,
+    sendNodeToBack,
+    stackableNodeZIndexBounds,
+  } from "./canvas-node-stacking";
 
   import type {
     DelveCanvasEdge,
@@ -228,34 +233,12 @@
     );
   }
 
-  function stackableNodeZIndexBounds() {
-    let min = 0;
-    let max = 0;
-    for (const node of logic.nodes) {
-      if (node.type === "delveSectorGroup") continue;
-      const z = canvasNodeZIndex(node);
-      if (z > max) max = z;
-      if (z < min) min = z;
-    }
-    return { min, max };
+  function handleBringNodeToFront(nodeId: string) {
+    logic.nodes = bringNodeToFront(logic.nodes, nodeId);
   }
 
-  function bringNodeToFront(nodeId: string) {
-    const { max } = stackableNodeZIndexBounds();
-    logic.nodes = logic.nodes.map((node) =>
-      node.id === nodeId
-        ? { ...node, data: { ...node.data, zIndex: max + 1 } }
-        : node,
-    );
-  }
-
-  function sendNodeToBack(nodeId: string) {
-    const { min } = stackableNodeZIndexBounds();
-    logic.nodes = logic.nodes.map((node) =>
-      node.id === nodeId
-        ? { ...node, data: { ...node.data, zIndex: min - 1 } }
-        : node,
-    );
+  function handleSendNodeToBack(nodeId: string) {
+    logic.nodes = sendNodeToBack(logic.nodes, nodeId);
   }
 
   const contextMenuNodeLocked = $derived.by(() => {
@@ -641,7 +624,7 @@
       screenPosition ?? centerScreenPosition(),
     );
     const nodeId = engine.addTextNode("", position);
-    const { max } = stackableNodeZIndexBounds();
+    const { max } = stackableNodeZIndexBounds(logic.nodes);
     const node = createFlowTextNode("", position, nodeId);
     logic.nodes = [
       ...logic.nodes,
@@ -1022,10 +1005,10 @@
         ? () => toggleNodeLock(logic.contextMenu!.id)
         : undefined}
       onBringToFront={contextMenuNodeStackable
-        ? () => bringNodeToFront(logic.contextMenu!.id)
+        ? () => handleBringNodeToFront(logic.contextMenu!.id)
         : undefined}
       onSendToBack={contextMenuNodeStackable
-        ? () => sendNodeToBack(logic.contextMenu!.id)
+        ? () => handleSendNodeToBack(logic.contextMenu!.id)
         : undefined}
       onDelete={logic.handleDelete}
       onRename={() => {
