@@ -344,6 +344,7 @@
     <div class="mb-12">
       <UsefulnessFeedback
         voteKey={answer.slug}
+        slug={answer.slug}
         onVote={(value, reason) =>
           trackAnswerUsefulVote({
             slug: answer.slug,
