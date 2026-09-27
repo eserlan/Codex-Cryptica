@@ -789,8 +789,8 @@ export class GraphViewController {
     if (override === this.lastLayoutOverride) return;
     const previous = this.lastLayoutOverride;
     this.lastLayoutOverride = override;
-    if (this.deps.graph.timelineMode || this.deps.graph.orbitMode) return;
     if (override) {
+      if (this.deps.graph.timelineMode || this.deps.graph.orbitMode) return;
       applyLayoutSnapshot(this.cy, override);
     } else if (previous) {
       restoreEverydayPositions(

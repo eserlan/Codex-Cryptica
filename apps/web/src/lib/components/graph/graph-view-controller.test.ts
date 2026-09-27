@@ -828,6 +828,27 @@ describe("GraphViewController", () => {
       expect(closing.state[0]).toMatchObject({ x: 5, y: 6 });
     });
 
+    it("restores everyday positions before switching an open layout to timeline mode", async () => {
+      await ready();
+      deps.vault.entities = { a: at(5, 6) };
+      const opening = fakeNodes([{ id: "a", x: 0, y: 0 }]);
+      vi.mocked(controller.cy!.nodes).mockReturnValueOnce(
+        opening.collection as any,
+      );
+      deps.graph.layoutOverride = { a: { x: 11, y: 22 } };
+      controller.syncElements();
+
+      const switching = fakeNodes([{ id: "a", x: 11, y: 22 }]);
+      vi.mocked(controller.cy!.nodes).mockReturnValueOnce(
+        switching.collection as any,
+      );
+      deps.graph.timelineMode = true;
+      deps.graph.layoutOverride = null;
+      controller.syncElements();
+
+      expect(switching.state[0]).toMatchObject({ x: 5, y: 6 });
+    });
+
     it("does nothing again while the same layout stays open (negative)", async () => {
       await ready();
       const override = { a: { x: 1, y: 1 } };
