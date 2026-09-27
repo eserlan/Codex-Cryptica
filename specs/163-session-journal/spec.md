@@ -21,7 +21,7 @@ A GM or solo player is running a session and wants a running record of what happ
 1. **Given** no journal is active for the current vault, **When** the user opens Quicknote/Scratchpad, **Then** they see a "Start Session Journal" control.
 2. **Given** the user selects "Start Session Journal", **When** the journal is created, **Then** the control changes to "Open Session Journal" and the journal is empty and active.
 3. **Given** an active journal, **When** the user adds a note, **Then** the note appears in the journal with a timestamp, in the order it was added, without navigating away from Quicknote/Scratchpad.
-4. **Given** an active journal with existing entries, **When** the user adds another note, **Then** the new note appears after the existing ones (chronological order is preserved).
+4. **Given** an active journal with existing entries that have not been manually reordered, **When** the user adds another note, **Then** the new note appears after the existing ones (chronological order is preserved). After a manual reorder, later entries append after the user's chosen order (FR-003).
 
 ---
 
@@ -268,7 +268,7 @@ After (or during) a session, a GM wants the good parts of the journal to become 
   - Rolls in the solo Adventure mode's own roll prompt, and in the map (VTT) view, do not go through the shared roll history today and are therefore not captured in this slice. Capturing them is a follow-up (they would publish through the same interface).
   - Capture is always on while a journal is active. There is no per-source switch or setting in this slice; if real use shows too much noise, a filter is a follow-up.
   - Each re-rolled part of a table result is a real result the user got, so it is captured as its own entry.
-  - Captured entries are read-only like all entries (no editing or deleting individual entries exists in this journal).
+  - Captured entry content is read-only. Users may still delete or reorder captured entries, including in ended journals; manual-note editing and ended-journal entry management follow FR-050–FR-052.
   - The entry summary text is written in English like the rest of the interface; it is built from the result and does not depend on the tool's own display text.
   - An event published for one vault could in theory arrive just after the user switches vaults. That window is very small, and such an event is added to whichever journal is active for the vault now open. Stamping events with a vault id is a follow-up if it ever matters.
   - Captured data stays in the browser, in the same journal record as typed notes. Nothing new leaves the device; cloud backup behaves as in slice 1 (FR-016).
