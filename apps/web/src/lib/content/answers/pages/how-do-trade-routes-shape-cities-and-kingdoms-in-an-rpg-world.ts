@@ -8,45 +8,45 @@ export const howDoTradeRoutesShapeCitiesAndKingdomsInAnRpgWorld: AnswerConfigInp
     question: "How do trade routes shape cities and kingdoms in an RPG world?",
     kind: "framework",
     shortAnswer:
-      "Trade routes shape settlements by forcing valuable goods through narrow points where someone can tax, store, and defend them, so crossings, ports, and passes grow rich while places the route skips stay small. Ask who takes a share at each narrow point, what has gathered around the flow of goods, which rival path could steal it, and what happens to those places if the flow stops. The answers place cities, tolls, garrisons, and rivalries on the map without any further invention.",
+      "Trade routes shape settlements wherever movement becomes easier, safer, cheaper, more concentrated, or easier to control. Crossings and passes matter, but so do junctions, deep-water harbours, markets, and places that offer storage, repairs, credit, or reliable passage. Ask who captures value from the flow, which goods suit each path, what grows around it, how rulers respond, and who bears the cost if it stops. The answers place towns, infrastructure, factions, and rivalries on the map without simulating an entire economy.",
     sections: [
       {
         kind: "prose",
         heading: "Routes drawn as decoration change nothing",
         paragraphs: [
-          "Many campaign maps show roads and sea lanes that connect dots without explaining any of them. The lines look busy, yet no town exists because of its position, nobody guards or taxes the flow, and closing a pass would inconvenience nobody. The route is illustration, and the world would play identically with it removed.",
-          "A route earns its ink when goods must pass a specific point and someone there takes a share. That share pays for walls, warehouses, soldiers, and officials, which attract smiths, moneylenders, spies, and thieves in turn. Once that chain is visible, the map starts answering its own questions: the large town sits where the river narrows, the fortress watches the only dry crossing, and the poor village sits one valley sideways from wealth it can see but not touch.",
+          "Many campaign maps show roads and sea lanes that connect dots without explaining any of them. The lines look busy, yet no place grows because movement is easier there, nobody guards or serves the flow, and closing a pass would inconvenience nobody. The route is illustration, and the world would play identically with it removed.",
+          "A route earns its ink when it makes movement easier, safer, cheaper, more concentrated, or easier to control. A ford or pass may funnel traffic, while a junction, deep-water harbour, safe stopping place, busy market, or reliable repair yard may attract it. Trade can also bring news, beliefs, fashions, languages, technology, migrants, spies, and political influence, giving route towns identities beyond the goods they handle. Once those effects are visible, the map starts answering its own questions: the large town sits where river and road meet, the fortress watches a strategic crossing, and the poor village sits one valley sideways from wealth it can see but not touch.",
         ],
       },
       {
         kind: "list",
         heading: "Five questions that place power on the map",
         intro:
-          "Take one route the party might travel and answer in order. Each answer positions something physical:",
+          "Take one route the party might travel and answer in order. Each answer places something on the map:",
         items: [
           {
-            term: "Where must goods pass?",
-            text: "Find the narrow points: a ford, a bridge, a mountain pass, a strait, the last harbour before open water. Mark them first, because everything expensive about the route happens there. A route with no narrow point has no reason to enrich anyone along it.",
+            term: "Where does movement become valuable?",
+            text: "Mark places where travel becomes easier, safer, cheaper, more concentrated, or easier to control: a ford, bridge, pass, strait, or last harbour before open water, but also a route junction, trans-shipment quay, safe stop, border crossing, or major market. A narrow point is one strong reason for a town to prosper, not the only one; reliable services or unusually low costs can draw trade too.",
           },
           {
-            term: "Who takes a share there?",
-            text: "Name the collector at each narrow point and the right behind the collection: a bridge toll, a harbour due, a guild staple that forces sale in its hall, an escort fee. The collector's income is the budget for everything the place builds next.",
+            term: "Who captures value from the flow, and how?",
+            text: "Name who benefits and by what means: a bridge toll, harbour due, or guild staple, but also warehousing, repairs, lodging, credit, brokerage, markets, shipbuilding, caravan services, processing, security, or information. A place can prosper by serving carriers and buyers without legally taxing every cart that passes.",
           },
           {
-            term: "What gathered around the flow?",
-            text: "Spend the collector's share visibly: warehouses, a walled counting house, a garrison, inns for drovers, a shrine the carriers favour, repair yards. Then add the second wave that follows money anywhere: lenders, fences, informants, and rival agents.",
+            term: "What grows around the flow, and what does the ruler do?",
+            text: "Show the local effects in warehouses, a counting house, garrison, inns, shrine, and repair yards, then add lenders, fences, informants, and rival agents. At kingdom scale, ask what the ruler or state does differently because this route matters: customs revenue may fund armies and officials; rulers may build roads, bridges, canals, and ports, fortify crossings, patrol routes, guarantee passage by treaty, or use embargoes and blockades as weapons. Capitals may grow where routes converge, and a route's rise can shift power between provinces, nobles, cities, temples, and merchant factions competing for the corridor.",
           },
           {
-            term: "What rival path threatens it?",
-            text: "Find the bypass: a new mountain road, a smuggler's cove, a repaired canal, a season when the marsh crossing holds. The rival path need not be better, only cheap enough that some carriers switch. Its existence keeps every collector nervous and every toll negotiable.",
+            term: "Which cargo prefers each path, and what rival route competes?",
+            text: "Ask what kind of cargo suits each route and why: weight and bulk, perishability, urgency, season, danger, cost, or secrecy may all matter. Then find a rival path: a new mountain road, smuggler's cove, repaired canal, or a season when the marsh crossing holds. It may serve different cargo, work only in one season, be faster but riskier, cross another kingdom, or suit smugglers alone. Its existence keeps collectors nervous and gives carriers a choice; it need not replace the original route.",
           },
           {
             term: "Who loses if the flow stops?",
-            text: "Trace the stoppage forward: the toll town starves first, then the carriers, then the distant buyer. Whoever loses fastest will pay, threaten, or hire to reopen the way, which tells you exactly who offers the party work when trouble comes.",
+            text: "Trace who feels the stoppage first, who has reserves or alternatives, and who can shift the cost onto someone else. Merchants may reroute, warehouses release stock, rulers subsidise transport, smugglers profit, consumers pay more, or armies requisition supplies. Whoever has the most to lose may pay, threaten, or hire to reopen the way, which tells you who offers the party work when trouble comes.",
           },
         ],
         outro:
-          "Worked through once, these answers explain the size of every settlement on the route and give each collector a motive the party can read from the buildings alone.",
+          "Worked through once, these answers explain why settlements and states invest in the route, and give beneficiaries and rivals motives the party can read from the map and its buildings.",
       },
       {
         kind: "example",
@@ -69,7 +69,7 @@ export const howDoTradeRoutesShapeCitiesAndKingdomsInAnRpgWorld: AnswerConfigInp
           },
           {
             term: "Why it works",
-            text: "No town was placed for scenery; each sits on a narrow point or a bypass, and their buildings show which share paid for them. The rivalry needs no villain: Vennport defends its income, Halrow defends its new prosperity, and carriers choose by price. Any party travelling, guarding, smuggling, or negotiating between the two walks straight into the tension.",
+            text: "No town was placed for scenery; each serves a different movement problem, and their buildings show what trade supports them. The rivalry needs no villain: Vennport defends its income, Halrow defends its new prosperity, and carriers choose by cargo, cost, and risk. The road does not replace the waterway for every load. Any party travelling, guarding, smuggling, or negotiating between the two walks straight into the tension.",
           },
         ],
       },
@@ -78,7 +78,7 @@ export const howDoTradeRoutesShapeCitiesAndKingdomsInAnRpgWorld: AnswerConfigInp
         heading: "Protection and disruption are the adventure layer",
         paragraphs: [
           "Every valuable flow attracts two kinds of attention: those paid to protect it and those paid to interrupt it. Guards ride with the pack trains, the garrison patrols the narrows, and pilots guide hulls past the sandbar. At the same time, deserters watch the road from the high woods, a rival town pays informants for sailing times, and wreckers light false beacons on storm nights. Neither side needs inventing once the route's value is clear; both follow from the money.",
-          "Disruption then plays out through the earlier links rather than as abstract loss. A blocked pass means the toll town's warehouses sit full while its treasury empties, carriers switch to the rival path, lenders call in debts, and the distant buyer sends riders asking what the party saw on the road. Run the stoppage town by town and the consequences arrive as scenes: idle porters, a closed staple hall, a council offering hazard pay.",
+          "Disruption then plays out through the earlier links rather than as abstract loss. A blocked pass may leave warehouses full while a treasury empties, send some carriers to a rival path, prompt lenders to call in debts, and drive buyers to seek alternatives. The order and severity depend on reserves, local production, alternatives, and who can pass the cost along. Run the stoppage town by town and the consequences arrive as scenes: idle porters, a closed staple hall, a council offering hazard pay.",
         ],
       },
       {
@@ -86,19 +86,19 @@ export const howDoTradeRoutesShapeCitiesAndKingdomsInAnRpgWorld: AnswerConfigInp
         heading: "Before the route reaches the table",
         intro: "For each route the party might use, confirm:",
         items: [
-          "Can you point at the narrow points where goods must pass on the actual map?",
-          "Does each narrow point have a named collector with a stated right to charge?",
-          "Do the towns on the route show the collector's spending in buildings and people?",
-          "Is there a rival path, however partial, that keeps the collectors uneasy?",
-          "Do you know who loses fastest if the flow stops, and what they will offer to reopen it?",
+          "Can you point to the places where travel becomes easier, safer, cheaper, more concentrated, or easier to control?",
+          "Who captures value from the flow, through charges, services, trade, or information?",
+          "What do settlements and rulers build, fund, or protect because the route matters?",
+          "Which cargo suits each path, and what partial, seasonal, or risky rival route competes?",
+          "Who feels a stoppage first, who has reserves or alternatives, and who bears the cost?",
           "Which protection and which threat already watch the route, and where do they show themselves?",
         ],
       },
     ],
     codexConnection: {
-      heading: "Holding routes, collectors, and towns on one map",
+      heading: "Holding routes, beneficiaries, and towns on one map",
       paragraphs: [
-        "A route connects more notes than any single settlement file comfortably holds: the narrow points, the collectors, the warehouses they built, the rival path, and the carriers choosing between them. When one toll changes, five places should feel it, and scattered notes rarely keep all five aligned. Codex Cryptica holds routes, settlements, factions, and NPCs as linked entities on one map, so a blocked pass or a new road shows its pressure everywhere it belongs.",
+        "A route connects more notes than any single settlement file comfortably holds: the junctions and crossings, the people and businesses capturing value, the warehouses they built, the rival path, and the carriers choosing between them. When a toll changes or a road opens, several places may feel it, and scattered notes rarely keep them aligned. Codex Cryptica holds routes, settlements, factions, and NPCs as linked entities on one map, so a blocked pass or a new road shows its pressure everywhere it belongs.",
         "The world generator sketches the land the route must cross, the settlement generator gives each stop its reason to exist, and the faction generator supplies the collectors with the charters and muscle to charge. The five questions above turn those pieces into a route with beneficiaries worth defending and rivals worth fearing.",
       ],
       linkText: "Try the settlement generator",
@@ -108,7 +108,7 @@ export const howDoTradeRoutesShapeCitiesAndKingdomsInAnRpgWorld: AnswerConfigInp
       {
         title: "Settlement generator",
         description:
-          "Build the toll towns, ports, and way stations that grow where goods must pass.",
+          "Build the ports, market towns, and way stations that grow where routes bring opportunity.",
         href: "/generators/settlement",
       },
       {
@@ -134,7 +134,7 @@ export const howDoTradeRoutesShapeCitiesAndKingdomsInAnRpgWorld: AnswerConfigInp
       {
         title: "Codex Cryptica for fantasy worldbuilding",
         description:
-          "Keep routes, toll towns, collectors, and rival paths connected on one map.",
+          "Keep routes, valuable nodes, beneficiaries, and rival paths connected on one map.",
         href: "/for/fantasy-worldbuilding",
       },
       {
@@ -165,7 +165,7 @@ export const howDoTradeRoutesShapeCitiesAndKingdomsInAnRpgWorld: AnswerConfigInp
         "rpg trade route tolls and rival paths",
       ],
       uniqueValue:
-        "Five map-placing questions (narrow points, collectors, gathered growth, rival paths, stoppage losers) that turn a drawn route into toll towns, garrisons, and rivalries, with a harbour-versus-road worked example.",
+        "Five map-placing questions (valuable nodes, who captures value, local and kingdom effects, cargo-fit and rival paths, stoppage costs) that turn a drawn route into settlements, state choices, and rivalries, with a harbour-versus-road worked example.",
       userJob: "create",
       relatedIntents: [
         "answer-believable-fantasy-economy",
@@ -186,7 +186,7 @@ export const howDoTradeRoutesShapeCitiesAndKingdomsInAnRpgWorld: AnswerConfigInp
     seo: {
       title: "How Do Trade Routes Shape Cities and Kingdoms? | Codex Cryptica",
       description:
-        "Place trade power on the map: narrow points, toll collectors, gathered towns, rival paths, and who loses when the flow stops.",
+        "Place trade power on the map: valuable route nodes, who captures value, cargo-fit, kingdom choices, rival paths, and who bears the cost when trade stops.",
       image:
         "https://assets.codexcryptica.com/og/how-do-trade-routes-shape-cities-and-kingdoms-in-an-rpg-world.jpg",
       imageAlt:
