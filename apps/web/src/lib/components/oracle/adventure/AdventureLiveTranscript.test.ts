@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 
-import { render, screen } from "@testing-library/svelte";
+import { fireEvent, render, screen } from "@testing-library/svelte";
 import { tick } from "svelte";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import AdventureLiveTranscript from "./AdventureLiveTranscript.svelte";
@@ -59,6 +59,59 @@ describe("AdventureLiveTranscript", () => {
 
     expect(screen.getByText(/1d20\+7/)).toBeTruthy();
     expect(screen.getByText(/14/)).toBeTruthy();
+  });
+
+  it("expands the dice behind a resolved roll (#3443)", async () => {
+    const m = manager({
+      rollHistory: [
+        {
+          turn: { sequence: 1 },
+          resolvedRoll: {
+            expression: "4d6kh3",
+            outcome: {
+              kind: "numeric",
+              value: 14,
+              parts: [
+                {
+                  type: "dice",
+                  sides: 6,
+                  rolls: [6, 5, 3],
+                  dropped: [1],
+                  value: 14,
+                },
+              ],
+            },
+          },
+        },
+      ],
+    });
+    render(AdventureLiveTranscript, { props: { manager: m } });
+
+    await fireEvent.click(screen.getByTestId("dice-disclosure-toggle"));
+
+    expect(
+      screen.getAllByTestId("dice-kept").map((el) => el.textContent),
+    ).toEqual(["6", "5", "3"]);
+    expect(
+      screen.getAllByTestId("dice-dropped").map((el) => el.textContent),
+    ).toEqual(["1"]);
+  });
+
+  it("offers no breakdown for a resolved roll with no saved dice (negative)", () => {
+    const m = manager({
+      rollHistory: [
+        {
+          turn: { sequence: 1 },
+          resolvedRoll: {
+            expression: "1d20+7",
+            outcome: { kind: "numeric", value: 14 },
+          },
+        },
+      ],
+    });
+    render(AdventureLiveTranscript, { props: { manager: m } });
+
+    expect(screen.queryByTestId("dice-disclosure-toggle")).toBeNull();
   });
 
   it("rotates a flavorful generation message while the Oracle responds", async () => {
