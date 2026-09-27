@@ -1,6 +1,10 @@
 <script lang="ts">
   import ConnectionLine from "./ConnectionLine.svelte";
   import {
+  autoArrangeCanvasNodes,
+} from "./canvas-auto-arrange";
+
+import {
     SvelteFlow,
     Background,
     Controls,
@@ -58,7 +62,7 @@
   import { themeStore } from "$lib/stores/theme.svelte";
   import { getDelveTerm } from "$lib/utils/delve-terminology";
   import {
-    autoArrangeCanvasNodes,
+
     canvasNodeStyle,
     canvasNodeZIndex,
     createFlowTextNode,
