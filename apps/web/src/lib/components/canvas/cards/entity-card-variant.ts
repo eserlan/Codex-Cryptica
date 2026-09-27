@@ -290,6 +290,36 @@ export function isMemberRelation(
   return MEMBER_KEYWORDS.some((kw) => combined.includes(kw));
 }
 
+export function getFactionMemberIcon(
+  subtitle: string,
+  isLeader: boolean,
+): string {
+  if (isLeader) return "icon-[lucide--crown]";
+  const role = subtitle.toLowerCase();
+  const iconRules: [string[], string][] = [
+    [
+      ["krig", "warrior", "fighter", "barbarian", "ridder", "knight"],
+      "icon-[lucide--swords]",
+    ],
+    [
+      ["mag", "wizard", "sorcerer", "warlock", "heks"],
+      "icon-[lucide--sparkles]",
+    ],
+    [
+      ["klerik", "cleric", "paladin", "priest", "prest"],
+      "icon-[lucide--shield]",
+    ],
+    [["skurk", "rogue", "thief", "tyv", "assassin"], "icon-[lucide--dagger]"],
+    [["speider", "ranger", "hunter", "jeger"], "icon-[lucide--compass]"],
+    [["bard", "skald"], "icon-[lucide--music]"],
+  ];
+  return (
+    iconRules.find(([terms]) =>
+      terms.some((term) => role.includes(term)),
+    )?.[1] ?? "icon-[lucide--user]"
+  );
+}
+
 /**
  * Faction relationships: extracts Leaders and Members strictly,
  * intentionally filtering out unrelated notes, session logs,
@@ -317,54 +347,226 @@ function tryAddFactionRelation(
   leaders: RelationRow[],
   members: RelationRow[],
 ): boolean {
-  if (seen.has(targetId)) return false;
-
   const isLeader = isLeaderRelation(conn.label, conn.type);
-  const isMember = isMemberRelation(conn.label, conn.type);
-
-  const metaAffiliation = String(
-    targetEntity?.metadata?.affiliation ||
-      targetEntity?.metadata?.faction ||
-      targetEntity?.metadata?.tilknytning ||
-      "",
-  ).toLowerCase();
-
-  const isAffiliatedMember = Boolean(
-    factionTitle &&
-    factionTitle.length > 2 &&
-    metaAffiliation.includes(factionTitle),
-  );
-
-  const isExplicitGhostMember =
-    !targetEntity &&
-    Boolean(
-      conn.type && ["part_of", "member", "leads", "leader"].includes(conn.type),
-    );
-
-  if (!isLeader && !isMember && !isAffiliatedMember && !isExplicitGhostMember) {
+  if (
+    seen.has(targetId) ||
+    !isFactionRelation(conn, targetEntity, factionTitle, isLeader)
+  )
     return false;
-  }
-
   seen.add(targetId);
-  const title = targetEntity?.title || "Unknown";
-  const stance = getConnectionStance(conn.type);
-
-  if (isLeader) {
-    leaders.push({
-      target: targetId,
-      title,
-      text: conn.label?.trim() || "Leader",
-      stance: stance === "neutral" ? "ally" : stance,
-    });
-  } else {
-    members.push({
-      target: targetId,
-      title,
-      text: conn.label?.trim() || "Member",
-      stance,
-    });
-  }
+  appendFactionRelation(
+    targetId,
+    targetEntity,
+    conn,
+    isLeader,
+    leaders,
+    members,
+  );
   return true;
+}
+
+function appendFactionRelation(
+  targetId: string,
+  entity: { title?: string | null } | undefined,
+  conn: { label?: string | null; type?: string | null },
+  isLeader: boolean,
+  leaders: RelationRow[],
+  members: RelationRow[],
+): void {
+  const stance = getConnectionStance(conn.type);
+  const row: RelationRow = {
+    target: targetId,
+    title: entity?.title || "Unknown",
+    text: conn.label?.trim() || (isLeader ? "Leader" : "Member"),
+    stance: isLeader && stance === "neutral" ? "ally" : stance,
+  };
+  (isLeader ? leaders : members).push(row);
+}
+
+function isFactionRelation(
+  conn: { label?: string | null; type?: string | null },
+  entity: { metadata?: Record<string, unknown> | null } | undefined,
+  factionTitle: string,
+  isLeader: boolean,
+): boolean {
+  return (
+    isLeader ||
+    isMemberRelation(conn.label, conn.type) ||
+    hasFactionAffiliation(entity, factionTitle) ||
+    isExplicitGhostMember(entity, conn.type)
+  );
+}
+
+function hasFactionAffiliation(
+  entity: { metadata?: Record<string, unknown> | null } | undefined,
+  factionTitle: string,
+): boolean {
+  if (factionTitle.length <= 2) return false;
+  const affiliation = firstMetadataValue(entity?.metadata ?? {}, [
+    "affiliation",
+    "faction",
+    "tilknytning",
+  ]);
+  return String(affiliation ?? "")
+    .toLowerCase()
+    .includes(factionTitle);
+}
+
+function isExplicitGhostMember(
+  entity: unknown,
+  connectionType: string | null | undefined,
+): boolean {
+  return (
+    !entity &&
+    ["part_of", "member", "leads", "leader"].includes(connectionType ?? "")
+  );
+}
+
+const NON_PERSON_TYPES = new Set([
+  "location",
+  "place",
+  "item",
+  "gjenstand",
+  "loot",
+  "note",
+  "session",
+  "log",
+  "quest",
+  "lore",
+  "event",
+  "hendelse",
+]);
+const PERSON_TYPES = new Set([
+  "character",
+  "creature",
+  "person",
+  "npc",
+  "pc",
+  "spiller",
+  "player",
+]);
+
+function processFactionOutgoing(
+  connections: FactionConnectionLike[],
+  entities: Record<
+    string,
+    | {
+        title?: string;
+        type?: string;
+        metadata?: Record<string, unknown> | null;
+      }
+    | undefined
+  >,
+  factionTitle: string,
+  seen: Set<string>,
+  leaders: RelationRow[],
+  members: RelationRow[],
+): void {
+  for (const connection of connections) {
+    const target = entities[connection.target];
+    if (NON_PERSON_TYPES.has((target?.type ?? "").toLowerCase())) continue;
+    tryAddFactionRelation(
+      connection.target,
+      target,
+      connection,
+      factionTitle,
+      seen,
+      leaders,
+      members,
+    );
+  }
+}
+
+function processFactionIncoming(
+  factionId: string | undefined,
+  entities: Record<
+    string,
+    | {
+        title?: string;
+        type?: string;
+        connections?: FactionConnectionLike[];
+        metadata?: Record<string, unknown> | null;
+      }
+    | undefined
+  >,
+  factionTitle: string,
+  seen: Set<string>,
+  leaders: RelationRow[],
+  members: RelationRow[],
+): void {
+  if (!factionId) return;
+  for (const [id, entity] of Object.entries(entities)) {
+    addIncomingFactionRelation(
+      id,
+      entity,
+      factionId,
+      factionTitle,
+      seen,
+      leaders,
+      members,
+    );
+  }
+}
+
+function addIncomingFactionRelation(
+  id: string,
+  entity:
+    | {
+        title?: string;
+        type?: string;
+        connections?: FactionConnectionLike[];
+        metadata?: Record<string, unknown> | null;
+      }
+    | undefined,
+  factionId: string,
+  factionTitle: string,
+  seen: Set<string>,
+  leaders: RelationRow[],
+  members: RelationRow[],
+): void {
+  if (
+    !entity ||
+    !PERSON_TYPES.has((entity.type ?? "").toLowerCase()) ||
+    seen.has(id)
+  )
+    return;
+  for (const connection of entity.connections ?? []) {
+    if (connection.target !== factionId) continue;
+    const added = tryAddFactionRelation(
+      id,
+      entity,
+      connection,
+      factionTitle,
+      seen,
+      leaders,
+      members,
+    );
+    if (added) break;
+  }
+}
+
+function makeFactionRelationResult(
+  leaders: RelationRow[],
+  members: RelationRow[],
+) {
+  const groups: LinkGroup[] = [];
+  if (leaders.length)
+    groups.push({ key: "character", label: "Leaders", rows: leaders });
+  if (members.length)
+    groups.push({ key: "character", label: "Members", rows: members });
+  const roster = [...leaders, ...members];
+  return {
+    groups,
+    members: roster
+      .slice(0, 5)
+      .map((row) => ({ id: row.target, title: row.title, stance: row.stance })),
+    memberCount: roster.length,
+    leaders,
+    allRosterMembers: [
+      ...leaders.map((row) => ({ ...row, isLeader: true })),
+      ...members.map((row) => ({ ...row, isLeader: false })),
+    ],
+  };
 }
 
 export function getFactionRelations(
@@ -403,113 +605,23 @@ export function getFactionRelations(
   const seenEntities = new Set<string>();
   const factionTitle = (factionEntity?.title || "").toLowerCase();
 
-  // 1. Process outgoing connections from the faction
-  for (const conn of connections) {
-    const target = entities[conn.target];
-    const targetType = (target?.type ?? "").toLowerCase();
-
-    const isExplicitNonPerson =
-      targetType === "location" ||
-      targetType === "place" ||
-      targetType === "item" ||
-      targetType === "gjenstand" ||
-      targetType === "loot" ||
-      targetType === "note" ||
-      targetType === "session" ||
-      targetType === "log" ||
-      targetType === "quest" ||
-      targetType === "lore" ||
-      targetType === "event" ||
-      targetType === "hendelse";
-
-    if (isExplicitNonPerson) {
-      continue;
-    }
-
-    tryAddFactionRelation(
-      conn.target,
-      target,
-      conn,
-      factionTitle,
-      seenEntities,
-      leaderRows,
-      memberRows,
-    );
-  }
-
-  // 2. Process incoming connections from characters in the vault pointing to this faction
-  if (factionId) {
-    for (const [id, e] of Object.entries(entities)) {
-      if (!e) continue;
-      const eType = (e.type ?? "").toLowerCase();
-      if (
-        eType !== "character" &&
-        eType !== "creature" &&
-        eType !== "person" &&
-        eType !== "npc" &&
-        eType !== "pc" &&
-        eType !== "spiller" &&
-        eType !== "player"
-      ) {
-        continue;
-      }
-      if (seenEntities.has(id)) continue;
-
-      if (Array.isArray(e.connections)) {
-        for (const conn of e.connections) {
-          if (conn.target === factionId) {
-            if (
-              tryAddFactionRelation(
-                id,
-                e,
-                conn,
-                factionTitle,
-                seenEntities,
-                leaderRows,
-                memberRows,
-              )
-            ) {
-              break;
-            }
-          }
-        }
-      }
-    }
-  }
-
-  const groups: LinkGroup[] = [];
-  if (leaderRows.length > 0) {
-    groups.push({
-      key: "character",
-      label: "Leaders",
-      rows: leaderRows,
-    });
-  }
-  if (memberRows.length > 0) {
-    groups.push({
-      key: "character",
-      label: "Members",
-      rows: memberRows,
-    });
-  }
-
-  const allPeople = [...leaderRows, ...memberRows];
-  const members: FactionMember[] = allPeople.slice(0, 5).map((p) => ({
-    id: p.target,
-    title: p.title,
-    stance: p.stance,
-  }));
-
-  return {
-    groups,
-    members,
-    memberCount: allPeople.length,
-    leaders: leaderRows,
-    allRosterMembers: [
-      ...leaderRows.map((r) => ({ ...r, isLeader: true })),
-      ...memberRows.map((r) => ({ ...r, isLeader: false })),
-    ],
-  };
+  processFactionOutgoing(
+    connections,
+    entities,
+    factionTitle,
+    seenEntities,
+    leaderRows,
+    memberRows,
+  );
+  processFactionIncoming(
+    factionId,
+    entities,
+    factionTitle,
+    seenEntities,
+    leaderRows,
+    memberRows,
+  );
+  return makeFactionRelationResult(leaderRows, memberRows);
 }
 
 export function getFactionMembers(
@@ -637,6 +749,68 @@ function truncateQuote(str: string, maxLength: number): string {
     : str;
 }
 
+function quoteFromMetadata(
+  metadata: Record<string, unknown> | null | undefined,
+  maxLength: number,
+): string | undefined {
+  const value = firstMetadataValue(metadata ?? {}, [
+    "quote",
+    "tagline",
+    "motto",
+    "sitat",
+  ]);
+  if (typeof value !== "string" || !value.trim()) return undefined;
+  const cleaned = cleanQuoteString(value.trim());
+  return cleaned ? truncateQuote(cleaned, maxLength) : undefined;
+}
+
+function quoteFromBlockquote(
+  lines: string[],
+  maxLength: number,
+): string | undefined {
+  const quoteLines: string[] = [];
+  for (const rawLine of lines) {
+    const line = rawLine.trim();
+    if (!line.startsWith(">")) {
+      if (quoteLines.length > 0) break;
+      continue;
+    }
+    quoteLines.push(line.replace(/^>+\s?/, ""));
+  }
+  const cleaned = cleanQuoteString(quoteLines.join(" "));
+  return cleaned ? truncateQuote(cleaned, maxLength) : undefined;
+}
+
+function quoteFromWrappedText(
+  content: string,
+  maxLength: number,
+): string | undefined {
+  const match = content.match(/["“«]([^"”»\n]+(?:\n[^"”»\n]+)?)["”»]/);
+  const candidate = match?.[1].replace(/\s+/g, " ").trim();
+  if (!candidate || candidate.length < 3 || candidate.startsWith("#"))
+    return undefined;
+  const cleaned = cleanQuoteString(candidate);
+  return cleaned ? truncateQuote(cleaned, maxLength) : undefined;
+}
+
+function quoteFromQuotedLine(
+  lines: string[],
+  maxLength: number,
+): string | undefined {
+  for (const rawLine of lines) {
+    const line = rawLine.trim();
+    if (
+      !line ||
+      line.startsWith("#") ||
+      !/^[*_]*["“'«].+["”'»][*_]*$/.test(line)
+    )
+      continue;
+    const cleaned = cleanQuoteString(line);
+    if (cleaned) return truncateQuote(cleaned, maxLength);
+  }
+  return undefined;
+}
+
 /**
  * An author-written quote: markdown blockquote (`> …`), explicit quoted line, or metadata quote.
  */
@@ -645,56 +819,15 @@ export function extractQuote(
   metadata?: Record<string, unknown> | null,
   maxLength = 140,
 ): string | undefined {
-  if (metadata) {
-    const metaQuote =
-      metadata.quote || metadata.tagline || metadata.motto || metadata.sitat;
-    if (typeof metaQuote === "string" && metaQuote.trim()) {
-      const cleaned = cleanQuoteString(metaQuote.trim());
-      if (cleaned) return truncateQuote(cleaned, maxLength);
-    }
-  }
-
+  const metadataQuote = quoteFromMetadata(metadata, maxLength);
+  if (metadataQuote) return metadataQuote;
   if (!content) return undefined;
-
   const lines = content.split("\n");
-
-  // 1. Contiguous markdown blockquotes (> ...)
-  const blockquoteLines: string[] = [];
-  for (const rawLine of lines) {
-    const trimmed = rawLine.trim();
-    if (trimmed.startsWith(">")) {
-      blockquoteLines.push(trimmed.replace(/^>+\s?/, ""));
-    } else if (blockquoteLines.length > 0) {
-      break;
-    }
-  }
-  if (blockquoteLines.length > 0) {
-    const combined = blockquoteLines.join(" ");
-    const cleaned = cleanQuoteString(combined);
-    if (cleaned) return truncateQuote(cleaned, maxLength);
-  }
-
-  // 2. Multi-line or single-line quote wrapped in matching quotes: "...", “...”, «...»
-  const quoteMatch = content.match(/["“«]([^"”»\n]+(?:\n[^"”»\n]+)?)["”»]/);
-  if (quoteMatch) {
-    const candidate = quoteMatch[1].replace(/\s+/g, " ").trim();
-    if (candidate.length >= 3 && !candidate.startsWith("#")) {
-      const cleaned = cleanQuoteString(candidate);
-      if (cleaned) return truncateQuote(cleaned, maxLength);
-    }
-  }
-
-  // 3. Fallback: single line with quotes or starting with quote
-  for (const rawLine of lines) {
-    const line = rawLine.trim();
-    if (!line || line.startsWith("#")) continue;
-    if (/^[*_]*["“'«].+["”'»][*_]*$/.test(line)) {
-      const cleaned = cleanQuoteString(line);
-      if (cleaned) return truncateQuote(cleaned, maxLength);
-    }
-  }
-
-  return undefined;
+  return (
+    quoteFromBlockquote(lines, maxLength) ??
+    quoteFromWrappedText(content, maxLength) ??
+    quoteFromQuotedLine(lines, maxLength)
+  );
 }
 
 export function formatCoordinates(
@@ -728,113 +861,110 @@ export function extractEntitySubtitle(
     | null,
 ): string {
   if (!entity) return "";
-
   const meta = entity.metadata as
     Record<string, string | undefined> | undefined;
-  const ancestry =
-    meta?.ancestry || meta?.race || meta?.rase || meta?.species || "";
-  const role =
-    meta?.class ||
-    meta?.klasse ||
-    meta?.role ||
-    meta?.yrke ||
-    meta?.profession ||
-    meta?.occupation ||
-    "";
-  if (ancestry && role) return `${ancestry} · ${role}`;
-  if (ancestry) return ancestry;
-  if (role) return role;
-
-  if (entity.content) {
-    const lines = entity.content.split("\n");
-    let foundRace = "";
-    let foundClass = "";
-    for (const line of lines) {
-      const trimmed = line.trim();
-      const m = trimmed.match(
-        /^(?:[-*•]\s*)?\*{0,2}([^*:]+)\*{0,2}[:-]\s*(.+)$/,
-      );
-      if (!m) continue;
-      const key = m[1].replace(/[*_`]/g, "").trim().toLowerCase();
-      const val = m[2].replace(/[*_`]/g, "").trim();
-
-      if (!foundRace && ["race", "ancestry", "rase", "species"].includes(key)) {
-        foundRace = val;
-      }
-      if (
-        !foundClass &&
-        [
-          "class",
-          "klasse",
-          "role",
-          "yrke/rolle",
-          "yrke",
-          "profession",
-          "occupation",
-        ].includes(key)
-      ) {
-        foundClass = val;
-      }
-    }
-    if (foundRace && foundClass) return `${foundRace} · ${foundClass}`;
-    if (foundRace) return foundRace;
-    if (foundClass) return foundClass;
-  }
-
-  if (entity.labels && entity.labels.length > 0) {
-    const COMMON_ANCESTRIES = [
-      "human",
-      "menneske",
-      "elf",
-      "alv",
-      "halvalv",
-      "half-elf",
-      "dwarf",
-      "dverg",
-      "halfling",
-      "tiefling",
-      "orc",
-      "ork",
-      "gnome",
-    ];
-    let raceFromLabel = "";
-    let roleFromLabel = "";
-    for (const label of entity.labels) {
-      const lower = label.toLowerCase();
-      if (!raceFromLabel && COMMON_ANCESTRIES.some((a) => lower.includes(a))) {
-        raceFromLabel = label;
-      } else if (
-        !roleFromLabel &&
-        ![
-          "female",
-          "male",
-          "kvinne",
-          "mann",
-          "ally",
-          "alliert",
-          "enemy",
-          "fiende",
-          "party",
-          "partyet",
-          "neutral",
-          "nøytral",
-          "character",
-        ].includes(lower)
-      ) {
-        roleFromLabel = label;
-      }
-    }
-    if (raceFromLabel && roleFromLabel)
-      return `${raceFromLabel} · ${roleFromLabel}`;
-    if (roleFromLabel) return roleFromLabel;
-    if (raceFromLabel) return raceFromLabel;
-  }
-
+  const metadataSubtitle = combineSubtitle(
+    firstValue(meta, ["ancestry", "race", "rase", "species"]),
+    firstValue(meta, [
+      "class",
+      "klasse",
+      "role",
+      "yrke",
+      "profession",
+      "occupation",
+    ]),
+  );
+  if (metadataSubtitle) return metadataSubtitle;
+  const contentSubtitle = subtitleFromContent(entity.content);
+  if (contentSubtitle) return contentSubtitle;
+  const labelSubtitle = subtitleFromLabels(entity.labels);
+  if (labelSubtitle) return labelSubtitle;
   if (entity.kind) return entity.kind;
-
   return entity.type
     ? entity.type.charAt(0).toUpperCase() + entity.type.slice(1)
     : "";
+}
+
+function firstValue(
+  record: Record<string, string | undefined> | undefined,
+  keys: string[],
+): string {
+  return keys.map((key) => record?.[key]).find(Boolean) ?? "";
+}
+
+function combineSubtitle(ancestry: string, role: string): string {
+  if (ancestry && role) return `${ancestry} · ${role}`;
+  return ancestry || role;
+}
+
+const ANCESTRY_KEYS = ["race", "ancestry", "rase", "species"];
+const ROLE_KEYS = [
+  "class",
+  "klasse",
+  "role",
+  "yrke/rolle",
+  "yrke",
+  "profession",
+  "occupation",
+];
+const COMMON_ANCESTRIES = [
+  "human",
+  "menneske",
+  "elf",
+  "alv",
+  "halvalv",
+  "half-elf",
+  "dwarf",
+  "dverg",
+  "halfling",
+  "tiefling",
+  "orc",
+  "ork",
+  "gnome",
+];
+const NON_ROLE_LABELS = new Set([
+  "female",
+  "male",
+  "kvinne",
+  "mann",
+  "ally",
+  "alliert",
+  "enemy",
+  "fiende",
+  "party",
+  "partyet",
+  "neutral",
+  "nøytral",
+  "character",
+]);
+
+function subtitleFromContent(content: string | null | undefined): string {
+  if (!content) return "";
+  let ancestry = "";
+  let role = "";
+  for (const line of content.split("\n")) {
+    const match = line
+      .trim()
+      .match(/^(?:[-*•]\s*)?\*{0,2}([^*:]+)\*{0,2}[:-]\s*(.+)$/);
+    if (!match) continue;
+    const key = match[1].replace(/[*_`]/g, "").trim().toLowerCase();
+    const value = match[2].replace(/[*_`]/g, "").trim();
+    if (!ancestry && ANCESTRY_KEYS.includes(key)) ancestry = value;
+    if (!role && ROLE_KEYS.includes(key)) role = value;
+  }
+  return combineSubtitle(ancestry, role);
+}
+
+function subtitleFromLabels(labels: string[] | null | undefined): string {
+  let ancestry = "";
+  let role = "";
+  for (const label of labels ?? []) {
+    const lower = label.toLowerCase();
+    if (!ancestry && COMMON_ANCESTRIES.some((item) => lower.includes(item)))
+      ancestry = label;
+    else if (!role && !NON_ROLE_LABELS.has(lower)) role = label;
+  }
+  return combineSubtitle(ancestry, role);
 }
 
 export interface DossierAttribute {
@@ -878,243 +1008,231 @@ const DOSSIER_KEYS = [
 
 function toEnglishAttributeLabel(raw: string): string {
   const lower = raw.trim().toLowerCase();
-  if (lower === "alder" || lower === "age") return "Age";
-  if (lower === "opprinnelse" || lower === "origin" || lower === "homeland")
-    return "Origin";
-  if (lower.includes("lokasjon") || lower.includes("location"))
-    return "Location";
-  if (
-    lower.includes("tilknyt") ||
-    lower.includes("tilhør") ||
-    lower.includes("affil") ||
-    lower.includes("faksjon") ||
-    lower === "faction"
-  ) {
-    return "Affiliation";
-  }
-  if (
-    lower.includes("yrke") ||
-    lower.includes("rolle") ||
-    lower === "role" ||
-    lower === "class" ||
-    lower === "occupation"
-  ) {
-    return "Role";
-  }
-  if (lower.includes("trekk") || lower.includes("trait")) return "Traits";
-  if (lower === "status") return "Status";
-  if (lower === "rase" || lower === "race" || lower === "ancestry")
-    return "Race";
-  return raw.trim().charAt(0).toUpperCase() + raw.trim().slice(1);
+  const exactLabels: Record<string, string> = {
+    alder: "Age",
+    age: "Age",
+    opprinnelse: "Origin",
+    origin: "Origin",
+    homeland: "Origin",
+    faction: "Affiliation",
+    role: "Role",
+    class: "Role",
+    occupation: "Role",
+    status: "Status",
+    rase: "Race",
+    race: "Race",
+    ancestry: "Race",
+  };
+  if (exactLabels[lower]) return exactLabels[lower];
+  const includesLabels: [string[], string][] = [
+    [["lokasjon", "location"], "Location"],
+    [["tilknyt", "tilhør", "affil", "faksjon"], "Affiliation"],
+    [["yrke", "rolle"], "Role"],
+    [["trekk", "trait"], "Traits"],
+  ];
+  const match = includesLabels.find(([needles]) =>
+    needles.some((needle) => lower.includes(needle)),
+  );
+  return match?.[1] ?? raw.trim().charAt(0).toUpperCase() + raw.trim().slice(1);
 }
+
+type DossierAttributeAdder = (
+  label: string,
+  value: string,
+  icon?: string,
+) => void;
+
+type DossierEntity = {
+  type?: string | null;
+  kind?: string | null;
+  labels?: string[] | null;
+  content?: string | null;
+  metadata?: Record<string, unknown> | null;
+};
 
 export function extractDossierAttributes(
   content: string | undefined | null,
   metadata?: Record<string, unknown> | null,
-  entity?: {
-    type?: string | null;
-    kind?: string | null;
-    labels?: string[] | null;
-    content?: string | null;
-    metadata?: Record<string, unknown> | null;
-  } | null,
+  entity?: DossierEntity | null,
 ): DossierAttribute[] {
   const attributes: DossierAttribute[] = [];
   const seen = new Set<string>();
-
-  const add = (label: string, value: string, icon?: string) => {
+  const add: DossierAttributeAdder = (label, value, icon) => {
     const englishLabel = toEnglishAttributeLabel(label);
-    const norm = englishLabel.toLowerCase();
-    if (!seen.has(norm) && value.trim()) {
-      seen.add(norm);
-      attributes.push({ label: englishLabel, value: value.trim(), icon });
-    }
+    const normalized = englishLabel.toLowerCase();
+    if (seen.has(normalized) || !value.trim()) return;
+    seen.add(normalized);
+    attributes.push({ label: englishLabel, value: value.trim(), icon });
   };
 
-  if (content) {
-    const lines = content.split("\n");
-    for (const rawLine of lines) {
-      const line = rawLine.trim();
-      const match = line.match(
+  addContentAttributes(content, add);
+  addMetadataAttributes(metadata, add);
+  addFallbackAttributes(attributes, seen, entity, add);
+  return attributes;
+}
+
+function addContentAttributes(
+  content: string | null | undefined,
+  add: DossierAttributeAdder,
+): void {
+  for (const rawLine of content?.split("\n") ?? []) {
+    const match = rawLine
+      .trim()
+      .match(
         /^(?:[-*•]\s*)?\*{0,2}([-A-Za-zæøåÆØÅ\s/_]{2,25})\*{0,2}[:-]\s*(.+)$/,
       );
-      if (match) {
-        const key = match[1].trim();
-        if (key.startsWith("#")) continue;
-        const val = match[2]
-          .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
-          .replace(/[*_`~]/g, "")
-          .trim();
-        if (val && !val.startsWith("http")) {
-          const lowerKey = key.toLowerCase();
-          if (
-            DOSSIER_KEYS.some((k) => lowerKey === k || lowerKey.startsWith(k))
-          ) {
-            let icon: string | undefined;
-            if (
-              lowerKey.includes("lokasjon") ||
-              lowerKey.includes("location")
-            ) {
-              icon = "icon-[lucide--map-pin]";
-            } else if (
-              lowerKey.includes("tilknyt") ||
-              lowerKey.includes("tilhør") ||
-              lowerKey.includes("affil")
-            ) {
-              icon = "icon-[lucide--shield]";
-            } else if (
-              lowerKey.includes("yrke") ||
-              lowerKey.includes("role") ||
-              lowerKey.includes("class")
-            ) {
-              icon = "icon-[lucide--swords]";
-            } else if (lowerKey.includes("status")) {
-              icon = "icon-[lucide--badge-check]";
-            } else if (
-              lowerKey.includes("trekk") ||
-              lowerKey.includes("trait")
-            ) {
-              icon = "icon-[lucide--sparkles]";
-            }
-            add(key, val, icon);
-          }
-        }
-      }
+    if (!match) continue;
+    const key = match[1].trim();
+    const value = match[2]
+      .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
+      .replace(/[*_`~]/g, "")
+      .trim();
+    if (key.startsWith("#") || !value || value.startsWith("http")) continue;
+    const lowerKey = key.toLowerCase();
+    if (
+      DOSSIER_KEYS.some(
+        (candidate) => lowerKey === candidate || lowerKey.startsWith(candidate),
+      )
+    ) {
+      add(key, value, iconForAttribute(lowerKey));
     }
   }
+}
 
-  if (metadata) {
-    if (metadata.age && !seen.has("age")) {
-      add("Age", String(metadata.age));
-    }
-    const originVal =
-      metadata.origin || metadata.opprinnelse || metadata.homeland;
-    if (originVal && !seen.has("origin")) {
-      add("Origin", String(originVal));
-    }
-    const locVal =
-      metadata.location ||
-      metadata.lokasjon ||
-      metadata.currentLocation ||
-      metadata.current_location;
-    if (locVal && !seen.has("location")) {
-      add("Location", String(locVal), "icon-[lucide--map-pin]");
-    }
-    const affilVal =
-      metadata.affiliation ||
-      metadata.tilknytning ||
-      metadata.tilhørighet ||
-      metadata.faction;
-    if (affilVal && !seen.has("affiliation")) {
-      add("Affiliation", String(affilVal), "icon-[lucide--shield]");
-    }
-    const roleVal =
-      metadata.role ||
-      metadata.yrke ||
-      metadata.class ||
-      metadata.klasse ||
-      metadata.occupation;
-    if (roleVal && !seen.has("role")) {
-      add("Role", String(roleVal), "icon-[lucide--swords]");
-    }
-    if (metadata.status && !seen.has("status")) {
-      add("Status", String(metadata.status), "icon-[lucide--badge-check]");
-    }
-    const traitsVal =
-      metadata.traits ||
-      metadata.trekk ||
-      metadata.specialTraits ||
-      metadata.spesielle_trekk;
-    if (traitsVal && !seen.has("traits")) {
-      add("Traits", String(traitsVal), "icon-[lucide--sparkles]");
+function iconForAttribute(key: string): string | undefined {
+  const rules: [string[], string][] = [
+    [["lokasjon", "location"], "icon-[lucide--map-pin]"],
+    [["tilknyt", "tilhør", "affil"], "icon-[lucide--shield]"],
+    [["yrke", "role", "class"], "icon-[lucide--swords]"],
+    [["status"], "icon-[lucide--badge-check]"],
+    [["trekk", "trait"], "icon-[lucide--sparkles]"],
+  ];
+  return rules.find(([terms]) => terms.some((term) => key.includes(term)))?.[1];
+}
+
+function firstMetadataValue(
+  metadata: Record<string, unknown>,
+  keys: string[],
+): unknown {
+  return keys.map((key) => metadata[key]).find(Boolean);
+}
+
+function addMetadataAttributes(
+  metadata: Record<string, unknown> | null | undefined,
+  add: DossierAttributeAdder,
+): void {
+  if (!metadata) return;
+  const fields: [string, string[], string?][] = [
+    ["Age", ["age"]],
+    ["Origin", ["origin", "opprinnelse", "homeland"]],
+    [
+      "Location",
+      ["location", "lokasjon", "currentLocation", "current_location"],
+      "icon-[lucide--map-pin]",
+    ],
+    [
+      "Affiliation",
+      ["affiliation", "tilknytning", "tilhørighet", "faction"],
+      "icon-[lucide--shield]",
+    ],
+    [
+      "Role",
+      ["role", "yrke", "class", "klasse", "occupation"],
+      "icon-[lucide--swords]",
+    ],
+    ["Status", ["status"], "icon-[lucide--badge-check]"],
+    [
+      "Traits",
+      ["traits", "trekk", "specialTraits", "spesielle_trekk"],
+      "icon-[lucide--sparkles]",
+    ],
+  ];
+  for (const [label, keys, icon] of fields) {
+    const value = firstMetadataValue(metadata, keys);
+    if (value) add(label, String(value), icon);
+  }
+}
+
+const NON_TRAIT_LABELS = [
+  "ally",
+  "alliert",
+  "enemy",
+  "fiende",
+  "party",
+  "partyet",
+  "neutral",
+  "nøytral",
+  "character",
+  "female",
+  "male",
+  "kvinne",
+  "mann",
+  "human",
+  "menneske",
+  "elf",
+  "alv",
+  "dwarf",
+  "dverg",
+  "halfling",
+  "tiefling",
+  "orc",
+  "ork",
+  "gnome",
+  "rogue",
+  "fighter",
+  "wizard",
+  "cleric",
+];
+
+function addFallbackAttributes(
+  attributes: DossierAttribute[],
+  seen: Set<string>,
+  entity: DossierEntity | null | undefined,
+  add: DossierAttributeAdder,
+): void {
+  if (!entity || attributes.length >= 3) return;
+  addRoleAndStatusFallbacks(seen, entity, add);
+  addLabelFallbacks(seen, entity.labels ?? [], add);
+}
+
+function addRoleAndStatusFallbacks(
+  seen: Set<string>,
+  entity: DossierEntity,
+  add: DossierAttributeAdder,
+): void {
+  if (!seen.has("role")) {
+    const role = extractEntitySubtitle(entity);
+    if (role && !["Character", "Unknown", "Note"].includes(role)) {
+      add("Role", role, "icon-[lucide--swords]");
     }
   }
-
-  // Fallback stats derived from entity if sparse, ensuring no awkward empty space
-  if (attributes.length < 3 && entity) {
-    if (!seen.has("role")) {
-      const role = extractEntitySubtitle(entity);
-      if (
-        role &&
-        role !== "Character" &&
-        role !== "Unknown" &&
-        role !== "Note"
-      ) {
-        add("Role", role, "icon-[lucide--swords]");
-      }
-    }
-    if (!seen.has("status")) {
-      const stance = getEntityPrimaryStance(entity);
-      if (
-        stance.badgeText &&
-        stance.badgeText !== "Character" &&
-        stance.badgeText !== "Unknown"
-      ) {
-        add("Status", stance.badgeText, "icon-[lucide--badge-check]");
-      }
-    }
-    if (!seen.has("race") && entity.labels) {
-      const COMMON_ANCESTRIES = [
-        "human",
-        "menneske",
-        "elf",
-        "alv",
-        "halvalv",
-        "half-elf",
-        "dwarf",
-        "dverg",
-        "halfling",
-        "tiefling",
-        "orc",
-        "ork",
-        "gnome",
-      ];
-      const raceLabel = entity.labels.find((l: string) =>
-        COMMON_ANCESTRIES.some((a) => l.toLowerCase().includes(a)),
-      );
-      if (raceLabel) add("Race", raceLabel);
-    }
-    if (!seen.has("traits") && entity.labels && entity.labels.length > 0) {
-      const nonTraits = [
-        "ally",
-        "alliert",
-        "enemy",
-        "fiende",
-        "party",
-        "partyet",
-        "neutral",
-        "nøytral",
-        "character",
-        "female",
-        "male",
-        "kvinne",
-        "mann",
-        "human",
-        "menneske",
-        "elf",
-        "alv",
-        "dwarf",
-        "dverg",
-        "halfling",
-        "tiefling",
-        "orc",
-        "ork",
-        "gnome",
-        "rogue",
-        "fighter",
-        "wizard",
-        "cleric",
-      ];
-      const traitLabels = entity.labels.filter(
-        (l: string) => !nonTraits.some((nt) => l.toLowerCase().includes(nt)),
-      );
-      if (traitLabels.length > 0) {
-        add("Traits", traitLabels.join(", "), "icon-[lucide--sparkles]");
-      }
+  if (!seen.has("status")) {
+    const status = getEntityPrimaryStance(entity).badgeText;
+    if (status && !["Character", "Unknown"].includes(status)) {
+      add("Status", status, "icon-[lucide--badge-check]");
     }
   }
+}
 
-  return attributes;
+function addLabelFallbacks(
+  seen: Set<string>,
+  labels: string[],
+  add: DossierAttributeAdder,
+): void {
+  if (!seen.has("race")) {
+    const race = labels.find((label) =>
+      COMMON_ANCESTRIES.some((term) => label.toLowerCase().includes(term)),
+    );
+    if (race) add("Race", race);
+  }
+  if (!seen.has("traits")) {
+    const traits = labels.filter(
+      (label) =>
+        !NON_TRAIT_LABELS.some((term) => label.toLowerCase().includes(term)),
+    );
+    if (traits.length)
+      add("Traits", traits.join(", "), "icon-[lucide--sparkles]");
+  }
 }
 
 export interface DossierSections {
@@ -1137,48 +1255,13 @@ export function extractDossierSections(
     const line = rawLine.trim();
     const headerMatch = line.match(/^#{1,4}\s+(.+)$/);
     if (headerMatch) {
-      const heading = headerMatch[1].trim().toLowerCase();
-      if (
-        heading.includes("bakgrunn") ||
-        heading.includes("background") ||
-        heading.includes("overview") ||
-        heading.includes("lore") ||
-        heading.includes("beskrivelse") ||
-        heading.includes("description")
-      ) {
-        currentSection = "background";
-        continue;
-      } else if (
-        heading.includes("mål") ||
-        heading.includes("mal") ||
-        heading.includes("goal") ||
-        heading.includes("motivation") ||
-        heading.includes("agenda")
-      ) {
-        currentSection = "goals";
-        continue;
-      } else {
-        currentSection = "none";
-        continue;
-      }
+      currentSection = classifyDossierSection(headerMatch[1]);
+      continue;
     }
 
-    if (currentSection === "goals") {
-      const bulletMatch = line.match(/^[-*•]\s+(.+)$/);
-      if (bulletMatch) {
-        const goal = bulletMatch[1].replace(/[*_`~]/g, "").trim();
-        if (goal) sections.goals.push(goal);
-      }
-    } else if (currentSection === "background") {
-      if (
-        !line.match(
-          /^(?:[-*•]\s*)?\*{0,2}[-A-Za-zæøåÆØÅ\s/_]{2,25}\*{0,2}[:-]/,
-        ) &&
-        !line.startsWith(">")
-      ) {
-        if (line) bgLines.push(line);
-      }
-    }
+    if (currentSection === "goals") appendGoal(line, sections.goals);
+    if (currentSection === "background" && isBackgroundText(line))
+      bgLines.push(line);
   }
 
   if (bgLines.length > 0) {
@@ -1186,6 +1269,37 @@ export function extractDossierSections(
   }
 
   return sections;
+}
+
+type DossierSectionName = "none" | "background" | "goals";
+
+function classifyDossierSection(rawHeading: string): DossierSectionName {
+  const heading = rawHeading.trim().toLowerCase();
+  const backgroundTerms = [
+    "bakgrunn",
+    "background",
+    "overview",
+    "lore",
+    "beskrivelse",
+    "description",
+  ];
+  const goalTerms = ["mål", "mal", "goal", "motivation", "agenda"];
+  if (backgroundTerms.some((term) => heading.includes(term)))
+    return "background";
+  if (goalTerms.some((term) => heading.includes(term))) return "goals";
+  return "none";
+}
+
+function appendGoal(line: string, goals: string[]): void {
+  const match = line.match(/^[-*•]\s+(.+)$/);
+  const goal = match?.[1].replace(/[*_`~]/g, "").trim();
+  if (goal) goals.push(goal);
+}
+
+function isBackgroundText(line: string): boolean {
+  const isAttribute =
+    /^(?:[-*•]\s*)?\*{0,2}[-A-Za-zæøåÆØÅ\s/_]{2,25}\*{0,2}[:-]/.test(line);
+  return Boolean(line) && !isAttribute && !line.startsWith(">");
 }
 
 export interface FactionTag {
@@ -1198,120 +1312,92 @@ export function getFactionTags(
   labels?: string[] | null,
   _content?: string | null,
 ): FactionTag[] {
-  const tags: FactionTag[] = [];
-  const list = Array.isArray(labels) ? labels : [];
+  return (Array.isArray(labels) ? labels : []).map(makeFactionTag);
+}
 
-  for (const label of list) {
-    const lower = label.trim().toLowerCase();
-    if (
-      lower.includes("alliert") ||
-      lower.includes("allianse") ||
-      lower.includes("ally")
-    ) {
-      tags.push({
-        label:
-          lower.includes("alliert") || lower.includes("allianse")
-            ? "Ally"
-            : label,
-        icon: "icon-[lucide--shield]",
-        variant: "ally",
-      });
-    } else if (
-      lower.includes("fiende") ||
-      lower.includes("hostile") ||
-      lower.includes("enemy")
-    ) {
-      tags.push({
-        label: lower.includes("fiende") ? "Enemy" : label,
-        icon: "icon-[lucide--skull]",
-        variant: "enemy",
-      });
-    } else if (lower.includes("nøytral") || lower.includes("neutral")) {
-      tags.push({
-        label: lower.includes("nøytral") ? "Neutral" : label,
-        icon: "icon-[lucide--scale]",
-        variant: "neutral",
-      });
-    } else if (
-      lower.includes("makt") ||
-      lower.includes("militær") ||
-      lower.includes("power")
-    ) {
-      tags.push({
-        label: lower.includes("politisk makt") ? "Political Power" : label,
-        icon: "icon-[lucide--swords]",
-        variant: "default",
-      });
-    } else if (
-      lower.includes("handel") ||
-      lower.includes("trade") ||
-      lower.includes("coins")
-    ) {
-      tags.push({
-        label: lower.includes("handel") ? "Trade" : label,
-        icon: "icon-[lucide--coins]",
-        variant: "default",
-      });
-    } else if (
-      lower.includes("info") ||
-      lower.includes("spion") ||
-      lower.includes("secret")
-    ) {
-      tags.push({
-        label: lower.includes("informasjon") ? "Intelligence" : label,
-        icon: "icon-[lucide--scroll]",
-        variant: "default",
-      });
-    } else if (
-      lower.includes("kult") ||
-      lower.includes("cult") ||
-      lower.includes("magi") ||
-      lower.includes("magic")
-    ) {
-      tags.push({
-        label: lower.includes("kult")
-          ? "Cult"
-          : lower.includes("magi")
-            ? "Magic"
-            : label,
-        icon: "icon-[lucide--sparkles]",
-        variant: "default",
-      });
-    } else if (
-      lower.includes("underverden") ||
-      lower.includes("underworld") ||
-      lower.includes("thief") ||
-      lower.includes("shadow")
-    ) {
-      tags.push({
-        label: lower.includes("underverden") ? "Underworld" : label,
-        icon: "icon-[lucide--dagger]",
-        variant: "default",
-      });
-    } else if (
-      lower.includes("by") ||
-      lower.includes("city") ||
-      lower.includes("borg")
-    ) {
-      tags.push({
-        label: lower === "by" ? "City" : lower === "borg" ? "Citadel" : label,
-        icon: "icon-[lucide--castle]",
-        variant: "default",
-      });
-    } else if (
-      lower.includes("valdren") ||
-      lower.includes("lokasjon") ||
-      lower.includes("location")
-    ) {
-      tags.push({
-        label: lower.includes("lokasjon") ? "Location" : label,
-        icon: "icon-[lucide--map-pin]",
-        variant: "default",
-      });
-    } else {
-      tags.push({ label, icon: "icon-[lucide--tag]", variant: "default" });
-    }
-  }
+const FACTION_TAG_RULES: {
+  terms: string[];
+  icon: string;
+  variant: FactionTag["variant"];
+  label?: (raw: string, lower: string) => string;
+}[] = [
+  {
+    terms: ["alliert", "allianse", "ally"],
+    icon: "icon-[lucide--shield]",
+    variant: "ally",
+    label: (raw, lower) =>
+      lower.includes("alliert") || lower.includes("allianse") ? "Ally" : raw,
+  },
+  {
+    terms: ["fiende", "hostile", "enemy"],
+    icon: "icon-[lucide--skull]",
+    variant: "enemy",
+    label: (raw, lower) => (lower.includes("fiende") ? "Enemy" : raw),
+  },
+  {
+    terms: ["nøytral", "neutral"],
+    icon: "icon-[lucide--scale]",
+    variant: "neutral",
+    label: (raw, lower) => (lower.includes("nøytral") ? "Neutral" : raw),
+  },
+  {
+    terms: ["makt", "militær", "power"],
+    icon: "icon-[lucide--swords]",
+    variant: "default",
+    label: (raw, lower) =>
+      lower.includes("politisk makt") ? "Political Power" : raw,
+  },
+  {
+    terms: ["handel", "trade", "coins"],
+    icon: "icon-[lucide--coins]",
+    variant: "default",
+    label: (raw, lower) => (lower.includes("handel") ? "Trade" : raw),
+  },
+  {
+    terms: ["info", "spion", "secret"],
+    icon: "icon-[lucide--scroll]",
+    variant: "default",
+    label: (raw, lower) =>
+      lower.includes("informasjon") ? "Intelligence" : raw,
+  },
+  {
+    terms: ["kult", "cult", "magi", "magic"],
+    icon: "icon-[lucide--sparkles]",
+    variant: "default",
+    label: (raw, lower) =>
+      lower.includes("kult") ? "Cult" : lower.includes("magi") ? "Magic" : raw,
+  },
+  {
+    terms: ["underverden", "underworld", "thief", "shadow"],
+    icon: "icon-[lucide--dagger]",
+    variant: "default",
+    label: (raw, lower) => (lower.includes("underverden") ? "Underworld" : raw),
+  },
+  {
+    terms: ["by", "city", "borg"],
+    icon: "icon-[lucide--castle]",
+    variant: "default",
+    label: (raw, lower) =>
+      lower === "by" ? "City" : lower === "borg" ? "Citadel" : raw,
+  },
+  {
+    terms: ["valdren", "lokasjon", "location"],
+    icon: "icon-[lucide--map-pin]",
+    variant: "default",
+    label: (raw, lower) => (lower.includes("lokasjon") ? "Location" : raw),
+  },
+];
 
-  return tags;
+function makeFactionTag(label: string): FactionTag {
+  const lower = label.trim().toLowerCase();
+  const rule = FACTION_TAG_RULES.find((candidate) =>
+    candidate.terms.some((term) => lower.includes(term)),
+  );
+  return rule
+    ? {
+        label: rule.label?.(label, lower) ?? label,
+        icon: rule.icon,
+        variant: rule.variant,
+      }
+    : { label, icon: "icon-[lucide--tag]", variant: "default" };
 }

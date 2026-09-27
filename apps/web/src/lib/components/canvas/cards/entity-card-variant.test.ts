@@ -8,6 +8,7 @@ import {
   formatCoordinates,
   getConnectionStance,
   getEntityPrimaryStance,
+  getFactionMemberIcon,
   getFactionMembers,
   getFactionRelations,
   getFactionTags,
@@ -597,6 +598,16 @@ describe("getFactionTags", () => {
     expect(tags[2].variant).toBe("neutral");
     expect(tags[2].label).toBe("Neutral");
     expect(tags[2].icon).toBe("icon-[lucide--scale]");
+  });
+});
+
+describe("getFactionMemberIcon", () => {
+  it("chooses a role icon and gives leaders a crown", () => {
+    expect(getFactionMemberIcon("Northern Wizard", false)).toBe(
+      "icon-[lucide--sparkles]",
+    );
+    expect(getFactionMemberIcon("Unknown", true)).toBe("icon-[lucide--crown]");
+    expect(getFactionMemberIcon("Unknown", false)).toBe("icon-[lucide--user]");
   });
 });
 

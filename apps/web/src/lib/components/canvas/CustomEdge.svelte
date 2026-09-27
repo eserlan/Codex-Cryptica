@@ -24,22 +24,22 @@
 
   const { getNodes } = useSvelteFlow();
 
-  const stance = $derived.by(() => {
-    if ((data as any)?.stance) return (data as any).stance;
-    if (label) {
-      const fromLabel = getConnectionStance(label);
-      if (fromLabel !== "neutral") return fromLabel;
-    }
-    return "neutral";
-  });
+  function resolveStance(data: unknown, label: string | undefined): string {
+    const explicit = (data as { stance?: string } | undefined)?.stance;
+    return explicit || (label ? getConnectionStance(label) : "neutral");
+  }
 
-  const resolvedStyle = $derived.by(() => {
-    if (style) return style;
-    if (stance === "ally") return "stroke: #34d399; stroke-width: 2px;";
-    if (stance === "friend") return "stroke: #38bdf8; stroke-width: 2px;";
-    if (stance === "enemy") return "stroke: #f43f5e; stroke-width: 2px;";
-    return undefined;
-  });
+  const STANCE_STYLES = {
+    ally: "stroke: #34d399; stroke-width: 2px;",
+    friend: "stroke: #38bdf8; stroke-width: 2px;",
+    enemy: "stroke: #f43f5e; stroke-width: 2px;",
+    neutral: undefined,
+  };
+
+  const stance = $derived(resolveStance(data, label));
+  const resolvedStyle = $derived(
+    style ?? STANCE_STYLES[stance as keyof typeof STANCE_STYLES],
+  );
 
   const edgeData = $derived.by(() => {
     const allNodes = getNodes();

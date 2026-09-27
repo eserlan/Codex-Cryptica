@@ -3,6 +3,7 @@
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
   import {
     extractEntitySubtitle,
+    getFactionMemberIcon,
     extractQuote,
     type ConnectionStance,
   } from "./entity-card-variant";
@@ -39,60 +40,7 @@
     char ? extractQuote(char.content, char.metadata, 70) : undefined,
   );
 
-  // Derive class/role icon or leader icon
-  const memberIcon = $derived.by(() => {
-    if (isLeader) return "icon-[lucide--crown]";
-    const sub = (subtitle || "").toLowerCase();
-    if (
-      sub.includes("krig") ||
-      sub.includes("warrior") ||
-      sub.includes("fighter") ||
-      sub.includes("barbarian") ||
-      sub.includes("ridder") ||
-      sub.includes("knight")
-    ) {
-      return "icon-[lucide--swords]";
-    }
-    if (
-      sub.includes("mag") ||
-      sub.includes("wizard") ||
-      sub.includes("sorcerer") ||
-      sub.includes("warlock") ||
-      sub.includes("heks")
-    ) {
-      return "icon-[lucide--sparkles]";
-    }
-    if (
-      sub.includes("klerik") ||
-      sub.includes("cleric") ||
-      sub.includes("paladin") ||
-      sub.includes("priest") ||
-      sub.includes("prest")
-    ) {
-      return "icon-[lucide--shield]";
-    }
-    if (
-      sub.includes("skurk") ||
-      sub.includes("rogue") ||
-      sub.includes("thief") ||
-      sub.includes("tyv") ||
-      sub.includes("assassin")
-    ) {
-      return "icon-[lucide--dagger]";
-    }
-    if (
-      sub.includes("speider") ||
-      sub.includes("ranger") ||
-      sub.includes("hunter") ||
-      sub.includes("jeger")
-    ) {
-      return "icon-[lucide--compass]";
-    }
-    if (sub.includes("bard") || sub.includes("skald")) {
-      return "icon-[lucide--music]";
-    }
-    return "icon-[lucide--user]";
-  });
+  const memberIcon = $derived(getFactionMemberIcon(subtitle, isLeader));
 
   const roleLabel = $derived(
     member.text && member.text !== "Member" && member.text !== "Leader"

@@ -22,6 +22,8 @@ import { systemClock, type Clock } from "$lib/utils/runtime-deps";
 import {
   normalizeEntityCardViewPreference,
   resolveEntityCardVariant,
+  type EntityCardVariant,
+  type EntityCardViewPreference,
 } from "./cards/entity-card-variant";
 
 export type CanvasWorkspacePoint = { x: number; y: number };
@@ -499,6 +501,158 @@ export interface EstimatedNodeSize {
   height: number;
 }
 
+function getLiveDomSize(
+  node: Node,
+  variant: EntityCardVariant,
+  isLarge: boolean,
+): EstimatedNodeSize | undefined {
+  const nodeEl = findCanvasNodeElement(node.id);
+  if (!nodeEl) return undefined;
+  const contentEl = (nodeEl.firstElementChild as HTMLElement) || nodeEl;
+  const width = Math.max(nodeEl.offsetWidth || 0, contentEl.offsetWidth || 0);
+  const height = Math.max(
+    nodeEl.offsetHeight || 0,
+    contentEl.offsetHeight || 0,
+  );
+  return isInvalidLiveSize(width, height, variant, isLarge)
+    ? undefined
+    : { width, height };
+}
+
+function findCanvasNodeElement(id: string): HTMLElement | null {
+  if (
+    typeof document === "undefined" ||
+    typeof document.querySelector !== "function"
+  )
+    return null;
+  return document.querySelector(
+    `.svelte-flow__node[data-id="${id}"], [data-id="${id}"]`,
+  ) as HTMLElement | null;
+}
+
+function isInvalidLiveSize(
+  width: number,
+  height: number,
+  variant: EntityCardVariant,
+  isLarge: boolean,
+): boolean {
+  if (width <= 40 || height <= 40) return true;
+  if (variant === "image_only" && !isLarge) return width > 320;
+  return (
+    variant !== "compact" &&
+    variant !== "image_only" &&
+    width <= 200 &&
+    height <= 260
+  );
+}
+
+function getMeasuredNodeSize(
+  node: Node,
+  variant: EntityCardVariant,
+  isLarge: boolean,
+): EstimatedNodeSize | undefined {
+  const width = (node as any).measured?.width as number | undefined;
+  const height = (node as any).measured?.height as number | undefined;
+  if (!isValidMeasuredSize(width, height)) return undefined;
+  return normalizeMeasuredNodeSize(width, height as number, variant, isLarge);
+}
+
+function normalizeMeasuredNodeSize(
+  width: number,
+  height: number,
+  variant: EntityCardVariant,
+  isLarge: boolean,
+): EstimatedNodeSize {
+  if (variant === "image_only" && !isLarge && width > 320)
+    return { width: 192, height: 256 };
+  if (isSmallCardMeasurement(width, height, variant)) {
+    return { width: isLarge ? 580 : 300, height: isLarge ? 500 : 480 };
+  }
+  return { width, height };
+}
+
+function isValidMeasuredSize(width: unknown, height: unknown): width is number {
+  return (
+    typeof width === "number" &&
+    width > 0 &&
+    typeof height === "number" &&
+    height > 0
+  );
+}
+
+function isSmallCardMeasurement(
+  width: number,
+  height: number | undefined,
+  variant: EntityCardVariant,
+): boolean {
+  return (
+    variant !== "image_only" &&
+    variant !== "compact" &&
+    width <= 200 &&
+    (height ?? Infinity) <= 260
+  );
+}
+
+function getDefaultNodeSize(
+  node: Node,
+  data: Record<string, unknown>,
+  entity: { metadata?: Record<string, unknown>; type?: string } | undefined,
+  cardView: EntityCardViewPreference,
+  variant: EntityCardVariant,
+  isLarge: boolean,
+): EstimatedNodeSize {
+  const width = (node.width as number) || (data.width as number);
+  const height = (node.height as number) || (data.height as number);
+  const fixedSizes: Record<string, EstimatedNodeSize> = {
+    text: { width: 200, height: 140 },
+    file: { width: 220, height: 180 },
+    delveRoom: { width: 280, height: 200 },
+    adventureNode: { width: 280, height: 200 },
+  };
+  const fixedSize = node.type ? fixedSizes[node.type] : undefined;
+  if (fixedSize) return applyExplicitSize(fixedSize, width, height);
+
+  const isFaction = isFactionCard(entity?.type, cardView);
+  const standardSize = isLarge ? LARGE_CARD_SIZE : STANDARD_CARD_SIZE;
+  const defaults: Record<EntityCardVariant, EstimatedNodeSize> = {
+    image_only: isFaction
+      ? FACTION_IMAGE_SIZE
+      : { width: isLarge ? 580 : 192, height: 256 },
+    compact: COMPACT_CARD_SIZE,
+    roster: ROSTER_CARD_SIZE,
+    default: standardSize,
+    character: standardSize,
+    faction: standardSize,
+    location: standardSize,
+  };
+  return applyExplicitSize(defaults[variant], width, height);
+}
+
+const STANDARD_CARD_SIZE = { width: 300, height: 480 };
+const LARGE_CARD_SIZE = { width: 580, height: 480 };
+const COMPACT_CARD_SIZE = { width: 112, height: 160 };
+const ROSTER_CARD_SIZE = { width: 580, height: 540 };
+const FACTION_IMAGE_SIZE = { width: 580, height: 380 };
+
+function isFactionCard(
+  entityType: string | undefined,
+  preference: EntityCardViewPreference,
+): boolean {
+  return (
+    (entityType ?? "").toLowerCase() === "faction" ||
+    preference === "roster" ||
+    preference === "faction"
+  );
+}
+
+function applyExplicitSize(
+  fallback: EstimatedNodeSize,
+  width: number | undefined,
+  height: number | undefined,
+): EstimatedNodeSize {
+  return { width: width || fallback.width, height: height || fallback.height };
+}
+
 export function getEstimatedNodeSize(
   node: Node,
   vaultEntities?: Record<
@@ -513,134 +667,206 @@ export function getEstimatedNodeSize(
   const variant = resolveEntityCardVariant(entity?.type, cardView);
   const isLarge = Boolean(data.largeCard) || variant === "roster";
 
-  // 1. Try reading live unscaled DOM dimensions directly from the browser
-  if (
-    typeof document !== "undefined" &&
-    typeof document.querySelector === "function"
-  ) {
-    const nodeEl = document.querySelector(
-      `.svelte-flow__node[data-id="${node.id}"], [data-id="${node.id}"]`,
-    ) as HTMLElement | null;
-    if (nodeEl) {
-      const contentEl = (nodeEl.firstElementChild as HTMLElement) || nodeEl;
-      const domWidth = Math.max(
-        nodeEl.offsetWidth || 0,
-        contentEl.offsetWidth || 0,
-      );
-      const domHeight = Math.max(
-        nodeEl.offsetHeight || 0,
-        contentEl.offsetHeight || 0,
-      );
-      if (domWidth > 40 && domHeight > 40) {
-        // Guard against view transition lag if mode was just toggled
-        const isImageMismatch =
-          variant === "image_only" && !isLarge && domWidth > 320;
-        const isCardMismatch =
-          variant !== "image_only" &&
-          variant !== "compact" &&
-          domWidth <= 200 &&
-          domHeight <= 260;
-        if (!isImageMismatch && !isCardMismatch) {
-          return { width: domWidth, height: domHeight };
-        }
-      }
-    }
-  }
-
-  // 2. Fall back to live measured dimensions from SvelteFlow
-  const measuredWidth = (node as any).measured?.width as number | undefined;
-  const measuredHeight = (node as any).measured?.height as number | undefined;
-
-  if (
-    typeof measuredWidth === "number" &&
-    measuredWidth > 0 &&
-    typeof measuredHeight === "number" &&
-    measuredHeight > 0
-  ) {
-    if (variant === "image_only" && !isLarge && measuredWidth > 320) {
-      return { width: 192, height: 256 };
-    }
-    if (
-      variant !== "image_only" &&
-      variant !== "compact" &&
-      measuredWidth <= 200 &&
-      measuredHeight <= 260
-    ) {
-      return { width: isLarge ? 580 : 300, height: isLarge ? 500 : 480 };
-    }
-    return { width: measuredWidth, height: measuredHeight };
-  }
-
-  const explicitWidth = (node.width as number) || (data.width as number);
-  const explicitHeight = (node.height as number) || (data.height as number);
-
-  if (node.type === "text") {
-    return {
-      width: explicitWidth || 200,
-      height: explicitHeight || 140,
-    };
-  }
-
-  if (node.type === "file") {
-    return {
-      width: explicitWidth || 220,
-      height: explicitHeight || 180,
-    };
-  }
-
-  if (node.type === "delveRoom" || node.type === "adventureNode") {
-    return {
-      width: explicitWidth || 280,
-      height: explicitHeight || 200,
-    };
-  }
-
-  const isFaction =
-    (entity?.type ?? "").toLowerCase() === "faction" ||
-    cardView === "roster" ||
-    cardView === "faction";
-
-  if (variant === "image_only") {
-    if (isFaction) {
-      return {
-        width: explicitWidth || 580,
-        height: explicitHeight || 380,
-      };
-    }
-    return {
-      width: explicitWidth || (isLarge ? 580 : 192),
-      height: explicitHeight || 256,
-    };
-  }
-
-  if (variant === "compact") {
-    return {
-      width: explicitWidth || 112,
-      height: explicitHeight || 160,
-    };
-  }
-
-  if (variant === "roster") {
-    return {
-      width: explicitWidth || 580,
-      height: explicitHeight || 540,
-    };
-  }
-
-  if (isLarge) {
-    return {
-      width: explicitWidth || 580,
-      height: explicitHeight || 480,
-    };
-  }
-
-  return {
-    width: explicitWidth || 300,
-    height: explicitHeight || 480,
-  };
+  return (
+    getLiveDomSize(node, variant, isLarge) ??
+    getMeasuredNodeSize(node, variant, isLarge) ??
+    getDefaultNodeSize(node, data, entity, cardView, variant, isLarge)
+  );
 }
 
-export function autoArrangeCanvasNodes(params: {
+interface StickerAttachment {
+  sticker: Node;
+  parentNodeId: string;
+  offsetX: number;
+  offsetY: number;
+}
+
+function intersectionArea(
+  first: Node,
+  firstSize: EstimatedNodeSize,
+  second: Node,
+  secondSize: EstimatedNodeSize,
+): number {
+  const overlapX = Math.max(
+    0,
+    Math.min(
+      first.position.x + firstSize.width,
+      second.position.x + secondSize.width,
+    ) - Math.max(first.position.x, second.position.x),
+  );
+  const overlapY = Math.max(
+    0,
+    Math.min(
+      first.position.y + firstSize.height,
+      second.position.y + secondSize.height,
+    ) - Math.max(first.position.y, second.position.y),
+  );
+  return overlapX * overlapY;
+}
+
+function findStickerParent(
+  node: Node,
+  parents: Node[],
+  sizes: Map<string, EstimatedNodeSize>,
+): Node | undefined {
+  const size = sizes.get(node.id) ?? { width: 200, height: 140 };
+  const area = size.width * size.height;
+  let best: Node | undefined;
+  let maxOverlap = 0;
+  for (const parent of parents) {
+    if (parent.id === node.id) continue;
+    const parentSize = sizes.get(parent.id) ?? { width: 260, height: 360 };
+    if (parentSize.width * parentSize.height < area * 1.1) continue;
+    const overlap = intersectionArea(node, size, parent, parentSize);
+    if (overlap > area * 0.15 && overlap > maxOverlap) {
+      best = parent;
+      maxOverlap = overlap;
+    }
+  }
+  return best;
+}
+
+function separateStickers(
+  nodes: Node[],
+  sizes: Map<string, EstimatedNodeSize>,
+): { primaryNodes: Node[]; stickers: StickerAttachment[] } {
+  const parents = nodes.filter((node) => node.type !== "text");
+  const primaryNodes: Node[] = [];
+  const stickers: StickerAttachment[] = [];
+  for (const node of nodes) {
+    const parent =
+      node.type === "text"
+        ? findStickerParent(node, parents, sizes)
+        : undefined;
+    if (!parent) {
+      primaryNodes.push(node);
+      continue;
+    }
+    stickers.push({
+      sticker: node,
+      parentNodeId: parent.id,
+      offsetX: node.position.x - parent.position.x,
+      offsetY: node.position.y - parent.position.y,
+    });
+  }
+  return { primaryNodes, stickers };
+}
+
+function horizontalConflict(
+  node: Node,
+  row: Node[],
+  sizes: Map<string, EstimatedNodeSize>,
+): boolean {
+  const size = sizes.get(node.id)!;
+  return row.some((member) => {
+    const memberSize = sizes.get(member.id)!;
+    const overlap = Math.max(
+      0,
+      Math.min(
+        node.position.x + size.width,
+        member.position.x + memberSize.width,
+      ) - Math.max(node.position.x, member.position.x),
+    );
+    return overlap > Math.min(size.width, memberSize.width) * 0.6;
+  });
+}
+
+function findCompatibleRow(
+  node: Node,
+  rows: Node[][],
+  sizes: Map<string, EstimatedNodeSize>,
+): Node[] | undefined {
+  const size = sizes.get(node.id)!;
+  const center = node.position.y + size.height / 2;
+  let best: Node[] | undefined;
+  let minDistance = Infinity;
+  for (const row of rows) {
+    if (horizontalConflict(node, row, sizes)) continue;
+    const averageCenter =
+      row.reduce(
+        (sum, item) => sum + item.position.y + sizes.get(item.id)!.height / 2,
+        0,
+      ) / row.length;
+    const averageHeight =
+      row.reduce((sum, item) => sum + sizes.get(item.id)!.height, 0) /
+      row.length;
+    const distance = Math.abs(center - averageCenter);
+    if (
+      distance < Math.max(averageHeight, size.height) * 0.55 &&
+      distance < minDistance
+    ) {
+      best = row;
+      minDistance = distance;
+    }
+  }
+  return best;
+}
+
+function clusterRows(
+  nodes: Node[],
+  sizes: Map<string, EstimatedNodeSize>,
+): Node[][] {
+  const sorted = [...nodes].sort(
+    (a, b) =>
+      a.position.y +
+      sizes.get(a.id)!.height / 2 -
+      (b.position.y + sizes.get(b.id)!.height / 2),
+  );
+  const rows: Node[][] = [];
+  for (const node of sorted) {
+    const row = findCompatibleRow(node, rows, sizes);
+    if (row) row.push(node);
+    else rows.push([node]);
+  }
+  rows.sort((a, b) => averageY(a) - averageY(b));
+  rows.forEach((row) => row.sort((a, b) => a.position.x - b.position.x));
+  return rows;
+}
+
+function averageY(nodes: Node[]): number {
+  return nodes.reduce((sum, node) => sum + node.position.y, 0) / nodes.length;
+}
+
+function positionRows(
+  rows: Node[][],
+  nodes: Node[],
+  sizes: Map<string, EstimatedNodeSize>,
+): Map<string, { x: number; y: number }> {
+  const minX = Math.min(...nodes.map((node) => node.position.x));
+  const minY = Math.min(...nodes.map((node) => node.position.y));
+  const positioned = new Map<string, { x: number; y: number }>();
+  let y = minY;
+  for (const row of rows) {
+    const rowMinX = Math.min(...row.map((node) => node.position.x));
+    let x = Math.abs(rowMinX - minX) < 100 ? minX : rowMinX;
+    let maxHeight = 0;
+    for (const node of row) {
+      const size = sizes.get(node.id)!;
+      positioned.set(node.id, { x, y });
+      x += size.width + 20;
+      maxHeight = Math.max(maxHeight, size.height);
+    }
+    y += maxHeight + 24;
+  }
+  return positioned;
+}
+
+function reattachStickers(
+  positioned: Map<string, { x: number; y: number }>,
+  stickers: StickerAttachment[],
+): void {
+  for (const { sticker, parentNodeId, offsetX, offsetY } of stickers) {
+    const parent = positioned.get(parentNodeId);
+    positioned.set(
+      sticker.id,
+      parent
+        ? { x: parent.x + offsetX, y: parent.y + offsetY }
+        : sticker.position,
+    );
+  }
+}
+
+type AutoArrangeParams = {
   canvasId: string;
   title: string;
   nodes: Node[];
@@ -650,51 +876,53 @@ export function autoArrangeCanvasNodes(params: {
     { metadata?: Record<string, unknown> } | undefined
   >;
   clock?: Clock;
-}): Node[] | null {
-  const clock = params.clock ?? systemClock;
-  const delveRooms = params.nodes.filter((node) => node.type === "delveRoom");
-  if (delveRooms.length > 0) {
-    const now = clock.now();
-    const rawDoc: DelveCanvasDocument = {
-      id: params.canvasId,
-      conceptId: params.canvasId,
-      title: params.title,
-      nodes: params.nodes.map(flowNodeToCanvasNode) as DelveCanvasNode[],
-      edges: params.edges.map((edge) =>
-        flowEdgeToCanvasEdge(edge),
-      ) as DelveCanvasEdge[],
-      metadata: {
-        size: "medium",
-        entranceRoomIds: delveRooms
-          .filter(
-            (node) =>
-              (node.data as unknown as DelveRoomNodeData).role === "entrance",
-          )
-          .map((node) => node.id),
-        createdAt: now,
-        updatedAt: now,
-      },
-    };
-    const positioned = new DelveFlowLayout().applyLayout(rawDoc);
-    const positionedById = new Map(
-      positioned.nodes.map((node) => [node.id, node]),
-    );
-    return params.nodes.map((node) => {
-      const match = positionedById.get(node.id);
-      if (!match) return node;
-      return {
-        ...node,
-        position: match.position,
-        width: match.width,
-        height: match.height,
-        parentId: match.parentId,
-        extent:
-          match.extent === "parent" ? "parent" : (node.extent ?? undefined),
-      };
-    });
-  }
+};
 
-  const adventureNodes = params.nodes.flatMap((node): AdventureNode[] => {
+function arrangeDelveNodes(
+  params: AutoArrangeParams,
+  clock: Clock,
+): Node[] | undefined {
+  const delveRooms = params.nodes.filter((node) => node.type === "delveRoom");
+  if (delveRooms.length === 0) return undefined;
+  const now = clock.now();
+  const document: DelveCanvasDocument = {
+    id: params.canvasId,
+    conceptId: params.canvasId,
+    title: params.title,
+    nodes: params.nodes.map(flowNodeToCanvasNode) as DelveCanvasNode[],
+    edges: params.edges.map((edge) =>
+      flowEdgeToCanvasEdge(edge),
+    ) as DelveCanvasEdge[],
+    metadata: {
+      size: "medium",
+      entranceRoomIds: delveRooms
+        .filter(
+          (node) =>
+            (node.data as unknown as DelveRoomNodeData).role === "entrance",
+        )
+        .map((node) => node.id),
+      createdAt: now,
+      updatedAt: now,
+    },
+  };
+  const layout = new DelveFlowLayout().applyLayout(document);
+  const byId = new Map(layout.nodes.map((node) => [node.id, node]));
+  return params.nodes.map((node) => {
+    const match = byId.get(node.id);
+    if (!match) return node;
+    return {
+      ...node,
+      position: match.position,
+      width: match.width,
+      height: match.height,
+      parentId: match.parentId,
+      extent: match.extent === "parent" ? "parent" : (node.extent ?? undefined),
+    };
+  });
+}
+
+function toAdventureNodes(nodes: Node[]): AdventureNode[] {
+  return nodes.flatMap((node): AdventureNode[] => {
     const type = getAdventureNodeType(node);
     if (!type) return [];
     return [
@@ -713,243 +941,72 @@ export function autoArrangeCanvasNodes(params: {
       },
     ];
   });
-  if (adventureNodes.length > 0) {
-    const adventureNodeIds = new Set(adventureNodes.map((node) => node.id));
-    const now = new Date(clock.now()).toISOString();
-    const rawDoc: AdventureCanvasDocument = {
-      id: params.canvasId,
-      title: params.title,
-      summary: "",
-      genre: "Fantasy",
-      nodes: adventureNodes,
-      edges: params.edges
-        .filter(
-          (edge) =>
-            adventureNodeIds.has(edge.source) &&
-            adventureNodeIds.has(edge.target),
-        )
-        .map((edge): AdventureEdge => ({
-          id: edge.id,
-          source: edge.source,
-          target: edge.target,
-          label: typeof edge.label === "string" ? edge.label : undefined,
-        })),
-      metadata: { kind: "adventure" },
-      createdAt: now,
-      updatedAt: now,
-    };
-    const positioned = new AdventureFlowLayout().applyLayout(rawDoc);
-    const positionedById = new Map(
-      positioned.nodes.map((node) => [node.id, node.position]),
-    );
-    return params.nodes.map((node) => {
-      const position = positionedById.get(node.id);
-      return position ? { ...node, position } : node;
-    });
-  }
+}
 
-  if (params.nodes.length === 0) return null;
-
-  // General / entity canvas layout:
-  // Respect current spatial placements. Group nodes into existing visual rows,
-  // pack them with consistent gaps according to their current dynamic sizes (e.g. image-only vs regular cards),
-  // and keep sticker notes pinned to their parent cards.
-  const nodeSizes = new Map<string, EstimatedNodeSize>();
-  for (const node of params.nodes) {
-    nodeSizes.set(node.id, getEstimatedNodeSize(node, params.vaultEntities));
-  }
-
-  // Separate sticker notes (small notes overlapping a larger card) from primary row nodes
-  interface StickerAttachment {
-    sticker: Node;
-    parentNodeId: string;
-    offsetX: number;
-    offsetY: number;
-  }
-
-  const potentialParents = params.nodes.filter((n) => n.type !== "text");
-  const stickers: StickerAttachment[] = [];
-  const primaryNodes: Node[] = [];
-
-  for (const node of params.nodes) {
-    if (node.type === "text" && potentialParents.length > 0) {
-      const candSize = nodeSizes.get(node.id) || { width: 200, height: 140 };
-      const candArea = candSize.width * candSize.height;
-
-      let bestParent: Node | null = null;
-      let maxOverlap = 0;
-
-      for (const parent of potentialParents) {
-        if (parent.id === node.id) continue;
-        const parentSize = nodeSizes.get(parent.id) || {
-          width: 260,
-          height: 360,
-        };
-        const parentArea = parentSize.width * parentSize.height;
-        if (parentArea < candArea * 1.1) continue;
-
-        const xOverlap = Math.max(
-          0,
-          Math.min(
-            node.position.x + candSize.width,
-            parent.position.x + parentSize.width,
-          ) - Math.max(node.position.x, parent.position.x),
-        );
-        const yOverlap = Math.max(
-          0,
-          Math.min(
-            node.position.y + candSize.height,
-            parent.position.y + parentSize.height,
-          ) - Math.max(node.position.y, parent.position.y),
-        );
-        const overlapArea = xOverlap * yOverlap;
-
-        if (overlapArea > candArea * 0.15 && overlapArea > maxOverlap) {
-          maxOverlap = overlapArea;
-          bestParent = parent;
-        }
-      }
-
-      if (bestParent) {
-        stickers.push({
-          sticker: node,
-          parentNodeId: bestParent.id,
-          offsetX: node.position.x - bestParent.position.x,
-          offsetY: node.position.y - bestParent.position.y,
-        });
-        continue;
-      }
-    }
-
-    primaryNodes.push(node);
-  }
-
-  if (primaryNodes.length === 0) {
-    return params.nodes;
-  }
-
-  // Sort primary nodes by vertical center position
-  const sortedByY = [...primaryNodes].sort((a, b) => {
-    const sizeA = nodeSizes.get(a.id)!;
-    const sizeB = nodeSizes.get(b.id)!;
-    const centerYA = a.position.y + sizeA.height / 2;
-    const centerYB = b.position.y + sizeB.height / 2;
-    return centerYA - centerYB;
-  });
-
-  // Cluster primary nodes into visual rows
-  const rows: Node[][] = [];
-  for (const node of sortedByY) {
-    const nodeSize = nodeSizes.get(node.id)!;
-    const nodeCenterY = node.position.y + nodeSize.height / 2;
-
-    let bestRow: Node[] | null = null;
-    let minCenterDiff = Infinity;
-
-    for (const row of rows) {
-      // Check for column conflict: if this node heavily overlaps horizontally (>60%) with any node
-      // already in this row, they are in the same vertical column and cannot share the same row.
-      let hasColConflict = false;
-      for (const rowMember of row) {
-        const memberSize = nodeSizes.get(rowMember.id)!;
-        const xOverlap = Math.max(
-          0,
-          Math.min(
-            node.position.x + nodeSize.width,
-            rowMember.position.x + memberSize.width,
-          ) - Math.max(node.position.x, rowMember.position.x),
-        );
-        const minW = Math.min(nodeSize.width, memberSize.width);
-        if (xOverlap > minW * 0.6) {
-          hasColConflict = true;
-          break;
-        }
-      }
-
-      if (hasColConflict) continue;
-
-      const rowCenterYs = row.map((m) => {
-        const s = nodeSizes.get(m.id)!;
-        return m.position.y + s.height / 2;
-      });
-      const rowAvgCenterY =
-        rowCenterYs.reduce((sum, v) => sum + v, 0) / row.length;
-      const rowAvgHeight =
-        row.reduce((sum, m) => sum + nodeSizes.get(m.id)!.height, 0) /
-        row.length;
-
-      const centerDiff = Math.abs(nodeCenterY - rowAvgCenterY);
-      const maxAllowedDiff = Math.max(rowAvgHeight, nodeSize.height) * 0.55;
-
-      if (centerDiff < maxAllowedDiff && centerDiff < minCenterDiff) {
-        minCenterDiff = centerDiff;
-        bestRow = row;
-      }
-    }
-
-    if (bestRow) {
-      bestRow.push(node);
-    } else {
-      rows.push([node]);
-    }
-  }
-
-  // Sort rows vertically and sort nodes within each row horizontally
-  rows.sort((rowA, rowB) => {
-    const avgYA = rowA.reduce((sum, n) => sum + n.position.y, 0) / rowA.length;
-    const avgYB = rowB.reduce((sum, n) => sum + n.position.y, 0) / rowB.length;
-    return avgYA - avgYB;
-  });
-
-  for (const row of rows) {
-    row.sort((a, b) => a.position.x - b.position.x);
-  }
-
-  const GAP_X = 20;
-  const GAP_Y = 24;
-
-  const canvasMinX = Math.min(...primaryNodes.map((n) => n.position.x));
-  const canvasMinY = Math.min(...primaryNodes.map((n) => n.position.y));
-
-  let currentY = canvasMinY;
-  const positionedMap = new Map<string, { x: number; y: number }>();
-
-  for (const row of rows) {
-    const rowMinX = Math.min(...row.map((n) => n.position.x));
-    const startX = Math.abs(rowMinX - canvasMinX) < 100 ? canvasMinX : rowMinX;
-
-    let currentX = startX;
-    let maxRowHeight = 0;
-
-    for (const node of row) {
-      const size = getEstimatedNodeSize(node, params.vaultEntities);
-      positionedMap.set(node.id, { x: currentX, y: currentY });
-      currentX += size.width + GAP_X;
-      if (size.height > maxRowHeight) {
-        maxRowHeight = size.height;
-      }
-    }
-
-    currentY += maxRowHeight + GAP_Y;
-  }
-
-  // Re-attach stickers relative to their parent's new position
-  for (const sticker of stickers) {
-    const parentPos = positionedMap.get(sticker.parentNodeId);
-    if (parentPos) {
-      positionedMap.set(sticker.sticker.id, {
-        x: parentPos.x + sticker.offsetX,
-        y: parentPos.y + sticker.offsetY,
-      });
-    } else {
-      positionedMap.set(sticker.sticker.id, sticker.sticker.position);
-    }
-  }
-
+function arrangeAdventureNodes(
+  params: AutoArrangeParams,
+  clock: Clock,
+): Node[] | undefined {
+  const nodes = toAdventureNodes(params.nodes);
+  if (nodes.length === 0) return undefined;
+  const ids = new Set(nodes.map((node) => node.id));
+  const now = new Date(clock.now()).toISOString();
+  const document: AdventureCanvasDocument = {
+    id: params.canvasId,
+    title: params.title,
+    summary: "",
+    genre: "Fantasy",
+    nodes,
+    edges: params.edges
+      .filter((edge) => ids.has(edge.source) && ids.has(edge.target))
+      .map((edge): AdventureEdge => ({
+        id: edge.id,
+        source: edge.source,
+        target: edge.target,
+        label: typeof edge.label === "string" ? edge.label : undefined,
+      })),
+    metadata: { kind: "adventure" },
+    createdAt: now,
+    updatedAt: now,
+  };
+  const layout = new AdventureFlowLayout().applyLayout(document);
+  const positions = new Map(
+    layout.nodes.map((node) => [node.id, node.position]),
+  );
   return params.nodes.map((node) => {
-    const pos = positionedMap.get(node.id);
-    return pos ? { ...node, position: pos } : node;
+    const position = positions.get(node.id);
+    return position ? { ...node, position } : node;
   });
+}
+
+function arrangeSpatialNodes(params: AutoArrangeParams): Node[] | null {
+  if (params.nodes.length === 0) return null;
+  const sizes = new Map(
+    params.nodes.map((node) => [
+      node.id,
+      getEstimatedNodeSize(node, params.vaultEntities),
+    ]),
+  );
+  const { primaryNodes, stickers } = separateStickers(params.nodes, sizes);
+  if (primaryNodes.length === 0) return params.nodes;
+  const rows = clusterRows(primaryNodes, sizes);
+  const positioned = positionRows(rows, primaryNodes, sizes);
+  reattachStickers(positioned, stickers);
+  return params.nodes.map((node) => {
+    const position = positioned.get(node.id);
+    return position ? { ...node, position } : node;
+  });
+}
+
+export function autoArrangeCanvasNodes(
+  params: AutoArrangeParams,
+): Node[] | null {
+  const clock = params.clock ?? systemClock;
+  return (
+    arrangeDelveNodes(params, clock) ??
+    arrangeAdventureNodes(params, clock) ??
+    arrangeSpatialNodes(params)
+  );
 }
 
 export function resolveSpawnPosition(params: {

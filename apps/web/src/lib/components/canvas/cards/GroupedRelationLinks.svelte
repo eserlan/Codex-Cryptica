@@ -24,6 +24,48 @@
   }
 </script>
 
+{#snippet relationRows(groupKey: string, rows: LinkGroup["rows"])}
+  <ul class="space-y-1.5">
+    {#each rows as row, rowIndex (`${groupKey}-${row.target}-${rowIndex}`)}
+      <li
+        class="flex items-start gap-2.5 text-[10px] leading-tight py-1 px-1.5 rounded-lg bg-theme-bg/30 border border-theme-border/30 hover:bg-theme-bg/60 transition-colors"
+        title={row.title}
+      >
+        <div class="mt-0.5 shrink-0">
+          <RelationAvatar entityId={row.target} title={row.title} />
+        </div>
+        <div class="flex flex-col min-w-0 flex-1">
+          <span
+            class="text-[9px] font-semibold uppercase tracking-wider truncate {STANCE_TEXT[
+              row.stance
+            ]}">{row.text}</span
+          >
+          <span
+            class="font-bold text-theme-text font-header text-[11px] tracking-wide line-clamp-2 break-words leading-snug"
+            >{row.title}</span
+          >
+        </div>
+      </li>
+    {/each}
+  </ul>
+{/snippet}
+
+{#snippet expansionControl(
+  group: LinkGroup,
+  groupKey: string,
+  isExpanded: boolean,
+)}
+  {#if group.rows.length > maxVisible}
+    <button
+      type="button"
+      class="nodrag mt-1 text-[10px] font-semibold text-theme-primary hover:underline flex items-center gap-1 py-0.5 px-1 rounded transition-colors"
+      onclick={() => toggleGroup(groupKey)}
+    >
+      {#if isExpanded}Show less{:else}+ {group.rows.length - maxVisible} more{/if}
+    </button>
+  {/if}
+{/snippet}
+
 {#if groups.length > 0}
   <div
     class="mt-2 border-t border-theme-border/30 pt-1.5 max-h-[420px] overflow-y-auto nodrag nowheel pr-1 space-y-2.5"
@@ -44,45 +86,8 @@
             >({group.rows.length})</span
           >
         </div>
-        <ul class="space-y-1.5">
-          {#each visibleRows as row, rowIndex (`${groupKey}-${row.target}-${rowIndex}`)}
-            <li
-              class="flex items-start gap-2.5 text-[10px] leading-tight py-1 px-1.5 rounded-lg bg-theme-bg/30 border border-theme-border/30 hover:bg-theme-bg/60 transition-colors"
-              title={row.title}
-            >
-              <div class="mt-0.5 shrink-0">
-                <RelationAvatar entityId={row.target} title={row.title} />
-              </div>
-              <div class="flex flex-col min-w-0 flex-1">
-                <span
-                  class="text-[9px] font-semibold uppercase tracking-wider truncate {STANCE_TEXT[
-                    row.stance
-                  ]}"
-                >
-                  {row.text}
-                </span>
-                <span
-                  class="font-bold text-theme-text font-header text-[11px] tracking-wide line-clamp-2 break-words leading-snug"
-                >
-                  {row.title}
-                </span>
-              </div>
-            </li>
-          {/each}
-        </ul>
-        {#if group.rows.length > maxVisible}
-          <button
-            type="button"
-            class="nodrag mt-1 text-[10px] font-semibold text-theme-primary hover:underline flex items-center gap-1 py-0.5 px-1 rounded transition-colors"
-            onclick={() => toggleGroup(groupKey)}
-          >
-            {#if isExpanded}
-              Show less
-            {:else}
-              + {group.rows.length - maxVisible} more
-            {/if}
-          </button>
-        {/if}
+        {@render relationRows(groupKey, visibleRows)}
+        {@render expansionControl(group, groupKey, isExpanded)}
       </div>
     {/each}
   </div>
