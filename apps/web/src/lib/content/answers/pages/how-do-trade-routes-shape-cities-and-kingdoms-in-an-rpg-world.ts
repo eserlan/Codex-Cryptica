@@ -166,6 +166,13 @@ export const howDoTradeRoutesShapeCitiesAndKingdomsInAnRpgWorld: AnswerConfigInp
         "generator-faction",
         "generator-world",
       ],
+      acknowledgedOverlap: [
+        {
+          with: "answer-believable-fantasy-economy",
+          reason:
+            "This answer maps choke points, collectors, and rival routes onto settlements; the economy answer traces resources, production, exchange, and pressure across a whole region.",
+        },
+      ],
     },
     seo: {
       title: "How Do Trade Routes Shape Cities and Kingdoms? | Codex Cryptica",

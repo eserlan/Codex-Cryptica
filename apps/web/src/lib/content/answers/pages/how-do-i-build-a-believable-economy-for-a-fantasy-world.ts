@@ -168,6 +168,13 @@ export const howDoIBuildABelievableEconomyForAFantasyWorld: AnswerConfigInput =
         "generator-world",
         "generator-rumour",
       ],
+      acknowledgedOverlap: [
+        {
+          with: "answer-trade-routes-shape-cities-kingdoms",
+          reason:
+            "This answer builds a whole economy from resources, production, exchange, and pressure; the trade-routes answer focuses on where goods must pass, who collects there, and how rival paths reshape settlements.",
+        },
+      ],
     },
     seo: {
       title: "How Do I Build a Believable Fantasy Economy? | Codex Cryptica",
