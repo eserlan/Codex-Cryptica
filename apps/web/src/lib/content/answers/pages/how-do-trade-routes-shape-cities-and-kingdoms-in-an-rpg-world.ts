@@ -145,6 +145,7 @@ export const howDoTradeRoutesShapeCitiesAndKingdomsInAnRpgWorld: AnswerConfigInp
       "what-should-an-rpg-settlement-contain",
       "how-do-you-create-a-fantasy-faction",
       "how-do-scarcity-and-shortages-affect-prices-and-conflict-in-an-rpg-world",
+      "how-do-i-turn-economic-pressures-into-rpg-adventure-hooks",
     ],
     discovery: {
       id: "answer-trade-routes-shape-cities-kingdoms",
