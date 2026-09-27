@@ -13,7 +13,7 @@ export const whatDoYouDoWithMurderHobosInAnRpgCampaign: AnswerConfigInput = {
       kind: "prose",
       heading: "The term covers two different things",
       paragraphs: [
-        '"Murder hobo" gets used for any character who fights readily, but that alone is not the issue. A fighter who kills bandits, dispatches a captured spy, or turns violent in a fight the table chose to have is playing a combat-capable character, not causing a problem.',
+        '"Murder hobo" gets used for any character who fights readily, but that alone is not the issue. A fighter who kills bandits during a fight the table chose to have is playing a combat-capable character, not causing a problem.',
         "The behaviour worth addressing is different: killing NPCs who posed no threat, attacking shopkeepers or informants the party needed alive, or treating every scene as a prompt for violence regardless of what the group set out to do. The distinction is not how much a character fights. It is whether the choices are closing off the story other players are trying to tell.",
       ],
     },

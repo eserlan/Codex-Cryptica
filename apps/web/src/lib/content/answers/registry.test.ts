@@ -354,6 +354,20 @@ describe("published answers", () => {
     expect(new Set(descriptions).size).toBe(descriptions.length);
   });
 
+  it("distinguishes ordinary combat from killing surrendered enemies", () => {
+    const answer =
+      answers["what-do-you-do-with-murder-hobos-in-an-rpg-campaign"];
+    const opening = answer.sections[0];
+
+    expect(opening.kind).toBe("prose");
+    if (opening.kind !== "prose") return;
+
+    expect(opening.paragraphs[0]).toContain(
+      "kills bandits during a fight the table chose to have",
+    );
+    expect(opening.paragraphs[0]).not.toContain("captured spy");
+  });
+
   it("never links to an answer that does not exist", () => {
     const slugs = new Set(getAllAnswerSlugs());
     for (const answer of published) {
