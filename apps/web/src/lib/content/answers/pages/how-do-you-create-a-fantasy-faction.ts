@@ -162,6 +162,7 @@ export const howDoYouCreateAFantasyFaction: AnswerConfigInput = {
     "how-do-i-build-a-believable-constitutional-crisis-or-coup",
     "how-do-i-build-a-believable-economy-for-a-fantasy-world",
     "how-do-i-decide-what-a-settlement-produces-imports-and-exports",
+    "how-do-trade-routes-shape-cities-and-kingdoms-in-an-rpg-world",
   ],
   discovery: {
     id: "answer-fantasy-faction",
