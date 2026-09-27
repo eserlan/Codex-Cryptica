@@ -56,9 +56,8 @@ export type AppendEntryResult =
 
 /**
  * FR-002, FR-003, FR-007. Rejects a journal whose `status` is `"ended"`
- * rather than silently reopening it. Entries are inserted by `timestamp`
- * order, not merely appended, so a caller with a slightly-stale clock still
- * produces a correctly-ordered list (FR-003).
+ * rather than silently reopening it. Entries append to the current display
+ * order so a new entry does not undo an explicit user reorder (FR-003).
  */
 export function appendEntry(
   journal: SessionJournal,
