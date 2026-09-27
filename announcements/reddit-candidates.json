@@ -1,5 +1,5 @@
 {
-  "updated_at": 1790499318,
+  "updated_at": 1790530529,
   "candidates": [
     {
       "id": "reddit-36168046733-tables-now-parse-4d6kh3-2-and-other-keep",
@@ -50,6 +50,16 @@
       "source_id": "36304542577",
       "status": "approved",
       "created_at": 1790499317
+    },
+    {
+      "id": "reddit-36337144583-paste-a-stat-block-instead-of-retyping-i",
+      "title": "Paste a stat block instead of retyping it",
+      "body": "Copying a monster by hand means retyping AC, HP, six saves, then hunting the typo that makes the goblin immortal. It is worse when you are pulling from two systems at once for a crossover one-shot.\n\nI built a multi-system importer that turns a pasted or uploaded stat block into a structured, editable sheet in your vault.\n\n- D&D 5e and PF2e from JSON or plain text, including skills and resistances\n- GURPS, Mythras, and Vampire V5 with their own fields (secondary stats, hit locations, disciplines)\n- Heuristic parsing when you only have plain text, no export\n- Result is a normal stat sheet you can edit, roll from, and link to entities\n\nHeuristic parsing is best effort. Odd homebrew layouts or PDFs with broken line breaks will misread a field, so check the import. JSON is exact when you have it.\n\nWhich system's stat blocks do you retype most, and what field always trips the copy?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/images/help-blog/import.png)",
+      "url": "",
+      "image_url": "https://assets.codexcryptica.com/images/help-blog/import.png",
+      "source_id": "36337144583",
+      "status": "approved",
+      "created_at": 1790530529
     }
   ]
 }
