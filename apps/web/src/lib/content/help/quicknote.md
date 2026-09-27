@@ -54,3 +54,7 @@ You can keep any part of a journal in your world. Use **Make entity** on an entr
 3. Approve the draft to keep it, or discard it. Either way, your journal stays exactly as it was, and you can turn the same part into another entity later.
 
 When you end a session, you are offered **Turn into a Note** and **Choose parts**. You don't have to use them; the same choices are always available on any ended journal in **Past journals**.
+
+### Editing and reordering entries
+
+Any entry can be moved up or down with the small arrows, or deleted, whether it is a typed note or an automatic one. Moving an entry only changes where it sits in the list; it keeps the time it actually happened, so the list can end up out of time order after a reorder. A typed note can also be edited in place. An automatic entry (a dice roll, card draw or table result) cannot be edited, since it is a record of what actually happened, but it can still be moved or deleted.

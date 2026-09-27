@@ -47,6 +47,8 @@ export interface SessionJournal {
   endedAt?: number;
   /** Ordered. May be empty (FR-006). */
   sections: JournalSection[];
-  /** Ordered by `timestamp` ascending (FR-003). */
+  /** Displayed order. A new entry is appended at the end (chronological in
+   *  the common case), and the user may reorder without changing any
+   *  entry's timestamp (#3476). */
   entries: JournalEntry[];
 }

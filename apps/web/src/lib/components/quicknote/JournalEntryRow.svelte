@@ -1,6 +1,8 @@
 <script lang="ts">
   import { entryTypeLabel, type JournalEntry } from "session-journal-engine";
   import DiceBreakdownDisclosure from "$lib/components/dice/DiceBreakdownDisclosure.svelte";
+  import JournalEntryEditForm from "./JournalEntryEditForm.svelte";
+  import JournalEntryActions from "./JournalEntryActions.svelte";
   import { parseBreakdownParts } from "$lib/utils/dice-breakdown";
 
   /**
@@ -10,6 +12,8 @@
    * the two are told apart at a glance without relying on colour (spec 163,
    * FR-028).
    */
+  type ActionResult = { ok: true } | { ok: false; error: string };
+
   let {
     entry,
     sectionName,
@@ -17,6 +21,12 @@
     selectable = false,
     selected = false,
     onToggleSelect,
+    onEdit,
+    onDelete,
+    onMoveUp,
+    onMoveDown,
+    canMoveUp = false,
+    canMoveDown = false,
   }: {
     entry: JournalEntry;
     sectionName?: string;
@@ -26,7 +36,37 @@
     selectable?: boolean;
     selected?: boolean;
     onToggleSelect?: (entry: JournalEntry) => void;
+    /** When given, a typed note offers Edit (#3476). Automatic entries never
+     *  do, since they are a record of what actually happened. */
+    onEdit?: (entry: JournalEntry, content: string) => Promise<ActionResult>;
+    /** When given, every entry offers Delete (#3476). */
+    onDelete?: (entry: JournalEntry) => Promise<ActionResult>;
+    /** When given, every entry offers Move up/down (#3476). Moving keeps the
+     *  entry's original timestamp. */
+    onMoveUp?: (entry: JournalEntry) => Promise<ActionResult>;
+    onMoveDown?: (entry: JournalEntry) => Promise<ActionResult>;
+    /** Whether this entry is not already first/last, so Move up/down is
+     *  offered rather than silently doing nothing at the boundary. */
+    canMoveUp?: boolean;
+    canMoveDown?: boolean;
   } = $props();
+
+  let isEditing = $state(false);
+
+  function startEdit() {
+    isEditing = true;
+  }
+
+  function cancelEdit() {
+    isEditing = false;
+  }
+
+  /** Passed to the edit form: saves, then leaves edit mode on success. */
+  async function saveEdit(content: string): Promise<ActionResult> {
+    const result = await onEdit!(entry, content);
+    if (result.ok) isEditing = false;
+    return result;
+  }
 
   // The label comes from the engine, so the journal and the text built for an
   // entity always agree. Only the icon is chosen here. A type the journal has
@@ -63,6 +103,7 @@
       ? `${entry.content.slice(0, 40)}…`
       : entry.content,
   );
+  const canEdit = $derived(!!onEdit && entry.type === "manual-note");
 </script>
 
 <div
@@ -90,7 +131,16 @@
       <span class="text-theme-accent">{sectionName}</span>
     {/if}
   </div>
-  <p class="text-theme-text">{entry.content}</p>
+  {#if isEditing}
+    <JournalEntryEditForm
+      content={entry.content}
+      {snippet}
+      onSave={saveEdit}
+      onCancel={cancelEdit}
+    />
+  {:else}
+    <p class="text-theme-text">{entry.content}</p>
+  {/if}
   {#if rollParts}
     <DiceBreakdownDisclosure
       parts={rollParts}
@@ -98,30 +148,20 @@
       formula={rollFormula}
     />
   {/if}
-  {#if selectable || onPromote}
-    <div class="mt-1.5 flex items-center justify-between gap-2">
-      {#if selectable}
-        <label class="flex items-center gap-1.5 text-[10px] text-theme-muted">
-          <input
-            type="checkbox"
-            checked={selected}
-            onchange={() => onToggleSelect?.(entry)}
-            aria-label={`Choose: ${snippet}`}
-          />
-          Choose
-        </label>
-      {/if}
-      {#if onPromote}
-        <button
-          type="button"
-          onclick={() => onPromote(entry)}
-          aria-label={`Make entity from: ${snippet}`}
-          class="ml-auto font-header text-[9px] font-bold uppercase tracking-wider text-theme-muted transition-colors hover:text-theme-primary"
-          data-testid="journal-entry-promote"
-        >
-          Make entity
-        </button>
-      {/if}
-    </div>
-  {/if}
+  <JournalEntryActions
+    {entry}
+    {snippet}
+    {isEditing}
+    {selectable}
+    {selected}
+    {onToggleSelect}
+    {canEdit}
+    onStartEdit={startEdit}
+    {onDelete}
+    {onMoveUp}
+    {onMoveDown}
+    {canMoveUp}
+    {canMoveDown}
+    {onPromote}
+  />
 </div>

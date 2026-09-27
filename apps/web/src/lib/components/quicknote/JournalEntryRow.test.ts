@@ -248,3 +248,189 @@ describe("JournalEntryRow (FR-028)", () => {
     });
   });
 });
+
+describe("JournalEntryRow — edit, delete and move (#3476)", () => {
+  const ok = { ok: true } as const;
+
+  it("offers Edit only for a typed note, not an automatic entry", () => {
+    render(JournalEntryRow, {
+      props: { entry: entry("manual-note"), onEdit: vi.fn() },
+    });
+    expect(screen.getByTestId("journal-entry-edit")).toBeTruthy();
+  });
+
+  it("does not offer Edit for an automatic entry, even when onEdit is given (negative)", () => {
+    render(JournalEntryRow, {
+      props: { entry: entry("dice-roll"), onEdit: vi.fn() },
+    });
+    expect(screen.queryByTestId("journal-entry-edit")).toBeNull();
+  });
+
+  it("does not offer Edit when no handler is given (negative)", () => {
+    render(JournalEntryRow, { props: { entry: entry("manual-note") } });
+    expect(screen.queryByTestId("journal-entry-edit")).toBeNull();
+  });
+
+  it("edits the text and calls back with the new content", async () => {
+    const onEdit = vi.fn().mockResolvedValue(ok);
+    render(JournalEntryRow, {
+      props: { entry: entry("manual-note", "Original"), onEdit },
+    });
+
+    await fireEvent.click(screen.getByTestId("journal-entry-edit"));
+    const input = screen.getByTestId(
+      "journal-entry-edit-input",
+    ) as HTMLTextAreaElement;
+    expect(input.value).toBe("Original");
+    await fireEvent.input(input, { target: { value: "Edited" } });
+    await fireEvent.click(screen.getByTestId("journal-entry-edit-save"));
+
+    expect(onEdit).toHaveBeenCalledWith(
+      expect.objectContaining({ content: "Original" }),
+      "Edited",
+    );
+    expect(screen.queryByTestId("journal-entry-edit-input")).toBeNull();
+  });
+
+  it("cancels an edit without calling back, restoring the original text", async () => {
+    const onEdit = vi.fn().mockResolvedValue(ok);
+    render(JournalEntryRow, {
+      props: { entry: entry("manual-note", "Original"), onEdit },
+    });
+
+    await fireEvent.click(screen.getByTestId("journal-entry-edit"));
+    await fireEvent.input(screen.getByTestId("journal-entry-edit-input"), {
+      target: { value: "Changed my mind" },
+    });
+    await fireEvent.click(screen.getByTestId("journal-entry-edit-cancel"));
+
+    expect(onEdit).not.toHaveBeenCalled();
+    expect(screen.getByText("Original")).toBeTruthy();
+
+    await fireEvent.click(screen.getByTestId("journal-entry-edit"));
+    expect(
+      (screen.getByTestId("journal-entry-edit-input") as HTMLTextAreaElement)
+        .value,
+    ).toBe("Original");
+  });
+
+  it("shows the failure and keeps editing when saving is refused (negative)", async () => {
+    const onEdit = vi
+      .fn()
+      .mockResolvedValue({ ok: false, error: "A note needs some text." });
+    render(JournalEntryRow, {
+      props: { entry: entry("manual-note", "Original"), onEdit },
+    });
+
+    await fireEvent.click(screen.getByTestId("journal-entry-edit"));
+    await fireEvent.input(screen.getByTestId("journal-entry-edit-input"), {
+      target: { value: "   " },
+    });
+    await fireEvent.click(screen.getByTestId("journal-entry-edit-save"));
+
+    expect(screen.getByRole("alert").textContent).toBe(
+      "A note needs some text.",
+    );
+    expect(screen.getByTestId("journal-entry-edit-input")).toBeTruthy();
+  });
+
+  it("hides the move and delete buttons while editing", async () => {
+    render(JournalEntryRow, {
+      props: {
+        entry: entry("manual-note"),
+        onEdit: vi.fn(),
+        onDelete: vi.fn(),
+        onMoveUp: vi.fn(),
+        canMoveUp: true,
+      },
+    });
+
+    await fireEvent.click(screen.getByTestId("journal-entry-edit"));
+
+    expect(screen.queryByTestId("journal-entry-delete")).toBeNull();
+    expect(screen.queryByTestId("journal-entry-move-up")).toBeNull();
+  });
+
+  it("deletes on request", async () => {
+    const onDelete = vi.fn().mockResolvedValue(ok);
+    const e = entry("manual-note", "Gone soon");
+    render(JournalEntryRow, { props: { entry: e, onDelete } });
+
+    await fireEvent.click(screen.getByTestId("journal-entry-delete"));
+
+    expect(onDelete).toHaveBeenCalledWith(e);
+  });
+
+  it("shows a message when delete fails, without crashing (negative)", async () => {
+    const onDelete = vi
+      .fn()
+      .mockResolvedValue({ ok: false, error: "That entry no longer exists." });
+    render(JournalEntryRow, {
+      props: { entry: entry("manual-note"), onDelete },
+    });
+
+    await fireEvent.click(screen.getByTestId("journal-entry-delete"));
+
+    expect(screen.getByRole("alert").textContent).toBe(
+      "That entry no longer exists.",
+    );
+  });
+
+  it("moves up and down, disabled at the boundary it is told about", async () => {
+    const onMoveUp = vi.fn().mockResolvedValue(ok);
+    const onMoveDown = vi.fn().mockResolvedValue(ok);
+    const e = entry("manual-note");
+    render(JournalEntryRow, {
+      props: {
+        entry: e,
+        onMoveUp,
+        onMoveDown,
+        canMoveUp: false,
+        canMoveDown: true,
+      },
+    });
+
+    expect(
+      (screen.getByTestId("journal-entry-move-up") as HTMLButtonElement)
+        .disabled,
+    ).toBe(true);
+    const down = screen.getByTestId(
+      "journal-entry-move-down",
+    ) as HTMLButtonElement;
+    expect(down.disabled).toBe(false);
+
+    await fireEvent.click(down);
+    expect(onMoveDown).toHaveBeenCalledWith(e);
+    expect(onMoveUp).not.toHaveBeenCalled();
+  });
+
+  it("moving an automatic entry works the same as a typed note", async () => {
+    const onMoveUp = vi.fn().mockResolvedValue(ok);
+    render(JournalEntryRow, {
+      props: { entry: entry("dice-roll"), onMoveUp, canMoveUp: true },
+    });
+
+    await fireEvent.click(screen.getByTestId("journal-entry-move-up"));
+
+    expect(onMoveUp).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not offer move or delete controls when neither handler is given (negative)", () => {
+    render(JournalEntryRow, { props: { entry: entry("manual-note") } });
+
+    expect(screen.queryByTestId("journal-entry-move-up")).toBeNull();
+    expect(screen.queryByTestId("journal-entry-move-down")).toBeNull();
+    expect(screen.queryByTestId("journal-entry-delete")).toBeNull();
+  });
+
+  it("clicking a disabled boundary button does nothing (negative)", async () => {
+    const onMoveUp = vi.fn();
+    render(JournalEntryRow, {
+      props: { entry: entry("manual-note"), onMoveUp, canMoveUp: false },
+    });
+
+    await fireEvent.click(screen.getByTestId("journal-entry-move-up"));
+
+    expect(onMoveUp).not.toHaveBeenCalled();
+  });
+});

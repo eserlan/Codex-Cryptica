@@ -15,13 +15,13 @@ One vault's ongoing or completed play-session record (spec Key Entity, FR-001–
 | `startedAt` | `number` (epoch ms)   | Set on creation.                                                           |
 | `endedAt`   | `number \| undefined` | Set only when `status` transitions to `"ended"` (FR-007).                  |
 | `sections`  | `JournalSection[]`    | Ordered. May be empty (FR-006).                                            |
-| `entries`   | `JournalEntry[]`      | Ordered by `timestamp` (FR-003).                                           |
+| `entries`   | `JournalEntry[]`      | Display order (FR-003); users may explicitly reorder entries.              |
 
 **Invariants** (enforced in `session-journal-engine`, not the store):
 
 - At most one `SessionJournal` per `vaultId` may have `status: "active"` at a time (FR-013).
 - `endedAt` is set if and only if `status === "ended"`.
-- `entries` is always sorted by `timestamp` ascending; append inserts in order rather than requiring a separate sort step downstream (FR-003).
+- `entries` preserves display order. New entries append to the end, and explicit moves change array order without changing timestamps (FR-003, FR-052).
 - No entry may be appended to a journal whose `status` is `"ended"` (FR-007).
 
 ### JournalSection
@@ -44,7 +44,7 @@ One timestamped item within a journal (FR-002, FR-003, FR-014).
 | Field       | Type                                   | Notes                                                                                                                                                                                           |
 | ----------- | -------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `id`        | `string`                               | Stable identifier, unique within the journal.                                                                                                                                                   |
-| `timestamp` | `number` (epoch ms)                    | Determines display/sort order (FR-003).                                                                                                                                                         |
+| `timestamp` | `number` (epoch ms)                    | Records when the entry occurred; explicit reordering does not change it (FR-003, FR-052).                                                                                                       |
 | `type`      | `string`                               | `"manual-note"` is the only value this slice produces; the field exists so slice 3 (#3408) can introduce `"dice-roll"`, `"card-draw"`, `"table-result"`, etc. without a schema change (FR-014). |
 | `content`   | `string`                               | The note text (this slice) or, for future types, a short rendered summary.                                                                                                                      |
 | `sectionId` | `string \| undefined`                  | References a `JournalSection.id` in the same journal; `undefined` means "ungrouped."                                                                                                            |

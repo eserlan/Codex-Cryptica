@@ -4,7 +4,11 @@
     type SessionJournalStore,
   } from "$lib/stores/session-journal.svelte";
   import { tick } from "svelte";
-  import type { PromotionScope, SessionJournal } from "session-journal-engine";
+  import type {
+    JournalEntry,
+    PromotionScope,
+    SessionJournal,
+  } from "session-journal-engine";
   import {
     sessionJournalPromoter,
     type SessionJournalPromoter,
@@ -91,6 +95,57 @@
       ? "Start Session Journal"
       : "Resume Session Journal",
   );
+
+  type ActionResult = { ok: true } | { ok: false; error: string };
+
+  /** Turns a store rejection into the plain message a row shows (#3476). */
+  async function asActionResult(
+    run: () => Promise<unknown>,
+  ): Promise<ActionResult> {
+    try {
+      await run();
+      return { ok: true };
+    } catch (err) {
+      return {
+        ok: false,
+        error: err instanceof Error ? err.message : "That could not be done.",
+      };
+    }
+  }
+
+  const handleEntryEdit = (entry: JournalEntry, content: string) =>
+    asActionResult(() =>
+      store.updateEntry(displayedJournal!.id, entry.id, content),
+    );
+  const handleEntryDelete = (entry: JournalEntry) =>
+    asActionResult(() => store.deleteEntry(displayedJournal!.id, entry.id));
+  const handleEntryMove = (entry: JournalEntry, direction: "up" | "down") =>
+    asActionResult(() =>
+      store.moveEntry(displayedJournal!.id, entry.id, direction),
+    );
+
+  /** The interactive props for one row: reorder/edit/delete/promote handlers
+   *  and boundary flags, kept out of the entryList markup so it stays a plain
+   *  list (#3476). None of them apply while choosing parts. */
+  function entryRowProps(entry: JournalEntry, index: number) {
+    const journal = displayedJournal;
+    const interactive = !promotion.selecting && !!journal;
+    return {
+      onPromote: interactive
+        ? () => openForm(journal, { kind: "entry", entryId: entry.id })
+        : undefined,
+      onEdit: interactive ? handleEntryEdit : undefined,
+      onDelete: interactive ? handleEntryDelete : undefined,
+      onMoveUp: interactive
+        ? (e: JournalEntry) => handleEntryMove(e, "up")
+        : undefined,
+      onMoveDown: interactive
+        ? (e: JournalEntry) => handleEntryMove(e, "down")
+        : undefined,
+      canMoveUp: index > 0,
+      canMoveDown: index < (journal?.entries.length ?? 0) - 1,
+    };
+  }
 
   function sectionName(sectionId: string | undefined): string | undefined {
     if (!sectionId) return undefined;
@@ -288,17 +343,14 @@
         : "This journal has no entries."}
     </p>
   {/if}
-  {#each displayedJournal?.entries ?? [] as entry (entry.id)}
+  {#each displayedJournal?.entries ?? [] as entry, index (entry.id)}
     <JournalEntryRow
       {entry}
       sectionName={sectionName(entry.sectionId)}
-      onPromote={promotion.selecting || !displayedJournal
-        ? undefined
-        : () =>
-            openForm(displayedJournal, { kind: "entry", entryId: entry.id })}
       selectable={promotion.selecting}
       selected={promotion.isEntrySelected(entry.id)}
       onToggleSelect={() => promotion.toggleEntry(entry.id)}
+      {...entryRowProps(entry, index)}
     />
   {/each}
 {/snippet}

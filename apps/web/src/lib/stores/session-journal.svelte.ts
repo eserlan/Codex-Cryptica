@@ -1,10 +1,14 @@
 import {
   appendEntry as engineAppendEntry,
   createSection as engineCreateSection,
+  deleteEntry as engineDeleteEntry,
   endJournal as engineEndJournal,
+  moveEntry as engineMoveEntry,
   renameSection as engineRenameSection,
   startOrResumeJournal,
+  updateEntryContent as engineUpdateEntryContent,
 } from "session-journal-engine";
+import type { MoveEntryDirection } from "session-journal-engine";
 import type {
   JournalEntry,
   JournalEntryInput,
@@ -229,6 +233,49 @@ export class SessionJournalStore {
       return result.journal;
     });
     return created!;
+  }
+
+  /**
+   * Edits a typed note's text in place, in whichever journal `journalId`
+   * names — the active one or a past one opened from history (#3476).
+   * Automatic entries cannot be edited.
+   */
+  async updateEntry(
+    journalId: string,
+    entryId: string,
+    content: string,
+  ): Promise<JournalEntry> {
+    let updated: JournalEntry | undefined;
+    await this.mutateLatest(journalId, (latest) => {
+      const result = engineUpdateEntryContent(latest, entryId, content);
+      if (!result.ok) throw new Error(result.error);
+      updated = result.entry;
+      return result.journal;
+    });
+    return updated!;
+  }
+
+  /** Removes one entry from `journalId` (#3476). */
+  async deleteEntry(journalId: string, entryId: string): Promise<void> {
+    await this.mutateLatest(journalId, (latest) => {
+      const result = engineDeleteEntry(latest, entryId);
+      if (!result.ok) throw new Error(result.error);
+      return result.journal;
+    });
+  }
+
+  /** Swaps an entry with its neighbour in `journalId`'s displayed order.
+   *  Timestamps are unchanged (#3476). */
+  async moveEntry(
+    journalId: string,
+    entryId: string,
+    direction: MoveEntryDirection,
+  ): Promise<void> {
+    await this.mutateLatest(journalId, (latest) => {
+      const result = engineMoveEntry(latest, entryId, direction);
+      if (!result.ok) throw new Error(result.error);
+      return result.journal;
+    });
   }
 
   /** FR-004. Returns the created section. */
