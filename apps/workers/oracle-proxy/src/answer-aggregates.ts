@@ -114,6 +114,31 @@ function isWellFormedSlug(slug: unknown): slug is string {
   );
 }
 
+interface ParsedVotePayload {
+  slug: string;
+  value: VoteValue;
+  previous?: VoteValue;
+}
+
+function parseVotePayload(payload: unknown): ParsedVotePayload | null {
+  if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
+    return null;
+  }
+  const { slug, value, previous } = payload as {
+    slug?: unknown;
+    value?: unknown;
+    previous?: unknown;
+  };
+  if (
+    !isWellFormedSlug(slug) ||
+    !isVoteValue(value) ||
+    (previous !== undefined && !isVoteValue(previous))
+  ) {
+    return null;
+  }
+  return { slug, value, previous: previous as VoteValue | undefined };
+}
+
 /** POST /api/answer-aggregates/vote — records one anonymous vote. */
 export async function handleVote(
   request: Request,
@@ -126,14 +151,11 @@ export async function handleVote(
   } catch {
     return writeJson(request, { error: "invalid_request" }, 400);
   }
-  const { slug, value, previous } = payload as {
-    slug?: unknown;
-    value?: unknown;
-    previous?: unknown;
-  };
-  if (!isWellFormedSlug(slug) || !isVoteValue(value)) {
+  const vote = parseVotePayload(payload);
+  if (!vote) {
     return writeJson(request, { error: "invalid_request" }, 400);
   }
+  const { slug, value, previous } = vote;
   const isKnownSlug = deps.isKnownSlug ?? (() => true);
   if (!isKnownSlug(slug)) {
     return writeJson(request, { error: "unknown_slug" }, 404);

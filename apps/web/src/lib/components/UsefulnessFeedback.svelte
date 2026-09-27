@@ -108,8 +108,9 @@
       void communityService.recordVote({
         slug,
         value,
-        previous:
-          previousVote && previousVote !== value ? previousVote : undefined,
+        // Sending the unchanged value lets the Worker treat selecting the
+        // same answer again as an idempotent no-op.
+        previous: previousVote,
       });
     }
   }

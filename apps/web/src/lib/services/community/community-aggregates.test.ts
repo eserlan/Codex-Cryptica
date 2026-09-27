@@ -51,6 +51,44 @@ describe("CommunityAggregatesService", () => {
     expect(JSON.parse(init.body as string)).toEqual({ slug: "a", value: "no" });
   });
 
+  it("sends rapid vote changes in invocation order for each answer", async () => {
+    let releaseFirst!: (response: Response) => void;
+    const firstResponse = new Promise<Response>((resolve) => {
+      releaseFirst = resolve;
+    });
+    const posted: Array<Record<string, unknown>> = [];
+    const fetchFn = vi.fn(async (_url: string, init?: RequestInit) => {
+      posted.push(JSON.parse(init?.body as string) as Record<string, unknown>);
+      if (posted.length === 1) return firstResponse;
+      return okJson({ ok: true });
+    });
+    const service = new CommunityAggregatesService({
+      fetch: fetchFn as unknown as typeof fetch,
+      baseUrl: "https://oracle.example",
+    });
+
+    const yesWrite = service.recordVote({ slug: "a", value: "yes" });
+    const noWrite = service.recordVote({
+      slug: "a",
+      value: "no",
+      previous: "yes",
+    });
+    await Promise.resolve();
+
+    expect(fetchFn).toHaveBeenCalledOnce();
+    expect(posted).toEqual([{ slug: "a", value: "yes" }]);
+
+    releaseFirst(okJson({ ok: true }) as Response);
+    await expect(Promise.all([yesWrite, noWrite])).resolves.toEqual([
+      true,
+      true,
+    ]);
+    expect(posted).toEqual([
+      { slug: "a", value: "yes" },
+      { slug: "a", value: "no", previous: "yes" },
+    ]);
+  });
+
   it("never rejects: network failure, HTTP errors, and bad payloads resolve false", async () => {
     const failing = new CommunityAggregatesService({
       fetch: (async () => {

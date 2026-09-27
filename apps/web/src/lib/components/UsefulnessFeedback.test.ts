@@ -176,6 +176,31 @@ describe("UsefulnessFeedback", () => {
     expect(screen.getByText("Thanks for the feedback!")).toBeTruthy();
   });
 
+  it("sends the current value when a reader reselects the same vote", async () => {
+    const persistence = new UIPersistence({ storage: fakeStorage() });
+    const recordVote = vi.fn(async () => true);
+    const communityService = {
+      recordVote,
+      fetchBySlugs: async () => [],
+    };
+
+    render(UsefulnessFeedback, {
+      props: { voteKey: "x", slug: "x", persistence, communityService },
+    });
+
+    await fireEvent.click(screen.getByRole("button", { name: /yes/i }));
+    await fireEvent.click(
+      screen.getByRole("button", { name: "Change your answer" }),
+    );
+    await fireEvent.click(screen.getByRole("button", { name: /yes/i }));
+
+    expect(recordVote).toHaveBeenLastCalledWith({
+      slug: "x",
+      value: "yes",
+      previous: "yes",
+    });
+  });
+
   it("shows community proof only once the public threshold is met", async () => {
     const persistence = new UIPersistence({ storage: fakeStorage() });
     const communityService = {

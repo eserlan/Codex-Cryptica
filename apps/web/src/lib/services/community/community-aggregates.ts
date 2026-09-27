@@ -59,6 +59,7 @@ function parseItems(payload: unknown): CommunityAggregateItem[] | null {
 export class CommunityAggregatesService {
   private readonly fetchOverride?: typeof fetch;
   private readonly baseUrl: string;
+  private readonly voteWrites = new Map<string, Promise<boolean>>();
 
   constructor(deps: CommunityAggregatesDeps = {}) {
     this.fetchOverride = deps.fetch;
@@ -79,7 +80,20 @@ export class CommunityAggregatesService {
    * Fire-and-forget vote write. Always resolves (true on recorded, false
    * otherwise) and never rejects — callers must not await it for rendering.
    */
-  async recordVote(input: RecordCommunityVoteInput): Promise<boolean> {
+  recordVote(input: RecordCommunityVoteInput): Promise<boolean> {
+    const previousWrite =
+      this.voteWrites.get(input.slug) ?? Promise.resolve(false);
+    const pendingWrite = previousWrite.then(() => this.sendVote(input));
+    this.voteWrites.set(input.slug, pendingWrite);
+    void pendingWrite.then(() => {
+      if (this.voteWrites.get(input.slug) === pendingWrite) {
+        this.voteWrites.delete(input.slug);
+      }
+    });
+    return pendingWrite;
+  }
+
+  private async sendVote(input: RecordCommunityVoteInput): Promise<boolean> {
     try {
       const response = await this.fetchImpl()(
         `${this.baseUrl}/api/answer-aggregates/vote`,

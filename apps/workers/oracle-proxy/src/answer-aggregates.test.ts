@@ -165,9 +165,12 @@ describe("answer aggregate vote handler", () => {
   it("rejects malformed votes and bad values", async () => {
     const { db } = stubDb();
     for (const body of [
+      null,
+      [],
       { slug: "how-do-you-run-a-heist", value: "maybe" },
       { slug: "NOT A SLUG!!", value: "yes" },
       { value: "yes" },
+      { slug: "how-do-you-run-a-heist", value: "yes", previous: "maybe" },
     ]) {
       const res = await handleVote(post(body), { ANSWER_AGGREGATES: db }, deps);
       expect(res.status).toBe(400);
