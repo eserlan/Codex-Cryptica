@@ -2,6 +2,9 @@
   import { fade } from "svelte/transition";
   import type { Core } from "cytoscape";
   import { graph } from "$lib/stores/graph.svelte";
+  import { GraphLayoutPresets } from "./graph-layout-presets.svelte";
+  import PresetLayoutToggle from "./PresetLayoutToggle.svelte";
+  import PresetLayoutActions from "./PresetLayoutActions.svelte";
 
   let { cy } = $props<{ cy: Core | undefined }>();
 
@@ -17,14 +20,17 @@
     editingId = null;
   };
 
+  const layouts = new GraphLayoutPresets(graph, () => cy);
+  const toggleOpen = () => {
+    isOpen = !isOpen;
+    if (isOpen) layouts.refresh();
+  };
+
   const saveCurrent = async () => {
     if (!newPresetName.trim() || isSaving) return;
     isSaving = true;
     try {
-      const viewport = cy
-        ? { pan: { ...cy.pan() }, zoom: cy.zoom() }
-        : undefined;
-      await graph.saveViewPreset(newPresetName, viewport);
+      await layouts.save(newPresetName);
       newPresetName = "";
     } finally {
       isSaving = false;
@@ -80,7 +86,7 @@
     class="w-8 h-8 flex-shrink-0 flex items-center justify-center border transition {isOpen
       ? 'border-theme-primary bg-theme-primary/20 text-theme-primary'
       : 'border-theme-border bg-theme-surface/80 text-theme-muted hover:text-theme-primary'}"
-    onclick={() => (isOpen = !isOpen)}
+    onclick={toggleOpen}
     title="Saved Views"
     aria-label="Saved Views"
     aria-haspopup="dialog"
@@ -108,6 +114,8 @@
           Save the current filters, modes, and camera as a reusable view.
         </p>
       {:else}
+        <!-- Tailwind provides this utility; Fallow cannot resolve generated v4 classes here. -->
+        <!-- fallow-ignore-next-line css-broken-reference -->
         <div class="space-y-1 max-h-48 overflow-y-auto pr-1 mb-2">
           <div class="flex items-center gap-1">
             <button
@@ -176,11 +184,24 @@
                     class="icon-[lucide--trash-2] w-3 h-3"
                   ></span></button
                 >
+                <PresetLayoutActions
+                  {preset}
+                  isOpen={layouts.isOpen(preset.id)}
+                  unavailableReason={layouts.unavailable}
+                  onSave={(p) => void layouts.update(p)}
+                  onRemove={(p) => void layouts.remove(p)}
+                />
               {/if}
             </div>
           {/each}
         </div>
       {/if}
+
+      <PresetLayoutToggle
+        bind:checked={layouts.saveLayout}
+        unavailableReason={layouts.unavailable}
+        status={layouts.status}
+      />
 
       <div class="flex items-center gap-1 border-t border-theme-border/40 pt-2">
         <input

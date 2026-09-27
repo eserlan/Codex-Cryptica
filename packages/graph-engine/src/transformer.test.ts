@@ -776,3 +776,55 @@ describe("GraphTransformer", () => {
     expect(pendingStyle?.style.events).toBe("no");
   });
 });
+
+describe("GraphTransformer node positions", () => {
+  const entity = (id: string, coordinates?: { x: number; y: number }) =>
+    ({
+      id,
+      type: "npc",
+      title: id,
+      content: "",
+      lore: "",
+      tags: [],
+      labels: [],
+      connections: [],
+      ...(coordinates ? { metadata: { coordinates } } : {}),
+    }) as any;
+
+  it("starts a node at the entity's saved coordinates", () => {
+    const elements = GraphTransformer.entitiesToElements([
+      entity("a", { x: 12, y: -34 }),
+    ]);
+
+    expect((elements[0] as any).position).toEqual({ x: 12, y: -34 });
+  });
+
+  it("gives the node its own position, so moving it never edits the entity's saved coordinates (#3456)", () => {
+    const saved = { x: 12, y: -34 };
+    const source = entity("a", saved);
+
+    const elements = GraphTransformer.entitiesToElements([source]);
+    const position = (elements[0] as any).position;
+
+    // Cytoscape adopts the object it is given as the node's live position, so
+    // sharing the entity's object would let a drag or a view's saved layout
+    // rewrite the vault's everyday arrangement.
+    expect(position).not.toBe(saved);
+    position.x = 999;
+    position.y = 999;
+    expect(source.metadata.coordinates).toEqual({ x: 12, y: -34 });
+    expect(saved).toEqual({ x: 12, y: -34 });
+  });
+
+  it("gives two nodes separate positions even from the same coordinates object (negative)", () => {
+    const shared = { x: 1, y: 2 };
+    const elements = GraphTransformer.entitiesToElements([
+      entity("a", shared),
+      entity("b", shared),
+    ]);
+
+    expect((elements[0] as any).position).not.toBe(
+      (elements[1] as any).position,
+    );
+  });
+});

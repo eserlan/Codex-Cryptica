@@ -1,5 +1,10 @@
 import { untrack } from "svelte";
 import { unsavedPositionUpdates } from "./position-persistence";
+import {
+  applyLayoutSnapshot,
+  restoreEverydayPositions,
+  type LayoutPositions,
+} from "./graph-layout-snapshot";
 import type { Core } from "cytoscape";
 import {
   initGraph,
@@ -600,6 +605,14 @@ export class GraphViewController {
               this.needsVisibilityReconcile = true;
               return;
             }
+            // A view's own layout is open (#3456): keep it on screen after any
+            // layout pass, and never write it, or positions worked out around
+            // it, into the vault's everyday arrangement.
+            const openLayout = this.deps.graph.layoutOverride;
+            if (openLayout) {
+              applyLayoutSnapshot(this.cy, openLayout);
+              return;
+            }
             const notLoading = this.deps.vault.status !== "loading";
             // Always keep positions for entities that have none yet, in any
             // view and on the first solve. Otherwise a vault shown in focus
@@ -763,6 +776,30 @@ export class GraphViewController {
     this.nodeSelectSpan = null;
   };
 
+  /**
+   * The graph only places an entity when it is first added, so when a view's
+   * saved layout opens or closes, entities already on screen are moved here:
+   * to their saved positions, or back to the vault's everyday ones. Entities
+   * added later are placed from the layout by the elements themselves.
+   * Timeline and orbit arrange entities on their own, so they are left alone.
+   */
+  private lastLayoutOverride: LayoutPositions | null = null;
+  private syncLayoutOverride() {
+    const override = this.deps.graph.layoutOverride ?? null;
+    if (override === this.lastLayoutOverride) return;
+    const previous = this.lastLayoutOverride;
+    this.lastLayoutOverride = override;
+    if (override) {
+      if (this.deps.graph.timelineMode || this.deps.graph.orbitMode) return;
+      applyLayoutSnapshot(this.cy, override);
+    } else if (previous) {
+      restoreEverydayPositions(
+        this.cy,
+        (id) => this.deps.vault.entities[id]?.metadata?.coordinates,
+      );
+    }
+  }
+
   // Sync Logic
   syncElements = () => {
     if (this.isSuspended) {
@@ -803,6 +840,7 @@ export class GraphViewController {
       this.lastSyncedGraphStructureVersion = graphStructureVersion;
       this.lastSyncedFilterSignature = filterSignature;
 
+      this.syncLayoutOverride();
       syncGraphElements(this.cy, {
         elements: this.deps.graph.elements,
         vaultStatus: this.deps.vault.status,

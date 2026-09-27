@@ -763,6 +763,149 @@ describe("GraphViewController", () => {
     });
   });
 
+  describe("a view's saved layout (#3456)", () => {
+    /** Fake nodes with just what the layout helpers touch. */
+    function fakeNodes(list: Array<{ id: string; x: number; y: number }>) {
+      const state = list.map((n) => ({ ...n }));
+      const nodes = state.map((n) => ({
+        id: () => n.id,
+        position: (p?: { x: number; y: number }) => {
+          if (p) {
+            n.x = p.x;
+            n.y = p.y;
+            return undefined;
+          }
+          return { x: n.x, y: n.y };
+        },
+      }));
+      return {
+        state,
+        collection: { forEach: (cb: (n: any) => void) => nodes.forEach(cb) },
+      };
+    }
+    const at = (x: number, y: number) => ({
+      metadata: { coordinates: { x, y } },
+    });
+
+    async function ready() {
+      await controller.init(document.createElement("div"), {});
+      controller.loadPhase = "ready";
+    }
+
+    it("moves the entities already on the graph to their saved positions when the layout opens", async () => {
+      await ready();
+      const { state, collection } = fakeNodes([
+        { id: "a", x: 0, y: 0 },
+        { id: "b", x: 0, y: 0 },
+      ]);
+      vi.mocked(controller.cy!.nodes).mockReturnValueOnce(collection as any);
+      deps.graph.layoutOverride = { a: { x: 11, y: 22 } };
+
+      controller.syncElements();
+
+      expect(state.find((n) => n.id === "a")).toMatchObject({ x: 11, y: 22 });
+      // Not in the layout: left where it is.
+      expect(state.find((n) => n.id === "b")).toMatchObject({ x: 0, y: 0 });
+    });
+
+    it("puts entities back where the vault keeps them when the layout closes", async () => {
+      await ready();
+      deps.vault.entities = { a: at(5, 6) };
+      const opened = fakeNodes([{ id: "a", x: 0, y: 0 }]);
+      vi.mocked(controller.cy!.nodes).mockReturnValueOnce(
+        opened.collection as any,
+      );
+      deps.graph.layoutOverride = { a: { x: 11, y: 22 } };
+      controller.syncElements();
+
+      const closing = fakeNodes([{ id: "a", x: 11, y: 22 }]);
+      vi.mocked(controller.cy!.nodes).mockReturnValueOnce(
+        closing.collection as any,
+      );
+      deps.graph.layoutOverride = null;
+      controller.syncElements();
+
+      expect(closing.state[0]).toMatchObject({ x: 5, y: 6 });
+    });
+
+    it("restores everyday positions before switching an open layout to timeline mode", async () => {
+      await ready();
+      deps.vault.entities = { a: at(5, 6) };
+      const opening = fakeNodes([{ id: "a", x: 0, y: 0 }]);
+      vi.mocked(controller.cy!.nodes).mockReturnValueOnce(
+        opening.collection as any,
+      );
+      deps.graph.layoutOverride = { a: { x: 11, y: 22 } };
+      controller.syncElements();
+
+      const switching = fakeNodes([{ id: "a", x: 11, y: 22 }]);
+      vi.mocked(controller.cy!.nodes).mockReturnValueOnce(
+        switching.collection as any,
+      );
+      deps.graph.timelineMode = true;
+      deps.graph.layoutOverride = null;
+      controller.syncElements();
+
+      expect(switching.state[0]).toMatchObject({ x: 5, y: 6 });
+    });
+
+    it("does nothing again while the same layout stays open (negative)", async () => {
+      await ready();
+      const override = { a: { x: 1, y: 1 } };
+      deps.graph.layoutOverride = override;
+      vi.mocked(controller.cy!.nodes).mockReturnValueOnce(
+        fakeNodes([{ id: "a", x: 0, y: 0 }]).collection as any,
+      );
+      controller.syncElements();
+      vi.mocked(controller.cy!.nodes).mockClear();
+
+      controller.syncElements();
+
+      expect(controller.cy!.nodes).not.toHaveBeenCalled();
+    });
+
+    it("does not move anything when no layout is open and none was (negative)", async () => {
+      await ready();
+      vi.mocked(controller.cy!.nodes).mockClear();
+
+      controller.syncElements();
+
+      expect(controller.cy!.nodes).not.toHaveBeenCalled();
+    });
+
+    it("never saves positions to the vault while a view's layout is open, and keeps the layout on screen", async () => {
+      await ready();
+      deps.vault.entities = { placed: at(5, 5), unplaced: { metadata: {} } };
+      deps.graph.layoutOverride = { placed: { x: 90, y: 90 } };
+      // Consume the move that happens when the layout first opens.
+      vi.mocked(controller.cy!.nodes).mockReturnValueOnce(
+        fakeNodes([]).collection as any,
+      );
+      controller.syncElements();
+      await controller.applyCurrentLayout({
+        reason: "Initial Load",
+        isInitial: true,
+      } as any);
+      const calls = (controller.layoutManager as any).apply.mock.calls;
+      const onPositions = calls[calls.length - 1][1].onPositionsUpdated as (
+        updates: Record<string, unknown>,
+        meta?: { healed?: boolean },
+      ) => void;
+      const shown = fakeNodes([{ id: "placed", x: 3, y: 3 }]);
+      vi.mocked(controller.cy!.nodes).mockReturnValueOnce(
+        shown.collection as any,
+      );
+
+      onPositions(
+        { placed: at(100, 100), unplaced: at(40, 40) },
+        { healed: true },
+      );
+
+      expect(deps.vault.batchUpdate).not.toHaveBeenCalled();
+      expect(shown.state[0]).toMatchObject({ x: 90, y: 90 });
+    });
+  });
+
   describe("viewport policy", () => {
     // apply is now called as apply(request, options) — viewport lives on request
     const lastPolicy = () => {
