@@ -488,3 +488,129 @@ describe("SessionJournalStore — current section (slice 3, FR-032)", () => {
     expect(store.activeSectionId).toBeUndefined();
   });
 });
+
+describe("SessionJournalStore — editing, deleting and reordering entries (#3476)", () => {
+  const newStore = (vaultId: string) =>
+    new SessionJournalStore(
+      fakeVaultRegistry(vaultId) as any,
+      fakeIds(),
+      fakeClock(),
+    );
+
+  it("edits a typed note's text", async () => {
+    const store = newStore("vault-edit-1");
+    await store.start();
+    const entry = await store.appendEntry({
+      type: "manual-note",
+      content: "Original",
+    });
+
+    const updated = await store.updateEntry(
+      store.current!.id,
+      entry.id,
+      "Edited",
+    );
+
+    expect(updated.content).toBe("Edited");
+    expect(store.current?.entries[0].content).toBe("Edited");
+  });
+
+  it("refuses to edit an automatic entry (negative)", async () => {
+    const store = newStore("vault-edit-2");
+    await store.start();
+    const entry = await store.appendEntry({
+      type: "dice-roll",
+      content: "Rolled 1d20: 14",
+    });
+
+    await expect(
+      store.updateEntry(store.current!.id, entry.id, "Rolled 1d20: 20"),
+    ).rejects.toThrow();
+    expect(store.current?.entries[0].content).toBe("Rolled 1d20: 14");
+  });
+
+  it("deletes an entry", async () => {
+    const store = newStore("vault-delete-1");
+    await store.start();
+    const a = await store.appendEntry({ type: "manual-note", content: "A" });
+    await store.appendEntry({ type: "manual-note", content: "B" });
+
+    await store.deleteEntry(store.current!.id, a.id);
+
+    expect(store.current?.entries.map((e) => e.content)).toEqual(["B"]);
+  });
+
+  it("moves an entry up and down", async () => {
+    const store = newStore("vault-move-1");
+    await store.start();
+    const a = await store.appendEntry({ type: "manual-note", content: "A" });
+    await store.appendEntry({ type: "manual-note", content: "B" });
+
+    await store.moveEntry(store.current!.id, a.id, "down");
+    expect(store.current?.entries.map((e) => e.content)).toEqual(["B", "A"]);
+
+    await store.moveEntry(store.current!.id, a.id, "up");
+    expect(store.current?.entries.map((e) => e.content)).toEqual(["A", "B"]);
+  });
+
+  it("refuses to move the first entry further up (negative)", async () => {
+    const store = newStore("vault-move-2");
+    await store.start();
+    const a = await store.appendEntry({ type: "manual-note", content: "A" });
+    await store.appendEntry({ type: "manual-note", content: "B" });
+
+    await expect(
+      store.moveEntry(store.current!.id, a.id, "up"),
+    ).rejects.toThrow();
+    expect(store.current?.entries.map((e) => e.content)).toEqual(["A", "B"]);
+  });
+
+  it("edits, deletes and reorders entries of an ended journal", async () => {
+    const store = newStore("vault-ended-edit");
+    await store.start();
+    const a = await store.appendEntry({ type: "manual-note", content: "A" });
+    const b = await store.appendEntry({ type: "manual-note", content: "B" });
+    await store.end();
+
+    await store.updateEntry(store.current!.id, a.id, "A edited");
+    await store.moveEntry(store.current!.id, a.id, "down");
+    await store.deleteEntry(store.current!.id, b.id);
+
+    expect(store.current?.entries.map((e) => e.content)).toEqual(["A edited"]);
+  });
+
+  it("edits an entry of a past journal that is not the active one", async () => {
+    const store = newStore("vault-past-edit");
+    await store.start();
+    const entry = await store.appendEntry({
+      type: "manual-note",
+      content: "Old session note",
+    });
+    const pastId = store.current!.id;
+    await store.end();
+    await store.start();
+    await store.appendEntry({ type: "manual-note", content: "New session" });
+
+    await store.updateEntry(pastId, entry.id, "Corrected old note");
+
+    const journals = await store.listJournals();
+    const past = journals.find((j) => j.id === pastId);
+    expect(past?.entries[0].content).toBe("Corrected old note");
+    expect(store.current?.entries[0].content).toBe("New session");
+  });
+
+  it("leaves the entry unchanged when editing fails (negative)", async () => {
+    const store = newStore("vault-edit-fail");
+    await store.start();
+    const entry = await store.appendEntry({
+      type: "manual-note",
+      content: "Kept",
+    });
+
+    await expect(
+      store.updateEntry(store.current!.id, entry.id, "   "),
+    ).rejects.toThrow();
+
+    expect(store.current?.entries[0].content).toBe("Kept");
+  });
+});

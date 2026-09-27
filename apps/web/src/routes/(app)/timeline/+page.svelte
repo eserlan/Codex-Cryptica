@@ -164,6 +164,7 @@
                     {timelineStore.calendarMonthView.title}
                     <span
                       class="icon-[lucide--chevrons-up-down] h-4 w-4 text-theme-muted group-hover:text-theme-primary transition-colors"
+                      aria-hidden="true"
                     ></span>
                   </button>
 

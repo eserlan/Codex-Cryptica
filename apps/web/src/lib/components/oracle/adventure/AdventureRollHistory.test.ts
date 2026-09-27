@@ -80,4 +80,56 @@ describe("AdventureRollHistory", () => {
     expect(screen.getByText("Roll history")).toBeTruthy();
     expect(screen.getByText(/d20/)).toBeTruthy();
   });
+
+  it("expands the dice behind a resolved roll (#3443)", async () => {
+    render(AdventureRollHistory, {
+      manager: manager({
+        rollHistory: [
+          {
+            turn: { id: "turn-1" },
+            resolvedRoll: {
+              expression: "4d6kh3",
+              outcome: {
+                kind: "numeric",
+                value: 14,
+                parts: [
+                  {
+                    type: "dice",
+                    sides: 6,
+                    rolls: [6, 5, 3],
+                    dropped: [1],
+                    value: 14,
+                  },
+                ],
+              },
+            },
+          },
+        ],
+      }),
+    });
+
+    await fireEvent.click(screen.getByTestId("dice-disclosure-toggle"));
+
+    expect(
+      screen.getAllByTestId("dice-kept").map((el) => el.textContent),
+    ).toEqual(["6", "5", "3"]);
+  });
+
+  it("offers no breakdown for a resolved roll with no saved dice (negative)", () => {
+    render(AdventureRollHistory, {
+      manager: manager({
+        rollHistory: [
+          {
+            turn: { id: "turn-1" },
+            resolvedRoll: {
+              expression: "d20",
+              outcome: { kind: "numeric", value: 15 },
+            },
+          },
+        ],
+      }),
+    });
+
+    expect(screen.queryByTestId("dice-disclosure-toggle")).toBeNull();
+  });
 });

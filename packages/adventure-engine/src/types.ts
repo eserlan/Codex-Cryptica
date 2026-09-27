@@ -77,10 +77,31 @@ export interface ProvisionalFact {
   visibility: "player-visible" | "gm-only";
 }
 
+/**
+ * One dice group or modifier from a resolved roll's trace. Structurally the
+ * same shape as `dice-engine`'s `PartResult` (#3443), but declared locally
+ * so this engine takes no dependency on it: the app layer hands over its own
+ * `RollResult.parts` and this type only describes what the engine persists.
+ */
+export interface RollTracePart {
+  type: "dice" | "modifier";
+  value: number;
+  sides?: number;
+  rolls?: number[];
+  dropped?: number[];
+}
+
 export interface SuppliedRollOutcome {
   kind: "narrative" | "numeric";
   value: string | number;
   label?: string;
+  /**
+   * The individual dice behind `value`, when it came from a real roll rather
+   * than a narrative outcome the player typed in. Persisted as-is on the
+   * committed turn (see `ResolvedRollSnapshot`) so a later "show the dice"
+   * view never has to reconstruct a roll from its total (#3443).
+   */
+  parts?: RollTracePart[];
 }
 
 export interface OutcomeBand {

@@ -295,6 +295,42 @@ describe("AdventureManager", () => {
     expect(manager.phase).toBe("ready");
   });
 
+  it("records the dice actually rolled alongside a numeric outcome (#3443)", async () => {
+    const deps: any = dependencies();
+    const generate = vi.fn(async (request: any) => {
+      if (request.phase === "opening") return completeProposal;
+      if (request.phase === "action") return rollProposal;
+      return completeProposal;
+    });
+    deps.generation = { generate };
+    deps.dice = {
+      evaluate: () => ({
+        total: 14,
+        formula: "1d20",
+        timestamp: 0,
+        parts: [{ type: "dice", sides: 20, rolls: [14], value: 14 }],
+      }),
+    };
+    const manager = new AdventureManager(deps);
+    await manager.start({
+      vaultId: "vault-1",
+      title: "Road",
+      premise: "Find the road",
+      playerCharacter: {
+        kind: "provisional",
+        name: "Mara",
+        description: "Guide",
+      },
+    });
+
+    await manager.submitAction("Cross the bridge");
+    await manager.rollCodexDice();
+
+    expect(manager.session?.turns[1]?.resolvedRoll?.outcome.parts).toEqual([
+      { type: "dice", sides: 20, rolls: [14], value: 14 },
+    ]);
+  });
+
   it("keeps a recorded outcome available for retry when resolution fails", async () => {
     const deps: any = dependencies();
     deps.generation = {
