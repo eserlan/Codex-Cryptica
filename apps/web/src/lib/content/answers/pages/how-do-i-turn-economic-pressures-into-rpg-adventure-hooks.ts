@@ -50,7 +50,7 @@ export const howDoITurnEconomicPressuresIntoRpgAdventureHooks: AnswerConfigInput
       },
       {
         kind: "example",
-        heading: "Worked example: the blocked pass and three more in brief",
+        heading: "Worked example: the blocked pass and two more in brief",
         paragraphs: [
           "The Grey Steppe pass is held by deserters, so Kettlebeck iron cannot reach the lowland forges and lowland grain cannot climb back up. Both towns from the earlier cluster answers now pull at the same party.",
         ],
