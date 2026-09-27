@@ -8,7 +8,7 @@ export const howDoIBuildABelievableEconomyForAFantasyWorld: AnswerConfigInput =
     question: "How do I build a believable economy for a fantasy world?",
     kind: "framework",
     shortAnswer:
-      "Build a believable fantasy economy by tracing six links for each region: what it produces, how that produce is worked, how goods move, who controls production or exchange, what strains the arrangement, and what the players can see changing as a result. Players never check your price list for consistency; they notice when bread costs more after a blocked pass, when a mine town has coin but no food, and when someone with power is visibly responding to the strain.",
+      "Build a believable fantasy economy by tracing six links for each region: what it has and needs, how resources are worked, how goods and labour move, who controls access or takes a share, what strains the arrangement, and what the players can see changing as a result. A believable economy does not need a perfectly calibrated price list; it needs causes the players can see, such as bread costing more after a blocked pass, a mine town having coin but no food, or someone with power responding to the strain.",
     sections: [
       {
         kind: "prose",
@@ -23,11 +23,11 @@ export const howDoIBuildABelievableEconomyForAFantasyWorld: AnswerConfigInput =
         kind: "list",
         heading: "Six links, from ground to table",
         intro:
-          "Work through these in order for each region the party will visit. One line each is enough to start:",
+          "Ask what this place has, what it lacks, how it turns one into the other, who controls that process, what is straining it, and what changes when it strains. Work through the six links in order for each region the party will visit; one line each is enough to start:",
         items: [
           {
-            term: "Resources",
-            text: "What the land gives without much working: farmland, timber, fish, ore, stone, pasture, salt, or a pass everyone must use. Two entries per region is plenty; a region with everything has no reason to trade.",
+            term: "Resources & needs",
+            text: "What the land gives without much working, and what the region cannot easily supply for itself: farmland, timber, fish, ore, stone, pasture, salt, or a pass everyone must use. Two resources and one important need are plenty; a region with everything has no reason to trade.",
           },
           {
             term: "Production",
@@ -35,11 +35,11 @@ export const howDoIBuildABelievableEconomyForAFantasyWorld: AnswerConfigInput =
           },
           {
             term: "Exchange",
-            text: "How surplus leaves and need arrives: a river route, a mountain pass, a coastal run, a market town where drovers meet. Name the path, the season it runs, and what makes it slow or unsafe. A route nobody can picture is a route nobody will defend.",
+            text: "Who needs the surplus, where missing goods come from, and how goods or labour move: by river, mountain pass, coastal run, or market town. Exchange need not mean a cash market: rent, tribute, tithes, labour obligations, household production, rationing, patronage, gifts, requisition, and barter can all move goods or labour without coin. Name the path, the season it runs, and what makes it slow or unsafe. A route nobody can picture is a route nobody will defend.",
           },
           {
             term: "Control",
-            text: "Who takes a share and decides who may trade: a lord with toll rights, a guild with a charter, a temple that blesses weights, a company that owns the barges. Control answers why prices stay put and who objects when they move.",
+            text: "Who can take a share, restrict access, or change the terms of exchange: a lord with toll rights, a guild with a charter, a temple that blesses weights, or a company that owns the barges. Ask who controls labour or infrastructure, who can enforce a deal or seize goods, and who gains or loses when the arrangement shifts.",
           },
           {
             term: "Pressure",
@@ -47,7 +47,7 @@ export const howDoIBuildABelievableEconomyForAFantasyWorld: AnswerConfigInput =
           },
           {
             term: "Consequences",
-            text: "What the players can observe without being told the model: dearer bread, empty stalls, idle porters, guards at a quay, a queue at a shrine kitchen, a merchant hiring swords. If a pressure has no visible sign, it does not exist at the table.",
+            text: "What the players can observe without being told the model: dearer bread, empty stalls, substitutes appearing, workers arriving or leaving, rationing, smuggling, guards at a quay, or a faction gaining leverage. If a pressure has no visible sign, it does not exist at the table.",
           },
         ],
         outro:
@@ -57,20 +57,20 @@ export const howDoIBuildABelievableEconomyForAFantasyWorld: AnswerConfigInput =
         kind: "example",
         heading: "Worked example: the same valley, two ways",
         paragraphs: [
-          "Greyvale is an upland valley two days from a river port. It grows barley and cuts timber. Compare a list-based approach with a linked one.",
+          "Greyvale is an upland valley two days from a river port. It grows barley and cuts timber, but depends on salt brought upriver from the port. Compare a list-based approach with a linked one.",
         ],
         items: [
           {
             term: "The list-based version",
-            text: "The notes list barley at 2 copper a bushel, timber at 5 silver a load, daily wages, and the price of a mule. Greyvale sells both goods at the port market. When the party asks why bread costs more this month, the notes have no answer, because no entry connects the valley to the town or either of them to trouble.",
+            text: "The notes list barley at 2 copper a bushel, timber at 5 silver a load, daily wages, and the price of a mule. Greyvale sells both goods at the port market and buys salt there. When the party asks why bread costs more this month, the notes have no answer, because no entry connects the valley to the town or either of them to trouble.",
           },
           {
             term: "The linked version",
-            text: "Greyvale grows barley but has no mill, so grain travels to mill towns downstream. Timber rafts follow the same river. The toll guild controls the narrows where the river bends, and deserters from a finished war now hold the far bank and demand their own fee. The millers pass both fees on: flour reaches the port late and dear, bakers shorten loaves, and the guild blames the deserters while quietly raising its own share.",
+            text: "Greyvale grows barley but has no mill, so grain travels to mill towns downstream; salt barges make the costly return upriver. Timber rafts follow the river too. The toll guild controls the narrows where it bends, and deserters from a finished war now hold the far bank and demand their own fee. The millers pass both fees on: flour reaches the port late and dear, bakers shorten loaves, and the guild blames the deserters while quietly raising its own share.",
           },
           {
             term: "Why it works",
-            text: "Every economic fact now has an owner and a location. The party can meet the miller who pays twice, see the short loaves, hear the guild's story at the quay, and choose whom to believe. Fixing the deserter problem, negotiating the toll, or finding another route all change prices through play rather than through edited notes.",
+            text: "Every economic fact now has an owner and a location. The party can meet the miller who pays twice, see the short loaves, hear the guild's story at the quay, and choose whom to believe. Greyvale matters because others need its barley and timber, while it depends on salt from elsewhere. Fixing the deserter problem, negotiating the toll, or finding another route can change prices, availability, and who holds power through play rather than through edited notes.",
           },
         ],
       },
@@ -79,7 +79,7 @@ export const howDoIBuildABelievableEconomyForAFantasyWorld: AnswerConfigInput =
         heading: "Let control and pressure do the heavy work",
         paragraphs: [
           "New worldbuilders often add more goods when an economy feels thin. The repair is usually elsewhere: give someone the right to tax, refuse, or delay exchange, then put that right under strain. A guild charter, a bridge toll, a temple monopoly on salt, or a lord who owns the only working crane will shape behaviour more than six additional commodities.",
-          "Magic and monsters slot into the same links rather than needing separate rules. A teleport circle is exchange with a controller who sets terms. A dragon on the pass is pressure on a named route with a visible consequence at market. Treat the fantastic as a sharper version of ordinary friction, not as an exception to the method.",
+          "Magic and monsters belong in the same links, but magic can change scarcity itself. For important magic, ask: what does this make cheap, what remains scarce, and who controls access? Magical transport can collapse distance for some goods; reliable food creation can change dependence on farms; enchanted tools can raise output; healing can change the cost of injury; and divination can shift information advantages. A dragon on the pass is pressure on a named route with a visible consequence at market.",
           "Resist modelling everything. Distant lands the party will never visit can stay as single phrases: pepper country, the horse plains, the glass coast. Detail follows play. When the party books passage or asks where the pepper comes from, that is the moment to trace the next chain.",
         ],
       },
