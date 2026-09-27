@@ -9,14 +9,14 @@ export const howDoIDecideWhatASettlementProducesImportsAndExports: AnswerConfigI
       "How do I decide what a settlement produces, imports, and exports?",
     kind: "how-to",
     shortAnswer:
-      "Derive a settlement's trade from its surroundings rather than picking goods at will: read the land for resources, check who lives there and what they know how to make, note the roads, river, or harbour that carry goods in and out, then name who taxes or forbids exchange. What the place makes with local hands is production; what it makes beyond its own need is surplus for export; what the land and skills cannot supply must be imported, and each import is a dependency you can press in play.",
+      "Derive a settlement's trade from its surroundings and capabilities rather than picking goods at will: note local resources, what its people and institutions can do, what it controls or connects, and the routes that carry goods and visitors. Production can use imported inputs or provide services; surplus is what remains after local demand, while imports may feed local needs or make exports possible. Goods made, processed, or passed onward, and services sold to travellers or neighbours, all give a settlement ways to earn.",
     sections: [
       {
         kind: "prose",
         heading: "Arbitrary goods lists all sound the same",
         paragraphs: [
           "The usual approach starts at the market stall: the GM invents a few exports that sound colourful and moves on. The result is settlements that all sell a little of everything, where a mountain hamlet trades wine and a fishing port sells cheap iron, and no choice ever follows from the difference. Players stop asking where things come from because the answer is never load-bearing.",
-          "Working from the surroundings fixes this with less effort, not more. Land, hands, paths, and rulers narrow the possibilities so sharply that the trade identity almost writes itself. A town above the treeline does not need a commodity table to tell you it buys timber; a town with one good harbour and poor soil does not need a simulation to explain why it sells fish and buys grain.",
+          "Working from the surroundings fixes this with less effort, not more. Land, skills, institutions, position, and rulers narrow the possibilities so sharply that the trade identity almost writes itself. A town above the treeline may import timber for its workshops; a town with one good harbour and poor soil may earn its keep by repairing ships, warehousing cargo, or serving travellers.",
         ],
       },
       {
@@ -27,19 +27,19 @@ export const howDoIDecideWhatASettlementProducesImportsAndExports: AnswerConfigI
         items: [
           {
             term: "Ground",
-            text: "Name the geography and what it gives freely: thin pasture, deep woods, a workable seam of ore, a tidal flat for salt pans, a ford everyone must cross. If a resource is not on this list, the settlement does not produce it in quantity.",
+            text: "Name the geography, what it gives freely, and what the place controls or connects: thin pasture, deep woods, a workable seam of ore, a tidal flat for salt pans, a ford, deep-water harbour, caravan junction, border checkpoint, pilgrimage site, or seat of government. Local resources make some production cheaper, but imported inputs can support major crafts or industries when skills, tools, capital, or access make them worthwhile.",
           },
           {
             term: "Hands",
-            text: "Count the people and what they know: fifty fishing families who can mend nets, two hundred miners with one smelter, a dozen weavers, no miller. Skills decide whether a resource leaves raw or worked, and worked goods feed more mouths per load.",
+            text: "Count the people, skills, and institutions: fishing families who mend nets, miners and a smelter crew, weavers, scribes, lawyers, healers, shipwrights, scholars, mages, soldiers, priests, brokers, or entertainers. Skills decide whether goods leave raw or worked, and who can provide services. Processing can make a good more valuable, durable, portable, or useful before it leaves the settlement.",
           },
           {
             term: "Tools",
-            text: "Note the infrastructure that multiplies or limits output: a mill, a smelter, a deep-water quay, a dry storehouse, a maintained road. One missing tool is often the whole story: grain without a mill must travel, ore without a smelter leaves cheap.",
+            text: "Note the infrastructure and capital that enable or limit work and exchange: a mill, a smelter, a deep-water quay, a dry storehouse, a maintained road, workshops, archives, or a court. One missing tool is often the whole story: grain without a mill must travel, ore without a smelter leaves cheap.",
           },
           {
             term: "Neighbours",
-            text: "List the two or three nearest settlements and the path to each, with its season and risk. Trade follows the cheapest safe path, so a rich neighbour across a dangerous pass matters less than a poor one downriver.",
+            text: "List the two or three nearest settlements and the path to each, with its season and risk. Ask who and what passes through: a river crossing, harbour, caravan junction, mountain pass, border checkpoint, pilgrimage site, or administrative seat may earn from traffic as much as from local goods. Trade follows the cheapest safe path, so a rich neighbour across a dangerous pass matters less than a poor one downriver.",
           },
           {
             term: "Rulers",
@@ -47,11 +47,11 @@ export const howDoIDecideWhatASettlementProducesImportsAndExports: AnswerConfigI
           },
           {
             term: "Ledger",
-            text: "Write four short lines. Produces: what local ground and hands supply. Surplus: what remains past local need and can leave. Imports: what the town cannot supply and must bring in. Exports: the surplus that survives tools, paths, and rulers to sell elsewhere.",
+            text: "First ask who consumes local output: residents, a garrison, mines or workshops, a court or temple, visiting traders, seasonal workers, ships, or caravans. Then write four short lines. Produces: goods and services made or provided here, including those made with imported inputs. Surplus: what remains after local demand. Imports: goods brought in for local use or as inputs for local work; a cloth town may import wool because its dyers and looms are exceptional, then export expensive cloth. Exports: surplus sold elsewhere, goods processed or passed onward, and services sold to travellers or neighbours.",
           },
         ],
         outro:
-          "Production is everything the town makes; surplus is the part it can spare; exports are the surplus that reaches a buyer. Imports are the mirror: everything the ground and hands cannot cover. Keeping those four lines separate is what makes shortages readable later.",
+          "Production is what the settlement makes or provides; surplus is what remains after local demand; exports include what it sells beyond its borders, whether made there, processed there, or passed onward. Imports can cover local needs or supply the work that creates exports. Keeping those four lines separate makes dependencies and shortages readable later.",
       },
       {
         kind: "example",
@@ -80,6 +80,14 @@ export const howDoIDecideWhatASettlementProducesImportsAndExports: AnswerConfigI
       },
       {
         kind: "prose",
+        heading: "A harbour can be the local resource",
+        paragraphs: [
+          "Bellhaven has poor soil and no important raw material, but it has the coast's only deep-water harbour. It imports timber, wine, and wool, repairs ships, warehouses cargo, and re-exports goods inland; its fragile dependency is keeping the harbour dredged and the sea route safe.",
+          "The ledger still follows the same six steps: Bellhaven's position and shipwrights turn imported supplies and passing traffic into trade.",
+        ],
+      },
+      {
+        kind: "prose",
         heading: "Read dependencies as future play",
         paragraphs: [
           "Every import line is a question about what happens when the delivery fails, and every export line is a question about who cannot afford to lose it. Kettlebeck without timber slows the smelter; Ashford without Kettlebeck bars idles its forge. Mark one dependency per settlement as the fragile one, the delivery with the fewest alternatives, and you have the pressure point without writing a plot.",
@@ -91,8 +99,9 @@ export const howDoIDecideWhatASettlementProducesImportsAndExports: AnswerConfigI
         heading: "Before the settlement trades",
         intro: "Confirm the ledger holds together before the party arrives:",
         items: [
-          "Can you name what the land gives and what it withholds, in one line each?",
-          "Do the people's skills explain whether goods leave raw or worked?",
+          "Can you name what the land gives and what the settlement controls or connects?",
+          "Do local skills and institutions explain what it makes or provides, including with imported inputs?",
+          "Who consumes local output, and what remains after their needs are met?",
           "Is production separated from surplus, and surplus separated from exports?",
           "Does every import have a named path and season attached to it?",
           "Which single dependency hurts fastest if its delivery fails?",
@@ -171,7 +180,7 @@ export const howDoIDecideWhatASettlementProducesImportsAndExports: AnswerConfigI
         "how to give an rpg settlement an economy",
       ],
       uniqueValue:
-        "A six-step method deriving a settlement ledger (production, surplus, imports, exports) from ground, hands, tools, neighbours, and rulers, with a mining-town worked example and named dependencies.",
+        "A six-step method deriving a settlement ledger (production, surplus, imports, exports) from local resources, skills, institutions, strategic position, routes, tools, and rulers, with a mining-town worked example and named dependencies.",
       userJob: "create",
       relatedIntents: [
         "answer-believable-fantasy-economy",
@@ -191,7 +200,7 @@ export const howDoIDecideWhatASettlementProducesImportsAndExports: AnswerConfigI
     seo: {
       title: "How Do I Decide a Settlement's Trade Goods? | Codex Cryptica",
       description:
-        "Derive what a settlement produces, imports, and exports from land, skills, routes, and rulers, with a worked mining-town ledger.",
+        "Derive a settlement's production, imports, and exports from local resources, skills, position, routes, and rulers, with worked trade examples.",
       image:
         "https://assets.codexcryptica.com/og/how-do-i-decide-what-a-settlement-produces-imports-and-exports.jpg",
       imageAlt:
