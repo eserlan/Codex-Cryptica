@@ -5,7 +5,8 @@ import {
   getAllLandingPageSlugs,
   getLandingPagesForHub,
 } from "./registry";
-import { isHubThemeSlug } from "../hub-themes";
+import { HUB_THEME_SLUGS, isHubThemeSlug } from "../hub-themes";
+import { GENERATOR_SLUGS } from "../../../params/generator_slug";
 import { LandingPageKindSchema, type LandingPageConfig } from "./schema";
 
 describe("Landing Page Registry", () => {
@@ -1063,6 +1064,93 @@ describe("Landing Page Registry", () => {
         expect(spoke.relation, `${spoke.label} has no relation`).toBeTruthy();
         expect(spoke.category, `${spoke.label} has no category`).toBeDefined();
       }
+    });
+  });
+
+  describe("Weird West & Frontier Pack", () => {
+    it("uses the western theme and links frontier-relevant generators", () => {
+      const weirdWest = getLandingPage("weird-west-rpgs");
+
+      expect(weirdWest).toBeDefined();
+      expect(weirdWest?.kind).toBe("genre");
+      expect(weirdWest?.theme).toBe("western");
+      expect(weirdWest?.hub).toBe("western");
+      expect(weirdWest?.recommendedTools.map((tool) => tool.href)).toEqual(
+        expect.arrayContaining([
+          "/generators/western",
+          "/generators/settlement",
+          "/generators/faction",
+          "/generators/npc",
+          "/generators/secret-society",
+        ]),
+      );
+    });
+
+    it("only links to generators and hubs that exist", () => {
+      const weirdWest = getLandingPage("weird-west-rpgs")!;
+      const validPaths = new Set([
+        ...GENERATOR_SLUGS.map((slug) => `/generators/${slug}`),
+        ...HUB_THEME_SLUGS.map((theme) => `/generators/${theme}`),
+      ]);
+
+      for (const tool of weirdWest.recommendedTools) {
+        expect(validPaths.has(tool.href), `${tool.href} is not a route`).toBe(
+          true,
+        );
+      }
+    });
+
+    it("connects boomtowns, lawmen, cartels, and the occult beneath them", () => {
+      const weirdWest = getLandingPage("weird-west-rpgs")!;
+      const copy = JSON.stringify(weirdWest);
+      const [hub, ...spokes] = weirdWest.exampleGraph!.steps;
+
+      expect(copy).toMatch(/boomtown/i);
+      expect(copy).toMatch(/marshal/i);
+      expect(copy).toMatch(/cartel/i);
+      expect(copy).toMatch(/rail/i);
+      expect(copy).toMatch(/occult/i);
+      expect(weirdWest.useCases).toHaveLength(4);
+      expect(copy).toMatch(/hauntings/i);
+      expect(copy).toMatch(/strange weather/i);
+      expect(copy).toMatch(/old violence, bargains, or greed/i);
+      expect(copy).toMatch(/today's witness into tomorrow's deputy/i);
+      expect(copy).not.toMatch(/lynching/i);
+      expect(hub.category).toBe("location");
+      expect(spokes.length).toBeGreaterThanOrEqual(5);
+      expect(
+        spokes.find(({ label }) => label === "Marshal Ada Quill")?.relation,
+      ).toBe("Falls under the law of");
+      expect(
+        spokes.find(({ label }) => label === "The Blackrail Company")?.relation,
+      ).toBe("Ships ore to");
+      expect(
+        spokes.find(({ label }) => label === "Silas Crowe")?.relation,
+      ).toBe("Is raided by");
+      expect(
+        spokes.find(({ label }) => label === "The Hollow Choir")?.relation,
+      ).toBe("Awakened");
+      for (const spoke of spokes) {
+        expect(spoke.relation, `${spoke.label} has no relation`).toBeTruthy();
+        expect(spoke.category, `${spoke.label} has no category`).toBeDefined();
+      }
+    });
+
+    it("stays distinct from the space western pack and names no published game", () => {
+      const weirdWest = getLandingPage("weird-west-rpgs")!;
+
+      expect(weirdWest.hub).not.toBe(getLandingPage("space-western")?.hub);
+      expect(JSON.stringify(weirdWest)).not.toMatch(
+        /deadlands|savage worlds|space|starship/i,
+      );
+    });
+
+    it("joins the western hub without emptying the other hubs", () => {
+      expect(getLandingPagesForHub("western").map((page) => page.slug)).toEqual(
+        ["weird-west-rpgs"],
+      );
+      expect(getLandingPagesForHub("space-western").length).toBeGreaterThan(0);
+      expect(getLandingPagesForHub("superhero")).toEqual([]);
     });
   });
 
