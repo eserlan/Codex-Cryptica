@@ -85,6 +85,9 @@ function readNumericValue(value: unknown, fallback: number): number {
 
 function readOptionalNumber(value: unknown): number | undefined {
   if (value === undefined || value === null) return undefined;
-  const number = Number(value);
+  const record = asRecord(value);
+  const raw = record ? (record.value ?? record.score) : value;
+  if (raw === undefined || raw === null) return undefined;
+  const number = Number(raw);
   return Number.isFinite(number) ? number : undefined;
 }

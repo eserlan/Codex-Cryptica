@@ -79,7 +79,12 @@ describe("Stat Block Import Pipeline", () => {
           { attr_id: "IQ", calc: { value: 11 } },
           { attr_id: "HT", calc: { value: 13 } },
         ],
-        calc: { hp: { value: 15 }, fp: { value: 12 }, basic_speed: 6.25 },
+        calc: {
+          hp: { value: 15 },
+          fp: { value: 12 },
+          basic_speed: { value: 6.25 },
+          move: { value: 5 },
+        },
       });
 
       expect(result.ir.system).toBe("gurps");
@@ -88,6 +93,10 @@ describe("Stat Block Import Pipeline", () => {
       expect(result.ir.vitals.find((v) => v.id === "hp")?.current).toBe(15);
       expect(result.ir.vitals.find((v) => v.id === "fp")?.current).toBe(12);
       expect(result.fields.find((field) => field.id === "st")?.value).toBe(14);
+      expect(
+        result.fields.find((field) => field.id === "basic_speed")?.value,
+      ).toBe(6.25);
+      expect(result.fields.find((field) => field.id === "move")?.value).toBe(5);
       expect(
         result.fields.find((field) => field.id === "str_score"),
       ).toBeUndefined();

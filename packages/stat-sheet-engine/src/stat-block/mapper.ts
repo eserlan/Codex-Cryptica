@@ -641,6 +641,13 @@ function synthesizeTemplateFromIr(ir: StatBlockIR): StatSheetTemplate {
     templateFields.push({ id: key, label: attr.label, type: "number" });
   }
 
+  if (ir.system === "gurps") {
+    templateFields.push(
+      { id: "basic_speed", label: "Basic Speed", type: "number" },
+      { id: "move", label: "Move", type: "number" },
+    );
+  }
+
   if (ir.defences.armorRating !== undefined) {
     templateFields.push({
       id: "armour",
@@ -703,6 +710,12 @@ function mapToSynthesizedTemplate(
     const matchingAttr = ir.attributes[f.id];
     if (matchingAttr && f.type === "number") {
       fields.push({ ...f, value: Number(matchingAttr.value) });
+      continue;
+    }
+
+    const matchingSecondary = ir.defences.secondaryDefences?.[f.id];
+    if (matchingSecondary !== undefined && f.type === "number") {
+      fields.push({ ...f, value: Number(matchingSecondary) });
       continue;
     }
 
