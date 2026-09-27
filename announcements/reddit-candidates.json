@@ -1,5 +1,5 @@
 {
-  "updated_at": 1790465548,
+  "updated_at": 1790496044,
   "candidates": [
     {
       "id": "reddit-36168046733-tables-now-parse-4d6kh3-2-and-other-keep",
@@ -40,6 +40,16 @@
       "source_id": "36277060972",
       "status": "approved",
       "created_at": 1790465548
+    },
+    {
+      "id": "reddit-36304542577-canvas-nodes-that-show-the-faction-not-j",
+      "title": "Canvas nodes that show the faction, not just a dot",
+      "body": "I had a conspiracy pinned on the canvas and every node looked the same. Twelve members, twelve identical boxes, and I had to open each one to remember who was who.\n\nI built variant canvas cards so a node can show what it actually is right on the board. Character dossier, faction card, roster, or image gallery, with an optional large view when you need the full picture.\n\nWhat you get on the board now:\n\n- character dossiers that surface stance, tags and quick facts\n- faction cards and a roster view that lists members in place\n- member image galleries for a visual lineup\n- grouped relation links so you see ally, rival, or subordinate at a glance\n- compact by default, large-card toggle when you want to read\n\nLarge cards work well for a tight crew and get noisy with twenty members, so I left compact as the default. I am still tuning how much fits before it feels crowded.\n\nWhat faction or conspiracy in your vault would you want readable as one board instead of a pile of nodes?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/images/help-blog/canvas.png)",
+      "url": "",
+      "image_url": "https://assets.codexcryptica.com/images/help-blog/canvas.png",
+      "source_id": "36304542577",
+      "status": "approved",
+      "created_at": 1790496044
     }
   ]
 }
