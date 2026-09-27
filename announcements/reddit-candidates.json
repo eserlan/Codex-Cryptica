@@ -1,5 +1,5 @@
 {
-  "updated_at": 1790497640,
+  "updated_at": 1790499318,
   "candidates": [
     {
       "id": "reddit-36168046733-tables-now-parse-4d6kh3-2-and-other-keep",
@@ -42,14 +42,14 @@
       "created_at": 1790465548
     },
     {
-      "id": "reddit-36304542577-saved-views-can-now-keep-your-graph-layo",
-      "title": "Saved Views can now keep your graph layout",
-      "body": "I would spend ten minutes arranging the graph for the current arc, save a view to keep it, and come back to find the positions gone.\n\nI built an optional layout snapshot for Graph views. When you tick it on save, the view stores node positions and camera. Reopening restores that exact arrangement while your live vault graph keeps moving.\n\nMore on how it works: https://codexcryptica.com/help/saved-views\n\nDetails:\n\n- opt-in snapshot per view, not on by default\n- restores curated positions and camera on open\n- update or remove the snapshot from the view menu\n- vault arrangement stays untouched\n- timeline and orbit views are excluded for now\n\nSnapshots are handy but they do not auto-update. Add a bunch of new entities and you will need to re-snapshot, otherwise new nodes land outside your curated layout.\n\nDo you keep one master graph arrangement, or would you save a separate layout per arc, city, or faction?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/announcements/release-36304542577-0.png)",
-      "url": "https://codexcryptica.com/help/saved-views",
-      "image_url": "https://assets.codexcryptica.com/announcements/release-36304542577-0.png",
+      "id": "reddit-36304542577-new-hub-weird-west-frontier",
+      "title": "New hub: Weird West & Frontier",
+      "body": "My frontier towns always flattened into saloon, sheriff, mine, repeat. No pressure from the railroad, no claim worth fighting over, nothing weird under the rock.\n\nI built a Weird West & Frontier hub that pulls boomtown economics, law, cartel power, and occult horror into one starting point.\n\nStart here: https://codexcryptica.com/for/weird-west-rpgs\n\nWhat is inside:\n\n- boomtown, claim, marshal, railroad and mining cartel hooks wired together\n- sample web Widow's Vein -> Harrow's Rest -> Blackrail to show how it links\n- quick links to settlement, faction, and location generators\n- occult horrors that sit behind the economics, not on top of it\n- prompts for cartels and law bending around the same claim\n\nI kept this focused on bust-town frontier with horror bleeding in. If you want straight historical western with no weird, you will be skipping a few tables.\n\nWhat is buried under your boomtown, and which faction is trying to keep it buried?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/announcements/release-36304542577-1.png)",
+      "url": "https://codexcryptica.com/for/weird-west-rpgs",
+      "image_url": "https://assets.codexcryptica.com/announcements/release-36304542577-1.png",
       "source_id": "36304542577",
       "status": "approved",
-      "created_at": 1790497640
+      "created_at": 1790499317
     }
   ]
 }
