@@ -382,22 +382,35 @@ function crossClusterEcho(entries: DiscoveryEntry[]): DiscoveryFinding[] {
   );
   const acknowledged = acknowledgedPairs(entries);
 
+  // ⚡ Bolt Optimization: Precompute claimed intents for each live entry
+  // to avoid recreating the Set and normalizing strings in an O(N^2) inner loop.
+  const liveClaims = live.map((entry) => {
+    const intents = claimedIntents(entry);
+    return { entry, intents, claimSet: new Set(intents) };
+  });
+
   const findings: DiscoveryFinding[] = [];
-  for (let i = 0; i < live.length; i += 1) {
-    for (let j = i + 1; j < live.length; j += 1) {
-      const a = live[i];
-      const b = live[j];
+  for (let i = 0; i < liveClaims.length; i += 1) {
+    for (let j = i + 1; j < liveClaims.length; j += 1) {
+      const { entry: a, claimSet: aClaims } = liveClaims[i];
+      const { entry: b, intents: bIntents } = liveClaims[j];
+
       if (a.parentCluster && a.parentCluster === b.parentCluster) continue;
       if (acknowledged.has(pairKey(a.id, b.id))) continue;
 
-      const aClaims = new Set(claimedIntents(a));
-      const shared = claimedIntents(b).filter((intent) => aClaims.has(intent));
-      if (shared.length === 0) continue;
+      let sharedIntent: string | undefined;
+      for (const intent of bIntents) {
+        if (aClaims.has(intent)) {
+          sharedIntent = intent;
+          break;
+        }
+      }
+      if (!sharedIntent) continue;
 
       findings.push({
         severity: "warning",
         code: "shared-phrasing-across-clusters",
-        message: `${a.canonicalPath} and ${b.canonicalPath} both claim "${shared[0]}" but sit in different clusters. One should own it.`,
+        message: `${a.canonicalPath} and ${b.canonicalPath} both claim "${sharedIntent}" but sit in different clusters. One should own it.`,
         entries: [a.id, b.id],
       });
     }
