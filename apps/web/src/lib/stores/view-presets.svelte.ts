@@ -9,6 +9,7 @@ import {
   parseViewPresets,
   viewPresetsSettingsKey,
   legacyGraphPresetsSettingsKey,
+  type ViewLayoutSnapshot,
   type ViewPreset,
   type ViewPresetState,
 } from "./view-presets";
@@ -73,16 +74,18 @@ export class ViewPresetsStore {
     }
   }
 
-  private async persistPresets(vaultId: string): Promise<void> {
+  private async persistPresets(vaultId: string): Promise<boolean> {
     try {
       const db = await this.getDb();
       const key = viewPresetsSettingsKey(vaultId);
       await db.put("settings", $state.snapshot(this.presets), key);
+      return true;
     } catch (error) {
       console.error(
         "[ViewPresetsStore] Failed to persist view presets:",
         error,
       );
+      return false;
     }
   }
 
@@ -107,6 +110,45 @@ export class ViewPresetsStore {
     this.activePresetId = preset.id;
     await this.persistPresets(vaultId);
     return preset;
+  }
+
+  /**
+   * Sets, replaces or (with `null`) removes a view's saved layout (#3456). The
+   * name, filters and creation time are untouched. When a camera is given it is
+   * saved with the layout, since positions only make sense with the zoom and
+   * pan they were arranged under.
+   *
+   * Returns the updated view, or `null` if the view does not exist or the
+   * change could not be stored, in which case the view is left as it was.
+   */
+  async setPresetLayout(
+    vaultId: string,
+    id: string,
+    layout: ViewLayoutSnapshot | null,
+    viewport?: { pan: { x: number; y: number }; zoom: number },
+  ): Promise<ViewPreset | null> {
+    const existing = this.presets.find((p) => p.id === id);
+    if (!vaultId || !existing) return null;
+
+    const { layout: _dropped, ...rest } = existing.state;
+    const state: ViewPresetState = {
+      ...rest,
+      ...(viewport ? { viewport } : {}),
+      ...(layout ? { layout } : {}),
+    };
+    const updated: ViewPreset = {
+      ...existing,
+      updatedAt: this.clock.now(),
+      state,
+    };
+
+    const previous = this.presets;
+    this.presets = this.presets.map((p) => (p.id === id ? updated : p));
+    if (!(await this.persistPresets(vaultId))) {
+      this.presets = previous;
+      return null;
+    }
+    return updated;
   }
 
   async renamePreset(vaultId: string, id: string, name: string): Promise<void> {
