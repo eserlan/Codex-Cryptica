@@ -33,6 +33,7 @@ When you save a view, it stores:
 - **Column Filters**: Column-level criteria configured in the Entity Table.
 - **Table Presentation**: Active sort column and sort direction.
 - **Graph Presentation**: Timeline layout, orbit mode, selected central node, and camera viewport pan/zoom.
+- **Graph Layout (optional)**: Where each entity sits on the graph, if you choose to keep it. See [Keeping Your Layout](#keeping-your-layout).
 
 ---
 
@@ -50,6 +51,26 @@ When you save a view, it stores:
 1. Filter the graph using the HUD controls, search bar, or timeline mode.
 2. Click the **Saved Views** bookmark icon in the bottom toolbar.
 3. Type a name and click **`+`** to save your filters along with the current camera position.
+
+---
+
+## Keeping Your Layout
+
+By default a Saved View remembers _which_ entities you are looking at and where the camera is, but not _where you put them_. If you have arranged entities into a useful picture (a faction map, an investigation board, a relationship web), you can keep the arrangement too.
+
+1. Filter the graph and move entities into the arrangement you want.
+2. Open **Saved Views**, type a name, and tick **Save current layout**.
+3. Click **`+`** to save.
+
+Opening that view later brings back its filters, every entity in the place you left it, and the camera zoom and position. The tick box is off unless you turn it on, so views made only as filters work exactly as before.
+
+- **Update a layout**: Open the view, rearrange, then click the **camera** button next to it (_Update layout snapshot_). The name and filters stay the same. This also works on a view that has no layout yet.
+- **Remove a layout**: Click the **eraser** button next to the view. It goes back to being a filter-only view.
+- **Which views have one**: A small grid icon marks views that have a saved layout.
+- **Your everyday graph is not touched**: A view's layout only applies while that view is open. Moves you make while it is open are not saved unless you use _Update layout snapshot_, and going back to the default view shows your normal arrangement again.
+- **When your vault changes**: Entities you have since deleted are ignored. Entities you have added since are placed next to the entities they connect to, without moving anything you saved. Entities the filters now hide come back in their saved place if they are shown again.
+- **Timeline and orbit views**: These arrange entities themselves, so a layout can't be saved in them, and a saved one isn't applied there.
+- **Table**: The Entity Table ignores layouts and shows the same filtered content as always.
 
 ---
 
