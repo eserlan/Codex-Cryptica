@@ -1,5 +1,5 @@
 {
-  "updated_at": 1790530529,
+  "updated_at": 1790532271,
   "candidates": [
     {
       "id": "reddit-36168046733-tables-now-parse-4d6kh3-2-and-other-keep",
@@ -52,14 +52,14 @@
       "created_at": 1790499317
     },
     {
-      "id": "reddit-36337144583-paste-a-stat-block-instead-of-retyping-i",
-      "title": "Paste a stat block instead of retyping it",
-      "body": "Copying a monster by hand means retyping AC, HP, six saves, then hunting the typo that makes the goblin immortal. It is worse when you are pulling from two systems at once for a crossover one-shot.\n\nI built a multi-system importer that turns a pasted or uploaded stat block into a structured, editable sheet in your vault.\n\n- D&D 5e and PF2e from JSON or plain text, including skills and resistances\n- GURPS, Mythras, and Vampire V5 with their own fields (secondary stats, hit locations, disciplines)\n- Heuristic parsing when you only have plain text, no export\n- Result is a normal stat sheet you can edit, roll from, and link to entities\n\nHeuristic parsing is best effort. Odd homebrew layouts or PDFs with broken line breaks will misread a field, so check the import. JSON is exact when you have it.\n\nWhich system's stat blocks do you retype most, and what field always trips the copy?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/images/help-blog/import.png)",
-      "url": "",
-      "image_url": "https://assets.codexcryptica.com/images/help-blog/import.png",
+      "id": "reddit-36337144583-journal-notes-that-keep-bold-lists-and-p",
+      "title": "Journal notes that keep bold, lists, and paragraphs",
+      "body": "Manual journal notes were flat text. You typed a recap with bold NPC names and a bullet list of clues, saved, and got a wall of text you did not want to reread.\n\nI made typed entries keep lightweight markdown from typing through to the journal and into vault promotion.\n\n- Toolbar for bold, italic, and bullet lists, plus Ctrl/Cmd+B and Ctrl/Cmd+I while typing\n- Paragraphs and lists render cleanly in the journal timeline\n- Formatting is preserved when you promote an entry, a section, or the whole journal into a vault entity\n\nIt is still small markdown, not a full editor. Headings, tables, and pasted Google Docs formatting will need a quick tidy.\n\nHow do you format your session recaps now \u2014 bold names, bullets for clues, something else you wish it kept?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/announcements/release-36337144583-0.png)",
+      "url": "https://codexcryptica.com/help/quicknote",
+      "image_url": "https://assets.codexcryptica.com/announcements/release-36337144583-0.png",
       "source_id": "36337144583",
       "status": "approved",
-      "created_at": 1790530529
+      "created_at": 1790532271
     }
   ]
 }
