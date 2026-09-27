@@ -49,6 +49,22 @@ const mockRegistry: Record<string, AnswerConfig> = {
 };
 
 describe("answer registry", () => {
+  it("matches the economic hooks example heading to its brief cases", () => {
+    const example = answers[
+      "how-do-i-turn-economic-pressures-into-rpg-adventure-hooks"
+    ].sections.find((section) => section.kind === "example");
+
+    expect(example?.heading).toBe(
+      "Worked example: the blocked pass and two more in brief",
+    );
+    expect(
+      example?.items?.filter(
+        (item) =>
+          item.term !== "The full situation" && item.term !== "Why it works",
+      ),
+    ).toHaveLength(2);
+  });
+
   describe("getAnswer", () => {
     it("returns the parsed answer for a known slug", () => {
       expect(getAnswer("alpha", mockRegistry)?.slug).toBe("alpha");
