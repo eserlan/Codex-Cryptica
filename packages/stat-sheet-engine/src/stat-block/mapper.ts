@@ -340,30 +340,16 @@ function mapToDnd5eMonster(ir: StatBlockIR): StatSheetField[] {
   // Ability Scores without checks
   fields.push(...mapScoresAndChecks(ir, false));
 
-  // Actions as item-table
-  const normalActions = ir.actionsAndAttacks.filter(
-    (a) => a.actionType === "action",
+  mapDndActionTable(fields, ir, "action", "actions", "Actions");
+  mapDndActionTable(fields, ir, "bonus", "bonus_actions", "Bonus Actions");
+  mapDndActionTable(fields, ir, "reaction", "reactions", "Reactions");
+  mapDndActionTable(
+    fields,
+    ir,
+    "legendary",
+    "legendary_actions",
+    "Legendary Actions",
   );
-  if (normalActions.length > 0) {
-    fields.push({
-      id: "actions",
-      label: "Actions",
-      type: "item-table",
-      columns: [
-        { id: "name", label: "Action", type: "text" },
-        { id: "attack", label: "Attack Roll", type: "dice" },
-        { id: "damage", label: "Damage", type: "dice" },
-        { id: "description", label: "Description", type: "text" },
-      ],
-      rows: normalActions.map((a) => ({
-        name: a.name,
-        attack: a.attackDice ?? "",
-        damage: a.damageDice ?? "",
-        description: a.description ?? "",
-      })),
-      linkVaultItems: false,
-    });
-  }
 
   // Traits as longtext
   if (ir.traitsAndFeatures.length > 0) {
@@ -379,6 +365,37 @@ function mapToDnd5eMonster(ir: StatBlockIR): StatSheetField[] {
   }
 
   return fields;
+}
+
+function mapDndActionTable(
+  fields: StatSheetField[],
+  ir: StatBlockIR,
+  actionType: "action" | "bonus" | "reaction" | "legendary",
+  id: string,
+  label: string,
+): void {
+  const actions = ir.actionsAndAttacks.filter(
+    (action) => action.actionType === actionType,
+  );
+  if (actions.length === 0) return;
+  fields.push({
+    id,
+    label,
+    type: "item-table",
+    columns: [
+      { id: "name", label: "Action", type: "text" },
+      { id: "attack", label: "Attack Roll", type: "dice" },
+      { id: "damage", label: "Damage", type: "dice" },
+      { id: "description", label: "Description", type: "text" },
+    ],
+    rows: actions.map((action) => ({
+      name: action.name,
+      attack: action.attackDice ?? "",
+      damage: action.damageDice ?? "",
+      description: action.description ?? "",
+    })),
+    linkVaultItems: false,
+  });
 }
 
 function mapToDndCharacter(ir: StatBlockIR): StatSheetField[] {
@@ -478,10 +495,10 @@ function mapToMythrasCharacter(ir: StatBlockIR): StatSheetField[] {
     fields.push({
       id: "damage_mod",
       label: "Damage Modifier",
-      type: "number",
-      value: Number(sec.damage_mod) || 0,
+      type: "text",
+      value: String(sec.damage_mod),
     });
-  if (sec.move)
+  if (sec.move !== undefined)
     fields.push({
       id: "move",
       label: "Movement (m)",
@@ -605,7 +622,7 @@ function mapToVampireCharacter(ir: StatBlockIR): StatSheetField[] {
 }
 
 function synthesizeTemplateFromIr(ir: StatBlockIR): StatSheetTemplate {
-  const templateId = `synthesized-${ir.system}-${Date.now().toString(36)}`;
+  const templateId = `synthesized-${ir.system}-${ir.identity.category}`;
   const systemName = ir.system.toUpperCase();
   const templateFields: StatSheetTemplate["fields"] = [];
 

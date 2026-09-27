@@ -70,6 +70,29 @@ describe("Stat Block Import Pipeline", () => {
       ).toBe("gurps");
     });
 
+    it("imports GCS JSON attributes and calculated resources instead of D&D defaults", () => {
+      const result = importStatBlock({
+        name: "GCS Adventurer",
+        attributes: [
+          { attr_id: "ST", calc: { value: 14 } },
+          { attr_id: "DX", calc: { value: 12 } },
+          { attr_id: "IQ", calc: { value: 11 } },
+          { attr_id: "HT", calc: { value: 13 } },
+        ],
+        calc: { hp: { value: 15 }, fp: { value: 12 }, basic_speed: 6.25 },
+      });
+
+      expect(result.ir.system).toBe("gurps");
+      expect(result.ir.attributes.st.value).toBe(14);
+      expect(result.ir.attributes.dx.value).toBe(12);
+      expect(result.ir.vitals.find((v) => v.id === "hp")?.current).toBe(15);
+      expect(result.ir.vitals.find((v) => v.id === "fp")?.current).toBe(12);
+      expect(result.fields.find((field) => field.id === "st")?.value).toBe(14);
+      expect(
+        result.fields.find((field) => field.id === "str_score"),
+      ).toBeUndefined();
+    });
+
     it("detects Mythras and BRP hit locations", () => {
       expect(
         detectStatBlockSystem({
@@ -511,6 +534,28 @@ Disciplines: Presence 4, Celerity 3, Auspex 2
       expect(actionsField?.rows?.[0].damage).toBe("2d12+4");
     });
 
+    it("maps each D&D action category into its matching template field", () => {
+      const result = importStatBlock({
+        name: "Test Monster",
+        str: 10,
+        dex: 10,
+        con: 10,
+        hp: 10,
+        actions: [{ name: "Claw", attack_bonus: 3 }],
+        bonus_actions: [{ name: "Pounce", attack_bonus: 4 }],
+        reactions: [{ name: "Parry", attack_bonus: 5 }],
+        legendary_actions: [{ name: "Tail Swipe", attack_bonus: 6 }],
+      });
+
+      const fieldMap = new Map(result.fields.map((field) => [field.id, field]));
+      expect(fieldMap.get("actions")?.rows?.[0].name).toBe("Claw");
+      expect(fieldMap.get("bonus_actions")?.rows?.[0].name).toBe("Pounce");
+      expect(fieldMap.get("reactions")?.rows?.[0].name).toBe("Parry");
+      expect(fieldMap.get("legendary_actions")?.rows?.[0].name).toBe(
+        "Tail Swipe",
+      );
+    });
+
     it("maps character category input to builtin-dnd-character with ability checks", () => {
       const input = {
         name: "Elven Ranger",
@@ -613,6 +658,10 @@ Disciplines: Presence 4, Celerity 3, Auspex 2
       expect(fieldMap.get("lp")?.value).toBe(2);
       expect(fieldMap.get("loc_head_ap")?.value).toBe(4);
       expect(fieldMap.get("loc_chest_hp")?.value).toBe(7);
+      expect(fieldMap.get("damage_mod")).toMatchObject({
+        type: "text",
+        value: "+1d4",
+      });
       expect(fieldMap.get("d100_check")?.formula).toBe("1d100");
     });
 
@@ -693,6 +742,18 @@ Broadsword. 3d6<=14. 2d+1 cut damage.
       expect(fieldMap.get("st")?.value).toBe(14);
       expect(fieldMap.get("dx")?.value).toBe(13);
       expect(fieldMap.get("hp")?.value).toBe(15);
+    });
+
+    it("uses a stable synthesized template ID for repeat imports of the same system/category", () => {
+      const input =
+        "Veteran Trooper\nST [13] DX [12] IQ [10] HT [11]\nBasic Speed 5.75, Fatigue 11";
+      const first = importStatBlock(input, { systemHint: "gurps" });
+      const second = importStatBlock(input, { systemHint: "gurps" });
+
+      expect(second.targetTemplateId).toBe(first.targetTemplateId);
+      expect(second.synthesizedTemplate?.id).toBe(
+        first.synthesizedTemplate?.id,
+      );
     });
   });
 

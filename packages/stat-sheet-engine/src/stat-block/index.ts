@@ -3,6 +3,7 @@ import { parseDnd5eJson } from "./parsers/dnd5e-json";
 import { parsePf2eJson } from "./parsers/pf2e-json";
 import { parseMythrasJson } from "./parsers/mythras-json";
 import { parseVtmJson } from "./parsers/vtm-json";
+import { parseGurpsJson } from "./parsers/gurps-json";
 import { parseTextStatBlock } from "./parsers/text-heuristic";
 import { mapIrToStatSheet } from "./mapper";
 import type {
@@ -18,6 +19,7 @@ export * from "./parsers/dnd5e-json";
 export * from "./parsers/pf2e-json";
 export * from "./parsers/mythras-json";
 export * from "./parsers/vtm-json";
+export * from "./parsers/gurps-json";
 export * from "./parsers/text-heuristic";
 
 /**
@@ -44,6 +46,9 @@ export function importStatBlock(
         break;
       case "vtm":
         ir = parseVtmJson(obj);
+        break;
+      case "gurps":
+        ir = parseGurpsJson(obj);
         break;
       case "dnd5e":
       case "tales-of-the-valiant":
