@@ -1110,11 +1110,26 @@ describe("Landing Page Registry", () => {
       expect(copy).toMatch(/cartel/i);
       expect(copy).toMatch(/rail/i);
       expect(copy).toMatch(/occult/i);
+      expect(weirdWest.useCases).toHaveLength(4);
+      expect(copy).toMatch(/hauntings/i);
+      expect(copy).toMatch(/strange weather/i);
+      expect(copy).toMatch(/old violence, bargains, or greed/i);
+      expect(copy).toMatch(/today's witness into tomorrow's deputy/i);
+      expect(copy).not.toMatch(/lynching/i);
       expect(hub.category).toBe("location");
       expect(spokes.length).toBeGreaterThanOrEqual(5);
       expect(
+        spokes.find(({ label }) => label === "Marshal Ada Quill")?.relation,
+      ).toBe("Falls under the law of");
+      expect(
+        spokes.find(({ label }) => label === "The Blackrail Company")?.relation,
+      ).toBe("Ships ore to");
+      expect(
+        spokes.find(({ label }) => label === "Silas Crowe")?.relation,
+      ).toBe("Is raided by");
+      expect(
         spokes.find(({ label }) => label === "The Hollow Choir")?.relation,
-      ).toBe("Lies above");
+      ).toBe("Awakened");
       for (const spoke of spokes) {
         expect(spoke.relation, `${spoke.label} has no relation`).toBeTruthy();
         expect(spoke.category, `${spoke.label} has no category`).toBeDefined();
