@@ -167,6 +167,7 @@ export const howDoYouPrepareASandboxRpgCampaign: AnswerConfigInput = {
     "xp-leveling-vs-milestone-leveling",
     "how-do-i-make-a-player-base-matter-in-an-rpg-campaign",
     "how-much-of-the-plot-should-a-dm-prepare",
+    "how-do-i-build-a-believable-economy-for-a-fantasy-world",
   ],
   discovery: {
     id: "answer-sandbox-campaign-prep",
