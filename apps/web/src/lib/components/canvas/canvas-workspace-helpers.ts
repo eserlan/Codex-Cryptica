@@ -19,6 +19,10 @@ import {
   type DelveRoomNodeData,
 } from "generator-engine";
 import { systemClock, type Clock } from "$lib/utils/runtime-deps";
+import {
+  normalizeEntityCardViewPreference,
+  resolveEntityCardVariant,
+} from "./cards/entity-card-variant";
 
 export type CanvasWorkspacePoint = { x: number; y: number };
 
@@ -490,11 +494,161 @@ function getAdventureNodeType(node: Node): AdventureNodeType | null {
   return ADVENTURE_NODE_TYPES.has(type) ? type : null;
 }
 
+export interface EstimatedNodeSize {
+  width: number;
+  height: number;
+}
+
+export function getEstimatedNodeSize(
+  node: Node,
+  vaultEntities?: Record<
+    string,
+    { metadata?: Record<string, unknown>; type?: string } | undefined
+  >,
+): EstimatedNodeSize {
+  const data = (node.data || {}) as Record<string, unknown>;
+  const cardView = normalizeEntityCardViewPreference(data.cardView);
+  const entityId = (data.entityId as string) || node.id;
+  const entity = vaultEntities?.[entityId];
+  const variant = resolveEntityCardVariant(entity?.type, cardView);
+  const isLarge = Boolean(data.largeCard) || variant === "roster";
+
+  // 1. Try reading live unscaled DOM dimensions directly from the browser
+  if (
+    typeof document !== "undefined" &&
+    typeof document.querySelector === "function"
+  ) {
+    const nodeEl = document.querySelector(
+      `.svelte-flow__node[data-id="${node.id}"], [data-id="${node.id}"]`,
+    ) as HTMLElement | null;
+    if (nodeEl) {
+      const contentEl = (nodeEl.firstElementChild as HTMLElement) || nodeEl;
+      const domWidth = Math.max(
+        nodeEl.offsetWidth || 0,
+        contentEl.offsetWidth || 0,
+      );
+      const domHeight = Math.max(
+        nodeEl.offsetHeight || 0,
+        contentEl.offsetHeight || 0,
+      );
+      if (domWidth > 40 && domHeight > 40) {
+        // Guard against view transition lag if mode was just toggled
+        const isImageMismatch =
+          variant === "image_only" && !isLarge && domWidth > 320;
+        const isCardMismatch =
+          variant !== "image_only" &&
+          variant !== "compact" &&
+          domWidth <= 200 &&
+          domHeight <= 260;
+        if (!isImageMismatch && !isCardMismatch) {
+          return { width: domWidth, height: domHeight };
+        }
+      }
+    }
+  }
+
+  // 2. Fall back to live measured dimensions from SvelteFlow
+  const measuredWidth = (node as any).measured?.width as number | undefined;
+  const measuredHeight = (node as any).measured?.height as number | undefined;
+
+  if (
+    typeof measuredWidth === "number" &&
+    measuredWidth > 0 &&
+    typeof measuredHeight === "number" &&
+    measuredHeight > 0
+  ) {
+    if (variant === "image_only" && !isLarge && measuredWidth > 320) {
+      return { width: 192, height: 256 };
+    }
+    if (
+      variant !== "image_only" &&
+      variant !== "compact" &&
+      measuredWidth <= 200 &&
+      measuredHeight <= 260
+    ) {
+      return { width: isLarge ? 580 : 300, height: isLarge ? 500 : 480 };
+    }
+    return { width: measuredWidth, height: measuredHeight };
+  }
+
+  const explicitWidth = (node.width as number) || (data.width as number);
+  const explicitHeight = (node.height as number) || (data.height as number);
+
+  if (node.type === "text") {
+    return {
+      width: explicitWidth || 200,
+      height: explicitHeight || 140,
+    };
+  }
+
+  if (node.type === "file") {
+    return {
+      width: explicitWidth || 220,
+      height: explicitHeight || 180,
+    };
+  }
+
+  if (node.type === "delveRoom" || node.type === "adventureNode") {
+    return {
+      width: explicitWidth || 280,
+      height: explicitHeight || 200,
+    };
+  }
+
+  const isFaction =
+    (entity?.type ?? "").toLowerCase() === "faction" ||
+    cardView === "roster" ||
+    cardView === "faction";
+
+  if (variant === "image_only") {
+    if (isFaction) {
+      return {
+        width: explicitWidth || 580,
+        height: explicitHeight || 380,
+      };
+    }
+    return {
+      width: explicitWidth || (isLarge ? 580 : 192),
+      height: explicitHeight || 256,
+    };
+  }
+
+  if (variant === "compact") {
+    return {
+      width: explicitWidth || 112,
+      height: explicitHeight || 160,
+    };
+  }
+
+  if (variant === "roster") {
+    return {
+      width: explicitWidth || 580,
+      height: explicitHeight || 540,
+    };
+  }
+
+  if (isLarge) {
+    return {
+      width: explicitWidth || 580,
+      height: explicitHeight || 480,
+    };
+  }
+
+  return {
+    width: explicitWidth || 300,
+    height: explicitHeight || 480,
+  };
+}
+
 export function autoArrangeCanvasNodes(params: {
   canvasId: string;
   title: string;
   nodes: Node[];
   edges: Edge[];
+  vaultEntities?: Record<
+    string,
+    { metadata?: Record<string, unknown> } | undefined
+  >;
   clock?: Clock;
 }): Node[] | null {
   const clock = params.clock ?? systemClock;
@@ -559,39 +713,242 @@ export function autoArrangeCanvasNodes(params: {
       },
     ];
   });
-  if (adventureNodes.length === 0) return null;
+  if (adventureNodes.length > 0) {
+    const adventureNodeIds = new Set(adventureNodes.map((node) => node.id));
+    const now = new Date(clock.now()).toISOString();
+    const rawDoc: AdventureCanvasDocument = {
+      id: params.canvasId,
+      title: params.title,
+      summary: "",
+      genre: "Fantasy",
+      nodes: adventureNodes,
+      edges: params.edges
+        .filter(
+          (edge) =>
+            adventureNodeIds.has(edge.source) &&
+            adventureNodeIds.has(edge.target),
+        )
+        .map((edge): AdventureEdge => ({
+          id: edge.id,
+          source: edge.source,
+          target: edge.target,
+          label: typeof edge.label === "string" ? edge.label : undefined,
+        })),
+      metadata: { kind: "adventure" },
+      createdAt: now,
+      updatedAt: now,
+    };
+    const positioned = new AdventureFlowLayout().applyLayout(rawDoc);
+    const positionedById = new Map(
+      positioned.nodes.map((node) => [node.id, node.position]),
+    );
+    return params.nodes.map((node) => {
+      const position = positionedById.get(node.id);
+      return position ? { ...node, position } : node;
+    });
+  }
 
-  const adventureNodeIds = new Set(adventureNodes.map((node) => node.id));
-  const now = new Date(clock.now()).toISOString();
-  const rawDoc: AdventureCanvasDocument = {
-    id: params.canvasId,
-    title: params.title,
-    summary: "",
-    genre: "Fantasy",
-    nodes: adventureNodes,
-    edges: params.edges
-      .filter(
-        (edge) =>
-          adventureNodeIds.has(edge.source) &&
-          adventureNodeIds.has(edge.target),
-      )
-      .map((edge): AdventureEdge => ({
-        id: edge.id,
-        source: edge.source,
-        target: edge.target,
-        label: typeof edge.label === "string" ? edge.label : undefined,
-      })),
-    metadata: { kind: "adventure" },
-    createdAt: now,
-    updatedAt: now,
-  };
-  const positioned = new AdventureFlowLayout().applyLayout(rawDoc);
-  const positionedById = new Map(
-    positioned.nodes.map((node) => [node.id, node.position]),
-  );
+  if (params.nodes.length === 0) return null;
+
+  // General / entity canvas layout:
+  // Respect current spatial placements. Group nodes into existing visual rows,
+  // pack them with consistent gaps according to their current dynamic sizes (e.g. image-only vs regular cards),
+  // and keep sticker notes pinned to their parent cards.
+  const nodeSizes = new Map<string, EstimatedNodeSize>();
+  for (const node of params.nodes) {
+    nodeSizes.set(node.id, getEstimatedNodeSize(node, params.vaultEntities));
+  }
+
+  // Separate sticker notes (small notes overlapping a larger card) from primary row nodes
+  interface StickerAttachment {
+    sticker: Node;
+    parentNodeId: string;
+    offsetX: number;
+    offsetY: number;
+  }
+
+  const potentialParents = params.nodes.filter((n) => n.type !== "text");
+  const stickers: StickerAttachment[] = [];
+  const primaryNodes: Node[] = [];
+
+  for (const node of params.nodes) {
+    if (node.type === "text" && potentialParents.length > 0) {
+      const candSize = nodeSizes.get(node.id) || { width: 200, height: 140 };
+      const candArea = candSize.width * candSize.height;
+
+      let bestParent: Node | null = null;
+      let maxOverlap = 0;
+
+      for (const parent of potentialParents) {
+        if (parent.id === node.id) continue;
+        const parentSize = nodeSizes.get(parent.id) || {
+          width: 260,
+          height: 360,
+        };
+        const parentArea = parentSize.width * parentSize.height;
+        if (parentArea < candArea * 1.1) continue;
+
+        const xOverlap = Math.max(
+          0,
+          Math.min(
+            node.position.x + candSize.width,
+            parent.position.x + parentSize.width,
+          ) - Math.max(node.position.x, parent.position.x),
+        );
+        const yOverlap = Math.max(
+          0,
+          Math.min(
+            node.position.y + candSize.height,
+            parent.position.y + parentSize.height,
+          ) - Math.max(node.position.y, parent.position.y),
+        );
+        const overlapArea = xOverlap * yOverlap;
+
+        if (overlapArea > candArea * 0.15 && overlapArea > maxOverlap) {
+          maxOverlap = overlapArea;
+          bestParent = parent;
+        }
+      }
+
+      if (bestParent) {
+        stickers.push({
+          sticker: node,
+          parentNodeId: bestParent.id,
+          offsetX: node.position.x - bestParent.position.x,
+          offsetY: node.position.y - bestParent.position.y,
+        });
+        continue;
+      }
+    }
+
+    primaryNodes.push(node);
+  }
+
+  if (primaryNodes.length === 0) {
+    return params.nodes;
+  }
+
+  // Sort primary nodes by vertical center position
+  const sortedByY = [...primaryNodes].sort((a, b) => {
+    const sizeA = nodeSizes.get(a.id)!;
+    const sizeB = nodeSizes.get(b.id)!;
+    const centerYA = a.position.y + sizeA.height / 2;
+    const centerYB = b.position.y + sizeB.height / 2;
+    return centerYA - centerYB;
+  });
+
+  // Cluster primary nodes into visual rows
+  const rows: Node[][] = [];
+  for (const node of sortedByY) {
+    const nodeSize = nodeSizes.get(node.id)!;
+    const nodeCenterY = node.position.y + nodeSize.height / 2;
+
+    let bestRow: Node[] | null = null;
+    let minCenterDiff = Infinity;
+
+    for (const row of rows) {
+      // Check for column conflict: if this node heavily overlaps horizontally (>60%) with any node
+      // already in this row, they are in the same vertical column and cannot share the same row.
+      let hasColConflict = false;
+      for (const rowMember of row) {
+        const memberSize = nodeSizes.get(rowMember.id)!;
+        const xOverlap = Math.max(
+          0,
+          Math.min(
+            node.position.x + nodeSize.width,
+            rowMember.position.x + memberSize.width,
+          ) - Math.max(node.position.x, rowMember.position.x),
+        );
+        const minW = Math.min(nodeSize.width, memberSize.width);
+        if (xOverlap > minW * 0.6) {
+          hasColConflict = true;
+          break;
+        }
+      }
+
+      if (hasColConflict) continue;
+
+      const rowCenterYs = row.map((m) => {
+        const s = nodeSizes.get(m.id)!;
+        return m.position.y + s.height / 2;
+      });
+      const rowAvgCenterY =
+        rowCenterYs.reduce((sum, v) => sum + v, 0) / row.length;
+      const rowAvgHeight =
+        row.reduce((sum, m) => sum + nodeSizes.get(m.id)!.height, 0) /
+        row.length;
+
+      const centerDiff = Math.abs(nodeCenterY - rowAvgCenterY);
+      const maxAllowedDiff = Math.max(rowAvgHeight, nodeSize.height) * 0.55;
+
+      if (centerDiff < maxAllowedDiff && centerDiff < minCenterDiff) {
+        minCenterDiff = centerDiff;
+        bestRow = row;
+      }
+    }
+
+    if (bestRow) {
+      bestRow.push(node);
+    } else {
+      rows.push([node]);
+    }
+  }
+
+  // Sort rows vertically and sort nodes within each row horizontally
+  rows.sort((rowA, rowB) => {
+    const avgYA = rowA.reduce((sum, n) => sum + n.position.y, 0) / rowA.length;
+    const avgYB = rowB.reduce((sum, n) => sum + n.position.y, 0) / rowB.length;
+    return avgYA - avgYB;
+  });
+
+  for (const row of rows) {
+    row.sort((a, b) => a.position.x - b.position.x);
+  }
+
+  const GAP_X = 20;
+  const GAP_Y = 24;
+
+  const canvasMinX = Math.min(...primaryNodes.map((n) => n.position.x));
+  const canvasMinY = Math.min(...primaryNodes.map((n) => n.position.y));
+
+  let currentY = canvasMinY;
+  const positionedMap = new Map<string, { x: number; y: number }>();
+
+  for (const row of rows) {
+    const rowMinX = Math.min(...row.map((n) => n.position.x));
+    const startX = Math.abs(rowMinX - canvasMinX) < 100 ? canvasMinX : rowMinX;
+
+    let currentX = startX;
+    let maxRowHeight = 0;
+
+    for (const node of row) {
+      const size = getEstimatedNodeSize(node, params.vaultEntities);
+      positionedMap.set(node.id, { x: currentX, y: currentY });
+      currentX += size.width + GAP_X;
+      if (size.height > maxRowHeight) {
+        maxRowHeight = size.height;
+      }
+    }
+
+    currentY += maxRowHeight + GAP_Y;
+  }
+
+  // Re-attach stickers relative to their parent's new position
+  for (const sticker of stickers) {
+    const parentPos = positionedMap.get(sticker.parentNodeId);
+    if (parentPos) {
+      positionedMap.set(sticker.sticker.id, {
+        x: parentPos.x + sticker.offsetX,
+        y: parentPos.y + sticker.offsetY,
+      });
+    } else {
+      positionedMap.set(sticker.sticker.id, sticker.sticker.position);
+    }
+  }
+
   return params.nodes.map((node) => {
-    const position = positionedById.get(node.id);
-    return position ? { ...node, position } : node;
+    const pos = positionedMap.get(node.id);
+    return pos ? { ...node, position: pos } : node;
   });
 }
 

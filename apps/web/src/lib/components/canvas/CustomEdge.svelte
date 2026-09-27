@@ -6,6 +6,7 @@
     useSvelteFlow,
     type EdgeProps,
   } from "@xyflow/svelte";
+  import { getConnectionStance } from "./cards/entity-card-variant";
 
   let {
     id,
@@ -18,9 +19,27 @@
     label,
     style,
     markerEnd,
+    data,
   }: EdgeProps = $props();
 
   const { getNodes } = useSvelteFlow();
+
+  const stance = $derived.by(() => {
+    if ((data as any)?.stance) return (data as any).stance;
+    if (label) {
+      const fromLabel = getConnectionStance(label);
+      if (fromLabel !== "neutral") return fromLabel;
+    }
+    return "neutral";
+  });
+
+  const resolvedStyle = $derived.by(() => {
+    if (style) return style;
+    if (stance === "ally") return "stroke: #34d399; stroke-width: 2px;";
+    if (stance === "friend") return "stroke: #38bdf8; stroke-width: 2px;";
+    if (stance === "enemy") return "stroke: #f43f5e; stroke-width: 2px;";
+    return undefined;
+  });
 
   const edgeData = $derived.by(() => {
     const allNodes = getNodes();
@@ -79,12 +98,19 @@
   }
 </script>
 
-<BaseEdge path={edgeData.path} {markerEnd} {style} />
+<BaseEdge path={edgeData.path} {markerEnd} style={resolvedStyle} />
 
 {#if label}
   <EdgeLabel x={edgeData.labelX} y={edgeData.labelY}>
     <div
-      class="canvas-edge-label bg-theme-surface border border-theme-border rounded-md px-2 py-1 text-[10px] font-bold text-theme-text uppercase font-header tracking-widest cursor-text select-none transition-all shadow-lg hover:border-theme-primary hover:scale-105"
+      class="canvas-edge-label rounded-full px-2.5 py-0.5 text-[9px] font-bold uppercase font-header tracking-wider cursor-text select-none transition-all shadow-md hover:scale-105 border {stance ===
+      'ally'
+        ? 'bg-emerald-950/80 text-emerald-300 border-emerald-500/50'
+        : stance === 'friend'
+          ? 'bg-sky-950/80 text-sky-300 border-sky-500/50'
+          : stance === 'enemy'
+            ? 'bg-rose-950/80 text-rose-300 border-rose-500/50'
+            : 'bg-theme-surface text-theme-text border-theme-border'}"
       ondblclick={onDoubleClick}
       role="button"
       tabindex="0"
