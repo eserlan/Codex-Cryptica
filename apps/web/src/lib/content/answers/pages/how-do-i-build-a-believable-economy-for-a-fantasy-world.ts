@@ -139,6 +139,12 @@ export const howDoIBuildABelievableEconomyForAFantasyWorld: AnswerConfigInput =
           "Keep regions, settlements, factions, and trade consequences connected across a campaign.",
         href: "/for/fantasy-worldbuilding",
       },
+      {
+        title: "TTRPG Economy & Trade",
+        description:
+          "Build believable prices, trade, scarcity, wealth, and economic pressures without simulating an entire economy.",
+        href: "/for/economy-trade",
+      },
     ],
     relatedAnswers: [
       "how-do-you-create-a-fantasy-city-that-feels-alive",
@@ -169,6 +175,7 @@ export const howDoIBuildABelievableEconomyForAFantasyWorld: AnswerConfigInput =
         "generator-faction",
         "generator-world",
         "generator-rumour",
+        "for-economy-trade",
       ],
     },
     seo: {

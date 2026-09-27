@@ -23,6 +23,7 @@ import { piratesHighSeas } from "./pirates-high-seas";
 import { postApocalypticRpgs } from "./post-apocalyptic-rpgs";
 import { steampunkRpgs } from "./steampunk-rpgs";
 import { weirdWestRpgs } from "./weird-west-rpgs";
+import { economyTrade } from "./economy-trade";
 
 export const packs: Record<string, LandingPageConfig> = {
   "vampire-the-masquerade": vampireTheMasquerade,
@@ -49,4 +50,5 @@ export const packs: Record<string, LandingPageConfig> = {
   "weird-west-rpgs": weirdWestRpgs,
   traveller,
   conspiracy,
+  "economy-trade": economyTrade,
 };

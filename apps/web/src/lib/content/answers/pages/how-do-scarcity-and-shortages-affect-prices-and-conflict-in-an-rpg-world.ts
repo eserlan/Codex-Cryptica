@@ -138,6 +138,12 @@ export const howDoScarcityAndShortagesAffectPricesAndConflictInAnRpgWorld: Answe
           "Keep shortages, stock holders, and competing claims connected across a campaign.",
         href: "/for/fantasy-worldbuilding",
       },
+      {
+        title: "TTRPG Economy & Trade",
+        description:
+          "Build believable prices, trade, scarcity, wealth, and economic pressures without simulating an entire economy.",
+        href: "/for/economy-trade",
+      },
     ],
     relatedAnswers: [
       "how-do-i-build-a-believable-economy-for-a-fantasy-world",
@@ -167,6 +173,7 @@ export const howDoScarcityAndShortagesAffectPricesAndConflictInAnRpgWorld: Answe
         "answer-trade-routes-shape-cities-kingdoms",
         "generator-faction",
         "generator-settlement",
+        "for-economy-trade",
       ],
     },
     seo: {
