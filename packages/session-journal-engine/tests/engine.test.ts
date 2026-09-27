@@ -2,12 +2,15 @@ import { describe, it, expect } from "vitest";
 import {
   appendEntry,
   createSection,
+  deleteEntry,
   endJournal,
+  moveEntry,
   renameSection,
   startOrResumeJournal,
+  updateEntryContent,
   validateSectionName,
 } from "../src/engine";
-import type { SessionJournal } from "../src/types";
+import type { JournalEntry, SessionJournal } from "../src/types";
 
 function ids(prefix = "id") {
   let n = 0;
@@ -31,6 +34,21 @@ const activeJournal = (
   entries: [],
   ...overrides,
 });
+
+const entry = (
+  id: string,
+  content: string,
+  overrides: Partial<JournalEntry> = {},
+): JournalEntry => ({
+  id,
+  timestamp: 1_000,
+  type: "manual-note",
+  content,
+  ...overrides,
+});
+
+const journalWithEntries = (entries: JournalEntry[]): SessionJournal =>
+  activeJournal({ entries });
 
 describe("startOrResumeJournal", () => {
   it("creates a new active journal when none exists", () => {
@@ -164,5 +182,198 @@ describe("endJournal", () => {
     const ended = activeJournal({ status: "ended", endedAt: 2_000 });
     const result = endJournal(ended, clock());
     expect(result.ok).toBe(false);
+  });
+});
+
+describe("appendEntry ordering (#3476)", () => {
+  it("appends without re-sorting, so a manually reordered list is not undone by a new entry", () => {
+    const journal = journalWithEntries([
+      entry("a", "First", { timestamp: 2_000 }),
+      entry("b", "Second", { timestamp: 1_000 }),
+    ]);
+
+    const result = appendEntry(
+      journal,
+      { type: "manual-note", content: "Third" },
+      ids(),
+      clock(500),
+    );
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.journal.entries.map((e) => e.content)).toEqual([
+      "First",
+      "Second",
+      "Third",
+    ]);
+  });
+});
+
+describe("updateEntryContent (#3476)", () => {
+  it("changes a typed note's text, keeping its id, timestamp and type", () => {
+    const journal = journalWithEntries([
+      entry("a", "Original", { timestamp: 500 }),
+    ]);
+
+    const result = updateEntryContent(journal, "a", "  Edited text  ");
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.entry).toEqual({
+      id: "a",
+      timestamp: 500,
+      type: "manual-note",
+      content: "Edited text",
+    });
+    expect(result.journal.entries[0]).toEqual(result.entry);
+  });
+
+  it("refuses to edit an automatic entry (negative)", () => {
+    const journal = journalWithEntries([
+      entry("a", "Rolled 1d20: 14", { type: "dice-roll" }),
+    ]);
+
+    const result = updateEntryContent(journal, "a", "Rolled 1d20: 20");
+
+    expect(result).toEqual({
+      ok: false,
+      error: "Only typed notes can be edited.",
+    });
+  });
+
+  it("refuses a blank edit and leaves the entry as it was (negative)", () => {
+    const journal = journalWithEntries([entry("a", "Kept")]);
+
+    const result = updateEntryContent(journal, "a", "   ");
+
+    expect(result).toEqual({ ok: false, error: "A note needs some text." });
+  });
+
+  it("refuses an entry that no longer exists (negative)", () => {
+    const journal = journalWithEntries([]);
+
+    const result = updateEntryContent(journal, "gone", "Text");
+
+    expect(result).toEqual({
+      ok: false,
+      error: "That entry no longer exists.",
+    });
+  });
+});
+
+describe("deleteEntry (#3476)", () => {
+  it("removes only the named entry, keeping the others in order", () => {
+    const journal = journalWithEntries([
+      entry("a", "One"),
+      entry("b", "Two"),
+      entry("c", "Three"),
+    ]);
+
+    const result = deleteEntry(journal, "b");
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.journal.entries.map((e) => e.id)).toEqual(["a", "c"]);
+  });
+
+  it("leaves the journal unchanged when the entry does not exist (negative)", () => {
+    const journal = journalWithEntries([entry("a", "One")]);
+
+    const result = deleteEntry(journal, "gone");
+
+    expect(result).toEqual({
+      ok: false,
+      error: "That entry no longer exists.",
+    });
+  });
+
+  it("can empty a journal down to zero entries", () => {
+    const journal = journalWithEntries([entry("a", "Only")]);
+
+    const result = deleteEntry(journal, "a");
+
+    expect(result.ok && result.journal.entries).toEqual([]);
+  });
+});
+
+describe("moveEntry (#3476)", () => {
+  it("moves an entry up, swapping with its neighbour, keeping timestamps (SC)", () => {
+    const journal = journalWithEntries([
+      entry("a", "One", { timestamp: 100 }),
+      entry("b", "Two", { timestamp: 200 }),
+      entry("c", "Three", { timestamp: 300 }),
+    ]);
+
+    const result = moveEntry(journal, "b", "up");
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.journal.entries.map((e) => e.id)).toEqual(["b", "a", "c"]);
+    expect(result.journal.entries.map((e) => e.timestamp)).toEqual([
+      200, 100, 300,
+    ]);
+  });
+
+  it("moves an entry down", () => {
+    const journal = journalWithEntries([
+      entry("a", "One"),
+      entry("b", "Two"),
+      entry("c", "Three"),
+    ]);
+
+    const result = moveEntry(journal, "a", "down");
+
+    expect(result.ok && result.journal.entries.map((e) => e.id)).toEqual([
+      "b",
+      "a",
+      "c",
+    ]);
+  });
+
+  it("refuses to move the first entry up (negative)", () => {
+    const journal = journalWithEntries([entry("a", "One"), entry("b", "Two")]);
+
+    const result = moveEntry(journal, "a", "up");
+
+    expect(result).toEqual({
+      ok: false,
+      error: "This is already the first entry.",
+    });
+  });
+
+  it("refuses to move the last entry down (negative)", () => {
+    const journal = journalWithEntries([entry("a", "One"), entry("b", "Two")]);
+
+    const result = moveEntry(journal, "b", "down");
+
+    expect(result).toEqual({
+      ok: false,
+      error: "This is already the last entry.",
+    });
+  });
+
+  it("refuses an entry that no longer exists (negative)", () => {
+    const journal = journalWithEntries([entry("a", "One")]);
+
+    const result = moveEntry(journal, "gone", "up");
+
+    expect(result).toEqual({
+      ok: false,
+      error: "That entry no longer exists.",
+    });
+  });
+
+  it("moves an automatic entry the same way as a typed note", () => {
+    const journal = journalWithEntries([
+      entry("a", "Rolled 1d6: 3", { type: "dice-roll" }),
+      entry("b", "Note"),
+    ]);
+
+    const result = moveEntry(journal, "b", "up");
+
+    expect(result.ok && result.journal.entries.map((e) => e.id)).toEqual([
+      "b",
+      "a",
+    ]);
   });
 });

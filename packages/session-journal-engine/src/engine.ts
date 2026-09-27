@@ -87,11 +87,103 @@ export function appendEntry(
     id: ids.uuid(),
     timestamp: clock.now(),
   };
-  const entries = [...journal.entries, entry].sort(
-    (a, b) => a.timestamp - b.timestamp,
-  );
+  // Appended at the end, not re-sorted by timestamp: the array itself is the
+  // displayed order (#3476), so a user's manual reordering (moveEntry) is
+  // never undone by the next entry coming in. A new entry's timestamp is
+  // `clock.now()`, so appending still reads chronologically in the common
+  // case where nothing has been reordered.
+  const entries = [...journal.entries, entry];
 
   return { ok: true, journal: { ...journal, entries }, entry };
+}
+
+export type UpdateEntryResult =
+  | { ok: true; journal: SessionJournal; entry: JournalEntry }
+  | { ok: false; error: string };
+
+/**
+ * Edits a typed note's text in place (#3476). Automatic entries (dice rolls,
+ * card draws, table results) are a record of what actually happened, not
+ * something to rewrite, so only `type: "manual-note"` can be edited. The
+ * entry's id, timestamp, type, section and source reference are unchanged.
+ */
+export function updateEntryContent(
+  journal: SessionJournal,
+  entryId: string,
+  content: string,
+): UpdateEntryResult {
+  const entry = journal.entries.find((e) => e.id === entryId);
+  if (!entry) {
+    return { ok: false, error: "That entry no longer exists." };
+  }
+  if (entry.type !== "manual-note") {
+    return { ok: false, error: "Only typed notes can be edited." };
+  }
+  const trimmed = content.trim();
+  if (!trimmed) {
+    return { ok: false, error: "A note needs some text." };
+  }
+
+  const updated: JournalEntry = { ...entry, content: trimmed };
+  const entries = journal.entries.map((e) => (e.id === entryId ? updated : e));
+  return { ok: true, journal: { ...journal, entries }, entry: updated };
+}
+
+export type DeleteEntryResult =
+  { ok: true; journal: SessionJournal } | { ok: false; error: string };
+
+/** Removes one entry, of either kind (#3476). */
+export function deleteEntry(
+  journal: SessionJournal,
+  entryId: string,
+): DeleteEntryResult {
+  if (!journal.entries.some((e) => e.id === entryId)) {
+    return { ok: false, error: "That entry no longer exists." };
+  }
+  return {
+    ok: true,
+    journal: {
+      ...journal,
+      entries: journal.entries.filter((e) => e.id !== entryId),
+    },
+  };
+}
+
+export type MoveEntryDirection = "up" | "down";
+
+export type MoveEntryResult =
+  { ok: true; journal: SessionJournal } | { ok: false; error: string };
+
+/**
+ * Swaps an entry with its neighbour in the displayed order (#3476). Neither
+ * entry's timestamp changes, so each still shows the time it actually
+ * happened, even when that puts the list out of strict chronological order —
+ * reordering is about how the session reads, not about rewriting when
+ * something happened. Works the same for a typed note and an automatic entry.
+ */
+export function moveEntry(
+  journal: SessionJournal,
+  entryId: string,
+  direction: MoveEntryDirection,
+): MoveEntryResult {
+  const index = journal.entries.findIndex((e) => e.id === entryId);
+  if (index === -1) {
+    return { ok: false, error: "That entry no longer exists." };
+  }
+  const target = direction === "up" ? index - 1 : index + 1;
+  if (target < 0 || target >= journal.entries.length) {
+    return {
+      ok: false,
+      error:
+        direction === "up"
+          ? "This is already the first entry."
+          : "This is already the last entry.",
+    };
+  }
+
+  const entries = [...journal.entries];
+  [entries[index], entries[target]] = [entries[target], entries[index]];
+  return { ok: true, journal: { ...journal, entries } };
 }
 
 export type SectionNameValidation = { ok: true } | { ok: false; error: string };
