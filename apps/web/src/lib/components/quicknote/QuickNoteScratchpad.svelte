@@ -48,6 +48,17 @@
     );
   }
 
+  function resizeDeltaForKey(
+    key: string,
+    growKey: string,
+    shrinkKey: string,
+    step: number,
+  ): number {
+    if (key === growKey) return step;
+    if (key === shrinkKey) return -step;
+    return 0;
+  }
+
   $effect(() => {
     if (quickNoteStore.isOpen) {
       bounds = loadSavedBounds(
@@ -122,6 +133,39 @@
     ) {
       saveBounds(SCRATCHPAD_WINDOW_STORAGE_KEY, bounds);
     }
+  }
+
+  function handleResizeKeydown(e: KeyboardEvent) {
+    const step = e.shiftKey ? 64 : 24;
+    const widthDelta = resizeDeltaForKey(
+      e.key,
+      "ArrowRight",
+      "ArrowLeft",
+      step,
+    );
+    const heightDelta = resizeDeltaForKey(e.key, "ArrowDown", "ArrowUp", step);
+    if (widthDelta === 0 && heightDelta === 0) return;
+
+    e.preventDefault();
+    const viewport = getViewportSize();
+    const next = clampBounds(
+      getCenteredBounds(
+        {
+          width: bounds.width + widthDelta,
+          height: bounds.height + heightDelta,
+        },
+        viewport,
+        SCRATCHPAD_MIN_WIDTH,
+        SCRATCHPAD_MIN_HEIGHT,
+      ),
+      viewport,
+      SCRATCHPAD_MIN_WIDTH,
+      SCRATCHPAD_MIN_HEIGHT,
+    );
+    if (next.width === bounds.width && next.height === bounds.height) return;
+
+    bounds = next;
+    saveBounds(SCRATCHPAD_WINDOW_STORAGE_KEY, bounds);
   }
 
   // Auto-save debounce effect
@@ -243,13 +287,20 @@
     {/if}
 
     <!-- Corner Resize Grip -->
-    <!-- svelte-ignore a11y_no_static_element_interactions -->
+    <!-- This focusable group implements a two-axis keyboard resize control. -->
+    <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
+    <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
     <div
+      role="group"
+      tabindex="0"
+      aria-label="Resize scratchpad with the arrow keys"
+      aria-keyshortcuts="ArrowLeft ArrowRight ArrowUp ArrowDown"
       class="absolute bottom-0 right-0 w-4 h-4 cursor-se-resize flex items-end justify-end p-0.5 text-theme-muted/40 hover:text-theme-primary touch-none transition-colors z-10"
       onpointerdown={handleResizePointerDown}
       onpointermove={handleResizePointerMove}
       onpointerup={handleResizePointerUp}
       onpointercancel={handleResizePointerUp}
+      onkeydown={handleResizeKeydown}
       title="Resize"
       data-testid="quicknote-scratchpad-resize-handle"
     >

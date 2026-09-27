@@ -165,4 +165,26 @@ describe("QuickNoteScratchpad — resizing (#3490)", () => {
     expect(setItemSpy).not.toHaveBeenCalled();
     setItemSpy.mockRestore();
   });
+
+  it("resizes with arrow keys and persists the keyboard-selected size", async () => {
+    render(QuickNoteScratchpad);
+
+    const card = screen.getByTestId("quicknote-scratchpad");
+    const startWidth = parseInt(card.style.width, 10);
+    const startHeight = parseInt(card.style.height, 10);
+    const handle = screen.getByTestId("quicknote-scratchpad-resize-handle");
+    handle.focus();
+
+    await fireEvent.keyDown(handle, { key: "ArrowRight" });
+    await fireEvent.keyDown(handle, { key: "ArrowDown" });
+
+    expect(parseInt(card.style.width, 10)).toBe(startWidth + 24);
+    expect(parseInt(card.style.height, 10)).toBe(startHeight + 24);
+
+    const saved = JSON.parse(
+      window.localStorage.getItem("codex_quicknote_scratchpad_size") || "{}",
+    );
+    expect(saved.width).toBe(startWidth + 24);
+    expect(saved.height).toBe(startHeight + 24);
+  });
 });
