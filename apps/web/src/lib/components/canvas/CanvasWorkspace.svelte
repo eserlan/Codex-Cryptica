@@ -1,5 +1,7 @@
 <script lang="ts">
   import ConnectionLine from "./ConnectionLine.svelte";
+  import { autoArrangeCanvasNodes } from "./canvas-auto-arrange";
+
   import {
     SvelteFlow,
     Background,
@@ -58,7 +60,6 @@
   import { themeStore } from "$lib/stores/theme.svelte";
   import { getDelveTerm } from "$lib/utils/delve-terminology";
   import {
-    autoArrangeCanvasNodes,
     canvasNodeStyle,
     canvasNodeZIndex,
     createFlowTextNode,
@@ -67,8 +68,17 @@
     flowNodesToCanvasNodes,
   } from "./canvas-workspace-helpers";
   import { exportCanvasImage } from "./canvas-image-export";
+  import {
+    normalizeEntityCardViewPreference,
+    type EntityCardViewPreference,
+  } from "./cards/entity-card-variant";
   import { openOrCreateSourceEntity } from "./canvas-source-entity";
   import { useCanvasAreaEnhancement } from "./canvas-area-enhancement.svelte";
+  import {
+    bringNodeToFront,
+    sendNodeToBack,
+    stackableNodeZIndexBounds,
+  } from "./canvas-node-stacking";
 
   import type {
     DelveCanvasEdge,
@@ -224,34 +234,12 @@
     );
   }
 
-  function stackableNodeZIndexBounds() {
-    let min = 0;
-    let max = 0;
-    for (const node of logic.nodes) {
-      if (node.type === "delveSectorGroup") continue;
-      const z = canvasNodeZIndex(node);
-      if (z > max) max = z;
-      if (z < min) min = z;
-    }
-    return { min, max };
+  function handleBringNodeToFront(nodeId: string) {
+    logic.nodes = bringNodeToFront(logic.nodes, nodeId);
   }
 
-  function bringNodeToFront(nodeId: string) {
-    const { max } = stackableNodeZIndexBounds();
-    logic.nodes = logic.nodes.map((node) =>
-      node.id === nodeId
-        ? { ...node, data: { ...node.data, zIndex: max + 1 } }
-        : node,
-    );
-  }
-
-  function sendNodeToBack(nodeId: string) {
-    const { min } = stackableNodeZIndexBounds();
-    logic.nodes = logic.nodes.map((node) =>
-      node.id === nodeId
-        ? { ...node, data: { ...node.data, zIndex: min - 1 } }
-        : node,
-    );
+  function handleSendNodeToBack(nodeId: string) {
+    logic.nodes = sendNodeToBack(logic.nodes, nodeId);
   }
 
   const contextMenuNodeLocked = $derived.by(() => {
@@ -270,6 +258,12 @@
     if (logic.contextMenu?.type !== "node") return undefined;
     const node = logic.nodes.find((n) => n.id === logic.contextMenu?.id);
     return node?.type === "text" ? node : undefined;
+  });
+
+  const contextMenuEntityNode = $derived.by(() => {
+    if (logic.contextMenu?.type !== "node") return undefined;
+    const node = logic.nodes.find((n) => n.id === logic.contextMenu?.id);
+    return node?.type === "entity" ? node : undefined;
   });
 
   const filteredNodes = $derived.by(() => {
@@ -304,6 +298,17 @@
           data: {
             ...node.data,
             onUpdateText: (updates: Record<string, unknown>) =>
+              updateNodeData(node.id, updates),
+          },
+        };
+      }
+      if (node.type === "entity") {
+        return {
+          ...withLock,
+          data: {
+            ...node.data,
+            showImageLabels,
+            onUpdateEntityNode: (updates: Record<string, unknown>) =>
               updateNodeData(node.id, updates),
           },
         };
@@ -620,7 +625,7 @@
       screenPosition ?? centerScreenPosition(),
     );
     const nodeId = engine.addTextNode("", position);
-    const { max } = stackableNodeZIndexBounds();
+    const { max } = stackableNodeZIndexBounds(logic.nodes);
     const node = createFlowTextNode("", position, nodeId);
     logic.nodes = [
       ...logic.nodes,
@@ -647,12 +652,13 @@
     }
   }
 
-  function handleAutoArrange() {
+  async function handleAutoArrange() {
     const positionedNodes = autoArrangeCanvasNodes({
       canvasId: canvas?.id || "temp",
       title: canvas?.name || "Canvas",
       nodes: logic.nodes,
       edges: logic.edges,
+      vaultEntities: vault.entities,
     });
     if (!positionedNodes) return;
 
@@ -664,6 +670,67 @@
       };
     }
     logic.saveNow();
+    await tick();
+    await logic.fitView?.({ padding: 0.15, duration: 400 });
+  }
+
+  const entityNodes = $derived(
+    logic.nodes.filter(
+      (n) =>
+        (n.type ?? "entity") === "entity" ||
+        Boolean((n.data as Record<string, unknown> | undefined)?.entityId),
+    ),
+  );
+  const isAllImageOnly = $derived(
+    entityNodes.length > 0 &&
+      entityNodes.every(
+        (n) =>
+          (n.data as Record<string, unknown> | undefined)?.cardView ===
+          "image_only",
+      ),
+  );
+
+  function handleToggleAllImageOnly() {
+    if (vault.isGuest) return;
+    const nextView = isAllImageOnly ? "auto" : "image_only";
+    logic.nodes = logic.nodes.map((node) => {
+      const isEntity =
+        (node.type ?? "entity") === "entity" ||
+        Boolean((node.data as Record<string, unknown> | undefined)?.entityId);
+      if (!isEntity) return node;
+      return {
+        ...node,
+        data: {
+          ...node.data,
+          cardView: nextView,
+        },
+      };
+    });
+    if (canvas) {
+      canvas.metadata = {
+        ...(canvas.metadata || {}),
+        defaultCardView: nextView,
+      };
+    }
+    logic.saveNow();
+  }
+
+  const showImageLabels = $derived(
+    Boolean(
+      (canvas?.metadata as Record<string, unknown> | undefined)
+        ?.showImageLabels,
+    ),
+  );
+
+  function handleToggleShowImageLabels() {
+    if (canvas) {
+      const nextShowImageLabels = !showImageLabels;
+      canvas.metadata = {
+        ...(canvas.metadata || {}),
+        showImageLabels: nextShowImageLabels,
+      };
+      logic.saveNow();
+    }
   }
 
   $effect(() => {
@@ -716,6 +783,14 @@
         : undefined}
       onOpenOrCreateSourceEntity={handleOpenOrCreateSourceEntity}
       onAutoArrange={handleAutoArrange}
+      {isAllImageOnly}
+      onToggleAllImageOnly={entityNodes.length > 0 && !vault.isGuest
+        ? handleToggleAllImageOnly
+        : undefined}
+      {showImageLabels}
+      onToggleShowImageLabels={entityNodes.length > 0
+        ? handleToggleShowImageLabels
+        : undefined}
       {showMinimap}
       onToggleMinimap={() => (showMinimap = !showMinimap)}
       onUploadFiles={!vault.isGuest
@@ -931,10 +1006,10 @@
         ? () => toggleNodeLock(logic.contextMenu!.id)
         : undefined}
       onBringToFront={contextMenuNodeStackable
-        ? () => bringNodeToFront(logic.contextMenu!.id)
+        ? () => handleBringNodeToFront(logic.contextMenu!.id)
         : undefined}
       onSendToBack={contextMenuNodeStackable
-        ? () => sendNodeToBack(logic.contextMenu!.id)
+        ? () => handleSendNodeToBack(logic.contextMenu!.id)
         : undefined}
       onDelete={logic.handleDelete}
       onRename={() => {
@@ -966,26 +1041,52 @@
               y: logic.contextMenu?.y || 0,
             })
         : undefined}
-      textNodeBackground={normalizeCanvasTextBackground(
-        (contextMenuTextNode?.data as any)?.background ?? "",
+      nodeBackground={normalizeCanvasTextBackground(
+        ((contextMenuEntityNode ?? contextMenuTextNode)?.data as any)
+          ?.background ?? "",
         DEFAULT_CANVAS_TEXT_BACKGROUND,
       )}
+      onNodeBackgroundChange={(contextMenuEntityNode || contextMenuTextNode) &&
+      !vault.isGuest
+        ? (background: string) => {
+            const targetNode = contextMenuEntityNode ?? contextMenuTextNode;
+            if (targetNode) {
+              updateNodeData(targetNode.id, {
+                background: normalizeCanvasTextBackground(
+                  background,
+                  DEFAULT_CANVAS_TEXT_BACKGROUND,
+                ),
+              });
+            }
+          }
+        : undefined}
       textNodeFontSize={normalizeCanvasTextFontSize(
         (contextMenuTextNode?.data as any)?.fontSize,
         DEFAULT_CANVAS_TEXT_FONT_SIZE,
       )}
-      onTextNodeBackgroundChange={contextMenuTextNode && !vault.isGuest
-        ? (background: string) =>
-            updateNodeData(contextMenuTextNode!.id, {
-              background: normalizeCanvasTextBackground(
-                background,
-                DEFAULT_CANVAS_TEXT_BACKGROUND,
-              ),
-            })
-        : undefined}
       onTextNodeFontSizeChange={contextMenuTextNode && !vault.isGuest
         ? (fontSize: number) =>
             updateNodeData(contextMenuTextNode!.id, { fontSize })
+        : undefined}
+      entityCardView={normalizeEntityCardViewPreference(
+        (contextMenuEntityNode?.data as any)?.cardView,
+      )}
+      onEntityCardViewChange={contextMenuEntityNode && !vault.isGuest
+        ? (view: EntityCardViewPreference) =>
+            updateNodeData(contextMenuEntityNode!.id, { cardView: view })
+        : undefined}
+      largeCard={(contextMenuEntityNode?.data as any)?.largeCard === true}
+      onLargeCardChange={contextMenuEntityNode && !vault.isGuest
+        ? (large: boolean) =>
+            updateNodeData(contextMenuEntityNode!.id, { largeCard: large })
+        : undefined}
+      {isAllImageOnly}
+      onToggleAllImageOnly={entityNodes.length > 0 && !vault.isGuest
+        ? handleToggleAllImageOnly
+        : undefined}
+      {showImageLabels}
+      onToggleShowImageLabels={entityNodes.length > 0
+        ? handleToggleShowImageLabels
         : undefined}
       onClose={() => (logic.contextMenu = null)}
     />

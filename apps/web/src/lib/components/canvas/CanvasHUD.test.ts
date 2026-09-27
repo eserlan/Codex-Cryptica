@@ -309,4 +309,46 @@ describe("CanvasHUD", () => {
     );
     expect(onDrawingWidthChange).toHaveBeenCalledWith(8);
   });
+
+  it("renders image-only toggle button and fires onToggleAllImageOnly", async () => {
+    const onToggleAllImageOnly = vi.fn();
+    render(CanvasHUD, {
+      props: {
+        canvasName: "Test Canvas",
+        activeCategories: new Set<string>(),
+        onToggleCategory: vi.fn(),
+        onClearCategories: vi.fn(),
+        isAllImageOnly: false,
+        onToggleAllImageOnly,
+      },
+    });
+
+    const btn = screen.getByRole("button", {
+      name: "Switch all cards to image only view",
+    });
+    expect(btn).toBeTruthy();
+    await fireEvent.click(btn);
+    expect(onToggleAllImageOnly).toHaveBeenCalledOnce();
+  });
+
+  it("renders image labels toggle button and fires onToggleShowImageLabels", async () => {
+    const onToggleShowImageLabels = vi.fn();
+    render(CanvasHUD, {
+      props: {
+        canvasName: "Test Canvas",
+        activeCategories: new Set<string>(),
+        onToggleCategory: vi.fn(),
+        onClearCategories: vi.fn(),
+        showImageLabels: false,
+        onToggleShowImageLabels,
+      },
+    });
+
+    const btn = screen.getByRole("button", {
+      name: "Show info text on all image cards",
+    });
+    expect(btn).toBeTruthy();
+    await fireEvent.click(btn);
+    expect(onToggleShowImageLabels).toHaveBeenCalledOnce();
+  });
 });

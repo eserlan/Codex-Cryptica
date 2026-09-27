@@ -281,6 +281,24 @@ export const forEntries: DiscoveryEntryInput[] = [
     status: "live",
   },
   {
+    id: "for-weird-west-rpgs",
+    pageKind: "for",
+    canonicalPath: "/for/weird-west-rpgs",
+    primaryIntent: "weird west campaign worldbuilding",
+    intentAliases: [
+      "weird west rpg campaign organiser",
+      "frontier occult western campaign notes",
+    ],
+    audience: "Game masters running weird west and frontier campaigns",
+    userJob: "adopt-workflow",
+    uniqueValue:
+      "A frontier-intrigue workflow connecting boomtowns, claims, lawmen, outlaws, railroad and mining interests, and the occult horrors beneath them, so every killing and land grab leads somewhere.",
+    parentCluster: "genre-guides",
+    relatedIntents: ["hub-western"],
+    indexable: true,
+    status: "live",
+  },
+  {
     id: "for-mecha-rpgs",
     pageKind: "for",
     canonicalPath: "/for/mecha-rpgs",

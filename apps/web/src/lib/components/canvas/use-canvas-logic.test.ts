@@ -9,6 +9,7 @@ import { canvasRegistry } from "$lib/stores/canvas-registry.svelte";
 vi.mock("@xyflow/svelte", () => ({
   useSvelteFlow: () => ({
     screenToFlowPosition: (pos: { x: number; y: number }) => pos,
+    fitView: vi.fn(),
   }),
   addEdge: (edge: any, edges: any[]) => [...edges, edge],
 }));

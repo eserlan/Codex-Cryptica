@@ -1,3 +1,4 @@
+import { autoArrangeCanvasNodes } from "./canvas-auto-arrange";
 import { describe, expect, it, vi } from "vitest";
 import type { Canvas } from "@codex/canvas-engine";
 import {
@@ -13,7 +14,6 @@ import {
   createFlowEntityNode,
   createFlowFileNode,
   createFlowTextNode,
-  autoArrangeCanvasNodes,
   flowEdgeToCanvasEdge,
   flowNodesToCanvasNodes,
   flowNodeToCanvasNode,
@@ -511,25 +511,174 @@ describe("canvas-workspace-helpers", () => {
     );
   });
 
-  it("does not auto-arrange an ordinary entity canvas", () => {
+  it("returns null when nodes list is empty", () => {
     const clockSpy = vi.fn().mockReturnValue(1234567890);
     expect(
       autoArrangeCanvasNodes({
         canvasId: "canvas-1",
-        title: "Entity Canvas",
-        nodes: [
-          {
-            id: "entity-node",
-            type: "entity",
-            position: { x: 40, y: 80 },
-            data: { entityId: "entity-1" },
-          },
-        ] as any,
+        title: "Empty Canvas",
+        nodes: [],
         edges: [],
         clock: { now: clockSpy },
       }),
     ).toBeNull();
     expect(clockSpy).not.toHaveBeenCalled();
+  });
+
+  it("arranges nodes by preserving existing row structure and left-to-right order with dynamic sizes", () => {
+    const arranged = autoArrangeCanvasNodes({
+      canvasId: "canvas-1",
+      title: "Entity Canvas",
+      nodes: [
+        {
+          id: "node-1",
+          type: "entity",
+          position: { x: 50, y: 100 },
+          data: { entityId: "entity-1", cardView: "image_only" },
+        },
+        {
+          id: "node-2",
+          type: "entity",
+          position: { x: 350, y: 110 },
+          data: { entityId: "entity-2", cardView: "image_only" },
+        },
+        {
+          id: "node-3",
+          type: "entity",
+          position: { x: 60, y: 450 },
+          data: { entityId: "entity-3", cardView: "image_only" },
+        },
+        {
+          id: "node-4",
+          type: "entity",
+          position: { x: 400, y: 440 },
+          data: { entityId: "entity-4", cardView: "image_only" },
+        },
+      ] as any,
+      edges: [],
+    });
+
+    expect(arranged).toHaveLength(4);
+    // Row 1 (y = 100): width 192 + gap 20 = 212
+    expect(arranged?.find((n) => n.id === "node-1")?.position).toEqual({
+      x: 50,
+      y: 100,
+    });
+    expect(arranged?.find((n) => n.id === "node-2")?.position).toEqual({
+      x: 262,
+      y: 100,
+    });
+    // Row 2 (y = 100 + 256 + 24 = 380)
+    expect(arranged?.find((n) => n.id === "node-3")?.position).toEqual({
+      x: 50,
+      y: 380,
+    });
+    expect(arranged?.find((n) => n.id === "node-4")?.position).toEqual({
+      x: 262,
+      y: 380,
+    });
+  });
+
+  it("preserves sticker notes pinned relative to their parent cards", () => {
+    const arranged = autoArrangeCanvasNodes({
+      canvasId: "canvas-1",
+      title: "Canvas with Sticker",
+      nodes: [
+        {
+          id: "node-1",
+          type: "entity",
+          position: { x: 50, y: 50 },
+          data: { entityId: "entity-1", cardView: "image_only" },
+        },
+        {
+          id: "node-2",
+          type: "entity",
+          position: { x: 400, y: 50 },
+          data: { entityId: "entity-2", cardView: "image_only" },
+        },
+        {
+          id: "sticker-1",
+          type: "text",
+          position: { x: 420, y: 80 },
+          data: { label: "Our heroes" },
+        },
+      ] as any,
+      edges: [],
+    });
+
+    expect(arranged).toHaveLength(3);
+    const parent = arranged?.find((n) => n.id === "node-2");
+    const sticker = arranged?.find((n) => n.id === "sticker-1");
+
+    expect(parent?.position).toEqual({ x: 262, y: 50 });
+    // Sticker was at offset (+20, +30) from node-2 (420 - 400 = 20, 80 - 50 = 30)
+    expect(sticker?.position).toEqual({ x: 282, y: 80 });
+  });
+
+  it("respects largeCard width when packing rows", () => {
+    const arranged = autoArrangeCanvasNodes({
+      canvasId: "canvas-1",
+      title: "Canvas with Wide Card",
+      nodes: [
+        {
+          id: "node-wide",
+          type: "entity",
+          position: { x: 50, y: 50 },
+          data: { entityId: "entity-wide", largeCard: true },
+        },
+        {
+          id: "node-next",
+          type: "entity",
+          position: { x: 700, y: 50 },
+          data: { entityId: "entity-next", cardView: "image_only" },
+        },
+      ] as any,
+      edges: [],
+    });
+
+    expect(arranged).toHaveLength(2);
+    expect(arranged?.find((n) => n.id === "node-wide")?.position).toEqual({
+      x: 50,
+      y: 50,
+    });
+    // largeCard width = 580, GAP_X = 20 -> 50 + 580 + 20 = 650
+    expect(arranged?.find((n) => n.id === "node-next")?.position).toEqual({
+      x: 650,
+      y: 50,
+    });
+  });
+
+  it("respects roster variant width (580px) when packing rows", () => {
+    const arranged = autoArrangeCanvasNodes({
+      canvasId: "canvas-roster",
+      title: "Canvas with Roster Card",
+      nodes: [
+        {
+          id: "node-roster",
+          type: "entity",
+          position: { x: 50, y: 50 },
+          data: { entityId: "faction-1", cardView: "roster" },
+        },
+        {
+          id: "node-member",
+          type: "entity",
+          position: { x: 700, y: 50 },
+          data: { entityId: "char-1", cardView: "compact" },
+        },
+      ] as any,
+      edges: [],
+    });
+
+    expect(arranged).toHaveLength(2);
+    expect(arranged?.find((n) => n.id === "node-roster")?.position).toEqual({
+      x: 50,
+      y: 50,
+    });
+    // roster width = 580, GAP_X = 20 -> 50 + 580 + 20 = 650
+    expect(arranged?.find((n) => n.id === "node-member")?.position).toEqual({
+      x: 650,
+      y: 50,
+    });
   });
 
   it("hydrates sector frames with a dedicated drag handle", () => {

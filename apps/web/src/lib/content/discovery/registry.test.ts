@@ -469,11 +469,38 @@ describe("the committed registry", () => {
     );
   });
 
+  it("gives weird west campaign workflow its own discovery intent, apart from space western", () => {
+    expect(
+      findIntentOwner("weird west campaign worldbuilding", registry)?.id,
+    ).toBe("for-weird-west-rpgs");
+    expect(getEntryByPath("/for/weird-west-rpgs", registry)?.userJob).toBe(
+      "adopt-workflow",
+    );
+    expect(findIntentOwner("western rpg generators", registry)?.id).toBe(
+      "hub-western",
+    );
+    expect(
+      findIntentOwner("space western campaign worldbuilding", registry)?.id,
+    ).toBe("for-space-western");
+  });
+
   it("gives tactical mecha campaigns their own operation-level workflow intent", () => {
     expect(findIntentOwner("mecha rpg campaign manager", registry)?.id).toBe(
       "for-mecha-rpgs",
     );
     expect(getEntryByPath("/for/mecha-rpgs", registry)?.userJob).toBe(
+      "adopt-workflow",
+    );
+  });
+
+  it("gives starship campaigns their own fleet and bridge crew workflow intent", () => {
+    expect(findIntentOwner("starship campaign management", registry)?.id).toBe(
+      "for-starship-campaigns",
+    );
+    expect(findIntentOwner("fleet operations rpg campaign", registry)?.id).toBe(
+      "for-starship-campaigns",
+    );
+    expect(getEntryByPath("/for/starship-campaigns", registry)?.userJob).toBe(
       "adopt-workflow",
     );
   });

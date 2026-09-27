@@ -232,7 +232,12 @@ describe("rollStatSheetDiceField", () => {
   it("returns the roll total, records history, and broadcasts when a VTT session is live", async () => {
     const display = await rollStatSheetDiceField(diceField());
 
-    expect(display).toEqual({ text: "= 17", isError: false, total: 17 });
+    expect(display).toEqual({
+      text: "= 17",
+      isError: false,
+      total: 17,
+      roll: { total: 17, parts: [] },
+    });
     expect(addResult).toHaveBeenCalled();
     expect(addResult).toHaveBeenCalledWith(
       expect.objectContaining({ total: 17 }),

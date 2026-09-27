@@ -58,3 +58,8 @@
 
 **Learning:** When large Svelte components (like `SourceWorkspace.svelte`) contain inline modal definitions (`{#if contextMenuTarget} <div class="fixed...">...</div> {/if}`), these inline modals heavily inflate the overall file size and increase component nesting, masking the core logic flow. They can be cleanly extracted into independent `<ComponentModal>.svelte` sub-components that manage their own internal styling, while taking data triggers (like `target`, `impact`) and semantic event callbacks (`onConfirm`, `onCancel`) as `$props`.
 **Action:** Extract large or complex inline modal markup blocks into dedicated sub-components. Ensure you manage lifecycle bounds carefully — for example, if an action accesses the object triggering the modal, perform the action _before_ invoking `onClose()` (which typically clears the target object back in the parent component and triggers destruction) to avoid null reference errors.
+
+## YYYY-MM-DD - Extracted distinct sub-algorithm from monolithic helpers file
+
+**Learning:** Large monolithic helper files (like `canvas-workspace-helpers.ts`) can often be reduced by identifying distinct sub-algorithms (like auto-arrangement and layout logic) that can operate independently if given their dependencies, even if they share some types.
+**Action:** Extract these bounded algorithms into their own dedicated files (e.g., `canvas-auto-arrange.ts`) to improve readability and maintainability without changing runtime behavior. Ensure types are properly exported/imported to support the split.

@@ -22,6 +22,7 @@ import { starshipCampaigns } from "./starship-campaigns";
 import { piratesHighSeas } from "./pirates-high-seas";
 import { postApocalypticRpgs } from "./post-apocalyptic-rpgs";
 import { steampunkRpgs } from "./steampunk-rpgs";
+import { weirdWestRpgs } from "./weird-west-rpgs";
 
 export const packs: Record<string, LandingPageConfig> = {
   "vampire-the-masquerade": vampireTheMasquerade,
@@ -45,6 +46,7 @@ export const packs: Record<string, LandingPageConfig> = {
   "pirates-high-seas": piratesHighSeas,
   "post-apocalyptic-rpgs": postApocalypticRpgs,
   "steampunk-rpgs": steampunkRpgs,
+  "weird-west-rpgs": weirdWestRpgs,
   traveller,
   conspiracy,
 };

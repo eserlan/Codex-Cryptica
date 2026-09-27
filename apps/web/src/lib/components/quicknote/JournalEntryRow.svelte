@@ -1,5 +1,7 @@
 <script lang="ts">
   import { entryTypeLabel, type JournalEntry } from "session-journal-engine";
+  import DiceBreakdownDisclosure from "$lib/components/dice/DiceBreakdownDisclosure.svelte";
+  import { parseBreakdownParts } from "$lib/utils/dice-breakdown";
 
   /**
    * One entry in the Session Journal (#3402 slice 3, #3408; promote controls
@@ -41,6 +43,21 @@
   const kind = $derived(
     label ? { label, icon: ICONS[entry.type] ?? GENERIC_ICON } : undefined,
   );
+  // A roll or table result carries the dice as they were rolled (#3443). Old
+  // entries without a trace, and other entry types, show no breakdown.
+  const rollParts = $derived(
+    entry.type === "dice-roll" || entry.type === "table-result"
+      ? parseBreakdownParts(entry.sourceRef?.parts, entry.sourceRef?.total)
+      : undefined,
+  );
+  const rollTotal = $derived(
+    typeof entry.sourceRef?.total === "number" ? entry.sourceRef.total : 0,
+  );
+  const rollFormula = $derived(
+    typeof entry.sourceRef?.formula === "string"
+      ? entry.sourceRef.formula
+      : undefined,
+  );
   const snippet = $derived(
     entry.content.length > 40
       ? `${entry.content.slice(0, 40)}…`
@@ -74,6 +91,13 @@
     {/if}
   </div>
   <p class="text-theme-text">{entry.content}</p>
+  {#if rollParts}
+    <DiceBreakdownDisclosure
+      parts={rollParts}
+      total={rollTotal}
+      formula={rollFormula}
+    />
+  {/if}
   {#if selectable || onPromote}
     <div class="mt-1.5 flex items-center justify-between gap-2">
       {#if selectable}

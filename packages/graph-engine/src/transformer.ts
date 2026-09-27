@@ -263,7 +263,11 @@ export class GraphTransformer {
         elements.push({
           group: "nodes",
           data: nodeData,
-          position: coords,
+          // A copy, not the entity's own object: Cytoscape adopts the position
+          // it is given as the node's live one, so sharing it would let moving
+          // a node (or applying a view's saved layout) rewrite the entity's
+          // saved coordinates in place.
+          position: { x: coords!.x, y: coords!.y },
         });
       } else {
         const angle = i * GOLDEN_ANGLE;

@@ -535,6 +535,13 @@ export function createCanvasLogic(
     pruneNodes,
     syncEngine,
     fitGraphForExport,
+    fitView: (options?: {
+      padding?: number;
+      duration?: number;
+      minZoom?: number;
+      maxZoom?: number;
+      nodes?: string[];
+    }) => svelteFlow?.fitView?.(options as any),
     flushSave,
     saveNow,
   };
