@@ -18,7 +18,7 @@
 
 **Story 2 — sections**: In an active journal, create a section, add a note, rename the section, add another note → confirm both notes are readable, the rename is reflected, and a fresh journal with zero sections still works exactly as Story 1.
 
-**Story 3 — end and resume**: Add entries and a section, end the journal → reload the app → confirm the ended journal and its content are still present and read-only (no way to add further entries to it — FR-007). Separately: start a new journal, add entries, reload the app _without_ ending it → confirm the control reads "Resume Session Journal" and reopening shows every entry/section intact.
+**Story 3 — end and resume**: Add entries and a section, end the journal → reload the app → confirm the ended journal and its content are still present and no further entries can be added (FR-007). Manual notes may still be edited, and entries may be deleted or reordered in ended journals (FR-050–FR-052). Separately: start a new journal, add entries, reload the app _without_ ending it → confirm the control reads "Resume Session Journal" and reopening shows every entry/section intact.
 
 **Story 4 — cloud backup survives**: With a vault that has cloud backup enabled and a journal containing entries and a section, trigger a backup, then restore that backup into a new vault (existing cloud-backup UI flow) → confirm the journal appears in the restored vault with every entry/section intact and in order. Separately, confirm the cloud backup consent screen's "What gets stored" copy now names session journals.
 

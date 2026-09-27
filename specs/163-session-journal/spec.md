@@ -21,7 +21,7 @@ A GM or solo player is running a session and wants a running record of what happ
 1. **Given** no journal is active for the current vault, **When** the user opens Quicknote/Scratchpad, **Then** they see a "Start Session Journal" control.
 2. **Given** the user selects "Start Session Journal", **When** the journal is created, **Then** the control changes to "Open Session Journal" and the journal is empty and active.
 3. **Given** an active journal, **When** the user adds a note, **Then** the note appears in the journal with a timestamp, in the order it was added, without navigating away from Quicknote/Scratchpad.
-4. **Given** an active journal with existing entries, **When** the user adds another note, **Then** the new note appears after the existing ones (chronological order is preserved).
+4. **Given** an active journal with existing entries that have not been manually reordered, **When** the user adds another note, **Then** the new note appears after the existing ones (chronological order is preserved). After a manual reorder, later entries append after the user's chosen order (FR-003).
 
 ---
 
@@ -169,7 +169,7 @@ After (or during) a session, a GM wants the good parts of the journal to become 
 
 - **FR-001**: System MUST let a user start a new Session Journal for the current vault when no journal is currently active for that vault.
 - **FR-002**: System MUST let a user add a manual, timestamped entry to the active journal without leaving Quicknote/Scratchpad.
-- **FR-003**: System MUST display a journal's entries in chronological order (by timestamp).
+- **FR-003**: System MUST display entries in the order they were added by default. A user may explicitly reorder entries; reordering MUST preserve each entry's timestamp, and later entries MUST be appended without undoing the user's chosen order.
 - **FR-004**: System MUST let a user create a named section within an active journal at any point during the session.
 - **FR-005**: System MUST let a user rename an existing section; renaming MUST reject an empty or whitespace-only name and leave the prior name in place.
 - **FR-006**: System MUST NOT require a journal to have any sections — a journal with zero sections is a fully valid, continuous log.
@@ -200,7 +200,7 @@ After (or during) a session, a GM wants the good parts of the journal to become 
 - **FR-031**: Each result MUST be captured once. Journal capture events MUST be local to the tab that publishes them: a publisher MUST NOT mark them for relay to other tabs (`metadata.sync`), and as a safeguard the listener MUST ignore any capture event marked as relayed (`metadata.remote`). Several events in quick succession MUST all be stored, in the order they were made, with none overwriting another (FR-011 applies to captured entries).
 - **FR-032**: Captured entries MUST go into the same current section as a typed note would. The current section MUST therefore be held by the journal's store, not by the journal view, so it is known while the panel is closed, which is when most captures happen. A section that no longer exists MUST fall back to no section. The current section is not saved: after an app reload it starts as no section, exactly as for typed notes today, until the user picks or creates one.
 - **FR-033**: System MUST NOT capture anything in a guest or player-facing session.
-- **FR-034**: Captured entries MUST behave like any other entry: they persist across reloads (FR-011), keep chronological order (FR-003), appear read-only in ended journals (FR-007, FR-008), and are included in cloud backup and restore (FR-016) with no extra work.
+- **FR-034**: Captured entries MUST behave like any other entry: they persist across reloads (FR-011), follow the journal's displayed order (FR-003), keep their captured content read-only, and are included in cloud backup and restore (FR-016) with no extra work. Users may delete or reorder entries in ended journals, but cannot edit captured content.
 - **FR-035**: This slice MUST NOT change what the dice roller, tables, decks, Oracle commands or stat sheets do or show: no new prompts, buttons, toggles or settings on those tools, and their roll history and chat output stay exactly as they are (FR-023 applies).
 - **FR-036**: System MUST let a user turn into a vault entity any one of: a single journal entry, a single section, the whole journal, or a chosen set of entries and sections. A chosen set MUST become one entity holding the chosen parts together in journal order, with an entry that is covered twice (chosen on its own and through its section) appearing once. Ticking a section and ticking its entries are independent choices: ticking one never changes how the other looks or behaves.
 - **FR-037**: The user MUST be able to choose the entity's type from the categories available in the current vault (Note by default) and to edit its name, which is pre-filled (the entry's opening words, the section's name, or the journal's title). A blank name MUST be refused with a plain-language message and nothing created.
@@ -213,9 +213,12 @@ After (or during) a session, a GM wants the good parts of the journal to become 
 - **FR-044**: A promote control that has nothing to make (empty journal, empty section, no parts chosen) MUST be disabled and MUST say why in plain language.
 - **FR-045**: If the entity cannot be created, the user MUST see a plain-language message, the form and their choices MUST stay as they were, and the journal MUST be unchanged. The failure is also logged for debugging.
 - **FR-046**: The promote controls MUST be usable with a keyboard and a screen reader: each has a text label, the form's fields are labelled, the form takes focus when it opens and returns it to the control that opened it when it closes, and no meaning depends on colour alone. Pressing Escape in the form MUST cancel only the form and leave the scratchpad open.
-- **FR-047**: This slice MUST NOT change the journal's data model, its storage, its cloud backup behaviour, or how typed notes and captured entries are added (FR-001–FR-035 apply unchanged).
+- **FR-047**: The promote-to-entity slice MUST NOT change the journal's data model, storage or cloud backup behaviour. Entry management added later may edit manual-note content, delete entries or change display order as specified by FR-003 and FR-050–FR-052; it MUST preserve captured content and entry timestamps.
 - **FR-048**: This slice MUST NOT be available in a guest or player-facing session, where the journal itself is not available. No separate control is added for this: the journal is only reachable through the toolbar control and the Quicknote panel, neither of which exists in a guest session (slice 2, FR-018).
 - **FR-049**: Every promote action MUST work the same for typed notes and for automatic entries (dice rolls, card draws, table results), using the entry's summary text. An entry's structured reference is not used.
+- **FR-050**: System MUST let a user edit the content of a manual-note entry in an active or ended journal. The edit MUST preserve the entry's identifier, timestamp, type, section and source reference, and MUST reject blank or whitespace-only content without changing the entry. Automatic entry content MUST remain read-only.
+- **FR-051**: System MUST let a user delete any entry from an active or ended journal. Deletion MUST leave the other entries in their current order and MUST NOT change their timestamps.
+- **FR-052**: System MUST let a user move any entry one position up or down in an active or ended journal. A move MUST preserve all entry data, including timestamps, and MUST reject moves beyond either end of the list.
 
 ### Key Entities
 
@@ -265,7 +268,7 @@ After (or during) a session, a GM wants the good parts of the journal to become 
   - Rolls in the solo Adventure mode's own roll prompt, and in the map (VTT) view, do not go through the shared roll history today and are therefore not captured in this slice. Capturing them is a follow-up (they would publish through the same interface).
   - Capture is always on while a journal is active. There is no per-source switch or setting in this slice; if real use shows too much noise, a filter is a follow-up.
   - Each re-rolled part of a table result is a real result the user got, so it is captured as its own entry.
-  - Captured entries are read-only like all entries (no editing or deleting individual entries exists in this journal).
+  - Captured entry content is read-only. Users may still delete or reorder captured entries, including in ended journals; manual-note editing and ended-journal entry management follow FR-050–FR-052.
   - The entry summary text is written in English like the rest of the interface; it is built from the result and does not depend on the tool's own display text.
   - An event published for one vault could in theory arrive just after the user switches vaults. That window is very small, and such an event is added to whichever journal is active for the vault now open. Stamping events with a vault id is a follow-up if it ever matters.
   - Captured data stays in the browser, in the same journal record as typed notes. Nothing new leaves the device; cloud backup behaves as in slice 1 (FR-016).

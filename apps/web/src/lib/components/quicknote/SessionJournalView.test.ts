@@ -809,3 +809,133 @@ describe("SessionJournalView — turning content into entities (slice 4)", () =>
     });
   });
 });
+
+describe("SessionJournalView — editing, deleting and reordering entries (#3476)", () => {
+  it("edits a typed note's text", async () => {
+    const store = newStore("vault-edit-view-1");
+    await store.start();
+    await store.appendEntry({ type: "manual-note", content: "Original" });
+    render(SessionJournalView, { props: { store } });
+
+    await fireEvent.click(await screen.findByTestId("journal-entry-edit"));
+    await fireEvent.input(screen.getByTestId("journal-entry-edit-input"), {
+      target: { value: "Edited text" },
+    });
+    await fireEvent.click(screen.getByTestId("journal-entry-edit-save"));
+
+    await waitFor(() =>
+      expect(store.current?.entries[0].content).toBe("Edited text"),
+    );
+    await waitFor(() =>
+      expect(screen.queryByTestId("journal-entry-edit-input")).toBeNull(),
+    );
+  });
+
+  it("does not offer Edit on an automatic entry (negative)", async () => {
+    const store = newStore("vault-edit-view-2");
+    await store.start();
+    await store.appendEntry({ type: "dice-roll", content: "Rolled 1d20: 14" });
+    render(SessionJournalView, { props: { store } });
+
+    await screen.findByTestId("journal-entry");
+    expect(screen.queryByTestId("journal-entry-edit")).toBeNull();
+  });
+
+  it("deletes an entry", async () => {
+    const store = newStore("vault-delete-view-1");
+    await store.start();
+    await store.appendEntry({ type: "manual-note", content: "Keep" });
+    await store.appendEntry({ type: "manual-note", content: "Remove" });
+    render(SessionJournalView, { props: { store } });
+
+    const rows = await screen.findAllByTestId("journal-entry-delete");
+    await fireEvent.click(rows[1]);
+
+    await waitFor(() =>
+      expect(store.current?.entries.map((e) => e.content)).toEqual(["Keep"]),
+    );
+  });
+
+  it("moves an entry up and down, disabled at each end of the list", async () => {
+    const store = newStore("vault-move-view-1");
+    await store.start();
+    await store.appendEntry({ type: "manual-note", content: "First" });
+    await store.appendEntry({ type: "manual-note", content: "Second" });
+    render(SessionJournalView, { props: { store } });
+
+    const ups = await screen.findAllByTestId("journal-entry-move-up");
+    const downs = screen.getAllByTestId("journal-entry-move-down");
+    expect((ups[0] as HTMLButtonElement).disabled).toBe(true);
+    expect((downs[1] as HTMLButtonElement).disabled).toBe(true);
+
+    await fireEvent.click(downs[0]);
+    await waitFor(() =>
+      expect(store.current?.entries.map((e) => e.content)).toEqual([
+        "Second",
+        "First",
+      ]),
+    );
+  });
+
+  it("edits an entry of a past journal opened from history (negative: not the active journal)", async () => {
+    const store = newStore("vault-past-edit-view");
+    await store.start();
+    await store.appendEntry({ type: "manual-note", content: "Old note" });
+    await store.end();
+    render(SessionJournalView, { props: { store } });
+
+    await fireEvent.click(
+      screen.getByRole("button", { name: "Past journals" }),
+    );
+    await fireEvent.click(
+      await screen.findByTestId(`past-journal-${store.current!.id}`),
+    );
+    await fireEvent.click(await screen.findByTestId("journal-entry-edit"));
+    await fireEvent.input(screen.getByTestId("journal-entry-edit-input"), {
+      target: { value: "Corrected" },
+    });
+    await fireEvent.click(screen.getByTestId("journal-entry-edit-save"));
+
+    await waitFor(() => expect(screen.getByText("Corrected")).toBeTruthy());
+  });
+
+  it("hides edit, delete and move while choosing parts, and restores them after (negative)", async () => {
+    const store = newStore("vault-select-mode-view");
+    await store.start();
+    await store.appendEntry({ type: "manual-note", content: "One" });
+    render(SessionJournalView, { props: { store } });
+
+    await fireEvent.click(await screen.findByTestId("promote-toggle"));
+    await fireEvent.click(await screen.findByTestId("promote-choose-parts"));
+    expect(screen.queryByTestId("journal-entry-edit")).toBeNull();
+    expect(screen.queryByTestId("journal-entry-delete")).toBeNull();
+
+    await fireEvent.click(screen.getByTestId("promote-stop-choosing"));
+    expect(screen.getByTestId("journal-entry-edit")).toBeTruthy();
+  });
+
+  it("shows a message and leaves the entry alone when a move is refused (negative)", async () => {
+    const store = newStore("vault-move-fail-view");
+    await store.start();
+    await store.appendEntry({ type: "manual-note", content: "First" });
+    await store.appendEntry({ type: "manual-note", content: "Second" });
+    const spy = vi
+      .spyOn(store, "moveEntry")
+      .mockRejectedValue(new Error("That could not be moved."));
+    render(SessionJournalView, { props: { store } });
+
+    const ups = await screen.findAllByTestId("journal-entry-move-up");
+    await fireEvent.click(ups[1]);
+
+    await waitFor(() =>
+      expect(screen.getByRole("alert").textContent).toBe(
+        "That could not be moved.",
+      ),
+    );
+    expect(spy).toHaveBeenCalled();
+    expect(store.current?.entries.map((e) => e.content)).toEqual([
+      "First",
+      "Second",
+    ]);
+  });
+});
