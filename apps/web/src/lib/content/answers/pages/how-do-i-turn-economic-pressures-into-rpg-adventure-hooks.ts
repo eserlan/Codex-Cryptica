@@ -150,6 +150,7 @@ export const howDoITurnEconomicPressuresIntoRpgAdventureHooks: AnswerConfigInput
       "how-do-trade-routes-shape-cities-and-kingdoms-in-an-rpg-world",
       "how-do-scarcity-and-shortages-affect-prices-and-conflict-in-an-rpg-world",
       "how-do-you-create-quest-hooks-without-railroading",
+      "what-can-players-actually-buy-and-sell-in-a-fantasy-settlement",
     ],
     discovery: {
       id: "answer-economic-pressures-adventure-hooks",
