@@ -8,6 +8,10 @@
     DEFAULT_CANVAS_TEXT_FONT_SIZE,
   } from "@codex/canvas-engine";
   import { canvasTextBackgroundStyle } from "./canvas-workspace-helpers";
+  import {
+    ENTITY_CARD_VIEW_OPTIONS,
+    type EntityCardViewPreference,
+  } from "./cards/entity-card-variant";
   import SpatialImageControls from "$lib/components/spatial/SpatialImageControls.svelte";
 
   let {
@@ -31,6 +35,16 @@
     textNodeFontSize = DEFAULT_CANVAS_TEXT_FONT_SIZE,
     onTextNodeBackgroundChange,
     onTextNodeFontSizeChange,
+    nodeBackground,
+    onNodeBackgroundChange,
+    entityCardView = "auto",
+    onEntityCardViewChange,
+    largeCard = false,
+    onLargeCardChange,
+    isAllImageOnly = false,
+    onToggleAllImageOnly,
+    showImageLabels = false,
+    onToggleShowImageLabels,
     onClose,
   } = $props<{
     x: number;
@@ -55,8 +69,27 @@
     textNodeFontSize?: number;
     onTextNodeBackgroundChange?: (background: string) => void;
     onTextNodeFontSizeChange?: (fontSize: number) => void;
+    nodeBackground?: string;
+    onNodeBackgroundChange?: (background: string) => void;
+    entityCardView?: EntityCardViewPreference;
+    onEntityCardViewChange?: (view: EntityCardViewPreference) => void;
+    largeCard?: boolean;
+    onLargeCardChange?: (large: boolean) => void;
+    isAllImageOnly?: boolean;
+    onToggleAllImageOnly?: () => void;
+    showImageLabels?: boolean;
+    onToggleShowImageLabels?: () => void;
     onClose: () => void;
   }>();
+
+  const effectiveBackground = $derived(
+    nodeBackground ?? textNodeBackground ?? DEFAULT_CANVAS_TEXT_BACKGROUND,
+  );
+  const handleBackgroundChange = $derived(
+    onNodeBackgroundChange ?? onTextNodeBackgroundChange,
+  );
+
+  const isImageOnly = $derived(entityCardView === "image_only");
 
   const handleRevise = async () => {
     if (targetType !== "node") return;
@@ -267,6 +300,37 @@
         >
           Create Lore
         </button>
+        {#if onToggleAllImageOnly}
+          <div class="border-t border-theme-border/30 my-1"></div>
+          <button
+            role="menuitem"
+            class="w-full text-left px-4 py-2.5 text-xs text-theme-text hover:bg-theme-primary/10 hover:text-theme-primary flex items-center gap-3 transition-colors uppercase font-header tracking-widest"
+            onclick={() => {
+              onToggleAllImageOnly?.();
+              onClose();
+            }}
+          >
+            <span class="icon-[lucide--image] w-3.5 h-3.5 opacity-70"></span>
+            {isAllImageOnly
+              ? "Switch All to Card Details"
+              : "Switch All to Image Only"}
+          </button>
+        {/if}
+        {#if onToggleShowImageLabels}
+          <button
+            role="menuitem"
+            class="w-full text-left px-4 py-2.5 text-xs text-theme-text hover:bg-theme-primary/10 hover:text-theme-primary flex items-center gap-3 transition-colors uppercase font-header tracking-widest"
+            onclick={() => {
+              onToggleShowImageLabels?.();
+              onClose();
+            }}
+          >
+            <span class="icon-[lucide--info] w-3.5 h-3.5 opacity-70"></span>
+            {showImageLabels
+              ? "Hide Labels on Image Cards"
+              : "Show Labels on Image Cards"}
+          </button>
+        {/if}
       {/if}
     {/if}
 
@@ -282,8 +346,8 @@
       <div class="border-t border-theme-border/30 my-1"></div>
     {/if}
 
-    {#if targetType === "node" && (onTextNodeBackgroundChange || onTextNodeFontSizeChange)}
-      {#if onTextNodeBackgroundChange}
+    {#if targetType === "node" && (handleBackgroundChange || onTextNodeFontSizeChange)}
+      {#if handleBackgroundChange}
         <div class="px-4 py-2">
           <p
             class="mb-1.5 text-[10px] font-bold text-theme-muted uppercase tracking-widest"
@@ -296,9 +360,9 @@
                 type="button"
                 title={key}
                 aria-label={`Set background to ${key}`}
-                aria-pressed={textNodeBackground === key}
-                onclick={() => onTextNodeBackgroundChange(key)}
-                class="h-6 w-6 rounded-full border transition-transform {textNodeBackground ===
+                aria-pressed={effectiveBackground === key}
+                onclick={() => handleBackgroundChange(key)}
+                class="h-6 w-6 rounded-full border transition-transform {effectiveBackground ===
                 key
                   ? 'border-theme-primary ring-2 ring-theme-primary/40 scale-110'
                   : 'border-theme-border/50'}"
@@ -342,6 +406,65 @@
           </div>
         </div>
       {/if}
+      <div class="border-t border-theme-border/30 my-1"></div>
+    {/if}
+
+    {#if targetType === "node" && onEntityCardViewChange}
+      <div class="px-4 py-2">
+        <p
+          class="mb-1.5 text-[10px] font-bold text-theme-muted uppercase tracking-widest"
+        >
+          Card view
+        </p>
+        <div class="flex flex-col gap-0.5">
+          {#each ENTITY_CARD_VIEW_OPTIONS as option (option.value)}
+            <button
+              type="button"
+              role="menuitemradio"
+              aria-checked={entityCardView === option.value}
+              onclick={() => {
+                if (
+                  option.value === "image_only" &&
+                  entityCardView === "image_only"
+                ) {
+                  onEntityCardViewChange("auto");
+                } else {
+                  onEntityCardViewChange(option.value);
+                }
+              }}
+              class="w-full text-left px-2 py-1 rounded text-[11px] transition-colors {entityCardView ===
+              option.value
+                ? 'bg-theme-primary/15 text-theme-primary font-semibold'
+                : 'text-theme-muted hover:bg-theme-primary/10 hover:text-theme-text'}"
+            >
+              {option.label}
+            </button>
+          {/each}
+          {#if onLargeCardChange && !isImageOnly}
+            <button
+              type="button"
+              role="menuitemcheckbox"
+              aria-checked={largeCard}
+              onclick={() => onLargeCardChange(!largeCard)}
+              class="w-full text-left px-2 py-1 rounded text-[11px] transition-colors flex items-center gap-2 {largeCard
+                ? 'bg-theme-primary/15 text-theme-primary font-semibold'
+                : 'text-theme-muted hover:bg-theme-primary/10 hover:text-theme-text'}"
+            >
+              <span
+                class="flex h-3.5 w-3.5 items-center justify-center rounded-sm border {largeCard
+                  ? 'border-theme-primary bg-theme-primary text-theme-bg'
+                  : 'border-theme-border'}"
+                aria-hidden="true"
+              >
+                {#if largeCard}
+                  <span class="icon-[lucide--check] w-2.5 h-2.5"></span>
+                {/if}
+              </span>
+              Large card
+            </button>
+          {/if}
+        </div>
+      </div>
       <div class="border-t border-theme-border/30 my-1"></div>
     {/if}
 

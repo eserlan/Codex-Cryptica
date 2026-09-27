@@ -34,6 +34,10 @@
     onClearCategories,
     showMinimap = true,
     onToggleMinimap,
+    isAllImageOnly = false,
+    onToggleAllImageOnly,
+    showImageLabels = false,
+    onToggleShowImageLabels,
   } = $props<{
     canvasName: string;
     sourceEntityId?: string;
@@ -63,6 +67,10 @@
     onClearCategories: () => void;
     showMinimap?: boolean;
     onToggleMinimap?: () => void;
+    isAllImageOnly?: boolean;
+    onToggleAllImageOnly?: () => void;
+    showImageLabels?: boolean;
+    onToggleShowImageLabels?: () => void;
   }>();
 
   let isAddMenuOpen = $state(false);
@@ -153,6 +161,44 @@
         class="flex h-8 w-8 items-center justify-center bg-theme-surface/80 backdrop-blur-md border border-theme-primary/30 shadow-sm pointer-events-auto transition-all hover:border-theme-primary text-theme-muted hover:text-theme-primary"
       >
         <span class="icon-[lucide--wand-2] w-4 h-4" aria-hidden="true"></span>
+      </button>
+    {/if}
+
+    {#if onToggleAllImageOnly}
+      <button
+        type="button"
+        onclick={onToggleAllImageOnly}
+        title={isAllImageOnly
+          ? "Switch all cards to detailed view"
+          : "Switch all cards to image only view"}
+        aria-label={isAllImageOnly
+          ? "Switch all cards to detailed view"
+          : "Switch all cards to image only view"}
+        aria-pressed={isAllImageOnly}
+        class="flex h-8 w-8 items-center justify-center bg-theme-surface/80 backdrop-blur-md border border-theme-primary/30 shadow-sm pointer-events-auto transition-all hover:border-theme-primary text-theme-muted hover:text-theme-primary {isAllImageOnly
+          ? 'border-theme-primary bg-theme-primary/15 text-theme-primary'
+          : ''}"
+      >
+        <span class="icon-[lucide--image] w-4 h-4" aria-hidden="true"></span>
+      </button>
+    {/if}
+
+    {#if onToggleShowImageLabels}
+      <button
+        type="button"
+        onclick={onToggleShowImageLabels}
+        title={showImageLabels
+          ? "Hide info text on image cards"
+          : "Show info text on all image cards"}
+        aria-label={showImageLabels
+          ? "Hide info text on image cards"
+          : "Show info text on all image cards"}
+        aria-pressed={showImageLabels}
+        class="flex h-8 w-8 items-center justify-center bg-theme-surface/80 backdrop-blur-md border border-theme-primary/30 shadow-sm pointer-events-auto transition-all hover:border-theme-primary text-theme-muted hover:text-theme-primary {showImageLabels
+          ? 'border-theme-primary bg-theme-primary/15 text-theme-primary'
+          : ''}"
+      >
+        <span class="icon-[lucide--info] w-4 h-4" aria-hidden="true"></span>
       </button>
     {/if}
 
