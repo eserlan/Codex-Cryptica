@@ -3,7 +3,7 @@ import type { AnswerConfigInput } from "../schema";
 export const howDoIRunCharacterRolesInAPoliticalIntrigueRpg: AnswerConfigInput =
   {
     slug: "how-do-i-run-character-roles-in-a-political-intrigue-rpg",
-    category: "session-prep",
+    category: "running-the-game",
     publishedAt: "2026-09-24",
     question:
       "How do I run common character roles in a political intrigue RPG?",

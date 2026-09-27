@@ -2,7 +2,7 @@ import type { AnswerConfigInput } from "../schema";
 
 export const howMuchRuleOfCoolShouldADmAllow: AnswerConfigInput = {
   slug: "how-much-rule-of-cool-should-a-dm-allow",
-  category: "session-prep",
+  category: "running-the-game",
   question: "How much Rule of Cool should a DM allow?",
   kind: "framework",
   publishedAt: "2026-09-10",

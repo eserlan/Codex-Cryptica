@@ -3,7 +3,7 @@ import type { AnswerConfigInput } from "../schema";
 export const howDoYouDesignRpgPuzzlesThatDoNotStallTheGame: AnswerConfigInput =
   {
     slug: "how-do-you-design-rpg-puzzles-that-do-not-stall-the-game",
-    category: "session-prep",
+    category: "adventure-design",
     publishedAt: "2026-08-30",
     question: "How do you design RPG puzzles that do not stall the game?",
     kind: "framework",

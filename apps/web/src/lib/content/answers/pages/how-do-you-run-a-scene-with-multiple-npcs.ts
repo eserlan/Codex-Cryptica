@@ -2,7 +2,7 @@ import type { AnswerConfigInput } from "../schema";
 
 export const howDoYouRunASceneWithMultipleNpcs: AnswerConfigInput = {
   slug: "how-do-you-run-a-scene-with-multiple-npcs",
-  category: "session-prep",
+  category: "running-the-game",
   publishedAt: "2026-09-14",
   question:
     "How do you run a scene with multiple NPCs without talking to yourself?",

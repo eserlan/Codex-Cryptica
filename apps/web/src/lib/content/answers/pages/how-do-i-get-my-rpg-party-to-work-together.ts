@@ -2,7 +2,7 @@ import type { AnswerConfigInput } from "../schema";
 
 export const howDoIGetMyRpgPartyToWorkTogether: AnswerConfigInput = {
   slug: "how-do-i-get-my-rpg-party-to-work-together",
-  category: "session-prep",
+  category: "running-the-game",
   publishedAt: "2026-09-22",
   question: "How do I get my RPG party to work together?",
   kind: "framework",

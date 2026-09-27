@@ -2,7 +2,7 @@ import type { AnswerConfigInput } from "../schema";
 
 export const howDoIRunPoliticalIntrigueAndFactionPlay: AnswerConfigInput = {
   slug: "how-do-i-run-political-intrigue-and-faction-play",
-  category: "session-prep",
+  category: "running-the-game",
   publishedAt: "2026-09-21",
   question: "How do I run political intrigue and faction play in an RPG?",
   kind: "how-to",

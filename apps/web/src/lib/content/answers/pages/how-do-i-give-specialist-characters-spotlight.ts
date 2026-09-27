@@ -2,7 +2,7 @@ import type { AnswerConfigInput } from "../schema";
 
 export const howDoIGiveSpecialistCharactersSpotlight: AnswerConfigInput = {
   slug: "how-do-i-give-specialist-characters-spotlight",
-  category: "session-prep",
+  category: "running-the-game",
   publishedAt: "2026-09-23",
   question:
     "How do I give specialist characters spotlight without sidelining the party?",

@@ -2,7 +2,7 @@ import type { AnswerConfigInput } from "../schema";
 
 export const howDoYouCreateQuestHooksWithoutRailroading: AnswerConfigInput = {
   slug: "how-do-you-create-quest-hooks-without-railroading",
-  category: "session-prep",
+  category: "adventure-design",
   publishedAt: "2026-09-07",
   question: "How do you create quest hooks without railroading?",
   kind: "framework",

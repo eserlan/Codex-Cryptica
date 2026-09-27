@@ -3,7 +3,7 @@ import type { AnswerConfigInput } from "../schema";
 export const howDoIRunARogueOrScoutWithoutSplittingTheParty: AnswerConfigInput =
   {
     slug: "how-do-i-run-a-rogue-or-scout-without-splitting-the-party",
-    category: "session-prep",
+    category: "running-the-game",
     publishedAt: "2026-09-23",
     question: "How do I run a rogue or scout without splitting the party?",
     kind: "framework",

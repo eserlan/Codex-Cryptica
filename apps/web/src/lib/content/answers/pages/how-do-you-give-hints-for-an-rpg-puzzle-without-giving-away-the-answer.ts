@@ -3,7 +3,7 @@ import type { AnswerConfigInput } from "../schema";
 export const howDoYouGiveHintsForAnRpgPuzzleWithoutGivingAwayTheAnswer: AnswerConfigInput =
   {
     slug: "how-do-you-give-hints-for-an-rpg-puzzle-without-giving-away-the-answer",
-    category: "session-prep",
+    category: "adventure-design",
     publishedAt: "2026-09-10",
     question:
       "How do you give players hints for an RPG puzzle without giving away the answer?",

@@ -2,7 +2,7 @@ import type { AnswerConfigInput } from "../schema";
 
 export const howDoIWriteAGoodCallOfCthulhuOneShot: AnswerConfigInput = {
   slug: "how-do-i-write-a-good-call-of-cthulhu-one-shot",
-  category: "session-prep",
+  category: "adventure-design",
   publishedAt: "2026-09-25",
   question: "How do I write a good Call of Cthulhu one-shot?",
   kind: "framework",

@@ -2,7 +2,7 @@ import type { AnswerConfigInput } from "../schema";
 
 export const howDoIRunADiplomatNobleOrCourtierInAnRpg: AnswerConfigInput = {
   slug: "how-do-i-run-a-diplomat-noble-or-courtier-in-an-rpg",
-  category: "session-prep",
+  category: "running-the-game",
   labels: ["fantasy", "sci-fi"],
   publishedAt: "2026-09-24",
   question:

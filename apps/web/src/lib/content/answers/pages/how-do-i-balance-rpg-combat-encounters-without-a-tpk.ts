@@ -2,7 +2,7 @@ import type { AnswerConfigInput } from "../schema";
 
 export const howDoIBalanceRpgCombatEncountersWithoutATpk: AnswerConfigInput = {
   slug: "how-do-i-balance-rpg-combat-encounters-without-a-tpk",
-  category: "session-prep",
+  category: "adventure-design",
   publishedAt: "2026-08-31",
   question: "How do I balance RPG combat encounters without causing a TPK?",
   kind: "framework",

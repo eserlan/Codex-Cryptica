@@ -2,7 +2,7 @@ import type { AnswerConfigInput } from "../schema";
 
 export const howDoYouRunDndForALargeGroupOfPlayers: AnswerConfigInput = {
   slug: "how-do-you-run-dnd-for-a-large-group-of-players",
-  category: "session-prep",
+  category: "running-the-game",
   publishedAt: "2026-09-16",
   question: "How do you run D&D for a large group of players?",
   kind: "framework",

@@ -2,7 +2,7 @@ import type { AnswerConfigInput } from "../schema";
 
 export const howDoYouRunAnRpgCampaignInOneCity: AnswerConfigInput = {
   slug: "how-do-you-run-an-rpg-campaign-in-one-city",
-  category: "session-prep",
+  category: "adventure-design",
   publishedAt: "2026-09-07",
   question: "How do you run an RPG campaign in one city?",
   kind: "framework",
