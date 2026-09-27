@@ -12,8 +12,3 @@
 
 **Learning:** In Svelte 5 derived state and lifecycle rebuilds (like `rebuildIndexes`), replacing chained `.filter()` or intermediate `Object.values()` allocations with a single imperative loop over keys drastically reduces unnecessary garbage collection overhead on large maps, such as standard dictionaries of all entities.
 **Action:** When extracting multiple derived arrays from a dictionary, avoid allocating intermediate arrays by looping via `for...in` and pushing items natively using `hasOwnProperty`.
-
-## 2025-02-28 - Optimizing O(N^2) Array Analysis Passes
-
-**Learning:** In analytical functions that compare every pair in a collection (O(N^2) loops, like finding shared strings across items), recreating Sets or chaining operations like `.filter().map()` inside the inner loop causes severe intermediate garbage collection overhead.
-**Action:** Always precompute any derived structures (like Sets of intents or normalized strings) in a single O(N) pass _before_ entering the O(N^2) loop, and use imperative `.has()` checks with `break` to short-circuit instead of creating intermediate arrays with `.filter()`.
