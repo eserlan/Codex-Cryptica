@@ -44,7 +44,6 @@ export function parseDnd5eJson(input: Record<string, unknown>): StatBlockIR {
   };
 }
 
-// fallow-ignore-next-line complexity
 function extractDndHp(input: Record<string, unknown>): {
   hp: number;
   hitDiceStr?: string;
@@ -52,21 +51,28 @@ function extractDndHp(input: Record<string, unknown>): {
   let hp = 10;
   let hitDiceStr: string | undefined;
 
-  if (typeof input.hp === "number") {
-    hp = input.hp;
-  } else if (typeof input.hp === "object" && input.hp !== null) {
-    const hpObj = input.hp as Record<string, unknown>;
-    hp = Number(hpObj.average || hpObj.max || hpObj.value || 10);
-    if (hpObj.formula) hitDiceStr = String(hpObj.formula);
-  } else if (input.hit_points !== undefined) {
-    hp = Number(input.hit_points);
-  }
-
-  if (!hitDiceStr && input.hit_dice) {
-    hitDiceStr = String(input.hit_dice);
-  }
+  const parsed = readHp(input.hp);
+  if (parsed) ({ hp, hitDiceStr } = parsed);
+  else if (input.hit_points !== undefined) hp = Number(input.hit_points);
+  if (!hitDiceStr) hitDiceStr = readText(input.hit_dice);
 
   return { hp, hitDiceStr };
+}
+
+function readHp(
+  value: unknown,
+): { hp: number; hitDiceStr?: string } | undefined {
+  if (typeof value === "number") return { hp: value };
+  if (typeof value !== "object" || value === null) return undefined;
+  const record = value as Record<string, unknown>;
+  return {
+    hp: Number(record.average || record.max || record.value || 10),
+    hitDiceStr: readText(record.formula),
+  };
+}
+
+function readText(value: unknown): string | undefined {
+  return value ? String(value) : undefined;
 }
 
 function extractDndAc(input: Record<string, unknown>): {
@@ -126,7 +132,6 @@ function extractDndAttributes(
   return attributes;
 }
 
-// fallow-ignore-next-line complexity
 function parseActionEntry(
   item: any,
   type: "action" | "bonus" | "reaction" | "legendary",
@@ -134,29 +139,9 @@ function parseActionEntry(
   const aName = String(item.name || "Action");
   const desc = String(item.desc || item.description || "");
 
-  let attackDice: string | undefined;
-  if (item.attack_bonus !== undefined) {
-    const bonus = Number(item.attack_bonus);
-    attackDice = bonus >= 0 ? `1d20+${bonus}` : `1d20${bonus}`;
-  } else {
-    const atkMatch = desc.match(/([+-]\d+)\s+to\s+hit/i);
-    if (atkMatch) {
-      const bonus = Number(atkMatch[1]);
-      attackDice = bonus >= 0 ? `1d20+${bonus}` : `1d20${bonus}`;
-    }
-  }
-
-  let damageDice = item.damage_dice ? String(item.damage_dice) : undefined;
-  if (!damageDice) {
-    const dmgMatch = desc.match(/\((\d+d\d+(?:\s*[+-]\s*\d+)?)\)/i);
-    if (dmgMatch) damageDice = dmgMatch[1].replace(/\s+/g, "");
-  }
-
-  let reachOrRange: string | undefined;
-  const rangeMatch = desc.match(
-    /(reach\s+\d+\s*ft\.|range\s+\d+\/\d+\s*ft\.)/i,
-  );
-  if (rangeMatch) reachOrRange = rangeMatch[1];
+  const attackDice = extractAttackDice(item.attack_bonus, desc);
+  const damageDice = extractDamageDice(item.damage_dice, desc);
+  const reachOrRange = extractReachOrRange(desc);
 
   return {
     name: aName,
@@ -166,6 +151,35 @@ function parseActionEntry(
     reachOrRange,
     description: desc,
   };
+}
+
+function formatAttackBonus(value: unknown): string {
+  const bonus = Number(value);
+  return bonus >= 0 ? `1d20+${bonus}` : `1d20${bonus}`;
+}
+
+function extractAttackDice(
+  value: unknown,
+  description: string,
+): string | undefined {
+  if (value !== undefined) return formatAttackBonus(value);
+  const match = description.match(/([+-]\d+)\s+to\s+hit/i);
+  return match ? formatAttackBonus(match[1]) : undefined;
+}
+
+function extractDamageDice(
+  value: unknown,
+  description: string,
+): string | undefined {
+  if (value) return String(value);
+  const match = description.match(/\((\d+d\d+(?:\s*[+-]\s*\d+)?)\)/i);
+  return match?.[1].replace(/\s+/g, "");
+}
+
+function extractReachOrRange(description: string): string | undefined {
+  return description.match(
+    /(reach\s+\d+\s*ft\.|range\s+\d+\/\d+\s*ft\.)/i,
+  )?.[1];
 }
 
 function extractDndActions(

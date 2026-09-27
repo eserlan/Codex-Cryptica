@@ -143,7 +143,6 @@ function extractPf2eTextStrikes(
   return actionsAndAttacks;
 }
 
-// fallow-ignore-next-line complexity
 function parseMythrasText(
   name: string,
   _lines: string[],
@@ -162,36 +161,37 @@ function parseMythrasText(
   const pow = getChar("POW");
   const cha = getChar("CHA");
 
-  const apMatch = text.match(/Action\s+Points\s*[:]?\s*(\d+)/i);
-  const ap = apMatch
-    ? Number(apMatch[1])
-    : Math.max(1, Math.min(5, Math.ceil((int + dex) / 12)));
-
-  const hpMatch =
-    text.match(/Hit\s+Points\s*[:]?\s*(\d+)/i) ||
-    text.match(/\bHP\s*[:]?\s*(\d+)/i);
-  const hp = hpMatch ? Number(hpMatch[1]) : Math.ceil((con + siz) / 5) * 5;
-
-  const mpMatch =
-    text.match(/Magic\s+Points\s*[:]?\s*(\d+)/i) ||
-    text.match(/\bMP\s*[:]?\s*(\d+)/i);
-  const mp = mpMatch ? Number(mpMatch[1]) : pow;
-
-  const lpMatch =
-    text.match(/Luck\s+Points\s*[:]?\s*(\d+)/i) ||
-    text.match(/\bLP\s*[:]?\s*(\d+)/i);
-  const lp = lpMatch ? Number(lpMatch[1]) : 2;
+  const ap = textNumber(
+    text,
+    [/Action\s+Points\s*[:]?\s*(\d+)/i],
+    Math.max(1, Math.min(5, Math.ceil((int + dex) / 12))),
+  );
+  const hp = textNumber(
+    text,
+    [/Hit\s+Points\s*[:]?\s*(\d+)/i, /\bHP\s*[:]?\s*(\d+)/i],
+    Math.ceil((con + siz) / 5) * 5,
+  );
+  const mp = textNumber(
+    text,
+    [/Magic\s+Points\s*[:]?\s*(\d+)/i, /\bMP\s*[:]?\s*(\d+)/i],
+    pow,
+  );
+  const lpValue = textNumberOptional(text, [
+    /Luck\s+Points\s*[:]?\s*(\d+)/i,
+    /\bLP\s*[:]?\s*(\d+)/i,
+  ]);
+  const lp = lpValue ?? 2;
 
   const secondaryDefences = extractMythrasTextSecondary(text);
 
   return {
     system: "mythras",
-    identity: { name, category: lpMatch ? "character" : "npc" },
+    identity: { name, category: lpValue !== undefined ? "character" : "npc" },
     vitals: [
       { id: "ap", label: "Action Points", current: ap, max: 5, min: 0 },
       { id: "hp", label: "Total Hit Points", current: hp, max: hp, min: 0 },
       { id: "mp", label: "Magic Points", current: mp, max: mp, min: 0 },
-      ...(lpMatch
+      ...(lpValue !== undefined
         ? [{ id: "lp", label: "Luck Points", current: lp, max: 10, min: 0 }]
         : []),
     ],
@@ -209,6 +209,25 @@ function parseMythrasText(
     traitsAndFeatures: [],
     rawSource: text,
   };
+}
+
+function textNumberOptional(
+  text: string,
+  patterns: RegExp[],
+): number | undefined {
+  for (const pattern of patterns) {
+    const match = text.match(pattern);
+    if (match) return Number(match[1]);
+  }
+  return undefined;
+}
+
+function textNumber(
+  text: string,
+  patterns: RegExp[],
+  fallback: number,
+): number {
+  return textNumberOptional(text, patterns) ?? fallback;
 }
 
 function extractMythrasTextSecondary(
@@ -453,54 +472,56 @@ function extractTextDefencesAndVitals(text: string) {
   };
 }
 
-// fallow-ignore-next-line complexity
 function extractTextAttributes(
   text: string,
   system: StatBlockSystem,
 ): StatBlockIR["attributes"] {
-  const attributes: StatBlockIR["attributes"] = {};
   const isGurps =
     system === "gurps" ||
     /\b(ST\s*[:[]?\s*\d+|DX\s*[:[]?\s*\d+|Basic Speed)\b/i.test(text);
+  return isGurps
+    ? extractGurpsAttributes(text)
+    : extractStandardAttributes(text);
+}
 
-  if (isGurps) {
-    const gurpsAttrs = [
-      { key: "st", label: "ST" },
-      { key: "dx", label: "DX" },
-      { key: "iq", label: "IQ" },
-      { key: "ht", label: "HT" },
-    ];
-    for (const { key, label } of gurpsAttrs) {
-      const match = text.match(
-        new RegExp(`\\b${label}\\s*[:[]?\\s*(\\d+)`, "i"),
-      );
-      if (match)
-        attributes[key] = { label, value: Number(match[1]), modifier: 0 };
-    }
-  } else {
-    const attrNames = [
-      { key: "str", label: "STR" },
-      { key: "dex", label: "DEX" },
-      { key: "con", label: "CON" },
-      { key: "int", label: "INT" },
-      { key: "wis", label: "WIS" },
-      { key: "cha", label: "CHA" },
-    ];
+function extractGurpsAttributes(text: string): StatBlockIR["attributes"] {
+  const attributes: StatBlockIR["attributes"] = {};
+  const fields = [
+    { key: "st", label: "ST" },
+    { key: "dx", label: "DX" },
+    { key: "iq", label: "IQ" },
+    { key: "ht", label: "HT" },
+  ];
+  for (const { key, label } of fields) {
+    const match = text.match(new RegExp(`\\b${label}\\s*[:[]?\\s*(\\d+)`, "i"));
+    if (match)
+      attributes[key] = { label, value: Number(match[1]), modifier: 0 };
+  }
+  return attributes;
+}
 
-    for (const { key, label } of attrNames) {
-      const regex = new RegExp(
+function extractStandardAttributes(text: string): StatBlockIR["attributes"] {
+  const attributes: StatBlockIR["attributes"] = {};
+  const fields = [
+    { key: "str", label: "STR" },
+    { key: "dex", label: "DEX" },
+    { key: "con", label: "CON" },
+    { key: "int", label: "INT" },
+    { key: "wis", label: "WIS" },
+    { key: "cha", label: "CHA" },
+  ];
+  for (const { key, label } of fields) {
+    const match = text.match(
+      new RegExp(
         `\\b${label}\\s*[:]?\\s*(\\d+)(?:\\s*\\(([+-]?\\d+)\\))?`,
         "i",
-      );
-      const match = text.match(regex);
-      if (match) {
-        const val = Number(match[1]);
-        const mod = match[2] ? Number(match[2]) : Math.floor((val - 10) / 2);
-        attributes[key] = { label, value: val, modifier: mod };
-      } else {
-        attributes[key] = { label, value: 10, modifier: 0 };
-      }
-    }
+      ),
+    );
+    const value = match ? Number(match[1]) : 10;
+    const modifier = match?.[2]
+      ? Number(match[2])
+      : Math.floor((value - 10) / 2);
+    attributes[key] = { label, value, modifier };
   }
   return attributes;
 }

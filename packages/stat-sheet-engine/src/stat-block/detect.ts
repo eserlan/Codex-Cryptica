@@ -19,27 +19,23 @@ function isPathbuilderObject(obj: Record<string, unknown>): boolean {
   return "build" in obj && typeof obj.build === "object" && obj.build !== null;
 }
 
-// fallow-ignore-next-line complexity
 function isFoundryActor(obj: Record<string, unknown>): StatBlockSystem | null {
-  if (
-    !("system" in obj) ||
-    typeof obj.system !== "object" ||
-    obj.system === null
-  ) {
-    return null;
-  }
-  const sys = obj.system as Record<string, unknown>;
-  if (
-    !("attributes" in sys) ||
-    typeof sys.attributes !== "object" ||
-    sys.attributes === null
-  ) {
-    return null;
-  }
-  const attrs = sys.attributes as Record<string, unknown>;
-  if ("perception" in attrs && "ac" in attrs && "hp" in attrs) return "pf2e";
-  if ("hp" in attrs && "ac" in attrs) return "dnd5e";
+  const system = asRecord(obj.system);
+  const attrs = asRecord(system?.attributes);
+  if (!attrs) return null;
+  if (hasKeys(attrs, ["perception", "ac", "hp"])) return "pf2e";
+  if (hasKeys(attrs, ["hp", "ac"])) return "dnd5e";
   return null;
+}
+
+function asRecord(value: unknown): Record<string, unknown> | null {
+  return typeof value === "object" && value !== null
+    ? (value as Record<string, unknown>)
+    : null;
+}
+
+function hasKeys(record: Record<string, unknown>, keys: string[]): boolean {
+  return keys.every((key) => key in record);
 }
 
 function isMythrasObject(obj: Record<string, unknown>): boolean {
@@ -67,17 +63,16 @@ function isGurpsObject(obj: Record<string, unknown>): boolean {
   return false;
 }
 
-// fallow-ignore-next-line complexity
 function isDnd5eObject(obj: Record<string, unknown>): StatBlockSystem | null {
-  const hasStr = "str" in obj || "strength" in obj;
-  const hasDex = "dex" in obj || "dexterity" in obj;
-  const hasCon = "con" in obj || "constitution" in obj;
-  const hasHp = "hp" in obj || "hit_points" in obj;
-
-  if (hasStr && hasDex && hasCon && hasHp) {
-    return "luck" in obj || "doom" in obj ? "tales-of-the-valiant" : "dnd5e";
-  }
-  return null;
+  const required = [
+    ["str", "strength"],
+    ["dex", "dexterity"],
+    ["con", "constitution"],
+    ["hp", "hit_points"],
+  ];
+  if (!required.every((aliases) => aliases.some((key) => key in obj)))
+    return null;
+  return "luck" in obj || "doom" in obj ? "tales-of-the-valiant" : "dnd5e";
 }
 
 function detectFromObject(obj: Record<string, unknown>): StatBlockSystem {

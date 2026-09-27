@@ -98,43 +98,47 @@ function extractVtmSecondary(
   return secondary;
 }
 
-// fallow-ignore-next-line complexity
 function extractVtmDisciplines(
   input: Record<string, unknown>,
 ): StatBlockIR["traitsAndFeatures"] {
-  const traits: StatBlockIR["traitsAndFeatures"] = [];
   const rawDisc = input.disciplines;
+  if (Array.isArray(rawDisc)) return rawDisc.flatMap(parseDiscipline);
+  if (typeof rawDisc !== "object" || rawDisc === null) return [];
+  return Object.entries(rawDisc).map(([name, dots]) => ({
+    name: `${name} ${dots}`,
+    text: "",
+    category: "discipline" as const,
+  }));
+}
 
-  if (Array.isArray(rawDisc)) {
-    for (const d of rawDisc) {
-      if (typeof d === "object" && d !== null) {
-        const dName = String(d.name || "Discipline");
-        const dots =
-          d.dots !== undefined || d.level !== undefined
-            ? ` ${d.dots ?? d.level}`
-            : "";
-        traits.push({
-          name: `${dName}${dots}`,
-          text: String(d.powers || d.text || d.description || ""),
-          category: "discipline",
-        });
-      } else if (typeof d === "string") {
-        traits.push({
-          name: d,
-          text: "",
-          category: "discipline",
-        });
-      }
-    }
-  } else if (typeof rawDisc === "object" && rawDisc !== null) {
-    for (const [discName, dots] of Object.entries(rawDisc)) {
-      traits.push({
-        name: `${discName} ${dots}`,
-        text: "",
-        category: "discipline",
-      });
-    }
+function parseDiscipline(value: unknown): StatBlockIR["traitsAndFeatures"] {
+  if (typeof value === "string") {
+    return [{ name: value, text: "", category: "discipline" }];
   }
+  if (typeof value !== "object" || value === null) return [];
+  const discipline = value as Record<string, unknown>;
+  const dots = discipline.dots ?? discipline.level;
+  return [
+    {
+      name: `${stringOr(discipline.name, "Discipline")}${suffix(dots)}`,
+      text: firstString([
+        discipline.powers,
+        discipline.text,
+        discipline.description,
+      ]),
+      category: "discipline",
+    },
+  ];
+}
 
-  return traits;
+function stringOr(value: unknown, fallback: string): string {
+  return String(value || fallback);
+}
+
+function suffix(value: unknown): string {
+  return value === undefined ? "" : ` ${value}`;
+}
+
+function firstString(values: unknown[]): string {
+  return String(values.find(Boolean) || "");
 }

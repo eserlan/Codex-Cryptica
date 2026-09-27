@@ -36,123 +36,173 @@ export function parsePf2eJson(input: Record<string, unknown>): StatBlockIR {
   };
 }
 
-// fallow-ignore-next-line complexity
 function extractPf2eIdentity(
   input: Record<string, unknown>,
   pb: Record<string, unknown> | null,
   fvtt: Record<string, unknown> | null,
 ): StatBlockIR["identity"] {
-  let name = "Unnamed Pathfinder Hero";
-  let ancestryOrType: string | undefined;
-  let classOrRole: string | undefined;
-  let levelOrCr: string | undefined;
-
-  if (pb) {
-    const char = (pb.character as Record<string, unknown>) || pb;
-    if (char.name) name = String(char.name);
-    if (char.ancestry) ancestryOrType = String(char.ancestry);
-    if (char.class) classOrRole = String(char.class);
-    if (char.level !== undefined) levelOrCr = String(char.level);
-  } else if (fvtt) {
-    if (input.name) name = String(input.name);
-    const details = fvtt.details as Record<string, unknown> | undefined;
-    if (details) {
-      if (details.ancestry && typeof details.ancestry === "object") {
-        ancestryOrType = String((details.ancestry as any).name || "");
-      }
-      if (details.class && typeof details.class === "object") {
-        classOrRole = String((details.class as any).name || "");
-      }
-      if (details.level && typeof details.level === "object") {
-        levelOrCr = String((details.level as any).value ?? "");
-      }
-    }
-  } else {
-    name = String(input.name || "Unnamed Pathfinder Hero");
-    if (input.ancestry || input.heritage)
-      ancestryOrType = String(input.ancestry || input.heritage);
-    if (input.class || input.role)
-      classOrRole = String(input.class || input.role);
-    if (input.level !== undefined) levelOrCr = String(input.level);
-  }
+  const identity = pb
+    ? pathbuilderIdentity(pb)
+    : fvtt
+      ? foundryIdentity(input, fvtt)
+      : plainIdentity(input);
 
   return {
-    name,
+    name: identity.name ?? "Unnamed Pathfinder Hero",
     category: input.category === "npc" ? "npc" : "character",
-    ancestryOrType,
-    classOrRole,
-    levelOrCr,
+    ancestryOrType: identity.ancestryOrType,
+    classOrRole: identity.classOrRole,
+    levelOrCr: identity.levelOrCr,
   };
 }
 
-// fallow-ignore-next-line complexity
+type PartialIdentity = Omit<
+  Pick<
+    StatBlockIR["identity"],
+    "name" | "ancestryOrType" | "classOrRole" | "levelOrCr"
+  >,
+  "name"
+> & { name?: string };
+
+function pathbuilderIdentity(pb: Record<string, unknown>): PartialIdentity {
+  const char = (pb.character as Record<string, unknown>) || pb;
+  return {
+    name: char.name ? String(char.name) : undefined,
+    ancestryOrType: char.ancestry ? String(char.ancestry) : undefined,
+    classOrRole: char.class ? String(char.class) : undefined,
+    levelOrCr: char.level !== undefined ? String(char.level) : undefined,
+  };
+}
+
+function foundryIdentity(
+  input: Record<string, unknown>,
+  fvtt: Record<string, unknown>,
+): PartialIdentity {
+  const details = fvtt.details as Record<string, unknown> | undefined;
+  return {
+    name: input.name ? String(input.name) : undefined,
+    ancestryOrType: foundryDetailName(details?.ancestry),
+    classOrRole: foundryDetailName(details?.class),
+    levelOrCr: foundryDetailValue(details?.level),
+  };
+}
+
+function foundryDetailName(value: unknown): string | undefined {
+  if (typeof value !== "object" || value === null) return undefined;
+  const name = (value as Record<string, unknown>).name;
+  return name ? String(name) : "";
+}
+
+function foundryDetailValue(value: unknown): string | undefined {
+  if (typeof value !== "object" || value === null) return undefined;
+  return String((value as Record<string, unknown>).value ?? "");
+}
+
+function plainIdentity(input: Record<string, unknown>): PartialIdentity {
+  const ancestry = input.ancestry || input.heritage;
+  const role = input.class || input.role;
+  return {
+    name: String(input.name || "Unnamed Pathfinder Hero"),
+    ancestryOrType: ancestry ? String(ancestry) : undefined,
+    classOrRole: role ? String(role) : undefined,
+    levelOrCr: input.level !== undefined ? String(input.level) : undefined,
+  };
+}
+
 function extractPf2eHpAc(
   input: Record<string, unknown>,
   pb: Record<string, unknown> | null,
   fvtt: Record<string, unknown> | null,
 ): { hp: number; ac: number } {
-  let hp = 10;
-  let ac = 10;
-
-  if (pb) {
-    const attrs = pb.attributes as Record<string, unknown> | undefined;
-    if (attrs?.hp !== undefined) hp = Number(attrs.hp);
-    else if (pb.hp !== undefined) hp = Number(pb.hp);
-
-    if (pb.ac !== undefined) {
-      ac =
-        typeof pb.ac === "object" && pb.ac !== null
-          ? Number((pb.ac as any).value ?? 10)
-          : Number(pb.ac);
-    }
-  } else if (fvtt) {
-    const attrs = fvtt.attributes as Record<string, unknown> | undefined;
-    if (attrs?.hp && typeof attrs.hp === "object") {
-      hp = Number((attrs.hp as any).value ?? (attrs.hp as any).max ?? 10);
-    }
-    if (attrs?.ac && typeof attrs.ac === "object") {
-      ac = Number((attrs.ac as any).value ?? 10);
-    }
-  } else {
-    hp = Number(input.hp ?? input.hit_points ?? 10);
-    ac = Number(input.ac ?? input.armor_class ?? 10);
-  }
-
-  return { hp, ac };
+  return pb ? pathbuilderHpAc(pb) : fvtt ? foundryHpAc(fvtt) : plainHpAc(input);
 }
 
-// fallow-ignore-next-line complexity
+function pathbuilderHpAc(pb: Record<string, unknown>): {
+  hp: number;
+  ac: number;
+} {
+  const attrs = pb.attributes as Record<string, unknown> | undefined;
+  const rawAc = pb.ac;
+  return {
+    hp: Number(attrs?.hp ?? pb.hp ?? 10),
+    ac: Number(readObjectValue(rawAc, 10)),
+  };
+}
+
+function foundryHpAc(fvtt: Record<string, unknown>): {
+  hp: number;
+  ac: number;
+} {
+  const attrs = fvtt.attributes as Record<string, unknown> | undefined;
+  const hp = readObjectValue(attrs?.hp, 10, "max");
+  return { hp: Number(hp), ac: Number(readObjectValue(attrs?.ac, 10)) };
+}
+
+function plainHpAc(input: Record<string, unknown>): { hp: number; ac: number } {
+  return {
+    hp: Number(input.hp ?? input.hit_points ?? 10),
+    ac: Number(input.ac ?? input.armor_class ?? 10),
+  };
+}
+
+function readObjectValue(
+  value: unknown,
+  fallback: number,
+  secondary?: string,
+): unknown {
+  if (typeof value !== "object" || value === null) return value ?? fallback;
+  const record = value as Record<string, unknown>;
+  return (
+    record.value ?? (secondary ? record[secondary] : undefined) ?? fallback
+  );
+}
+
 function extractPf2eAbilityValue(
   key: string,
   input: Record<string, unknown>,
   pb: Record<string, unknown> | null,
   fvtt: Record<string, unknown> | null,
 ): { value: number; mod: number } {
-  let rawVal: any;
-  if (pb) {
-    const abilities = (pb.abilities || pb.attributes) as
-      Record<string, unknown> | undefined;
-    rawVal = abilities?.[key];
-  } else if (fvtt) {
-    const abilities = fvtt.abilities as Record<string, unknown> | undefined;
-    const ab = abilities?.[key];
-    if (typeof ab === "object" && ab !== null) {
-      const val = Number((ab as any).value ?? 10);
-      const mod =
-        (ab as any).mod !== undefined
-          ? Number((ab as any).mod)
-          : Math.floor((val - 10) / 2);
-      return { value: val, mod };
+  if (fvtt) {
+    const rawAbility = foundryAbilityValue(fvtt, key);
+    if (typeof rawAbility === "object" && rawAbility !== null) {
+      return foundryAbility(rawAbility);
     }
-    rawVal = ab;
-  } else {
-    rawVal = input[key];
+    return abilityNumbers(rawAbility);
   }
+  const rawVal = pb ? pathbuilderAbility(pb, key) : input[key];
+  return abilityNumbers(rawVal);
+}
 
+function abilityNumbers(rawVal: unknown): { value: number; mod: number } {
   const val = Number(rawVal ?? 10);
   const mod = val > 9 ? Math.floor((val - 10) / 2) : val;
   const fullScore = val <= 9 && val >= -5 ? 10 + val * 2 : val;
   return { value: fullScore, mod };
+}
+
+function pathbuilderAbility(pb: Record<string, unknown>, key: string): unknown {
+  const abilities = (pb.abilities || pb.attributes) as
+    Record<string, unknown> | undefined;
+  return abilities?.[key];
+}
+
+function foundryAbilityValue(
+  fvtt: Record<string, unknown>,
+  key: string,
+): unknown {
+  const abilities = fvtt.abilities as Record<string, unknown> | undefined;
+  return abilities?.[key];
+}
+
+function foundryAbility(ability: object): { value: number; mod: number } {
+  const record = ability as Record<string, unknown>;
+  const value = Number(record.value ?? 10);
+  const mod =
+    record.mod !== undefined
+      ? Number(record.mod)
+      : Math.floor((value - 10) / 2);
+  return { value, mod };
 }
 
 function extractPf2eAttributes(
@@ -183,20 +233,17 @@ function extractPf2eSaves(
   fvtt: Record<string, unknown> | null,
   attrs: StatBlockIR["attributes"],
 ): Record<string, string | number> {
-  // fallow-ignore-next-line complexity
   const getSave = (key: string, alt: string, fallbackMod: number): number => {
-    let raw: any;
-    if (pb) {
-      const saves = pb.saves as Record<string, unknown> | undefined;
-      raw = saves?.[key] ?? saves?.[alt];
-    } else if (fvtt) {
-      const saves = fvtt.saves as Record<string, unknown> | undefined;
-      const s = saves?.[key] ?? saves?.[alt];
-      raw = typeof s === "object" && s !== null ? (s as any).value : s;
-    } else {
-      raw = input[key] ?? input[alt];
-    }
-    return raw !== undefined ? Number(raw) : fallbackMod;
+    const raw = pb
+      ? readSave(pb.saves, key, alt)
+      : fvtt
+        ? readSave(fvtt.saves, key, alt)
+        : (input[key] ?? input[alt]);
+    const value =
+      typeof raw === "object" && raw !== null
+        ? (raw as Record<string, unknown>).value
+        : raw;
+    return value !== undefined ? Number(value) : fallbackMod;
   };
 
   return {
@@ -204,6 +251,12 @@ function extractPf2eSaves(
     reflex: getSave("reflex", "ref", attrs.dex.modifier ?? 0),
     will: getSave("will", "willpower", attrs.wis.modifier ?? 0),
   };
+}
+
+function readSave(rawSaves: unknown, key: string, alias: string): unknown {
+  if (typeof rawSaves !== "object" || rawSaves === null) return undefined;
+  const saves = rawSaves as Record<string, unknown>;
+  return saves[key] ?? saves[alias];
 }
 
 function extractPf2ePerception(
@@ -233,7 +286,6 @@ function extractPf2ePerception(
   ];
 }
 
-// fallow-ignore-next-line complexity
 function extractPf2eActions(
   input: Record<string, unknown>,
   pb: Record<string, unknown> | null,
@@ -243,28 +295,38 @@ function extractPf2eActions(
     pb?.weapons || fvtt?.items || input.actions || input.weapons;
   if (!Array.isArray(rawWeapons)) return [];
 
-  const actions: StatBlockIR["actionsAndAttacks"] = [];
-  for (const w of rawWeapons) {
-    if (typeof w !== "object" || w === null) continue;
-    const wName = String(w.name || "Strike");
-    let atkBonus: number | undefined;
-    let dmg: string | undefined;
+  return rawWeapons.flatMap((weapon) =>
+    isRecord(weapon) ? [parsePf2eWeapon(weapon)] : [],
+  );
+}
 
-    if (w.bonus !== undefined) atkBonus = Number(w.bonus);
-    else if (w.attack_bonus !== undefined) atkBonus = Number(w.attack_bonus);
-    else if (w.system?.bonus?.value !== undefined)
-      atkBonus = Number(w.system.bonus.value);
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
+}
 
-    if (w.damage) dmg = String(w.damage);
-    else if (w.damage_dice) dmg = String(w.damage_dice);
+function parsePf2eWeapon(
+  weapon: Record<string, unknown>,
+): StatBlockIR["actionsAndAttacks"][number] {
+  const system = weapon.system as Record<string, unknown> | undefined;
+  const bonus = firstDefined(
+    weapon.bonus,
+    weapon.attack_bonus,
+    (system?.bonus as Record<string, unknown> | undefined)?.value,
+  );
+  const damage = firstTruthy(weapon.damage, weapon.damage_dice);
+  return {
+    name: String(weapon.name || "Strike"),
+    actionType: "action",
+    attackDice: bonus !== undefined ? `1d20+${Number(bonus)}` : undefined,
+    damageDice: damage === undefined ? undefined : String(damage),
+    description: String(weapon.description || ""),
+  };
+}
 
-    actions.push({
-      name: wName,
-      actionType: "action",
-      attackDice: atkBonus !== undefined ? `1d20+${atkBonus}` : undefined,
-      damageDice: dmg,
-      description: String(w.description || ""),
-    });
-  }
-  return actions;
+function firstDefined(...values: unknown[]): unknown {
+  return values.find((value) => value !== undefined);
+}
+
+function firstTruthy(...values: unknown[]): unknown {
+  return values.find(Boolean);
 }

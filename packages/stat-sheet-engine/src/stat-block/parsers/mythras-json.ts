@@ -52,28 +52,16 @@ function extractMythrasCharacteristics(
   return attributes;
 }
 
-// fallow-ignore-next-line complexity
 function extractMythrasVitals(
   input: Record<string, unknown>,
   category: "character" | "npc" | "creature",
   attributes: StatBlockIR["attributes"],
 ): StatBlockIR["vitals"] {
-  const intVal = Number(attributes.int.value);
-  const dexVal = Number(attributes.dex.value);
-  const conVal = Number(attributes.con.value);
-  const sizVal = Number(attributes.siz.value);
-  const powVal = Number(attributes.pow.value);
-
-  const defaultAp = Math.max(1, Math.min(5, Math.ceil((intVal + dexVal) / 12)));
-  const defaultHp = Math.ceil((conVal + sizVal) / 5) * 5;
-  const defaultMp = powVal;
-
-  const ap = Number(input.ap ?? input.action_points ?? defaultAp);
-  const hp = Number(input.hp ?? input.hit_points ?? defaultHp);
-  const mp = Number(input.mp ?? input.magic_points ?? defaultMp);
-  const lp = Number(
-    input.lp ?? input.luck_points ?? Math.max(1, Math.ceil(powVal / 6)),
-  );
+  const defaults = mythrasVitalDefaults(attributes);
+  const ap = readNumber(input, ["ap", "action_points"], defaults.ap);
+  const hp = readNumber(input, ["hp", "hit_points"], defaults.hp);
+  const mp = readNumber(input, ["mp", "magic_points"], defaults.mp);
+  const lp = readNumber(input, ["lp", "luck_points"], defaults.lp);
 
   const vitals: StatBlockIR["vitals"] = [
     { id: "ap", label: "Action Points", current: ap, max: 5, min: 0 },
@@ -92,6 +80,29 @@ function extractMythrasVitals(
   }
 
   return vitals;
+}
+
+function mythrasVitalDefaults(attributes: StatBlockIR["attributes"]) {
+  const int = Number(attributes.int.value);
+  const dex = Number(attributes.dex.value);
+  const con = Number(attributes.con.value);
+  const siz = Number(attributes.siz.value);
+  const pow = Number(attributes.pow.value);
+  return {
+    ap: Math.max(1, Math.min(5, Math.ceil((int + dex) / 12))),
+    hp: Math.ceil((con + siz) / 5) * 5,
+    mp: pow,
+    lp: Math.max(1, Math.ceil(pow / 6)),
+  };
+}
+
+function readNumber(
+  input: Record<string, unknown>,
+  keys: string[],
+  fallback: number,
+): number {
+  const key = keys.find((candidate) => input[candidate] !== undefined);
+  return Number(key ? input[key] : fallback);
 }
 
 const MYTHRAS_LOC_MAP: Record<string, string> = {
@@ -120,27 +131,10 @@ function matchLocationPrefix(name: string): string | null {
   return null;
 }
 
-// fallow-ignore-next-line complexity
 function extractMythrasHitLocations(
   input: Record<string, unknown>,
 ): Record<string, string | number> {
-  const secondaryDefences: Record<string, string | number> = {};
-
-  if (Array.isArray(input.hit_locations)) {
-    for (const loc of input.hit_locations) {
-      if (typeof loc !== "object" || loc === null) continue;
-      const locName = String(loc.location || loc.name || "").toLowerCase();
-      const prefix = matchLocationPrefix(locName);
-
-      if (prefix) {
-        if (loc.ap !== undefined)
-          secondaryDefences[`${prefix}_ap`] = Number(loc.ap);
-        if (loc.hp !== undefined)
-          secondaryDefences[`${prefix}_hp`] = Number(loc.hp);
-      }
-    }
-  }
-
+  const secondaryDefences = extractLocationDefences(input.hit_locations);
   const damageMod = input.damage_mod ?? input.damage_modifier;
   if (damageMod !== undefined) secondaryDefences.damage_mod = String(damageMod);
   const initiative = input.initiative ?? input.initiative_bonus;
@@ -152,50 +146,68 @@ function extractMythrasHitLocations(
   return secondaryDefences;
 }
 
-// fallow-ignore-next-line complexity
+function extractLocationDefences(
+  rawLocations: unknown,
+): Record<string, string | number> {
+  const defences: Record<string, string | number> = {};
+  if (!Array.isArray(rawLocations)) return defences;
+  for (const raw of rawLocations) {
+    if (typeof raw !== "object" || raw === null) continue;
+    const location = raw as Record<string, unknown>;
+    const name = String(location.location || location.name || "").toLowerCase();
+    const prefix = matchLocationPrefix(name);
+    if (prefix) addLocationValues(defences, prefix, location);
+  }
+  return defences;
+}
+
+function addLocationValues(
+  defences: Record<string, string | number>,
+  prefix: string,
+  location: Record<string, unknown>,
+): void {
+  if (location.ap !== undefined) defences[`${prefix}_ap`] = Number(location.ap);
+  if (location.hp !== undefined) defences[`${prefix}_hp`] = Number(location.hp);
+}
+
 function extractMythrasAttacks(
   input: Record<string, unknown>,
 ): StatBlockIR["actionsAndAttacks"] {
-  const actions: StatBlockIR["actionsAndAttacks"] = [];
   const rawAttacks = input.attacks || input.combat_styles || input.weapons;
-  if (!Array.isArray(rawAttacks)) return actions;
-
-  for (const atk of rawAttacks) {
-    if (typeof atk === "object" && atk !== null) {
-      actions.push({
-        name: String(atk.name || "Attack"),
-        actionType: "action",
-        attackDice: "1d100",
-        damageDice: atk.damage ? String(atk.damage) : undefined,
-        description: atk.description ? String(atk.description) : undefined,
-      });
-    } else if (typeof atk === "string") {
-      actions.push({
-        name: atk,
-        actionType: "action",
-        attackDice: "1d100",
-      });
-    }
-  }
-  return actions;
+  if (!Array.isArray(rawAttacks)) return [];
+  return rawAttacks.flatMap(parseMythrasAttack);
 }
 
-// fallow-ignore-next-line complexity
+function parseMythrasAttack(value: unknown): StatBlockIR["actionsAndAttacks"] {
+  if (typeof value === "string")
+    return [{ name: value, actionType: "action", attackDice: "1d100" }];
+  if (typeof value !== "object" || value === null) return [];
+  const attack = value as Record<string, unknown>;
+  return [
+    {
+      name: String(attack.name || "Attack"),
+      actionType: "action",
+      attackDice: "1d100",
+      damageDice: attack.damage ? String(attack.damage) : undefined,
+      description: attack.description ? String(attack.description) : undefined,
+    },
+  ];
+}
+
 function extractMythrasTraits(
   input: Record<string, unknown>,
 ): StatBlockIR["traitsAndFeatures"] {
-  const traits: StatBlockIR["traitsAndFeatures"] = [];
   const rawTraits = input.traits || input.abilities || input.passions;
-  if (!Array.isArray(rawTraits)) return traits;
-
-  for (const t of rawTraits) {
-    if (typeof t === "object" && t !== null) {
-      traits.push({
-        name: String(t.name || "Trait"),
-        text: String(t.text || t.description || ""),
-        category: "trait",
-      });
-    }
-  }
-  return traits;
+  if (!Array.isArray(rawTraits)) return [];
+  return rawTraits.flatMap((value) => {
+    if (typeof value !== "object" || value === null) return [];
+    const trait = value as Record<string, unknown>;
+    return [
+      {
+        name: String(trait.name || "Trait"),
+        text: String(trait.text || trait.description || ""),
+        category: "trait" as const,
+      },
+    ];
+  });
 }
