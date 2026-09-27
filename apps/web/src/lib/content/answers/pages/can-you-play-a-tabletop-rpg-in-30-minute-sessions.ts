@@ -2,7 +2,7 @@ import type { AnswerConfigInput } from "../schema";
 
 export const canYouPlayATabletopRpgIn30MinuteSessions: AnswerConfigInput = {
   slug: "can-you-play-a-tabletop-rpg-in-30-minute-sessions",
-  category: "session-prep",
+  category: "running-the-game",
   publishedAt: "2026-09-16",
   question: "Can you play a tabletop RPG in 30-minute sessions?",
   kind: "framework",

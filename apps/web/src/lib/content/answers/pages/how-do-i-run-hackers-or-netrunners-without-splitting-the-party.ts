@@ -3,7 +3,7 @@ import type { AnswerConfigInput } from "../schema";
 export const howDoIRunHackersOrNetrunnersWithoutSplittingTheParty: AnswerConfigInput =
   {
     slug: "how-do-i-run-hackers-or-netrunners-without-splitting-the-party",
-    category: "session-prep",
+    category: "running-the-game",
     labels: ["cyberpunk"],
     publishedAt: "2026-09-23",
     question: "How do I run hackers or netrunners without splitting the party?",

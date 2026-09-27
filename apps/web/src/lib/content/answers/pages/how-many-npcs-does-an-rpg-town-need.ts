@@ -2,7 +2,7 @@ import type { AnswerConfigInput } from "../schema";
 
 export const howManyNpcsDoesAnRpgTownNeed: AnswerConfigInput = {
   slug: "how-many-npcs-does-an-rpg-town-need",
-  category: "session-prep",
+  category: "adventure-design",
   publishedAt: "2026-09-07",
   question: "How many NPCs does an RPG town need?",
   kind: "framework",

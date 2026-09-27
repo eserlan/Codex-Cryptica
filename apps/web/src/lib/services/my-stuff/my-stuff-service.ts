@@ -20,6 +20,8 @@ export const MANAGEMENT_TOKENS_KEY = "codex_generator_share_management_tokens";
 export const CATEGORY_LABELS: Record<string, string> = {
   "getting-started": "Getting Started",
   "session-prep": "Session Prep",
+  "adventure-design": "Adventure Design",
+  "running-the-game": "Running at the Table",
   worldbuilding: "Worldbuilding",
   "campaign-notes": "Campaign Notes",
 };

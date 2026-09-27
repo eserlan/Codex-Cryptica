@@ -2,7 +2,7 @@ import type { AnswerConfigInput } from "../schema";
 
 export const howDoYouMakeATabletopRpgSessionMoreEngaging: AnswerConfigInput = {
   slug: "how-do-you-make-a-tabletop-rpg-session-more-engaging",
-  category: "session-prep",
+  category: "running-the-game",
   publishedAt: "2026-09-12",
   question: "How do you make a tabletop RPG session more engaging?",
   kind: "framework",

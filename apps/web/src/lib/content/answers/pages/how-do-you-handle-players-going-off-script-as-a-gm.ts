@@ -2,7 +2,7 @@ import type { AnswerConfigInput } from "../schema";
 
 export const howDoYouHandlePlayersGoingOffScriptAsAGm: AnswerConfigInput = {
   slug: "how-do-you-handle-players-going-off-script-as-a-gm",
-  category: "session-prep",
+  category: "running-the-game",
   publishedAt: "2026-09-09",
   question: "How do you handle players going off script as a GM?",
   kind: "how-to",

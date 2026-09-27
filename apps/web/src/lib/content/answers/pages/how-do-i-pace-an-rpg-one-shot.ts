@@ -2,7 +2,7 @@ import type { AnswerConfigInput } from "../schema";
 
 export const howDoIPaceAnRpgOneShot: AnswerConfigInput = {
   slug: "how-do-i-pace-an-rpg-one-shot",
-  category: "session-prep",
+  category: "adventure-design",
   publishedAt: "2026-09-25",
   question: "How do I pace an RPG one-shot?",
   kind: "framework",

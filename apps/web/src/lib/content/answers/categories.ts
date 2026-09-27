@@ -22,23 +22,37 @@ export const CATEGORY_DEFINITIONS: AnswerCategoryDefinition[] = [
   },
   {
     id: "session-prep",
-    title: "Session Prep & Running Games",
+    title: "Session Prep & Planning",
     description:
-      "Prep volume, combat encounter balance, random tables, puzzle design, player engagement, and mystery structure.",
+      "Prep volume, pacing, weekly prep checklists, expanding campaign premises, and levelling systems.",
+    icon: "icon-[lucide--clipboard-list]",
+  },
+  {
+    id: "adventure-design",
+    title: "Adventure & Encounter Design",
+    description:
+      "One-shot structures, heist design, mystery clues, puzzle hints without spoilers, combat balance, and boss encounters.",
     icon: "icon-[lucide--swords]",
+  },
+  {
+    id: "running-the-game",
+    title: "Running at the Table",
+    description:
+      "Table dynamics, player engagement, specialist spotlights, NPC improvisation, and pacing live sessions.",
+    icon: "icon-[lucide--dices]",
   },
   {
     id: "worldbuilding",
     title: "Worldbuilding & Setting Design",
     description:
-      "Factions, pantheons, fictional religions, settlement layouts, and point crawls.",
+      "Factions, pantheons, fictional religions, settlement layouts, star systems, and point crawls.",
     icon: "icon-[lucide--globe]",
   },
   {
     id: "campaign-notes",
     title: "Notes & Campaign Management",
     description:
-      "Note structures, NPC relationship mapping, and evaluating campaign managers.",
+      "Note structures, NPC relationship mapping, timelines, faction turn tracking, and campaign managers.",
     icon: "icon-[lucide--book-open]",
   },
 ];

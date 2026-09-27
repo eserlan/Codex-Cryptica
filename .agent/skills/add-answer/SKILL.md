@@ -118,7 +118,7 @@ import type { AnswerConfigInput } from "../schema";
 
 export const <camelCaseName>: AnswerConfigInput = {
   slug: "<kebab-case-slug>",
-  category: "session-prep", // "getting-started" | "session-prep" | "worldbuilding" | "campaign-notes"
+  category: "session-prep", // "getting-started" | "session-prep" | "adventure-design" | "running-the-game" | "worldbuilding" | "campaign-notes"
   question: "<Verbatim Question Ending in ?>",
   kind: "framework", // "definition" | "how-to" | "framework" | "comparison"
   shortAnswer:

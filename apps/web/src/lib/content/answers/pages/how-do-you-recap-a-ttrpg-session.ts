@@ -2,7 +2,7 @@ import type { AnswerConfigInput } from "../schema";
 
 export const howDoYouRecapATtrpgSession: AnswerConfigInput = {
   slug: "how-do-you-recap-a-ttrpg-session",
-  category: "session-prep",
+  category: "running-the-game",
   publishedAt: "2026-09-12",
   question: "How do you recap a TTRPG session?",
   kind: "framework",
