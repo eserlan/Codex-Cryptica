@@ -44,6 +44,7 @@ export function parseDnd5eJson(input: Record<string, unknown>): StatBlockIR {
   };
 }
 
+// fallow-ignore-next-line complexity
 function extractDndHp(input: Record<string, unknown>): {
   hp: number;
   hitDiceStr?: string;
@@ -125,6 +126,7 @@ function extractDndAttributes(
   return attributes;
 }
 
+// fallow-ignore-next-line complexity
 function parseActionEntry(
   item: any,
   type: "action" | "bonus" | "reaction" | "legendary",

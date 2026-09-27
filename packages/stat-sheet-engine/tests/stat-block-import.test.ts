@@ -564,25 +564,26 @@ Disciplines: Presence 4, Celerity 3, Auspex 2
       expect(result.targetTemplateId).toBe("builtin-pathfinder-character");
 
       const fieldMap = new Map(result.fields.map((f) => [f.id, f]));
-      expect(fieldMap.get("hp")?.value).toBe(24);
-      expect(fieldMap.get("ac")?.value).toBe(17);
-      expect(fieldMap.get("str_score")?.value).toBe(18);
+      const getField = (id: string) => fieldMap.get(id)!;
+      expect(getField("hp").value).toBe(24);
+      expect(getField("ac").value).toBe(17);
+      expect(getField("str_score").value).toBe(18);
 
-      const fortSave = fieldMap.get("fort");
-      expect(fortSave?.type).toBe("dice");
-      expect(fortSave?.formula).toBe("1d20+8");
-      expect(fortSave?.modifierSource).toBe("con_score");
+      const fortSave = getField("fort");
+      expect(fortSave.type).toBe("dice");
+      expect(fortSave.formula).toBe("1d20+8");
+      expect(fortSave.modifierSource).toBe("con_score");
 
-      const reflexSave = fieldMap.get("reflex");
-      expect(reflexSave?.formula).toBe("1d20+5");
-      expect(reflexSave?.modifierSource).toBe("dex_score");
+      const reflexSave = getField("reflex");
+      expect(reflexSave.formula).toBe("1d20+5");
+      expect(reflexSave.modifierSource).toBe("dex_score");
 
-      const willSave = fieldMap.get("will");
-      expect(willSave?.formula).toBe("1d20+4");
-      expect(willSave?.modifierSource).toBe("wis_score");
+      const willSave = getField("will");
+      expect(willSave.formula).toBe("1d20+4");
+      expect(willSave.modifierSource).toBe("wis_score");
 
-      const atk = fieldMap.get("atk");
-      expect(atk?.formula).toBe("1d20+9");
+      const atk = getField("atk");
+      expect(atk.formula).toBe("1d20+9");
     });
 
     it("maps Mythras character IR to builtin-mythras-character", () => {

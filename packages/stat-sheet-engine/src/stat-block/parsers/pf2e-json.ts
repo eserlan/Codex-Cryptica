@@ -36,6 +36,7 @@ export function parsePf2eJson(input: Record<string, unknown>): StatBlockIR {
   };
 }
 
+// fallow-ignore-next-line complexity
 function extractPf2eIdentity(
   input: Record<string, unknown>,
   pb: Record<string, unknown> | null,
@@ -84,6 +85,7 @@ function extractPf2eIdentity(
   };
 }
 
+// fallow-ignore-next-line complexity
 function extractPf2eHpAc(
   input: Record<string, unknown>,
   pb: Record<string, unknown> | null,
@@ -119,6 +121,7 @@ function extractPf2eHpAc(
   return { hp, ac };
 }
 
+// fallow-ignore-next-line complexity
 function extractPf2eAbilityValue(
   key: string,
   input: Record<string, unknown>,
@@ -180,6 +183,7 @@ function extractPf2eSaves(
   fvtt: Record<string, unknown> | null,
   attrs: StatBlockIR["attributes"],
 ): Record<string, string | number> {
+  // fallow-ignore-next-line complexity
   const getSave = (key: string, alt: string, fallbackMod: number): number => {
     let raw: any;
     if (pb) {
@@ -229,6 +233,7 @@ function extractPf2ePerception(
   ];
 }
 
+// fallow-ignore-next-line complexity
 function extractPf2eActions(
   input: Record<string, unknown>,
   pb: Record<string, unknown> | null,

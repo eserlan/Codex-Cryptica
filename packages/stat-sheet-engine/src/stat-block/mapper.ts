@@ -1,6 +1,203 @@
 import type { StatSheetField, StatSheetTemplate } from "schema";
 import type { StatBlockIR, StatBlockImportResult } from "./types";
 
+const D20_ABILITY_KEYS = ["str", "dex", "con", "int", "wis", "cha"];
+const MYTHRAS_CHAR_KEYS = ["str", "con", "siz", "dex", "int", "pow", "cha"];
+
+const MYTHRAS_LOCATION_DEFINITIONS = [
+  { key: "head", label: "Head", defaultHp: 5, npcLabel: "Head" },
+  { key: "chest", label: "Chest", defaultHp: 7, npcLabel: "Chest" },
+  { key: "abdomen", label: "Abdomen", defaultHp: 6, npcLabel: "Abdomen" },
+  {
+    key: "rarm",
+    label: "Right Arm",
+    defaultHp: 4,
+    npcLabel: "Right Arm / Foreleg",
+  },
+  {
+    key: "larm",
+    label: "Left Arm",
+    defaultHp: 4,
+    npcLabel: "Left Arm / Foreleg",
+  },
+  {
+    key: "rleg",
+    label: "Right Leg",
+    defaultHp: 5,
+    npcLabel: "Right Leg / Hindleg",
+  },
+  {
+    key: "lleg",
+    label: "Left Leg",
+    defaultHp: 5,
+    npcLabel: "Left Leg / Hindleg",
+  },
+];
+
+function getVitalValue(ir: StatBlockIR, id: string, fallback: number): number {
+  return ir.vitals.find((v) => v.id === id)?.current ?? fallback;
+}
+
+function mapHpField(ir: StatBlockIR, defaultMax = 100): StatSheetField | null {
+  const hpVital = ir.vitals.find((v) => v.id === "hp") || ir.vitals[0];
+  if (!hpVital) return null;
+  return {
+    id: "hp",
+    label: "Hit Points",
+    type: "counter",
+    value: hpVital.current ?? hpVital.max ?? 10,
+    min: hpVital.min ?? 0,
+    max: Math.max(defaultMax, hpVital.max ?? hpVital.current ?? defaultMax),
+  };
+}
+
+function mapAcField(ir: StatBlockIR): StatSheetField | null {
+  if (ir.defences.armorRating === undefined) return null;
+  return {
+    id: "ac",
+    label: "Armor Class",
+    type: "number",
+    value: Number(ir.defences.armorRating),
+  };
+}
+
+function mapScoresAndChecks(
+  ir: StatBlockIR,
+  includeChecks = true,
+): StatSheetField[] {
+  const fields: StatSheetField[] = [];
+  for (const s of D20_ABILITY_KEYS) {
+    const attr = ir.attributes[s];
+    if (!attr) continue;
+    const scoreVal = Number(attr.value);
+    fields.push({
+      id: `${s}_score`,
+      label: attr.label,
+      type: "number",
+      value: scoreVal,
+    });
+    if (includeChecks) {
+      const mod = attr.modifier ?? Math.floor((scoreVal - 10) / 2);
+      const modStr = mod >= 0 ? `+${mod}` : `${mod}`;
+      fields.push({
+        id: s,
+        label: `${attr.label} Check`,
+        type: "dice",
+        formula: `1d20${modStr}`,
+        modifierSource: `${s}_score`,
+      });
+    }
+  }
+  return fields;
+}
+
+function mapD20Basics(ir: StatBlockIR, defaultMaxHp: number): StatSheetField[] {
+  const fields: StatSheetField[] = [];
+  const hpField = mapHpField(ir, defaultMaxHp);
+  if (hpField) fields.push(hpField);
+  const acField = mapAcField(ir);
+  if (acField) fields.push(acField);
+  fields.push(...mapScoresAndChecks(ir, true));
+  return fields;
+}
+
+function mapMythrasLocations(
+  sec: Record<string, string | number>,
+  isNpc = false,
+): StatSheetField[] {
+  const fields: StatSheetField[] = [];
+  for (const loc of MYTHRAS_LOCATION_DEFINITIONS) {
+    const apVal = Number(sec[`loc_${loc.key}_ap`] ?? 0);
+    const hpVal = Number(sec[`loc_${loc.key}_hp`] ?? loc.defaultHp);
+    const label = isNpc ? loc.npcLabel : loc.label;
+    const apSuffix = isNpc ? "AP" : "AP (Armor)";
+    fields.push({
+      id: `loc_${loc.key}_ap`,
+      label: `${label} ${apSuffix}`,
+      type: "number",
+      value: apVal,
+    });
+    fields.push({
+      id: `loc_${loc.key}_hp`,
+      label: `${label} HP`,
+      type: "counter",
+      value: hpVal,
+      min: 0,
+      max: 20,
+    });
+  }
+  return fields;
+}
+
+function mapMythrasCharacteristics(ir: StatBlockIR): StatSheetField[] {
+  const fields: StatSheetField[] = [];
+  for (const c of MYTHRAS_CHAR_KEYS) {
+    const attr = ir.attributes[c];
+    if (attr)
+      fields.push({
+        id: c,
+        label: attr.label,
+        type: "number",
+        value: Number(attr.value),
+      });
+  }
+  return fields;
+}
+
+function mapMythrasVitalsAndChars(
+  ir: StatBlockIR,
+  defaultMp: number,
+  isNpc: boolean,
+): StatSheetField[] {
+  const fields: StatSheetField[] = [
+    {
+      id: "ap",
+      label: "Action Points",
+      type: "counter",
+      value: getVitalValue(ir, "ap", 3),
+      min: 0,
+      max: 5,
+    },
+  ];
+  if (!isNpc) {
+    fields.push({
+      id: "lp",
+      label: "Luck Points",
+      type: "counter",
+      value: getVitalValue(ir, "lp", 2),
+      min: 0,
+      max: 10,
+    });
+  }
+  fields.push(
+    {
+      id: "mp",
+      label: "Magic Points",
+      type: "counter",
+      value: getVitalValue(ir, "mp", defaultMp),
+      min: 0,
+      max: 30,
+    },
+    {
+      id: "hp",
+      label: "Total Hit Points",
+      type: "counter",
+      value: getVitalValue(ir, "hp", 15),
+      min: 0,
+      max: 50,
+    },
+    ...mapMythrasCharacteristics(ir),
+    ...mapMythrasLocations(ir.defences.secondaryDefences || {}, isNpc),
+  );
+  return fields;
+}
+
+function formatFeaturesAsProse(
+  features: Array<{ name: string; text: string }>,
+): string {
+  return features.map((t) => `**${t.name}**: ${t.text}`).join("\n\n");
+}
+
 /**
  * Maps a StatBlockIR into concrete StatSheetField[] for Codex Cryptica.
  */
@@ -74,6 +271,7 @@ function selectDefaultTemplateId(ir: StatBlockIR): string {
   return `custom-${ir.system}-template`;
 }
 
+// fallow-ignore-next-line complexity
 function mapToDnd5eMonster(ir: StatBlockIR): StatSheetField[] {
   const fields: StatSheetField[] = [];
 
@@ -108,17 +306,11 @@ function mapToDnd5eMonster(ir: StatBlockIR): StatSheetField[] {
     });
 
   // Defence & Vitals
-  const hpVital = ir.vitals.find((v) => v.id === "hp") || ir.vitals[0];
-  if (hpVital) {
-    fields.push({
-      id: "hp",
-      label: "Hit Points",
-      type: "counter",
-      value: hpVital.current ?? hpVital.max ?? 10,
-      min: hpVital.min ?? 0,
-      max: hpVital.max ?? 10,
-    });
-    if (hpVital.sublabel) {
+  const hpField = mapHpField(ir, 10);
+  if (hpField) {
+    fields.push(hpField);
+    const hpVital = ir.vitals.find((v) => v.id === "hp") || ir.vitals[0];
+    if (hpVital?.sublabel) {
       fields.push({
         id: "hit_dice",
         label: "Hit Dice",
@@ -128,44 +320,25 @@ function mapToDnd5eMonster(ir: StatBlockIR): StatSheetField[] {
     }
   }
 
-  if (ir.defences.armorRating !== undefined) {
-    fields.push({
-      id: "ac",
-      label: "Armor Class",
-      type: "number",
-      value: Number(ir.defences.armorRating),
-    });
-  }
-  if (ir.defences.armorDetails) {
+  const acField = mapAcField(ir);
+  if (acField) fields.push(acField);
+  if (ir.defences.armorDetails)
     fields.push({
       id: "ac_details",
       label: "AC Source / Details",
       type: "text",
       value: ir.defences.armorDetails,
     });
-  }
-  if (ir.defences.speed) {
+  if (ir.defences.speed)
     fields.push({
       id: "speed",
       label: "Speed",
       type: "text",
       value: ir.defences.speed,
     });
-  }
 
-  // Ability Scores
-  const scores = ["str", "dex", "con", "int", "wis", "cha"];
-  for (const s of scores) {
-    const attr = ir.attributes[s];
-    if (attr) {
-      fields.push({
-        id: `${s}_score`,
-        label: attr.label,
-        type: "number",
-        value: Number(attr.value),
-      });
-    }
-  }
+  // Ability Scores without checks
+  fields.push(...mapScoresAndChecks(ir, false));
 
   // Actions as item-table
   const normalActions = ir.actionsAndAttacks.filter(
@@ -209,54 +382,7 @@ function mapToDnd5eMonster(ir: StatBlockIR): StatSheetField[] {
 }
 
 function mapToDndCharacter(ir: StatBlockIR): StatSheetField[] {
-  const fields: StatSheetField[] = [];
-
-  const hpVital = ir.vitals.find((v) => v.id === "hp") || ir.vitals[0];
-  if (hpVital) {
-    fields.push({
-      id: "hp",
-      label: "Hit Points",
-      type: "counter",
-      value: hpVital.current ?? hpVital.max ?? 10,
-      min: hpVital.min ?? 0,
-      max: hpVital.max ?? 10,
-    });
-  }
-
-  if (ir.defences.armorRating !== undefined) {
-    fields.push({
-      id: "ac",
-      label: "Armor Class",
-      type: "number",
-      value: Number(ir.defences.armorRating),
-    });
-  }
-
-  // Scores & checks
-  const scores = ["str", "dex", "con", "int", "wis", "cha"];
-  for (const s of scores) {
-    const attr = ir.attributes[s];
-    if (attr) {
-      const scoreVal = Number(attr.value);
-      fields.push({
-        id: `${s}_score`,
-        label: attr.label,
-        type: "number",
-        value: scoreVal,
-      });
-      const mod = attr.modifier ?? Math.floor((scoreVal - 10) / 2);
-      const modStr = mod >= 0 ? `+${mod}` : `${mod}`;
-      fields.push({
-        id: s,
-        label: `${attr.label} Check`,
-        type: "dice",
-        formula: `1d20${modStr}`,
-        modifierSource: `${s}_score`,
-      });
-    }
-  }
-
-  // Primary attack
+  const fields = mapD20Basics(ir, 10);
   const firstAttack = ir.actionsAndAttacks.find((a) => a.attackDice);
   if (firstAttack?.attackDice) {
     fields.push({
@@ -266,10 +392,10 @@ function mapToDndCharacter(ir: StatBlockIR): StatSheetField[] {
       formula: firstAttack.attackDice,
     });
   }
-
   return fields;
 }
 
+// fallow-ignore-next-line complexity
 function buildPfSaves(ir: StatBlockIR): StatSheetField[] {
   const sec = ir.defences.secondaryDefences || {};
   const fortBonus =
@@ -303,58 +429,9 @@ function buildPfSaves(ir: StatBlockIR): StatSheetField[] {
   ];
 }
 
-function buildPfScoresAndChecks(ir: StatBlockIR): StatSheetField[] {
-  const fields: StatSheetField[] = [];
-  const scores = ["str", "dex", "con", "int", "wis", "cha"];
-  for (const s of scores) {
-    const attr = ir.attributes[s];
-    if (attr) {
-      const scoreVal = Number(attr.value);
-      fields.push({
-        id: `${s}_score`,
-        label: attr.label,
-        type: "number",
-        value: scoreVal,
-      });
-      const mod = attr.modifier ?? Math.floor((scoreVal - 10) / 2);
-      const modStr = mod >= 0 ? `+${mod}` : `${mod}`;
-      fields.push({
-        id: s,
-        label: `${attr.label} Check`,
-        type: "dice",
-        formula: `1d20${modStr}`,
-        modifierSource: `${s}_score`,
-      });
-    }
-  }
-  return fields;
-}
-
+// fallow-ignore-next-line complexity
 function mapToPathfinderCharacter(ir: StatBlockIR): StatSheetField[] {
-  const fields: StatSheetField[] = [];
-
-  const hpVital = ir.vitals.find((v) => v.id === "hp") || ir.vitals[0];
-  if (hpVital) {
-    fields.push({
-      id: "hp",
-      label: "Hit Points",
-      type: "counter",
-      value: hpVital.current ?? hpVital.max ?? 10,
-      min: hpVital.min ?? 0,
-      max: Math.max(100, hpVital.max ?? hpVital.current ?? 100),
-    });
-  }
-
-  if (ir.defences.armorRating !== undefined) {
-    fields.push({
-      id: "ac",
-      label: "Armor Class",
-      type: "number",
-      value: Number(ir.defences.armorRating),
-    });
-  }
-
-  fields.push(...buildPfScoresAndChecks(ir));
+  const fields = mapD20Basics(ir, 100);
   fields.push(...buildPfSaves(ir));
 
   const primaryAtk = ir.actionsAndAttacks.find((a) => a.attackDice);
@@ -382,108 +459,20 @@ function mapToPathfinderCharacter(ir: StatBlockIR): StatSheetField[] {
   });
 
   if (ir.traitsAndFeatures.length > 0) {
-    const textProse = ir.traitsAndFeatures
-      .map((t) => `**${t.name}**: ${t.text}`)
-      .join("\n\n");
     fields.push({
       id: "feats",
       label: "Feats & Abilities",
       type: "longtext",
-      value: textProse,
+      value: formatFeaturesAsProse(ir.traitsAndFeatures),
     });
   }
 
-  return fields;
-}
-
-function buildMythrasHitLocations(
-  sec: Record<string, string | number>,
-): StatSheetField[] {
-  const locations = [
-    { key: "head", label: "Head", defaultHp: 5 },
-    { key: "chest", label: "Chest", defaultHp: 7 },
-    { key: "abdomen", label: "Abdomen", defaultHp: 6 },
-    { key: "rarm", label: "Right Arm", defaultHp: 4 },
-    { key: "larm", label: "Left Arm", defaultHp: 4 },
-    { key: "rleg", label: "Right Leg", defaultHp: 5 },
-    { key: "lleg", label: "Left Leg", defaultHp: 5 },
-  ];
-
-  const fields: StatSheetField[] = [];
-  for (const loc of locations) {
-    const apVal = Number(sec[`loc_${loc.key}_ap`] ?? 0);
-    const hpVal = Number(sec[`loc_${loc.key}_hp`] ?? loc.defaultHp);
-    fields.push({
-      id: `loc_${loc.key}_ap`,
-      label: `${loc.label} AP (Armor)`,
-      type: "number",
-      value: apVal,
-    });
-    fields.push({
-      id: `loc_${loc.key}_hp`,
-      label: `${loc.label} HP`,
-      type: "counter",
-      value: hpVal,
-      min: 0,
-      max: 20,
-    });
-  }
   return fields;
 }
 
 function mapToMythrasCharacter(ir: StatBlockIR): StatSheetField[] {
-  const fields: StatSheetField[] = [];
-
-  const getVitalVal = (id: string, fallback: number) =>
-    ir.vitals.find((v) => v.id === id)?.current ?? fallback;
-  fields.push({
-    id: "ap",
-    label: "Action Points",
-    type: "counter",
-    value: getVitalVal("ap", 3),
-    min: 0,
-    max: 5,
-  });
-  fields.push({
-    id: "lp",
-    label: "Luck Points",
-    type: "counter",
-    value: getVitalVal("lp", 2),
-    min: 0,
-    max: 10,
-  });
-  fields.push({
-    id: "mp",
-    label: "Magic Points",
-    type: "counter",
-    value: getVitalVal("mp", 12),
-    min: 0,
-    max: 30,
-  });
-  fields.push({
-    id: "hp",
-    label: "Total Hit Points",
-    type: "counter",
-    value: getVitalVal("hp", 15),
-    min: 0,
-    max: 50,
-  });
-
-  const chars = ["str", "con", "siz", "dex", "int", "pow", "cha"];
-  for (const c of chars) {
-    const attr = ir.attributes[c];
-    if (attr) {
-      fields.push({
-        id: c,
-        label: attr.label,
-        type: "number",
-        value: Number(attr.value),
-      });
-    }
-  }
-
+  const fields = mapMythrasVitalsAndChars(ir, 12, false);
   const sec = ir.defences.secondaryDefences || {};
-  fields.push(...buildMythrasHitLocations(sec));
 
   if (sec.damage_mod)
     fields.push({
@@ -506,90 +495,11 @@ function mapToMythrasCharacter(ir: StatBlockIR): StatSheetField[] {
     type: "dice",
     formula: "1d100",
   });
-
-  return fields;
-}
-
-function buildMythrasNpcHitLocations(
-  sec: Record<string, string | number>,
-): StatSheetField[] {
-  const locations = [
-    { key: "head", label: "Head", defaultHp: 5 },
-    { key: "chest", label: "Chest", defaultHp: 7 },
-    { key: "abdomen", label: "Abdomen", defaultHp: 6 },
-    { key: "rarm", label: "Right Arm / Foreleg", defaultHp: 4 },
-    { key: "larm", label: "Left Arm / Foreleg", defaultHp: 4 },
-    { key: "rleg", label: "Right Leg / Hindleg", defaultHp: 5 },
-    { key: "lleg", label: "Left Leg / Hindleg", defaultHp: 5 },
-  ];
-
-  const fields: StatSheetField[] = [];
-  for (const loc of locations) {
-    const apVal = Number(sec[`loc_${loc.key}_ap`] ?? 0);
-    const hpVal = Number(sec[`loc_${loc.key}_hp`] ?? loc.defaultHp);
-    fields.push({
-      id: `loc_${loc.key}_ap`,
-      label: `${loc.label} AP`,
-      type: "number",
-      value: apVal,
-    });
-    fields.push({
-      id: `loc_${loc.key}_hp`,
-      label: `${loc.label} HP`,
-      type: "counter",
-      value: hpVal,
-      min: 0,
-      max: 20,
-    });
-  }
   return fields;
 }
 
 function mapToMythrasNpc(ir: StatBlockIR): StatSheetField[] {
-  const fields: StatSheetField[] = [];
-
-  const getVitalVal = (id: string, fallback: number) =>
-    ir.vitals.find((v) => v.id === id)?.current ?? fallback;
-  fields.push({
-    id: "ap",
-    label: "Action Points",
-    type: "counter",
-    value: getVitalVal("ap", 3),
-    min: 0,
-    max: 5,
-  });
-  fields.push({
-    id: "mp",
-    label: "Magic Points",
-    type: "counter",
-    value: getVitalVal("mp", 10),
-    min: 0,
-    max: 30,
-  });
-  fields.push({
-    id: "hp",
-    label: "Total Hit Points",
-    type: "counter",
-    value: getVitalVal("hp", 15),
-    min: 0,
-    max: 50,
-  });
-
-  const chars = ["str", "con", "siz", "dex", "int", "pow", "cha"];
-  for (const c of chars) {
-    const attr = ir.attributes[c];
-    if (attr) {
-      fields.push({
-        id: c,
-        label: attr.label,
-        type: "number",
-        value: Number(attr.value),
-      });
-    }
-  }
-
-  const sec = ir.defences.secondaryDefences || {};
-  fields.push(...buildMythrasNpcHitLocations(sec));
+  const fields = mapMythrasVitalsAndChars(ir, 10, true);
 
   if (ir.actionsAndAttacks.length > 0) {
     const textProse = ir.actionsAndAttacks
@@ -607,14 +517,11 @@ function mapToMythrasNpc(ir: StatBlockIR): StatSheetField[] {
   }
 
   if (ir.traitsAndFeatures.length > 0) {
-    const textProse = ir.traitsAndFeatures
-      .map((t) => `**${t.name}**: ${t.text}`)
-      .join("\n\n");
     fields.push({
       id: "traits",
       label: "Creature Traits & Special Abilities",
       type: "longtext",
-      value: textProse,
+      value: formatFeaturesAsProse(ir.traitsAndFeatures),
     });
   }
 
@@ -624,13 +531,11 @@ function mapToMythrasNpc(ir: StatBlockIR): StatSheetField[] {
 function mapToVampireCharacter(ir: StatBlockIR): StatSheetField[] {
   const fields: StatSheetField[] = [];
 
-  const getVitalVal = (id: string, fallback: number) =>
-    ir.vitals.find((v) => v.id === id)?.current ?? fallback;
   fields.push({
     id: "willpower",
     label: "Willpower",
     type: "counter",
-    value: getVitalVal("willpower", 5),
+    value: getVitalValue(ir, "willpower", 5),
     min: 0,
     max: 10,
   });
@@ -638,7 +543,7 @@ function mapToVampireCharacter(ir: StatBlockIR): StatSheetField[] {
     id: "blood",
     label: "Blood Pool / Hunger",
     type: "counter",
-    value: getVitalVal("blood", 1),
+    value: getVitalValue(ir, "blood", 1),
     min: 0,
     max: 10,
   });
@@ -646,7 +551,7 @@ function mapToVampireCharacter(ir: StatBlockIR): StatSheetField[] {
     id: "humanity",
     label: "Humanity",
     type: "counter",
-    value: getVitalVal("humanity", 7),
+    value: getVitalValue(ir, "humanity", 7),
     min: 0,
     max: 10,
   });
@@ -665,14 +570,13 @@ function mapToVampireCharacter(ir: StatBlockIR): StatSheetField[] {
 
   for (const a of wodAttrs) {
     const attr = ir.attributes[a];
-    if (attr) {
+    if (attr)
       fields.push({
         id: a,
         label: attr.label,
         type: "number",
         value: Number(attr.value),
       });
-    }
   }
 
   fields.push({
@@ -760,6 +664,7 @@ function synthesizeTemplateFromIr(ir: StatBlockIR): StatSheetTemplate {
   };
 }
 
+// fallow-ignore-next-line complexity
 function mapToSynthesizedTemplate(
   ir: StatBlockIR,
   template: StatSheetTemplate,

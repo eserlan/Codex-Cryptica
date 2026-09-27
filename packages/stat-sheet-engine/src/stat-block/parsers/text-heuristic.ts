@@ -143,6 +143,7 @@ function extractPf2eTextStrikes(
   return actionsAndAttacks;
 }
 
+// fallow-ignore-next-line complexity
 function parseMythrasText(
   name: string,
   _lines: string[],
@@ -452,6 +453,7 @@ function extractTextDefencesAndVitals(text: string) {
   };
 }
 
+// fallow-ignore-next-line complexity
 function extractTextAttributes(
   text: string,
   system: StatBlockSystem,

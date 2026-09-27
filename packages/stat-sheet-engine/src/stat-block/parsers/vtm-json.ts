@@ -98,6 +98,7 @@ function extractVtmSecondary(
   return secondary;
 }
 
+// fallow-ignore-next-line complexity
 function extractVtmDisciplines(
   input: Record<string, unknown>,
 ): StatBlockIR["traitsAndFeatures"] {

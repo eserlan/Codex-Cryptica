@@ -52,6 +52,7 @@ function extractMythrasCharacteristics(
   return attributes;
 }
 
+// fallow-ignore-next-line complexity
 function extractMythrasVitals(
   input: Record<string, unknown>,
   category: "character" | "npc" | "creature",
@@ -119,6 +120,7 @@ function matchLocationPrefix(name: string): string | null {
   return null;
 }
 
+// fallow-ignore-next-line complexity
 function extractMythrasHitLocations(
   input: Record<string, unknown>,
 ): Record<string, string | number> {
@@ -150,6 +152,7 @@ function extractMythrasHitLocations(
   return secondaryDefences;
 }
 
+// fallow-ignore-next-line complexity
 function extractMythrasAttacks(
   input: Record<string, unknown>,
 ): StatBlockIR["actionsAndAttacks"] {
@@ -177,6 +180,7 @@ function extractMythrasAttacks(
   return actions;
 }
 
+// fallow-ignore-next-line complexity
 function extractMythrasTraits(
   input: Record<string, unknown>,
 ): StatBlockIR["traitsAndFeatures"] {

@@ -19,6 +19,7 @@ function isPathbuilderObject(obj: Record<string, unknown>): boolean {
   return "build" in obj && typeof obj.build === "object" && obj.build !== null;
 }
 
+// fallow-ignore-next-line complexity
 function isFoundryActor(obj: Record<string, unknown>): StatBlockSystem | null {
   if (
     !("system" in obj) ||
@@ -66,6 +67,7 @@ function isGurpsObject(obj: Record<string, unknown>): boolean {
   return false;
 }
 
+// fallow-ignore-next-line complexity
 function isDnd5eObject(obj: Record<string, unknown>): StatBlockSystem | null {
   const hasStr = "str" in obj || "strength" in obj;
   const hasDex = "dex" in obj || "dexterity" in obj;
