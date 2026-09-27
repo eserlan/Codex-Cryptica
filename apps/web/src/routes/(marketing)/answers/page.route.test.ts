@@ -1,7 +1,7 @@
 /** @vitest-environment jsdom */
 
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { render, fireEvent } from "@testing-library/svelte";
+import { render, fireEvent, waitFor } from "@testing-library/svelte";
 import Page from "./+page.svelte";
 import {
   AnswerConfigSchema,
@@ -69,6 +69,7 @@ const mockAnswers: AnswerConfig[] = [
 describe("/answers route", () => {
   afterEach(() => {
     document.head.innerHTML = "";
+    window.history.replaceState({}, "", "/");
     vi.restoreAllMocks();
   });
 
@@ -193,5 +194,21 @@ describe("/answers route", () => {
     expect(container.textContent).toContain("format: Framework");
     expect(container.textContent).toContain("How do you run a heist?");
     expect(container.textContent).not.toContain("What is a point crawl?");
+  });
+
+  it("ignores inherited kind names in the URL filter", async () => {
+    window.history.replaceState({}, "", "/answers?kind=constructor");
+
+    const { container } = render(Page, {
+      props: { data: { answers: mockAnswers } },
+    });
+
+    await waitFor(() => {
+      const allFormats = container.querySelector(
+        'div[aria-label="Filter answers by format"] button',
+      );
+      expect(allFormats?.getAttribute("aria-pressed")).toBe("true");
+      expect(window.location.search).not.toContain("kind=");
+    });
   });
 });

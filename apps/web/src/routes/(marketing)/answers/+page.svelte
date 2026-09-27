@@ -65,7 +65,7 @@
       searchQuery = q;
     }
     const k = params.get("kind");
-    if (k && (k === "all" || k in KIND_LABEL)) {
+    if (k && (k === "all" || Object.hasOwn(KIND_LABEL, k))) {
       activeKind = k as AnswerKind | "all";
     }
 
