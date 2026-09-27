@@ -231,7 +231,8 @@
                 onclick={() => (showReportModal = true)}
                 class="inline-flex items-center gap-1.5 text-xs font-bold text-theme-text/60 hover:text-theme-primary transition-colors"
               >
-                <span class="icon-[lucide--flag] h-3.5 w-3.5"></span>
+                <span class="icon-[lucide--flag] h-3.5 w-3.5" aria-hidden="true"
+                ></span>
                 <span>Report copyright concern</span>
               </button>
             </div>
@@ -243,7 +244,8 @@
               onclick={() => (showReportModal = true)}
               class="inline-flex items-center gap-1.5 text-xs font-bold text-theme-text/60 hover:text-theme-primary transition-colors"
             >
-              <span class="icon-[lucide--flag] h-3.5 w-3.5"></span>
+              <span class="icon-[lucide--flag] h-3.5 w-3.5" aria-hidden="true"
+              ></span>
               <span>Report copyright concern</span>
             </button>
           </div>
@@ -267,7 +269,8 @@
             onclick={() => (showReportModal = true)}
             class="inline-flex items-center gap-1.5 rounded border border-theme-border/60 bg-theme-surface/90 px-3 py-1.5 text-xs font-bold text-theme-text/70 shadow hover:border-theme-primary/50 hover:text-theme-primary transition-colors backdrop-blur-sm"
           >
-            <span class="icon-[lucide--flag] h-3.5 w-3.5"></span>
+            <span class="icon-[lucide--flag] h-3.5 w-3.5" aria-hidden="true"
+            ></span>
             <span>Report copyright concern</span>
           </button>
         </div>
