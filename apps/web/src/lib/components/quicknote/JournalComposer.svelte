@@ -2,8 +2,7 @@
   import type { SessionJournalStore } from "$lib/stores/session-journal.svelte";
   import type { SessionJournal } from "session-journal-engine";
   import { notificationStore } from "$lib/stores/ui/notification.svelte";
-  import MarkdownFormatToolbar from "$lib/components/editor/MarkdownFormatToolbar.svelte";
-  import { createMarkdownEditingController } from "$lib/utils/markdown-editing";
+  import JournalMarkdownField from "./JournalMarkdownField.svelte";
 
   /**
    * The bottom of the Session Journal while a journal is running (#3402 slice
@@ -18,22 +17,12 @@
 
   let noteText = $state("");
   let isAddingNote = $state(false);
-  let noteTextarea = $state<HTMLTextAreaElement | undefined>(undefined);
   let newSectionName = $state("");
   let isCreatingSection = $state(false);
   let sectionError = $state<string | null>(null);
   let renamingSectionId = $state<string | null>(null);
   let renameValue = $state("");
   let renameError = $state<string | null>(null);
-
-  // Basic Markdown formatting (#3481): the toolbar and keyboard shortcuts
-  // below share their glue with `JournalEntryEditForm`'s edit form.
-  const editing = createMarkdownEditingController({
-    getTextarea: () => noteTextarea,
-    getText: () => noteText,
-    setText: (text) => (noteText = text),
-    onSubmitShortcut: () => void submitNote(),
-  });
 
   async function submitNote() {
     const content = noteText.trim();
@@ -91,23 +80,17 @@
 
 <div class="flex flex-col gap-2 border-t border-theme-border/40 pt-3">
   <div class="flex flex-col gap-1.5">
-    <MarkdownFormatToolbar
-      label="Note formatting"
-      onBold={editing.bold}
-      onItalic={editing.italic}
-      onBullet={editing.bullet}
+    <JournalMarkdownField
+      value={noteText}
+      onValueChange={(text) => (noteText = text)}
+      ariaLabel="Journal note"
+      placeholder="Add a note... (Ctrl/Cmd+Enter to add)"
+      rows={2}
+      toolbarLabel="Note formatting"
+      testIdPrefix="journal-note"
+      onSubmitShortcut={() => void submitNote()}
     />
-    <div class="flex gap-2">
-      <textarea
-        bind:this={noteTextarea}
-        bind:value={noteText}
-        aria-label="Journal note"
-        placeholder="Add a note... (Ctrl/Cmd+Enter to add)"
-        rows="2"
-        onkeydown={editing.handleKeydown}
-        class="flex-1 resize-y rounded border border-theme-border bg-theme-bg px-2 py-1.5 text-xs text-theme-text focus:border-theme-primary focus:outline-none"
-        data-testid="journal-note-input"
-      ></textarea>
+    <div class="flex justify-end">
       <button
         type="button"
         onclick={submitNote}

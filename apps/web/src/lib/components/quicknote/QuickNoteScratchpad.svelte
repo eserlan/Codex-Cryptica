@@ -4,6 +4,17 @@
   import SessionJournalView from "./SessionJournalView.svelte";
   import { fade, scale } from "svelte/transition";
   import { onDestroy } from "svelte";
+  import {
+    clampBounds,
+    getCenteredBounds,
+    getViewportSize,
+    loadSavedBounds,
+    resizePointerDelta,
+    saveBounds,
+    MIN_WINDOW_WIDTH,
+    MIN_WINDOW_HEIGHT,
+    type WindowBounds,
+  } from "$lib/utils/window-bounds";
 
   /**
    * Notes and Journal are deliberately separate tabs, not merged into one
@@ -13,6 +24,149 @@
    * lives in quickNoteStore so the global journal control can set it.
    */
   const activeTab = $derived(quickNoteStore.activeTab);
+
+  // Resizable scratchpad (#3490): the card used to be a fixed 768x480 box,
+  // which cramped the Session Journal once entries had sections and a
+  // formatting toolbar. Only resize is offered, not drag (unlike the Play
+  // Tools window this math is shared with) — this stays centred, so growing
+  // or shrinking it never has to reposition it.
+  const SCRATCHPAD_WINDOW_STORAGE_KEY = "codex_quicknote_scratchpad_size";
+  const SCRATCHPAD_DEFAULT_SIZE = { width: 768, height: 480 };
+  const SCRATCHPAD_MIN_WIDTH = Math.max(MIN_WINDOW_WIDTH, 480);
+  const SCRATCHPAD_MIN_HEIGHT = Math.max(MIN_WINDOW_HEIGHT, 360);
+
+  let bounds = $state<WindowBounds>(centeredBounds());
+  let isResizing = $state(false);
+  let resizeStart = { x: 0, y: 0, width: 0, height: 0 };
+
+  function centeredBounds(): WindowBounds {
+    return getCenteredBounds(
+      SCRATCHPAD_DEFAULT_SIZE,
+      getViewportSize(),
+      SCRATCHPAD_MIN_WIDTH,
+      SCRATCHPAD_MIN_HEIGHT,
+    );
+  }
+
+  function resizeDeltaForKey(
+    key: string,
+    growKey: string,
+    shrinkKey: string,
+    step: number,
+  ): number {
+    if (key === growKey) return step;
+    if (key === shrinkKey) return -step;
+    return 0;
+  }
+
+  $effect(() => {
+    if (quickNoteStore.isOpen) {
+      bounds = loadSavedBounds(
+        SCRATCHPAD_WINDOW_STORAGE_KEY,
+        typeof window !== "undefined" ? window.localStorage : null,
+        getViewportSize(),
+        SCRATCHPAD_DEFAULT_SIZE,
+      );
+    }
+  });
+
+  function handleWindowResize() {
+    if (!quickNoteStore.isOpen) return;
+    bounds = clampBounds(
+      bounds,
+      getViewportSize(),
+      SCRATCHPAD_MIN_WIDTH,
+      SCRATCHPAD_MIN_HEIGHT,
+    );
+    saveBounds(SCRATCHPAD_WINDOW_STORAGE_KEY, bounds);
+  }
+
+  function handleResizePointerDown(e: PointerEvent) {
+    if (e.button !== 0) return;
+    e.stopPropagation();
+    e.preventDefault();
+
+    isResizing = true;
+    resizeStart = { ...bounds, x: e.clientX, y: e.clientY };
+
+    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+  }
+
+  function handleResizePointerMove(e: PointerEvent) {
+    if (!isResizing) return;
+    const { deltaX, deltaY, viewport } = resizePointerDelta(e, resizeStart);
+    // Growing keeps the box centred: widening/heightening by `delta` moves
+    // the left/top edge back by half of it, rather than only growing
+    // rightward/downward from a fixed corner.
+    const newWidth = Math.max(
+      SCRATCHPAD_MIN_WIDTH,
+      resizeStart.width + deltaX * 2,
+    );
+    const newHeight = Math.max(
+      SCRATCHPAD_MIN_HEIGHT,
+      resizeStart.height + deltaY * 2,
+    );
+    bounds = clampBounds(
+      getCenteredBounds(
+        { width: newWidth, height: newHeight },
+        viewport,
+        SCRATCHPAD_MIN_WIDTH,
+        SCRATCHPAD_MIN_HEIGHT,
+      ),
+      viewport,
+      SCRATCHPAD_MIN_WIDTH,
+      SCRATCHPAD_MIN_HEIGHT,
+    );
+  }
+
+  function handleResizePointerUp(e: PointerEvent) {
+    if (!isResizing) return;
+    isResizing = false;
+    try {
+      (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
+    } catch {
+      // ignore if capture was already released
+    }
+    if (
+      bounds.width !== resizeStart.width ||
+      bounds.height !== resizeStart.height
+    ) {
+      saveBounds(SCRATCHPAD_WINDOW_STORAGE_KEY, bounds);
+    }
+  }
+
+  function handleResizeKeydown(e: KeyboardEvent) {
+    const step = e.shiftKey ? 64 : 24;
+    const widthDelta = resizeDeltaForKey(
+      e.key,
+      "ArrowRight",
+      "ArrowLeft",
+      step,
+    );
+    const heightDelta = resizeDeltaForKey(e.key, "ArrowDown", "ArrowUp", step);
+    if (widthDelta === 0 && heightDelta === 0) return;
+
+    e.preventDefault();
+    const viewport = getViewportSize();
+    const next = clampBounds(
+      getCenteredBounds(
+        {
+          width: bounds.width + widthDelta,
+          height: bounds.height + heightDelta,
+        },
+        viewport,
+        SCRATCHPAD_MIN_WIDTH,
+        SCRATCHPAD_MIN_HEIGHT,
+      ),
+      viewport,
+      SCRATCHPAD_MIN_WIDTH,
+      SCRATCHPAD_MIN_HEIGHT,
+    );
+    if (next.width === bounds.width && next.height === bounds.height) return;
+
+    bounds = next;
+    saveBounds(SCRATCHPAD_WINDOW_STORAGE_KEY, bounds);
+  }
 
   // Auto-save debounce effect
   let debounceTimeout: any;
@@ -63,6 +217,8 @@
   });
 </script>
 
+<svelte:window onresize={handleWindowResize} />
+
 {#if quickNoteStore.isOpen}
   <!-- Overlay Backdrop (click to close) -->
   <button
@@ -75,9 +231,12 @@
 
   <!-- Main Floating Scratchpad Card -->
   <div
-    class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[101] w-full max-w-3xl h-[480px]
-           rounded-2xl border border-theme-border/60 bg-theme-surface/85 backdrop-blur-xl shadow-2xl flex flex-col overflow-hidden"
+    class="fixed z-[101] rounded-2xl border border-theme-border/60 bg-theme-surface/85 backdrop-blur-xl shadow-2xl flex flex-col overflow-hidden {isResizing
+      ? 'select-none'
+      : ''}"
+    style="left: {bounds.x}px; top: {bounds.y}px; width: {bounds.width}px; height: {bounds.height}px;"
     transition:scale={{ duration: 200, start: 0.95 }}
+    data-testid="quicknote-scratchpad"
   >
     <!-- Header -->
     <div
@@ -126,6 +285,27 @@
     {:else}
       {@render notesPanel()}
     {/if}
+
+    <!-- Corner Resize Grip -->
+    <!-- This focusable group implements a two-axis keyboard resize control. -->
+    <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
+    <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
+    <div
+      role="group"
+      tabindex="0"
+      aria-label="Resize scratchpad with the arrow keys"
+      aria-keyshortcuts="ArrowLeft ArrowRight ArrowUp ArrowDown"
+      class="absolute bottom-0 right-0 w-4 h-4 cursor-se-resize flex items-end justify-end p-0.5 text-theme-muted/40 hover:text-theme-primary touch-none transition-colors z-10"
+      onpointerdown={handleResizePointerDown}
+      onpointermove={handleResizePointerMove}
+      onpointerup={handleResizePointerUp}
+      onpointercancel={handleResizePointerUp}
+      onkeydown={handleResizeKeydown}
+      title="Resize"
+      data-testid="quicknote-scratchpad-resize-handle"
+    >
+      <span class="icon-[lucide--grip-vertical] w-3 h-3 rotate-45"></span>
+    </div>
   </div>
 {/if}
 
