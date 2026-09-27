@@ -419,6 +419,9 @@ describe("EntityNode card variants", () => {
     const btn = await screen.findByRole("button", {
       name: "Show card details",
     });
+    expect(btn.parentElement?.className).toContain(
+      "group-focus-within:opacity-100",
+    );
     await fireEvent.click(btn);
     expect(onUpdateEntityNode).toHaveBeenCalledWith({ cardView: "auto" });
   });

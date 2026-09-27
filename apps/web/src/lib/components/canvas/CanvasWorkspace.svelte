@@ -731,7 +731,7 @@
     logic.saveNow();
   }
 
-  let showImageLabels = $state(
+  const showImageLabels = $derived(
     Boolean(
       (canvas?.metadata as Record<string, unknown> | undefined)
         ?.showImageLabels,
@@ -739,11 +739,11 @@
   );
 
   function handleToggleShowImageLabels() {
-    showImageLabels = !showImageLabels;
     if (canvas) {
+      const nextShowImageLabels = !showImageLabels;
       canvas.metadata = {
         ...(canvas.metadata || {}),
-        showImageLabels,
+        showImageLabels: nextShowImageLabels,
       };
       logic.saveNow();
     }

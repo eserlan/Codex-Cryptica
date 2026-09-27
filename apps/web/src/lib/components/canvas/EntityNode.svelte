@@ -412,7 +412,7 @@
         {/if}
         <!-- Top-right flip button to switch back to card view -->
         <div
-          class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-10 pointer-events-auto"
+          class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity z-10 pointer-events-auto"
         >
           <button
             class="p-1 rounded-md bg-black/60 hover:bg-black/90 text-white/80 hover:text-white backdrop-blur-sm border border-white/20 transition-all shadow-md cursor-pointer"
