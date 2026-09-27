@@ -160,6 +160,7 @@ export const whatShouldAnRpgSettlementContain: AnswerConfigInput = {
     "how-do-i-make-a-player-base-matter-in-an-rpg-campaign",
     "what-should-players-be-able-to-upgrade-in-an-rpg-base",
     "how-do-i-build-a-believable-economy-for-a-fantasy-world",
+    "how-do-i-decide-what-a-settlement-produces-imports-and-exports",
   ],
   discovery: {
     id: "answer-settlement-contents",

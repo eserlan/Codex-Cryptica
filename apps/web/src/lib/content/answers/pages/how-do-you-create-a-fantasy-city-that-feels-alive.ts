@@ -149,6 +149,7 @@ export const howDoYouCreateAFantasyCityThatFeelsAlive: AnswerConfigInput = {
     "how-many-npcs-does-an-rpg-town-need",
     "how-do-i-expand-a-simple-rpg-campaign-idea",
     "how-do-i-build-a-believable-economy-for-a-fantasy-world",
+    "how-do-i-decide-what-a-settlement-produces-imports-and-exports",
   ],
   labels: ["fantasy", "rumour"],
   discovery: {
