@@ -1192,6 +1192,92 @@ describe("Landing Page Registry", () => {
     });
   });
 
+  describe("Starship Campaigns Pack", () => {
+    it("uses the startrek theme, links optimistic exploration sci-fi hub, and links starship-relevant generators", () => {
+      const starship = getLandingPage("starship-campaigns");
+
+      expect(starship).toBeDefined();
+      expect(starship?.kind).toBe("genre");
+      expect(starship?.theme).toBe("startrek");
+      expect(starship?.hub).toBe("optimistic-exploration-sci-fi");
+      expect(starship?.recommendedTools.map((tool) => tool.href)).toEqual(
+        expect.arrayContaining([
+          "/generators/ship-generator",
+          "/generators/star-system",
+          "/generators/faction",
+          "/generators/settlement",
+          "/generators/quest",
+          "/generators/optimistic-exploration-sci-fi",
+        ]),
+      );
+    });
+
+    it("only links to generators and hubs that exist", () => {
+      const starship = getLandingPage("starship-campaigns")!;
+      const validPaths = new Set([
+        ...GENERATOR_SLUGS.map((slug) => `/generators/${slug}`),
+        ...HUB_THEME_SLUGS.map((theme) => `/generators/${theme}`),
+      ]);
+
+      for (const tool of starship.recommendedTools) {
+        expect(validPaths.has(tool.href), `${tool.href} is not a route`).toBe(
+          true,
+        );
+      }
+    });
+
+    it("connects bridge crews, ship systems, sector maps, starbases, and fleet command webs", () => {
+      const starship = getLandingPage("starship-campaigns")!;
+      const copy = JSON.stringify(starship);
+      const [hub, ...spokes] = starship.exampleGraph!.steps;
+
+      expect(copy).toMatch(/bridge crew/i);
+      expect(copy).toMatch(/ship systems/i);
+      expect(copy).toMatch(/sector map/i);
+      expect(copy).toMatch(/starbase/i);
+      expect(copy).toMatch(/diplomacy|first contact/i);
+      expect(copy).toMatch(/fleet/i);
+      expect(starship.useCases).toHaveLength(4);
+      expect(hub.category).toBe("item");
+      expect(spokes.length).toBeGreaterThanOrEqual(5);
+      expect(
+        spokes.find(({ label }) => label === "Captain Ilsa Renn")?.relation,
+      ).toBe("Commanded by");
+      expect(
+        spokes.find(({ label }) => label === "Sector Command")?.relation,
+      ).toBe("Receives orders from");
+      expect(
+        spokes.find(({ label }) => label === "Starbase Tressel")?.relation,
+      ).toBe("Resupplied at");
+      expect(
+        spokes.find(({ label }) => label === "The Vey Pact")?.relation,
+      ).toBe("Negotiating with");
+      expect(
+        spokes.find(({ label }) => label === "First Contact at Kell Minor")
+          ?.relation,
+      ).toBe("Diverted to");
+      for (const spoke of spokes) {
+        expect(spoke.relation, `${spoke.label} has no relation`).toBeTruthy();
+        expect(spoke.category, `${spoke.label} has no category`).toBeDefined();
+      }
+    });
+
+    it("stays distinct from space opera and space western packs", () => {
+      const starship = getLandingPage("starship-campaigns")!;
+      expect(starship.hub).not.toBe(getLandingPage("space-western")?.hub);
+      expect(starship.slug).not.toBe(getLandingPage("space-opera")?.slug);
+    });
+
+    it("joins the optimistic exploration sci-fi hub without emptying other hubs", () => {
+      expect(
+        getLandingPagesForHub("optimistic-exploration-sci-fi").map(
+          (page) => page.slug,
+        ),
+      ).toEqual(["starship-campaigns"]);
+      expect(getLandingPagesForHub("space-western").length).toBeGreaterThan(0);
+    });
+  });
+
   describe("Conspiracy Pack", () => {
     it("is registered as genre, uses sharp styling, and omits non-affiliation disclaimer", () => {
       const conspiracy = getLandingPage("conspiracy");
