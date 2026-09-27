@@ -102,6 +102,14 @@ describe("buildPromotion — entry", () => {
     expect(r.ok && r.title).toBe("It is cold to the touch");
   });
 
+  it("preserves literal intraword underscores in the derived title", () => {
+    const j = journal({
+      entries: [entry("e1", 10, "Use the foo_bar_baz command")],
+    });
+    const r = build({ kind: "entry", entryId: "e1" }, j);
+    expect(r.ok && r.title).toBe("Use the foo_bar_baz command");
+  });
+
   it("names it from the content only, never the label", () => {
     const r = build({ kind: "entry", entryId: "e3" });
     expect(r.ok && r.title).toBe("Rolled 2d6+3: 9");
