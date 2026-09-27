@@ -322,6 +322,7 @@
         <!-- Format / Kind Filter Chips -->
         <div
           class="flex flex-wrap items-center gap-1.5"
+          role="group"
           aria-label="Filter answers by format"
         >
           <span

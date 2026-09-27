@@ -117,7 +117,7 @@ describe("/answers route", () => {
     });
 
     const formatContainer = document.querySelector(
-      'div[aria-label="Filter answers by format"]',
+      'div[role="group"][aria-label="Filter answers by format"]',
     );
     expect(formatContainer).toBeTruthy();
     expect(formatContainer?.textContent).toContain("All Formats");
