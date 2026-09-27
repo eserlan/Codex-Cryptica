@@ -434,7 +434,8 @@
               ></span>
               Revising
             {:else}
-              <span class="icon-[lucide--refresh-cw] h-4 w-4" aria-hidden="true"></span>
+              <span class="icon-[lucide--refresh-cw] h-4 w-4" aria-hidden="true"
+              ></span>
               Revise Prompt
             {/if}
           </button>
@@ -459,7 +460,8 @@
               ></span>
               Generating
             {:else}
-              <span class="icon-[lucide--image-plus] h-4 w-4" aria-hidden="true"></span>
+              <span class="icon-[lucide--image-plus] h-4 w-4" aria-hidden="true"
+              ></span>
               Generate
             {/if}
           </button>

@@ -1,3 +1,4 @@
+import { autoArrangeCanvasNodes } from "./canvas-auto-arrange";
 import { describe, expect, it, vi } from "vitest";
 import type { Canvas } from "@codex/canvas-engine";
 import {
@@ -13,7 +14,6 @@ import {
   createFlowEntityNode,
   createFlowFileNode,
   createFlowTextNode,
-  autoArrangeCanvasNodes,
   flowEdgeToCanvasEdge,
   flowNodesToCanvasNodes,
   flowNodeToCanvasNode,

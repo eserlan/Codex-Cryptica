@@ -28,8 +28,8 @@
         </div>
         <h2 class="font-header text-2xl text-theme-text">Select an entity</h2>
         <p class="text-sm leading-6 text-theme-muted">
-          Keep the explorer open on the left and choose any entity to read or edit
-          it here without leaving your workspace.
+          Keep the explorer open on the left and choose any entity to read or
+          edit it here without leaving your workspace.
         </p>
       </div>
     </div>

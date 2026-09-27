@@ -58,10 +58,13 @@
           class="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full border border-theme-primary/30 bg-theme-primary/10 text-theme-primary"
         >
           {#if dialog.isDangerous}
-            <span class="icon-[lucide--triangle-alert] h-6 w-6 text-red-400" aria-hidden="true"
+            <span
+              class="icon-[lucide--triangle-alert] h-6 w-6 text-red-400"
+              aria-hidden="true"
             ></span>
           {:else}
-            <span class="icon-[lucide--help-circle] h-6 w-6" aria-hidden="true"></span>
+            <span class="icon-[lucide--help-circle] h-6 w-6" aria-hidden="true"
+            ></span>
           {/if}
         </div>
         <h3
