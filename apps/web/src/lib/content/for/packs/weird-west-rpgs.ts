@@ -8,7 +8,7 @@ export const weirdWestRpgs: LandingPageConfig = {
   seo: {
     title: "Codex Cryptica for Weird West & Frontier Campaigns",
     description:
-      "Organise weird west and frontier campaigns with boomtowns, outlaws, marshals, mining cartels, occult rail barons, and the mystery webs beneath them in one connected setting bible.",
+      "Organise weird west and frontier campaigns with boomtowns, contested claims, competing law, extractive companies, hauntings, curses, and strange forces shaped by the territory's history.",
     image: "https://assets.codexcryptica.com/og/weird-west-rpgs.jpg",
     imageAlt:
       "A lone rider on a dusty ridge above a lamplit mining town, with a strange glow rising from the mine",
@@ -17,9 +17,9 @@ export const weirdWestRpgs: LandingPageConfig = {
     eyebrow: "Weird West, Frontier & Occult Railroads",
     title: "Codex Cryptica for Weird West RPGs",
     tagline:
-      "Connect the boomtowns, badges, and buried horrors of the frontier, so every claim, killing, and rumour leads somewhere.",
+      "Connect boomtowns, contested claims, patchy law, extractive companies, and occult pressure, so every dispute leaves a mark across the territory.",
     problemStatement:
-      "A Weird West campaign runs on who owns the land, who owns the law, and what is buried under both. A silver strike can found a town overnight, and a rail baron's contract, a marshal's bribe, and a mine that should never have been opened can tie a whole territory together. In Codex Cryptica, connect towns to their claims, lawmen, outlaws, cartels, and the strange thing underground, so when a gunfight, a lynching, or a train robbery happens you can see exactly who it touches.",
+      "A Weird West campaign runs on who owns the land, who owns the law, and what is buried under both. A silver strike can found a town overnight, and a rail baron's contract, a marshal's bribe, and violence over a claim can tie a whole territory together. In Codex Cryptica, connect towns to their claims, lawmen, outlaws, cartels, and the hauntings, old bargains, and strange forces shaped by people, places, and history, so a gunfight, vigilante killing, or train robbery changes who trusts whom—and what stirs in its wake.",
   },
   useCases: [
     {
@@ -31,7 +31,7 @@ export const weirdWestRpgs: LandingPageConfig = {
     {
       title: "Outlaws, Marshals & Frontier Law",
       description:
-        "Keep gangs, lawmen, bounty hunters, and the favours between them in view, so a bribed badge or a lynching has consequences later.",
+        "Keep gangs, lawmen, bounty hunters, and their favours in view: a bribed badge or vigilante killing can turn today's witness into tomorrow's deputy, while grudges travel across the territory.",
       icon: "icon-[lucide--shield]",
     },
     {
@@ -41,9 +41,9 @@ export const weirdWestRpgs: LandingPageConfig = {
       icon: "icon-[lucide--train-front]",
     },
     {
-      title: "Occult Mysteries & Buried Things",
+      title: "Occult Mysteries & Frontier Folklore",
       description:
-        "Follow the strange lights, cursed ground, and hidden cults through your territory, and see which powerful people know what lies beneath.",
+        "Follow hauntings, revenants, cursed ground, strange weather, and local folklore through your territory; trace them to old violence, bargains, or greed, and the people caught in their wake.",
       icon: "icon-[lucide--skull]",
     },
   ],
@@ -66,13 +66,13 @@ export const weirdWestRpgs: LandingPageConfig = {
       {
         label: "Marshal Ada Quill",
         sublabel: "Territorial Lawman",
-        relation: "Is sworn to guard",
+        relation: "Falls under the law of",
         category: "character",
       },
       {
         label: "The Blackrail Company",
         sublabel: "Railroad & Mining Cartel",
-        relation: "Is hauled by",
+        relation: "Ships ore to",
         category: "faction",
       },
       {
@@ -84,7 +84,7 @@ export const weirdWestRpgs: LandingPageConfig = {
       {
         label: "The Hollow Choir",
         sublabel: "Something in the Deep Shaft",
-        relation: "Lies above",
+        relation: "Awakened",
         category: "creature",
       },
     ],
@@ -121,7 +121,7 @@ export const weirdWestRpgs: LandingPageConfig = {
     {
       title: "Secret Society Generator",
       description:
-        "Create the occult cabal behind the land grab, or the thing they woke.",
+        "Create the occult society behind a land grab, a local bargain, or a creature stirred by violence or greed.",
       href: "/generators/secret-society",
       badge: "Generator",
     },
@@ -136,7 +136,7 @@ export const weirdWestRpgs: LandingPageConfig = {
   cta: {
     title: "Saddle Up Your Next Campaign",
     description:
-      "Build a connected territory where every claim, killing, and buried secret changes who holds the frontier next.",
+      "Build a connected territory where every claim, killing, and old secret changes who holds the frontier next.",
     buttonText: "Start Building Free",
     buttonHref: "/app",
   },
