@@ -172,6 +172,13 @@ export const howDoIDecideWhatASettlementProducesImportsAndExports: AnswerConfigI
         "generator-world",
         "generator-faction",
       ],
+      acknowledgedOverlap: [
+        {
+          with: "answer-believable-fantasy-economy",
+          reason:
+            "The economy guide designs a coherent world-scale system, while this answer derives one settlement's production, surplus, imports, and exports as a local ledger.",
+        },
+      ],
     },
     seo: {
       title: "How Do I Decide a Settlement's Trade Goods? | Codex Cryptica",
