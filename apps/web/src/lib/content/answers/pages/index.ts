@@ -83,6 +83,7 @@ import { howToCreateRumoursForAFantasyTown } from "./how-to-create-rumours-for-a
 import { howToWriteAnInWorldNewspaperForAnRpg } from "./how-to-write-an-in-world-newspaper-for-an-rpg";
 import { isMyRpgCampaignIdeaGood } from "./is-my-rpg-campaign-idea-good";
 import { pointCrawlVsHexCrawl } from "./point-crawl-vs-hex-crawl";
+import { whatCanPlayersActuallyBuyAndSellInAFantasySettlement } from "./what-can-players-actually-buy-and-sell-in-a-fantasy-settlement";
 import { whatDoYouDoWithMurderHobosInAnRpgCampaign } from "./what-do-you-do-with-murder-hobos-in-an-rpg-campaign";
 import { whatIsAPointCrawl } from "./what-is-a-point-crawl";
 import { whatKindOfShipShouldAPirateCrewStartWith } from "./what-kind-of-ship-should-a-pirate-crew-start-with";
@@ -197,6 +198,7 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     howToWriteAnInWorldNewspaperForAnRpg,
     isMyRpgCampaignIdeaGood,
     pointCrawlVsHexCrawl,
+    whatCanPlayersActuallyBuyAndSellInAFantasySettlement,
     whatDoYouDoWithMurderHobosInAnRpgCampaign,
     whatIsAPointCrawl,
     whatKindOfShipShouldAPirateCrewStartWith,

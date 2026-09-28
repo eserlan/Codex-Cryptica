@@ -20,6 +20,14 @@
   } from "$lib/content/answers/sort";
   import { browserStorage } from "$lib/utils/runtime-deps";
   import type { PageData } from "./$types";
+  import CommunityFavourites, {
+    type CommunityFavourite,
+  } from "$lib/components/answers/CommunityFavourites.svelte";
+  import {
+    COMMUNITY_MAX_ITEMS,
+    communityAggregates,
+  } from "$lib/services/community/community-aggregates";
+  import { getAnswer } from "$lib/content/answers/registry";
 
   let { data }: { data: PageData } = $props();
 
@@ -37,6 +45,8 @@
   let sortBy = $state<AnswerSortOption>(DEFAULT_ANSWER_SORT);
   let lastSyncedSort = $state<AnswerSortOption | null>(null);
   let isInitialized = $state(false);
+  /** Community-validated answers with display copy resolved (spec 164). */
+  let communityFavourites = $state<CommunityFavourite[]>([]);
 
   const KIND_LABEL: Record<string, string> = {
     definition: "Definition",
@@ -53,8 +63,44 @@
     { id: "definition", label: "Definitions" },
   ];
 
-  onMount(() => {
-    // Read URL search params
+  /** Resolves one aggregate row to display copy; unknown slugs are dropped. */
+  function toCommunityFavourite(item: {
+    slug: string;
+    yes: number;
+  }): CommunityFavourite | null {
+    const answer = getAnswer(item.slug);
+    if (!answer) return null;
+    const category = getCategoryInfo(answer.category);
+    return {
+      slug: item.slug,
+      question: answer.question,
+      shortAnswer: answer.shortAnswer,
+      kindLabel: KIND_LABEL[answer.kind] ?? answer.kind,
+      categoryTitle: category?.title ?? answer.category,
+      publishedAt: answer.publishedAt,
+      yes: item.yes,
+    };
+  }
+
+  /** Loads the community strip; fail-silent by design (spec 164). */
+  async function loadCommunityFavourites(): Promise<void> {
+    const items = await communityAggregates.fetchTop();
+    if (!items) return;
+    const resolved: CommunityFavourite[] = [];
+    for (const item of items.slice(0, COMMUNITY_MAX_ITEMS)) {
+      const favourite = toCommunityFavourite(item);
+      if (favourite) resolved.push(favourite);
+    }
+    communityFavourites = resolved;
+  }
+
+  /** Reads URL search params into filter state; returns the raw params so
+   * callers can distinguish a clean directory view from a linked filter. */
+  function readInitialFilters(): {
+    cat: string | null;
+    q: string | null;
+    k: string | null;
+  } {
     const params = new URLSearchParams(window.location.search);
     const cat = params.get("category");
     if (cat && (cat === "all" || ANSWER_CATEGORIES.some((c) => c.id === cat))) {
@@ -68,13 +114,25 @@
     if (k && (k === "all" || Object.hasOwn(KIND_LABEL, k))) {
       activeKind = k as AnswerKind | "all";
     }
+    return { cat, q, k };
+  }
 
+  onMount(() => {
+    const { cat, q, k } = readInitialFilters();
     const saved = readStoredAnswerSort(browserStorage);
     if (saved !== sortBy) {
       sortBy = saved;
     }
     lastSyncedSort = saved;
     isInitialized = true;
+
+    // Community favourites (spec 164): fetch only for the default directory
+    // view. Rendering is additionally gated on !isSearchingOrFiltered and
+    // the component's own quorum, so a cold or unreachable aggregate simply
+    // leaves the section hidden.
+    if (!cat && !q && !k) {
+      void loadCommunityFavourites();
+    }
   });
 
   $effect(() => {
@@ -218,6 +276,10 @@
         behind it with a concrete example.
       </p>
     </header>
+
+    {#if !isSearchingOrFiltered && communityFavourites.length > 0}
+      <CommunityFavourites favourites={communityFavourites} />
+    {/if}
 
     <!-- Category Directory Grid -->
     <nav aria-label="Category directory" class="mb-10">

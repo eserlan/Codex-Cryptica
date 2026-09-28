@@ -152,6 +152,7 @@ export const howDoScarcityAndShortagesAffectPricesAndConflictInAnRpgWorld: Answe
       "how-do-you-create-a-fantasy-faction",
       "how-to-create-rumours-for-a-fantasy-town",
       "how-do-i-turn-economic-pressures-into-rpg-adventure-hooks",
+      "what-can-players-actually-buy-and-sell-in-a-fantasy-settlement",
     ],
     discovery: {
       id: "answer-scarcity-shortages-prices-conflict",

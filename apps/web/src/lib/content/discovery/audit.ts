@@ -375,6 +375,27 @@ function sameJobInCluster(entries: DiscoveryEntry[]): DiscoveryFinding[] {
   return findings;
 }
 
+function findFirstSharedClaim(
+  claimSet: Set<string>,
+  candidateIntents: readonly string[],
+): string | undefined {
+  for (const intent of candidateIntents) {
+    if (claimSet.has(intent)) {
+      return intent;
+    }
+  }
+  return undefined;
+}
+
+function isCandidateEchoPair(
+  a: DiscoveryEntry,
+  b: DiscoveryEntry,
+  acknowledged: Set<string>,
+): boolean {
+  if (a.parentCluster && a.parentCluster === b.parentCluster) return false;
+  return !acknowledged.has(pairKey(a.id, b.id));
+}
+
 /** Entries whose claimed phrasings overlap heavily without being in one cluster. */
 function crossClusterEcho(entries: DiscoveryEntry[]): DiscoveryFinding[] {
   const live = entries.filter(
@@ -382,22 +403,29 @@ function crossClusterEcho(entries: DiscoveryEntry[]): DiscoveryFinding[] {
   );
   const acknowledged = acknowledgedPairs(entries);
 
-  const findings: DiscoveryFinding[] = [];
-  for (let i = 0; i < live.length; i += 1) {
-    for (let j = i + 1; j < live.length; j += 1) {
-      const a = live[i];
-      const b = live[j];
-      if (a.parentCluster && a.parentCluster === b.parentCluster) continue;
-      if (acknowledged.has(pairKey(a.id, b.id))) continue;
+  // ⚡ Bolt Optimization: Precompute claimed intents for each live entry
+  // to avoid recreating the Set and normalizing strings in an O(N^2) inner loop.
+  const liveClaims = live.map((entry) => {
+    const intents = claimedIntents(entry);
+    return { entry, intents, claimSet: new Set(intents) };
+  });
 
-      const aClaims = new Set(claimedIntents(a));
-      const shared = claimedIntents(b).filter((intent) => aClaims.has(intent));
-      if (shared.length === 0) continue;
+  const findings: DiscoveryFinding[] = [];
+  for (let i = 0; i < liveClaims.length; i += 1) {
+    const { entry: a, claimSet: aClaims } = liveClaims[i];
+
+    for (let j = i + 1; j < liveClaims.length; j += 1) {
+      const { entry: b, intents: bIntents } = liveClaims[j];
+
+      if (!isCandidateEchoPair(a, b, acknowledged)) continue;
+
+      const sharedIntent = findFirstSharedClaim(aClaims, bIntents);
+      if (!sharedIntent) continue;
 
       findings.push({
         severity: "warning",
         code: "shared-phrasing-across-clusters",
-        message: `${a.canonicalPath} and ${b.canonicalPath} both claim "${shared[0]}" but sit in different clusters. One should own it.`,
+        message: `${a.canonicalPath} and ${b.canonicalPath} both claim "${sharedIntent}" but sit in different clusters. One should own it.`,
         entries: [a.id, b.id],
       });
     }
