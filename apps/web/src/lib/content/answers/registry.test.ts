@@ -390,6 +390,30 @@ describe("published answers", () => {
     expect(opening.paragraphs[0]).not.toContain("captured spy");
   });
 
+  it("keeps the player-notes recap within the facts in its worked example", () => {
+    const answer = answers["how-do-i-take-useful-rpg-notes-during-play"];
+    const example = answer.sections.find(
+      (section) => section.kind === "example",
+    );
+    expect(example?.kind).toBe("example");
+    if (example?.kind !== "example") return;
+
+    const recap = example.items?.find(
+      (item) =>
+        item.term ===
+        "Four-bullet recap built from those notes after the session",
+    )?.text;
+
+    expect(recap).toContain(
+      "A rumour says the warehouse fire was deliberate; its cause is unknown.",
+    );
+    expect(recap).toContain(
+      "Kelm, who had been asking about smugglers, is missing.",
+    );
+    expect(recap).not.toContain("Glass Guild may be involved");
+    expect(recap).not.toContain("last seen near Low Quay");
+  });
+
   it("never links to an answer that does not exist", () => {
     const slugs = new Set(getAllAnswerSlugs());
     for (const answer of published) {
