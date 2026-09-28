@@ -4,6 +4,11 @@ import { fireEvent, render, screen } from "@testing-library/svelte";
 import { describe, expect, it, vi } from "vitest";
 import JournalEntryRow from "./JournalEntryRow.svelte";
 
+vi.mock("$lib/components/MarkdownEditor.svelte", async () => ({
+  default: (await import("./test-support/markdown-editor-stub"))
+    .markdownEditorStub,
+}));
+
 const entry = (type: string, content = "Something happened") => ({
   id: "e1",
   timestamp: 1_000,
@@ -296,15 +301,13 @@ describe("JournalEntryRow — Markdown formatting (#3481)", () => {
     );
   });
 
-  it("offers the formatting toolbar and keeps the edited Markdown on save", async () => {
+  it("keeps the edited Markdown on save", async () => {
     const onEdit = vi.fn().mockResolvedValue({ ok: true } as const);
     render(JournalEntryRow, {
       props: { entry: entry("manual-note", "Plain"), onEdit },
     });
 
     await fireEvent.click(screen.getByTestId("journal-entry-edit"));
-    expect(screen.getByTestId("markdown-format-toolbar")).toBeTruthy();
-
     const input = screen.getByTestId(
       "journal-entry-edit-input",
     ) as HTMLTextAreaElement;

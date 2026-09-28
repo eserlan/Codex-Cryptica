@@ -26,6 +26,7 @@ import { howDoIRunHackersOrNetrunnersWithoutSplittingTheParty } from "./how-do-i
 import { howDoIRunPoliticalIntrigueAndFactionPlay } from "./how-do-i-run-political-intrigue-and-faction-play";
 import { howDoIRunSpiesAndInfiltratorsInAnRpg } from "./how-do-i-run-spies-and-infiltrators-in-an-rpg";
 import { howDoIStartGmingForTheFirstTime } from "./how-do-i-start-gming-for-the-first-time";
+import { howDoITakeUsefulRpgNotesDuringPlay } from "./how-do-i-take-useful-rpg-notes-during-play";
 import { howDoITurnAnRpgIdeaIntoAnAdventure } from "./how-do-i-turn-an-rpg-idea-into-an-adventure";
 import { howDoITurnEconomicPressuresIntoRpgAdventureHooks } from "./how-do-i-turn-economic-pressures-into-rpg-adventure-hooks";
 import { howDoIWriteAGoodCallOfCthulhuOneShot } from "./how-do-i-write-a-good-call-of-cthulhu-one-shot";
@@ -94,6 +95,7 @@ import { whatKindOfShipShouldASciFiRpgPartyStartWith } from "./what-kind-of-ship
 import { whatMakesAGoodHeistTargetInATabletopRpg } from "./what-makes-a-good-heist-target-in-a-tabletop-rpg";
 import { whatMakesAGoodRandomEncounter } from "./what-makes-a-good-random-encounter";
 import { whatRpgFeelsLikeDndButIsSimpler } from "./what-rpg-feels-like-dnd-but-is-simpler";
+import { whatRpgMapMakingToolShouldIUse } from "./what-rpg-map-making-tool-should-i-use";
 import { whatRpgShouldIPlayForAnOverTheTopSpaceOpera } from "./what-rpg-should-i-play-for-an-over-the-top-space-opera";
 import { whatRpgShouldIPlayForInvestigativeHorror } from "./what-rpg-should-i-play-for-investigative-horror";
 import { whatRpgShouldIUseForTacticalCombat } from "./what-rpg-should-i-use-for-tactical-combat";
@@ -144,6 +146,7 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     howDoIRunPoliticalIntrigueAndFactionPlay,
     howDoIRunSpiesAndInfiltratorsInAnRpg,
     howDoIStartGmingForTheFirstTime,
+    howDoITakeUsefulRpgNotesDuringPlay,
     howDoITurnAnRpgIdeaIntoAnAdventure,
     howDoITurnEconomicPressuresIntoRpgAdventureHooks,
     howDoIWriteAGoodCallOfCthulhuOneShot,
@@ -212,6 +215,7 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     whatMakesAGoodHeistTargetInATabletopRpg,
     whatMakesAGoodRandomEncounter,
     whatRpgFeelsLikeDndButIsSimpler,
+    whatRpgMapMakingToolShouldIUse,
     whatRpgShouldIPlayForAnOverTheTopSpaceOpera,
     whatRpgShouldIPlayForInvestigativeHorror,
     whatRpgShouldIUseForTacticalCombat,

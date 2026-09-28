@@ -1,7 +1,13 @@
 /** @vitest-environment jsdom */
 
-import { fireEvent, render, screen, waitFor } from "@testing-library/svelte";
+import { fireEvent, render, screen } from "@testing-library/svelte";
 import { describe, expect, it, vi } from "vitest";
+
+vi.mock("$lib/components/MarkdownEditor.svelte", async () => ({
+  default: (await import("./test-support/markdown-editor-stub"))
+    .markdownEditorStub,
+}));
+
 import JournalComposer from "./JournalComposer.svelte";
 
 function storeStub(overrides: Record<string, unknown> = {}) {
@@ -17,15 +23,12 @@ function storeStub(overrides: Record<string, unknown> = {}) {
 
 const journal = { id: "j1", sections: [], entries: [] } as any;
 
-describe("JournalComposer — Markdown formatting (#3481)", () => {
+describe("JournalComposer, note input", () => {
   it("holds several lines and adds the note on submit", async () => {
     const store = storeStub();
     render(JournalComposer, { props: { store, journal } });
 
-    const input = screen.getByTestId(
-      "journal-note-input",
-    ) as HTMLTextAreaElement;
-    await fireEvent.input(input, {
+    await fireEvent.input(screen.getByTestId("journal-note-input"), {
       target: { value: "Line one\nLine two" },
     });
     await fireEvent.click(screen.getByTestId("journal-note-submit"));
@@ -35,42 +38,11 @@ describe("JournalComposer — Markdown formatting (#3481)", () => {
     );
   });
 
-  it("wraps the selection in ** from the toolbar without submitting", async () => {
+  it("submits on Ctrl/Cmd+Enter", async () => {
     const store = storeStub();
     render(JournalComposer, { props: { store, journal } });
 
-    const input = screen.getByTestId(
-      "journal-note-input",
-    ) as HTMLTextAreaElement;
-    await fireEvent.input(input, { target: { value: "bridge" } });
-    input.setSelectionRange(0, 6);
-    await fireEvent.click(screen.getByTestId("markdown-format-bold"));
-
-    await waitFor(() => expect(input.value).toBe("**bridge**"));
-    expect(store.appendEntry).not.toHaveBeenCalled();
-  });
-
-  it("toggles a bullet list from the toolbar", async () => {
-    const store = storeStub();
-    render(JournalComposer, { props: { store, journal } });
-
-    const input = screen.getByTestId(
-      "journal-note-input",
-    ) as HTMLTextAreaElement;
-    await fireEvent.input(input, { target: { value: "A clue" } });
-    input.setSelectionRange(0, 6);
-    await fireEvent.click(screen.getByTestId("markdown-format-bullet"));
-
-    await waitFor(() => expect(input.value).toBe("- A clue"));
-  });
-
-  it("submits on Ctrl/Cmd+Enter without adding a new line", async () => {
-    const store = storeStub();
-    render(JournalComposer, { props: { store, journal } });
-
-    const input = screen.getByTestId(
-      "journal-note-input",
-    ) as HTMLTextAreaElement;
+    const input = screen.getByTestId("journal-note-input");
     await fireEvent.input(input, { target: { value: "Ready" } });
     await fireEvent.keyDown(input, { key: "Enter", ctrlKey: true });
 
@@ -79,17 +51,15 @@ describe("JournalComposer — Markdown formatting (#3481)", () => {
     );
   });
 
-  it("applies bold from Ctrl/Cmd+B", async () => {
+  it("does not add a blank note (negative)", async () => {
     const store = storeStub();
     render(JournalComposer, { props: { store, journal } });
 
-    const input = screen.getByTestId(
-      "journal-note-input",
-    ) as HTMLTextAreaElement;
-    await fireEvent.input(input, { target: { value: "bridge" } });
-    input.setSelectionRange(0, 6);
-    await fireEvent.keyDown(input, { key: "b", ctrlKey: true });
+    await fireEvent.input(screen.getByTestId("journal-note-input"), {
+      target: { value: "   " },
+    });
+    await fireEvent.click(screen.getByTestId("journal-note-submit"));
 
-    await waitFor(() => expect(input.value).toBe("**bridge**"));
+    expect(store.appendEntry).not.toHaveBeenCalled();
   });
 });

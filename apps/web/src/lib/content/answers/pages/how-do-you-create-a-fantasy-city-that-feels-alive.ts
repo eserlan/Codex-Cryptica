@@ -152,6 +152,7 @@ export const howDoYouCreateAFantasyCityThatFeelsAlive: AnswerConfigInput = {
     "how-do-i-decide-what-a-settlement-produces-imports-and-exports",
     "how-do-trade-routes-shape-cities-and-kingdoms-in-an-rpg-world",
     "how-do-i-run-common-character-roles-in-a-fantasy-rpg",
+    "what-rpg-map-making-tool-should-i-use",
   ],
   labels: ["fantasy", "rumour"],
   discovery: {

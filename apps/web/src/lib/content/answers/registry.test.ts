@@ -370,6 +370,12 @@ describe("published answers", () => {
     expect(new Set(descriptions).size).toBe(descriptions.length);
   });
 
+  it("uses a hosted map image for the map-making tool answer", () => {
+    expect(answers["what-rpg-map-making-tool-should-i-use"].seo.image).toBe(
+      "https://assets.codexcryptica.com/og/point-crawl-vs-hex-crawl.jpg",
+    );
+  });
+
   it("distinguishes ordinary combat from killing surrendered enemies", () => {
     const answer =
       answers["what-do-you-do-with-murder-hobos-in-an-rpg-campaign"];
@@ -382,6 +388,34 @@ describe("published answers", () => {
       "kills bandits during a fight the table chose to have",
     );
     expect(opening.paragraphs[0]).not.toContain("captured spy");
+  });
+
+  it("keeps the player-notes recap within the facts in its worked example", () => {
+    const answer = answers["how-do-i-take-useful-rpg-notes-during-play"];
+    const example = answer.sections.find(
+      (section) => section.kind === "example",
+    );
+    expect(example?.kind).toBe("example");
+    if (example?.kind !== "example") return;
+
+    const recap = example.items?.find(
+      (item) =>
+        item.term ===
+        "Four-bullet recap built from those notes after the session",
+    )?.text;
+
+    expect(recap).toContain(
+      "A dockside rumour says the warehouse fire was deliberate; its cause is unknown.",
+    );
+    expect(recap).toContain(
+      "its possible council connection is only a theory and needs checking.",
+    );
+    expect(recap).not.toContain("fire was probably deliberate");
+    expect(recap).toContain(
+      "Kelm, who had been asking about smugglers, is missing.",
+    );
+    expect(recap).not.toContain("Glass Guild may be involved");
+    expect(recap).not.toContain("last seen near Low Quay");
   });
 
   it("never links to an answer that does not exist", () => {
