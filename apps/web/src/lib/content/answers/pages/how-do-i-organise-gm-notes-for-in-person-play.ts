@@ -161,6 +161,7 @@ export const howDoIOrganiseGmNotesForInPersonPlay: AnswerConfigInput = {
     "how-do-you-recap-a-ttrpg-session",
     "how-do-i-start-gming-for-the-first-time",
     "how-do-i-prepare-an-rpg-session-step-by-step",
+    "how-do-i-take-useful-rpg-notes-during-play",
   ],
   discovery: {
     id: "answer-in-person-gm-notes",

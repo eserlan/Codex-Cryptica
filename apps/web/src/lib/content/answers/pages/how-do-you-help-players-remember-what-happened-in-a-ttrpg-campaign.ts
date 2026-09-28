@@ -111,6 +111,7 @@ export const howDoYouHelpPlayersRememberWhatHappenedInATtrpgCampaign: AnswerConf
       "how-do-you-track-unresolved-plot-hooks-in-an-rpg-campaign",
       "how-do-you-make-npcs-memorable-without-lots-of-prep",
       "how-do-you-manage-a-campaign-timeline-in-an-rpg",
+      "how-do-i-take-useful-rpg-notes-during-play",
     ],
     discovery: {
       id: "answer-campaign-memory-hub",
