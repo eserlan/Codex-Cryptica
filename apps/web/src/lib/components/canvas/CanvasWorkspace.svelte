@@ -45,6 +45,7 @@
   import { useCanvasDrawing } from "./hooks/use-canvas-drawing.svelte";
   import { useCanvasEvents } from "./use-canvas-events.svelte";
   import { useCanvasNodeRotation } from "./hooks/use-canvas-node-rotation.svelte";
+  import { useCanvasContextMenu } from "./hooks/use-canvas-context-menu.svelte";
   import {
     useCanvasFileImport,
     centerScreenPosition,
@@ -113,6 +114,7 @@
   const logic = createCanvasLogic(() => engine);
   const rotationLogic = useCanvasNodeRotation(logic, vault);
   const drawingLogic = useCanvasDrawing(logic);
+  const contextMenuLogic = useCanvasContextMenu(logic, vault);
   const fileImport = useCanvasFileImport({
     vault,
     engine: {
@@ -241,30 +243,6 @@
   function handleSendNodeToBack(nodeId: string) {
     logic.nodes = sendNodeToBack(logic.nodes, nodeId);
   }
-
-  const contextMenuNodeLocked = $derived.by(() => {
-    if (logic.contextMenu?.type !== "node") return false;
-    const node = logic.nodes.find((n) => n.id === logic.contextMenu?.id);
-    return Boolean((node?.data as any)?.locked);
-  });
-
-  const contextMenuNodeStackable = $derived.by(() => {
-    if (logic.contextMenu?.type !== "node") return false;
-    const node = logic.nodes.find((n) => n.id === logic.contextMenu?.id);
-    return Boolean(node) && node?.type !== "delveSectorGroup";
-  });
-
-  const contextMenuTextNode = $derived.by(() => {
-    if (logic.contextMenu?.type !== "node") return undefined;
-    const node = logic.nodes.find((n) => n.id === logic.contextMenu?.id);
-    return node?.type === "text" ? node : undefined;
-  });
-
-  const contextMenuEntityNode = $derived.by(() => {
-    if (logic.contextMenu?.type !== "node") return undefined;
-    const node = logic.nodes.find((n) => n.id === logic.contextMenu?.id);
-    return node?.type === "entity" ? node : undefined;
-  });
 
   const filteredNodes = $derived.by(() => {
     const base = (() => {
@@ -409,22 +387,6 @@
     }
   });
 
-  function onNodeContextMenu({
-    event,
-    node,
-  }: {
-    event: MouseEvent;
-    node: any;
-  }) {
-    event.preventDefault();
-    logic.contextMenu = {
-      x: event.clientX,
-      y: event.clientY,
-      type: "node",
-      id: node.id,
-    };
-  }
-
   function onNodeClick({ node }: { node: any }) {
     if (!vault.isGuest && rotationLogic.canRotateNode(node.id)) {
       rotationLogic.selectedRotationNodeId = node.id;
@@ -537,33 +499,6 @@
         ? { ...node, data: { ...node.data, ...updated } }
         : node,
     );
-  }
-
-  function onEdgeContextMenu({
-    event,
-    edge,
-  }: {
-    event: MouseEvent;
-    edge: any;
-  }) {
-    event.preventDefault();
-    logic.contextMenu = {
-      x: event.clientX,
-      y: event.clientY,
-      type: "edge",
-      id: edge.id,
-    };
-  }
-
-  function handlePaneContextMenu({ event }: { event: MouseEvent }) {
-    if (vault.isGuest) return;
-    event.preventDefault();
-    logic.contextMenu = {
-      x: event.clientX,
-      y: event.clientY,
-      type: "pane",
-      id: "pane",
-    };
   }
 
   function onEdgeClick({ event, edge }: { event: MouseEvent; edge: any }) {
@@ -840,13 +775,13 @@
           logic.isConnecting = false;
           connectionModeStore.isConnecting = false;
         }}
-        onnodecontextmenu={onNodeContextMenu}
+        onnodecontextmenu={contextMenuLogic.onNodeContextMenu}
         onnodeclick={onNodeClick}
         onpaneclick={onPaneClick}
         onnodedragstop={onNodeDragStop}
-        onedgecontextmenu={onEdgeContextMenu}
+        onedgecontextmenu={contextMenuLogic.onEdgeContextMenu}
         onedgeclick={onEdgeClick}
-        onpanecontextmenu={handlePaneContextMenu}
+        onpanecontextmenu={contextMenuLogic.handlePaneContextMenu}
         defaultEdgeOptions={{ type: "straight" }}
         connectionMode={ConnectionMode.Loose}
         zoomOnDoubleClick={false}
@@ -1001,14 +936,14 @@
       isAdventure={canvas?.metadata?.kind === "adventure" ||
         sourceEntity?.kind === "adventure" ||
         logic.nodes.some((n) => n.type === "adventureNode")}
-      isLocked={contextMenuNodeLocked}
+      isLocked={contextMenuLogic.contextMenuNodeLocked}
       onToggleLock={logic.contextMenu?.type === "node" && logic.contextMenu.id
         ? () => toggleNodeLock(logic.contextMenu!.id)
         : undefined}
-      onBringToFront={contextMenuNodeStackable
+      onBringToFront={contextMenuLogic.contextMenuNodeStackable
         ? () => handleBringNodeToFront(logic.contextMenu!.id)
         : undefined}
-      onSendToBack={contextMenuNodeStackable
+      onSendToBack={contextMenuLogic.contextMenuNodeStackable
         ? () => handleSendNodeToBack(logic.contextMenu!.id)
         : undefined}
       onDelete={logic.handleDelete}
@@ -1042,14 +977,14 @@
             })
         : undefined}
       nodeBackground={normalizeCanvasTextBackground(
-        ((contextMenuEntityNode ?? contextMenuTextNode)?.data as any)
+        ((contextMenuLogic.contextMenuEntityNode ?? contextMenuLogic.contextMenuTextNode)?.data as any)
           ?.background ?? "",
         DEFAULT_CANVAS_TEXT_BACKGROUND,
       )}
-      onNodeBackgroundChange={(contextMenuEntityNode || contextMenuTextNode) &&
+      onNodeBackgroundChange={(contextMenuLogic.contextMenuEntityNode || contextMenuLogic.contextMenuTextNode) &&
       !vault.isGuest
         ? (background: string) => {
-            const targetNode = contextMenuEntityNode ?? contextMenuTextNode;
+            const targetNode = contextMenuLogic.contextMenuEntityNode ?? contextMenuLogic.contextMenuTextNode;
             if (targetNode) {
               updateNodeData(targetNode.id, {
                 background: normalizeCanvasTextBackground(
@@ -1061,24 +996,24 @@
           }
         : undefined}
       textNodeFontSize={normalizeCanvasTextFontSize(
-        (contextMenuTextNode?.data as any)?.fontSize,
+        (contextMenuLogic.contextMenuTextNode?.data as any)?.fontSize,
         DEFAULT_CANVAS_TEXT_FONT_SIZE,
       )}
-      onTextNodeFontSizeChange={contextMenuTextNode && !vault.isGuest
+      onTextNodeFontSizeChange={contextMenuLogic.contextMenuTextNode && !vault.isGuest
         ? (fontSize: number) =>
-            updateNodeData(contextMenuTextNode!.id, { fontSize })
+            updateNodeData(contextMenuLogic.contextMenuTextNode!.id, { fontSize })
         : undefined}
       entityCardView={normalizeEntityCardViewPreference(
-        (contextMenuEntityNode?.data as any)?.cardView,
+        (contextMenuLogic.contextMenuEntityNode?.data as any)?.cardView,
       )}
-      onEntityCardViewChange={contextMenuEntityNode && !vault.isGuest
+      onEntityCardViewChange={contextMenuLogic.contextMenuEntityNode && !vault.isGuest
         ? (view: EntityCardViewPreference) =>
-            updateNodeData(contextMenuEntityNode!.id, { cardView: view })
+            updateNodeData(contextMenuLogic.contextMenuEntityNode!.id, { cardView: view })
         : undefined}
-      largeCard={(contextMenuEntityNode?.data as any)?.largeCard === true}
-      onLargeCardChange={contextMenuEntityNode && !vault.isGuest
+      largeCard={(contextMenuLogic.contextMenuEntityNode?.data as any)?.largeCard === true}
+      onLargeCardChange={contextMenuLogic.contextMenuEntityNode && !vault.isGuest
         ? (large: boolean) =>
-            updateNodeData(contextMenuEntityNode!.id, { largeCard: large })
+            updateNodeData(contextMenuLogic.contextMenuEntityNode!.id, { largeCard: large })
         : undefined}
       {isAllImageOnly}
       onToggleAllImageOnly={entityNodes.length > 0 && !vault.isGuest
