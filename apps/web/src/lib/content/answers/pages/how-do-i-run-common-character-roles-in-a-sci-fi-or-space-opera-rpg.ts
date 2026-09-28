@@ -201,22 +201,22 @@ export const howDoIRunCommonCharacterRolesInASciFiOrSpaceOperaRpg: AnswerConfigI
         {
           with: "answer-specialist-character-spotlight",
           reason:
-            "The spotlight answer gives reusable scene structures for any specialist across genres; this answer applies those structures to eight sci-fi and space-opera archetypes with genre-specific pressures and a crew-level arrival.",
+            "The spotlight answer gives reusable scene structures for any specialist across genres; this answer applies those structures to nine sci-fi and space-opera functions across crews and expedition teams, with genre-specific pressures and both planetary-survey and crew-arrival examples.",
         },
         {
           with: "answer-run-hackers-netrunners",
           reason:
-            "This crew answer summarises what a systems specialist contributes inside a shared starship scene; the hacker answer is the focused procedure for running digital intrusions without leaving the physical crew idle.",
+            "This team answer summarises what a systems specialist contributes to a shared sci-fi operation; the hacker answer is the focused procedure for running digital intrusions without leaving the rest of the team idle.",
         },
         {
           with: "answer-run-diplomats-nobles-courtiers",
           reason:
-            "This crew answer summarises what a diplomat or envoy contributes to starship-scale commitments; the diplomat answer is the focused procedure for building negotiations around interests and trade-offs.",
+            "This team answer summarises what a diplomat or envoy contributes to shared sci-fi operations; the diplomat answer is the focused procedure for building negotiations around interests and trade-offs.",
         },
         {
           with: "answer-cyberpunk-party-roles",
           reason:
-            "The cyberpunk roles page situates specialists inside a shared physical job in a street-level crew; this answer situates specialists inside starship operations, travel, and station-scale commitments.",
+            "The cyberpunk roles page situates specialists inside a shared physical job in a street-level crew; this answer situates specialists across ship operations and planetary expedition teams, with travel and station-scale commitments.",
         },
         {
           with: "answer-run-character-roles-political-intrigue",
@@ -226,12 +226,12 @@ export const howDoIRunCommonCharacterRolesInASciFiOrSpaceOperaRpg: AnswerConfigI
         {
           with: "answer-run-investigator-without-sidelining-party",
           reason:
-            "The investigator answer focuses on clue access, interpretation, and shared decisions around a detective character; this page applies shared-scene techniques across a starship crew's pilot, engineer, scientist, diplomat, hacker, captain, scout, and medic roles.",
+            "The investigator answer focuses on clue access, interpretation, and shared decisions around a detective character; this page applies shared-scene techniques across sci-fi team roles, including a security specialist, with both starship and planetary-survey examples.",
         },
         {
           with: "answer-character-roles-investigative-horror",
           reason:
-            "The investigative horror roles page covers overlapping archetypes such as scientist, diplomat, and hacker inside a shared investigation; this page covers the same functions inside starship and space-opera operations with distinct travel and system pressures.",
+            "The investigative horror roles page covers overlapping archetypes such as scientist, diplomat, and hacker inside a shared investigation; this page covers the same functions across sci-fi crew and expedition operations with distinct travel and system pressures.",
         },
       ],
     },
