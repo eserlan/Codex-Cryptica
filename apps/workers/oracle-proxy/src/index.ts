@@ -83,8 +83,17 @@ import {
 } from "./answer-aggregates";
 import { isKnownAnswerSlug } from "./answer-slugs";
 import { handleAssetGallery } from "./asset-gallery";
+import {
+  getCorsHeaders,
+  handleCorsPreflight,
+  isOriginAllowed,
+  withCorsHeaders,
+  type CorsEnv,
+} from "./cors";
 
-interface Env {
+export { isOriginAllowed } from "./cors";
+
+interface Env extends CorsEnv {
   GEMINI_API_KEY: string;
   OPENAI_API_KEY?: string;
   ALLOWED_ORIGINS?: string;
@@ -119,32 +128,6 @@ interface Env {
     limit: (options: { key: string }) => Promise<{ success: boolean }>;
   };
 }
-
-/**
- * Allowed origins for CORS — the single source of truth.
- *
- * One `oracle-proxy` Worker serves every environment (no `--env`, no
- * `[env.*]` in wrangler.toml), so this list must cover them all. Setting
- * `ALLOWED_ORIGINS` per deploy is what broke staging on 2026-08-11: the
- * variable is authoritative when present, so a deploy carrying only the
- * production origins cut staging off until the next deploy. Keeping the list
- * here means every deploy is identical no matter who runs it or which
- * environment they thought they were deploying.
- *
- * `ALLOWED_ORIGINS` still overrides this if set, as an escape hatch for
- * locking the Worker down without a code change — it just isn't set normally.
- *
- * Only origins actually served belong here: an entry for a domain nobody owns
- * would hand CORS access to whoever registers it next.
- */
-const DEFAULT_ALLOWED_ORIGINS = [
-  "https://codexcryptica.com",
-  "https://www.codexcryptica.com",
-  "https://staging.codexcryptica.com",
-  "https://codex-cryptica.pages.dev",
-  "http://localhost",
-  "http://127.0.0.1",
-];
 
 /**
  * FLUX.2 models are served through the multipart image-generation endpoint.
@@ -218,23 +201,6 @@ async function handleCachedAssetGallery(
  * edge locations where the CDN would otherwise pass through to D1.
  * Falls back to a direct read when the Cache API is unavailable (tests).
  */
-/**
- * Attaches the Worker's CORS headers to a response (shared by route blocks
- * that cannot use the handlers' own CORS helpers).
- */
-function withCorsHeaders(
-  request: Request,
-  env: Env,
-  response: Response,
-): Response {
-  const headers = getCorsHeaders(request.headers, env);
-  for (const [name, value] of Object.entries(headers)) {
-    response.headers.set(name, value);
-  }
-  response.headers.append("Vary", "Origin");
-  return response;
-}
-
 async function handleCachedAggregateRead(
   request: Request,
   env: Env,
@@ -1148,48 +1114,6 @@ async function handleInteraction(
   return json({ id: data.id, text: extractedText }, 200);
 }
 
-/**
- * Handle CORS preflight requests
- */
-function handleCorsPreflight(request: Request, env: Env): Response {
-  const headers = new Headers();
-  const allowedHeaders =
-    "Content-Type, Authorization, X-Requested-With, X-Turnstile-Token, X-Filename, X-Codex-Automation-Key";
-  const allowedMethods = "GET, POST, PUT, DELETE, OPTIONS";
-
-  // Set CORS headers
-  const origin = request.headers.get("Origin") || "";
-  if (isOriginAllowed(origin, env)) {
-    headers.set("Access-Control-Allow-Origin", origin);
-  }
-
-  headers.set("Access-Control-Allow-Headers", allowedHeaders);
-  headers.set("Access-Control-Allow-Methods", allowedMethods);
-  headers.set("Access-Control-Max-Age", "86400");
-
-  return new Response(null, {
-    status: 204,
-    headers,
-  });
-}
-
-/**
- * Get CORS headers for a response
- */
-function getCorsHeaders(
-  requestHeaders: Headers,
-  env: Env,
-): Record<string, string> {
-  const headers: Record<string, string> = {};
-  const origin = requestHeaders.get("Origin") || "";
-
-  if (isOriginAllowed(origin, env)) {
-    headers["Access-Control-Allow-Origin"] = origin;
-  }
-
-  return headers;
-}
-
 async function enforcePublishRateLimit(
   request: Request,
   env: Env,
@@ -1238,78 +1162,6 @@ async function enforcePublishRateLimit(
       },
     },
   );
-}
-
-/**
- * Check if origin is allowed
- */
-export function isOriginAllowed(origin: string, env: Env): boolean {
-  if (!origin) return false;
-
-  // 1. Check explicit allowlist if configured
-  if (env.ALLOWED_ORIGINS?.trim()) {
-    const explicitlyAllowedOrigins = env.ALLOWED_ORIGINS.split(",")
-      .map((o) => o.trim())
-      .filter(Boolean);
-    if (explicitlyAllowedOrigins.includes(origin)) return true;
-
-    if (
-      isEnabled(env.ALLOW_CLOUDFLARE_PAGES_PREVIEW_ORIGINS) &&
-      isCloudflarePagesPreviewOrigin(origin)
-    ) {
-      return true;
-    }
-
-    // When ALLOWED_ORIGINS is configured, treat it as authoritative.
-    return false;
-  }
-
-  // 2. Check default internal origins
-  if (DEFAULT_ALLOWED_ORIGINS.includes(origin)) {
-    return true;
-  }
-
-  // 3. Allow Cloudflare Pages preview subdomains
-  if (isCloudflarePagesPreviewOrigin(origin)) {
-    return true;
-  }
-
-  // 4. Allow any local dev port so Vite / wrangler dev port changes do not break CORS.
-  return isLoopbackOrigin(origin);
-}
-
-function isEnabled(value: string | undefined): boolean {
-  return value?.toLowerCase() === "true" || value === "1";
-}
-
-function isCloudflarePagesPreviewOrigin(origin: string): boolean {
-  try {
-    const url = new URL(origin);
-    if (url.protocol !== "https:") {
-      return false;
-    }
-
-    const hostname = url.hostname.toLowerCase();
-    return (
-      hostname === "codex-cryptica.pages.dev" ||
-      hostname.endsWith(".codex-cryptica.pages.dev")
-    );
-  } catch {
-    return false;
-  }
-}
-
-function isLoopbackOrigin(origin: string): boolean {
-  try {
-    const url = new URL(origin);
-    if (url.protocol !== "http:" && url.protocol !== "https:") {
-      return false;
-    }
-    const hostname = url.hostname.toLowerCase();
-    return hostname === "localhost" || hostname === "127.0.0.1";
-  } catch {
-    return false;
-  }
 }
 
 /**
