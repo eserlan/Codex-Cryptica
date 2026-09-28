@@ -2,7 +2,7 @@
   import type { SessionJournalStore } from "$lib/stores/session-journal.svelte";
   import type { SessionJournal } from "session-journal-engine";
   import { notificationStore } from "$lib/stores/ui/notification.svelte";
-  import JournalMarkdownField from "./JournalMarkdownField.svelte";
+  import MarkdownEditor from "$lib/components/MarkdownEditor.svelte";
 
   /**
    * The bottom of the Session Journal while a journal is running (#3402 slice
@@ -80,14 +80,12 @@
 
 <div class="flex flex-col gap-2 border-t border-theme-border/40 pt-3">
   <div class="flex flex-col gap-1.5">
-    <JournalMarkdownField
-      value={noteText}
-      onValueChange={(text) => (noteText = text)}
-      ariaLabel="Journal note"
-      placeholder="Add a note... (Ctrl/Cmd+Enter to add)"
-      rows={2}
-      toolbarLabel="Note formatting"
-      testIdPrefix="journal-note"
+    <MarkdownEditor
+      content={noteText}
+      onUpdate={(markdown) => (noteText = markdown)}
+      label="Journal note"
+      compact
+      testId="journal-note-input"
       onSubmitShortcut={() => void submitNote()}
     />
     <div class="flex justify-end">

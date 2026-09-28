@@ -1,12 +1,20 @@
 <script lang="ts">
   import { type Editor } from "@tiptap/core";
   import { onMount, onDestroy } from "svelte";
-  import ZenModeRevisionAction from "../entity/ZenModeRevisionAction.svelte";
+  import EditorTableActions from "./EditorTableActions.svelte";
+  import EditorZenActions from "./EditorZenActions.svelte";
 
-  let { editor, isZenMode, onToggleZenMode } = $props<{
+  let {
+    editor,
+    isZenMode,
+    onToggleZenMode,
+    compact = false,
+  } = $props<{
     editor: Editor | null;
     isZenMode: boolean;
     onToggleZenMode: () => void;
+    /** Inline marks and lists only: no headings, link/table, or Zen mode. */
+    compact?: boolean;
   }>();
 
   // Optimization: Single state object for all formatting states.
@@ -100,6 +108,8 @@
   };
 
   const handleKeydown = (e: KeyboardEvent) => {
+    // No Zen mode in the compact variant, so its shortcuts must not fire either.
+    if (compact) return;
     // Toggle Zen Mode on Escape if active, but do not block other handlers/defaults
     if (e.key === "Escape" && isZenMode && !e.defaultPrevented) {
       e.preventDefault();
@@ -170,46 +180,51 @@
       </button>
     </div>
 
-    <div class="w-px bg-theme-border/50 mx-1"></div>
+    {#if !compact}
+      <div class="w-px bg-theme-border/50 mx-1"></div>
 
-    <!-- Headings -->
-    <div class="flex gap-0.5">
-      <button
-        type="button"
-        onclick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
-        class="toolbar-btn {activeStates.isH1 ? 'active' : ''}"
-        title="Heading 1"
-        aria-label="Heading 1"
-        aria-pressed={activeStates.isH1}
-      >
-        <span class="icon-[lucide--heading-1] w-4 h-4" aria-hidden="true"
-        ></span>
-      </button>
-      <button
-        type="button"
-        onclick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
-        class="toolbar-btn {activeStates.isH2 ? 'active' : ''}"
-        title="Heading 2"
-        aria-label="Heading 2"
-        aria-pressed={activeStates.isH2}
-      >
-        <span class="icon-[lucide--heading-2] w-4 h-4" aria-hidden="true"
-        ></span>
-      </button>
-      <button
-        type="button"
-        onclick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
-        class="toolbar-btn {activeStates.isH3 ? 'active' : ''}"
-        title="Heading 3"
-        aria-label="Heading 3"
-        aria-pressed={activeStates.isH3}
-      >
-        <span class="icon-[lucide--heading-3] w-4 h-4" aria-hidden="true"
-        ></span>
-      </button>
-    </div>
+      <!-- Headings -->
+      <div class="flex gap-0.5">
+        <button
+          type="button"
+          onclick={() =>
+            editor.chain().focus().toggleHeading({ level: 1 }).run()}
+          class="toolbar-btn {activeStates.isH1 ? 'active' : ''}"
+          title="Heading 1"
+          aria-label="Heading 1"
+          aria-pressed={activeStates.isH1}
+        >
+          <span class="icon-[lucide--heading-1] w-4 h-4" aria-hidden="true"
+          ></span>
+        </button>
+        <button
+          type="button"
+          onclick={() =>
+            editor.chain().focus().toggleHeading({ level: 2 }).run()}
+          class="toolbar-btn {activeStates.isH2 ? 'active' : ''}"
+          title="Heading 2"
+          aria-label="Heading 2"
+          aria-pressed={activeStates.isH2}
+        >
+          <span class="icon-[lucide--heading-2] w-4 h-4" aria-hidden="true"
+          ></span>
+        </button>
+        <button
+          type="button"
+          onclick={() =>
+            editor.chain().focus().toggleHeading({ level: 3 }).run()}
+          class="toolbar-btn {activeStates.isH3 ? 'active' : ''}"
+          title="Heading 3"
+          aria-label="Heading 3"
+          aria-pressed={activeStates.isH3}
+        >
+          <span class="icon-[lucide--heading-3] w-4 h-4" aria-hidden="true"
+          ></span>
+        </button>
+      </div>
 
-    <div class="w-px bg-theme-border/50 mx-1"></div>
+      <div class="w-px bg-theme-border/50 mx-1"></div>
+    {/if}
 
     <!-- Lists & Structure -->
     <div class="flex gap-0.5">
@@ -246,171 +261,50 @@
       </button>
     </div>
 
-    <div class="w-px bg-theme-border/50 mx-1"></div>
-
-    <!-- Insertions -->
-    <div class="flex gap-0.5">
-      <button
-        type="button"
-        onclick={setLink}
-        class="toolbar-btn {activeStates.isLink ? 'active' : ''}"
-        title="Link"
-        aria-label="Link"
-        aria-pressed={activeStates.isLink}
-      >
-        <span class="icon-[lucide--link] w-4 h-4" aria-hidden="true"></span>
-      </button>
-      <button
-        type="button"
-        onclick={insertTable}
-        class="toolbar-btn"
-        title="Insert Table"
-        aria-label="Insert Table"
-      >
-        <span class="icon-[lucide--table] w-4 h-4" aria-hidden="true"></span>
-      </button>
-    </div>
-
-    {#if activeStates.isTable}
+    {#if !compact}
       <div class="w-px bg-theme-border/50 mx-1"></div>
 
-      <!-- Table editing -->
+      <!-- Insertions -->
       <div class="flex gap-0.5">
         <button
           type="button"
-          onclick={() => editor.chain().focus().addRowBefore().run()}
-          class="toolbar-btn"
-          title="Add Row Above"
-          aria-label="Add Row Above"
+          onclick={setLink}
+          class="toolbar-btn {activeStates.isLink ? 'active' : ''}"
+          title="Link"
+          aria-label="Link"
+          aria-pressed={activeStates.isLink}
         >
-          <span
-            class="icon-[lucide--arrow-up-to-line] w-4 h-4"
-            aria-hidden="true"
-          ></span>
+          <span class="icon-[lucide--link] w-4 h-4" aria-hidden="true"></span>
         </button>
         <button
           type="button"
-          onclick={() => editor.chain().focus().addRowAfter().run()}
+          onclick={insertTable}
           class="toolbar-btn"
-          title="Add Row Below"
-          aria-label="Add Row Below"
+          title="Insert Table"
+          aria-label="Insert Table"
         >
-          <span
-            class="icon-[lucide--arrow-down-to-line] w-4 h-4"
-            aria-hidden="true"
-          ></span>
-        </button>
-        <button
-          type="button"
-          onclick={() => editor.chain().focus().deleteRow().run()}
-          class="toolbar-btn"
-          title="Delete Row"
-          aria-label="Delete Row"
-        >
-          <span class="icon-[lucide--rows-3] w-4 h-4" aria-hidden="true"></span>
-        </button>
-        <button
-          type="button"
-          onclick={() => editor.chain().focus().addColumnBefore().run()}
-          class="toolbar-btn"
-          title="Add Column Left"
-          aria-label="Add Column Left"
-        >
-          <span
-            class="icon-[lucide--arrow-left-to-line] w-4 h-4"
-            aria-hidden="true"
-          ></span>
-        </button>
-        <button
-          type="button"
-          onclick={() => editor.chain().focus().addColumnAfter().run()}
-          class="toolbar-btn"
-          title="Add Column Right"
-          aria-label="Add Column Right"
-        >
-          <span
-            class="icon-[lucide--arrow-right-to-line] w-4 h-4"
-            aria-hidden="true"
-          ></span>
-        </button>
-        <button
-          type="button"
-          onclick={() => editor.chain().focus().deleteColumn().run()}
-          class="toolbar-btn"
-          title="Delete Column"
-          aria-label="Delete Column"
-        >
-          <span class="icon-[lucide--columns-3] w-4 h-4" aria-hidden="true"
-          ></span>
-        </button>
-        <button
-          type="button"
-          onclick={() => editor.chain().focus().toggleHeaderRow().run()}
-          class="toolbar-btn"
-          title="Toggle Header Row"
-          aria-label="Toggle Header Row"
-        >
-          <span
-            class="icon-[lucide--table-properties] w-4 h-4"
-            aria-hidden="true"
-          ></span>
-        </button>
-        <button
-          type="button"
-          onclick={() => editor.chain().focus().deleteTable().run()}
-          class="toolbar-btn"
-          title="Delete Table"
-          aria-label="Delete Table"
-        >
-          <span class="icon-[lucide--trash-2] w-4 h-4" aria-hidden="true"
-          ></span>
+          <span class="icon-[lucide--table] w-4 h-4" aria-hidden="true"></span>
         </button>
       </div>
+
+      {#if activeStates.isTable}
+        <div class="w-px bg-theme-border/50 mx-1"></div>
+
+        <EditorTableActions {editor} />
+      {/if}
     {/if}
 
     <div class="flex-1"></div>
 
     <!-- Utility -->
-    <div class="flex gap-1">
-      {#if isZenMode}
-        <ZenModeRevisionAction />
-        <button
-          type="button"
-          onclick={toggleZenMode}
-          class="px-3 py-1 flex items-center gap-2 text-[10px] font-bold text-theme-accent border border-theme-accent/30 hover:border-theme-accent/50 transition-all uppercase font-header tracking-widest bg-theme-accent/10 rounded"
-          title="Close Zen Mode"
-          aria-label="Close Zen Mode"
-        >
-          <span class="icon-[lucide--x] w-3.5 h-3.5" aria-hidden="true"></span>
-          Close Zen Mode
-        </button>
-        <div class="w-px bg-theme-border/50 mx-1"></div>
-      {/if}
-
-      <button
-        type="button"
-        onclick={toggleZenMode}
-        class="toolbar-btn {isZenMode ? 'active' : ''}"
-        title={isZenMode ? "Exit Zen Mode (Esc)" : "Zen Mode (Cmd+Shift+F)"}
-        aria-label={isZenMode
-          ? "Exit Zen Mode (Esc)"
-          : "Zen Mode (Cmd+Shift+F)"}
-        aria-pressed={isZenMode}
-      >
-        {#if isZenMode}
-          <span class="icon-[lucide--minimize] w-4 h-4" aria-hidden="true"
-          ></span>
-        {:else}
-          <span class="icon-[lucide--maximize] w-4 h-4" aria-hidden="true"
-          ></span>
-        {/if}
-      </button>
-    </div>
+    {#if !compact}
+      <EditorZenActions {isZenMode} onToggle={toggleZenMode} />
+    {/if}
   </div>
 {/if}
 
 <style>
-  .toolbar-btn {
+  :global(.editor-toolbar .toolbar-btn) {
     padding: 0.375rem; /* p-1.5 */
     border-radius: 0.25rem; /* rounded */
     color: color-mix(in srgb, var(--color-theme-text) 70%, transparent);
@@ -420,7 +314,7 @@
     transition: all 0.2s;
   }
 
-  .toolbar-btn:hover {
+  :global(.editor-toolbar .toolbar-btn:hover) {
     color: var(--color-theme-primary);
     background-color: color-mix(
       in srgb,
@@ -429,7 +323,7 @@
     );
   }
 
-  .toolbar-btn.active {
+  :global(.editor-toolbar .toolbar-btn.active) {
     color: var(--color-theme-primary);
     background-color: color-mix(
       in srgb,
