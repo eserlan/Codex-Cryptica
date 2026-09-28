@@ -402,7 +402,7 @@
               <span
                 class="w-1.5 h-1.5 rounded-full bg-theme-primary/60 animate-pulse"
               ></span>
-              Local-first RPG campaign manager • Private by default
+              No account needed • Works offline
             </div>
             <h1
               class="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold text-theme-primary/90 font-header tracking-tight mb-3 md:mb-5 leading-tight"
@@ -527,37 +527,42 @@
           </section>
         </section>
 
-        <!-- Below the Hero: Info boxes -->
+        <!-- Below the Hero: product highlights, condensed to a single slim
+             strip. These used to be three tall cards, which pushed the
+             themed-vault picker and footer well below the fold on a first
+             visit; the claims themselves didn't need that much room (#welcomeness). -->
         <div
-          class="mx-auto mb-10 md:mb-14 grid max-w-5xl gap-4 text-left sm:grid-cols-3 w-full"
+          class="mx-auto mb-8 flex w-full max-w-4xl flex-wrap items-center justify-center gap-x-8 gap-y-3 text-left"
           aria-label="Codex Cryptica product highlights"
         >
           {#each agenticProofPoints as point (point.label)}
-            <article
-              class="border border-theme-border/70 bg-theme-surface/45 p-4 text-theme-text shadow-sm"
-            >
-              <div
-                class="mb-3 flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.18em] text-theme-primary"
-              >
-                <span class="{point.icon} h-4 w-4 shrink-0" aria-hidden="true"
-                ></span>
-                <h3>{point.label}</h3>
-              </div>
-              <p class="text-sm leading-relaxed text-theme-muted">
-                {point.copy}
-              </p>
-            </article>
+            <div class="flex items-center gap-2 text-sm text-theme-muted">
+              <span
+                class="{point.icon} h-4 w-4 shrink-0 text-theme-primary"
+                aria-hidden="true"
+              ></span>
+              <span>
+                <span class="font-bold text-theme-text">{point.label}</span>
+                — {point.copy}
+              </span>
+            </div>
           {/each}
         </div>
 
-        <!-- Try it as section -->
-        <section class="text-center mb-10 w-full">
-          <h3
-            class="text-[10px] font-mono text-theme-muted uppercase tracking-[0.3em] mb-6"
+        <!-- Try it as section — collapsed by default so the eight theme
+             chips don't compete with the primary CTAs above; still reachable
+             in one click for anyone who wants a themed starting point. -->
+        <details class="group mb-10 w-full text-center">
+          <summary
+            class="mb-2 inline-flex list-none items-center gap-1.5 text-[10px] font-mono text-theme-muted uppercase tracking-[0.3em] transition-colors hover:text-theme-primary cursor-pointer [&::-webkit-details-marker]:hidden"
           >
-            Try a themed vault:
-          </h3>
-          <div class="flex flex-wrap justify-center gap-4">
+            <span
+              class="icon-[lucide--chevron-right] h-3 w-3 transition-transform group-open:rotate-90"
+              aria-hidden="true"
+            ></span>
+            Or start from a themed vault
+          </summary>
+          <div class="mt-4 flex flex-wrap justify-center gap-4">
             {#each demoThemes as theme (theme)}
               <button
                 onclick={() => startDemoFromWelcome(theme, "themed_demo")}
@@ -567,7 +572,7 @@
               </button>
             {/each}
           </div>
-        </section>
+        </details>
 
         <!-- Footer actions & settings -->
         <div class="flex flex-col items-center gap-4 w-full">
