@@ -552,6 +552,17 @@ describe("the committed registry", () => {
     }
   });
 
+  it("records the distinct scope of sci-fi crew roles and investigator guidance", () => {
+    const sciFiCrew = registry.find(
+      (entry) => entry.id === "answer-sci-fi-character-roles",
+    );
+
+    expect(sciFiCrew?.acknowledgedOverlap).toContainEqual({
+      with: "answer-run-investigator-without-sidelining-party",
+      reason: expect.stringContaining("clue access"),
+    });
+  });
+
   it("keeps the judgement warnings to a reviewable number", () => {
     // Not a quality bar — a tripwire. If this climbs, the overlap heuristic has
     // started reporting noise and needs tightening rather than muting.

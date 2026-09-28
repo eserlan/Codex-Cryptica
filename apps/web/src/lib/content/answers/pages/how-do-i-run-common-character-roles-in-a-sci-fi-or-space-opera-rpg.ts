@@ -219,6 +219,11 @@ export const howDoIRunCommonCharacterRolesInASciFiOrSpaceOperaRpg: AnswerConfigI
             "The political roles page covers overlapping archetypes such as diplomat and captain inside faction play; this page covers the same roles as they function inside sci-fi travel, engineering, and survey operations.",
         },
         {
+          with: "answer-run-investigator-without-sidelining-party",
+          reason:
+            "The investigator answer focuses on clue access, interpretation, and shared decisions around a detective character; this page applies shared-scene techniques across a starship crew's pilot, engineer, scientist, diplomat, hacker, captain, scout, and medic roles.",
+        },
+        {
           with: "answer-character-roles-investigative-horror",
           reason:
             "The investigative horror roles page covers overlapping archetypes such as scientist, diplomat, and hacker inside a shared investigation; this page covers the same functions inside starship and space-opera operations with distinct travel and system pressures.",
