@@ -162,6 +162,7 @@ export const whatShouldAnRpgSettlementContain: AnswerConfigInput = {
     "how-do-i-build-a-believable-economy-for-a-fantasy-world",
     "how-do-i-decide-what-a-settlement-produces-imports-and-exports",
     "how-do-trade-routes-shape-cities-and-kingdoms-in-an-rpg-world",
+    "what-rpg-map-making-tool-should-i-use",
   ],
   discovery: {
     id: "answer-settlement-contents",

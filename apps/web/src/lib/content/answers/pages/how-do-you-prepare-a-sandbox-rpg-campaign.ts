@@ -168,6 +168,7 @@ export const howDoYouPrepareASandboxRpgCampaign: AnswerConfigInput = {
     "how-do-i-make-a-player-base-matter-in-an-rpg-campaign",
     "how-much-of-the-plot-should-a-dm-prepare",
     "how-do-i-build-a-believable-economy-for-a-fantasy-world",
+    "what-rpg-map-making-tool-should-i-use",
   ],
   discovery: {
     id: "answer-sandbox-campaign-prep",

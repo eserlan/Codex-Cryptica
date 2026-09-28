@@ -94,6 +94,7 @@ import { whatKindOfShipShouldASciFiRpgPartyStartWith } from "./what-kind-of-ship
 import { whatMakesAGoodHeistTargetInATabletopRpg } from "./what-makes-a-good-heist-target-in-a-tabletop-rpg";
 import { whatMakesAGoodRandomEncounter } from "./what-makes-a-good-random-encounter";
 import { whatRpgFeelsLikeDndButIsSimpler } from "./what-rpg-feels-like-dnd-but-is-simpler";
+import { whatRpgMapMakingToolShouldIUse } from "./what-rpg-map-making-tool-should-i-use";
 import { whatRpgShouldIPlayForAnOverTheTopSpaceOpera } from "./what-rpg-should-i-play-for-an-over-the-top-space-opera";
 import { whatRpgShouldIPlayForInvestigativeHorror } from "./what-rpg-should-i-play-for-investigative-horror";
 import { whatRpgShouldIUseForTacticalCombat } from "./what-rpg-should-i-use-for-tactical-combat";
@@ -212,6 +213,7 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     whatMakesAGoodHeistTargetInATabletopRpg,
     whatMakesAGoodRandomEncounter,
     whatRpgFeelsLikeDndButIsSimpler,
+    whatRpgMapMakingToolShouldIUse,
     whatRpgShouldIPlayForAnOverTheTopSpaceOpera,
     whatRpgShouldIPlayForInvestigativeHorror,
     whatRpgShouldIUseForTacticalCombat,
