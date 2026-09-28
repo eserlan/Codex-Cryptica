@@ -44,7 +44,7 @@ export const whatRpgMapMakingToolShouldIUse: AnswerConfigInput = {
         ],
         [
           "VTT-ready tactical map",
-          "Grid precision, lighting, line of sight, and UVTT or image export",
+          "Grid precision and the export your workflow needs: an image backdrop or structured wall, door, and light data for a ready-to-run VTT scene",
           "Dungeondraft, Dungeon Alchemist, tools with Universal VTT export",
         ],
         [
@@ -52,6 +52,12 @@ export const whatRpgMapMakingToolShouldIUse: AnswerConfigInput = {
           "Visual finish, annotations, and presentation without tactical data",
           "Inkarnate, Wonderdraft, Photoshop or Affinity with cartography brushes",
         ],
+      ],
+    },
+    {
+      kind: "prose",
+      paragraphs: [
+        "Tool features, export formats, and pricing change over time. Use these examples to identify the right category, then confirm the current feature or licence you need on the tool's own site.",
       ],
     },
     {
@@ -73,25 +79,32 @@ export const whatRpgMapMakingToolShouldIUse: AnswerConfigInput = {
           text: "Procedural generators such as Azgaar or Watabou give you a complete geography or street plan in seconds that you then edit. Illustration-first tools such as Inkarnate or Wonderdraft give you brush-by-brush control but need more time. Pick the balance that matches the hours you will actually spend, not the result you wish you had.",
         },
         {
-          term: "Do you need grid, walls, and lighting data?",
-          text: "If the map will run on a virtual tabletop, you need square or hex grid alignment, wall and door definitions, and an export your VTT can read such as UVTT, WebP, or Foundry-ready JSON. A beautiful image that cannot carry wall data becomes an extra prep step rather than a finished battle map.",
+          term: "Do you only need a background image, or structured VTT scene data?",
+          text: "For an image-only workflow, prioritise the right grid dimensions and resolution, a PNG, WebP, or JPG export, and easy alignment in your VTT. For scene data, check for UVTT/DD2VTT or a VTT-specific export that your target VTT can import, with the wall, door, lighting, or line-of-sight metadata your scene needs. Dungeondraft and Worldographer 2025 support UVTT export; Dungeon Alchemist documents VTT exports with wall, light, and door data; Dungeon Scrawl currently offers UVTT export to Pro subscribers. An image is a backdrop; it does not carry that scene data by itself.",
         },
         {
           term: "Is it GM-facing, player-facing, or both?",
-          text: "A GM map can carry secret routes, faction territory, trap locations, and encounter keys. A player map should carry only what the characters have learned: roads they have travelled, settlements they have visited, and rumours they have confirmed. Plan whether you need two versions from the same source or one shared view.",
+          text: "Decide whether you need a campaign reference map for operational truth, a player navigation map for information the characters could reasonably know, or an in-world map that may be incomplete, outdated, biased, or wrong. Keep secret routes and encounter keys on the reference map; show known roads, places from briefings or local knowledge, and rumours marked as uncertain when that matters. Plan whether you need separate versions or a handout with its own point of view.",
         },
         {
-          term: "Free and browser-based or paid desktop app?",
-          text: "Browser tools such as Azgaar, Dungeon Scrawl, and Watabou are free and fast for drafts. Desktop apps such as Wonderdraft, Dungeondraft, and Worldographer cost money but work offline, handle larger files, and often give finer export control. Try the free option for the category first, then pay only when it blocks a real need.",
+          term: "Which platform, licence, and workflow fit your needs?",
+          text: "Browser tools often make it easy to start quickly, while desktop apps can offer offline use and deeper file or export control. Both categories may have free, paid, subscription, or Pro tiers; for example, Worldographer 2025 has a robust free version with optional Pro features. Check the current licence and export limits before committing.",
         },
       ],
     },
     {
       kind: "prose",
-      heading: "GM-facing and player-facing are different maps",
+      heading:
+        "Three map modes: campaign reference, player navigation, and in-world",
       paragraphs: [
-        "Even when both versions cover the same area, they serve different purposes. The GM copy records truth: accurate distances, hidden ruins, monster lairs, faction control, and the key for each hex or room. The player copy records knowledge: what the party has mapped, what a hired guide claimed, and what remains blank. Keeping those layers separate avoids handing over information the characters have not earned and avoids a cluttered table where secrets compete with useful navigation.",
-        "If your tool supports layers or you can export a base map and add annotations elsewhere, you can maintain one geography file and produce two views. Hide or remove the GM layer on export, leave deliberate gaps for unknown country, and add only the labels the party would recognise. A travel map that players mistrust because it looks too complete will slow their decisions less than one they can rely on.",
+        "A campaign reference map records what the campaign treats as operationally true: routes, keyed locations, hidden entrances, faction territory, and tactical information. A player navigation map shows what the characters can reasonably use to make decisions. That can include geography learned through upbringing, purchased maps, briefings, local knowledge, libraries, or guides, as well as places they have visited. An in-world map is an artefact that exists in the fiction; it may be incomplete, outdated, biased, stylised, based on rumour, or deliberately wrong.",
+        "Keep those jobs distinct when uncertainty matters. Put whatever the characters could reasonably know on the player-facing map, and visually distinguish uncertain or disputed information when that uncertainty matters in play. A handout can be valuable precisely because it is not an omniscient truth layer. Layers or separate annotations can help you produce different views, but a single shared image is not always the right answer.",
+      ],
+    },
+    {
+      kind: "prose",
+      paragraphs: [
+        "Do not make the map more precise than the decisions it needs to support. Narrative travel may need only named routes and travel times; a hexcrawl needs explicit hex positions and keys; tactical combat needs spatial precision; a political map may need borders and control rather than accurate roads; and a treasure map may need recognisable landmarks rather than scale.",
       ],
     },
     {
@@ -130,9 +143,9 @@ export const whatRpgMapMakingToolShouldIUse: AnswerConfigInput = {
       items: [
         "Write one sentence for the map's job: what must a player or the GM be able to do with it during the session?",
         "Circle the row in the chooser table that matches that job and note what you need to prioritise.",
-        "Decide whether you need grid, walls, or lighting data for a VTT, and which export format your table uses.",
-        "Decide whether you need a GM truth version, a player knowledge version, or both, and whether your tool can produce two views from one file.",
-        "Set a time budget: try the free browser option for that category for thirty minutes before buying a desktop app.",
+        "Decide whether your VTT workflow needs only a background image or structured scene data, and confirm the import format your table uses.",
+        "Decide whether you need a campaign reference map, a player navigation map, an in-world map, or more than one of these modes.",
+        "Set a time budget and check the current licence and export limits before committing to a tool.",
         "If no row in the table clearly matches, start with a quick sketch or point-crawl and draw the finished map only after the first session shows what information mattered.",
       ],
     },
@@ -140,8 +153,8 @@ export const whatRpgMapMakingToolShouldIUse: AnswerConfigInput = {
   codexConnection: {
     heading: "Connect the map to the rest of the campaign",
     paragraphs: [
-      "A map becomes more useful when the places on it are not just shapes. Link each settlement, ruin, or hex to the people, factions, and events that live there, so a change on the map updates the world behind it. Codex Cryptica keeps those connections in a campaign graph rather than a single image file, which lets a regional map, a town plan, and a dungeon sit as separate views of the same world.",
-      "Use generators to fill the locations your map now needs: a settlement for each town along the road, a faction for whoever controls the toll, an encounter for the forest path. Draft them once, attach them to the map's keyed locations, and export only the player-safe view when the party sets out.",
+      "A map becomes more useful when the places on it are not just shapes. Codex Cryptica lets you keep map images with the location entities they describe and connect those locations to related settlements, factions, people, and events in the campaign graph.",
+      "Use generators to draft the settlement at the road's end, the faction collecting its toll, or an encounter for the forest path. Keep those entities connected in the campaign graph, and use your map-making tool to prepare any player handout or VTT export the session needs.",
     ],
     linkText: "Try the settlement generator",
     href: "/generators/settlement",
@@ -196,7 +209,6 @@ export const whatRpgMapMakingToolShouldIUse: AnswerConfigInput = {
     "what-should-an-rpg-settlement-contain",
     "how-do-you-manage-a-campaign-timeline-in-an-rpg",
   ],
-  labels: ["fantasy"],
   discovery: {
     id: "answer-rpg-map-making-tool-chooser",
     parentCluster: "adventure-mapping",
