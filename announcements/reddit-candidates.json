@@ -1,5 +1,5 @@
 {
-  "updated_at": 1790635720,
+  "updated_at": 1790637362,
   "candidates": [
     {
       "id": "reddit-36168046733-tables-now-parse-4d6kh3-2-and-other-keep",
@@ -92,14 +92,14 @@
       "created_at": 1790611184
     },
     {
-      "id": "reddit-36492955284-taking-useful-notes-during-play-without-",
-      "title": "Taking useful notes during play without stopping the game",
-      "body": "You are running the scene and trying to record it at the same time. By the end of the night you have half sentences, a missing NPC name, and no note of what the players actually promised.\n\nI wrote a short answer that gives you a simple framework for what to write, when to write it, and how to turn scribbles into campaign memory you can actually use next week.\n\nRead it here: https://codexcryptica.com/answers/how-do-i-take-useful-rpg-notes-during-play\n\n- what is worth capturing at the table and what you can skip without losing the thread\n- timing tricks for jotting without pausing play, plus shorthand that still makes sense later\n- a quick five minute pass after the session to clean notes into searchable memory\n- before and after examples so you can see the shape, not just the theory\n\nI kept it focused on habits at the table, so it does not go deep on app specific workflows. I am still not sure how far this stretches for very lore heavy games where every name matters.\n\nWhat is the one thing you always wish you had written down but never do?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/announcements/release-36492955284-0.png)",
-      "url": "https://codexcryptica.com/answers/how-do-i-take-useful-rpg-notes-during-play",
-      "image_url": "https://assets.codexcryptica.com/announcements/release-36492955284-0.png",
+      "id": "reddit-36492955284-what-rpg-map-making-tool-should-you-actu",
+      "title": "What RPG map-making tool should you actually use",
+      "body": "You open a map tool to sketch a quick dungeon and spend an hour comparing brush packs and export settings before you have drawn a single room.\n\nI put together an answer that helps you pick a map tool by how you run and share maps, not by reading a long feature list.\n\nRead it here: https://codexcryptica.com/answers/what-rpg-map-making-tool-should-i-use\n\n- which tools fit quick battlemaps versus polished world maps versus collaborative online play\n- how style, learning curve and pricing line up with different GM habits\n- when a free or simple tool is enough and when a dedicated cartography app pays off\n- a short chooser flow so you can narrow it without testing five apps first\n\nI did not crown a single winner, because the right call depends on whether you print, run a VTT, or just sketch for yourself. That makes it less tidy if you just want a top pick.\n\nWhat are you making most often right now, quick encounter maps or bigger world and region maps?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/announcements/release-36492955284-1.png)",
+      "url": "https://codexcryptica.com/answers/what-rpg-map-making-tool-should-i-use",
+      "image_url": "https://assets.codexcryptica.com/announcements/release-36492955284-1.png",
       "source_id": "36492955284",
       "status": "approved",
-      "created_at": 1790635720
+      "created_at": 1790637362
     }
   ]
 }
