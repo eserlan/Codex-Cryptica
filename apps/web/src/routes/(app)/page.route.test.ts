@@ -130,10 +130,11 @@ describe("root +page.svelte — front page overlay keydown", () => {
 
     // Discord/Reddit/GitHub/Features/Changelog links used to be duplicated
     // directly on the welcome screen; they now live on /explore, and the
-    // welcome page carries only the shared lightweight footer (#2830).
-    expect(screen.getByRole("link", { name: /^explore$/i })).toBeTruthy();
-    expect(screen.getByRole("link", { name: /^terms$/i })).toBeTruthy();
-    expect(screen.getByRole("link", { name: /^privacy$/i })).toBeTruthy();
+    // welcome page carries no footer of its own: the layout's `AppFooter`
+    // already renders the same Explore/Terms/Privacy links beneath it, so a
+    // second copy in the page was a visible duplicate.
+    expect(screen.queryByRole("contentinfo")).toBeNull();
+    expect(screen.queryByRole("link", { name: /^terms$/i })).toBeNull();
   });
 
   it("renders complete Open Graph and Twitter Card tags in head", () => {

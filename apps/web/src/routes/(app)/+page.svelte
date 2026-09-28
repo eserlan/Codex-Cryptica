@@ -15,7 +15,6 @@
   import { focusEntity } from "$lib/stores/ui/navigation";
   import { seoImportService } from "$lib/services/seo/import-handler";
   import WelcomeGraphPreview from "$lib/components/welcome/WelcomeGraphPreview.svelte";
-  import MarketingFooter from "$lib/components/seo/MarketingFooter.svelte";
   import {
     trackWelcomeFirstClick,
     type WelcomeAction,
@@ -594,7 +593,6 @@
               Hide welcome screen on startup
             </label>
           </div>
-          <MarketingFooter />
         </div>
       </div>
     </div>
