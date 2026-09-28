@@ -375,6 +375,27 @@ function sameJobInCluster(entries: DiscoveryEntry[]): DiscoveryFinding[] {
   return findings;
 }
 
+function findFirstSharedClaim(
+  claimSet: Set<string>,
+  candidateIntents: readonly string[],
+): string | undefined {
+  for (const intent of candidateIntents) {
+    if (claimSet.has(intent)) {
+      return intent;
+    }
+  }
+  return undefined;
+}
+
+function isCandidateEchoPair(
+  a: DiscoveryEntry,
+  b: DiscoveryEntry,
+  acknowledged: Set<string>,
+): boolean {
+  if (a.parentCluster && a.parentCluster === b.parentCluster) return false;
+  return !acknowledged.has(pairKey(a.id, b.id));
+}
+
 /** Entries whose claimed phrasings overlap heavily without being in one cluster. */
 function crossClusterEcho(entries: DiscoveryEntry[]): DiscoveryFinding[] {
   const live = entries.filter(
@@ -391,20 +412,14 @@ function crossClusterEcho(entries: DiscoveryEntry[]): DiscoveryFinding[] {
 
   const findings: DiscoveryFinding[] = [];
   for (let i = 0; i < liveClaims.length; i += 1) {
+    const { entry: a, claimSet: aClaims } = liveClaims[i];
+
     for (let j = i + 1; j < liveClaims.length; j += 1) {
-      const { entry: a, claimSet: aClaims } = liveClaims[i];
       const { entry: b, intents: bIntents } = liveClaims[j];
 
-      if (a.parentCluster && a.parentCluster === b.parentCluster) continue;
-      if (acknowledged.has(pairKey(a.id, b.id))) continue;
+      if (!isCandidateEchoPair(a, b, acknowledged)) continue;
 
-      let sharedIntent: string | undefined;
-      for (const intent of bIntents) {
-        if (aClaims.has(intent)) {
-          sharedIntent = intent;
-          break;
-        }
-      }
+      const sharedIntent = findFirstSharedClaim(aClaims, bIntents);
       if (!sharedIntent) continue;
 
       findings.push({
