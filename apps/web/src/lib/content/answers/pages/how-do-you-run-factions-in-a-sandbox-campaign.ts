@@ -158,6 +158,7 @@ export const howDoYouRunFactionsInASandboxCampaign: AnswerConfigInput = {
     "how-do-i-run-a-diplomat-noble-or-courtier-in-an-rpg",
     "how-do-i-run-character-roles-in-a-political-intrigue-rpg",
     "how-do-i-make-a-player-base-matter-in-an-rpg-campaign",
+    "how-do-i-run-common-character-roles-in-a-fantasy-rpg",
   ],
   discovery: {
     id: "answer-run-factions-sandbox",

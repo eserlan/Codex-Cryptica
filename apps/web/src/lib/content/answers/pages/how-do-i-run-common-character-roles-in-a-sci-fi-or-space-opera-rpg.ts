@@ -167,6 +167,7 @@ export const howDoIRunCommonCharacterRolesInASciFiOrSpaceOperaRpg: AnswerConfigI
       "how-do-you-make-travel-interesting-in-a-tabletop-rpg",
       "how-to-create-a-sci-fi-star-system-for-an-rpg",
       "how-do-you-make-an-alien-species-feel-believable",
+      "how-do-i-run-common-character-roles-in-a-fantasy-rpg",
     ],
     discovery: {
       id: "answer-sci-fi-character-roles",
