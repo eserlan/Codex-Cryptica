@@ -159,7 +159,8 @@ export const howDoIRunCharacterRolesInAPoliticalIntrigueRpg: AnswerConfigInput =
       "how-do-you-run-factions-in-a-sandbox-campaign",
       "what-rpg-works-for-political-intrigue-and-faction-play",
       "how-do-i-run-common-character-roles-in-a-sci-fi-or-space-opera-rpg",
-    ],
+    "how-do-i-run-common-character-roles-in-a-fantasy-rpg",
+  ],
     discovery: {
       id: "answer-run-character-roles-political-intrigue",
       parentCluster: "specialist-roles",

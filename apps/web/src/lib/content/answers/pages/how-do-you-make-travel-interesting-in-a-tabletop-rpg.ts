@@ -163,6 +163,7 @@ export const howDoYouMakeTravelInterestingInATabletopRpg: AnswerConfigInput = {
     "what-kind-of-ship-should-a-sci-fi-rpg-party-start-with",
     "how-do-you-run-a-chase-in-a-tabletop-rpg",
     "how-do-i-run-common-character-roles-in-a-sci-fi-or-space-opera-rpg",
+    "how-do-i-run-common-character-roles-in-a-fantasy-rpg",
   ],
   discovery: {
     id: "answer-travel-interesting",

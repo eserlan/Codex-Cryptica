@@ -164,6 +164,7 @@ export const howDoYouCreateABelievableFictionalReligion: AnswerConfigInput = {
     "how-do-you-create-a-fantasy-faction",
     "what-should-an-rpg-settlement-contain",
     "how-do-you-create-a-secret-society-for-an-rpg-campaign",
+    "how-do-i-run-common-character-roles-in-a-fantasy-rpg",
   ],
   discovery: {
     id: "answer-fictional-religion",
