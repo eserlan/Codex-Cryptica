@@ -370,6 +370,12 @@ describe("published answers", () => {
     expect(new Set(descriptions).size).toBe(descriptions.length);
   });
 
+  it("uses a hosted map image for the map-making tool answer", () => {
+    expect(answers["what-rpg-map-making-tool-should-i-use"].seo.image).toBe(
+      "https://assets.codexcryptica.com/og/point-crawl-vs-hex-crawl.jpg",
+    );
+  });
+
   it("distinguishes ordinary combat from killing surrendered enemies", () => {
     const answer =
       answers["what-do-you-do-with-murder-hobos-in-an-rpg-campaign"];
