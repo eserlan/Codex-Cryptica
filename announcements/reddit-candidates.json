@@ -1,5 +1,5 @@
 {
-  "updated_at": 1790585145,
+  "updated_at": 1790608246,
   "candidates": [
     {
       "id": "reddit-36168046733-tables-now-parse-4d6kh3-2-and-other-keep",
@@ -80,6 +80,16 @@
       "source_id": "36398392671",
       "status": "approved",
       "created_at": 1790585145
+    },
+    {
+      "id": "reddit-36437655113-fantasy-sci-fi-and-investigative-horror-",
+      "title": "Fantasy, sci-fi and investigative horror roles that keep the whole table in the scene",
+      "body": "You have a warrior who wants to hold a door, a pilot who wants to change how the group moves, and an investigator who spots the one contradiction in a witness statement. At most tables one of them ends up in a private scene while everyone else waits to be asked for a decision.\n\nI built three Answers that treat each archetype as a way to change the same shared scene, not a separate mini-game.\n\nStart here and follow the links between them:\n\n- Fantasy: https://codexcryptica.com/answers/how-do-i-run-common-character-roles-in-a-fantasy-rpg\n- Sci-fi and space opera: https://codexcryptica.com/answers/how-do-i-run-common-character-roles-in-a-sci-fi-or-space-opera-rpg\n- Investigative horror: https://codexcryptica.com/answers/how-do-i-run-character-roles-in-an-investigative-horror-rpg\n\nWhat you get in each guide:\n\n- what the role actually changes about scene design, a technique that keeps play shared, a pressure that makes the result interesting, and a common failure mode to avoid\n- fantasy covers warrior, rogue, mage, priest, ranger, bard, envoy, sage and summoner without turning the list into a class roster to fill\n- sci-fi covers pilot, engineer, scientist, commander and the mix of physical, digital and social actions on a ship or station\n- investigative horror covers investigator, journalist, occultist, doctor, authority, witness and fixer, with expertise as faster, safer or more precise information rather than exclusive permission to learn\n\nTradeoff I kept: the specialist stays competent but never fully settles a scene alone. If your table loves a long solo spotlight where one player gets to be the expert for ten minutes uninterrupted, you will need to negotiate that expectation first.\n\nWhich role at your table most often ends up playing alone while the rest wait, and what did you try to bring the group back into the same decision?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/announcements/release-36437655113-3.png)",
+      "url": "https://codexcryptica.com/answers/how-do-you-run-character-roles-in-a-cyberpunk-rpg",
+      "image_url": "https://assets.codexcryptica.com/announcements/release-36437655113-3.png",
+      "source_id": "36437655113",
+      "status": "approved",
+      "created_at": 1790608246
     }
   ]
 }
