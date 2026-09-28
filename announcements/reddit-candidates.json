@@ -1,5 +1,5 @@
 {
-  "updated_at": 1790544234,
+  "updated_at": 1790585145,
   "candidates": [
     {
       "id": "reddit-36168046733-tables-now-parse-4d6kh3-2-and-other-keep",
@@ -70,6 +70,16 @@
       "source_id": "36350158307",
       "status": "approved",
       "created_at": 1790544234
+    },
+    {
+      "id": "reddit-36398392671-i-kept-hand-waving-what-towns-sell-so-i-",
+      "title": "I kept hand-waving what towns sell, so I built five linked guides to rule it consistently",
+      "body": "Every settlement I made could sell anything if the player had the coin. A mountain hamlet had wine, a fishing port had cheap iron, and blocking a pass never moved a price. Players stopped asking where things came from because nothing ever followed from the answer.\n\nI built a linked framework of five short answers that lets you derive settlement trade from its surroundings and keep markets and shortages consistent without a spreadsheet. Each guide starts from the one before, so you do not need a full continent model, just the places the party will actually visit.\n\nStart with one: https://codexcryptica.com/answers/how-do-i-decide-what-a-settlement-produces-imports-and-exports\n\nWhat the five cover:\n\n- how to decide what a settlement produces, imports and exports from ground, hands, tools, neighbours and rulers, and where surplus actually leaves\n- how trade routes shape cities and kingdoms when goods must narrow through a ford, bridge, pass or harbour and someone takes a share\n- how scarcity and shortages play as who goes without first, then rationing, hoarding, substitutes and smuggling until claims collide\n- how to turn any pressure (a held pass, a late caravan, risen dues) into a situation with two sides, two responses and two doors for the party\n- what players can actually buy and sell in a settlement by scale, common goods, irregular imports, specialists and who can actually pay\n\nTradeoff I kept: prices stay impressionistic (dearer, short, queued, guarded) instead of percentages. It is less precise on paper but much easier to run when players start asking questions.\n\nWhat single import would your home settlement miss first if it stopped this week, and who controls that lifeline?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/announcements/release-36398392671-2.png)",
+      "url": "https://codexcryptica.com/answers/how-do-i-turn-economic-pressures-into-rpg-adventure-hooks",
+      "image_url": "https://assets.codexcryptica.com/announcements/release-36398392671-2.png",
+      "source_id": "36398392671",
+      "status": "approved",
+      "created_at": 1790585145
     }
   ]
 }
