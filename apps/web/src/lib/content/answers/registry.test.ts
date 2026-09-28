@@ -405,8 +405,12 @@ describe("published answers", () => {
     )?.text;
 
     expect(recap).toContain(
-      "A rumour says the warehouse fire was deliberate; its cause is unknown.",
+      "A dockside rumour says the warehouse fire was deliberate; its cause is unknown.",
     );
+    expect(recap).toContain(
+      "its possible council connection is only a theory and needs checking.",
+    );
+    expect(recap).not.toContain("fire was probably deliberate");
     expect(recap).toContain(
       "Kelm, who had been asking about smugglers, is missing.",
     );
