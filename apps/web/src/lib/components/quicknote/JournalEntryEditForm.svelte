@@ -1,11 +1,11 @@
 <script lang="ts">
-  import JournalMarkdownField from "./JournalMarkdownField.svelte";
+  import MarkdownEditor from "$lib/components/MarkdownEditor.svelte";
 
   /**
-   * The inline edit form for a typed journal entry (#3476; basic Markdown
-   * formatting per #3481). Shown by `JournalEntryRow` in place of the
-   * entry's text while editing; it knows nothing about the row's other
-   * state (move, delete, selection).
+   * The inline edit form for a typed journal entry (#3476). Edits with the
+   * same rich-text editor as entity content, in its compact variant. Shown by
+   * `JournalEntryRow` in place of the entry's text while editing; it knows
+   * nothing about the row's other state (move, delete, selection).
    */
   type ActionResult = { ok: true } | { ok: false; error: string };
 
@@ -43,13 +43,12 @@
 </script>
 
 <div class="flex flex-col gap-1">
-  <JournalMarkdownField
-    value={draft}
-    onValueChange={(text) => (draftOverride = text)}
-    ariaLabel={`Edit: ${snippet}`}
-    rows={3}
-    toolbarLabel="Edit formatting"
-    testIdPrefix="journal-entry-edit"
+  <MarkdownEditor
+    content={draft}
+    onUpdate={(markdown) => (draftOverride = markdown)}
+    label={`Edit: ${snippet}`}
+    compact
+    testId="journal-entry-edit-input"
   />
   {#if error}
     <p role="alert" class="text-[10px] text-theme-danger">{error}</p>
