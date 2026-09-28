@@ -219,11 +219,11 @@ export const whatRpgMapMakingToolShouldIUse: AnswerConfigInput = {
       "answer-build-a-point-crawl",
       "answer-point-crawl-vs-hex-crawl",
       "answer-point-crawl",
-      "answer-prepare-sandbox-campaign",
+      "answer-sandbox-campaign-prep",
       "answer-travel-interesting",
       "generator-world",
       "generator-settlement",
-      "generator-dungeon",
+      "generator-dungeon-generator",
     ],
     acknowledgedOverlap: [
       {
@@ -242,7 +242,8 @@ export const whatRpgMapMakingToolShouldIUse: AnswerConfigInput = {
     title: "What RPG Map-Making Tool Should I Use? | Codex Cryptica",
     description:
       "Choose an RPG map maker by what the map must do: world, town, dungeon, hexcrawl, or VTT battle map. Compare categories, example tools, and key criteria.",
-    image: "https://assets.codexcryptica.com/og/what-rpg-map-making-tool-should-i-use.jpg",
+    image:
+      "https://assets.codexcryptica.com/og/what-rpg-map-making-tool-should-i-use.jpg",
     imageAlt:
       "Tabletop with layered RPG maps showing world geography, a town plan, and a gridded dungeon map side by side",
   },
