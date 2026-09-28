@@ -195,14 +195,14 @@ export const howDoIRunCommonCharacterRolesInAFantasyRpg: AnswerConfigInput = {
       "A genre-entry framework for nine fantasy archetypes that gives each one a scene-design change, a shared-play technique, a pressure, a failure mode, and deep-dive links, with a worked moor and barrow arrival and a company prep checklist.",
     relatedIntents: [
       "answer-specialist-character-spotlight",
-      "answer-run-spies-infiltrators",
+      "answer-run-spies-infiltrators-rpg",
       "answer-run-diplomats-nobles-courtiers",
       "answer-run-investigator-without-sidelining-party",
       "answer-run-rogue-scout-without-splitting-party",
       "answer-travel-interesting",
-      "answer-fantasy-city-alive",
+      "answer-living-fantasy-city",
       "answer-create-magic-system",
-      "answer-create-fictional-religion",
+      "answer-fictional-religion",
       "answer-run-factions-sandbox",
       "answer-run-character-roles-political-intrigue",
       "answer-sci-fi-character-roles",
@@ -217,7 +217,7 @@ export const howDoIRunCommonCharacterRolesInAFantasyRpg: AnswerConfigInput = {
           "The spotlight answer gives reusable scene structures for any specialist across genres; this answer applies those structures to nine fantasy archetypes with genre-specific pressures and a company-level barrow and audience.",
       },
       {
-        with: "answer-run-spies-infiltrators",
+        with: "answer-run-spies-infiltrators-rpg",
         reason:
           "This company answer summarises what a rogue or infiltrator contributes inside a shared fantasy scene; the spy answer is the focused procedure for running infiltration without leaving the rest of the party idle.",
       },
