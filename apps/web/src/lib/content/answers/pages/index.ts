@@ -24,7 +24,9 @@ import { howDoIRunPoliticalIntrigueAndFactionPlay } from "./how-do-i-run-politic
 import { howDoIRunSpiesAndInfiltratorsInAnRpg } from "./how-do-i-run-spies-and-infiltrators-in-an-rpg";
 import { howDoIStartGmingForTheFirstTime } from "./how-do-i-start-gming-for-the-first-time";
 import { howDoITurnAnRpgIdeaIntoAnAdventure } from "./how-do-i-turn-an-rpg-idea-into-an-adventure";
+import { howDoITurnEconomicPressuresIntoRpgAdventureHooks } from "./how-do-i-turn-economic-pressures-into-rpg-adventure-hooks";
 import { howDoIWriteAGoodCallOfCthulhuOneShot } from "./how-do-i-write-a-good-call-of-cthulhu-one-shot";
+import { howDoScarcityAndShortagesAffectPricesAndConflictInAnRpgWorld } from "./how-do-scarcity-and-shortages-affect-prices-and-conflict-in-an-rpg-world";
 import { howDoTradeRoutesShapeCitiesAndKingdomsInAnRpgWorld } from "./how-do-trade-routes-shape-cities-and-kingdoms-in-an-rpg-world";
 import { howDoYouBuildAPointCrawlForAnRpg } from "./how-do-you-build-a-point-crawl-for-an-rpg";
 import { howDoYouCreateABelievableFictionalReligion } from "./how-do-you-create-a-believable-fictional-religion";
@@ -81,6 +83,7 @@ import { howToCreateRumoursForAFantasyTown } from "./how-to-create-rumours-for-a
 import { howToWriteAnInWorldNewspaperForAnRpg } from "./how-to-write-an-in-world-newspaper-for-an-rpg";
 import { isMyRpgCampaignIdeaGood } from "./is-my-rpg-campaign-idea-good";
 import { pointCrawlVsHexCrawl } from "./point-crawl-vs-hex-crawl";
+import { whatCanPlayersActuallyBuyAndSellInAFantasySettlement } from "./what-can-players-actually-buy-and-sell-in-a-fantasy-settlement";
 import { whatDoYouDoWithMurderHobosInAnRpgCampaign } from "./what-do-you-do-with-murder-hobos-in-an-rpg-campaign";
 import { whatIsAPointCrawl } from "./what-is-a-point-crawl";
 import { whatKindOfShipShouldAPirateCrewStartWith } from "./what-kind-of-ship-should-a-pirate-crew-start-with";
@@ -136,7 +139,9 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     howDoIRunSpiesAndInfiltratorsInAnRpg,
     howDoIStartGmingForTheFirstTime,
     howDoITurnAnRpgIdeaIntoAnAdventure,
+    howDoITurnEconomicPressuresIntoRpgAdventureHooks,
     howDoIWriteAGoodCallOfCthulhuOneShot,
+    howDoScarcityAndShortagesAffectPricesAndConflictInAnRpgWorld,
     howDoTradeRoutesShapeCitiesAndKingdomsInAnRpgWorld,
     howDoYouBuildAPointCrawlForAnRpg,
     howDoYouCreateABelievableFictionalReligion,
@@ -193,6 +198,7 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     howToWriteAnInWorldNewspaperForAnRpg,
     isMyRpgCampaignIdeaGood,
     pointCrawlVsHexCrawl,
+    whatCanPlayersActuallyBuyAndSellInAFantasySettlement,
     whatDoYouDoWithMurderHobosInAnRpgCampaign,
     whatIsAPointCrawl,
     whatKindOfShipShouldAPirateCrewStartWith,
