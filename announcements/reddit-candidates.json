@@ -1,5 +1,5 @@
 {
-  "updated_at": 1790609895,
+  "updated_at": 1790611184,
   "candidates": [
     {
       "id": "reddit-36168046733-tables-now-parse-4d6kh3-2-and-other-keep",
@@ -82,14 +82,14 @@
       "created_at": 1790585145
     },
     {
-      "id": "reddit-36437655113-what-your-settlement-actually-has-for-sa",
-      "title": "What your settlement actually has for sale, and who can actually pay",
-      "body": "My party once reached a hamlet with a jewelled cup worth a house and the innkeeper bought it without blinking. The same hamlet somehow stocked plate in six sizes the week before. Neither felt like the same world that had just decided what the place grows and trades.\n\nI built a new settlement Answer that prices and stocks markets from what a place produces, imports and exports. It uses a six-line profile you write once and reuse for every buy and sell.\n\nFull guide: https://codexcryptica.com/answers/what-can-players-actually-buy-and-sell-in-a-fantasy-settlement\n\nInside:\n\n- a loose scale ladder from hamlet to trade hub that governs breadth and buyer depth together\n- common goods, imported and irregular goods, and a specialists and commissions line with time, materials and permission spelled out\n- buyer capacity split three ways: ordinary valuables, bulk cargo, and rare or enchanted pieces that need a patron, temple treasury or distant market\n- a current pressure line that moves goods between categories when a pass closes or a fair ends\n- a worked Harrowgate example where rope is instant, a fine sword takes six weeks, salt triples, and the cup needs a city broker\n\nTradeoff: the ladder is judgement, not a simulation. You will still need to eyeball a price rather than look it up, but the profile tells you whether the answer is too dear, not here, or not yet.\n\nWhat is the strangest thing your players tried to sell in a small settlement, and who at your table ended up explaining why no one there could afford it?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/announcements/release-36437655113-1.png)",
-      "url": "https://codexcryptica.com/answers/what-can-players-actually-buy-and-sell-in-a-fantasy-settlement",
-      "image_url": "https://assets.codexcryptica.com/announcements/release-36437655113-1.png",
+      "id": "reddit-36437655113-journal-entries-now-preview-markdown-as-",
+      "title": "Journal entries now preview Markdown as you type, and the scratchpad resizes",
+      "body": "I was typing **bold** and - lists in the Session Journal and only seeing asterisks and hyphens until I saved. The formatting toolbar looked like rich text but the box behaved like plain text, so I never knew if a note would be readable in the fight.\n\nI built a live preview under the Journal fields that renders exactly as the saved entry will, and added a corner handle so the scratchpad can be resized.\n\nWhat changed:\n\n- note and edit fields share a new Markdown field with B, I and list controls that writes markdown you see rendered immediately underneath\n- preview uses the entry list's own renderer, so what you type is what you get after save\n- scratchpad modal now drags from the corner to grow or shrink and stays centred, with keyboard resizing as well\n- window bounds math is shared with the dice modal so it does not drift off screen\n\nTradeoff: the preview adds a second pane under a small input, so on a narrow phone it takes extra vertical space. I am still tuning where it feels crowded versus useful, and I kept the raw text visible so you can see what the toolbar actually wrote.\n\nWhen combat is moving fast, how do you keep session notes scannable: headings, short lists, or do you keep it all plain and tidy it later?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/screenshots/feature-run.jpg)",
+      "url": "",
+      "image_url": "https://assets.codexcryptica.com/screenshots/feature-run.jpg",
       "source_id": "36437655113",
       "status": "approved",
-      "created_at": 1790609895
+      "created_at": 1790611184
     }
   ]
 }
