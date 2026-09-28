@@ -188,6 +188,7 @@ export const howDoIRunCharacterRolesInAnInvestigativeHorrorRpg: AnswerConfigInpu
       "how-do-i-run-spies-and-infiltrators-in-an-rpg",
       "how-do-i-run-hackers-or-netrunners-without-splitting-the-party",
       "how-do-you-generate-useful-rpg-rumours",
+      "how-do-i-run-common-character-roles-in-a-sci-fi-or-space-opera-rpg",
     ],
     discovery: {
       id: "answer-character-roles-investigative-horror",

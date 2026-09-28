@@ -156,6 +156,7 @@ export const howDoIGiveSpecialistCharactersSpotlight: AnswerConfigInput = {
     "how-do-i-run-character-roles-in-a-political-intrigue-rpg",
     "how-do-i-run-a-rogue-or-scout-without-splitting-the-party",
     "how-do-i-run-character-roles-in-an-investigative-horror-rpg",
+    "how-do-i-run-common-character-roles-in-a-sci-fi-or-space-opera-rpg",
   ],
   discovery: {
     id: "answer-specialist-character-spotlight",

@@ -134,6 +134,7 @@ export const howDoYouMakeAnAlienSpeciesFeelBelievable: AnswerConfigInput = {
     "how-do-you-create-a-fictional-language-for-an-rpg",
     "how-do-you-start-worldbuilding-from-scratch",
     "how-to-create-a-sci-fi-star-system-for-an-rpg",
+    "how-do-i-run-common-character-roles-in-a-sci-fi-or-space-opera-rpg",
   ],
   labels: ["sci-fi"],
   discovery: {

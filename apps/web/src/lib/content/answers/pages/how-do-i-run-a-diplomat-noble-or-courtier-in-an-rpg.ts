@@ -146,6 +146,7 @@ export const howDoIRunADiplomatNobleOrCourtierInAnRpg: AnswerConfigInput = {
     "how-do-i-run-spies-and-infiltrators-in-an-rpg",
     "how-do-i-run-character-roles-in-a-political-intrigue-rpg",
     "how-do-i-run-character-roles-in-an-investigative-horror-rpg",
+    "how-do-i-run-common-character-roles-in-a-sci-fi-or-space-opera-rpg",
   ],
   discovery: {
     id: "answer-run-diplomats-nobles-courtiers",
