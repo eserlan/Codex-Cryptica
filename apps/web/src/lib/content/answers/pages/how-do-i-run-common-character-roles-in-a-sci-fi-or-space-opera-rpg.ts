@@ -10,30 +10,31 @@ export const howDoIRunCommonCharacterRolesInASciFiOrSpaceOperaRpg: AnswerConfigI
       "How do I run common character roles in a sci-fi or space-opera RPG?",
     kind: "framework",
     shortAnswer:
-      "Run each sci-fi specialist by giving their expertise a clear way to change the shared situation, a practical technique that keeps the rest of the crew involved, and a pressure that follows the result. Let the pilot shape how the group moves, the engineer decide what stays working under stress, the scientist reduce uncertainty without removing the decision, and the captain choose between competing priorities. Tie digital, social and technical actions to what is happening in the room so the table plays one scene together rather than a set of isolated mini-games.",
+      "Run each sci-fi specialist by giving their expertise a clear way to change the shared situation, a practical technique that keeps the rest of the team involved, and a pressure that follows the result. Let the pilot shape how the group moves, the engineer decide what stays working under stress, the scientist reduce uncertainty without removing the decision, and the commander choose between competing priorities. Tie physical, digital, social and technical actions to what is happening in the scene so the table plays together rather than through isolated mini-games.",
     sections: [
       {
         kind: "prose",
-        heading: "Why starship crews pull the table apart",
+        heading: "Why specialist teams can pull the table apart",
         paragraphs: [
-          "A sci-fi or space-opera crew often looks like a list of jobs: pilot at the helm, engineer in the drive bay, medic in sickbay, scientist at the sensor console, captain on the bridge, diplomat handling first contact, hacker in the systems, scout reading the survey. That is a useful shorthand for who does what, but it can become a set of separate mini-games where one player rolls while everyone else waits for the ship to finish its turn.",
-          "These are genre archetypes rather than required classes, and your game may give them different names or combine several into one character. The guidance below works whether you run Traveller, Mothership, Scum and Villainy, Stars Without Number, Coriolis, Lancer, or another game that supports a mixed crew. Avoid treating the list as a class roster to fill. Instead, ask for each role what it changes about scene design, how you keep the whole table in the conversation, and what happens when the specialist cannot act or fails.",
-          "A consistent pattern from the specialist spotlight framework helps: specialist acts, situation changes, others respond, party decides, return to specialist. Keep the specialist's competence real, make the result change something the whole crew can see and act on, and cut back to the shared scene whenever time, access, or risk changes for someone else.",
+          "A sci-fi or space-opera team often looks like a list of jobs: pilot at the helm, engineer in the drive bay, medic in sickbay, scientist at the sensor console, commander on the bridge, security specialist holding a breach, diplomat handling first contact, systems specialist at a terminal, scout reading the survey. That shorthand helps show who does what, but the jobs can become separate mini-games where one player acts while everyone else waits for the ship, mission or negotiation to finish.",
+          "These are genre archetypes rather than required classes, and your game may give them different names or combine several into one character. They are functions, not necessarily bridge jobs: use them for a mixed crew or expedition team in Traveller, Mothership, Scum and Villainy, Stars Without Number, Coriolis, or another game with shared missions and specialist roles. Avoid treating the list as a class roster to fill. Instead, ask what each role changes about the scene, how you keep the whole table involved, and what happens when a specialist cannot act or fails.",
+          "A consistent pattern from the specialist spotlight framework helps: specialist acts, situation changes, others respond, party decides, return to specialist. Keep the specialist's competence real, make the result change something the whole team can see and act on, and cut back to the shared scene whenever time, access or risk changes for someone else.",
+          "On a planetary survey, the scout compares two routes, the scientist assesses an atmospheric hazard, the engineer determines which rover can manage it, and a security specialist plans protection. The diplomat handles access to a local settlement while the medic sets an exposure limit. Their findings change one shared choice about where and how the team proceeds, without a bridge or docking bay.",
         ],
       },
       {
         kind: "list",
         heading: "What each role changes and how to run it",
         intro:
-          "Treat each entry as a flexible function rather than a fixed assignment. For each role, note what it changes, a technique that keeps play shared, a pressure that keeps the decision interesting, a common failure mode, and where to read more:",
+          "Treat each entry as a flexible function rather than a fixed assignment. The labelled prompts make each role easy to scan: what it changes, how to keep play shared, what pressure follows, a common failure mode, and an optional deep dive.",
         items: [
           {
-            term: "Pilot or Helmsman",
-            text: "Changes: how, where and when the group can move, and what arriving there costs. Technique: frame travel or manoeuvring as a shared choice rather than a private check. Put terrain, traffic, pursuit, a closing window, or a damaged system in front of the helm so the pilot's decision changes what the engineer must hold together and what the scout can survey next. Pressure: a route that is fast but exposed, a manoeuvre that saves fuel but risks a hard burn, a landing that requires someone to talk to port control while the pilot handles the approach. Failure mode: a long sequence of pilot-only checks resolves travel while the rest of the table has nothing to do until the destination loads. For Traveller or Starfinder tables, resist turning every voyage into a full ship-combat subsystem.",
+            term: "Pilot, Driver or Vehicle Operator",
+            text: "Changes: how the group moves and what reaching a destination costs. Technique: make travel or manoeuvring a shared choice. Put terrain, traffic, pursuit, a closing window or damaged equipment in the specialist's path so their decision changes what the engineer must keep working and what the scout can survey next. Pressure: a fast but exposed route, a fuel-saving manoeuvre that risks a hard burn, or a landing that needs someone to talk to port control. Failure mode: a run of solo checks leaves the table waiting for the destination. Use the game's detailed travel rules or vehicle- and ship-combat procedures when choices and risks justify them, rather than for every routine journey.",
           },
           {
-            term: "Engineer or Tech",
-            text: "Changes: what remains possible under stress, which systems stay available, and what will need attention later. Technique: let technical expertise change live situations, not only repairs between scenes. The engineer can stabilise a drive during a burn, reroute power to give the pilot an option that did not exist, or declare a fix as temporary so the group must plan around its limit. Pressure: limited spares, a workaround that creates a new risk such as heat, noise or a traceable signature, or a choice between keeping life support quiet and keeping weapons armed. Failure mode: engineering becomes an off-screen maintenance roll with no effect on the current scene. Keep the consequence visible: a system that will fail after one more use, or a jury-rig that draws attention.",
+            term: "Engineer or Technician",
+            text: "Changes: what remains possible under stress, which systems stay available, and what needs attention later. Technique: let technical expertise change the live situation, not only repairs between scenes. A repair result can offer a temporary fix, limited use or trade-off when the chosen system's outcome supports it. That limit can give the pilot a new option while making the engineer plan around heat, noise or a traceable signature. Pressure: limited spares or a choice between quiet life support and armed weapons. Failure mode: engineering becomes an off-screen maintenance roll with no effect on the current scene. Keep consequences visible, such as a system at risk after one more use or a jury-rig that draws attention.",
           },
           {
             term: "Scientist or Analyst",
@@ -41,23 +42,27 @@ export const howDoIRunCommonCharacterRolesInASciFiOrSpaceOperaRpg: AnswerConfigI
           },
           {
             term: "Diplomat or Envoy",
-            text: "Changes: which doors, terms and commitments are available to the group. Technique: build negotiation around interests and commitments rather than a single persuasion roll. Note what each side actually needs, what they can offer, what they cannot concede, and what a promise will cost later. Let the diplomat lead the exchange while other characters bring evidence the scientist verified, security the scout arranged, or leverage the hacker uncovered. Pressure: a counterpart who answers to someone else, a cultural protocol that makes a direct demand costly, or a deal that requires the captain to stake the crew's reputation. Failure mode: one roll settles the whole exchange while the rest of the party watches. Keep success as improved position or a new choice, not an automatic agreement. Deep dive: how to run a diplomat, noble or courtier.",
+            text: "Changes: which doors, terms and commitments are available to the group. Technique: build negotiation around interests and commitments rather than a single persuasion roll. Note what each side needs, can offer and cannot concede, and what a promise will cost later. Let the diplomat lead while others bring evidence the scientist verified, protection the security specialist arranged, or leverage the systems specialist uncovered. Pressure: a counterpart who answers to someone else, a costly cultural protocol, or a deal that puts the crew's reputation at stake. Failure mode: one roll settles the exchange while everyone else watches. Keep success as improved position or a new choice, not an automatic agreement. Deep dive: how to run a diplomat, noble or courtier.",
           },
           {
-            term: "Hacker or Systems specialist",
+            term: "Hacker, Systems or Communications Specialist",
             text: "Changes: access, information and control over security, communications and automation in the scene. Technique: tie every digital action to the physical situation. Resolve the intrusion in short beats and cut back whenever a door opens, a camera blinds, or an alert changes what the crew must do right now. Give the rest of the party ways to affect the hack by handling physical access, time, or attention, and let their outcomes change the hacker's options. Pressure: a trace that grows with time, a system that requires someone at a terminal on site, or a countermeasure that locks out the hacker unless the engineer keeps power steady. Failure mode: a private run of checks with only invisible resource costs while the table waits for a result. Keep the hack inside the shared scene. Deep dive: how to run hackers or netrunners without splitting the party.",
           },
           {
-            term: "Captain or Commander",
-            text: "Changes: which priorities the group commits to and who carries responsibility for the choice. Technique: give authority responsibility and trade-offs rather than control over other player characters. Let the captain choose between competing goods such as crew safety, mission completion, a treaty obligation or a rescue window, then record what was promised and who will judge it. The captain's skill opens the decision and sets its terms; the group still decides together. Pressure: an order that protects one need while exposing another, a superior who expects a report, or a crew member whose trust depends on what is risked. Failure mode: the captain becomes a player who directs other player characters, which replaces collaboration with instruction. Frame the captain as accountable to the table, not as the person who tells others what to do.",
+            term: "Captain, Commander or Team Leader",
+            text: "Changes: which priorities the group commits to and who carries responsibility. Technique: agree out of character how command authority works, then honour that fiction without letting one player take away another's agency. A commander can issue orders and choose between crew safety, mission completion, a treaty obligation or a rescue window; the table may agree that disobedience has consequences. The commander never decides what another character thinks, feels or ultimately does. Pressure: an order that protects one need while exposing another, a superior expecting a report, or a crew member whose trust is at stake. Failure mode: the captain's player uses authority beyond the agreed fiction to direct another player's character.",
           },
           {
-            term: "Scout or Explorer",
-            text: "Changes: what the group knows about the route, the site and the risks before it commits. Technique: make navigation, survey and risk assessment shape choices rather than just revealing map. Let the scout compare routes or landing sites by time, exposure, resources and what remains unseen, then bring that assessment back as an option the group must select. Pressure: a safe path that misses a narrow window, a rich site that requires splitting the crew, or a reading that suggests danger without confirming it. Failure mode: scouting becomes a separate solo expedition that reports back only after it is finished, leaving the rest of the crew idle. Keep the survey short and return with a decision the party must make now.",
+            term: "Scout, Surveyor or Recon Specialist",
+            text: "Changes: what the group knows about a route, site and its risks before committing. Technique: make navigation, survey and risk assessment shape choices rather than just reveal a map. Compare routes or landing sites by time, exposure, resources and what remains unseen, then bring the assessment back as an option the group must select. Pressure: a safe path that misses a narrow window, a rich site that requires splitting the team, or a reading that suggests danger without confirming it. Failure mode: a separate solo expedition reports back only after it ends, leaving everyone else idle. Keep the survey short and return with a decision the party must make now.",
+          },
+          {
+            term: "Security, Marine, Gunner or Combat Specialist",
+            text: "Changes: who can be protected, which threats can be contained, and how long the team can hold a dangerous position. Technique: make force create choices for everyone: hold the airlock or pursue an intruder, protect the scientist or secure the objective, fire on a pursuing craft or preserve power and stealth. Pressure: ammunition or heat limits, collateral harm to civilians, legal consequences, decompression or fragile infrastructure. Failure mode: every obstacle becomes a fight and the combat specialist monopolises danger while technical and social specialists wait. Make clear what force cannot solve.",
           },
           {
             term: "Medic",
-            text: "Changes: how long the group can keep going, who remains able to act, and what care costs in time and resources. Technique: make triage and limited resources consequential without forcing one player into permanent support duty. The medic can stabilise, choose who recovers first, or declare a treatment as stabilising rather than curing so the patient can act at a cost. Give other characters ways to help such as securing supplies, protecting the casualty, or handling the situation the injury interrupted. Pressure: limited meds, a procedure that needs a stable platform the pilot must provide, or a patient who cannot be moved without engineering help. Failure mode: the medic only matters between fights and has no meaningful choice during play, or becomes trapped as the table's required healer. Keep medical decisions tied to what the crew must do next.",
+            text: "Changes: how long the group can keep going, who remains able to act, and what care costs in time and resources. Technique: make triage consequential without forcing one player into permanent support duty. A treatment result can offer stabilisation, limited recovery or a trade-off when the chosen system's outcome supports it. Other characters can secure supplies, protect the casualty or handle the situation the injury interrupted. Pressure: limited medicine, a procedure that needs a stable platform, or a patient who cannot be moved without technical help. Failure mode: the medic only matters between fights or becomes the table's required healer. Keep medical decisions tied to what the team must do next.",
           },
         ],
       },
@@ -66,8 +71,8 @@ export const howDoIRunCommonCharacterRolesInASciFiOrSpaceOperaRpg: AnswerConfigI
         heading:
           "Keep specialist expertise distinct without splitting the crew",
         paragraphs: [
-          "Several characters may be able to learn the same fact or open the same door, but they do not need to do the same job. The scientist might confirm a signal is artificial while the engineer recognises it as a bearing failure in the array, and the diplomat knows which faction would claim it. Let those contributions change the same meeting, burn, or landing rather than building a separate scene for each role.",
-          "Cut between actions when new information, a cost, or a choice changes what someone else can do. If one character negotiates alone, keep the scene as long as it holds a decision or discovery, then return with information the group can act on. Brief private actions work when they end with a shared choice. Check with players about how they want authority, secrets between characters, and spotlight handled before using hidden knowledge or command conflicts.",
+          "Several characters may be able to learn the same fact or open the same door, but they do not need to do the same job. The scientist might confirm a signal is artificial while the engineer recognises it as a bearing failure in the array, and the diplomat knows which faction would claim it. Let those contributions change the same meeting, operation or landing rather than building a separate scene for each role.",
+          "Cut between actions when new information, a cost, or a choice changes what someone else can do. If one character negotiates alone, keep the scene as long as it holds a decision or discovery, then return with information the group can act on. Brief private actions work when they end with a shared choice. Check with players how they want authority, secrets between characters and spotlight handled before using hidden knowledge or command conflicts.",
         ],
       },
       {
@@ -83,36 +88,36 @@ export const howDoIRunCommonCharacterRolesInASciFiOrSpaceOperaRpg: AnswerConfigI
           },
           {
             term: "The shared-crew version",
-            text: "The scout compares two approach lanes: the chartered corridor is fast but puts the ship under the customs sweep, while a maintenance lane avoids the sweep but adds a burn the coolant loop may not tolerate. The pilot can fly either, and the engineer's assessment changes the choice: a temporary reroute keeps thrust available but leaves life support running hot, with a visible cost if the burn is extended. The scientist clarifies that the moon's recent flare makes the second lane's radiation a composed risk rather than an unknown. The hacker offers to spoof the transponder for the maintenance lane, but needs the pilot to hold steady long enough for a physical relay the rest of the crew must place. The diplomat prepares a commitment the captain will need to make at the high dock: accept a quarantine inspection that delays the medical delivery, or stake the charter on a promise to submit to a full hold inspection after offload. The medic notes that the delay affects a patient already waiting for the supplies. The captain weighs crew strain, charter obligation, and delivery need, then chooses. The choice leaves a record the station will refer back to.",
+            text: "The scout compares two approach lanes: the chartered corridor is fast but puts the ship under the customs sweep, while a maintenance lane avoids the sweep but adds a burn the coolant loop may not tolerate. If the system's resolution supports it, the engineer's result makes a temporary reroute available: thrust stays online, but life support runs hot if the burn is extended. The scientist clarifies that the moon's recent flare makes the second lane's radiation a known risk rather than an unknown. The hacker offers to spoof the transponder for the maintenance lane, but needs the pilot to hold steady long enough for a physical relay the rest of the crew must place. The diplomat prepares a commitment the commander will need to make at the high dock: accept a quarantine inspection that delays the medical delivery, or stake the charter on a promise to submit to a full hold inspection after offload. The medic notes that the delay affects a patient already waiting for the supplies. The commander weighs crew strain, charter obligation and delivery need, then chooses. The choice leaves a record the station will refer back to.",
           },
           {
             term: "Why it works",
-            text: "No role settles the arrival alone. The scout frames the options, the engineer and scientist change what each option costs and how well the group understands it, the hacker and diplomat create access at a price, the medic makes the delay matter, the pilot executes the shared plan, and the captain carries the commitment. Each specialist changes the same approach and docking decision the whole table faces.",
+            text: "No role settles the arrival alone. The scout frames the options, the engineer and scientist change what each option costs and how well the group understands it, the hacker and diplomat create access at a price, the medic makes the delay matter, the pilot executes the shared plan, and the commander carries the commitment. Each specialist changes the same approach and docking decision the whole table faces.",
           },
         ],
       },
       {
         kind: "checklist",
-        heading: "Prep checklist for a sci-fi crew session",
+        heading: "Prep checklist for a sci-fi team session",
         intro:
-          "Before play, check that each specialist has a reason to be in the same scene as the rest of the crew:",
+          "Before play, check that each specialist has a reason to be in the same scene as the rest of the team:",
         items: [
           "Every role that is present has one concrete way its success changes what the other players can do next.",
           "Travel, manoeuvring or survey includes a terrain, window or trade-off the pilot and scout must decide together, not only a distance to cross.",
           "At least one technical or medical outcome leaves a visible limit the group must plan around, such as a system that will fail after one more use or a patient who cannot be moved yet.",
           "Knowledge and sensor results reduce uncertainty but still leave an interpretation the party can debate.",
           "Negotiation or authority creates a commitment, record, or observer who will return to judge what was promised.",
-          "Digital actions require proximity, time, or attention the physical crew can affect, and produce a change the crew can see.",
+          "Digital actions require proximity, time or attention the physical team can affect, and produce a change everyone can see.",
           "You know what a failure or absence changes: cost, timing, exposure, certainty, or who now owes whom, rather than only whether a specialist succeeds.",
           "If a specialist must act alone, you have a clear purpose for the solo beat and a way to return with a decision the group can use while there is still time to act.",
         ],
       },
     ],
     codexConnection: {
-      heading: "Keep crew roles, ships and promises connected",
+      heading: "Keep team roles, vehicles and promises connected",
       paragraphs: [
-        "A starship crew produces a web of ships, systems, contacts, routes and commitments that outlasts any single arrival or negotiation. That makes it useful to record who promised what at Wayfinder Station, which system is running hot after the engineer's reroute, and which lane the scout's survey still leaves uncertain, so you can see at a glance which roles contributed and what remains at risk next session.",
-        "Codex Cryptica lets you keep those links in one place, from the ship's drive state to the charter obligation the captain staked, then bring them back to the table when the consequence arrives rather than relying on memory alone.",
+        "A sci-fi team produces a web of vehicles, systems, contacts, routes and commitments that outlasts any single mission or negotiation. That makes it useful to record who promised what at Wayfinder Station, which system is running hot after the engineer's reroute, and which lane the scout's survey still leaves uncertain, so you can see at a glance which roles contributed and what remains at risk next session.",
+        "Codex Cryptica lets you keep those links in one place, from a vehicle's condition to the obligation the commander accepted, then bring them back to the table when the consequence arrives rather than relying on memory alone.",
       ],
       linkText: "Explore the RPG knowledge graph",
       href: "/solutions/rpg-knowledge-graph",
@@ -182,7 +187,7 @@ export const howDoIRunCommonCharacterRolesInASciFiOrSpaceOperaRpg: AnswerConfigI
       ],
       userJob: "adopt-workflow",
       uniqueValue:
-        "A genre-entry framework for eight sci-fi and space-opera specialist roles that gives each one a scene-design change, a shared-play technique, a pressure, a failure mode, and deep-dive links, with a worked arrival and a crew prep checklist.",
+        "A genre-entry framework for sci-fi and space-opera specialist functions across crews and expedition teams, with a shared-play technique, pressure and failure mode for each, plus a worked arrival and team prep checklist.",
       relatedIntents: [
         "answer-specialist-character-spotlight",
         "answer-run-hackers-netrunners",
@@ -197,22 +202,22 @@ export const howDoIRunCommonCharacterRolesInASciFiOrSpaceOperaRpg: AnswerConfigI
         {
           with: "answer-specialist-character-spotlight",
           reason:
-            "The spotlight answer gives reusable scene structures for any specialist across genres; this answer applies those structures to eight sci-fi and space-opera archetypes with genre-specific pressures and a crew-level arrival.",
+            "The spotlight answer gives reusable scene structures for any specialist across genres; this answer applies those structures to nine sci-fi and space-opera functions across crews and expedition teams, with genre-specific pressures and both planetary-survey and crew-arrival examples.",
         },
         {
           with: "answer-run-hackers-netrunners",
           reason:
-            "This crew answer summarises what a systems specialist contributes inside a shared starship scene; the hacker answer is the focused procedure for running digital intrusions without leaving the physical crew idle.",
+            "This team answer summarises what a systems specialist contributes to a shared sci-fi operation; the hacker answer is the focused procedure for running digital intrusions without leaving the rest of the team idle.",
         },
         {
           with: "answer-run-diplomats-nobles-courtiers",
           reason:
-            "This crew answer summarises what a diplomat or envoy contributes to starship-scale commitments; the diplomat answer is the focused procedure for building negotiations around interests and trade-offs.",
+            "This team answer summarises what a diplomat or envoy contributes to shared sci-fi operations; the diplomat answer is the focused procedure for building negotiations around interests and trade-offs.",
         },
         {
           with: "answer-cyberpunk-party-roles",
           reason:
-            "The cyberpunk roles page situates specialists inside a shared physical job in a street-level crew; this answer situates specialists inside starship operations, travel, and station-scale commitments.",
+            "The cyberpunk roles page situates specialists inside a shared physical job in a street-level crew; this answer situates specialists across ship operations and planetary expedition teams, with travel and station-scale commitments.",
         },
         {
           with: "answer-run-character-roles-political-intrigue",
@@ -222,12 +227,12 @@ export const howDoIRunCommonCharacterRolesInASciFiOrSpaceOperaRpg: AnswerConfigI
         {
           with: "answer-run-investigator-without-sidelining-party",
           reason:
-            "The investigator answer focuses on clue access, interpretation, and shared decisions around a detective character; this page applies shared-scene techniques across a starship crew's pilot, engineer, scientist, diplomat, hacker, captain, scout, and medic roles.",
+            "The investigator answer focuses on clue access, interpretation, and shared decisions around a detective character; this page applies shared-scene techniques across sci-fi team roles, including a security specialist, with both starship and planetary-survey examples.",
         },
         {
           with: "answer-character-roles-investigative-horror",
           reason:
-            "The investigative horror roles page covers overlapping archetypes such as scientist, diplomat, and hacker inside a shared investigation; this page covers the same functions inside starship and space-opera operations with distinct travel and system pressures.",
+            "The investigative horror roles page covers overlapping archetypes such as scientist, diplomat, and hacker inside a shared investigation; this page covers the same functions across sci-fi crew and expedition operations with distinct travel and system pressures.",
         },
       ],
     },
