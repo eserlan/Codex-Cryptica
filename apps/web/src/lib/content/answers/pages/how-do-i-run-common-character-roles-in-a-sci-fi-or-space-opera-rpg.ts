@@ -185,12 +185,12 @@ export const howDoIRunCommonCharacterRolesInASciFiOrSpaceOperaRpg: AnswerConfigI
       relatedIntents: [
         "answer-specialist-character-spotlight",
         "answer-run-hackers-netrunners",
-        "answer-run-diplomat-courtier",
+        "answer-run-diplomats-nobles-courtiers",
         "answer-cyberpunk-party-roles",
-        "answer-travel-interesting-tabletop-rpg",
-        "answer-sci-fi-star-system",
-        "answer-sci-fi-party-starting-ship",
-        "answer-make-alien-believable",
+        "answer-travel-interesting",
+        "answer-create-sci-fi-star-system",
+        "answer-starter-ship-sci-fi",
+        "answer-make-alien-species-believable",
       ],
       acknowledgedOverlap: [
         {
@@ -204,7 +204,7 @@ export const howDoIRunCommonCharacterRolesInASciFiOrSpaceOperaRpg: AnswerConfigI
             "This crew answer summarises what a systems specialist contributes inside a shared starship scene; the hacker answer is the focused procedure for running digital intrusions without leaving the physical crew idle.",
         },
         {
-          with: "answer-run-diplomat-courtier",
+          with: "answer-run-diplomats-nobles-courtiers",
           reason:
             "This crew answer summarises what a diplomat or envoy contributes to starship-scale commitments; the diplomat answer is the focused procedure for building negotiations around interests and trade-offs.",
         },
