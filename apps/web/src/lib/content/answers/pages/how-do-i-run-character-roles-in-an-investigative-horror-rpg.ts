@@ -17,7 +17,7 @@ export const howDoIRunCharacterRolesInAnInvestigativeHorrorRpg: AnswerConfigInpu
         paragraphs: [
           "Investigative horror puts the same mystery in front of a mixed group: a detective who notices contradictions, a reporter with a contact book, an academic who has read the wrong journals, a doctor who can read a wound, an officer who can order a door opened, a witness who was there last time, and a local who knows which archive drawer sticks. The question at the table is not which role is most useful. It is what each role changes about clue flow, authority, danger, and spotlight when that character acts.",
           "This page assumes you have already chosen a system. For help picking a game for this style of investigation, see the system comparison for investigative horror. For structure of the mystery itself, pair this with the mystery without railroading and conspiracy campaign guides. The framework below stays system agnostic and works whether you run Call of Cthulhu, Delta Green, Trail of Cthulhu, Vaesen, Brindlewood Bay, or another game that supports this genre.",
-          "Core principle from the specialist spotlight framework: Specialist acts, situation changes, others respond, party decides, return to specialist. Let expertise give better, faster, or safer information or access, not exclusive permission to learn. When a roll fails or a specialist is absent, change cost, certainty, exposure, or timing rather than stalling the trail.",
+          "Core principle from the specialist spotlight framework: Specialist acts, situation changes, others respond, party decides, return to specialist. As scenario design, do not make critical progress depend on one specialist succeeding at one exact roll. Use the chosen system's clue and failure procedures, while giving necessary conclusions resilient routes so one failure or absent specialist does not end the investigation. Let expertise make information better, faster, safer, or richer rather than granting exclusive permission to learn.",
         ],
       },
       {
@@ -28,7 +28,7 @@ export const howDoIRunCharacterRolesInAnInvestigativeHorrorRpg: AnswerConfigInpu
         items: [
           {
             term: "Investigator or Detective",
-            text: "Contributes: connects evidence, spots contradictions, rules things out, and notices what does not fit. Distortion: one roll owns every clue, so the table waits while the detective monologues a theory. Technique: use Find, Interpret, Decide. Anyone searching a clue-bearing scene gets the core clue. The investigator adds specialist detail such as blade type, toxin, or a rehearsed phrase, and separates what was observed from what it may imply. Pressure: tunnel vision on one suspect, a compromised chain of custody that weakens proof, or a suspect who realises someone is close. Deep dive: how to run an investigator without sidelining the party.",
+            text: "Contributes: connects evidence, spots contradictions, and notices what does not fit. Distortion: one roll owns every clue while the table waits for a theory. Technique: use Find, Interpret, Decide. As scenario design, give necessary conclusions more than one route; use the system's own clue rules. The investigator can add specialist detail such as blade type, toxin, or a rehearsed phrase. State what the character can establish; let the table decide what it means unless the system explicitly resolves that interpretation. Pressure: tunnel vision, a compromised chain of custody, or a suspect who realises someone is close. Deep dive: how to run an investigator without sidelining the party.",
           },
           {
             term: "Journalist or Reporter",
@@ -36,7 +36,7 @@ export const howDoIRunCharacterRolesInAnInvestigativeHorrorRpg: AnswerConfigInpu
           },
           {
             term: "Occult expert or Scholar",
-            text: "Contributes: places a clue inside a dangerous context, from a symbol's history to a ritual's supposed purpose. Distortion: lore becomes a lecture that settles the question, or the expert learns too much too safely. Technique: give the expert better questions rather than final answers. Let expertise name what the sign matches, what it would imply if the account is accurate, and what remains uncertain. Keep the cost visible, such as handling a source that affects composure or credibility, or needing a translation that takes time. Pressure: a text that harms the reader, a rival scholar who disputes the finding, or knowledge that requires someone to act on it while uncertain.",
+            text: "Contributes: places a clue in dangerous context, from a symbol's history to a ritual's supposed purpose. Distortion: lore becomes a lecture that settles the question, or the expert learns too much too safely. Technique: offer better questions, not automatic answers. Name what the sign matches, what it might imply if the account is accurate, and what remains uncertain. A sensitive's impression is information produced by the chosen system, not privileged proof that overrides ordinary investigation. Pressure: a harmful text, a rival scholar, or knowledge that demands action while uncertain.",
           },
           {
             term: "Doctor or Scientist",
@@ -47,12 +47,16 @@ export const howDoIRunCharacterRolesInAnInvestigativeHorrorRpg: AnswerConfigInpu
             text: "Contributes: access, legal power, and institutional weight, from opening a scene to demanding records. Distortion: authority makes every locked door trivial, or it shuts down horror by making the party feel protected. Technique: pair access with jurisdiction, scrutiny, and constraint. Define what the badge authorises, who can countermand it, and what procedure must be followed. A warrant may open a house but require a reason on file that alerts a suspect. Institutional knowledge cuts both ways. Pressure: a supervisor who wants a result on record, a procedure that creates a delay, or an audience that now expects the authority to explain what was found.",
           },
           {
+            term: "Protector, Soldier, Operator, or Enforcer",
+            text: "Contributes: secures dangerous scenes, protects witnesses, creates escape routes, and buys time to investigate. Distortion: every threat becomes a combat problem while others watch the operator clear the room. Technique: make force create choices: protect the witness or pursue the attacker; preserve evidence or stop the threat; hold the exit or enter the unknown. Pressure: scarce resources, collateral risk, scrutiny, injury, escalation, or a problem force cannot solve.",
+          },
+          {
             term: "Witness, Survivor, or Sensitive",
-            text: "Contributes: personal connection to the horror that makes a threat specific, credible, or urgent. Distortion: the character becomes the explanation, predetermining truth rather than creating a playable perspective. Technique: treat personal experience as a source with wants and fears, not as the answer. Note what they observed, what they think it means, what they fear will happen if they speak, and what would earn their trust. Keep their account testable against other evidence. Pressure: being noticed by whoever caused the harm, pressure to stay silent, or a personal cost for returning to a place tied to the event.",
+            text: "Contributes: a witness or survivor brings personal stakes and memory; a sensitive offers an impression through the chosen system. Distortion: either becomes privileged proof that settles the mystery. Technique: treat experience as a source, not the answer. Separate what was observed from what it may mean, and test accounts or impressions against other evidence unless the system explicitly resolves them. Pressure: being noticed by whoever caused the harm, pressure to stay silent, or the cost of returning to a place tied to the event.",
           },
           {
             term: "Fixer, Local contact, or Archivist",
-            text: "Contributes: access to people, places, and records the group cannot reach alone. Distortion: a contact list that produces whatever the party needs without cost, delay, or competing loyalty. Technique: make each favour specific and keep track of who expects repayment. A town clerk can find a burial register, but needs the party to keep the request quiet or to help with a problem first. The fixer opens a route and adds a choice about who now has a claim on the party. Pressure: a favour that must be repaid, a source who answers to someone else, or an archive whose use leaves a record that others can check.",
+            text: "Contributes: a fixer trades relationships for access to people or places; an archivist or local expert knows where information lives and how it is recorded. Distortion: contacts produce whatever the party needs without delay or competing loyalties, or research automatically creates a favour debt. Technique: make a fixer's favour specific and track who expects repayment. An archivist may find a burial register through ordinary expertise; the record itself can still leave a trace. Pressure: a debt, a source who answers to someone else, or an archive others can check.",
           },
         ],
       },
@@ -72,7 +76,7 @@ export const howDoIRunCharacterRolesInAnInvestigativeHorrorRpg: AnswerConfigInpu
         items: [
           {
             term: "Clue flow",
-            text: "Can the essential clue be found even if the specialist misses a roll or is absent, with the expert making it richer, quicker, or less exposed? For each necessary conclusion, provide support from more than one independent route.",
+            text: "As scenario design, do necessary conclusions have resilient routes if a specialist is absent or a roll fails? Use the chosen system's clue and failure procedures, and let expertise make the result richer, quicker, or safer.",
           },
           {
             term: "Authority",
@@ -88,7 +92,7 @@ export const howDoIRunCharacterRolesInAnInvestigativeHorrorRpg: AnswerConfigInpu
           },
           {
             term: "Truth",
-            text: "Is the underlying reality stable even when witnesses disagree about its meaning? Keep facts established; let interpretation remain uncertain and testable.",
+            text: "Follow the mystery model of the chosen system. In fixed-truth mysteries, distinguish observation from interpretation, keep established facts stable, and give necessary conclusions multiple routes. In emergent-truth mysteries, do not secretly pre-solve the case: let clues constrain and inspire theories through the system's procedure. State what a character can establish; let the table decide what it means unless the system explicitly resolves that interpretation. Keep role expertise useful without overriding that procedure.",
           },
         ],
       },
@@ -105,11 +109,11 @@ export const howDoIRunCharacterRolesInAnInvestigativeHorrorRpg: AnswerConfigInpu
           },
           {
             term: "The shared investigation",
-            text: "Anyone who examines the crypt finds fresh clay on the floor and a scuffed burial ledger with its last page cut rather than torn. The investigator recognises the clay as riverbank mould used for casting, and notes the cut was deliberate. At the same time the archivist, who accompanied the party, confirms the ledger should be locked in the vestry and recalls that the river path has a night watch. The doctor examines the injured worker and establishes the wound is a recent brush with a narrow tool, but treating the worker properly will delay the group's next move. The constable can demand the ledger formally, which creates a record of the request and alerts the churchwarden. The reporter can publish a narrow verified note about the ledger discrepancy to pressure the warden, but risks exposing the worker who spoke. The party must choose whether to question the warden now, secure the worker's safety, or verify the ledger's claim in the town archive before the ceremony. If the investigator's roll fails, the group still has the clay and the ledger observation, but the delay in interpreting the scene lets the churchwarden move the contents of the crypt.",
+            text: "The scene offers several leads: fresh clay on the floor, a scuffed burial ledger with its last page cut rather than torn, and a river path with a night watch. Use the group's system to resolve what each character can establish. The investigator may recognise the clay as riverbank mould used for casting and the cut as deliberate; the archivist, who accompanies the party, knows the ledger should be locked in the vestry. The doctor examines the injured worker and establishes a recent brush with a narrow tool, but proper treatment delays the group's next move. The constable can demand the ledger formally, creating a record that alerts the churchwarden. The reporter can publish a narrow verified note about the discrepancy to pressure the warden, but risks exposing the worker. The party must choose whether to question the warden, secure the worker's safety, or verify the ledger in the town archive before the ceremony. If the system calls for a roll and the investigator fails, the group still has other leads; the delay in interpreting the scene lets the churchwarden move the contents of the crypt.",
           },
           {
             term: "Why it works",
-            text: "The investigator deepens the clue without owning it. The authority creates lawful access at a cost of visibility. The reporter turns a private finding into a public consequence. The doctor makes medical knowledge a decision about time and care. The witness carries personal risk. The archivist gives a second independent route to the same conclusion. No single roll stalls the case, and each choice leaves a trace the horror can respond to.",
+            text: "The investigator deepens the clue without owning it. The authority creates lawful access at a cost of visibility. The reporter turns a private finding into a public consequence. The doctor makes medical knowledge a decision about time and care. The injured worker faces personal risk as a source. The archivist offers another route to the records without necessarily owing a favour. The group can keep investigating after a failed roll, using the system's procedures, and each choice leaves a trace the horror can respond to.",
           },
         ],
       },
@@ -120,9 +124,9 @@ export const howDoIRunCharacterRolesInAnInvestigativeHorrorRpg: AnswerConfigInpu
           "What can this role change that another character cannot change in the same way?",
           "Who notices, records, or judges the use of that role's access or expertise?",
           "Which other characters can add context, proof, protection, or a competing obligation in the same scene?",
-          "Can the essential clue be found if the specialist fails or is absent, with expertise improving quality, speed, certainty, or safety?",
+          "As scenario design, do necessary conclusions have resilient routes if a specialist is absent or a roll fails, while expertise improves quality, speed, or safety?",
           "What is directly observed and what remains an interpretation the players can debate?",
-          "If a roll fails, will it change cost, certainty, danger, or exposure rather than stopping the trail?",
+          "How does the chosen system handle failure, and what scenario routes keep one failed roll from ending necessary progress?",
           "What visible choice or consequence brings this scene back into shared play, and how does it raise the horror's pressure?",
         ],
       },
