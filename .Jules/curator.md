@@ -63,3 +63,9 @@
 
 **Learning:** Large monolithic helper files (like `canvas-workspace-helpers.ts`) can often be reduced by identifying distinct sub-algorithms (like auto-arrangement and layout logic) that can operate independently if given their dependencies, even if they share some types.
 **Action:** Extract these bounded algorithms into their own dedicated files (e.g., `canvas-auto-arrange.ts`) to improve readability and maintainability without changing runtime behavior. Ensure types are properly exported/imported to support the split.
+
+## 2026-09-28 - Extracting Event Handlers and State to Hooks
+
+**Learning:** When extracting event handlers and their corresponding derived state out of a large UI component into a separate `.svelte.ts` hook file to reduce the component's god-file status, the HTML template markup must be carefully updated to point to the properties of the hook's returned object (e.g., `contextMenuLogic.onNodeContextMenu`). Missed references in the template won't always trigger build-time Svelte errors depending on configuration, leading to hidden runtime bugs.
+
+**Action:** Before committing god-file extractions from Svelte components, run a robust search (e.g. `grep`) on the original file for all instances of the extracted functions/state names to ensure the markup bindings have been completely updated to point to the new hook object wrapper.
