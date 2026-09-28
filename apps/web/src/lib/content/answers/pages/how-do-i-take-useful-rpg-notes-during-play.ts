@@ -8,21 +8,21 @@ export const howDoITakeUsefulRpgNotesDuringPlay: AnswerConfigInput = {
     "How do I take useful RPG notes during play without missing the session?",
   kind: "framework",
   shortAnswer:
-    "Do not try to transcribe the session. During play, capture only what your future self will need to make decisions: names, places, clues, promises and debts, party decisions, unresolved questions and what changed. Use short fragments and a few symbols to keep your eyes on the table, use placeholders when you miss a name, skip detailed notes during combat, then spend two to five minutes after the session turning those fragments into a compact recap and a handful of lasting entries.",
+    "Do not try to transcribe the session. During play, capture what your future self may need to make decisions, or what your character would care about remembering: names, places, clues, promises and debts, party decisions, unresolved questions and what changed. Use short fragments and a few symbols to keep your eyes on the table, use placeholders when you miss a name, skip detailed notes during combat, then spend around two to five minutes after the session turning those fragments into a compact recap and a handful of lasting entries.",
   sections: [
     {
       kind: "prose",
       heading: "The trade-off is not memory versus typing speed",
       paragraphs: [
-        "Players who try to write everything down end up watching their notebook instead of the scene. Players who write nothing rely on memory, and memory is generous for one evening and thin a fortnight later. Useful notes sit between those two habits. They answer one question: will knowing this change what I do next session?",
-        "That test is stricter than it sounds. The colour of the curtains rarely passes it. The fact that the dockmaster distrusts the Glass Guild and offered a reward for checking a tunnel before dawn does. When you filter for future decisions, you write far less and remember far more.",
+        "Players who try to write everything down end up watching their notebook instead of the scene. Players who write nothing rely on memory, and memory is generous for one evening and thin a fortnight later. Useful notes sit between those two habits. Ask: will knowing this change what I do next session, or is it something my character would care about remembering?",
+        "That test is stricter than it sounds. The colour of the curtains rarely passes it. The fact that the dockmaster distrusts the Glass Guild and offered a reward for checking a tunnel before dawn does. So might a relationship moment, a personal goal, an in-character revelation or a promise that matters to your character. Capture what you may act on and what you would want your character to remember.",
       ],
     },
     {
       kind: "list",
       heading: "Capture decisions, not dialogue",
       intro:
-        "If you write these nine things you will have most of what matters. Everything else can usually wait.",
+        "These categories cover most of what matters; the final one is a reminder of what you can usually leave out.",
       items: [
         {
           term: "Names worth keeping",
@@ -30,7 +30,7 @@ export const howDoITakeUsefulRpgNotesDuringPlay: AnswerConfigInput = {
         },
         {
           term: "Clues and leads",
-          text: "The fact itself, not the speech that delivered it. A seal, a sigil, a rumour, a document. Note what it might point to, not every word around it.",
+          text: "Keep what you observed separate from what someone claimed and what you suspect. A lightweight pattern is enough: observed: blue wax seal on crate; source claim: ? dockside rumour says the warehouse fire was deliberate; theory: ? council involved. Note who made a claim when their reliability may matter later.",
         },
         {
           term: "Promises, debts and bargains",
@@ -97,8 +97,8 @@ export const howDoITakeUsefulRpgNotesDuringPlay: AnswerConfigInput = {
       heading: "Live notes and the campaign record are different jobs",
       paragraphs: [
         "During play, notes should be fragments: names, keywords, symbols, quick arrows between them, a rough sketch if a layout matters. Write badly on purpose. You are catching things, not composing them.",
-        "After play, spend two to five minutes turning those fragments into something your future self can use. Add the missing context while you still remember it, mark the threads that are still open, write a three to six bullet recap of what changed, and promote only the genuinely important facts into longer-term notes. Most lines on the live page will never need promoting, and that is expected.",
-        "One page per session covers most tables. A slightly longer campaign wants an occasional index you can scan, not a complicated taxonomy you have to maintain under time pressure.",
+        "After play, as a starting point, spend around two to five minutes turning those fragments into something your future self can use. Add the missing context while you still remember it, mark the threads that are still open, write a handful of bullets — perhaps three to six — about what changed, and promote only the genuinely important facts into longer-term notes. A long investigation or political session may need more. Most lines on the live page will never need promoting, and that is expected.",
+        "One page per session is a useful starting point for many tables. A longer or more involved session may need more space. A slightly longer campaign wants an occasional index you can scan, not a complicated taxonomy you have to maintain under time pressure.",
       ],
     },
     {
@@ -147,11 +147,11 @@ export const howDoITakeUsefulRpgNotesDuringPlay: AnswerConfigInput = {
         },
         {
           term: "Session recap",
-          text: "Three to six bullets written right after play, summarising what changed and what is now expected.",
+          text: "A handful of bullets written right after play, summarising what changed. Keep predictions about what may happen next separate from this factual recap.",
         },
       ],
       outro:
-        "For many players one page per session plus an occasional index is enough. Add structure only when the current page stops finding answers in a few seconds.",
+        "For many players, one page per session plus an occasional index is a useful starting point. Add structure only when the current page stops finding answers in a few seconds.",
     },
     {
       kind: "prose",
@@ -205,8 +205,8 @@ export const howDoITakeUsefulRpgNotesDuringPlay: AnswerConfigInput = {
           text: "Current location and immediate situation, as your character would describe it.",
         },
         {
-          term: "What is likely to happen next?",
-          text: "The most plausible next pressure if you do nothing, so the table has a direction to react to.",
+          term: "What do we expect next? (prediction)",
+          text: "The most plausible next pressure if you do nothing. Keep this expectation separate from what actually happened; it is a prediction, not campaign fact.",
         },
       ],
     },
@@ -224,11 +224,11 @@ export const howDoITakeUsefulRpgNotesDuringPlay: AnswerConfigInput = {
         },
         {
           term: "Terse notes taken during play",
-          text: "★ Vessa, dockmaster, dislikes Glass Guild\n! warehouse fire probably deliberate\n? blue wax seal = council?\n→ promised Vessa we would inspect tunnel before dawn\n★ Old Pump House, entrance below quay\n! Kelm missing after asking about smugglers",
+          text: "★ Vessa — dockmaster, dislikes Glass Guild\n? dockside rumour: warehouse fire was deliberate\n? blue wax seal = council?\n? theory: council involved\n→ promised Vessa: inspect tunnel before dawn\n★ Old Pump House — entrance below quay\n! Kelm missing after asking about smugglers",
         },
         {
           term: "Four-bullet recap built from those notes after the session",
-          text: "• Promised Dockmaster Vessa we would inspect the Old Pump House tunnel before dawn.\n• A rumour says the warehouse fire was deliberate; its cause is unknown.\n• Unresolved: blue wax seal, possibly council issue, needs checking.\n• Kelm, who had been asking about smugglers, is missing.",
+          text: "• Promised Dockmaster Vessa we would inspect the Old Pump House tunnel before dawn.\n• A dockside rumour says the warehouse fire was deliberate; its cause is unknown.\n• Observed a blue wax seal; its possible council connection is only a theory and needs checking.\n• Kelm, who had been asking about smugglers, is missing.",
         },
         {
           term: "Why it works",
@@ -240,23 +240,24 @@ export const howDoITakeUsefulRpgNotesDuringPlay: AnswerConfigInput = {
       kind: "checklist",
       heading: "A compact template you can copy",
       intro:
-        "Use this as a one-page live sheet during play, then the five prompts after. Adjust headings to fit your notebook or tool.",
+        "Use this as a live sheet during play, then the prompts after. One page is a useful starting point; adjust the space and headings to fit your session, notebook or tool.",
       items: [
         "During play - PEOPLE: name, role, one detail",
         "During play - PLACES: location, how to return",
         "During play - ! IMPORTANT: urgent facts and deadlines",
         "During play - ? QUESTIONS: threads you cannot yet explain",
         "During play - → NEXT / PROMISES: what you agreed to do and for whom",
-        "After session - What changed, what you learned, what you promised, what is still unresolved, what is likely next",
-        "After session - three to six bullet recap, then promote only lasting facts into your longer-term index",
+        "After session - factual recap: what changed, what you learned, what you promised, what is still unresolved",
+        "After session - separately note what you expect next as a prediction; a handful of recap bullets is often enough",
+        "After session - promote only lasting facts into your longer-term index",
       ],
     },
   ],
   codexConnection: {
-    heading: "Notes in your own notebook, with Codex where it helps",
+    heading: "Use a scratchpad during play, then keep what lasts",
     paragraphs: [
-      "Codex Cryptica does not need to be your live notebook to be useful for this workflow. Keep the paper or tool you already like at the table, and use Codex for the parts paper handles poorly: a searchable place for the NPC and location index, linked entities for people and places you will need to find in a few seconds mid-session, and a session recap you can file alongside the rest of the campaign.",
-      "If your table shares notes, the same entities give everyone a common reference without requiring one player to act as scribe. Your live fragments stay yours; the lasting entries live where the whole campaign can reuse them.",
+      "The distinction is between a quick capture layer and a curated campaign record, not paper versus digital. Use paper, a phone note or Codex Cryptica's Session Journal for terse fragments while you play; the Journal stays accessible as you move around Codex, so you can jot things down without stopping to create polished entities. After the session, you can turn selected journal entries or sections into drafts, review them, and keep only lasting facts as searchable campaign entities.",
+      "If your table shares notes, those durable entities give everyone a common reference without requiring one player to act as scribe. Keep personal notes too: the shared record captures what happened, while your own lines can preserve what mattered to your character. The same capture-then-curate workflow works with whatever notebook or tool you prefer.",
     ],
     linkText: "See the campaign manager",
     href: "/solutions/campaign-manager",
