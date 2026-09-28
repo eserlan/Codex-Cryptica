@@ -552,14 +552,18 @@ describe("the committed registry", () => {
     }
   });
 
-  it("records the distinct scope of sci-fi crew roles and investigator guidance", () => {
+  it("records the distinct scope of sci-fi team roles and investigator guidance", () => {
     const sciFiCrew = registry.find(
       (entry) => entry.id === "answer-sci-fi-character-roles",
     );
 
     expect(sciFiCrew?.acknowledgedOverlap).toContainEqual({
       with: "answer-run-investigator-without-sidelining-party",
-      reason: expect.stringContaining("clue access"),
+      reason: expect.stringContaining("planetary-survey examples"),
+    });
+    expect(sciFiCrew?.acknowledgedOverlap).toContainEqual({
+      with: "answer-specialist-character-spotlight",
+      reason: expect.stringContaining("nine sci-fi and space-opera functions"),
     });
   });
 

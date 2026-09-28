@@ -151,6 +151,7 @@ export const howDoYouCreateAFantasyCityThatFeelsAlive: AnswerConfigInput = {
     "how-do-i-build-a-believable-economy-for-a-fantasy-world",
     "how-do-i-decide-what-a-settlement-produces-imports-and-exports",
     "how-do-trade-routes-shape-cities-and-kingdoms-in-an-rpg-world",
+    "how-do-i-run-common-character-roles-in-a-fantasy-rpg",
   ],
   labels: ["fantasy", "rumour"],
   discovery: {

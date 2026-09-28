@@ -152,6 +152,7 @@ export const howDoYouRunCharacterRolesInACyberpunkRpg: AnswerConfigInput = {
     "how-to-write-an-in-world-newspaper-for-an-rpg",
     "how-do-i-run-a-diplomat-noble-or-courtier-in-an-rpg",
     "how-do-i-run-common-character-roles-in-a-sci-fi-or-space-opera-rpg",
+    "how-do-i-run-common-character-roles-in-a-fantasy-rpg",
   ],
   discovery: {
     id: "answer-cyberpunk-party-roles",
