@@ -257,7 +257,8 @@ export const howDoIRunCommonCharacterRolesInAFantasyRpg: AnswerConfigInput = {
     title: "How do I run fantasy character roles? GM guide | Codex Cryptica",
     description:
       "GM guidance for nine fantasy roles: warrior, rogue, mage, priest, noble, ranger, bard, sage and summoner, with shared-scene techniques and a worked barrow example.",
-    image: "https://assets.codexcryptica.com/og/how-do-i-run-common-character-roles-in-a-fantasy-rpg.jpg",
+    image:
+      "https://assets.codexcryptica.com/og/how-do-i-run-common-character-roles-in-a-fantasy-rpg.jpg",
     imageAlt:
       "A fantasy adventuring company of warrior, rogue, mage, priest, ranger and bard gathered at the sealed entrance of a misty moorland barrow",
   },
