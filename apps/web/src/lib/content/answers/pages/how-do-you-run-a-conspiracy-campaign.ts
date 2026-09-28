@@ -177,6 +177,7 @@ export const howDoYouRunAConspiracyCampaign: AnswerConfigInput = {
     "how-do-i-run-political-intrigue-and-faction-play",
     "how-do-i-run-an-investigator-without-sidelining-the-party",
     "how-do-i-run-a-journalist-or-media-character-in-an-rpg",
+    "how-do-i-run-character-roles-in-an-investigative-horror-rpg",
   ],
   discovery: {
     id: "answer-conspiracy-campaign",

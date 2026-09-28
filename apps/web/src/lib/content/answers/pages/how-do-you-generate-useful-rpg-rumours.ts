@@ -184,6 +184,7 @@ export const howDoYouGenerateUsefulRpgRumours: AnswerConfigInput = {
     "what-rpg-should-i-play-for-investigative-horror",
     "how-do-i-build-a-believable-constitutional-crisis-or-coup",
     "how-do-i-write-a-good-call-of-cthulhu-one-shot",
+    "how-do-i-run-character-roles-in-an-investigative-horror-rpg",
   ],
   labels: ["fantasy", "rumour"],
   discovery: {

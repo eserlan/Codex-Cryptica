@@ -160,6 +160,7 @@ export const howDoYouCreateASecretSocietyForAnRpgCampaign: AnswerConfigInput = {
     "what-rpg-works-for-political-intrigue-and-faction-play",
     "how-do-i-run-political-intrigue-and-faction-play",
     "how-do-i-build-a-believable-constitutional-crisis-or-coup",
+    "how-do-i-run-character-roles-in-an-investigative-horror-rpg",
   ],
   discovery: {
     id: "answer-secret-society",
