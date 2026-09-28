@@ -252,13 +252,13 @@ describe("root +page.svelte — front page overlay keydown", () => {
 
     const disclosure = screen
       .getByText(/or start from a themed vault/i)
-      .closest("details");
+      .closest("details") as HTMLDetailsElement | null;
     expect(disclosure).toBeTruthy();
-    expect(disclosure).not.toHaveAttribute("open");
+    expect(disclosure?.open).toBe(false);
 
     await fireEvent.click(screen.getByText(/or start from a themed vault/i));
 
-    expect(disclosure).toHaveAttribute("open");
+    expect(disclosure?.open).toBe(true);
     await fireEvent.click(screen.getByRole("button", { name: /^vampire$/i }));
     expect(demoService.startDemo).toHaveBeenCalledWith("vampire");
   });
