@@ -254,11 +254,11 @@ describe("root +page.svelte — front page overlay keydown", () => {
       .getByText(/or start from a themed vault/i)
       .closest("details");
     expect(disclosure).toBeTruthy();
-    expect(disclosure).not.toHaveAttribute("open");
+    expect(disclosure?.hasAttribute("open")).toBe(false);
 
     await fireEvent.click(screen.getByText(/or start from a themed vault/i));
 
-    expect(disclosure).toHaveAttribute("open");
+    expect(disclosure?.hasAttribute("open")).toBe(true);
     await fireEvent.click(screen.getByRole("button", { name: /^vampire$/i }));
     expect(demoService.startDemo).toHaveBeenCalledWith("vampire");
   });
