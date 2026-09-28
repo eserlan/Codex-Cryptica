@@ -132,6 +132,7 @@ export const howDoYouManageACampaignTimelineInAnRpg: AnswerConfigInput = {
     "how-do-you-recap-a-ttrpg-session",
     "xp-leveling-vs-milestone-leveling",
     "how-much-of-the-plot-should-a-dm-prepare",
+    "what-rpg-map-making-tool-should-i-use",
   ],
   discovery: {
     id: "answer-manage-campaign-timeline",
