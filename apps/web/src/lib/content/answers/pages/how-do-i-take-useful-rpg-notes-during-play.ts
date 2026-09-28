@@ -228,7 +228,7 @@ export const howDoITakeUsefulRpgNotesDuringPlay: AnswerConfigInput = {
         },
         {
           term: "Four-bullet recap built from those notes after the session",
-          text: "• Promised Dockmaster Vessa we would inspect the Old Pump House tunnel before dawn.\n• Warehouse fire looks deliberate; Glass Guild may be involved but we have not confirmed it.\n• Unresolved: blue wax seal, possibly council issue, needs checking.\n• Kelm missing after asking about smugglers, last seen near Low Quay.",
+          text: "• Promised Dockmaster Vessa we would inspect the Old Pump House tunnel before dawn.\n• A rumour says the warehouse fire was deliberate; its cause is unknown.\n• Unresolved: blue wax seal, possibly council issue, needs checking.\n• Kelm, who had been asking about smugglers, is missing.",
         },
         {
           term: "Why it works",
@@ -301,7 +301,7 @@ export const howDoITakeUsefulRpgNotesDuringPlay: AnswerConfigInput = {
       "player note taking tips tabletop rpg",
     ],
     uniqueValue:
-      "A player-facing capture framework that replaces transcription with decision-filtered fragments, a four-symbol shorthand, a live-notes versus post-session split with a two to five minute recap, and explicit guidance for combat, placeholders, a lightweight index, shared notes and recording as an optional supplement.",
+      "A player-facing capture framework that replaces transcription with decision-filtered fragments, a five-symbol shorthand to choose from, a live-notes versus post-session split with a two to five minute recap, and explicit guidance for combat, placeholders, a lightweight index, shared notes and recording as an optional supplement.",
     userJob: "adopt-workflow",
     relatedIntents: [
       "answer-in-person-gm-notes",
