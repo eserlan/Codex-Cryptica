@@ -13,7 +13,9 @@ function favourite(slug: string, yes = 24): CommunityFavourite {
     slug,
     question: `Question for ${slug}?`,
     shortAnswer: `Short answer for ${slug}.`,
-    meta: "Heists · Framework",
+    kindLabel: "Framework",
+    categoryTitle: "Heists",
+    publishedAt: "2026-09-01",
     yes,
   };
 }
@@ -34,6 +36,9 @@ describe("CommunityFavourites", () => {
     expect(
       within(section).getAllByText(/readers found this helpful/),
     ).toHaveLength(6);
+    // Rows share the standard answer-row anatomy: kind, category, title.
+    expect(within(section).getAllByText("Framework")).toHaveLength(6);
+    expect(within(section).getAllByText("Heists")).toHaveLength(6);
   });
 
   it("hides the section below quorum", () => {

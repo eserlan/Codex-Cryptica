@@ -1,14 +1,21 @@
 <script lang="ts">
   import { COMMUNITY_QUORUM } from "$lib/services/community/community-aggregates";
+  import { formatAnswerDate } from "$lib/content/answers/sort";
   import { base } from "$app/paths";
 
-  /** A community-validated answer, with display copy resolved by the parent. */
+  /**
+   * A community-validated answer. Rows deliberately share the standard
+   * answer-row anatomy used across /answers (kind · category · date /
+   * title / summary / arrow) — the section frame and the trailing
+   * helpfulness count are the only differentiators.
+   */
   export interface CommunityFavourite {
     slug: string;
     question: string;
     shortAnswer: string;
-    /** Category/kind line, e.g. "Heists · Framework". */
-    meta: string;
+    kindLabel: string;
+    categoryTitle: string;
+    publishedAt?: string;
     yes: number;
   }
 
@@ -43,31 +50,50 @@
         <li class="group">
           <a
             href="{cleanBase}/answers/{favourite.slug}"
-            class="-mx-2 block rounded-lg px-2 py-3 transition-colors hover:bg-theme-surface/40"
+            class="-mx-2 block rounded-lg px-2 py-4 transition-colors hover:bg-theme-surface/40"
           >
-            <span class="flex items-start justify-between gap-4">
-              <span class="flex-1">
-                <span
-                  class="mb-1 block font-mono text-[11px] uppercase tracking-wider text-theme-muted"
-                >
-                  {favourite.meta} &bull; {favourite.yes} readers found this helpful
-                </span>
-                <span
-                  class="block font-header text-base font-bold text-theme-text transition-colors group-hover:text-theme-primary"
+            <div class="flex items-start justify-between gap-4">
+              <div class="flex-1">
+                <div class="mb-1.5 flex flex-wrap items-center gap-2">
+                  <span
+                    class="font-mono text-[11px] uppercase tracking-wider text-theme-primary"
+                  >
+                    {favourite.kindLabel}
+                  </span>
+                  <span class="text-theme-muted/40">&bull;</span>
+                  <span class="font-mono text-[11px] text-theme-muted">
+                    {favourite.categoryTitle}
+                  </span>
+                  {#if favourite.publishedAt}
+                    <span class="text-theme-muted/40">&bull;</span>
+                    <time
+                      datetime={favourite.publishedAt}
+                      class="font-mono text-[11px] text-theme-muted"
+                    >
+                      {formatAnswerDate(favourite.publishedAt)}
+                    </time>
+                  {/if}
+                  <span class="text-theme-muted/40">&bull;</span>
+                  <span class="font-mono text-[11px] text-theme-muted">
+                    {favourite.yes} readers found this helpful
+                  </span>
+                </div>
+                <h3
+                  class="font-header text-lg font-bold text-theme-text transition-colors group-hover:text-theme-primary sm:text-xl"
                 >
                   {favourite.question}
-                </span>
-                <span
-                  class="mt-1 line-clamp-2 block text-sm leading-relaxed text-theme-muted"
+                </h3>
+                <p
+                  class="mt-1.5 line-clamp-2 text-base leading-relaxed text-theme-muted"
                 >
                   {favourite.shortAnswer}
-                </span>
-              </span>
+                </p>
+              </div>
               <span
-                class="icon-[lucide--arrow-right] mt-1 h-4 w-4 shrink-0 text-theme-muted transition-all group-hover:translate-x-1 group-hover:text-theme-primary"
+                class="icon-[lucide--arrow-right] mt-2 h-4 w-4 shrink-0 text-theme-muted transition-all group-hover:translate-x-1 group-hover:text-theme-primary"
                 aria-hidden="true"
               ></span>
-            </span>
+            </div>
           </a>
         </li>
       {/each}

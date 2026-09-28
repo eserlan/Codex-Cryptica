@@ -75,7 +75,9 @@
       slug: item.slug,
       question: answer.question,
       shortAnswer: answer.shortAnswer,
-      meta: `${category?.title ?? answer.category} · ${KIND_LABEL[answer.kind] ?? answer.kind}`,
+      kindLabel: KIND_LABEL[answer.kind] ?? answer.kind,
+      categoryTitle: category?.title ?? answer.category,
+      publishedAt: answer.publishedAt,
       yes: item.yes,
     };
   }
