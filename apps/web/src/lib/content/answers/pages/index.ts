@@ -19,6 +19,9 @@ import { howDoIRunARogueOrScoutWithoutSplittingTheParty } from "./how-do-i-run-a
 import { howDoIRunASuccessfulSessionZero } from "./how-do-i-run-a-successful-session-0";
 import { howDoIRunAnInvestigatorWithoutSideliningTheParty } from "./how-do-i-run-an-investigator-without-sidelining-the-party";
 import { howDoIRunCharacterRolesInAPoliticalIntrigueRpg } from "./how-do-i-run-character-roles-in-a-political-intrigue-rpg";
+import { howDoIRunCharacterRolesInAnInvestigativeHorrorRpg } from "./how-do-i-run-character-roles-in-an-investigative-horror-rpg";
+import { howDoIRunCommonCharacterRolesInAFantasyRpg } from "./how-do-i-run-common-character-roles-in-a-fantasy-rpg";
+import { howDoIRunCommonCharacterRolesInASciFiOrSpaceOperaRpg } from "./how-do-i-run-common-character-roles-in-a-sci-fi-or-space-opera-rpg";
 import { howDoIRunHackersOrNetrunnersWithoutSplittingTheParty } from "./how-do-i-run-hackers-or-netrunners-without-splitting-the-party";
 import { howDoIRunPoliticalIntrigueAndFactionPlay } from "./how-do-i-run-political-intrigue-and-faction-play";
 import { howDoIRunSpiesAndInfiltratorsInAnRpg } from "./how-do-i-run-spies-and-infiltrators-in-an-rpg";
@@ -134,6 +137,9 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     howDoIRunASuccessfulSessionZero,
     howDoIRunAnInvestigatorWithoutSideliningTheParty,
     howDoIRunCharacterRolesInAPoliticalIntrigueRpg,
+    howDoIRunCharacterRolesInAnInvestigativeHorrorRpg,
+    howDoIRunCommonCharacterRolesInAFantasyRpg,
+    howDoIRunCommonCharacterRolesInASciFiOrSpaceOperaRpg,
     howDoIRunHackersOrNetrunnersWithoutSplittingTheParty,
     howDoIRunPoliticalIntrigueAndFactionPlay,
     howDoIRunSpiesAndInfiltratorsInAnRpg,

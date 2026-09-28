@@ -174,6 +174,8 @@ export const howDoIRunHackersOrNetrunnersWithoutSplittingTheParty: AnswerConfigI
       "how-do-i-run-spies-and-infiltrators-in-an-rpg",
       "how-do-i-run-a-journalist-or-media-character-in-an-rpg",
       "how-do-i-run-a-rogue-or-scout-without-splitting-the-party",
+      "how-do-i-run-character-roles-in-an-investigative-horror-rpg",
+      "how-do-i-run-common-character-roles-in-a-sci-fi-or-space-opera-rpg",
     ],
     discovery: {
       id: "answer-run-hackers-netrunners",
