@@ -59,7 +59,6 @@
     { key: "relationships", label: "Relationships" },
     { key: "factionsAffiliations", label: "Factions and affiliations" },
     { key: "portraits", label: "Portraits" },
-    { key: "notes", label: "Notes" },
     { key: "gmOnlySecrets", label: "GM-only secrets" },
   ];
   const detailOptions: { value: ReportDetail; label: string }[] = [
