@@ -10,6 +10,7 @@
   import OrbitControls from "$lib/components/graph/OrbitControls.svelte";
   import ContextMenu from "$lib/components/graph/ContextMenu.svelte";
   import SelectionConnector from "$lib/components/graph/SelectionConnector.svelte";
+  import GraphReportAction from "$lib/components/graph/GraphReportAction.svelte";
   import FeatureHint from "$lib/components/help/FeatureHint.svelte";
   import GraphTooltip from "./graph/GraphTooltip.svelte";
   import EdgeEditorModal from "./graph/EdgeEditorModal.svelte";
@@ -720,6 +721,7 @@
   {#if controller.cy}
     <ContextMenu cy={controller.cy} />
     <SelectionConnector cy={controller.cy} />
+    <GraphReportAction cy={controller.cy} />
   {/if}
   {#if hasNoEntities}
     <div

@@ -24,6 +24,7 @@
   import TableViewPresets from "$lib/components/table/TableViewPresets.svelte";
   import type { ViewPreset } from "$lib/stores/view-presets";
   import EmptyState from "$lib/components/ui/EmptyState.svelte";
+  import { openSelectionReport } from "$lib/components/reports/open-selection-report";
   import {
     sortEntities,
     nextSortState,
@@ -426,6 +427,13 @@
     }
   }
 
+  function openBulkReport() {
+    openSelectionReport(
+      "table",
+      selectedVisible.map((e) => e.id),
+    );
+  }
+
   function openBulkLabels() {
     if (selectedVisible.length === 0) return;
     modalUIStore.openBulkLabelDialog(selectedVisible.map((e) => e.id));
@@ -793,6 +801,20 @@
               ></span>
               Add / remove labels
             </button>
+            {#if !vault.isGuest}
+              <button
+                type="button"
+                onclick={openBulkReport}
+                data-testid="entity-table-bulk-generate-report"
+                class="inline-flex items-center gap-1.5 rounded-md border border-theme-primary/50 bg-theme-surface px-2.5 py-1 text-xs font-medium text-theme-primary transition-colors hover:bg-theme-primary/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-theme-accent/40"
+              >
+                <span
+                  class="icon-[lucide--file-text] h-3.5 w-3.5"
+                  aria-hidden="true"
+                ></span>
+                Generate report
+              </button>
+            {/if}
             <button
               type="button"
               onclick={clearSelection}

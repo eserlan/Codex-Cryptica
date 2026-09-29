@@ -9,7 +9,7 @@ export const howDoIRunALargeBattleWhenThePlayerCharactersArePartOfAnArmy: Answer
       "How do I run a large battle when the player characters are part of an army?",
     kind: "framework",
     shortAnswer:
-      "Treat the wider battle as a changing environment that surrounds normal, player-scale scenes, not as hundreds of combats to resolve one by one. Give the party one concrete objective at a time, track the army fight with a handful of visible states such as front, momentum or morale, and let the outcome of the party's actions nudge those states. Intercut short updates on the larger battle between standard encounters so the war feels consequential whilst play stays at a scale the table can run.",
+      "Treat the wider battle as a changing environment that surrounds player-scale scenes, not as hundreds of combats to resolve one by one. Give the battle a trajectory of its own, then let the party's actions alter it where they have plausible leverage. Track a handful of visible states such as fronts, momentum or morale, and intercut updates with focused scenes so the war feels consequential whilst play stays at a scale the table can run.",
     sections: [
       {
         kind: "prose",
@@ -26,15 +26,15 @@ export const howDoIRunALargeBattleWhenThePlayerCharactersArePartOfAnArmy: Answer
         items: [
           {
             term: "Player-scale scenes stay normal",
-            text: "Where the party stands, run the game exactly as you would a standard fight or challenge: positions, actions, skills and hit points as written. The difference is framing, not mechanics. The enemy in front of them is the one they can affect right now; the rest of the battlefield is context that may change the next scene.",
+            text: "Resolve the immediate battlefield question with the tools your game already uses. That might be a short combat, a challenge, movement under fire, holding a position for a set time, an escort or rescue, sabotage, rallying troops, or a withdrawal. The scene ends when its question is answered, not necessarily when every enemy is defeated. The rest of the battlefield is context that may change what comes next.",
           },
           {
             term: "Army-scale resolution stays small and visible",
-            text: "Track the wider battle with three to five states the whole table can see. Common choices are lines or fronts (left, centre, right), momentum or advantage (who is pressing), morale or cohesion (will a formation hold), and time or reserves (when help arrives or breaks). Update a state only when the fiction earns it, not on a fixed turn. A whiteboard, index cards or a simple track is enough.",
+            text: "Track the wider battle with three to five states the whole table can see. Common choices are lines or fronts (left, centre, right), momentum or advantage (who is pressing), morale or cohesion (will a formation hold), and time or reserves (when help arrives or breaks). Let these change when the fiction, enemy plans, command decisions, terrain, weather, troop quality, supply, reinforcements or chance call for it, whether or not the party has acted. A whiteboard, index cards or a simple track is enough.",
           },
           {
-            term: "Let PC outcomes feed the track",
-            text: "Decide in advance what a player success or failure moves. Holding a gate for three rounds shifts the centre from wavering to steady. Reaching an officer with new orders lets the reserve move one step sooner. Losing a flank does not require twenty die rolls; it requires the party to see the consequence in their next objective.",
+            term: "Prepare causal links, not fixed state moves",
+            text: "Before the battle, decide what is likely to happen if the party does nothing, then sketch how their plausible actions might affect it. If they hold the ford long enough for the baggage to cross, the army keeps its supplies and the centre may be less likely to break later. If they reach an officer with new orders, reserves may deploy sooner. Update whichever state or situation actually follows from play; an unexpected solution need not fit a pre-written track change.",
           },
           {
             term: "Move between the scales on beats",
@@ -48,6 +48,14 @@ export const howDoIRunALargeBattleWhenThePlayerCharactersArePartOfAnArmy: Answer
             term: "Skip per-unit rolls unless the table chose a mass-combat subsystem",
             text: "If your chosen RPG already gives you a mass-battle procedure you trust, use it for the army layer and keep it separate from the player layer. If not, do not invent one mid-battle that asks for dozens of extra rolls. The states above are the subsystem: they cost almost no time and they keep attention on the characters.",
           },
+        ],
+      },
+      {
+        kind: "prose",
+        heading: "Give the battle a trajectory of its own",
+        paragraphs: [
+          "Before play, decide what happens if the party does nothing. Perhaps the left flank is likely to collapse after two beats unless reinforced, the centre can probably hold, enemy cavalry will reach the baggage train unless delayed, or reserves will arrive late unless communication is restored. These are pressures and likely outcomes, not a script for what the characters must do. Their choices can alter the course where their position and actions give them real leverage.",
+          "Match the scale of an effect to that leverage. Saving a unit, securing a gate, capturing an officer, holding a street or recovering a standard is a local result. Opening a route for reserves, preventing a flank collapse or disrupting enemy command can change the operation. Changing whether the army wins, retreats or achieves its campaign purpose is strategic. Rankers usually affect local events, specialists may have operational reach, and commanders can choose priorities and allocate forces whilst still facing uncertainty in execution. Let dramatic actions matter without making every local success decide the whole war.",
         ],
       },
       {
@@ -69,6 +77,10 @@ export const howDoIRunALargeBattleWhenThePlayerCharactersArePartOfAnArmy: Answer
             text: "Runners go missing, horns are misheard, smoke hides signals, officers fall. Use these breakdowns as prompts that return initiative to the party: the order has not arrived, so they must judge; the officer is down, so someone must carry the signet or the standard; the plan failed on the next hill, so their position is now the key one. Rank explains why they are there; friction explains why they must choose.",
           },
           {
+            term: "Change the next objective when a plan fails",
+            text: "Failure should create a new battlefield problem before it worsens a track. If the flank breaks, the party may need to escort the wounded out. If an officer dies, they must choose whether to assume command or carry the orders. If reserves never arrive, they may have to hold long enough for an organised withdrawal. If a gate falls, protecting civilians or baggage may matter more than trying the same fight again.",
+          },
+          {
             term: "Show the price of the structure",
             text: "Discipline has visible costs. Refusing an order may save lives at the cost of favour. Obeying a poor order may hold the line but waste a resource. If every choice inside the army leads to the same approved outcome, the hierarchy is scenery. Let the chain of command react in ways the party can see in the next scene.",
           },
@@ -78,32 +90,32 @@ export const howDoIRunALargeBattleWhenThePlayerCharactersArePartOfAnArmy: Answer
         kind: "example",
         heading: "Worked example: a hoplite line in five beats",
         paragraphs: [
-          "A classical phalanx battle: two lines of spear and shield, a dusty plain, captains trying to be heard over bronze and shouting. The party are rankers in the centre-right, close enough to act but not in command of the field. Each beat is one player-scale scene plus a single army-state update.",
+          "A classical phalanx battle: two lines of spear and shield, a dusty plain, captains trying to be heard over bronze and shouting. The party are rankers in the centre-right, close enough to act but not in command of the field. If they do nothing, the left flank is likely to give way after two beats, the centre should hold, and enemy cavalry will threaten the baggage train. Each beat pairs a player-scale scene with any army changes the battle's causes warrant; the party can influence events near them without controlling every outcome.",
         ],
         items: [
           {
             term: "Beat 1: Hold formation during the initial clash",
-            text: "Objective: keep shields locked whilst the lines meet. At player scale this is a short, brutal exchange where the threat is being pushed out of formation rather than simply losing hit points. Success: the centre holds and the army state for Centre Front stays steady. Failure: the centre is wavering, and the next scene starts with the file leader shouting for the party to close a gap that has opened to their left.",
+            text: "Objective: keep shields locked whilst the lines meet. At player scale this is a short, brutal exchange where the threat is being pushed out of formation rather than simply losing hit points. If the party holds, the centre is better placed to withstand pressure; if they are pushed back, a gap opens to their left and the next task is to close it. Either way, the rest of the centre responds to its own officers and the pressure of the clash.",
           },
           {
             term: "Beat 2: React when the left flank begins to fail",
-            text: "Update: dust, a horn, and a runner gasping that the left is giving ground. New objective: the polemarch cannot spare the reserve yet, so the party must prevent a rout by reaching the flank captain and steadying that file. At player scale this is movement under pressure, perhaps a contested advance through broken ground and missile fire. Success nudges Left Flank from failing to wavering and buys one more beat before collapse. Failure keeps it failing and the party arrives to find the captain down.",
+            text: "Update: dust, a horn, and a runner gasping that the left is giving ground. New objective: the polemarch cannot spare the reserve yet, so the party can try to prevent a rout by reaching the flank captain and steadying that file. At player scale this is movement under pressure, perhaps a contested advance through broken ground and missile fire. If they reach the captain, the flank may hold long enough for an organised response; if they do not, they arrive to find the captain down and the wounded falling back past them.",
           },
           {
             term: "Beat 3: Protect or reach an officer carrying new orders",
-            text: "Objective: a junior officer has the order to commit the reserve, but his escort is cut off behind a knot of enemy spearmen. The party can cut through, lay down covering fire, or haul the wounded officer out by another route. Success moves Reserves from committed late to committed now, visible when fresh shields appear on the ridge. Failure delays the reserve, and the centre will have to hold one beat longer without help. Either way, the officer's fate is a person the party will see again.",
+            text: "Objective: a junior officer has the order to commit the reserve, but his escort is cut off behind a knot of enemy spearmen. The party can cut through, draw enemy attention while another character reaches the officer, or haul him out by another route. If the order reaches the commander, the reserve may deploy sooner; if not, the centre faces pressure without that help and the party must decide whether to recover the officer or carry the order themselves. Either way, his fate is a person the party will see again.",
           },
           {
             term: "Beat 4: Exploit a break in the enemy line",
-            text: "Update: the enemy centre overextended chasing the earlier flank collapse. A seam appears two files wide. Objective: the party leads a wedge into the gap, not to kill the whole army but to force the enemy to turn or split. At player scale this is a focused push with a clear exit: create the opening, then decide whether to hold it or pull back. Success shifts Enemy Cohesion from steady to wavering and opens a choice for the final beat. Failure still costs the enemy but leaves the party exposed, and the next scene starts with them needing to disengage.",
+            text: "Update: the enemy centre overextended chasing the earlier flank collapse. A seam appears two files wide. Objective: the party leads a wedge into the gap, not to kill the whole army but to force the enemy to turn or split. At player scale this is a focused push with a clear exit: create the opening, then decide whether to hold it or pull back. If they open the gap, nearby enemy troops may turn to face them, giving the centre a chance to press. If they are pinned, the party must disengage whilst the larger line continues to shift around them.",
           },
           {
             term: "Beat 5: Show how each objective changed the wider battle",
-            text: "Close with a brief battlefield coda that names what the party's actions bought. A held formation meant the baggage train cleared the ford. A steadied flank meant the wounded were carried off instead of lost. A delivered order meant the reserve arrived before the line broke. A wedge in the enemy line meant the enemy withdrew rather than routed the army. Not every combination ends in victory; if several states are still failing, let the cost be plain, such as a retreat under shield, a lost standard, or a captain who will remember who held and who ran.",
+            text: "Close with a brief battlefield coda that names what the party's actions changed and what the wider battle did on its own. Perhaps the baggage cleared the ford, the wounded were carried off, or the enemy withdrew before the line broke. The outcome need not be a simple victory or defeat: the army might lose the field but escape intact, win at a cost that reshapes the next campaign, delay the enemy until nightfall, protect civilians or baggage, preserve a unit or commander, or capture an enemy leader during a retreat. A withdrawal or rescue can be as consequential an objective as taking the hill; battle lost need not mean the session failed.",
           },
           {
             term: "Why it works",
-            text: "Never did the table roll for every spear. Five visible states (Left Flank, Centre Front, Reserves, Enemy Cohesion, and casualties the party can see) were enough to make the wider battle responsive. Each player-scale scene had a concrete task that a small group can perform inside a large force, and each success or failure changed the next task rather than adding a numerical modifier the players never saw. The hoplite dressing can be swapped for any pre-modern or fantasy line battle with the same structure.",
+            text: "Never did the table roll for every spear. Five visible states (Left Flank, Centre Front, Reserves, Enemy Cohesion, and casualties the party can see) were enough to make the wider battle responsive. The scenes gave the party concrete tasks, and consequences changed the next situation rather than adding a numerical modifier the players never saw. The hoplite dressing can be swapped for any pre-modern or fantasy line battle with the same structure.",
           },
         ],
       },
@@ -122,12 +134,14 @@ export const howDoIRunALargeBattleWhenThePlayerCharactersArePartOfAnArmy: Answer
         items: [
           "Name the battle's purpose in one line: what the army must achieve before nightfall and what happens if it does not.",
           "Sketch three to five army states on cards or a small track (for example Left, Centre, Right, Morale, Reserves) and mark their starting positions.",
-          "Decide for each state what player-scale success or failure moves it one step, in plain language the table will recognise.",
-          "Write three concrete objectives the party could plausively be given in order (hold, carry, exploit), plus one that appears only if a state fails.",
+          "Decide what is likely to happen if the party does nothing, including which parts of the battle may change through command, terrain, troops, supplies, enemy plans or chance.",
+          "Sketch causal links between plausible party actions and local, operational or strategic consequences; leave room for unexpected solutions.",
+          "Write a few concrete objectives the party could face, plus new tasks that could follow from setbacks or a changed battlefield.",
           "Place two pieces of terrain or friction that will change between beats (a hedge, a ford, smoke, a hill, a broken signal), and note when each becomes visible.",
           "Plan the signal that tells the table the scale is shifting: a horn, a runner, a captain's shout, standards moving, so the cut between army update and player scene is crisp.",
           "Agree how you will use your system's existing rules for the player layer, and whether you will use any mass-combat subsystem for the army layer or keep the track abstract.",
           "Note what visible cost or benefit each state produces for the next scene, so every shift can be shown rather than reported.",
+          "Consider what retreat, defeat, costly success or partial victory could still let the party protect, preserve or achieve.",
         ],
       },
     ],
@@ -221,7 +235,7 @@ export const howDoIRunALargeBattleWhenThePlayerCharactersArePartOfAnArmy: Answer
     seo: {
       title: "How to Run a Large Battle With PCs in an Army | Codex Cryptica",
       description:
-        "Run PCs inside a large army battle without rolling for every soldier. Track a few army states, give concrete objectives, and let player success shift the wider fight.",
+        "Run PCs inside a large army battle without rolling for every soldier. Track a few army states and let plausible player actions change the wider fight.",
       image:
         "https://assets.codexcryptica.com/og/how-do-i-run-a-large-battle-when-the-player-characters-are-part-of-an-army.jpg",
       imageAlt:

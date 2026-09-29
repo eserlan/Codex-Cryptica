@@ -352,3 +352,24 @@ describe("CanvasHUD", () => {
     expect(onToggleShowImageLabels).toHaveBeenCalledOnce();
   });
 });
+
+const hudBase = {
+  canvasName: "Party",
+  activeCategories: new Set<string>(),
+  onToggleCategory: vi.fn(),
+  onClearCategories: vi.fn(),
+};
+
+describe("CanvasHUD generate report button", () => {
+  it("shows the button and calls the handler", async () => {
+    const onGenerateReport = vi.fn();
+    render(CanvasHUD, { props: { ...hudBase, onGenerateReport } });
+    await fireEvent.click(screen.getByTestId("canvas-generate-report"));
+    expect(onGenerateReport).toHaveBeenCalledTimes(1);
+  });
+
+  it("hides the button when no handler is provided", () => {
+    render(CanvasHUD, { props: { ...hudBase } });
+    expect(screen.queryByTestId("canvas-generate-report")).toBeNull();
+  });
+});
