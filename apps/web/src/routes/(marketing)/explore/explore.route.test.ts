@@ -61,4 +61,20 @@ describe("/explore route", () => {
     expect(silhouettesLink).toBeTruthy();
     expect(silhouettesLink?.textContent).toContain("Vector Silhouettes");
   });
+
+  it("links to the community templates directory under Build & Explore", () => {
+    render(Page, { props: { data: emptyData } });
+
+    const templatesLink = document.querySelector('a[href="/templates"]');
+    expect(templatesLink).toBeTruthy();
+    expect(templatesLink?.textContent).toContain("Templates");
+  });
+
+  it("does not show the templates link on a label view", () => {
+    render(Page, {
+      props: { data: { ...emptyData, label: "cyberpunk" } },
+    });
+
+    expect(document.querySelector('a[href="/templates"]')).toBeNull();
+  });
 });
