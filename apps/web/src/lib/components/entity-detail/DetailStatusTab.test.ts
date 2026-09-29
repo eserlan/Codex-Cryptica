@@ -36,6 +36,7 @@ vi.mock("$lib/stores/vault.svelte", () => ({
       ],
     },
     removeConnection: vi.fn(),
+    setConnectionHidden: vi.fn().mockResolvedValue(true),
     addConnection: vi.fn().mockResolvedValue(true),
     updateEntity: vi.fn().mockResolvedValue(true),
     loadTranscriptsForCharacter: vi.fn().mockResolvedValue([]),
@@ -406,5 +407,120 @@ describe("DetailStatusTab", () => {
     });
 
     expect(screen.queryByText("Guest Character Chat")).toBeNull();
+  });
+
+  describe("hiding connections", () => {
+    const renderTab = (entity = mockEntity) =>
+      render(DetailStatusTab, {
+        entity,
+        isEditing: false,
+        editType: "npc",
+        editContent: "",
+        editStartDate: undefined as any,
+        editEndDate: undefined as any,
+      });
+
+    it("hides an outgoing connection by writing to this entity", async () => {
+      renderTab();
+
+      await fireEvent.click(
+        screen.getByLabelText("Hide connection to Target 1"),
+      );
+
+      expect(vault.setConnectionHidden).toHaveBeenCalledWith(
+        "entity-1",
+        "target-1",
+        "friendly",
+        true,
+      );
+      expect(vault.removeConnection).not.toHaveBeenCalled();
+    });
+
+    it("hides an incoming connection by writing to the other entity", async () => {
+      renderTab();
+
+      await fireEvent.click(
+        screen.getByLabelText("Hide connection to Source 1"),
+      );
+
+      expect(vault.setConnectionHidden).toHaveBeenCalledWith(
+        "source-1",
+        "entity-1",
+        "enemy",
+        true,
+      );
+    });
+
+    it("keeps a hidden connection listed, dimmed, with a way to show it", async () => {
+      renderTab({
+        ...mockEntity,
+        connections: [
+          {
+            target: "target-1",
+            type: "friendly",
+            label: "Friend of",
+            hidden: true,
+          },
+        ],
+      });
+
+      expect(screen.getByText("Target 1")).toBeTruthy();
+      expect(screen.queryByLabelText("Hide connection to Target 1")).toBeNull();
+      expect(
+        screen
+          .getByTestId("hidden-connections-bar")
+          .textContent?.replace(/\s+/g, " "),
+      ).toContain("1 connection is hidden");
+
+      await fireEvent.click(
+        screen.getByLabelText("Show connection to Target 1"),
+      );
+      expect(vault.setConnectionHidden).toHaveBeenCalledWith(
+        "entity-1",
+        "target-1",
+        "friendly",
+        false,
+      );
+    });
+
+    it("shows every hidden connection again from one button", async () => {
+      renderTab({
+        ...mockEntity,
+        connections: [
+          { target: "target-1", type: "friendly", hidden: true },
+          { target: "target-1", type: "rival", hidden: true },
+        ],
+      });
+
+      await fireEvent.click(
+        screen.getByRole("button", { name: "Show all connections" }),
+      );
+
+      expect(vault.setConnectionHidden).toHaveBeenCalledTimes(2);
+      expect(vault.setConnectionHidden).toHaveBeenCalledWith(
+        "entity-1",
+        "target-1",
+        "rival",
+        false,
+      );
+    });
+
+    it("shows no hidden notice when nothing is hidden (negative)", () => {
+      renderTab();
+      expect(screen.queryByTestId("hidden-connections-bar")).toBeNull();
+    });
+
+    it("offers no hide or show controls to guests (negative)", () => {
+      (vault as any).isGuest = true;
+      renderTab({
+        ...mockEntity,
+        connections: [{ target: "target-1", type: "friendly", hidden: true }],
+      });
+
+      expect(screen.queryByLabelText(/^(Hide|Show) connection to /)).toBeNull();
+      expect(
+        screen.queryByRole("button", { name: "Show all connections" }),
+      ).toBeNull();
+    });
   });
 });

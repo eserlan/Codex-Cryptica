@@ -133,7 +133,7 @@ export class GraphTransformer {
       for (let j = 0; j < connections.length; j++) {
         if (weightedEdgeCount >= maxEdges) break;
         const conn = connections[j];
-        if (!validIds.has(conn.target)) continue;
+        if (conn.hidden || !validIds.has(conn.target)) continue;
 
         incrementWeight(weights, entity.id);
         incrementWeight(weights, conn.target);
@@ -291,8 +291,8 @@ export class GraphTransformer {
         for (let l = 0; l < connections.length; l++) {
           if (renderedEdgeCount >= maxEdges) break;
           const conn = connections[l];
-          // Skip edges to non-existent targets
-          if (!validIds.has(conn.target)) continue;
+          // Skip hidden connections and edges to non-existent targets
+          if (conn.hidden || !validIds.has(conn.target)) continue;
 
           // Construct a unique edge ID: source-target-type
           const edgeId = `${entity.id}-${conn.target}-${conn.type}`;

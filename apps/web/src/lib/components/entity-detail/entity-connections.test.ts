@@ -4,6 +4,7 @@ import {
   buildConnectionNeighbors,
   connectionLabel,
   toConnectionRows,
+  withoutHiddenRelations,
   vaultConnectionContext,
 } from "./entity-connections";
 
@@ -92,6 +93,7 @@ describe("buildConnectionNeighbors", () => {
         direction: "outbound",
         isChild: false,
         strength: 1,
+        hidden: false,
       },
     ]);
     expect(neighbors.find((n) => n.id === "kingdom")?.relations).toEqual([
@@ -102,6 +104,7 @@ describe("buildConnectionNeighbors", () => {
         direction: "inbound",
         isChild: false,
         strength: 1,
+        hidden: false,
       },
     ]);
     expect(neighbors.find((n) => n.id === "heir")?.relations).toEqual([
@@ -111,6 +114,7 @@ describe("buildConnectionNeighbors", () => {
         direction: "inbound",
         isChild: true,
         strength: 1,
+        hidden: false,
       },
     ]);
   });
@@ -306,5 +310,66 @@ describe("vaultConnectionContext", () => {
     );
 
     expect(neighbors).toEqual([]);
+  });
+});
+
+describe("hidden relations", () => {
+  const build = () => {
+    const a = entity({
+      id: "a",
+      connections: [
+        { target: "b", type: "knows", strength: 1, hidden: true },
+        { target: "b", type: "owns", strength: 1 },
+        { target: "c", type: "knows", strength: 1, hidden: true },
+      ] as Entity["connections"],
+    });
+    const b = entity({ id: "b" });
+    const c = entity({ id: "c" });
+    return { a, all: [a, b, c] };
+  };
+
+  it("still lists hidden relations, flagged, in the rows", () => {
+    const { a, all } = build();
+    const rows = toConnectionRows(buildConnectionNeighbors(a, context(all)));
+    expect(rows.map((r) => [r.targetId, r.type, r.hidden])).toEqual([
+      ["b", "knows", true],
+      ["b", "owns", false],
+      ["c", "knows", true],
+    ]);
+  });
+
+  it("drops hidden relations, and neighbours left with none, from the diagram", () => {
+    const { a, all } = build();
+    const visible = withoutHiddenRelations(
+      buildConnectionNeighbors(a, context(all)),
+    );
+    expect(visible.map((n) => n.id)).toEqual(["b"]);
+    expect(visible[0].relations.map((r) => r.type)).toEqual(["owns"]);
+  });
+
+  it("marks an incoming hidden relation as hidden too", () => {
+    const b = entity({ id: "b" });
+    const a = entity({
+      id: "a",
+      connections: [
+        { target: "b", type: "knows", strength: 1, hidden: true },
+      ] as Entity["connections"],
+    });
+    const [neighbor] = buildConnectionNeighbors(b, context([a, b]));
+    expect(neighbor.relations[0].hidden).toBe(true);
+  });
+
+  it("keeps every neighbour when nothing is hidden (negative)", () => {
+    const a = entity({
+      id: "a",
+      connections: [
+        { target: "b", type: "knows", strength: 1 },
+      ] as Entity["connections"],
+    });
+    const neighbors = buildConnectionNeighbors(
+      a,
+      context([a, entity({ id: "b" })]),
+    );
+    expect(withoutHiddenRelations(neighbors)).toEqual(neighbors);
   });
 });

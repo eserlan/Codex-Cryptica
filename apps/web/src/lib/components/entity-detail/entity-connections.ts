@@ -23,6 +23,8 @@ export type ConnectionRelation = {
   /** True for a hierarchy child (`entity.parent`), which is not a stored connection. */
   isChild: boolean;
   strength: number;
+  /** Hidden connections are listed but left out of the graph and diagrams. */
+  hidden: boolean;
 };
 
 export type ConnectionNeighbor = {
@@ -146,6 +148,7 @@ export function buildConnectionNeighbors(
     direction,
     isChild: false,
     strength: connection.strength ?? 1,
+    hidden: connection.hidden === true,
   });
 
   for (const connection of entity.connections ?? []) {
@@ -168,10 +171,32 @@ export function buildConnectionNeighbors(
       direction: "inbound",
       isChild: true,
       strength: 1,
+      hidden: false,
     });
   }
 
   return [...byId.values()];
+}
+
+/**
+ * The neighbours a diagram should draw: hidden relations are dropped, and a
+ * neighbour whose every relation is hidden is dropped with them. Hierarchy
+ * children are never hidden (they are not stored connections).
+ */
+export function withoutHiddenRelations(
+  neighbors: ConnectionNeighbor[],
+): ConnectionNeighbor[] {
+  const visible: ConnectionNeighbor[] = [];
+  for (const neighbor of neighbors) {
+    const relations = neighbor.relations.filter((r) => !r.hidden);
+    if (relations.length === 0) continue;
+    visible.push(
+      relations.length === neighbor.relations.length
+        ? neighbor
+        : { ...neighbor, relations },
+    );
+  }
+  return visible;
 }
 
 /**
@@ -185,6 +210,7 @@ export type ConnectionRow = Connection & {
   hasPastLabel: boolean;
   isOutbound: boolean;
   isChild: boolean;
+  hidden: boolean;
 };
 
 export function toConnectionRows(
@@ -203,6 +229,7 @@ export function toConnectionRows(
         hasPastLabel: neighbor.hasPastLabel,
         isOutbound: relation.direction === "outbound",
         isChild: relation.isChild,
+        hidden: relation.hidden,
       });
     }
   }

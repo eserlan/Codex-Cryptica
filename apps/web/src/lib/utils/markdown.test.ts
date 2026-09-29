@@ -315,6 +315,39 @@ describe("markdown.ts utility", () => {
     });
   });
 
+  describe("hidden connections", () => {
+    const base = {
+      id: "eldrin",
+      type: "character",
+      title: "Eldrin",
+      content: "Body",
+    };
+
+    it("keeps a hidden connection's flag through save and reload", () => {
+      const parsed = parseMarkdown(
+        stringifyEntity({
+          ...base,
+          connections: [
+            { target: "keep", type: "located_in", hidden: true },
+            { target: "tower", type: "owns" },
+          ],
+        } as any),
+      );
+      expect(parsed.metadata.connections).toEqual([
+        { target: "keep", type: "located_in", hidden: true },
+        { target: "tower", type: "owns" },
+      ]);
+    });
+
+    it("writes nothing extra for a connection that was never hidden (negative)", () => {
+      const serialized = stringifyEntity({
+        ...base,
+        connections: [{ target: "tower", type: "owns" }],
+      } as any);
+      expect(serialized).not.toContain("hidden");
+    });
+  });
+
   describe("Vault Round-Trip Integration", () => {
     it("should serialize a fully populated entity and re-parse it with full fidelity", () => {
       const fullEntity = {

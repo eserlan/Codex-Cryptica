@@ -28,3 +28,24 @@ describe("ConnectionTypeSchema family types", () => {
     ).toBe("custom_bond");
   });
 });
+
+describe("ConnectionSchema hidden flag", () => {
+  it("keeps hidden: true through a parse", () => {
+    expect(
+      ConnectionSchema.parse({ target: "e", type: "knows", hidden: true })
+        .hidden,
+    ).toBe(true);
+  });
+
+  it("leaves hidden unset when it was never written", () => {
+    expect(
+      ConnectionSchema.parse({ target: "e", type: "knows" }),
+    ).not.toHaveProperty("hidden");
+  });
+
+  it("rejects a non-boolean hidden value", () => {
+    expect(
+      ConnectionSchema.safeParse({ target: "e", hidden: "yes" }).success,
+    ).toBe(false);
+  });
+});
