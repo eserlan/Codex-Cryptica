@@ -375,3 +375,14 @@
     />
   </div>
 </div>
+
+<style>
+  /* Images inside an entity's text stay a comfortable size in the reading view. */
+  .prose-container :global(img) {
+    max-width: 100%;
+    max-height: 16rem;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+  }
+</style>

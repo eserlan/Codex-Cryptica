@@ -164,6 +164,7 @@
 
 <div
   style="background-image: var(--bg-texture-overlay)"
+  id="zen-sidebar"
   class="w-full md:w-80 lg:w-96 md:border-r border-theme-border p-4 md:p-5 md:overflow-y-auto custom-scrollbar bg-theme-surface shrink-0"
   data-testid="zen-sidebar"
 >

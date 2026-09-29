@@ -6,6 +6,10 @@
   import ZenHeader from "./ZenHeader.svelte";
   import ZenSidebar from "./ZenSidebar.svelte";
   import ZenContent from "./ZenContent.svelte";
+  import {
+    readSidebarCollapsed,
+    writeSidebarCollapsed,
+  } from "./zen-sidebar-preference";
   import DetailConnectionsTab from "$lib/components/entity-detail/DetailConnectionsTab.svelte";
   import DetailMapTab from "$lib/components/entity-detail/DetailMapTab.svelte";
   import DetailChatsTab from "$lib/components/entity-detail/DetailChatsTab.svelte";
@@ -53,6 +57,12 @@
     if (!entity || !vault.isGuest) return;
     persistZenPopoutPayload(vault.activeVaultId ?? "guest", entity, true);
   });
+
+  let sidebarCollapsed = $state(readSidebarCollapsed());
+  const toggleSidebar = () => {
+    sidebarCollapsed = !sidebarCollapsed;
+    writeSidebarCollapsed(sidebarCollapsed);
+  };
 
   let activeTab = $derived(modalUIStore.zenModeActiveTab);
   let scrollContainer = $state<HTMLDivElement>();
@@ -486,6 +496,24 @@
       >
         TIMELINE
       </button>
+      {#if activeTab === "overview"}
+        <button
+          type="button"
+          class="ml-auto py-2 pl-3 text-theme-muted hover:text-theme-primary transition-colors flex items-center gap-1.5 text-xs font-bold tracking-widest font-header shrink-0"
+          onclick={toggleSidebar}
+          aria-pressed={sidebarCollapsed}
+          aria-label={sidebarCollapsed ? "Show sidebar" : "Hide sidebar"}
+          title={sidebarCollapsed ? "Show sidebar" : "Hide sidebar"}
+          data-testid="zen-sidebar-toggle"
+        >
+          <span
+            class="{sidebarCollapsed
+              ? 'icon-[lucide--panel-left-open]'
+              : 'icon-[lucide--panel-left-close]'} h-4 w-4"
+            aria-hidden="true"
+          ></span>
+        </button>
+      {/if}
     </div>
 
     <!-- Main Body -->
@@ -500,21 +528,23 @@
           data-testid="zen-mobile-scroll-container"
           style="touch-action: pan-y;"
         >
-          <ZenSidebar
-            {entity}
-            bind:editState
-            {resolvedImageUrl}
-            {isPopout}
-            onShowLightbox={(rect) =>
-              modalUIStore.openLightbox(
-                resolvedImageUrl,
-                entity.title,
-                rect,
-                entity.image,
-              )}
-            onNavigate={navigateTo}
-            onDelete={handleDelete}
-          />
+          {#if !sidebarCollapsed}
+            <ZenSidebar
+              {entity}
+              bind:editState
+              {resolvedImageUrl}
+              {isPopout}
+              onShowLightbox={(rect) =>
+                modalUIStore.openLightbox(
+                  resolvedImageUrl,
+                  entity.title,
+                  rect,
+                  entity.image,
+                )}
+              onNavigate={navigateTo}
+              onDelete={handleDelete}
+            />
+          {/if}
 
           <ZenContent
             {entity}
