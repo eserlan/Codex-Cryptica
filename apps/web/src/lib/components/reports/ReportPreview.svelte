@@ -5,6 +5,7 @@
     renderFactionSummary,
     renderGenericSummary,
     type ReportDocument,
+    type ReportEntityInput,
     type ReportSection,
   } from "entity-report-engine";
 
@@ -38,8 +39,14 @@
   const views = $derived(
     document.sections.map((section) => ({
       section,
-      view: viewFor(section) as ReturnType<typeof renderCharacterSummary> & {
+      view: {
+        ...viewFor(section),
+        entity: section.entity,
+        showVisual: document.includePortraits,
+      } as ReturnType<typeof renderCharacterSummary> & {
         members?: string[];
+        entity: ReportEntityInput;
+        showVisual: boolean;
       },
     })),
   );

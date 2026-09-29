@@ -17,6 +17,11 @@ vi.mock("$lib/stores/vault.svelte", () => ({
   vault: { resolveImageUrl, releaseImageUrl },
 }));
 
+vi.mock("$lib/components/ui/SilhouetteAvatar.svelte", async () => ({
+  default: (await import("./test-support/silhouette-avatar-stub.svelte"))
+    .default,
+}));
+
 import ReportPreview from "./ReportPreview.svelte";
 
 describe("ReportPreview", () => {
@@ -67,5 +72,62 @@ describe("ReportPreview", () => {
 
     unmount();
     await waitFor(() => expect(releaseImageUrl).toHaveBeenCalledTimes(3));
+  });
+
+  const buildOne = (portraits: boolean, portraitUrl?: string) =>
+    buildReport(
+      {
+        entities: [
+          {
+            id: "a",
+            title: "Archstaff",
+            type: "item",
+            labels: [],
+            portraitUrl,
+            description: "## Summary\n\nA **rare** relic.\n\n- one\n- two",
+          },
+        ],
+        relationships: [],
+        factionMembership: {},
+      },
+      {
+        scope: { origin: "graph" },
+        include: { ...DEFAULT_REPORT_INCLUDE, portraits },
+        detail: DEFAULT_REPORT_DETAIL,
+      },
+    );
+
+  it("renders markdown richly instead of showing raw syntax", () => {
+    const { container } = render(ReportPreview, {
+      props: { document: buildOne(true) },
+    });
+    expect(container.querySelector("h2")?.textContent).toBe("Summary");
+    expect(container.querySelector("strong")?.textContent).toBe("rare");
+    expect(container.querySelectorAll("li")).toHaveLength(2);
+    expect(container.textContent).not.toContain("##");
+  });
+
+  it("falls back to a silhouette when the entity has no portrait", () => {
+    render(ReportPreview, { props: { document: buildOne(true) } });
+    expect(screen.getByTestId("silhouette-stub")).toBeTruthy();
+  });
+
+  it("shows no silhouette when portraits are turned off", () => {
+    render(ReportPreview, { props: { document: buildOne(false) } });
+    expect(screen.queryByTestId("silhouette-stub")).toBeNull();
+  });
+
+  it("prefers the portrait over the silhouette", async () => {
+    render(ReportPreview, { props: { document: buildOne(true, "a.png") } });
+    await waitFor(() => expect(screen.getByAltText("Archstaff")).toBeTruthy());
+    expect(screen.queryByTestId("silhouette-stub")).toBeNull();
+  });
+
+  it("falls back to the silhouette when the portrait cannot be loaded", async () => {
+    resolveImageUrl.mockRejectedValueOnce(new Error("missing"));
+    render(ReportPreview, { props: { document: buildOne(true, "gone.png") } });
+    await waitFor(() =>
+      expect(screen.getByTestId("silhouette-stub")).toBeTruthy(),
+    );
   });
 });

@@ -30,6 +30,8 @@ export interface ReportEntityInput {
   secrets?: string;
   notes?: string;
   portraitUrl?: string;
+  /** Explicit silhouette id, used for the preview fallback when there is no portrait. */
+  silhouette?: string;
   labels: string[];
 }
 
@@ -96,6 +98,8 @@ export interface ReportDocument {
     factionCount: number;
   };
   detail: ReportDetail;
+  /** Whether visuals (portraits, or silhouettes as a fallback) are included. */
+  includePortraits: boolean;
   sections: ReportSection[];
   relationshipSummary: ReportRelationshipLine[];
 }

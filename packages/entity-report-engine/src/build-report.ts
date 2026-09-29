@@ -99,6 +99,7 @@ export function buildReport(
       factionCount: entities.filter((e) => e.type === "faction").length,
     },
     detail,
+    includePortraits: include.portraits,
     sections,
     relationshipSummary: include.relationships
       ? allLines.map((l) => l.line)
