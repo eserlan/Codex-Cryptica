@@ -1,5 +1,5 @@
 {
-  "updated_at": 1790637362,
+  "updated_at": 1790700211,
   "candidates": [
     {
       "id": "reddit-36168046733-tables-now-parse-4d6kh3-2-and-other-keep",
@@ -100,6 +100,16 @@
       "source_id": "36492955284",
       "status": "approved",
       "created_at": 1790637362
+    },
+    {
+      "id": "reddit-36595187772-my-board-had-the-right-pieces-but-handou",
+      "title": "My board had the right pieces but handouts still took an hour",
+      "body": "My canvas had the right characters, locations and factions placed, and the graph showed the links I wanted. Turning that into something players could read still meant copying sections and rebuilding connections by hand.\n\nI built a report flow that takes what you have selected on the canvas, graph or table and generates a styled note from it, then saves it as an ordinary editable note you can read in Zen mode.\n\nYou pick brief or standard detail and choose which sections to include.\n\nWhat you get:\n- location blocks pulled from the selected entities\n- relationships and faction links collected together\n- connection sources shown so you know why a line exists\n- rich markdown with silhouette fallbacks when an entity has no portrait\n- a normal note afterwards, so you can edit it like anything else\n\nTradeoff I am still weighing: the report is a snapshot. If you move things later you generate again rather than it staying live linked. It keeps the note simple, but adds a manual step.\n\nHow do you hand your group a summary of a region or network today, do you export a view, write it by hand, or just talk it through?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/images/help-blog/zen-mode.png)",
+      "url": "",
+      "image_url": "https://assets.codexcryptica.com/images/help-blog/zen-mode.png",
+      "source_id": "36595187772",
+      "status": "approved",
+      "created_at": 1790700211
     }
   ]
 }
