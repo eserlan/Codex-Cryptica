@@ -1,5 +1,21 @@
 [
   {
+    "version": "0.34.0",
+    "title": "The Session Journal & Reports Update",
+    "date": "2026-09-29",
+    "type": "minor",
+    "highlights": [
+      "Session Journal: Keep a running record of your game from anywhere in the app. Write notes with formatting and a live preview, edit and reorder entries, and let rolls, card draws and table results log themselves. Turn what happened into characters, places and lore when you're ready.",
+      "Entity Reports: Pick some entities on the canvas, graph or table and generate a report from them, with locations, connections and their sources included. Save it as an ordinary note you can edit and read in Zen mode.",
+      "Entity Templates in Settings: See every starting layout for new notes in one place, duplicate a built-in one, and edit it as plain markdown. Choose your own default for each type of entity, and import or export templates to share. New characters start from your choice, and asking the Oracle to revise a note now keeps to it. Includes a compact Table Card for improvised NPCs.",
+      "See the Dice: Open up any resolved roll to see the individual dice behind it, in roll tables, the journal, stat sheets and solo adventures. Roll tables now also handle multi-dice formulas such as keep highest and keep lowest.",
+      "Richer Canvases: Give entity cards different looks, show a faction's roster right on its card, and browse a member image gallery.",
+      "Saved Views Keep Your Layout: Return to a saved graph view and find its arrangement exactly as you left it.",
+      "Faster Cloud Backup: Backups now send only what changed, so they finish sooner and use less of your connection. You can also attach a vault to an existing backup.",
+      "Session Prep Builder: Answer a few guided questions and get AI-assisted prep for your next session."
+    ]
+  },
+  {
     "version": "0.33.0",
     "title": "The Generators & Campaign Craft Update",
     "date": "2026-09-24",
