@@ -16,10 +16,7 @@ import EntityTemplateEditor from "./EntityTemplateEditor.svelte";
 const initial = {
   name: "Mine",
   entityType: "character",
-  sections: [
-    { id: "a", title: "Summary", hint: "Who they are." },
-    { id: "b", title: "Secrets" },
-  ],
+  markdown: "## Summary\n\nWho they are.\n",
 };
 
 const setup = (over: Record<string, unknown> = {}) => {
@@ -35,10 +32,8 @@ const setup = (over: Record<string, unknown> = {}) => {
   return { onSave, onCancel };
 };
 
-const titles = () =>
-  (
-    screen.getAllByTestId("entity-template-section-title") as HTMLInputElement[]
-  ).map((i) => i.value);
+const box = () =>
+  screen.getByTestId("entity-template-markdown") as HTMLTextAreaElement;
 
 describe("EntityTemplateEditor", () => {
   beforeEach(() => {
@@ -46,90 +41,49 @@ describe("EntityTemplateEditor", () => {
     confirm.mockResolvedValue(true);
   });
 
-  it("shows a live preview that follows every edit", async () => {
+  it("shows the template as plain markdown", () => {
     setup();
-    expect(screen.getByTestId("entity-template-preview").textContent).toContain(
-      "## Summary",
-    );
-
-    await fireEvent.input(
-      screen.getAllByTestId("entity-template-section-title")[0],
-      {
-        target: { value: "Overview" },
-      },
-    );
-    expect(screen.getByTestId("entity-template-preview").textContent).toContain(
-      "## Overview",
-    );
-
-    await fireEvent.click(screen.getByTestId("entity-template-add-section"));
-    expect(titles()).toHaveLength(3);
-
-    await fireEvent.click(
-      screen.getAllByTestId("entity-template-remove-section")[0],
-    );
-    expect(titles()).toEqual(["Secrets", ""]);
-  });
-
-  it("reorders sections with the up and down buttons", async () => {
-    setup();
-    await fireEvent.click(
-      screen.getAllByTestId("entity-template-move-down")[0],
-    );
-    expect(titles()).toEqual(["Secrets", "Summary"]);
-    await fireEvent.click(screen.getAllByTestId("entity-template-move-up")[1]);
-    expect(titles()).toEqual(["Summary", "Secrets"]);
-  });
-
-  it("disables moving the first section up and the last one down", () => {
-    setup();
+    expect(box().value).toBe("## Summary\n\nWho they are.\n");
     expect(
-      (screen.getAllByTestId("entity-template-move-up")[0] as HTMLButtonElement)
-        .disabled,
-    ).toBe(true);
-    expect(
-      (
-        screen.getAllByTestId(
-          "entity-template-move-down",
-        )[1] as HTMLButtonElement
-      ).disabled,
-    ).toBe(true);
+      (screen.getByTestId("entity-template-name") as HTMLInputElement).value,
+    ).toBe("Mine");
   });
 
-  it("blocks saving with plain-language messages", async () => {
-    const { onSave } = setup({
-      initial: {
-        name: "",
-        entityType: "character",
-        sections: [{ id: "a", title: "" }],
-      },
-    });
-    await fireEvent.click(screen.getByTestId("entity-template-save"));
-    const alerts = screen.getAllByRole("alert").map((a) => a.textContent);
-    expect(alerts).toContain("Give the template a name.");
-    expect(alerts).toContain("Every section needs a title.");
-    expect(onSave).not.toHaveBeenCalled();
-  });
-
-  it("blocks saving when there are no sections", async () => {
-    const { onSave } = setup({
-      initial: { name: "X", entityType: "character", sections: [] },
-    });
-    await fireEvent.click(screen.getByTestId("entity-template-save"));
-    expect(screen.getByRole("alert").textContent).toBe(
-      "Add at least one section.",
-    );
-    expect(onSave).not.toHaveBeenCalled();
-  });
-
-  it("saves a valid draft", async () => {
+  it("saves exactly what was typed", async () => {
     const { onSave } = setup();
+    await fireEvent.input(box(), { target: { value: "## Goals\n\n- one\n" } });
     await fireEvent.click(screen.getByTestId("entity-template-save"));
     await waitFor(() => expect(onSave).toHaveBeenCalledTimes(1));
-    expect(onSave.mock.calls[0][0].sections.map((s: any) => s.title)).toEqual([
-      "Summary",
-      "Secrets",
-    ]);
+    expect(onSave.mock.calls[0][0]).toEqual({
+      name: "Mine",
+      entityType: "character",
+      markdown: "## Goals\n\n- one\n",
+    });
+  });
+
+  it("allows an empty body (a blank note)", async () => {
+    const { onSave } = setup();
+    await fireEvent.input(box(), { target: { value: "" } });
+    await fireEvent.click(screen.getByTestId("entity-template-save"));
+    await waitFor(() => expect(onSave).toHaveBeenCalledTimes(1));
+    expect(onSave.mock.calls[0][0].markdown).toBe("");
+  });
+
+  it("blocks saving with a plain-language message when the name is missing", async () => {
+    const { onSave } = setup({ initial: { ...initial, name: "" } });
+    await fireEvent.click(screen.getByTestId("entity-template-save"));
+    expect(screen.getByRole("alert").textContent).toBe(
+      "Give the template a name.",
+    );
+    expect(onSave).not.toHaveBeenCalled();
+  });
+
+  it("blocks saving a template that is too long", async () => {
+    const { onSave } = setup();
+    await fireEvent.input(box(), { target: { value: "x".repeat(50_001) } });
+    await fireEvent.click(screen.getByTestId("entity-template-save"));
+    expect(screen.getByRole("alert").textContent).toMatch(/too long/);
+    expect(onSave).not.toHaveBeenCalled();
   });
 
   it("shows the reason when saving fails and keeps the editor open", async () => {
@@ -156,9 +110,7 @@ describe("EntityTemplateEditor", () => {
 
   it("asks before discarding, and Keep editing leaves the editor open", async () => {
     const { onCancel } = setup();
-    await fireEvent.input(screen.getByTestId("entity-template-name"), {
-      target: { value: "Changed" },
-    });
+    await fireEvent.input(box(), { target: { value: "changed" } });
     confirm.mockResolvedValueOnce(false);
     await fireEvent.click(screen.getByTestId("entity-template-cancel"));
     await waitFor(() => expect(confirm).toHaveBeenCalledTimes(1));
@@ -168,23 +120,12 @@ describe("EntityTemplateEditor", () => {
     await waitFor(() => expect(onCancel).toHaveBeenCalledTimes(1));
   });
 
-  it("stays responsive with 50 sections and a very long hint", async () => {
-    const sections = Array.from({ length: 50 }, (_, i) => ({
-      id: `s${i}`,
-      title: `Section ${i}`,
-      hint: i === 0 ? "x".repeat(10_000) : undefined,
-    }));
-    setup({ initial: { name: "Big", entityType: "character", sections } });
-    const start = performance.now();
-    await fireEvent.input(
-      screen.getAllByTestId("entity-template-section-title")[49],
-      {
-        target: { value: "Renamed" },
-      },
-    );
-    expect(screen.getByTestId("entity-template-preview").textContent).toContain(
-      "## Renamed",
-    );
-    expect(performance.now() - start).toBeLessThan(1000);
+  it("does not treat undoing an edit as a change", async () => {
+    const { onCancel } = setup();
+    await fireEvent.input(box(), { target: { value: "changed" } });
+    await fireEvent.input(box(), { target: { value: initial.markdown } });
+    await fireEvent.click(screen.getByTestId("entity-template-cancel"));
+    await waitFor(() => expect(onCancel).toHaveBeenCalled());
+    expect(confirm).not.toHaveBeenCalled();
   });
 });

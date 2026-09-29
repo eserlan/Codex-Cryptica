@@ -1,16 +1,15 @@
 # Research: Entity Template Management
 
-## R-001: Canonical model
+## R-001: Canonical model (revised)
 
-- **Decision**: A structured template: `{ id, name, entityType, intro?, sections: [{ id, title, hint? }], version }`, compiled to markdown once when an entity is created.
-- **Rationale**: The visual editor, validation, duplicate and package import/export are lossless on a structured model. Parsing free markdown back into sections for editing is lossy.
-- **Alternatives**: Keep `.md` bodies plus a manifest (two sources of truth, lossy editor). Reuse the stat sheet field model (typed value cells, wrong shape for prose sections).
+- **Decision**: A template is `{ id, name, entityType, markdown, version }`. The markdown body is stored and used exactly as written. The editor is a plain markdown text box.
+- **Rationale**: The first design modelled sections (title, hint, order) and compiled them to markdown. In use that was more machinery than the job needs: a template is just the text a note starts with, and people already know markdown. Storing the text directly removes the compile and parse steps, the heading-injection risk, and the lossy round trip for built-in and legacy files. Nothing was released with the section model, so no migration is needed.
+- **Alternatives**: Structured sections with a visual builder (the original plan; rejected as too complex). Reuse the stat sheet field model (typed value cells, wrong shape for prose). Typed fields remain a follow-up, and the stored object keeps unknown extra fields so they can be added without breaking existing files.
 
-## R-002: Built-in and legacy templates keep exact output
+## R-002: Built-in and legacy templates
 
-- **Decision**: Built-in and legacy templates return their original markdown unchanged. Only user templates are compiled. Duplicating a built-in or legacy template parses it into sections once.
-- **Rationale**: SC-004 requires byte-identical output for existing vaults, including empty legacy files. Round-tripping through a parser would risk drift.
-- **Alternatives**: Convert every built-in to sections and compile (risks changing today's output; only worth it if compile is proven byte-identical, which the tests will check for the built-ins we duplicate).
+- **Decision**: Built-in and legacy templates carry their original markdown and are returned unchanged. Duplicating one copies that text into a new user template.
+- **Rationale**: SC-004 requires byte-identical output for existing vaults, including empty legacy files. With markdown as the model there is nothing to convert.
 
 ## R-003: Built-in listing
 
@@ -70,5 +69,5 @@
 
 ## R-012: Validation rules
 
-- **Decision**: Name non-empty (trimmed), entity type present, at least one section, no blank section titles, titles unique per template is not required. Limit name to 80 chars and title to 120 to keep the list readable.
-- **Rationale**: FR-011.
+- **Decision**: Name non-empty, single line, at most 80 characters; entity type present; body at most 50,000 characters. An empty body is valid (a blank note).
+- **Rationale**: FR-011. The size cap bounds imports and file reads; a name with a line break would break the list.

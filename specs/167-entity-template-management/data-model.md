@@ -5,21 +5,13 @@
 | Field        | Type                              | Notes                                                                    |
 | ------------ | --------------------------------- | ------------------------------------------------------------------------ |
 | `id`         | string                            | User: generated id. Built-in: `builtin:{type}`. Legacy: `legacy:{type}`. |
-| `name`       | string (1–80)                     | Trimmed. Not unique.                                                     |
+| `name`       | string (1–80)                     | Trimmed, single line. Not unique.                                        |
 | `entityType` | string                            | Open-ended category id (`character`, custom categories, …).              |
-| `intro`      | string?                           | Optional text before the first heading.                                  |
-| `sections`   | `TemplateSection[]`               | Ordered, at least 1 for user templates.                                  |
+| `markdown`   | string (0–50,000)                 | The text a new note starts with. Empty means a blank note.               |
 | `source`     | `"builtin" \| "user" \| "legacy"` | Derived on load; not stored in user files.                               |
-| `markdown`   | string?                           | Only for built-in and legacy: the exact original text used at creation.  |
 | `version`    | number                            | Format version, currently `1`. Stored in user files.                     |
 
-## TemplateSection
-
-| Field   | Type           | Notes                                                        |
-| ------- | -------------- | ------------------------------------------------------------ |
-| `id`    | string         | Stable within the template; used for reorder and list keys.  |
-| `title` | string (1–120) | Becomes a `##` heading.                                      |
-| `hint`  | string?        | Prose under the heading. Unknown extra fields are preserved. |
+Stored files keep any extra fields they contain, so later versions can add typed fields without breaking older files.
 
 ## TemplateDefaults
 
@@ -36,8 +28,7 @@ A missing or dangling id means "no chosen default", so resolution falls through 
   "template": {
     "name": "...",
     "entityType": "...",
-    "intro": "...",
-    "sections": [{ "title": "...", "hint": "..." }]
+    "markdown": "## Summary\n"
   }
 }
 ```
@@ -53,12 +44,6 @@ No id, source, or default state is exported. Import assigns a new id.
 └── {type}.md          # legacy, read-only to the app
 .cc/templates/{type}.md  # legacy, read-only to the app
 ```
-
-## Compile rules
-
-- `intro`, if present, is emitted first followed by a blank line.
-- Each section: `## {title}` then a blank line, then `{hint}` and a blank line if a hint exists.
-- Output ends with a single trailing newline. Deterministic, so preview equals the created note body.
 
 ## State and transitions
 

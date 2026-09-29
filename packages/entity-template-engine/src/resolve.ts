@@ -1,12 +1,11 @@
-import { compileTemplate } from "./compile";
 import type { EntityTemplate, TemplateDefaults } from "./types";
 
 const sameType = (t: EntityTemplate, type: string) =>
   t.entityType.toLowerCase() === type.toLowerCase();
 
-/** Original text for built-in and legacy templates, compiled sections otherwise. */
+/** The markdown a new entity starts with. */
 export function templateMarkdown(t: EntityTemplate): string {
-  return t.markdown !== undefined ? t.markdown : compileTemplate(t);
+  return t.markdown;
 }
 
 /**

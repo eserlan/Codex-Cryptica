@@ -13,7 +13,7 @@ describe("vault templates reach every creation path (FR-019)", () => {
     const mine = await ctx.store.create({
       name: "Cyber faction",
       entityType: "faction",
-      sections: [{ id: "a", title: "Corporate ties", hint: "Who pays them." }],
+      markdown: "## Corporate ties\n\nWho pays them.\n",
     });
     await ctx.store.setDefault("faction", mine.id);
     const service = new EntityTemplateService({

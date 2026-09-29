@@ -8,7 +8,7 @@ describe("EntityTemplateStore: defaults", () => {
     const mine = await store.create({
       name: "Mine",
       entityType: "character",
-      sections: [{ id: "a", title: "A" }],
+      markdown: "## A\n",
     });
     expect(store.effectiveDefaultFor("character")).toBe("builtin:character");
 
@@ -46,7 +46,7 @@ describe("EntityTemplateStore: defaults", () => {
     const mine = await store.create({
       name: "Mine",
       entityType: "location",
-      sections: [{ id: "a", title: "A" }],
+      markdown: "## A\n",
     });
     await expect(store.setDefault("location", mine.id)).rejects.toThrow();
     expect(store.defaultFor("location")).toBeUndefined();

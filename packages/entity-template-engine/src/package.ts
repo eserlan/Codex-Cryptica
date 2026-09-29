@@ -13,12 +13,7 @@ export function exportTemplatePackage(t: DraftTemplate): TemplatePackage {
   return {
     kind: TEMPLATE_PACKAGE_KIND,
     formatVersion: TEMPLATE_FORMAT_VERSION,
-    template: {
-      name: t.name,
-      entityType: t.entityType,
-      ...(t.intro ? { intro: t.intro } : {}),
-      sections: t.sections.map(({ id: _id, ...rest }) => rest),
-    },
+    template: { name: t.name, entityType: t.entityType, markdown: t.markdown },
   };
 }
 
@@ -36,14 +31,8 @@ export function importTemplatePackage(raw: unknown): ImportResult {
     };
   }
 
-  const { template } = parsed.data;
-  const draft: DraftTemplate = {
-    name: template.name,
-    entityType: template.entityType,
-    ...(template.intro ? { intro: template.intro } : {}),
-    sections: template.sections.map((s, i) => ({ ...s, id: `s${i + 1}` })),
-  };
-
+  const { name, entityType, markdown } = parsed.data.template;
+  const draft: DraftTemplate = { name, entityType, markdown };
   const issues = validateTemplate(draft);
   if (issues.length) {
     return {

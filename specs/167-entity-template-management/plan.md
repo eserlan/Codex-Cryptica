@@ -5,7 +5,7 @@
 
 ## Summary
 
-Turn entity templates from a hidden "drop a `{type}.md` in a folder" feature into a managed vault setting. A new framework-free package, `packages/entity-template-engine`, owns the template model, the markdown compiler and parser, package import/export, and the pure resolution order. A vault-scoped `EntityTemplateStore` in `apps/web` loads built-in, legacy and user templates, persists user templates as JSON under `.codex/templates/`, and keeps the per-type defaults. The existing `EntityTemplateService` becomes a thin facade over it, so every creation path, including the related-entity dialog and the AI engine's sync resolver, sees vault templates. A new Entity Templates section in the Settings Templates tab provides list, preview, default, duplicate, delete, import and export, plus a visual section editor with live preview. Templates are copied into entities once at creation, so nothing existing is ever rewritten.
+Turn entity templates from a hidden "drop a `{type}.md` in a folder" feature into a managed vault setting. A new framework-free package, `packages/entity-template-engine`, owns the template model, validation, package import/export, and the pure resolution order. A vault-scoped `EntityTemplateStore` in `apps/web` loads built-in, legacy and user templates, persists user templates as JSON under `.codex/templates/`, and keeps the per-type defaults. The existing `EntityTemplateService` becomes a thin facade over it, so every creation path, including the related-entity dialog and the AI engine's sync resolver, sees vault templates. A new Entity Templates section in the Settings Templates tab provides list, preview, default, duplicate, delete, import and export, plus an editor with a name, a type and the template as plain markdown. Templates are copied into entities once at creation, so nothing existing is ever rewritten.
 
 ## Technical Context
 
@@ -15,30 +15,30 @@ Turn entity templates from a hidden "drop a `{type}.md` in a folder" feature int
 **Testing**: Bun test in the new package; Vitest for the store, service, and Svelte components; existing `EntityTemplateService` tests must pass unchanged. Playwright is optional for one create-from-custom-default flow.
 **Target Platform**: Browser (desktop and mobile), offline-capable, OPFS plus optional linked local folder.
 **Project Type**: Monorepo web app with library packages.
-**Performance Goals**: Template list loads with the vault without blocking entity creation. Live preview updates within 1 s at 50 sections (SC-007). Sync resolution is an in-memory lookup.
+**Performance Goals**: Template list loads with the vault without blocking entity creation. Saving and resolving a 50,000-character template stays under 1 s (SC-007). Sync resolution is an in-memory lookup.
 **Constraints**: Local-only (no network); the sync resolver must never do I/O; malformed files never block creation (FR-022); guest and read-only vaults get view-only; editing templates never touches entities (FR-017).
-**Scale/Scope**: Tens of templates per vault, up to about 50 sections each. About 6 built-in-backed types plus custom categories.
+**Scale/Scope**: Tens of templates per vault, up to 50,000 characters each. About 6 built-in-backed types plus custom categories.
 
 ## Constitution Check
 
 _GATE: Must pass before Phase 0 research. Re-check after Phase 1 design._
 
-| Principle                   | Status           | Notes                                                                                                                                                                                                                                |
-| --------------------------- | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| I. Library-First            | PASS             | Model, compile, parse, package, resolve live in `packages/entity-template-engine`; web app is a thin store, disk I/O, and UI layer.                                                                                                  |
-| II. TDD                     | PASS             | Package units, store, I/O and components each get failing tests first; success and failure paths (malformed file, invalid package, read-only) are covered.                                                                           |
-| III. Simplicity & YAGNI     | PASS             | Sections only; no typed fields, no per-creation picker, no marketplace (#3548). Reuses `writeOpfsFile`, the `io.ts` pattern, the stat-sheet settings layout, and existing constants. No duplicated resolver: one order in one place. |
-| IV. AI-First Extraction     | PASS             | The AI path now sees vault templates via the same resolver. No AI is used to manage templates.                                                                                                                                       |
-| V. Privacy & Client-Side    | PASS             | All data stays in the vault; no network calls, no remote storage, so the opt-in remote exception is not invoked.                                                                                                                     |
-| VI. Clean Implementation    | PASS             | Runes, Tailwind semantic tokens, `icon-[lucide--x]` icons. Validation is impacted-only per AGENTS.md.                                                                                                                                |
-| VII. User Documentation     | PASS             | Update `content/help/default-templates.md`, register in `help-content.ts`, add a `FeatureHint` on the new section.                                                                                                                   |
-| VIII. Dependency Injection  | PASS             | `EntityTemplateStore` and the disk repository take constructor deps (fs handle provider, id generator, clock, theme, session mode) and export class plus singleton.                                                                  |
-| IX. Natural Language        | PASS             | Copy says "template", "section", "default", "hint", "duplicate", not "schema" or "blueprint".                                                                                                                                        |
-| X. Coverage                 | PASS             | New package must meet the 70% goal on introduction; store at least the 50% floor.                                                                                                                                                    |
-| XI. Agent Protocol          | PASS             | Surgical edits to callers; success criteria defined in quickstart.                                                                                                                                                                   |
-| XII. Labels over Tags       | PASS             | Marketplace "genre tags" are out of scope here; if added later they are called labels.                                                                                                                                               |
-| XIII. Discovery Intent      | N/A              | No public indexable page.                                                                                                                                                                                                            |
-| XIV. Bounded Responsibility | PASS (see below) | Touched files over 500 lines are listed with a justification.                                                                                                                                                                        |
+| Principle                   | Status           | Notes                                                                                                                                                                                                                                           |
+| --------------------------- | ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| I. Library-First            | PASS             | Model, package, resolve, validate live in `packages/entity-template-engine`; web app is a thin store, disk I/O, and UI layer.                                                                                                                   |
+| II. TDD                     | PASS             | Package units, store, I/O and components each get failing tests first; success and failure paths (malformed file, invalid package, read-only) are covered.                                                                                      |
+| III. Simplicity & YAGNI     | PASS             | Plain markdown body only; no typed fields, no per-creation picker, no marketplace (#3548). Reuses `writeOpfsFile`, the `io.ts` pattern, the stat-sheet settings layout, and existing constants. No duplicated resolver: one order in one place. |
+| IV. AI-First Extraction     | PASS             | The AI path now sees vault templates via the same resolver. No AI is used to manage templates.                                                                                                                                                  |
+| V. Privacy & Client-Side    | PASS             | All data stays in the vault; no network calls, no remote storage, so the opt-in remote exception is not invoked.                                                                                                                                |
+| VI. Clean Implementation    | PASS             | Runes, Tailwind semantic tokens, `icon-[lucide--x]` icons. Validation is impacted-only per AGENTS.md.                                                                                                                                           |
+| VII. User Documentation     | PASS             | Update `content/help/default-templates.md`, register in `help-content.ts`, add a `FeatureHint` on the new section.                                                                                                                              |
+| VIII. Dependency Injection  | PASS             | `EntityTemplateStore` and the disk repository take constructor deps (fs handle provider, id generator, clock, theme, session mode) and export class plus singleton.                                                                             |
+| IX. Natural Language        | PASS             | Copy says "template", "default", "duplicate", not "schema" or "blueprint".                                                                                                                                                                      |
+| X. Coverage                 | PASS             | New package must meet the 70% goal on introduction; store at least the 50% floor.                                                                                                                                                               |
+| XI. Agent Protocol          | PASS             | Surgical edits to callers; success criteria defined in quickstart.                                                                                                                                                                              |
+| XII. Labels over Tags       | PASS             | Marketplace "genre tags" are out of scope here; if added later they are called labels.                                                                                                                                                          |
+| XIII. Discovery Intent      | N/A              | No public indexable page.                                                                                                                                                                                                                       |
+| XIV. Bounded Responsibility | PASS (see below) | Touched files over 500 lines are listed with a justification.                                                                                                                                                                                   |
 
 ### Discovery Intent Check
 
@@ -85,14 +85,12 @@ specs/167-entity-template-management/
 packages/entity-template-engine/            # NEW, framework-free
 ├── package.json, tsconfig.json, bunfig.toml
 ├── src/
-│   ├── types.ts            # EntityTemplate, TemplateSection, TemplateDefaults, Zod schemas
-│   ├── compile.ts          # sections -> markdown
-│   ├── parse.ts            # markdown -> sections (for duplicating built-in/legacy)
+│   ├── types.ts            # EntityTemplate, TemplateDefaults, Zod schemas
 │   ├── package.ts          # export/import versioned Template Package + validation
 │   ├── resolve.ts          # pure resolution order (FR-018)
 │   ├── validate.ts         # editor validation rules (FR-011)
 │   └── index.ts
-└── tests/                  # compile, parse round-trip, package, resolve, validate
+└── tests/                  # package, resolve, validate
 
 apps/web/src/lib/
 ├── services/
@@ -102,7 +100,7 @@ apps/web/src/lib/
 │   ├── vault/lifecycle.ts                  # +1 call: entityTemplateStore.loadForVault
 │   └── entity-templates/
 │       ├── entity-template-repository.ts   # .codex/templates read/write/delete, legacy read
-│       ├── builtin-templates.ts            # built-ins derived from constants via parse
+│       ├── builtin-templates.ts            # built-ins derived from the existing constants
 │       ├── entity-template-store.svelte.ts # loadForVault, list, defaults, CRUD, resolveSync
 │       └── *.test.ts
 ├── components/settings/
@@ -112,7 +110,7 @@ apps/web/src/lib/
 │       ├── EntityTemplateRow.svelte        # one row: badges + actions + preview
 │       ├── EntityTemplateToolbar.svelte    # New / Import
 │       ├── EntityTemplateNotices.svelte    # read-only note, warnings, import error
-│       ├── EntityTemplateEditor.svelte     # visual section editor + live preview
+│       ├── EntityTemplateEditor.svelte     # name, type and a plain markdown box
 │       ├── EntityTemplatePreview.svelte
 │       └── *.test.ts
 ├── content/help/default-templates.md       # updated

@@ -37,9 +37,7 @@ describe("TemplatesTab", () => {
 
     await fireEvent.click(screen.getByTestId("templates-subtab-entity"));
     expect(screen.getByTestId("stub-entity-settings")).toBeTruthy();
-    expect(
-      screen.getByText(/which sections a new note starts with/),
-    ).toBeTruthy();
+    expect(screen.getByText(/text a new note starts with/)).toBeTruthy();
   });
 
   it("supports arrow keys and keeps only the active tab in the tab order", async () => {

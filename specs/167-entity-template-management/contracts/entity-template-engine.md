@@ -3,8 +3,6 @@
 ## Package: `packages/entity-template-engine` (pure, no DOM, no I/O)
 
 ```ts
-compileTemplate(t: Pick<EntityTemplate, "intro" | "sections">): string
-parseMarkdownToSections(md: string): { intro?: string; sections: TemplateSection[] }
 validateTemplate(t: DraftTemplate): ValidationIssue[]        // [] means valid; messages are plain language
 exportTemplatePackage(t: EntityTemplate): TemplatePackage
 importTemplatePackage(raw: unknown): { ok: true; template: DraftTemplate } | { ok: false; error: string }
@@ -19,10 +17,7 @@ resolveTemplateMarkdown(input: {
 
 Guarantees:
 
-- `compileTemplate` is deterministic: same input, same output.
-- `parseMarkdownToSections(compileTemplate(t))` yields the same sections (round trip for compiled templates).
-- `importTemplatePackage` rejects: non-object, wrong `kind`, unsupported `formatVersion` (message says to update the app), invalid template. It never throws.
-- `resolveTemplateMarkdown` never throws and never performs I/O.
+- `- `resolveTemplateMarkdown` never throws and never performs I/O.
 
 ## Web: `EntityTemplateStore` (Svelte 5, constructor DI)
 
@@ -84,4 +79,4 @@ Delegates to the store; uses `dirHandle` only when the store has not loaded.
 - Row: name, source badge (Built-in / Yours), Default marker.
 - Actions: Preview, Set as default, Duplicate, Edit\*, Export, Delete\* (\*user templates only; hidden in read-only mode).
 - Header actions: New template, Import.
-- Editor: name, entity type, intro (optional), orderable sections (title, hint), live preview, Save / Cancel with discard confirmation.
+- Editor: name, entity type, and the template as plain markdown in a text box; Save / Cancel with a discard confirmation.

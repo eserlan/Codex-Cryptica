@@ -1,6 +1,5 @@
 <script lang="ts">
   import type { DraftTemplate, EntityTemplate } from "entity-template-engine";
-  import { parseMarkdownToSections } from "entity-template-engine";
   import { categories } from "$lib/stores/categories.svelte";
   import { notificationStore } from "$lib/stores/ui/notification.svelte";
   import {
@@ -50,18 +49,11 @@
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/^-|-$/g, "") || "template";
 
-  const toDraft = (t: EntityTemplate): DraftTemplate => {
-    const parsed =
-      t.source === "legacy"
-        ? parseMarkdownToSections(t.markdown ?? "")
-        : { intro: t.intro, sections: t.sections };
-    return {
-      name: t.name,
-      entityType: t.entityType,
-      intro: parsed.intro,
-      sections: parsed.sections.map((s) => ({ ...s })),
-    };
-  };
+  const toDraft = (t: EntityTemplate): DraftTemplate => ({
+    name: t.name,
+    entityType: t.entityType,
+    markdown: t.markdown,
+  });
 
   // One action at a time: a double click must not duplicate or delete twice.
   let busy = false;
@@ -92,7 +84,7 @@
       initial: {
         name: "",
         entityType: categories.list[0]?.id ?? "note",
-        sections: [{ id: "s1", title: "" }],
+        markdown: "",
       },
     };
   }

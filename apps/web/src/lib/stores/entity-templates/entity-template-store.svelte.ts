@@ -1,11 +1,9 @@
 import {
   EMPTY_DEFAULTS,
   TEMPLATE_FORMAT_VERSION,
-  compileTemplate,
   effectiveDefaultId,
   exportTemplatePackage,
   importTemplatePackage,
-  parseMarkdownToSections,
   resolveTemplateMarkdown,
   templateMarkdown,
   validateTemplate,
@@ -123,9 +121,8 @@ export class EntityTemplateStore {
     });
   }
 
-  previewMarkdown(target: string | DraftTemplate): string {
-    if (typeof target !== "string") return compileTemplate(target);
-    const found = this.list.find((t) => t.id === target);
+  previewMarkdown(id: string): string {
+    const found = this.list.find((t) => t.id === id);
     return found ? templateMarkdown(found) : "";
   }
 
@@ -157,20 +154,10 @@ export class EntityTemplateStore {
     const source = this.list.find((t) => t.id === id);
     if (!source)
       throw new EntityTemplateError("That template no longer exists.");
-
-    const parsed =
-      source.source === "legacy"
-        ? parseMarkdownToSections(source.markdown ?? "")
-        : { intro: source.intro, sections: source.sections };
-    const sections = parsed.sections.length
-      ? parsed.sections.map((s) => ({ ...s }))
-      : [{ id: "s1", title: "Notes" }];
-
     return this.create({
       name: name?.trim() || `${source.name} (copy)`,
       entityType: source.entityType,
-      intro: parsed.intro,
-      sections,
+      markdown: source.markdown,
     });
   }
 
@@ -205,14 +192,10 @@ export class EntityTemplateStore {
     const found = this.list.find((t) => t.id === id);
     if (!found)
       throw new EntityTemplateError("That template no longer exists.");
-    const sections =
-      found.source === "legacy"
-        ? parseMarkdownToSections(found.markdown ?? "")
-        : { intro: found.intro, sections: found.sections };
     return exportTemplatePackage({
       name: found.name,
       entityType: found.entityType,
-      ...sections,
+      markdown: found.markdown,
     });
   }
 
@@ -241,9 +224,8 @@ export class EntityTemplateStore {
       id: `legacy:${l.type}`,
       name: `Your ${l.type} file`,
       entityType: l.type,
-      ...parseMarkdownToSections(l.markdown),
-      source: "legacy",
       markdown: l.markdown,
+      source: "legacy",
       version: TEMPLATE_FORMAT_VERSION,
     }));
     return [
@@ -258,8 +240,7 @@ export class EntityTemplateStore {
       id: t.id,
       name: t.name,
       entityType: t.entityType,
-      intro: t.intro,
-      sections: t.sections,
+      markdown: t.markdown,
       source: "user",
       version: t.version,
     };
@@ -273,8 +254,7 @@ export class EntityTemplateStore {
       id,
       name: draft.name.trim(),
       entityType: normalizeType(draft.entityType),
-      ...(draft.intro?.trim() ? { intro: draft.intro.trim() } : {}),
-      sections: draft.sections.map((s) => ({ ...s, title: s.title.trim() })),
+      markdown: draft.markdown,
     };
   }
 

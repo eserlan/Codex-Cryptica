@@ -14,7 +14,7 @@ describe("EntityTemplateStore: import and export", () => {
     for (const id of ["builtin:character", mine.id]) {
       const pkg = store.exportPackage(id);
       expect(pkg.kind).toBe("entity-template");
-      expect(pkg.template.sections.length).toBeGreaterThan(0);
+      expect(pkg.template.markdown.length).toBeGreaterThan(0);
     }
     expect(() => store.exportPackage("gone")).toThrow();
   });

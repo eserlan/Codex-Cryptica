@@ -8,7 +8,7 @@ const storedUser = (over: Record<string, unknown> = {}) => ({
   id: "u1",
   name: "Mine",
   entityType: "character",
-  sections: [{ id: "a", title: "Mine A", hint: "h" }],
+  markdown: "## Mine A\n\nh\n",
   ...over,
 });
 

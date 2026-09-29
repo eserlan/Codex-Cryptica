@@ -1,6 +1,5 @@
 import {
-  MAX_SECTIONS,
-  SECTION_TITLE_MAX,
+  TEMPLATE_MARKDOWN_MAX,
   TEMPLATE_NAME_MAX,
   type DraftTemplate,
   type ValidationIssue,
@@ -14,10 +13,7 @@ export function validateTemplate(t: DraftTemplate): ValidationIssue[] {
   if (!name) {
     issues.push({ field: "name", message: "Give the template a name." });
   } else if (/[\r\n]/.test(name)) {
-    issues.push({
-      field: "name",
-      message: "Keep the name on a single line.",
-    });
+    issues.push({ field: "name", message: "Keep the name on a single line." });
   } else if (name.length > TEMPLATE_NAME_MAX) {
     issues.push({
       field: "name",
@@ -32,38 +28,11 @@ export function validateTemplate(t: DraftTemplate): ValidationIssue[] {
     });
   }
 
-  if (t.sections.length === 0) {
-    issues.push({ field: "sections", message: "Add at least one section." });
-  }
-
-  if (t.sections.length > MAX_SECTIONS) {
+  if (t.markdown.length > TEMPLATE_MARKDOWN_MAX) {
     issues.push({
-      field: "sections",
-      message: `Use ${MAX_SECTIONS} sections or fewer.`,
+      field: "markdown",
+      message: "This template is too long. Shorten it and try again.",
     });
-  }
-
-  for (const section of t.sections) {
-    const title = section.title.trim();
-    if (!title) {
-      issues.push({
-        field: "section",
-        sectionId: section.id,
-        message: "Every section needs a title.",
-      });
-    } else if (/[\r\n]/.test(title)) {
-      issues.push({
-        field: "section",
-        sectionId: section.id,
-        message: "Keep each section title on a single line.",
-      });
-    } else if (title.length > SECTION_TITLE_MAX) {
-      issues.push({
-        field: "section",
-        sectionId: section.id,
-        message: `Keep section titles under ${SECTION_TITLE_MAX} characters.`,
-      });
-    }
   }
 
   return issues;

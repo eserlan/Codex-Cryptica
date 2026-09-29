@@ -28,7 +28,7 @@ Open **Settings → Templates** and choose the **Entity templates** tab (the **S
 - **Preview** shows the note a new entity would start with.
 - **Set as default** makes a template the starting point for every new entity of that type. It only affects notes you create afterwards; notes you already made never change.
 - **Duplicate** copies any template, including built-in ones, so you can make it your own. Built-in templates are read-only.
-- **Edit** opens the visual editor for your own templates. Rename the template, add, remove and reorder sections, and give each section a short hint about what belongs there. A live preview updates as you type.
+- **Edit** opens a simple editor for your own templates: a name, the type it is for, and the template itself as plain markdown. Whatever you write is exactly what a new note starts with, and an empty template gives a blank note.
 - **New template** builds one from scratch for any entity type, including your own custom categories.
 - **Export** saves a template as a `.json` file you can share or keep as a backup. **Import** adds a template from such a file. Imported templates never replace an existing one.
 - **Delete** removes one of your templates. If it was the default, that type goes back to the built-in template.

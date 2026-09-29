@@ -56,6 +56,6 @@ export function makeStore(
 export const draft = (over: Record<string, unknown> = {}) => ({
   name: "Mine",
   entityType: "character",
-  sections: [{ id: "a", title: "Summary", hint: "Who they are." }],
+  markdown: "## Summary\n\nWho they are.\n",
   ...over,
 });

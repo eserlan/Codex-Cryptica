@@ -1,9 +1,5 @@
 import { describe, it, expect } from "vitest";
 import { GENERIC_TEMPLATES } from "schema";
-import {
-  parseMarkdownToSections,
-  compileTemplate,
-} from "entity-template-engine";
 import { buildBuiltinTemplates } from "./builtin-templates";
 import {
   FANTASY_TEMPLATES,
@@ -44,15 +40,10 @@ describe("buildBuiltinTemplates", () => {
     expect(character.name).toBe("Standard Character");
   });
 
-  it("parses every built-in into sections without losing headings", () => {
+  it("never yields a blank built-in for the standard entity types", () => {
     for (const theme of ["workspace", "fantasy", "scifi", "horror"]) {
       for (const t of buildBuiltinTemplates(theme)) {
-        const headings = (t.markdown ?? "").match(/^## .+$/gm) ?? [];
-        expect(t.sections.map((s) => `## ${s.title}`)).toEqual(headings);
-        // Duplicating must yield a compilable template.
-        expect(() =>
-          compileTemplate(parseMarkdownToSections(t.markdown ?? "")),
-        ).not.toThrow();
+        expect(t.markdown).toContain("## ");
       }
     }
   });

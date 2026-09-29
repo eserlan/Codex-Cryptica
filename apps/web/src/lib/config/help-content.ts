@@ -179,7 +179,7 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
     id: "entity-templates",
     title: "Entity templates",
     content:
-      "Pick which sections a new note starts with. Duplicate a built-in template to make your own, then set it as the default for that type. Changing a template only affects notes you create afterwards; existing notes stay as they are.",
+      "Pick the markdown a new note starts with. Duplicate a built-in template to make your own, edit it as plain markdown, then set it as the default for that type. Changing a template only affects notes you create afterwards; existing notes stay as they are.",
     icon: "icon-[lucide--layout-template]",
   },
   // The browser-local caveat is the whole point of this hint (156-entity-shelf,

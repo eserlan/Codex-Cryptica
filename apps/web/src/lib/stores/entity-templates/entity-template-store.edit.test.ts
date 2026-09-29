@@ -26,9 +26,7 @@ describe("EntityTemplateStore: create", () => {
 
   it("rejects an invalid draft with the validation issues", async () => {
     const { store, repository } = await setup();
-    const err = await store
-      .create(draft({ name: " ", sections: [] }))
-      .catch((e) => e);
+    const err = await store.create(draft({ name: " " })).catch((e) => e);
     expect(err).toBeInstanceOf(EntityTemplateError);
     expect(err.issues.length).toBeGreaterThan(0);
     expect(repository.saveTemplate).not.toHaveBeenCalled();
@@ -58,10 +56,11 @@ describe("EntityTemplateStore: duplicate", () => {
     expect(copy.id).toBe("copy-1");
     expect(copy.source).toBe("user");
     expect(copy.name).toBe("Standard Faction (copy)");
-    expect(copy.sections.length).toBeGreaterThan(0);
+    expect(copy.markdown).toBe(store.previewMarkdown("builtin:faction"));
+    expect(copy.markdown).toContain("## ");
   });
 
-  it("parses a legacy file into sections and leaves the file alone", async () => {
+  it("copies a legacy file as-is and leaves the file alone", async () => {
     const repository = makeRepository({
       loadAll: vi.fn().mockResolvedValue({
         templates: [],
@@ -73,12 +72,12 @@ describe("EntityTemplateStore: duplicate", () => {
     const { store, vault } = makeStore({ repository });
     await store.loadForVault("v1", { vault });
     const copy = await store.duplicate("legacy:character");
-    expect(copy.sections.map((s) => s.title)).toEqual(["Cyberware"]);
+    expect(copy.markdown).toBe("## Cyberware\nImplants.\n");
     expect(repository.deleteTemplate).not.toHaveBeenCalled();
     expect(store.list.some((t) => t.id === "legacy:character")).toBe(true);
   });
 
-  it("seeds one section when the source is an empty file", async () => {
+  it("duplicates an empty file as a blank template", async () => {
     const repository = makeRepository({
       loadAll: vi.fn().mockResolvedValue({
         templates: [],
@@ -90,7 +89,7 @@ describe("EntityTemplateStore: duplicate", () => {
     const { store, vault } = makeStore({ repository });
     await store.loadForVault("v1", { vault });
     const copy = await store.duplicate("legacy:location");
-    expect(copy.sections).toHaveLength(1);
+    expect(copy.markdown).toBe("");
   });
 
   it("refuses an unknown id", async () => {
@@ -106,10 +105,7 @@ describe("EntityTemplateStore: update and remove", () => {
     await store.setDefault("character", t.id);
     const before = store.resolveSync("character");
 
-    await store.update(
-      t.id,
-      draft({ sections: [{ id: "z", title: "Changed" }] }),
-    );
+    await store.update(t.id, draft({ markdown: "## Changed\n" }));
     expect(repository.saveTemplate).toHaveBeenLastCalledWith(
       expect.anything(),
       expect.objectContaining({ id: t.id }),

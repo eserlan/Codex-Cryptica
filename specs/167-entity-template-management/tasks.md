@@ -12,6 +12,8 @@ description: "Task list for Entity Template Management (167-entity-template-mana
 
 **Organization**: Grouped by user story so each can be implemented and tested independently. US1 (P1) browse + default · US2 (P1) duplicate + visual editor · US3 (P2) create from scratch · US4 (P2) import/export · US5 (P2) legacy files · US6 (P2) every creation path.
 
+> **Design revision (after first implementation):** the section model (titles, hints, ordering, `compileTemplate` / `parseMarkdownToSections`, live preview, drag/up-down reorder) was replaced by a plain markdown body edited in a text box. Tasks below that mention sections, compile, parse, reorder or a live preview (T004, T005, T009, T026, T029, and the section-specific parts of T006, T007, T025, T032, T038) were implemented and then superseded; the shipped behaviour is described by `spec.md`, `data-model.md` and `contracts/entity-template-engine.md`. See research R-001.
+
 ## Format: `[ID] [P?] [Story] Description`
 
 - **[P]**: Can run in parallel (different files, no dependency on an incomplete task)

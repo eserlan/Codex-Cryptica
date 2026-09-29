@@ -54,18 +54,18 @@ describe("EntityTemplateStore: legacy files", () => {
       store.update("legacy:character", {
         name: "n",
         entityType: "character",
-        sections: [{ id: "a", title: "t" }],
+        markdown: "t",
       }),
     ).rejects.toThrow();
     await expect(store.remove("legacy:character")).rejects.toThrow();
     expect(repository.deleteTemplate).not.toHaveBeenCalled();
   });
 
-  it("exports a legacy file as sections", async () => {
+  it("exports a legacy file with its markdown", async () => {
     const { store } = await withLegacy([
       { type: "character", markdown: "## A\nb\n" },
     ]);
     const pkg = store.exportPackage("legacy:character");
-    expect(pkg.template.sections[0].title).toBe("A");
+    expect(pkg.template.markdown).toBe("## A\nb\n");
   });
 });

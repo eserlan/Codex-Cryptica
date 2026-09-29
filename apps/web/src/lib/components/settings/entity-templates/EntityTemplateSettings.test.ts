@@ -158,8 +158,8 @@ describe("EntityTemplateSettings", () => {
     await fireEvent.input(screen.getByTestId("entity-template-name"), {
       target: { value: "Settlement" },
     });
-    await fireEvent.input(screen.getByTestId("entity-template-section-title"), {
-      target: { value: "Geography" },
+    await fireEvent.input(screen.getByTestId("entity-template-markdown"), {
+      target: { value: "## Geography\n" },
     });
     await fireEvent.click(screen.getByTestId("entity-template-save"));
     await waitFor(() => expect(screen.getByText("Settlement")).toBeTruthy());
@@ -203,7 +203,7 @@ describe("EntityTemplateSettings", () => {
       template: {
         name: "From a friend",
         entityType: "location",
-        sections: [{ title: "Vibes" }],
+        markdown: "## Vibes\n",
       },
     };
     const input = screen.getByTestId(

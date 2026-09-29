@@ -9,7 +9,7 @@
       label: "Entity templates",
       icon: "icon-[lucide--layout-template]",
       intro:
-        "Choose which sections a new note starts with, like a character's Appearance and Goals.",
+        "Choose the text a new note starts with, like a character's Appearance and Goals headings.",
     },
     {
       id: "stats",

@@ -6,7 +6,7 @@ const t = (over: Partial<EntityTemplate>): EntityTemplate => ({
   id: "x",
   name: "X",
   entityType: "character",
-  sections: [],
+  markdown: "",
   source: "user",
   version: 1,
   ...over,
@@ -22,10 +22,7 @@ const legacy = t({
   source: "legacy",
   markdown: "LEGACY",
 });
-const user = t({
-  id: "u1",
-  sections: [{ id: "a", title: "Mine", hint: "h" }],
-});
+const user = t({ id: "u1", markdown: "## Mine\n\nh\n" });
 const noDefaults: TemplateDefaults = { version: 1, defaults: {} };
 
 const run = (
@@ -73,7 +70,7 @@ describe("resolveTemplateMarkdown (FR-018)", () => {
     expect(run([builtin, empty])).toBe("");
   });
 
-  it("returns original markdown for a built-in default, compiled for user", () => {
+  it("returns the stored markdown for a built-in or user default", () => {
     const d = { version: 1, defaults: { character: "builtin:character" } };
     expect(run([builtin, user], d)).toBe("## Built-in\n");
   });

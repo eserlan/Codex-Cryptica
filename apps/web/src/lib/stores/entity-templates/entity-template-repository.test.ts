@@ -19,7 +19,7 @@ const stored = (over: Record<string, unknown> = {}) =>
     id: "u1",
     name: "Mine",
     entityType: "character",
-    sections: [{ id: "a", title: "A" }],
+    markdown: "## A\n",
     ...over,
   });
 
@@ -38,7 +38,7 @@ describe("EntityTemplateRepository", () => {
       id: "u1",
       name: "Mine",
       entityType: "character",
-      sections: [{ id: "a", title: "A" }],
+      markdown: "## A\n",
     });
     expect(
       JSON.parse(vault.read([".codex", "templates", "u1.json"])!).name,

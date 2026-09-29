@@ -4,25 +4,21 @@ import { exportTemplatePackage, importTemplatePackage } from "../src/package";
 const draft = {
   name: "Settlement",
   entityType: "location",
-  intro: "Intro",
-  sections: [
-    { id: "a", title: "Geography", hint: "Where." },
-    { id: "b", title: "People" },
-  ],
+  markdown: "## Geography\n\nWhere.\n\n## People\n",
 };
 
 describe("template package", () => {
   it("round-trips a template", () => {
     const pkg = exportTemplatePackage(draft);
     const r = importTemplatePackage(JSON.parse(JSON.stringify(pkg)));
-    expect(r.ok).toBe(true);
-    if (!r.ok) return;
-    expect(r.template.name).toBe("Settlement");
-    expect(r.template.intro).toBe("Intro");
-    expect(r.template.sections.map((s) => [s.title, s.hint])).toEqual([
-      ["Geography", "Where."],
-      ["People", undefined],
-    ]);
+    expect(r).toEqual({ ok: true, template: draft });
+  });
+
+  it("round-trips a blank template", () => {
+    const r = importTemplatePackage(
+      exportTemplatePackage({ ...draft, markdown: "" }),
+    );
+    expect(r.ok && r.template.markdown).toBe("");
   });
 
   it("exports no id, source or default state", () => {
@@ -34,15 +30,6 @@ describe("template package", () => {
     expect(JSON.stringify(pkg)).not.toMatch(/"id"|"source"|"default/);
     expect(pkg.kind).toBe("entity-template");
     expect(pkg.formatVersion).toBe(1);
-  });
-
-  it("preserves unknown section fields", () => {
-    const pkg = exportTemplatePackage({
-      ...draft,
-      sections: [{ id: "a", title: "A", fieldType: "number" } as any],
-    });
-    const r = importTemplatePackage(pkg);
-    expect(r.ok && (r.template.sections[0] as any).fieldType).toBe("number");
   });
 
   it.each([
@@ -69,16 +56,8 @@ describe("template package", () => {
   });
 
   it("rejects a package that fails template validation", () => {
-    const pkg = exportTemplatePackage({ ...draft, sections: [] });
-    const r = importTemplatePackage(pkg);
-    expect(r.ok).toBe(false);
-  });
-
-  it("rejects a package whose section title would inject a heading", () => {
-    const pkg = exportTemplatePackage({
-      ...draft,
-      sections: [{ id: "a", title: "A\n## Injected" }],
-    });
-    expect(importTemplatePackage(pkg).ok).toBe(false);
+    expect(
+      importTemplatePackage(exportTemplatePackage({ ...draft, name: " " })).ok,
+    ).toBe(false);
   });
 });
