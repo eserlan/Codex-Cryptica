@@ -74,11 +74,14 @@ This file is the Codex-facing instruction layer for this repository.
 <!-- SPECKIT START -->
 
 For additional context about technologies to be used, project structure,
-shell commands, and other important information, read the [current plan](./specs/164-answer-community-aggregate/plan.md).
+shell commands, and other important information, read the [current plan](./specs/166-canvas-entity-reports/plan.md).
 
 <!-- SPECKIT END -->
 
 ## Active Technologies
+
+- TypeScript 6.0.3, Svelte 5 Runes, SvelteKit 2, Bun 1.3.14 + Existing `@codex/vault-engine` (`vault.createEntity`/`updateEntity`), `@codex/canvas-engine` (canvas nodes/edges), `schema` (Zod `Entity` type), existing `ZenView`/`modalUIStore.openZenMode`, existing `ClipboardService` (+ `marked`/`dompurify`, already a dependency per 2815-smart-copy), Cytoscape (Graph view selection, already used by `SelectionConnector.svelte`). **No new third-party dependency.** (166-canvas-entity-reports)
+- Existing browser-local IndexedDB/OPFS vault. A report is an ordinary Note-category entity (`kind: "report"`) with an additive optional `report` provenance field on `EntitySchema` — no new persistence format, no new object store. (166-canvas-entity-reports)
 
 - TypeScript 6.0.3, Svelte 5 Runes, SvelteKit 2, Bun 1.3.14 + Existing `idb` (via `apps/web/src/lib/utils/idb.ts`), existing `vault-registry.svelte.ts`; new internal workspace package `packages/session-journal-engine` (framework-free); no new third-party dependency (163-session-journal)
 - Browser-local IndexedDB via the shared `CodexDB` schema (new `session_journals` object store, `by-vault` index) — not a new database, not Dexie (163-session-journal)
