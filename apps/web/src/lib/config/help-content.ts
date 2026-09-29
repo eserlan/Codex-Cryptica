@@ -18,6 +18,7 @@ export type { HelpArticle };
 /** Help articles linked directly from feature entry points. */
 export const FEATURE_HELP_ARTICLES = {
   COMMUNITY_STAT_SHEET_TEMPLATES: "stat-sheets",
+  SHARING_ENTITY_TEMPLATES: "sharing-templates",
 } as const;
 
 export interface FeatureHint {

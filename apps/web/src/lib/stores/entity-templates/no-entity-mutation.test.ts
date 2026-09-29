@@ -24,3 +24,41 @@ describe("templates never touch entities (FR-017, SC-003)", () => {
     }
   });
 });
+
+describe("installing a community template never touches entities or defaults (SC-003, SC-005)", () => {
+  it("only writes the one new template file", async () => {
+    const { installEntityTemplate } = await import("./entity-template-install");
+    const { store, repository, vault } = makeStore();
+    await store.loadForVault("v1", { vault });
+    await store.setDefault("character", "builtin:character");
+    (repository.saveDefaults as any).mockClear();
+
+    const result = await installEntityTemplate(
+      {
+        service: {
+          downloadEntityTemplatePackage: async () => ({
+            kind: "entity-template" as const,
+            formatVersion: 1,
+            template: {
+              name: "Guild Hall",
+              entityType: "character",
+              markdown: "## x\n",
+            },
+          }),
+        },
+        store,
+        getKnownTypes: () => ["character"],
+      },
+      { listingId: "l1" },
+    );
+
+    expect(result.status).toBe("installed");
+    expect((repository.saveTemplate as any).mock.calls).toHaveLength(1);
+    expect(repository.saveDefaults).not.toHaveBeenCalled();
+    expect(repository.deleteTemplate).not.toHaveBeenCalled();
+    expect(store.defaultFor("character")).toBe("builtin:character");
+    for (const args of (repository.saveTemplate as any).mock.calls) {
+      expect(args[0]).toBe(vault);
+    }
+  });
+});

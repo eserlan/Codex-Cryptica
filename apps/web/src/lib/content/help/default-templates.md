@@ -34,6 +34,8 @@ Open **Settings → Templates** and choose the **Entity templates** tab (the **S
 - **Export** saves a template as a `.json` file you can share or keep as a backup. **Import** adds a template from such a file. Imported templates never replace an existing one.
 - **Delete** removes one of your templates. If it was the default, that type goes back to the built-in template.
 
+You can also share a template with other people, or install one that someone else made. See **Sharing Templates** for how publishing, installing and owner tokens work.
+
 If a template file in your vault can't be read, it is skipped and a warning appears at the top of the list. Everything else keeps working.
 
 > [!NOTE]

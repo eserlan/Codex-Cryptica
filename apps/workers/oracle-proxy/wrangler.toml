@@ -133,6 +133,18 @@ namespace_id = "1358"
   limit = 5
   period = 60
 
+# Entity template reports are anonymous public writes. Cap them per reporting
+# address (hashed) so one client cannot flood the operator's report queue. The
+# binding only supports 10 or 60 second periods; the worker also enforces a
+# daily per-address quota itself.
+[[ratelimits]]
+name = "TEMPLATE_REPORT_RATE_LIMITER"
+namespace_id = "1360"
+
+  [ratelimits.simple]
+  limit = 5
+  period = 60
+
 # LLM generation limits, keyed by session capability token id.
 #
 # The binding only supports period = 10 or 60, and is a permissive,
