@@ -1,26 +1,6 @@
 {
-  "updated_at": 1790703176,
+  "updated_at": 1790718804,
   "candidates": [
-    {
-      "id": "reddit-36168046733-tables-now-parse-4d6kh3-2-and-other-keep",
-      "title": "Tables now parse 4d6kh3+2 and other keep/modifier rolls",
-      "body": "I kept building chargen and loot tables that needed 4d6 keep highest 3 or a flat +2, and tables only did simple single-die rolls. I had to roll outside and copy it in.\n\nI added multi-die with keep and modifiers directly in tables. You can write the formula in the table and it rolls there.\n\nNow supports:\n- 4d6kh3, 4d6kl3 and similar keep-highest / keep-lowest\n- modifiers like +2, -1 on the same formula\n- mixing it with existing table syntax so old tables still work\n- faster rolls for stats, loot drops and homebrew without leaving the page\n\nThe syntax is compact, so a typo like kh33 will just fail to parse. I will need to make the error message clearer next.\n\nWhat formula do you use most that did not roll in tables before, chargen stats, loot, or something else?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/screenshots/feature-build.jpg)",
-      "url": "",
-      "image_url": "https://assets.codexcryptica.com/screenshots/feature-build.jpg",
-      "source_id": "36168046733",
-      "status": "approved",
-      "created_at": 1790364445
-    },
-    {
-      "id": "reddit-36177007535-table-dice-now-handle-4d6kh3-and-2d20kh1",
-      "title": "Table dice now handle 4d6kh3 and 2d20kh1 with modifiers",
-      "body": "I wanted tables to roll stat arrays and advantage odds directly, but I was stuck on single-die formulas or working around it with an outside roller.\n\nI added multi-die formulas with keep-highest / keep-lowest and modifiers straight in table dice fields.\n\nNow you can:\n- write 4d6kh3 for stat generation without a workaround\n- use 2d20kh1 and 2d20kl1 for advantage style rolls\n- add modifiers after the keep so the math lands where you expect\n- keep existing tables as-is, the new syntax only matters if you use it\n\nIt covers the common table cases. Really nested or conditional rolls are still better in a full dice roller.\n\nWhich of your tables would you switch to 4d6kh3 or 2d20kh1 first, stat blocks, loot, or something else?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/images/blog/oracle-capabilities/oracle-roll-command.png)",
-      "url": "",
-      "image_url": "https://assets.codexcryptica.com/images/blog/oracle-capabilities/oracle-roll-command.png",
-      "source_id": "36177007535",
-      "status": "approved",
-      "created_at": 1790365466
-    },
     {
       "id": "reddit-36254739930-new-hub-steampunk-victorian-industrial-f",
       "title": "New hub: Steampunk & Victorian Industrial for brass-and-steam campaigns",
