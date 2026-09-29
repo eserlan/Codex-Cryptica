@@ -53,7 +53,10 @@ vi.mock("../theme.svelte", () => ({
 }));
 
 const { mockEntityTemplates } = vi.hoisted(() => ({
-  mockEntityTemplates: { loadForVault: vi.fn().mockResolvedValue(undefined) },
+  mockEntityTemplates: {
+    loadForVault: vi.fn().mockResolvedValue(undefined),
+    clearForGuest: vi.fn(),
+  },
 }));
 
 vi.mock("../entity-templates/entity-template-store.svelte", () => ({
@@ -201,6 +204,7 @@ describe("VaultLifecycleManager", () => {
       try {
         await manager.switchVault("v2");
         expect(mockEntityTemplates.loadForVault).not.toHaveBeenCalled();
+        expect(mockEntityTemplates.clearForGuest).toHaveBeenCalled();
       } finally {
         sessionModeStore.isGuestMode = false;
       }
@@ -383,6 +387,7 @@ describe("VaultLifecycleManager", () => {
       });
 
       await manager.loadDemoData("Demo", entities as any);
+      expect(mockEntityTemplates.clearForGuest).toHaveBeenCalled();
 
       expect(deps.ensureServicesInitialized).toHaveBeenCalled();
       expect(deps.repository.entities).toEqual(entities);

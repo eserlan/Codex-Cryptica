@@ -110,6 +110,29 @@ describe("EntityTemplateStore: loading and resolving", () => {
     expect(store.list.some((t) => t.id === "u1")).toBe(false);
   });
 
+  it("clears vault templates and defaults for guest sessions", async () => {
+    const repository = makeRepository({
+      loadAll: vi.fn().mockResolvedValue(
+        loaded({
+          templates: [storedUser()],
+          legacy: [{ type: "character", markdown: "PRIVATE LEGACY" }],
+          defaults: { version: 1, defaults: { character: "u1" } },
+        }),
+      ),
+    } as any);
+    const { store, vault } = makeStore({ repository });
+    await store.loadForVault("v1", { vault });
+
+    store.clearForGuest();
+
+    expect(store.loaded).toBe(true);
+    expect(store.canEdit).toBe(false);
+    expect(store.list.some((t) => t.id === "u1")).toBe(false);
+    expect(store.list.some((t) => t.id === "legacy:character")).toBe(false);
+    expect(store.defaultFor("character")).toBeUndefined();
+    expect(store.resolveSync("character")).toBe(GENERIC_TEMPLATES.character);
+  });
+
   it("ignores a slow load that finished after a newer one started", async () => {
     let release!: (v: unknown) => void;
     const slow = new Promise((r) => (release = r));

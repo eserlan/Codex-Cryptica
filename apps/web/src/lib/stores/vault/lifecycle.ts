@@ -238,7 +238,10 @@ export class VaultLifecycleManager {
 
   /** Template problems must never block opening a vault. */
   async loadEntityTemplates(vaultId: string) {
-    if (sessionModeStore.isGuestMode) return;
+    if (sessionModeStore.isGuestMode) {
+      entityTemplateStore.clearForGuest();
+      return;
+    }
     try {
       const [vault, folder] = await Promise.all([
         this.deps.getActiveVaultHandle(),
@@ -251,6 +254,9 @@ export class VaultLifecycleManager {
   }
 
   async loadDemoData(name: string, entities: Record<string, LocalEntity>) {
+    // Demo data has no vault-scoped template files. Do not carry templates from
+    // a vault that was active before entering guest or demo mode.
+    entityTemplateStore.clearForGuest();
     this.deps.syncStore.setStatus("loading");
     try {
       await this.deps.ensureServicesInitialized();
