@@ -751,6 +751,9 @@ export class VaultStore {
     }
     return this.entityStore.addConnection(sId, tId, type, label, strength);
   }
+  setConnectionHidden(sId: string, tId: string, type: string, hidden: boolean) {
+    return this.entityStore.setConnectionHidden(sId, tId, type, hidden);
+  }
   removeConnection(sId: string, tId: string, type: string) {
     return this.entityStore.removeConnection(sId, tId, type);
   }

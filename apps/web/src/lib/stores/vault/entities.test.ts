@@ -8,6 +8,7 @@ import {
   addConnection,
   updateConnection,
   removeConnection,
+  setConnectionHidden,
   bulkAddLabel,
   bulkRemoveLabel,
   batchCreateEntities,
@@ -443,6 +444,62 @@ describe("Vault Entities Operations", () => {
     it("should return null if source not found in removeConnection", () => {
       const { updatedSource } = removeConnection({}, "s", "t", "type");
       expect(updatedSource).toBeNull();
+    });
+
+    describe("setConnectionHidden", () => {
+      const source = () =>
+        ({
+          id: "e1",
+          status: "active",
+          connections: [
+            { target: "e2", type: "friend", strength: 1 },
+            { target: "e2", type: "rival", strength: 1 },
+          ],
+        }) as any;
+
+      it("hides only the matching relation and keeps the rest", () => {
+        const { updatedSource, updatedConnection } = setConnectionHidden(
+          { e1: source() },
+          "e1",
+          "e2",
+          "friend",
+          true,
+        );
+        expect(updatedConnection?.hidden).toBe(true);
+        expect(updatedSource?.connections).toHaveLength(2);
+        expect(updatedSource?.connections[0].hidden).toBe(true);
+        expect(updatedSource?.connections[1]).not.toHaveProperty("hidden");
+      });
+
+      it("drops the flag when showing again, rather than storing false", () => {
+        const hidden = setConnectionHidden(
+          { e1: source() },
+          "e1",
+          "e2",
+          "friend",
+          true,
+        );
+        const shown = setConnectionHidden(
+          hidden.entities,
+          "e1",
+          "e2",
+          "friend",
+          false,
+        );
+        expect(shown.updatedSource?.connections[0]).not.toHaveProperty(
+          "hidden",
+        );
+      });
+
+      it("returns null when the source or the connection is missing", () => {
+        expect(
+          setConnectionHidden({}, "e1", "e2", "friend", true).updatedSource,
+        ).toBeNull();
+        expect(
+          setConnectionHidden({ e1: source() }, "e1", "e2", "nope", true)
+            .updatedSource,
+        ).toBeNull();
+      });
     });
 
     it("should add a connection", () => {

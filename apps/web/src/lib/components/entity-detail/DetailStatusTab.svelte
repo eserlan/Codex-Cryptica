@@ -79,6 +79,21 @@
     );
   });
 
+  const hiddenConnections = $derived(allConnections.filter((c) => c.hidden));
+
+  // The connection is stored on whichever entity points outward, so hiding an
+  // incoming one writes to the other entity's record.
+  const setHidden = (conn: (typeof allConnections)[number], hidden: boolean) =>
+    vault.setConnectionHidden(
+      conn.isOutbound ? entity.id : conn.targetId,
+      conn.isOutbound ? conn.targetId : entity.id,
+      conn.type,
+      hidden,
+    );
+
+  const showAllConnections = () =>
+    Promise.all(hiddenConnections.map((c) => setHidden(c, false)));
+
   // Entity auto-link: build flat index of titles + aliases for mention detection.
   // vault.titleAndAliasIndex is available to both host and guest sessions (FR-011).
   // ⚡ Bolt Optimization: Use the pre-cached titleAndAliasIndex with an imperative loop
@@ -305,6 +320,28 @@
       />
     {/if}
 
+    {#if hiddenConnections.length > 0}
+      <div
+        class="mb-3 flex items-center justify-between gap-2 text-xs text-theme-muted"
+        data-testid="hidden-connections-bar"
+      >
+        <span
+          >{hiddenConnections.length}
+          {hiddenConnections.length === 1 ? "connection is" : "connections are"} hidden
+          from the graph</span
+        >
+        {#if !vault.isGuest}
+          <button
+            type="button"
+            class="font-bold text-theme-primary hover:text-theme-secondary transition"
+            onclick={showAllConnections}
+          >
+            Show all connections
+          </button>
+        {/if}
+      </div>
+    {/if}
+
     <ul class="space-y-3">
       {#each allConnections as conn}
         {#if editingConnectionTarget === conn.targetId && conn.isOutbound && !conn.isChild}
@@ -317,7 +354,12 @@
             />
           </li>
         {:else}
-          <li class="flex gap-3 text-sm text-theme-muted items-start group">
+          <li
+            class="flex gap-3 text-sm text-theme-muted items-start group {conn.hidden
+              ? 'opacity-60'
+              : ''}"
+            data-hidden={conn.hidden || undefined}
+          >
             <span
               aria-hidden="true"
               class="mt-1 w-3 h-3 shrink-0 {conn.isChild
@@ -434,6 +476,24 @@
                       <span
                         aria-hidden="true"
                         class="icon-[lucide--pencil] w-3 h-3"
+                      ></span>
+                    </button>
+                  {/if}
+                  {#if !conn.isChild}
+                    <button
+                      type="button"
+                      class="text-theme-muted hover:text-theme-primary transition p-1"
+                      onclick={() => setHidden(conn, !conn.hidden)}
+                      aria-label="{conn.hidden
+                        ? 'Show'
+                        : 'Hide'} connection to {conn.displayTitle}"
+                      title={conn.hidden ? "Show in graph" : "Hide from graph"}
+                    >
+                      <span
+                        aria-hidden="true"
+                        class="{conn.hidden
+                          ? 'icon-[lucide--eye]'
+                          : 'icon-[lucide--eye-off]'} w-3 h-3"
                       ></span>
                     </button>
                   {/if}

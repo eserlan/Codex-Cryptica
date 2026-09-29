@@ -46,21 +46,17 @@ export function stringArrayEqual(a?: string[], b?: string[]): boolean {
   return true;
 }
 
+const CONNECTION_KEYS = ["target", "type", "label", "strength"] as const;
+
+function connectionEqual(left: any = {}, right: any = {}): boolean {
+  return (
+    CONNECTION_KEYS.every((key) => left[key] === right[key]) &&
+    Boolean(left.hidden) === Boolean(right.hidden)
+  );
+}
+
 export function connectionsEqual(a: any[] = [], b: any[] = []): boolean {
-  if (a.length !== b.length) return false;
-  for (let i = 0; i < a.length; i++) {
-    const left = a[i] ?? {};
-    const right = b[i] ?? {};
-    if (
-      left.target !== right.target ||
-      left.type !== right.type ||
-      left.label !== right.label ||
-      left.strength !== right.strength
-    ) {
-      return false;
-    }
-  }
-  return true;
+  return a.length === b.length && a.every((c, i) => connectionEqual(c, b[i]));
 }
 
 export function temporalEqual(a: any, b: any): boolean {

@@ -10,6 +10,7 @@
   import {
     buildConnectionNeighbors,
     vaultConnectionContext,
+    withoutHiddenRelations,
     type ConnectionNeighbor,
   } from "./entity-connections";
   import {
@@ -45,7 +46,9 @@
   const allNeighbors = $derived.by<ConnectionNeighbor[]>(() =>
     buildConnectionNeighbors(entity, vaultConnectionContext(vault)),
   );
-  const shownNeighbors = $derived(allNeighbors.slice(0, MAX_SHOWN));
+  const shownNeighbors = $derived(
+    withoutHiddenRelations(allNeighbors).slice(0, MAX_SHOWN),
+  );
 
   const colorOf = (type: string) => categories.getCategory(type)?.color ?? null;
   // --- Cytoscape: layout + paint only ---------------------------------
@@ -315,7 +318,9 @@
         class="pointer-events-none absolute inset-x-0 bottom-8 text-center text-sm text-theme-muted italic"
         data-testid="connections-empty"
       >
-        No direct connections yet.
+        {allNeighbors.length > 0
+          ? "Every connection is hidden. Show them again from the Status tab."
+          : "No direct connections yet."}
       </p>
     {/if}
 
