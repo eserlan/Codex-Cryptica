@@ -15,6 +15,15 @@ export interface EntityTemplateServiceDeps {
   themeStore?: {
     worldThemeId: string;
   };
+  /**
+   * Vault-scoped templates (chosen defaults, user templates, legacy files).
+   * Once it has loaded it is authoritative and the handle lookup below is
+   * only a fallback for the moments before a vault has finished loading.
+   */
+  templateStore?: {
+    loaded: boolean;
+    resolveSync(type: string, themeId?: string): string;
+  };
 }
 
 export class EntityTemplateService {
@@ -37,6 +46,9 @@ export class EntityTemplateService {
     themeId?: string,
     customTemplatesDirHandle?: FileSystemDirectoryHandle | null,
   ): Promise<string> {
+    const store = this.deps.templateStore;
+    if (store?.loaded) return store.resolveSync(type, themeId);
+
     const normalizedType = type.toLowerCase();
 
     // Resolve active theme ID and extract its base theme name (stripping light/dark suffixes)
@@ -191,8 +203,12 @@ export class EntityTemplateService {
 
 // Late-bind store reference dynamically in the getter to avoid circular dependency / premature initialization issues
 import { themeStore } from "../stores/theme.svelte";
+import { entityTemplateStore } from "../stores/entity-templates/entity-template-store.svelte";
 export const entityTemplateService = new EntityTemplateService({
   get themeStore() {
     return themeStore;
+  },
+  get templateStore() {
+    return entityTemplateStore;
   },
 });

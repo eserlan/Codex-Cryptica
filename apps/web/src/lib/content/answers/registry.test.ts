@@ -355,7 +355,7 @@ describe("answer schema", () => {
 describe("published answers", () => {
   const published = getAllAnswers();
 
-  it("describes quiet, fast, and safe routes in the ruined-city checklist", () => {
+  it("frames ruined-city routes as weighed trade-offs in the checklist", () => {
     const answer = answers["how-do-i-run-exploration-in-a-huge-ruined-city"];
     const checklist = answer.sections.find(
       (section) => section.kind === "checklist",
@@ -365,7 +365,7 @@ describe("published answers", () => {
     if (checklist?.kind !== "checklist") return;
 
     expect(checklist.items[1]).toContain(
-      "at least one quiet, one fast and one safe option",
+      "offer useful trade-offs where the city supports them",
     );
   });
 

@@ -69,6 +69,8 @@ export class DefaultTextGenerationService implements TextGenerationService {
       instructions?: string;
       priority?: "instructions-first" | "incoming-first" | "preserve-existing";
       themeId?: string;
+      /** Pre-resolved lore template (see TextGenerationService.reviseEntityUpdate). */
+      loreTemplate?: string;
       interactionsEnabled?: boolean;
     },
   ): Promise<{ content: string; lore: string; categoryId?: string }> {

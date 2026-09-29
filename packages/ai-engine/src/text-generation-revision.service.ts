@@ -41,6 +41,8 @@ export class TextGenerationRevisionService {
       instructions?: string;
       priority?: "instructions-first" | "incoming-first" | "preserve-existing";
       themeId?: string;
+      /** Pre-resolved lore template (see TextGenerationService.reviseEntityUpdate). */
+      loreTemplate?: string;
       interactionsEnabled?: boolean;
     },
   ): Promise<{
@@ -105,9 +107,15 @@ export class TextGenerationRevisionService {
       );
     }
 
-    const loreTemplate = sanitizedEntity?.type
-      ? resolveAITemplate(sanitizedEntity.type, options?.themeId) || undefined
-      : undefined;
+    // The caller resolves vault templates on the main thread and passes the text,
+    // because this service runs in a worker that never sees them.
+    const loreTemplate =
+      options?.loreTemplate !== undefined
+        ? options.loreTemplate || undefined
+        : sanitizedEntity?.type
+          ? resolveAITemplate(sanitizedEntity.type, options?.themeId) ||
+            undefined
+          : undefined;
     const promptCore = buildEntityRevisionPromptCore(
       sanitizedEntity,
       cleanIncoming,

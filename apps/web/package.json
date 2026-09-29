@@ -1,7 +1,7 @@
 {
   "name": "web",
   "private": true,
-  "version": "0.33.13",
+  "version": "0.34.0",
   "type": "module",
   "scripts": {
     "dev": "vite dev",
@@ -83,6 +83,7 @@
     "dompurify": "^3.4.2",
     "editor-core": "workspace:*",
     "entity-report-engine": "workspace:*",
+    "entity-template-engine": "workspace:*",
     "fflate": "^0.8.3",
     "flexsearch": "^0.8.212",
     "generator-engine": "workspace:*",
