@@ -23,7 +23,7 @@ Out of the box, the following types come with high-fidelity structures:
 
 ## Managing Templates in Settings
 
-Open **Settings → Templates** to see every template in your vault, grouped by entity type. Each row shows where it comes from (**Built-in** or **Yours**) and which one is the **Default** for its type.
+Open **Settings → Templates** and choose the **Entity templates** tab (the **Stat sheets** tab next to it is for reusable stat layouts) to see every template in your vault, grouped by entity type. Each row shows where it comes from (**Built-in** or **Yours**) and which one is the **Default** for its type.
 
 - **Preview** shows the note a new entity would start with.
 - **Set as default** makes a template the starting point for every new entity of that type. It only affects notes you create afterwards; notes you already made never change.

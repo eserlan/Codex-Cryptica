@@ -167,8 +167,8 @@
     />
 
     <p class="text-sm text-theme-muted leading-relaxed">
-      Templates decide which sections a new note starts with. Changing a
-      template or its default only affects notes you create afterwards.
+      Changing a template or its default only affects notes you create
+      afterwards.
     </p>
 
     <EntityTemplateNotices
