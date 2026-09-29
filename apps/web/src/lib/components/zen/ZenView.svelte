@@ -6,6 +6,10 @@
   import ZenHeader from "./ZenHeader.svelte";
   import ZenSidebar from "./ZenSidebar.svelte";
   import ZenContent from "./ZenContent.svelte";
+  import {
+    readSidebarCollapsed,
+    writeSidebarCollapsed,
+  } from "./zen-sidebar-preference";
   import DetailConnectionsTab from "$lib/components/entity-detail/DetailConnectionsTab.svelte";
   import DetailMapTab from "$lib/components/entity-detail/DetailMapTab.svelte";
   import DetailChatsTab from "$lib/components/entity-detail/DetailChatsTab.svelte";
@@ -53,6 +57,12 @@
     if (!entity || !vault.isGuest) return;
     persistZenPopoutPayload(vault.activeVaultId ?? "guest", entity, true);
   });
+
+  let sidebarCollapsed = $state(readSidebarCollapsed());
+  const toggleSidebar = () => {
+    sidebarCollapsed = !sidebarCollapsed;
+    writeSidebarCollapsed(sidebarCollapsed);
+  };
 
   let activeTab = $derived(modalUIStore.zenModeActiveTab);
   let scrollContainer = $state<HTMLDivElement>();
@@ -500,21 +510,52 @@
           data-testid="zen-mobile-scroll-container"
           style="touch-action: pan-y;"
         >
-          <ZenSidebar
-            {entity}
-            bind:editState
-            {resolvedImageUrl}
-            {isPopout}
-            onShowLightbox={(rect) =>
-              modalUIStore.openLightbox(
-                resolvedImageUrl,
-                entity.title,
-                rect,
-                entity.image,
-              )}
-            onNavigate={navigateTo}
-            onDelete={handleDelete}
-          />
+          {#if !sidebarCollapsed}
+            <div class="relative flex shrink-0 w-full md:w-auto">
+              <ZenSidebar
+                {entity}
+                bind:editState
+                {resolvedImageUrl}
+                {isPopout}
+                onShowLightbox={(rect) =>
+                  modalUIStore.openLightbox(
+                    resolvedImageUrl,
+                    entity.title,
+                    rect,
+                    entity.image,
+                  )}
+                onNavigate={navigateTo}
+                onDelete={handleDelete}
+              />
+              <button
+                type="button"
+                class="hidden md:flex absolute top-3 right-px z-10 h-7 w-5 items-center justify-center rounded-l border border-r-0 border-theme-border bg-theme-surface text-theme-muted hover:text-theme-primary hover:bg-theme-primary/10 transition-colors cursor-pointer"
+                onclick={toggleSidebar}
+                aria-label="Hide sidebar"
+                title="Hide sidebar"
+                data-testid="zen-sidebar-toggle"
+              >
+                <span
+                  class="icon-[lucide--chevron-left] h-4 w-4"
+                  aria-hidden="true"
+                ></span>
+              </button>
+            </div>
+          {:else}
+            <button
+              type="button"
+              class="hidden md:flex w-6 shrink-0 items-start justify-center pt-3 border-r border-theme-border bg-theme-surface text-theme-muted hover:text-theme-primary hover:bg-theme-primary/10 transition-colors cursor-pointer"
+              onclick={toggleSidebar}
+              aria-label="Show sidebar"
+              title="Show sidebar"
+              data-testid="zen-sidebar-toggle"
+            >
+              <span
+                class="icon-[lucide--chevron-right] h-4 w-4"
+                aria-hidden="true"
+              ></span>
+            </button>
+          {/if}
 
           <ZenContent
             {entity}

@@ -1,3 +1,4 @@
+import { deriveFactionMembership } from "./faction-membership";
 import type {
   ReportDocument,
   ReportEntityInput,
@@ -36,7 +37,19 @@ export function buildReport(
   const byId = new Map(entities.map((e) => [e.id, e]));
   const titleOf = (id: string) => byId.get(id)?.title ?? id;
 
-  const allLines = input.relationships
+  const relationships = input.relationships.filter(
+    (r) =>
+      !r.sources?.length ||
+      r.sources.some((s) =>
+        s === "canvas" ? include.canvasConnections : include.graphConnections,
+      ),
+  );
+  const membershipByFaction =
+    relationships.length === input.relationships.length
+      ? input.factionMembership
+      : deriveFactionMembership(input.entities, relationships);
+
+  const allLines = relationships
     .filter((r) => byId.has(r.sourceId) && byId.has(r.targetId))
     .map((r) => ({
       sourceId: r.sourceId,
@@ -57,7 +70,7 @@ export function buildReport(
 
   const factionsOf = (id: string): string[] =>
     include.factionsAffiliations
-      ? Object.entries(input.factionMembership)
+      ? Object.entries(membershipByFaction)
           .filter(
             ([factionId, members]) =>
               byId.has(factionId) && members.includes(id),
@@ -69,7 +82,7 @@ export function buildReport(
   const sections: ReportSection[] = entities.map((entity) => {
     if (entity.type === "faction") {
       const memberIds = include.factionsAffiliations
-        ? (input.factionMembership[entity.id] ?? [])
+        ? (membershipByFaction[entity.id] ?? [])
         : [];
       return {
         kind: "faction",
@@ -87,6 +100,20 @@ export function buildReport(
         entity,
         relationships: linesFor(entity.id),
         affiliations: factionsOf(entity.id),
+      };
+    }
+    if (entity.type === "location") {
+      return {
+        kind: "location",
+        entity,
+        parent:
+          include.relationships && entity.parent
+            ? byId.get(entity.parent)
+            : undefined,
+        contains: include.relationships
+          ? entities.filter((e) => e.parent === entity.id)
+          : [],
+        relationships: linesFor(entity.id),
       };
     }
     return { kind: "generic", entity };

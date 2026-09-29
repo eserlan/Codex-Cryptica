@@ -30,7 +30,7 @@ describe("renderReportMarkdown", () => {
   it("marks GM-only text and demotes note headings", () => {
     const md = renderReportMarkdown(
       buildReport(sampleInput(), {
-        ...options({ detail: "detailed" }),
+        ...options({ detail: "standard" }),
         include: { ...DEFAULT_REPORT_INCLUDE, gmOnlySecrets: true },
       }),
     );
@@ -48,5 +48,29 @@ describe("renderReportMarkdown", () => {
       ),
     );
     expect(md.match(/^### /gm)).toHaveLength(200);
+  });
+});
+
+describe("renderReportMarkdown locations", () => {
+  it("lists where a place sits and what it contains", () => {
+    const md = renderReportMarkdown(
+      buildReport(
+        {
+          entities: [
+            entity("realm", { title: "Realm", type: "location" }),
+            entity("keep", {
+              title: "Keep",
+              type: "location",
+              parent: "realm",
+            }),
+          ],
+          relationships: [],
+          factionMembership: {},
+        },
+        options(),
+      ),
+    );
+    expect(md).toContain("**Located in:** Realm");
+    expect(md).toContain("**Contains:** Keep");
   });
 });

@@ -130,4 +130,63 @@ describe("ReportPreview", () => {
       expect(screen.getByTestId("silhouette-stub")).toBeTruthy(),
     );
   });
+
+  const withInlineImage = (portraits: boolean) =>
+    buildReport(
+      {
+        entities: [
+          {
+            id: "a",
+            title: "Argel",
+            type: "character",
+            labels: [],
+            description: "Intro.\n\n![art](https://example.com/a.png)",
+          },
+        ],
+        relationships: [],
+        factionMembership: {},
+      },
+      {
+        scope: { origin: "graph" },
+        include: { ...DEFAULT_REPORT_INCLUDE, portraits },
+        detail: DEFAULT_REPORT_DETAIL,
+      },
+    );
+
+  it("keeps images from the entity's own text inside the report's styling", () => {
+    const { container } = render(ReportPreview, {
+      props: { document: withInlineImage(true) },
+    });
+    const img = container.querySelector(".report-md img");
+    expect(img).toBeTruthy();
+    expect(container.querySelector(".report-md--no-images")).toBeNull();
+  });
+
+  it("hides images from the entity's text when portraits are off", () => {
+    const { container } = render(ReportPreview, {
+      props: { document: withInlineImage(false) },
+    });
+    expect(container.querySelector(".report-md--no-images img")).toBeTruthy();
+  });
+
+  it("shows where a location sits and what it contains", () => {
+    const document = buildReport(
+      {
+        entities: [
+          { id: "r", title: "Realm", type: "location", labels: [] },
+          { id: "k", title: "Keep", type: "location", labels: [], parent: "r" },
+        ],
+        relationships: [],
+        factionMembership: {},
+      },
+      {
+        scope: { origin: "graph" },
+        include: { ...DEFAULT_REPORT_INCLUDE },
+        detail: DEFAULT_REPORT_DETAIL,
+      },
+    );
+    const { container } = render(ReportPreview, { props: { document } });
+    expect(container.textContent).toContain("Located in: Realm");
+    expect(container.textContent).toContain("Contains: Keep");
+  });
 });
