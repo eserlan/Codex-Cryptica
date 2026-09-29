@@ -105,6 +105,15 @@ The following high-impact candidate specifications target performance, scaling, 
 
 ## 🏛️ Historical Roadmap & Release Timeline
 
+### v0.34.0 — The Session Journal & Reports Update (2026-09-29)
+
+- **Highlights**: The Session Journal (a running record reachable from every view, with formatted notes and live preview, editing and reordering, automatic capture of rolls, draws and table results, and promotion of journal content to vault entities); Entity Reports generated from canvas, graph or table selections and saved as editable Note entities; Entity Templates as a vault setting (built-in, legacy-file and user templates, per-type defaults, a markdown editor, import/export, a compact Table Card NPC template, and Oracle revision that follows the chosen template); expandable individual-dice breakdowns across roll tables, the journal, stat sheets and solo adventures, plus multi-die keep-highest/lowest table formulas; canvas entity-card variants with faction rosters and member galleries; saved graph views that keep their layout; delta-based Cloud Backup with attach-to-existing; and the AI-assisted Session Prep Builder.
+- **Associated Specifications**:
+  - [163-session-journal](./163-session-journal/spec.md) (Session Journal)
+  - [166-canvas-entity-reports](./166-canvas-entity-reports/spec.md) (Canvas, graph and table entity reports)
+  - [167-entity-template-management](./167-entity-template-management/spec.md) (Entity template management)
+  - [162-cc-cloud-backup](./162-cc-cloud-backup/spec.md) (Delta uploads and attach-to-existing backup)
+
 ### v0.33.0 — The Generators & Campaign Craft Update (2026-09-24)
 
 - **Highlights**: A wider public and in-app generator library (rumours, heists, constellations, personality, holidays and festivals, and superhero stories); easier generator discovery with categories, favourites, and quick search; the local-first My Stuff library with shareable and remixable creations; automatic vault sync when Cloud Save is enabled; dedicated Pirate & High Seas and Starship campaign content packs plus the Superhero theme; the AI RPG Idea Developer; partner-generator handoffs; new system-neutral and system-aware RPG guides; and search across Explore.
