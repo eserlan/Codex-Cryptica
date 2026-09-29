@@ -52,4 +52,34 @@ describe("EntityTemplateStore: defaults", () => {
     expect(store.defaultFor("location")).toBeUndefined();
     expect(notify).toHaveBeenCalledWith(expect.any(String), "error");
   });
+
+  it("keeps Standard Character as the default until Table Card is chosen", async () => {
+    const { store, vault } = makeStore();
+    await store.loadForVault("v1", { vault });
+    expect(store.effectiveDefaultFor("character")).toBe("builtin:character");
+    expect(store.resolveSync("character")).not.toContain("The Five Elements");
+
+    await store.setDefault("character", "builtin:character:table-card");
+    expect(store.effectiveDefaultFor("character")).toBe(
+      "builtin:character:table-card",
+    );
+    expect(store.resolveSync("character")).toContain("## The Five Elements");
+  });
+
+  it("can duplicate Table Card into an editable copy", async () => {
+    const { store, vault } = makeStore();
+    await store.loadForVault("v1", { vault });
+    const copy = await store.duplicate("builtin:character:table-card");
+    expect(copy.source).toBe("user");
+    expect(copy.markdown).toBe(
+      store.previewMarkdown("builtin:character:table-card"),
+    );
+    await expect(
+      store.update("builtin:character:table-card", {
+        name: "x",
+        entityType: "character",
+        markdown: "",
+      }),
+    ).rejects.toThrow();
+  });
 });

@@ -20,6 +20,7 @@ Out of the box, the following types come with high-fidelity structures:
 - **Event**: Includes sections for Date/Chronology, Key Participants, Sequence of Events, and Aftermath.
 - **Creature**: Includes sections for Ecology, Combat/Abilities, Behavior, and Lore.
 - **Note**: A clean generic canvas for general-purpose world-building.
+- **Table Card** (an extra Character template): a compact NPC card built on five memorable elements, Immediate Want, Physical Mannerism, Sharp Contradiction, Relationship Hook and Sensory Tag, plus a short line on how to introduce them at the table. Pick it as the Character default in **Settings → Templates** if you improvise a lot of NPCs mid-session.
 
 ## Managing Templates in Settings
 
