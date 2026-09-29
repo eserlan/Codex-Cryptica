@@ -3,6 +3,14 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { GuestPresenceHandler } from "./guest-presence-handler";
 import type { GuestSessionState } from "./guest-handler-context";
 
+const { mockEntityTemplates } = vi.hoisted(() => ({
+  mockEntityTemplates: { clearForGuest: vi.fn() },
+}));
+
+vi.mock("$lib/stores/entity-templates/entity-template-store.svelte", () => ({
+  entityTemplateStore: mockEntityTemplates,
+}));
+
 describe("GuestPresenceHandler", () => {
   let handler: GuestPresenceHandler;
   let ctx: any;
@@ -107,6 +115,7 @@ describe("GuestPresenceHandler", () => {
     expect(ctx.mapSession.myPeerId).toBeNull();
     expect(ctx.sessionModeStore.guestUsername).toBeNull();
     expect(ctx.sessionModeStore.isGuestMode).toBe(true);
+    expect(mockEntityTemplates.clearForGuest).toHaveBeenCalled();
     expect(ctx.vault.status).toBe("idle");
     expect(ctx.vault.errorMessage).toBeNull();
     expect(transport.disconnect).toHaveBeenCalled();

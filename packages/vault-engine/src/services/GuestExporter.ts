@@ -64,6 +64,11 @@ export class GuestExporter {
         continue;
       }
 
+      // Reports can hold GM-only text and are never published
+      if (entity.kind === "report") {
+        continue;
+      }
+
       // Exclude hidden entities based on Fog of War settings
       if (!isEntityVisible(entity, visibilitySettings)) {
         continue;

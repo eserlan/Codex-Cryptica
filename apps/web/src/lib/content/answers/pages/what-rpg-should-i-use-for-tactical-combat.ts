@@ -175,6 +175,7 @@ export const whatRpgShouldIUseForTacticalCombat: AnswerConfigInput = {
     "how-do-you-make-a-boss-fight-memorable-in-a-tabletop-rpg",
     "what-rpg-should-i-play-for-investigative-horror",
     "what-rpg-works-for-political-intrigue-and-faction-play",
+    "how-do-i-run-a-large-battle-when-the-player-characters-are-part-of-an-army",
   ],
   discovery: {
     id: "answer-tactical-combat-system-selection",

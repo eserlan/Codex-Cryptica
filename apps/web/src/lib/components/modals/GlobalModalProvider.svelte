@@ -10,6 +10,7 @@
   import { notificationStore } from "$lib/stores/ui/notification.svelte";
   import { loreMergeStore } from "$lib/stores/ui/lore-merge.svelte";
   import { guestChatStore } from "$lib/stores/guest-chat.svelte";
+  import { reportPanelStore } from "$lib/stores/ui/report-panel.svelte";
 
   let {
     isMobileMenuOpen = $bindable(false),
@@ -161,6 +162,20 @@
       {#await loadModal(() => import("$lib/components/canvas/CanvasSelectionModal.svelte"), "CanvasSelectionModal") then CanvasSelectionModal}
         {#if CanvasSelectionModal}
           <CanvasSelectionModal />
+        {/if}
+      {/await}
+    {/if}
+
+    {#if reportPanelStore.request}
+      {#await loadModal(() => import("$lib/components/reports/ReportPanel.svelte"), "ReportPanel") then ReportPanel}
+        {#if ReportPanel && reportPanelStore.request}
+          <ReportPanel
+            input={reportPanelStore.request.input}
+            source={reportPanelStore.request.source}
+            defaultTitle={reportPanelStore.request.defaultTitle}
+            rescope={reportPanelStore.request.rescope}
+            onclose={() => reportPanelStore.close()}
+          />
         {/if}
       {/await}
     {/if}

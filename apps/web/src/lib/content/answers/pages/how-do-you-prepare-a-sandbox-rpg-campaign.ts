@@ -169,6 +169,7 @@ export const howDoYouPrepareASandboxRpgCampaign: AnswerConfigInput = {
     "how-much-of-the-plot-should-a-dm-prepare",
     "how-do-i-build-a-believable-economy-for-a-fantasy-world",
     "what-rpg-map-making-tool-should-i-use",
+    "how-do-i-run-exploration-in-a-huge-ruined-city",
   ],
   discovery: {
     id: "answer-sandbox-campaign-prep",

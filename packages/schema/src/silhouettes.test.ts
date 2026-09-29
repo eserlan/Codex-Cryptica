@@ -192,6 +192,50 @@ describe("resolveEntitySilhouette Heuristic Inference", () => {
     expect(match.id).toBe("fantasy-warrior-male");
   });
 
+  it("resolves the male fantasy shaman from totem and antler cues", () => {
+    const match = resolveEntitySilhouette(
+      {
+        type: "character",
+        title: "Old Bram Antlerhorn",
+        labels: ["shaman", "elder"],
+        kind: "NPC",
+        content:
+          "A tribal shaman in an antlered headdress who speaks to the spirits with a totem staff.",
+      },
+      { worldTheme: "fantasy" },
+    );
+    expect(match.id).toBe("fantasy-shaman-male");
+  });
+
+  it("resolves the female fantasy shaman from feather and spirit cues", () => {
+    const match = resolveEntitySilhouette(
+      {
+        type: "character",
+        title: "Judit Featherbraid",
+        labels: ["shaman", "seer"],
+        kind: "NPC",
+        content:
+          "A tribal shaman who walks among the spirits, wearing a feathered headband and beads. She is the clan's medicine woman.",
+      },
+      { worldTheme: "fantasy" },
+    );
+    expect(match.id).toBe("fantasy-shaman-female");
+  });
+
+  it("keeps ordinary wizards and witches on their own silhouettes", () => {
+    const wizard = resolveEntitySilhouette(
+      {
+        type: "character",
+        title: "Aldric the Archmage",
+        labels: ["wizard"],
+        kind: "NPC",
+        content: "A male wizard in flowing robes who studies arcane magic.",
+      },
+      { worldTheme: "fantasy" },
+    );
+    expect(wizard.id).toBe("fantasy-caster-male");
+  });
+
   it("resolves alien scientist in a sci-fi world context", () => {
     const match = resolveEntitySilhouette(
       {

@@ -6,7 +6,7 @@
   import ThemeSelector from "./ThemeSelector.svelte";
   import CategorySettings from "./CategorySettings.svelte";
   import LabelSettings from "./LabelSettings.svelte";
-  import StatSheetTemplateSettings from "./StatSheetTemplateSettings.svelte";
+  import TemplatesTab from "./TemplatesTab.svelte";
   import HelpTab from "../help/HelpTab.svelte";
   import VaultSettings from "./VaultSettings.svelte";
   import PublishingSettings from "./PublishingSettings.svelte";
@@ -342,19 +342,7 @@
             <LabelSettings />
           </div>
         {:else if modalUIStore.activeSettingsTab === "templates"}
-          <div
-            role="tabpanel"
-            id="settings-panel-templates"
-            aria-labelledby="settings-tab-templates"
-            class="space-y-6 max-w-3xl mx-auto"
-          >
-            <p class="text-sm text-chrome-text/70 leading-relaxed">
-              Manage reusable stat sheet layouts you can apply to any entity
-              from its Stats tab. Built-in templates are always available;
-              custom templates you save are scoped to this vault.
-            </p>
-            <StatSheetTemplateSettings />
-          </div>
+          <TemplatesTab />
         {:else if modalUIStore.activeSettingsTab === "theme"}
           <div
             role="tabpanel"

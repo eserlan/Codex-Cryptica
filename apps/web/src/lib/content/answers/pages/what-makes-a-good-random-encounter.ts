@@ -171,6 +171,7 @@ export const whatMakesAGoodRandomEncounter: AnswerConfigInput = {
     "how-much-prep-do-you-need-for-an-rpg-session",
     "how-do-you-run-a-heist-in-a-tabletop-rpg",
     "how-do-you-write-a-one-shot-adventure",
+    "how-do-i-run-a-large-battle-when-the-player-characters-are-part-of-an-army",
   ],
   discovery: {
     id: "answer-random-encounter",

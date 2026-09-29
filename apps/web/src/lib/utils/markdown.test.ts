@@ -440,4 +440,41 @@ describe("markdown.ts utility", () => {
       );
     });
   });
+
+  describe("report provenance round-trip", () => {
+    it("keeps the report field through stringify and parse", () => {
+      const report = {
+        origin: "canvas" as const,
+        canvasId: "c1",
+        selection: "entire" as const,
+        include: {
+          descriptions: true,
+          relationships: true,
+          factionsAffiliations: true,
+          portraits: true,
+          notes: true,
+          gmOnlySecrets: false,
+        },
+        detail: "standard" as const,
+        generatedAt: 5,
+        contentHash: "abc12345",
+      };
+      const entity = EntitySchema.parse({
+        id: "r",
+        type: "note",
+        title: "R",
+        kind: "report",
+        content: "## Overview",
+        report,
+      });
+      const { metadata } = parseMarkdown(stringifyEntity(entity));
+      expect(metadata.report).toEqual(report);
+    });
+
+    it("does not add a report field to ordinary notes", () => {
+      const entity = EntitySchema.parse({ id: "n", type: "note", title: "N" });
+      const { metadata } = parseMarkdown(stringifyEntity(entity));
+      expect(metadata.report).toBeUndefined();
+    });
+  });
 });

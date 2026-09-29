@@ -4,6 +4,7 @@
   import { replaceState } from "$app/navigation";
   import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
   import { guestVault } from "$lib/stores/guest-vault.svelte";
+  import { entityTemplateStore } from "$lib/stores/entity-templates/entity-template-store.svelte";
   import { themeStore } from "$lib/stores/theme.svelte";
   import { vault } from "$lib/stores/vault.svelte";
   import { onboardingStore } from "$lib/stores/ui/onboarding.svelte";
@@ -75,6 +76,7 @@
     if (data.bundle) {
       try {
         // 1. Force guest mode
+        entityTemplateStore.clearForGuest();
         sessionModeStore.isGuestMode = true;
 
         // 2. Load the bundle into our reactive guest vault

@@ -49,6 +49,18 @@ const mockRegistry: Record<string, AnswerConfig> = {
 };
 
 describe("answer registry", () => {
+  it("links the army-battle answer to Pathfinder's troop rules", () => {
+    const armyBattle =
+      answers[
+        "how-do-i-run-a-large-battle-when-the-player-characters-are-part-of-an-army"
+      ];
+    const pathfinder = armyBattle.systemsThatSupportThis?.find(
+      (system) => system.system === "Pathfinder Second Edition",
+    );
+
+    expect(pathfinder?.href).toBe("https://2e.aonprd.com/Rules.aspx?ID=3365");
+  });
+
   it("matches the economic hooks example heading to its brief cases", () => {
     const example = answers[
       "how-do-i-turn-economic-pressures-into-rpg-adventure-hooks"
@@ -342,6 +354,20 @@ describe("answer schema", () => {
 
 describe("published answers", () => {
   const published = getAllAnswers();
+
+  it("describes quiet, fast, and safe routes in the ruined-city checklist", () => {
+    const answer = answers["how-do-i-run-exploration-in-a-huge-ruined-city"];
+    const checklist = answer.sections.find(
+      (section) => section.kind === "checklist",
+    );
+
+    expect(checklist?.kind).toBe("checklist");
+    if (checklist?.kind !== "checklist") return;
+
+    expect(checklist.items[1]).toContain(
+      "at least one quiet, one fast and one safe option",
+    );
+  });
 
   it("publishes at least eight distinct answers", () => {
     // The first content pack's acceptance bar (#2564).

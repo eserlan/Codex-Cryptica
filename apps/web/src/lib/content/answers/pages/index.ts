@@ -15,6 +15,7 @@ import { howDoIPaceAnRpgOneShot } from "./how-do-i-pace-an-rpg-one-shot";
 import { howDoIPrepareAnRpgSessionStepByStep } from "./how-do-i-prepare-an-rpg-session-step-by-step";
 import { howDoIRunADiplomatNobleOrCourtierInAnRpg } from "./how-do-i-run-a-diplomat-noble-or-courtier-in-an-rpg";
 import { howDoIRunAJournalistOrMediaCharacterInAnRpg } from "./how-do-i-run-a-journalist-or-media-character-in-an-rpg";
+import { howDoIRunALargeBattleWhenThePlayerCharactersArePartOfAnArmy } from "./how-do-i-run-a-large-battle-when-the-player-characters-are-part-of-an-army";
 import { howDoIRunARogueOrScoutWithoutSplittingTheParty } from "./how-do-i-run-a-rogue-or-scout-without-splitting-the-party";
 import { howDoIRunASuccessfulSessionZero } from "./how-do-i-run-a-successful-session-0";
 import { howDoIRunAnInvestigatorWithoutSideliningTheParty } from "./how-do-i-run-an-investigator-without-sidelining-the-party";
@@ -22,6 +23,7 @@ import { howDoIRunCharacterRolesInAPoliticalIntrigueRpg } from "./how-do-i-run-c
 import { howDoIRunCharacterRolesInAnInvestigativeHorrorRpg } from "./how-do-i-run-character-roles-in-an-investigative-horror-rpg";
 import { howDoIRunCommonCharacterRolesInAFantasyRpg } from "./how-do-i-run-common-character-roles-in-a-fantasy-rpg";
 import { howDoIRunCommonCharacterRolesInASciFiOrSpaceOperaRpg } from "./how-do-i-run-common-character-roles-in-a-sci-fi-or-space-opera-rpg";
+import { howDoIRunExplorationInAHugeRuinedCity } from "./how-do-i-run-exploration-in-a-huge-ruined-city";
 import { howDoIRunHackersOrNetrunnersWithoutSplittingTheParty } from "./how-do-i-run-hackers-or-netrunners-without-splitting-the-party";
 import { howDoIRunPoliticalIntrigueAndFactionPlay } from "./how-do-i-run-political-intrigue-and-faction-play";
 import { howDoIRunSpiesAndInfiltratorsInAnRpg } from "./how-do-i-run-spies-and-infiltrators-in-an-rpg";
@@ -135,6 +137,7 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     howDoIPrepareAnRpgSessionStepByStep,
     howDoIRunADiplomatNobleOrCourtierInAnRpg,
     howDoIRunAJournalistOrMediaCharacterInAnRpg,
+    howDoIRunALargeBattleWhenThePlayerCharactersArePartOfAnArmy,
     howDoIRunARogueOrScoutWithoutSplittingTheParty,
     howDoIRunASuccessfulSessionZero,
     howDoIRunAnInvestigatorWithoutSideliningTheParty,
@@ -142,6 +145,7 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     howDoIRunCharacterRolesInAnInvestigativeHorrorRpg,
     howDoIRunCommonCharacterRolesInAFantasyRpg,
     howDoIRunCommonCharacterRolesInASciFiOrSpaceOperaRpg,
+    howDoIRunExplorationInAHugeRuinedCity,
     howDoIRunHackersOrNetrunnersWithoutSplittingTheParty,
     howDoIRunPoliticalIntrigueAndFactionPlay,
     howDoIRunSpiesAndInfiltratorsInAnRpg,

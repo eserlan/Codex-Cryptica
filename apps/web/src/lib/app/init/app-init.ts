@@ -28,7 +28,7 @@ import {
   browserPerformanceCapture,
   browserPerformanceRecorder,
 } from "$lib/services/performance/browser-performance-capture";
-import { resolveTemplateSync } from "../../services/EntityTemplateConstants";
+import { entityTemplateStore } from "../../stores/entity-templates/entity-template-store.svelte";
 import { registerFlushSavesOnHide } from "./flush-saves-on-hide";
 import { vault } from "$lib/stores/vault.svelte";
 import { mapRegistry } from "$lib/stores/map-registry.svelte";
@@ -67,7 +67,8 @@ export function bootSystem(stores: {
   searchService.setPerformanceRecorder(browserPerformanceRecorder);
   configureAIEngine({
     searchService,
-    templateResolver: resolveTemplateSync,
+    templateResolver: (type, themeId) =>
+      entityTemplateStore.resolveSync(type, themeId),
   });
   stores.categories.init();
 

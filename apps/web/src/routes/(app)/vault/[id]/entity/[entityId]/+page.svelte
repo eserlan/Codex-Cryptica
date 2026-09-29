@@ -8,6 +8,7 @@
     type ZenPopoutPayload,
   } from "$lib/utils/zen-popout";
   import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
+  import { entityTemplateStore } from "$lib/stores/entity-templates/entity-template-store.svelte";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
 
   const VAULT_INIT_TIMEOUT_MS = 5000;
@@ -33,7 +34,10 @@
     };
     vault.isInitialized = true;
     vault.status = "idle";
-    if (payload.isGuest) sessionModeStore.isGuestMode = true;
+    if (payload.isGuest) {
+      entityTemplateStore.clearForGuest();
+      sessionModeStore.isGuestMode = true;
+    }
     return payload.entity.id;
   };
 
@@ -53,6 +57,7 @@
 
         // 2. If not found but we have an opener, request it via postMessage
         if (!payload && window.opener) {
+          entityTemplateStore.clearForGuest();
           sessionModeStore.isGuestMode = true; // Set early to prevent default vault load
           payload = await requestZenPopoutPayload(eid);
 

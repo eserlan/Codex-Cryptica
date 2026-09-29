@@ -107,6 +107,8 @@ class OracleWorker {
       instructions?: string;
       priority?: "instructions-first" | "incoming-first" | "preserve-existing";
       themeId?: string;
+      /** Pre-resolved lore template (see TextGenerationService.reviseEntityUpdate). */
+      loreTemplate?: string;
       interactionsEnabled?: boolean;
     },
   ): Promise<any> {

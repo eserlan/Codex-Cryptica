@@ -175,6 +175,13 @@ export const COACH_MARKS: CoachMark[] = [
 ];
 
 export const FEATURE_HINTS: Record<string, FeatureHint> = {
+  "entity-templates": {
+    id: "entity-templates",
+    title: "Entity templates",
+    content:
+      "Pick the markdown a new note starts with. Duplicate a built-in template to make your own, edit it as plain markdown, then set it as the default for that type. Changing a template only affects notes you create afterwards; existing notes stay as they are.",
+    icon: "icon-[lucide--layout-template]",
+  },
   // The browser-local caveat is the whole point of this hint (156-entity-shelf,
   // FR-024): people will otherwise assume the Shelf is a backup or a way to
   // send an entity to a co-GM, and find out it is neither at the worst moment.
@@ -767,6 +774,13 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
     content:
       "Keep a running record of what happens during play, separate from Quicknote/Scratchpad's transient working notes. Start a Session Journal from the Session Journal button in the toolbar (or the Journal tab of the Quicknote panel), add timestamped notes as the session unfolds, and optionally break a long session into named sections (chapters or scenes). While a journal is running, your dice rolls, card draws and table results are added to it for you, marked so you can tell them from your own notes. When you want to keep something in your world, turn an entry, a section, or the whole journal into a draft entity: choose a type and a name, and the text is filled in for you to edit and approve. The journal itself is never changed. End the session when you're done — the journal stays around afterward, and you can resume an unfinished one exactly where you left off next time. Any entry can be edited (typed notes only), moved up or down, or deleted. If cloud backup is enabled for this vault, journals are included in what gets backed up and restored, same as your entities, maps, and canvases.",
     icon: "icon-[lucide--book-open]",
+  },
+  "entity-reports": {
+    id: "entity-reports",
+    title: "Entity Reports",
+    content:
+      "Turn a group of entities into a readable document. On a Spatial Canvas, click Generate report in the toolbar. In Graph view, select some nodes and choose Generate report. In Table view, tick some rows and use Generate report in the selection bar. A preview appears where you choose the scope (canvas only), what to include, and how much detail to show. GM-only secrets stay out unless you turn them on. Press Save as note to keep the report as a normal note in your vault, then read and edit it like any other entity. Regenerate refreshes a report from its original source and asks first if you have edited it, and Export copies it as Markdown for use in other tools.",
+    icon: "icon-[lucide--file-text]",
   },
   "presentation-templates": {
     id: "presentation-templates",

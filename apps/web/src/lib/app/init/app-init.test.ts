@@ -57,6 +57,9 @@ import {
 import { notificationStore } from "$lib/stores/ui/notification.svelte";
 import { calendarStore } from "$lib/stores/calendar.svelte";
 import { timelineStore } from "$lib/stores/timeline.svelte";
+import { resolveAITemplate } from "@codex/ai-engine";
+import { entityTemplateStore } from "$lib/stores/entity-templates/entity-template-store.svelte";
+import { GENERIC_TEMPLATES } from "schema";
 
 describe("app-init", () => {
   let listenersCleanup: (() => void)[] = [];
@@ -91,6 +94,27 @@ describe("app-init", () => {
       expect(mockStores.calendar.init).not.toHaveBeenCalled();
       expect(mockStores.vault.init).toHaveBeenCalled();
       expect(mockStores.sessionModeStore.isStaging).toBe(true);
+    });
+
+    it("gives the AI engine the vault-aware template resolver", () => {
+      const mockStores = {
+        categories: { init: vi.fn() },
+        vault: { init: vi.fn().mockResolvedValue(undefined) },
+        sessionModeStore: { isStaging: false },
+      };
+      bootSystem(mockStores as any);
+
+      // Before any vault templates load, the built-in template is used.
+      expect(resolveAITemplate("character")).toBe(GENERIC_TEMPLATES.character);
+
+      const spy = vi
+        .spyOn(entityTemplateStore, "resolveSync")
+        .mockReturnValue("## From the vault\n");
+      expect(resolveAITemplate("character", "fantasy")).toBe(
+        "## From the vault\n",
+      );
+      expect(spy).toHaveBeenCalledWith("character", "fantasy");
+      spy.mockRestore();
     });
 
     it("should handle vault initialization failure", async () => {
