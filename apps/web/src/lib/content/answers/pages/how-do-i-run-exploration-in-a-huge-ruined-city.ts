@@ -20,7 +20,8 @@ export const howDoIRunExplorationInAHugeRuinedCity: AnswerConfigInput = {
     {
       kind: "list",
       heading: "Treat the city as a layered pointcrawl",
-      intro: "Prepare five to eight districts, not fifty streets. Each district is a node with the same depth you would give to a village or small valley:",
+      intro:
+        "Prepare five to eight districts, not fifty streets. Each district is a node with the same depth you would give to a village or small valley:",
       items: [
         {
           term: "Districts as nodes with identity",
@@ -67,7 +68,11 @@ export const howDoIRunExplorationInAHugeRuinedCity: AnswerConfigInput = {
     {
       kind: "table",
       heading: "Fictional gates and how they open through play",
-      headers: ["Gate (fiction first)", "What players learn to look for", "How mobility changes when it opens"],
+      headers: [
+        "Gate (fiction first)",
+        "What players learn to look for",
+        "How mobility changes when it opens",
+      ],
       rows: [
         [
           "Flooded district or canal ward",
@@ -166,34 +171,40 @@ export const howDoIRunExplorationInAHugeRuinedCity: AnswerConfigInput = {
   relatedTools: [
     {
       title: "Settlement Generator",
-      description: "Seed distinct districts, quarters and ruined wards with history, tensions and landmarks.",
+      description:
+        "Seed distinct districts, quarters and ruined wards with history, tensions and landmarks.",
       href: "/generators/settlement",
     },
     {
       title: "Dungeon Generator",
-      description: "Build the nested vaults, towers, sewers and temples you zoom into when players commit to a building.",
+      description:
+        "Build the nested vaults, towers, sewers and temples you zoom into when players commit to a building.",
       href: "/generators/dungeon-generator",
     },
     {
       title: "Faction Generator",
-      description: "Create the crews, guilds and occupying companies that control districts and shift territory.",
+      description:
+        "Create the crews, guilds and occupying companies that control districts and shift territory.",
       href: "/generators/faction",
     },
     {
       title: "Quest Generator",
-      description: "Draft the rumours, maps and vantage clues that reveal new nodes and safer routes through play.",
+      description:
+        "Draft the rumours, maps and vantage clues that reveal new nodes and safer routes through play.",
       href: "/generators/quest",
     },
   ],
   relatedForPages: [
     {
       title: "Codex Cryptica for Fantasy Worldbuilding",
-      description: "Link districts, ruins, factions and timelines so a vast city stays consistent across sessions.",
+      description:
+        "Link districts, ruins, factions and timelines so a vast city stays consistent across sessions.",
       href: "/for/fantasy-worldbuilding",
     },
     {
       title: "Codex Cryptica for Sandbox Campaigns",
-      description: "Track player-chosen routes, discoveries and territorial changes in a city that reacts over time.",
+      description:
+        "Track player-chosen routes, discoveries and territorial changes in a city that reacts over time.",
       href: "/for/sandbox-campaigns",
     },
   ],
@@ -234,8 +245,8 @@ export const howDoIRunExplorationInAHugeRuinedCity: AnswerConfigInput = {
       "answer-travel-interesting",
       "answer-living-fantasy-city",
       "answer-settlement-contents",
-      "answer-faction-play",
-      "answer-sandbox-prep",
+      "answer-fantasy-faction",
+      "answer-sandbox-campaign-prep",
     ],
     acknowledgedOverlap: [
       {
@@ -248,13 +259,20 @@ export const howDoIRunExplorationInAHugeRuinedCity: AnswerConfigInput = {
         reason:
           "The living city page teaches daily rhythms and civic pressures that make an inhabited settlement feel active; this page teaches spatial exploration structure for ruined, district-scale locations where the loop is discovery, routes and gates rather than civic life.",
       },
+      {
+        with: "answer-run-mystery-without-railroading",
+        reason:
+          "The mystery page structures non-linear clue discovery and culprit timelines; this page structures spatial exploration through ruined districts, routes and gates. The shared wording about avoiding railroading describes different play problems.",
+      },
     ],
   },
   seo: {
     title: "How to Run Exploration in a Huge Ruined City | Codex Cryptica",
     description:
       "Run a ruined megacity as a layered pointcrawl: districts as nodes, visible landmarks, discovery through play, soft gates, nested dungeons and routes as rewards.",
-    image: "https://assets.codexcryptica.com/og/how-do-i-run-exploration-in-a-huge-ruined-city.jpg",
-    imageAlt: "Vast ruined city at dusk with a leaning cathedral dome, flooded lower wards and a high cableway cutting across the skyline",
+    image:
+      "https://assets.codexcryptica.com/og/how-do-i-run-exploration-in-a-huge-ruined-city.jpg",
+    imageAlt:
+      "Vast ruined city at dusk with a leaning cathedral dome, flooded lower wards and a high cableway cutting across the skyline",
   },
 };
