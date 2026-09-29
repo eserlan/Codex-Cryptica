@@ -38,6 +38,7 @@
     onToggleAllImageOnly,
     showImageLabels = false,
     onToggleShowImageLabels,
+    onGenerateReport,
   } = $props<{
     canvasName: string;
     sourceEntityId?: string;
@@ -71,6 +72,7 @@
     onToggleAllImageOnly?: () => void;
     showImageLabels?: boolean;
     onToggleShowImageLabels?: () => void;
+    onGenerateReport?: () => void;
   }>();
 
   let isAddMenuOpen = $state(false);
@@ -161,6 +163,20 @@
         class="flex h-8 w-8 items-center justify-center bg-theme-surface/80 backdrop-blur-md border border-theme-primary/30 shadow-sm pointer-events-auto transition-all hover:border-theme-primary text-theme-muted hover:text-theme-primary"
       >
         <span class="icon-[lucide--wand-2] w-4 h-4" aria-hidden="true"></span>
+      </button>
+    {/if}
+
+    {#if onGenerateReport}
+      <button
+        type="button"
+        onclick={onGenerateReport}
+        title="Generate report"
+        aria-label="Generate report"
+        data-testid="canvas-generate-report"
+        class="flex h-8 w-8 items-center justify-center bg-theme-surface/80 backdrop-blur-md border border-theme-primary/30 shadow-sm pointer-events-auto transition-all hover:border-theme-primary text-theme-muted hover:text-theme-primary"
+      >
+        <span class="icon-[lucide--file-text] w-4 h-4" aria-hidden="true"
+        ></span>
       </button>
     {/if}
 
