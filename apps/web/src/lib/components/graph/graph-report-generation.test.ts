@@ -32,14 +32,14 @@ describe.each([
     expect(res.source).toEqual({ origin, entityIds: ["a", "b", "c"] });
     expect(res.input?.entities.map((x) => x.id)).toEqual(["a", "b", "c"]);
     expect(res.input?.relationships).toEqual([
-      { sourceId: "a", targetId: "b", label: "friend" },
+      { sourceId: "a", targetId: "b", label: "friend", sources: ["graph"] },
     ]);
   });
 
   it("drops relationships to entities outside the selection", () => {
     const res = run(["a", "d"], get);
     expect(res.input?.relationships).toEqual([
-      { sourceId: "d", targetId: "a", label: "enemy" },
+      { sourceId: "d", targetId: "a", label: "enemy", sources: ["graph"] },
     ]);
     expect(run(["a"], get).input?.relationships).toEqual([]);
   });
