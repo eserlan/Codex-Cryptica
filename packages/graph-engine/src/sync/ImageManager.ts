@@ -23,6 +23,21 @@ export interface ImageManagerOptions {
   onError?: (error: any) => void;
 }
 
+/** Images resolved at once. Enough to keep the network busy, few enough that they do not starve each other. */
+const RESOLVE_CONCURRENCY = 6;
+/** Resolved visuals are painted together once this many are ready... */
+const FLUSH_SIZE = 20;
+/** ...or after this long, so a slow image never holds back the ones that finished. */
+const FLUSH_DELAY_MS = 40;
+
+type ResolvedVisual = {
+  node: any;
+  url: string;
+  isSilhouette: boolean;
+  skip: boolean;
+  oldUrl: string | undefined;
+};
+
 export class GraphImageManager {
   private urlCache = new Map<string, string>();
   private resolvingIds = new Set<string>();
@@ -73,107 +88,180 @@ export class GraphImageManager {
       this.resolvingIds.add(n.id());
     });
 
-    // Bulk process all images and silhouettes concurrently
-    void (async () => {
-      try {
-        const start = performance.now();
-        const results = await Promise.all(
-          nodesNeedingVisuals.map(async (node) => {
-            const imagePath = node.data("thumbnail") || node.data("image");
-            if (imagePath) {
-              let url = this.urlCache.get(imagePath);
-              if (!url) {
-                url = (await options.resolveImageUrl(imagePath)) || "";
-                if (url) this.urlCache.set(imagePath, url);
-              }
-              return {
-                node,
-                url,
-                isSilhouette: false,
-                skip: false,
-                oldUrl: node.data("resolvedImage") as string | undefined,
-              };
-            }
+    void this.resolveAndApply(
+      this.inViewportFirst(Array.from(nodesNeedingVisuals)),
+      {
+        options,
+        variant,
+      },
+    );
+  }
 
-            if (options.resolveSilhouetteUrl) {
-              const silUrl = await options.resolveSilhouetteUrl(node);
-              return {
-                node,
-                url: silUrl || "",
-                isSilhouette: true,
-                // A silhouette that did not resolve is a fetch that failed,
-                // not artwork that does not exist. Leaving it unstamped keeps
-                // the node stale so the next sync tries again — otherwise one
-                // offline moment would cost the glyph until the entity itself
-                // changed.
-                skip: !silUrl,
-                oldUrl: node.data("resolvedImage") as string | undefined,
-              };
-            }
+  /**
+   * Nodes the user can see are resolved first, so a large vault paints its
+   * visible pictures before it works through the ones off-screen.
+   */
+  private inViewportFirst(nodes: any[]): any[] {
+    const extent = this.cy.extent?.();
+    if (!extent) return nodes;
+    const isVisible = (node: any) => {
+      const p = node.position?.();
+      return (
+        !!p &&
+        p.x >= extent.x1 &&
+        p.x <= extent.x2 &&
+        p.y >= extent.y1 &&
+        p.y <= extent.y2
+      );
+    };
+    const visible = nodes.filter(isVisible);
+    const shown = new Set(visible);
+    return visible.concat(nodes.filter((node) => !shown.has(node)));
+  }
 
-            return {
-              node,
-              url: "",
-              isSilhouette: false,
-              skip: false,
-              oldUrl: node.data("resolvedImage") as string | undefined,
-            };
-          }),
-        );
-
-        if (this.cy.destroyed() || !options.showImages) {
-          return;
-        }
-
-        // Apply in batches to prevent massive style churn while avoiding excessive batch overhead
-        const batchSize = options.batchSize ?? 100;
-        for (let i = 0; i < results.length; i += batchSize) {
-          const chunk = results.slice(i, i + batchSize);
-          this.cy.batch(() => {
-            for (const { node, url, isSilhouette, oldUrl, skip } of chunk) {
-              if (skip) continue;
-              const newUrl = url || "none"; // Mark as "none" to avoid infinite retries and prevent broken image states
-              if (newUrl !== oldUrl) {
-                const nodeId = node.id();
-                const oldPath = this.nodePathMap.get(nodeId);
-                if (oldPath) {
-                  options.releaseImageUrl(oldPath);
-                }
-
-                node.data("resolvedImage", newUrl);
-                if (isSilhouette) {
-                  node.data("isSilhouette", true);
-                  node.data(
-                    "appliedSilhouetteKey",
-                    this.getSilhouetteKey(node, variant),
-                  );
-                } else {
-                  node.removeData("isSilhouette");
-                  node.removeData("appliedSilhouetteKey");
-                }
-                const currentPath =
-                  node.data("thumbnail") || node.data("image");
-                if (currentPath) {
-                  this.nodePathMap.set(nodeId, currentPath);
-                }
-              }
-            }
-          });
-        }
-
-        this.cy.style().update();
-        options.onLog?.(
-          `[GraphImageManager] Resolved ${results.length} node visuals in ${(performance.now() - start).toFixed(2)}ms`,
-        );
-        options.onBatchApplied?.(results.length);
-      } catch (err) {
-        options.onError?.(err);
-      } finally {
-        nodesNeedingVisuals.forEach((n) => {
-          this.resolvingIds.delete(n.id());
-        });
+  private async resolveVisual(
+    node: any,
+    options: ImageManagerOptions,
+  ): Promise<ResolvedVisual> {
+    const oldUrl = node.data("resolvedImage") as string | undefined;
+    const imagePath = node.data("thumbnail") || node.data("image");
+    if (imagePath) {
+      let url = this.urlCache.get(imagePath);
+      if (!url) {
+        url = (await options.resolveImageUrl(imagePath)) || "";
+        if (url) this.urlCache.set(imagePath, url);
       }
-    })();
+      return { node, url, isSilhouette: false, skip: false, oldUrl };
+    }
+
+    if (options.resolveSilhouetteUrl) {
+      const silUrl = await options.resolveSilhouetteUrl(node);
+      return {
+        node,
+        url: silUrl || "",
+        isSilhouette: true,
+        // A silhouette that did not resolve is a fetch that failed,
+        // not artwork that does not exist. Leaving it unstamped keeps
+        // the node stale so the next sync tries again — otherwise one
+        // offline moment would cost the glyph until the entity itself
+        // changed.
+        skip: !silUrl,
+        oldUrl,
+      };
+    }
+
+    return { node, url: "", isSilhouette: false, skip: false, oldUrl };
+  }
+
+  /**
+   * Resolves visuals through a small pool and paints them as they arrive.
+   * Waiting for every image before applying any meant one slow host held up
+   * the whole graph (11.8 s for 198 external images in one profile), and
+   * hundreds of simultaneous fetches slowed each other down.
+   */
+  private async resolveAndApply(
+    nodes: any[],
+    { options, variant }: { options: ImageManagerOptions; variant: string },
+  ) {
+    const start = performance.now();
+    const ready: ResolvedVisual[] = [];
+    let applied = 0;
+    let stopped = false;
+    let flushTimer: ReturnType<typeof setTimeout> | undefined;
+
+    const shouldStop = () =>
+      stopped || this.cy.destroyed() || !options.showImages;
+
+    const flush = () => {
+      flushTimer = undefined;
+      if (ready.length === 0) return;
+      if (shouldStop()) {
+        stopped = true;
+        ready.length = 0;
+        return;
+      }
+      const chunk = ready.splice(0, ready.length);
+      this.cy.batch(() => {
+        for (const visual of chunk) this.applyVisual(visual, variant, options);
+      });
+      this.cy.style().update();
+      applied += chunk.length;
+      options.onBatchApplied?.(chunk.length);
+    };
+
+    const scheduleFlush = () => {
+      if (ready.length >= (options.batchSize ?? FLUSH_SIZE)) {
+        if (flushTimer !== undefined) clearTimeout(flushTimer);
+        flush();
+      } else if (flushTimer === undefined) {
+        flushTimer = setTimeout(flush, FLUSH_DELAY_MS);
+      }
+    };
+
+    let next = 0;
+    const worker = async () => {
+      while (next < nodes.length && !shouldStop()) {
+        const node = nodes[next++];
+        try {
+          ready.push(await this.resolveVisual(node, options));
+        } catch (err) {
+          // One failed resolve must not lose the rest. The node stays
+          // unstamped, so the next sync tries it again.
+          options.onError?.(err);
+        } finally {
+          this.resolvingIds.delete(node.id());
+        }
+        scheduleFlush();
+      }
+    };
+
+    try {
+      await Promise.all(
+        Array.from(
+          { length: Math.min(RESOLVE_CONCURRENCY, nodes.length) },
+          () => worker(),
+        ),
+      );
+      if (flushTimer !== undefined) clearTimeout(flushTimer);
+      flush();
+      if (!stopped) {
+        options.onLog?.(
+          `[GraphImageManager] Resolved ${applied} node visuals in ${(performance.now() - start).toFixed(2)}ms`,
+        );
+      }
+    } catch (err) {
+      options.onError?.(err);
+    } finally {
+      if (flushTimer !== undefined) clearTimeout(flushTimer);
+      // Anything the pool never reached (a destroyed graph, images switched
+      // off) is released so a later sync can pick it up.
+      for (const node of nodes) this.resolvingIds.delete(node.id());
+    }
+  }
+
+  private applyVisual(
+    { node, url, isSilhouette, oldUrl, skip }: ResolvedVisual,
+    variant: string,
+    options: ImageManagerOptions,
+  ) {
+    if (skip) return;
+    const newUrl = url || "none"; // Mark as "none" to avoid infinite retries and prevent broken image states
+    if (newUrl === oldUrl) return;
+
+    const nodeId = node.id();
+    const oldPath = this.nodePathMap.get(nodeId);
+    if (oldPath) options.releaseImageUrl(oldPath);
+
+    node.data("resolvedImage", newUrl);
+    if (isSilhouette) {
+      node.data("isSilhouette", true);
+      node.data("appliedSilhouetteKey", this.getSilhouetteKey(node, variant));
+    } else {
+      node.removeData("isSilhouette");
+      node.removeData("appliedSilhouetteKey");
+    }
+    const currentPath = node.data("thumbnail") || node.data("image");
+    if (currentPath) this.nodePathMap.set(nodeId, currentPath);
   }
 
   private getSilhouetteKey(
