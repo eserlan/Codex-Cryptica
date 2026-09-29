@@ -43,6 +43,14 @@ wrangler secret put SESSION_TOKEN_SECRET
 
 wrangler secret put CODEX_AUTOMATION_KEY
 # Secret key for trusted automation/agent workflows (can be comma-separated for rotation).
+
+wrangler secret put TEMPLATE_REPORT_HASH_KEY
+# Any high-entropy random string, e.g. `openssl rand -base64 32`.
+# Keys the hash of a reporter's network address for entity template reports
+# (one report per address per listing, plus daily caps). Without it the report
+# endpoint returns 503 and stores nothing, so set it in every environment
+# before opening template publishing. Changing it resets the "already reported"
+# memory, because old hashes no longer match.
 ```
 
 For widget creation, web environment configuration, quotas, and testing, see [Turnstile Publishing Setup](../../../docs/deployment/turnstile-publishing.md).

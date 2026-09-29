@@ -4,6 +4,10 @@ import {
   GeneratorShareSchema,
   type GeneratorShare,
 } from "../../../../packages/schema/src/generator-share";
+import {
+  hashOwnerToken as hashToken,
+  readJson,
+} from "./template-directory-shared";
 
 interface GeneratorShareEnv {
   BUCKET?: any;
@@ -35,16 +39,6 @@ function tokenFromRequest(request: Request): string | null {
   const value = request.headers.get("Authorization");
   if (!value) return null;
   return value.startsWith("Bearer ") ? value.slice(7).trim() : value.trim();
-}
-
-async function hashToken(token: string): Promise<string> {
-  const digest = await crypto.subtle.digest(
-    "SHA-256",
-    new TextEncoder().encode(token),
-  );
-  return [...new Uint8Array(digest)]
-    .map((byte) => byte.toString(16).padStart(2, "0"))
-    .join("");
 }
 
 function slugify(text: string): string {
@@ -82,14 +76,6 @@ function randomToken(): string {
     .replaceAll("+", "-")
     .replaceAll("/", "_")
     .replaceAll("=", "");
-}
-
-async function readJson(object: any): Promise<unknown> {
-  const text =
-    typeof object?.text === "function"
-      ? await object.text()
-      : new TextDecoder().decode(object?.body);
-  return JSON.parse(text);
 }
 
 async function readShare(

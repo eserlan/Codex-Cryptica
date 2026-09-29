@@ -20,15 +20,51 @@ vi.mock("$lib/stores/ui/notification.svelte", () => ({
 
 vi.mock("$lib/utils/download", () => ({ downloadText: vi.fn() }));
 
+// Sharing uses the real vault registry and device storage; these tests only
+// need the settings screen, so give it a fake publish store.
+vi.mock(
+  "$lib/stores/entity-templates/entity-template-publish-store.svelte",
+  () => ({
+    entityTemplatePublishStore: {},
+  }),
+);
+vi.mock(
+  "$lib/components/community-templates/EntityTemplatePublishModal.svelte",
+  async () => ({
+    default: (await import("./__fakes__/FakePublishModal.svelte")).default,
+  }),
+);
+
 import EntityTemplateSettings from "./EntityTemplateSettings.svelte";
 import { makeStore } from "$lib/stores/entity-templates/test-helpers";
 import { downloadText } from "$lib/utils/download";
 
-async function mount(opts: Parameters<typeof makeStore>[0] = {}) {
+function makePublishStore(over: Record<string, unknown> = {}) {
+  return {
+    loadLinks: vi.fn(async () => undefined),
+    linkFor: vi.fn(() => undefined),
+    publishState: vi.fn((t: any) =>
+      t.source === "user" ? { kind: "publish" } : { kind: "duplicate-first" },
+    ),
+    loadOwnerMeta: vi.fn(async () => ({
+      description: "d",
+      labels: ["Fantasy"],
+    })),
+    unpublish: vi.fn(async () => undefined),
+    update: vi.fn(async () => ({})),
+    remove: vi.fn(async () => undefined),
+    ...over,
+  } as any;
+}
+
+async function mount(
+  opts: Parameters<typeof makeStore>[0] = {},
+  publishStore = makePublishStore(),
+) {
   const ctx = makeStore(opts);
   await ctx.store.loadForVault("v1", { vault: ctx.vault });
-  render(EntityTemplateSettings, { store: ctx.store as any });
-  return ctx;
+  render(EntityTemplateSettings, { store: ctx.store as any, publishStore });
+  return { ...ctx, publishStore };
 }
 
 const rowFor = (name: string) =>
@@ -245,9 +281,187 @@ describe("EntityTemplateSettings", () => {
       warnings: ['Skipped "bad.json" because it couldn\'t be read.'],
     });
     await ctx.store.loadForVault("v1", { vault: ctx.vault });
-    render(EntityTemplateSettings, { store: ctx.store as any });
+    render(EntityTemplateSettings, {
+      store: ctx.store as any,
+      publishStore: makePublishStore(),
+    });
     expect(
       screen.getByTestId("entity-template-warnings").textContent,
     ).toContain("bad.json");
+  });
+
+  describe("sharing", () => {
+    it("offers Publish on a user template and opens the publish dialog", async () => {
+      const ctx = await mount();
+      await ctx.store.create({
+        name: "Mine",
+        entityType: "location",
+        markdown: "## x\n",
+      });
+      const row = await waitFor(() => rowFor("Mine"));
+      await fireEvent.click(within(row).getByTestId("entity-template-publish"));
+      expect(screen.getByTestId("fake-publish-modal").textContent).toContain(
+        "publish:Mine",
+      );
+    });
+
+    it("explains that a built-in template must be duplicated first", async () => {
+      await mount();
+      const row = rowFor("Standard Character");
+      const button = within(row).getByTestId("entity-template-publish");
+      expect(button.getAttribute("title")).toMatch(
+        /duplicate this template first/i,
+      );
+      await fireEvent.click(button);
+      expect(notify).toHaveBeenCalledWith(
+        expect.stringMatching(/duplicate this template first/i),
+        "info",
+      );
+      expect(screen.queryByTestId("fake-publish-modal")).toBeNull();
+    });
+
+    it("shows update, unpublish and delete for a published template instead of publish", async () => {
+      const publishStore = makePublishStore({
+        publishState: vi.fn((t: any) =>
+          t.source === "user"
+            ? { kind: "published", link: { status: "active" } }
+            : { kind: "duplicate-first" },
+        ),
+        linkFor: vi.fn(() => ({ listingId: "L1", status: "active" })),
+      });
+      const ctx = await mount({}, publishStore);
+      await ctx.store.create({
+        name: "Mine",
+        entityType: "location",
+        markdown: "## x\n",
+      });
+      const row = await waitFor(() => rowFor("Mine"));
+      expect(
+        within(row).getByTestId("entity-template-published-badge").textContent,
+      ).toBe("Published");
+      expect(within(row).queryByTestId("entity-template-publish")).toBeNull();
+      await fireEvent.click(
+        within(row).getByTestId("entity-template-unpublish"),
+      );
+      await waitFor(() => expect(publishStore.unpublish).toHaveBeenCalled());
+    });
+
+    it("confirms before deleting the public listing, and can cancel without a request", async () => {
+      const publishStore = makePublishStore({
+        publishState: vi.fn((t: any) =>
+          t.source === "user"
+            ? { kind: "published", link: { status: "active" } }
+            : { kind: "duplicate-first" },
+        ),
+      });
+      const ctx = await mount({}, publishStore);
+      await ctx.store.create({
+        name: "Mine",
+        entityType: "location",
+        markdown: "## x\n",
+      });
+      const row = await waitFor(() => rowFor("Mine"));
+
+      confirm.mockResolvedValueOnce(false);
+      await fireEvent.click(
+        within(row).getByTestId("entity-template-delete-listing"),
+      );
+      await waitFor(() => expect(confirm).toHaveBeenCalled());
+      expect(publishStore.remove).not.toHaveBeenCalled();
+
+      await fireEvent.click(
+        within(row).getByTestId("entity-template-delete-listing"),
+      );
+      await waitFor(() => expect(publishStore.remove).toHaveBeenCalled());
+    });
+
+    it("shows a Republish action for an unpublished template", async () => {
+      const publishStore = makePublishStore({
+        publishState: vi.fn((t: any) =>
+          t.source === "user"
+            ? { kind: "published", link: { status: "unpublished" } }
+            : { kind: "duplicate-first" },
+        ),
+      });
+      const ctx = await mount({}, publishStore);
+      await ctx.store.create({
+        name: "Mine",
+        entityType: "location",
+        markdown: "## x\n",
+      });
+      const row = await waitFor(() => rowFor("Mine"));
+      expect(
+        within(row).getByTestId("entity-template-published-badge").textContent,
+      ).toBe("Unpublished");
+      await fireEvent.click(
+        within(row).getByTestId("entity-template-republish"),
+      );
+      await waitFor(() => expect(publishStore.update).toHaveBeenCalled());
+    });
+
+    it("warns that a published template's listing stays when the local one is deleted", async () => {
+      const publishStore = makePublishStore({
+        linkFor: vi.fn(() => ({ listingId: "L1", status: "active" })),
+        publishState: vi.fn((t: any) =>
+          t.source === "user"
+            ? { kind: "published", link: { status: "active" } }
+            : { kind: "duplicate-first" },
+        ),
+      });
+      const ctx = await mount({}, publishStore);
+      await ctx.store.create({
+        name: "Mine",
+        entityType: "location",
+        markdown: "## x\n",
+      });
+      const row = await waitFor(() => rowFor("Mine"));
+      await fireEvent.click(within(row).getByTestId("entity-template-delete"));
+      await waitFor(() => expect(confirm).toHaveBeenCalled());
+      expect((confirm.mock.calls.at(-1)![0] as any).message).toMatch(
+        /stays in the directory until you unpublish or delete/i,
+      );
+    });
+
+    it("hides sharing actions in a read-only vault", async () => {
+      await mount({ readOnly: true });
+      expect(screen.queryAllByTestId("entity-template-publish")).toHaveLength(
+        0,
+      );
+    });
+
+    it("reports a failed sharing action instead of failing silently", async () => {
+      const { EntityTemplateDirectoryError } =
+        await import("$lib/services/publishing/PublicEntityTemplateDirectoryService");
+      const publishStore = makePublishStore({
+        publishState: vi.fn((t: any) =>
+          t.source === "user"
+            ? { kind: "published", link: { status: "active" } }
+            : { kind: "duplicate-first" },
+        ),
+        unpublish: vi
+          .fn()
+          .mockRejectedValue(
+            new EntityTemplateDirectoryError(
+              "Could not unpublish the template.",
+            ),
+          ),
+      });
+      const ctx = await mount({}, publishStore);
+      await ctx.store.create({
+        name: "Mine",
+        entityType: "location",
+        markdown: "## x\n",
+      });
+      const row = await waitFor(() => rowFor("Mine"));
+      await fireEvent.click(
+        within(row).getByTestId("entity-template-unpublish"),
+      );
+      await waitFor(() =>
+        expect(notify).toHaveBeenCalledWith(
+          "Could not unpublish the template.",
+          "error",
+        ),
+      );
+    });
   });
 });
