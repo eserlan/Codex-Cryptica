@@ -4,6 +4,7 @@
   import { vault } from "$lib/stores/vault.svelte";
   import { guestChatStore } from "$lib/stores/guest-chat.svelte";
   import type { Entity } from "schema";
+  import ReportZenButtons from "$lib/components/reports/ReportZenButtons.svelte";
   import AliasInput from "$lib/components/labels/AliasInput.svelte";
   import CategoryRadioGroup from "$lib/components/labels/CategoryRadioGroup.svelte";
   import {
@@ -465,6 +466,10 @@
             <span aria-hidden="true" class="icon-[lucide--copy] w-4 h-4"></span>
           {/if}
         </button>
+      {/if}
+
+      {#if !editState.isEditing && entity?.kind === "report" && !vault.isGuest}
+        <ReportZenButtons {entity} />
       {/if}
 
       {#if !editState.isEditing && entity?.status === "draft" && !vault.isGuest && onApproveDraft && onRejectDraft}

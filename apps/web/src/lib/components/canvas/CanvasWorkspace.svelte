@@ -74,6 +74,10 @@
     type EntityCardViewPreference,
   } from "./cards/entity-card-variant";
   import { openOrCreateSourceEntity } from "./canvas-source-entity";
+  import {
+    canGenerateCanvasReport,
+    openCanvasReport,
+  } from "./open-canvas-report";
   import { useCanvasAreaEnhancement } from "./canvas-area-enhancement.svelte";
   import {
     bringNodeToFront,
@@ -587,6 +591,8 @@
     }
   }
 
+  const canReport = $derived(canGenerateCanvasReport(canvas, logic.nodes));
+
   async function handleAutoArrange() {
     const positionedNodes = autoArrangeCanvasNodes({
       canvasId: canvas?.id || "temp",
@@ -718,6 +724,14 @@
         : undefined}
       onOpenOrCreateSourceEntity={handleOpenOrCreateSourceEntity}
       onAutoArrange={handleAutoArrange}
+      onGenerateReport={canReport && canvas
+        ? () =>
+            openCanvasReport(
+              canvas,
+              () => logic.nodes,
+              () => logic.edges,
+            )
+        : undefined}
       {isAllImageOnly}
       onToggleAllImageOnly={entityNodes.length > 0 && !vault.isGuest
         ? handleToggleAllImageOnly
@@ -977,14 +991,21 @@
             })
         : undefined}
       nodeBackground={normalizeCanvasTextBackground(
-        ((contextMenuLogic.contextMenuEntityNode ?? contextMenuLogic.contextMenuTextNode)?.data as any)
-          ?.background ?? "",
+        (
+          (
+            contextMenuLogic.contextMenuEntityNode ??
+            contextMenuLogic.contextMenuTextNode
+          )?.data as any
+        )?.background ?? "",
         DEFAULT_CANVAS_TEXT_BACKGROUND,
       )}
-      onNodeBackgroundChange={(contextMenuLogic.contextMenuEntityNode || contextMenuLogic.contextMenuTextNode) &&
+      onNodeBackgroundChange={(contextMenuLogic.contextMenuEntityNode ||
+        contextMenuLogic.contextMenuTextNode) &&
       !vault.isGuest
         ? (background: string) => {
-            const targetNode = contextMenuLogic.contextMenuEntityNode ?? contextMenuLogic.contextMenuTextNode;
+            const targetNode =
+              contextMenuLogic.contextMenuEntityNode ??
+              contextMenuLogic.contextMenuTextNode;
             if (targetNode) {
               updateNodeData(targetNode.id, {
                 background: normalizeCanvasTextBackground(
@@ -999,21 +1020,31 @@
         (contextMenuLogic.contextMenuTextNode?.data as any)?.fontSize,
         DEFAULT_CANVAS_TEXT_FONT_SIZE,
       )}
-      onTextNodeFontSizeChange={contextMenuLogic.contextMenuTextNode && !vault.isGuest
+      onTextNodeFontSizeChange={contextMenuLogic.contextMenuTextNode &&
+      !vault.isGuest
         ? (fontSize: number) =>
-            updateNodeData(contextMenuLogic.contextMenuTextNode!.id, { fontSize })
+            updateNodeData(contextMenuLogic.contextMenuTextNode!.id, {
+              fontSize,
+            })
         : undefined}
       entityCardView={normalizeEntityCardViewPreference(
         (contextMenuLogic.contextMenuEntityNode?.data as any)?.cardView,
       )}
-      onEntityCardViewChange={contextMenuLogic.contextMenuEntityNode && !vault.isGuest
+      onEntityCardViewChange={contextMenuLogic.contextMenuEntityNode &&
+      !vault.isGuest
         ? (view: EntityCardViewPreference) =>
-            updateNodeData(contextMenuLogic.contextMenuEntityNode!.id, { cardView: view })
+            updateNodeData(contextMenuLogic.contextMenuEntityNode!.id, {
+              cardView: view,
+            })
         : undefined}
-      largeCard={(contextMenuLogic.contextMenuEntityNode?.data as any)?.largeCard === true}
-      onLargeCardChange={contextMenuLogic.contextMenuEntityNode && !vault.isGuest
+      largeCard={(contextMenuLogic.contextMenuEntityNode?.data as any)
+        ?.largeCard === true}
+      onLargeCardChange={contextMenuLogic.contextMenuEntityNode &&
+      !vault.isGuest
         ? (large: boolean) =>
-            updateNodeData(contextMenuLogic.contextMenuEntityNode!.id, { largeCard: large })
+            updateNodeData(contextMenuLogic.contextMenuEntityNode!.id, {
+              largeCard: large,
+            })
         : undefined}
       {isAllImageOnly}
       onToggleAllImageOnly={entityNodes.length > 0 && !vault.isGuest
