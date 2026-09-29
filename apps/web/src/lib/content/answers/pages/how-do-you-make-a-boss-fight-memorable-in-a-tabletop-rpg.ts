@@ -123,6 +123,7 @@ export const howDoYouMakeABossFightMemorableInATabletopRpg: AnswerConfigInput =
       "how-do-you-make-a-tabletop-rpg-session-more-engaging",
       "how-do-you-handle-character-death-in-a-tabletop-rpg",
       "what-rpg-should-i-use-for-tactical-combat",
+      "how-do-i-run-a-large-battle-when-the-player-characters-are-part-of-an-army",
     ],
     discovery: {
       parentCluster: "encounter-balance",
