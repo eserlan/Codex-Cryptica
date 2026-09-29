@@ -11,6 +11,7 @@
     type ReportSource,
   } from "entity-report-engine";
   import ReportPreview from "./ReportPreview.svelte";
+  import ReportIncludeOptions from "./ReportIncludeOptions.svelte";
   import { reportService } from "$lib/services/report-service";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
   import { notificationStore } from "$lib/stores/ui/notification.svelte";
@@ -54,13 +55,8 @@
       : null,
   );
 
-  const includeOptions: { key: keyof ReportInclude; label: string }[] = [
-    { key: "descriptions", label: "Descriptions" },
-    { key: "relationships", label: "Relationships" },
-    { key: "factionsAffiliations", label: "Factions and affiliations" },
-    { key: "portraits", label: "Portraits" },
-    { key: "gmOnlySecrets", label: "GM-only secrets" },
-  ];
+  // These options only matter when the report actually has something for them
+  // to show or hide; otherwise ticking them would look broken.
   const detailOptions: { value: ReportDetail; label: string }[] = [
     { value: "brief", label: "Brief" },
     { value: "standard", label: "Standard" },
@@ -176,21 +172,7 @@
           </fieldset>
         {/if}
 
-        <fieldset class="space-y-2">
-          <legend
-            class="text-xs uppercase tracking-widest font-header text-theme-muted"
-            >Include</legend
-          >
-          {#each includeOptions as opt (opt.key)}
-            <label class="flex items-center gap-2 text-sm text-theme-text">
-              <input type="checkbox" bind:checked={include[opt.key]} />
-              {opt.label}
-            </label>
-          {/each}
-          <p class="text-[11px] text-theme-muted">
-            GM-only secrets stay out of the report unless you turn them on.
-          </p>
-        </fieldset>
+        <ReportIncludeOptions bind:include input={current.input} {source} />
 
         <fieldset class="space-y-2">
           <legend

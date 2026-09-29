@@ -46,7 +46,7 @@ const canvas = (over: Partial<Canvas> = {}): Canvas =>
   ({ id: "cv", name: "Party", nodes: [], edges: [], ...over }) as Canvas;
 
 describe("useCanvasReportGeneration", () => {
-  it("reads relationships from canvas edges, not entity connections", () => {
+  it("reads relationships from canvas edges", () => {
     const res = useCanvasReportGeneration(
       canvas(),
       [node("n1", "a"), node("n2", "b")],
@@ -60,8 +60,74 @@ describe("useCanvasReportGeneration", () => {
       selection: "entire",
     });
     expect(res.input?.relationships).toEqual([
-      { sourceId: "a", targetId: "b", label: "friend" },
+      { sourceId: "a", targetId: "b", label: "friend", sources: ["canvas"] },
     ]);
+  });
+
+  it("also includes the connections entities have in the graph", () => {
+    const linked: Record<string, Entity> = {
+      a: entity("a", {
+        connections: [{ target: "b", type: "ally", strength: 1 }],
+      }),
+      b: entity("b", { connections: [] }),
+    };
+    const res = useCanvasReportGeneration(
+      canvas(),
+      [node("n1", "a"), node("n2", "b")],
+      [],
+      "entire",
+      (id) => linked[id],
+    );
+    expect(res.input?.relationships).toEqual([
+      { sourceId: "a", targetId: "b", label: "ally", sources: ["graph"] },
+    ]);
+  });
+
+  it("combines both sources without repeating the same relationship", () => {
+    const linked: Record<string, Entity> = {
+      a: entity("a", {
+        connections: [
+          { target: "b", type: "friend", strength: 1 },
+          { target: "c", type: "rival", strength: 1 },
+        ],
+      }),
+      b: entity("b", { connections: [] }),
+      c: entity("c", { connections: [] }),
+    };
+    const res = useCanvasReportGeneration(
+      canvas(),
+      [node("n1", "a"), node("n2", "b"), node("n3", "c")],
+      [edge("e1", "n1", "n2", "friend"), edge("e2", "n2", "n3", "owes")],
+      "entire",
+      (id) => linked[id],
+    );
+    expect(res.input?.relationships).toEqual([
+      {
+        sourceId: "a",
+        targetId: "b",
+        label: "friend",
+        sources: ["canvas", "graph"],
+      },
+      { sourceId: "b", targetId: "c", label: "owes", sources: ["canvas"] },
+      { sourceId: "a", targetId: "c", label: "rival", sources: ["graph"] },
+    ]);
+  });
+
+  it("leaves out a connection to an entity that is not in scope", () => {
+    const res = useCanvasReportGeneration(
+      canvas(),
+      [node("n1", "a"), node("n2", "b", true)],
+      [],
+      "selected",
+      (id) =>
+        ({
+          a: entity("a", {
+            connections: [{ target: "b", type: "x", strength: 1 }],
+          }),
+          b: entity("b", { connections: [] }),
+        })[id as "a" | "b"],
+    );
+    expect(res.input?.relationships).toEqual([]);
   });
 
   it("excludes non-entity nodes", () => {

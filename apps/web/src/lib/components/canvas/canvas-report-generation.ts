@@ -4,6 +4,7 @@ import type { Entity } from "schema";
 import type { ReportInput, ReportSource } from "entity-report-engine";
 import {
   assembleReportInput,
+  connectionPairs,
   type RelationshipPair,
 } from "$lib/services/report-input-mapper";
 
@@ -50,8 +51,10 @@ export function flowEdgesToReportEdges(edges: Edge[]): CanvasReportEdge[] {
 }
 
 /**
- * Builds a report input from a canvas. Relationships come from the canvas's own
- * edges (FR-006), never from `entity.connections`. When `entityIds` is given
+ * Builds a report input from a canvas. Relationships combine the canvas's own
+ * edges with each entity's stored connections (the ones the graph shows), kept
+ * only where both ends are in scope; identical pairs collapse into one. When
+ * `entityIds` is given
  * (regeneration of a "selected" report) it replaces live node selection.
  */
 export function resolveCanvasReportInput(params: {
@@ -104,9 +107,15 @@ export function resolveCanvasReportInput(params: {
     const from = entityByNode.get(edge.source);
     const to = entityByNode.get(edge.target);
     if (from && to) {
-      pairs.push({ sourceId: from.id, targetId: to.id, label: edge.label });
+      pairs.push({
+        sourceId: from.id,
+        targetId: to.id,
+        label: edge.label,
+        source: "canvas",
+      });
     }
   }
+  pairs.push(...connectionPairs(entities));
   return { input: assembleReportInput(entities, pairs), source };
 }
 

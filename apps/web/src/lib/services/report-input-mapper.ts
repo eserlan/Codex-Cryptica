@@ -1,8 +1,10 @@
 import type { Entity } from "schema";
-import type {
-  ReportEntityInput,
-  ReportInput,
-  ReportRelationshipInput,
+import {
+  deriveFactionMembership,
+  type RelationshipSource,
+  type ReportEntityInput,
+  type ReportInput,
+  type ReportRelationshipInput,
 } from "entity-report-engine";
 
 const HEADING = /^#{1,6}\s/m;
@@ -43,6 +45,7 @@ export interface RelationshipPair {
   sourceId: string;
   targetId: string;
   label?: string;
+  source?: RelationshipSource;
 }
 
 /** Keeps only pairs where both endpoints are in `entityIds` (FR-006/FR-006a). */
@@ -51,16 +54,33 @@ export function buildRelationshipInputs(
   pairs: Iterable<RelationshipPair>,
 ): ReportRelationshipInput[] {
   const ids = new Set(entityIds);
-  const seen = new Set<string>();
+  const seen = new Map<string, ReportRelationshipInput>();
   const result: ReportRelationshipInput[] = [];
   for (const pair of pairs) {
     if (pair.sourceId === pair.targetId) continue;
     if (!ids.has(pair.sourceId) || !ids.has(pair.targetId)) continue;
     const label = pair.label?.trim() || "related";
     const key = `${pair.sourceId}\u0000${pair.targetId}\u0000${label}`;
-    if (seen.has(key)) continue;
-    seen.add(key);
-    result.push({ sourceId: pair.sourceId, targetId: pair.targetId, label });
+    const existing = seen.get(key);
+    if (existing) {
+      // The same relationship from a second place stays one relationship.
+      if (
+        pair.source &&
+        existing.sources &&
+        !existing.sources.includes(pair.source)
+      ) {
+        existing.sources.push(pair.source);
+      }
+      continue;
+    }
+    const relationship: ReportRelationshipInput = {
+      sourceId: pair.sourceId,
+      targetId: pair.targetId,
+      label,
+      ...(pair.source && { sources: [pair.source] }),
+    };
+    seen.set(key, relationship);
+    result.push(relationship);
   }
   return result;
 }
@@ -74,41 +94,15 @@ export function connectionPairs(entities: Entity[]): RelationshipPair[] {
         sourceId: entity.id,
         targetId: conn.target,
         label: conn.label || conn.type,
+        source: "graph",
       });
     }
   }
   return pairs;
 }
 
-/**
- * FR-019: an in-scope relationship between a faction and a non-faction entity
- * (either direction, any label) makes that entity a member. Faction-to-faction
- * is not membership.
- */
-export function buildFactionMembership(
-  entities: ReportEntityInput[],
-  relationships: ReportRelationshipInput[],
-): Record<string, string[]> {
-  const byId = new Map(entities.map((e) => [e.id, e]));
-  const membership: Record<string, Set<string>> = {};
-  for (const e of entities) {
-    if (e.type === "faction") membership[e.id] = new Set();
-  }
-  for (const rel of relationships) {
-    const source = byId.get(rel.sourceId);
-    const target = byId.get(rel.targetId);
-    if (!source || !target) continue;
-    const sourceIsFaction = source.type === "faction";
-    const targetIsFaction = target.type === "faction";
-    if (sourceIsFaction === targetIsFaction) continue;
-    const faction = sourceIsFaction ? source : target;
-    const member = sourceIsFaction ? target : source;
-    membership[faction.id].add(member.id);
-  }
-  return Object.fromEntries(
-    Object.entries(membership).map(([id, members]) => [id, [...members]]),
-  );
-}
+/** FR-019: see `deriveFactionMembership`. */
+export const buildFactionMembership = deriveFactionMembership;
 
 export function assembleReportInput(
   entities: Entity[],
