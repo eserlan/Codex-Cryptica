@@ -7,13 +7,33 @@
     EntityTemplateError,
   } from "$lib/stores/entity-templates/entity-template-store.svelte";
   import { downloadText } from "$lib/utils/download";
+  import { onMount } from "svelte";
+  import { EntityTemplateDirectoryError } from "$lib/services/publishing/PublicEntityTemplateDirectoryService";
+  import {
+    entityTemplatePublishStore,
+    type PublishMetadata,
+  } from "$lib/stores/entity-templates/entity-template-publish-store.svelte";
+  import EntityTemplatePublishModal from "$lib/components/community-templates/EntityTemplatePublishModal.svelte";
   import EntityTemplateEditor from "./EntityTemplateEditor.svelte";
   import EntityTemplateRow from "./EntityTemplateRow.svelte";
   import EntityTemplateToolbar from "./EntityTemplateToolbar.svelte";
   import EntityTemplateNotices from "./EntityTemplateNotices.svelte";
 
-  let { store = entityTemplateStore }: { store?: typeof entityTemplateStore } =
-    $props();
+  let {
+    store = entityTemplateStore,
+    publishStore = entityTemplatePublishStore,
+  }: {
+    store?: typeof entityTemplateStore;
+    publishStore?: typeof entityTemplatePublishStore;
+  } = $props();
+
+  let sharing = $state<{
+    template: EntityTemplate;
+    mode: "publish" | "update";
+    initial?: PublishMetadata;
+  } | null>(null);
+
+  onMount(() => void publishStore.loadLinks());
 
   type EditorState =
     | { mode: "create"; initial: DraftTemplate }
@@ -65,7 +85,10 @@
       await action();
     } catch (err) {
       // Write failures are already announced by the store.
-      if (err instanceof EntityTemplateError) {
+      if (
+        err instanceof EntityTemplateError ||
+        err instanceof EntityTemplateDirectoryError
+      ) {
         notificationStore.notify(err.message, "error");
       }
     } finally {
@@ -100,10 +123,55 @@
     editor = null;
   }
 
+  function startPublish(t: EntityTemplate) {
+    if (t.source !== "user") {
+      notificationStore.notify(
+        "Duplicate this template first, then publish your copy.",
+        "info",
+      );
+      return;
+    }
+    sharing = { template: t, mode: "publish" };
+  }
+
+  const startUpdateListing = (t: EntityTemplate) =>
+    run(async () => {
+      const initial = await publishStore.loadOwnerMeta(t.id);
+      sharing = { template: t, mode: "update", initial };
+    });
+
+  async function unpublish(t: EntityTemplate) {
+    const confirmed = await notificationStore.confirm({
+      title: "Unpublish template",
+      message: `Unpublish "${t.name}"? It disappears from the directory, but you keep your own copy and can republish it later.`,
+      confirmLabel: "Unpublish",
+    });
+    if (confirmed) await run(() => publishStore.unpublish(t.id));
+  }
+
+  const republish = (t: EntityTemplate) =>
+    run(async () => {
+      const meta = await publishStore.loadOwnerMeta(t.id);
+      await publishStore.update(t.id, meta);
+    });
+
+  async function deleteListing(t: EntityTemplate) {
+    const confirmed = await notificationStore.confirm({
+      title: "Delete listing permanently",
+      message: `Delete the public listing for "${t.name}" permanently? It and its text are removed from the directory and this can't be undone. Your own template is not changed.`,
+      confirmLabel: "Delete permanently",
+      isDangerous: true,
+    });
+    if (confirmed) await run(() => publishStore.remove(t.id));
+  }
+
   async function remove(t: EntityTemplate) {
+    const published = publishStore.linkFor(t.id);
     const confirmed = await notificationStore.confirm({
       title: "Delete template",
-      message: `Delete "${t.name}"? Notes already made from it are not changed.`,
+      message: published
+        ? `Delete "${t.name}"? Notes already made from it are not changed. Its public listing stays in the directory until you unpublish or delete it.`
+        : `Delete "${t.name}"? Notes already made from it are not changed.`,
       confirmLabel: "Delete",
       isDangerous: true,
     });
@@ -189,9 +257,25 @@
             onEdit={() => startEdit(t)}
             onExport={() => exportTemplate(t)}
             onDelete={() => remove(t)}
+            publishState={publishStore.publishState(t)}
+            onPublish={() => startPublish(t)}
+            onUpdateListing={() => startUpdateListing(t)}
+            onUnpublish={() => unpublish(t)}
+            onRepublish={() => republish(t)}
+            onDeleteListing={() => deleteListing(t)}
           />
         {/each}
       </div>
     {/each}
   {/if}
 </section>
+
+{#if sharing}
+  <EntityTemplatePublishModal
+    template={sharing.template}
+    mode={sharing.mode}
+    initial={sharing.initial}
+    store={publishStore}
+    onClose={() => (sharing = null)}
+  />
+{/if}

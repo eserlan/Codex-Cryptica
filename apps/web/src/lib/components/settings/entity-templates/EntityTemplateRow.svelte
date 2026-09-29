@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { EntityTemplate } from "entity-template-engine";
   import EntityTemplatePreview from "./EntityTemplatePreview.svelte";
+  import EntityTemplateShareActions from "./EntityTemplateShareActions.svelte";
 
   let {
     template,
@@ -14,6 +15,12 @@
     onEdit,
     onExport,
     onDelete,
+    publishState = { kind: "unavailable" },
+    onPublish = () => {},
+    onUpdateListing = () => {},
+    onUnpublish = () => {},
+    onRepublish = () => {},
+    onDeleteListing = () => {},
   }: {
     template: EntityTemplate;
     isDefault: boolean;
@@ -26,6 +33,17 @@
     onEdit: () => void;
     onExport: () => void;
     onDelete: () => void;
+    /** Sharing state, from the publish store. Omitted where sharing isn't offered. */
+    publishState?:
+      | { kind: "duplicate-first" }
+      | { kind: "unavailable" }
+      | { kind: "publish" }
+      | { kind: "published"; link: { status: "active" | "unpublished" } };
+    onPublish?: () => void;
+    onUpdateListing?: () => void;
+    onUnpublish?: () => void;
+    onRepublish?: () => void;
+    onDeleteListing?: () => void;
   } = $props();
 
   const sourceLabel = $derived(
@@ -54,6 +72,15 @@
         class="rounded bg-theme-bg px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-theme-muted"
         data-testid="entity-template-source">{sourceLabel}</span
       >
+      {#if publishState.kind === "published"}
+        <span
+          class="rounded bg-theme-bg px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-theme-muted"
+          data-testid="entity-template-published-badge"
+          >{publishState.link.status === "active"
+            ? "Published"
+            : "Unpublished"}</span
+        >
+      {/if}
       {#if isDefault}
         <span
           class="rounded bg-theme-primary/15 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-theme-primary"
@@ -93,6 +120,15 @@
           data-testid="entity-template-edit">Edit</button
         >
       {/if}
+      <EntityTemplateShareActions
+        {canEdit}
+        {publishState}
+        {onPublish}
+        {onUpdateListing}
+        {onUnpublish}
+        {onRepublish}
+        {onDeleteListing}
+      />
       <button
         type="button"
         class={smallButton}
