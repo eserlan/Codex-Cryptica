@@ -7,6 +7,8 @@ export const DEFAULT_REPORT_INCLUDE: ReportInclude = {
   portraits: true,
   notes: true,
   gmOnlySecrets: false,
+  canvasConnections: true,
+  graphConnections: true,
 };
 
 export const DEFAULT_REPORT_DETAIL: ReportDetail = "standard";

@@ -355,6 +355,20 @@ describe("answer schema", () => {
 describe("published answers", () => {
   const published = getAllAnswers();
 
+  it("describes quiet, fast, and safe routes in the ruined-city checklist", () => {
+    const answer = answers["how-do-i-run-exploration-in-a-huge-ruined-city"];
+    const checklist = answer.sections.find(
+      (section) => section.kind === "checklist",
+    );
+
+    expect(checklist?.kind).toBe("checklist");
+    if (checklist?.kind !== "checklist") return;
+
+    expect(checklist.items[1]).toContain(
+      "at least one quiet, one fast and one safe option",
+    );
+  });
+
   it("publishes at least eight distinct answers", () => {
     // The first content pack's acceptance bar (#2564).
     expect(published.length).toBeGreaterThanOrEqual(8);

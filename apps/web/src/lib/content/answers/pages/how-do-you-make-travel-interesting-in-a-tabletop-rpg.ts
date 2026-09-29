@@ -165,6 +165,7 @@ export const howDoYouMakeTravelInterestingInATabletopRpg: AnswerConfigInput = {
     "how-do-i-run-common-character-roles-in-a-sci-fi-or-space-opera-rpg",
     "how-do-i-run-common-character-roles-in-a-fantasy-rpg",
     "what-rpg-map-making-tool-should-i-use",
+    "how-do-i-run-exploration-in-a-huge-ruined-city",
   ],
   discovery: {
     id: "answer-travel-interesting",

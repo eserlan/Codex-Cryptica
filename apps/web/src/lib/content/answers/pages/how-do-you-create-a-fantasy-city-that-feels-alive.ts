@@ -153,6 +153,7 @@ export const howDoYouCreateAFantasyCityThatFeelsAlive: AnswerConfigInput = {
     "how-do-trade-routes-shape-cities-and-kingdoms-in-an-rpg-world",
     "how-do-i-run-common-character-roles-in-a-fantasy-rpg",
     "what-rpg-map-making-tool-should-i-use",
+    "how-do-i-run-exploration-in-a-huge-ruined-city",
   ],
   labels: ["fantasy", "rumour"],
   discovery: {

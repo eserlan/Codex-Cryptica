@@ -1,6 +1,7 @@
 export * from "./types";
 export * from "./defaults";
 export { hashReportContent } from "./content-hash";
+export { deriveFactionMembership } from "./faction-membership";
 export { buildReport } from "./build-report";
 export { renderReportMarkdown } from "./markdown";
 export {
@@ -9,4 +10,5 @@ export {
 } from "./presentation/relationship";
 export { renderCharacterSummary } from "./presentation/character";
 export { renderFactionSummary } from "./presentation/faction";
+export { renderLocationSummary } from "./presentation/location";
 export { renderGenericSummary } from "./presentation/generic";

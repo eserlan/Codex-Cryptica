@@ -4,6 +4,7 @@
     renderCharacterSummary,
     renderFactionSummary,
     renderGenericSummary,
+    renderLocationSummary,
     type ReportDocument,
     type ReportEntityInput,
     type ReportSection,
@@ -31,6 +32,17 @@
           type: "faction",
           affiliations: [] as string[],
         };
+      case "location":
+        return {
+          ...renderLocationSummary(
+            section.entity,
+            section.parent,
+            section.contains,
+            section.relationships,
+            document.detail,
+          ),
+          affiliations: [] as string[],
+        };
       default:
         return renderGenericSummary(section.entity, document.detail);
     }
@@ -45,6 +57,8 @@
         showVisual: document.includePortraits,
       } as ReturnType<typeof renderCharacterSummary> & {
         members?: string[];
+        parent?: string;
+        contains?: string[];
         entity: ReportEntityInput;
         showVisual: boolean;
       },

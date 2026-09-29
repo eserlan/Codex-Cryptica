@@ -208,6 +208,7 @@ export const whatRpgMapMakingToolShouldIUse: AnswerConfigInput = {
     "how-do-you-create-a-fantasy-city-that-feels-alive",
     "what-should-an-rpg-settlement-contain",
     "how-do-you-manage-a-campaign-timeline-in-an-rpg",
+    "how-do-i-run-exploration-in-a-huge-ruined-city",
   ],
   discovery: {
     id: "answer-rpg-map-making-tool-chooser",

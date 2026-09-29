@@ -39,6 +39,8 @@ const base: Omit<ReportProvenance, "origin"> = {
     portraits: true,
     notes: true,
     gmOnlySecrets: false,
+    canvasConnections: true,
+    graphConnections: true,
   },
   detail: "standard",
   generatedAt: 1,
@@ -53,7 +55,8 @@ describe("resolveReportSource", () => {
     );
     expect(input?.entities).toHaveLength(3);
     expect(input?.relationships).toEqual([
-      { sourceId: "a", targetId: "b", label: "ally" },
+      { sourceId: "a", targetId: "b", label: "ally", sources: ["canvas"] },
+      { sourceId: "a", targetId: "b", label: "friend", sources: ["graph"] },
     ]);
   });
 
@@ -79,7 +82,7 @@ describe("resolveReportSource", () => {
         deps,
       );
       expect(input?.relationships).toEqual([
-        { sourceId: "a", targetId: "b", label: "friend" },
+        { sourceId: "a", targetId: "b", label: "friend", sources: ["graph"] },
       ]);
     }
   });

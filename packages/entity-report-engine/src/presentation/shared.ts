@@ -8,7 +8,7 @@ export interface BaseFields {
   secrets?: string;
 }
 
-/** Brief: name/type/summary. Standard: + description. Detailed: + notes. */
+/** Brief: name/type/summary. Standard: + description and notes. */
 export function baseFieldsForDetail(
   entity: ReportEntityInput,
   detail: ReportDetail,
@@ -19,7 +19,7 @@ export function baseFieldsForDetail(
   };
   if (detail === "brief") return fields;
   fields.description = entity.description;
+  fields.notes = entity.notes;
   fields.secrets = entity.secrets;
-  if (detail === "detailed") fields.notes = entity.notes;
   return fields;
 }

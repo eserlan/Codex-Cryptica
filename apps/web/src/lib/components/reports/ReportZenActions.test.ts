@@ -69,6 +69,15 @@ describe("regenerateReport", () => {
     expect(d.confirm).not.toHaveBeenCalled();
   });
 
+  it("regenerates a report saved with the legacy detailed level", async () => {
+    const legacy = {
+      ...report,
+      report: { ...provenance, detail: "detailed" },
+    } as unknown as Entity;
+    const d = deps();
+    expect(await regenerateReport(legacy, d)).toBe("applied");
+  });
+
   it("asks first when edited, and does nothing if declined", async () => {
     const regenerate = vi.fn(async () => ({
       hadManualEdits: true,
