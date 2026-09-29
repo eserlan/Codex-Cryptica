@@ -27,6 +27,7 @@ import type {
   CloudBackupDirtyStore,
 } from "./cloud-backup-dirty";
 import type { DurableVaultChange } from "./vault/registry";
+import { browserStorage, type StorageLike } from "$lib/utils/runtime-deps";
 
 /**
  * Cloud Backup status store (spec 162, issue #2593).
@@ -1114,12 +1115,14 @@ export const cloudBackupStore = new CloudBackupStore();
  * should degrade to "cloud backup unavailable", never to a thrown error on the
  * save path.
  */
-export function cloudBackupBrowserStorage() {
+export function cloudBackupBrowserStorage(
+  storage: StorageLike = browserStorage,
+) {
   const key = (vaultId: string) => `codex.cloud-backup.${vaultId}`;
   return {
     async read(vaultId: string) {
       try {
-        const raw = localStorage.getItem(key(vaultId));
+        const raw = storage.getItem(key(vaultId));
         return raw ? JSON.parse(raw) : null;
       } catch {
         return null;
@@ -1127,14 +1130,14 @@ export function cloudBackupBrowserStorage() {
     },
     async write(vaultId: string, record: unknown) {
       try {
-        localStorage.setItem(key(vaultId), JSON.stringify(record));
+        storage.setItem(key(vaultId), JSON.stringify(record));
       } catch {
         // Storage unavailable; the in-memory state still drives this session.
       }
     },
     async clear(vaultId: string) {
       try {
-        localStorage.removeItem(key(vaultId));
+        storage.removeItem(key(vaultId));
       } catch {
         // Nothing to do.
       }
@@ -1143,10 +1146,10 @@ export function cloudBackupBrowserStorage() {
       const prefix = key("");
       try {
         const entries: { vaultId: string; record: unknown }[] = [];
-        for (let i = 0; i < localStorage.length; i += 1) {
-          const storageKey = localStorage.key(i);
+        for (let i = 0; i < (storage.length ?? 0); i += 1) {
+          const storageKey = storage.key?.(i);
           if (!storageKey?.startsWith(prefix)) continue;
-          const raw = localStorage.getItem(storageKey);
+          const raw = storage.getItem(storageKey);
           if (!raw) continue;
           try {
             entries.push({

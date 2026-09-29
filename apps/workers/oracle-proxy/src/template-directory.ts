@@ -8,53 +8,23 @@ import {
 } from "../../../../packages/schema/src/publishing";
 import { SuspensionMarkerSchema } from "../../../../packages/schema/src/publishing";
 import { readSuspensionMarker, writeSuspensionMarker } from "./suspension";
+import { removeEntityIndexEntry } from "./template-directory-index";
+import {
+  CACHE_CONTROL,
+  PREFIX,
+  authorize,
+  bucketMissing,
+  fail,
+  getTemplateListingKey,
+  getTemplatePackageKey,
+  hashOwnerToken,
+  json,
+  operatorAuthError,
+  readJson,
+  type TemplateDirectoryEnv,
+} from "./template-directory-shared";
 
-interface TemplateDirectoryEnv {
-  BUCKET?: any;
-  ALLOWED_ORIGINS?: string;
-  ALLOW_CLOUDFLARE_PAGES_PREVIEW_ORIGINS?: string;
-  TURNSTILE_SECRET_KEY?: string;
-  TEMPLATE_ADMIN_TOKEN?: string;
-}
-
-const PREFIX = "templates/listings/";
-const CACHE_CONTROL = "public, max-age=15";
-
-export function getTemplateListingKey(listingId: string): string {
-  return `${PREFIX}${listingId}/listing.json`;
-}
-
-export function getTemplatePackageKey(listingId: string): string {
-  return `${PREFIX}${listingId}/package.json`;
-}
-
-function cors(request: Request): Record<string, string> {
-  return {
-    "Access-Control-Allow-Origin": request.headers.get("Origin") || "*",
-    "Access-Control-Allow-Headers": "Content-Type, Authorization",
-    "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-  };
-}
-
-function json(
-  request: Request,
-  body: unknown,
-  status = 200,
-  extra: Record<string, string> = {},
-) {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: { ...cors(request), "Content-Type": "application/json", ...extra },
-  });
-}
-
-async function readJson(object: any): Promise<unknown> {
-  const text =
-    typeof object?.text === "function"
-      ? await object.text()
-      : new TextDecoder().decode(object?.body);
-  return JSON.parse(text);
-}
+export { getTemplateListingKey, getTemplatePackageKey };
 
 async function readListing(
   env: TemplateDirectoryEnv,
@@ -71,9 +41,11 @@ async function readListingRecord(
   const object = await env.BUCKET?.get(getTemplateListingKey(listingId));
   if (!object) return null;
   try {
-    const parsed = CommunityTemplateListingSchema.safeParse(
-      await readJson(object),
-    );
+    const raw = await readJson(object);
+    // Entity listings share this namespace; they are never stat sheet listings.
+    const kind = (raw as { templateKind?: unknown } | null)?.templateKind;
+    if (kind !== undefined && kind !== "stat-sheet") return null;
+    const parsed = CommunityTemplateListingSchema.safeParse(raw);
     return parsed.success ? parsed.data : null;
   } catch {
     return null;
@@ -94,44 +66,6 @@ async function readPackage(
   } catch {
     return null;
   }
-}
-
-function ownerToken(request: Request): string | null {
-  const value = request.headers.get("Authorization");
-  return value?.startsWith("Bearer ")
-    ? value.slice(7).trim()
-    : value?.trim() || null;
-}
-
-async function hashOwnerToken(token: string): Promise<string> {
-  const digest = await crypto.subtle.digest(
-    "SHA-256",
-    new TextEncoder().encode(token),
-  );
-  return [...new Uint8Array(digest)]
-    .map((byte) => byte.toString(16).padStart(2, "0"))
-    .join("");
-}
-
-async function authorize(
-  request: Request,
-  env: TemplateDirectoryEnv,
-  listingId: string,
-) {
-  const token = ownerToken(request);
-  if (!token)
-    return json(request, { error: { message: "Owner token required" } }, 401);
-  const head = await env.BUCKET?.head(getTemplateListingKey(listingId));
-  if (!head)
-    return json(
-      request,
-      { error: { message: "Template listing not found" } },
-      404,
-    );
-  if (head.customMetadata?.ownerTokenHash !== (await hashOwnerToken(token))) {
-    return json(request, { error: { message: "Invalid owner token" } }, 401);
-  }
-  return null;
 }
 
 function projectResult(
@@ -493,25 +427,35 @@ export async function handleListTemplateListings(
   });
 }
 
+/**
+ * An operator takedown must also leave the entity browse index (a no-op for
+ * stat sheet listings, which are never in it). The marker is already written,
+ * so if the index cannot be updated the operator repeats the request.
+ */
+async function leaveEntityIndex(
+  request: Request,
+  env: TemplateDirectoryEnv,
+  publishId: string,
+): Promise<Response> {
+  try {
+    await removeEntityIndexEntry(env, publishId);
+  } catch {
+    return fail(
+      request,
+      "The listing is suspended but the directory index could not be updated. Repeat this request.",
+      503,
+    );
+  }
+  return json(request, { success: true }, 201);
+}
+
 export async function handleAdminSuspendTemplateListing(
   request: Request,
   env: TemplateDirectoryEnv,
 ): Promise<Response> {
-  if (!env.BUCKET)
-    return json(
-      request,
-      { error: { message: "R2 bucket is not configured" } },
-      500,
-    );
-  const expected = env.TEMPLATE_ADMIN_TOKEN;
-  const supplied = ownerToken(request);
-  if (!expected || !supplied || supplied !== expected) {
-    return json(
-      request,
-      { error: { message: "Operator authorization required" } },
-      401,
-    );
-  }
+  if (!env.BUCKET) return bucketMissing(request);
+  const denied = operatorAuthError(request, env);
+  if (denied) return denied;
   try {
     const body = (await request.json()) as {
       publishId?: unknown;
@@ -526,12 +470,8 @@ export async function handleAdminSuspendTemplateListing(
       createdAt: new Date().toISOString(),
     });
     await writeSuspensionMarker(env, marker);
-    return json(request, { success: true }, 201);
+    return await leaveEntityIndex(request, env, marker.publishId);
   } catch {
-    return json(
-      request,
-      { error: { message: "Invalid suspension marker" } },
-      400,
-    );
+    return fail(request, "Invalid suspension marker", 400);
   }
 }

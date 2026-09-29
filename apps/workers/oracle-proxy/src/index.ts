@@ -45,16 +45,7 @@ import {
   handleLlmOperationStreamRequest,
 } from "./llm/handle-operation-request";
 import { handleSessionRequest, enforceLlmSession } from "./session-guard";
-import {
-  handleCreateTemplateListing,
-  handleDeleteTemplateListing,
-  handleGetTemplateListing,
-  handleGetTemplatePackage,
-  handleListTemplateListings,
-  handleReportTemplateListing,
-  handleUpdateTemplateListing,
-  handleAdminSuspendTemplateListing,
-} from "./template-directory";
+import { handleTemplateDirectoryRoutes } from "./template-directory-routes";
 import {
   handleEnableCloudBackup,
   handleCommitCloudBackup,
@@ -120,6 +111,11 @@ interface Env extends CorsEnv {
     limit: (options: { key: string }) => Promise<{ success: boolean }>;
   };
   TEMPLATE_ADMIN_TOKEN?: string;
+  /** HMAC key for hashing reporter addresses. Reporting is off without it. */
+  TEMPLATE_REPORT_HASH_KEY?: string;
+  TEMPLATE_REPORT_RATE_LIMITER?: {
+    limit: (options: { key: string }) => Promise<{ success: boolean }>;
+  };
   ANSWER_AGGREGATES?: D1DatabaseLike;
   ANSWER_FEEDBACK_RATE_LIMITER?: {
     limit: (options: { key: string }) => Promise<{ success: boolean }>;
@@ -526,55 +522,12 @@ export default {
       });
     }
 
-    if (
-      pathname === "/api/template-directory/admin/suspensions" &&
-      request.method === "POST"
-    ) {
-      return handleAdminSuspendTemplateListing(request, env);
-    }
-
-    if (pathname === "/api/template-directory/listings") {
-      if (request.method === "GET")
-        return handleListTemplateListings(request, env);
-      if (request.method === "POST")
-        return handleCreateTemplateListing(request, env);
-      return new Response("Method not allowed", {
-        status: 405,
-        headers: getCorsHeaders(request.headers, env),
-      });
-    }
-
-    if (pathname.startsWith("/api/template-directory/listings/")) {
-      const parts = pathname.split("/");
-      const listingId = parts[4];
-      if (!listingId) return new Response("Not found", { status: 404 });
-      if (
-        parts.length === 6 &&
-        parts[5] === "package" &&
-        request.method === "GET"
-      ) {
-        return handleGetTemplatePackage(request, env, listingId);
-      }
-      if (
-        parts.length === 6 &&
-        parts[5] === "report" &&
-        request.method === "POST"
-      ) {
-        return handleReportTemplateListing(request, env, listingId);
-      }
-      if (parts.length === 5) {
-        if (request.method === "GET")
-          return handleGetTemplateListing(request, env, listingId);
-        if (request.method === "PUT")
-          return handleUpdateTemplateListing(request, env, listingId);
-        if (request.method === "DELETE")
-          return handleDeleteTemplateListing(request, env, listingId);
-      }
-      return new Response("Method not allowed", {
-        status: 405,
-        headers: getCorsHeaders(request.headers, env),
-      });
-    }
+    const templateDirectoryResponse = await handleTemplateDirectoryRoutes(
+      request,
+      env,
+      pathname,
+    );
+    if (templateDirectoryResponse) return templateDirectoryResponse;
 
     if (pathname === "/api/reports/copyright") {
       const origin = request.headers.get("Origin") || "";

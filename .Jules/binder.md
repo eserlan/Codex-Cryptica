@@ -256,3 +256,9 @@
 **Learning:** Found a hardcoded `crypto.randomUUID()` inside the constructor of `CloudBackupDirtyStore` used for generating versions of dirtied rows. Replaced with the app-standard `systemIdGenerator` from `@codex/runtime` via `$lib/utils/runtime-deps`.
 
 **Action:** When refactoring hardcoded crypto/ID logic for DI in stores, inject an `IdGenerator` (or its `uuid` method) with `systemIdGenerator` as the default.
+
+## 2024-05-18 - Avoid direct `localStorage` access for cloud backup
+
+**Learning:** Direct `localStorage` access in `apps/web/src/lib/stores/cloud-backup.svelte.ts` was hardcoded, making testing and environment overrides (like SSR) difficult.
+
+**Action:** Refactored `cloudBackupBrowserStorage` to accept a dependency-injected `storage: StorageLike` parameter, defaulting to `browserStorage` from `$lib/utils/runtime-deps`. Replaced all `localStorage` usages within the function with the injected `storage`. Uses `storage.length ?? 0` and `storage.key?.(i)` to handle optional properties in `StorageLike`.

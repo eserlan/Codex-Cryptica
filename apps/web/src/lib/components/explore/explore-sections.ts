@@ -54,6 +54,13 @@ export const EXPLORE_SECTIONS: ExploreSection[] = [
         icon: "icon-[lucide--wrench]",
       },
       {
+        href: "/templates",
+        label: "Templates",
+        summary:
+          "Browse and share entity templates from the community directory.",
+        icon: "icon-[lucide--layout-template]",
+      },
+      {
         href: "/silhouettes",
         label: "Vector Silhouettes",
         summary:

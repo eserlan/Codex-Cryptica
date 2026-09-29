@@ -222,6 +222,20 @@ describe("resolveEntitySilhouette Heuristic Inference", () => {
     expect(match.id).toBe("fantasy-shaman-female");
   });
 
+  it("keeps legacy druid and oracle cues on the matching shaman silhouettes", () => {
+    const male = resolveEntitySilhouette(
+      { type: "character", labels: ["druid"] },
+      { worldTheme: "fantasy" },
+    );
+    const female = resolveEntitySilhouette(
+      { type: "character", labels: ["oracle"] },
+      { worldTheme: "fantasy" },
+    );
+
+    expect(male.id).toBe("fantasy-shaman-male");
+    expect(female.id).toBe("fantasy-shaman-female");
+  });
+
   it("keeps ordinary wizards and witches on their own silhouettes", () => {
     const wizard = resolveEntitySilhouette(
       {
