@@ -182,7 +182,13 @@ export class GraphImageManager {
       }
       const chunk = ready.splice(0, ready.length);
       this.cy.batch(() => {
-        for (const visual of chunk) this.applyVisual(visual, variant, options);
+        for (const visual of chunk) {
+          try {
+            this.applyVisual(visual, variant, options);
+          } finally {
+            this.resolvingIds.delete(visual.node.id());
+          }
+        }
       });
       this.cy.style().update();
       applied += chunk.length;
@@ -207,9 +213,8 @@ export class GraphImageManager {
         } catch (err) {
           // One failed resolve must not lose the rest. The node stays
           // unstamped, so the next sync tries it again.
-          options.onError?.(err);
-        } finally {
           this.resolvingIds.delete(node.id());
+          options.onError?.(err);
         }
         scheduleFlush();
       }

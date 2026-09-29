@@ -371,6 +371,37 @@ describe("GraphImageManager", () => {
       expect(nodes[1].data("resolvedImage")).toBe("blob:slow");
     });
 
+    it("does not resolve an image again while its result waits in the paint queue", async () => {
+      const queued = makeNode("queued");
+      const slow = makeNode("slow");
+      const pendingSlow = deferred();
+      const resolveImageUrl = vi.fn((path: string) =>
+        path.includes("slow")
+          ? pendingSlow.promise
+          : Promise.resolve("blob:queued"),
+      );
+      const manager = new GraphImageManager(graphOf([queued, slow]) as any);
+      const options = {
+        showImages: true,
+        resolveImageUrl,
+        releaseImageUrl: vi.fn(),
+      };
+
+      manager.sync(options);
+      // Let the fast result enter the paint queue while the slow result keeps
+      // the pass open and inside the 40 ms paint window.
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      expect(queued.data("resolvedImage")).toBeUndefined();
+
+      manager.sync(options);
+
+      expect(
+        resolveImageUrl.mock.calls.filter(([p]) => p.includes("queued")),
+      ).toHaveLength(1);
+      pendingSlow.resolve("blob:slow");
+      await until(() => queued.data("resolvedImage") === "blob:queued");
+    });
+
     it("never resolves more than a handful of images at once", async () => {
       const nodes = Array.from({ length: 30 }, (_, i) => makeNode(`n${i}`));
       let active = 0;
