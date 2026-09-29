@@ -1,5 +1,6 @@
 import { renderCharacterSummary } from "./presentation/character";
 import { renderFactionSummary } from "./presentation/faction";
+import { renderLocationSummary } from "./presentation/location";
 import { renderGenericSummary } from "./presentation/generic";
 import { renderRelationshipReference } from "./presentation/relationship";
 import type { ReportDocument, ReportSection } from "./types";
@@ -26,6 +27,8 @@ interface BodyView {
   relationships: string[];
   affiliations?: string[];
   members?: string[];
+  parent?: string;
+  contains?: string[];
 }
 
 const blockquote = (text: string) =>
@@ -49,6 +52,8 @@ function renderSection(view: BodyView): string {
     view.type && `*${view.type}*`,
     view.portraitUrl && `![${view.title}](${view.portraitUrl})`,
     view.description ?? view.summary,
+    view.parent && `**Located in:** ${view.parent}`,
+    labelled("Contains", view.contains),
     labelled("Members", view.members),
     labelled("Affiliations", view.affiliations),
     relationshipBlock(view.relationships),
@@ -74,6 +79,14 @@ function viewFor(
       return renderFactionSummary(
         section.entity,
         section.members,
+        section.relationships,
+        detail,
+      );
+    case "location":
+      return renderLocationSummary(
+        section.entity,
+        section.parent,
+        section.contains,
         section.relationships,
         detail,
       );

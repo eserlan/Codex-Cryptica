@@ -14,6 +14,8 @@
     relationships: string[];
     affiliations: string[];
     members?: string[];
+    parent?: string;
+    contains?: string[];
     /** Source entity, used to infer a silhouette when there is no portrait. */
     entity?: {
       type: string;
@@ -30,6 +32,7 @@
   let portraitFailed = $state(false);
 
   const md = (text: string | undefined) => (text ? renderMarkdown(text) : "");
+  const hideImages = $derived(view.showVisual === false);
   const showSilhouette = $derived(
     !portraitSrc &&
       (!view.portraitUrl || portraitFailed) &&
@@ -83,9 +86,21 @@
     </div>
   </div>
   {#if view.description ?? view.summary}
-    <div class="report-md text-sm">
+    <div class="report-md text-sm" class:report-md--no-images={hideImages}>
       {@html md(view.description ?? view.summary)}
     </div>
+  {/if}
+  {#if view.parent}
+    <p class="text-sm">
+      <span class="text-theme-muted">Located in:</span>
+      {view.parent}
+    </p>
+  {/if}
+  {#if view.contains?.length}
+    <p class="text-sm">
+      <span class="text-theme-muted">Contains:</span>
+      {view.contains.join(", ")}
+    </p>
   {/if}
   {#if view.members?.length}
     <p class="text-sm">
@@ -107,7 +122,10 @@
     </ul>
   {/if}
   {#if view.notes}
-    <div class="report-md text-sm text-theme-muted">
+    <div
+      class="report-md text-sm text-theme-muted"
+      class:report-md--no-images={hideImages}
+    >
       {@html md(view.notes)}
     </div>
   {/if}
@@ -120,7 +138,9 @@
         class="text-[10px] uppercase tracking-widest font-header text-theme-primary"
         >GM only</span
       >
-      <div class="report-md">{@html md(view.secrets)}</div>
+      <div class="report-md" class:report-md--no-images={hideImages}>
+        {@html md(view.secrets)}
+      </div>
     </div>
   {/if}
 </article>
@@ -181,6 +201,21 @@
   .report-md :global(code) {
     font-family: monospace;
     font-size: 0.85em;
+  }
+  /* Images embedded in an entity's text stay thumbnail-sized in the preview. */
+  .report-md :global(img) {
+    display: block;
+    max-width: 100%;
+    max-height: 12rem;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    margin: 0.5rem 0;
+    border-radius: 0.5rem;
+    border: 1px solid var(--theme-border);
+  }
+  .report-md--no-images :global(img) {
+    display: none;
   }
   .report-md :global(hr) {
     border-color: var(--theme-border);

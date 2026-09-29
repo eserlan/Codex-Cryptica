@@ -110,3 +110,46 @@ describe("buildReport", () => {
     expect(doc.sections).toHaveLength(200);
   });
 });
+
+describe("buildReport locations", () => {
+  const places = (): ReportInput => ({
+    entities: [
+      entity("realm", { title: "Realm", type: "location" }),
+      entity("keep", { title: "Keep", type: "location", parent: "realm" }),
+      entity("guard", { title: "Guard", parent: "realm" }),
+      entity("far", { title: "Far", type: "location", parent: "gone" }),
+    ],
+    relationships: [{ sourceId: "keep", targetId: "guard", label: "houses" }],
+    factionMembership: {},
+  });
+  const loc = (doc: ReturnType<typeof buildReport>, id: string) => {
+    const s = doc.sections.find((x) => x.entity.id === id)!;
+    if (s.kind !== "location") throw new Error("not a location");
+    return s;
+  };
+
+  it("gives locations their parent, contents and relationships", () => {
+    const doc = buildReport(places(), options());
+    expect(loc(doc, "keep").parent?.id).toBe("realm");
+    expect(loc(doc, "realm").contains.map((c) => c.id)).toEqual([
+      "guard",
+      "keep",
+    ]);
+    expect(loc(doc, "keep").relationships).toHaveLength(1);
+  });
+
+  it("ignores a parent that is outside the report", () => {
+    expect(loc(buildReport(places(), options()), "far").parent).toBeUndefined();
+  });
+
+  it("omits parent and contents when relationships are off", () => {
+    const doc = buildReport(
+      places(),
+      options({
+        include: { ...DEFAULT_REPORT_INCLUDE, relationships: false },
+      }),
+    );
+    expect(loc(doc, "keep").parent).toBeUndefined();
+    expect(loc(doc, "realm").contains).toEqual([]);
+  });
+});

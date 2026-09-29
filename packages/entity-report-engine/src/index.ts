@@ -9,4 +9,5 @@ export {
 } from "./presentation/relationship";
 export { renderCharacterSummary } from "./presentation/character";
 export { renderFactionSummary } from "./presentation/faction";
+export { renderLocationSummary } from "./presentation/location";
 export { renderGenericSummary } from "./presentation/generic";

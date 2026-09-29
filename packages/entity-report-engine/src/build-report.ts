@@ -89,6 +89,20 @@ export function buildReport(
         affiliations: factionsOf(entity.id),
       };
     }
+    if (entity.type === "location") {
+      return {
+        kind: "location",
+        entity,
+        parent:
+          include.relationships && entity.parent
+            ? byId.get(entity.parent)
+            : undefined,
+        contains: include.relationships
+          ? entities.filter((e) => e.parent === entity.id)
+          : [],
+        relationships: linesFor(entity.id),
+      };
+    }
     return { kind: "generic", entity };
   });
 
