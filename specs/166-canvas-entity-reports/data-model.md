@@ -137,7 +137,7 @@ export const ReportProvenanceSchema = z.object({
   detail: z.enum(["brief", "standard", "detailed"]),
   generatedAt: z.number(),
   /** Hash of `content` at generation time — how Regenerate detects manual edits (FR-013d). */
-  contentHash: z.string(),
+  contentHash: z.string().regex(/^[0-9a-f]{64}$/), // lowercase SHA-256 hex
 });
 ```
 
@@ -161,12 +161,12 @@ Follows `delve-dossier-service.ts`, with two deliberate differences: the body is
 
 ## Content hash (`packages/entity-report-engine/src/content-hash.ts`)
 
-`hashReportContent(content: string): string` — a small synchronous, deterministic non-cryptographic string hash (FNV-1a, 32-bit, hex). It exists only to answer "did the text change since we generated it", so a cryptographic hash is unnecessary. It lives in the engine (pure, no I/O) so the save path and the regenerate path share one definition.
+`hashReportContent(content: string): Promise<string>` — a deterministic SHA-256 digest encoded as lowercase hex, computed with the Web Crypto API. This value gates whether Regenerate may overwrite the saved body without warning, so a small checksum is not sufficient: a checksum collision could make a manually edited report appear untouched. This function performs no network or filesystem I/O and lives in the engine so save and regenerate use the same definition.
 
 ## Validation / state rules carried from the spec
 
 - **FR-004 / FR-017**: `ReportInput.entities` MUST be non-empty before a preview is generated; `build-report.ts` MUST NOT be called with zero entities — the UI layer enforces this before ever constructing a `ReportInput` (not a runtime error inside the engine).
 - **FR-006 / FR-006a**: `ReportRelationshipInput` is only ever constructed for pairs already known to both be in `ReportInput.entities` — the _caller_ (canvas/graph/table entry point) does this filtering; `build-report.ts` trusts its input and does no further inclusion logic, keeping the package pure and simple (Principle III).
 - **FR-019**: `factionMembership[factionId]` is built by the caller from relationships/edges already present in scope — never from a full vault-wide faction roster lookup. `entity-report-engine` has no access to "the rest of the vault" at all (by type signature), which makes this rule structurally hard to violate rather than merely documented.
-- **FR-013d**: `ReportService.regenerate()` compares `hashReportContent(entity.content)` with `entity.report.contentHash`. A mismatch means the GM edited the text since it was generated (`hadManualEdits: true`); the UI then asks for confirmation before the update is applied. On success it rewrites `content` and `report.generatedAt` / `report.contentHash`, and keeps `report.origin`, scope and options. Regenerate rebuilds its input from `report` alone (canvas → re-read the canvas, filtered by `selection`/`entityIds`; graph/table → `entityIds` looked up in the vault), never from anything the UI happens to have open.
+- **FR-013d**: `ReportService.regenerate()` compares `await hashReportContent(entity.content)` with `entity.report.contentHash`. A mismatch means the GM edited the text since it was generated (`hadManualEdits: true`); the UI then asks for confirmation before the update is applied. On success it rewrites `content` and `report.generatedAt` / `report.contentHash`, and keeps `report.origin`, scope and options. Regenerate rebuilds its input from `report` alone (canvas → re-read the canvas, filtered by `selection`/`entityIds`; graph/table → `entityIds` looked up in the vault), never from anything the UI happens to have open.
 - **Second report from the same source**: `save()` always creates a new entity (new id); it never looks for or overwrites an earlier report. Only `regenerate(entityId, …)` modifies an existing one.

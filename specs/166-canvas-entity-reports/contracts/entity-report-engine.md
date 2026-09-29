@@ -26,10 +26,10 @@ export function buildReport(
  */
 export function renderReportMarkdown(document: ReportDocument): string;
 
-/** Deterministic, synchronous, non-cryptographic hash of a report's text
- *  (FNV-1a 32-bit, hex). Shared by save() and regenerate() so "edited since
+/** Deterministic SHA-256 digest of a report's text, encoded as lowercase hex
+ *  using Web Crypto. Shared by save() and regenerate() so "edited since
  *  generation" has exactly one definition. */
-export function hashReportContent(content: string): string;
+export function hashReportContent(content: string): Promise<string>;
 
 // Presentation views (FR-014's reusability requirement — each is a pure
 // function from one typed input to a small, UI-framework-agnostic view
@@ -84,7 +84,7 @@ export class ReportService {
 
   /** FR-013d/FR-013e: regenerates an EXISTING report entity's content, using
    *  the scope and options stored in its `report` provenance. Reports
-   *  `hadManualEdits` (current content hash differs from `report.contentHash`)
+   *  `hadManualEdits` (current content digest differs from `report.contentHash`)
    *  and, when `confirmed` is false and there are manual edits, writes
    *  NOTHING and returns `{ hadManualEdits: true, applied: false }` so the UI
    *  can ask first. Fails safely (no write) for a non-report entity. */
