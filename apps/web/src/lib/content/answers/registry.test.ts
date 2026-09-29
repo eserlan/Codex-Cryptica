@@ -49,6 +49,18 @@ const mockRegistry: Record<string, AnswerConfig> = {
 };
 
 describe("answer registry", () => {
+  it("links the army-battle answer to Pathfinder's troop rules", () => {
+    const armyBattle =
+      answers[
+        "how-do-i-run-a-large-battle-when-the-player-characters-are-part-of-an-army"
+      ];
+    const pathfinder = armyBattle.systemsThatSupportThis?.find(
+      (system) => system.system === "Pathfinder Second Edition",
+    );
+
+    expect(pathfinder?.href).toBe("https://2e.aonprd.com/Rules.aspx?ID=3365");
+  });
+
   it("matches the economic hooks example heading to its brief cases", () => {
     const example = answers[
       "how-do-i-turn-economic-pressures-into-rpg-adventure-hooks"

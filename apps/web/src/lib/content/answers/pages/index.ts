@@ -15,6 +15,7 @@ import { howDoIPaceAnRpgOneShot } from "./how-do-i-pace-an-rpg-one-shot";
 import { howDoIPrepareAnRpgSessionStepByStep } from "./how-do-i-prepare-an-rpg-session-step-by-step";
 import { howDoIRunADiplomatNobleOrCourtierInAnRpg } from "./how-do-i-run-a-diplomat-noble-or-courtier-in-an-rpg";
 import { howDoIRunAJournalistOrMediaCharacterInAnRpg } from "./how-do-i-run-a-journalist-or-media-character-in-an-rpg";
+import { howDoIRunALargeBattleWhenThePlayerCharactersArePartOfAnArmy } from "./how-do-i-run-a-large-battle-when-the-player-characters-are-part-of-an-army";
 import { howDoIRunARogueOrScoutWithoutSplittingTheParty } from "./how-do-i-run-a-rogue-or-scout-without-splitting-the-party";
 import { howDoIRunASuccessfulSessionZero } from "./how-do-i-run-a-successful-session-0";
 import { howDoIRunAnInvestigatorWithoutSideliningTheParty } from "./how-do-i-run-an-investigator-without-sidelining-the-party";
@@ -135,6 +136,7 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     howDoIPrepareAnRpgSessionStepByStep,
     howDoIRunADiplomatNobleOrCourtierInAnRpg,
     howDoIRunAJournalistOrMediaCharacterInAnRpg,
+    howDoIRunALargeBattleWhenThePlayerCharactersArePartOfAnArmy,
     howDoIRunARogueOrScoutWithoutSplittingTheParty,
     howDoIRunASuccessfulSessionZero,
     howDoIRunAnInvestigatorWithoutSideliningTheParty,

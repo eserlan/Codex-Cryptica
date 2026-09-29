@@ -180,6 +180,7 @@ export const howDoYouRunDndForALargeGroupOfPlayers: AnswerConfigInput = {
     "how-do-you-run-a-scene-with-multiple-npcs",
     "can-you-play-a-tabletop-rpg-in-30-minute-sessions",
     "how-do-i-give-specialist-characters-spotlight",
+    "how-do-i-run-a-large-battle-when-the-player-characters-are-part-of-an-army",
   ],
   discovery: {
     id: "answer-large-group-dnd",
