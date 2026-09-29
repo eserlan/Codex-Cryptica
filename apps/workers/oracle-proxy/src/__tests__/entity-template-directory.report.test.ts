@@ -162,6 +162,34 @@ describe("reporting an entity template", () => {
     ).toBe(201);
   });
 
+  it("enforces the daily cap when reports for different listings arrive together", async () => {
+    const bucket = new Bucket();
+    const env = withKey(bucket);
+    for (let i = 0; i < 25; i++) {
+      await seedEntityListing(bucket, { id: `parallel-${i}` });
+    }
+
+    const responses = await Promise.all(
+      Array.from({ length: 25 }, (_, i) =>
+        call(env, "POST", report(`parallel-${i}`), {
+          body: { reason: "spam" },
+          headers: ip("5.5.5.5"),
+        }),
+      ),
+    );
+
+    expect(
+      responses.filter((response) => response.status === 201),
+    ).toHaveLength(20);
+    expect(
+      responses.filter((response) => response.status === 429),
+    ).toHaveLength(5);
+    const storedReports = keysUnder(bucket, "moderation/template-reports/");
+    expect(storedReports).toHaveLength(20);
+    const quota = keysUnder(bucket, "moderation/template-report-quota/");
+    expect(JSON.parse(String(bucket.store.get(quota[0])!.body)).count).toBe(20);
+  });
+
   it("returns 429 and stores nothing when the per-minute limiter is exhausted", async () => {
     const bucket = new Bucket();
     await seedEntityListing(bucket, { id: "a" });

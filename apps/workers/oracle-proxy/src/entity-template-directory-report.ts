@@ -28,6 +28,7 @@ export const DAILY_REPORT_LIMIT = 20;
 const REPORTS = "moderation/template-reports/";
 const DEDUPE = "moderation/template-report-index/";
 const QUOTA = "moderation/template-report-quota/";
+const MAX_QUOTA_ATTEMPTS = 25;
 
 async function hashAddress(key: string, address: string): Promise<string> {
   const cryptoKey = await crypto.subtle.importKey(
@@ -59,30 +60,70 @@ const rateLimited = (request: Request) =>
 const alreadyReported = (request: Request) =>
   fail(request, "You've already reported this.", 409, "already_reported");
 
-/** Reports this address has sent today. An unreadable counter counts as zero. */
-async function reportsSentToday(env: ReportEnv, quotaKey: string) {
-  const object = await env.BUCKET.get(quotaKey);
-  if (!object) return 0;
-  try {
-    const stored = (await readJson(object)) as { count?: unknown };
-    return Number(stored.count) || 0;
-  } catch {
-    return 0;
+type QuotaReservation = "reserved" | "full";
+
+/**
+ * Reserves one of the address's daily report slots with an R2 compare-and-set.
+ * A read followed by an unconditional write loses increments when separate
+ * listing reports arrive together, which would let concurrent requests evade
+ * the daily cap.
+ */
+async function reserveDailyQuota(
+  env: ReportEnv,
+  quotaKey: string,
+): Promise<QuotaReservation> {
+  for (let attempt = 0; attempt < MAX_QUOTA_ATTEMPTS; attempt++) {
+    const object = await env.BUCKET.get(quotaKey);
+    let count = 0;
+    if (object) {
+      try {
+        const stored = (await readJson(object)) as { count?: unknown };
+        count = Number(stored.count) || 0;
+      } catch {
+        // An unreadable counter retains the existing fail-open recovery path.
+      }
+    }
+    if (count >= DAILY_REPORT_LIMIT) return "full";
+
+    const written = await env.BUCKET.put(
+      quotaKey,
+      JSON.stringify({ count: count + 1 }),
+      {
+        httpMetadata: { contentType: "application/json" },
+        onlyIf: object?.etag
+          ? { etagMatches: object.etag }
+          : { etagDoesNotMatch: "*" },
+      },
+    );
+    if (written !== null) return "reserved";
   }
+  throw new Error("Could not reserve a template report quota slot.");
 }
 
 /** Stores the report, its de-duplication marker and the day's count. */
 async function recordReport(
   env: ReportEnv,
   input: { listingId: string; reason: string; details?: string },
-  keys: { dedupe: string; quota: string; used: number },
-): Promise<"stored" | "duplicate"> {
+  keys: { dedupe: string; quota: string },
+): Promise<"stored" | "duplicate" | "limited"> {
   // Claim the marker first so two simultaneous reports cannot both count.
   const claimed = await env.BUCKET.put(keys.dedupe, "", {
     httpMetadata: { contentType: "text/plain" },
     onlyIf: { etagDoesNotMatch: "*" },
   });
   if (claimed === null) return "duplicate";
+
+  let quotaReservation: QuotaReservation;
+  try {
+    quotaReservation = await reserveDailyQuota(env, keys.quota);
+  } catch (error) {
+    await env.BUCKET.delete(keys.dedupe).catch(() => undefined);
+    throw error;
+  }
+  if (quotaReservation === "full") {
+    await env.BUCKET.delete(keys.dedupe);
+    return "limited";
+  }
 
   const reportId = crypto.randomUUID();
   const record = EntityTemplateReportRecordSchema.parse({
@@ -94,17 +135,47 @@ async function recordReport(
     receivedAt: new Date().toISOString(),
   });
   const jsonMeta = { httpMetadata: { contentType: "application/json" } };
-  await env.BUCKET.put(
-    `${REPORTS}${input.listingId}/${reportId}.json`,
-    JSON.stringify(record),
-    jsonMeta,
-  );
-  await env.BUCKET.put(
-    keys.quota,
-    JSON.stringify({ count: keys.used + 1 }),
-    jsonMeta,
-  );
+  try {
+    await env.BUCKET.put(
+      `${REPORTS}${input.listingId}/${reportId}.json`,
+      JSON.stringify(record),
+      jsonMeta,
+    );
+  } catch (error) {
+    // The marker and quota reservation must not permanently consume a report
+    // when R2 failed before storing the report itself.
+    await Promise.allSettled([
+      env.BUCKET.delete(keys.dedupe),
+      releaseDailyQuota(env, keys.quota),
+    ]);
+    throw error;
+  }
   return "stored";
+}
+
+/** Best-effort rollback for a quota slot when storing its report fails. */
+async function releaseDailyQuota(env: ReportEnv, quotaKey: string) {
+  for (let attempt = 0; attempt < 5; attempt++) {
+    const object = await env.BUCKET.get(quotaKey);
+    if (!object) return;
+    let count: number;
+    try {
+      const stored = (await readJson(object)) as { count?: unknown };
+      count = Number(stored.count) || 0;
+    } catch {
+      return;
+    }
+    if (count <= 0) return;
+    const written = await env.BUCKET.put(
+      quotaKey,
+      JSON.stringify({ count: count - 1 }),
+      {
+        httpMetadata: { contentType: "application/json" },
+        onlyIf: { etagMatches: object.etag },
+      },
+    );
+    if (written !== null) return;
+  }
 }
 
 /** `null` when the id is not an entity listing (fall through). */
@@ -152,17 +223,14 @@ export async function handleReportEntityTemplateListing(
   if (limited && !limited.success) return rateLimited(request);
 
   const quota = `${QUOTA}${reporter}/${new Date().toISOString().slice(0, 10)}`;
-  const used = await reportsSentToday(env, quota);
-  if (used >= DAILY_REPORT_LIMIT) return rateLimited(request);
-
   const outcome = await recordReport(
     env,
     { listingId, ...parsed.data },
-    { dedupe, quota, used },
+    { dedupe, quota },
   );
-  return outcome === "duplicate"
-    ? alreadyReported(request)
-    : json(request, { success: true }, 201);
+  if (outcome === "duplicate") return alreadyReported(request);
+  if (outcome === "limited") return rateLimited(request);
+  return json(request, { success: true }, 201);
 }
 
 type ReportSummary = {
