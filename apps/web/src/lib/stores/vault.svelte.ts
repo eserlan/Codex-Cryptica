@@ -467,6 +467,7 @@ export class VaultStore {
       repository: this.repository,
       activeVaultId: () => this.activeVaultId,
       getActiveVaultHandle: () => this.getActiveVaultHandle(),
+      getActiveFolderHandle: () => this.getActiveFolderHandle(),
       loadFiles: (skipSync) => this.loadFiles(skipSync),
       flushPendingSaves: () => this.entityStore.flushPendingSaves(),
       ensureServicesInitialized: async () => {
@@ -534,6 +535,7 @@ export class VaultStore {
         await themeStore.loadForVault(this.activeVaultId);
         await statSheetTemplates.loadForVault(this.activeVaultId);
         await presentationTemplates.loadForVault(this.activeVaultId);
+        await this.lifecycleManager.loadEntityTemplates(this.activeVaultId);
       }
 
       if (this.activeVaultId) {

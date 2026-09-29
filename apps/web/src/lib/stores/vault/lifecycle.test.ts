@@ -52,6 +52,14 @@ vi.mock("../theme.svelte", () => ({
   themeStore: mockThemeStore,
 }));
 
+const { mockEntityTemplates } = vi.hoisted(() => ({
+  mockEntityTemplates: { loadForVault: vi.fn().mockResolvedValue(undefined) },
+}));
+
+vi.mock("../entity-templates/entity-template-store.svelte", () => ({
+  entityTemplateStore: mockEntityTemplates,
+}));
+
 vi.mock("../oracle/hooks", () => ({
   loadOracleForVault: (id: string) => mockOracle.loadForVault(id),
 }));
@@ -169,6 +177,39 @@ describe("VaultLifecycleManager", () => {
       expect(deps.loadFiles).toHaveBeenCalled();
       expect(deps.themeStore.loadForVault).toHaveBeenCalledWith("v2");
       expect(deps.syncStore.setStatus).toHaveBeenCalledWith("idle");
+      expect(deps.setInitialized).toHaveBeenLastCalledWith(true);
+    });
+
+    it("loads entity templates with both handles on switch", async () => {
+      const vault = { name: "vault" } as any;
+      const folder = { name: "folder" } as any;
+      deps.getActiveVaultHandle = vi.fn().mockResolvedValue(vault);
+      deps.getActiveFolderHandle = vi.fn().mockResolvedValue(folder);
+      manager = new VaultLifecycleManager(deps);
+
+      await manager.switchVault("v2");
+
+      expect(mockEntityTemplates.loadForVault).toHaveBeenCalledWith("v2", {
+        vault,
+        folder,
+      });
+    });
+
+    it("skips entity templates in guest mode", async () => {
+      const { sessionModeStore } = await import("../ui/session-mode.svelte");
+      sessionModeStore.isGuestMode = true;
+      try {
+        await manager.switchVault("v2");
+        expect(mockEntityTemplates.loadForVault).not.toHaveBeenCalled();
+      } finally {
+        sessionModeStore.isGuestMode = false;
+      }
+    });
+
+    it("still switches when entity templates fail to load", async () => {
+      mockEntityTemplates.loadForVault.mockRejectedValueOnce(new Error("disk"));
+      await manager.switchVault("v2");
+      expect(deps.loadFiles).toHaveBeenCalled();
       expect(deps.setInitialized).toHaveBeenLastCalledWith(true);
     });
 

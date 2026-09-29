@@ -175,6 +175,13 @@ export const COACH_MARKS: CoachMark[] = [
 ];
 
 export const FEATURE_HINTS: Record<string, FeatureHint> = {
+  "entity-templates": {
+    id: "entity-templates",
+    title: "Entity templates",
+    content:
+      "Pick which sections a new note starts with. Duplicate a built-in template to make your own, then set it as the default for that type. Changing a template only affects notes you create afterwards; existing notes stay as they are.",
+    icon: "icon-[lucide--layout-template]",
+  },
   // The browser-local caveat is the whole point of this hint (156-entity-shelf,
   // FR-024): people will otherwise assume the Shelf is a backup or a way to
   // send an entity to a co-GM, and find out it is neither at the worst moment.

@@ -1,0 +1,59 @@
+import { describe, it, expect } from "vitest";
+import { GENERIC_TEMPLATES } from "schema";
+import {
+  parseMarkdownToSections,
+  compileTemplate,
+} from "entity-template-engine";
+import { buildBuiltinTemplates } from "./builtin-templates";
+import {
+  FANTASY_TEMPLATES,
+  resolveTemplateSync,
+} from "../../services/EntityTemplateConstants";
+
+describe("buildBuiltinTemplates", () => {
+  it("returns one read-only built-in per generic entity type", () => {
+    const list = buildBuiltinTemplates("workspace");
+    expect(list.map((t) => t.entityType).sort()).toEqual(
+      Object.keys(GENERIC_TEMPLATES).sort(),
+    );
+    for (const t of list) {
+      expect(t.id).toBe(`builtin:${t.entityType}`);
+      expect(t.source).toBe("builtin");
+    }
+  });
+
+  it("carries the exact original markdown for the given theme", () => {
+    const list = buildBuiltinTemplates("fantasy");
+    const character = list.find((t) => t.entityType === "character")!;
+    expect(character.markdown).toBe(FANTASY_TEMPLATES.character);
+    expect(character.markdown).toBe(
+      resolveTemplateSync("character", "fantasy"),
+    );
+  });
+
+  it("falls back to the generic template for an unknown theme", () => {
+    const list = buildBuiltinTemplates("no-such-theme");
+    const faction = list.find((t) => t.entityType === "faction")!;
+    expect(faction.markdown).toBe(GENERIC_TEMPLATES.faction);
+  });
+
+  it("gives every built-in a plain-language name", () => {
+    const character = buildBuiltinTemplates("workspace").find(
+      (t) => t.entityType === "character",
+    )!;
+    expect(character.name).toBe("Standard Character");
+  });
+
+  it("parses every built-in into sections without losing headings", () => {
+    for (const theme of ["workspace", "fantasy", "scifi", "horror"]) {
+      for (const t of buildBuiltinTemplates(theme)) {
+        const headings = (t.markdown ?? "").match(/^## .+$/gm) ?? [];
+        expect(t.sections.map((s) => `## ${s.title}`)).toEqual(headings);
+        // Duplicating must yield a compilable template.
+        expect(() =>
+          compileTemplate(parseMarkdownToSections(t.markdown ?? "")),
+        ).not.toThrow();
+      }
+    }
+  });
+});

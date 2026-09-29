@@ -73,6 +73,7 @@ export const FEATURE_GROUPS: FeatureGroup[] = [
       "front-page",
       "vault-switcher",
       "presentation-templates",
+      "entity-templates",
     ],
   },
   {
