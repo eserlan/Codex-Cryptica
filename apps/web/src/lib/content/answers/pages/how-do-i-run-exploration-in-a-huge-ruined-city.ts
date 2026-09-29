@@ -149,7 +149,7 @@ export const howDoIRunExplorationInAHugeRuinedCity: AnswerConfigInput = {
       intro: "Use this pass before you place the city on the table:",
       items: [
         "Draw five to eight districts as named nodes, each with a skyline landmark visible from at least one other district.",
-        "Connect them with a looped route network where every connection lists travel time, hazard and cost, with at least oneQuiet, one fast and one safe option.",
+        "Connect them with a looped route network where every connection lists travel time, hazard and cost, with at least one quiet, one fast and one safe option.",
         "Put two landmarks on the horizon for every starting district so players can choose a direction without a full reveal.",
         "Seed six to ten discoverable leads and assign each to a source such as a survivor, map, vantage, archive or faction favour, with no more than two visible at the start.",
         "Place one fictional gate that blocks a whole district using a plausible city reason, and note two different ways to open it that exist elsewhere in the city.",
