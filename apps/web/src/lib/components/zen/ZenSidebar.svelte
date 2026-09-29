@@ -23,6 +23,7 @@
     onNavigate,
     onDelete,
     isPopout = false,
+    onCollapse,
   } = $props<{
     entity: Entity | null;
     editState: any;
@@ -33,6 +34,8 @@
     onNavigate: (id: string) => void;
     onDelete: () => Promise<void>;
     isPopout?: boolean;
+    /** Hides the sidebar; the button only shows when the parent supports it. */
+    onCollapse?: () => void;
   }>();
 
   let isImageLoaded = $state(false);
@@ -164,10 +167,26 @@
 
 <div
   style="background-image: var(--bg-texture-overlay)"
-  id="zen-sidebar"
   class="w-full md:w-80 lg:w-96 md:border-r border-theme-border p-4 md:p-5 md:overflow-y-auto custom-scrollbar bg-theme-surface shrink-0"
   data-testid="zen-sidebar"
 >
+  {#if onCollapse}
+    <div class="hidden md:flex justify-end -mt-1 mb-3">
+      <button
+        type="button"
+        onclick={onCollapse}
+        class="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest font-header text-theme-muted hover:text-theme-primary transition-colors cursor-pointer"
+        aria-label="Hide sidebar"
+        title="Hide sidebar"
+        data-testid="zen-sidebar-collapse"
+      >
+        <span class="icon-[lucide--panel-left-close] h-4 w-4" aria-hidden="true"
+        ></span>
+        Hide panel
+      </button>
+    </div>
+  {/if}
+
   <!-- Guest Character Chat -->
   {#if vault.isGuest && entity?.type === "character" && entity?.guestChatConfig?.isEnabled && entity.guestChatConfig.extraInstructions?.trim()}
     <div class="mb-6">
