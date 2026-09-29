@@ -3,6 +3,8 @@ import { DefaultTextGenerationService } from "./text-generation.service.svelte";
 import { resolvePronounsLocally } from "./resolve-pronouns";
 import { TIER_MODES } from "schema";
 import * as capabilityGuard from "./capability-guard";
+import { buildEntityRevisionPromptCore } from "./prompts/entity-revision";
+import { GENERIC_TEMPLATES } from "schema";
 
 // Mock AI capability guard
 vi.mock("./capability-guard", () => ({
@@ -419,6 +421,42 @@ describe("DefaultTextGenerationService", () => {
       expect(mockModel.generateContent).toHaveBeenCalledWith(
         "revise:The Glass Key::::Make it a living crystal.:instructions-first",
       );
+    });
+
+    describe("lore template", () => {
+      const revise = async (options?: Record<string, unknown>) => {
+        mockModel.generateContent.mockResolvedValue({
+          response: {
+            text: vi.fn().mockReturnValue('{"content":"c","lore":"l"}'),
+          },
+        });
+        await service.reviseEntityUpdate!(
+          "key",
+          "model",
+          { title: "Mira", type: "character", content: "x", lore: "y" },
+          { chronicle: "", lore: "" },
+          [],
+          [],
+          options,
+        );
+        const calls = vi.mocked(buildEntityRevisionPromptCore).mock.calls;
+        return calls[calls.length - 1][3] as { loreTemplate?: string };
+      };
+
+      it("uses the template the caller resolved, so vault templates reach the worker", async () => {
+        const passed = await revise({ loreTemplate: "## Table Card\n" });
+        expect(passed.loreTemplate).toBe("## Table Card\n");
+      });
+
+      it("treats an empty template as no imposed structure", async () => {
+        const passed = await revise({ loreTemplate: "" });
+        expect(passed.loreTemplate).toBeUndefined();
+      });
+
+      it("falls back to the built-in template when none was passed", async () => {
+        const passed = await revise({});
+        expect(passed.loreTemplate).toBe(GENERIC_TEMPLATES.character);
+      });
     });
 
     it("should ignore revision categories outside the allowed list", async () => {
