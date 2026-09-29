@@ -32,6 +32,8 @@ export interface ReportEntityInput {
   portraitUrl?: string;
   /** Explicit silhouette id, used for the preview fallback when there is no portrait. */
   silhouette?: string;
+  /** Id of the containing place, when the entity is nested in another. */
+  parent?: string;
   labels: string[];
 }
 
@@ -76,6 +78,21 @@ export interface FactionReportView {
   relationships: string[];
 }
 
+export interface LocationReportView {
+  title: string;
+  type: string;
+  portraitUrl?: string;
+  summary?: string;
+  description?: string;
+  notes?: string;
+  secrets?: string;
+  /** Title of the containing place, when it is part of the report. */
+  parent?: string;
+  /** Titles of places and things inside this one that are part of the report. */
+  contains: string[];
+  relationships: string[];
+}
+
 export type ReportSection =
   | {
       kind: "character";
@@ -87,6 +104,13 @@ export type ReportSection =
       kind: "faction";
       entity: ReportEntityInput;
       members: ReportEntityInput[];
+      relationships: ReportRelationshipLine[];
+    }
+  | {
+      kind: "location";
+      entity: ReportEntityInput;
+      parent?: ReportEntityInput;
+      contains: ReportEntityInput[];
       relationships: ReportRelationshipLine[];
     }
   | { kind: "generic"; entity: ReportEntityInput };

@@ -50,3 +50,27 @@ describe("renderReportMarkdown", () => {
     expect(md.match(/^### /gm)).toHaveLength(200);
   });
 });
+
+describe("renderReportMarkdown locations", () => {
+  it("lists where a place sits and what it contains", () => {
+    const md = renderReportMarkdown(
+      buildReport(
+        {
+          entities: [
+            entity("realm", { title: "Realm", type: "location" }),
+            entity("keep", {
+              title: "Keep",
+              type: "location",
+              parent: "realm",
+            }),
+          ],
+          relationships: [],
+          factionMembership: {},
+        },
+        options(),
+      ),
+    );
+    expect(md).toContain("**Located in:** Realm");
+    expect(md).toContain("**Contains:** Keep");
+  });
+});

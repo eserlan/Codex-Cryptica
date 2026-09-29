@@ -34,6 +34,7 @@ export function toReportEntityInput(entity: Entity): ReportEntityInput {
     secrets: entity.lore?.trim() || undefined,
     portraitUrl: entity.image || undefined,
     silhouette: entity.silhouette || undefined,
+    parent: entity.parent || undefined,
     labels: entity.labels ?? [],
   };
 }
