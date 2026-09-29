@@ -27,7 +27,7 @@ One sentence: who they are and what they want from the party right now.
 - **Sensory Tag**: a scent, sound or visual mark players will remember (one line)
 
 ## Table Delivery
-How to introduce them in thirty seconds of dialogue (two or three sentences).
+Two or three sentences explaining how the GM introduces them: what the players notice first, and when to reveal the want and the contradiction.
 `;
 
 export const EXTRA_BUILTIN_TEMPLATES: ExtraBuiltinTemplate[] = [
