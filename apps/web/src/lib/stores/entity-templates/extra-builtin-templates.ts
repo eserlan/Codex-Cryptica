@@ -17,17 +17,17 @@ export interface ExtraBuiltinTemplate {
  * thirty seconds.
  */
 const TABLE_CARD = `## Summary
-One line: who they are and what they want from the party right now.
+One sentence: who they are and what they want from the party right now.
 
 ## The Five Elements
-- **Immediate Want**: something urgent they need from the party this scene
-- **Physical Mannerism**: a habit or vocal cadence you can portray easily
-- **Sharp Contradiction**: a trait that cuts against their role or look
-- **Relationship Hook**: a debt, rival, family tie or faction link
-- **Sensory Tag**: a scent, sound or visual mark players will remember
+- **Immediate Want**: something urgent they need from the party this scene (one line)
+- **Physical Mannerism**: a habit or vocal cadence you can portray easily (one line)
+- **Sharp Contradiction**: a trait that cuts against their role or look (one line)
+- **Relationship Hook**: a debt, rival, family tie or faction link (one line)
+- **Sensory Tag**: a scent, sound or visual mark players will remember (one line)
 
 ## Table Delivery
-How to introduce them in thirty seconds of dialogue.
+How to introduce them in thirty seconds of dialogue (two or three sentences).
 `;
 
 export const EXTRA_BUILTIN_TEMPLATES: ExtraBuiltinTemplate[] = [

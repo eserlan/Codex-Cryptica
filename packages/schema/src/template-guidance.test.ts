@@ -16,4 +16,10 @@ describe("template guidance prompt helpers", () => {
       "Do not reproduce explanatory text, placeholders, questions, examples, or XML tags from <template_guidance> in the generated lore.",
     );
   });
+
+  it("tells the model to follow a length or format the guidance states", () => {
+    expect(templateGuidanceInstruction("lore")).toContain(
+      `If a section's guidance states a length or format, such as "one line" or "a bulleted list", follow it.`,
+    );
+  });
 });
