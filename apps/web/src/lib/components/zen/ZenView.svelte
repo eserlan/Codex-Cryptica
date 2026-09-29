@@ -496,24 +496,6 @@
       >
         TIMELINE
       </button>
-      {#if activeTab === "overview"}
-        <button
-          type="button"
-          class="ml-auto py-2 pl-3 text-theme-muted hover:text-theme-primary transition-colors flex items-center gap-1.5 text-xs font-bold tracking-widest font-header shrink-0"
-          onclick={toggleSidebar}
-          aria-pressed={sidebarCollapsed}
-          aria-label={sidebarCollapsed ? "Show sidebar" : "Hide sidebar"}
-          title={sidebarCollapsed ? "Show sidebar" : "Hide sidebar"}
-          data-testid="zen-sidebar-toggle"
-        >
-          <span
-            class="{sidebarCollapsed
-              ? 'icon-[lucide--panel-left-open]'
-              : 'icon-[lucide--panel-left-close]'} h-4 w-4"
-            aria-hidden="true"
-          ></span>
-        </button>
-      {/if}
     </div>
 
     <!-- Main Body -->
@@ -544,6 +526,24 @@
               onNavigate={navigateTo}
               onDelete={handleDelete}
             />
+          {:else}
+            <button
+              type="button"
+              class="hidden md:flex w-9 shrink-0 flex-col items-center gap-2 pt-3 border-r border-theme-border bg-theme-surface text-theme-muted hover:text-theme-primary hover:bg-theme-primary/5 transition-colors cursor-pointer"
+              onclick={toggleSidebar}
+              aria-label="Show sidebar"
+              title="Show sidebar"
+              data-testid="zen-sidebar-toggle"
+            >
+              <span
+                class="icon-[lucide--panel-left-open] h-4 w-4"
+                aria-hidden="true"
+              ></span>
+              <span
+                class="text-[9px] font-bold tracking-widest uppercase font-header [writing-mode:vertical-rl]"
+                >Details</span
+              >
+            </button>
           {/if}
 
           <ZenContent
