@@ -102,6 +102,17 @@ export class EntityTemplateStore {
     this.loaded = true;
   }
 
+  /** Drops vault-scoped template data before entering a session with no vault. */
+  clearForGuest(): void {
+    this.loadToken++;
+    this.userTemplates = [];
+    this.legacyFiles = [];
+    this.defaults = EMPTY_DEFAULTS;
+    this.handles = {};
+    this.warnings = [];
+    this.loaded = true;
+  }
+
   defaultFor(type: string): string | undefined {
     return this.defaults.defaults[normalizeType(type)];
   }
