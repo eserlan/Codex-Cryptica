@@ -37,7 +37,6 @@
   import { buildAbsoluteUrl } from "$lib/seo/site";
   import SeoHead from "./SeoHead.svelte";
   import { unregisterDevelopmentServiceWorkers } from "$lib/utils/dev-service-worker";
-  import { PENDING_DELVE_CANVAS_KEY } from "$lib/services/seo/pending-delve-transfer";
   import {
     getContextSelection,
     computeProvenance,
@@ -79,6 +78,7 @@
     buildAdventureCanvasTransfer,
     buildDelveCanvasTransfer,
   } from "./generator-canvas-transfer";
+  import { handoffGeneratorToCanvas } from "./generator-canvas-handoff";
   import {
     buildGeneratorSavePayload,
     buildHubSaveDrafts,
@@ -828,14 +828,14 @@
 
   async function handleBuildDelveCanvas(data: GeneratorOutput) {
     try {
-      const transfer = buildDelveCanvasTransfer(data);
-      localStorage.setItem(PENDING_DELVE_CANVAS_KEY, JSON.stringify(transfer));
-      await unregisterDevelopmentServiceWorkers(dev);
-      if (dev) {
-        window.location.assign(resolve("/canvas"));
-        return;
-      }
-      await goto(resolve("/canvas"));
+      await handoffGeneratorToCanvas(data, buildDelveCanvasTransfer, {
+        storeTransfer: (key, transfer) =>
+          localStorage.setItem(key, JSON.stringify(transfer)),
+        unregisterDevelopmentServiceWorkers,
+        isDevelopment: dev,
+        navigate: () => goto(resolve("/canvas")),
+        navigateInDevelopment: () => window.location.assign(resolve("/canvas")),
+      });
     } catch (err) {
       console.error("[DelveCanvas] Failed to build delve canvas:", err);
       errorMessage =
@@ -845,14 +845,14 @@
 
   async function handleBuildAdventureCanvas(data: GeneratorOutput) {
     try {
-      const transfer = buildAdventureCanvasTransfer(data);
-      localStorage.setItem(PENDING_DELVE_CANVAS_KEY, JSON.stringify(transfer));
-      await unregisterDevelopmentServiceWorkers(dev);
-      if (dev) {
-        window.location.assign(resolve("/canvas"));
-        return;
-      }
-      await goto(resolve("/canvas"));
+      await handoffGeneratorToCanvas(data, buildAdventureCanvasTransfer, {
+        storeTransfer: (key, transfer) =>
+          localStorage.setItem(key, JSON.stringify(transfer)),
+        unregisterDevelopmentServiceWorkers,
+        isDevelopment: dev,
+        navigate: () => goto(resolve("/canvas")),
+        navigateInDevelopment: () => window.location.assign(resolve("/canvas")),
+      });
     } catch (err) {
       console.error("[AdventureCanvas] Failed to build adventure canvas:", err);
       errorMessage = "Failed to open Adventure Canvas for this scenario.";
