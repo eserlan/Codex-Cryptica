@@ -41,9 +41,23 @@ We didn't stop at a single generic outline. Because fantasy adventurers have vas
 
 ---
 
-## **Take Full Control: Vault-Level Customization**
+## **Manage Templates Without Touching a File**
 
-For worldbuilders, GMs, and writers with specific note-taking frameworks, you can override any built-in system template with your own local markdown files.
+You don't need to know where any folders live. Open **Settings → Templates** and every template in your vault is listed by entity type, marked **Built-in** or **Yours**, with a **Default** badge on the one new notes will use.
+
+- **Preview** any template to see the note it would create.
+- **Duplicate** a built-in template to make your own. The built-ins stay read-only, so you can always get back to them.
+- **Edit** your copy in a simple editor: a name, the type it is for, and the template itself as plain markdown. What you write is exactly what a new note starts with.
+- **Set as default** so every new Character, Faction or Location starts from your version.
+- **Export** a template to share with your table or reuse in another vault, and **Import** one someone sent you.
+
+Changing a template, or its default, only affects notes you create afterwards. Nothing you have already written is rewritten.
+
+---
+
+## **Prefer Plain Files? Vault-Level Customization**
+
+For worldbuilders, GMs, and writers who would rather work in plain markdown, you can still override any built-in system template with your own local markdown files. These keep working exactly as before, and they appear in the Settings list as **Yours (file)**, so you can duplicate one into the visual editor whenever you like.
 
 Create a folder in your local vault directory named `.cc/templates/` (or `.codex/templates/`) and place a markdown file named after the entity type (e.g., `.cc/templates/character.md`).
 
@@ -93,4 +107,6 @@ You can drop custom templates into `.cc/templates/` for any of the standard enti
 
 > **Pro Tip:** If you want a specific entity type to _always_ start as a completely blank page without having to uncheck "Start from default format" every time, just create an empty file (e.g., an empty `.cc/templates/note.md`). Codex Cryptica recognizes empty template files as intentional blank canvases.
 
-By keeping your overrides inside your vault, your custom templates sync across devices and stay private, right alongside your lore.
+If you also pick a default in Settings, that choice wins over the file for that entity type.
+
+By keeping your overrides inside your vault, your custom templates sync across devices and stay private, right alongside your lore. Templates you make in Settings are stored the same way, in your vault's `.codex/templates/` folder.
