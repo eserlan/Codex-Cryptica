@@ -23,6 +23,7 @@ import { howDoIRunCharacterRolesInAPoliticalIntrigueRpg } from "./how-do-i-run-c
 import { howDoIRunCharacterRolesInAnInvestigativeHorrorRpg } from "./how-do-i-run-character-roles-in-an-investigative-horror-rpg";
 import { howDoIRunCommonCharacterRolesInAFantasyRpg } from "./how-do-i-run-common-character-roles-in-a-fantasy-rpg";
 import { howDoIRunCommonCharacterRolesInASciFiOrSpaceOperaRpg } from "./how-do-i-run-common-character-roles-in-a-sci-fi-or-space-opera-rpg";
+import { howDoIRunExplorationInAHugeRuinedCity } from "./how-do-i-run-exploration-in-a-huge-ruined-city";
 import { howDoIRunHackersOrNetrunnersWithoutSplittingTheParty } from "./how-do-i-run-hackers-or-netrunners-without-splitting-the-party";
 import { howDoIRunPoliticalIntrigueAndFactionPlay } from "./how-do-i-run-political-intrigue-and-faction-play";
 import { howDoIRunSpiesAndInfiltratorsInAnRpg } from "./how-do-i-run-spies-and-infiltrators-in-an-rpg";
@@ -144,6 +145,7 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     howDoIRunCharacterRolesInAnInvestigativeHorrorRpg,
     howDoIRunCommonCharacterRolesInAFantasyRpg,
     howDoIRunCommonCharacterRolesInASciFiOrSpaceOperaRpg,
+    howDoIRunExplorationInAHugeRuinedCity,
     howDoIRunHackersOrNetrunnersWithoutSplittingTheParty,
     howDoIRunPoliticalIntrigueAndFactionPlay,
     howDoIRunSpiesAndInfiltratorsInAnRpg,

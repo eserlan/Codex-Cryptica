@@ -121,6 +121,7 @@ export const pointCrawlVsHexCrawl: AnswerConfigInput = {
     "how-do-you-make-travel-interesting-in-a-tabletop-rpg",
     "how-do-you-prepare-a-sandbox-rpg-campaign",
     "what-rpg-map-making-tool-should-i-use",
+    "how-do-i-run-exploration-in-a-huge-ruined-city",
   ],
   discovery: {
     id: "answer-point-crawl-vs-hex-crawl",
