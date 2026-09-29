@@ -36,14 +36,14 @@ describe("presentation views", () => {
     expect(v.affiliations).toEqual([]);
   });
 
-  it("character: standard adds description and relationships, detailed adds notes", () => {
+  it("character: standard adds description, notes and relationships", () => {
     const std = renderCharacterSummary(full, rels, ["Eagles"], "standard");
     expect(std.description).toBe("Rogue with a past.");
     expect(std.relationships).toEqual(["Vargas — friend → Lajos"]);
-    expect(std.notes).toBeUndefined();
-    expect(renderCharacterSummary(full, rels, [], "detailed").notes).toBe(
-      "## H\nn",
-    );
+    expect(std.notes).toBe("## H\nn");
+    expect(
+      renderCharacterSummary(full, rels, [], "brief").notes,
+    ).toBeUndefined();
   });
 
   it("faction lists only the supplied members", () => {

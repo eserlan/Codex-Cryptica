@@ -182,6 +182,7 @@ export const ReportProvenanceSchema = z.object({
     notes: z.boolean(),
     gmOnlySecrets: z.boolean(),
   }),
+  // "detailed" is legacy: still accepted so previously saved reports load.
   detail: z.enum(["brief", "standard", "detailed"]),
   generatedAt: z.number(),
   contentHash: z.string(),

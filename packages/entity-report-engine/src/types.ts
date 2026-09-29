@@ -13,7 +13,7 @@ export interface ReportInclude {
   gmOnlySecrets: boolean;
 }
 
-export type ReportDetail = "brief" | "standard" | "detailed";
+export type ReportDetail = "brief" | "standard";
 
 export interface ReportOptions {
   scope: ReportScope;

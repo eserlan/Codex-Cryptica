@@ -64,7 +64,6 @@
   const detailOptions: { value: ReportDetail; label: string }[] = [
     { value: "brief", label: "Brief" },
     { value: "standard", label: "Standard" },
-    { value: "detailed", label: "Detailed" },
   ];
 
   function setScope(next: "entire" | "selected") {
