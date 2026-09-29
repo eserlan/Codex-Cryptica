@@ -61,6 +61,7 @@ import { guestVault } from "./guest-vault.svelte";
 import { onboardingFunnel } from "$lib/app/onboarding/onboarding-funnel";
 import { statSheetTemplates } from "./stat-sheet-templates.svelte";
 import { presentationTemplates } from "./presentation-templates.svelte";
+import { entityTemplateStore } from "./entity-templates/entity-template-store.svelte";
 import { browserPerformanceRecorder } from "$lib/services/performance/browser-performance-capture";
 
 export class VaultStore {
@@ -553,6 +554,7 @@ export class VaultStore {
       debugStore.error("[VaultStore] Init failed", err);
       console.warn("[VaultStore] Init failed, falling back to Guest Mode", err);
 
+      entityTemplateStore.clearForGuest();
       sessionModeStore.isGuestMode = true;
       this.status = "idle";
       this.errorMessage =

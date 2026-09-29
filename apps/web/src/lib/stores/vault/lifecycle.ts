@@ -247,6 +247,12 @@ export class VaultLifecycleManager {
         this.deps.getActiveVaultHandle(),
         this.deps.getActiveFolderHandle?.(),
       ]);
+      // Guest mode can begin while the OPFS handles are resolving. Recheck
+      // before starting a load that could repopulate the guest session.
+      if (sessionModeStore.isGuestMode) {
+        entityTemplateStore.clearForGuest();
+        return;
+      }
       await entityTemplateStore.loadForVault(vaultId, { vault, folder });
     } catch (err) {
       console.warn("[VaultStore] Entity templates failed to load", err);
