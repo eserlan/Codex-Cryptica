@@ -112,7 +112,7 @@ export const howDoIRunALargeBattleWhenThePlayerCharactersArePartOfAnArmy: Answer
         heading: "Make consequences visible before the next scene",
         paragraphs: [
           "A battle state only matters if the party encounters it. Translate every shift immediately into something they can see, hear or be asked to do. A held gate produces a quieter street behind it and a breathing space for the chirurgeons. A fallen officer produces a standard on the ground, a horn that stops sounding, or a runner who now treats the party as the nearest authority. A failed flank produces missiles from a new angle, wounded coming the wrong way, or a captain who cancels the next order because it no longer makes sense.",
-          "Write each consequence as a change to the next objective, not as a ledger entry. If a line buckles, the party is not told the modifier has moved from plus one to minus one; they are told the file to their left is gone and the enemy is trying to turn their shields. If morale holds, they see a neighbouring file cheer when the standard is raised rather than being told a number went up. The track stays behind the screen; the fiction stays in front of the table.",
+          "Write each consequence as a change to the next objective, not as a ledger entry. If a line buckles, the party is not told the modifier has moved from plus one to minus one; they are told the file to their left is gone and the enemy is trying to turn their shields. If morale holds, they see a neighbouring file cheer when the standard is raised rather than being told a number went up. You do not need to announce the track's numbers; keep the fiction in front of the table.",
         ],
       },
       {
@@ -142,7 +142,7 @@ export const howDoIRunALargeBattleWhenThePlayerCharactersArePartOfAnArmy: Answer
         system: "Pathfinder Second Edition",
         rationale:
           "Troop rules package many soldiers into a single creature with shared hit points and area weaknesses, letting the wider battle appear as a few credible opponents rather than dozens of individual stat blocks.",
-        href: "https://2e.aonprd.com/Rules.aspx?ID=2715",
+        href: "https://2e.aonprd.com/Rules.aspx?ID=3365",
       },
     ],
     codexConnection: {
