@@ -1,5 +1,5 @@
 {
-  "updated_at": 1790702004,
+  "updated_at": 1790703176,
   "candidates": [
     {
       "id": "reddit-36168046733-tables-now-parse-4d6kh3-2-and-other-keep",
@@ -102,14 +102,14 @@
       "created_at": 1790637362
     },
     {
-      "id": "reddit-36595187772-running-a-huge-ruined-city-without-prepp",
-      "title": "Running a huge ruined city without prepping every street",
-      "body": "A vast ruined city can stall a game. Prep every street and you burn out. Wing it and the districts blur into the same rubble.\n\nI put together a framework for running it as a layered pointcrawl, with districts as zones, routes as connections with cost and risk, and landmarks as anchors you can point to.\n\nFull guide: https://codexcryptica.com/answers/how-do-i-run-exploration-in-a-huge-ruined-city\n\nInside:\n- how to split the city into districts that feel different at the table\n- using routes and landmarks as the navigation layer instead of a grid\n- tables for district traits and complications\n- a worked example you can lift or reskin\n\nI leaned toward abstraction over street-by-street simulation. You get a city that is navigable and reusable, but you lose block detail if your group loves that.\n\nWhen you last ran a huge or ruined city, what structure actually helped your group navigate, districts, routes, or something else?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/announcements/release-36595187772-0.png)",
-      "url": "https://codexcryptica.com/answers/how-do-i-run-exploration-in-a-huge-ruined-city",
-      "image_url": "https://assets.codexcryptica.com/announcements/release-36595187772-0.png",
+      "id": "reddit-36595187772-running-a-large-battle-when-the-party-is",
+      "title": "Running a large battle when the party is inside the army",
+      "body": "Large battles often turn into the party watching generals talk, or tracking every squad on the field until the session stalls.\n\nI wrote a framework for when the characters are part of a bigger force. Treat the army as changing states around focused player-scale scenes, zoom in when their choice matters and abstract when it does not.\n\nFull guide: https://codexcryptica.com/answers/how-do-i-run-a-large-battle-when-the-player-characters-are-part-of-an-army\n\nThe guide covers:\n- framing the battle as army states that shift with player action\n- where to keep focus on the party and where to pull out\n- tables to pace escalation and add complications\n- a worked example from muster to aftermath\n\nIt keeps the fight playable in a normal session, but it is not a mass combat simulator. If your table wants unit-by-unit casualty counts you would still add a second system.\n\nHave you run a battle with the party embedded in a larger force, and what kept their actions central without pausing the wider fight?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/announcements/release-36595187772-1.png)",
+      "url": "https://codexcryptica.com/answers/how-do-i-run-a-large-battle-when-the-player-characters-are-part-of-an-army",
+      "image_url": "https://assets.codexcryptica.com/announcements/release-36595187772-1.png",
       "source_id": "36595187772",
       "status": "approved",
-      "created_at": 1790702003
+      "created_at": 1790703176
     }
   ]
 }
