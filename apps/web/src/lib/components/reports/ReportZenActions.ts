@@ -2,6 +2,7 @@ import type { Entity } from "schema";
 import type { Canvas } from "@codex/canvas-engine";
 import {
   buildReport,
+  DEFAULT_REPORT_INCLUDE,
   type ReportDetail,
   type ReportScope,
 } from "entity-report-engine";
@@ -74,7 +75,7 @@ export async function regenerateReport(
       : { origin: provenance.origin };
   const document = buildReport(input, {
     scope,
-    include: provenance.include,
+    include: { ...DEFAULT_REPORT_INCLUDE, ...provenance.include },
     detail: currentDetail(provenance.detail),
   });
 

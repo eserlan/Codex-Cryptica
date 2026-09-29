@@ -153,3 +153,83 @@ describe("buildReport locations", () => {
     expect(loc(doc, "realm").contains).toEqual([]);
   });
 });
+
+describe("buildReport connection sources", () => {
+  const input = (): ReportInput => ({
+    entities: [
+      entity("f", { title: "Guild", type: "faction" }),
+      entity("a", { title: "Ann" }),
+      entity("b", { title: "Bob" }),
+    ],
+    relationships: [
+      { sourceId: "a", targetId: "f", label: "member", sources: ["canvas"] },
+      { sourceId: "b", targetId: "f", label: "member", sources: ["graph"] },
+      {
+        sourceId: "a",
+        targetId: "b",
+        label: "ally",
+        sources: ["canvas", "graph"],
+      },
+    ],
+    factionMembership: { f: ["a", "b"] },
+  });
+  const withSources = (canvasConnections: boolean, graphConnections: boolean) =>
+    buildReport(
+      input(),
+      options({
+        include: {
+          ...DEFAULT_REPORT_INCLUDE,
+          canvasConnections,
+          graphConnections,
+        },
+      }),
+    );
+  const members = (doc: ReturnType<typeof buildReport>) => {
+    const f = doc.sections.find((s) => s.entity.id === "f")!;
+    return f.kind === "faction" ? f.members.map((m) => m.id) : [];
+  };
+
+  it("keeps everything when both sources are on", () => {
+    const doc = withSources(true, true);
+    expect(doc.overview.relationshipCount).toBe(3);
+    expect(members(doc)).toEqual(["a", "b"]);
+  });
+
+  it("keeps only canvas relationships and members when graph is off", () => {
+    const doc = withSources(true, false);
+    expect(doc.relationshipSummary.map((l) => l.label).sort()).toEqual([
+      "ally",
+      "member",
+    ]);
+    expect(members(doc)).toEqual(["a"]);
+  });
+
+  it("keeps only graph relationships and members when canvas is off", () => {
+    const doc = withSources(false, true);
+    expect(members(doc)).toEqual(["b"]);
+    expect(doc.overview.relationshipCount).toBe(2);
+  });
+
+  it("drops all sourced relationships and members when both are off", () => {
+    const doc = withSources(false, false);
+    expect(doc.overview.relationshipCount).toBe(0);
+    expect(members(doc)).toEqual([]);
+  });
+
+  it("always keeps a relationship that has no source recorded", () => {
+    const doc = buildReport(
+      {
+        ...input(),
+        relationships: [{ sourceId: "a", targetId: "b", label: "old" }],
+      },
+      options({
+        include: {
+          ...DEFAULT_REPORT_INCLUDE,
+          canvasConnections: false,
+          graphConnections: false,
+        },
+      }),
+    );
+    expect(doc.overview.relationshipCount).toBe(1);
+  });
+});

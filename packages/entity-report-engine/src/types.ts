@@ -11,7 +11,13 @@ export interface ReportInclude {
   portraits: boolean;
   notes: boolean;
   gmOnlySecrets: boolean;
+  /** Relationships drawn as lines on the canvas. Only matters with Relationships on. */
+  canvasConnections: boolean;
+  /** Relationships the entities have in the graph. Only matters with Relationships on. */
+  graphConnections: boolean;
 }
+
+export type RelationshipSource = "canvas" | "graph";
 
 export type ReportDetail = "brief" | "standard";
 
@@ -41,6 +47,8 @@ export interface ReportRelationshipInput {
   sourceId: string;
   targetId: string;
   label: string;
+  /** Where the relationship comes from; unset means it is always included. */
+  sources?: RelationshipSource[];
 }
 
 export interface ReportInput {

@@ -181,6 +181,9 @@ export const ReportProvenanceSchema = z.object({
     portraits: z.boolean(),
     notes: z.boolean(),
     gmOnlySecrets: z.boolean(),
+    // Added later; reports saved before then include both kinds.
+    canvasConnections: z.boolean().optional(),
+    graphConnections: z.boolean().optional(),
   }),
   // "detailed" is legacy: still accepted so previously saved reports load.
   detail: z.enum(["brief", "standard", "detailed"]),

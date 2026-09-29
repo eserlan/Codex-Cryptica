@@ -98,6 +98,126 @@ describe("ReportPanel", () => {
     expect(screen.queryByText("A rogue.")).toBeNull();
   });
 
+  it("disables options that have nothing to show, and says why", () => {
+    render(ReportPanel, {
+      props: {
+        input: { ...input, relationships: [] },
+        source: canvasSource,
+        defaultTitle: "T",
+        onclose: vi.fn(),
+      },
+    });
+    const relationships = screen.getByLabelText(
+      "Relationships",
+    ) as HTMLInputElement;
+    const factions = screen.getByLabelText(
+      "Factions and affiliations",
+    ) as HTMLInputElement;
+    expect(relationships.disabled).toBe(true);
+    expect(factions.disabled).toBe(true);
+    expect(
+      screen.getByText("No relationships between these entities."),
+    ).toBeTruthy();
+    expect(
+      (screen.getByLabelText("Descriptions") as HTMLInputElement).disabled,
+    ).toBe(false);
+  });
+
+  it("keeps options enabled when the report has relationships and members", () => {
+    render(ReportPanel, {
+      props: {
+        input: { ...input, factionMembership: { f: ["a"] } },
+        source: canvasSource,
+        defaultTitle: "T",
+        onclose: vi.fn(),
+      },
+    });
+    expect(
+      (screen.getByLabelText("Relationships") as HTMLInputElement).disabled,
+    ).toBe(false);
+    expect(
+      (screen.getByLabelText("Factions and affiliations") as HTMLInputElement)
+        .disabled,
+    ).toBe(false);
+    expect(screen.queryByText(/No relationships between/)).toBeNull();
+  });
+
+  const twoSources = {
+    ...input,
+    relationships: [
+      {
+        sourceId: "a",
+        targetId: "b",
+        label: "friend",
+        sources: ["canvas" as const],
+      },
+      {
+        sourceId: "b",
+        targetId: "a",
+        label: "ally",
+        sources: ["graph" as const],
+      },
+    ],
+  };
+  const panel = (over: Record<string, unknown> = {}) =>
+    render(ReportPanel, {
+      props: {
+        input: twoSources,
+        source: canvasSource,
+        defaultTitle: "T",
+        onclose: vi.fn(),
+        ...over,
+      },
+    });
+
+  it("lets canvas lines and graph connections be turned off separately", async () => {
+    const { container } = panel();
+    expect(container.textContent).toContain("Vargas — friend → Lajos");
+    expect(container.textContent).toContain("Lajos — ally → Vargas");
+
+    await fireEvent.click(screen.getByLabelText("Connections from the graph"));
+    expect(container.textContent).toContain("Vargas — friend → Lajos");
+    expect(container.textContent).not.toContain("Lajos — ally → Vargas");
+
+    await fireEvent.click(screen.getByLabelText("Lines drawn on the canvas"));
+    expect(container.textContent).not.toContain("Vargas — friend → Lajos");
+  });
+
+  it("only offers canvas lines for canvas reports", () => {
+    panel({ source: { origin: "graph" as const } });
+    expect(screen.queryByLabelText("Lines drawn on the canvas")).toBeNull();
+    expect(screen.getByLabelText("Connections from the graph")).toBeTruthy();
+  });
+
+  it("disables a connection source that has nothing in this report", () => {
+    panel({
+      input: {
+        ...twoSources,
+        relationships: [twoSources.relationships[0]],
+      },
+    });
+    expect(
+      (screen.getByLabelText("Connections from the graph") as HTMLInputElement)
+        .disabled,
+    ).toBe(true);
+    expect(
+      screen.getByText("No graph connections between these entities."),
+    ).toBeTruthy();
+    expect(
+      (screen.getByLabelText("Lines drawn on the canvas") as HTMLInputElement)
+        .disabled,
+    ).toBe(false);
+  });
+
+  it("greys out the source options when Relationships is off", async () => {
+    panel();
+    await fireEvent.click(screen.getByLabelText("Relationships"));
+    expect(
+      (screen.getByLabelText("Lines drawn on the canvas") as HTMLInputElement)
+        .disabled,
+    ).toBe(true);
+  });
+
   it("does not offer a Notes option", () => {
     render(ReportPanel, {
       props: {
