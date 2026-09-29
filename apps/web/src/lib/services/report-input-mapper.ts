@@ -20,7 +20,9 @@ export function toReportEntityInput(entity: Entity): ReportEntityInput {
     headingAt === -1 ? content : content.slice(0, headingAt)
   ).trim();
   const notes = headingAt === -1 ? "" : content.slice(headingAt).trim();
-  const summary = firstLine(description);
+  const summary =
+    firstLine(description) ??
+    firstLine(notes.replace(/^#{1,6}\s.*$/gm, "").trim());
 
   return {
     id: entity.id,

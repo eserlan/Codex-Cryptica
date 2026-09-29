@@ -1,6 +1,10 @@
 import type { Entity } from "schema";
 import type { Canvas } from "@codex/canvas-engine";
-import { buildReport, type ReportScope } from "entity-report-engine";
+import {
+  buildReport,
+  type ReportDetail,
+  type ReportScope,
+} from "entity-report-engine";
 import { vault } from "$lib/stores/vault.svelte";
 import { notificationStore } from "$lib/stores/ui/notification.svelte";
 import {
@@ -39,6 +43,11 @@ export function isReportEntity(
   return entity?.kind === "report" && Boolean(entity.report);
 }
 
+/** Reports saved before "detailed" was folded into "standard" still carry it. */
+function currentDetail(saved: string): ReportDetail {
+  return saved === "brief" ? "brief" : "standard";
+}
+
 export async function regenerateReport(
   entity: Entity,
   deps: ReportZenActionDeps = defaultDeps,
@@ -66,7 +75,7 @@ export async function regenerateReport(
   const document = buildReport(input, {
     scope,
     include: provenance.include,
-    detail: provenance.detail,
+    detail: currentDetail(provenance.detail),
   });
 
   let first: Awaited<ReturnType<ReportZenActionDeps["service"]["regenerate"]>>;

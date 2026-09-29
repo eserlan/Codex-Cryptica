@@ -30,7 +30,7 @@ describe("renderReportMarkdown", () => {
   it("marks GM-only text and demotes note headings", () => {
     const md = renderReportMarkdown(
       buildReport(sampleInput(), {
-        ...options({ detail: "detailed" }),
+        ...options({ detail: "standard" }),
         include: { ...DEFAULT_REPORT_INCLUDE, gmOnlySecrets: true },
       }),
     );

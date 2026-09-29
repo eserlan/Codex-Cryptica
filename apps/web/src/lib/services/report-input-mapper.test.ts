@@ -41,6 +41,12 @@ describe("toReportEntityInput", () => {
     const input = toReportEntityInput(make({ id: "a", content: "## Only\nx" }));
     expect(input.description).toBeUndefined();
     expect(input.notes).toBe("## Only\nx");
+    expect(input.summary).toBe("x");
+  });
+
+  it("has no summary when a heading-only note has no body text", () => {
+    const input = toReportEntityInput(make({ id: "a", content: "## Only" }));
+    expect(input.summary).toBeUndefined();
   });
 });
 

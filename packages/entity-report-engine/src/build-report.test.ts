@@ -6,7 +6,7 @@ import type { ReportInput } from "./types";
 
 const detailed = (over: Partial<typeof DEFAULT_REPORT_INCLUDE> = {}) =>
   options({
-    detail: "detailed",
+    detail: "standard",
     include: { ...DEFAULT_REPORT_INCLUDE, ...over },
   });
 
