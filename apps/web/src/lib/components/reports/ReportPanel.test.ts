@@ -98,6 +98,19 @@ describe("ReportPanel", () => {
     expect(screen.queryByText("A rogue.")).toBeNull();
   });
 
+  it("does not offer a Notes option", () => {
+    render(ReportPanel, {
+      props: {
+        input,
+        source: canvasSource,
+        defaultTitle: "T",
+        onclose: vi.fn(),
+      },
+    });
+    expect(screen.queryByLabelText("Notes")).toBeNull();
+    expect(screen.getByLabelText("Descriptions")).toBeTruthy();
+  });
+
   it("saves once, closes and opens the new note in Zen", async () => {
     const onclose = vi.fn();
     render(ReportPanel, {
