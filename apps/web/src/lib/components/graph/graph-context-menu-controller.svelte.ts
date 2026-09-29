@@ -195,13 +195,31 @@ export class GraphContextMenuController {
     }
   };
 
-  handleDeleteEdge = async () => {
-    if (!this.targetEdge || this.deps.vault.isGuest) return;
-    const { source, target, type } = this.targetEdge;
+  /** Closes the edge menu and hands back the edge it was opened on. */
+  private takeEditableEdge() {
+    const edge = this.targetEdge;
+    if (!edge || this.deps.vault.isGuest) return null;
     this.clearPickerTimeout();
     this.contextMenuOpen = false;
     this.targetEdge = null;
-    await this.deps.vault.removeConnection(source, target, type);
+    return edge;
+  }
+
+  handleHideEdge = async () => {
+    const edge = this.takeEditableEdge();
+    if (!edge) return;
+    await this.deps.vault.setConnectionHidden(
+      edge.source,
+      edge.target,
+      edge.type,
+      true,
+    );
+  };
+
+  handleDeleteEdge = async () => {
+    const edge = this.takeEditableEdge();
+    if (!edge) return;
+    await this.deps.vault.removeConnection(edge.source, edge.target, edge.type);
   };
 
   clearPickerTimeout = () => {

@@ -93,6 +93,19 @@
     {#if controller.targetEdge}
       {#if !vault.isGuest}
         <button
+          type="button"
+          role="menuitem"
+          class="w-full text-left px-4 py-2 text-sm text-theme-text hover:bg-theme-primary/10 hover:text-theme-primary transition flex items-center gap-2 whitespace-nowrap"
+          onclick={controller.handleHideEdge}
+          aria-label="Hide Connection"
+        >
+          <span
+            aria-hidden="true"
+            class="icon-[lucide--eye-off] h-3.5 w-3.5 opacity-70"
+          ></span>
+          <span>Hide Connection</span>
+        </button>
+        <button
           role="menuitem"
           class="w-full text-left px-4 py-2 text-sm text-theme-danger hover:bg-theme-danger/10 transition flex items-center gap-2 whitespace-nowrap"
           onclick={controller.handleDeleteEdge}

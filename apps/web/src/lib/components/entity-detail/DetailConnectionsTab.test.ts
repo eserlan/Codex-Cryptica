@@ -206,6 +206,59 @@ describe("DetailConnectionsTab", () => {
     expect(screen.getByTestId("connections-empty")).toBeTruthy();
   });
 
+  describe("hidden connections", () => {
+    const withHidden = (hidden: Record<string, boolean>) =>
+      ({
+        ...entities.king,
+        connections: entities.king.connections.map((c) => ({
+          ...c,
+          hidden: hidden[c.target] || undefined,
+        })),
+      }) as unknown as Entity;
+
+    const drawnNodeIds = () =>
+      cyInstances[0].nodes().map((n: any) => n.id() as string);
+
+    it("leaves a hidden connection's neighbour out of the diagram", async () => {
+      render(DetailConnectionsTab, { entity: withHidden({ duke: true }) });
+      await Promise.resolve();
+      await Promise.resolve();
+      await Promise.resolve();
+
+      const ids = drawnNodeIds();
+      expect(ids).not.toContain("duke");
+      expect(ids).toContain("guard");
+      expect(ids).toContain("king");
+    });
+
+    it("draws every neighbour when nothing is hidden (negative)", async () => {
+      render(DetailConnectionsTab, { entity: withHidden({}) });
+      await Promise.resolve();
+      await Promise.resolve();
+      await Promise.resolve();
+
+      expect(drawnNodeIds()).toEqual(
+        expect.arrayContaining(["king", "duke", "guard"]),
+      );
+    });
+
+    it("explains an empty diagram when every connection is hidden", async () => {
+      render(DetailConnectionsTab, {
+        entity: {
+          ...entities.hermit,
+          connections: [
+            { target: "guard", type: "knows", strength: 1, hidden: true },
+          ],
+        } as unknown as Entity,
+      });
+      await Promise.resolve();
+
+      expect(screen.getByTestId("connections-empty").textContent).toContain(
+        "hidden",
+      );
+    });
+  });
+
   describe("cytoscape wiring", () => {
     it("initializes the canvas without its own pan/zoom gestures", async () => {
       const { initGraph } = await import("graph-engine");

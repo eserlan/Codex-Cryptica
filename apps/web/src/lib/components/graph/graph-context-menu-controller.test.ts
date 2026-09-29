@@ -496,4 +496,42 @@ describe("GraphContextMenuController", () => {
 
     expect(deps.vault.removeConnection).not.toHaveBeenCalled();
   });
+
+  it("hides the edge's connection instead of deleting it", async () => {
+    deps.vault.isGuest = false;
+    deps.vault.setConnectionHidden = vi.fn();
+    deps.vault.removeConnection = vi.fn();
+    controller.targetEdge = {
+      source: "node-a",
+      target: "node-b",
+      type: "ally",
+    };
+    controller.contextMenuOpen = true;
+
+    await controller.handleHideEdge();
+
+    expect(deps.vault.setConnectionHidden).toHaveBeenCalledWith(
+      "node-a",
+      "node-b",
+      "ally",
+      true,
+    );
+    expect(deps.vault.removeConnection).not.toHaveBeenCalled();
+    expect(controller.targetEdge).toBeNull();
+    expect(controller.contextMenuOpen).toBe(false);
+  });
+
+  it("should not hide an edge in guest mode", async () => {
+    deps.vault.isGuest = true;
+    deps.vault.setConnectionHidden = vi.fn();
+    controller.targetEdge = {
+      source: "node-a",
+      target: "node-b",
+      type: "ally",
+    };
+
+    await controller.handleHideEdge();
+
+    expect(deps.vault.setConnectionHidden).not.toHaveBeenCalled();
+  });
 });

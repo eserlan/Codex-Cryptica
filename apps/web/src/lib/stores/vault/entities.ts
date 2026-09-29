@@ -391,6 +391,49 @@ export function updateConnection(
   };
 }
 
+export function setConnectionHidden(
+  entities: Record<string, LocalEntity>,
+  sourceId: string,
+  targetId: string,
+  type: string,
+  hidden: boolean,
+): {
+  entities: Record<string, LocalEntity>;
+  updatedSource: LocalEntity | null;
+  updatedConnection: Connection | null;
+} {
+  const source = entities[sourceId];
+  if (!source) {
+    return { entities, updatedSource: null, updatedConnection: null };
+  }
+
+  let updatedConnection: Connection | null = null;
+  const connections = (source.connections ?? []).map((c) => {
+    if (c.target !== targetId || c.type !== type) return c;
+    // An unhidden connection drops the flag rather than storing `false`, so
+    // the note's frontmatter stays as it was before it was ever hidden.
+    const { hidden: _previous, ...rest } = c;
+    updatedConnection = hidden ? { ...rest, hidden: true } : rest;
+    return updatedConnection;
+  });
+  if (!updatedConnection) {
+    return { entities, updatedSource: null, updatedConnection: null };
+  }
+
+  const updatedSource = {
+    ...source,
+    connections,
+    updatedAt: systemClock.now(),
+    modifiedAt: systemClock.now(),
+  } as LocalEntity;
+
+  return {
+    entities: { ...entities, [sourceId]: updatedSource },
+    updatedSource,
+    updatedConnection,
+  };
+}
+
 export function removeConnection(
   entities: Record<string, LocalEntity>,
   sourceId: string,

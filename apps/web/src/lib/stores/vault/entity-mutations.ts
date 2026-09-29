@@ -686,6 +686,49 @@ export class EntityMutationService {
     return false;
   }
 
+  /**
+   * Hides or shows one connection everywhere it is drawn (graph, Connections
+   * diagram). The connection itself is kept and still listed on the entity.
+   */
+  async setConnectionHidden(
+    sourceId: string,
+    targetId: string,
+    type: string,
+    hidden: boolean,
+  ): Promise<boolean> {
+    if (!this.deps.loader.isContentLoaded(sourceId)) {
+      await this.deps.loader.loadEntityContent(sourceId);
+    }
+    const { entities, updatedSource, updatedConnection } =
+      vaultEntities.setConnectionHidden(
+        this.entities,
+        sourceId,
+        targetId,
+        type,
+        hidden,
+      );
+    if (!updatedSource || !updatedConnection) return false;
+
+    this.entities = entities;
+    await this.deps.persistence.scheduleSave(updatedSource);
+    this.deps.onConnectionUpdated?.(
+      sourceId,
+      targetId,
+      type,
+      updatedConnection,
+    );
+    vaultEventBus.emit({
+      type: "CONNECTION_UPDATED",
+      vaultId: this.deps.activeVaultId() || "unknown",
+      sourceId,
+      targetId,
+      oldType: type,
+      newType: type,
+      newLabel: updatedConnection.label,
+    });
+    return true;
+  }
+
   async removeConnection(
     sourceId: string,
     targetId: string,

@@ -398,6 +398,15 @@ export class EntityStore {
     );
   }
 
+  async setConnectionHidden(
+    sourceId: string,
+    targetId: string,
+    type: string,
+    hidden: boolean,
+  ): Promise<boolean> {
+    return this.mutations.setConnectionHidden(sourceId, targetId, type, hidden);
+  }
+
   async removeConnection(
     sourceId: string,
     targetId: string,

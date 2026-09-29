@@ -46,4 +46,39 @@ describe("isGraphRelevantEntityChange", () => {
   ])("catches a %s change", (_field, patch) => {
     expect(changed(patch as Partial<LocalEntity>)).toBe(true);
   });
+
+  describe("connections", () => {
+    const link = { target: "keep", type: "owns", strength: 1 };
+    const withLinks = (connections: unknown[]) =>
+      isGraphRelevantEntityChange(
+        { ...base, connections: [link] } as unknown as LocalEntity,
+        { ...base, connections } as unknown as LocalEntity,
+      );
+
+    it("catches hiding a connection, so the edge leaves the graph", () => {
+      expect(withLinks([{ ...link, hidden: true }])).toBe(true);
+    });
+
+    it("catches showing a hidden connection again", () => {
+      expect(
+        isGraphRelevantEntityChange(
+          {
+            ...base,
+            connections: [{ ...link, hidden: true }],
+          } as unknown as LocalEntity,
+          { ...base, connections: [link] } as unknown as LocalEntity,
+        ),
+      ).toBe(true);
+    });
+
+    it("treats hidden: false and no flag as the same connection (negative)", () => {
+      expect(withLinks([{ ...link, hidden: false }])).toBe(false);
+      expect(withLinks([{ ...link }])).toBe(false);
+    });
+
+    it("catches a changed or extra connection", () => {
+      expect(withLinks([{ ...link, type: "rival" }])).toBe(true);
+      expect(withLinks([link, { ...link, target: "tower" }])).toBe(true);
+    });
+  });
 });

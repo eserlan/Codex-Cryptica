@@ -827,4 +827,59 @@ describe("GraphTransformer node positions", () => {
       (elements[1] as any).position,
     );
   });
+
+  describe("hidden connections", () => {
+    const pair = (hidden?: boolean) =>
+      [
+        {
+          id: "a",
+          type: "npc",
+          title: "A",
+          tags: [],
+          labels: [],
+          content: "",
+          connections: [
+            { target: "b", type: "knows", hidden },
+            { target: "b", type: "owns" },
+          ],
+        },
+        {
+          id: "b",
+          type: "npc",
+          title: "B",
+          tags: [],
+          labels: [],
+          content: "",
+          connections: [],
+        },
+      ] as unknown as Entity[];
+
+    const edges = (entities: Entity[]) =>
+      GraphTransformer.entitiesToElements(entities).filter(
+        (e) => e.group === "edges",
+      );
+
+    it("leaves a hidden connection out of the edges but keeps both nodes", () => {
+      const elements = GraphTransformer.entitiesToElements(pair(true));
+
+      expect(elements.filter((e) => e.group === "nodes")).toHaveLength(2);
+      expect(edges(pair(true)).map((e) => (e.data as any).id)).toEqual([
+        "a-b-owns",
+      ]);
+    });
+
+    it("draws every connection when none is hidden (negative)", () => {
+      expect(edges(pair(undefined))).toHaveLength(2);
+      expect(edges(pair(false))).toHaveLength(2);
+    });
+
+    it("does not spend the edge budget on a hidden connection", () => {
+      const elements = GraphTransformer.entitiesToElements(
+        pair(true),
+        undefined,
+        1,
+      );
+      expect(elements.filter((e) => e.group === "edges")).toHaveLength(1);
+    });
+  });
 });
