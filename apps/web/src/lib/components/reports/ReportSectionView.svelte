@@ -23,7 +23,8 @@
     portraitSrc = null;
     if (!path) return;
     let cancelled = false;
-    Promise.resolve(vault.resolveImageUrl(path))
+    const resolution = Promise.resolve(vault.resolveImageUrl(path));
+    resolution
       .then((url) => {
         if (!cancelled) portraitSrc = url || null;
       })
@@ -32,6 +33,7 @@
       });
     return () => {
       cancelled = true;
+      resolution.then(() => vault.releaseImageUrl(path)).catch(() => undefined);
     };
   });
 </script>
@@ -73,7 +75,7 @@
   {/if}
   {#if view.relationships.length}
     <ul class="text-sm list-disc pl-5">
-      {#each view.relationships as line (line)}
+      {#each view.relationships as line, i (i)}
         <li>{line}</li>
       {/each}
     </ul>

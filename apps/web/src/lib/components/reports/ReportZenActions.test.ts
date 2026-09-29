@@ -109,6 +109,23 @@ describe("regenerateReport", () => {
     const d = deps();
     expect(await regenerateReport(source, d)).toBe("failed");
   });
+
+  it("notifies when saving regenerated content throws", async () => {
+    const d = deps({
+      service: {
+        regenerate: vi.fn(async () => {
+          throw new Error("disk unavailable");
+        }),
+        export: vi.fn(),
+      },
+    });
+
+    expect(await regenerateReport(report, d)).toBe("failed");
+    expect(d.notify).toHaveBeenCalledWith(
+      "The report could not be regenerated.",
+      "error",
+    );
+  });
 });
 
 describe("exportReport", () => {

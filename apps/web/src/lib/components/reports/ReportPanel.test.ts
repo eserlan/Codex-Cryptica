@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 
-import { fireEvent, render, screen } from "@testing-library/svelte";
+import { fireEvent, render, screen, waitFor } from "@testing-library/svelte";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { ReportInput } from "entity-report-engine";
 
@@ -127,9 +127,62 @@ describe("ReportPanel", () => {
     render(ReportPanel, {
       props: { input, source: canvasSource, defaultTitle: "T", onclose },
     });
+    const panel = screen.getByTestId("report-panel");
     await fireEvent.click(screen.getByTestId("report-cancel"));
     expect(onclose).toHaveBeenCalled();
+    expect(panel.getAttribute("aria-hidden")).toBe("true");
     expect(save).not.toHaveBeenCalled();
+  });
+
+  it("does not close while a save is pending", async () => {
+    let finishSave!: (value: { entityId: string; created: true }) => void;
+    save.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          finishSave = resolve;
+        }),
+    );
+    const onclose = vi.fn();
+    render(ReportPanel, {
+      props: { input, source: canvasSource, defaultTitle: "T", onclose },
+    });
+
+    await fireEvent.click(screen.getByTestId("report-save"));
+    await fireEvent.keyDown(window, { key: "Escape" });
+    expect(onclose).not.toHaveBeenCalled();
+
+    finishSave({ entityId: "new", created: true });
+    await vi.waitFor(() => expect(onclose).toHaveBeenCalledOnce());
+  });
+
+  it("keeps keyboard focus inside the dialog", async () => {
+    const trigger = document.createElement("button");
+    document.body.append(trigger);
+    trigger.focus();
+
+    render(ReportPanel, {
+      props: {
+        input,
+        source: canvasSource,
+        defaultTitle: "T",
+        onclose: vi.fn(),
+      },
+    });
+    const dialog = screen.getByRole("dialog");
+    await waitFor(() =>
+      expect(dialog.contains(document.activeElement)).toBe(true),
+    );
+
+    const buttons = dialog.querySelectorAll<HTMLButtonElement>(
+      "button:not([disabled])",
+    );
+    buttons[buttons.length - 1].focus();
+    await fireEvent.keyDown(dialog, { key: "Tab" });
+    expect(document.activeElement).toBe(
+      dialog.querySelector('button[aria-label="Close"]'),
+    );
+
+    trigger.remove();
   });
 
   it("tells the user when saving fails and stays open", async () => {

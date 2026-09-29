@@ -69,7 +69,13 @@ export async function regenerateReport(
     detail: provenance.detail,
   });
 
-  const first = await deps.service.regenerate(entity.id, document);
+  let first: Awaited<ReturnType<ReportZenActionDeps["service"]["regenerate"]>>;
+  try {
+    first = await deps.service.regenerate(entity.id, document);
+  } catch {
+    deps.notify("The report could not be regenerated.", "error");
+    return "failed";
+  }
   if (first.applied) {
     deps.notify("Report regenerated.", "success");
     return "applied";
@@ -88,9 +94,15 @@ export async function regenerateReport(
   });
   if (!confirmed) return "cancelled";
 
-  const second = await deps.service.regenerate(entity.id, document, {
-    confirmed: true,
-  });
+  let second: Awaited<ReturnType<ReportZenActionDeps["service"]["regenerate"]>>;
+  try {
+    second = await deps.service.regenerate(entity.id, document, {
+      confirmed: true,
+    });
+  } catch {
+    deps.notify("The report could not be regenerated.", "error");
+    return "failed";
+  }
   deps.notify(
     second.applied
       ? "Report regenerated."

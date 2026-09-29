@@ -70,7 +70,7 @@
       </p>
     </section>
 
-    {#each views as { view } (view.title)}
+    {#each views as { section, view } (section.entity.id)}
       <ReportSectionView {view} />
     {/each}
 

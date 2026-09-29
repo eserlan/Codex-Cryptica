@@ -1,5 +1,6 @@
 <script lang="ts">
   import { fade, scale } from "svelte/transition";
+  import { focusTrap } from "$lib/actions/focusTrap";
   import {
     DEFAULT_REPORT_DETAIL,
     DEFAULT_REPORT_INCLUDE,
@@ -40,6 +41,7 @@
   // svelte-ignore state_referenced_locally
   let title = $state(defaultTitle);
   let isSaving = $state(false);
+  let isClosing = $state(false);
 
   const showScope = $derived(current.source.origin === "canvas" && !!rescope);
   const selection = $derived(
@@ -77,6 +79,12 @@
       : "There are no entities to report on.",
   );
 
+  function closePanel() {
+    if (isSaving || isClosing) return;
+    isClosing = true;
+    onclose();
+  }
+
   async function save() {
     if (!document || isSaving) return;
     isSaving = true;
@@ -85,6 +93,7 @@
         title,
         provenance: { ...current.source, include: { ...include }, detail },
       });
+      isClosing = true;
       onclose();
       modalUIStore.openZenMode(entityId);
     } catch (err) {
@@ -96,7 +105,7 @@
   }
 </script>
 
-<svelte:window onkeydown={(e) => e.key === "Escape" && onclose()} />
+<svelte:window onkeydown={(e) => e.key === "Escape" && closePanel()} />
 
 <div
   class="fixed inset-0 z-[80] flex items-center justify-center bg-black/60 p-4"
@@ -109,6 +118,9 @@
     role="dialog"
     aria-modal="true"
     aria-label="Generate report"
+    aria-hidden={isClosing}
+    tabindex="-1"
+    use:focusTrap
     data-testid="report-panel"
   >
     <div
@@ -123,7 +135,8 @@
       </h2>
       <button
         type="button"
-        onclick={onclose}
+        onclick={closePanel}
+        disabled={isSaving}
         class="p-2 rounded-lg hover:bg-theme-bg text-theme-muted hover:text-theme-text"
         aria-label="Close"
       >
@@ -216,7 +229,8 @@
     >
       <button
         type="button"
-        onclick={onclose}
+        onclick={closePanel}
+        disabled={isSaving}
         class="px-4 py-2 rounded-lg text-xs uppercase font-header tracking-widest text-theme-muted hover:text-theme-text"
         data-testid="report-cancel"
       >
