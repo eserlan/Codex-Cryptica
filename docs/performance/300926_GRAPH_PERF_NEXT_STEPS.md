@@ -2,10 +2,43 @@
 
 - **Date:** 2026-09-30
 - **Tracking issue:** [#3569](https://github.com/eserlan/Codex-Cryptica/issues/3569)
-- **Status (2026-09-30):** items 1 and 2 shipped in [#3571](https://github.com/eserlan/Codex-Cryptica/pull/3571) and [#3572](https://github.com/eserlan/Codex-Cryptica/pull/3572). Items 3 to 6 are open. No before/after timings exist for the shipped changes yet.
+- **Status (2026-09-30):** items 1 and 2 shipped in [#3571](https://github.com/eserlan/Codex-Cryptica/pull/3571) and [#3572](https://github.com/eserlan/Codex-Cryptica/pull/3572). Measured results, and three changes found by measuring, are in [Measured results](#measured-results-30-sep-2026) below. Item 3 was measured and not built.
 - **Scope:** `packages/graph-engine`, `packages/vault-engine`, `packages/search-orchestrator`, `apps/web`
 - **Method:** code review of the current `staging`, plus the existing measurements in this folder.
-- **No fresh measurements.** An attempt to run the large-vault harness (`bun run test:performance`) timed out waiting for its own web server (its `webServer` command rebuilds the app, with a 120 s limit), so every number below is quoted from an earlier document and dated. Step 1 of the plan exists to fix this.
+- **Measurements.** The first version of this document had none: the harness timed out on its own web server (its `webServer` command rebuilds the app, and the old 2-minute limit was shorter than the build), so its figures were quoted from earlier documents. That is fixed, and the results are in [Measured results](#measured-results-30-sep-2026). Figures in the item sections below that are marked as quoted are from the earlier documents and were not re-measured.
+
+## Measured results (30 Sep 2026)
+
+The large-vault harness now runs (`PERFORMANCE_EXTERNAL_SERVER=1` with a separate `vite preview`, or the raised web server timeout), with three new scenarios in [#3576](https://github.com/eserlan/Codex-Cryptica/pull/3576): `graph-images`, `entity-index-batch` and `graph-sync-edit`. All figures: production build, three runs, median, one machine. Synthetic hosts and fixtures, so absolute numbers will differ on real vaults; the ratios are the point.
+
+### Baseline: the core operations were already fast
+
+At 1,600 entities: cold open 103 ms, warm open 106 ms, focus-depth change 67 ms, table open 82 ms, table sort 36 ms. Two apparently slow figures are deliberate delays, not work: `graph_select` (384 ms) is a 300 ms double-tap delay (`NODE_SELECT_DELAY_MS`) plus about 84 ms of work, and `entity_save` (about 350 ms) is dominated by the 400 ms persistence debounce. The August figures (focus-depth change 1,170 ms, table open 824 ms) no longer apply.
+
+### Images
+
+Pool of 6 (#3571) fixed the hang and first paint but made total completion slower on slow hosts. 300 images, 25% on a 1.5 s host:
+
+|               | before #3571 | pool 6 | pool 24 (#3577) |
+| ------------- | ------------ | ------ | --------------- |
+| first picture | 8.9 s        | 1.1 s  | 1.2 s           |
+| 50%           | 8.9 s        | 12.5 s | 5.0 s           |
+| all           | 8.9 s        | 25.2 s | 9.9 s           |
+
+With 5% hosts that never answer: no picture in 60 s before; pool 6 finished at 49 s; pool 24 at 19 s. Run 1 of each variant is much slower than runs 2 and 3, which looks like warm-up. Total completion is about the same as before #3571, but pictures arrive progressively and a hung host no longer blocks everything.
+
+### Entity index batches (found by measuring, not in the original list)
+
+Every edit, import and sync reconcile passes through `EntityIndexMaintainer.handleEntitiesUpdate`, which searched and copied three reactive arrays per changed entity, so a batch of k edits cost k passes. About 5 ms per changed entity, linear in k.
+
+| batch of edits       | before   | after          |
+| -------------------- | -------- | -------------- |
+| 800 connection edits | 4,370 ms | 16 ms (#3588)  |
+| 200 connection edits | 1,036 ms | 9 ms (#3588)   |
+| 800 renames          | 3,690 ms | 5 ms (#3591)   |
+| 200 deletes          | 1,181 ms | 4.7 ms (#3591) |
+
+A full index rebuild takes 6 ms at 1,600 entities, so #3591 rebuilds once when a batch has more than three index-relevant changes. My first estimate for this was "tens of milliseconds"; the measurement was two orders of magnitude worse, which is why the estimate was replaced by a scenario.
 
 ## What the recent work achieved
 
@@ -39,7 +72,7 @@ Each item says how it was verified. "Measured" means a figure from an earlier do
 - A resolve that throws is reported through `onError`, no longer discards the rest, and is retried on the next sync.
 - Nothing is painted once the graph is destroyed or images are switched off mid-run.
 
-**Effect:** pictures appear progressively instead of after the longest fetch. Total work is unchanged, so this shows up as time to first useful paint, not as a lower total. **Not yet measured.**
+**Effect:** pictures appear progressively instead of after the longest fetch. Total work is unchanged, so this shows up as time to first useful paint, not as a lower total. Measured in the results section: with the pool at 6 total completion got slower on slow hosts, which #3577 corrected.
 
 ### 2. Images that cannot load are retried, twice, with no timeout (shipped, #3572)
 
@@ -58,13 +91,26 @@ For an external image the host blocks (no CORS headers), `resolveThumbnailUrl` c
 
 **Correction to the first version of this document:** it proposed also blocking a whole origin after a few failures. That was dropped. It could have blanked images that display correctly through the fallback, and a fetch error cannot tell "blocked by CORS" from "temporarily unreachable".
 
-### 3. Every sync compares the whole graph
+### 3. Every sync compares the whole graph (measured, not built)
 
 **Evidence:** code review of `packages/graph-engine/src/sync/useGraphSync.ts`. Cost not measured.
 
 `syncGraphElements` builds a set of every target id, walks `cy.elements()` to partition them, then `syncDataAndFilters` patches every element and applies filter classes to every node, and `syncRenderedWeights` runs over all of them. This is O(nodes + edges) for any change, including editing one entity. The unchanged case no longer emits events (#3386), but it still does the comparison.
 
 A cheaper path already exists: `focusMembershipOnly` skips data patching for retained nodes.
+
+**Measured, and not worth building at this scale.** After connection edits to rendered entities (`graph-sync-edit`, with the graph active), the spans are:
+
+| span                                                   | focus view (500 nodes) | full graph (about 1,600 nodes) |
+| ------------------------------------------------------ | ---------------------- | ------------------------------ |
+| `graph_focus_compute` (rebuild elements)               | 14 to 24 ms            | 39 to 46 ms                    |
+| `graph_sync_patch_filter` (the whole-graph comparison) | 8 to 15 ms             | 22 to 28 ms                    |
+| `graph_sync_reconcile` (total)                         | 13 to 21 ms            | 39 to 42 ms                    |
+| `graph_sync_layout`                                    | 10 to 21 ms            | 35 to 38 ms                    |
+
+The comparison a changed-id sync would shrink is under one frame in the default view and about 25 ms in the opt-in full-graph view, for a change to shared sync code with a real risk of stale nodes. Not built. Element caching (item 4) has a similar headroom (14 to 45 ms) and should be judged the same way.
+
+The design below is kept for the record.
 
 **Proposal:** let the store pass a hint about what changed. The entity store already decides whether an edit is graph-relevant (`isGraphRelevantEntityChange`), so it knows which ids changed. Give `SyncOptions` an optional `changedIds` set. When it is present, patch only those elements and their incident edges, and recompute weights only for their endpoints. Fall back to the full path when the hint is absent, for example on first load, filter changes and mode changes.
 
@@ -129,11 +175,12 @@ These were considered and should stay rejected. The reasons are recorded in exis
 
 ## Plan
 
-1. **Re-baseline.** Make the harness runnable without rebuilding: set `PERFORMANCE_EXTERNAL_SERVER` and start `vite preview` separately, or raise the `webServer.timeout`. Record five runs on the current `staging` for the scenarios in `100826_LARGE_VAULT_BUDGETS.md`, and add a stationary five-second idle check to `large-graph.spec.ts`, as `240926` suggested. **Open, and the blocker for measuring everything below.**
-2. **Images (items 1 and 2).** **Shipped** in #3571 and #3572. Their effect still needs measuring against the fresh baseline.
-3. **`patchGraphEntity` index, then changed-id sync (item 3).** Re-measure the graph scenarios first to confirm it is still worth doing. The index fix is small and can go on its own.
-4. **Preload dedupe (item 5).** Small and independent; can go alongside any step.
-5. **Element caching (item 4) and incremental search persistence (item 6).** Only if the fresh baseline shows them.
-6. **Update the budget ceilings** to the new numbers, in report-only mode, and correct the two stale documents listed at the top.
+1. **Re-baseline.** Done: the harness runs and has the scenarios above. Keep `graph-images`, `entity-index-batch` and `graph-sync-edit` in the suite so regressions show.
+2. **Images (items 1 and 2).** Shipped (#3571, #3572), with the pool corrected in #3577.
+3. **Entity index batches.** Shipped in #3588 and #3591. Not yet measured: batches of _adds_ (they take the same rebuild path), and the heavy path at sizes above 800.
+4. **Changed-id sync (item 3).** Measured, not built (see above). Revisit only if a real vault shows the full-graph view is used often and sync becomes noticeable there.
+5. **Preload dedupe (item 5).** Open. Not yet measured on the harness; the earlier figure (1,281 ms for the second preload) came from a real 1,625-entity vault with content, not this synthetic fixture.
+6. **Element caching (item 4) and incremental search persistence (item 6).** Open; only if the harness or a real vault shows them.
+7. **Update the budget ceilings** in `100826_LARGE_VAULT_BUDGETS.md` to the current numbers, in report-only mode, and correct the two stale documents listed at the top.
 
-Each step ships as its own PR with a before and after number from the same harness.
+Each change ships as its own PR with a before and after number from the same harness.
