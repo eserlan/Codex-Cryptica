@@ -42,7 +42,8 @@
   "ignoreUnresolvedImports": [
     "../workers/search.worker?worker",
     "../p2p-protocol",
-    "../data-model"
+    "../data-model",
+    "../../../../packages/help-engine/dist/knowledge-bundle.json"
   ],
   "ignoreExports": [
     {
@@ -73,8 +74,16 @@
         "patterns": ["packages/schema/**"]
       },
       {
+        "name": "help-engine",
+        "patterns": ["packages/help-engine/**"]
+      },
+      {
         "name": "packages",
-        "patterns": ["packages/**", "!packages/schema/**"]
+        "patterns": [
+          "packages/**",
+          "!packages/schema/**",
+          "!packages/help-engine/**"
+        ]
       },
       {
         "name": "workers",
@@ -109,8 +118,12 @@
         "allow": ["schema", "packages"]
       },
       {
-        "from": "workers",
+        "from": "help-engine",
         "allow": ["schema"]
+      },
+      {
+        "from": "workers",
+        "allow": ["schema", "help-engine"]
       },
       {
         "from": "public-generators",

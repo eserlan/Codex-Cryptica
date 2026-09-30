@@ -45,6 +45,7 @@ import {
   handleLlmOperationStreamRequest,
 } from "./llm/handle-operation-request";
 import { handleSessionRequest, enforceLlmSession } from "./session-guard";
+import { handleHelpAsk } from "./help";
 import { handleTemplateDirectoryRoutes } from "./template-directory-routes";
 import {
   handleEnableCloudBackup,
@@ -845,6 +846,17 @@ export default {
           },
         );
       }
+    }
+
+    // Contextual help (#3427) runs the same session guard itself so it can
+    // count rate-limited requests; see help.ts.
+    if (url.pathname === "/api/help/ask") {
+      return handleHelpAsk(
+        request,
+        env,
+        getCorsHeaders(request.headers, env),
+        isAllowedOrigin,
+      );
     }
 
     // Capability-token guard for the text LLM endpoints. Covers all three
