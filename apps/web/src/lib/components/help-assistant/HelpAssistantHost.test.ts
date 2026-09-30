@@ -63,7 +63,10 @@ describe("HelpAssistantHost", () => {
     const button = screen.getByTestId("help-assistant-button");
     expect(button.getAttribute("aria-expanded")).toBe("false");
     await fireEvent.click(button);
-    await waitFor(() => screen.getByRole("dialog", { name: "Help assistant" }));
+    const dialog = await waitFor(() =>
+      screen.getByRole("dialog", { name: "Help assistant" }),
+    );
+    expect(dialog.getAttribute("tabindex")).toBe("-1");
     expect(button.getAttribute("aria-expanded")).toBe("true");
     await fireEvent.click(
       within(screen.getByRole("dialog")).getByRole("button", { name: "Close" }),

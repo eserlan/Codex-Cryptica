@@ -222,6 +222,43 @@ describe("POST /api/help/ask — validation and failures", () => {
     expect((await big.json()).error.code).toBe("BAD_REQUEST");
   });
 
+  it("cancels an oversized request stream at the byte limit", async () => {
+    let cancelled = false;
+    let pulls = 0;
+    const stream = new ReadableStream<Uint8Array>({
+      pull(controller) {
+        pulls++;
+        if (pulls === 1) controller.enqueue(new Uint8Array(MAX_BODY_BYTES));
+        else if (pulls === 2) controller.enqueue(new Uint8Array(1));
+        else controller.enqueue(new Uint8Array(1));
+      },
+      cancel() {
+        cancelled = true;
+      },
+    });
+    const { generate } = harness();
+    const response = await createHelpHandler({
+      loadBundle: async () => bundle,
+      generate,
+      guard: async () => null,
+    })(
+      new Request("https://worker.test/api/help/ask", {
+        method: "POST",
+        body: stream,
+        // Bun's Request implementation requires this for streamed bodies.
+        duplex: "half",
+      } as RequestInit & { duplex: "half" }),
+      cors,
+    );
+
+    expect(response.status).toBe(400);
+    expect(cancelled).toBe(true);
+    // The stream implementation may prefetch one queued chunk, but the
+    // handler cancels as soon as it reads the first byte over the limit.
+    expect(pulls).toBeLessThanOrEqual(3);
+    expect(generate).not.toHaveBeenCalled();
+  });
+
   it("returns the guard's response for a missing or invalid session", async () => {
     const guard = vi.fn(
       async () =>

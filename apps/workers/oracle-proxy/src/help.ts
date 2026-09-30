@@ -109,11 +109,28 @@ type AskRequest =
   | { ok: false; response: Response };
 
 async function readBody(request: Request): Promise<string | null> {
+  const reader = request.body?.getReader();
+  if (!reader) return "";
+
   try {
-    const raw = await request.text();
-    return new TextEncoder().encode(raw).length > MAX_BODY_BYTES ? null : raw;
+    const decoder = new TextDecoder();
+    let bytes = 0;
+    let raw = "";
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      bytes += value.byteLength;
+      if (bytes > MAX_BODY_BYTES) {
+        await reader.cancel();
+        return null;
+      }
+      raw += decoder.decode(value, { stream: true });
+    }
+    return raw + decoder.decode();
   } catch {
     return null;
+  } finally {
+    reader.releaseLock();
   }
 }
 
