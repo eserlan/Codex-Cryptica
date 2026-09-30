@@ -344,9 +344,9 @@ export const howDoIMakeDifferentCulturesFeelDistinctWithoutRelyingOnStereotypes:
         "answer-fictional-religion",
         "answer-pantheon",
         "answer-fictional-language",
-        "answer-alien-species-believable",
+        "answer-make-alien-species-believable",
         "answer-believable-fantasy-economy",
-        "answer-create-fantasy-faction",
+        "answer-fantasy-faction",
         "answer-living-fantasy-city",
         "answer-trade-routes-shape-cities-kingdoms",
         "generator-settlement",
@@ -362,7 +362,7 @@ export const howDoIMakeDifferentCulturesFeelDistinctWithoutRelyingOnStereotypes:
             "The civilisation answer treats large-scale institutional capability (cause, capability, vulnerability, visible consequence across military, logistics, economy, infrastructure, diplomacy, administration, knowledge, cohesion). This answer treats cultural expectations (principle, behaviour, tension, visible consequence across values, etiquette, kinship, ritual, and daily life). The frameworks are paired but distinct.",
         },
         {
-          with: "answer-alien-species-believable",
+          with: "answer-make-alien-species-believable",
           reason:
             "The alien species answer links biology, environment, and institutions for a single species as a coherent whole. This answer assumes ordinary human cultural variation within and between groups and focuses on values, institutions, and internal disagreement without species-wide traits.",
         },
