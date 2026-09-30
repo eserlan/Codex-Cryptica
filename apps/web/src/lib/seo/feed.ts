@@ -33,9 +33,13 @@ export interface FeedMeta {
 
 export const escapeXml = (value: string): string =>
   value
-    // Strip characters that are illegal in XML 1.0.
-    // eslint-disable-next-line no-control-regex
-    .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, "")
+    // Keep only characters allowed by XML 1.0, including rejecting lone
+    // surrogates and the two noncharacters at the end of the BMP.
+    .replace(
+      // eslint-disable-next-line no-control-regex
+      /[^\u0009\u000A\u000D\u0020-\uD7FF\uE000-\uFFFD\u{10000}-\u{10FFFF}]/gu,
+      "",
+    )
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
