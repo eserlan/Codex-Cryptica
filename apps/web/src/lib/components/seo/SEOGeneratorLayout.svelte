@@ -80,9 +80,9 @@
   } from "./generator-canvas-transfer";
   import { handoffGeneratorToCanvas } from "./generator-canvas-handoff";
   import {
-    buildGeneratorSavePayload,
-    buildHubSaveDrafts,
-  } from "$lib/components/seo/generator-save";
+    saveGeneratorOutput,
+    saveSessionHubEntities,
+  } from "$lib/components/seo/generator-save-flow";
   import {
     trackGeneratorShareCreated,
     trackGeneratorShareLinkCopied,
@@ -626,28 +626,17 @@
       item_count: entitiesToSave.length,
     });
     try {
-      const draftsToSave = buildHubSaveDrafts(
+      redirectQuery = saveSessionHubEntities(
         entitiesToSave,
         sessionHubStore.provenance,
         sessionHubStore.entities,
-      );
-      localStorage.setItem(
-        "__codex_pending_import",
-        JSON.stringify(draftsToSave),
-      );
-      // #1796: fires at this outbound-click moment only — see
-      // generator-save-tracking.ts's docstring for why this never observes
-      // what actually happens after the redirect below.
-      trackSaveToCodex({
         generatorType,
-        isHubBatch: true,
-        itemCount: draftsToSave.length,
-        relatedEntityCount: draftsToSave.reduce(
-          (sum, d) => sum + countRelatedEntities(d.content, d.references),
-          0,
-        ),
-      });
-      redirectQuery = `?utm_source=generator-session-hub&utm_medium=save-all&utm_campaign=seo-funnel`;
+        {
+          store: (key, value) => localStorage.setItem(key, value),
+          track: trackSaveToCodex,
+          countRelatedEntities,
+        },
+      );
       showSaveModal = true;
     } catch {
       errorMessage = "Storage access is blocked. Please copy drafts manually.";
@@ -663,42 +652,25 @@
     });
 
     try {
-      // Best-effort: a rasterization failure must never block saving the
-      // draft itself, so this is caught separately from the payload write.
-      let mapImageDataUrl: string | undefined;
-      if (starSystemDiagramRef) {
-        try {
-          const blob = await starSystemDiagramRef.exportPng();
-          if (blob) mapImageDataUrl = await blobToDataUrl(blob);
-        } catch (err) {
-          console.error("Failed to rasterize star system diagram:", err);
-        }
-      } else if (constellationChartRef) {
-        try {
-          const blob = await constellationChartRef.exportPng();
-          if (blob) mapImageDataUrl = await blobToDataUrl(blob);
-        } catch (err) {
-          console.error("Failed to rasterize constellation chart:", err);
-        }
-      }
-
-      const payload = buildGeneratorSavePayload(
+      redirectQuery = await saveGeneratorOutput(
         generatedData,
         documentLayout,
-        mapImageDataUrl,
-      );
-
-      localStorage.setItem("__codex_pending_import", JSON.stringify(payload));
-      // #1796: fires at this outbound-click moment only — see
-      // generator-save-tracking.ts's docstring for why this never observes
-      // what actually happens after the redirect below.
-      trackSaveToCodex({
         generatorType,
-        isHubBatch: false,
-        itemCount: 1,
-        relatedEntityCount: countRelatedEntities(payload.content, undefined),
-      });
-      redirectQuery = `?utm_source=generator-${generatedData.type}&utm_medium=save-to-vault&utm_campaign=seo-funnel`;
+        {
+          store: (key, value) => localStorage.setItem(key, value),
+          track: trackSaveToCodex,
+          countRelatedEntities,
+        },
+        async () => {
+          let blob: Blob | undefined;
+          if (starSystemDiagramRef) {
+            blob = (await starSystemDiagramRef.exportPng()) ?? undefined;
+          } else if (constellationChartRef) {
+            blob = (await constellationChartRef.exportPng()) ?? undefined;
+          }
+          return blob ? blobToDataUrl(blob) : undefined;
+        },
+      );
       showSaveModal = true;
     } catch {
       errorMessage =
