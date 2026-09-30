@@ -93,6 +93,8 @@ test("entity index batch cost", async ({ page }) => {
       ) => {
         if (mode === "content")
           return { ...entity, content: `Edited ${mode} ${round}` };
+        if (mode === "title")
+          return { ...entity, title: `Renamed ${round} ${index}` };
         const kept = (entity.connections ?? []).filter(
           (c: any) => !String(c.type).startsWith("round-"),
         );
@@ -108,13 +110,17 @@ test("entity index batch cost", async ({ page }) => {
       const runRound = async (mode: string, size: number, round: number) => {
         const previous = { ...store.entities };
         const next = { ...previous };
-        for (let i = 0; i < size; i += 1) {
-          next[`benchmark-${i}`] = edited(
-            previous[`benchmark-${i}`],
-            mode,
-            i,
-            round,
-          );
+        if (mode === "delete") {
+          for (const id of Object.keys(previous).slice(-size)) delete next[id];
+        } else {
+          for (let i = 0; i < size; i += 1) {
+            next[`benchmark-${i}`] = edited(
+              previous[`benchmark-${i}`],
+              mode,
+              i,
+              round,
+            );
+          }
         }
         const started = performance.now();
         store.handleEntitiesUpdate(previous, next);
@@ -129,7 +135,9 @@ test("entity index batch cost", async ({ page }) => {
       const measure = async (mode: string, size: number) => {
         const calls: number[] = [];
         const settles: number[] = [];
-        for (let round = 1; round <= rounds; round += 1) {
+        // Deleted entities are gone for good, so a delete run gets fewer rounds.
+        const count = mode === "delete" ? 3 : rounds;
+        for (let round = 1; round <= count; round += 1) {
           const { call, settle } = await runRound(mode, size, round);
           calls.push(call);
           settles.push(settle);
@@ -141,11 +149,23 @@ test("entity index batch cost", async ({ page }) => {
       };
 
       const out: Record<string, { callMs: number; settleMs: number }> = {};
-      for (const mode of ["content", "connection"]) {
+      for (const mode of ["content", "connection", "title", "delete"]) {
         for (const size of sizes) {
+          if (mode === "delete" && size > 200) continue;
           out[`${mode}-${size}`] = await measure(mode, size);
         }
       }
+      // The cost of rebuilding every index from scratch, for comparison.
+      const rebuilds: number[] = [];
+      for (let i = 0; i < rounds; i += 1) {
+        const started = performance.now();
+        store.rebuildIndexes();
+        rebuilds.push(performance.now() - started);
+      }
+      out["rebuild-all"] = {
+        callMs: +median(rebuilds).toFixed(1),
+        settleMs: +median(rebuilds).toFixed(1),
+      };
       return out;
     },
     { sizes: BATCH_SIZES, rounds: ROUNDS, total: LARGE_VAULT_ENTITY_COUNT },
@@ -155,5 +175,5 @@ test("entity index batch cost", async ({ page }) => {
   fs.mkdirSync(path.dirname(output), { recursive: true });
   fs.writeFileSync(output, `${JSON.stringify(results, null, 2)}\n`);
   console.log(`ENTITY_INDEX_BATCH ${JSON.stringify(results)}`);
-  expect(Object.keys(results).length).toBe(BATCH_SIZES.length * 2);
+  expect(Object.keys(results).length).toBe(BATCH_SIZES.length * 3 + 4);
 });
