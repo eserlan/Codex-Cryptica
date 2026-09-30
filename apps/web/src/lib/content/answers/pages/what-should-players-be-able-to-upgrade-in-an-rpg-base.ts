@@ -324,6 +324,7 @@ export const whatShouldPlayersBeAbleToUpgradeInAnRpgBase: AnswerConfigInput = {
     "what-kind-of-ship-should-a-sci-fi-rpg-party-start-with",
     "what-kind-of-ship-should-a-pirate-crew-start-with",
     "how-do-you-track-faction-turns-between-rpg-sessions",
+    "how-do-i-run-a-campaign-where-the-players-own-a-business",
   ],
   discovery: {
     id: "answer-base-upgrade-ideas",

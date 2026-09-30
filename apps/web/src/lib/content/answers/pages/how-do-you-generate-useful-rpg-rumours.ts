@@ -185,6 +185,7 @@ export const howDoYouGenerateUsefulRpgRumours: AnswerConfigInput = {
     "how-do-i-build-a-believable-constitutional-crisis-or-coup",
     "how-do-i-write-a-good-call-of-cthulhu-one-shot",
     "how-do-i-run-character-roles-in-an-investigative-horror-rpg",
+    "how-do-i-run-a-campaign-where-the-players-own-a-business",
   ],
   labels: ["fantasy", "rumour"],
   discovery: {
