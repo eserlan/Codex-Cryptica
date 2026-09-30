@@ -150,8 +150,8 @@ export const whatCanPlayersActuallyBuyAndSellInAFantasySettlement: AnswerConfigI
       "how-do-trade-routes-shape-cities-and-kingdoms-in-an-rpg-world",
       "how-do-scarcity-and-shortages-affect-prices-and-conflict-in-an-rpg-world",
       "how-do-i-turn-economic-pressures-into-rpg-adventure-hooks",
-    "how-do-i-give-different-civilisations-distinct-strengths-and-weaknesses",
-  ],
+      "how-do-i-give-different-civilisations-distinct-strengths-and-weaknesses",
+    ],
     discovery: {
       id: "answer-settlement-market-buy-sell",
       parentCluster: "economy-trade",

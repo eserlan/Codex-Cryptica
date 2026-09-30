@@ -260,8 +260,8 @@ export const howDoIBuildABelievableConstitutionalCrisisOrCoup: AnswerConfigInput
       "how-do-you-generate-useful-rpg-rumours",
       "how-do-you-create-a-secret-society-for-an-rpg-campaign",
       "how-do-you-start-worldbuilding-from-scratch",
-    "how-do-i-give-different-civilisations-distinct-strengths-and-weaknesses",
-  ],
+      "how-do-i-give-different-civilisations-distinct-strengths-and-weaknesses",
+    ],
     discovery: {
       id: "answer-constitutional-crisis-or-coup",
       parentCluster: "worldbuilding",

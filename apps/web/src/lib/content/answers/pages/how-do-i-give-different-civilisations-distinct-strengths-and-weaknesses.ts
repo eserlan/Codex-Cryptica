@@ -5,7 +5,8 @@ export const howDoIGiveDifferentCivilisationsDistinctStrengthsAndWeaknesses: Ans
     slug: "how-do-i-give-different-civilisations-distinct-strengths-and-weaknesses",
     category: "worldbuilding",
     publishedAt: "2026-09-30",
-    question: "How do I give different civilisations distinct strengths and weaknesses?",
+    question:
+      "How do I give different civilisations distinct strengths and weaknesses?",
     kind: "framework",
     shortAnswer:
       "Give each civilisation distinct strengths and weaknesses by tracing why it became good at something, what that strength depends on, what fails when the dependency is stressed, and what the players can see changing as a result. A maritime trading culture is strong at diplomacy and logistics because its merchant fleet must keep sea lanes open, so a blockade, storm season, or lost harbour hits it harder than a landlocked neighbour. When every strength creates a cost, a trade-off, or a failure mode, civilisations feel different without fixed ancestry bonuses.",
@@ -21,7 +22,8 @@ export const howDoIGiveDifferentCivilisationsDistinctStrengthsAndWeaknesses: Ans
       },
       {
         kind: "list",
-        heading: "The four-link model: cause, capability, vulnerability, visible consequence",
+        heading:
+          "The four-link model: cause, capability, vulnerability, visible consequence",
         intro:
           "Use this chain for each major strength so it remains explainable, situational, and playable. One sentence per link is enough to start:",
         items: [
@@ -83,8 +85,14 @@ export const howDoIGiveDifferentCivilisationsDistinctStrengthsAndWeaknesses: Ans
       },
       {
         kind: "table",
-        heading: "Eight areas where civilisations differ, with typical causes and vulnerabilities",
-        headers: ["Area", "Strength looks like", "Common cause", "Built-in vulnerability"],
+        heading:
+          "Eight areas where civilisations differ, with typical causes and vulnerabilities",
+        headers: [
+          "Area",
+          "Strength looks like",
+          "Common cause",
+          "Built-in vulnerability",
+        ],
         rows: [
           [
             "Military",
@@ -159,7 +167,8 @@ export const howDoIGiveDifferentCivilisationsDistinctStrengthsAndWeaknesses: Ans
       },
       {
         kind: "example",
-        heading: "Worked example: capacity versus reputation, and a college that looks stronger than it is",
+        heading:
+          "Worked example: capacity versus reputation, and a college that looks stronger than it is",
         paragraphs: [
           "Reputation often claims more than capacity can deliver. This example shows how to separate the two and create a playable tension between what a civilisation is famed for and what it can currently do.",
         ],
@@ -180,7 +189,8 @@ export const howDoIGiveDifferentCivilisationsDistinctStrengthsAndWeaknesses: Ans
       },
       {
         kind: "list",
-        heading: "Optional method: sketch with eight civilisation stats, then explain why",
+        heading:
+          "Optional method: sketch with eight civilisation stats, then explain why",
         intro:
           "When you need a quick start or want civilisations that do not all lean the same way, use these eight stats as a generation aid. Treat them as prompts to explain, not as fixed bonuses handed to ancestry:",
         items: [
@@ -211,7 +221,8 @@ export const howDoIGiveDifferentCivilisationsDistinctStrengthsAndWeaknesses: Ans
       {
         kind: "checklist",
         heading: "Before these civilisations reach the table",
-        intro: "For each major civilisation the party may deal with, confirm you can answer:",
+        intro:
+          "For each major civilisation the party may deal with, confirm you can answer:",
         items: [
           "Which two or three strengths matter most in the next few sessions, and what circumstance explains each one?",
           "What does each strength depend on, and what single disruption would stress that dependency?",
@@ -242,7 +253,8 @@ export const howDoIGiveDifferentCivilisationsDistinctStrengthsAndWeaknesses: Ans
       },
       {
         title: "Nation generator",
-        description: "Draft a larger polity with institutions, dependencies, and points of strain.",
+        description:
+          "Draft a larger polity with institutions, dependencies, and points of strain.",
         href: "/generators/nation",
       },
       {
@@ -288,7 +300,8 @@ export const howDoIGiveDifferentCivilisationsDistinctStrengthsAndWeaknesses: Ans
       id: "answer-civilisation-strengths-weaknesses",
       parentCluster: "worldbuilding",
       clusters: ["worldbuilding"],
-      primaryIntent: "how to give civilisations distinct strengths and weaknesses",
+      primaryIntent:
+        "how to give civilisations distinct strengths and weaknesses",
       intentAliases: [
         "how to make civilisations feel different without stereotypes",
         "civilisation strengths and weaknesses worldbuilding",
@@ -329,7 +342,8 @@ export const howDoIGiveDifferentCivilisationsDistinctStrengthsAndWeaknesses: Ans
       title: "How Do I Give Civilisations Distinct Strengths? | Codex Cryptica",
       description:
         "Give civilisations distinct strengths and weaknesses from geography, institutions, and history, with a cause to consequence model and paired vulnerabilities.",
-      image: "https://assets.codexcryptica.com/og/how-do-i-give-different-civilisations-distinct-strengths-and-weaknesses.jpg",
+      image:
+        "https://assets.codexcryptica.com/og/how-do-i-give-different-civilisations-distinct-strengths-and-weaknesses.jpg",
       imageAlt:
         "A coastal harbour city and a mountain valley kingdom linked by a fortified pass, with ships, terraced fields, and storehouses",
     },
