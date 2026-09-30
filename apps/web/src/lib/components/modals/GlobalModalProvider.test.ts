@@ -1,7 +1,7 @@
 /** @vitest-environment jsdom */
 
 import { render, screen } from "@testing-library/svelte";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("$app/state", () => ({
   page: {
@@ -112,10 +112,21 @@ vi.mock("./MobileCreateEntitySheet.svelte", async () => ({
     .default,
 }));
 
+vi.mock(
+  "$lib/components/help-assistant/HelpAssistantHost.svelte",
+  async () => ({
+    default: (await import("./__tests__/ModalStub.svelte")).default,
+  }),
+);
+
 import GlobalModalProvider from "./GlobalModalProvider.svelte";
 import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
 
 describe("GlobalModalProvider", () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
   beforeEach(() => {
     modalUIStore.showCanvasSelector = false;
     modalUIStore.showMobileCreateSheet = false;
@@ -172,5 +183,22 @@ describe("GlobalModalProvider", () => {
     render(GlobalModalProvider);
 
     expect(screen.queryByTestId("mobile-create-entity-sheet-stub")).toBeNull();
+  });
+
+  it("loads the help assistant only when its flag is on", async () => {
+    vi.stubEnv("VITE_HELP_ASSISTANT", "true");
+
+    render(GlobalModalProvider);
+
+    expect(await screen.findByTestId("modal-stub")).toBeTruthy();
+  });
+
+  it("does not load the help assistant when its flag is off", async () => {
+    vi.stubEnv("VITE_HELP_ASSISTANT", "");
+
+    render(GlobalModalProvider);
+    await Promise.resolve();
+
+    expect(screen.queryByTestId("modal-stub")).toBeNull();
   });
 });

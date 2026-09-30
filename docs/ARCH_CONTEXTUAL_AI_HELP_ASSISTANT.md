@@ -1,8 +1,8 @@
 # Contextual AI Help Assistant Architecture
 
-**Status:** Proposed  
-**Version:** 0.1  
-**Date:** 2026-09-25
+**Status:** Spike built and measured; see [Spike findings](#33-spike-findings-2026-09-30)  
+**Version:** 0.2  
+**Date:** 2026-09-25 (spike findings added 2026-09-30)
 
 ## 1. Overview
 
@@ -1116,3 +1116,46 @@ The assistant is therefore not merely a chatbot embedded in Codex Cryptica.
 It becomes a context-sensitive interface to the product itself.
 
 > **The assistant should know both Codex Cryptica and where the user is standing inside Codex Cryptica.**
+
+---
+
+## 33. Spike findings (2026-09-30)
+
+Issue #3427 built a thin vertical slice of this design. Full detail, measurements and the follow-up list are in
+[`specs/3427-contextual-ai-help-assistant/findings.md`](../specs/3427-contextual-ai-help-assistant/findings.md). Where the spike
+disagrees with the sections above, this section wins.
+
+### Corrections to this document
+
+- **§7, §12 and the example question:** "Add connection" is on the **Status** tab, not the Connections tab, which is a read-only
+  picture. The right guide from the Connections tab is "open Status, then highlight Add".
+- **§4, §8, §9, §10: retrieval is registry-first and lexical for now.** The proof-of-concept corpus (about 170 chunks, 140 KB) does
+  not need D1 or Vectorize. Retrieval filters the registry by the live screen, ranks chunks with BM25 plus context boosts, and
+  returns no-match below a relevance floor without calling the model. The D1 and Vectorize designs stay in the spike's
+  `contracts/knowledge-store.md`, with adoption triggers (over about 2,000 chunks, over about 1 MB, recall below 85%, or content that
+  must update without a Worker deploy). Embeddings were **not** compared in the spike.
+- **§13: the model never writes an action.** The Worker builds a list of valid candidate actions from the registry and the model picks
+  an `actionId` from that list (an empty string for none). The Worker expands it into the typed action. A guide may chain one
+  follow-on step (open a tab, then highlight), so it is offered and accepted as one.
+- **§25 Observability: no client-side events.** The Help panel is inside the authenticated vault app, where this project does not
+  instrument anything, not even privacy-safe first-party events. The events listed there (`help.opened`, `help.action_used`, feedback,
+  and so on) are **not** implemented and should not be. The only measurement is one server-side log line per request: outcome,
+  latency and feature area, with no identifiers. "Action accepted" is not measured.
+- **§5.1 context packet:** the shipped schema is strict and closed. The route is a SvelteKit route template from a fixed list; the
+  entity kind is one of seven built-in categories or `custom`; there is no free-text or identifier field. There is no built-in
+  `settlement` kind.
+- **§12 prompt shape:** untrusted text (question, history, retrieved chunks) sits in delimited blocks with tag characters neutralised;
+  citations are checked after generation, and an answer with no valid citation is downgraded to no-match.
+- **Session Hub** lives on the public generator pages, not inside the app, so it can be explained in-app but not pointed at.
+- **Models:** `gpt-5.6-luna` rejects `reasoning_effort: "minimal"`. The help operation uses `"low"`.
+
+### Measured
+
+Headline scenario 10 of 10 correct live; 20-question pass p50 1.96 s and p90 2.85 s; about 670 prompt and 66 completion tokens,
+roughly $0.0011 per interaction on Luna; retrieval recall@3 of 95% and 100% no-match on 10 undocumented questions, over the real
+38 help articles.
+
+### Still open
+
+The relevance floor sits in a thin margin (0.35 weakest in-scope vs 0.27 strongest out-of-scope) and was tuned on the evaluation set
+itself. Screen context can override a question's topic. The Gemini fallback was not exercised live.

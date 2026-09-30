@@ -12,6 +12,7 @@
     getTemporalLabel,
   } from "./detail-tabs";
   import CategoryRadioGroup from "$lib/components/labels/CategoryRadioGroup.svelte";
+  import HelpEntityDetailSurface from "$lib/components/help-assistant/HelpEntityDetailSurface.svelte";
 
   let {
     entity,
@@ -152,6 +153,8 @@
     </div>
   {/if}
 
+  <HelpEntityDetailSurface {entity} bind:activeTab {isEditing} />
+
   <div
     role="tablist"
     aria-label="Entity detail sections"
@@ -171,6 +174,7 @@
       aria-controls={panelIds.status}
       tabindex={activeTab === "status" ? 0 : -1}
       data-testid="tab-status"
+      data-help-target="status-tab"
       class={activeTab === "status"
         ? isFantasyTheme
           ? "border px-3 py-1.5 rounded-sm text-[color:var(--color-accent-primary)]"
@@ -196,6 +200,7 @@
       aria-controls={panelIds.connections}
       tabindex={activeTab === "connections" ? 0 : -1}
       data-testid="tab-connections"
+      data-help-target="connections-tab"
       class={activeTab === "connections"
         ? isFantasyTheme
           ? "border px-3 py-1.5 rounded-sm text-[color:var(--color-accent-primary)]"

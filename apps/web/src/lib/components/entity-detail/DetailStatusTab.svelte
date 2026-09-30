@@ -294,6 +294,7 @@
           onclick={() => (isAddingConnection = true)}
           class="text-xs font-bold text-theme-primary hover:text-theme-secondary flex items-center gap-1 transition"
           aria-label="Add new connection"
+          data-help-target="add-connection-button"
         >
           <span aria-hidden="true" class="icon-[lucide--plus] w-3.5 h-3.5"
           ></span>

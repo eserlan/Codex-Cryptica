@@ -115,3 +115,6 @@ apps/web/ios/App/Podfile.lock
 
 # Cloudflare Pages functions build
 _worker.bundle*
+
+# Generated contextual-help knowledge bundle (built at deploy; see #3427)
+packages/help-engine/dist/
