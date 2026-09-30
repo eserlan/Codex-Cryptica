@@ -11,6 +11,7 @@ export default defineConfig({
     "graph-images.spec.ts",
     "entity-index-batch.spec.ts",
     "graph-sync-edit.spec.ts",
+    "vault-preload.spec.ts",
   ],
   fullyParallel: false,
   workers: 1,

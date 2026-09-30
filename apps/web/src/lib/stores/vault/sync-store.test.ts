@@ -1005,7 +1005,29 @@ describe("SyncStore warm-cache reconcile (#2619)", () => {
     await vi.advanceTimersByTimeAsync(2000);
 
     // ...and the cold path follows, so the cache cannot mask the disk.
-    expect(reload).toHaveBeenCalledWith(false);
+    expect(reload).toHaveBeenCalledWith(false, { reuseCache: true });
+  });
+
+  it("lets the reconcile reuse the cache it just loaded, but not an ordinary load", async () => {
+    warmCache();
+    const store = makeStore();
+
+    await store.loadFiles();
+    await vi.advanceTimersByTimeAsync(2000);
+
+    const calls = vi.mocked(cacheService.preloadVault).mock.calls;
+    expect(calls).toEqual([["vault-1"], ["vault-1", { reuse: true }]]);
+  });
+
+  it("re-reads the cache for an explicit cold load (negative)", async () => {
+    warmCache();
+    const store = makeStore();
+
+    await store.loadFiles(false);
+
+    expect(vi.mocked(cacheService.preloadVault).mock.calls).toEqual([
+      ["vault-1"],
+    ]);
   });
 
   it("does not reconcile when the load was already cold", async () => {

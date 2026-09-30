@@ -72,7 +72,18 @@ export class CacheService {
    */
   async preloadVault(
     vaultId: string,
+    options: { reuse?: boolean } = {},
   ): Promise<Map<string, { lastModified: number; entity: LocalEntity }>> {
+    // The snapshot is kept current by `set`, `bulkSet` and `remove`, so a caller
+    // that has just preloaded this vault in the same tab can skip the second
+    // read of every graph record. Callers that must see another tab's writes
+    // (a cross-tab reload) do not ask for this.
+    if (options.reuse && this.preloaded && this._preloadedVaultId === vaultId) {
+      debugStore.log(
+        `[CacheService] Reusing preloaded snapshot for ${vaultId} (${this.preloaded.size} graph entities)`,
+      );
+      return this.preloaded;
+    }
     try {
       debugStore.log(`[CacheService] Preloading vault: ${vaultId}`);
       const start = performance.now();
