@@ -26,7 +26,7 @@ const entry = (over: Partial<FeedEntry> = {}): FeedEntry => ({
 
 describe("feed", () => {
   it("escapes XML and strips illegal control characters", () => {
-    expect(escapeXml(`<a href="x">&'\u0001</a>`)).toBe(
+    expect(escapeXml(`<a href="x">&'\u0001\uFFFE\uFFFF\uD800</a>`)).toBe(
       "&lt;a href=&quot;x&quot;&gt;&amp;&apos;&lt;/a&gt;",
     );
   });
