@@ -49,6 +49,22 @@ const mockRegistry: Record<string, AnswerConfig> = {
 };
 
 describe("answer registry", () => {
+  it("keeps the civilisation capability habits heading aligned with its items", () => {
+    const habits = answers[
+      "how-do-i-give-different-civilisations-distinct-strengths-and-weaknesses"
+    ].sections.find(
+      (section) =>
+        section.kind === "list" &&
+        section.heading?.includes("habits that keep strengths honest"),
+    );
+
+    expect(habits?.kind).toBe("list");
+    if (habits?.kind === "list") {
+      expect(habits.heading).toBe("Eight habits that keep strengths honest");
+      expect(habits.items).toHaveLength(8);
+    }
+  });
+
   it("links the army-battle answer to Pathfinder's troop rules", () => {
     const armyBattle =
       answers[
