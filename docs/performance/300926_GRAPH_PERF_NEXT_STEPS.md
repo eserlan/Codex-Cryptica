@@ -178,6 +178,6 @@ These were considered and should stay rejected. The reasons are recorded in exis
 4. **Changed-id sync (item 3).** Measured, not built (see above). Revisit only if a real vault shows the full-graph view is used often and sync becomes noticeable there.
 5. **Preload dedupe (item 5).** Open. Not yet measured on the harness; the earlier figure (1,281 ms for the second preload) came from a real 1,625-entity vault with content, not this synthetic fixture.
 6. **Element caching (item 4) and incremental search persistence (item 6).** Open; only if the harness or a real vault shows them.
-7. **Update the budget ceilings** in `100826_LARGE_VAULT_BUDGETS.md` to the current numbers, in report-only mode, and correct the two stale documents listed at the top.
+7. **Update the budget ceilings** in `100826_LARGE_VAULT_BUDGETS.md` to the current numbers, in report-only mode.
 
 Each change ships as its own PR with a before and after number from the same harness.
