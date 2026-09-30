@@ -1,6 +1,7 @@
 # Vault Reload & Search Persistence Bottleneck Investigation
 
 - **Investigation Date:** 2026-09-25
+- **Last updated:** 2026-09-30 (Findings 2 and 3 resolved and measured on a synthetic fixture; see [section 5](#5-follow-up-measurements-30-sep-2026))
 - **Branch:** `perf/graph-bottlenecks`
 - **Target Repository:** Codex Cryptica (`packages/search-orchestrator`, `packages/search-engine`, `apps/web`)
 - **Profiled Vault:** Real-world user campaign (`big-brin-zieb`, 1,625 entities, 500 nodes and 1,158 edges in graph view)
@@ -80,6 +81,8 @@ While initial page load and graph rendering are fast (DOMContentLoaded: 201ms, c
 
 ---
 
+**Status (30 Sep 2026):** resolved. Progressive painting and a bounded pool in #3571, an 8 s timeout and a per-URL failure memory in #3572, a pool of 24 in #3577. The plan above proposed blocking whole origins after CORS failures; that was dropped, because node images use `background-image-crossorigin: "null"` and the fallback to the original link displays images the host refuses a CORS fetch for. Results in section 5.
+
 ### Finding 3: Double Cache Preload Sequence (Priority 3)
 
 #### Root Cause
@@ -90,6 +93,8 @@ While initial page load and graph rendering are fast (DOMContentLoaded: 201ms, c
 - While this does not freeze the UI (the second pass happens in the background), deduping in-flight preload promises will save unnecessary IndexedDB reads.
 
 ---
+
+**Status (30 Sep 2026):** resolved in #3595. The second call comes from the warm-open reconcile (`scheduleWarmReconcile` calling `loadFiles(false)`), which now reuses the snapshot already loaded. The reconcile's second reseed of the store from the cache (`CACHE_LOADED`) is a separate, unmeasured cost, tracked in #3605.
 
 ### Finding 4: Graph Reload Layout Bypass & Invisible Nodes Hairball (Priority 1.5 - Visual Critical)
 
@@ -178,5 +183,47 @@ During initial reload of a vault with unplaced nodes (e.g. 498 / 500 nodes witho
 | **P1.5** | Graph Reload Layout Bypass & Pending Selector  | `LayoutManager.ts`, `transformer.ts`                                            | ✅ **Resolved** | 49/49 graph-engine tests pass; live DevTools validation on 500-node graph confirms all nodes visible and beautifully placed.                                            |
 | **P1.6** | Unplaced Edges Spiderweb Hairball During Solve | `transformer.ts`, `LayoutManager.ts`, `useGraphSync.ts`                         | ✅ **Resolved** | 23/23 transformer tests, 49/49 layout tests pass; live Chrome DevTools reload screenshot confirms clean "INITIALIZING..." screen with 0 unplaced lines before reveal.   |
 | **P1.8** | Startup Module/Article Eager Load Pruning      | `loader.ts`, `help.svelte.ts`, `generator-engine`, `GlobalModalProvider.svelte` | ✅ **Resolved** | Live Chrome DevTools network audit: 0 blog markdown, 0 help markdown, 0 generator configs requested on boot. All changed tests, lint, and typecheck pass with 0 errors. |
-| **P2**   | Image CORS Fast-Fail / Fallback Cache          | `ImageManager` / `GraphImageManager`                                            | ⏳ Pending      | Network latency benchmark                                                                                                                                               |
-| **P3**   | Cache Preload Deduping                         | `CacheService`                                                                  | ⏳ Pending      | Trace confirmation                                                                                                                                                      |
+| **P2**   | Image CORS Fast-Fail / Fallback Cache          | `ImageManager` / `GraphImageManager`, `asset-manager.ts`                        | ✅ **Resolved** | #3571, #3572, #3577. Synthetic hosts, 300 images, 3 runs: hung hosts went from no picture in 60 s to all in 19 s; first picture at 1.8 s (median). See section 5.       |
+| **P3**   | Cache Preload Deduping                         | `CacheService`, `SyncStore`                                                     | ✅ **Resolved** | #3595. Second preload 255 ms median to 1.5 ms; total preload time per warm reload 551 ms to 150 ms (1,600 entities, 3 runs).                                            |
+
+---
+
+## 5. Follow-up measurements (30 Sep 2026)
+
+Measured with the large-vault harness (`bun run test:performance`, scenarios `graph-images`, `entity-index-batch`, `vault-preload`; see [`300926_GRAPH_PERF_NEXT_STEPS.md`](./300926_GRAPH_PERF_NEXT_STEPS.md)). All figures are a production build on one machine, three runs, median, with a **synthetic** 1,600-entity fixture and mock image hosts. They are not measurements of the real vault profiled above, so the absolute numbers differ (the real vault had 198 external images and took 11.8 s; the real second preload took 1,281 ms). The ratios and the mechanisms are what carry over.
+
+### Finding 2: images (300 images, 25% on a 1.5 s host)
+
+|               | before #3571 | pool of 6 (#3571) | pool of 24 (#3577) |
+| :------------ | -----------: | ----------------: | -----------------: |
+| first picture |        8.9 s |             1.1 s |              1.2 s |
+| 50% painted   |        8.9 s |            12.5 s |              5.0 s |
+| all painted   |        8.9 s |            25.2 s |              9.9 s |
+
+With 5% of hosts that never answer: no picture in 60 s before; 49 s to finish with a pool of 6; 19 s with 24, with the first picture at 1.8 s (median; run 1 took 4.7 s). The pool of 6 fixed the hang but made total completion slower on slow hosts, because resolving an image is mostly waiting; that is why #3577 exists. Run 1 of every variant is much slower than runs 2 and 3, which looks like warm-up. Total time is now about the same as before #3571, not better; what changed is that pictures arrive progressively and one hung host no longer blocks the rest.
+
+### Finding 3: preload (1,600 entities, warm reload)
+
+|             | first call (paint) | second call (reconcile) |  total |
+| :---------- | -----------------: | ----------------------: | -----: |
+| before      |             240 ms |     255 ms (130 to 546) | 551 ms |
+| after #3595 |             148 ms |                  1.5 ms | 150 ms |
+
+The second call fell about two seconds after the first in every run.
+
+### New: entity index batches (not in the original findings)
+
+Found while measuring, not in this investigation. Every edit, import and sync reconcile passes through `EntityIndexMaintainer.handleEntitiesUpdate`, which searched and copied three reactive arrays per changed entity, so a batch of k edits cost k passes (about 5 ms per entity).
+
+| batch                |   before |          after |
+| :------------------- | -------: | -------------: |
+| 800 connection edits | 4,370 ms |  16 ms (#3588) |
+| 800 renames          | 3,690 ms |   5 ms (#3591) |
+| 200 deletes          | 1,181 ms | 4.7 ms (#3591) |
+
+### Not re-measured or still open
+
+- **Finding 1 (search persistence storm)** is marked resolved in section 4 and the coalescing is in the code (`activeSaves` in `search-index-persistence.ts`). The cost of a single full export (2.7 to 4.8 s in the original profile) was not re-measured here; incremental persistence remains an idea, not a finding.
+- **Findings 4 to 6** were not re-verified beyond what section 4 records.
+- **The second store reseed** after the warm-open reconcile: tracked in #3605, unmeasured.
+- **Why the original figures are not directly comparable:** the original profile also included real content (previews, lore) and 198 real external hosts, neither of which the fixture has.
