@@ -16,6 +16,7 @@ import { howDoIMakeDifferentCulturesFeelDistinctWithoutRelyingOnStereotypes } fr
 import { howDoIOrganiseGmNotesForInPersonPlay } from "./how-do-i-organise-gm-notes-for-in-person-play";
 import { howDoIPaceAnRpgOneShot } from "./how-do-i-pace-an-rpg-one-shot";
 import { howDoIPrepareAnRpgSessionStepByStep } from "./how-do-i-prepare-an-rpg-session-step-by-step";
+import { howDoIRunACampaignWhereThePlayersOwnABusiness } from "./how-do-i-run-a-campaign-where-the-players-own-a-business";
 import { howDoIRunADiplomatNobleOrCourtierInAnRpg } from "./how-do-i-run-a-diplomat-noble-or-courtier-in-an-rpg";
 import { howDoIRunAJournalistOrMediaCharacterInAnRpg } from "./how-do-i-run-a-journalist-or-media-character-in-an-rpg";
 import { howDoIRunALargeBattleWhenThePlayerCharactersArePartOfAnArmy } from "./how-do-i-run-a-large-battle-when-the-player-characters-are-part-of-an-army";
@@ -34,6 +35,7 @@ import { howDoIStartGmingForTheFirstTime } from "./how-do-i-start-gming-for-the-
 import { howDoITakeUsefulRpgNotesDuringPlay } from "./how-do-i-take-useful-rpg-notes-during-play";
 import { howDoITurnAnRpgIdeaIntoAnAdventure } from "./how-do-i-turn-an-rpg-idea-into-an-adventure";
 import { howDoITurnEconomicPressuresIntoRpgAdventureHooks } from "./how-do-i-turn-economic-pressures-into-rpg-adventure-hooks";
+import { howDoIUpgradeAPlayerCharactersWeaponWithoutReplacingIt } from "./how-do-i-upgrade-a-player-characters-weapon-without-replacing-it";
 import { howDoIWriteAGoodCallOfCthulhuOneShot } from "./how-do-i-write-a-good-call-of-cthulhu-one-shot";
 import { howDoScarcityAndShortagesAffectPricesAndConflictInAnRpgWorld } from "./how-do-scarcity-and-shortages-affect-prices-and-conflict-in-an-rpg-world";
 import { howDoTradeRoutesShapeCitiesAndKingdomsInAnRpgWorld } from "./how-do-trade-routes-shape-cities-and-kingdoms-in-an-rpg-world";
@@ -141,6 +143,7 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     howDoIOrganiseGmNotesForInPersonPlay,
     howDoIPaceAnRpgOneShot,
     howDoIPrepareAnRpgSessionStepByStep,
+    howDoIRunACampaignWhereThePlayersOwnABusiness,
     howDoIRunADiplomatNobleOrCourtierInAnRpg,
     howDoIRunAJournalistOrMediaCharacterInAnRpg,
     howDoIRunALargeBattleWhenThePlayerCharactersArePartOfAnArmy,
@@ -159,6 +162,7 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     howDoITakeUsefulRpgNotesDuringPlay,
     howDoITurnAnRpgIdeaIntoAnAdventure,
     howDoITurnEconomicPressuresIntoRpgAdventureHooks,
+    howDoIUpgradeAPlayerCharactersWeaponWithoutReplacingIt,
     howDoIWriteAGoodCallOfCthulhuOneShot,
     howDoScarcityAndShortagesAffectPricesAndConflictInAnRpgWorld,
     howDoTradeRoutesShapeCitiesAndKingdomsInAnRpgWorld,

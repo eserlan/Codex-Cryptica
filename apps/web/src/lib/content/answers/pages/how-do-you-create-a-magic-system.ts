@@ -136,6 +136,7 @@ export const howDoYouCreateAMagicSystem: AnswerConfigInput = {
     "how-do-you-make-npcs-memorable-without-lots-of-prep",
     "how-do-i-run-common-character-roles-in-a-fantasy-rpg",
     "how-do-fantasy-cities-defend-against-flying-creatures-and-teleportation",
+    "how-do-i-upgrade-a-player-characters-weapon-without-replacing-it",
   ],
   discovery: {
     id: "answer-create-magic-system",
