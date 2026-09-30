@@ -13,6 +13,7 @@ vi.mock("../utils/idb", () => ({
 
 import { GraphStore } from "./graph.svelte";
 import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
+import { LARGE_GRAPH_NODE_THRESHOLD } from "graph-engine";
 
 /**
  * Minimal reactive vault mirroring the real EntityStore split: `entities` is
@@ -34,7 +35,7 @@ class ReactiveVault {
 }
 
 // Above the large-graph node threshold so the focus view culls.
-const ENTITY_COUNT = 701;
+const ENTITY_COUNT = LARGE_GRAPH_NODE_THRESHOLD + 1;
 
 function createLargeVault() {
   const vault = new ReactiveVault();

@@ -76,8 +76,8 @@ describe("getGraphStyles", () => {
     const performanceNodeStyle = styles.find(
       (s) =>
         s.selector === "node" &&
-        s.style.label === "" &&
-        s.style["background-image"] === "none",
+        s.style["background-image"] === "none" &&
+        s.style["background-opacity"] === 0.72,
     );
     const performanceEdgeStyle = styles.find(
       (s) =>
@@ -94,6 +94,47 @@ describe("getGraphStyles", () => {
     expect(performanceEdgeStyle?.style["haystack-radius"]).toBe(0.5);
     expect(performanceEdgeStyle?.style["target-arrow-shape"]).toBe("none");
     expect(selectedLabelStyle?.style.label).toBe("data(label)");
+  });
+
+  describe("labels in performance mode", () => {
+    const build = (showLabels = true, timelineMode = false) =>
+      getGraphStyles(
+        mockTemplate,
+        mockCategories,
+        true,
+        timelineMode,
+        showLabels,
+        true,
+      );
+    const blanksNodeLabels = (styles: any[]) =>
+      styles.some((s) => s.selector === "node" && s.style.label === "");
+
+    it("does not blank node labels, so zooming in on a large vault can show them", () => {
+      const styles = build();
+
+      expect(blanksNodeLabels(styles)).toBe(false);
+      const perfNode = styles.find(
+        (s) => s.selector === "node" && s.style["background-opacity"] === 0.72,
+      );
+      expect(perfNode?.style["text-opacity"]).toBeUndefined();
+    });
+
+    it("still hides labels when zoomed out, through the level-of-detail rules", () => {
+      const styles = build();
+      const lod = (selector: string) =>
+        styles.find((s) => s.selector === selector)?.style.label;
+
+      expect(lod("node.lod-low")).toBe("");
+      expect(lod("node.lod-medium")).toBe("");
+    });
+
+    it("still hides labels when the user turned them off (negative)", () => {
+      expect(blanksNodeLabels(build(false))).toBe(true);
+    });
+
+    it("still hides labels in timeline mode (negative)", () => {
+      expect(blanksNodeLabels(build(true, true))).toBe(true);
+    });
   });
 
   it("keeps relationship labels horizontal and clears dimmed background labels", () => {
