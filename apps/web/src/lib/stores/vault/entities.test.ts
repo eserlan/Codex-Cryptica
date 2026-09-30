@@ -135,6 +135,24 @@ describe("Vault Entities Operations", () => {
       expect(updated).toBeNull();
     });
 
+    it("should remove properties set to undefined", () => {
+      const e1 = {
+        id: "e1",
+        title: "E1",
+        image: "https://example.com/dead.png",
+        thumbnail: "https://example.com/dead_thumb.png",
+      } as any;
+      const entities = { e1 };
+      const { updated } = updateEntity(entities, "e1", {
+        image: undefined,
+        thumbnail: undefined,
+      });
+      expect(updated).toBeDefined();
+      expect("image" in updated!).toBe(false);
+      expect("thumbnail" in updated!).toBe(false);
+      expect(updated!.image).toBeUndefined();
+    });
+
     it("should add 'past' label when updating to add a valid end_date", () => {
       const e1 = {
         id: "e1",

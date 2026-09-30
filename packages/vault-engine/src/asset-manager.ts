@@ -75,6 +75,8 @@ export class AssetManager {
   private thumbnailWaiters: (() => void)[] = [];
   /** When each unreachable external image last failed, by URL. */
   private failedExternal = new Map<string, number>();
+  /** URLs confirmed to be permanently missing (404/410). */
+  private deadExternal = new Set<string>();
 
   constructor(
     private ioAdapter: IAssetIOAdapter,
@@ -82,7 +84,16 @@ export class AssetManager {
     // Injected for tests; default wraps the global `fetch` lazily.
     private fetcher: typeof fetch = (input, init) => fetch(input, init),
     private clock: Clock = systemClock,
+    private onDeadExternalImage?: (url: string) => void,
   ) {}
+
+  setOnDeadExternalImage(handler: ((url: string) => void) | undefined) {
+    this.onDeadExternalImage = handler;
+  }
+
+  isDeadExternal(url: string): boolean {
+    return this.deadExternal.has(url);
+  }
 
   async saveImageToVault(
     vaultHandle: FileSystemDirectoryHandle | undefined,
@@ -160,22 +171,31 @@ export class AssetManager {
 
         // 2. External URL caching
         if (/^https?:\/\//i.test(cleanPath)) {
+          if (this.deadExternal.has(cleanPath)) return "";
+
           // If no vault handle, we can't persistent-cache it, but we should still
           // try to resolve to a blob URL to satisfy CORS requirements for canvas.
           if (!vaultHandle) {
             try {
               const blob = await this.fetchExternal(cleanPath);
-              if (!blob) return cleanPath;
+              if (!blob) {
+                if (this.deadExternal.has(cleanPath)) return "";
+                return cleanPath;
+              }
               url = URL.createObjectURL(blob);
               this.urlCache.set(cleanPath, { url, refs: 1 });
               return url;
             } catch {
+              if (this.deadExternal.has(cleanPath)) return "";
               return cleanPath;
             }
           }
 
           const blob = await this.readOrFetchExternal(vaultHandle, cleanPath);
-          if (!blob) return cleanPath;
+          if (!blob) {
+            if (this.deadExternal.has(cleanPath)) return "";
+            return cleanPath;
+          }
           url = URL.createObjectURL(blob);
         } else if (fileFetcher) {
           // 3. P2P / Guest Mode remote fetcher
@@ -236,6 +256,7 @@ export class AssetManager {
           this.urlCache.set(cleanPath, { url, refs: 1 });
         }
 
+        if (this.deadExternal.has(cleanPath)) return "";
         return url || cleanPath;
       } finally {
         this.resolving.delete(cleanPath);
@@ -272,6 +293,9 @@ export class AssetManager {
         fallbackHandle,
       );
     }
+    if (this.deadExternal.has(cleanPath)) {
+      return Promise.resolve("");
+    }
     const key = thumbnailKey(cleanPath);
     const ongoing = this.resolving.get(key);
     if (ongoing) return ongoing;
@@ -283,11 +307,13 @@ export class AssetManager {
 
     const resolution = (async () => {
       try {
+        if (this.deadExternal.has(cleanPath)) return "";
         const thumbnail = await this.readOrCreateExternalThumbnail(
           vaultHandle,
           cleanPath,
         );
         if (!thumbnail) {
+          if (this.deadExternal.has(cleanPath)) return "";
           return this.resolveImageUrl(
             vaultHandle,
             cleanPath,
@@ -365,13 +391,19 @@ export class AssetManager {
    * with hundreds of dead links does not retry each on every load.
    */
   private async fetchExternal(url: string): Promise<Blob | null> {
-    if (this.hasRecentFailure(url)) return null;
+    if (this.deadExternal.has(url) || this.hasRecentFailure(url)) return null;
     try {
       const response = await this.fetcher(url, {
         mode: "cors",
         signal: AbortSignal.timeout(EXTERNAL_FETCH_TIMEOUT_MS),
       });
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      if (!response.ok) {
+        if (response.status === 404 || response.status === 410) {
+          this.deadExternal.add(url);
+          this.onDeadExternalImage?.(url);
+        }
+        throw new Error(`HTTP ${response.status}`);
+      }
       return await response.blob();
     } catch {
       this.failedExternal.set(url, this.clock.now());
@@ -501,6 +533,9 @@ export class AssetManager {
       URL.revokeObjectURL(entry.url);
     });
     this.urlCache.clear();
+    this.resolving.clear();
+    this.failedExternal.clear();
+    this.deadExternal.clear();
   }
 
   /**

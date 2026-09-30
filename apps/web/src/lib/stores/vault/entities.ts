@@ -92,6 +92,12 @@ export function updateEntity(
     // createdAt is preserved via the spread above; never overwritten on update.
   } as LocalEntity;
 
+  for (const key of Object.keys(updates) as (keyof LocalEntity)[]) {
+    if (updates[key] === undefined) {
+      delete updated[key];
+    }
+  }
+
   if (updated.parent) {
     updated.parent = sanitizeId(updated.parent);
   }

@@ -793,6 +793,53 @@ describe("EntityStore", () => {
 
       expect(invalidateUrlCache).toHaveBeenCalledWith("/img.png");
     });
+
+    it("should keep image URLs cached for patches that do not change the image", async () => {
+      repository.entities.hero.image = "/img.png";
+      const invalidateUrlCache = vi.fn();
+      const storeWithUrl = new EntityStore({
+        repository: repository as any,
+        activeVaultId: () => "vault-1",
+        isGuest: () => false,
+        setStatus: vi.fn(),
+        status: vi.fn().mockReturnValue("idle" as const),
+        setErrorMessage: vi.fn(),
+        getActiveVaultHandle: vi.fn().mockResolvedValue(undefined),
+        getSpecificVaultHandle: vi.fn().mockResolvedValue(undefined),
+        getActiveFolderHandle: vi.fn().mockResolvedValue(undefined),
+        getServices: () => ({}),
+        updateEntityCount: vi.fn().mockResolvedValue(undefined),
+        invalidateUrlCache,
+      });
+
+      await storeWithUrl.batchUpdate({ hero: { labels: ["important"] } });
+
+      expect(invalidateUrlCache).not.toHaveBeenCalled();
+    });
+
+    it("should release image URLs when a batch patch explicitly clears them", async () => {
+      repository.entities.hero.image = "/img.png";
+      const invalidateUrlCache = vi.fn();
+      const storeWithUrl = new EntityStore({
+        repository: repository as any,
+        activeVaultId: () => "vault-1",
+        isGuest: () => false,
+        setStatus: vi.fn(),
+        status: vi.fn().mockReturnValue("idle" as const),
+        setErrorMessage: vi.fn(),
+        getActiveVaultHandle: vi.fn().mockResolvedValue(undefined),
+        getSpecificVaultHandle: vi.fn().mockResolvedValue(undefined),
+        getActiveFolderHandle: vi.fn().mockResolvedValue(undefined),
+        getServices: () => ({}),
+        updateEntityCount: vi.fn().mockResolvedValue(undefined),
+        invalidateUrlCache,
+      });
+
+      await storeWithUrl.batchUpdate({ hero: { image: undefined } });
+
+      expect(invalidateUrlCache).toHaveBeenCalledWith("/img.png");
+      expect(storeWithUrl.entities.hero.image).toBeUndefined();
+    });
   });
 
   describe("deleteEntity", () => {

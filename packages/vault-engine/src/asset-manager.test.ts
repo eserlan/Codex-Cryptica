@@ -322,9 +322,72 @@ describe("AssetManager", () => {
         expect(result).toBe("blob:mock-url");
       });
 
+      it("should return empty string and fire callback when external fetch returns 404", async () => {
+        mockIO.readOpfsBlob.mockRejectedValue(new Error("Not in cache"));
+        (global.fetch as any).mockResolvedValue({ ok: false, status: 404 });
+        const onDead = vi.fn();
+        assetManager.setOnDeadExternalImage(onDead);
+
+        const result = await assetManager.resolveImageUrl(
+          { name: "v1" } as any,
+          "https://example.com/dead-404.png",
+        );
+
+        expect(result).toBe("");
+        expect(onDead).toHaveBeenCalledWith("https://example.com/dead-404.png");
+        expect(
+          assetManager.isDeadExternal("https://example.com/dead-404.png"),
+        ).toBe(true);
+
+        // Subsequent call does not refetch
+        (global.fetch as any).mockClear();
+        const secondResult = await assetManager.resolveImageUrl(
+          { name: "v1" } as any,
+          "https://example.com/dead-404.png",
+        );
+        expect(secondResult).toBe("");
+        expect(global.fetch).not.toHaveBeenCalled();
+      });
+
+      it("should return empty string and fire callback when external fetch returns 410", async () => {
+        mockIO.readOpfsBlob.mockRejectedValue(new Error("Not in cache"));
+        (global.fetch as any).mockResolvedValue({ ok: false, status: 410 });
+        const onDead = vi.fn();
+        assetManager.setOnDeadExternalImage(onDead);
+
+        const result = await assetManager.resolveImageUrl(
+          { name: "v1" } as any,
+          "https://example.com/dead-410.png",
+        );
+
+        expect(result).toBe("");
+        expect(onDead).toHaveBeenCalledWith("https://example.com/dead-410.png");
+        expect(
+          assetManager.isDeadExternal("https://example.com/dead-410.png"),
+        ).toBe(true);
+      });
+
+      it("should return original URL and not mark dead on non-404/410 errors", async () => {
+        mockIO.readOpfsBlob.mockRejectedValue(new Error("Not in cache"));
+        (global.fetch as any).mockResolvedValue({ ok: false, status: 500 });
+        const onDead = vi.fn();
+        assetManager.setOnDeadExternalImage(onDead);
+
+        const result = await assetManager.resolveImageUrl(
+          { name: "v1" } as any,
+          "https://example.com/server-error.png",
+        );
+
+        expect(result).toBe("https://example.com/server-error.png");
+        expect(onDead).not.toHaveBeenCalled();
+        expect(
+          assetManager.isDeadExternal("https://example.com/server-error.png"),
+        ).toBe(false);
+      });
+
       it("should return original URL if external fetch fails", async () => {
         mockIO.readOpfsBlob.mockRejectedValue(new Error("Not in cache")); // neither hashed nor legacy copy
-        (global.fetch as any).mockResolvedValue({ ok: false });
+        (global.fetch as any).mockResolvedValue({ ok: false, status: 503 });
         const result = await assetManager.resolveImageUrl(
           { name: "v1" } as any,
           "https://example.com/fail.png",
@@ -609,10 +672,19 @@ describe("AssetManager", () => {
     it("should revoke all cached URLs and clear map", () => {
       (assetManager as any).urlCache.set("a.png", { url: "blob:a", refs: 1 });
       (assetManager as any).urlCache.set("b.png", { url: "blob:b", refs: 1 });
+      (assetManager as any).deadExternal.add("https://example.com/dead.png");
+      (assetManager as any).failedExternal.set(
+        "https://example.com/fail.png",
+        123,
+      );
 
       assetManager.clear();
       expect(URL.revokeObjectURL).toHaveBeenCalledTimes(2);
       expect((assetManager as any).urlCache.size).toBe(0);
+      expect(assetManager.isDeadExternal("https://example.com/dead.png")).toBe(
+        false,
+      );
+      expect((assetManager as any).failedExternal.size).toBe(0);
     });
   });
 

@@ -258,10 +258,23 @@ export class EntityMutationService {
         modifiedAt: systemClock.now(),
       } as LocalEntity;
 
+      for (const key of Object.keys(patch) as (keyof LocalEntity)[]) {
+        if (patch[key] === undefined) {
+          delete merged[key];
+        }
+      }
+
       stagedEntities[id] = merged;
       appliedUpdates[id] = patch;
       if (patch.image && this.deps.invalidateUrlCache) {
         this.deps.invalidateUrlCache(patch.image);
+      } else if (
+        Object.hasOwn(patch, "image") &&
+        patch.image === undefined &&
+        current.image &&
+        this.deps.invalidateUrlCache
+      ) {
+        this.deps.invalidateUrlCache(current.image);
       }
       entries.push({
         entity: merged,
