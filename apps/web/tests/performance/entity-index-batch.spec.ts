@@ -61,6 +61,20 @@ test("entity index batch cost", async ({ page }) => {
   );
   await page.waitForTimeout(2_000);
 
+  // The first-run "vault theme" prompt covers the graph, and a covered graph
+  // suspends itself, so nothing after this would sync until it is dismissed.
+  const themePrompt = page.getByTestId("vault-theme-modal");
+  if (await themePrompt.isVisible()) {
+    await page.getByRole("button", { name: "LATER" }).click();
+    await expect(themePrompt).toBeHidden();
+  }
+  await page.waitForFunction(
+    () => (window as any).graphViewController?.isSuspended === false,
+    undefined,
+    { timeout: 30_000 },
+  );
+  await page.waitForTimeout(1_500);
+
   const results = await page.evaluate(
     async ({ sizes, rounds, total }) => {
       const store = (window as any).vault.entityStore;

@@ -10,6 +10,7 @@ export default defineConfig({
     "large-vault.operations.spec.ts",
     "graph-images.spec.ts",
     "entity-index-batch.spec.ts",
+    "graph-sync-edit.spec.ts",
   ],
   fullyParallel: false,
   workers: 1,
