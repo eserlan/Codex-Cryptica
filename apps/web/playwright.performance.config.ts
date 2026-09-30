@@ -6,7 +6,11 @@ const baseURL = `http://127.0.0.1:${port}`;
 /** Production-preview configuration for reproducible large-vault measurements. */
 export default defineConfig({
   testDir: "./tests/performance",
-  testMatch: ["large-vault.operations.spec.ts", "graph-images.spec.ts"],
+  testMatch: [
+    "large-vault.operations.spec.ts",
+    "graph-images.spec.ts",
+    "entity-index-batch.spec.ts",
+  ],
   fullyParallel: false,
   workers: 1,
   retries: 0,
