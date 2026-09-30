@@ -8,7 +8,7 @@ export const howDoIRunACampaignWhereThePlayersOwnABusiness: AnswerConfigInput =
     question: "How do I run a campaign where the players own a business?",
     kind: "framework",
     shortAnswer:
-      "Let the business generate adventures, not replace adventuring. Track five or six abstract traits such as profit, reputation, staff, supplies, security and debt rather than coin by coin bookkeeping, resolve business activity in turns between adventures, let players invest in visible improvements, and turn every complication and success into relationships and hooks the party must handle in normal play.",
+      "Let the business generate adventures, not replace adventuring. Track five or six abstract traits such as profit, reputation, staff, supplies, security and debt rather than coin-by-coin bookkeeping, resolve business activity in turns between adventures, let players invest in visible improvements, and turn every complication and success into relationships and hooks the party must handle in normal play.",
     sections: [
       {
         kind: "prose",
@@ -22,10 +22,10 @@ export const howDoIRunACampaignWhereThePlayersOwnABusiness: AnswerConfigInput =
         kind: "list",
         heading: "Treat the business as a handful of traits, not a spreadsheet",
         intro:
-          "Track enough about the business that investments and setbacks feel different from each other, but not so much that you need a calculator. Five or six traits are Usually enough:",
+          "Track enough about the business that investments and setbacks feel different from each other, but not so much that you need a calculator. Five or six traits are usually enough:",
         items: [
           {
-            term: "Profit and cashflow",
+            term: "Profit and cash flow",
             text: "Whether the business covers its costs, builds a small reserve or loses money. Use a simple scale such as struggling, stable or thriving rather than exact coin counts. Players should be able to see that takings have changed without auditing every sale.",
           },
           {
@@ -58,6 +58,7 @@ export const howDoIRunACampaignWhereThePlayersOwnABusiness: AnswerConfigInput =
         paragraphs: [
           "Ask the table how much management they want. If they mainly want a home base that produces hooks and familiar faces, keep finances abstract and resolve the business in a single scene when the party returns. If they enjoy projects and trade-offs, give the traits more room and let investment choices carry into the next turn.",
           "A practical rule is to handle ongoing costs in the fiction rather than as a recurring tax. When the party hires a guard, upgrading security is the visible change; you do not need to deduct wages each week unless the group has asked for that kind of play. Reserve detailed tracking for the trait that is currently under strain, and let the others simply work until something challenges them.",
+          "Some groups want merchant-company or domain-management play, and some systems already have strong business mechanics. Keep those mechanics when they suit the table, and use this lightweight turn as the narrative and adventure layer around them.",
           "Avoid simulating every day. Players remember the week the cellar flooded or the guild inspector arrived, not the fourteen ordinary Tuesdays between them.",
         ],
       },
@@ -93,7 +94,7 @@ export const howDoIRunACampaignWhereThePlayersOwnABusiness: AnswerConfigInput =
       },
       {
         kind: "list",
-        heading: "Let players invest in improvements they chose",
+        heading: "Let players invest in improvements they choose",
         intro:
           "Investments work best when they express what the players want the business to become. Offer a few distinct directions, each with a clear benefit and a new connection or responsibility:",
         items: [
@@ -134,8 +135,8 @@ export const howDoIRunACampaignWhereThePlayersOwnABusiness: AnswerConfigInput =
           "Owning a business should create problems and opportunities that only an owner gets. Frame each complication as a hook produced by the business, not as a random encounter that could have happened anywhere:",
         items: [
           {
-            term: "A missing or stolen shipment",
-            text: "The supplier the party relies on has not delivered. Someone diverted it, kept it, or is holding it for a price. Recovery means following the chain the business depends on.",
+            term: "A missing shipment or supply shortage",
+            text: "The supplier the party relies on has not delivered, perhaps because someone diverted the shipment, kept it or is holding it for a price. A closed road, failed catch, strike or late harvest can also leave the business short. Recovery means tracing the chain the business depends on or finding another source before customers notice.",
           },
           {
             term: "Protection rackets",
@@ -156,10 +157,6 @@ export const howDoIRunACampaignWhereThePlayersOwnABusiness: AnswerConfigInput =
           {
             term: "An important or dangerous customer",
             text: "A noble, a crime boss, a celebrity, an inquisitor or a creature that does not usually sit at tables. Their patronage is valuable and their presence is a statement to everyone watching.",
-          },
-          {
-            term: "Supply shortages",
-            text: "A road is closed, a catch has failed, a refinery is on strike, a harvest is late. The party must find an alternative source, pay more, or explain to customers why the menu has changed.",
           },
           {
             term: "Monsters or hazards in or beneath the premises",
@@ -199,7 +196,7 @@ export const howDoIRunACampaignWhereThePlayersOwnABusiness: AnswerConfigInput =
         items: [
           {
             term: "Turn one: stop the leak",
-            text: "Priority: repair the roof and the cellar drain. The party makes a relevant check and succeeds. Profit stays struggling for now, but capacity and security each improve a step. Complication: Mara mentions the brewer has started shorting the tavern by a barrel a week, selling the missing stock to a new alehouse up the street. The players now know their supplier and their rival by name.",
+            text: "Priority: repair the roof and the cellar drain. The party makes a relevant check and succeeds. Profit stays struggling for now, but supplies and security each improve a step. Complication: Mara mentions the brewer has started shorting the tavern by a barrel a week, selling the missing stock to a new alehouse up the street. The players now know their supplier and their rival by name.",
           },
           {
             term: "Turn two: fix the supply",
@@ -235,7 +232,7 @@ export const howDoIRunACampaignWhereThePlayersOwnABusiness: AnswerConfigInput =
         items: [
           "Agree what the business is for and who it serves. One sentence the group chooses together is enough.",
           "Pick four or five traits to track and note their starting level on a single card.",
-          "Name two or three staff or regulars with a want each. Give at least one person a loyalty the party will need to earn or keep.",
+          "Name two or three staff or regulars, each with something they want. Give at least one person a loyalty the party will need to earn or keep.",
           "Name a supplier, a rival and a person or faction the business owes something to.",
           "Decide the turn length for this campaign: weekly, monthly or between adventures.",
           "Prepare one opening complication from the list above that fits the street the business sits on, not a generic encounter.",
@@ -317,7 +314,7 @@ export const howDoIRunACampaignWhereThePlayersOwnABusiness: AnswerConfigInput =
         "player owned inn business rpg hooks",
       ],
       uniqueValue:
-        "A system-neutral framework for player-owned businesses: six lightweight traits, a five-step business turn, investment options, eleven adventure-generating complications and a multi-turn tavern example.",
+        "A system-neutral framework for player-owned businesses: six lightweight traits, a five-step business turn, investment options, ten adventure-generating complications and a multi-turn tavern example.",
       userJob: "adopt-workflow",
       relatedIntents: [
         "answer-make-player-base-matter",
