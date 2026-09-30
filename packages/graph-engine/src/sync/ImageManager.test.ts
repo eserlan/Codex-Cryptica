@@ -402,8 +402,8 @@ describe("GraphImageManager", () => {
       await until(() => queued.data("resolvedImage") === "blob:queued");
     });
 
-    it("never resolves more than a handful of images at once", async () => {
-      const nodes = Array.from({ length: 30 }, (_, i) => makeNode(`n${i}`));
+    it("keeps the number of images resolving at once bounded", async () => {
+      const nodes = Array.from({ length: 60 }, (_, i) => makeNode(`n${i}`));
       let active = 0;
       let peak = 0;
       const resolveImageUrl = vi.fn(async () => {
@@ -419,11 +419,12 @@ describe("GraphImageManager", () => {
       });
 
       await until(
-        () => resolveImageUrl.mock.calls.length === 30 && active === 0,
+        () => resolveImageUrl.mock.calls.length === 60 && active === 0,
       );
 
-      expect(resolveImageUrl).toHaveBeenCalledTimes(30);
-      expect(peak).toBeLessThanOrEqual(6);
+      expect(resolveImageUrl).toHaveBeenCalledTimes(60);
+      expect(peak).toBeLessThanOrEqual(24);
+      expect(peak).toBeGreaterThan(6);
     });
 
     it("resolves nodes in the viewport before the ones off-screen", async () => {

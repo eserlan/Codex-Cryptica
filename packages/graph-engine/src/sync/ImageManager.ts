@@ -23,8 +23,14 @@ export interface ImageManagerOptions {
   onError?: (error: any) => void;
 }
 
-/** Images resolved at once. Enough to keep the network busy, few enough that they do not starve each other. */
-const RESOLVE_CONCURRENCY = 6;
+/**
+ * Images resolved at once. Most of a resolve is waiting on a remote host, so
+ * this can be generous: the CPU-heavy part (thumbnail generation) has its own,
+ * much smaller limit in the asset manager. Six was measured to be too few: with
+ * a quarter of images on slow hosts, the graph took three times as long to
+ * finish as it did with no limit.
+ */
+const RESOLVE_CONCURRENCY = 24;
 /** Resolved visuals are painted together once this many are ready... */
 const FLUSH_SIZE = 20;
 /** ...or after this long, so a slow image never holds back the ones that finished. */
