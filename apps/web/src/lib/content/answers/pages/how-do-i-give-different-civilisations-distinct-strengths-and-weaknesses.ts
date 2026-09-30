@@ -50,7 +50,7 @@ export const howDoIGiveDifferentCivilisationsDistinctStrengthsAndWeaknesses: Ans
       },
       {
         kind: "list",
-        heading: "Seven habits that keep strengths honest",
+        heading: "Eight habits that keep strengths honest",
         intro:
           "Apply these as checks after you draft a civilisation's strengths, so the differences remain situational rather than absolute:",
         items: [
@@ -325,7 +325,7 @@ export const howDoIGiveDifferentCivilisationsDistinctStrengthsAndWeaknesses: Ans
         "how to design nations with trade-offs for rpg",
       ],
       uniqueValue:
-        "A causal framework (cause, capability, vulnerability, visible consequence) that derives civilisation strengths from geography, institutions, and history with paired failure modes, plus an optional eight-stat generation method and settlement-scale examples.",
+        "A causal framework (cause, capability, vulnerability, visible consequence) that derives organisational capabilities from geography, institutions, and history with scoped dependencies and plausible failure modes, plus an optional eight-stat generation method and settlement-scale examples.",
       userJob: "create",
       relatedIntents: [
         "answer-believable-fantasy-economy",
