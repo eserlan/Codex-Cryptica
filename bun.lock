@@ -38,7 +38,7 @@
     },
     "apps/web": {
       "name": "web",
-      "version": "0.33.13",
+      "version": "0.34.2",
       "dependencies": {
         "@capacitor/app": "^8.1.1",
         "@capacitor/core": "^8.5.0",
@@ -99,6 +99,7 @@
         "flexsearch": "^0.8.212",
         "generator-engine": "workspace:*",
         "graph-engine": "workspace:*",
+        "help-engine": "workspace:*",
         "html-to-image": "^1.11.13",
         "idb": "^8.0.3",
         "js-yaml": "^5.2.1",
@@ -400,6 +401,18 @@
       "devDependencies": {
         "@vitest/coverage-v8": "^5.0.0",
         "jsdom": "^30.0.1",
+        "typescript": "^6.0.3",
+        "vitest": "^5.0.0",
+      },
+    },
+    "packages/help-engine": {
+      "name": "help-engine",
+      "version": "0.0.0",
+      "dependencies": {
+        "zod": "^4.4.3",
+      },
+      "devDependencies": {
+        "@vitest/coverage-v8": "^5.0.0",
         "typescript": "^6.0.3",
         "vitest": "^5.0.0",
       },
@@ -1796,6 +1809,8 @@
     "has-flag": ["has-flag@4.0.0", "", {}, "sha512-EykJT/Q1KjTWctppgIAgfSO0tKVuZUjhgMr17kqTumMl6Afv3EISleU7qZUzoXDFTAHTDC4NOoG/ZxU3EvlMPQ=="],
 
     "hashery": ["hashery@1.5.1", "", { "dependencies": { "hookified": "^1.15.0" } }, "sha512-iZyKG96/JwPz1N55vj2Ie2vXbhu440zfUfJvSwEqEbeLluk7NnapfGqa7LH0mOsnDxTF85Mx8/dyR6HfqcbmbQ=="],
+
+    "help-engine": ["help-engine@workspace:packages/help-engine"],
 
     "hookified": ["hookified@1.15.1", "", {}, "sha512-MvG/clsADq1GPM2KGo2nyfaWVyn9naPiXrqIe4jYjXNZQt238kWyOGrsyc/DmRAQ+Re6yeo6yX/yoNCG5KAEVg=="],
 
