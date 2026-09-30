@@ -323,7 +323,7 @@ export const howDoIRunACampaignWhereThePlayersOwnABusiness: AnswerConfigInput =
         "answer-make-player-base-matter",
         "answer-base-upgrade-ideas",
         "answer-believable-fantasy-economy",
-        "answer-economic-pressure-hooks",
+        "answer-economic-pressures-adventure-hooks",
       ],
       acknowledgedOverlap: [
         {
