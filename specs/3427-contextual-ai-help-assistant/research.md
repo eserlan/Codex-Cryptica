@@ -14,7 +14,7 @@ Each item resolves a design question from issue #3427 or a finding from reading 
 
 ### F2 — There is no feature-flag system
 
-No `featureFlag` / `isFeatureEnabled` mechanism exists in `apps/web`. The spike gate is a build-time env flag (`VITE_HELP_ASSISTANT`, default off, on for staging; the repo reads `import.meta.env.VITE_*`, e.g. `VITE_ORACLE_PROXY_URL`) combined with the existing `discoveryPolicyStore.aiDisabled` check. Adding a general flag framework is out of scope (Constitution III).
+No `featureFlag` / `isFeatureEnabled` mechanism exists in `apps/web`. The spike gate is on at staging (run-time hostname check via the existing `IS_STAGING`, because the staging web build is promoted to production unchanged, so a build-time flag set for staging would also enable production), or where `VITE_HELP_ASSISTANT` is "true" (default off; the repo reads `import.meta.env.VITE_*`, e.g. `VITE_ORACLE_PROXY_URL`) combined with the existing `discoveryPolicyStore.aiDisabled` check. Adding a general flag framework is out of scope (Constitution III).
 
 ### F3 — The Worker already has most of the substrate
 

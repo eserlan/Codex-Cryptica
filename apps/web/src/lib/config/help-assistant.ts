@@ -1,13 +1,18 @@
 /**
- * Build-time gate for the contextual help assistant spike (#3427).
+ * Gate for the contextual help assistant spike (#3427).
  *
- * Off unless `VITE_HELP_ASSISTANT` is exactly "true". There is no general
- * feature-flag system in the app; staging sets this, production does not.
+ * On when any of these holds, otherwise off:
+ * - `VITE_HELP_ASSISTANT` is exactly "true" (a build that wants it everywhere);
+ * - the page is served from staging, detected from the hostname at run time;
+ * - a development build has the local switch set.
  *
- * Development builds also honour a local switch, so a test or a developer can
- * turn it on for one browser without rebuilding. Production builds ignore it.
- * Read at call time so tests can stub the environment.
+ * Staging is detected at run time, not build time, because the web build that
+ * runs on staging is promoted to production as the same artifact. A build-time
+ * flag set for staging would switch the assistant on in production as well.
+ * There is no general feature-flag system in the app.
  */
+import { IS_STAGING } from "$lib/config";
+
 export const HELP_ASSISTANT_DEV_SWITCH = "codex_help_assistant";
 
 function devSwitchOn(): boolean {
@@ -21,5 +26,9 @@ function devSwitchOn(): boolean {
 }
 
 export function isHelpAssistantEnabled(): boolean {
-  return import.meta.env?.VITE_HELP_ASSISTANT === "true" || devSwitchOn();
+  return (
+    import.meta.env?.VITE_HELP_ASSISTANT === "true" ||
+    IS_STAGING ||
+    devSwitchOn()
+  );
 }
