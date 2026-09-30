@@ -157,6 +157,8 @@ export const howDoIBuildABelievableEconomyForAFantasyWorld: AnswerConfigInput =
       "how-do-scarcity-and-shortages-affect-prices-and-conflict-in-an-rpg-world",
       "how-do-i-turn-economic-pressures-into-rpg-adventure-hooks",
       "what-can-players-actually-buy-and-sell-in-a-fantasy-settlement",
+      "how-do-i-give-different-civilisations-distinct-strengths-and-weaknesses",
+      "how-do-i-make-different-cultures-feel-distinct-without-relying-on-stereotypes",
     ],
     discovery: {
       id: "answer-believable-fantasy-economy",
