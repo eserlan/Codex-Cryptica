@@ -30,7 +30,7 @@ test("warm reload cache preloads", async ({ page }) => {
       configurable: true,
       set(service: any) {
         const original = service.preloadVault.bind(service);
-        service.preloadVault = async (vaultId: string) => {
+        service.preloadVault = async (vaultId: string, options?: unknown) => {
           const call: any = {
             startMs: Math.round(performance.now()),
             caller: (new Error().stack ?? "")
@@ -41,7 +41,7 @@ test("warm reload cache preloads", async ({ page }) => {
           };
           calls.push(call);
           const started = performance.now();
-          const result = await original(vaultId);
+          const result = await original(vaultId, options);
           call.durationMs = +(performance.now() - started).toFixed(1);
           call.entities = result.size;
           return result;
