@@ -30,10 +30,40 @@ test("entity index batch cost", async ({ page }) => {
   });
   await setupVaultPage(page);
   await installLargeVaultFixture(page);
+  // The reload gives the real cache-backed warm open the other scenarios use.
+  await page.reload();
+  await page.waitForFunction(
+    (entityCount) => {
+      const vault = (window as any).vault;
+      return (
+        vault?.status === "idle" && vault.allEntities?.length === entityCount
+      );
+    },
+    LARGE_VAULT_ENTITY_COUNT,
+    { timeout: 60_000 },
+  );
+  await page.waitForFunction(
+    () => {
+      const cy = (window as any).cy;
+      return Boolean(cy && cy.nodes().length > 0);
+    },
+    undefined,
+    { timeout: 60_000 },
+  );
   await page.waitForFunction(
     () => {
       const controller = (window as any).graphViewController;
-      return controller?.loadPhase === "ready" && !controller.isLayoutRunning;
+      const samples =
+        (window as any).__CODEX_PERFORMANCE_RESULTS__?.getSamples() ?? [];
+      return (
+        controller?.loadPhase === "ready" &&
+        !controller.isLayoutRunning &&
+        samples.some(
+          (sample: any) =>
+            sample.operation === "graph_sync_render_ready" &&
+            sample.outcome === "completed",
+        )
+      );
     },
     undefined,
     { timeout: 60_000 },
