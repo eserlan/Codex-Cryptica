@@ -109,6 +109,18 @@ export const OPERATION_DEFAULTS: OperationDefaults[] = [
     fallbackModelKey: "gemini-flash-lite",
     reasoningEffort: "minimal",
   },
+  {
+    // Contextual help answers (#3427). Internal to /api/help/ask, never
+    // selectable by a client. A short grounded answer over supplied sources
+    // needs little deliberation, so reasoning stays at the lowest depth the
+    // model accepts. Checked live: gpt-5.6-luna rejects "minimal" with a 400
+    // (it accepts none, low, medium, high, xhigh), so "low" is the floor.
+    operation: "help-answer",
+    context: "public",
+    defaultModelKey: "luna-fast",
+    fallbackModelKey: "gemini-flash-lite",
+    reasoningEffort: "low",
+  },
   // "revision" intentionally has no default yet — no caller uses it this
   // slice (spec Scope §4, out of scope).
 ];

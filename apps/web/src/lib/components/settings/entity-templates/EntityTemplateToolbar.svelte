@@ -23,10 +23,10 @@
   <div class="flex flex-wrap items-center gap-2">
     <a
       href={resolve("/templates?kind=entity" as any)}
-      class="inline-flex items-center gap-1 rounded border border-theme-primary/40 px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-theme-primary transition-colors hover:border-theme-primary hover:bg-theme-primary/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary"
+      class="inline-flex items-center gap-1.5 rounded border border-theme-primary/40 px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-wide text-theme-primary transition-colors hover:border-theme-primary hover:bg-theme-primary/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary"
       data-testid="browse-community-entity-templates"
     >
-      <span class="icon-[lucide--users-round] h-3 w-3" aria-hidden="true"
+      <span class="icon-[lucide--users-round] h-3.5 w-3.5" aria-hidden="true"
       ></span>
       Browse community templates
     </a>

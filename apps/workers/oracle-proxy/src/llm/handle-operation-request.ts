@@ -6,11 +6,11 @@
  */
 
 import { getModel, getOperationDefaults } from "./registry";
-import { createResolver } from "./resolver";
+import { createProviderResolver } from "./provider-resolver";
 import { validateOperationRequestBody } from "./request-validation";
 import { buildResolutionLogEntry } from "./observability";
-import { callGemini, streamGemini } from "./adaptors/gemini-adaptor";
-import { callOpenAi, streamOpenAi } from "./adaptors/openai-adaptor";
+import { streamGemini } from "./adaptors/gemini-adaptor";
+import { streamOpenAi } from "./adaptors/openai-adaptor";
 import type {
   GenerationEvent,
   LlmModelDefinition,
@@ -43,13 +43,20 @@ interface HandleEnv {
   OPENAI_API_KEY?: string;
 }
 
-export async function handleLlmOperationRequest(
+type JsonResponder = (data: unknown, status: number) => Response;
+
+/**
+ * The part both handlers share: a JSON responder bound to the CORS headers,
+ * request validation, and the provider-neutral request built from the body.
+ * Returns the error response to send, or the prepared pieces.
+ */
+function prepareOperation(
   body: any,
   corsHeaders: Record<string, string>,
-  env: HandleEnv,
-  now: () => number = Date.now,
-): Promise<Response> {
-  const json = (data: unknown, status: number) =>
+):
+  | { response: Response }
+  | { json: JsonResponder; llmRequest: LlmRequest; context: "public" } {
+  const json: JsonResponder = (data, status) =>
     new Response(JSON.stringify(data), {
       status,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -57,7 +64,7 @@ export async function handleLlmOperationRequest(
 
   const validation = validateOperationRequestBody(body);
   if (!validation.valid) {
-    return json({ error: validation.error }, 400);
+    return { response: json({ error: validation.error }, 400) };
   }
 
   const llmRequest: LlmRequest = {
@@ -71,17 +78,22 @@ export async function handleLlmOperationRequest(
 
   // Context is hardcoded to "public" for every request in this slice
   // (FR-003) — no header/token inspection or other caller-identity
-  // detection. Real authenticated-context detection is deferred to #2050.
-  const context = "public" as const;
+  // detection. Real authenticated-context detection is deferred to #2050,
+  // which will change both handlers together.
+  return { json, llmRequest, context: "public" };
+}
 
-  const resolver = createResolver({
-    getModel,
-    getOperationDefaults,
-    adaptors: {
-      gemini: (req, model) => callGemini(req, model, env),
-      openai: (req, model) => callOpenAi(req, model, env),
-    },
-  });
+export async function handleLlmOperationRequest(
+  body: any,
+  corsHeaders: Record<string, string>,
+  env: HandleEnv,
+  now: () => number = Date.now,
+): Promise<Response> {
+  const prepared = prepareOperation(body, corsHeaders);
+  if ("response" in prepared) return prepared.response;
+  const { json, llmRequest, context } = prepared;
+
+  const resolver = createProviderResolver(env);
 
   const start = now();
   const outcome = await resolver.resolve(llmRequest, context);
@@ -200,29 +212,9 @@ export async function handleLlmOperationStreamRequest(
   env: HandleEnv,
   signal?: AbortSignal,
 ): Promise<Response> {
-  const json = (data: unknown, status: number) =>
-    new Response(JSON.stringify(data), {
-      status,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
-
-  const validation = validateOperationRequestBody(body);
-  if (!validation.valid) {
-    return json({ error: validation.error }, 400);
-  }
-
-  const llmRequest: LlmRequest = {
-    operation: body.operation,
-    messages: body.messages,
-    schema: body.schema,
-    temperature: body.temperature,
-    maxOutputTokens: body.maxOutputTokens,
-    modelKeyOverride: body.modelKeyOverride,
-  };
-
-  // Context hardcoded to "public", matching handleLlmOperationRequest (#2050
-  // will add real context detection to both handlers together).
-  const context = "public" as const;
+  const prepared = prepareOperation(body, corsHeaders);
+  if ("response" in prepared) return prepared.response;
+  const { json, llmRequest, context } = prepared;
   const defaults = getOperationDefaults(llmRequest.operation, context);
 
   let primaryKey: string | undefined;

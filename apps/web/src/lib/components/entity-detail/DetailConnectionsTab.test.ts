@@ -1,6 +1,15 @@
 /** @vitest-environment jsdom */
 import { render, screen, fireEvent } from "@testing-library/svelte";
-import { describe, it, expect, beforeAll, beforeEach, vi } from "vitest";
+import {
+  describe,
+  it,
+  expect,
+  afterEach,
+  beforeAll,
+  beforeEach,
+  vi,
+} from "vitest";
+import { discoveryPolicyStore } from "$lib/stores/ui/discovery-policy.svelte";
 import type { Entity } from "schema";
 
 const { entities, vaultMock, cyInstances, imageManagerInstances } = vi.hoisted(
@@ -506,6 +515,35 @@ describe("DetailConnectionsTab", () => {
       // The next, undragged tap still opens it.
       tapNode(lastCy(), "duke");
       expect(vaultMock.selectedEntityId).toBe("duke");
+    });
+  });
+
+  describe("help assistant shortcut", () => {
+    afterEach(() => {
+      vi.unstubAllEnvs();
+      discoveryPolicyStore.aiDisabled = false;
+    });
+
+    it("is absent while the help assistant flag is off", async () => {
+      vi.stubEnv("VITE_HELP_ASSISTANT", "");
+      render(DetailConnectionsTab, { entity: entities.king });
+      await Promise.resolve();
+      expect(screen.queryByTestId("ask-about-this")).toBeNull();
+    });
+
+    it("is shown when the flag is on and AI is not disabled", async () => {
+      vi.stubEnv("VITE_HELP_ASSISTANT", "true");
+      render(DetailConnectionsTab, { entity: entities.king });
+      await Promise.resolve();
+      expect(screen.getByTestId("ask-about-this")).toBeTruthy();
+    });
+
+    it("is absent when the user has turned AI off", async () => {
+      vi.stubEnv("VITE_HELP_ASSISTANT", "true");
+      discoveryPolicyStore.aiDisabled = true;
+      render(DetailConnectionsTab, { entity: entities.king });
+      await Promise.resolve();
+      expect(screen.queryByTestId("ask-about-this")).toBeNull();
     });
   });
 });

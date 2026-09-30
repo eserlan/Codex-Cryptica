@@ -89,6 +89,24 @@ function ensureSessionManager(): AiSessionManager | null {
 }
 
 /**
+ * Bearer token for callers that talk to the proxy directly instead of through
+ * `aiClientManager` (the contextual help assistant, #3427). Resolves `null`
+ * when no session is required (a local development proxy) or none could be
+ * obtained; the proxy is the authority on whether that is acceptable.
+ *
+ * `forceRefresh` discards the cached token first, for the one retry after a
+ * 401 that `aiClientManager` also makes.
+ */
+export async function getAiSessionToken(
+  forceRefresh = false,
+): Promise<string | null> {
+  const manager = ensureSessionManager();
+  if (!manager) return null;
+  if (forceRefresh) manager.invalidate();
+  return manager.getToken();
+}
+
+/**
  * Wire the token flow without solving a challenge.
  *
  * Cheap and side-effect-free, so it belongs on every page: a visitor reading
