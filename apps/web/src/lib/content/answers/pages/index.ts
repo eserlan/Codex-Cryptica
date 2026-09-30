@@ -34,6 +34,7 @@ import { howDoIStartGmingForTheFirstTime } from "./how-do-i-start-gming-for-the-
 import { howDoITakeUsefulRpgNotesDuringPlay } from "./how-do-i-take-useful-rpg-notes-during-play";
 import { howDoITurnAnRpgIdeaIntoAnAdventure } from "./how-do-i-turn-an-rpg-idea-into-an-adventure";
 import { howDoITurnEconomicPressuresIntoRpgAdventureHooks } from "./how-do-i-turn-economic-pressures-into-rpg-adventure-hooks";
+import { howDoIUpgradeAPlayerCharactersWeaponWithoutReplacingIt } from "./how-do-i-upgrade-a-player-characters-weapon-without-replacing-it";
 import { howDoIWriteAGoodCallOfCthulhuOneShot } from "./how-do-i-write-a-good-call-of-cthulhu-one-shot";
 import { howDoScarcityAndShortagesAffectPricesAndConflictInAnRpgWorld } from "./how-do-scarcity-and-shortages-affect-prices-and-conflict-in-an-rpg-world";
 import { howDoTradeRoutesShapeCitiesAndKingdomsInAnRpgWorld } from "./how-do-trade-routes-shape-cities-and-kingdoms-in-an-rpg-world";
@@ -159,6 +160,7 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     howDoITakeUsefulRpgNotesDuringPlay,
     howDoITurnAnRpgIdeaIntoAnAdventure,
     howDoITurnEconomicPressuresIntoRpgAdventureHooks,
+    howDoIUpgradeAPlayerCharactersWeaponWithoutReplacingIt,
     howDoIWriteAGoodCallOfCthulhuOneShot,
     howDoScarcityAndShortagesAffectPricesAndConflictInAnRpgWorld,
     howDoTradeRoutesShapeCitiesAndKingdomsInAnRpgWorld,

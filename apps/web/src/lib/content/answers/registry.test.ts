@@ -628,7 +628,7 @@ describe("published answers", () => {
     // The pack's editorial rule (#2564). A curated list rather than a broad
     // `\w+ize` pattern, which flags legitimate words like "assize" and "sized".
     const americanisms =
-      /\b(?:organiz|recogniz|realiz|specializ|characteriz|apologiz|analyz|color|honor|behavior|rumor|favorite|neighbor|center|theater|catalog|gray|traveled|traveling|canceled|defense|offense)\w*\b/i;
+      /\b(?:organiz|recogniz|realiz|specializ|characteriz|apologiz|analyz|color|honor|behavior|rumor|favorite|neighbor|center|theater|catalog|gray|traveled|traveling|canceled|defense|offense|armor)\w*\b/i;
     for (const answer of published) {
       const { discovery: _discovery, ...readerFacing } = answer;
       const body = JSON.stringify(readerFacing);

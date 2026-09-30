@@ -151,6 +151,7 @@ export const whatCanPlayersActuallyBuyAndSellInAFantasySettlement: AnswerConfigI
       "how-do-scarcity-and-shortages-affect-prices-and-conflict-in-an-rpg-world",
       "how-do-i-turn-economic-pressures-into-rpg-adventure-hooks",
       "how-do-i-give-different-civilisations-distinct-strengths-and-weaknesses",
+      "how-do-i-upgrade-a-player-characters-weapon-without-replacing-it",
     ],
     discovery: {
       id: "answer-settlement-market-buy-sell",
