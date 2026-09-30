@@ -76,6 +76,12 @@
 
 <svelte:head>
   <link rel="help" href="{base}/llms.txt" />
+  <link
+    rel="alternate"
+    type="application/atom+xml"
+    title="Codex Cryptica answers and blog"
+    href="{base}/feed.xml"
+  />
   <!-- eslint-disable-next-line svelte/no-at-html-tags -->
   {@html `<scr` +
     `ipt type="application/ld+json">${schemaOrgString}</scr` +
