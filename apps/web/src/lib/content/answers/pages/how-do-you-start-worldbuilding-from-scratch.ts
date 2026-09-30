@@ -145,6 +145,7 @@ export const howDoYouStartWorldbuildingFromScratch: AnswerConfigInput = {
     "how-to-create-a-sci-fi-star-system-for-an-rpg",
     "how-do-i-start-gming-for-the-first-time",
     "how-do-i-build-a-believable-constitutional-crisis-or-coup",
+    "how-do-fantasy-cities-defend-against-flying-creatures-and-teleportation",
   ],
   discovery: {
     id: "answer-worldbuilding-from-scratch",

@@ -141,6 +141,7 @@ export const howDoIBalanceRpgCombatEncountersWithoutATpk: AnswerConfigInput = {
     "how-do-you-run-dnd-for-a-large-group-of-players",
     "what-rpg-should-i-use-for-tactical-combat",
     "how-do-i-run-a-large-battle-when-the-player-characters-are-part-of-an-army",
+    "how-do-i-upgrade-a-player-characters-weapon-without-replacing-it",
   ],
   discovery: {
     id: "answer-encounter-balance",

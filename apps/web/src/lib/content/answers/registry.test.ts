@@ -49,6 +49,22 @@ const mockRegistry: Record<string, AnswerConfig> = {
 };
 
 describe("answer registry", () => {
+  it("keeps the civilisation capability habits heading aligned with its items", () => {
+    const habits = answers[
+      "how-do-i-give-different-civilisations-distinct-strengths-and-weaknesses"
+    ].sections.find(
+      (section) =>
+        section.kind === "list" &&
+        section.heading?.includes("habits that keep strengths honest"),
+    );
+
+    expect(habits?.kind).toBe("list");
+    if (habits?.kind === "list") {
+      expect(habits.heading).toBe("Eight habits that keep strengths honest");
+      expect(habits.items).toHaveLength(8);
+    }
+  });
+
   it("links the army-battle answer to Pathfinder's troop rules", () => {
     const armyBattle =
       answers[
@@ -75,6 +91,24 @@ describe("answer registry", () => {
           item.term !== "The full situation" && item.term !== "Why it works",
       ),
     ).toHaveLength(2);
+  });
+
+  it("keeps the player-owned business complication count aligned with its discovery summary", () => {
+    const business =
+      answers["how-do-i-run-a-campaign-where-the-players-own-a-business"];
+    const complications = business.sections.find(
+      (section) =>
+        section.kind === "list" &&
+        section.heading === "Turn complications into adventure hooks",
+    );
+
+    expect(complications?.kind).toBe("list");
+    if (complications?.kind === "list") {
+      expect(complications.items).toHaveLength(10);
+    }
+    expect(business.discovery?.uniqueValue).toContain(
+      "ten adventure-generating complications",
+    );
   });
 
   describe("getAnswer", () => {
@@ -612,7 +646,7 @@ describe("published answers", () => {
     // The pack's editorial rule (#2564). A curated list rather than a broad
     // `\w+ize` pattern, which flags legitimate words like "assize" and "sized".
     const americanisms =
-      /\b(?:organiz|recogniz|realiz|specializ|characteriz|apologiz|analyz|color|honor|behavior|rumor|favorite|neighbor|center|theater|catalog|gray|traveled|traveling|canceled|defense|offense)\w*\b/i;
+      /\b(?:organiz|recogniz|realiz|specializ|characteriz|apologiz|analyz|color|honor|behavior|rumor|favorite|neighbor|center|theater|catalog|gray|traveled|traveling|canceled|defense|offense|armor)\w*\b/i;
     for (const answer of published) {
       const { discovery: _discovery, ...readerFacing } = answer;
       const body = JSON.stringify(readerFacing);

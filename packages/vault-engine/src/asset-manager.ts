@@ -29,6 +29,16 @@ const THUMBNAIL_CONCURRENCY = 2;
 
 const EXTERNAL_URL = /^https?:\/\//i;
 
+/** An external image that has not answered by now is treated as unreachable. */
+const EXTERNAL_FETCH_TIMEOUT_MS = 8_000;
+
+/**
+ * How long an unreachable external image is left alone. Long enough that a
+ * graph re-sync does not retry every blocked image, short enough that an image
+ * that was only briefly down is tried again.
+ */
+const EXTERNAL_FAILURE_TTL_MS = 5 * 60_000;
+
 /** Cache-key namespace for thumbnail URLs, distinct from their originals. */
 const thumbnailKey = (path: string) => `thumbnail:${path}`;
 
@@ -63,6 +73,8 @@ export class AssetManager {
   private resolving = new Map<string, Promise<string>>();
   private activeThumbnails = 0;
   private thumbnailWaiters: (() => void)[] = [];
+  /** When each unreachable external image last failed, by URL. */
+  private failedExternal = new Map<string, number>();
 
   constructor(
     private ioAdapter: IAssetIOAdapter,
@@ -152,9 +164,8 @@ export class AssetManager {
           // try to resolve to a blob URL to satisfy CORS requirements for canvas.
           if (!vaultHandle) {
             try {
-              const response = await this.fetcher(cleanPath, { mode: "cors" });
-              if (!response.ok) return cleanPath;
-              const blob = await response.blob();
+              const blob = await this.fetchExternal(cleanPath);
+              if (!blob) return cleanPath;
               url = URL.createObjectURL(blob);
               this.urlCache.set(cleanPath, { url, refs: 1 });
               return url;
@@ -340,6 +351,34 @@ export class AssetManager {
     );
   }
 
+  private hasRecentFailure(url: string): boolean {
+    const failedAt = this.failedExternal.get(url);
+    if (failedAt === undefined) return false;
+    if (this.clock.now() - failedAt < EXTERNAL_FAILURE_TTL_MS) return true;
+    this.failedExternal.delete(url);
+    return false;
+  }
+
+  /**
+   * Fetches an external image, or `null` when it cannot be had. A failure
+   * (blocked by CORS, gone, too slow) is remembered for a while, so a graph
+   * with hundreds of dead links does not retry each on every load.
+   */
+  private async fetchExternal(url: string): Promise<Blob | null> {
+    if (this.hasRecentFailure(url)) return null;
+    try {
+      const response = await this.fetcher(url, {
+        mode: "cors",
+        signal: AbortSignal.timeout(EXTERNAL_FETCH_TIMEOUT_MS),
+      });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      return await response.blob();
+    } catch {
+      this.failedExternal.set(url, this.clock.now());
+      return null;
+    }
+  }
+
   /** The cached copy of an external image, fetching and caching it if needed. */
   private async readOrFetchExternal(
     vaultHandle: FileSystemDirectoryHandle,
@@ -353,9 +392,8 @@ export class AssetManager {
       } catch {
         const legacy = await this.migrateLegacyExternal(vaultHandle, url, name);
         if (legacy) return legacy;
-        const response = await this.fetcher(url, { mode: "cors" });
-        if (!response.ok) return null;
-        const blob = await response.blob();
+        const blob = await this.fetchExternal(url);
+        if (!blob) return null;
         await this.ioAdapter.writeOpfsFile(
           [".cache", "external_images", name],
           blob,

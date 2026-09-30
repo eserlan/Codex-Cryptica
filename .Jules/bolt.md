@@ -12,3 +12,8 @@
 
 **Learning:** In Svelte 5 derived state and lifecycle rebuilds (like `rebuildIndexes`), replacing chained `.filter()` or intermediate `Object.values()` allocations with a single imperative loop over keys drastically reduces unnecessary garbage collection overhead on large maps, such as standard dictionaries of all entities.
 **Action:** When extracting multiple derived arrays from a dictionary, avoid allocating intermediate arrays by looping via `for...in` and pushing items natively using `hasOwnProperty`.
+
+## 2026-10-30 - Replace [...matchAll] with lazy iterator to avoid intermediate array allocation
+
+**Learning:** When using `[...string.matchAll(regex)]` to extract multiple matches from a string (such as HTML or markdown parsing), it eagerly forces the Javascript engine to allocate an intermediate array to hold all the match objects. In hot paths or large files (like parsing large HTML sitemaps or markdown), this creates unnecessary garbage collection pressure and memory usage, particularly if the values are simply iterated over or counted.
+**Action:** Replace `[...string.matchAll(regex)]` and `Array.from(string.matchAll(regex))` with an imperative `for...of` loop over the raw iterator (e.g. `for (const match of string.matchAll(regex)) { ... }`) to process the matches lazily, significantly reducing intermediate array allocations.

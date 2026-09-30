@@ -134,9 +134,10 @@ describe("AssetManager", () => {
         "https://example.com/pic.png",
       );
 
-      expect(injected).toHaveBeenCalledWith("https://example.com/pic.png", {
-        mode: "cors",
-      });
+      expect(injected).toHaveBeenCalledWith(
+        "https://example.com/pic.png",
+        expect.objectContaining({ mode: "cors" }),
+      );
       expect(global.fetch).not.toHaveBeenCalled();
       expect(result).toBe("blob:mock-url");
     });
@@ -418,6 +419,95 @@ describe("AssetManager", () => {
 
       expect(await manager.resolveThumbnailUrl(vault, url)).toBe(url);
       expect(mockImageProcessor.generateThumbnail).not.toHaveBeenCalled();
+    });
+
+    describe("unreachable external images", () => {
+      let now = 0;
+      const clock = { now: () => now } as any;
+      const blocked = () => {
+        mockIO.readOpfsBlob.mockImplementation(notFound);
+        (global.fetch as any).mockReset();
+        (global.fetch as any).mockRejectedValue(new TypeError("CORS"));
+        now = 0;
+        return new AssetManager(
+          mockIO,
+          mockImageProcessor,
+          global.fetch,
+          clock,
+        );
+      };
+
+      it("fetches a blocked image once, not again for the fallback", async () => {
+        const manager = blocked();
+
+        expect(await manager.resolveThumbnailUrl(vault, url)).toBe(url);
+
+        expect(global.fetch).toHaveBeenCalledTimes(1);
+      });
+
+      it("does not retry a blocked image on the next load", async () => {
+        const manager = blocked();
+        await manager.resolveThumbnailUrl(vault, url);
+        await manager.resolveThumbnailUrl(vault, url);
+        await manager.resolveImageUrl(vault, url);
+
+        expect(global.fetch).toHaveBeenCalledTimes(1);
+      });
+
+      it("tries the image again once the failure has aged out", async () => {
+        const manager = blocked();
+        await manager.resolveThumbnailUrl(vault, url);
+
+        now = 5 * 60_000 + 1;
+        await manager.resolveThumbnailUrl(vault, url);
+
+        expect(global.fetch).toHaveBeenCalledTimes(2);
+      });
+
+      it("does not let one blocked image stop a different one loading (negative)", async () => {
+        const manager = blocked();
+        await manager.resolveThumbnailUrl(vault, url);
+        (global.fetch as any).mockResolvedValue({
+          ok: true,
+          blob: () => Promise.resolve(new Blob(["img"])),
+        });
+
+        await manager.resolveThumbnailUrl(vault, "https://other.example/b.png");
+
+        expect(global.fetch).toHaveBeenCalledTimes(2);
+        expect(mockImageProcessor.generateThumbnail).toHaveBeenCalledTimes(1);
+      });
+
+      it("treats an error status as a failure too", async () => {
+        const manager = blocked();
+        (global.fetch as any).mockReset();
+        (global.fetch as any).mockResolvedValue({ ok: false, status: 404 });
+
+        await manager.resolveThumbnailUrl(vault, url);
+        await manager.resolveThumbnailUrl(vault, url);
+
+        expect(global.fetch).toHaveBeenCalledTimes(1);
+      });
+
+      it("gives every external fetch a timeout", async () => {
+        const manager = blocked();
+        await manager.resolveThumbnailUrl(vault, url);
+
+        const init = (global.fetch as any).mock.calls[0][1];
+        expect(init.signal).toBeInstanceOf(AbortSignal);
+      });
+
+      it("counts a timed-out fetch as a failure", async () => {
+        const manager = blocked();
+        (global.fetch as any).mockReset();
+        (global.fetch as any).mockRejectedValue(
+          new DOMException("timed out", "TimeoutError"),
+        );
+
+        expect(await manager.resolveThumbnailUrl(vault, url)).toBe(url);
+        await manager.resolveThumbnailUrl(vault, url);
+        expect(global.fetch).toHaveBeenCalledTimes(1);
+      });
     });
 
     it("resolves local paths exactly like resolveImageUrl", async () => {

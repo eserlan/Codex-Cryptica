@@ -239,6 +239,15 @@
   }
 </script>
 
+<svelte:head>
+  <link
+    rel="alternate"
+    type="application/atom+xml"
+    title="Codex Cryptica answers"
+    href="{base}/answers/feed.xml"
+  />
+</svelte:head>
+
 <SeoHead
   title="{TITLE} | Codex Cryptica"
   description={DESCRIPTION}
@@ -275,6 +284,13 @@
         {DESCRIPTION} Each page answers one question directly, then explains the framework
         behind it with a concrete example.
       </p>
+      <a
+        href="{base}/answers/feed.xml"
+        class="mt-4 inline-flex items-center gap-2 text-sm text-theme-primary hover:underline"
+      >
+        <span class="icon-[lucide--rss] h-4 w-4" aria-hidden="true"></span>
+        Subscribe to new answers
+      </a>
     </header>
 
     {#if !isSearchingOrFiltered && communityFavourites.length > 0}
