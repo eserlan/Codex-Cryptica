@@ -314,7 +314,7 @@ export const howDoIRunACampaignWhereThePlayersOwnABusiness: AnswerConfigInput =
         "player owned inn business rpg hooks",
       ],
       uniqueValue:
-        "A system-neutral framework for player-owned businesses: six lightweight traits, a five-step business turn, investment options, eleven adventure-generating complications and a multi-turn tavern example.",
+        "A system-neutral framework for player-owned businesses: six lightweight traits, a five-step business turn, investment options, ten adventure-generating complications and a multi-turn tavern example.",
       userJob: "adopt-workflow",
       relatedIntents: [
         "answer-make-player-base-matter",

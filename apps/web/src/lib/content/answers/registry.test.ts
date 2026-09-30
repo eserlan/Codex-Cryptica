@@ -93,6 +93,24 @@ describe("answer registry", () => {
     ).toHaveLength(2);
   });
 
+  it("keeps the player-owned business complication count aligned with its discovery summary", () => {
+    const business =
+      answers["how-do-i-run-a-campaign-where-the-players-own-a-business"];
+    const complications = business.sections.find(
+      (section) =>
+        section.kind === "list" &&
+        section.heading === "Turn complications into adventure hooks",
+    );
+
+    expect(complications?.kind).toBe("list");
+    if (complications?.kind === "list") {
+      expect(complications.items).toHaveLength(10);
+    }
+    expect(business.discovery?.uniqueValue).toContain(
+      "ten adventure-generating complications",
+    );
+  });
+
   describe("getAnswer", () => {
     it("returns the parsed answer for a known slug", () => {
       expect(getAnswer("alpha", mockRegistry)?.slug).toBe("alpha");
