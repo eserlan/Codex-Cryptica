@@ -185,7 +185,7 @@ export class SyncStore {
       // The user may have switched vaults while we waited; reconciling the
       // wrong vault would be worse than not reconciling at all.
       if (this.isStale(vaultIdAtStart)) return;
-      void this.loadFiles(false).catch((err) => {
+      void this.loadFiles(false, { reuseCache: true }).catch((err) => {
         debugStore.warn("[SyncStore] Warm-cache reconcile failed:", err);
       });
     }, WARM_RECONCILE_DELAY_MS);
@@ -197,7 +197,15 @@ export class SyncStore {
     this.warmReconcileTimer = null;
   }
 
-  async loadFiles(skipSyncIfWarm = true) {
+  /**
+   * `reuseCache` lets a load that follows a warm open skip re-reading the
+   * whole cache: the warm-cache reconcile passes it, since it re-reads OPFS
+   * (the source of truth) itself and the snapshot was loaded moments earlier.
+   */
+  async loadFiles(
+    skipSyncIfWarm = true,
+    options: { reuseCache?: boolean } = {},
+  ) {
     const activeVaultId = this.deps.activeVaultId();
     if (!activeVaultId) return;
     const vaultIdAtStart = activeVaultId;
@@ -269,7 +277,9 @@ export class SyncStore {
       const isDemo =
         sessionModeStore.isDemoMode || vaultIdAtStart.startsWith("demo-");
       const cachedMap = !isDemo
-        ? await cacheService.preloadVault(vaultIdAtStart)
+        ? await (options.reuseCache
+            ? cacheService.preloadVault(vaultIdAtStart, { reuse: true })
+            : cacheService.preloadVault(vaultIdAtStart))
         : new Map();
 
       vaultOpenCacheState = cachedMap.size > 0 ? "warm" : "cold";
