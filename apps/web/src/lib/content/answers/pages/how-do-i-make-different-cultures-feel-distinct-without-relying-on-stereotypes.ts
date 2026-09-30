@@ -9,7 +9,7 @@ export const howDoIMakeDifferentCulturesFeelDistinctWithoutRelyingOnStereotypes:
       "How do I make different cultures feel distinct without relying on stereotypes?",
     kind: "framework",
     shortAnswer:
-      "Make cultures distinct by building each one from a few stated principles that shape behaviour, create a tension where the principle pulls against other needs, and produce visible consequences players can encounter. A culture that treats hospitality as sacred does not simply wear different clothes; it maintains guest rituals, host liabilities, and hospitality law that change how the party is received, judged, and protected. When principles produce institutions, etiquette, trade-offs, and internal disagreement, cultures feel coherent and playable without resorting to species-wide personality traits or surface markers alone.",
+      "Make cultures distinct by tracing a few principles, norms, or expectations into behaviour and visible consequences. Ask what happens when a norm meets another duty or pressure, where that creates useful friction, and what players can notice. A culture that treats hospitality as sacred does not simply wear different clothes; it may maintain guest rituals and host obligations that change how the party is received and protected. These patterns need an intelligible history and meaning, not an objectively efficient purpose, and they vary between people and settings rather than becoming species-wide personality traits.",
     sections: [
       {
         kind: "prose",
@@ -25,11 +25,11 @@ export const howDoIMakeDifferentCulturesFeelDistinctWithoutRelyingOnStereotypes:
         heading:
           "The core framework: principle, behaviour, tension, visible consequence",
         intro:
-          "Use this four-step chain for each cultural trait you want to make playable. One clear sentence per step is enough to start; each step constrains the next:",
+          "Use this four-step chain for each cultural trait you want to make playable. One clear sentence per step is enough to start; you are extracting a pattern for play, not claiming every local would state it as doctrine:",
         items: [
           {
-            term: "Cultural principle",
-            text: "A stated value or expectation that members would recognise as proper, even when they fail to live up to it. An ideal, not a biology. Examples: hospitality is sacred, lineage shapes honour, land belongs to the community, oaths outlive the people who swear them. Name it as a sentence a local elder, priest, or clerk could defend in argument.",
+            term: "Principle / norm / expectation",
+            text: "A value, habit, or expectation that shapes what people treat as proper, even when they fail to live up to it. It may be explicit, implicit, embodied, or contradictory: good hosts feed before asking questions; adults do not praise themselves directly; work begins after the shared meal. Examples include hospitality as sacred, lineage shaping honour, land belonging to the community, or oaths outliving those who swear them. Name it as a sentence someone might defend, or a pattern they might only explain when challenged.",
           },
           {
             term: "Behaviour",
@@ -37,15 +37,15 @@ export const howDoIMakeDifferentCulturesFeelDistinctWithoutRelyingOnStereotypes:
           },
           {
             term: "Tension",
-            text: "Where the principle pulls against another legitimate concern: security, justice, personal merit, efficiency, or a rival duty. Sacred hospitality can protect an enemy who claims guest-right. Inherited honour can bind a capable person to a tarnished name. Collective ownership can frustrate a merchant who expects land to be bought and fenced. Tension is what makes a culture feel lived in rather than decorative.",
+            text: "Ask what happens when the norm meets another duty, a resource limit, a different social group, or changing circumstances. Sacred hospitality can protect an enemy who claims guest-right; inherited honour can bind a capable person to a tarnished name. Sometimes this creates a sharp choice, sometimes the practice is routine, outsider-facing, or reinforced by another norm. Look for playable friction where it exists; do not force every custom into a balanced trade-off.",
           },
           {
             term: "Visible consequence",
-            text: "The institutions, customs, spaces, and costs that exist because of the first three steps: guest houses with hearth law, registers of lineage, courts that weigh family standing, assembly fields where use rights are renewed, songs or rites that restate the principle, and the everyday objects that mark compliance or breach. If a principle leaves no trace anyone at the table can see, hear, or pay for, it will not survive contact with play.",
+            text: "The institutions, customs, interactions, spaces, and costs through which the pattern becomes visible: guest houses with hearth law, registers of lineage, assembly fields where use rights are renewed, songs or rites, who speaks first at a meal, how gifts are opened, how close people stand, whether silence is comfortable, or whether work starts communally. If a norm leaves no trace anyone at the table can see, hear, or pay for, it may be hard to bring into play.",
           },
         ],
         outro:
-          "Write the whole chain as a single sentence when you can: hospitality is sacred, so strangers are welcomed and protected, which can shelter an enemy who claims guest-right, so inns, homes, courts, and even war camps maintain rituals and laws around hosting and protection. That sentence is the culture at the table.",
+          "Write the whole chain as a single sentence when you can: hospitality is sacred, so strangers are welcomed and protected, which can shelter an enemy who claims guest-right, so inns, homes, and war camps maintain rituals around hosting and protection. That sentence gives you a cultural pattern to play, not a complete description of everyone who shares it.",
       },
       {
         kind: "list",
@@ -71,7 +71,11 @@ export const howDoIMakeDifferentCulturesFeelDistinctWithoutRelyingOnStereotypes:
           },
           {
             term: "Attitudes to outsiders",
-            text: "What counts as belonging, how newcomers are tested, and where the line falls between guest, resident, and citizen. A trading coast may naturalise quickly through oaths and fees; a valley commune may require seasons of work before granting use rights.",
+            text: "Map rules of belonging rather than assigning a population one attitude. Who can admit newcomers, and are merchants, refugees, pilgrims, mercenaries, and spouses treated differently? Compare law with everyday practice, and ask which factions benefit from stricter or looser membership. A trading coast may grant merchants quick access through oaths and fees while treating refugees differently; a valley commune may require seasons of work before granting use rights.",
+          },
+          {
+            term: "Communication, privacy, and social rhythm",
+            text: "How people disagree directly or indirectly, correct one another in public or private, take conversational turns, and treat punctuality, solitude, or shared space. When is business discussed? What do silence, interruption, eye contact, or touch mean here? These are expectations, not measures of how civilised or rational anyone is, and differences can create ordinary misreadings before they create conflict.",
           },
           {
             term: "Religion, ritual, and taboo",
@@ -95,7 +99,7 @@ export const howDoIMakeDifferentCulturesFeelDistinctWithoutRelyingOnStereotypes:
           },
           {
             term: "Aesthetics, food, and architecture",
-            text: "Fitted to geography and economy rather than invented in isolation. A culture that forbids cutting live trees will build in stone and thatch; one that honours collective labour will have wide assembly halls and shared kitchens before it has palaces. Let material style follow the principles above, not replace them.",
+            text: "Let food, dress, and architecture carry history, taste, status, and meaning as well as geography or economy. A prohibition on cutting live trees might shape building choices, but it need not be an efficient response to scarcity; wide assembly halls or shared kitchens can express collective labour, prestige, or an inherited style. Material detail can enrich a norm without serving as proof of its practical purpose.",
           },
           {
             term: "Language, naming, and forms of address",
@@ -108,9 +112,10 @@ export const howDoIMakeDifferentCulturesFeelDistinctWithoutRelyingOnStereotypes:
         heading: "From ideals to everyday life, with disagreement baked in",
         paragraphs: [
           "Treat every stated principle as an ideal that real people honour unevenly. Parents, priests, creditors, youths, and newcomers will disagree about what the principle requires in a specific case, and institutions will disagree with one another. That variation keeps a culture from reading as a single mind.",
-          "Build in class, region, and generation. A harbour district and an inland hamlet of the same culture can interpret hospitality differently; a wealthy household can afford its obligations while a poor one must choose between hosting and feeding its own; elders and youths will narrate the same custom as duty and constraint. Note at least one internal disagreement for each principle you define.",
-          "History, geography, and economy should leave marks on the norm. A hill people who store grain collectively after a famine will treat hoarding differently from a river people who depend on market exchange; a coast that survived by sheltering shipwrecked traders will treat stranded strangers differently from a border town that paid for that habit in raids. When the past explains the present rule, players can reason about the culture rather than memorise it.",
-          "Avoid framing difference as exotic or irrational. Each custom should make practical sense to the people who hold it, and it should create a trade-off legible to an outsider. A taboo that looks strange until the party learns it preserves a fishery, a marriage rule that looks rigid until it prevents feuding over land, or a deference rule that looks servile until it keeps a dangerous assembly orderly are all ways of letting difference read as judgement under different constraints.",
+          "Give each norm a scope. Cultural practices can overlap across regions, classes, professions, religions, diasporas, generations, border communities, urban and rural settings, and multilingual groups; one person may take part in several at once. Ask: which group, place, situation, or relationship does this norm actually apply to? A harbour district and an inland hamlet may interpret hospitality differently; wealth can make obligations easier to meet, while elders and youths may narrate the same custom as duty or constraint.",
+          "Cultures are not sealed boxes with independent origin stories for every practice. Include imported fashions, borrowed rituals, prestige languages, hybrid border customs, conquered peoples influencing conquerors, and diaspora practices changing abroad. Neighbours may also deliberately reject one another's customs. Ask what this culture borrowed, what it changed, and what it insists is uniquely its own.",
+          "History, geography, and economy can shape a norm, but they are only part of its history. Practices can persist through identity, sacred or symbolic meaning, prestige, imitation, accident, nostalgia, resistance to neighbours or imperial rule, migration, elite interests, or institutions that outlive their original purpose. A custom needs an intelligible history and meaning to its participants; it need not be objectively efficient or have begun as a solution to a material problem.",
+          "People code-switch. A merchant may use formal etiquette at court, speak bluntly among shipmates, follow diaspora customs at home, and adopt foreign bargaining habits at the port. Culture offers expectations and repertoires, not one fixed behaviour script; let individuals adapt, disagree, or break a norm for reasons of their own.",
         ],
       },
       {
@@ -118,7 +123,7 @@ export const howDoIMakeDifferentCulturesFeelDistinctWithoutRelyingOnStereotypes:
         heading: "How this differs from civilisation",
         paragraphs: [
           "Culture explains how people understand the world and how they tend to behave. Civilisation explains what large-scale systems and institutions are capable of doing: logistics, administration, military reach, or stored knowledge. A culture may prize open hospitality even where the civilisation can barely maintain roads; a civilisation may command a strong bureaucracy even where local cultures settle disputes by compensation rather than trial.",
-          "The two influence one another. A dispersed, trading culture will sustain a civilisation that is strong at diplomacy and weak at concentrating force. A centralised administration will reshape cultural practice around records, calendars, and standard measures. Design them separately, then note where one supports or strains the other, so a change at one level cascades visibly to the other.",
+          "The two can influence one another without determining one another. A dispersed trading culture may support diplomatic networks, but whether a polity turns that into durable diplomatic capacity depends on institutions, resources, and political organisation. Central administration can influence cultural practice around records, calendars, and standard measures without making local customs uniform, while those customs can shape how administration works in practice. Design them separately, then note where each supports, strains, or changes the other.",
         ],
       },
       {
@@ -151,6 +156,35 @@ export const howDoIMakeDifferentCulturesFeelDistinctWithoutRelyingOnStereotypes:
           {
             term: "Why it works",
             text: "Hospitality is not a costume detail but an institution with a procedure, a liability, and a legal consequence that forces a choice the players can see and negotiate.",
+          },
+        ],
+      },
+      {
+        kind: "example",
+        heading: "Worked example: indirect praise",
+        paragraphs: [
+          "A small everyday norm can carry the same framework without courts, law, or formal institutions.",
+        ],
+        items: [
+          {
+            term: "Principle / norm",
+            text: "Praise should be indirect; direct self-praise is embarrassing.",
+          },
+          {
+            term: "Behaviour",
+            text: "People praise someone's teacher, family, tools, or preparation rather than praising them directly. The norm is strongest at formal introductions and among adults, while young people sometimes break it in boasting contests.",
+          },
+          {
+            term: "Tension",
+            text: "Outsiders may read indirect praise as coldness, while locals may find direct praise uncomfortable. There is no need for a dramatic dispute: the difference can simply make an introduction awkward until someone explains it.",
+          },
+          {
+            term: "Visible consequence",
+            text: "Introductions, toasts, and apprenticeship rituals praise preparation or teachers; youths deliberately boast to test the boundary.",
+          },
+          {
+            term: "At the table",
+            text: "A host praises the party's horses, and the characters assume the host is avoiding praise of them. A local explains that the horses are being praised precisely because their riders prepared well.",
           },
         ],
       },
@@ -259,14 +293,66 @@ export const howDoIMakeDifferentCulturesFeelDistinctWithoutRelyingOnStereotypes:
         intro:
           "For each culture the party will actually meet, confirm you can answer:",
         items: [
-          "Which two or three principles will visibly shape the next few sessions, and can you state each as a single local sentence?",
+          "Which two or three principles, norms, or expectations will shape the next few sessions, and what is their scope?",
           "For each principle, what everyday behaviour would a stranger notice within a day of arrival?",
-          "What tension does each principle create with security, justice, efficiency, or a rival duty, and who at the table would choose each side?",
+          "What happens when each norm meets another duty, resource limit, social group, or changing circumstance? Is there playable friction, or is the practice simply routine?",
           "What institutions, customs, spaces, or records exist because the principle is taken seriously?",
           "Where do ideals break down: who disputes the principle, who cannot afford it, and who interprets it differently by class, region, or generation?",
           "What would a traveller get wrong on first contact, and how would a local correct them?",
-          "How do history, geography, and economy explain why this norm makes sense here and not two valleys over?",
+          "What history or meaning does this norm have, and what has it borrowed, changed, or resisted?",
           "Which consequence offers the party a clear, actionable choice: to honour, breach, mediate, or exploit the custom?",
+        ],
+      },
+      {
+        kind: "list",
+        heading: "A reusable culture profile",
+        intro:
+          "Use this compact profile for one group in one context. Leave fields blank when they do not help the next session:",
+        items: [
+          {
+            term: "Group / context",
+            text: "Who, where, and in what situation?",
+          },
+          {
+            term: "Principle / norm",
+            text: "What expectation or pattern matters here?",
+          },
+          {
+            term: "Who follows it most strongly",
+            text: "Who upholds it, and who does not?",
+          },
+          {
+            term: "Everyday behaviour",
+            text: "What would someone notice people doing?",
+          },
+          {
+            term: "Where it varies",
+            text: "How do class, region, profession, religion, or generation change it?",
+          },
+          {
+            term: "Meaning to insiders",
+            text: "What does the practice mean to the people who take part?",
+          },
+          {
+            term: "How it developed or was borrowed",
+            text: "What history, influence, or choice shaped it?",
+          },
+          {
+            term: "Pressure or other norm",
+            text: "What happens when it meets another duty, group, or circumstance?",
+          },
+          {
+            term: "Visible signs",
+            text: "What can players see, hear, or take part in?",
+          },
+          {
+            term: "Common outsider misunderstanding",
+            text: "What might a visitor get wrong?",
+          },
+          {
+            term: "What players can do with it",
+            text: "Can they follow, question, adapt, mediate, or challenge it?",
+          },
         ],
       },
     ],
