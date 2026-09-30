@@ -11,6 +11,7 @@ import { howDoIGetPlayersToEngageWithMyCampaignWorld } from "./how-do-i-get-play
 import { howDoIGiveDifferentCivilisationsDistinctStrengthsAndWeaknesses } from "./how-do-i-give-different-civilisations-distinct-strengths-and-weaknesses";
 import { howDoIGiveSpecialistCharactersSpotlight } from "./how-do-i-give-specialist-characters-spotlight";
 import { howDoIMakeAPlayerBaseMatterInAnRpgCampaign } from "./how-do-i-make-a-player-base-matter-in-an-rpg-campaign";
+import { howDoIMakeDifferentCulturesFeelDistinctWithoutRelyingOnStereotypes } from "./how-do-i-make-different-cultures-feel-distinct-without-relying-on-stereotypes";
 import { howDoIOrganiseGmNotesForInPersonPlay } from "./how-do-i-organise-gm-notes-for-in-person-play";
 import { howDoIPaceAnRpgOneShot } from "./how-do-i-pace-an-rpg-one-shot";
 import { howDoIPrepareAnRpgSessionStepByStep } from "./how-do-i-prepare-an-rpg-session-step-by-step";
@@ -134,6 +135,7 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     howDoIGiveDifferentCivilisationsDistinctStrengthsAndWeaknesses,
     howDoIGiveSpecialistCharactersSpotlight,
     howDoIMakeAPlayerBaseMatterInAnRpgCampaign,
+    howDoIMakeDifferentCulturesFeelDistinctWithoutRelyingOnStereotypes,
     howDoIOrganiseGmNotesForInPersonPlay,
     howDoIPaceAnRpgOneShot,
     howDoIPrepareAnRpgSessionStepByStep,
