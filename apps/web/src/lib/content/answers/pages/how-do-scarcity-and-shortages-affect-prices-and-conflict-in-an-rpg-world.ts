@@ -153,7 +153,8 @@ export const howDoScarcityAndShortagesAffectPricesAndConflictInAnRpgWorld: Answe
       "how-to-create-rumours-for-a-fantasy-town",
       "how-do-i-turn-economic-pressures-into-rpg-adventure-hooks",
       "what-can-players-actually-buy-and-sell-in-a-fantasy-settlement",
-    ],
+    "how-do-i-give-different-civilisations-distinct-strengths-and-weaknesses",
+  ],
     discovery: {
       id: "answer-scarcity-shortages-prices-conflict",
       parentCluster: "economy-trade",

@@ -154,6 +154,7 @@ export const howDoYouCreateAFantasyCityThatFeelsAlive: AnswerConfigInput = {
     "how-do-i-run-common-character-roles-in-a-fantasy-rpg",
     "what-rpg-map-making-tool-should-i-use",
     "how-do-i-run-exploration-in-a-huge-ruined-city",
+    "how-do-i-give-different-civilisations-distinct-strengths-and-weaknesses",
   ],
   labels: ["fantasy", "rumour"],
   discovery: {

@@ -165,6 +165,7 @@ export const howDoYouCreateAFantasyFaction: AnswerConfigInput = {
     "how-do-trade-routes-shape-cities-and-kingdoms-in-an-rpg-world",
     "how-do-scarcity-and-shortages-affect-prices-and-conflict-in-an-rpg-world",
     "how-do-i-run-exploration-in-a-huge-ruined-city",
+    "how-do-i-give-different-civilisations-distinct-strengths-and-weaknesses",
   ],
   discovery: {
     id: "answer-fantasy-faction",
