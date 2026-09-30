@@ -16,12 +16,12 @@ export const howDoIUpgradeAPlayerCharactersWeaponWithoutReplacingIt: AnswerConfi
         heading: "Why the starting weapon sticks",
         paragraphs: [
           "Players get attached. The sword that survived the first dungeon, the battered rifle patched after every firefight, or the bow strung on the road to the capital carries more story than any stat block. If every improvement means handing that item back and taking a bigger number, the campaign quietly tells the table that history does not count.",
-          "Constant replacement also narrows your reward design. When the only way to mark progress is a larger damage die or a higher bonus, the numbers climb until you must inflate every opponent to keep up. The alternative is to let the same weapon get better in ways that change what the character can attempt, not just how hard they hit.",
+          "Constant replacement also narrows your reward design. When the only way to mark progress is a larger damage die or a higher bonus, the numbers climb until you must inflate every opponent to keep up.",
         ],
       },
       {
         kind: "prose",
-        heading: "The spine: make the weapon better at chosen jobs",
+        heading: "Core principle: make the weapon better at specific jobs",
         paragraphs: [
           "Treat each upgrade as an answer to one question: what new choice, option or reliable edge does this weapon give its wielder that they did not have before? If you can describe the situation where the character will reach for this weapon because of the upgrade, it is pulling its weight. If the only answer is that the number is larger, look for a more specific improvement.",
         ],
@@ -30,7 +30,7 @@ export const howDoIUpgradeAPlayerCharactersWeaponWithoutReplacingIt: AnswerConfi
         kind: "list",
         heading: "Six upgrade paths that work across genres",
         intro:
-          "Use one or two of these at a time rather than stacking all six. Each favours interesting utility before a bigger number:",
+          "Use one or two of these at a time, choosing paths that fit the campaign and the player's priorities:",
         items: [
           {
             term: "Incremental physical refinement",
@@ -92,6 +92,11 @@ export const howDoIUpgradeAPlayerCharactersWeaponWithoutReplacingIt: AnswerConfi
             "Named blade recognised at the border fort",
             "Marked pistol that gets the crew through a checkpoint without a fight",
           ],
+          [
+            "Attunement and cost that creates choice",
+            "A spirit's favour powers the binding rune until dawn",
+            "An overcharge cell enables a focused burst, then needs time to recharge",
+          ],
         ],
       },
       {
@@ -99,7 +104,8 @@ export const howDoIUpgradeAPlayerCharactersWeaponWithoutReplacingIt: AnswerConfi
         heading: "Balance without the damage spiral",
         paragraphs: [
           "Keep flat increases rare and clearly telegraphed. When the group can see that the next damage step is two upgrades away and tied to a major undertaking, they plan around the capabilities they already have instead of waiting for a number.",
-          "A practical habit is to offer the player a choice between two good properties rather than one straight improvement. Penetration or reach, steadiness or quick handling, a quiet shot or a harder hit: any of these asks the player to match the weapon to the situation. That decision is the progression, and it keeps your opposition design stable for longer.",
+          "In some systems, encounter maths assumes weapons scale numerically as characters advance. Keep that required scaling, then layer situational or narrative upgrades on top.",
+          "A practical habit is to offer two good properties to choose between: penetration or reach, steadiness or quick handling, a quiet shot or a harder hit. This keeps opposition design stable while giving the player something to weigh.",
           "When you do raise damage, do it once and make it memorable. Let it follow a reforge from meaningful material, a field promotion, or a repair using tech no one in the sector can replicate. Then return to utility for the next few steps.",
         ],
       },
@@ -107,7 +113,7 @@ export const howDoIUpgradeAPlayerCharactersWeaponWithoutReplacingIt: AnswerConfi
         kind: "example",
         heading: "Worked example: the same axe, two campaigns later",
         paragraphs: [
-          "A fighter has carried a plain wood-axe since the first session. By mid-campaign the table needs the axe to keep up, but the player does not want to trade it for a generic +3 weapon.",
+          "A fighter has carried a plain wood axe since the first session. By mid-campaign the table needs the axe to keep up, but the player does not want to trade it for a generic +3 weapon.",
         ],
         items: [
           {
@@ -116,11 +122,11 @@ export const howDoIUpgradeAPlayerCharactersWeaponWithoutReplacingIt: AnswerConfi
           },
           {
             term: "The layered upgrade approach",
-            text: "The original axe stays. First, the party smith reforges it with ore the fighter secured from the hill road; it now holds its edge in wet weather and can be drawn quickly in tight ground. Next, a veteran teaches the haft-bind, letting the fighter pin a shield or weapon on a solid hit. After the defence of the mill, the axe earns its name, Mill-Ward, and guards at the valley fort wave the bearer through. A carved grip fitted later can be swapped for a heavier pommel when the fighter expects armoured foes. Damage has risen once, after the reforge, and every other step added a choice the player uses at the table.",
+            text: "The original axe stays. First, the party smith reforges it with ore the fighter secured from the hill road; a new haft and better balance make it easier to control in cramped spaces, while the reforged head holds an edge longer. Next, a veteran teaches the haft-bind, letting the fighter pin a shield or weapon on a solid hit. After the defence of the mill, the axe earns its name, Mill-Ward, and guards at the valley fort wave the bearer through. A carved grip fitted later can be swapped for a heavier pommel when the fighter expects armoured foes. Damage rises once with the reforge; later changes come through training, reputation and loadout.",
           },
           {
             term: "Why it works",
-            text: "The fighter still describes the same axe, but the table has four distinct moments when it changed: a material quest, a training scene, a public deed and a loadout decision before a job. Each upgrade opened a situation where reaching for this specific weapon mattered, and none forced the GM to inflate the whole bestiary.",
+            text: "The fighter still describes the same axe, with changes tied to a material quest, a training scene, a public deed and preparation for a job. The weapon's history gives the GM rewards to build on without inflating the whole bestiary.",
           },
         ],
       },
@@ -175,9 +181,9 @@ export const howDoIUpgradeAPlayerCharactersWeaponWithoutReplacingIt: AnswerConfi
         intro: "Before offering an improvement, run through this at prep:",
         items: [
           "Name the weapon and one deed already tied to it, so the upgrade has something to build on.",
-          "Pick one path from the six. State the situation where this upgrade will matter at the table.",
+          "Pick one of the six paths and name the situation where it will matter at the table.",
           "Write the requirement: who teaches it, what material or module is needed, or what deed unlocks it.",
-          "Offer a choice between two useful properties rather than one flat increase, where you can.",
+          "Note what choice or cost the upgrade asks the player to weigh.",
           "Note who in the world will recognise or react to the change.",
           "Save flat damage increases for story-earned reforges and keep them infrequent.",
           "If the campaign's needs have shifted, consider a new weapon instead and mark the old one's retirement properly.",
