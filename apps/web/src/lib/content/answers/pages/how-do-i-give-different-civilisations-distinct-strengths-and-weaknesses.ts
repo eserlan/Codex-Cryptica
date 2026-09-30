@@ -179,7 +179,7 @@ export const howDoIGiveDifferentCivilisationsDistinctStrengthsAndWeaknesses: Ans
           },
           {
             term: "The revised version",
-            text: "Cause: three generations of stable patronage from the river cities, plus a scriptorium that copied texts after a fire destroyed the old palace library. Capability: an extensive archive, trained copyists, and workshop lineages that can reproduce complex work reliably. Vulnerability: knowledge is concentrated in one hilltop complex, its income depends on a handful of patron houses, and its authority rests on the claim that its copies are complete. Half the archive was never recopied after the fire. Visible consequence: scholars who can answer precisely from the archive and hesitate badly beyond it, patrons who expect answers their donations did not fund, and rival teachers in the port towns who kept the uncopied traditions alive.",
+            text: "Cause: three generations of stable patronage from the river cities, plus a scriptorium that copied texts after a fire destroyed the old palace library. Capability: an extensive archive, trained copyists, and workshop lineages that can reproduce complex work reliably. Vulnerability: knowledge is concentrated in one hilltop complex, its income depends on a handful of patron houses, and its authority rests on the claim that its copies are complete. Half the archive's holdings were never recopied after the fire. Visible consequence: scholars who can answer precisely from the archive and hesitate when asked about knowledge beyond it, patrons who expect answers their donations did not fund, and rival teachers in the port towns who kept the uncopied traditions alive.",
           },
           {
             term: "Why it works",
