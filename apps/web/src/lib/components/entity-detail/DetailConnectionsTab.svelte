@@ -7,6 +7,7 @@
   import { themeStore } from "$lib/stores/theme.svelte";
   import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
   import FeatureHint from "$lib/components/help/FeatureHint.svelte";
+  import AskAboutThis from "$lib/components/help-assistant/AskAboutThis.svelte";
   import {
     buildConnectionNeighbors,
     vaultConnectionContext,
@@ -276,6 +277,8 @@
   <p class="shrink-0 text-xs text-theme-muted">
     Direct connections only — entities linked straight to {entity.title}.
   </p>
+
+  <AskAboutThis />
 
   <div
     bind:this={graphElement}

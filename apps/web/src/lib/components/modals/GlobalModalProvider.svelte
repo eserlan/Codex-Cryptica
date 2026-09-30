@@ -11,6 +11,7 @@
   import { loreMergeStore } from "$lib/stores/ui/lore-merge.svelte";
   import { guestChatStore } from "$lib/stores/guest-chat.svelte";
   import { reportPanelStore } from "$lib/stores/ui/report-panel.svelte";
+  import { isHelpAssistantEnabled } from "$lib/config/help-assistant";
 
   let {
     isMobileMenuOpen = $bindable(false),
@@ -342,6 +343,16 @@
       {#await loadModal(() => import("$lib/components/modals/GuestChatModal.svelte"), "GuestChatModal") then GuestChatModal}
         {#if GuestChatModal}
           <GuestChatModal />
+        {/if}
+      {/await}
+    {/if}
+
+    <!-- Contextual help assistant (#3427). Loaded only when the flag is on, so
+         with it off none of the help code is downloaded. -->
+    {#if isHelpAssistantEnabled()}
+      {#await loadModal(() => import("$lib/components/help-assistant/HelpAssistantHost.svelte"), "HelpAssistantHost") then HelpAssistantHost}
+        {#if HelpAssistantHost}
+          <HelpAssistantHost />
         {/if}
       {/await}
     {/if}

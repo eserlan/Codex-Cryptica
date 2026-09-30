@@ -48,6 +48,31 @@ describe("registry invariants", () => {
   });
 });
 
+describe("help-answer operation", () => {
+  it("resolves Luna as primary with Gemini as fallback, both structured-output capable", () => {
+    const defaults = getOperationDefaults("help-answer", "public");
+    expect(defaults?.defaultModelKey).toBe("luna-fast");
+    expect(defaults?.fallbackModelKey).toBe("gemini-flash-lite");
+    expect(
+      getModel(defaults!.defaultModelKey)?.capabilities.structuredOutput,
+    ).toBe(true);
+    expect(
+      getModel(defaults!.fallbackModelKey)?.capabilities.structuredOutput,
+    ).toBe(true);
+  });
+
+  it('uses low reasoning, the lowest depth gpt-5.6-luna accepts (it 400s on "minimal")', () => {
+    expect(getOperationDefaults("help-answer", "public")?.reasoningEffort).toBe(
+      "low",
+    );
+  });
+
+  it("is server-internal: an operation with no default in a context still resolves to nothing", () => {
+    expect(getOperationDefaults("help-answer", "admin")).toBeUndefined();
+    expect(getOperationDefaults("revision", "public")).toBeUndefined();
+  });
+});
+
 describe("getModel", () => {
   it("returns the matching entry", () => {
     expect(getModel("gemini-flash-lite")?.provider).toBe("gemini");

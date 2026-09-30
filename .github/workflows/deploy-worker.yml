@@ -10,6 +10,8 @@ on:
       - master
     paths:
       - 'apps/workers/oracle-proxy/**'
+      - 'packages/help-engine/**'
+      - 'apps/web/src/lib/content/help/**'
       - '.github/workflows/deploy-worker.yml'
   
   # Allow manual trigger from GitHub Actions tab
@@ -49,6 +51,17 @@ jobs:
         uses: actions/setup-node@v7
         with:
           node-version: 24
+
+      # The contextual help assistant (#3427) ships its product knowledge as a
+      # build-time JSON bundle generated from the registry and the in-app help
+      # articles. Build it before wrangler bundles the Worker.
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+
+      - name: Build help knowledge bundle
+        run: |
+          bun install --frozen-lockfile
+          bun run --cwd packages/help-engine bundle
 
       - name: Install Wrangler CLI
         run: npm install -g wrangler@latest
