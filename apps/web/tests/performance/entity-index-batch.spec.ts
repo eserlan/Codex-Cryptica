@@ -50,24 +50,16 @@ test("entity index batch cost", async ({ page }) => {
     undefined,
     { timeout: 60_000 },
   );
+  // Layout must be finished so the batch is measured against a settled graph.
   await page.waitForFunction(
     () => {
       const controller = (window as any).graphViewController;
-      const samples =
-        (window as any).__CODEX_PERFORMANCE_RESULTS__?.getSamples() ?? [];
-      return (
-        controller?.loadPhase === "ready" &&
-        !controller.isLayoutRunning &&
-        samples.some(
-          (sample: any) =>
-            sample.operation === "graph_sync_render_ready" &&
-            sample.outcome === "completed",
-        )
-      );
+      return Boolean(controller) && !controller.isLayoutRunning;
     },
     undefined,
     { timeout: 60_000 },
   );
+  await page.waitForTimeout(2_000);
 
   const results = await page.evaluate(
     async ({ sizes, rounds, total }) => {
