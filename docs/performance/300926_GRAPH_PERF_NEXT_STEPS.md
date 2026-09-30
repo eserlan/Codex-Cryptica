@@ -2,6 +2,7 @@
 
 - **Date:** 2026-09-30
 - **Tracking issue:** [#3569](https://github.com/eserlan/Codex-Cryptica/issues/3569)
+- **Status (2026-09-30):** items 1 and 2 shipped in [#3571](https://github.com/eserlan/Codex-Cryptica/pull/3571) and [#3572](https://github.com/eserlan/Codex-Cryptica/pull/3572). Items 3 to 6 are open. No before/after timings exist for the shipped changes yet.
 - **Scope:** `packages/graph-engine`, `packages/vault-engine`, `packages/search-orchestrator`, `apps/web`
 - **Method:** code review of the current `staging`, plus the existing measurements in this folder.
 - **No fresh measurements.** An attempt to run the large-vault harness (`bun run test:performance`) timed out waiting for its own web server (its `webServer` command rebuilds the app, with a 120 s limit), so every number below is quoted from an earlier document and dated. Step 1 of the plan exists to fix this.
@@ -24,34 +25,38 @@ Two documents are out of date and should be edited when the work below lands:
 
 Each item says how it was verified. "Measured" means a figure from an earlier document. "Code review" means the behaviour is visible in the current source but its cost has not been measured.
 
-### 1. Graph images are applied only after the slowest one resolves
+### 1. Graph images are applied only after the slowest one resolves (shipped, #3571)
 
 **Evidence:** code review of `packages/graph-engine/src/sync/ImageManager.ts`, plus a measurement (11,827 ms for 198 external images, 25 Sep profile).
 
-`sync()` starts every image resolve with one `Promise.all`, with no concurrency limit, and applies results only after all of them settle. A single slow or hanging request delays every node's picture, and hundreds of simultaneous fetches compete with each other.
+`sync()` started every image resolve with one `Promise.all`, with no concurrency limit, and applied results only after all of them settled. A single slow or hanging request delayed every node's picture, and hundreds of simultaneous fetches competed with each other. Silhouettes were in the same `Promise.all`, so a slow silhouette fetch from R2 held everything up too.
 
-**Proposal:**
+**What shipped:**
 
-- Resolve through a small pool (for example 6 at a time).
-- Order the queue so nodes in the viewport go first.
-- Apply each finished chunk as it arrives, inside one `cy.batch`, and call `style().update()` once per chunk.
+- Images and silhouettes resolve through a pool of 6.
+- Nodes inside the current viewport go first.
+- Finished visuals are painted in batches (every 20, or after 40 ms) inside one `cy.batch`, with one `style().update()` per batch.
+- A resolve that throws is reported through `onError`, no longer discards the rest, and is retried on the next sync.
+- Nothing is painted once the graph is destroyed or images are switched off mid-run.
 
-**Expected effect:** the graph shows pictures progressively instead of after the longest fetch. Total work is unchanged, but the time to first useful paint no longer depends on the slowest host.
+**Effect:** pictures appear progressively instead of after the longest fetch. Total work is unchanged, so this shows up as time to first useful paint, not as a lower total. **Not yet measured.**
 
-### 2. Images that cannot load are retried, twice, with no timeout
+### 2. Images that cannot load are retried, twice, with no timeout (shipped, #3572)
 
 **Evidence:** code review of `packages/vault-engine/src/asset-manager.ts`.
 
-For an external image that the host blocks (no CORS headers), `resolveThumbnailUrl` calls `readOrCreateExternalThumbnail`, which calls `readOrFetchExternal`, which fetches and fails. It then falls back to `resolveImageUrl`, which calls `readOrFetchExternal` again and fails again. Nothing remembers the failure, so the next graph mount repeats both attempts. There is no fetch timeout.
+For an external image the host blocks (no CORS headers), `resolveThumbnailUrl` called `readOrCreateExternalThumbnail`, which called `readOrFetchExternal`, which fetched and failed. It then fell back to `resolveImageUrl`, which called `readOrFetchExternal` again and failed again. Nothing remembered the failure, so the next graph mount repeated both attempts. There was no fetch timeout.
 
-**Proposal:**
+**What shipped:**
 
-- Remember failures for the session, per URL, and per origin after a few CORS failures, so later images from that host fail immediately.
-- Give the fetch an `AbortSignal.timeout`.
-- Skip the fallback fetch when the first attempt already failed the same way.
-- Optionally persist a short-lived "failed" marker beside the cached originals, so a reload does not retry either.
+- External fetches time out after 8 s.
+- A failure (network error, HTTP error or timeout) is remembered per URL for 5 minutes, using the injected clock. The fallback no longer fetches a second time, repeat loads skip dead links, and after the TTL the image is tried again.
+- One failing image does not affect another.
+- The memory is per session and is not persisted.
 
-**Expected effect:** removes half of the failing requests immediately and most of the rest after the first failure per host. It also bounds the worst case.
+**What deliberately did not change:** the fallback to the original link. Node images use `background-image-crossorigin: "null"` (see `packages/graph-engine/src/transformer.ts`), so Cytoscape loads them as plain images, which display fine cross-origin even when the host refuses a CORS fetch. The fallback therefore shows real pictures for blocked hosts, and removing it would blank those nodes.
+
+**Correction to the first version of this document:** it proposed also blocking a whole origin after a few failures. That was dropped. It could have blanked images that display correctly through the fallback, and a fetch error cannot tell "blocked by CORS" from "temporarily unreachable".
 
 ### 3. Every sync compares the whole graph
 
@@ -63,7 +68,19 @@ A cheaper path already exists: `focusMembershipOnly` skips data patching for ret
 
 **Proposal:** let the store pass a hint about what changed. The entity store already decides whether an edit is graph-relevant (`isGraphRelevantEntityChange`), so it knows which ids changed. Give `SyncOptions` an optional `changedIds` set. When it is present, patch only those elements and their incident edges, and recompute weights only for their endpoints. Fall back to the full path when the hint is absent, for example on first load, filter changes and mode changes.
 
-**Expected effect:** a single-entity edit goes from a whole-graph comparison to a handful of elements. The gain grows with the size of the rendered graph, so it matters most in the full-graph view of a large vault.
+**Where the hint comes from:** `patchGraphEntity` in `apps/web/src/lib/stores/vault/entity-index-maintainer.svelte.ts` runs once per changed entity and is the natural place to record the id in a pending set. `syncElements` in `graph-view-controller.svelte.ts` already works out what kind of change happened (`focusMembershipOnly`, from the structure version and filter signature), so the hint sits beside that logic. The controller would consume and clear the set.
+
+**A related cost in the same function:** `patchGraphEntity` does a `findIndex` over `graphEntities` and then copies the whole array, for every changed entity. That is O(N) per edit, so a batch of k edits costs O(k x N) before the graph even syncs. A `Map` from id to index removes it, and it is worth doing on its own.
+
+**What the delta path needs:**
+
+- Patch only the changed nodes and their incident edges, and recompute weights for those endpoints only.
+- Fall back to the full path whenever the pending set is empty or has overflowed. That covers first load, filter changes, mode changes, and theme or category changes, which alter styling without changing element data.
+- Keep the full path as the reference: in tests, apply the same change both ways and assert identical Cytoscape state.
+
+**Risk:** a missed invalidation leaves a stale node, so the fallback rule must be conservative. This is the only item in the plan with real correctness risk.
+
+**Expected effect:** a single-entity edit goes from a whole-graph comparison to a handful of elements. The gain grows with the size of the rendered graph, so it matters most in the full-graph view of a large vault. Re-measure after items 1 and 2 before investing here.
 
 ### 4. Elements are rebuilt from every entity on every structural change
 
@@ -112,11 +129,11 @@ These were considered and should stay rejected. The reasons are recorded in exis
 
 ## Plan
 
-1. **Re-baseline.** Make the harness runnable without rebuilding: set `PERFORMANCE_EXTERNAL_SERVER` and start `vite preview` separately, or raise the `webServer.timeout`. Record five runs on the current `staging` for the scenarios in `100826_LARGE_VAULT_BUDGETS.md`, and add a stationary five-second idle check to `large-graph.spec.ts`, as `240926` suggested.
-2. **Images (items 1 and 2).** Highest value for the least risk; both are local to two files and testable without a browser.
-3. **Changed-id sync (item 3).** Re-measure the graph scenarios after step 2 to confirm it is still worth doing.
+1. **Re-baseline.** Make the harness runnable without rebuilding: set `PERFORMANCE_EXTERNAL_SERVER` and start `vite preview` separately, or raise the `webServer.timeout`. Record five runs on the current `staging` for the scenarios in `100826_LARGE_VAULT_BUDGETS.md`, and add a stationary five-second idle check to `large-graph.spec.ts`, as `240926` suggested. **Open, and the blocker for measuring everything below.**
+2. **Images (items 1 and 2).** **Shipped** in #3571 and #3572. Their effect still needs measuring against the fresh baseline.
+3. **`patchGraphEntity` index, then changed-id sync (item 3).** Re-measure the graph scenarios first to confirm it is still worth doing. The index fix is small and can go on its own.
 4. **Preload dedupe (item 5).** Small and independent; can go alongside any step.
 5. **Element caching (item 4) and incremental search persistence (item 6).** Only if the fresh baseline shows them.
-6. **Update the budget ceilings** to the new numbers, in report-only mode, and correct the two stale documents.
+6. **Update the budget ceilings** to the new numbers, in report-only mode, and correct the two stale documents listed at the top.
 
 Each step ships as its own PR with a before and after number from the same harness.
