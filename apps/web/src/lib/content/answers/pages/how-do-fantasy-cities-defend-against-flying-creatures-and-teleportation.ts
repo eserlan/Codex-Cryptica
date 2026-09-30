@@ -27,16 +27,16 @@ export const howDoFantasyCitiesDefendAgainstFlyingCreaturesAndTeleportation: Ans
           "Architecture should follow the actual constraints of flight and teleportation in your setting, not a vague idea that attackers can appear anywhere from any height. Answer these first:",
         items: [
           {
-            term: "Flying attackers",
-            text: "How common are flying mounts, and who can afford them. How high and how fast they fly, how much weight they carry, whether they can hover, how long they can stay aloft, and how vulnerable they are to missiles, weather, and fatigue. Can they land in a narrow street, or do they need a clear courtyard or rooftop.",
+            term: "Flying attackers —",
+            text: "How common are flying mounts, and who can afford them? How high and fast do they fly, and how much weight can they carry? Can they hover, and how long can they stay aloft? How vulnerable are they to missiles, weather, and fatigue? Can they land in a narrow street, or do they need a clear courtyard or rooftop?",
           },
           {
-            term: "Teleportation",
-            text: "Whether it needs line of sight, whether the caster must know the destination, whether there are fixed circles or beacons, what the range and group size limits are, whether wards can block it, and whether it is rare elite magic or common battlefield mobility. The rarer and more constrained it is, the fewer places need hardening.",
+            term: "Teleportation —",
+            text: "Does it need line of sight? Must the caster know the destination? Are there fixed circles or beacons? What are the range and group size limits? Can wards block it? Is it rare elite magic or common battlefield mobility? The rarer and more constrained it is, the fewer places need hardening.",
           },
           {
-            term: "Prevalence and cost",
-            text: "How often these capabilities appear in hostile hands and what they cost to field. A power that can drop a dozen troops from griffin back every night calls for different investment than a single archmage who can blink once before needing a week to recover.",
+            term: "Prevalence and cost —",
+            text: "How often do these capabilities appear in hostile hands, and what do they cost to field? A force that can carry a dozen troops into the city on griffins every night calls for different investment than a single archmage who can blink once before needing a week to recover.",
           },
         ],
       },
@@ -87,7 +87,7 @@ export const howDoFantasyCitiesDefendAgainstFlyingCreaturesAndTeleportation: Ans
             text: "A small interceptor unit, whether griffin riders, trained hippogriffs, or a mage flight, is more practical than trying to make every roof a fortress. Give it a launch point, a weather limit, and a standing order that players can see in play.",
           },
           {
-            term: "Protect the underground option with care",
+            term: "Harden critical spaces underground",
             text: "Recessed or subterranean command rooms, wells, granaries, and armouries survive bombardment, but they create ventilation, flooding, and entrapment risks. Use them for a few critical nodes, not the entire city.",
           },
         ],
@@ -140,11 +140,11 @@ export const howDoFantasyCitiesDefendAgainstFlyingCreaturesAndTeleportation: Ans
         kind: "list",
         heading: "Let defence reshape the city itself",
         intro:
-          "If aerial attack is common, the settlement stops looking like a tall exposed tower and behaves like a hardened, compartmented strongpoint:",
+          "Where aerial attacks are common, the city adapts its shape and routes to limit exposure and give defenders better cover:",
         items: [
           {
-            term: "Build inward and downward where it counts",
-            text: "Cliffside carving, terraced construction, and underground or semi-sunken stores protect essentials while public streets remain exposed. Covered markets and arcaded courtyards keep daily life functioning under net or roof.",
+            term: "Use the terrain and shelter busy spaces",
+            text: "Cliffside carving and terraced construction break up exposed approaches. Covered markets and arcaded courtyards keep daily life functioning under net or roof.",
           },
           {
             term: "Rethink circulation",
