@@ -23,6 +23,8 @@ export interface FeedEntry {
 export interface FeedMeta {
   title: string;
   subtitle: string;
+  /** Feed-level author applies to entries that do not declare their own. */
+  author: string;
   /** Absolute URL of the feed itself. */
   selfUrl: string;
   /** Absolute URL of the human-readable page the feed mirrors. */
@@ -44,6 +46,13 @@ const toIso = (value: string): string => new Date(value).toISOString();
 
 const timeOf = (value: string): number => new Date(value).getTime();
 
+const hasValidDate = (value: string): boolean => Number.isFinite(timeOf(value));
+
+const updatedAtOf = (entry: FeedEntry): string =>
+  entry.updatedAt && hasValidDate(entry.updatedAt)
+    ? entry.updatedAt
+    : entry.publishedAt;
+
 /** Newest first; ties broken by URL so output is deterministic. */
 export const sortFeedEntries = (entries: FeedEntry[]): FeedEntry[] =>
   [...entries].sort(
@@ -53,7 +62,7 @@ export const sortFeedEntries = (entries: FeedEntry[]): FeedEntry[] =>
   );
 
 const renderEntry = (entry: FeedEntry): string => {
-  const updated = entry.updatedAt ?? entry.publishedAt;
+  const updated = updatedAtOf(entry);
   const categories = [entry.contentType, ...entry.categories]
     .filter((term, index, all) => term && all.indexOf(term) === index)
     .map((term) => `    <category term="${escapeXml(term)}"/>`);
@@ -77,10 +86,13 @@ export const renderAtomFeed = (
   meta: FeedMeta,
   entries: FeedEntry[],
 ): string => {
-  const sorted = sortFeedEntries(entries);
+  // Remote blog indexes are a content boundary. Ignore entries with malformed
+  // publication dates rather than letting one bad record break prerendering.
+  const sorted = sortFeedEntries(
+    entries.filter((entry) => hasValidDate(entry.publishedAt)),
+  );
   const feedUpdated = sorted.reduce(
-    (latest, entry) =>
-      Math.max(latest, timeOf(entry.updatedAt ?? entry.publishedAt)),
+    (latest, entry) => Math.max(latest, timeOf(updatedAtOf(entry))),
     0,
   );
   // An empty feed still needs a valid <updated>; use the epoch, not "now",
@@ -92,6 +104,7 @@ export const renderAtomFeed = (
   <id>${escapeXml(meta.selfUrl)}</id>
   <title>${escapeXml(meta.title)}</title>
   <subtitle>${escapeXml(meta.subtitle)}</subtitle>
+  <author><name>${escapeXml(meta.author)}</name></author>
   <link rel="self" type="application/atom+xml" href="${escapeXml(meta.selfUrl)}"/>
   <link rel="alternate" type="text/html" href="${escapeXml(meta.siteUrl)}"/>
   <updated>${updated}</updated>

@@ -1,4 +1,4 @@
-import { loadLocalBlogArticles } from "$lib/content/blog-content";
+import { loadBlogIndex } from "$lib/content/blog-content";
 import { getAnswerCategory } from "$lib/content/answers/categories";
 import { getAllAnswers, answerPath } from "$lib/content/answers/registry";
 import { buildAbsoluteUrl } from "./site";
@@ -19,8 +19,8 @@ export const answerFeedEntries = (): FeedEntry[] =>
     };
   });
 
-export const blogFeedEntries = (): FeedEntry[] =>
-  loadLocalBlogArticles().map((article) => ({
+export const blogFeedEntries = async (): Promise<FeedEntry[]> =>
+  (await loadBlogIndex()).map((article) => ({
     title: article.title,
     url: buildAbsoluteUrl(`/blog/${article.slug}`),
     publishedAt: article.publishedAt,
@@ -41,19 +41,20 @@ const feed = (
   const meta: FeedMeta = {
     title,
     subtitle,
+    author: DEFAULT_BLOG_AUTHOR,
     selfUrl: buildAbsoluteUrl(path),
     siteUrl: buildAbsoluteUrl(sitePath),
   };
   return renderAtomFeed(meta, entries);
 };
 
-export const renderCombinedFeed = () =>
+export const renderCombinedFeed = async () =>
   feed(
     "/feed.xml",
     "/",
     "Codex Cryptica: Answers and blog",
     "New RPG and worldbuilding answers and articles from Codex Cryptica.",
-    [...answerFeedEntries(), ...blogFeedEntries()],
+    [...answerFeedEntries(), ...(await blogFeedEntries())],
   );
 
 export const renderAnswersFeed = () =>
@@ -65,11 +66,11 @@ export const renderAnswersFeed = () =>
     answerFeedEntries(),
   );
 
-export const renderBlogFeed = () =>
+export const renderBlogFeed = async () =>
   feed(
     "/blog/feed.xml",
     "/blog",
     "Codex Cryptica: Blog",
     "Articles, guides and news from Codex Cryptica.",
-    blogFeedEntries(),
+    await blogFeedEntries(),
   );

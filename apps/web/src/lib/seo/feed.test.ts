@@ -9,6 +9,7 @@ import {
 const meta = {
   title: "Test & feed",
   subtitle: "Sub",
+  author: "Codex Cryptica",
   selfUrl: "https://example.com/feed.xml",
   siteUrl: "https://example.com/",
 };
@@ -61,5 +62,16 @@ describe("feed", () => {
     const xml = renderAtomFeed(meta, []);
     expect(xml).toContain("<updated>1970-01-01T00:00:00.000Z</updated>");
     expect(xml).not.toContain("<entry>");
+  });
+
+  it("provides the feed author and skips entries with invalid dates", () => {
+    const xml = renderAtomFeed(meta, [entry({ publishedAt: "not-a-date" })]);
+    expect(xml).toContain("<author><name>Codex Cryptica</name></author>");
+    expect(xml).not.toContain("<entry>");
+  });
+
+  it("falls back to publishedAt when updatedAt is malformed", () => {
+    const xml = renderAtomFeed(meta, [entry({ updatedAt: "not-a-date" })]);
+    expect(xml).toContain("<updated>2026-06-01T00:00:00.000Z</updated>");
   });
 });
