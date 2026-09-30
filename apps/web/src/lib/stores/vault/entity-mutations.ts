@@ -269,6 +269,7 @@ export class EntityMutationService {
       if (patch.image && this.deps.invalidateUrlCache) {
         this.deps.invalidateUrlCache(patch.image);
       } else if (
+        Object.hasOwn(patch, "image") &&
         patch.image === undefined &&
         current.image &&
         this.deps.invalidateUrlCache
