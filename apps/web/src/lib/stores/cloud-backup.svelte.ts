@@ -158,6 +158,8 @@ export interface CloudBackupDeps {
   debounceMs?: number;
   /** Wait before retrying a failed auto-push; overridable in tests. */
   retryMs?: number;
+  /** Local storage for persisting caches across sessions. */
+  storage?: StorageLike;
 }
 
 /**
@@ -232,6 +234,9 @@ export class CloudBackupStore {
   private autoTimer: ReturnType<typeof setTimeout> | null = null;
   private autoListenersAttached = false;
   private hashCache: Record<string, string> = {};
+  private get localStorage(): StorageLike {
+    return this.deps?.storage ?? browserStorage;
+  }
 
   /** Wires the store up. Called once from app init with the real runtime. */
   configure(deps: CloudBackupDeps) {
@@ -1085,7 +1090,7 @@ export class CloudBackupStore {
 
   private loadHashCache(vaultId: string): void {
     try {
-      const raw = localStorage.getItem(this.hashCacheKey(vaultId));
+      const raw = this.localStorage.getItem(this.hashCacheKey(vaultId));
       this.hashCache = raw ? (JSON.parse(raw) as Record<string, string>) : {};
     } catch {
       this.hashCache = {};
@@ -1094,7 +1099,7 @@ export class CloudBackupStore {
 
   private saveHashCache(vaultId: string): void {
     try {
-      localStorage.setItem(
+      this.localStorage.setItem(
         this.hashCacheKey(vaultId),
         JSON.stringify(this.hashCache),
       );
