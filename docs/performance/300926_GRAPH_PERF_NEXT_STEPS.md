@@ -2,7 +2,7 @@
 
 - **Date:** 2026-09-30
 - **Tracking issue:** [#3569](https://github.com/eserlan/Codex-Cryptica/issues/3569)
-- **Status (2026-09-30):** items 1 and 2 shipped in [#3571](https://github.com/eserlan/Codex-Cryptica/pull/3571) and [#3572](https://github.com/eserlan/Codex-Cryptica/pull/3572). The entity-index changes measured below are proposed in the still-open [#3588](https://github.com/eserlan/Codex-Cryptica/pull/3588) and [#3591](https://github.com/eserlan/Codex-Cryptica/pull/3591); they have not shipped. Item 3 was measured and not built.
+- **Status (2026-09-30):** items 1 and 2 shipped in [#3571](https://github.com/eserlan/Codex-Cryptica/pull/3571) and [#3572](https://github.com/eserlan/Codex-Cryptica/pull/3572). The entity-index changes measured below shipped in [#3588](https://github.com/eserlan/Codex-Cryptica/pull/3588) and [#3591](https://github.com/eserlan/Codex-Cryptica/pull/3591). Item 3 was measured and not built.
 - **Scope:** `packages/graph-engine`, `packages/vault-engine`, `packages/search-orchestrator`, `apps/web`
 - **Method:** code review of the current `staging`, plus the existing measurements in this folder.
 - **Measurements.** The first version of this document had none: the harness timed out on its own web server (its `webServer` command rebuilds the app, and the old 2-minute limit was shorter than the build), so its figures were quoted from earlier documents. That is fixed, and the results are in [Measured results](#measured-results-30-sep-2026). Figures in the item sections below that are marked as quoted are from the earlier documents and were not re-measured.
@@ -49,10 +49,7 @@ A full index rebuild takes 6 ms at 1,600 entities, so the proposed #3591 change 
 | #3392 edges, weights, stable layout | Edge endpoint checks use a set; rendered weights are linear; a fast path skips layout when positions are stable.                                                                                                         |
 | Search persistence coalescing       | 40 queued full-index exports (~110 s of worker time) collapse to the latest one. `activeSaves` in `search-index-persistence.ts` now waits for the running export and skips stale generations.                            |
 
-Two documents are out of date and should be edited when the work below lands:
-
-- `250926_VAULT_RELOAD_AND_SEARCH_BOTTLENECK_INVESTIGATION.md` still lists the persistence storm as open. It has shipped.
-- `100826_LARGE_VAULT_BUDGETS.md` has ceilings taken before #3386 and #3392.
+The reload investigation in `250926_VAULT_RELOAD_AND_SEARCH_BOTTLENECK_INVESTIGATION.md` now records the shipped work and follow-up measurements. `100826_LARGE_VAULT_BUDGETS.md` still has ceilings taken before #3386 and #3392.
 
 ## What is still expensive
 
@@ -177,7 +174,7 @@ These were considered and should stay rejected. The reasons are recorded in exis
 
 1. **Re-baseline.** Done: the harness runs and has the scenarios above. Keep `graph-images`, `entity-index-batch` and `graph-sync-edit` in the suite so regressions show.
 2. **Images (items 1 and 2).** Shipped (#3571, #3572), with the pool corrected in #3577.
-3. **Entity index batches.** Proposed in #3588 and #3591; both PRs are open. Not yet measured: batches of _adds_ (they take the same rebuild path), and the heavy path at sizes above 800.
+3. **Entity index batches.** Shipped in #3588 and #3591. Not yet measured: batches of _adds_ (they take the same rebuild path), and the heavy path at sizes above 800.
 4. **Changed-id sync (item 3).** Measured, not built (see above). Revisit only if a real vault shows the full-graph view is used often and sync becomes noticeable there.
 5. **Preload dedupe (item 5).** Open. Not yet measured on the harness; the earlier figure (1,281 ms for the second preload) came from a real 1,625-entity vault with content, not this synthetic fixture.
 6. **Element caching (item 4) and incremental search persistence (item 6).** Open; only if the harness or a real vault shows them.

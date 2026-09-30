@@ -209,7 +209,7 @@ With 5% of hosts that never answer: no picture in 60 s before; 49 s to finish wi
 | before      |             240 ms |     255 ms (130 to 546) | 551 ms |
 | after #3595 |             148 ms |                  1.5 ms | 150 ms |
 
-The second call fell about two seconds after the first in every run.
+The second call's median duration fell from 255 ms to 1.5 ms.
 
 ### New: entity index batches (not in the original findings)
 
