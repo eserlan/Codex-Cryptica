@@ -311,6 +311,7 @@ export const howDoIGiveDifferentCivilisationsDistinctStrengthsAndWeaknesses: Ans
       "how-do-i-build-a-believable-constitutional-crisis-or-coup",
       "what-can-players-actually-buy-and-sell-in-a-fantasy-settlement",
       "how-do-i-make-different-cultures-feel-distinct-without-relying-on-stereotypes",
+      "how-do-fantasy-cities-defend-against-flying-creatures-and-teleportation",
     ],
     labels: ["fantasy"],
     discovery: {

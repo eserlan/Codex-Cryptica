@@ -167,6 +167,7 @@ export const howDoYouCreateAFantasyFaction: AnswerConfigInput = {
     "how-do-i-run-exploration-in-a-huge-ruined-city",
     "how-do-i-give-different-civilisations-distinct-strengths-and-weaknesses",
     "how-do-i-make-different-cultures-feel-distinct-without-relying-on-stereotypes",
+    "how-do-fantasy-cities-defend-against-flying-creatures-and-teleportation",
   ],
   discovery: {
     id: "answer-fantasy-faction",

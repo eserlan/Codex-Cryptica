@@ -19,11 +19,14 @@ It is especially relevant to users searching for:
 
 ## Core Features
 
+### Entity templates
+Pick the markdown a new note starts with. Duplicate a built-in template to make your own, edit it as plain markdown, then set it as the default for that type. Changing a template only affects notes you create afterwards; existing notes stay as they are.
+
 ### The Shelf
 Send an entity, or a whole selection, to the Shelf, switch vault, and import it there. Stat sheets, images, sound bites and links all come across. The Shelf lives in this browser only: it is not a backup, and it cannot send anything to another person or another device.
 
 ### Cloud Backup
-Keep a copy of a vault in Codex Cryptica Cloud so you can get it back if you lose this device. It is off until you turn it on, and the consent screen explains exactly what is stored and who can read it. Turning it on creates a recovery key; that key is the only way back to your backup, so copy it somewhere safe. It is one value covering both halves restoring needs, so the Copy recovery key button gives you everything. You can stop backing up, or delete the stored copy for good, at any time. A vault is mirrored to one cloud at a time: pick either Google Drive or Codex Cryptica Cloud under Cloud copy in Vault settings, since each would otherwise restore over the other.
+Keep a copy of a vault in Codex Cryptica Cloud so you can get it back if you lose this device. It is off until you turn it on, and the consent screen explains exactly what is stored and who can read it. Turning it on creates a recovery key; that key is the only way back to your backup, so copy it somewhere safe. It is one value covering both halves restoring needs, so the Copy recovery key button gives you everything. If this vault is already saving from another device, Attach this vault to an existing backup links it to the same cloud copy instead of starting a second one. You can stop backing up, or delete the stored copy for good, at any time. A vault is mirrored to one cloud at a time: pick either Google Drive or Codex Cryptica Cloud under Cloud copy in Vault settings, since each would otherwise restore over the other.
 
 ### Touch gestures
 Drag to pan, pinch to zoom, and tap a node to open it.
@@ -220,6 +223,9 @@ Invite world participants to chat in-character with NPCs. GMs can enable guest c
 ### Campaign Generators
 Generate NPCs, factions, settlements, dungeons, and magic items directly inside your vault. Search by generator name, category, or description to find the right tool quickly. Star generators you use often to keep them at the top; favourites are saved in this browser only. Use Refine on a generated result or a Session Hub entry to ask for a focused change, review the new version, refine it again, or use it. Confirming replaces the source draft with the accepted revision while keeping its lineage.
 
+### Holidays & Festivals
+Create one observance or a connected calendar of 6, 10, or 14 days. Add a society's culture, seasons, beliefs, political history, important people, or events as context; the generator treats those details as candidates, not a checklist. Each observance includes traditions, who observes it, what outsiders misunderstand, and a table-ready tension. Review the note before saving it to your vault.
+
 ### Secret Societies & Cults
 Use Campaign Generators to create a cult, sect, conspiracy, or hidden order as a Faction draft. Choose its public face, danger, and relationship to the truth; the result includes doctrine, rituals, recruitment, hierarchy, a sacred object or site, clues, conflicts, and follow-up ideas. Review it before saving, then link its leader, meeting site, rivals, and rumours to the rest of your vault.
 
@@ -264,6 +270,12 @@ Transform dungeon concepts into interactive spatial canvas maps. Open a generate
 
 ### Random Tables & Card Decks
 Keep your encounter tables, loot lists, and oracle decks in the vault and roll them mid-session. A table holds entries you can weight or assign explicit die ranges to. Create custom tables manually, paste external spreadsheets via the Import Wizard, or use 'Generate with AI' to build world-grounded random tables referencing your vault's NPCs, locations, and existing sub-tables. Candidate rows appear in an interactive staging review where you can edit, select, or discard entries before adding them. Write {source_name} inside an entry to pull a result from another table (e.g. {weather}), and click recognized entity chips in roll results to immediately inspect linked world lore. Decks work similarly by dealing cards without replacement. Roll or draw from the Oracle chat with /table and /deck commands.
+
+### Session Journal
+Keep a running record of what happens during play, separate from Quicknote/Scratchpad's transient working notes. Start a Session Journal from the Session Journal button in the toolbar (or the Journal tab of the Quicknote panel), add timestamped notes as the session unfolds, and optionally break a long session into named sections (chapters or scenes). While a journal is running, your dice rolls, card draws and table results are added to it for you, marked so you can tell them from your own notes. When you want to keep something in your world, turn an entry, a section, or the whole journal into a draft entity: choose a type and a name, and the text is filled in for you to edit and approve. The journal itself is never changed. End the session when you're done — the journal stays around afterward, and you can resume an unfinished one exactly where you left off next time. Any entry can be edited (typed notes only), moved up or down, or deleted. If cloud backup is enabled for this vault, journals are included in what gets backed up and restored, same as your entities, maps, and canvases.
+
+### Entity Reports
+Turn a group of entities into a readable document. On a Spatial Canvas, click Generate report in the toolbar. In Graph view, select some nodes and choose Generate report. In Table view, tick some rows and use Generate report in the selection bar. A preview appears where you choose the scope (canvas only), what to include, and how much detail to show. GM-only secrets stay out unless you turn them on. Press Save as note to keep the report as a normal note in your vault, then read and edit it like any other entity. Regenerate refreshes a report from its original source and asks first if you have edited it, and Export copies it as Markdown for use in other tools.
 
 ### Presentation Templates
 Change how a Stat Sheet looks without touching its data. Click Presentations to switch between built-in layouts, or write your own in Markdown with field references like {{stat.hp}} and layout sections for groups, cards, and rows. Repeatable Table fields (used for Weapons/Items by default) keep rows of data together: add rows, edit their cells, adjust counters, and roll dice from the table. In the template editor you can customize a Repeatable Table's own column headings and cell types (text, number, dice, counter, or checkbox) so the same table type covers skills, spells, or any other list your system needs, and you can turn off vault-item linking for tables that aren't about items. A live preview and inline warnings catch typos or removed fields as you type, and every layout can be exported and shared with anyone using a matching schema.
@@ -730,6 +742,7 @@ When you save a view, it stores:
 - **Column Filters**: Column-level criteria configured in the Entity Table.
 - **Table Presentation**: Active sort column and sort direction.
 - **Graph Presentation**: Timeline layout, orbit mode, selected central node, and camera viewport pan/zoom.
+- **Graph Layout (optional)**: Where each entity sits on the graph, if you choose to keep it. See [Keeping Your Layout](#keeping-your-layout).
 
 ---
 
@@ -747,6 +760,26 @@ When you save a view, it stores:
 1. Filter the graph using the HUD controls, search bar, or timeline mode.
 2. Click the **Saved Views** bookmark icon in the bottom toolbar.
 3. Type a name and click **`+`** to save your filters along with the current camera position.
+
+---
+
+## Keeping Your Layout
+
+By default a Saved View remembers _which_ entities you are looking at and where the camera is, but not _where you put them_. If you have arranged entities into a useful picture (a faction map, an investigation board, a relationship web), you can keep the arrangement too.
+
+1. Filter the graph and move entities into the arrangement you want.
+2. Open **Saved Views**, type a name, and tick **Save current layout**.
+3. Click **`+`** to save.
+
+Opening that view later brings back its filters, every entity in the place you left it, and the camera zoom and position. The tick box is off unless you turn it on, so views made only as filters work exactly as before.
+
+- **Update a layout**: Open the view, rearrange, then click the **camera** button next to it (_Update layout snapshot_). The name and filters stay the same. This also works on a view that has no layout yet.
+- **Remove a layout**: Click the **eraser** button next to the view. It goes back to being a filter-only view.
+- **Which views have one**: A small grid icon marks views that have a saved layout.
+- **Your everyday graph is not touched**: A view's layout only applies while that view is open. Moves you make while it is open are not saved unless you use _Update layout snapshot_, and going back to the default view shows your normal arrangement again.
+- **When your vault changes**: Entities you have since deleted are ignored. Entities you have added since are placed next to the entities they connect to, without moving anything you saved. Entities the filters now hide come back in their saved place if they are shown again.
+- **Timeline and orbit views**: These arrange entities themselves, so a layout can't be saved in them, and a saved one isn't applied there.
+- **Table**: The Entity Table ignores layouts and shows the same filtered content as always.
 
 ---
 
@@ -857,7 +890,7 @@ Image generation uses Art Direction from your world before falling back to shipp
 
 ### IN-APP CAMPAIGN GENERATORS
 
-The **Campaign Generators** let you create NPCs, factions, settlements, and magic items directly inside your active campaign vault. Every draft is previewed before it touches your data — no surprise saves.
+The **Campaign Generators** let you create NPCs, factions, settlements, magic items, and more directly inside your active campaign vault. The **Holiday & Festival** generator creates one observance or a connected calendar. Every draft is previewed before it touches your data — no surprise saves.
 
 ### How to Open the Generator
 
@@ -867,9 +900,9 @@ The **Campaign Generators** let you create NPCs, factions, settlements, and magi
 
 ### Configuring a Generator
 
-1. Pick a generator type: **NPC**, **Faction**, **Settlement**, or **Magic Item**.
-2. Adjust any available options (race, type, rarity, etc.).
-3. Click **Generate** to produce a draft. With AI enabled, the Oracle writes the draft for you; if AI is unavailable or turned off, generators fall back to a built-in local template — so you always get a result, no AI key required.
+1. Pick a generator type, such as **NPC**, **Faction**, **Settlement**, **Magic Item**, or **Holiday & Festival**.
+2. Adjust any available options (race, type, rarity, calendar size, etc.). For a holiday calendar, choose a scope and size, then optionally add cultural, seasonal, religious, or historical context and important people or events.
+3. Click **Generate** to produce a draft. Holiday calendars include individual observances with traditions, timing, who observes them, and table-ready tensions. With AI enabled, the Oracle writes the draft for you; if AI is unavailable or turned off, generators fall back to a built-in local template — so you always get a result, no AI key required.
 
 ### Reviewing and Saving
 
@@ -1174,6 +1207,32 @@ When you're ready to turn a fleeting draft into a formal wiki article, let the L
 3. The newly generated draft is loaded into your sidebar review panel, complete with a `discoverySource` back-link referencing your original QuickNote.
 4. When you click **Verify/Approve** on the Svelte sidebar draft banner, the original QuickNote is automatically archived, keeping your scratchpad perfectly clean.
 
+### Session Journal
+
+The scratchpad also has a **Session Journal** tab. It is a running record of what happens during play, separate from your QuickNotes. You can open it from anywhere in the app with the **Session Journal** button in the toolbar (it sits in the menu on a phone). The button tells you what will happen:
+
+- **Start Session Journal**: no journal is running yet. It opens the journal tab, where you choose to start one.
+- **Open Session Journal**: a journal is running. It takes you straight to it.
+- **Resume Session Journal**: you left a journal running last time. It opens with everything just as you left it.
+
+A small dot on the button means a journal is currently running.
+
+While a journal is running, your dice rolls, card draws and random table results are added to it automatically, even when the scratchpad is closed. Each one shows up as its own entry with a label and an icon (**Dice roll**, **Card draw** or **Table result**), so you can tell it from a note you typed. They go into whichever section you have chosen. If no journal is running, nothing is added, and your rolls work exactly as before. Rolls made in the solo Adventure prompt and on the map are not added yet.
+
+### Turning the journal into entities
+
+You can keep any part of a journal in your world. Use **Make entity** on an entry or a section, **Turn journal into a Note** for the whole thing, or **Choose parts** to tick several entries and sections and turn them into one entity together.
+
+1. Pick a type (Note is suggested) and check the name.
+2. Press **Create draft**. The scratchpad closes and the new draft opens so you can edit it.
+3. Approve the draft to keep it, or discard it. Either way, your journal stays exactly as it was, and you can turn the same part into another entity later.
+
+When you end a session, you are offered **Turn into a Note** and **Choose parts**. You don't have to use them; the same choices are always available on any ended journal in **Past journals**.
+
+### Editing and reordering entries
+
+Any entry can be moved up or down with the small arrows, or deleted, whether it is a typed note or an automatic one. Moving an entry only changes where it sits in the list; it keeps the time it actually happened, so the list can end up out of time order after a reorder. A typed note can also be edited in place. An automatic entry (a dice roll, card draw or table result) cannot be edited, since it is a record of what actually happened, but it can still be moved or deleted.
+
 ---
 
 ### ENTITY TIMELINE
@@ -1417,6 +1476,26 @@ Out of the box, the following types come with high-fidelity structures:
 - **Event**: Includes sections for Date/Chronology, Key Participants, Sequence of Events, and Aftermath.
 - **Creature**: Includes sections for Ecology, Combat/Abilities, Behavior, and Lore.
 - **Note**: A clean generic canvas for general-purpose world-building.
+- **Table Card** (an extra Character template): a compact NPC card built on five memorable elements, Immediate Want, Physical Mannerism, Sharp Contradiction, Relationship Hook and Sensory Tag, plus a short line on how to introduce them at the table. Pick it as the Character default in **Settings → Templates** if you improvise a lot of NPCs mid-session.
+
+## Managing Templates in Settings
+
+Open **Settings → Templates** and choose the **Entity templates** tab (the **Stat sheets** tab next to it is for reusable stat layouts) to see every template in your vault, grouped by entity type. Each row shows where it comes from (**Built-in** or **Yours**) and which one is the **Default** for its type.
+
+- **Preview** shows the note a new entity would start with.
+- **Set as default** makes a template the starting point for every new entity of that type. It only affects notes you create afterwards; notes you already made never change.
+- **Duplicate** copies any template, including built-in ones, so you can make it your own. Built-in templates are read-only.
+- **Edit** opens a simple editor for your own templates: a name, the type it is for, and the template itself as plain markdown. Whatever you write is exactly what a new note starts with, and an empty template gives a blank note.
+- **New template** builds one from scratch for any entity type, including your own custom categories.
+- **Export** saves a template as a `.json` file you can share or keep as a backup. **Import** adds a template from such a file. Imported templates never replace an existing one.
+- **Delete** removes one of your templates. If it was the default, that type goes back to the built-in template.
+
+You can also share a template with other people, or install one that someone else made. See **Sharing Templates** for how publishing, installing and owner tokens work.
+
+If a template file in your vault can't be read, it is skipped and a warning appears at the top of the list. Everything else keeps working.
+
+> [!NOTE]
+> In a shared or read-only vault you can preview and export templates but not change them.
 
 ## Toggling Templates On or Off
 
@@ -1426,14 +1505,14 @@ If you prefer to start with a completely empty editor page for a new note:
 2. Uncheck the option **"Start from default format"** located below the Title input field.
 3. Click **Add** — your newly created document will be entirely blank.
 
-## Vault-Level Override Templates
+## Template Files (Advanced)
 
-For advanced world-builders or genre-specific campaigns (e.g., sci-fi vs. high fantasy), you can fully override our system defaults with your own custom markdown files:
+Templates you make in Settings are saved as files in your vault's `.codex/templates/` folder. If you would rather work with plain markdown, you can still override our defaults with your own files. These keep working exactly as before and show up in the list as **Yours (file)**; duplicate one to edit it in the visual editor.
 
 1. In your linked local folder, create a directory path named `.cc/templates/` (or `.codex/templates/`).
 2. Add a markdown file named after the entity type in lowercase (e.g., `character.md`, `faction.md`, `location.md`). Casing of the file itself does not matter.
 3. Open the file and write your custom markdown structure (e.g. `## Cyberware` or `## Magical Lineage`).
-4. Any new entities of that type created henceforth will immediately use your custom structure.
+4. Any new entities of that type created henceforth will use your custom structure, unless you choose a different default in Settings.
 
 > [!NOTE]
 > **No frontmatter or placeholders required:** You do not need to add YAML frontmatter or placeholder tags (`title`, `type`, `labels`). Codex Cryptica manages entity metadata automatically through the creation dialog and header bar. Template files only define the Markdown body of the note.
@@ -1535,6 +1614,54 @@ The front page is the first thing you see when a vault opens. It gives you a wor
 ### Related Blog Posts
 
 - [The Vault Front Page: Your Campaign Dashboard](/blog/front-page) — Why your setting needs a central command center and how to customize your world briefing.
+
+---
+
+### SHARING TEMPLATES
+
+You can share your own entity templates with other Codex Cryptica users, and install ones they have made. Open **Community templates** and switch to **Entity templates** to browse.
+
+## Installing a template
+
+Open a listing to read its description and see the note a new entity would start with. Choose **Install** to add a copy to your vault.
+
+- The copy is one of **your own templates**. You can edit, duplicate, export or delete it like any other.
+- It **never becomes your default** and it doesn't change any notes you already have.
+- If you already have a template with the same name for that type, you're asked to pick a different name or cancel. Nothing is overwritten.
+- Later changes to the listing, or its removal, don't change your copy.
+
+## Publishing a template
+
+In **Settings → Templates → Entity templates**, choose **Publish** on one of your own templates. Built-in templates and file templates can't be published directly: **Duplicate** one first and publish your copy.
+
+You add a short description, at least one label (a genre or game system, such as "Fantasy" or "Pathfinder"), and, if you like, a display name to credit yourself. You then see exactly what will be shared before you confirm.
+
+**What is shared:** the name, the type and the text of the template, plus your description, labels and display name. **The whole template text is public**, so check it before you publish. It never includes your notes. Your vault and everything else stay private.
+
+By publishing you confirm you have the right to share the template and that others may copy, use and adapt it.
+
+## Your owner token
+
+When you publish, you get an **owner token**. Keep it somewhere safe. It's what lets you update or remove the listing if you clear this browser's data. You can copy it or save it as a file. It's shown only once, and it is never saved in your vault or in exported files.
+
+If you lose access, open your listing, choose **I published this template**, and enter the token to get your controls back.
+
+## Updating, unpublishing and deleting
+
+- **Update listing** sends your template's current text and details. The listing keeps the same address.
+- **Unpublish** hides the listing from the directory. You keep your own template and can **Republish** it later at the same address.
+- **Delete permanently** removes the listing and its text from the directory for good. Your own template isn't changed.
+
+Deleting your local template does **not** remove the public listing. Unpublish or delete the listing yourself.
+
+## Reporting a template
+
+If a listing is inappropriate, spam, or copied without permission, open it and choose **Report this template**. You can report a listing once. If the operator removes a listing, that removal is final: the token can't restore it, though you can publish the template again as a new listing.
+
+## Good to know
+
+- Sharing is optional. Nothing is uploaded unless you go through **Publish**.
+- In a shared or read-only vault you can browse and preview listings, but you can't install or publish.
 
 ---
 
@@ -1932,9 +2059,29 @@ Reference answers to real RPG and worldbuilding questions, indexed at https://co
 
 **Direct answer:** Yes, but a 30-minute session has to be designed as a short episode rather than a compressed version of a normal three to four hour session. Prepare one meaningful scene, problem, decision, or encounter that can produce a real change in about half an hour, start at the interesting moment instead of narrating the approach to it, and move levelling, shopping, and long rules discussion outside the slot when the group is willing. Combat can work if it's scoped for the window: fewer, more meaningful enemies, a clear objective, and a willingness to let a fight run into next time rather than forcing it to finish. Stop the session once something has genuinely changed.
 
+### [How do fantasy cities defend against flying creatures and teleportation?](https://codexcryptica.com/answers/how-do-fantasy-cities-defend-against-flying-creatures-and-teleportation)
+
+**Direct answer:** Fantasy cities keep their walls because walls still control ordinary movement, trade, taxation, and conventional siege, then add layered defences for the new vectors. Define how common, fast, heavy, and vulnerable your fliers and teleporters are, harden critical infrastructure such as granaries, wells, armouries, and command posts rather than every roof, and treat teleportation as access control through wards, registered arrival points, and compartmented layouts that carry clear costs and trade-offs.
+
 ### [How do I balance RPG combat encounters without causing a TPK?](https://codexcryptica.com/answers/how-do-i-balance-rpg-combat-encounters-without-a-tpk)
 
 **Direct answer:** Encounter balance isn't only a monster-versus-party maths problem. A fight rated 'appropriate' by the book can still read as unwinnable if the action economy is lopsided, the party is already worn down, or there's no way to retreat, negotiate or achieve the objective some other way. Use your system's encounter-building rules as the starting point, then layer judgement on top: compare effective actions on each side, telegraph anything unusually dangerous, give the fight a goal beyond zeroing every enemy's HP, and build in pressure you can turn up or down as play reveals how the party is actually doing.
+
+### [How do I build a believable constitutional crisis or coup in a fictional government?](https://codexcryptica.com/answers/how-do-i-build-a-believable-constitutional-crisis-or-coup)
+
+**Direct answer:** Map legal authority, practical power and legitimacy, then make them point at different actors. Practical power comes from resources such as force, money, administration, logistics and information, and depends on the institutions and people willing to use them. Add a trigger and deadline that expose the mismatch, make every response costly, and leave several outcomes open.
+
+### [How do I build a believable economy for a fantasy world?](https://codexcryptica.com/answers/how-do-i-build-a-believable-economy-for-a-fantasy-world)
+
+**Direct answer:** Build a believable fantasy economy by tracing six links for each region: what it has and needs, how resources are worked, how goods and labour move, who controls access or takes a share, what strains the arrangement, and what the players can see changing as a result. A believable economy does not need a perfectly calibrated price list; it needs causes the players can see, such as bread costing more after a blocked pass, a mine town having coin but no food, or someone with power responding to the strain.
+
+### [How do I decide what a settlement produces, imports, and exports?](https://codexcryptica.com/answers/how-do-i-decide-what-a-settlement-produces-imports-and-exports)
+
+**Direct answer:** Derive a settlement's trade from its surroundings and capabilities rather than picking goods at will: note local resources, what its people and institutions can do, what it controls or connects, and the routes that carry goods and visitors. Production can use imported inputs or provide services; surplus is what remains after local demand, while imports may feed local needs or make exports possible. Goods made, processed, or passed onward, and services sold to travellers or neighbours, all give a settlement ways to earn.
+
+### [How do I expand a simple RPG campaign idea?](https://codexcryptica.com/answers/how-do-i-expand-a-simple-rpg-campaign-idea)
+
+**Direct answer:** Expand outward from the original idea through relationships and consequences, and skip the encyclopaedia. Ask what tension sits at the centre, who gains from it, who is hurt by it, what everyone believes that may be wrong, what changed recently, and what happens if nobody acts. Then choose three people, places or things that make the idea tangible at the table, and leave the deeper answers as questions for play to settle.
 
 ### [How do I find a tabletop RPG group to play with?](https://codexcryptica.com/answers/how-do-i-find-a-tabletop-rpg-group-to-play-with)
 
@@ -1948,9 +2095,21 @@ Reference answers to real RPG and worldbuilding questions, indexed at https://co
 
 **Direct answer:** Players engage with lore when it does something to their characters, not when it's explained to them. A piece of history becomes interesting the moment it can be wanted, feared, changed, lost or exploited. The fix is rarely 'more worldbuilding' or 'better exposition'; it's turning what already exists into choices, connecting it to what the characters already want, and letting player decisions visibly move it. And roleplaying isn't the same thing as performing dialogue in character: a player making a sharp decision in third person is roleplaying just as much as one doing voices.
 
+### [How do I give different civilisations distinct strengths and weaknesses?](https://codexcryptica.com/answers/how-do-i-give-different-civilisations-distinct-strengths-and-weaknesses)
+
+**Direct answer:** Give each polity, region, institution, or network distinct capabilities by tracing why they developed, what they depend on, and what the players can see when conditions change. A maritime trading confederation may coordinate convoys and negotiate port access because its merchant houses need open sea lanes; a blockade or storm season strains those arrangements. Give each capability a scope, conditions, and dependencies so plausible failure modes emerge without requiring every strength to have an equal weakness. Describe what institutions and networks can do, not what ‘the people’ are inherently like.
+
 ### [How do I give specialist characters spotlight without sidelining the party?](https://codexcryptica.com/answers/how-do-i-give-specialist-characters-spotlight)
 
-**Direct answer:** Let the specialist use their expertise to change the situation, then give the whole party a meaningful response to that change. Build scenes with shared stakes, parallel ways to contribute, and decisions that need more than one character's judgement. A brief solo moment can work when it has a clear purpose and returns useful information or a consequential choice to the group.
+**Direct answer:** Spotlight means giving one character a distinctive contribution, not a separate game. Let the specialist use their expertise to change the situation, then give the whole party a meaningful response to that change. Build scenes with shared stakes, intersecting ways to contribute, and decisions that need more than one character's judgement. A brief solo moment can work when it has a clear purpose and returns useful information or a consequential choice to the group.
+
+### [How do I make a player base matter in an RPG campaign?](https://codexcryptica.com/answers/how-do-i-make-a-player-base-matter-in-an-rpg-campaign)
+
+**Direct answer:** Use four anchors: a purpose the players choose; capabilities that open options; people and relationships that matter to them; and change and consequences, including improvements, vulnerabilities and the world's reactions. A stronghold, crew headquarters or ship matters when returning gives the players meaningful options, familiar people and visible evidence of what they changed. If it only hands out bonuses, it stays a menu.
+
+### [How do I make different cultures feel distinct without relying on stereotypes?](https://codexcryptica.com/answers/how-do-i-make-different-cultures-feel-distinct-without-relying-on-stereotypes)
+
+**Direct answer:** Make cultures distinct by tracing a few principles, norms, or expectations into behaviour and visible consequences. Ask what happens when a norm meets another duty or pressure, where that creates useful friction, and what players can notice. A culture that treats hospitality as sacred does not simply wear different clothes; it may maintain guest rituals and host obligations that change how the party is received and protected. These patterns need an intelligible history and meaning, not an objectively efficient purpose, and they vary between people and settings rather than becoming species-wide personality traits.
 
 ### [How do I organise my GM notes and references when running an RPG in person?](https://codexcryptica.com/answers/how-do-i-organise-gm-notes-for-in-person-play)
 
@@ -1960,17 +2119,93 @@ Reference answers to real RPG and worldbuilding questions, indexed at https://co
 
 **Direct answer:** Pace an RPG one-shot by budgeting backward from your hard stop: reserve the final 50 to 70 minutes of usable play for the climax and epilogue, place one explicit checkpoint at the halfway mark to test momentum, and prepare an elastic middle encounter that can expand or vanish entirely depending on the table clock.
 
+### [How do I prepare an RPG session step by step?](https://codexcryptica.com/answers/how-do-i-prepare-an-rpg-session-step-by-step)
+
+**Direct answer:** Prepare a situation rather than a script. Work out where play starts and what is changing tonight. Prepare the people who matter, places the players might visit and information they can act on; decide how the world reacts to success, failure or delay. Give critical information more than one route, keep a short reserve of names and complications, then put what you need on one page for the table. The plan should still work when the players choose a route you did not expect.
+
+### [How do I make a diplomat, noble or courtier useful in an RPG without relying on one social roll?](https://codexcryptica.com/answers/how-do-i-run-a-diplomat-noble-or-courtier-in-an-rpg)
+
+**Direct answer:** Make status change who will hear the character, what they can request, and what commitments they can make, not what everyone must obey. Build negotiations around each side's interests, limits, leverage and costs; let the diplomat lead the exchange while other characters bring evidence, protect people, win support or change the available deal. Record promises and favours as campaign state, then show what they change after the scene.
+
+### [How do I make a journalist or Media character matter in an RPG campaign?](https://codexcryptica.com/answers/how-do-i-run-a-journalist-or-media-character-in-an-rpg)
+
+**Direct answer:** An investigator changes what the party knows. A journalist can also change who else knows it, and what they do next. Build play around access, verification, publication, and reaction; the reporter owns what to publish, while the party helps gather evidence, protect sources, and handle the fallout.
+
+### [How do I run a large battle when the player characters are part of an army?](https://codexcryptica.com/answers/how-do-i-run-a-large-battle-when-the-player-characters-are-part-of-an-army)
+
+**Direct answer:** Treat the wider battle as a changing environment that surrounds player-scale scenes, not as hundreds of combats to resolve one by one. Give the battle a trajectory of its own, then let the party's actions alter it where they have plausible leverage. Track a handful of visible states such as fronts, momentum or morale, and intercut updates with focused scenes so the war feels consequential whilst play stays at a scale the table can run.
+
 ### [How do I run a rogue or scout without splitting the party?](https://codexcryptica.com/answers/how-do-i-run-a-rogue-or-scout-without-splitting-the-party)
 
-**Direct answer:** Give the scout a clear question, resolve only the uncertain part of their reconnaissance, then bring the result back while the party can still choose what to do. Let the rogue gain useful information, position, or access, while companions watch exits, prepare a diversion, or change the conditions outside. A failed stealth or scouting roll can raise suspicion, cost time, or close a route without automatically leaving the scout alone in a fight.
+**Direct answer:** Characters can be apart without excluding their players. Let the scout move ahead, but keep each solo beat short: resolve its uncertainty, then return information, pressure, or a choice to the group while they can still act. The rogue earns useful information, position, or access; companions can watch exits, prepare a diversion, or change the conditions outside.
 
 ### [How do I run a successful Session 0?](https://codexcryptica.com/answers/how-do-i-run-a-successful-session-0)
 
 **Direct answer:** A good Session 0 aligns the group on what kind of game they're actually playing, sets boundaries and expectations before anyone's invested in a bad assumption, and gives the characters concrete reasons to be in a party together. It isn't paperwork; done well, it produces the campaign's first real material: the premise, the party's connections, and the first hook, rather than a form everyone fills in and forgets.
 
+### [How do I run an investigator or detective without making other PCs irrelevant?](https://codexcryptica.com/answers/how-do-i-run-an-investigator-without-sidelining-the-party)
+
+**Direct answer:** Let the investigator reduce uncertainty; let the party decide what to do with what they learn. The investigator can excel at finding evidence and noticing what it suggests without owning the group's interpretation or next move. Give the party multiple routes to necessary conclusions, and let failed rolls change the information's quality, cost, timing, or safety rather than stop the investigation.
+
+### [How do I run common character roles in a political intrigue RPG?](https://codexcryptica.com/answers/how-do-i-run-character-roles-in-a-political-intrigue-rpg)
+
+**Direct answer:** Run political roles through the interests and people they can affect. Give each character a constituency, a source of leverage, a commitment that could cost them, and a way their actions change the choices facing the group. A diplomat can negotiate terms, a spy can expose a vulnerability, and a dissident can build support, but none should settle the conflict alone. Let every role create an opening or pressure the rest of the party can act on.
+
+### [How do I run the different character roles that show up in an investigative horror RPG?](https://codexcryptica.com/answers/how-do-i-run-character-roles-in-an-investigative-horror-rpg)
+
+**Direct answer:** Run investigative horror roles through what each one changes about the case. Let the investigator deepen a clue, the journalist decide who else learns it, the occultist explain what it costs to know, the doctor make it a medical decision, the authority open a door that comes with scrutiny, the witness carry personal risk, and the fixer trade access for a favour. Keep expertise as better, faster, or safer information rather than exclusive permission to learn, and bring every discovery back to a shared decision.
+
+### [How do I run common character roles in a fantasy RPG?](https://codexcryptica.com/answers/how-do-i-run-common-character-roles-in-a-fantasy-rpg)
+
+**Direct answer:** Give each fantasy role a clear way to change the shared scene rather than a private mini-game, then keep the rest of the party in the result. Let the warrior decide what holds, the rogue make infiltration a team operation, the mage open an option without settling the problem, the priest bring institutional and moral weight, and the ranger, bard, envoy, sage and summoner each create a choice or cost the group must handle together. Tie every specialist action to a pressure the whole table can see and act on, so spotlight stays shared even when expertise is uneven.
+
+### [How do I run common character roles in a sci-fi or space-opera RPG?](https://codexcryptica.com/answers/how-do-i-run-common-character-roles-in-a-sci-fi-or-space-opera-rpg)
+
+**Direct answer:** Run each sci-fi specialist by giving their expertise a clear way to change the shared situation, a practical technique that keeps the rest of the team involved, and a pressure that follows the result. Let the pilot shape how the group moves, the engineer decide what stays working under stress, the scientist reduce uncertainty without removing the decision, and the commander choose between competing priorities. Tie physical, digital, social and technical actions to what is happening in the scene so the table plays together rather than through isolated mini-games.
+
+### [How do I run exploration in a huge ruined city?](https://codexcryptica.com/answers/how-do-i-run-exploration-in-a-huge-ruined-city)
+
+**Direct answer:** Run a huge ruined city as a layered pointcrawl, not as one giant dungeon map. Give districts distinct identities, connect them with routes whose costs and risks players can weigh, and use landmarks or other orientation cues to help them choose goals without seeing everything. As they travel, tell them what they know, advance relevant time and supplies, and resolve an event only when uncertainty or pressure makes it matter. Reveal information when the fiction gives them a reason to learn it; treat obstacles as pressures they can approach in different ways, and let mastered routes become quick summaries until something changes. Reward progress with faster, safer movement and deeper understanding, while factions, hazards and route conditions continue to shift between expeditions.
+
+### [How do I run hackers or netrunners without splitting the party?](https://codexcryptica.com/answers/how-do-i-run-hackers-or-netrunners-without-splitting-the-party)
+
+**Direct answer:** Run hacking as one thread of the same scene. Give the intrusion a physical objective, a visible source of pressure, and a consequence the crew can see; let the hacker make specialist choices while the others change access, security, or time. Cut between them when the situation changes, then return a solo hack to the group as a decision rather than a private result.
+
+### [How do I run political intrigue and faction play in an RPG?](https://codexcryptica.com/answers/how-do-i-run-political-intrigue-and-faction-play)
+
+**Direct answer:** Start with three to five factions that want incompatible things. Give each one a goal, a pressure forcing it to act now, something it can offer, something it fears, and a next move it will make if nobody interferes. Put the player characters where those interests overlap, let factions keep acting when the party does nothing, and treat information, obligations and leverage as seriously as combat power.
+
+### [How do I run spies and infiltrators in an RPG?](https://codexcryptica.com/answers/how-do-i-run-spies-and-infiltrators-in-an-rpg)
+
+**Direct answer:** Make infiltration a team operation even when one character goes inside. Give the infiltrator a clear objective, then let the rest of the party create access, cover, distractions, surveillance, or an extraction plan under the same pressure. Reveal useful information while the group can still act on it, and prepare several viable routes with consequences for delay, partial success, and exposure.
+
 ### [How do I start GMing for the first time?](https://codexcryptica.com/answers/how-do-i-start-gming-for-the-first-time)
 
 **Direct answer:** Pick a system or a beginner-friendly published scenario you can actually run soon, prepare the next session rather than an entire world, and hold at least a short Session 0 to align expectations before play. Build only the NPCs, places, factions, and conflicts the players are likely to encounter, expect them to go off script and prepare situations rather than a fixed plot, and focus on clear choices, pacing, and spotlight over elaborate lore or performance. After the first session, keep only the notes that actually became real at the table. You do not need voices, acting skill, encyclopedic rules knowledge, or hours of prep to run a good first session.
+
+### [How do I take useful RPG notes during play without missing the session?](https://codexcryptica.com/answers/how-do-i-take-useful-rpg-notes-during-play)
+
+**Direct answer:** Do not try to transcribe the session. During play, capture what your future self may need to make decisions, or what your character would care about remembering: names, places, clues, promises and debts, party decisions, unresolved questions and what changed. Use short fragments and a few symbols to keep your eyes on the table, use placeholders when you miss a name, skip detailed notes during combat, then spend around two to five minutes after the session turning those fragments into a compact recap and a handful of lasting entries.
+
+### [How do I turn an RPG idea into an adventure?](https://codexcryptica.com/answers/how-do-i-turn-an-rpg-idea-into-an-adventure)
+
+**Direct answer:** Add pressure, people, choices and consequences. Something changes that makes your premise unstable; people want incompatible things because of it; give the players several ways to intervene; then decide what happens if nobody does. Prepare those conditions and leave the order of events for the table to decide.
+
+### [How do I turn economic pressures into RPG adventure hooks?](https://codexcryptica.com/answers/how-do-i-turn-economic-pressures-into-rpg-adventure-hooks)
+
+**Direct answer:** Convert any economic pressure into a hook by naming who gains and who pays, giving each side a response the party can observe, letting those responses collide over something both sides need, and leaving the party a clear way in with more than one employer to choose between. A shortage, a new route, or a blocked pass becomes playable the moment two interested groups pull in opposite directions and either of them would pay the party to tip the balance.
+
+### [How do I write a good Call of Cthulhu one-shot?](https://codexcryptica.com/answers/how-do-i-write-a-good-call-of-cthulhu-one-shot)
+
+**Direct answer:** Design backward from a hidden truth, and give investigators more than one route to facts the scenario needs them to find. For especially critical deductions, three clue vectors are a useful benchmark. Let the threat escalate as the investigation continues, then resolve the crisis through player choices rather than complete occult knowledge.
+
+### [How do scarcity and shortages affect prices and conflict in an RPG world?](https://codexcryptica.com/answers/how-do-scarcity-and-shortages-affect-prices-and-conflict-in-an-rpg-world)
+
+**Direct answer:** Run scarcity as a short chain: name what is missing and why, decide who loses access first, then let each affected group respond through changed prices or terms, rationing, conservation, substitutes, redistribution, migration, or smuggling. Scarcity changes access; changed access forces responses; incompatible responses can create conflict. Players feel a shortage through changed behaviour and visible pressure, not through an inflation formula, so track who holds stock, who needs it, and who can act rather than tracking percentages.
+
+### [How do trade routes shape cities and kingdoms in an RPG world?](https://codexcryptica.com/answers/how-do-trade-routes-shape-cities-and-kingdoms-in-an-rpg-world)
+
+**Direct answer:** Trade routes shape settlements wherever movement becomes easier, safer, cheaper, more concentrated, or easier to control. Crossings and passes matter, but so do junctions, deep-water harbours, markets, and places that offer storage, repairs, credit, or reliable passage. Ask who captures value from the flow, which goods suit each path, what grows around it, how rulers respond, and who bears the cost if it stops. The answers place towns, infrastructure, factions, and rivalries on the map without simulating an entire economy.
 
 ### [How do you build a point crawl for an RPG?](https://codexcryptica.com/answers/how-do-you-build-a-point-crawl-for-an-rpg)
 
@@ -2116,6 +2351,10 @@ Reference answers to real RPG and worldbuilding questions, indexed at https://co
 
 **Direct answer:** Run a campaign in one city by trading breadth for depth: prepare a handful of districts instead of a whole map, build a small recurring cast the party keeps running into, let locations change permanently when the party acts, and layer secrets so each one implicates people the table already knows. A city campaign works when the same names, streets, and debts keep resurfacing rather than when new ones get introduced every session.
 
+### [How do you run character roles in a cyberpunk RPG?](https://codexcryptica.com/answers/how-do-you-run-character-roles-in-a-cyberpunk-rpg)
+
+**Direct answer:** Run each cyberpunk specialist role by tying its objective to something the whole crew can see happening in the room, rather than to a private side scene that leaves the table waiting. A netrunner's slice can open a door the crew is standing at, a fixer's favour can carry a cost that surfaces later, and a solo's combat skill can support the crew's plan rather than replace it. Give each role a concrete way to change a scene and a realistic way it can go wrong, then let those roles collide inside a shared job.
+
 ### [How do you run D&D for a large group of players?](https://codexcryptica.com/answers/how-do-you-run-dnd-for-a-large-group-of-players)
 
 **Direct answer:** A table of seven to ten players works when the GM deliberately cuts dead time and structures spotlight, rather than running it exactly like a four-player table. Keep scene goals and stakes obvious from the first line, use visible initiative and prompt the next player before their turn arrives, and let players decide their action while someone else is still resolving theirs. Eight players is not automatically too many: the real constraint is attention and turn time, not encounter balance, and if the table keeps waiting more than playing, splitting into two smaller groups is a legitimate fix rather than a failure.
@@ -2152,6 +2391,10 @@ Reference answers to real RPG and worldbuilding questions, indexed at https://co
 
 **Direct answer:** Players should reliably remember their current goal and whichever two or three NPCs and factions are active right now, but not a campaign encyclopedia of every name, title, or detail mentioned once. Separate player memory from character memory: if the character would obviously know something, restate it rather than testing whether the player recalls it. Reinforce important information through play — repetition, consistent hooks, recurring symbols — rather than hiding it behind a memory check, and lower your expectations further after a long gap between sessions. Most forgetting is normal and fixable with a quick reminder, not a sign players aren't paying attention.
 
+### [How much of the plot should a DM prepare?](https://codexcryptica.com/answers/how-much-of-the-plot-should-a-dm-prepare)
+
+**Direct answer:** Prepare what the world is doing, not what the players will do. Write down what would happen if the players did nothing, then let their actions change it. Note external events, actors' current plans and conditional triggers; keep player-dependent outcomes as questions, not answers. You can plan a long way ahead this way, because you are planning a situation that keeps moving rather than a story the players are expected to walk through.
+
 ### [How much prep do you need for an RPG session?](https://codexcryptica.com/answers/how-much-prep-do-you-need-for-an-rpg-session)
 
 **Direct answer:** There is no time or page-count that applies to every GM, system or campaign, and chasing one is the wrong question. Prep only pays off when it creates choices at the table, so the useful measure is coverage, not hours: do you know the immediate situation, the people in it and what they want, a couple of places the party might go, a complication or two, and what happens if the players do nothing? If yes, you are ready, whether that took twenty minutes or two hours.
@@ -2176,9 +2419,21 @@ Reference answers to real RPG and worldbuilding questions, indexed at https://co
 
 **Direct answer:** Write an in-world RPG newspaper as a playable handout: give it a local headline, two or three public facts, a recognisable editorial voice, one clear bias, a rumour marked by its source, and a hook the players can pursue. Keep the truth behind each item in your GM notes, then connect names, places and dates to the campaign so the paper changes when the world does.
 
+### [Is my RPG campaign idea good?](https://codexcryptica.com/answers/is-my-rpg-campaign-idea-good)
+
+**Direct answer:** An idea does not need to be original to be good, because tables run familiar premises well all the time. It needs to make the players curious, put something at risk, give several people competing goals, and leave the party with things to do. Test it with five questions: curiosity, pressure, competing goals, player actions and discovery.
+
 ### [Point crawl vs hex crawl: which should you use?](https://codexcryptica.com/answers/point-crawl-vs-hex-crawl)
 
 **Direct answer:** Use a point crawl when play is about choosing between known or rumoured destinations and routes, with each journey carrying a clear cost. Use a hex crawl when finding the landscape is itself the game: the party chooses a direction, exposes unknown ground, and manages time and supplies across a broad region. Neither is more open by default; they make different parts of exploration visible at the table.
+
+### [What can players actually buy and sell in a fantasy settlement?](https://codexcryptica.com/answers/what-can-players-actually-buy-and-sell-in-a-fantasy-settlement)
+
+**Direct answer:** Give each settlement a small market profile: its scale, the common goods always about, the imports that arrive irregularly, the specialists who make or commission the rest, the buyers able to absorb treasure or bulk, and the current pressure bending all of it. A hamlet sells bread and buys nothing precious; a regional market stocks ordinary gear and takes ordinary treasure; only a city or port moves luxuries, bulk cargo, or extraordinary items, and then through named brokers, guild permission, or waiting time. Availability stays separate from affordability: the sword can hang on the rack beyond any purse, or sit affordable in the capital but absent here.
+
+### [What do you do with murder hobos in your RPG campaign?](https://codexcryptica.com/answers/what-do-you-do-with-murder-hobos-in-an-rpg-campaign)
+
+**Direct answer:** First check whether murder hobo behaviour is actually a problem: if everyone at the table enjoys a violent, chaotic playstyle, there is nothing to fix. A violent character can still be played cooperatively; the concern is whether the player's choices repeatedly break agreed expectations, limit other players' agency, or make the game less enjoyable. Address a mismatch out of game, while letting proportionate in-fiction consequences follow from the established world. Escalating with tougher enemies to punish the behaviour treats a table disagreement as a combat problem and usually makes it worse.
 
 ### [What is a point crawl?](https://codexcryptica.com/answers/what-is-a-point-crawl)
 
@@ -2204,9 +2459,17 @@ Reference answers to real RPG and worldbuilding questions, indexed at https://co
 
 **Direct answer:** If you want a game that preserves the recognisable classes, d20 rolls, and heroic party structure of D&D with a fraction of the rules overhead, Shadowdark is the closest direct match. If you want faster combat with tactile skill checks and reactive defence rolls, Dragonbane provides that heroic fantasy feel on a roll-under d20 engine. For tables wanting near-zero onboarding and rapid improvisation, EZD6 runs on six-sided dice pools without character sheet bookkeeping. Groups wanting classless, equipment-driven play should consider Knave, whilst Cairn strips away dice rolling in combat entirely to focus on clever problem-solving. The right choice depends on which specific part of D&D your table finds burdensome: character sheet complexity, combat duration, or preparation time.
 
+### [What RPG map-making tool should I use?](https://codexcryptica.com/answers/what-rpg-map-making-tool-should-i-use)
+
+**Direct answer:** Do not choose a map maker until you know what the map must communicate at the table. A world map needs fast geography and political layers, a town map needs streets and buildings you can edit, a battle map needs precise grids and walls, and a hexcrawl needs hex control and keyed locations. Name the job first, then pick the category of tool that serves it, and treat individual products as examples rather than ranked winners.
+
 ### [What RPG should I play for an over-the-top space opera?](https://codexcryptica.com/answers/what-rpg-should-i-play-for-an-over-the-top-space-opera)
 
 **Direct answer:** There is no single best system for over-the-top space opera: the right pick depends on the table experience your group wants. For cinematic crew drama with jobs, flashbacks and a shared ship, Scum and Villainy fits best; for colourful tactical science-fantasy with deep character builds and proper starship combat, Starfinder Second Edition; for fast pulpy action your group can bend to any setting, Savage Worlds with its Science Fiction Companion; and for rules-light gonzo science-fantasy with almost no prep, Solar Blades and Cosmic Spells. Systems named here belong to their publishers; naming one is not an endorsement of Codex Cryptica by that publisher, or the reverse.
+
+### [What RPG should I play for investigative horror?](https://codexcryptica.com/answers/what-rpg-should-i-play-for-investigative-horror)
+
+**Direct answer:** The right investigative horror system depends on the investigation your group wants. For classic cosmic horror with fragile researchers, Call of Cthulhu. For modern conspiracy horror played by competent federal agents, Delta Green. For folklore mysteries in a mythic Scandinavia, Vaesen. For investigations that cannot stall on a missed roll, Trail of Cthulhu. For collaborative mysteries where even the GM discovers the solution in play, Brindlewood Bay.
 
 ### [What RPG should I use for tactical combat?](https://codexcryptica.com/answers/what-rpg-should-i-use-for-tactical-combat)
 
@@ -2220,6 +2483,10 @@ Reference answers to real RPG and worldbuilding questions, indexed at https://co
 
 **Direct answer:** There's no single best alternative: the right system depends on the kind of play your group actually wants, not on which game is most popular. Start from genre and play style (how tactical, how rules-heavy, how much character-build optimisation, what kind of story structure) rather than a ranked list, and you'll land on something that fits rather than something that's merely well-known. Systems named on this page belong to their respective publishers; mentioning one here isn't an endorsement of Codex Cryptica by that publisher, or the reverse.
 
+### [What RPG works for political intrigue and faction play?](https://codexcryptica.com/answers/what-rpg-works-for-political-intrigue-and-faction-play)
+
+**Direct answer:** The right system for political intrigue depends on which politics your group wants. For criminal crews seizing turf, Blades in the Dark. For courtly alliances and social manoeuvring, Court of Blades. For character-belief-driven drama resolved through social conflict, Burning Wheel. For organisation-level strategy where players direct factions as well as characters, Reign. For supernatural social politics built on status and debt, Vampire: The Masquerade.
+
 ### [What should a new D&D player learn first?](https://codexcryptica.com/answers/what-should-a-new-dnd-player-learn-first)
 
 **Direct answer:** Before your first D&D session, learn only what your own character can do, how the basic d20 roll works, and how the table takes turns describing actions and resolving them. You do not need to memorise every class, species, background, rule, or spell. Ask the Dungeon Master which books and options the campaign uses, bring a simple reason for your character to join the party, and expect to ask questions while you play.
@@ -2232,17 +2499,25 @@ Reference answers to real RPG and worldbuilding questions, indexed at https://co
 
 **Direct answer:** There's no single best campaign manager: the right one depends on what kind of game you run and what actually causes you friction. Before comparing named tools, it's worth being clear on the dimensions that matter: how it organises notes and relationships, whether it handles maps or VTT play, how easily data gets in and out, whether it runs locally or requires the cloud, how well it adapts to a system you didn't design it for, and whether it slows you down or speeds you up during an actual session.
 
+### [What should players be able to upgrade in an RPG base?](https://codexcryptica.com/answers/what-should-players-be-able-to-upgrade-in-an-rpg-base)
+
+**Direct answer:** Let players upgrade the parts of a base that change what they can attempt, who they deal with, or what they can protect: capabilities, defences, reach, people and services, standing, supplies and information. A forge, hidden dock or sensor array earns its place when it opens new actions, changes future choices or creates relationships. Costs and complications can add play, but they need not come with every upgrade. A passive bonus can help, but works best alongside a visible capability or choice. Offer fewer, larger choices with more than one good path.
+
 ### [What TTRPG should I use for a fantasy dungeon crawl?](https://codexcryptica.com/answers/what-ttrpg-should-i-use-for-a-fantasy-dungeon-crawl)
 
 **Direct answer:** There is no single best system for fantasy dungeon crawling: the right pick depends on the crawl your group wants. For fast, dangerous old-school exploration with modern rules, Shadowdark; for gonzo magic and lethal funnel play, Dungeon Crawl Classics; for a game where the dungeon itself is the whole campaign, His Majesty the Worm; for very light, improvisable play, EZD6; for grim, stylish doom, Mörk Borg; and for tactical combat with deep character builds, Pathfinder Second Edition or D&D itself.
 
 ### [What TTRPGs let you build and upgrade a base?](https://codexcryptica.com/answers/what-ttrpgs-let-you-build-and-upgrade-a-base)
 
-**Direct answer:** Choose by the kind of base you want to play around: Mutant: Year Zero and Stonetop make community development central, Salvage Union gives the group a mobile home, Blades in the Dark advances a crew and its lair, and Forbidden Lands treats a stronghold as an optional long-term project. Check whether base development is the campaign's main loop, a crew-progression subsystem, or a lighter addition before choosing. Systems named here belong to their respective publishers; mentioning one is not an endorsement of Codex Cryptica by that publisher, or the reverse.
+**Direct answer:** Choose by the kind of base and campaign role you want: Mutant: Year Zero and Stonetop make community development a core loop; Salvage Union and Blades in the Dark offer a recurring subsystem, centred on a mobile home or crew lair; Forbidden Lands makes a stronghold an optional project. Systems named here belong to their respective publishers; mentioning one is not an endorsement of Codex Cryptica by that publisher, or the reverse.
 
 ### [Where do I start if I have never played a tabletop RPG before?](https://codexcryptica.com/answers/where-do-i-start-if-i-have-never-played-a-tabletop-rpg)
 
 **Direct answer:** You need less than it looks like: a game or beginner ruleset, a small group (or a solo-friendly option), some way to resolve uncertainty (usually dice), and one short scenario to try. You don't need to read a large rulebook cover to cover first, own special gear, or already know the jargon. You can start as a player in someone else's game, or as the GM running a short beginner adventure for others; both are completely valid entry points, and neither requires the other to happen first.
+
+### [XP vs milestone levelling: which should I use?](https://codexcryptica.com/answers/xp-leveling-vs-milestone-leveling)
+
+**Direct answer:** Use XP levelling when you want progress to be visible and tied to what characters accomplish; use milestones when you want levels to follow agreed campaign goals or story developments. XP can reward the wrong behaviour if its sources are narrow, while milestones can feel arbitrary if players cannot see what moves them forward. Choose the reward signal and pace your group wants, not a universal winner.
 
 
 ## Curated Generator Examples
@@ -2396,6 +2671,8 @@ The canonical, no-login-required tools that actually generate and let you save a
 
 - [Heist Generator](https://codexcryptica.com/generators/heist): Build a playable heist instead of a planning session. You get a concrete objective, a prize that is awkward to move, three layered security rings that each allow more than one approach, a five-state alarm track, and a getaway whose original route has already failed. Works without login, then imports into your local vault.
 
+- [Holiday & Festival Generator](https://codexcryptica.com/generators/holiday): Create observances that feel like they grew from a society's history, climate, beliefs, and conflicts. Generate one memorable day or a coherent calendar, from celebratory festivals to contested memorials, without needing an account.
+
 - [BBEG / Campaign Villain Generator](https://codexcryptica.com/generators/bbeg-generator): Create a campaign antagonist who functions as a campaign engine: a goal, motivation, methods, lieutenants, an escalating plan the party can discover and disrupt, and consequences whether they act or not. Works without login, then imports into your local vault.
 
 - [Comic Book Event Generator](https://codexcryptica.com/generators/comic-book-event-generator): Create a large, crossover-tier superhero crisis a campaign can build an arc around: a premise, a staged escalation the party can witness and intervene in, and concrete, campaign-persistent consequences — a location changed, an institution's trust broken, a hero unmasked — not just a premise that resets to normal. Works without login, then imports into your local vault.
@@ -2505,6 +2782,12 @@ Codex Cryptica provides specialized, tailored landing pages, knowledge graphs, a
 
 **Overview:** Dystopian science fiction turns on interlocking systems of control: governments, corporations, surveillance, scarcity, social hierarchy, and the people trying to survive, exploit, or resist them. When an official defects, resources are cut off, or a surveillance log leaks, you shouldn't have to scramble across scattered notes to see who enforces the rules, who profits from the shortage, and who is caught in the middle.
 
+### [Codex Cryptica for TTRPG Economy & Trade](https://codexcryptica.com/for/economy-trade)
+
+**Summary:** Build believable prices, trade, scarcity, wealth, and economic pressures without simulating an entire economy.
+
+**Overview:** Economies in most campaigns fail in one of two directions: everything costs the same everywhere and nothing can run short, or the game master keeps a price spreadsheet no player will ever check. Neither produces play. What produces play is dependence: one town needs what only another can supply, moving it costs something, someone takes a share, and the whole arrangement is one blocked pass away from trouble.
+
 ### [Codex Cryptica for Fantasy Worldbuilding](https://codexcryptica.com/for/fantasy-worldbuilding)
 
 **Summary:** Build a fantasy setting without losing track of how it fits together. Connect realms, dynasties, religions, factions and centuries of history in one place.
@@ -2528,6 +2811,18 @@ Codex Cryptica provides specialized, tailored landing pages, knowledge graphs, a
 **Summary:** Keep every NPC, faction, nation, and deity in your Adventure Path connected — and still findable three books later.
 
 **Overview:** An Adventure Path runs for months. By book three the party has crossed two nations, sworn an oath to one deity, and made an enemy of a society you invented as background colour. You are the one who has to remember which — usually mid-session, while four players wait.
+
+### [Codex Cryptica for Pirate & High Seas Campaigns](https://codexcryptica.com/for/pirates-high-seas)
+
+**Summary:** Keep your ships, crews, islands, hoards, and grudges connected across every sea your players sail.
+
+**Overview:** A high seas campaign turns on trade routes, old debts, and treasure rivals will kill to claim. When the crew returns to a port they wronged or a rival captain arrives with their old quartermaster, keep ships, islands, debts, and relationships together in Codex Cryptica, not scattered across ship logs and session notes. The same workflow suits privateers, smugglers, merchant crews, naval patrols, and treasure hunters.
+
+### [Codex Cryptica for Post-Apocalyptic RPG Campaigns](https://codexcryptica.com/for/post-apocalyptic-rpgs)
+
+**Summary:** Follow the dependency chains behind survival: who controls clean water, where it travels, who relies on it, and what happens when supply breaks.
+
+**Overview:** A water shortage can spark a feud over the aquifer; a raider truce can collapse when dust season damages the trade route, and a radiation zone can make the safest road too dangerous. Link the people, places, supplies, and threats behind those choices, so their consequences carry between sessions.
 
 ### [Codex Cryptica for Sandbox Campaigns](https://codexcryptica.com/for/sandbox-campaigns)
 
@@ -2565,6 +2860,12 @@ Codex Cryptica provides specialized, tailored landing pages, knowledge graphs, a
 
 **Overview:** A starship campaign splits its story across decks, planets, and headquarters: the bridge crew rotates between watches, the ship carries refit debt and battle damage from three sectors back, a trade pact signed last month now constrains this week's first contact, and fleet command keeps issuing orders that contradict the captain's log. When diplomacy, exploration, and fleet politics collide mid-session, you should not have to dig through scattered notes to remember which admiral promised what, which system is under quarantine, and who on the crew still owes the quartermaster an explanation.
 
+### [Codex Cryptica for Steampunk & Victorian Industrial Campaigns](https://codexcryptica.com/for/steampunk-rpgs)
+
+**Summary:** Connect the inventions that change what is possible with the people, places, and power struggles they leave behind.
+
+**Overview:** Steampunk campaigns turn on what invention makes possible—and who gains or loses power when it succeeds. A stolen prototype, strike, noble investment, or act of sabotage can reshape an industrial city, scientific expedition, or airship voyage. In Codex Cryptica, connect inventions to their inventors, workers, patrons, rivals, routes, and consequences, from guild intrigue to gaslamp investigation and weird science.
+
 ### [Codex Cryptica for Traveller Campaign Management](https://codexcryptica.com/for/traveller)
 
 **Summary:** Keep subsectors, worlds, patrons, Travellers, trade, and rival powers connected in one place.
@@ -2577,8 +2878,15 @@ Codex Cryptica provides specialized, tailored landing pages, knowledge graphs, a
 
 **Overview:** Standard notes break down when every Kindred is tied to three debts, two mortal Touchstones, and a rival faction. When a Primogen shifts allegiance or a Masquerade breach threatens the city, you shouldn’t have to scramble through scattered documents to know who holds leverage over whom.
 
+### [Codex Cryptica for Weird West & Frontier Campaigns](https://codexcryptica.com/for/weird-west-rpgs)
+
+**Summary:** Connect boomtowns, contested claims, patchy law, extractive companies, and occult pressure, so every dispute leaves a mark across the territory.
+
+**Overview:** A Weird West campaign runs on who owns the land, who owns the law, and what is buried under both. A silver strike can found a town overnight, and a rail baron's contract, a marshal's bribe, and violence over a claim can tie a whole territory together. In Codex Cryptica, connect towns to their claims, lawmen, outlaws, cartels, and the hauntings, old bargains, and strange forces shaped by people, places, and history, so a gunfight, vigilante killing, or train robbery changes who trusts whom—and what stirs in its wake.
+
 ### [Codex Cryptica for West Marches Campaigns](https://codexcryptica.com/for/west-marches)
 
 **Summary:** One world, one hex map, one set of consequences — however many players turn up, and whenever they do.
 
 **Overview:** In a West Marches game you are the only person who has seen the whole map. Six players went out in March and named a ruin; four different players go back in September and need to know what the first group found, who they annoyed, and which road is now watched. The world keeps moving between expeditions, and none of it is written down anywhere the next party can use.
+

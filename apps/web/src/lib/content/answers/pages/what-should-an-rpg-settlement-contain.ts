@@ -164,6 +164,7 @@ export const whatShouldAnRpgSettlementContain: AnswerConfigInput = {
     "how-do-trade-routes-shape-cities-and-kingdoms-in-an-rpg-world",
     "what-rpg-map-making-tool-should-i-use",
     "how-do-i-run-exploration-in-a-huge-ruined-city",
+    "how-do-fantasy-cities-defend-against-flying-creatures-and-teleportation",
   ],
   discovery: {
     id: "answer-settlement-contents",

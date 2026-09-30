@@ -411,6 +411,7 @@ export const howDoIMakeDifferentCulturesFeelDistinctWithoutRelyingOnStereotypes:
       "how-do-trade-routes-shape-cities-and-kingdoms-in-an-rpg-world",
       "how-do-scarcity-and-shortages-affect-prices-and-conflict-in-an-rpg-world",
       "how-do-i-turn-economic-pressures-into-rpg-adventure-hooks",
+      "how-do-fantasy-cities-defend-against-flying-creatures-and-teleportation",
     ],
     discovery: {
       id: "answer-cultures-without-stereotypes",

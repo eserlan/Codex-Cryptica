@@ -1,5 +1,6 @@
 import { AnswerConfigSchema, type AnswerConfig } from "../schema";
 import { canYouPlayATabletopRpgIn30MinuteSessions } from "./can-you-play-a-tabletop-rpg-in-30-minute-sessions";
+import { howDoFantasyCitiesDefendAgainstFlyingCreaturesAndTeleportation } from "./how-do-fantasy-cities-defend-against-flying-creatures-and-teleportation";
 import { howDoIBalanceRpgCombatEncountersWithoutATpk } from "./how-do-i-balance-rpg-combat-encounters-without-a-tpk";
 import { howDoIBuildABelievableConstitutionalCrisisOrCoup } from "./how-do-i-build-a-believable-constitutional-crisis-or-coup";
 import { howDoIBuildABelievableEconomyForAFantasyWorld } from "./how-do-i-build-a-believable-economy-for-a-fantasy-world";
@@ -124,6 +125,7 @@ import { xpLevelingVsMilestoneLeveling } from "./xp-leveling-vs-milestone-leveli
 export const answers: Record<string, AnswerConfig> = Object.fromEntries(
   [
     canYouPlayATabletopRpgIn30MinuteSessions,
+    howDoFantasyCitiesDefendAgainstFlyingCreaturesAndTeleportation,
     howDoIBalanceRpgCombatEncountersWithoutATpk,
     howDoIBuildABelievableConstitutionalCrisisOrCoup,
     howDoIBuildABelievableEconomyForAFantasyWorld,
