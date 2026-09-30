@@ -62,6 +62,7 @@ import { onboardingFunnel } from "$lib/app/onboarding/onboarding-funnel";
 import { statSheetTemplates } from "./stat-sheet-templates.svelte";
 import { presentationTemplates } from "./presentation-templates.svelte";
 import { entityTemplateStore } from "./entity-templates/entity-template-store.svelte";
+import { DeadExternalImagePruner } from "./vault/dead-external-image-pruner";
 import { browserPerformanceRecorder } from "$lib/services/performance/browser-performance-capture";
 
 export class VaultStore {
@@ -97,6 +98,7 @@ export class VaultStore {
   public fileStore: FileStore;
   public serviceRegistry: ServiceRegistry;
   public searchStore: SearchStore;
+  public deadImagePruner: DeadExternalImagePruner;
   private lifecycleManager: VaultLifecycleManager;
   private storageManager: VaultStorageManager;
   private messenger: VaultMessenger;
@@ -449,6 +451,21 @@ export class VaultStore {
       persistence,
       mutations,
     );
+
+    this.deadImagePruner = new DeadExternalImagePruner({
+      getEntities: () => this.entityStore.entities,
+      isWritable: () =>
+        !sessionModeStore.isGuestMode &&
+        !sessionModeStore.isDemoMode &&
+        !this.isGuest &&
+        !this.demoVaultName &&
+        !!this.activeVaultId,
+      updateEntities: (updates) => this.entityStore.batchUpdate(updates),
+    });
+
+    this.assetManager.setOnDeadExternalImage((url) => {
+      this.deadImagePruner.add(url);
+    });
 
     this.assetStore = new AssetStore({
       assetManager: this.assetManager,
