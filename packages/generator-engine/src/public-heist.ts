@@ -914,23 +914,51 @@ Return only the JSON object. Do not include markdown code block formatting like 
  * key to collide on and is always kept.
  */
 function dedupeSections(markdown: string, seen: Set<string>): string {
-  const matches = [...markdown.matchAll(/^#{2,4}\s+(.+?)\s*$/gm)];
-  if (matches.length === 0) return markdown;
+  // ⚡ Bolt Optimization: Replace [...matchAll] with lazy iteration to prevent intermediate array allocation
+  const iterator = markdown.matchAll(/^#{2,4}\s+(.+?)\s*$/gm);
   const kept: string[] = [];
-  const preamble = markdown.slice(0, matches[0].index ?? 0).trim();
-  if (preamble) kept.push(preamble);
-  for (const [i, match] of matches.entries()) {
-    const start = match.index ?? 0;
-    const end = matches[i + 1]?.index ?? markdown.length;
-    const block = markdown.slice(start, end).trim();
-    const heading = match[1].trim();
-    const body = block.split("\n").slice(1).join("\n").trim();
-    if (!body) continue;
-    const key = heading.toLowerCase();
-    if (seen.has(key)) continue;
-    seen.add(key);
-    kept.push(block);
+  let prevMatch: RegExpExecArray | null = null;
+  let hasMatches = false;
+
+  for (const match of iterator) {
+    hasMatches = true;
+    if (!prevMatch) {
+      const preamble = markdown.slice(0, match.index ?? 0).trim();
+      if (preamble) kept.push(preamble);
+    } else {
+      const start = prevMatch.index ?? 0;
+      const end = match.index ?? markdown.length;
+      const block = markdown.slice(start, end).trim();
+      const heading = prevMatch[1].trim();
+      const body = block.split("\n").slice(1).join("\n").trim();
+
+      if (body) {
+        const key = heading.toLowerCase();
+        if (!seen.has(key)) {
+          seen.add(key);
+          kept.push(block);
+        }
+      }
+    }
+    prevMatch = match;
   }
+
+  if (prevMatch) {
+    const start = prevMatch.index ?? 0;
+    const block = markdown.slice(start).trim();
+    const heading = prevMatch[1].trim();
+    const body = block.split("\n").slice(1).join("\n").trim();
+
+    if (body) {
+      const key = heading.toLowerCase();
+      if (!seen.has(key)) {
+        seen.add(key);
+        kept.push(block);
+      }
+    }
+  }
+
+  if (!hasMatches) return markdown;
   return kept.join("\n\n");
 }
 
