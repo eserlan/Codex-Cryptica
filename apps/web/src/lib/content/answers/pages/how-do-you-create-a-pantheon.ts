@@ -132,6 +132,7 @@ export const howDoYouCreateAPantheon: AnswerConfigInput = {
     "how-do-you-create-a-believable-fictional-religion",
     "how-do-you-create-a-fantasy-faction",
     "how-do-you-organise-rpg-campaign-notes",
+    "how-do-i-make-different-cultures-feel-distinct-without-relying-on-stereotypes",
   ],
   discovery: {
     id: "answer-pantheon",

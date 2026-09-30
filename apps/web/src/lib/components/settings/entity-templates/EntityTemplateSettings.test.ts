@@ -93,6 +93,22 @@ describe("EntityTemplateSettings", () => {
     expect(screen.getByText("Standard Character")).toBeTruthy();
   });
 
+  it("links to the community Entity templates tab", async () => {
+    await mount();
+    const link = screen.getByTestId("browse-community-entity-templates");
+    expect(link.getAttribute("href")).toContain("/templates?kind=entity");
+  });
+
+  it("keeps the community link in a read-only vault without edit actions", async () => {
+    await mount({ readOnly: true });
+    expect(
+      screen
+        .getByTestId("browse-community-entity-templates")
+        .getAttribute("href"),
+    ).toContain("/templates?kind=entity");
+    expect(screen.queryByTestId("entity-template-new")).toBeNull();
+  });
+
   it("previews a template as the note it produces", async () => {
     await mount();
     await fireEvent.click(
