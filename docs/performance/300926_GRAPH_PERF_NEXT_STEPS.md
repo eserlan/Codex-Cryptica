@@ -9,7 +9,7 @@
 
 ## Measured results (30 Sep 2026)
 
-The large-vault harness now runs (`PERFORMANCE_EXTERNAL_SERVER=1` with a separate `vite preview`, or the raised web server timeout). [#3576](https://github.com/eserlan/Codex-Cryptica/pull/3576) added `graph-images`; the still-open [#3591](https://github.com/eserlan/Codex-Cryptica/pull/3591) adds `entity-index-batch` and `graph-sync-edit`. All figures: production build, three runs, median, one machine. Synthetic hosts and fixtures, so absolute numbers will differ on real vaults; the ratios are the point.
+The large-vault harness now runs (`PERFORMANCE_EXTERNAL_SERVER=1` with a separate `vite preview`, or the raised web server timeout). [#3576](https://github.com/eserlan/Codex-Cryptica/pull/3576) added `graph-images`; [#3591](https://github.com/eserlan/Codex-Cryptica/pull/3591) added `entity-index-batch` and `graph-sync-edit`. All figures: production build, three runs, median, one machine. Synthetic hosts and fixtures, so absolute numbers will differ on real vaults; the ratios are the point.
 
 ### Baseline: the core operations were already fast
 
