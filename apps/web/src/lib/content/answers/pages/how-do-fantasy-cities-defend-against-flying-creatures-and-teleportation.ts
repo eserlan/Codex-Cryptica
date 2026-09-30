@@ -327,6 +327,13 @@ export const howDoFantasyCitiesDefendAgainstFlyingCreaturesAndTeleportation: Ans
         "answer-civilisation-strengths-weaknesses",
         "answer-cultures-without-stereotypes",
       ],
+      acknowledgedOverlap: [
+        {
+          with: "resource-castle-floorplans",
+          reason:
+            "Both serve readers thinking about castles, but this answer explains how a city adapts to aerial and teleport threats while the resource page curates external floorplans and layout references.",
+        },
+      ],
     },
     seo: {
       title: "How Do Fantasy Cities Defend Against Flying and Teleportation?",
