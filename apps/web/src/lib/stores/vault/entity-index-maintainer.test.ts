@@ -149,3 +149,152 @@ describe("EntityIndexMaintainer.handleEntitiesUpdate batches", () => {
     );
   });
 });
+
+describe("EntityIndexMaintainer rebuild threshold for large batches", () => {
+  const snapshot = (index: EntityIndexMaintainer) => {
+    const byId = (a: { id: string }, b: { id: string }) =>
+      a.id.localeCompare(b.id);
+    return JSON.parse(
+      JSON.stringify({
+        all: [...index.allEntities].sort(byId),
+        active: [...index.allActiveEntities].sort(byId),
+        // The graph list deliberately keeps the old object for an edit the
+        // graph does not render (prose), so compare only what it draws.
+        graph: [...index.graphEntities].sort(byId).map((e) => ({
+          id: e.id,
+          title: e.title,
+          labels: e.labels,
+          status: e.status,
+          parent: e.parent,
+          connections: e.connections,
+        })),
+        labels: [...index.labelIndex].sort(),
+        counts: index.labelCounts,
+        children: Object.fromEntries(
+          Object.entries(index.parentToChildren).map(([k, v]) => [
+            k,
+            [...v].sort(),
+          ]),
+        ),
+        titles: [...index.titleAndAliasIndex].sort((a, b) =>
+          `${a.lowercaseText}|${a.entityId}`.localeCompare(
+            `${b.lowercaseText}|${b.entityId}`,
+          ),
+        ),
+      }),
+    );
+  };
+
+  /** Applies each changed entity as its own update: the incremental path. */
+  const oneAtATime = (
+    start: Record<string, LocalEntity>,
+    target: Record<string, LocalEntity>,
+  ) => {
+    const index = new EntityIndexMaintainer();
+    index.rebuildIndexes(start);
+    let current = start;
+    const ids = new Set([...Object.keys(start), ...Object.keys(target)]);
+    for (const id of ids) {
+      if (start[id] === target[id]) continue;
+      const next = { ...current };
+      if (target[id]) next[id] = target[id];
+      else delete next[id];
+      index.handleEntitiesUpdate(current, next);
+      current = next;
+    }
+    return index;
+  };
+
+  const mixedBatch = (start: Record<string, LocalEntity>) => {
+    const target = { ...start };
+    for (let i = 0; i < 6; i++)
+      target[`e${i}`] = {
+        ...start[`e${i}`],
+        title: `Renamed ${i}`,
+        aliases: [`Alias ${i}`],
+      };
+    for (let i = 6; i < 9; i++)
+      target[`e${i}`] = { ...start[`e${i}`], labels: ["npc", `tag${i}`] };
+    target.e9 = { ...start.e9, parent: "e10" };
+    target.e11 = { ...start.e11, status: "draft" } as LocalEntity;
+    target.e12 = { ...start.e12, content: "prose only" };
+    delete target.e13;
+    delete target.e14;
+    target.n1 = entity("n1", { title: "Brand new", labels: ["npc"] });
+    target.n2 = entity("n2", { title: "Another new" });
+    return target;
+  };
+
+  it("gives the same indexes as applying the changes one at a time", () => {
+    const { entities, index } = build(40);
+    const target = mixedBatch(entities);
+
+    index.handleEntitiesUpdate(entities, target);
+
+    expect(snapshot(index)).toEqual(snapshot(oneAtATime(entities, target)));
+  });
+
+  it("rebuilds once for a large batch: one graph version bump", () => {
+    const { entities, index } = build(40);
+    const before = index.graphStructureVersion;
+
+    index.handleEntitiesUpdate(entities, mixedBatch(entities));
+
+    expect(index.graphStructureVersion).toBe(before + 1);
+  });
+
+  it("keeps a small batch incremental (negative: the list is not rebuilt)", () => {
+    const { entities, index } = build(40);
+    const listBefore = index.allEntities;
+    const next = edit(entities, ["e1", "e2"], (e) => ({
+      title: `Renamed ${e.id}`,
+    }));
+
+    index.handleEntitiesUpdate(entities, next);
+
+    expect(index.allEntities).toBe(listBefore);
+    expect(index.allEntities.find((e) => e.id === "e1")?.title).toBe(
+      "Renamed e1",
+    );
+  });
+
+  it("does not rebuild for many edits that leave the indexes alone (negative)", () => {
+    const { entities, index } = build(40);
+    const listBefore = index.allEntities;
+    const ids = Array.from({ length: 20 }, (_, i) => `e${i}`);
+
+    index.handleEntitiesUpdate(
+      entities,
+      edit(entities, ids, () => ({ content: "prose" })),
+    );
+
+    // Replaced once by the batch, not rebuilt from scratch: order is unchanged
+    // and untouched entities keep their identity.
+    expect(index.allEntities).not.toBe(listBefore);
+    expect(index.allEntities.map((e) => e.id)).toEqual(Object.keys(entities));
+    expect(index.allEntities.find((e) => e.id === "e30")).toBe(
+      listBefore.find((e) => e.id === "e30"),
+    );
+  });
+
+  it("removes every deleted entity from every list", () => {
+    const { entities, index } = build(30);
+    const doomed = ["e2", "e4", "e6", "e8", "e10", "e12"];
+    const target = { ...entities };
+    for (const id of doomed) delete target[id];
+
+    index.handleEntitiesUpdate(entities, target);
+
+    for (const list of [
+      index.allEntities,
+      index.allActiveEntities,
+      index.graphEntities,
+    ]) {
+      expect(list).toHaveLength(24);
+      expect(list.some((e) => doomed.includes(e.id))).toBe(false);
+    }
+    expect(
+      index.titleAndAliasIndex.some((t) => doomed.includes(t.entityId)),
+    ).toBe(false);
+  });
+});
