@@ -70,7 +70,7 @@ A cheaper path already exists: `focusMembershipOnly` skips data patching for ret
 
 **Where the hint comes from:** `patchGraphEntity` in `apps/web/src/lib/stores/vault/entity-index-maintainer.svelte.ts` runs once per changed entity and is the natural place to record the id in a pending set. `syncElements` in `graph-view-controller.svelte.ts` already works out what kind of change happened (`focusMembershipOnly`, from the structure version and filter signature), so the hint sits beside that logic. The controller would consume and clear the set.
 
-**A related cost in the same function:** `patchGraphEntity` does a `findIndex` over `graphEntities` and then copies the whole array, for every changed entity. That is O(N) per edit, so a batch of k edits costs O(k x N) before the graph even syncs. A `Map` from id to index removes it, and it is worth doing on its own.
+**A related cost in the same function:** `patchGraphEntity` does a `findIndex` over `graphEntities` and then copies the whole array, for every changed entity. That is O(N) per edit, so a batch of k edits costs O(k x N) before the graph even syncs. A `Map` from id to index would remove the search, but copying the whole array would still be O(N); treat it as a constant-factor reduction unless the update path also avoids copying the full collection.
 
 **What the delta path needs:**
 
