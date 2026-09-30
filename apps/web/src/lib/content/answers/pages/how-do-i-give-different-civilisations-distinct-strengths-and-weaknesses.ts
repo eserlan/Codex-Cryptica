@@ -310,6 +310,7 @@ export const howDoIGiveDifferentCivilisationsDistinctStrengthsAndWeaknesses: Ans
       "how-do-i-decide-what-a-settlement-produces-imports-and-exports",
       "how-do-i-build-a-believable-constitutional-crisis-or-coup",
       "what-can-players-actually-buy-and-sell-in-a-fantasy-settlement",
+      "how-do-i-make-different-cultures-feel-distinct-without-relying-on-stereotypes",
     ],
     labels: ["fantasy"],
     discovery: {

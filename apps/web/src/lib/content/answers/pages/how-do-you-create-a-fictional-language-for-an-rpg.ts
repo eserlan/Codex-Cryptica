@@ -162,6 +162,7 @@ export const howDoYouCreateAFictionalLanguageForAnRpg: AnswerConfigInput = {
     "how-do-you-create-a-believable-fictional-religion",
     "what-should-an-rpg-settlement-contain",
     "how-do-you-make-an-alien-species-feel-believable",
+    "how-do-i-make-different-cultures-feel-distinct-without-relying-on-stereotypes",
   ],
   seo: {
     title:
