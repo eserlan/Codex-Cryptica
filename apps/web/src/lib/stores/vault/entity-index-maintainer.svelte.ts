@@ -30,6 +30,15 @@ export class EntityIndexMaintainer {
   labelCounts = $state<Record<string, number>>({});
   titleAndAliasIndex = $state<TitleAndAliasIndexEntry[]>([]);
 
+  /**
+   * Replacements gathered while one batch is processed, applied once at the end
+   * of `handleEntitiesUpdate`. Each array is reactive, so finding an entity and
+   * copying the array for every edit made a batch of k edits cost k passes over
+   * all entities (about 5 ms per edit at 1,600 entities: 220 ms for 50 edits).
+   */
+  private pendingIndexReplacements = new Map<string, LocalEntity>();
+  private pendingGraphPatches = new Map<string, LocalEntity>();
+
   rebuildIndexes(entities: Record<string, LocalEntity>) {
     // ⚡ Bolt Optimization: Use a single imperative loop over keys instead of Object.values() + .filter()
     // to populate all three derived arrays (all, active, graph) in one O(n) pass rather than multiple
@@ -128,6 +137,10 @@ export class EntityIndexMaintainer {
     oldMap: Record<string, LocalEntity>,
     newMap: Record<string, LocalEntity>,
   ) {
+    // A batch that threw part-way must not leak its replacements into this one.
+    this.pendingIndexReplacements.clear();
+    this.pendingGraphPatches.clear();
+
     const oldKeys = Object.keys(oldMap);
     const newKeys = Object.keys(newMap);
 
@@ -178,31 +191,18 @@ export class EntityIndexMaintainer {
           this.incrementalUpdate(oldEnt, newEnt);
         } else {
           // Cold content or timestamp update path (e.g. keystroke inside editor).
-          // Replace the array identity so derived graph elements resync for
-          // connection-only updates without rebuilding all secondary indexes.
-          const idx = this.allEntities.findIndex((e) => e.id === id);
-          if (idx !== -1) {
-            const nextAllEntities = [...this.allEntities];
-            nextAllEntities[idx] = newEnt;
-            this.allEntities = nextAllEntities;
-          }
-          if (newEnt.status !== "draft") {
-            const activeIdx = this.allActiveEntities.findIndex(
-              (e) => e.id === id,
-            );
-            if (activeIdx !== -1) {
-              const nextActiveEntities = [...this.allActiveEntities];
-              nextActiveEntities[activeIdx] = newEnt;
-              this.allActiveEntities = nextActiveEntities;
-            }
-          }
-
+          // The array identity is replaced (once, after the batch) so derived
+          // graph elements resync for connection-only updates without
+          // rebuilding all secondary indexes.
+          this.pendingIndexReplacements.set(id, newEnt);
           if (graphChanged) {
             this.patchGraphEntity(newEnt);
           }
         }
       }
     }
+
+    this.flushPendingPatches();
   }
 
   private incrementalAdd(entity: LocalEntity) {
@@ -456,15 +456,37 @@ export class EntityIndexMaintainer {
   }
 
   private patchGraphEntity(entity: LocalEntity) {
-    const idx = this.graphEntities.findIndex((e) => e.id === entity.id);
-    if (idx !== -1) {
-      const next = [...this.graphEntities];
-      next[idx] = entity;
-      this.graphEntities = next;
-    } else {
-      this.graphEntities = [...this.graphEntities, entity];
+    this.pendingGraphPatches.set(entity.id, entity);
+  }
+
+  /** Applies the batch's replacements, one pass and one assignment per array. */
+  private flushPendingPatches() {
+    const replacements = this.pendingIndexReplacements;
+    if (replacements.size > 0) {
+      this.allEntities = this.allEntities.map(
+        (e) => replacements.get(e.id) ?? e,
+      );
+      this.allActiveEntities = this.allActiveEntities.map((e) => {
+        const replacement = replacements.get(e.id);
+        return replacement && replacement.status !== "draft" ? replacement : e;
+      });
+      replacements.clear();
     }
-    this.bumpGraphStructureVersion();
+
+    const patches = this.pendingGraphPatches;
+    if (patches.size > 0) {
+      const unplaced = new Map(patches);
+      const next = this.graphEntities.map((e) => {
+        const patch = unplaced.get(e.id);
+        if (!patch) return e;
+        unplaced.delete(e.id);
+        return patch;
+      });
+      for (const patch of unplaced.values()) next.push(patch);
+      this.graphEntities = next;
+      this.bumpGraphStructureVersion();
+      patches.clear();
+    }
   }
 
   private bumpGraphStructureVersion() {
