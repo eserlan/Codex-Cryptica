@@ -42,7 +42,7 @@ export const howDoIUpgradeAPlayerCharactersWeaponWithoutReplacingIt: AnswerConfi
           },
           {
             term: "Unlockable abilities earned in play",
-            text: "Tie a new capability to a deed, lesson or milestone: a veteran teaches a disarming bind, a trial in the ruins proves the wielder worthy, or a field armorer certifies the character on a new firing mode. The weapon itself has not changed shape, but what the character can do with it has. Record the requirement so the upgrade feels earned.",
+            text: "Tie a new capability to a deed, lesson or milestone: a veteran teaches a disarming bind, a trial in the ruins proves the wielder worthy, or a field armourer certifies the character on a new firing mode. The weapon itself has not changed shape, but what the character can do with it has. Record the requirement so the upgrade feels earned.",
           },
           {
             term: "Modular parts you can swap",
