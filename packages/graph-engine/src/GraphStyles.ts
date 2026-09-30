@@ -83,8 +83,11 @@ export const getGraphStyles = (
     },
   ];
 
+  // Performance mode no longer blanks labels by itself: the level-of-detail
+  // rules below already hide them when zoomed out, and Cytoscape skips any
+  // label too small to read, so zooming in on a large vault can show names.
   const labelOverrides =
-    performanceMode || timelineMode || !showLabels
+    timelineMode || !showLabels
       ? [
           {
             selector: "node",
@@ -129,13 +132,11 @@ export const getGraphStyles = (
         {
           selector: "node",
           style: {
-            label: "",
             "background-image": "none",
             "background-opacity": 0.72,
             "overlay-opacity": 0,
             "underlay-opacity": 0,
             "transition-duration": 0,
-            "text-opacity": 0,
           },
         },
         {

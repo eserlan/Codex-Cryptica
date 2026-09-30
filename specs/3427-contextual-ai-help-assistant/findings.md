@@ -17,7 +17,7 @@ Three things should be settled before wider exposure: the thin margin on the no-
 | Flagged Help panel, stores, client, highlight service, action runner, fallback                                                                                          | `apps/web/src/lib/{components,stores,services}/help-assistant/` |
 | Hidden user article and a new Session Hub article                                                                                                                       | `apps/web/src/lib/content/help/`                                |
 
-It is behind `VITE_HELP_ASSISTANT` (plus a dev-build-only local switch) and appears only while the existing **AI Disabled** setting is off. With the flag off, none of the help code is downloaded: the production build puts the panel in its own 12 KB chunk, loaded by a dynamic `import()`, and the dev switch is absent from the shipped JavaScript.
+It is on only at staging, detected from the hostname at run time (plus `VITE_HELP_ASSISTANT=true` and a dev-build-only local switch), and appears only while the existing **AI Disabled** setting is off. Staging is detected at run time, not with a build flag, because the staging web build is promoted to production as the same artifact; a build flag would have switched it on in production too. With the flag off, none of the help code is downloaded: the production build puts the panel in its own 12 KB chunk, loaded by a dynamic `import()`, and the dev switch is absent from the shipped JavaScript.
 
 ## Deliverables from the issue
 

@@ -36,8 +36,14 @@ export interface GraphOptions {
   wheelSensitivity?: number;
 }
 
-export const LARGE_GRAPH_NODE_THRESHOLD = 700;
-export const LARGE_GRAPH_EDGE_THRESHOLD = 1800;
+/**
+ * Above either limit the graph culls to a focus view and drops images, curved
+ * edges and arrowheads. They were 700 and 1,800 before the graph got faster;
+ * a vault of about 1,600 entities now renders in full. Edges are what cost the
+ * most to draw, so that limit is lower relative to the node one.
+ */
+export const LARGE_GRAPH_NODE_THRESHOLD = 3000;
+export const LARGE_GRAPH_EDGE_THRESHOLD = 6000;
 
 /** Single source of truth for the large-graph perf-mode threshold. */
 export const isLargeGraphSize = (nodeCount: number, edgeCount: number) =>

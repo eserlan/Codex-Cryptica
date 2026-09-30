@@ -313,7 +313,7 @@
   <span class="block text-theme-muted">
     {focusViewActive
       ? focusDetailHint
-      : "Labels, images, and edge detail are simplified for speed."}
+      : "Images and edge detail are simplified for speed. Zoom in to see labels."}
   </span>
   {#if focusViewActive && graph.canIncreaseFocusDetail}
     <button
