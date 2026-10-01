@@ -242,6 +242,7 @@ export const howDoIMakeSeaTravelInterestingInATtrpg: AnswerConfigInput = {
     "how-do-you-run-factions-in-a-sandbox-campaign",
     "how-do-you-run-a-chase-in-a-tabletop-rpg",
     "how-do-i-run-a-pirate-campaign-focused-on-exploration",
+    "what-ttrpg-should-i-play-for-a-pirate-campaign",
   ],
   labels: ["pirate"],
   discovery: {
