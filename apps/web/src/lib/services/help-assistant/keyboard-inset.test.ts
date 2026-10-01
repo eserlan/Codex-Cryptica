@@ -18,6 +18,12 @@ class FakeViewport extends EventTarget implements ViewportLike {
     this.offsetTop = offsetTop;
     this.dispatchEvent(new Event("resize"));
   }
+  /** The visual viewport moving within the page, as pinch-zoom or the keyboard pushing the page does. */
+  scrollTo(offsetTop: number, height = this.height) {
+    this.height = height;
+    this.offsetTop = offsetTop;
+    this.dispatchEvent(new Event("scroll"));
+  }
 }
 
 const setup = (innerHeight = 800, vvHeight = 800) => {
@@ -46,11 +52,24 @@ describe("KeyboardInset", () => {
     expect(tracker.keyboardOpen).toBe(false);
   });
 
-  it("allows for the visual viewport being scrolled within the page", () => {
+  it("allows for the visual viewport being resized with an offset", () => {
     const { vv, tracker } = setup();
     tracker.start();
     vv.set(480, 100);
     expect(tracker.inset).toBe(220);
+  });
+
+  it("follows the visual viewport scrolling, with no resize event", () => {
+    const { vv, tracker } = setup();
+    tracker.start();
+    vv.set(480); // keyboard up, nothing scrolled
+    expect(tracker.inset).toBe(320);
+
+    vv.scrollTo(100); // only a scroll event is fired
+    expect(tracker.inset).toBe(220);
+
+    vv.scrollTo(0);
+    expect(tracker.inset).toBe(320);
   });
 
   it("does not treat browser chrome moving as a keyboard", () => {
@@ -68,13 +87,15 @@ describe("KeyboardInset", () => {
     expect(tracker.inset).toBe(0);
   });
 
-  it("stops listening and resets when stopped", () => {
+  it("stops listening to both resize and scroll, and resets, when stopped", () => {
     const { vv, tracker } = setup();
     const stop = tracker.start();
     vv.set(480);
     stop();
     expect(tracker.inset).toBe(0);
     vv.set(300);
+    expect(tracker.inset).toBe(0);
+    vv.scrollTo(50, 300);
     expect(tracker.inset).toBe(0);
   });
 
