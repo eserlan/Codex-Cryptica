@@ -48,6 +48,23 @@ describe("retrieval quality over the real help articles", () => {
     );
   });
 
+  it("requires every Cloud Backup retrieval question to hit an expected source", () => {
+    const cloudBackupQuestions = IN_SCOPE.filter((q) =>
+      q.expect.includes("cloud-backup"),
+    );
+    expect(cloudBackupQuestions).toHaveLength(4);
+
+    const { results } = evaluateInScope(bundle, cloudBackupQuestions);
+    const failures = results
+      .filter((r) => r.noMatch || !r.hit)
+      .map(
+        (r) =>
+          `${r.question} → ${r.sources.join(", ") || "no match"} (${r.topRelevance.toFixed(2)})`,
+      );
+
+    expect(failures, failures.join("\n")).toEqual([]);
+  });
+
   it("answers every in-scope question instead of calling it a no-match", () => {
     const { results, answeredRate } = evaluateInScope(bundle);
     const refused = results
