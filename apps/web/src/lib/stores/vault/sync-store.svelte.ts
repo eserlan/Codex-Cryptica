@@ -297,15 +297,19 @@ export class SyncStore {
         // async preload above.
         const liveEntities = isSameVault ? this.deps.repository.entities : {};
         const entityMap: Record<string, LocalEntity> = {};
+        let reseedChanged = !isSameVault;
         for (const { entity } of cachedMap.values()) {
-          // If the live entity is newer than the cached copy, the cache is
-          // stale (a debounced save hasn't landed yet) — keep the live one so
-          // we never clobber fresher in-memory writes (e.g. import connections).
+          // If the live entity is newer than (or the same revision as) the
+          // cached copy, keep the live one: a debounced save may not have
+          // landed yet, and an identical copy would only replace every entity
+          // object, which makes everything reading them (the graph included)
+          // rebuild for nothing.
           const live = liveEntities[entity.id];
-          if (live && (live.updatedAt ?? 0) > (entity.updatedAt ?? 0)) {
+          if (live && (live.updatedAt ?? 0) >= (entity.updatedAt ?? 0)) {
             entityMap[entity.id] = live;
           } else {
             entityMap[entity.id] = { ...entity };
+            reseedChanged = true;
           }
         }
         // Preserve live entities created during this reload that the cache
@@ -314,14 +318,16 @@ export class SyncStore {
         for (const id in liveEntities) {
           if (!(id in entityMap)) entityMap[id] = liveEntities[id];
         }
-        this.deps.repository.entities = entityMap;
         this._lastSeededVaultId = vaultIdAtStart;
-
-        vaultEventBus.emit({
-          type: "CACHE_LOADED",
-          vaultId: vaultIdAtStart,
-          entities: entityMap,
-        });
+        // A same-vault reload whose cache matches memory has nothing to seed.
+        if (reseedChanged) {
+          this.deps.repository.entities = entityMap;
+          vaultEventBus.emit({
+            type: "CACHE_LOADED",
+            vaultId: vaultIdAtStart,
+            entities: entityMap,
+          });
+        }
 
         this.setStatus("idle");
       }

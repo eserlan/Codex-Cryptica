@@ -3222,10 +3222,12 @@ export interface SilhouetteFetchOptions {
  * cached, so going offline and back does not poison the catalogue.
  */
 const svgCache = new Map<string, Promise<string>>();
+const tintedCache = new Map<string, Promise<string | null>>();
 
 /** Drops the session cache. Test seam; also useful after a failed load. */
 export function clearSilhouetteCache(): void {
   svgCache.clear();
+  tintedCache.clear();
 }
 
 /**
@@ -3275,6 +3277,19 @@ export async function loadSilhouetteDataUri(
   fillColor = DEFAULT_SILHOUETTE_FILL,
   options: SilhouetteFetchOptions = {},
 ): Promise<string | null> {
-  const svg = await loadSilhouetteSvg(silhouette, options);
-  return svg === null ? null : svgToDataUri(tintSilhouetteSvg(svg, fillColor));
+  const key = JSON.stringify([
+    getSilhouetteUrl(silhouette, options.base ?? SILHOUETTE_ASSET_BASE),
+    fillColor,
+  ]);
+  const cached = tintedCache.get(key);
+  if (cached) return cached;
+  const pending = loadSilhouetteSvg(silhouette, options).then((svg) => {
+    if (svg === null) {
+      tintedCache.delete(key);
+      return null;
+    }
+    return svgToDataUri(tintSilhouetteSvg(svg, fillColor));
+  });
+  tintedCache.set(key, pending);
+  return pending;
 }

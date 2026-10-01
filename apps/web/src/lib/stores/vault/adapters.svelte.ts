@@ -58,6 +58,9 @@ export const fileIOAdapter: IFileIOAdapter = {
     }));
     await cacheService.bulkSet(formatted);
   },
+  removeCachedEntity: async (vaultId, path) => {
+    await cacheService.remove(`${vaultId}:${path}`);
+  },
   parseMarkdown: (text, path) => {
     const parsed = parseMarkdown(text);
     const rawId = parsed.metadata.id || deriveIdFromPath(path);
@@ -175,6 +178,7 @@ export const assetIOAdapter: IAssetIOAdapter = {
   readOpfsBlob: readOpfsBlob as any,
   getDirectoryHandle: getDirHandle as any,
   isNotFoundError: (err) => isNotFoundError(err),
+  deleteFile: (path, root, vaultId) => deleteOpfsEntry(root, path, vaultId),
 };
 
 export const imageProcessor: IImageProcessor = {
