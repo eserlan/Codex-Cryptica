@@ -43,9 +43,9 @@
     aria-label="Help assistant"
     tabindex="-1"
     data-testid="help-assistant-panel"
-    class="fixed bottom-20 right-3 z-[95] flex max-h-[min(36rem,calc(100dvh-7rem))] w-[min(24rem,calc(100vw-1.5rem))] flex-col overflow-hidden rounded-lg border border-theme-border bg-theme-surface shadow-xl md:bottom-16 md:right-4"
+    class="fixed bottom-[7.25rem] left-3 z-[95] flex max-h-[min(36rem,calc(100dvh-11rem))] w-[min(24rem,calc(100vw-1.5rem))] flex-col overflow-hidden rounded-lg border border-theme-border bg-theme-surface shadow-xl md:bottom-16 md:left-[4.5rem] md:max-h-[min(36rem,calc(100dvh-7rem))]"
     transition:fly={{
-      x: 24,
+      x: -24,
       duration: reduceMotion() ? 0 : 250,
       easing: quintOut,
     }}
