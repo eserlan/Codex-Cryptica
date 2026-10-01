@@ -167,6 +167,7 @@ export const howDoYouMakeTravelInterestingInATabletopRpg: AnswerConfigInput = {
     "what-rpg-map-making-tool-should-i-use",
     "how-do-i-run-exploration-in-a-huge-ruined-city",
     "how-do-i-make-rival-captains-navies-and-pirate-factions-matter",
+    "how-do-i-create-interesting-islands-and-ports-for-a-pirate-campaign",
   ],
   discovery: {
     id: "answer-travel-interesting",

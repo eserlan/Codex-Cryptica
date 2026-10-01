@@ -156,6 +156,7 @@ export const howDoYouBuildAPointCrawlForAnRpg: AnswerConfigInput = {
     "what-ttrpg-should-i-use-for-a-fantasy-dungeon-crawl",
     "what-rpg-map-making-tool-should-i-use",
     "how-do-i-run-exploration-in-a-huge-ruined-city",
+    "how-do-i-create-interesting-islands-and-ports-for-a-pirate-campaign",
   ],
   discovery: {
     id: "answer-build-a-point-crawl",
