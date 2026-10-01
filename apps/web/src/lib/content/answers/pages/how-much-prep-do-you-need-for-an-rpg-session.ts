@@ -162,6 +162,7 @@ export const howMuchPrepDoYouNeedForAnRpgSession: AnswerConfigInput = {
     "how-do-i-prepare-an-rpg-session-step-by-step",
     "how-do-i-pace-an-rpg-one-shot",
     "how-much-of-the-plot-should-a-dm-prepare",
+    "how-long-should-a-ttrpg-session-be",
   ],
   discovery: {
     id: "answer-session-prep",

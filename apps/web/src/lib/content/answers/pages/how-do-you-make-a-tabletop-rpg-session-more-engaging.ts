@@ -171,6 +171,7 @@ export const howDoYouMakeATabletopRpgSessionMoreEngaging: AnswerConfigInput = {
     "can-you-play-a-tabletop-rpg-in-30-minute-sessions",
     "how-do-i-get-my-rpg-party-to-work-together",
     "how-do-i-give-specialist-characters-spotlight",
+    "how-long-should-a-ttrpg-session-be",
   ],
   discovery: {
     id: "answer-session-engagement",
