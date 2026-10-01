@@ -17,11 +17,30 @@ export const ACTION_TYPES = [
 export type ActionType = (typeof ACTION_TYPES)[number];
 
 /** Places `navigate` may go (mapped to real routes by the web app). */
-export const DESTINATION_IDS = ["graph", "tables"] as const;
+export const DESTINATION_IDS = [
+  "graph",
+  "tables",
+  "canvas",
+  "map",
+  "import",
+] as const;
 export type DestinationId = (typeof DESTINATION_IDS)[number];
 
-/** Entity detail tabs `openPanel` may open. Values match the real tab IDs. */
-export const PANEL_IDS = ["status-tab", "connections-tab"] as const;
+/**
+ * Panels `openPanel` may open: entity detail tabs (matching the real tab IDs)
+ * and Settings tabs, written `settings-<tab>`. Only the Settings tabs the
+ * registry gives guidance for are listed; there is none for About or Help.
+ */
+export const PANEL_IDS = [
+  "status-tab",
+  "connections-tab",
+  "settings-vault",
+  "settings-intelligence",
+  "settings-schema",
+  "settings-templates",
+  "settings-theme",
+  "settings-publishing",
+] as const;
 export type PanelId = (typeof PANEL_IDS)[number];
 
 /** Generators `openGenerator` may open. */

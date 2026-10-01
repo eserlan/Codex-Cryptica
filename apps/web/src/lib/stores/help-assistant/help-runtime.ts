@@ -48,6 +48,9 @@ export const helpAssistant = new HelpAssistantStore({
 const DESTINATIONS: Record<DestinationId, string> = {
   graph: `${base}/`,
   tables: `${base}/tables`,
+  canvas: `${base}/canvas`,
+  map: `${base}/map`,
+  import: `${base}/import`,
 };
 
 function waitFor(check: () => boolean, ms: number): Promise<boolean> {

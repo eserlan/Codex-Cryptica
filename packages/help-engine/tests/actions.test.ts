@@ -164,6 +164,89 @@ describe("validateAction", () => {
   });
 });
 
+describe("navigation to the new screens and Settings tabs", () => {
+  const screen = (over: Record<string, unknown> = {}) =>
+    sanitizeHelpContext({
+      routeTemplate: "/(app)",
+      area: "graph",
+      surface: "vault",
+      ...over,
+    });
+
+  it("lets a guide go to canvas, map, import, graph and tables", () => {
+    for (const to of ["canvas", "map", "import", "graph", "tables"] as const) {
+      const action = { type: "navigate", to, label: "Go" };
+      expect(validateAction(action, screen(), deps), to).toEqual(action);
+    }
+  });
+
+  it("still refuses a destination outside the catalogue", () => {
+    expect(
+      validateAction(
+        { type: "navigate", to: "admin", label: "Go" },
+        screen(),
+        deps,
+      ),
+    ).toBeNull();
+  });
+
+  it("opens a Settings tab only when the screen lists it as available", () => {
+    const open = {
+      type: "openPanel",
+      panel: "settings-vault",
+      label: "Open Settings",
+    };
+    expect(
+      validateAction(
+        open,
+        screen({ availableActions: ["settings-vault"] }),
+        deps,
+      ),
+    ).toEqual(open);
+    expect(
+      validateAction(open, screen({ availableActions: [] }), deps),
+    ).toBeNull();
+  });
+
+  it("offers a Settings tab for each tab the registry will point at", () => {
+    for (const tab of [
+      "vault",
+      "intelligence",
+      "schema",
+      "templates",
+      "theme",
+      "publishing",
+    ]) {
+      const panel = `settings-${tab}`;
+      const open = { type: "openPanel", panel, label: "Open" };
+      expect(
+        validateAction(open, screen({ availableActions: [panel] }), deps),
+        panel,
+      ).toEqual(open);
+    }
+  });
+
+  it("refuses a Settings tab that is not on the list (nothing about the app or help tabs)", () => {
+    expect(
+      validateAction(
+        { type: "openPanel", panel: "settings-about", label: "Open" },
+        screen({ availableActions: [] }),
+        deps,
+      ),
+    ).toBeNull();
+  });
+
+  it("does not turn a Settings guide into a highlight (no new control targets)", () => {
+    expect(
+      validateAction(
+        { type: "highlight", target: "settings-vault", label: "x" },
+        screen({ availableActions: ["settings-vault"] }),
+        deps,
+      ),
+    ).toBeNull();
+  });
+});
+
 describe("buildActionCandidates", () => {
   const refs: ActionRef[] = [
     { id: "connections.add-guide", action: guide },
