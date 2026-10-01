@@ -478,6 +478,10 @@ describe("AssetManager", () => {
         mockIO,
         mockImageProcessor,
         global.fetch,
+        undefined,
+        undefined,
+        // Keep the fallback deterministic: jsdom does not load remote images.
+        async () => "unknown",
       );
 
       expect(await manager.resolveThumbnailUrl(vault, url)).toBe(url);
@@ -497,6 +501,9 @@ describe("AssetManager", () => {
           mockImageProcessor,
           global.fetch,
           clock,
+          undefined,
+          // Exercise fetch failures without waiting for jsdom image events.
+          async () => "unknown",
         );
       };
 
