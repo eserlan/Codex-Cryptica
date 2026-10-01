@@ -200,6 +200,7 @@ export const howDoIMakeRivalCaptainsNaviesAndPirateFactionsMatter: AnswerConfigI
       "how-do-trade-routes-shape-cities-and-kingdoms-in-an-rpg-world",
       "how-do-i-create-interesting-islands-and-ports-for-a-pirate-campaign",
       "how-do-i-run-ship-to-ship-combat-without-sidelining-the-party",
+      "how-do-i-make-sea-travel-interesting-in-a-ttrpg",
     ],
     labels: ["pirate"],
     discovery: {

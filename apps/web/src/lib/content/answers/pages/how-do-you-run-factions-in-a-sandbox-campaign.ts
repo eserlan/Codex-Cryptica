@@ -162,6 +162,7 @@ export const howDoYouRunFactionsInASandboxCampaign: AnswerConfigInput = {
     "how-do-i-run-exploration-in-a-huge-ruined-city",
     "how-do-i-make-rival-captains-navies-and-pirate-factions-matter",
     "how-do-i-create-interesting-islands-and-ports-for-a-pirate-campaign",
+    "how-do-i-make-sea-travel-interesting-in-a-ttrpg",
   ],
   discovery: {
     id: "answer-run-factions-sandbox",
