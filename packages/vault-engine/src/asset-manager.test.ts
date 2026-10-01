@@ -573,6 +573,227 @@ describe("AssetManager", () => {
       });
     });
 
+    describe("links the browser cannot load at all", () => {
+      const DAY = 24 * 60 * 60_000;
+      let now = 0;
+      const clock = { now: () => now } as any;
+      type Probe = (url: string) => Promise<"loaded" | "failed" | "unknown">;
+      const markerWrites = () =>
+        mockIO.writeOpfsFile.mock.calls.filter((call: any[]) =>
+          String(call[0][2]).endsWith(".unreachable"),
+        );
+
+      const manager = (
+        probe: Probe,
+        failWith: unknown = new TypeError("CORS"),
+      ) => {
+        mockIO.readOpfsBlob.mockImplementation(notFound);
+        (global.fetch as any).mockReset();
+        (global.fetch as any).mockRejectedValue(failWith);
+        mockIO.writeOpfsFile.mockClear();
+        now = 1_000;
+        return new AssetManager(
+          mockIO,
+          mockImageProcessor,
+          global.fetch,
+          clock,
+          undefined,
+          probe,
+        );
+      };
+
+      it("shows no image and remembers it, when the status was hidden and the browser cannot load it either", async () => {
+        const probe = vi.fn<Probe>().mockResolvedValue("failed");
+        const assets = manager(probe);
+
+        expect(await assets.resolveThumbnailUrl(vault, url)).toBe("");
+
+        expect(probe).toHaveBeenCalledWith(url);
+        expect(markerWrites()).toHaveLength(1);
+        expect(markerWrites()[0][1]).toBe("1000");
+      });
+
+      it("makes no request at all in a later session while the marker is fresh", async () => {
+        const probe = vi.fn<Probe>().mockResolvedValue("failed");
+        const later = manager(probe);
+        mockIO.readOpfsBlob.mockImplementation((path: string[]) =>
+          path[0].endsWith(".unreachable")
+            ? Promise.resolve(new Blob(["1000"]))
+            : notFound(),
+        );
+        now = 1_000 + DAY - 1;
+
+        expect(await later.resolveThumbnailUrl(vault, url)).toBe("");
+
+        expect(global.fetch).not.toHaveBeenCalled();
+        expect(probe).not.toHaveBeenCalled();
+      });
+
+      it("tries the link again once the marker is a day old", async () => {
+        const probe = vi.fn<Probe>().mockResolvedValue("failed");
+        const later = manager(probe);
+        mockIO.readOpfsBlob.mockImplementation((path: string[]) =>
+          path[0].endsWith(".unreachable")
+            ? Promise.resolve(new Blob(["1000"]))
+            : notFound(),
+        );
+        now = 1_000 + DAY;
+
+        await later.resolveThumbnailUrl(vault, url);
+
+        expect(global.fetch).toHaveBeenCalledTimes(1);
+      });
+
+      it("keeps the original link when the browser can load it plainly (negative)", async () => {
+        const probe = vi.fn<Probe>().mockResolvedValue("loaded");
+        const assets = manager(probe);
+
+        expect(await assets.resolveThumbnailUrl(vault, url)).toBe(url);
+
+        expect(markerWrites()).toHaveLength(0);
+      });
+
+      it("keeps the original link when the probe cannot tell (negative)", async () => {
+        const probe = vi.fn<Probe>().mockResolvedValue("unknown");
+        const assets = manager(probe);
+
+        expect(await assets.resolveThumbnailUrl(vault, url)).toBe(url);
+
+        expect(markerWrites()).toHaveLength(0);
+      });
+
+      it("does not probe a failure that was not a hidden status (negative)", async () => {
+        const probe = vi.fn<Probe>().mockResolvedValue("failed");
+        const assets = manager(
+          probe,
+          new DOMException("timed out", "TimeoutError"),
+        );
+
+        expect(await assets.resolveThumbnailUrl(vault, url)).toBe(url);
+
+        expect(probe).not.toHaveBeenCalled();
+        expect(markerWrites()).toHaveLength(0);
+      });
+
+      it("leaves a readable 404 to the dead-link path, not the probe (negative)", async () => {
+        const probe = vi.fn<Probe>().mockResolvedValue("failed");
+        const assets = manager(probe);
+        (global.fetch as any).mockReset();
+        (global.fetch as any).mockResolvedValue({ ok: false, status: 404 });
+
+        expect(await assets.resolveThumbnailUrl(vault, url)).toBe("");
+
+        expect(assets.isDeadExternal(url)).toBe(true);
+        expect(probe).not.toHaveBeenCalled();
+        expect(markerWrites()).toHaveLength(0);
+      });
+
+      it("prefers a cached thumbnail over the marker (negative)", async () => {
+        const probe = vi.fn<Probe>().mockResolvedValue("failed");
+        const assets = manager(probe);
+        mockIO.readOpfsBlob.mockImplementation((path: string[]) =>
+          path[0].endsWith(".unreachable")
+            ? Promise.resolve(new Blob(["1000"]))
+            : path[0].endsWith(".thumb.webp")
+              ? Promise.resolve(new Blob(["thumb"]))
+              : notFound(),
+        );
+
+        expect(await assets.resolveThumbnailUrl(vault, url)).toBe(
+          "blob:mock-url",
+        );
+        expect(global.fetch).not.toHaveBeenCalled();
+      });
+
+      it("treats a marker timestamped in the future as invalid, so it cannot extend the day indefinitely", async () => {
+        const probe = vi.fn<Probe>().mockResolvedValue("loaded");
+        const assets = manager(probe);
+        // A damaged file, or the clock having gone backwards, leaves a time
+        // far ahead of now: a negative age must not count as fresh.
+        mockIO.readOpfsBlob.mockImplementation((path: string[]) =>
+          path[0].endsWith(".unreachable")
+            ? Promise.resolve(new Blob([String(1_000 + 30 * DAY)]))
+            : notFound(),
+        );
+
+        await assets.resolveThumbnailUrl(vault, url);
+
+        expect(global.fetch).toHaveBeenCalledTimes(1);
+      });
+
+      it("forgets what it marked when cleared, so another vault is not affected", async () => {
+        const probe = vi.fn<Probe>().mockResolvedValue("failed");
+        const assets = manager(probe);
+        expect(await assets.resolveThumbnailUrl(vault, url)).toBe("");
+        expect(global.fetch).toHaveBeenCalledTimes(1);
+
+        assets.clear();
+        mockIO.readOpfsBlob.mockImplementation(notFound);
+        (global.fetch as any).mockClear();
+        probe.mockResolvedValue("loaded");
+
+        // A different vault has no marker file; the in-memory one must be gone.
+        expect(await assets.resolveThumbnailUrl(vault, url)).toBe(url);
+        expect(global.fetch).toHaveBeenCalledTimes(1);
+      });
+
+      it("stops suppressing in the same session once a day has passed", async () => {
+        const probe = vi.fn<Probe>().mockResolvedValue("failed");
+        const assets = manager(probe);
+        expect(await assets.resolveThumbnailUrl(vault, url)).toBe("");
+        (global.fetch as any).mockClear();
+        mockIO.readOpfsBlob.mockImplementation(notFound);
+
+        now = 1_000 + DAY - 1;
+        expect(await assets.resolveThumbnailUrl(vault, url)).toBe("");
+        expect(global.fetch).not.toHaveBeenCalled();
+
+        now = 1_000 + DAY;
+        probe.mockResolvedValue("loaded");
+        expect(await assets.resolveThumbnailUrl(vault, url)).toBe(url);
+        expect(global.fetch).toHaveBeenCalledTimes(1);
+      });
+
+      it("probes a link the browser can load only once per failure window, not on every resolution", async () => {
+        const probe = vi.fn<Probe>().mockResolvedValue("loaded");
+        const assets = manager(probe);
+
+        expect(await assets.resolveThumbnailUrl(vault, url)).toBe(url);
+        expect(await assets.resolveThumbnailUrl(vault, url)).toBe(url);
+        expect(await assets.resolveThumbnailUrl(vault, url)).toBe(url);
+
+        expect(probe).toHaveBeenCalledTimes(1);
+        expect(global.fetch).toHaveBeenCalledTimes(1);
+      });
+
+      it("does not re-probe an inconclusive result either, and probes again once the failure window has expired", async () => {
+        const probe = vi.fn<Probe>().mockResolvedValue("unknown");
+        const assets = manager(probe);
+
+        await assets.resolveThumbnailUrl(vault, url);
+        await assets.resolveThumbnailUrl(vault, url);
+        expect(probe).toHaveBeenCalledTimes(1);
+
+        now = 1_000 + 5 * 60_000; // the five-minute failure window is over
+        await assets.resolveThumbnailUrl(vault, url);
+        expect(probe).toHaveBeenCalledTimes(2);
+      });
+
+      it("treats a damaged marker as no marker", async () => {
+        const probe = vi.fn<Probe>().mockResolvedValue("loaded");
+        const assets = manager(probe);
+        mockIO.readOpfsBlob.mockImplementation((path: string[]) =>
+          path[0].endsWith(".unreachable")
+            ? Promise.resolve(new Blob(["not a time"]))
+            : notFound(),
+        );
+
+        await assets.resolveThumbnailUrl(vault, url);
+
+        expect(global.fetch).toHaveBeenCalledTimes(1);
+      });
+    });
+
     it("resolves local paths exactly like resolveImageUrl", async () => {
       const spy = vi.spyOn(assetManager, "resolveImageUrl");
 
