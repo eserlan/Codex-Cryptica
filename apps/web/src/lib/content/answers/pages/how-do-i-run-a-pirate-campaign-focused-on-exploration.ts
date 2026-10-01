@@ -325,8 +325,7 @@ export const howDoIRunAPirateCampaignFocusedOnExploration: AnswerConfigInput = {
     ],
   },
   seo: {
-    title:
-      "How to Run a Pirate Campaign as Exploration | Codex Cryptica",
+    title: "How to Run a Pirate Campaign as Exploration | Codex Cryptica",
     description:
       "Run a pirate campaign around discovery, not naval battles. Use the voyage, discovery, and consequence loop, distinct islands, and rival clocks.",
     image:

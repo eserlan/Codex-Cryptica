@@ -221,8 +221,8 @@ export const howDoIRunShipToShipCombatWithoutSideliningTheParty: AnswerConfigInp
       "what-should-an-rpg-settlement-contain",
       "how-do-you-prepare-a-sandbox-rpg-campaign",
       "how-do-i-make-sea-travel-interesting-in-a-ttrpg",
-    "how-do-i-run-a-pirate-campaign-focused-on-exploration",
-  ],
+      "how-do-i-run-a-pirate-campaign-focused-on-exploration",
+    ],
     labels: ["pirate"],
     discovery: {
       id: "answer-ship-to-ship-combat-without-sidelining-party",
