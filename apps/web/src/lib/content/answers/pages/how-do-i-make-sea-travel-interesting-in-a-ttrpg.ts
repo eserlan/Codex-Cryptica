@@ -241,6 +241,7 @@ export const howDoIMakeSeaTravelInterestingInATtrpg: AnswerConfigInput = {
     "how-do-trade-routes-shape-cities-and-kingdoms-in-an-rpg-world",
     "how-do-you-run-factions-in-a-sandbox-campaign",
     "how-do-you-run-a-chase-in-a-tabletop-rpg",
+    "how-do-i-run-a-pirate-campaign-focused-on-exploration",
   ],
   labels: ["pirate"],
   discovery: {

@@ -158,7 +158,8 @@ export const howDoTradeRoutesShapeCitiesAndKingdomsInAnRpgWorld: AnswerConfigInp
       "how-do-i-make-rival-captains-navies-and-pirate-factions-matter",
       "how-do-i-create-interesting-islands-and-ports-for-a-pirate-campaign",
       "how-do-i-make-sea-travel-interesting-in-a-ttrpg",
-    ],
+    "how-do-i-run-a-pirate-campaign-focused-on-exploration",
+  ],
     discovery: {
       id: "answer-trade-routes-shape-cities-kingdoms",
       parentCluster: "economy-trade",

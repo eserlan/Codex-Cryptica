@@ -173,6 +173,7 @@ export const whatMakesAGoodRandomEncounter: AnswerConfigInput = {
     "how-do-you-write-a-one-shot-adventure",
     "how-do-i-run-a-large-battle-when-the-player-characters-are-part-of-an-army",
     "how-do-i-make-sea-travel-interesting-in-a-ttrpg",
+    "how-do-i-run-a-pirate-campaign-focused-on-exploration",
   ],
   discovery: {
     id: "answer-random-encounter",
