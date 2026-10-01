@@ -26,6 +26,18 @@ See `FeatureEntry` in [data-model.md](../data-model.md). Required: `id`, `title`
 | `tables`             | `tables`                                  | `random-tables-decks`                                                                                                                                                                   | Actions: `navigate(tables)`                                                                                                                                                  |
 | `campaign-generator` | `generators`                              | `in-app-generators`, `generate-related`                                                                                                                                                 | The one generator workflow; action `openGenerator(campaign)`                                                                                                                 |
 
+Phase A (#3615) adds:
+
+| id                   | Areas / tabs              | Help sources                                              | Notes                                                                             |
+| -------------------- | ------------------------- | --------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| `canvas`             | `canvas`                  | `spatial-canvas`, `canvas-add-entities`                   | Action `navigate(canvas)`                                                         |
+| `vtt-map`            | `map`                     | `map-mode`, `vtt-session`, `fog-of-war`                   | Action `navigate(map)`                                                            |
+| `entity-editing`     | `entity-detail` / any tab | `creating-and-editing-entities` (new)                     | Deliberately one article: also claiming the templates article distorted retrieval |
+| `backup-and-restore` | `settings` / `vault`      | `export-and-backup` (new), `cloud-backup`, `offline-sync` | Actions `openPanel(settings-vault)`, `openHelp(export-and-backup)`                |
+| `archive-import`     | `import`                  | `importing`, `thread-weaver-import`                       | Actions `navigate(import)`, `openHelp(importing)`                                 |
+
+The generators are one registry entry (`campaign-generator`) plus one bundle chunk per generator, written without the word "generator" so that "where are the generators" still finds the overview.
+
 Help IDs are file basenames under `content/help/` that exist today, except `session-hub`, which this spike creates. Any ID that does not match a real article fails validation rather than being guessed.
 
 ## Authoring rules

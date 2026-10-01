@@ -127,3 +127,20 @@ Found on a second read of the plan against the code:
 ## Not in this phase
 
 Highlight targets and "Show me" guides for canvas, VTT, Settings and generators (phase B); the public marketing generator pages and the public `/answers` articles; mutating or proactive assistance; D1 + Vectorize; the Gemini fallback run; human review of live answers.
+
+## Status after implementation
+
+| #   | Result                                                                                                                                                                                                                                                                          |
+| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| R1  | Met. Five new entries plus the generator chunks; the validator passes against the real articles.                                                                                                                                                                                |
+| R2  | Met. Key set unchanged; strict-schema and privacy tests cover canvas, map, import and Settings.                                                                                                                                                                                 |
+| R3  | Met. 29 generators from a generated list with a drift test; each is findable from its plain name.                                                                                                                                                                               |
+| R4  | Met. Navigation to canvas, map, import; Settings tabs through `openPanel`; open a chosen generator; no highlight steps added.                                                                                                                                                   |
+| R5  | Met. Settings panels and generators are not offered in a guest or not-ready vault. This also fixed a spike bug: the generators flag ignored guest mode.                                                                                                                         |
+| R6  | Met. `export-and-backup` and `creating-and-editing-entities`, written from the components' labels.                                                                                                                                                                              |
+| R7  | **Partly met.** 122 questions, 8+ per new area, 13 confusion questions, 29 out of scope, over 30% held out. recall@3 is **89% on tune and 75% on held-out, against a 90% target on each**. Unrelated questions are 100% refused; near-miss questions cannot be refused offline. |
+| R8  | Met. Metric areas come from the engine's list, so they cannot drift.                                                                                                                                                                                                            |
+| R9  | Met. Existing guard tests pass; the runner's no-mutation test now covers Settings and import.                                                                                                                                                                                   |
+| R10 | Met. 96% on the spike's 24 questions, the same single miss as before (#3617), and 100% refusal of the spike's unrelated questions.                                                                                                                                              |
+
+R7's gap, its causes and what was and was not tuned are in the phase A addendum of [`findings.md`](../3427-contextual-ai-help-assistant/findings.md).

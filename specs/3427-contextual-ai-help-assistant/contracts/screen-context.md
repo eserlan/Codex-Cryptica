@@ -6,6 +6,10 @@ Authoritative schema: `packages/help-engine/src/context/`. Summary of rules (ful
 
 `v`, `routeTemplate`, `area`, `entityKind` (built-in category ID or `custom`), `tab`, `mode`, `surface`, `flags` (allow-listed), `availableActions` (allow-listed IDs).
 
+## Areas (phase A)
+
+`entity-detail`, `graph`, `session-hub`, `tables`, `generators`, `canvas`, `map`, `import`, `settings`, `other`. `canvas`, `map` and `import` come from the route. `settings` comes from the open Settings dialog, and its `tab` is the open Settings tab (`vault`, `intelligence`, `schema`, `templates`, `theme`, `publishing`, `about`, `help`); `tab` is an entity tab only when the area is `entity-detail`, and a tab that does not belong to the area is dropped. When several things are open the most specific one wins: Settings, then a generator, then an entry, then the route. The entry's kind and tab are reported only while the entry is the screen.
+
 ## Excluded — enforced by schema and tests
 
 | Never sent                                | Why / how enforced                                         |
