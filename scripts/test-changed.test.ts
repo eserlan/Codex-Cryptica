@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import {
   findCoLocatedTests,
+  getTestExecution,
   groupTestsByWorkspace,
   isUnitTestFile,
 } from "./test-changed.mjs";
@@ -49,5 +50,22 @@ describe("test-changed", () => {
     expect(isUnitTestFile("packages/adventure-engine/tests/core.test.ts")).toBe(
       true,
     );
+  });
+
+  test("runs workspace tests through each workspace's declared test script", () => {
+    expect(
+      getTestExecution("packages/vault-engine", [
+        "packages/vault-engine/src/local-thumbnail.test.ts",
+      ]),
+    ).toEqual({
+      cwd: "packages/vault-engine",
+      args: ["run", "test", "--", "src/local-thumbnail.test.ts"],
+    });
+    expect(
+      getTestExecution("apps/web", ["apps/web/src/lib/example.test.ts"]),
+    ).toEqual({
+      cwd: "apps/web",
+      args: ["run", "test", "--", "src/lib/example.test.ts"],
+    });
   });
 });

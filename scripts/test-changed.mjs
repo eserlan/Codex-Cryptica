@@ -113,6 +113,22 @@ export function isUnitTestFile(file) {
   return !file.replace(/\\/g, "/").startsWith("apps/web/tests/");
 }
 
+export function getTestExecution(workspace, files) {
+  if (workspace === "root") {
+    return { cwd: ".", args: ["test", ...files] };
+  }
+
+  return {
+    cwd: workspace,
+    args: [
+      "run",
+      "test",
+      "--",
+      ...files.map((file) => relative(workspace, file)),
+    ],
+  };
+}
+
 export function runTestChanged({
   base,
   head = "HEAD",
@@ -148,33 +164,16 @@ export function runTestChanged({
       `\n🧪 Running tests for ${workspace} (${files.length} test file(s))...`,
     );
 
-    if (workspace === "apps/web") {
-      // In apps/web, vitest runs relative to apps/web directory
-      const relativeFiles = files.map((f) =>
-        relative("apps/web", f).replace(/\\/g, "/"),
-      );
-      try {
-        execFileSync("bunx", ["vitest", "run", ...relativeFiles], {
-          cwd: resolve(cwd, "apps/web"),
-          stdio: "inherit",
-        });
-        console.log(`✅ ${workspace} tests passed.`);
-      } catch {
-        allPassed = false;
-        console.error(`❌ ${workspace} tests failed.`);
-      }
-    } else {
-      // For packages or root, use bun test
-      try {
-        execFileSync("bun", ["test", ...files], {
-          cwd,
-          stdio: "inherit",
-        });
-        console.log(`✅ ${workspace} tests passed.`);
-      } catch {
-        allPassed = false;
-        console.error(`❌ ${workspace} tests failed.`);
-      }
+    const execution = getTestExecution(workspace, files);
+    try {
+      execFileSync("bun", execution.args, {
+        cwd: resolve(cwd, execution.cwd),
+        stdio: "inherit",
+      });
+      console.log(`✅ ${workspace} tests passed.`);
+    } catch {
+      allPassed = false;
+      console.error(`❌ ${workspace} tests failed.`);
     }
   }
 
