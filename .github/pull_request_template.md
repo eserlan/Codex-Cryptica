@@ -18,6 +18,7 @@
      internal refactors, and non-user-facing changes, mark both as N/A. -->
 
 **User Help** — choose one and give the article/reason:
+
 - [ ] Existing Help remains sufficient
 - [ ] Existing Help updated
 - [ ] New Help article added
@@ -25,6 +26,7 @@
 - [ ] N/A — not major user-facing feature work
 
 **Contextual AI Help registry** — make this decision separately from prose Help:
+
 - [ ] Existing registry coverage remains sufficient
 - [ ] Registry entry/context/actions updated or added
 - [ ] Registry support deliberately deferred/not needed (reason required)
