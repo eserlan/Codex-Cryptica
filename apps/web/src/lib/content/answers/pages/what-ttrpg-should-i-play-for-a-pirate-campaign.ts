@@ -20,7 +20,12 @@ export const whatTtrpgShouldIPlayForAPirateCampaign: AnswerConfigInput = {
     {
       kind: "table",
       heading: "Match the campaign you want to the system that handles it best",
-      headers: ["If you want", "Try this", "What it does well", "Trade-off to accept"],
+      headers: [
+        "If you want",
+        "Try this",
+        "What it does well",
+        "Trade-off to accept",
+      ],
       rows: [
         [
           "Swashbuckling and cinematic duels",
@@ -223,12 +228,11 @@ export const whatTtrpgShouldIPlayForAPirateCampaign: AnswerConfigInput = {
       "answer-islands-ports-pirate-campaign",
       "answer-rival-captains-navies-pirate-factions-matter",
       "answer-sea-travel-interesting",
-      "answer-ship-combat-not-sidelining",
-      "answer-pirate-exploration-campaign",
+      "answer-ship-to-ship-combat-without-sidelining-party",
+      "answer-pirate-campaign-exploration-not-naval-battles",
       "answer-dungeon-crawl-system-selection",
       "hub-pirate",
       "generator-ship-generator",
-      "generator-pirate-hub",
       "for-pirates-high-seas",
     ],
     acknowledgedOverlap: [
@@ -243,7 +247,7 @@ export const whatTtrpgShouldIPlayForAPirateCampaign: AnswerConfigInput = {
           "That answer helps pick a starter vessel and crew within a chosen system. This page helps pick the system itself, then points readers to the ship answer for the next decision.",
       },
       {
-        with: "answer-pirate-exploration-campaign",
+        with: "answer-pirate-campaign-exploration-not-naval-battles",
         reason:
           "That page structures a pirate campaign as a voyage, discovery, and consequence loop. This page helps choose the engine that best supports that loop or a different one.",
       },
