@@ -104,7 +104,7 @@ export const howDoIMakeRivalCaptainsNaviesAndPirateFactionsMatter: AnswerConfigI
           },
           {
             term: "The active version",
-            text: "Hale's squadron is on a 4-step clock to enforce a blockade of the northern channel (step 3: sloops now stop and search every brig). Vesper is on step 3 of reopening the sugar route and has posted a bounty on Varga for raiding its last convoy. Varga, short on powder, has allied with the smugglers at Skerry Cove. Between sessions the GM advances Hale to step 3 and Vesper to step 4: the blockade is now active and Vesper has secured a letter of marque that makes Varga fair game for any navy hull. The crew arrives to find sugar dear, powder scarce, Vesper's flag over the company wharf, Hale's cutter signalling them to heave to, and a fresh rumour that Varga was last seen taking on shot at the cove they had planned to use.",
+            text: "Hale's squadron is preparing to blockade the northern channel (step 2: its cutters have moved into position and are warning merchants away from the passage). Vesper is on step 3 of reopening the sugar route and has posted a bounty on Varga for raiding its last convoy. Varga, short on powder, has allied with the smugglers at Skerry Cove. Between sessions the GM advances Hale to step 3 and Vesper to step 4: the blockade is now active and Vesper has secured a letter of marque that makes Varga fair game for any navy hull. The crew arrives to find sugar dear, powder scarce, Vesper's flag over the company wharf, Hale's cutter signalling them to heave to, and a fresh rumour that Varga was last seen taking on shot at the cove they had planned to use.",
           },
           {
             term: "Why it works",
