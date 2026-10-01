@@ -173,6 +173,7 @@ export const whatKindOfShipShouldAPirateCrewStartWith: AnswerConfigInput = {
     "what-should-players-be-able-to-upgrade-in-an-rpg-base",
     "how-do-i-make-rival-captains-navies-and-pirate-factions-matter",
     "how-do-i-create-interesting-islands-and-ports-for-a-pirate-campaign",
+    "how-do-i-run-ship-to-ship-combat-without-sidelining-the-party",
   ],
   labels: ["pirate"],
   discovery: {

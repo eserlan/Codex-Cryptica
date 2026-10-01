@@ -170,6 +170,7 @@ export const howDoYouPrepareASandboxRpgCampaign: AnswerConfigInput = {
     "how-do-i-build-a-believable-economy-for-a-fantasy-world",
     "what-rpg-map-making-tool-should-i-use",
     "how-do-i-run-exploration-in-a-huge-ruined-city",
+    "how-do-i-run-ship-to-ship-combat-without-sidelining-the-party",
   ],
   discovery: {
     id: "answer-sandbox-campaign-prep",
