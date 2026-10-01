@@ -114,6 +114,77 @@ describe("VaultRepository", () => {
     expect(repository.entities["e1"].title).toBe("Cached Entity");
   });
 
+  describe("cache hits that match what is already in memory", () => {
+    const file = (name: string, lastModified: number) => ({
+      path: [name],
+      handle: { getFile: vi.fn().mockResolvedValue({ lastModified }) },
+    });
+
+    it("leaves the entity map untouched so nothing downstream re-renders", async () => {
+      const handle = {} as FileSystemDirectoryHandle;
+      mockAdapter.walkDirectory.mockResolvedValue([file("a.md", 100)] as any);
+      mockAdapter.getCachedEntity.mockResolvedValue({
+        lastModified: 100,
+        entity: { id: "e1", type: "note", title: "A", updatedAt: 5 } as any,
+      });
+
+      await repository.loadFiles("vault-1", handle);
+      const seeded = repository.entities;
+      repository.entities["e1"].content = "body loaded later";
+
+      const onProgress = vi.fn();
+      await repository.loadFiles("vault-1", handle, onProgress);
+
+      expect(repository.entities).toBe(seeded);
+      expect(repository.entities["e1"].content).toBe("body loaded later");
+      // Callers are still told about the chunk.
+      expect(onProgress).toHaveBeenCalledTimes(1);
+    });
+
+    it("still applies a cache hit whose entity differs from memory (negative)", async () => {
+      const handle = {} as FileSystemDirectoryHandle;
+      mockAdapter.walkDirectory.mockResolvedValue([file("a.md", 100)] as any);
+      mockAdapter.getCachedEntity.mockResolvedValue({
+        lastModified: 100,
+        entity: { id: "e1", type: "note", title: "A", updatedAt: 5 } as any,
+      });
+      await repository.loadFiles("vault-1", handle);
+
+      mockAdapter.getCachedEntity.mockResolvedValue({
+        lastModified: 100,
+        entity: { id: "e1", type: "note", title: "B", updatedAt: 9 } as any,
+      });
+      await repository.loadFiles("vault-1", handle);
+
+      expect(repository.entities["e1"].title).toBe("B");
+    });
+  });
+
+  it("drops the cache row of an entity that is gone from disk, and survives a cache failure", async () => {
+    const handle = {} as FileSystemDirectoryHandle;
+    const removeCachedEntity = vi.fn().mockResolvedValue(undefined);
+    (mockAdapter as any).removeCachedEntity = removeCachedEntity;
+    repository.entities = {
+      gone: { id: "gone", type: "note", title: "Gone", _path: ["gone.md"] },
+    } as any;
+    mockAdapter.walkDirectory.mockResolvedValue([]);
+
+    await repository.loadFiles("vault-1", handle);
+
+    expect(repository.entities["gone"]).toBeUndefined();
+    expect(removeCachedEntity).toHaveBeenCalledWith("vault-1", "gone.md");
+
+    // A failing cache must not fail the load.
+    removeCachedEntity.mockRejectedValue(new Error("idb down"));
+    repository.entities = {
+      gone2: { id: "gone2", type: "note", title: "Gone", _path: ["g2.md"] },
+    } as any;
+    await expect(
+      repository.loadFiles("vault-1", handle),
+    ).resolves.toBeDefined();
+    expect(repository.entities["gone2"]).toBeUndefined();
+  });
+
   it("should save entity to disk", async () => {
     const mockHandle = {} as FileSystemDirectoryHandle;
     const mockEntity = { id: "e1", title: "Test" } as any;

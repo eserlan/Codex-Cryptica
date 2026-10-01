@@ -130,6 +130,45 @@ describe("GraphTransformer", () => {
     expect(node?.data.image).toBe("http://example.com/img.png");
   });
 
+  it("leaves stock placeholder art off the node so it gets a silhouette", () => {
+    const icon = "https://www.scabard.com/images/cross_categories/event.png";
+    const entities: Entity[] = [
+      {
+        id: "n1",
+        type: "event",
+        title: "Placeholder",
+        tags: [],
+        labels: [],
+        connections: [],
+        content: "",
+        image: icon,
+        thumbnail: icon,
+      },
+      {
+        id: "n2",
+        type: "event",
+        title: "Real",
+        tags: [],
+        labels: [],
+        connections: [],
+        content: "",
+        image: "https://www.scabard.com/images/rf_images/event/1.jpg",
+        thumbnail: icon,
+      },
+    ];
+
+    const nodes = GraphTransformer.entitiesToElements(entities).filter(
+      (e): e is GraphNode => e.group === "nodes",
+    );
+    const [placeholder, real] = nodes;
+    expect(placeholder.data.image).toBeUndefined();
+    expect(placeholder.data.thumbnail).toBeUndefined();
+    expect(real.data.image).toBe(
+      "https://www.scabard.com/images/rf_images/event/1.jpg",
+    );
+    expect(real.data.thumbnail).toBeUndefined();
+  });
+
   it("should transform imageFocus field", () => {
     const entities: Entity[] = [
       {

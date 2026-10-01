@@ -92,7 +92,12 @@ export const applyLargeGraphRenderHints = (
 // Cache the imported modules so we don't re-register plugins
 let corePromise: Promise<any> | null = null;
 
-export const initGraph = async (options: GraphOptions) => {
+/**
+ * Starts fetching Cytoscape and its layout plugin without waiting for them.
+ * The graph is otherwise only requested once the vault's data is in, so the
+ * library download and parse would sit behind the vault load on every open.
+ */
+export const preloadGraphCore = (): Promise<any> => {
   if (!corePromise) {
     corePromise = (async () => {
       try {
@@ -112,8 +117,11 @@ export const initGraph = async (options: GraphOptions) => {
       }
     })();
   }
+  return corePromise;
+};
 
-  const cytoscape = await corePromise;
+export const initGraph = async (options: GraphOptions) => {
+  const cytoscape = await preloadGraphCore();
 
   const nodeCount = (options.elements || []).filter(
     (el) => el.group === "nodes" || (!el.group && el.data && !el.data.source),

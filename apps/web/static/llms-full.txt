@@ -479,6 +479,15 @@ The bottom-left toolbar provides quick access to layout and visibility:
 - **Link (Chain icon)**: Quickly connect two selected nodes.
 - **Redraw (Refresh)**: Recalculate node positions.
 
+### Images in Large Campaigns
+
+The graph loads images in and near your current view. Pan or zoom towards another
+part of the graph to load its images. Images that finish loading appear without
+waiting for slower ones. Fitting the entire graph on screen can still take longer,
+because every visible image needs to load. Uploaded images use saved previews, and older local images get previews cached
+for later visits. Silhouettes appear for entities without images and when an image cannot be
+found.
+
 ### Related Blog Posts
 
 - [Getting Started with Codex Cryptica](/blog/getting-started-guide) — Core workflows and knowledge graph navigation.

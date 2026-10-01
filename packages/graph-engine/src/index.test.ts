@@ -2,11 +2,24 @@ import { describe, it, expect } from "vitest";
 import type { Core } from "cytoscape";
 import {
   initGraph,
+  preloadGraphCore,
   applyLargeGraphRenderHints,
   isLargeGraphSize,
   LARGE_GRAPH_EDGE_THRESHOLD,
   LARGE_GRAPH_NODE_THRESHOLD,
 } from "./index";
+
+describe("preloadGraphCore", () => {
+  it("loads the library once and hands the same instance to initGraph", async () => {
+    const first = preloadGraphCore();
+    expect(preloadGraphCore()).toBe(first);
+    const cytoscape = await first;
+    expect(typeof cytoscape).toBe("function");
+    const cy = await initGraph({ headless: true, elements: [] });
+    expect(cy.nodes().length).toBe(0);
+    cy.destroy();
+  });
+});
 
 describe("initGraph adaptive zoom", () => {
   it("should calculate higher minZoom for small graphs", async () => {

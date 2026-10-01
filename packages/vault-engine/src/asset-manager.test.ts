@@ -428,6 +428,25 @@ describe("AssetManager", () => {
     });
   });
 
+  it("does not publish a thumbnail after the vault is cleared", async () => {
+    let finish!: (blob: Blob) => void;
+    mockIO.readOpfsBlob.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          finish = resolve;
+        }),
+    );
+    const pending = assetManager.resolveThumbnailUrl(
+      { name: "vault" } as FileSystemDirectoryHandle,
+      "images/portrait.png",
+    );
+    await vi.waitFor(() => expect(finish).toBeDefined());
+    assetManager.clear();
+    finish(new File(["original"], "portrait.png", { lastModified: 1 }));
+    expect(await pending).toBe("");
+    expect(URL.createObjectURL).not.toHaveBeenCalled();
+  });
+
   describe("resolveThumbnailUrl", () => {
     const vault = { name: "vault-1" } as FileSystemDirectoryHandle;
     const url = "https://img.example/photo.png";
@@ -457,6 +476,103 @@ describe("AssetManager", () => {
       );
       expect(written.some((p) => p.endsWith(".thumb.webp"))).toBe(true);
       expect(written.some((p) => p.endsWith(".cache"))).toBe(true);
+    });
+
+    describe("full-size copies once a thumbnail exists", () => {
+      const hexName = (c: string) => c.repeat(64);
+
+      it("removes the full-size copy after generating the thumbnail", async () => {
+        const deleteFile = vi.fn().mockResolvedValue(undefined);
+        mockIO.deleteFile = deleteFile;
+        mockIO.readOpfsBlob.mockImplementation(notFound);
+        (global.fetch as any).mockResolvedValue({
+          ok: true,
+          blob: async () => new Blob(["full"], { type: "image/png" }),
+        });
+        const manager = new AssetManager(
+          mockIO,
+          mockImageProcessor,
+          global.fetch,
+        );
+
+        await manager.resolveThumbnailUrl(vault, url);
+
+        expect(deleteFile).toHaveBeenCalledTimes(1);
+        const [path] = deleteFile.mock.calls[0];
+        expect(path.slice(0, 2)).toEqual([".cache", "external_images"]);
+        expect(path[2]).toMatch(/^[0-9a-f]{64}\.cache$/);
+      });
+
+      it("still returns the thumbnail when the full-size copy cannot be removed (negative)", async () => {
+        mockIO.deleteFile = vi.fn().mockRejectedValue(new Error("locked"));
+        mockIO.readOpfsBlob.mockImplementation(notFound);
+        (global.fetch as any).mockResolvedValue({
+          ok: true,
+          blob: async () => new Blob(["full"], { type: "image/png" }),
+        });
+        const manager = new AssetManager(
+          mockIO,
+          mockImageProcessor,
+          global.fetch,
+        );
+
+        expect(await manager.resolveThumbnailUrl(vault, url)).toBe(
+          "blob:mock-url",
+        );
+      });
+
+      it("sweeps leftover originals that already have a thumbnail, once", async () => {
+        vi.useFakeTimers();
+        try {
+          const a = hexName("a");
+          const b = hexName("b");
+          const names = [
+            `${a}.cache`,
+            `${a}.thumb.webp`,
+            `${b}.cache`, // no thumbnail yet: must be kept
+            "legacy_name.cache",
+          ];
+          const dir = {
+            async *entries() {
+              for (const n of names) yield [n, {}];
+            },
+          };
+          mockIO.getDirectoryHandle.mockResolvedValue(dir as any);
+          const deleteFile = vi.fn().mockResolvedValue(undefined);
+          mockIO.deleteFile = deleteFile;
+          mockIO.readOpfsBlob.mockResolvedValue(
+            new Blob(["thumb"], { type: "image/webp" }),
+          );
+
+          await assetManager.resolveThumbnailUrl(vault, url);
+          await assetManager.resolveThumbnailUrl(
+            vault,
+            "https://img.example/other.png",
+          );
+          await vi.advanceTimersByTimeAsync(2500);
+
+          expect(deleteFile).toHaveBeenCalledTimes(1);
+          expect(deleteFile.mock.calls[0][0][2]).toBe(`${a}.cache`);
+        } finally {
+          vi.useRealTimers();
+        }
+      });
+
+      it("does nothing when the adapter cannot delete files (negative)", async () => {
+        vi.useFakeTimers();
+        try {
+          const entries = vi.fn();
+          mockIO.getDirectoryHandle.mockResolvedValue({ entries } as any);
+          mockIO.readOpfsBlob.mockResolvedValue(
+            new Blob(["thumb"], { type: "image/webp" }),
+          );
+          await assetManager.resolveThumbnailUrl(vault, url);
+          await vi.advanceTimersByTimeAsync(2500);
+          expect(entries).not.toHaveBeenCalled();
+        } finally {
+          vi.useRealTimers();
+        }
+      });
     });
 
     it("reads a cached thumbnail without generating or fetching", async () => {
