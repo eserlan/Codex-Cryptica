@@ -6,6 +6,7 @@ import {
 } from "help-engine";
 import type { DestinationId } from "help-engine";
 import type { HelpSurfaceRegistry } from "$lib/stores/help-assistant/help-surface.svelte";
+import type { SettingsTab } from "$lib/stores/ui/modal-ui.svelte";
 import type { HelpHighlightService } from "./help-highlight.svelte";
 
 export interface HelpActionRunnerDeps {
@@ -18,6 +19,8 @@ export interface HelpActionRunnerDeps {
   openHelp: (helpId: string) => void;
   /** Opens the generator workflow, on the chosen generator when one is given. */
   openGenerator: (generatorId?: string) => void;
+  /** Opens the Settings dialog on one tab. */
+  openSettings: (tab: SettingsTab) => void;
   /** Resolves true once `check` passes, or false after `ms`. */
   waitFor: (check: () => boolean, ms: number) => Promise<boolean>;
 }
@@ -58,6 +61,12 @@ export class HelpActionRunner {
         this.deps.openGenerator(step.generatorId);
         return true;
       case "openPanel": {
+        if (step.panel.startsWith("settings-")) {
+          this.deps.openSettings(
+            step.panel.slice("settings-".length) as SettingsTab,
+          );
+          return true;
+        }
         const surface = this.deps.surfaces.entityDetail;
         if (!surface) return false;
         surface.openTab(step.panel === "status-tab" ? "status" : "connections");

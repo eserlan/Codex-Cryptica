@@ -29,6 +29,9 @@ export const helpContext = new HelpContextStore({
   surfaces: helpSurfaces,
   isGeneratorOpen: () => modalUIStore.generatorWorkflow.open,
   generatorsAvailable: () => generatorsAvailable(vault, sessionModeStore),
+  getOpenSettingsTab: () =>
+    modalUIStore.showSettings ? modalUIStore.activeSettingsTab : null,
+  isGuestMode: () => sessionModeStore.isGuestMode,
 });
 
 const helpIds = () => new Set(getHelpArticles().map((article) => article.id));
@@ -74,6 +77,7 @@ export const helpActionRunner = new HelpActionRunner({
   goto: (path) => goto(path),
   destinationPath: (destination) => DESTINATIONS[destination],
   openHelp: (id) => helpStore.openHelpToArticle(id),
+  openSettings: (tab) => modalUIStore.openSettings(tab),
   openGenerator: (generatorId) =>
     modalUIStore.openGeneratorWorkflow(generatorId ?? null),
   waitFor,

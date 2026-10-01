@@ -4,9 +4,10 @@ import {
   buildBundle,
   type KnowledgeBundle,
 } from "../../../../packages/help-engine/src";
+import { KNOWN_HELP_IDS } from "../../../../packages/help-engine/tests/fixtures/help-article-ids";
 import { MAX_BODY_BYTES, createHelpHandler, type HelpDeps } from "./help";
 
-const articles = [
+const written = [
   {
     id: "connections-tab",
     title: "Connections Tab",
@@ -43,6 +44,15 @@ const articles = [
     title: "Random Tables",
     content: "## Tables\nRoll on tables and draw from decks.",
   },
+];
+
+// Every article the registry points at must exist; the ones these tests do not
+// read are one-line stand-ins.
+const articles = [
+  ...written,
+  ...KNOWN_HELP_IDS.filter((id) => !written.some((a) => a.id === id)).map(
+    (id) => ({ id, title: id, content: `## ${id}\nAbout ${id}.` }),
+  ),
 ];
 
 const bundle: KnowledgeBundle = buildBundle({
@@ -418,9 +428,7 @@ describe("POST /api/help/ask — validation and failures", () => {
 describe("POST /api/help/ask — no authoritative answer", () => {
   it("returns no-match with suggestions and never calls the model below the relevance floor", async () => {
     const { ask, generate } = harness();
-    const res = await ask(
-      valid({ question: "Can I export my vault to Roll20?" }),
-    );
+    const res = await ask(valid({ question: "Can I print my map on a mug?" }));
     const body = await res.json();
     expect(res.status).toBe(200);
     expect(body.outcome).toBe("no-match");

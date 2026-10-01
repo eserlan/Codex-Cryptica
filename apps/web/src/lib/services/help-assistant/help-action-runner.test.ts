@@ -44,6 +44,7 @@ function setup(over: Partial<HelpActionRunnerDeps> = {}, context = screen()) {
     destinationPath: (d) => `/${d}`,
     openHelp: vi.fn(),
     openGenerator: vi.fn(),
+    openSettings: vi.fn(),
     waitFor: async (check) => check(),
     ...over,
   };
@@ -133,6 +134,45 @@ describe("HelpActionRunner", () => {
     expect(deps.openGenerator).toHaveBeenLastCalledWith(undefined);
   });
 
+  it("opens the Vault tab of Settings when a guide asks for it", async () => {
+    const { runner, deps, openTab } = setup(
+      {},
+      screen({ availableActions: ["settings-vault"] }),
+    );
+    expect(
+      await runner.run({
+        type: "openPanel",
+        panel: "settings-vault",
+        label: "Open Vault settings",
+      }),
+    ).toBe(true);
+    expect(deps.openSettings).toHaveBeenCalledTimes(1);
+    expect(deps.openSettings).toHaveBeenCalledWith("vault");
+    expect(openTab).not.toHaveBeenCalled();
+  });
+
+  it("does not open Settings when the screen no longer lists it, such as in a guest vault", async () => {
+    const { runner, deps } = setup({}, screen({ availableActions: [] }));
+    expect(
+      await runner.run({
+        type: "openPanel",
+        panel: "settings-vault",
+        label: "Open Vault settings",
+      }),
+    ).toBe(false);
+    expect(deps.openSettings).not.toHaveBeenCalled();
+  });
+
+  it("goes to the canvas, map and import screens through the destination list only", async () => {
+    const { runner, deps } = setup();
+    for (const to of ["canvas", "map", "import"] as const) {
+      expect(await runner.run({ type: "navigate", to, label: "Go" })).toBe(
+        true,
+      );
+      expect(deps.goto).toHaveBeenLastCalledWith(`/${to}`);
+    }
+  });
+
   it("never creates, edits, deletes, imports or exports vault content, whatever the action", async () => {
     const mutators = [
       "addConnection",
@@ -152,9 +192,16 @@ describe("HelpActionRunner", () => {
       .map((name) => vi.spyOn(vault as never, name));
     expect(spies.length).toBeGreaterThan(0);
 
-    const { runner } = setup();
+    const { runner } = setup(
+      {},
+      screen({
+        availableActions: ["status-tab", "connections-tab", "settings-vault"],
+      }),
+    );
     const actions: GuidanceAction[] = [
       guide,
+      { type: "openPanel", panel: "settings-vault", label: "Settings" },
+      { type: "navigate", to: "import", label: "Import" },
       { type: "navigate", to: "tables", label: "Go" },
       { type: "openHelp", helpId: "graph-basics", label: "Read" },
       { type: "openGenerator", generatorId: "quest", label: "Open" },
