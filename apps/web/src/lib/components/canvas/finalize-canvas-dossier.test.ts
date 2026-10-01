@@ -13,6 +13,7 @@ function setup() {
     loadEntityContent: vi.fn().mockResolvedValue(undefined),
     getEntity: vi.fn().mockReturnValue(loadedEntity),
     exportImage: vi.fn().mockResolvedValue(image),
+    getGraph: vi.fn().mockReturnValue({ nodes: [], edges: [] }),
     finalize: vi
       .fn()
       .mockResolvedValue({ entityId: "dossier-1", created: true }),
@@ -45,6 +46,34 @@ describe("finalizeCanvasDossier", () => {
       "success",
     );
     expect(deps.openEntity).toHaveBeenCalledWith("dossier-1");
+  });
+
+  it("reads graph data after the image export completes", async () => {
+    const { deps, image } = setup();
+    const events: string[] = [];
+    const exportedNodes = [{ id: "node-after-export" }];
+    const exportedEdges = [{ id: "edge-after-export" }];
+    deps.exportImage.mockImplementation(async () => {
+      events.push("export");
+      return image;
+    });
+    deps.getGraph.mockImplementation(() => {
+      events.push("graph");
+      return {
+        nodes: exportedNodes as never,
+        edges: exportedEdges as never,
+      };
+    });
+    deps.finalize.mockImplementation(async (request) => {
+      events.push("finalize");
+      expect(request.nodes).toBe(exportedNodes);
+      expect(request.edges).toBe(exportedEdges);
+      return { entityId: "dossier-1", created: true };
+    });
+
+    await finalizeCanvasDossier(canvas, sourceEntity, deps);
+
+    expect(events).toEqual(["export", "graph", "finalize"]);
   });
 
   it("reports failures without opening a dossier", async () => {

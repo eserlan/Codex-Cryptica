@@ -6,6 +6,7 @@ export interface FinalizeCanvasDossierDeps {
   loadEntityContent: (entityId: string) => Promise<unknown>;
   getEntity: (entityId: string) => Entity | undefined;
   exportImage: () => Promise<Blob>;
+  getGraph: () => { nodes: DelveCanvasNode[]; edges: DelveCanvasEdge[] };
   finalize: (request: {
     canvas: Canvas;
     sourceEntity: Entity;
@@ -15,8 +16,6 @@ export interface FinalizeCanvasDossierDeps {
     canvasImage: Blob;
   }) => Promise<{ entityId: string; created: boolean }>;
   dossierTerm: string;
-  nodes: DelveCanvasNode[];
-  edges: DelveCanvasEdge[];
   notify: (message: string, level: "success" | "error") => void;
   openEntity: (entityId: string) => void;
 }
@@ -30,12 +29,13 @@ export async function finalizeCanvasDossier(
     await deps.loadEntityContent(sourceEntity.id);
     const loadedSourceEntity = deps.getEntity(sourceEntity.id) ?? sourceEntity;
     const canvasImage = await deps.exportImage();
+    const { nodes, edges } = deps.getGraph();
     const result = await deps.finalize({
       canvas,
       sourceEntity: loadedSourceEntity,
       dossierTerm: deps.dossierTerm,
-      nodes: deps.nodes,
-      edges: deps.edges,
+      nodes,
+      edges,
       canvasImage,
     });
     deps.notify(

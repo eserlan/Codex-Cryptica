@@ -469,12 +469,14 @@
         },
         finalize: (request) => delveDossierService.finalize(request),
         dossierTerm: getDelveTerm(themeStore.activeTheme.id),
-        nodes: flowNodesToCanvasNodes(
-          logic.nodes,
-        ) as unknown as DelveCanvasNode[],
-        edges: logic.edges.map((edge) =>
-          flowEdgeToCanvasEdge(edge),
-        ) as unknown as DelveCanvasEdge[],
+        getGraph: () => ({
+          nodes: flowNodesToCanvasNodes(
+            logic.nodes,
+          ) as unknown as DelveCanvasNode[],
+          edges: logic.edges.map((edge) =>
+            flowEdgeToCanvasEdge(edge),
+          ) as unknown as DelveCanvasEdge[],
+        }),
         notify: (message, level) => notificationStore.notify(message, level),
         openEntity: (entityId) => modalUIStore.openZenMode(entityId),
       });
