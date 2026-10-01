@@ -139,11 +139,47 @@ describe("POST /api/help/ask — answers", () => {
     expect(generate).toHaveBeenCalledTimes(1);
   });
 
-  it("uses embedQuery to retrieve semantically relevant chunks when provided", async () => {
-    const embedQuery = vi.fn(async () => [0.1, 0.2, 0.3]);
-    const { ask, generate } = harness({ embedQuery });
-    await ask(valid({ question: "tell me of graphs" }));
-    expect(embedQuery).toHaveBeenCalledWith("tell me of graphs");
+  it("forwards a query embedding so a zero-overlap chunk can be retrieved", async () => {
+    const vector = Array.from({ length: 384 }, (_, index) =>
+      index === 0 ? 1 : 0,
+    );
+    const target = {
+      ...bundle.chunks.find((chunk) => chunk.kind === "help")!,
+      text: "A semantic-only retrieval target.",
+      embedding: vector,
+    };
+    const embedQuery = vi.fn(async () => vector);
+    const { ask, generate } = harness({
+      embedQuery,
+      loadBundle: async () => ({ ...bundle, chunks: [target] }),
+    });
+    await ask(valid({ question: "flibbertigibbet quokka" }));
+    expect(embedQuery).toHaveBeenCalledWith("flibbertigibbet quokka");
+    expect(generate).toHaveBeenCalled();
+  });
+
+  it("falls back to lexical retrieval when query embedding is malformed", async () => {
+    const target = {
+      ...bundle.chunks.find((chunk) => chunk.kind === "help")!,
+      text: "A semantic-only retrieval target.",
+      embedding: Array.from({ length: 384 }, (_, index) =>
+        index === 0 ? 1 : 0,
+      ),
+    };
+    const { ask, generate } = harness({
+      embedQuery: async () => [1, 1000],
+      loadBundle: async () => ({ ...bundle, chunks: [target] }),
+    });
+    await ask(valid({ question: "flibbertigibbet quokka" }));
+    expect(generate).not.toHaveBeenCalled();
+  });
+
+  it("falls back to lexical retrieval when query embedding times out", async () => {
+    const { ask, generate } = harness({
+      embedQuery: () => new Promise<number[]>(() => {}),
+      embeddingTimeoutMs: 5,
+    });
+    await ask(valid());
     expect(generate).toHaveBeenCalled();
   });
 

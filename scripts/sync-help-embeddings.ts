@@ -14,6 +14,13 @@ import { fileURLToPath } from "node:url";
 import { FEATURE_REGISTRY } from "../packages/help-engine/src/registry";
 import { buildBundle } from "../packages/help-engine/src/bundle/build";
 import { parseHelpArticle } from "../packages/help-engine/src/bundle/front-matter";
+import {
+  embeddingFingerprint,
+  embeddingText,
+  isValidEmbeddingVector,
+  validateEmbeddingBatch,
+  HELP_EMBEDDING_MODEL,
+} from "../packages/help-engine/src/bundle/embeddings";
 import type { HelpArticleSource } from "../packages/help-engine/src/bundle/types";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -23,7 +30,6 @@ const outputPath = path.join(
   "packages/help-engine/src/bundle/embeddings.generated.json",
 );
 
-const MODEL = "@cf/baai/bge-small-en-v1.5";
 const BATCH_SIZE = 50;
 
 // fallow-ignore-next-line complexity
@@ -65,7 +71,7 @@ async function requestEmbeddings(
   texts: string[],
   auth: { token: string; accountId: string },
 ): Promise<number[][]> {
-  const url = `https://api.cloudflare.com/client/v4/accounts/${auth.accountId}/ai/run/${MODEL}`;
+  const url = `https://api.cloudflare.com/client/v4/accounts/${auth.accountId}/ai/run/${HELP_EMBEDDING_MODEL}`;
   const response = await fetch(url, {
     method: "POST",
     headers: {
@@ -94,19 +100,11 @@ async function requestEmbeddings(
     );
   }
 
-  return result.result.data;
+  return validateEmbeddingBatch(result.result.data, texts.length);
 }
 
 // fallow-ignore-next-line complexity
 async function main() {
-  const auth = getWranglerAuth();
-  if (!auth) {
-    console.error(
-      "Error: No Cloudflare credentials found. Please log in via `wrangler login` or set CLOUDFLARE_API_TOKEN.",
-    );
-    process.exit(1);
-  }
-
   console.log("Loading help articles and features...");
   const files = fs
     .readdirSync(helpDir)
@@ -147,14 +145,18 @@ async function main() {
 
   for (const chunk of bundle.chunks) {
     const cached = existingMap[chunk.id];
-    if (cached && cached.hash === chunk.hash && cached.vector?.length === 384) {
-      finalMap[chunk.id] = cached;
+    const hash = embeddingFingerprint(chunk);
+    if (
+      cached &&
+      cached.hash === hash &&
+      isValidEmbeddingVector(cached.vector)
+    ) {
+      finalMap[chunk.id] = { hash, vector: cached.vector };
     } else {
-      const textToEmbed = `${chunk.title}: ${chunk.heading ? chunk.heading + " - " : ""}${chunk.text}`;
       toEmbed.push({
         id: chunk.id,
-        hash: chunk.hash,
-        text: textToEmbed,
+        hash,
+        text: embeddingText(chunk),
       });
     }
   }
@@ -164,6 +166,14 @@ async function main() {
   );
 
   if (toEmbed.length > 0) {
+    const auth = getWranglerAuth();
+    if (!auth) {
+      console.error(
+        "Error: No Cloudflare credentials found. Please log in via `wrangler login` or set CLOUDFLARE_API_TOKEN.",
+      );
+      process.exit(1);
+    }
+
     for (let i = 0; i < toEmbed.length; i += BATCH_SIZE) {
       const batch = toEmbed.slice(i, i + BATCH_SIZE);
       const batchNum = Math.floor(i / BATCH_SIZE) + 1;
@@ -175,6 +185,9 @@ async function main() {
       const texts = batch.map((item) => item.text);
       const vectors = await requestEmbeddings(texts, auth);
 
+      // Validate the entire response before changing finalMap so a partial
+      // batch can never produce a partially updated artifact.
+      validateEmbeddingBatch(vectors, batch.length);
       for (let j = 0; j < batch.length; j++) {
         // Round floats to 4 decimal places to reduce file size while keeping high precision
         const rounded = vectors[j].map((v) => Math.round(v * 10000) / 10000);

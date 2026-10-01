@@ -146,9 +146,10 @@ describe("rankChunks", () => {
     });
     const ranked = rankChunks(
       "what can I do here?",
-      [registry, otherRegistry, ...filler],
+      [registry, otherRegistry, { ...filler[0], embedding: [1, 0] }],
       FEATURE_REGISTRY,
       connectionsScreen,
+      [1, 0],
     );
     expect(ranked.map((r) => r.chunk.id)).toEqual([
       "registry:entity-connections#0",
@@ -311,6 +312,12 @@ describe("semantic vector retrieval", () => {
     expect(cosineSimilarity(v1, v1)).toBeCloseTo(1.0);
     expect(cosineSimilarity(v1, v3)).toBeCloseTo(0.0);
     expect(cosineSimilarity(v1, v2)).toBeGreaterThan(0.9);
+  });
+
+  it("rejects empty, unequal, and non-finite vectors", () => {
+    expect(cosineSimilarity([], [])).toBe(0);
+    expect(cosineSimilarity([1], [1, 1000])).toBe(0);
+    expect(cosineSimilarity([Number.NaN], [1])).toBe(0);
   });
 
   it("retrieves semantically matching chunks even with zero lexical word overlap", () => {

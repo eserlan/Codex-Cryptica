@@ -2,6 +2,7 @@ import { GENERATORS } from "../registry/generators.generated";
 import type { FeatureEntry } from "../registry/schema";
 import { filterByChannel, validateRegistry } from "../registry/schema";
 import { chunkMarkdown, contentHash } from "./chunk";
+import { embeddingFingerprint, isValidEmbeddingVector } from "./embeddings";
 import type { HelpArticleSource, HelpChunk, KnowledgeBundle } from "./types";
 
 export interface BuildBundleInput {
@@ -121,7 +122,11 @@ export function buildBundle(input: BuildBundleInput): KnowledgeBundle {
   if (input.embeddings) {
     for (const chunk of chunks) {
       const entry = input.embeddings[chunk.id];
-      if (entry && entry.hash === chunk.hash && Array.isArray(entry.vector)) {
+      if (
+        entry &&
+        entry.hash === embeddingFingerprint(chunk) &&
+        isValidEmbeddingVector(entry.vector)
+      ) {
         chunk.embedding = entry.vector;
       }
     }

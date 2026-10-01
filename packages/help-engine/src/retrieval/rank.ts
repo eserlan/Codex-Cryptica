@@ -32,13 +32,18 @@ export function cosineSimilarity(
   a: readonly number[],
   b: readonly number[],
 ): number {
+  if (a.length === 0 || a.length !== b.length) {
+    return 0;
+  }
+
   let dot = 0;
   let normA = 0;
   let normB = 0;
-  const len = Math.min(a.length, b.length);
+  const len = a.length;
   for (let i = 0; i < len; i++) {
     const ai = a[i];
     const bi = b[i];
+    if (!Number.isFinite(ai) || !Number.isFinite(bi)) return 0;
     dot += ai * bi;
     normA += ai * ai;
     normB += bi * bi;
@@ -181,7 +186,7 @@ export function rankChunks(
 
   // "What can I do here?" has no content terms. Answer from the screen's own
   // registry entries rather than giving up, but only those.
-  if (terms.length === 0 && !queryVector) {
+  if (terms.length === 0) {
     return chunks
       .filter(
         (c) =>

@@ -25,6 +25,10 @@ import {
   type HelpTurn,
   type KnowledgeBundle,
 } from "../../../../packages/help-engine/src";
+import {
+  HELP_EMBEDDING_MODEL,
+  isValidEmbeddingVector as isValidHelpEmbeddingVector,
+} from "../../../../packages/help-engine/src/bundle/embeddings";
 import { createProviderResolver } from "./llm/provider-resolver";
 import type { LlmRequest } from "./llm/types";
 import {
@@ -37,6 +41,7 @@ import { enforceLlmSession, type SessionEnv } from "./session-guard";
 /** Generous for a question plus four short turns and a screen description. */
 export const MAX_BODY_BYTES = 8 * 1024;
 export const UPSTREAM_BUDGET_MS = 7000;
+const EMBEDDING_BUDGET_MS = 1000;
 
 export type HelpGenerate = (
   request: LlmRequest,
@@ -49,6 +54,7 @@ export interface HelpDeps {
   guard: (request: Request) => Promise<Response | null>;
   /** Optional dense vector embedder for semantic search over chunk embeddings. */
   embedQuery?: (text: string) => Promise<number[] | null>;
+  embeddingTimeoutMs?: number;
   now?: () => number;
   log?: (line: string) => void;
   timeoutMs?: number;
@@ -304,8 +310,13 @@ export function createHelpHandler(deps: HelpDeps) {
       );
     }
 
+    const embeddingBudgetMs = deps.embeddingTimeoutMs ?? EMBEDDING_BUDGET_MS;
     const queryVector = deps.embedQuery
-      ? ((await deps.embedQuery(question).catch(() => null)) ?? undefined)
+      ? ((await withTimeout(deps.embedQuery(question), embeddingBudgetMs)
+          .then((vector) =>
+            isValidHelpEmbeddingVector(vector) ? vector : null,
+          )
+          .catch(() => null)) ?? undefined)
       : undefined;
     const retrieval = retrieve(question, bundle, context, {
       queryVector: queryVector ?? undefined,
@@ -394,10 +405,17 @@ export function handleHelpAsk(
     embedQuery: env.AI
       ? async (text: string) => {
           try {
-            const res = (await env.AI.run("@cf/baai/bge-small-en-v1.5", {
+            const res = (await env.AI.run(HELP_EMBEDDING_MODEL, {
               text: [text],
-            })) as { data?: number[][] };
-            return res?.data?.[0] ?? null;
+            })) as { data?: unknown };
+            if (
+              !Array.isArray(res?.data) ||
+              res.data.length !== 1 ||
+              !isValidHelpEmbeddingVector(res.data[0])
+            ) {
+              return null;
+            }
+            return res.data[0];
           } catch (error) {
             console.warn(
               "[help] query embedding failed, falling back to lexical search:",
