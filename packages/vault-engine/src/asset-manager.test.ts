@@ -705,6 +705,80 @@ describe("AssetManager", () => {
         expect(global.fetch).not.toHaveBeenCalled();
       });
 
+      it("treats a marker timestamped in the future as invalid, so it cannot extend the day indefinitely", async () => {
+        const probe = vi.fn<Probe>().mockResolvedValue("loaded");
+        const assets = manager(probe);
+        // A damaged file, or the clock having gone backwards, leaves a time
+        // far ahead of now: a negative age must not count as fresh.
+        mockIO.readOpfsBlob.mockImplementation((path: string[]) =>
+          path[0].endsWith(".unreachable")
+            ? Promise.resolve(new Blob([String(1_000 + 30 * DAY)]))
+            : notFound(),
+        );
+
+        await assets.resolveThumbnailUrl(vault, url);
+
+        expect(global.fetch).toHaveBeenCalledTimes(1);
+      });
+
+      it("forgets what it marked when cleared, so another vault is not affected", async () => {
+        const probe = vi.fn<Probe>().mockResolvedValue("failed");
+        const assets = manager(probe);
+        expect(await assets.resolveThumbnailUrl(vault, url)).toBe("");
+        expect(global.fetch).toHaveBeenCalledTimes(1);
+
+        assets.clear();
+        mockIO.readOpfsBlob.mockImplementation(notFound);
+        (global.fetch as any).mockClear();
+        probe.mockResolvedValue("loaded");
+
+        // A different vault has no marker file; the in-memory one must be gone.
+        expect(await assets.resolveThumbnailUrl(vault, url)).toBe(url);
+        expect(global.fetch).toHaveBeenCalledTimes(1);
+      });
+
+      it("stops suppressing in the same session once a day has passed", async () => {
+        const probe = vi.fn<Probe>().mockResolvedValue("failed");
+        const assets = manager(probe);
+        expect(await assets.resolveThumbnailUrl(vault, url)).toBe("");
+        (global.fetch as any).mockClear();
+        mockIO.readOpfsBlob.mockImplementation(notFound);
+
+        now = 1_000 + DAY - 1;
+        expect(await assets.resolveThumbnailUrl(vault, url)).toBe("");
+        expect(global.fetch).not.toHaveBeenCalled();
+
+        now = 1_000 + DAY;
+        probe.mockResolvedValue("loaded");
+        expect(await assets.resolveThumbnailUrl(vault, url)).toBe(url);
+        expect(global.fetch).toHaveBeenCalledTimes(1);
+      });
+
+      it("probes a link the browser can load only once per failure window, not on every resolution", async () => {
+        const probe = vi.fn<Probe>().mockResolvedValue("loaded");
+        const assets = manager(probe);
+
+        expect(await assets.resolveThumbnailUrl(vault, url)).toBe(url);
+        expect(await assets.resolveThumbnailUrl(vault, url)).toBe(url);
+        expect(await assets.resolveThumbnailUrl(vault, url)).toBe(url);
+
+        expect(probe).toHaveBeenCalledTimes(1);
+        expect(global.fetch).toHaveBeenCalledTimes(1);
+      });
+
+      it("does not re-probe an inconclusive result either, and probes again once the failure window has expired", async () => {
+        const probe = vi.fn<Probe>().mockResolvedValue("unknown");
+        const assets = manager(probe);
+
+        await assets.resolveThumbnailUrl(vault, url);
+        await assets.resolveThumbnailUrl(vault, url);
+        expect(probe).toHaveBeenCalledTimes(1);
+
+        now = 1_000 + 5 * 60_000; // the five-minute failure window is over
+        await assets.resolveThumbnailUrl(vault, url);
+        expect(probe).toHaveBeenCalledTimes(2);
+      });
+
       it("treats a damaged marker as no marker", async () => {
         const probe = vi.fn<Probe>().mockResolvedValue("loaded");
         const assets = manager(probe);

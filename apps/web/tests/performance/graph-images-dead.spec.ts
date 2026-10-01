@@ -185,5 +185,12 @@ test("dead link requests across a reload", async ({ page }) => {
   fs.mkdirSync(path.dirname(output), { recursive: true });
   fs.writeFileSync(output, `${JSON.stringify(result, null, 2)}\n`);
   console.log(`GRAPH_IMAGES_DEAD ${JSON.stringify(result)}`);
+  // The first session still pays for the CORS fetch and then the plain-image
+  // probe, so at most two requests per dead link.
   expect(session1).toBeGreaterThan(0);
+  expect(session1).toBeLessThanOrEqual(deadCount * 2);
+  // What this change is for: a reload makes no request at all for a link an
+  // earlier session found unreachable. Without this the scenario would still
+  // pass if the reload re-requested every dead link.
+  expect(session2).toBe(0);
 });

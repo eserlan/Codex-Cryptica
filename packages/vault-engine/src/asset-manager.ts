@@ -112,11 +112,20 @@ export class AssetManager {
   /**
    * When each unreachable external image last failed, by URL. `opaque` marks a
    * failure whose status was hidden from us (a network or CORS error), as
-   * opposed to a timeout or an HTTP error we could read.
+   * opposed to a timeout or an HTTP error we could read. `probed` records that
+   * the browser has already been asked to load it plainly for this failure, so
+   * that is decided once per failure window and not on every resolution.
    */
-  private failedExternal = new Map<string, { at: number; opaque: boolean }>();
-  /** URLs marked unreachable in this session, so the marker is read once. */
-  private unreachableThisSession = new Set<string>();
+  private failedExternal = new Map<
+    string,
+    { at: number; opaque: boolean; probed: boolean }
+  >();
+  /**
+   * When each URL was marked unreachable, so the marker is read from disk once.
+   * Held with its time, not as a bare set, so it expires with the same
+   * 24 hours as the marker file; reset by `clear()` like the other state.
+   */
+  private unreachableThisSession = new Map<string, number>();
   /** URLs confirmed to be permanently missing (404/410). */
   private deadExternal = new Set<string>();
 
@@ -360,7 +369,7 @@ export class AssetManager {
           if (this.deadExternal.has(cleanPath)) return "";
           // Marked unreachable (now or by an earlier session): no request at
           // all, and nothing handed to Cytoscape to request instead.
-          if (this.unreachableThisSession.has(cleanPath)) return "";
+          if (this.isFreshInSession(cleanPath)) return "";
           if (await this.cannotBeLoadedAtAll(cleanPath)) {
             await this.markUnreachable(vaultHandle, cleanPath);
             return "";
@@ -462,6 +471,7 @@ export class AssetManager {
         // A TypeError is how fetch reports a network or CORS failure, where the
         // response (and so any 404) is hidden from us.
         opaque: error instanceof TypeError,
+        probed: false,
       });
       return null;
     }
@@ -476,27 +486,47 @@ export class AssetManager {
     vaultHandle: FileSystemDirectoryHandle,
     url: string,
   ): Promise<boolean> {
-    if (this.unreachableThisSession.has(url)) return true;
+    if (this.isFreshInSession(url)) return true;
     try {
       const marker = await this.ioAdapter.readOpfsBlob(
         [await this.unreachableMarkerName(url)],
         await this.externalDir(vaultHandle),
       );
       const markedAt = Number(await marker.text());
-      if (!Number.isFinite(markedAt)) return false;
-      if (this.clock.now() - markedAt >= UNREACHABLE_TTL_MS) return false;
-      this.unreachableThisSession.add(url);
+      if (!this.isFreshMarkerTime(markedAt)) return false;
+      this.unreachableThisSession.set(url, markedAt);
       return true;
     } catch {
       return false;
     }
   }
 
+  /**
+   * Whether a marker time still counts: a real time, not in the future, less
+   * than a day old. A time ahead of now (a damaged file, or the clock having
+   * gone backwards) gives a negative age that would otherwise look fresh and
+   * suppress the link far beyond the day.
+   */
+  private isFreshMarkerTime(markedAt: number): boolean {
+    if (!Number.isFinite(markedAt)) return false;
+    const age = this.clock.now() - markedAt;
+    return age >= 0 && age < UNREACHABLE_TTL_MS;
+  }
+
+  /** Marked unreachable earlier in this session and still within the day. */
+  private isFreshInSession(url: string): boolean {
+    const markedAt = this.unreachableThisSession.get(url);
+    if (markedAt === undefined) return false;
+    if (this.isFreshMarkerTime(markedAt)) return true;
+    this.unreachableThisSession.delete(url);
+    return false;
+  }
+
   private async markUnreachable(
     vaultHandle: FileSystemDirectoryHandle,
     url: string,
   ): Promise<void> {
-    this.unreachableThisSession.add(url);
+    this.unreachableThisSession.set(url, this.clock.now());
     await this.ioAdapter
       .writeOpfsFile(
         [".cache", "external_images", await this.unreachableMarkerName(url)],
@@ -514,8 +544,15 @@ export class AssetManager {
    * every load.
    */
   private async cannotBeLoadedAtAll(url: string): Promise<boolean> {
-    if (!this.failedExternal.get(url)?.opaque) return false;
-    return (await this.probeImage(url)) === "failed";
+    const failure = this.failedExternal.get(url);
+    if (!failure?.opaque || failure.probed) return false;
+    if ((await this.probeImage(url)) === "failed") return true;
+    // The browser can load it, or could not tell: either way the old behaviour
+    // stands, and asking again on every resolution would only add a request.
+    // The failure entry expires after EXTERNAL_FAILURE_TTL_MS; the probe is
+    // tried again for the next failure.
+    failure.probed = true;
+    return false;
   }
 
   /** The cached copy of an external image, fetching and caching it if needed. */
@@ -645,6 +682,7 @@ export class AssetManager {
     this.resolving.clear();
     this.failedExternal.clear();
     this.deadExternal.clear();
+    this.unreachableThisSession.clear();
   }
 
   /**
