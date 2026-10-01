@@ -192,6 +192,7 @@ export const howDoIPaceAnRpgOneShot: AnswerConfigInput = {
     "how-do-you-run-a-mystery-without-railroading",
     "how-do-i-prepare-an-rpg-session-step-by-step",
     "how-much-prep-do-you-need-for-an-rpg-session",
+    "how-long-should-a-ttrpg-session-be",
   ],
   discovery: {
     id: "answer-pace-rpg-one-shot",
@@ -229,6 +230,11 @@ export const howDoIPaceAnRpgOneShot: AnswerConfigInput = {
         with: "answer-run-heist-in-tabletop-rpg",
         reason:
           "The heist answer focuses on four-phase infiltration scores with alarm tracks, whereas this answer provides broad table-time management and time-budgeting heuristics for one-shots.",
+      },
+      {
+        with: "answer-ttrpg-session-length",
+        reason:
+          "This answer teaches how to pace content within a fixed single-session slot; the session-length answer compares general booked lengths across play contexts.",
       },
     ],
     relatedIntents: [
