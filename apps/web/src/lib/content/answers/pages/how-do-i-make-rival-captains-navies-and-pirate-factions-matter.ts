@@ -9,14 +9,14 @@ export const howDoIMakeRivalCaptainsNaviesAndPirateFactionsMatter: AnswerConfigI
       "How do I make rival captains, navies, and pirate factions matter?",
     kind: "framework",
     shortAnswer:
-      "Give every rival captain, navy, and pirate faction a concrete goal, a territory or resource it depends on, and a clock that advances whether the crew interferes or not. Between sessions move each clock by one step, translate the result into something the players can see in prices, patrols, flags, or port control, and let reputation carry consequences from one harbour to the next. Recurring rivals who change after a win or loss create choices that reshape the map instead of a fixed plot that waits for the party.",
+      "Give each rival captain, navy, company, or pirate faction a concrete goal, an asset or dependency, and a move that can change the sea around the crew. Review factions at natural breaks in fictional time, often between sessions, and advance only moves that had the time, means, and opportunity to progress. Show the results in prices, patrols, routes, port access, and local reputation; let recurring rivals change their relationship with the crew as well as their plans.",
     sections: [
       {
         kind: "prose",
         heading: "Why rivals and factions slip into the background",
         paragraphs: [
           "Most pirate campaigns introduce a navy, a trading company, and two or three rival captains in the first session, then quietly forget them until the plot needs an enemy. The faction exists as a paragraph of lore and a stat block, not as something that holds territory, needs money, or wants a specific port before the season turns. When nothing changes without the party in the room, the sea feels like a series of disconnected encounters rather than a contested region.",
-          "The fix is to treat each faction as an actor with its own schedule. A navy squadron patrolling a strait, a company trying to reopen a sugar route, or a rival captain chasing the same wreck all have reasons to act next week whether the crew helps, hinders, or ignores them. If you can answer what each faction will try before the next session, what it risks, and how the players would notice the outcome, the world starts to push back on its own.",
+          "The fix is to treat each faction as an actor with goals, limits, and opportunities. A navy squadron, a trading company, and a rival captain may all want the same channel, but they do not have the same means or pace. Ask what each can plausibly attempt as fictional time passes, what could stop it, and how the players would notice the result. A week-long voyage may give several plans time to move; three scenes in one afternoon may give none.",
         ],
       },
       {
@@ -30,8 +30,8 @@ export const howDoIMakeRivalCaptainsNaviesAndPirateFactionsMatter: AnswerConfigI
             text: "Name one thing it wants this season, such as lifting a blockade on Grey Harbour, seizing the wreck of the Saint Elmo, or securing a letter of marque from the governor. A goal you can tell has succeeded or failed creates a natural moment to change the map when it resolves.",
           },
           {
-            term: "Resource or territory it depends on",
-            text: "State what it would lose if it failed: a coaling station, a convoy charter, a safe cove, a string of coastal forts, or a monopoly on salt and timber. This is the thing the crew can take, block, or bargain over.",
+            term: "Asset, leverage, or dependency",
+            text: "Name something it cannot easily replace: a naval station, convoy charter, safe cove, monopoly on salt and timber, governor's protection, stolen chart, crew loyalty, fair-share reputation, debt held by a merchant house, or a navigator who knows the shoals. This is something the crew can take, block, expose, or bargain over.",
           },
           {
             term: "Pressure that forces action now",
@@ -39,11 +39,11 @@ export const howDoIMakeRivalCaptainsNaviesAndPirateFactionsMatter: AnswerConfigI
           },
           {
             term: "Clock with visible steps",
-            text: "Track progress on a simple 4-step clock (for example: rumour, preparation, attempt, outcome). Advance it once between sessions when no one interferes, or when a relevant obstacle remains unopposed. Keep the steps concrete so you can describe them later as a changed patrol or a new flag over the fort.",
+            text: "Track a move with a simple 4-step clock if that helps (for example: rumour, preparation, attempt, outcome). The clock is a reminder of pressure, not a metronome: a move can advance, stall, lose resources, change direction, branch into a new goal, be abandoned, or resolve early when circumstances change. A setback can move the clock backwards when it undoes an achieved step; for example, scattered ships may have to regroup before a blockade can proceed. Keep its steps concrete enough to show later as a changed patrol or a new flag over the fort.",
           },
           {
             term: "Relationship to at least one other faction",
-            text: "Place it in tension or alliance with another power on the sea: a grudge with a rival captain, a blockade it maintains against a company, a bounty it has posted, or a letter of marque that makes it legal prey for one navy and a criminal for another. Relationships turn a single move into a chain of reactions.",
+            text: "Place it in tension or alliance with another power: a grudge with a rival captain, a blockade against a company, or a bounty. Ask who inside the faction disagrees about its goal or methods: an admiral and governor, company directors and a local factor, junior officers and their commander, or pirate captains dividing prizes. A letter of marque authorises named private actors to seize enemy shipping under the issuing authority; it does not grant that authority's navy permission to act.",
           },
           {
             term: "Signature that players can recognise",
@@ -53,33 +53,57 @@ export const howDoIMakeRivalCaptainsNaviesAndPirateFactionsMatter: AnswerConfigI
       },
       {
         kind: "list",
-        heading: "How to make them act without the party",
+        heading: "Give each kind of rival its own habits",
         intro:
-          "A faction that only moves when the party visits it is set dressing. Use these habits to keep rivals active on their own.",
+          "Keep the six-line framework, then tune its pressures to the kind of actor. These are tendencies, not extra bookkeeping.",
         items: [
           {
-            term: "Advance clocks between sessions, not during them",
-            text: "At the end of a session or in brief between-session prep, move each active clock one step if its path is clear. If the crew blocked the attempt, mark the consequence of that block instead of advancing the same step again. One line per faction is enough: what it tried, what happened, what changed.",
+            term: "Rival captain",
+            text: "A captain often depends on crew loyalty, ship condition, information, personal reputation, debts or promises, and one patron or safe harbour. Their moves are personal and quick; one encounter can change their course, priorities, or relationship with the crew.",
           },
           {
-            term: "Resolve through the same procedure when possible",
-            text: "If another faction or a port authority opposes the move, use your normal resolution method for an opposed action. If no one meaningfully opposes it, let it succeed without a roll and focus table time on the consequence. Avoid inventing a separate simulation that only you see.",
+            term: "Navy or state force",
+            text: "A navy often depends on orders, logistics, bases, jurisdiction, political legitimacy, and available ships. It tends to move more slowly, but can reshape routes, laws, patrols, and port access. Its officers and political sponsors may want different outcomes.",
+          },
+          {
+            term: "Trading company",
+            text: "A company often depends on credit, warehouses, contracts, insurers, investors, monopolies, and political protection. It may use prices, lawsuits, debt, hired agents, or port influence before risking ships and cargo in a direct fight.",
+          },
+          {
+            term: "Pirate faction or brotherhood",
+            text: "A pirate faction often depends on safe anchorages, shared rules, fair loot distribution, charismatic captains, and fences or buyers. It may be a loose alliance rather than a single command, able to agree on sanctuary while its captains compete over prizes.",
+          },
+        ],
+      },
+      {
+        kind: "list",
+        heading: "How to keep them active without a timetable",
+        intro:
+          "A faction that only moves when the party visits it is set dressing. Review its situation at natural breaks in fictional time; between-session prep is often a convenient moment to do that.",
+        items: [
+          {
+            term: "Advance only what had time and opportunity",
+            text: "For each active move, ask whether enough fictional time passed, the faction still had the means, its route or opportunity remained open, opposition failed to stop it, and the goal still mattered. Advance it only if those conditions support progress. Storms may scatter a squadron; a captain may abandon a wreck hunt after learning the chart was sold; a governor's escorts may accelerate a convoy plan. A move can stall, change, lose resources, split, or resolve early. Note what changed and why.",
+          },
+          {
+            term: "Resolve opposition only as much as needed",
+            text: "Assess the goal, means, opposition, and current circumstances, then choose the most plausible outcome or use your game's faction procedure. Avoid rolling through NPC-versus-NPC actions the players will never see; roll when uncertainty is genuinely useful. For a detailed faction-turn procedure, use the general faction guidance linked below. Bring the consequence into play.",
           },
           {
             term: "Turn outcomes into port-level changes",
-            text: "Translate each resolved step into something the next port visit can show: a rumour that names the captain who succeeded, a price rise where a company now controls supply, a new patrol route, a flag change over the fort, an impounded ship, or a bounty board with revised figures. Players track factions through evidence, not announcements.",
+            text: "Translate a resolved move into a change the crew can encounter: prices, patrols, flags, routes, freight or insurance terms, crew and specialist availability, repair priority, intelligence, prize buyers, legal status, recruitment, convoy schedules, neutral-port restrictions, or a newly unsafe anchorage. Players track factions through evidence, not announcements; show how their plausible options have changed.",
           },
           {
             term: "Let reputation follow the crew",
-            text: "Record what each port has heard about the party, not a single global score. A navy that was humiliated at North Spit may offer a pardon elsewhere to regain prestige, while a trading company that lost cargo to the crew may close its warehouses to them in every harbour it controls. Carry one sentence per port about what the authorities there believe and want.",
+            text: "Keep reputation local to each port, not as one global score, and give information a carrier: merchant traffic, navy dispatches, wanted posters, tavern gossip, surviving witnesses, or broadsheets if the setting has them. Stories can arrive late, be wrong, differ by port, or be deliberately manipulated. Ask who carried the story here and what version they had reason to tell; it may outrun the crew on a trade route and lag in an isolated cove.",
           },
           {
             term: "Evolve recurring captains after contact",
-            text: "When a rival captain wins or loses against the party, change one thing before the next appearance: a new scar or ship, a shifted goal, a lost ally, a harder bargain, or a grudge that narrows their options. A captain who returns visibly changed signals that encounters have lasting weight.",
+            text: "After contact, change the relationship as well as the captain's circumstances. They might return with reluctant respect, a debt to the crew, a temporary common enemy, an imitation of the crew's tactic, embarrassment they want hidden, an offer to recruit or ally, or a new priority that makes the old feud irrelevant. A scar, lost ally, or grudge can matter too, but each return need not escalate hostility.",
           },
           {
             term: "Use conflicts to create choices, not rails",
-            text: "Frame each faction move as a situation with two or three plausible responses rather than a single required quest. A blockade can be run, negotiated, bypassed through a shoal route, or used as cover for a different job. The faction provides the pressure, the players choose the answer.",
+            text: "Prepare the faction's pressure, constraints, and likely reactions, then accept any player response that fits the fiction. A blockade matters because of patrol coverage, jurisdiction, shoals, political purpose, and the consequences of breaking it. The crew might run it, negotiate, find another route, exploit it, or invent an approach you did not anticipate; those are examples, not a prepared response menu.",
           },
         ],
       },
@@ -87,8 +111,8 @@ export const howDoIMakeRivalCaptainsNaviesAndPirateFactionsMatter: AnswerConfigI
         kind: "prose",
         heading: "Making change visible through the world",
         paragraphs: [
-          "Players rarely remember a briefing about faction politics, but they always notice that the price of powder has doubled, that the harbour now flies a different colour, or that the patrol that used to wave them through now signals them to heave to. Tie every clock advance to one concrete detail the next session can present without explanation: a tavern rumour naming the rival who took the cove, a posted bounty with the crew's ship described too accurately for comfort, a formerly friendly wharf now closed to them, or a letter of marque that makes a former ally legal prey.",
-          "Spread those signals across different channels. Rumours carry intent and reputation, prices and scarcity show who controls trade, patrols and flags show who holds territory, and port control shows who can deny the party rest, repair, or sale of a prize. When the same faction's signature appears in two of those channels, the players start to treat it as a real power with reach, and their next voyage becomes a decision about which pressure to answer first.",
+          "Players rarely remember a briefing about faction politics, but they notice when the price of powder doubles, the harbour flies a different colour, or a patrol that once waved them through signals them to heave to. Tie each move that actually progresses to evidence the crew can encounter: a rumour naming who took the cove, a posted bounty describing their ship too accurately, a friendly wharf closed to them, or a warrant whose jurisdiction is clear. A letter of marque authorises licensed privateers to seize enemy shipping for its issuer; a state's navy acts under its own authority.",
+          "Spread signals across different channels. Rumours carry intent and reputation; prices, freight, and insurance show who controls trade; patrols and flags show presence; services, law, recruitment, and port access show what the crew can do. When a faction's signature appears in more than one channel, players can recognise its reach and decide which pressure to answer.",
         ],
       },
       {
@@ -104,11 +128,11 @@ export const howDoIMakeRivalCaptainsNaviesAndPirateFactionsMatter: AnswerConfigI
           },
           {
             term: "The active version",
-            text: "Hale's squadron is preparing to blockade the northern channel (step 2: its cutters have moved into position and are warning merchants away from the passage). Vesper is on step 3 of reopening the sugar route and has posted a bounty on Varga for raiding its last convoy. Varga, short on powder, has allied with the smugglers at Skerry Cove. Between sessions the GM advances Hale to step 3 and Vesper to step 4: the blockade is now active and Vesper has secured a letter of marque that makes Varga fair game for any navy hull. The crew arrives to find sugar dear, powder scarce, Vesper's flag over the company wharf, Hale's cutter signalling them to heave to, and a fresh rumour that Varga was last seen taking on shot at the cove they had planned to use.",
+            text: "Hale's squadron is preparing to blockade the northern channel (step 2: its cutters have moved into position and are warning merchants away from the passage). Vesper is pursuing the reopening of the sugar route and has posted a bounty on Varga for raiding its last convoy. Varga, short on powder, has allied with the smugglers at Skerry Cove. On a week-long voyage, Hale has time, ships, and orders to close the channel, while Vesper has the credit and political support to seek state backing. Vesper secures state backing, a warrant against Varga, and letters of marque authorising licensed privateers to seize her ships for the issuing state. The crew arrives to find sugar dear, powder scarce, Vesper's flag over the company wharf, Hale's cutter signalling them to heave to, and a fresh rumour that Varga was last seen taking on shot at the cove they had planned to use. If storms scatter Hale's ships or the governor withholds support, those moves stall or change instead; the clock does not advance by itself.",
           },
           {
             term: "Why it works",
-            text: "Each faction tried one thing and left evidence the players can read without a lecture. The blockade, the prices, the flag, the patrol, and the rumour are all consequences of clocks the players did not have to watch to feel. The next decision matters because options have narrowed: run the blockade to reach the old cove, negotiate with Hale using the letter of marque, or help Vesper in exchange for access to powder. The same three factions now produce a choice that reshapes the route, not a task that waits on a board.",
+            text: "The factions acted only where time, means, and opportunity made progress plausible, and left evidence the players can read without a lecture. The blockade, prices, flag, patrol, and rumour change what the crew can plausibly do. They might run the blockade, bargain with Hale or Vesper, find another route, or pursue a different plan that fits the situation. The factions create pressure and reactions; the players choose what to do with them.",
           },
         ],
       },
@@ -118,20 +142,21 @@ export const howDoIMakeRivalCaptainsNaviesAndPirateFactionsMatter: AnswerConfigI
         intro:
           "Set up rival captains and factions so the sea changes even when the crew looks the other way.",
         items: [
-          "Write one goal, one territory or resource, and one current pressure for each active navy, company, or rival captain.",
-          "Start a 4-step clock for each, with steps concrete enough to describe as a rumour, a preparation, an attempt, and an outcome.",
-          "Name one alliance or grudge, and one instrument of pressure such as a bounty, blockade, or letter of marque, for each power.",
-          "Decide what each clock does next session if no one interferes, and what visible evidence that step would leave in the next port.",
-          "Record one sentence per port about what the authorities there currently believe about the crew and what they want from them.",
-          "Note how each recurring captain changes after a win or loss: a new ship, a lost ally, a shifted goal, or a harder stance that the players will see on return.",
-          "Prepare two or three plausible responses to each active move so the situation offers choices rather than a single required job.",
+          "Write one goal, one asset or dependency, and one current pressure for each active captain, navy, company, or pirate faction.",
+          "Use a 4-step clock if useful; make steps concrete enough to show as preparation, an attempt, or a changed port.",
+          "Name a relationship, an instrument of pressure, and any internal disagreement that could change the faction's method or goal.",
+          "At a natural break in fictional time, note which moves had the time, means, and opportunity to progress, and what opposition or changed circumstance affected them.",
+          "Record what each port has heard about the crew, who carried the story, and what version they had reason to tell.",
+          "Note how each recurring captain's priorities or relationship with the crew might have changed after contact.",
+          "Prepare the faction's pressure, constraints, and likely reactions; accept any player response that fits the fiction.",
+          "Copy and fill in this compact faction-state block when useful: Actor type: captain / navy / company / pirate faction | Current goal: | Why now: | Asset / leverage / dependency: | Current move: | Time / means needed: | Opposition: | Internal disagreement: | Relationships: | Recognisable signature: | What changes if it succeeds: | How players may hear or see it:",
         ],
       },
     ],
     codexConnection: {
       heading: "Connect rivals and sea pressure in your campaign",
       paragraphs: [
-        "Save each navy, company, and rival captain as a linked faction with its goal, territory, pressure, and clock, then tie them to the ports, routes, and captains they contest. When a clock advances, update the relationship graph and campaign timeline so the next port visit can show the change in prices, patrols, flags, and rumours without rebuilding the world from memory between sessions.",
+        "Save each navy, company, rival captain, or pirate faction with its goal, asset or dependency, pressure, and current move, then tie it to the ports, routes, and captains it affects. When circumstances change its move, update the relationship graph and campaign timeline so a later port visit can show the result in prices, patrols, routes, access, and rumours.",
       ],
       linkText: "Generate a rival faction",
       href: "/generators/faction",
@@ -140,7 +165,7 @@ export const howDoIMakeRivalCaptainsNaviesAndPirateFactionsMatter: AnswerConfigI
       {
         title: "Faction Generator",
         description:
-          "Create navies, trading companies, and pirate brotherhoods with goals, resources, and rivalries.",
+          "Create navies, trading companies, and pirate brotherhoods with goals, dependencies, and rivalries.",
         href: "/generators/faction",
       },
       {
@@ -195,7 +220,7 @@ export const howDoIMakeRivalCaptainsNaviesAndPirateFactionsMatter: AnswerConfigI
         "recurring rival captains who evolve",
       ],
       uniqueValue:
-        "A six-line faction engine plus a between-session clock procedure that turns rival captains, navies, and companies into visible port changes through rumours, prices, patrols, flags, and reputation.",
+        "A six-line faction engine that makes rival captains, navies, companies, and pirate factions change the sea through fiction-driven moves, visible port consequences, and local reputation.",
       relatedIntents: [
         "answer-starter-ship-pirate",
         "answer-run-factions-sandbox",
@@ -224,7 +249,7 @@ export const howDoIMakeRivalCaptainsNaviesAndPirateFactionsMatter: AnswerConfigI
       title:
         "How Do I Make Rival Captains and Pirate Factions Matter? | Codex Cryptica",
       description:
-        "Give each rival and faction a goal, territory, and clock, advance them between sessions, and show the result in rumours, prices, patrols, and port control.",
+        "Give each rival and faction a goal, asset or dependency, and fiction-driven move; show the result in rumours, prices, patrols, routes, and port access.",
       image:
         "https://assets.codexcryptica.com/og/how-do-i-make-rival-captains-navies-and-pirate-factions-matter.jpg",
       imageAlt:
