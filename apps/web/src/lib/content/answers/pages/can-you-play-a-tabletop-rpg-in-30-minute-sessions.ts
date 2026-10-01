@@ -237,6 +237,11 @@ export const canYouPlayATabletopRpgIn30MinuteSessions: AnswerConfigInput = {
         reason:
           "Both are companion scheduling-and-format answers in the session-prep cluster, but this answer addresses sessions constrained by time, while the large-group answer addresses sessions constrained by player count.",
       },
+      {
+        with: "answer-ttrpg-session-length",
+        reason:
+          "This page designs a complete episode for a constrained 30-minute slot; the session-length answer compares general booked lengths across play contexts.",
+      },
     ],
   },
   seo: {

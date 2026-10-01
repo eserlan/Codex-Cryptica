@@ -7,7 +7,7 @@ export const howLongShouldATtrpgSessionBe: AnswerConfigInput = {
   question: "How long should a TTRPG session be?",
   kind: "framework",
   shortAnswer:
-    "There is no single ideal: most groups settle on two and a half to four hours of usable play, plus time for setup, breaks and packing up. Three hours is a dependable default for home and online games, four hours works well for a weekly evening with a break in the middle, and two hours can be plenty when the content is planned around the window. Pick a predictable slot you can sustain, tell players the expected finish time in advance, and shape the adventure to fit the time you have rather than squeezing a fixed amount of plot into every session.",
+    "There is no single ideal: most groups settle on a booking of two and a half to four hours, including setup, breaks and packing up. Three hours is a dependable default for home and online games, four hours works well for a weekly evening with a break in the middle, and a two-hour booking can be plenty when the content is planned around the window. Pick a predictable slot you can sustain, tell players the expected finish time in advance, and shape the adventure to fit the time you have rather than squeezing a fixed amount of plot into every session.",
   sections: [
     {
       kind: "prose",
@@ -49,7 +49,7 @@ export const howLongShouldATtrpgSessionBe: AnswerConfigInput = {
       items: [
         {
           term: "Home games",
-          text: "Evening sessions usually need 30 to 60 minutes of overhead in a three to four hour booking: catching up, recap, rules queries, a mid-session break, and packing up. Agree a firm end time so players with travel or early starts know what they are committing to. If evenings are tight, two to three focused hours often outlasts a four hour plan that regularly overruns.",
+          text: "Evening sessions usually need 30 to 60 minutes of overhead in a three to four hour booking: catching up, recap, rules queries, a mid-session break, and packing up. Agree a firm end time so players with travel or early starts know what they are committing to. If evenings are tight, a focused two to three hour booking often outlasts a four hour plan that regularly overruns.",
         },
         {
           term: "Local game store and open-table games",
@@ -57,7 +57,7 @@ export const howLongShouldATtrpgSessionBe: AnswerConfigInput = {
         },
         {
           term: "Online play",
-          text: "Fatigue and attention tend to favour shorter sessions. Video calls carry extra overhead from audio delays, screen sharing, and looking up rules, and sustained concentration on camera is tiring. Two to three hours with a brief pause often produces sharper play than a four hour call. If you run four hours online, build in a proper break away from screens.",
+          text: "Fatigue and attention tend to favour shorter sessions. Video calls carry extra overhead from audio delays, screen sharing, and looking up rules, and sustained concentration on camera is tiring. Sessions of two to three hours with a brief pause often produce sharper play than a four hour call. If you run four hours online, build in a proper break away from screens.",
         },
         {
           term: "One-shots and convention play",
@@ -93,7 +93,7 @@ export const howLongShouldATtrpgSessionBe: AnswerConfigInput = {
         },
         {
           term: "Stopping points and campaign continuity",
-          text: "Longer sessions can absorb a cliffhanger because the next game is far away. Shorter or less frequent sessions benefit from stopping at a resolved beat: a door opened, a clue found, a promise made, or a safe place reached. That gives the next recap a clean hook and avoids reopening an unfinished tactical position cold.",
+          text: "Session length and meeting frequency affect stopping points in different ways. A longer session gives you more room to reach a resolved beat; when there will be a long gap before the next game, ending on a clear development or decision also gives players a stronger reminder of where the story stands. For a shorter session, choose a natural pause such as a door opened, a clue found, a promise made, or a safe place reached, so the next recap does not have to reopen an unfinished tactical position cold.",
         },
       ],
     },
@@ -162,7 +162,7 @@ export const howLongShouldATtrpgSessionBe: AnswerConfigInput = {
         },
         {
           term: "The longer plan (4 hours booked, about 3 to 3.5 hours of play)",
-          text: "Same opening and same closing gallery, but add a brief mid-session break and an optional middle scene at the settlement archive or the merchants weighing office where players can recover the original contract. That extra scene is the one to trim if table discussion ran long earlier. Protect the final hour for the flooded gallery so the choice still lands without being rushed.",
+          text: "Same opening and same closing gallery, but add a brief mid-session break and an optional middle scene at the settlement archive or the merchants' weighing office where players can recover the original contract. That extra scene is the one to trim if table discussion ran long earlier. Protect the final hour for the flooded gallery so the choice still lands without being rushed.",
         },
         {
           term: "Why it works",
@@ -249,6 +249,18 @@ export const howLongShouldATtrpgSessionBe: AnswerConfigInput = {
       "answer-short-session",
       "answer-monthly-campaign",
       "answer-prepare-session-step-by-step",
+    ],
+    acknowledgedOverlap: [
+      {
+        with: "answer-pace-rpg-one-shot",
+        reason:
+          "This page compares general booked session lengths across play contexts; the one-shot page teaches how to pace content within a fixed single-session slot.",
+      },
+      {
+        with: "answer-short-session",
+        reason:
+          "This page compares general booked session lengths; the short-session page focuses on designing a complete episode for a constrained 30-minute slot.",
+      },
     ],
   },
   seo: {

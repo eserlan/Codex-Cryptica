@@ -231,6 +231,11 @@ export const howDoIPaceAnRpgOneShot: AnswerConfigInput = {
         reason:
           "The heist answer focuses on four-phase infiltration scores with alarm tracks, whereas this answer provides broad table-time management and time-budgeting heuristics for one-shots.",
       },
+      {
+        with: "answer-ttrpg-session-length",
+        reason:
+          "This answer teaches how to pace content within a fixed single-session slot; the session-length answer compares general booked lengths across play contexts.",
+      },
     ],
     relatedIntents: [
       "answer-write-one-shot-adventure",
