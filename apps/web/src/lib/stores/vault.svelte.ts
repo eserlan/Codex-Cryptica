@@ -550,14 +550,16 @@ export class VaultStore {
       }
 
       if (this.activeVaultId) {
-        await themeStore.loadForVault(this.activeVaultId);
-        await statSheetTemplates.loadForVault(this.activeVaultId);
-        await presentationTemplates.loadForVault(this.activeVaultId);
-        await this.lifecycleManager.loadEntityTemplates(this.activeVaultId);
-      }
-
-      if (this.activeVaultId) {
-        await this.loadFiles();
+        const vaultId = this.activeVaultId;
+        // The graph is styled from the theme, so it is loaded first. Templates
+        // are not needed to show the vault and load alongside its files.
+        await themeStore.loadForVault(vaultId);
+        await Promise.all([
+          statSheetTemplates.loadForVault(vaultId),
+          presentationTemplates.loadForVault(vaultId),
+          this.lifecycleManager.loadEntityTemplates(vaultId),
+          this.loadFiles(),
+        ]);
       }
       if (typeof window !== "undefined" && this.activeVaultId) {
         window.dispatchEvent(

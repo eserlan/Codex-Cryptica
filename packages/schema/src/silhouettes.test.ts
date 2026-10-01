@@ -131,6 +131,33 @@ describe("Silhouette artwork loading", () => {
     expect(uri).toBe(svgToDataUri(tintSilhouetteSvg(markup, "#5e3018")));
   });
 
+  it("shares tinted artwork and separates theme colours", async () => {
+    const fetchImpl = ok();
+    const first = await loadSilhouetteDataUri(definition, "#123456", {
+      fetch: fetchImpl,
+    });
+    const repeated = await loadSilhouetteDataUri(definition, "#123456", {
+      fetch: fetchImpl,
+    });
+    const otherTheme = await loadSilhouetteDataUri(definition, "#abcdef", {
+      fetch: fetchImpl,
+    });
+    expect(repeated).toBe(first);
+    expect(otherTheme).not.toBe(first);
+    expect(fetchImpl).toHaveBeenCalledTimes(1);
+  });
+
+  it("retries tinted artwork after a failed fetch", async () => {
+    expect(
+      await loadSilhouetteDataUri(definition, "#123456", {
+        fetch: vi.fn().mockRejectedValue(new Error("offline")),
+      }),
+    ).toBeNull();
+    expect(
+      await loadSilhouetteDataUri(definition, "#123456", { fetch: ok() }),
+    ).not.toBeNull();
+  });
+
   it("returns null when the artwork cannot be reached, and retries later", async () => {
     const offline = vi.fn(async () => {
       throw new TypeError("Failed to fetch");
