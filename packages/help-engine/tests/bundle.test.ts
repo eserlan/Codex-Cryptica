@@ -1,3 +1,4 @@
+import { KNOWN_HELP_IDS } from "./fixtures/help-article-ids";
 import { describe, expect, it } from "vitest";
 import {
   MAX_CHUNK_TOKENS,
@@ -18,16 +19,7 @@ const article = (id: string, content = "## A\nText about A.") => ({
   content,
 });
 
-const ids = [
-  "connections-tab",
-  "connection-labels",
-  "graph-basics",
-  "session-hub",
-  "in-app-generators",
-  "generate-related",
-  "random-tables-decks",
-];
-const articles = ids.map((id) =>
+const articles = KNOWN_HELP_IDS.map((id) =>
   article(
     id,
     `# ${id}\n\nIntro.\n\n## Section One\nOne body.\n\n## Section Two\nTwo body.`,

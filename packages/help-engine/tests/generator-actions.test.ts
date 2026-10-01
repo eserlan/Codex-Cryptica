@@ -1,3 +1,4 @@
+import { KNOWN_HELP_IDS } from "./fixtures/help-article-ids";
 import { describe, expect, it } from "vitest";
 import {
   GENERATORS,
@@ -11,15 +12,11 @@ import { retrieve } from "../src/retrieval";
 
 const bundle = buildBundle({
   features: FEATURE_REGISTRY,
-  articles: [
-    "connections-tab",
-    "connection-labels",
-    "graph-basics",
-    "session-hub",
-    "in-app-generators",
-    "generate-related",
-    "random-tables-decks",
-  ].map((id) => ({ id, title: id, content: `## ${id}\nText about ${id}.` })),
+  articles: KNOWN_HELP_IDS.map((id) => ({
+    id,
+    title: id,
+    content: `## ${id}\nText about ${id}.`,
+  })),
   commit: "t",
   builtAt: "t",
   channel: "production",
