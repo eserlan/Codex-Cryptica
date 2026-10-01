@@ -46,7 +46,6 @@ describe("HelpAssistantHost", () => {
   it("shows nothing while the flag is off, so users get static help only", () => {
     vi.stubEnv("VITE_HELP_ASSISTANT", "");
     render(HelpAssistantHost);
-    expect(screen.queryByTestId("help-assistant-button")).toBeNull();
     expect(screen.queryByTestId("help-assistant-panel")).toBeNull();
   });
 
@@ -54,20 +53,17 @@ describe("HelpAssistantHost", () => {
     vi.stubEnv("VITE_HELP_ASSISTANT", "true");
     discoveryPolicyStore.aiDisabled = true;
     render(HelpAssistantHost);
-    expect(screen.queryByTestId("help-assistant-button")).toBeNull();
+    expect(screen.queryByTestId("help-assistant-panel")).toBeNull();
   });
 
-  it("shows a help button that opens and closes the panel", async () => {
+  it("opens and closes the panel via the assistant store", async () => {
     vi.stubEnv("VITE_HELP_ASSISTANT", "true");
     render(HelpAssistantHost);
-    const button = screen.getByTestId("help-assistant-button");
-    expect(button.getAttribute("aria-expanded")).toBe("false");
-    await fireEvent.click(button);
+    helpAssistant.open();
     const dialog = await waitFor(() =>
       screen.getByRole("dialog", { name: "Help assistant" }),
     );
     expect(dialog.getAttribute("tabindex")).toBe("-1");
-    expect(button.getAttribute("aria-expanded")).toBe("true");
     await fireEvent.click(
       within(screen.getByRole("dialog")).getByRole("button", { name: "Close" }),
     );
