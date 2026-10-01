@@ -478,6 +478,9 @@ describe("AssetManager", () => {
         mockIO,
         mockImageProcessor,
         global.fetch,
+        undefined,
+        undefined,
+        vi.fn().mockResolvedValue("unknown"),
       );
 
       expect(await manager.resolveThumbnailUrl(vault, url)).toBe(url);
@@ -497,6 +500,8 @@ describe("AssetManager", () => {
           mockImageProcessor,
           global.fetch,
           clock,
+          undefined,
+          vi.fn().mockResolvedValue("unknown"),
         );
       };
 

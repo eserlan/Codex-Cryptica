@@ -1,6 +1,7 @@
 ---
 id: connection-labels
 title: Relationship Labels
+description: Label graph connections to show how two campaign entities are related.
 tags: [connections, graph, metadata]
 rank: 9
 ---

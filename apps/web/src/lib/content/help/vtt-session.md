@@ -1,6 +1,7 @@
 ---
 id: vtt-session
 title: Starting a VTT Session from Maps
+description: Start a tactical tabletop session from a campaign map with tokens, initiative, and multiplayer controls.
 tags: [vtt, map, session, encounter, tokens, multiplayer, p2p, initiative]
 rank: 4
 ---

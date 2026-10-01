@@ -1,6 +1,7 @@
 ---
 id: chat-commands
 title: Chat Commands
+description: Discover slash commands for creating, revising, connecting, and visualising campaign entities with the Lore Oracle.
 tags: [commands, discovery, connect, merge, oracle]
 rank: 7
 ---

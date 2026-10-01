@@ -1,6 +1,7 @@
 ---
 id: spatial-canvas
 title: Spatial Canvas
+description: Arrange campaign entities and hand-drawn notes on a free-form board with a persistent layout.
 tags: [layout, connections, workspace]
 rank: 4
 ---

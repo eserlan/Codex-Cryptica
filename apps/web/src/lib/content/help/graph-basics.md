@@ -1,6 +1,7 @@
 ---
 id: graph-basics
 title: Knowledge Graph
+description: Navigate campaign entities and relationships in the graph with selection, zoom, and connection shortcuts.
 tags: [navigation, connections]
 rank: 2
 ---

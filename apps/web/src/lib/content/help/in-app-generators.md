@@ -1,6 +1,7 @@
 ---
 id: in-app-generators
 title: In-App Campaign Generators
+description: Draft campaign characters, factions, settlements, items, and other content with the in-app generators.
 tags:
   [
     generator,

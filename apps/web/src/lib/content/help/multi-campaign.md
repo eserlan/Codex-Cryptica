@@ -1,6 +1,7 @@
 ---
 id: multi-campaign
 title: Multiple Vaults
+description: Create and switch between separate vaults to keep different campaigns and worlds apart.
 tags: [vault, setup, organization]
 rank: 14
 ---

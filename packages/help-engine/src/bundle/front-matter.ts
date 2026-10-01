@@ -24,8 +24,25 @@ function scalar(front: string, key: string): string | null {
 }
 
 function list(front: string, key: string): string[] | null {
-  const raw = scalar(front, key);
-  if (!raw) return null;
+  const lines = front.split(/\r?\n/);
+  const lineIndex = lines.findIndex((line) =>
+    new RegExp(`^${key}:\\s*(.*)$`).test(line),
+  );
+  if (lineIndex === -1) return null;
+
+  const match = new RegExp(`^${key}:\\s*(.*)$`).exec(lines[lineIndex]);
+  if (!match) return null;
+  let raw = match[1].trim();
+
+  if (!raw && lines[lineIndex + 1]?.trimStart().startsWith("[")) {
+    raw = lines[lineIndex + 1].trim();
+    let nextLine = lineIndex + 2;
+    while (!raw.includes("]") && nextLine < lines.length) {
+      raw += ` ${lines[nextLine].trim()}`;
+      nextLine++;
+    }
+  }
+
   if (!raw.startsWith("[") || !raw.endsWith("]")) return null;
   return raw
     .slice(1, -1)
@@ -72,8 +89,7 @@ export function validateHelpArticleFrontMatter(raw: string): string[] {
     errors.push("`id` must be stable kebab-case");
 
   if (!metadata.title) errors.push("missing required `title`");
-  if (!metadata.description)
-    errors.push("missing required `description`");
+  if (!metadata.description) errors.push("missing required `description`");
   else if (metadata.description.length > 240)
     errors.push("`description` must be concise (240 characters or fewer)");
 
@@ -91,7 +107,9 @@ export function validateHelpArticleFrontMatter(raw: string): string[] {
  * Validates every Help file together, including duplicate IDs. Errors include
  * the source path so CI points directly at the article that needs attention.
  */
-export function validateHelpCorpus(sources: readonly HelpCorpusSource[]): string[] {
+export function validateHelpCorpus(
+  sources: readonly HelpCorpusSource[],
+): string[] {
   const errors: string[] = [];
   const seen = new Map<string, string>();
 
@@ -104,7 +122,8 @@ export function validateHelpCorpus(sources: readonly HelpCorpusSource[]): string
     const id = metadata?.id;
     if (!id) continue;
     const previous = seen.get(id);
-    if (previous) errors.push(`${source}: duplicate id "${id}" (also in ${previous})`);
+    if (previous)
+      errors.push(`${source}: duplicate id "${id}" (also in ${previous})`);
     else seen.set(id, source);
   }
   return errors;

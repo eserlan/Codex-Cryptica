@@ -1,6 +1,7 @@
 ---
 id: fog-of-war
 title: Fog of War
+description: Hide undiscovered entities from the graph while keeping GM-only information out of players' view.
 tags: [exploration, graph, security]
 rank: 12
 ---
