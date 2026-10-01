@@ -160,6 +160,7 @@ export const howDoYouRunFactionsInASandboxCampaign: AnswerConfigInput = {
     "how-do-i-make-a-player-base-matter-in-an-rpg-campaign",
     "how-do-i-run-common-character-roles-in-a-fantasy-rpg",
     "how-do-i-run-exploration-in-a-huge-ruined-city",
+    "how-do-i-make-rival-captains-navies-and-pirate-factions-matter",
   ],
   discovery: {
     id: "answer-run-factions-sandbox",

@@ -166,6 +166,7 @@ export const whatShouldAnRpgSettlementContain: AnswerConfigInput = {
     "how-do-i-run-exploration-in-a-huge-ruined-city",
     "how-do-fantasy-cities-defend-against-flying-creatures-and-teleportation",
     "how-do-i-run-a-campaign-where-the-players-own-a-business",
+    "how-do-i-make-rival-captains-navies-and-pirate-factions-matter",
   ],
   discovery: {
     id: "answer-settlement-contents",
