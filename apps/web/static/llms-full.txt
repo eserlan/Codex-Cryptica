@@ -2327,7 +2327,7 @@ Reference answers to real RPG and worldbuilding questions, indexed at https://co
 
 ### [How do I create interesting islands and ports for a pirate campaign?](https://codexcryptica.com/answers/how-do-i-create-interesting-islands-and-ports-for-a-pirate-campaign)
 
-**Direct answer:** Give each island or port a clear identity, one immediate problem the locals cannot solve alone, and a reason strangers matter there. Anchor it with a landmark sailors can see and name, a faction that sets local law and prices, a trade need that explains what it exports, imports, or lacks, and two or three nearby sites such as a hidden cove, wreck, reef, or ruin that generate adventure. Then record one visible change to apply when the crew returns, so return visits show consequence rather than repetition.
+**Direct answer:** Give each island or port a clear identity, an active pressure locals are already responding to, and a reason outsiders could change the balance. Establish why ships come, where they can land or anchor, what the terrain and season make difficult, and who controls law, access, navigation, services, trade, and local legitimacy. Add a landmark, an economic role or trade need, useful ship services, and nearby or inland sites. Track the pressure, factions, and resources so the crew's actions and time away shape what they find on return.
 
 ### [How do I decide what a settlement produces, imports, and exports?](https://codexcryptica.com/answers/how-do-i-decide-what-a-settlement-produces-imports-and-exports)
 
@@ -2368,6 +2368,10 @@ Reference answers to real RPG and worldbuilding questions, indexed at https://co
 ### [How do I make rival captains, navies, and pirate factions matter?](https://codexcryptica.com/answers/how-do-i-make-rival-captains-navies-and-pirate-factions-matter)
 
 **Direct answer:** Give every rival captain, navy, and pirate faction a concrete goal, a territory or resource it depends on, and a clock that advances whether the crew interferes or not. Between sessions move each clock by one step, translate the result into something the players can see in prices, patrols, flags, or port control, and let reputation carry consequences from one harbour to the next. Recurring rivals who change after a win or loss create choices that reshape the map instead of a fixed plot that waits for the party.
+
+### [How do I make sea travel interesting in a TTRPG?](https://codexcryptica.com/answers/how-do-i-make-sea-travel-interesting-in-a-ttrpg)
+
+**Direct answer:** Make sea travel interesting by deciding in advance which voyages earn close attention and which can be summarised, then running the important ones as a small set of linked choices about weather, navigation, supplies, repairs, and crew. Give the crew two or three routes with clear trade-offs between speed, safety, secrecy, and profit, seed each leg with sightings, rumours, wrecks, and landmarks that reveal the setting, and carry the costs and discoveries forward so the next voyage begins with consequences rather than a fresh random table.
 
 ### [How do I organise my GM notes and references when running an RPG in person?](https://codexcryptica.com/answers/how-do-i-organise-gm-notes-for-in-person-play)
 
@@ -2436,6 +2440,10 @@ Reference answers to real RPG and worldbuilding questions, indexed at https://co
 ### [How do I run political intrigue and faction play in an RPG?](https://codexcryptica.com/answers/how-do-i-run-political-intrigue-and-faction-play)
 
 **Direct answer:** Start with three to five factions that want incompatible things. Give each one a goal, a pressure forcing it to act now, something it can offer, something it fears, and a next move it will make if nobody interferes. Put the player characters where those interests overlap, let factions keep acting when the party does nothing, and treat information, obligations and leverage as seriously as combat power.
+
+### [How do I run ship-to-ship combat without sidelining half the party?](https://codexcryptica.com/answers/how-do-i-run-ship-to-ship-combat-without-sidelining-the-party)
+
+**Direct answer:** Run ship-to-ship combat as a set of simultaneous station problems so every character has a decision each round. Treat the ship as a shared platform with distinct stations for helm and navigation, guns, damage control, lookout and signals, boarding preparation, and morale or command, and let players claim a station each round based on what the situation needs rather than locking them to one job. Pair that with visible objectives, environmental complications, and a clean handover to boarding, chase, or escape so non-martial and non-nautical characters always have useful choices.
 
 ### [How do I run spies and infiltrators in an RPG?](https://codexcryptica.com/answers/how-do-i-run-spies-and-infiltrators-in-an-rpg)
 
