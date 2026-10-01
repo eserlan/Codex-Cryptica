@@ -27,7 +27,15 @@ A vault can use only **one app-managed cloud destination at a time**: either **G
 
 ## What is uploaded
 
-Cloud Backup stores the contents needed to restore the vault, including your entities and notes, labels, maps, canvases, session journals, and referenced images/media that can be read at save time.
+Cloud Backup stores the vault data needed to rebuild your world, including entities and notes, labels, maps, canvases, and session journals.
+
+For vault-owned local files, the current backup payload includes these asset classes:
+
+- an entity's **image** and **thumbnail**;
+- a map's background **asset**; and
+- a map's **fog-of-war mask**.
+
+Other referenced files are not automatically collected. In particular, **sound-bite audio files are not currently backed up**, so keep a separate copy of audio you need to preserve. Remote URLs are kept as references rather than downloaded into the backup.
 
 The copy is hosted on third-party cloud infrastructure. It is **not end-to-end encrypted**, so Codex Cryptica and its hosting provider are technically able to read the stored data. The Cloud Backup consent screen is the authoritative summary shown before anything leaves your device.
 
@@ -48,7 +56,7 @@ The Cloud Backup panel reports states such as:
 
 You can also use **Save to cloud** to push changes manually when you want an immediate backup.
 
-If Codex cannot read an individual note or media file during a save, it reports that the backup is partial rather than silently pretending everything was stored.
+If Codex cannot read an entity body or one of the local image/map assets that Cloud Backup supports, it reports that the backup is partial rather than silently pretending everything was stored.
 
 ## Recovery key
 
@@ -64,7 +72,7 @@ Open **Settings → Vault → Cloud copy → Codex Cryptica Cloud** and choose t
 - To restore a backup made on another device, paste its recovery key.
 - **Load from cloud** restores into a **new local vault**. It does not silently replace the vault you currently have open.
 
-If some media cannot be recovered, the restore completes with a warning naming the missing items rather than hiding the problem.
+If backed-up assets cannot be recovered, the restore still completes but reports **how many** assets are missing. It does not currently list each missing asset by name.
 
 ## Attach an existing local vault to the same backup
 
