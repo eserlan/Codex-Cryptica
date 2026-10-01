@@ -2401,6 +2401,10 @@ Reference answers to real RPG and worldbuilding questions, indexed at https://co
 
 **Direct answer:** Treat the wider battle as a changing environment that surrounds player-scale scenes, not as hundreds of combats to resolve one by one. Give the battle a trajectory of its own, then let the party's actions alter it where they have plausible leverage. Track a handful of visible states such as fronts, momentum or morale, and intercut updates with focused scenes so the war feels consequential whilst play stays at a scale the table can run.
 
+### [How do I run a pirate campaign that feels like exploration rather than a series of naval battles?](https://codexcryptica.com/answers/how-do-i-run-a-pirate-campaign-focused-on-exploration)
+
+**Direct answer:** Structure a pirate campaign around a voyage, discovery, and consequence loop rather than encounters at sea: each voyage presents two or three competing rumours, maps, or treasure leads that point to distinct islands, and each discovery visibly changes prices, patrols, alliances, or sea routes so the next voyage begins with new choices. Keep rival crews on their own clocks between sessions, stock every island as a different kind of adventure site, and treat the sea as connective tissue that links discoveries instead of empty travel time between fights.
+
 ### [How do I run a rogue or scout without splitting the party?](https://codexcryptica.com/answers/how-do-i-run-a-rogue-or-scout-without-splitting-the-party)
 
 **Direct answer:** Characters can be apart without excluding their players. Let the scout move ahead, but keep each solo beat short: resolve its uncertainty, then return information, pressure, or a choice to the group while they can still act. The rogue earns useful information, position, or access; companions can watch exits, prepare a diversion, or change the conditions outside.
