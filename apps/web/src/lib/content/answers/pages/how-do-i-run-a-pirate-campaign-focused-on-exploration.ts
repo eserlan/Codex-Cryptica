@@ -46,7 +46,7 @@ export const howDoIRunAPirateCampaignFocusedOnExploration: AnswerConfigInput = {
       kind: "list",
       heading: "Make islands distinct adventure sites",
       intro:
-        "Keep this summary light; see [how to create interesting islands and ports for a pirate campaign](/answers/how-do-i-create-interesting-islands-and-ports-for-a-pirate-campaign) for the full framework. Islands can matter beyond their harbour, and each should offer a different reason to explore.",
+        "Keep this summary light; the full framework for creating interesting islands and ports is in the related answer. Islands can matter beyond their harbour, and each should offer a different reason to explore.",
       items: [
         {
           term: "Assign one primary mode of play per site",
@@ -98,7 +98,7 @@ export const howDoIRunAPirateCampaignFocusedOnExploration: AnswerConfigInput = {
       items: [
         {
           term: "Give each rival a reason and a next move",
-          text: "Rivals act for reasons independent of the party: a squadron may try to blockade a strait before a convoy sails; a company may pursue a wreck to fund a well; a captain may seek powder before chasing a ruin. Track a clear next move, an objective and its resources, a scheduled event, a simple faction state, or an optional clock when escalation matters. See [how to make rival captains and pirate factions matter](/answers/how-do-i-make-rival-captains-navies-and-pirate-factions-matter) for the deeper framework.",
+          text: "Rivals act for reasons independent of the party: a squadron may try to blockade a strait before a convoy sails; a company may pursue a wreck to fund a well; a captain may seek powder before chasing a ruin. Track a clear next move, an objective and its resources, a scheduled event, a simple faction state, or an optional clock when escalation matters. See the related answer on making rival captains and pirate factions matter for the deeper framework.",
         },
         {
           term: "Let the world move when someone has motive and opportunity",
@@ -155,7 +155,7 @@ export const howDoIRunAPirateCampaignFocusedOnExploration: AnswerConfigInput = {
       kind: "example",
       heading: "Worked example: the same archipelago, two ways",
       paragraphs: [
-        "The crew sails the sloop Mercy's Wake from Greyhaven with two known leads. Old Joss the pilot offers a tide-bound reef cut past the wreck of the Saint Elmo for a share of whatever they raise. Mistress Varl's clerk at the factor's store will pay for a diver to recover the same pay chest and use it to fund a new well. A third sail, rival captain Selene Varga, is known to be short of powder and last seen taking on shot at Skerry Cove. The archipelago holds Greyhaven, Saltmouth behind the white Jaws cliffs, Ash Cove in the mangroves, the Elmo wreck on the outer reef, and the ruined battery on Widow Hill. The crew could ignore all three leads and follow the strange current south of Widow Hill; the GM can use the same voyage, discovery, and consequence framework to improvise what that choice uncovers.",
+        "The crew sails the sloop Mercy's Wake from Greyhaven with two known leads. Old Joss the pilot offers a tide-bound reef cut past the wreck of the Saint Elmo for a share of whatever they raise. Mistress Varl's clerk at the factor's store will pay for a diver to recover the same pay chest and use it to fund a new well. A third sail, rival captain Selene Varga, is known to be short of powder and last seen taking on shot at Skerry Cove; she wants enough powder to reach and claim the Elmo wreck. The archipelago holds Greyhaven, Saltmouth behind the white Jaws cliffs, Ash Cove in the mangroves, the Elmo wreck on the outer reef, and the ruined battery on Widow Hill. The crew could ignore all three leads and follow the strange current south of Widow Hill; the GM can use the same voyage, discovery, and consequence framework to improvise what that choice uncovers.",
       ],
       items: [
         {
@@ -172,11 +172,11 @@ export const howDoIRunAPirateCampaignFocusedOnExploration: AnswerConfigInput = {
         },
         {
           term: "Consequence that rewrites the next voyage",
-          text: "They dive the Elmo and raise the chest, but spend two days doing it. In that time Varga completes her powder run and moves to blockade the harbour mouth at Saltmouth, Varl's factor raises the powder price and raises the company flag over the battery at Widow Hill, and Old Joss now charges double for guiding any crew that backed the company. Each change follows an actor's existing aim and opportunity. If the crew had taken Varl's contract, they would have had a legal claim and a lower powder price, but Joss would have refused them as pilots and Varga would have contested the wreck in force. Because the corrected sounding stays on their chart, the reef route is safer next time, yet the flagged battery and blockade make Saltmouth a different harbour on return. The next voyage begins with a real choice: use the safer channel to slip past the blockade to Ash Cove, bargain with the flagged battery, or run to Greyhaven for timber to properly repair the jury-braced mast.",
+          text: "They dive the Elmo and raise the chest, but spend two days doing it. Varga secures powder and reaches the wreck too late; with the chest gone, she returns to Skerry Cove to seek another opportunity. Varl's factor has not received the recovery payment, so the new well remains unfunded. If the crew had taken Varl's contract, they would have had a legal claim to the chest and Varga would have contested their recovery. The corrected sounding stays on their chart, making the reef route safer next time, while the unpaid well gives the crew a reason to revisit Varl's offer. The next voyage begins with a real choice: follow the strange current south of Widow Hill, find another way to fund the well, or run to Greyhaven for timber to properly repair the jury-braced mast.",
         },
         {
           term: "Why it works",
-          text: "The table chose a destination, then played a leg where different roles shaped the passage and a sighting revealed the coast's trade and patrol story. The discovery was not interchangeable: the reef cut demanded seamanship, the wreck demanded a tide-bound dive, and the harbours offered different patrons and prices. The players corrected their own chart, while the flag and changed price showed who controlled the battery and the hull remembered the blow it took. Even the sea between the cays taught them about the region. The rival's move followed her goal and available resources; choosing another lead alone would not have made the wreck disappear.",
+          text: "The table chose a destination, then played a leg where different roles shaped the passage and a sighting revealed the coast's trade and patrol story. The discovery was not interchangeable: the reef cut demanded seamanship, the wreck demanded a tide-bound dive, and the harbours offered different patrons and prices. The players corrected their own chart, while the unfunded well showed what the missed contract meant and the hull remembered the blow it took. Even the sea between the cays taught them about the region. The rival's move followed her goal and available resources; choosing another lead alone would not have made the wreck disappear.",
         },
       ],
     },
@@ -328,7 +328,7 @@ export const howDoIRunAPirateCampaignFocusedOnExploration: AnswerConfigInput = {
   seo: {
     title: "How to Run a Pirate Campaign as Exploration | Codex Cryptica",
     description:
-      "Run a pirate campaign around discovery with a flexible voyage, discovery, and consequence rhythm. Keep the chart open to player goals, use deadlines selectively, and let discoveries change later voyages.",
+      "Run a pirate campaign around discovery, player-led voyages, and consequences that shape later journeys.",
     image:
       "https://assets.codexcryptica.com/og/how-do-i-run-a-pirate-campaign-focused-on-exploration.jpg",
     imageAlt:
