@@ -697,7 +697,7 @@ describe("published answers", () => {
     );
   });
 
-  it("advances the pirate blockade clock from preparation to active blockade", () => {
+  it("grounds pirate faction moves in fictional time and circumstance", () => {
     const answer =
       answers["how-do-i-make-rival-captains-navies-and-pirate-factions-matter"];
     const activeVersion = answer.sections.find(
@@ -714,7 +714,10 @@ describe("published answers", () => {
     )?.text;
 
     expect(text).toContain("step 2:");
-    expect(text).toContain("advances Hale to step 3");
+    expect(text).toContain("On a week-long voyage");
+    expect(text).toContain("time, ships, and orders");
+    expect(text).toContain("letters of marque authorising licensed privateers");
+    expect(text).toContain("those moves stall or change instead");
     expect(text).not.toContain(
       "(step 3: sloops now stop and search every brig)",
     );
