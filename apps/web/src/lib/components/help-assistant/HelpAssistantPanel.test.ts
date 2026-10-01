@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 import { fireEvent, render, screen, waitFor } from "@testing-library/svelte";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { sanitizeHelpContext, type HelpAnswer } from "help-engine";
 import type { HelpAskResult } from "$lib/services/help-assistant/help-client";
 import { HelpAssistantStore } from "$lib/stores/help-assistant/help-assistant.svelte";
@@ -190,6 +190,82 @@ describe("HelpAssistantPanel", () => {
     expect(screen.getByText("Looking that up…")).toBeTruthy();
     expect(screen.getByRole("button", { name: "Cancel" })).toBeTruthy();
     assistant.reset();
+  });
+});
+
+describe("HelpAssistantPanel — on-screen keyboard", () => {
+  class FakeViewport extends EventTarget {
+    constructor(
+      public height: number,
+      public offsetTop = 0,
+    ) {
+      super();
+    }
+  }
+  let vv: FakeViewport;
+
+  beforeEach(() => {
+    vv = new FakeViewport(window.innerHeight);
+    Object.defineProperty(window, "visualViewport", {
+      value: vv,
+      configurable: true,
+    });
+  });
+
+  afterEach(() => {
+    Object.defineProperty(window, "visualViewport", {
+      value: undefined,
+      configurable: true,
+    });
+  });
+
+  it("keeps the default position while no keyboard is showing", async () => {
+    const { assistant } = setup();
+    assistant.open();
+    const panel = await screen.findByTestId("help-assistant-panel");
+    expect(panel.style.bottom).toBe("");
+    expect(panel.style.maxHeight).toBe("");
+  });
+
+  it("lifts the panel above the keyboard and fits it to the visible area, so the question box stays reachable", async () => {
+    const { assistant } = setup();
+    assistant.open();
+    const panel = await screen.findByTestId("help-assistant-panel");
+
+    vv.height = window.innerHeight - 320; // a 320px keyboard
+    vv.dispatchEvent(new Event("resize"));
+
+    await waitFor(() => expect(panel.style.bottom).toBe("328px"));
+    expect(panel.style.maxHeight).toBe(`${window.innerHeight - 320 - 16}px`);
+  });
+
+  it("puts the panel back when the keyboard closes", async () => {
+    const { assistant } = setup();
+    assistant.open();
+    const panel = await screen.findByTestId("help-assistant-panel");
+    vv.height = window.innerHeight - 320;
+    vv.dispatchEvent(new Event("resize"));
+    await waitFor(() => expect(panel.style.bottom).not.toBe(""));
+
+    vv.height = window.innerHeight;
+    vv.dispatchEvent(new Event("resize"));
+    await waitFor(() => expect(panel.style.bottom).toBe(""));
+    expect(panel.style.maxHeight).toBe("");
+  });
+
+  it("stops following the viewport once the panel is closed", async () => {
+    const remove = vi.spyOn(vv, "removeEventListener");
+    const { assistant } = setup();
+    assistant.open();
+    await screen.findByTestId("help-assistant-panel");
+    expect(remove).not.toHaveBeenCalled();
+
+    assistant.close();
+
+    await waitFor(() =>
+      expect(remove).toHaveBeenCalledWith("resize", expect.any(Function)),
+    );
+    expect(remove).toHaveBeenCalledWith("scroll", expect.any(Function));
   });
 });
 

@@ -2,6 +2,7 @@
   import { fly } from "svelte/transition";
   import { quintOut } from "svelte/easing";
   import type { GuidanceAction } from "help-engine";
+  import { KeyboardInset } from "$lib/services/help-assistant/keyboard-inset.svelte";
   import type { HelpAssistantStore } from "$lib/stores/help-assistant/help-assistant.svelte";
   import HelpActionOffer from "./HelpActionOffer.svelte";
   import HelpAssistantComposer from "./HelpAssistantComposer.svelte";
@@ -27,6 +28,17 @@
     typeof window !== "undefined" &&
     (window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches ?? false);
 
+  // On a phone the on-screen keyboard covers the page instead of resizing it,
+  // which would leave the question box underneath. While it is up, sit just
+  // above it and fit the panel to what is actually visible.
+  const keyboard = new KeyboardInset();
+  $effect(() => (assistant.isOpen ? keyboard.start() : undefined));
+  const keyboardLift = $derived(
+    keyboard.keyboardOpen
+      ? `bottom: ${keyboard.inset + 8}px; max-height: ${keyboard.visibleHeight - 16}px;`
+      : undefined,
+  );
+
   function onKeydown(event: KeyboardEvent) {
     if (event.key === "Escape") {
       event.stopPropagation();
@@ -49,6 +61,7 @@
       duration: reduceMotion() ? 0 : 250,
       easing: quintOut,
     }}
+    style={keyboardLift}
     onkeydown={onKeydown}
     onoutrostart={(event) =>
       event.currentTarget.setAttribute("aria-hidden", "true")}
