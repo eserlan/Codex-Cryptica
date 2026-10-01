@@ -481,7 +481,7 @@ describe("AssetManager", () => {
         undefined,
         undefined,
         // Keep the fallback deterministic: jsdom does not load remote images.
-        async () => "unknown",
+        vi.fn().mockResolvedValue("unknown"),
       );
 
       expect(await manager.resolveThumbnailUrl(vault, url)).toBe(url);
@@ -503,7 +503,7 @@ describe("AssetManager", () => {
           clock,
           undefined,
           // Exercise fetch failures without waiting for jsdom image events.
-          async () => "unknown",
+          vi.fn().mockResolvedValue("unknown"),
         );
       };
 

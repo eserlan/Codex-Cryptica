@@ -1,6 +1,7 @@
 ---
 id: front-page
 title: World Front Page
+description: Use your vault's front page to share a world briefing, recent activity, and shortcuts to campaign tools.
 tags: [world, landing, vault]
 rank: 18
 ---

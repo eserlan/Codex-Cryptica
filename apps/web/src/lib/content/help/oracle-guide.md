@@ -1,6 +1,7 @@
 ---
 id: oracle-guide
 title: The Lore Oracle
+description: Use the Lore Oracle to ask questions and generate content grounded in your campaign notes.
 tags: [ai, gemini, rag]
 rank: 5
 ---

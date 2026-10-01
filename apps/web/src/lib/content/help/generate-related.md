@@ -1,6 +1,7 @@
 ---
 id: generate-related
 title: Generating Related Entities
+description: Expand your campaign with new entities grounded in a selected entity and its nearby connections.
 tags: [oracle, generate, create, entities, connections]
 rank: 8
 ---

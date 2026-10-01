@@ -1,6 +1,7 @@
 ---
 id: node-merging
 title: Merging Nodes
+description: Combine duplicate graph entities into one record while preserving useful lore and connections.
 tags: [organization, cleanup, ai]
 rank: 10
 ---

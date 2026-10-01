@@ -1,6 +1,7 @@
 ---
 id: themes
 title: Themes
+description: Change the colours, typography, and textures used across your Codex Cryptica workspace.
 tags: ["interface", "themes", "customization"]
 rank: 15
 ---

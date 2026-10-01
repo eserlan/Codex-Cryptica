@@ -1,6 +1,7 @@
 ---
 id: map-mode
 title: Map Mode
+description: Place campaign locations on a map and navigate your world with spatial pins.
 tags: [map, spatial, pins, fog of war, hierarchy]
 rank: 3
 ---

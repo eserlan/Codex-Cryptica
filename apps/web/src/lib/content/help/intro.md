@@ -1,6 +1,7 @@
 ---
 id: intro
 title: Getting Started
+description: Learn how Codex Cryptica stores campaign notes and how to begin building a local, connected world.
 tags: [basics, vault, workflow]
 rank: 1
 ---

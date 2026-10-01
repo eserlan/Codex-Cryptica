@@ -1,6 +1,7 @@
 ---
 id: quicknote
 title: QuickNotes & Fast Scratchpad
+description: Capture private campaign ideas in a fast, locally saved scratchpad without leaving your current view.
 tags: [basics, quicknote, scratchpad, ai, elevation]
 rank: 11
 ---

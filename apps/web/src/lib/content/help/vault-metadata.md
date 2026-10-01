@@ -1,6 +1,7 @@
 ---
 id: vault-metadata
 title: Vault Structure
+description: Understand the Markdown files and YAML metadata that make up a portable Codex Cryptica vault.
 tags: [markdown, yaml, technical]
 rank: 17
 ---

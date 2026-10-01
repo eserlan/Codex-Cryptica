@@ -11,7 +11,11 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { FEATURE_REGISTRY } from "../src/registry";
 import { buildBundle } from "../src/bundle/build";
-import { parseHelpArticle } from "../src/bundle/front-matter";
+import {
+  parseHelpArticle,
+  validateHelpCorpus,
+  type HelpCorpusSource,
+} from "../src/bundle/front-matter";
 import type { HelpArticleSource } from "../src/bundle/types";
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -30,11 +34,22 @@ const out = resolve(
 );
 const channel = arg("channel") === "staging" ? "staging" : "production";
 
+const sources: HelpCorpusSource[] = readdirSync(helpDir)
+  .filter((file: string) => file.endsWith(".md"))
+  .sort()
+  .map((file) => ({
+    source: file,
+    raw: readFileSync(join(helpDir, file), "utf8"),
+  }));
+
+const metadataErrors = validateHelpCorpus(sources);
+if (metadataErrors.length > 0) {
+  throw new Error(`Invalid Help corpus:\n${metadataErrors.join("\n")}`);
+}
+
 const articles: HelpArticleSource[] = [];
-for (const file of readdirSync(helpDir).filter((f: string) =>
-  f.endsWith(".md"),
-)) {
-  const article = parseHelpArticle(readFileSync(join(helpDir, file), "utf8"));
+for (const { raw } of sources) {
+  const article = parseHelpArticle(raw);
   if (article) articles.push(article);
 }
 

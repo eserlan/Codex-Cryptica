@@ -2,6 +2,7 @@
 id: adventure-mode
 title: Solo Adventure Mode
 description: Play a persistent, vault-grounded adventure with Oracle as GM.
+tags: [adventure, oracle, solo, campaign]
 ---
 
 # Solo Adventure Mode

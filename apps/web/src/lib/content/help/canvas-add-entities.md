@@ -1,6 +1,7 @@
 ---
 id: canvas-add-entities
 title: Adding Entities to Canvas
+description: Add campaign entities to a spatial canvas from the Explorer, graph, or search results.
 tags: [canvas, organization, context-menu]
 rank: 5
 ---

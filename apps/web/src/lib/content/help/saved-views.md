@@ -1,6 +1,7 @@
 ---
 id: saved-views
 title: Saved Views & View Sync
+description: Save reusable graph and table filters as named views that keep matching entities together.
 tags: [views, presets, table, graph, filters, navigation]
 rank: 6
 ---

@@ -1,6 +1,7 @@
 ---
 id: importing
 title: Importing Notes
+description: Turn text, Word, and JSON notes into structured campaign entities and relationships.
 tags: [import, oracle, resume]
 rank: 8
 ---

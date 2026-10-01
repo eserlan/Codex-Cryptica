@@ -1,6 +1,7 @@
 ---
 id: gemini-api-key
 title: Acquiring a OpenAI/Luna API Key
+description: Set up the AI provider key used by the Lore Oracle in Codex Cryptica.
 tags: [ai, gemini, setup]
 rank: 6
 ---
