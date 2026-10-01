@@ -39,7 +39,7 @@ export const howDoIMakeRivalCaptainsNaviesAndPirateFactionsMatter: AnswerConfigI
           },
           {
             term: "Clock with visible steps",
-            text: "Track a move with a simple 4-step clock if that helps (for example: rumour, preparation, attempt, outcome). The clock is a reminder of pressure, not a metronome: a move can advance, stall, lose resources, change direction, branch into a new goal, be abandoned, or resolve early when circumstances change. Keep its steps concrete enough to show later as a changed patrol or a new flag over the fort.",
+            text: "Track a move with a simple 4-step clock if that helps (for example: rumour, preparation, attempt, outcome). The clock is a reminder of pressure, not a metronome: a move can advance, stall, lose resources, change direction, branch into a new goal, be abandoned, or resolve early when circumstances change. A setback can move the clock backwards when it undoes an achieved step; for example, scattered ships may have to regroup before a blockade can proceed. Keep its steps concrete enough to show later as a changed patrol or a new flag over the fort.",
           },
           {
             term: "Relationship to at least one other faction",

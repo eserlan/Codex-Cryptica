@@ -721,6 +721,13 @@ describe("published answers", () => {
     expect(text).not.toContain(
       "(step 3: sloops now stop and search every brig)",
     );
+
+    const clockGuidance = answer.sections
+      .filter((section) => section.kind === "list")
+      .flatMap((section) => section.items ?? [])
+      .find((item) => item.term === "Clock with visible steps")?.text;
+    expect(clockGuidance).toContain("move the clock backwards");
+    expect(clockGuidance).toContain("scattered ships may have to regroup");
   });
 
   it("records the reciprocal scope of the sandbox and pirate faction answers", () => {
