@@ -168,6 +168,7 @@ export const whatShouldAnRpgSettlementContain: AnswerConfigInput = {
     "how-do-i-run-a-campaign-where-the-players-own-a-business",
     "how-do-i-make-rival-captains-navies-and-pirate-factions-matter",
     "how-do-i-create-interesting-islands-and-ports-for-a-pirate-campaign",
+    "how-do-i-run-ship-to-ship-combat-without-sidelining-the-party",
   ],
   discovery: {
     id: "answer-settlement-contents",

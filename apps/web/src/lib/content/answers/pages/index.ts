@@ -32,6 +32,7 @@ import { howDoIRunCommonCharacterRolesInASciFiOrSpaceOperaRpg } from "./how-do-i
 import { howDoIRunExplorationInAHugeRuinedCity } from "./how-do-i-run-exploration-in-a-huge-ruined-city";
 import { howDoIRunHackersOrNetrunnersWithoutSplittingTheParty } from "./how-do-i-run-hackers-or-netrunners-without-splitting-the-party";
 import { howDoIRunPoliticalIntrigueAndFactionPlay } from "./how-do-i-run-political-intrigue-and-faction-play";
+import { howDoIRunShipToShipCombatWithoutSideliningTheParty } from "./how-do-i-run-ship-to-ship-combat-without-sidelining-the-party";
 import { howDoIRunSpiesAndInfiltratorsInAnRpg } from "./how-do-i-run-spies-and-infiltrators-in-an-rpg";
 import { howDoIStartGmingForTheFirstTime } from "./how-do-i-start-gming-for-the-first-time";
 import { howDoITakeUsefulRpgNotesDuringPlay } from "./how-do-i-take-useful-rpg-notes-during-play";
@@ -162,6 +163,7 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     howDoIRunExplorationInAHugeRuinedCity,
     howDoIRunHackersOrNetrunnersWithoutSplittingTheParty,
     howDoIRunPoliticalIntrigueAndFactionPlay,
+    howDoIRunShipToShipCombatWithoutSideliningTheParty,
     howDoIRunSpiesAndInfiltratorsInAnRpg,
     howDoIStartGmingForTheFirstTime,
     howDoITakeUsefulRpgNotesDuringPlay,

@@ -168,6 +168,7 @@ export const howDoYouMakeTravelInterestingInATabletopRpg: AnswerConfigInput = {
     "how-do-i-run-exploration-in-a-huge-ruined-city",
     "how-do-i-make-rival-captains-navies-and-pirate-factions-matter",
     "how-do-i-create-interesting-islands-and-ports-for-a-pirate-campaign",
+    "how-do-i-run-ship-to-ship-combat-without-sidelining-the-party",
   ],
   discovery: {
     id: "answer-travel-interesting",
