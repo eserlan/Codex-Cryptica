@@ -49,6 +49,14 @@ const EXTERNAL_FAILURE_TTL_MS = 5 * 60_000;
 const UNREACHABLE_TTL_MS = 24 * 60 * 60_000;
 
 /**
+ * How long a host that serves images but sends no CORS headers is remembered
+ * across sessions. The CORS fetch for such a host can never succeed (and so a
+ * thumbnail can never be made), but it fails with a console error for every
+ * image on every load. A host that later adds CORS is noticed after this.
+ */
+const NO_CORS_HOST_TTL_MS = 7 * 24 * 60 * 60_000;
+
+/**
  * Whether the browser can load a URL as a plain image, which needs no CORS
  * headers. `unknown` when it cannot be told (no browser, or it took too long).
  */
@@ -112,14 +120,27 @@ export class AssetManager {
   /**
    * When each unreachable external image last failed, by URL. `opaque` marks a
    * failure whose status was hidden from us (a network or CORS error), as
-   * opposed to a timeout or an HTTP error we could read. `probed` records that
-   * the browser has already been asked to load it plainly for this failure, so
-   * that is decided once per failure window and not on every resolution.
+   * opposed to a timeout or an HTTP error we could read.
    */
   private failedExternal = new Map<
     string,
-    { at: number; opaque: boolean; probed: boolean }
+    {
+      at: number;
+      opaque: boolean;
+      /** What loading it as a plain image showed, once that was asked. */
+      probe?: "loaded" | "failed" | "unknown";
+    }
   >();
+  /** Hosts known to serve images without CORS headers, and when they were learned. */
+  private corslessHosts = new Map<string, number>();
+  /** Hosts whose marker has already been looked for on disk this session. */
+  private corslessChecked = new Set<string>();
+  /**
+   * The first attempt at each host, so a batch of images from one host waits for
+   * that one attempt to say whether the host allows CORS instead of every image
+   * failing on its own.
+   */
+  private hostScouts = new Map<string, Promise<void>>();
   /**
    * When each URL was marked unreachable, so the marker is read from disk once.
    * Held with its time, not as a bare set, so it expires with the same
@@ -370,7 +391,7 @@ export class AssetManager {
           // Marked unreachable (now or by an earlier session): no request at
           // all, and nothing handed to Cytoscape to request instead.
           if (this.isFreshInSession(cleanPath)) return "";
-          if (await this.cannotBeLoadedAtAll(cleanPath)) {
+          if (this.cannotBeLoadedAtAll(cleanPath)) {
             await this.markUnreachable(vaultHandle, cleanPath);
             return "";
           }
@@ -450,7 +471,10 @@ export class AssetManager {
    * (blocked by CORS, gone, too slow) is remembered for a while, so a graph
    * with hundreds of dead links does not retry each on every load.
    */
-  private async fetchExternal(url: string): Promise<Blob | null> {
+  private async fetchExternal(
+    url: string,
+    vaultHandle?: FileSystemDirectoryHandle,
+  ): Promise<Blob | null> {
     if (this.deadExternal.has(url) || this.hasRecentFailure(url)) return null;
     try {
       const response = await this.fetcher(url, {
@@ -458,22 +482,44 @@ export class AssetManager {
         signal: AbortSignal.timeout(EXTERNAL_FETCH_TIMEOUT_MS),
       });
       if (!response.ok) {
-        if (response.status === 404 || response.status === 410) {
-          this.deadExternal.add(url);
-          this.onDeadExternalImage?.(url);
-        }
+        this.noteDeadStatus(url, response.status);
         throw new Error(`HTTP ${response.status}`);
       }
       return await response.blob();
     } catch (error) {
-      this.failedExternal.set(url, {
-        at: this.clock.now(),
-        // A TypeError is how fetch reports a network or CORS failure, where the
-        // response (and so any 404) is hidden from us.
-        opaque: error instanceof TypeError,
-        probed: false,
-      });
+      await this.recordFailure(url, error, vaultHandle);
       return null;
+    }
+  }
+
+  /** A 404 or 410 means the image is gone for good, not just unreachable. */
+  private noteDeadStatus(url: string, status: number): void {
+    if (status !== 404 && status !== 410) return;
+    this.deadExternal.add(url);
+    this.onDeadExternalImage?.(url);
+  }
+
+  /**
+   * Remembers a failed fetch. A TypeError is how fetch reports a network or
+   * CORS failure, where the response (and so any 404) is hidden from us; for
+   * those the browser is asked, once and here, whether it can load the image
+   * plainly, so everything that follows (the host verdict, and showing nothing)
+   * rests on the same attempt.
+   */
+  private async recordFailure(
+    url: string,
+    error: unknown,
+    vaultHandle?: FileSystemDirectoryHandle,
+  ): Promise<void> {
+    const failure: NonNullable<ReturnType<typeof this.failedExternal.get>> = {
+      at: this.clock.now(),
+      opaque: error instanceof TypeError,
+    };
+    this.failedExternal.set(url, failure);
+    if (!failure.opaque || !vaultHandle) return;
+    failure.probe = await this.probeImage(url);
+    if (failure.probe === "loaded") {
+      await this.markHostWithoutCors(vaultHandle, url);
     }
   }
 
@@ -507,10 +553,13 @@ export class AssetManager {
    * gone backwards) gives a negative age that would otherwise look fresh and
    * suppress the link far beyond the day.
    */
-  private isFreshMarkerTime(markedAt: number): boolean {
+  private isFreshMarkerTime(
+    markedAt: number,
+    ttl: number = UNREACHABLE_TTL_MS,
+  ): boolean {
     if (!Number.isFinite(markedAt)) return false;
     const age = this.clock.now() - markedAt;
-    return age >= 0 && age < UNREACHABLE_TTL_MS;
+    return age >= 0 && age < ttl;
   }
 
   /** Marked unreachable earlier in this session and still within the day. */
@@ -539,20 +588,113 @@ export class AssetManager {
 
   /**
    * For a link whose CORS fetch failed without a readable status: true when the
-   * browser cannot load it as a plain image either. The graph would otherwise
-   * hand it to Cytoscape, which requests it again, logs a 404, and does so on
-   * every load.
+   * browser could not load it as a plain image either. The graph would
+   * otherwise hand it to Cytoscape, which requests it again, logs a 404, and
+   * does so on every load. The browser is asked once, when the fetch fails.
    */
-  private async cannotBeLoadedAtAll(url: string): Promise<boolean> {
-    const failure = this.failedExternal.get(url);
-    if (!failure?.opaque || failure.probed) return false;
-    if ((await this.probeImage(url)) === "failed") return true;
-    // The browser can load it, or could not tell: either way the old behaviour
-    // stands, and asking again on every resolution would only add a request.
-    // The failure entry expires after EXTERNAL_FAILURE_TTL_MS; the probe is
-    // tried again for the next failure.
-    failure.probed = true;
-    return false;
+  private cannotBeLoadedAtAll(url: string): boolean {
+    return this.failedExternal.get(url)?.probe === "failed";
+  }
+
+  private hostOf(url: string): string | null {
+    try {
+      return new URL(url).host.toLowerCase() || null;
+    } catch {
+      return null;
+    }
+  }
+
+  private async noCorsMarkerName(host: string): Promise<string> {
+    return (await externalCacheName(`host:${host}`)).replace(
+      /\.cache$/,
+      ".nocors",
+    );
+  }
+
+  /** Whether this link's host is known to serve images without CORS headers. */
+  private async isHostWithoutCors(
+    vaultHandle: FileSystemDirectoryHandle,
+    url: string,
+  ): Promise<boolean> {
+    const host = this.hostOf(url);
+    if (!host) return false;
+    const learned = this.corslessHosts.get(host);
+    if (learned !== undefined) {
+      if (this.isFreshMarkerTime(learned, NO_CORS_HOST_TTL_MS)) return true;
+      this.corslessHosts.delete(host);
+    }
+    if (this.corslessChecked.has(host)) return false;
+    this.corslessChecked.add(host);
+    try {
+      const marker = await this.ioAdapter.readOpfsBlob(
+        [await this.noCorsMarkerName(host)],
+        await this.externalDir(vaultHandle),
+      );
+      const markedAt = Number(await marker.text());
+      if (!this.isFreshMarkerTime(markedAt, NO_CORS_HOST_TTL_MS)) return false;
+      this.corslessHosts.set(host, markedAt);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  /**
+   * A CORS fetch failed opaquely, yet the browser can load the image plainly:
+   * the host serves images and sends no CORS headers. Remember that, so the
+   * fetch that can never succeed is not made for every other image.
+   */
+  private async markHostWithoutCors(
+    vaultHandle: FileSystemDirectoryHandle,
+    url: string,
+  ): Promise<void> {
+    const host = this.hostOf(url);
+    if (!host) return;
+    const now = this.clock.now();
+    this.corslessHosts.set(host, now);
+    this.corslessChecked.add(host);
+    await this.ioAdapter
+      .writeOpfsFile(
+        [".cache", "external_images", await this.noCorsMarkerName(host)],
+        String(now),
+        vaultHandle,
+        vaultHandle.name,
+      )
+      .catch(() => {});
+  }
+
+  /**
+   * Fetches from the network, letting the first image from each host find out
+   * whether the host allows CORS before the rest try. A host known to refuse it
+   * is not asked at all: the fetch could only fail, and log, for every image.
+   */
+  private async fetchFromHost(
+    vaultHandle: FileSystemDirectoryHandle,
+    url: string,
+  ): Promise<Blob | null> {
+    const host = this.hostOf(url);
+    if (!host) return this.fetchExternal(url, vaultHandle);
+
+    const scout = this.hostScouts.get(host);
+    if (scout) {
+      await scout;
+      if (await this.isHostWithoutCors(vaultHandle, url)) return null;
+      return this.fetchExternal(url, vaultHandle);
+    }
+
+    // Become the scout before any await, so an image that arrives while this
+    // one is still reading the marker from disk waits instead of also trying.
+    let finished!: () => void;
+    this.hostScouts.set(
+      host,
+      new Promise<void>((resolve) => (finished = resolve)),
+    );
+    try {
+      if (await this.isHostWithoutCors(vaultHandle, url)) return null;
+      return await this.fetchExternal(url, vaultHandle);
+    } finally {
+      finished();
+    }
   }
 
   /** The cached copy of an external image, fetching and caching it if needed. */
@@ -568,9 +710,9 @@ export class AssetManager {
       } catch {
         const legacy = await this.migrateLegacyExternal(vaultHandle, url, name);
         if (legacy) return legacy;
-        // Cached copies win over the marker; only the network is skipped.
+        // Cached copies win over the markers; only the network is skipped.
         if (await this.isMarkedUnreachable(vaultHandle, url)) return null;
-        const blob = await this.fetchExternal(url);
+        const blob = await this.fetchFromHost(vaultHandle, url);
         if (!blob) return null;
         await this.ioAdapter.writeOpfsFile(
           [".cache", "external_images", name],
@@ -681,6 +823,9 @@ export class AssetManager {
     this.urlCache.clear();
     this.resolving.clear();
     this.failedExternal.clear();
+    this.corslessHosts.clear();
+    this.corslessChecked.clear();
+    this.hostScouts.clear();
     this.deadExternal.clear();
     this.unreachableThisSession.clear();
   }
