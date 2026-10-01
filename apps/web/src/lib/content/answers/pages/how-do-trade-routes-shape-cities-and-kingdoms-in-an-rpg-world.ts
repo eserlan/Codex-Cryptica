@@ -155,6 +155,7 @@ export const howDoTradeRoutesShapeCitiesAndKingdomsInAnRpgWorld: AnswerConfigInp
       "what-can-players-actually-buy-and-sell-in-a-fantasy-settlement",
       "how-do-i-give-different-civilisations-distinct-strengths-and-weaknesses",
       "how-do-i-make-different-cultures-feel-distinct-without-relying-on-stereotypes",
+      "how-do-i-make-rival-captains-navies-and-pirate-factions-matter",
     ],
     discovery: {
       id: "answer-trade-routes-shape-cities-kingdoms",

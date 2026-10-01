@@ -163,6 +163,7 @@ export const howDoYouTrackFactionTurnsBetweenRpgSessions: AnswerConfigInput = {
     "how-do-i-make-a-player-base-matter-in-an-rpg-campaign",
     "what-should-players-be-able-to-upgrade-in-an-rpg-base",
     "how-much-of-the-plot-should-a-dm-prepare",
+    "how-do-i-make-rival-captains-navies-and-pirate-factions-matter",
   ],
   discovery: {
     id: "answer-track-faction-turns-between-sessions",

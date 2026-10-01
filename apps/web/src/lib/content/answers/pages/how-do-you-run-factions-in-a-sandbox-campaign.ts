@@ -160,6 +160,7 @@ export const howDoYouRunFactionsInASandboxCampaign: AnswerConfigInput = {
     "how-do-i-make-a-player-base-matter-in-an-rpg-campaign",
     "how-do-i-run-common-character-roles-in-a-fantasy-rpg",
     "how-do-i-run-exploration-in-a-huge-ruined-city",
+    "how-do-i-make-rival-captains-navies-and-pirate-factions-matter",
   ],
   discovery: {
     id: "answer-run-factions-sandbox",
@@ -187,6 +188,11 @@ export const howDoYouRunFactionsInASandboxCampaign: AnswerConfigInput = {
         with: "answer-track-faction-turns-between-sessions",
         reason:
           "That page provides the concrete five-step downtime procedure (intent, action, outcome, consequence, history) for resolving off-screen faction clashes and updating the campaign timeline. This page covers running factions as continuous active pressure in a sandbox using the goal/resource/rival/scheduled-move concept.",
+      },
+      {
+        with: "answer-rival-captains-navies-pirate-factions-matter",
+        reason:
+          "That page applies active faction clocks to pirate seas, rival captains, navies, trading companies, and visible port changes. This page gives the broader sandbox framework of goals, resources, rivals, and scheduled moves across any setting.",
       },
       {
         with: "answer-run-character-roles-political-intrigue",

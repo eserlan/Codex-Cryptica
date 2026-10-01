@@ -169,6 +169,7 @@ export const howDoYouCreateAFantasyFaction: AnswerConfigInput = {
     "how-do-i-make-different-cultures-feel-distinct-without-relying-on-stereotypes",
     "how-do-fantasy-cities-defend-against-flying-creatures-and-teleportation",
     "how-do-i-run-a-campaign-where-the-players-own-a-business",
+    "how-do-i-make-rival-captains-navies-and-pirate-factions-matter",
   ],
   discovery: {
     id: "answer-fantasy-faction",

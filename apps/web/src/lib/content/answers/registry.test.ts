@@ -697,6 +697,45 @@ describe("published answers", () => {
     );
   });
 
+  it("advances the pirate blockade clock from preparation to active blockade", () => {
+    const answer =
+      answers["how-do-i-make-rival-captains-navies-and-pirate-factions-matter"];
+    const activeVersion = answer.sections.find(
+      (section) =>
+        section.kind === "example" &&
+        section.heading ===
+          "Worked example: the same sea, with and without active rivals",
+    );
+    expect(activeVersion?.kind).toBe("example");
+    if (!activeVersion || activeVersion.kind !== "example") return;
+
+    const text = activeVersion.items?.find(
+      (item) => item.term === "The active version",
+    )?.text;
+
+    expect(text).toContain("step 2:");
+    expect(text).toContain("advances Hale to step 3");
+    expect(text).not.toContain(
+      "(step 3: sloops now stop and search every brig)",
+    );
+  });
+
+  it("records the reciprocal scope of the sandbox and pirate faction answers", () => {
+    const sandboxFactions =
+      answers["how-do-you-run-factions-in-a-sandbox-campaign"];
+    const pirateFactions =
+      answers["how-do-i-make-rival-captains-navies-and-pirate-factions-matter"];
+
+    expect(sandboxFactions?.discovery?.acknowledgedOverlap).toContainEqual({
+      with: "answer-rival-captains-navies-pirate-factions-matter",
+      reason: expect.any(String),
+    });
+    expect(pirateFactions?.discovery?.acknowledgedOverlap).toContainEqual({
+      with: "answer-run-factions-sandbox",
+      reason: expect.any(String),
+    });
+  });
+
   it("publishes the short-session answer around one playable unit", () => {
     const shortSessionAnswer =
       answers["can-you-play-a-tabletop-rpg-in-30-minute-sessions"];
