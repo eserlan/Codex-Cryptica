@@ -94,6 +94,8 @@ Timeouts: upstream call budget 7 s; overall 8 s; abort → 504.
 
 ## Metric line (only observability output)
 
+`area` is any value of the engine's `HELP_AREAS` list; the Worker takes the list from the engine, so a new area cannot be reported by the app and then rejected.
+
 ```json
 {
   "event": "help.request",

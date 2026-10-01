@@ -4,9 +4,10 @@ import {
   buildBundle,
   type KnowledgeBundle,
 } from "../../../../packages/help-engine/src";
+import { KNOWN_HELP_IDS } from "../../../../packages/help-engine/tests/fixtures/help-article-ids";
 import { MAX_BODY_BYTES, createHelpHandler, type HelpDeps } from "./help";
 
-const articles = [
+const written = [
   {
     id: "connections-tab",
     title: "Connections Tab",
@@ -43,6 +44,15 @@ const articles = [
     title: "Random Tables",
     content: "## Tables\nRoll on tables and draw from decks.",
   },
+];
+
+// Every article the registry points at must exist; the ones these tests do not
+// read are one-line stand-ins.
+const articles = [
+  ...written,
+  ...KNOWN_HELP_IDS.filter((id) => !written.some((a) => a.id === id)).map(
+    (id) => ({ id, title: id, content: `## ${id}\nAbout ${id}.` }),
+  ),
 ];
 
 const bundle: KnowledgeBundle = buildBundle({
@@ -179,6 +189,85 @@ describe("POST /api/help/ask — answers", () => {
       }),
     });
     expect((await (await ask(valid())).json()).outcome).toBe("answered");
+  });
+});
+
+describe("POST /api/help/ask — opening a chosen generator", () => {
+  const generatorContext = {
+    ...context,
+    area: "generators",
+    tab: null,
+    entityKind: null,
+    flags: ["generators"],
+    availableActions: [],
+  };
+  const questModel = {
+    answer:
+      "Open the Quest generator, describe the quest you want, and review the draft.",
+    sourceIds: ["generator:quest#0"],
+    actionId: "generators.open-quest",
+    confidence: "high",
+  };
+
+  it("offers the generator the question is about and returns it as a guide", async () => {
+    const { ask } = harness({
+      generate: vi.fn(async () => ({ ok: true as const, content: questModel })),
+    });
+    const body = await (
+      await ask(
+        valid({
+          question: "How do I make a quest?",
+          context: generatorContext,
+        }),
+      )
+    ).json();
+
+    expect(body.outcome).toBe("answered");
+    expect(body.action).toMatchObject({
+      type: "openGenerator",
+      generatorId: "quest",
+    });
+  });
+
+  it("lists only the retrieved generators as options, never all of them", async () => {
+    const generate = vi.fn(async (_req: unknown) => ({
+      ok: true as const,
+      content: questModel,
+    }));
+    const { ask } = harness({ generate });
+    await ask(
+      valid({ question: "How do I make a quest?", context: generatorContext }),
+    );
+    const prompt = (
+      generate.mock.calls[0][0] as { messages: { content: string }[] }
+    ).messages[1].content;
+    expect(prompt).toContain("generators.open-quest");
+    const offered = (
+      prompt.match(/<action id="generators\.open-[a-z-]+"/g) ?? []
+    ).filter((id) => !id.includes("open-workflow"));
+    expect(offered.length).toBeGreaterThan(0);
+    expect(offered.length).toBeLessThanOrEqual(3);
+  });
+
+  it("offers no generator where generators cannot open (such as a guest vault)", async () => {
+    const generate = vi.fn(async (_req: unknown) => ({
+      ok: true as const,
+      content: questModel,
+    }));
+    const { ask } = harness({ generate });
+    const body = await (
+      await ask(
+        valid({
+          question: "How do I make a quest?",
+          context: { ...generatorContext, flags: [] },
+        }),
+      )
+    ).json();
+    const prompt = (
+      generate.mock.calls[0][0] as { messages: { content: string }[] }
+    ).messages[1].content;
+    expect(prompt).not.toContain("generators.open-");
+    expect(body.action).toBeNull();
   });
 });
 
@@ -339,9 +428,7 @@ describe("POST /api/help/ask — validation and failures", () => {
 describe("POST /api/help/ask — no authoritative answer", () => {
   it("returns no-match with suggestions and never calls the model below the relevance floor", async () => {
     const { ask, generate } = harness();
-    const res = await ask(
-      valid({ question: "Can I export my vault to Roll20?" }),
-    );
+    const res = await ask(valid({ question: "Can I print my map on a mug?" }));
     const body = await res.json();
     expect(res.status).toBe(200);
     expect(body.outcome).toBe("no-match");

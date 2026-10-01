@@ -48,13 +48,21 @@ export function trimHistory(history: readonly HelpTurn[]): HelpTurn[] {
 }
 
 function describeScreen(ctx: HelpContext): string {
+  // Settings tabs can be opened from anywhere, so they are not "on screen".
+  const onScreen = ctx.availableActions.filter(
+    (a) => !a.startsWith("settings-"),
+  );
+  const settings = ctx.availableActions
+    .filter((a) => a.startsWith("settings-"))
+    .map((a) => a.slice("settings-".length));
   return [
     `area: ${ctx.area}`,
     ctx.entityKind ? `entry kind: ${ctx.entityKind}` : null,
     ctx.tab ? `tab: ${ctx.tab}` : null,
     `mode: ${ctx.mode}`,
-    ctx.availableActions.length
-      ? `controls on screen: ${ctx.availableActions.join(", ")}`
+    onScreen.length ? `controls on screen: ${onScreen.join(", ")}` : null,
+    settings.length
+      ? `Settings tabs that can be opened from anywhere: ${settings.join(", ")}`
       : null,
   ]
     .filter(Boolean)

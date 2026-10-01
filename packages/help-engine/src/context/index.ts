@@ -34,6 +34,10 @@ export const HELP_AREAS = [
   "session-hub",
   "tables",
   "generators",
+  "canvas",
+  "map",
+  "import",
+  "settings",
   "other",
 ] as const;
 
@@ -50,7 +54,7 @@ export const HELP_ENTITY_KINDS = [
 ] as const;
 
 /** Entity detail tab IDs (mirrors `entityDetailTabs` in the web app). */
-export const HELP_TABS = [
+export const ENTITY_TABS = [
   "status",
   "connections",
   "lore",
@@ -60,6 +64,24 @@ export const HELP_TABS = [
   "stats",
   "timeline",
 ] as const;
+
+/**
+ * Settings tab IDs (mirrors the `SettingsTab` type in the web app). They share
+ * the `tab` field with the entity tabs: the two sets do not overlap, and `area`
+ * says which one applies.
+ */
+export const SETTINGS_TABS = [
+  "vault",
+  "intelligence",
+  "schema",
+  "templates",
+  "theme",
+  "publishing",
+  "about",
+  "help",
+] as const;
+
+export const HELP_TABS = [...ENTITY_TABS, ...SETTINGS_TABS] as const;
 
 export const HELP_MODES = ["view", "edit", "draft"] as const;
 
@@ -88,11 +110,26 @@ export const HelpContextSchema = z
     mode: z.enum(HELP_MODES),
     surface: z.enum(HELP_SURFACES),
     flags: z.array(z.enum(HELP_FLAGS)).max(8),
-    availableActions: z.array(z.enum(AVAILABLE_ACTION_IDS)).max(12),
+    // Room for the entity tabs plus the Settings panels.
+    availableActions: z.array(z.enum(AVAILABLE_ACTION_IDS)).max(16),
   })
-  .strict();
+  .strict()
+  .refine((c) => tabFitsArea(c.area, c.tab), {
+    message: "tab does not belong to this area",
+    path: ["tab"],
+  });
 
 export type HelpContext = z.infer<typeof HelpContextSchema>;
+
+/** A tab is only meaningful on the area that owns it; anywhere else it is null. */
+function tabFitsArea(area: HelpArea, tab: HelpTab | null): boolean {
+  if (tab === null) return true;
+  if (area === "entity-detail")
+    return (ENTITY_TABS as readonly string[]).includes(tab);
+  if (area === "settings")
+    return (SETTINGS_TABS as readonly string[]).includes(tab);
+  return false;
+}
 
 /** The exact key set, asserted by tests so silent additions fail CI. */
 export const HELP_CONTEXT_KEYS = Object.keys(HelpContextSchema.shape).sort();
@@ -148,16 +185,19 @@ export function sanitizeHelpContext(input: unknown): HelpContext {
     rawKind == null
       ? null
       : (pick(HELP_ENTITY_KINDS, rawKind) ?? ("custom" as const));
+  const area = pick(HELP_AREAS, raw.area) ?? "other";
+  const tab = pick(HELP_TABS, raw.tab) ?? null;
   return {
     v: HELP_CONTEXT_VERSION,
     routeTemplate: pick(HELP_ROUTE_TEMPLATES, raw.routeTemplate) ?? "unknown",
-    area: pick(HELP_AREAS, raw.area) ?? "other",
+    area,
     entityKind: kind,
-    tab: pick(HELP_TABS, raw.tab) ?? null,
+    // A tab that does not belong to this area is dropped, not sent.
+    tab: tabFitsArea(area, tab) ? tab : null,
     mode: pick(HELP_MODES, raw.mode) ?? "view",
     surface: pick(HELP_SURFACES, raw.surface) ?? "vault",
     flags: pickMany(HELP_FLAGS, raw.flags, 8),
-    availableActions: pickMany(AVAILABLE_ACTION_IDS, raw.availableActions, 12),
+    availableActions: pickMany(AVAILABLE_ACTION_IDS, raw.availableActions, 16),
   };
 }
 

@@ -9,7 +9,10 @@ import {
   IN_SCOPE,
   OUT_OF_SCOPE,
   SCREENS,
+  type EvalSplit,
   type InScopeQuestion,
+  type OutOfScopeKind,
+  type OutOfScopeQuestion,
 } from "./questions";
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -37,6 +40,8 @@ export function buildRealBundle(): KnowledgeBundle {
 
 export interface InScopeResult {
   question: string;
+  split: EvalSplit;
+  topic: string;
   screen: string;
   hit: boolean;
   noMatch: boolean;
@@ -53,8 +58,12 @@ export function evaluateInScope(
     const sources = r.chunks.map((c) => c.chunk.sourceId);
     return {
       question: q.question,
+      split: q.split,
+      topic: q.topic,
       screen: q.screen,
-      hit: sources.some((s) => q.expect.includes(s)),
+      hit:
+        sources.some((s) => q.expect.includes(s)) &&
+        (!q.alsoExpect || sources.some((s) => q.alsoExpect!.includes(s))),
       noMatch: r.noMatch,
       topRelevance: r.topRelevance,
       sources,
@@ -67,11 +76,26 @@ export function evaluateInScope(
   };
 }
 
-export function evaluateOutOfScope(bundle: KnowledgeBundle) {
-  const results = OUT_OF_SCOPE.map((q) => {
+export const ofKind = (
+  questions: OutOfScopeQuestion[],
+  kind: OutOfScopeKind,
+): OutOfScopeQuestion[] => questions.filter((q) => q.kind === kind);
+
+/** The questions of one half of the set, or all of them. */
+export const inSplit = <T extends { split: EvalSplit }>(
+  questions: T[],
+  split?: EvalSplit,
+): T[] => (split ? questions.filter((q) => q.split === split) : questions);
+
+export function evaluateOutOfScope(
+  bundle: KnowledgeBundle,
+  questions: OutOfScopeQuestion[] = ofKind(OUT_OF_SCOPE, "unrelated"),
+) {
+  const results = questions.map((q) => {
     const r = retrieve(q.question, bundle, SCREENS[q.screen]);
     return {
       question: q.question,
+      split: q.split,
       noMatch: r.noMatch,
       topRelevance: r.topRelevance,
     };

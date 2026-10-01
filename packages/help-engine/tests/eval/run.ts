@@ -13,7 +13,10 @@ import {
   buildRealBundle,
   evaluateInScope,
   evaluateOutOfScope,
+  inSplit,
+  ofKind,
 } from "./evaluate";
+import { OUT_OF_SCOPE } from "./questions";
 
 const bundle = buildRealBundle();
 const inScope = evaluateInScope(bundle);
@@ -28,19 +31,36 @@ console.log(
 );
 for (const r of inScope.results) {
   console.log(
-    `  ${r.hit ? "✓" : "✗"} rel ${r.topRelevance.toFixed(2)}  ${r.question.padEnd(58)} [${r.screen}] ${r.sources.join(", ")}`,
+    `  ${r.hit ? "✓" : "✗"} ${r.split === "holdout" ? "H" : "t"} rel ${r.topRelevance.toFixed(2)}  ${r.question.padEnd(58)} [${r.screen}] ${r.sources.join(", ")}`,
   );
 }
 console.log(
   `  recall@3 ${pct(inScope.recallAt3)}   answered ${pct(inScope.answeredRate)}`,
 );
-console.log("\nOut-of-scope / undocumented questions (should be no-match)");
+for (const split of ["tune", "holdout"] as const) {
+  const part = inSplit(inScope.results, split);
+  console.log(
+    `    ${split}: recall@3 ${pct(part.filter((r) => r.hit).length / part.length)} over ${part.length}`,
+  );
+}
+console.log(
+  "\nUnrelated questions (word overlap alone must send these to no-match)",
+);
 for (const r of outOfScope.results) {
   console.log(
-    `  ${r.noMatch ? "✓" : "✗"} rel ${r.topRelevance.toFixed(2)}  ${r.question}`,
+    `  ${r.noMatch ? "✓" : "✗"} ${r.split === "holdout" ? "H" : "t"} rel ${r.topRelevance.toFixed(2)}  ${r.question}`,
   );
 }
 console.log(`  no-match ${pct(outOfScope.noMatchRate)}`);
+const nearMiss = evaluateOutOfScope(bundle, ofKind(OUT_OF_SCOPE, "near-miss"));
+console.log(
+  "\nNear-miss questions (name a covered feature, ask for something it lacks; the model must refuse, checked with --live)",
+);
+for (const r of nearMiss.results) {
+  console.log(
+    `  ${r.noMatch ? "refused by floor" : "reaches the model "} rel ${r.topRelevance.toFixed(2)}  ${r.question}`,
+  );
+}
 const weakestIn = Math.min(...inScope.results.map((r) => r.topRelevance));
 const strongestOut = Math.max(...outOfScope.results.map((r) => r.topRelevance));
 console.log(
@@ -100,6 +120,33 @@ if (process.argv.includes("--live")) {
       }
     }
   }
+  let refusedNearMiss = 0;
+  const nearMissQuestions = ofKind(OUT_OF_SCOPE, "near-miss");
+  for (const q of nearMissQuestions) {
+    try {
+      const res = await fetch(`${base}/api/help/ask`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Origin: "http://localhost",
+        },
+        body: JSON.stringify({
+          question: q.question,
+          history: [],
+          context: SCREENS[q.screen],
+        }),
+      });
+      const body = (await res.json()) as { outcome?: string };
+      const refused = body.outcome !== "answered";
+      if (refused) refusedNearMiss++;
+      console.log(`  ${refused ? "✓ refused " : "✗ ANSWERED"} ${q.question}`);
+    } catch (error) {
+      console.log(`  ! ${q.question}: ${(error as Error).message}`);
+    }
+  }
+  console.log(
+    `  near-miss refused ${refusedNearMiss} of ${nearMissQuestions.length}`,
+  );
   latencies.sort((a, b) => a - b);
   const at = (p: number) =>
     latencies[

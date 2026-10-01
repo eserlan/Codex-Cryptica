@@ -74,7 +74,7 @@ This file is the Codex-facing instruction layer for this repository.
 <!-- SPECKIT START -->
 
 For additional context about technologies to be used, project structure,
-shell commands, and other important information, read the [current plan](./specs/3427-contextual-ai-help-assistant/plan.md).
+shell commands, and other important information, read the [current plan](./specs/3615-help-registry-expansion/plan.md).
 
 <!-- SPECKIT END -->
 

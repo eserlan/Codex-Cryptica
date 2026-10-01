@@ -6,6 +6,7 @@ import {
   type ActionRef,
 } from "../src/actions";
 import { sanitizeHelpContext } from "../src/context";
+import { GENERATORS } from "../src/registry";
 
 const deps = { helpIds: new Set(["connections-tab", "graph-basics"]) };
 
@@ -109,7 +110,7 @@ describe("validateAction", () => {
   it("discards a generator when its flag is off and accepts it when on", () => {
     const open = {
       type: "openGenerator",
-      generatorId: "campaign",
+      generatorId: "npc",
       label: "Open",
     };
     expect(validateAction(open, connectionsScreen, deps)).toBeNull();
@@ -164,6 +165,142 @@ describe("validateAction", () => {
   });
 });
 
+describe("opening a chosen generator", () => {
+  const withGenerators = sanitizeHelpContext({
+    routeTemplate: "/(app)",
+    area: "generators",
+    surface: "vault",
+    flags: ["generators"],
+  });
+  const noGenerators = sanitizeHelpContext({
+    routeTemplate: "/(app)",
+    area: "graph",
+    surface: "vault",
+    flags: [],
+  });
+
+  it("accepts every generator the registry has", () => {
+    for (const generator of GENERATORS) {
+      const open = {
+        type: "openGenerator",
+        generatorId: generator.id,
+        label: `Open ${generator.label}`,
+      };
+      expect(validateAction(open, withGenerators, deps), generator.id).toEqual(
+        open,
+      );
+    }
+  });
+
+  it("opens the generator workflow without choosing one", () => {
+    const open = { type: "openGenerator", label: "Open the generators" };
+    expect(validateAction(open, withGenerators, deps)).toEqual(open);
+  });
+
+  it("refuses an id that is not a generator, and any generator when generators are unavailable", () => {
+    expect(
+      validateAction(
+        { type: "openGenerator", generatorId: "delete-vault", label: "x" },
+        withGenerators,
+        deps,
+      ),
+    ).toBeNull();
+    expect(
+      validateAction(
+        { type: "openGenerator", generatorId: "quest", label: "x" },
+        noGenerators,
+        deps,
+      ),
+    ).toBeNull();
+    expect(
+      validateAction({ type: "openGenerator", label: "x" }, noGenerators, deps),
+    ).toBeNull();
+  });
+});
+
+describe("navigation to the new screens and Settings tabs", () => {
+  const screen = (over: Record<string, unknown> = {}) =>
+    sanitizeHelpContext({
+      routeTemplate: "/(app)",
+      area: "graph",
+      surface: "vault",
+      ...over,
+    });
+
+  it("lets a guide go to canvas, map, import, graph and tables", () => {
+    for (const to of ["canvas", "map", "import", "graph", "tables"] as const) {
+      const action = { type: "navigate", to, label: "Go" };
+      expect(validateAction(action, screen(), deps), to).toEqual(action);
+    }
+  });
+
+  it("still refuses a destination outside the catalogue", () => {
+    expect(
+      validateAction(
+        { type: "navigate", to: "admin", label: "Go" },
+        screen(),
+        deps,
+      ),
+    ).toBeNull();
+  });
+
+  it("opens a Settings tab only when the screen lists it as available", () => {
+    const open = {
+      type: "openPanel",
+      panel: "settings-vault",
+      label: "Open Settings",
+    };
+    expect(
+      validateAction(
+        open,
+        screen({ availableActions: ["settings-vault"] }),
+        deps,
+      ),
+    ).toEqual(open);
+    expect(
+      validateAction(open, screen({ availableActions: [] }), deps),
+    ).toBeNull();
+  });
+
+  it("offers a Settings tab for each tab the registry will point at", () => {
+    for (const tab of [
+      "vault",
+      "intelligence",
+      "schema",
+      "templates",
+      "theme",
+      "publishing",
+    ]) {
+      const panel = `settings-${tab}`;
+      const open = { type: "openPanel", panel, label: "Open" };
+      expect(
+        validateAction(open, screen({ availableActions: [panel] }), deps),
+        panel,
+      ).toEqual(open);
+    }
+  });
+
+  it("refuses a Settings tab that is not on the list (nothing about the app or help tabs)", () => {
+    expect(
+      validateAction(
+        { type: "openPanel", panel: "settings-about", label: "Open" },
+        screen({ availableActions: [] }),
+        deps,
+      ),
+    ).toBeNull();
+  });
+
+  it("does not turn a Settings guide into a highlight (no new control targets)", () => {
+    expect(
+      validateAction(
+        { type: "highlight", target: "settings-vault", label: "x" },
+        screen({ availableActions: ["settings-vault"] }),
+        deps,
+      ),
+    ).toBeNull();
+  });
+});
+
 describe("buildActionCandidates", () => {
   const refs: ActionRef[] = [
     { id: "connections.add-guide", action: guide },
@@ -174,7 +311,7 @@ describe("buildActionCandidates", () => {
     },
     {
       id: "generators.campaign",
-      action: { type: "openGenerator", generatorId: "campaign", label: "Open" },
+      action: { type: "openGenerator", generatorId: "npc", label: "Open" },
     },
   ];
 

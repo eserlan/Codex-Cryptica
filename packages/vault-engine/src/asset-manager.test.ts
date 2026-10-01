@@ -480,6 +480,7 @@ describe("AssetManager", () => {
         global.fetch,
         undefined,
         undefined,
+        // Keep the fallback deterministic: jsdom does not load remote images.
         vi.fn().mockResolvedValue("unknown"),
       );
 
@@ -501,6 +502,7 @@ describe("AssetManager", () => {
           global.fetch,
           clock,
           undefined,
+          // Exercise fetch failures without waiting for jsdom image events.
           vi.fn().mockResolvedValue("unknown"),
         );
       };
@@ -796,6 +798,206 @@ describe("AssetManager", () => {
         await assets.resolveThumbnailUrl(vault, url);
 
         expect(global.fetch).toHaveBeenCalledTimes(1);
+      });
+    });
+
+    describe("hosts that send no CORS headers", () => {
+      const WEEK = 7 * 24 * 60 * 60_000;
+      const first = "https://scabard.example/user/a.webp";
+      const second = "https://scabard.example/user/b.webp";
+      const elsewhere = "https://other.example/c.webp";
+      let now = 0;
+      const clock = { now: () => now } as any;
+      type Probe = (url: string) => Promise<"loaded" | "failed" | "unknown">;
+      const hostMarkerWrites = () =>
+        mockIO.writeOpfsFile.mock.calls.filter((call: any[]) =>
+          String(call[0][2]).endsWith(".nocors"),
+        );
+      const hostMarker = (markedAt: string) =>
+        mockIO.readOpfsBlob.mockImplementation((path: string[]) =>
+          path[0].endsWith(".nocors")
+            ? Promise.resolve(new Blob([markedAt]))
+            : notFound(),
+        );
+
+      const manager = (
+        probe: Probe,
+        failWith: unknown = new TypeError("CORS"),
+      ) => {
+        mockIO.readOpfsBlob.mockImplementation(notFound);
+        (global.fetch as any).mockReset();
+        (global.fetch as any).mockRejectedValue(failWith);
+        mockIO.writeOpfsFile.mockClear();
+        now = 1_000;
+        return new AssetManager(
+          mockIO,
+          mockImageProcessor,
+          global.fetch,
+          clock,
+          undefined,
+          probe,
+        );
+      };
+
+      it("stops asking a host for images once it has shown it sends no CORS headers", async () => {
+        const assets = manager(vi.fn<Probe>().mockResolvedValue("loaded"));
+
+        expect(await assets.resolveThumbnailUrl(vault, first)).toBe(first);
+        expect(await assets.resolveThumbnailUrl(vault, second)).toBe(second);
+
+        expect(global.fetch).toHaveBeenCalledTimes(1);
+      });
+
+      it("makes one failed request for a whole batch from one host, not one each", async () => {
+        const assets = manager(vi.fn<Probe>().mockResolvedValue("loaded"));
+        const batch = Array.from(
+          { length: 8 },
+          (_, i) => `https://scabard.example/user/${i}.webp`,
+        );
+
+        const results = await Promise.all(
+          batch.map((link) => assets.resolveThumbnailUrl(vault, link)),
+        );
+
+        expect(results).toEqual(batch);
+        expect(global.fetch).toHaveBeenCalledTimes(1);
+      });
+
+      it("records the host, with the time, for later sessions", async () => {
+        const assets = manager(vi.fn<Probe>().mockResolvedValue("loaded"));
+
+        await assets.resolveThumbnailUrl(vault, first);
+
+        expect(hostMarkerWrites()).toHaveLength(1);
+        expect(hostMarkerWrites()[0][1]).toBe("1000");
+      });
+
+      it("makes no CORS request at all in a later session while the host marker is fresh", async () => {
+        const probe = vi.fn<Probe>().mockResolvedValue("loaded");
+        const later = manager(probe);
+        hostMarker("1000");
+        now = 1_000 + WEEK - 1;
+
+        expect(await later.resolveThumbnailUrl(vault, first)).toBe(first);
+        expect(await later.resolveThumbnailUrl(vault, second)).toBe(second);
+
+        expect(global.fetch).not.toHaveBeenCalled();
+        expect(probe).not.toHaveBeenCalled();
+      });
+
+      it("asks the host again once the marker is a week old", async () => {
+        const later = manager(vi.fn<Probe>().mockResolvedValue("loaded"));
+        hostMarker("1000");
+        now = 1_000 + WEEK;
+
+        await later.resolveThumbnailUrl(vault, first);
+
+        expect(global.fetch).toHaveBeenCalledTimes(1);
+      });
+
+      it("leaves other hosts alone (negative)", async () => {
+        const assets = manager(vi.fn<Probe>().mockResolvedValue("loaded"));
+
+        await assets.resolveThumbnailUrl(vault, first);
+        await assets.resolveThumbnailUrl(vault, elsewhere);
+
+        expect(global.fetch).toHaveBeenCalledTimes(2);
+      });
+
+      it("does not blame the host when the browser cannot load the image either (negative)", async () => {
+        const assets = manager(vi.fn<Probe>().mockResolvedValue("failed"));
+
+        await assets.resolveThumbnailUrl(vault, first);
+        await assets.resolveThumbnailUrl(vault, second);
+
+        expect(hostMarkerWrites()).toHaveLength(0);
+        expect(global.fetch).toHaveBeenCalledTimes(2);
+      });
+
+      it("does not blame the host when the probe cannot tell (negative)", async () => {
+        const assets = manager(vi.fn<Probe>().mockResolvedValue("unknown"));
+
+        await assets.resolveThumbnailUrl(vault, first);
+
+        expect(hostMarkerWrites()).toHaveLength(0);
+      });
+
+      it("does not blame the host for a timeout (negative)", async () => {
+        const probe = vi.fn<Probe>().mockResolvedValue("loaded");
+        const assets = manager(
+          probe,
+          new DOMException("timed out", "TimeoutError"),
+        );
+
+        await assets.resolveThumbnailUrl(vault, first);
+
+        expect(probe).not.toHaveBeenCalled();
+        expect(hostMarkerWrites()).toHaveLength(0);
+      });
+
+      it("keeps fetching from a host that does send CORS headers (negative)", async () => {
+        const assets = manager(vi.fn<Probe>().mockResolvedValue("loaded"));
+        (global.fetch as any).mockReset();
+        (global.fetch as any).mockResolvedValue({
+          ok: true,
+          blob: () => Promise.resolve(new Blob(["img"])),
+        });
+        const batch = Array.from(
+          { length: 4 },
+          (_, i) => `https://friendly.example/${i}.webp`,
+        );
+
+        await Promise.all(
+          batch.map((link) => assets.resolveThumbnailUrl(vault, link)),
+        );
+
+        expect(global.fetch).toHaveBeenCalledTimes(4);
+        expect(hostMarkerWrites()).toHaveLength(0);
+      });
+
+      it("prefers a cached thumbnail over the host marker (negative)", async () => {
+        const assets = manager(vi.fn<Probe>().mockResolvedValue("loaded"));
+        mockIO.readOpfsBlob.mockImplementation((path: string[]) =>
+          path[0].endsWith(".nocors")
+            ? Promise.resolve(new Blob(["1000"]))
+            : path[0].endsWith(".thumb.webp")
+              ? Promise.resolve(new Blob(["thumb"]))
+              : notFound(),
+        );
+
+        expect(await assets.resolveThumbnailUrl(vault, first)).toBe(
+          "blob:mock-url",
+        );
+        expect(global.fetch).not.toHaveBeenCalled();
+      });
+
+      it("treats a damaged host marker as no marker (negative)", async () => {
+        const assets = manager(vi.fn<Probe>().mockResolvedValue("loaded"));
+        hostMarker("not a time");
+
+        await assets.resolveThumbnailUrl(vault, first);
+
+        expect(global.fetch).toHaveBeenCalledTimes(1);
+      });
+
+      it("treats a host marker dated in the future as no marker (negative)", async () => {
+        const assets = manager(vi.fn<Probe>().mockResolvedValue("loaded"));
+        hostMarker(String(1_000 + 10 * WEEK));
+
+        await assets.resolveThumbnailUrl(vault, first);
+
+        expect(global.fetch).toHaveBeenCalledTimes(1);
+      });
+
+      it("forgets what it learned about hosts when cleared", async () => {
+        const assets = manager(vi.fn<Probe>().mockResolvedValue("loaded"));
+        await assets.resolveThumbnailUrl(vault, first);
+
+        assets.clear();
+        mockIO.readOpfsBlob.mockImplementation(notFound);
+        await assets.resolveThumbnailUrl(vault, second);
+
+        expect(global.fetch).toHaveBeenCalledTimes(2);
       });
     });
 

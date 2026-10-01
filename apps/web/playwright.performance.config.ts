@@ -10,6 +10,7 @@ export default defineConfig({
     "large-vault.operations.spec.ts",
     "graph-images.spec.ts",
     "graph-images-dead.spec.ts",
+    "graph-images-nocors.spec.ts",
     "entity-index-batch.spec.ts",
     "graph-sync-edit.spec.ts",
     "vault-preload.spec.ts",

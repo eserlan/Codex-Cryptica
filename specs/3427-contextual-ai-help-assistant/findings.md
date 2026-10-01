@@ -133,3 +133,41 @@ Drafted, not created as GitHub issues (that is outward-facing and awaits approva
 9. **Streaming the prose** only if p90 regresses.
 10. **Knowledge sync into D1 + Vectorize** only when an adoption trigger is hit.
 11. **Mutating or proactive assistance** remain out of scope and each needs its own spec.
+
+---
+
+## Addendum: phase A coverage expansion (#3615)
+
+Canvas, maps and VTT, entity editing, generators, backup and export, and import were added to the registry and the help articles, with navigation guides only (no new highlight targets). This addendum records what the larger evaluation showed.
+
+### What was measured
+
+The evaluation grew from 36 to 122 questions: 93 in scope (65 `tune`, 28 `holdout`) and 29 out of scope, with 13 confusion questions that must show both neighbouring features. The questions and their halves were fixed before any score was read; the spike's questions had already been tuned against and all count as `tune`.
+
+| Measure (offline, no model)                        | Result | Target       |
+| -------------------------------------------------- | ------ | ------------ |
+| recall@3, `tune`                                   | 89%    | 90% — missed |
+| recall@3, `holdout`                                | 75%    | 90% — missed |
+| Unrelated questions sent to no-match               | 100%   | 100% — met   |
+| Near-miss questions the word-overlap floor refuses | 1 of 8 | not a target |
+
+The first look, before any retrieval change, was 85% tune, 68% held out and 76% refusal over all out-of-scope questions. The unrelated-question figure is the one that was always achievable; the other two are described below.
+
+### Findings
+
+1. **A word-overlap floor cannot refuse a near-miss.** "Can I back up my vault to Dropbox?" scores 0.49 because backup and vault are covered; the weakest real question scores 0.25. No floor separates them. Refusing these is the model's job (the prompt says to answer "none" when the sources do not cover the question). The set now keeps them apart from unrelated questions and `bun run eval -- --live` asks the model each one. **That live run has not been done**, so how well the model refuses near-misses is unmeasured. The 100% "undocumented" figure in the original spec is only true of unrelated questions.
+2. **One feature can fill all three slots**, so "is X the same as Y" heard about only one of them. Now at most two chunks per feature are shown, and only a chunk that clears the floor can displace one (an earlier version let a weak chunk in and broke four questions; it was found by the tune misses and fixed). Comparison words ("difference", "same", "between") are no longer topics.
+3. **A feature on screen pulls its own articles above a better match.** In Settings the only registered feature is backup, so "How do I set the default template for a new character?" returns the backup articles, because the +0.45 on-screen boost outweighs a stronger word match. This is a miss on the held-out half and was **not** tuned against. The likely fix is a registry entry per Settings tab (templates, theme, intelligence, publishing) or boosting by Settings tab. Both are content or design work rather than a parameter.
+4. **A long chunk loses to short ones.** "Can I draw on the canvas?" has its answer in a long "Core Features" section that ranks below two short registry chunks and an unrelated one. Splitting long sections is a content change.
+5. **Vocabulary gaps.** "What happens if my import gets interrupted?" misses because the article says "close the app or lose connection". A small synonym list would help, but each addition is a guess; it was not done.
+
+### How much tuning was done
+
+Two rounds against the `tune` half, plus one correction to the second round's own defect. The `holdout` half was read only to check the result and not to choose a change. Because the third look was at `tune` again, the held-out figure is the cleaner one of the two, and it is the lower.
+
+### Not done
+
+- The live near-miss run and the live answer-quality run for the new areas (needs a deployed Worker and a provider key).
+- Highlight guides for canvas, VTT, Settings and the generators (phase B, #3616).
+- A human reading of live answers.
+- Staging: the Worker has to be redeployed after merge for the new knowledge to reach staging, because the knowledge ships inside the Worker bundle.

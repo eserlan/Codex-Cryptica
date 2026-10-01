@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
+import { SETTINGS_PANEL_IDS } from "help-engine";
 import { HelpAssistantStore } from "$lib/stores/help-assistant/help-assistant.svelte";
 import { HelpContextStore } from "$lib/stores/help-assistant/help-context.svelte";
 import { HelpSurfaceRegistry } from "$lib/stores/help-assistant/help-surface.svelte";
@@ -24,6 +25,8 @@ async function capture(question: string) {
     surfaces,
     isGeneratorOpen: () => false,
     generatorsAvailable: () => true,
+    getOpenSettingsTab: () => null,
+    isGuestMode: () => false,
   });
 
   const fetcher = vi.fn(
@@ -119,6 +122,8 @@ describe("what leaves the browser when asking for help", () => {
       "generators",
       "status-tab",
       "connections-tab",
+      // closed catalogue ids for the Settings tabs
+      ...SETTINGS_PANEL_IDS,
     ]);
     expect(textFields.filter((t) => !allowed.has(t))).toEqual([]);
   });

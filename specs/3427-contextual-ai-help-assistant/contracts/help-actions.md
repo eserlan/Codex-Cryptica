@@ -17,9 +17,9 @@ There is no type for create, edit, delete, import, export, publish, or settings 
 ## Catalogues (closed lists)
 
 - `ControlId` (spike): `add-connection-button`, `graph-view` entry, `status-tab`, `connections-tab` (extensible only via code change).
-- `DestinationId`: `graph`, `session-hub`, `tables`, `generators`.
-- `PanelId`: `status-tab`, `connections-tab`.
-- `GeneratorId`: `campaign`.
+- `DestinationId`: `graph`, `tables`, `canvas`, `map`, `import` (phase A, #3615).
+- `PanelId`: `status-tab`, `connections-tab`, and the Settings tabs `settings-vault`, `settings-intelligence`, `settings-schema`, `settings-templates`, `settings-theme`, `settings-publishing`. Settings panels are listed in `availableActions` on every screen of a real vault and never in a guest or demo vault. There is no panel for the About or Help tabs.
+- `GeneratorId`: every generator in the generator registry (29 today), generated into `packages/help-engine/src/registry/generators.generated.ts` by `scripts/sync-help-generators.ts`; a web test fails if the list and the registry disagree. `openGenerator` with no `generatorId` opens the generator workflow. Per-generator guides are offered only for generators in the retrieved chunks, at most three.
 
 Each ControlId has: the `data-help-target` value, allowed `area`/`tab`/`surface`, and required flags.
 

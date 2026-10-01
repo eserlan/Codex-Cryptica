@@ -51,8 +51,7 @@ function stepIsValid(
       return controlIsOnScreen(step.target, ctx, previous);
     case "openGenerator":
       return (
-        ctx.surface === "vault" &&
-        ctx.flags.includes(GENERATOR_REQUIRED_FLAG[step.generatorId])
+        ctx.surface === "vault" && ctx.flags.includes(GENERATOR_REQUIRED_FLAG)
       );
   }
 }

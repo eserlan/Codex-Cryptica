@@ -15,6 +15,7 @@ import {
   MAX_QUESTION_CHARS,
   buildActionCandidates,
   buildHelpPrompt,
+  generatorActionRefs,
   finalizeAnswer,
   noMatchAnswer,
   parseHelpContext,
@@ -206,9 +207,13 @@ function offerableActions(
       c.chunk.featureId ? [c.chunk.featureId] : [],
     ),
   ]);
-  const refs = bundle.features
-    .filter((f) => featureIds.has(f.id))
-    .flatMap((f) => f.actions);
+  const refs = [
+    ...bundle.features
+      .filter((f) => featureIds.has(f.id))
+      .flatMap((f) => f.actions),
+    // "Open this generator" only for the generators actually retrieved.
+    ...generatorActionRefs(retrieval.chunks.map((c) => c.chunk)),
+  ];
   return buildActionCandidates(refs, context, {
     helpIds: new Set(bundle.helpIds),
   });

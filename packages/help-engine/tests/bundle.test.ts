@@ -1,3 +1,4 @@
+import { KNOWN_HELP_IDS } from "./fixtures/help-article-ids";
 import { describe, expect, it } from "vitest";
 import {
   MAX_CHUNK_TOKENS,
@@ -6,7 +7,11 @@ import {
   estimateTokens,
   parseHelpArticle,
 } from "../src/bundle";
-import { FEATURE_REGISTRY, type FeatureEntry } from "../src/registry";
+import {
+  FEATURE_REGISTRY,
+  GENERATORS,
+  type FeatureEntry,
+} from "../src/registry";
 
 const article = (id: string, content = "## A\nText about A.") => ({
   id,
@@ -14,16 +19,7 @@ const article = (id: string, content = "## A\nText about A.") => ({
   content,
 });
 
-const ids = [
-  "connections-tab",
-  "connection-labels",
-  "graph-basics",
-  "session-hub",
-  "in-app-generators",
-  "generate-related",
-  "random-tables-decks",
-];
-const articles = ids.map((id) =>
+const articles = KNOWN_HELP_IDS.map((id) =>
   article(
     id,
     `# ${id}\n\nIntro.\n\n## Section One\nOne body.\n\n## Section Two\nTwo body.`,
@@ -131,6 +127,63 @@ describe("buildBundle", () => {
         (f) => f.id,
       ),
     ).toContain("staging-only");
+  });
+});
+
+describe("generator chunks", () => {
+  const bundle = buildBundle(input);
+
+  it("has one chunk per generator, owned by the generators feature", () => {
+    const chunks = bundle.chunks.filter((c) =>
+      c.sourceId.startsWith("generator:"),
+    );
+    expect(chunks.map((c) => c.sourceId).sort()).toEqual(
+      GENERATORS.map((g) => `generator:${g.id}`).sort(),
+    );
+    for (const chunk of chunks) {
+      expect(chunk.kind).toBe("registry");
+      expect(chunk.featureId).toBe("campaign-generator");
+    }
+  });
+
+  it("names the generator and says what it makes, in the user's words", () => {
+    const quest = bundle.chunks.find((c) => c.id === "generator:quest#0")!;
+    const meta = GENERATORS.find((g) => g.id === "quest")!;
+    expect(quest.title).toBe(meta.label);
+    expect(quest.text).toContain(meta.description);
+  });
+
+  it('does not repeat the word "generator", which would drown out the overview', () => {
+    for (const chunk of bundle.chunks.filter((c) =>
+      c.sourceId.startsWith("generator:"),
+    )) {
+      expect(
+        `${chunk.title} ${chunk.heading}`.toLowerCase(),
+        chunk.id,
+      ).not.toContain("generator");
+    }
+  });
+
+  it("stays small: the whole bundle is well under the Worker's limit", () => {
+    expect(JSON.stringify(bundle).length).toBeLessThan(600_000);
+  });
+
+  it("can be built from a different generator list (so the list is an input, not hard-wired)", () => {
+    const custom = buildBundle({
+      ...input,
+      generators: [
+        {
+          id: "widget",
+          label: "Widget",
+          description: "Make a widget for the table.",
+        },
+      ],
+    });
+    expect(
+      custom.chunks
+        .filter((c) => c.sourceId.startsWith("generator:"))
+        .map((c) => c.id),
+    ).toEqual(["generator:widget#0"]);
   });
 });
 
