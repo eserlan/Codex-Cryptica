@@ -156,6 +156,7 @@ export const howDoTradeRoutesShapeCitiesAndKingdomsInAnRpgWorld: AnswerConfigInp
       "how-do-i-give-different-civilisations-distinct-strengths-and-weaknesses",
       "how-do-i-make-different-cultures-feel-distinct-without-relying-on-stereotypes",
       "how-do-i-make-rival-captains-navies-and-pirate-factions-matter",
+      "how-do-i-create-interesting-islands-and-ports-for-a-pirate-campaign",
     ],
     discovery: {
       id: "answer-trade-routes-shape-cities-kingdoms",

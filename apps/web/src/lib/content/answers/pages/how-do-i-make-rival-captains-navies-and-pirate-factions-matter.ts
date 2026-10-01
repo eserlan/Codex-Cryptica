@@ -173,6 +173,7 @@ export const howDoIMakeRivalCaptainsNaviesAndPirateFactionsMatter: AnswerConfigI
       "how-do-you-generate-useful-rpg-rumours",
       "what-should-an-rpg-settlement-contain",
       "how-do-trade-routes-shape-cities-and-kingdoms-in-an-rpg-world",
+      "how-do-i-create-interesting-islands-and-ports-for-a-pirate-campaign",
     ],
     labels: ["pirate"],
     discovery: {
