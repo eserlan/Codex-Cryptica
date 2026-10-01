@@ -2367,7 +2367,7 @@ Reference answers to real RPG and worldbuilding questions, indexed at https://co
 
 ### [How do I make rival captains, navies, and pirate factions matter?](https://codexcryptica.com/answers/how-do-i-make-rival-captains-navies-and-pirate-factions-matter)
 
-**Direct answer:** Give every rival captain, navy, and pirate faction a concrete goal, a territory or resource it depends on, and a clock that advances whether the crew interferes or not. Between sessions move each clock by one step, translate the result into something the players can see in prices, patrols, flags, or port control, and let reputation carry consequences from one harbour to the next. Recurring rivals who change after a win or loss create choices that reshape the map instead of a fixed plot that waits for the party.
+**Direct answer:** Give each rival captain, navy, company, or pirate faction a concrete goal, an asset or dependency, and a move that can change the sea around the crew. Review factions at natural breaks in fictional time, often between sessions, and advance only moves that had the time, means, and opportunity to progress. Show the results in prices, patrols, routes, port access, and local reputation; let recurring rivals change their relationship with the crew as well as their plans.
 
 ### [How do I make sea travel interesting in a TTRPG?](https://codexcryptica.com/answers/how-do-i-make-sea-travel-interesting-in-a-ttrpg)
 
@@ -2447,7 +2447,7 @@ Reference answers to real RPG and worldbuilding questions, indexed at https://co
 
 ### [How do I run ship-to-ship combat without sidelining half the party?](https://codexcryptica.com/answers/how-do-i-run-ship-to-ship-combat-without-sidelining-the-party)
 
-**Direct answer:** Run ship-to-ship combat as a set of simultaneous station problems so every character has a decision each round. Treat the ship as a shared platform with distinct stations for helm and navigation, guns, damage control, lookout and signals, boarding preparation, and morale or command, and let players claim a station each round based on what the situation needs rather than locking them to one job. Pair that with visible objectives, environmental complications, and a clean handover to boarding, chase, or escape so non-martial and non-nautical characters always have useful choices.
+**Direct answer:** Treat the ship as a shared battlefield with several simultaneous problems, so specialist actions change what the rest of the party can do next. Present shipboard functions such as helm, guns, damage control, lookout, boarding, command, and setting-specific support; let character expertise shape who leads, assists, or finds another approach. The ordinary crew handles routine work while the PCs make exceptional decisions, direct crises, and choose priorities. Use the game’s normal rules, visible consequences, environmental complications, and a clear handover to boarding, chase, escape, or surrender.
 
 ### [How do I run spies and infiltrators in an RPG?](https://codexcryptica.com/answers/how-do-i-run-spies-and-infiltrators-in-an-rpg)
 
