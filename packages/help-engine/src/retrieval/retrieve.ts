@@ -22,8 +22,45 @@ export interface RetrievalResult {
 
 export const DEFAULT_LIMIT = 3;
 
+/**
+ * No more than this many chunks from one feature (or, for an article no
+ * feature claims, one article). With only a few chunks shown, one feature's
+ * entry and article could fill them all and a question that spans two features
+ * ("is X the same as Y?") would only ever hear about one.
+ */
+export const MAX_CHUNKS_PER_FEATURE = 2;
+
 /** A shown chunk needs at least this fraction of the relevance floor. */
 export const INCLUSION_RATIO = 0.5;
+
+/**
+ * Picks the chunks to show, in rank order. The per-feature cap only ever swaps
+ * in a chunk that clears the full relevance floor: a weak chunk must never
+ * take the place of a relevant one just to look varied. Slots the cap leaves
+ * empty go back to the best remaining chunks.
+ */
+function diversify(
+  ranked: ScoredChunk[],
+  limit: number,
+  floor: number,
+): ScoredChunk[] {
+  const perGroup = new Map<string, number>();
+  const picked = new Set<ScoredChunk>();
+  for (const r of ranked) {
+    if (picked.size === limit) break;
+    if (r.relevance < floor) continue;
+    const group = r.chunk.featureId ?? r.chunk.sourceId;
+    const used = perGroup.get(group) ?? 0;
+    if (used >= MAX_CHUNKS_PER_FEATURE) continue;
+    perGroup.set(group, used + 1);
+    picked.add(r);
+  }
+  for (const r of ranked) {
+    if (picked.size === limit) break;
+    picked.add(r);
+  }
+  return ranked.filter((r) => picked.has(r));
+}
 
 function closestTopics(
   ranked: ScoredChunk[],
@@ -70,9 +107,11 @@ export function retrieve(
     // A lower bar still keeps out chunks that share almost nothing.
     chunks: noMatch
       ? []
-      : ranked
-          .filter((r) => r.relevance >= floor * INCLUSION_RATIO)
-          .slice(0, limit),
+      : diversify(
+          ranked.filter((r) => r.relevance >= floor * INCLUSION_RATIO),
+          limit,
+          floor,
+        ),
     topRelevance,
     noMatch,
     screenFeatures,

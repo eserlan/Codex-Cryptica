@@ -1,4 +1,18 @@
 import { sanitizeHelpContext, type HelpContext } from "../../src/context";
+import {
+  PHASE_A_CONFUSION,
+  PHASE_A_IN_SCOPE,
+  PHASE_A_OUT_OF_SCOPE,
+} from "./phase-a-questions";
+
+const SETTINGS_PANELS = [
+  "settings-vault",
+  "settings-intelligence",
+  "settings-schema",
+  "settings-templates",
+  "settings-theme",
+  "settings-publishing",
+];
 
 /** The screens the evaluation asks from. */
 export const SCREENS: Record<string, HelpContext> = {
@@ -27,14 +41,67 @@ export const SCREENS: Record<string, HelpContext> = {
     mode: "view",
     flags: ["generators"],
   }),
+  entityEdit: sanitizeHelpContext({
+    routeTemplate: "/(app)",
+    area: "entity-detail",
+    entityKind: "character",
+    tab: "status",
+    mode: "edit",
+    flags: ["connections-editable", "generators"],
+    availableActions: ["status-tab", "connections-tab", ...SETTINGS_PANELS],
+  }),
+  canvas: sanitizeHelpContext({
+    routeTemplate: "/(app)/canvas",
+    area: "canvas",
+    mode: "view",
+    flags: ["generators"],
+    availableActions: SETTINGS_PANELS,
+  }),
+  map: sanitizeHelpContext({
+    routeTemplate: "/(app)/map",
+    area: "map",
+    mode: "view",
+    flags: ["generators"],
+    availableActions: SETTINGS_PANELS,
+  }),
+  import: sanitizeHelpContext({
+    routeTemplate: "/(app)/import",
+    area: "import",
+    mode: "view",
+    flags: ["generators"],
+    availableActions: SETTINGS_PANELS,
+  }),
+  settings: sanitizeHelpContext({
+    routeTemplate: "/(app)",
+    area: "settings",
+    tab: "vault",
+    mode: "view",
+    flags: ["generators"],
+    availableActions: SETTINGS_PANELS,
+  }),
   none: sanitizeHelpContext({}),
 };
+
+/**
+ * Which half of the set a question belongs to. Retrieval settings and wording
+ * may be adjusted by looking at `tune` results only. `holdout` is read to
+ * check the result and never to choose a setting, so it still means something.
+ */
+export type EvalSplit = "tune" | "holdout";
 
 export interface InScopeQuestion {
   question: string;
   screen: keyof typeof SCREENS;
   /** Any one of these source IDs in the top three counts as a correct source. */
   expect: string[];
+  /**
+   * For a question that is easy to confuse with a neighbouring feature: the
+   * top three must also hold one of these, so both sides are on the table.
+   */
+  alsoExpect?: string[];
+  split: EvalSplit;
+  /** Area or kind of question, used to check every new area has enough. */
+  topic: string;
 }
 
 const CONNECTIONS = [
@@ -43,7 +110,10 @@ const CONNECTIONS = [
   "connection-labels",
 ];
 
-export const IN_SCOPE: InScopeQuestion[] = [
+type PhaseOneQuestion = Omit<InScopeQuestion, "split" | "topic">;
+
+/** The spike's questions. They were used to tune retrieval, so they are all `tune`. */
+const PHASE_ONE: PhaseOneQuestion[] = [
   // Entity Connections
   {
     question: "How do I connect the faction I just created?",
@@ -185,8 +255,7 @@ export const IN_SCOPE: InScopeQuestion[] = [
   },
 ];
 
-/** Capabilities the product lacks, and questions that are not about it at all. */
-export const OUT_OF_SCOPE: {
+const PHASE_ONE_OUT_OF_SCOPE: {
   question: string;
   screen: keyof typeof SCREENS;
 }[] = [
@@ -203,6 +272,47 @@ export const OUT_OF_SCOPE: {
   { question: "Translate this sentence into French", screen: "none" },
   { question: "How do I install Photoshop?", screen: "none" },
   { question: "Who won the football match yesterday?", screen: "none" },
+];
+
+export const IN_SCOPE: InScopeQuestion[] = [
+  ...PHASE_ONE.map((q) => ({
+    ...q,
+    split: "tune" as const,
+    topic: "existing",
+  })),
+  ...PHASE_A_IN_SCOPE,
+  ...PHASE_A_CONFUSION,
+];
+
+/**
+ * `unrelated`: shares no subject with the help (weather, cooking). Word overlap
+ * alone must send these to no-match without calling the model.
+ *
+ * `near-miss`: names something the help does cover (import, export, backup, map,
+ * canvas, storage, generator) and asks for a capability it does not have, such
+ * as "back up to Dropbox". A word-overlap floor cannot tell these from a real
+ * question, so the model has to refuse from its sources. They are checked in
+ * the live run, not offline.
+ */
+export type OutOfScopeKind = "unrelated" | "near-miss";
+
+export interface OutOfScopeQuestion {
+  question: string;
+  screen: keyof typeof SCREENS;
+  split: EvalSplit;
+  kind: OutOfScopeKind;
+}
+
+/** Capabilities the product lacks, and questions that are not about it at all. */
+export const OUT_OF_SCOPE: OutOfScopeQuestion[] = [
+  ...PHASE_ONE_OUT_OF_SCOPE.map((q) => ({
+    ...q,
+    split: "tune" as const,
+    kind: q.question.includes("Roll20")
+      ? ("near-miss" as const)
+      : ("unrelated" as const),
+  })),
+  ...PHASE_A_OUT_OF_SCOPE,
 ];
 
 /** Attempts to change the assistant's role or expose its instructions. */
