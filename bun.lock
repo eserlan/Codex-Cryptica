@@ -409,6 +409,7 @@
       "name": "help-engine",
       "version": "0.0.0",
       "dependencies": {
+        "js-yaml": "^5.2.1",
         "zod": "^4.4.3",
       },
       "devDependencies": {
