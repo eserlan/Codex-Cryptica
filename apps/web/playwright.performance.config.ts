@@ -9,6 +9,7 @@ export default defineConfig({
   testMatch: [
     "large-vault.operations.spec.ts",
     "graph-images.spec.ts",
+    "graph-images-dead.spec.ts",
     "entity-index-batch.spec.ts",
     "graph-sync-edit.spec.ts",
     "vault-preload.spec.ts",

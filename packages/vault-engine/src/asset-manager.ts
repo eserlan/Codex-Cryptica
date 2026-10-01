@@ -39,6 +39,42 @@ const EXTERNAL_FETCH_TIMEOUT_MS = 8_000;
  */
 const EXTERNAL_FAILURE_TTL_MS = 5 * 60_000;
 
+/**
+ * How long an external image that could not be loaded at all is left alone
+ * across sessions. A host that answers 404 without CORS headers never shows us
+ * the status, so the link cannot be called dead (and is never deleted), but
+ * asking again on every load only adds a console error each time. A link that
+ * was merely down is tried again after this.
+ */
+const UNREACHABLE_TTL_MS = 24 * 60 * 60_000;
+
+/**
+ * Whether the browser can load a URL as a plain image, which needs no CORS
+ * headers. `unknown` when it cannot be told (no browser, or it took too long).
+ */
+export type ImageProbe = (
+  url: string,
+) => Promise<"loaded" | "failed" | "unknown">;
+
+const probeImageLoad: ImageProbe = (url) =>
+  new Promise((resolve) => {
+    if (typeof Image === "undefined") return resolve("unknown");
+    const image = new Image();
+    const finish = (result: "loaded" | "failed" | "unknown") => {
+      clearTimeout(timer);
+      image.onload = null;
+      image.onerror = null;
+      resolve(result);
+    };
+    const timer = setTimeout(
+      () => finish("unknown"),
+      EXTERNAL_FETCH_TIMEOUT_MS,
+    );
+    image.onload = () => finish("loaded");
+    image.onerror = () => finish("failed");
+    image.src = url;
+  });
+
 /** Cache-key namespace for thumbnail URLs, distinct from their originals. */
 const thumbnailKey = (path: string) => `thumbnail:${path}`;
 
@@ -73,8 +109,14 @@ export class AssetManager {
   private resolving = new Map<string, Promise<string>>();
   private activeThumbnails = 0;
   private thumbnailWaiters: (() => void)[] = [];
-  /** When each unreachable external image last failed, by URL. */
-  private failedExternal = new Map<string, number>();
+  /**
+   * When each unreachable external image last failed, by URL. `opaque` marks a
+   * failure whose status was hidden from us (a network or CORS error), as
+   * opposed to a timeout or an HTTP error we could read.
+   */
+  private failedExternal = new Map<string, { at: number; opaque: boolean }>();
+  /** URLs marked unreachable in this session, so the marker is read once. */
+  private unreachableThisSession = new Set<string>();
   /** URLs confirmed to be permanently missing (404/410). */
   private deadExternal = new Set<string>();
 
@@ -85,6 +127,8 @@ export class AssetManager {
     private fetcher: typeof fetch = (input, init) => fetch(input, init),
     private clock: Clock = systemClock,
     private onDeadExternalImage?: (url: string) => void,
+    // Injected for tests; the default asks the browser to load the image.
+    private probeImage: ImageProbe = probeImageLoad,
   ) {}
 
   setOnDeadExternalImage(handler: ((url: string) => void) | undefined) {
@@ -314,6 +358,13 @@ export class AssetManager {
         );
         if (!thumbnail) {
           if (this.deadExternal.has(cleanPath)) return "";
+          // Marked unreachable (now or by an earlier session): no request at
+          // all, and nothing handed to Cytoscape to request instead.
+          if (this.unreachableThisSession.has(cleanPath)) return "";
+          if (await this.cannotBeLoadedAtAll(cleanPath)) {
+            await this.markUnreachable(vaultHandle, cleanPath);
+            return "";
+          }
           return this.resolveImageUrl(
             vaultHandle,
             cleanPath,
@@ -378,9 +429,9 @@ export class AssetManager {
   }
 
   private hasRecentFailure(url: string): boolean {
-    const failedAt = this.failedExternal.get(url);
-    if (failedAt === undefined) return false;
-    if (this.clock.now() - failedAt < EXTERNAL_FAILURE_TTL_MS) return true;
+    const failure = this.failedExternal.get(url);
+    if (failure === undefined) return false;
+    if (this.clock.now() - failure.at < EXTERNAL_FAILURE_TTL_MS) return true;
     this.failedExternal.delete(url);
     return false;
   }
@@ -405,10 +456,66 @@ export class AssetManager {
         throw new Error(`HTTP ${response.status}`);
       }
       return await response.blob();
-    } catch {
-      this.failedExternal.set(url, this.clock.now());
+    } catch (error) {
+      this.failedExternal.set(url, {
+        at: this.clock.now(),
+        // A TypeError is how fetch reports a network or CORS failure, where the
+        // response (and so any 404) is hidden from us.
+        opaque: error instanceof TypeError,
+      });
       return null;
     }
+  }
+
+  private async unreachableMarkerName(url: string): Promise<string> {
+    return (await externalCacheName(url)).replace(/\.cache$/, ".unreachable");
+  }
+
+  /** Whether an earlier session found this link unreachable, recently. */
+  private async isMarkedUnreachable(
+    vaultHandle: FileSystemDirectoryHandle,
+    url: string,
+  ): Promise<boolean> {
+    if (this.unreachableThisSession.has(url)) return true;
+    try {
+      const marker = await this.ioAdapter.readOpfsBlob(
+        [await this.unreachableMarkerName(url)],
+        await this.externalDir(vaultHandle),
+      );
+      const markedAt = Number(await marker.text());
+      if (!Number.isFinite(markedAt)) return false;
+      if (this.clock.now() - markedAt >= UNREACHABLE_TTL_MS) return false;
+      this.unreachableThisSession.add(url);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  private async markUnreachable(
+    vaultHandle: FileSystemDirectoryHandle,
+    url: string,
+  ): Promise<void> {
+    this.unreachableThisSession.add(url);
+    await this.ioAdapter
+      .writeOpfsFile(
+        [".cache", "external_images", await this.unreachableMarkerName(url)],
+        String(this.clock.now()),
+        vaultHandle,
+        vaultHandle.name,
+      )
+      .catch(() => {});
+  }
+
+  /**
+   * For a link whose CORS fetch failed without a readable status: true when the
+   * browser cannot load it as a plain image either. The graph would otherwise
+   * hand it to Cytoscape, which requests it again, logs a 404, and does so on
+   * every load.
+   */
+  private async cannotBeLoadedAtAll(url: string): Promise<boolean> {
+    if (!this.failedExternal.get(url)?.opaque) return false;
+    return (await this.probeImage(url)) === "failed";
   }
 
   /** The cached copy of an external image, fetching and caching it if needed. */
@@ -424,6 +531,8 @@ export class AssetManager {
       } catch {
         const legacy = await this.migrateLegacyExternal(vaultHandle, url, name);
         if (legacy) return legacy;
+        // Cached copies win over the marker; only the network is skipped.
+        if (await this.isMarkedUnreachable(vaultHandle, url)) return null;
         const blob = await this.fetchExternal(url);
         if (!blob) return null;
         await this.ioAdapter.writeOpfsFile(
