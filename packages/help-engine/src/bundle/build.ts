@@ -1,3 +1,4 @@
+import { GENERATORS } from "../registry/generators.generated";
 import type { FeatureEntry } from "../registry/schema";
 import { filterByChannel, validateRegistry } from "../registry/schema";
 import { chunkMarkdown, contentHash } from "./chunk";
@@ -9,6 +10,40 @@ export interface BuildBundleInput {
   commit: string;
   builtAt: string;
   channel: "production" | "staging";
+  /** The generators to describe; defaults to the generated list. */
+  generators?: readonly {
+    id: string;
+    label: string;
+    description: string;
+  }[];
+}
+
+/** The registry feature that owns the generator chunks. */
+const GENERATORS_FEATURE_ID = "campaign-generator";
+
+/** One chunk per generator, so a plain request ("make a quest") finds its generator. */
+function generatorChunks(
+  generators: NonNullable<BuildBundleInput["generators"]>,
+): HelpChunk[] {
+  return generators.map((generator) => {
+    // Deliberately without the word "generator": every one of these chunks
+    // would repeat it, and a question like "where are the generators" would
+    // then match 29 near-identical chunks instead of the overview. They match
+    // on what each one makes (its label and description) instead.
+    const heading = "Creates";
+    const text = `${generator.label}: ${generator.description}`;
+    return {
+      id: `generator:${generator.id}#0`,
+      sourceId: `generator:${generator.id}`,
+      kind: "registry",
+      featureId: GENERATORS_FEATURE_ID,
+      helpId: null,
+      title: generator.label,
+      heading,
+      text,
+      hash: contentHash(`${heading}\n${text}`),
+    };
+  });
 }
 
 function registryChunks(feature: FeatureEntry): HelpChunk[] {
@@ -64,6 +99,7 @@ export function buildBundle(input: BuildBundleInput): KnowledgeBundle {
 
   const chunks: HelpChunk[] = [];
   for (const feature of features) chunks.push(...registryChunks(feature));
+  chunks.push(...generatorChunks(input.generators ?? GENERATORS));
   for (const article of [...input.articles].sort((a, b) =>
     a.id.localeCompare(b.id),
   )) {

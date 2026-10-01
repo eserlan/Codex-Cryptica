@@ -243,3 +243,60 @@ describe("retrieve — floor decides answerability, score decides evidence", () 
     expect(result.chunks).toEqual([]);
   });
 });
+
+describe("retrieve — one feature cannot fill every slot", () => {
+  const publishing = chunk(
+    "publishing#0",
+    "Publish a snapshot of your world so other people can read it. Publishing makes a public copy.",
+    { featureId: "session-hub" },
+  );
+  const backupParts = [0, 1, 2].map((n) =>
+    chunk(
+      `backup-${n}#0`,
+      `Export a backup of your world as one file. Backup part ${n} explains the file and how to restore it.`,
+      { featureId: "tables", sourceId: `backup-${n}`, helpId: `backup-${n}` },
+    ),
+  );
+  const screen = sanitizeHelpContext({
+    routeTemplate: "/(app)",
+    area: "other",
+    mode: "view",
+  });
+
+  it("gives the third slot to a different feature that clears the floor", () => {
+    const result = retrieve(
+      "Is exporting a backup file the same as publishing?",
+      bundle([...backupParts, publishing, ...filler]),
+      screen,
+    );
+    const ids = result.chunks.map((c) => c.chunk.id);
+    expect(ids).toContain("publishing#0");
+    expect(
+      ids.filter((id) => id.startsWith("backup-")).length,
+    ).toBeLessThanOrEqual(2);
+  });
+
+  it("keeps a relevant third chunk from the same feature when nothing else clears the floor", () => {
+    const result = retrieve(
+      "How do I export a backup of my world?",
+      bundle([...backupParts, ...filler]),
+      screen,
+    );
+    expect(result.chunks.map((c) => c.chunk.id).sort()).toEqual([
+      "backup-0#0",
+      "backup-1#0",
+      "backup-2#0",
+    ]);
+  });
+});
+
+describe("text handling — comparison words", () => {
+  it("does not treat 'difference between' or 'same as' as topics", () => {
+    expect(
+      tokenize("What is the difference between the graph and the canvas?"),
+    ).toEqual(tokenize("the graph and the canvas"));
+    expect(tokenize("Is a pin the same as a connection?")).toEqual(
+      tokenize("a pin a connection"),
+    );
+  });
+});

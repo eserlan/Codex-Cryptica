@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   HELP_CONTEXT_KEYS,
+  HelpContextSchema,
   emptyHelpContext,
   parseHelpContext,
   sanitizeHelpContext,
@@ -72,7 +73,94 @@ describe("HelpContextV1", () => {
   });
 });
 
+describe("HelpContextV1 — canvas, map, import and Settings", () => {
+  const base = {
+    v: 1,
+    routeTemplate: "/(app)",
+    area: "settings",
+    entityKind: null,
+    tab: "vault",
+    mode: "view",
+    surface: "vault",
+    flags: [],
+    availableActions: [],
+  };
+
+  it("accepts the new screens", () => {
+    for (const [routeTemplate, area] of [
+      ["/(app)/canvas", "canvas"],
+      ["/(app)/map", "map"],
+      ["/(app)/import", "import"],
+    ] as const) {
+      expect(
+        parseHelpContext({ ...base, routeTemplate, area, tab: null }).ok,
+      ).toBe(true);
+    }
+  });
+
+  it("accepts a Settings screen and names its tab with the existing tab field", () => {
+    for (const tab of [
+      "vault",
+      "intelligence",
+      "schema",
+      "templates",
+      "theme",
+      "publishing",
+      "about",
+      "help",
+    ]) {
+      expect(parseHelpContext({ ...base, tab }).ok, tab).toBe(true);
+    }
+  });
+
+  it("rejects a tab that does not belong to the screen's area", () => {
+    expect(
+      parseHelpContext({ ...base, area: "settings", tab: "connections" }).ok,
+    ).toBe(false);
+    expect(
+      parseHelpContext({ ...base, area: "entity-detail", tab: "vault" }).ok,
+    ).toBe(false);
+    expect(
+      parseHelpContext({ ...base, area: "canvas", tab: "status" }).ok,
+    ).toBe(false);
+  });
+
+  it("keeps the entity tabs working on an entity screen", () => {
+    expect(
+      parseHelpContext({ ...base, area: "entity-detail", tab: "lore" }).ok,
+    ).toBe(true);
+  });
+
+  it("does not add a key: Settings reuses the tab field", () => {
+    expect(Object.keys(HelpContextSchema.shape).sort()).toEqual(
+      HELP_CONTEXT_KEYS,
+    );
+    expect(HELP_CONTEXT_KEYS).not.toContain("settingsTab");
+  });
+});
+
 describe("sanitizeHelpContext", () => {
+  it("drops a tab that does not fit the area instead of sending it", () => {
+    expect(
+      sanitizeHelpContext({ area: "settings", tab: "connections" }).tab,
+    ).toBeNull();
+    expect(
+      sanitizeHelpContext({ area: "graph", tab: "status" }).tab,
+    ).toBeNull();
+    expect(
+      sanitizeHelpContext({ area: "settings", tab: "publishing" }).tab,
+    ).toBe("publishing");
+    expect(
+      sanitizeHelpContext({ area: "entity-detail", tab: "stats" }).tab,
+    ).toBe("stats");
+  });
+
+  it("recognises the new areas", () => {
+    for (const area of ["canvas", "map", "import", "settings"]) {
+      expect(sanitizeHelpContext({ area }).area).toBe(area);
+    }
+  });
+
   it("collapses a user-defined category to custom", () => {
     expect(
       sanitizeHelpContext({

@@ -1,7 +1,26 @@
 import { describe, expect, it, vi } from "vitest";
+import { HELP_AREAS } from "help-engine";
 import { buildHelpMetric, emitHelpMetric } from "./help-metrics";
 
 describe("buildHelpMetric", () => {
+  it("accepts every screen area the app can describe, including the newest", () => {
+    for (const area of HELP_AREAS) {
+      expect(
+        buildHelpMetric({ outcome: "answered", latencyMs: 5, area }),
+        area,
+      ).toMatchObject({ area });
+    }
+    for (const area of ["canvas", "map", "import", "settings"]) {
+      expect(HELP_AREAS as readonly string[]).toContain(area);
+    }
+  });
+
+  it("still rejects an area that is not one of them", () => {
+    expect(
+      buildHelpMetric({ outcome: "answered", latencyMs: 5, area: "oakvale" }),
+    ).toBeNull();
+  });
+
   it("emits exactly event, outcome, latencyMs and area", () => {
     expect(
       buildHelpMetric({

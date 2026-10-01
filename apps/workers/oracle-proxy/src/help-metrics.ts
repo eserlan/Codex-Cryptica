@@ -8,6 +8,8 @@
  * is deliberately not measured.
  */
 
+import { HELP_AREAS } from "help-engine";
+
 export const HELP_OUTCOMES = [
   "answered",
   "no-match",
@@ -17,14 +19,11 @@ export const HELP_OUTCOMES = [
 ] as const;
 export type HelpOutcome = (typeof HELP_OUTCOMES)[number];
 
-export const HELP_METRIC_AREAS = [
-  "entity-detail",
-  "graph",
-  "session-hub",
-  "tables",
-  "generators",
-  "other",
-] as const;
+/**
+ * Every screen area the assistant describes, taken from the engine so a new
+ * area can never be reported by the app and then dropped here as invalid.
+ */
+export const HELP_METRIC_AREAS = HELP_AREAS;
 export type HelpMetricArea = (typeof HELP_METRIC_AREAS)[number];
 
 export interface HelpMetric {

@@ -1,4 +1,6 @@
+import { KNOWN_HELP_IDS } from "./fixtures/help-article-ids";
 import { describe, expect, it } from "vitest";
+import { HELP_AREAS } from "../src/context";
 import {
   FEATURE_REGISTRY,
   filterByChannel,
@@ -6,15 +8,7 @@ import {
   type FeatureEntry,
 } from "../src/registry";
 
-const helpIds = new Set([
-  "connections-tab",
-  "connection-labels",
-  "graph-basics",
-  "session-hub",
-  "in-app-generators",
-  "generate-related",
-  "random-tables-decks",
-]);
+const helpIds = new Set<string>(KNOWN_HELP_IDS);
 
 const base = FEATURE_REGISTRY[0];
 const clone = (over: Partial<FeatureEntry>): FeatureEntry => ({
@@ -27,14 +21,46 @@ describe("proof-of-concept registry", () => {
     expect(validateRegistry(FEATURE_REGISTRY, { helpIds })).toEqual([]);
   });
 
-  it("covers the five required areas", () => {
+  it("has something to say on every screen area except the catch-all", () => {
+    const covered = new Set(FEATURE_REGISTRY.flatMap((f) => f.areas));
+    for (const area of HELP_AREAS.filter((a) => a !== "other")) {
+      expect(covered.has(area), `no feature covers "${area}"`).toBe(true);
+    }
+  });
+
+  it("lists a Settings tab only on a Settings feature", () => {
+    for (const feature of FEATURE_REGISTRY) {
+      const settingsTabs = feature.tabs.filter((t) =>
+        [
+          "vault",
+          "intelligence",
+          "schema",
+          "templates",
+          "theme",
+          "publishing",
+          "about",
+          "help",
+        ].includes(t),
+      );
+      if (settingsTabs.length > 0) {
+        expect(feature.areas, feature.id).toEqual(["settings"]);
+      }
+    }
+  });
+
+  it("covers the proof-of-concept areas and the phase A expansion", () => {
     expect(FEATURE_REGISTRY.map((f) => f.id).sort()).toEqual(
       [
+        "archive-import",
+        "backup-and-restore",
         "campaign-generator",
+        "canvas",
         "entity-connections",
+        "entity-editing",
         "graph-view",
         "session-hub",
         "tables",
+        "vtt-map",
       ].sort(),
     );
   });

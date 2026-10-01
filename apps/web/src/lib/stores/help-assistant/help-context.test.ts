@@ -28,6 +28,8 @@ function store(
     surfaces: registry,
     isGeneratorOpen: () => false,
     generatorsAvailable: () => false,
+    getOpenSettingsTab: () => null,
+    isGuestMode: () => true,
     ...over,
   };
   return { ctx: new HelpContextStore(sources), registry };
@@ -124,6 +126,83 @@ describe("HelpContextStore", () => {
     registry.registerEntityDetail(second);
     first();
     expect(registry.entityDetail).toBe(second);
+  });
+
+  it("describes the canvas, map and import screens from the route", () => {
+    for (const [route, area] of [
+      ["/(app)/canvas", "canvas"],
+      ["/(app)/map", "map"],
+      ["/(app)/import", "import"],
+    ] as const) {
+      expect(store({ getRouteId: () => route }).ctx.current.area, route).toBe(
+        area,
+      );
+    }
+  });
+
+  it("describes an open Settings tab and lets it win over what is underneath", () => {
+    const { ctx, registry } = store({
+      getOpenSettingsTab: () => "vault",
+      isGeneratorOpen: () => true,
+    });
+    registry.registerEntityDetail(surface());
+    expect(ctx.current).toMatchObject({
+      area: "settings",
+      tab: "vault",
+      entityKind: null,
+      mode: "view",
+    });
+  });
+
+  it("puts an open generator above an open entry, and an entry above the route", () => {
+    const { ctx, registry } = store({ isGeneratorOpen: () => true });
+    registry.registerEntityDetail(surface());
+    expect(ctx.current.area).toBe("generators");
+    expect(ctx.current.entityKind).toBeNull();
+    const entry = store();
+    entry.registry.registerEntityDetail(surface());
+    expect(entry.ctx.current.area).toBe("entity-detail");
+  });
+
+  it("offers the Settings panels on every screen of a real vault", () => {
+    const panels = [
+      "settings-vault",
+      "settings-intelligence",
+      "settings-schema",
+      "settings-templates",
+      "settings-theme",
+      "settings-publishing",
+    ];
+    for (const route of ["/(app)", "/(app)/canvas", "/(app)/map"]) {
+      const { ctx } = store({
+        getRouteId: () => route,
+        isGuestMode: () => false,
+      });
+      expect(ctx.current.availableActions, route).toEqual(panels);
+    }
+    const { ctx, registry } = store({ isGuestMode: () => false });
+    registry.registerEntityDetail(surface());
+    expect(ctx.current.availableActions).toEqual([
+      "status-tab",
+      "connections-tab",
+      ...panels,
+    ]);
+  });
+
+  it("offers no Settings panel in a guest or demo vault, even with Settings open", () => {
+    const { ctx } = store({
+      isGuestMode: () => true,
+      getOpenSettingsTab: () => "vault",
+    });
+    expect(ctx.current.area).toBe("settings");
+    expect(
+      ctx.current.availableActions.filter((a) => a.startsWith("settings-")),
+    ).toEqual([]);
+  });
+
+  it("drops a Settings tab that does not belong to the screen it is reported on", () => {
+    const { ctx } = store({ getOpenSettingsTab: () => "not-a-tab" });
+    expect(ctx.current.tab).toBeNull();
   });
 
   it("always produces only the agreed keys", () => {

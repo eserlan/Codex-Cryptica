@@ -101,6 +101,39 @@ describe("buildHelpPrompt", () => {
       candidates: [guide],
     });
 
+  it("does not call the Settings tabs controls on screen", () => {
+    const user = buildHelpPrompt({
+      question: "How do I back up?",
+      history: [],
+      context: sanitizeHelpContext({
+        routeTemplate: "/(app)",
+        area: "graph",
+        availableActions: ["settings-vault", "settings-theme"],
+      }),
+      chunks: [chunk("connections-tab#0", "Back up your vault.")],
+      candidates: [],
+    })[1].content;
+    expect(user).not.toContain("controls on screen");
+    expect(user).toContain(
+      "Settings tabs that can be opened from anywhere: vault, theme",
+    );
+  });
+
+  it("still lists real on-screen controls on their own", () => {
+    const user = buildHelpPrompt({
+      question: "x",
+      history: [],
+      context: sanitizeHelpContext({
+        routeTemplate: "/(app)",
+        area: "entity-detail",
+        availableActions: ["status-tab", "settings-vault"],
+      }),
+      chunks: [chunk("connections-tab#0", "x")],
+      candidates: [],
+    })[1].content;
+    expect(user).toContain("controls on screen: status-tab;");
+  });
+
   it("labels each source by id and lists the offered actions", () => {
     const user = build("How do I connect the faction?")[1].content;
     expect(user).toContain('<source id="connections-tab#0"');
