@@ -33,13 +33,14 @@ Article body.
 `;
 
     expect(validateHelpArticleFrontMatter(article)).toEqual([
-      "missing required `description`",
-      "missing non-empty `tags` array",
+      "missing required string `description`",
+      "missing non-empty string `tags` array",
     ]);
   });
 
   it("ignores metadata requirements for hidden articles", () => {
     const article = `---
+id: hidden-note
 hidden: true
 ---
 Article body.

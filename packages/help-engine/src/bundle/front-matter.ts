@@ -1,8 +1,13 @@
+import { load as loadYaml } from "js-yaml";
 import type { HelpArticleSource } from "./types";
 
 interface FrontMatterBlock {
   front: string;
   content: string;
+}
+
+interface ParsedFrontMatter extends FrontMatterBlock {
+  metadata: Record<string, unknown>;
 }
 
 export interface HelpCorpusSource {
@@ -11,101 +16,104 @@ export interface HelpCorpusSource {
 }
 
 const HELP_ID = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+const FRONT_MATTER = /^---\s*[\r\n]+([\s\S]*?)[\r\n]+---\s*[\r\n]+([\s\S]*)$/;
 
 function splitFrontMatter(raw: string): FrontMatterBlock | null {
-  const match = /^---\s*\r?\n([\s\S]*?)\r?\n---\s*\r?\n([\s\S]*)$/.exec(raw);
+  const match = FRONT_MATTER.exec(raw);
   if (!match) return null;
   return { front: match[1], content: match[2] };
 }
 
-function scalar(front: string, key: string): string | null {
-  const hit = new RegExp(`^${key}:\\s*(.+?)\\s*$`, "m").exec(front);
-  return hit ? hit[1].replace(/^["']|["']$/g, "").trim() : null;
-}
-
-function list(front: string, key: string): string[] | null {
-  const lines = front.split(/\r?\n/);
-  const lineIndex = lines.findIndex((line) =>
-    new RegExp(`^${key}:\\s*(.*)$`).test(line),
-  );
-  if (lineIndex === -1) return null;
-
-  const match = new RegExp(`^${key}:\\s*(.*)$`).exec(lines[lineIndex]);
-  if (!match) return null;
-  let raw = match[1].trim();
-
-  if (!raw && lines[lineIndex + 1]?.trimStart().startsWith("[")) {
-    raw = lines[lineIndex + 1].trim();
-    let nextLine = lineIndex + 2;
-    while (!raw.includes("]") && nextLine < lines.length) {
-      raw += ` ${lines[nextLine].trim()}`;
-      nextLine++;
-    }
-  }
-
-  if (!raw.startsWith("[") || !raw.endsWith("]")) return null;
-  return raw
-    .slice(1, -1)
-    .split(",")
-    .map((value) => value.trim().replace(/^["']|["']$/g, ""))
-    .filter(Boolean);
-}
-
-function visibleMetadata(raw: string): {
-  id: string | null;
-  title: string | null;
-  description: string | null;
-  tags: string[] | null;
-  rank: string | null;
-} | null {
+function parseFrontMatter(raw: string): {
+  value: ParsedFrontMatter | null;
+  error: string | null;
+} {
   const block = splitFrontMatter(raw);
-  if (!block) return null;
-  if (scalar(block.front, "hidden") === "true") return null;
-  return {
-    id: scalar(block.front, "id"),
-    title: scalar(block.front, "title"),
-    description: scalar(block.front, "description"),
-    tags: list(block.front, "tags"),
-    rank: scalar(block.front, "rank"),
-  };
+  if (!block) return { value: null, error: "missing front matter" };
+
+  try {
+    const parsed = loadYaml(block.front);
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+      return {
+        value: null,
+        error: "front matter must be a YAML mapping",
+      };
+    }
+    return {
+      value: {
+        ...block,
+        metadata: parsed as Record<string, unknown>,
+      },
+      error: null,
+    };
+  } catch {
+    return { value: null, error: "malformed YAML front matter" };
+  }
+}
+
+function stringField(
+  metadata: Record<string, unknown>,
+  key: string,
+): string | null {
+  const value = metadata[key];
+  return typeof value === "string" && value.trim() ? value.trim() : null;
+}
+
+function validateId(metadata: Record<string, unknown>): string[] {
+  const id = stringField(metadata, "id");
+  if (!id) return ["missing required string `id`"];
+  if (!HELP_ID.test(id)) return ["`id` must be stable kebab-case"];
+  return [];
 }
 
 /**
  * Validates the front-matter contract shared by human Help and AI Help.
- * Hidden articles are deliberately excluded: they are not user-facing and are
- * not included in the contextual-help knowledge bundle.
+ * Hidden articles still require a stable ID so duplicate detection matches the
+ * human Help loader; other user-facing fields are required only for visible
+ * articles. Only the YAML boolean `hidden: true` hides an article.
  */
 export function validateHelpArticleFrontMatter(raw: string): string[] {
-  const block = splitFrontMatter(raw);
-  if (!block) return ["missing front matter"];
-  if (scalar(block.front, "hidden") === "true") return [];
+  const parsed = parseFrontMatter(raw);
+  if (!parsed.value) return [parsed.error ?? "could not parse front matter"];
 
-  const metadata = visibleMetadata(raw);
-  if (!metadata) return ["could not read visible article metadata"];
+  const { metadata } = parsed.value;
+  const errors = validateId(metadata);
+  if (metadata.hidden === true) return errors;
 
-  const errors: string[] = [];
-  if (!metadata.id) errors.push("missing required `id`");
-  else if (!HELP_ID.test(metadata.id))
-    errors.push("`id` must be stable kebab-case");
+  if (!stringField(metadata, "title"))
+    errors.push("missing required string `title`");
 
-  if (!metadata.title) errors.push("missing required `title`");
-  if (!metadata.description) errors.push("missing required `description`");
-  else if (metadata.description.length > 240)
+  const description = stringField(metadata, "description");
+  if (!description) errors.push("missing required string `description`");
+  else if (description.length > 240)
     errors.push("`description` must be concise (240 characters or fewer)");
 
-  if (!metadata.tags?.length) errors.push("missing non-empty `tags` array");
-
-  if (metadata.rank !== null) {
-    const rank = Number(metadata.rank);
-    if (!Number.isInteger(rank) || rank < 0)
-      errors.push("`rank` must be a non-negative integer when present");
+  const tags = metadata.tags;
+  if (
+    !Array.isArray(tags) ||
+    tags.length === 0 ||
+    tags.some((tag) => typeof tag !== "string" || !tag.trim())
+  ) {
+    errors.push("missing non-empty string `tags` array");
   }
+
+  if (metadata.rank !== undefined) {
+    if (
+      typeof metadata.rank !== "number" ||
+      !Number.isInteger(metadata.rank) ||
+      metadata.rank < 0
+    ) {
+      errors.push("`rank` must be a non-negative integer when present");
+    }
+  }
+
   return errors;
 }
 
 /**
- * Validates every Help file together, including duplicate IDs. Errors include
- * the source path so CI points directly at the article that needs attention.
+ * Validates every Help file together, including duplicate IDs. Duplicate IDs
+ * are detected across both hidden and visible files because the human Help
+ * loader resolves duplicates before filtering hidden articles.
  */
 export function validateHelpCorpus(
   sources: readonly HelpCorpusSource[],
@@ -118,9 +126,11 @@ export function validateHelpCorpus(
       errors.push(`${source}: ${error}`);
     }
 
-    const metadata = visibleMetadata(raw);
-    const id = metadata?.id;
+    const parsed = parseFrontMatter(raw);
+    if (!parsed.value) continue;
+    const id = stringField(parsed.value.metadata, "id");
     if (!id) continue;
+
     const previous = seen.get(id);
     if (previous)
       errors.push(`${source}: duplicate id "${id}" (also in ${previous})`);
@@ -130,16 +140,20 @@ export function validateHelpCorpus(
 }
 
 /**
- * Minimal front-matter reader for the knowledge bundle. Validation of the full
- * user-facing metadata contract is handled by `validateHelpCorpus` before the
- * bundle is built; this reader only extracts fields needed by chunking.
+ * Front-matter reader for the knowledge bundle. It deliberately uses the same
+ * YAML parser and strict boolean hidden semantics as the human Help loader.
+ * Full corpus validation runs before bundle generation.
  */
 export function parseHelpArticle(raw: string): HelpArticleSource | null {
-  const block = splitFrontMatter(raw);
-  if (!block) return null;
-  if (scalar(block.front, "hidden") === "true") return null;
-  const id = scalar(block.front, "id");
-  const title = scalar(block.front, "title");
+  const parsed = parseFrontMatter(raw);
+  if (!parsed.value) return null;
+
+  const { metadata, content } = parsed.value;
+  if (metadata.hidden === true) return null;
+
+  const id = stringField(metadata, "id");
+  const title = stringField(metadata, "title");
   if (!id || !title) return null;
-  return { id, title, content: block.content };
+
+  return { id, title, content };
 }
