@@ -69,3 +69,8 @@
 **Learning:** When extracting event handlers and their corresponding derived state out of a large UI component into a separate `.svelte.ts` hook file to reduce the component's god-file status, the HTML template markup must be carefully updated to point to the properties of the hook's returned object (e.g., `contextMenuLogic.onNodeContextMenu`). Missed references in the template won't always trigger build-time Svelte errors depending on configuration, leading to hidden runtime bugs.
 
 **Action:** Before committing god-file extractions from Svelte components, run a robust search (e.g. `grep`) on the original file for all instances of the extracted functions/state names to ensure the markup bindings have been completely updated to point to the new hook object wrapper.
+
+## 2026-10-01 - Extraction of Holiday Formatting Logic from God File
+
+**Learning:** Found an overloaded god-file `campaign-generator-service.ts` (~1094 lines) which handled orchestration alongside pure formatting/transformation logic for holidays. Extracted pure functions like `normalizeHolidayGenericOutput` and `formatHolidayContent` into `public-holiday.ts`.
+**Action:** Always consider moving pure data formatting logic out of service orchestrator files and closer to the data definitions or adapter layers where they logically belong.
