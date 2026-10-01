@@ -29,12 +29,18 @@ describe("HelpAskButton", () => {
     expect(classes).toMatch(/md:left-\[4\.5rem\]/);
   });
 
-  it("sits below the front page's z-50 call-to-action bar, so it never covers it", () => {
+  it("stays below the front-page stacking context that contains its call to action", () => {
     render(HelpAskButton, { open: false, onToggle: vi.fn() });
     const match = screen
       .getByTestId("help-assistant-button")
       .className.match(/z-\[(\d+)\]/);
-    expect(Number(match?.[1])).toBeLessThan(50);
-    expect(Number(match?.[1])).toBeGreaterThan(40);
+    expect(Number(match?.[1])).toBeLessThan(40);
+  });
+
+  it("clears the mobile ActivityBar safe area", () => {
+    render(HelpAskButton, { open: false, onToggle: vi.fn() });
+    expect(screen.getByTestId("help-assistant-button").className).toContain(
+      "bottom-[calc(4rem_+_env(safe-area-inset-bottom,0px))]",
+    );
   });
 });

@@ -89,6 +89,26 @@ describe("HelpAssistantPanel", () => {
     expect(screen.queryByTestId("help-assistant-panel")).toBeNull();
   });
 
+  it("keeps the panel above the mobile ActivityBar and to the left on mobile and desktop", async () => {
+    const { assistant } = setup();
+    assistant.open();
+
+    const panel = await waitFor(() =>
+      screen.getByTestId("help-assistant-panel"),
+    );
+    const classes = panel.className;
+    expect(classes).toContain(
+      "bottom-[calc(7.25rem_+_env(safe-area-inset-bottom,0px))]",
+    );
+    expect(classes).toContain(
+      "max-h-[min(36rem,calc(100dvh_-_11rem_-_env(safe-area-inset-bottom,0px)))]",
+    );
+    expect(classes).toContain("left-3");
+    expect(classes).toContain("md:bottom-16");
+    expect(classes).toContain("md:left-[4.5rem]");
+    expect(classes).toContain("md:max-h-[min(36rem,calc(100dvh-7rem))]");
+  });
+
   it("is a labelled dialog with a labelled input once open", async () => {
     const { assistant } = setup();
     assistant.open();
