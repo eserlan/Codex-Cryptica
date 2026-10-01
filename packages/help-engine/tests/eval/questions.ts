@@ -171,12 +171,14 @@ export const IN_SCOPE: InScopeQuestion[] = [
     expect: ["cloud-backup"],
   },
   {
-    question: "Can I restore a cloud backup without replacing the vault I have open?",
+    question:
+      "Can I restore a cloud backup without replacing the vault I have open?",
     screen: "none",
     expect: ["cloud-backup"],
   },
   {
-    question: "What is the difference between Google Drive sync and Codex Cloud Backup?",
+    question:
+      "What is the difference between Google Drive sync and Codex Cloud Backup?",
     screen: "none",
     expect: ["cloud-backup", "gdrive-cloud-sync", "offline-sync"],
   },
