@@ -220,6 +220,7 @@ export const howDoIRunShipToShipCombatWithoutSideliningTheParty: AnswerConfigInp
       "how-do-you-run-a-chase-in-a-tabletop-rpg",
       "what-should-an-rpg-settlement-contain",
       "how-do-you-prepare-a-sandbox-rpg-campaign",
+      "how-do-i-make-sea-travel-interesting-in-a-ttrpg",
     ],
     labels: ["pirate"],
     discovery: {
