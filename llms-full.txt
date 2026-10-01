@@ -2403,7 +2403,7 @@ Reference answers to real RPG and worldbuilding questions, indexed at https://co
 
 ### [How do I run a pirate campaign that feels like exploration rather than a series of naval battles?](https://codexcryptica.com/answers/how-do-i-run-a-pirate-campaign-focused-on-exploration)
 
-**Direct answer:** Structure a pirate campaign around a voyage, discovery, and consequence loop rather than encounters at sea: each voyage presents two or three competing rumours, maps, or treasure leads that point to distinct islands, and each discovery visibly changes prices, patrols, alliances, or sea routes so the next voyage begins with new choices. Keep rival crews on their own clocks between sessions, stock every island as a different kind of adventure site, and treat the sea as connective tissue that links discoveries instead of empty travel time between fights.
+**Direct answer:** Structure a pirate campaign around a flexible voyage, discovery, and consequence loop: offer a few competing rumours or maps as a useful starting point, while keeping the chart open to destinations and goals the players choose for themselves. Let discoveries change what the crew knows and what they find on later voyages; use deadlines selectively, and let rivals act when their motives and opportunities give them cause. Treat the sea as terrain and connective tissue, not empty travel between fights.
 
 ### [How do I run a rogue or scout without splitting the party?](https://codexcryptica.com/answers/how-do-i-run-a-rogue-or-scout-without-splitting-the-party)
 
@@ -2784,6 +2784,10 @@ Reference answers to real RPG and worldbuilding questions, indexed at https://co
 ### [What should players be able to upgrade in an RPG base?](https://codexcryptica.com/answers/what-should-players-be-able-to-upgrade-in-an-rpg-base)
 
 **Direct answer:** Let players upgrade the parts of a base that change what they can attempt, who they deal with, or what they can protect: capabilities, defences, reach, people and services, standing, supplies and information. A forge, hidden dock or sensor array earns its place when it opens new actions, changes future choices or creates relationships. Costs and complications can add play, but they need not come with every upgrade. A passive bonus can help, but works best alongside a visible capability or choice. Offer fewer, larger choices with more than one good path.
+
+### [What TTRPG should I play for a pirate or high-seas campaign?](https://codexcryptica.com/answers/what-ttrpg-should-i-play-for-a-pirate-campaign)
+
+**Direct answer:** Pick by the voyage you want, not by cover art. For cinematic duels and panache, try 7th Sea Second Edition; for an open sandbox of island-hopping and buried chart leads, try 50 Fathoms for Savage Worlds; for spare, fast, and mean play you can teach in an evening, try Pirate Borg; for grounded age-of-sail handling of wind, supply, and hull damage, try a historical set such as Pirates of the Spanish Main or Privateers and Gentlemen with a Savage Worlds or similar light-sim core; and for a ready-made campaign with months of linked ports and treasure arcs, run Ghosts of Saltmarsh or Skull & Shackles on the 5E or Pathfinder chassis your group already knows.
 
 ### [What TTRPG should I use for a fantasy dungeon crawl?](https://codexcryptica.com/answers/what-ttrpg-should-i-use-for-a-fantasy-dungeon-crawl)
 
