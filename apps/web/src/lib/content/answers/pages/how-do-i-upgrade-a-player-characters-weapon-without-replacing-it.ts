@@ -279,6 +279,6 @@ export const howDoIUpgradeAPlayerCharactersWeaponWithoutReplacingIt: AnswerConfi
       image:
         "https://assets.codexcryptica.com/og/how-do-i-upgrade-a-player-characters-weapon-without-replacing-it.jpg",
       imageAlt:
-        "A well-worn axe resting on a workbench beside steel blanks, tools and oiled leather fittings in warm workshop light",
+        "An artisan weaponsmith carefully fitting and wrapping the hilt of a storied steel sword on a cluttered workshop workbench with glowing forge embers in the background",
     },
   };
