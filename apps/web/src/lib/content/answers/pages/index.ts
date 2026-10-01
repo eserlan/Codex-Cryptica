@@ -119,6 +119,7 @@ import { whatShouldANewDndPlayerLearnFirst } from "./what-should-a-new-dnd-playe
 import { whatShouldAnRpgSettlementContain } from "./what-should-an-rpg-settlement-contain";
 import { whatShouldILookForInAnRpgCampaignManager } from "./what-should-i-look-for-in-an-rpg-campaign-manager";
 import { whatShouldPlayersBeAbleToUpgradeInAnRpgBase } from "./what-should-players-be-able-to-upgrade-in-an-rpg-base";
+import { whatTtrpgShouldIPlayForAPirateCampaign } from "./what-ttrpg-should-i-play-for-a-pirate-campaign";
 import { whatTtrpgShouldIUseForAFantasyDungeonCrawl } from "./what-ttrpg-should-i-use-for-a-fantasy-dungeon-crawl";
 import { whatTtrpgsLetYouBuildAndUpgradeABase } from "./what-ttrpgs-let-you-build-and-upgrade-a-base";
 import { whereDoIStartIfIHaveNeverPlayedATabletopRpg } from "./where-do-i-start-if-i-have-never-played-a-tabletop-rpg";
@@ -252,6 +253,7 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     whatShouldAnRpgSettlementContain,
     whatShouldILookForInAnRpgCampaignManager,
     whatShouldPlayersBeAbleToUpgradeInAnRpgBase,
+    whatTtrpgShouldIPlayForAPirateCampaign,
     whatTtrpgShouldIUseForAFantasyDungeonCrawl,
     whatTtrpgsLetYouBuildAndUpgradeABase,
     whereDoIStartIfIHaveNeverPlayedATabletopRpg,

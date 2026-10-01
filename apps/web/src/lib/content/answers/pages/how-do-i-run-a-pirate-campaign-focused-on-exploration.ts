@@ -260,6 +260,7 @@ export const howDoIRunAPirateCampaignFocusedOnExploration: AnswerConfigInput = {
     "how-do-trade-routes-shape-cities-and-kingdoms-in-an-rpg-world",
     "how-do-you-run-a-chase-in-a-tabletop-rpg",
     "what-makes-a-good-random-encounter",
+    "what-ttrpg-should-i-play-for-a-pirate-campaign",
   ],
   labels: ["pirate"],
   discovery: {
