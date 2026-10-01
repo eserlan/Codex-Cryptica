@@ -190,6 +190,11 @@ export const howDoYouRunFactionsInASandboxCampaign: AnswerConfigInput = {
           "That page provides the concrete five-step downtime procedure (intent, action, outcome, consequence, history) for resolving off-screen faction clashes and updating the campaign timeline. This page covers running factions as continuous active pressure in a sandbox using the goal/resource/rival/scheduled-move concept.",
       },
       {
+        with: "answer-rival-captains-navies-pirate-factions-matter",
+        reason:
+          "That page applies active faction clocks to pirate seas, rival captains, navies, trading companies, and visible port changes. This page gives the broader sandbox framework of goals, resources, rivals, and scheduled moves across any setting.",
+      },
+      {
         with: "answer-run-character-roles-political-intrigue",
         reason:
           "This answer tracks factions as ongoing sandbox actors; the political roles page focuses on how PCs with different archetypes influence live political scenes and decisions.",

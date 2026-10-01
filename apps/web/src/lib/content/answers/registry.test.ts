@@ -720,6 +720,22 @@ describe("published answers", () => {
     );
   });
 
+  it("records the reciprocal scope of the sandbox and pirate faction answers", () => {
+    const sandboxFactions =
+      answers["how-do-you-run-factions-in-a-sandbox-campaign"];
+    const pirateFactions =
+      answers["how-do-i-make-rival-captains-navies-and-pirate-factions-matter"];
+
+    expect(sandboxFactions?.discovery?.acknowledgedOverlap).toContainEqual({
+      with: "answer-rival-captains-navies-pirate-factions-matter",
+      reason: expect.any(String),
+    });
+    expect(pirateFactions?.discovery?.acknowledgedOverlap).toContainEqual({
+      with: "answer-run-factions-sandbox",
+      reason: expect.any(String),
+    });
+  });
+
   it("publishes the short-session answer around one playable unit", () => {
     const shortSessionAnswer =
       answers["can-you-play-a-tabletop-rpg-in-30-minute-sessions"];
