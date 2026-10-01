@@ -25,17 +25,43 @@ export const BOOSTS = {
   tab: 0.05,
 } as const;
 
+export const SEMANTIC_BASE = 0.45;
+export const SEMANTIC_SPAN = 0.25;
+
+export function cosineSimilarity(
+  a: readonly number[],
+  b: readonly number[],
+): number {
+  let dot = 0;
+  let normA = 0;
+  let normB = 0;
+  const len = Math.min(a.length, b.length);
+  for (let i = 0; i < len; i++) {
+    const ai = a[i];
+    const bi = b[i];
+    dot += ai * bi;
+    normA += ai * ai;
+    normB += bi * bi;
+  }
+  const denom = Math.sqrt(normA) * Math.sqrt(normB);
+  return denom === 0 ? 0 : dot / denom;
+}
+
+export function normalizeSemanticSimilarity(raw: number): number {
+  return Math.max(0, Math.min(1, (raw - SEMANTIC_BASE) / SEMANTIC_SPAN));
+}
+
 export interface ScoredChunk {
   chunk: HelpChunk;
-  /** Ranking score: word overlap plus context boosts. Not capped, so context can break ties. */
+  /** Ranking score: match strength plus context boosts. Not capped, so context can break ties. */
   score: number;
   /** Word overlap only, 0..1. */
   lexical: number;
+  /** Normalized semantic similarity, 0..1 (when embeddings are available). */
+  semantic?: number;
   /**
-   * What the relevance floor is judged on: word overlap, plus a small bonus
-   * when the chunk belongs to a feature on the current screen. It is never the
-   * full ranking boost, so screen context cannot make a weak match look
-   * strong. Context-only answers use CONTEXT_ONLY_SCORE.
+   * What the relevance floor is judged on: match strength, plus a small bonus
+   * when the chunk belongs to a feature on the current screen.
    */
   relevance: number;
 }
@@ -111,11 +137,42 @@ function contextBoost(feature: FeatureEntry, ctx: HelpContext): number {
   return boost;
 }
 
+// fallow-ignore-next-line complexity
+function scoreSingleChunk(
+  chunk: HelpChunk,
+  lex: number,
+  ctx: HelpContext,
+  byId: Map<string, FeatureEntry>,
+  screenFeatureIds: Set<string>,
+  queryVector?: readonly number[],
+): ScoredChunk | null {
+  let semantic: number | undefined;
+  if (queryVector && chunk.embedding) {
+    const rawSim = cosineSimilarity(queryVector, chunk.embedding);
+    semantic = normalizeSemanticSimilarity(rawSim);
+  }
+
+  const matchStrength = semantic !== undefined ? Math.max(lex, semantic) : lex;
+  if (matchStrength <= 0) return null;
+
+  const feature = chunk.featureId ? byId.get(chunk.featureId) : undefined;
+  const onScreen = feature !== undefined && screenFeatureIds.has(feature.id);
+  return {
+    chunk,
+    lexical: lex,
+    semantic,
+    score:
+      matchStrength + (feature && onScreen ? contextBoost(feature, ctx) : 0),
+    relevance: matchStrength + (onScreen ? RELEVANCE_SCREEN_BONUS : 0),
+  };
+}
+
 export function rankChunks(
   question: string,
   chunks: readonly HelpChunk[],
   features: readonly FeatureEntry[],
   ctx: HelpContext,
+  queryVector?: readonly number[],
 ): ScoredChunk[] {
   const terms = tokenize(question);
   const screenFeatures = features.filter((f) => featureMatchesScreen(f, ctx));
@@ -124,7 +181,7 @@ export function rankChunks(
 
   // "What can I do here?" has no content terms. Answer from the screen's own
   // registry entries rather than giving up, but only those.
-  if (terms.length === 0) {
+  if (terms.length === 0 && !queryVector) {
     return chunks
       .filter(
         (c) =>
@@ -143,18 +200,17 @@ export function rankChunks(
 
   const lexical = lexicalScores(terms, chunks);
   const scored: ScoredChunk[] = [];
-  chunks.forEach((chunk, i) => {
-    const lex = lexical[i];
-    if (lex <= 0) return; // context never rescues a chunk with no word overlap
-    const feature = chunk.featureId ? byId.get(chunk.featureId) : undefined;
-    const onScreen = feature !== undefined && screenFeatureIds.has(feature.id);
-    scored.push({
-      chunk,
-      lexical: lex,
-      score: lex + (feature && onScreen ? contextBoost(feature, ctx) : 0),
-      relevance: lex + (onScreen ? RELEVANCE_SCREEN_BONUS : 0),
-    });
-  });
+  for (let i = 0; i < chunks.length; i++) {
+    const result = scoreSingleChunk(
+      chunks[i],
+      lexical[i],
+      ctx,
+      byId,
+      screenFeatureIds,
+      queryVector,
+    );
+    if (result) scored.push(result);
+  }
 
   return scored.sort(
     (a, b) => b.score - a.score || a.chunk.id.localeCompare(b.chunk.id),

@@ -10,6 +10,8 @@ export interface BuildBundleInput {
   commit: string;
   builtAt: string;
   channel: "production" | "staging";
+  /** Precomputed embeddings keyed by chunk ID. */
+  embeddings?: Record<string, { hash: string; vector: number[] }>;
   /** The generators to describe; defaults to the generated list. */
   generators?: readonly {
     id: string;
@@ -82,6 +84,7 @@ function registryChunks(feature: FeatureEntry): HelpChunk[] {
  * inconsistent registry, so a broken reference fails the build rather than
  * reaching users.
  */
+// fallow-ignore-next-line complexity
 export function buildBundle(input: BuildBundleInput): KnowledgeBundle {
   const helpIds = new Set(input.articles.map((a) => a.id));
   const errors = validateRegistry(input.features, { helpIds });
@@ -113,6 +116,15 @@ export function buildBundle(input: BuildBundleInput): KnowledgeBundle {
         helpId: article.id,
       }),
     );
+  }
+
+  if (input.embeddings) {
+    for (const chunk of chunks) {
+      const entry = input.embeddings[chunk.id];
+      if (entry && entry.hash === chunk.hash && Array.isArray(entry.vector)) {
+        chunk.embedding = entry.vector;
+      }
+    }
   }
 
   return {

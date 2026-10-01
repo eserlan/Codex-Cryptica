@@ -139,6 +139,14 @@ describe("POST /api/help/ask — answers", () => {
     expect(generate).toHaveBeenCalledTimes(1);
   });
 
+  it("uses embedQuery to retrieve semantically relevant chunks when provided", async () => {
+    const embedQuery = vi.fn(async () => [0.1, 0.2, 0.3]);
+    const { ask, generate } = harness({ embedQuery });
+    await ask(valid({ question: "tell me of graphs" }));
+    expect(embedQuery).toHaveBeenCalledWith("tell me of graphs");
+    expect(generate).toHaveBeenCalled();
+  });
+
   it("calls the internal help-answer operation with a structured schema", async () => {
     const { ask, generate } = harness();
     await ask(valid());

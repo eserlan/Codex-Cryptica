@@ -38,7 +38,10 @@ const IGNORED_PREFIXES = [
 
 export function isIgnoredPath(filePath) {
   const normalized = filePath.replace(/\\/g, "/");
-  return IGNORED_PREFIXES.some((prefix) => normalized.startsWith(prefix));
+  return (
+    IGNORED_PREFIXES.some((prefix) => normalized.startsWith(prefix)) ||
+    normalized.endsWith(".generated.json")
+  );
 }
 
 export function filterLintableFiles(files, root = process.cwd()) {

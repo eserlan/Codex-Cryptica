@@ -53,12 +53,24 @@ for (const { raw } of sources) {
   if (article) articles.push(article);
 }
 
+const embeddingsPath = join(
+  packageRoot,
+  "src/bundle/embeddings.generated.json",
+);
+let embeddings: Record<string, { hash: string; vector: number[] }> | undefined;
+try {
+  embeddings = JSON.parse(readFileSync(embeddingsPath, "utf8"));
+} catch {
+  // Gracefully continue without embeddings if not yet generated
+}
+
 const bundle = buildBundle({
   features: FEATURE_REGISTRY,
   articles,
   commit: process.env.GITHUB_SHA ?? "local",
   builtAt: new Date().toISOString(),
   channel,
+  embeddings,
 });
 
 mkdirSync(dirname(out), { recursive: true });
