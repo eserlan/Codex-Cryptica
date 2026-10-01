@@ -157,6 +157,31 @@ export const IN_SCOPE: InScopeQuestion[] = [
     screen: "none",
     expect: ["in-app-generators", "registry:campaign-generator"],
   },
+  // Cloud Backup — intentionally no registry context yet. These prove that
+  // help-corpus retrieval alone can ground the feature while #3645 expands
+  // contextual registry coverage.
+  {
+    question: "Does Codex automatically back up changes to the cloud?",
+    screen: "none",
+    expect: ["cloud-backup"],
+  },
+  {
+    question: "What is the Cloud Backup recovery key for?",
+    screen: "none",
+    expect: ["cloud-backup"],
+  },
+  {
+    question:
+      "Can I restore a cloud backup without replacing the vault I have open?",
+    screen: "none",
+    expect: ["cloud-backup"],
+  },
+  {
+    question:
+      "What is the difference between Google Drive sync and Codex Cloud Backup?",
+    screen: "none",
+    expect: ["cloud-backup", "gdrive-cloud-sync", "offline-sync"],
+  },
 ];
 
 /** Capabilities the product lacks, and questions that are not about it at all. */
