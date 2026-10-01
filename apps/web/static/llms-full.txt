@@ -423,6 +423,39 @@ Quickly populate your world with rich lore, even when offline.
 
 ---
 
+### CREATING AND EDITING ENTITIES
+
+Everything in your world is an **entity**: a character, location, faction, item, event, creature or note. Each one has a page you can read and edit.
+
+## Create an entity
+
+1. Click **+ Create** in the header, or the **+** in the explorer sidebar.
+2. Choose a category, such as **Character** or **Location**.
+3. Type a title and save.
+
+New entities start from a ready-made layout for their category. See Default Entity Templates to change it.
+
+If you would rather have a draft written for you, use a generator or the Oracle. Those show a draft first, and nothing is added until you keep it.
+
+## Edit an entity
+
+1. Open the entity from the explorer, the graph or search.
+2. Click **EDIT** at the bottom of its page.
+3. Change the title, aliases, labels or text.
+4. Click **SAVE CHANGES**, or **CANCEL** to leave the entity as it was.
+
+While you have unsaved edits, the footer shows **Unsaved changes**. Cancelling discards them.
+
+## Delete an entity
+
+Click **DELETE** at the bottom of the entity page and confirm. Deleting is permanent. Take a Portable Backup first if you might want it back.
+
+## Guest vaults
+
+A guest or demo vault is read only. Keep the world as your own vault to create and edit.
+
+---
+
 ### KNOWLEDGE GRAPH
 
 The graph is your primary way to navigate.
@@ -1285,6 +1318,27 @@ The **Fog of War** system lets you track what your players have discovered. You 
 
 ---
 
+### SESSION HUB
+
+The Session Hub is the list on the random generators page where your generated drafts collect while you work.
+
+## What goes in it
+
+Every draft you generate appears in the Session Hub automatically, with the newest at the top. Nothing is saved to your vault until you choose to save it.
+
+## What you can do with a draft
+
+- **Reuse it as context** so the next thing you generate fits the same world.
+- **Refine it** to ask for a focused change, then review the new version before you accept it.
+- **Share it** as a public snapshot. Your original draft stays private.
+- **Save it to Codex** when you want to keep it. Pick which drafts to save; unticked drafts are left behind.
+
+## Starting over
+
+Use **Clear** in the Session Hub to empty the list. Saved entities in your vault are not affected.
+
+---
+
 ### CONNECTIONS PROPOSER
 
 The **Connections Proposer** works in the background to find hidden links between your entities. It uses the Lore Oracle to analyze your writing and suggest relationships you might have missed.
@@ -1295,6 +1349,32 @@ The **Connections Proposer** works in the background to find hidden links betwee
 2. **Review**: Suggestions appear at the bottom of the detail panel.
 3. **Apply**: Click the checkmark to create a real connection.
 4. **Dismiss**: Click 'X' to ignore. Dismissed suggestions are saved in history just in case.
+
+---
+
+### HELP ASSISTANT
+
+The help assistant answers questions about using Codex Cryptica. It knows which screen you are on, so "how do I connect this?" gets an answer for what you are looking at.
+
+## Asking a question
+
+Open the help button at the bottom right, or choose **Ask about this** on an entity's Connections tab. Type your question and press **Ask**. Every answer lists the help articles it came from, so you can read more.
+
+## Being shown where something is
+
+Sometimes the assistant offers to show you a control. Choose **Show me** and it opens the right tab and outlines the button with a label. It only points at things. It never changes your vault, and you can clear the outline any time by pressing Escape.
+
+## What is sent
+
+Your question, the last few questions in this conversation, and a short description of the screen you are on, such as "an entity's Connections tab". No entity names, text, or IDs are sent. Avoid typing private lore into the question, because the question itself goes to our AI service.
+
+## When it cannot answer
+
+If the help does not cover your question, the assistant says so and suggests the closest topics instead of guessing. If you are offline, or the assistant is not reachable, you will see the help articles for your screen instead.
+
+## Turning it off
+
+Turn on **AI Disabled** in Settings and the help assistant disappears. The help library is still there.
 
 ---
 
@@ -1310,6 +1390,45 @@ Codex Cryptica lets you manage multiple "Vaults" (folders). Each vault is comple
 
 > [!NOTE]
 > Your AI API Key works for all vaults, but things like NPC categories and tags are unique to each campaign.
+
+---
+
+### EXPORT AND BACK UP YOUR VAULT
+
+Your vault lives in your browser, so a copy outside the browser is the safest protection against a cleared browser, a lost device or a mistake. The simplest copy is a **Portable Backup**: your whole vault in one file you can keep anywhere.
+
+## Download a Portable Backup
+
+1. Open **Settings → Vault**.
+2. Find **Portable Backup**.
+3. Click **Export Backup**.
+
+Your browser downloads one archive file. A message tells you how many files went into it. This works in every browser and needs no folder permission.
+
+## Restore a Portable Backup
+
+1. Open **Settings → Vault**.
+2. Under **Portable Backup**, click **Import Backup**.
+3. Choose the archive file.
+
+Restoring always creates a **new vault** with the name stored in the archive and switches to it. It never overwrites or merges into the vault you are in, so it is safe to try.
+
+## Which copy should I use?
+
+| You want to…                                          | Use                                                                           |
+| ----------------------------------------------------- | ----------------------------------------------------------------------------- |
+| Keep a file you control, in any browser               | **Portable Backup** (this article)                                            |
+| Keep your vault mirrored in a folder on your computer | **Save to Folder**, see Offline Support & Local Folders                       |
+| Keep an automatic off-device copy                     | **Cloud copy**, see Codex Cryptica Cloud Backup or Google Drive sync          |
+| Show your world to other people                       | **Publishing**. This is not a backup, it makes a public copy of what you pick |
+| Bring a few files from another vault or a folder in   | **Import Files**, see Importing Notes                                         |
+| Reuse one entity in another vault                     | **The Shelf**                                                                 |
+
+## Good habits
+
+- Export before big changes, such as a large import or a merge.
+- Keep at least one copy outside this device.
+- A backup file holds your vault data. Treat it as private and store it like any other personal file.
 
 ---
 
@@ -1345,86 +1464,208 @@ Your selected theme is saved to your local browser storage and will be automatic
 
 ### OFFLINE SUPPORT & LOCAL FOLDERS
 
-Codex Cryptica is designed as a **local-first** application. This means your data always lives on your device first, ensuring you can continue building your world even without an internet connection.
+Codex Cryptica is designed as a **local-first** application. Your working vault lives on your device first, so you can continue building your world without an internet connection.
 
 ## Local Storage (OPFS)
 
-By default, all your campaign data is stored in the **Origin Private File System (OPFS)**. This is a high-performance, sandboxed area within your browser.
+By default, campaign data is stored in the browser's **Origin Private File System (OPFS)**.
 
-- **Privacy:** Your data is not uploaded to our servers.
-- **Speed:** Reading and writing thousands of chronicles is near-instant.
-- **Persistence:** Your work is saved automatically as you type.
+- **Privacy:** local vault data is not uploaded merely because you use Codex.
+- **Speed:** reading and writing the vault happens locally.
+- **Persistence:** your work is saved automatically on the device as you edit.
+
+Uploading only happens when you explicitly use a feature that needs it, such as an AI request, publishing, or an opted-in cloud destination.
 
 ## Saving & Loading with Local Folders
 
-You can mirror your internal archives with any folder on your computer. This enables several powerful workflows:
+You can mirror your internal vault to a folder on your computer. This is separate from Codex's app-managed **Cloud copy** setting.
 
 > **Browser support:** local folder saving relies on the File System Access API.
 >
 > - **Chrome, Edge:** supported out of the box.
-> - **Brave:** ships this feature disabled by default. If "Save to Folder" doesn't work, open a new tab, go to `brave://flags/#file-system-access-api`, set it to **Enabled**, and relaunch Brave.
-> - **Firefox, Safari:** don't support this feature yet. Your vault still saves automatically to the browser's local storage (OPFS) — you just can't mirror it to a folder on disk until you switch to a Chromium-based browser.
+> - **Brave:** ships this feature disabled by default. If "Save to Folder" does not work, open a new tab, go to `brave://flags/#file-system-access-api`, set it to **Enabled**, and relaunch Brave.
+> - **Firefox, Safari:** do not support this feature yet. Your vault still saves automatically to browser-local OPFS; you just cannot mirror it to a folder on disk until you switch to a Chromium-based browser.
 >
-> On any browser, you can still back up with **Settings → Portable Backup → Export Backup**, which downloads your whole vault as a single `.codex.zip` file you can re-import anywhere.
+> On any browser, you can still make a **Portable Backup** with **Settings → Portable Backup → Export Backup**, which downloads the vault as a `.codex.zip` file you can import elsewhere.
 
-1.  **External Backups:** Keep a real-time copy of your world in a folder you control.
-2.  **External Editing:** Use your favorite Markdown editor (like Obsidian or VS Code) to edit your chronicles while Codex is closed.
-3.  **Cloud Mirroring:** By selecting a folder managed by a cloud provider (like Google Drive, Dropbox, or iCloud), you can achieve multi-device synchronization using your OS's built-in support.
+A linked folder supports several workflows:
 
-### How to set up Cloud Mirroring (via OS)
+1. **External backups:** keep a filesystem copy you control.
+2. **External editing:** edit Markdown files with tools such as Obsidian or VS Code while Codex is closed.
+3. **OS-managed cloud mirroring:** choose a folder already managed by Google Drive for Desktop, Dropbox, iCloud, or another desktop sync client. Your operating system/provider then handles that cloud transfer.
 
-To access your world across multiple devices using Google Drive or other providers:
+## Cloud copy vs a synced local folder
 
-1.  Install the official client for your provider (e.g., [Google Drive for Desktop](https://www.google.com/drive/download/)).
-2.  In Codex Cryptica, click **SAVE TO FOLDER** in the bottom-left sidebar (or the Save icon in Switch Vault).
-3.  If no folder is linked yet, you will be prompted to select a directory. Choose a folder within your local Google Drive/Cloud directory.
-4.  Codex will now write all changes to that folder, and your OS will handle the background upload to the cloud.
+These are easy to confuse:
 
-## Managing Multiple Devices
+- **Local folder mirroring** writes to a folder on your computer. If another application syncs that folder, Codex does not control or monitor that remote copy.
+- **Google Drive Cloud Sync** is an in-app integration with your Google Drive account and uses explicit Save/Load controls.
+- **Codex Cryptica Cloud Backup** is an in-app backup destination with automatic Cloud Save after you opt in and recovery-key based restore.
 
-When you open Codex on a new device:
+Inside Codex's **Cloud copy** picker, a vault can use only **one app-managed destination at a time**: Google Drive or Codex Cryptica Cloud. A local folder mirror is a separate filesystem feature and is not that picker.
 
-1.  Create a new vault or open **Switch Vault**.
-2.  Click **Open Folder**.
-3.  Select the cloud-synced folder you set up on your first device.
-4.  Codex will load your world and keep it updated with the cloud mirror.
+## How to set up OS-managed cloud mirroring
+
+To keep a linked folder inside a desktop cloud provider:
+
+1. Install the official desktop client for your provider.
+2. In Codex Cryptica, click **Save to Folder** in the sidebar or the save action in **Switch Vault**.
+3. If no folder is linked yet, choose a directory inside the provider's local synced folder.
+4. Codex writes the local folder copy; the provider's desktop software decides when and how that folder is uploaded.
+
+Because that remote synchronisation happens outside Codex, provider conflicts, versioning, offline queues, and account behaviour belong to the provider rather than Codex Cryptica.
+
+## Managing Multiple Devices with a Folder
+
+When you open Codex on another compatible device:
+
+1. Create a new vault or open **Switch Vault**.
+2. Click **Open Folder**.
+3. Select the folder that your desktop cloud provider has synchronised onto that device.
+4. Codex loads that folder as the local vault source.
+
+If you instead want Codex itself to manage the remote copy, use **Settings → Vault → Cloud copy** and choose either Google Drive or Codex Cryptica Cloud.
 
 ## Related Blog Posts
 
-- [Google Drive Cloud Sync Walkthrough](/blog/gdrive-cloud-sync) — Step-by-step devlog detailing local-first cloud backup and co-GM collaboration.
-- [Data Sovereignty for Game Masters](/blog/gm-guide-data-sovereignty) — Why local-first storage and private cloud backups keep your campaign notes safe.
+- [Google Drive Cloud Sync Walkthrough](/blog/gdrive-cloud-sync) — Step-by-step guide to the in-app Google Drive integration.
+- [Data Sovereignty for Game Masters](/blog/gm-guide-data-sovereignty) — Why local-first storage and user-controlled backups matter.
+
+---
+
+### CODEX CRYPTICA CLOUD BACKUP
+
+Codex Cryptica Cloud Backup keeps a restorable copy of your current vault in Codex Cryptica Cloud. It is **off by default** and nothing is uploaded until you choose Codex Cryptica Cloud as this vault's cloud destination and confirm the consent screen.
+
+Use it when you want Codex to keep an up-to-date off-device copy without relying on a Google Drive account or a folder managed by your operating system.
+
+## Turn Cloud Backup on
+
+1. Open **Settings → Vault**.
+2. Find **Cloud copy**.
+3. Choose **Codex Cryptica Cloud**.
+4. Read the **Before you turn on cloud backup** consent screen.
+5. Click **I understand — turn it on**.
+
+The first save creates the cloud backup and a **recovery key**. Use **Copy recovery key** and keep it somewhere outside this browser or device.
+
+A vault can use only **one app-managed cloud destination at a time**: either **Google Drive** or **Codex Cryptica Cloud**. Both can restore a whole-vault copy, so Codex does not let them act as competing sources of truth for the same vault.
+
+## What is uploaded
+
+Cloud Backup stores the vault data needed to rebuild your world, including entities and notes, labels, maps, canvases, and session journals.
+
+For vault-owned local files, the current backup payload includes these asset classes:
+
+- an entity's **image** and **thumbnail**;
+- a map's background **asset**; and
+- a map's **fog-of-war mask**.
+
+Other referenced files are not automatically collected. In particular, **sound-bite audio files are not currently backed up**, so keep a separate copy of audio you need to preserve. Remote URLs are kept as references rather than downloaded into the backup.
+
+The copy is hosted on third-party cloud infrastructure. It is **not end-to-end encrypted**, so Codex Cryptica and its hosting provider are technically able to read the stored data. The Cloud Backup consent screen is the authoritative summary shown before anything leaves your device.
+
+Cloud Backup is for restoring your vault. It is not a publishing or sharing feature and it does not make the vault public.
+
+## Automatic Cloud Save
+
+Once Cloud Backup is on, normal durable changes to the vault are tracked and saved to the existing cloud backup automatically. After the initial full backup, Codex can send only the changed items rather than rebuilding the entire upload every time.
+
+The Cloud Backup panel reports states such as:
+
+- **Saved to cloud**
+- **Changes pending…**
+- **Saving…**
+- **Offline — changes will sync later**
+- **Sync failed — retrying…**
+- **Sync paused — another device updated this backup**
+
+You can also use **Save to cloud** to push changes manually when you want an immediate backup.
+
+If Codex cannot read an entity body or one of the local image/map assets that Cloud Backup supports, it reports that the backup is partial rather than silently pretending everything was stored.
+
+## Recovery key
+
+The recovery key identifies the backup and proves that you are allowed to restore or update it. There are no Codex accounts and there is no ordinary password-reset flow for Cloud Backup.
+
+Keep the key somewhere safe. If you lose it, recovery may not be possible. Support can use limited backup metadata such as a vault title, size, and last-backup time to help identify a backup, but support cannot read the vault contents through the support lookup.
+
+## Restore a backup
+
+Open **Settings → Vault → Cloud copy → Codex Cryptica Cloud** and choose the restore/load option.
+
+- If this browser already knows about one of your backups, you can select it directly.
+- To restore a backup made on another device, paste its recovery key.
+- **Load from cloud** restores into a **new local vault**. It does not silently replace the vault you currently have open.
+
+If backed-up assets cannot be recovered, the restore still completes but reports **how many** assets are missing. It does not currently list each missing asset by name.
+
+## Attach an existing local vault to the same backup
+
+If you already have a local copy of the vault on another device and want both devices to use the **same** cloud backup, choose **Attach this vault to an existing backup** and paste the recovery key from the device that already owns the backup.
+
+Attaching does not first download and merge the cloud copy. It links this local vault to that backup so the next save writes this vault to the existing cloud destination. Use **Load from cloud** instead when you want to restore the cloud copy into a new vault.
+
+## Turn it off or delete it
+
+These are different actions:
+
+- **Turn off Cloud Backup** stops future saves, but the existing stored backup remains available for recovery.
+- **Delete cloud backup** permanently removes the stored copy. Your local vault is not deleted.
+
+## How this differs from the other backup options
+
+- **Codex Cryptica Cloud Backup**: app-managed off-device copy, automatic Cloud Save after you opt in, recovery-key based restore.
+- **Google Drive**: app-managed copy in your own Google Drive; its Save/Load controls are documented separately under **Google Drive Cloud Sync**.
+- **Local folder mirroring**: writes to a folder you choose on your computer; if that folder is synchronised by Google Drive, Dropbox, iCloud, or another desktop client, that synchronisation is handled by your operating system/provider rather than by Codex Cloud Backup.
+- **Portable Backup**: a downloadable `.codex.zip` snapshot you create manually and keep wherever you choose.
+
+These options solve similar safety problems in different ways. For the app-managed **Cloud copy** setting, choose either Google Drive or Codex Cryptica Cloud for a given vault.
 
 ---
 
 ### GOOGLE DRIVE CLOUD SYNC
 
-Codex Cryptica can back up your vault to your personal Google Drive and restore it from any device. Your files go straight from your browser to your Drive — our servers never see them.
+Codex Cryptica can copy a vault to your personal Google Drive and load it from another device. Your files go straight from your browser to your Drive — Codex Cryptica Cloud does not store this Google Drive copy.
+
+Google Drive is one of the app-managed **Cloud copy** destinations. A vault can use only **one** of these at a time: **Google Drive** or **Codex Cryptica Cloud**. Both can restore whole-vault state, so Codex does not use both as competing sources of truth for the same vault.
 
 ## Connect Your Vault
 
-1. Open Settings, choose the **Vault** tab, and scroll to the **Cloud Sync** section.
-2. Click **Connect Google Drive** and sign in when Google prompts you.
-3. Codex creates a `CodexCryptica/` folder on your Drive (if it doesn't exist) and a subfolder named after your vault inside it. The folder ID is saved locally so future syncs know where to go.
+1. Open **Settings → Vault** and find **Cloud copy**.
+2. Choose **Google Drive**.
+3. Click **Connect Google Drive** and sign in when Google prompts you.
+4. Codex creates a `CodexCryptica/` folder on your Drive (if it does not exist) and a subfolder named after your vault inside it. The folder ID is saved locally so future syncs know where to go.
 
-Once connected you'll see two buttons:
+Once connected you will see two controls:
 
-- **Save to Drive** — pushes your local vault up to the cloud.
-- **Load from Drive** — pulls the cloud version back down. Only files that are newer than your local copy are downloaded, so a full re-pull stays fast.
+- **Save to Drive** — pushes your local vault up to Google Drive.
+- **Load from Drive** — pulls the Drive version back down. Only files that are newer than your local copy are downloaded, so a repeated load stays efficient.
 
 > [!NOTE]
-> Sync is always manual. Codex never uploads in the background without you clicking a button, so you stay in control of what leaves your device.
+> **Google Drive sync is manual.** Codex only saves to or loads from Drive when you choose the corresponding action. This is different from **Codex Cryptica Cloud Backup**, whose Cloud Save can track and upload changes automatically after you opt in.
 
 ## Import a Vault from Drive
 
-If you have vaults already stored in your `CodexCryptica/` Drive folder (from another device), you can load them without setting them up from scratch:
+If you have vaults already stored in your `CodexCryptica/` Drive folder from another device, you can load them without setting them up from scratch:
 
-1. In the **Vault** settings tab under **Cloud Sync**, click **Browse Drive**.
+1. In **Settings → Vault → Cloud copy → Google Drive**, click **Browse Drive**.
 2. Codex lists every vault subfolder it finds under `CodexCryptica/`.
 3. Click **Load** next to any vault. Codex creates a local vault (or finds the existing one), then pulls only the files that are newer than what you have locally.
 
 ## Disconnect
 
-Click **Disconnect** in the connected state to remove the Drive link from this vault. Your local vault and the files on Drive are both preserved — only the sync mapping is removed.
+Click **Disconnect** in the connected state to remove the Drive link from this vault. Your local vault and the files already stored on Drive are both preserved — only the mapping between this vault and that Drive folder is removed.
+
+After disconnecting, you can choose a different Cloud copy destination, including **Codex Cryptica Cloud**.
+
+## Google Drive vs Codex Cryptica Cloud Backup
+
+Use **Google Drive** when you want the app-managed copy to live in your own Drive account and you prefer explicit Save/Load controls.
+
+Use **Codex Cryptica Cloud Backup** when you want Codex to maintain an off-device backup with automatic Cloud Save and recovery-key based restore. See **Codex Cryptica Cloud Backup** in Help for the recovery-key, restore, attach, privacy, and deletion behaviour.
+
+This is also different from choosing a normal local folder that happens to be synchronised by Google Drive for Desktop, Dropbox, iCloud, or another operating-system client. That workflow is described under **Offline Support & Local Folders** and is outside Codex's app-managed Cloud copy picker.
 
 ## Related Blog Posts
 
@@ -2075,6 +2316,10 @@ Reference answers to real RPG and worldbuilding questions, indexed at https://co
 
 **Direct answer:** Build a believable fantasy economy by tracing six links for each region: what it has and needs, how resources are worked, how goods and labour move, who controls access or takes a share, what strains the arrangement, and what the players can see changing as a result. A believable economy does not need a perfectly calibrated price list; it needs causes the players can see, such as bread costing more after a blocked pass, a mine town having coin but no food, or someone with power responding to the strain.
 
+### [How do I create interesting islands and ports for a pirate campaign?](https://codexcryptica.com/answers/how-do-i-create-interesting-islands-and-ports-for-a-pirate-campaign)
+
+**Direct answer:** Give each island or port a clear identity, one immediate problem the locals cannot solve alone, and a reason strangers matter there. Anchor it with a landmark sailors can see and name, a faction that sets local law and prices, a trade need that explains what it exports, imports, or lacks, and two or three nearby sites such as a hidden cove, wreck, reef, or ruin that generate adventure. Then record one visible change to apply when the crew returns, so return visits show consequence rather than repetition.
+
 ### [How do I decide what a settlement produces, imports, and exports?](https://codexcryptica.com/answers/how-do-i-decide-what-a-settlement-produces-imports-and-exports)
 
 **Direct answer:** Derive a settlement's trade from its surroundings and capabilities rather than picking goods at will: note local resources, what its people and institutions can do, what it controls or connects, and the routes that carry goods and visitors. Production can use imported inputs or provide services; surplus is what remains after local demand, while imports may feed local needs or make exports possible. Goods made, processed, or passed onward, and services sold to travellers or neighbours, all give a settlement ways to earn.
@@ -2111,6 +2356,10 @@ Reference answers to real RPG and worldbuilding questions, indexed at https://co
 
 **Direct answer:** Make cultures distinct by tracing a few principles, norms, or expectations into behaviour and visible consequences. Ask what happens when a norm meets another duty or pressure, where that creates useful friction, and what players can notice. A culture that treats hospitality as sacred does not simply wear different clothes; it may maintain guest rituals and host obligations that change how the party is received and protected. These patterns need an intelligible history and meaning, not an objectively efficient purpose, and they vary between people and settings rather than becoming species-wide personality traits.
 
+### [How do I make rival captains, navies, and pirate factions matter?](https://codexcryptica.com/answers/how-do-i-make-rival-captains-navies-and-pirate-factions-matter)
+
+**Direct answer:** Give every rival captain, navy, and pirate faction a concrete goal, a territory or resource it depends on, and a clock that advances whether the crew interferes or not. Between sessions move each clock by one step, translate the result into something the players can see in prices, patrols, flags, or port control, and let reputation carry consequences from one harbour to the next. Recurring rivals who change after a win or loss create choices that reshape the map instead of a fixed plot that waits for the party.
+
 ### [How do I organise my GM notes and references when running an RPG in person?](https://codexcryptica.com/answers/how-do-i-organise-gm-notes-for-in-person-play)
 
 **Direct answer:** Bring a session-facing subset to the table, not the whole campaign file: one page of what might matter tonight, a few reference pages you can reach without scrolling, somewhere to catch names and decisions as they happen, and a place the session gets filed afterwards. Paper, tablet and laptop all do that job, so choose by how fast you need an answer and how much screen you want sitting between you and the players.
@@ -2122,6 +2371,10 @@ Reference answers to real RPG and worldbuilding questions, indexed at https://co
 ### [How do I prepare an RPG session step by step?](https://codexcryptica.com/answers/how-do-i-prepare-an-rpg-session-step-by-step)
 
 **Direct answer:** Prepare a situation rather than a script. Work out where play starts and what is changing tonight. Prepare the people who matter, places the players might visit and information they can act on; decide how the world reacts to success, failure or delay. Give critical information more than one route, keep a short reserve of names and complications, then put what you need on one page for the table. The plan should still work when the players choose a route you did not expect.
+
+### [How do I run a campaign where the players own a business?](https://codexcryptica.com/answers/how-do-i-run-a-campaign-where-the-players-own-a-business)
+
+**Direct answer:** Let the business generate adventures, not replace adventuring. Track five or six abstract traits such as profit, reputation, staff, supplies, security and debt rather than coin-by-coin bookkeeping, resolve business activity in turns between adventures, let players invest in visible improvements, and turn every complication and success into relationships and hooks the party must handle in normal play.
 
 ### [How do I make a diplomat, noble or courtier useful in an RPG without relying on one social roll?](https://codexcryptica.com/answers/how-do-i-run-a-diplomat-noble-or-courtier-in-an-rpg)
 
@@ -2194,6 +2447,10 @@ Reference answers to real RPG and worldbuilding questions, indexed at https://co
 ### [How do I turn economic pressures into RPG adventure hooks?](https://codexcryptica.com/answers/how-do-i-turn-economic-pressures-into-rpg-adventure-hooks)
 
 **Direct answer:** Convert any economic pressure into a hook by naming who gains and who pays, giving each side a response the party can observe, letting those responses collide over something both sides need, and leaving the party a clear way in with more than one employer to choose between. A shortage, a new route, or a blocked pass becomes playable the moment two interested groups pull in opposite directions and either of them would pay the party to tip the balance.
+
+### [How do I upgrade a player character's weapon without replacing it?](https://codexcryptica.com/answers/how-do-i-upgrade-a-player-characters-weapon-without-replacing-it)
+
+**Direct answer:** Let the weapon earn upgrades instead of swapping it: refine its physical qualities, add situational properties rather than flat damage, unlock abilities through training or story milestones, fit modular parts that can be swapped, and let its name and reputation grow with use. Reserve a flat damage increase for rare, story-earned moments and keep most upgrades about interesting choices, so the axe the fighter has carried since session one stays competitive without warping your numbers.
 
 ### [How do I write a good Call of Cthulhu one-shot?](https://codexcryptica.com/answers/how-do-i-write-a-good-call-of-cthulhu-one-shot)
 
@@ -2382,6 +2639,10 @@ Reference answers to real RPG and worldbuilding questions, indexed at https://co
 ### [How do you write a one-shot adventure?](https://codexcryptica.com/answers/how-do-you-write-a-one-shot-adventure)
 
 **Direct answer:** Design backward from a strict session time limit, using a four-beat structure: an immediate inciting incident, an investigative exploration scene, a high-stakes complication, and a decisive final confrontation. Build in at least one elastic middle encounter that can be expanded or cut entirely depending on the clock, so the party reaches the climax before the session ends.
+
+### [How long should a TTRPG session be?](https://codexcryptica.com/answers/how-long-should-a-ttrpg-session-be)
+
+**Direct answer:** There is no single ideal: most groups settle on a booking of two and a half to four hours, including setup, breaks and packing up. Three hours is a dependable default for home and online games, four hours works well for a weekly evening with a break in the middle, and a two-hour booking can be plenty when the content is planned around the window. Pick a predictable slot you can sustain, tell players the expected finish time in advance, and shape the adventure to fit the time you have rather than squeezing a fixed amount of plot into every session.
 
 ### [How many NPCs does an RPG town need?](https://codexcryptica.com/answers/how-many-npcs-does-an-rpg-town-need)
 

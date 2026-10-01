@@ -214,8 +214,8 @@ export const howDoICreateInterestingIslandsAndPortsForAPirateCampaign: AnswerCon
         "answer-settlement-contents",
         "answer-living-fantasy-city",
         "answer-create-fantasy-town-rumours",
-        "answer-trade-routes-shape-cities",
-        "answer-settlement-produces-imports-exports",
+        "answer-trade-routes-shape-cities-kingdoms",
+        "answer-settlement-production-imports-exports",
         "answer-believable-fantasy-economy",
         "answer-scarcity-shortages-prices-conflict",
         "answer-point-crawl",
@@ -238,7 +238,7 @@ export const howDoICreateInterestingIslandsAndPortsForAPirateCampaign: AnswerCon
             "That answer makes a city feel alive through daily rhythms and visible district changes. This answer makes an island feel worth exploring through sailing geography, port law and custom, and return-visit consequences tied to trade decisions.",
         },
         {
-          with: "answer-trade-routes-shape-cities",
+          with: "answer-trade-routes-shape-cities-kingdoms",
           reason:
             "That page follows trade routes across regions and kingdoms. This page uses a single port's exports, imports, shortages, and strait control to set quayside prices and give the crew a reason to choose the next island.",
         },
