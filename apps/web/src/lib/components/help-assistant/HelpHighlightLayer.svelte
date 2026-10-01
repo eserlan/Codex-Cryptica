@@ -23,7 +23,7 @@
     aria-hidden="true"
   >
     <span
-      class="absolute -top-7 left-0 flex items-center gap-1 whitespace-nowrap rounded bg-theme-primary px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-theme-bg shadow"
+      class="absolute -top-7 left-0 flex items-center gap-1 whitespace-nowrap rounded bg-chrome-accent px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-chrome-bg shadow"
     >
       <span class="icon-[lucide--arrow-down] h-3 w-3" aria-hidden="true"></span>
       {label}
@@ -35,10 +35,10 @@
   /* A solid outline plus the text label above: never colour alone. */
   .help-highlight {
     border-radius: 0.375rem;
-    outline: 3px solid var(--theme-primary);
+    outline: 3px solid var(--chrome-accent);
     outline-offset: 0;
     box-shadow: 0 0 0 6px
-      color-mix(in srgb, var(--theme-primary) 25%, transparent);
+      color-mix(in srgb, var(--chrome-accent) 25%, transparent);
   }
 
   @media (prefers-reduced-motion: no-preference) {
@@ -50,7 +50,7 @@
   @keyframes help-highlight-pulse {
     50% {
       box-shadow: 0 0 0 10px
-        color-mix(in srgb, var(--theme-primary) 10%, transparent);
+        color-mix(in srgb, var(--chrome-accent) 10%, transparent);
     }
   }
 </style>

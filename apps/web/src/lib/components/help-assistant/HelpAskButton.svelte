@@ -27,7 +27,7 @@
   aria-label={open ? "Close help assistant" : "Open help assistant"}
   aria-expanded={open}
   data-testid="help-assistant-button"
-  class="fixed bottom-[calc(4rem_+_env(safe-area-inset-bottom,0px))] left-3 z-[30] flex h-11 w-11 items-center justify-center rounded-full border border-theme-border bg-theme-surface text-theme-primary shadow-lg transition hover:bg-theme-primary/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary md:bottom-4 md:left-[4.5rem]"
+  class="fixed bottom-[calc(4rem_+_env(safe-area-inset-bottom,0px))] left-3 z-[30] flex h-11 w-11 items-center justify-center rounded-full border border-chrome-border bg-chrome-surface text-chrome-accent shadow-lg transition hover:bg-chrome-accent/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-chrome-accent md:bottom-4 md:left-[4.5rem]"
 >
   <span
     aria-hidden="true"
