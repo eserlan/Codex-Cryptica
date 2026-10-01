@@ -125,6 +125,8 @@ export class AssetManager {
   private activeThumbnails = 0;
   private generation = 0;
   private prunedVaults = new Set<string>();
+  /** How long the original-copy sweep waits for image loading to settle. */
+  pruneDelayMs = 2000;
   private pruneTimer?: ReturnType<typeof setTimeout>;
   private localThumbnails: LocalThumbnailCache;
   private thumbnailWaiters: (() => void)[] = [];
@@ -865,13 +867,13 @@ export class AssetManager {
     this.prunedVaults.add(vaultHandle.name);
     const attempt = () => {
       if (this.resolving.size > 0) {
-        this.pruneTimer = setTimeout(attempt, 2000);
+        this.pruneTimer = setTimeout(attempt, this.pruneDelayMs);
         return;
       }
       this.pruneTimer = undefined;
       void this.pruneExternalOriginals(vaultHandle).catch(() => {});
     };
-    this.pruneTimer = setTimeout(attempt, 2000);
+    this.pruneTimer = setTimeout(attempt, this.pruneDelayMs);
   }
 
   private async pruneExternalOriginals(vaultHandle: FileSystemDirectoryHandle) {

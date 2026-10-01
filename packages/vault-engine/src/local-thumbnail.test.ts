@@ -2,6 +2,20 @@ import { describe, expect, it, vi } from "vitest";
 import { LocalThumbnailCache } from "./local-thumbnail";
 import type { IAssetIOAdapter, IImageProcessor } from "./asset-manager";
 
+/** Polls until the assertion passes; works under both vitest and bun test. */
+async function waitFor(assertion: () => void, timeoutMs = 2000) {
+  const deadline = Date.now() + timeoutMs;
+  for (;;) {
+    try {
+      assertion();
+      return;
+    } catch (error) {
+      if (Date.now() > deadline) throw error;
+      await new Promise((r) => setTimeout(r, 5));
+    }
+  }
+}
+
 function fixture(canGenerate = () => true) {
   const source = new File(["original"], "portrait.png", { lastModified: 100 });
   const thumbnail = new Blob(["thumbnail"]);
@@ -39,9 +53,7 @@ describe("local thumbnails", () => {
     try {
       expect(await f.resolve()).toBe(f.source);
       expect(f.processor.generateThumbnail).not.toHaveBeenCalled();
-      await vi.waitFor(() =>
-        expect(f.io.writeOpfsFile).toHaveBeenCalledTimes(1),
-      );
+      await waitFor(() => expect(f.io.writeOpfsFile).toHaveBeenCalledTimes(1));
       expect(await f.resolve()).toBe(f.thumbnail);
       // A fresh session reuses the persisted thumbnail.
       const next = new LocalThumbnailCache(f.io, f.processor);
@@ -85,17 +97,13 @@ describe("local thumbnails", () => {
     const f = fixture();
     try {
       await f.resolve();
-      await vi.waitFor(() =>
-        expect(f.io.writeOpfsFile).toHaveBeenCalledTimes(1),
-      );
+      await waitFor(() => expect(f.io.writeOpfsFile).toHaveBeenCalledTimes(1));
       const replacement = new File(["replacement"], "portrait.png", {
         lastModified: 200,
       });
       f.files.set("images/portrait.png", replacement);
       expect(await f.resolve()).toBe(replacement);
-      await vi.waitFor(() =>
-        expect(f.io.writeOpfsFile).toHaveBeenCalledTimes(2),
-      );
+      await waitFor(() => expect(f.io.writeOpfsFile).toHaveBeenCalledTimes(2));
     } finally {
       f.cache.clear();
     }
@@ -103,11 +111,11 @@ describe("local thumbnails", () => {
   it("keeps originals usable after background generation fails", async () => {
     const f = fixture();
     try {
-      vi.mocked(f.processor.generateThumbnail).mockRejectedValue(
-        new Error("decode"),
-      );
+      (
+        f.processor.generateThumbnail as ReturnType<typeof vi.fn>
+      ).mockRejectedValue(new Error("decode"));
       expect(await f.resolve()).toBe(f.source);
-      await vi.waitFor(() =>
+      await waitFor(() =>
         expect(f.processor.generateThumbnail).toHaveBeenCalledTimes(1),
       );
       expect(f.io.writeOpfsFile).not.toHaveBeenCalled();
@@ -118,7 +126,9 @@ describe("local thumbnails", () => {
   it("does not persist an in-flight thumbnail after clear", async () => {
     const f = fixture();
     let finish!: (blob: Blob) => void;
-    vi.mocked(f.processor.generateThumbnail).mockImplementation(
+    (
+      f.processor.generateThumbnail as ReturnType<typeof vi.fn>
+    ).mockImplementation(
       () =>
         new Promise((resolve) => {
           finish = resolve;
@@ -126,7 +136,7 @@ describe("local thumbnails", () => {
     );
     try {
       await f.resolve();
-      await vi.waitFor(() => expect(finish).toBeDefined());
+      await waitFor(() => expect(finish).toBeDefined());
       f.cache.clear();
       finish(f.thumbnail);
       await Promise.resolve();
@@ -139,12 +149,12 @@ describe("local thumbnails", () => {
 
   it("keeps originals usable if background cache writing fails", async () => {
     const f = fixture();
-    vi.mocked(f.io.writeOpfsFile).mockRejectedValue(new Error("quota"));
+    (f.io.writeOpfsFile as ReturnType<typeof vi.fn>).mockRejectedValue(
+      new Error("quota"),
+    );
     try {
       expect(await f.resolve()).toBe(f.source);
-      await vi.waitFor(() =>
-        expect(f.io.writeOpfsFile).toHaveBeenCalledTimes(1),
-      );
+      await waitFor(() => expect(f.io.writeOpfsFile).toHaveBeenCalledTimes(1));
       expect(await f.resolve()).toBe(f.source);
     } finally {
       f.cache.clear();

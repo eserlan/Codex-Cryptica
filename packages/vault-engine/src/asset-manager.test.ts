@@ -2,6 +2,20 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { AssetManager } from "./asset-manager";
 import type { IAssetIOAdapter, IImageProcessor } from "./asset-manager";
 
+/** Polls until the assertion passes; works under both vitest and bun test. */
+async function waitFor(assertion: () => void, timeoutMs = 2000) {
+  const deadline = Date.now() + timeoutMs;
+  for (;;) {
+    try {
+      assertion();
+      return;
+    } catch (error) {
+      if (Date.now() > deadline) throw error;
+      await new Promise((r) => setTimeout(r, 5));
+    }
+  }
+}
+
 describe("AssetManager", () => {
   let assetManager: AssetManager;
   let mockIO: ReturnType<typeof vi.mocked<IAssetIOAdapter>>;
@@ -440,7 +454,7 @@ describe("AssetManager", () => {
       { name: "vault" } as FileSystemDirectoryHandle,
       "images/portrait.png",
     );
-    await vi.waitFor(() => expect(finish).toBeDefined());
+    await waitFor(() => expect(finish).toBeDefined());
     assetManager.clear();
     finish(new File(["original"], "portrait.png", { lastModified: 1 }));
     expect(await pending).toBe("");
@@ -522,8 +536,8 @@ describe("AssetManager", () => {
       });
 
       it("sweeps leftover originals that already have a thumbnail, once", async () => {
-        vi.useFakeTimers();
-        try {
+        assetManager.pruneDelayMs = 0;
+        {
           const a = hexName("a");
           const b = hexName("b");
           const names = [
@@ -549,28 +563,25 @@ describe("AssetManager", () => {
             vault,
             "https://img.example/other.png",
           );
-          await vi.advanceTimersByTimeAsync(2500);
+          await waitFor(() => expect(deleteFile).toHaveBeenCalled());
+          await new Promise((r) => setTimeout(r, 30));
 
           expect(deleteFile).toHaveBeenCalledTimes(1);
           expect(deleteFile.mock.calls[0][0][2]).toBe(`${a}.cache`);
-        } finally {
-          vi.useRealTimers();
         }
       });
 
       it("does nothing when the adapter cannot delete files (negative)", async () => {
-        vi.useFakeTimers();
-        try {
+        assetManager.pruneDelayMs = 0;
+        {
           const entries = vi.fn();
           mockIO.getDirectoryHandle.mockResolvedValue({ entries } as any);
           mockIO.readOpfsBlob.mockResolvedValue(
             new Blob(["thumb"], { type: "image/webp" }),
           );
           await assetManager.resolveThumbnailUrl(vault, url);
-          await vi.advanceTimersByTimeAsync(2500);
+          await new Promise((r) => setTimeout(r, 30));
           expect(entries).not.toHaveBeenCalled();
-        } finally {
-          vi.useRealTimers();
         }
       });
     });

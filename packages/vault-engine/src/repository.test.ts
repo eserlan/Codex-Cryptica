@@ -208,7 +208,6 @@ describe("VaultRepository", () => {
   });
 
   it("should queue scheduled saves", async () => {
-    vi.useFakeTimers();
     const mockHandle = {} as FileSystemDirectoryHandle;
     const mockEntity = { id: "e1", title: "Test" } as any;
     const onStatusChange = vi.fn();
@@ -229,7 +228,6 @@ describe("VaultRepository", () => {
     expect(onStatusChange).toHaveBeenCalledWith("saving");
     expect(repository.pendingSaveCount).toBe(1);
 
-    await vi.advanceTimersByTimeAsync(10);
     await savePromise;
 
     expect(onStatusChange).toHaveBeenCalledWith("idle");
