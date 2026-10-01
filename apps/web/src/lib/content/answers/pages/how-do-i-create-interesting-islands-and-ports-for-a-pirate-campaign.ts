@@ -187,6 +187,7 @@ export const howDoICreateInterestingIslandsAndPortsForAPirateCampaign: AnswerCon
       "how-do-you-build-a-point-crawl-for-an-rpg",
       "how-do-you-run-factions-in-a-sandbox-campaign",
       "how-do-i-run-ship-to-ship-combat-without-sidelining-the-party",
+      "how-do-i-make-sea-travel-interesting-in-a-ttrpg",
     ],
     labels: ["pirate"],
     discovery: {

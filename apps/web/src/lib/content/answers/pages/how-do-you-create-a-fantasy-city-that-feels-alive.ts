@@ -159,6 +159,7 @@ export const howDoYouCreateAFantasyCityThatFeelsAlive: AnswerConfigInput = {
     "how-do-fantasy-cities-defend-against-flying-creatures-and-teleportation",
     "how-do-i-run-a-campaign-where-the-players-own-a-business",
     "how-do-i-create-interesting-islands-and-ports-for-a-pirate-campaign",
+    "how-do-i-make-sea-travel-interesting-in-a-ttrpg",
   ],
   labels: ["fantasy", "rumour"],
   discovery: {
