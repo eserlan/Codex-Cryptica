@@ -6,6 +6,7 @@ import {
   type ActionRef,
 } from "../src/actions";
 import { sanitizeHelpContext } from "../src/context";
+import { GENERATORS } from "../src/registry";
 
 const deps = { helpIds: new Set(["connections-tab", "graph-basics"]) };
 
@@ -109,7 +110,7 @@ describe("validateAction", () => {
   it("discards a generator when its flag is off and accepts it when on", () => {
     const open = {
       type: "openGenerator",
-      generatorId: "campaign",
+      generatorId: "npc",
       label: "Open",
     };
     expect(validateAction(open, connectionsScreen, deps)).toBeNull();
@@ -160,6 +161,59 @@ describe("validateAction", () => {
         connectionsScreen,
         deps,
       ),
+    ).toBeNull();
+  });
+});
+
+describe("opening a chosen generator", () => {
+  const withGenerators = sanitizeHelpContext({
+    routeTemplate: "/(app)",
+    area: "generators",
+    surface: "vault",
+    flags: ["generators"],
+  });
+  const noGenerators = sanitizeHelpContext({
+    routeTemplate: "/(app)",
+    area: "graph",
+    surface: "vault",
+    flags: [],
+  });
+
+  it("accepts every generator the registry has", () => {
+    for (const generator of GENERATORS) {
+      const open = {
+        type: "openGenerator",
+        generatorId: generator.id,
+        label: `Open ${generator.label}`,
+      };
+      expect(validateAction(open, withGenerators, deps), generator.id).toEqual(
+        open,
+      );
+    }
+  });
+
+  it("opens the generator workflow without choosing one", () => {
+    const open = { type: "openGenerator", label: "Open the generators" };
+    expect(validateAction(open, withGenerators, deps)).toEqual(open);
+  });
+
+  it("refuses an id that is not a generator, and any generator when generators are unavailable", () => {
+    expect(
+      validateAction(
+        { type: "openGenerator", generatorId: "delete-vault", label: "x" },
+        withGenerators,
+        deps,
+      ),
+    ).toBeNull();
+    expect(
+      validateAction(
+        { type: "openGenerator", generatorId: "quest", label: "x" },
+        noGenerators,
+        deps,
+      ),
+    ).toBeNull();
+    expect(
+      validateAction({ type: "openGenerator", label: "x" }, noGenerators, deps),
     ).toBeNull();
   });
 });
@@ -257,7 +311,7 @@ describe("buildActionCandidates", () => {
     },
     {
       id: "generators.campaign",
-      action: { type: "openGenerator", generatorId: "campaign", label: "Open" },
+      action: { type: "openGenerator", generatorId: "npc", label: "Open" },
     },
   ];
 

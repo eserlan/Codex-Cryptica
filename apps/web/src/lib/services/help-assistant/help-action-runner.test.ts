@@ -125,10 +125,12 @@ describe("HelpActionRunner", () => {
     expect(deps.openHelp).toHaveBeenCalledWith("graph-basics");
     await runner.run({
       type: "openGenerator",
-      generatorId: "campaign",
+      generatorId: "npc",
       label: "Open",
     });
-    expect(deps.openGenerator).toHaveBeenCalled();
+    expect(deps.openGenerator).toHaveBeenCalledWith("npc");
+    await runner.run({ type: "openGenerator", label: "Open the generators" });
+    expect(deps.openGenerator).toHaveBeenLastCalledWith(undefined);
   });
 
   it("never creates, edits, deletes, imports or exports vault content, whatever the action", async () => {
@@ -155,7 +157,8 @@ describe("HelpActionRunner", () => {
       guide,
       { type: "navigate", to: "tables", label: "Go" },
       { type: "openHelp", helpId: "graph-basics", label: "Read" },
-      { type: "openGenerator", generatorId: "campaign", label: "Open" },
+      { type: "openGenerator", generatorId: "quest", label: "Open" },
+      { type: "openGenerator", label: "Open the generators" },
       { type: "highlight", target: "status-tab", label: "Tab" },
     ];
     for (const action of actions) await runner.run(action);

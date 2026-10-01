@@ -136,6 +136,7 @@ export const IN_SCOPE: InScopeQuestion[] = [
       "in-app-generators",
       "registry:campaign-generator",
       "generate-related",
+      "generator:faction",
     ],
   },
   {

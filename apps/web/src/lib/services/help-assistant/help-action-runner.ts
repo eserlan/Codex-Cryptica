@@ -16,7 +16,8 @@ export interface HelpActionRunnerDeps {
   goto: (path: string) => void | Promise<void>;
   destinationPath: (destination: DestinationId) => string;
   openHelp: (helpId: string) => void;
-  openGenerator: () => void;
+  /** Opens the generator workflow, on the chosen generator when one is given. */
+  openGenerator: (generatorId?: string) => void;
   /** Resolves true once `check` passes, or false after `ms`. */
   waitFor: (check: () => boolean, ms: number) => Promise<boolean>;
 }
@@ -54,7 +55,7 @@ export class HelpActionRunner {
         this.deps.openHelp(step.helpId);
         return true;
       case "openGenerator":
-        this.deps.openGenerator();
+        this.deps.openGenerator(step.generatorId);
         return true;
       case "openPanel": {
         const surface = this.deps.surfaces.entityDetail;

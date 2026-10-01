@@ -31,7 +31,8 @@ const highlight = z
 const openGenerator = z
   .object({
     type: z.literal("openGenerator"),
-    generatorId: z.enum(GENERATOR_IDS),
+    // Optional: without an id the generator workflow opens for the user to pick.
+    generatorId: z.enum(GENERATOR_IDS).optional(),
     label,
   })
   .strict();

@@ -19,18 +19,17 @@ export const campaignGenerator: FeatureEntry = {
         "Choose a generator and describe what you want.",
         "Review the result, then save it to your vault.",
       ],
-      actionIds: ["generators.open-campaign"],
+      actionIds: ["generators.open-workflow"],
     },
   ],
   helpIds: ["in-app-generators", "generate-related"],
   related: ["session-hub"],
   actions: [
     {
-      id: "generators.open-campaign",
+      id: "generators.open-workflow",
       action: {
         type: "openGenerator",
-        generatorId: "campaign",
-        label: "Open the campaign generator",
+        label: "Open the generators",
       },
     },
   ],
