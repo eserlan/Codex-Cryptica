@@ -142,7 +142,7 @@
             aria-hidden="true"
             class="icon-[lucide--loader-circle] h-4 w-4 animate-spin text-chrome-accent motion-reduce:animate-none"
           ></span>
-          <span class="text-xs text-chrome-muted">Cif is looking that up…</span>
+          <span class="text-xs text-chrome-muted">Looking that up…</span>
           <button
             type="button"
             onclick={() => assistant.cancel()}
