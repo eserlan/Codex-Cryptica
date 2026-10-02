@@ -302,6 +302,7 @@ export const howDoFantasyCitiesDefendAgainstFlyingCreaturesAndTeleportation: Ans
       "how-do-i-make-different-cultures-feel-distinct-without-relying-on-stereotypes",
       "how-do-you-create-a-fantasy-faction",
       "how-do-you-start-worldbuilding-from-scratch",
+      "how-does-magic-affect-politics-and-government",
     ],
     discovery: {
       id: "answer-fantasy-city-defence-flight-teleportation",
