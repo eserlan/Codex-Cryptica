@@ -8,7 +8,7 @@ export const howShouldMagicHaveBeenDiscoveredInMyWorld: AnswerConfigInput = {
   question: "How should magic have been discovered in my world?",
   kind: "framework",
   shortAnswer:
-    "Choose how your people first learned to use magic separately from where magic itself comes from, then decide who remembers, controls, or forbids that discovery today. The model you pick, whether slow natural enquiry, divine gift, inheritance from a fallen civilisation,Planar catastrophe, outsider teaching, rediscovery of banned lore, multiple independent traditions, or an ancient force only recently made usable, sets who claims authority, what institutions guard the knowledge, and what laws and taboos shape play now.",
+    "Choose how your people first learned to use magic separately from where magic itself comes from, then decide who remembers, controls, or forbids that discovery today. The model you pick, whether slow natural enquiry, divine gift, inheritance from a fallen civilisation, planar catastrophe, outsider teaching, rediscovery of banned lore, multiple independent traditions, or an ancient force only recently made usable, shapes who claims authority, which institutions guard the knowledge, and what laws, customs, and beliefs shape play now.",
   sections: [
     {
       kind: "prose",
@@ -23,7 +23,7 @@ export const howShouldMagicHaveBeenDiscoveredInMyWorld: AnswerConfigInput = {
       kind: "list",
       heading: "Eight discovery models and what each one buys you",
       intro:
-        "Pick the model that best supports the present-day society you want at the table. Each one pushes authority, access, and conflict in a different direction:",
+        "Choose the dominant discovery history for the setting you want at the table. Other models can describe different regions or later periods when they materially change present-day authority, access, or conflict:",
       items: [
         {
           term: "Natural force, gradually understood",
@@ -43,7 +43,7 @@ export const howShouldMagicHaveBeenDiscoveredInMyWorld: AnswerConfigInput = {
         },
         {
           term: "Introduced by outsiders or non-human peoples",
-          text: "Elves, spirits, travellers from another world, or a neighbouring culture teach or trade the art. Magic carries a cultural debt. Questions of translation, appropriation, incomplete teaching, and whether the teachers left deliberately become central, and the originating people retain influence.",
+          text: "Elves, spirits, travellers from another world, or a neighbouring culture teach or trade the art. The transfer might come through exchange, alliance, apprenticeship, migration, conquest, coercion, espionage, or secrecy. Ask who had power to teach or withhold the knowledge, how it was translated, and who receives credit now.",
         },
         {
           term: "Rediscovered or forbidden knowledge",
@@ -61,9 +61,37 @@ export const howShouldMagicHaveBeenDiscoveredInMyWorld: AnswerConfigInput = {
     },
     {
       kind: "list",
+      heading: "From phenomenon to living tradition",
+      intro:
+        "A discovery can mean different things: people may discover a phenomenon, invent a usable technique, domesticate an unpredictable force, standardise local practices, or rediscover lost knowledge. A setting can have several such turning points, and no single first practitioner needs to be known. A quick method is **phenomenon → breakthrough → replication → transmission → standardisation → control → legacy**. In Saltspire, storm-lit water leads to charged glass, fishers gather it, glassworkers reproduce the effect, harbour apprentices spread the method, the Salt Guild grades safe cuts, the city requires its seals, and temple and university contest its legacy. Trace how usable knowledge became repeatable, teachable, and socially important:",
+      items: [
+        {
+          term: "Phenomenon and prerequisites",
+          text: "Who first noticed what was happening, and what had to exist before anyone could use it? A reagent, writing system, measuring tool, ritual space, specialist institution, or contact with a particular place or being may have made practical work possible.",
+        },
+        {
+          term: "Breakthrough and replication",
+          text: "Who found a workable technique, and who proved it could be repeated? The breakthrough may belong to a community rather than a named discoverer; surviving evidence, oral histories, and official accounts may disagree about who did the work.",
+        },
+        {
+          term: "Transmission",
+          text: "How did the practice travel: through families, apprenticeships, temples, armies, trade, migration, texts, conquest, or theft? Ask what carried the knowledge, what slowed or distorted it, and how it changed in translation or new conditions—a ritual might be shortened for soldiers, or fail where its reagents do not grow.",
+        },
+        {
+          term: "Standardisation and control",
+          text: "When did local practice become a recognised tradition, and who set its names, training, or safety rules? An institution may later claim authority over that process; decide how it acquired its position, rather than assuming it survived from the first discovery.",
+        },
+        {
+          term: "Legacy and false starts",
+          text: "Who is remembered as the discoverer, and who actually developed the practice? Keep room for erased contributors, a useful but mistaken theory, an abandoned dangerous method, or an experiment no one can repeat. These can shape present-day prestige, taboos, and popular beliefs.",
+        },
+      ],
+    },
+    {
+      kind: "list",
       heading: "How discovery shapes the present day",
       intro:
-        "Once you have chosen a model, trace its consequences forward. Each question connects history to something the party can see, hear, or break:",
+        "Trace the history into present-day institutions and everyday life. Its legacy might appear in language, education, faith, trade, class, architecture, warfare, safety customs, or law; connect it to something the party can see, hear, or break:",
       items: [
         {
           term: "Who claims ownership",
@@ -75,7 +103,7 @@ export const howShouldMagicHaveBeenDiscoveredInMyWorld: AnswerConfigInput = {
         },
         {
           term: "Institutions and monopolies",
-          text: "Decide what ancient institution survived and how it rations access now: entrance exams, oaths, guild marks, or state vetting. Show the monopoly in prices, permits, uniforms, and who is allowed to teach. If there is no monopoly, show why it failed and who benefits from that absence.",
+          text: "Decide which institution now claims authority and how it acquired that position: entrance exams, oaths, guild marks, or state vetting may reflect a recent reform, a takeover, or succession from an older power. Show its reach in prices, permits, uniforms, and who is allowed to teach. If there is no monopoly, show why it failed and who benefits from that absence.",
         },
         {
           term: "Lost techniques and taboos",
@@ -87,7 +115,7 @@ export const howShouldMagicHaveBeenDiscoveredInMyWorld: AnswerConfigInput = {
         },
         {
           term: "Modern access, law, and politics",
-          text: "Translate history into current law. Who may learn, who may teach, who may carry catalysts in a city, and who judges misuse? Write one statute, one street-level enforcement habit, and one loophole that adventurers, smugglers, or reformers exploit. History matters at the table when it sets what is legal today.",
+          text: "Translate history into current rules and customs. Who may learn, teach, or carry catalysts, and who judges misuse? Write one statute, one street-level habit, and one loophole that adventurers, smugglers, or reformers exploit. The legacy might instead—or also—shape a calendar, professional title, school curriculum, market, or popular misconception.",
         },
       ],
     },
@@ -120,13 +148,15 @@ export const howShouldMagicHaveBeenDiscoveredInMyWorld: AnswerConfigInput = {
       kind: "checklist",
       heading: "Discovery history checklist",
       intro:
-        "Use this before your next session to lock the model into playable detail:",
+        "Use this before your next session to turn the history into playable detail:",
       items: [
         "Write one sentence for origin and one for discovery; note whether they match and who exploits any gap.",
-        "Choose one primary discovery model from the eight and name the community that was present at the first usable demonstration.",
-        "Name the present-day custodian that claims authority over that memory, and one rival that tells a different version.",
-        "List one surviving institution that rations access and one visible sign of its control (a licence, uniform, seal, or schedule).",
+        "Choose the dominant discovery history from the eight, then add another model only where it changes present-day institutions or conflict. A single first discoverer may be unknown or unknowable.",
+        "Trace one practice from first encounter through repeatable technique, transmission, standardisation, and present-day control; note any material or institution it depended on.",
+        "Name who is credited with the discovery, who did the work, and one rival account or erased contributor.",
+        "Name the present-day claimant to authority, how it gained that position, and one visible sign of its control (a licence, uniform, seal, or schedule).",
         "Define one lost technique, one forbidden branch, and one dangerous line of research your players could actually find traces of.",
+        "Add one false start, obsolete theory, or abandoned practice that still leaves a mark on custom or public belief.",
         "If you use independent traditions, give each a distinct tool, gesture, or prohibition that the other tradition finds odd or rude.",
         "Write one current statute and one loophole: who may learn, who may teach, and how a clever party might work around the rule.",
         "Place three table-visible consequences in your next location: a price, a patrol habit, and a piece of street argument that stems directly from the discovery you chose.",
