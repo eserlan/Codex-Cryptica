@@ -14,6 +14,8 @@ export interface CommunityGroup {
   size: number;
   /** Members the community's background covers (outliers left out). */
   members: HullNode[];
+  /** Links between those members, painted as bands so the shape is one piece. */
+  links: Array<[HullNode, HullNode]>;
 }
 
 /** Communities smaller than this get no background: a halo around 3 nodes is noise. */
@@ -41,7 +43,11 @@ function withoutOutliers(members: HullNode[]): HullNode[] {
 export function computeCommunityGroups(
   nodes: HullNode[],
   communities: ReadonlyMap<string, string>,
-  { minSize = MIN_HULL_SIZE, maxCount = MAX_HULLS } = {},
+  {
+    minSize = MIN_HULL_SIZE,
+    maxCount = MAX_HULLS,
+    edges = [] as ReadonlyArray<readonly [string, string]>,
+  } = {},
 ): CommunityGroup[] {
   const groups = new Map<string, HullNode[]>();
   for (const node of nodes) {
@@ -55,11 +61,17 @@ export function computeCommunityGroups(
     .filter(([, members]) => members.length >= minSize)
     .sort((a, b) => b[1].length - a[1].length || (a[0] < b[0] ? -1 : 1))
     .slice(0, maxCount)
-    .map(([community, members]) => ({
-      community,
-      size: members.length,
-      members: withoutOutliers(members),
-    }));
+    .map(([community, members]) => {
+      const kept = withoutOutliers(members);
+      const byId = new Map(kept.map((n) => [n.id, n]));
+      const links: Array<[HullNode, HullNode]> = [];
+      for (const [a, b] of edges) {
+        const na = byId.get(a);
+        const nb = byId.get(b);
+        if (na && nb) links.push([na, nb]);
+      }
+      return { community, size: members.length, members: kept, links };
+    });
 }
 
 /** A distinct, quiet hue per community rank (golden-angle spacing). */
@@ -104,11 +116,16 @@ export function attachCommunityHulls(
       .filter((n) => n.visible())
       .toArray() as NodeSingular[];
 
+  let edgeList: Array<readonly [string, string]> | null = null;
+
   const recomputeGroups = () => {
-    if (!communities) {
+    if (!communities || !edgeList) {
+      edgeList = cy
+        .edges()
+        .map((e) => [e.source().id(), e.target().id()] as const);
       communities = detectCommunities(
         cy.nodes().map((n) => n.id()),
-        cy.edges().map((e) => [e.source().id(), e.target().id()] as const),
+        edgeList,
       );
     }
     groups = computeCommunityGroups(
@@ -117,6 +134,7 @@ export function attachCommunityHulls(
         return { id: n.id(), x: p.x, y: p.y, r: n.width() / 2 };
       }),
       communities,
+      { edges: edgeList },
     );
   };
 
@@ -144,7 +162,19 @@ export function attachCommunityHulls(
     off.setTransform(1, 0, 0, 1, 0, 0);
     off.clearRect(0, 0, width, height);
     off.setTransform(dpr * zoom, 0, 0, dpr * zoom, dpr * pan.x, dpr * pan.y);
-    off.fillStyle = `hsl(${hueFor(rank)}, 55%, 58%)`;
+    const colour = `hsl(${hueFor(rank)}, 55%, 58%)`;
+    // Bands along the community's own links join its members' halos into one
+    // shape; halos alone read as separate bubbles once members are far apart.
+    off.strokeStyle = colour;
+    off.lineCap = "round";
+    off.lineWidth = HALO_PADDING * 2;
+    off.beginPath();
+    for (const [a, b] of group.links) {
+      off.moveTo(a.x, a.y);
+      off.lineTo(b.x, b.y);
+    }
+    off.stroke();
+    off.fillStyle = colour;
     off.beginPath();
     for (const n of group.members) {
       const r = n.r + HALO_PADDING;
@@ -175,6 +205,7 @@ export function attachCommunityHulls(
   };
   const onStructure = () => {
     communities = null;
+    edgeList = null;
     groups = null;
     schedule();
   };
