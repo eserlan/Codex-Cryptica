@@ -19,8 +19,9 @@ function findSubstantiveUserTurn(
     // useful anchor. Skip turns whose subject depends on an earlier answer,
     // such as "Does it link back?" or "Can I discard that?".
     const dependsOnPriorTurn =
-      /\b(it|its|that|these|those|one|ones|there)\b/i.test(turn.text) ||
-      terms.length < 2;
+      /\b(they|them|their|theirs|it|its|that|these|those|one|ones|there)\b/i.test(
+        turn.text,
+      ) || terms.length < 2;
     if (!dependsOnPriorTurn) {
       return turn;
     }

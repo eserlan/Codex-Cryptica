@@ -374,6 +374,25 @@ describe("semantic vector retrieval", () => {
       expect(out).toBe("how to make them? (tell me of connections)");
     });
 
+    it("uses the earlier topic when a follow-up refers to it as they", () => {
+      const history = [
+        { role: "user" as const, text: "How do I create connections?" },
+        {
+          role: "assistant" as const,
+          text: "Connections link entities together.",
+        },
+        { role: "user" as const, text: "Do they appear on maps?" },
+        {
+          role: "assistant" as const,
+          text: "Connected entities can have map pins.",
+        },
+      ];
+
+      expect(
+        contextualizeQuery("Can I edit them from the graph?", history),
+      ).toBe("Can I edit them from the graph? (How do I create connections?)");
+    });
+
     it("leaves self-contained query untouched despite history", () => {
       const history = [
         { role: "user" as const, text: "tell me of connections" },
