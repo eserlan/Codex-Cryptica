@@ -8,18 +8,22 @@
     helpActionRunner,
     helpAssistant,
   } from "$lib/stores/help-assistant/help-runtime";
-  import HelpAskButton from "./HelpAskButton.svelte";
   import HelpAssistantPanel from "./HelpAssistantPanel.svelte";
   import HelpHighlightLayer from "./HelpHighlightLayer.svelte";
 
   const available = $derived(isHelpAssistantAvailable());
-  let trigger = $state<HTMLButtonElement>();
   let wasOpen = false;
 
   // Hand focus back to the button when the panel closes.
   $effect(() => {
     const open = helpAssistant.isOpen;
-    if (wasOpen && !open) trigger?.focus();
+    if (wasOpen && !open) {
+      document
+        .querySelector<HTMLButtonElement>(
+          '[data-testid="help-assistant-button"]',
+        )
+        ?.focus();
+    }
     wasOpen = open;
   });
 
@@ -48,11 +52,6 @@
 </script>
 
 {#if available}
-  <HelpAskButton
-    bind:element={trigger}
-    open={helpAssistant.isOpen}
-    onToggle={() => (helpAssistant.isOpen ? close() : helpAssistant.open())}
-  />
   <HelpAssistantPanel
     assistant={helpAssistant}
     onAccept={accept}

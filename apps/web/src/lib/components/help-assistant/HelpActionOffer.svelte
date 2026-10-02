@@ -17,14 +17,14 @@
 </script>
 
 <div
-  class="flex flex-col gap-2 rounded border border-theme-primary/40 bg-theme-surface/60 p-3"
+  class="flex flex-col gap-2 rounded border border-chrome-accent/40 bg-chrome-surface/60 p-3"
   data-testid="help-action-offer"
 >
-  <p class="text-xs text-theme-text">
-    <span class="font-bold text-theme-primary">I can show you:</span>
+  <p class="text-xs text-chrome-text">
+    <span class="font-bold text-chrome-accent">I can show you:</span>
     {summary}
   </p>
-  <p class="text-[10px] text-theme-muted">
+  <p class="text-[10px] text-chrome-muted">
     This only points at things on screen. It won't change anything in your
     vault.
   </p>
@@ -32,14 +32,14 @@
     <button
       type="button"
       onclick={onAccept}
-      class="rounded bg-theme-primary px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-theme-bg transition hover:bg-theme-secondary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary"
+      class="rounded bg-chrome-accent px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-chrome-bg transition hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-chrome-accent"
     >
       Show me
     </button>
     <button
       type="button"
       onclick={onDismiss}
-      class="rounded px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-theme-muted transition hover:text-theme-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary"
+      class="rounded px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-chrome-muted transition hover:text-chrome-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-chrome-accent"
     >
       No thanks
     </button>

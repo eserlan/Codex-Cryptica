@@ -45,14 +45,14 @@
 </script>
 
 <form
-  class="flex flex-col gap-1 border-t border-theme-border px-3 py-2"
+  class="flex flex-col gap-1 border-t border-chrome-border px-3 py-2"
   onsubmit={(event) => {
     event.preventDefault();
     void send();
   }}
 >
   {#if notice}
-    <p class="text-[10px] text-theme-muted" role="status">{notice}</p>
+    <p class="text-[10px] text-chrome-muted" role="status">{notice}</p>
   {/if}
   <label for="help-assistant-input" class="sr-only">
     Ask a question about using Codex Cryptica
@@ -66,17 +66,17 @@
       maxlength={MAX_QUESTION_CHARS}
       rows="2"
       placeholder="How do I connect two entities?"
-      class="min-h-[2.75rem] flex-1 resize-none rounded border border-theme-border bg-theme-bg px-2 py-1.5 text-xs text-theme-text placeholder:text-theme-muted focus-visible:outline-2 focus-visible:outline-theme-primary"
+      class="min-h-[2.75rem] flex-1 resize-none rounded border border-chrome-border bg-chrome-bg px-2 py-1.5 text-xs text-chrome-text placeholder:text-chrome-muted focus-visible:outline-2 focus-visible:outline-chrome-accent"
     ></textarea>
     <button
       type="submit"
       disabled={!draft.trim() || pending}
-      class="rounded bg-theme-primary px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-theme-bg transition hover:bg-theme-secondary disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary"
+      class="rounded bg-chrome-accent px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-chrome-bg transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-chrome-accent"
     >
       Ask
     </button>
   </div>
-  <p class="text-[10px] leading-tight text-theme-muted">
+  <p class="text-[10px] leading-tight text-chrome-muted">
     Your question goes to our AI service. Avoid pasting private lore.
     {#if remaining <= 50}
       <span class="ml-1 font-bold">{remaining} characters left.</span>

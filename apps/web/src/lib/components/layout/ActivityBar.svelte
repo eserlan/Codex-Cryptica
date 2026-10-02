@@ -8,10 +8,14 @@
     navItems,
     type NavItem,
   } from "./nav-items";
+  import { isHelpAssistantAvailable } from "$lib/services/help-assistant/help-availability";
+  import { helpAssistant } from "$lib/stores/help-assistant/help-runtime";
+  import HelpAskButton from "$lib/components/help-assistant/HelpAskButton.svelte";
 
   const items = $derived(navItems());
   const views = $derived(items.filter((i) => i.group === "view"));
   const tools = $derived(items.filter((i) => i.group === "tool"));
+  const helpAvailable = $derived(isHelpAssistantAvailable());
 
   /**
    * This row does not wrap and does not scroll on its own, so every item added
@@ -106,4 +110,21 @@
       {/if}
     </button>
   {/each}
+
+  <!-- Bottom Actions: Help & Guidance -->
+  {#if helpAvailable}
+    <div
+      class="md:mt-auto flex flex-row md:flex-col items-center shrink-0"
+      data-testid="activity-bar-bottom"
+    >
+      <div
+        class="w-px h-6 bg-chrome-border md:w-8 md:h-px my-1 md:my-2 mx-0.5 md:mx-0 opacity-50 shrink-0"
+      ></div>
+      <HelpAskButton
+        open={helpAssistant.isOpen}
+        onToggle={() =>
+          helpAssistant.isOpen ? helpAssistant.close() : helpAssistant.open()}
+      />
+    </div>
+  {/if}
 </nav>
