@@ -27,14 +27,15 @@ The bottom-left toolbar provides quick access to layout and visibility:
 - **Zoom**: Adjust view scale.
 - **Stable Layout (Pin)**: Prevent nodes from moving automatically.
 - **Link (Chain icon)**: Quickly connect two selected nodes.
-- **Redraw (Refresh)**: Recalculate node positions.
+- **Groups**: Show or hide soft backgrounds behind the larger groups of closely linked entities.
+- **Redraw (Refresh)**: Recalculate node positions. Closely linked entities are placed together in their own area, and entities with no connections are lined up separately.
 
 ### Images in Large Campaigns
 
 The graph loads images in and near your current view. Pan or zoom towards another
-part of the graph to load its images. Images that finish loading appear without
-waiting for slower ones. Fitting the entire graph on screen can still take longer,
-because every visible image needs to load. Uploaded images use saved previews, and older local images get previews cached
+part of the graph to load its images. They appear together once they have loaded,
+or after about 20 seconds if some are slow. Fitting the entire graph on screen can
+take longer, because every visible image needs to load. Uploaded images use saved previews, and older local images get previews cached
 for later visits. Silhouettes appear for entities without images and when an image cannot be
 found.
 

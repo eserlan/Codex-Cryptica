@@ -11,6 +11,8 @@ import {
   isLayoutCollinear,
   LayoutManager,
   GraphImageManager,
+  attachCommunityHulls,
+  type CommunityHullOverlay,
   setupGraphEvents,
   syncGraphElements,
   applyLargeGraphRenderHints,
@@ -98,6 +100,7 @@ export class GraphViewController {
   cy = $state<Core | undefined>();
   layoutManager = $state<LayoutManager | undefined>();
   imageManager = $state<GraphImageManager | undefined>();
+  communityHulls = $state<CommunityHullOverlay | undefined>();
 
   isLayoutRunning = $state(false);
   graphVisible = $derived(this.cy !== undefined);
@@ -313,6 +316,16 @@ export class GraphViewController {
         (window as any).graphViewController = this;
       }
 
+      const hullCanvas = container.querySelector<HTMLCanvasElement>(
+        "canvas[data-community-hulls]",
+      );
+      this.communityHulls?.destroy();
+      this.communityHulls = hullCanvas
+        ? attachCommunityHulls(instance, hullCanvas, {
+            enabled: untrack(() => this.communityHullsWanted()),
+          })
+        : undefined;
+
       this.cleanupEvents = setupGraphEvents(instance, {
         onNodeMouseOver: (id, renderedPos) => {
           this.hoverPosition = renderedPos;
@@ -491,6 +504,8 @@ export class GraphViewController {
       this.cleanupEvents();
       this.cleanupEvents = undefined;
     }
+    this.communityHulls?.destroy();
+    this.communityHulls = undefined;
     this.clearNodeSelectTimer();
     this.clearRenderReadyMeasurement();
     if (this.layoutManager) {
@@ -927,6 +942,16 @@ export class GraphViewController {
     if (this.cy) {
       applyLargeGraphRenderHints(this.cy, this.deps.graph.isLargeGraph);
     }
+  };
+
+  /** Timeline and orbit arrange nodes by date or distance, not by community. */
+  private communityHullsWanted() {
+    const g = this.deps.graph;
+    return g.showCommunities && !g.timelineMode && !g.orbitMode;
+  }
+
+  syncCommunityHulls = () => {
+    this.communityHulls?.setEnabled(this.communityHullsWanted());
   };
 
   syncImages = () => {

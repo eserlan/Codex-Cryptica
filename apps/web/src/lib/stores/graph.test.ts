@@ -461,6 +461,22 @@ describe("GraphStore", () => {
     expect(putSpy).toHaveBeenCalledWith("settings", true, "graphShowImages");
   });
 
+  it("should toggle group backgrounds and persist to IDB", async () => {
+    const db = await getDB();
+    const putSpy = vi.spyOn(db, "put");
+
+    await graph.toggleCommunities();
+    expect(graph.showCommunities).toBe(false);
+    expect(putSpy).toHaveBeenCalledWith(
+      "settings",
+      false,
+      "graphShowCommunities",
+    );
+
+    await graph.toggleCommunities();
+    expect(graph.showCommunities).toBe(true);
+  });
+
   it("should toggle labels and persist to IDB", async () => {
     const db = await getDB();
     const putSpy = vi.spyOn(db, "put");
@@ -792,6 +808,12 @@ describe("GraphStore", () => {
     await graph.toggleImages();
     expect(consoleSpy).toHaveBeenCalledWith(
       expect.stringContaining("Failed to persist graphShowImages"),
+      expect.anything(),
+    );
+
+    await graph.toggleCommunities();
+    expect(consoleSpy).toHaveBeenCalledWith(
+      expect.stringContaining("Failed to persist graphShowCommunities"),
       expect.anything(),
     );
 

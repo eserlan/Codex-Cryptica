@@ -126,6 +126,7 @@ describe("GraphViewController", () => {
         stableLayout: true,
         stats: { nodeCount: 0 },
         showImages: true,
+        showCommunities: true,
         isLargeGraph: false,
         perfStylingActive: false,
         activeLabels: new Set(),
@@ -988,6 +989,33 @@ describe("GraphViewController", () => {
         reseed: true,
       });
       expect(lastPolicy()).toBe("fit");
+    });
+  });
+
+  describe("community backgrounds", () => {
+    it("are shown normally and hidden in timeline mode or when turned off", () => {
+      const setEnabled = vi.fn();
+      controller.communityHulls = { setEnabled, destroy: vi.fn() };
+
+      controller.syncCommunityHulls();
+      expect(setEnabled).toHaveBeenLastCalledWith(true);
+
+      deps.graph.timelineMode = true;
+      controller.syncCommunityHulls();
+      expect(setEnabled).toHaveBeenLastCalledWith(false);
+
+      deps.graph.timelineMode = false;
+      deps.graph.showCommunities = false;
+      controller.syncCommunityHulls();
+      expect(setEnabled).toHaveBeenLastCalledWith(false);
+    });
+
+    it("are torn down with the controller (negative: no further drawing)", () => {
+      const destroy = vi.fn();
+      controller.communityHulls = { setEnabled: vi.fn(), destroy };
+      controller.destroy();
+      expect(destroy).toHaveBeenCalled();
+      expect(controller.communityHulls).toBeUndefined();
     });
   });
 

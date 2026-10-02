@@ -477,14 +477,15 @@ The bottom-left toolbar provides quick access to layout and visibility:
 - **Zoom**: Adjust view scale.
 - **Stable Layout (Pin)**: Prevent nodes from moving automatically.
 - **Link (Chain icon)**: Quickly connect two selected nodes.
-- **Redraw (Refresh)**: Recalculate node positions.
+- **Groups**: Show or hide soft backgrounds behind the larger groups of closely linked entities.
+- **Redraw (Refresh)**: Recalculate node positions. Closely linked entities are placed together in their own area, and entities with no connections are lined up separately.
 
 ### Images in Large Campaigns
 
 The graph loads images in and near your current view. Pan or zoom towards another
-part of the graph to load its images. Images that finish loading appear without
-waiting for slower ones. Fitting the entire graph on screen can still take longer,
-because every visible image needs to load. Uploaded images use saved previews, and older local images get previews cached
+part of the graph to load its images. They appear together once they have loaded,
+or after about 20 seconds if some are slow. Fitting the entire graph on screen can
+take longer, because every visible image needs to load. Uploaded images use saved previews, and older local images get previews cached
 for later visits. Silhouettes appear for entities without images and when an image cannot be
 found.
 
@@ -2371,7 +2372,7 @@ Reference answers to real RPG and worldbuilding questions, indexed at https://co
 
 ### [How do I make sea travel interesting in a TTRPG?](https://codexcryptica.com/answers/how-do-i-make-sea-travel-interesting-in-a-ttrpg)
 
-**Direct answer:** Make sea travel interesting by deciding in advance which voyages earn close attention and which can be summarised, then running the important ones as a small set of linked choices about weather, navigation, supplies, repairs, and crew. Give the crew two or three routes with clear trade-offs between speed, safety, secrecy, and profit, seed each leg with sightings, rumours, wrecks, and landmarks that reveal the setting, and carry the costs and discoveries forward so the next voyage begins with consequences rather than a fresh random table.
+**Direct answer:** Make sea travel interesting by deciding which passages can be summarised and where a meaningful choice deserves close attention. Offer different courses or sailing strategies, then bring in only the pressures, sightings, and discoveries that matter to this voyage. Let consequences carry forward whether the crew sails for merchants or a navy, leads an expedition, works a fishing fleet, or raids as pirates.
 
 ### [How do I organise my GM notes and references when running an RPG in person?](https://codexcryptica.com/answers/how-do-i-organise-gm-notes-for-in-person-play)
 

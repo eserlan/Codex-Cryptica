@@ -24,6 +24,28 @@ interface WorkerRequest {
   options: Record<string, any>;
 }
 
+/**
+ * The headless graph fcose solves on. `styleEnabled` is required for the
+ * node sizes to apply: without it every node is 1px wide, repulsion and
+ * separation act on points, and a 1,625-node vault collapsed into a ball.
+ */
+export function createLayoutGraph(
+  nodes: SerializedLayoutNode[],
+  edges: SerializedLayoutEdge[],
+): Core {
+  return Cytoscape({
+    headless: true,
+    styleEnabled: true,
+    elements: {
+      nodes: nodes.map((n) => ({ data: n.data, position: n.position })),
+      edges: edges.map((e) => ({ data: e.data })),
+    },
+    style: [
+      { selector: "node", style: { width: "data(_w)", height: "data(_h)" } },
+    ],
+  });
+}
+
 function serializeError(error: unknown) {
   return error instanceof Error ? error.message : String(error);
 }
@@ -41,6 +63,10 @@ function getDegreeAwareLayoutOptions(options: Record<string, any>) {
       // Hubs repel much harder so they carve out space between clusters
       return baseRepulsion * (1 + Math.min(4.0, Math.sqrt(degree) * 0.55));
     },
+    edgeElasticity: (edge: any) =>
+      Number(edge.data("_elasticity")) ||
+      Number(options.edgeElasticity) ||
+      0.45,
     idealEdgeLength: (edge: any) => {
       const precomputed = Number(edge.data("_idealLength"));
       if (precomputed) return precomputed;
@@ -168,19 +194,7 @@ self.onmessage = async (event: MessageEvent<WorkerRequest>) => {
       actualRadii[i] = Math.max(nodes[i].actualW, nodes[i].actualH) / 2;
     }
 
-    cy = Cytoscape({
-      headless: true,
-      elements: {
-        nodes: nodes.map((n) => ({
-          data: n.data,
-          position: n.position,
-        })),
-        edges: edges.map((e) => ({ data: e.data })),
-      },
-      style: [
-        { selector: "node", style: { width: "data(_w)", height: "data(_h)" } },
-      ],
-    });
+    cy = createLayoutGraph(nodes, edges);
 
     const layout = cy.layout(getDegreeAwareLayoutOptions(options) as any);
 

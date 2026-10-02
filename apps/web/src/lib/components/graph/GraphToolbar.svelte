@@ -263,6 +263,23 @@
     ><span aria-hidden="true" class="icon-[lucide--image] w-4 h-4"
     ></span></button
   >
+  <button
+    type="button"
+    class="w-8 h-8 flex-shrink-0 items-center justify-center border {layoutUIStore.isMobile
+      ? 'flex'
+      : 'hidden md:flex'} transition {graph.showCommunities
+      ? 'border-theme-primary bg-theme-primary/20 text-theme-primary'
+      : 'border-theme-border bg-theme-surface/80 text-theme-muted hover:text-theme-primary'}"
+    onclick={() => {
+      void graph.toggleCommunities().catch((e: any) => console.error(e));
+      closeMenuIfMobile();
+    }}
+    title={graph.showCommunities ? "Groups: ON" : "Groups: OFF"}
+    aria-label="Toggle group backgrounds"
+    aria-pressed={graph.showCommunities}
+    ><span aria-hidden="true" class="icon-[lucide--group] w-4 h-4"
+    ></span></button
+  >
 
   <div
     class="{layoutUIStore.isMobile

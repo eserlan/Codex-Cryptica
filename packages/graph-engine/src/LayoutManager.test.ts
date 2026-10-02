@@ -11,6 +11,7 @@ import {
 } from "./LayoutManager";
 import type { Core } from "cytoscape";
 import cytoscape from "cytoscape";
+import { BRIDGE_EDGE_LENGTH, COMMUNITY_EDGE_LENGTH } from "./defaults";
 
 const isPendingSelector = (selector?: string) =>
   selector === ".pending-layout" ||
@@ -486,10 +487,7 @@ describe("LayoutManager", () => {
     expect(mockCy.animate).toHaveBeenCalled();
   });
 
-  it("should use lower gravity in landscape view", async () => {
-    mockCy.width.mockReturnValue(1200);
-    mockCy.height.mockReturnValue(800); // AR = 1.5 (Landscape)
-
+  it("solves at full quality without squeezing the graph into a fixed box", async () => {
     await layoutManager.apply(
       { reason: "unknown" },
       {
@@ -503,49 +501,8 @@ describe("LayoutManager", () => {
       },
     );
 
-    expect(capturedPostMessage?.options.gravity).toBeLessThanOrEqual(0.12);
-  });
-
-  it("should use higher gravity in portrait view", async () => {
-    mockCy.width.mockReturnValue(800);
-    mockCy.height.mockReturnValue(1200); // AR = 0.66 (Portrait)
-
-    await layoutManager.apply(
-      { reason: "unknown" },
-      {
-        timelineMode: false,
-        timelineAxis: "x",
-        timelineScale: 1,
-        orbitMode: false,
-        centralNodeId: null,
-        stableLayout: false,
-        isGuest: false,
-      },
-    );
-
-    expect(capturedPostMessage?.options.gravity).toBeGreaterThan(0.005);
-  });
-
-  it("should give force layouts room to spread out", async () => {
-    await layoutManager.apply(
-      { reason: "unknown" },
-      {
-        timelineMode: false,
-        timelineAxis: "x",
-        timelineScale: 1,
-        orbitMode: false,
-        centralNodeId: null,
-        stableLayout: false,
-        isGuest: false,
-      },
-    );
-
-    expect(capturedPostMessage?.options.boundingBox).toEqual({
-      x1: -2400,
-      y1: -2400,
-      x2: 2400,
-      y2: 2400,
-    });
+    expect(capturedPostMessage?.options.quality).toBe("default");
+    expect(capturedPostMessage?.options.boundingBox).toBeUndefined();
   });
 
   it("should use fit-only for forced updates when stableLayout is true", async () => {
@@ -654,6 +611,52 @@ describe("LayoutManager", () => {
     );
   });
 
+  it("keeps edges inside a community short and the edge between two communities long", async () => {
+    // Two five-node groups, every member linked to every other, joined by 5-6.
+    const pairs: Array<[string, string]> = [];
+    for (const group of [
+      [1, 2, 3, 4, 5],
+      [6, 7, 8, 9, 10],
+    ]) {
+      for (let a = 0; a < group.length; a++)
+        for (let b = a + 1; b < group.length; b++)
+          pairs.push([String(group[a]), String(group[b])]);
+    }
+    pairs.push(["5", "6"]);
+    mockCy.nodes.mockReturnValue(
+      makeNodes(Array.from({ length: 10 }, (_, i) => ({ x: i * 10, y: 0 }))),
+    );
+    mockCy.edges.mockReturnValue(
+      pairs.map(([a, b]) => ({
+        data: vi.fn().mockReturnValue({}),
+        id: vi.fn().mockReturnValue(`${a}-${b}`),
+        source: vi.fn().mockReturnValue({ id: vi.fn().mockReturnValue(a) }),
+        target: vi.fn().mockReturnValue({ id: vi.fn().mockReturnValue(b) }),
+      })),
+    );
+
+    await layoutManager.apply(
+      { reason: "unknown" },
+      {
+        timelineMode: false,
+        timelineAxis: "x",
+        timelineScale: 1,
+        orbitMode: false,
+        centralNodeId: null,
+        stableLayout: false,
+        isGuest: false,
+      },
+    );
+
+    const byId = Object.fromEntries(
+      capturedPostMessage!.edges.map((e: any) => [e.data.id, e.data]),
+    );
+    expect(byId["1-2"]._idealLength).toBe(COMMUNITY_EDGE_LENGTH);
+    expect(byId["7-8"]._idealLength).toBe(COMMUNITY_EDGE_LENGTH);
+    expect(byId["5-6"]._idealLength).toBe(BRIDGE_EDGE_LENGTH);
+    expect(byId["5-6"]._elasticity).toBeLessThan(byId["1-2"]._elasticity);
+  });
+
   it("should give connected hubs a larger layout collision box", async () => {
     const nodes = makeNodes([
       { x: 10, y: 10 },
@@ -693,7 +696,6 @@ describe("LayoutManager", () => {
       capturedPostMessage?.nodes[1].data._w,
     );
     expect(capturedPostMessage?.nodes[0].data._degree).toBe(2);
-    expect(capturedPostMessage?.options.gravity).toBeLessThan(0.05);
     expect(capturedPostMessage?.nodes[0].actualW).toBe(60);
   });
 

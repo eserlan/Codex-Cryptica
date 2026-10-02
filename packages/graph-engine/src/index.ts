@@ -5,6 +5,8 @@ export * from "./transformer";
 export * from "./layouts/timeline";
 export * from "./layouts/orbit";
 export * from "./renderer/overlays";
+export * from "./renderer/community-hulls";
+export * from "./communities";
 export * from "./defaults";
 export * from "./LayoutManager";
 export * from "./GraphStyles";
