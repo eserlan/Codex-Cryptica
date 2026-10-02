@@ -35,6 +35,11 @@ export const FOCUS_DETAIL_STEP = 150;
 /** Avoid a dense focus neighbourhood overwhelming the renderer. */
 export const FOCUS_EDGE_CAP = 2_000;
 
+export type CommunityMode = "off" | "soft" | "strong";
+
+export const nextCommunityMode = (mode: CommunityMode): CommunityMode =>
+  mode === "off" ? "soft" : mode === "soft" ? "strong" : "off";
+
 export class GraphStore {
   // Dependencies
   private _vault?: typeof defaultVault;
@@ -221,8 +226,11 @@ export class GraphStore {
   // Labels state
   showLabels = $state(true);
   showImages = $state(true);
-  /** Soft backgrounds behind large communities of linked entities. */
-  showCommunities = $state(true);
+  /** Backgrounds behind large communities of linked entities: off, soft or strong. */
+  communityMode = $state<CommunityMode>("soft");
+  get showCommunities() {
+    return this.communityMode !== "off";
+  }
   stableLayout = $state(true);
   recentLabels = $state<string[]>([]);
   labelFilterMode = $state<"AND" | "OR">("OR");
@@ -801,25 +809,31 @@ export class GraphStore {
 
   /** Display switches saved as plain booleans; a missing value keeps the default. */
   private async loadDisplayToggles(db: Awaited<ReturnType<typeof getDB>>) {
-    const [labels, images, communities] = await Promise.all([
+    const [labels, images, mode, legacy] = await Promise.all([
       db.get("settings", "graphShowLabels"),
       db.get("settings", "graphShowImages"),
+      db.get("settings", "graphCommunityMode"),
+      // Before there were three states this was a plain on/off flag.
       db.get("settings", "graphShowCommunities"),
     ]);
     if (labels !== undefined) this.showLabels = labels;
     if (images !== undefined) this.showImages = images;
-    if (communities !== undefined) this.showCommunities = communities;
+    const saved = mode ?? (legacy === false ? "off" : undefined);
+    if (saved === "off" || saved === "soft" || saved === "strong") {
+      this.communityMode = saved;
+    }
   }
 
+  /** Cycles the group backgrounds: off, soft, strong, and back to off. */
   async toggleCommunities() {
-    const newValue = !this.showCommunities;
-    this.showCommunities = newValue;
+    const next: CommunityMode = nextCommunityMode(this.communityMode);
+    this.communityMode = next;
     try {
       const db = await getDB();
-      await db.put("settings", newValue, "graphShowCommunities");
+      await db.put("settings", next, "graphCommunityMode");
     } catch (error) {
       console.error(
-        "[GraphStore] Failed to persist graphShowCommunities:",
+        "[GraphStore] Failed to persist graphCommunityMode:",
         error,
       );
     }
