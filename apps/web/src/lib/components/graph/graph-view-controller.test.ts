@@ -1037,7 +1037,28 @@ describe("GraphViewController", () => {
     const glyphFor = (type: string) =>
       deriveEntityTypeTone(categories.getColor(type), PIRATE_DARK.tokens).glyph;
 
+    // Silhouettes reach the graph as object URLs; read the SVG behind one.
+    const blobs = new Map<string, Blob>();
+    const svgOf = async (url: string | null | undefined) => {
+      if (!url) return "";
+      const blob = blobs.get(url);
+      if (!blob) return decodeURIComponent(url);
+      return await new Promise<string>((resolve) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result));
+        reader.readAsText(blob);
+      });
+    };
+
     it("fills a silhouette with its own type's glyph colour", async () => {
+      let n = 0;
+      const create = vi
+        .spyOn(URL, "createObjectURL")
+        .mockImplementation((blob: Blob | MediaSource) => {
+          const url = `blob:silhouette-${++n}`;
+          blobs.set(url, blob as Blob);
+          return url;
+        });
       const options = await syncOptions();
 
       // Artwork comes from R2, so resolving one is a fetch.
@@ -1046,13 +1067,14 @@ describe("GraphViewController", () => {
         node("character"),
       );
 
-      expect(location).toContain(encodeURIComponent(glyphFor("location")));
-      expect(character).toContain(encodeURIComponent(glyphFor("character")));
+      expect(await svgOf(location)).toContain(glyphFor("location"));
+      expect(await svgOf(character)).toContain(glyphFor("character"));
       // A moss node needs a lighter glyph than the theme primary to clear 3:1;
       // the blue character tone does not, so it keeps the theme's own colour.
       expect(glyphFor("location")).not.toBe(PIRATE_DARK.tokens.primary);
       expect(glyphFor("character")).toBe(PIRATE_DARK.tokens.primary);
       expect(location).not.toBe(character);
+      create.mockRestore();
     });
 
     it("keys the silhouette on the theme so a theme switch re-tints it", async () => {
