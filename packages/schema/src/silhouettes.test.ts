@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   SILHOUETTES,
   SILHOUETTE_MAP,
@@ -8,6 +8,7 @@ import {
   clearSilhouetteCache,
   getSilhouetteUrl,
   loadSilhouetteDataUri,
+  loadSilhouetteImageUrl,
   loadSilhouetteSvg,
   resolveEntitySilhouette,
   svgToDataUri,
@@ -156,6 +157,65 @@ describe("Silhouette artwork loading", () => {
     expect(
       await loadSilhouetteDataUri(definition, "#123456", { fetch: ok() }),
     ).not.toBeNull();
+  });
+
+  describe("as an object URL for the graph", () => {
+    const realCreate = URL.createObjectURL;
+    const realRevoke = URL.revokeObjectURL;
+    let created: Blob[];
+    beforeEach(() => {
+      created = [];
+      URL.createObjectURL = vi.fn((blob: Blob) => {
+        created.push(blob);
+        return `blob:silhouette-${created.length}`;
+      }) as any;
+      URL.revokeObjectURL = vi.fn();
+    });
+    afterEach(() => {
+      URL.createObjectURL = realCreate;
+      URL.revokeObjectURL = realRevoke;
+    });
+
+    it("hands out one short tinted URL per artwork and colour", async () => {
+      const fetch = ok();
+      const [a, b] = await Promise.all([
+        loadSilhouetteImageUrl(definition, "#123456", { fetch }),
+        loadSilhouetteImageUrl(definition, "#123456", { fetch }),
+      ]);
+      expect(a).toBe("blob:silhouette-1");
+      expect(b).toBe(a);
+      expect(created).toHaveLength(1);
+      expect(created[0].type).toBe("image/svg+xml");
+      expect(await created[0].text()).toContain("#123456");
+
+      expect(
+        await loadSilhouetteImageUrl(definition, "#654321", { fetch }),
+      ).toBe("blob:silhouette-2");
+      clearSilhouetteCache();
+      await Promise.resolve();
+      await Promise.resolve();
+      expect(URL.revokeObjectURL).toHaveBeenCalledWith("blob:silhouette-1");
+    });
+
+    it("returns null and retries when the artwork cannot be fetched (negative)", async () => {
+      expect(
+        await loadSilhouetteImageUrl(definition, "#123456", {
+          fetch: vi.fn().mockRejectedValue(new Error("offline")),
+        }),
+      ).toBeNull();
+      expect(created).toHaveLength(0);
+      expect(
+        await loadSilhouetteImageUrl(definition, "#123456", { fetch: ok() }),
+      ).toBe("blob:silhouette-1");
+    });
+
+    it("falls back to a data URI where object URLs are unavailable", async () => {
+      URL.createObjectURL = undefined as any;
+      const url = await loadSilhouetteImageUrl(definition, "#123456", {
+        fetch: ok(),
+      });
+      expect(url?.startsWith("data:image/svg+xml")).toBe(true);
+    });
   });
 
   it("returns null when the artwork cannot be reached, and retries later", async () => {

@@ -29,7 +29,7 @@ import type { connectionModeStore as connectionModeStoreType } from "$lib/stores
 import type { modalUIStore as modalUIStoreType } from "$lib/stores/ui/modal-ui.svelte";
 import {
   resolveEntitySilhouette,
-  loadSilhouetteDataUri,
+  loadSilhouetteImageUrl,
   deriveEntityTypePalette,
 } from "schema";
 import { themeStore } from "$lib/stores/theme.svelte";
@@ -980,7 +980,7 @@ export class GraphViewController {
             // The artwork lives in R2, so this is a fetch (cached per URL for
             // the session). A node whose silhouette cannot be reached simply
             // paints without a glyph.
-            return loadSilhouetteDataUri(sil, glyphColor);
+            return loadSilhouetteImageUrl(sil, glyphColor);
           },
           onBatchApplied: (count) => {
             this.deps.debugStore.log(

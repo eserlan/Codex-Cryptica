@@ -255,3 +255,27 @@ Two ordering changes apply to production too:
 Trade-off to note: full-size external images are no longer kept once their
 thumbnail exists, so opening one at full size fetches it from its host again
 and does not work offline.
+
+## Silhouette object URLs and zoomed-out detail
+
+A staging profile showed one 7-12 s main-thread freeze per load inside
+Cytoscape's `updateEleCalcs`. Instrumenting the dev build placed it in
+`cleanStyle()` for nodes whose image had just been set. Silhouettes were tinted
+SVG data URIs averaging 48 KB (1,081 nodes, about 53 MB of style strings).
+Recalculating 300 such nodes after setting their image took 1.8 s; with the
+same SVG as a `blob:` object URL it took 30 ms the first time and 2 ms after.
+The graph now gets silhouettes from `loadSilhouetteImageUrl`, one object URL per
+artwork and colour for the session, with the data URI as fallback where object
+URLs are unavailable.
+
+The existing level-of-detail classes now also simplify edges: below zoom 0.5
+edges are straight without arrowheads and transitions are off; below 0.2 edges
+are haystacks and only the theme texture is dropped (entity images and
+silhouettes stay, where previously every background image was removed).
+Elements added after setup get the current level, and thresholds have a 10%
+exit margin. A full redraw at the overview zoom went from 97 ms to 53-56 ms.
+
+Dev server, same vault, two runs after both changes: graph at 19.3 s / 11.3 s,
+all images 6 s / 3.3 s after the graph, total long-animation-frame time 14.0 s /
+7.7 s (23-27 s earlier the same day). The remaining long frame (about 4 s) comes
+before the graph appears.

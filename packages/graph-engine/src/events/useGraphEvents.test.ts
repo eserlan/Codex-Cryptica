@@ -46,6 +46,45 @@ describe("setupGraphEvents", () => {
     expect(mockElements.removeClass).toHaveBeenCalledWith("lod-medium");
   });
 
+  it("tags elements added later with the current detail level", () => {
+    const mockElements = {
+      addClass: vi.fn().mockReturnThis(),
+      removeClass: vi.fn().mockReturnThis(),
+    };
+    mockCy.elements = vi.fn().mockReturnValue(mockElements);
+    mockCy.zoom = vi.fn().mockReturnValue(0.3);
+    mockCy.batch = vi.fn((cb) => cb());
+    setupGraphEvents(mockCy as unknown as Core, {});
+
+    const addHandler = mockCy.on.mock.calls.find(
+      (call: any) => call[0] === "add",
+    )[1];
+    const added = {
+      addClass: vi.fn().mockReturnThis(),
+      removeClass: vi.fn().mockReturnThis(),
+    };
+    addHandler({ target: added });
+    expect(added.addClass).toHaveBeenCalledWith("lod-medium");
+  });
+
+  it("leaves elements added at full detail untouched (negative)", () => {
+    mockCy.elements = vi.fn().mockReturnValue({
+      addClass: vi.fn().mockReturnThis(),
+      removeClass: vi.fn().mockReturnThis(),
+    });
+    mockCy.zoom = vi.fn().mockReturnValue(1);
+    mockCy.batch = vi.fn((cb) => cb());
+    setupGraphEvents(mockCy as unknown as Core, {});
+
+    const addHandler = mockCy.on.mock.calls.find(
+      (call: any) => call[0] === "add",
+    )[1];
+    const added = { addClass: vi.fn(), removeClass: vi.fn() };
+    addHandler({ target: added });
+    expect(added.addClass).not.toHaveBeenCalled();
+    expect(added.removeClass).not.toHaveBeenCalled();
+  });
+
   it("should apply lod classes during setup for the initial zoom", () => {
     const mockElements = {
       addClass: vi.fn().mockReturnThis(),
