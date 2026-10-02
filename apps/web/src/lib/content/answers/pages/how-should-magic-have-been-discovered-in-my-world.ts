@@ -196,6 +196,13 @@ export const howShouldMagicHaveBeenDiscoveredInMyWorld: AnswerConfigInput = {
       "answer-fictional-religion",
       "answer-pantheon",
     ],
+    acknowledgedOverlap: [
+      {
+        with: "answer-create-magic-system",
+        reason:
+          "This answer explains how people discovered magic and how that history shapes access and authority; the magic-system answer designs the rules, costs, and limits of using it.",
+      },
+    ],
   },
   seo: {
     title:

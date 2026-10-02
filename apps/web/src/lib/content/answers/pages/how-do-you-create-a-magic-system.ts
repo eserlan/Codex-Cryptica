@@ -157,6 +157,13 @@ export const howDoYouCreateAMagicSystem: AnswerConfigInput = {
       "answer-worldbuilding-from-scratch",
       "answer-npcs-memorable",
     ],
+    acknowledgedOverlap: [
+      {
+        with: "answer-magic-discovery-origin",
+        reason:
+          "This answer designs a magic system's costs and limits and considers their consequences; the discovery answer traces how people learned magic and how that history shapes access and authority.",
+      },
+    ],
   },
   seo: {
     title:
