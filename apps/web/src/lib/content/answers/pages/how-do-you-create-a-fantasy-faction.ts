@@ -172,6 +172,7 @@ export const howDoYouCreateAFantasyFaction: AnswerConfigInput = {
     "how-do-i-make-rival-captains-navies-and-pirate-factions-matter",
     "how-does-magic-affect-politics-and-government",
     "how-should-magic-have-been-discovered-in-my-world",
+    "how-does-magic-create-social-classes-and-inequality",
   ],
   discovery: {
     id: "answer-fantasy-faction",

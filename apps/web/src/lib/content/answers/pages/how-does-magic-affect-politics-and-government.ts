@@ -196,6 +196,7 @@ export const howDoesMagicAffectPoliticsAndGovernment: AnswerConfigInput = {
     "how-do-you-create-a-secret-society-for-an-rpg-campaign",
     "how-do-fantasy-cities-defend-against-flying-creatures-and-teleportation",
     "how-do-you-create-a-pantheon",
+    "how-does-magic-create-social-classes-and-inequality",
   ],
   discovery: {
     id: "answer-magic-affects-politics-and-government",
@@ -223,6 +224,11 @@ export const howDoesMagicAffectPoliticsAndGovernment: AnswerConfigInput = {
         with: "answer-create-magic-system",
         reason:
           "The magic-system answer designs magical rules, costs and limits; this answer assumes those capabilities exist and traces who controls, regulates and counters them through political institutions.",
+      },
+      {
+        with: "answer-magic-creates-social-classes-and-inequality",
+        reason:
+          "This answer follows magic through courts, law, succession and state offices; the social-classes answer follows the same capabilities through schooling, wealth, work and everyday status across households and regions.",
       },
       {
         with: "answer-fantasy-city-defence-flight-teleportation",

@@ -161,6 +161,7 @@ export const howDoIBuildABelievableEconomyForAFantasyWorld: AnswerConfigInput =
       "how-do-i-make-different-cultures-feel-distinct-without-relying-on-stereotypes",
       "how-do-i-run-a-campaign-where-the-players-own-a-business",
       "how-do-i-create-interesting-islands-and-ports-for-a-pirate-campaign",
+      "how-does-magic-create-social-classes-and-inequality",
     ],
     discovery: {
       id: "answer-believable-fantasy-economy",
