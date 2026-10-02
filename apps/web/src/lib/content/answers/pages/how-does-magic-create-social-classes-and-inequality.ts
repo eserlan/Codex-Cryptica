@@ -109,7 +109,7 @@ export const howDoesMagicCreateSocialClassesAndInequality: AnswerConfigInput = {
       items: [
         {
           term: "The flat version",
-          text: "The council declares that mages rule because they control the river. A single powerful reader sits as magistrate. Players who are not mages have little to do except obey or plot against the same figure.",
+          text: "The council includes a river reader alongside millers and wardens. It consults them before flood season and funds public gauges, but treats every quarter's access as a minor budget question. The reader's guild provides forecasts when asked, while the council assumes its training places are open to anyone who qualifies. That is a workable policy for the next flood, yet it leaves the cost of training, the price of private readings and the hill quarter's lack of representation off the agenda. When another bad harvest comes, the council has no clear account of who paid for the warnings or who went without them.",
         },
         {
           term: "The stratified version",
@@ -222,7 +222,8 @@ export const howDoesMagicCreateSocialClassesAndInequality: AnswerConfigInput = {
     ],
   },
   seo: {
-    title: "How does magic create social classes and inequality?",
+    title:
+      "How does magic create social classes and inequality? | Codex Cryptica",
     description:
       "Show how magical talent, training cost and licensing turn gifts into dynasties, guilds and everyday price gaps, without assuming mages must rule.",
     image:

@@ -171,6 +171,11 @@ export const howDoYouCreateAMagicSystem: AnswerConfigInput = {
         reason:
           "This answer designs magical rules, costs and limits; the politics answer assumes those capabilities exist and traces who controls, regulates and counters them through government and public institutions.",
       },
+      {
+        with: "answer-magic-creates-social-classes-and-inequality",
+        reason:
+          "This answer designs the rules, costs and limits of magic itself; the social-classes answer assumes a system exists and traces how talent, training and access turn those rules into social stratification.",
+      },
     ],
   },
   seo: {

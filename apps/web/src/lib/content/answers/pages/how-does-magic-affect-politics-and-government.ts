@@ -226,6 +226,11 @@ export const howDoesMagicAffectPoliticsAndGovernment: AnswerConfigInput = {
           "The magic-system answer designs magical rules, costs and limits; this answer assumes those capabilities exist and traces who controls, regulates and counters them through political institutions.",
       },
       {
+        with: "answer-magic-creates-social-classes-and-inequality",
+        reason:
+          "This answer follows magic through courts, law, succession and state offices; the social-classes answer follows the same capabilities through schooling, wealth, work and everyday status across households and regions.",
+      },
+      {
         with: "answer-fantasy-city-defence-flight-teleportation",
         reason:
           "The city-defence answer designs physical and magical countermeasures to aerial and teleport threats; this answer examines how those capabilities reshape political power and institutions.",
