@@ -81,9 +81,10 @@ export function setupGraphEvents(cy: Core, handlers: GraphEventHandlers) {
   // The vault's elements usually arrive after this runs, and a later sync adds
   // more; tag them with the current level as they come, or they would render
   // at full detail until the next threshold crossing.
-  cy.on("add", (evt: any) => {
+  const tagAdded = (evt: any) => {
     if (lastLod && lastLod !== "high") applyDetailLevel(evt.target, lastLod);
-  });
+  };
+  cy.on("add", tagAdded);
 
   cy.on("tap", "node", (evt: any) => {
     handlers.onNodeTap?.(evt.target.id(), evt.target);
@@ -105,6 +106,8 @@ export function setupGraphEvents(cy: Core, handlers: GraphEventHandlers) {
 
   return () => {
     clearTimeout(hoverTimeout);
-    cy.off("mouseover mouseout position pan zoom add tap dblclick dbltap");
+    cy.off("mouseover mouseout position pan zoom tap dblclick dbltap");
+    // Only our own handler: the minimap listens to "add" as well.
+    cy.off("add", tagAdded);
   };
 }

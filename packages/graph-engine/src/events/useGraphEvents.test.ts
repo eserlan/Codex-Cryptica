@@ -85,6 +85,26 @@ describe("setupGraphEvents", () => {
     expect(added.removeClass).not.toHaveBeenCalled();
   });
 
+  it("removes only its own add listener on cleanup (negative)", () => {
+    mockCy.elements = vi.fn().mockReturnValue({
+      addClass: vi.fn().mockReturnThis(),
+      removeClass: vi.fn().mockReturnThis(),
+    });
+    mockCy.zoom = vi.fn().mockReturnValue(1);
+    mockCy.batch = vi.fn((cb) => cb());
+    const cleanup = setupGraphEvents(mockCy as unknown as Core, {});
+    const addHandler = mockCy.on.mock.calls.find(
+      (call: any) => call[0] === "add",
+    )[1];
+    cleanup();
+    expect(mockCy.off).toHaveBeenCalledWith("add", addHandler);
+    expect(
+      mockCy.off.mock.calls.some(
+        (call: any) => call.length === 1 && String(call[0]).includes("add"),
+      ),
+    ).toBe(false);
+  });
+
   it("should apply lod classes during setup for the initial zoom", () => {
     const mockElements = {
       addClass: vi.fn().mockReturnThis(),
