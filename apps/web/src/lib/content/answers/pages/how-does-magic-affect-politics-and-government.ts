@@ -197,6 +197,7 @@ export const howDoesMagicAffectPoliticsAndGovernment: AnswerConfigInput = {
     "how-do-fantasy-cities-defend-against-flying-creatures-and-teleportation",
     "how-do-you-create-a-pantheon",
     "how-does-magic-create-social-classes-and-inequality",
+    "how-common-should-magic-be-in-a-fantasy-world",
   ],
   discovery: {
     id: "answer-magic-affects-politics-and-government",
