@@ -217,3 +217,8 @@
 **Learning:** I noticed that some icon-only buttons or buttons with decorative icons do not have proper `aria-hidden="true"` attributes on the inner `<span>` element (which contains the icon class) or an `aria-label` on the button itself. This violates accessibility rules, as screen readers might announce confusing CSS class names or not understand the button's purpose. I found some examples in `apps/web/src/routes/(app)/+page.svelte`, `apps/web/src/routes/(app)/timeline/+page.svelte`, and `apps/web/src/routes/(app)/guest/[publishId]/+page.svelte`.
 
 **Action:** When adding icons inside buttons, always ensure that the inner `<span>` containing the icon class has `aria-hidden="true"`. Also, ensure that buttons have a descriptive `aria-label` or clear, readable text.
+
+## 2025-02-18 - Missing ARIA on community template modals
+
+**Learning:** Svelte dropdowns, action buttons, or interactive elements within generic modals (like `TemplateImportModal`, `EntityTemplatePublishModal`, `ReportListingModal`, and `EntityTemplateInstallModal`) can contain decorative icons (`<span class="icon-[lucide--...]">`). Although the elements containing them often have clear text descriptors or `aria-label`s, the decorative inner icons may be missing `aria-hidden="true"`, risking screen readers announcing the CSS icon classes unnecessarily.
+**Action:** Always add `aria-hidden="true"` to purely decorative icons nested inside actionable buttons across generic overlay or modal components.

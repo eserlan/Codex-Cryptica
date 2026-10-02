@@ -100,7 +100,7 @@
         type="button"
         class="text-theme-muted hover:text-theme-text"
         aria-label="Close"
-        onclick={onClose}><span class="icon-[lucide--x] h-4 w-4"></span></button
+        onclick={onClose}><span class="icon-[lucide--x] h-4 w-4" aria-hidden="true"></span></button
       >
     </div>
 
