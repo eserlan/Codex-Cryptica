@@ -220,5 +220,5 @@
 
 ## 2025-02-18 - Missing ARIA on community template modals
 
-**Learning:** Svelte dropdowns, action buttons, or interactive elements within generic modals (like `TemplateImportModal`, `EntityTemplatePublishModal`, `ReportListingModal`, and `EntityTemplateInstallModal`) can contain decorative icons (`<span class="icon-[lucide--...]">`). Although the elements containing them often have clear text descriptors or `aria-label`s, the decorative inner icons may be missing `aria-hidden="true"`, risking screen readers announcing the CSS icon classes unnecessarily.
+**Learning:** Svelte dropdowns, action buttons, or interactive elements within generic modals (like `TemplateImportModal`, `EntityTemplatePublishModal`, `ReportListingModal`, and `EntityTemplateInstallModal`) can contain decorative icons (`<span class="icon-[lucide--...]">`). Although the elements containing them often have clear text descriptors or descriptive `aria-label` attributes, the decorative inner icons may be missing `aria-hidden="true"`, risking screen readers announcing the CSS icon classes unnecessarily.
 **Action:** Always add `aria-hidden="true"` to purely decorative icons nested inside actionable buttons across generic overlay or modal components.

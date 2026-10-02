@@ -50,6 +50,14 @@ async function fill(desc = "A place for guilds.", labels = "Fantasy") {
 }
 
 describe("EntityTemplatePublishModal (publish)", () => {
+  it("hides the decorative close icon from assistive technology", () => {
+    render(EntityTemplatePublishModal, { template, store: store() });
+    const closeButton = screen.getByRole("button", { name: "Close" });
+    expect(closeButton.querySelector("span")?.getAttribute("aria-hidden")).toBe(
+      "true",
+    );
+  });
+
   it("shows the full body that will become public and says what publishing means", () => {
     render(EntityTemplatePublishModal, { template, store: store() });
     expect(screen.getByTestId("entity-template-preview").textContent).toBe(
