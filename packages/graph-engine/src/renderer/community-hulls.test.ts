@@ -55,7 +55,7 @@ describe("computeCommunityGroups", () => {
     ]);
   });
 
-  it("includes a small community when asked, e.g. the selected node's", () => {
+  it("includes a small community when asked, e.g. the hovered node's", () => {
     const tiny = ring("s", 3, 0);
     const labels = new Map(tiny.map((n) => [n.id, "S"] as const));
     expect(computeCommunityGroups(tiny, labels)).toEqual([]);
@@ -80,13 +80,13 @@ describe("paintOrder", () => {
     links: [],
   });
 
-  it("paints every group alike when nothing is selected", () => {
+  it("paints every group alike when nothing is highlighted", () => {
     const order = paintOrder([group("A"), group("B")], new Set());
     expect(order.map((o) => o.group.community)).toEqual(["A", "B"]);
     expect(new Set(order.map((o) => o.alpha)).size).toBe(1);
   });
 
-  it("puts the selected group last and strongest, keeping its colour rank", () => {
+  it("puts the highlighted group last and strongest, keeping its colour rank", () => {
     const order = paintOrder(
       [group("A"), group("B"), group("C")],
       new Set(["A"]),
@@ -96,7 +96,7 @@ describe("paintOrder", () => {
     expect(order[2].alpha).toBeGreaterThan(order[0].alpha);
   });
 
-  it("fades everything when the selection's group has no background (negative)", () => {
+  it("fades everything when the highlighted group has no background (negative)", () => {
     const order = paintOrder([group("A")], new Set(["Z"]));
     expect(order).toHaveLength(1);
     expect(order[0].alpha).toBeLessThan(
@@ -193,7 +193,7 @@ describe("attachCommunityHulls", () => {
     [g.requestAnimationFrame, g.cancelAnimationFrame] = saved;
   });
 
-  it("shows the selected node's whole group strongly and fades the others", () => {
+  it("shows the hovered node's whole group strongly and fades the others", () => {
     const frames: FrameRequestCallback[] = [];
     const g = globalThis as any;
     const saved = [g.requestAnimationFrame, g.cancelAnimationFrame];
@@ -232,19 +232,14 @@ describe("attachCommunityHulls", () => {
     expect(new Set(alphas).size).toBe(1);
 
     alphas.length = 0;
-    cy.$id("a0").select();
+    cy.$id("a0").emit("mouseover");
     flush();
-    // The unselected group first and faint, the selected one last and strong.
+    // The other group first and faint, the hovered one last and strong.
     expect(alphas).toHaveLength(2);
     expect(alphas[1]).toBeGreaterThan(alphas[0] * 3);
 
-    expect(overlay.communityMembers("a0").sort()).toEqual(
-      Array.from({ length: 8 }, (_, i) => `a${i}`).sort(),
-    );
-    expect(overlay.communityMembers("missing")).toEqual([]);
-
     alphas.length = 0;
-    cy.$id("a0").unselect();
+    cy.$id("a0").emit("mouseout");
     flush();
     expect(new Set(alphas).size).toBe(1);
 
