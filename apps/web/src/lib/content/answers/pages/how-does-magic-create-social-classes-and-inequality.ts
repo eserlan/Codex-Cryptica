@@ -188,6 +188,7 @@ export const howDoesMagicCreateSocialClassesAndInequality: AnswerConfigInput = {
     "how-do-i-build-a-believable-economy-for-a-fantasy-world",
     "how-do-you-create-a-fantasy-faction",
     "how-do-you-create-a-believable-fictional-religion",
+    "how-common-should-magic-be-in-a-fantasy-world",
   ],
   discovery: {
     id: "answer-magic-creates-social-classes-and-inequality",

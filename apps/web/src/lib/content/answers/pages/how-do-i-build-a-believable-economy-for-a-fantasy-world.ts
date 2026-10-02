@@ -162,7 +162,8 @@ export const howDoIBuildABelievableEconomyForAFantasyWorld: AnswerConfigInput =
       "how-do-i-run-a-campaign-where-the-players-own-a-business",
       "how-do-i-create-interesting-islands-and-ports-for-a-pirate-campaign",
       "how-does-magic-create-social-classes-and-inequality",
-    ],
+    "how-common-should-magic-be-in-a-fantasy-world",
+  ],
     discovery: {
       id: "answer-believable-fantasy-economy",
       parentCluster: "economy-trade",
