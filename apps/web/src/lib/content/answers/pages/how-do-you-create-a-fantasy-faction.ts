@@ -171,6 +171,7 @@ export const howDoYouCreateAFantasyFaction: AnswerConfigInput = {
     "how-do-i-run-a-campaign-where-the-players-own-a-business",
     "how-do-i-make-rival-captains-navies-and-pirate-factions-matter",
     "how-does-magic-affect-politics-and-government",
+    "how-should-magic-have-been-discovered-in-my-world",
   ],
   discovery: {
     id: "answer-fantasy-faction",
