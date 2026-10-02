@@ -1,5 +1,5 @@
 {
-  "updated_at": 1790956824,
+  "updated_at": 1790958316,
   "candidates": [
     {
       "id": "reddit-36492955284-what-rpg-map-making-tool-should-you-actu",
@@ -30,6 +30,16 @@
       "source_id": "36640695405",
       "status": "approved",
       "created_at": 1790721855
+    },
+    {
+      "id": "reddit-37032544014-i-got-tired-of-leaving-my-vault-just-to-",
+      "title": "I got tired of leaving my vault just to look up how the vault works",
+      "body": "I was building in canvas last week and had to pop out to search how edge stacking works, then again for map fog, then again for where import keeps images. Three tabs open for questions about the same vault.\n\nI built Cif so you can ask without leaving where you are. It is a contextual help assistant inside your vault that pulls from canvas, maps, entities, backup, import and every generator with context about what you are looking at. It is now enabled in production after a stretch in staging, with retrieval tightened to point at the right page instead of a generic one.\n\nWhat it does now:\n\n- answers in place about the tool you are using, not on a separate help site\n- covers canvas, maps, entities, backup, import and generators without switching context\n- runs in production for everyone, not just a preview\n- improved retrieval that prefers the exact match for your question\n\nIt still misses on very new or edge features, and I am still tuning when it should stay quiet versus offer a nudge. That is the next pass.\n\nWhat is the one thing in Codex Cryptica you still have to leave the vault to figure out?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/announcements/release-37032544014-0.png)",
+      "url": "https://codexcryptica.com/help/help-assistant",
+      "image_url": "https://assets.codexcryptica.com/announcements/release-37032544014-0.png",
+      "source_id": "37032544014",
+      "status": "approved",
+      "created_at": 1790958316
     }
   ]
 }
