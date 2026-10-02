@@ -120,13 +120,98 @@ export interface CommunityHullOverlay {
   destroy(): void;
 }
 
+/** Longest side of one group's cached bitmap, in pixels. */
+const MAX_BITMAP_SIDE = 2048;
+/** Re-render a group's bitmap once the view's scale differs from it by this factor. */
+const RESCALE_FACTOR = 1.6;
+/** Wait after the last pan or zoom before re-rendering bitmaps at the new scale. */
+const SHARPEN_DELAY_MS = 180;
+
+interface GroupBitmap {
+  canvas: HTMLCanvasElement;
+  x1: number;
+  y1: number;
+  w: number;
+  h: number;
+  scale: number;
+  /** Geometry and colour it was rendered from; a mismatch means stale. */
+  key: string;
+  /** Whether `scale` was capped by `MAX_BITMAP_SIDE`. */
+  capped: boolean;
+}
+
+/** Identity of a group's shape and colour: members, positions, sizes and rank. */
+function groupKey(group: CommunityGroup, rank: number): string {
+  let key = `${rank}|`;
+  for (const n of group.members)
+    key += `${n.id}:${Math.round(n.x)},${Math.round(n.y)},${Math.round(n.r)};`;
+  return key + `|${group.links.length}`;
+}
+
+/** Draws a group's merged halo shape, opaque, into its own small canvas. */
+function renderGroupBitmap(
+  canvas: HTMLCanvasElement,
+  group: CommunityGroup,
+  rank: number,
+  wantedScale: number,
+): Omit<GroupBitmap, "key"> {
+  let x1 = Infinity;
+  let y1 = Infinity;
+  let x2 = -Infinity;
+  let y2 = -Infinity;
+  for (const n of group.members) {
+    const r = n.r + HALO_PADDING;
+    x1 = Math.min(x1, n.x - r);
+    y1 = Math.min(y1, n.y - r);
+    x2 = Math.max(x2, n.x + r);
+    y2 = Math.max(y2, n.y + r);
+  }
+  const w = Math.max(1, x2 - x1);
+  const h = Math.max(1, y2 - y1);
+  const limit = Math.min(MAX_BITMAP_SIDE / w, MAX_BITMAP_SIDE / h);
+  const scale = Math.max(0.01, Math.min(wantedScale, limit));
+  canvas.width = Math.ceil(w * scale);
+  canvas.height = Math.ceil(h * scale);
+  const g = canvas.getContext("2d");
+  if (g) {
+    g.setTransform(1, 0, 0, 1, 0, 0);
+    g.clearRect(0, 0, canvas.width, canvas.height);
+    g.setTransform(scale, 0, 0, scale, -x1 * scale, -y1 * scale);
+    const colour = `hsl(${hueFor(rank)}, 55%, 58%)`;
+    // Bands along the community's own links join its members' halos into one
+    // shape; halos alone read as separate bubbles once members are far apart.
+    g.strokeStyle = colour;
+    g.lineCap = "round";
+    g.lineWidth = HALO_PADDING * 2;
+    g.beginPath();
+    for (const [a, b] of group.links) {
+      g.moveTo(a.x, a.y);
+      g.lineTo(b.x, b.y);
+    }
+    g.stroke();
+    g.fillStyle = colour;
+    g.beginPath();
+    for (const n of group.members) {
+      const r = n.r + HALO_PADDING;
+      g.moveTo(n.x + r, n.y);
+      g.arc(n.x, n.y, r, 0, Math.PI * 2);
+    }
+    g.fill();
+  }
+  return { canvas, x1, y1, w, h, scale, capped: scale < wantedScale };
+}
+
 /**
  * Paints a soft background behind each large community on `canvas`, which
  * must sit under Cytoscape's own layer and cover the same area. Each member
  * gets a padded halo and a community's halos merge into one shape, so the
  * background follows its members rather than the space between them.
- * Communities are recomputed when elements are added or removed, shapes when
- * nodes move or change visibility, and the drawing follows pan and zoom.
+ *
+ * Each group is rendered once into its own small bitmap, kept until its
+ * members move or the graph changes; a frame only copies those bitmaps into
+ * place. Redrawing every shape on every frame cut panning from 60 to about 19
+ * frames a second on a 1,625-node vault. Bitmaps are re-rendered at the new
+ * scale shortly after a zoom settles, so they stay sharp.
  */
 export function attachCommunityHulls(
   cy: Core,
@@ -139,14 +224,13 @@ export function attachCommunityHulls(
   let on = enabled;
   let communities: Map<string, string> | null = null;
   let groups: CommunityGroup[] | null = null;
+  let keys = new Map<string, string>();
   /** Community of the hovered node: shown strongly, the rest faded. */
   let highlighted = new Set<string>();
   let frame: number | null = null;
+  let sharpenTimer: ReturnType<typeof setTimeout> | undefined;
+  const bitmaps = new Map<string, GroupBitmap>();
   const ctx = canvas.getContext("2d");
-  // Each community is painted opaque here, then copied over translucent, so
-  // overlapping halos merge into one shape instead of stacking darker.
-  const layer = createLayer();
-  const layerCtx = layer.getContext("2d");
 
   const visibleNodes = (): NodeSingular[] =>
     cy
@@ -174,6 +258,9 @@ export function attachCommunityHulls(
       communities,
       { edges: edgeList, include: highlighted },
     );
+    keys = new Map(groups.map((g, rank) => [g.community, groupKey(g, rank)]));
+    for (const community of bitmaps.keys())
+      if (!keys.has(community)) bitmaps.delete(community);
   };
 
   const highlight = (id: string | null) => {
@@ -182,77 +269,74 @@ export function attachCommunityHulls(
     const next = new Set(community === undefined ? [] : [community]);
     if ([...next].join() === [...highlighted].join()) return;
     highlighted = next;
-    groups = null;
+    // Only needed when the hovered group is too small to be shown already.
+    if (community !== undefined && !keys.has(community)) groups = null;
     schedule();
   };
   const onHover = (evt: { target: NodeSingular }) => highlight(evt.target.id());
   const onLeave = () => highlight(null);
 
-  /** Matches both canvases to the element's size; returns that size in device pixels. */
-  const fitCanvases = () => {
-    const dpr = globalThis.devicePixelRatio || 1;
-    const width = Math.round(canvas.clientWidth * dpr);
-    const height = Math.round(canvas.clientHeight * dpr);
-    for (const c of [canvas, layer]) {
-      if (c.width !== width) c.width = width;
-      if (c.height !== height) c.height = height;
-    }
-    return { dpr, width, height };
-  };
-
-  const paintGroup = (
-    target: CanvasRenderingContext2D,
-    off: CanvasRenderingContext2D,
-    group: CommunityGroup,
-    rank: number,
-    { dpr, width, height }: { dpr: number; width: number; height: number },
-    alpha: number,
-  ) => {
-    const zoom = cy.zoom();
-    const pan = cy.pan();
-    off.setTransform(1, 0, 0, 1, 0, 0);
-    off.clearRect(0, 0, width, height);
-    off.setTransform(dpr * zoom, 0, 0, dpr * zoom, dpr * pan.x, dpr * pan.y);
-    const colour = `hsl(${hueFor(rank)}, 55%, 58%)`;
-    // Bands along the community's own links join its members' halos into one
-    // shape; halos alone read as separate bubbles once members are far apart.
-    off.strokeStyle = colour;
-    off.lineCap = "round";
-    off.lineWidth = HALO_PADDING * 2;
-    off.beginPath();
-    for (const [a, b] of group.links) {
-      off.moveTo(a.x, a.y);
-      off.lineTo(b.x, b.y);
-    }
-    off.stroke();
-    off.fillStyle = colour;
-    off.beginPath();
-    for (const n of group.members) {
-      const r = n.r + HALO_PADDING;
-      off.moveTo(n.x + r, n.y);
-      off.arc(n.x, n.y, r, 0, Math.PI * 2);
-    }
-    off.fill();
-    target.globalAlpha = alpha;
-    target.drawImage(layer, 0, 0);
-    target.globalAlpha = 1;
+  const bitmapFor = (group: CommunityGroup, rank: number, scale: number) => {
+    const key = keys.get(group.community)!;
+    const current = bitmaps.get(group.community);
+    if (current && current.key === key) return current;
+    const rendered = renderGroupBitmap(
+      current?.canvas ?? createLayer(),
+      group,
+      rank,
+      scale,
+    );
+    const bitmap = { ...rendered, key };
+    bitmaps.set(group.community, bitmap);
+    return bitmap;
   };
 
   const draw = () => {
     frame = null;
-    if (!ctx || !layerCtx || cy.destroyed()) return;
-    const size = fitCanvases();
+    if (!ctx || cy.destroyed()) return;
+    const dpr = globalThis.devicePixelRatio || 1;
+    const width = Math.round(canvas.clientWidth * dpr);
+    const height = Math.round(canvas.clientHeight * dpr);
+    if (canvas.width !== width) canvas.width = width;
+    if (canvas.height !== height) canvas.height = height;
     ctx.setTransform(1, 0, 0, 1, 0, 0);
-    ctx.clearRect(0, 0, size.width, size.height);
+    ctx.clearRect(0, 0, width, height);
     if (!on) return;
     if (!groups) recomputeGroups();
+    const zoom = cy.zoom();
+    const pan = cy.pan();
+    ctx.setTransform(dpr * zoom, 0, 0, dpr * zoom, dpr * pan.x, dpr * pan.y);
     for (const { group, rank, alpha } of paintOrder(groups!, highlighted)) {
-      paintGroup(ctx, layerCtx, group, rank, size, alpha);
+      const bitmap = bitmapFor(group, rank, dpr * zoom);
+      ctx.globalAlpha = alpha;
+      ctx.drawImage(bitmap.canvas, bitmap.x1, bitmap.y1, bitmap.w, bitmap.h);
     }
+    ctx.globalAlpha = 1;
   };
 
   const schedule = () => {
     if (frame === null) frame = requestAnimationFrame(draw);
+  };
+  /** After a zoom settles, re-render bitmaps that are now much too coarse or fine. */
+  const sharpen = () => {
+    sharpenTimer = undefined;
+    const wanted = (globalThis.devicePixelRatio || 1) * cy.zoom();
+    let stale = false;
+    for (const bitmap of bitmaps.values()) {
+      const tooCoarse =
+        wanted > bitmap.scale * RESCALE_FACTOR && !bitmap.capped;
+      const tooFine = wanted < bitmap.scale / (RESCALE_FACTOR * 2);
+      if (tooCoarse || tooFine) {
+        bitmap.key = "";
+        stale = true;
+      }
+    }
+    if (stale) schedule();
+  };
+  const onViewport = () => {
+    schedule();
+    if (sharpenTimer !== undefined) clearTimeout(sharpenTimer);
+    sharpenTimer = setTimeout(sharpen, SHARPEN_DELAY_MS);
   };
   const onStructure = () => {
     communities = null;
@@ -267,7 +351,7 @@ export function attachCommunityHulls(
 
   cy.on("add remove", onStructure);
   cy.on("position style", onMove);
-  cy.on("viewport resize", schedule);
+  cy.on("viewport resize", onViewport);
   cy.on("mouseover", "node", onHover);
   cy.on("mouseout", "node", onLeave);
   schedule();
@@ -281,10 +365,12 @@ export function attachCommunityHulls(
     destroy() {
       cy.off("add remove", onStructure);
       cy.off("position style", onMove);
-      cy.off("viewport resize", schedule);
+      cy.off("viewport resize", onViewport);
       cy.off("mouseover", "node", onHover);
       cy.off("mouseout", "node", onLeave);
       if (frame !== null) cancelAnimationFrame(frame);
+      if (sharpenTimer !== undefined) clearTimeout(sharpenTimer);
+      bitmaps.clear();
       ctx?.clearRect(0, 0, canvas.width, canvas.height);
     },
   };

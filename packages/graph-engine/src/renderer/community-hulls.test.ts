@@ -179,6 +179,19 @@ describe("attachCommunityHulls", () => {
     expect(calls).toContain("layer.stroke");
     expect(calls.filter((c) => c === "main.drawImage")).toHaveLength(1);
 
+    // Panning only copies the cached shape; it is not redrawn.
+    calls.length = 0;
+    cy.panBy({ x: 40, y: 0 });
+    flush();
+    expect(calls).toContain("main.drawImage");
+    expect(calls).not.toContain("layer.fill");
+
+    // Moving a member redraws the shape.
+    calls.length = 0;
+    cy.$id("n0").position({ x: -200, y: 0 });
+    flush();
+    expect(calls).toContain("layer.fill");
+
     calls.length = 0;
     overlay.setEnabled(false);
     flush();
