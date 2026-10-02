@@ -3,6 +3,7 @@ import cytoscape from "cytoscape";
 import {
   attachCommunityHulls,
   computeCommunityGroups,
+  budgetedScale,
   MIN_HULL_SIZE,
   paintOrder,
 } from "./community-hulls";
@@ -93,6 +94,25 @@ describe("computeCommunityGroups", () => {
     const tiny = ring("c", MIN_HULL_SIZE - 1, 0);
     const labels = new Map(tiny.map((n) => [n.id, "C"] as const));
     expect(computeCommunityGroups(tiny, labels)).toEqual([]);
+  });
+});
+
+describe("budgetedScale", () => {
+  it("keeps the view's scale while the bitmaps fit the budget", () => {
+    expect(budgetedScale([{ x1: 0, y1: 0, w: 100, h: 100 }], 2, 1e6)).toBe(2);
+  });
+
+  it("lowers the scale so all bitmaps together stay within the budget", () => {
+    const areas = Array.from({ length: 24 }, () => ({
+      x1: 0,
+      y1: 0,
+      w: 4000,
+      h: 4000,
+    }));
+    const scale = budgetedScale(areas, 1, 16_000_000);
+    const pixels = areas.reduce((sum, b) => sum + b.w * scale * b.h * scale, 0);
+    expect(scale).toBeLessThan(1);
+    expect(pixels).toBeLessThanOrEqual(16_000_000 + 1);
   });
 });
 
@@ -309,5 +329,204 @@ describe("attachCommunityHulls", () => {
     overlay.destroy();
     cy.destroy();
     [g.requestAnimationFrame, g.cancelAnimationFrame] = saved;
+  });
+
+  describe("caching and cleanup", () => {
+    type Recorder = {
+      calls: string[];
+      canvases: Array<{ width: number; height: number }>;
+    };
+    const recorder = (): Recorder => ({ calls: [], canvases: [] });
+    const canvasFor = (rec: Recorder, name: string) => {
+      const ctx = new Proxy(
+        {},
+        {
+          get: (_t, key) =>
+            typeof key === "string" &&
+            [
+              "fill",
+              "stroke",
+              "drawImage",
+              "clearRect",
+              "setTransform",
+            ].includes(key)
+              ? () => rec.calls.push(`${name}.${key}`)
+              : () => {},
+          set: () => true,
+        },
+      );
+      const canvas = {
+        clientWidth: 400,
+        clientHeight: 300,
+        width: 0,
+        height: 0,
+        getContext: () => ctx,
+      };
+      rec.canvases.push(canvas);
+      return canvas as unknown as HTMLCanvasElement;
+    };
+    const withFrames = async (
+      run: (
+        flush: () => void,
+        settle: () => Promise<void>,
+      ) => Promise<void> | void,
+    ) => {
+      const frames: FrameRequestCallback[] = [];
+      const g = globalThis as any;
+      const saved = [g.requestAnimationFrame, g.cancelAnimationFrame];
+      g.requestAnimationFrame = (cb: FrameRequestCallback) => frames.push(cb);
+      g.cancelAnimationFrame = () => {};
+      const flush = () => frames.splice(0).forEach((f) => f(0));
+      const settle = () => new Promise<void>((r) => setTimeout(r, 5));
+      try {
+        await run(flush, settle);
+      } finally {
+        [g.requestAnimationFrame, g.cancelAnimationFrame] = saved;
+      }
+    };
+    /** A connected chain of `count` nodes, `gap` apart. */
+    const chainGraph = (count: number, gap: number) =>
+      cytoscape({
+        headless: true,
+        styleEnabled: true,
+        layout: { name: "preset" },
+        elements: [
+          ...Array.from({ length: count }, (_, i) => ({
+            data: { id: `c${i}` },
+            position: { x: i * gap, y: 0 },
+          })),
+          ...Array.from({ length: count - 1 }, (_, i) => ({
+            data: { id: `e${i}`, source: `c${i}`, target: `c${i + 1}` },
+          })),
+        ],
+      });
+
+    it("redraws a shape when a link is swapped for another between the same members", async () => {
+      await withFrames((flush) => {
+        const cy = chainGraph(9, 30);
+        cy.add({ data: { id: "x", source: "c0", target: "c2" } });
+        const rec = recorder();
+        const overlay = attachCommunityHulls(cy, canvasFor(rec, "main"), {
+          createLayer: () => canvasFor(rec, "layer"),
+        });
+        flush();
+        rec.calls.length = 0;
+        cy.batch(() => {
+          cy.remove("#x");
+          cy.add({ data: { id: "y", source: "c0", target: "c3" } });
+        });
+        flush();
+        expect(rec.calls).toContain("layer.stroke");
+        overlay.destroy();
+        cy.destroy();
+      });
+    });
+
+    it("never makes a bitmap larger than the side limit, however spread out the group", async () => {
+      await withFrames((flush) => {
+        const cy = chainGraph(9, 40_000);
+        const rec = recorder();
+        const overlay = attachCommunityHulls(cy, canvasFor(rec, "main"), {
+          createLayer: () => canvasFor(rec, "layer"),
+        });
+        flush();
+        const layers = rec.canvases.slice(1);
+        expect(layers.length).toBeGreaterThan(0);
+        for (const c of layers) {
+          expect(c.width).toBeLessThanOrEqual(2048);
+          expect(c.height).toBeLessThanOrEqual(2048);
+        }
+        overlay.destroy();
+        cy.destroy();
+      });
+    });
+
+    it("removes a small group's temporary background when the hover moves away", async () => {
+      await withFrames((flush) => {
+        const cy = chainGraph(3, 30);
+        const rec = recorder();
+        const overlay = attachCommunityHulls(cy, canvasFor(rec, "main"), {
+          createLayer: () => canvasFor(rec, "layer"),
+        });
+        flush();
+        expect(rec.calls).not.toContain("main.drawImage");
+        cy.$id("c0").emit("mouseover");
+        flush();
+        expect(rec.calls).toContain("main.drawImage");
+        rec.calls.length = 0;
+        cy.$id("c0").emit("mouseout");
+        flush();
+        expect(rec.calls).not.toContain("main.drawImage");
+        overlay.destroy();
+        cy.destroy();
+      });
+    });
+
+    it("clears the canvas in pixels when destroyed after a pan", async () => {
+      await withFrames((flush) => {
+        const cy = chainGraph(9, 30);
+        const rec = recorder();
+        const overlay = attachCommunityHulls(cy, canvasFor(rec, "main"), {
+          createLayer: () => canvasFor(rec, "layer"),
+        });
+        cy.panBy({ x: 50, y: 20 });
+        flush();
+        rec.calls.length = 0;
+        overlay.destroy();
+        expect(rec.calls.filter((c) => c.startsWith("main."))).toEqual([
+          "main.setTransform",
+          "main.clearRect",
+        ]);
+        cy.destroy();
+      });
+    });
+
+    it("re-renders once at the new scale after a zoom settles, and not again", async () => {
+      await withFrames(async (flush, settle) => {
+        const cy = chainGraph(9, 30);
+        const rec = recorder();
+        const overlay = attachCommunityHulls(cy, canvasFor(rec, "main"), {
+          createLayer: () => canvasFor(rec, "layer"),
+          sharpenDelayMs: 0,
+        });
+        flush();
+        rec.calls.length = 0;
+        cy.zoom(4);
+        flush();
+        expect(rec.calls).not.toContain("layer.fill");
+        await settle();
+        flush();
+        expect(rec.calls.filter((c) => c === "layer.fill")).toHaveLength(1);
+        rec.calls.length = 0;
+        await settle();
+        flush();
+        expect(rec.calls).not.toContain("layer.fill");
+        overlay.destroy();
+        cy.destroy();
+      });
+    });
+
+    it("does not keep re-rendering a bitmap capped by the size limit (negative)", async () => {
+      await withFrames(async (flush, settle) => {
+        const cy = chainGraph(9, 40_000);
+        const rec = recorder();
+        const overlay = attachCommunityHulls(cy, canvasFor(rec, "main"), {
+          createLayer: () => canvasFor(rec, "layer"),
+          sharpenDelayMs: 0,
+        });
+        cy.zoom(2);
+        flush();
+        await settle();
+        flush();
+        rec.calls.length = 0;
+        cy.zoom(3);
+        flush();
+        await settle();
+        flush();
+        expect(rec.calls).not.toContain("layer.fill");
+        overlay.destroy();
+        cy.destroy();
+      });
+    });
   });
 });

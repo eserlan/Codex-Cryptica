@@ -16,6 +16,8 @@ export interface CommunityGroup {
   members: HullNode[];
   /** Links between those members, painted as bands so the shape is one piece. */
   links: Array<[HullNode, HullNode]>;
+  /** Shown only because it was asked for (the hovered node's small group). */
+  extra?: boolean;
 }
 
 /** Communities smaller than this get no background: a halo around 3 nodes is noise. */
@@ -109,12 +111,19 @@ export function computeCommunityGroups(
       members.length >= 2 &&
       !shown.some(([c]) => c === community),
   );
-  return [...shown, ...extra].map(([community, members]) => {
+  return [...shown, ...extra].map(([community, members], i) => {
     const { members: kept, links } = largestLinkedPiece(
       withoutOutliers(members),
       edges,
     );
-    return { community, size: members.length, members: kept, links };
+    const group: CommunityGroup = {
+      community,
+      size: members.length,
+      members: kept,
+      links,
+    };
+    if (i >= shown.length) group.extra = true;
+    return group;
   });
 }
 
@@ -152,6 +161,12 @@ export interface CommunityHullOverlay {
 
 /** Longest side of one group's cached bitmap, in pixels. */
 const MAX_BITMAP_SIDE = 2048;
+/**
+ * Pixels all cached bitmaps may use together (about 64 MiB). Without it, 24
+ * groups at the side limit could hold around 384 MiB; past the budget every
+ * bitmap is rendered at a proportionally lower scale.
+ */
+const BITMAP_PIXEL_BUDGET = 16_000_000;
 /** Re-render a group's bitmap once the view's scale differs from it by this factor. */
 const RESCALE_FACTOR = 1.6;
 /** Wait after the last pan or zoom before re-rendering bitmaps at the new scale. */
@@ -170,21 +185,20 @@ interface GroupBitmap {
   capped: boolean;
 }
 
-/** Identity of a group's shape and colour: members, positions, sizes and rank. */
+/** Identity of a group's shape and colour: members, positions, sizes, links and rank. */
 function groupKey(group: CommunityGroup, rank: number): string {
   let key = `${rank}|`;
   for (const n of group.members)
     key += `${n.id}:${Math.round(n.x)},${Math.round(n.y)},${Math.round(n.r)};`;
-  return key + `|${group.links.length}`;
+  key += "|";
+  for (const [a, b] of group.links) key += `${a.id}-${b.id};`;
+  return key;
 }
 
-/** Draws a group's merged halo shape, opaque, into its own small canvas. */
-function renderGroupBitmap(
-  canvas: HTMLCanvasElement,
-  group: CommunityGroup,
-  rank: number,
-  wantedScale: number,
-): Omit<GroupBitmap, "key"> {
+type Bounds = { x1: number; y1: number; w: number; h: number };
+
+/** The area a group's background covers, in graph units. */
+function groupBounds(group: CommunityGroup): Bounds {
   let x1 = Infinity;
   let y1 = Infinity;
   let x2 = -Infinity;
@@ -196,12 +210,37 @@ function renderGroupBitmap(
     x2 = Math.max(x2, n.x + r);
     y2 = Math.max(y2, n.y + r);
   }
-  const w = Math.max(1, x2 - x1);
-  const h = Math.max(1, y2 - y1);
+  return { x1, y1, w: Math.max(1, x2 - x1), h: Math.max(1, y2 - y1) };
+}
+
+/**
+ * The scale all bitmaps are rendered at: the view's scale, lowered so their
+ * combined pixels stay within `BITMAP_PIXEL_BUDGET`.
+ */
+export function budgetedScale(
+  areas: readonly Bounds[],
+  wanted: number,
+  budget = BITMAP_PIXEL_BUDGET,
+): number {
+  const units = areas.reduce((sum, b) => sum + b.w * b.h, 0);
+  if (units === 0) return wanted;
+  return Math.min(wanted, Math.sqrt(budget / units));
+}
+
+/** Draws a group's merged halo shape, opaque, into its own small canvas. */
+function renderGroupBitmap(
+  canvas: HTMLCanvasElement,
+  group: CommunityGroup,
+  rank: number,
+  { x1, y1, w, h }: Bounds,
+  scaleWithinBudget: number,
+  wantedScale: number,
+): Omit<GroupBitmap, "key"> {
+  // The side cap always wins, however small that makes the scale.
   const limit = Math.min(MAX_BITMAP_SIDE / w, MAX_BITMAP_SIDE / h);
-  const scale = Math.max(0.01, Math.min(wantedScale, limit));
-  canvas.width = Math.ceil(w * scale);
-  canvas.height = Math.ceil(h * scale);
+  const scale = Math.max(1e-6, Math.min(scaleWithinBudget, limit));
+  canvas.width = Math.max(1, Math.min(MAX_BITMAP_SIDE, Math.ceil(w * scale)));
+  canvas.height = Math.max(1, Math.min(MAX_BITMAP_SIDE, Math.ceil(h * scale)));
   const g = canvas.getContext("2d");
   if (g) {
     g.setTransform(1, 0, 0, 1, 0, 0);
@@ -249,7 +288,12 @@ export function attachCommunityHulls(
   {
     enabled = true,
     createLayer = () => document.createElement("canvas"),
-  }: { enabled?: boolean; createLayer?: () => HTMLCanvasElement } = {},
+    sharpenDelayMs = SHARPEN_DELAY_MS,
+  }: {
+    enabled?: boolean;
+    createLayer?: () => HTMLCanvasElement;
+    sharpenDelayMs?: number;
+  } = {},
 ): CommunityHullOverlay {
   let on = enabled;
   let communities: Map<string, string> | null = null;
@@ -300,20 +344,33 @@ export function attachCommunityHulls(
       if (!keys.has(community)) bitmaps.delete(community);
   };
 
+  const communityOf = (id: string) => {
+    if (!communities) recomputeGroups();
+    return communities!.get(id);
+  };
+  /** A group shown only for the current hover, which must go when it ends. */
+  const hasHoverOnlyGroup = () => groups?.some((g) => g.extra) ?? false;
+
   const highlight = (id: string | null) => {
-    if (id !== null && !communities) recomputeGroups();
-    const community = id === null ? undefined : communities!.get(id);
-    const next = new Set(community === undefined ? [] : [community]);
-    if ([...next].join() === [...highlighted].join()) return;
-    highlighted = next;
-    // Only needed when the hovered group is too small to be shown already.
-    if (community !== undefined && !keys.has(community)) groups = null;
+    const community = id === null ? undefined : communityOf(id);
+    if ([...highlighted][0] === community) return;
+    // Regroup when the new group is not shown yet (too small) or when a
+    // group shown only for the previous hover has to go again.
+    const regroup =
+      hasHoverOnlyGroup() || (community !== undefined && !keys.has(community));
+    highlighted = new Set(community === undefined ? [] : [community]);
+    if (regroup) groups = null;
     schedule();
   };
   const onHover = (evt: { target: NodeSingular }) => highlight(evt.target.id());
   const onLeave = () => highlight(null);
 
-  const bitmapFor = (group: CommunityGroup, rank: number, scale: number) => {
+  const bitmapFor = (
+    group: CommunityGroup,
+    rank: number,
+    budgeted: number,
+    wanted: number,
+  ) => {
     const key = keys.get(group.community)!;
     const current = bitmaps.get(group.community);
     if (current && current.key === key) return current;
@@ -321,7 +378,9 @@ export function attachCommunityHulls(
       current?.canvas ?? createLayer(),
       group,
       rank,
-      scale,
+      groupBounds(group),
+      budgeted,
+      wanted,
     );
     const bitmap = { ...rendered, key };
     bitmaps.set(group.community, bitmap);
@@ -343,8 +402,10 @@ export function attachCommunityHulls(
     const zoom = cy.zoom();
     const pan = cy.pan();
     ctx.setTransform(dpr * zoom, 0, 0, dpr * zoom, dpr * pan.x, dpr * pan.y);
+    const wanted = dpr * zoom;
+    const budgeted = budgetedScale(groups!.map(groupBounds), wanted);
     for (const { group, rank, alpha } of paintOrder(groups!, highlighted)) {
-      const bitmap = bitmapFor(group, rank, dpr * zoom);
+      const bitmap = bitmapFor(group, rank, budgeted, wanted);
       ctx.globalAlpha = alpha;
       ctx.drawImage(bitmap.canvas, bitmap.x1, bitmap.y1, bitmap.w, bitmap.h);
     }
@@ -373,7 +434,7 @@ export function attachCommunityHulls(
   const onViewport = () => {
     schedule();
     if (sharpenTimer !== undefined) clearTimeout(sharpenTimer);
-    sharpenTimer = setTimeout(sharpen, SHARPEN_DELAY_MS);
+    sharpenTimer = setTimeout(sharpen, sharpenDelayMs);
   };
   const onStructure = () => {
     communities = null;
@@ -408,6 +469,8 @@ export function attachCommunityHulls(
       if (frame !== null) cancelAnimationFrame(frame);
       if (sharpenTimer !== undefined) clearTimeout(sharpenTimer);
       bitmaps.clear();
+      // `draw` leaves the pan/zoom transform set; clear in pixels.
+      ctx?.setTransform(1, 0, 0, 1, 0, 0);
       ctx?.clearRect(0, 0, canvas.width, canvas.height);
     },
   };
