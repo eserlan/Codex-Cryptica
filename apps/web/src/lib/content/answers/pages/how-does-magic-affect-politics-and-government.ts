@@ -214,9 +214,26 @@ export const howDoesMagicAffectPoliticsAndGovernment: AnswerConfigInput = {
       "A GM-facing framework that turns each magical capability into control, fear and counters, covering courts, licensing, policing, succession, logistics, warfare and anti-magic institutions.",
     relatedIntents: [
       "answer-create-magic-system",
-      "answer-fantasy-city-defence",
+      "answer-fantasy-city-defence-flight-teleportation",
       "answer-fantasy-faction",
       "answer-constitutional-crisis-or-coup",
+    ],
+    acknowledgedOverlap: [
+      {
+        with: "answer-fantasy-city-defence-flight-teleportation",
+        reason:
+          "The city-defence answer designs physical and magical countermeasures to aerial and teleport threats; this answer examines how those capabilities reshape political power and institutions.",
+      },
+      {
+        with: "answer-constitutional-crisis-or-coup",
+        reason:
+          "The crisis answer structures a single struggle over constitutional legitimacy; this answer explains the wider effects of magic on government, succession and public institutions.",
+      },
+      {
+        with: "resource-castle-floorplans",
+        reason:
+          "The resource page curates castle layout references; this answer helps GMs reason about magical power and political institutions across a setting.",
+      },
     ],
   },
   seo: {
