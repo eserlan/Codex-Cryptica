@@ -16,6 +16,7 @@ import {
   buildActionCandidates,
   buildHelpPrompt,
   generatorActionRefs,
+  contextualizeQuery,
   finalizeAnswer,
   noMatchAnswer,
   parseHelpContext,
@@ -310,16 +311,18 @@ export function createHelpHandler(deps: HelpDeps) {
       );
     }
 
+    const searchQuestion = contextualizeQuery(question, history);
     const embeddingBudgetMs = deps.embeddingTimeoutMs ?? EMBEDDING_BUDGET_MS;
     const queryVector = deps.embedQuery
-      ? ((await withTimeout(deps.embedQuery(question), embeddingBudgetMs)
+      ? ((await withTimeout(deps.embedQuery(searchQuestion), embeddingBudgetMs)
           .then((vector) =>
             isValidHelpEmbeddingVector(vector) ? vector : null,
           )
           .catch(() => null)) ?? undefined)
       : undefined;
-    const retrieval = retrieve(question, bundle, context, {
+    const retrieval = retrieve(searchQuestion, bundle, context, {
       queryVector: queryVector ?? undefined,
+      history,
     });
     if (retrieval.noMatch) {
       // Below the relevance floor: answer honestly without calling the model.

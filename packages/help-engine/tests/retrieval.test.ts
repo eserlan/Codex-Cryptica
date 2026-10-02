@@ -4,6 +4,7 @@ import { sanitizeHelpContext } from "../src/context";
 import { FEATURE_REGISTRY } from "../src/registry";
 import {
   MIN_RELEVANCE,
+  contextualizeQuery,
   cosineSimilarity,
   rankChunks,
   retrieve,
@@ -358,5 +359,67 @@ describe("semantic vector retrieval", () => {
     expect(result.noMatch).toBe(false);
     expect(result.chunks[0].chunk.id).toBe("graph-basics#0");
     expect(result.chunks[0].lexical).toBeGreaterThan(0);
+  });
+
+  describe("conversational follow-up retrieval", () => {
+    it("augments anaphoric follow-up question with substantive topic from history", () => {
+      const history = [
+        { role: "user" as const, text: "tell me of connections" },
+        {
+          role: "assistant" as const,
+          text: "Connections link entities together.",
+        },
+      ];
+      const out = contextualizeQuery("how to make them?", history);
+      expect(out).toBe("how to make them? (tell me of connections)");
+    });
+
+    it("leaves self-contained query untouched despite history", () => {
+      const history = [
+        { role: "user" as const, text: "tell me of connections" },
+        {
+          role: "assistant" as const,
+          text: "Connections link entities together.",
+        },
+      ];
+      const out = contextualizeQuery("how do I roll dice?", history);
+      expect(out).toBe("how do I roll dice?");
+    });
+
+    it("retrieves connection chunks for 'how to make them?' when history is provided", () => {
+      const connChunk = chunk(
+        "connections-tab#0",
+        "Link and connect entities together across your campaign.",
+        { featureId: "entity-connections" },
+      );
+      const testBundle = bundle([connChunk, ...filler]);
+      const history = [
+        { role: "user" as const, text: "tell me of connections" },
+        {
+          role: "assistant" as const,
+          text: "In the Graph, you can explore entities as nodes and their connections as lines.",
+        },
+      ];
+
+      // Without history, "how to make them?" stems to ["creat"] and fails the floor
+      const withoutHistory = retrieve(
+        "how to make them?",
+        testBundle,
+        connectionsScreen,
+      );
+      expect(withoutHistory.noMatch).toBe(true);
+
+      // With history, it contextualizes and successfully retrieves connections-tab
+      const withHistory = retrieve(
+        "how to make them?",
+        testBundle,
+        connectionsScreen,
+        { history },
+      );
+      expect(withHistory.noMatch).toBe(false);
+      expect(withHistory.chunks.map((c) => c.chunk.id)).toContain(
+        "connections-tab#0",
+      );
+    });
   });
 });

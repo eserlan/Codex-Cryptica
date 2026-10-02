@@ -1,12 +1,15 @@
 import type { KnowledgeBundle } from "../bundle/types";
 import type { HelpContext } from "../context";
+import type { HelpTurn } from "../prompt/build";
 import type { FeatureEntry } from "../registry/schema";
+import { contextualizeQuery } from "./contextualize";
 import { MIN_RELEVANCE, rankChunks, type ScoredChunk } from "./rank";
 
 export interface RetrieveOptions {
   limit?: number;
   minRelevance?: number;
   queryVector?: readonly number[];
+  history?: readonly HelpTurn[];
 }
 
 export interface RetrievalResult {
@@ -95,8 +98,11 @@ export function retrieve(
 ): RetrievalResult {
   const limit = options.limit ?? DEFAULT_LIMIT;
   const floor = options.minRelevance ?? MIN_RELEVANCE;
+  const effectiveQuestion = options.history?.length
+    ? contextualizeQuery(question, options.history)
+    : question;
   const ranked = rankChunks(
-    question,
+    effectiveQuestion,
     bundle.chunks,
     bundle.features,
     ctx,
