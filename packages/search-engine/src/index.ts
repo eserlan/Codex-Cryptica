@@ -529,8 +529,21 @@ export class SearchEngine {
                 if (Array.isArray(buffer)) {
                   buffer = new Uint8Array(buffer);
                 } else {
-                  const values = Object.values(buffer ?? {});
-                  buffer = new Uint8Array(values as number[]);
+                  // ⚡ Bolt Optimization: Replace Object.values() with an imperative loop over keys to avoid large array allocation
+                  const bufferObj = buffer ?? {};
+                  let count = 0;
+                  for (const k in bufferObj) {
+                    if (Object.prototype.hasOwnProperty.call(bufferObj, k))
+                      count++;
+                  }
+                  const newBuffer = new Uint8Array(count);
+                  let i = 0;
+                  for (const k in bufferObj) {
+                    if (Object.prototype.hasOwnProperty.call(bufferObj, k)) {
+                      newBuffer[i++] = (bufferObj as any)[k] as number;
+                    }
+                  }
+                  buffer = newBuffer;
                 }
               }
               str = decoder.decode(buffer);
@@ -585,8 +598,21 @@ export class SearchEngine {
               if (Array.isArray(buffer)) {
                 buffer = new Uint8Array(buffer);
               } else {
-                const values = Object.values(buffer ?? {});
-                buffer = new Uint8Array(values as number[]);
+                // ⚡ Bolt Optimization: Replace Object.values() with an imperative loop over keys to avoid large array allocation
+                const bufferObj = buffer ?? {};
+                let count = 0;
+                for (const k in bufferObj) {
+                  if (Object.prototype.hasOwnProperty.call(bufferObj, k))
+                    count++;
+                }
+                const newBuffer = new Uint8Array(count);
+                let i = 0;
+                for (const k in bufferObj) {
+                  if (Object.prototype.hasOwnProperty.call(bufferObj, k)) {
+                    newBuffer[i++] = (bufferObj as any)[k] as number;
+                  }
+                }
+                buffer = newBuffer;
               }
             }
             decoded = new TextDecoder().decode(buffer);
