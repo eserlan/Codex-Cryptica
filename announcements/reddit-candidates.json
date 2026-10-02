@@ -1,5 +1,5 @@
 {
-  "updated_at": 1790958316,
+  "updated_at": 1790959443,
   "candidates": [
     {
       "id": "reddit-36492955284-what-rpg-map-making-tool-should-you-actu",
@@ -32,14 +32,14 @@
       "created_at": 1790721855
     },
     {
-      "id": "reddit-37032544014-i-got-tired-of-leaving-my-vault-just-to-",
-      "title": "I got tired of leaving my vault just to look up how the vault works",
-      "body": "I was building in canvas last week and had to pop out to search how edge stacking works, then again for map fog, then again for where import keeps images. Three tabs open for questions about the same vault.\n\nI built Cif so you can ask without leaving where you are. It is a contextual help assistant inside your vault that pulls from canvas, maps, entities, backup, import and every generator with context about what you are looking at. It is now enabled in production after a stretch in staging, with retrieval tightened to point at the right page instead of a generic one.\n\nWhat it does now:\n\n- answers in place about the tool you are using, not on a separate help site\n- covers canvas, maps, entities, backup, import and generators without switching context\n- runs in production for everyone, not just a preview\n- improved retrieval that prefers the exact match for your question\n\nIt still misses on very new or edge features, and I am still tuning when it should stay quiet versus offer a nudge. That is the next pass.\n\nWhat is the one thing in Codex Cryptica you still have to leave the vault to figure out?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/announcements/release-37032544014-0.png)",
-      "url": "https://codexcryptica.com/help/help-assistant",
-      "image_url": "https://assets.codexcryptica.com/announcements/release-37032544014-0.png",
+      "id": "reddit-37032544014-large-graphs-were-readable-as-data-but-n",
+      "title": "Large graphs were readable as data but not as factions",
+      "body": "After about a hundred entities my graph stopped being a map of relationships and started looking like static. I could see nodes, but not which crew belonged to which harbour or which faction actually held together.\n\nI added a Groups state to the graph that draws community-aware backgrounds behind clusters, so factions and crews read as shapes instead of dot clouds.\n\nWhat changes:\n\n- backgrounds wrap the communities the graph already detects, not boxes you have to draw by hand\n- each group gets a distinct shape so you can spot a faction at a glance\n- toggle Groups on and off without changing the layout\n- easier to scan a large vault for who belongs together before you zoom into links\n\nIt adds visual weight, and on very dense vaults the shapes can overlap until you filter. I left it as a state you toggle for that reason, not a default.\n\nWhich vault of yours would be clearer as groups rather than as a single tangle of links?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/announcements/release-37032544014-1.png)",
+      "url": "https://codexcryptica.com/help/graph-basics",
+      "image_url": "https://assets.codexcryptica.com/announcements/release-37032544014-1.png",
       "source_id": "37032544014",
       "status": "approved",
-      "created_at": 1790958316
+      "created_at": 1790959443
     }
   ]
 }
