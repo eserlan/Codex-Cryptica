@@ -1,16 +1,6 @@
 {
-  "updated_at": 1790930835,
+  "updated_at": 1790956824,
   "candidates": [
-    {
-      "id": "reddit-36437655113-journal-entries-now-preview-markdown-as-",
-      "title": "Journal entries now preview Markdown as you type, and the scratchpad resizes",
-      "body": "I was typing **bold** and - lists in the Session Journal and only seeing asterisks and hyphens until I saved. The formatting toolbar looked like rich text but the box behaved like plain text, so I never knew if a note would be readable in the fight.\n\nI built a live preview under the Journal fields that renders exactly as the saved entry will, and added a corner handle so the scratchpad can be resized.\n\nWhat changed:\n\n- note and edit fields share a new Markdown field with B, I and list controls that writes markdown you see rendered immediately underneath\n- preview uses the entry list's own renderer, so what you type is what you get after save\n- scratchpad modal now drags from the corner to grow or shrink and stays centred, with keyboard resizing as well\n- window bounds math is shared with the dice modal so it does not drift off screen\n\nTradeoff: the preview adds a second pane under a small input, so on a narrow phone it takes extra vertical space. I am still tuning where it feels crowded versus useful, and I kept the raw text visible so you can see what the toolbar actually wrote.\n\nWhen combat is moving fast, how do you keep session notes scannable: headings, short lists, or do you keep it all plain and tidy it later?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/screenshots/feature-run.jpg)",
-      "url": "",
-      "image_url": "https://assets.codexcryptica.com/screenshots/feature-run.jpg",
-      "source_id": "36437655113",
-      "status": "approved",
-      "created_at": 1790611184
-    },
     {
       "id": "reddit-36492955284-what-rpg-map-making-tool-should-you-actu",
       "title": "What RPG map-making tool should you actually use",
