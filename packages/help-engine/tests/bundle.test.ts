@@ -185,17 +185,34 @@ describe("buildBundle", () => {
       area: "graph",
       surface: "vault",
     });
-    for (const question of [
-      "How does grouping work?",
-      "Can I group these entities visually?",
-      "How do I make a group in the graph?",
-      "Does grouping change the relationships between entities?",
-      "Can I save my groups?",
+    for (const { question, expectedPhrase } of [
+      {
+        question: "How does grouping work?",
+        expectedPhrase:
+          "automatic visual clusters of closely connected entities",
+      },
+      {
+        question: "Can I group these entities visually?",
+        expectedPhrase:
+          "no manual add/remove, rename, resize, or style control",
+      },
+      {
+        question: "How do I make a group in the graph?",
+        expectedPhrase: "cannot manually create a Graph group",
+      },
+      {
+        question: "Does grouping change the relationships between entities?",
+        expectedPhrase: "does not create or change entity relationships",
+      },
+      {
+        question: "Can I save my groups?",
+        expectedPhrase: "cannot manually create a Graph group",
+      },
     ]) {
       const result = retrieve(question, bundle, context);
       expect(result.noMatch, question).toBe(false);
       expect(
-        result.chunks.some(({ chunk }) => chunk.helpId === "graph-basics"),
+        result.chunks.some(({ chunk }) => chunk.text.includes(expectedPhrase)),
         question,
       ).toBe(true);
     }
