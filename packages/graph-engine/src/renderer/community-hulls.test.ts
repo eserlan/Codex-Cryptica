@@ -38,6 +38,22 @@ describe("computeCommunityGroups", () => {
     expect(result.members.map((m) => m.id)).not.toContain("far");
   });
 
+  it("keeps the links between members so the background is one shape", () => {
+    const group = ring("e", 10, 0);
+    const labels = new Map(group.map((n) => [n.id, "E"] as const));
+    const [result] = computeCommunityGroups(group, labels, {
+      edges: [
+        ["e0", "e1"],
+        ["e1", "e2"],
+        ["e0", "outside"],
+      ],
+    });
+    expect(result.links.map(([a, b]) => `${a.id}-${b.id}`)).toEqual([
+      "e0-e1",
+      "e1-e2",
+    ]);
+  });
+
   it("skips communities too small to be worth shading (negative)", () => {
     const tiny = ring("c", MIN_HULL_SIZE - 1, 0);
     const labels = new Map(tiny.map((n) => [n.id, "C"] as const));
@@ -52,7 +68,7 @@ describe("attachCommunityHulls", () => {
       {
         get: (_t, key) =>
           typeof key === "string" &&
-          ["fill", "drawImage", "clearRect"].includes(key)
+          ["fill", "stroke", "drawImage", "clearRect"].includes(key)
             ? () => calls.push(`${name}.${key}`)
             : () => {},
         set: () => true,
@@ -105,6 +121,7 @@ describe("attachCommunityHulls", () => {
     });
     flush();
     expect(calls).toContain("layer.fill");
+    expect(calls).toContain("layer.stroke");
     expect(calls.filter((c) => c === "main.drawImage")).toHaveLength(1);
 
     calls.length = 0;

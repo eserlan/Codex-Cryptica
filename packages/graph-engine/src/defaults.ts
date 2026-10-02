@@ -31,10 +31,12 @@ export const DEFAULT_LAYOUT_OPTIONS = {
  * community settles into its own region and the long lines are the
  * meaningful links between groups.
  */
-export const COMMUNITY_EDGE_LENGTH = 90;
-export const LEAF_EDGE_LENGTH = 55;
-export const BRIDGE_EDGE_LENGTH = 420;
-const BASE_NODE_REPULSION = 12000;
+export const COMMUNITY_EDGE_LENGTH = 160;
+export const LEAF_EDGE_LENGTH = 100;
+export const BRIDGE_EDGE_LENGTH = 520;
+// Spread so the dense core keeps readable gaps: on the profiled vault the
+// median gap between neighbouring nodes went from 10px to 46px.
+const BASE_NODE_REPULSION = 96000;
 
 export const getDynamicLayoutOptions = (nodeCount: number) => {
   // Graphs above the large-graph limit are culled to a focus view first, so
@@ -45,7 +47,7 @@ export const getDynamicLayoutOptions = (nodeCount: number) => {
     quality,
     numIter: 2500,
     nodeRepulsion: BASE_NODE_REPULSION,
-    nodeSeparation: 75,
+    nodeSeparation: 200,
     idealEdgeLength: COMMUNITY_EDGE_LENGTH,
     gravity: 0.15,
     gravityRange: 3.8,
