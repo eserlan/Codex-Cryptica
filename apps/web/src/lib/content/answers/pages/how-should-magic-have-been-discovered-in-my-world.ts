@@ -63,7 +63,7 @@ export const howShouldMagicHaveBeenDiscoveredInMyWorld: AnswerConfigInput = {
       kind: "list",
       heading: "From phenomenon to living tradition",
       intro:
-        "A discovery can mean different things: people may discover a phenomenon, invent a usable technique, domesticate an unpredictable force, standardise local practices, or rediscover lost knowledge. A setting can have several such turning points, and no single first practitioner needs to be known. A quick method is **phenomenon → breakthrough → replication → transmission → standardisation → control → legacy**. In Saltspire, storm-lit water leads to charged glass, fishers gather it, glassworkers reproduce the effect, harbour apprentices spread the method, the Salt Guild grades safe cuts, the city requires its seals, and temple and university contest its legacy. Trace how usable knowledge became repeatable, teachable, and socially important:",
+        "A discovery can mean different things: people may discover a phenomenon, invent a usable technique, domesticate an unpredictable force, standardise local practices, or rediscover lost knowledge. A setting can have several such turning points, and no single first practitioner needs to be known. A quick method is phenomenon → breakthrough → replication → transmission → standardisation → control → legacy. In Saltspire, storm-lit water leads to charged glass, fishers gather it, glassworkers reproduce the effect, harbour apprentices spread the method, the Salt Guild grades safe cuts, the city requires its seals, and temple and university contest its legacy. Trace how usable knowledge became repeatable, teachable, and socially important:",
       items: [
         {
           term: "Phenomenon and prerequisites",
@@ -75,7 +75,7 @@ export const howShouldMagicHaveBeenDiscoveredInMyWorld: AnswerConfigInput = {
         },
         {
           term: "Transmission",
-          text: "How did the practice travel: through families, apprenticeships, temples, armies, trade, migration, texts, conquest, or theft? Ask what carried the knowledge, what slowed or distorted it, and how it changed in translation or new conditions—a ritual might be shortened for soldiers, or fail where its reagents do not grow.",
+          text: "How did the practice travel: through families, apprenticeships, temples, armies, trade, migration, texts, conquest, or theft? Ask what carried the knowledge, what slowed or distorted it, and how it changed in translation or new conditions. A ritual might be shortened for soldiers, or fail where its reagents do not grow.",
         },
         {
           term: "Standardisation and control",
@@ -115,7 +115,7 @@ export const howShouldMagicHaveBeenDiscoveredInMyWorld: AnswerConfigInput = {
         },
         {
           term: "Modern access, law, and politics",
-          text: "Translate history into current rules and customs. Who may learn, teach, or carry catalysts, and who judges misuse? Write one statute, one street-level habit, and one loophole that adventurers, smugglers, or reformers exploit. The legacy might instead—or also—shape a calendar, professional title, school curriculum, market, or popular misconception.",
+          text: "Translate history into current rules and customs. Who may learn, teach, or carry catalysts, and who judges misuse? Write one statute, one street-level habit, and one loophole that adventurers, smugglers, or reformers exploit. The legacy might shape a calendar, professional title, school curriculum, market, or popular misconception as well.",
         },
       ],
     },
