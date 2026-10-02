@@ -1,5 +1,5 @@
 {
-  "updated_at": 1790960832,
+  "updated_at": 1790974900,
   "candidates": [
     {
       "id": "reddit-36492955284-what-rpg-map-making-tool-should-you-actu",
@@ -40,6 +40,16 @@
       "source_id": "37032544014",
       "status": "approved",
       "created_at": 1790960832
+    },
+    {
+      "id": "reddit-37060899021-when-magic-actually-shapes-the-society-a",
+      "title": "When magic actually shapes the society around it",
+      "body": "At my table someone always asks why the king does not just hire a teleporter to fix supply lines, or why the village does not all know a healing cantrip. I never had a consistent answer from street level up to politics.\n\nI built a small hub that treats magic as a social system. Five properties you set for any setting: who can use it, what it costs, how reliable it is, how strong it gets, and how detectable it is. Tables and worked before/after examples show how each choice ripples out.\n\nWhat you can pull straight into a world:\n- where magic users cluster and what that does to migration and guilds\n- how cost and reliability decide who can afford magic day to day\n- how power and detectability tilt law, surveillance and inequality\n- two worked examples that turn abstract settings into lived-in streets and courts\n\nThe tables give fast defaults, but you still need to tune them to the tone you want. A low-cost, high-power setup will break a gritty game unless you add limits elsewhere.\n\nWhich of the five tends to cause the most friction in your world, cost or detectability?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/announcements/release-37060899021-0.png)",
+      "url": "https://codexcryptica.com/answers/how-does-magic-change-society-in-a-fantasy-world",
+      "image_url": "https://assets.codexcryptica.com/announcements/release-37060899021-0.png",
+      "source_id": "37060899021",
+      "status": "approved",
+      "created_at": 1790974900
     }
   ]
 }
