@@ -261,6 +261,7 @@ export const howDoIBuildABelievableConstitutionalCrisisOrCoup: AnswerConfigInput
       "how-do-you-create-a-secret-society-for-an-rpg-campaign",
       "how-do-you-start-worldbuilding-from-scratch",
       "how-do-i-give-different-civilisations-distinct-strengths-and-weaknesses",
+      "how-does-magic-affect-politics-and-government",
     ],
     discovery: {
       id: "answer-constitutional-crisis-or-coup",

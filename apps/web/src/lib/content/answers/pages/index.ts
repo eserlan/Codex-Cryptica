@@ -88,6 +88,7 @@ import { howDoYouTrackFactionTurnsBetweenRpgSessions } from "./how-do-you-track-
 import { howDoYouTrackUnresolvedPlotHooksInAnRpgCampaign } from "./how-do-you-track-unresolved-plot-hooks-in-an-rpg-campaign";
 import { howDoYouUsePlayerBackstoriesInAnRpgCampaignWorld } from "./how-do-you-use-player-backstories-in-an-rpg-campaign-world";
 import { howDoYouWriteAOneShotAdventure } from "./how-do-you-write-a-one-shot-adventure";
+import { howDoesMagicAffectPoliticsAndGovernment } from "./how-does-magic-affect-politics-and-government";
 import { howLongShouldATtrpgSessionBe } from "./how-long-should-a-ttrpg-session-be";
 import { howManyNpcsDoesAnRpgTownNeed } from "./how-many-npcs-does-an-rpg-town-need";
 import { howMuchCampaignLoreShouldPlayersBeExpectedToRemember } from "./how-much-campaign-lore-should-players-be-expected-to-remember";
@@ -223,6 +224,7 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     howDoYouTrackUnresolvedPlotHooksInAnRpgCampaign,
     howDoYouUsePlayerBackstoriesInAnRpgCampaignWorld,
     howDoYouWriteAOneShotAdventure,
+    howDoesMagicAffectPoliticsAndGovernment,
     howLongShouldATtrpgSessionBe,
     howManyNpcsDoesAnRpgTownNeed,
     howMuchCampaignLoreShouldPlayersBeExpectedToRemember,
