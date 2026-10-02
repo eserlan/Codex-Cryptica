@@ -8,43 +8,48 @@ export const howCommonShouldMagicBeInAFantasyWorld: AnswerConfigInput = {
   question: "How common should magic be in a fantasy world?",
   kind: "framework",
   shortAnswer:
-    "Set how many people can use magic, how hard it is to get good at it, and what ordinary spells can actually do, then price that access in coin, time, risk and visibility. A tiny elite with costly rites produces secrecy, patronage and fear of exposure; a common craft with cheap, visible charms reshapes work, trade, law and war, so choose the level that gives your table the institutions and everyday expectations you want to play with.",
+    "Decide what an ordinary person should expect from magic, then work backwards through aptitude, practical training access, legal permission, competence, service capacity and everyday exposure. Set those dials for the kinds of magic that matter to play; cost, risk, visibility and place shape the result.",
   sections: [
     {
       kind: "prose",
       heading:
         "Why low magic and high magic are not useful settings on their own",
       paragraphs: [
-        "Labelling a world low magic or high magic rarely helps at the table, because those terms bundle together too many different choices. One table means rare by talent but cheap to learn and openly used. Another means everyone could learn but almost nobody masters anything stronger than a hedge charm. Both get called low magic, yet they play completely differently, produce different economies, and invite different stories.",
-        "A more practical approach is to separate two questions that are often confused. Access asks who is allowed or able to try magic at all: everyone with study, only the trained, only a gifted minority, or only a tiny elite. Talent asks how exceptional the best practitioners are compared with an ordinary trained caster. A setting can give wide access but keep true brilliance rare, or keep access narrow while treating every licensed caster as roughly equal inside that circle. When you state both plainly, labels stop doing the work and your world gains handles the players can actually grip.",
-        "This separation matters because prevalence is not only about headcounts. Magical literacy among non-casters, the availability of services and items, the urban and rural difference, and the source of ability all shift when you move a dial. A city where anyone can pay a street reader for a charm but nobody outside the guild can ward a house lives differently from a hamlet where one inherited healer serves three valleys and every neighbour knows the cost. Name the dials, then set them one by one.",
+        "Labelling a world low magic or high magic rarely helps at the table, because those terms bundle together too many different choices. One table means rare by aptitude but cheap to learn and openly used. Another means everyone could learn but almost nobody masters anything stronger than a hedge charm. Both get called low magic, yet they play completely differently, produce different economies, and invite different stories.",
+        "A more practical approach is to ask five separate questions: how many could learn, how many actually get trained, how many may legally practise, how many competent practitioners exist, and how often an ordinary person encounters magic's effects. Aptitude is not training access; practical access to teachers, books, sites, reagents or patrons is not legal permission; and neither guarantees competence. Keep this separate from the mastery ceiling: how exceptional can the best practitioners become compared with a competent one?",
+        "Caster prevalence and magic-in-daily-life prevalence are separate dials. A few practitioners may support common services through durable wards, enchanted tools, public provision or high-throughput work; many people may know minor charms while powerful effects remain rare. Practitioner prevalence is also distinct from supernatural prevalence: enchanted landscapes, spirits, creatures, relics or seasonal events can make a world feel magical without living spellcasters. Set these dials by capability, since household charms, healing, divination and battle magic need not be equally common. Prevalence is a current state produced by systems and can change with schools, resources, war, migration or reform.",
+        "Decide what an ordinary person should expect from magic, then work backwards to the people, institutions and capacity needed to support it. If magic should feel wondrous and disruptive, limit routine public exposure even if aptitude is widespread. If healing, sending and wards should be ordinary services, provide enough practitioners or infrastructure to deliver them. Magical literacy among non-casters, service terms and spatial distribution all shift when you move a dial. A city where anyone can seek a street charm but only guild members can ward a house lives differently from a hamlet where one inherited healer serves three valleys. Name the dials, then set them one by one.",
       ],
     },
     {
       kind: "list",
-      heading: "Who can use magic, and where does the ability come from",
+      heading: "Trace the path from aptitude to everyday exposure",
       intro:
-        "Start by fixing who is allowed to attempt magic and what kind of origin your table needs to explain. Pick the band that gives you the stories you want, then follow the consequences into training, family and law:",
+        "These stages can overlap in different ways; they are questions to answer, not mutually exclusive bands. Set them for each capability that matters to play:",
       items: [
         {
-          term: "Everyone with study",
-          text: "If anyone who puts in the work can learn, magic behaves like literacy or a craft. Schools, apprenticeships, fees and examinations decide who actually gets good. Bloodline matters little, but access to teachers, books and time matters a great deal. Expect municipal classes, competing manuals, and disputes about standards.",
+          term: "Aptitude",
+          text: "Who could learn or perform this magic in principle: anyone with study, a gifted minority, a particular lineage, or those chosen by a patron or place? State how that potential is recognised, if at all.",
         },
         {
-          term: "Trained users only",
-          text: "Talent may be widespread, but lawful practice requires initiation, licence or induction. Folk without the mark can still learn in secret, yet their work is treated as unlawful, hedge or heretical. This model suits guilds, orders, temples and state colleges that turn a common aptitude into a controlled profession.",
+          term: "Practical training access",
+          text: "Who can reach teachers, books, sites, reagents or patrons, and afford the time and cost of training? Open aptitude can still lead to few trained users when those routes are scarce.",
         },
         {
-          term: "Gifted minority",
-          text: "A noticeable share of people carry the knack, perhaps one household in ten, but it takes testing to find and training to shape. Sponsors compete to identify children early, families treat a gifted child as a resource, and those passed over must live beside a power they cannot claim. Mobility and resentment both run high.",
+          term: "Legal access",
+          text: "Who is permitted or licensed to practise, and who sets those rules? People may learn in secret or practise through custom even when the law restricts professional use.",
         },
         {
-          term: "Tiny elite",
-          text: "True casters are few enough to name in a district, perhaps one in a generation per valley. Each one is a political fact. Rulers keep them close, rivals try to buy or remove them, and ordinary people may go years without seeing lawful magic done openly. Secrecy, patronage and fear of exposure dominate.",
+          term: "Competence and practitioner prevalence",
+          text: "How many trained people become reliable at the work, and how many are practising in a place? A large pool of learners can still produce a tiny competent profession; a small group can serve a much wider region.",
         },
         {
-          term: "Hereditary, learned, granted or accidental",
-          text: "Hereditary gifts entrench families and dowries of lore. Learned magic rewards investment and favours cities where teachers collect. Granted power ties the caster to a patron, divine or otherwise, who can withdraw favour or demand service. Accidental or site-bound magic creates places that matter more than bloodlines, and traffic to those places becomes a geography the party can read.",
+          term: "Service capacity and everyday exposure",
+          text: "Count capacity, not just practitioners: how many people can one healer treat in a day, how long does a ward last, and can routine work be delegated or stockpiled? Then ask how often people encounter the service or effect, including through infrastructure, tools and lasting rituals.",
+        },
+        {
+          term: "Origin and source of ability",
+          text: "Hereditary gifts can entrench families; learned magic rewards investment; granted power ties a caster to a patron; accidental or site-bound magic makes particular places matter. These sources shape the routes into practice without deciding prevalence by themselves.",
         },
         {
           term: "Magical literacy among non-casters",
@@ -55,17 +60,25 @@ export const howCommonShouldMagicBeInAFantasyWorld: AnswerConfigInput = {
     {
       kind: "list",
       heading:
-        "Five questions that set prevalence before you place a single mage",
+        "Seven questions that set prevalence before you place a single mage",
       intro:
-        "Use these as your framework. Answer briefly and concretely for your own world, then carry those answers into streets, prices and laws:",
+        "Use these as your framework. Keep aptitude, practical training access and legal permission distinct. Answer briefly and concretely for your own world, then carry those answers into streets, prices and laws:",
       items: [
         {
-          term: "Who can learn or use magic at all",
-          text: "Name the pool plainly and how it is identified: open study, licensed instruction, tested gift, or rare inheritance. State the rough share in a settlement of a thousand who could attempt a simple rite if they chose, and who decides whether that attempt is lawful. This one line determines whether magic is a right, a credential or a birthright.",
+          term: "Who has the aptitude for magic?",
+          text: "Name who could learn or perform each kind of magic in principle: anyone, a gifted minority, a particular lineage, or people chosen by a patron or place. Give a rough share in a settlement of a thousand, whether that potential is recognised or hidden, and what evidence reveals it. Do not use access to a teacher or permission to practise as a measure of aptitude.",
         },
         {
-          term: "How difficult is it to become competent",
-          text: "Fix training time, cost and gatekeeping. Is competence a matter of weeks with a patient teacher, years of formal study, or a decade inside an order that selects few? Note fees, apprenticeship places, required travel, and any service owed after training. If competence is dear, expect debt, patronage and regional shortage.",
+          term: "Who can get practical training?",
+          text: "Decide who can reach teachers, books, sites, reagents or patrons, and afford the time and cost of instruction. Open aptitude can still produce few trained users when schools, apprenticeship places or travel are scarce. Note who controls these routes and any service owed after training.",
+        },
+        {
+          term: "Who may legally practise?",
+          text: "Set who may cast in public or offer services, who issues licences or credentials, and what happens to those who practise without them. Someone may have the aptitude and receive training yet still be barred by law; others may practise through custom or in secret.",
+        },
+        {
+          term: "How many become competent practitioners?",
+          text: "Set the time and effort needed to become reliable, then estimate how many trained people reach that level and continue practising. A patient teacher may bring competence in weeks, while a selective order may take a decade to produce a few experts. If competence is rare, expect debt, patronage and regional shortages.",
         },
         {
           term: "How powerful is ordinary magic",
@@ -83,7 +96,8 @@ export const howCommonShouldMagicBeInAFantasyWorld: AnswerConfigInput = {
     },
     {
       kind: "table",
-      heading: "What changes when magic moves from rare to ubiquitous",
+      heading:
+        "Illustrative patterns from rare to ubiquitous magic, not predictions",
       headers: [
         "Prevalence",
         "Everyday access",
@@ -92,25 +106,25 @@ export const howCommonShouldMagicBeInAFantasyWorld: AnswerConfigInput = {
       ],
       rows: [
         [
-          "Rare (tiny elite, few services)",
+          "Sparse exposure",
           "Services by appointment; most people never buy a spell; items are relics rather than stock",
           "Patronage, private households and secrecy; knowledge kept in families or single orders",
           "Mages as named assets and deniable specialists; courts, roads and markets work without them",
         ],
         [
-          "Uncommon (gifted minority, licensed trade)",
+          "Local or occasional services",
           "Licensed readers in market towns; rural hamlets rely on travelling or hedge practitioners",
           "Guilds, examinations and per-casting fees; urban wards and rural hedge alternatives side by side",
           "Small corps inside guard and council; counter charms issued where threat is known",
         ],
         [
-          "Common (teachable craft, municipal presence)",
+          "Routine public services",
           "Municipal desks for healing, warding and sending; apprentices visible on the street",
           "Civic colleges, inspected practice and price lists; reagents traded like other commodities",
           "Ward infrastructure, precinct casters and routine counters; doctrine assumes magical support",
         ],
         [
-          "Ubiquitous (everyday literacy, household charms)",
+          "Woven into daily life",
           "Household charms for mending, lighting and keeping; market stalls for minor reagents",
           "Standards, liability and curriculum; regulation focuses on misuse rather than permission",
           "Public codes for magical conduct; warfare and building assume counters are standard",
@@ -119,21 +133,21 @@ export const howCommonShouldMagicBeInAFantasyWorld: AnswerConfigInput = {
     },
     {
       kind: "list",
-      heading: "Urban and rural access rarely match",
+      heading: "Spatial distribution: where do the prerequisites cluster?",
       intro:
-        "Prevalence looks different on the street than on the register. Where people live, who they know, and what they can pay shape whether magic feels close or distant:",
+        "Ask where teachers, reagents, sacred sites, ley lines, patrons, clients or other prerequisites cluster, and why. Cities and countryside offer one useful contrast, but magic might instead gather around monasteries, mines, ruins, forests, islands, nomadic routes or military garrisons:",
       items: [
         {
           term: "City concentration",
-          text: "Teachers, libraries, reagents and clients collect in towns, so licensed practice clusters there. Price lists are posted, apprentices are visible, and officials can inspect. Cities therefore display magic more openly even when the underlying talent is evenly spread.",
+          text: "In one plausible pattern, teachers, libraries, reagents and clients collect in towns, so licensed practice clusters there. Price lists are posted, apprentices are visible, and officials can inspect. Cities may display magic more openly even when aptitude is evenly spread.",
         },
         {
-          term: "Rural scarcity and hedge answers",
-          text: "Hamlets see fewer qualified casters and longer gaps between visits. Hedge readers, travelling charmers and inherited charms fill the shortage where licensed rates are out of reach. Expect slower, cheaper and legally ambiguous alternatives rather than no magic at all.",
+          term: "Rural and remote patterns",
+          text: "Where qualified casters or required materials are distant, hamlets may have longer gaps between visits. Hedge readers, travelling charmers and inherited charms can fill the need when licensed services are hard to reach. These alternatives may be slower, cheaper or legally ambiguous, depending on the place.",
         },
         {
           term: "Availability of services and items",
-          text: "Decide for each common need whether service is retail (pay per casting), subscription (ward by season), or rationed (temple healing on fixed days). For items, note whether charms are made to order, stocked by shops, or limited to relics held by families and orders. A setting where healing is retail but warding is rationed feels very different from the reverse.",
+          text: "Ask on what terms an ordinary household can reliably obtain each service: retail payment, public funding, temple or employer provision, communal support, guild membership, patronage, rationing, barter or custom. For items, note whether charms are made to order, stocked, shared or limited to relics. A setting where healing is public but warding is rationed feels very different from the reverse.",
         },
         {
           term: "How to make the contrast playable",
@@ -158,7 +172,7 @@ export const howCommonShouldMagicBeInAFantasyWorld: AnswerConfigInput = {
         },
         {
           term: "Why it works",
-          text: "The two versions asked and answered the same five questions, then followed those answers into visible places and prices. The uncommon dale produced scarcity, travel, per-casting cost and legal ambiguity. The common dale produced posted fees, queues, inspection and rivalry between guild standard and hedge price. In both cases the party's choices touched coin, law, waiting lists or locked storerooms rather than a vague sense that magic was everywhere or nowhere.",
+          text: "The two versions answered the same seven questions, then followed those answers into visible places and prices. The uncommon dale produced scarcity, travel, per-casting cost and legal ambiguity. The common dale produced posted fees, queues, inspection and rivalry between guild standard and hedge price. In both cases the party's choices touched coin, law, waiting lists or locked storerooms rather than a vague sense that magic was everywhere or nowhere.",
         },
       ],
     },
@@ -167,23 +181,23 @@ export const howCommonShouldMagicBeInAFantasyWorld: AnswerConfigInput = {
       heading:
         "Prevalence checklist: lock your setting before you place encounters",
       intro:
-        "Work through these briefly, then place casters, shops and offices to match the result:",
+        "Choose the everyday expectations first, then work backwards through this chain for each kind of magic that matters to play: aptitude → training access → legal access → competence → service capacity → everyday exposure. Layer cost, risk, visibility and geography over it, then place casters, services and institutions to match:",
       items: [
-        "Pick one band for access (everyone, trained users, gifted minority, tiny elite) and state how that access is identified or licensed.",
+        "For each capability, state who has the aptitude, who can practically get trained, who may legally practise, and how many become competent practitioners.",
         "Pick one source mix (hereditary, learned, granted, accidental or place-bound) and note which families, schools or sites it empowers.",
-        "Answer the five framework questions in concrete terms: pool, training time and cost, ordinary power, price and risk per use, and visible trace.",
-        "Price the three services your table will meet most often, and note the per-casting cost or subscription for a common household.",
-        "Set urban and rural availability separately: what the market town stocks openly and what the hamlets get through hedge or circuit riders.",
+        "Answer the seven framework questions in concrete terms: aptitude, practical training access, legal permission, competence, ordinary power, price and risk per use, and visible trace.",
+        "For the services your table will meet most often, note the terms on which a household can reliably obtain them and the capacity available: who provides them, how many can be served, and how often.",
+        "Map spatial distribution: what clusters around the market town, and what instead gathers at sacred sites, resource sources, borderlands or other places? Keep city and hamlet availability distinct where it matters.",
         "Decide what an ordinary non-caster knows: how they recognise a ward, which door to queue at, and what a lawful charm looks like versus a hedge one.",
-        "Test the result with one everyday scene: a sick child, a spoiled store, or a message to a distant authority, and confirm that coin, law, and waiting are clear.",
+        "Test the result with one everyday scene: a sick child, a spoiled store, or a message to a distant authority, and confirm that terms, capacity, law and waiting are clear. Revisit the answers when schools, resources, war or political reform change the system.",
       ],
     },
   ],
   codexConnection: {
     heading: "Place magical prevalence in Codex Cryptica",
     paragraphs: [
-      "Record each magical capability with its access band, training time and cost, ordinary power, price per use and visible trace, then link it to the families, guilds, colleges and circuit routes that actually deliver it. Tag settlements and quarters for urban concentration versus rural scarcity so the graph shows where licensed practice, hedge answers and temple queues each appear.",
-      "Link household and quarter records to the services they rely on, with posted fees or barter terms kept beside the entry. When the table tests a different prevalence, you can see which ledger, waiting list or storeroom their choice touches overnight.",
+      "Record prevalence, access conditions and service availability on linked settlement, faction and location entities so regional differences remain visible in the campaign graph. Note which families, guilds, colleges, sites or routes shape each capability, and how ordinary people encounter its effects.",
+      "Keep the terms of access, ordinary power, capacity and visible traces with the relevant records. When the table tests a different prevalence, those linked details help you follow how the change affects places and institutions.",
     ],
     linkText: "Try the settlement generator",
     href: "/generators/settlement",
@@ -239,7 +253,7 @@ export const howCommonShouldMagicBeInAFantasyWorld: AnswerConfigInput = {
     ],
     userJob: "understand",
     uniqueValue:
-      "A prevalence framework that separates access from talent and answers five practical questions about competence, power, cost and visibility, with a four-level prevalence table and urban versus rural guidance.",
+      "A capability-first prevalence framework that follows aptitude through training, legal access, competence, service capacity and everyday exposure, with five practical questions and spatial-distribution guidance.",
     relatedIntents: [
       "answer-create-magic-system",
       "answer-magic-creates-social-classes-and-inequality",
@@ -255,7 +269,7 @@ export const howCommonShouldMagicBeInAFantasyWorld: AnswerConfigInput = {
       {
         with: "answer-magic-creates-social-classes-and-inequality",
         reason:
-          "The social-classes answer traces how talent, schooling and licensing produce stratification among households; this answer sets the broader prevalence band that determines how large that talent pool is and where access concentrates.",
+          "The social-classes answer traces how aptitude, schooling and licensing produce stratification among households; this answer follows prevalence from potential ability through training, practice and everyday exposure.",
       },
       {
         with: "answer-magic-affects-politics-and-government",
@@ -267,7 +281,7 @@ export const howCommonShouldMagicBeInAFantasyWorld: AnswerConfigInput = {
   seo: {
     title: "How common should magic be in a fantasy world? | Codex Cryptica",
     description:
-      "Choose who can use magic, how hard it is to learn and what everyday spells do, with urban versus rural access and a prevalence table for your table.",
+      "Choose how aptitude, training, permission and service capacity shape everyday magic, with capability-specific prevalence and spatial distribution examples.",
     image:
       "https://assets.codexcryptica.com/og/how-common-should-magic-be-in-a-fantasy-world.jpg",
     imageAlt:
