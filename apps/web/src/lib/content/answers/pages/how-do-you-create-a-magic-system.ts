@@ -137,6 +137,7 @@ export const howDoYouCreateAMagicSystem: AnswerConfigInput = {
     "how-do-i-run-common-character-roles-in-a-fantasy-rpg",
     "how-do-fantasy-cities-defend-against-flying-creatures-and-teleportation",
     "how-do-i-upgrade-a-player-characters-weapon-without-replacing-it",
+    "how-should-magic-have-been-discovered-in-my-world",
   ],
   discovery: {
     id: "answer-create-magic-system",
@@ -155,6 +156,13 @@ export const howDoYouCreateAMagicSystem: AnswerConfigInput = {
     relatedIntents: [
       "answer-worldbuilding-from-scratch",
       "answer-npcs-memorable",
+    ],
+    acknowledgedOverlap: [
+      {
+        with: "answer-magic-discovery-origin",
+        reason:
+          "This answer designs a magic system's costs and limits and considers their consequences; the discovery answer traces how people learned magic and how that history shapes access and authority.",
+      },
     ],
   },
   seo: {

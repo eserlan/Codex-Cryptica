@@ -312,6 +312,7 @@ export const howDoIGiveDifferentCivilisationsDistinctStrengthsAndWeaknesses: Ans
       "what-can-players-actually-buy-and-sell-in-a-fantasy-settlement",
       "how-do-i-make-different-cultures-feel-distinct-without-relying-on-stereotypes",
       "how-do-fantasy-cities-defend-against-flying-creatures-and-teleportation",
+      "how-should-magic-have-been-discovered-in-my-world",
     ],
     labels: ["fantasy"],
     discovery: {

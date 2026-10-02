@@ -170,6 +170,7 @@ export const howDoYouCreateAFantasyFaction: AnswerConfigInput = {
     "how-do-fantasy-cities-defend-against-flying-creatures-and-teleportation",
     "how-do-i-run-a-campaign-where-the-players-own-a-business",
     "how-do-i-make-rival-captains-navies-and-pirate-factions-matter",
+    "how-should-magic-have-been-discovered-in-my-world",
   ],
   discovery: {
     id: "answer-fantasy-faction",

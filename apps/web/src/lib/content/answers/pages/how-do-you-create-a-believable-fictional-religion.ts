@@ -166,6 +166,7 @@ export const howDoYouCreateABelievableFictionalReligion: AnswerConfigInput = {
     "how-do-you-create-a-secret-society-for-an-rpg-campaign",
     "how-do-i-run-common-character-roles-in-a-fantasy-rpg",
     "how-do-i-make-different-cultures-feel-distinct-without-relying-on-stereotypes",
+    "how-should-magic-have-been-discovered-in-my-world",
   ],
   discovery: {
     id: "answer-fictional-religion",
