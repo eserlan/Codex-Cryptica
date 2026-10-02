@@ -279,3 +279,18 @@ Dev server, same vault, two runs after both changes: graph at 19.3 s / 11.3 s,
 all images 6 s / 3.3 s after the graph, total long-animation-frame time 14.0 s /
 7.7 s (23-27 s earlier the same day). The remaining long frame (about 4 s) comes
 before the graph appears.
+
+## Pre-graph freeze: Cytoscape's built-in fit
+
+The remaining 3.3-5.5 s frame before the graph appeared was mostly fitting the
+view. `initGraph` constructed Cytoscape with a `preset` layout, whose default
+`fit: true` measures every element's full bounds, labels and edges included:
+constructing took 918 ms warm with that fit and 70 ms without it (about 3 s on
+first load). Later fits (first elements, layout passes) repeated the same
+full measurement, the first of them 2.5 s.
+
+Fits now use `nodeFitBounds`: the nodes' own boxes, without labels, edge curves,
+overlays or underlays (labels are not drawn at overview zoom; edges stay between
+their nodes). `initGraph` constructs without the preset fit and fits to those
+bounds itself. Dev server, same vault: graph construction including its fit
+went from 2,950 ms to 1,121 ms and the pre-graph frame from 5.5 s to 2.9 s.

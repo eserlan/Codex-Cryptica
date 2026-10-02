@@ -1,4 +1,5 @@
 import type { Core } from "cytoscape";
+import { nodeFitBounds } from "./fit-bounds";
 
 export * from "./transformer";
 export * from "./layouts/timeline";
@@ -131,7 +132,7 @@ export const initGraph = async (options: GraphOptions) => {
   ).length;
   const isLargeGraph = isLargeGraphSize(nodeCount, edgeCount);
 
-  return (cytoscape as unknown as (opt: any) => Core)({
+  const cy = (cytoscape as unknown as (opt: any) => Core)({
     container: options.container,
     headless: options.headless,
     elements: options.elements || [],
@@ -155,8 +156,13 @@ export const initGraph = async (options: GraphOptions) => {
         },
       },
     ],
+    // Cytoscape's preset layout fits by default, measuring every label and
+    // edge: 0.9 s warm and about 3 s on first load for a 1,625-node vault,
+    // against 70 ms to construct without it. The view is fitted to the nodes'
+    // own extent just below instead.
     layout: options.layout ?? {
       name: "preset",
+      fit: false,
     },
     // Rendering Optimizations
     hideLabelsOnViewport: options.hideLabelsOnViewport ?? true,
@@ -175,4 +181,8 @@ export const initGraph = async (options: GraphOptions) => {
     maxZoom: options.maxZoom ?? 9.0,
     wheelSensitivity: options.wheelSensitivity ?? 1.0,
   });
+  if (!options.layout && !options.headless && cy.nodes().length > 0) {
+    cy.fit(nodeFitBounds(cy), 30);
+  }
+  return cy;
 };

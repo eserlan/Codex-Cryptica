@@ -5,6 +5,7 @@ import { getTimelineLayout, hasTimelineDate } from "./layouts/timeline";
 import { setCentralNode } from "./layouts/orbit";
 import type { GraphNode } from "./transformer";
 import { isLayoutCollinear } from "./geometry";
+import { nodeFitBounds } from "./fit-bounds";
 
 export interface LayoutOptions {
   timelineMode: boolean;
@@ -319,7 +320,7 @@ export class LayoutManager {
     timeout = setTimeout(finish, FIT_ANIMATION_TIMEOUT_MS);
 
     this.cy.animate({
-      fit: { eles: this.cy.elements(), padding: 20 },
+      fit: { eles: nodeFitBounds(this.cy), padding: 20 },
       duration: 800,
       easing,
       complete: finish,
@@ -414,7 +415,7 @@ export class LayoutManager {
   private handleGuestInitialFit(options: LayoutOptions) {
     this.cy.nodes().removeData("isPendingLayout");
     this.clearPendingLayout();
-    this.cy.fit(this.cy.nodes(), 20);
+    this.cy.fit(nodeFitBounds(this.cy), 20);
     // On mobile the full-fit zoom is often unreadably small — enforce a minimum
     if (options.isMobile && this.cy.zoom() < 0.6) {
       this.cy.zoom({
@@ -744,7 +745,7 @@ export class LayoutManager {
           }
         }
       });
-      this.cy.fit(this.cy.elements(), 20);
+      this.cy.fit(nodeFitBounds(this.cy), 20);
     }
 
     // Scale timeout: draft quality (500+ nodes) can take 20-30s on slow machines
