@@ -19,7 +19,7 @@
   onclick={onToggle}
   aria-label={open ? "Close help assistant" : "Open help assistant"}
   aria-expanded={open}
-  title={open ? "Close help assistant" : "Open help assistant"}
+  title={open ? "Close Cif" : "Ask Cif"}
   data-testid="help-assistant-button"
   class="shrink-0 w-11 h-11 md:w-10 md:h-10 flex items-center justify-center rounded-md transition-all duration-200 group relative border {open
     ? 'bg-chrome-accent/10 text-chrome-accent border-chrome-accent/30 shadow-sm'

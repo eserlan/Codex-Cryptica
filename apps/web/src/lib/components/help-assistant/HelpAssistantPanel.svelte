@@ -91,7 +91,12 @@
     <header
       class="flex items-center justify-between gap-2 border-b border-chrome-border px-3 py-2"
     >
-      <h2 class="text-sm font-bold text-chrome-text">Help assistant</h2>
+      <div class="flex items-baseline gap-2">
+        <h2 class="text-sm font-bold text-chrome-text">Cif</h2>
+        <span class="text-[10px] uppercase tracking-wider text-chrome-muted"
+          >Codex guide</span
+        >
+      </div>
       <div class="flex items-center gap-1">
         {#if assistant.messages.length > 0}
           <button
@@ -122,8 +127,8 @@
     >
       {#if assistant.messages.length === 0}
         <p class="text-xs leading-relaxed text-chrome-muted">
-          Ask how to do something in Codex Cryptica. I can also show you where a
-          button is. I can't change anything in your vault.
+          Ask Cif how to do something in Codex Cryptica. Cif can also show you
+          where a button is, but never changes anything in your vault.
         </p>
       {/if}
 
