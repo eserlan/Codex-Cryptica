@@ -133,6 +133,7 @@ export const howDoYouCreateAPantheon: AnswerConfigInput = {
     "how-do-you-create-a-fantasy-faction",
     "how-do-you-organise-rpg-campaign-notes",
     "how-do-i-make-different-cultures-feel-distinct-without-relying-on-stereotypes",
+    "how-does-magic-affect-politics-and-government",
     "how-should-magic-have-been-discovered-in-my-world",
   ],
   discovery: {
