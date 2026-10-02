@@ -141,7 +141,7 @@ export const howDoesMagicCreateSocialClassesAndInequality: AnswerConfigInput = {
   codexConnection: {
     heading: "Map magical inequality in Codex Cryptica",
     paragraphs: [
-      "Record each magical capability beside the families, guilds and offices that control its teaching and licensing. Tag households and quarters with access and price, so the graph shows at a glance who can afford regular use, who pays per casting, and who relies on hedge or counter traditions.",
+      "Record each magical capability beside the families, guilds and offices that control its teaching and licensing. Label households and quarters with access and price, so the graph shows at a glance who can afford regular use, who pays per casting, and who relies on hedge or counter traditions.",
       "Link gifted characters to patrons, sponsors and contracts, and note where a licence, ward or prejudice changes what that character may do in play. When the table tests a policy, the map tells you which ledger, storeroom or register their choice actually touches.",
     ],
     linkText: "Try the faction generator",
