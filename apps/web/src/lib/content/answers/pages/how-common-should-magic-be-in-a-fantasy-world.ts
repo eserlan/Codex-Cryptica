@@ -8,7 +8,7 @@ export const howCommonShouldMagicBeInAFantasyWorld: AnswerConfigInput = {
   question: "How common should magic be in a fantasy world?",
   kind: "framework",
   shortAnswer:
-    "Decide what an ordinary person should expect from magic, then work backwards: who has the aptitude, who can get trained, who may practise, how many become competent, and what services or effects reach daily life. Set those dials for the kinds of magic that matter to play; cost, risk, visibility and place shape the result.",
+    "Decide what an ordinary person should expect from magic, then work backwards through aptitude, practical training access, legal permission, competence, service capacity and everyday exposure. Set those dials for the kinds of magic that matter to play; cost, risk, visibility and place shape the result.",
   sections: [
     {
       kind: "prose",
@@ -60,17 +60,25 @@ export const howCommonShouldMagicBeInAFantasyWorld: AnswerConfigInput = {
     {
       kind: "list",
       heading:
-        "Five questions that set prevalence before you place a single mage",
+        "Seven questions that set prevalence before you place a single mage",
       intro:
-        "Use these as your framework. Answer briefly and concretely for your own world, then carry those answers into streets, prices and laws:",
+        "Use these as your framework. Keep aptitude, practical training access and legal permission distinct. Answer briefly and concretely for your own world, then carry those answers into streets, prices and laws:",
       items: [
         {
-          term: "Who can learn or use magic at all",
-          text: "Name the pool plainly and how it is identified: open study, licensed instruction, tested gift, or rare inheritance. State the rough share in a settlement of a thousand who could attempt a simple rite if they chose, and who decides whether that attempt is lawful. This one line determines whether magic is a right, a credential or a birthright.",
+          term: "Who has the aptitude for magic?",
+          text: "Name who could learn or perform each kind of magic in principle: anyone, a gifted minority, a particular lineage, or people chosen by a patron or place. Give a rough share in a settlement of a thousand, whether that potential is recognised or hidden, and what evidence reveals it. Do not use access to a teacher or permission to practise as a measure of aptitude.",
         },
         {
-          term: "How difficult is it to become competent",
-          text: "Fix training time, cost and gatekeeping. Is competence a matter of weeks with a patient teacher, years of formal study, or a decade inside an order that selects few? Note fees, apprenticeship places, required travel, and any service owed after training. If competence is dear, expect debt, patronage and regional shortage.",
+          term: "Who can get practical training?",
+          text: "Decide who can reach teachers, books, sites, reagents or patrons, and afford the time and cost of instruction. Open aptitude can still produce few trained users when schools, apprenticeship places or travel are scarce. Note who controls these routes and any service owed after training.",
+        },
+        {
+          term: "Who may legally practise?",
+          text: "Set who may cast in public or offer services, who issues licences or credentials, and what happens to those who practise without them. Someone may have the aptitude and receive training yet still be barred by law; others may practise through custom or in secret.",
+        },
+        {
+          term: "How many become competent practitioners?",
+          text: "Set the time and effort needed to become reliable, then estimate how many trained people reach that level and continue practising. A patient teacher may bring competence in weeks, while a selective order may take a decade to produce a few experts. If competence is rare, expect debt, patronage and regional shortages.",
         },
         {
           term: "How powerful is ordinary magic",
@@ -164,7 +172,7 @@ export const howCommonShouldMagicBeInAFantasyWorld: AnswerConfigInput = {
         },
         {
           term: "Why it works",
-          text: "The two versions asked and answered the same five questions, then followed those answers into visible places and prices. The uncommon dale produced scarcity, travel, per-casting cost and legal ambiguity. The common dale produced posted fees, queues, inspection and rivalry between guild standard and hedge price. In both cases the party's choices touched coin, law, waiting lists or locked storerooms rather than a vague sense that magic was everywhere or nowhere.",
+          text: "The two versions answered the same seven questions, then followed those answers into visible places and prices. The uncommon dale produced scarcity, travel, per-casting cost and legal ambiguity. The common dale produced posted fees, queues, inspection and rivalry between guild standard and hedge price. In both cases the party's choices touched coin, law, waiting lists or locked storerooms rather than a vague sense that magic was everywhere or nowhere.",
         },
       ],
     },
@@ -177,7 +185,7 @@ export const howCommonShouldMagicBeInAFantasyWorld: AnswerConfigInput = {
       items: [
         "For each capability, state who has the aptitude, who can practically get trained, who may legally practise, and how many become competent practitioners.",
         "Pick one source mix (hereditary, learned, granted, accidental or place-bound) and note which families, schools or sites it empowers.",
-        "Answer the five framework questions in concrete terms: pool, training time and cost, ordinary power, price and risk per use, and visible trace.",
+        "Answer the seven framework questions in concrete terms: aptitude, practical training access, legal permission, competence, ordinary power, price and risk per use, and visible trace.",
         "For the services your table will meet most often, note the terms on which a household can reliably obtain them and the capacity available: who provides them, how many can be served, and how often.",
         "Map spatial distribution: what clusters around the market town, and what instead gathers at sacred sites, resource sources, borderlands or other places? Keep city and hamlet availability distinct where it matters.",
         "Decide what an ordinary non-caster knows: how they recognise a ward, which door to queue at, and what a lawful charm looks like versus a hedge one.",
