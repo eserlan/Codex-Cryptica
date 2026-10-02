@@ -45,7 +45,7 @@ export const howDoesMagicAffectPoliticsAndGovernment: AnswerConfigInput = {
         },
         {
           term: "Logistics, communication and governing at distance",
-          text: "Sending, teleportation and bound messengers compress distance. A realm that can move orders and officials instantly can centralise tax, justice and command, but it also concentrates risk: the circle, tower or relay becomes a target, and the people who operate it become gatekeepers. If the effect is rare or costly, expect trunk routes between capitals with mundane roads covering the last miles, and a visible hierarchy of places that are on the network and places that are not.",
+          text: "Sending, teleportation and bound messengers compress distance. A state that can move orders and officials instantly can centralise tax, justice and command, but it also concentrates risk: the circle, tower or relay becomes a target, and the people who operate it become gatekeepers. If the effect is rare or costly, expect trunk routes between capitals with mundane roads covering the last miles, and a visible hierarchy of places that are on the network and places that are not.",
         },
       ],
     },
@@ -219,6 +219,11 @@ export const howDoesMagicAffectPoliticsAndGovernment: AnswerConfigInput = {
       "answer-constitutional-crisis-or-coup",
     ],
     acknowledgedOverlap: [
+      {
+        with: "answer-create-magic-system",
+        reason:
+          "The magic-system answer designs magical rules, costs and limits; this answer assumes those capabilities exist and traces who controls, regulates and counters them through political institutions.",
+      },
       {
         with: "answer-fantasy-city-defence-flight-teleportation",
         reason:
