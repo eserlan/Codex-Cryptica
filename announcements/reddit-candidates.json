@@ -1,5 +1,5 @@
 {
-  "updated_at": 1790959443,
+  "updated_at": 1790960832,
   "candidates": [
     {
       "id": "reddit-36492955284-what-rpg-map-making-tool-should-you-actu",
@@ -32,14 +32,14 @@
       "created_at": 1790721855
     },
     {
-      "id": "reddit-37032544014-large-graphs-were-readable-as-data-but-n",
-      "title": "Large graphs were readable as data but not as factions",
-      "body": "After about a hundred entities my graph stopped being a map of relationships and started looking like static. I could see nodes, but not which crew belonged to which harbour or which faction actually held together.\n\nI added a Groups state to the graph that draws community-aware backgrounds behind clusters, so factions and crews read as shapes instead of dot clouds.\n\nWhat changes:\n\n- backgrounds wrap the communities the graph already detects, not boxes you have to draw by hand\n- each group gets a distinct shape so you can spot a faction at a glance\n- toggle Groups on and off without changing the layout\n- easier to scan a large vault for who belongs together before you zoom into links\n\nIt adds visual weight, and on very dense vaults the shapes can overlap until you filter. I left it as a state you toggle for that reason, not a default.\n\nWhich vault of yours would be clearer as groups rather than as a single tangle of links?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/announcements/release-37032544014-1.png)",
-      "url": "https://codexcryptica.com/help/graph-basics",
-      "image_url": "https://assets.codexcryptica.com/announcements/release-37032544014-1.png",
+      "id": "reddit-37032544014-my-pirate-arcs-kept-collapsing-into-eith",
+      "title": "My pirate arcs kept collapsing into either ship math or empty ocean",
+      "body": "Every pirate campaign I ran fell into the same hole. Either the ship fight turned into forty minutes of cannon math while half the table waited, or the sea between islands was just fast-forward with a random encounter.\n\nI wrote a small cluster of six guides that treats piracy as exploration first and keeps the crew involved together, on deck and on shore.\n\nThey cover:\n\n- running an exploration-first pirate campaign that does not stall at the dock\n- ship-to-ship combat where everyone has a job, not just the captain\n- rival captains and factions that remember what the crew did in the last port\n- building islands and ports that feel different and worth coming back to\n- picking a pirate TTRPG that fits your table, making sea travel feel like travel, and what to trim when you only have a short slot\n\nThe guides are short, system-agnostic, and built to read before a session, with tables and examples you can lift directly.\n\nWhat stalls your high-seas game more often, the ship battle itself or what happens between islands?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/announcements/release-37032544014-2.png)",
+      "url": "https://codexcryptica.com/answers/how-do-i-run-a-pirate-campaign-focused-on-exploration",
+      "image_url": "https://assets.codexcryptica.com/announcements/release-37032544014-2.png",
       "source_id": "37032544014",
       "status": "approved",
-      "created_at": 1790959443
+      "created_at": 1790960832
     }
   ]
 }
