@@ -4,7 +4,7 @@ export const graphView: FeatureEntry = {
   id: "graph-view",
   title: "Graph",
   summary:
-    "See every entity as a node and every connection as a line, with automatic grouping of closely linked entities so you can explore how your world fits together.",
+    "See entities as nodes and connections as lines. The Graph can show automatic visual clusters of connected entities; these are not manually created groups and do not change entity data.",
   channel: "production",
   routes: ["/(app)"],
   areas: ["graph"],
@@ -13,12 +13,13 @@ export const graphView: FeatureEntry = {
   workflows: [
     {
       id: "graph-grouping",
-      title: "Show groups of connected entities",
+      title: "Understand visual groups in the Graph",
       steps: [
         "Open the Graph from the activity bar.",
-        "Use Groups in the bottom-left toolbar to show or hide coloured group backgrounds. On mobile, open the graph toolbar menu.",
-        "Use Redraw to rearrange closely linked entities into their own areas; entities with no connections are lined up separately.",
-        "Groups follow connections rather than categories or labels. Toggling Groups changes backgrounds, not node positions; small groups may have no background.",
+        "Use Groups in the bottom-left toolbar to cycle soft, strong, and hidden backgrounds. On mobile, open the graph toolbar menu.",
+        "These clusters are calculated from entity connections. You cannot manually create a Graph group or add, remove, rename, resize, or style its members.",
+        "Use Redraw to rearrange connected entities. Arrange cards on Spatial Canvas, or save a Graph layout with a Saved View.",
+        "Groups follow connections, not categories or labels. Backgrounds change no entity data, relationships, or node positions; small groups may have no background.",
       ],
       actionIds: ["graph.open"],
     },
