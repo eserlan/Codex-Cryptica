@@ -4,6 +4,7 @@ import { sanitizeHelpContext } from "../src/context";
 import { FEATURE_REGISTRY } from "../src/registry";
 import {
   MIN_RELEVANCE,
+  cosineSimilarity,
   rankChunks,
   retrieve,
   stem,
@@ -145,9 +146,10 @@ describe("rankChunks", () => {
     });
     const ranked = rankChunks(
       "what can I do here?",
-      [registry, otherRegistry, ...filler],
+      [registry, otherRegistry, { ...filler[0], embedding: [1, 0] }],
       FEATURE_REGISTRY,
       connectionsScreen,
+      [1, 0],
     );
     expect(ranked.map((r) => r.chunk.id)).toEqual([
       "registry:entity-connections#0",
@@ -298,5 +300,62 @@ describe("text handling — comparison words", () => {
     expect(tokenize("Is a pin the same as a connection?")).toEqual(
       tokenize("a pin a connection"),
     );
+  });
+});
+
+describe("semantic vector retrieval", () => {
+  const v1 = [1, 0, 0, 0];
+  const v2 = [0.95, 0.05, 0, 0];
+  const v3 = [0, 1, 0, 0];
+
+  it("calculates cosine similarity correctly", () => {
+    expect(cosineSimilarity(v1, v1)).toBeCloseTo(1.0);
+    expect(cosineSimilarity(v1, v3)).toBeCloseTo(0.0);
+    expect(cosineSimilarity(v1, v2)).toBeGreaterThan(0.9);
+  });
+
+  it("rejects empty, unequal, and non-finite vectors", () => {
+    expect(cosineSimilarity([], [])).toBe(0);
+    expect(cosineSimilarity([1], [1, 1000])).toBe(0);
+    expect(cosineSimilarity([Number.NaN], [1])).toBe(0);
+  });
+
+  it("retrieves semantically matching chunks even with zero lexical word overlap", () => {
+    const semanticChunk = {
+      ...chunk("graph-basics#0", "visualize relationships in node network"),
+      embedding: [0.95, 0.05, 0, 0],
+    };
+    const unrelatedChunk = {
+      ...chunk("backup#0", "save your archive file to disk"),
+      embedding: [0, 1, 0, 0],
+    };
+
+    // Query terms "lore web" have 0 word overlap with "visualize relationships in node network"
+    const result = retrieve(
+      "lore web",
+      bundle([semanticChunk, unrelatedChunk]),
+      connectionsScreen,
+      { queryVector: [1, 0, 0, 0] },
+    );
+
+    expect(result.noMatch).toBe(false);
+    expect(result.chunks.map((c) => c.chunk.id)).toContain("graph-basics#0");
+  });
+
+  it("falls back to lexical matching when queryVector is not provided", () => {
+    const semanticChunk = {
+      ...chunk("graph-basics#0", "node network connections"),
+      embedding: [0.95, 0.05, 0, 0],
+    };
+
+    const result = retrieve(
+      "node network connections",
+      bundle([semanticChunk]),
+      connectionsScreen,
+    );
+
+    expect(result.noMatch).toBe(false);
+    expect(result.chunks[0].chunk.id).toBe("graph-basics#0");
+    expect(result.chunks[0].lexical).toBeGreaterThan(0);
   });
 });

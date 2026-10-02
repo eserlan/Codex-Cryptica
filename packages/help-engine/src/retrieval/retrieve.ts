@@ -6,6 +6,7 @@ import { MIN_RELEVANCE, rankChunks, type ScoredChunk } from "./rank";
 export interface RetrieveOptions {
   limit?: number;
   minRelevance?: number;
+  queryVector?: readonly number[];
 }
 
 export interface RetrievalResult {
@@ -94,7 +95,13 @@ export function retrieve(
 ): RetrievalResult {
   const limit = options.limit ?? DEFAULT_LIMIT;
   const floor = options.minRelevance ?? MIN_RELEVANCE;
-  const ranked = rankChunks(question, bundle.chunks, bundle.features, ctx);
+  const ranked = rankChunks(
+    question,
+    bundle.chunks,
+    bundle.features,
+    ctx,
+    options.queryVector,
+  );
   const screenFeatures = bundle.features.filter((f) =>
     f.areas.includes(ctx.area),
   );

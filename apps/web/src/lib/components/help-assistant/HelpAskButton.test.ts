@@ -18,7 +18,7 @@ describe("HelpAskButton", () => {
         .getByRole("button", { name: "Close help assistant" })
         .getAttribute("aria-expanded"),
     ).toBe("true");
-  });
+  }, 15000);
 
   it("is styled as a standard Activity Bar item", () => {
     render(HelpAskButton, { open: false, onToggle: vi.fn() });

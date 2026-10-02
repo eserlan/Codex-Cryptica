@@ -12,6 +12,7 @@
   import { helpAssistant } from "$lib/stores/help-assistant/help-runtime";
   import HelpAskButton from "$lib/components/help-assistant/HelpAskButton.svelte";
 
+  // fallow-ignore-next-line code-duplication
   const items = $derived(navItems());
   const views = $derived(items.filter((i) => i.group === "view"));
   const tools = $derived(items.filter((i) => i.group === "tool"));

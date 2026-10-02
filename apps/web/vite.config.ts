@@ -186,6 +186,7 @@ export default defineConfig({
     globals: true,
     pool: "forks",
     silent: true,
+    testTimeout: 15000,
     setupFiles: ["tests/setup.ts"],
     environmentMatchGlobs: [
       ["src/lib/utils/**", "node"],

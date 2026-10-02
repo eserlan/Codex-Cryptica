@@ -13,6 +13,8 @@ export interface HelpChunk {
   heading: string;
   text: string;
   hash: string;
+  /** Dense vector embedding (e.g. 384 floats from bge-small-en-v1.5) for semantic search. */
+  embedding?: number[];
 }
 
 export interface KnowledgeBundle {

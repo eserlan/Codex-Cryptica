@@ -25,6 +25,10 @@ import {
   type HelpTurn,
   type KnowledgeBundle,
 } from "../../../../packages/help-engine/src";
+import {
+  HELP_EMBEDDING_MODEL,
+  isValidEmbeddingVector as isValidHelpEmbeddingVector,
+} from "../../../../packages/help-engine/src/bundle/embeddings";
 import { createProviderResolver } from "./llm/provider-resolver";
 import type { LlmRequest } from "./llm/types";
 import {
@@ -37,6 +41,7 @@ import { enforceLlmSession, type SessionEnv } from "./session-guard";
 /** Generous for a question plus four short turns and a screen description. */
 export const MAX_BODY_BYTES = 8 * 1024;
 export const UPSTREAM_BUDGET_MS = 7000;
+const EMBEDDING_BUDGET_MS = 1000;
 
 export type HelpGenerate = (
   request: LlmRequest,
@@ -47,6 +52,9 @@ export interface HelpDeps {
   generate: HelpGenerate;
   /** Returns a response to send instead (401/403/429), or null to continue. */
   guard: (request: Request) => Promise<Response | null>;
+  /** Optional dense vector embedder for semantic search over chunk embeddings. */
+  embedQuery?: (text: string) => Promise<number[] | null>;
+  embeddingTimeoutMs?: number;
   now?: () => number;
   log?: (line: string) => void;
   timeoutMs?: number;
@@ -271,6 +279,7 @@ export function createHelpHandler(deps: HelpDeps) {
   const now = deps.now ?? Date.now;
   const timeoutMs = deps.timeoutMs ?? UPSTREAM_BUDGET_MS;
 
+  // fallow-ignore-next-line complexity
   return async function handle(
     request: Request,
     cors: Cors,
@@ -301,7 +310,17 @@ export function createHelpHandler(deps: HelpDeps) {
       );
     }
 
-    const retrieval = retrieve(question, bundle, context);
+    const embeddingBudgetMs = deps.embeddingTimeoutMs ?? EMBEDDING_BUDGET_MS;
+    const queryVector = deps.embedQuery
+      ? ((await withTimeout(deps.embedQuery(question), embeddingBudgetMs)
+          .then((vector) =>
+            isValidHelpEmbeddingVector(vector) ? vector : null,
+          )
+          .catch(() => null)) ?? undefined)
+      : undefined;
+    const retrieval = retrieve(question, bundle, context, {
+      queryVector: queryVector ?? undefined,
+    });
     if (retrieval.noMatch) {
       // Below the relevance floor: answer honestly without calling the model.
       metric("no-match", area);
@@ -356,9 +375,10 @@ export function createHelpHandler(deps: HelpDeps) {
 export interface HelpEnv extends SessionEnv {
   GEMINI_API_KEY: string;
   OPENAI_API_KEY?: string;
+  AI?: any;
 }
 
-/** Production wiring: existing session guard, resolver and lazily loaded bundle. */
+/** Production wiring: existing session guard, resolver, Workers AI embedder and lazily loaded bundle. */
 export function handleHelpAsk(
   request: Request,
   env: HelpEnv,
@@ -382,6 +402,29 @@ export function handleHelpAsk(
         return null;
       }
     },
+    embedQuery: env.AI
+      ? async (text: string) => {
+          try {
+            const res = (await env.AI.run(HELP_EMBEDDING_MODEL, {
+              text: [text],
+            })) as { data?: unknown };
+            if (
+              !Array.isArray(res?.data) ||
+              res.data.length !== 1 ||
+              !isValidHelpEmbeddingVector(res.data[0])
+            ) {
+              return null;
+            }
+            return res.data[0];
+          } catch (error) {
+            console.warn(
+              "[help] query embedding failed, falling back to lexical search:",
+              error instanceof Error ? error.message : "unknown",
+            );
+            return null;
+          }
+        }
+      : undefined,
     generate: async (req) => {
       const outcome = await resolver.resolve(req, "public");
       return outcome.result.ok

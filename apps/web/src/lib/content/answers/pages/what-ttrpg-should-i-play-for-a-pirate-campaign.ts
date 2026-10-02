@@ -136,10 +136,10 @@ export const whatTtrpgShouldIPlayForAPirateCampaign: AnswerConfigInput = {
       href: "https://www.pirateborg.com/",
     },
     {
-      system: "Honor + Intrigue",
+      system: "Honour + Intrigue",
       rationale:
         "Barbarians of Lemuria-based manoeuvre duelling where advantage, gambits, and fencing styles shape boarding actions.",
-      href: "https://www.drivethrurpg.com/en/product/318345/honor-intrigue",
+      href: "https://www.drivethrurpg.com/product/318345",
     },
     {
       system: "Ghosts of Saltmarsh (D&D 5E)",
@@ -154,8 +154,8 @@ export const whatTtrpgShouldIPlayForAPirateCampaign: AnswerConfigInput = {
       "Whatever engine the group chooses, the campaign still needs the same connective tissue: a ship with debts and damage, ports that remember the crew, rival captains with clocks of their own, and isles that offer a different kind of trouble each voyage. Codex Cryptica keeps those pieces linked so a prize taken at sea changes who controls a harbour, who hunts the party, and which chart leads make sense next session.",
       "Build the vessel, its crew, and its quirks with the Ship Generator, stock harbours and hidden coves with the Settlement Generator, give the companies and squadrons behind them motives with the Faction Generator, and keep the whole network visible on the Pirate & High Seas hub between sessions. The system decides how you roll; the linked campaign decides why the roll mattered.",
     ],
-    linkText: "Open the pirate generator hub",
-    href: "/generators/pirate",
+    linkText: "Generate a pirate ship",
+    href: "/generators/ship-generator",
   },
   relatedTools: [
     {
@@ -163,12 +163,6 @@ export const whatTtrpgShouldIPlayForAPirateCampaign: AnswerConfigInput = {
       description:
         "Create a pirate vessel with crew, quirks, damage, and secrets the party can recognise at distance.",
       href: "/generators/ship-generator",
-    },
-    {
-      title: "Pirate Generator Hub",
-      description:
-        "Open pirate-ready generators for captains, ports, factions, and rumours around your crew.",
-      href: "/generators/pirate",
     },
     {
       title: "Settlement Generator",
@@ -256,7 +250,7 @@ export const whatTtrpgShouldIPlayForAPirateCampaign: AnswerConfigInput = {
   seo: {
     title: "What TTRPG should I play for a pirate campaign? | Codex Cryptica",
     description:
-      "Pick your pirate system by campaign style: swashbuckling, sandbox island-hopping, gritty age-of-sail, naval combat, or rules-light play, with fantasy against history and campaign support.",
+      "Pick a pirate system by campaign style: swashbuckling, sandbox island-hopping, gritty age-of-sail, naval combat, or rules-light play, with fantasy versus history and campaign support.",
     image:
       "https://assets.codexcryptica.com/og/what-ttrpg-should-i-play-for-a-pirate-campaign.jpg",
     imageAlt:
