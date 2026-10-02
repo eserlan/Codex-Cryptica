@@ -995,7 +995,11 @@ describe("GraphViewController", () => {
   describe("community backgrounds", () => {
     it("are shown normally and hidden in timeline mode or when turned off", () => {
       const setEnabled = vi.fn();
-      controller.communityHulls = { setEnabled, destroy: vi.fn() };
+      controller.communityHulls = {
+        setEnabled,
+        communityMembers: vi.fn(() => []),
+        destroy: vi.fn(),
+      };
 
       controller.syncCommunityHulls();
       expect(setEnabled).toHaveBeenLastCalledWith(true);
@@ -1010,9 +1014,46 @@ describe("GraphViewController", () => {
       expect(setEnabled).toHaveBeenLastCalledWith(false);
     });
 
+    it("keep the selected entity's whole group visible when focusing it, but only when shown", async () => {
+      const cytoscape = (await import("cytoscape")).default;
+      const cy = cytoscape({
+        headless: true,
+        elements: [
+          { data: { id: "a" } },
+          { data: { id: "b" } },
+          { data: { id: "c" } },
+          { data: { id: "d" } },
+          { data: { id: "far" } },
+          { data: { id: "ab", source: "a", target: "b" } },
+          { data: { id: "bc", source: "b", target: "c" } },
+          { data: { id: "cd", source: "c", target: "d" } },
+        ],
+      });
+      controller.cy = cy as any;
+      controller.communityHulls = {
+        setEnabled: vi.fn(),
+        communityMembers: vi.fn(() => ["a", "b", "c", "d"]),
+        destroy: vi.fn(),
+      };
+
+      controller.applyFocus("a");
+      // d is three steps from a: dimmed by distance, kept by its group.
+      expect(cy.$id("d").hasClass("dimmed")).toBe(false);
+      expect(cy.$id("far").hasClass("dimmed")).toBe(true);
+
+      deps.graph.showCommunities = false;
+      controller.applyFocus("a");
+      expect(cy.$id("d").hasClass("dimmed")).toBe(true);
+      cy.destroy();
+    });
+
     it("are torn down with the controller (negative: no further drawing)", () => {
       const destroy = vi.fn();
-      controller.communityHulls = { setEnabled: vi.fn(), destroy };
+      controller.communityHulls = {
+        setEnabled: vi.fn(),
+        communityMembers: vi.fn(() => []),
+        destroy,
+      };
       controller.destroy();
       expect(destroy).toHaveBeenCalled();
       expect(controller.communityHulls).toBeUndefined();
