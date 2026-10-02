@@ -194,7 +194,7 @@ export const howShouldMagicHaveBeenDiscoveredInMyWorld: AnswerConfigInput = {
     relatedIntents: [
       "answer-create-magic-system",
       "answer-fictional-religion",
-      "answer-create-pantheon",
+      "answer-pantheon",
     ],
   },
   seo: {
