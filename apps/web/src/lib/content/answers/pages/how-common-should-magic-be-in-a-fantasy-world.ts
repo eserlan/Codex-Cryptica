@@ -12,7 +12,8 @@ export const howCommonShouldMagicBeInAFantasyWorld: AnswerConfigInput = {
   sections: [
     {
       kind: "prose",
-      heading: "Why low magic and high magic are not useful settings on their own",
+      heading:
+        "Why low magic and high magic are not useful settings on their own",
       paragraphs: [
         "Labelling a world low magic or high magic rarely helps at the table, because those terms bundle together too many different choices. One table means rare by talent but cheap to learn and openly used. Another means everyone could learn but almost nobody masters anything stronger than a hedge charm. Both get called low magic, yet they play completely differently, produce different economies, and invite different stories.",
         "A more practical approach is to separate two questions that are often confused. Access asks who is allowed or able to try magic at all: everyone with study, only the trained, only a gifted minority, or only a tiny elite. Talent asks how exceptional the best practitioners are compared with an ordinary trained caster. A setting can give wide access but keep true brilliance rare, or keep access narrow while treating every licensed caster as roughly equal inside that circle. When you state both plainly, labels stop doing the work and your world gains handles the players can actually grip.",
@@ -53,7 +54,8 @@ export const howCommonShouldMagicBeInAFantasyWorld: AnswerConfigInput = {
     },
     {
       kind: "list",
-      heading: "Five questions that set prevalence before you place a single mage",
+      heading:
+        "Five questions that set prevalence before you place a single mage",
       intro:
         "Use these as your framework. Answer briefly and concretely for your own world, then carry those answers into streets, prices and laws:",
       items: [
@@ -82,7 +84,12 @@ export const howCommonShouldMagicBeInAFantasyWorld: AnswerConfigInput = {
     {
       kind: "table",
       heading: "What changes when magic moves from rare to ubiquitous",
-      headers: ["Prevalence", "Everyday access", "Institutions and economy", "Warfare and civic life"],
+      headers: [
+        "Prevalence",
+        "Everyday access",
+        "Institutions and economy",
+        "Warfare and civic life",
+      ],
       rows: [
         [
           "Rare (tiny elite, few services)",
@@ -157,8 +164,10 @@ export const howCommonShouldMagicBeInAFantasyWorld: AnswerConfigInput = {
     },
     {
       kind: "checklist",
-      heading: "Prevalence checklist: lock your setting before you place encounters",
-      intro: "Work through these briefly, then place casters, shops and offices to match the result:",
+      heading:
+        "Prevalence checklist: lock your setting before you place encounters",
+      intro:
+        "Work through these briefly, then place casters, shops and offices to match the result:",
       items: [
         "Pick one band for access (everyone, trained users, gifted minority, tiny elite) and state how that access is identified or licensed.",
         "Pick one source mix (hereditary, learned, granted, accidental or place-bound) and note which families, schools or sites it empowers.",
@@ -182,24 +191,28 @@ export const howCommonShouldMagicBeInAFantasyWorld: AnswerConfigInput = {
   relatedTools: [
     {
       title: "Settlement generator",
-      description: "Place market readers, relay posts, temple wards and hedge quarters inside towns and hamlets.",
+      description:
+        "Place market readers, relay posts, temple wards and hedge quarters inside towns and hamlets.",
       href: "/generators/settlement",
     },
     {
       title: "Faction generator",
-      description: "Build guilds, colleges, patron houses and travelling circuits with goals and rivalries.",
+      description:
+        "Build guilds, colleges, patron houses and travelling circuits with goals and rivalries.",
       href: "/generators/faction",
     },
     {
       title: "NPC generator",
-      description: "Create licensed readers, hedge charmers, clerks and sponsors with distinct motives.",
+      description:
+        "Create licensed readers, hedge charmers, clerks and sponsors with distinct motives.",
       href: "/generators/npc",
     },
   ],
   relatedForPages: [
     {
       title: "Fantasy Worldbuilding",
-      description: "Shape economies, faiths and settlements that give magic a social home.",
+      description:
+        "Shape economies, faiths and settlements that give magic a social home.",
       href: "/for/fantasy-worldbuilding",
     },
   ],
@@ -254,7 +267,9 @@ export const howCommonShouldMagicBeInAFantasyWorld: AnswerConfigInput = {
     title: "How common should magic be in a fantasy world? | Codex Cryptica",
     description:
       "Choose who can use magic, how hard it is to learn and what everyday spells do, with urban versus rural access and a prevalence table for your table.",
-    image: "https://assets.codexcryptica.com/og/how-common-should-magic-be-in-a-fantasy-world.jpg",
-    imageAlt: "A twilight fantasy market where a licensed apothecary stall with warded charms faces a quiet hedge table across the square",
+    image:
+      "https://assets.codexcryptica.com/og/how-common-should-magic-be-in-a-fantasy-world.jpg",
+    imageAlt:
+      "A twilight fantasy market where a licensed apothecary stall with warded charms faces a quiet hedge table across the square",
   },
 };
