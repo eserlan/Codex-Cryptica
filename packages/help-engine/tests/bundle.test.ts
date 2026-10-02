@@ -178,24 +178,34 @@ describe("buildBundle", () => {
     expect(chunk.text).toContain(feature.summary);
   });
 
-  it("retrieves documented graph grouping instructions for a grouping question", () => {
+  it("retrieves the distinction between automatic Graph clusters and manual visual arrangement", () => {
     const bundle = buildBundle({ ...input, articles: productionArticles });
     const context = sanitizeHelpContext({
       routeTemplate: "/(app)",
       area: "graph",
       surface: "vault",
     });
-    const result = retrieve("How do I show graph groups?", bundle, context);
-    expect(result.noMatch).toBe(false);
-    expect(
-      result.chunks.some(
-        ({ chunk }) =>
-          chunk.helpId === "graph-basics" && /Groups/.test(chunk.text),
-      ),
-    ).toBe(true);
+    for (const question of [
+      "How does grouping work?",
+      "Can I group these entities visually?",
+      "How do I make a group in the graph?",
+      "Does grouping change the relationships between entities?",
+      "Can I save my groups?",
+    ]) {
+      const result = retrieve(question, bundle, context);
+      expect(result.noMatch, question).toBe(false);
+      expect(
+        result.chunks.some(({ chunk }) => chunk.helpId === "graph-basics"),
+        question,
+      ).toBe(true);
+    }
     const article = productionArticles.find((a) => a.id === "graph-basics")!;
-    expect(article.content).toContain("Small groups may have no background");
-    expect(article.content).toContain("button only changes the backgrounds");
+    expect(article.content).toContain("Small clusters may have no background");
+    expect(article.content).toContain("no manual add/remove, rename, resize");
+    expect(article.content).toContain(
+      "does not create or change entity relationships",
+    );
+    expect(article.content).toContain("Save current layout");
   });
 
   it("retrieves entity-view AI revision steps and their discard path", () => {
