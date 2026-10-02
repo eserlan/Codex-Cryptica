@@ -7,33 +7,33 @@ export const howDoIMakeSeaTravelInterestingInATtrpg: AnswerConfigInput = {
   question: "How do I make sea travel interesting in a TTRPG?",
   kind: "framework",
   shortAnswer:
-    "Make sea travel interesting by deciding in advance which voyages earn close attention and which can be summarised, then running the important ones as a small set of linked choices about weather, navigation, supplies, repairs, and crew. Give the crew two or three routes with clear trade-offs between speed, safety, secrecy, and profit, seed each leg with sightings, rumours, wrecks, and landmarks that reveal the setting, and carry the costs and discoveries forward so the next voyage begins with consequences rather than a fresh random table.",
+    "Make sea travel interesting by deciding which passages can be summarised and where a meaningful choice deserves close attention. Offer different courses or sailing strategies, then bring in only the pressures, sightings, and discoveries that matter to this voyage. Let consequences carry forward whether the crew sails for merchants or a navy, leads an expedition, works a fishing fleet, or raids as pirates.",
   sections: [
     {
       kind: "prose",
       heading: "Why sea voyages drift into slog or hand-wave",
       paragraphs: [
-        "Sea travel in most campaigns settles into one of two defaults. Either every day at sea is rolled for, with weather checks, random encounters, and supply tallies that consume a full session without moving a plot, or the whole voyage vanishes in a single sentence and the sea may as well not exist between ports. Both habits hide the same problem: the voyage asks for bookkeeping or dice, not for a decision the table can own.",
-        "A voyage becomes worth playing when the crew must choose what kind of voyage they are making, and when that choice changes what they see and what it costs. If cutting along the coast saves water but risks a patrol, if running before a gale saves days but strains a patched hull, if chasing a wreck rumour delays a delivery, the sea has scale without needing a separate encounter for each sunrise. The structure below keeps that scale manageable, so you can give a passage weight without giving it your whole evening.",
+        "Sea travel in most campaigns settles into one of two defaults. Either every day at sea is rolled for, with weather checks, random encounters, and supply tallies that consume a full session without moving a plot, or the whole voyage vanishes in a single sentence and the sea may as well not exist between ports. Both habits hide the same problem: the voyage asks for bookkeeping or rolls without offering a decision the table can own.",
+        "A voyage becomes worth playing when the crew must choose what kind of voyage they are making, and when that choice changes what they see and what it costs. If cutting along the coast saves water but risks a patrol, if running before a gale saves days but strains a patched hull, if chasing a wreck rumour delays a delivery, the sea has scale without needing a separate encounter for each sunrise. The same structure suits merchant schedules, naval orders, exploration expeditions, pilgrimages, refugee passages, and fishing or whaling seasons; change the stakes and who has a say. It keeps a passage manageable without giving it your whole evening.",
       ],
     },
     {
       kind: "list",
       heading: "Decide when to zoom in and when to montage",
       intro:
-        "Not every voyage deserves the same attention. Use one of three scopes and tell the table which you are using before they cast off.",
+        "Not every voyage deserves the same attention. Set an expectation before casting off, then let the scope change as the passage unfolds: zoom in when a meaningful decision or uncertainty appears, and back out when it is resolved.",
       items: [
         {
           term: "Montage the routine passage",
-          text: "Use when the route is familiar, the sea is settled, and nothing the crew wants depends on this leg. Summarise in two or three beats: what the coast looked like, one small sighting or rumour gathered underway, and what the ship needs on arrival. Then ask whether anything from the previous voyage should change the summary, such as a damaged spar, a wanted flag, or a debt that closes a port. If the answer is no, let the montage be brief.",
+          text: "Use when the route is familiar, the sea is settled, and nothing the crew wants depends on this leg. Summarise in two or three beats: what the coast looked like, one small sighting or rumour gathered underway, and what the ship needs on arrival. Then ask whether anything from the previous voyage should change the summary, such as a damaged spar, a naval order, or a debt that closes a port. If the answer is no, let the montage be brief. If a storm, sighting, or choice makes the passage matter, zoom in for that moment.",
         },
         {
           term: "Play one leg in detail",
-          text: "Use when the voyage carries a real choice or a deadline. Isolate the leg that matters, such as the strait with contrary winds, the shoal that only a local pilot can read, or the open-water crossing where water is short. Play that leg with positions, weather, and supplies, and montage the remainder. Players learn that you zoom in when their decisions alter the outcome, not because the calendar demands it.",
+          text: "Use when the voyage carries a real choice or a deadline. Isolate the leg that matters, such as a strait with contrary winds, a shoal where local knowledge helps, or an open-water crossing where water is short. Play that leg with the details that can affect the outcome, and montage the remainder. If preparation removes the uncertainty or the crew reaches known water, zoom back out. Players learn that you change scope when their decisions matter, not because the calendar demands it.",
         },
         {
           term: "Run the full crossing when it is the adventure",
-          text: "Reserve a round-by-round voyage for passages where reaching the destination is itself the prize or the test: a storm season crossing, a blockade run, a pursuit, or a voyage into uncharted water. Even here, frame the crossing as three or four linked legs rather than an undifferentiated ocean. Each leg gets a distinct wind, hazard, sighting, and decision, which stops the middle of the voyage from sagging.",
+          text: "Use this for passages where reaching the destination is itself the prize or the test: a storm-season crossing, a naval blockade, an evacuation, or an expedition into uncharted water. Run the crossing as three or four meaningful legs or phases rather than an undifferentiated ocean. Each can cover hours or days and need only bring in a distinct condition, sighting, or decision when it matters. Zoom in or out as the situation changes.",
         },
       ],
     },
@@ -41,15 +41,15 @@ export const howDoIMakeSeaTravelInterestingInATtrpg: AnswerConfigInput = {
       kind: "list",
       heading: "Six pressures that turn a passage into choices",
       intro:
-        "For any leg you choose to play, track only the pressures the players can affect. One clear sentence per pressure is enough to run.",
+        "Treat these as a menu, not a set of tracks to fill. Choose the one to three pressures that matter to this passage, or none for a routine leg. An open-water crossing might bring weather, water, and hull condition into play; a reef passage might turn on navigation and tide; a covert coastal run might hinge on patrols, secrecy, and time.",
       items: [
         {
           term: "Weather and sea state",
-          text: "Name the wind, swell, and visibility for this leg and what it permits or denies: close-hauled beating, running free, heaving to, or seeking shelter. State the cost of pushing on and the cost of waiting. A backing wind that promises a gale by nightfall matters because it forces timing, not because it applies a modifier. Give a character who reads the sky or the barometer one round of warning so weather becomes planning.",
+          text: "Name the wind, swell, and visibility for this leg and what it permits or denies: close-hauled beating, running free, heaving to, or seeking shelter. State the cost of pushing on and the cost of waiting. A backing wind that promises a gale by nightfall matters because it forces timing, not because it applies a modifier. Skilled observation should give useful early warning, enough to create a decision before the weather hits; let the chosen system set the mechanical benefit.",
         },
         {
           term: "Navigation and hazards",
-          text: "Identify one hazard the chosen route must handle: a reef, a sandbar, a tidal race, a lee shore, or a current that sets the ship off course. Note how charts, a pilot, or a landmark solve it, and what happens if the crew improvises without that help. When navigation has a named solution, players can weigh whether to pay for it, steal it, or risk going without.",
+          text: "Identify a hazard the chosen course may encounter: a reef, a sandbar, a tidal race, a lee shore, or a current that sets the ship off course. Charts, pilots, soundings, landmarks, and local knowledge can reduce uncertainty, reveal options, or lower risk. They need not be the only way through: let the crew improvise another approach when the fiction supports it, and make the risks legible.",
         },
         {
           term: "Supplies and water",
@@ -61,7 +61,7 @@ export const howDoIMakeSeaTravelInterestingInATtrpg: AnswerConfigInput = {
         },
         {
           term: "Crew pressure and morale",
-          text: "Note one crew pressure for this leg: exhaustion after a gale, an unpaid share, a sick mess, a faction split between old hands and new recruits, or superstition about a cape or wreck site. Decide what steadying action the officers must take: rest, shore time, extra grog, a shared ritual, or a hard order. When the crew is tired or divided, even small hazards require more hands or more time.",
+          text: "If the crew's situation matters, connect it to people rather than a morale meter: exhaustion after a gale, an unpaid share, sickness, a split between old hands and new recruits, or fear of a cape or wreck. What do they want, fear, or believe? What were they promised, and what conditions will they not accept? Rest, shore leave, a shared ritual, negotiation, or a hard order may address the pressure; a tired or divided crew may need more hands or time.",
         },
         {
           term: "Time, tide, and season",
@@ -71,10 +71,9 @@ export const howDoIMakeSeaTravelInterestingInATtrpg: AnswerConfigInput = {
     },
     {
       kind: "list",
-      heading:
-        "Give every route a trade-off between speed, safety, secrecy, and profit",
+      heading: "Offer a course or voyage strategy with meaningful trade-offs",
       intro:
-        "Offer two or three named routes and shape each around the four-way tension. No route should be best at everything.",
+        "Where the geography offers branches, give two or three named routes with different trade-offs. In open water, offer two or more meaningfully different ways to pursue the voyage goal; they might be courses, timing, pace, company, or what the crew chooses to investigate. No option should be best at everything.",
       items: [
         {
           term: "Speed",
@@ -86,15 +85,15 @@ export const howDoIMakeSeaTravelInterestingInATtrpg: AnswerConfigInput = {
         },
         {
           term: "Secrecy",
-          text: "The quietest line keeps the crew off the shipping lane and out of signal range: a mangrove cut, a night passage past a battery, or a reef route that only a shallow-draft vessel can use. It trades speed and ease for a lower chance of being hailed, boarded, or remembered. Secrecy matters when the ship carries a disputed prize, a wanted person, or a chart others would pay to seize.",
+          text: "A covert approach might keep a ship off the shipping lane and out of signal range: a mangrove cut, a night passage past a battery, or a reef route suited to a shallow-draft vessel. It trades speed and ease for a lower chance of being noticed. Secrecy can matter to smugglers, but also to a naval patrol avoiding detection, a refugee ship evading a blockade, or an expedition protecting a sensitive landfall.",
         },
         {
           term: "Profit",
-          text: "The most profitable line connects a surplus to a shortage. A harbour with cheap salt and a distant port short of it, or a coast where powder is dear because the company holds the charter, makes detours worthwhile. Link profit to a controller: a factor, a council, or a navy that sets price or passage. That way a lucrative detour invites negotiation or smuggling, not just arithmetic.",
+          text: "A profitable line connects a surplus to a shortage: a harbour with cheap salt and a distant port short of it, or a seasonal catch a market is eager to buy. Profit depends on scarcity, competition, season, and demand as well as institutions. Where relevant, a factor, council, or navy may shape access through tariffs, licences, monopoly rights, warehousing, credit, or purchase restrictions, making a detour a question of negotiation as well as arithmetic.",
         },
         {
           term: "How to present the choice",
-          text: "Lay out each route with one line for what it gains, one for what it risks, and one visible landmark or hazard that marks it. Name the pilot, chart, or favour that would make the risky option viable. When players can see who benefits and where the danger lies, the table can choose a course and accept its cost rather than waiting for the GM to surprise them with it.",
+          text: "For each option, show what it gains, what it risks, and a visible clue that makes the trade-off understandable. The choices might be direct crossing or coastal hops, sail hard or conserve rigging, leave now or wait for better weather, travel by day or night, join a convoy or sail independently, make a known landfall or risk a shortcut, or pursue a sighting and accept the delay. When players can see the stakes, they can choose and accept the cost rather than waiting for a surprise.",
         },
       ],
     },
@@ -102,7 +101,7 @@ export const howDoIMakeSeaTravelInterestingInATtrpg: AnswerConfigInput = {
       kind: "list",
       heading: "Stock the sea with sightings that teach the setting",
       intro:
-        "Replace a generic encounter list with prepared sightings, rumours, wrecks, and landmarks that reveal the world and invite a choice.",
+        "Avoid context-free filler encounters. Use prepared situations, evolving encounter tables, or random checks tied to the route, season, weather, shipping, factions, ecology, or current regional events. The result should reveal the world or change the voyage.",
       items: [
         {
           term: "Sightings that invite action",
@@ -118,7 +117,7 @@ export const howDoIMakeSeaTravelInterestingInATtrpg: AnswerConfigInput = {
         },
         {
           term: "Encounters that reveal rather than merely tax",
-          text: "When a meeting at sea occurs, frame it as a situation in progress rooted in the region's factions and trade. A company cutter demanding to inspect casks, a fishing fleet blocking a channel because the navy has closed the bar, a rival crew careening on a beach that fever makes dangerous, or a temple barge seeking witnesses to a wreck. Give the crew at least two handles beyond fighting, such as papers, payment, parley, pilotage, or a favour owed.",
+          text: "When a meeting at sea occurs, frame it as a situation in progress rooted in the region's factions, work, or trade: a company cutter inspecting casks, a fishing fleet blocked by a naval closure, a rival crew careening on a fever-struck beach, or a temple barge seeking witnesses to a wreck. Where the fiction supports it, the situation may invite different kinds of action: negotiation, avoidance, deception, navigation, aid, payment, force, or simply leaving. Present the circumstances and let the crew find its approach.",
         },
       ],
     },
@@ -127,15 +126,15 @@ export const howDoIMakeSeaTravelInterestingInATtrpg: AnswerConfigInput = {
       heading: "Make the sea remember previous voyages",
       paragraphs: [
         "The strongest cure for repetitive travel is recurrence. When a voyage leaves marks that the next one must handle, players stop seeing the sea as a reset between harbours. A channel buoy dragged by a storm, a reef that took a ship because the markers were pulled to punish smugglers, a port that now charges double for water after the crew broke its well monopoly, or a pilot who refuses to guide a crew that burned his cove all teach the table that choices carry forward.",
-        "Record three kinds of carry-over after every played leg: one change to the chart, such as a sounding corrected, a channel opened or closed, or a landmark renamed after events; one change to cost or law, such as a price shift, a new patrol route, or a flag flying over a fort; and one change to relationships, such as a debt settled, a grudge deepened, or a crew appointment that shifts morale. Bring one of those back as a sighting, a harbour welcome, or a price before the next voyage begins. Even a montaged passage then feels sequenced rather than repeated.",
+        "Record whatever meaningfully changed, using chart, access or cost, and relationships as prompts. A corrected sounding may be enough; another voyage may shift a price, change a patrol, and settle a debt all at once. Bring a consequence back as a sighting, a harbour welcome, or a price before the next voyage begins. Even a montaged passage then feels sequenced rather than repeated.",
       ],
     },
     {
       kind: "prose",
       heading: "Avoid repetitive encounter tables",
       paragraphs: [
-        "A table that lists only creatures or hazards will repeat by its third use, because the same entries return without reference to what the crew has already done. Replace that table with a small deck of prepared situations that you can shuffle and retire. Write each card with a subject, an activity in progress, a complication tied to wind, water, or a faction, and one choice that reveals the region: help, trade, hide, hail, or avoid. When the card is played, cross it out or evolve it. A drifting launch with survivors becomes a port rumour; a cutter that once demanded papers returns with a new officer and a different price.",
-        "Restock with material from play. After each voyage, add one new card based on what happened: the rival who escaped, the wreck the crew marked, the patrol whose cutter they outran, the island whose elders now demand a tithe. A table that grows from the campaign will feel less arbitrary than one that could describe any ocean. Keep a compact reference of which sightings the crew have seen and which factions they have met underway, so you can call back a flag, a hull colour, or a price rather than improvising a new pirate each time.",
+        "A table that lists only creatures or hazards may repeat without reference to what the crew has done. Prepared situations are one useful option: keep a small deck you can shuffle, retire, or evolve. Random procedures work just as well when their results reflect the route, season, weather, shipping density, faction activity, ecology, or current regional state. A result should reveal something or change the voyage, rather than fill space. A drifting launch with survivors might become a port rumour; a cutter that once demanded papers might return with a new officer and a different price.",
+        "Restock with material from play. After a voyage, you might add a situation based on what happened: the rival who escaped, the wreck the crew marked, the patrol whose cutter they outran, or an island whose elders now demand a tithe. A table that grows from the campaign will feel less arbitrary than one that could describe any ocean. Keep a compact reference of sightings and factions the crew have met, so you can call back a flag, hull colour, or price instead of inventing a disconnected encounter.",
       ],
     },
     {
@@ -155,11 +154,11 @@ export const howDoIMakeSeaTravelInterestingInATtrpg: AnswerConfigInput = {
         },
         {
           term: "Playing the leg the crew chooses",
-          text: "The crew chooses the reef cut for secrecy and the chance at the chest, accepting tide timing and a navigation risk. The lookout character gets the warning about the gale's advance, the navigator plots the channel using the white rock on the headland, and the carpenter steadies the cracked spar with a jury brace that will need proper timber in port. Mid-leg they sight oil and cut rigging near the Elmo, with a single drifting launch showing the company flag. The situation has two handles beyond combat: they can hail, take on survivors for harbour goodwill, or keep clear and note what the current suggests about the reef. They take the survivors aboard, learn the cutter dragged the channel markers after the last smuggling incident, and mark a corrected sounding on their chart. That corrected sounding reduces the navigation risk on the next passage, the survivors' report raises goodwill at Saltmouth but puts the charter factor in a harder mood, and the jury brace commits the crew to buy timber before the next gale. The same coast now has a geography the players helped map.",
+          text: "The crew chooses the reef cut for secrecy and the chance at the chest, accepting tide timing and a navigation risk. The lookout spots the gale's advance early enough for the crew to decide whether to continue, the navigator plots the channel using the white rock on the headland, and the carpenter steadies the cracked spar with a jury brace that will need proper timber in port. Mid-leg they sight oil and cut rigging near the Elmo, with a single drifting launch showing the company flag. The crew can hail, take on survivors, keep clear, or study what the current suggests about the reef. They take the survivors aboard, learn the cutter dragged the channel markers after the last smuggling incident, and mark a corrected sounding on their chart. That corrected sounding reduces navigation risk on the next passage, the survivors' report raises goodwill at Saltmouth but puts the charter factor in a harder mood, and the jury brace commits the crew to buy timber before the next gale. The same coast now has a geography the players helped map.",
         },
         {
           term: "Why it works",
-          text: "The table chose a kind of voyage and paid a price they had seen before deciding. Pressures were shared across roles, so the navigator, lookout, and carpenter each shaped the passage. The encounter revealed the coast's trade and patrol story instead of spending resources for its own sake, and its outcome left three visible threads that the next voyage will inherit: a safer but still tender channel, a flagged welcome at the next harbour, and a hull that remembers the blow it did not take.",
+          text: "The table chose a course and paid a price they had seen before deciding. The few pressures that mattered gave the navigator, lookout, and carpenter ways to shape the passage. The encounter revealed the coast's trade and patrol story instead of spending resources for its own sake, and its outcome left consequences for the next voyage: a safer but still tender channel, a warmer welcome at the next harbour, and a hull that remembers the blow it did not take.",
         },
       ],
     },
@@ -168,13 +167,13 @@ export const howDoIMakeSeaTravelInterestingInATtrpg: AnswerConfigInput = {
       heading: "Before the crew next puts to sea",
       intro: "Run through these checks for the current chart and season.",
       items: [
-        "Have you named which scope this voyage will use: montage, single detailed leg, or full crossing?",
-        "What are the two or three named routes, and what does each trade among speed, safety, secrecy, and profit?",
-        "What is one weather, navigation, supply, hull, crew, and time pressure that players can affect on the detailed leg?",
-        "Which two sightings or rumours with named tellers will share the water, and which landmark or wreck anchors the navigation choice?",
-        "What one encounter situation could appear here that reveals a faction, trade need, or recent event, with at least two non-combat handles?",
-        "What three carry-overs will you note after the leg: one chart change, one price or patrol change, and one relationship shift?",
-        "Which card or table entry will you retire or evolve to avoid repetition, and which new card from this voyage will you add?",
+        "What scope fits the passage for now, and what might make you zoom in or out?",
+        "What two or more courses or sailing strategies pursue the voyage goal differently, and what does each gain or risk?",
+        "Which one to three pressures, if any, can the crew meaningfully affect on this passage?",
+        "What sighting, rumour, or landmark might matter here, and what does it reveal about this sea or its people?",
+        "Could a prepared situation or contextual random result reveal something or change the voyage? What approaches fit the circumstances?",
+        "What meaningfully changed that is worth carrying into the next passage? Consider the chart, access or cost, and relationships.",
+        "Would evolving a situation or encounter table help it reflect what has happened on this voyage?",
       ],
     },
   ],
@@ -191,7 +190,7 @@ export const howDoIMakeSeaTravelInterestingInATtrpg: AnswerConfigInput = {
     {
       title: "Ship Generator",
       description:
-        "Create a pirate vessel with crew, handling quirks, damage history, and secrets the party can recognise at distance.",
+        "Create a vessel with a crew, handling quirks, damage history, and details the party can recognise at distance.",
       href: "/generators/ship-generator",
     },
     {
@@ -203,7 +202,7 @@ export const howDoIMakeSeaTravelInterestingInATtrpg: AnswerConfigInput = {
     {
       title: "Faction Generator",
       description:
-        "Give the rival crew, navy, or trading company a goal and pressure that explains who controls the strait.",
+        "Give a crew, navy, or trading company a goal and pressure that shapes access to the strait.",
       href: "/generators/faction",
     },
     {
@@ -215,7 +214,7 @@ export const howDoIMakeSeaTravelInterestingInATtrpg: AnswerConfigInput = {
     {
       title: "Encounter Generator",
       description:
-        "Sketch situation-first encounters at sea with activities and non-combat handles instead of isolated creatures.",
+        "Sketch sea encounters tied to place and circumstance, whether they begin as prepared situations or random results.",
       href: "/generators/encounter",
     },
   ],
@@ -223,7 +222,7 @@ export const howDoIMakeSeaTravelInterestingInATtrpg: AnswerConfigInput = {
     {
       title: "Codex Cryptica for Pirate & High Seas Campaigns",
       description:
-        "Organise ships, islands, rival fleets, treasure hunts, and trade routes in one connected campaign bible.",
+        "Organise ships, islands, fleets, expeditions, and trade routes in one connected campaign bible.",
       href: "/for/pirates-high-seas",
     },
   ],
@@ -261,7 +260,7 @@ export const howDoIMakeSeaTravelInterestingInATtrpg: AnswerConfigInput = {
       "when to montage sea travel vs play in detail",
     ],
     uniqueValue:
-      "A voyage-scope framework that ties weather, navigation, supplies, hull, and crew to route trade-offs between speed, safety, secrecy, and profit, with sightings and reusable situation cards that carry consequences between voyages.",
+      "A flexible voyage framework that uses only the pressures that matter, offers meaningful course or sailing-strategy choices, and carries discoveries and consequences between passages.",
     userJob: "adopt-workflow",
     relatedIntents: [
       "answer-islands-ports-pirate-campaign",
