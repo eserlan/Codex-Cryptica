@@ -35,6 +35,14 @@ function setup(over: Record<string, unknown> = {}) {
 }
 
 describe("ReportListingModal", () => {
+  it("hides the decorative close icon from assistive technology", () => {
+    setup();
+    const closeButton = screen.getByRole("button", { name: "Close" });
+    expect(closeButton.querySelector("span")?.getAttribute("aria-hidden")).toBe(
+      "true",
+    );
+  });
+
   it("requires a reason before sending anything", async () => {
     const p = setup();
     await fireEvent.click(screen.getByText("Send report"));

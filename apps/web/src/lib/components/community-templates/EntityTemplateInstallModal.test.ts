@@ -15,6 +15,18 @@ import EntityTemplateInstallModal from "./EntityTemplateInstallModal.svelte";
 const template = { id: "t1", name: "Guild Hall" } as any;
 
 describe("EntityTemplateInstallModal", () => {
+  it("hides the decorative close icon from assistive technology", () => {
+    render(EntityTemplateInstallModal, {
+      listingId: "l1",
+      title: "Guild Hall",
+      install: vi.fn(),
+    });
+    const closeButton = screen.getByRole("button", { name: "Close" });
+    expect(closeButton.querySelector("span")?.getAttribute("aria-hidden")).toBe(
+      "true",
+    );
+  });
+
   it("explains what installing does before doing anything", () => {
     const install = vi.fn();
     render(EntityTemplateInstallModal, {
