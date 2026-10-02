@@ -221,6 +221,8 @@ export class GraphStore {
   // Labels state
   showLabels = $state(true);
   showImages = $state(true);
+  /** Soft backgrounds behind large communities of linked entities. */
+  showCommunities = $state(true);
   stableLayout = $state(true);
   recentLabels = $state<string[]>([]);
   labelFilterMode = $state<"AND" | "OR">("OR");
@@ -491,15 +493,7 @@ export class GraphStore {
       this.eras = savedEras;
     }
 
-    const savedShowLabels = await db.get("settings", "graphShowLabels");
-    if (savedShowLabels !== undefined) {
-      this.showLabels = savedShowLabels;
-    }
-
-    const savedShowImages = await db.get("settings", "graphShowImages");
-    if (savedShowImages !== undefined) {
-      this.showImages = savedShowImages;
-    }
+    await this.loadDisplayToggles(db);
 
     const savedStableLayout = await db.get("settings", "graphStableLayout");
     if (savedStableLayout !== undefined) {
@@ -802,6 +796,32 @@ export class GraphStore {
       await db.put("settings", newValue, "graphShowImages");
     } catch (error) {
       console.error("[GraphStore] Failed to persist graphShowImages:", error);
+    }
+  }
+
+  /** Display switches saved as plain booleans; a missing value keeps the default. */
+  private async loadDisplayToggles(db: Awaited<ReturnType<typeof getDB>>) {
+    const [labels, images, communities] = await Promise.all([
+      db.get("settings", "graphShowLabels"),
+      db.get("settings", "graphShowImages"),
+      db.get("settings", "graphShowCommunities"),
+    ]);
+    if (labels !== undefined) this.showLabels = labels;
+    if (images !== undefined) this.showImages = images;
+    if (communities !== undefined) this.showCommunities = communities;
+  }
+
+  async toggleCommunities() {
+    const newValue = !this.showCommunities;
+    this.showCommunities = newValue;
+    try {
+      const db = await getDB();
+      await db.put("settings", newValue, "graphShowCommunities");
+    } catch (error) {
+      console.error(
+        "[GraphStore] Failed to persist graphShowCommunities:",
+        error,
+      );
     }
   }
 
