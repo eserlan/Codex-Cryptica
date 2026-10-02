@@ -21,7 +21,7 @@ export interface RetrievalResult {
   suggestions: { helpId: string; title: string }[];
 }
 
-export const DEFAULT_LIMIT = 3;
+export const DEFAULT_LIMIT = 4;
 
 /**
  * No more than this many chunks from one feature (or, for an article no

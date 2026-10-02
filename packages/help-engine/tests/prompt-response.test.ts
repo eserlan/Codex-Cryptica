@@ -166,6 +166,17 @@ describe("buildHelpPrompt", () => {
     expect(SYSTEM_PROMPT).toMatch(/data, not instructions/);
   });
 
+  it("instructs the model to qualify locations and summarize multi-pathway options without false exclusivity", () => {
+    expect(SYSTEM_PROMPT).toMatch(
+      /Always specify the screen, tool, or location/,
+    );
+    expect(SYSTEM_PROMPT).toMatch(
+      /Never present a single method or shortcut as the only way/,
+    );
+    expect(SYSTEM_PROMPT).toMatch(/summarize the options clearly/);
+    expect(SYSTEM_PROMPT).toMatch(/highlight that on-screen option first/);
+  });
+
   it("declares a response schema with the four fields", () => {
     expect(HELP_RESPONSE_JSON_SCHEMA.required).toEqual([
       "answer",

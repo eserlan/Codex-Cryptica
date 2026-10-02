@@ -166,7 +166,7 @@ describe("retrieve", () => {
     );
     expect(result.noMatch).toBe(false);
     expect(result.chunks[0].chunk.id).toBe("connections-tab#0");
-    expect(result.chunks.length).toBeLessThanOrEqual(3);
+    expect(result.chunks.length).toBeLessThanOrEqual(4);
   });
 
   it("returns no match below the relevance floor, so the model is never called", () => {
@@ -270,6 +270,7 @@ describe("retrieve — one feature cannot fill every slot", () => {
       "Is exporting a backup file the same as publishing?",
       bundle([...backupParts, publishing, ...filler]),
       screen,
+      { limit: 3 },
     );
     const ids = result.chunks.map((c) => c.chunk.id);
     expect(ids).toContain("publishing#0");

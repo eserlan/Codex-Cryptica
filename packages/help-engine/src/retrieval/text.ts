@@ -25,6 +25,9 @@ const SYNONYMS: Record<string, string> = {
   entities: "entity",
   relationship: "connect",
   relationships: "connect",
+  make: "create",
+  made: "create",
+  making: "create",
 };
 
 const SUFFIXES = [

@@ -34,3 +34,12 @@ A picture of a handful of connections reads well; a picture of thirty does not. 
 ## Where the links come from
 
 Nothing here is stored twice. The view is built from the same connections you manage in the **Status** tab, so adding, editing, or removing a connection there changes what you see here immediately.
+
+## Ways to create connections
+
+You can create connections between entities in several ways across Codex Cryptica:
+
+- **Entity detail (Status tab)**: Open an entity, switch to its **Status** tab, look under the Connections section, and click **+ Add** to choose a target entity and relationship label.
+- **Knowledge Graph**: In the graph view, press `C` to enter Connect Mode and click the source node then target node, or select two nodes and click the chain link icon in the bottom-left toolbar.
+- **Lore Oracle chat**: Type `/connect` (or `/con`) in the chat input to use the interactive linking helper, or type `/connect "Source" is the mentor of "Target"` to link entities instantly without leaving the keyboard.
+- **Connections Proposer**: When viewing an entity, the Lore Oracle scans your notes in the background and suggests potential relationships at the bottom of the detail panel. Click the checkmark on any suggestion to create the connection.
