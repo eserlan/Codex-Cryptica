@@ -1,16 +1,6 @@
 {
-  "updated_at": 1790974900,
+  "updated_at": 1790983233,
   "candidates": [
-    {
-      "id": "reddit-36492955284-what-rpg-map-making-tool-should-you-actu",
-      "title": "What RPG map-making tool should you actually use",
-      "body": "You open a map tool to sketch a quick dungeon and spend an hour comparing brush packs and export settings before you have drawn a single room.\n\nI put together an answer that helps you pick a map tool by how you run and share maps, not by reading a long feature list.\n\nRead it here: https://codexcryptica.com/answers/what-rpg-map-making-tool-should-i-use\n\n- which tools fit quick battlemaps versus polished world maps versus collaborative online play\n- how style, learning curve and pricing line up with different GM habits\n- when a free or simple tool is enough and when a dedicated cartography app pays off\n- a short chooser flow so you can narrow it without testing five apps first\n\nI did not crown a single winner, because the right call depends on whether you print, run a VTT, or just sketch for yourself. That makes it less tidy if you just want a top pick.\n\nWhat are you making most often right now, quick encounter maps or bigger world and region maps?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/announcements/release-36492955284-1.png)",
-      "url": "https://codexcryptica.com/answers/what-rpg-map-making-tool-should-i-use",
-      "image_url": "https://assets.codexcryptica.com/announcements/release-36492955284-1.png",
-      "source_id": "36492955284",
-      "status": "approved",
-      "created_at": 1790637362
-    },
     {
       "id": "reddit-36595187772-running-a-large-battle-when-the-party-is",
       "title": "Running a large battle when the party is inside the army",
