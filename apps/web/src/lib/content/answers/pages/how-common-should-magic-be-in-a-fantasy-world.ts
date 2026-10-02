@@ -223,6 +223,7 @@ export const howCommonShouldMagicBeInAFantasyWorld: AnswerConfigInput = {
     "how-should-magic-have-been-discovered-in-my-world",
     "how-do-i-build-a-believable-economy-for-a-fantasy-world",
     "how-do-you-create-a-fantasy-faction",
+    "how-does-magic-change-society-in-a-fantasy-world",
   ],
   discovery: {
     id: "answer-how-common-should-magic-be-in-a-fantasy-world",

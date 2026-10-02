@@ -174,6 +174,7 @@ export const howDoYouCreateAFantasyFaction: AnswerConfigInput = {
     "how-should-magic-have-been-discovered-in-my-world",
     "how-does-magic-create-social-classes-and-inequality",
     "how-common-should-magic-be-in-a-fantasy-world",
+    "how-does-magic-change-society-in-a-fantasy-world",
   ],
   discovery: {
     id: "answer-fantasy-faction",

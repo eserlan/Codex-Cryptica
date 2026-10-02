@@ -179,6 +179,7 @@ export const howShouldMagicHaveBeenDiscoveredInMyWorld: AnswerConfigInput = {
     "how-do-you-start-worldbuilding-from-scratch",
     "how-does-magic-create-social-classes-and-inequality",
     "how-common-should-magic-be-in-a-fantasy-world",
+    "how-does-magic-change-society-in-a-fantasy-world",
   ],
   discovery: {
     id: "answer-magic-discovery-origin",
