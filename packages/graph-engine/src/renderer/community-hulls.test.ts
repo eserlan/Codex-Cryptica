@@ -130,6 +130,18 @@ describe("paintOrder", () => {
     expect(new Set(order.map((o) => o.alpha)).size).toBe(1);
   });
 
+  it("paints every strength higher when emphasised, keeping their order", () => {
+    const groups = [group("A"), group("B")];
+    const soft = paintOrder(groups, new Set(), false)[0].alpha;
+    const strong = paintOrder(groups, new Set(), true)[0].alpha;
+    expect(strong).toBeGreaterThan(soft * 2);
+
+    const softLit = paintOrder(groups, new Set(["A"]), false);
+    const strongLit = paintOrder(groups, new Set(["A"]), true);
+    expect(strongLit[0].alpha).toBeGreaterThan(softLit[0].alpha);
+    expect(strongLit[1].alpha).toBeGreaterThan(strongLit[0].alpha);
+  });
+
   it("puts the highlighted group last and strongest, keeping its colour rank", () => {
     const order = paintOrder(
       [group("A"), group("B"), group("C")],
@@ -528,5 +540,41 @@ describe("attachCommunityHulls", () => {
         cy.destroy();
       });
     });
+  });
+
+  it("draws stronger once emphasised and returns to soft (and ignores no-op switches)", () => {
+    const frames: FrameRequestCallback[] = [];
+    const g = globalThis as any;
+    const saved = [g.requestAnimationFrame, g.cancelAnimationFrame];
+    g.requestAnimationFrame = (cb: FrameRequestCallback) => frames.push(cb);
+    g.cancelAnimationFrame = () => {};
+    const flush = () => frames.splice(0).forEach((f) => f(0));
+    const cy = graph();
+    const calls: string[] = [];
+    const alphas: number[] = [];
+    const overlay = attachCommunityHulls(
+      cy,
+      recordingCanvas(calls, "main", alphas),
+      { createLayer: () => recordingCanvas(calls, "layer") },
+    );
+    flush();
+    const soft = alphas.at(-1)!;
+
+    overlay.setStrong(true);
+    flush();
+    const strong = alphas.at(-1)!;
+    expect(strong).toBeGreaterThan(soft * 2);
+
+    alphas.length = 0;
+    overlay.setStrong(true);
+    flush();
+    expect(alphas).toHaveLength(0);
+
+    overlay.setStrong(false);
+    flush();
+    expect(alphas.at(-1)).toBe(soft);
+    overlay.destroy();
+    cy.destroy();
+    [g.requestAnimationFrame, g.cancelAnimationFrame] = saved;
   });
 });

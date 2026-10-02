@@ -30,6 +30,10 @@ const HALO_PADDING = 46;
 const RESTING_ALPHA = 0.11;
 const HIGHLIGHT_ALPHA = 0.2;
 const FADED_ALPHA = 0.04;
+/** The same three strengths when backgrounds are emphasised. */
+const STRONG_RESTING_ALPHA = 0.3;
+const STRONG_HIGHLIGHT_ALPHA = 0.46;
+const STRONG_FADED_ALPHA = 0.12;
 
 /**
  * Members far from the rest of their community (more than twice the median
@@ -139,23 +143,29 @@ function hueFor(rank: number): number {
 export function paintOrder(
   groups: CommunityGroup[],
   highlighted: ReadonlySet<string>,
+  strong = false,
 ): Array<{ group: CommunityGroup; rank: number; alpha: number }> {
+  const resting = strong ? STRONG_RESTING_ALPHA : RESTING_ALPHA;
+  const lit = strong ? STRONG_HIGHLIGHT_ALPHA : HIGHLIGHT_ALPHA;
+  const faded = strong ? STRONG_FADED_ALPHA : FADED_ALPHA;
   const ranked = groups.map((group, rank) => ({ group, rank }));
   if (highlighted.size === 0) {
-    return ranked.map((r) => ({ ...r, alpha: RESTING_ALPHA }));
+    return ranked.map((r) => ({ ...r, alpha: resting }));
   }
   const isSelected = (r: { group: CommunityGroup }) =>
     highlighted.has(r.group.community);
   return [
     ...ranked
       .filter((r) => !isSelected(r))
-      .map((r) => ({ ...r, alpha: FADED_ALPHA })),
-    ...ranked.filter(isSelected).map((r) => ({ ...r, alpha: HIGHLIGHT_ALPHA })),
+      .map((r) => ({ ...r, alpha: faded })),
+    ...ranked.filter(isSelected).map((r) => ({ ...r, alpha: lit })),
   ];
 }
 
 export interface CommunityHullOverlay {
   setEnabled(enabled: boolean): void;
+  /** Emphasised backgrounds: stronger at rest, on hover, and for the faded rest. */
+  setStrong(strong: boolean): void;
   destroy(): void;
 }
 
@@ -287,15 +297,18 @@ export function attachCommunityHulls(
   canvas: HTMLCanvasElement,
   {
     enabled = true,
+    strong: startStrong = false,
     createLayer = () => document.createElement("canvas"),
     sharpenDelayMs = SHARPEN_DELAY_MS,
   }: {
     enabled?: boolean;
+    strong?: boolean;
     createLayer?: () => HTMLCanvasElement;
     sharpenDelayMs?: number;
   } = {},
 ): CommunityHullOverlay {
   let on = enabled;
+  let strong = startStrong;
   let communities: Map<string, string> | null = null;
   let groups: CommunityGroup[] | null = null;
   let keys = new Map<string, string>();
@@ -404,7 +417,11 @@ export function attachCommunityHulls(
     ctx.setTransform(dpr * zoom, 0, 0, dpr * zoom, dpr * pan.x, dpr * pan.y);
     const wanted = dpr * zoom;
     const budgeted = budgetedScale(groups!.map(groupBounds), wanted);
-    for (const { group, rank, alpha } of paintOrder(groups!, highlighted)) {
+    for (const { group, rank, alpha } of paintOrder(
+      groups!,
+      highlighted,
+      strong,
+    )) {
       const bitmap = bitmapFor(group, rank, budgeted, wanted);
       ctx.globalAlpha = alpha;
       ctx.drawImage(bitmap.canvas, bitmap.x1, bitmap.y1, bitmap.w, bitmap.h);
@@ -458,6 +475,11 @@ export function attachCommunityHulls(
     setEnabled(next: boolean) {
       if (next === on) return;
       on = next;
+      schedule();
+    },
+    setStrong(next: boolean) {
+      if (next === strong) return;
+      strong = next;
       schedule();
     },
     destroy() {

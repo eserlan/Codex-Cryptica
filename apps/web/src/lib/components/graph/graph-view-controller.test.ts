@@ -126,7 +126,7 @@ describe("GraphViewController", () => {
         stableLayout: true,
         stats: { nodeCount: 0 },
         showImages: true,
-        showCommunities: true,
+        communityMode: "soft",
         isLargeGraph: false,
         perfStylingActive: false,
         activeLabels: new Set(),
@@ -995,24 +995,36 @@ describe("GraphViewController", () => {
   describe("community backgrounds", () => {
     it("are shown normally and hidden in timeline mode or when turned off", () => {
       const setEnabled = vi.fn();
-      controller.communityHulls = { setEnabled, destroy: vi.fn() };
+      const setStrong = vi.fn();
+      controller.communityHulls = { setEnabled, setStrong, destroy: vi.fn() };
 
       controller.syncCommunityHulls();
       expect(setEnabled).toHaveBeenLastCalledWith(true);
+      expect(setStrong).toHaveBeenLastCalledWith(false);
+
+      deps.graph.communityMode = "strong";
+      controller.syncCommunityHulls();
+      expect(setEnabled).toHaveBeenLastCalledWith(true);
+      expect(setStrong).toHaveBeenLastCalledWith(true);
+      deps.graph.communityMode = "soft";
 
       deps.graph.timelineMode = true;
       controller.syncCommunityHulls();
       expect(setEnabled).toHaveBeenLastCalledWith(false);
 
       deps.graph.timelineMode = false;
-      deps.graph.showCommunities = false;
+      deps.graph.communityMode = "off";
       controller.syncCommunityHulls();
       expect(setEnabled).toHaveBeenLastCalledWith(false);
     });
 
     it("are torn down with the controller (negative: no further drawing)", () => {
       const destroy = vi.fn();
-      controller.communityHulls = { setEnabled: vi.fn(), destroy };
+      controller.communityHulls = {
+        setEnabled: vi.fn(),
+        setStrong: vi.fn(),
+        destroy,
+      };
       controller.destroy();
       expect(destroy).toHaveBeenCalled();
       expect(controller.communityHulls).toBeUndefined();

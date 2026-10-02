@@ -461,20 +461,57 @@ describe("GraphStore", () => {
     expect(putSpy).toHaveBeenCalledWith("settings", true, "graphShowImages");
   });
 
-  it("should toggle group backgrounds and persist to IDB", async () => {
+  it("cycles group backgrounds soft, strong, off and persists each state", async () => {
     const db = await getDB();
     const putSpy = vi.spyOn(db, "put");
+    expect(graph.communityMode).toBe("soft");
+    expect(graph.showCommunities).toBe(true);
 
     await graph.toggleCommunities();
-    expect(graph.showCommunities).toBe(false);
+    expect(graph.communityMode).toBe("strong");
     expect(putSpy).toHaveBeenCalledWith(
       "settings",
-      false,
-      "graphShowCommunities",
+      "strong",
+      "graphCommunityMode",
     );
 
     await graph.toggleCommunities();
-    expect(graph.showCommunities).toBe(true);
+    expect(graph.communityMode).toBe("off");
+    expect(graph.showCommunities).toBe(false);
+    expect(putSpy).toHaveBeenCalledWith(
+      "settings",
+      "off",
+      "graphCommunityMode",
+    );
+
+    await graph.toggleCommunities();
+    expect(graph.communityMode).toBe("soft");
+  });
+
+  it("restores a saved mode, and reads the old on/off flag when there is none (negative: garbage ignored)", async () => {
+    const db = await getDB();
+    const saved: Record<string, unknown> = {};
+    vi.spyOn(db, "get").mockImplementation(
+      (async (_store: string, key: string) => saved[key]) as any,
+    );
+    const load = async (mode: "off" | "soft" | "strong" = "soft") => {
+      graph.communityMode = mode;
+      await (graph as any).loadPersistedState();
+      return graph.communityMode;
+    };
+
+    saved.graphCommunityMode = "strong";
+    expect(await load()).toBe("strong");
+
+    delete saved.graphCommunityMode;
+    saved.graphShowCommunities = false;
+    expect(await load()).toBe("off");
+
+    saved.graphShowCommunities = true;
+    expect(await load()).toBe("soft");
+
+    saved.graphCommunityMode = "sideways";
+    expect(await load("strong")).toBe("strong");
   });
 
   it("should toggle labels and persist to IDB", async () => {
@@ -813,7 +850,7 @@ describe("GraphStore", () => {
 
     await graph.toggleCommunities();
     expect(consoleSpy).toHaveBeenCalledWith(
-      expect.stringContaining("Failed to persist graphShowCommunities"),
+      expect.stringContaining("Failed to persist graphCommunityMode"),
       expect.anything(),
     );
 

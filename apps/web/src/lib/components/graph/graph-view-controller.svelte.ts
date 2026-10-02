@@ -323,6 +323,7 @@ export class GraphViewController {
       this.communityHulls = hullCanvas
         ? attachCommunityHulls(instance, hullCanvas, {
             enabled: untrack(() => this.communityHullsWanted()),
+            strong: untrack(() => this.deps.graph.communityMode === "strong"),
           })
         : undefined;
 
@@ -947,11 +948,12 @@ export class GraphViewController {
   /** Timeline and orbit arrange nodes by date or distance, not by community. */
   private communityHullsWanted() {
     const g = this.deps.graph;
-    return g.showCommunities && !g.timelineMode && !g.orbitMode;
+    return g.communityMode !== "off" && !g.timelineMode && !g.orbitMode;
   }
 
   syncCommunityHulls = () => {
     this.communityHulls?.setEnabled(this.communityHullsWanted());
+    this.communityHulls?.setStrong(this.deps.graph.communityMode === "strong");
   };
 
   syncImages = () => {

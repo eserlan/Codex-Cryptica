@@ -27,7 +27,7 @@ The bottom-left toolbar provides quick access to layout and visibility:
 - **Zoom**: Adjust view scale.
 - **Stable Layout (Pin)**: Prevent nodes from moving automatically.
 - **Link (Chain icon)**: Quickly connect two selected nodes.
-- **Groups**: Show or hide soft backgrounds behind the larger groups of closely linked entities.
+- **Groups**: Cycle the backgrounds behind the larger groups of closely linked entities: soft, strong (more visible, for spotting the groups quickly), or hidden. Hover an entity to highlight its whole group.
 - **Redraw (Refresh)**: Recalculate node positions. Closely linked entities are placed together in their own area, and entities with no connections are lined up separately.
 
 ### Images in Large Campaigns

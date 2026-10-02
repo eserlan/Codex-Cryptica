@@ -281,7 +281,7 @@
   });
 
   $effect(() => {
-    void graph.showCommunities;
+    void graph.communityMode;
     void graph.timelineMode;
     void graph.orbitMode;
     void controller.communityHulls;
