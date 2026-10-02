@@ -89,6 +89,7 @@ import { howDoYouTrackUnresolvedPlotHooksInAnRpgCampaign } from "./how-do-you-tr
 import { howDoYouUsePlayerBackstoriesInAnRpgCampaignWorld } from "./how-do-you-use-player-backstories-in-an-rpg-campaign-world";
 import { howDoYouWriteAOneShotAdventure } from "./how-do-you-write-a-one-shot-adventure";
 import { howDoesMagicAffectPoliticsAndGovernment } from "./how-does-magic-affect-politics-and-government";
+import { howDoesMagicCreateSocialClassesAndInequality } from "./how-does-magic-create-social-classes-and-inequality";
 import { howLongShouldATtrpgSessionBe } from "./how-long-should-a-ttrpg-session-be";
 import { howManyNpcsDoesAnRpgTownNeed } from "./how-many-npcs-does-an-rpg-town-need";
 import { howMuchCampaignLoreShouldPlayersBeExpectedToRemember } from "./how-much-campaign-lore-should-players-be-expected-to-remember";
@@ -225,6 +226,7 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     howDoYouUsePlayerBackstoriesInAnRpgCampaignWorld,
     howDoYouWriteAOneShotAdventure,
     howDoesMagicAffectPoliticsAndGovernment,
+    howDoesMagicCreateSocialClassesAndInequality,
     howLongShouldATtrpgSessionBe,
     howManyNpcsDoesAnRpgTownNeed,
     howMuchCampaignLoreShouldPlayersBeExpectedToRemember,

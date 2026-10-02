@@ -196,6 +196,7 @@ export const howDoesMagicAffectPoliticsAndGovernment: AnswerConfigInput = {
     "how-do-you-create-a-secret-society-for-an-rpg-campaign",
     "how-do-fantasy-cities-defend-against-flying-creatures-and-teleportation",
     "how-do-you-create-a-pantheon",
+    "how-does-magic-create-social-classes-and-inequality",
   ],
   discovery: {
     id: "answer-magic-affects-politics-and-government",

@@ -168,6 +168,7 @@ export const howDoYouCreateABelievableFictionalReligion: AnswerConfigInput = {
     "how-do-i-make-different-cultures-feel-distinct-without-relying-on-stereotypes",
     "how-does-magic-affect-politics-and-government",
     "how-should-magic-have-been-discovered-in-my-world",
+    "how-does-magic-create-social-classes-and-inequality",
   ],
   discovery: {
     id: "answer-fictional-religion",
