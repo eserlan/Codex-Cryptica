@@ -68,7 +68,9 @@
         type="button"
         class="text-theme-muted"
         aria-label="Close import dialog"
-        onclick={onClose}><span class="icon-[lucide--x] h-4 w-4" aria-hidden="true"></span></button
+        onclick={onClose}
+        ><span class="icon-[lucide--x] h-4 w-4" aria-hidden="true"
+        ></span></button
       >
     </div>
     <p class="mt-3 text-sm text-theme-muted">
