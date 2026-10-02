@@ -2476,6 +2476,10 @@ Reference answers to real RPG and worldbuilding questions, indexed at https://co
 
 **Direct answer:** Yes, but a 30-minute session has to be designed as a short episode rather than a compressed version of a normal three to four hour session. Prepare one meaningful scene, problem, decision, or encounter that can produce a real change in about half an hour, start at the interesting moment instead of narrating the approach to it, and move levelling, shopping, and long rules discussion outside the slot when the group is willing. Combat can work if it's scoped for the window: fewer, more meaningful enemies, a clear objective, and a willingness to let a fight run into next time rather than forcing it to finish. Stop the session once something has genuinely changed.
 
+### [How common should magic be in a fantasy world?](https://codexcryptica.com/answers/how-common-should-magic-be-in-a-fantasy-world)
+
+**Direct answer:** Set how many people can use magic, how hard it is to get good at it, and what ordinary spells can actually do, then price that access in coin, time, risk and visibility. A tiny elite with costly rites produces secrecy, patronage and fear of exposure; a common craft with cheap, visible charms reshapes work, trade, law and war, so choose the level that gives your table the institutions and everyday expectations you want to play with.
+
 ### [How do fantasy cities defend against flying creatures and teleportation?](https://codexcryptica.com/answers/how-do-fantasy-cities-defend-against-flying-creatures-and-teleportation)
 
 **Direct answer:** Fantasy cities keep their walls because walls still control ordinary movement, trade, taxation, and conventional siege, then add layered defences for the new vectors. Define how common, fast, heavy, and vulnerable your fliers and teleporters are, harden critical infrastructure such as granaries, wells, armouries, and command posts rather than every roof, and treat teleportation as access control through wards, registered arrival points, and compartmented layouts that carry clear costs and trade-offs.
@@ -2832,6 +2836,10 @@ Reference answers to real RPG and worldbuilding questions, indexed at https://co
 
 **Direct answer:** Magic does not automatically create a magocracy. It forces every government to answer who may use each capability, who fears it enough to pay for a counter, and what public institution makes that answer visible and enforceable. A single truth reader reshapes trials, a guild that can teleport reshapes taxation and troop movement, and a handful of charmers reshapes succession and policing, so build politics around control, fear and counters rather than raw power alone.
 
+### [How does magic change society in a fantasy world?](https://codexcryptica.com/answers/how-does-magic-change-society-in-a-fantasy-world)
+
+**Direct answer:** Magic reshapes a society according to five properties: who can use it, what it costs, how reliable it is, how much power it offers, and how easily it can be detected or stopped. When those answers shift, so do schooling, work, faith, law, war, status and government, because every institution must decide whether to train, hire, licence, tax, forbid or counter magical ability.
+
 ### [How does magic create social classes and inequality?](https://codexcryptica.com/answers/how-does-magic-create-social-classes-and-inequality)
 
 **Direct answer:** Magic creates inequality when access to talent, training or resources is uneven, not because every mage automatically rules. Whether a gifted child rises, a family entrenches a dynasty, a guild locks out outsiders, or a state keeps mages as licensed specialists depends on how rare magic is, how costly it is to learn, how organised its practitioners are, and whether non-magical people have reliable counters.
@@ -2862,7 +2870,7 @@ Reference answers to real RPG and worldbuilding questions, indexed at https://co
 
 ### [How should magic have been discovered in my world?](https://codexcryptica.com/answers/how-should-magic-have-been-discovered-in-my-world)
 
-**Direct answer:** Choose how your people first learned to use magic separately from where magic itself comes from, then decide who remembers, controls, or forbids that discovery today. The model you pick, whether slow natural enquiry, divine gift, inheritance from a fallen civilisation,Planar catastrophe, outsider teaching, rediscovery of banned lore, multiple independent traditions, or an ancient force only recently made usable, sets who claims authority, what institutions guard the knowledge, and what laws and taboos shape play now.
+**Direct answer:** Choose how your people first learned to use magic separately from where magic itself comes from, then decide who remembers, controls, or forbids that discovery today. The model you pick, whether slow natural enquiry, divine gift, inheritance from a fallen civilisation, planar catastrophe, outsider teaching, rediscovery of banned lore, multiple independent traditions, or an ancient force only recently made usable, shapes who claims authority, which institutions guard the knowledge, and what laws, customs, and beliefs shape play now.
 
 ### [How do you create a cyberpunk city district?](https://codexcryptica.com/answers/how-to-create-a-cyberpunk-city-district)
 
