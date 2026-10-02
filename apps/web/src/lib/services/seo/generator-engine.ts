@@ -81,7 +81,6 @@ import {
   parseShipResponse,
   generateShipLocal,
   buildLanguagePrompt,
-  buildLanguageRepairPrompt,
   generateLanguageLocal,
   buildNewsSheetPrompt,
   parseNewsSheetResponse,
@@ -150,7 +149,7 @@ import {
   GeneratorAITransport,
   LANGUAGE_GENERATION_CONFIG,
 } from "./generator-ai-transport";
-import { assessLanguageOutput } from "./language-output-assessment";
+import { runLanguageGenerationWithRepair } from "./language-generation-repair";
 import { runSeoHeistGeneration } from "./heist-generation-orchestration";
 import { WorldGenerationService } from "./world-generation";
 import { FactionGenerationService } from "./faction-generation";
@@ -1050,58 +1049,14 @@ export class DefaultGeneratorEngine {
           structure: resolved.structure,
           ...(resolved.context ? { worldContext: resolved.context } : {}),
         };
-        const assess = (raw: string) =>
-          assessLanguageOutput(raw, expected, resolved.bannedNames ?? []);
-
-        const initialRaw = await this.runModel(
+        return runLanguageGenerationWithRepair({
           systemInstruction,
           userMessage,
-          LANGUAGE_GENERATION_CONFIG,
-        );
-        const initial = assess(initialRaw);
-        if (initial.output && initial.issues.length === 0) {
-          return initial.output;
-        }
-
-        let candidateRaw = initialRaw;
-        let candidate = initial;
-        let lastAcceptableOutput =
-          initial.output && initial.blockingIssues.length === 0
-            ? initial.output
-            : undefined;
-        const repairBudget = initial.blockingIssues.length ? 2 : 1;
-        for (
-          let repairAttempt = 0;
-          repairAttempt < repairBudget;
-          repairAttempt += 1
-        ) {
-          try {
-            const repairRaw = await this.runModel(
-              systemInstruction,
-              buildLanguageRepairPrompt(
-                candidateRaw,
-                candidate.issues,
-                userMessage,
-              ),
-              LANGUAGE_GENERATION_CONFIG,
-            );
-            candidateRaw = repairRaw;
-            candidate = assess(repairRaw);
-            if (candidate.output && candidate.issues.length === 0) {
-              return candidate.output;
-            }
-            if (candidate.output && candidate.blockingIssues.length === 0) {
-              lastAcceptableOutput = candidate.output;
-              break;
-            }
-          } catch {
-            // Preserve the last parseable candidate for the remaining repair.
-          }
-        }
-        if (lastAcceptableOutput) return lastAcceptableOutput;
-        throw new Error(
-          `AI language output failed validation: ${candidate.issues.join(" ")}`,
-        );
+          expected,
+          bannedNames: resolved.bannedNames ?? [],
+          runModel: (instruction, message, config) =>
+            this.runModel(instruction, message, config),
+        });
       },
       () => generateLanguageLocal(langOptions),
     );
