@@ -1066,19 +1066,6 @@ export class GraphViewController {
 
             secondLevel.removeClass("dimmed");
             secondLevel.addClass("secondary-neighborhood");
-
-            // The rest of the selected entity's group stays visible too, so
-            // its highlighted background is not a field of dimmed nodes.
-            if (this.communityHulls && this.communityHullsWanted()) {
-              const members = new Set(this.communityHulls.communityMembers(id));
-              const group = currentCy
-                .nodes()
-                .filter((n) => members.has(n.id()))
-                .not(firstLevelNodes)
-                .not(secondLevelNodes);
-              group.removeClass("dimmed");
-              group.addClass("secondary-neighborhood");
-            }
           } else {
             allEles.removeClass("dimmed neighborhood secondary-neighborhood");
           }

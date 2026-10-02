@@ -24,9 +24,9 @@ export const MIN_HULL_SIZE = 8;
 export const MAX_HULLS = 24;
 /** How far a community's background reaches beyond each member, in graph units. */
 const HALO_PADDING = 46;
-/** Background strength with nothing selected, for the selected node's group, and for the others. */
+/** Background strength at rest, for the hovered node's group, and for the others meanwhile. */
 const RESTING_ALPHA = 0.11;
-const SELECTED_ALPHA = 0.2;
+const HIGHLIGHT_ALPHA = 0.2;
 const FADED_ALPHA = 0.04;
 
 /**
@@ -51,7 +51,7 @@ export function computeCommunityGroups(
     minSize = MIN_HULL_SIZE,
     maxCount = MAX_HULLS,
     edges = [] as ReadonlyArray<readonly [string, string]>,
-    /** Communities to include whatever their size, e.g. the selected one's. */
+    /** Communities to include whatever their size, e.g. the hovered node's. */
     include = new Set<string>() as ReadonlySet<string>,
   } = {},
 ): CommunityGroup[] {
@@ -94,31 +94,29 @@ function hueFor(rank: number): number {
 }
 
 /**
- * Which groups to paint, in what order and how strongly. With a selection,
- * the selected groups come last (on top) and strong, the rest faint.
+ * Which groups to paint, in what order and how strongly. With a highlight
+ * (the hovered node's group), it comes last (on top) and strong, the rest faint.
  */
 export function paintOrder(
   groups: CommunityGroup[],
-  selected: ReadonlySet<string>,
+  highlighted: ReadonlySet<string>,
 ): Array<{ group: CommunityGroup; rank: number; alpha: number }> {
   const ranked = groups.map((group, rank) => ({ group, rank }));
-  if (selected.size === 0) {
+  if (highlighted.size === 0) {
     return ranked.map((r) => ({ ...r, alpha: RESTING_ALPHA }));
   }
   const isSelected = (r: { group: CommunityGroup }) =>
-    selected.has(r.group.community);
+    highlighted.has(r.group.community);
   return [
     ...ranked
       .filter((r) => !isSelected(r))
       .map((r) => ({ ...r, alpha: FADED_ALPHA })),
-    ...ranked.filter(isSelected).map((r) => ({ ...r, alpha: SELECTED_ALPHA })),
+    ...ranked.filter(isSelected).map((r) => ({ ...r, alpha: HIGHLIGHT_ALPHA })),
   ];
 }
 
 export interface CommunityHullOverlay {
   setEnabled(enabled: boolean): void;
-  /** Ids of every node in the same community as `id` (including it). */
-  communityMembers(id: string): string[];
   destroy(): void;
 }
 
@@ -141,8 +139,8 @@ export function attachCommunityHulls(
   let on = enabled;
   let communities: Map<string, string> | null = null;
   let groups: CommunityGroup[] | null = null;
-  /** Communities of the selected nodes: shown strongly, the rest faded. */
-  let selected = new Set<string>();
+  /** Community of the hovered node: shown strongly, the rest faded. */
+  let highlighted = new Set<string>();
   let frame: number | null = null;
   const ctx = canvas.getContext("2d");
   // Each community is painted opaque here, then copied over translucent, so
@@ -174,21 +172,21 @@ export function attachCommunityHulls(
         return { id: n.id(), x: p.x, y: p.y, r: n.width() / 2 };
       }),
       communities,
-      { edges: edgeList, include: selected },
+      { edges: edgeList, include: highlighted },
     );
   };
 
-  const refreshSelection = () => {
-    if (!communities) recomputeGroups();
-    const next = new Set<string>();
-    cy.nodes(":selected").forEach((n) => {
-      const community = communities!.get(n.id());
-      if (community !== undefined) next.add(community);
-    });
-    selected = next;
+  const highlight = (id: string | null) => {
+    if (id !== null && !communities) recomputeGroups();
+    const community = id === null ? undefined : communities!.get(id);
+    const next = new Set(community === undefined ? [] : [community]);
+    if ([...next].join() === [...highlighted].join()) return;
+    highlighted = next;
     groups = null;
     schedule();
   };
+  const onHover = (evt: { target: NodeSingular }) => highlight(evt.target.id());
+  const onLeave = () => highlight(null);
 
   /** Matches both canvases to the element's size; returns that size in device pixels. */
   const fitCanvases = () => {
@@ -248,7 +246,7 @@ export function attachCommunityHulls(
     ctx.clearRect(0, 0, size.width, size.height);
     if (!on) return;
     if (!groups) recomputeGroups();
-    for (const { group, rank, alpha } of paintOrder(groups!, selected)) {
+    for (const { group, rank, alpha } of paintOrder(groups!, highlighted)) {
       paintGroup(ctx, layerCtx, group, rank, size, alpha);
     }
   };
@@ -270,7 +268,8 @@ export function attachCommunityHulls(
   cy.on("add remove", onStructure);
   cy.on("position style", onMove);
   cy.on("viewport resize", schedule);
-  cy.on("select unselect", "node", refreshSelection);
+  cy.on("mouseover", "node", onHover);
+  cy.on("mouseout", "node", onLeave);
   schedule();
 
   return {
@@ -279,19 +278,12 @@ export function attachCommunityHulls(
       on = next;
       schedule();
     },
-    communityMembers(id: string) {
-      if (!communities) recomputeGroups();
-      const community = communities!.get(id);
-      if (community === undefined) return [];
-      return [...communities!]
-        .filter(([, c]) => c === community)
-        .map(([n]) => n);
-    },
     destroy() {
       cy.off("add remove", onStructure);
       cy.off("position style", onMove);
       cy.off("viewport resize", schedule);
-      cy.off("select unselect", "node", refreshSelection);
+      cy.off("mouseover", "node", onHover);
+      cy.off("mouseout", "node", onLeave);
       if (frame !== null) cancelAnimationFrame(frame);
       ctx?.clearRect(0, 0, canvas.width, canvas.height);
     },
