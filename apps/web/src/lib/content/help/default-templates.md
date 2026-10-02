@@ -1,6 +1,7 @@
 ---
 id: default-entity-templates
 title: Default Entity Templates
+description: See the built-in note structures Codex uses when you create characters, places, factions, and other entities.
 tags: ["templates", "formatting", "customization"]
 rank: 18
 ---

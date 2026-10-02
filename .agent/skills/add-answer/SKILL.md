@@ -89,8 +89,11 @@ Every public answer page is governed by the Discovery Intent Registry:
 > **Every answer page requires an R2 illustration.** `seo.image`/`seo.imageAlt` are enforced by `registry.test.ts` for every answer with `publishedAt` on or after 2026-09-07; skipping the image will fail that test. **NEVER commit image files to git.** All image assets belong exclusively in Cloudflare R2 (`codex-cryptica-statics` bucket served via `https://assets.codexcryptica.com/`). Any local files created temporarily during generation must be deleted immediately after upload.
 
 1. Generate or prepare a 16:9 illustration for the topic:
-   - Aspect ratio: `16:9`.
-   - Evocative, atmospheric tabletop RPG illustration matching Codex's aesthetic.
+   - **Aspect ratio**: Strictly `16:9`.
+   - **Art Direction (Grounded Cinematic Realism)**: Adhere to [docs/ART_DIRECTION_EDITORIAL_IMAGES.md](../../../docs/ART_DIRECTION_EDITORIAL_IMAGES.md).
+     - Target: Painterly digital realism, cinematic lighting (golden hour, firelight, twilight, mist), environmental storytelling, authentic textures and dress. Full-bleed edge-to-edge framing.
+     - Strictly forbidden: Storybook/fairytale styles, borders/frames/parchment mats, text/runes/banner labels, flowchart/diagrammatic layouts.
+     - Prompt formula: `Cinematic concept art, wide shot of [grounded scene and cultural interaction]... [authentic materials and garments]... [motivated lighting and atmospheric haze]... No text, no frames, no borders.`
    - **Tool fallback order:** try the `agy` CLI first. If `agy` reports its image-generation quota is exhausted, fall back to `codex`. If `codex` also fails, fall back to Claude Code's own image generation. Only move to the next tool once the current one has failed or is out of quota.
    - **`agy` in headless mode:** a plain `agy -p "<prompt>"` can fail with `a tool required the "command" permission that headless mode cannot prompt for`, since there is no interactive session to approve the permission. This is a local sandbox/permission issue, not a quota failure, so it does not mean falling back to `codex`. Retry once with `agy --dangerously-skip-permissions -p "<prompt>"` before treating it as a genuine `agy` failure — this only auto-approves tool calls inside `agy`'s own sandboxed image-generation run in the current directory (the scratchpad), it does not touch the surrounding session's permissions.
 2. Upload directly to R2 using wrangler:

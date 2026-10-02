@@ -112,6 +112,7 @@ export const howDoYouHelpPlayersRememberWhatHappenedInATtrpgCampaign: AnswerConf
       "how-do-you-make-npcs-memorable-without-lots-of-prep",
       "how-do-you-manage-a-campaign-timeline-in-an-rpg",
       "how-do-i-take-useful-rpg-notes-during-play",
+      "how-long-should-a-ttrpg-session-be",
     ],
     discovery: {
       id: "answer-campaign-memory-hub",

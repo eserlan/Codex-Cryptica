@@ -5,7 +5,11 @@ import type {
   StylingTemplate,
   ImageFocus,
 } from "schema";
-import { deriveEntityTypePalette, imageFocusBackgroundPosition } from "schema";
+import {
+  deriveEntityTypePalette,
+  imageFocusBackgroundPosition,
+  isPlaceholderImageUrl,
+} from "schema";
 import { CONNECTION_COLORS } from "./defaults";
 import { isLayoutCollinear } from "./geometry";
 
@@ -232,8 +236,11 @@ export class GraphTransformer {
       };
       if (hasPast) nodeData.isPast = true;
       if (hasImportantLabel(entity.labels)) nodeData.isImportant = true;
-      if (entity.image) nodeData.image = entity.image;
-      if (entity.thumbnail) nodeData.thumbnail = entity.thumbnail;
+      // Stock placeholder art is left off so the node gets its silhouette.
+      if (entity.image && !isPlaceholderImageUrl(entity.image))
+        nodeData.image = entity.image;
+      if (entity.thumbnail && !isPlaceholderImageUrl(entity.thumbnail))
+        nodeData.thumbnail = entity.thumbnail;
       if (entity.imageFocus) nodeData.imageFocus = entity.imageFocus;
       if (entity.silhouette) (nodeData as any).silhouette = entity.silhouette;
       (nodeData as any).entity = {

@@ -1,10 +1,16 @@
 import type { Core } from "cytoscape";
 import type { Entity } from "schema";
-import { getDynamicLayoutOptions } from "./defaults";
+import {
+  communityEdgeShape,
+  degreeRepulsion,
+  getDynamicLayoutOptions,
+} from "./defaults";
+import { detectCommunities } from "./communities";
 import { getTimelineLayout, hasTimelineDate } from "./layouts/timeline";
 import { setCentralNode } from "./layouts/orbit";
 import type { GraphNode } from "./transformer";
 import { isLayoutCollinear } from "./geometry";
+import { nodeFitBounds } from "./fit-bounds";
 
 export interface LayoutOptions {
   timelineMode: boolean;
@@ -53,7 +59,6 @@ export interface LayoutRequest {
   hasRemovedNodes?: boolean;
 }
 
-const ORIENTATION_THRESHOLD = 1.2;
 const BASE_LAYOUT_WORKER_TIMEOUT_MS = 15000;
 const FIT_ANIMATION_TIMEOUT_MS = 1200;
 const GOLDEN_ANGLE = Math.PI * (3 - Math.sqrt(5));
@@ -319,7 +324,7 @@ export class LayoutManager {
     timeout = setTimeout(finish, FIT_ANIMATION_TIMEOUT_MS);
 
     this.cy.animate({
-      fit: { eles: this.cy.elements(), padding: 20 },
+      fit: { eles: nodeFitBounds(this.cy), padding: 20 },
       duration: 800,
       easing,
       complete: finish,
@@ -414,7 +419,7 @@ export class LayoutManager {
   private handleGuestInitialFit(options: LayoutOptions) {
     this.cy.nodes().removeData("isPendingLayout");
     this.clearPendingLayout();
-    this.cy.fit(this.cy.nodes(), 20);
+    this.cy.fit(nodeFitBounds(this.cy), 20);
     // On mobile the full-fit zoom is often unreadably small — enforce a minimum
     if (options.isMobile && this.cy.zoom() < 0.6) {
       this.cy.zoom({
@@ -629,13 +634,8 @@ export class LayoutManager {
     const width = this.cy.width();
     const height = this.cy.height();
     const ar = width / height;
-    const isLandscape = ar > ORIENTATION_THRESHOLD;
 
     const baseOptions = getDynamicLayoutOptions(cyNodes.length);
-
-    const gravity = isLandscape
-      ? Math.min(baseOptions.gravity, 0.12)
-      : Math.min(baseOptions.gravity, 0.15);
 
     if (this.cy.destroyed()) {
       options.onLayoutStop?.();
@@ -662,38 +662,30 @@ export class LayoutManager {
       degrees.set(tgt, (degrees.get(tgt) ?? 0) + 1);
     }
 
-    const baseRepulsion = Number(baseOptions.nodeRepulsion) || 250000;
-    const baseEdgeLength = Number(baseOptions.idealEdgeLength) || 180;
+    const communities = detectCommunities(
+      Array.from(cyNodes, (n) => n.id()),
+      edgeSources.map((src, i) => [src, edgeTargets[i]] as const),
+    );
 
     const edges = new Array(rawEdgeCount);
     for (let i = 0; i < rawEdgeCount; i++) {
       const src = edgeSources[i];
       const tgt = edgeTargets[i];
-      const srcDeg = degrees.get(src) ?? 0;
-      const tgtDeg = degrees.get(tgt) ?? 0;
-      const maxDeg = Math.max(srcDeg, tgtDeg);
-      const minDeg = Math.min(srcDeg, tgtDeg);
-      let idealLength = baseEdgeLength;
-      if (minDeg >= 5) idealLength = baseEdgeLength * 3.5;
-      else if (maxDeg >= 5) idealLength = baseEdgeLength * 0.8;
-
+      const shape = communityEdgeShape(
+        communities.get(src) === communities.get(tgt),
+        Math.min(degrees.get(src) ?? 0, degrees.get(tgt) ?? 0),
+      );
       edges[i] = {
         data: {
           id: edgeIds[i],
           source: src,
           target: tgt,
-          _idealLength: idealLength,
+          _idealLength: shape.idealLength,
+          _elasticity: shape.elasticity,
         },
       };
     }
 
-    let maxDegree = 0;
-    for (const degree of degrees.values()) {
-      if (degree > maxDegree) {
-        maxDegree = degree;
-      }
-    }
-    const hubGravity = gravity * (1 - Math.min(0.45, maxDegree * 0.012));
     const nodes = Array.from(cyNodes).map((n, index) => {
       const p = n.position();
       const w = n.width();
@@ -703,8 +695,7 @@ export class LayoutManager {
       const position = shouldRandomize
         ? seededLayoutPosition(n.id(), index, cyNodes.length, ar)
         : { x: p.x, y: p.y };
-      const nodeRepulsion =
-        baseRepulsion * (1 + Math.min(4.0, Math.sqrt(deg) * 0.55));
+      const nodeRepulsion = degreeRepulsion(deg);
       return {
         data: {
           id: n.id(),
@@ -720,8 +711,6 @@ export class LayoutManager {
     });
     const layoutOptions = {
       ...baseOptions,
-      boundingBox: { x1: -2400, y1: -2400, x2: 2400, y2: 2400 },
-      gravity: hubGravity,
       randomize: shouldRandomize,
       animate: false,
       fit: false,
@@ -744,7 +733,7 @@ export class LayoutManager {
           }
         }
       });
-      this.cy.fit(this.cy.elements(), 20);
+      this.cy.fit(nodeFitBounds(this.cy), 20);
     }
 
     // Scale timeout: draft quality (500+ nodes) can take 20-30s on slow machines

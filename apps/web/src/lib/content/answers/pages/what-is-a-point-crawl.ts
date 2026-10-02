@@ -130,6 +130,8 @@ export const whatIsAPointCrawl: AnswerConfigInput = {
     "point-crawl-vs-hex-crawl",
     "what-rpg-map-making-tool-should-i-use",
     "how-do-i-run-exploration-in-a-huge-ruined-city",
+    "how-do-i-make-sea-travel-interesting-in-a-ttrpg",
+    "how-do-i-run-a-pirate-campaign-focused-on-exploration",
   ],
   discovery: {
     id: "answer-point-crawl",

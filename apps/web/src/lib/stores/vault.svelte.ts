@@ -62,6 +62,7 @@ import { onboardingFunnel } from "$lib/app/onboarding/onboarding-funnel";
 import { statSheetTemplates } from "./stat-sheet-templates.svelte";
 import { presentationTemplates } from "./presentation-templates.svelte";
 import { entityTemplateStore } from "./entity-templates/entity-template-store.svelte";
+import { DeadExternalImagePruner } from "./vault/dead-external-image-pruner";
 import { browserPerformanceRecorder } from "$lib/services/performance/browser-performance-capture";
 
 export class VaultStore {
@@ -97,6 +98,7 @@ export class VaultStore {
   public fileStore: FileStore;
   public serviceRegistry: ServiceRegistry;
   public searchStore: SearchStore;
+  public deadImagePruner: DeadExternalImagePruner;
   private lifecycleManager: VaultLifecycleManager;
   private storageManager: VaultStorageManager;
   private messenger: VaultMessenger;
@@ -450,6 +452,21 @@ export class VaultStore {
       mutations,
     );
 
+    this.deadImagePruner = new DeadExternalImagePruner({
+      getEntities: () => this.entityStore.entities,
+      isWritable: () =>
+        !sessionModeStore.isGuestMode &&
+        !sessionModeStore.isDemoMode &&
+        !this.isGuest &&
+        !this.demoVaultName &&
+        !!this.activeVaultId,
+      updateEntities: (updates) => this.entityStore.batchUpdate(updates),
+    });
+
+    this.assetManager.setOnDeadExternalImage((url) => {
+      this.deadImagePruner.add(url);
+    });
+
     this.assetStore = new AssetStore({
       assetManager: this.assetManager,
       getActiveVaultHandle: () => this.getActiveVaultHandle(),
@@ -533,14 +550,16 @@ export class VaultStore {
       }
 
       if (this.activeVaultId) {
-        await themeStore.loadForVault(this.activeVaultId);
-        await statSheetTemplates.loadForVault(this.activeVaultId);
-        await presentationTemplates.loadForVault(this.activeVaultId);
-        await this.lifecycleManager.loadEntityTemplates(this.activeVaultId);
-      }
-
-      if (this.activeVaultId) {
-        await this.loadFiles();
+        const vaultId = this.activeVaultId;
+        // The graph is styled from the theme, so it is loaded first. Templates
+        // are not needed to show the vault and load alongside its files.
+        await themeStore.loadForVault(vaultId);
+        await Promise.all([
+          statSheetTemplates.loadForVault(vaultId),
+          presentationTemplates.loadForVault(vaultId),
+          this.lifecycleManager.loadEntityTemplates(vaultId),
+          this.loadFiles(),
+        ]);
       }
       if (typeof window !== "undefined" && this.activeVaultId) {
         window.dispatchEvent(

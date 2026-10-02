@@ -1,4 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import {
+  LARGE_GRAPH_EDGE_THRESHOLD,
+  LARGE_GRAPH_NODE_THRESHOLD,
+} from "graph-engine";
 
 // Mock Svelte 5 Runes
 vi.hoisted(() => {
@@ -39,13 +43,18 @@ vi.mock("./vault.svelte", () => ({
 }));
 
 // Mock graph-engine
-vi.mock("graph-engine", () => ({
-  GraphTransformer: {
-    entitiesToElements: vi.fn().mockReturnValue([]),
-  },
-  isLargeGraphSize: (nodeCount: number, edgeCount: number) =>
-    nodeCount > 700 || edgeCount > 1800,
-}));
+vi.mock("graph-engine", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("graph-engine")>();
+  return {
+    GraphTransformer: {
+      entitiesToElements: vi.fn().mockReturnValue([]),
+    },
+    // The real limits, so these tests cannot drift from what ships.
+    LARGE_GRAPH_NODE_THRESHOLD: actual.LARGE_GRAPH_NODE_THRESHOLD,
+    LARGE_GRAPH_EDGE_THRESHOLD: actual.LARGE_GRAPH_EDGE_THRESHOLD,
+    isLargeGraphSize: actual.isLargeGraphSize,
+  };
+});
 
 vi.mock("schema", async (importOriginal) => {
   const actual = await importOriginal<typeof import("schema")>();
@@ -129,17 +138,20 @@ describe("GraphStore", () => {
   });
 
   it("culls large vaults to a target-sized focus view by default", () => {
-    const mockEntities = Array.from({ length: 701 }, (_, index) => ({
-      id: `node-${index}`,
-      type: "npc",
-      title: `Node ${index}`,
-      // Sparse local neighborhood: without target filling this would render
-      // only the focal node and three direct neighbors.
-      connections:
-        index === 0
-          ? [{ target: "node-1" }, { target: "node-2" }, { target: "node-3" }]
-          : [],
-    })) as any[];
+    const mockEntities = Array.from(
+      { length: LARGE_GRAPH_NODE_THRESHOLD + 1 },
+      (_, index) => ({
+        id: `node-${index}`,
+        type: "npc",
+        title: `Node ${index}`,
+        // Sparse local neighborhood: without target filling this would render
+        // only the focal node and three direct neighbors.
+        connections:
+          index === 0
+            ? [{ target: "node-1" }, { target: "node-2" }, { target: "node-3" }]
+            : [],
+      }),
+    ) as any[];
     (vault as any).allEntities = mockEntities;
     (vault as any).entities = Object.fromEntries(
       mockEntities.map((e) => [e.id, e]),
@@ -166,12 +178,15 @@ describe("GraphStore", () => {
 
   it("caps the focus view at the visible entity count", () => {
     const visibleCount = FOCUS_BASE_COUNT - 70;
-    const mockEntities = Array.from({ length: 701 }, (_, index) => ({
-      id: `node-${index}`,
-      type: "npc",
-      title: `Node ${index}`,
-      connections: index === 0 ? [{ target: "node-1" }] : [],
-    })) as any[];
+    const mockEntities = Array.from(
+      { length: LARGE_GRAPH_NODE_THRESHOLD + 1 },
+      (_, index) => ({
+        id: `node-${index}`,
+        type: "npc",
+        title: `Node ${index}`,
+        connections: index === 0 ? [{ target: "node-1" }] : [],
+      }),
+    ) as any[];
     (vault as any).allEntities = mockEntities;
     (vault as any).entities = Object.fromEntries(
       mockEntities.map((e) => [e.id, e]),
@@ -196,10 +211,13 @@ describe("GraphStore", () => {
   });
 
   it("applies the edge cap when every visible entity fits in focus view", () => {
+    // Few enough entities to fit in focus view, with enough connections to
+    // pass the edge limit on their own.
+    const perEntity = Math.ceil(LARGE_GRAPH_EDGE_THRESHOLD / 400) + 1;
     const entities = Array.from({ length: 400 }, (_, index) => ({
       id: `node-${index}`,
       type: "npc",
-      connections: Array.from({ length: 5 }, (_, offset) => ({
+      connections: Array.from({ length: perEntity }, (_, offset) => ({
         target: `node-${(index + offset + 1) % 400}`,
       })),
     })) as any[];
@@ -224,11 +242,14 @@ describe("GraphStore", () => {
   });
 
   it("keeps zoom-driven focus expansion bounded and supports explicit detail reveal", () => {
-    const entities = Array.from({ length: 1600 }, (_, index) => ({
-      id: `node-${index}`,
-      type: "npc",
-      connections: [],
-    })) as any[];
+    const entities = Array.from(
+      { length: LARGE_GRAPH_NODE_THRESHOLD + 1 },
+      (_, index) => ({
+        id: `node-${index}`,
+        type: "npc",
+        connections: [],
+      }),
+    ) as any[];
     (vault as any).allEntities = entities;
     (vault as any).entities = Object.fromEntries(
       entities.map((entity) => [entity.id, entity]),
@@ -255,21 +276,24 @@ describe("GraphStore", () => {
   });
 
   it("falls back to the highest-degree hub when nothing is selected", () => {
-    const mockEntities = Array.from({ length: 701 }, (_, index) => ({
-      id: `node-${index}`,
-      type: "npc",
-      title: `Node ${index}`,
-      // node-5 is the hub: connected to four others.
-      connections:
-        index === 5
-          ? [
-              { target: "node-6" },
-              { target: "node-7" },
-              { target: "node-8" },
-              { target: "node-9" },
-            ]
-          : [],
-    })) as any[];
+    const mockEntities = Array.from(
+      { length: LARGE_GRAPH_NODE_THRESHOLD + 1 },
+      (_, index) => ({
+        id: `node-${index}`,
+        type: "npc",
+        title: `Node ${index}`,
+        // node-5 is the hub: connected to four others.
+        connections:
+          index === 5
+            ? [
+                { target: "node-6" },
+                { target: "node-7" },
+                { target: "node-8" },
+                { target: "node-9" },
+              ]
+            : [],
+      }),
+    ) as any[];
     (vault as any).allEntities = mockEntities;
     (vault as any).entities = Object.fromEntries(
       mockEntities.map((e) => [e.id, e]),
@@ -293,11 +317,14 @@ describe("GraphStore", () => {
   });
 
   it("keeps focus membership stable when selecting an already rendered node", () => {
-    const entities = Array.from({ length: 701 }, (_, index) => ({
-      id: `node-${index}`,
-      type: "npc",
-      connections: index === 0 ? [{ target: "node-1" }] : [],
-    })) as any[];
+    const entities = Array.from(
+      { length: LARGE_GRAPH_NODE_THRESHOLD + 1 },
+      (_, index) => ({
+        id: `node-${index}`,
+        type: "npc",
+        connections: index === 0 ? [{ target: "node-1" }] : [],
+      }),
+    ) as any[];
     (vault as any).allEntities = entities;
     (vault as any).entities = Object.fromEntries(
       entities.map((e) => [e.id, e]),
@@ -326,11 +353,14 @@ describe("GraphStore", () => {
   });
 
   it("moves the focus root only for explicit outside-focus navigation", () => {
-    const entities = Array.from({ length: 701 }, (_, index) => ({
-      id: `node-${index}`,
-      type: "npc",
-      connections: [],
-    })) as any[];
+    const entities = Array.from(
+      { length: LARGE_GRAPH_NODE_THRESHOLD + 1 },
+      (_, index) => ({
+        id: `node-${index}`,
+        type: "npc",
+        connections: [],
+      }),
+    ) as any[];
     (vault as any).allEntities = entities;
     (vault as any).entities = Object.fromEntries(
       entities.map((e) => [e.id, e]),
@@ -344,11 +374,14 @@ describe("GraphStore", () => {
   });
 
   it("replaces an invalid focus root without coupling it to later selection", () => {
-    const entities = Array.from({ length: 701 }, (_, index) => ({
-      id: `node-${index}`,
-      type: "npc",
-      connections: [],
-    })) as any[];
+    const entities = Array.from(
+      { length: LARGE_GRAPH_NODE_THRESHOLD + 1 },
+      (_, index) => ({
+        id: `node-${index}`,
+        type: "npc",
+        connections: [],
+      }),
+    ) as any[];
     (vault as any).allEntities = entities;
     (vault as any).entities = Object.fromEntries(
       entities.map((e) => [e.id, e]),
@@ -370,11 +403,14 @@ describe("GraphStore", () => {
   });
 
   it("keeps the root on clear selection and resets it on a vault switch", async () => {
-    const entities = Array.from({ length: 701 }, (_, index) => ({
-      id: `node-${index}`,
-      type: "npc",
-      connections: [],
-    })) as any[];
+    const entities = Array.from(
+      { length: LARGE_GRAPH_NODE_THRESHOLD + 1 },
+      (_, index) => ({
+        id: `node-${index}`,
+        type: "npc",
+        connections: [],
+      }),
+    ) as any[];
     (vault as any).allEntities = entities;
     (vault as any).entities = Object.fromEntries(
       entities.map((e) => [e.id, e]),
@@ -423,6 +459,59 @@ describe("GraphStore", () => {
     await graph.toggleImages();
     expect(graph.showImages).toBe(true);
     expect(putSpy).toHaveBeenCalledWith("settings", true, "graphShowImages");
+  });
+
+  it("cycles group backgrounds soft, strong, off and persists each state", async () => {
+    const db = await getDB();
+    const putSpy = vi.spyOn(db, "put");
+    expect(graph.communityMode).toBe("soft");
+    expect(graph.showCommunities).toBe(true);
+
+    await graph.toggleCommunities();
+    expect(graph.communityMode).toBe("strong");
+    expect(putSpy).toHaveBeenCalledWith(
+      "settings",
+      "strong",
+      "graphCommunityMode",
+    );
+
+    await graph.toggleCommunities();
+    expect(graph.communityMode).toBe("off");
+    expect(graph.showCommunities).toBe(false);
+    expect(putSpy).toHaveBeenCalledWith(
+      "settings",
+      "off",
+      "graphCommunityMode",
+    );
+
+    await graph.toggleCommunities();
+    expect(graph.communityMode).toBe("soft");
+  });
+
+  it("restores a saved mode, and reads the old on/off flag when there is none (negative: garbage ignored)", async () => {
+    const db = await getDB();
+    const saved: Record<string, unknown> = {};
+    vi.spyOn(db, "get").mockImplementation(
+      (async (_store: string, key: string) => saved[key]) as any,
+    );
+    const load = async (mode: "off" | "soft" | "strong" = "soft") => {
+      graph.communityMode = mode;
+      await (graph as any).loadPersistedState();
+      return graph.communityMode;
+    };
+
+    saved.graphCommunityMode = "strong";
+    expect(await load()).toBe("strong");
+
+    delete saved.graphCommunityMode;
+    saved.graphShowCommunities = false;
+    expect(await load()).toBe("off");
+
+    saved.graphShowCommunities = true;
+    expect(await load()).toBe("soft");
+
+    saved.graphCommunityMode = "sideways";
+    expect(await load("strong")).toBe("strong");
   });
 
   it("should toggle labels and persist to IDB", async () => {
@@ -756,6 +845,12 @@ describe("GraphStore", () => {
     await graph.toggleImages();
     expect(consoleSpy).toHaveBeenCalledWith(
       expect.stringContaining("Failed to persist graphShowImages"),
+      expect.anything(),
+    );
+
+    await graph.toggleCommunities();
+    expect(consoleSpy).toHaveBeenCalledWith(
+      expect.stringContaining("Failed to persist graphCommunityMode"),
       expect.anything(),
     );
 

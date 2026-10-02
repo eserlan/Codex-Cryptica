@@ -164,6 +164,13 @@ export const whatShouldAnRpgSettlementContain: AnswerConfigInput = {
     "how-do-trade-routes-shape-cities-and-kingdoms-in-an-rpg-world",
     "what-rpg-map-making-tool-should-i-use",
     "how-do-i-run-exploration-in-a-huge-ruined-city",
+    "how-do-fantasy-cities-defend-against-flying-creatures-and-teleportation",
+    "how-do-i-run-a-campaign-where-the-players-own-a-business",
+    "how-do-i-make-rival-captains-navies-and-pirate-factions-matter",
+    "how-do-i-create-interesting-islands-and-ports-for-a-pirate-campaign",
+    "how-do-i-run-ship-to-ship-combat-without-sidelining-the-party",
+    "how-do-i-make-sea-travel-interesting-in-a-ttrpg",
+    "how-do-i-run-a-pirate-campaign-focused-on-exploration",
   ],
   discovery: {
     id: "answer-settlement-contents",

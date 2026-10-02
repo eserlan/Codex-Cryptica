@@ -5,6 +5,7 @@ import {
 } from "@codex/performance-observability";
 import type { GraphNode, GraphEdge } from "../transformer";
 import type { LayoutRequest } from "../LayoutManager";
+import { nodeFitBounds } from "../fit-bounds";
 
 export interface SyncOptions {
   elements: (GraphNode | GraphEdge)[];
@@ -544,7 +545,7 @@ export function syncGraphElements(cy: Core, options: SyncOptions) {
     if (hasNewNodes || hasDeletions || isFirstElements) {
       if (isFirstElements) {
         options.onFirstElements?.();
-        (cy as any).fit(undefined, 40);
+        (cy as any).fit(nodeFitBounds(cy), 40);
       } else {
         const req = resolveLayoutTrigger(
           isFirstElements,

@@ -30,6 +30,15 @@
   );
 </script>
 
+<svelte:head>
+  <link
+    rel="alternate"
+    type="application/atom+xml"
+    title="Codex Cryptica blog"
+    href="{base}/blog/feed.xml"
+  />
+</svelte:head>
+
 <SeoHead
   title="The Archive | Codex Cryptica Blog"
   description="Explore the official Codex Cryptica blog for guides on local-first RPG world-building, tactical mapping, and data sovereignty."
@@ -58,6 +67,13 @@
         Deep dives into the technology and philosophy behind Codex Cryptica.
         Learn how to secure your lore and master the spatial brain.
       </p>
+      <a
+        href="{base}/blog/feed.xml"
+        class="mt-4 inline-flex items-center gap-2 text-sm text-theme-primary hover:underline"
+      >
+        <span class="icon-[lucide--rss] h-4 w-4" aria-hidden="true"></span>
+        Subscribe to the blog
+      </a>
 
       <!-- Responsible AI Pillar Link Banner -->
       <div

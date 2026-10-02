@@ -49,6 +49,22 @@ const mockRegistry: Record<string, AnswerConfig> = {
 };
 
 describe("answer registry", () => {
+  it("keeps the civilisation capability habits heading aligned with its items", () => {
+    const habits = answers[
+      "how-do-i-give-different-civilisations-distinct-strengths-and-weaknesses"
+    ].sections.find(
+      (section) =>
+        section.kind === "list" &&
+        section.heading?.includes("habits that keep strengths honest"),
+    );
+
+    expect(habits?.kind).toBe("list");
+    if (habits?.kind === "list") {
+      expect(habits.heading).toBe("Eight habits that keep strengths honest");
+      expect(habits.items).toHaveLength(8);
+    }
+  });
+
   it("links the army-battle answer to Pathfinder's troop rules", () => {
     const armyBattle =
       answers[
@@ -75,6 +91,24 @@ describe("answer registry", () => {
           item.term !== "The full situation" && item.term !== "Why it works",
       ),
     ).toHaveLength(2);
+  });
+
+  it("keeps the player-owned business complication count aligned with its discovery summary", () => {
+    const business =
+      answers["how-do-i-run-a-campaign-where-the-players-own-a-business"];
+    const complications = business.sections.find(
+      (section) =>
+        section.kind === "list" &&
+        section.heading === "Turn complications into adventure hooks",
+    );
+
+    expect(complications?.kind).toBe("list");
+    if (complications?.kind === "list") {
+      expect(complications.items).toHaveLength(10);
+    }
+    expect(business.discovery?.uniqueValue).toContain(
+      "ten adventure-generating complications",
+    );
   });
 
   describe("getAnswer", () => {
@@ -612,7 +646,7 @@ describe("published answers", () => {
     // The pack's editorial rule (#2564). A curated list rather than a broad
     // `\w+ize` pattern, which flags legitimate words like "assize" and "sized".
     const americanisms =
-      /\b(?:organiz|recogniz|realiz|specializ|characteriz|apologiz|analyz|color|honor|behavior|rumor|favorite|neighbor|center|theater|catalog|gray|traveled|traveling|canceled|defense|offense)\w*\b/i;
+      /\b(?:organiz|recogniz|realiz|specializ|characteriz|apologiz|analyz|color|honor|behavior|rumor|favorite|neighbor|center|theater|catalog|gray|traveled|traveling|canceled|defense|offense|armor)\w*\b/i;
     for (const answer of published) {
       const { discovery: _discovery, ...readerFacing } = answer;
       const body = JSON.stringify(readerFacing);
@@ -661,6 +695,55 @@ describe("published answers", () => {
     expect(npcAnswer.relatedAnswers).toContain(
       "how-do-you-organise-npc-relationships",
     );
+  });
+
+  it("grounds pirate faction moves in fictional time and circumstance", () => {
+    const answer =
+      answers["how-do-i-make-rival-captains-navies-and-pirate-factions-matter"];
+    const activeVersion = answer.sections.find(
+      (section) =>
+        section.kind === "example" &&
+        section.heading ===
+          "Worked example: the same sea, with and without active rivals",
+    );
+    expect(activeVersion?.kind).toBe("example");
+    if (!activeVersion || activeVersion.kind !== "example") return;
+
+    const text = activeVersion.items?.find(
+      (item) => item.term === "The active version",
+    )?.text;
+
+    expect(text).toContain("step 2:");
+    expect(text).toContain("On a week-long voyage");
+    expect(text).toContain("time, ships, and orders");
+    expect(text).toContain("letters of marque authorising licensed privateers");
+    expect(text).toContain("those moves stall or change instead");
+    expect(text).not.toContain(
+      "(step 3: sloops now stop and search every brig)",
+    );
+
+    const clockGuidance = answer.sections
+      .filter((section) => section.kind === "list")
+      .flatMap((section) => section.items ?? [])
+      .find((item) => item.term === "Clock with visible steps")?.text;
+    expect(clockGuidance).toContain("move the clock backwards");
+    expect(clockGuidance).toContain("scattered ships may have to regroup");
+  });
+
+  it("records the reciprocal scope of the sandbox and pirate faction answers", () => {
+    const sandboxFactions =
+      answers["how-do-you-run-factions-in-a-sandbox-campaign"];
+    const pirateFactions =
+      answers["how-do-i-make-rival-captains-navies-and-pirate-factions-matter"];
+
+    expect(sandboxFactions?.discovery?.acknowledgedOverlap).toContainEqual({
+      with: "answer-rival-captains-navies-pirate-factions-matter",
+      reason: expect.any(String),
+    });
+    expect(pirateFactions?.discovery?.acknowledgedOverlap).toContainEqual({
+      with: "answer-run-factions-sandbox",
+      reason: expect.any(String),
+    });
   });
 
   it("publishes the short-session answer around one playable unit", () => {

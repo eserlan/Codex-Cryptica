@@ -196,6 +196,8 @@ export const howDoIRunALargeBattleWhenThePlayerCharactersArePartOfAnArmy: Answer
       "how-do-you-handle-character-death-in-a-tabletop-rpg",
       "how-do-i-run-political-intrigue-and-faction-play",
       "how-do-you-run-dnd-for-a-large-group-of-players",
+      "how-do-fantasy-cities-defend-against-flying-creatures-and-teleportation",
+      "how-do-i-run-ship-to-ship-combat-without-sidelining-the-party",
     ],
     discovery: {
       id: "answer-large-battle-pcs-in-army",

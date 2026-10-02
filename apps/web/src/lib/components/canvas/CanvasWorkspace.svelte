@@ -69,6 +69,7 @@
     flowNodesToCanvasNodes,
   } from "./canvas-workspace-helpers";
   import { exportCanvasImage } from "./canvas-image-export";
+  import { finalizeCanvasDossier } from "./finalize-canvas-dossier";
   import {
     normalizeEntityCardViewPreference,
     type EntityCardViewPreference,
@@ -453,43 +454,32 @@
     isFinalizingDossier = true;
     isExportingCanvas = true;
     try {
-      await vault.loadEntityContent(sourceEntity.id);
-      const loadedSourceEntity =
-        vault.entities[sourceEntity.id] ?? sourceEntity;
-      if (!canvasExportElement) {
-        throw new Error("The canvas is not ready to export.");
-      }
-      await tick();
-      const canvasImage = await exportCanvasImage(
-        canvasExportElement,
-        logic.fitGraphForExport,
-      );
-      const result = await delveDossierService.finalize({
-        canvas,
-        sourceEntity: loadedSourceEntity,
+      await finalizeCanvasDossier(canvas, sourceEntity, {
+        loadEntityContent: (entityId) => vault.loadEntityContent(entityId),
+        getEntity: (entityId) => vault.entities[entityId],
+        exportImage: async () => {
+          if (!canvasExportElement) {
+            throw new Error("The canvas is not ready to export.");
+          }
+          await tick();
+          return exportCanvasImage(
+            canvasExportElement,
+            logic.fitGraphForExport,
+          );
+        },
+        finalize: (request) => delveDossierService.finalize(request),
         dossierTerm: getDelveTerm(themeStore.activeTheme.id),
-        nodes: flowNodesToCanvasNodes(
-          logic.nodes,
-        ) as unknown as DelveCanvasNode[],
-        edges: logic.edges.map((edge) =>
-          flowEdgeToCanvasEdge(edge),
-        ) as unknown as DelveCanvasEdge[],
-        canvasImage,
+        getGraph: () => ({
+          nodes: flowNodesToCanvasNodes(
+            logic.nodes,
+          ) as unknown as DelveCanvasNode[],
+          edges: logic.edges.map((edge) =>
+            flowEdgeToCanvasEdge(edge),
+          ) as unknown as DelveCanvasEdge[],
+        }),
+        notify: (message, level) => notificationStore.notify(message, level),
+        openEntity: (entityId) => modalUIStore.openZenMode(entityId),
       });
-      notificationStore.notify(
-        result.created
-          ? "Created the GM dossier."
-          : "Updated the GM dossier from the current canvas.",
-        "success",
-      );
-      modalUIStore.openZenMode(result.entityId);
-    } catch (error) {
-      notificationStore.notify(
-        error instanceof Error
-          ? error.message
-          : "The GM dossier could not be finalized.",
-        "error",
-      );
     } finally {
       isExportingCanvas = false;
       isFinalizingDossier = false;

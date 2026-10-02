@@ -1,6 +1,7 @@
 ---
 id: vtt-session
 title: Starting a VTT Session from Maps
+description: Start a tactical tabletop session from a campaign map with tokens, initiative, and multiplayer controls.
 tags: [vtt, map, session, encounter, tokens, multiplayer, p2p, initiative]
 rank: 4
 ---
@@ -32,7 +33,7 @@ Codex Cryptica includes an integrated **Virtual Tabletop (VTT)** mode directly a
 
 - To share the live VTT session with your players, open the session menu and start a **Host Session** (or click the P2P connection icon in the top header).
 - Copy and share the generated session link or Peer ID with your players.
-- Connected guests view map navigation, live token movements, map pings, and Fog of War revelations in real-time in their browser — no external servers or player accounts required.
+- Connected guests view map navigation, live token movements, map pings, and Fog of War revelations in real-time in their browser — without requiring player accounts. Session connections can still use network services to establish or relay the connection.
 
 #### 4. Measurement & Map Pings
 

@@ -88,6 +88,7 @@
     "flexsearch": "^0.8.212",
     "generator-engine": "workspace:*",
     "graph-engine": "workspace:*",
+    "help-engine": "workspace:*",
     "html-to-image": "^1.11.13",
     "idb": "^8.0.3",
     "js-yaml": "^5.2.1",

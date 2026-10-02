@@ -1,22 +1,44 @@
 ---
 id: oracle-guide
 title: The Lore Oracle
+description: Use the Lore Oracle to ask questions and generate content grounded in your campaign notes.
 tags: [ai, gemini, rag]
 rank: 5
 ---
 
-## AI Intelligence
+## Using the Lore Oracle
 
-The Oracle is powered by **OpenAI/Luna**. It doesn't just 'chat'; it retrieves relevant lore from your graph to provide context-aware answers.
+Open **Lore Oracle** and ask a question about your world. The Oracle retrieves relevant entity descriptions, Lore and connections to help ground its answer in your campaign. Check its suggestions against your notes before keeping them.
 
-### Features
+### Revise an existing entity
 
-- **Context Fusion**: Combines visible chronicles and hidden lore.
-- **Image Generation**: Type `/draw [description]` to visualize your world.
-- **Instant Visualization**: Advanced Tier users will see a "DRAW VISUAL" button on Oracle responses and empty Entity profiles to quickly generate images based on lore.
+- **Entity side panel**: click **AI Revise Description** (sparkles) near the title.
+- **Zen Mode**: use the same sparkle button in the editor toolbar.
+- **Oracle chat**: select an entity, then send `/revise`.
+
+From either entity-view button, add optional instructions in **Revise Description**, click **Revise**, and review the Chronicle and Lore draft. **Apply Changes** saves it; **Discard** keeps the original. See [Creating and Editing Entities](/help#help/creating-and-editing-entities) for the full workflow and Lore review.
+
+The `/revise` chat command returns suggested Chronicle and Lore in the conversation. Review the response before keeping it.
+
+### Create and connect
+
+- `/create [description]` asks for a new entity draft.
+- `/connect` opens the linking helper; quoted names let you create a connection directly.
+- `/plot [entity name]` analyses story tensions around an entity.
+- `/draw [description]` generates an image using your world’s art direction.
+
+See [Chat Commands](/help#help/chat-commands) for syntax, deterministic commands and merge behaviour. Some commands, such as direct connections and merges, write immediately; read their instructions before using them.
+
+### AI access and privacy
+
+Open **Settings → Intelligence** to see your connection mode and key controls. The system proxy and a personal key are different ways to reach an AI service; a personal key does not make AI run on your device. Questions and relevant lore used as context leave your browser when you request AI assistance.
+
+Turn on **AI Disabled** in Settings to stop AI assistance. Manual writing, connections, local roll tables and local generator templates remain available. AI revisions cannot run in a guest vault.
+
+The **Help Assistant** answers questions about using Codex Cryptica. It is separate from the Lore Oracle and cannot edit your vault.
 
 ### Related Blog Posts
 
-- [Lore Oracle: Co-GM, Not the Author](/blog/lore-oracle-not-the-author) — Why the Oracle is built to help your world answer back rather than replace your authorship.
-- [Lore Oracle Capabilities & Slash Commands](/blog/oracle-capabilities) — Detailed breakdown of deterministic slash commands and context retrieval.
-- [Revising Your Lore with the Oracle](/blog/revising-your-lore-with-the-oracle) — Practical techniques for using AI context to polish entity notes.
+- [Lore Oracle: Co-GM, Not the Author](/blog/lore-oracle-not-the-author)
+- [Lore Oracle Capabilities & Slash Commands](/blog/oracle-capabilities)
+- [Revising Your Lore with the Oracle](/blog/revising-your-lore-with-the-oracle)

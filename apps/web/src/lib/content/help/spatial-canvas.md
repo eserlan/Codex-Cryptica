@@ -1,13 +1,22 @@
 ---
 id: spatial-canvas
 title: Spatial Canvas
+description: Arrange campaign entities and hand-drawn notes on a free-form board with a persistent layout.
 tags: [layout, connections, workspace]
 rank: 4
 ---
 
 ## Designing Your Desk
 
-The **Spatial Canvas** is a free-form workspace that emphasizes **Spatial Intentionality**. Unlike the automated Knowledge Graph, every node position and connection here is manually placed and preserved.
+The **Spatial Canvas** is a free-form workspace that keeps your chosen layout. Unlike the automated Knowledge Graph, every node position and connection here is manually placed and preserved.
+
+### Canvas or map?
+
+A canvas is a planning board for entity cards, notes and visual links. Use it to
+arrange an investigation, plot outline or scene. A map places pins on a geographic
+or tactical image, with fog of war and optional VTT tokens. Choose a map when
+positions represent places or distances in the world.
+See [Map Mode](/help#help/map-mode).
 
 ### Core Features
 
@@ -28,6 +37,13 @@ You can also right-click nodes in the **Knowledge Graph** and use **Add to Canva
 
 Click the **workspace name** in the top-left HUD to open the **Canvas Manager**. From there you can create new canvases, rename or delete existing ones, and switch between boards.
 
+### Save a report from your board
+
+When a board contains entity cards, use **Generate report** in the canvas header
+to collect their information into a document. Review the report, then choose
+**Save as note** to keep it as a Note entity, or **Cancel** to close without saving.
+This control is unavailable in guest vaults and on Adventure boards.
+
 ### Managing Connections
 
 - **Custom Labels**: Double-click any connection (edge) to open a themed modal and enter a name for the relationship.
@@ -40,14 +56,13 @@ Click the **workspace name** in the top-left HUD to open the **Canvas Manager**.
 2. Choose a color with the color picker next to it.
 3. Draw with a mouse, stylus, or touch pointer. Existing node and canvas controls are paused while drawing mode is active.
 4. Select the eraser button, then select an individual stroke to remove it.
+5. Select the pencil button again, or press **Escape**, to leave drawing mode. Completed strokes are saved automatically.
 
 ### Rotating Canvas Cards
 
 - **Touch**: Place two fingers over the same card and twist.
 - **Desktop**: Select a card, then drag the circular rotation handle above it around the card's center. Focus the handle and use the arrow keys for 15-degree steps, or hold Shift for 45-degree steps.
 - Cards can rotate through any angle, including more than one complete turn.
-
-4. Select the pencil button again, or press **Escape**, to leave drawing mode. Completed strokes are saved automatically.
 
 ### Locking Cards in Place
 

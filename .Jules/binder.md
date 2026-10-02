@@ -262,3 +262,9 @@
 **Learning:** Direct `localStorage` access in `apps/web/src/lib/stores/cloud-backup.svelte.ts` was hardcoded, making testing and environment overrides (like SSR) difficult.
 
 **Action:** Refactored `cloudBackupBrowserStorage` to accept a dependency-injected `storage: StorageLike` parameter, defaulting to `browserStorage` from `$lib/utils/runtime-deps`. Replaced all `localStorage` usages within the function with the injected `storage`. Uses `storage.length ?? 0` and `storage.key?.(i)` to handle optional properties in `StorageLike`.
+
+## 2024-05-18 - Replacing hardcoded global localStorage in CloudBackupStore
+
+**Learning:** When a class manages backup synchronization or caching (like `CloudBackupStore`), directly accessing `window.localStorage` limits testability and creates hidden dependencies. The repository pattern provides `browserStorage` from `$lib/utils/runtime-deps` which handles SSR gracefully and acts as a proper dependency boundary.
+
+**Action:** Refactored `CloudBackupStore`'s `hashCache` persistence to use a `storage: StorageLike` dependency through `CloudBackupDeps`, defaulting to `browserStorage`. Replaced `localStorage.getItem` and `localStorage.setItem` with the injected `storage` accessor.

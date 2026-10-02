@@ -93,6 +93,22 @@ describe("EntityTemplateSettings", () => {
     expect(screen.getByText("Standard Character")).toBeTruthy();
   });
 
+  it("links to the community Entity templates tab", async () => {
+    await mount();
+    const link = screen.getByTestId("browse-community-entity-templates");
+    expect(link.getAttribute("href")).toContain("/templates?kind=entity");
+  });
+
+  it("keeps the community link in a read-only vault without edit actions", async () => {
+    await mount({ readOnly: true });
+    expect(
+      screen
+        .getByTestId("browse-community-entity-templates")
+        .getAttribute("href"),
+    ).toContain("/templates?kind=entity");
+    expect(screen.queryByTestId("entity-template-new")).toBeNull();
+  });
+
   it("previews a template as the note it produces", async () => {
     await mount();
     await fireEvent.click(
@@ -250,6 +266,23 @@ describe("EntityTemplateSettings", () => {
     });
     await fireEvent.change(input, { target: { files: [file] } });
     await waitFor(() => expect(screen.getByText("From a friend")).toBeTruthy());
+  });
+
+  it("links entity template settings to the community Entity directory", async () => {
+    await mount();
+    const link = screen.getByTestId(
+      "browse-community-entity-templates",
+    ) as HTMLAnchorElement;
+    expect(link.textContent).toContain("Browse community templates");
+    expect(link.getAttribute("href")).toBe("/templates?kind=entity");
+  });
+
+  it("keeps the community directory link in a read-only vault", async () => {
+    await mount({ readOnly: true });
+    const link = screen.getByTestId(
+      "browse-community-entity-templates",
+    ) as HTMLAnchorElement;
+    expect(link.getAttribute("href")).toBe("/templates?kind=entity");
   });
 
   it("is view-only in a read-only vault, with an explanation", async () => {

@@ -74,11 +74,14 @@ This file is the Codex-facing instruction layer for this repository.
 <!-- SPECKIT START -->
 
 For additional context about technologies to be used, project structure,
-shell commands, and other important information, read the [current plan](./specs/168-entity-template-marketplace/plan.md).
+shell commands, and other important information, read the [current plan](./specs/3615-help-registry-expansion/plan.md).
 
 <!-- SPECKIT END -->
 
 ## Active Technologies
+
+- TypeScript 6.0.3, Svelte 5 Runes, SvelteKit 2, Bun 1.3.14 + Existing `apps/workers/oracle-proxy` LLM pipeline and session guard, `discoveryPolicyStore` (AI Disabled gate), existing help content; new internal workspace package `packages/help-engine` (framework-free); no new third-party dependency (3427-contextual-ai-help-assistant)
+- Product knowledge is a build-time JSON bundle generated from `packages/help-engine` and `apps/web/src/lib/content/help` (not committed); the help conversation is in memory only; no new vault storage (3427-contextual-ai-help-assistant)
 
 - TypeScript 6.0.3, Svelte 5 Runes, SvelteKit 2, Bun 1.3.14 + Existing `schema` (Zod, `GENERIC_TEMPLATES`), `@codex/ai-engine` (`configureAIEngine`), `writeOpfsFile`/`runtime-deps`; new internal workspace package `packages/entity-template-engine` (framework-free); no new third-party dependency (167-entity-template-management)
 - Vault OPFS files: `.codex/templates/{id}.json` and `.codex/templates/defaults.json`; legacy `.cc/templates/{type}.md` and `.codex/templates/{type}.md` read-only; no new IndexedDB store (167-entity-template-management)
@@ -145,6 +148,7 @@ shell commands, and other important information, read the [current plan](./specs
 
 ## Recent Changes
 
+- 3427-contextual-ai-help-assistant: Added `packages/help-engine` and a flagged (`VITE_HELP_ASSISTANT`) Help panel backed by `POST /api/help/ask`; no new third-party dependency
 - 163-session-journal: Added TypeScript 6.0.3, Svelte 5 Runes, SvelteKit 2, Bun 1.3.14 + Existing `idb`, `vault-registry.svelte.ts`; new `packages/session-journal-engine`; no new third-party dependency
 - 116-scroll-wheel-date-picker: Added TypeScript 6.0.3, Svelte 5 runes, Bun 1.3.14 workspace + `chronology-engine`, `schema`, Svelte 5, Floating UI, IndexedDB `idb`, existing Tailwind 4 theme tokens
 - 118-graph-important-label: Added TypeScript 6.0.3, Svelte 5 runes, Bun 1.3.14 workspace + Svelte 5, Cytoscape, `graph-engine`, `schema`, existing vault/entity stores, existing Tailwind 4 theme tokens

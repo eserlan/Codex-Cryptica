@@ -280,6 +280,14 @@
     }
   });
 
+  $effect(() => {
+    void graph.communityMode;
+    void graph.timelineMode;
+    void graph.orbitMode;
+    void controller.communityHulls;
+    untrack(() => controller.syncCommunityHulls());
+  });
+
   // Mode change triggers
   $effect(() => {
     void graph.orbitMode;
@@ -713,7 +721,13 @@
     class="w-full h-full {controller.graphVisible
       ? 'opacity-100'
       : 'opacity-0'} transition-opacity duration-1000"
-  ></div>
+  >
+    <!-- Community backgrounds; first child so Cytoscape's layer paints above. -->
+    <canvas
+      data-community-hulls
+      class="absolute inset-0 w-full h-full pointer-events-none"
+    ></canvas>
+  </div>
 
   <GraphTooltip {hoveredEntity} hoverPosition={controller.hoverPosition} />
   <EdgeEditorModal bind:editingEdge={controller.editingEdge} />

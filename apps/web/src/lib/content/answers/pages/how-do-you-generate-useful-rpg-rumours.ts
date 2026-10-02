@@ -185,6 +185,10 @@ export const howDoYouGenerateUsefulRpgRumours: AnswerConfigInput = {
     "how-do-i-build-a-believable-constitutional-crisis-or-coup",
     "how-do-i-write-a-good-call-of-cthulhu-one-shot",
     "how-do-i-run-character-roles-in-an-investigative-horror-rpg",
+    "how-do-i-run-a-campaign-where-the-players-own-a-business",
+    "how-do-i-make-rival-captains-navies-and-pirate-factions-matter",
+    "how-do-i-create-interesting-islands-and-ports-for-a-pirate-campaign",
+    "how-do-i-run-a-pirate-campaign-focused-on-exploration",
   ],
   labels: ["fantasy", "rumour"],
   discovery: {

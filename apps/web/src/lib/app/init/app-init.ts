@@ -23,6 +23,7 @@ import { initOracleEventListeners } from "../../listeners/oracle-events";
 import { initSessionJournalCapture } from "../../listeners/session-journal-events";
 import { notificationStore } from "$lib/stores/ui/notification.svelte";
 import { configureAIEngine } from "@codex/ai-engine";
+import { preloadGraphCore } from "graph-engine";
 import { searchService } from "@codex/search-orchestrator";
 import {
   browserPerformanceCapture,
@@ -64,6 +65,9 @@ export function bootSystem(stores: {
 }): boolean {
   debugStore.log("System booting: Initializing core stores...");
   browserPerformanceCapture.start();
+  // Fetched alongside the vault load instead of after it; a failure here is
+  // retried when the graph is actually created.
+  void preloadGraphCore().catch(() => {});
   searchService.setPerformanceRecorder(browserPerformanceRecorder);
   configureAIEngine({
     searchService,

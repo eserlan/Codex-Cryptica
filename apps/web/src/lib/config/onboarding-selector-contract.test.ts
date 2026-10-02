@@ -48,7 +48,13 @@ vi.mock("$app/paths", () => ({ base: "" }));
 vi.mock("$lib/stores/guest-chat.svelte", () => ({
   guestChatStore: { showChatModal: false },
 }));
-vi.mock("$lib/config", () => ({ IS_STAGING: false }));
+vi.mock("$lib/config", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("$lib/config")>();
+  return {
+    ...actual,
+    IS_STAGING: false,
+  };
+});
 vi.mock("$lib/stores/search.svelte", () => ({
   searchStore: { open: vi.fn(), query: "", setQuery: vi.fn() },
 }));

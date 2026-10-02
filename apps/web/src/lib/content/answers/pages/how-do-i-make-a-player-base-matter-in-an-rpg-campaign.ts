@@ -315,6 +315,8 @@ export const howDoIMakeAPlayerBaseMatterInAnRpgCampaign: AnswerConfigInput = {
     "how-do-you-prepare-a-sandbox-rpg-campaign",
     "what-kind-of-ship-should-a-sci-fi-rpg-party-start-with",
     "what-should-players-be-able-to-upgrade-in-an-rpg-base",
+    "how-do-i-upgrade-a-player-characters-weapon-without-replacing-it",
+    "how-do-i-run-a-campaign-where-the-players-own-a-business",
   ],
   discovery: {
     id: "answer-make-player-base-matter",

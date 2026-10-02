@@ -158,6 +158,7 @@ export const howDoIGiveSpecialistCharactersSpotlight: AnswerConfigInput = {
     "how-do-i-run-character-roles-in-an-investigative-horror-rpg",
     "how-do-i-run-common-character-roles-in-a-sci-fi-or-space-opera-rpg",
     "how-do-i-run-common-character-roles-in-a-fantasy-rpg",
+    "how-do-i-upgrade-a-player-characters-weapon-without-replacing-it",
   ],
   discovery: {
     id: "answer-specialist-character-spotlight",

@@ -83,8 +83,11 @@ export const getGraphStyles = (
     },
   ];
 
+  // Performance mode no longer blanks labels by itself: the level-of-detail
+  // rules below already hide them when zoomed out, and Cytoscape skips any
+  // label too small to read, so zooming in on a large vault can show names.
   const labelOverrides =
-    performanceMode || timelineMode || !showLabels
+    timelineMode || !showLabels
       ? [
           {
             selector: "node",
@@ -95,31 +98,42 @@ export const getGraphStyles = (
         ]
       : [];
 
+  // Far from the graph, nodes are a few pixels wide: curves, arrowheads and
+  // fades cannot be seen but each costs per element on every redraw. Straight
+  // edges without arrows halved a full redraw of a 1,625-node vault.
   const lodStyles = [
     {
-      selector: "node.lod-low",
+      selector: "node.lod-low, node.lod-medium",
       style: {
         label: "",
+        "transition-duration": 0,
+      },
+    },
+    {
+      // Only the theme texture goes; entity images and silhouettes stay.
+      selector:
+        "node.lod-low[^resolvedImage], node.lod-low[resolvedImage = 'none']",
+      style: {
         "background-image": "none",
-      },
-    },
-    {
-      selector: "node.lod-medium",
-      style: {
-        label: "",
-      },
-    },
-    {
-      selector: "edge.lod-low",
-      style: {
-        label: "",
-        "curve-style": "straight",
       },
     },
     {
       selector: "edge.lod-medium",
       style: {
         label: "",
+        "curve-style": "straight",
+        "target-arrow-shape": "none",
+        "transition-duration": 0,
+      },
+    },
+    {
+      selector: "edge.lod-low",
+      style: {
+        label: "",
+        "curve-style": "haystack",
+        "haystack-radius": 0,
+        "target-arrow-shape": "none",
+        "transition-duration": 0,
       },
     },
   ];
@@ -129,13 +143,11 @@ export const getGraphStyles = (
         {
           selector: "node",
           style: {
-            label: "",
             "background-image": "none",
             "background-opacity": 0.72,
             "overlay-opacity": 0,
             "underlay-opacity": 0,
             "transition-duration": 0,
-            "text-opacity": 0,
           },
         },
         {

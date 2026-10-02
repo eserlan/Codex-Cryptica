@@ -8,11 +8,11 @@
   import ConnectionEditor from "$lib/components/connections/ConnectionEditor.svelte";
   import ConnectionCreator from "$lib/components/connections/ConnectionCreator.svelte";
   import DetailProposals from "./proposals/DetailProposals.svelte";
+  import GenerateRelatedButton from "./GenerateRelatedButton.svelte";
   import EntityProposals from "./EntityProposals.svelte";
   import { themeStore } from "$lib/stores/theme.svelte";
   import { revisionService } from "$lib/services/RevisionService.svelte";
   import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
-  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
   import { getTemporalLabel } from "./detail-tabs";
   import {
     buildConnectionNeighbors,
@@ -128,14 +128,7 @@
   {#if !isEditing}
     {#if !vault.isGuest}
       <div class="flex justify-end">
-        <button
-          type="button"
-          onclick={() => modalUIStore.openGeneratorWorkflowForEntity(entity.id)}
-          class="text-xs font-bold uppercase tracking-widest bg-theme-primary text-theme-bg border border-theme-primary hover:bg-theme-secondary hover:border-theme-secondary px-4 py-2 rounded-xl flex items-center gap-1.5 transition shadow-[0_0_15px_rgba(var(--color-theme-primary-rgb),0.15)] cursor-pointer"
-        >
-          <span class="icon-[lucide--sparkles] w-4 h-4"></span>
-          Generate Related
-        </button>
+        <GenerateRelatedButton entityId={entity.id} />
       </div>
     {/if}
   {/if}
@@ -294,6 +287,7 @@
           onclick={() => (isAddingConnection = true)}
           class="text-xs font-bold text-theme-primary hover:text-theme-secondary flex items-center gap-1 transition"
           aria-label="Add new connection"
+          data-help-target="add-connection-button"
         >
           <span aria-hidden="true" class="icon-[lucide--plus] w-3.5 h-3.5"
           ></span>

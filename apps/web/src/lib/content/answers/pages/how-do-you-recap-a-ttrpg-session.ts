@@ -132,6 +132,7 @@ export const howDoYouRecapATtrpgSession: AnswerConfigInput = {
     "how-much-campaign-lore-should-players-be-expected-to-remember",
     "how-do-i-organise-gm-notes-for-in-person-play",
     "how-do-i-take-useful-rpg-notes-during-play",
+    "how-long-should-a-ttrpg-session-be",
   ],
   discovery: {
     id: "answer-session-recap",
