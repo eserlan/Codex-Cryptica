@@ -9,10 +9,11 @@
     onOpenArticle: (helpId: string) => void;
   } = $props();
 
-  const uniqueSources = $derived.by(() => {
+  const articleSources = $derived.by(() => {
     const seen = new Set<string>();
     return sources.filter((source) => {
-      const key = source.helpId ?? source.title;
+      if (!source.helpId) return false;
+      const key = source.helpId;
       if (seen.has(key)) return false;
       seen.add(key);
       return true;
@@ -20,12 +21,12 @@
   });
 </script>
 
-<div class="flex flex-wrap items-center gap-1">
-  <span class="text-[10px] uppercase tracking-wider text-chrome-muted"
-    >Sources</span
-  >
-  {#each uniqueSources as source (source.id)}
-    {#if source.helpId}
+{#if articleSources.length > 0}
+  <div class="flex flex-wrap items-center gap-1">
+    <span class="text-[10px] uppercase tracking-wider text-chrome-muted"
+      >Sources</span
+    >
+    {#each articleSources as source (source.id)}
       <button
         type="button"
         onclick={() => onOpenArticle(source.helpId!)}
@@ -33,11 +34,6 @@
       >
         {source.title}
       </button>
-    {:else}
-      <span
-        class="rounded border border-chrome-border px-2 py-0.5 text-[10px] text-chrome-muted"
-        >{source.title}</span
-      >
-    {/if}
-  {/each}
-</div>
+    {/each}
+  </div>
+{/if}

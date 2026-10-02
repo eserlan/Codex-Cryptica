@@ -5,7 +5,7 @@ const STOPWORDS = new Set(
     "we were what when where which who why will with would you your here page " +
     "tell tells show shows explain about please help " +
     // asking to compare is not a topic: "the difference between X and Y" is about X and Y
-    "difference differences different same between versus vs compare"
+    "difference differences different same between versus vs compare thing things something anything"
   ).split(" "),
 );
 
@@ -16,6 +16,7 @@ const STOPWORDS = new Set(
  * generator questions to the Connections help.
  */
 const SYNONYMS: Record<string, string> = {
+  gen: "generate",
   link: "connect",
   linked: "connect",
   links: "connect",
@@ -28,6 +29,10 @@ const SYNONYMS: Record<string, string> = {
   make: "create",
   made: "create",
   making: "create",
+  makes: "create",
+  rumor: "rumour",
+  rumors: "rumour",
+  gossip: "rumour",
 };
 
 const SUFFIXES = [

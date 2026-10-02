@@ -2,7 +2,7 @@ import type { HelpTurn } from "../prompt/build";
 import { tokenize } from "./text";
 
 const ANAPHORA_PATTERN =
-  /\b(them|they|their|theirs|it|its|this|that|these|those|one|ones|there|another|else|same)\b/i;
+  /\b(them|they|their|theirs|it|its|that|these|those|one|ones|there|another|else|same)\b/i;
 
 const CONTINUATION_PATTERN =
   /^(and|also|what about|how about|or|can you|could you|is that|is there|are there)\b/i;
@@ -14,8 +14,14 @@ function findSubstantiveUserTurn(
     const turn = history[i];
     if (turn.role !== "user") continue;
     const terms = tokenize(turn.text);
-    const hasAnaphora = ANAPHORA_PATTERN.test(turn.text);
-    if (terms.length >= 1 && !hasAnaphora) {
+    // A sentence can name its topic and still contain a demonstrative, e.g.
+    // "What does Generate Related do from this sidebar?" Treat that as a
+    // useful anchor. Skip turns whose subject depends on an earlier answer,
+    // such as "Does it link back?" or "Can I discard that?".
+    const dependsOnPriorTurn =
+      /\b(it|its|that|these|those|one|ones|there)\b/i.test(turn.text) ||
+      terms.length < 2;
+    if (!dependsOnPriorTurn) {
       return turn;
     }
   }
@@ -39,11 +45,15 @@ export function contextualizeQuery(
   if (!history || history.length === 0) return question;
 
   const currentTerms = tokenize(question);
-  const isAnaphoric =
-    ANAPHORA_PATTERN.test(question) || CONTINUATION_PATTERN.test(question);
+  const isAnaphoric = ANAPHORA_PATTERN.test(question);
+  const isContinuation = CONTINUATION_PATTERN.test(question);
   const isUnderspecified = currentTerms.length <= 1;
 
-  if (!isAnaphoric && !isUnderspecified) {
+  // A question can contain a pronoun while still naming its topic: "What does
+  // Generate Related do from this sidebar?" Carry history only when the
+  // current wording is too thin to retrieve on its own or clearly continues
+  // the previous turn. Otherwise old topics can swamp a new, explicit one.
+  if (!isAnaphoric && !isContinuation && !isUnderspecified) {
     return question;
   }
 

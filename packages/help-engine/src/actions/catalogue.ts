@@ -62,6 +62,7 @@ export { GENERATOR_IDS, type GeneratorId };
 /** Controls `highlight` may point at (`data-help-target` values). */
 export const CONTROL_IDS = [
   "add-connection-button",
+  "generate-related-button",
   "status-tab",
   "connections-tab",
 ] as const;
@@ -92,6 +93,11 @@ export const CONTROL_CATALOGUE: Record<ControlId, ControlSpec> = {
     area: "entity-detail",
     panel: "status-tab",
     requiresFlag: "connections-editable",
+  },
+  "generate-related-button": {
+    area: "entity-detail",
+    panel: "status-tab",
+    requiresFlag: "generators",
   },
   "status-tab": { area: "entity-detail" },
   "connections-tab": { area: "entity-detail" },

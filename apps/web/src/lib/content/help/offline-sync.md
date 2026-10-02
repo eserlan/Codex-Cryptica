@@ -30,7 +30,7 @@ You can mirror your internal vault to a folder on your computer. This is separat
 > - **Brave:** ships this feature disabled by default. If "Save to Folder" does not work, open a new tab, go to `brave://flags/#file-system-access-api`, set it to **Enabled**, and relaunch Brave.
 > - **Firefox, Safari:** do not support this feature yet. Your vault still saves automatically to browser-local OPFS; you just cannot mirror it to a folder on disk until you switch to a Chromium-based browser.
 >
-> On any browser, you can still make a **Portable Backup** with **Settings → Portable Backup → Export Backup**, which downloads the vault as a `.codex.zip` file you can import elsewhere.
+> On any browser, you can still make a **Portable Backup** with **Settings → Vault → Portable Backup → Export Backup**, which downloads the vault as a `.codex.zip` file you can import elsewhere.
 
 A linked folder supports several workflows:
 

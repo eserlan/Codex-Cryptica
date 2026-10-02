@@ -28,7 +28,7 @@ Codex Cryptica does not use file folders. Everything in your vault lives in a fl
 When you save a view, it stores:
 
 - **Categories & Types**: Active entity types (e.g., _Characters_, _Locations_, _Factions_).
-- **Labels & Tags**: Any filtered `#labels` (e.g., `#quest-lead`, `#act-2`, `#patron`).
+- **Labels**: Any filtered `#labels` (e.g., `#quest-lead`, `#act-2`, `#patron`).
 - **Search Queries**: Active search terms and keyword filters.
 - **Incompleteness Status**: The "Incomplete only" toggle to isolate notes missing summaries, labels, or connections.
 - **Column Filters**: Column-level criteria configured in the Entity Table.
@@ -83,7 +83,7 @@ Because views are query-based, you don't drag-and-drop entities into them:
 - **To build a hand-curated view** (e.g., _Session 14 Cast_ or _Dungeon Bosses_):
   1. Create a dedicated label such as `#session-14` or `#boss`.
   2. Filter for that label in the Table or Graph and save the view.
-  3. Tag any relevant entity with that `#label` in the detail panel or table. It will immediately appear in that view!
+  3. Give any relevant entity that label in the detail panel or table. It will immediately appear in that view!
 
 ---
 

@@ -10,6 +10,14 @@ rank: 12
 
 The **Fog of War** system lets you track what your players have discovered. You can hide nodes on the graph so they don't see spoilers during a session.
 
+### Entity visibility or map fog?
+
+This article covers hiding entity records and graph nodes from player-facing
+views. Map fog is a separate layer covering terrain on a map image. Its brush
+reveals map areas; it does not reveal a private entity or change that entity’s
+visibility. Check both controls when sharing a world with players.
+See [Map Mode](/help#help/map-mode) for the map fog controls.
+
 ### Visibility States
 
 - **Revealed**: Everyone can see this node and its links.

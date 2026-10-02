@@ -17,10 +17,15 @@ import {
   ofKind,
 } from "./evaluate";
 import { OUT_OF_SCOPE } from "./questions";
+import { FRESH_IN_SCOPE, FRESH_OUT_OF_SCOPE } from "./fresh-holdout";
+
+const fresh = process.argv.includes("--fresh-holdout");
+const questions = fresh ? FRESH_IN_SCOPE : IN_SCOPE;
+const unrelated = fresh ? FRESH_OUT_OF_SCOPE : OUT_OF_SCOPE;
 
 const bundle = buildRealBundle();
-const inScope = evaluateInScope(bundle);
-const outOfScope = evaluateOutOfScope(bundle);
+const inScope = evaluateInScope(bundle, questions);
+const outOfScope = evaluateOutOfScope(bundle, ofKind(unrelated, "unrelated"));
 
 const pct = (n: number) => `${(n * 100).toFixed(0)}%`;
 console.log(
@@ -39,8 +44,9 @@ console.log(
 );
 for (const split of ["tune", "holdout"] as const) {
   const part = inSplit(inScope.results, split);
+  if (!part.length) continue;
   console.log(
-    `    ${split}: recall@3 ${pct(part.filter((r) => r.hit).length / part.length)} over ${part.length}`,
+    `    ${fresh ? "fresh frozen holdout" : split === "holdout" ? "legacy regression" : "tune"}: recall@3 ${pct(part.filter((r) => r.hit).length / part.length)} over ${part.length}`,
   );
 }
 console.log(
@@ -52,7 +58,7 @@ for (const r of outOfScope.results) {
   );
 }
 console.log(`  no-match ${pct(outOfScope.noMatchRate)}`);
-const nearMiss = evaluateOutOfScope(bundle, ofKind(OUT_OF_SCOPE, "near-miss"));
+const nearMiss = evaluateOutOfScope(bundle, ofKind(unrelated, "near-miss"));
 console.log(
   "\nNear-miss questions (name a covered feature, ask for something it lacks; the model must refuse, checked with --live)",
 );
@@ -83,7 +89,7 @@ if (process.argv.includes("--live")) {
   let correct = 0;
   let total = 0;
   for (let pass = 0; pass < runs; pass++) {
-    for (const q of IN_SCOPE) {
+    for (const q of questions) {
       const started = performance.now();
       try {
         const res = await fetch(`${base}/api/help/ask`, {
@@ -121,7 +127,7 @@ if (process.argv.includes("--live")) {
     }
   }
   let refusedNearMiss = 0;
-  const nearMissQuestions = ofKind(OUT_OF_SCOPE, "near-miss");
+  const nearMissQuestions = ofKind(unrelated, "near-miss");
   for (const q of nearMissQuestions) {
     try {
       const res = await fetch(`${base}/api/help/ask`, {

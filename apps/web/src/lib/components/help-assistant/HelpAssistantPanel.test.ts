@@ -84,6 +84,36 @@ const type = async (text: string) => {
 };
 
 describe("HelpAssistantPanel", () => {
+  it("scrolls the conversation to a new answer after it renders", async () => {
+    const { assistant } = setup();
+    assistant.open();
+    const log = await screen.findByRole("log");
+    Object.defineProperty(log, "scrollHeight", {
+      configurable: true,
+      get: () => 800,
+    });
+    log.scrollTop = 0;
+    await assistant.ask("How do I connect entities?");
+    await waitFor(() => expect(log.scrollTop).toBe(800));
+    expect(screen.getByText(answered.answer)).toBeDefined();
+  });
+
+  it("lets the user scroll up without snapping back on unrelated updates", async () => {
+    const { assistant } = setup();
+    assistant.open();
+    const log = await screen.findByRole("log");
+    Object.defineProperty(log, "scrollHeight", {
+      configurable: true,
+      get: () => 800,
+    });
+    await assistant.ask("How do I connect entities?");
+    await waitFor(() => expect(log.scrollTop).toBe(800));
+    log.scrollTop = 100;
+    await fireEvent.scroll(log);
+    await type("Another question");
+    expect(log.scrollTop).toBe(100);
+  });
+
   it("renders nothing while closed", () => {
     setup();
     expect(screen.queryByTestId("help-assistant-panel")).toBeNull();

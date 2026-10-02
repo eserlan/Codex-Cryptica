@@ -423,3 +423,70 @@ describe("semantic vector retrieval", () => {
     });
   });
 });
+
+describe("citation article suggestions", () => {
+  it("uses the article title when the registry chunk comes first", () => {
+    const registry = chunk("registry:connections#0", "Connect entries", {
+      kind: "registry",
+      helpId: "connections-tab",
+      title: "Entity Connections",
+      citationTitle: "Connections Tab",
+    });
+    const result = retrieve(
+      "unrelated gibberish",
+      bundle([registry, connections]),
+      connectionsScreen,
+    );
+    expect(result.noMatch).toBe(true);
+    expect(result.suggestions).toContainEqual({
+      helpId: "connections-tab",
+      title: "Connections Tab",
+    });
+  });
+});
+
+describe("ordinary wording and source diversity", () => {
+  it("matches makes and US spelling without treating related generation as connecting", () => {
+    expect(stem("makes")).toBe(stem("make"));
+    expect(stem("rumor")).toBe(stem("rumours"));
+    expect(stem("gossip")).toBe(stem("rumour"));
+    expect(stem("related")).not.toBe(stem("connection"));
+    expect(tokenize("Is there something that makes rumours?")).toEqual([
+      stem("create"),
+      stem("rumour"),
+    ]);
+  });
+
+  it("does not let sections of one article crowd a second subject out of the top three", () => {
+    const parts = [0, 1, 2].map((n) =>
+      chunk(`same#${n}`, "map map map canvas", {
+        sourceId: "same",
+        helpId: "same",
+      }),
+    );
+    const other = chunk("other#0", "canvas canvas map", {
+      sourceId: "other",
+      helpId: "other",
+      title: "Canvas map",
+    });
+    const result = retrieve(
+      "map versus canvas",
+      bundle([...parts, other]),
+      sanitizeHelpContext({}),
+      { limit: 3 },
+    );
+    expect(result.noMatch).toBe(false);
+    expect(result.chunks.map(({ chunk }) => chunk.sourceId)).toContain("other");
+  });
+
+  it("does not fill diversity slots with unrelated material", () => {
+    const relevant = chunk("map#0", "map map map");
+    const unrelated = chunk("other#0", "potatoes cooking oven");
+    const result = retrieve(
+      "map",
+      bundle([relevant, unrelated]),
+      sanitizeHelpContext({}),
+    );
+    expect(result.chunks.map(({ chunk }) => chunk.id)).toEqual(["map#0"]);
+  });
+});

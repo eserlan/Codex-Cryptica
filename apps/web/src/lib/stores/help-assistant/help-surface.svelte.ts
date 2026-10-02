@@ -17,17 +17,29 @@ export interface EntityDetailSurface {
   isEditing: () => boolean;
   /** False in a read-only (guest) vault, where the Add button does not exist. */
   canAddConnection: () => boolean;
+  /** The Generate Related control is visible on the Status tab. */
+  canGenerateRelated?: () => boolean;
+  /** Zen Mode is a detail view without the side-panel tab strip. */
+  canSwitchTabs?: () => boolean;
   openTab: (tab: HelpTabId) => void;
 }
 
 export class HelpSurfaceRegistry {
   entityDetail = $state.raw<EntityDetailSurface | null>(null);
+  zenEntityDetail = $state.raw<EntityDetailSurface | null>(null);
 
   /** Returns an unregister function; a newer registration is never removed by an older one. */
   registerEntityDetail(surface: EntityDetailSurface): () => void {
     this.entityDetail = surface;
     return () => {
       if (this.entityDetail === surface) this.entityDetail = null;
+    };
+  }
+
+  registerZenEntityDetail(surface: EntityDetailSurface): () => void {
+    this.zenEntityDetail = surface;
+    return () => {
+      if (this.zenEntityDetail === surface) this.zenEntityDetail = null;
     };
   }
 }

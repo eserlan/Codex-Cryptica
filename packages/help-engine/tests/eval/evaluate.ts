@@ -49,6 +49,19 @@ export interface InScopeResult {
   sources: string[];
 }
 
+/** Both sides of a comparison must occur within the first three positions. */
+export function matchesExpectedSources(
+  sources: readonly string[],
+  question: Pick<InScopeQuestion, "expect" | "alsoExpect">,
+): boolean {
+  const topThree = sources.slice(0, 3);
+  return (
+    topThree.some((source) => question.expect.includes(source)) &&
+    (!question.alsoExpect ||
+      topThree.some((source) => question.alsoExpect!.includes(source)))
+  );
+}
+
 export function evaluateInScope(
   bundle: KnowledgeBundle,
   questions: InScopeQuestion[] = IN_SCOPE,
@@ -61,9 +74,7 @@ export function evaluateInScope(
       split: q.split,
       topic: q.topic,
       screen: q.screen,
-      hit:
-        sources.some((s) => q.expect.includes(s)) &&
-        (!q.alsoExpect || sources.some((s) => q.alsoExpect!.includes(s))),
+      hit: matchesExpectedSources(sources, q),
       noMatch: r.noMatch,
       topRelevance: r.topRelevance,
       sources,

@@ -14,11 +14,11 @@ The help assistant answers questions about using Codex Cryptica. It knows which 
 
 ## Asking a question
 
-Open the help button at the bottom right, or choose **Ask about this** on an entity's Connections tab. Type your question and press **Ask**. Every answer lists the help articles it came from, so you can read more.
+Open the help assistant button, or choose **Ask about this** on an entity's Connections tab. Type your question and press **Ask**. When an answer has a related readable guide, its **Sources** buttons open that article. Answers can include formatted lists, bold controls and command examples.
 
 ## Being shown where something is
 
-Sometimes the assistant offers to show you a control. Choose **Show me** and it opens the right tab and outlines the button with a label. It only points at things. It never changes your vault, and you can clear the outline any time by pressing Escape.
+Sometimes the assistant offers to show you a control. Choose **Show me** and it opens the right tab and outlines the button with a label. Other offers can open a tool or help article. The assistant never edits your vault, and you can clear the outline any time by pressing Escape.
 
 ## What is sent
 

@@ -104,6 +104,71 @@ export interface FinalizeInput {
   suggestions: HelpTopic[];
 }
 
+function answerForConfidence(
+  confidence: z.infer<typeof ModelResponseSchema>["confidence"],
+  suggestions: HelpTopic[],
+): HelpAnswer | null {
+  if (confidence === "out-of-scope") return outOfScopeAnswer();
+  if (confidence === "none") return noMatchAnswer(suggestions);
+  return null;
+}
+
+function citedSources(
+  sourceIds: string[],
+  chunks: readonly HelpChunk[],
+): HelpSource[] {
+  const supplied = new Map(chunks.map((chunk) => [chunk.id, chunk]));
+  const seenSources = new Set<string>();
+  const seenTitles = new Set<string>();
+  const sources: HelpSource[] = [];
+
+  for (const id of sourceIds) {
+    const chunk = supplied.get(id);
+    if (!chunk) continue;
+
+    const title = chunk.citationTitle ?? chunk.title;
+    const sourceKey = chunk.helpId ?? chunk.sourceId ?? chunk.id;
+    if (seenSources.has(sourceKey) || seenTitles.has(title)) continue;
+
+    seenSources.add(sourceKey);
+    seenTitles.add(title);
+    sources.push({
+      id: chunk.id,
+      title,
+      ...(chunk.helpId ? { helpId: chunk.helpId } : {}),
+    });
+  }
+
+  return sources;
+}
+
+function finalizeParsedAnswer(
+  model: z.infer<typeof ModelResponseSchema>,
+  input: FinalizeInput,
+): HelpAnswer {
+  const confidenceAnswer = answerForConfidence(
+    model.confidence,
+    input.suggestions,
+  );
+  if (confidenceAnswer) return confidenceAnswer;
+
+  const sources = citedSources(model.sourceIds, input.chunks);
+  if (sources.length === 0 || model.answer.trim() === "") {
+    return noMatchAnswer(input.suggestions);
+  }
+
+  const action =
+    input.candidates.find((candidate) => candidate.id === model.actionId)
+      ?.action ?? null;
+  return {
+    outcome: "answered",
+    answer: trimAnswer(model.answer),
+    sources,
+    action,
+    suggestions: [],
+  };
+}
+
 /**
  * Turns an untrusted model response into the answer the user sees. Grounding
  * is enforced here, after generation: citations the model was never given are
@@ -114,40 +179,5 @@ export interface FinalizeInput {
 export function finalizeAnswer(input: FinalizeInput): HelpAnswer | null {
   const parsed = ModelResponseSchema.safeParse(input.raw);
   if (!parsed.success) return null;
-  const model = parsed.data;
-
-  if (model.confidence === "out-of-scope") return outOfScopeAnswer();
-  if (model.confidence === "none") return noMatchAnswer(input.suggestions);
-
-  const supplied = new Map(input.chunks.map((c) => [c.id, c]));
-  const seenSources = new Set<string>();
-  const seenTitles = new Set<string>();
-  const sources: HelpSource[] = [];
-  for (const id of model.sourceIds) {
-    const chunk = supplied.get(id);
-    if (!chunk) continue;
-    const sourceKey = chunk.helpId ?? chunk.sourceId ?? chunk.id;
-    if (seenSources.has(sourceKey) || seenTitles.has(chunk.title)) continue;
-    seenSources.add(sourceKey);
-    seenTitles.add(chunk.title);
-    sources.push({
-      id: chunk.id,
-      title: chunk.title,
-      ...(chunk.helpId ? { helpId: chunk.helpId } : {}),
-    });
-  }
-  if (sources.length === 0 || model.answer.trim() === "") {
-    return noMatchAnswer(input.suggestions);
-  }
-
-  const action =
-    input.candidates.find((c) => c.id === model.actionId)?.action ?? null;
-
-  return {
-    outcome: "answered",
-    answer: trimAnswer(model.answer),
-    sources,
-    action,
-    suggestions: [],
-  };
+  return finalizeParsedAnswer(parsed.data, input);
 }

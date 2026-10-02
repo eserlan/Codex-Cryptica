@@ -12,7 +12,7 @@ Not every connection is the same. You can add labels to the lines in your graph 
 
 ### How to Add Labels
 
-You can add labels using two methods:
+Use the **Connections** section on an entity’s **Status** tab, or either graph control below. See [Connections Tab](/help#help/connections-tab) for all the ways to create a connection.
 
 #### 1. The Link Button (Recommended)
 
@@ -29,7 +29,7 @@ You can add labels using two methods:
 ### Tips for Labels
 
 - **Common Labels**: Use "Enemy," "Child of," or "Home Town" for consistency.
-- **Hide Labels**: If your graph gets too cluttered, press `L` to hide the text on the lines.
+- **Visibility**: The graph’s `L` shortcut toggles node labels. It does not remove relationship labels from your saved connections.
 
 ### AI Context
 

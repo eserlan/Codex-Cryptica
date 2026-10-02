@@ -71,6 +71,7 @@ const GOVERNED_BLOG_PATHS = [
   "/blog/gm-guide-data-sovereignty",
   "/blog/worldbuilding-tool-without-ai",
   "/blog/ai-slop-is-context-failure",
+  "/blog/entity-detail-views",
 ] as const;
 
 /** Topic hubs that act as crawlable cluster entry points (#3118). */

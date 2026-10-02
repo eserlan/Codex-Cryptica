@@ -23,7 +23,7 @@ describe("HelpSourceChips", () => {
     expect(onOpenArticle).toHaveBeenCalledWith("connections-tab");
   });
 
-  it("renders non-clickable span for sources without helpId", () => {
+  it("hides sources without an article and the empty Sources row", () => {
     render(HelpSourceChips, {
       sources: [
         {
@@ -35,10 +35,11 @@ describe("HelpSourceChips", () => {
     });
 
     expect(screen.queryByRole("button", { name: "Graph View" })).toBeNull();
-    expect(screen.getByText("Graph View")).toBeDefined();
+    expect(screen.queryByText("Graph View")).toBeNull();
+    expect(screen.queryByText("Sources")).toBeNull();
   });
 
-  it("deduplicates sources with identical helpId or title", () => {
+  it("deduplicates sources with identical helpId", () => {
     const onOpenArticle = vi.fn();
     render(HelpSourceChips, {
       sources: [

@@ -35,6 +35,13 @@ A picture of a handful of connections reads well; a picture of thirty does not. 
 
 Nothing here is stored twice. The view is built from the same connections you manage in the **Status** tab, so adding, editing, or removing a connection there changes what you see here immediately.
 
+## Connections and map pins
+
+A connection describes how two entities relate. A map pin locates one entity
+on a map image. Placing a pin does not add a relationship between entities;
+create that separately in the **Status** tab or graph.
+See [Map Mode](/help#help/map-mode) for placing pins.
+
 ## Ways to create connections
 
 You can create connections between entities in several ways across Codex Cryptica:
