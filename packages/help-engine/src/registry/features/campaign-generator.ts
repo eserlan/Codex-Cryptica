@@ -17,7 +17,8 @@ export const campaignGenerator: FeatureEntry = {
       steps: [
         "Open Generators from the activity bar.",
         "Choose a generator and describe what you want.",
-        "Review the result, then save it to your vault.",
+        "Review the result, then click Open in Editor to open a temporary entity draft.",
+        "Apply Changes keeps the generated text; Discard removes the new draft entity.",
       ],
       actionIds: ["generators.open-workflow"],
     },

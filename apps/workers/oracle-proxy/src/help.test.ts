@@ -111,7 +111,7 @@ function harness(over: Partial<HelpDeps> = {}) {
       }),
       cors,
     );
-  return { ask, generate, log };
+  return { ask, generate: deps.generate as typeof generate, log };
 }
 
 const valid = (over: Record<string, unknown> = {}) => ({
@@ -137,6 +137,48 @@ describe("POST /api/help/ask — answers", () => {
     expect(body.action.type).toBe("openPanel");
     expect(body.action.then.target).toBe("add-connection-button");
     expect(generate).toHaveBeenCalledTimes(1);
+  });
+
+  it("resolves anaphoric follow-up questions using conversation history", async () => {
+    let promptSources: string[] = [];
+    const { ask, generate } = harness({
+      generate: vi.fn(
+        async (params: { messages: { role: string; content: string }[] }) => {
+          const userMsg =
+            params.messages.find((m) => m.role === "user")?.content ?? "";
+          const matches = [...userMsg.matchAll(/<source id="([^"]+)"/g)];
+          promptSources = matches.map((m) => m[1]);
+          return {
+            ok: true as const,
+            content: {
+              answer:
+                "Connections can be made on the Status tab or via chat commands.",
+              sourceIds: promptSources.slice(0, 1),
+              actionId: "",
+              confidence: "high" as const,
+            },
+          };
+        },
+      ),
+    });
+    const res = await ask(
+      valid({
+        question: "how to make them?",
+        history: [
+          { role: "user", text: "tell me of connections" },
+          {
+            role: "assistant",
+            text: "Connections link entities together in your vault.",
+          },
+        ],
+      }),
+    );
+    const body = await res.json();
+    expect(res.status).toBe(200);
+    expect(body.outcome).toBe("answered");
+    expect(generate).toHaveBeenCalledTimes(1);
+    expect(promptSources.some((id) => id.includes("connection"))).toBe(true);
+    expect(body.sources.length).toBeGreaterThan(0);
   });
 
   it("forwards a query embedding so a zero-overlap chunk can be retrieved", async () => {

@@ -6,6 +6,7 @@
 export const KNOWN_HELP_IDS = [
   "connections-tab",
   "connection-labels",
+  "proposer-guide",
   "graph-basics",
   "session-hub",
   "in-app-generators",

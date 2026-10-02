@@ -18,11 +18,14 @@ export const CONTEXT_ONLY_SCORE = 0.35;
  */
 export const RELEVANCE_SCREEN_BONUS = 0.15;
 
+/** Keep an exact on-screen feature name ahead of semantically similar guides. */
+export const EXACT_TITLE_MATCH_BONUS = 0.2;
+
 export const BOOSTS = {
-  feature: 0.2,
-  route: 0.15,
-  kind: 0.1,
-  tab: 0.05,
+  feature: 0.08,
+  route: 0.04,
+  kind: 0.03,
+  tab: 0.02,
 } as const;
 
 export const SEMANTIC_BASE = 0.45;
@@ -149,6 +152,7 @@ function scoreSingleChunk(
   ctx: HelpContext,
   byId: Map<string, FeatureEntry>,
   screenFeatureIds: Set<string>,
+  queryTermSet: ReadonlySet<string>,
   queryVector?: readonly number[],
 ): ScoredChunk | null {
   let semantic: number | undefined;
@@ -162,13 +166,20 @@ function scoreSingleChunk(
 
   const feature = chunk.featureId ? byId.get(chunk.featureId) : undefined;
   const onScreen = feature !== undefined && screenFeatureIds.has(feature.id);
+  const titleTerms = tokenize(chunk.title);
+  const exactTitleMatch =
+    titleTerms.length > 0 && titleTerms.every((term) => queryTermSet.has(term));
+  const exactTitleBonus = exactTitleMatch ? EXACT_TITLE_MATCH_BONUS : 0;
   return {
     chunk,
     lexical: lex,
     semantic,
     score:
-      matchStrength + (feature && onScreen ? contextBoost(feature, ctx) : 0),
-    relevance: matchStrength + (onScreen ? RELEVANCE_SCREEN_BONUS : 0),
+      matchStrength +
+      (feature && onScreen ? contextBoost(feature, ctx) : 0) +
+      exactTitleBonus,
+    relevance:
+      matchStrength + (onScreen ? RELEVANCE_SCREEN_BONUS : 0) + exactTitleBonus,
   };
 }
 
@@ -180,6 +191,18 @@ export function rankChunks(
   queryVector?: readonly number[],
 ): ScoredChunk[] {
   const terms = tokenize(question);
+  const queryTermSet = new Set(terms);
+  const hasExactTitleMatch = chunks.some((chunk) => {
+    const titleTerms = tokenize(chunk.title);
+    return (
+      titleTerms.length > 0 &&
+      titleTerms.every((term) => queryTermSet.has(term))
+    );
+  });
+  // When a question names a feature shown in the knowledge base, use lexical
+  // ranking for this query. Semantic neighbours must not crowd out the page
+  // that documents the exact control the user asked about.
+  const effectiveQueryVector = hasExactTitleMatch ? undefined : queryVector;
   const screenFeatures = features.filter((f) => featureMatchesScreen(f, ctx));
   const screenFeatureIds = new Set(screenFeatures.map((f) => f.id));
   const byId = new Map(features.map((f) => [f.id, f]));
@@ -212,7 +235,8 @@ export function rankChunks(
       ctx,
       byId,
       screenFeatureIds,
-      queryVector,
+      queryTermSet,
+      effectiveQueryVector,
     );
     if (result) scored.push(result);
   }

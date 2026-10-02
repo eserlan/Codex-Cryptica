@@ -26,6 +26,11 @@ const bundle = buildBundle({
       "## Labels\nGive a connection a label such as ally or rival.",
     ),
     article(
+      "proposer-guide",
+      "Connections Proposer",
+      "## Automated Discovery\nReview suggested relationships the Oracle finds between entities in your campaign.",
+    ),
+    article(
       "graph-basics",
       "Graph Basics",
       "## Nodes\nThe graph draws every entry as a node and every connection as a line. Select a node to see its links.",

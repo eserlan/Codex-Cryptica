@@ -30,8 +30,8 @@ export const FeatureEntrySchema = z
     kinds: z.union([z.literal("any"), z.array(z.enum(HELP_ENTITY_KINDS))]),
     tabs: z.array(z.enum(HELP_TABS)),
     workflows: z.array(WorkflowSchema),
-    /** Existing help articles this feature draws on. References, never copies. */
-    helpIds: z.array(z.string().min(1)).min(1),
+    /** Existing help articles this feature draws on. References, never copies. Optional. */
+    helpIds: z.array(z.string().min(1)).default([]),
     related: z.array(z.string().regex(kebab)).default([]),
     actions: z.array(ActionRefSchema),
   })

@@ -7,9 +7,11 @@ export interface HelpChunk {
   kind: "help" | "registry";
   /** The registry feature this chunk belongs to, used for context boosting. */
   featureId: string | null;
-  /** The help article ID when this chunk is cited from `content/help`. */
+  /** The readable help article to open when citing this chunk. */
   helpId: string | null;
   title: string;
+  /** Article title for citations; retrieval keeps the original chunk title. */
+  citationTitle?: string;
   heading: string;
   text: string;
   hash: string;

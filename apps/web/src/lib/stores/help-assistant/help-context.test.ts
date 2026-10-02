@@ -58,6 +58,44 @@ describe("HelpContextStore", () => {
     expect(ctx.current.availableActions).toContain("add-connection-button");
   });
 
+  it("offers Generate Related only when its Status control is visible", () => {
+    const { ctx, registry } = store({ isGuestMode: () => false });
+    registry.registerEntityDetail(
+      surface({
+        activeTab: () => "status",
+        canGenerateRelated: () => true,
+      }),
+    );
+    expect(ctx.current.availableActions).toContain("generate-related-button");
+
+    registry.registerEntityDetail(
+      surface({
+        activeTab: () => "connections",
+        canGenerateRelated: () => true,
+      }),
+    );
+    expect(ctx.current.availableActions).not.toContain(
+      "generate-related-button",
+    );
+  });
+
+  it("describes Zen detail actions without claiming a tab strip", () => {
+    const { ctx, registry } = store({ isGuestMode: () => false });
+    registry.registerZenEntityDetail(
+      surface({
+        activeTab: () => "status",
+        canGenerateRelated: () => true,
+        canSwitchTabs: () => false,
+      }),
+    );
+    expect(ctx.current).toMatchObject({
+      area: "entity-detail",
+      tab: "status",
+    });
+    expect(ctx.current.availableActions).toContain("generate-related-button");
+    expect(ctx.current.availableActions).not.toContain("connections-tab");
+  });
+
   it("does not claim connections are editable in a read-only vault", () => {
     const { ctx, registry } = store();
     registry.registerEntityDetail(

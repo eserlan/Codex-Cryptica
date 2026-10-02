@@ -4,6 +4,7 @@ import { sanitizeHelpContext } from "../src/context";
 import { FEATURE_REGISTRY } from "../src/registry";
 import {
   MIN_RELEVANCE,
+  contextualizeQuery,
   cosineSimilarity,
   rankChunks,
   retrieve,
@@ -166,7 +167,7 @@ describe("retrieve", () => {
     );
     expect(result.noMatch).toBe(false);
     expect(result.chunks[0].chunk.id).toBe("connections-tab#0");
-    expect(result.chunks.length).toBeLessThanOrEqual(3);
+    expect(result.chunks.length).toBeLessThanOrEqual(4);
   });
 
   it("returns no match below the relevance floor, so the model is never called", () => {
@@ -270,6 +271,7 @@ describe("retrieve — one feature cannot fill every slot", () => {
       "Is exporting a backup file the same as publishing?",
       bundle([...backupParts, publishing, ...filler]),
       screen,
+      { limit: 3 },
     );
     const ids = result.chunks.map((c) => c.chunk.id);
     expect(ids).toContain("publishing#0");
@@ -357,5 +359,153 @@ describe("semantic vector retrieval", () => {
     expect(result.noMatch).toBe(false);
     expect(result.chunks[0].chunk.id).toBe("graph-basics#0");
     expect(result.chunks[0].lexical).toBeGreaterThan(0);
+  });
+
+  describe("conversational follow-up retrieval", () => {
+    it("augments anaphoric follow-up question with substantive topic from history", () => {
+      const history = [
+        { role: "user" as const, text: "tell me of connections" },
+        {
+          role: "assistant" as const,
+          text: "Connections link entities together.",
+        },
+      ];
+      const out = contextualizeQuery("how to make them?", history);
+      expect(out).toBe("how to make them? (tell me of connections)");
+    });
+
+    it("uses the earlier topic when a follow-up refers to it as they", () => {
+      const history = [
+        { role: "user" as const, text: "How do I create connections?" },
+        {
+          role: "assistant" as const,
+          text: "Connections link entities together.",
+        },
+        { role: "user" as const, text: "Do they appear on maps?" },
+        {
+          role: "assistant" as const,
+          text: "Connected entities can have map pins.",
+        },
+      ];
+
+      expect(
+        contextualizeQuery("Can I edit them from the graph?", history),
+      ).toBe("Can I edit them from the graph? (How do I create connections?)");
+    });
+
+    it("leaves self-contained query untouched despite history", () => {
+      const history = [
+        { role: "user" as const, text: "tell me of connections" },
+        {
+          role: "assistant" as const,
+          text: "Connections link entities together.",
+        },
+      ];
+      const out = contextualizeQuery("how do I roll dice?", history);
+      expect(out).toBe("how do I roll dice?");
+    });
+
+    it("retrieves connection chunks for 'how to make them?' when history is provided", () => {
+      const connChunk = chunk(
+        "connections-tab#0",
+        "Link and connect entities together across your campaign.",
+        { featureId: "entity-connections" },
+      );
+      const testBundle = bundle([connChunk, ...filler]);
+      const history = [
+        { role: "user" as const, text: "tell me of connections" },
+        {
+          role: "assistant" as const,
+          text: "In the Graph, you can explore entities as nodes and their connections as lines.",
+        },
+      ];
+
+      // Without history, "how to make them?" stems to ["creat"] and fails the floor
+      const withoutHistory = retrieve(
+        "how to make them?",
+        testBundle,
+        connectionsScreen,
+      );
+      expect(withoutHistory.noMatch).toBe(true);
+
+      // With history, it contextualizes and successfully retrieves connections-tab
+      const withHistory = retrieve(
+        "how to make them?",
+        testBundle,
+        connectionsScreen,
+        { history },
+      );
+      expect(withHistory.noMatch).toBe(false);
+      expect(withHistory.chunks.map((c) => c.chunk.id)).toContain(
+        "connections-tab#0",
+      );
+    });
+  });
+});
+
+describe("citation article suggestions", () => {
+  it("uses the article title when the registry chunk comes first", () => {
+    const registry = chunk("registry:connections#0", "Connect entries", {
+      kind: "registry",
+      helpId: "connections-tab",
+      title: "Entity Connections",
+      citationTitle: "Connections Tab",
+    });
+    const result = retrieve(
+      "unrelated gibberish",
+      bundle([registry, connections]),
+      connectionsScreen,
+    );
+    expect(result.noMatch).toBe(true);
+    expect(result.suggestions).toContainEqual({
+      helpId: "connections-tab",
+      title: "Connections Tab",
+    });
+  });
+});
+
+describe("ordinary wording and source diversity", () => {
+  it("matches makes and US spelling without treating related generation as connecting", () => {
+    expect(stem("makes")).toBe(stem("make"));
+    expect(stem("rumor")).toBe(stem("rumours"));
+    expect(stem("gossip")).toBe(stem("rumour"));
+    expect(stem("related")).not.toBe(stem("connection"));
+    expect(tokenize("Is there something that makes rumours?")).toEqual([
+      stem("create"),
+      stem("rumour"),
+    ]);
+  });
+
+  it("does not let sections of one article crowd a second subject out of the top three", () => {
+    const parts = [0, 1, 2].map((n) =>
+      chunk(`same#${n}`, "map map map canvas", {
+        sourceId: "same",
+        helpId: "same",
+      }),
+    );
+    const other = chunk("other#0", "canvas canvas map", {
+      sourceId: "other",
+      helpId: "other",
+      title: "Canvas map",
+    });
+    const result = retrieve(
+      "map versus canvas",
+      bundle([...parts, other]),
+      sanitizeHelpContext({}),
+      { limit: 3 },
+    );
+    expect(result.noMatch).toBe(false);
+    expect(result.chunks.map(({ chunk }) => chunk.sourceId)).toContain("other");
+  });
+
+  it("does not fill diversity slots with unrelated material", () => {
+    const relevant = chunk("map#0", "map map map");
+    const unrelated = chunk("other#0", "potatoes cooking oven");
+    const result = retrieve(
+      "map",
+      bundle([relevant, unrelated]),
+      sanitizeHelpContext({}),
+    );
+    expect(result.chunks.map(({ chunk }) => chunk.id)).toEqual(["map#0"]);
   });
 });

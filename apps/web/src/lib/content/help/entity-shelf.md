@@ -37,6 +37,15 @@ Links between entities travel too, with a couple of sensible limits:
 - A link pointing at something already in the destination reconnects by name.
 - If nothing matches, or more than one thing does, the link is left off and listed for you afterwards. It won't guess — a link quietly attached to the wrong entity is far harder to notice than one that's missing.
 
+## Shelf or Import Files?
+
+Use the **Shelf** to move an existing monster, character or other entity between
+vaults in this browser. Shelve it, switch vaults, and choose **Import into this vault**.
+Use **Import Files** when the material is already in files on your computer, or
+when bringing files from another device. The Shelf does not transfer between
+browsers or devices. Neither flow overwrites an existing entity.
+See [Importing Notes](/help#help/importing) for file import.
+
 ## When names clash
 
 Importing never overwrites anything. If the destination already has an entity with the same title, the arriving one gets a number after it, and you're told which was renamed.

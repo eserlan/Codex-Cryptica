@@ -13,9 +13,9 @@ The **QuickNote Scratchpad** is designed to let you write down sudden brainstorm
 ### Key Features
 
 - **Global Hotkey Toggle**: Press `Ctrl+I` (or `Cmd+I` on macOS) from anywhere in the app to slide open the glassmorphic QuickNote overlay.
-- **Debounced Auto-Save**: Just start typing. Every keystroke is saved locally to your device's IndexedDB with under 150ms activation latency.
+- **Debounced Auto-Save**: Just start typing. Your notes save automatically in this browser as you type.
 - **Floating Action Bubble (FAB)**: A glowing, interactive bubble sits in the bottom-right corner of your screen when active notes are present, pulsing to remind you of pending drafts.
-- **glowing Counter Badges**: High-visibility orange badges on the leftmost Activity Bar `[⚡]` and compact draft pills in the Campaign Header count your active QuickNotes.
+- **Counter Badges**: High-visibility orange badges on the leftmost Activity Bar `[⚡]` and compact draft pills in the Campaign Header count your active QuickNotes.
 
 ### Visual Brainstorming Integration
 
@@ -32,7 +32,7 @@ When you're ready to turn a fleeting draft into a formal wiki article, let the L
 1. Click **Elevate** (or the magic wand icon) in the QuickNote editor.
 2. The AI reads your raw draft, retrieves semantic context from your vault, and structures the note into a rich draft entity (determining `Name`, `Type`, `Chronicle`, and `Lore`).
 3. The newly generated draft is loaded into your sidebar review panel, complete with a `discoverySource` back-link referencing your original QuickNote.
-4. When you click **Verify/Approve** on the Svelte sidebar draft banner, the original QuickNote is automatically archived, keeping your scratchpad perfectly clean.
+4. When you approve the draft in the entity panel, the original QuickNote is automatically archived, keeping your scratchpad perfectly clean.
 
 ### Session Journal
 

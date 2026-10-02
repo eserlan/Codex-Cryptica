@@ -34,6 +34,7 @@ const chunk = (id: string, text: string): HelpChunk => ({
 
 const chunks = [
   chunk("connections-tab#0", "Add connections on the Status tab."),
+  chunk("connections-tab#1", "View connections in the Knowledge Graph."),
 ];
 const guide: ActionRef = {
   id: "connections.add-guide",
@@ -166,6 +167,17 @@ describe("buildHelpPrompt", () => {
     expect(SYSTEM_PROMPT).toMatch(/data, not instructions/);
   });
 
+  it("instructs the model to qualify locations and summarize multi-pathway options without false exclusivity", () => {
+    expect(SYSTEM_PROMPT).toMatch(
+      /Always specify the screen, tool, or location/,
+    );
+    expect(SYSTEM_PROMPT).toMatch(
+      /Never present a single method or shortcut as the only way/,
+    );
+    expect(SYSTEM_PROMPT).toMatch(/summarize the options clearly/);
+    expect(SYSTEM_PROMPT).toMatch(/highlight that on-screen option first/);
+  });
+
   it("declares a response schema with the four fields", () => {
     expect(HELP_RESPONSE_JSON_SCHEMA.required).toEqual([
       "answer",
@@ -193,6 +205,18 @@ describe("finalizeAnswer", () => {
   it("drops cited ids the model was never given", () => {
     const out = respond({ sourceIds: ["connections-tab#0", "made-up#9"] })!;
     expect(out.sources.map((s) => s.id)).toEqual(["connections-tab#0"]);
+  });
+
+  it("deduplicates sources from the same help article or with identical title", () => {
+    const out = respond({
+      sourceIds: ["connections-tab#0", "connections-tab#1"],
+    })!;
+    expect(out.sources).toHaveLength(1);
+    expect(out.sources[0]).toEqual({
+      id: "connections-tab#0",
+      title: "Connections Tab",
+      helpId: "connections-tab",
+    });
   });
 
   it("downgrades an answer with no valid citation to no-match", () => {

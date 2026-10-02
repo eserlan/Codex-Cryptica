@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { tick } from "svelte";
   import { fly } from "svelte/transition";
   import { quintOut } from "svelte/easing";
   import type { GuidanceAction } from "help-engine";
@@ -38,6 +39,27 @@
       ? `bottom: ${keyboard.inset + 8}px; max-height: ${keyboard.visibleHeight - 16}px;`
       : undefined,
   );
+
+  let conversation: HTMLDivElement | undefined = $state();
+
+  $effect(() => {
+    const container = conversation;
+    // Follow new messages and the pending/action rows after their DOM updates.
+    const state = {
+      open: assistant.isOpen,
+      messages: assistant.messages.length,
+      pending: assistant.isPending,
+      offer: assistant.offer,
+    };
+    if (!state.open || !container) return;
+    let active = true;
+    void tick().then(() => {
+      if (active) container.scrollTop = container.scrollHeight;
+    });
+    return () => {
+      active = false;
+    };
+  });
 
   function onKeydown(event: KeyboardEvent) {
     if (event.key === "Escape") {
@@ -93,6 +115,7 @@
 
     <div
       class="flex min-h-0 flex-1 flex-col gap-3 overflow-auto px-3 py-3"
+      bind:this={conversation}
       role="log"
       aria-live="polite"
       aria-relevant="additions"

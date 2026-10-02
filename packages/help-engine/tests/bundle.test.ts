@@ -1,3 +1,6 @@
+import { sanitizeHelpContext } from "../src/context";
+import { retrieve } from "../src/retrieval";
+import { finalizeAnswer } from "../src/response/finalize";
 import { KNOWN_HELP_IDS } from "./fixtures/help-article-ids";
 import { readFileSync, readdirSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
@@ -132,6 +135,95 @@ describe("buildBundle", () => {
     expect(chunk.featureId).toBe("entity-connections");
   });
 
+  it("resolves registry citations to article titles without changing retrieval titles", () => {
+    const bundle = buildBundle({
+      ...input,
+      articles: articles.map((a) =>
+        a.id === "connections-tab" ? { ...a, title: "Connections Tab" } : a,
+      ),
+    });
+    const chunks = bundle.chunks.filter(
+      (c) => c.sourceId === "registry:entity-connections",
+    );
+    for (const chunk of chunks) {
+      expect(chunk.helpId).toBe("connections-tab");
+      expect(chunk.citationTitle).toBe("Connections Tab");
+      expect(chunk.title).toBe(
+        FEATURE_REGISTRY.find((f) => f.id === "entity-connections")!.title,
+      );
+    }
+    const result = finalizeAnswer({
+      raw: {
+        answer: "Open Connections.",
+        sourceIds: [...chunks.map((c) => c.id), "connections-tab#0"],
+        confidence: "high",
+      },
+      chunks: bundle.chunks,
+      candidates: [],
+      suggestions: [],
+    });
+    expect(result?.sources).toEqual([
+      { id: chunks[0].id, title: "Connections Tab", helpId: "connections-tab" },
+    ]);
+  });
+
+  it("keeps undocumented registry chunks available for grounding without an article link", () => {
+    const feature = { ...FEATURE_REGISTRY[0], helpIds: [], related: [] };
+    const bundle = buildBundle({ ...input, features: [feature] });
+    const chunk = bundle.chunks.find(
+      (c) => c.sourceId === `registry:${feature.id}`,
+    )!;
+    expect(chunk.helpId).toBeNull();
+    expect(chunk.citationTitle).toBeUndefined();
+    expect(chunk.text).toContain(feature.summary);
+  });
+
+  it("retrieves documented graph grouping instructions for a grouping question", () => {
+    const bundle = buildBundle({ ...input, articles: productionArticles });
+    const context = sanitizeHelpContext({
+      routeTemplate: "/(app)",
+      area: "graph",
+      surface: "vault",
+    });
+    const result = retrieve("How do I show graph groups?", bundle, context);
+    expect(result.noMatch).toBe(false);
+    expect(
+      result.chunks.some(
+        ({ chunk }) =>
+          chunk.helpId === "graph-basics" && /Groups/.test(chunk.text),
+      ),
+    ).toBe(true);
+    const article = productionArticles.find((a) => a.id === "graph-basics")!;
+    expect(article.content).toContain("Small groups may have no background");
+    expect(article.content).toContain("button only changes the backgrounds");
+  });
+
+  it("retrieves entity-view AI revision steps and their discard path", () => {
+    const bundle = buildBundle({ ...input, articles: productionArticles });
+    const context = sanitizeHelpContext({
+      routeTemplate: "/(app)",
+      area: "entity-detail",
+      surface: "vault",
+    });
+    const result = retrieve("what of ai revisions?", bundle, context);
+    expect(result.noMatch).toBe(false);
+    expect(
+      result.chunks.some(
+        ({ chunk }) =>
+          chunk.helpId === "creating-and-editing-entities" &&
+          chunk.text.includes("AI Revise Description"),
+      ),
+    ).toBe(true);
+    const article = productionArticles.find(
+      (a) => a.id === "creating-and-editing-entities",
+    )!;
+    expect(article.content).toContain("**Discard** to keep the original");
+    expect(article.content).toContain(
+      "If generation fails, your existing entity text remains unchanged.",
+    );
+    expect(article.content).toContain("**Zen Mode**");
+  });
+
   it("is deterministic for the same input", () => {
     expect(buildBundle(input)).toEqual(buildBundle(input));
   });
@@ -251,6 +343,16 @@ describe("generator chunks", () => {
       expect(chunk.kind).toBe("registry");
       expect(chunk.featureId).toBe("campaign-generator");
     }
+  });
+
+  it("links generator citations only when the guide is present", () => {
+    const quest = bundle.chunks.find((c) => c.id === "generator:quest#0")!;
+    expect(quest.helpId).toBe("in-app-generators");
+    expect(quest.citationTitle).toBe("in-app-generators");
+    const withoutGuide = buildBundle({ ...input, features: [], articles: [] });
+    const unlinked = withoutGuide.chunks.find((c) => c.id === quest.id)!;
+    expect(unlinked.helpId).toBeNull();
+    expect(unlinked.citationTitle).toBeUndefined();
   });
 
   it("names the generator and says what it makes, in the user's words", () => {

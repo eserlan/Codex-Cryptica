@@ -52,6 +52,30 @@ Transform any map into a live tactical Virtual Tabletop:
 3. Track initiative, measure spell/movement ranges (`R`), drop map pings (`Shift` + `Click`), and stream live map updates to players via **Host Session**.
 4. For detailed step-by-step instructions, open the [Starting a VTT Session from Maps](/help#help/vtt-session) help article.
 
+### Map or canvas?
+
+Use a **map** for geography: a town, region or dungeon image with pins locating
+entities, fog to reveal terrain, and optional tactical tokens. Use a **Spatial
+Canvas** for arranging entity cards, notes and visual links on a planning board.
+A canvas is useful for an investigation or plot outline where positions do not
+represent geographic locations. See [Spatial Canvas](/help#help/spatial-canvas).
+
+### Is a map pin a connection?
+
+A map pin places an entity at a location on an image. A connection records a
+relationship between two entities, such as a character living in a town.
+Placing a pin does not create that relationship. Use **+ Add** under Connections
+on the entity’s **Status** tab to create a relationship separately.
+See [Connections Tab](/help#help/connections-tab).
+
+### Map fog or hidden entities?
+
+Map fog covers parts of a map image; the fog brush reveals terrain to players.
+Entity visibility controls which records and graph nodes players can see.
+Revealing terrain does not make a private entity public. Check both map fog and
+entity visibility when preparing a player-facing view.
+See [Fog of War](/help#help/fog-of-war) for entity visibility.
+
 ### Related Blog Posts
 
 - [Introducing Tactical VTT Mode](/blog/vtt-introduction) — Overview of zero-overhead, Peer-to-Peer tactical map sessions.

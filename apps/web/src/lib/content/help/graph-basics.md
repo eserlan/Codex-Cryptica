@@ -1,7 +1,7 @@
 ---
 id: graph-basics
 title: Knowledge Graph
-description: Navigate campaign entities and relationships in the graph with selection, zoom, and connection shortcuts.
+description: Navigate campaign entities and relationships in the graph with selection, zoom, automatic grouping, and connection shortcuts.
 tags: [navigation, connections]
 rank: 2
 ---
@@ -29,6 +29,24 @@ The bottom-left toolbar provides quick access to layout and visibility:
 - **Link (Chain icon)**: Quickly connect two selected nodes.
 - **Groups**: Cycle the backgrounds behind the larger groups of closely linked entities: soft, strong (more visible, for spotting the groups quickly), or hidden. Hover an entity to highlight its whole group.
 - **Redraw (Refresh)**: Recalculate node positions. Closely linked entities are placed together in their own area, and entities with no connections are lined up separately.
+
+### Graph Grouping
+
+The graph automatically groups closely linked entities by their connections.
+Use these groups to spot connected parts of your world, such as a faction and
+its members or locations linked by events.
+
+- **Groups**: Use the Groups button in the bottom-left toolbar to show or hide
+  soft coloured backgrounds behind the larger groups. On mobile, open the graph
+  toolbar menu to find it.
+- **Redraw**: Recalculate the layout to place closely linked entities together
+  in their own areas. Entities with no connections are lined up separately.
+
+Grouping follows connections rather than entity categories or labels. The Groups
+button only changes the backgrounds; use Redraw to rearrange node positions.
+Hover over a node to highlight its group and fade the other backgrounds.
+Small groups may have no background until you hover over one of their nodes,
+so a node without a background can still have connections.
 
 ### Images in Large Campaigns
 

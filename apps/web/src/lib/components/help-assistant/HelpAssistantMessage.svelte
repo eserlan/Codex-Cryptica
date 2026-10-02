@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { renderMarkdown } from "$lib/utils/markdown";
   import type { HelpMessage } from "$lib/stores/help-assistant/help-assistant.svelte";
   import HelpSourceChips from "./HelpSourceChips.svelte";
   import HelpTopicList from "./HelpTopicList.svelte";
@@ -12,6 +13,12 @@
     onOpenArticle: (helpId: string) => void;
     onOpenLibrary: () => void;
   } = $props();
+
+  const answerHtml = $derived(
+    message.role === "assistant"
+      ? renderMarkdown(message.text, { breaks: true })
+      : "",
+  );
 
   // Closest topics after a no-match, or this screen's static help after a failure.
   const topics = $derived(
@@ -30,9 +37,11 @@
     class="mr-4 flex flex-col gap-2 rounded border border-chrome-border/60 bg-chrome-surface/60 px-3 py-2"
     data-testid="help-assistant-answer"
   >
-    <p class="whitespace-pre-line text-xs leading-relaxed text-chrome-text">
-      {message.text}
-    </p>
+    <div
+      class="text-xs leading-relaxed text-chrome-text [&_p]:my-2 [&_p:first-child]:mt-0 [&_p:last-child]:mb-0 [&_strong]:font-bold [&_ul]:my-3 [&_ol]:my-3 [&_ul]:space-y-2 [&_ol]:space-y-2 [&_li::marker]:text-chrome-accent [&_ul]:list-disc [&_ol]:list-decimal [&_ul]:pl-5 [&_ol]:pl-5 [&_li]:pl-1 [&_a]:text-chrome-accent [&_a]:underline [&_code]:rounded [&_code]:bg-chrome-accent/10 [&_code]:px-1 [&_pre]:overflow-x-auto [&_blockquote]:border-l-2 [&_blockquote]:border-chrome-border [&_blockquote]:pl-2 [&_h1]:font-bold [&_h2]:font-bold [&_h3]:font-bold"
+    >
+      {@html answerHtml}
+    </div>
 
     {#if message.staleScreen}
       <p class="text-[10px] italic text-chrome-muted">

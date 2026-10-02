@@ -34,7 +34,7 @@ Guests can only chat with Characters you have enabled and made visible to them. 
 
 ## Try it yourself as the host
 
-Once Guest Character Chat is enabled, the **Character Chat** panel below it lets you test the conversation as the host. This chat stays local to your browser and is never added to guest logs.
+Once Guest Character Chat is enabled, the **Character Chat** panel below it lets you test the conversation as the host. The transcript is stored in your browser and is never added to guest logs. Generating replies still sends the conversation and selected character context to the AI service.
 
 - **Chat as**: Before connecting, choose whether you're speaking as **Yourself** or as one of your other Characters — this helps the character respond to your role and relationship.
 - **Switch who you're chatting as**: Once connected, use **Sessions** above the conversation to start a new chat as a different speaker. Your previous conversation is kept, not erased.
