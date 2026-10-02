@@ -1,5 +1,5 @@
 import type { Core, NodeSingular } from "cytoscape";
-import { detectCommunities } from "../communities";
+import { detectCommunities, linkedPieces } from "../communities";
 
 export interface HullNode {
   id: string;
@@ -43,6 +43,40 @@ function withoutOutliers(members: HullNode[]): HullNode[] {
   return kept.length >= 3 ? kept : members;
 }
 
+/**
+ * The biggest linked piece of `members`, with its links. Leaving out an
+ * outlier can cut a community in two, and pieces further apart than the halos
+ * reach would read as separate groups; drawing only the biggest piece keeps
+ * each background one shape. Without any edges, members are kept as given.
+ */
+function largestLinkedPiece(
+  members: HullNode[],
+  edges: ReadonlyArray<readonly [string, string]>,
+): { members: HullNode[]; links: Array<[HullNode, HullNode]> } {
+  const byId = new Map(members.map((n) => [n.id, n]));
+  const near = new Map<string, string[]>(members.map((n) => [n.id, []]));
+  const links: Array<[HullNode, HullNode]> = [];
+  for (const [a, b] of edges) {
+    const na = byId.get(a);
+    const nb = byId.get(b);
+    if (!na || !nb) continue;
+    links.push([na, nb]);
+    near.get(a)!.push(b);
+    near.get(b)!.push(a);
+  }
+  if (edges.length === 0) return { members, links };
+
+  const ids = members.map((n) => n.id).sort();
+  const best = linkedPieces(ids, (id) => near.get(id) ?? []).reduce((a, b) =>
+    b.length > a.length ? b : a,
+  );
+  const keep = new Set(best);
+  return {
+    members: members.filter((n) => keep.has(n.id)),
+    links: links.filter(([a, b]) => keep.has(a.id) && keep.has(b.id)),
+  };
+}
+
 /** The largest communities, each with the members its background covers. */
 export function computeCommunityGroups(
   nodes: HullNode[],
@@ -76,14 +110,10 @@ export function computeCommunityGroups(
       !shown.some(([c]) => c === community),
   );
   return [...shown, ...extra].map(([community, members]) => {
-    const kept = withoutOutliers(members);
-    const byId = new Map(kept.map((n) => [n.id, n]));
-    const links: Array<[HullNode, HullNode]> = [];
-    for (const [a, b] of edges) {
-      const na = byId.get(a);
-      const nb = byId.get(b);
-      if (na && nb) links.push([na, nb]);
-    }
+    const { members: kept, links } = largestLinkedPiece(
+      withoutOutliers(members),
+      edges,
+    );
     return { community, size: members.length, members: kept, links };
   });
 }
@@ -232,10 +262,17 @@ export function attachCommunityHulls(
   const bitmaps = new Map<string, GroupBitmap>();
   const ctx = canvas.getContext("2d");
 
+  // Nodes waiting for a layout are hidden with opacity only, so `visible()`
+  // still counts them; bands between their placeholder positions would show.
   const visibleNodes = (): NodeSingular[] =>
     cy
       .nodes()
-      .filter((n) => n.visible())
+      .filter(
+        (n) =>
+          n.visible() &&
+          !n.data("isPendingLayout") &&
+          !n.hasClass("pending-layout"),
+      )
       .toArray() as NodeSingular[];
 
   let edgeList: Array<readonly [string, string]> | null = null;
@@ -350,7 +387,7 @@ export function attachCommunityHulls(
   };
 
   cy.on("add remove", onStructure);
-  cy.on("position style", onMove);
+  cy.on("position style data", onMove);
   cy.on("viewport resize", onViewport);
   cy.on("mouseover", "node", onHover);
   cy.on("mouseout", "node", onLeave);
@@ -364,7 +401,7 @@ export function attachCommunityHulls(
     },
     destroy() {
       cy.off("add remove", onStructure);
-      cy.off("position style", onMove);
+      cy.off("position style data", onMove);
       cy.off("viewport resize", onViewport);
       cy.off("mouseover", "node", onHover);
       cy.off("mouseout", "node", onLeave);

@@ -65,6 +65,30 @@ describe("computeCommunityGroups", () => {
     expect(group.community).toBe("S");
   });
 
+  it("draws only the biggest linked piece when a community comes apart", () => {
+    const left = ring("l", 9, 0);
+    const right = ring("r", 4, 0);
+    const labels = new Map(
+      [...left, ...right].map((n) => [n.id, "Split"] as const),
+    );
+    const chain = (ids: string[]) =>
+      ids.slice(1).map((id, i) => [ids[i], id] as [string, string]);
+    const [group] = computeCommunityGroups([...left, ...right], labels, {
+      edges: [
+        ...chain(left.map((n) => n.id)),
+        ...chain(right.map((n) => n.id)),
+      ],
+    });
+    expect(group.members.map((m) => m.id).sort()).toEqual(
+      left.map((n) => n.id).sort(),
+    );
+    expect(
+      group.links.every(
+        ([a, b]) => a.id.startsWith("l") && b.id.startsWith("l"),
+      ),
+    ).toBe(true);
+  });
+
   it("skips communities too small to be worth shading (negative)", () => {
     const tiny = ring("c", MIN_HULL_SIZE - 1, 0);
     const labels = new Map(tiny.map((n) => [n.id, "C"] as const));
@@ -256,6 +280,32 @@ describe("attachCommunityHulls", () => {
     flush();
     expect(new Set(alphas).size).toBe(1);
 
+    overlay.destroy();
+    cy.destroy();
+    [g.requestAnimationFrame, g.cancelAnimationFrame] = saved;
+  });
+
+  it("leaves nodes still waiting for a layout out of the backgrounds (negative)", () => {
+    const frames: FrameRequestCallback[] = [];
+    const g = globalThis as any;
+    const saved = [g.requestAnimationFrame, g.cancelAnimationFrame];
+    g.requestAnimationFrame = (cb: FrameRequestCallback) => frames.push(cb);
+    g.cancelAnimationFrame = () => {};
+    const flush = () => frames.splice(0).forEach((f) => f(0));
+
+    const cy = graph();
+    // Only 3 of the 10 members are laid out: too few for a background.
+    cy.nodes().slice(3).data("isPendingLayout", true);
+    const calls: string[] = [];
+    const overlay = attachCommunityHulls(cy, recordingCanvas(calls, "main"), {
+      createLayer: () => recordingCanvas(calls, "layer"),
+    });
+    flush();
+    expect(calls).not.toContain("main.drawImage");
+
+    cy.nodes().removeData("isPendingLayout");
+    flush();
+    expect(calls).toContain("main.drawImage");
     overlay.destroy();
     cy.destroy();
     [g.requestAnimationFrame, g.cancelAnimationFrame] = saved;
