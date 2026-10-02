@@ -198,6 +198,7 @@ export const howDoesMagicAffectPoliticsAndGovernment: AnswerConfigInput = {
     "how-do-you-create-a-pantheon",
     "how-does-magic-create-social-classes-and-inequality",
     "how-common-should-magic-be-in-a-fantasy-world",
+    "how-does-magic-change-society-in-a-fantasy-world",
   ],
   discovery: {
     id: "answer-magic-affects-politics-and-government",
