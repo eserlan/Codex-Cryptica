@@ -403,6 +403,15 @@ describe("published answers", () => {
     );
   });
 
+  it("uses the project term Labels in the magical-inequality Codex guidance", () => {
+    const answer =
+      answers["how-does-magic-create-social-classes-and-inequality"];
+
+    expect(answer.codexConnection?.paragraphs.join(" ")).toContain(
+      "Label households and quarters",
+    );
+  });
+
   it("publishes at least eight distinct answers", () => {
     // The first content pack's acceptance bar (#2564).
     expect(published.length).toBeGreaterThanOrEqual(8);

@@ -166,6 +166,10 @@ export const howDoYouCreateABelievableFictionalReligion: AnswerConfigInput = {
     "how-do-you-create-a-secret-society-for-an-rpg-campaign",
     "how-do-i-run-common-character-roles-in-a-fantasy-rpg",
     "how-do-i-make-different-cultures-feel-distinct-without-relying-on-stereotypes",
+    "how-does-magic-affect-politics-and-government",
+    "how-should-magic-have-been-discovered-in-my-world",
+    "how-does-magic-create-social-classes-and-inequality",
+    "how-does-magic-change-society-in-a-fantasy-world",
   ],
   discovery: {
     id: "answer-fictional-religion",

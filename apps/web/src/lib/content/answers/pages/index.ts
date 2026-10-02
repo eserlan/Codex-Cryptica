@@ -1,5 +1,6 @@
 import { AnswerConfigSchema, type AnswerConfig } from "../schema";
 import { canYouPlayATabletopRpgIn30MinuteSessions } from "./can-you-play-a-tabletop-rpg-in-30-minute-sessions";
+import { howCommonShouldMagicBeInAFantasyWorld } from "./how-common-should-magic-be-in-a-fantasy-world";
 import { howDoFantasyCitiesDefendAgainstFlyingCreaturesAndTeleportation } from "./how-do-fantasy-cities-defend-against-flying-creatures-and-teleportation";
 import { howDoIBalanceRpgCombatEncountersWithoutATpk } from "./how-do-i-balance-rpg-combat-encounters-without-a-tpk";
 import { howDoIBuildABelievableConstitutionalCrisisOrCoup } from "./how-do-i-build-a-believable-constitutional-crisis-or-coup";
@@ -88,12 +89,16 @@ import { howDoYouTrackFactionTurnsBetweenRpgSessions } from "./how-do-you-track-
 import { howDoYouTrackUnresolvedPlotHooksInAnRpgCampaign } from "./how-do-you-track-unresolved-plot-hooks-in-an-rpg-campaign";
 import { howDoYouUsePlayerBackstoriesInAnRpgCampaignWorld } from "./how-do-you-use-player-backstories-in-an-rpg-campaign-world";
 import { howDoYouWriteAOneShotAdventure } from "./how-do-you-write-a-one-shot-adventure";
+import { howDoesMagicAffectPoliticsAndGovernment } from "./how-does-magic-affect-politics-and-government";
+import { howDoesMagicChangeSocietyInAFantasyWorld } from "./how-does-magic-change-society-in-a-fantasy-world";
+import { howDoesMagicCreateSocialClassesAndInequality } from "./how-does-magic-create-social-classes-and-inequality";
 import { howLongShouldATtrpgSessionBe } from "./how-long-should-a-ttrpg-session-be";
 import { howManyNpcsDoesAnRpgTownNeed } from "./how-many-npcs-does-an-rpg-town-need";
 import { howMuchCampaignLoreShouldPlayersBeExpectedToRemember } from "./how-much-campaign-lore-should-players-be-expected-to-remember";
 import { howMuchOfThePlotShouldADmPrepare } from "./how-much-of-the-plot-should-a-dm-prepare";
 import { howMuchPrepDoYouNeedForAnRpgSession } from "./how-much-prep-do-you-need-for-an-rpg-session";
 import { howMuchRuleOfCoolShouldADmAllow } from "./how-much-rule-of-cool-should-a-dm-allow";
+import { howShouldMagicHaveBeenDiscoveredInMyWorld } from "./how-should-magic-have-been-discovered-in-my-world";
 import { howToCreateACyberpunkCityDistrict } from "./how-to-create-a-cyberpunk-city-district";
 import { howToCreateASciFiStarSystemForAnRpg } from "./how-to-create-a-sci-fi-star-system-for-an-rpg";
 import { howToCreateRumoursForAFantasyTown } from "./how-to-create-rumours-for-a-fantasy-town";
@@ -134,6 +139,7 @@ import { xpLevelingVsMilestoneLeveling } from "./xp-leveling-vs-milestone-leveli
 export const answers: Record<string, AnswerConfig> = Object.fromEntries(
   [
     canYouPlayATabletopRpgIn30MinuteSessions,
+    howCommonShouldMagicBeInAFantasyWorld,
     howDoFantasyCitiesDefendAgainstFlyingCreaturesAndTeleportation,
     howDoIBalanceRpgCombatEncountersWithoutATpk,
     howDoIBuildABelievableConstitutionalCrisisOrCoup,
@@ -222,12 +228,16 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     howDoYouTrackUnresolvedPlotHooksInAnRpgCampaign,
     howDoYouUsePlayerBackstoriesInAnRpgCampaignWorld,
     howDoYouWriteAOneShotAdventure,
+    howDoesMagicAffectPoliticsAndGovernment,
+    howDoesMagicChangeSocietyInAFantasyWorld,
+    howDoesMagicCreateSocialClassesAndInequality,
     howLongShouldATtrpgSessionBe,
     howManyNpcsDoesAnRpgTownNeed,
     howMuchCampaignLoreShouldPlayersBeExpectedToRemember,
     howMuchOfThePlotShouldADmPrepare,
     howMuchPrepDoYouNeedForAnRpgSession,
     howMuchRuleOfCoolShouldADmAllow,
+    howShouldMagicHaveBeenDiscoveredInMyWorld,
     howToCreateACyberpunkCityDistrict,
     howToCreateASciFiStarSystemForAnRpg,
     howToCreateRumoursForAFantasyTown,

@@ -4,7 +4,6 @@ title: Cif
 description: Ask Cif how to do something in Codex Cryptica and get an answer for the screen you are on.
 icon: icon-[lucide--message-circle-question]
 rank: 13
-hidden: true
 tags: [help, assistant, ai, cif]
 ---
 

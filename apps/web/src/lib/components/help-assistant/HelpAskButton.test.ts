@@ -45,7 +45,7 @@ describe("HelpAskButton", () => {
   it("provides accessible title and label", () => {
     render(HelpAskButton, { open: false, onToggle: vi.fn() });
     const button = screen.getByTestId("help-assistant-button");
-    expect(button.getAttribute("title")).toBe("Open help assistant");
+    expect(button.getAttribute("title")).toBe("Ask Cif");
     expect(button.getAttribute("aria-label")).toBe("Open help assistant");
   });
 });
