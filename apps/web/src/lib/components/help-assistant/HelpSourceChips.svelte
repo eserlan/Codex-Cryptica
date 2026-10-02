@@ -8,13 +8,23 @@
     sources: HelpSource[];
     onOpenArticle: (helpId: string) => void;
   } = $props();
+
+  const uniqueSources = $derived.by(() => {
+    const seen = new Set<string>();
+    return sources.filter((source) => {
+      const key = source.helpId ?? source.title;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  });
 </script>
 
 <div class="flex flex-wrap items-center gap-1">
   <span class="text-[10px] uppercase tracking-wider text-chrome-muted"
     >Sources</span
   >
-  {#each sources as source (source.id)}
+  {#each uniqueSources as source (source.id)}
     {#if source.helpId}
       <button
         type="button"

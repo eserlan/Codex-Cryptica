@@ -120,12 +120,16 @@ export function finalizeAnswer(input: FinalizeInput): HelpAnswer | null {
   if (model.confidence === "none") return noMatchAnswer(input.suggestions);
 
   const supplied = new Map(input.chunks.map((c) => [c.id, c]));
-  const seen = new Set<string>();
+  const seenSources = new Set<string>();
+  const seenTitles = new Set<string>();
   const sources: HelpSource[] = [];
   for (const id of model.sourceIds) {
     const chunk = supplied.get(id);
-    if (!chunk || seen.has(id)) continue;
-    seen.add(id);
+    if (!chunk) continue;
+    const sourceKey = chunk.helpId ?? chunk.sourceId ?? chunk.id;
+    if (seenSources.has(sourceKey) || seenTitles.has(chunk.title)) continue;
+    seenSources.add(sourceKey);
+    seenTitles.add(chunk.title);
     sources.push({
       id: chunk.id,
       title: chunk.title,
