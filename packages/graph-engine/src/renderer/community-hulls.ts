@@ -24,6 +24,10 @@ export const MIN_HULL_SIZE = 8;
 export const MAX_HULLS = 24;
 /** How far a community's background reaches beyond each member, in graph units. */
 const HALO_PADDING = 46;
+/** Background strength with nothing selected, for the selected node's group, and for the others. */
+const RESTING_ALPHA = 0.11;
+const SELECTED_ALPHA = 0.2;
+const FADED_ALPHA = 0.04;
 
 /**
  * Members far from the rest of their community (more than twice the median
@@ -47,6 +51,8 @@ export function computeCommunityGroups(
     minSize = MIN_HULL_SIZE,
     maxCount = MAX_HULLS,
     edges = [] as ReadonlyArray<readonly [string, string]>,
+    /** Communities to include whatever their size, e.g. the selected one's. */
+    include = new Set<string>() as ReadonlySet<string>,
   } = {},
 ): CommunityGroup[] {
   const groups = new Map<string, HullNode[]>();
@@ -57,21 +63,29 @@ export function computeCommunityGroups(
     if (!group) groups.set(community, (group = []));
     group.push(node);
   }
-  return [...groups.entries()]
+  const bySize = [...groups.entries()].sort(
+    (a, b) => b[1].length - a[1].length || (a[0] < b[0] ? -1 : 1),
+  );
+  const shown = bySize
     .filter(([, members]) => members.length >= minSize)
-    .sort((a, b) => b[1].length - a[1].length || (a[0] < b[0] ? -1 : 1))
-    .slice(0, maxCount)
-    .map(([community, members]) => {
-      const kept = withoutOutliers(members);
-      const byId = new Map(kept.map((n) => [n.id, n]));
-      const links: Array<[HullNode, HullNode]> = [];
-      for (const [a, b] of edges) {
-        const na = byId.get(a);
-        const nb = byId.get(b);
-        if (na && nb) links.push([na, nb]);
-      }
-      return { community, size: members.length, members: kept, links };
-    });
+    .slice(0, maxCount);
+  const extra = bySize.filter(
+    ([community, members]) =>
+      include.has(community) &&
+      members.length >= 2 &&
+      !shown.some(([c]) => c === community),
+  );
+  return [...shown, ...extra].map(([community, members]) => {
+    const kept = withoutOutliers(members);
+    const byId = new Map(kept.map((n) => [n.id, n]));
+    const links: Array<[HullNode, HullNode]> = [];
+    for (const [a, b] of edges) {
+      const na = byId.get(a);
+      const nb = byId.get(b);
+      if (na && nb) links.push([na, nb]);
+    }
+    return { community, size: members.length, members: kept, links };
+  });
 }
 
 /** A distinct, quiet hue per community rank (golden-angle spacing). */
@@ -79,8 +93,32 @@ function hueFor(rank: number): number {
   return (rank * 137.508 + 200) % 360;
 }
 
+/**
+ * Which groups to paint, in what order and how strongly. With a selection,
+ * the selected groups come last (on top) and strong, the rest faint.
+ */
+export function paintOrder(
+  groups: CommunityGroup[],
+  selected: ReadonlySet<string>,
+): Array<{ group: CommunityGroup; rank: number; alpha: number }> {
+  const ranked = groups.map((group, rank) => ({ group, rank }));
+  if (selected.size === 0) {
+    return ranked.map((r) => ({ ...r, alpha: RESTING_ALPHA }));
+  }
+  const isSelected = (r: { group: CommunityGroup }) =>
+    selected.has(r.group.community);
+  return [
+    ...ranked
+      .filter((r) => !isSelected(r))
+      .map((r) => ({ ...r, alpha: FADED_ALPHA })),
+    ...ranked.filter(isSelected).map((r) => ({ ...r, alpha: SELECTED_ALPHA })),
+  ];
+}
+
 export interface CommunityHullOverlay {
   setEnabled(enabled: boolean): void;
+  /** Ids of every node in the same community as `id` (including it). */
+  communityMembers(id: string): string[];
   destroy(): void;
 }
 
@@ -103,6 +141,8 @@ export function attachCommunityHulls(
   let on = enabled;
   let communities: Map<string, string> | null = null;
   let groups: CommunityGroup[] | null = null;
+  /** Communities of the selected nodes: shown strongly, the rest faded. */
+  let selected = new Set<string>();
   let frame: number | null = null;
   const ctx = canvas.getContext("2d");
   // Each community is painted opaque here, then copied over translucent, so
@@ -134,8 +174,20 @@ export function attachCommunityHulls(
         return { id: n.id(), x: p.x, y: p.y, r: n.width() / 2 };
       }),
       communities,
-      { edges: edgeList },
+      { edges: edgeList, include: selected },
     );
+  };
+
+  const refreshSelection = () => {
+    if (!communities) recomputeGroups();
+    const next = new Set<string>();
+    cy.nodes(":selected").forEach((n) => {
+      const community = communities!.get(n.id());
+      if (community !== undefined) next.add(community);
+    });
+    selected = next;
+    groups = null;
+    schedule();
   };
 
   /** Matches both canvases to the element's size; returns that size in device pixels. */
@@ -156,6 +208,7 @@ export function attachCommunityHulls(
     group: CommunityGroup,
     rank: number,
     { dpr, width, height }: { dpr: number; width: number; height: number },
+    alpha: number,
   ) => {
     const zoom = cy.zoom();
     const pan = cy.pan();
@@ -182,7 +235,7 @@ export function attachCommunityHulls(
       off.arc(n.x, n.y, r, 0, Math.PI * 2);
     }
     off.fill();
-    target.globalAlpha = 0.11;
+    target.globalAlpha = alpha;
     target.drawImage(layer, 0, 0);
     target.globalAlpha = 1;
   };
@@ -195,9 +248,9 @@ export function attachCommunityHulls(
     ctx.clearRect(0, 0, size.width, size.height);
     if (!on) return;
     if (!groups) recomputeGroups();
-    groups!.forEach((group, rank) =>
-      paintGroup(ctx, layerCtx, group, rank, size),
-    );
+    for (const { group, rank, alpha } of paintOrder(groups!, selected)) {
+      paintGroup(ctx, layerCtx, group, rank, size, alpha);
+    }
   };
 
   const schedule = () => {
@@ -217,6 +270,7 @@ export function attachCommunityHulls(
   cy.on("add remove", onStructure);
   cy.on("position style", onMove);
   cy.on("viewport resize", schedule);
+  cy.on("select unselect", "node", refreshSelection);
   schedule();
 
   return {
@@ -225,10 +279,19 @@ export function attachCommunityHulls(
       on = next;
       schedule();
     },
+    communityMembers(id: string) {
+      if (!communities) recomputeGroups();
+      const community = communities!.get(id);
+      if (community === undefined) return [];
+      return [...communities!]
+        .filter(([, c]) => c === community)
+        .map(([n]) => n);
+    },
     destroy() {
       cy.off("add remove", onStructure);
       cy.off("position style", onMove);
       cy.off("viewport resize", schedule);
+      cy.off("select unselect", "node", refreshSelection);
       if (frame !== null) cancelAnimationFrame(frame);
       ctx?.clearRect(0, 0, canvas.width, canvas.height);
     },
