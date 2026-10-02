@@ -19,10 +19,10 @@ export const CONTEXT_ONLY_SCORE = 0.35;
 export const RELEVANCE_SCREEN_BONUS = 0.15;
 
 export const BOOSTS = {
-  feature: 0.2,
-  route: 0.15,
-  kind: 0.1,
-  tab: 0.05,
+  feature: 0.08,
+  route: 0.04,
+  kind: 0.03,
+  tab: 0.02,
 } as const;
 
 export const SEMANTIC_BASE = 0.45;
