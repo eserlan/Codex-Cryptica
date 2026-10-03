@@ -65,6 +65,13 @@ describe("Mobile typography contract (#3718)", () => {
     );
   });
 
+  it("keeps touch-target content centred when controls grow", async () => {
+    const css = await readFile(appCssPath, "utf8");
+    expect(css).toMatch(
+      /\.touch-target \{[\s\S]*align-items: center;[\s\S]*justify-content: center/,
+    );
+  });
+
   it("provides a mobile-only 44px touch target utility", async () => {
     const css = await readFile(appCssPath, "utf8");
     expect(css).toMatch(
