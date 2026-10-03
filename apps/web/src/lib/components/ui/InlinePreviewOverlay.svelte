@@ -20,11 +20,11 @@
     ></span>
     <div class="flex flex-col">
       <span
-        class="text-[10px] font-bold text-theme-primary uppercase tracking-widest"
+        class="text-micro font-bold text-theme-primary uppercase tracking-widest"
       >
         AI Revision in Progress
       </span>
-      <span class="text-[9px] text-theme-muted uppercase tracking-tight">
+      <span class="text-nano text-theme-muted uppercase tracking-tight">
         Creating updated Chronicle & Lore
       </span>
     </div>
@@ -41,11 +41,11 @@
       ></span>
       <div class="flex flex-col">
         <span
-          class="text-[10px] font-bold text-theme-primary uppercase tracking-widest"
+          class="text-micro font-bold text-theme-primary uppercase tracking-widest"
         >
           AI Suggestion Ready
         </span>
-        <span class="text-[9px] text-theme-muted uppercase tracking-tight">
+        <span class="text-nano text-theme-muted uppercase tracking-tight">
           Review generated Chronicle & Lore
         </span>
       </div>
@@ -55,14 +55,14 @@
       <button
         type="button"
         onclick={() => void revisionService.discardDraft()}
-        class="px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest text-theme-muted hover:text-theme-text transition-colors focus-visible:ring-2 focus-visible:ring-theme-primary focus-visible:outline-none rounded"
+        class="px-3 py-1.5 text-micro font-bold uppercase tracking-widest text-theme-muted hover:text-theme-text transition-colors focus-visible:ring-2 focus-visible:ring-theme-primary focus-visible:outline-none rounded"
       >
         Discard
       </button>
       <button
         type="button"
         onclick={() => revisionService.acceptDraft()}
-        class="px-4 py-1.5 text-[10px] font-bold uppercase tracking-widest bg-theme-primary text-theme-surface hover:bg-theme-primary/80 transition-all rounded shadow-sm focus-visible:ring-2 focus-visible:ring-theme-primary focus-visible:ring-offset-2 focus-visible:ring-offset-theme-bg focus-visible:outline-none"
+        class="px-4 py-1.5 text-micro font-bold uppercase tracking-widest bg-theme-primary text-theme-surface hover:bg-theme-primary/80 transition-all rounded shadow-sm focus-visible:ring-2 focus-visible:ring-theme-primary focus-visible:ring-offset-2 focus-visible:ring-offset-theme-bg focus-visible:outline-none"
       >
         Apply Changes
       </button>

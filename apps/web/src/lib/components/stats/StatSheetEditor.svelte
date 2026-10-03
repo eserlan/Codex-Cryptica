@@ -394,7 +394,7 @@
         </button>
       </div>
 
-      <div class="flex items-center gap-2 text-[10px] text-theme-muted">
+      <div class="flex items-center gap-2 text-micro text-theme-muted">
         <label
           for={`field-key-${field.id}`}
           class="shrink-0 font-bold uppercase tracking-wider"
@@ -404,7 +404,7 @@
         <input
           id={`field-key-${field.id}`}
           type="text"
-          class="w-36 rounded border border-theme-border bg-theme-bg px-1.5 py-0.5 font-mono text-[11px] text-theme-text"
+          class="w-36 rounded border border-theme-border bg-theme-bg px-1.5 py-0.5 font-mono text-meta text-theme-text"
           value={field.key ?? ""}
           placeholder={slugifyFieldKey(field.label)}
           aria-label={`Reference key for ${field.label}`}
@@ -433,7 +433,7 @@
       </div>
 
       {#if field.type === "counter"}
-        <div class="flex items-center gap-2 text-[10px] text-theme-muted">
+        <div class="flex items-center gap-2 text-micro text-theme-muted">
           <label class="flex items-center gap-1">
             Min
             <input
@@ -478,7 +478,7 @@
           </label>
         </div>
       {:else if field.type === "dice"}
-        <div class="flex items-center gap-3 text-[10px] text-theme-muted">
+        <div class="flex items-center gap-3 text-micro text-theme-muted">
           <label class="flex items-center gap-1">
             Target
             <input
@@ -510,7 +510,7 @@
           </label>
         </div>
       {:else if field.type === "item-table"}
-        <div class="flex flex-col gap-1.5 text-[10px] text-theme-muted">
+        <div class="flex flex-col gap-1.5 text-micro text-theme-muted">
           <label class="flex items-center gap-1.5">
             <input
               type="checkbox"
@@ -656,7 +656,7 @@
           {/each}
           <button
             type="button"
-            class="self-start rounded border border-theme-border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-theme-muted hover:border-theme-primary hover:text-theme-primary"
+            class="self-start rounded border border-theme-border px-2 py-0.5 text-micro font-bold uppercase tracking-wide text-theme-muted hover:border-theme-primary hover:text-theme-primary"
             onclick={() => addColumn(field)}
           >
             + Add Column

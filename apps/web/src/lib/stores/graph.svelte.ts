@@ -35,9 +35,9 @@ export const FOCUS_DETAIL_STEP = 150;
 /** Avoid a dense focus neighbourhood overwhelming the renderer. */
 export const FOCUS_EDGE_CAP = 2_000;
 
-export type CommunityMode = "off" | "soft" | "strong";
+type CommunityMode = "off" | "soft" | "strong";
 
-export const nextCommunityMode = (mode: CommunityMode): CommunityMode =>
+const nextCommunityMode = (mode: CommunityMode): CommunityMode =>
   mode === "off" ? "soft" : mode === "soft" ? "strong" : "off";
 
 export class GraphStore {

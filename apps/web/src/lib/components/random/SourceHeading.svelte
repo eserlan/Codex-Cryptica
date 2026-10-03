@@ -24,7 +24,7 @@
     <div class="flex flex-wrap gap-1.5">
       {#each source.labels as label}
         <span
-          class="rounded bg-theme-primary/10 px-2 py-0.5 font-mono text-[10px] tracking-wider text-theme-primary"
+          class="rounded bg-theme-primary/10 px-2 py-0.5 font-mono text-micro tracking-wider text-theme-primary"
         >
           {label}
         </span>

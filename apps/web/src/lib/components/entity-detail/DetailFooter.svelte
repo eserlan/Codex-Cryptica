@@ -33,7 +33,7 @@
     <div class="flex gap-2 w-full justify-end items-center">
       {#if isDirty}
         <span
-          class="text-[9px] text-theme-accent font-bold font-header uppercase tracking-widest animate-pulse mr-auto"
+          class="text-nano text-theme-accent font-bold font-header uppercase tracking-widest animate-pulse mr-auto"
         >
           • Unsaved changes
         </span>
@@ -74,7 +74,7 @@
         <button
           onclick={onDelete}
           data-testid="delete-entity-button"
-          class="border border-red-900/50 text-red-700 hover:text-red-500 hover:border-red-700 text-[10px] font-bold px-3 py-2 rounded tracking-widest transition"
+          class="border border-red-900/50 text-red-700 hover:text-red-500 hover:border-red-700 text-micro font-bold px-3 py-2 rounded tracking-widest transition"
         >
           {themeStore.jargon.delete.toUpperCase()}
         </button>

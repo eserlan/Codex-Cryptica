@@ -261,7 +261,7 @@
       <div class="flex items-center gap-2">
         {#if activeTab === "notes"}
           <span
-            class="text-[10px] text-theme-muted px-2 py-0.5 rounded-full bg-theme-bg/50 border border-theme-border/30"
+            class="text-micro text-theme-muted px-2 py-0.5 rounded-full bg-theme-bg/50 border border-theme-border/30"
           >
             {saveStatus}
           </span>
@@ -356,7 +356,7 @@
                 }}
                 disabled={quickNoteStore.isElevating ||
                   !quickNoteStore.currentNote.content.trim()}
-                class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-theme-primary text-theme-bg border border-theme-primary hover:bg-theme-secondary hover:border-theme-secondary font-bold text-[10px] uppercase font-header tracking-widest disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-md"
+                class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-theme-primary text-theme-bg border border-theme-primary hover:bg-theme-secondary hover:border-theme-secondary font-bold text-micro uppercase font-header tracking-widest disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-md"
                 title="Make Entity with AI"
               >
                 <span

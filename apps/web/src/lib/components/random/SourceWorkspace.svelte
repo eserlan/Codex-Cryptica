@@ -99,7 +99,7 @@
 
   /** Both toggles share one shape so the header reads as one control strip. */
   const toggleClass = (current: boolean) =>
-    `flex items-center rounded px-2 py-1 font-header text-[10px] font-bold uppercase tracking-wider transition-colors ${
+    `flex items-center rounded px-2 py-1 font-header text-micro font-bold uppercase tracking-wider transition-colors ${
       current
         ? "bg-theme-primary/15 text-theme-primary"
         : "text-theme-muted hover:text-theme-text"
@@ -581,7 +581,7 @@
 
     {#if saving}
       <span
-        class="shrink-0 font-mono text-[9px] uppercase tracking-widest text-theme-muted/60"
+        class="shrink-0 font-mono text-nano uppercase tracking-widest text-theme-muted/60"
         data-testid="workspace-saving">Saving…</span
       >
     {/if}
@@ -599,7 +599,7 @@
     data-testid="toggle-source-list"
   >
     <span
-      class="min-w-0 truncate font-header text-[10px] font-bold uppercase tracking-widest text-theme-text"
+      class="min-w-0 truncate font-header text-micro font-bold uppercase tracking-widest text-theme-text"
     >
       {draft ? draft.name : `All ${noun}s`}
       <span class="font-mono text-theme-muted/60">({all.length})</span>
@@ -632,7 +632,7 @@
             <button
               type="button"
               onclick={() => toggleLabel(label)}
-              class="rounded px-2 py-0.5 font-mono text-[10px] tracking-wider transition-colors {activeLabels.includes(
+              class="rounded px-2 py-0.5 font-mono text-micro tracking-wider transition-colors {activeLabels.includes(
                 label,
               )
                 ? 'bg-theme-primary text-theme-bg'
@@ -647,7 +647,7 @@
       <button
         type="button"
         onclick={create}
-        class="flex items-center justify-center gap-2 rounded border border-theme-primary/30 bg-theme-primary/10 px-3 py-2 font-header text-[10px] font-bold uppercase tracking-widest text-theme-primary transition-all hover:bg-theme-primary hover:text-theme-bg"
+        class="flex items-center justify-center gap-2 rounded border border-theme-primary/30 bg-theme-primary/10 px-3 py-2 font-header text-micro font-bold uppercase tracking-widest text-theme-primary transition-all hover:bg-theme-primary hover:text-theme-bg"
         data-testid="new-{noun}"
       >
         <span aria-hidden="true" class="icon-[lucide--plus] h-3.5 w-3.5"></span>
@@ -661,7 +661,7 @@
             generatingTable = true;
             listOpen = false;
           }}
-          class="flex items-center justify-center gap-2 rounded border border-theme-border px-3 py-2 font-header text-[10px] font-bold uppercase tracking-widest text-theme-text transition-colors hover:border-theme-primary hover:text-theme-primary"
+          class="flex items-center justify-center gap-2 rounded border border-theme-border px-3 py-2 font-header text-micro font-bold uppercase tracking-widest text-theme-text transition-colors hover:border-theme-primary hover:text-theme-primary"
           data-testid="generate-table-btn"
         >
           <span
@@ -684,7 +684,7 @@
             exporting = false;
             listOpen = false;
           }}
-          class="flex items-center justify-center gap-2 rounded border border-theme-border px-3 py-2 font-header text-[10px] font-bold uppercase tracking-widest text-theme-text transition-colors hover:border-theme-primary hover:text-theme-primary"
+          class="flex items-center justify-center gap-2 rounded border border-theme-border px-3 py-2 font-header text-micro font-bold uppercase tracking-widest text-theme-text transition-colors hover:border-theme-primary hover:text-theme-primary"
           data-testid="open-import"
         >
           <span
@@ -707,7 +707,7 @@
         }}
         disabled={!draft}
         title={draft ? `Export "${draft.name}"` : `Open a ${noun} to export it`}
-        class="flex items-center justify-center gap-2 rounded border border-theme-border px-3 py-2 font-header text-[10px] font-bold uppercase tracking-widest text-theme-text transition-colors hover:border-theme-primary hover:text-theme-primary disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-theme-border disabled:hover:text-theme-text"
+        class="flex items-center justify-center gap-2 rounded border border-theme-border px-3 py-2 font-header text-micro font-bold uppercase tracking-widest text-theme-text transition-colors hover:border-theme-primary hover:text-theme-primary disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-theme-border disabled:hover:text-theme-text"
         data-testid="open-export"
       >
         <span aria-hidden="true" class="icon-[lucide--download] h-3.5 w-3.5"
@@ -739,7 +739,7 @@
             >
               <span class="truncate pr-1">{source.name}</span>
               <span
-                class="ml-1 font-mono text-[9px] text-theme-muted/60 shrink-0"
+                class="ml-1 font-mono text-nano text-theme-muted/60 shrink-0"
               >
                 {countOf(kind, source)}
               </span>
@@ -786,7 +786,7 @@
             <button
               type="button"
               onclick={() => openRenameModal(draft!)}
-              class="flex items-center gap-1 rounded border border-theme-border px-2 py-1 font-header text-[10px] uppercase tracking-wider text-theme-muted transition-colors hover:border-theme-primary hover:text-theme-primary"
+              class="flex items-center gap-1 rounded border border-theme-border px-2 py-1 font-header text-micro uppercase tracking-wider text-theme-muted transition-colors hover:border-theme-primary hover:text-theme-primary"
               title="Rename {noun}"
               data-testid="header-rename-{noun}"
             >
@@ -797,7 +797,7 @@
             <button
               type="button"
               onclick={() => duplicate(draft!)}
-              class="flex items-center gap-1 rounded border border-theme-border px-2 py-1 font-header text-[10px] uppercase tracking-wider text-theme-muted transition-colors hover:border-theme-primary hover:text-theme-primary"
+              class="flex items-center gap-1 rounded border border-theme-border px-2 py-1 font-header text-micro uppercase tracking-wider text-theme-muted transition-colors hover:border-theme-primary hover:text-theme-primary"
               title="Duplicate {noun}"
               data-testid="header-duplicate-{noun}"
             >
@@ -810,7 +810,7 @@
             <button
               type="button"
               onclick={() => setMode("build")}
-              class="flex items-center gap-1.5 rounded bg-theme-primary/10 px-2.5 py-1 font-header text-[10px] font-bold uppercase tracking-wider text-theme-primary transition-colors hover:bg-theme-primary hover:text-theme-bg"
+              class="flex items-center gap-1.5 rounded bg-theme-primary/10 px-2.5 py-1 font-header text-micro font-bold uppercase tracking-wider text-theme-primary transition-colors hover:bg-theme-primary hover:text-theme-bg"
               data-testid="header-edit-{noun}"
             >
               <span
@@ -822,7 +822,7 @@
             <button
               type="button"
               onclick={() => openDeleteModal(draft!)}
-              class="flex items-center gap-1 rounded border border-theme-border px-2 py-1 font-header text-[10px] uppercase tracking-wider text-theme-muted transition-colors hover:border-red-500 hover:text-red-500"
+              class="flex items-center gap-1 rounded border border-theme-border px-2 py-1 font-header text-micro uppercase tracking-wider text-theme-muted transition-colors hover:border-red-500 hover:text-red-500"
               title="Delete {noun}"
               data-testid="header-delete-{noun}"
             >
@@ -841,7 +841,7 @@
             <button
               type="button"
               onclick={() => openRenameModal(draft!)}
-              class="flex items-center gap-1 rounded border border-theme-border px-2 py-1 font-header text-[10px] uppercase tracking-wider text-theme-muted transition-colors hover:border-theme-primary hover:text-theme-primary"
+              class="flex items-center gap-1 rounded border border-theme-border px-2 py-1 font-header text-micro uppercase tracking-wider text-theme-muted transition-colors hover:border-theme-primary hover:text-theme-primary"
               title="Rename {noun}"
               data-testid="header-rename-{noun}"
             >
@@ -852,7 +852,7 @@
             <button
               type="button"
               onclick={() => duplicate(draft!)}
-              class="flex items-center gap-1 rounded border border-theme-border px-2 py-1 font-header text-[10px] uppercase tracking-wider text-theme-muted transition-colors hover:border-theme-primary hover:text-theme-primary"
+              class="flex items-center gap-1 rounded border border-theme-border px-2 py-1 font-header text-micro uppercase tracking-wider text-theme-muted transition-colors hover:border-theme-primary hover:text-theme-primary"
               title="Duplicate {noun}"
               data-testid="header-duplicate-{noun}"
             >
@@ -865,7 +865,7 @@
             <button
               type="button"
               onclick={() => setMode("use")}
-              class="flex items-center gap-1.5 rounded bg-theme-primary/10 px-2.5 py-1 font-header text-[10px] font-bold uppercase tracking-wider text-theme-primary transition-colors hover:bg-theme-primary hover:text-theme-bg"
+              class="flex items-center gap-1.5 rounded bg-theme-primary/10 px-2.5 py-1 font-header text-micro font-bold uppercase tracking-wider text-theme-primary transition-colors hover:bg-theme-primary hover:text-theme-bg"
               data-testid="header-use-{noun}"
             >
               <span aria-hidden="true" class="icon-[lucide--dices] h-3 w-3"
@@ -875,7 +875,7 @@
             <button
               type="button"
               onclick={() => openDeleteModal(draft!)}
-              class="flex items-center gap-1.5 rounded border border-theme-border px-2.5 py-1 font-header text-[10px] uppercase tracking-widest text-theme-muted transition-colors hover:border-red-500 hover:text-red-500"
+              class="flex items-center gap-1.5 rounded border border-theme-border px-2.5 py-1 font-header text-micro uppercase tracking-widest text-theme-muted transition-colors hover:border-red-500 hover:text-red-500"
               data-testid="delete-{noun}"
             >
               <span aria-hidden="true" class="icon-[lucide--trash-2] h-3 w-3"
@@ -902,7 +902,7 @@
             <div class="flex gap-2">
               <button
                 type="button"
-                class="rounded bg-red-500 px-2.5 py-1 font-header text-[10px] uppercase tracking-widest text-white"
+                class="rounded bg-red-500 px-2.5 py-1 font-header text-micro uppercase tracking-widest text-white"
                 onclick={() => confirmDelete(draft!)}
                 data-testid="confirm-delete"
               >
@@ -910,7 +910,7 @@
               </button>
               <button
                 type="button"
-                class="rounded border border-theme-border px-2.5 py-1 font-header text-[10px] uppercase tracking-widest text-theme-muted"
+                class="rounded border border-theme-border px-2.5 py-1 font-header text-micro uppercase tracking-widest text-theme-muted"
                 onclick={() => (deleteImpact = undefined)}
               >
                 Keep it
@@ -933,7 +933,7 @@
             <div class="flex gap-2">
               <button
                 type="button"
-                class="rounded bg-amber-500 px-2.5 py-1 font-header text-[10px] uppercase tracking-widest text-white"
+                class="rounded bg-amber-500 px-2.5 py-1 font-header text-micro uppercase tracking-widest text-white"
                 onclick={() => commitRename(pendingRename!.name)}
                 data-testid="confirm-rename"
               >
@@ -941,7 +941,7 @@
               </button>
               <button
                 type="button"
-                class="rounded border border-theme-border px-2.5 py-1 font-header text-[10px] uppercase tracking-widest text-theme-muted"
+                class="rounded border border-theme-border px-2.5 py-1 font-header text-micro uppercase tracking-widest text-theme-muted"
                 onclick={() => (pendingRename = undefined)}
               >
                 Keep the name

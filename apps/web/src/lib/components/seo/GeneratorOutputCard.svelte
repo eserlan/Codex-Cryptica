@@ -191,7 +191,7 @@
           </h2>
           {#if isExampleDraft}
             <span
-              class="mt-1.5 px-2 py-0.5 rounded-full border border-theme-border/70 text-theme-text/60 text-[9px] font-mono uppercase tracking-wider flex-shrink-0"
+              class="mt-1.5 px-2 py-0.5 rounded-full border border-theme-border/70 text-theme-text/60 text-nano font-mono uppercase tracking-wider flex-shrink-0"
             >
               Example
             </span>
@@ -206,7 +206,7 @@
           <div class="flex flex-wrap gap-1.5">
             {#each (generatedData.labels ?? []).filter((l) => !HIDDEN_TAGS.has(l)) as label (label)}
               <span
-                class="rounded-full border border-theme-border/60 bg-theme-surface/20 px-2 py-0.5 text-[8px] uppercase tracking-wider font-mono font-bold text-theme-text/55"
+                class="rounded-full border border-theme-border/60 bg-theme-surface/20 px-2 py-0.5 text-nano uppercase tracking-wider font-mono font-bold text-theme-text/55"
               >
                 {label}
               </span>
@@ -220,7 +220,7 @@
               <button
                 type="button"
                 onclick={onSaveToCodex}
-                class="px-4 py-2 bg-theme-primary text-theme-bg font-bold uppercase font-header tracking-wider text-[10px] hover:brightness-110 transition-all"
+                class="px-4 py-2 bg-theme-primary text-theme-bg font-bold uppercase font-header tracking-wider text-micro hover:brightness-110 transition-all"
                 id="save-to-codex-btn"
                 title="Import this draft into your local Codex Cryptica vault"
               >
@@ -231,7 +231,7 @@
               <button
                 type="button"
                 onclick={() => onRefine(generatedData!)}
-                class="border-l border-theme-primary/25 bg-theme-primary/10 px-4 py-2 text-[10px] font-bold uppercase font-header tracking-wider text-theme-primary transition-all hover:bg-theme-primary/20 flex items-center gap-1.5"
+                class="border-l border-theme-primary/25 bg-theme-primary/10 px-4 py-2 text-micro font-bold uppercase font-header tracking-wider text-theme-primary transition-all hover:bg-theme-primary/20 flex items-center gap-1.5"
                 id="refine-draft-btn"
                 title="Refine this draft with an instruction"
               >
@@ -246,7 +246,7 @@
               <button
                 type="button"
                 onclick={() => onBuildDelveCanvas(generatedData!)}
-                class="px-4 py-2 border-l border-theme-primary/25 bg-theme-primary/10 text-theme-primary font-bold uppercase font-header tracking-wider text-[10px] hover:bg-theme-primary/20 transition-all flex items-center gap-1.5"
+                class="px-4 py-2 border-l border-theme-primary/25 bg-theme-primary/10 text-theme-primary font-bold uppercase font-header tracking-wider text-micro hover:bg-theme-primary/20 transition-all flex items-center gap-1.5"
                 id="build-delve-canvas-btn"
                 title="Build and open an interactive Delve Canvas for this dungeon"
               >
@@ -259,7 +259,7 @@
               <button
                 type="button"
                 onclick={() => onBuildAdventureCanvas(generatedData!)}
-                class="px-4 py-2 border-l border-theme-primary/25 bg-theme-primary/10 text-theme-primary font-bold uppercase font-header tracking-wider text-[10px] hover:bg-theme-primary/20 transition-all flex items-center gap-1.5"
+                class="px-4 py-2 border-l border-theme-primary/25 bg-theme-primary/10 text-theme-primary font-bold uppercase font-header tracking-wider text-micro hover:bg-theme-primary/20 transition-all flex items-center gap-1.5"
                 id="build-adventure-canvas-btn"
                 title="Build and open an interactive Adventure Canvas for this scenario"
               >
@@ -272,7 +272,7 @@
               <button
                 type="button"
                 onclick={() => onGeneratePlotTwist(generatedData!)}
-                class="border-l border-theme-primary/25 bg-theme-primary/10 px-4 py-2 text-[10px] font-bold uppercase tracking-wider text-theme-primary transition-all hover:bg-theme-primary/20"
+                class="border-l border-theme-primary/25 bg-theme-primary/10 px-4 py-2 text-micro font-bold uppercase tracking-wider text-theme-primary transition-all hover:bg-theme-primary/20"
                 id="generate-plot-twist-btn"
                 title="Generate a Plot Twist from this draft"
               >
@@ -287,7 +287,7 @@
               <button
                 type="button"
                 onclick={() => onGenerateRoster(generatedData!)}
-                class="border-l border-theme-primary/25 bg-theme-primary/10 px-4 py-2 text-[10px] font-bold uppercase tracking-wider text-theme-primary transition-all hover:bg-theme-primary/20 flex items-center gap-1.5"
+                class="border-l border-theme-primary/25 bg-theme-primary/10 px-4 py-2 text-micro font-bold uppercase tracking-wider text-theme-primary transition-all hover:bg-theme-primary/20 flex items-center gap-1.5"
                 id="generate-roster-btn"
                 title="Generate notable members of this faction"
               >
@@ -307,7 +307,7 @@
                 onclick={() => onSendToMonsterLabs(generatedData!)}
                 disabled={isSendingToMonsterLabs}
                 aria-busy={isSendingToMonsterLabs}
-                class="px-4 py-2 border-l border-theme-primary/25 bg-theme-primary/10 text-theme-primary font-bold uppercase font-header tracking-wider text-[10px] hover:bg-theme-primary/20 transition-all flex items-center gap-1.5 disabled:opacity-50"
+                class="px-4 py-2 border-l border-theme-primary/25 bg-theme-primary/10 text-theme-primary font-bold uppercase font-header tracking-wider text-micro hover:bg-theme-primary/20 transition-all flex items-center gap-1.5 disabled:opacity-50"
                 id="send-to-monsterlabs-btn"
                 title="Create a D&D {isItem
                   ? 'magic item'
@@ -327,7 +327,7 @@
             <button
               type="button"
               onclick={onCopyMarkdown}
-              class="px-4 py-2 border-l border-theme-primary/25 bg-theme-surface/35 text-theme-text/85 font-bold uppercase font-header tracking-wider text-[10px] hover:bg-theme-surface/70 hover:text-theme-primary transition-all flex items-center gap-1.5"
+              class="px-4 py-2 border-l border-theme-primary/25 bg-theme-surface/35 text-theme-text/85 font-bold uppercase font-header tracking-wider text-micro hover:bg-theme-surface/70 hover:text-theme-primary transition-all flex items-center gap-1.5"
               id="copy-markdown-btn"
               title="Copy this draft as markdown to your clipboard"
             >
@@ -382,7 +382,7 @@
                         type="button"
                         onclick={() =>
                           onOpenMemberAsCharacter(section, generatedData!)}
-                        class="inline-flex items-center gap-1.5 rounded-full border border-theme-primary/50 bg-theme-primary/10 px-2.5 py-1 text-[9px] font-bold uppercase tracking-wider text-theme-primary opacity-100 transition-all hover:bg-theme-primary/20 md:opacity-0 md:group-hover/section:opacity-100 md:focus-visible:opacity-100"
+                        class="inline-flex items-center gap-1.5 rounded-full border border-theme-primary/50 bg-theme-primary/10 px-2.5 py-1 text-nano font-bold uppercase tracking-wider text-theme-primary opacity-100 transition-all hover:bg-theme-primary/20 md:opacity-0 md:group-hover/section:opacity-100 md:focus-visible:opacity-100"
                         aria-label="Open {section.heading} as a Character"
                         title="Continue this member in the NPC generator"
                       >
@@ -397,7 +397,7 @@
                       type="button"
                       onclick={() =>
                         onCopySection(section.id, section.markdown)}
-                      class="inline-flex items-center gap-1.5 rounded-full border border-theme-border/60 bg-theme-surface/45 px-2.5 py-1 text-[9px] font-bold uppercase tracking-wider text-theme-text/65 opacity-100 transition-all hover:border-theme-primary/60 hover:text-theme-primary md:opacity-0 md:group-hover/section:opacity-100 md:focus-visible:opacity-100"
+                      class="inline-flex items-center gap-1.5 rounded-full border border-theme-border/60 bg-theme-surface/45 px-2.5 py-1 text-nano font-bold uppercase tracking-wider text-theme-text/65 opacity-100 transition-all hover:border-theme-primary/60 hover:text-theme-primary md:opacity-0 md:group-hover/section:opacity-100 md:focus-visible:opacity-100"
                       aria-label="Copy {section.heading} as Markdown"
                       title="Copy this section as Markdown"
                     >
@@ -430,7 +430,7 @@
       <h3 class="font-header font-bold text-sm uppercase tracking-widest mb-2">
         No Draft Generated
       </h3>
-      <p class="text-[11px] leading-relaxed">
+      <p class="text-meta leading-relaxed">
         Use the sidebar generator control panel to customize parameters, then
         trigger the generation engine to forge details.
       </p>
@@ -444,7 +444,7 @@
     <SessionHubWidget onSelect={onSelectHubEntity} onSave={onSaveHubToCodex} />
     {#if contextTrimmed}
       <div
-        class="mt-2 text-[10px] text-amber-500 bg-amber-500/10 border border-amber-500/20 p-2.5 rounded-xl flex items-start gap-2 leading-relaxed animate-in fade-in slide-in-from-top-2 duration-300"
+        class="mt-2 text-micro text-amber-500 bg-amber-500/10 border border-amber-500/20 p-2.5 rounded-xl flex items-start gap-2 leading-relaxed animate-in fade-in slide-in-from-top-2 duration-300"
       >
         <span class="icon-[lucide--alert-triangle] w-4 h-4 shrink-0 mt-0.5"
         ></span>

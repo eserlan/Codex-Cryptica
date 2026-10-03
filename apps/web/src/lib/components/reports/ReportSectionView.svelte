@@ -135,7 +135,7 @@
       data-testid="report-preview-gm-only"
     >
       <span
-        class="text-[10px] uppercase tracking-widest font-header text-theme-primary"
+        class="text-micro uppercase tracking-widest font-header text-theme-primary"
         >GM only</span
       >
       <div class="report-md" class:report-md--no-images={hideImages}>

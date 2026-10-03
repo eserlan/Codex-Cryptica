@@ -96,7 +96,7 @@
 
     {#if isLeader}
       <span
-        class="absolute top-1.5 right-1.5 px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-amber-500/90 text-black shadow-sm flex items-center gap-1 backdrop-blur-xs"
+        class="absolute top-1.5 right-1.5 px-1.5 py-0.5 rounded text-nano font-bold uppercase tracking-wider bg-amber-500/90 text-black shadow-sm flex items-center gap-1 backdrop-blur-xs"
       >
         <span class="icon-[lucide--crown] w-2.5 h-2.5" aria-hidden="true"
         ></span>
@@ -123,14 +123,14 @@
       </div>
 
       {#if subtitle}
-        <p class="text-[10px] text-theme-muted font-medium truncate mt-0.5">
+        <p class="text-micro text-theme-muted font-medium truncate mt-0.5">
           {subtitle}
         </p>
       {/if}
 
       {#if quote}
         <p
-          class="text-[10px] italic text-theme-text/85 line-clamp-2 mt-1.5 leading-snug font-serif"
+          class="text-micro italic text-theme-text/85 line-clamp-2 mt-1.5 leading-snug font-serif"
         >
           “{quote}”
         </p>
@@ -139,7 +139,7 @@
 
     <!-- Bottom Role/Reference -->
     <div
-      class="mt-2 pt-1 border-t border-theme-border/20 flex items-center justify-between text-[9px] text-theme-muted font-mono"
+      class="mt-2 pt-1 border-t border-theme-border/20 flex items-center justify-between text-nano text-theme-muted font-mono"
     >
       <span class="truncate">
         {roleLabel}

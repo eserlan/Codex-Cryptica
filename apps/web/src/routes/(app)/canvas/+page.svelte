@@ -120,12 +120,12 @@
         <div
           class="mt-8 p-4 border border-theme-border rounded bg-theme-surface/50 animate-in fade-in slide-in-from-bottom-2"
         >
-          <p class="text-[10px] mb-4 text-theme-text opacity-70">
+          <p class="text-micro mb-4 text-theme-text opacity-70">
             The registry is taking longer than usual to respond.
           </p>
           <button
             onclick={() => canvasRegistry.loadFromVault(vault.activeVaultId!)}
-            class="text-[10px] font-bold text-theme-primary hover:underline uppercase font-header tracking-widest"
+            class="text-micro font-bold text-theme-primary hover:underline uppercase font-header tracking-widest"
           >
             Force Reload Registry
           </button>

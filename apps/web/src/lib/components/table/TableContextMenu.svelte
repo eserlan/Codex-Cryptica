@@ -50,7 +50,7 @@
 >
   {#if isGuest}
     <div
-      class="px-4 py-2 text-[10px] uppercase font-bold text-theme-muted tracking-wider border-b border-theme-border/30"
+      class="px-4 py-2 text-micro uppercase font-bold text-theme-muted tracking-wider border-b border-theme-border/30"
     >
       Read-Only Guest Session
     </div>

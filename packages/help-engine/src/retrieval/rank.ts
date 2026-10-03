@@ -25,7 +25,7 @@ export const BOOSTS = {
   feature: 0.08,
   route: 0.04,
   kind: 0.03,
-  tab: 0.02,
+  tab: 0.2,
 } as const;
 
 export const SEMANTIC_BASE = 0.45;

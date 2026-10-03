@@ -56,7 +56,7 @@
   const isOwn = $derived(template.source === "user");
 
   const smallButton =
-    "inline-flex items-center gap-1 rounded border border-theme-border px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-theme-muted transition-colors hover:border-theme-primary/40 hover:text-theme-text";
+    "inline-flex items-center gap-1 rounded border border-theme-border px-2 py-1 text-micro font-bold uppercase tracking-wide text-theme-muted transition-colors hover:border-theme-primary/40 hover:text-theme-text";
 </script>
 
 <div
@@ -69,12 +69,12 @@
         >{template.name}</span
       >
       <span
-        class="rounded bg-theme-bg px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-theme-muted"
+        class="rounded bg-theme-bg px-1.5 py-0.5 text-micro uppercase tracking-wide text-theme-muted"
         data-testid="entity-template-source">{sourceLabel}</span
       >
       {#if publishState.kind === "published"}
         <span
-          class="rounded bg-theme-bg px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-theme-muted"
+          class="rounded bg-theme-bg px-1.5 py-0.5 text-micro font-bold uppercase tracking-wide text-theme-muted"
           data-testid="entity-template-published-badge"
           >{publishState.link.status === "active"
             ? "Published"
@@ -83,7 +83,7 @@
       {/if}
       {#if isDefault}
         <span
-          class="rounded bg-theme-primary/15 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-theme-primary"
+          class="rounded bg-theme-primary/15 px-1.5 py-0.5 text-micro font-bold uppercase tracking-wide text-theme-primary"
           data-testid="entity-template-default">Default</span
         >
       {/if}

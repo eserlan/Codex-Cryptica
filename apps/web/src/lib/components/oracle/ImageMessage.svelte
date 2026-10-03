@@ -67,8 +67,7 @@
           class="absolute inset-0 flex flex-col items-center justify-center bg-theme-bg/40 animate-pulse text-theme-muted gap-2"
         >
           <span class="icon-[lucide--image] w-8 h-8 opacity-30"></span>
-          <span
-            class="text-[10px] font-mono uppercase tracking-wider opacity-40"
+          <span class="text-micro font-mono uppercase tracking-wider opacity-40"
             >Resolving Neural Visual...</span
           >
         </div>
@@ -108,7 +107,7 @@
         class="absolute bottom-2 left-2 right-2 flex justify-between items-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"
       >
         <span
-          class="text-[9px] bg-theme-surface/80 text-theme-muted px-1.5 py-0.5 rounded backdrop-blur-sm border border-theme-border shadow-sm"
+          class="text-nano bg-theme-surface/80 text-theme-muted px-1.5 py-0.5 rounded backdrop-blur-sm border border-theme-border shadow-sm"
         >
           DRAG TO ENTITY
         </span>
@@ -121,7 +120,7 @@
         <button
           onclick={handleSave}
           disabled={isArchiving}
-          class="flex items-center gap-1.5 px-3 py-1.5 rounded text-[10px] font-bold tracking-widest transition-all bg-theme-primary/10 text-theme-primary border border-theme-primary/30 hover:bg-theme-primary hover:text-black max-w-[250px] disabled:opacity-50"
+          class="flex items-center gap-1.5 px-3 py-1.5 rounded text-micro font-bold tracking-widest transition-all bg-theme-primary/10 text-theme-primary border border-theme-primary/30 hover:bg-theme-primary hover:text-black max-w-[250px] disabled:opacity-50"
         >
           {#if isArchiving}
             <span class="icon-[lucide--loader-2] w-3 h-3 animate-spin"></span>
@@ -132,7 +131,7 @@
           {/if}
         </button>
         {#if archiveError}
-          <span class="text-[9px] text-red-400 font-mono italic"
+          <span class="text-nano text-red-400 font-mono italic"
             >{archiveError}</span
           >
         {/if}
@@ -150,7 +149,7 @@
           class="absolute inset-0 bg-theme-primary/20 blur-xl rounded-full"
         ></div>
       </div>
-      <span class="text-[10px] font-mono text-theme-primary tracking-widest"
+      <span class="text-micro font-mono text-theme-primary tracking-widest"
         >VISUALIZING...</span
       >
     </div>

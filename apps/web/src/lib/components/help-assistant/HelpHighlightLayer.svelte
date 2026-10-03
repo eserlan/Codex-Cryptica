@@ -23,7 +23,7 @@
     aria-hidden="true"
   >
     <span
-      class="absolute -top-7 left-0 flex items-center gap-1 whitespace-nowrap rounded bg-chrome-accent px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-chrome-bg shadow"
+      class="absolute -top-7 left-0 flex items-center gap-1 whitespace-nowrap rounded bg-chrome-accent px-2 py-1 text-meta font-bold uppercase tracking-wider text-chrome-bg shadow"
     >
       <span class="icon-[lucide--arrow-down] h-3 w-3" aria-hidden="true"></span>
       {label}

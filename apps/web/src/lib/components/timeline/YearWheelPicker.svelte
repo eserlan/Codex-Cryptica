@@ -147,7 +147,7 @@
   <div class="flex w-full gap-0 border-t border-theme-border">
     <button
       type="button"
-      class="flex-1 py-2.5 text-[10px] font-bold uppercase tracking-widest text-theme-muted hover:text-theme-text transition-colors"
+      class="flex-1 py-2.5 text-micro font-bold uppercase tracking-widest text-theme-muted hover:text-theme-text transition-colors"
       onclick={onClose}
     >
       Cancel
@@ -155,7 +155,7 @@
     <div class="w-px bg-theme-border"></div>
     <button
       type="button"
-      class="flex-1 py-2.5 text-[10px] font-bold uppercase tracking-widest text-theme-primary hover:text-theme-primary/80 transition-colors"
+      class="flex-1 py-2.5 text-micro font-bold uppercase tracking-widest text-theme-primary hover:text-theme-primary/80 transition-colors"
       onclick={confirm}
     >
       Go

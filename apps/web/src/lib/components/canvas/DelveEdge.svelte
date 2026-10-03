@@ -76,7 +76,7 @@
   <button
     type="button"
     ondblclick={onClickEdge}
-    class="flex items-center gap-1 bg-theme-bg/95 border border-theme-border/70 rounded-full px-2 py-0.5 text-[9px] font-mono text-theme-text/90 shadow-md hover:border-theme-primary transition-all cursor-pointer"
+    class="flex items-center gap-1 bg-theme-bg/95 border border-theme-border/70 rounded-full px-2 py-0.5 text-nano font-mono text-theme-text/90 shadow-md hover:border-theme-primary transition-all cursor-pointer"
     title="Double-click to edit passage attributes"
   >
     <span

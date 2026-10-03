@@ -76,7 +76,7 @@
       data-testid="table-peek"
     >
       <summary
-        class="cursor-pointer select-none px-3 py-2 font-header text-[10px] uppercase tracking-widest text-theme-muted transition-colors hover:text-theme-text"
+        class="cursor-pointer select-none px-3 py-2 font-header text-micro uppercase tracking-widest text-theme-muted transition-colors hover:text-theme-text"
       >
         Show the table ({entries.length})
       </summary>
@@ -87,7 +87,7 @@
             data-testid="peek-entry"
           >
             <span
-              class="w-14 shrink-0 text-right font-mono text-[10px] text-theme-muted/70"
+              class="w-14 shrink-0 text-right font-mono text-micro text-theme-muted/70"
             >
               {odds(entry)}
             </span>
@@ -99,7 +99,7 @@
       </ul>
       {#if !isRanged}
         <p
-          class="border-t border-theme-border/40 px-3 py-1.5 font-mono text-[10px] text-theme-muted/70"
+          class="border-t border-theme-border/40 px-3 py-1.5 font-mono text-micro text-theme-muted/70"
         >
           {totalWeight} in the pool
         </p>

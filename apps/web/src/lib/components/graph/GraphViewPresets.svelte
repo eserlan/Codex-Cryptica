@@ -103,7 +103,7 @@
       transition:fade={{ duration: 100 }}
     >
       <div
-        class="flex items-center gap-2 text-theme-primary uppercase tracking-[0.2em] font-mono text-[11px] mb-2"
+        class="flex items-center gap-2 text-theme-primary uppercase tracking-[0.2em] font-mono text-meta mb-2"
       >
         <span aria-hidden="true" class="icon-[lucide--bookmark] w-3 h-3"></span>
         Saved Views

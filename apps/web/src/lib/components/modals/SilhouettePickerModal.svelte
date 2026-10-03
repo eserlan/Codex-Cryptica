@@ -302,7 +302,7 @@
                 <!-- Auto Badge -->
                 {#if isAuto}
                   <div
-                    class="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded-xs text-[9px] font-semibold bg-theme-accent/20 text-theme-accent border border-theme-accent/30 flex items-center gap-1"
+                    class="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded-xs text-nano font-semibold bg-theme-accent/20 text-theme-accent border border-theme-accent/30 flex items-center gap-1"
                   >
                     <span class="icon-[lucide--sparkles] h-2.5 w-2.5"></span>
                     auto
@@ -331,7 +331,7 @@
                 >
                   {s.name}
                 </div>
-                <div class="text-[10px] text-theme-muted capitalize mt-0.5">
+                <div class="text-micro text-theme-muted capitalize mt-0.5">
                   {s.archetype}
                 </div>
               </button>
@@ -366,7 +366,7 @@
           <div class="w-full flex flex-col items-center text-center space-y-4">
             <!-- Status Badge -->
             <div
-              class="flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-0.5 rounded-full {hoveredSilhouette
+              class="flex items-center gap-1.5 text-meta font-semibold px-2.5 py-0.5 rounded-full {hoveredSilhouette
                 ? 'bg-theme-accent/20 text-theme-accent border border-theme-accent/40'
                 : 'bg-theme-border/60 text-theme-muted'}"
             >
@@ -424,14 +424,14 @@
               class="w-full pt-3 border-t border-theme-border/30 space-y-2 text-left"
             >
               <div
-                class="text-[10px] uppercase font-bold tracking-wider text-theme-muted"
+                class="text-micro uppercase font-bold tracking-wider text-theme-muted"
               >
                 Keywords & Tags
               </div>
               <div class="flex flex-wrap gap-1">
                 {#each previewSilhouette.tags as tag}
                   <span
-                    class="px-2 py-0.5 rounded-md text-[10px] bg-theme-base/80 border border-theme-border/60 text-theme-text/80"
+                    class="px-2 py-0.5 rounded-md text-micro bg-theme-base/80 border border-theme-border/60 text-theme-text/80"
                   >
                     {tag}
                   </span>
@@ -473,7 +473,7 @@
           <div class="text-sm font-medium text-theme-primary truncate">
             {selectedSilhouette.name}
           </div>
-          <div class="text-[11px] text-theme-muted capitalize truncate">
+          <div class="text-meta text-theme-muted capitalize truncate">
             {selectedSilhouette.category} &middot; {selectedSilhouette.archetype}
           </div>
         </div>

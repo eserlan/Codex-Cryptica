@@ -82,12 +82,12 @@
             : ''}"
         ></div>
         <span
-          class="text-[11px] sm:text-[10px] font-bold text-theme-text tracking-[0.2em] uppercase font-header"
+          class="text-meta sm:text-micro font-bold text-theme-text tracking-[0.2em] uppercase font-header"
           >Lore Oracle</span
         >
         {#if discoveryPolicyStore.aiDisabled}
           <span
-            class="text-[8px] font-header bg-theme-primary/20 text-theme-primary px-1.5 py-0.5 rounded border border-theme-primary/30"
+            class="text-nano font-header bg-theme-primary/20 text-theme-primary px-1.5 py-0.5 rounded border border-theme-primary/30"
             >AI DISABLED</span
           >
         {/if}
@@ -172,7 +172,7 @@
         class="p-4 bg-theme-primary/5 border-t border-theme-border flex flex-col gap-3 rounded-b-xl md:rounded-b-lg"
       >
         <p
-          class="text-[10px] text-theme-muted italic text-center leading-relaxed"
+          class="text-micro text-theme-muted italic text-center leading-relaxed"
         >
           {demoService.marketingPrompt}
         </p>
@@ -196,7 +196,7 @@
               );
             }
           }}
-          class="w-full py-2 bg-theme-primary text-theme-bg text-[10px] font-bold uppercase font-header tracking-widest rounded hover:bg-theme-secondary transition-colors"
+          class="w-full py-2 bg-theme-primary text-theme-bg text-micro font-bold uppercase font-header tracking-widest rounded hover:bg-theme-secondary transition-colors"
           title={`Save this demo exploration as your own persistent ${themeStore.jargon.vault}`}
         >
           Save as {themeStore.jargon.vault}

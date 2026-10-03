@@ -578,7 +578,7 @@
 
     <a
       href={graphHref}
-      class="flex h-8 flex-shrink-0 items-center gap-1.5 whitespace-nowrap rounded border border-theme-border bg-theme-surface/80 px-2 text-[10px] font-bold uppercase tracking-tighter text-theme-muted transition hover:border-theme-primary hover:text-theme-primary"
+      class="flex h-8 flex-shrink-0 items-center gap-1.5 whitespace-nowrap rounded border border-theme-border bg-theme-surface/80 px-2 text-micro font-bold uppercase tracking-tighter text-theme-muted transition hover:border-theme-primary hover:text-theme-primary"
       data-testid="table-browse-as-graph"
       title="Browse the same entities as a knowledge graph"
     >
@@ -637,7 +637,7 @@
           <span>Filters</span>
           {#if activeFilterCount > 0}
             <span
-              class="rounded-full bg-theme-primary px-1.5 py-0.2 text-[10px] font-bold text-theme-bg"
+              class="rounded-full bg-theme-primary px-1.5 py-0.2 text-micro font-bold text-theme-bg"
               data-testid="entity-table-active-filter-badge"
             >
               {activeFilterCount}
@@ -661,7 +661,7 @@
           ></span>
           Incomplete only
           <span
-            class="rounded-full px-1.5 py-0.2 text-[10px] {showIncompleteOnly
+            class="rounded-full px-1.5 py-0.2 text-micro {showIncompleteOnly
               ? 'bg-amber-500/20 text-amber-600 dark:text-amber-400 font-bold'
               : 'bg-theme-border text-theme-muted'}"
           >
@@ -685,7 +685,7 @@
       </div>
 
       {#if searchStatusMessage}
-        <p class="text-[10px] text-theme-muted" aria-live="polite">
+        <p class="text-micro text-theme-muted" aria-live="polite">
           {searchStatusMessage}
         </p>
       {/if}
@@ -739,7 +739,7 @@
           {/each}
           {#each [...labelFilters].sort() as label (label)}
             <div
-              class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-theme-primary/10 border border-theme-primary/20 text-[9px] font-bold text-theme-primary uppercase tracking-wider"
+              class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-theme-primary/10 border border-theme-primary/20 text-nano font-bold text-theme-primary uppercase tracking-wider"
               data-testid="entity-table-label-filter"
             >
               <span>{label}</span>

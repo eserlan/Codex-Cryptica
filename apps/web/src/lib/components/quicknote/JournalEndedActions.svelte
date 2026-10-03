@@ -29,7 +29,7 @@
     <button
       type="button"
       onclick={onTurnIntoNote}
-      class="rounded bg-theme-primary px-3 py-1.5 font-header text-[10px] font-bold uppercase text-theme-bg transition-colors hover:bg-theme-secondary"
+      class="rounded bg-theme-primary px-3 py-1.5 font-header text-micro font-bold uppercase text-theme-bg transition-colors hover:bg-theme-secondary"
       data-testid="ended-turn-into-note"
     >
       Turn into a Note
@@ -37,7 +37,7 @@
     <button
       type="button"
       onclick={onChooseParts}
-      class="rounded border border-theme-border px-3 py-1.5 font-header text-[10px] font-bold uppercase text-theme-text transition-colors hover:border-theme-primary hover:text-theme-primary"
+      class="rounded border border-theme-border px-3 py-1.5 font-header text-micro font-bold uppercase text-theme-text transition-colors hover:border-theme-primary hover:text-theme-primary"
       data-testid="ended-choose-parts"
     >
       Choose parts
@@ -45,7 +45,7 @@
     <button
       type="button"
       onclick={onDismiss}
-      class="px-2 py-1.5 text-[10px] text-theme-muted transition-colors hover:text-theme-text"
+      class="px-2 py-1.5 text-micro text-theme-muted transition-colors hover:text-theme-text"
       data-testid="ended-dismiss"
     >
       Leave it as it is

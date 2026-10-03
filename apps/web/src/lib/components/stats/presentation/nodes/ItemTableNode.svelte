@@ -357,7 +357,7 @@
         {#if linkEnabled}
           <button
             type="button"
-            class="inline-flex items-center gap-1 rounded border border-theme-border/60 bg-theme-surface/40 px-2 py-0.5 text-[10px] font-bold text-theme-muted transition-colors hover:border-theme-primary hover:text-theme-primary"
+            class="inline-flex items-center gap-1 rounded border border-theme-border/60 bg-theme-surface/40 px-2 py-0.5 text-micro font-bold text-theme-muted transition-colors hover:border-theme-primary hover:text-theme-primary"
             onclick={() => (showItemPicker = !showItemPicker)}
             data-testid="item-table-link-item"
           >
@@ -367,7 +367,7 @@
         {/if}
         <button
           type="button"
-          class="inline-flex items-center gap-1 rounded border border-theme-border/60 bg-theme-surface/40 px-2 py-0.5 text-[10px] font-bold text-theme-muted transition-colors hover:border-theme-primary hover:text-theme-primary"
+          class="inline-flex items-center gap-1 rounded border border-theme-border/60 bg-theme-surface/40 px-2 py-0.5 text-micro font-bold text-theme-muted transition-colors hover:border-theme-primary hover:text-theme-primary"
           onclick={handleAddRow}
           data-testid="item-table-add-row"
         >
@@ -383,7 +383,7 @@
       class="flex items-center gap-2 border-b border-theme-border/60 bg-theme-surface/20 px-3 py-2"
     >
       <label
-        class="text-[10px] font-bold uppercase tracking-wide text-theme-muted"
+        class="text-micro font-bold uppercase tracking-wide text-theme-muted"
         for="item-table-link-select"
       >
         Vault item

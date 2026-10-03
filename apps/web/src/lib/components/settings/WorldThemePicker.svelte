@@ -91,7 +91,7 @@
           </p>
         </div>
 
-        <div class="mt-auto text-[11px] text-theme-muted/70 font-mono italic">
+        <div class="mt-auto text-meta text-theme-muted/70 font-mono italic">
           {theme.graph.nodeShape} nodes // {theme.graph.edgeStyle} edges
         </div>
 

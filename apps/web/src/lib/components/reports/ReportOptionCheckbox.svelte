@@ -27,6 +27,6 @@
     {label}
   </label>
   {#if hint}
-    <p class="ml-6 text-[11px] text-theme-muted">{hint}</p>
+    <p class="ml-6 text-meta text-theme-muted">{hint}</p>
   {/if}
 </div>

@@ -18,7 +18,7 @@
     type="button"
     onclick={open}
     data-testid="ask-about-this"
-    class="flex items-center gap-1 self-start rounded px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-theme-primary transition hover:bg-theme-primary/10 focus-visible:outline-2 focus-visible:outline-theme-primary"
+    class="touch-target flex items-center gap-1 self-start rounded px-2 py-1 text-meta font-bold uppercase tracking-wider text-theme-primary transition hover:bg-theme-primary/10 focus-visible:outline-2 focus-visible:outline-theme-primary"
   >
     <span
       aria-hidden="true"

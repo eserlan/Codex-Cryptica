@@ -55,14 +55,14 @@
       </div>
       <div class="min-w-0 flex-1">
         <div
-          class="text-[9px] font-mono uppercase tracking-widest text-amber-400 font-bold mb-0.5"
+          class="text-nano font-mono uppercase tracking-widest text-amber-400 font-bold mb-0.5"
         >
           Faction Crest
         </div>
         <div
           class="{large
             ? 'text-xs font-bold font-header'
-            : 'text-[10px] font-semibold'} text-theme-text truncate"
+            : 'text-micro font-semibold'} text-theme-text truncate"
         >
           {entity?.title || "Faction"}
         </div>
@@ -76,7 +76,7 @@
     <div class="flex flex-wrap gap-1 {spacing}">
       {#each factionTags.slice(0, limit) as tag}
         <span
-          class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[9px] font-medium {tag.variant ===
+          class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-nano font-medium {tag.variant ===
           'ally'
             ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30'
             : tag.variant === 'enemy'
@@ -103,7 +103,7 @@
       {#each members as member, memberIndex (`${member.id}-${memberIndex}`)}
         <span
           title={member.title}
-          class="flex h-5 w-5 items-center justify-center rounded-full border bg-theme-primary/15 text-[9px] font-bold text-theme-primary {STANCE_RING[
+          class="flex h-5 w-5 items-center justify-center rounded-full border bg-theme-primary/15 text-nano font-bold text-theme-primary {STANCE_RING[
             member.stance
           ]}"
         >
@@ -111,7 +111,7 @@
         </span>
       {/each}
     </div>
-    <span class="text-[10px] text-theme-text font-semibold">
+    <span class="text-micro text-theme-text font-semibold">
       {memberCount}
       {memberCount === 1 ? "member" : "members"}
     </span>
@@ -126,12 +126,12 @@
     >
       {#if large}
         <div
-          class="text-[9px] font-mono uppercase tracking-widest text-theme-muted font-bold mb-1 border-b border-theme-border/20 pb-0.5"
+          class="text-nano font-mono uppercase tracking-widest text-theme-muted font-bold mb-1 border-b border-theme-border/20 pb-0.5"
         >
           Overview
         </div>
         <div
-          class="text-[11px] text-theme-muted leading-relaxed line-clamp-6 markdown-content prose prose-invert prose-xs"
+          class="text-meta text-theme-muted leading-relaxed line-clamp-6 markdown-content prose prose-invert prose-xs"
         >
           {@html renderedContent}
         </div>
@@ -144,7 +144,7 @@
 
 {#if large}
   <div
-    class="faction-dossier grid grid-cols-1 md:grid-cols-12 gap-3.5 text-[11px] font-body"
+    class="faction-dossier grid grid-cols-1 md:grid-cols-12 gap-3.5 text-meta font-body"
   >
     <!-- Left Column: Crest, Tags, Members, Excerpt -->
     <div
@@ -169,7 +169,7 @@
   </div>
 {:else}
   <div
-    class="text-[11px] text-theme-muted leading-relaxed markdown-content prose prose-invert prose-xs font-body"
+    class="text-meta text-theme-muted leading-relaxed markdown-content prose prose-invert prose-xs font-body"
   >
     {@render factionCrest(false)}
     {@render factionTagList(4, "mb-2")}

@@ -256,14 +256,14 @@
                   {candidate.title}
                 </span>
                 <span
-                  class="block truncate text-[10px] uppercase tracking-tighter text-theme-muted"
+                  class="block truncate text-micro uppercase tracking-tighter text-theme-muted"
                 >
                   {category?.label || candidate.type}
                 </span>
               </span>
               {#if sanitizeId(candidate.id) === currentParentId}
                 <span
-                  class="shrink-0 rounded border border-theme-primary/30 bg-theme-primary/10 px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wider text-theme-secondary"
+                  class="shrink-0 rounded border border-theme-primary/30 bg-theme-primary/10 px-1.5 py-0.5 text-nano font-bold uppercase tracking-wider text-theme-secondary"
                 >
                   Current
                 </span>
@@ -285,7 +285,7 @@
 
       {#if matches.length > results.length}
         <p
-          class="px-5 pb-3 text-[10px] text-theme-muted"
+          class="px-5 pb-3 text-micro text-theme-muted"
           data-testid="parent-picker-truncation"
         >
           Showing {results.length} of {matches.length} — keep typing to narrow it
@@ -301,7 +301,7 @@
             type="button"
             onclick={removeParent}
             disabled={isSaving}
-            class="text-[10px] font-bold uppercase tracking-widest text-theme-muted transition-colors hover:text-theme-danger disabled:opacity-50"
+            class="text-micro font-bold uppercase tracking-widest text-theme-muted transition-colors hover:text-theme-danger disabled:opacity-50"
             data-testid="parent-picker-remove"
           >
             Remove parent
@@ -312,7 +312,7 @@
         <button
           type="button"
           onclick={onClose}
-          class="rounded-lg border border-theme-border bg-theme-bg/50 px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-theme-muted transition-all hover:bg-theme-bg hover:text-theme-text"
+          class="rounded-lg border border-theme-border bg-theme-bg/50 px-4 py-2 text-micro font-bold uppercase tracking-widest text-theme-muted transition-all hover:bg-theme-bg hover:text-theme-text"
         >
           Cancel
         </button>

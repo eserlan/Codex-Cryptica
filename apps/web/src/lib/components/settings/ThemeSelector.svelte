@@ -64,7 +64,7 @@
     >
       <div class="space-y-0.5">
         <div class="font-bold">Auto Fullscreen on First Interaction</div>
-        <div class="text-[11px] text-chrome-muted">
+        <div class="text-meta text-chrome-muted">
           Automatically request browser fullscreen mode when clicking or
           pressing keys on load.
         </div>

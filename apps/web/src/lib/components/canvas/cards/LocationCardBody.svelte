@@ -16,7 +16,7 @@
 </script>
 
 <div
-  class="text-[11px] text-theme-muted leading-relaxed markdown-content prose prose-invert prose-xs font-body"
+  class="text-meta text-theme-muted leading-relaxed markdown-content prose prose-invert prose-xs font-body"
 >
   {#if renderedContent}
     <div class="line-clamp-3" data-testid="location-card-excerpt">
@@ -24,7 +24,7 @@
     </div>
   {/if}
   <div
-    class="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-theme-border/30 pt-1.5 text-[9px] text-theme-muted"
+    class="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-theme-border/30 pt-1.5 text-nano text-theme-muted"
     data-testid="location-card-meta"
   >
     {#if coordinatesText}

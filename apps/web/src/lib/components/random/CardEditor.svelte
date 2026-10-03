@@ -118,14 +118,14 @@
   <div class="flex flex-wrap items-end gap-4">
     <div class="flex flex-col gap-1">
       <span
-        class="font-header text-[9px] font-bold uppercase tracking-[0.2em] text-theme-muted"
+        class="font-header text-nano font-bold uppercase tracking-[0.2em] text-theme-muted"
         >How cards are drawn</span
       >
       <div class="flex overflow-hidden rounded border border-theme-border">
         {#each [{ id: "without-replacement" as const, label: "Keep a discard pile" }, { id: "with-replacement" as const, label: "Always full deck" }] as option}
           <button
             type="button"
-            class="px-3 py-1.5 font-header text-[10px] uppercase tracking-widest transition-colors {options.drawMode ===
+            class="px-3 py-1.5 font-header text-micro uppercase tracking-widest transition-colors {options.drawMode ===
             option.id
               ? 'bg-theme-primary text-theme-bg'
               : 'bg-theme-bg text-theme-muted hover:text-theme-text'}"
@@ -175,13 +175,13 @@
 
   <div class="flex items-center justify-between">
     <span
-      class="font-header text-[9px] font-bold uppercase tracking-[0.2em] text-theme-muted"
+      class="font-header text-nano font-bold uppercase tracking-[0.2em] text-theme-muted"
     >
       Cards ({cards.length})
     </span>
     <button
       type="button"
-      class="flex items-center gap-1.5 rounded border border-theme-border px-2.5 py-1 font-header text-[10px] uppercase tracking-widest text-theme-text transition-colors hover:border-theme-primary hover:text-theme-primary"
+      class="flex items-center gap-1.5 rounded border border-theme-border px-2.5 py-1 font-header text-micro uppercase tracking-widest text-theme-text transition-colors hover:border-theme-primary hover:text-theme-primary"
       onclick={addCard}
       data-testid="add-card"
     >
@@ -199,7 +199,7 @@
       <li class="flex flex-col gap-1 border-b border-theme-border/40 p-2">
         <div class="flex items-center gap-2">
           <span
-            class="w-8 shrink-0 text-right font-mono text-[10px] text-theme-muted/60"
+            class="w-8 shrink-0 text-right font-mono text-micro text-theme-muted/60"
             >{index + 1}</span
           >
           <input
@@ -285,7 +285,7 @@
                 alt="Picture on {card.title || 'this card'}"
               />
               <label
-                class="cursor-pointer rounded border border-theme-border px-2 py-1 font-header text-[9px] uppercase tracking-widest text-theme-text transition-colors hover:border-theme-primary hover:text-theme-primary"
+                class="cursor-pointer rounded border border-theme-border px-2 py-1 font-header text-nano uppercase tracking-widest text-theme-text transition-colors hover:border-theme-primary hover:text-theme-primary"
               >
                 {card.imagePath ? "Replace picture" : "Add picture"}
                 <input
@@ -300,7 +300,7 @@
               {#if card.imagePath}
                 <button
                   type="button"
-                  class="rounded border border-theme-border px-2 py-1 font-header text-[9px] uppercase tracking-widest text-theme-muted transition-colors hover:border-red-500 hover:text-red-500"
+                  class="rounded border border-theme-border px-2 py-1 font-header text-nano uppercase tracking-widest text-theme-muted transition-colors hover:border-red-500 hover:text-red-500"
                   onclick={() => patchCard(card.id, { imagePath: undefined })}
                   data-testid="remove-card-image"
                 >
@@ -328,14 +328,14 @@
 
         {#if problems.length > 0}
           <span
-            class="pl-10 text-[10px] text-amber-600 dark:text-amber-400"
+            class="pl-10 text-micro text-amber-600 dark:text-amber-400"
             data-testid="card-diagnostic"
           >
             {problems[0].message}
           </span>
         {:else if references(card.body).length > 0}
           <span
-            class="pl-10 font-mono text-[10px] text-theme-primary/80"
+            class="pl-10 font-mono text-micro text-theme-primary/80"
             data-testid="card-references"
           >
             pulls in {references(card.body).join(", ")}

@@ -274,9 +274,9 @@
             ></span>
             Voice Guidance Missing
           </div>
-          <p class="mt-1 text-[11px] leading-relaxed text-amber-300/90">
+          <p class="mt-1 text-meta leading-relaxed text-amber-300/90">
             This character lacks a <code
-              class="rounded bg-black/30 px-1 py-0.5 font-mono text-[10px]"
+              class="rounded bg-black/30 px-1 py-0.5 font-mono text-micro"
               >## Personality & Voice</code
             > section in GM Lore. Edit this character or add the section so the AI
             knows how to respond.
@@ -331,7 +331,7 @@
             type="button"
             onclick={copyChat}
             disabled={isCopying}
-            class="flex shrink-0 items-center gap-1 text-[10px] font-bold uppercase tracking-widest text-theme-muted hover:text-theme-primary transition cursor-pointer disabled:opacity-50"
+            class="flex shrink-0 items-center gap-1 text-micro font-bold uppercase tracking-widest text-theme-muted hover:text-theme-primary transition cursor-pointer disabled:opacity-50"
             title="Copy conversation"
             aria-label="Copy conversation"
           >
@@ -343,7 +343,7 @@
               type="button"
               onclick={sendToJournal}
               disabled={isSavingJournal}
-              class="flex shrink-0 items-center gap-1 text-[10px] font-bold uppercase tracking-widest text-theme-muted hover:text-theme-primary transition cursor-pointer disabled:opacity-50"
+              class="flex shrink-0 items-center gap-1 text-micro font-bold uppercase tracking-widest text-theme-muted hover:text-theme-primary transition cursor-pointer disabled:opacity-50"
               title="Send to Journal"
               aria-label="Send to Journal"
             >
@@ -358,7 +358,7 @@
         <button
           type="button"
           onclick={openSpeakerSwitcher}
-          class="flex shrink-0 items-center gap-1 text-[10px] font-bold uppercase tracking-widest text-theme-muted hover:text-theme-primary transition cursor-pointer"
+          class="flex shrink-0 items-center gap-1 text-micro font-bold uppercase tracking-widest text-theme-muted hover:text-theme-primary transition cursor-pointer"
         >
           <span aria-hidden="true" class="icon-[lucide--refresh-cw] w-3 h-3"
           ></span>
@@ -396,7 +396,7 @@
                   <span class="block text-xs font-bold text-theme-text"
                     >{speakerLabel(session.speakerCharacterId)}</span
                   >
-                  <span class="block text-[10px] text-theme-muted">
+                  <span class="block text-micro text-theme-muted">
                     {session.messages.length} message{session.messages
                       .length === 1
                       ? ""
@@ -437,7 +437,7 @@
             <button
               type="button"
               onclick={() => (showSpeakerSwitcher = false)}
-              class="text-[9px] font-bold text-theme-muted hover:text-theme-text uppercase px-2 py-1 cursor-pointer"
+              class="text-nano font-bold text-theme-muted hover:text-theme-text uppercase px-2 py-1 cursor-pointer"
             >
               Cancel
             </button>
@@ -445,7 +445,7 @@
               type="button"
               onclick={confirmSpeakerSwitch}
               disabled={isSwitchingSpeaker}
-              class="text-[9px] font-bold bg-theme-primary text-theme-bg rounded px-3 py-1.5 hover:bg-theme-secondary transition cursor-pointer disabled:opacity-50"
+              class="text-nano font-bold bg-theme-primary text-theme-bg rounded px-3 py-1.5 hover:bg-theme-secondary transition cursor-pointer disabled:opacity-50"
             >
               {isSwitchingSpeaker ? "Starting..." : "Start New Chat"}
             </button>
@@ -465,7 +465,7 @@
         ></span>
         <span>
           <strong>Voice Guidance Missing:</strong> Add a
-          <code class="rounded bg-black/30 px-1 py-0.5 font-mono text-[11px]"
+          <code class="rounded bg-black/30 px-1 py-0.5 font-mono text-meta"
             >## Personality & Voice</code
           > section in GM Lore or edit this character to generate one.
         </span>
@@ -483,7 +483,7 @@
             : 'self-start items-start'}"
         >
           <div
-            class="flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-wider text-theme-muted"
+            class="flex items-center gap-1.5 text-nano font-bold uppercase tracking-wider text-theme-muted"
           >
             <span>{message.role === "user" ? "You" : entity.title}</span>
             {#if editingMessageId !== message.id}
@@ -530,14 +530,14 @@
                 <button
                   type="button"
                   onclick={() => (editingMessageId = null)}
-                  class="text-[9px] font-bold text-theme-muted hover:text-theme-text uppercase px-2 py-1"
+                  class="text-nano font-bold text-theme-muted hover:text-theme-text uppercase px-2 py-1"
                 >
                   Cancel
                 </button>
                 <button
                   type="button"
                   onclick={() => saveMessageEdit(message.id)}
-                  class="text-[9px] font-bold bg-theme-primary text-theme-bg rounded px-2 py-1 hover:bg-theme-secondary transition"
+                  class="text-nano font-bold bg-theme-primary text-theme-bg rounded px-2 py-1 hover:bg-theme-secondary transition"
                 >
                   Save
                 </button>
@@ -546,7 +546,7 @@
           {:else}
             {#if message.cue}
               <div
-                class="flex items-center gap-1 text-[10px] font-semibold text-amber-400/90 mb-0.5 {message.role ===
+                class="flex items-center gap-1 text-micro font-semibold text-amber-400/90 mb-0.5 {message.role ===
                 'user'
                   ? 'justify-end'
                   : 'justify-start'}"
@@ -556,7 +556,7 @@
                   aria-hidden="true"
                 ></span>
                 <span
-                  class="font-mono bg-amber-500/10 border border-amber-500/20 px-1.5 py-0.5 rounded text-[10px]"
+                  class="font-mono bg-amber-500/10 border border-amber-500/20 px-1.5 py-0.5 rounded text-micro"
                   >Cue: {message.cue}</span
                 >
               </div>
@@ -571,7 +571,7 @@
             </div>
           {/if}
 
-          <span class="text-[8px] text-theme-muted select-none">
+          <span class="text-nano text-theme-muted select-none">
             {new Date(message.timestamp).toLocaleTimeString([], {
               hour: "2-digit",
               minute: "2-digit",
@@ -585,7 +585,7 @@
           class="flex flex-col gap-1 w-full max-w-[85%] self-start items-start"
         >
           <span
-            class="text-[9px] font-bold uppercase tracking-wider text-theme-muted"
+            class="text-nano font-bold uppercase tracking-wider text-theme-muted"
             >{entity.title}</span
           >
           <div
@@ -638,10 +638,10 @@
 
           <!-- Quick Oracle & Roll Shortcuts -->
           <div
-            class="flex flex-wrap items-center gap-1 pt-1.5 border-t border-amber-500/10 text-[10px]"
+            class="flex flex-wrap items-center gap-1 pt-1.5 border-t border-amber-500/10 text-micro"
           >
             <span
-              class="text-amber-400/70 font-mono text-[9px] uppercase tracking-wider select-none mr-0.5"
+              class="text-amber-400/70 font-mono text-nano uppercase tracking-wider select-none mr-0.5"
               >Quick Roll:</span
             >
             <button

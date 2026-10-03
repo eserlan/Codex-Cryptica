@@ -240,7 +240,7 @@
             <div class="flex items-center gap-2">
               {#if controller.hasImage}
                 <span
-                  class="text-[10px] text-theme-muted opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none italic"
+                  class="text-micro text-theme-muted opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none italic"
                 >
                   click to view
                 </span>
@@ -385,7 +385,7 @@
       {#if controller.hasImage}
         <div class="h-px bg-theme-border my-1 mx-1"></div>
         <div
-          class="px-3 py-1 text-[9px] font-bold uppercase tracking-widest text-theme-muted"
+          class="px-3 py-1 text-nano font-bold uppercase tracking-widest text-theme-muted"
         >
           Image focus
         </div>

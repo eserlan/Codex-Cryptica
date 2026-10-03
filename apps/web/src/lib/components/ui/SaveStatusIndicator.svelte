@@ -23,7 +23,7 @@
 
 {#if currentStatus === "saving"}
   <div
-    class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] md:text-xs font-mono font-medium text-theme-muted bg-theme-primary/5 border border-theme-primary/10 tracking-wider shrink-0 {className}"
+    class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-micro md:text-xs font-mono font-medium text-theme-muted bg-theme-primary/5 border border-theme-primary/10 tracking-wider shrink-0 {className}"
     role="status"
     aria-live="polite"
     aria-label="Saving changes"
@@ -38,7 +38,7 @@
   </div>
 {:else if currentStatus === "saved"}
   <div
-    class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] md:text-xs font-mono font-medium text-emerald-500 bg-emerald-500/10 border border-emerald-500/20 tracking-wider shrink-0 {className}"
+    class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-micro md:text-xs font-mono font-medium text-emerald-500 bg-emerald-500/10 border border-emerald-500/20 tracking-wider shrink-0 {className}"
     role="status"
     aria-live="polite"
     aria-label="All changes saved to disk"
@@ -53,7 +53,7 @@
   </div>
 {:else if currentStatus === "error"}
   <div
-    class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] md:text-xs font-mono font-semibold text-theme-danger bg-red-500/10 border border-theme-danger/30 tracking-wider shrink-0 {className}"
+    class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-micro md:text-xs font-mono font-semibold text-theme-danger bg-red-500/10 border border-theme-danger/30 tracking-wider shrink-0 {className}"
     role="alert"
     aria-live="assertive"
     aria-atomic="true"

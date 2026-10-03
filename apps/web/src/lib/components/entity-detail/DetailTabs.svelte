@@ -128,7 +128,7 @@
     </div>
   {:else}
     <div
-      class="text-[10px] font-bold tracking-widest uppercase font-header mb-2"
+      class="text-micro font-bold tracking-widest uppercase font-header mb-2"
       style:color="var(--theme-meta-text)"
     >
       {entity.type}{#if dateText}
@@ -159,7 +159,7 @@
     role="tablist"
     aria-label="Entity detail sections"
     tabindex="0"
-    class="flex overflow-x-auto custom-scrollbar gap-x-4 md:gap-x-6 gap-y-2 text-[10px] font-bold tracking-widest text-theme-muted border-b border-theme-border pb-2 font-header"
+    class="flex overflow-x-auto custom-scrollbar gap-x-4 md:gap-x-6 gap-y-2 text-micro font-bold tracking-widest text-theme-muted border-b border-theme-border pb-2 font-header"
     style:border-color={isFantasyTheme
       ? "var(--theme-selected-border)"
       : undefined}

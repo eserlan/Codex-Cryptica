@@ -21,8 +21,8 @@
   const selectClass =
     "w-full bg-theme-bg/60 border border-theme-border/60 rounded-lg px-3 py-2 text-xs text-theme-text focus:outline-none focus:border-theme-primary/60";
   const labelClass =
-    "text-[10px] font-bold uppercase tracking-wider text-theme-muted";
-  const hintClass = "text-[9px] text-theme-muted/75 leading-snug";
+    "text-micro font-bold uppercase tracking-wider text-theme-muted";
+  const hintClass = "text-nano text-theme-muted/75 leading-snug";
 
   function getParenthetical(val: string) {
     return val.match(/\(([^)]+)\)/)?.[1] ?? "";
@@ -117,7 +117,7 @@
   ></textarea>
   <p
     id="vampire-campaign-context-help"
-    class="text-[10px] text-theme-text/60 leading-relaxed"
+    class="text-micro text-theme-text/60 leading-relaxed"
   >
     Add a city, gothic metropolis, investigator guild, or campaign threat to aim
     the clan at your table.
@@ -146,7 +146,7 @@
         ];
       if (onSurprise) onSurprise();
     }}
-    class="flex items-center gap-1.5 px-3 py-1.5 bg-theme-surface/60 border border-theme-border/60 rounded-lg text-[10px] font-bold uppercase tracking-wider text-theme-text hover:bg-theme-primary hover:text-theme-bg hover:border-theme-primary transition-all cursor-pointer"
+    class="flex items-center gap-1.5 px-3 py-1.5 bg-theme-surface/60 border border-theme-border/60 rounded-lg text-micro font-bold uppercase tracking-wider text-theme-text hover:bg-theme-primary hover:text-theme-bg hover:border-theme-primary transition-all cursor-pointer"
     title="Randomize all options and generate a draft from the result"
   >
     <span class="icon-[lucide--dices] w-3.5 h-3.5" aria-hidden="true"></span>

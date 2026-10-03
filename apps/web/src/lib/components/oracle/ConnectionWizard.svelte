@@ -75,7 +75,7 @@
 
 <div class="flex flex-col gap-3 p-1">
   <div
-    class="flex items-center gap-2 text-theme-primary font-bold uppercase font-header tracking-[0.2em] text-[10px] mb-1"
+    class="flex items-center gap-2 text-theme-primary font-bold uppercase font-header tracking-[0.2em] text-micro mb-1"
   >
     <span class="icon-[heroicons--link] w-3.5 h-3.5"></span>
     Connection Wizard
@@ -102,7 +102,7 @@
       <div
         class="flex items-center gap-2 mb-2 px-2 py-1 bg-theme-primary/10 rounded border border-theme-primary/20"
       >
-        <span class="text-[10px] font-bold text-theme-primary">FROM:</span>
+        <span class="text-micro font-bold text-theme-primary">FROM:</span>
         <span class="text-xs text-theme-text font-mono truncate"
           >{sourceName}</span
         >
@@ -135,7 +135,7 @@
         <div class="flex flex-col gap-1">
           <label
             for="wizard-connection-type"
-            class="text-[9px] font-bold text-theme-secondary uppercase font-header tracking-wider"
+            class="text-nano font-bold text-theme-secondary uppercase font-header tracking-wider"
             >Base Type</label
           >
           <select
@@ -151,7 +151,7 @@
         <div class="flex flex-col gap-1">
           <label
             for="wizard-connection-label"
-            class="text-[9px] font-bold text-theme-secondary uppercase font-header tracking-wider"
+            class="text-nano font-bold text-theme-secondary uppercase font-header tracking-wider"
             >Label (Custom)</label
           >
           <input
@@ -167,7 +167,7 @@
   {:else if step === "DONE"}
     <div class="py-2 text-center" in:fade>
       <span
-        class="text-green-400 font-bold uppercase font-header tracking-widest text-[10px] flex items-center justify-center gap-2"
+        class="text-green-400 font-bold uppercase font-header tracking-widest text-micro flex items-center justify-center gap-2"
       >
         <span class="icon-[heroicons--check-circle] w-4 h-4"></span>
         Connection Created
@@ -176,7 +176,7 @@
   {/if}
 
   {#if error}
-    <p class="text-[10px] text-red-400 font-mono italic" transition:slide>
+    <p class="text-micro text-red-400 font-mono italic" transition:slide>
       {error}
     </p>
   {/if}
@@ -185,20 +185,20 @@
     {#if step !== "DONE"}
       <button
         onclick={handleCancel}
-        class="px-3 py-1 text-[10px] font-bold text-theme-muted hover:text-theme-text uppercase font-header tracking-widest transition-all"
+        class="px-3 py-1 text-micro font-bold text-theme-muted hover:text-theme-text uppercase font-header tracking-widest transition-all"
         >Cancel</button
       >
 
       {#if step === "SELECT_SOURCE"}
         <button
           onclick={handleNext}
-          class="px-4 py-1 bg-theme-primary text-theme-bg font-bold rounded text-[10px] uppercase font-header tracking-widest hover:bg-theme-secondary active:scale-95 transition-all"
+          class="px-4 py-1 bg-theme-primary text-theme-bg font-bold rounded text-micro uppercase font-header tracking-widest hover:bg-theme-secondary active:scale-95 transition-all"
           >Next</button
         >
       {:else if step === "SELECT_TARGET"}
         <button
           onclick={handleFinalize}
-          class="px-4 py-1 bg-theme-primary text-theme-bg font-bold rounded text-[10px] uppercase font-header tracking-widest hover:bg-theme-secondary active:scale-95 transition-all"
+          class="px-4 py-1 bg-theme-primary text-theme-bg font-bold rounded text-micro uppercase font-header tracking-widest hover:bg-theme-secondary active:scale-95 transition-all"
           >Create Connection</button
         >
       {/if}

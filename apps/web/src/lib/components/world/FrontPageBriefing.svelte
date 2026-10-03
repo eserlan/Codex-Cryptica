@@ -159,14 +159,14 @@
       class="flex flex-wrap gap-2 border-t border-theme-border/60 px-5 py-4 sm:px-6"
     >
       <button
-        class="rounded-lg bg-theme-primary px-4 py-2 text-[10px] font-bold uppercase tracking-[0.2em] text-theme-bg disabled:opacity-50"
+        class="rounded-lg bg-theme-primary px-4 py-2 text-micro font-bold uppercase tracking-[0.2em] text-theme-bg disabled:opacity-50"
         onclick={onSave}
         disabled={isSaving || !isDraftDirty}
       >
         Save Briefing
       </button>
       <button
-        class="rounded-lg px-4 py-2 text-[10px] font-bold uppercase tracking-[0.2em] text-theme-muted hover:text-theme-text disabled:opacity-50"
+        class="rounded-lg px-4 py-2 text-micro font-bold uppercase tracking-[0.2em] text-theme-muted hover:text-theme-text disabled:opacity-50"
         onclick={onCancel}
         disabled={isSaving}
       >

@@ -93,7 +93,7 @@
     >
       <div class="flex items-baseline gap-2">
         <h2 class="text-sm font-bold text-chrome-text">Cif</h2>
-        <span class="text-[10px] uppercase tracking-wider text-chrome-muted"
+        <span class="text-meta uppercase tracking-wider text-chrome-muted"
           >Codex guide</span
         >
       </div>
@@ -102,7 +102,7 @@
           <button
             type="button"
             onclick={() => assistant.reset()}
-            class="rounded px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-chrome-muted hover:text-chrome-text focus-visible:outline-2 focus-visible:outline-chrome-accent"
+            class="touch-target rounded px-2 py-1 text-meta font-bold uppercase tracking-wider text-chrome-muted hover:text-chrome-text focus-visible:outline-2 focus-visible:outline-chrome-accent"
           >
             Start over
           </button>
@@ -111,7 +111,7 @@
           type="button"
           onclick={onClose}
           aria-label="Close"
-          class="rounded p-1 text-chrome-muted hover:text-chrome-text focus-visible:outline-2 focus-visible:outline-chrome-accent"
+          class="touch-target rounded p-1 text-chrome-muted hover:text-chrome-text focus-visible:outline-2 focus-visible:outline-chrome-accent"
         >
           <span aria-hidden="true" class="icon-[lucide--x] h-4 w-4"></span>
         </button>
@@ -126,7 +126,7 @@
       aria-relevant="additions"
     >
       {#if assistant.messages.length === 0}
-        <p class="text-xs leading-relaxed text-chrome-muted">
+        <p class="text-body-ui leading-relaxed text-chrome-muted">
           Ask Cif how to do something in Codex Cryptica. Cif can also show you
           where a button is, but never changes anything in your vault.
         </p>
@@ -142,11 +142,11 @@
             aria-hidden="true"
             class="icon-[lucide--loader-circle] h-4 w-4 animate-spin text-chrome-accent motion-reduce:animate-none"
           ></span>
-          <span class="text-xs text-chrome-muted">Looking that up…</span>
+          <span class="text-body-ui text-chrome-muted">Looking that up…</span>
           <button
             type="button"
             onclick={() => assistant.cancel()}
-            class="ml-auto rounded px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-chrome-muted hover:text-chrome-text focus-visible:outline-2 focus-visible:outline-chrome-accent"
+            class="touch-target ml-auto rounded px-2 py-1 text-meta font-bold uppercase tracking-wider text-chrome-muted hover:text-chrome-text focus-visible:outline-2 focus-visible:outline-chrome-accent"
           >
             Cancel
           </button>

@@ -18,7 +18,7 @@
       class="flex justify-between items-center border-b border-theme-border/30 pb-1"
     >
       <span
-        class="text-[9px] font-bold text-theme-primary uppercase font-header tracking-widest"
+        class="text-nano font-bold text-theme-primary uppercase font-header tracking-widest"
         >{hint.title}</span
       >
       <button
@@ -31,7 +31,7 @@
         <span aria-hidden="true" class="icon-[lucide--x] w-3 h-3"></span>
       </button>
     </div>
-    <p class="text-[10px] leading-tight break-words text-theme-text/80">
+    <p class="text-micro leading-tight break-words text-theme-text/80">
       {hint.content}
     </p>
   </div>

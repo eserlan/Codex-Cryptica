@@ -68,7 +68,7 @@
         <button
           type="button"
           onclick={() => (isAddingConnection = true)}
-          class="text-[10px] font-bold text-theme-primary hover:text-theme-secondary flex items-center gap-1 transition"
+          class="text-micro font-bold text-theme-primary hover:text-theme-secondary flex items-center gap-1 transition"
           aria-label="Add new connection"
         >
           <span aria-hidden="true" class="icon-[lucide--plus] w-3.5 h-3.5"

@@ -56,7 +56,7 @@
     aria-controls="timeline-filter-bar-body"
     data-testid="filter-bar-toggle"
     onclick={() => timelineStore.toggleFilterBar()}
-    class="relative flex items-center gap-1.5 rounded-md border border-theme-border px-2 py-1 text-[10px] font-mono uppercase tracking-widest text-theme-muted transition-colors hover:border-theme-primary/40 hover:text-theme-text"
+    class="relative flex items-center gap-1.5 rounded-md border border-theme-border px-2 py-1 text-micro font-mono uppercase tracking-widest text-theme-muted transition-colors hover:border-theme-primary/40 hover:text-theme-text"
   >
     <span class="icon-[lucide--sliders-horizontal] h-3 w-3" aria-hidden="true"
     ></span>
@@ -120,7 +120,7 @@
           ></span>
           {#if count > 0 && !timelineStore.typeFilters.has(cat.id)}
             <span
-              class="absolute -top-1 -right-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-theme-primary/10 text-[7px] font-bold leading-none text-theme-primary"
+              class="absolute -top-2 -right-2 flex h-5 w-5 items-center justify-center rounded-full bg-theme-primary/10 text-nano font-bold leading-none text-theme-primary"
             >
               {count > 9 ? "9+" : count}
             </span>
@@ -157,7 +157,7 @@
           onclick={() => toggleLabel(label)}
           aria-pressed={timelineStore.labelFilters.has(label)}
           class={[
-            "px-2 py-0.5 rounded-md border text-[9px] font-bold uppercase tracking-wider transition-colors",
+            "px-2 py-0.5 rounded-md border text-nano font-bold uppercase tracking-wider transition-colors",
             timelineStore.labelFilters.has(label)
               ? "bg-theme-primary/10 border-theme-primary/20 text-theme-primary"
               : "border-theme-border/60 text-theme-muted hover:border-theme-primary/30 hover:text-theme-text",
@@ -173,7 +173,7 @@
     <button
       type="button"
       onclick={() => timelineStore.clearFilters()}
-      class="self-start text-[9px] font-bold uppercase tracking-wider text-theme-muted hover:text-theme-primary transition-colors"
+      class="self-start text-nano font-bold uppercase tracking-wider text-theme-muted hover:text-theme-primary transition-colors"
     >
       Clear filters
     </button>

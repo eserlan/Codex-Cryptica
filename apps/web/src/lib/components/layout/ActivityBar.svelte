@@ -91,7 +91,7 @@
 
       {#if tool.id === "quicknote" && quickNoteStore.count > 0}
         <span
-          class="absolute -top-1 -right-1 flex h-4 min-w-[16px] items-center justify-center rounded-full px-1 text-[9px] font-bold text-chrome-bg bg-chrome-accent shadow-md"
+          class="absolute -top-1 -right-1 flex h-4 min-w-[16px] items-center justify-center rounded-full px-1 text-nano font-bold text-chrome-bg bg-chrome-accent shadow-md"
         >
           {quickNoteStore.count}
         </span>

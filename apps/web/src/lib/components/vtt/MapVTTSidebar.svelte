@@ -84,7 +84,7 @@
 
       <div class="flex flex-1 items-center justify-center">
         <span
-          class="rotate-180 text-[10px] font-black uppercase tracking-[0.4em] text-theme-muted [writing-mode:vertical-rl]"
+          class="rotate-180 text-micro font-black uppercase tracking-[0.4em] text-theme-muted [writing-mode:vertical-rl]"
         >
           VTT
         </span>
@@ -113,7 +113,7 @@
       >
         <div>
           <div
-            class="text-[9px] font-black uppercase tracking-[0.35em] text-theme-primary/70 font-header"
+            class="text-nano font-black uppercase tracking-[0.35em] text-theme-primary/70 font-header"
           >
             VTT Sidebar
           </div>
@@ -169,7 +169,7 @@
             >
               <div>
                 <div
-                  class="text-[9px] font-black uppercase tracking-[0.35em] text-theme-primary/70 font-header"
+                  class="text-nano font-black uppercase tracking-[0.35em] text-theme-primary/70 font-header"
                 >
                   Vault Entities
                 </div>
@@ -179,7 +179,7 @@
               </div>
               <div class="flex items-center gap-2">
                 <span
-                  class="rounded-full border border-theme-border px-2 py-1 text-[9px] font-bold uppercase tracking-[0.2em] text-theme-muted"
+                  class="rounded-full border border-theme-border px-2 py-1 text-nano font-bold uppercase tracking-[0.2em] text-theme-muted"
                 >
                   {vttEntityCount}
                 </span>

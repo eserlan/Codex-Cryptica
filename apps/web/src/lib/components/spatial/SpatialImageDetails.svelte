@@ -18,7 +18,7 @@
 >
   <h4
     id="spatial-image-details-heading"
-    class="text-[10px] font-bold uppercase tracking-widest text-theme-primary"
+    class="text-micro font-bold uppercase tracking-widest text-theme-primary"
   >
     Room details
   </h4>
@@ -26,7 +26,7 @@
     {@const key = field as keyof TileDetails}
     <label class="block space-y-1.5">
       <span
-        class="text-[10px] font-bold uppercase tracking-widest text-theme-muted"
+        class="text-micro font-bold uppercase tracking-widest text-theme-muted"
         >{label}</span
       >
       <textarea

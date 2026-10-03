@@ -70,7 +70,7 @@
 
   <!-- Card Footer Line -->
   <div
-    class="px-5 py-3 border-t border-theme-border/30 flex items-center justify-between text-[10px] font-mono tracking-widest text-theme-muted uppercase"
+    class="px-5 py-3 border-t border-theme-border/30 flex items-center justify-between text-micro font-mono tracking-widest text-theme-muted uppercase"
   >
     <span class="truncate mr-2">
       ROSTER — {entity?.title || "FACTION"}

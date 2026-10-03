@@ -124,7 +124,7 @@
                   </span>
                   {#if proposal.confidence > 0.8}
                     <span
-                      class="text-[10px] text-green-400 font-mono"
+                      class="text-micro text-green-400 font-mono"
                       title="High Confidence"
                     >
                       {(proposal.confidence * 100).toFixed(0)}%

@@ -65,7 +65,7 @@
     >
       Published Campaigns Registry
     </h4>
-    <span class="text-[10px] text-theme-text/50 font-mono">
+    <span class="text-micro text-theme-text/50 font-mono">
       {items.length} active shared link{items.length === 1 ? "" : "s"}
     </span>
   </div>
@@ -87,7 +87,7 @@
             <div class="flex items-center gap-2">
               <span class="font-bold text-sm text-theme-primary">{title}</span>
               <span
-                class="flex items-center gap-1 px-1.5 py-0.5 bg-green-500/10 border border-green-500/20 text-green-400 text-[10px] rounded font-bold uppercase tracking-wider"
+                class="flex items-center gap-1 px-1.5 py-0.5 bg-green-500/10 border border-green-500/20 text-green-400 text-micro rounded font-bold uppercase tracking-wider"
               >
                 Live
               </span>
@@ -114,7 +114,8 @@
               class="px-2.5 py-1.5 border border-theme-border hover:border-theme-primary hover:text-theme-primary text-xs font-bold font-header uppercase tracking-wider rounded transition-all flex items-center gap-1"
               title="Copy public link"
             >
-              <span class="icon-[lucide--copy] w-3.5 h-3.5" aria-hidden="true"></span>
+              <span class="icon-[lucide--copy] w-3.5 h-3.5" aria-hidden="true"
+              ></span>
               Link
             </button>
             <button
@@ -123,7 +124,10 @@
               class="px-2.5 py-1.5 border border-red-500/30 text-red-400 hover:text-red-300 hover:bg-red-500/5 text-xs font-bold font-header uppercase tracking-wider rounded transition-all flex items-center gap-1"
               title="Delete snapshot from cloud"
             >
-              <span class="icon-[lucide--trash-2] w-3.5 h-3.5" aria-hidden="true"></span>
+              <span
+                class="icon-[lucide--trash-2] w-3.5 h-3.5"
+                aria-hidden="true"
+              ></span>
               Unpublish
             </button>
           </div>

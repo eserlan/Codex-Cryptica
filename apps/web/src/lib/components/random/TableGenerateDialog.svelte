@@ -220,7 +220,7 @@
                 placeholder="Mention specific NPCs, factions, or instructions (e.g. Focus on Captain Vane's crew and the drowned temple)"
                 class="w-full rounded-lg border border-theme-border bg-theme-bg px-3 py-2 text-xs text-theme-text focus:border-theme-primary focus:outline-none focus:ring-1 focus:ring-theme-primary resize-y"
               ></textarea>
-              <p class="text-[10px] text-theme-muted mt-1">
+              <p class="text-micro text-theme-muted mt-1">
                 Names and instructions you provide here take highest priority.
                 Relevant vault lore and existing tables will be grounded
                 automatically.

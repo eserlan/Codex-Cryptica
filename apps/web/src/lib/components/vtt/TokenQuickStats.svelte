@@ -113,7 +113,7 @@
                 );
               }}
             />
-            <span class="text-[10px] text-theme-muted font-mono shrink-0"
+            <span class="text-micro text-theme-muted font-mono shrink-0"
               >- {field.formula || "1d100"}</span
             >
           </div>
@@ -164,7 +164,7 @@
     {/each}
   </div>
 {:else}
-  <p class="text-[10px] text-theme-muted" data-testid="token-quick-stats-empty">
+  <p class="text-micro text-theme-muted" data-testid="token-quick-stats-empty">
     Star HP or a skill on the stat sheet to pin it here.
   </p>
 {/if}

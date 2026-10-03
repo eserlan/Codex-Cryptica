@@ -180,14 +180,14 @@
   >
     {#if sessionModeStore.isDemoMode}
       <div
-        class="flex items-center gap-1.5 px-2 py-1 border border-chrome-accent bg-chrome-accent/10 text-chrome-accent rounded text-[9px] font-bold tracking-tighter"
+        class="flex items-center gap-1.5 px-2 py-1 border border-chrome-accent bg-chrome-accent/10 text-chrome-accent rounded text-nano font-bold tracking-tighter"
       >
         DEMO MODE
       </div>
       <button
         class={isVertical
           ? `${btnPrimary} py-3 text-sm justify-center gap-2`
-          : `${btnPrimary} px-3 md:px-4 py-1.5 text-[10px] md:text-xs gap-2`}
+          : `${btnPrimary} px-3 md:px-4 py-1.5 text-micro md:text-xs gap-2`}
         onclick={async () => {
           try {
             await demoService.convertToWorld();
@@ -214,7 +214,7 @@
       <button
         class={isVertical
           ? `${btnGhost} py-3 text-sm justify-center gap-2`
-          : `${btnGhost} px-3 md:px-4 py-1.5 text-[10px] md:text-xs gap-2`}
+          : `${btnGhost} px-3 md:px-4 py-1.5 text-micro md:text-xs gap-2`}
         onclick={() => demoService.exitDemo()}
         aria-label="Exit Demo"
       >
@@ -225,7 +225,7 @@
 
     {#if isOffline}
       <div
-        class="flex items-center gap-1.5 px-2 py-1 border border-amber-900/50 bg-amber-950/20 text-amber-500 rounded text-[9px] font-bold tracking-tighter cursor-help justify-center"
+        class="flex items-center gap-1.5 px-2 py-1 border border-amber-900/50 bg-amber-950/20 text-amber-500 rounded text-nano font-bold tracking-tighter cursor-help justify-center"
         title="Sovereign data remains accessible. Cloud-backed features and Lore Oracle are suspended while offline."
       >
         <span class="icon-[lucide--wifi-off] w-3.5 h-3.5" aria-hidden="true"
@@ -264,7 +264,7 @@
     {/if}
 
     <div
-      class="text-[10px] md:text-xs text-chrome-muted tracking-wider uppercase {isVertical
+      class="text-micro md:text-xs text-chrome-muted tracking-wider uppercase {isVertical
         ? 'text-center'
         : 'hidden sm:block'}"
       role="status"
@@ -301,7 +301,7 @@
       {:else if vault.status === "error" || vault.failedFiles.length > 0}
         <div class="flex items-center gap-1.5">
           <span
-            class="text-red-400 font-bold text-[10px] bg-red-900/20 px-2 py-1 rounded border border-red-900/50 cursor-help"
+            class="text-red-400 font-bold text-micro bg-red-900/20 px-2 py-1 rounded border border-red-900/50 cursor-help"
             title={vault.failedFiles.length > 0
               ? vault.failedFiles.map((f) => `${f.path}: ${f.error}`).join("\n")
               : vault.errorMessage || "ERROR"}
@@ -310,7 +310,7 @@
           </span>
           {#if vault.failedFiles.length > 0}
             <button
-              class="text-[9px] text-chrome-muted hover:text-chrome-text underline font-sans"
+              class="text-nano text-chrome-muted hover:text-chrome-text underline font-sans"
               onclick={() => (vault.failedFiles = [])}
             >
               CLEAR
@@ -385,7 +385,7 @@
         <button
           class={isVertical
             ? `${btnAccent} py-3 text-sm justify-center`
-            : `${btnAccent} px-3 md:px-4 py-1.5 text-[10px] md:text-xs`}
+            : `${btnAccent} px-3 md:px-4 py-1.5 text-micro md:text-xs`}
           onclick={async () => {
             await p2pGuestService.leaveSession();
             sessionModeStore.guestUsername = null;
@@ -417,7 +417,7 @@
             <button
               class="{isVertical
                 ? 'py-3 text-sm justify-center gap-2'
-                : 'px-3 md:px-4 py-1.5 text-[10px] md:text-xs gap-2'} rounded font-bold tracking-widest transition whitespace-nowrap flex items-center border border-amber-500 bg-amber-500/10 text-amber-400 hover:bg-amber-500/20"
+                : 'px-3 md:px-4 py-1.5 text-micro md:text-xs gap-2'} rounded font-bold tracking-widest transition whitespace-nowrap flex items-center border border-amber-500 bg-amber-500/10 text-amber-400 hover:bg-amber-500/20"
               onclick={() => vault.saveToFolder()}
               title="Grant browser permission to access your linked local folder."
               aria-label="GRANT ACCESS"
@@ -431,7 +431,7 @@
             <button
               class="{isVertical
                 ? 'py-3 text-sm justify-center gap-2'
-                : 'px-3 md:px-4 py-1.5 text-[10px] md:text-xs gap-2'} rounded font-bold tracking-widest transition whitespace-nowrap flex items-center border border-green-500 bg-green-500/10 text-green-400 cursor-default"
+                : 'px-3 md:px-4 py-1.5 text-micro md:text-xs gap-2'} rounded font-bold tracking-widest transition whitespace-nowrap flex items-center border border-green-500 bg-green-500/10 text-green-400 cursor-default"
               title="Changes successfully saved to folder."
               aria-label="SAVED"
               disabled
@@ -447,7 +447,7 @@
             <button
               class="{btnAccent} {isVertical
                 ? 'py-3 text-sm justify-center gap-2'
-                : 'px-3 md:px-4 py-1.5 text-[10px] md:text-xs gap-2'} {vault.status ===
+                : 'px-3 md:px-4 py-1.5 text-micro md:text-xs gap-2'} {vault.status ===
               'saving'
                 ? 'opacity-75 cursor-wait'
                 : ''} {vault.hasFolderHandle && !vault.isDirty
@@ -522,7 +522,7 @@
 
       {#if prefillStartDate}
         <div
-          class="flex items-center gap-1.5 rounded px-2 py-1 text-[10px] bg-chrome-accent/10 border border-chrome-accent/30 text-chrome-accent font-mono tracking-wide"
+          class="flex items-center gap-1.5 rounded px-2 py-1 text-micro bg-chrome-accent/10 border border-chrome-accent/30 text-chrome-accent font-mono tracking-wide"
         >
           <span class="icon-[lucide--calendar] h-3 w-3" aria-hidden="true"
           ></span>
@@ -533,7 +533,7 @@
       {/if}
 
       <label
-        class="flex items-center gap-2 cursor-pointer group select-none text-[10px] md:text-xs text-chrome-muted hover:text-chrome-text {isVertical
+        class="flex items-center gap-2 cursor-pointer group select-none text-micro md:text-xs text-chrome-muted hover:text-chrome-text {isVertical
           ? 'py-1'
           : 'px-1'}"
       >
@@ -591,7 +591,7 @@
       {#if createError}
         <div
           id="create-error"
-          class="text-[10px] text-red-500 w-full text-center font-sans"
+          class="text-micro text-red-500 w-full text-center font-sans"
           role="alert"
         >
           {createError}

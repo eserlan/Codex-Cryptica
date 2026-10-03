@@ -195,13 +195,13 @@
 >
   <div class="flex items-center justify-between gap-3">
     <h3
-      class="text-[10px] font-bold font-header uppercase tracking-[0.2em] text-theme-muted"
+      class="text-micro font-bold font-header uppercase tracking-[0.2em] text-theme-muted"
     >
       Roll
     </h3>
     <button
       type="button"
-      class="flex items-center gap-2 rounded-lg border border-theme-primary/30 bg-theme-primary/10 px-3 py-1.5 text-[10px] font-bold font-header uppercase tracking-widest text-theme-primary transition-all hover:bg-theme-primary hover:text-theme-bg active:scale-95 disabled:cursor-not-allowed disabled:opacity-40"
+      class="flex items-center gap-2 rounded-lg border border-theme-primary/30 bg-theme-primary/10 px-3 py-1.5 text-micro font-bold font-header uppercase tracking-widest text-theme-primary transition-all hover:bg-theme-primary hover:text-theme-bg active:scale-95 disabled:cursor-not-allowed disabled:opacity-40"
       onclick={roll}
       disabled={!hasEntries}
       data-testid="roll-table"
@@ -227,7 +227,7 @@
           {dieValue ?? "—"}
         </span>
         <span
-          class="mt-1.5 text-[8px] font-bold uppercase tracking-tighter text-theme-muted"
+          class="mt-1.5 text-nano font-bold uppercase tracking-tighter text-theme-muted"
         >
           {dieLabel}
         </span>
@@ -251,7 +251,7 @@
     <div class="flex flex-wrap gap-2 border-t border-theme-border/40 pt-3">
       <button
         type="button"
-        class="flex items-center gap-1.5 rounded border border-theme-border px-2.5 py-1 font-header text-[9px] uppercase tracking-widest text-theme-muted transition-colors hover:border-theme-primary hover:text-theme-primary disabled:cursor-not-allowed disabled:opacity-40"
+        class="flex items-center gap-1.5 rounded border border-theme-border px-2.5 py-1 font-header text-nano uppercase tracking-widest text-theme-muted transition-colors hover:border-theme-primary hover:text-theme-primary disabled:cursor-not-allowed disabled:opacity-40"
         onclick={addResultToChat}
         disabled={isAddingToChat}
         aria-busy={isAddingToChat}
@@ -265,7 +265,7 @@
       </button>
       <button
         type="button"
-        class="flex items-center gap-1.5 rounded border border-theme-border px-2.5 py-1 font-header text-[9px] uppercase tracking-widest text-theme-muted transition-colors hover:border-theme-primary hover:text-theme-primary disabled:cursor-not-allowed disabled:opacity-40"
+        class="flex items-center gap-1.5 rounded border border-theme-border px-2.5 py-1 font-header text-nano uppercase tracking-widest text-theme-muted transition-colors hover:border-theme-primary hover:text-theme-primary disabled:cursor-not-allowed disabled:opacity-40"
         onclick={pinResultToMap}
         disabled={isPinning || !canPinToMap}
         aria-busy={isPinning}
@@ -280,7 +280,7 @@
       </button>
       <button
         type="button"
-        class="flex items-center gap-1.5 rounded border border-theme-border px-2.5 py-1 font-header text-[9px] uppercase tracking-widest text-theme-muted transition-colors hover:border-theme-primary hover:text-theme-primary"
+        class="flex items-center gap-1.5 rounded border border-theme-border px-2.5 py-1 font-header text-nano uppercase tracking-widest text-theme-muted transition-colors hover:border-theme-primary hover:text-theme-primary"
         onclick={copyResult}
         data-testid="copy-roll-result"
       >
@@ -292,7 +292,7 @@
     {#if isComposed}
       <div class="border-t border-theme-border/40 pt-3">
         <h4
-          class="mb-2 font-header text-[9px] font-bold uppercase tracking-[0.2em] text-theme-muted"
+          class="mb-2 font-header text-nano font-bold uppercase tracking-[0.2em] text-theme-muted"
         >
           Where this came from
         </h4>

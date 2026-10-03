@@ -32,13 +32,13 @@
     Demo mode active. Save as {themeStore.jargon.vault} or exit.
   </div>
   <span
-    class="shrink-0 px-1.5 py-0.5 border border-chrome-accent bg-chrome-accent/10 text-chrome-accent rounded text-[9px] font-bold tracking-tighter"
+    class="shrink-0 px-1.5 py-0.5 border border-chrome-accent bg-chrome-accent/10 text-chrome-accent rounded text-nano font-bold tracking-tighter"
   >
     DEMO
   </span>
   <button
     type="button"
-    class="flex-1 min-h-[36px] flex items-center justify-center gap-2 rounded bg-chrome-accent text-chrome-bg font-bold text-[11px] tracking-widest uppercase transition active:scale-95 disabled:opacity-60"
+    class="flex-1 min-h-[36px] flex items-center justify-center gap-2 rounded bg-chrome-accent text-chrome-bg font-bold text-meta tracking-widest uppercase transition active:scale-95 disabled:opacity-60"
     onclick={handleSave}
     disabled={isSaving}
     aria-busy={isSaving}
@@ -57,7 +57,7 @@
   </button>
   <button
     type="button"
-    class="shrink-0 min-h-[36px] px-3 flex items-center gap-1.5 rounded border border-chrome-border text-chrome-muted font-bold text-[11px] tracking-widest uppercase transition active:scale-95 disabled:opacity-60"
+    class="shrink-0 min-h-[36px] px-3 flex items-center gap-1.5 rounded border border-chrome-border text-chrome-muted font-bold text-meta tracking-widest uppercase transition active:scale-95 disabled:opacity-60"
     onclick={() => demoService.exitDemo()}
     disabled={isSaving}
     data-testid="mobile-exit-demo-button"

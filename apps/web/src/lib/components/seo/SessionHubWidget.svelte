@@ -31,7 +31,7 @@
       <button
         type="button"
         onclick={() => sessionHubStore.clear()}
-        class="text-[9px] uppercase font-bold text-rose-400 hover:text-rose-300 transition-colors"
+        class="text-nano uppercase font-bold text-rose-400 hover:text-rose-300 transition-colors"
       >
         Clear
       </button>
@@ -39,7 +39,7 @@
   </div>
 
   {#if entities.length === 0}
-    <p class="text-[10px] text-theme-muted leading-relaxed">
+    <p class="text-micro text-theme-muted leading-relaxed">
       Generated drafts appear here automatically. Choose which ones to reuse as
       context or save to Codex.
     </p>
@@ -163,14 +163,14 @@
         type="button"
         onclick={() => onSave?.(selectedEntities)}
         disabled={selectedEntities.length === 0}
-        class="w-full py-2 bg-theme-primary text-theme-bg font-bold uppercase font-header tracking-wider text-[10px] rounded-lg hover:brightness-110 shadow-sm transition-all text-center disabled:cursor-not-allowed disabled:opacity-40"
+        class="w-full py-2 bg-theme-primary text-theme-bg font-bold uppercase font-header tracking-wider text-micro rounded-lg hover:brightness-110 shadow-sm transition-all text-center disabled:cursor-not-allowed disabled:opacity-40"
       >
         Save selected ({selectedEntities.length})
       </button>
       <button
         type="button"
         onclick={() => onSave?.(entities)}
-        class="w-full py-2 border border-theme-primary/40 bg-theme-surface/40 text-theme-primary font-bold uppercase font-header tracking-wider text-[10px] rounded-lg hover:bg-theme-primary/10 transition-colors text-center"
+        class="w-full py-2 border border-theme-primary/40 bg-theme-surface/40 text-theme-primary font-bold uppercase font-header tracking-wider text-micro rounded-lg hover:bg-theme-primary/10 transition-colors text-center"
       >
         Save all ({entities.length})
       </button>

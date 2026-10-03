@@ -75,7 +75,7 @@
         <div>
           <label
             for="edge-label"
-            class="block text-[10px] font-bold text-theme-muted uppercase mb-1"
+            class="block text-micro font-bold text-theme-muted uppercase mb-1"
             >Label</label
           >
           <input
@@ -91,7 +91,7 @@
         <div>
           <label
             for="edge-type"
-            class="block text-[10px] font-bold text-theme-muted uppercase mb-1"
+            class="block text-micro font-bold text-theme-muted uppercase mb-1"
             >Relationship Nature</label
           >
           {#if vault.isGuest}
@@ -128,7 +128,7 @@
                   editingEdge = null;
                 }
               }}
-              class="text-[10px] font-bold text-red-600 hover:text-red-500 uppercase tracking-widest transition-colors"
+              class="text-micro font-bold text-red-600 hover:text-red-500 uppercase tracking-widest transition-colors"
             >
               Sever Connection
             </button>
@@ -139,14 +139,14 @@
           <div class="flex gap-2">
             <button
               onclick={() => (editingEdge = null)}
-              class="px-4 py-2 text-[10px] font-bold text-theme-muted hover:text-theme-text uppercase tracking-widest transition-colors"
+              class="px-4 py-2 text-micro font-bold text-theme-muted hover:text-theme-text uppercase tracking-widest transition-colors"
             >
               Cancel
             </button>
             {#if !vault.isGuest}
               <button
                 onclick={saveEdgeLabel}
-                class="px-6 py-2 bg-theme-primary text-theme-bg text-[10px] font-bold uppercase tracking-widest hover:bg-theme-secondary transition-colors"
+                class="px-6 py-2 bg-theme-primary text-theme-bg text-micro font-bold uppercase tracking-widest hover:bg-theme-secondary transition-colors"
               >
                 Sync Data
               </button>

@@ -99,7 +99,7 @@
     >
       <button
         type="button"
-        class={`px-2.5 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all ${getPrimaryButtonStateClass(sessionModeStore.sharedMode)}`}
+        class={`px-2.5 py-1.5 rounded-md text-micro font-bold uppercase tracking-wider transition-all ${getPrimaryButtonStateClass(sessionModeStore.sharedMode)}`}
         onclick={() =>
           (sessionModeStore.sharedMode = !sessionModeStore.sharedMode)}
         title={sessionModeStore.sharedMode
@@ -115,7 +115,7 @@
       {#if mapStore.isGMMode}
         <button
           type="button"
-          class={`px-2.5 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all ${getPrimaryButtonStateClass(mapStore.showFog)}`}
+          class={`px-2.5 py-1.5 rounded-md text-micro font-bold uppercase tracking-wider transition-all ${getPrimaryButtonStateClass(mapStore.showFog)}`}
           onclick={() => (mapStore.showFog = !mapStore.showFog)}
         >
           FOG: {mapStore.showFog ? "ON" : "OFF"}
@@ -123,7 +123,7 @@
 
         <button
           type="button"
-          class={`px-2.5 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all ${getPrimaryButtonStateClass(mapStore.visionMode === "selected")}`}
+          class={`px-2.5 py-1.5 rounded-md text-micro font-bold uppercase tracking-wider transition-all ${getPrimaryButtonStateClass(mapStore.visionMode === "selected")}`}
           onclick={() =>
             (mapStore.visionMode =
               mapStore.visionMode === "party" ? "selected" : "party")}
@@ -134,7 +134,7 @@
 
         <div class="flex items-center gap-2 px-2">
           <span
-            class="text-[9px] text-theme-muted font-bold tracking-tighter uppercase"
+            class="text-nano text-theme-muted font-bold tracking-tighter uppercase"
             >Vision Range</span
           >
           <input
@@ -145,14 +145,14 @@
             bind:value={mapStore.visionRange}
             class="w-24 accent-theme-primary h-1"
           />
-          <span class="text-[9px] text-theme-primary font-mono w-8"
+          <span class="text-nano text-theme-primary font-mono w-8"
             >{mapStore.visionRange}{mapSession.gridUnit}</span
           >
         </div>
 
         <button
           type="button"
-          class={`px-2.5 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all ${getPrimaryButtonStateClass(mapStore.showLabels)}`}
+          class={`px-2.5 py-1.5 rounded-md text-micro font-bold uppercase tracking-wider transition-all ${getPrimaryButtonStateClass(mapStore.showLabels)}`}
           onclick={() => (mapStore.showLabels = !mapStore.showLabels)}
           title="Toggle Pin Labels"
         >
@@ -161,7 +161,7 @@
 
         <button
           type="button"
-          class={`px-2.5 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all ${getPrimaryButtonStateClass(mapStore.showGrid)}`}
+          class={`px-2.5 py-1.5 rounded-md text-micro font-bold uppercase tracking-wider transition-all ${getPrimaryButtonStateClass(mapStore.showGrid)}`}
           onclick={() => (mapStore.showGrid = !mapStore.showGrid)}
           oncontextmenu={openGridSettings}
           title="Toggle Grid (Right-click for settings)"
@@ -198,7 +198,7 @@
         {#if mapStore.showFog}
           <div class="flex items-center gap-2 px-2">
             <span
-              class="text-[9px] text-theme-muted font-bold tracking-tighter uppercase"
+              class="text-nano text-theme-muted font-bold tracking-tighter uppercase"
               >Brush Size</span
             >
             <input
@@ -208,13 +208,13 @@
               bind:value={mapStore.brushRadius}
               class="w-24 accent-theme-primary h-1"
             />
-            <span class="text-[9px] text-theme-primary font-mono w-6"
+            <span class="text-nano text-theme-primary font-mono w-6"
               >{mapStore.brushRadius}px</span
             >
           </div>
 
           <div
-            class="flex flex-col justify-center px-2 text-[10px] text-theme-muted/90 font-semibold italic leading-tight"
+            class="flex flex-col justify-center px-2 text-micro text-theme-muted/90 font-semibold italic leading-tight"
           >
             <span>Alt+Drag to Reveal</span>
             <span>Alt+Shift+Drag to Hide</span>

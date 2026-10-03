@@ -52,7 +52,7 @@
       <button
         type="button"
         onclick={() => (mode = "image")}
-        class="flex-1 rounded-md py-2 text-[10px] font-bold uppercase tracking-widest transition-colors {mode ===
+        class="flex-1 rounded-md py-2 text-micro font-bold uppercase tracking-widest transition-colors {mode ===
         'image'
           ? 'bg-theme-primary text-theme-bg'
           : 'text-theme-muted hover:text-theme-text'}"
@@ -62,7 +62,7 @@
       <button
         type="button"
         onclick={() => (mode = "blank")}
-        class="flex-1 rounded-md py-2 text-[10px] font-bold uppercase tracking-widest transition-colors {mode ===
+        class="flex-1 rounded-md py-2 text-micro font-bold uppercase tracking-widest transition-colors {mode ===
         'blank'
           ? 'bg-theme-primary text-theme-bg'
           : 'text-theme-muted hover:text-theme-text'}"
@@ -74,7 +74,7 @@
     <div class="space-y-6">
       <div class="space-y-2">
         <label
-          class="text-[10px] font-mono text-theme-muted uppercase tracking-widest"
+          class="text-micro font-mono text-theme-muted uppercase tracking-widest"
           for="map-name"
         >
           Map Name
@@ -91,7 +91,7 @@
       {#if mode === "image"}
         <div class="space-y-2">
           <label
-            class="text-[10px] font-mono text-theme-muted uppercase tracking-widest"
+            class="text-micro font-mono text-theme-muted uppercase tracking-widest"
             for="map-file"
           >
             Image File
@@ -113,14 +113,14 @@
 
       <div class="flex gap-4 pt-4">
         <button
-          class="flex-1 px-6 py-3 border border-theme-border text-theme-muted rounded-lg hover:bg-theme-surface transition-colors uppercase text-[10px] font-bold font-header tracking-widest"
+          class="flex-1 px-6 py-3 border border-theme-border text-theme-muted rounded-lg hover:bg-theme-surface transition-colors uppercase text-micro font-bold font-header tracking-widest"
           onclick={onCancel}
         >
           Cancel
         </button>
         {#if mode === "image"}
           <button
-            class="flex-1 px-6 py-3 bg-theme-primary text-theme-bg rounded-lg font-bold uppercase font-header text-[10px] tracking-widest"
+            class="flex-1 px-6 py-3 bg-theme-primary text-theme-bg rounded-lg font-bold uppercase font-header text-micro tracking-widest"
             onclick={onUpload}
             disabled={!hasSelectedFile}
           >
@@ -128,7 +128,7 @@
           </button>
         {:else}
           <button
-            class="flex-1 px-6 py-3 bg-theme-primary text-theme-bg rounded-lg font-bold uppercase font-header text-[10px] tracking-widest"
+            class="flex-1 px-6 py-3 bg-theme-primary text-theme-bg rounded-lg font-bold uppercase font-header text-micro tracking-widest"
             onclick={onCreateBlank}
           >
             Create Blank Map

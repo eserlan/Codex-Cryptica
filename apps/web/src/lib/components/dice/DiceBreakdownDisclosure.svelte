@@ -33,7 +33,7 @@
   <div class="flex flex-col gap-2" data-testid="dice-disclosure">
     <button
       type="button"
-      class="flex w-fit items-center gap-1 rounded px-1 py-0.5 font-header text-[9px] font-bold uppercase tracking-widest text-theme-muted transition-colors hover:text-theme-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-theme-primary"
+      class="flex w-fit items-center gap-1 rounded px-1 py-0.5 font-header text-nano font-bold uppercase tracking-widest text-theme-muted transition-colors hover:text-theme-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-theme-primary"
       aria-expanded={open}
       aria-controls={regionId}
       onclick={() => (open = !open)}

@@ -533,7 +533,7 @@
         <div class="flex flex-wrap gap-2">
           {#each labels as label (label)}
             <span
-              class="rounded border border-theme-primary/30 bg-theme-primary/10 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-theme-primary"
+              class="rounded border border-theme-primary/30 bg-theme-primary/10 px-2 py-1 text-micro font-bold uppercase tracking-wider text-theme-primary"
               >{label}</span
             >
           {/each}

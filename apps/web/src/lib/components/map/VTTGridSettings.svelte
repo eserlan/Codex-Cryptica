@@ -62,7 +62,7 @@
     <div class="space-y-6">
       <div class="space-y-2">
         <label
-          class="text-[10px] font-mono text-theme-muted uppercase tracking-widest"
+          class="text-micro font-mono text-theme-muted uppercase tracking-widest"
           for="grid-size"
         >
           Grid Cell Size (Pixels)
@@ -86,7 +86,7 @@
       <div class="grid grid-cols-2 gap-4">
         <div class="space-y-2">
           <label
-            class="text-[10px] font-mono text-theme-muted uppercase tracking-widest"
+            class="text-micro font-mono text-theme-muted uppercase tracking-widest"
             for="grid-dist"
           >
             Distance per Cell
@@ -101,7 +101,7 @@
         </div>
         <div class="space-y-2">
           <label
-            class="text-[10px] font-mono text-theme-muted uppercase tracking-widest"
+            class="text-micro font-mono text-theme-muted uppercase tracking-widest"
             for="grid-unit"
           >
             Unit Name
@@ -119,13 +119,13 @@
       <div class="border-t border-theme-border pt-4 space-y-4">
         {#if mapSession.gridMoveMode}
           <div class="space-y-3">
-            <p class="text-[10px] text-theme-muted text-center">
+            <p class="text-micro text-theme-muted text-center">
               Drag the map to align it with the fixed grid
             </p>
           </div>
         {:else if mapSession.gridFitMode}
           <div class="space-y-3">
-            <p class="text-[10px] text-theme-muted text-center">
+            <p class="text-micro text-theme-muted text-center">
               Drag across a few grid squares rather than just one — it's much
               easier to land accurately on, say, 3 squares than exactly 1. While
               dragging, hold <span class="font-bold">Shift</span> and scroll to change
@@ -134,7 +134,7 @@
             </p>
             <button
               type="button"
-              class="w-full px-4 py-2 rounded-md border border-theme-border text-theme-muted hover:bg-theme-bg transition-all uppercase text-[10px] font-bold tracking-wider focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-theme-primary"
+              class="w-full px-4 py-2 rounded-md border border-theme-border text-theme-muted hover:bg-theme-bg transition-all uppercase text-micro font-bold tracking-wider focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-theme-primary"
               onclick={() => {
                 mapSession.gridFitMode = false;
               }}
@@ -145,7 +145,7 @@
         {:else}
           <button
             type="button"
-            class="w-full px-4 py-2.5 rounded-md border border-dashed border-theme-border text-theme-muted text-[10px] font-bold uppercase tracking-wider transition-all hover:border-theme-primary hover:text-theme-primary hover:bg-theme-primary/5 flex items-center justify-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-theme-primary"
+            class="w-full px-4 py-2.5 rounded-md border border-dashed border-theme-border text-theme-muted text-micro font-bold uppercase tracking-wider transition-all hover:border-theme-primary hover:text-theme-primary hover:bg-theme-primary/5 flex items-center justify-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-theme-primary"
             onclick={() => {
               mapSession.gridFitMode = true;
               close();
@@ -155,7 +155,7 @@
             ></span>
             Fit Grid from Map
           </button>
-          <p class="text-[9px] text-theme-muted mt-1 text-center italic">
+          <p class="text-nano text-theme-muted mt-1 text-center italic">
             Drag across a span of grid squares (default 3×3) to auto-detect cell
             size — Shift+Scroll while dragging changes the span
           </p>
@@ -163,7 +163,7 @@
           {#if mapStore.gridSize > 0}
             <button
               type="button"
-              class="w-full px-4 py-2.5 rounded-md border border-dashed border-theme-border text-theme-muted text-[10px] font-bold uppercase tracking-wider transition-all hover:border-theme-primary hover:text-theme-primary hover:bg-theme-primary/5 flex items-center justify-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-theme-primary"
+              class="w-full px-4 py-2.5 rounded-md border border-dashed border-theme-border text-theme-muted text-micro font-bold uppercase tracking-wider transition-all hover:border-theme-primary hover:text-theme-primary hover:bg-theme-primary/5 flex items-center justify-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-theme-primary"
               onclick={() => {
                 mapSession.gridMoveMode = true;
                 close();
@@ -178,7 +178,7 @@
               ></span>
               Move Map to Fine-tune
             </button>
-            <p class="text-[9px] text-theme-muted mt-1 text-center italic">
+            <p class="text-nano text-theme-muted mt-1 text-center italic">
               Drag the map under the fixed grid
             </p>
           {/if}
@@ -188,7 +188,7 @@
       <div class="pt-2 flex gap-3">
         <button
           type="button"
-          class="flex-1 px-4 py-2 border border-theme-border text-theme-muted rounded-md hover:bg-theme-bg transition-all uppercase text-[10px] font-bold tracking-wider focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-theme-primary"
+          class="flex-1 px-4 py-2 border border-theme-border text-theme-muted rounded-md hover:bg-theme-bg transition-all uppercase text-micro font-bold tracking-wider focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-theme-primary"
           onclick={close}
         >
           Close

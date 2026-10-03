@@ -39,7 +39,7 @@
         type="button"
         onclick={onEnd}
         disabled={isEnding}
-        class="text-[10px] font-bold uppercase tracking-wider text-theme-danger transition-colors hover:underline"
+        class="text-micro font-bold uppercase tracking-wider text-theme-danger transition-colors hover:underline"
         data-testid="end-session"
       >
         End Session
@@ -48,7 +48,7 @@
       <button
         type="button"
         onclick={onBack}
-        class="text-[10px] text-theme-muted transition-colors hover:text-theme-primary"
+        class="text-micro text-theme-muted transition-colors hover:text-theme-primary"
         data-testid="back-to-current-journal"
       >
         Back

@@ -505,7 +505,7 @@
   {#if favoriteGenerators.length > 0}
     <fieldset class="flex flex-col gap-2">
       <legend
-        class="mb-1 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-chrome-muted"
+        class="mb-1 flex items-center gap-1.5 text-micro font-bold uppercase tracking-wider text-chrome-muted"
       >
         <span
           aria-hidden="true"
@@ -548,7 +548,7 @@
                   {gen.label}
                 </span>
                 <span
-                  class="text-[10px] uppercase tracking-wider text-chrome-muted"
+                  class="text-micro uppercase tracking-wider text-chrome-muted"
                 >
                   Creates {entityTypeLabel}
                 </span>
@@ -599,7 +599,7 @@
   <div class="flex flex-col gap-3">
     <div class="flex items-center justify-between">
       <span
-        class="text-[10px] font-bold uppercase tracking-wider text-chrome-muted"
+        class="text-micro font-bold uppercase tracking-wider text-chrome-muted"
       >
         All Generators
       </span>
@@ -639,7 +639,7 @@
               </span>
             </span>
             <span
-              class="rounded-full bg-chrome-bg/60 px-2 py-0.5 text-[10px] font-medium text-chrome-muted"
+              class="rounded-full bg-chrome-bg/60 px-2 py-0.5 text-micro font-medium text-chrome-muted"
             >
               {group.generators.length}
             </span>
@@ -684,7 +684,7 @@
                           {gen.label}
                         </span>
                         <span
-                          class="text-[10px] uppercase tracking-wider text-chrome-muted"
+                          class="text-micro uppercase tracking-wider text-chrome-muted"
                         >
                           Creates {entityTypeLabel}
                         </span>
@@ -737,7 +737,7 @@
   {#if visibleOptions.length > 0}
     <fieldset class="flex flex-col gap-3">
       <legend
-        class="mb-1 text-[10px] font-bold uppercase tracking-wider text-chrome-muted"
+        class="mb-1 text-micro font-bold uppercase tracking-wider text-chrome-muted"
       >
         Generator options
       </legend>
@@ -754,7 +754,7 @@
             choices={choicesForOption(option)}
             {disabled}
             className="flex flex-col gap-1.5"
-            labelClass="text-[10px] font-bold uppercase tracking-wider text-chrome-muted"
+            labelClass="text-micro font-bold uppercase tracking-wider text-chrome-muted"
             inputClass="w-full rounded border border-chrome-border bg-chrome-bg/50 px-3 py-2 text-sm leading-relaxed text-chrome-text outline-none transition focus:border-chrome-accent focus:ring-1 focus:ring-chrome-accent disabled:opacity-50"
             customPlaceholder={`Enter a custom ${option.label.toLowerCase()}`}
           />
@@ -778,7 +778,7 @@
           <div class="flex flex-col gap-1">
             <label
               for={inputId}
-              class="text-[10px] font-bold uppercase tracking-wider text-chrome-muted"
+              class="text-micro font-bold uppercase tracking-wider text-chrome-muted"
             >
               {option.label}
             </label>
@@ -799,7 +799,7 @@
           <div class="flex flex-col gap-1">
             <label
               for={inputId}
-              class="text-[10px] font-bold uppercase tracking-wider text-chrome-muted"
+              class="text-micro font-bold uppercase tracking-wider text-chrome-muted"
             >
               {option.label}
             </label>
@@ -823,7 +823,7 @@
           <div class="flex flex-col gap-1">
             <label
               for={inputId}
-              class="text-[10px] font-bold uppercase tracking-wider text-chrome-muted"
+              class="text-micro font-bold uppercase tracking-wider text-chrome-muted"
             >
               {option.label}
             </label>
@@ -849,7 +849,7 @@
     <div class="flex flex-col gap-1.5">
       <label
         for="generator-primary-language"
-        class="text-[10px] font-bold uppercase tracking-wider text-chrome-muted"
+        class="text-micro font-bold uppercase tracking-wider text-chrome-muted"
       >
         Naming language
       </label>
@@ -888,7 +888,7 @@
   <div class="flex flex-col gap-1">
     <label
       for="gen-instructions"
-      class="text-[10px] font-bold uppercase tracking-wider text-chrome-muted"
+      class="text-micro font-bold uppercase tracking-wider text-chrome-muted"
     >
       Instructions <span class="normal-case font-normal">(optional)</span>
     </label>

@@ -198,7 +198,7 @@
       {#if mapSession.selectedTokens.size > 1 && mapSession.selectedTokens.has(tokenId)}
         <div class="h-px bg-theme-border my-1 mx-2"></div>
         <div
-          class="px-3 py-1 text-[9px] font-bold uppercase tracking-widest text-theme-muted"
+          class="px-3 py-1 text-nano font-bold uppercase tracking-widest text-theme-muted"
         >
           {mapSession.selectedTokens.size} tokens selected
         </div>
@@ -374,7 +374,7 @@
               }}
             >
               <span>Facing indicator</span>
-              <span class="text-[10px] text-theme-muted"
+              <span class="text-micro text-theme-muted"
                 >{_ctxToken?.facingIndicator ? "ON" : "OFF"}</span
               >
             </button>
@@ -400,7 +400,7 @@
             {#if _ctxTokenHasImage}
               <div class="h-px bg-theme-border my-1 mx-2"></div>
               <div
-                class="px-4 py-1 text-[9px] font-bold uppercase tracking-widest text-theme-muted"
+                class="px-4 py-1 text-nano font-bold uppercase tracking-widest text-theme-muted"
               >
                 Image focus
               </div>
@@ -581,7 +581,7 @@
                 <span class="flex-1">{effect.label}</span>
                 {#if isActive}
                   <span
-                    class="flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-full bg-amber-900/10 text-[11px] font-black leading-none text-amber-950 shadow-[0_0_0_1px_rgba(120,53,15,0.25)]"
+                    class="flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-full bg-amber-900/10 text-meta font-black leading-none text-amber-950 shadow-[0_0_0_1px_rgba(120,53,15,0.25)]"
                     aria-hidden="true"
                   >
                     ✓
