@@ -286,7 +286,7 @@
     <button
       type="button"
       onclick={onClose}
-      class="touch-target md:hidden text-theme-muted hover:text-theme-primary transition p-1 -ml-2 rounded-full shrink-0"
+      class="touch-target flex items-center justify-center md:hidden text-theme-muted hover:text-theme-primary transition p-1 -ml-2 rounded-full shrink-0"
       aria-label="Back"
     >
       <span aria-hidden="true" class="icon-[lucide--chevron-left] w-7 h-7"

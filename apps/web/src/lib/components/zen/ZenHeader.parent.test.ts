@@ -92,6 +92,19 @@ describe("ZenHeader parent selection", () => {
     expect(queryByTestId("zen-parent-indicator")).toBeNull();
   });
 
+  it("centres the mobile back icon inside its expanded touch target", () => {
+    const { getByRole } = renderHeader({});
+
+    expect(
+      getByRole("button", { name: "Back" }).classList.contains("flex"),
+    ).toBe(true);
+    expect(
+      getByRole("button", { name: "Back" }).classList.contains(
+        "justify-center",
+      ),
+    ).toBe(true);
+  });
+
   it("opens the shared picker on the entity in view", async () => {
     const { getByTestId } = renderHeader({});
 
