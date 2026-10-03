@@ -87,6 +87,11 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://codexcryptica.com/topics/pirates</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://codexcryptica.com/tools/vampire-clan-generator</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
@@ -542,7 +547,17 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://codexcryptica.com/answers/can-multiple-gods-share-a-domain</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://codexcryptica.com/answers/can-you-play-a-tabletop-rpg-in-30-minute-sessions</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://codexcryptica.com/answers/how-common-should-magic-be-in-a-fantasy-world</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
@@ -607,6 +622,11 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://codexcryptica.com/answers/how-do-i-handle-players-asking-an-npc-to-tell-us-everything-you-know</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://codexcryptica.com/answers/how-do-i-make-a-player-base-matter-in-an-rpg-campaign</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
@@ -617,7 +637,17 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://codexcryptica.com/answers/how-do-i-make-interviewing-npcs-interesting-in-an-investigation</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://codexcryptica.com/answers/how-do-i-make-rival-captains-navies-and-pirate-factions-matter</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://codexcryptica.com/answers/how-do-i-make-sea-travel-interesting-in-a-ttrpg</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
@@ -653,6 +683,11 @@
   </url>
   <url>
     <loc>https://codexcryptica.com/answers/how-do-i-run-a-large-battle-when-the-player-characters-are-part-of-an-army</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://codexcryptica.com/answers/how-do-i-run-a-pirate-campaign-focused-on-exploration</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
@@ -703,6 +738,11 @@
   </url>
   <url>
     <loc>https://codexcryptica.com/answers/how-do-i-run-political-intrigue-and-faction-play</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://codexcryptica.com/answers/how-do-i-run-ship-to-ship-combat-without-sidelining-the-party</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
@@ -972,6 +1012,21 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://codexcryptica.com/answers/how-does-magic-affect-politics-and-government</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://codexcryptica.com/answers/how-does-magic-change-society-in-a-fantasy-world</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://codexcryptica.com/answers/how-does-magic-create-social-classes-and-inequality</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://codexcryptica.com/answers/how-long-should-a-ttrpg-session-be</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
@@ -998,6 +1053,11 @@
   </url>
   <url>
     <loc>https://codexcryptica.com/answers/how-much-rule-of-cool-should-a-dm-allow</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://codexcryptica.com/answers/how-should-magic-have-been-discovered-in-my-world</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
@@ -1127,6 +1187,11 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://codexcryptica.com/answers/what-ttrpg-should-i-play-for-a-pirate-campaign</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://codexcryptica.com/answers/what-ttrpg-should-i-use-for-a-fantasy-dungeon-crawl</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
@@ -1240,6 +1305,12 @@
     <loc>https://codexcryptica.com/examples/the-null-key-reliquary-cyberpunk-puzzle</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://codexcryptica.com/blog/entity-detail-views</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <lastmod>2026-10-02T12:00:00.000Z</lastmod>
   </url>
   <url>
     <loc>https://codexcryptica.com/blog/generate-here-use-it-anywhere</loc>
