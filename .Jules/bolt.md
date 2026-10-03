@@ -17,3 +17,8 @@
 
 **Learning:** When using `[...string.matchAll(regex)]` to extract multiple matches from a string (such as HTML or markdown parsing), it eagerly forces the Javascript engine to allocate an intermediate array to hold all the match objects. In hot paths or large files (like parsing large HTML sitemaps or markdown), this creates unnecessary garbage collection pressure and memory usage, particularly if the values are simply iterated over or counted.
 **Action:** Replace `[...string.matchAll(regex)]` and `Array.from(string.matchAll(regex))` with an imperative `for...of` loop over the raw iterator (e.g. `for (const match of string.matchAll(regex)) { ... }`) to process the matches lazily, significantly reducing intermediate array allocations.
+
+## 2025-02-18 - Replace Object.values with imperative loop over keys when importing buffer indices
+
+**Learning:** When importing indexed datasets (such as a serialized flexsearch index) that may be segmented and stored as JSON payloads, extracting the byte arrays via `Object.values(buffer)` forces heavy intermediate array allocation. In large indexes, this creates unnecessary garbage collection overhead before wrapping it into `Uint8Array`.
+**Action:** Replace `Object.values(buffer ?? {})` inside large parsing workflows (e.g. `SearchEngine.importIndex`) with an imperative `for...in` loop over keys to explicitly determine the count and place each entry into a `Uint8Array` directly, bypassing the intermediate javascript array entirely.
