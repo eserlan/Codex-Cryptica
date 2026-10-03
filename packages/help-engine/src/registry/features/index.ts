@@ -1,3 +1,11 @@
+import { sessionJournal } from "./session-journal";
+import { entityReports } from "./entity-reports";
+import { statSheets } from "./stat-sheets";
+import { entityTemplates } from "./entity-templates";
+import { chronology } from "./chronology";
+import { familyTree } from "./family-tree";
+import { guidedMode } from "./guided-mode";
+import { sessionPrep } from "./session-prep";
 import type { FeatureEntry } from "../schema";
 import { archiveImport } from "./archive-import";
 import { backupAndRestore } from "./backup-and-restore";
@@ -11,7 +19,7 @@ import { sessionHub } from "./session-hub";
 import { tables } from "./tables";
 import { vttMap } from "./vtt-map";
 
-/** The proof-of-concept feature registry (spec FR-011). */
+/** Contextual Help coverage. Entries reference shared user-facing Help articles. */
 export const FEATURE_REGISTRY: readonly FeatureEntry[] = [
   entityConnections,
   graphView,
@@ -24,4 +32,12 @@ export const FEATURE_REGISTRY: readonly FeatureEntry[] = [
   relatedEntityGeneration,
   backupAndRestore,
   archiveImport,
+  sessionJournal,
+  entityReports,
+  statSheets,
+  entityTemplates,
+  chronology,
+  familyTree,
+  guidedMode,
+  sessionPrep,
 ];

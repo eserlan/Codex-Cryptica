@@ -15,6 +15,8 @@ import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
 import { HelpAssistantStore } from "./help-assistant.svelte";
 import { HelpContextStore } from "./help-context.svelte";
 import { helpSurfaces } from "./help-surface.svelte";
+import { quickNoteStore } from "$lib/stores/quicknote.svelte";
+import { reportPanelStore } from "$lib/stores/ui/report-panel.svelte";
 
 /**
  * Production wiring for the help assistant. The classes take their
@@ -32,6 +34,13 @@ export const helpContext = new HelpContextStore({
   getOpenSettingsTab: () =>
     modalUIStore.showSettings ? modalUIStore.activeSettingsTab : null,
   isGuestMode: () => sessionModeStore.isGuestMode,
+  getOpenHelpArea: () =>
+    reportPanelStore.request
+      ? "entity-reports"
+      : quickNoteStore.isOpen && quickNoteStore.activeTab === "journal"
+        ? "session-journal"
+        : null,
+  journalAvailable: () => generatorsAvailable(vault, sessionModeStore),
 });
 
 const helpIds = () => new Set(getHelpArticles().map((article) => article.id));
@@ -55,6 +64,7 @@ const DESTINATIONS: Record<DestinationId, string> = {
   canvas: `${base}/canvas`,
   map: `${base}/map`,
   import: `${base}/import`,
+  timeline: `${base}/timeline`,
 };
 
 function waitFor(check: () => boolean, ms: number): Promise<boolean> {
@@ -78,6 +88,7 @@ export const helpActionRunner = new HelpActionRunner({
   destinationPath: (destination) => DESTINATIONS[destination],
   openHelp: (id) => helpStore.openHelpToArticle(id),
   openSettings: (tab) => modalUIStore.openSettings(tab),
+  openJournal: () => quickNoteStore.openJournal(),
   openGenerator: (generatorId) =>
     modalUIStore.openGeneratorWorkflow(generatorId ?? null),
   waitFor,

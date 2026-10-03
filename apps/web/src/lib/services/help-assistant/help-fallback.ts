@@ -1,5 +1,6 @@
 import {
   FEATURE_REGISTRY,
+  featureMatchesScreen,
   type FeatureEntry,
   type HelpContext,
 } from "help-engine";
@@ -63,7 +64,7 @@ export function buildFallback(
   const seen = new Set<string>();
   const topics: HelpTopicLink[] = [];
   for (const feature of features) {
-    if (!feature.areas.includes(context.area)) continue;
+    if (!featureMatchesScreen(feature, context)) continue;
     for (const helpId of feature.helpIds) {
       if (seen.has(helpId) || topics.length >= MAX_TOPICS) continue;
       const title = deps.titleFor(helpId);

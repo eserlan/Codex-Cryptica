@@ -18,11 +18,17 @@ export interface HelpContextSources {
   getOpenSettingsTab: () => string | null;
   /** Guest and demo vaults have no Settings guides: nothing there can be changed. */
   isGuestMode: () => boolean;
+  /** Read-only overlay state, without any selected IDs or content. */
+  getOpenHelpArea?: () => "session-journal" | "entity-reports" | null;
+  journalAvailable?: () => boolean;
 }
 
 const ROUTE_AREAS: Record<string, HelpArea> = {
   "/(app)/tables": "tables",
   "/(app)/canvas": "canvas",
+  "/(app)/canvas/[slug]": "canvas",
+  "/(app)/timeline": "chronology",
+  "/(marketing)/tools/session-prep-builder": "session-prep",
   "/(app)/map": "map",
   "/(app)/import": "import",
   "/(app)": "graph",
@@ -35,6 +41,8 @@ function areaFor(
   // The most specific thing on top wins: an open Settings dialog covers
   // everything under it, then the generator dialog, then an open entry.
   if (sources.getOpenSettingsTab() !== null) return "settings";
+  const overlay = sources.getOpenHelpArea?.();
+  if (overlay) return overlay;
   if (sources.isGeneratorOpen()) return "generators";
   if (sources.surfaces.zenEntityDetail || sources.surfaces.entityDetail)
     return "entity-detail";
@@ -51,14 +59,21 @@ function flagsFor(
   return flags;
 }
 
+function entityTabActions(
+  surface: NonNullable<HelpSurfaceRegistry["entityDetail"]>,
+): string[] {
+  if (surface.canSwitchTabs?.() === false) return [];
+  const tabs = ["status-tab", "connections-tab", "stats-tab", "timeline-tab"];
+  if (surface.entityKind() === "character") tabs.push("family-tab");
+  return tabs;
+}
+
 function entityActionsFor(
   surface: HelpContextSources["surfaces"]["entityDetail"],
 ): string[] {
   if (!surface) return [];
 
-  const actions: string[] = [];
-  const canSwitchTabs = surface.canSwitchTabs?.() !== false;
-  if (canSwitchTabs) actions.push("status-tab", "connections-tab");
+  const actions = entityTabActions(surface);
 
   const onStatusTab = surface.activeTab() === "status";
   if (onStatusTab && surface.canAddConnection()) {
@@ -78,6 +93,8 @@ function availableActionsFor(
   const actions = entityActionsFor(surface);
   // Settings is reachable from every screen of a real vault.
   if (!sources.isGuestMode()) actions.push(...SETTINGS_PANEL_IDS);
+  if (!sources.isGuestMode() && sources.journalAvailable?.())
+    actions.push("session-journal");
   return actions;
 }
 

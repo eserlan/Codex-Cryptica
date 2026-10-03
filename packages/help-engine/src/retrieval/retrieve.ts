@@ -3,6 +3,7 @@ import type { HelpContext } from "../context";
 import type { HelpTurn } from "../prompt/build";
 import type { FeatureEntry } from "../registry/schema";
 import { contextualizeQuery } from "./contextualize";
+import { featureMatchesScreen } from "../registry/matches-screen";
 import { MIN_RELEVANCE, rankChunks, type ScoredChunk } from "./rank";
 
 export interface RetrieveOptions {
@@ -167,7 +168,7 @@ export function retrieve(
     options.queryVector,
   );
   const screenFeatures = bundle.features.filter((f) =>
-    f.areas.includes(ctx.area),
+    featureMatchesScreen(f, ctx),
   );
   const topRelevance = ranked.reduce((max, r) => Math.max(max, r.relevance), 0);
   const noMatch = topRelevance < floor;

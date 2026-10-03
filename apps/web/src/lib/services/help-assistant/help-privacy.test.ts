@@ -122,6 +122,8 @@ describe("what leaves the browser when asking for help", () => {
       "generators",
       "status-tab",
       "connections-tab",
+      "stats-tab",
+      "timeline-tab",
       // closed catalogue ids for the Settings tabs
       ...SETTINGS_PANEL_IDS,
     ]);
