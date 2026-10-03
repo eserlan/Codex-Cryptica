@@ -19,7 +19,11 @@ export function areAllCanvasEntityNodesImageOnly(nodes: Node[]): boolean {
   const entityNodes = getCanvasEntityNodes(nodes);
   return (
     entityNodes.length > 0 &&
-    entityNodes.every((node) => node.data.cardView === "image_only")
+    entityNodes.every(
+      (node) =>
+        (node.data as Record<string, unknown> | undefined)?.cardView ===
+        "image_only",
+    )
   );
 }
 

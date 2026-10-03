@@ -28,6 +28,16 @@ describe("canvas entity card preferences", () => {
     expect(areAllCanvasEntityNodesImageOnly([file])).toBe(false);
   });
 
+  it("treats an entity node without data as not image-only", () => {
+    const entityWithoutData = {
+      id: "entity-no-data",
+      type: "entity",
+      position: { x: 0, y: 0 },
+    } as Node;
+
+    expect(areAllCanvasEntityNodesImageOnly([entityWithoutData])).toBe(false);
+  });
+
   it("sets all entity cards to image-only, then back to automatic view", () => {
     const entity = node("entity", "entity", { title: "Keep me" });
     const legacyEntity = node("legacy", undefined, { entityId: "e-1" });
