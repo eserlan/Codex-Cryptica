@@ -2497,6 +2497,10 @@ that world’s session.
 
 Reference answers to real RPG and worldbuilding questions, indexed at https://codexcryptica.com/answers. Each page states the direct answer first, then the framework behind it and a concrete example.
 
+### [Can multiple gods or supernatural beings share the same domain?](https://codexcryptica.com/answers/can-multiple-gods-share-a-domain)
+
+**Direct answer:** Yes. A world can give several gods or other supernatural beings influence over the same concept, with each expressing a different aspect, claiming it in a different culture, or competing for the same power. Decide what their overlap means to worshippers and play, rather than treating every domain as exclusive by default.
+
 ### [Can you play a tabletop RPG in 30-minute sessions?](https://codexcryptica.com/answers/can-you-play-a-tabletop-rpg-in-30-minute-sessions)
 
 **Direct answer:** Yes, but a 30-minute session has to be designed as a short episode rather than a compressed version of a normal three to four hour session. Prepare one meaningful scene, problem, decision, or encounter that can produce a real change in about half an hour, start at the interesting moment instead of narrating the approach to it, and move levelling, shopping, and long rules discussion outside the slot when the group is willing. Combat can work if it's scoped for the window: fewer, more meaningful enemies, a clear objective, and a willingness to let a fight run into next time rather than forcing it to finish. Stop the session once something has genuinely changed.

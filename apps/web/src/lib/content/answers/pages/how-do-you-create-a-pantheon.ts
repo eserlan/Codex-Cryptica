@@ -130,6 +130,7 @@ export const howDoYouCreateAPantheon: AnswerConfigInput = {
   ],
   relatedAnswers: [
     "what-is-the-difference-between-gods-and-demon-lords-in-a-fantasy-world",
+    "can-multiple-gods-share-a-domain",
     "how-do-you-create-a-believable-fictional-religion",
     "how-do-you-create-a-fantasy-faction",
     "how-do-you-organise-rpg-campaign-notes",
@@ -148,6 +149,7 @@ export const howDoYouCreateAPantheon: AnswerConfigInput = {
       "generator-pantheon-generator",
       "answer-fictional-religion",
       "answer-gods-vs-demon-lords",
+      "answer-overlapping-divine-domains",
     ],
     acknowledgedOverlap: [
       {
@@ -159,6 +161,11 @@ export const howDoYouCreateAPantheon: AnswerConfigInput = {
         with: "answer-gods-vs-demon-lords",
         reason:
           "Pantheon covers the relationships among gods and their portfolios; the gods and demon lords answer compares divine office and other supernatural natures across a wider cosmology.",
+      },
+      {
+        with: "answer-overlapping-divine-domains",
+        reason:
+          "Pantheon design covers the relationships between gods, while the overlapping-domains answer focuses on the cosmological models and table consequences of shared claims.",
       },
     ],
   },
