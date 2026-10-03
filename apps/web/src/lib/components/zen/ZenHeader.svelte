@@ -286,7 +286,7 @@
     <button
       type="button"
       onclick={onClose}
-      class="md:hidden text-theme-muted hover:text-theme-primary transition p-1 -ml-2 rounded-full shrink-0"
+      class="touch-target md:hidden text-theme-muted hover:text-theme-primary transition p-1 -ml-2 rounded-full shrink-0"
       aria-label="Back"
     >
       <span aria-hidden="true" class="icon-[lucide--chevron-left] w-7 h-7"
@@ -312,7 +312,7 @@
                 console.error("[DelveCanvas] ZenHeader build failed:", err);
               }
             }}
-            class="px-2 md:px-3 py-1.5 border border-theme-border text-theme-secondary hover:text-theme-primary transition flex items-center gap-1.5 rounded text-micro md:text-xs font-bold tracking-widest cursor-pointer"
+            class="touch-target px-2 md:px-3 py-1.5 border border-theme-border text-theme-secondary hover:text-theme-primary transition flex items-center gap-1.5 rounded text-micro md:text-xs font-bold tracking-widest cursor-pointer"
             title={existingCanvas
               ? `Open ${delveCanvasLabel}`
               : `Build ${delveCanvasLabel}`}
@@ -374,7 +374,7 @@
             onclick={handleSendToMonsterLabs}
             disabled={monsterLabsFlow.open}
             aria-busy={monsterLabsFlow.state === "loading"}
-            class="px-2 md:px-3 py-1.5 border border-theme-border text-theme-secondary hover:text-theme-primary transition flex items-center gap-2 rounded text-micro md:text-xs font-bold tracking-widest disabled:opacity-50"
+            class="touch-target px-2 md:px-3 py-1.5 border border-theme-border text-theme-secondary hover:text-theme-primary transition flex items-center gap-2 rounded text-micro md:text-xs font-bold tracking-widest disabled:opacity-50"
             title="{getMonsterLabsActionLabel(
               entity.type,
             )} — opens monsterlabs.app in a new tab"
@@ -420,7 +420,7 @@
           <button
             type="button"
             onclick={() => guestChatStore.openChat(entity.id, entity.title)}
-            class="px-2 md:px-3 py-1.5 border border-theme-border text-theme-secondary hover:text-theme-primary transition flex items-center gap-2 rounded text-micro md:text-xs font-bold tracking-widest"
+            class="touch-target px-2 md:px-3 py-1.5 border border-theme-border text-theme-secondary hover:text-theme-primary transition flex items-center gap-2 rounded text-micro md:text-xs font-bold tracking-widest"
             title="Chat with character"
             aria-label="Chat with character"
             data-testid="zen-guest-chat-button"
@@ -435,7 +435,7 @@
           <button
             type="button"
             onclick={handleCopyGuestLink}
-            class="px-2 md:px-3 py-1.5 border border-theme-border {linkCopied
+            class="touch-target px-2 md:px-3 py-1.5 border border-theme-border {linkCopied
               ? 'text-theme-primary'
               : 'text-theme-secondary hover:text-theme-primary'} transition flex items-center gap-2 rounded text-micro md:text-xs font-bold tracking-widest"
             title={linkCopied ? "Link copied!" : "Copy link to this entity"}
@@ -453,7 +453,7 @@
         <button
           type="button"
           onclick={onCopy}
-          class="px-2 md:px-3 py-1.5 border border-theme-border text-theme-secondary hover:text-theme-primary transition flex items-center gap-2 rounded text-micro md:text-xs font-bold tracking-widest"
+          class="touch-target px-2 md:px-3 py-1.5 border border-theme-border text-theme-secondary hover:text-theme-primary transition flex items-center gap-2 rounded text-micro md:text-xs font-bold tracking-widest"
           title="Copy Content"
           aria-label="Copy Content"
         >
@@ -479,7 +479,7 @@
           disabled={isDraftActioning}
           title="Approve draft"
           aria-label="Approve draft"
-          class="flex items-center gap-2 rounded border border-theme-primary/40 px-2 py-1.5 text-micro font-bold tracking-widest text-theme-primary transition hover:bg-theme-primary/10 disabled:opacity-50 md:px-4 md:text-xs"
+          class="touch-target flex items-center gap-2 rounded border border-theme-primary/40 px-2 py-1.5 text-micro font-bold tracking-widest text-theme-primary transition hover:bg-theme-primary/10 disabled:opacity-50 md:px-4 md:text-xs"
           data-testid="approve-draft-button"
         >
           <span aria-hidden="true" class="icon-[lucide--check] h-3 w-3"></span>
@@ -491,7 +491,7 @@
           disabled={isDraftActioning}
           title="Reject draft"
           aria-label="Reject draft"
-          class="flex items-center gap-2 rounded border border-theme-danger/40 px-2 py-1.5 text-micro font-bold tracking-widest text-theme-danger transition hover:bg-theme-danger/10 disabled:opacity-50 md:px-4 md:text-xs"
+          class="touch-target flex items-center gap-2 rounded border border-theme-danger/40 px-2 py-1.5 text-micro font-bold tracking-widest text-theme-danger transition hover:bg-theme-danger/10 disabled:opacity-50 md:px-4 md:text-xs"
           data-testid="reject-draft-button"
         >
           <span aria-hidden="true" class="icon-[lucide--trash-2] h-3 w-3"
@@ -515,7 +515,7 @@
         {/if}
         <button
           onclick={onStartEdit}
-          class="px-2 md:px-4 py-1.5 border border-theme-border text-theme-secondary hover:text-theme-primary text-micro md:text-xs font-bold rounded tracking-widest transition flex items-center gap-2"
+          class="touch-target px-2 md:px-4 py-1.5 border border-theme-border text-theme-secondary hover:text-theme-primary text-micro md:text-xs font-bold rounded tracking-widest transition flex items-center gap-2"
           data-testid="edit-entity-button"
         >
           <span class="icon-[lucide--edit-2] w-3 h-3"></span>
@@ -524,14 +524,14 @@
       {:else if editState.isEditing}
         <button
           onclick={onCancelEdit}
-          class="px-2 md:px-4 py-1.5 text-theme-muted hover:text-theme-text text-micro md:text-xs font-bold rounded tracking-widest transition"
+          class="touch-target px-2 md:px-4 py-1.5 text-theme-muted hover:text-theme-text text-micro md:text-xs font-bold rounded tracking-widest transition"
         >
           CANCEL
         </button>
         <button
           onclick={onSave}
           disabled={isSaving}
-          class="px-2 md:px-4 py-1.5 bg-theme-primary hover:bg-theme-secondary disabled:opacity-50 text-theme-bg text-micro md:text-xs font-bold rounded tracking-widest transition flex items-center gap-2"
+          class="touch-target px-2 md:px-4 py-1.5 bg-theme-primary hover:bg-theme-secondary disabled:opacity-50 text-theme-bg text-micro md:text-xs font-bold rounded tracking-widest transition flex items-center gap-2"
         >
           {#if isSaving}
             <span class="icon-[lucide--loader-2] w-3 h-3 animate-spin"></span>
@@ -547,7 +547,7 @@
         <button
           type="button"
           onclick={onPopOut}
-          class="px-2 md:px-3 py-1.5 border border-theme-border text-theme-secondary hover:text-theme-primary transition flex items-center gap-2 rounded text-micro md:text-xs font-bold tracking-widest"
+          class="touch-target px-2 md:px-3 py-1.5 border border-theme-border text-theme-secondary hover:text-theme-primary transition flex items-center gap-2 rounded text-micro md:text-xs font-bold tracking-widest"
           title="Open in new tab"
           aria-label="Open in new tab"
         >
