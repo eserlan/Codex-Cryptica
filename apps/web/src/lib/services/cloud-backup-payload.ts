@@ -1,9 +1,16 @@
 import type { LocalEntity } from "$lib/stores/vault/types";
 import type { CloudBackupTiming } from "@codex/cloud-backup-sync";
 
+import { systemClock, type Clock } from "../utils/runtime-deps";
+
 /** Monotonic clock for stage timings; counts, bytes and ms only, never content. */
-function nowMs(): number {
-  return typeof performance !== "undefined" ? performance.now() : Date.now();
+function nowMs(clock: Clock = systemClock): number {
+  // Try to use performance.now() if clock is systemClock and performance is available,
+  // else fallback to clock.now() which allows test injections.
+  if (clock === systemClock && typeof performance !== "undefined") {
+    return performance.now();
+  }
+  return clock.now();
 }
 
 /**
@@ -25,6 +32,7 @@ function nowMs(): number {
  */
 
 export interface CloudBackupPayloadDeps {
+  clock?: Clock;
   /** Resolves a vault-relative path to a fetchable URL, as the vault store does. */
   resolveImageUrl: (path: string) => Promise<string | null | undefined>;
   fetch?: typeof fetch;
@@ -181,13 +189,13 @@ export async function buildCloudBackupPayload(
 ): Promise<CloudBackupPayloadResult> {
   let list = entities as readonly LocalEntity[];
   const skippedEntities: string[] = [];
-  const buildStartedAt = nowMs();
+  const buildStartedAt = nowMs(deps.clock);
 
   // Before anything else: the snapshot must hold real markdown, not the
   // warm-start preview. Asset collection reads the hydrated list too, since
   // hydration can replace the records it scans.
   if (deps.hydrateEntities) {
-    const hydrateStartedAt = nowMs();
+    const hydrateStartedAt = nowMs(deps.clock);
     const result = await hydrateEntityContent(
       list,
       deps.hydrateEntities,
@@ -198,7 +206,7 @@ export async function buildCloudBackupPayload(
     skippedEntities.push(...result.skippedEntities);
     deps.onTiming?.({
       stage: "hydrate",
-      durationMs: nowMs() - hydrateStartedAt,
+      durationMs: nowMs(deps.clock) - hydrateStartedAt,
       count: entities.length,
     });
   }
@@ -238,7 +246,7 @@ export async function buildCloudBackupPayload(
 
   deps.onTiming?.({
     stage: "build",
-    durationMs: nowMs() - buildStartedAt,
+    durationMs: nowMs(deps.clock) - buildStartedAt,
     count: list.length,
     bytes: assetBytesTotal,
   });
@@ -275,6 +283,7 @@ export interface CloudBackupChange {
 }
 
 export interface CloudBackupDeltaDeps {
+  clock?: Clock;
   /** The entity as held in memory, or undefined once it no longer exists. */
   getEntity: (id: string) => LocalEntity | undefined;
   hydrateEntities: EntityHydrator;
@@ -321,12 +330,12 @@ export async function buildCloudBackupDelta(
     return null;
   }
 
-  const buildStartedAt = nowMs();
+  const buildStartedAt = nowMs(deps.clock);
   const entities = await readChangedEntities(entityChanges, deps);
   if (!entities) return null;
   deps.onTiming?.({
     stage: "build",
-    durationMs: nowMs() - buildStartedAt,
+    durationMs: nowMs(deps.clock) - buildStartedAt,
     count: entities.upserts.length + entities.deletes.length,
   });
 
