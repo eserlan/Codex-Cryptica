@@ -53,6 +53,8 @@ vi.mock("$lib/stores/ui/session-mode.svelte", () => ({
   sessionModeStore: sessionModeStoreMock,
 }));
 
+import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
+import { mapControlsUIStore } from "$lib/stores/ui/map-controls-ui.svelte";
 import MapVTTControlsHUD from "./MapVTTControlsHUD.svelte";
 
 describe("MapVTTControlsHUD", () => {
@@ -65,6 +67,8 @@ describe("MapVTTControlsHUD", () => {
     mapStoreMock.showGrid = false;
     mapStoreMock.showLabels = true;
     mapSessionMock.vttEnabled = true;
+    layoutUIStore.isMobile = false;
+    mapControlsUIStore.open = false;
     mapSessionMock.showGridSettings = false;
     mapSessionMock.measurement.active = false;
     mapSessionMock.activeLayer = "terrain";
@@ -83,6 +87,51 @@ describe("MapVTTControlsHUD", () => {
 
     expect(mapStoreMock.showFog).toBe(false);
     expect(screen.getByRole("button", { name: "GRID: OFF" })).not.toBeNull();
+  });
+
+  describe("reveal / hide on phones", () => {
+    it("starts hidden behind a button and exposes its state", () => {
+      layoutUIStore.isMobile = true;
+      render(MapVTTControlsHUD, { props: { chatSidebarOffset: "20rem" } });
+
+      const fab = screen.getByRole("button", { name: "Map Controls" });
+      expect(fab.getAttribute("aria-expanded")).toBe("false");
+      expect(fab.className).toContain("touch-target");
+      expect(screen.queryByRole("button", { name: "LABELS: ON" })).toBeNull();
+    });
+
+    it("reveals the controls when the button is pressed and hides them again", async () => {
+      layoutUIStore.isMobile = true;
+      render(MapVTTControlsHUD, { props: { chatSidebarOffset: "20rem" } });
+      const fab = screen.getByRole("button", { name: "Map Controls" });
+
+      await fireEvent.click(fab);
+      expect(fab.getAttribute("aria-expanded")).toBe("true");
+      expect(screen.getByRole("button", { name: "LABELS: ON" })).not.toBeNull();
+      expect(fab.getAttribute("aria-controls")).toBe("map-controls-bar");
+      expect(document.getElementById("map-controls-bar")).not.toBeNull();
+
+      await fireEvent.click(fab);
+      expect(fab.getAttribute("aria-expanded")).toBe("false");
+      expect(screen.queryByRole("button", { name: "LABELS: ON" })).toBeNull();
+    });
+
+    it("has no button and shows the controls on larger screens", () => {
+      layoutUIStore.isMobile = false;
+      render(MapVTTControlsHUD, { props: { chatSidebarOffset: "20rem" } });
+
+      expect(screen.queryByRole("button", { name: "Map Controls" })).toBeNull();
+      expect(screen.getByRole("button", { name: "LABELS: ON" })).not.toBeNull();
+    });
+
+    it("does not offer the button to guests, who have no controls to reveal", () => {
+      layoutUIStore.isMobile = true;
+      sessionModeStoreMock.isGuestMode = true;
+      render(MapVTTControlsHUD, { props: { chatSidebarOffset: "20rem" } });
+
+      expect(screen.queryByRole("button", { name: "Map Controls" })).toBeNull();
+      sessionModeStoreMock.isGuestMode = false;
+    });
   });
 
   it("wraps on narrow screens and only the bar takes pointer events", () => {
