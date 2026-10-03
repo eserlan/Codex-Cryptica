@@ -208,17 +208,17 @@
       tabindex="-1"
     />
     <div class="mb-4 px-4 md:px-6">
-      <div class="flex items-center gap-2">
+      <div class="flex items-stretch gap-2">
         <button
           type="button"
           onclick={() => fileInput?.click()}
-          class="touch-target flex-1 rounded border border-theme-border bg-theme-surface px-3 py-2 text-micro font-bold uppercase tracking-widest text-theme-text transition hover:border-theme-primary hover:bg-theme-bg/50"
+          class="touch-target flex flex-1 items-center justify-center gap-1.5 text-center rounded border border-theme-border bg-theme-surface px-3 py-2 text-micro font-bold uppercase tracking-widest text-theme-text transition hover:border-theme-primary hover:bg-theme-bg/50"
           aria-describedby={imageUploadError
             ? "entity-image-upload-error"
             : undefined}
         >
           <span
-            class="icon-[lucide--upload] mr-2 inline-block h-4 w-4 align-middle text-theme-primary"
+            class="icon-[lucide--upload] inline-block h-4 w-4 shrink-0 text-theme-primary"
             aria-hidden="true"
           ></span>
           {entity.image ? "Replace image" : "Choose image"}
@@ -227,11 +227,11 @@
         <button
           type="button"
           onclick={() => modalUIStore.openSilhouettePicker(entity)}
-          class="touch-target rounded border border-theme-border bg-theme-surface px-3 py-2 text-micro font-bold uppercase tracking-widest text-theme-text transition hover:border-theme-primary hover:bg-theme-bg/50 flex items-center gap-1.5"
+          class="touch-target rounded border border-theme-border bg-theme-surface px-3 py-2 text-micro font-bold uppercase tracking-widest text-theme-text transition hover:border-theme-primary hover:bg-theme-bg/50 flex items-center justify-center gap-1.5"
           title="Customize vector silhouette"
         >
           <span
-            class="icon-[lucide--user] inline-block h-4 w-4 text-theme-accent"
+            class="icon-[lucide--user] inline-block h-4 w-4 shrink-0 text-theme-accent"
             aria-hidden="true"
           ></span>
           Silhouette
