@@ -21,7 +21,7 @@ See [Map Mode](/help#help/map-mode).
 ### Core Features
 
 - **Infinite Workspace**: Pan and zoom across an unlimited board to organize your narrative.
-- **Persistent Layouts**: Your card coordinates and custom links are saved directly to `.canvas` files in your vault.
+- **Persistent Layouts**: Card positions, sizes, rotations, locks, layer order, links and drawings are saved with the canvas in your vault. Changes save automatically; reopen the same canvas to continue where you left off.
 - **Freehand Annotations**: Select **Draw on canvas**, choose a color, and sketch notes, routes, or highlights directly on the board. Drawings stay aligned while you pan and zoom and are saved with the canvas. Use the eraser and select a stroke to remove it.
 - **Rotatable Cards**: Twist two fingers over a card to rotate it. On desktop, select a card and drag the rotation handle above it. Rotation is free-form and can continue through multiple turns.
 - **Themed Components**: The **MiniMap** and all UI elements adapt to your active theme (Fantasy, Sci-Fi, etc.), ensuring a cohesive aesthetic.
@@ -35,7 +35,36 @@ You can also right-click nodes in the **Knowledge Graph** and use **Add to Canva
 
 ### Managing Canvases
 
-Click the **workspace name** in the top-left HUD to open the **Canvas Manager**. From there you can create new canvases, rename or delete existing ones, and switch between boards.
+Click the **workspace name** in the top-left HUD to open the **Canvas Manager**. Create a canvas by choosing **New Canvas** and entering a name. Select a canvas to switch to it; use its rename or delete control to manage it. Each canvas keeps its own layout, so you can use separate boards for different topics.
+
+## Positioning, ordering and layout
+
+### Move cards freely
+
+Drag a card to place it anywhere on the board. Drag an entity from the Entity Explorer onto the canvas to add it at the drop point. Canvas placement is freeform: the background grid is a visual guide, and cards are not snapped to grid positions. There are no general alignment guides or automatic sorting by name, type or date.
+
+When multiple cards are selected, dragging one selected card moves the selected cards together. Use the canvas selection gesture for your platform to add cards to the selection. You can also select multiple entities in the Knowledge Graph with **Shift-click**, then right-click and choose **Add to Canvas** to add them together.
+
+### Overlap and layer order
+
+Cards can overlap. If one hides another, right-click the card you want to adjust and choose **Bring to Front** or **Send to Back**. This changes which card appears on top; it does not change its position. These commands apply to one card at a time.
+
+### Lock a card
+
+To keep a card from being moved accidentally, right-click it and choose **Lock in Place**. Right-click it again and choose **Unlock** when you want to move it. Locking disables dragging; it does not remove the card or its links.
+
+### Auto-arrange
+
+Select the wand-shaped **Auto-arrange** button beside the canvas name to rearrange the board's cards. This is an explicit layout command, not continuous sorting: after it runs, you can move cards manually again. Auto-arrange lays out the current board's supported nodes; it does not provide rules such as sorting alphabetically or aligning only a selected subset. If you prefer to keep a hand-built layout, use the command only when you want to replace that arrangement.
+
+### Mouse, keyboard and touch
+
+- Drag a card with a mouse or touch pointer to reposition it. Drag the empty board to pan; use the wheel or a pinch gesture to zoom.
+- Right-click a card to open its context menu on desktop. On touch devices, use the device's context-menu gesture (usually a long press) for locking and layer-order commands.
+- Canvas supports touch pan, pinch-to-zoom and two-finger card rotation. On desktop, rotate a selected card using its handle; focus that handle and use the arrow keys for 15-degree steps, or hold **Shift** for 45-degree steps.
+- The minimap is hidden on narrow/mobile screens. Canvas gestures share the same surface, so if a gesture is interpreted as drawing or connecting, leave that tool mode before dragging cards.
+
+The board is a freeform workspace rather than a diagram editor: it has no general align/distribute commands, configurable grid snapping, or automatic alphabetical/date sorting. Use Auto-arrange for a one-time layout, then reposition cards as needed.
 
 ### Save a report from your board
 
@@ -63,10 +92,6 @@ This control is unavailable in guest vaults and on Adventure boards.
 - **Touch**: Place two fingers over the same card and twist.
 - **Desktop**: Select a card, then drag the circular rotation handle above it around the card's center. Focus the handle and use the arrow keys for 15-degree steps, or hold Shift for 45-degree steps.
 - Cards can rotate through any angle, including more than one complete turn.
-
-### Locking Cards in Place
-
-Once a layout is just how you want it, right-click any card (entity, file, or otherwise) and choose **Lock in Place** to prevent it from being accidentally dragged or resized. Right-click again and choose **Unlock** to move it later.
 
 ### Tips for Organization
 
