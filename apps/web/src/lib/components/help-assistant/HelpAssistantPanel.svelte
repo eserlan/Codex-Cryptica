@@ -93,7 +93,7 @@
     >
       <div class="flex items-baseline gap-2">
         <h2 class="text-sm font-bold text-chrome-text">Cif</h2>
-        <span class="text-[10px] uppercase tracking-wider text-chrome-muted"
+        <span class="text-meta uppercase tracking-wider text-chrome-muted"
           >Codex guide</span
         >
       </div>
