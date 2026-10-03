@@ -246,6 +246,7 @@ export const howDoIMakeInterviewingNpcsInterestingInAnInvestigation: AnswerConfi
       "how-do-you-create-quest-hooks-without-railroading",
       "how-do-you-handle-players-going-off-script-as-a-gm",
       "what-rpg-should-i-play-for-investigative-horror",
+      "how-do-i-handle-players-asking-an-npc-to-tell-us-everything-you-know",
     ],
     discovery: {
       id: "answer-interviewing-npcs-investigation",
