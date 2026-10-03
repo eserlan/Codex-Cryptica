@@ -420,7 +420,7 @@
       <button
         type="button"
         onclick={() => (isMobileMenuOpen = !isMobileMenuOpen)}
-        class="w-10 h-10 rounded-full bg-theme-primary text-theme-bg shadow-lg flex items-center justify-center transition-all active:scale-95 z-30"
+        class="touch-target w-10 h-10 rounded-full bg-theme-primary text-theme-bg shadow-lg flex items-center justify-center transition-all active:scale-95 z-30"
         class:rotate-45={isMobileMenuOpen}
         aria-label="Graph Controls"
         aria-expanded={isMobileMenuOpen}

@@ -59,7 +59,7 @@
       <div class="group relative flex items-center">
         <button
           type="button"
-          class="icon-[lucide--info] h-3.5 w-3.5 cursor-help text-theme-muted/60 transition-colors hover:text-theme-primary focus-visible:text-theme-primary focus-visible:outline-none"
+          class="relative before:absolute before:-inset-3.5 before:content-[''] icon-[lucide--info] h-3.5 w-3.5 cursor-help text-theme-muted/60 transition-colors hover:text-theme-primary focus-visible:text-theme-primary focus-visible:outline-none"
           aria-label="About relevant entities"
           aria-describedby="relevant-entities-tooltip"
           title="Entities tagged or labeled with frontpage will be pinned to the top of this section."
@@ -107,7 +107,7 @@
       {:else}
         <button
           type="button"
-          class="flex h-10 w-10 items-center justify-center rounded-full border border-theme-primary/40 bg-theme-primary/10 text-sm font-bold text-theme-primary hover:bg-theme-primary/20"
+          class="touch-target flex h-10 w-10 items-center justify-center rounded-full border border-theme-primary/40 bg-theme-primary/10 text-sm font-bold text-theme-primary hover:bg-theme-primary/20"
           aria-label={`Show ${recentLimit} recent entities`}
           title="Set how many recent entities to show"
           onclick={beginEditingRecentLimit}

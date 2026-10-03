@@ -148,7 +148,7 @@
     <div class="mt-4 flex flex-wrap justify-center gap-2">
       <!-- Explicit file-picker button — works on both desktop and mobile -->
       <button
-        class="rounded-lg border border-theme-border bg-theme-surface px-3 py-2 text-micro font-bold uppercase tracking-[0.2em] text-theme-text hover:bg-theme-bg/50 disabled:opacity-50"
+        class="touch-target rounded-lg border border-theme-border bg-theme-surface px-3 py-2 text-micro font-bold uppercase tracking-[0.2em] text-theme-text hover:bg-theme-bg/50 disabled:opacity-50"
         onclick={() => fileInput?.click()}
         disabled={isBusy}
         data-testid="choose-image-button"
@@ -171,7 +171,7 @@
         {/if}
       {:else}
         <button
-          class={`rounded-lg border border-theme-primary/40 bg-theme-primary/10 px-3 py-2 text-micro font-bold uppercase tracking-[0.2em] text-theme-primary hover:bg-theme-primary/20 disabled:opacity-50 ${isBusy ? "animate-pulse" : ""}`}
+          class={`touch-target rounded-lg border border-theme-primary/40 bg-theme-primary/10 px-3 py-2 text-micro font-bold uppercase tracking-[0.2em] text-theme-primary hover:bg-theme-primary/20 disabled:opacity-50 ${isBusy ? "animate-pulse" : ""}`}
           onclick={handleGenerate}
           disabled={isBusy}
           data-testid="generate-art-button"

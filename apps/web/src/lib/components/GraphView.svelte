@@ -852,14 +852,14 @@
           </div>
           <div class="flex gap-2">
             <button
-              class="text-micro text-theme-muted hover:text-theme-primary transition-colors"
+              class="touch-target text-micro text-theme-muted hover:text-theme-primary transition-colors"
               onclick={() => onboardingStore.dismissMobileGraphCoachMarks()}
               data-testid="coach-mark-skip"
             >
               Skip
             </button>
             <button
-              class="rounded-lg bg-theme-primary px-3 py-1.5 text-micro font-bold uppercase tracking-[0.15em] text-theme-bg transition-opacity hover:opacity-90"
+              class="touch-target rounded-lg bg-theme-primary px-3 py-1.5 text-micro font-bold uppercase tracking-[0.15em] text-theme-bg transition-opacity hover:opacity-90"
               onclick={nextCoachMark}
               data-testid="coach-mark-next"
             >

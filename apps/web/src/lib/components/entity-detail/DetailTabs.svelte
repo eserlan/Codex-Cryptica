@@ -170,6 +170,8 @@
       type="button"
       role="tab"
       class:shrink-0={true}
+      class:touch-target={true}
+      class:items-center={true}
       aria-selected={activeTab === "status"}
       aria-controls={panelIds.status}
       tabindex={activeTab === "status" ? 0 : -1}
@@ -196,6 +198,8 @@
       type="button"
       role="tab"
       class:shrink-0={true}
+      class:touch-target={true}
+      class:items-center={true}
       aria-selected={activeTab === "connections"}
       aria-controls={panelIds.connections}
       tabindex={activeTab === "connections" ? 0 : -1}
@@ -223,6 +227,8 @@
         type="button"
         role="tab"
         class:shrink-0={true}
+        class:touch-target={true}
+        class:items-center={true}
         aria-selected={activeTab === "lore"}
         aria-controls={panelIds.lore}
         tabindex={activeTab === "lore" ? 0 : -1}
@@ -251,6 +257,8 @@
       type="button"
       role="tab"
       class:shrink-0={true}
+      class:touch-target={true}
+      class:items-center={true}
       aria-selected={activeTab === "map"}
       aria-controls={panelIds.map}
       tabindex={activeTab === "map" ? 0 : -1}
@@ -277,6 +285,8 @@
         type="button"
         role="tab"
         class:shrink-0={true}
+        class:touch-target={true}
+        class:items-center={true}
         aria-selected={activeTab === "chats"}
         aria-controls={panelIds.chats}
         tabindex={activeTab === "chats" ? 0 : -1}
@@ -304,6 +314,8 @@
         type="button"
         role="tab"
         class:shrink-0={true}
+        class:touch-target={true}
+        class:items-center={true}
         aria-selected={activeTab === "family"}
         aria-controls={panelIds.family}
         tabindex={activeTab === "family" ? 0 : -1}
@@ -330,6 +342,8 @@
       type="button"
       role="tab"
       class:shrink-0={true}
+      class:touch-target={true}
+      class:items-center={true}
       aria-selected={activeTab === "stats"}
       aria-controls={panelIds.stats}
       tabindex={activeTab === "stats" ? 0 : -1}
@@ -355,6 +369,8 @@
       type="button"
       role="tab"
       class:shrink-0={true}
+      class:touch-target={true}
+      class:items-center={true}
       aria-selected={activeTab === "timeline"}
       aria-controls={panelIds.timeline}
       tabindex={activeTab === "timeline" ? 0 : -1}

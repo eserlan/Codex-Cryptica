@@ -101,7 +101,7 @@
       >
         <button
           type="button"
-          class="relative z-[70] flex items-center gap-2 md:gap-3 text-inherit hover:text-chrome-accent transition-colors cursor-pointer text-left"
+          class="touch-target relative z-[70] flex items-center gap-2 md:gap-3 text-inherit hover:text-chrome-accent transition-colors cursor-pointer text-left"
           onclick={handleBrandClick}
           aria-label="Go to front page"
           title="Go to front page"

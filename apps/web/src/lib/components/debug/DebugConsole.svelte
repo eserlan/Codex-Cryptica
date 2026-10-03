@@ -36,7 +36,7 @@
   >
     <button
       type="button"
-      class="bg-black/80 text-white px-3 py-1 rounded text-xs border border-white/20 hover:bg-white/10 transition-colors shadow-lg"
+      class="touch-target bg-black/80 text-white px-3 py-1 rounded text-xs border border-white/20 hover:bg-white/10 transition-colors shadow-lg"
       onclick={() => (isOpen = !isOpen)}
     >
       {isOpen ? "Close Debug" : "Debug Log"}

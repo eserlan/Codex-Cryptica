@@ -133,7 +133,7 @@
       <button
         type="button"
         onclick={() => (isFiltersExpanded = !isFiltersExpanded)}
-        class="flex md:hidden items-center gap-2 px-3 py-1.5 bg-theme-surface/80 backdrop-blur border border-theme-border rounded text-xs font-mono tracking-widest text-theme-primary shadow-lg uppercase transition-all hover:border-theme-primary active:scale-95"
+        class="touch-target flex md:hidden items-center gap-2 px-3 py-1.5 bg-theme-surface/80 backdrop-blur border border-theme-border rounded text-xs font-mono tracking-widest text-theme-primary shadow-lg uppercase transition-all hover:border-theme-primary active:scale-95"
       >
         <span class="icon-[lucide--filter] w-3.5 h-3.5"></span>
         <span>Filters</span>

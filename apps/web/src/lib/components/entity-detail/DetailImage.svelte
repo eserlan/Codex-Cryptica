@@ -212,7 +212,7 @@
         <button
           type="button"
           onclick={() => fileInput?.click()}
-          class="flex-1 rounded border border-theme-border bg-theme-surface px-3 py-2 text-micro font-bold uppercase tracking-widest text-theme-text transition hover:border-theme-primary hover:bg-theme-bg/50"
+          class="touch-target flex-1 rounded border border-theme-border bg-theme-surface px-3 py-2 text-micro font-bold uppercase tracking-widest text-theme-text transition hover:border-theme-primary hover:bg-theme-bg/50"
           aria-describedby={imageUploadError
             ? "entity-image-upload-error"
             : undefined}
@@ -227,7 +227,7 @@
         <button
           type="button"
           onclick={() => modalUIStore.openSilhouettePicker(entity)}
-          class="rounded border border-theme-border bg-theme-surface px-3 py-2 text-micro font-bold uppercase tracking-widest text-theme-text transition hover:border-theme-primary hover:bg-theme-bg/50 flex items-center gap-1.5"
+          class="touch-target rounded border border-theme-border bg-theme-surface px-3 py-2 text-micro font-bold uppercase tracking-widest text-theme-text transition hover:border-theme-primary hover:bg-theme-bg/50 flex items-center gap-1.5"
           title="Customize vector silhouette"
         >
           <span
@@ -366,7 +366,7 @@
           <button
             type="button"
             onclick={() => modalUIStore.openSilhouettePicker(entity)}
-            class="flex flex-col items-center justify-center cursor-pointer transition-transform hover:scale-102 group/sil"
+            class="touch-target flex flex-col items-center justify-center cursor-pointer transition-transform hover:scale-102 group/sil"
             title="Click to change silhouette"
           >
             <SilhouetteAvatar
@@ -391,7 +391,7 @@
             <button
               onclick={() => oracle.drawEntity(entity.id)}
               disabled={isVisualizing}
-              class="bg-theme-surface hover:bg-theme-surface/80 border border-theme-primary/30 hover:border-theme-primary transition-all flex items-center justify-center gap-2 px-2 py-1 md:px-3 md:py-1.5 rounded shadow-sm group/btn relative overflow-hidden"
+              class="touch-target bg-theme-surface hover:bg-theme-surface/80 border border-theme-primary/30 hover:border-theme-primary transition-all flex items-center justify-center gap-2 px-2 py-1 md:px-3 md:py-1.5 rounded shadow-sm group/btn relative overflow-hidden"
               aria-label={canGenerateImage
                 ? `Generate image for ${entity.title}`
                 : `Generate image prompt for ${entity.title}`}
