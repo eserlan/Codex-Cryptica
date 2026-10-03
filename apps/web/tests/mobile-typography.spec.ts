@@ -3,7 +3,12 @@ import { expect, type Page, test } from "@playwright/test";
 // #3718: mobile typography floor and touch targets.
 async function fontSizes(page: Page, classes: string[]) {
   await page.goto("/");
-  await page.waitForLoadState("networkidle");
+  await page.waitForFunction(
+    () =>
+      getComputedStyle(document.documentElement)
+        .getPropertyValue("--type-nano")
+        .trim() !== "",
+  );
   return page.evaluate(
     (list) => {
       return Object.fromEntries(
@@ -52,7 +57,12 @@ test.describe("mobile", () => {
 
   test("touch-target is at least 44px", async ({ page }) => {
     await page.goto("/");
-    await page.waitForLoadState("networkidle");
+    await page.waitForFunction(
+      () =>
+        getComputedStyle(document.documentElement)
+          .getPropertyValue("--type-nano")
+          .trim() !== "",
+    );
     const box = await page.evaluate(() => {
       const el = document.createElement("button");
       el.className = "touch-target";
