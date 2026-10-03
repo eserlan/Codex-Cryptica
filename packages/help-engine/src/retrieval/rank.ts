@@ -2,6 +2,7 @@ import type { HelpChunk } from "../bundle/types";
 import type { HelpContext } from "../context";
 import type { FeatureEntry } from "../registry/schema";
 import { tokenize } from "./text";
+import { featureMatchesScreen } from "../registry/matches-screen";
 
 /** Below this normalised relevance the model is not called at all. */
 export const MIN_RELEVANCE = 0.3;
@@ -72,13 +73,6 @@ export interface ScoredChunk {
    * when the chunk belongs to a feature on the current screen.
    */
   relevance: number;
-}
-
-function featureMatchesScreen(
-  feature: FeatureEntry,
-  ctx: HelpContext,
-): boolean {
-  return feature.areas.includes(ctx.area);
 }
 
 const K1 = 1.2;

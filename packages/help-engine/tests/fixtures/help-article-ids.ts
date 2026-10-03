@@ -24,4 +24,11 @@ export const KNOWN_HELP_IDS = [
   "offline-sync",
   "importing",
   "thread-weaver-import",
+  "quicknote",
+  "stat-sheets",
+  "sharing-templates",
+  "chronology",
+  "family-tree",
+  "guided-mode",
+  "session-prep",
 ] as const;

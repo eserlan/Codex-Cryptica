@@ -17,6 +17,40 @@ const connections = sanitizeHelpContext({
 });
 
 describe("buildFallback", () => {
+  it("prefers the current Family or Stats guide over unrelated entity tabs", () => {
+    const articles: Record<string, string> = {
+      "family-tree": "Family Tree",
+      "stat-sheets": "Stat Sheets",
+      ...titles,
+    };
+    const deps = { titleFor: (id: string) => articles[id] ?? null };
+    const family = buildFallback(
+      { kind: "offline" },
+      sanitizeHelpContext({
+        area: "entity-detail",
+        entityKind: "character",
+        tab: "family",
+      }),
+      deps,
+    );
+    expect(family.topics.map((topic) => topic.helpId)).toContain("family-tree");
+    expect(family.topics.map((topic) => topic.helpId)).not.toContain(
+      "stat-sheets",
+    );
+    const stats = buildFallback(
+      { kind: "offline" },
+      sanitizeHelpContext({
+        area: "entity-detail",
+        entityKind: "item",
+        tab: "stats",
+      }),
+      deps,
+    );
+    expect(stats.topics.map((topic) => topic.helpId)).toContain("stat-sheets");
+    expect(stats.topics.map((topic) => topic.helpId)).not.toContain(
+      "family-tree",
+    );
+  });
   it("links the static Connections help for an entity screen, with no network needed", () => {
     const fb = buildFallback({ kind: "offline" }, connections, { titleFor });
     expect(fb.topics.map((t) => t.helpId)).toEqual([

@@ -98,6 +98,6 @@ describe("retrieval over the real help articles", () => {
         bundle,
         graphScreen,
       ).screenFeatures.map((f) => f.id),
-    ).toEqual(["graph-view"]);
+    ).toEqual(["graph-view", "entity-reports", "guided-mode"]);
   });
 });

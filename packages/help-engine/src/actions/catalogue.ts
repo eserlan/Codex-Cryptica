@@ -28,6 +28,7 @@ export const DESTINATION_IDS = [
   "canvas",
   "map",
   "import",
+  "timeline",
 ] as const;
 export type DestinationId = (typeof DESTINATION_IDS)[number];
 
@@ -39,6 +40,10 @@ export type DestinationId = (typeof DESTINATION_IDS)[number];
 export const PANEL_IDS = [
   "status-tab",
   "connections-tab",
+  "stats-tab",
+  "family-tab",
+  "timeline-tab",
+  "session-journal",
   "settings-vault",
   "settings-intelligence",
   "settings-schema",
@@ -47,6 +52,19 @@ export const PANEL_IDS = [
   "settings-publishing",
 ] as const;
 export type PanelId = (typeof PANEL_IDS)[number];
+
+const ENTITY_PANEL_TABS = {
+  "status-tab": "status",
+  "connections-tab": "connections",
+  "stats-tab": "stats",
+  "family-tab": "family",
+  "timeline-tab": "timeline",
+} as const;
+
+/** Shared mapping so Worker validation and browser execution agree. */
+export function entityTabForPanel(panel: PanelId) {
+  return ENTITY_PANEL_TABS[panel as keyof typeof ENTITY_PANEL_TABS] ?? null;
+}
 
 /** The Settings panels, in the order the registry points at them. */
 export const SETTINGS_PANEL_IDS = PANEL_IDS.filter((id) =>

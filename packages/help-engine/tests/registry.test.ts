@@ -62,6 +62,14 @@ describe("proof-of-concept registry", () => {
         "session-hub",
         "tables",
         "vtt-map",
+        "session-journal",
+        "entity-reports",
+        "stat-sheets",
+        "entity-templates",
+        "chronology",
+        "family-tree",
+        "guided-mode",
+        "session-prep",
       ].sort(),
     );
   });

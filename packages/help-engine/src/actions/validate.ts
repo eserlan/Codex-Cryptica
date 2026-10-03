@@ -1,8 +1,10 @@
 import type { HelpContext } from "../context";
 import {
   CONTROL_CATALOGUE,
+  entityTabForPanel,
   GENERATOR_REQUIRED_FLAG,
   type ControlId,
+  type PanelId,
 } from "./catalogue";
 import {
   GuidanceActionSchema,
@@ -34,6 +36,13 @@ function controlIsOnScreen(
   );
 }
 
+function panelIsValid(panel: PanelId, ctx: HelpContext): boolean {
+  const tab = entityTabForPanel(panel);
+  if (tab && ctx.area !== "entity-detail") return false;
+  if (tab === "family" && ctx.entityKind !== "character") return false;
+  return ctx.availableActions.includes(panel);
+}
+
 function stepIsValid(
   step: GuidanceStep,
   ctx: HelpContext,
@@ -46,7 +55,7 @@ function stepIsValid(
     case "openHelp":
       return deps.helpIds.has(step.helpId);
     case "openPanel":
-      return ctx.availableActions.includes(step.panel);
+      return panelIsValid(step.panel, ctx);
     case "highlight":
       return controlIsOnScreen(step.target, ctx, previous);
     case "openGenerator":

@@ -73,6 +73,16 @@ to collect their information into a document. Review the report, then choose
 **Save as note** to keep it as a Note entity, or **Cancel** to close without saving.
 This control is unavailable in guest vaults and on Adventure boards.
 
+In the preview, choose **Brief** or **Standard** detail and which information to
+include. **Entire canvas** includes the board's entities; **Selected nodes only**
+uses the selected entity cards. If nothing is selected, the preview explains
+that there is nothing to report on rather than saving an empty note.
+
+You can also generate a report from selected entities in the **Knowledge Graph**
+or **Table** view. Saving opens the new Note in Zen Mode. A saved report is a
+snapshot of those entities; cancelling the preview does not create or update
+anything. Cif can explain reports but cannot save or regenerate them for you.
+
 ### Managing Connections
 
 - **Custom Labels**: Double-click any connection (edge) to open a themed modal and enter a name for the relationship.
