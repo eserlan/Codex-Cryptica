@@ -7,7 +7,7 @@ import {
   type MapLayer,
 } from "map-engine";
 import { convertToWebP } from "../utils/image-processing";
-import { writeOpfsFile } from "../utils/opfs";
+import { deleteOpfsEntry, writeOpfsFile } from "../utils/opfs";
 import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
 import { guestVault } from "./guest-vault.svelte";
 import {
@@ -557,6 +557,56 @@ export class MapStore {
     await vault.saveMaps();
     this.selectMap(id);
     return id;
+  }
+
+  /**
+   * Swaps a map's background image for a new one, keeping its pins, tokens
+   * and fog. Used to recover a map whose image is missing or unreadable.
+   * Dimensions are reset so they are recomputed from the new image on load.
+   */
+  async replaceMapImage(mapId: string, file: File): Promise<boolean> {
+    const map = vault.maps[mapId];
+    const vaultDir = await vault.getActiveVaultHandle();
+    if (!map || !vaultDir) {
+      return false;
+    }
+
+    const storageName = `${this.idGenerator.uuid()}.webp`;
+    try {
+      const webpBlob = await convertToWebP(file, 0.85);
+      await writeOpfsFile(
+        ["maps", storageName],
+        webpBlob,
+        vaultDir,
+        vaultDir.name,
+      );
+    } catch (err) {
+      console.error("[MapStore] Map image replacement failed", err);
+      return false;
+    }
+
+    const previousPath = map.assetPath;
+    vault.maps[mapId] = {
+      ...map,
+      assetPath: `maps/${storageName}`,
+      dimensions: { width: 0, height: 0 },
+    };
+    await vault.saveMaps();
+
+    // Best-effort cleanup of the old local file and any cached object URL.
+    if (previousPath) {
+      vault.releaseImageUrl?.(previousPath);
+      if (previousPath.startsWith("maps/")) {
+        await deleteOpfsEntry(
+          vaultDir,
+          previousPath.split("/"),
+          vaultDir.name,
+        ).catch((err) =>
+          console.warn("[MapStore] Could not remove the old map image", err),
+        );
+      }
+    }
+    return true;
   }
 
   /**
