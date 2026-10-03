@@ -85,6 +85,12 @@
     sendNodeToBack,
     stackableNodeZIndexBounds,
   } from "./canvas-node-stacking";
+  import {
+    areAllCanvasEntityNodesImageOnly,
+    getCanvasEntityNodes,
+    toggleCanvasEntityCardView,
+    toggleCanvasImageLabels,
+  } from "./canvas-entity-card-preferences";
 
   import type {
     DelveCanvasEdge,
@@ -605,38 +611,18 @@
     await logic.fitView?.({ padding: 0.15, duration: 400 });
   }
 
-  const entityNodes = $derived(
-    logic.nodes.filter(
-      (n) =>
-        (n.type ?? "entity") === "entity" ||
-        Boolean((n.data as Record<string, unknown> | undefined)?.entityId),
-    ),
-  );
+  const entityNodes = $derived(getCanvasEntityNodes(logic.nodes));
   const isAllImageOnly = $derived(
-    entityNodes.length > 0 &&
-      entityNodes.every(
-        (n) =>
-          (n.data as Record<string, unknown> | undefined)?.cardView ===
-          "image_only",
-      ),
+    areAllCanvasEntityNodesImageOnly(logic.nodes),
   );
 
   function handleToggleAllImageOnly() {
     if (vault.isGuest) return;
-    const nextView = isAllImageOnly ? "auto" : "image_only";
-    logic.nodes = logic.nodes.map((node) => {
-      const isEntity =
-        (node.type ?? "entity") === "entity" ||
-        Boolean((node.data as Record<string, unknown> | undefined)?.entityId);
-      if (!isEntity) return node;
-      return {
-        ...node,
-        data: {
-          ...node.data,
-          cardView: nextView,
-        },
-      };
-    });
+    const { nodes, nextView } = toggleCanvasEntityCardView(
+      logic.nodes,
+      isAllImageOnly,
+    );
+    logic.nodes = nodes;
     if (canvas) {
       canvas.metadata = {
         ...(canvas.metadata || {}),
@@ -655,10 +641,11 @@
 
   function handleToggleShowImageLabels() {
     if (canvas) {
-      const nextShowImageLabels = !showImageLabels;
+      const { metadata } = toggleCanvasImageLabels(
+        canvas.metadata as Record<string, unknown> | undefined,
+      );
       canvas.metadata = {
-        ...(canvas.metadata || {}),
-        showImageLabels: nextShowImageLabels,
+        ...metadata,
       };
       logic.saveNow();
     }
