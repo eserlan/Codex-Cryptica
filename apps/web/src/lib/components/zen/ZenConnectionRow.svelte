@@ -44,7 +44,7 @@
   </div>
 {:else}
   <div
-    class="[content-visibility:auto] [contain-intrinsic-size:0_44px] w-full flex items-center gap-3 px-2 py-3 md:py-2 rounded border border-transparent hover:border-theme-border hover:bg-theme-primary/10 transition text-left group"
+    class="[content-visibility:auto] [contain-intrinsic-size:auto_96px] md:[contain-intrinsic-size:auto_56px] w-full flex items-center gap-3 px-2 py-3 md:py-2 rounded border border-transparent hover:border-theme-border hover:bg-theme-primary/10 transition text-left group"
   >
     <button
       type="button"

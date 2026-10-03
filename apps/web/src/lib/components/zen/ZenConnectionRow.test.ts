@@ -40,6 +40,9 @@ describe("ZenConnectionRow mobile typography", () => {
     expect(title.className).toContain("md:text-sm");
     expect(title.className).toContain("line-clamp-2");
     expect(title.className).toContain("md:truncate");
+    const row = title.closest(".group");
+    expect(row?.className).toContain("[contain-intrinsic-size:auto_96px]");
+    expect(row?.className).toContain("md:[contain-intrinsic-size:auto_56px]");
   });
 
   it("keeps the relation label at 14px on mobile", () => {
