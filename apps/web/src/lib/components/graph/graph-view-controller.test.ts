@@ -126,6 +126,7 @@ describe("GraphViewController", () => {
         stableLayout: true,
         stats: { nodeCount: 0 },
         showImages: true,
+        communityMode: "soft",
         isLargeGraph: false,
         perfStylingActive: false,
         activeLabels: new Set(),
@@ -991,6 +992,45 @@ describe("GraphViewController", () => {
     });
   });
 
+  describe("community backgrounds", () => {
+    it("are shown normally and hidden in timeline mode or when turned off", () => {
+      const setEnabled = vi.fn();
+      const setStrong = vi.fn();
+      controller.communityHulls = { setEnabled, setStrong, destroy: vi.fn() };
+
+      controller.syncCommunityHulls();
+      expect(setEnabled).toHaveBeenLastCalledWith(true);
+      expect(setStrong).toHaveBeenLastCalledWith(false);
+
+      deps.graph.communityMode = "strong";
+      controller.syncCommunityHulls();
+      expect(setEnabled).toHaveBeenLastCalledWith(true);
+      expect(setStrong).toHaveBeenLastCalledWith(true);
+      deps.graph.communityMode = "soft";
+
+      deps.graph.timelineMode = true;
+      controller.syncCommunityHulls();
+      expect(setEnabled).toHaveBeenLastCalledWith(false);
+
+      deps.graph.timelineMode = false;
+      deps.graph.communityMode = "off";
+      controller.syncCommunityHulls();
+      expect(setEnabled).toHaveBeenLastCalledWith(false);
+    });
+
+    it("are torn down with the controller (negative: no further drawing)", () => {
+      const destroy = vi.fn();
+      controller.communityHulls = {
+        setEnabled: vi.fn(),
+        setStrong: vi.fn(),
+        destroy,
+      };
+      controller.destroy();
+      expect(destroy).toHaveBeenCalled();
+      expect(controller.communityHulls).toBeUndefined();
+    });
+  });
+
   describe("silhouette tinting (issue #2680)", () => {
     const ARTWORK =
       '<svg width="512" height="512" viewBox="0 0 512 512"><path fill="currentColor" d="M0 0h1v1H0z"/></svg>';
@@ -1037,7 +1077,28 @@ describe("GraphViewController", () => {
     const glyphFor = (type: string) =>
       deriveEntityTypeTone(categories.getColor(type), PIRATE_DARK.tokens).glyph;
 
+    // Silhouettes reach the graph as object URLs; read the SVG behind one.
+    const blobs = new Map<string, Blob>();
+    const svgOf = async (url: string | null | undefined) => {
+      if (!url) return "";
+      const blob = blobs.get(url);
+      if (!blob) return decodeURIComponent(url);
+      return await new Promise<string>((resolve) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result));
+        reader.readAsText(blob);
+      });
+    };
+
     it("fills a silhouette with its own type's glyph colour", async () => {
+      let n = 0;
+      const create = vi
+        .spyOn(URL, "createObjectURL")
+        .mockImplementation((blob: Blob | MediaSource) => {
+          const url = `blob:silhouette-${++n}`;
+          blobs.set(url, blob as Blob);
+          return url;
+        });
       const options = await syncOptions();
 
       // Artwork comes from R2, so resolving one is a fetch.
@@ -1046,13 +1107,14 @@ describe("GraphViewController", () => {
         node("character"),
       );
 
-      expect(location).toContain(encodeURIComponent(glyphFor("location")));
-      expect(character).toContain(encodeURIComponent(glyphFor("character")));
+      expect(await svgOf(location)).toContain(glyphFor("location"));
+      expect(await svgOf(character)).toContain(glyphFor("character"));
       // A moss node needs a lighter glyph than the theme primary to clear 3:1;
       // the blue character tone does not, so it keeps the theme's own colour.
       expect(glyphFor("location")).not.toBe(PIRATE_DARK.tokens.primary);
       expect(glyphFor("character")).toBe(PIRATE_DARK.tokens.primary);
       expect(location).not.toBe(character);
+      create.mockRestore();
     });
 
     it("keys the silhouette on the theme so a theme switch re-tints it", async () => {

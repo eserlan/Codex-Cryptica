@@ -1,3 +1,4 @@
+import { LocalThumbnailCache } from "./local-thumbnail";
 import { type Clock, systemClock } from "./runtime";
 
 export interface IImageProcessor {
@@ -19,6 +20,12 @@ export interface IAssetIOAdapter {
     create?: boolean,
   ): Promise<FileSystemDirectoryHandle>;
   isNotFoundError(err: any): boolean;
+  /** Removes a file, and does nothing when it is already gone. */
+  deleteFile?(
+    path: string[],
+    root: FileSystemDirectoryHandle,
+    vaultId?: string,
+  ): Promise<void>;
 }
 
 /** Longest side of a generated thumbnail; matches uploaded images' `_thumb`. */
@@ -116,6 +123,12 @@ export class AssetManager {
   private urlCache = new Map<string, { url: string; refs: number }>();
   private resolving = new Map<string, Promise<string>>();
   private activeThumbnails = 0;
+  private generation = 0;
+  private prunedVaults = new Set<string>();
+  /** How long the original-copy sweep waits for image loading to settle. */
+  pruneDelayMs = 2000;
+  private pruneTimer?: ReturnType<typeof setTimeout>;
+  private localThumbnails: LocalThumbnailCache;
   private thumbnailWaiters: (() => void)[] = [];
   /**
    * When each unreachable external image last failed, by URL. `opaque` marks a
@@ -159,7 +172,13 @@ export class AssetManager {
     private onDeadExternalImage?: (url: string) => void,
     // Injected for tests; the default asks the browser to load the image.
     private probeImage: ImageProbe = probeImageLoad,
-  ) {}
+  ) {
+    this.localThumbnails = new LocalThumbnailCache(
+      ioAdapter,
+      imageProcessor,
+      () => this.resolving.size === 0,
+    );
+  }
 
   setOnDeadExternalImage(handler: ((url: string) => void) | undefined) {
     this.onDeadExternalImage = handler;
@@ -344,8 +363,8 @@ export class AssetManager {
   /**
    * A graph-sized version of an image.
    *
-   * Uploaded images already have a `_thumb.webp` beside them, so local paths
-   * resolve as usual. Imported entities usually point at external images and
+   * Uploaded thumbnails resolve directly. Other local images get a persistent
+   * derived thumbnail keyed by source revision. Imported entities usually point at external images and
    * set `thumbnail` to the same full-size URL; painting those at tens of pixels
    * cost seconds per graph redraw. For them a thumbnail is generated once, with
    * the same generator uploads use, and cached beside the cached original.
@@ -359,7 +378,7 @@ export class AssetManager {
     fallbackHandle?: FileSystemDirectoryHandle,
   ): Promise<string> {
     const cleanPath = (path ?? "").trim();
-    if (!vaultHandle || !EXTERNAL_URL.test(cleanPath)) {
+    if (!vaultHandle || this.useOriginalThumbnail(cleanPath, fileFetcher)) {
       return this.resolveImageUrl(
         vaultHandle,
         cleanPath,
@@ -379,23 +398,19 @@ export class AssetManager {
       return Promise.resolve(existing.url);
     }
 
+    const generation = this.generation;
     const resolution = (async () => {
       try {
         if (this.deadExternal.has(cleanPath)) return "";
-        const thumbnail = await this.readOrCreateExternalThumbnail(
-          vaultHandle,
-          cleanPath,
-        );
+        if (EXTERNAL_URL.test(cleanPath)) this.schedulePrune(vaultHandle);
+        const thumbnail = EXTERNAL_URL.test(cleanPath)
+          ? await this.readOrCreateExternalThumbnail(vaultHandle, cleanPath)
+          : await this.localThumbnails
+              .resolve(vaultHandle, cleanPath, fallbackHandle)
+              .catch(() => null);
+        if (generation !== this.generation) return "";
         if (!thumbnail) {
-          if (this.deadExternal.has(cleanPath)) return "";
-          // Marked unreachable (now or by an earlier session): no request at
-          // all, and nothing handed to Cytoscape to request instead.
-          if (this.isFreshInSession(cleanPath)) return "";
-          if (this.cannotBeLoadedAtAll(cleanPath)) {
-            await this.markUnreachable(vaultHandle, cleanPath);
-            return "";
-          }
-          return this.resolveImageUrl(
+          return this.resolveThumbnailFallback(
             vaultHandle,
             cleanPath,
             fileFetcher,
@@ -406,11 +421,42 @@ export class AssetManager {
         this.urlCache.set(key, { url, refs: 1 });
         return url;
       } finally {
-        this.resolving.delete(key);
+        if (generation === this.generation) this.resolving.delete(key);
       }
     })();
     this.resolving.set(key, resolution);
     return resolution;
+  }
+
+  private useOriginalThumbnail(
+    path: string,
+    fetcher?: (path: string) => Promise<Blob>,
+  ) {
+    return (
+      !path ||
+      /^(data:|blob:)/i.test(path) ||
+      /_thumb\.webp$/i.test(path) ||
+      Boolean(fetcher)
+    );
+  }
+
+  private async resolveThumbnailFallback(
+    root: FileSystemDirectoryHandle,
+    path: string,
+    fetcher?: (path: string) => Promise<Blob>,
+    fallback?: FileSystemDirectoryHandle,
+  ): Promise<string> {
+    if (
+      !EXTERNAL_URL.test(path) ||
+      this.deadExternal.has(path) ||
+      this.isFreshInSession(path)
+    )
+      return "";
+    if (this.cannotBeLoadedAtAll(path)) {
+      await this.markUnreachable(root, path);
+      return "";
+    }
+    return this.resolveImageUrl(root, path, fetcher, fallback);
   }
 
   /**
@@ -785,9 +831,68 @@ export class AssetManager {
         vaultHandle,
         vaultHandle.name,
       );
+      // The graph only ever reads the thumbnail. Keeping the full-size copy
+      // cost hundreds of MB; a full-size view fetches and caches it again.
+      await this.dropOriginal(
+        vaultHandle,
+        name.replace(/\.thumb\.webp$/, ".cache"),
+      );
       return thumbnail;
     } catch {
       return null;
+    }
+  }
+
+  private async dropOriginal(
+    vaultHandle: FileSystemDirectoryHandle,
+    originalName: string,
+  ): Promise<void> {
+    await this.ioAdapter
+      .deleteFile?.(
+        [".cache", "external_images", originalName],
+        vaultHandle,
+        vaultHandle.name,
+      )
+      .catch(() => {});
+  }
+
+  /**
+   * Once per session and vault, removes full-size copies that already have a
+   * thumbnail (cached by versions that kept both). Runs after image loading
+   * settles so it never competes with it.
+   */
+  private schedulePrune(vaultHandle: FileSystemDirectoryHandle) {
+    if (!this.ioAdapter.deleteFile || this.prunedVaults.has(vaultHandle.name))
+      return;
+    this.prunedVaults.add(vaultHandle.name);
+    const attempt = () => {
+      if (this.resolving.size > 0) {
+        this.pruneTimer = setTimeout(attempt, this.pruneDelayMs);
+        return;
+      }
+      this.pruneTimer = undefined;
+      void this.pruneExternalOriginals(vaultHandle).catch(() => {});
+    };
+    this.pruneTimer = setTimeout(attempt, this.pruneDelayMs);
+  }
+
+  private async pruneExternalOriginals(vaultHandle: FileSystemDirectoryHandle) {
+    const generation = this.generation;
+    const dir = await this.externalDir(vaultHandle);
+    const names = new Set<string>();
+    for await (const [name] of (dir as any).entries() as AsyncIterable<
+      [string, unknown]
+    >) {
+      names.add(name);
+    }
+    let removed = 0;
+    for (const name of names) {
+      if (generation !== this.generation) return;
+      const match = /^([0-9a-f]{64})\.cache$/.exec(name);
+      if (!match || !names.has(`${match[1]}.thumb.webp`)) continue;
+      await this.dropOriginal(vaultHandle, name);
+      // Yield so a long sweep never blocks painting.
+      if (++removed % 10 === 0) await new Promise((r) => setTimeout(r, 0));
     }
   }
 
@@ -817,6 +922,11 @@ export class AssetManager {
   }
 
   clear() {
+    this.generation++;
+    if (this.pruneTimer !== undefined) clearTimeout(this.pruneTimer);
+    this.pruneTimer = undefined;
+    this.prunedVaults.clear();
+    this.localThumbnails.clear();
     this.urlCache.forEach((entry) => {
       URL.revokeObjectURL(entry.url);
     });

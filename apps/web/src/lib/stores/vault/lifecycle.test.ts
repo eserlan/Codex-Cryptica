@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { VaultLifecycleManager } from "./lifecycle";
 import { getDB } from "../../utils/idb";
 import { vaultEventBus } from "./events.svelte";
+import { statSheetTemplates } from "../stat-sheet-templates.svelte";
 
 // Mock dependencies
 const { mockThemeStore, mockOracle } = vi.hoisted(() => {
@@ -242,6 +243,36 @@ describe("VaultLifecycleManager", () => {
     it("should return early if already on the target vault", async () => {
       await manager.switchVault("v1");
       expect(deps.vaultRegistry.setActiveVault).not.toHaveBeenCalled();
+    });
+
+    it("loads the vault's files without waiting for its templates", async () => {
+      let finishTemplates!: () => void;
+      const templates = vi
+        .spyOn(statSheetTemplates, "loadForVault")
+        .mockReturnValue(
+          new Promise<void>((resolve) => (finishTemplates = resolve)),
+        );
+
+      const switching = manager.switchVault("v2");
+      await vi.waitFor(() => expect(deps.loadFiles).toHaveBeenCalled());
+      expect(deps.setInitialized).not.toHaveBeenCalledWith(true);
+
+      finishTemplates();
+      await switching;
+      expect(deps.setInitialized).toHaveBeenLastCalledWith(true);
+      templates.mockRestore();
+    });
+
+    it("still loads the files when a template load fails (negative)", async () => {
+      const templates = vi
+        .spyOn(statSheetTemplates, "loadForVault")
+        .mockRejectedValue(new Error("template store unavailable"));
+
+      await expect(manager.switchVault("v2")).rejects.toThrow(
+        "template store unavailable",
+      );
+      expect(deps.loadFiles).toHaveBeenCalled();
+      templates.mockRestore();
     });
 
     it("should serialize multiple switchVault calls using a lock", async () => {

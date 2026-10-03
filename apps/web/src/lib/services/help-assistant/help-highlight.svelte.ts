@@ -73,9 +73,14 @@ export class HelpHighlightService {
   }
 
   private findVisible(target: ControlId): Element | null {
-    const el =
-      this.doc?.querySelector(`[data-help-target="${target}"]`) ?? null;
-    return el?.isConnected && this.isRendered(el) ? el : null;
+    const elements = this.doc?.querySelectorAll(
+      `[data-help-target="${target}"]`,
+    );
+    if (!elements) return null;
+    for (const el of elements) {
+      if (el.isConnected && this.isRendered(el)) return el;
+    }
+    return null;
   }
 
   private measure(): void {

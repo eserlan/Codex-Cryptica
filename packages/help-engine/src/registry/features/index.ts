@@ -6,6 +6,7 @@ import { canvas } from "./canvas";
 import { entityConnections } from "./entity-connections";
 import { entityEditing } from "./entity-editing";
 import { graphView } from "./graph-view";
+import { relatedEntityGeneration } from "./related-entity-generation";
 import { sessionHub } from "./session-hub";
 import { tables } from "./tables";
 import { vttMap } from "./vtt-map";
@@ -20,6 +21,7 @@ export const FEATURE_REGISTRY: readonly FeatureEntry[] = [
   canvas,
   vttMap,
   entityEditing,
+  relatedEntityGeneration,
   backupAndRestore,
   archiveImport,
 ];

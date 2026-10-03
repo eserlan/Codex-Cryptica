@@ -1,11 +1,13 @@
 <script lang="ts">
   import { vault } from "$lib/stores/vault.svelte";
   import type { EntityIndexEntry } from "$lib/utils/entity-mention-detector";
+  import HelpZenDetailSurface from "$lib/components/help-assistant/HelpZenDetailSurface.svelte";
   import { themeStore } from "$lib/stores/theme.svelte";
   import MarkdownEditor from "$lib/components/MarkdownEditor.svelte";
   import TemporalEditor from "$lib/components/timeline/TemporalEditor.svelte";
   import { revisionService } from "$lib/services/RevisionService.svelte";
   import DetailProposals from "$lib/components/entity-detail/proposals/DetailProposals.svelte";
+  import GenerateRelatedButton from "$lib/components/entity-detail/GenerateRelatedButton.svelte";
   import EntityProposals from "$lib/components/entity-detail/EntityProposals.svelte";
   import ZenConnections from "./ZenConnections.svelte";
   import { getTemporalLabel } from "$lib/components/entity-detail/detail-tabs";
@@ -95,6 +97,7 @@
   style="background-image: var(--bg-texture-overlay)"
   data-testid="zen-content"
 >
+  <HelpZenDetailSurface {entity} isEditing={editState.isEditing} />
   <div class="max-w-3xl mx-auto space-y-6">
     {#if entity && !editState.isEditing && !vault.isGuest}
       <div class="flex flex-wrap justify-end gap-2">
@@ -118,14 +121,7 @@
             AI Revise
           {/if}
         </button>
-        <button
-          type="button"
-          onclick={() => modalUIStore.openGeneratorWorkflowForEntity(entity.id)}
-          class="text-xs font-bold uppercase tracking-widest bg-theme-primary text-theme-bg border border-theme-primary hover:bg-theme-secondary hover:border-theme-secondary px-4 py-2 rounded-xl flex items-center gap-1.5 transition shadow-[0_0_15px_rgba(var(--color-theme-primary-rgb),0.15)] cursor-pointer"
-        >
-          <span class="icon-[lucide--sparkles] w-4 h-4"></span>
-          Generate Related
-        </button>
+        <GenerateRelatedButton entityId={entity.id} />
       </div>
     {/if}
     <!-- Temporal Data -->

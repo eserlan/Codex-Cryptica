@@ -29,6 +29,8 @@ export interface IFileIOAdapter {
       entity: LocalEntity;
     }>,
   ): Promise<void>;
+  /** Drops a cached entry whose file no longer exists. */
+  removeCachedEntity?(vaultId: string, path: string): Promise<void>;
   parseMarkdown(text: string, filePath: string[]): LocalEntity | null;
   isNotFoundError(err: any): boolean;
 }
@@ -145,6 +147,7 @@ export class VaultRepository {
 
       const updatedEntities: Record<string, LocalEntity> = {};
       const newOrChanged: Record<string, LocalEntity> = {};
+      const cacheHitIds = new Set<string>();
       const cacheEntriesToWrite: Array<{
         path: string;
         lastModified: number;
@@ -155,7 +158,9 @@ export class VaultRepository {
         if (res) {
           newEntities[res.entity.id] = res.entity;
           updatedEntities[res.entity.id] = res.entity;
-          if (!res.isHit) {
+          if (res.isHit) {
+            cacheHitIds.add(res.entity.id);
+          } else {
             newOrChanged[res.entity.id] = res.entity;
             if (this.ioAdapter.setCachedEntitiesBulk) {
               cacheEntriesToWrite.push({
@@ -184,42 +189,56 @@ export class VaultRepository {
 
       // Update incrementally to allow search/UI to work during load.
       // We only update the specific entities in this chunk.
-      if (Object.keys(updatedEntities).length > 0) {
-        const nextEntities = { ...this.entities };
-        for (const [id, entity] of Object.entries(updatedEntities)) {
-          const existing = nextEntities[id];
+      let changedInMemory = false;
+      const nextEntities = { ...this.entities };
+      for (const [id, entity] of Object.entries(updatedEntities)) {
+        const existing = nextEntities[id];
 
-          // SAFETY: If we have a newer version in memory (e.g. from a recent user edit
-          // or a more complete load), do not let the background scan clobber it.
-          if (
-            existing &&
-            existing.updatedAt !== undefined &&
-            entity.updatedAt !== undefined &&
-            existing.updatedAt > entity.updatedAt
-          ) {
-            continue;
-          }
-
-          // CRITICAL: Metadata-only updates (cache hits) have content = "".
-          // We MUST NOT overwrite an existing entity that already has
-          // content/lore loaded in memory.
-          const hasNewContent =
-            entity.content !== undefined && entity.content !== "";
-          const finalContent = hasNewContent
-            ? entity.content
-            : existing?.content || "";
-
-          const hasNewLore = entity.lore !== undefined && entity.lore !== "";
-          const finalLore = hasNewLore ? entity.lore : existing?.lore || "";
-
-          nextEntities[id] = {
-            ...entity,
-            content: finalContent,
-            lore: finalLore,
-          };
+        // A cache hit is the entity the warm open already seeded from the
+        // same cache. Re-assigning it would invalidate everything that reads
+        // the entity map (the graph included) for no change at all, which
+        // made the post-open reconcile compete with image loading.
+        if (
+          cacheHitIds.has(id) &&
+          existing &&
+          existing.updatedAt !== undefined &&
+          existing.updatedAt === entity.updatedAt &&
+          existing._path?.join("/") === entity._path?.join("/")
+        ) {
+          continue;
         }
-        this.entities = nextEntities;
+
+        // SAFETY: If we have a newer version in memory (e.g. from a recent user edit
+        // or a more complete load), do not let the background scan clobber it.
+        if (
+          existing &&
+          existing.updatedAt !== undefined &&
+          entity.updatedAt !== undefined &&
+          existing.updatedAt > entity.updatedAt
+        ) {
+          continue;
+        }
+
+        // CRITICAL: Metadata-only updates (cache hits) have content = "".
+        // We MUST NOT overwrite an existing entity that already has
+        // content/lore loaded in memory.
+        const hasNewContent =
+          entity.content !== undefined && entity.content !== "";
+        const finalContent = hasNewContent
+          ? entity.content
+          : existing?.content || "";
+
+        const hasNewLore = entity.lore !== undefined && entity.lore !== "";
+        const finalLore = hasNewLore ? entity.lore : existing?.lore || "";
+
+        nextEntities[id] = {
+          ...entity,
+          content: finalContent,
+          lore: finalLore,
+        };
+        changedInMemory = true;
       }
+      if (changedInMemory) this.entities = nextEntities;
 
       if (onProgress) {
         await onProgress(
@@ -248,9 +267,22 @@ export class VaultRepository {
     );
 
     if (toDelete.length > 0) {
+      const removedPaths = toDelete.map((id) => this.entities[id]._path!);
       const nextEntities = { ...this.entities };
       toDelete.forEach((id) => delete nextEntities[id]);
       this.entities = nextEntities;
+
+      // Without this the cache keeps the entry, the next warm open seeds it
+      // again, and this cleanup removes it again: two full rebuilds of every
+      // reader of the entity map on every load, for an entity that is gone.
+      const remove = this.ioAdapter.removeCachedEntity?.bind(this.ioAdapter);
+      if (remove) {
+        await Promise.all(
+          removedPaths.map((path) =>
+            remove(activeVaultId, path.join("/")).catch(() => {}),
+          ),
+        );
+      }
     }
 
     return this.entities;

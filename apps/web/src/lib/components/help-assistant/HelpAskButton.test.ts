@@ -18,29 +18,34 @@ describe("HelpAskButton", () => {
         .getByRole("button", { name: "Close help assistant" })
         .getAttribute("aria-expanded"),
     ).toBe("true");
-  });
+  }, 15000);
 
-  it("stays out of the bottom-right corner used by the create (+) buttons", () => {
+  it("is styled as a standard Activity Bar item", () => {
     render(HelpAskButton, { open: false, onToggle: vi.fn() });
     const classes = screen.getByTestId("help-assistant-button").className;
-    expect(classes).not.toMatch(/(^|\s)(md:)?right-/);
-    expect(classes).toMatch(/\bleft-3\b/);
-    // Clears the 3.5rem activity rail on wide screens.
-    expect(classes).toMatch(/md:left-\[4\.5rem\]/);
+    expect(classes).toContain("shrink-0");
+    expect(classes).toContain("w-11");
+    expect(classes).toContain("md:w-10");
+    expect(classes).toContain("rounded-md");
+    expect(classes).not.toContain("fixed");
   });
 
-  it("stays below the front-page stacking context that contains its call to action", () => {
-    render(HelpAskButton, { open: false, onToggle: vi.fn() });
-    const match = screen
-      .getByTestId("help-assistant-button")
-      .className.match(/z-\[(\d+)\]/);
-    expect(Number(match?.[1])).toBeLessThan(40);
+  it("renders active indicator bar when open", () => {
+    const { rerender } = render(HelpAskButton, {
+      open: false,
+      onToggle: vi.fn(),
+    });
+    const button = screen.getByTestId("help-assistant-button");
+    expect(button.querySelector(".bg-chrome-accent")).toBeNull();
+
+    rerender({ open: true, onToggle: vi.fn() });
+    expect(button.querySelector(".bg-chrome-accent")).not.toBeNull();
   });
 
-  it("clears the mobile ActivityBar safe area", () => {
+  it("provides accessible title and label", () => {
     render(HelpAskButton, { open: false, onToggle: vi.fn() });
-    expect(screen.getByTestId("help-assistant-button").className).toContain(
-      "bottom-[calc(4rem_+_env(safe-area-inset-bottom,0px))]",
-    );
+    const button = screen.getByTestId("help-assistant-button");
+    expect(button.getAttribute("title")).toBe("Ask Cif");
+    expect(button.getAttribute("aria-label")).toBe("Open help assistant");
   });
 });

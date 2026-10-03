@@ -220,11 +220,14 @@ export class VaultLifecycleManager {
         // Load Oracle chat history for the new vault
         await loadOracleForVault(id);
 
+        // Theme first (it styles the graph); templates load alongside files.
         await this.deps.themeStore.loadForVault(id);
-        await statSheetTemplates.loadForVault(id);
-        await presentationTemplates.loadForVault(id);
-        await this.loadEntityTemplates(id);
-        await this.deps.loadFiles();
+        await Promise.all([
+          statSheetTemplates.loadForVault(id),
+          presentationTemplates.loadForVault(id),
+          this.loadEntityTemplates(id),
+          this.deps.loadFiles(),
+        ]);
         this.deps.setInitialized(true);
         if (this.deps.syncStore.status === "loading") {
           this.deps.syncStore.setStatus("idle");

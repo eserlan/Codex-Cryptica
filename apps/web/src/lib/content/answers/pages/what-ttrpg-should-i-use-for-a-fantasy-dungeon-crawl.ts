@@ -177,6 +177,7 @@ export const whatTtrpgShouldIUseForAFantasyDungeonCrawl: AnswerConfigInput = {
     "what-rpg-should-i-use-for-tactical-combat",
     "what-rpg-should-i-play-for-investigative-horror",
     "how-do-i-run-exploration-in-a-huge-ruined-city",
+    "what-ttrpg-should-i-play-for-a-pirate-campaign",
   ],
   discovery: {
     id: "answer-dungeon-crawl-system-selection",

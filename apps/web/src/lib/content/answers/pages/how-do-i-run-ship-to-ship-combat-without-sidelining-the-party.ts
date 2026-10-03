@@ -9,7 +9,7 @@ export const howDoIRunShipToShipCombatWithoutSideliningTheParty: AnswerConfigInp
       "How do I run ship-to-ship combat without sidelining half the party?",
     kind: "framework",
     shortAnswer:
-      "Run ship-to-ship combat as a set of simultaneous station problems so every character has a decision each round. Treat the ship as a shared platform with distinct stations for helm and navigation, guns, damage control, lookout and signals, boarding preparation, and morale or command, and let players claim a station each round based on what the situation needs rather than locking them to one job. Pair that with visible objectives, environmental complications, and a clean handover to boarding, chase, or escape so non-martial and non-nautical characters always have useful choices.",
+      "Treat the ship as a shared battlefield with several simultaneous problems, so specialist actions change what the rest of the party can do next. Present shipboard functions such as helm, guns, damage control, lookout, boarding, command, and setting-specific support; let character expertise shape who leads, assists, or finds another approach. The ordinary crew handles routine work while the PCs make exceptional decisions, direct crises, and choose priorities. Use the game’s normal rules, visible consequences, environmental complications, and a clear handover to boarding, chase, escape, or surrender.",
     sections: [
       {
         kind: "prose",
@@ -21,37 +21,37 @@ export const howDoIRunShipToShipCombatWithoutSideliningTheParty: AnswerConfigInp
       },
       {
         kind: "list",
-        heading: "Seven shipboard stations, not fixed jobs",
+        heading: "Seven shipboard functions, not universal job slots",
         intro:
-          "Present stations as positions anyone can claim each round, not as character classes. A fighter can haul on a brace, a cleric can direct damage control, a wizard can read wind or veil the ship in fog. Let the fiction and the immediate danger decide who steps where.",
+          "Treat these as shipboard functions and pressure areas, not interchangeable jobs. Make each function available to the party, while the fiction, character expertise, and chosen game system determine who can lead it well, who can assist, and who needs another approach. The ordinary sailors load guns, pump, and handle routine sail work; PCs usually make exceptional decisions, lead the crew, or deal with a crisis. A useful contribution might be choosing a priority, spending a resource, using an ability, preparing for the next phase, or accepting an unhandled cost. Not every PC needs a separate roll each round.",
         items: [
           {
             term: "Helm and navigation",
-            text: "Steering, sail trim, choosing the approach angle, and reading wind, tide, reef, or current. Use this station to decide whether the ship closes, holds distance, turns to bring guns to bear, or breaks for open water. A character without sailing skill can still help by hauling lines on command, spotting a shoal the helmsman cannot see from the wheel, or relaying orders.",
+            text: "Deciding the manoeuvre, approach angle, and response to wind, tide, reef, or current. The helmsman or officer chooses whether to close, hold distance, bring guns to bear, or break for open water; the deck crew carries out routine sail work. Someone without sailing expertise might spot a shoal, relay an order, or help in a way the rules support, while a specialist leads the manoeuvre.",
           },
           {
             term: "Guns and ordnance",
-            text: "Aiming, loading, and choosing what to target: hull, rigging, rudder, guns, or crew. Keep gunnery as one clear decision per round, such as cripple their rigging to slow them, silence a gun, or punch the hull to force a surrender check. Characters who dislike artillery can still pass powder, clear a jam, or choose the target the captain should prioritise.",
+            text: "Choosing a target and the purpose of a broadside: slow the ship by damaging its rigging, silence a gun, or threaten the hull. The gun crew normally loads and fires; a PC might direct its aim, take over after casualties, or solve a jam under fire. Characters without gunnery expertise can contribute through another function or help in a way the game supports.",
           },
           {
             term: "Damage control and hull",
-            text: "Pumping, patching, fighting fires, and shoring a sprung spar. Every round the ship does not address a fire, leak, or fouled line should make the next helm or gunnery check harder in a visible way. This is where tough, practical, or healing characters shine without needing naval training.",
+            text: "Deciding how to respond to flooding, fire, a sprung spar, or fouled gear. Sailors can pump and make routine repairs; a PC might divert more hands, shore a critical breach, or keep the crew working under pressure. Treat a spreading fire or serious leak as an active crisis if it fits the fiction, and show the cost of leaving it alone using the game’s normal rules.",
           },
           {
             term: "Lookout, signals, and pilotage",
-            text: "Reading the other vessel, the coastline, and the weather. Calling sail changes, spotting a hidden battery, flag signals, or a squall building to windward. A keen-eyed, learned, or magically assisted character can give the helm an advantage, reveal an ambush, or identify which flag the approaching ship is really flying.",
+            text: "Reading the other vessel, coastline, and weather; spotting a hidden battery, interpreting a signal, or noticing a squall building to windward. A lookout’s expertise can reveal an ambush or identify which flag the approaching ship is really flying. Apply the result through the game’s normal mechanics and fiction.",
           },
           {
             term: "Boarding and repelling",
-            text: "Grapples, boarding planks, small arms, and deck fighting preparation. Even before hulls touch, this station covers readying lines, positioning crew, and protecting the quarterdeck. It gives martial characters a clear build-up without forcing the whole fight to become a boarding action.",
+            text: "Deciding how to prepare for grapples, boarding, or an enemy assault. The crew can ready lines and hold the quarterdeck; a PC might choose where to reinforce, protect a vulnerable person, or prepare an escape. This gives martial characters a build-up without forcing the whole fight to become a boarding action.",
           },
           {
-            term: "Magic, lore, and strange seas",
-            text: "Wind calling, fog weaving, hull mending, warding shot, reading a cursed chart, or negotiating with something in the water. If your setting has supernatural seas, treat this as a station that can help any other: soften a gust for the helm, shield a gun crew, or calm the crew instead of the sea.",
+            term: "Lore, special abilities, and supernatural support (if the setting has it)",
+            text: "Unusual expertise or abilities can change another live shipboard problem rather than becoming a separate mini-game. Depending on the character and setting, that might mean reading a cursed chart, calling wind, weaving fog, mending a hull, warding a gun crew, or negotiating with something in the water. If the setting has no supernatural elements, use relevant lore or other special abilities here instead.",
           },
           {
             term: "Command, morale, and shipboard order",
-            text: "Issuing clear orders, steadying the crew, settling a dispute that flares under fire, and deciding when to risk people to save the ship. The party face, leader, or anyone the crew trusts can keep a frightened gun crew at its post, rotate exhausted sailors, or call for a surrender or parley before panic decides it for them.",
+            text: "Setting priorities, allocating crew, steadying morale, and deciding when to risk people to save the ship. A commander may have authority over the vessel and its NPC crew, but that authority does not let one player decide another PC’s actions. If the campaign has a formal chain of command, agree out of character how PC authority works, then honour that fiction. Orders can affect crew morale, surrender, parley, or the risks the group accepts.",
           },
         ],
       },
@@ -59,27 +59,27 @@ export const howDoIRunShipToShipCombatWithoutSideliningTheParty: AnswerConfigInp
         kind: "list",
         heading: "Run simultaneous objectives, not one queue",
         intro:
-          "Naval combat works when the party faces more problems than it has hands. Structure each round around two or three concurrent pressures so choices matter.",
+          "Naval combat works when the party faces more problems than it can address at once. Present two or three concurrent pressures so choices matter, without requiring a roll from every PC each round.",
         items: [
           {
             term: "Open with a visible situation and a clock",
-            text: "Name the range, the wind, and what each ship wants. The enemy wants to cripple your rudder and board, or to escape with the prize. Put a simple track on the table, such as Closing, Cannon Range, Boarding Range, or Escaped, or mark Hull, Rigging, and Crew strain with a few boxes. Advance the track when the fiction and checks call for it, whether or not the party acted.",
+            text: "Name the range, the wind, and what each ship wants, including what would make it break off. The enemy might want to cripple your rudder and board, or escape with the prize. If useful, add a simple track such as Closing, Cannon Range, Boarding Range, or Escaped, or a few boxes for Hull, Rigging, and Crew strain. These are optional abstractions: use the game’s normal resolution mechanics and advance a track when the fiction and rules call for it. Ship state describes what the vessel can still do; a local deck crisis describes what needs attention now; character state describes who is injured, exposed, or committed. For example, a hit might worsen Rigging state, create a snapped brace as the immediate crisis, and injure someone only if the fiction and system support it.",
           },
           {
             term: "Offer two or three problems at once",
-            text: "For example: the enemy is turning to rake your stern whilst smoke from a hit gun blocks the helm's view and a wounded topman dangles from the main yard. The party can only address some of them this round. Let the unhandled problem make next round harder or change the objective.",
+            text: "For example: the enemy is turning to rake your stern whilst smoke from a hit gun blocks the helm's view and a wounded topman dangles from the main yard. The party can only address some of them now. Decide what follows from the fiction: an active crisis such as fire, flooding, broken rigging, or panic may worsen if ignored; an opportunity such as a favourable wind or exposed enemy gun may pass; routine work can continue through the NPC crew unless disrupted.",
           },
           {
-            term: "Let unhandled stations create visible costs",
-            text: "If no one pumps, water rises and the ship answers the helm more slowly. If no one tends the guns, the next broadside is late or wild. If no one steadies the crew, a frightened team hesitates before reloading. State the cost before the next round so the table can choose what to accept.",
+            term: "Make consequences visible when functions are disrupted",
+            text: "Use the game’s normal resolution mechanics. Ignored active crises can worsen; missed opportunities can disappear; and routine functions can carry on through the crew until casualties, panic, exhaustion, or reassignment reduce its capacity. State likely costs when the rules and situation allow, so players can decide what to accept. Crew capacity can be a shared ship state rather than a separate turn for every sailor.",
           },
           {
             term: "Change the objective before it goes stale",
-            text: "After two rounds of cannon fire, alter the premise: a reef forces a turn, a squall reaches the ships, a third sail appears on the horizon, the enemy tries to foul your rigging and board, or the chart shows a channel only one ship can use. A new objective reopens the station choices for characters whose earlier station is no longer the priority.",
+            text: "After two rounds of cannon fire, alter the premise: a reef forces a turn, a squall reaches the ships, a third sail appears on the horizon, the enemy tries to foul your rigging and board, or the chart shows a channel only one ship can use. A new objective reopens the choices for characters whose earlier function is no longer the priority.",
           },
           {
             term: "Give non-martial and non-nautical characters directed choices",
-            text: "Do not ask a scholar or healer to make a sailing check to feel included. Instead give them problems their skills already solve: identify the flag and what it signals about the enemy's intent, recall the reef's local name and safe passage, treat burns and keep a gun crew working, negotiate a brief parley to buy a round for repairs, or use lore or magic to read the weather one round early.",
+            text: "Do not ask a scholar or healer to make a sailing check just to include them. Let their expertise shape an existing problem: identify the flag and the enemy's intent, recall the reef's local name and safe passage, treat burns, negotiate a brief parley, or use relevant lore or an ability to read the weather. Sometimes their contribution is a choice, a resource, leading sailors, preparing for the next phase, or helping a specialist under the system’s rules. Every player should have a meaningful way to influence the current problem, but each PC need not make a bespoke roll every round.",
           },
         ],
       },
@@ -91,7 +91,7 @@ export const howDoIRunShipToShipCombatWithoutSideliningTheParty: AnswerConfigInp
         items: [
           {
             term: "Abstract, theatre-of-the-mind",
-            text: "Best when the story needs a naval beat inside a larger session. Use range bands (distant, long, close, alongside), facing as an advantage rather than a precise heading, and three to five ship states that change on failed checks or enemy action. Resolve helm, guns, and damage as one check per station per round, with clear fictional consequences. A whole engagement then fits in thirty to forty minutes and leaves room for what happens on deck after.",
+            text: "Best when the naval engagement should occupy only part of the session, leaving substantial time for its consequences, boarding, or shore scenes. Range bands (distant, long, close, alongside), broad facing, and a few ship states are optional ways to keep the situation legible. Use the game’s normal rules for actions and resolution; what matters is that ignored problems produce visible consequences and each resolved action changes the shared situation.",
           },
           {
             term: "Tactical, map or grid",
@@ -131,7 +131,7 @@ export const howDoIRunShipToShipCombatWithoutSideliningTheParty: AnswerConfigInp
         kind: "example",
         heading: "Worked example: a brig tries to take a sloop off a lee shore",
         paragraphs: [
-          "The party's sloop has a shallow-draft advantage and a cracked foremast that may fail in a hard chase, from their starter ship. A naval brig wants their prize cargo and is trying to force them onto a reef-marked lee shore. The round-by-round comparison shows how stations and simultaneous pressures change the session.",
+          "The party's sloop has a shallow-draft advantage and a cracked foremast that may fail in a hard chase, from their starter ship. A naval brig wants their prize cargo and is trying to force them onto a reef-marked lee shore. The comparison shows how shipboard functions and simultaneous pressures change the session.",
         ],
         items: [
           {
@@ -139,12 +139,12 @@ export const howDoIRunShipToShipCombatWithoutSideliningTheParty: AnswerConfigInp
             text: "The GM calls for a sailing check from the helmsman, then resolves a broadside with the gunner. The scholar, healer, and face have no check to make, so the GM asks them to roll to aid the sailing check for a small bonus. Two players aid, one watches. The brig closes, fires again, and the sloop eventually boards because the table is waiting for a fight where everyone can act. The ship's draft, the cracked mast, and the reef never matter.",
           },
           {
-            term: "The station approach",
-            text: "Round one opens with three problems: the brig is reaching to rake the sloop's stern, smoke from a hit carronade blinds the helm, and the lookout spots breakers ahead marking the reef that only the sloop can cross. The helmsman claims the helm and must choose between turning to spoil the rake or holding course for the channel. The healer claims damage control and must decide whether to clear the smoke for the helm or pump water that is already slowing the rudder. The scholar claims lookout and pilotage, recalling the channel's local name and calling the turn by a white rock on the headland. The face claims command, steadying a gun crew shaken by the hit, whilst magic veils the sloop's exact heading for one round. Each station resolves with one check and a visible consequence that changes the next round's choices.",
+            term: "The shared-problem approach",
+            text: "Round one opens with three problems: the brig is reaching to rake the sloop's stern, smoke from a hit carronade blinds the helm, and the lookout spots breakers ahead marking the reef that only the sloop can cross. The experienced helmsman chooses between turning to spoil the rake or holding course for the channel, while the sailors carry out the manoeuvre. The healer decides whether to direct hands to clear the smoke or shore the leak already slowing the rudder. The scholar uses local knowledge to identify the channel and call the turn by a white rock on the headland. The face steadies a gun crew shaken by the hit; if the setting supports it, magic veils the sloop's exact heading. The game’s own rules resolve these actions, and each consequence changes the shared situation for the next choice.",
           },
           {
             term: "Why it works",
-            text: "Every character had a decision that required their actual strengths, not a generic aid bonus tacked onto the helm roll. An unhandled problem was allowed to cost something: if no one had cleared the smoke, the helm would have turned late; if no one had steadied the crew, the next broadside would have been delayed. The reef and the draft gave the scholar a way to win the encounter through pilotage rather than gunnery, which meant the sloop could escape without needing to outfight a larger ship.",
+            text: "The players influenced the same naval problem through their characters’ strengths, rather than adding generic aid to the helm roll. The crew handled routine labour, while PCs made the decisions and addressed the crisis. If no one cleared the smoke, the helm might have turned late; if no one steadied the crew, its capacity to reload might fall. The reef and shallow draft let the scholar’s knowledge shape the escape without requiring them to become the helmsman or outfight a larger ship. A PC who has no useful action in this moment can prepare for the next phase or accept an unhandled cost; participation does not require a roll every round.",
           },
         ],
       },
@@ -161,9 +161,9 @@ export const howDoIRunShipToShipCombatWithoutSideliningTheParty: AnswerConfigInp
         heading: "Prep checklist before running ship combat",
         items: [
           "Name what each ship wants and what will make it break off: capture, cripple, delay, or escape.",
-          "Prepare seven station cards or lines on paper: helm, guns, damage control, lookout, boarding, magic or lore, and command. Note that any player can claim any station each round.",
+          "List the shipboard functions that matter here: helm, guns, damage control, lookout, boarding, command, and any setting-specific support. Note who has the expertise to lead, who could assist under the rules, and what other approaches are possible; do not assign every PC a function each round.",
           "Write two simultaneous problems for the opening round and one environmental complication that will appear on round two or three, such as a reef, squall, smoke, fire, or third sail.",
-          "Decide whether you will run this engagement as abstract range bands or as a tactical map, and note the one ship state that will worsen if unhandled, such as hull, rigging, or crew strain.",
+          "Choose abstract range bands, a tactical map, or a hybrid according to the spotlight and time you want. Separate ship state (what the vessel can still do), local crises, and character consequences. Decide which crises may worsen, which opportunities may pass, and which routine functions the crew can maintain; use tracks or state boxes only if they suit your system.",
           "Give one non-martial and one non-nautical character a directed problem only they can solve well, such as identifying the flag, reading the channel, treating burns, or steadying the crew.",
           "Plan the threshold that ends the naval phase and starts the next scene: alongside with fouled lines for boarding, channel cleared for escape, or colours struck for surrender, and what damage and prisoners carry forward.",
         ],
@@ -172,7 +172,7 @@ export const howDoIRunShipToShipCombatWithoutSideliningTheParty: AnswerConfigInp
     codexConnection: {
       heading: "Link ship, sea, and shore in one place",
       paragraphs: [
-        "Keep each vessel's stations, damage, cargo, and handling alongside its captain, crew, debts, and the harbours that can repair it. When a cracked mast, a reef-marked channel, or a shaken gun crew changes during a fight, the relationship graph shows what else should react next session without rebuilding the voyage from memory.",
+        "Keep each vessel's shipboard functions, damage, cargo, and handling alongside its captain, crew, debts, and the harbours that can repair it. When a cracked mast, a reef-marked channel, or a shaken gun crew changes during a fight, the relationship graph shows what else should react next session without rebuilding the voyage from memory.",
       ],
       linkText: "Generate a pirate ship",
       href: "/generators/ship-generator",
@@ -220,6 +220,9 @@ export const howDoIRunShipToShipCombatWithoutSideliningTheParty: AnswerConfigInp
       "how-do-you-run-a-chase-in-a-tabletop-rpg",
       "what-should-an-rpg-settlement-contain",
       "how-do-you-prepare-a-sandbox-rpg-campaign",
+      "how-do-i-make-sea-travel-interesting-in-a-ttrpg",
+      "how-do-i-run-a-pirate-campaign-focused-on-exploration",
+      "what-ttrpg-should-i-play-for-a-pirate-campaign",
     ],
     labels: ["pirate"],
     discovery: {
@@ -239,7 +242,7 @@ export const howDoIRunShipToShipCombatWithoutSideliningTheParty: AnswerConfigInp
         "how to transition from ship combat to boarding chase or escape",
       ],
       uniqueValue:
-        "A station-based naval encounter framework with seven claimable shipboard roles, simultaneous objectives, and environmental complications that gives non-martial and non-nautical characters directed choices and a clean handover to boarding, chase, or escape.",
+        "A fiction-first naval encounter framework with concurrent shipboard problems, environmental complications, specialist contributions, crew capacity, and a clean handover to boarding, chase, escape, or surrender.",
       userJob: "adopt-workflow",
       relatedIntents: [
         "answer-starter-ship-pirate",
@@ -260,12 +263,12 @@ export const howDoIRunShipToShipCombatWithoutSideliningTheParty: AnswerConfigInp
         {
           with: "answer-large-battle-pcs-in-army",
           reason:
-            "That page nests character-scale objectives inside an army battle tracked with a few visible states. This page nests character-scale stations inside a ship tracked the same way, with helm, guns, damage control, lookout, and morale as the shared platform rather than a battlefield front.",
+            "That page nests character-scale objectives inside an army battle tracked with a few visible states. This page nests character-scale problems inside a ship tracked the same way, with helm, guns, damage control, lookout, and morale as the shared platform rather than a battlefield front.",
         },
         {
           with: "answer-travel-interesting",
           reason:
-            "That page makes sea and land journeys interesting through branching routes and travel roles. This page applies simultaneous roles and environmental pressures at combat tempo, with range, wind, and coastline changing the objective each round rather than each day.",
+            "That page makes sea and land journeys interesting through branching routes and travel roles. This page applies simultaneous shipboard functions and environmental pressures at combat tempo, with range, wind, and coastline changing the objective each round rather than each day.",
         },
         {
           with: "answer-rival-captains-navies-pirate-factions-matter",
@@ -278,7 +281,7 @@ export const howDoIRunShipToShipCombatWithoutSideliningTheParty: AnswerConfigInp
       title:
         "How to Run Ship-to-Ship Combat Without Sidelining Players | Codex Cryptica",
       description:
-        "Run naval combat where every player acts each round. Use claimable ship stations, simultaneous objectives, and weather and coastline to keep the fight moving.",
+        "Run naval combat through shared problems, specialist contributions, crew capacity, and changing weather, then hand over to boarding, chase, escape, or surrender.",
       image:
         "https://assets.codexcryptica.com/og/how-do-i-run-ship-to-ship-combat-without-sidelining-the-party.jpg",
       imageAlt:

@@ -1,11 +1,15 @@
 import type { KnowledgeBundle } from "../bundle/types";
 import type { HelpContext } from "../context";
+import type { HelpTurn } from "../prompt/build";
 import type { FeatureEntry } from "../registry/schema";
+import { contextualizeQuery } from "./contextualize";
 import { MIN_RELEVANCE, rankChunks, type ScoredChunk } from "./rank";
 
 export interface RetrieveOptions {
   limit?: number;
   minRelevance?: number;
+  queryVector?: readonly number[];
+  history?: readonly HelpTurn[];
 }
 
 export interface RetrievalResult {
@@ -20,7 +24,7 @@ export interface RetrievalResult {
   suggestions: { helpId: string; title: string }[];
 }
 
-export const DEFAULT_LIMIT = 3;
+export const DEFAULT_LIMIT = 4;
 
 /**
  * No more than this many chunks from one feature (or, for an article no
@@ -33,8 +37,71 @@ export const MAX_CHUNKS_PER_FEATURE = 2;
 /** A shown chunk needs at least this fraction of the relevance floor. */
 export const INCLUSION_RATIO = 0.5;
 
+type PickState = {
+  perGroup: Map<string, number>;
+  picked: Set<ScoredChunk>;
+  sources: Set<string>;
+};
+
+const groupFor = (item: ScoredChunk) =>
+  item.chunk.featureId ?? item.chunk.sourceId;
+
+function pickDistinctSources(
+  ranked: ScoredChunk[],
+  limit: number,
+  floor: number,
+  state: PickState,
+): void {
+  for (const item of ranked) {
+    if (state.picked.size === limit) break;
+    if (item.relevance < floor) continue;
+
+    const group = groupFor(item);
+    const used = state.perGroup.get(group) ?? 0;
+    if (
+      used >= MAX_CHUNKS_PER_FEATURE ||
+      state.sources.has(item.chunk.sourceId)
+    )
+      continue;
+
+    state.sources.add(item.chunk.sourceId);
+    state.perGroup.set(group, used + 1);
+    state.picked.add(item);
+  }
+}
+
+function pickAdditionalFeatureChunks(
+  ranked: ScoredChunk[],
+  limit: number,
+  floor: number,
+  state: PickState,
+): void {
+  for (const item of ranked) {
+    if (state.picked.size === limit) break;
+    if (state.picked.has(item) || item.relevance < floor) continue;
+
+    const group = groupFor(item);
+    const used = state.perGroup.get(group) ?? 0;
+    if (used >= MAX_CHUNKS_PER_FEATURE) continue;
+
+    state.perGroup.set(group, used + 1);
+    state.picked.add(item);
+  }
+}
+
+function fillRemainingChunks(
+  ranked: ScoredChunk[],
+  limit: number,
+  picked: Set<ScoredChunk>,
+): void {
+  for (const item of ranked) {
+    if (picked.size === limit) break;
+    picked.add(item);
+  }
+}
+
 /**
- * Picks the chunks to show, in rank order. The per-feature cap only ever swaps
+ * Picks distinct relevant sources first, then additional sections in rank order. The per-feature cap only ever swaps
  * in a chunk that clears the full relevance floor: a weak chunk must never
  * take the place of a relevant one just to look varied. Slots the cap leaves
  * empty go back to the best remaining chunks.
@@ -44,22 +111,17 @@ function diversify(
   limit: number,
   floor: number,
 ): ScoredChunk[] {
-  const perGroup = new Map<string, number>();
-  const picked = new Set<ScoredChunk>();
-  for (const r of ranked) {
-    if (picked.size === limit) break;
-    if (r.relevance < floor) continue;
-    const group = r.chunk.featureId ?? r.chunk.sourceId;
-    const used = perGroup.get(group) ?? 0;
-    if (used >= MAX_CHUNKS_PER_FEATURE) continue;
-    perGroup.set(group, used + 1);
-    picked.add(r);
-  }
-  for (const r of ranked) {
-    if (picked.size === limit) break;
-    picked.add(r);
-  }
-  return ranked.filter((r) => picked.has(r));
+  const state: PickState = {
+    perGroup: new Map(),
+    picked: new Set(),
+    sources: new Set(),
+  };
+  // Once distinct sources have been considered, retain useful additional
+  // sections rather than padding with a weak or unrelated source.
+  pickDistinctSources(ranked, limit, floor, state);
+  pickAdditionalFeatureChunks(ranked, limit, floor, state);
+  fillRemainingChunks(ranked, limit, state.picked);
+  return [...state.picked];
 }
 
 function closestTopics(
@@ -71,7 +133,7 @@ function closestTopics(
   const titles = new Map<string, string>();
   for (const chunk of bundle.chunks) {
     if (chunk.helpId && !titles.has(chunk.helpId))
-      titles.set(chunk.helpId, chunk.title);
+      titles.set(chunk.helpId, chunk.citationTitle ?? chunk.title);
   }
   const out: { helpId: string; title: string }[] = [];
   const add = (helpId: string) => {
@@ -94,7 +156,16 @@ export function retrieve(
 ): RetrievalResult {
   const limit = options.limit ?? DEFAULT_LIMIT;
   const floor = options.minRelevance ?? MIN_RELEVANCE;
-  const ranked = rankChunks(question, bundle.chunks, bundle.features, ctx);
+  const effectiveQuestion = options.history?.length
+    ? contextualizeQuery(question, options.history)
+    : question;
+  const ranked = rankChunks(
+    effectiveQuestion,
+    bundle.chunks,
+    bundle.features,
+    ctx,
+    options.queryVector,
+  );
   const screenFeatures = bundle.features.filter((f) =>
     f.areas.includes(ctx.area),
   );

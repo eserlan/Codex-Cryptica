@@ -11,6 +11,8 @@ import {
   isLayoutCollinear,
   LayoutManager,
   GraphImageManager,
+  attachCommunityHulls,
+  type CommunityHullOverlay,
   setupGraphEvents,
   syncGraphElements,
   applyLargeGraphRenderHints,
@@ -29,7 +31,7 @@ import type { connectionModeStore as connectionModeStoreType } from "$lib/stores
 import type { modalUIStore as modalUIStoreType } from "$lib/stores/ui/modal-ui.svelte";
 import {
   resolveEntitySilhouette,
-  loadSilhouetteDataUri,
+  loadSilhouetteImageUrl,
   deriveEntityTypePalette,
 } from "schema";
 import { themeStore } from "$lib/stores/theme.svelte";
@@ -98,6 +100,7 @@ export class GraphViewController {
   cy = $state<Core | undefined>();
   layoutManager = $state<LayoutManager | undefined>();
   imageManager = $state<GraphImageManager | undefined>();
+  communityHulls = $state<CommunityHullOverlay | undefined>();
 
   isLayoutRunning = $state(false);
   graphVisible = $derived(this.cy !== undefined);
@@ -313,6 +316,17 @@ export class GraphViewController {
         (window as any).graphViewController = this;
       }
 
+      const hullCanvas = container.querySelector<HTMLCanvasElement>(
+        "canvas[data-community-hulls]",
+      );
+      this.communityHulls?.destroy();
+      this.communityHulls = hullCanvas
+        ? attachCommunityHulls(instance, hullCanvas, {
+            enabled: untrack(() => this.communityHullsWanted()),
+            strong: untrack(() => this.deps.graph.communityMode === "strong"),
+          })
+        : undefined;
+
       this.cleanupEvents = setupGraphEvents(instance, {
         onNodeMouseOver: (id, renderedPos) => {
           this.hoverPosition = renderedPos;
@@ -491,6 +505,8 @@ export class GraphViewController {
       this.cleanupEvents();
       this.cleanupEvents = undefined;
     }
+    this.communityHulls?.destroy();
+    this.communityHulls = undefined;
     this.clearNodeSelectTimer();
     this.clearRenderReadyMeasurement();
     if (this.layoutManager) {
@@ -929,6 +945,17 @@ export class GraphViewController {
     }
   };
 
+  /** Timeline and orbit arrange nodes by date or distance, not by community. */
+  private communityHullsWanted() {
+    const g = this.deps.graph;
+    return g.communityMode !== "off" && !g.timelineMode && !g.orbitMode;
+  }
+
+  syncCommunityHulls = () => {
+    this.communityHulls?.setEnabled(this.communityHullsWanted());
+    this.communityHulls?.setStrong(this.deps.graph.communityMode === "strong");
+  };
+
   syncImages = () => {
     if (this.isSuspended) {
       this.needsVisibilityReconcile = true;
@@ -980,7 +1007,7 @@ export class GraphViewController {
             // The artwork lives in R2, so this is a fetch (cached per URL for
             // the session). A node whose silhouette cannot be reached simply
             // paints without a glyph.
-            return loadSilhouetteDataUri(sil, glyphColor);
+            return loadSilhouetteImageUrl(sil, glyphColor);
           },
           onBatchApplied: (count) => {
             this.deps.debugStore.log(

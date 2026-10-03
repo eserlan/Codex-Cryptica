@@ -13,6 +13,7 @@ import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
 import { vault } from "$lib/stores/vault.svelte";
 import { vaultRegistry } from "$lib/stores/vault-registry.svelte";
 import { sessionJournalStore } from "$lib/stores/session-journal.svelte";
+import { helpAssistant } from "$lib/stores/help-assistant/help-runtime";
 
 vi.mock("$lib/stores/theme.svelte", () => ({
   themeStore: {
@@ -320,6 +321,68 @@ describe("ActivityBar", () => {
       render(ActivityBar);
       expect(screen.queryByTestId("activity-bar-session-journal")).toBeNull();
       expect(screen.queryByTestId("session-journal-indicator")).toBeNull();
+    });
+  });
+
+  describe("help assistant button at bottom of ActivityBar", () => {
+    afterEach(() => {
+      vi.unstubAllEnvs();
+      discoveryPolicyStore.aiDisabled = false;
+      helpAssistant.reset();
+      helpAssistant.close();
+    });
+
+    it("renders the help button at the bottom of the rail when help assistant is available", () => {
+      vi.stubEnv("VITE_HELP_ASSISTANT", "true");
+      render(ActivityBar);
+
+      const bottom = screen.getByTestId("activity-bar-bottom");
+      expect(bottom.className).toContain("md:mt-auto");
+      const button = screen.getByTestId("help-assistant-button");
+      expect(button).toBeDefined();
+    });
+
+    it("toggles the help assistant when clicked", async () => {
+      vi.stubEnv("VITE_HELP_ASSISTANT", "true");
+      render(ActivityBar);
+
+      const button = screen.getByTestId("help-assistant-button");
+      expect(helpAssistant.isOpen).toBe(false);
+
+      await fireEvent.click(button);
+      expect(helpAssistant.isOpen).toBe(true);
+
+      await fireEvent.click(button);
+      expect(helpAssistant.isOpen).toBe(false);
+    });
+
+    it("shows active indicator bar when help assistant is open", async () => {
+      vi.stubEnv("VITE_HELP_ASSISTANT", "true");
+      const { rerender } = render(ActivityBar);
+
+      const button = screen.getByTestId("help-assistant-button");
+      expect(button.querySelector(".bg-chrome-accent")).toBeNull();
+
+      helpAssistant.open();
+      await rerender({});
+      expect(button.querySelector(".bg-chrome-accent")).not.toBeNull();
+    });
+
+    it("does not render when AI is disabled (negative)", () => {
+      vi.stubEnv("VITE_HELP_ASSISTANT", "true");
+      discoveryPolicyStore.aiDisabled = true;
+      render(ActivityBar);
+
+      expect(screen.queryByTestId("help-assistant-button")).toBeNull();
+      expect(screen.queryByTestId("activity-bar-bottom")).toBeNull();
+    });
+
+    it("does not render when feature flag is off (negative)", () => {
+      vi.stubEnv("VITE_HELP_ASSISTANT", "");
+      render(ActivityBar);
+
+      expect(screen.queryByTestId("help-assistant-button")).toBeNull();
+      expect(screen.queryByTestId("activity-bar-bottom")).toBeNull();
     });
   });
 });

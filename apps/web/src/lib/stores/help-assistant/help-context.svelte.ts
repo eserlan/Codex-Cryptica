@@ -36,7 +36,8 @@ function areaFor(
   // everything under it, then the generator dialog, then an open entry.
   if (sources.getOpenSettingsTab() !== null) return "settings";
   if (sources.isGeneratorOpen()) return "generators";
-  if (sources.surfaces.entityDetail) return "entity-detail";
+  if (sources.surfaces.zenEntityDetail || sources.surfaces.entityDetail)
+    return "entity-detail";
   return (routeId && ROUTE_AREAS[routeId]) || "other";
 }
 
@@ -50,18 +51,31 @@ function flagsFor(
   return flags;
 }
 
+function entityActionsFor(
+  surface: HelpContextSources["surfaces"]["entityDetail"],
+): string[] {
+  if (!surface) return [];
+
+  const actions: string[] = [];
+  const canSwitchTabs = surface.canSwitchTabs?.() !== false;
+  if (canSwitchTabs) actions.push("status-tab", "connections-tab");
+
+  const onStatusTab = surface.activeTab() === "status";
+  if (onStatusTab && surface.canAddConnection()) {
+    actions.push("add-connection-button");
+  }
+  if (onStatusTab && surface.canGenerateRelated?.()) {
+    actions.push("generate-related-button");
+  }
+  return actions;
+}
+
 /** What is on screen and can be pointed at, by ID. The Add button lives on the Status tab. */
 function availableActionsFor(
   sources: HelpContextSources,
   surface: HelpSurfaceRegistry["entityDetail"],
 ): string[] {
-  const actions: string[] = [];
-  if (surface) {
-    actions.push("status-tab", "connections-tab");
-    if (surface.activeTab() === "status" && surface.canAddConnection()) {
-      actions.push("add-connection-button");
-    }
-  }
+  const actions = entityActionsFor(surface);
   // Settings is reachable from every screen of a real vault.
   if (!sources.isGuestMode()) actions.push(...SETTINGS_PANEL_IDS);
   return actions;
@@ -83,7 +97,9 @@ export class HelpContextStore {
       const area = areaFor(sources, routeId);
       // The entry's own details only count while the entry is the screen.
       const surface =
-        area === "entity-detail" ? sources.surfaces.entityDetail : null;
+        area === "entity-detail"
+          ? (sources.surfaces.zenEntityDetail ?? sources.surfaces.entityDetail)
+          : null;
 
       return sanitizeHelpContext({
         routeTemplate: routeId,
@@ -96,10 +112,7 @@ export class HelpContextStore {
         mode: surface?.isEditing() ? "edit" : "view",
         surface: "vault",
         flags: flagsFor(sources, surface),
-        availableActions: availableActionsFor(
-          sources,
-          sources.surfaces.entityDetail,
-        ),
+        availableActions: availableActionsFor(sources, surface),
       });
     } catch {
       // A misbehaving provider must never break help: fall back to "no idea

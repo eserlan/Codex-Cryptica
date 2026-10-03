@@ -4,13 +4,25 @@ export const entityEditing: FeatureEntry = {
   id: "entity-editing",
   title: "Creating and Editing Entities",
   summary:
-    "Create a character, location or other entry with the + Create button, then use EDIT on its page to change it. SAVE CHANGES keeps your edits and CANCEL discards them.",
+    "Create entries with + Create and edit them with EDIT. AI-assisted revisions of Chronicle and Lore start from AI Revise Description in the entity side panel or Zen Mode, or /revise in Lore Oracle chat. Review the draft before Apply Changes.",
   channel: "production",
   routes: ["/(app)"],
   areas: ["entity-detail"],
   kinds: "any",
   tabs: [],
   workflows: [
+    {
+      id: "ai-revisions",
+      title: "AI-assisted revisions of Chronicle and Lore",
+      steps: [
+        "Click AI Revise Description (sparkles) near the entity title in the side panel, or in the Zen Mode editor toolbar.",
+        "In Revise Description, optionally add AI Instructions / Corrections, then click Revise. Cancel closes the dialog without generating a revision.",
+        "Review the Chronicle and Lore draft. Apply Changes saves it; Discard keeps the original. Review lore changes may ask which sections to keep.",
+        "Alternatively, use /revise in Lore Oracle chat for the selected entity.",
+        "AI revisions are unavailable in guest or demo vaults. A failed revision leaves existing text unchanged.",
+      ],
+      actionIds: ["entity-editing.open-help"],
+    },
     {
       id: "create-an-entity",
       title: "Create a new entity",

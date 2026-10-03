@@ -1,5 +1,6 @@
 import { AnswerConfigSchema, type AnswerConfig } from "../schema";
 import { canYouPlayATabletopRpgIn30MinuteSessions } from "./can-you-play-a-tabletop-rpg-in-30-minute-sessions";
+import { howCommonShouldMagicBeInAFantasyWorld } from "./how-common-should-magic-be-in-a-fantasy-world";
 import { howDoFantasyCitiesDefendAgainstFlyingCreaturesAndTeleportation } from "./how-do-fantasy-cities-defend-against-flying-creatures-and-teleportation";
 import { howDoIBalanceRpgCombatEncountersWithoutATpk } from "./how-do-i-balance-rpg-combat-encounters-without-a-tpk";
 import { howDoIBuildABelievableConstitutionalCrisisOrCoup } from "./how-do-i-build-a-believable-constitutional-crisis-or-coup";
@@ -15,6 +16,7 @@ import { howDoIGiveSpecialistCharactersSpotlight } from "./how-do-i-give-special
 import { howDoIMakeAPlayerBaseMatterInAnRpgCampaign } from "./how-do-i-make-a-player-base-matter-in-an-rpg-campaign";
 import { howDoIMakeDifferentCulturesFeelDistinctWithoutRelyingOnStereotypes } from "./how-do-i-make-different-cultures-feel-distinct-without-relying-on-stereotypes";
 import { howDoIMakeRivalCaptainsNaviesAndPirateFactionsMatter } from "./how-do-i-make-rival-captains-navies-and-pirate-factions-matter";
+import { howDoIMakeSeaTravelInterestingInATtrpg } from "./how-do-i-make-sea-travel-interesting-in-a-ttrpg";
 import { howDoIOrganiseGmNotesForInPersonPlay } from "./how-do-i-organise-gm-notes-for-in-person-play";
 import { howDoIPaceAnRpgOneShot } from "./how-do-i-pace-an-rpg-one-shot";
 import { howDoIPrepareAnRpgSessionStepByStep } from "./how-do-i-prepare-an-rpg-session-step-by-step";
@@ -22,6 +24,7 @@ import { howDoIRunACampaignWhereThePlayersOwnABusiness } from "./how-do-i-run-a-
 import { howDoIRunADiplomatNobleOrCourtierInAnRpg } from "./how-do-i-run-a-diplomat-noble-or-courtier-in-an-rpg";
 import { howDoIRunAJournalistOrMediaCharacterInAnRpg } from "./how-do-i-run-a-journalist-or-media-character-in-an-rpg";
 import { howDoIRunALargeBattleWhenThePlayerCharactersArePartOfAnArmy } from "./how-do-i-run-a-large-battle-when-the-player-characters-are-part-of-an-army";
+import { howDoIRunAPirateCampaignFocusedOnExploration } from "./how-do-i-run-a-pirate-campaign-focused-on-exploration";
 import { howDoIRunARogueOrScoutWithoutSplittingTheParty } from "./how-do-i-run-a-rogue-or-scout-without-splitting-the-party";
 import { howDoIRunASuccessfulSessionZero } from "./how-do-i-run-a-successful-session-0";
 import { howDoIRunAnInvestigatorWithoutSideliningTheParty } from "./how-do-i-run-an-investigator-without-sidelining-the-party";
@@ -86,12 +89,16 @@ import { howDoYouTrackFactionTurnsBetweenRpgSessions } from "./how-do-you-track-
 import { howDoYouTrackUnresolvedPlotHooksInAnRpgCampaign } from "./how-do-you-track-unresolved-plot-hooks-in-an-rpg-campaign";
 import { howDoYouUsePlayerBackstoriesInAnRpgCampaignWorld } from "./how-do-you-use-player-backstories-in-an-rpg-campaign-world";
 import { howDoYouWriteAOneShotAdventure } from "./how-do-you-write-a-one-shot-adventure";
+import { howDoesMagicAffectPoliticsAndGovernment } from "./how-does-magic-affect-politics-and-government";
+import { howDoesMagicChangeSocietyInAFantasyWorld } from "./how-does-magic-change-society-in-a-fantasy-world";
+import { howDoesMagicCreateSocialClassesAndInequality } from "./how-does-magic-create-social-classes-and-inequality";
 import { howLongShouldATtrpgSessionBe } from "./how-long-should-a-ttrpg-session-be";
 import { howManyNpcsDoesAnRpgTownNeed } from "./how-many-npcs-does-an-rpg-town-need";
 import { howMuchCampaignLoreShouldPlayersBeExpectedToRemember } from "./how-much-campaign-lore-should-players-be-expected-to-remember";
 import { howMuchOfThePlotShouldADmPrepare } from "./how-much-of-the-plot-should-a-dm-prepare";
 import { howMuchPrepDoYouNeedForAnRpgSession } from "./how-much-prep-do-you-need-for-an-rpg-session";
 import { howMuchRuleOfCoolShouldADmAllow } from "./how-much-rule-of-cool-should-a-dm-allow";
+import { howShouldMagicHaveBeenDiscoveredInMyWorld } from "./how-should-magic-have-been-discovered-in-my-world";
 import { howToCreateACyberpunkCityDistrict } from "./how-to-create-a-cyberpunk-city-district";
 import { howToCreateASciFiStarSystemForAnRpg } from "./how-to-create-a-sci-fi-star-system-for-an-rpg";
 import { howToCreateRumoursForAFantasyTown } from "./how-to-create-rumours-for-a-fantasy-town";
@@ -117,6 +124,7 @@ import { whatShouldANewDndPlayerLearnFirst } from "./what-should-a-new-dnd-playe
 import { whatShouldAnRpgSettlementContain } from "./what-should-an-rpg-settlement-contain";
 import { whatShouldILookForInAnRpgCampaignManager } from "./what-should-i-look-for-in-an-rpg-campaign-manager";
 import { whatShouldPlayersBeAbleToUpgradeInAnRpgBase } from "./what-should-players-be-able-to-upgrade-in-an-rpg-base";
+import { whatTtrpgShouldIPlayForAPirateCampaign } from "./what-ttrpg-should-i-play-for-a-pirate-campaign";
 import { whatTtrpgShouldIUseForAFantasyDungeonCrawl } from "./what-ttrpg-should-i-use-for-a-fantasy-dungeon-crawl";
 import { whatTtrpgsLetYouBuildAndUpgradeABase } from "./what-ttrpgs-let-you-build-and-upgrade-a-base";
 import { whereDoIStartIfIHaveNeverPlayedATabletopRpg } from "./where-do-i-start-if-i-have-never-played-a-tabletop-rpg";
@@ -131,6 +139,7 @@ import { xpLevelingVsMilestoneLeveling } from "./xp-leveling-vs-milestone-leveli
 export const answers: Record<string, AnswerConfig> = Object.fromEntries(
   [
     canYouPlayATabletopRpgIn30MinuteSessions,
+    howCommonShouldMagicBeInAFantasyWorld,
     howDoFantasyCitiesDefendAgainstFlyingCreaturesAndTeleportation,
     howDoIBalanceRpgCombatEncountersWithoutATpk,
     howDoIBuildABelievableConstitutionalCrisisOrCoup,
@@ -146,6 +155,7 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     howDoIMakeAPlayerBaseMatterInAnRpgCampaign,
     howDoIMakeDifferentCulturesFeelDistinctWithoutRelyingOnStereotypes,
     howDoIMakeRivalCaptainsNaviesAndPirateFactionsMatter,
+    howDoIMakeSeaTravelInterestingInATtrpg,
     howDoIOrganiseGmNotesForInPersonPlay,
     howDoIPaceAnRpgOneShot,
     howDoIPrepareAnRpgSessionStepByStep,
@@ -153,6 +163,7 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     howDoIRunADiplomatNobleOrCourtierInAnRpg,
     howDoIRunAJournalistOrMediaCharacterInAnRpg,
     howDoIRunALargeBattleWhenThePlayerCharactersArePartOfAnArmy,
+    howDoIRunAPirateCampaignFocusedOnExploration,
     howDoIRunARogueOrScoutWithoutSplittingTheParty,
     howDoIRunASuccessfulSessionZero,
     howDoIRunAnInvestigatorWithoutSideliningTheParty,
@@ -217,12 +228,16 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     howDoYouTrackUnresolvedPlotHooksInAnRpgCampaign,
     howDoYouUsePlayerBackstoriesInAnRpgCampaignWorld,
     howDoYouWriteAOneShotAdventure,
+    howDoesMagicAffectPoliticsAndGovernment,
+    howDoesMagicChangeSocietyInAFantasyWorld,
+    howDoesMagicCreateSocialClassesAndInequality,
     howLongShouldATtrpgSessionBe,
     howManyNpcsDoesAnRpgTownNeed,
     howMuchCampaignLoreShouldPlayersBeExpectedToRemember,
     howMuchOfThePlotShouldADmPrepare,
     howMuchPrepDoYouNeedForAnRpgSession,
     howMuchRuleOfCoolShouldADmAllow,
+    howShouldMagicHaveBeenDiscoveredInMyWorld,
     howToCreateACyberpunkCityDistrict,
     howToCreateASciFiStarSystemForAnRpg,
     howToCreateRumoursForAFantasyTown,
@@ -248,6 +263,7 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     whatShouldAnRpgSettlementContain,
     whatShouldILookForInAnRpgCampaignManager,
     whatShouldPlayersBeAbleToUpgradeInAnRpgBase,
+    whatTtrpgShouldIPlayForAPirateCampaign,
     whatTtrpgShouldIUseForAFantasyDungeonCrawl,
     whatTtrpgsLetYouBuildAndUpgradeABase,
     whereDoIStartIfIHaveNeverPlayedATabletopRpg,

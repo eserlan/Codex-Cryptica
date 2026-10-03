@@ -25,6 +25,7 @@
       activeTab: () => activeTab,
       isEditing: () => isEditing,
       canAddConnection: () => !vault.isGuest,
+      canGenerateRelated: () => !vault.isGuest && !isEditing,
       openTab: (tab) => {
         activeTab = tab;
       },

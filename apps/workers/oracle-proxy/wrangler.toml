@@ -90,7 +90,7 @@ remote = true
 [[d1_databases]]
 binding = "ANSWER_AGGREGATES"
 database_name = "codex-answer-aggregates"
-database_id = "00000000-0000-0000-0000-000000000000"
+database_id = "a21162a9-2f74-4e19-a529-98f6d257675e"
 migrations_dir = "migrations"
 
 [[ratelimits]]

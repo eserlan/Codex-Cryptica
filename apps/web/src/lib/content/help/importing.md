@@ -25,6 +25,15 @@ If you already have Codex Cryptica files on your computer — from another vault
 - **Review before anything is written**: You'll see exactly what was picked up, how many files will be added, and how many already exist in this vault (those are always skipped — this flow never overwrites, updates, or merges existing entities).
 - **Images come along automatically**: If a dropped file references an image, that image (and its thumbnail) is included automatically whenever it was part of the same drop — for example when you drag in a whole folder. If it wasn't, you'll be prompted to add the image file directly or, in browsers that support it, grant access to the source folder so it can be found there.
 
+## Import Files or the Shelf?
+
+For an existing monster, character or other entity in another vault in this
+browser, the **Shelf** is the direct route: send it to the Shelf, switch vaults,
+and choose **Import into this vault**. Use **Import Files** for Markdown files
+and their assets on your computer. File import skips entries already present;
+Shelf imports keep both entries by renaming incoming title clashes.
+See [The Shelf](/help#help/entity-shelf).
+
 ## Dedicated Importer
 
 For uninterrupted world-building, clicking **IMPORT** in the top menu or the Entity Palette opens a dedicated, distraction-free popout window.

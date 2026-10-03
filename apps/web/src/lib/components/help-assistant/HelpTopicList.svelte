@@ -16,7 +16,7 @@
       <button
         type="button"
         onclick={() => onOpenArticle(topic.helpId)}
-        class="text-left text-body-ui text-theme-primary underline hover:text-theme-secondary focus-visible:outline-2 focus-visible:outline-theme-primary"
+        class="touch-target text-left text-body-ui text-chrome-accent underline hover:opacity-80 focus-visible:outline-2 focus-visible:outline-chrome-accent"
       >
         {topic.title}
       </button>

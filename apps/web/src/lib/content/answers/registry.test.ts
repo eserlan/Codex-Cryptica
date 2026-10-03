@@ -403,6 +403,15 @@ describe("published answers", () => {
     );
   });
 
+  it("uses the project term Labels in the magical-inequality Codex guidance", () => {
+    const answer =
+      answers["how-does-magic-create-social-classes-and-inequality"];
+
+    expect(answer.codexConnection?.paragraphs.join(" ")).toContain(
+      "Label households and quarters",
+    );
+  });
+
   it("publishes at least eight distinct answers", () => {
     // The first content pack's acceptance bar (#2564).
     expect(published.length).toBeGreaterThanOrEqual(8);
@@ -697,7 +706,7 @@ describe("published answers", () => {
     );
   });
 
-  it("advances the pirate blockade clock from preparation to active blockade", () => {
+  it("grounds pirate faction moves in fictional time and circumstance", () => {
     const answer =
       answers["how-do-i-make-rival-captains-navies-and-pirate-factions-matter"];
     const activeVersion = answer.sections.find(
@@ -714,10 +723,20 @@ describe("published answers", () => {
     )?.text;
 
     expect(text).toContain("step 2:");
-    expect(text).toContain("advances Hale to step 3");
+    expect(text).toContain("On a week-long voyage");
+    expect(text).toContain("time, ships, and orders");
+    expect(text).toContain("letters of marque authorising licensed privateers");
+    expect(text).toContain("those moves stall or change instead");
     expect(text).not.toContain(
       "(step 3: sloops now stop and search every brig)",
     );
+
+    const clockGuidance = answer.sections
+      .filter((section) => section.kind === "list")
+      .flatMap((section) => section.items ?? [])
+      .find((item) => item.term === "Clock with visible steps")?.text;
+    expect(clockGuidance).toContain("move the clock backwards");
+    expect(clockGuidance).toContain("scattered ships may have to regroup");
   });
 
   it("records the reciprocal scope of the sandbox and pirate faction answers", () => {
