@@ -80,6 +80,9 @@ shell commands, and other important information, read the [current plan](./specs
 
 ## Active Technologies
 
+- TypeScript 6.0.3, Svelte 5 (Runes), SvelteKit 2, Bun 1.3.14 + `packages/chronology-engine` (internal framework-free package), Tailwind 4 semantic tokens, Floating UI, `@codex/events`. No new third-party dependency. (3717-calendar-eras)
+- Browser-local IndexedDB via existing `calendarStore` configuration persistence. No new database store or migration needed. (3717-calendar-eras)
+
 - TypeScript 6.0.3, Svelte 5 Runes, SvelteKit 2, Bun 1.3.14 + Existing `apps/workers/oracle-proxy` LLM pipeline and session guard, `discoveryPolicyStore` (AI Disabled gate), existing help content; new internal workspace package `packages/help-engine` (framework-free); no new third-party dependency (3427-contextual-ai-help-assistant)
 - Product knowledge is a build-time JSON bundle generated from `packages/help-engine` and `apps/web/src/lib/content/help` (not committed); the help conversation is in memory only; no new vault storage (3427-contextual-ai-help-assistant)
 

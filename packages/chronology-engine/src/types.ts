@@ -28,6 +28,28 @@ export interface IntercalaryAnchor {
 }
 
 /**
+ * Represents a calendar era or epoch with custom year numbering.
+ */
+export interface CalendarEra {
+  id: string;
+  name: string;
+  label?: string;
+  startYear: number;
+  endYear?: number;
+  yearAtStart?: number;
+  direction?: "forward" | "backward";
+}
+
+/**
+ * Resolved era details for an internal year.
+ */
+export interface ResolvedEra {
+  era: CalendarEra;
+  eraYear: number;
+  formattedYear: string;
+}
+
+/**
  * Rules for how time is structured in a campaign vault.
  */
 export interface WorldCalendar {
@@ -44,6 +66,10 @@ export interface WorldCalendar {
    * Defaults to 0 when absent.
    */
   epochWeekday?: number;
+  /**
+   * Optional ordered list of calendar eras for epoch-based year numbering.
+   */
+  eras?: CalendarEra[];
 }
 
 export type DatePrecision = "year" | "unit" | "day" | "anchor";

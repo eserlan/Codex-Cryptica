@@ -9,6 +9,7 @@
   import { scale, slide } from "svelte/transition";
   import { toDateSelection } from "./utils/toDateSelection";
   import TemporalPickerEras from "./TemporalPickerEras.svelte";
+  import TemporalPickerEraSelector from "./TemporalPickerEraSelector.svelte";
   import TemporalPickerFooter from "./TemporalPickerFooter.svelte";
   import {
     formatDirectDateInput,
@@ -210,6 +211,15 @@
     );
     selectedEraId = era.id;
     activeTab = "manual";
+  };
+
+  const handleSelectCalendarEra = (targetYear: number) => {
+    const patch: Partial<DateSelection> = { year: targetYear };
+    activeSelection = calendarEngine.applyParentChange(
+      activeSelection,
+      patch,
+      calendarStore.getSnapshot(),
+    );
   };
 
   const handleDirectDateInput = (e: Event) => {
@@ -504,6 +514,12 @@
             </div>
           {/if}
         </div>
+
+        <TemporalPickerEraSelector
+          selection={activeSelection}
+          config={calendarStore.config}
+          onSelectEra={handleSelectCalendarEra}
+        />
 
         <!-- Scroll Wheels Columns Container -->
         <div

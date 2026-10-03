@@ -426,11 +426,18 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
       "Change your world. Click the folder name at the top to switch to a different story.",
     icon: "icon-[lucide--folder-sync]",
   },
+  "calendar-eras": {
+    id: "calendar-eras",
+    title: "Calendar Eras & Epochs",
+    content:
+      "Configure historical eras (such as First Age, Second Age, or Before the Fall / After the Fall) in Vault Settings. Each era can reset year numbering or count backward into the past. Dates across all views display with the appropriate era label while the underlying chronology keeps a continuous integer timeline for precise ordering.",
+    icon: "icon-[lucide--history]",
+  },
   "era-date-picker": {
     id: "era-date-picker",
     title: "Pick Dates",
     content:
-      "Select dates using smooth, center-snapping scroll wheels. Features side-by-side vertical tracks, intercalary anchors, inline repair warnings on calendar change, and quick keyboard year/day overrides.",
+      "Select dates using smooth, center-snapping scroll wheels or direct text entry (including era labels like 312 BF). Features side-by-side vertical tracks, era selectors, intercalary anchors, inline repair warnings on calendar change, and quick keyboard year/day overrides.",
     icon: "icon-[lucide--settings-2]",
   },
   "keyboard-navigation": {

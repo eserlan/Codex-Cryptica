@@ -8,6 +8,7 @@ import type {
   WheelColumnState,
   WheelOption,
 } from "./types";
+import { formatEraYear, parseEraDateString } from "./eras";
 
 export const GREGORIAN_MONTHS: CalendarMonth[] = [
   { id: "january", name: "January", days: 31 },
@@ -148,34 +149,34 @@ export class CalendarEngine {
     const config = getConfig(configOrSnapshot);
     const months = this.getMonths(config);
 
+    const eraFormattedYear = formatEraYear(date.year, config);
+    const yearDisplay =
+      eraFormattedYear ||
+      `${date.year}${config.epochLabel ? ` ${config.epochLabel}` : ""}`;
+
     // Handle new DateSelection shape
     if ("precision" in date && date.precision) {
-      let suffix = "";
-      if (config.epochLabel) {
-        suffix = ` ${config.epochLabel}`;
-      }
-
       if (date.precision === "year") {
-        return `${date.year}${suffix}`;
+        return yearDisplay;
       }
 
       if (date.precision === "unit") {
         const month = months.find((m) => m.id === date.unitId);
         const name = month ? month.name : `Unit ${date.unitId}`;
-        return `${name} ${date.year}${suffix}`;
+        return `${name} ${yearDisplay}`;
       }
 
       if (date.precision === "day") {
         const month = months.find((m) => m.id === date.unitId);
         const name = month ? month.name : `Unit ${date.unitId}`;
-        return `${date.day} ${name} ${date.year}${suffix}`;
+        return `${date.day} ${name} ${yearDisplay}`;
       }
 
       if (date.precision === "anchor") {
         const anchors = config.anchors || [];
         const anchor = anchors.find((a) => a.id === date.anchorId);
         const name = anchor ? anchor.name : `Anchor ${date.anchorId}`;
-        return `${name} ${date.year}${suffix}`;
+        return `${name} ${yearDisplay}`;
       }
     }
 
@@ -193,11 +194,7 @@ export class CalendarEngine {
       parts.push(monthName);
     }
 
-    let yearStr = `${legacyDate.year}`;
-    if (config.epochLabel) {
-      yearStr += ` ${config.epochLabel}`;
-    }
-    parts.push(yearStr);
+    parts.push(yearDisplay);
 
     return parts.join(" ");
   }
@@ -278,9 +275,10 @@ export class CalendarEngine {
     const yearOptions: WheelOption[] = [];
     const currentYear = selection.year;
     for (let y = currentYear - 10; y <= currentYear + 10; y++) {
+      const eraStr = formatEraYear(y, config);
       yearOptions.push({
         id: String(y),
-        label: String(y),
+        label: eraStr || String(y),
         value: y,
       });
     }
@@ -481,6 +479,16 @@ export function parseDirectDateInput(
   const config = getConfig(configOrSnapshot);
   const trimmed = input.trim();
   if (!trimmed) return null;
+
+  const eraParsed = parseEraDateString(trimmed, config);
+  if (eraParsed) {
+    const date: TemporalMetadata = {
+      year: eraParsed.internalYear,
+      month: eraParsed.month,
+      day: eraParsed.day,
+    };
+    return calendarEngine.isValid(date, config) ? date : null;
+  }
 
   const compactMatch =
     trimmed.length >= 6 ? trimmed.match(/^(\d{2})(\d{2})(-?\d+)$/) : null;

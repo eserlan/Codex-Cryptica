@@ -1,8 +1,11 @@
 # Codex-Cryptica Development Guidelines
 
-Auto-generated from all feature plans. Last updated: 2026-09-25
+Auto-generated from all feature plans. Last updated: 2026-10-03
 
 ## Active Technologies
+
+- TypeScript 6.0.3, Svelte 5 (Runes), SvelteKit 2, Bun 1.3.14 + `packages/chronology-engine` (internal framework-free package), Tailwind 4 semantic tokens, Floating UI, `@codex/events`. No new third-party dependency. (3717-calendar-eras)
+- Browser-local IndexedDB via existing `calendarStore` configuration persistence. No new database store or migration needed. (3717-calendar-eras)
 
 - TypeScript 6.0.3, Svelte 5 Runes, SvelteKit 2, Bun 1.3.14 + Existing `idb` (via `apps/web/src/lib/utils/idb.ts`), existing `vault-registry.svelte.ts`; no new third-party dependency. New internal workspace package `packages/session-journal-engine` (framework-free). (163-session-journal)
 - Browser-local IndexedDB, via the shared `CodexDB` schema (new `session_journals` object store, `by-vault` index) — not a new database, not Dexie. (163-session-journal)
@@ -59,11 +62,10 @@ TypeScript 6.0.3, Svelte 5 runes, Bun 1.3.14 workspace: Follow standard conventi
 
 ## Recent Changes
 
+- 169-calendar-eras: Added TypeScript 6.0.3, Svelte 5 (Runes), SvelteKit 2, Bun 1.3.14 + `packages/chronology-engine` (internal framework-free package), Tailwind 4 semantic tokens, Floating UI, `@codex/events`. No new third-party dependency.
+- 3717-calendar-eras: Added TypeScript 6.0.3, Svelte 5 (Runes), SvelteKit 2, Bun 1.3.14 + `packages/chronology-engine` (internal framework-free package), Tailwind 4 semantic tokens, Floating UI, `@codex/events`. No new third-party dependency.
+
 - 163-session-journal: Added TypeScript 6.0.3, Svelte 5 Runes, SvelteKit 2, Bun 1.3.14 + Existing `idb` (via `apps/web/src/lib/utils/idb.ts`), existing `vault-registry.svelte.ts`; no new third-party dependency. New internal workspace package `packages/session-journal-engine` (framework-free).
-
-- 162-cc-cloud-backup: Added TypeScript 6.0.3; Svelte 5.55.9 (runes); SvelteKit 2 + Existing `@codex/gdrive-sync`-shaped package pattern (new `packages/cloud-backup-sync`); existing `schema`/Zod package (`packages/schema/src/publishing.ts`) for shared types; Cloudflare Workers runtime (`apps/workers/oracle-proxy`) — no new third-party dependency
-
-- 2306-adventure-phase-2-play-tools: Added TypeScript 6.0.3, Svelte 5.55.9 Runes, SvelteKit 2, Bun 1.3.14 + Existing `@codex/adventure-engine`, `@codex/ai-engine` (`AdventureTurnGenerationService`), `@codex/oracle-engine`, `dice-engine`, `schema`/Zod, `idb`; no new third-party dependency
 
 <!-- MANUAL ADDITIONS START -->
 <!-- MANUAL ADDITIONS END -->
