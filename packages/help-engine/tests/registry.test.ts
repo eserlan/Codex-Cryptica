@@ -58,6 +58,7 @@ describe("proof-of-concept registry", () => {
         "entity-connections",
         "entity-editing",
         "graph-view",
+        "related-entity-generation",
         "session-hub",
         "tables",
         "vtt-map",
