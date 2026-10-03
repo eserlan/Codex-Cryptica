@@ -1,40 +1,11 @@
 import { expect, type Page, test } from "@playwright/test";
-import path from "path";
+import { openMapWithUpload } from "./test-helpers";
 
 test.describe.configure({ mode: "serial" });
 
 // #3740: map controls must fit and stay usable on phone viewports.
-async function openMapWithControls(page: Page) {
-  await page.addInitScript(() => {
-    localStorage.setItem("codex_skip_landing", "true");
-    localStorage.setItem(
-      "codex-cryptica-help-state",
-      JSON.stringify({ completedTours: ["initial-onboarding"] }),
-    );
-  });
-  await page.goto("/?demo=fantasy");
-  await page.waitForFunction(
-    () => {
-      const vault = (window as any).vault;
-      return (
-        vault?.isInitialized === true &&
-        (vault.demoVaultName === "Fantasy Demo" ||
-          (vault.allEntities?.length ?? 0) > 0)
-      );
-    },
-    { timeout: 30000 },
-  );
-  await page.goto("/map");
-  await page.click('button:has-text("Upload World Image")');
-  await page.fill('input[id="map-name"]', "Mobile Map");
-  const chooser = page.waitForEvent("filechooser");
-  await page.locator('input[type="file"]').click();
-  await (
-    await chooser
-  ).setFiles(path.join(process.cwd(), "static/favicon.png"));
-  await page.getByRole("button", { name: "Upload", exact: true }).click();
-  await expect(page.locator("canvas")).toBeVisible({ timeout: 15000 });
-}
+const openMapWithControls = (page: Page) =>
+  openMapWithUpload(page, "Mobile Map");
 
 for (const size of [
   { width: 360, height: 740 },
