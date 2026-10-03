@@ -4,6 +4,8 @@ import { openOracle, seedEntity, setupVaultPage } from "./test-helpers";
 // #3718 follow-up: with the larger mobile scale, key screens must not overflow
 // horizontally, and no visible text may render below 13px.
 test.use({ viewport: { width: 390, height: 844 } });
+// Serial: parallel workers starve the graph canvas and flake the 10s wait.
+test.describe.configure({ mode: "serial" });
 
 async function scan(page: import("@playwright/test").Page) {
   return page.evaluate(() => {
