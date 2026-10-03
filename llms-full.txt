@@ -2945,6 +2945,10 @@ Reference answers to real RPG and worldbuilding questions, indexed at https://co
 
 **Direct answer:** A point crawl is a way of mapping an adventure area as a set of named locations joined by explicit routes, rather than as a grid of hexes or squares. Players choose which link to travel along instead of which direction to walk, so the map is a small network of nodes and edges: this village connects to that ford, the ford connects to the ruined watchtower. It keeps overland and dungeon travel meaningful without asking anyone to track movement rates across empty terrain.
 
+### [What’s the difference between gods and demon lords in a fantasy world?](https://codexcryptica.com/answers/what-is-the-difference-between-gods-and-demon-lords-in-a-fantasy-world)
+
+**Direct answer:** A god and a demon lord need not differ in raw power. Decide what each being is, where its power comes from, and how it relates to cosmic law and mortal followers: a god might hold a recognised office over pestilence, while a demon lord of worms feeds on plague and commands a cult through bargains. Their portfolios can overlap without either title becoming meaningless.
+
 ### [What kind of ship should a pirate crew start with?](https://codexcryptica.com/answers/what-kind-of-ship-should-a-pirate-crew-start-with)
 
 **Direct answer:** Start a pirate crew with a ship that can win a prize but cannot solve every problem: a fast sloop, modest schooner, or compromised brig gives the party a home, a reason to take jobs, and weaknesses that force choices. Give it one clear advantage, one serious flaw, a visible scar, and an owner or debt that can still make demands.
