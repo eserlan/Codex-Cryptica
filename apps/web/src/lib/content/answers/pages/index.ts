@@ -110,6 +110,7 @@ import { pointCrawlVsHexCrawl } from "./point-crawl-vs-hex-crawl";
 import { whatCanPlayersActuallyBuyAndSellInAFantasySettlement } from "./what-can-players-actually-buy-and-sell-in-a-fantasy-settlement";
 import { whatDoYouDoWithMurderHobosInAnRpgCampaign } from "./what-do-you-do-with-murder-hobos-in-an-rpg-campaign";
 import { whatIsAPointCrawl } from "./what-is-a-point-crawl";
+import { whatIsTheDifferenceBetweenGodsAndDemonLordsInAFantasyWorld } from "./what-is-the-difference-between-gods-and-demon-lords-in-a-fantasy-world";
 import { whatKindOfShipShouldAPirateCrewStartWith } from "./what-kind-of-ship-should-a-pirate-crew-start-with";
 import { whatKindOfShipShouldASciFiRpgPartyStartWith } from "./what-kind-of-ship-should-a-sci-fi-rpg-party-start-with";
 import { whatMakesAGoodHeistTargetInATabletopRpg } from "./what-makes-a-good-heist-target-in-a-tabletop-rpg";
@@ -251,6 +252,7 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     whatCanPlayersActuallyBuyAndSellInAFantasySettlement,
     whatDoYouDoWithMurderHobosInAnRpgCampaign,
     whatIsAPointCrawl,
+    whatIsTheDifferenceBetweenGodsAndDemonLordsInAFantasyWorld,
     whatKindOfShipShouldAPirateCrewStartWith,
     whatKindOfShipShouldASciFiRpgPartyStartWith,
     whatMakesAGoodHeistTargetInATabletopRpg,

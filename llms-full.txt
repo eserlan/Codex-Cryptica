@@ -2553,6 +2553,10 @@ Reference answers to real RPG and worldbuilding questions, indexed at https://co
 
 **Direct answer:** Spotlight means giving one character a distinctive contribution, not a separate game. Let the specialist use their expertise to change the situation, then give the whole party a meaningful response to that change. Build scenes with shared stakes, intersecting ways to contribute, and decisions that need more than one character's judgement. A brief solo moment can work when it has a clear purpose and returns useful information or a consequential choice to the group.
 
+### [How do I handle players asking an NPC to "tell us everything you know"?](https://codexcryptica.com/answers/how-do-i-handle-players-asking-an-npc-to-tell-us-everything-you-know)
+
+**Direct answer:** Treat 'tell us everything you know' as a request for the witness's best relevant summary, not an exhaustive transcript of memory. Resolve the scope first—everything about the burglary, the victim, or last night—then give the account, including what the witness recalls, believes, and remains unsure about. Follow the game's clue procedure, but keep investigation moving through a reliable route that does not depend on one exact phrase or fragile check. Targeted questions can clarify prepared or fictionally supported details, uncertainty, and sources without creating new evidence through repetition.
+
 ### [How do I make a player base matter in an RPG campaign?](https://codexcryptica.com/answers/how-do-i-make-a-player-base-matter-in-an-rpg-campaign)
 
 **Direct answer:** Use four anchors: a purpose the players choose; capabilities that open options; people and relationships that matter to them; and change and consequences, including improvements, vulnerabilities and the world's reactions. A stronghold, crew headquarters or ship matters when returning gives the players meaningful options, familiar people and visible evidence of what they changed. If it only hands out bonuses, it stays a menu.
@@ -2560,6 +2564,10 @@ Reference answers to real RPG and worldbuilding questions, indexed at https://co
 ### [How do I make different cultures feel distinct without relying on stereotypes?](https://codexcryptica.com/answers/how-do-i-make-different-cultures-feel-distinct-without-relying-on-stereotypes)
 
 **Direct answer:** Make cultures distinct by tracing a few principles, norms, or expectations into behaviour and visible consequences. Ask what happens when a norm meets another duty or pressure, where that creates useful friction, and what players can notice. A culture that treats hospitality as sacred does not simply wear different clothes; it may maintain guest rituals and host obligations that change how the party is received and protected. These patterns need an intelligible history and meaning, not an objectively efficient purpose, and they vary between people and settings rather than becoming species-wide personality traits.
+
+### [How do I make interviewing NPCs interesting in an investigation?](https://codexcryptica.com/answers/how-do-i-make-interviewing-npcs-interesting-in-an-investigation)
+
+**Direct answer:** Make the NPC a person with their own view of events and a reason to shape the conversation, not a clue dispenser. Follow the game's clue procedure, but ensure essential information has a reliable route that does not depend on one exact phrase or fragile check. Let specific questions change what the NPC remembers, reveals, or revises. Separate fallible recollections from interpretations and omissions: confidence is not accuracy, and hearsay is not eyewitness testimony.
 
 ### [How do I make rival captains, navies, and pirate factions matter?](https://codexcryptica.com/answers/how-do-i-make-rival-captains-navies-and-pirate-factions-matter)
 
@@ -2932,6 +2940,10 @@ Reference answers to real RPG and worldbuilding questions, indexed at https://co
 ### [What is a point crawl?](https://codexcryptica.com/answers/what-is-a-point-crawl)
 
 **Direct answer:** A point crawl is a way of mapping an adventure area as a set of named locations joined by explicit routes, rather than as a grid of hexes or squares. Players choose which link to travel along instead of which direction to walk, so the map is a small network of nodes and edges: this village connects to that ford, the ford connects to the ruined watchtower. It keeps overland and dungeon travel meaningful without asking anyone to track movement rates across empty terrain.
+
+### [What’s the difference between gods and demon lords in a fantasy world?](https://codexcryptica.com/answers/what-is-the-difference-between-gods-and-demon-lords-in-a-fantasy-world)
+
+**Direct answer:** A god and a demon lord need not differ in raw power. Decide what each being is, where its power comes from, and how it relates to cosmic law and mortal followers: a god might hold a recognised office over pestilence, while a demon lord of worms feeds on plague and commands a cult through bargains. Their portfolios can overlap without either title becoming meaningless.
 
 ### [What kind of ship should a pirate crew start with?](https://codexcryptica.com/answers/what-kind-of-ship-should-a-pirate-crew-start-with)
 
