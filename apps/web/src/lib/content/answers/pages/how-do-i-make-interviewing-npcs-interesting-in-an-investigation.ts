@@ -5,7 +5,8 @@ export const howDoIMakeInterviewingNpcsInterestingInAnInvestigation: AnswerConfi
     slug: "how-do-i-make-interviewing-npcs-interesting-in-an-investigation",
     category: "running-the-game",
     publishedAt: "2026-10-03",
-    question: "How do I make interviewing NPCs interesting in an investigation?",
+    question:
+      "How do I make interviewing NPCs interesting in an investigation?",
     kind: "framework",
     shortAnswer:
       "Make the NPC a person with their own view of events, not a clue dispenser. Give essential information freely through ordinary conversation, then let specific questions change what the NPC remembers, reveals, or revises. Separate what they saw, what they think it meant, and what they missed or avoid mentioning, so testimony is imperfect without every witness being a liar and no single question needs magic wording to keep the investigation moving.",
@@ -192,7 +193,8 @@ export const howDoIMakeInterviewingNpcsInterestingInAnInvestigation: AnswerConfi
       {
         kind: "checklist",
         heading: "Quick GM checklist for the next interview",
-        intro: "Run through these before the scene and keep them visible at the table:",
+        intro:
+          "Run through these before the scene and keep them visible at the table:",
         items: [
           "You have given the NPC one thing they know, one thing they assume, and one thing they missed or avoid.",
           "Their reluctance comes from character or circumstance, not from needing to stall the case.",
@@ -299,7 +301,8 @@ export const howDoIMakeInterviewingNpcsInterestingInAnInvestigation: AnswerConfi
       title: "How to Make NPC Interviews Interesting | Codex Cryptica",
       description:
         "Stop flat NPC interviews. Use facts, interpretations and omissions, give core clues freely, and let better questions change context and consequences.",
-      image: "https://assets.codexcryptica.com/og/how-do-i-make-interviewing-npcs-interesting-in-an-investigation.jpg",
+      image:
+        "https://assets.codexcryptica.com/og/how-do-i-make-interviewing-npcs-interesting-in-an-investigation.jpg",
       imageAlt:
         "Tabletop RPG illustration of adventurers questioning a thoughtful witness in a lantern-lit archive with scattered notes and maps",
     },
