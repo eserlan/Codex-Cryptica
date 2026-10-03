@@ -1,6 +1,7 @@
 import { DEFAULT_CALENDAR } from "chronology-engine";
 import type {
   CalendarCurrentDateSource,
+  CalendarEra,
   CalendarSnapshot,
   WorldCalendar,
 } from "chronology-engine";
