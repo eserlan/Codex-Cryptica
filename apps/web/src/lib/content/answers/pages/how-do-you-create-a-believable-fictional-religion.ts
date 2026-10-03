@@ -159,6 +159,7 @@ export const howDoYouCreateABelievableFictionalReligion: AnswerConfigInput = {
     },
   ],
   relatedAnswers: [
+    "can-multiple-gods-share-a-domain",
     "how-do-you-create-a-fictional-language-for-an-rpg",
     "how-do-you-create-a-pantheon",
     "how-do-you-create-a-fantasy-faction",
@@ -182,7 +183,14 @@ export const howDoYouCreateABelievableFictionalReligion: AnswerConfigInput = {
     ],
     uniqueValue:
       "Practice before doctrine: one rite, one prohibition, who funds it, what adherents dispute, and why total coherence reads as fake.",
-    relatedIntents: ["answer-pantheon"],
+    relatedIntents: ["answer-pantheon", "answer-overlapping-divine-domains"],
+    acknowledgedOverlap: [
+      {
+        with: "answer-overlapping-divine-domains",
+        reason:
+          "Religion design centres on the rites and institutions people practise; the overlapping-domains answer centres on supernatural claims and the conflicts those claims create.",
+      },
+    ],
   },
 
   seo: {
