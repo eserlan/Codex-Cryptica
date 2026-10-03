@@ -1256,7 +1256,7 @@
     filter: none;
   }
   .seo-rail.seo-md :global(h3) {
-    font-size: 0.75rem;
+    font-size: var(--type-helper);
     text-transform: uppercase;
     letter-spacing: 0.08em;
     color: color-mix(in srgb, var(--color-text) 82%, transparent);

@@ -72,7 +72,7 @@
     <!-- Mobile: Left (Menu + Brand) -->
     <div class="flex items-center gap-2 md:gap-3 shrink-0">
       <button
-        class="md:hidden text-chrome-muted hover:text-chrome-text transition-colors"
+        class="touch-target flex items-center justify-center md:hidden text-chrome-muted hover:text-chrome-text transition-colors"
         onclick={() => (isMobileMenuOpen = !isMobileMenuOpen)}
         aria-label="Toggle menu"
       >
@@ -82,7 +82,7 @@
       <!-- Die Roller Toggle — advanced RPG utility, hidden in Guided Mode -->
       {#if !guidedModeStore.isGuidedMode}
         <button
-          class="w-8 h-8 md:w-9 md:h-9 flex items-center justify-center rounded-lg bg-chrome-surface border border-chrome-border text-chrome-text shadow hover:bg-chrome-bg/50 transition-all duration-300 group relative"
+          class="touch-target w-8 h-8 md:w-9 md:h-9 flex items-center justify-center rounded-lg bg-chrome-surface border border-chrome-border text-chrome-text shadow hover:bg-chrome-bg/50 transition-all duration-300 group relative"
           onclick={() => (modalUIStore.showDiceModal = true)}
           aria-label="Open Die Roller"
           title="Open Die Roller"
@@ -138,7 +138,7 @@
       </div>
       <button
         type="button"
-        class="lg:hidden p-2 text-chrome-muted hover:text-chrome-text transition-colors"
+        class="touch-target flex items-center justify-center lg:hidden p-2 text-chrome-muted hover:text-chrome-text transition-colors"
         onclick={() => searchStore.open()}
         aria-label="Search"
         data-testid="mobile-search-button"
@@ -170,7 +170,7 @@
           Explore Worlds
         </a>
         <button
-          class="px-3 py-1.5 rounded-lg border border-chrome-border hover:border-chrome-accent hover:text-chrome-accent text-xs font-medium transition-all"
+          class="touch-target px-3 py-1.5 rounded-lg border border-chrome-border hover:border-chrome-accent hover:text-chrome-accent text-xs font-medium transition-all"
           onclick={() => {
             sessionModeStore.isGuestMode = false;
             guestVault.clear();
@@ -181,7 +181,7 @@
         </button>
         <button
           type="button"
-          class="flex h-8 w-8 items-center justify-center border border-chrome-border text-chrome-muted transition-all hover:border-chrome-accent hover:text-chrome-accent"
+          class="touch-target flex h-8 w-8 items-center justify-center border border-chrome-border text-chrome-muted transition-all hover:border-chrome-accent hover:text-chrome-accent"
           onclick={() => modalUIStore.openSettings("help")}
           title="Help and legal information"
           aria-label="Open Help and legal information"
@@ -221,7 +221,7 @@
           </a>
         {/if}
         <button
-          class="w-8 h-8 flex items-center justify-center border transition-all {modalUIStore.showSettings
+          class="touch-target w-8 h-8 flex items-center justify-center border transition-all {modalUIStore.showSettings
             ? 'border-chrome-accent bg-chrome-accent/10 text-chrome-accent'
             : 'border-chrome-border hover:border-chrome-accent text-chrome-muted hover:text-chrome-accent'} relative"
           onclick={() => modalUIStore.toggleSettings("vault")}

@@ -91,7 +91,7 @@
       title="Show all types"
       aria-label="Show all types"
       aria-pressed={timelineStore.typeFilters.size === 0}
-      class="flex items-center justify-center p-1.5 {iconToggleClass(
+      class="touch-target flex items-center justify-center p-1.5 {iconToggleClass(
         timelineStore.typeFilters.size === 0,
       )}"
     >
@@ -108,7 +108,7 @@
           title={cat.label}
           aria-label={`Filter by ${cat.label}`}
           aria-pressed={timelineStore.typeFilters.has(cat.id)}
-          class="relative flex items-center justify-center p-1.5 {iconToggleClass(
+          class="touch-target relative flex items-center justify-center p-1.5 {iconToggleClass(
             timelineStore.typeFilters.has(cat.id),
           )}"
         >
@@ -139,7 +139,7 @@
       title="Include undated entries"
       aria-label="Include undated entries"
       aria-pressed={timelineStore.includeUndated}
-      class="flex items-center justify-center p-1.5 {iconToggleClass(
+      class="touch-target flex items-center justify-center p-1.5 {iconToggleClass(
         timelineStore.includeUndated,
       )}"
     >
@@ -173,7 +173,7 @@
     <button
       type="button"
       onclick={() => timelineStore.clearFilters()}
-      class="self-start text-nano font-bold uppercase tracking-wider text-theme-muted hover:text-theme-primary transition-colors"
+      class="touch-target self-start text-nano font-bold uppercase tracking-wider text-theme-muted hover:text-theme-primary transition-colors"
     >
       Clear filters
     </button>
