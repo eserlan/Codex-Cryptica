@@ -9,33 +9,33 @@ export const howDoIHandlePlayersAskingAnNpcToTellUsEverythingYouKnow: AnswerConf
       'How do I handle players asking an NPC to "tell us everything you know"?',
     kind: "framework",
     shortAnswer:
-      "Treat 'tell us everything you know' as an invitation for the witness to provide their natural, concise summary rather than a full transcript of their memory. In-world witnesses do not record events objectively or know which details matter to investigators. Provide the essential lead freely through the NPC's initial summary so the scenario never stalls on missing keywords. Then use specific follow-up questions to jog associative memory, uncover sensory details, reveal contradictions, and explore personal perspectives without making progress contingent on conversational pixel-hunting.",
+      "Treat 'tell us everything you know' as a request for the witness's best relevant summary, not an exhaustive transcript of memory. Resolve the scope first—everything about the burglary, the victim, or last night—then give the account, including what the witness recalls, believes, and remains unsure about. Follow the game's clue procedure, but keep investigation moving through a reliable route that does not depend on one exact phrase or fragile check. Targeted questions can clarify prepared or fictionally supported details, uncertainty, and sources without creating new evidence through repetition.",
     sections: [
       {
         kind: "prose",
-        heading: "Why 'everything you know' is not an in-world request",
+        heading: "Why ‘tell us everything’ still produces a summary",
         paragraphs: [
-          'When players instruct a witness to "tell us everything you know", they are usually trying to avoid missing an essential clue through imprecise phrasing. At the table, however, human memory does not function as an indexed filing system. Witnesses filter events through their own routines, fears, and assumptions. They do not know what the party is investigating, which objects are out of place, or what constitutes evidence. Expecting a character to download their entire consciousness into a speech is unnatural in fiction and flattens table engagement into passive listening.',
-          "The solution is neither to withhold clues punitively nor to recite the entire scenario prep in one monologue. Instead, recognise that broad questions yield broad summaries. The NPC reports what they noticed and what they personally believe mattered. Specific follow-up questions then jog associative recall, bringing forward sensory observations, odd timings, and private doubts that the witness saw no reason to volunteer initially.",
+          "People do say ‘tell us everything you know’ in-world. The phrase is a natural request for a useful account, not a literal demand for every memory. The NPC answers what they reasonably think is being asked, using the scope established by the conversation. If that scope is unclear, they can briefly ask, ‘About the break-in, or everything that’s happened here this week?’",
+          "Resolve the scope first, then give the witness's best relevant summary. They do not know what the party is investigating or which details count as evidence, and their recollections may be incomplete or mistaken. Do not withhold a useful account because the players phrased the request broadly, or recite every note from the scenario in one monologue. Follow-up questions can focus attention on prepared or fictionally supported details the witness had not thought relevant, clarify uncertainty, or distinguish direct observation from inference; asking repeatedly does not create new evidence.",
         ],
       },
       {
         kind: "list",
-        heading: "What the witness volunteers automatically",
+        heading: "Resolve the scope, then give a useful account",
         intro:
-          "Never hide the core thread required to keep the investigation moving behind a secret phrase. An NPC should offer these three elements upon any reasonable initial enquiry:",
+          "The implied subject usually makes a broad request clear: everything about the burglary, the victim, last night, or a particular symbol. Once the scope is clear, give the witness's useful account in layers:",
         items: [
           {
-            term: "The natural summary",
-            text: "What the NPC believes happened, recounted in the order they remember it and shaped by their personal perspective. This provides the primary lead, establishing where to go or who to look for next.",
+            term: "Initial broad summary",
+            text: "What the witness thinks happened, the relevant observations and recollections they can readily bring to mind, and one or more leads that keep the investigation moving. Mark confidence naturally: “I saw…”, “I think…”, “I heard from…”, or “I'm not sure, but…”. A sincere witness can misremember timing, sequence, or identity without lying.",
           },
           {
-            term: "Obvious and undisputed facts",
-            text: "Details that anyone in the NPC's position would think are relevant: the broken padlock, the scream heard at midnight, or the carriage that sped toward the north gate.",
+            term: "Targeted depth",
+            text: "Follow-ups clarify uncertainty, sensory detail, source, relationships, contradictions, or context the witness did not initially think relevant. Keep those details consistent with where the witness was, what they could perceive, what had their attention, and what is already established.",
           },
           {
-            term: "What they told others",
-            text: "The version the witness already gave to town guards, neighbours, or their employer. Witnesses readily repeat this baseline narrative, giving the party an immediate anchor to verify against other accounts.",
+            term: "External corroboration",
+            text: "Records, physical evidence, another witness, or specialist interpretation can support, challenge, or add context to the account. The witness's recollection is evidence about what they remember, not automatically an objective record of events.",
           },
         ],
       },
@@ -43,15 +43,15 @@ export const howDoIHandlePlayersAskingAnNpcToTellUsEverythingYouKnow: AnswerConf
         kind: "list",
         heading: "How targeted questions reveal depth",
         intro:
-          "Specific follow-up questions should add context, clarity, and alternative angles, not serve as a mandatory password to prevent the adventure from stalling:",
+          "Specific follow-ups should focus the witness on details supported by the fiction, add context and clarity, or offer another angle—not serve as a mandatory password or generate facts through repetition:",
         items: [
           {
             term: "Jogging sensory memory",
-            text: "Asking what an NPC heard, smelled, or felt often brings back memories they dismissed as irrelevant. A witness who saw nothing unusual might remember the smell of bitter almonds or the scrape of iron on flagstones.",
+            text: "Asking what a witness heard, smelled, or felt can focus them on a prepared detail they dismissed as irrelevant, if the circumstances support it. They might recall lamp oil on a visitor's coat or the clank of a distinctive machine nearby.",
           },
           {
             term: "Testing timing and sequence",
-            text: "Enquiring about what happened immediately before or after an event forces the NPC to anchor their memories to daily habits, exposing gaps, hurried departures, or unexpected pauses.",
+            text: "Asking what happened immediately before or after an event can help the witness place a recollection against daily habits and identify uncertainty, hurried departures, or unexpected pauses. It may also show that their remembered sequence is mistaken.",
           },
           {
             term: "Probing deviations from routine",
@@ -61,29 +61,33 @@ export const howDoIHandlePlayersAskingAnNpcToTellUsEverythingYouKnow: AnswerConf
             term: "Surfacing personal relationships",
             text: "Asking who the victim spent time with or who stood to lose money shifts the conversation from passive observation to local politics, alliances, and grudges.",
           },
+          {
+            term: "Asking how they know",
+            text: "“How do you know that?” separates direct observation from inference, routine expectation, hearsay, or knowledge acquired afterwards. The witness may be certain, tentative, or mistaken; let the players hear which kind of account they are weighing.",
+          },
         ],
       },
       {
         kind: "list",
         heading: "Filtering testimony through NPC perspective",
         intro:
-          "Witnesses perceive the same scene through the lens of their profession, social station, and immediate self-interest:",
+          "Profession, current task, training, relationships, and personal stakes all shape what an NPC was likely to notice. Treat these as attention tendencies, not rules for what a person must perceive:",
         items: [
           {
             term: "The night watchman",
-            text: "Notices weapons, broken latches, unfamiliar uniforms, and avenues of escape, but pays little attention to domestic arguments or fine jewellery.",
+            text: "May be especially alert to access points, weapons, and unfamiliar movement because those are part of the job. An individual witness may notice something entirely different because of where their attention was at that moment.",
           },
           {
             term: "The house servant",
-            text: "Notices altered moods, moved furniture, missing silver, and unusual visitors, while remaining oblivious to tactical advantages or political intrigue.",
+            text: "May know household routines, regular visitors, and when something has been moved, while another servant in the same house might be focused on a particular person or task.",
           },
           {
             term: "The dock clerk",
-            text: "Notices forged manifests, irregular cargo marks, and overdue barges, filtering events through ledgers, customs duties, and official protocol.",
+            text: "May pay close attention to cargo marks, manifests, and schedules, especially when checking an arrival, but may miss activity outside that task.",
           },
           {
             term: "The street vendor",
-            text: "Notices foot traffic, spending habits, nervous loiterers, and who avoids eye contact with the watch, viewing the district through commerce and street survival.",
+            text: "May recognise regular customers, changes in foot traffic, or unusual loitering, depending on the stall, the day's trade, and what had their attention.",
           },
         ],
       },
@@ -92,7 +96,7 @@ export const howDoIHandlePlayersAskingAnNpcToTellUsEverythingYouKnow: AnswerConf
         heading: "Avoiding conversational pixel-hunting",
         paragraphs: [
           "Conversational pixel-hunting happens when a Game Master decides that an essential clue will only be revealed if players ask a single exact question or utter a specific keyword. If the players ask about the victim's visitors, the GM stays silent about the delivery courier because a courier is technically not a visitor. This turns investigative roleplay into an adversarial guessing game where players feel punished for failing to read the GM's mind.",
-          "Keep player skill focused on interpreting clues, recognising contradictions, and deciding which leads to pursue. When players ask an open question, answer generously with the NPC's core knowledge. When their follow-up questions touch the general vicinity of a secondary clue, let the witness make the natural mental connection rather than withholding the detail on a technicality.",
+          "Keep player skill focused on interpreting accounts, recognising contradictions, and deciding which leads to pursue. When players ask an open question, answer generously within the understood scope. If they ask about a nearby detail, share it when the witness could reasonably know or recall it; do not withhold it on a technicality or invent it because they repeated a question.",
         ],
       },
       {
@@ -108,11 +112,11 @@ export const howDoIHandlePlayersAskingAnNpcToTellUsEverythingYouKnow: AnswerConf
           },
           {
             term: "The framework approach",
-            text: "The GM gives Vane's natural summary immediately: he found the rear storeroom trashed at dawn, two jars of dried ghostleaf missing, and his apprentice nowhere to be found. The party now has a suspect, a crime scene, and a stolen item. The rogue then asks if anything unusual happened the night before. This jogs Vane's memory: he recalls the bell above the front door ringing briefly around midnight, followed by the distinctive reek of marsh bilge, pointing the party toward the river docks.",
+            text: "The GM clarifies, “Everything about the break-in?” Vane gives his best account: he found the rear storeroom trashed at dawn, two jars of dried ghostleaf missing, and his apprentice nowhere to be found. He thinks the apprentice left before closing, but admits he did not see them go. The party has leads without a roll or magic words. Asked, “How do you know the apprentice left early?”, Vane explains that a neighbouring shopkeeper told him. The GM has prepared the brief midnight doorbell and the smell of wet rope by the back steps; when the party asks about the night before, Vane can place them in the account as uncertain details that point toward the river docks.",
           },
           {
             term: "Why it works",
-            text: "The party receives actionable leads right away without needing magic words. The targeted question about the prior evening does not gate basic progress; instead, it rewards player initiative with physical evidence and an unexpected direction to explore.",
+            text: "The broad summary gives the party actionable leads, and the follow-up clarifies where Vane's knowledge came from before adding supported detail. The investigation has a reliable route forward without making every secondary clue automatic or every uncertainty a hidden test.",
           },
         ],
       },
@@ -120,14 +124,21 @@ export const howDoIHandlePlayersAskingAnNpcToTellUsEverythingYouKnow: AnswerConf
         kind: "checklist",
         heading: "Checklist: Running broad witness questions",
         intro:
-          "Keep these six checks in mind whenever players prompt an NPC for everything they know:",
+          "Keep these checks in mind whenever players ask an NPC to tell them everything they know:",
         items: [
-          "Deliver the core lead and general summary in the NPC's very first response.",
-          "Ensure no essential piece of evidence is hidden behind an exact keyword or specific phrasing.",
-          "Frame the account through the NPC's craft, social standing, and personal worries.",
-          "Use specific follow-up questions to jog associative memory rather than unlock gated doors.",
-          "Separate what the witness actually saw from their personal assumptions about what it meant.",
-          "When the witness has shared everything they know, direct the party toward another person, record, or physical scene.",
+          "Resolve what the request is about, briefly clarifying in character if its scope is unclear.",
+          "Give the witness's useful summary, including relevant recollections, confidence, and one or more leads.",
+          "Follow the game's clue procedure, with a reliable route to progress that does not depend on one exact phrase or fragile check.",
+          "Use targeted questions to clarify prepared or fictionally supported detail, source, uncertainty, and inference.",
+          "Account for the witness's task, training, relationships, and attention without treating role as destiny.",
+          "When the witness has given their useful account and more questions would only repeat material, say so plainly. Remind the table of the leads already available, then let the players choose what to pursue.",
+        ],
+      },
+      {
+        kind: "prose",
+        heading: "Know when the interview is done",
+        paragraphs: [
+          "For example: “You think Vane has told you everything relevant he can currently recall about last night. The missing apprentice, rear storeroom, and river smell are your clearest leads.” This signals that further questions would repeat the account while leaving the next move to the players.",
         ],
       },
     ],
@@ -192,8 +203,8 @@ export const howDoIHandlePlayersAskingAnNpcToTellUsEverythingYouKnow: AnswerConf
     ],
     discovery: {
       id: "answer-npc-tell-us-everything",
-      parentCluster: "adventure-mapping",
-      clusters: ["adventure-mapping", "session-prep"],
+      parentCluster: "session-prep",
+      clusters: ["session-prep"],
       primaryIntent:
         "how do i handle players asking an npc to tell us everything you know",
       intentAliases: [
