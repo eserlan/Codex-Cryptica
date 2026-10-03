@@ -1,7 +1,7 @@
 # Tasks: Support Multiple Calendar Eras / Epoch-Based Year Numbering
 
 **Input**: Design documents from `/specs/169-calendar-eras/`  
-**Prerequisites**: [plan.md](./plan.md), [spec.md](./spec.md), [research.md](./research.md), [data-model.md](./data-model.md), [contracts/calendar-eras.ts](./contracts/calendar-eras.ts)
+**Prerequisites**: [plan.md](./plan.md), [spec.md](./spec.md), [research.md](./research.md), [data-model.md](./data-model.md), [contracts/calendar-eras.md](./contracts/calendar-eras.md)
 
 ## Format: `[ID] [P?] [Story] Description`
 

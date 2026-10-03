@@ -54,7 +54,7 @@ specs/169-calendar-eras/
 ├── research.md          # Phase 0 research and math formulations
 ├── data-model.md        # Data models and interfaces
 ├── contracts/           # TypeScript contract definitions
-│   └── calendar-eras.ts
+│   └── calendar-eras.md
 ├── quickstart.md        # Feature overview and examples
 ├── checklists/          # Verification checklists
 │   └── requirements.md
@@ -99,7 +99,7 @@ apps/web/src/lib/
 
 ### Phase 1: Design & Contracts (Completed)
 
-- Authored [data-model.md](./data-model.md) and [contracts/calendar-eras.ts](./contracts/calendar-eras.ts).
+- Authored [data-model.md](./data-model.md) and [contracts/calendar-eras.md](./contracts/calendar-eras.md).
 - Drafted [quickstart.md](./quickstart.md).
 - Updated agent context.
 
