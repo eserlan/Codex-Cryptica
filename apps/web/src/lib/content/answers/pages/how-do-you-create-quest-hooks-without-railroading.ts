@@ -147,6 +147,7 @@ export const howDoYouCreateQuestHooksWithoutRailroading: AnswerConfigInput = {
     "is-my-rpg-campaign-idea-good",
     "how-much-of-the-plot-should-a-dm-prepare",
     "how-do-i-turn-economic-pressures-into-rpg-adventure-hooks",
+    "how-do-i-make-interviewing-npcs-interesting-in-an-investigation",
   ],
   discovery: {
     id: "answer-quest-hooks-without-railroading",

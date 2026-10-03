@@ -138,6 +138,7 @@ export const howDoYouRunAMysteryWithoutRailroading: AnswerConfigInput = {
     "how-do-i-write-a-good-call-of-cthulhu-one-shot",
     "how-do-i-pace-an-rpg-one-shot",
     "how-do-i-run-character-roles-in-an-investigative-horror-rpg",
+    "how-do-i-make-interviewing-npcs-interesting-in-an-investigation",
   ],
   discovery: {
     id: "answer-run-mystery-without-railroading",
