@@ -9,7 +9,7 @@ export const howDoIMakeInterviewingNpcsInterestingInAnInvestigation: AnswerConfi
       "How do I make interviewing NPCs interesting in an investigation?",
     kind: "framework",
     shortAnswer:
-      "Make the NPC a person with their own view of events, not a clue dispenser. Give essential information freely through ordinary conversation, then let specific questions change what the NPC remembers, reveals, or revises. Separate what they saw, what they think it meant, and what they missed or avoid mentioning, so testimony is imperfect without every witness being a liar and no single question needs magic wording to keep the investigation moving.",
+      "Make the NPC a person with their own view of events and a reason to shape the conversation, not a clue dispenser. Give essential information a reliable route through the rules and fiction, then let specific questions change what the NPC remembers, reveals, or revises. Separate what they think they experienced from what they think it meant and what they missed or avoid mentioning; their confidence need not match their accuracy, and no single question needs magic wording to keep the investigation moving.",
     sections: [
       {
         kind: "prose",
@@ -21,43 +21,71 @@ export const howDoIMakeInterviewingNpcsInterestingInAnInvestigation: AnswerConfi
       },
       {
         kind: "list",
-        heading: "Facts, interpretations, and omissions",
+        heading: "Observations, interpretations, omissions, and confidence",
         intro:
-          "Every witness account mixes three kinds of material. Naming them lets testimony be unreliable without making everyone dishonest:",
+          "A witness gives an account from memory, not an objective record. Separate what they think they experienced from what they think it meant, what they left out, and how certain they feel:",
         items: [
           {
-            term: "Facts",
-            text: "Things the NPC directly observed or did: who was present, what time something happened, what was seen or heard, what objects were moved. This is the most stable part of their account, though still limited by where they were and what they noticed.",
+            term: "Observed / remembers",
+            text: "What the NPC believes they directly saw, heard, or did: who seemed to be present, when something happened, what they heard, or which objects they handled. Memory can blur timing, sequence, identity, or exact words, even when the witness is sincere.",
           },
           {
             term: "Interpretations",
-            text: "What the NPC believes those facts mean: motives they assign, causes they assume, conclusions they have drawn. An earnest witness can report facts accurately and still be confidently wrong about why they happened.",
+            text: "What the NPC believes their observations mean: motives they assign, causes they assume, conclusions they have drawn. An earnest witness can remember accurately and still be confidently wrong about why events happened.",
           },
           {
             term: "Omissions",
             text: "Details they left out because they forgot, dismissed the significance, misunderstood the context, or deliberately avoided the topic. Some omissions are innocent, some are protective, and some reflect embarrassment or fear. Use omissions to explain why a further question can surface something new without rewriting what was already said.",
           },
+          {
+            term: "Confidence",
+            text: "How certain the NPC feels about each part of their account. Confidence is useful to portray, but it does not prove accuracy: a hesitant witness may remember correctly, while a certain one may have misheard or filled a gap without noticing.",
+          },
         ],
         outro:
-          "Keeping these separate helps you answer follow-up questions consistently. You can confirm a fact, challenge an interpretation, or reveal an omission without deciding the whole scene should swing from total openness to total silence.",
+          "Keeping these separate helps you answer follow-up questions consistently. You can clarify a memory, challenge an interpretation, or reveal an omission without deciding the whole scene should swing from total openness to total silence.",
       },
       {
         kind: "list",
         heading: "What to give freely",
         intro:
-          "Players should not need to discover a hidden dialogue option to obtain the clue that lets the investigation continue. Offer it through ordinary conversation:",
+          "Do not make the investigation depend on guessing the GM's exact wording. Ensure essential information has a reliable route through the rules and fiction of the game you are using. In a conversational scene, information an NPC would naturally volunteer should not require a magic phrase:",
         items: [
           {
             term: "The NPC's useful summary",
             text: "When the party asks a broad question, give the witness's own sense of what mattered: what they think happened, in the order they remember it, with the emphasis they would naturally put on it. This is not an exhaustive transcript, it is how that person would summarise the event to someone asking for help.",
           },
           {
-            term: "Core facts they would volunteer",
+            term: "Useful details they would volunteer",
             text: "Anything the NPC would reasonably consider relevant belongs in the initial exchange without a special prompt. If they saw the courier leave without the satchel, they mention it. If they noticed the rear door open, they mention that too when it seems connected to what the party asked about.",
           },
           {
             term: "What they have already told others",
             text: "Witnesses often repeat the version they gave to a guard, a manager, or a neighbour. That prior account is a natural place to start, and later questions can draw out what was left out of the first telling because it seemed unimportant at the time.",
+          },
+        ],
+      },
+      {
+        kind: "list",
+        heading: "Choose the kind of conversation",
+        intro:
+          "The same witness prep can support different scenes, but their tone and stakes are not interchangeable:",
+        items: [
+          {
+            term: "Interview",
+            text: "A cooperative or semi-cooperative exchange focused on gathering information.",
+          },
+          {
+            term: "Questioning a reluctant witness",
+            text: "Reassurance, social pressure, or leverage may matter because the witness has a reason to hold back.",
+          },
+          {
+            term: "Interrogating a suspect",
+            text: "Incentives, legal risk, deception, and self-protection may dominate; follow the procedures and tone of the game you are playing.",
+          },
+          {
+            term: "Confrontation",
+            text: "The party presents evidence and watches how the NPC responds, whether or not the conversation began as an interview.",
           },
         ],
       },
@@ -73,7 +101,7 @@ export const howDoIMakeInterviewingNpcsInterestingInAnInvestigation: AnswerConfi
           },
           {
             term: "Surface a contradiction",
-            text: "When the party names a detail that does not fit the NPC's interpretation, the NPC can hesitate, revise, or explain why they saw it differently. The conversation changes because the players noticed something, not because they used a prepared keyword.",
+            text: "When the party names a detail that does not fit the NPC's account, they might correct a genuine mistake, reinterpret what they saw, double down defensively, admit one part selectively, or find a face-saving way to revise. They may also realise they misunderstood something. A contradiction gives the NPC something to respond to; it does not by itself prove they lied. The conversation changes because the players noticed something, not because they used a prepared keyword.",
           },
           {
             term: "Shift trust and caution",
@@ -82,6 +110,18 @@ export const howDoIMakeInterviewingNpcsInterestingInAnInvestigation: AnswerConfi
           {
             term: "Open a new lead",
             text: "Follow-ups about relationships, habits, and what was normal for the location often produce another person to speak to, another place to check, or another record to request. This keeps momentum even when the current witness has little more to add on the central fact.",
+          },
+        ],
+      },
+      {
+        kind: "list",
+        heading: "Let the whole party affect the interview",
+        intro:
+          "One PC may lead the conversation, but evidence and expertise from the whole party should be able to change it:",
+        items: [
+          {
+            term: "Bring other forms of attention",
+            text: "A PC can compare testimony with documents, recognise technical language, notice a routine or environmental inconsistency, recall names and relationships, read the room, present physical evidence, or ask a domain-specific follow-up. Let those contributions shape what the lead interviewer can ask, what the witness believes, or what happens next.",
           },
         ],
       },
@@ -104,6 +144,10 @@ export const howDoIMakeInterviewingNpcsInterestingInAnInvestigation: AnswerConfi
             text: "Some witnesses want the party to reach a particular conclusion, or are keen to help but confidently wrong about what they saw. Their enthusiasm is useful, and their mistaken interpretation is a chance to test the players' judgement rather than to mislead them through deceit.",
           },
           {
+            term: "Deliberate lies",
+            text: "A witness can lie, but make the deception specific: decide which claim is false, why they are lying, what truth they are protecting, what evidence could expose it, and how they react when challenged. Lie about something specific; do not make the whole testimony a fog.",
+          },
+          {
             term: "Vary the posture across the case",
             text: "Not every NPC should resist or demand a check. Mix cooperative witnesses, nervous witnesses, talkative gossips, distracted bystanders, partial observers, experts who can interpret a detail, and hostile suspects. Variety keeps questioning from feeling like every conversation is an interrogation.",
           },
@@ -117,19 +161,19 @@ export const howDoIMakeInterviewingNpcsInterestingInAnInvestigation: AnswerConfi
         items: [
           {
             term: "Fewer optional details",
-            text: "The party keeps the core summary and any fact the NPC would have volunteered. A weak result means less context, fewer precise times, or a useful detail that remains vague enough to need corroboration elsewhere.",
+            text: "The party keeps the core summary and any detail the NPC would have volunteered. A weak result means less context, fewer precise times, or a useful recollection that remains vague enough to need corroboration elsewhere.",
           },
           {
             term: "An interpretation goes unchallenged",
-            text: "The NPC's confident but mistaken reading of events stands for now. The players have the facts they were given, and can test the interpretation by comparing it with other testimony, physical evidence, or records.",
+            text: "The NPC's confident but mistaken reading of events stands for now. The players have the account they were given and can test the interpretation by comparing it with other testimony, physical evidence, or records.",
           },
           {
             term: "The relationship or situation shifts",
             text: "The conversation may take longer, the NPC may want something in return, or they may become wary and share less in future. The party may also reveal what they are investigating, which can have consequences with other interested parties.",
           },
           {
-            term: "Make the stakes visible before the roll",
-            text: "State what a strong result would add and what a weak one would risk, so the players can decide how to approach the conversation and whether to accept a cost, seek another witness, or try a different angle.",
+            term: "Set expectations when it fits",
+            text: "When it fits the game's resolution style, make clear what is being risked or what the roll is trying to improve. This helps players choose an approach without requiring every system to spell out exact success and failure consequences before resolution.",
           },
         ],
       },
@@ -137,15 +181,15 @@ export const howDoIMakeInterviewingNpcsInterestingInAnInvestigation: AnswerConfi
         kind: "list",
         heading: "A lightweight witness prep template",
         intro:
-          "You need enough structure to improvise the conversation without scripting a dialogue tree. Six fields are usually enough:",
+          "You need enough structure to improvise the conversation without scripting a dialogue tree. Keep the witness's account, priorities, and follow-ups in view:",
         items: [
           {
-            term: "Knows",
-            text: "One or two facts they directly observed.",
+            term: "Observed / remembers",
+            text: "One or two things they believe they directly saw, heard, or did.",
           },
           {
             term: "Assumes",
-            text: "What they think those facts mean.",
+            text: "What they think those observations mean.",
           },
           {
             term: "Missed significance",
@@ -160,9 +204,24 @@ export const howDoIMakeInterviewingNpcsInterestingInAnInvestigation: AnswerConfi
             text: "What matters to them personally in this situation.",
           },
           {
+            term: "Wants from this conversation",
+            text: "What they hope to get from the exchange: protect a colleague, keep their lateness off the record, secure protection before naming someone, be taken seriously, push a pet theory, finish quickly, learn what the party knows, trade information for a favour, or protect an institution's reputation. The investigators want information; the witness should usually want something too.",
+          },
+          {
+            term: "Will revise / open up if…",
+            text: "What might change their stance: evidence against an assumption, credible protection, a named mutual contact, an apology, news that another witness has spoken, a believable threat, a contradiction, or a face-saving way to revise their account.",
+          },
+          {
             term: "Useful follow-ups",
             text: "Three or four natural prompts that would draw out more: timing, another person, a routine, an unusual sound, a record, a location.",
           },
+        ],
+      },
+      {
+        kind: "prose",
+        heading: "A simple interview loop",
+        paragraphs: [
+          "Open with the NPC's summary, choose an angle, ask a question or present evidence, and let the NPC respond from memory and motive. Update trust or the account, then identify the next lead or contradiction. Repeat while the conversation has something useful to change.",
         ],
       },
       {
@@ -174,7 +233,7 @@ export const howDoIMakeInterviewingNpcsInterestingInAnInvestigation: AnswerConfi
         items: [
           {
             term: "Prep",
-            text: "Knows: saw the courier enter at about 21:00 and leave without their satchel. Assumes: the courier stole something. Missed significance: a second person used the rear door five minutes later, which Mara assumed was a cleaner. Reluctant to mention: she was meeting someone nearby on a personal errand during her shift. Care about: keeping the job and avoiding a formal report. Useful follow-ups: timing, rear entrance, satchel, who else was present.",
+            text: "Observed / remembers: believes she saw the courier enter at about 21:00 and leave without their satchel. Confidence: high about the satchel, less certain about the time. Assumes: the courier stole something. Missed significance: a second person used the rear door five minutes later, which Mara assumed was a cleaner. Reluctant to mention: she was meeting someone nearby on a personal errand during her shift. Care about: keeping the job and avoiding a formal report. Wants from this conversation: to keep her own lapse off the record while still being seen as helpful. Will revise / open up if: shown evidence that the rear door was used later, or given a face-saving way to explain why she stepped away. Useful follow-ups: timing, rear entrance, satchel, who else was present.",
           },
           {
             term: "Flat version",
@@ -182,11 +241,11 @@ export const howDoIMakeInterviewingNpcsInterestingInAnInvestigation: AnswerConfi
           },
           {
             term: "Responsive version",
-            text: "Asked broadly, Mara offers her summary: the courier came at nine, seemed agitated, and left without the satchel, so she assumes a theft. That already gives the party the courier, the time, and the missing satchel. Asked about routine, she notes the rear door is normally locked and that she thought she saw it move later but was distracted. Asked who else was present, she hesitates before admitting she stepped away briefly and is worried about being blamed. Each specific question jogs a fact, exposes her assumption, or reveals a cost, and the party can compare her account with the watch log and the courier's itinerary.",
+            text: "Asked broadly, Mara offers her summary: the courier came around nine, seemed agitated, and left without the satchel, so she assumes a theft. That gives the party a useful account to follow up. Asked about routine, she notes the rear door is normally locked and that she thought she saw it move later but was distracted. A watch log shows the door opened later than she remembers; Mara pauses, then admits she stepped away briefly and is worried about being blamed. Asked who else was present, she recalls someone near the door but is no longer sure it was a cleaner. Each specific question adds context, tests a memory or assumption, or reveals a cost, and the party can compare her account with the watch log and the courier's itinerary.",
           },
           {
             term: "Why it works",
-            text: "The core facts arrive without magic wording, but targeted questions still improve the picture. The NPC's interpretation is available and clearly labelled as hers, the omission has a human reason, and the players leave with a new place to check and a person to corroborate rather than a single solved answer.",
+            text: "Essential information has a reliable route without magic wording, while targeted questions still improve the picture. Mara's interpretation is clearly labelled as hers, her memory remains open to correction, the omission has a human reason, and the players leave with a new place to check and a person to corroborate rather than a single solved answer.",
           },
         ],
       },
@@ -196,12 +255,12 @@ export const howDoIMakeInterviewingNpcsInterestingInAnInvestigation: AnswerConfi
         intro:
           "Run through these before the scene and keep them visible at the table:",
         items: [
-          "You have given the NPC one thing they know, one thing they assume, and one thing they missed or avoid.",
+          "You have noted what the NPC remembers, what they assume, their confidence, and what they missed or avoid.",
           "Their reluctance comes from character or circumstance, not from needing to stall the case.",
           "At least one scene type is cooperative; not every NPC resists or demands a roll.",
-          "The essential clue is available through ordinary conversation, without exact phrasing.",
+          "Essential information has a reliable route through the rules and fiction, without depending on exact phrasing.",
           "You know three or four follow-up angles that would draw out context, contradictions, relationships, or new leads.",
-          "You can state what a strong or weak social or investigation roll would change, without turning failure into silence.",
+          "When it fits the game's resolution style, players know what a roll is trying to improve or put at risk.",
           "You have a nearby piece of evidence, record, or other witness the party can use to check the interpretation they were given.",
         ],
       },
@@ -209,7 +268,7 @@ export const howDoIMakeInterviewingNpcsInterestingInAnInvestigation: AnswerConfi
     codexConnection: {
       heading: "Track what each witness actually said",
       paragraphs: [
-        "Interviews are easier to run when you can see how claims connect. Keep each NPC as an entity, link their testimony to the people, places, and items it concerns, and note which parts are fact, interpretation, or omission. When the next witness speaks, you can compare facts without re-reading pages of notes.",
+        "Interviews are easier to run when you can see how claims connect. Keep each NPC as an entity, link their testimony to the people, places, and items it concerns, and note which parts are remembered observations, interpretations, or omissions. When the next witness speaks, you can compare accounts without re-reading pages of notes.",
         "Codex Cryptica's graph and note linking suit a case with several imperfect accounts. Record the useful follow-ups from your prep on the entity, then follow the links to the location or record the party checks next.",
       ],
       linkText: "Map NPC testimony in Codex Cryptica",
@@ -250,8 +309,8 @@ export const howDoIMakeInterviewingNpcsInterestingInAnInvestigation: AnswerConfi
     ],
     discovery: {
       id: "answer-interviewing-npcs-investigation",
-      parentCluster: "adventure-mapping",
-      clusters: ["adventure-mapping", "session-prep"],
+      parentCluster: "investigative-horror",
+      clusters: ["investigative-horror", "adventure-mapping", "session-prep"],
       primaryIntent:
         "how do i make interviewing npcs interesting in an investigation",
       intentAliases: [
@@ -267,7 +326,7 @@ export const howDoIMakeInterviewingNpcsInterestingInAnInvestigation: AnswerConfi
       ],
       userJob: "adopt-workflow",
       uniqueValue:
-        "A witness-centred framework that separates facts, interpretations, and omissions, gives core clues without magic wording, and uses targeted questions and social stakes to change quality and consequence rather than gate progress.",
+        "A witness-centred framework that separates remembered observations, interpretations, and omissions, gives essential information a reliable route without magic wording, and uses active scene goals, targeted questions, and social stakes to change quality and consequence rather than gate progress.",
       relatedIntents: [
         "answer-npc-tell-us-everything",
         "answer-run-mystery-without-railroading",
@@ -295,7 +354,7 @@ export const howDoIMakeInterviewingNpcsInterestingInAnInvestigation: AnswerConfi
         {
           with: "answer-run-scene-multiple-npcs",
           reason:
-            "The multi-NPC answer structures crowded council scenes through brief friction beats and sub-scenes; this answer structures one-to-one or small-group interviews through facts, interpretations, and omissions and targeted follow-ups.",
+            "The multi-NPC answer structures crowded council scenes through brief friction beats and sub-scenes; this answer structures one-to-one or small-group interviews through remembered observations, interpretations, omissions, and targeted follow-ups.",
         },
         {
           with: "answer-specialist-character-spotlight",
@@ -307,10 +366,10 @@ export const howDoIMakeInterviewingNpcsInterestingInAnInvestigation: AnswerConfi
     seo: {
       title: "How to Make NPC Interviews Interesting | Codex Cryptica",
       description:
-        "Stop flat NPC interviews. Use facts, interpretations and omissions, give core clues freely, and let better questions change context and consequences.",
+        "Make NPC interviews active and fallible. Separate memory, interpretation and omission, and let questions change context and consequences without relying on magic wording.",
       image:
-        "https://assets.codexcryptica.com/og/how-do-i-run-an-investigator-without-sidelining-the-party.jpg",
+        "https://assets.codexcryptica.com/og/how-do-i-make-interviewing-npcs-interesting-in-an-investigation.jpg",
       imageAlt:
-        "An investigator studies evidence at a lantern-lit table while companions question a witness in a stone archive",
+        "Two investigators compare a watch log with a night porter during a rain-lit interview",
     },
   };
