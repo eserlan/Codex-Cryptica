@@ -5,7 +5,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const vaultMock = vi.hoisted(() => ({
   activeVaultId: "vault-a",
   maps: {} as Record<string, any>,
-  saveMaps: vi.fn(),
+  saveMapsWithResult: vi.fn(),
   getActiveVaultHandle: vi.fn(),
   releaseImageUrl: vi.fn(),
 }));
@@ -37,7 +37,8 @@ describe("MapStore.replaceMapImage", () => {
   beforeEach(() => {
     window.localStorage.clear();
     vaultMock.maps = { "map-1": existingMap() };
-    vaultMock.saveMaps.mockReset();
+    vaultMock.saveMapsWithResult.mockReset();
+    vaultMock.saveMapsWithResult.mockResolvedValue(true);
     vaultMock.releaseImageUrl.mockReset();
     vaultMock.getActiveVaultHandle.mockReset();
     vaultMock.getActiveVaultHandle.mockResolvedValue({ name: "vault-a" });
@@ -67,7 +68,7 @@ describe("MapStore.replaceMapImage", () => {
       pins: [{ id: "pin-1", x: 10, y: 20 }],
       fogOfWar: { maskPath: "maps/map-1_mask.png" },
     });
-    expect(vaultMock.saveMaps).toHaveBeenCalled();
+    expect(vaultMock.saveMapsWithResult).toHaveBeenCalled();
   });
 
   it("resets dimensions so they are recomputed from the new image", async () => {
@@ -116,7 +117,7 @@ describe("MapStore.replaceMapImage", () => {
 
     expect(replaced).toBe(false);
     expect(vaultMock.maps["map-1"]).toEqual(existingMap());
-    expect(vaultMock.saveMaps).not.toHaveBeenCalled();
+    expect(vaultMock.saveMapsWithResult).not.toHaveBeenCalled();
     expect(opfsMock.deleteOpfsEntry).not.toHaveBeenCalled();
   });
 
@@ -128,6 +129,27 @@ describe("MapStore.replaceMapImage", () => {
 
     expect(replaced).toBe(false);
     expect(vaultMock.maps["map-1"].assetPath).toBe("maps/old.webp");
+  });
+
+  it("keeps the old image when map metadata cannot be saved", async () => {
+    vaultMock.saveMapsWithResult.mockResolvedValue(false);
+    const store = new MapStore(undefined, { uuid: () => "new-image-id" });
+
+    const replaced = await store.replaceMapImage("map-1", file());
+
+    expect(replaced).toBe(false);
+    expect(vaultMock.maps["map-1"]).toEqual(existingMap());
+    expect(opfsMock.deleteOpfsEntry).toHaveBeenCalledWith(
+      expect.anything(),
+      ["maps", "new-image-id.webp"],
+      "vault-a",
+    );
+    expect(opfsMock.deleteOpfsEntry).not.toHaveBeenCalledWith(
+      expect.anything(),
+      ["maps", "old.webp"],
+      "vault-a",
+    );
+    expect(vaultMock.releaseImageUrl).not.toHaveBeenCalled();
   });
 
   it("fails for an unknown map or without an active vault", async () => {

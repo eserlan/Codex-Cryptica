@@ -591,7 +591,20 @@ export class MapStore {
       assetPath: `maps/${storageName}`,
       dimensions: { width: 0, height: 0 },
     };
-    await vault.saveMaps();
+    if (!(await vault.saveMapsWithResult())) {
+      // saveMaps reports storage errors instead of throwing. Restore the
+      // in-memory map and keep the old image, which the on-disk metadata may
+      // still reference.
+      vault.maps[mapId] = map;
+      await deleteOpfsEntry(
+        vaultDir,
+        ["maps", storageName],
+        vaultDir.name,
+      ).catch((err) =>
+        console.warn("[MapStore] Could not remove the unsaved map image", err),
+      );
+      return false;
+    }
 
     // Best-effort cleanup of the old local file and any cached object URL.
     if (previousPath) {
