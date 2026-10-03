@@ -9,12 +9,19 @@
   import { mapStore } from "$lib/stores/map.svelte";
   import { mapSession } from "$lib/stores/map-session.svelte";
   import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
+  import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
+  import { mapControlsUIStore } from "$lib/stores/ui/map-controls-ui.svelte";
 
   let {
     chatSidebarOffset,
   }: {
     chatSidebarOffset: string;
   } = $props();
+
+  // On phones the bar is hidden behind a button, like the graph controls.
+  const barVisible = $derived(
+    !layoutUIStore.isMobile || mapControlsUIStore.open,
+  );
 
   let showLayerPanel = $state(false);
   let layerPanelContainer = $state<HTMLDivElement>();
@@ -87,16 +94,36 @@
   </div>
 {/if}
 
+{#if !sessionModeStore.isGuestMode && layoutUIStore.isMobile}
+  <button
+    type="button"
+    onclick={() => mapControlsUIStore.toggle()}
+    class="touch-target absolute right-3 bottom-3 z-30 flex h-11 w-11 items-center justify-center rounded-full bg-theme-primary text-theme-bg shadow-lg transition-all active:scale-95"
+    aria-label="Map Controls"
+    aria-expanded={mapControlsUIStore.open}
+    aria-controls="map-controls-bar"
+    data-testid="map-controls-fab"
+  >
+    <span
+      aria-hidden="true"
+      class="{mapControlsUIStore.open
+        ? 'icon-[lucide--x]'
+        : 'icon-[lucide--settings-2]'} h-5 w-5"
+    ></span>
+  </button>
+{/if}
+
 <!-- svelte-ignore a11y_no_static_element_interactions -->
-{#if !sessionModeStore.isGuestMode}
+{#if !sessionModeStore.isGuestMode && barVisible}
   <div
-    class="pointer-events-none absolute inset-x-2 bottom-2 z-10 flex justify-center sm:inset-x-4 sm:bottom-4"
+    class="pointer-events-none absolute inset-x-2 bottom-2 z-10 flex justify-center sm:inset-x-4 min-[769px]:bottom-4 max-[769px]:bottom-16"
     role="presentation"
     onmousedown={(e) => e.stopPropagation()}
   >
     <!-- Wraps on phones; only the bar itself takes touches so the map can
          still be panned and pinched around it. -->
     <div
+      id="map-controls-bar"
       class="pointer-events-auto flex max-w-full flex-wrap items-center justify-center gap-1.5 rounded-lg border border-theme-border bg-theme-surface/80 p-1.5 shadow-lg backdrop-blur"
       role="presentation"
       onpointerdown={(e) => e.stopPropagation()}
