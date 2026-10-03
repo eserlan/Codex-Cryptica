@@ -37,6 +37,13 @@ const TOPIC_HUBS: Record<string, PublicLabelResult> = {
       "The central cluster hub for tabletop RPG puzzles: stall-proof design, hint ladders, worked examples with alternate solutions, and the puzzle generator.",
     href: "/topics/puzzles",
   },
+  pirate: {
+    kind: "topic",
+    title: "Planning a Pirate or High-Seas Campaign",
+    summary:
+      "The campaign guide hub for pirate games, exploration, sea travel, ship combat, islands, ports, and factions, with a worked adventure and generators.",
+    href: "/topics/pirates",
+  },
 };
 
 const answerResults = (label: string, isCluster: boolean) =>

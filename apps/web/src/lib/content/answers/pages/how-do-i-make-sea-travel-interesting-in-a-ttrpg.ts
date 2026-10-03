@@ -218,6 +218,14 @@ export const howDoIMakeSeaTravelInterestingInATtrpg: AnswerConfigInput = {
       href: "/generators/encounter",
     },
   ],
+  relatedTopics: [
+    {
+      title: "Pirate & High-Seas Campaign Guides",
+      href: "/topics/pirates",
+      description:
+        "Browse the guide cluster for pirate systems, exploration, voyages, ship combat, islands, ports, and rivals.",
+    },
+  ],
   relatedForPages: [
     {
       title: "Codex Cryptica for Pirate & High Seas Campaigns",
