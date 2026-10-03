@@ -91,6 +91,13 @@ export const piratesHighSeas: LandingPageConfig = {
   },
   recommendedTools: [
     {
+      title: "Pirate & High-Seas Campaign Guides",
+      description:
+        "Browse practical guides to pirate campaign systems, exploration, voyages, naval combat, islands, and rival factions.",
+      href: "/topics/pirates",
+      badge: "Campaign guides",
+    },
+    {
       title: "What kind of ship should a pirate crew start with?",
       description:
         "Choose a starter hull, crew size, ownership trouble, and upgrades that create useful pirate-campaign pressure.",

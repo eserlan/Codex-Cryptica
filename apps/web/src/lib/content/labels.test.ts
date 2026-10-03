@@ -93,6 +93,18 @@ describe("public label content aggregation (#2762, #2863)", () => {
     expect(groups.get("topic")?.length).toBe(1);
   });
 
+  it("aggregates the pirate campaign cluster under its label", () => {
+    const results = getPublicContentByLabel("pirate");
+    const paths = results.map((result) => result.href);
+    expect(paths).toContain("/topics/pirates");
+    expect(paths).toContain(
+      "/answers/how-do-i-run-a-pirate-campaign-focused-on-exploration",
+    );
+    expect(paths).toContain(
+      "/examples/letters-of-marque-expired-pirate-adventure",
+    );
+  });
+
   it("aggregates all rumour cluster resources", () => {
     const results = getPublicContentByLabel("rumour");
     expect(results.length).toBeGreaterThanOrEqual(4);

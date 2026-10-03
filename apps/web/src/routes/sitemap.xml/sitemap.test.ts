@@ -88,5 +88,6 @@ describe("Sitemap.xml API Endpoint", () => {
       "https://codexcryptica.com/resources/castle-floorplans",
     );
     expect(xml).toContain("https://codexcryptica.com/topics/puzzles");
+    expect(xml).toContain("https://codexcryptica.com/topics/pirates");
   });
 });

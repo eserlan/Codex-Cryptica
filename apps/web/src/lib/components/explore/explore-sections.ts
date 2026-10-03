@@ -137,6 +137,13 @@ export const EXPLORE_SECTIONS: ExploreSection[] = [
         icon: "icon-[lucide--puzzle]",
       },
       {
+        href: "/topics/pirates",
+        label: "Pirate & High-Seas Hub",
+        summary:
+          "Guides to pirate systems, exploration, sea travel, ship combat, ports, rivals, and tools for building the campaign.",
+        icon: "icon-[lucide--ship]",
+      },
+      {
         href: "/my-stuff",
         label: "My Stuff",
         summary:
