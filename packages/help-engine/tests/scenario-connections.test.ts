@@ -99,6 +99,15 @@ const bundle = buildBundle({
       "thread-weaver-import",
       "## thread-weaver-import\nAbout thread-weaver-import.",
     ),
+    ...[
+      "quicknote",
+      "stat-sheets",
+      "sharing-templates",
+      "chronology",
+      "family-tree",
+      "guided-mode",
+      "session-prep",
+    ].map((id) => article(id, id, `## ${id}\nAbout ${id}.`)),
   ],
   commit: "t",
   builtAt: "t",
@@ -161,6 +170,9 @@ describe("Settlement → Connections scenario", () => {
     expect(fromConnections.screenFeatures.map((f) => f.id)).toContain(
       "entity-connections",
     );
-    expect(fromGraph.screenFeatures.map((f) => f.id)).toEqual(["graph-view"]);
+    expect(fromGraph.screenFeatures.map((f) => f.id)).toContain("graph-view");
+    expect(fromGraph.screenFeatures.map((f) => f.id)).not.toContain(
+      "entity-connections",
+    );
   });
 });

@@ -36,6 +36,58 @@ function store(
 }
 
 describe("HelpContextStore", () => {
+  it("describes a journal or report overlay above the underlying entity", () => {
+    for (const overlay of ["session-journal", "entity-reports"] as const) {
+      const { ctx, registry } = store({ getOpenHelpArea: () => overlay });
+      registry.registerEntityDetail(surface());
+      expect(ctx.current).toMatchObject({
+        area: overlay,
+        tab: null,
+        entityKind: null,
+      });
+      expect(ctx.current.availableActions).not.toContain("status-tab");
+    }
+  });
+
+  it("offers the journal panel only in a ready editable vault", () => {
+    expect(
+      store({ isGuestMode: () => false, journalAvailable: () => true }).ctx
+        .current.availableActions,
+    ).toContain("session-journal");
+    expect(
+      store({ isGuestMode: () => true, journalAvailable: () => true }).ctx
+        .current.availableActions,
+    ).not.toContain("session-journal");
+    expect(
+      store({ isGuestMode: () => false, journalAvailable: () => false }).ctx
+        .current.availableActions,
+    ).not.toContain("session-journal");
+  });
+
+  it("offers Stats and Timeline, but Family only for a character and no tabs in Zen Mode", () => {
+    const { ctx, registry } = store();
+    registry.registerEntityDetail(surface({ entityKind: () => "character" }));
+    expect(ctx.current.availableActions).toEqual(
+      expect.arrayContaining(["stats-tab", "family-tab", "timeline-tab"]),
+    );
+    registry.registerEntityDetail(surface({ entityKind: () => "item" }));
+    expect(ctx.current.availableActions).not.toContain("family-tab");
+    registry.registerZenEntityDetail(
+      surface({ entityKind: () => "character", canSwitchTabs: () => false }),
+    );
+    expect(
+      ctx.current.availableActions.filter((id) => id.endsWith("-tab")),
+    ).toEqual([]);
+  });
+
+  it("recognises chronology and nested canvas routes without sending identifiers", () => {
+    expect(
+      store({ getRouteId: () => "/(app)/timeline" }).ctx.current.area,
+    ).toBe("chronology");
+    expect(
+      store({ getRouteId: () => "/(app)/canvas/[slug]" }).ctx.current,
+    ).toMatchObject({ area: "canvas", routeTemplate: "/(app)/canvas/[slug]" });
+  });
   it("describes Settlement → Connections from the registered entity surface", () => {
     const { ctx, registry } = store();
     registry.registerEntityDetail(surface());
@@ -48,7 +100,12 @@ describe("HelpContextStore", () => {
       mode: "view",
       surface: "vault",
       flags: ["connections-editable"],
-      availableActions: ["status-tab", "connections-tab"],
+      availableActions: [
+        "status-tab",
+        "connections-tab",
+        "stats-tab",
+        "timeline-tab",
+      ],
     });
   });
 
@@ -223,6 +280,8 @@ describe("HelpContextStore", () => {
     expect(ctx.current.availableActions).toEqual([
       "status-tab",
       "connections-tab",
+      "stats-tab",
+      "timeline-tab",
       ...panels,
     ]);
   });

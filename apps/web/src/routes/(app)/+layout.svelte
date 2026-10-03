@@ -50,6 +50,7 @@
     type VaultServiceWorkerSession,
   } from "$lib/app/init/app-init";
   import { isVaultAppPath } from "$lib/service-worker/lifecycle";
+  import { mapControlsUIStore } from "$lib/stores/ui/map-controls-ui.svelte";
   import { initFullscreenOnFirstInteraction } from "$lib/app/init/fullscreen-on-interaction";
   import { useGlobalShortcuts } from "$lib/hooks/useGlobalShortcuts.svelte";
   import {
@@ -123,12 +124,15 @@
   const isZenPopout = $derived(
     /\/vault\/[^/]+\/entity\/[^/]+$/.test(page.url.pathname),
   );
-  const isVttFullscreen = $derived(
-    page.url.pathname.startsWith(`${base}/map`) && !!mapSession?.vttEnabled,
+  // The map goes full-bleed (no header, navigation or footer) while VTT is on,
+  // or when the user has maximized it.
+  const isMapFullscreen = $derived(
+    page.url.pathname.startsWith(`${base}/map`) &&
+      (!!mapSession?.vttEnabled || mapControlsUIStore.maximized),
   );
   const isEntityExplorerWorkspace = $derived(
     !isPopup &&
-      !isVttFullscreen &&
+      !isMapFullscreen &&
       !isZenPopout &&
       layoutUIStore.isEntityExplorerWorkspace,
   );
@@ -439,7 +443,7 @@
   $effect(() => {
     if (!browser) return;
 
-    if (isVttFullscreen || !headerEl) {
+    if (isMapFullscreen || !headerEl) {
       document.documentElement.style.setProperty("--header-height", "0px");
       return;
     }
@@ -702,7 +706,7 @@
   >
     <NotificationToast />
 
-    {#if !isPopup && !isVttFullscreen && !isZenPopout}
+    {#if !isPopup && !isMapFullscreen && !isZenPopout}
       <AppHeader bind:isMobileMenuOpen bind:headerEl />
       {#if sessionModeStore.isDemoMode}
         <MobileDemoBanner />
@@ -712,7 +716,7 @@
     <div
       class="flex-1 flex flex-col-reverse md:flex-row min-h-0 relative overflow-hidden"
     >
-      {#if !isPopup && !isVttFullscreen && !isZenPopout && !guidedModeStore.isGuidedMode}
+      {#if !isPopup && !isMapFullscreen && !isZenPopout && !guidedModeStore.isGuidedMode}
         <ActivityBar />
         <SidebarPanelHost />
       {/if}
@@ -746,7 +750,7 @@
       </main>
     </div>
 
-    {#if !isPopup && !isVttFullscreen && !isZenPopout}
+    {#if !isPopup && !isMapFullscreen && !isZenPopout}
       <AppFooter />
     {/if}
   </div>

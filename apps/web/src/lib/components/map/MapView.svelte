@@ -10,6 +10,7 @@
   import { resolveVisionSourceTokens, visionRangeToPixels } from "./vtt-vision";
   import { broadcastActiveMapFogSync } from "./interactions/interaction-adapters";
   import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
+  import { notificationStore } from "$lib/stores/ui/notification.svelte";
   import { MapViewAssetLoader } from "./map-view-loader";
   import { MapInteractionManager } from "./map-interactions.svelte";
   import MapCanvas from "./MapCanvas.svelte";
@@ -46,6 +47,10 @@
 
   let container = $state<HTMLDivElement | null>(null);
   let mapImage = $state<HTMLImageElement | null>(null);
+  // Set when the background image cannot be resolved or decoded, so the
+  // loading overlay can offer a retry instead of spinning forever.
+  let imageLoadFailed = $state(false);
+  let retryNonce = $state(0);
   let maskCanvas = $state<HTMLCanvasElement | null>(null);
 
   const painter = new MapFogPainter({
@@ -75,6 +80,7 @@
       painter.cancel();
       mapImage = null;
       maskCanvas = null;
+      imageLoadFailed = false;
     },
     onImageLoaded: (img) => {
       mapImage = img;
@@ -98,6 +104,7 @@
     },
     onError: (message, err) => {
       console.error(message, err);
+      imageLoadFailed = true;
     },
   });
 
@@ -338,7 +345,41 @@
     };
   });
 
+  let replacementInput = $state<HTMLInputElement | null>(null);
+  let replacingImage = $state(false);
+
+  async function replaceActiveMapImage(file: File) {
+    const mapId = mapStore.activeMapId;
+    if (!mapId) return;
+
+    replacingImage = true;
+    try {
+      if (!(await mapStore.replaceMapImage(mapId, file))) {
+        notificationStore.notify(
+          "That image could not be used. Try a different file.",
+          "error",
+        );
+      }
+    } finally {
+      replacingImage = false;
+    }
+  }
+
+  function handleReplacementSelected(event: Event) {
+    const input = event.currentTarget as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = "";
+    if (file) void replaceActiveMapImage(file);
+  }
+
+  function retryImageLoad() {
+    // Forget the last synced signature so the effect below reloads the asset.
+    lastMapSignature = null;
+    retryNonce += 1;
+  }
+
   $effect(() => {
+    void retryNonce;
     if (activeMapSignature === lastMapSignature) {
       return;
     }
@@ -429,19 +470,68 @@
 
   {#if hasBackgroundImage && !mapImage}
     <div
-      class="absolute inset-0 flex items-center justify-center bg-theme-bg/40 backdrop-blur-sm z-50 pointer-events-none"
+      class="pointer-events-none absolute inset-0 z-50 flex items-center justify-center bg-theme-bg/40 px-6 backdrop-blur-sm"
       transition:fade
     >
-      <div class="flex flex-col items-center gap-4">
+      {#if imageLoadFailed}
         <div
-          class="w-12 h-12 border-4 border-theme-primary border-t-transparent rounded-full animate-spin"
-        ></div>
-        <div
-          class="text-micro font-mono text-theme-primary uppercase tracking-[0.3em] animate-pulse"
+          class="pointer-events-auto flex max-w-sm flex-col items-center gap-3 text-center"
+          role="alert"
+          data-testid="map-image-error"
         >
-          Synthesizing Spatial Asset...
+          <span
+            class="icon-[lucide--image-off] h-10 w-10 text-theme-muted"
+            aria-hidden="true"
+          ></span>
+          <p class="text-sm text-theme-text">
+            This map's image could not be loaded. It may be missing from this
+            device or the connection may have dropped. You can try again, or
+            choose a new image to keep this map's pins and notes.
+          </p>
+          <div class="flex flex-wrap items-center justify-center gap-2">
+            <button
+              type="button"
+              class="touch-target rounded-lg bg-theme-primary px-4 py-2 text-xs font-bold uppercase tracking-wider text-theme-bg hover:bg-theme-secondary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary disabled:opacity-50"
+              onclick={retryImageLoad}
+              disabled={replacingImage}
+            >
+              Try again
+            </button>
+            {#if !sessionModeStore.isGuestMode}
+              <button
+                type="button"
+                class="touch-target rounded-lg border border-theme-primary px-4 py-2 text-xs font-bold uppercase tracking-wider text-theme-primary hover:bg-theme-primary/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary disabled:opacity-50"
+                onclick={() => replacementInput?.click()}
+                disabled={replacingImage}
+                data-testid="map-image-replace"
+              >
+                {replacingImage ? "Replacing…" : "Choose a new image"}
+              </button>
+              <input
+                bind:this={replacementInput}
+                type="file"
+                accept="image/*"
+                class="sr-only"
+                tabindex="-1"
+                aria-hidden="true"
+                data-testid="map-image-replace-input"
+                onchange={handleReplacementSelected}
+              />
+            {/if}
+          </div>
         </div>
-      </div>
+      {:else}
+        <div class="flex flex-col items-center gap-4" role="status">
+          <div
+            class="h-12 w-12 animate-spin rounded-full border-4 border-theme-primary border-t-transparent"
+          ></div>
+          <div
+            class="animate-pulse text-center font-mono text-micro uppercase tracking-[0.2em] text-theme-primary"
+          >
+            Synthesizing Spatial Asset...
+          </div>
+        </div>
+      {/if}
     </div>
   {/if}
 

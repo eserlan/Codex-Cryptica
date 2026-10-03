@@ -11,6 +11,7 @@ export const HELP_ROUTE_TEMPLATES = [
   "/(app)",
   "/(app)/adventure",
   "/(app)/canvas",
+  "/(app)/canvas/[slug]",
   "/(app)/decks",
   "/(app)/dice",
   "/(app)/guest",
@@ -23,6 +24,10 @@ export const HELP_ROUTE_TEMPLATES = [
   "/(app)/tables",
   "/(app)/templates",
   "/(app)/timeline",
+  "/(app)/vault/[id]",
+  "/(app)/vault/[id]/entity/[entityId]",
+  "/(app)/guest/[publishId]",
+  "/(marketing)/tools/session-prep-builder",
   // Reserved for the public surface (the spike never produces it).
   "/(marketing)/generators/random",
   "unknown",
@@ -38,6 +43,10 @@ export const HELP_AREAS = [
   "map",
   "import",
   "settings",
+  "session-journal",
+  "entity-reports",
+  "chronology",
+  "session-prep",
   "other",
 ] as const;
 

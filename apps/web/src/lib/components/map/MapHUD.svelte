@@ -6,9 +6,17 @@
   import { vault } from "$lib/stores/vault.svelte";
   import { notificationStore } from "$lib/stores/ui/notification.svelte";
   import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
+  import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
+  import { mapControlsUIStore } from "$lib/stores/ui/map-controls-ui.svelte";
   import { guestVault } from "$lib/stores/guest-vault.svelte";
   import { mapSession } from "$lib/stores/map-session.svelte";
   import PinNoteButton from "./PinNoteButton.svelte";
+
+  // On phones the map switcher stays put and the other actions live behind
+  // the same "Map Controls" button as the bottom bar.
+  const showSecondaryActions = $derived(
+    !layoutUIStore.isMobile || mapControlsUIStore.open,
+  );
 
   // A published-vault reader browses maps on their own (no host), unlike a
   // live VTT guest who only sees whatever map the host is currently sharing.
@@ -27,28 +35,32 @@
 
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div
-  class="absolute z-10 flex flex-col items-start gap-2"
-  style="top: 1rem; left: calc({chatSidebarOffset} + 1rem);"
+  class="absolute top-4 left-4 z-10 flex flex-col items-start gap-2 sm:left-[var(--map-hud-left)]"
+  style="--map-hud-left: calc({chatSidebarOffset} + 1rem);"
   role="presentation"
   onmousedown={(e) => e.stopPropagation()}
 >
-  <div class="flex gap-2">
+  <div class="flex flex-wrap gap-2">
     {#if mapStore.canGoBack}
       <button
         type="button"
-        class="px-3 py-1.5 bg-theme-surface border border-theme-border text-theme-text text-xs font-bold rounded-lg hover:border-theme-primary transition-colors flex items-center gap-2 focus-visible:ring-2 focus-visible:ring-theme-primary focus-visible:outline-none"
+        class="touch-target px-3 py-1.5 bg-theme-surface border border-theme-border text-theme-text text-xs font-bold rounded-lg hover:border-theme-primary transition-colors flex items-center gap-2 focus-visible:ring-2 focus-visible:ring-theme-primary focus-visible:outline-none"
         onclick={() => mapStore.goBack()}
+        aria-label="Back to the previous map"
+        title="Back to the previous map"
+        data-testid="map-back-button"
       >
         <span class="icon-[lucide--arrow-left] w-3 h-3" aria-hidden="true"
         ></span>
-        BACK
+        <!-- Icon only on phones: the label cost a whole row there. -->
+        <span class="hidden sm:inline">BACK</span>
       </button>
     {/if}
 
     {#if isPublishedVaultReader}
       {#if vault.allMaps.length > 1}
         <select
-          class="bg-theme-surface border border-theme-border text-theme-text px-3 py-1.5 rounded-lg text-xs focus-visible:ring-2 focus-visible:ring-theme-primary focus-visible:outline-none"
+          class="touch-target bg-theme-surface border border-theme-border text-theme-text px-3 py-1.5 rounded-lg text-xs focus-visible:ring-2 focus-visible:ring-theme-primary focus-visible:outline-none"
           aria-label="Select Map"
           value={mapStore.activeMapId}
           onchange={(e) => mapStore.selectMap(e.currentTarget.value)}
@@ -61,7 +73,7 @@
         </select>
       {:else if mapStore.activeMap}
         <div
-          class="px-3 py-1.5 bg-theme-surface border border-theme-border text-theme-text rounded-lg text-xs font-bold"
+          class="touch-target px-3 py-1.5 bg-theme-surface border border-theme-border text-theme-text rounded-lg text-xs font-bold"
         >
           {mapStore.activeMap.isWorldMap ? "★ " : ""}{mapStore.activeMap.name}
         </div>
@@ -69,14 +81,14 @@
     {:else if sessionModeStore.isGuestMode}
       {#if mapStore.activeMap}
         <div
-          class="px-3 py-1.5 bg-theme-surface border border-theme-border text-theme-text rounded-lg text-xs font-bold"
+          class="touch-target px-3 py-1.5 bg-theme-surface border border-theme-border text-theme-text rounded-lg text-xs font-bold"
         >
           {mapStore.activeMap.isWorldMap ? "★ " : ""}{mapStore.activeMap.name}
         </div>
       {/if}
     {:else}
       <select
-        class="bg-theme-surface border border-theme-border text-theme-text px-3 py-1.5 rounded-lg text-xs focus-visible:ring-2 focus-visible:ring-theme-primary focus-visible:outline-none"
+        class="touch-target max-w-[13rem] sm:max-w-none bg-theme-surface border border-theme-border text-theme-text px-3 py-1.5 rounded-lg text-xs focus-visible:ring-2 focus-visible:ring-theme-primary focus-visible:outline-none"
         aria-label="Select Map"
         value={mapStore.activeMapId}
         onchange={(e) =>
@@ -94,62 +106,65 @@
         {/each}
       </select>
 
-      {#if mapStore.activeMap && !mapStore.activeMap.isWorldMap}
+      {#if showSecondaryActions}
+        {#if mapStore.activeMap && !mapStore.activeMap.isWorldMap}
+          <button
+            type="button"
+            class="touch-target px-3 py-1.5 bg-theme-surface border border-theme-border text-theme-muted text-micro font-bold rounded-lg hover:text-theme-primary hover:border-theme-primary transition-colors flex items-center gap-2 focus-visible:ring-2 focus-visible:ring-theme-primary focus-visible:outline-none"
+            onclick={() => mapStore.setAsWorldMap(mapStore.activeMapId!)}
+            title="Set as World Map"
+          >
+            <span class="icon-[lucide--star] w-3 h-3" aria-hidden="true"></span>
+            SET WORLD
+          </button>
+        {:else if mapStore.activeMap?.isWorldMap}
+          <div
+            class="touch-target px-3 py-1.5 bg-theme-primary/10 border border-theme-primary/30 text-theme-primary text-micro font-bold rounded-lg flex items-center gap-2"
+          >
+            <span
+              class="icon-[lucide--star] w-3 h-3 fill-theme-primary"
+              aria-hidden="true"
+            ></span>
+            WORLD MAP
+          </div>
+        {/if}
+
         <button
           type="button"
-          class="px-3 py-1.5 bg-theme-surface border border-theme-border text-theme-muted text-micro font-bold rounded-lg hover:text-theme-primary hover:border-theme-primary transition-colors flex items-center gap-2 focus-visible:ring-2 focus-visible:ring-theme-primary focus-visible:outline-none"
-          onclick={() => mapStore.setAsWorldMap(mapStore.activeMapId!)}
-          title="Set as World Map"
+          class="touch-target px-3 py-1.5 bg-theme-surface border border-theme-border text-red-500/70 text-micro font-bold rounded-lg hover:text-red-400 hover:border-red-400 transition-colors flex items-center gap-2 focus-visible:ring-2 focus-visible:ring-theme-primary focus-visible:outline-none"
+          onclick={async () => {
+            if (
+              await notificationStore.confirm({
+                title: "Clear Map",
+                message:
+                  "Are you sure you want to delete this map? This action cannot be undone.",
+                isDangerous: true,
+              })
+            ) {
+              await vault.deleteMap(mapStore.activeMapId!);
+            }
+          }}
+          title="Delete Map"
         >
-          <span class="icon-[lucide--star] w-3 h-3" aria-hidden="true"></span>
-          SET WORLD
-        </button>
-      {:else if mapStore.activeMap?.isWorldMap}
-        <div
-          class="px-3 py-1.5 bg-theme-primary/10 border border-theme-primary/30 text-theme-primary text-micro font-bold rounded-lg flex items-center gap-2"
-        >
-          <span
-            class="icon-[lucide--star] w-3 h-3 fill-theme-primary"
-            aria-hidden="true"
+          <span class="icon-[lucide--trash-2] w-3 h-3" aria-hidden="true"
           ></span>
-          WORLD MAP
-        </div>
-      {/if}
+          DELETE
+        </button>
 
-      <button
-        type="button"
-        class="px-3 py-1.5 bg-theme-surface border border-theme-border text-red-500/70 text-micro font-bold rounded-lg hover:text-red-400 hover:border-red-400 transition-colors flex items-center gap-2 focus-visible:ring-2 focus-visible:ring-theme-primary focus-visible:outline-none"
-        onclick={async () => {
-          if (
-            await notificationStore.confirm({
-              title: "Clear Map",
-              message:
-                "Are you sure you want to delete this map? This action cannot be undone.",
-              isDangerous: true,
-            })
-          ) {
-            await vault.deleteMap(mapStore.activeMapId!);
-          }
-        }}
-        title="Delete Map"
-      >
-        <span class="icon-[lucide--trash-2] w-3 h-3" aria-hidden="true"></span>
-        DELETE
-      </button>
-
-      <!-- In play the note button lives in the VTT toolbar; out of play this
+        <!-- In play the note button lives in the VTT toolbar; out of play this
            is the only place it can be reached from. -->
-      {#if !mapSession.vttEnabled && !sessionModeStore.isGuestMode}
-        <PinNoteButton />
-      {/if}
+        {#if !mapSession.vttEnabled && !sessionModeStore.isGuestMode}
+          <PinNoteButton />
+        {/if}
 
-      <button
-        type="button"
-        class="px-3 py-1.5 bg-theme-primary text-theme-bg text-xs font-bold rounded-lg uppercase font-header tracking-wider focus-visible:ring-2 focus-visible:ring-theme-primary focus-visible:outline-none"
-        onclick={onShowUpload}
-      >
-        Add Map
-      </button>
+        <button
+          type="button"
+          class="touch-target px-3 py-1.5 bg-theme-primary text-theme-bg text-xs font-bold rounded-lg uppercase font-header tracking-wider focus-visible:ring-2 focus-visible:ring-theme-primary focus-visible:outline-none"
+          onclick={onShowUpload}
+        >
+          Add Map
+        </button>
+      {/if}
     {/if}
   </div>
 

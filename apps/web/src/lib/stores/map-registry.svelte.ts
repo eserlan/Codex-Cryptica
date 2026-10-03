@@ -50,24 +50,21 @@ class MapRegistryStore {
     }
   }
 
-  async saveMaps() {
+  async saveMaps(): Promise<boolean> {
     if (
       !vaultRegistry.activeVaultId ||
       !vaultRegistry.rootHandle ||
       !this.saveQueue
     )
-      return;
+      return false;
     const vaultId = vaultRegistry.activeVaultId;
 
     this.status = "saving";
     return this.saveQueue.enqueue("maps-metadata", async () => {
+      let vaultDir: FileSystemDirectoryHandle;
       try {
-        const vaultDir = await getVaultDir(vaultRegistry.rootHandle!, vaultId);
+        vaultDir = await getVaultDir(vaultRegistry.rootHandle!, vaultId);
         await saveMapsToDisk(vaultDir, this.maps);
-
-        await updateLastInternalChange(vaultId, { kind: "maps" });
-
-        this.status = "idle";
       } catch (err) {
         console.error("[MapRegistryStore] Failed to save maps", err);
         this.status = "error";
@@ -75,7 +72,20 @@ class MapRegistryStore {
           "Failed to save map data. Please check your storage quota.",
           "error",
         );
+        return false;
       }
+
+      try {
+        await updateLastInternalChange(vaultId, { kind: "maps" });
+      } catch (err) {
+        console.warn(
+          "[MapRegistryStore] Could not update map sync metadata",
+          err,
+        );
+      }
+
+      this.status = "idle";
+      return true;
     });
   }
 

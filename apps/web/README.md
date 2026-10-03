@@ -101,6 +101,11 @@ For every major user-facing feature, make two explicit decisions in the pull req
 
 These decisions are separate. A feature can be well documented before it has screen-aware AI Help actions, and not every feature needs registry support immediately.
 
+See [Contextual AI Help coverage](../../docs/help-assistant-coverage.md) for the
+current screen/feature decisions, authoritative Help IDs, safe guidance limits
+and Worker-first rollout requirements. Update that table when registry coverage
+changes; a regression test checks that every registered feature is recorded.
+
 ### Article Sorting (Rank)
 
 Articles are sorted by `rank` ascending, then by `title`. If `rank` is omitted, the article appears after ranked articles.

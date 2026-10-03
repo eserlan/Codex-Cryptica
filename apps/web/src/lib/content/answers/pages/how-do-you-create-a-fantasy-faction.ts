@@ -175,6 +175,7 @@ export const howDoYouCreateAFantasyFaction: AnswerConfigInput = {
     "how-does-magic-create-social-classes-and-inequality",
     "how-common-should-magic-be-in-a-fantasy-world",
     "how-does-magic-change-society-in-a-fantasy-world",
+    "can-multiple-gods-share-a-domain",
   ],
   discovery: {
     id: "answer-fantasy-faction",

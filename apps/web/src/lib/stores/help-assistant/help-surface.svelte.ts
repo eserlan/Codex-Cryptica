@@ -8,7 +8,8 @@
  * to help by registering more than it should: the context schema has nowhere
  * to put it.
  */
-export type HelpTabId = "status" | "connections";
+export type HelpTabId =
+  "status" | "connections" | "stats" | "family" | "timeline";
 
 export interface EntityDetailSurface {
   /** Category ID of the open entry (sanitised to a built-in kind or `custom` later). */

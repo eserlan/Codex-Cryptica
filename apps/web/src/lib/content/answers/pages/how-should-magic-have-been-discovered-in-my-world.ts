@@ -201,6 +201,7 @@ export const howShouldMagicHaveBeenDiscoveredInMyWorld: AnswerConfigInput = {
     },
   ],
   relatedAnswers: [
+    "what-is-the-difference-between-gods-and-demon-lords-in-a-fantasy-world",
     "how-do-you-create-a-magic-system",
     "how-do-you-create-a-believable-fictional-religion",
     "how-do-you-create-a-pantheon",
@@ -234,6 +235,11 @@ export const howShouldMagicHaveBeenDiscoveredInMyWorld: AnswerConfigInput = {
         with: "answer-create-magic-system",
         reason:
           "This answer explains how people discovered magic and how that history shapes access and authority; the magic-system answer designs the rules, costs, and limits of using it.",
+      },
+      {
+        with: "answer-gods-vs-demon-lords",
+        reason:
+          "Magic discovery traces how people learned to use magic and who claims it; the gods and demon lords answer distinguishes the supernatural sources and patrons that may provide power.",
       },
     ],
   },

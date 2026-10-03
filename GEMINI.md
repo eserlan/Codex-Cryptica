@@ -1,8 +1,11 @@
 # Codex-Cryptica Development Guidelines
 
-Auto-generated from all feature plans. Last updated: 2026-08-15
+Auto-generated from all feature plans. Last updated: 2026-10-03
 
 ## Active Technologies
+
+- TypeScript 6.0.3, Svelte 5 (Runes), SvelteKit 2, Bun 1.3.14 + `packages/chronology-engine` (internal framework-free package), Tailwind 4 semantic tokens, Floating UI, `@codex/events`. No new third-party dependency. (3717-calendar-eras)
+- Browser-local IndexedDB via existing `calendarStore` configuration persistence. No new database store or migration needed. (3717-calendar-eras)
 
 - TypeScript 6.0.3, Bun 1.3.14 + Svelte 5 Runes, SvelteKit 2, `@codex/generator-engine`, `@codex/search-orchestrator`, `random-source-engine`, `@google/generative-ai` (159-ai-world-aware-tables)
 - OPFS (Vault Files) & IndexedDB (via existing vault and random source stores; zero new database stores or schema flags) (159-ai-world-aware-tables)
@@ -250,11 +253,10 @@ TypeScript: Follow standard conventions
 
 ## Recent Changes
 
+- 169-calendar-eras: Added TypeScript 6.0.3, Svelte 5 (Runes), SvelteKit 2, Bun 1.3.14 + `packages/chronology-engine` (internal framework-free package), Tailwind 4 semantic tokens, Floating UI, `@codex/events`. No new third-party dependency.
+- 3717-calendar-eras: Added TypeScript 6.0.3, Svelte 5 (Runes), SvelteKit 2, Bun 1.3.14 + `packages/chronology-engine` (internal framework-free package), Tailwind 4 semantic tokens, Floating UI, `@codex/events`. No new third-party dependency.
+
 - 159-ai-world-aware-tables: Added TypeScript 6.0.3, Bun 1.3.14 + Svelte 5 Runes, SvelteKit 2, `@codex/generator-engine`, `@codex/search-orchestrator`, `random-source-engine`, `@google/generative-ai`
-
-- 1515-table-missing-filters: Added TypeScript 6.0.3, Svelte 5 Runes, SvelteKit 2, Bun 1.3.14 + Svelte 5, Tailwind 4 semantic tokens, Lucide Iconify utility classes, `@codex/search-orchestrator`
-
-- 2147-timeline-agenda-bounded-rendering: Added TypeScript 6.0.3, Svelte 5 Runes, SvelteKit 2, Bun 1.3.14 + Existing `chronology-engine`, Svelte components/stores, Playwright performance harness, Vitest
 
 <!-- MANUAL ADDITIONS START -->
 

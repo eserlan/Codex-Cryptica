@@ -53,6 +53,8 @@ vi.mock("$lib/stores/ui/session-mode.svelte", () => ({
   sessionModeStore: sessionModeStoreMock,
 }));
 
+import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
+import { mapControlsUIStore } from "$lib/stores/ui/map-controls-ui.svelte";
 import MapVTTControlsHUD from "./MapVTTControlsHUD.svelte";
 
 describe("MapVTTControlsHUD", () => {
@@ -65,6 +67,9 @@ describe("MapVTTControlsHUD", () => {
     mapStoreMock.showGrid = false;
     mapStoreMock.showLabels = true;
     mapSessionMock.vttEnabled = true;
+    layoutUIStore.isMobile = false;
+    mapControlsUIStore.open = false;
+    mapControlsUIStore.maximized = false;
     mapSessionMock.showGridSettings = false;
     mapSessionMock.measurement.active = false;
     mapSessionMock.activeLayer = "terrain";
@@ -83,6 +88,182 @@ describe("MapVTTControlsHUD", () => {
 
     expect(mapStoreMock.showFog).toBe(false);
     expect(screen.getByRole("button", { name: "GRID: OFF" })).not.toBeNull();
+  });
+
+  describe("maximize", () => {
+    it("offers a maximize toggle inside the control bar when VTT is off", async () => {
+      mapSessionMock.vttEnabled = false;
+      render(MapVTTControlsHUD, { props: { chatSidebarOffset: "20rem" } });
+
+      const toggle = screen.getByTestId("map-maximize-toggle");
+      expect(toggle.closest("#map-controls-bar")).not.toBeNull();
+      expect(toggle.textContent).toContain("MAXIMIZE");
+      expect(toggle.getAttribute("aria-pressed")).toBe("false");
+
+      await fireEvent.click(toggle);
+
+      expect(mapControlsUIStore.maximized).toBe(true);
+      expect(toggle.textContent).toContain("MINIMIZE");
+      expect(toggle.getAttribute("aria-pressed")).toBe("true");
+
+      await fireEvent.click(toggle);
+      expect(mapControlsUIStore.maximized).toBe(false);
+      mapSessionMock.vttEnabled = true;
+    });
+
+    it("is not offered while VTT is on, which is already full-bleed", () => {
+      mapSessionMock.vttEnabled = true;
+      render(MapVTTControlsHUD, { props: { chatSidebarOffset: "20rem" } });
+
+      expect(screen.queryByTestId("map-maximize-toggle")).toBeNull();
+    });
+
+    it("tucks the phone controls panel away after maximizing so the map shows", async () => {
+      mapSessionMock.vttEnabled = false;
+      layoutUIStore.isMobile = true;
+      mapControlsUIStore.open = true;
+      render(MapVTTControlsHUD, { props: { chatSidebarOffset: "20rem" } });
+
+      await fireEvent.click(screen.getByTestId("map-maximize-toggle"));
+
+      expect(mapControlsUIStore.maximized).toBe(true);
+      expect(mapControlsUIStore.open).toBe(false);
+      // The Map Controls button stays, so the user can always minimize again.
+      expect(
+        screen.getByRole("button", { name: "Map Controls" }),
+      ).not.toBeNull();
+      mapSessionMock.vttEnabled = true;
+    });
+
+    it("stays maximized after the phone panel closes and the toggle unmounts", async () => {
+      mapSessionMock.vttEnabled = false;
+      layoutUIStore.isMobile = true;
+      mapControlsUIStore.open = true;
+      render(MapVTTControlsHUD, { props: { chatSidebarOffset: "20rem" } });
+
+      await fireEvent.click(screen.getByTestId("map-maximize-toggle"));
+
+      // The panel (and the toggle in it) is gone, but the map stays maximized.
+      expect(screen.queryByTestId("map-maximize-toggle")).toBeNull();
+      expect(mapControlsUIStore.maximized).toBe(true);
+      mapSessionMock.vttEnabled = true;
+    });
+
+    it("keeps the panel open on larger screens", async () => {
+      mapSessionMock.vttEnabled = false;
+      layoutUIStore.isMobile = false;
+      mapControlsUIStore.open = true;
+      render(MapVTTControlsHUD, { props: { chatSidebarOffset: "20rem" } });
+
+      await fireEvent.click(screen.getByTestId("map-maximize-toggle"));
+
+      expect(mapControlsUIStore.open).toBe(true);
+      mapSessionMock.vttEnabled = true;
+    });
+
+    it("restores the app chrome when the map screen is left", () => {
+      mapSessionMock.vttEnabled = false;
+      mapControlsUIStore.maximized = true;
+      const { unmount } = render(MapVTTControlsHUD, {
+        props: { chatSidebarOffset: "20rem" },
+      });
+
+      unmount();
+
+      expect(mapControlsUIStore.maximized).toBe(false);
+      mapSessionMock.vttEnabled = true;
+    });
+  });
+
+  describe("reveal / hide on phones", () => {
+    it("starts hidden behind a button and exposes its state", () => {
+      layoutUIStore.isMobile = true;
+      render(MapVTTControlsHUD, { props: { chatSidebarOffset: "20rem" } });
+
+      const fab = screen.getByRole("button", { name: "Map Controls" });
+      expect(fab.getAttribute("aria-expanded")).toBe("false");
+      expect(fab.className).toContain("touch-target");
+      expect(screen.queryByRole("button", { name: "LABELS: ON" })).toBeNull();
+    });
+
+    it("reveals the controls when the button is pressed and hides them again", async () => {
+      layoutUIStore.isMobile = true;
+      render(MapVTTControlsHUD, { props: { chatSidebarOffset: "20rem" } });
+      const fab = screen.getByRole("button", { name: "Map Controls" });
+
+      await fireEvent.click(fab);
+      expect(fab.getAttribute("aria-expanded")).toBe("true");
+      expect(screen.getByRole("button", { name: "LABELS: ON" })).not.toBeNull();
+      expect(fab.getAttribute("aria-controls")).toBe("map-controls-bar");
+      expect(document.getElementById("map-controls-bar")).not.toBeNull();
+
+      await fireEvent.click(fab);
+      expect(fab.getAttribute("aria-expanded")).toBe("false");
+      expect(screen.queryByRole("button", { name: "LABELS: ON" })).toBeNull();
+    });
+
+    it("has no button and shows the controls on larger screens", () => {
+      layoutUIStore.isMobile = false;
+      render(MapVTTControlsHUD, { props: { chatSidebarOffset: "20rem" } });
+
+      expect(screen.queryByRole("button", { name: "Map Controls" })).toBeNull();
+      expect(screen.getByRole("button", { name: "LABELS: ON" })).not.toBeNull();
+    });
+
+    it("does not offer the button to guests, who have no controls to reveal", () => {
+      layoutUIStore.isMobile = true;
+      sessionModeStoreMock.isGuestMode = true;
+      render(MapVTTControlsHUD, { props: { chatSidebarOffset: "20rem" } });
+
+      expect(screen.queryByRole("button", { name: "Map Controls" })).toBeNull();
+      sessionModeStoreMock.isGuestMode = false;
+    });
+  });
+
+  it("wraps on narrow screens and only the bar takes pointer events", () => {
+    render(MapVTTControlsHUD, {
+      props: {
+        chatSidebarOffset: "20rem",
+      },
+    });
+
+    const bar = screen
+      .getByRole("button", { name: "LABELS: ON" })
+      .closest("div.rounded-lg") as HTMLElement;
+    expect(bar.className).toContain("flex-wrap");
+    expect(bar.className).toContain("max-w-full");
+    expect(bar.className).toContain("pointer-events-auto");
+    // The full-width row around it must not swallow map pans and pinches.
+    expect(bar.parentElement?.className).toContain("pointer-events-none");
+  });
+
+  it("gives every bar control a 44px mobile touch target", () => {
+    render(MapVTTControlsHUD, {
+      props: {
+        chatSidebarOffset: "20rem",
+      },
+    });
+
+    for (const name of ["FOG: ON", "LABELS: ON", "GRID: OFF"]) {
+      expect(screen.getByRole("button", { name }).className, name).toContain(
+        "touch-target",
+      );
+    }
+  });
+
+  it("keeps controls pinned to the left edge on phones and offsets only from sm up", () => {
+    const { container } = render(MapVTTControlsHUD, {
+      props: {
+        chatSidebarOffset: "20rem",
+      },
+    });
+
+    const measure = container.querySelector(
+      '[style*="--map-hud-left"]',
+    ) as HTMLElement;
+    expect(measure.className).toContain("left-4");
+    expect(measure.className).toContain("sm:left-[var(--map-hud-left)]");
+    expect(measure.getAttribute("style")).toContain("20rem");
   });
 
   it("toggles labels visibility", async () => {

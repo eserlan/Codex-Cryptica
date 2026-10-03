@@ -1,5 +1,7 @@
 import {
   validateAction,
+  entityTabForPanel,
+  type PanelId,
   type GuidanceAction,
   type GuidanceStep,
   type HelpContext,
@@ -21,6 +23,8 @@ export interface HelpActionRunnerDeps {
   openGenerator: (generatorId?: string) => void;
   /** Opens the Settings dialog on one tab. */
   openSettings: (tab: SettingsTab) => void;
+  /** Opens the journal tab only; starting a journal is a separate user action. */
+  openJournal: () => void;
   /** Resolves true once `check` passes, or false after `ms`. */
   waitFor: (check: () => boolean, ms: number) => Promise<boolean>;
 }
@@ -49,6 +53,22 @@ export class HelpActionRunner {
     return first;
   }
 
+  private openPanel(panel: PanelId): boolean {
+    if (panel === "session-journal") {
+      this.deps.openJournal();
+      return true;
+    }
+    if (panel.startsWith("settings-")) {
+      this.deps.openSettings(panel.slice("settings-".length) as SettingsTab);
+      return true;
+    }
+    const surface = this.deps.surfaces.entityDetail;
+    const tab = entityTabForPanel(panel);
+    if (!surface || !tab) return false;
+    surface.openTab(tab);
+    return true;
+  }
+
   private async step(step: GuidanceStep): Promise<boolean> {
     switch (step.type) {
       case "navigate":
@@ -60,18 +80,8 @@ export class HelpActionRunner {
       case "openGenerator":
         this.deps.openGenerator(step.generatorId);
         return true;
-      case "openPanel": {
-        if (step.panel.startsWith("settings-")) {
-          this.deps.openSettings(
-            step.panel.slice("settings-".length) as SettingsTab,
-          );
-          return true;
-        }
-        const surface = this.deps.surfaces.entityDetail;
-        if (!surface) return false;
-        surface.openTab(step.panel === "status-tab" ? "status" : "connections");
-        return true;
-      }
+      case "openPanel":
+        return this.openPanel(step.panel);
       case "highlight": {
         // The control may only mount after the previous step (a tab opening).
         let shown = false;

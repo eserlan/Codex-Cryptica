@@ -10,6 +10,7 @@ This file is the Codex-facing instruction layer for this repository.
 - Staging checkout & pull is available through [`.codex/commands/stg.md`](./.codex/commands/stg.md) and [`.gemini/commands/stg.toml`](./.gemini/commands/stg.toml). Trigger it whenever a request mentions `/stg`, "to stg n pull", or "pull stg" to verify tree cleanliness, switch to `staging`, pull `origin/staging`, and clean up any merged local feature branch.
 - Community announcement drafting is available through [`.codex/skills/cc-announcer/SKILL.md`](./.codex/skills/cc-announcer/SKILL.md). Use it whenever a request concerns a Codex Cryptica Reddit post, devlog, release announcement, or community update.
 - Keep command behavior synchronized in the canonical Speckit files first, then mirror any Codex-specific guidance here.
+- Spec Kit is pinned to 1.1.0 with Gemini as the managed integration; maintenance and compatibility-copy rules are in [docs/speckit-maintenance.md](./docs/speckit-maintenance.md). Preserve the installed `constitution-sync` preset and repository policy overrides when upgrading.
 - If these instructions ever conflict with [`.specify/memory/constitution.md`](./.specify/memory/constitution.md), the constitution wins.
 - **Verify against the Constitution**: Always refer to the project constitution at [`.specify/memory/constitution.md`](./.specify/memory/constitution.md) to guide design/architecture decisions, and verify all implementation plans against it. To manage, update, or synchronize the constitution, refer to the [`.agent/workflows/sdd-constitution.md`](./.agent/workflows/sdd-constitution.md) workflow.
 
@@ -79,6 +80,9 @@ shell commands, and other important information, read the [current plan](./specs
 <!-- SPECKIT END -->
 
 ## Active Technologies
+
+- TypeScript 6.0.3, Svelte 5 (Runes), SvelteKit 2, Bun 1.3.14 + `packages/chronology-engine` (internal framework-free package), Tailwind 4 semantic tokens, Floating UI, `@codex/events`. No new third-party dependency. (3717-calendar-eras)
+- Browser-local IndexedDB via existing `calendarStore` configuration persistence. No new database store or migration needed. (3717-calendar-eras)
 
 - TypeScript 6.0.3, Svelte 5 Runes, SvelteKit 2, Bun 1.3.14 + Existing `apps/workers/oracle-proxy` LLM pipeline and session guard, `discoveryPolicyStore` (AI Disabled gate), existing help content; new internal workspace package `packages/help-engine` (framework-free); no new third-party dependency (3427-contextual-ai-help-assistant)
 - Product knowledge is a build-time JSON bundle generated from `packages/help-engine` and `apps/web/src/lib/content/help` (not committed); the help conversation is in memory only; no new vault storage (3427-contextual-ai-help-assistant)

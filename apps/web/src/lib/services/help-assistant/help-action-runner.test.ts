@@ -45,6 +45,7 @@ function setup(over: Partial<HelpActionRunnerDeps> = {}, context = screen()) {
     openHelp: vi.fn(),
     openGenerator: vi.fn(),
     openSettings: vi.fn(),
+    openJournal: vi.fn(),
     waitFor: async (check) => check(),
     ...over,
   };
@@ -52,6 +53,51 @@ function setup(over: Partial<HelpActionRunnerDeps> = {}, context = screen()) {
 }
 
 describe("HelpActionRunner", () => {
+  it.each(["stats", "family", "timeline"] as const)(
+    "opens the actual %s tab",
+    async (tab) => {
+      const { runner, openTab } = setup(
+        {},
+        screen({ entityKind: "character", availableActions: [`${tab}-tab`] }),
+      );
+      expect(
+        await runner.run({
+          type: "openPanel",
+          panel: `${tab}-tab`,
+          label: "Open",
+        }),
+      ).toBe(true);
+      expect(openTab).toHaveBeenCalledWith(tab);
+    },
+  );
+
+  it("opens the journal view without starting or writing a journal", async () => {
+    const { runner, deps, openTab } = setup(
+      {},
+      screen({ availableActions: ["session-journal"] }),
+    );
+    expect(
+      await runner.run({
+        type: "openPanel",
+        panel: "session-journal",
+        label: "Open journal",
+      }),
+    ).toBe(true);
+    expect(deps.openJournal).toHaveBeenCalledOnce();
+    expect(openTab).not.toHaveBeenCalled();
+  });
+
+  it("refuses a journal guide after switching to a guest or unready vault", async () => {
+    const { runner, deps } = setup({}, screen({ availableActions: [] }));
+    expect(
+      await runner.run({
+        type: "openPanel",
+        panel: "session-journal",
+        label: "Open journal",
+      }),
+    ).toBe(false);
+    expect(deps.openJournal).not.toHaveBeenCalled();
+  });
   it("opens the Status tab and then highlights Add, as one accepted guide", async () => {
     const { runner, openTab, show } = setup();
     expect(await runner.run(guide)).toBe(true);

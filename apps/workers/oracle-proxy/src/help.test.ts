@@ -121,6 +121,80 @@ const valid = (over: Record<string, unknown> = {}) => ({
   ...over,
 });
 
+describe("expanded Help screen contract", () => {
+  it("returns the journal guide only when its panel is still available", async () => {
+    const { ask } = harness({
+      generate: vi.fn(async () => ({
+        ok: true as const,
+        content: {
+          answer:
+            "Open Session Journal in the scratchpad. Start a journal yourself when you are ready.",
+          sourceIds: ["registry:session-journal#0"],
+          actionId: "session-journal.open",
+          confidence: "high",
+        },
+      })),
+    });
+    for (const available of [true, false]) {
+      const res = await ask(
+        valid({
+          question: "Where do I start a session journal?",
+          context: {
+            ...context,
+            area: "session-journal",
+            entityKind: null,
+            tab: null,
+            availableActions: available ? ["session-journal"] : [],
+          },
+        }),
+      );
+      const body = await res.json();
+      expect(res.status).toBe(200);
+      expect(body.outcome).toBe("answered");
+      if (available)
+        expect(body.action).toMatchObject({
+          type: "openPanel",
+          panel: "session-journal",
+        });
+      else expect(body.action).toBeNull();
+    }
+  });
+  it.each(["session-journal", "entity-reports", "chronology", "session-prep"])(
+    "accepts the closed %s area at the Worker boundary",
+    async (area) => {
+      const { ask } = harness();
+      const res = await ask(
+        valid({
+          context: {
+            ...context,
+            area,
+            tab: null,
+            entityKind: null,
+            availableActions: [],
+          },
+        }),
+      );
+      expect(res.status).toBe(200);
+    },
+  );
+
+  it("rejects journal text smuggled into context before calling the model", async () => {
+    const { ask, generate } = harness();
+    const res = await ask(
+      valid({
+        context: {
+          ...context,
+          area: "session-journal",
+          tab: null,
+          journalText: "Private play notes",
+        },
+      }),
+    );
+    expect(res.status).toBe(400);
+    expect(generate).not.toHaveBeenCalled();
+  });
+});
+
 const metrics = (log: ReturnType<typeof vi.fn>) =>
   log.mock.calls.map((c) => JSON.parse(c[0] as string));
 
