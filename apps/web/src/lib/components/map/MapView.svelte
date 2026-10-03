@@ -46,6 +46,10 @@
 
   let container = $state<HTMLDivElement | null>(null);
   let mapImage = $state<HTMLImageElement | null>(null);
+  // Set when the background image cannot be resolved or decoded, so the
+  // loading overlay can offer a retry instead of spinning forever.
+  let imageLoadFailed = $state(false);
+  let retryNonce = $state(0);
   let maskCanvas = $state<HTMLCanvasElement | null>(null);
 
   const painter = new MapFogPainter({
@@ -75,6 +79,7 @@
       painter.cancel();
       mapImage = null;
       maskCanvas = null;
+      imageLoadFailed = false;
     },
     onImageLoaded: (img) => {
       mapImage = img;
@@ -98,6 +103,7 @@
     },
     onError: (message, err) => {
       console.error(message, err);
+      imageLoadFailed = true;
     },
   });
 
@@ -338,7 +344,14 @@
     };
   });
 
+  function retryImageLoad() {
+    // Forget the last synced signature so the effect below reloads the asset.
+    lastMapSignature = null;
+    retryNonce += 1;
+  }
+
   $effect(() => {
+    void retryNonce;
     if (activeMapSignature === lastMapSignature) {
       return;
     }
@@ -429,19 +442,43 @@
 
   {#if hasBackgroundImage && !mapImage}
     <div
-      class="absolute inset-0 flex items-center justify-center bg-theme-bg/40 backdrop-blur-sm z-50 pointer-events-none"
+      class="pointer-events-none absolute inset-0 z-50 flex items-center justify-center bg-theme-bg/40 px-6 backdrop-blur-sm"
       transition:fade
     >
-      <div class="flex flex-col items-center gap-4">
+      {#if imageLoadFailed}
         <div
-          class="w-12 h-12 border-4 border-theme-primary border-t-transparent rounded-full animate-spin"
-        ></div>
-        <div
-          class="text-micro font-mono text-theme-primary uppercase tracking-[0.3em] animate-pulse"
+          class="pointer-events-auto flex max-w-sm flex-col items-center gap-3 text-center"
+          role="alert"
+          data-testid="map-image-error"
         >
-          Synthesizing Spatial Asset...
+          <span
+            class="icon-[lucide--image-off] h-10 w-10 text-theme-muted"
+            aria-hidden="true"
+          ></span>
+          <p class="text-sm text-theme-text">
+            This map's image could not be loaded. It may be missing from this
+            device or the connection may have dropped.
+          </p>
+          <button
+            type="button"
+            class="touch-target rounded-lg bg-theme-primary px-4 py-2 text-xs font-bold uppercase tracking-wider text-theme-bg hover:bg-theme-secondary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary"
+            onclick={retryImageLoad}
+          >
+            Try again
+          </button>
         </div>
-      </div>
+      {:else}
+        <div class="flex flex-col items-center gap-4" role="status">
+          <div
+            class="h-12 w-12 animate-spin rounded-full border-4 border-theme-primary border-t-transparent"
+          ></div>
+          <div
+            class="animate-pulse text-center font-mono text-micro uppercase tracking-[0.2em] text-theme-primary"
+          >
+            Synthesizing Spatial Asset...
+          </div>
+        </div>
+      {/if}
     </div>
   {/if}
 
