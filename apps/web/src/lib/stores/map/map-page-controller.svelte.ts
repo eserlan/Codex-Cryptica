@@ -99,8 +99,13 @@ export class MapPageController {
   mapName = $state("");
   files = $state<FileList | null>(null);
 
+  // The VTT chat sidebar only exists while VTT is on; otherwise HUDs sit flush left.
   chatSidebarOffset = $derived(
-    this.layoutUIStore.vttChatSidebarCollapsed ? "3rem" : "20rem",
+    !this.mapSession.vttEnabled
+      ? "0rem"
+      : this.layoutUIStore.vttChatSidebarCollapsed
+        ? "3rem"
+        : "20rem",
   );
   showInitiativePanel = $derived(
     shouldShowInitiativePanel(this.mapSession.vttEnabled, this.mapSession.mode),

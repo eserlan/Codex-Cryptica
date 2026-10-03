@@ -337,4 +337,36 @@ describe("MapPageController", () => {
 
     expect(modalUIStore.openShare).toHaveBeenCalledTimes(1);
   });
+
+  describe("chatSidebarOffset", () => {
+    it("is flush left when VTT is off, because there is no chat sidebar", () => {
+      const { controller } = createController();
+
+      expect(controller.chatSidebarOffset).toBe("0rem");
+    });
+
+    it("makes room for the expanded chat sidebar when VTT is on", () => {
+      const base = createController();
+      base.mapSession.vttEnabled = true;
+      const { controller } = createController({
+        mapStore: base.mapStore,
+        mapSession: base.mapSession,
+      });
+
+      expect(controller.chatSidebarOffset).toBe("20rem");
+    });
+
+    it("only keeps a narrow rail when the VTT chat sidebar is collapsed", () => {
+      const base = createController();
+      base.mapSession.vttEnabled = true;
+      base.layoutUIStore.vttChatSidebarCollapsed = true;
+      const { controller } = createController({
+        mapStore: base.mapStore,
+        mapSession: base.mapSession,
+        layoutUIStore: base.layoutUIStore,
+      });
+
+      expect(controller.chatSidebarOffset).toBe("3rem");
+    });
+  });
 });

@@ -85,6 +85,52 @@ describe("MapVTTControlsHUD", () => {
     expect(screen.getByRole("button", { name: "GRID: OFF" })).not.toBeNull();
   });
 
+  it("wraps on narrow screens and only the bar takes pointer events", () => {
+    render(MapVTTControlsHUD, {
+      props: {
+        chatSidebarOffset: "20rem",
+      },
+    });
+
+    const bar = screen
+      .getByRole("button", { name: "LABELS: ON" })
+      .closest("div.rounded-lg") as HTMLElement;
+    expect(bar.className).toContain("flex-wrap");
+    expect(bar.className).toContain("max-w-full");
+    expect(bar.className).toContain("pointer-events-auto");
+    // The full-width row around it must not swallow map pans and pinches.
+    expect(bar.parentElement?.className).toContain("pointer-events-none");
+  });
+
+  it("gives every bar control a 44px mobile touch target", () => {
+    render(MapVTTControlsHUD, {
+      props: {
+        chatSidebarOffset: "20rem",
+      },
+    });
+
+    for (const name of ["FOG: ON", "LABELS: ON", "GRID: OFF"]) {
+      expect(screen.getByRole("button", { name }).className, name).toContain(
+        "touch-target",
+      );
+    }
+  });
+
+  it("keeps controls pinned to the left edge on phones and offsets only from sm up", () => {
+    const { container } = render(MapVTTControlsHUD, {
+      props: {
+        chatSidebarOffset: "20rem",
+      },
+    });
+
+    const measure = container.querySelector(
+      '[style*="--map-hud-left"]',
+    ) as HTMLElement;
+    expect(measure.className).toContain("left-4");
+    expect(measure.className).toContain("sm:left-[var(--map-hud-left)]");
+    expect(measure.getAttribute("style")).toContain("20rem");
+  });
+
   it("toggles labels visibility", async () => {
     render(MapVTTControlsHUD, {
       props: {
