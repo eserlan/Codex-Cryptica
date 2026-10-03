@@ -69,6 +69,7 @@ export const FEATURE_GROUPS: FeatureGroup[] = [
       "quicknote-scratchpad",
       "session-journal",
       "era-date-picker",
+      "calendar-eras",
       "creature-packs",
       "front-page",
       "vault-switcher",

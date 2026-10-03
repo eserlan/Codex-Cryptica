@@ -8,6 +8,7 @@
   import { themeStore } from "$lib/stores/theme.svelte";
   import CloudDestinationSettings from "./CloudDestinationSettings.svelte";
   import VaultBackupSettings from "./VaultBackupSettings.svelte";
+  import CalendarEraSettings from "./CalendarEraSettings.svelte";
   import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
   import { notificationStore } from "$lib/stores/ui/notification.svelte";
@@ -383,6 +384,8 @@
           </div>
         </div>
       {/if}
+
+      <CalendarEraSettings />
     </div>
   </div>
 </div>

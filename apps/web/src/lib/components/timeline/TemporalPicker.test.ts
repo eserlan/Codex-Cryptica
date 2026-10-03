@@ -3,6 +3,7 @@
 import { render, screen, fireEvent } from "@testing-library/svelte";
 import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
 import TemporalPicker from "./TemporalPicker.svelte";
+import { calendarStore } from "$lib/stores/calendar.svelte";
 
 vi.mock("$app/paths", () => ({
   base: "",
@@ -192,5 +193,48 @@ describe("TemporalPicker", () => {
     // Verify warning banner is gone and Apply is now enabled
     expect(screen.queryByTestId("repair-warning-banner")).toBeNull();
     expect(applyButton.disabled).toBe(false);
+  });
+
+  it("should render calendar era selector when eras are configured", async () => {
+    const prevEras = calendarStore.config.eras;
+    calendarStore.config = {
+      ...calendarStore.config,
+      eras: [
+        {
+          id: "era-bf",
+          name: "Before Fall",
+          label: "BF",
+          startYear: -1,
+          yearAtStart: 1,
+          direction: "backward",
+        },
+        {
+          id: "era-af",
+          name: "After Fall",
+          label: "AF",
+          startYear: 0,
+          yearAtStart: 1,
+          direction: "forward",
+        },
+      ],
+    };
+
+    const value = {
+      precision: "year" as const,
+      year: 0,
+      calendarRevision: 2,
+    };
+
+    render(TemporalPicker, {
+      value,
+      trigger: triggerElement,
+      onClose: vi.fn(),
+    });
+
+    expect(screen.getByTestId("calendar-era-selector")).toBeTruthy();
+    expect(screen.getByTestId("era-pill-era-bf")).toBeTruthy();
+    expect(screen.getByTestId("era-pill-era-af")).toBeTruthy();
+
+    calendarStore.config.eras = prevEras;
   });
 });
