@@ -131,6 +131,7 @@ export const howDoYouCreateAMagicSystem: AnswerConfigInput = {
     },
   ],
   relatedAnswers: [
+    "what-is-the-difference-between-gods-and-demon-lords-in-a-fantasy-world",
     "how-do-you-start-worldbuilding-from-scratch",
     "how-do-you-handle-character-death-in-a-tabletop-rpg",
     "how-do-you-make-npcs-memorable-without-lots-of-prep",
@@ -167,6 +168,11 @@ export const howDoYouCreateAMagicSystem: AnswerConfigInput = {
         with: "answer-magic-discovery-origin",
         reason:
           "This answer designs a magic system's costs and limits and considers their consequences; the discovery answer traces how people learned magic and how that history shapes access and authority.",
+      },
+      {
+        with: "answer-gods-vs-demon-lords",
+        reason:
+          "The magic-system answer defines magical rules, costs, and limits; the gods and demon lords answer applies those questions to supernatural patrons and their grants of power.",
       },
       {
         with: "answer-magic-affects-politics-and-government",
