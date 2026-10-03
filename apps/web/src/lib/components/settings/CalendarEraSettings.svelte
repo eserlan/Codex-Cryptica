@@ -92,6 +92,7 @@
                 type="text"
                 placeholder="Era Name (e.g. After the Fall)"
                 data-testid="era-name-input-{i}"
+                aria-label="Era name #{i + 1}"
                 value={era.name}
                 oninput={(e) =>
                   updateEra(era.id, { name: e.currentTarget.value })}
@@ -101,6 +102,7 @@
                 type="text"
                 placeholder="Label (e.g. AF)"
                 data-testid="era-label-input-{i}"
+                aria-label="Era abbreviation #{i + 1}"
                 value={era.label || ""}
                 oninput={(e) =>
                   updateEra(era.id, { label: e.currentTarget.value })}

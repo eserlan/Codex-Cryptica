@@ -3,7 +3,11 @@
   import { graph } from "$lib/stores/graph.svelte";
   import type { TemporalMetadata } from "schema";
   import type { DateSelection } from "chronology-engine";
-  import { calendarEngine } from "chronology-engine";
+  import {
+    calendarEngine,
+    resolveEraForYear,
+    resolveYearFromEra,
+  } from "chronology-engine";
   import { computePosition, flip, shift, offset } from "@floating-ui/dom";
   import { onMount, tick, untrack } from "svelte";
   import { scale, slide } from "svelte/transition";
@@ -229,7 +233,15 @@
       return;
     }
 
-    const result = parsePickerDateInput(directDateInput, calendarStore.config);
+    const activeEra = resolveEraForYear(
+      activeSelection.year,
+      calendarStore.config,
+    )?.era;
+    const result = parsePickerDateInput(
+      directDateInput,
+      calendarStore.config,
+      activeEra,
+    );
     if (result.selection) activeSelection = result.selection;
     directDateError = result.error ?? "";
   };
@@ -292,7 +304,16 @@
 
     let patch: Partial<DateSelection> = {};
     if (colId === "year") {
-      patch = { year: val };
+      const activeEra = resolveEraForYear(
+        activeSelection.year,
+        calendarStore.config,
+      )?.era;
+      patch = {
+        year:
+          activeEra && /^\d+$/.test(text.trim())
+            ? resolveYearFromEra(activeEra, val)
+            : val,
+      };
     } else if (colId === "day") {
       const config = calendarStore.config;
       const months = calendarEngine.getMonths(config);

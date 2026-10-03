@@ -51,6 +51,11 @@ describe("CalendarEraSettings", () => {
 
     render(CalendarEraSettings);
 
+    expect(screen.getByRole("textbox", { name: "Era name #1" })).toBeDefined();
+    expect(
+      screen.getByRole("textbox", { name: "Era abbreviation #1" }),
+    ).toBeDefined();
+
     const nameInput = screen.getByTestId("era-name-input-0");
     await fireEvent.input(nameInput, { target: { value: "After the Fall" } });
 
