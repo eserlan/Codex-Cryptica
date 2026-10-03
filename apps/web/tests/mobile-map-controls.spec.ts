@@ -204,6 +204,28 @@ test.describe("reveal / hide on phones", () => {
     ).toBeGreaterThanOrEqual(44);
   });
 
+  test("the button stays clear of the controls panel at the 768px mobile boundary", async ({
+    page,
+  }) => {
+    test.setTimeout(90000);
+    await page.setViewportSize({ width: 768, height: 900 });
+    await openMapWithControls(page);
+    const fab = page.getByTestId("map-controls-fab");
+    await expect(fab).toBeVisible();
+    await fab.click();
+
+    const overlap = await page.evaluate(() => {
+      const f = document
+        .querySelector('[data-testid="map-controls-fab"]')!
+        .getBoundingClientRect();
+      const bar = document
+        .getElementById("map-controls-bar")!
+        .getBoundingClientRect();
+      return f.top < bar.bottom && f.bottom > bar.top;
+    });
+    expect(overlap).toBe(false);
+  });
+
   test("desktop has no button and shows controls straight away", async ({
     page,
   }) => {

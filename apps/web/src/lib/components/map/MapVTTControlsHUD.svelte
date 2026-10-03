@@ -116,7 +116,7 @@
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 {#if !sessionModeStore.isGuestMode && barVisible}
   <div
-    class="pointer-events-none absolute inset-x-2 bottom-2 z-10 flex justify-center sm:inset-x-4 sm:bottom-4 max-md:bottom-16"
+    class="pointer-events-none absolute inset-x-2 bottom-2 z-10 flex justify-center sm:inset-x-4 min-[769px]:bottom-4 max-[769px]:bottom-16"
     role="presentation"
     onmousedown={(e) => e.stopPropagation()}
   >
