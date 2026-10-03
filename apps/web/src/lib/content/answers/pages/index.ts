@@ -15,6 +15,7 @@ import { howDoIGiveDifferentCivilisationsDistinctStrengthsAndWeaknesses } from "
 import { howDoIGiveSpecialistCharactersSpotlight } from "./how-do-i-give-specialist-characters-spotlight";
 import { howDoIMakeAPlayerBaseMatterInAnRpgCampaign } from "./how-do-i-make-a-player-base-matter-in-an-rpg-campaign";
 import { howDoIMakeDifferentCulturesFeelDistinctWithoutRelyingOnStereotypes } from "./how-do-i-make-different-cultures-feel-distinct-without-relying-on-stereotypes";
+import { howDoIMakeInterviewingNpcsInterestingInAnInvestigation } from "./how-do-i-make-interviewing-npcs-interesting-in-an-investigation";
 import { howDoIMakeRivalCaptainsNaviesAndPirateFactionsMatter } from "./how-do-i-make-rival-captains-navies-and-pirate-factions-matter";
 import { howDoIMakeSeaTravelInterestingInATtrpg } from "./how-do-i-make-sea-travel-interesting-in-a-ttrpg";
 import { howDoIOrganiseGmNotesForInPersonPlay } from "./how-do-i-organise-gm-notes-for-in-person-play";
@@ -154,6 +155,7 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     howDoIGiveSpecialistCharactersSpotlight,
     howDoIMakeAPlayerBaseMatterInAnRpgCampaign,
     howDoIMakeDifferentCulturesFeelDistinctWithoutRelyingOnStereotypes,
+    howDoIMakeInterviewingNpcsInterestingInAnInvestigation,
     howDoIMakeRivalCaptainsNaviesAndPirateFactionsMatter,
     howDoIMakeSeaTravelInterestingInATtrpg,
     howDoIOrganiseGmNotesForInPersonPlay,
