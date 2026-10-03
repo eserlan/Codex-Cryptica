@@ -349,7 +349,7 @@
           </li>
         {:else}
           <li
-            class="flex gap-3 text-sm text-theme-muted items-start group {conn.hidden
+            class="flex gap-3 text-base md:text-sm text-theme-muted items-start group {conn.hidden
               ? 'opacity-60'
               : ''}"
             data-hidden={conn.hidden || undefined}
