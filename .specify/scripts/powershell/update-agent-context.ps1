@@ -39,7 +39,11 @@ $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $envData = Get-FeaturePathsEnv
 $REPO_ROOT     = $envData.REPO_ROOT
 $CURRENT_BRANCH = $envData.CURRENT_BRANCH
-$HAS_GIT       = $envData.HAS_GIT
+$HAS_GIT       = $false
+if (Get-Command git -ErrorAction SilentlyContinue) {
+    git -C $REPO_ROOT rev-parse --is-inside-work-tree 2>$null | Out-Null
+    $HAS_GIT = $LASTEXITCODE -eq 0
+}
 $IMPL_PLAN     = $envData.IMPL_PLAN
 $NEW_PLAN = $IMPL_PLAN
 
@@ -445,4 +449,3 @@ function Main {
 }
 
 Main
-

@@ -991,7 +991,7 @@ describe("VaultStore", () => {
 
   describe("Delegations", () => {
     it("should delegate map and canvas operations", async () => {
-      vi.mocked(mapRegistry.saveMaps).mockResolvedValue(undefined);
+      vi.mocked(mapRegistry.saveMaps).mockResolvedValue(true);
       vi.mocked(mapRegistry.deleteMap).mockResolvedValue(undefined);
       vi.mocked(canvasRegistry.saveCanvas).mockResolvedValue(undefined);
 
