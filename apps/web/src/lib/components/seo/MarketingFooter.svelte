@@ -22,7 +22,7 @@
 -->
 <!-- chrome-shield: see app.css and #2578. -->
 <footer
-  class="chrome-shield border-t border-theme-border/60 bg-theme-surface/20 px-6 py-4 mt-auto text-center text-[10px] text-theme-muted tracking-wider uppercase font-header"
+  class="chrome-shield border-t border-theme-border/60 bg-theme-surface/20 px-6 py-4 mt-auto text-center text-micro text-theme-muted tracking-wider uppercase font-header"
 >
   <div
     class="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4"

@@ -249,7 +249,7 @@
           <th
             scope="col"
             aria-sort={ariaSort(col.key)}
-            class="px-3 py-2 text-[10px] font-bold uppercase tracking-[0.15em] text-theme-muted {col.class ??
+            class="px-3 py-2 text-micro font-bold uppercase tracking-[0.15em] text-theme-muted {col.class ??
               ''}"
           >
             <div class="inline-flex items-center gap-1.5">

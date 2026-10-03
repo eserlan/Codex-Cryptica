@@ -93,7 +93,7 @@
         type="button"
         onclick={submitNote}
         disabled={isAddingNote}
-        class="rounded bg-theme-primary px-3 py-1.5 font-header text-[10px] font-bold uppercase text-theme-bg transition-colors hover:bg-theme-secondary"
+        class="rounded bg-theme-primary px-3 py-1.5 font-header text-micro font-bold uppercase text-theme-bg transition-colors hover:bg-theme-secondary"
         data-testid="journal-note-submit"
       >
         Add
@@ -131,14 +131,14 @@
       type="button"
       onclick={submitSection}
       disabled={isCreatingSection}
-      class="rounded border border-theme-border px-3 py-1.5 font-header text-[10px] uppercase text-theme-text transition-colors hover:border-theme-primary hover:text-theme-primary"
+      class="rounded border border-theme-border px-3 py-1.5 font-header text-micro uppercase text-theme-text transition-colors hover:border-theme-primary hover:text-theme-primary"
       data-testid="journal-section-submit"
     >
       New Section
     </button>
   </div>
   {#if sectionError}
-    <p class="text-[10px] text-theme-danger" data-testid="section-error">
+    <p class="text-micro text-theme-danger" data-testid="section-error">
       {sectionError}
     </p>
   {/if}
@@ -161,14 +161,14 @@
             aria-label="Rename section"
             onkeydown={(e) => e.key === "Enter" && submitRename()}
             onblur={submitRename}
-            class="w-24 bg-transparent text-[9px] text-theme-text focus:outline-none"
+            class="w-24 bg-transparent text-nano text-theme-text focus:outline-none"
             data-testid="journal-section-rename-input"
           />
         {:else}
           <button
             type="button"
             onclick={() => startRename(section.id, section.name)}
-            class="text-[9px] text-theme-text transition-colors hover:text-theme-primary"
+            class="text-nano text-theme-text transition-colors hover:text-theme-primary"
             data-testid="journal-section-name"
           >
             {section.name}
@@ -178,7 +178,7 @@
     {/each}
   </div>
   {#if renameError}
-    <p class="text-[10px] text-theme-danger" data-testid="rename-error">
+    <p class="text-micro text-theme-danger" data-testid="rename-error">
       {renameError}
     </p>
   {/if}

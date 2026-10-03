@@ -26,7 +26,7 @@ const getStore = (instance: any) => {
 };
 
 // Ensure Storage class exists
-if (typeof Storage === "undefined") {
+if (typeof Storage === "undefined" || typeof window === "undefined") {
   (global as any).Storage = class Storage {
     get length() {
       return getStore(this).size;
@@ -68,12 +68,6 @@ if (typeof Storage === "undefined") {
   Storage.prototype.key = function (index: number) {
     return Array.from(getStore(this).keys())[index] || null;
   };
-  Object.defineProperty(Storage.prototype, "length", {
-    get: function () {
-      return getStore(this).size;
-    },
-    configurable: true,
-  });
 }
 
 // Create/Ensure localStorage and sessionStorage are proper Storage instances
@@ -89,8 +83,13 @@ if (typeof window !== "undefined") {
       delete (instance as any).removeItem;
       delete (instance as any).clear;
       delete (instance as any).key;
-      delete (instance as any).length;
     }
+    instance = new Proxy(instance, {
+      get(target, property, receiver) {
+        if (property === "length") return getStore(receiver).size;
+        return Reflect.get(target, property, receiver);
+      },
+    });
     // Always (re)define via Object.defineProperty rather than a plain
     // assignment: newer jsdom versions provide a real Storage instance for
     // window.localStorage/sessionStorage as a getter-only accessor, and a

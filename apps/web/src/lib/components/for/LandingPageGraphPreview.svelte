@@ -407,7 +407,7 @@
             >
           </div>
           <div
-            class="flex items-center gap-1.5 pt-1 font-mono text-[11px] font-bold"
+            class="flex items-center gap-1.5 pt-1 font-mono text-meta font-bold"
             style="color: {p.panelHighlight}"
           >
             <span class="icon-[lucide--sparkles] w-4 h-4 shrink-0"></span>
@@ -417,7 +417,7 @@
       </div>
 
       <div
-        class="border-t pt-3 text-[10px] font-mono text-slate-400 uppercase tracking-wider flex items-center justify-between"
+        class="border-t pt-3 text-micro font-mono text-slate-400 uppercase tracking-wider flex items-center justify-between"
         style="border-color: {p.panelBorder}"
       >
         <span>Inspect Node</span>

@@ -44,11 +44,11 @@
         class="rounded border border-theme-border/70 bg-theme-bg/40 p-3 space-y-1.5"
       >
         <h4
-          class="font-bold text-theme-primary uppercase text-[10px] tracking-wide"
+          class="font-bold text-theme-primary uppercase text-micro tracking-wide"
         >
           1. Field References
         </h4>
-        <p class="text-theme-muted text-[11px]">
+        <p class="text-theme-muted text-meta">
           Reference stat fields using simple brackets <code
             class="rounded bg-theme-bg px-1 font-mono text-theme-primary"
             >[field_id]</code
@@ -61,12 +61,12 @@
             >strength</code
           >) or its internal ID — both resolve to the same field.
         </p>
-        <p class="text-theme-muted text-[11px]">
+        <p class="text-theme-muted text-meta">
           In the Visual Builder, right-click a field chip to choose a compatible
           display mode or hide its label.
         </p>
         <div
-          class="font-mono text-[11px] space-y-1 bg-theme-bg p-2 rounded border border-theme-border"
+          class="font-mono text-meta space-y-1 bg-theme-bg p-2 rounded border border-theme-border"
         >
           <div>
             <span class="text-theme-primary">[hp]</span>
@@ -110,12 +110,12 @@
         class="rounded border border-theme-border/70 bg-theme-bg/40 p-3 space-y-1.5"
       >
         <h4
-          class="font-bold text-theme-primary uppercase text-[10px] tracking-wide"
+          class="font-bold text-theme-primary uppercase text-micro tracking-wide"
         >
           2. Available Display Modes
         </h4>
         <div class="overflow-x-auto">
-          <table class="w-full text-[11px] border-collapse text-left">
+          <table class="w-full text-meta border-collapse text-left">
             <thead>
               <tr class="border-b border-theme-border/60 text-theme-primary">
                 <th class="py-1 px-1">Mode</th>
@@ -124,7 +124,7 @@
               </tr>
             </thead>
             <tbody
-              class="divide-y divide-theme-border/40 text-theme-text font-mono text-[10px]"
+              class="divide-y divide-theme-border/40 text-theme-text font-mono text-micro"
             >
               <tr>
                 <td class="py-1 px-1 text-theme-primary font-bold">plain</td>
@@ -190,17 +190,17 @@
         class="rounded border border-theme-border/70 bg-theme-bg/40 p-3 space-y-1.5"
       >
         <h4
-          class="font-bold text-theme-primary uppercase text-[10px] tracking-wide"
+          class="font-bold text-theme-primary uppercase text-micro tracking-wide"
         >
           3. Card Containers (<code class="font-mono text-theme-primary"
             >:::card</code
           >)
         </h4>
-        <p class="text-theme-muted text-[11px]">
+        <p class="text-theme-muted text-meta">
           Wrap layout content inside card borders with fenced directives.
         </p>
         <pre
-          class="font-mono text-[11px] bg-theme-bg p-2 rounded border border-theme-border text-theme-text overflow-x-auto">
+          class="font-mono text-meta bg-theme-bg p-2 rounded border border-theme-border text-theme-text overflow-x-auto">
 :::card
 ### Section Title
 [field_1]
@@ -212,17 +212,17 @@
         class="rounded border border-theme-border/70 bg-theme-bg/40 p-3 space-y-1.5"
       >
         <h4
-          class="font-bold text-theme-primary uppercase text-[10px] tracking-wide"
+          class="font-bold text-theme-primary uppercase text-micro tracking-wide"
         >
           4. Multi-Column Grids (<code class="font-mono text-theme-primary"
             >:::stat-group columns=N</code
           >)
         </h4>
-        <p class="text-theme-muted text-[11px]">
+        <p class="text-theme-muted text-meta">
           Arrange stat fields into 1 to 6 responsive grid columns.
         </p>
         <pre
-          class="font-mono text-[11px] bg-theme-bg p-2 rounded border border-theme-border text-theme-text overflow-x-auto">
+          class="font-mono text-meta bg-theme-bg p-2 rounded border border-theme-border text-theme-text overflow-x-auto">
 :::card
 :::stat-group columns=3
 [str:prominent]
@@ -237,16 +237,16 @@
         class="rounded border border-theme-border/70 bg-theme-bg/40 p-3 space-y-1.5"
       >
         <h4
-          class="font-bold text-theme-primary uppercase text-[10px] tracking-wide"
+          class="font-bold text-theme-primary uppercase text-micro tracking-wide"
         >
           5. Markdown Tables
         </h4>
-        <p class="text-theme-muted text-[11px]">
+        <p class="text-theme-muted text-meta">
           Use standard GFM Markdown tables to embed rollable attacks or stats in
           table rows.
         </p>
         <pre
-          class="font-mono text-[11px] bg-theme-bg p-2 rounded border border-theme-border text-theme-text overflow-x-auto">
+          class="font-mono text-meta bg-theme-bg p-2 rounded border border-theme-border text-theme-text overflow-x-auto">
 | Attack | Bonus | Damage |
 | --- | --- | --- |
 | Shortsword | [atk_bonus] | [damage] |

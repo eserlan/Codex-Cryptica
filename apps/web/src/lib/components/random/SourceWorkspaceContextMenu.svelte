@@ -50,7 +50,7 @@
     tabindex="-1"
   >
     <div
-      class="px-2.5 py-1 text-[10px] font-header font-bold uppercase tracking-wider text-theme-muted truncate border-b border-theme-border/50 mb-1"
+      class="px-2.5 py-1 text-micro font-header font-bold uppercase tracking-wider text-theme-muted truncate border-b border-theme-border/50 mb-1"
     >
       {contextMenu.source.name}
     </div>

@@ -91,7 +91,7 @@
         data-testid="sidebar-panel-loading"
       >
         <div
-          class="animate-pulse text-chrome-muted font-mono text-[10px] uppercase tracking-widest"
+          class="animate-pulse text-chrome-muted font-mono text-micro uppercase tracking-widest"
         >
           Loading Panel...
         </div>

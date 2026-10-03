@@ -157,7 +157,7 @@
             <span class="block text-xs font-bold uppercase font-header">
               {option.label}
             </span>
-            <span class="mt-1 block text-[11px] leading-snug text-theme-muted">
+            <span class="mt-1 block text-meta leading-snug text-theme-muted">
               {option.description}
             </span>
           </button>
@@ -196,7 +196,7 @@
             <span class="block text-xs font-bold uppercase font-header">
               {option.label}
             </span>
-            <span class="mt-1 block text-[11px] leading-snug text-theme-muted">
+            <span class="mt-1 block text-meta leading-snug text-theme-muted">
               {option.description}
             </span>
           </button>
@@ -249,7 +249,7 @@
           OpenAI/Luna API
           {#if !oracle.apiKey}
             <span
-              class="text-[10px] bg-theme-muted/20 px-1.5 py-0.5 rounded text-theme-muted"
+              class="text-micro bg-theme-muted/20 px-1.5 py-0.5 rounded text-theme-muted"
               >Requires own key</span
             >
           {/if}
@@ -348,7 +348,7 @@
                   customImageBaseUrl: e.currentTarget.value,
                 })}
             />
-            <p class="text-[11px] text-theme-muted mt-1">
+            <p class="text-meta text-theme-muted mt-1">
               Must be an OpenAI-compatible /v1/images/generations endpoint.
             </p>
           </div>

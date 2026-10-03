@@ -229,7 +229,7 @@
             <div class="flex flex-wrap gap-2 mb-6">
               {#each entity.labels as label}
                 <span
-                  class="text-[10px] font-mono px-2 py-1 bg-green-900/20 text-green-400 border border-green-900/30 rounded"
+                  class="text-micro font-mono px-2 py-1 bg-green-900/20 text-green-400 border border-green-900/30 rounded"
                   >#{label}</span
                 >
               {/each}

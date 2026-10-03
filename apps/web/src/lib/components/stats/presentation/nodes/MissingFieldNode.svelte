@@ -5,7 +5,7 @@
 </script>
 
 <span
-  class="inline-flex items-center gap-1 rounded border border-dashed border-amber-500/50 bg-amber-500/10 px-1.5 py-0.5 text-[11px] text-amber-600 dark:text-amber-400"
+  class="inline-flex items-center gap-1 rounded border border-dashed border-amber-500/50 bg-amber-500/10 px-1.5 py-0.5 text-meta text-amber-600 dark:text-amber-400"
   data-testid="presentation-missing-field"
   title={`This template refers to a field ("${node.fieldId}") that no longer exists on the schema.`}
 >

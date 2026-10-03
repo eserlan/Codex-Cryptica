@@ -117,7 +117,7 @@
   style:left="{Math.max(10, Math.min(x, window.innerWidth - 220))}px"
 >
   <div
-    class="border-b border-theme-border/40 px-3 pb-1.5 text-[10px] font-bold uppercase tracking-wider text-theme-muted"
+    class="border-b border-theme-border/40 px-3 pb-1.5 text-micro font-bold uppercase tracking-wider text-theme-muted"
   >
     Filter {columnLabel}
   </div>
@@ -307,7 +307,7 @@
     <button
       type="button"
       role="menuitem"
-      class="w-full px-3 py-1 text-left text-[11px] text-theme-muted hover:text-theme-text"
+      class="w-full px-3 py-1 text-left text-meta text-theme-muted hover:text-theme-text"
       onclick={clearThisFilter}
     >
       Reset column filter

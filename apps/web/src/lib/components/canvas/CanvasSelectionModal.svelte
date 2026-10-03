@@ -165,7 +165,7 @@
             Canvas Registry
           </h2>
           <p
-            class="text-[10px] text-theme-muted uppercase tracking-tighter mt-1"
+            class="text-micro text-theme-muted uppercase tracking-tighter mt-1"
           >
             Manage and switch between your spatial workspaces
           </p>
@@ -357,14 +357,14 @@
                   </span>
                   {#if getCanvasKind(canvas) === "adventure"}
                     <span
-                      class="px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-400 border border-amber-500/30 text-[8px] font-bold uppercase font-header tracking-widest flex items-center gap-1 shrink-0"
+                      class="px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-400 border border-amber-500/30 text-nano font-bold uppercase font-header tracking-widest flex items-center gap-1 shrink-0"
                     >
                       <span class="icon-[lucide--compass] w-2.5 h-2.5"></span>
                       Adventure
                     </span>
                   {:else if getCanvasKind(canvas) === "delve"}
                     <span
-                      class="px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 text-[8px] font-bold uppercase font-header tracking-widest flex items-center gap-1 shrink-0"
+                      class="px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 text-nano font-bold uppercase font-header tracking-widest flex items-center gap-1 shrink-0"
                     >
                       <span class="icon-[lucide--castle] w-2.5 h-2.5"></span>
                       Delve
@@ -372,12 +372,12 @@
                   {/if}
                   {#if activeCanvasId === canvas.slug}
                     <span
-                      class="px-1.5 py-0.5 rounded bg-theme-primary text-[8px] text-theme-bg font-bold uppercase font-header tracking-widest shrink-0"
+                      class="px-1.5 py-0.5 rounded bg-theme-primary text-nano text-theme-bg font-bold uppercase font-header tracking-widest shrink-0"
                       >Active</span
                     >
                   {/if}
                 </div>
-                <div class="text-[10px] text-theme-muted font-mono mt-0.5">
+                <div class="text-micro text-theme-muted font-mono mt-0.5">
                   Last updated: {new Date(
                     canvas.lastModified ?? systemClock.now(),
                   ).toLocaleString()}
@@ -428,7 +428,7 @@
             {#if searchQuery}
               <button
                 onclick={() => (searchQuery = "")}
-                class="text-[10px] text-theme-primary mt-2 uppercase tracking-widest hover:underline"
+                class="text-micro text-theme-primary mt-2 uppercase tracking-widest hover:underline"
                 >Clear filter</button
               >
             {/if}
@@ -438,7 +438,7 @@
 
       <!-- Footer -->
       <div
-        class="p-4 bg-theme-bg/50 border-t border-theme-border text-[9px] text-theme-muted font-mono uppercase tracking-[0.2em] flex justify-between"
+        class="p-4 bg-theme-bg/50 border-t border-theme-border text-nano text-theme-muted font-mono uppercase tracking-[0.2em] flex justify-between"
       >
         <span>{filteredCanvases.length} Workspaces Available</span>
         <span>Codex Spatial Protocol v1.0</span>

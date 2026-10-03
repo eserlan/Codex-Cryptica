@@ -192,7 +192,7 @@
       </span>
     {:else if showIncompleteOnly}
       <span
-        class="inline-block rounded bg-amber-500/10 px-1.5 py-0.5 text-[10px] font-semibold text-amber-600 dark:text-amber-400"
+        class="inline-block rounded bg-amber-500/10 px-1.5 py-0.5 text-micro font-semibold text-amber-600 dark:text-amber-400"
         >0 connections</span
       >
     {:else}
@@ -206,7 +206,7 @@
       <span class="line-clamp-2 text-xs text-theme-muted/90">{snippet}</span>
     {:else if showIncompleteOnly}
       <span
-        class="inline-block rounded bg-amber-500/10 px-1.5 py-0.5 text-[10px] font-semibold text-amber-600 dark:text-amber-400"
+        class="inline-block rounded bg-amber-500/10 px-1.5 py-0.5 text-micro font-semibold text-amber-600 dark:text-amber-400"
         aria-label="No summary">Missing summary</span
       >
     {:else}
@@ -227,7 +227,7 @@
               onclick={() => onFilterLabel(chip)}
               title="Filter by {chip}"
               data-testid="entity-table-row-label-filter"
-              class="text-[9px] px-2 py-0.5 rounded-md uppercase font-header font-bold tracking-wider transition-all border cursor-pointer {activeLabels?.has(
+              class="text-nano px-2 py-0.5 rounded-md uppercase font-header font-bold tracking-wider transition-all border cursor-pointer {activeLabels?.has(
                 chip,
               )
                 ? 'bg-theme-primary text-theme-bg border-theme-primary shadow-sm'
@@ -238,7 +238,7 @@
             >
           {:else}
             <span
-              class="text-[9px] px-2 py-0.5 rounded-md uppercase font-header font-bold tracking-wider border {activeLabels?.has(
+              class="text-nano px-2 py-0.5 rounded-md uppercase font-header font-bold tracking-wider border {activeLabels?.has(
                 chip,
               )
                 ? 'bg-theme-primary text-theme-bg border-theme-primary shadow-sm'
@@ -249,14 +249,14 @@
         {/each}
         {#if extraChips > 0}
           <span
-            class="text-[9px] text-theme-muted font-header font-bold flex items-center"
+            class="text-nano text-theme-muted font-header font-bold flex items-center"
             >+{extraChips}</span
           >
         {/if}
       </span>
     {:else if showIncompleteOnly}
       <span
-        class="inline-block rounded bg-amber-500/10 px-1.5 py-0.5 text-[10px] font-semibold text-amber-600 dark:text-amber-400"
+        class="inline-block rounded bg-amber-500/10 px-1.5 py-0.5 text-micro font-semibold text-amber-600 dark:text-amber-400"
         aria-label="No labels">No labels</span
       >
     {:else}

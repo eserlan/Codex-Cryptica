@@ -95,7 +95,7 @@
       </div>
     {/if}
   {/each}
-  <p class="text-[11px] text-theme-muted">
+  <p class="text-meta text-theme-muted">
     GM-only secrets stay out of the report unless you turn them on.
   </p>
 </fieldset>

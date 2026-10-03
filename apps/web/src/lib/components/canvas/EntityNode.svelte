@@ -326,7 +326,7 @@
 
         {#if primaryStance.badgeText}
           <span
-            class="text-[9px] font-semibold tracking-wider mt-0.5 truncate max-w-full {primaryStance.stance ===
+            class="text-nano font-semibold tracking-wider mt-0.5 truncate max-w-full {primaryStance.stance ===
             'ally'
               ? 'text-emerald-400'
               : primaryStance.stance === 'enemy'
@@ -375,7 +375,7 @@
             </div>
             {#if primaryStance.badgeText}
               <span
-                class="text-[9px] font-semibold tracking-wider drop-shadow-sm {primaryStance.stance ===
+                class="text-nano font-semibold tracking-wider drop-shadow-sm {primaryStance.stance ===
                 'ally'
                   ? 'text-emerald-400'
                   : primaryStance.stance === 'enemy'
@@ -405,7 +405,7 @@
             >
               {entity?.title || "Missing Entity"}
             </span>
-            <span class="text-[10px] text-theme-muted mt-1 opacity-60"
+            <span class="text-micro text-theme-muted mt-1 opacity-60"
               >No image</span
             >
           </div>
@@ -531,7 +531,7 @@
           </div>
           {#if subtitle && subtitle.toLowerCase() !== (entity?.type || "").toLowerCase()}
             <div
-              class="text-[10px] text-theme-muted font-medium truncate mt-0.5 pl-5"
+              class="text-micro text-theme-muted font-medium truncate mt-0.5 pl-5"
             >
               {subtitle}
             </div>
@@ -541,7 +541,7 @@
             <div class="flex flex-wrap gap-1 mt-1.5">
               {#each entity.labels as label}
                 <span
-                  class="px-1.5 py-0.5 bg-theme-bg border border-theme-border rounded text-[9px] text-theme-muted"
+                  class="px-1.5 py-0.5 bg-theme-bg border border-theme-border rounded text-nano text-theme-muted"
                 >
                   {label}
                 </span>
@@ -584,7 +584,7 @@
                 />
               {:else}
                 <div
-                  class="text-[11px] text-theme-muted leading-relaxed markdown-content prose prose-invert prose-xs font-body"
+                  class="text-meta text-theme-muted leading-relaxed markdown-content prose prose-invert prose-xs font-body"
                 >
                   {#if renderedContent}
                     <div class="line-clamp-6">
@@ -603,7 +603,7 @@
                 <textarea
                   bind:value={editContent}
                   use:autoresize
-                  class="bg-theme-surface/30 border border-theme-border/50 rounded-md p-1.5 text-[11px] text-theme-muted font-body leading-relaxed focus:outline-none focus:border-theme-primary focus:bg-theme-surface/50 resize-none nodrag overflow-hidden transition-colors w-full min-h-[100px] max-h-[350px]"
+                  class="bg-theme-surface/30 border border-theme-border/50 rounded-md p-1.5 text-meta text-theme-muted font-body leading-relaxed focus:outline-none focus:border-theme-primary focus:bg-theme-surface/50 resize-none nodrag overflow-hidden transition-colors w-full min-h-[100px] max-h-[350px]"
                   placeholder="Write the chronicle here..."
                   onkeydown={(e) => {
                     e.stopPropagation();

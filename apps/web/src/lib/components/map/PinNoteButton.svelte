@@ -31,7 +31,7 @@
 <button
   class={compact
     ? `h-9 w-9 flex items-center justify-center rounded-md transition-all ${getPrimaryButtonStateClass(mapSession.notePlacementArmed)} disabled:opacity-50 disabled:cursor-not-allowed`
-    : `px-3 py-1.5 rounded-lg border text-[10px] font-bold uppercase tracking-wider transition-colors flex items-center gap-2 focus-visible:ring-2 focus-visible:ring-theme-primary focus-visible:outline-none disabled:opacity-50 disabled:cursor-not-allowed ${
+    : `px-3 py-1.5 rounded-lg border text-micro font-bold uppercase tracking-wider transition-colors flex items-center gap-2 focus-visible:ring-2 focus-visible:ring-theme-primary focus-visible:outline-none disabled:opacity-50 disabled:cursor-not-allowed ${
         mapSession.notePlacementArmed
           ? "bg-theme-primary text-theme-bg border-theme-primary"
           : "bg-theme-surface border-theme-border text-theme-text hover:border-theme-primary hover:text-theme-primary"

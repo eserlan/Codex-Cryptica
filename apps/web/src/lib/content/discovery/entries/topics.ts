@@ -58,4 +58,28 @@ export const topicEntries: DiscoveryEntryInput[] = [
     indexable: true,
     status: "live",
   },
+  {
+    id: "topic-pirates-high-seas",
+    pageKind: "hub",
+    canonicalPath: "/topics/pirates",
+    primaryIntent: "pirate and high seas campaign guide hub",
+    intentAliases: [
+      "pirate campaign guides and resources",
+      "high seas rpg campaign guides",
+      "pirate campaign answers",
+    ],
+    audience: "Game masters planning pirate or high-seas campaigns",
+    userJob: "navigate",
+    uniqueValue:
+      "Connects practical answers for choosing a system, exploration, sea travel, ship combat, islands and ports, and rival factions with the existing starter-ship guide, campaign page, pirate generators, and a worked adventure example. This is a guide navigator, distinct from the campaign-management focus of /for/pirates-high-seas and the content-creation focus of /generators/pirate.",
+    parentCluster: "pirates-high-seas",
+    clusters: ["pirate", "pirates-high-seas"],
+    relatedIntents: [
+      "for-pirates-high-seas",
+      "hub-pirate",
+      "answer-starter-ship-pirate",
+    ],
+    indexable: true,
+    status: "live",
+  },
 ];

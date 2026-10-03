@@ -12,7 +12,7 @@
   class="w-56 rounded-lg border border-theme-border bg-theme-surface/95 backdrop-blur p-1 shadow-2xl"
 >
   <div
-    class="px-3 py-1.5 text-[9px] font-bold uppercase tracking-widest text-theme-muted"
+    class="px-3 py-1.5 text-nano font-bold uppercase tracking-widest text-theme-muted"
   >
     Layers
   </div>

@@ -107,7 +107,7 @@
         <span>{tab.label}</span>
         {#if tab.id === "decks" && decks.length > 0}
           <span
-            class="ml-1 px-1.5 py-0.2 rounded-full text-[9px] font-mono {isActive
+            class="ml-1 px-1.5 py-0.2 rounded-full text-nano font-mono {isActive
               ? 'bg-theme-primary/20 text-theme-primary'
               : 'bg-theme-border/50 text-theme-muted'}"
           >
@@ -115,7 +115,7 @@
           </span>
         {:else if tab.id === "tables" && tables.length > 0}
           <span
-            class="ml-1 px-1.5 py-0.2 rounded-full text-[9px] font-mono {isActive
+            class="ml-1 px-1.5 py-0.2 rounded-full text-nano font-mono {isActive
               ? 'bg-theme-primary/20 text-theme-primary'
               : 'bg-theme-border/50 text-theme-muted'}"
           >
@@ -160,7 +160,7 @@
             >
               No Decks Available
             </p>
-            <p class="text-[11px] text-theme-muted mt-1 max-w-xs font-body">
+            <p class="text-meta text-theme-muted mt-1 max-w-xs font-body">
               Create a card deck in the Tables & Decks workspace to draw cards
               during play.
             </p>
@@ -172,7 +172,7 @@
           >
             <label
               for="play-tools-deck-select"
-              class="text-[10px] font-header font-bold uppercase tracking-widest text-theme-muted shrink-0"
+              class="text-micro font-header font-bold uppercase tracking-widest text-theme-muted shrink-0"
             >
               Active Deck:
             </label>
@@ -229,7 +229,7 @@
             >
               No Tables Available
             </p>
-            <p class="text-[11px] text-theme-muted mt-1 max-w-xs font-body">
+            <p class="text-meta text-theme-muted mt-1 max-w-xs font-body">
               Create a random table in the Tables & Decks workspace to roll on
               tables during play.
             </p>
@@ -241,7 +241,7 @@
           >
             <label
               for="play-tools-table-select"
-              class="text-[10px] font-header font-bold uppercase tracking-widest text-theme-muted shrink-0"
+              class="text-micro font-header font-bold uppercase tracking-widest text-theme-muted shrink-0"
             >
               Active Table:
             </label>

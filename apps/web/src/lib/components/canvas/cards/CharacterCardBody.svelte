@@ -51,7 +51,7 @@
         </blockquote>
       {/if}
       {#if attributes.length > 0}
-        <div class="space-y-1 text-[10px]">
+        <div class="space-y-1 text-micro">
           {#each attributes.slice(0, 6) as attr}
             <div class="flex items-baseline gap-1.5 min-w-0">
               <span class="font-semibold text-theme-muted shrink-0"
@@ -73,12 +73,12 @@
   {#if sections.background || renderedContent}
     <div class="mt-1">
       <div
-        class="text-[9px] font-mono uppercase tracking-widest text-theme-muted font-bold mb-1 border-b border-theme-border/20 pb-0.5"
+        class="text-nano font-mono uppercase tracking-widest text-theme-muted font-bold mb-1 border-b border-theme-border/20 pb-0.5"
       >
         Background
       </div>
       <div
-        class="text-[11px] text-theme-muted leading-relaxed line-clamp-4 markdown-content prose prose-invert prose-xs"
+        class="text-meta text-theme-muted leading-relaxed line-clamp-4 markdown-content prose prose-invert prose-xs"
         data-testid="character-card-excerpt"
       >
         {#if sections.background}{sections.background}{:else}{@html renderedContent}{/if}
@@ -88,11 +88,11 @@
   {#if sections.goals.length > 0}
     <div class="mt-1">
       <div
-        class="text-[9px] font-mono uppercase tracking-widest text-theme-muted font-bold mb-1 border-b border-theme-border/20 pb-0.5"
+        class="text-nano font-mono uppercase tracking-widest text-theme-muted font-bold mb-1 border-b border-theme-border/20 pb-0.5"
       >
         Goals
       </div>
-      <ul class="text-[10px] text-theme-text space-y-1">
+      <ul class="text-micro text-theme-text space-y-1">
         {#each sections.goals.slice(0, 4) as goal}
           <li class="flex items-start gap-1.5">
             <span
@@ -108,7 +108,7 @@
 
 {#if large}
   <div
-    class="character-dossier grid grid-cols-1 md:grid-cols-12 gap-3.5 text-[11px] font-body"
+    class="character-dossier grid grid-cols-1 md:grid-cols-12 gap-3.5 text-meta font-body"
   >
     <!-- Left Column: Portrait, Attributes, Background, Goals -->
     <div class="md:col-span-6 flex flex-col gap-3 min-w-0">
@@ -125,7 +125,7 @@
   </div>
 {:else}
   <div
-    class="text-[11px] text-theme-muted leading-relaxed markdown-content prose prose-invert prose-xs font-body"
+    class="text-meta text-theme-muted leading-relaxed markdown-content prose prose-invert prose-xs font-body"
   >
     {#if quote}
       <blockquote

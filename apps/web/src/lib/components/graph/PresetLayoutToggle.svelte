@@ -37,7 +37,7 @@
   </label>
   {#if unavailableReason}
     <p
-      class="pl-6 text-[11px] text-theme-muted"
+      class="pl-6 text-meta text-theme-muted"
       data-testid="view-preset-layout-reason"
     >
       {unavailableReason}
@@ -46,7 +46,7 @@
   {#if status}
     <p
       role="status"
-      class="pl-6 text-[11px] {status.failed
+      class="pl-6 text-meta {status.failed
         ? 'text-theme-danger'
         : 'text-theme-muted'}"
       data-testid="view-preset-layout-status"

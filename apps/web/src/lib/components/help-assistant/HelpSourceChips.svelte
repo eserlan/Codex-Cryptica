@@ -23,14 +23,14 @@
 
 {#if articleSources.length > 0}
   <div class="flex flex-wrap items-center gap-1">
-    <span class="text-[10px] uppercase tracking-wider text-chrome-muted"
+    <span class="text-meta uppercase tracking-wider text-chrome-muted"
       >Sources</span
     >
     {#each articleSources as source (source.id)}
       <button
         type="button"
         onclick={() => onOpenArticle(source.helpId!)}
-        class="rounded border border-chrome-border px-2 py-0.5 text-[10px] text-chrome-accent hover:bg-chrome-accent/10 focus-visible:outline-2 focus-visible:outline-chrome-accent"
+        class="touch-target rounded border border-chrome-border px-2 py-0.5 text-meta text-chrome-accent hover:bg-chrome-accent/10 focus-visible:outline-2 focus-visible:outline-chrome-accent"
       >
         {source.title}
       </button>

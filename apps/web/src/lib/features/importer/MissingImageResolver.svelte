@@ -41,7 +41,7 @@
       ></span>
       <div class="min-w-0">
         <p
-          class="font-header text-[10px] font-bold uppercase tracking-widest text-amber-500"
+          class="font-header text-micro font-bold uppercase tracking-widest text-amber-500"
         >
           {pending.length} Image{pending.length === 1 ? "" : "s"} Not Included
         </p>
@@ -65,7 +65,7 @@
           <div class="flex items-center gap-2 shrink-0">
             <button
               type="button"
-              class="px-2 py-1 text-[10px] font-bold uppercase font-header tracking-wider border border-theme-border rounded hover:bg-theme-surface"
+              class="px-2 py-1 text-micro font-bold uppercase font-header tracking-wider border border-theme-border rounded hover:bg-theme-surface"
               onclick={() => inputRefs[ref.path]?.click()}
             >
               Add File
@@ -81,7 +81,7 @@
             {#if folderSupported}
               <button
                 type="button"
-                class="px-2 py-1 text-[10px] font-bold uppercase font-header tracking-wider border border-theme-border rounded hover:bg-theme-surface"
+                class="px-2 py-1 text-micro font-bold uppercase font-header tracking-wider border border-theme-border rounded hover:bg-theme-surface"
                 onclick={() => onUseFolder(ref)}
               >
                 Use Folder
@@ -93,7 +93,7 @@
     </ul>
 
     {#if !folderSupported}
-      <p class="mt-2 text-[10px] text-theme-muted leading-snug">
+      <p class="mt-2 text-micro text-theme-muted leading-snug">
         This browser can't grant folder access to search for missing images
         automatically — add each one directly instead.
       </p>

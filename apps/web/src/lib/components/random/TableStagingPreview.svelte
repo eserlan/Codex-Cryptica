@@ -92,7 +92,7 @@
               {#if row.matchedSubTables}
                 {#each row.matchedSubTables as subTable}
                   <span
-                    class="inline-flex items-center gap-1 rounded bg-theme-accent/15 px-1.5 py-0.5 text-[10px] font-medium text-theme-accent"
+                    class="inline-flex items-center gap-1 rounded bg-theme-accent/15 px-1.5 py-0.5 text-micro font-medium text-theme-accent"
                   >
                     <span class="icon-[lucide--dices] h-3 w-3"></span>
                     &#123;{subTable}&#125;
@@ -102,7 +102,7 @@
               {#if row.matchedEntities}
                 {#each row.matchedEntities as entityName}
                   <span
-                    class="inline-flex items-center gap-1 rounded bg-theme-primary/15 px-1.5 py-0.5 text-[10px] font-medium text-theme-primary"
+                    class="inline-flex items-center gap-1 rounded bg-theme-primary/15 px-1.5 py-0.5 text-micro font-medium text-theme-primary"
                   >
                     <span class="icon-[lucide--book-open] h-3 w-3"></span>
                     {entityName}

@@ -886,7 +886,7 @@
       >
         <a
           href="{cleanBase}{backHref ?? '/generators'}"
-          class="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-widest font-header text-theme-muted hover:text-theme-primary transition-colors mb-3"
+          class="inline-flex items-center gap-1 text-micro font-bold uppercase tracking-widest font-header text-theme-muted hover:text-theme-primary transition-colors mb-3"
         >
           <span class="icon-[lucide--arrow-left] w-3 h-3" aria-hidden="true"
           ></span>
@@ -913,7 +913,7 @@
         {/if}
         {#if inputHint}
           <p
-            class="text-[9px] text-theme-text/45 uppercase tracking-widest font-header mb-5 flex items-center gap-1.5"
+            class="text-nano text-theme-text/45 uppercase tracking-widest font-header mb-5 flex items-center gap-1.5"
           >
             <span class="icon-[lucide--arrow-right] w-3 h-3"></span>
             {inputHint}
@@ -933,11 +933,11 @@
             ></span>
             <div class="flex flex-col gap-1">
               <p
-                class="text-[10px] font-bold uppercase tracking-wider font-header text-theme-primary"
+                class="text-micro font-bold uppercase tracking-wider font-header text-theme-primary"
               >
                 {aiModeRequired ? "AI required" : "Local Mode"}
               </p>
-              <p class="text-[10px] text-theme-text/70 leading-snug">
+              <p class="text-micro text-theme-text/70 leading-snug">
                 {offlineMessage ??
                   "You're offline. Codex will generate from built-in tables and save drafts locally. Reconnect to use AI Lore Co-Author mode again."}
               </p>
@@ -956,7 +956,7 @@
         >
           {@render formFields(() => void handleGenerate())}
           {#if aiModeRequired && aiDataNotice}
-            <p class="text-[10px] text-theme-muted leading-relaxed" role="note">
+            <p class="text-micro text-theme-muted leading-relaxed" role="note">
               {aiDataNotice}
             </p>
           {/if}
@@ -995,7 +995,7 @@
                 />
                 <label
                   for="ai-toggle"
-                  class="text-[10px] font-bold uppercase tracking-wider text-theme-muted flex items-center gap-1 {isOnline
+                  class="text-micro font-bold uppercase tracking-wider text-theme-muted flex items-center gap-1 {isOnline
                     ? 'cursor-pointer'
                     : 'opacity-50 cursor-not-allowed'}"
                 >
@@ -1007,7 +1007,7 @@
               </div>
               <p
                 id="ai-toggle-hint"
-                class="text-[9px] text-theme-muted/70 leading-snug pl-6"
+                class="text-nano text-theme-muted/70 leading-snug pl-6"
               >
                 {#if !isOnline}
                   Offline: using fast local tables. Reconnect to enable AI Lore
@@ -1131,7 +1131,7 @@
     <div class="{columnClasses.table} order-3 lg:order-3">
       <!-- Mobile label — hidden on lg where the sticky card makes the context clear -->
       <p
-        class="lg:hidden text-[10px] font-bold uppercase tracking-widest font-header text-theme-muted mb-2"
+        class="lg:hidden text-micro font-bold uppercase tracking-widest font-header text-theme-muted mb-2"
       >
         GM Reference
       </p>
@@ -1160,7 +1160,7 @@
               class="flex flex-col items-center text-center text-theme-muted/40 py-8"
             >
               <span class="icon-[lucide--scroll] w-8 h-8 mb-3"></span>
-              <p class="text-[10px] uppercase tracking-widest font-header">
+              <p class="text-micro uppercase tracking-widest font-header">
                 At the Table
               </p>
               <p class="text-sm mt-2 leading-relaxed">
@@ -1256,7 +1256,7 @@
     filter: none;
   }
   .seo-rail.seo-md :global(h3) {
-    font-size: 0.75rem;
+    font-size: var(--type-helper);
     text-transform: uppercase;
     letter-spacing: 0.08em;
     color: color-mix(in srgb, var(--color-text) 82%, transparent);

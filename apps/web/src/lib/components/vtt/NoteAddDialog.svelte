@@ -86,7 +86,7 @@
           >
             Pin Note
           </h2>
-          <p class="text-[10px] text-theme-muted mt-1">
+          <p class="text-micro text-theme-muted mt-1">
             Only you can see it until you reveal it to players.
           </p>
         </div>
@@ -103,7 +103,7 @@
       <div class="p-4 space-y-4">
         <label class="space-y-2 block">
           <span
-            class="text-[10px] uppercase font-bold tracking-widest text-theme-muted"
+            class="text-micro uppercase font-bold tracking-widest text-theme-muted"
             >Title</span
           >
           <input
@@ -116,7 +116,7 @@
 
         <label class="space-y-2 block">
           <span
-            class="text-[10px] uppercase font-bold tracking-widest text-theme-muted"
+            class="text-micro uppercase font-bold tracking-widest text-theme-muted"
             >Note</span
           >
           <!-- svelte-ignore a11y_autofocus -->
@@ -134,19 +134,19 @@
       <div
         class="p-4 border-t border-theme-border flex items-center justify-between gap-3"
       >
-        <div class="text-[10px] text-theme-muted">
+        <div class="text-micro text-theme-muted">
           Position: {Math.round(coords.x)}, {Math.round(coords.y)}
         </div>
         <div class="flex items-center gap-2">
           <button
-            class="px-3 py-2 rounded-lg border border-theme-border text-[10px] font-bold uppercase tracking-widest text-theme-muted hover:text-theme-text"
+            class="px-3 py-2 rounded-lg border border-theme-border text-micro font-bold uppercase tracking-widest text-theme-muted hover:text-theme-text"
             onclick={close}
             type="button"
           >
             Cancel
           </button>
           <button
-            class="px-4 py-2 rounded-lg bg-theme-primary text-theme-bg text-[10px] font-bold uppercase tracking-widest"
+            class="px-4 py-2 rounded-lg bg-theme-primary text-theme-bg text-micro font-bold uppercase tracking-widest"
             onclick={createNote}
             data-testid="note-add-confirm"
             type="button"

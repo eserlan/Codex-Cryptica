@@ -207,7 +207,7 @@
     class="max-w-4xl mx-auto px-4 sm:px-6 pt-16 pb-12 text-center flex-grow"
   >
     <div
-      class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-mono font-bold bg-theme-primary/10 border border-theme-primary/20 text-theme-primary mb-10 uppercase tracking-wider"
+      class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-micro font-mono font-bold bg-theme-primary/10 border border-theme-primary/20 text-theme-primary mb-10 uppercase tracking-wider"
     >
       <span class="w-1.5 h-1.5 rounded-full bg-theme-primary"></span>
       {data.eyebrow ??
@@ -476,7 +476,7 @@
               >
                 <div class="p-3">
                   <span
-                    class="block font-header font-bold text-[9px] uppercase tracking-wider text-theme-muted mb-1"
+                    class="block font-header font-bold text-nano uppercase tracking-wider text-theme-muted mb-1"
                     >{comparisonData.competitorName}</span
                   >
                   {#if typeof row.competitorHas === "boolean"}
@@ -501,7 +501,7 @@
                 </div>
                 <div class="p-3">
                   <span
-                    class="block font-header font-bold text-[9px] uppercase tracking-wider text-theme-primary mb-1"
+                    class="block font-header font-bold text-nano uppercase tracking-wider text-theme-primary mb-1"
                     >Codex Cryptica</span
                   >
                   {#if typeof row.codexHas === "boolean"}

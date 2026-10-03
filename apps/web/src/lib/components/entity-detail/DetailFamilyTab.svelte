@@ -79,7 +79,7 @@
           type="button"
           data-testid="family-mode-family"
           aria-pressed={mode === "family"}
-          class="px-2 py-1 text-[10px] font-bold uppercase tracking-wide {mode ===
+          class="px-2 py-1 text-micro font-bold uppercase tracking-wide {mode ===
           'family'
             ? 'bg-theme-primary/20 text-theme-primary'
             : 'text-theme-muted hover:text-theme-primary'}"
@@ -91,7 +91,7 @@
           type="button"
           data-testid="family-mode-lineage"
           aria-pressed={mode === "lineage"}
-          class="px-2 py-1 text-[10px] font-bold uppercase tracking-wide {mode ===
+          class="px-2 py-1 text-micro font-bold uppercase tracking-wide {mode ===
           'lineage'
             ? 'bg-theme-primary/20 text-theme-primary'
             : 'text-theme-muted hover:text-theme-primary'}"
@@ -116,7 +116,7 @@
       <button
         type="button"
         data-testid="family-zoom-reset"
-        class="min-w-[3rem] rounded border border-theme-border px-1 py-0.5 text-center text-[10px] font-bold text-theme-muted hover:border-theme-primary hover:text-theme-primary"
+        class="min-w-[3rem] rounded border border-theme-border px-1 py-0.5 text-center text-micro font-bold text-theme-muted hover:border-theme-primary hover:text-theme-primary"
         onclick={resetZoom}
         aria-label="Reset zoom to 100%"
         title="Reset zoom"
@@ -166,7 +166,7 @@
       <button
         type="button"
         data-testid="family-recenter-reset"
-        class="self-start text-[10px] font-bold uppercase tracking-wide text-theme-muted hover:text-theme-primary"
+        class="self-start text-micro font-bold uppercase tracking-wide text-theme-muted hover:text-theme-primary"
         onclick={() => (focusId = entity.id)}
       >
         ← Back to {entity.title}
@@ -183,7 +183,7 @@
       <button
         type="button"
         data-testid="family-recenter-reset"
-        class="self-start text-[10px] font-bold uppercase tracking-wide text-theme-muted hover:text-theme-primary"
+        class="self-start text-micro font-bold uppercase tracking-wide text-theme-muted hover:text-theme-primary"
         onclick={() => (focusId = entity.id)}
       >
         ← Back to {entity.title}
@@ -248,7 +248,7 @@
     <div class="flex h-full flex-col gap-3 p-4 md:p-6">
       <div class="flex items-center justify-between">
         <span
-          class="text-[10px] font-bold uppercase tracking-widest text-theme-muted"
+          class="text-micro font-bold uppercase tracking-widest text-theme-muted"
         >
           Family — {tree.focus.name}
         </span>

@@ -951,6 +951,7 @@ describe("Landing Page Registry", () => {
         "A prize taken today can change who controls a port",
       );
       expect(pirates.recommendedTools.map((tool) => tool.href)).toEqual([
+        "/topics/pirates",
         "/answers/what-kind-of-ship-should-a-pirate-crew-start-with",
         "/generators/ship-generator",
         "/generators/settlement",

@@ -111,7 +111,7 @@
     <!-- Active Entity Title: Simplified for mobile -->
     {#if selectedEntity}
       <div
-        class="bg-theme-surface/80 backdrop-blur border border-theme-border px-3 py-1 flex sm:hidden items-center gap-2 text-[11px] font-mono tracking-widest text-theme-primary shadow-lg uppercase pointer-events-auto"
+        class="bg-theme-surface/80 backdrop-blur border border-theme-border px-3 py-1 flex sm:hidden items-center gap-2 text-meta font-mono tracking-widest text-theme-primary shadow-lg uppercase pointer-events-auto"
       >
         <span class="font-bold"
           >{selectedEntity.title || selectedEntity.id}</span
@@ -121,7 +121,7 @@
 
     {#if selectedId}
       <div
-        class="hidden sm:flex items-center gap-2 text-[10px] font-bold text-theme-primary animate-pulse bg-theme-surface/40 px-2 py-0.5 border border-theme-primary/20"
+        class="hidden sm:flex items-center gap-2 text-micro font-bold text-theme-primary animate-pulse bg-theme-surface/40 px-2 py-0.5 border border-theme-primary/20"
       >
         <div class="w-1.5 h-1.5 bg-theme-primary rounded-full"></div>
         ARCHIVE DETAIL MODE
@@ -133,7 +133,7 @@
       <button
         type="button"
         onclick={() => (isFiltersExpanded = !isFiltersExpanded)}
-        class="flex md:hidden items-center gap-2 px-3 py-1.5 bg-theme-surface/80 backdrop-blur border border-theme-border rounded text-xs font-mono tracking-widest text-theme-primary shadow-lg uppercase transition-all hover:border-theme-primary active:scale-95"
+        class="touch-target flex md:hidden items-center gap-2 px-3 py-1.5 bg-theme-surface/80 backdrop-blur border border-theme-border rounded text-xs font-mono tracking-widest text-theme-primary shadow-lg uppercase transition-all hover:border-theme-primary active:scale-95"
       >
         <span class="icon-[lucide--filter] w-3.5 h-3.5"></span>
         <span>Filters</span>
@@ -190,7 +190,7 @@
       class="absolute bottom-0 left-1/2 flex -translate-x-1/2 flex-col items-center gap-3 max-w-[calc(100vw-3rem)] mb-12 sm:mb-0"
     >
       <div
-        class="bg-amber-900/40 backdrop-blur border border-amber-500/30 px-3 py-1 flex items-center gap-2 text-[11px] font-mono tracking-[0.2em] text-amber-300 shadow-lg uppercase pointer-events-auto"
+        class="bg-amber-900/40 backdrop-blur border border-amber-500/30 px-3 py-1 flex items-center gap-2 text-meta font-mono tracking-[0.2em] text-amber-300 shadow-lg uppercase pointer-events-auto"
         transition:fade
       >
         <span class="icon-[lucide--eye] w-3 h-3 animate-pulse"></span>
@@ -204,7 +204,7 @@
   >
     {#if graph.timelineMode}
       <div
-        class="bg-timeline-dark/40 backdrop-blur border border-timeline-primary/30 px-3 py-1 flex items-center gap-2 text-[10px] font-mono tracking-[0.2em] text-timeline-primary shadow-lg uppercase pointer-events-auto"
+        class="bg-timeline-dark/40 backdrop-blur border border-timeline-primary/30 px-3 py-1 flex items-center gap-2 text-micro font-mono tracking-[0.2em] text-timeline-primary shadow-lg uppercase pointer-events-auto"
         transition:fade
       >
         <span class="icon-[lucide--history] w-3 h-3 animate-pulse"></span>
@@ -219,7 +219,7 @@
 
     {#if isLayoutRunning}
       <div
-        class="bg-blue-900/40 backdrop-blur border border-blue-500/30 px-3 py-1 flex items-center gap-2 text-[10px] font-mono tracking-[0.2em] text-blue-300 shadow-lg uppercase pointer-events-auto"
+        class="bg-blue-900/40 backdrop-blur border border-blue-500/30 px-3 py-1 flex items-center gap-2 text-micro font-mono tracking-[0.2em] text-blue-300 shadow-lg uppercase pointer-events-auto"
         transition:fade
       >
         <span class="icon-[lucide--cpu] w-3 h-3 animate-spin"></span>
@@ -233,7 +233,7 @@
     {#if isLargeGraph}
       <!-- Desktop: full inline alert. Mobile uses the compact top-right chip below. -->
       <div
-        class="bg-theme-surface/85 backdrop-blur border border-theme-primary/30 px-3 py-1.5 hidden max-w-[min(26rem,calc(100vw-2rem))] items-start gap-2 text-[10px] font-mono tracking-[0.16em] text-theme-primary shadow-lg uppercase pointer-events-auto md:flex"
+        class="bg-theme-surface/85 backdrop-blur border border-theme-primary/30 px-3 py-1.5 hidden max-w-[min(26rem,calc(100vw-2rem))] items-start gap-2 text-micro font-mono tracking-[0.16em] text-theme-primary shadow-lg uppercase pointer-events-auto md:flex"
         transition:fade
       >
         <span
@@ -297,7 +297,7 @@
 
       {#if isFocusInfoExpanded}
         <div
-          class="bg-theme-surface/85 backdrop-blur border border-theme-primary/30 px-3 py-1.5 flex max-w-[min(20rem,calc(100vw-2rem))] flex-col gap-1 text-[10px] font-mono tracking-[0.16em] text-theme-primary shadow-lg uppercase"
+          class="bg-theme-surface/85 backdrop-blur border border-theme-primary/30 px-3 py-1.5 flex max-w-[min(20rem,calc(100vw-2rem))] flex-col gap-1 text-micro font-mono tracking-[0.16em] text-theme-primary shadow-lg uppercase"
           transition:fade
         >
           {@render focusDetail()}

@@ -53,7 +53,7 @@
     data-testid="presentation-template-picker"
   >
     <span
-      class="text-[10px] font-bold uppercase tracking-widest text-theme-muted"
+      class="text-micro font-bold uppercase tracking-widest text-theme-muted"
     >
       Presentation
     </span>
@@ -77,7 +77,7 @@
     {#if currentOverrideId}
       <button
         type="button"
-        class="rounded border border-theme-border px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-theme-muted hover:border-theme-primary hover:text-theme-primary"
+        class="rounded border border-theme-border px-2 py-1 text-micro font-bold uppercase tracking-wide text-theme-muted hover:border-theme-primary hover:text-theme-primary"
         onclick={() => setEntityOverride(null)}
         data-testid="presentation-template-clear-override"
       >
@@ -85,7 +85,7 @@
       </button>
       <button
         type="button"
-        class="rounded border border-theme-border px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-theme-muted hover:border-theme-primary hover:text-theme-primary"
+        class="rounded border border-theme-border px-2 py-1 text-micro font-bold uppercase tracking-wide text-theme-muted hover:border-theme-primary hover:text-theme-primary"
         onclick={() => setSchemaDefault(currentOverrideId)}
         data-testid="presentation-template-make-schema-default"
       >

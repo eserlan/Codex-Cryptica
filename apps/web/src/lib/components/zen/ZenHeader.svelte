@@ -182,7 +182,7 @@
             )} text-theme-primary w-4 h-4 md:w-5 md:h-5"
           ></span>
           <span
-            class="text-[10px] md:text-xs font-bold tracking-widest text-theme-primary uppercase font-header"
+            class="text-micro md:text-xs font-bold tracking-widest text-theme-primary uppercase font-header"
             >{entity?.type || ""}</span
           >
         </div>
@@ -216,12 +216,12 @@
           {#if entity?.aliases && entity.aliases.length > 0}
             <div class="flex flex-wrap gap-1 md:gap-1.5">
               <span
-                class="text-[8px] md:text-[10px] font-bold text-theme-muted uppercase tracking-widest self-center mr-0.5 md:mr-1"
+                class="text-nano md:text-micro font-bold text-theme-muted uppercase tracking-widest self-center mr-0.5 md:mr-1"
                 >aka:</span
               >
               {#each entity.aliases as alias, index (`${entity.id}-alias-${index}`)}
                 <div
-                  class="px-1.5 md:px-2 py-0.5 rounded bg-theme-primary/5 border border-theme-primary/10 text-[8px] md:text-[10px] font-bold text-theme-secondary uppercase tracking-wider"
+                  class="px-1.5 md:px-2 py-0.5 rounded bg-theme-primary/5 border border-theme-primary/10 text-nano md:text-micro font-bold text-theme-secondary uppercase tracking-wider"
                 >
                   {alias}
                 </div>
@@ -263,7 +263,7 @@
               <button
                 type="button"
                 onclick={() => modalUIStore.openParentPicker(entity.id)}
-                class="flex items-center gap-1.5 text-xs text-theme-muted hover:text-theme-primary transition-colors focus:outline-none"
+                class="touch-target flex items-center gap-1.5 text-xs text-theme-muted hover:text-theme-primary transition-colors focus:outline-none"
                 title="Nest this under another entity"
                 data-testid="zen-set-parent-button"
               >
@@ -286,7 +286,7 @@
     <button
       type="button"
       onclick={onClose}
-      class="md:hidden text-theme-muted hover:text-theme-primary transition p-1 -ml-2 rounded-full shrink-0"
+      class="touch-target flex items-center justify-center md:hidden text-theme-muted hover:text-theme-primary transition p-1 -ml-2 rounded-full shrink-0"
       aria-label="Back"
     >
       <span aria-hidden="true" class="icon-[lucide--chevron-left] w-7 h-7"
@@ -312,7 +312,7 @@
                 console.error("[DelveCanvas] ZenHeader build failed:", err);
               }
             }}
-            class="px-2 md:px-3 py-1.5 border border-theme-border text-theme-secondary hover:text-theme-primary transition flex items-center gap-1.5 rounded text-[10px] md:text-xs font-bold tracking-widest cursor-pointer"
+            class="touch-target px-2 md:px-3 py-1.5 border border-theme-border text-theme-secondary hover:text-theme-primary transition flex items-center gap-1.5 rounded text-micro md:text-xs font-bold tracking-widest cursor-pointer"
             title={existingCanvas
               ? `Open ${delveCanvasLabel}`
               : `Build ${delveCanvasLabel}`}
@@ -338,7 +338,7 @@
           <button
             type="button"
             onclick={handleFindInGraph}
-            class="px-2 md:px-3 py-1.5 border border-theme-border text-theme-secondary hover:text-theme-primary transition flex items-center gap-2 rounded text-[10px] md:text-xs font-bold tracking-widest"
+            class="touch-target px-2 md:px-3 py-1.5 border border-theme-border text-theme-secondary hover:text-theme-primary transition flex items-center gap-2 rounded text-micro md:text-xs font-bold tracking-widest"
             title="Find in Graph"
             aria-label="Find in Graph"
             data-testid="zen-find-in-graph-button"
@@ -351,9 +351,9 @@
           <button
             type="button"
             onclick={handleSendToShelf}
-            class="px-2 md:px-3 py-1.5 border border-theme-border {shelvedJustNow
+            class="touch-target px-2 md:px-3 py-1.5 border border-theme-border {shelvedJustNow
               ? 'text-theme-primary'
-              : 'text-theme-secondary hover:text-theme-primary'} transition flex items-center gap-2 rounded text-[10px] md:text-xs font-bold tracking-widest"
+              : 'text-theme-secondary hover:text-theme-primary'} transition flex items-center gap-2 rounded text-micro md:text-xs font-bold tracking-widest"
             title={shelvedJustNow
               ? "On the Shelf"
               : "Send to Shelf — to bring into another vault"}
@@ -374,7 +374,7 @@
             onclick={handleSendToMonsterLabs}
             disabled={monsterLabsFlow.open}
             aria-busy={monsterLabsFlow.state === "loading"}
-            class="px-2 md:px-3 py-1.5 border border-theme-border text-theme-secondary hover:text-theme-primary transition flex items-center gap-2 rounded text-[10px] md:text-xs font-bold tracking-widest disabled:opacity-50"
+            class="touch-target px-2 md:px-3 py-1.5 border border-theme-border text-theme-secondary hover:text-theme-primary transition flex items-center gap-2 rounded text-micro md:text-xs font-bold tracking-widest disabled:opacity-50"
             title="{getMonsterLabsActionLabel(
               entity.type,
             )} — opens monsterlabs.app in a new tab"
@@ -401,7 +401,7 @@
               if (!alreadyOpen) soundBiteService.loadFromEntity(entity);
               modalUIStore.openSoundBite(entity.id);
             }}
-            class="px-2 md:px-3 py-1.5 border transition flex items-center gap-2 rounded text-[10px] md:text-xs font-bold tracking-widest {entity.soundBite
+            class="touch-target px-2 md:px-3 py-1.5 border transition flex items-center gap-2 rounded text-micro md:text-xs font-bold tracking-widest {entity.soundBite
               ? 'border-theme-accent/30 text-theme-accent hover:border-theme-accent/50 hover:text-theme-accent/80'
               : 'border-theme-border text-theme-secondary hover:text-theme-primary'}"
             title={entity.soundBite ? "Play sound bite" : "Generate sound bite"}
@@ -420,7 +420,7 @@
           <button
             type="button"
             onclick={() => guestChatStore.openChat(entity.id, entity.title)}
-            class="px-2 md:px-3 py-1.5 border border-theme-border text-theme-secondary hover:text-theme-primary transition flex items-center gap-2 rounded text-[10px] md:text-xs font-bold tracking-widest"
+            class="touch-target px-2 md:px-3 py-1.5 border border-theme-border text-theme-secondary hover:text-theme-primary transition flex items-center gap-2 rounded text-micro md:text-xs font-bold tracking-widest"
             title="Chat with character"
             aria-label="Chat with character"
             data-testid="zen-guest-chat-button"
@@ -435,9 +435,9 @@
           <button
             type="button"
             onclick={handleCopyGuestLink}
-            class="px-2 md:px-3 py-1.5 border border-theme-border {linkCopied
+            class="touch-target px-2 md:px-3 py-1.5 border border-theme-border {linkCopied
               ? 'text-theme-primary'
-              : 'text-theme-secondary hover:text-theme-primary'} transition flex items-center gap-2 rounded text-[10px] md:text-xs font-bold tracking-widest"
+              : 'text-theme-secondary hover:text-theme-primary'} transition flex items-center gap-2 rounded text-micro md:text-xs font-bold tracking-widest"
             title={linkCopied ? "Link copied!" : "Copy link to this entity"}
             aria-label="Copy link to this entity"
             data-testid="zen-copy-guest-link-button"
@@ -453,7 +453,7 @@
         <button
           type="button"
           onclick={onCopy}
-          class="px-2 md:px-3 py-1.5 border border-theme-border text-theme-secondary hover:text-theme-primary transition flex items-center gap-2 rounded text-[10px] md:text-xs font-bold tracking-widest"
+          class="touch-target px-2 md:px-3 py-1.5 border border-theme-border text-theme-secondary hover:text-theme-primary transition flex items-center gap-2 rounded text-micro md:text-xs font-bold tracking-widest"
           title="Copy Content"
           aria-label="Copy Content"
         >
@@ -479,7 +479,7 @@
           disabled={isDraftActioning}
           title="Approve draft"
           aria-label="Approve draft"
-          class="flex items-center gap-2 rounded border border-theme-primary/40 px-2 py-1.5 text-[10px] font-bold tracking-widest text-theme-primary transition hover:bg-theme-primary/10 disabled:opacity-50 md:px-4 md:text-xs"
+          class="touch-target flex items-center gap-2 rounded border border-theme-primary/40 px-2 py-1.5 text-micro font-bold tracking-widest text-theme-primary transition hover:bg-theme-primary/10 disabled:opacity-50 md:px-4 md:text-xs"
           data-testid="approve-draft-button"
         >
           <span aria-hidden="true" class="icon-[lucide--check] h-3 w-3"></span>
@@ -491,7 +491,7 @@
           disabled={isDraftActioning}
           title="Reject draft"
           aria-label="Reject draft"
-          class="flex items-center gap-2 rounded border border-theme-danger/40 px-2 py-1.5 text-[10px] font-bold tracking-widest text-theme-danger transition hover:bg-theme-danger/10 disabled:opacity-50 md:px-4 md:text-xs"
+          class="touch-target flex items-center gap-2 rounded border border-theme-danger/40 px-2 py-1.5 text-micro font-bold tracking-widest text-theme-danger transition hover:bg-theme-danger/10 disabled:opacity-50 md:px-4 md:text-xs"
           data-testid="reject-draft-button"
         >
           <span aria-hidden="true" class="icon-[lucide--trash-2] h-3 w-3"
@@ -504,7 +504,7 @@
           <button
             type="button"
             onclick={onDelete}
-            class="px-2 md:px-3 py-1.5 border border-theme-danger/40 text-theme-danger hover:bg-theme-danger/10 text-[10px] md:text-xs font-bold rounded tracking-widest transition flex items-center gap-2"
+            class="touch-target px-2 md:px-3 py-1.5 border border-theme-danger/40 text-theme-danger hover:bg-theme-danger/10 text-micro md:text-xs font-bold rounded tracking-widest transition flex items-center gap-2"
             title="Delete entity"
             aria-label="Delete entity"
             data-testid="delete-entity-button"
@@ -515,7 +515,7 @@
         {/if}
         <button
           onclick={onStartEdit}
-          class="px-2 md:px-4 py-1.5 border border-theme-border text-theme-secondary hover:text-theme-primary text-[10px] md:text-xs font-bold rounded tracking-widest transition flex items-center gap-2"
+          class="touch-target px-2 md:px-4 py-1.5 border border-theme-border text-theme-secondary hover:text-theme-primary text-micro md:text-xs font-bold rounded tracking-widest transition flex items-center gap-2"
           data-testid="edit-entity-button"
         >
           <span class="icon-[lucide--edit-2] w-3 h-3"></span>
@@ -524,14 +524,14 @@
       {:else if editState.isEditing}
         <button
           onclick={onCancelEdit}
-          class="px-2 md:px-4 py-1.5 text-theme-muted hover:text-theme-text text-[10px] md:text-xs font-bold rounded tracking-widest transition"
+          class="touch-target px-2 md:px-4 py-1.5 text-theme-muted hover:text-theme-text text-micro md:text-xs font-bold rounded tracking-widest transition"
         >
           CANCEL
         </button>
         <button
           onclick={onSave}
           disabled={isSaving}
-          class="px-2 md:px-4 py-1.5 bg-theme-primary hover:bg-theme-secondary disabled:opacity-50 text-theme-bg text-[10px] md:text-xs font-bold rounded tracking-widest transition flex items-center gap-2"
+          class="touch-target px-2 md:px-4 py-1.5 bg-theme-primary hover:bg-theme-secondary disabled:opacity-50 text-theme-bg text-micro md:text-xs font-bold rounded tracking-widest transition flex items-center gap-2"
         >
           {#if isSaving}
             <span class="icon-[lucide--loader-2] w-3 h-3 animate-spin"></span>
@@ -547,7 +547,7 @@
         <button
           type="button"
           onclick={onPopOut}
-          class="px-2 md:px-3 py-1.5 border border-theme-border text-theme-secondary hover:text-theme-primary transition flex items-center gap-2 rounded text-[10px] md:text-xs font-bold tracking-widest"
+          class="touch-target px-2 md:px-3 py-1.5 border border-theme-border text-theme-secondary hover:text-theme-primary transition flex items-center gap-2 rounded text-micro md:text-xs font-bold tracking-widest"
           title="Open in new tab"
           aria-label="Open in new tab"
         >

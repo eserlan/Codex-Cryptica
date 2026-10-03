@@ -162,7 +162,7 @@
               >
               {#if tool.id === "quicknote" && quickNoteStore.count > 0}
                 <span
-                  class="ml-auto rounded-full bg-theme-primary px-1.5 text-[10px] font-bold text-theme-bg"
+                  class="ml-auto rounded-full bg-theme-primary px-1.5 text-micro font-bold text-theme-bg"
                 >
                   {quickNoteStore.count}
                 </span>
@@ -276,7 +276,7 @@
     <!-- Footer Info -->
     <div class="p-4 border-t border-theme-border bg-theme-bg/30">
       <div
-        class="text-[10px] font-mono text-theme-muted uppercase tracking-widest text-center"
+        class="text-micro font-mono text-theme-muted uppercase tracking-widest text-center"
       >
         Codex Cryptica
       </div>

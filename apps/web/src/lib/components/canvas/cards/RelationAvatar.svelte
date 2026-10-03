@@ -43,7 +43,7 @@
   <span
     {title}
     aria-label={title}
-    class="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-theme-border bg-theme-primary/15 text-[9px] font-bold text-theme-primary"
+    class="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-theme-border bg-theme-primary/15 text-nano font-bold text-theme-primary"
   >
     {initial}
   </span>

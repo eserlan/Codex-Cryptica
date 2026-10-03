@@ -167,6 +167,14 @@ export const whatKindOfShipShouldAPirateCrewStartWith: AnswerConfigInput = {
       href: "/generators/settlement",
     },
   ],
+  relatedTopics: [
+    {
+      title: "Pirate & High-Seas Campaign Guides",
+      href: "/topics/pirates",
+      description:
+        "Browse the guide cluster for pirate systems, exploration, voyages, ship combat, islands, ports, and rivals.",
+    },
+  ],
   relatedForPages: [],
   relatedAnswers: [
     "what-kind-of-ship-should-a-sci-fi-rpg-party-start-with",

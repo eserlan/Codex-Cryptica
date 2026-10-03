@@ -21,7 +21,7 @@
           Archive Importer
         </h1>
         <p
-          class="text-[10px] md:text-xs text-theme-muted uppercase font-mono tracking-widest mt-1"
+          class="text-micro md:text-xs text-theme-muted uppercase font-mono tracking-widest mt-1"
         >
           Automatically organize your notes into the archive
         </p>
@@ -42,7 +42,7 @@
   </div>
 
   <footer
-    class="mt-4 text-center text-[10px] text-theme-muted/40 uppercase font-header tracking-widest shrink-0"
+    class="mt-4 text-center text-micro text-theme-muted/40 uppercase font-header tracking-widest shrink-0"
   >
     Secured Connection // Your data is safe and local
   </footer>

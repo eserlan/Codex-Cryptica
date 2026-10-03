@@ -128,7 +128,7 @@
     </div>
   {:else}
     <div
-      class="text-[10px] font-bold tracking-widest uppercase font-header mb-2"
+      class="text-micro font-bold tracking-widest uppercase font-header mb-2"
       style:color="var(--theme-meta-text)"
     >
       {entity.type}{#if dateText}
@@ -159,7 +159,7 @@
     role="tablist"
     aria-label="Entity detail sections"
     tabindex="0"
-    class="flex overflow-x-auto custom-scrollbar gap-x-4 md:gap-x-6 gap-y-2 text-[10px] font-bold tracking-widest text-theme-muted border-b border-theme-border pb-2 font-header"
+    class="flex overflow-x-auto custom-scrollbar gap-x-4 md:gap-x-6 gap-y-2 text-micro font-bold tracking-widest text-theme-muted border-b border-theme-border pb-2 font-header"
     style:border-color={isFantasyTheme
       ? "var(--theme-selected-border)"
       : undefined}
@@ -170,6 +170,8 @@
       type="button"
       role="tab"
       class:shrink-0={true}
+      class:touch-target={true}
+      class:items-center={true}
       aria-selected={activeTab === "status"}
       aria-controls={panelIds.status}
       tabindex={activeTab === "status" ? 0 : -1}
@@ -196,6 +198,8 @@
       type="button"
       role="tab"
       class:shrink-0={true}
+      class:touch-target={true}
+      class:items-center={true}
       aria-selected={activeTab === "connections"}
       aria-controls={panelIds.connections}
       tabindex={activeTab === "connections" ? 0 : -1}
@@ -223,6 +227,8 @@
         type="button"
         role="tab"
         class:shrink-0={true}
+        class:touch-target={true}
+        class:items-center={true}
         aria-selected={activeTab === "lore"}
         aria-controls={panelIds.lore}
         tabindex={activeTab === "lore" ? 0 : -1}
@@ -251,6 +257,8 @@
       type="button"
       role="tab"
       class:shrink-0={true}
+      class:touch-target={true}
+      class:items-center={true}
       aria-selected={activeTab === "map"}
       aria-controls={panelIds.map}
       tabindex={activeTab === "map" ? 0 : -1}
@@ -277,6 +285,8 @@
         type="button"
         role="tab"
         class:shrink-0={true}
+        class:touch-target={true}
+        class:items-center={true}
         aria-selected={activeTab === "chats"}
         aria-controls={panelIds.chats}
         tabindex={activeTab === "chats" ? 0 : -1}
@@ -304,6 +314,8 @@
         type="button"
         role="tab"
         class:shrink-0={true}
+        class:touch-target={true}
+        class:items-center={true}
         aria-selected={activeTab === "family"}
         aria-controls={panelIds.family}
         tabindex={activeTab === "family" ? 0 : -1}
@@ -330,6 +342,8 @@
       type="button"
       role="tab"
       class:shrink-0={true}
+      class:touch-target={true}
+      class:items-center={true}
       aria-selected={activeTab === "stats"}
       aria-controls={panelIds.stats}
       tabindex={activeTab === "stats" ? 0 : -1}
@@ -355,6 +369,8 @@
       type="button"
       role="tab"
       class:shrink-0={true}
+      class:touch-target={true}
+      class:items-center={true}
       aria-selected={activeTab === "timeline"}
       aria-controls={panelIds.timeline}
       tabindex={activeTab === "timeline" ? 0 : -1}

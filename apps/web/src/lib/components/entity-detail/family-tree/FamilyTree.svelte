@@ -25,7 +25,7 @@
     <button
       type="button"
       data-testid="toggle-parents"
-      class="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wide text-theme-muted hover:text-theme-primary"
+      class="flex items-center gap-1 text-micro font-bold uppercase tracking-wide text-theme-muted hover:text-theme-primary"
       aria-expanded={!parentsCollapsed}
       onclick={() => (parentsCollapsed = !parentsCollapsed)}
     >
@@ -96,7 +96,7 @@
     <button
       type="button"
       data-testid="toggle-children"
-      class="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wide text-theme-muted hover:text-theme-primary"
+      class="flex items-center gap-1 text-micro font-bold uppercase tracking-wide text-theme-muted hover:text-theme-primary"
       aria-expanded={!childrenCollapsed}
       onclick={() => (childrenCollapsed = !childrenCollapsed)}
     >

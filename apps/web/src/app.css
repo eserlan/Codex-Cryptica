@@ -128,9 +128,49 @@
   --font-header: var(--font-header-val);
   --font-body: var(--font-body-val);
   --font-display: var(--font-display-val, var(--font-header-val));
+
+  /*
+   * Semantic UI type scale (#3718). Values come from --type-* so they can grow
+   * on mobile (see @layer base) while desktop/tablet keep their current sizes.
+   */
+  --text-nano: var(--type-nano);
+  --text-nano--line-height: 1.4;
+  --text-micro: var(--type-micro);
+  --text-micro--line-height: 1.4;
+  --text-meta: var(--type-meta);
+  --text-meta--line-height: 1.4;
+  --text-helper: var(--type-helper);
+  --text-helper--line-height: 1.5;
+  --text-body-ui: var(--type-body-ui);
+  --text-body-ui--line-height: 1.5;
+
+  /* text-xs follows the helper size so existing helper copy grows on mobile only */
+  --text-xs: var(--type-helper);
+  --text-xs--line-height: var(--type-xs-lh);
 }
 
 @layer base {
+  /* Mobile typography scale (#3718): micro/meta >= 13px, helper >= 14px, body 16px. */
+  :root {
+    --type-xs-lh: 1.33333;
+    --type-nano: 0.5625rem;
+    --type-micro: 0.625rem;
+    --type-meta: 0.6875rem;
+    --type-helper: 0.75rem;
+    --type-body-ui: 0.75rem;
+  }
+
+  @media (max-width: 639.98px) {
+    :root {
+      --type-xs-lh: 1.5;
+      --type-nano: 0.8125rem;
+      --type-micro: 0.8125rem;
+      --type-meta: 0.8125rem;
+      --type-helper: 0.875rem;
+      --type-body-ui: 1rem;
+    }
+  }
+
   :root {
     color-scheme: light dark;
     --header-height: 65px;
@@ -683,6 +723,17 @@
 }
 
 @layer utilities {
+  /* Minimum 44x44px touch target on mobile only (#3718) */
+  .touch-target {
+    @media (max-width: 639.98px) {
+      min-height: 2.75rem;
+      min-width: 2.75rem;
+      /* Keep icons and labels centred when the control grows to 44px */
+      align-items: center;
+      justify-content: center;
+    }
+  }
+
   /* Safe Area Utilities */
   .pb-safe {
     padding-bottom: calc(env(safe-area-inset-bottom, 0px));
@@ -734,4 +785,27 @@
   display: block;
   overflow-x: auto;
   max-width: 100%;
+}
+
+/*
+ * Text-entry controls must be at least 16px on mobile (#3718). Unlayered and
+ * !important so it beats per-component text-xs/text-[10px] utilities; it also
+ * prevents iOS Safari focus-zoom.
+ */
+@media (max-width: 639.98px) {
+  textarea,
+  select,
+  input:not(
+    [type="checkbox"],
+    [type="radio"],
+    [type="range"],
+    [type="color"],
+    [type="file"],
+    [type="button"],
+    [type="submit"],
+    [type="reset"],
+    [type="image"]
+  ) {
+    font-size: max(1rem, 16px) !important;
+  }
 }

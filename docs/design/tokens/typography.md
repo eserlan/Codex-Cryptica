@@ -21,6 +21,24 @@ We use standard Tailwind typography scales with semantic overrides for prose:
 - `text-xl`: 1.25rem (20px)
 - `text-2xl`: 1.5rem (24px)
 
+### Mobile Typography Scale (#3718)
+
+Prefer these semantic tokens over `text-[10px]`/`text-[11px]`/`text-xs` for UI text. They grow below the `sm` breakpoint (640px) and keep today's sizes above it.
+
+| Utility        | Desktop/tablet | Mobile | Use for                                   |
+| -------------- | -------------- | ------ | ----------------------------------------- |
+| `text-nano`    | 9px            | 13px   | Legacy 8–9px labels (prefer `text-micro`) |
+| `text-micro`   | 10px           | 13px   | Tiny uppercase labels, badges             |
+| `text-meta`    | 11px           | 13px   | Chips, tags, source labels, metadata      |
+| `text-helper`  | 12px           | 14px   | Helper/privacy copy, captions, tooltips   |
+| `text-body-ui` | 12px           | 16px   | Panel/answer body text, compact inputs    |
+
+- `text-xs` itself resolves to the helper size (12px → 14px on mobile).
+- Run `bun scripts/mobile-type-codemod.mjs --write` to migrate stray `text-[8..11px]` uses.
+- Inputs, textareas and selects are forced to at least 16px below `sm` by a global rule in `app.css`.
+- Use `touch-target` (44×44px minimum on mobile only) on icon buttons, chips and small controls.
+- Do not add new `text-[Npx]` below 12px; `app.css.test.ts` guards the token contract.
+
 ### Themed Typography
 
 Font families are not hardcoded but are mapped to theme-specific variables. This allows the aesthetic to shift across themes without requiring component-level typography changes.

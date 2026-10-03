@@ -276,13 +276,13 @@
 >
   <div class="flex flex-wrap items-center justify-between gap-3">
     <h3
-      class="font-header text-[10px] font-bold uppercase tracking-[0.2em] text-theme-muted"
+      class="font-header text-micro font-bold uppercase tracking-[0.2em] text-theme-muted"
     >
       Draw
     </h3>
     <div class="flex items-center gap-2">
       <label class="flex items-center gap-1">
-        <span class="font-mono text-[9px] uppercase text-theme-muted"
+        <span class="font-mono text-nano uppercase text-theme-muted"
           >How many</span
         >
         <input
@@ -295,7 +295,7 @@
       </label>
       <button
         type="button"
-        class="flex items-center gap-2 rounded-lg border border-theme-primary/30 bg-theme-primary/10 px-3 py-1.5 font-header text-[10px] font-bold uppercase tracking-widest text-theme-primary transition-all hover:bg-theme-primary hover:text-theme-bg active:scale-95 disabled:cursor-not-allowed disabled:opacity-40"
+        class="flex items-center gap-2 rounded-lg border border-theme-primary/30 bg-theme-primary/10 px-3 py-1.5 font-header text-micro font-bold uppercase tracking-widest text-theme-primary transition-all hover:bg-theme-primary hover:text-theme-bg active:scale-95 disabled:cursor-not-allowed disabled:opacity-40"
         onclick={draw}
         disabled={busy || cards.length === 0}
         data-testid="draw-cards"
@@ -306,7 +306,7 @@
       </button>
       <button
         type="button"
-        class="rounded-lg border border-theme-border px-3 py-1.5 font-header text-[10px] uppercase tracking-widest text-theme-muted transition-colors hover:border-theme-primary hover:text-theme-primary disabled:opacity-40"
+        class="rounded-lg border border-theme-border px-3 py-1.5 font-header text-micro uppercase tracking-widest text-theme-muted transition-colors hover:border-theme-primary hover:text-theme-primary disabled:opacity-40"
         onclick={reshuffle}
         disabled={busy || discarded.length === 0}
         title="Put every discarded card back and shuffle"
@@ -322,7 +322,7 @@
       Add a card and this deck can be drawn from.
     </p>
   {:else}
-    <p class="font-mono text-[10px] uppercase tracking-widest text-theme-muted">
+    <p class="font-mono text-micro uppercase tracking-widest text-theme-muted">
       {#if withReplacement}
         <span data-testid="deck-remaining">{cards.length}</span> cards, drawn with
         the whole deck available every time
@@ -346,7 +346,7 @@
       <div>
         <button
           type="button"
-          class="rounded bg-amber-500 px-2.5 py-1 font-header text-[10px] uppercase tracking-widest text-white"
+          class="rounded bg-amber-500 px-2.5 py-1 font-header text-micro uppercase tracking-widest text-white"
           onclick={reshuffle}
           disabled={busy}
           data-testid="confirm-reshuffle"
@@ -377,7 +377,7 @@
         >
           {#if outcome.positions?.[index]}
             <span
-              class="mb-1 block font-mono text-[9px] uppercase tracking-widest text-theme-primary"
+              class="mb-1 block font-mono text-nano uppercase tracking-widest text-theme-primary"
               data-testid="drawn-position"
             >
               {outcome.positions[index]}
@@ -411,7 +411,7 @@
                 </span>
                 {#if drawn.reversed}
                   <span
-                    class="rounded bg-theme-primary/10 px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-widest text-theme-primary"
+                    class="rounded bg-theme-primary/10 px-1.5 py-0.5 font-mono text-nano uppercase tracking-widest text-theme-primary"
                     data-testid="drawn-reversed"
                   >
                     Reversed
@@ -444,7 +444,7 @@
     <div class="flex flex-wrap gap-2 border-t border-theme-border/40 pt-3">
       <button
         type="button"
-        class="flex items-center gap-1.5 rounded border border-theme-border px-2.5 py-1 font-header text-[9px] uppercase tracking-widest text-theme-muted transition-colors hover:border-theme-primary hover:text-theme-primary disabled:cursor-not-allowed disabled:opacity-40"
+        class="flex items-center gap-1.5 rounded border border-theme-border px-2.5 py-1 font-header text-nano uppercase tracking-widest text-theme-muted transition-colors hover:border-theme-primary hover:text-theme-primary disabled:cursor-not-allowed disabled:opacity-40"
         onclick={addResultToChat}
         disabled={isAddingToChat}
         aria-busy={isAddingToChat}
@@ -458,7 +458,7 @@
       </button>
       <button
         type="button"
-        class="flex items-center gap-1.5 rounded border border-theme-border px-2.5 py-1 font-header text-[9px] uppercase tracking-widest text-theme-muted transition-colors hover:border-theme-primary hover:text-theme-primary"
+        class="flex items-center gap-1.5 rounded border border-theme-border px-2.5 py-1 font-header text-nano uppercase tracking-widest text-theme-muted transition-colors hover:border-theme-primary hover:text-theme-primary"
         onclick={copyResult}
         data-testid="copy-draw-result"
       >
@@ -472,14 +472,14 @@
     <div class="flex flex-col gap-2 border-t border-theme-border/40 pt-3">
       <div class="flex items-center justify-between">
         <h4
-          class="font-header text-[9px] font-bold uppercase tracking-[0.2em] text-theme-muted"
+          class="font-header text-nano font-bold uppercase tracking-[0.2em] text-theme-muted"
         >
           Spreads
         </h4>
         {#if onChange}
           <button
             type="button"
-            class="rounded border border-theme-border px-2 py-0.5 font-header text-[9px] uppercase tracking-widest text-theme-text transition-colors hover:border-theme-primary hover:text-theme-primary"
+            class="rounded border border-theme-border px-2 py-0.5 font-header text-nano uppercase tracking-widest text-theme-text transition-colors hover:border-theme-primary hover:text-theme-primary"
             onclick={addSpread}
             data-testid="add-spread"
           >
@@ -517,13 +517,13 @@
             <span class="font-header text-xs text-theme-text"
               >{spread.name}</span
             >
-            <span class="font-mono text-[10px] text-theme-muted"
+            <span class="font-mono text-micro text-theme-muted"
               >{spread.positions.join(" · ")}</span
             >
           {/if}
           <button
             type="button"
-            class="rounded border border-theme-primary/30 bg-theme-primary/10 px-2.5 py-1 font-header text-[9px] uppercase tracking-widest text-theme-primary transition-all hover:bg-theme-primary hover:text-theme-bg disabled:opacity-40"
+            class="rounded border border-theme-primary/30 bg-theme-primary/10 px-2.5 py-1 font-header text-nano uppercase tracking-widest text-theme-primary transition-all hover:bg-theme-primary hover:text-theme-bg disabled:opacity-40"
             onclick={() => drawSpread(spread)}
             disabled={busy || spread.positions.length === 0}
             data-testid="draw-spread"
@@ -551,14 +551,14 @@
   {#if discarded.length > 0 && !withReplacement}
     <details class="rounded border border-theme-border/60 p-2">
       <summary
-        class="cursor-pointer font-header text-[9px] uppercase tracking-[0.2em] text-theme-muted"
+        class="cursor-pointer font-header text-nano uppercase tracking-[0.2em] text-theme-muted"
       >
         Discard pile ({discarded.length})
       </summary>
       <ul class="mt-2 flex flex-wrap gap-1.5">
         {#each discarded as card}
           <li
-            class="overflow-hidden rounded bg-theme-primary/10 text-[10px] text-theme-primary"
+            class="overflow-hidden rounded bg-theme-primary/10 text-micro text-theme-primary"
             data-testid="discarded-card"
           >
             <!-- The pill itself is the previewer: a thumbnail here is too small

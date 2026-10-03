@@ -284,7 +284,7 @@
                 <div class="flex items-center justify-between gap-2">
                   {#if answer.categoryLabel}
                     <span
-                      class="px-2.5 py-0.5 text-[11px] font-mono font-medium rounded-full bg-theme-bg border border-theme-border text-theme-primary"
+                      class="px-2.5 py-0.5 text-meta font-mono font-medium rounded-full bg-theme-bg border border-theme-border text-theme-primary"
                     >
                       {answer.categoryLabel}
                     </span>
@@ -390,7 +390,7 @@
               >
                 <div class="flex items-center justify-between gap-2">
                   <span
-                    class="px-2.5 py-0.5 text-[11px] font-mono font-medium rounded-full bg-theme-bg border border-theme-border text-theme-primary"
+                    class="px-2.5 py-0.5 text-meta font-mono font-medium rounded-full bg-theme-bg border border-theme-border text-theme-primary"
                   >
                     {item.generatorTitle || item.generatorId}
                   </span>

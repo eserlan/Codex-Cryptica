@@ -124,7 +124,7 @@
       >
         Initiative
       </h3>
-      <p class="text-[10px] text-theme-muted mt-1">
+      <p class="text-micro text-theme-muted mt-1">
         Round {mapSession.round}
       </p>
     </div>
@@ -146,7 +146,7 @@
       {/if}
 
       <button
-        class={`rounded-lg bg-theme-primary text-theme-bg text-[10px] font-bold uppercase tracking-widest ${
+        class={`rounded-lg bg-theme-primary text-theme-bg text-micro font-bold uppercase tracking-widest ${
           compact ? "px-2.5 py-1.5" : "px-3 py-2"
         }`}
         onclick={() => mapSession.advanceTurn()}
@@ -223,7 +223,7 @@
                 </div>
                 {#if ownerName(token)}
                   <div
-                    class="text-[9px] text-theme-muted uppercase tracking-wider truncate"
+                    class="text-nano text-theme-muted uppercase tracking-wider truncate"
                   >
                     {ownerName(token)}
                   </div>
@@ -234,7 +234,7 @@
 
           <div class="flex items-center gap-2">
             <label
-              class="text-[10px] uppercase tracking-widest text-theme-muted"
+              class="text-micro uppercase tracking-widest text-theme-muted"
               for={`initiative-${entry.tokenId}`}
             >
               Init

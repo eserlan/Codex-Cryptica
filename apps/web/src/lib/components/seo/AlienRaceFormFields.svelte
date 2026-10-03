@@ -34,7 +34,7 @@
   const selectClass =
     "w-full min-h-12 rounded-lg border border-theme-border/60 bg-theme-bg/60 px-3 py-2.5 text-base text-theme-text focus:border-theme-primary/60 focus:outline-none md:text-sm";
   const labelClass =
-    "text-[10px] font-bold uppercase tracking-wider text-theme-text/80";
+    "text-micro font-bold uppercase tracking-wider text-theme-text/80";
 
   // Grounded mode hides the exotic body plans and environments entirely, so
   // the form cannot offer a plasma being to someone who asked for a
@@ -94,7 +94,7 @@
   inputClass={selectClass}
   customPlaceholder="Enter a custom generation mode"
 />
-<p class="-mt-1 text-[10px] leading-relaxed text-theme-text/60">
+<p class="-mt-1 text-micro leading-relaxed text-theme-text/60">
   Grounded keeps the species biologically plausible and shaped by its
   environment. Freeform also allows crystalline, colonial, plasma and machine
   life.
@@ -181,7 +181,7 @@
 <div class="flex justify-end pt-2">
   <button
     type="button"
-    class="flex cursor-pointer items-center gap-1.5 rounded-lg border border-theme-border/60 bg-theme-surface/60 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-theme-text transition-all hover:border-theme-primary hover:bg-theme-primary hover:text-theme-bg"
+    class="flex cursor-pointer items-center gap-1.5 rounded-lg border border-theme-border/60 bg-theme-surface/60 px-3 py-1.5 text-micro font-bold uppercase tracking-wider text-theme-text transition-all hover:border-theme-primary hover:bg-theme-primary hover:text-theme-bg"
     title="Randomize all options and generate a draft from the result"
     onclick={() => {
       // Genre is deliberately left alone: it is a user-controlled axis and
@@ -222,7 +222,7 @@
   ></textarea>
   <p
     id="alien-race-campaign-context-help"
-    class="text-[10px] text-theme-text/60 leading-relaxed"
+    class="text-micro text-theme-text/60 leading-relaxed"
   >
     Name the world, system, or powers this species lives among — or describe the
     species concept you already have in mind. Anything you name here is kept and

@@ -125,7 +125,7 @@
     </div>
 
     <div class="flex items-center justify-between gap-3 flex-wrap">
-      <p class="text-[11px] text-theme-text-muted">
+      <p class="text-meta text-theme-text-muted">
         {shelf.entries.length}
         {shelf.entries.length === 1 ? "entry" : "entries"} · {formatSize(
           shelf.totalBytes,

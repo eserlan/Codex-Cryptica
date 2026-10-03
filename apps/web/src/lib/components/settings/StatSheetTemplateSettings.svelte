@@ -403,7 +403,7 @@
     {#each template.fields as field, index (field.id)}
       <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
       <li
-        class="flex items-center justify-between gap-2 rounded px-1.5 py-1 text-[11px] transition-colors {!template.isBuiltIn &&
+        class="flex items-center justify-between gap-2 rounded px-1.5 py-1 text-meta transition-colors {!template.isBuiltIn &&
         draggedFieldKey === `${template.id}-${index}`
           ? 'opacity-40 border-dashed border-theme-primary'
           : !template.isBuiltIn &&
@@ -452,7 +452,7 @@
         <div class="flex items-center gap-1.5 shrink-0">
           {#if field.type !== "heading"}
             <span
-              class="rounded border border-theme-border px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-theme-muted"
+              class="rounded border border-theme-border px-1.5 py-0.5 text-nano font-bold uppercase tracking-wide text-theme-muted"
             >
               {FIELD_TYPE_LABELS[field.type] ?? field.type}
               {#if field.type === "dice" && field.formula}
@@ -493,7 +493,7 @@
         </div>
       </li>
     {:else}
-      <li class="text-[10px] text-theme-muted">No fields.</li>
+      <li class="text-micro text-theme-muted">No fields.</li>
     {/each}
   </ul>
 {/snippet}
@@ -507,7 +507,7 @@
         >
           Applicable Templates for Vault ({vaultRegistry.vaultName})
         </h4>
-        <p class="text-[10px] text-theme-muted mt-1 leading-relaxed">
+        <p class="text-micro text-theme-muted mt-1 leading-relaxed">
           Select which stat sheet templates apply to this campaign/vault.
           Disabled templates will be hidden from entity template pickers.
         </p>
@@ -521,7 +521,7 @@
     >
       Default Template by Category
     </h4>
-    <p class="text-[10px] text-theme-muted mb-4 leading-relaxed">
+    <p class="text-micro text-theme-muted mb-4 leading-relaxed">
       When set, new entities of that category automatically start with this
       template's fields already applied. Leave as "None" for categories that
       shouldn't get stats by default.
@@ -595,7 +595,7 @@
                   >{template.name}</span
                 >
                 {#if template.description}
-                  <span class="text-[10px] text-theme-muted truncate block"
+                  <span class="text-micro text-theme-muted truncate block"
                     >{template.description}</span
                   >
                 {/if}
@@ -603,7 +603,7 @@
             </button>
             <button
               type="button"
-              class="flex items-center gap-1.5 rounded border px-2 py-1 text-[10px] font-bold uppercase tracking-wide transition-colors shrink-0 {statSheetTemplates.isTemplateEnabled(
+              class="flex items-center gap-1.5 rounded border px-2 py-1 text-micro font-bold uppercase tracking-wide transition-colors shrink-0 {statSheetTemplates.isTemplateEnabled(
                 template.id,
               )
                 ? 'border-theme-primary/40 bg-theme-primary/10 text-theme-primary'
@@ -631,7 +631,7 @@
             </button>
             <button
               type="button"
-              class="inline-flex items-center gap-1.5 rounded border border-theme-primary/40 px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-theme-primary transition-colors hover:border-theme-primary hover:bg-theme-primary/10"
+              class="inline-flex items-center gap-1.5 rounded border border-theme-primary/40 px-2 py-1 text-micro font-bold uppercase tracking-wide text-theme-primary transition-colors hover:border-theme-primary hover:bg-theme-primary/10"
               onclick={() => saveBuiltInAsVaultTemplate(template)}
               title="Save an editable vault copy of this template"
               aria-label="Save a vault copy of {template.name} template"
@@ -665,7 +665,7 @@
       </h4>
       <a
         href={resolve("/templates")}
-        class="inline-flex items-center gap-1.5 rounded border border-theme-primary/40 px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-wide text-theme-primary transition-colors hover:border-theme-primary hover:bg-theme-primary/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary"
+        class="inline-flex items-center gap-1.5 rounded border border-theme-primary/40 px-2.5 py-1.5 text-micro font-bold uppercase tracking-wide text-theme-primary transition-colors hover:border-theme-primary hover:bg-theme-primary/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary"
         data-testid="browse-community-stat-sheet-templates"
       >
         <span class="icon-[lucide--users-round] h-3.5 w-3.5" aria-hidden="true"
@@ -674,7 +674,7 @@
       </a>
       <button
         type="button"
-        class="inline-flex items-center gap-1.5 rounded bg-theme-primary px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-wide text-theme-bg transition-colors hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
+        class="inline-flex items-center gap-1.5 rounded bg-theme-primary px-2.5 py-1.5 text-micro font-bold uppercase tracking-wide text-theme-bg transition-colors hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
         disabled={selectedPublishCount === 0}
         onclick={openPublishSelection}
         data-testid="publish-selected-stat-sheet-templates"
@@ -721,13 +721,13 @@
                   />
                   <button
                     onclick={handleRename}
-                    class="px-3 py-1 bg-theme-primary text-theme-bg text-[11px] font-bold rounded uppercase font-header transition-colors"
+                    class="px-3 py-1 bg-theme-primary text-theme-bg text-meta font-bold rounded uppercase font-header transition-colors"
                   >
                     Save
                   </button>
                   <button
                     onclick={() => (editingId = null)}
-                    class="px-3 py-1 border border-theme-border text-theme-muted text-[11px] font-bold rounded uppercase font-header hover:text-theme-text transition-colors"
+                    class="px-3 py-1 border border-theme-border text-theme-muted text-meta font-bold rounded uppercase font-header hover:text-theme-text transition-colors"
                   >
                     Cancel
                   </button>
@@ -761,7 +761,7 @@
 
             <button
               type="button"
-              class="flex items-center gap-1.5 rounded border px-2 py-1 text-[10px] font-bold uppercase tracking-wide transition-colors shrink-0 {statSheetTemplates.isTemplateEnabled(
+              class="flex items-center gap-1.5 rounded border px-2 py-1 text-micro font-bold uppercase tracking-wide transition-colors shrink-0 {statSheetTemplates.isTemplateEnabled(
                 template.id,
               )
                 ? 'border-theme-primary/40 bg-theme-primary/10 text-theme-primary'
@@ -836,7 +836,7 @@
           >
             No vault templates saved yet
           </p>
-          <p class="text-[10px] text-theme-muted/70 mt-2 max-w-sm mx-auto">
+          <p class="text-micro text-theme-muted/70 mt-2 max-w-sm mx-auto">
             Save a stat sheet layout as a template from an entity's Stats tab to
             see it here.
           </p>
@@ -853,7 +853,7 @@
         >
           Presentation Layout Templates
         </h4>
-        <p class="text-[10px] text-theme-muted mt-1 leading-relaxed">
+        <p class="text-micro text-theme-muted mt-1 leading-relaxed">
           Custom card, grid, and table layouts for stat sheets.
         </p>
       </div>
@@ -921,21 +921,21 @@
               </span>
               {#if t.id === schemaDefaultPresentationId}
                 <span
-                  class="rounded bg-theme-primary/10 border border-theme-primary/30 px-1.5 py-0.5 text-[9px] font-bold text-theme-primary uppercase tracking-wider"
+                  class="rounded bg-theme-primary/10 border border-theme-primary/30 px-1.5 py-0.5 text-nano font-bold text-theme-primary uppercase tracking-wider"
                 >
                   Default
                 </span>
               {/if}
               {#if t.isBuiltIn}
                 <span
-                  class="rounded bg-theme-surface border border-theme-border px-1.5 py-0.5 text-[9px] font-bold text-theme-muted uppercase tracking-wider"
+                  class="rounded bg-theme-surface border border-theme-border px-1.5 py-0.5 text-nano font-bold text-theme-muted uppercase tracking-wider"
                 >
                   Built-in
                 </span>
               {/if}
             </div>
             {#if t.description}
-              <span class="text-[10px] text-theme-muted truncate mt-0.5"
+              <span class="text-micro text-theme-muted truncate mt-0.5"
                 >{t.description}</span
               >
             {/if}
@@ -944,7 +944,7 @@
           <div class="flex items-center gap-2 shrink-0">
             <button
               type="button"
-              class="rounded border border-theme-border px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-theme-muted hover:border-theme-primary hover:text-theme-primary transition-colors"
+              class="rounded border border-theme-border px-2.5 py-1 text-micro font-bold uppercase tracking-wide text-theme-muted hover:border-theme-primary hover:text-theme-primary transition-colors"
               onclick={() => {
                 presentationTemplates.exportTemplate(t);
                 notificationStore.notify(`Exported "${t.name}"`, "info");
@@ -957,7 +957,7 @@
             {#if t.isBuiltIn}
               <button
                 type="button"
-                class="rounded border border-theme-border px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-theme-muted hover:border-theme-primary hover:text-theme-primary transition-colors"
+                class="rounded border border-theme-border px-2.5 py-1 text-micro font-bold uppercase tracking-wide text-theme-muted hover:border-theme-primary hover:text-theme-primary transition-colors"
                 onclick={() => openDuplicatePresentation(t)}
                 data-testid="presentation-manager-duplicate"
               >
@@ -966,7 +966,7 @@
             {:else}
               <button
                 type="button"
-                class="rounded border border-theme-border px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-theme-muted hover:border-theme-primary hover:text-theme-primary transition-colors"
+                class="rounded border border-theme-border px-2.5 py-1 text-micro font-bold uppercase tracking-wide text-theme-muted hover:border-theme-primary hover:text-theme-primary transition-colors"
                 onclick={() => openEditPresentation(t)}
                 data-testid="presentation-manager-edit"
               >
@@ -974,7 +974,7 @@
               </button>
               <button
                 type="button"
-                class="rounded border border-theme-border px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-theme-muted hover:border-red-500 hover:text-red-500 transition-colors"
+                class="rounded border border-theme-border px-2.5 py-1 text-micro font-bold uppercase tracking-wide text-theme-muted hover:border-red-500 hover:text-red-500 transition-colors"
                 onclick={() => deletePresentationTemplate(t)}
                 data-testid="presentation-manager-delete"
               >

@@ -51,13 +51,13 @@
     testId="journal-entry-edit-input"
   />
   {#if error}
-    <p role="alert" class="text-[10px] text-theme-danger">{error}</p>
+    <p role="alert" class="text-micro text-theme-danger">{error}</p>
   {/if}
   <div class="flex justify-end gap-2">
     <button
       type="button"
       onclick={onCancel}
-      class="font-header text-[9px] font-bold uppercase tracking-wider text-theme-muted transition-colors hover:text-theme-text"
+      class="font-header text-nano font-bold uppercase tracking-wider text-theme-muted transition-colors hover:text-theme-text"
       data-testid="journal-entry-edit-cancel"
     >
       Cancel
@@ -66,7 +66,7 @@
       type="button"
       onclick={save}
       disabled={isSaving}
-      class="font-header text-[9px] font-bold uppercase tracking-wider text-theme-primary transition-colors hover:text-theme-secondary disabled:opacity-40"
+      class="font-header text-nano font-bold uppercase tracking-wider text-theme-primary transition-colors hover:text-theme-secondary disabled:opacity-40"
       data-testid="journal-entry-edit-save"
     >
       Save

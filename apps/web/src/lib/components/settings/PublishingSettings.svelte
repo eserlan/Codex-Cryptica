@@ -231,7 +231,7 @@
             class="p-3 bg-theme-surface border border-theme-border/40 rounded"
           >
             <span
-              class="text-[10px] text-theme-text/50 font-header uppercase tracking-wider block"
+              class="text-micro text-theme-text/50 font-header uppercase tracking-wider block"
               >Entities</span
             >
             <span
@@ -243,7 +243,7 @@
             class="p-3 bg-theme-surface border border-theme-border/40 rounded"
           >
             <span
-              class="text-[10px] text-theme-text/50 font-header uppercase tracking-wider block"
+              class="text-micro text-theme-text/50 font-header uppercase tracking-wider block"
               >Connections</span
             >
             <span
@@ -255,7 +255,7 @@
             class="p-3 bg-theme-surface border border-theme-border/40 rounded"
           >
             <span
-              class="text-[10px] text-theme-text/50 font-header uppercase tracking-wider block"
+              class="text-micro text-theme-text/50 font-header uppercase tracking-wider block"
               >Uploaded Assets</span
             >
             <span
@@ -267,7 +267,7 @@
             class="p-3 bg-theme-surface border border-theme-border/40 rounded"
           >
             <span
-              class="text-[10px] text-theme-text/50 font-header uppercase tracking-wider block"
+              class="text-micro text-theme-text/50 font-header uppercase tracking-wider block"
               >Last Published</span
             >
             <span

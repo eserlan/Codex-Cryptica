@@ -105,7 +105,7 @@
     >
       <div class="px-6 mb-8 hidden md:block">
         <span
-          class="text-[11px] font-header text-chrome-muted uppercase tracking-[0.3em]"
+          class="text-meta font-header text-chrome-muted uppercase tracking-[0.3em]"
           >Configuration</span
         >
       </div>
@@ -147,7 +147,7 @@
       </div>
 
       <div
-        class="mt-auto p-4 md:p-6 text-[10px] font-header text-chrome-muted/40 uppercase hidden md:block"
+        class="mt-auto p-4 md:p-6 text-micro font-header text-chrome-muted/40 uppercase hidden md:block"
       >
         Version {VERSION} // Build {CODENAME}
       </div>
@@ -204,7 +204,7 @@
                 class="bg-chrome-surface border border-chrome-border p-4 rounded font-body"
               >
                 <div
-                  class="text-[11px] text-chrome-muted uppercase mb-1 font-header"
+                  class="text-meta text-chrome-muted uppercase mb-1 font-header"
                 >
                   Status
                 </div>
@@ -215,7 +215,7 @@
                 </div>
 
                 <div
-                  class="text-[11px] text-chrome-muted uppercase mb-1 font-header"
+                  class="text-meta text-chrome-muted uppercase mb-1 font-header"
                 >
                   Entity Count
                 </div>
@@ -268,7 +268,7 @@
                     class="block text-sm font-bold text-chrome-text uppercase font-header cursor-pointer"
                     for="ai-disabled-toggle">AI Disabled</label
                   >
-                  <p class="text-[11px] text-chrome-muted">
+                  <p class="text-meta text-chrome-muted">
                     Disable all AI-powered features (Oracle chat, image
                     generation, tag suggestions).
                   </p>
@@ -366,7 +366,7 @@
                       for="skip-welcome-screen-toggle"
                       >Skip Welcome Screen</label
                     >
-                    <p class="text-[11px] text-chrome-muted">
+                    <p class="text-meta text-chrome-muted">
                       Hide the marketing landing page on startup even when no
                       vault is initialized.
                     </p>
@@ -428,7 +428,7 @@
               >
                 Manifest
               </h3>
-              <div class="grid grid-cols-2 gap-4 font-body text-[11px]">
+              <div class="grid grid-cols-2 gap-4 font-body text-meta">
                 <div>
                   <div class="text-chrome-muted uppercase mb-1 font-header">
                     Software
@@ -553,13 +553,11 @@
 
             <section class="pt-4 text-center">
               <div
-                class="text-[10px] font-header text-chrome-muted/40 uppercase tracking-[0.5em] mb-2"
+                class="text-micro font-header text-chrome-muted/40 uppercase tracking-[0.5em] mb-2"
               >
                 Secure Connection Protocol Active
               </div>
-              <div
-                class="text-[8px] font-header text-chrome-muted/20 uppercase"
-              >
+              <div class="text-nano font-header text-chrome-muted/20 uppercase">
                 No telemetry detected // User privacy prioritized
               </div>
             </section>

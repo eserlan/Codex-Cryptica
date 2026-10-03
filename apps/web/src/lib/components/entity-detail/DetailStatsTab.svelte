@@ -158,7 +158,7 @@
 <div class="flex flex-col gap-3 pb-8" data-testid="detail-stats-tab">
   <div class="flex items-center justify-between">
     <span
-      class="text-[10px] font-bold uppercase tracking-widest text-theme-muted"
+      class="text-micro font-bold uppercase tracking-widest text-theme-muted"
     >
       Stat Sheet
     </span>
@@ -167,7 +167,7 @@
         {#if hasStats}
           <button
             type="button"
-            class="rounded border border-theme-border px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-theme-muted hover:border-red-500 hover:text-red-500"
+            class="rounded border border-theme-border px-2 py-1 text-micro font-bold uppercase tracking-wide text-theme-muted hover:border-red-500 hover:text-red-500"
             onclick={clearStatSheet}
             data-testid="stat-sheet-clear-stats"
           >
@@ -176,7 +176,7 @@
         {/if}
         <button
           type="button"
-          class="rounded border border-theme-border px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-theme-muted hover:border-theme-primary hover:text-theme-primary"
+          class="rounded border border-theme-border px-2 py-1 text-micro font-bold uppercase tracking-wide text-theme-muted hover:border-theme-primary hover:text-theme-primary"
           onclick={() => (showTemplateModal = true)}
           data-testid="stat-sheet-open-templates"
         >
@@ -185,7 +185,7 @@
         {#if schema}
           <button
             type="button"
-            class="rounded border border-theme-border px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-theme-muted hover:border-theme-primary hover:text-theme-primary"
+            class="rounded border border-theme-border px-2 py-1 text-micro font-bold uppercase tracking-wide text-theme-muted hover:border-theme-primary hover:text-theme-primary"
             onclick={() => (showPresentationManager = true)}
             data-testid="stat-sheet-open-presentation-templates"
           >
@@ -194,7 +194,7 @@
         {/if}
         <button
           type="button"
-          class="rounded border border-theme-border px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-theme-muted hover:border-theme-primary hover:text-theme-primary"
+          class="rounded border border-theme-border px-2 py-1 text-micro font-bold uppercase tracking-wide text-theme-muted hover:border-theme-primary hover:text-theme-primary"
           onclick={() => (isEditingLayout = !isEditingLayout)}
           data-testid="stat-sheet-toggle-editor"
         >

@@ -77,7 +77,7 @@
 >
   {#if sortedRolls.length === 0}
     <div
-      class="text-theme-muted text-[10px] text-center py-8 italic uppercase tracking-widest opacity-50"
+      class="text-theme-muted text-micro text-center py-8 italic uppercase tracking-widest opacity-50"
     >
       No recent rolls in this session
     </div>
@@ -120,7 +120,7 @@
       </span>
     </div>
     <span
-      class="text-[9px] text-theme-muted font-header uppercase tracking-tighter"
+      class="text-nano text-theme-muted font-header uppercase tracking-tighter"
     >
       {new Date(roll.timestamp).toLocaleTimeString([], {
         hour: "2-digit",
@@ -147,14 +147,14 @@
         {roll.total}
       </span>
       <span
-        class="text-[8px] font-bold text-theme-muted uppercase tracking-tighter mt-1.5"
+        class="text-nano font-bold text-theme-muted uppercase tracking-tighter mt-1.5"
       >
         {source.kind === "deck" ? "Draw" : "Rolled"}
       </span>
     </div>
     <div class="flex-1 flex flex-col gap-1">
       <span
-        class="text-[9px] font-bold text-theme-muted uppercase tracking-widest"
+        class="text-nano font-bold text-theme-muted uppercase tracking-widest"
         data-testid="roll-source-name"
       >
         {source.sourceName}
@@ -181,7 +181,7 @@
         {roll.total}
       </span>
       <span
-        class="text-[8px] font-bold text-theme-muted uppercase tracking-tighter mt-1.5"
+        class="text-nano font-bold text-theme-muted uppercase tracking-tighter mt-1.5"
         >Total</span
       >
     </div>
@@ -198,7 +198,7 @@
         />
       {:else}
         <!-- Fallback for legacy results or unexpected empty parts -->
-        <span class="text-[10px] text-theme-muted italic"
+        <span class="text-micro text-theme-muted italic"
           >Result Breakdown Unavailable</span
         >
       {/if}

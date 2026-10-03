@@ -218,7 +218,7 @@
                 >
                   Spatial {delveCanvasLabel}
                 </span>
-                <span class="text-[10px] text-theme-muted">
+                <span class="text-micro text-theme-muted">
                   {existingCanvas
                     ? "Interactive room & sector floor plan on Spatial Canvas."
                     : "Generate an interactive room & sector floor plan on Spatial Canvas."}
@@ -232,7 +232,7 @@
                   onclick={() => {
                     openCanvasFromZen(existingCanvas, goto);
                   }}
-                  class="px-3.5 py-1.5 bg-theme-primary text-theme-bg font-bold text-[10px] rounded-lg uppercase font-header tracking-widest hover:bg-theme-secondary transition-colors shrink-0 flex items-center gap-1.5 shadow-md cursor-pointer"
+                  class="px-3.5 py-1.5 bg-theme-primary text-theme-bg font-bold text-micro rounded-lg uppercase font-header tracking-widest hover:bg-theme-secondary transition-colors shrink-0 flex items-center gap-1.5 shadow-md cursor-pointer"
                 >
                   <span class="icon-[lucide--external-link] w-3.5 h-3.5"></span>
                   Open {delveCanvasLabel}
@@ -271,7 +271,7 @@
                       console.error("[DelveCanvas] Build failed:", err);
                     }
                   }}
-                  class="px-3.5 py-1.5 bg-theme-primary text-theme-bg font-bold text-[10px] rounded-lg uppercase font-header tracking-widest hover:bg-theme-secondary transition-colors shrink-0 flex items-center gap-1.5 shadow-md cursor-pointer"
+                  class="px-3.5 py-1.5 bg-theme-primary text-theme-bg font-bold text-micro rounded-lg uppercase font-header tracking-widest hover:bg-theme-secondary transition-colors shrink-0 flex items-center gap-1.5 shadow-md cursor-pointer"
                 >
                   <span class="icon-[lucide--map] w-3.5 h-3.5"></span>
                   Build {delveCanvasLabel}
@@ -294,7 +294,7 @@
           >
             {#if draft}
               <div
-                class="absolute top-0 right-0 p-2 text-[8px] font-bold text-theme-primary uppercase tracking-[0.2em]"
+                class="absolute top-0 right-0 p-2 text-nano font-bold text-theme-primary uppercase tracking-[0.2em]"
               >
                 Proposed
               </div>
@@ -342,7 +342,7 @@
           >
             {#if draft}
               <div
-                class="absolute top-0 right-0 p-2 text-[8px] font-bold text-theme-primary uppercase tracking-[0.2em]"
+                class="absolute top-0 right-0 p-2 text-nano font-bold text-theme-primary uppercase tracking-[0.2em]"
               >
                 Proposed
               </div>

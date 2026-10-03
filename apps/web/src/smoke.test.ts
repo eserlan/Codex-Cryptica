@@ -21,8 +21,12 @@ describe("Web App Smoke Test", () => {
     expect(appHtmlContent).toContain("--font-header-val");
     expect(appHtmlContent).toContain("--font-body-val");
     expect(appHtmlContent).toContain("--font-display-val");
-    expect(appHtmlContent).toMatch(
-      /western_dark:\s*\{[^}]*body:\s*"'Inter', sans-serif"\s*\}/,
+    const fontMap = appHtmlContent.match(
+      /const fonts = \{([\s\S]*?)\n\s*\};/,
+    )?.[1];
+    expect(fontMap).toBeDefined();
+    expect(fontMap).toMatch(
+      /western_dark:\s*\{[^}]*body:\s*"'Inter', sans-serif",?\s*\}/,
     );
   });
 });

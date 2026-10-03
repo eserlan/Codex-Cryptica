@@ -114,7 +114,7 @@
       {#if !outcome}
         <div class="flex flex-col min-w-0">
           <span
-            class="text-[9px] font-bold text-theme-muted uppercase tracking-widest leading-none mb-1 font-header"
+            class="text-nano font-bold text-theme-muted uppercase tracking-widest leading-none mb-1 font-header"
             >Result</span
           >
           <span
@@ -128,7 +128,7 @@
       {/if}
       <div class="flex flex-col items-end shrink-0 min-w-0">
         <span
-          class="text-[9px] font-bold text-theme-muted uppercase tracking-widest leading-none mb-1 font-header"
+          class="text-nano font-bold text-theme-muted uppercase tracking-widest leading-none mb-1 font-header"
           >Formula</span
         >
         <span

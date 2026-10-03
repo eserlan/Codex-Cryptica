@@ -191,7 +191,7 @@
             placeholder="name@example.com"
             class="w-full rounded-md border border-theme-border bg-theme-base px-3 py-2 text-sm text-theme-text placeholder-theme-text/40 focus:border-theme-primary focus:outline-none focus:ring-1 focus:ring-theme-primary"
           />
-          <p class="mt-1 text-[11px] text-theme-text/50">
+          <p class="mt-1 text-meta text-theme-text/50">
             We will never display your email publicly. Used solely for
             verification and follow-up.
           </p>

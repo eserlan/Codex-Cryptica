@@ -17,6 +17,7 @@ import { answers } from "./pages";
 import { getAllLandingPageSlugs } from "../for/registry";
 import { HEIST_TOPIC_CONFIG } from "../topics/heists";
 import { PUZZLE_TOPIC_CONFIG } from "../topics/puzzles";
+import { PIRATE_TOPIC_CONFIG } from "../topics/pirates";
 import { solutions } from "$lib/config/seo-pages";
 import { featuresConfig } from "$lib/config/seo-features";
 import { match as isGeneratorSlug } from "../../../params/generator_slug";
@@ -531,6 +532,20 @@ describe("published answers", () => {
         answer.relatedTools.every((tool) => tool.href !== "/topics/puzzles"),
       ),
     ).toBe(true);
+
+    const pirateAnswers = published.filter((answer) =>
+      answer.relatedTopics.some(
+        (topic) => topic.href === PIRATE_TOPIC_CONFIG.canonicalPath,
+      ),
+    );
+    expect(pirateAnswers).toHaveLength(7);
+    expect(
+      pirateAnswers.every((answer) =>
+        answer.relatedTools.every(
+          (tool) => tool.href !== PIRATE_TOPIC_CONFIG.canonicalPath,
+        ),
+      ),
+    ).toBe(true);
   });
 
   it("only links to routes the site actually publishes", () => {
@@ -541,6 +556,7 @@ describe("published answers", () => {
     const topicPaths = new Set([
       HEIST_TOPIC_CONFIG.canonicalPath,
       PUZZLE_TOPIC_CONFIG.canonicalPath,
+      PIRATE_TOPIC_CONFIG.canonicalPath,
     ]);
     const toolPages = new Set([
       "cyberpunk-nomad-clan-generator",

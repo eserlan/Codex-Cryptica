@@ -102,6 +102,36 @@ describe("rankChunks", () => {
     expect(ranked[0].score).toBeGreaterThan(ranked[1].score);
   });
 
+  it("keeps Connections tab guidance ahead of a faction generator for a newly created faction", () => {
+    const factionGenerator = chunk(
+      "faction-generator#0",
+      "Create a faction with a name, leader, and headquarters.",
+      { featureId: "campaign-generator" },
+    );
+    const question = "How do I connect the faction I just created?";
+    const onConnections = rankChunks(
+      question,
+      [factionGenerator, connections, ...filler],
+      FEATURE_REGISTRY,
+      connectionsScreen,
+    );
+    const elsewhere = rankChunks(
+      question,
+      [factionGenerator, connections, ...filler],
+      FEATURE_REGISTRY,
+      sanitizeHelpContext({ area: "other" }),
+    );
+    const connectionOnScreen = onConnections.find(
+      (result) => result.chunk.id === "connections-tab#0",
+    )!;
+    const connectionElsewhere = elsewhere.find(
+      (result) => result.chunk.id === "connections-tab#0",
+    )!;
+
+    expect(onConnections[0].chunk.id).toBe("connections-tab#0");
+    expect(connectionOnScreen.score).toBeGreaterThan(connectionElsewhere.score);
+  });
+
   it("without screen context the generic chunk is not boosted over the connections one", () => {
     const off = sanitizeHelpContext({ area: "other" });
     const ranked = rankChunks(

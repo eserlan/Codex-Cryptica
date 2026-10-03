@@ -184,6 +184,8 @@ export const howDoIRunAnInvestigatorWithoutSideliningTheParty: AnswerConfigInput
       "how-do-i-write-a-good-call-of-cthulhu-one-shot",
       "how-do-i-run-character-roles-in-an-investigative-horror-rpg",
       "how-do-i-run-common-character-roles-in-a-fantasy-rpg",
+      "how-do-i-make-interviewing-npcs-interesting-in-an-investigation",
+      "how-do-i-handle-players-asking-an-npc-to-tell-us-everything-you-know",
     ],
     discovery: {
       id: "answer-run-investigator-without-sidelining-party",

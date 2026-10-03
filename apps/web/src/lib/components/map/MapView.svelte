@@ -437,7 +437,7 @@
           class="w-12 h-12 border-4 border-theme-primary border-t-transparent rounded-full animate-spin"
         ></div>
         <div
-          class="text-[10px] font-mono text-theme-primary uppercase tracking-[0.3em] animate-pulse"
+          class="text-micro font-mono text-theme-primary uppercase tracking-[0.3em] animate-pulse"
         >
           Synthesizing Spatial Asset...
         </div>

@@ -83,7 +83,7 @@
       >
         <div>
           <p
-            class="font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-theme-primary"
+            class="font-mono text-micro font-bold uppercase tracking-[0.2em] text-theme-primary"
           >
             {service.proposal ? "Reviewing revision" : "Refine draft"}
           </p>
@@ -117,7 +117,7 @@
             class="mb-5 rounded-xl border border-theme-primary/30 bg-theme-primary/5 p-4"
           >
             <p
-              class="mb-2 text-[10px] font-bold uppercase tracking-widest text-theme-primary"
+              class="mb-2 text-micro font-bold uppercase tracking-widest text-theme-primary"
             >
               Latest revision
             </p>
@@ -167,7 +167,7 @@
         <button
           type="button"
           onclick={close}
-          class="rounded-lg border border-theme-border/60 px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-theme-text hover:bg-theme-surface"
+          class="rounded-lg border border-theme-border/60 px-4 py-2 text-micro font-bold uppercase tracking-widest text-theme-text hover:bg-theme-surface"
           disabled={service.isRefining}
           aria-busy={service.isRefining}
         >
@@ -177,7 +177,7 @@
           <button
             type="button"
             onclick={accept}
-            class="rounded-lg bg-theme-primary px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-theme-bg hover:brightness-110"
+            class="rounded-lg bg-theme-primary px-4 py-2 text-micro font-bold uppercase tracking-widest text-theme-bg hover:brightness-110"
             disabled={service.isRefining || isAccepting}
             aria-busy={service.isRefining || isAccepting}
           >
@@ -186,7 +186,7 @@
           <button
             type="button"
             onclick={submit}
-            class="rounded-lg border border-theme-primary/40 bg-theme-primary/10 px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-theme-primary hover:bg-theme-primary/20"
+            class="rounded-lg border border-theme-primary/40 bg-theme-primary/10 px-4 py-2 text-micro font-bold uppercase tracking-widest text-theme-primary hover:bg-theme-primary/20"
             disabled={service.isRefining || !instructions.trim()}
             aria-busy={service.isRefining}
           >
@@ -196,7 +196,7 @@
           <button
             type="button"
             onclick={submit}
-            class="rounded-lg bg-theme-primary px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-theme-bg hover:brightness-110"
+            class="rounded-lg bg-theme-primary px-4 py-2 text-micro font-bold uppercase tracking-widest text-theme-bg hover:brightness-110"
             disabled={service.isRefining || !instructions.trim()}
             aria-busy={service.isRefining}
           >

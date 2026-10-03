@@ -92,7 +92,7 @@
 <div class={className}>
   <label for={id} class={labelClass}>{label}</label>
   <select
-    id={id}
+    {id}
     {name}
     value={selectValue}
     onchange={handleSelectChange}

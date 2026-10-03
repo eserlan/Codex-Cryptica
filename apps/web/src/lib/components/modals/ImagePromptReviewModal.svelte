@@ -255,7 +255,7 @@
         <div class="flex-1 overflow-y-auto px-4 py-4 md:px-6">
           <label
             for="image-prompt-review-text"
-            class="mb-2 block text-[10px] font-bold uppercase tracking-widest text-theme-secondary"
+            class="mb-2 block text-micro font-bold uppercase tracking-widest text-theme-secondary"
           >
             Prompt
           </label>
@@ -283,7 +283,7 @@
           {#if negativeTerms.length}
             <div class="mt-4">
               <p
-                class="mb-2 text-[10px] font-bold uppercase tracking-widest text-theme-secondary"
+                class="mb-2 text-micro font-bold uppercase tracking-widest text-theme-secondary"
               >
                 Negative prompt
               </p>
@@ -293,7 +293,7 @@
               >
                 {negativeTerms.join(", ")}
               </p>
-              <p class="mt-1 text-[10px] text-theme-muted">
+              <p class="mt-1 text-micro text-theme-muted">
                 Sent separately where your image provider supports it, and
                 folded into the prompt where it does not.
               </p>
@@ -305,7 +305,7 @@
               type="button"
               onclick={() => (showAdvanced = !showAdvanced)}
               aria-expanded={showAdvanced}
-              class="inline-flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-theme-muted transition hover:text-theme-primary"
+              class="inline-flex items-center gap-2 text-micro font-bold uppercase tracking-widest text-theme-muted transition hover:text-theme-primary"
             >
               <span
                 class="h-3 w-3 {showAdvanced
@@ -320,7 +320,7 @@
               <div class="mt-3 grid gap-3 md:grid-cols-2">
                 <label class="block">
                   <span
-                    class="mb-1 block text-[10px] font-bold uppercase tracking-widest text-theme-secondary"
+                    class="mb-1 block text-micro font-bold uppercase tracking-widest text-theme-secondary"
                   >
                     Camera
                   </span>
@@ -337,7 +337,7 @@
 
                 <label class="block">
                   <span
-                    class="mb-1 block text-[10px] font-bold uppercase tracking-widest text-theme-secondary"
+                    class="mb-1 block text-micro font-bold uppercase tracking-widest text-theme-secondary"
                   >
                     Stature
                   </span>
@@ -354,7 +354,7 @@
 
                 <label class="block">
                   <span
-                    class="mb-1 block text-[10px] font-bold uppercase tracking-widest text-theme-secondary"
+                    class="mb-1 block text-micro font-bold uppercase tracking-widest text-theme-secondary"
                   >
                     Style reference
                   </span>
@@ -369,7 +369,7 @@
                   </select>
                 </label>
               </div>
-              <p class="mt-2 text-[10px] text-theme-muted">
+              <p class="mt-2 text-micro text-theme-muted">
                 Choose a camera that matches the subject's category. Stature
                 decides whether something is drawn as ordinary, renowned, or
                 worshipped, and is read from labels like <em>deity</em> unless you
@@ -377,7 +377,7 @@
               </p>
               {#if resolvedStature}
                 <p
-                  class="mt-1 text-[10px] font-bold uppercase tracking-widest text-theme-secondary"
+                  class="mt-1 text-micro font-bold uppercase tracking-widest text-theme-secondary"
                   data-testid="image-prompt-resolved-stature"
                 >
                   Drawn as: {STATURE_LABELS[resolvedStature] ||
@@ -392,13 +392,13 @@
                     onclick={pinStatureAsLabel}
                     disabled={isApplyingStatureLabel}
                     data-testid="image-prompt-pin-stature"
-                    class="mt-1 text-[10px] font-bold uppercase tracking-widest text-theme-primary underline-offset-2 transition hover:underline disabled:opacity-50"
+                    class="mt-1 text-micro font-bold uppercase tracking-widest text-theme-primary underline-offset-2 transition hover:underline disabled:opacity-50"
                   >
                     Keep it — label this {STATURE_LABELS[
                       resolvedStature
                     ]?.toLowerCase() || resolvedStature}
                   </button>
-                  <p class="mt-0.5 text-[10px] text-theme-muted">
+                  <p class="mt-0.5 text-micro text-theme-muted">
                     Without a label the Oracle re-reads this every time, and its
                     answer can change between pictures.
                   </p>
@@ -434,7 +434,8 @@
               ></span>
               Revising
             {:else}
-              <span class="icon-[lucide--refresh-cw] h-4 w-4" aria-hidden="true"></span>
+              <span class="icon-[lucide--refresh-cw] h-4 w-4" aria-hidden="true"
+              ></span>
               Revise Prompt
             {/if}
           </button>
@@ -459,7 +460,8 @@
               ></span>
               Generating
             {:else}
-              <span class="icon-[lucide--image-plus] h-4 w-4" aria-hidden="true"></span>
+              <span class="icon-[lucide--image-plus] h-4 w-4" aria-hidden="true"
+              ></span>
               Generate
             {/if}
           </button>

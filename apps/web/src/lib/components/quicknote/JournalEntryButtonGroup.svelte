@@ -55,7 +55,7 @@
       onclick={() => handleMove("up")}
       disabled={!canMoveUp}
       aria-label={`Move up: ${snippet}`}
-      class="font-header text-[9px] font-bold uppercase tracking-wider text-theme-muted transition-colors hover:text-theme-primary disabled:opacity-30 disabled:hover:text-theme-muted"
+      class="font-header text-nano font-bold uppercase tracking-wider text-theme-muted transition-colors hover:text-theme-primary disabled:opacity-30 disabled:hover:text-theme-muted"
       data-testid="journal-entry-move-up"
     >
       <span aria-hidden="true" class="icon-[lucide--chevron-up] h-3 w-3"></span>
@@ -65,7 +65,7 @@
       onclick={() => handleMove("down")}
       disabled={!canMoveDown}
       aria-label={`Move down: ${snippet}`}
-      class="font-header text-[9px] font-bold uppercase tracking-wider text-theme-muted transition-colors hover:text-theme-primary disabled:opacity-30 disabled:hover:text-theme-muted"
+      class="font-header text-nano font-bold uppercase tracking-wider text-theme-muted transition-colors hover:text-theme-primary disabled:opacity-30 disabled:hover:text-theme-muted"
       data-testid="journal-entry-move-down"
     >
       <span aria-hidden="true" class="icon-[lucide--chevron-down] h-3 w-3"
@@ -77,7 +77,7 @@
       type="button"
       onclick={onStartEdit}
       aria-label={`Edit: ${snippet}`}
-      class="font-header text-[9px] font-bold uppercase tracking-wider text-theme-muted transition-colors hover:text-theme-primary"
+      class="font-header text-nano font-bold uppercase tracking-wider text-theme-muted transition-colors hover:text-theme-primary"
       data-testid="journal-entry-edit"
     >
       Edit
@@ -88,7 +88,7 @@
       type="button"
       onclick={handleDelete}
       aria-label={`Delete: ${snippet}`}
-      class="font-header text-[9px] font-bold uppercase tracking-wider text-theme-muted transition-colors hover:text-theme-danger"
+      class="font-header text-nano font-bold uppercase tracking-wider text-theme-muted transition-colors hover:text-theme-danger"
       data-testid="journal-entry-delete"
     >
       Delete
@@ -99,7 +99,7 @@
       type="button"
       onclick={() => onPromote(entry)}
       aria-label={`Make entity from: ${snippet}`}
-      class="font-header text-[9px] font-bold uppercase tracking-wider text-theme-muted transition-colors hover:text-theme-primary"
+      class="font-header text-nano font-bold uppercase tracking-wider text-theme-muted transition-colors hover:text-theme-primary"
       data-testid="journal-entry-promote"
     >
       Make entity
@@ -107,5 +107,5 @@
   {/if}
 </div>
 {#if error}
-  <p role="alert" class="text-[10px] text-theme-danger">{error}</p>
+  <p role="alert" class="text-micro text-theme-danger">{error}</p>
 {/if}

@@ -198,7 +198,7 @@
           <div>
             <label
               for="area-encounters"
-              class="block text-[10px] font-mono font-bold uppercase tracking-wider text-rose-400 mb-1"
+              class="block text-micro font-mono font-bold uppercase tracking-wider text-rose-400 mb-1"
             >
               Encounters (1 per line)
             </label>
@@ -212,7 +212,7 @@
           <div>
             <label
               for="area-hazards"
-              class="block text-[10px] font-mono font-bold uppercase tracking-wider text-amber-400 mb-1"
+              class="block text-micro font-mono font-bold uppercase tracking-wider text-amber-400 mb-1"
             >
               Hazards / Traps
             </label>
@@ -229,7 +229,7 @@
           <div>
             <label
               for="area-treasure"
-              class="block text-[10px] font-mono font-bold uppercase tracking-wider text-yellow-400 mb-1"
+              class="block text-micro font-mono font-bold uppercase tracking-wider text-yellow-400 mb-1"
             >
               Treasure / Loot
             </label>
@@ -243,7 +243,7 @@
           <div>
             <label
               for="area-secrets"
-              class="block text-[10px] font-mono font-bold uppercase tracking-wider text-purple-400 mb-1"
+              class="block text-micro font-mono font-bold uppercase tracking-wider text-purple-400 mb-1"
             >
               Secrets / Clues
             </label>
@@ -261,13 +261,13 @@
             class="space-y-3 rounded-xl border border-red-400/30 bg-red-500/5 p-3"
           >
             <legend
-              class="px-1 text-[10px] font-mono font-bold uppercase tracking-wider text-red-300"
+              class="px-1 text-micro font-mono font-bold uppercase tracking-wider text-red-300"
             >
               Climax Resolution
             </legend>
             <p
               id="climax-resolution-help"
-              class="text-[10px] leading-relaxed text-theme-muted"
+              class="text-micro leading-relaxed text-theme-muted"
             >
               Define what is at risk, the decision facing the players, and how
               the delve can change.
@@ -275,7 +275,7 @@
             <div>
               <label
                 for="area-climax-stakes"
-                class="block text-[10px] font-mono font-bold uppercase tracking-wider text-theme-muted mb-1"
+                class="block text-micro font-mono font-bold uppercase tracking-wider text-theme-muted mb-1"
               >
                 Stakes
               </label>
@@ -291,7 +291,7 @@
             <div>
               <label
                 for="area-climax-decision"
-                class="block text-[10px] font-mono font-bold uppercase tracking-wider text-theme-muted mb-1"
+                class="block text-micro font-mono font-bold uppercase tracking-wider text-theme-muted mb-1"
               >
                 Player Decision
               </label>
@@ -306,7 +306,7 @@
             <div>
               <label
                 for="area-climax-outcomes"
-                class="block text-[10px] font-mono font-bold uppercase tracking-wider text-theme-muted mb-1"
+                class="block text-micro font-mono font-bold uppercase tracking-wider text-theme-muted mb-1"
               >
                 Possible Outcomes (1 per line)
               </label>

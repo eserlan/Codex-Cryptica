@@ -178,6 +178,8 @@ export const howDoYouRunAConspiracyCampaign: AnswerConfigInput = {
     "how-do-i-run-an-investigator-without-sidelining-the-party",
     "how-do-i-run-a-journalist-or-media-character-in-an-rpg",
     "how-do-i-run-character-roles-in-an-investigative-horror-rpg",
+    "how-do-i-make-interviewing-npcs-interesting-in-an-investigation",
+    "how-do-i-handle-players-asking-an-npc-to-tell-us-everything-you-know",
   ],
   discovery: {
     id: "answer-conspiracy-campaign",

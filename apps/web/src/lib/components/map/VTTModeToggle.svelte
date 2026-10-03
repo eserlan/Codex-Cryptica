@@ -30,7 +30,7 @@
 <div class="relative">
   <button
     bind:this={toggleEl}
-    class={`px-2.5 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all ${getPrimaryButtonStateClass(mapSession.vttEnabled)}`}
+    class={`px-2.5 py-1.5 rounded-md text-micro font-bold uppercase tracking-wider transition-all ${getPrimaryButtonStateClass(mapSession.vttEnabled)}`}
     onclick={toggleVtt}
     onmousedown={handleMouseDown}
     oncontextmenu={(event) => event.preventDefault()}

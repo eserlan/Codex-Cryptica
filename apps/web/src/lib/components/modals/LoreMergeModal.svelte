@@ -149,7 +149,7 @@
                     {label(entry.heading)}
                   </h3>
                   <p
-                    class="font-mono text-[10px] uppercase tracking-wider text-theme-muted"
+                    class="font-mono text-micro uppercase tracking-wider text-theme-muted"
                   >
                     {STATUS_LABEL[entry.status]}
                   </p>
@@ -196,7 +196,7 @@
                         : 'border-theme-border opacity-60'}"
                     >
                       <p
-                        class="mb-1 font-mono text-[10px] uppercase tracking-wider text-theme-muted"
+                        class="mb-1 font-mono text-micro uppercase tracking-wider text-theme-muted"
                       >
                         Current
                       </p>
@@ -215,7 +215,7 @@
                         : 'border-theme-border opacity-60'}"
                     >
                       <p
-                        class="mb-1 font-mono text-[10px] uppercase tracking-wider text-theme-muted"
+                        class="mb-1 font-mono text-micro uppercase tracking-wider text-theme-muted"
                       >
                         Revised
                       </p>

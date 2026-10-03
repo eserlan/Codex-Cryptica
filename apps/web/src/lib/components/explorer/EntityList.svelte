@@ -359,7 +359,7 @@
   <div class="p-4 border-b border-theme-border shrink-0 space-y-3">
     <EntityListSearch bind:searchQuery />
     {#if searchStatusMessage}
-      <p class="text-[10px] text-theme-muted" aria-live="polite">
+      <p class="text-micro text-theme-muted" aria-live="polite">
         {searchStatusMessage}
       </p>
     {/if}
@@ -367,7 +367,7 @@
     <div class="flex items-center justify-end gap-1.5">
       <label
         for="entity-explorer-sort"
-        class="text-[9px] font-bold uppercase tracking-wider text-theme-muted"
+        class="text-nano font-bold uppercase tracking-wider text-theme-muted"
       >
         Sort
       </label>
@@ -378,7 +378,7 @@
           explorerUIStore.setExplorerSortKey(
             event.currentTarget.value as "name" | "updated",
           )}
-        class="rounded-lg border border-theme-border/60 bg-theme-surface/40 px-2 py-1 text-[10px] font-mono text-theme-text outline-none transition-colors hover:border-theme-primary/50 focus:border-theme-primary focus:ring-2 focus:ring-theme-primary/20"
+        class="rounded-lg border border-theme-border/60 bg-theme-surface/40 px-2 py-1 text-micro font-mono text-theme-text outline-none transition-colors hover:border-theme-primary/50 focus:border-theme-primary focus:ring-2 focus:ring-theme-primary/20"
       >
         <option value="name">Name</option>
         <option value="updated">Last edited</option>
@@ -518,7 +518,7 @@
               />
               <select
                 bind:value={newChildType}
-                class="bg-theme-bg/50 border border-theme-border/50 text-[10px] text-theme-muted uppercase tracking-wider rounded px-1.5 py-0.5 focus:outline-none focus:ring-0"
+                class="bg-theme-bg/50 border border-theme-border/50 text-micro text-theme-muted uppercase tracking-wider rounded px-1.5 py-0.5 focus:outline-none focus:ring-0"
                 aria-label="New entity category"
                 disabled={isCreatingChild}
               >
@@ -555,7 +555,7 @@
               </button>
             </div>
             {#if createChildError}
-              <div class="text-[10px] text-red-500/80 px-2.5 mt-1 font-mono">
+              <div class="text-micro text-red-500/80 px-2.5 mt-1 font-mono">
                 {createChildError}
               </div>
             {/if}
@@ -669,7 +669,7 @@
                   : undefined}
             aria-expanded={isToggleable ? !entry.collapsed : undefined}
             disabled={!isToggleable}
-            class="mt-4 first:mt-0 flex w-full items-center justify-between rounded-lg border border-theme-border/30 px-2 py-1.5 text-left text-[10px] font-bold uppercase tracking-[0.2em] text-theme-muted transition-all hover:border-theme-primary/40 hover:bg-theme-primary/5 hover:text-theme-text focus:border-theme-accent focus:outline-none focus:ring-2 focus:ring-theme-accent/20"
+            class="mt-4 first:mt-0 flex w-full items-center justify-between rounded-lg border border-theme-border/30 px-2 py-1.5 text-left text-micro font-bold uppercase tracking-[0.2em] text-theme-muted transition-all hover:border-theme-primary/40 hover:bg-theme-primary/5 hover:text-theme-text focus:border-theme-accent focus:outline-none focus:ring-2 focus:ring-theme-accent/20"
           >
             <span class="flex items-center gap-1.5">
               {#if isToggleable}
@@ -681,7 +681,7 @@
               {/if}
               <span>{entry.title}</span>
             </span>
-            <span class="text-[9px] text-theme-muted/80">{entry.count}</span>
+            <span class="text-nano text-theme-muted/80">{entry.count}</span>
           </button>
         {:else}
           {@render groupedEntityItem(entry.entity, entry.groupKey)}
@@ -698,7 +698,7 @@
         aria-label="Entity explorer pages"
         data-testid="entity-explorer-pagination"
       >
-        <span class="text-[10px] text-theme-muted" aria-live="polite">
+        <span class="text-micro text-theme-muted" aria-live="polite">
           Showing {firstPageRow}–{lastPageRow} of {totalPageRows} visible rows
         </span>
         <div class="flex items-center gap-1">
@@ -707,10 +707,10 @@
             aria-label="Previous page"
             disabled={page === 1}
             onclick={() => goToPage(page - 1)}
-            class="rounded px-2 py-1 text-[10px] text-theme-muted disabled:opacity-40"
+            class="rounded px-2 py-1 text-micro text-theme-muted disabled:opacity-40"
             >Previous</button
           >
-          <span class="px-1 text-[10px] text-theme-text"
+          <span class="px-1 text-micro text-theme-text"
             >Page {page} of {pageCount}</span
           >
           <button
@@ -718,7 +718,7 @@
             aria-label="Next page"
             disabled={page === pageCount}
             onclick={() => goToPage(page + 1)}
-            class="rounded px-2 py-1 text-[10px] text-theme-muted disabled:opacity-40"
+            class="rounded px-2 py-1 text-micro text-theme-muted disabled:opacity-40"
             >Next</button
           >
         </div>

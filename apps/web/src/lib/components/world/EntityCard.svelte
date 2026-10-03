@@ -156,7 +156,7 @@
             {activity.title}
           </h3>
         </div>
-        <span class="shrink-0 text-[10px] text-theme-muted whitespace-nowrap">
+        <span class="shrink-0 text-micro text-theme-muted whitespace-nowrap">
           {relativeTime}
         </span>
       </header>
@@ -176,7 +176,7 @@
           <div class="mt-4 flex flex-wrap gap-2">
             {#each activity.labels || [] as label}
               <span
-                class="rounded-full border border-theme-primary/20 bg-[color-mix(in_srgb,var(--color-theme-primary)_10%,var(--color-theme-bg))] px-2 py-1 text-[10px] uppercase tracking-[0.16em] text-theme-secondary backdrop-blur-sm"
+                class="rounded-full border border-theme-primary/20 bg-[color-mix(in_srgb,var(--color-theme-primary)_10%,var(--color-theme-bg))] px-2 py-1 text-micro uppercase tracking-[0.16em] text-theme-secondary backdrop-blur-sm"
               >
                 {label}
               </span>

@@ -208,17 +208,17 @@
       tabindex="-1"
     />
     <div class="mb-4 px-4 md:px-6">
-      <div class="flex items-center gap-2">
+      <div class="flex items-stretch gap-2">
         <button
           type="button"
           onclick={() => fileInput?.click()}
-          class="flex-1 rounded border border-theme-border bg-theme-surface px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-theme-text transition hover:border-theme-primary hover:bg-theme-bg/50"
+          class="touch-target flex flex-1 items-center justify-center gap-1.5 text-center rounded border border-theme-border bg-theme-surface px-3 py-2 text-micro font-bold uppercase tracking-widest text-theme-text transition hover:border-theme-primary hover:bg-theme-bg/50"
           aria-describedby={imageUploadError
             ? "entity-image-upload-error"
             : undefined}
         >
           <span
-            class="icon-[lucide--upload] mr-2 inline-block h-4 w-4 align-middle text-theme-primary"
+            class="icon-[lucide--upload] inline-block h-4 w-4 shrink-0 text-theme-primary"
             aria-hidden="true"
           ></span>
           {entity.image ? "Replace image" : "Choose image"}
@@ -227,11 +227,11 @@
         <button
           type="button"
           onclick={() => modalUIStore.openSilhouettePicker(entity)}
-          class="rounded border border-theme-border bg-theme-surface px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-theme-text transition hover:border-theme-primary hover:bg-theme-bg/50 flex items-center gap-1.5"
+          class="touch-target rounded border border-theme-border bg-theme-surface px-3 py-2 text-micro font-bold uppercase tracking-widest text-theme-text transition hover:border-theme-primary hover:bg-theme-bg/50 flex items-center justify-center gap-1.5"
           title="Customize vector silhouette"
         >
           <span
-            class="icon-[lucide--user] inline-block h-4 w-4 text-theme-accent"
+            class="icon-[lucide--user] inline-block h-4 w-4 shrink-0 text-theme-accent"
             aria-hidden="true"
           ></span>
           Silhouette
@@ -252,7 +252,7 @@
   {#if isEditing}
     <div class="mb-4 px-4 md:px-6">
       <label
-        class="block text-[10px] text-theme-secondary font-bold mb-1"
+        class="block text-micro text-theme-secondary font-bold mb-1"
         for="entity-image-url">IMAGE URL</label
       >
       <input
@@ -271,7 +271,7 @@
         <span class="icon-[lucide--lock] w-4 h-4 md:w-6 md:h-6 opacity-30"
         ></span>
         <span
-          class="text-[8px] md:text-[9px] font-bold uppercase font-header opacity-40"
+          class="text-nano md:text-nano font-bold uppercase font-header opacity-40"
           >Image Hidden</span
         >
       </div>
@@ -304,7 +304,7 @@
           >
             <span class="icon-[lucide--image] w-8 h-8 opacity-30"></span>
             <span
-              class="text-[9px] font-mono uppercase tracking-wider opacity-40"
+              class="text-nano font-mono uppercase tracking-wider opacity-40"
               >Resolving Neural Visual...</span
             >
           </div>
@@ -325,7 +325,7 @@
             : 'opacity-0 scale-95'}"
         />
         <div
-          class="absolute bottom-2 right-2 bg-theme-surface text-theme-primary text-[9px] px-2 py-0.5 rounded opacity-0 group-hover:opacity-100 group-focus:opacity-100 transition"
+          class="absolute bottom-2 right-2 bg-theme-surface text-theme-primary text-nano px-2 py-0.5 rounded opacity-0 group-hover:opacity-100 group-focus:opacity-100 transition"
         >
           Click to enlarge
         </div>
@@ -350,7 +350,7 @@
             class="icon-[lucide--share-2] w-4 h-4 text-theme-primary"
           ></span>
           <span
-            class="text-[9px] font-bold tracking-widest text-theme-primary relative z-10"
+            class="text-nano font-bold tracking-widest text-theme-primary relative z-10"
             >SHOW TO GUESTS</span
           >
         </button>
@@ -366,7 +366,7 @@
           <button
             type="button"
             onclick={() => modalUIStore.openSilhouettePicker(entity)}
-            class="flex flex-col items-center justify-center cursor-pointer transition-transform hover:scale-102 group/sil"
+            class="touch-target flex flex-col items-center justify-center cursor-pointer transition-transform hover:scale-102 group/sil"
             title="Click to change silhouette"
           >
             <SilhouetteAvatar
@@ -376,7 +376,7 @@
               class="border-theme-border/60 shadow-xl group-hover/sil:border-theme-primary transition-colors"
             />
             <span
-              class="mt-2 text-[9px] font-mono uppercase tracking-wider text-theme-muted group-hover/sil:text-theme-primary transition-colors flex items-center gap-1"
+              class="mt-2 text-nano font-mono uppercase tracking-wider text-theme-muted group-hover/sil:text-theme-primary transition-colors flex items-center gap-1"
             >
               <span class="icon-[lucide--sparkles] h-3 w-3 text-theme-accent"
               ></span>
@@ -391,7 +391,7 @@
             <button
               onclick={() => oracle.drawEntity(entity.id)}
               disabled={isVisualizing}
-              class="bg-theme-surface hover:bg-theme-surface/80 border border-theme-primary/30 hover:border-theme-primary transition-all flex items-center justify-center gap-2 px-2 py-1 md:px-3 md:py-1.5 rounded shadow-sm group/btn relative overflow-hidden"
+              class="touch-target bg-theme-surface hover:bg-theme-surface/80 border border-theme-primary/30 hover:border-theme-primary transition-all flex items-center justify-center gap-2 px-2 py-1 md:px-3 md:py-1.5 rounded shadow-sm group/btn relative overflow-hidden"
               aria-label={canGenerateImage
                 ? `Generate image for ${entity.title}`
                 : `Generate image prompt for ${entity.title}`}
@@ -403,7 +403,7 @@
                   aria-hidden="true"
                 ></span>
                 <span
-                  class="text-[7px] md:text-[8px] font-bold tracking-widest text-theme-primary text-center px-2"
+                  class="text-nano font-bold tracking-widest text-theme-primary text-center px-2"
                   aria-live="polite"
                 >
                   {#if oracle.activeStyleTitle}
@@ -421,7 +421,7 @@
                   aria-hidden="true"
                 ></span>
                 <span
-                  class="text-[8px] md:text-[9px] font-bold tracking-widest text-theme-primary relative z-10"
+                  class="text-nano md:text-nano font-bold tracking-widest text-theme-primary relative z-10"
                   >{canGenerateImage
                     ? "GENERATE AI ART"
                     : "GENERATE PROMPT"}</span
@@ -439,7 +439,7 @@
                 aria-hidden="true"
               ></span>
               <div
-                class="text-[8px] md:text-[9px] font-bold uppercase tracking-[0.2em] font-header text-theme-primary text-center px-4"
+                class="text-nano md:text-nano font-bold uppercase tracking-[0.2em] font-header text-theme-primary text-center px-4"
                 aria-live="polite"
               >
                 {#if oracle.activeStyleTitle}
@@ -470,7 +470,7 @@
           >
             <span class="icon-[lucide--pen-tool] w-4 h-4"></span>
             <span
-              class="text-[8px] font-header uppercase tracking-widest font-bold"
+              class="text-nano font-header uppercase tracking-widest font-bold"
               >Image Prompt</span
             >
           </div>
@@ -479,7 +479,7 @@
           >
             <span class="icon-[lucide--copy] w-3 h-3"></span>
             <span
-              class="text-[8px] font-header uppercase tracking-widest font-bold"
+              class="text-nano font-header uppercase tracking-widest font-bold"
               >Click to Copy</span
             >
           </div>
@@ -507,7 +507,7 @@
           class="icon-[lucide--download-cloud] w-8 h-8 text-oracle-primary animate-bounce"
         ></span>
         <span
-          class="text-[10px] font-bold text-oracle-primary tracking-widest uppercase font-header"
+          class="text-micro font-bold text-oracle-primary tracking-widest uppercase font-header"
           >Drop to Archive</span
         >
       </div>

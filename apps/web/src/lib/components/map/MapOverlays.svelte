@@ -48,7 +48,7 @@
     <span class="text-xs font-medium text-theme-text">
       Click map to place <strong>{mapSession.armedTile.name}</strong>
     </span>
-    <span class="text-[10px] text-theme-muted">· [Esc] to cancel</span>
+    <span class="text-micro text-theme-muted">· [Esc] to cancel</span>
     <button
       type="button"
       onclick={() => mapSession.clearArmedTile()}
@@ -138,7 +138,7 @@
       style:height={`${Math.abs(interactions.gridFitEnd.y - interactions.gridFitStart.y)}px`}
     ></div>
     <div
-      class="absolute rounded bg-theme-bg/90 px-2 py-1 text-[11px] font-bold text-theme-primary shadow"
+      class="absolute rounded bg-theme-bg/90 px-2 py-1 text-meta font-bold text-theme-primary shadow"
       style:left={`${Math.min(interactions.gridFitStart.x, interactions.gridFitEnd.x)}px`}
       style:top={`${Math.min(interactions.gridFitStart.y, interactions.gridFitEnd.y) - 28}px`}
     >
@@ -184,7 +184,7 @@
         pin.id === interactions.selectedPinId}
     >
       <div
-        class="px-2 py-0.5 bg-theme-surface/90 border border-theme-border/80 rounded-md text-[10px] font-bold text-theme-text shadow-md whitespace-nowrap select-none backdrop-blur-sm flex items-center"
+        class="px-2 py-0.5 bg-theme-surface/90 border border-theme-border/80 rounded-md text-micro font-bold text-theme-text shadow-md whitespace-nowrap select-none backdrop-blur-sm flex items-center"
       >
         {labelText}
       </div>

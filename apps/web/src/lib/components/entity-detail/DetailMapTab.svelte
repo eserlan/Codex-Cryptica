@@ -141,7 +141,7 @@
         >
           Spatial {delveCanvasLabel}
         </h4>
-        <p class="text-[10px] text-theme-muted mt-0.5">
+        <p class="text-micro text-theme-muted mt-0.5">
           {existingCanvas
             ? "Interactive room & sector floor plan on Spatial Canvas."
             : "Generate an interactive floor plan with sector frames, room stocking, and passage types on Spatial Canvas."}
@@ -154,7 +154,7 @@
             onclick={() => {
               openCanvasFromZen(existingCanvas, goto);
             }}
-            class="px-4 py-2 bg-theme-primary text-theme-bg font-bold text-[10px] rounded uppercase font-header tracking-widest hover:bg-theme-secondary transition-colors shrink-0 flex items-center gap-1.5 cursor-pointer"
+            class="px-4 py-2 bg-theme-primary text-theme-bg font-bold text-micro rounded uppercase font-header tracking-widest hover:bg-theme-secondary transition-colors shrink-0 flex items-center gap-1.5 cursor-pointer"
           >
             <span class="icon-[lucide--external-link] w-3.5 h-3.5"></span>
             Open {delveCanvasLabel}
@@ -166,13 +166,14 @@
             onclick={handleBuildDelveCanvas}
             class="p-2 text-theme-muted hover:text-theme-primary transition-colors cursor-pointer"
           >
-            <span class="icon-[lucide--rotate-cw] w-4 h-4" aria-hidden="true"></span>
+            <span class="icon-[lucide--rotate-cw] w-4 h-4" aria-hidden="true"
+            ></span>
           </button>
         {:else}
           <button
             type="button"
             onclick={handleBuildDelveCanvas}
-            class="px-4 py-2 bg-theme-primary text-theme-bg font-bold text-[10px] rounded uppercase font-header tracking-widest hover:bg-theme-secondary transition-colors shrink-0 flex items-center gap-1.5 cursor-pointer"
+            class="px-4 py-2 bg-theme-primary text-theme-bg font-bold text-micro rounded uppercase font-header tracking-widest hover:bg-theme-secondary transition-colors shrink-0 flex items-center gap-1.5 cursor-pointer"
           >
             <span class="icon-[lucide--map] w-3.5 h-3.5"></span>
             Build {delveCanvasLabel}
@@ -186,14 +187,14 @@
     <div class="space-y-4">
       <div class="flex items-center justify-between">
         <h4
-          class="text-[10px] font-bold text-theme-muted uppercase font-header tracking-widest"
+          class="text-micro font-bold text-theme-muted uppercase font-header tracking-widest"
         >
           Linked Sub-Map
         </h4>
         <div class="flex items-center gap-3">
           <button
             type="button"
-            class="text-[10px] font-bold text-red-500/70 hover:text-red-400 transition-colors uppercase font-header tracking-widest flex items-center gap-1.5"
+            class="text-micro font-bold text-red-500/70 hover:text-red-400 transition-colors uppercase font-header tracking-widest flex items-center gap-1.5"
             onclick={handleDeleteMap}
             title="Delete this map"
             aria-label="Delete map"
@@ -206,7 +207,7 @@
           <div class="w-px h-3 bg-theme-border"></div>
 
           <button
-            class="text-[10px] font-bold text-theme-primary hover:text-theme-text transition-colors uppercase font-header tracking-widest flex items-center gap-1.5"
+            class="text-micro font-bold text-theme-primary hover:text-theme-text transition-colors uppercase font-header tracking-widest flex items-center gap-1.5"
             onclick={() => {
               mapStore.selectMap(linkedMap!.id, true);
               modalUIStore.closeZenMode();
@@ -242,7 +243,7 @@
           }}
         >
           <span
-            class="px-4 py-2 bg-theme-primary text-theme-bg text-[10px] font-bold rounded uppercase font-header tracking-widest shadow-xl"
+            class="px-4 py-2 bg-theme-primary text-theme-bg text-micro font-bold rounded uppercase font-header tracking-widest shadow-xl"
           >
             Enter Location
           </span>
@@ -270,13 +271,13 @@
         No map attached
       </h4>
       <p
-        class="text-[10px] text-theme-muted max-w-[200px] mx-auto mb-6 leading-relaxed"
+        class="text-micro text-theme-muted max-w-[200px] mx-auto mb-6 leading-relaxed"
       >
         Drag and drop a floor plan or local map here, or click to upload.
       </p>
 
       <label
-        class="px-6 py-2 bg-theme-surface border border-theme-border text-theme-text text-[10px] font-bold rounded uppercase font-header tracking-widest cursor-pointer hover:border-theme-primary transition-all active:scale-95 focus-within:ring-2 focus-within:ring-theme-primary focus-within:outline-none focus-within:ring-offset-2 focus-within:ring-offset-theme-bg"
+        class="px-6 py-2 bg-theme-surface border border-theme-border text-theme-text text-micro font-bold rounded uppercase font-header tracking-widest cursor-pointer hover:border-theme-primary transition-all active:scale-95 focus-within:ring-2 focus-within:ring-theme-primary focus-within:outline-none focus-within:ring-offset-2 focus-within:ring-offset-theme-bg"
       >
         Upload Map
         <input

@@ -142,7 +142,7 @@
       </div>
 
       <div
-        class="flex flex-wrap gap-2 text-[10px] font-bold uppercase font-header tracking-wider"
+        class="flex flex-wrap gap-2 text-micro font-bold uppercase font-header tracking-wider"
       >
         <span
           class="px-2 py-1 border border-theme-border bg-theme-bg text-theme-text rounded"
@@ -184,7 +184,7 @@
           Found entities
         </h4>
         <span
-          class="text-[10px] font-bold uppercase tracking-widest text-theme-muted"
+          class="text-micro font-bold uppercase tracking-widest text-theme-muted"
         >
           {session.items.length} detected
         </span>
@@ -192,7 +192,7 @@
     </div>
 
     <div
-      class="grid grid-cols-[minmax(0,1.5fr)_minmax(0,0.85fr)_minmax(0,0.9fr)_auto] gap-3 px-4 py-2 border-b border-theme-border text-[10px] font-bold uppercase font-header tracking-wider text-theme-muted"
+      class="grid grid-cols-[minmax(0,1.5fr)_minmax(0,0.85fr)_minmax(0,0.9fr)_auto] gap-3 px-4 py-2 border-b border-theme-border text-micro font-bold uppercase font-header tracking-wider text-theme-muted"
     >
       <span>Entity</span>
       <span>Type</span>
@@ -235,7 +235,7 @@
                   </span>
                   {#if item.typeFallback}
                     <span
-                      class="mt-2 inline-flex items-center gap-1 text-[10px] font-bold uppercase font-header tracking-wider text-amber-500"
+                      class="mt-2 inline-flex items-center gap-1 text-micro font-bold uppercase font-header tracking-wider text-amber-500"
                     >
                       <span class="icon-[lucide--triangle-alert] h-3.5 w-3.5"
                       ></span>
@@ -244,7 +244,7 @@
                   {/if}
                   {#if itemWarningCount(item) > 0}
                     <span
-                      class="mt-2 inline-flex items-center gap-1 text-[10px] font-bold uppercase font-header tracking-wider text-red-400"
+                      class="mt-2 inline-flex items-center gap-1 text-micro font-bold uppercase font-header tracking-wider text-red-400"
                     >
                       <span class="icon-[lucide--alert-triangle] h-3.5 w-3.5"
                       ></span>
@@ -262,7 +262,7 @@
             <div class="min-w-0 flex items-start">
               <select
                 class={[
-                  "px-2 py-1 border bg-theme-bg text-[10px] font-bold uppercase font-header tracking-wider rounded",
+                  "px-2 py-1 border bg-theme-bg text-micro font-bold uppercase font-header tracking-wider rounded",
                   item.typeFallback
                     ? "border-amber-500 text-amber-500"
                     : "border-theme-border text-theme-text",
@@ -287,14 +287,14 @@
             <div class="min-w-0 flex items-start">
               {#if item.match}
                 <span
-                  class="inline-flex items-center gap-1 px-2 py-1 border border-theme-primary/30 bg-theme-primary/10 text-[10px] font-bold uppercase font-header tracking-wider text-theme-primary rounded"
+                  class="inline-flex items-center gap-1 px-2 py-1 border border-theme-primary/30 bg-theme-primary/10 text-micro font-bold uppercase font-header tracking-wider text-theme-primary rounded"
                 >
                   <span class="icon-[lucide--link-2] h-3.5 w-3.5"></span>
                   Existing
                 </span>
               {:else}
                 <span
-                  class="inline-flex items-center gap-1 px-2 py-1 border border-theme-border bg-theme-bg text-[10px] font-bold uppercase font-header tracking-wider text-theme-muted rounded"
+                  class="inline-flex items-center gap-1 px-2 py-1 border border-theme-border bg-theme-bg text-micro font-bold uppercase font-header tracking-wider text-theme-muted rounded"
                 >
                   <span class="icon-[lucide--sparkles] h-3.5 w-3.5"></span>
                   New
@@ -311,7 +311,7 @@
                     <button
                       type="button"
                       class={[
-                        "px-2.5 py-1 text-[10px] font-bold uppercase font-header tracking-wider border-l first:border-l-0",
+                        "px-2.5 py-1 text-micro font-bold uppercase font-header tracking-wider border-l first:border-l-0",
                         (item.matchDecision ?? "skip") === option
                           ? "bg-theme-primary text-theme-bg border-theme-primary"
                           : "bg-theme-bg text-theme-text border-theme-border hover:bg-theme-surface",
@@ -329,7 +329,7 @@
                 </div>
               {:else}
                 <span
-                  class="text-[10px] font-bold uppercase font-header tracking-wider text-theme-muted pt-1"
+                  class="text-micro font-bold uppercase font-header tracking-wider text-theme-muted pt-1"
                 >
                   Create
                 </span>
@@ -340,7 +340,7 @@
           {#if item.match && diffs.length > 0}
             <div class="px-4 pb-3 -mt-1 space-y-1.5">
               {#each diffs as diff (diff.field)}
-                <div class="text-[11px] leading-tight">
+                <div class="text-meta leading-tight">
                   <span
                     class="font-bold uppercase font-header tracking-wider text-theme-muted"
                     >{diff.field}:</span

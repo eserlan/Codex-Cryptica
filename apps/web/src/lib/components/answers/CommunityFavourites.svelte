@@ -56,25 +56,25 @@
               <div class="flex-1">
                 <div class="mb-1.5 flex flex-wrap items-center gap-2">
                   <span
-                    class="font-mono text-[11px] uppercase tracking-wider text-theme-primary"
+                    class="font-mono text-meta uppercase tracking-wider text-theme-primary"
                   >
                     {favourite.kindLabel}
                   </span>
                   <span class="text-theme-muted/40">&bull;</span>
-                  <span class="font-mono text-[11px] text-theme-muted">
+                  <span class="font-mono text-meta text-theme-muted">
                     {favourite.categoryTitle}
                   </span>
                   {#if favourite.publishedAt}
                     <span class="text-theme-muted/40">&bull;</span>
                     <time
                       datetime={favourite.publishedAt}
-                      class="font-mono text-[11px] text-theme-muted"
+                      class="font-mono text-meta text-theme-muted"
                     >
                       {formatAnswerDate(favourite.publishedAt)}
                     </time>
                   {/if}
                   <span class="text-theme-muted/40">&bull;</span>
-                  <span class="font-mono text-[11px] text-theme-muted">
+                  <span class="font-mono text-meta text-theme-muted">
                     {favourite.yes} readers found this helpful
                   </span>
                 </div>

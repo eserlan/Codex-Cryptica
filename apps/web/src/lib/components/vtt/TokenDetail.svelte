@@ -223,7 +223,7 @@
             {selectedToken.name}
           </h3>
         {/if}
-        <p class="text-[10px] text-theme-muted mt-1">
+        <p class="text-micro text-theme-muted mt-1">
           {selectedToken.width} x {selectedToken.height} units
         </p>
       </div>
@@ -243,20 +243,20 @@
         data-testid="token-linked-entity-card"
       >
         <div class="min-w-0 flex-1">
-          <div class="text-[10px] uppercase tracking-widest text-theme-muted">
+          <div class="text-micro uppercase tracking-widest text-theme-muted">
             Linked Entity
           </div>
           <div class="text-sm font-bold text-theme-text truncate">
             {linkedEntity.title}
           </div>
-          <div class="text-[10px] uppercase tracking-widest text-theme-muted">
+          <div class="text-micro uppercase tracking-widest text-theme-muted">
             {linkedEntity.type}
           </div>
         </div>
         <button
           type="button"
           onclick={() => modalUIStore.openZenMode(linkedEntity.id)}
-          class="flex items-center gap-1 rounded border border-theme-border px-2 py-1 text-[10px] font-medium text-theme-muted hover:border-theme-primary hover:text-theme-primary transition-colors shrink-0"
+          class="flex items-center gap-1 rounded border border-theme-border px-2 py-1 text-micro font-medium text-theme-muted hover:border-theme-primary hover:text-theme-primary transition-colors shrink-0"
           title="Open in Zen Mode"
           aria-label="Open entity in Zen Mode"
         >
@@ -301,7 +301,7 @@
             <button
               type="button"
               onclick={() => mapSession.unlinkToken(selectedToken.id)}
-              class="ml-2 shrink-0 rounded px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-theme-primary hover:bg-theme-primary/20"
+              class="ml-2 shrink-0 rounded px-1.5 py-0.5 text-micro font-bold uppercase tracking-wider text-theme-primary hover:bg-theme-primary/20"
               title="Unlink note from this tile"
               data-testid="token-note-unlink-btn"
             >
@@ -312,7 +312,7 @@
       {:else if canManageToken && availableTiles.length > 0}
         <div class="space-y-1" data-testid="token-note-link-section">
           <label
-            class="block text-[10px] font-bold uppercase tracking-widest text-theme-muted"
+            class="block text-micro font-bold uppercase tracking-widest text-theme-muted"
             for="link-parent-tile"
           >
             Link to Tile
@@ -362,7 +362,7 @@
           data-testid="tile-attached-notes"
         >
           <div
-            class="text-[10px] font-bold uppercase tracking-widest text-theme-muted"
+            class="text-micro font-bold uppercase tracking-widest text-theme-muted"
           >
             Stocked Notes ({attachedNotes.length})
           </div>
@@ -401,7 +401,7 @@
     {#if canManageToken}
       <label class="space-y-2 block">
         <span
-          class="text-[10px] uppercase tracking-widest font-bold text-theme-muted"
+          class="text-micro uppercase tracking-widest font-bold text-theme-muted"
           >Owner</span
         >
         <select
@@ -423,7 +423,7 @@
             <option value={guest.peerId}>{guest.displayName}</option>
           {/each}
         </select>
-        <p class="text-[10px] text-theme-muted">
+        <p class="text-micro text-theme-muted">
           Guests can move only tokens assigned to their peer id.
         </p>
       </label>
@@ -440,7 +440,7 @@
             )}
         />
         <span
-          class="text-[10px] uppercase tracking-widest font-bold text-theme-muted"
+          class="text-micro uppercase tracking-widest font-bold text-theme-muted"
         >
           Vision Source (PC)
         </span>
@@ -449,7 +449,7 @@
       <div class="flex items-stretch gap-2">
         {#if !isInInitiative}
           <button
-            class="flex-1 px-3 py-2 rounded-lg border border-theme-border text-[10px] font-bold uppercase tracking-widest text-theme-muted hover:text-theme-text"
+            class="flex-1 px-3 py-2 rounded-lg border border-theme-border text-micro font-bold uppercase tracking-widest text-theme-muted hover:text-theme-text"
             onclick={() => mapSession.addToInitiative(selectedToken.id)}
             type="button"
           >
@@ -482,7 +482,7 @@
           </button>
         {/if}
         <button
-          class="flex-1 px-3 py-2 rounded-lg border border-red-500/40 text-[10px] font-bold uppercase tracking-widest text-red-300 hover:text-red-200"
+          class="flex-1 px-3 py-2 rounded-lg border border-red-500/40 text-micro font-bold uppercase tracking-widest text-red-300 hover:text-red-200"
           onclick={() => mapSession.removeToken(selectedToken.id)}
           type="button"
         >

@@ -20,7 +20,7 @@
   const inputClass =
     "w-full rounded-lg border border-theme-border/60 bg-theme-bg/60 px-3 py-2 text-base text-theme-text focus:border-theme-primary/60 focus:outline-none md:text-xs";
   const labelClass =
-    "text-[11px] font-bold uppercase tracking-wider text-theme-text/80";
+    "text-meta font-bold uppercase tracking-wider text-theme-text/80";
 
   function surprise() {
     originType = pickFrom(originConfig.originTypes);
