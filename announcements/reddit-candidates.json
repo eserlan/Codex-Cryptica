@@ -1,16 +1,6 @@
 {
-  "updated_at": 1791048836,
+  "updated_at": 1791067728,
   "candidates": [
-    {
-      "id": "reddit-36640695405-i-was-retyping-the-same-npc-outline-for-",
-      "title": "I was retyping the same NPC outline for every new character, so I built a shared template directory",
-      "body": "Starting a new character with a blank page is fine once. By the fifth NPC you are retyping the same headings for appearance, goals, secrets and leaving the same fields empty.\n\nI built a community directory for entity templates so you can publish your own outlines and install what others have shared, without leaving the app.\n\nBrowse it here: https://codexcryptica.com/templates\n\n- Browse Entity templates and Stat sheet templates in one place, with pagination, keyword search across name, description, type and labels, and filters for entity type (Character, Faction, Location, Creature, etc.) and free-form genre or system labels\n- Open any listing to see its description, labels, creator name if given, and a live preview of the note it will create. Installing adds it as an ordinary editable vault template with a rename prompt if the name collides, and it does not change existing entities or your defaults\n- Publish from Entity Templates settings with a full preview of everything that becomes public, live counters for the limits (80 character name, 500 character description, up to 8 labels of 30 characters, body up to 50,000), and an explicit acknowledgment that the text will be public. You get a per-listing owner token you can copy and re-enter later to update, unpublish and republish to the same listing, or permanently delete it\n- Anyone can report a listing from its detail view, one report per listing per device with per-minute and per-day caps, plus owner unpublish and operator takedown\n\nTradeoff I kept on purpose: there are no ratings, comments or automatic updates in this first version. An installed copy stays yours and never changes when the original is edited or taken down. That keeps ownership clear, but you will not know a better version exists unless you check the directory again. I am still not sure whether that will feel quiet or just hard to discover.\n\nWhat outline do you end up retyping most often at your table, a compact character card, a shop, a faction with tensions, and what would make a stranger's template trustworthy enough for you to actually install?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/announcements/release-36640695405-0.png)",
-      "url": "https://codexcryptica.com/templates",
-      "image_url": "https://assets.codexcryptica.com/announcements/release-36640695405-0.png",
-      "source_id": "36640695405",
-      "status": "approved",
-      "created_at": 1790721855
-    },
     {
       "id": "reddit-37032544014-my-pirate-arcs-kept-collapsing-into-eith",
       "title": "My pirate arcs kept collapsing into either ship math or empty ocean",
