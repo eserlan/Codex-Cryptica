@@ -549,7 +549,7 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
     id: "spatial-canvas",
     title: "Spatial Canvas",
     content:
-      "Design custom layouts like conspiracy boards or quest flowcharts. Sketch with the pencil, remove individual strokes with the eraser, and rotate cards with a two-finger twist or the desktop rotation handle. Drawings and card angles persist with the canvas.",
+      "Drag cards into a freeform layout, then right-click a card to lock it, bring it to the front or send it to the back. Use Auto-arrange for a one-time board layout; there is no grid snapping or automatic sorting. Positions and card settings save with each canvas. Click the workspace name to create, rename, delete or switch boards. Sketch with the pencil, erase individual strokes, and rotate cards with a two-finger twist or the desktop rotation handle.",
     icon: "icon-[lucide--layout-dashboard]",
   },
   "the-archive": {
