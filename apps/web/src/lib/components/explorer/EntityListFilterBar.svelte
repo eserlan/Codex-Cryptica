@@ -74,7 +74,7 @@
     title="Show all categories"
     aria-label="Show all categories"
     aria-pressed={typeFilters.size === 0}
-    class="flex items-center justify-center p-1.5 {getIconToggleClasses(
+    class="touch-target flex items-center justify-center p-1.5 {getIconToggleClasses(
       typeFilters.size === 0,
     )}"
   >
@@ -91,7 +91,7 @@
         title={cat.label}
         aria-label={`Filter by ${cat.label}`}
         aria-pressed={typeFilters.has(cat.id)}
-        class="relative flex items-center justify-center p-1.5 {getIconToggleClasses(
+        class="touch-target relative flex items-center justify-center p-1.5 {getIconToggleClasses(
           typeFilters.has(cat.id),
         )}"
       >
@@ -118,7 +118,7 @@
     title="List View"
     aria-label="List View"
     aria-pressed={effectiveViewMode === "list"}
-    class="flex items-center justify-center p-1.5 {getIconToggleClasses(
+    class="touch-target flex items-center justify-center p-1.5 {getIconToggleClasses(
       effectiveViewMode === 'list',
     )}"
   >
@@ -131,7 +131,7 @@
     title="Group by Label"
     aria-label="Group by Label"
     aria-pressed={effectiveViewMode === "label"}
-    class="flex items-center justify-center p-1.5 {getIconToggleClasses(
+    class="touch-target flex items-center justify-center p-1.5 {getIconToggleClasses(
       effectiveViewMode === 'label',
     )}"
   >
@@ -147,7 +147,7 @@
     aria-label="Group by Category"
     aria-pressed={effectiveViewMode === "category"}
     disabled={categoryGroupingDisabled}
-    class="flex items-center justify-center p-1.5 {getCategoryGroupToggleClasses(
+    class="touch-target flex items-center justify-center p-1.5 {getCategoryGroupToggleClasses(
       effectiveViewMode === 'category',
       categoryGroupingDisabled,
     )}"
@@ -169,7 +169,7 @@
         <button
           type="button"
           onclick={() => explorerUIStore.removeLabelFilter(label)}
-          class="hover:text-theme-text transition-colors flex items-center justify-center"
+          class="touch-target hover:text-theme-text transition-colors flex items-center justify-center"
           aria-label={`Remove ${label} filter`}
         >
           <span aria-hidden="true" class="icon-[lucide--x] w-2.5 h-2.5"></span>
@@ -179,7 +179,7 @@
     <button
       type="button"
       onclick={() => explorerUIStore.clearLabelFilters()}
-      class="px-2 py-0.5 text-nano font-bold text-theme-muted hover:text-theme-primary uppercase tracking-wider transition-colors"
+      class="touch-target px-2 py-0.5 text-nano font-bold text-theme-muted hover:text-theme-primary uppercase tracking-wider transition-colors"
     >
       Clear All
     </button>
