@@ -46,10 +46,14 @@
         type="button"
         class="touch-target px-3 py-1.5 bg-theme-surface border border-theme-border text-theme-text text-xs font-bold rounded-lg hover:border-theme-primary transition-colors flex items-center gap-2 focus-visible:ring-2 focus-visible:ring-theme-primary focus-visible:outline-none"
         onclick={() => mapStore.goBack()}
+        aria-label="Back to the previous map"
+        title="Back to the previous map"
+        data-testid="map-back-button"
       >
         <span class="icon-[lucide--arrow-left] w-3 h-3" aria-hidden="true"
         ></span>
-        BACK
+        <!-- Icon only on phones: the label cost a whole row there. -->
+        <span class="hidden sm:inline">BACK</span>
       </button>
     {/if}
 
@@ -84,7 +88,7 @@
       {/if}
     {:else}
       <select
-        class="touch-target bg-theme-surface border border-theme-border text-theme-text px-3 py-1.5 rounded-lg text-xs focus-visible:ring-2 focus-visible:ring-theme-primary focus-visible:outline-none"
+        class="touch-target max-w-[13rem] sm:max-w-none bg-theme-surface border border-theme-border text-theme-text px-3 py-1.5 rounded-lg text-xs focus-visible:ring-2 focus-visible:ring-theme-primary focus-visible:outline-none"
         aria-label="Select Map"
         value={mapStore.activeMapId}
         onchange={(e) =>
