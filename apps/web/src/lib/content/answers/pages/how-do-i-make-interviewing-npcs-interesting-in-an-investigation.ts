@@ -246,6 +246,7 @@ export const howDoIMakeInterviewingNpcsInterestingInAnInvestigation: AnswerConfi
       "how-do-you-create-quest-hooks-without-railroading",
       "how-do-you-handle-players-going-off-script-as-a-gm",
       "what-rpg-should-i-play-for-investigative-horror",
+      "how-do-i-handle-players-asking-an-npc-to-tell-us-everything-you-know",
     ],
     discovery: {
       id: "answer-interviewing-npcs-investigation",
@@ -268,6 +269,7 @@ export const howDoIMakeInterviewingNpcsInterestingInAnInvestigation: AnswerConfi
       uniqueValue:
         "A witness-centred framework that separates facts, interpretations, and omissions, gives core clues without magic wording, and uses targeted questions and social stakes to change quality and consequence rather than gate progress.",
       relatedIntents: [
+        "answer-npc-tell-us-everything",
         "answer-run-mystery-without-railroading",
         "answer-run-investigator-without-sidelining-party",
         "answer-run-scene-multiple-npcs",
@@ -275,6 +277,11 @@ export const howDoIMakeInterviewingNpcsInterestingInAnInvestigation: AnswerConfi
         "answer-specialist-character-spotlight",
       ],
       acknowledgedOverlap: [
+        {
+          with: "answer-npc-tell-us-everything",
+          reason:
+            "This answer covers overall witness texture, social stakes, and separating facts from interpretations; the companion answer resolves the specific table dilemma of players asking an NPC to tell them everything they know.",
+        },
         {
           with: "answer-run-mystery-without-railroading",
           reason:

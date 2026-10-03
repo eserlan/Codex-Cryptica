@@ -194,6 +194,7 @@ export const howDoIRunCharacterRolesInAnInvestigativeHorrorRpg: AnswerConfigInpu
       "how-do-you-generate-useful-rpg-rumours",
       "how-do-i-run-common-character-roles-in-a-sci-fi-or-space-opera-rpg",
       "how-do-i-make-interviewing-npcs-interesting-in-an-investigation",
+      "how-do-i-handle-players-asking-an-npc-to-tell-us-everything-you-know",
     ],
     discovery: {
       id: "answer-character-roles-investigative-horror",
