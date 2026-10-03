@@ -45,8 +45,8 @@
 
 {#if !sessionModeStore.isGuestMode && mapSession.vttEnabled}
   <div
-    class="absolute z-20 pointer-events-auto"
-    style="bottom: 1rem; left: calc({chatSidebarOffset} + 1rem);"
+    class="absolute bottom-4 left-4 z-20 pointer-events-auto sm:left-[var(--map-hud-left)] max-sm:bottom-auto max-sm:top-16"
+    style="--map-hud-left: calc({chatSidebarOffset} + 1rem);"
   >
     <button
       type="button"
@@ -90,16 +90,21 @@
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 {#if !sessionModeStore.isGuestMode}
   <div
-    class="absolute inset-x-4 bottom-4 z-10 flex justify-center"
+    class="pointer-events-none absolute inset-x-2 bottom-2 z-10 flex justify-center sm:inset-x-4 sm:bottom-4"
     role="presentation"
     onmousedown={(e) => e.stopPropagation()}
   >
+    <!-- Wraps on phones; only the bar itself takes touches so the map can
+         still be panned and pinched around it. -->
     <div
-      class="flex gap-1.5 bg-theme-surface/80 backdrop-blur border border-theme-border p-1.5 rounded-lg shadow-lg items-center"
+      class="pointer-events-auto flex max-w-full flex-wrap items-center justify-center gap-1.5 rounded-lg border border-theme-border bg-theme-surface/80 p-1.5 shadow-lg backdrop-blur"
+      role="presentation"
+      onpointerdown={(e) => e.stopPropagation()}
+      ontouchstart={(e) => e.stopPropagation()}
     >
       <button
         type="button"
-        class={`px-2.5 py-1.5 rounded-md text-micro font-bold uppercase tracking-wider transition-all ${getPrimaryButtonStateClass(sessionModeStore.sharedMode)}`}
+        class={`touch-target px-2.5 py-1.5 rounded-md text-micro font-bold uppercase tracking-wider transition-all ${getPrimaryButtonStateClass(sessionModeStore.sharedMode)}`}
         onclick={() =>
           (sessionModeStore.sharedMode = !sessionModeStore.sharedMode)}
         title={sessionModeStore.sharedMode
@@ -115,7 +120,7 @@
       {#if mapStore.isGMMode}
         <button
           type="button"
-          class={`px-2.5 py-1.5 rounded-md text-micro font-bold uppercase tracking-wider transition-all ${getPrimaryButtonStateClass(mapStore.showFog)}`}
+          class={`touch-target px-2.5 py-1.5 rounded-md text-micro font-bold uppercase tracking-wider transition-all ${getPrimaryButtonStateClass(mapStore.showFog)}`}
           onclick={() => (mapStore.showFog = !mapStore.showFog)}
         >
           FOG: {mapStore.showFog ? "ON" : "OFF"}
@@ -123,7 +128,7 @@
 
         <button
           type="button"
-          class={`px-2.5 py-1.5 rounded-md text-micro font-bold uppercase tracking-wider transition-all ${getPrimaryButtonStateClass(mapStore.visionMode === "selected")}`}
+          class={`touch-target px-2.5 py-1.5 rounded-md text-micro font-bold uppercase tracking-wider transition-all ${getPrimaryButtonStateClass(mapStore.visionMode === "selected")}`}
           onclick={() =>
             (mapStore.visionMode =
               mapStore.visionMode === "party" ? "selected" : "party")}
@@ -132,7 +137,7 @@
           VISION: {mapStore.visionMode === "selected" ? "SELECTED" : "PARTY"}
         </button>
 
-        <div class="flex items-center gap-2 px-2">
+        <div class="flex items-center gap-2 px-2 max-sm:w-full">
           <span
             class="text-nano text-theme-muted font-bold tracking-tighter uppercase"
             >Vision Range</span
@@ -143,16 +148,16 @@
             max="300"
             step="5"
             bind:value={mapStore.visionRange}
-            class="w-24 accent-theme-primary h-1"
+            class="w-24 accent-theme-primary h-1 max-sm:h-6 max-sm:min-w-0 max-sm:flex-1"
           />
-          <span class="text-nano text-theme-primary font-mono w-8"
+          <span class="text-nano text-theme-primary font-mono w-10 shrink-0"
             >{mapStore.visionRange}{mapSession.gridUnit}</span
           >
         </div>
 
         <button
           type="button"
-          class={`px-2.5 py-1.5 rounded-md text-micro font-bold uppercase tracking-wider transition-all ${getPrimaryButtonStateClass(mapStore.showLabels)}`}
+          class={`touch-target px-2.5 py-1.5 rounded-md text-micro font-bold uppercase tracking-wider transition-all ${getPrimaryButtonStateClass(mapStore.showLabels)}`}
           onclick={() => (mapStore.showLabels = !mapStore.showLabels)}
           title="Toggle Pin Labels"
         >
@@ -161,7 +166,7 @@
 
         <button
           type="button"
-          class={`px-2.5 py-1.5 rounded-md text-micro font-bold uppercase tracking-wider transition-all ${getPrimaryButtonStateClass(mapStore.showGrid)}`}
+          class={`touch-target px-2.5 py-1.5 rounded-md text-micro font-bold uppercase tracking-wider transition-all ${getPrimaryButtonStateClass(mapStore.showGrid)}`}
           onclick={() => (mapStore.showGrid = !mapStore.showGrid)}
           oncontextmenu={openGridSettings}
           title="Toggle Grid (Right-click for settings)"
@@ -172,7 +177,7 @@
         <div class="relative" bind:this={layerPanelContainer}>
           <button
             type="button"
-            class={`px-2.5 py-1.5 rounded-md transition-all flex items-center ${getPrimaryButtonStateClass(showLayerPanel)}`}
+            class={`touch-target px-2.5 py-1.5 rounded-md transition-all flex items-center ${getPrimaryButtonStateClass(showLayerPanel)}`}
             onclick={(e) => {
               e.stopPropagation();
               showLayerPanel = !showLayerPanel;
@@ -187,7 +192,9 @@
             ></span>
           </button>
           {#if showLayerPanel}
-            <div class="absolute bottom-full left-0 mb-2">
+            <div
+              class="absolute bottom-full left-0 mb-2 max-sm:fixed max-sm:inset-x-2 max-sm:bottom-[12rem] max-sm:mb-0 max-sm:flex max-sm:justify-center"
+            >
               <LayerPanel onClose={() => (showLayerPanel = false)} />
             </div>
           {/if}
@@ -196,7 +203,7 @@
         <VTTModeToggle />
 
         {#if mapStore.showFog}
-          <div class="flex items-center gap-2 px-2">
+          <div class="flex items-center gap-2 px-2 max-sm:w-full">
             <span
               class="text-nano text-theme-muted font-bold tracking-tighter uppercase"
               >Brush Size</span
@@ -206,15 +213,15 @@
               min="10"
               max="500"
               bind:value={mapStore.brushRadius}
-              class="w-24 accent-theme-primary h-1"
+              class="w-24 accent-theme-primary h-1 max-sm:h-6 max-sm:min-w-0 max-sm:flex-1"
             />
-            <span class="text-nano text-theme-primary font-mono w-6"
+            <span class="text-nano text-theme-primary font-mono w-10 shrink-0"
               >{mapStore.brushRadius}px</span
             >
           </div>
 
           <div
-            class="flex flex-col justify-center px-2 text-micro text-theme-muted/90 font-semibold italic leading-tight"
+            class="hidden flex-col justify-center px-2 text-micro text-theme-muted/90 font-semibold italic leading-tight md:flex"
           >
             <span>Alt+Drag to Reveal</span>
             <span>Alt+Shift+Drag to Hide</span>

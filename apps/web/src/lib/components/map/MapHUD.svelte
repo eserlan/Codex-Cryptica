@@ -27,16 +27,16 @@
 
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div
-  class="absolute z-10 flex flex-col items-start gap-2"
-  style="top: 1rem; left: calc({chatSidebarOffset} + 1rem);"
+  class="absolute top-4 left-4 z-10 flex flex-col items-start gap-2 sm:left-[var(--map-hud-left)]"
+  style="--map-hud-left: calc({chatSidebarOffset} + 1rem);"
   role="presentation"
   onmousedown={(e) => e.stopPropagation()}
 >
-  <div class="flex gap-2">
+  <div class="flex flex-wrap gap-2">
     {#if mapStore.canGoBack}
       <button
         type="button"
-        class="px-3 py-1.5 bg-theme-surface border border-theme-border text-theme-text text-xs font-bold rounded-lg hover:border-theme-primary transition-colors flex items-center gap-2 focus-visible:ring-2 focus-visible:ring-theme-primary focus-visible:outline-none"
+        class="touch-target px-3 py-1.5 bg-theme-surface border border-theme-border text-theme-text text-xs font-bold rounded-lg hover:border-theme-primary transition-colors flex items-center gap-2 focus-visible:ring-2 focus-visible:ring-theme-primary focus-visible:outline-none"
         onclick={() => mapStore.goBack()}
       >
         <span class="icon-[lucide--arrow-left] w-3 h-3" aria-hidden="true"
@@ -48,7 +48,7 @@
     {#if isPublishedVaultReader}
       {#if vault.allMaps.length > 1}
         <select
-          class="bg-theme-surface border border-theme-border text-theme-text px-3 py-1.5 rounded-lg text-xs focus-visible:ring-2 focus-visible:ring-theme-primary focus-visible:outline-none"
+          class="touch-target bg-theme-surface border border-theme-border text-theme-text px-3 py-1.5 rounded-lg text-xs focus-visible:ring-2 focus-visible:ring-theme-primary focus-visible:outline-none"
           aria-label="Select Map"
           value={mapStore.activeMapId}
           onchange={(e) => mapStore.selectMap(e.currentTarget.value)}
@@ -61,7 +61,7 @@
         </select>
       {:else if mapStore.activeMap}
         <div
-          class="px-3 py-1.5 bg-theme-surface border border-theme-border text-theme-text rounded-lg text-xs font-bold"
+          class="touch-target px-3 py-1.5 bg-theme-surface border border-theme-border text-theme-text rounded-lg text-xs font-bold"
         >
           {mapStore.activeMap.isWorldMap ? "★ " : ""}{mapStore.activeMap.name}
         </div>
@@ -69,14 +69,14 @@
     {:else if sessionModeStore.isGuestMode}
       {#if mapStore.activeMap}
         <div
-          class="px-3 py-1.5 bg-theme-surface border border-theme-border text-theme-text rounded-lg text-xs font-bold"
+          class="touch-target px-3 py-1.5 bg-theme-surface border border-theme-border text-theme-text rounded-lg text-xs font-bold"
         >
           {mapStore.activeMap.isWorldMap ? "★ " : ""}{mapStore.activeMap.name}
         </div>
       {/if}
     {:else}
       <select
-        class="bg-theme-surface border border-theme-border text-theme-text px-3 py-1.5 rounded-lg text-xs focus-visible:ring-2 focus-visible:ring-theme-primary focus-visible:outline-none"
+        class="touch-target bg-theme-surface border border-theme-border text-theme-text px-3 py-1.5 rounded-lg text-xs focus-visible:ring-2 focus-visible:ring-theme-primary focus-visible:outline-none"
         aria-label="Select Map"
         value={mapStore.activeMapId}
         onchange={(e) =>
@@ -97,7 +97,7 @@
       {#if mapStore.activeMap && !mapStore.activeMap.isWorldMap}
         <button
           type="button"
-          class="px-3 py-1.5 bg-theme-surface border border-theme-border text-theme-muted text-micro font-bold rounded-lg hover:text-theme-primary hover:border-theme-primary transition-colors flex items-center gap-2 focus-visible:ring-2 focus-visible:ring-theme-primary focus-visible:outline-none"
+          class="touch-target px-3 py-1.5 bg-theme-surface border border-theme-border text-theme-muted text-micro font-bold rounded-lg hover:text-theme-primary hover:border-theme-primary transition-colors flex items-center gap-2 focus-visible:ring-2 focus-visible:ring-theme-primary focus-visible:outline-none"
           onclick={() => mapStore.setAsWorldMap(mapStore.activeMapId!)}
           title="Set as World Map"
         >
@@ -106,7 +106,7 @@
         </button>
       {:else if mapStore.activeMap?.isWorldMap}
         <div
-          class="px-3 py-1.5 bg-theme-primary/10 border border-theme-primary/30 text-theme-primary text-micro font-bold rounded-lg flex items-center gap-2"
+          class="touch-target px-3 py-1.5 bg-theme-primary/10 border border-theme-primary/30 text-theme-primary text-micro font-bold rounded-lg flex items-center gap-2"
         >
           <span
             class="icon-[lucide--star] w-3 h-3 fill-theme-primary"
@@ -118,7 +118,7 @@
 
       <button
         type="button"
-        class="px-3 py-1.5 bg-theme-surface border border-theme-border text-red-500/70 text-micro font-bold rounded-lg hover:text-red-400 hover:border-red-400 transition-colors flex items-center gap-2 focus-visible:ring-2 focus-visible:ring-theme-primary focus-visible:outline-none"
+        class="touch-target px-3 py-1.5 bg-theme-surface border border-theme-border text-red-500/70 text-micro font-bold rounded-lg hover:text-red-400 hover:border-red-400 transition-colors flex items-center gap-2 focus-visible:ring-2 focus-visible:ring-theme-primary focus-visible:outline-none"
         onclick={async () => {
           if (
             await notificationStore.confirm({
@@ -145,7 +145,7 @@
 
       <button
         type="button"
-        class="px-3 py-1.5 bg-theme-primary text-theme-bg text-xs font-bold rounded-lg uppercase font-header tracking-wider focus-visible:ring-2 focus-visible:ring-theme-primary focus-visible:outline-none"
+        class="touch-target px-3 py-1.5 bg-theme-primary text-theme-bg text-xs font-bold rounded-lg uppercase font-header tracking-wider focus-visible:ring-2 focus-visible:ring-theme-primary focus-visible:outline-none"
         onclick={onShowUpload}
       >
         Add Map
