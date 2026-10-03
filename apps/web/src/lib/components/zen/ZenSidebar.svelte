@@ -262,11 +262,11 @@
         aria-hidden="true"
         tabindex="-1"
       />
-      <div class="mb-2 flex items-center gap-2">
+      <div class="mb-2 flex items-stretch gap-2">
         <button
           type="button"
           onclick={() => fileInput?.click()}
-          class="flex-1 rounded border border-theme-border bg-theme-surface px-3 py-2 text-micro font-bold uppercase tracking-widest text-theme-text transition hover:border-theme-primary hover:bg-theme-bg/50"
+          class="touch-target flex-1 rounded border border-theme-border bg-theme-surface px-3 py-2 text-micro font-bold uppercase tracking-widest text-theme-text transition hover:border-theme-primary hover:bg-theme-bg/50"
           aria-describedby={imageUploadError
             ? "zen-image-upload-error"
             : undefined}
@@ -285,7 +285,7 @@
           type="button"
           onclick={() => entity && modalUIStore.openSilhouettePicker(entity)}
           disabled={!entity}
-          class="flex items-center gap-1.5 rounded border border-theme-border bg-theme-surface px-3 py-2 text-micro font-bold uppercase tracking-widest text-theme-text transition hover:border-theme-primary hover:bg-theme-bg/50 disabled:cursor-not-allowed disabled:opacity-40"
+          class="touch-target flex items-center gap-1.5 rounded border border-theme-border bg-theme-surface px-3 py-2 text-micro font-bold uppercase tracking-widest text-theme-text transition hover:border-theme-primary hover:bg-theme-bg/50 disabled:cursor-not-allowed disabled:opacity-40"
           title="Customize vector silhouette"
           data-testid="zen-silhouette-button"
         >
@@ -489,7 +489,7 @@
         <button
           onclick={() => oracle.drawEntity(entity.id)}
           disabled={isVisualizing}
-          class="bg-theme-surface/50 hover:bg-theme-surface border border-theme-primary/30 hover:border-theme-primary transition-all flex items-center justify-center gap-2 px-2 py-1 md:px-4 md:py-2 rounded shadow-sm group/btn relative overflow-hidden"
+          class="touch-target bg-theme-surface/50 hover:bg-theme-surface border border-theme-primary/30 hover:border-theme-primary transition-all flex items-center justify-center gap-2 px-2 py-1 md:px-4 md:py-2 rounded shadow-sm group/btn relative overflow-hidden"
           aria-label={oracle.apiKey
             ? `Draw visualization for ${entity.title}`
             : `Generate image prompt for ${entity.title}`}
@@ -528,7 +528,7 @@
         <button
           type="button"
           onclick={() => modalUIStore.openRevisionDialog(entity.id)}
-          class="bg-theme-surface/50 hover:bg-theme-surface border border-theme-primary/30 hover:border-theme-primary transition-all flex items-center justify-center gap-2 px-2 py-1 md:px-4 md:py-2 rounded shadow-sm group/btn relative overflow-hidden"
+          class="touch-target bg-theme-surface/50 hover:bg-theme-surface border border-theme-primary/30 hover:border-theme-primary transition-all flex items-center justify-center gap-2 px-2 py-1 md:px-4 md:py-2 rounded shadow-sm group/btn relative overflow-hidden"
           aria-label="Revise Chronicle and Lore"
           title="Revise Chronicle and Lore"
         >
