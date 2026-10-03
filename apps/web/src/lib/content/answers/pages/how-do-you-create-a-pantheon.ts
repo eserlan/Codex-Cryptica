@@ -129,6 +129,7 @@ export const howDoYouCreateAPantheon: AnswerConfigInput = {
     },
   ],
   relatedAnswers: [
+    "can-multiple-gods-share-a-domain",
     "how-do-you-create-a-believable-fictional-religion",
     "how-do-you-create-a-fantasy-faction",
     "how-do-you-organise-rpg-campaign-notes",
@@ -146,12 +147,18 @@ export const howDoYouCreateAPantheon: AnswerConfigInput = {
     relatedIntents: [
       "generator-pantheon-generator",
       "answer-fictional-religion",
+      "answer-overlapping-divine-domains",
     ],
     acknowledgedOverlap: [
       {
         with: "answer-fictional-religion",
         reason:
           "Pantheon covers the roster of gods and how they are entangled; religion covers the institution, its rites and its funding. Both pages state the split explicitly and a setting can need either alone.",
+      },
+      {
+        with: "answer-overlapping-divine-domains",
+        reason:
+          "Pantheon design covers the relationships between gods, while the overlapping-domains answer focuses on the cosmological models and table consequences of shared claims.",
       },
     ],
   },
