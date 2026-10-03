@@ -97,7 +97,11 @@ test("map controls stay usable with touch at 390x844", async ({ page }) => {
 
   // The bar's row wrapper must not swallow touches meant for the map.
   const hit = await page.evaluate(() => {
-    const el = document.elementFromPoint(195, 600);
+    const bar = document
+      .getElementById("map-controls-bar")!
+      .getBoundingClientRect();
+    // Just above the bar, in the middle of the screen.
+    const el = document.elementFromPoint(195, bar.top - 24);
     return el?.tagName.toLowerCase();
   });
   expect(hit).toBe("canvas");
@@ -235,5 +239,64 @@ test.describe("reveal / hide on phones", () => {
 
     await expect(page.getByTestId("map-controls-fab")).toHaveCount(0);
     await expect(page.getByRole("button", { name: /^LABELS/ })).toBeVisible();
+  });
+});
+
+test.describe("maximize", () => {
+  const header = (page: Page) => page.getByTestId("header-front-page-button");
+
+  test("on a phone the toggle lives in the controls and gives the map the whole screen", async ({
+    page,
+  }) => {
+    test.setTimeout(90000);
+    await page.setViewportSize({ width: 390, height: 844 });
+    await openMapWithControls(page);
+    await expect(header(page)).toBeVisible();
+    const before = await page.locator("canvas").first().boundingBox();
+
+    await revealControls(page);
+    const toggle = page.getByTestId("map-maximize-toggle");
+    await expect(toggle).toHaveText(/MAXIMIZE/);
+    await toggle.click();
+
+    // The header is gone (navigation shares the same condition, but the demo
+    // vault runs guided mode with no bottom bar); the Map Controls button stays.
+    await expect(header(page)).toHaveCount(0);
+    const fab = page.getByTestId("map-controls-fab");
+    await expect(fab).toBeVisible();
+    const after = await page.locator("canvas").first().boundingBox();
+    expect(after!.height).toBeGreaterThan(before!.height + 50);
+
+    // Minimize from the same group of controls.
+    await fab.click();
+    await expect(page.getByTestId("map-maximize-toggle")).toHaveText(
+      /MINIMIZE/,
+    );
+    await page.getByTestId("map-maximize-toggle").click();
+    await expect(header(page)).toBeVisible();
+  });
+
+  test("it also works on desktop", async ({ page }) => {
+    test.setTimeout(90000);
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await openMapWithControls(page);
+
+    await page.getByTestId("map-maximize-toggle").click();
+    await expect(header(page)).toHaveCount(0);
+    await page.getByTestId("map-maximize-toggle").click();
+    await expect(header(page)).toBeVisible();
+  });
+
+  test("leaving the map restores the header", async ({ page }) => {
+    test.setTimeout(90000);
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await openMapWithControls(page);
+    await page.getByTestId("map-maximize-toggle").click();
+    await expect(header(page)).toHaveCount(0);
+
+    await page.goto("/");
+    await expect(header(page)).toBeVisible({ timeout: 15000 });
+    await page.goto("/map");
+    await expect(header(page)).toBeVisible({ timeout: 15000 });
   });
 });

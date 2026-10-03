@@ -69,6 +69,7 @@ describe("MapVTTControlsHUD", () => {
     mapSessionMock.vttEnabled = true;
     layoutUIStore.isMobile = false;
     mapControlsUIStore.open = false;
+    mapControlsUIStore.maximized = false;
     mapSessionMock.showGridSettings = false;
     mapSessionMock.measurement.active = false;
     mapSessionMock.activeLayer = "terrain";
@@ -87,6 +88,91 @@ describe("MapVTTControlsHUD", () => {
 
     expect(mapStoreMock.showFog).toBe(false);
     expect(screen.getByRole("button", { name: "GRID: OFF" })).not.toBeNull();
+  });
+
+  describe("maximize", () => {
+    it("offers a maximize toggle inside the control bar when VTT is off", async () => {
+      mapSessionMock.vttEnabled = false;
+      render(MapVTTControlsHUD, { props: { chatSidebarOffset: "20rem" } });
+
+      const toggle = screen.getByTestId("map-maximize-toggle");
+      expect(toggle.closest("#map-controls-bar")).not.toBeNull();
+      expect(toggle.textContent).toContain("MAXIMIZE");
+      expect(toggle.getAttribute("aria-pressed")).toBe("false");
+
+      await fireEvent.click(toggle);
+
+      expect(mapControlsUIStore.maximized).toBe(true);
+      expect(toggle.textContent).toContain("MINIMIZE");
+      expect(toggle.getAttribute("aria-pressed")).toBe("true");
+
+      await fireEvent.click(toggle);
+      expect(mapControlsUIStore.maximized).toBe(false);
+      mapSessionMock.vttEnabled = true;
+    });
+
+    it("is not offered while VTT is on, which is already full-bleed", () => {
+      mapSessionMock.vttEnabled = true;
+      render(MapVTTControlsHUD, { props: { chatSidebarOffset: "20rem" } });
+
+      expect(screen.queryByTestId("map-maximize-toggle")).toBeNull();
+    });
+
+    it("tucks the phone controls panel away after maximizing so the map shows", async () => {
+      mapSessionMock.vttEnabled = false;
+      layoutUIStore.isMobile = true;
+      mapControlsUIStore.open = true;
+      render(MapVTTControlsHUD, { props: { chatSidebarOffset: "20rem" } });
+
+      await fireEvent.click(screen.getByTestId("map-maximize-toggle"));
+
+      expect(mapControlsUIStore.maximized).toBe(true);
+      expect(mapControlsUIStore.open).toBe(false);
+      // The Map Controls button stays, so the user can always minimize again.
+      expect(
+        screen.getByRole("button", { name: "Map Controls" }),
+      ).not.toBeNull();
+      mapSessionMock.vttEnabled = true;
+    });
+
+    it("stays maximized after the phone panel closes and the toggle unmounts", async () => {
+      mapSessionMock.vttEnabled = false;
+      layoutUIStore.isMobile = true;
+      mapControlsUIStore.open = true;
+      render(MapVTTControlsHUD, { props: { chatSidebarOffset: "20rem" } });
+
+      await fireEvent.click(screen.getByTestId("map-maximize-toggle"));
+
+      // The panel (and the toggle in it) is gone, but the map stays maximized.
+      expect(screen.queryByTestId("map-maximize-toggle")).toBeNull();
+      expect(mapControlsUIStore.maximized).toBe(true);
+      mapSessionMock.vttEnabled = true;
+    });
+
+    it("keeps the panel open on larger screens", async () => {
+      mapSessionMock.vttEnabled = false;
+      layoutUIStore.isMobile = false;
+      mapControlsUIStore.open = true;
+      render(MapVTTControlsHUD, { props: { chatSidebarOffset: "20rem" } });
+
+      await fireEvent.click(screen.getByTestId("map-maximize-toggle"));
+
+      expect(mapControlsUIStore.open).toBe(true);
+      mapSessionMock.vttEnabled = true;
+    });
+
+    it("restores the app chrome when the map screen is left", () => {
+      mapSessionMock.vttEnabled = false;
+      mapControlsUIStore.maximized = true;
+      const { unmount } = render(MapVTTControlsHUD, {
+        props: { chatSidebarOffset: "20rem" },
+      });
+
+      unmount();
+
+      expect(mapControlsUIStore.maximized).toBe(false);
+      mapSessionMock.vttEnabled = true;
+    });
   });
 
   describe("reveal / hide on phones", () => {

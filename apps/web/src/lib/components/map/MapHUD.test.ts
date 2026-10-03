@@ -106,6 +106,35 @@ describe("MapHUD", () => {
     expect(onShowUpload).toHaveBeenCalled();
   });
 
+  describe("back button", () => {
+    it("is absent until the user has followed a link to another map", () => {
+      mapStoreMock.canGoBack = false;
+      render(MapHUD, {
+        props: { chatSidebarOffset: "20rem", onShowUpload: vi.fn() },
+      });
+
+      expect(screen.queryByTestId("map-back-button")).toBeNull();
+    });
+
+    it("is compact (icon only on phones) but still named for assistive tech", async () => {
+      mapStoreMock.canGoBack = true;
+      render(MapHUD, {
+        props: { chatSidebarOffset: "20rem", onShowUpload: vi.fn() },
+      });
+
+      const back = screen.getByRole("button", {
+        name: "Back to the previous map",
+      });
+      expect(back.querySelector("span.hidden.sm\\:inline")?.textContent).toBe(
+        "BACK",
+      );
+
+      await fireEvent.click(back);
+      expect(mapStoreMock.goBack).toHaveBeenCalledTimes(1);
+      mapStoreMock.canGoBack = false;
+    });
+  });
+
   describe("on phones", () => {
     it("keeps the map switcher but hides the other actions until revealed", () => {
       layoutUIStore.isMobile = true;

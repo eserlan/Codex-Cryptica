@@ -1,5 +1,7 @@
 <script lang="ts">
   import VTTModeToggle from "$lib/components/map/VTTModeToggle.svelte";
+  import MapControlsFab from "$lib/components/map/MapControlsFab.svelte";
+  import MapMaximizeToggle from "$lib/components/map/MapMaximizeToggle.svelte";
   import LayerPanel from "$lib/components/map/LayerPanel.svelte";
   import { LAYER_OPTIONS } from "$lib/components/ui/LayerMenu.svelte";
   import {
@@ -22,6 +24,13 @@
   const barVisible = $derived(
     !layoutUIStore.isMobile || mapControlsUIStore.open,
   );
+
+  // Never leave the app chrome hidden after the map screen is gone. This lives
+  // here, not in the toggle: the toggle unmounts whenever the phone panel
+  // closes, which must not undo maximizing.
+  $effect(() => () => {
+    mapControlsUIStore.maximized = false;
+  });
 
   let showLayerPanel = $state(false);
   let layerPanelContainer = $state<HTMLDivElement>();
@@ -95,22 +104,7 @@
 {/if}
 
 {#if !sessionModeStore.isGuestMode && layoutUIStore.isMobile}
-  <button
-    type="button"
-    onclick={() => mapControlsUIStore.toggle()}
-    class="touch-target absolute right-3 bottom-3 z-30 flex h-11 w-11 items-center justify-center rounded-full bg-theme-primary text-theme-bg shadow-lg transition-all active:scale-95"
-    aria-label="Map Controls"
-    aria-expanded={mapControlsUIStore.open}
-    aria-controls="map-controls-bar"
-    data-testid="map-controls-fab"
-  >
-    <span
-      aria-hidden="true"
-      class="{mapControlsUIStore.open
-        ? 'icon-[lucide--x]'
-        : 'icon-[lucide--settings-2]'} h-5 w-5"
-    ></span>
-  </button>
+  <MapControlsFab />
 {/if}
 
 <!-- svelte-ignore a11y_no_static_element_interactions -->
@@ -129,6 +123,10 @@
       onpointerdown={(e) => e.stopPropagation()}
       ontouchstart={(e) => e.stopPropagation()}
     >
+      {#if !mapSession.vttEnabled}
+        <MapMaximizeToggle />
+      {/if}
+
       <button
         type="button"
         class={`touch-target px-2.5 py-1.5 rounded-md text-micro font-bold uppercase tracking-wider transition-all ${getPrimaryButtonStateClass(sessionModeStore.sharedMode)}`}

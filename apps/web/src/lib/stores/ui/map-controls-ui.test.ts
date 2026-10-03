@@ -22,4 +22,20 @@ describe("MapControlsUIStore", () => {
     store.close();
     expect(store.open).toBe(false);
   });
+
+  it("starts with the app chrome visible and toggles maximized", () => {
+    const store = new MapControlsUIStore();
+    expect(store.maximized).toBe(false);
+    store.toggleMaximized();
+    expect(store.maximized).toBe(true);
+    store.toggleMaximized();
+    expect(store.maximized).toBe(false);
+  });
+
+  it("keeps maximized independent of the phone controls panel", () => {
+    const store = new MapControlsUIStore();
+    store.toggleMaximized();
+    store.close();
+    expect(store.maximized).toBe(true);
+  });
 });
