@@ -559,6 +559,30 @@ export class MapStore {
     return id;
   }
 
+  private async rollbackFailedImageReplacement(
+    mapId: string,
+    previousMap: Map,
+    replacementMap: Map,
+    vaultDir: FileSystemDirectoryHandle,
+    storageName: string,
+  ): Promise<void> {
+    // Keep edits made while the metadata save was pending, but restore the
+    // fields changed by this replacement operation.
+    const currentMap = vault.maps[mapId];
+    if (currentMap?.assetPath === replacementMap.assetPath) {
+      vault.maps[mapId] = {
+        ...currentMap,
+        assetPath: previousMap.assetPath,
+        dimensions: previousMap.dimensions,
+      };
+    }
+
+    await deleteOpfsEntry(vaultDir, ["maps", storageName], vaultDir.name).catch(
+      (err) =>
+        console.warn("[MapStore] Could not remove the unsaved map image", err),
+    );
+  }
+
   /**
    * Swaps a map's background image for a new one, keeping its pins, tokens
    * and fog. Used to recover a map whose image is missing or unreadable.
@@ -586,22 +610,22 @@ export class MapStore {
     }
 
     const previousPath = map.assetPath;
-    vault.maps[mapId] = {
+    const replacementMap: Map = {
       ...map,
       assetPath: `maps/${storageName}`,
       dimensions: { width: 0, height: 0 },
     };
+    vault.maps[mapId] = replacementMap;
     if (!(await vault.saveMapsWithResult())) {
       // saveMaps reports storage errors instead of throwing. Restore the
       // in-memory map and keep the old image, which the on-disk metadata may
       // still reference.
-      vault.maps[mapId] = map;
-      await deleteOpfsEntry(
+      await this.rollbackFailedImageReplacement(
+        mapId,
+        map,
+        replacementMap,
         vaultDir,
-        ["maps", storageName],
-        vaultDir.name,
-      ).catch((err) =>
-        console.warn("[MapStore] Could not remove the unsaved map image", err),
+        storageName,
       );
       return false;
     }

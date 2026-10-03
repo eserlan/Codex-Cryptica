@@ -152,6 +152,39 @@ describe("MapStore.replaceMapImage", () => {
     expect(vaultMock.releaseImageUrl).not.toHaveBeenCalled();
   });
 
+  it("preserves map edits made while a failed metadata save is pending", async () => {
+    let resolveSave!: (saved: boolean) => void;
+    vaultMock.saveMapsWithResult.mockReturnValue(
+      new Promise<boolean>((resolve) => {
+        resolveSave = resolve;
+      }),
+    );
+    const store = new MapStore(undefined, { uuid: () => "new-image-id" });
+
+    const replacement = store.replaceMapImage("map-1", file());
+    await vi.waitFor(() =>
+      expect(vaultMock.saveMapsWithResult).toHaveBeenCalled(),
+    );
+
+    vaultMock.maps["map-1"] = {
+      ...vaultMock.maps["map-1"],
+      name: "Renamed while saving",
+      pins: [...vaultMock.maps["map-1"].pins, { id: "pin-2", x: 30, y: 40 }],
+    };
+    resolveSave(false);
+
+    await expect(replacement).resolves.toBe(false);
+    expect(vaultMock.maps["map-1"]).toMatchObject({
+      name: "Renamed while saving",
+      assetPath: "maps/old.webp",
+      dimensions: { width: 4000, height: 3000 },
+      pins: [
+        { id: "pin-1", x: 10, y: 20 },
+        { id: "pin-2", x: 30, y: 40 },
+      ],
+    });
+  });
+
   it("fails for an unknown map or without an active vault", async () => {
     const store = new MapStore(undefined, { uuid: () => "new-image-id" });
     expect(await store.replaceMapImage("missing", file())).toBe(false);
