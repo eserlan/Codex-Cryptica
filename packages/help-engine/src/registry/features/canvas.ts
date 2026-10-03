@@ -4,7 +4,7 @@ export const canvas: FeatureEntry = {
   id: "canvas",
   title: "Spatial Canvas",
   summary:
-    "A free-form board where you place entities and draw links yourself, to plan a plot or lay out a conspiracy. Positions are yours; the graph arranges itself.",
+    "A free-form board for placing entities and drawing links. Drag cards, adjust their layer order, lock them, or use the one-time auto-arrange control; each canvas saves its own layout.",
   channel: "production",
   routes: ["/(app)/canvas"],
   areas: ["canvas"],
