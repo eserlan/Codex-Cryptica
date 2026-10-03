@@ -302,8 +302,8 @@ export const howDoIMakeInterviewingNpcsInterestingInAnInvestigation: AnswerConfi
       description:
         "Stop flat NPC interviews. Use facts, interpretations and omissions, give core clues freely, and let better questions change context and consequences.",
       image:
-        "https://assets.codexcryptica.com/og/how-do-i-make-interviewing-npcs-interesting-in-an-investigation.jpg",
+        "https://assets.codexcryptica.com/og/how-do-i-run-an-investigator-without-sidelining-the-party.jpg",
       imageAlt:
-        "Tabletop RPG illustration of adventurers questioning a thoughtful witness in a lantern-lit archive with scattered notes and maps",
+        "An investigator studies evidence at a lantern-lit table while companions question a witness in a stone archive",
     },
   };
