@@ -253,7 +253,7 @@
       <button
         type="button"
         onclick={handleSendToShelf}
-        class="transition flex items-center justify-center p-1 {shelvedJustNow
+        class="touch-target transition flex items-center justify-center p-1 {shelvedJustNow
           ? 'text-theme-primary'
           : 'text-[color:var(--theme-icon-default)] hover:text-[color:var(--theme-icon-active)]'}"
         aria-label="Send to Shelf"
@@ -295,7 +295,7 @@
       <button
         type="button"
         onclick={handleFindInGraph}
-        class="transition flex items-center justify-center p-1 text-[color:var(--theme-icon-default)] hover:text-[color:var(--theme-icon-active)]"
+        class="touch-target transition flex items-center justify-center p-1 text-[color:var(--theme-icon-default)] hover:text-[color:var(--theme-icon-active)]"
         aria-label="Find in Graph"
         title="Find in Graph"
         data-testid="find-in-graph-button"
@@ -334,7 +334,7 @@
           if (!alreadyOpen) soundBiteService.loadFromEntity(entity);
           modalUIStore.openSoundBite(entity.id);
         }}
-        class="transition flex items-center justify-center p-1 {entity.soundBite
+        class="touch-target transition flex items-center justify-center p-1 {entity.soundBite
           ? 'text-theme-accent hover:opacity-85'
           : 'text-[color:var(--theme-icon-default)] hover:text-[color:var(--theme-icon-active)]'}"
         aria-label="Sound bite"
@@ -365,7 +365,7 @@
     <button
       type="button"
       onclick={() => modalUIStore.openZenMode(entity.id)}
-      class="transition flex items-center justify-center p-1 text-[color:var(--theme-icon-default)] hover:text-[color:var(--theme-icon-active)]"
+      class="touch-target transition flex items-center justify-center p-1 text-[color:var(--theme-icon-default)] hover:text-[color:var(--theme-icon-active)]"
       aria-label="Enter Zen Mode"
       title="Zen Mode (Full Screen)"
       data-testid="enter-zen-mode-button"
@@ -385,7 +385,7 @@
     <button
       type="button"
       onclick={onClose}
-      class="text-theme-muted hover:text-theme-primary transition p-1 -ml-2 rounded-full shrink-0"
+      class="touch-target flex items-center justify-center text-theme-muted hover:text-theme-primary transition p-1 -ml-2 rounded-full shrink-0"
       aria-label="Back"
     >
       <span aria-hidden="true" class="icon-[lucide--chevron-left] w-7 h-7"
@@ -484,7 +484,7 @@
               <button
                 type="button"
                 onclick={() => modalUIStore.openParentPicker(entity.id)}
-                class="flex items-center gap-1.5 text-xs text-theme-muted hover:text-theme-primary transition-colors focus:outline-none"
+                class="touch-target flex items-center gap-1.5 text-xs text-theme-muted hover:text-theme-primary transition-colors focus:outline-none"
                 title="Nest this under another entity"
                 data-testid="set-parent-button"
               >

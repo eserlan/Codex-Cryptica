@@ -263,7 +263,7 @@
               <button
                 type="button"
                 onclick={() => modalUIStore.openParentPicker(entity.id)}
-                class="flex items-center gap-1.5 text-xs text-theme-muted hover:text-theme-primary transition-colors focus:outline-none"
+                class="touch-target flex items-center gap-1.5 text-xs text-theme-muted hover:text-theme-primary transition-colors focus:outline-none"
                 title="Nest this under another entity"
                 data-testid="zen-set-parent-button"
               >
@@ -338,7 +338,7 @@
           <button
             type="button"
             onclick={handleFindInGraph}
-            class="px-2 md:px-3 py-1.5 border border-theme-border text-theme-secondary hover:text-theme-primary transition flex items-center gap-2 rounded text-micro md:text-xs font-bold tracking-widest"
+            class="touch-target px-2 md:px-3 py-1.5 border border-theme-border text-theme-secondary hover:text-theme-primary transition flex items-center gap-2 rounded text-micro md:text-xs font-bold tracking-widest"
             title="Find in Graph"
             aria-label="Find in Graph"
             data-testid="zen-find-in-graph-button"
@@ -351,7 +351,7 @@
           <button
             type="button"
             onclick={handleSendToShelf}
-            class="px-2 md:px-3 py-1.5 border border-theme-border {shelvedJustNow
+            class="touch-target px-2 md:px-3 py-1.5 border border-theme-border {shelvedJustNow
               ? 'text-theme-primary'
               : 'text-theme-secondary hover:text-theme-primary'} transition flex items-center gap-2 rounded text-micro md:text-xs font-bold tracking-widest"
             title={shelvedJustNow
@@ -401,7 +401,7 @@
               if (!alreadyOpen) soundBiteService.loadFromEntity(entity);
               modalUIStore.openSoundBite(entity.id);
             }}
-            class="px-2 md:px-3 py-1.5 border transition flex items-center gap-2 rounded text-micro md:text-xs font-bold tracking-widest {entity.soundBite
+            class="touch-target px-2 md:px-3 py-1.5 border transition flex items-center gap-2 rounded text-micro md:text-xs font-bold tracking-widest {entity.soundBite
               ? 'border-theme-accent/30 text-theme-accent hover:border-theme-accent/50 hover:text-theme-accent/80'
               : 'border-theme-border text-theme-secondary hover:text-theme-primary'}"
             title={entity.soundBite ? "Play sound bite" : "Generate sound bite"}
@@ -504,7 +504,7 @@
           <button
             type="button"
             onclick={onDelete}
-            class="px-2 md:px-3 py-1.5 border border-theme-danger/40 text-theme-danger hover:bg-theme-danger/10 text-micro md:text-xs font-bold rounded tracking-widest transition flex items-center gap-2"
+            class="touch-target px-2 md:px-3 py-1.5 border border-theme-danger/40 text-theme-danger hover:bg-theme-danger/10 text-micro md:text-xs font-bold rounded tracking-widest transition flex items-center gap-2"
             title="Delete entity"
             aria-label="Delete entity"
             data-testid="delete-entity-button"

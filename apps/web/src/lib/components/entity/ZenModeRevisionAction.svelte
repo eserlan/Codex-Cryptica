@@ -14,7 +14,7 @@
     onclick={() => isHost && modalUIStore.openRevisionDialog(selectedEntityId)}
     disabled={isRevising}
     aria-busy={isRevising}
-    class="toolbar-btn {isRevising
+    class="touch-target toolbar-btn {isRevising
       ? 'active'
       : ''} disabled:opacity-50 disabled:cursor-not-allowed"
     aria-label="AI Revise Description"

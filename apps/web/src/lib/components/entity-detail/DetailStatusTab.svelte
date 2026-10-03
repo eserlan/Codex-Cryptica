@@ -285,7 +285,7 @@
         <button
           type="button"
           onclick={() => (isAddingConnection = true)}
-          class="text-xs font-bold text-theme-primary hover:text-theme-secondary flex items-center gap-1 transition"
+          class="touch-target text-xs font-bold text-theme-primary hover:text-theme-secondary flex items-center gap-1 transition"
           aria-label="Add new connection"
           data-help-target="add-connection-button"
         >
