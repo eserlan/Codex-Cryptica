@@ -79,7 +79,7 @@ describe("MapRegistryStore", () => {
       vi.mocked(getVaultDir).mockResolvedValue({} as any);
       vi.mocked(saveMapsToDisk).mockResolvedValue(undefined);
 
-      await mapRegistry.saveMaps();
+      await expect(mapRegistry.saveMaps()).resolves.toBe(true);
 
       expect(mockQueue.enqueue).toHaveBeenCalledWith(
         "maps-metadata",
@@ -95,7 +95,7 @@ describe("MapRegistryStore", () => {
         .spyOn(console, "error")
         .mockImplementation(() => {});
 
-      await mapRegistry.saveMaps();
+      await expect(mapRegistry.saveMaps()).resolves.toBe(false);
 
       expect(mapRegistry.status).toBe("error");
       expect(notificationStore.notify).toHaveBeenCalledWith(
@@ -164,7 +164,7 @@ describe("MapRegistryStore", () => {
 
     it("should return early if dependencies missing in saveMaps", async () => {
       (vaultRegistry as any).activeVaultId = null;
-      await mapRegistry.saveMaps();
+      await expect(mapRegistry.saveMaps()).resolves.toBe(false);
       expect(vi.mocked(saveMapsToDisk)).not.toHaveBeenCalled();
     });
 

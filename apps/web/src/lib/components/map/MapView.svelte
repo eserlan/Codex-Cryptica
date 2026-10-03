@@ -10,6 +10,7 @@
   import { resolveVisionSourceTokens, visionRangeToPixels } from "./vtt-vision";
   import { broadcastActiveMapFogSync } from "./interactions/interaction-adapters";
   import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
+  import { notificationStore } from "$lib/stores/ui/notification.svelte";
   import { MapViewAssetLoader } from "./map-view-loader";
   import { MapInteractionManager } from "./map-interactions.svelte";
   import MapCanvas from "./MapCanvas.svelte";
@@ -344,6 +345,33 @@
     };
   });
 
+  let replacementInput = $state<HTMLInputElement | null>(null);
+  let replacingImage = $state(false);
+
+  async function replaceActiveMapImage(file: File) {
+    const mapId = mapStore.activeMapId;
+    if (!mapId) return;
+
+    replacingImage = true;
+    try {
+      if (!(await mapStore.replaceMapImage(mapId, file))) {
+        notificationStore.notify(
+          "That image could not be used. Try a different file.",
+          "error",
+        );
+      }
+    } finally {
+      replacingImage = false;
+    }
+  }
+
+  function handleReplacementSelected(event: Event) {
+    const input = event.currentTarget as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = "";
+    if (file) void replaceActiveMapImage(file);
+  }
+
   function retryImageLoad() {
     // Forget the last synced signature so the effect below reloads the asset.
     lastMapSignature = null;
@@ -457,15 +485,40 @@
           ></span>
           <p class="text-sm text-theme-text">
             This map's image could not be loaded. It may be missing from this
-            device or the connection may have dropped.
+            device or the connection may have dropped. You can try again, or
+            choose a new image to keep this map's pins and notes.
           </p>
-          <button
-            type="button"
-            class="touch-target rounded-lg bg-theme-primary px-4 py-2 text-xs font-bold uppercase tracking-wider text-theme-bg hover:bg-theme-secondary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary"
-            onclick={retryImageLoad}
-          >
-            Try again
-          </button>
+          <div class="flex flex-wrap items-center justify-center gap-2">
+            <button
+              type="button"
+              class="touch-target rounded-lg bg-theme-primary px-4 py-2 text-xs font-bold uppercase tracking-wider text-theme-bg hover:bg-theme-secondary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary disabled:opacity-50"
+              onclick={retryImageLoad}
+              disabled={replacingImage}
+            >
+              Try again
+            </button>
+            {#if !sessionModeStore.isGuestMode}
+              <button
+                type="button"
+                class="touch-target rounded-lg border border-theme-primary px-4 py-2 text-xs font-bold uppercase tracking-wider text-theme-primary hover:bg-theme-primary/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary disabled:opacity-50"
+                onclick={() => replacementInput?.click()}
+                disabled={replacingImage}
+                data-testid="map-image-replace"
+              >
+                {replacingImage ? "Replacing…" : "Choose a new image"}
+              </button>
+              <input
+                bind:this={replacementInput}
+                type="file"
+                accept="image/*"
+                class="sr-only"
+                tabindex="-1"
+                aria-hidden="true"
+                data-testid="map-image-replace-input"
+                onchange={handleReplacementSelected}
+              />
+            {/if}
+          </div>
         </div>
       {:else}
         <div class="flex flex-col items-center gap-4" role="status">

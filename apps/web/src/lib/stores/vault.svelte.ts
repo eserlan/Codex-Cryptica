@@ -869,6 +869,9 @@ export class VaultStore {
 
   // --- Map & Canvas Delegations ---
   saveMaps() {
+    return mapRegistry.saveMaps().then(() => undefined);
+  }
+  saveMapsWithResult() {
     return mapRegistry.saveMaps();
   }
   deleteMap(id: string) {
