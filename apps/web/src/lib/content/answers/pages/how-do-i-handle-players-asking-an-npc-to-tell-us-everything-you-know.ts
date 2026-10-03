@@ -15,7 +15,7 @@ export const howDoIHandlePlayersAskingAnNpcToTellUsEverythingYouKnow: AnswerConf
         kind: "prose",
         heading: "Why 'everything you know' is not literally everything",
         paragraphs: [
-          "When players say 'tell us everything you know', they are trying to avoid missing a clue because they did not guess the right phrasing. Taken literally, that request would ask an NPC to catalogue every perception, conversation, and assumption from the time in question, which no witness does in practice and which would take longer to deliver than any table wants to sit through.",
+          "When players say 'tell us everything you know', they are trying to avoid missing a clue because they did not guess the right phrasing. Taken literally, that request would ask an NPC to list every perception, conversation, and assumption from the time in question, which no witness does in practice and which would take longer to deliver than any table wants to sit through.",
           "Memory is associative and selective. People summarise what they think mattered, in the order they remember it, with the emphasis that reflects their role and concerns. They do not know which details are relevant to the investigators, so they leave out things they noticed but dismissed, forgot to connect, or assumed were normal. A specific question can prompt them to remember a sound, a time, or a person they would not have volunteered in a broad summary, without implying they were hiding it.",
         ],
       },
