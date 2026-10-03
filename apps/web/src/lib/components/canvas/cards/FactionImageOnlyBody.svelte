@@ -37,6 +37,6 @@
     >
       {entity?.title || "Faction"}
     </span>
-    <span class="text-[10px] text-theme-muted mt-1 opacity-60">No members</span>
+    <span class="text-micro text-theme-muted mt-1 opacity-60">No members</span>
   </div>
 {/if}

@@ -185,10 +185,10 @@
           ><span class="sr-only"> (past)</span>{/if}
       </div>
       {#if entity.aliases && entity.aliases.length > 0}
-        <div class="truncate text-[9px] text-theme-muted/70 font-mono italic">
+        <div class="truncate text-nano text-theme-muted/70 font-mono italic">
           aka: {entity.aliases.slice(0, 2).join(", ")}
           {#if entity.aliases.length > 2}
-            <span class="text-[8px] opacity-60">
+            <span class="text-nano opacity-60">
               +{entity.aliases.length - 2} more
             </span>
           {/if}
@@ -209,7 +209,7 @@
             explorerUIStore.toggleLabelFilter(label, e.ctrlKey || e.metaKey);
           }}
           onmousedown={(e) => e.stopPropagation()}
-          class="text-[9px] px-2 py-0.5 rounded-md uppercase font-header font-bold tracking-wider truncate max-w-[90px] transition-all border {labelFilters.has(
+          class="text-nano px-2 py-0.5 rounded-md uppercase font-header font-bold tracking-wider truncate max-w-[90px] transition-all border {labelFilters.has(
             label,
           )
             ? 'bg-theme-primary text-theme-bg border-theme-primary shadow-sm'
@@ -222,7 +222,7 @@
       {/each}
       {#if entity.labels.length > 2}
         <div
-          class="text-[9px] text-theme-muted font-header font-bold flex items-center"
+          class="text-nano text-theme-muted font-header font-bold flex items-center"
         >
           +{entity.labels.length - 2}
         </div>

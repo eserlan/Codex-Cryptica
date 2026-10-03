@@ -15,7 +15,7 @@
   const selectClass =
     "w-full bg-theme-bg/60 border border-theme-border/60 rounded-lg px-3 py-2 text-xs text-theme-text focus:outline-none focus:border-theme-primary/60";
   const labelClass =
-    "text-[10px] font-bold uppercase tracking-wider text-theme-text/80";
+    "text-micro font-bold uppercase tracking-wider text-theme-text/80";
 </script>
 
 <SelectWithCustomOption
@@ -61,7 +61,7 @@
   ></textarea>
   <p
     id="magic-item-campaign-context-help"
-    class="text-[10px] text-theme-text/60 leading-relaxed"
+    class="text-micro text-theme-text/60 leading-relaxed"
   >
     Name the campaign, region, or faction this belongs to. Anything you name
     here is kept and the item is built to fit it.

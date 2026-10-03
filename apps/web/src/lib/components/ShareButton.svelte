@@ -156,7 +156,7 @@
   onclick={handleClick}
   disabled={isSharing}
   aria-busy={isSharing}
-  class="inline-flex items-center gap-1.5 rounded-full border border-theme-border/60 bg-theme-surface/45 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-theme-text/70 transition-all hover:border-theme-primary/60 hover:text-theme-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-accent disabled:opacity-70"
+  class="inline-flex items-center gap-1.5 rounded-full border border-theme-border/60 bg-theme-surface/45 px-3 py-1.5 text-micro font-bold uppercase tracking-wider text-theme-text/70 transition-all hover:border-theme-primary/60 hover:text-theme-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-accent disabled:opacity-70"
   aria-label={canNativeShare
     ? `Share ${subjectLabel}`
     : `Copy link to ${subjectLabel}`}
@@ -172,7 +172,7 @@
   <span>{copied ? "Copied!" : canNativeShare ? "Share" : "Copy link"}</span>
 </button>
 {#if copyFailed}
-  <span class="text-[10px] text-theme-danger" role="alert"
+  <span class="text-micro text-theme-danger" role="alert"
     >Couldn't copy the link — copy it from the address bar instead.</span
   >
 {/if}

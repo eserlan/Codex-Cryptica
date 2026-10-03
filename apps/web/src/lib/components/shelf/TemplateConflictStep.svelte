@@ -47,7 +47,7 @@
         </button>
       </div>
 
-      <p class="text-[11px] text-theme-text-muted">
+      <p class="text-meta text-theme-text-muted">
         Bringing the shelved one across adds it alongside the existing template
         rather than replacing it, so nothing you already have is lost.
       </p>

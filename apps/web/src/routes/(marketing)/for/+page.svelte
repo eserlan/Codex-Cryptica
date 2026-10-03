@@ -23,7 +23,7 @@
         <div class="flex flex-1 flex-col">
           <div class="mb-3 flex items-center justify-between">
             <span
-              class="rounded-full border border-theme-primary/20 bg-theme-primary/10 px-2.5 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider text-theme-primary"
+              class="rounded-full border border-theme-primary/20 bg-theme-primary/10 px-2.5 py-0.5 font-mono text-micro font-bold uppercase tracking-wider text-theme-primary"
             >
               {badge}
             </span>

@@ -218,12 +218,12 @@
       Eldrin the Wise
     </div>
     <div
-      class="text-[9px] font-mono uppercase tracking-[0.15em] mb-3"
+      class="text-nano font-mono uppercase tracking-[0.15em] mb-3"
       style="color: {PREVIEW_COLORS.character}"
     >
       Character
     </div>
-    <div class="space-y-1.5 text-[9px] sm:text-[10px] font-body leading-snug">
+    <div class="space-y-1.5 text-nano sm:text-micro font-body leading-snug">
       <div class="text-theme-muted">
         Faction: <span class="text-theme-text">The Gilded Hand</span>
       </div>

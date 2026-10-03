@@ -60,7 +60,7 @@
       </h1>
     </div>
     <div
-      class="text-[9px] text-theme-muted uppercase font-mono tracking-widest opacity-60"
+      class="text-nano text-theme-muted uppercase font-mono tracking-widest opacity-60"
     >
       Standalone Mode
     </div>
@@ -71,7 +71,7 @@
   </div>
 
   <footer
-    class="p-2 text-center text-[9px] text-theme-muted/40 uppercase font-header tracking-widest bg-theme-surface border-t border-theme-border shrink-0"
+    class="p-2 text-center text-nano text-theme-muted/40 uppercase font-header tracking-widest bg-theme-surface border-t border-theme-border shrink-0"
   >
     Codex Cryptica // Session Play Tools
   </footer>

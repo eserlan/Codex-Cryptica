@@ -396,7 +396,7 @@
             class="mx-auto flex w-full max-w-6xl flex-col items-center text-center"
           >
             <div
-              class="inline-flex items-center gap-2 px-3.5 py-1.5 mb-4 border border-theme-primary/40 bg-theme-primary/10 rounded-full text-[10px] sm:text-[11px] md:text-sm font-mono text-theme-primary uppercase tracking-[0.1em]"
+              class="inline-flex items-center gap-2 px-3.5 py-1.5 mb-4 border border-theme-primary/40 bg-theme-primary/10 rounded-full text-micro sm:text-meta md:text-sm font-mono text-theme-primary uppercase tracking-[0.1em]"
             >
               <span
                 class="w-1.5 h-1.5 rounded-full bg-theme-primary/60 animate-pulse"
@@ -434,13 +434,13 @@
                 <div class="min-w-0">
                   <h2
                     id="living-lore-graph"
-                    class="text-[10px] font-mono font-bold uppercase tracking-[0.2em] text-theme-primary"
+                    class="text-micro font-mono font-bold uppercase tracking-[0.2em] text-theme-primary"
                   >
                     Living Lore Graph
                   </h2>
                   <p
                     id="living-lore-graph-copy"
-                    class="mt-1 text-[11px] text-theme-muted"
+                    class="mt-1 text-meta text-theme-muted"
                   >
                     See how characters, factions, secrets, and places connect.
                     Click the graph and Quick Start builds one like this for you
@@ -553,7 +553,7 @@
              in one click for anyone who wants a themed starting point. -->
         <details class="group mb-10 w-full text-center">
           <summary
-            class="mb-2 inline-flex list-none items-center gap-1.5 text-[10px] font-mono text-theme-muted uppercase tracking-[0.3em] transition-colors hover:text-theme-primary cursor-pointer [&::-webkit-details-marker]:hidden"
+            class="mb-2 inline-flex list-none items-center gap-1.5 text-micro font-mono text-theme-muted uppercase tracking-[0.3em] transition-colors hover:text-theme-primary cursor-pointer [&::-webkit-details-marker]:hidden"
           >
             <span
               class="icon-[lucide--chevron-right] h-3 w-3 transition-transform group-open:rotate-90"
@@ -565,7 +565,7 @@
             {#each demoThemes as theme (theme)}
               <button
                 onclick={() => startDemoFromWelcome(theme, "themed_demo")}
-                class="px-4 py-2 text-[10px] font-bold border border-theme-border hover:border-theme-primary text-theme-muted hover:text-theme-primary rounded uppercase font-header tracking-widest transition-all"
+                class="px-4 py-2 text-micro font-bold border border-theme-border hover:border-theme-primary text-theme-muted hover:text-theme-primary rounded uppercase font-header tracking-widest transition-all"
               >
                 {theme}
               </button>
@@ -588,7 +588,7 @@
             />
             <label
               for="skip-welcome"
-              class="text-[10px] font-body text-theme-muted uppercase tracking-widest cursor-pointer hover:text-theme-primary transition-colors select-none"
+              class="text-micro font-body text-theme-muted uppercase tracking-widest cursor-pointer hover:text-theme-primary transition-colors select-none"
             >
               Hide welcome screen on startup
             </label>

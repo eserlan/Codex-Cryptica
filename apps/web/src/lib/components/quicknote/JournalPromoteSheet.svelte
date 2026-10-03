@@ -98,7 +98,7 @@
 >
   <h3
     id="journal-promote-heading"
-    class="font-header text-[10px] font-bold uppercase tracking-wider text-theme-primary"
+    class="font-header text-micro font-bold uppercase tracking-wider text-theme-primary"
   >
     Make entity
   </h3>
@@ -108,14 +108,14 @@
       {built.error}
     </p>
   {:else}
-    <p class="text-[10px] text-theme-muted">
+    <p class="text-micro text-theme-muted">
       {built.entryCount === 1 ? "1 entry" : `${built.entryCount} entries`} from this
       journal. The journal itself stays as it is.
     </p>
   {/if}
 
   <div class="flex flex-col gap-1">
-    <label for="journal-promote-type" class="text-[10px] text-theme-muted"
+    <label for="journal-promote-type" class="text-micro text-theme-muted"
       >Type</label
     >
     <select
@@ -132,7 +132,7 @@
   </div>
 
   <div class="flex flex-col gap-1">
-    <label for="journal-promote-name" class="text-[10px] text-theme-muted"
+    <label for="journal-promote-name" class="text-micro text-theme-muted"
       >Name</label
     >
     <input
@@ -149,12 +149,12 @@
   {#if built.ok}
     <div class="flex flex-col gap-1">
       <span
-        class="text-[10px] text-theme-muted"
+        class="text-micro text-theme-muted"
         id="journal-promote-preview-label">Preview</span
       >
       <pre
         aria-labelledby="journal-promote-preview-label"
-        class="max-h-32 overflow-auto whitespace-pre-wrap rounded border border-theme-border/40 bg-theme-bg p-2 font-body text-[11px] text-theme-text"
+        class="max-h-32 overflow-auto whitespace-pre-wrap rounded border border-theme-border/40 bg-theme-bg p-2 font-body text-meta text-theme-text"
         data-testid="promote-preview">{preview}</pre>
     </div>
   {/if}
@@ -167,7 +167,7 @@
     <button
       type="button"
       onclick={onCancel}
-      class="rounded border border-theme-border px-3 py-1.5 font-header text-[10px] font-bold uppercase text-theme-muted transition-colors hover:text-theme-text"
+      class="rounded border border-theme-border px-3 py-1.5 font-header text-micro font-bold uppercase text-theme-muted transition-colors hover:text-theme-text"
     >
       Cancel
     </button>
@@ -175,7 +175,7 @@
       type="button"
       onclick={submit}
       disabled={isCreating || !built.ok}
-      class="rounded bg-theme-primary px-3 py-1.5 font-header text-[10px] font-bold uppercase text-theme-bg transition-colors hover:bg-theme-secondary disabled:opacity-40"
+      class="rounded bg-theme-primary px-3 py-1.5 font-header text-micro font-bold uppercase text-theme-bg transition-colors hover:bg-theme-secondary disabled:opacity-40"
     >
       Create draft
     </button>

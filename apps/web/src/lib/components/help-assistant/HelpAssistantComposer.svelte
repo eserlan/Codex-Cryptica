@@ -52,7 +52,7 @@
   }}
 >
   {#if notice}
-    <p class="text-[10px] text-theme-muted" role="status">{notice}</p>
+    <p class="text-meta text-theme-muted" role="status">{notice}</p>
   {/if}
   <label for="help-assistant-input" class="sr-only">
     Ask a question about using Codex Cryptica
@@ -66,17 +66,17 @@
       maxlength={MAX_QUESTION_CHARS}
       rows="2"
       placeholder="How do I connect two entities?"
-      class="min-h-[2.75rem] flex-1 resize-none rounded border border-theme-border bg-theme-bg px-2 py-1.5 text-xs text-theme-text placeholder:text-theme-muted focus-visible:outline-2 focus-visible:outline-theme-primary"
+      class="min-h-[2.75rem] flex-1 resize-none rounded border border-theme-border bg-theme-bg px-2 py-1.5 text-body-ui text-theme-text placeholder:text-theme-muted focus-visible:outline-2 focus-visible:outline-theme-primary"
     ></textarea>
     <button
       type="submit"
       disabled={!draft.trim() || pending}
-      class="rounded bg-theme-primary px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-theme-bg transition hover:bg-theme-secondary disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary"
+      class="rounded bg-theme-primary px-3 py-2 text-meta font-bold uppercase tracking-wider text-theme-bg transition hover:bg-theme-secondary disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary"
     >
       Ask
     </button>
   </div>
-  <p class="text-[10px] leading-tight text-theme-muted">
+  <p class="text-helper text-theme-muted">
     Your question goes to our AI service. Avoid pasting private lore.
     {#if remaining <= 50}
       <span class="ml-1 font-bold">{remaining} characters left.</span>

@@ -164,7 +164,7 @@
 
   <div class="flex items-center justify-between gap-2 mb-1.5">
     <span
-      class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-mono uppercase tracking-wider border font-bold {badge.color}"
+      class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-nano font-mono uppercase tracking-wider border font-bold {badge.color}"
     >
       <span class="{badge.icon} h-3 w-3" aria-hidden="true"></span>
       {badge.label}
@@ -179,7 +179,7 @@
 
   {#if data.description || data.summary}
     <p
-      class="text-[10px] text-theme-muted line-clamp-3 leading-tight mb-2"
+      class="text-micro text-theme-muted line-clamp-3 leading-tight mb-2"
       title={data.description || data.summary}
     >
       {data.description || data.summary}
@@ -188,7 +188,7 @@
 
   {#if data.role || data.wants || data.secret || data.leverage || data.dilemma}
     <div
-      class="space-y-1 my-2 text-[9px] border-t border-theme-border/30 pt-1.5"
+      class="space-y-1 my-2 text-nano border-t border-theme-border/30 pt-1.5"
     >
       {#if data.role}
         <div class="text-theme-muted line-clamp-1">
@@ -233,7 +233,7 @@
           e.stopPropagation();
           handleLaunchDungeon(data);
         }}
-        class="inline-flex items-center gap-1 text-[9px] font-semibold text-amber-400 hover:text-amber-300 transition-colors"
+        class="inline-flex items-center gap-1 text-nano font-semibold text-amber-400 hover:text-amber-300 transition-colors"
         title="Launch Dungeon Builder from this location"
       >
         <span class="icon-[lucide--castle] h-3 w-3" aria-hidden="true"></span>
@@ -247,7 +247,7 @@
         e.stopPropagation();
         handleCreateOrViewEntity(data);
       }}
-      class="inline-flex items-center gap-1 text-[9px] font-semibold text-theme-primary hover:text-theme-primary/80 transition-colors ml-auto"
+      class="inline-flex items-center gap-1 text-nano font-semibold text-theme-primary hover:text-theme-primary/80 transition-colors ml-auto"
       title="Create or view linked vault entity"
     >
       <span class="icon-[lucide--plus] h-3 w-3" aria-hidden="true"></span>

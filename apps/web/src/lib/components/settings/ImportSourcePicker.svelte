@@ -83,7 +83,7 @@
     class="p-3 bg-theme-secondary/10 border border-theme-secondary/20 rounded flex items-center justify-between gap-4"
   >
     <div
-      class="flex items-center gap-2 text-[11px] font-bold text-theme-secondary uppercase font-header tracking-wider"
+      class="flex items-center gap-2 text-meta font-bold text-theme-secondary uppercase font-header tracking-wider"
     >
       <span class="icon-[lucide--history] w-3.5 h-3.5"></span>
       Resuming previous import
@@ -91,7 +91,7 @@
 
     <button
       onclick={onRestart}
-      class="text-[9px] font-bold underline hover:text-theme-text"
+      class="text-nano font-bold underline hover:text-theme-text"
     >
       START OVER
     </button>
@@ -132,7 +132,7 @@
       ></span>
       <div class="min-w-0">
         <p
-          class="font-header text-[10px] font-bold uppercase tracking-widest text-theme-primary"
+          class="font-header text-micro font-bold uppercase tracking-widest text-theme-primary"
         >
           Kanka, Scabard, and Chronica
         </p>
@@ -149,7 +149,7 @@
       ></span>
       <div class="min-w-0">
         <p
-          class="font-header text-[10px] font-bold uppercase tracking-widest text-theme-secondary"
+          class="font-header text-micro font-bold uppercase tracking-widest text-theme-secondary"
         >
           Documents and notes
         </p>
@@ -162,7 +162,7 @@
 
   <div class="px-1" data-testid="vault-files-section">
     <p
-      class="text-[10px] font-bold uppercase tracking-widest text-theme-muted font-header mb-2"
+      class="text-micro font-bold uppercase tracking-widest text-theme-muted font-header mb-2"
     >
       Import Files
     </p>
@@ -179,7 +179,7 @@
   {#if masterPacks.length > 0}
     <div class="px-1" data-testid="creature-packs-section">
       <p
-        class="text-[10px] font-bold uppercase tracking-widest text-theme-muted font-header mb-2"
+        class="text-micro font-bold uppercase tracking-widest text-theme-muted font-header mb-2"
       >
         Creature Packs
       </p>
@@ -211,7 +211,7 @@
                     </p>
                     {#if status.isFullyImported}
                       <p
-                        class="px-1.5 py-0.5 text-[9px] font-bold uppercase rounded bg-green-500/10 text-green-400 border border-green-500/20 flex items-center gap-1 shrink-0"
+                        class="px-1.5 py-0.5 text-nano font-bold uppercase rounded bg-green-500/10 text-green-400 border border-green-500/20 flex items-center gap-1 shrink-0"
                       >
                         <span
                           aria-hidden="true"
@@ -221,24 +221,24 @@
                       </p>
                     {:else if status.isPartiallyImported}
                       <p
-                        class="px-1.5 py-0.5 text-[9px] font-bold uppercase rounded bg-amber-500/10 text-amber-400 border border-amber-500/20 shrink-0"
+                        class="px-1.5 py-0.5 text-nano font-bold uppercase rounded bg-amber-500/10 text-amber-400 border border-amber-500/20 shrink-0"
                       >
                         {status.importedCount}/{status.total} Imported
                       </p>
                     {/if}
                   </div>
-                  <p class="text-[10px] text-theme-muted leading-snug mt-0.5">
+                  <p class="text-micro text-theme-muted leading-snug mt-0.5">
                     {masterPack.description}
                   </p>
                   <div
                     class="flex items-center justify-between gap-2 mt-1 flex-wrap"
                   >
-                    <p class="text-[10px] text-theme-muted/60 font-mono">
+                    <p class="text-micro text-theme-muted/60 font-mono">
                       {masterPack.entries.length} creatures total
                     </p>
                     {#if masterPack.credits}
                       <p
-                        class="text-[9px] text-theme-muted/50 italic truncate max-w-[240px]"
+                        class="text-nano text-theme-muted/50 italic truncate max-w-[240px]"
                         title={masterPack.credits}
                       >
                         🎨 {masterPack.credits}
@@ -251,7 +251,7 @@
               {#if subpacks.length > 0}
                 <button
                   onclick={() => onTogglePackExpanded(masterPack.id)}
-                  class="px-2 py-1 rounded border border-theme-border bg-theme-base/50 hover:bg-theme-primary/10 hover:border-theme-primary/30 text-theme-muted hover:text-theme-primary flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider shrink-0 transition-all mt-0.5"
+                  class="px-2 py-1 rounded border border-theme-border bg-theme-base/50 hover:bg-theme-primary/10 hover:border-theme-primary/30 text-theme-muted hover:text-theme-primary flex items-center gap-1.5 text-micro font-bold uppercase tracking-wider shrink-0 transition-all mt-0.5"
                   aria-expanded={!!expandedPacks[masterPack.id]}
                 >
                   <span>{subpacks.length} Subpacks</span>
@@ -271,7 +271,7 @@
                 class="border-t border-theme-border/60 bg-theme-base/30 p-2.5 flex flex-col gap-1.5"
               >
                 <p
-                  class="text-[9px] font-bold uppercase tracking-widest text-theme-muted/80 font-header px-1 pb-0.5"
+                  class="text-nano font-bold uppercase tracking-widest text-theme-muted/80 font-header px-1 pb-0.5"
                 >
                   Modular Themed Packs
                 </p>
@@ -294,7 +294,7 @@
                           class="flex items-center justify-between gap-1.5 flex-wrap"
                         >
                           <p
-                            class="text-[11px] font-bold text-theme-primary truncate"
+                            class="text-meta font-bold text-theme-primary truncate"
                           >
                             {subpack.name
                               .replace("Fantasy ", "")
@@ -302,7 +302,7 @@
                           </p>
                           {#if subStatus.isFullyImported}
                             <p
-                              class="px-1 py-0.5 text-[8px] font-bold uppercase rounded bg-green-500/10 text-green-400 border border-green-500/20 flex items-center gap-0.5 shrink-0"
+                              class="px-1 py-0.5 text-nano font-bold uppercase rounded bg-green-500/10 text-green-400 border border-green-500/20 flex items-center gap-0.5 shrink-0"
                             >
                               <span
                                 aria-hidden="true"
@@ -312,25 +312,25 @@
                             </p>
                           {:else if subStatus.isPartiallyImported}
                             <p
-                              class="px-1 py-0.5 text-[8px] font-bold uppercase rounded bg-amber-500/10 text-amber-400 border border-amber-500/20 shrink-0"
+                              class="px-1 py-0.5 text-nano font-bold uppercase rounded bg-amber-500/10 text-amber-400 border border-amber-500/20 shrink-0"
                             >
                               {subStatus.importedCount}/{subStatus.total}
                             </p>
                           {:else}
                             <span
-                              class="text-[9px] text-theme-muted/60 font-mono shrink-0"
+                              class="text-nano text-theme-muted/60 font-mono shrink-0"
                               >{subpack.entries.length}</span
                             >
                           {/if}
                         </div>
                         <p
-                          class="text-[9px] text-theme-muted leading-tight mt-0.5 line-clamp-2"
+                          class="text-nano text-theme-muted leading-tight mt-0.5 line-clamp-2"
                         >
                           {subpack.description}
                         </p>
                         {#if subpack.credits}
                           <p
-                            class="text-[8px] text-theme-muted/50 italic truncate mt-1"
+                            class="text-nano text-theme-muted/50 italic truncate mt-1"
                             title={subpack.credits}
                           >
                             🎨 {subpack.credits}

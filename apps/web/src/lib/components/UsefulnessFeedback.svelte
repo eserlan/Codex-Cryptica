@@ -190,7 +190,7 @@
           <button
             type="button"
             onclick={() => pickReason(reason)}
-            class="rounded-full border border-theme-border/60 bg-theme-surface/45 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-theme-text/70 transition-all hover:border-theme-primary/60 hover:text-theme-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-accent"
+            class="rounded-full border border-theme-border/60 bg-theme-surface/45 px-3 py-1.5 text-micro font-bold uppercase tracking-wider text-theme-text/70 transition-all hover:border-theme-primary/60 hover:text-theme-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-accent"
           >
             {reason}
           </button>
@@ -198,7 +198,7 @@
         <button
           type="button"
           onclick={skipReason}
-          class="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-theme-muted underline-offset-2 transition-all hover:text-theme-primary hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-accent"
+          class="px-3 py-1.5 text-micro font-bold uppercase tracking-wider text-theme-muted underline-offset-2 transition-all hover:text-theme-primary hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-accent"
         >
           Skip
         </button>

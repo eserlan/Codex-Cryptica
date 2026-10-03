@@ -97,7 +97,7 @@
       {#if mapStore.activeMap && !mapStore.activeMap.isWorldMap}
         <button
           type="button"
-          class="px-3 py-1.5 bg-theme-surface border border-theme-border text-theme-muted text-[10px] font-bold rounded-lg hover:text-theme-primary hover:border-theme-primary transition-colors flex items-center gap-2 focus-visible:ring-2 focus-visible:ring-theme-primary focus-visible:outline-none"
+          class="px-3 py-1.5 bg-theme-surface border border-theme-border text-theme-muted text-micro font-bold rounded-lg hover:text-theme-primary hover:border-theme-primary transition-colors flex items-center gap-2 focus-visible:ring-2 focus-visible:ring-theme-primary focus-visible:outline-none"
           onclick={() => mapStore.setAsWorldMap(mapStore.activeMapId!)}
           title="Set as World Map"
         >
@@ -106,7 +106,7 @@
         </button>
       {:else if mapStore.activeMap?.isWorldMap}
         <div
-          class="px-3 py-1.5 bg-theme-primary/10 border border-theme-primary/30 text-theme-primary text-[10px] font-bold rounded-lg flex items-center gap-2"
+          class="px-3 py-1.5 bg-theme-primary/10 border border-theme-primary/30 text-theme-primary text-micro font-bold rounded-lg flex items-center gap-2"
         >
           <span
             class="icon-[lucide--star] w-3 h-3 fill-theme-primary"
@@ -118,7 +118,7 @@
 
       <button
         type="button"
-        class="px-3 py-1.5 bg-theme-surface border border-theme-border text-red-500/70 text-[10px] font-bold rounded-lg hover:text-red-400 hover:border-red-400 transition-colors flex items-center gap-2 focus-visible:ring-2 focus-visible:ring-theme-primary focus-visible:outline-none"
+        class="px-3 py-1.5 bg-theme-surface border border-theme-border text-red-500/70 text-micro font-bold rounded-lg hover:text-red-400 hover:border-red-400 transition-colors flex items-center gap-2 focus-visible:ring-2 focus-visible:ring-theme-primary focus-visible:outline-none"
         onclick={async () => {
           if (
             await notificationStore.confirm({

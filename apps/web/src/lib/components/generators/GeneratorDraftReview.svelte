@@ -106,7 +106,7 @@
   <div class="flex flex-col gap-1">
     <label
       for="draft-title"
-      class="text-[10px] font-bold uppercase tracking-wider text-chrome-muted"
+      class="text-micro font-bold uppercase tracking-wider text-chrome-muted"
     >
       Title
     </label>
@@ -123,7 +123,7 @@
   <div class="flex flex-col gap-1">
     <label
       for="draft-type"
-      class="text-[10px] font-bold uppercase tracking-wider text-chrome-muted"
+      class="text-micro font-bold uppercase tracking-wider text-chrome-muted"
     >
       Type
     </label>
@@ -146,7 +146,7 @@
   <div class="flex flex-col gap-1">
     <label
       for="draft-labels"
-      class="text-[10px] font-bold uppercase tracking-wider text-chrome-muted"
+      class="text-micro font-bold uppercase tracking-wider text-chrome-muted"
     >
       Labels
     </label>
@@ -163,7 +163,7 @@
   {#if draft.summary}
     <div class="flex flex-col gap-1">
       <span
-        class="text-[10px] font-bold uppercase tracking-wider text-chrome-muted"
+        class="text-micro font-bold uppercase tracking-wider text-chrome-muted"
       >
         Summary
       </span>
@@ -179,7 +179,7 @@
   {#if draft.content}
     <div class="flex flex-col gap-1">
       <span
-        class="text-[10px] font-bold uppercase tracking-wider text-chrome-muted"
+        class="text-micro font-bold uppercase tracking-wider text-chrome-muted"
       >
         Content
       </span>
@@ -195,7 +195,7 @@
   {#if draft.lore}
     <div class="flex flex-col gap-1">
       <span
-        class="text-[10px] font-bold uppercase tracking-wider text-chrome-muted"
+        class="text-micro font-bold uppercase tracking-wider text-chrome-muted"
       >
         GM Reference
       </span>
@@ -211,7 +211,7 @@
   {#if draft.connections?.length}
     <div class="flex flex-col gap-1">
       <span
-        class="text-[10px] font-bold uppercase tracking-wider text-chrome-muted"
+        class="text-micro font-bold uppercase tracking-wider text-chrome-muted"
       >
         Suggested Connections
       </span>
@@ -224,7 +224,7 @@
           </li>
         {/each}
       </ul>
-      <p class="text-[10px] text-chrome-muted">
+      <p class="text-micro text-chrome-muted">
         Links to entities that already exist will be created on save.
       </p>
     </div>

@@ -245,7 +245,7 @@
     <!-- fallow-ignore-next-line complexity -->
     <button type="button" onclick={toggleHistory}>
       <span
-        class="text-[10px] text-theme-muted transition-colors hover:text-theme-primary"
+        class="text-micro text-theme-muted transition-colors hover:text-theme-primary"
       >
         Past journals
       </span>
@@ -318,7 +318,7 @@
     data-testid="journal-history"
   >
     {#if pastJournals.length === 0}
-      <p class="text-[10px] italic text-theme-muted">
+      <p class="text-micro italic text-theme-muted">
         No past journals for this vault yet.
       </p>
     {/if}
@@ -326,7 +326,7 @@
       <button
         type="button"
         onclick={() => (selectedPastJournalId = journal.id)}
-        class="w-full text-left text-[10px] text-theme-muted transition-colors hover:text-theme-primary"
+        class="w-full text-left text-micro text-theme-muted transition-colors hover:text-theme-primary"
         data-testid={`past-journal-${journal.id}`}
       >
         {journal.title} — {journal.status}

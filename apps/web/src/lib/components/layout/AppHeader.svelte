@@ -45,11 +45,14 @@
 >
   {#if isStaging}
     <div
-      class="flex flex-wrap items-center justify-center gap-x-2 gap-y-1 rounded-xl border border-amber-300/40 bg-gradient-to-r from-amber-500/20 via-orange-500/20 to-rose-500/20 px-3 py-2 text-center text-[11px] font-medium tracking-[0.18em] text-amber-50 shadow-lg shadow-amber-950/20 md:text-xs"
+      class="flex flex-wrap items-center justify-center gap-x-2 gap-y-1 rounded-xl border border-amber-300/40 bg-gradient-to-r from-amber-500/20 via-orange-500/20 to-rose-500/20 px-3 py-2 text-center text-meta font-medium tracking-[0.18em] text-amber-50 shadow-lg shadow-amber-950/20 md:text-xs"
       data-testid="staging-banner"
       aria-label="Staging preview banner"
     >
-      <span class="icon-[lucide--flask-conical] h-4 w-4 text-amber-200" aria-hidden="true"></span>
+      <span
+        class="icon-[lucide--flask-conical] h-4 w-4 text-amber-200"
+        aria-hidden="true"
+      ></span>
       <span>STAGING PREVIEW</span>
       <span class="hidden sm:inline text-amber-100/80 tracking-normal">
         Changes here do not affect production.
@@ -153,7 +156,8 @@
         <span
           class="text-xs font-mono px-2.5 py-1 rounded bg-chrome-accent/15 border border-chrome-accent/30 text-chrome-accent flex items-center gap-1.5"
         >
-          <span class="icon-[lucide--eye] h-3.5 w-3.5" aria-hidden="true"></span>
+          <span class="icon-[lucide--eye] h-3.5 w-3.5" aria-hidden="true"
+          ></span>
           READ-ONLY GUEST
         </span>
         <VoiceChatControls />
@@ -161,7 +165,8 @@
           href="{base}/worlds"
           class="px-3 py-1.5 rounded-lg border border-chrome-border hover:border-chrome-accent hover:text-chrome-accent text-xs font-medium transition-all flex items-center gap-1.5"
         >
-          <span class="icon-[lucide--compass] h-3.5 w-3.5" aria-hidden="true"></span>
+          <span class="icon-[lucide--compass] h-3.5 w-3.5" aria-hidden="true"
+          ></span>
           Explore Worlds
         </a>
         <button

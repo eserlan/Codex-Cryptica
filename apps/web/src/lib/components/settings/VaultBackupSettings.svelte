@@ -78,7 +78,7 @@
   <div
     class="bg-theme-bg/50 border border-theme-border p-4 rounded-lg space-y-4"
   >
-    <p class="text-[11px] text-theme-muted leading-relaxed">
+    <p class="text-meta text-theme-muted leading-relaxed">
       Download your entire vault as a single <code class="text-theme-secondary"
         >{VAULT_ARCHIVE_EXTENSION}</code
       >

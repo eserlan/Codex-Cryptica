@@ -13,7 +13,7 @@
   onclick={onToggle}
   aria-expanded={expanded}
   aria-controls="journal-promote-panel"
-  class="flex items-center gap-1 font-header text-[10px] font-bold uppercase tracking-wider text-theme-muted transition-colors hover:text-theme-primary"
+  class="flex items-center gap-1 font-header text-micro font-bold uppercase tracking-wider text-theme-muted transition-colors hover:text-theme-primary"
   data-testid="promote-toggle"
 >
   Make entity

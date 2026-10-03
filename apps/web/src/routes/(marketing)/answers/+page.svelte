@@ -270,7 +270,7 @@
           Reference & Guidance
         </p>
         <span
-          class="rounded-full border border-theme-border bg-theme-surface/70 px-2 py-0.5 font-mono text-[11px] text-theme-muted"
+          class="rounded-full border border-theme-border bg-theme-surface/70 px-2 py-0.5 font-mono text-meta text-theme-muted"
         >
           {answers.length} answers across {ANSWER_CATEGORIES.length} categories
         </span>
@@ -328,7 +328,7 @@
                   ></span>
                 </span>
                 <span
-                  class="rounded-full border border-theme-border/60 bg-theme-surface px-2 py-0.5 font-mono text-[11px] text-theme-muted group-hover:text-theme-text"
+                  class="rounded-full border border-theme-border/60 bg-theme-surface px-2 py-0.5 font-mono text-meta text-theme-muted group-hover:text-theme-text"
                 >
                   {count} answers
                 </span>
@@ -345,7 +345,7 @@
               </p>
             </div>
             <div
-              class="mt-3 flex items-center gap-1 font-mono text-[11px] font-medium {isSelected
+              class="mt-3 flex items-center gap-1 font-mono text-meta font-medium {isSelected
                 ? 'text-theme-primary'
                 : 'text-theme-muted/70 group-hover:text-theme-primary'}"
             >
@@ -404,7 +404,7 @@
           aria-label="Filter answers by format"
         >
           <span
-            class="mr-1 font-mono text-[11px] uppercase tracking-wider text-theme-muted"
+            class="mr-1 font-mono text-meta uppercase tracking-wider text-theme-muted"
           >
             Format:
           </span>
@@ -413,7 +413,7 @@
             <button
               type="button"
               onclick={() => (activeKind = kindOpt.id)}
-              class="inline-flex items-center gap-1 rounded-md px-2 py-0.5 font-mono text-[11px] transition-colors {activeKind ===
+              class="inline-flex items-center gap-1 rounded-md px-2 py-0.5 font-mono text-meta transition-colors {activeKind ===
               kindOpt.id
                 ? 'bg-theme-primary/20 font-bold text-theme-primary ring-1 ring-theme-primary/40'
                 : 'text-theme-muted hover:bg-theme-surface hover:text-theme-text'}"
@@ -462,13 +462,13 @@
             <div class="flex-1">
               <div class="mb-1.5 flex flex-wrap items-center gap-2">
                 <span
-                  class="font-mono text-[11px] uppercase tracking-wider text-theme-primary"
+                  class="font-mono text-meta uppercase tracking-wider text-theme-primary"
                 >
                   {KIND_LABEL[answer.kind] ?? answer.kind}
                 </span>
                 {#if showCategory && cat}
                   <span class="text-theme-muted/40">&bull;</span>
-                  <span class="font-mono text-[11px] text-theme-muted">
+                  <span class="font-mono text-meta text-theme-muted">
                     {cat.title}
                   </span>
                 {/if}
@@ -476,7 +476,7 @@
                   <span class="text-theme-muted/40">&bull;</span>
                   <time
                     datetime={answer.publishedAt}
-                    class="font-mono text-[11px] text-theme-muted"
+                    class="font-mono text-meta text-theme-muted"
                   >
                     {formatAnswerDate(answer.publishedAt)}
                   </time>
@@ -544,7 +544,7 @@
             <div class="mt-4 flex justify-end">
               <a
                 href="#top"
-                class="inline-flex items-center gap-1 font-mono text-[11px] text-theme-muted hover:text-theme-primary transition-colors"
+                class="inline-flex items-center gap-1 font-mono text-meta text-theme-muted hover:text-theme-primary transition-colors"
               >
                 <span class="icon-[lucide--arrow-up] h-3 w-3" aria-hidden="true"
                 ></span>

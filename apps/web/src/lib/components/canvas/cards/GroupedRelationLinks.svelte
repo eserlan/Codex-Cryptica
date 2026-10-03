@@ -28,7 +28,7 @@
   <ul class="space-y-1.5">
     {#each rows as row, rowIndex (`${groupKey}-${row.target}-${rowIndex}`)}
       <li
-        class="flex items-start gap-2.5 text-[10px] leading-tight py-1 px-1.5 rounded-lg bg-theme-bg/30 border border-theme-border/30 hover:bg-theme-bg/60 transition-colors"
+        class="flex items-start gap-2.5 text-micro leading-tight py-1 px-1.5 rounded-lg bg-theme-bg/30 border border-theme-border/30 hover:bg-theme-bg/60 transition-colors"
         title={row.title}
       >
         <div class="mt-0.5 shrink-0">
@@ -36,12 +36,12 @@
         </div>
         <div class="flex flex-col min-w-0 flex-1">
           <span
-            class="text-[9px] font-semibold uppercase tracking-wider truncate {STANCE_TEXT[
+            class="text-nano font-semibold uppercase tracking-wider truncate {STANCE_TEXT[
               row.stance
             ]}">{row.text}</span
           >
           <span
-            class="font-bold text-theme-text font-header text-[11px] tracking-wide line-clamp-2 break-words leading-snug"
+            class="font-bold text-theme-text font-header text-meta tracking-wide line-clamp-2 break-words leading-snug"
             >{row.title}</span
           >
         </div>
@@ -58,7 +58,7 @@
   {#if group.rows.length > maxVisible}
     <button
       type="button"
-      class="nodrag mt-1 text-[10px] font-semibold text-theme-primary hover:underline flex items-center gap-1 py-0.5 px-1 rounded transition-colors"
+      class="nodrag mt-1 text-micro font-semibold text-theme-primary hover:underline flex items-center gap-1 py-0.5 px-1 rounded transition-colors"
       onclick={() => toggleGroup(groupKey)}
     >
       {#if isExpanded}Show less{:else}+ {group.rows.length - maxVisible} more{/if}
@@ -79,10 +79,10 @@
         : group.rows.slice(0, maxVisible)}
       <div class="first:mt-0" data-testid="link-group-{group.key}">
         <div
-          class="text-[9px] font-mono uppercase tracking-widest text-theme-muted font-bold flex items-center justify-between border-b border-theme-border/20 pb-0.5 mb-1.5"
+          class="text-nano font-mono uppercase tracking-widest text-theme-muted font-bold flex items-center justify-between border-b border-theme-border/20 pb-0.5 mb-1.5"
         >
           <span>{group.label}</span>
-          <span class="text-[8px] font-normal opacity-70"
+          <span class="text-nano font-normal opacity-70"
             >({group.rows.length})</span
           >
         </div>

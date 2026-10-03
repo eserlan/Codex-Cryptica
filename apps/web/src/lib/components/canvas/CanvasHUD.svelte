@@ -469,7 +469,7 @@
           aria-hidden="true"
         ></span>
         <span
-          class="truncate text-[10px] font-bold uppercase tracking-wider text-theme-text group-hover:text-theme-primary"
+          class="truncate text-micro font-bold uppercase tracking-wider text-theme-text group-hover:text-theme-primary"
         >
           {buttonText}
         </span>
@@ -494,7 +494,7 @@
             aria-hidden="true"
           ></span>
           <span
-            class="truncate text-[10px] font-bold uppercase tracking-wider text-theme-text group-hover:text-theme-primary"
+            class="truncate text-micro font-bold uppercase tracking-wider text-theme-text group-hover:text-theme-primary"
           >
             Open Dossier
           </span>
@@ -528,7 +528,7 @@
             aria-hidden="true"
           ></span>
           <span
-            class="truncate text-[10px] font-bold uppercase tracking-wider text-theme-text group-hover:text-theme-primary"
+            class="truncate text-micro font-bold uppercase tracking-wider text-theme-text group-hover:text-theme-primary"
           >
             Finalize Dossier
           </span>
@@ -551,7 +551,7 @@
     >
       <span class="icon-[lucide--save] w-3 h-3 text-theme-primary"></span>
       <span
-        class="text-[8px] font-bold text-theme-primary tracking-[0.2em] uppercase"
+        class="text-nano font-bold text-theme-primary tracking-[0.2em] uppercase"
       >
         Syncing...
       </span>

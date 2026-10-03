@@ -42,9 +42,7 @@
     </div>
 
     <div class="flex flex-col items-start gap-2 sm:items-end">
-      <p
-        class="max-w-xs text-left sm:text-right text-[11px] text-theme-text/50"
-      >
+      <p class="max-w-xs text-left sm:text-right text-meta text-theme-text/50">
         {PUBLIC_WORLDS_NOTICE.REPORT_PROMPT}
       </p>
       {#if onReport}

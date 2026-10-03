@@ -77,7 +77,7 @@
       >
         <div class="flex items-center gap-3">
           <span
-            class="text-[10px] uppercase tracking-wider text-theme-primary px-2 py-0.5 rounded-full bg-theme-primary/10 border border-theme-primary/20"
+            class="text-micro uppercase tracking-wider text-theme-primary px-2 py-0.5 rounded-full bg-theme-primary/10 border border-theme-primary/20"
             >{entity.type}</span
           >
           <h3
@@ -134,7 +134,7 @@
           <button
             type="button"
             onclick={() => entity && onRefine(entity)}
-            class="rounded-lg border border-theme-primary/30 bg-theme-primary/10 px-4 py-2 text-[10px] font-bold uppercase font-header tracking-widest text-theme-primary hover:bg-theme-primary/20 transition-all"
+            class="rounded-lg border border-theme-primary/30 bg-theme-primary/10 px-4 py-2 text-micro font-bold uppercase font-header tracking-widest text-theme-primary hover:bg-theme-primary/20 transition-all"
           >
             Refine
           </button>
@@ -154,14 +154,14 @@
           type="button"
           onclick={handleCopy}
           disabled={!onCopy || copyInFlight || copyState === "success"}
-          class="px-4 py-2 bg-theme-primary/10 border border-theme-primary/30 text-theme-primary font-bold uppercase font-header tracking-widest text-[10px] rounded-lg hover:bg-theme-primary/20 transition-all disabled:opacity-50"
+          class="px-4 py-2 bg-theme-primary/10 border border-theme-primary/30 text-theme-primary font-bold uppercase font-header tracking-widest text-micro rounded-lg hover:bg-theme-primary/20 transition-all disabled:opacity-50"
         >
           {copyState === "success" ? "Copied!" : "Copy"}
         </button>
         <button
           type="button"
           onclick={onClose}
-          class="px-4 py-2 bg-theme-surface/60 border border-theme-border/60 text-theme-text font-bold uppercase font-header tracking-widest text-[10px] rounded-lg hover:bg-theme-surface transition-all"
+          class="px-4 py-2 bg-theme-surface/60 border border-theme-border/60 text-theme-text font-bold uppercase font-header tracking-widest text-micro rounded-lg hover:bg-theme-surface transition-all"
         >
           Close
         </button>

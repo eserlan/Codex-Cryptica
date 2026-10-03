@@ -22,7 +22,7 @@
   const inputClass =
     "w-full bg-theme-bg/60 border border-theme-border/60 rounded-lg px-3 py-2 text-xs text-theme-text focus:outline-none focus:border-theme-primary/60";
   const labelClass =
-    "text-[11px] font-bold uppercase tracking-wider text-theme-text/80";
+    "text-meta font-bold uppercase tracking-wider text-theme-text/80";
 </script>
 
 <SelectWithCustomOption
@@ -52,7 +52,7 @@
   {inputClass}
   customPlaceholder="Enter a custom scale"
 />
-<p class="text-[10px] text-theme-muted leading-relaxed -mt-1">
+<p class="text-micro text-theme-muted leading-relaxed -mt-1">
   A Comic Book Event is campaign-scale by nature — Street/City-level threats fit
   the Villain or Quest Hook generators better.
 </p>
@@ -82,7 +82,7 @@
       tone = pickFrom(comicBookEventConfig.tones);
       if (onSurprise) onSurprise();
     }}
-    class="flex items-center gap-1.5 px-3 py-1.5 bg-theme-surface/60 border border-theme-border/60 rounded-lg text-[10px] font-bold uppercase tracking-wider text-theme-text hover:bg-theme-primary hover:text-theme-bg hover:border-theme-primary transition-all cursor-pointer"
+    class="flex items-center gap-1.5 px-3 py-1.5 bg-theme-surface/60 border border-theme-border/60 rounded-lg text-micro font-bold uppercase tracking-wider text-theme-text hover:bg-theme-primary hover:text-theme-bg hover:border-theme-primary transition-all cursor-pointer"
     title="Randomize all options and generate a draft from the result"
   >
     <span class="icon-[lucide--dices] w-3.5 h-3.5" aria-hidden="true"></span>
@@ -105,7 +105,7 @@
   ></textarea>
   <p
     id="comic-book-event-campaign-context-help"
-    class="text-[10px] text-theme-muted leading-relaxed"
+    class="text-micro text-theme-muted leading-relaxed"
   >
     Add an existing team, city, or ongoing tension to ground this event in your
     table.

@@ -12,7 +12,7 @@
 
   const cleanBase = base === "/" ? "" : base;
   const sizeClasses = $derived(
-    size === "sm" ? "px-1.5 py-0.5 text-[9px]" : "px-2 py-1 text-[10px]",
+    size === "sm" ? "px-1.5 py-0.5 text-nano" : "px-2 py-1 text-micro",
   );
 </script>
 

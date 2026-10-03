@@ -45,7 +45,7 @@
   {#if hidden > 0 || canCollapse}
     <button
       type="button"
-      class="rounded border border-theme-border bg-theme-bg px-2 py-1 text-[10px] font-bold text-theme-muted transition-colors hover:text-theme-primary"
+      class="rounded border border-theme-border bg-theme-bg px-2 py-1 text-micro font-bold text-theme-muted transition-colors hover:text-theme-primary"
       aria-expanded={showAll}
       onclick={() => (showAll = !showAll)}
       >{hidden > 0 ? `+${hidden} more` : "Show less"}</button

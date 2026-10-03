@@ -55,7 +55,7 @@
 {#if hasAnyAction}
   <div class="mt-1.5 flex items-center justify-between gap-2">
     {#if selectable}
-      <label class="flex items-center gap-1.5 text-[10px] text-theme-muted">
+      <label class="flex items-center gap-1.5 text-micro text-theme-muted">
         <input
           type="checkbox"
           checked={selected}

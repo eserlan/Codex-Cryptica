@@ -102,7 +102,7 @@
           <p
             id="username-error"
             role="alert"
-            class="absolute -bottom-5 left-0 right-0 text-[10px] text-red-400 uppercase tracking-tighter"
+            class="absolute -bottom-5 left-0 right-0 text-micro text-red-400 uppercase tracking-tighter"
           >
             {error}
           </p>
@@ -117,7 +117,7 @@
       </button>
     </form>
 
-    <p class="mt-6 text-[10px] text-theme-muted/80 uppercase tracking-widest">
+    <p class="mt-6 text-micro text-theme-muted/80 uppercase tracking-widest">
       Read-only mode enabled. No changes will be persisted.
     </p>
   </div>

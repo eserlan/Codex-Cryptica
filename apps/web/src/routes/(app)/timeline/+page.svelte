@@ -151,7 +151,7 @@
               >
                 <div class="relative">
                   <p
-                    class="text-[10px] uppercase tracking-[0.22em] text-theme-muted"
+                    class="text-micro uppercase tracking-[0.22em] text-theme-muted"
                   >
                     Active month
                   </p>

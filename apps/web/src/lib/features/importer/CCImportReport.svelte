@@ -33,7 +33,7 @@
   <section class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
     <div class="border border-theme-border bg-theme-surface rounded-lg p-3">
       <div
-        class="text-[10px] font-bold uppercase font-header tracking-widest text-theme-muted"
+        class="text-micro font-bold uppercase font-header tracking-widest text-theme-muted"
       >
         Created
       </div>
@@ -43,7 +43,7 @@
     </div>
     <div class="border border-theme-border bg-theme-surface rounded-lg p-3">
       <div
-        class="text-[10px] font-bold uppercase font-header tracking-widest text-theme-muted"
+        class="text-micro font-bold uppercase font-header tracking-widest text-theme-muted"
       >
         Updated
       </div>
@@ -53,7 +53,7 @@
     </div>
     <div class="border border-theme-border bg-theme-surface rounded-lg p-3">
       <div
-        class="text-[10px] font-bold uppercase font-header tracking-widest text-theme-muted"
+        class="text-micro font-bold uppercase font-header tracking-widest text-theme-muted"
       >
         Skipped
       </div>
@@ -63,7 +63,7 @@
     </div>
     <div class="border border-theme-border bg-theme-surface rounded-lg p-3">
       <div
-        class="text-[10px] font-bold uppercase font-header tracking-widest text-theme-muted"
+        class="text-micro font-bold uppercase font-header tracking-widest text-theme-muted"
       >
         Links
       </div>
@@ -111,7 +111,7 @@
             <div class="text-xs text-theme-text">
               <div class="font-semibold break-all">{failure.ref}</div>
               <div
-                class="text-theme-muted uppercase font-header tracking-wider text-[10px]"
+                class="text-theme-muted uppercase font-header tracking-wider text-micro"
               >
                 {failure.stage}
               </div>

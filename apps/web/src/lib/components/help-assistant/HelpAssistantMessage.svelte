@@ -21,7 +21,7 @@
 
 {#if message.role === "user"}
   <p
-    class="ml-8 self-end rounded bg-theme-primary/15 px-3 py-2 text-xs text-theme-text"
+    class="ml-8 self-end rounded bg-theme-primary/15 px-3 py-2 text-body-ui text-theme-text"
   >
     {message.text}
   </p>
@@ -30,12 +30,12 @@
     class="mr-4 flex flex-col gap-2 rounded border border-theme-border/60 bg-theme-surface/60 px-3 py-2"
     data-testid="help-assistant-answer"
   >
-    <p class="whitespace-pre-line text-xs leading-relaxed text-theme-text">
+    <p class="whitespace-pre-line text-body-ui leading-relaxed text-theme-text">
       {message.text}
     </p>
 
     {#if message.staleScreen}
-      <p class="text-[10px] italic text-theme-muted">
+      <p class="text-meta italic text-theme-muted">
         This answer is for the screen you were on when you asked.
       </p>
     {/if}
@@ -52,7 +52,7 @@
       <button
         type="button"
         onclick={onOpenLibrary}
-        class="self-start text-xs text-theme-primary underline hover:text-theme-secondary focus-visible:outline-2 focus-visible:outline-theme-primary"
+        class="self-start text-body-ui text-theme-primary underline hover:text-theme-secondary focus-visible:outline-2 focus-visible:outline-theme-primary"
       >
         Open the help library
       </button>

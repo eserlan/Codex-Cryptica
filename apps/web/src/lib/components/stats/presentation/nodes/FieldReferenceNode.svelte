@@ -174,7 +174,7 @@
       .map((s) => s.trim())
       .filter(Boolean) as tag (tag)}
       <span
-        class="rounded-full border border-theme-border px-2 py-0.5 text-[10px] text-theme-muted"
+        class="rounded-full border border-theme-border px-2 py-0.5 text-micro text-theme-muted"
       >
         {tag}
       </span>
@@ -253,19 +253,19 @@
         {#if isNameTargetDice}
           {#if targetScore !== null}
             <span
-              class="rounded bg-theme-bg px-1 py-0.5 font-mono text-[11px] text-theme-muted"
+              class="rounded bg-theme-bg px-1 py-0.5 font-mono text-meta text-theme-muted"
               data-testid="presentation-field-dice-target"
             >
               {formattedTargetScore}
             </span>
           {/if}
         {:else}
-          <span class="rounded bg-theme-bg px-1 py-0.5 font-mono text-[11px]">
+          <span class="rounded bg-theme-bg px-1 py-0.5 font-mono text-meta">
             {field.formula ?? "1d20"}
           </span>
           {#if targetScore !== null}
             <span
-              class="rounded bg-theme-bg px-1 py-0.5 font-mono text-[11px] text-theme-muted"
+              class="rounded bg-theme-bg px-1 py-0.5 font-mono text-meta text-theme-muted"
               data-testid="presentation-field-dice-target"
             >
               Target: {targetScore}
@@ -310,13 +310,13 @@
       {#if isNameTargetDice}
         {#if targetScore !== null}
           <span
-            class="rounded bg-theme-bg px-1 py-0.5 font-mono text-[11px] text-theme-muted"
+            class="rounded bg-theme-bg px-1 py-0.5 font-mono text-meta text-theme-muted"
           >
             {formattedTargetScore}
           </span>
         {/if}
       {:else}
-        <span class="rounded bg-theme-bg px-1 py-0.5 font-mono text-[11px]">
+        <span class="rounded bg-theme-bg px-1 py-0.5 font-mono text-meta">
           {field.formula ?? "1d20"}
         </span>
       {/if}

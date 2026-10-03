@@ -22,7 +22,7 @@
   const hasEntries = $derived(journal.entries.length > 0);
 
   const button =
-    "rounded border border-theme-border px-2 py-1 font-header text-[9px] font-bold uppercase tracking-wider text-theme-text transition-colors hover:border-theme-primary hover:text-theme-primary disabled:opacity-40 disabled:hover:border-theme-border disabled:hover:text-theme-text";
+    "rounded border border-theme-border px-2 py-1 font-header text-nano font-bold uppercase tracking-wider text-theme-text transition-colors hover:border-theme-primary hover:text-theme-primary disabled:opacity-40 disabled:hover:border-theme-border disabled:hover:text-theme-text";
 </script>
 
 <div
@@ -50,7 +50,7 @@
         Cancel
       </button>
       {#if !promotion.hasSelection}
-        <span class="text-[10px] text-theme-muted" data-testid="promote-reason">
+        <span class="text-micro text-theme-muted" data-testid="promote-reason">
           Choose at least one entry or section.
         </span>
       {/if}
@@ -74,7 +74,7 @@
         Choose parts
       </button>
       {#if !hasEntries}
-        <span class="text-[10px] text-theme-muted" data-testid="promote-reason">
+        <span class="text-micro text-theme-muted" data-testid="promote-reason">
           Nothing to turn into an entity yet.
         </span>
       {/if}

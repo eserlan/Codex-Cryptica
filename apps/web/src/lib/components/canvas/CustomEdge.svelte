@@ -103,7 +103,7 @@
 {#if label}
   <EdgeLabel x={edgeData.labelX} y={edgeData.labelY}>
     <div
-      class="canvas-edge-label rounded-full px-2.5 py-0.5 text-[9px] font-bold uppercase font-header tracking-wider cursor-text select-none transition-all shadow-md hover:scale-105 border {stance ===
+      class="canvas-edge-label rounded-full px-2.5 py-0.5 text-nano font-bold uppercase font-header tracking-wider cursor-text select-none transition-all shadow-md hover:scale-105 border {stance ===
       'ally'
         ? 'bg-emerald-950/80 text-emerald-300 border-emerald-500/50'
         : stance === 'friend'

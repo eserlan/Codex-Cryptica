@@ -28,7 +28,7 @@
       </p>
       {#if error.stack}
         <pre
-          class="bg-black/50 p-4 rounded text-[10px] overflow-auto max-h-40 border border-red-900/30 mb-6">{error.stack}</pre>
+          class="bg-black/50 p-4 rounded text-micro overflow-auto max-h-40 border border-red-900/30 mb-6">{error.stack}</pre>
       {/if}
       <div class="flex gap-4">
         <button

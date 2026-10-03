@@ -136,7 +136,7 @@
       <div class="flex gap-3">
         <button
           type="button"
-          class="inline-flex items-center gap-1.5 rounded-full border border-theme-primary/40 bg-theme-primary/10 px-4 py-2 text-[10px] font-bold uppercase tracking-[0.15em] text-theme-primary hover:bg-theme-primary/20 transition-colors"
+          class="inline-flex items-center gap-1.5 rounded-full border border-theme-primary/40 bg-theme-primary/10 px-4 py-2 text-micro font-bold uppercase tracking-[0.15em] text-theme-primary hover:bg-theme-primary/20 transition-colors"
           onclick={() => modalUIStore.openIntentCreateMenu()}
           data-testid="entities-create-button"
         >
@@ -145,7 +145,7 @@
         </button>
         <button
           type="button"
-          class="inline-flex items-center gap-1.5 rounded-full border border-theme-border bg-theme-surface/50 px-4 py-2 text-[10px] font-bold uppercase tracking-[0.15em] text-theme-text hover:bg-theme-bg/50 transition-colors"
+          class="inline-flex items-center gap-1.5 rounded-full border border-theme-border bg-theme-surface/50 px-4 py-2 text-micro font-bold uppercase tracking-[0.15em] text-theme-text hover:bg-theme-bg/50 transition-colors"
           onclick={() => openImportWindow()}
           data-testid="entities-import-button"
         >

@@ -269,12 +269,12 @@
       ? 'flex'
       : 'hidden sm:flex'} items-center gap-1 bg-theme-surface/80 border border-theme-border rounded px-2 h-8"
   >
-    <span class="text-[11px] font-mono text-theme-primary font-bold"
+    <span class="text-meta font-mono text-theme-primary font-bold"
       >{currentZoom.toFixed(2)}x</span
     >
     <button
       type="button"
-      class="text-[10px] font-black bg-theme-primary/10 text-theme-primary hover:bg-theme-primary hover:text-theme-bg px-1 rounded transition-colors uppercase tracking-tighter"
+      class="text-micro font-black bg-theme-primary/10 text-theme-primary hover:bg-theme-primary hover:text-theme-bg px-1 rounded transition-colors uppercase tracking-tighter"
       onclick={() =>
         cy?.animate({
           zoom: 9,
@@ -296,7 +296,7 @@
     onclick={closeMenuIfMobile}
     class="{layoutUIStore.isMobile
       ? 'flex'
-      : 'hidden sm:flex'} h-8 flex-shrink-0 items-center gap-1.5 rounded border border-theme-border bg-theme-surface/80 px-2 text-[10px] font-bold uppercase tracking-tighter text-theme-muted transition hover:border-theme-primary hover:text-theme-primary"
+      : 'hidden sm:flex'} h-8 flex-shrink-0 items-center gap-1.5 rounded border border-theme-border bg-theme-surface/80 px-2 text-micro font-bold uppercase tracking-tighter text-theme-muted transition hover:border-theme-primary hover:text-theme-primary"
     data-testid="graph-browse-as-table"
     title="Browse the same entities as a sortable table"
   >
@@ -330,7 +330,7 @@
     >
       <div class="flex items-center justify-between gap-3 mb-2">
         <div
-          class="flex items-center gap-2 text-theme-primary uppercase tracking-[0.2em] font-mono text-[11px]"
+          class="flex items-center gap-2 text-theme-primary uppercase tracking-[0.2em] font-mono text-meta"
         >
           <span aria-hidden="true" class="icon-[lucide--users] w-3 h-3"></span>
           Active Guests
@@ -355,7 +355,7 @@
                   >{guest.displayName}</span
                 >
                 <span
-                  class="rounded border border-theme-border/60 bg-theme-bg/60 px-1.5 py-0.5 uppercase tracking-[0.2em] text-[10px] text-theme-muted"
+                  class="rounded border border-theme-border/60 bg-theme-bg/60 px-1.5 py-0.5 uppercase tracking-[0.2em] text-micro text-theme-muted"
                 >
                   {guest.status === "viewing" ? "viewing" : "connected"}
                 </span>

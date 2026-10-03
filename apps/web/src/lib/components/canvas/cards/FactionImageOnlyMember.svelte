@@ -57,9 +57,7 @@
         class="icon-[lucide--user] w-8 h-8 opacity-40 mb-1"
         aria-hidden="true"
       ></span>
-      <span
-        class="text-[10px] font-bold text-theme-text/80 truncate max-w-full"
-      >
+      <span class="text-micro font-bold text-theme-text/80 truncate max-w-full">
         {member.title}
       </span>
     </div>
@@ -88,7 +86,7 @@
     </span>
     {#if member.isLeader}
       <span
-        class="text-[9px] font-semibold text-amber-300 uppercase tracking-wider ml-1 shrink-0"
+        class="text-nano font-semibold text-amber-300 uppercase tracking-wider ml-1 shrink-0"
       >
         Leader
       </span>

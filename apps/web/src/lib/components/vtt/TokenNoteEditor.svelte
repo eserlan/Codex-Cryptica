@@ -150,12 +150,12 @@
     <div class="flex items-center gap-2">
       <h4
         id="token-note-heading"
-        class="text-[10px] font-bold uppercase tracking-widest text-theme-primary"
+        class="text-micro font-bold uppercase tracking-widest text-theme-primary"
       >
         Note
       </h4>
       <div
-        class="flex rounded border border-theme-border bg-theme-bg/60 p-0.5 text-[10px]"
+        class="flex rounded border border-theme-border bg-theme-bg/60 p-0.5 text-micro"
         role="group"
         aria-label="Editor view mode"
       >
@@ -194,7 +194,7 @@
     {#if onToggleCollapsed && !disabled}
       <button
         type="button"
-        class="flex items-center gap-1 rounded border border-theme-border px-2 py-0.5 text-[9px] font-bold uppercase tracking-widest text-theme-muted transition-colors hover:border-theme-primary hover:text-theme-primary"
+        class="flex items-center gap-1 rounded border border-theme-border px-2 py-0.5 text-nano font-bold uppercase tracking-widest text-theme-muted transition-colors hover:border-theme-primary hover:text-theme-primary"
         onclick={onToggleCollapsed}
         data-testid="token-note-collapse"
         title={collapsed
@@ -212,7 +212,7 @@
   {#if canGenerate}
     <button
       type="button"
-      class="flex w-full items-center justify-center gap-1.5 rounded-lg border border-theme-primary/40 px-2 py-1.5 text-[11px] font-bold text-theme-primary transition-colors hover:bg-theme-primary/10 disabled:cursor-not-allowed disabled:opacity-60"
+      class="flex w-full items-center justify-center gap-1.5 rounded-lg border border-theme-primary/40 px-2 py-1.5 text-meta font-bold text-theme-primary transition-colors hover:bg-theme-primary/10 disabled:cursor-not-allowed disabled:opacity-60"
       onclick={onGenerateEncounter}
       disabled={generating}
       data-testid="token-note-generate-encounter"
@@ -268,7 +268,7 @@
       data-testid="token-note-preview-content"
     >
       {#if parsedBlocks.length === 0}
-        <p class="text-theme-muted italic text-[11px]">Empty note</p>
+        <p class="text-theme-muted italic text-meta">Empty note</p>
       {:else}
         {#each parsedBlocks as block}
           {#if block.heading}
@@ -282,7 +282,7 @@
           {:else if block.bullet}
             <div class="flex items-start gap-1.5 pl-1">
               <span class="text-theme-primary select-none">•</span>
-              <p class="flex-1 text-[11px] leading-relaxed">
+              <p class="flex-1 text-meta leading-relaxed">
                 {#each block.runs as run}
                   <span
                     class={[run.bold && "font-bold", run.italic && "italic"]}
@@ -292,7 +292,7 @@
               </p>
             </div>
           {:else}
-            <p class="text-[11px] leading-relaxed">
+            <p class="text-meta leading-relaxed">
               {#each block.runs as run}
                 <span class={[run.bold && "font-bold", run.italic && "italic"]}
                   >{run.text}</span
@@ -307,7 +307,7 @@
   {#if canSaveToVault}
     <button
       type="button"
-      class="flex w-full items-center justify-center gap-1.5 rounded-lg border border-theme-border px-2 py-1.5 text-[11px] font-bold text-theme-muted transition-colors hover:border-theme-primary hover:text-theme-primary disabled:cursor-not-allowed disabled:opacity-60"
+      class="flex w-full items-center justify-center gap-1.5 rounded-lg border border-theme-border px-2 py-1.5 text-meta font-bold text-theme-muted transition-colors hover:border-theme-primary hover:text-theme-primary disabled:cursor-not-allowed disabled:opacity-60"
       onclick={onSaveToVault}
       disabled={savingToVault}
       data-testid="token-note-save-to-vault"

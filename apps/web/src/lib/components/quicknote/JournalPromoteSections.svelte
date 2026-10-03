@@ -26,7 +26,7 @@
 <ul class="flex flex-wrap gap-2" aria-label="Sections">
   {#each journal.sections as section (section.id)}
     <li
-      class="flex items-center gap-1.5 rounded-full border border-theme-border/40 px-2 py-0.5 text-[10px] text-theme-text"
+      class="flex items-center gap-1.5 rounded-full border border-theme-border/40 px-2 py-0.5 text-micro text-theme-text"
       data-testid="promote-section"
     >
       {#if promotion.selecting}
@@ -46,7 +46,7 @@
         {/if}
         <button
           type="button"
-          class="font-header text-[9px] font-bold uppercase tracking-wider text-theme-muted transition-colors hover:text-theme-primary disabled:opacity-40 disabled:hover:text-theme-muted"
+          class="font-header text-nano font-bold uppercase tracking-wider text-theme-muted transition-colors hover:text-theme-primary disabled:opacity-40 disabled:hover:text-theme-muted"
           disabled={!sectionHasEntries(section.id)}
           title={sectionHasEntries(section.id)
             ? undefined

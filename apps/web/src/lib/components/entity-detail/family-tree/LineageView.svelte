@@ -120,7 +120,7 @@
     <button
       type="button"
       data-testid="lineage-expand-all"
-      class="rounded border border-theme-border px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-theme-muted hover:border-theme-primary hover:text-theme-primary"
+      class="rounded border border-theme-border px-2 py-1 text-micro font-bold uppercase tracking-wide text-theme-muted hover:border-theme-primary hover:text-theme-primary"
       onclick={expandAllGenerations}
     >
       Show all generations
@@ -184,7 +184,7 @@
                 <button
                   type="button"
                   data-testid="lineage-branch-toggle-{card.id}"
-                  class="mt-1 w-full min-h-[44px] rounded border border-theme-border px-1 py-0.5 text-[9px] font-bold uppercase tracking-wide text-theme-muted hover:border-theme-primary hover:text-theme-primary"
+                  class="mt-1 w-full min-h-[44px] rounded border border-theme-border px-1 py-0.5 text-nano font-bold uppercase tracking-wide text-theme-muted hover:border-theme-primary hover:text-theme-primary"
                   onclick={() => toggleBranch(card.id)}
                 >
                   {isBranchExpanded(card.id)
@@ -204,7 +204,7 @@
       <button
         type="button"
         data-testid="lineage-expander-up"
-        class="rounded border border-theme-border px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-theme-muted hover:border-theme-primary hover:text-theme-primary"
+        class="rounded border border-theme-border px-2 py-1 text-micro font-bold uppercase tracking-wide text-theme-muted hover:border-theme-primary hover:text-theme-primary"
         onclick={expandUp}
       >
         {lineage.truncatedUp.hiddenGenerations} more generations above
@@ -214,7 +214,7 @@
       <button
         type="button"
         data-testid="lineage-expander-down"
-        class="rounded border border-theme-border px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-theme-muted hover:border-theme-primary hover:text-theme-primary"
+        class="rounded border border-theme-border px-2 py-1 text-micro font-bold uppercase tracking-wide text-theme-muted hover:border-theme-primary hover:text-theme-primary"
         onclick={expandDown}
       >
         {lineage.truncatedDown.hiddenGenerations} more generations below

@@ -277,9 +277,7 @@
                   <span class="text-sm text-theme-text"
                     >{backupLabel(backup)}</span
                   >
-                  <span
-                    class="font-mono text-[10px] uppercase text-theme-muted"
-                  >
+                  <span class="font-mono text-micro uppercase text-theme-muted">
                     {savedAt(backup.lastPushedAt)}
                   </span>
                 </button>
@@ -415,7 +413,7 @@
 
     {#if isOn}
       <span
-        class="shrink-0 font-mono text-[10px] uppercase tracking-wider {status ===
+        class="shrink-0 font-mono text-micro uppercase tracking-wider {status ===
         'error'
           ? 'text-red-400'
           : 'text-theme-primary'}"

@@ -131,7 +131,7 @@
                 >
                   {item.vaultTitle}
                 </div>
-                <div class="text-[11px] text-theme-text/50">
+                <div class="text-meta text-theme-text/50">
                   Last Visited: {new Date(item.lastAccessed).toLocaleString()}
                 </div>
               </a>

@@ -55,14 +55,14 @@
                 <button
                   type="button"
                   onclick={handleRename}
-                  class="px-3 py-1 bg-theme-primary text-theme-bg text-[11px] font-bold rounded uppercase font-header transition-colors"
+                  class="px-3 py-1 bg-theme-primary text-theme-bg text-meta font-bold rounded uppercase font-header transition-colors"
                 >
                   Save
                 </button>
                 <button
                   type="button"
                   onclick={() => (editingLabel = null)}
-                  class="px-3 py-1 border border-theme-border text-theme-muted text-[11px] font-bold rounded uppercase font-header hover:text-theme-text transition-colors"
+                  class="px-3 py-1 border border-theme-border text-theme-muted text-meta font-bold rounded uppercase font-header hover:text-theme-text transition-colors"
                 >
                   Cancel
                 </button>

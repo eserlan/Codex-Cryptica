@@ -77,7 +77,7 @@
           <button
             type="button"
             onclick={() => assistant.reset()}
-            class="rounded px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-theme-muted hover:text-theme-text focus-visible:outline-2 focus-visible:outline-theme-primary"
+            class="touch-target rounded px-2 py-1 text-meta font-bold uppercase tracking-wider text-theme-muted hover:text-theme-text focus-visible:outline-2 focus-visible:outline-theme-primary"
           >
             Start over
           </button>
@@ -100,7 +100,7 @@
       aria-relevant="additions"
     >
       {#if assistant.messages.length === 0}
-        <p class="text-xs leading-relaxed text-theme-muted">
+        <p class="text-body-ui leading-relaxed text-theme-muted">
           Ask how to do something in Codex Cryptica. I can also show you where a
           button is. I can't change anything in your vault.
         </p>
@@ -116,11 +116,11 @@
             aria-hidden="true"
             class="icon-[lucide--loader-circle] h-4 w-4 animate-spin text-theme-primary motion-reduce:animate-none"
           ></span>
-          <span class="text-xs text-theme-muted">Looking that up…</span>
+          <span class="text-body-ui text-theme-muted">Looking that up…</span>
           <button
             type="button"
             onclick={() => assistant.cancel()}
-            class="ml-auto rounded px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-theme-muted hover:text-theme-text focus-visible:outline-2 focus-visible:outline-theme-primary"
+            class="ml-auto rounded px-2 py-1 text-meta font-bold uppercase tracking-wider text-theme-muted hover:text-theme-text focus-visible:outline-2 focus-visible:outline-theme-primary"
           >
             Cancel
           </button>

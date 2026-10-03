@@ -66,7 +66,7 @@
 
 <label class="flex flex-col gap-1">
   <span
-    class="font-header text-[9px] font-bold uppercase tracking-[0.2em] text-theme-muted"
+    class="font-header text-nano font-bold uppercase tracking-[0.2em] text-theme-muted"
     >Name</span
   >
   <input
@@ -82,13 +82,13 @@
 
 <div class="flex flex-col gap-1">
   <span
-    class="font-header text-[9px] font-bold uppercase tracking-[0.2em] text-theme-muted"
+    class="font-header text-nano font-bold uppercase tracking-[0.2em] text-theme-muted"
     >Labels</span
   >
   <div class="flex flex-wrap items-center gap-1.5">
     {#each source.labels as label}
       <span
-        class="flex items-center gap-1 rounded bg-theme-primary/10 px-2 py-0.5 font-mono text-[10px] tracking-wider text-theme-primary"
+        class="flex items-center gap-1 rounded bg-theme-primary/10 px-2 py-0.5 font-mono text-micro tracking-wider text-theme-primary"
       >
         {label}
         <button

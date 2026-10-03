@@ -58,7 +58,7 @@
         type="button"
         onclick={handleAction}
         data-testid="structural-suggestion-action"
-        class="px-2.5 py-1 rounded-md bg-theme-primary text-theme-bg text-[10px] font-bold uppercase tracking-wider hover:brightness-110 transition-all"
+        class="px-2.5 py-1 rounded-md bg-theme-primary text-theme-bg text-micro font-bold uppercase tracking-wider hover:brightness-110 transition-all"
       >
         {recommendation.actionLabel}
       </button>

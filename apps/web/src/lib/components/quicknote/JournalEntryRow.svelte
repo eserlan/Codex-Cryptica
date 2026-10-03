@@ -121,7 +121,7 @@
   data-entry-type={entry.type}
   data-automatic={isAutomatic ? "true" : "false"}
 >
-  <div class="flex items-center justify-between text-[9px] text-theme-muted">
+  <div class="flex items-center justify-between text-nano text-theme-muted">
     <span class="flex items-center gap-1.5">
       {#if kind}
         <span

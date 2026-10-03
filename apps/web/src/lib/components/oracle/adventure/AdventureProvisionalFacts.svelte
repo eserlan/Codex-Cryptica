@@ -121,7 +121,7 @@
                   {fact.name}
                 </p>
                 <span
-                  class="shrink-0 text-[10px] font-mono uppercase tracking-wider text-theme-secondary"
+                  class="shrink-0 text-micro font-mono uppercase tracking-wider text-theme-secondary"
                 >
                   {typePresentation[fact.kind].label}
                 </span>

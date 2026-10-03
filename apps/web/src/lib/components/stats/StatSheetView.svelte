@@ -204,7 +204,7 @@
         {#if field.type === "heading"}
           <button
             type="button"
-            class="mt-2 flex w-full items-center gap-2 border-b border-theme-border pb-1 text-left text-[10px] font-bold uppercase tracking-widest text-theme-muted hover:text-theme-primary"
+            class="mt-2 flex w-full items-center gap-2 border-b border-theme-border pb-1 text-left text-micro font-bold uppercase tracking-widest text-theme-muted hover:text-theme-primary"
             onclick={() => toggleHeading(field)}
             data-testid="stat-sheet-heading"
             aria-expanded={!field.collapsed}
@@ -491,7 +491,7 @@
     {#if !readOnly}
       <button
         type="button"
-        class="mt-2 self-start text-[10px] font-bold uppercase tracking-wide text-theme-muted hover:text-theme-primary"
+        class="mt-2 self-start text-micro font-bold uppercase tracking-wide text-theme-muted hover:text-theme-primary"
         onclick={onOpenEditor}
         data-testid="stat-sheet-edit-layout"
       >

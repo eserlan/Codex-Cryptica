@@ -346,7 +346,7 @@
       </button>
       <button
         type="button"
-        class="min-w-[2.75rem] rounded px-1 py-1 font-mono text-[10px] text-theme-muted transition hover:bg-theme-primary/10 hover:text-theme-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-theme-primary"
+        class="min-w-[2.75rem] rounded px-1 py-1 font-mono text-micro text-theme-muted transition hover:bg-theme-primary/10 hover:text-theme-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-theme-primary"
         aria-label="Reset zoom"
         title="Reset zoom"
         data-testid="connections-zoom-reset"

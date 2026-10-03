@@ -350,7 +350,7 @@
       {#if handleBackgroundChange}
         <div class="px-4 py-2">
           <p
-            class="mb-1.5 text-[10px] font-bold text-theme-muted uppercase tracking-widest"
+            class="mb-1.5 text-micro font-bold text-theme-muted uppercase tracking-widest"
           >
             Background
           </p>
@@ -383,7 +383,7 @@
       {#if onTextNodeFontSizeChange}
         <div class="px-4 py-2">
           <p
-            class="mb-1.5 text-[10px] font-bold text-theme-muted uppercase tracking-widest"
+            class="mb-1.5 text-micro font-bold text-theme-muted uppercase tracking-widest"
           >
             Font Size
           </p>
@@ -395,7 +395,7 @@
                 aria-checked={textNodeFontSize === size}
                 title={`${size}px`}
                 onclick={() => onTextNodeFontSizeChange(size)}
-                class="flex h-6 min-w-6 items-center justify-center rounded px-1 text-[10px] font-semibold transition-colors {textNodeFontSize ===
+                class="flex h-6 min-w-6 items-center justify-center rounded px-1 text-micro font-semibold transition-colors {textNodeFontSize ===
                 size
                   ? 'bg-theme-primary/15 text-theme-primary ring-1 ring-theme-primary'
                   : 'text-theme-muted hover:bg-theme-primary/10'}"
@@ -412,7 +412,7 @@
     {#if targetType === "node" && onEntityCardViewChange}
       <div class="px-4 py-2">
         <p
-          class="mb-1.5 text-[10px] font-bold text-theme-muted uppercase tracking-widest"
+          class="mb-1.5 text-micro font-bold text-theme-muted uppercase tracking-widest"
         >
           Card view
         </p>
@@ -432,7 +432,7 @@
                   onEntityCardViewChange(option.value);
                 }
               }}
-              class="w-full text-left px-2 py-1 rounded text-[11px] transition-colors {entityCardView ===
+              class="w-full text-left px-2 py-1 rounded text-meta transition-colors {entityCardView ===
               option.value
                 ? 'bg-theme-primary/15 text-theme-primary font-semibold'
                 : 'text-theme-muted hover:bg-theme-primary/10 hover:text-theme-text'}"
@@ -446,7 +446,7 @@
               role="menuitemcheckbox"
               aria-checked={largeCard}
               onclick={() => onLargeCardChange(!largeCard)}
-              class="w-full text-left px-2 py-1 rounded text-[11px] transition-colors flex items-center gap-2 {largeCard
+              class="w-full text-left px-2 py-1 rounded text-meta transition-colors flex items-center gap-2 {largeCard
                 ? 'bg-theme-primary/15 text-theme-primary font-semibold'
                 : 'text-theme-muted hover:bg-theme-primary/10 hover:text-theme-text'}"
             >
@@ -497,7 +497,7 @@
     {/if}
   {:else}
     <div
-      class="px-4 py-3 text-[10px] text-theme-muted italic uppercase tracking-widest"
+      class="px-4 py-3 text-micro text-theme-muted italic uppercase tracking-widest"
     >
       Viewer Mode
     </div>

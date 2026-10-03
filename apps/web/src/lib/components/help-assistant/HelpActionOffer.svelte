@@ -20,11 +20,11 @@
   class="flex flex-col gap-2 rounded border border-theme-primary/40 bg-theme-surface/60 p-3"
   data-testid="help-action-offer"
 >
-  <p class="text-xs text-theme-text">
+  <p class="text-body-ui text-theme-text">
     <span class="font-bold text-theme-primary">I can show you:</span>
     {summary}
   </p>
-  <p class="text-[10px] text-theme-muted">
+  <p class="text-meta text-theme-muted">
     This only points at things on screen. It won't change anything in your
     vault.
   </p>
@@ -32,14 +32,14 @@
     <button
       type="button"
       onclick={onAccept}
-      class="rounded bg-theme-primary px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-theme-bg transition hover:bg-theme-secondary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary"
+      class="touch-target rounded bg-theme-primary px-3 py-1.5 text-meta font-bold uppercase tracking-wider text-theme-bg transition hover:bg-theme-secondary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary"
     >
       Show me
     </button>
     <button
       type="button"
       onclick={onDismiss}
-      class="rounded px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-theme-muted transition hover:text-theme-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary"
+      class="touch-target rounded px-3 py-1.5 text-meta font-bold uppercase tracking-wider text-theme-muted transition hover:text-theme-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary"
     >
       No thanks
     </button>

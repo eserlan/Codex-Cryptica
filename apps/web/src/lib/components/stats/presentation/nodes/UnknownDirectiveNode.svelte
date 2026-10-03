@@ -5,7 +5,7 @@
 </script>
 
 <div
-  class="rounded border border-dashed border-amber-500/50 bg-amber-500/10 px-2 py-1.5 text-[11px] text-amber-600 dark:text-amber-400"
+  class="rounded border border-dashed border-amber-500/50 bg-amber-500/10 px-2 py-1.5 text-meta text-amber-600 dark:text-amber-400"
   data-testid="presentation-unknown-directive"
   title={`This template uses a directive ("${node.name}") this version of the app doesn't recognize.`}
 >

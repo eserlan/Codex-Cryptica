@@ -409,7 +409,7 @@
       aria-selected={activeTab === "era"}
       aria-controls="era-panel"
       id="era-tab"
-      class="flex-1 py-2 text-[10px] font-bold uppercase font-header tracking-widest transition-colors {activeTab ===
+      class="flex-1 py-2 text-micro font-bold uppercase font-header tracking-widest transition-colors {activeTab ===
       'era'
         ? 'text-theme-primary bg-theme-primary/10'
         : 'text-theme-muted hover:text-theme-text'}"
@@ -423,7 +423,7 @@
       aria-selected={activeTab === "manual"}
       aria-controls="manual-panel"
       id="manual-tab"
-      class="flex-1 py-2 text-[10px] font-bold uppercase font-header tracking-widest transition-colors {activeTab ===
+      class="flex-1 py-2 text-micro font-bold uppercase font-header tracking-widest transition-colors {activeTab ===
       'manual'
         ? 'text-theme-primary bg-theme-primary/10'
         : 'text-theme-muted hover:text-theme-text'}"
@@ -451,7 +451,7 @@
           {#each ["year", "unit", "day", ...(calendarStore.config.anchors?.length ? ["anchor"] : [])] as p (p)}
             <button
               type="button"
-              class="flex-1 py-1 text-[9px] font-bold uppercase font-header tracking-tighter transition-all rounded {activeSelection.precision ===
+              class="flex-1 py-1 text-nano font-bold uppercase font-header tracking-tighter transition-all rounded {activeSelection.precision ===
               p
                 ? 'bg-theme-primary text-theme-bg shadow-sm'
                 : 'text-theme-muted hover:text-theme-text'}"
@@ -476,7 +476,7 @@
         <div class="space-y-1">
           <label
             for="direct-date-input"
-            class="text-[9px] font-bold text-theme-muted uppercase font-header tracking-widest"
+            class="text-nano font-bold text-theme-muted uppercase font-header tracking-widest"
             >Quick Entry</label
           >
           <input
@@ -498,7 +498,7 @@
               id="direct-date-error"
               role="alert"
               aria-live="polite"
-              class="text-[9px] text-red-500 font-bold uppercase font-header"
+              class="text-nano text-red-500 font-bold uppercase font-header"
             >
               {directDateError}
             </div>
@@ -528,7 +528,7 @@
               <div class="flex-1 flex flex-col items-center relative min-w-0">
                 <!-- Header -->
                 <div
-                  class="text-[8px] font-bold text-theme-muted uppercase font-header tracking-wider py-1 border-b border-theme-border/10 w-full text-center bg-theme-surface/50 z-20"
+                  class="text-nano font-bold text-theme-muted uppercase font-header tracking-wider py-1 border-b border-theme-border/10 w-full text-center bg-theme-surface/50 z-20"
                 >
                   {col.label}
                 </div>
@@ -583,7 +583,7 @@
                         tabindex="-1"
                         aria-selected={col.selectedId === option.id}
                         onclick={() => selectOption(col.id, option.id)}
-                        class="h-10 w-full flex items-center justify-center snap-center text-[10px] font-semibold tracking-wider uppercase transition-colors hover:text-theme-primary {col.selectedId ===
+                        class="h-10 w-full flex items-center justify-center snap-center text-micro font-semibold tracking-wider uppercase transition-colors hover:text-theme-primary {col.selectedId ===
                         option.id
                           ? 'text-theme-primary font-bold text-xs'
                           : 'text-theme-muted'}"
@@ -631,13 +631,13 @@
               <span class="icon-[lucide--alert-triangle] w-3.5 h-3.5"></span>
               Calendar Conflict
             </div>
-            <p class="text-[10px] leading-snug text-theme-muted">
+            <p class="text-micro leading-snug text-theme-muted">
               The calendar configuration changed. Selected values are invalid.
             </p>
             <button
               type="button"
               onclick={confirmRepair}
-              class="w-full py-1 text-[9px] font-bold uppercase font-header tracking-wider bg-yellow-500 hover:bg-yellow-400 text-theme-bg transition-colors rounded"
+              class="w-full py-1 text-nano font-bold uppercase font-header tracking-wider bg-yellow-500 hover:bg-yellow-400 text-theme-bg transition-colors rounded"
             >
               Confirm Repair
             </button>
@@ -650,7 +650,7 @@
           data-testid="synchronized-preview"
         >
           <div
-            class="text-[8px] font-bold text-theme-muted uppercase font-header tracking-wider mb-0.5"
+            class="text-nano font-bold text-theme-muted uppercase font-header tracking-wider mb-0.5"
           >
             Preview
           </div>
@@ -662,14 +662,14 @@
         {#if isYearOutOfRange}
           <div
             transition:slide
-            class="text-[8px] text-red-500 font-bold uppercase font-header text-center py-1 bg-red-500/5 rounded border border-red-500/20"
+            class="text-nano text-red-500 font-bold uppercase font-header text-center py-1 bg-red-500/5 rounded border border-red-500/20"
           >
             Year {activeSelection.year} is outside {selectedEra?.name}
           </div>
         {:else if selectedEra}
           <div
             transition:slide
-            class="text-[8px] text-theme-primary/70 font-bold uppercase font-header flex items-center justify-center gap-1 py-1"
+            class="text-nano text-theme-primary/70 font-bold uppercase font-header flex items-center justify-center gap-1 py-1"
           >
             <span class="w-1 h-1 rounded-full bg-theme-primary animate-pulse"
             ></span>

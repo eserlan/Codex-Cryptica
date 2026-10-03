@@ -157,7 +157,7 @@
         >
           <div class="flex flex-col min-w-0">
             <span
-              class="text-[10px] font-bold uppercase tracking-wider text-theme-primary"
+              class="text-micro font-bold uppercase tracking-wider text-theme-primary"
             >
               Active Stat Sheet
             </span>
@@ -187,7 +187,7 @@
         >
           <span class="text-xs font-bold text-theme-text">{template.name}</span>
           {#if template.description}
-            <span class="text-[10px] text-theme-muted"
+            <span class="text-micro text-theme-muted"
               >{template.description}</span
             >
           {/if}
@@ -196,7 +196,7 @@
       {#if hasHiddenTemplates}
         <button
           type="button"
-          class="mt-2 text-center text-[10px] font-bold uppercase tracking-wide text-theme-muted hover:text-theme-primary"
+          class="mt-2 text-center text-micro font-bold uppercase tracking-wide text-theme-muted hover:text-theme-primary"
           onclick={() => (showAllTemplates = !showAllTemplates)}
           data-testid="stat-sheet-toggle-show-all"
         >

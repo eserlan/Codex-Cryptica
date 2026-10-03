@@ -101,7 +101,7 @@
         <!-- Era Marker -->
         {#if eraName}
           <div
-            class="flex items-center gap-2 text-[9px] font-bold text-amber-500/50 uppercase font-header tracking-[0.3em] mb-2 md:justify-center"
+            class="flex items-center gap-2 text-nano font-bold text-amber-500/50 uppercase font-header tracking-[0.3em] mb-2 md:justify-center"
           >
             <span class="h-px bg-amber-900/20 flex-1 hidden md:block"></span>
             {eraName}

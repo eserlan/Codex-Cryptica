@@ -44,7 +44,7 @@
   const selectClass =
     "w-full bg-theme-bg/60 border border-theme-border/60 rounded-lg px-3 py-2 text-xs text-theme-text focus:outline-none focus:border-theme-primary/60";
   const labelClass =
-    "text-[11px] font-bold uppercase tracking-wider text-theme-text/80";
+    "text-meta font-bold uppercase tracking-wider text-theme-text/80";
   const textClass =
     "w-full bg-theme-bg/60 border border-theme-border/60 rounded-lg px-3 py-2 text-base md:text-xs text-theme-text focus:outline-none focus:border-theme-primary/60";
 
@@ -178,7 +178,7 @@
       cooperationStyle = pickFrom(personalityConfig.cooperationStyles);
       if (onSurprise) onSurprise();
     }}
-    class="flex items-center gap-1.5 px-3 py-1.5 bg-theme-surface/60 border border-theme-border/60 rounded-lg text-[10px] font-bold uppercase tracking-wider text-theme-text hover:bg-theme-primary hover:text-theme-bg hover:border-theme-primary transition-all cursor-pointer"
+    class="flex items-center gap-1.5 px-3 py-1.5 bg-theme-surface/60 border border-theme-border/60 rounded-lg text-micro font-bold uppercase tracking-wider text-theme-text hover:bg-theme-primary hover:text-theme-bg hover:border-theme-primary transition-all cursor-pointer"
     title="Randomize all options and generate a draft from the result"
   >
     <span class="icon-[lucide--dices] w-3.5 h-3.5" aria-hidden="true"></span>
@@ -246,7 +246,7 @@
   ></textarea>
   <p
     id="personality-campaign-context-help"
-    class="text-[10px] text-theme-muted leading-relaxed"
+    class="text-micro text-theme-muted leading-relaxed"
   >
     Add a faction, location, or ongoing tension to tie the personality into your
     table.

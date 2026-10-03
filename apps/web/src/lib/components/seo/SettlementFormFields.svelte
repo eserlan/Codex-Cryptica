@@ -148,7 +148,7 @@
   const selectClass =
     "w-full bg-theme-bg/60 border border-theme-border/60 rounded-lg px-3 py-2 text-xs text-theme-text focus:outline-none focus:border-theme-primary/60";
   const labelClass =
-    "text-[10px] font-bold uppercase tracking-wider text-theme-text/80";
+    "text-micro font-bold uppercase tracking-wider text-theme-text/80";
 </script>
 
 {#if presets.length > 0}
@@ -164,7 +164,7 @@
           type="button"
           aria-pressed={activePresetId === preset.id}
           title={preset.description}
-          class="px-2.5 py-1.5 rounded-lg border text-[11px] font-medium transition-all cursor-pointer {activePresetId ===
+          class="px-2.5 py-1.5 rounded-lg border text-meta font-medium transition-all cursor-pointer {activePresetId ===
           preset.id
             ? 'bg-theme-primary text-theme-bg border-theme-primary'
             : 'bg-theme-surface/60 text-theme-text border-theme-border/60 hover:border-theme-primary/60'}"
@@ -174,7 +174,7 @@
         </button>
       {/each}
     </div>
-    <p class="text-[10px] text-theme-text/60 leading-relaxed">
+    <p class="text-micro text-theme-text/60 leading-relaxed">
       A preset fills in a few fields below. Change any of them, or leave the
       rest blank and they will be picked to match.
     </p>
@@ -282,7 +282,7 @@
   ></textarea>
   <p
     id="settlement-context-help"
-    class="text-[10px] text-theme-text/60 leading-relaxed"
+    class="text-micro text-theme-text/60 leading-relaxed"
   >
     Settings above that are still blank get filled in from this. Anything else
     here, like a region name or a nearby faction, aims the result at your world.
@@ -300,7 +300,7 @@
       >
         {#each inferred as choice (choice.axisId)}
           <span
-            class="inline-flex items-center gap-1.5 pl-2.5 pr-1 py-1 rounded-lg border border-theme-primary/50 bg-theme-primary/10 text-[11px] text-theme-text"
+            class="inline-flex items-center gap-1.5 pl-2.5 pr-1 py-1 rounded-lg border border-theme-primary/50 bg-theme-primary/10 text-meta text-theme-text"
           >
             <span class="icon-[lucide--wand-sparkles] w-3 h-3 shrink-0"></span>
             <span class="font-medium">{choice.label}</span>
@@ -316,7 +316,7 @@
           </span>
         {/each}
       </div>
-      <p class="text-[10px] text-theme-text/60 leading-relaxed">
+      <p class="text-micro text-theme-text/60 leading-relaxed">
         These are settings, not results. Remove any of them, or change them
         above, and the generator uses what you leave.
       </p>
@@ -327,7 +327,7 @@
 <div class="pt-2 flex justify-end">
   <button
     type="button"
-    class="flex items-center gap-1.5 px-3 py-1.5 bg-theme-surface/60 border border-theme-border/60 rounded-lg text-[10px] font-bold uppercase tracking-wider text-theme-text hover:bg-theme-primary hover:text-theme-bg hover:border-theme-primary transition-all cursor-pointer"
+    class="flex items-center gap-1.5 px-3 py-1.5 bg-theme-surface/60 border border-theme-border/60 rounded-lg text-micro font-bold uppercase tracking-wider text-theme-text hover:bg-theme-primary hover:text-theme-bg hover:border-theme-primary transition-all cursor-pointer"
     title="Randomize all options and generate a draft from the result"
     onclick={() => {
       // Resolved through the same framework as the generator itself (#2525),
