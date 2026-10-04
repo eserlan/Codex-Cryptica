@@ -29,7 +29,15 @@ import {
 import { forGenre } from "./public-dungeon-constants";
 import { themeIdToLabel, factionConfig } from "./public-faction-constants";
 import { npcThemeConfig } from "./public-npc-constants";
-import { isTitleBanned, bannedNamesInstruction } from "./naming-policy";
+import {
+  isTitleBanned,
+  bannedNamesInstruction,
+  findOverusedNamePatterns,
+  overusedPatternsInstruction,
+  nameExamplesInstruction,
+  cultureNamingInstruction,
+  type OverusedNamePatterns,
+} from "./naming-policy";
 import { settlementConfig } from "./public-settlement-constants";
 import {
   buildAdventurePrompt,
@@ -428,12 +436,42 @@ function instructionsBlock(request: GeneratorRunRequest): string {
   return `\n[HIGHEST PRIORITY — User instructions, override defaults]\n${inst}\nThe entity you generate MUST directly depict what this instruction describes. Use the world context below only as supporting background — never substitute a different, better-documented event or subject for the one requested.${relationalNote}\n`;
 }
 
+/**
+ * Pattern and style-example guidance for a fresh generation. Refinement turns
+ * keep the name the user already accepted, and a selected Primary Language owns
+ * the names' shared sound, so neither gets guidance that pulls the other way.
+ */
+function overusedPatternsFor(
+  ctx: GeneratorRunRequest["vaultContext"],
+): OverusedNamePatterns {
+  return (
+    ctx?.overusedNamePatterns ??
+    findOverusedNamePatterns(ctx?.existingTitles ?? [])
+  );
+}
+
+function freshNamingGuidance(request: GeneratorRunRequest): {
+  patterns: string;
+  examples: string;
+} {
+  const ctx = request.vaultContext;
+  if (request.interaction || ctx?.selectedLanguage) {
+    return { patterns: "", examples: "" };
+  }
+  return {
+    patterns: overusedPatternsInstruction(overusedPatternsFor(ctx)),
+    examples: nameExamplesInstruction(ctx?.nameExamples ?? []),
+  };
+}
+
 function bannedNamesBlock(request: GeneratorRunRequest): string {
   if (request.interaction) return "";
   const ctx = request.vaultContext;
   const all = [...(ctx?.bannedNames ?? []), ...(ctx?.existingTitles ?? [])];
-  const instruction = bannedNamesInstruction(all);
-  return instruction ? `\n${instruction}` : "";
+  return [bannedNamesInstruction(all), freshNamingGuidance(request).patterns]
+    .filter(Boolean)
+    .map((t) => `\n${t}`)
+    .join("");
 }
 
 // Re-exported for existing callers/tests that import isTitleBanned from this
@@ -447,6 +485,20 @@ export { isTitleBanned };
  * context (e.g. Magyar-flavoured names for a Magyar-inspired culture) rather
  * than defaulting to generic, culture-neutral fantasy names.
  */
+/** The pre-pass name, offered as the entity's name unless it clearly clashes with the concept. */
+function nameSuggestionBlock(request: GeneratorRunRequest): string {
+  const name = request.nameSuggestion;
+  if (!name || request.interaction) return "";
+  return `Use "${name}" as this entity's name (from this world's naming style). Change it only if it clearly clashes with the concept you write.`;
+}
+
+/** The vault's own recorded naming conventions for the entity's culture. Authoritative over a model's defaults. */
+function cultureNamingBlock(request: GeneratorRunRequest): string {
+  const ctx = request.vaultContext;
+  if (request.interaction || ctx?.selectedLanguage) return "";
+  return cultureNamingInstruction(ctx?.cultureNaming);
+}
+
 function namingBlock(request: GeneratorRunRequest): string {
   const ctx = request.vaultContext;
   const hasExamples =
@@ -458,7 +510,14 @@ function namingBlock(request: GeneratorRunRequest): string {
     basis +=
       " and treat the explicitly selected Primary Language as authoritative for names and terminology";
   }
-  return `\nName the entity to match the established naming conventions and cultural/linguistic flavour of this world. ${basis}; do not default to generic, culture-neutral fantasy names.`;
+  return [
+    `\nName the entity to match the established naming conventions and cultural/linguistic flavour of this world. ${basis}; do not default to generic, culture-neutral fantasy names.`,
+    cultureNamingBlock(request),
+    nameSuggestionBlock(request),
+    freshNamingGuidance(request).examples,
+  ]
+    .filter(Boolean)
+    .join(" ");
 }
 
 /**

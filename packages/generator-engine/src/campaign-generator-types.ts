@@ -6,6 +6,7 @@
  * persistence dependencies into {@link CampaignGeneratorService}.
  */
 import type { LanguageProfileV1 } from "schema";
+import type { OverusedNamePatterns } from "./naming-policy";
 import type { StarSystemBody } from "./public-star-system";
 import type {
   ConstellationPattern,
@@ -199,6 +200,20 @@ export interface GeneratorVaultContext {
    */
   worldSample: VaultContextEntityExcerpt[];
   existingTitles: string[];
+  /**
+   * Words, openings and endings the vault's names already lean on, computed
+   * over ALL same-type titles (the {@link existingTitles} ban list is capped,
+   * so it would see only a slice of a large vault).
+   */
+  overusedNamePatterns?: OverusedNamePatterns;
+  /** A random sample of the vault's own same-type names, to anchor the naming style by example. */
+  nameExamples?: string[];
+  /**
+   * Naming conventions the vault itself records for the culture this entity
+   * belongs to (e.g. a note saying "Stormber names draw on Magyar"). When set,
+   * {@link nameExamples} are that culture's names too.
+   */
+  cultureNaming?: { culture: string; guidance: string[] };
   bannedNames?: string[];
   labelSuggestions: string[];
   includedContext: IncludedContextCategory[];
@@ -227,6 +242,11 @@ export interface GeneratorRunRequest {
   primaryLanguageId?: string;
   vaultContext?: GeneratorVaultContext;
   interaction?: GeneratorInteractionRequest;
+  /**
+   * A name chosen by the fast name-only pre-pass (see `name-candidates.ts`).
+   * Set by the service just before the main prompt is built; never by callers.
+   */
+  nameSuggestion?: string;
 }
 
 /** A transient, reviewable result produced before save. */

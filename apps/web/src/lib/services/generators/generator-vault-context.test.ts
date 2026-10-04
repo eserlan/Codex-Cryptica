@@ -286,6 +286,172 @@ describe("buildVaultContext (T042/T047)", () => {
     expect(ctx.existingTitles).not.toContain("Great Library");
   });
 
+  it("detects overused name patterns across every same-type title, not just the capped ban list", () => {
+    const allEntities: Record<string, Entity> = {};
+    // 60 names: more than the 50-title ban-list cap. The shared "Darvold"
+    // family only appears past the cap, so the ban list alone would miss it.
+    for (let i = 0; i < 54; i++) {
+      allEntities[`f${i}`] = entity({
+        id: `f${i}`,
+        title: `Zq${String.fromCharCode(97 + (i % 26))}${i}x`,
+        type: "character",
+      });
+    }
+    for (let i = 0; i < 6; i++) {
+      allEntities[`d${i}`] = entity({
+        id: `d${i}`,
+        title: `Darvold ${i}`,
+        type: "character",
+      });
+    }
+    const ctx = buildVaultContext({
+      themeId: "workspace",
+      categoryLabels: categories,
+      allEntities,
+      targetEntityType: "character",
+    });
+    expect(ctx.existingTitles).toHaveLength(50);
+    expect(ctx.existingTitles).not.toContain("Darvold 5");
+    expect(ctx.overusedNamePatterns?.words).toContain("darvold");
+  });
+
+  it("ignores other entity types when detecting overused name patterns", () => {
+    const allEntities: Record<string, Entity> = {
+      a: entity({ id: "a", title: "Mira", type: "character" }),
+    };
+    for (let i = 0; i < 4; i++) {
+      allEntities[`l${i}`] = entity({
+        id: `l${i}`,
+        title: `Darvold ${i}`,
+        type: "location",
+      });
+    }
+    const ctx = buildVaultContext({
+      themeId: "workspace",
+      categoryLabels: categories,
+      allEntities,
+      targetEntityType: "character",
+    });
+    expect(ctx.overusedNamePatterns?.words ?? []).not.toContain("darvold");
+  });
+
+  it("samples example names from the same type for invented-name types only", () => {
+    const allEntities: Record<string, Entity> = {};
+    for (let i = 0; i < 20; i++) {
+      allEntities[`c${i}`] = entity({
+        id: `c${i}`,
+        title: `Aranyvér${i}`,
+        type: "character",
+      });
+      allEntities[`e${i}`] = entity({
+        id: `e${i}`,
+        title: `Siege ${i}`,
+        type: "event",
+      });
+    }
+    const characters = buildVaultContext({
+      themeId: "workspace",
+      categoryLabels: categories,
+      allEntities,
+      targetEntityType: "character",
+    });
+    expect(characters.nameExamples).toHaveLength(10);
+    expect(
+      characters.nameExamples?.every((n) => n.startsWith("Aranyvér")),
+    ).toBe(true);
+
+    const events = buildVaultContext({
+      themeId: "workspace",
+      categoryLabels: categories,
+      allEntities,
+      targetEntityType: "event",
+    });
+    expect(events.nameExamples).toEqual([]);
+  });
+
+  it("skips opening/ending detection for descriptive types but keeps repeated words", () => {
+    const allEntities: Record<string, Entity> = {};
+    for (let i = 0; i < 5; i++) {
+      allEntities[`e${i}`] = entity({
+        id: `e${i}`,
+        title: `Siege of Zorvash${i}`,
+        type: "event",
+      });
+    }
+    const ctx = buildVaultContext({
+      themeId: "workspace",
+      categoryLabels: categories,
+      allEntities,
+      targetEntityType: "event",
+    });
+    expect(ctx.overusedNamePatterns?.words).toContain("siege");
+    expect(ctx.overusedNamePatterns?.prefixes).toEqual([]);
+    expect(ctx.overusedNamePatterns?.suffixes).toEqual([]);
+  });
+
+  it("carries the culture's recorded naming conventions and its own name examples", () => {
+    const note = entity({
+      id: "n",
+      title: "Clan Leadership of the Stormber",
+      type: "note",
+      content:
+        "Drawing inspiration from the Magyar people, leaders carry old titles.",
+    });
+    const allEntities: Record<string, Entity> = { n: note };
+    for (const [i, name] of ["Béla", "Eszter", "Csilla", "Dávid"].entries()) {
+      allEntities[`c${i}`] = entity({
+        id: `c${i}`,
+        title: name,
+        type: "character",
+        labels: ["Stormberi"],
+      });
+    }
+    allEntities.o = entity({
+      id: "o",
+      title: "Thorin Ashmark",
+      type: "character",
+    });
+    const ctx = buildVaultContext({
+      themeId: "workspace",
+      categoryLabels: categories,
+      allEntities,
+      targetEntityType: "character",
+      cultureNaming: {
+        culture: "Stormber",
+        examples: ["Béla", "Eszter", "Csilla", "Dávid"],
+        docIds: ["n"],
+      },
+    });
+    expect(ctx.cultureNaming?.culture).toBe("Stormber");
+    expect(ctx.cultureNaming?.guidance.join(" ")).toContain("Magyar");
+    expect(ctx.nameExamples?.sort()).toEqual([
+      "Béla",
+      "Csilla",
+      "Dávid",
+      "Eszter",
+    ]);
+  });
+
+  it("keeps vault-wide name examples when the culture has too few members", () => {
+    const allEntities: Record<string, Entity> = {};
+    for (let i = 0; i < 12; i++) {
+      allEntities[`c${i}`] = entity({
+        id: `c${i}`,
+        title: `Name${i}`,
+        type: "character",
+      });
+    }
+    const ctx = buildVaultContext({
+      themeId: "workspace",
+      categoryLabels: categories,
+      allEntities,
+      targetEntityType: "character",
+      cultureNaming: { culture: "Stormber", examples: [], docIds: [] },
+    });
+    expect(ctx.nameExamples).toHaveLength(10);
+    expect(ctx.cultureNaming).toBeUndefined();
+  });
+
   it("selects neighbors from connectedIds (graph) when provided", () => {
     const src = entity({ id: "src", title: "Hero", type: "character" });
     const connected = entity({ id: "c1", title: "Ally", type: "faction" });

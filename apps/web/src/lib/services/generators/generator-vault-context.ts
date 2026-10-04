@@ -2,8 +2,16 @@ import type {
   GeneratorVaultContext,
   VaultContextEntityExcerpt,
 } from "generator-engine";
-import { BANNED_NAMES } from "generator-engine";
+import {
+  BANNED_NAMES,
+  findOverusedNamePatterns,
+  sampleNameExamples,
+} from "generator-engine";
 import type { Entity } from "schema";
+import {
+  buildCultureGuidance,
+  type CultureNamingSources,
+} from "./generator-culture-naming";
 
 /** Maximum number of neighboring entities included in the context packet. */
 const MAX_NEIGHBORS = 5;
@@ -19,6 +27,14 @@ const MAX_EXCERPT_CHARS = 300;
 const MAX_SOURCE_CHARS = 1500;
 /** Cap the selector list so unusually large vaults remain responsive. */
 const MAX_LANGUAGE_CHOICES = 50;
+/** Vault category ids whose titles are invented names rather than descriptions. */
+const NAME_LIKE_TYPES = new Set([
+  "character",
+  "location",
+  "faction",
+  "creature",
+  "item",
+]);
 /** Vault category id for events (included as grounding for any new entity). */
 const EVENT_TYPE = "event";
 /** Vault category id for notes (lowest-priority grounding). */
@@ -153,6 +169,11 @@ function entityToExcerpt(
 }
 
 export interface BuildVaultContextOptions {
+  /**
+   * The culture the new entity belongs to, from `resolveCultureNaming`. Its
+   * `docIds` must already have their content loaded.
+   */
+  cultureNaming?: CultureNamingSources;
   themeId: string;
   themeName?: string;
   /** Current in-world campaign date/year, when the vault's calendar sets one. */
@@ -248,6 +269,31 @@ export function suggestPrimaryLanguageId(
 }
 
 /**
+ * A recognised culture swaps the vault-wide name examples for its own members'
+ * names, and contributes the naming conventions its notes record.
+ */
+function resolveCultureContext(
+  sources: CultureNamingSources | undefined,
+  allEntities: Record<string, Entity>,
+  vaultWideExamples: string[],
+): Pick<GeneratorVaultContext, "nameExamples" | "cultureNaming"> {
+  if (!sources) return { nameExamples: vaultWideExamples };
+  const guidance = buildCultureGuidance(
+    allEntities,
+    sources.docIds,
+    sources.culture,
+  );
+  return {
+    nameExamples: sources.examples.length
+      ? sources.examples
+      : vaultWideExamples,
+    cultureNaming: guidance.length
+      ? { culture: sources.culture, guidance }
+      : undefined,
+  };
+}
+
+/**
  * Builds a bounded {@link GeneratorVaultContext} packet from live vault state.
  * Caps neighbors at {@link MAX_NEIGHBORS} and excerpts to {@link MAX_EXCERPT_CHARS}
  * to avoid sending full vault contents to the generator.
@@ -279,13 +325,28 @@ export function buildVaultContext(
   // ⚡ Bolt Optimization: Use imperative loop with early exit to avoid intermediate
   // arrays from Object.values().filter().map().slice()
   const existingTitles: string[] = [];
+  // Pattern detection needs every same-type title (the ban list above is
+  // capped), so collect them in the same pass.
+  const patternTitles: string[] = [];
   for (const id in allEntities) {
-    if (existingTitles.length >= MAX_TITLES) break;
     if (!Object.hasOwn(allEntities, id)) continue;
     const e = allEntities[id];
     if (targetEntityType && e.type !== targetEntityType) continue;
-    if (e.title) existingTitles.push(e.title);
+    if (!e.title) continue;
+    patternTitles.push(e.title);
+    if (existingTitles.length < MAX_TITLES) existingTitles.push(e.title);
   }
+  // Invented-name types get openings/endings and example names; descriptive
+  // types (events, notes…) share affixes by chance, so only repeated words count.
+  const nameLike = !!targetEntityType && NAME_LIKE_TYPES.has(targetEntityType);
+  const overusedNamePatterns = findOverusedNamePatterns(patternTitles, {
+    affixes: nameLike,
+  });
+  const culture = resolveCultureContext(
+    opts.cultureNaming,
+    allEntities,
+    nameLike ? sampleNameExamples(patternTitles) : [],
+  );
 
   // Neighbors: first-degree graph connections when available, otherwise
   // same-type entities as a fallback for vaults without connection data.
@@ -407,6 +468,9 @@ export function buildVaultContext(
     neighbors,
     worldSample,
     existingTitles,
+    overusedNamePatterns,
+    nameExamples: culture.nameExamples,
+    cultureNaming: culture.cultureNaming,
     bannedNames: [...BANNED_NAMES],
     labelSuggestions,
     applyTemplate,

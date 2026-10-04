@@ -12,6 +12,7 @@
     latestTemporalYear,
     suggestPrimaryLanguageId,
   } from "$lib/services/generators/generator-vault-context";
+  import { resolveCultureNaming } from "$lib/services/generators/generator-culture-naming";
   import {
     CampaignGeneratorService,
     composeDraftVaultFields,
@@ -329,6 +330,23 @@
           ? `${presentYear}${cal.epochLabel ? ` ${cal.epochLabel}` : ""}`
           : undefined;
 
+      // Look up the naming conventions the vault records for the entity's
+      // culture (labels pick the culture; only its few naming notes are loaded).
+      const cultureNaming = resolveCultureNaming({
+        allEntities: vault.entities,
+        sourceEntity,
+        connectedIds: sourceConnectedIds,
+        instructions: req.instructions,
+        targetEntityType,
+      });
+      if (cultureNaming) {
+        await Promise.all(
+          cultureNaming.docIds.map((id) =>
+            vault.loadEntityContent(id).catch(() => undefined),
+          ),
+        );
+      }
+
       const vaultContext = buildVaultContext({
         themeId: themeStore.worldThemeId ?? "workspace",
         themeName: themeStore.activeTheme?.name,
@@ -345,6 +363,7 @@
         applyTemplate: !!templateOutline,
         relevantIds,
         primaryLanguageId: req.primaryLanguageId,
+        cultureNaming,
       });
       // When the user gives no instructions, fall back to the category's
       // default brief so the model always has direction.

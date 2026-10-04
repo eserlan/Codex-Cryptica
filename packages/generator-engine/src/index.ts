@@ -35,7 +35,13 @@ export {
   GENERATOR_ENTITY_TYPE,
   FALLBACK_CATEGORY,
 } from "./campaign-generator-registry";
-export { isTitleBanned, bannedNamesInstruction } from "./naming-policy";
+export {
+  isTitleBanned,
+  bannedNamesInstruction,
+  findOverusedNamePatterns,
+  sampleNameExamples,
+} from "./naming-policy";
+export type { OverusedNamePatterns } from "./naming-policy";
 export {
   adaptNPC,
   adaptFaction,
