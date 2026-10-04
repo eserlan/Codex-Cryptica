@@ -74,7 +74,7 @@
   <div
     role="dialog"
     aria-modal="false"
-    aria-label="Help assistant"
+    aria-label="Cif, the Codex guide"
     tabindex="-1"
     data-testid="help-assistant-panel"
     class="fixed bottom-[calc(7.25rem_+_env(safe-area-inset-bottom,0px))] left-3 z-[95] flex max-h-[min(36rem,calc(100dvh_-_11rem_-_env(safe-area-inset-bottom,0px)))] w-[min(24rem,calc(100vw-1.5rem))] flex-col overflow-hidden rounded-lg border border-chrome-border bg-chrome-surface shadow-xl md:bottom-16 md:left-[4.5rem] md:max-h-[min(36rem,calc(100dvh-7rem))]"
@@ -110,7 +110,7 @@
         <button
           type="button"
           onclick={onClose}
-          aria-label="Close"
+          aria-label="Close Cif"
           class="touch-target rounded p-1 text-chrome-muted hover:text-chrome-text focus-visible:outline-2 focus-visible:outline-chrome-accent"
         >
           <span aria-hidden="true" class="icon-[lucide--x] h-4 w-4"></span>

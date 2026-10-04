@@ -207,7 +207,7 @@ As a privacy-conscious user, I can be confident that asking for help shares only
 ## Assumptions
 
 - This is a spike behind a feature flag, off by default and limited to users with AI already enabled (see Clarifications); it is not announced in the changelog.
-- The assistant's name is provisional for the spike. Final naming, contextual quick prompts, and the proactive-help setting are design questions the spike reports on rather than settles.
+- The assistant's name is **Cif**, decided in #3616 (see Decisions below). Contextual quick prompts are proposed there, and proactive help is described but deferred.
 - Existing help content in the application is the authoritative starting source; the registry points to it rather than replacing it.
 - The assistant uses the application's existing AI service boundary and follows the existing rules about AI availability, including that AI features fall back gracefully when AI is unavailable or unconfigured.
 - Answers are in English for the spike.
@@ -215,6 +215,75 @@ As a privacy-conscious user, I can be confident that asking for help shares only
 - The five proof-of-concept areas are Entity Connections, Graph, Session Hub, Tables, and one generator workflow chosen during planning.
 - Storage, retrieval, embedding, ranking, service contract, cost, and deployment design questions raised in the issue are resolved in the planning phase and recorded in the spike findings.
 - Deferred to later specs: proactive suggestions, automated knowledge publishing on each release, broad feature coverage, and any vault-mutating assistant action.
+
+## Decisions: name, quick prompts and proactive help (#3616)
+
+| Decision                       | Status                                              |
+| ------------------------------ | --------------------------------------------------- |
+| Name: **Cif**, the Codex guide | **Decided.** In the panel and copy.                 |
+| Quick prompts                  | **Proposed**, not built. Needs maintainer approval. |
+| Proactive help and its setting | **Described**, deferred, not built.                 |
+
+### Name
+
+The assistant is called **Cif**, short for "cipher": it helps you read the app, and the name suits a product about codes and hidden meaning. It is short enough for a button tooltip and a heading.
+
+- **Always with its descriptor where there is room.** The panel header reads "Cif" with "Codex guide" beside it, and the dialog is labelled "Cif, the Codex guide", so what it does is plain to someone who has never heard the name.
+- **A name, not a character.** No avatar, no greeting or small talk, no personality. The first person is kept to short status lines ("I couldn't get an answer just now"). The Oracle already exists as the creative, character-like helper; Cif must not be mistaken for something that knows your world or can change it. The panel says so: "Cif ... never changes anything in your vault."
+- **Cif versus the Oracle, in one line each:** Cif explains how to use Codex Cryptica; the Oracle helps with ideas and content for your world. Help questions about the Oracle are answered by Cif.
+- **Plain-language and accessibility rules.**
+  - The accessible name of a control is the same as its tooltip: "Ask Cif" / "Close Cif" for the Activity Bar button, "Close Cif" for the panel, "Cif, the Codex guide" for the dialog, "Ask Cif a question about using Codex Cryptica" for the input.
+  - Screen readers hear who is speaking: each message is prefixed (visually hidden) with "You:" or "Cif:", because the difference is otherwise only colour and position.
+  - Nothing a person sees or hears says "help assistant". A test guards the panel components and the failure messages. Internal names (the `help-assistant` folders, test ids and the feature flag) keep the old name; they are not user-facing.
+
+### Quick prompts (proposed)
+
+**What.** A few tap-to-ask questions in an empty conversation, chosen by the screen the user is on. They remove the blank-page problem, which matters most on a phone where typing is slow.
+
+**Rules.**
+
+1. At most three, shown only while the conversation is empty, under the intro text. They disappear after the first question and return after "Start over".
+2. Tapping one asks it straight away, through the same path as typing: same length limit, same screen description, same refusal when help does not cover it. It is never sent without a tap.
+3. Fixed text written by us. Never built from the vault: no entity names, no recent activity. This keeps the privacy rules (FR-008) trivially true.
+4. Each prompt is a real evaluation question that already finds its guide on that screen, so a prompt never leads to "I don't know". A screen with no verified prompts shows none.
+5. Phrased the way a person would ask, in first person, plain language, under about 60 characters.
+6. Each is a button of at least 44px, in a group labelled "Questions you can ask Cif", reachable by keyboard in the normal order, with no rotation or randomisation.
+
+**Proposed prompts.** Every one below retrieves a correct source in the top three on its screen in the current evaluation.
+
+| Screen                  | Prompts                                                                                                                                   |
+| ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| Entity, Connections tab | Where do I add a connection? / How do I give a connection a label like rival? / How do I generate entries related to this one?            |
+| Entity, editing         | How do I save my changes? / How do I cancel what I just typed?                                                                            |
+| Graph                   | What is the graph for? / How do I find an entry in the graph? / How do I explore how my entries relate on the graph?                      |
+| Canvas                  | How do I put a character on the canvas? / How do I name the line between two cards? / Can I make more than one canvas?                    |
+| Map                     | How do I drop a pin on the map? / How do I hide parts of the map from my players? / How do I measure distance on the map?                 |
+| Generators              | How do I generate a faction? / Can I generate a city and keep it in my vault? / Should I use a generator or the Oracle to make a new NPC? |
+| Random tables           | How do I roll on a random table? / What is the difference between a table and a deck?                                                     |
+| Import                  | What kinds of files can I import? / Will importing overwrite entries I already have? / How do I bring in my old notes?                    |
+| Settings                | Where is the Export Backup button? / How do I restore a backup? / How do I change the theme?                                              |
+| Anywhere else           | None until prompts are verified for that screen.                                                                                          |
+
+**How it would be built, and kept honest.** A static list in `packages/help-engine`, keyed by screen area plus tab or mode, with the expected source for each prompt. A test runs every prompt on its screen and fails if it no longer retrieves its source or no longer clears the relevance floor, so a prompt cannot go stale when help changes. The panel renders them with the existing ask path.
+
+**Not proposed.** Prompts that depend on the vault (privacy); prompts for AI-only features, which do not exist here; a "trending" or personalised list (needs tracking the help feature deliberately does not have).
+
+### Proactive help (described, deferred)
+
+**What it would be.** Today Cif never speaks first. Proactive help means Cif can offer a short, dismissible tip when someone arrives somewhere they have not been before, for example the first visit to the canvas. It never answers unasked, never changes the vault, and never interrupts typing.
+
+**The setting.** One switch, **Show tips from Cif**, off by default, in Settings next to the AI controls. It is forced off, and the switch is hidden, whenever AI is disabled or the help feature is unavailable. The choice is stored on the device like other interface preferences; it is not part of the vault and is not synced.
+
+**How a tip would work.**
+
+- It is the screen's own quick prompt (above) shown as a small "Cif has a tip" chip beside the Cif button, never a pop-up over the work. Tapping it opens Cif with that question already asked. Showing the chip costs no AI call and sends nothing; only the tap does.
+- At most one tip per screen per session, and none at all while a dialog is open, the user is typing, onboarding or guided mode is running, or the conversation is already open.
+- Dismissing the chip twice on a screen silences that screen for good, until the setting is turned off and on again.
+- It is announced politely once, never moves focus, and respects reduced motion.
+
+**What it must not do.** Watch what people type or click, infer that someone is "stuck" from behaviour, or report any usage. "Stuck" detection would need exactly that, so it is out. The only trigger is arriving on a screen that has a verified prompt and that the user has not been to before on this device.
+
+**Why deferred.** It needs the quick prompts first, a decision on whether first-visit-only is useful enough, and its own spec: it is the first time Cif would initiate anything. Nothing for it is built or registered.
 
 ## Dependencies
 

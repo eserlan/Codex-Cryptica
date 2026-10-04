@@ -17,7 +17,7 @@
   bind:this={element}
   type="button"
   onclick={onToggle}
-  aria-label={open ? "Close help assistant" : "Open help assistant"}
+  aria-label={open ? "Close Cif" : "Ask Cif"}
   aria-expanded={open}
   title={open ? "Close Cif" : "Ask Cif"}
   data-testid="help-assistant-button"

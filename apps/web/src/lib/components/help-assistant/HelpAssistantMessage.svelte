@@ -30,6 +30,7 @@
   <p
     class="ml-8 self-end rounded bg-chrome-accent/15 px-3 py-2 text-body-ui text-chrome-text"
   >
+    <span class="sr-only">You:</span>
     {message.text}
   </p>
 {:else}
@@ -37,6 +38,7 @@
     class="mr-4 flex flex-col gap-2 rounded border border-chrome-border/60 bg-chrome-surface/60 px-3 py-2"
     data-testid="help-assistant-answer"
   >
+    <span class="sr-only">Cif:</span>
     <div
       class="text-body-ui leading-relaxed text-chrome-text [&_p]:my-2 [&_p:first-child]:mt-0 [&_p:last-child]:mb-0 [&_strong]:font-bold [&_ul]:my-3 [&_ol]:my-3 [&_ul]:space-y-2 [&_ol]:space-y-2 [&_li::marker]:text-chrome-accent [&_ul]:list-disc [&_ol]:list-decimal [&_ul]:pl-5 [&_ol]:pl-5 [&_li]:pl-1 [&_a]:text-chrome-accent [&_a]:underline [&_code]:rounded [&_code]:bg-chrome-accent/10 [&_code]:px-1 [&_pre]:overflow-x-auto [&_blockquote]:border-l-2 [&_blockquote]:border-chrome-border [&_blockquote]:pl-2 [&_h1]:font-bold [&_h2]:font-bold [&_h3]:font-bold"
     >
