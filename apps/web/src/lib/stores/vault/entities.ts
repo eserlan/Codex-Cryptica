@@ -523,6 +523,55 @@ export function bulkRemoveLabel(
   return { entities: newEntities, modifiedIds };
 }
 
+/**
+ * Renames a label on every entity that has it. Labels are compared without
+ * regard to case and stored trimmed and lower-cased, like every other label
+ * operation. If an entity already has the new label, the old one is simply
+ * dropped, so renaming into an existing label merges them without a duplicate.
+ */
+export function renameLabel(
+  entities: Record<string, LocalEntity>,
+  from: string,
+  to: string,
+): { entities: Record<string, LocalEntity>; modifiedIds: string[] } {
+  const fromKey = from.trim().toLowerCase();
+  const toKey = to.trim().toLowerCase();
+  if (!fromKey || !toKey || fromKey === toKey) {
+    return { entities, modifiedIds: [] };
+  }
+
+  const newEntities = { ...entities };
+  const modifiedIds: string[] = [];
+
+  for (const [id, entity] of Object.entries(entities)) {
+    const labels = entity.labels || [];
+    if (!labels.some((l) => l.toLowerCase() === fromKey)) continue;
+
+    const seen = new Set<string>();
+    const renamed = labels
+      .map((l) => (l.toLowerCase() === fromKey ? toKey : l))
+      .filter((l) => {
+        const key = l.toLowerCase();
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+
+    newEntities[id] = {
+      ...entity,
+      labels: renamed,
+      updatedAt: systemClock.now(),
+      modifiedAt: systemClock.now(),
+    } as LocalEntity;
+    modifiedIds.push(id);
+  }
+
+  return {
+    entities: modifiedIds.length > 0 ? newEntities : entities,
+    modifiedIds,
+  };
+}
+
 export function batchCreateEntities(
   entities: Record<string, LocalEntity>,
   newEntitiesList: BatchCreateInput[],

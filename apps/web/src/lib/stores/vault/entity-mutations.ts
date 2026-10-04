@@ -822,31 +822,42 @@ export class EntityMutationService {
     return false;
   }
 
+  /**
+   * Saves the entities a label change touched and announces them once. Returns
+   * how many changed.
+   */
+  private async commitLabelChanges(
+    entities: Record<string, LocalEntity>,
+    modifiedIds: string[],
+  ): Promise<number> {
+    if (modifiedIds.length === 0) return 0;
+
+    this.entities = entities;
+    const changed: LocalEntity[] = [];
+    const savePromises: Promise<void>[] = [];
+    for (const id of modifiedIds) {
+      const entity = entities[id];
+      if (entity) {
+        savePromises.push(this.deps.persistence.scheduleSave(entity));
+        changed.push(entity);
+      }
+    }
+    await Promise.all(savePromises);
+    vaultEventBus.emit({
+      type: "BATCH_UPDATED",
+      vaultId: this.deps.activeVaultId() || "unknown",
+      entities: changed,
+    });
+    return modifiedIds.length;
+  }
+
   async bulkAddLabel(ids: string[], label: string): Promise<number> {
     const { entities, modifiedIds } = vaultEntities.bulkAddLabel(
       this.entities,
       ids,
       label,
     );
-    if (modifiedIds.length > 0) {
-      this.entities = entities;
-      const changed: LocalEntity[] = [];
-      const savePromises: Promise<void>[] = [];
-      for (const id of modifiedIds) {
-        const entity = entities[id];
-        if (entity) {
-          savePromises.push(this.deps.persistence.scheduleSave(entity));
-          changed.push(entity);
-        }
-      }
-      await Promise.all(savePromises);
-      vaultEventBus.emit({
-        type: "BATCH_UPDATED",
-        vaultId: this.deps.activeVaultId() || "unknown",
-        entities: changed,
-      });
-    }
-    return modifiedIds.length;
+    return this.commitLabelChanges(entities, modifiedIds);
   }
 
   async bulkRemoveLabel(ids: string[], label: string): Promise<number> {
@@ -855,25 +866,27 @@ export class EntityMutationService {
       ids,
       label,
     );
-    if (modifiedIds.length > 0) {
-      this.entities = entities;
-      const changed: LocalEntity[] = [];
-      const savePromises: Promise<void>[] = [];
-      for (const id of modifiedIds) {
-        const entity = entities[id];
-        if (entity) {
-          savePromises.push(this.deps.persistence.scheduleSave(entity));
-          changed.push(entity);
-        }
-      }
-      await Promise.all(savePromises);
-      vaultEventBus.emit({
-        type: "BATCH_UPDATED",
-        vaultId: this.deps.activeVaultId() || "unknown",
-        entities: changed,
-      });
-    }
-    return modifiedIds.length;
+    return this.commitLabelChanges(entities, modifiedIds);
+  }
+
+  /** Renames a label on every entity that has it. Returns how many changed. */
+  async renameLabel(from: string, to: string): Promise<number> {
+    const { entities, modifiedIds } = vaultEntities.renameLabel(
+      this.entities,
+      from,
+      to,
+    );
+    return this.commitLabelChanges(entities, modifiedIds);
+  }
+
+  /** Removes a label from every entity that has it. Entities stay. */
+  async deleteLabel(label: string): Promise<number> {
+    const { entities, modifiedIds } = vaultEntities.bulkRemoveLabel(
+      this.entities,
+      Object.keys(this.entities),
+      label,
+    );
+    return this.commitLabelChanges(entities, modifiedIds);
   }
 
   async batchCreateEntities(newEntitiesList: BatchCreateInput[]) {
