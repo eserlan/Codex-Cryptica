@@ -140,7 +140,7 @@ describe("pickNameCandidate", () => {
 
   it("rejects banned, existing and pattern-matching names, then picks from the rest", () => {
     const picked = pickNameCandidate(
-      ["Vane-Smithe", "mira", "Kaelmoor", "Yusra"],
+      ["Vane-Smithe", "mira", "Mira Dawnward", "Kaelmoor", "Yusra"],
       {
         ...ctx,
         patterns: { words: [], prefixes: ["kae"], suffixes: [] },

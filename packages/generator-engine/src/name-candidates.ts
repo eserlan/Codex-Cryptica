@@ -120,7 +120,7 @@ export function pickNameCandidate(
   const existing = new Set(filters.existing.map((t) => t.toLowerCase().trim()));
   const usable = candidates.filter(
     (name) =>
-      !isTitleBanned(name, filters.banned) &&
+      !isTitleBanned(name, [...filters.banned, ...filters.existing]) &&
       !existing.has(name.toLowerCase()) &&
       !matchesOverusedPattern(name, filters.patterns),
   );
