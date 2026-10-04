@@ -1,5 +1,6 @@
 import {
   MAX_QUESTION_CHARS,
+  quickPromptsFor,
   validateAction,
   type GuidanceAction,
   type HelpAnswer,
@@ -53,6 +54,15 @@ export class HelpAssistantStore {
   offer = $state.raw<GuidanceAction | null>(null);
   /** A plain-language note about the last attempt, such as a length limit. */
   notice = $state<string | null>(null);
+
+  /**
+   * Tap-to-ask questions for the screen the user is on, shown only while the
+   * conversation is empty and nothing is pending.
+   */
+  get quickPrompts(): readonly string[] {
+    if (this.messages.length > 0 || this.isPending) return [];
+    return quickPromptsFor(this.deps.context.current);
+  }
 
   private controller: AbortController | null = null;
   private run = 0;

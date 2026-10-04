@@ -261,3 +261,73 @@ describe("HelpAssistantStore — privacy", () => {
     expect(idb).not.toHaveBeenCalled();
   });
 });
+
+describe("HelpAssistantStore quick prompts", () => {
+  it("offers the prompts for the screen while the conversation is empty", () => {
+    const { store } = setup();
+
+    expect(store.quickPrompts).toEqual([
+      "Where do I add a connection?",
+      "How do I give a connection a label like rival?",
+      "How do I generate entries related to this one?",
+    ]);
+  });
+
+  it("follows the screen the user moves to", () => {
+    const { store, moveTo } = setup();
+    moveTo(
+      screen({ area: "graph", tab: undefined, entityKind: undefined }),
+      "sig-2",
+    );
+
+    expect(store.quickPrompts[0]).toBe("What is the graph for?");
+  });
+
+  it("offers none on a screen without verified prompts", () => {
+    const { store } = setup(
+      undefined,
+      screen({ area: "other", tab: undefined }),
+    );
+
+    expect(store.quickPrompts).toEqual([]);
+  });
+
+  it("stops offering them once a question has been asked", async () => {
+    const { store } = setup();
+
+    await store.ask("How do I connect the faction?");
+
+    expect(store.quickPrompts).toEqual([]);
+  });
+
+  it("stops offering them while an answer is pending", async () => {
+    let release: (value: HelpAskResult) => void = () => {};
+    const { store } = setup(
+      () => new Promise<HelpAskResult>((resolve) => (release = resolve)),
+    );
+
+    const pending = store.ask("How do I connect the faction?");
+    expect(store.quickPrompts).toEqual([]);
+    release({ ok: true, answer: answered() });
+    await pending;
+  });
+
+  it("brings them back after Start over", async () => {
+    const { store } = setup();
+    await store.ask("How do I connect the faction?");
+
+    store.reset();
+
+    expect(store.quickPrompts.length).toBe(3);
+  });
+
+  it("asks a prompt exactly like a typed question, with the same screen description", async () => {
+    const { store, client } = setup();
+
+    await store.ask(store.quickPrompts[0]);
+
+    const sent = client.ask.mock.calls[0][0] as AskInput;
+    expect(sent.question).toBe("Where do I add a connection?");
+    expect((sent.context as { tab?: string }).tab).toBe("connections");
+  });
+});

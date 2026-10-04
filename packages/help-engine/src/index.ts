@@ -5,3 +5,4 @@ export * from "./prompt";
 export * from "./registry";
 export * from "./response";
 export * from "./retrieval";
+export * from "./quick-prompts";

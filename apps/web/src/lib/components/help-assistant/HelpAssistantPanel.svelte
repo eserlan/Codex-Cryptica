@@ -8,6 +8,7 @@
   import HelpActionOffer from "./HelpActionOffer.svelte";
   import HelpAssistantComposer from "./HelpAssistantComposer.svelte";
   import HelpAssistantMessage from "./HelpAssistantMessage.svelte";
+  import HelpQuickPrompts from "./HelpQuickPrompts.svelte";
 
   let {
     assistant,
@@ -22,6 +23,14 @@
     onOpenLibrary: () => void;
     onClose: () => void;
   } = $props();
+
+  // The prompt list disappears once a question is asked, so hand focus to the
+  // question box rather than leaving it on a removed button.
+  async function askQuickPrompt(question: string) {
+    void assistant.ask(question);
+    await tick();
+    document.getElementById("help-assistant-input")?.focus();
+  }
 
   // A small panel is a micro-interaction (150–250ms); none at all when the
   // user asks for reduced motion.
@@ -130,6 +139,10 @@
           Ask Cif how to do something in Codex Cryptica. Cif can also show you
           where a button is, but never changes anything in your vault.
         </p>
+        <HelpQuickPrompts
+          prompts={assistant.quickPrompts}
+          onAsk={askQuickPrompt}
+        />
       {/if}
 
       {#each assistant.messages as message (message.id)}

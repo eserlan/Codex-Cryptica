@@ -180,6 +180,49 @@ describe("HelpAssistantPanel", () => {
     expect(yours.querySelector(".sr-only")?.textContent).toBe("You:");
   });
 
+  it("offers the screen's quick prompts in an empty conversation", async () => {
+    const { assistant } = setup();
+    assistant.open();
+    await waitFor(() => screen.getByRole("dialog"));
+
+    const list = screen.getByRole("list", {
+      name: "Questions you can ask Cif",
+    });
+    expect(list.querySelectorAll("button").length).toBe(3);
+    expect(
+      screen.getByRole("button", { name: "Where do I add a connection?" }),
+    ).toBeTruthy();
+  });
+
+  it("asks a tapped prompt, then replaces the prompts with the conversation and keeps focus in the question box", async () => {
+    const { assistant } = setup();
+    assistant.open();
+    await waitFor(() => screen.getByRole("dialog"));
+
+    await fireEvent.click(
+      screen.getByRole("button", { name: "Where do I add a connection?" }),
+    );
+
+    await waitFor(() => screen.getByText("Open the Status tab and use Add."));
+    expect(screen.queryByTestId("help-quick-prompts")).toBeNull();
+    expect(screen.getByText("Where do I add a connection?")).toBeTruthy();
+    expect(document.activeElement?.id).toBe("help-assistant-input");
+  });
+
+  it("brings the prompts back after Start over", async () => {
+    const { assistant } = setup();
+    assistant.open();
+    await waitFor(() => screen.getByRole("dialog"));
+    await fireEvent.click(
+      screen.getByRole("button", { name: "Where do I add a connection?" }),
+    );
+    await waitFor(() => screen.getByText("Open the Status tab and use Add."));
+
+    await fireEvent.click(screen.getByRole("button", { name: "Start over" }));
+
+    await waitFor(() => screen.getByTestId("help-quick-prompts"));
+  });
+
   it("tells the user plainly what is sent", async () => {
     const { assistant } = setup();
     assistant.open();
