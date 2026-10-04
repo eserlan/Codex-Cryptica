@@ -284,34 +284,28 @@
         />
       </div>
 
-      <div class="grid grid-cols-2 gap-4">
-        <div class="space-y-1">
-          <div class="flex items-center justify-between">
+      <div
+        class="grid gap-4 {(calendarStore.config.eras?.length ?? 0) === 0
+          ? 'grid-cols-2'
+          : 'grid-cols-1 max-w-xs'}"
+      >
+        {#if (calendarStore.config.eras?.length ?? 0) === 0}
+          <div class="space-y-1">
             <label
               class="text-meta font-bold text-theme-muted uppercase font-header"
               for="epoch-label">Default Year Suffix</label
             >
-            {#if (calendarStore.config.eras?.length ?? 0) > 0}
-              <span class="text-nano text-theme-muted/80 font-mono">
-                Fallback
-              </span>
-            {/if}
+            <input
+              id="epoch-label"
+              type="text"
+              placeholder="e.g. AF, AC"
+              value={calendarStore.config.epochLabel || ""}
+              oninput={(e) =>
+                updateConfigField("epochLabel", e.currentTarget.value)}
+              class="w-full bg-theme-surface border border-theme-border rounded px-3 py-1.5 text-xs text-theme-text font-mono focus:border-theme-primary outline-none"
+            />
           </div>
-          <input
-            id="epoch-label"
-            type="text"
-            placeholder="e.g. AF, AC"
-            value={calendarStore.config.epochLabel || ""}
-            oninput={(e) =>
-              updateConfigField("epochLabel", e.currentTarget.value)}
-            class="w-full bg-theme-surface border border-theme-border rounded px-3 py-1.5 text-xs text-theme-text font-mono focus:border-theme-primary outline-none"
-          />
-          {#if (calendarStore.config.eras?.length ?? 0) > 0}
-            <p class="text-nano text-theme-muted leading-tight">
-              Used as fallback for dates outside configured eras.
-            </p>
-          {/if}
-        </div>
+        {/if}
         <div class="space-y-1">
           <label
             class="text-meta font-bold text-theme-muted uppercase font-header"

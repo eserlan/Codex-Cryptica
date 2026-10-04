@@ -93,4 +93,30 @@ describe("CalendarEraSettings", () => {
     expect(calendarStore.setConfig).toHaveBeenCalled();
     expect(calendarStore.config.eras?.length).toBe(0);
   });
+
+  it("renders Fallback Year Suffix row and updates epochLabel when custom eras exist", async () => {
+    calendarStore.config = {
+      ...DEFAULT_CALENDAR,
+      epochLabel: "AF",
+      eras: [
+        {
+          id: "era-1",
+          name: "Imperial Age",
+          label: "IA",
+          startYear: 0,
+          yearAtStart: 1,
+          direction: "forward",
+        },
+      ],
+    };
+
+    render(CalendarEraSettings);
+
+    const fallbackInput = screen.getByLabelText(/Fallback Year Suffix/i);
+    expect(fallbackInput).toBeDefined();
+
+    await fireEvent.input(fallbackInput, { target: { value: "BCE" } });
+    expect(calendarStore.setConfig).toHaveBeenCalled();
+    expect(calendarStore.config.epochLabel).toBe("BCE");
+  });
 });
