@@ -21,6 +21,8 @@ export interface HelpContextSources {
   /** Read-only overlay state, without any selected IDs or content. */
   getOpenHelpArea?: () => "session-journal" | "entity-reports" | null;
   journalAvailable?: () => boolean;
+  /** Whether the sidebar panel host is visible. */
+  isSidebarOpen?: () => boolean;
   /** The sidebar panel that is open beside the screen, if any. */
   getActiveSidebarTool?: () => "oracle" | "explorer" | "shelf" | "none";
 }
@@ -59,7 +61,9 @@ function flagsFor(
   if (sources.generatorsAvailable()) flags.push("generators");
   if (surface?.canAddConnection()) flags.push("connections-editable");
   // A side panel adds to the screen description instead of replacing the area.
-  const panel = sources.getActiveSidebarTool?.();
+  const panel = sources.isSidebarOpen?.()
+    ? sources.getActiveSidebarTool?.()
+    : "none";
   if (panel === "explorer") flags.push("explorer-open");
   if (panel === "shelf") flags.push("shelf-open");
   return flags;

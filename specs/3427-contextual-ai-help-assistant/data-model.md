@@ -30,20 +30,21 @@ Validation: `.strict()` (unknown keys rejected, not silently accepted). Excluded
 
 ## FeatureEntry (Registry)
 
-| Field       | Type                      | Notes                                                                                |
-| ----------- | ------------------------- | ------------------------------------------------------------------------------------ |
-| `id`        | string                    | Stable kebab-case, unique (e.g. `entity-connections`)                                |
-| `title`     | string                    | Plain-language name                                                                  |
-| `summary`   | string                    | What it is for, 1–2 sentences                                                        |
-| `channel`   | `production` \| `staging` | Staging-only entries are excluded from production bundles                            |
-| `routes`    | string[]                  | Route templates where it lives                                                       |
-| `areas`     | area[]                    | Matches `HelpContextV1.area`                                                         |
-| `kinds`     | string[] \| `"any"`       | Entity kinds it applies to (labels, not tags)                                        |
-| `tabs`      | string[]                  | Tabs where it applies                                                                |
-| `workflows` | Workflow[]                | Named tasks, see below                                                               |
-| `helpIds`   | string[]                  | IDs of existing `content/help/*.md` articles it draws on; must exist                 |
-| `related`   | string[]                  | Feature IDs; must exist                                                              |
-| `actions`   | ActionRef[]               | Safe actions offerable for this feature; targets must exist in the control catalogue |
+| Field       | Type                      | Notes                                                                                 |
+| ----------- | ------------------------- | ------------------------------------------------------------------------------------- |
+| `id`        | string                    | Stable kebab-case, unique (e.g. `entity-connections`)                                 |
+| `title`     | string                    | Plain-language name                                                                   |
+| `summary`   | string                    | What it is for, 1–2 sentences                                                         |
+| `channel`   | `production` \| `staging` | Staging-only entries are excluded from production bundles                             |
+| `routes`    | string[]                  | Route templates where it lives                                                        |
+| `areas`     | area[]                    | Matches `HelpContextV1.area`                                                          |
+| `kinds`     | string[] \| `"any"`       | Entity kinds it applies to (labels, not tags)                                         |
+| `tabs`      | string[]                  | Tabs where it applies                                                                 |
+| `whenFlag`  | PanelFlag (optional)      | Panel features match only while their `explorer-open` or `shelf-open` flag is present |
+| `workflows` | Workflow[]                | Named tasks, see below                                                                |
+| `helpIds`   | string[]                  | IDs of existing `content/help/*.md` articles it draws on; must exist                  |
+| `related`   | string[]                  | Feature IDs; must exist                                                               |
+| `actions`   | ActionRef[]               | Safe actions offerable for this feature; targets must exist in the control catalogue  |
 
 **Workflow**: `{ id, title, steps: string[] (short, plain), actionIds: string[] }`.
 

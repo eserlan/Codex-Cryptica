@@ -42,6 +42,7 @@ export const helpContext = new HelpContextStore({
         ? "session-journal"
         : null,
   journalAvailable: () => generatorsAvailable(vault, sessionModeStore),
+  isSidebarOpen: () => layoutUIStore.leftSidebarOpen,
   getActiveSidebarTool: () => layoutUIStore.activeSidebarTool,
 });
 
