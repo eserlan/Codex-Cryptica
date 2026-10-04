@@ -70,6 +70,15 @@ describe("proof-of-concept registry", () => {
         "family-tree",
         "guided-mode",
         "session-prep",
+        "publishing",
+        "lore-oracle",
+        "theme-settings",
+        "schema-settings",
+        "entity-table",
+        "dice-roller",
+        "solo-adventure",
+        "entity-explorer",
+        "entity-shelf",
       ].sort(),
     );
   });

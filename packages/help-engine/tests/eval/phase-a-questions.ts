@@ -263,7 +263,7 @@ export const PHASE_A_CONFUSION: InScopeQuestion[] = [
     "settings",
     "Is exporting a backup the same as publishing my world?",
     ["export-and-backup"],
-    ["publishing"],
+    ["publishing", "registry:publishing"],
   ),
   q(
     "confusion",

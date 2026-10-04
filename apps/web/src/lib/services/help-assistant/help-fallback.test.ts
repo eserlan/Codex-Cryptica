@@ -61,6 +61,20 @@ describe("buildFallback", () => {
     expect(fb.message).toMatch(/offline/i);
   });
 
+  it("names Cif rather than a generic assistant when it cannot answer", () => {
+    expect(fallbackMessage({ kind: "offline" })).toMatch(/Cif/);
+    for (const kind of [
+      "offline",
+      "unauthorised",
+      "rate-limited",
+      "server",
+      "timeout",
+      "invalid-response",
+    ] as const) {
+      expect(fallbackMessage({ kind }), kind).not.toMatch(/help assistant/i);
+    }
+  });
+
   it("uses plain-language wording for each failure kind", () => {
     const kinds = [
       "offline",

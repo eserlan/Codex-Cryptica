@@ -431,6 +431,14 @@ export class EntityStore {
     return this.mutations.bulkRemoveLabel(ids, label);
   }
 
+  async renameLabel(from: string, to: string): Promise<number> {
+    return this.mutations.renameLabel(from, to);
+  }
+
+  async deleteLabel(label: string): Promise<number> {
+    return this.mutations.deleteLabel(label);
+  }
+
   async batchCreateEntities(newEntitiesList: BatchCreateInput[]) {
     return this.mutations.batchCreateEntities(newEntitiesList);
   }

@@ -61,11 +61,13 @@ describe("HelpAssistantHost", () => {
     render(HelpAssistantHost);
     helpAssistant.open();
     const dialog = await waitFor(() =>
-      screen.getByRole("dialog", { name: "Help assistant" }),
+      screen.getByRole("dialog", { name: "Cif, the Codex guide" }),
     );
     expect(dialog.getAttribute("tabindex")).toBe("-1");
     await fireEvent.click(
-      within(screen.getByRole("dialog")).getByRole("button", { name: "Close" }),
+      within(screen.getByRole("dialog")).getByRole("button", {
+        name: "Close Cif",
+      }),
     );
     await waitFor(() => expect(helpAssistant.isOpen).toBe(false));
   });

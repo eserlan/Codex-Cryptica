@@ -1,7 +1,7 @@
 <script lang="ts">
   import { base, resolve } from "$app/paths";
-  import { goto } from "$app/navigation";
   const cleanBase = base === "/" ? "" : base;
+  import { goto } from "$app/navigation";
   import { fade } from "svelte/transition";
   import type { GeneratorOutput } from "$lib/services/seo/generator-engine";
   import type { MarkdownSectionForCopy } from "$lib/components/seo/markdown-sections";
@@ -22,7 +22,7 @@
   import { sessionHubStore } from "$lib/stores/session-hub.svelte";
   import { loreMergeStore } from "$lib/stores/ui/lore-merge.svelte";
   import ProvenanceBadge from "./ProvenanceBadge.svelte";
-  import GeneratorSwitcherMenu from "./GeneratorSwitcherMenu.svelte";
+  import GeneratorIntroPanel from "./GeneratorIntroPanel.svelte";
   import FaqSection from "./FaqSection.svelte";
   import RelatedLinksSection from "./RelatedLinksSection.svelte";
   import SaveToCodexModal from "./SaveToCodexModal.svelte";
@@ -60,7 +60,6 @@
     countRelatedEntities,
   } from "$lib/services/analytics/generator-save-tracking";
   import { registerShellCtaHandler } from "./marketing-shell";
-  import PublicLabelChip from "$lib/components/labels/PublicLabelChip.svelte";
   import {
     clipboardService as defaultClipboardService,
     type ClipboardService,
@@ -884,41 +883,17 @@
       <div
         class="p-6 bg-theme-surface/40 border border-theme-border/60 rounded-2xl shadow-sm"
       >
-        <a
-          href="{cleanBase}{backHref ?? '/generators'}"
-          class="inline-flex items-center gap-1 text-micro font-bold uppercase tracking-widest font-header text-theme-muted hover:text-theme-primary transition-colors mb-3"
-        >
-          <span class="icon-[lucide--arrow-left] w-3 h-3" aria-hidden="true"
-          ></span>
-          {backLabel ?? "All generators"}
-        </a>
-        {#if showGeneratorSwitcher}
-          <GeneratorSwitcherMenu {canonicalPath} {eyebrow} />
-        {/if}
-        <h1
-          class="font-header font-bold text-lg uppercase tracking-wider text-theme-primary mb-4"
-          id="generator-title"
-        >
+        <GeneratorIntroPanel
+          {canonicalPath}
+          {eyebrow}
+          {showGeneratorSwitcher}
           {introTitle}
-        </h1>
-        <p class="text-sm text-theme-text/70 leading-relaxed mb-4">
           {introText}
-        </p>
-        {#if labels.length}
-          <div class="mb-4 flex flex-wrap gap-2">
-            {#each labels as label (label)}
-              <PublicLabelChip {label} size="sm" />
-            {/each}
-          </div>
-        {/if}
-        {#if inputHint}
-          <p
-            class="text-nano text-theme-text/45 uppercase tracking-widest font-header mb-5 flex items-center gap-1.5"
-          >
-            <span class="icon-[lucide--arrow-right] w-3 h-3"></span>
-            {inputHint}
-          </p>
-        {/if}
+          {labels}
+          {inputHint}
+          {backHref}
+          {backLabel}
+        />
 
         {#if !isOnline}
           <div

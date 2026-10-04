@@ -3,8 +3,12 @@
  *
  *   bun run eval                      retrieval quality over the real help articles (offline)
  *   bun run eval -- --live [--url U]  also ask a running Worker, record latency and citations
+ *   bun run eval -- --compare-embeddings [--fresh-holdout] [--report FILE]
+ *   bun run eval -- --compare-embeddings --offline-embeddings
  *
- * The offline part needs no network and no key: it is the part CI enforces.
+ * Lexical evaluation needs no network or key: it is the part CI enforces.
+ * Embedding comparison embeds missing public inputs with Workers AI unless
+ * --offline-embeddings is set; its local cache supports network-free repeats.
  * `--live` needs the Worker running (`bunx wrangler dev`) with a provider key,
  * and is how latency, correctness and cost are measured for the findings.
  */
@@ -24,6 +28,28 @@ const questions = fresh ? FRESH_IN_SCOPE : IN_SCOPE;
 const unrelated = fresh ? FRESH_OUT_OF_SCOPE : OUT_OF_SCOPE;
 
 const bundle = buildRealBundle();
+if (process.argv.includes("--compare-embeddings")) {
+  if (process.argv.includes("--live"))
+    throw new Error(
+      "Embedding comparison and live answer evaluation are separate runs.",
+    );
+  const argument = (flag: string) => {
+    const index = process.argv.indexOf(flag);
+    if (index < 0) return undefined;
+    const value = process.argv[index + 1];
+    if (!value || value.startsWith("--"))
+      throw new Error(`${flag} requires a file path.`);
+    return value;
+  };
+  const { runEmbeddingComparison } = await import("./embedding-comparison");
+  await runEmbeddingComparison(bundle, questions, unrelated, {
+    cachePath: argument("--embedding-cache"),
+    reportPath: argument("--report"),
+    offline: process.argv.includes("--offline-embeddings"),
+    fresh,
+  });
+  process.exit(0);
+}
 const inScope = evaluateInScope(bundle, questions);
 const outOfScope = evaluateOutOfScope(bundle, ofKind(unrelated, "unrelated"));
 

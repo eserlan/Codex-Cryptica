@@ -177,10 +177,12 @@ export const howDoYouRunDndForALargeGroupOfPlayers: AnswerConfigInput = {
     "how-do-i-run-a-successful-session-0",
     "how-much-prep-do-you-need-for-an-rpg-session",
     "how-do-i-balance-rpg-combat-encounters-without-a-tpk",
+    "how-do-i-make-combat-faster-without-making-it-less-exciting",
     "how-do-you-run-a-scene-with-multiple-npcs",
     "can-you-play-a-tabletop-rpg-in-30-minute-sessions",
     "how-do-i-give-specialist-characters-spotlight",
     "how-do-i-run-a-large-battle-when-the-player-characters-are-part-of-an-army",
+    "how-do-i-keep-players-engaged-during-other-players-turns-in-combat",
   ],
   discovery: {
     id: "answer-large-group-dnd",
@@ -192,7 +194,6 @@ export const howDoYouRunDndForALargeGroupOfPlayers: AnswerConfigInput = {
       "is 8 players too many for dnd",
       "how to run dnd for a big group",
       "tips for dming 7 players",
-      "how to speed up dnd combat with many players",
       "how to keep everyone engaged in a large dnd group",
       "how to dm a large group of beginners",
     ],
@@ -213,6 +214,11 @@ export const howDoYouRunDndForALargeGroupOfPlayers: AnswerConfigInput = {
         with: "answer-encounter-balance",
         reason:
           "The encounter-balance answer addresses combat difficulty and TPK risk; this answer explicitly separates that concern from the large-table problem, which is attention and time rather than whether the fight is fair.",
+      },
+      {
+        with: "answer-faster-exciting-combat",
+        reason:
+          "This answer covers combat pacing for any table size and preserving tactical tension; the large-group answer covers the wider attention, spotlight, and decision-time problems of running many players across the session.",
       },
       {
         with: "answer-run-scene-multiple-npcs",

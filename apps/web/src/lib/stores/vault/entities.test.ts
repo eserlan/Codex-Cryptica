@@ -11,6 +11,7 @@ import {
   setConnectionHidden,
   bulkAddLabel,
   bulkRemoveLabel,
+  renameLabel,
   batchCreateEntities,
   applyBatchDelete,
   detectCycle,
@@ -590,6 +591,103 @@ describe("Vault Entities Operations", () => {
       expect(modifiedIds).toHaveLength(1);
       expect(entities["e1"].labels).not.toContain("story");
       expect(entities["e2"].labels).toContain("other");
+    });
+  });
+
+  describe("renameLabel", () => {
+    const make = (id: string, labels: string[]) =>
+      ({ id, status: "active", labels, updatedAt: 1, modifiedAt: 1 }) as any;
+
+    it("renames the label on every entity that has it and leaves the rest alone", () => {
+      const e1 = make("e1", ["npc", "quest"]);
+      const e2 = make("e2", ["npc"]);
+      const e3 = make("e3", ["place"]);
+      const { entities, modifiedIds } = renameLabel(
+        { e1, e2, e3 },
+        "npc",
+        "character",
+      );
+
+      expect(modifiedIds.sort()).toEqual(["e1", "e2"]);
+      expect(entities.e1.labels).toEqual(["character", "quest"]);
+      expect(entities.e2.labels).toEqual(["character"]);
+      // Untouched entities are the very same objects, not copies.
+      expect(entities.e3).toBe(e3);
+    });
+
+    it("keeps the position of the label it replaces", () => {
+      const e1 = make("e1", ["a", "npc", "z"]);
+      const { entities } = renameLabel({ e1 }, "npc", "character");
+
+      expect(entities.e1.labels).toEqual(["a", "character", "z"]);
+    });
+
+    it("ignores case and whitespace, and stores the new name trimmed and lower-case", () => {
+      const e1 = make("e1", ["NPC"]);
+      const { entities, modifiedIds } = renameLabel(
+        { e1 },
+        "  npc ",
+        "  Character  ",
+      );
+
+      expect(modifiedIds).toEqual(["e1"]);
+      expect(entities.e1.labels).toEqual(["character"]);
+    });
+
+    it("merges into an existing label without leaving a duplicate", () => {
+      const both = make("both", ["npc", "character", "quest"]);
+      const onlyOld = make("onlyOld", ["npc"]);
+      const { entities, modifiedIds } = renameLabel(
+        { both, onlyOld },
+        "npc",
+        "character",
+      );
+
+      expect(modifiedIds.sort()).toEqual(["both", "onlyOld"]);
+      expect(entities.both.labels).toEqual(["character", "quest"]);
+      expect(entities.onlyOld.labels).toEqual(["character"]);
+    });
+
+    it("updates the modified time only on entities that changed", () => {
+      const changed = make("changed", ["npc"]);
+      const same = make("same", ["place"]);
+      const { entities } = renameLabel({ changed, same }, "npc", "character");
+
+      expect(entities.changed.modifiedAt).toBeGreaterThan(1);
+      expect(entities.changed.updatedAt).toBeGreaterThan(1);
+      expect(entities.same.modifiedAt).toBe(1);
+    });
+
+    it("does nothing when no entity has the label", () => {
+      const e1 = make("e1", ["place"]);
+      const input = { e1 };
+      const { entities, modifiedIds } = renameLabel(input, "npc", "character");
+
+      expect(modifiedIds).toEqual([]);
+      expect(entities).toBe(input);
+    });
+
+    it("does nothing for an empty new name, an empty old name, or the same name", () => {
+      const input = { e1: make("e1", ["npc"]) };
+
+      for (const [from, to] of [
+        ["npc", ""],
+        ["npc", "   "],
+        ["", "character"],
+        ["npc", "NPC"],
+        ["npc", " npc "],
+      ]) {
+        const { entities, modifiedIds } = renameLabel(input, from, to);
+        expect(modifiedIds, `${from} -> ${to}`).toEqual([]);
+        expect(entities, `${from} -> ${to}`).toBe(input);
+      }
+    });
+
+    it("copes with entities that have no labels", () => {
+      const bare = { id: "bare", status: "active" } as any;
+      const { modifiedIds } = renameLabel({ bare }, "npc", "character");
+
+      expect(modifiedIds).toEqual([]);
     });
   });
 

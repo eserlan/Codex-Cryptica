@@ -284,22 +284,28 @@
         />
       </div>
 
-      <div class="grid grid-cols-2 gap-4">
-        <div class="space-y-1">
-          <label
-            class="text-meta font-bold text-theme-muted uppercase font-header"
-            for="epoch-label">Epoch Suffix</label
-          >
-          <input
-            id="epoch-label"
-            type="text"
-            placeholder="e.g. AF, AC"
-            value={calendarStore.config.epochLabel || ""}
-            oninput={(e) =>
-              updateConfigField("epochLabel", e.currentTarget.value)}
-            class="w-full bg-theme-surface border border-theme-border rounded px-3 py-1.5 text-xs text-theme-text font-mono focus:border-theme-primary outline-none"
-          />
-        </div>
+      <div
+        class="grid gap-4 {(calendarStore.config.eras?.length ?? 0) === 0
+          ? 'grid-cols-2'
+          : 'grid-cols-1 max-w-xs'}"
+      >
+        {#if (calendarStore.config.eras?.length ?? 0) === 0}
+          <div class="space-y-1">
+            <label
+              class="text-meta font-bold text-theme-muted uppercase font-header"
+              for="epoch-label">Default Year Suffix</label
+            >
+            <input
+              id="epoch-label"
+              type="text"
+              placeholder="e.g. AF, AC"
+              value={calendarStore.config.epochLabel || ""}
+              oninput={(e) =>
+                updateConfigField("epochLabel", e.currentTarget.value)}
+              class="w-full bg-theme-surface border border-theme-border rounded px-3 py-1.5 text-xs text-theme-text font-mono focus:border-theme-primary outline-none"
+            />
+          </div>
+        {/if}
         <div class="space-y-1">
           <label
             class="text-meta font-bold text-theme-muted uppercase font-header"

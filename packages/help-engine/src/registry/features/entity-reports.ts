@@ -22,14 +22,14 @@ export const entityReports: FeatureEntry = {
       actionIds: ["entity-reports.help"],
     },
   ],
-  helpIds: ["spatial-canvas"],
+  helpIds: ["entity-reports", "spatial-canvas"],
   related: ["canvas", "entity-editing"],
   actions: [
     {
       id: "entity-reports.help",
       action: {
         type: "openHelp",
-        helpId: "spatial-canvas",
+        helpId: "entity-reports",
         label: "Read about entity reports",
       },
     },

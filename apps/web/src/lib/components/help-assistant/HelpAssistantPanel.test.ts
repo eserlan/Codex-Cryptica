@@ -78,7 +78,7 @@ beforeEach(() => {
 });
 
 const type = async (text: string) => {
-  await fireEvent.input(screen.getByLabelText(/Ask a question/i), {
+  await fireEvent.input(screen.getByLabelText(/Ask Cif a question/i), {
     target: { value: text },
   });
 };
@@ -144,12 +144,83 @@ describe("HelpAssistantPanel", () => {
     assistant.open();
     await waitFor(() =>
       expect(
-        screen.getByRole("dialog", { name: "Help assistant" }),
+        screen.getByRole("dialog", { name: "Cif, the Codex guide" }),
       ).toBeTruthy(),
     );
     expect(
-      screen.getByLabelText(/Ask a question about using Codex Cryptica/i),
+      screen.getByLabelText(/Ask Cif a question about using Codex Cryptica/i),
     ).toBeTruthy();
+  });
+
+  it("names the close button so it is not confused with other Close buttons", async () => {
+    const { assistant } = setup();
+    assistant.open();
+    await waitFor(() => screen.getByRole("dialog"));
+
+    expect(screen.getByRole("button", { name: "Close Cif" })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Close" })).toBeNull();
+  });
+
+  it("tells screen readers who said what, because only colour and position show it", async () => {
+    const { assistant } = setup();
+    assistant.open();
+    await waitFor(() => screen.getByRole("dialog"));
+    await type("How do I connect the faction?");
+    await fireEvent.click(screen.getByRole("button", { name: "Ask" }));
+    const answer = await waitFor(() =>
+      screen.getByTestId("help-assistant-answer"),
+    );
+
+    expect(answer.textContent?.trimStart().startsWith("Cif:")).toBe(true);
+    const yours = screen.getByText("How do I connect the faction?");
+    // A real space follows the label, so it is not read as "You:How".
+    expect(yours.textContent?.startsWith("You: How")).toBe(true);
+    // Both prefixes are visually hidden.
+    expect(answer.querySelector(".sr-only")?.textContent).toBe("Cif:");
+    expect(yours.querySelector(".sr-only")?.textContent).toBe("You:");
+  });
+
+  it("offers the screen's quick prompts in an empty conversation", async () => {
+    const { assistant } = setup();
+    assistant.open();
+    await waitFor(() => screen.getByRole("dialog"));
+
+    const list = screen.getByRole("list", {
+      name: "Questions you can ask Cif",
+    });
+    expect(list.querySelectorAll("button").length).toBe(3);
+    expect(
+      screen.getByRole("button", { name: "Where do I add a connection?" }),
+    ).toBeTruthy();
+  });
+
+  it("asks a tapped prompt, then replaces the prompts with the conversation and keeps focus in the question box", async () => {
+    const { assistant } = setup();
+    assistant.open();
+    await waitFor(() => screen.getByRole("dialog"));
+
+    await fireEvent.click(
+      screen.getByRole("button", { name: "Where do I add a connection?" }),
+    );
+
+    await waitFor(() => screen.getByText("Open the Status tab and use Add."));
+    expect(screen.queryByTestId("help-quick-prompts")).toBeNull();
+    expect(screen.getByText("Where do I add a connection?")).toBeTruthy();
+    expect(document.activeElement?.id).toBe("help-assistant-input");
+  });
+
+  it("brings the prompts back after Start over", async () => {
+    const { assistant } = setup();
+    assistant.open();
+    await waitFor(() => screen.getByRole("dialog"));
+    await fireEvent.click(
+      screen.getByRole("button", { name: "Where do I add a connection?" }),
+    );
+    await waitFor(() => screen.getByText("Open the Status tab and use Add."));
+
+    await fireEvent.click(screen.getByRole("button", { name: "Start over" }));
+
+    await waitFor(() => screen.getByTestId("help-quick-prompts"));
   });
 
   it("tells the user plainly what is sent", async () => {
@@ -180,7 +251,7 @@ describe("HelpAssistantPanel", () => {
     const { assistant } = setup();
     assistant.open();
     await waitFor(() => screen.getByRole("dialog"));
-    const box = screen.getByLabelText(/Ask a question/i);
+    const box = screen.getByLabelText(/Ask Cif a question/i);
     await type("hello");
     await fireEvent.keyDown(box, { key: "Enter", shiftKey: true });
     expect(assistant.messages).toHaveLength(0);

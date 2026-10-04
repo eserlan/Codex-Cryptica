@@ -428,7 +428,7 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
   },
   "calendar-eras": {
     id: "calendar-eras",
-    title: "Calendar Eras & Epochs",
+    title: "Calendar Eras",
     content:
       "Configure historical eras (such as First Age, Second Age, or Before the Fall / After the Fall) in Vault Settings. Each era can reset year numbering or count backward into the past. Dates across all views display with the appropriate era label while the underlying chronology keeps a continuous integer timeline for precise ordering.",
     icon: "icon-[lucide--history]",

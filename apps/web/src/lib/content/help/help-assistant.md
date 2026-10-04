@@ -15,6 +15,10 @@ Cif is Codex Cryptica's in-app guide. Cif answers questions about using Codex Cr
 
 Open **Ask Cif** from the Activity Bar, or choose **Ask about this** on an entity's Connections tab. Type your question and press **Ask**. When an answer has a related readable guide, its **Sources** buttons open that article. Answers can include formatted lists, bold controls and command examples.
 
+## Questions you can tap
+
+When the conversation is empty, Cif can show a few questions for the screen you are on, such as "Where do I add a connection?" on an entity's Connections tab. Tap one to ask it. They are the same as typing the question yourself, and they come back after **Start over**. Cif only offers them on screens where it has a reliable answer.
+
 ## Being shown where something is
 
 Sometimes Cif offers to show you a control. Choose **Show me** and it opens the right tab and outlines the button with a label. Other offers can open a tool or help article. Cif never edits your vault, and you can clear the outline any time by pressing Escape.

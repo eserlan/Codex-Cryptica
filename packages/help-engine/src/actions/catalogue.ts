@@ -86,8 +86,19 @@ export const CONTROL_IDS = [
 ] as const;
 export type ControlId = (typeof CONTROL_IDS)[number];
 
+/**
+ * Panels that sit beside every screen. Their flag is present while the panel
+ * is open, so it adds to the screen description instead of replacing the area.
+ */
+export const PANEL_FLAGS = ["explorer-open", "shelf-open"] as const;
+export type PanelFlag = (typeof PANEL_FLAGS)[number];
+
 /** Material flags a screen description may carry. */
-export const HELP_FLAGS = ["generators", "connections-editable"] as const;
+export const HELP_FLAGS = [
+  "generators",
+  "connections-editable",
+  ...PANEL_FLAGS,
+] as const;
 export type HelpFlag = (typeof HELP_FLAGS)[number];
 
 export interface ControlSpec {

@@ -7,7 +7,7 @@ describe("HelpAskButton", () => {
   it("toggles the panel and reports its state to assistive technology", async () => {
     const onToggle = vi.fn();
     const { rerender } = render(HelpAskButton, { open: false, onToggle });
-    const button = screen.getByRole("button", { name: "Open help assistant" });
+    const button = screen.getByRole("button", { name: "Ask Cif" });
     expect(button.getAttribute("aria-expanded")).toBe("false");
     await fireEvent.click(button);
     expect(onToggle).toHaveBeenCalledTimes(1);
@@ -15,7 +15,7 @@ describe("HelpAskButton", () => {
     await rerender({ open: true, onToggle });
     expect(
       screen
-        .getByRole("button", { name: "Close help assistant" })
+        .getByRole("button", { name: "Close Cif" })
         .getAttribute("aria-expanded"),
     ).toBe("true");
   }, 15000);
@@ -46,6 +46,19 @@ describe("HelpAskButton", () => {
     render(HelpAskButton, { open: false, onToggle: vi.fn() });
     const button = screen.getByTestId("help-assistant-button");
     expect(button.getAttribute("title")).toBe("Ask Cif");
-    expect(button.getAttribute("aria-label")).toBe("Open help assistant");
+    expect(button.getAttribute("aria-label")).toBe("Ask Cif");
+  });
+
+  it("has an accessible name that matches the tooltip people see", () => {
+    for (const open of [false, true]) {
+      const { unmount } = render(HelpAskButton, { open, onToggle: vi.fn() });
+      const button = screen.getByTestId("help-assistant-button");
+
+      expect(button.getAttribute("aria-label")).toBe(
+        button.getAttribute("title"),
+      );
+      expect(button.getAttribute("aria-label")).toMatch(/Cif/);
+      unmount();
+    }
   });
 });
