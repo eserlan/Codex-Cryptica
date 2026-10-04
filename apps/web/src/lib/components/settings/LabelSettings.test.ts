@@ -184,6 +184,37 @@ describe("LabelSettings", () => {
       );
     });
 
+    it("ignores repeated saves while the rename is still running", async () => {
+      let finishRename!: (count: number) => void;
+      vaultMock.renameLabel.mockReturnValue(
+        new Promise<number>((resolve) => {
+          finishRename = resolve;
+        }),
+      );
+      render(LabelSettings);
+      const input = await startRename();
+      await fireEvent.input(input, { target: { value: "hero" } });
+      const save = screen.getByRole("button", { name: "Save" });
+      await fireEvent.click(save);
+      await fireEvent.click(save);
+
+      expect(vaultMock.renameLabel).toHaveBeenCalledTimes(1);
+      expect(
+        (
+          screen.getByRole("button", {
+            name: "Rename npc label",
+          }) as HTMLButtonElement
+        ).disabled,
+      ).toBe(true);
+      finishRename(2);
+      await waitFor(() =>
+        expect(notificationMock.notify).toHaveBeenCalledWith(
+          'Renamed "npc" to "hero" on 2 entries.',
+          "success",
+        ),
+      );
+    });
+
     it("does nothing in a read-only guest session", async () => {
       vaultMock.isGuest = true;
       render(LabelSettings);
@@ -252,6 +283,28 @@ describe("LabelSettings", () => {
           "error",
         ),
       );
+    });
+
+    it("opens only one confirmation while a delete is pending", async () => {
+      let finishConfirm!: (confirmed: boolean) => void;
+      notificationMock.confirm.mockReturnValue(
+        new Promise<boolean>((resolve) => {
+          finishConfirm = resolve;
+        }),
+      );
+      render(LabelSettings);
+      const remove = screen.getByRole("button", {
+        name: "Delete npc label project-wide",
+      });
+      await fireEvent.click(remove);
+      await fireEvent.click(remove);
+
+      expect(notificationMock.confirm).toHaveBeenCalledTimes(1);
+      finishConfirm(true);
+      await waitFor(() =>
+        expect(vaultMock.deleteLabel).toHaveBeenCalledWith("npc"),
+      );
+      expect(vaultMock.deleteLabel).toHaveBeenCalledTimes(1);
     });
 
     it("does nothing in a read-only guest session", async () => {

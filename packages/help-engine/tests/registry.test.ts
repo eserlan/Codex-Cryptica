@@ -73,6 +73,7 @@ describe("proof-of-concept registry", () => {
         "publishing",
         "lore-oracle",
         "theme-settings",
+        "schema-settings",
       ].sort(),
     );
   });

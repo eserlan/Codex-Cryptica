@@ -23,6 +23,7 @@ const remaining = [
   "publishing",
   "lore-oracle",
   "theme-settings",
+  "schema-settings",
 ];
 
 describe("remaining contextual Help coverage", () => {
@@ -230,8 +231,42 @@ describe("remaining contextual Help coverage", () => {
     ]);
   });
 
-  it("never offers the Oracle, Publishing or Themes a way to change anything", () => {
-    for (const id of ["publishing", "lore-oracle", "theme-settings"]) {
+  it("offers the Schema panel only when it can be opened, and Help always", () => {
+    const refs = FEATURE_REGISTRY.find(
+      (f) => f.id === "schema-settings",
+    )!.actions;
+    const deps = { helpIds: new Set(buildRealBundle().helpIds) };
+    const available = buildActionCandidates(
+      refs,
+      sanitizeHelpContext({
+        area: "settings",
+        tab: "schema",
+        availableActions: ["settings-schema"],
+      }),
+      deps,
+    );
+    const unavailable = buildActionCandidates(
+      refs,
+      sanitizeHelpContext({ area: "settings", tab: "schema" }),
+      deps,
+    );
+
+    expect(available.map((ref) => ref.id)).toEqual([
+      "schema-settings.open-settings",
+      "schema-settings.open-help",
+    ]);
+    expect(unavailable.map((ref) => ref.id)).toEqual([
+      "schema-settings.open-help",
+    ]);
+  });
+
+  it("never offers the Oracle, Publishing, Themes or Schema a way to change anything", () => {
+    for (const id of [
+      "publishing",
+      "lore-oracle",
+      "theme-settings",
+      "schema-settings",
+    ]) {
       for (const ref of FEATURE_REGISTRY.find((f) => f.id === id)!.actions)
         expect(["openHelp", "openPanel"], ref.id).toContain(ref.action.type);
     }
