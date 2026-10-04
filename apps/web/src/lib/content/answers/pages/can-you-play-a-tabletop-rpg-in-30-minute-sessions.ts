@@ -193,6 +193,7 @@ export const canYouPlayATabletopRpgIn30MinuteSessions: AnswerConfigInput = {
     },
   ],
   relatedAnswers: [
+    "how-do-i-make-combat-faster-without-making-it-less-exciting",
     "how-do-i-start-gming-for-the-first-time",
     "how-do-you-make-a-tabletop-rpg-session-more-engaging",
     "how-much-prep-do-you-need-for-an-rpg-session",
