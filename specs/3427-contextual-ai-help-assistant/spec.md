@@ -218,11 +218,11 @@ As a privacy-conscious user, I can be confident that asking for help shares only
 
 ## Decisions: name, quick prompts and proactive help (#3616)
 
-| Decision                       | Status                                              |
-| ------------------------------ | --------------------------------------------------- |
-| Name: **Cif**, the Codex guide | **Decided.** In the panel and copy.                 |
-| Quick prompts                  | **Proposed**, not built. Needs maintainer approval. |
-| Proactive help and its setting | **Described**, deferred, not built.                 |
+| Decision                       | Status                                                |
+| ------------------------------ | ----------------------------------------------------- |
+| Name: **Cif**, the Codex guide | **Decided.** In the panel and copy.                   |
+| Quick prompts                  | **Built** (#3616). Behaviour as below.                |
+| Proactive help and its setting | **Described**, deferred, not built. Tracked in #3765. |
 
 ### Name
 
@@ -236,7 +236,7 @@ The assistant is called **Cif**, short for "cipher": it helps you read the app, 
   - Screen readers hear who is speaking: each message is prefixed (visually hidden) with "You:" or "Cif:", because the difference is otherwise only colour and position.
   - Nothing a person sees or hears says "help assistant". A test guards the panel components and the failure messages. Internal names (the `help-assistant` folders, test ids and the feature flag) keep the old name; they are not user-facing.
 
-### Quick prompts (proposed)
+### Quick prompts (built)
 
 **What.** A few tap-to-ask questions in an empty conversation, chosen by the screen the user is on. They remove the blank-page problem, which matters most on a phone where typing is slow.
 
@@ -249,7 +249,7 @@ The assistant is called **Cif**, short for "cipher": it helps you read the app, 
 5. Phrased the way a person would ask, in first person, plain language, under about 60 characters.
 6. Each is a button of at least 44px, in a group labelled "Questions you can ask Cif", reachable by keyboard in the normal order, with no rotation or randomisation.
 
-**Proposed prompts.** Every one below retrieves a correct source in the top three on its screen in the current evaluation.
+**Prompts.** Every one below retrieves a correct source in the top three on its screen in the current evaluation.
 
 | Screen                  | Prompts                                                                                                                                   |
 | ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
@@ -264,7 +264,7 @@ The assistant is called **Cif**, short for "cipher": it helps you read the app, 
 | Settings                | Where is the Export Backup button? / How do I restore a backup? / How do I change the theme?                                              |
 | Anywhere else           | None until prompts are verified for that screen.                                                                                          |
 
-**How it would be built, and kept honest.** A static list in `packages/help-engine`, keyed by screen area plus tab or mode, with the expected source for each prompt. A test runs every prompt on its screen and fails if it no longer retrieves its source or no longer clears the relevance floor, so a prompt cannot go stale when help changes. The panel renders them with the existing ask path.
+**How it is built, and kept honest.** A static list in `packages/help-engine`, keyed by screen area plus tab or mode, with the expected source for each prompt. A test runs every prompt on its screen and fails if it no longer retrieves its source or no longer clears the relevance floor, so a prompt cannot go stale when help changes. The panel renders them with the existing ask path.
 
 **Not proposed.** Prompts that depend on the vault (privacy); prompts for AI-only features, which do not exist here; a "trending" or personalised list (needs tracking the help feature deliberately does not have).
 
@@ -283,7 +283,7 @@ The assistant is called **Cif**, short for "cipher": it helps you read the app, 
 
 **What it must not do.** Watch what people type or click, infer that someone is "stuck" from behaviour, or report any usage. "Stuck" detection would need exactly that, so it is out. The only trigger is arriving on a screen that has a verified prompt and that the user has not been to before on this device.
 
-**Why deferred.** It needs the quick prompts first, a decision on whether first-visit-only is useful enough, and its own spec: it is the first time Cif would initiate anything. Nothing for it is built or registered.
+**Why deferred.** Tracked in #3765. It needs the quick prompts (now built), a decision on whether first-visit-only is useful enough, and its own spec: it is the first time Cif would initiate anything. Nothing for it is built or registered.
 
 ## Dependencies
 
