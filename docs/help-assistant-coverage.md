@@ -29,6 +29,7 @@ registered feature; the coverage test requires it to stay in sync.
 | publishing                | Settings → Publishing                    | publishing                                         | Open Publishing settings when available, or read Help; never publish, update, unpublish or list a world.                                |
 | lore-oracle               | Lore Oracle (any screen)                 | oracle-guide, chat-commands                        | Open Intelligence settings when available, or read Help; never ask, revise, create or connect anything.                                 |
 | theme-settings            | Settings → Theme                         | themes                                             | Open Theme settings when available, or read Help; never change the theme, appearance or world genre.                                    |
+| schema-settings           | Settings → Schema                        | categories-and-labels                              | Open Schema settings when available, or read Help; never add, edit, delete or reset a category, and never change a label.               |
 
 ## Context and unavailable actions
 
@@ -115,17 +116,15 @@ Surface keys are `nav:<id>` (Activity Bar and menu), `route:<folder>` (under
 | route:vault           | creating-and-editing-entities                                 | entity-editing                                | covered      | The pop-out entity page.                                                                                                                                                        |
 | settings:vault        | export-and-backup, cloud-backup, offline-sync, vault-metadata | backup-and-restore                            | covered      |                                                                                                                                                                                 |
 | settings:intelligence | gemini-api-key, oracle-guide                                  | lore-oracle                                   | covered      |                                                                                                                                                                                 |
-| settings:schema       | categories-and-labels                                         | —                                             | article-only | The Schema tab already exists in the context schema, so a registry entry is the next cheap addition. Not written yet.                                                           |
+| settings:schema       | categories-and-labels                                         | schema-settings                               | covered      |                                                                                                                                                                                 |
 | settings:templates    | default-entity-templates, sharing-templates                   | entity-templates                              | covered      |                                                                                                                                                                                 |
 | settings:theme        | themes                                                        | theme-settings                                | covered      |                                                                                                                                                                                 |
 | settings:publishing   | publishing                                                    | publishing                                    | covered      |                                                                                                                                                                                 |
 | settings:about        | —                                                             | —                                             | not-needed   | Version and links only; there is nothing to explain.                                                                                                                            |
 | settings:help         | —                                                             | —                                             | not-needed   | The Help tab hosts the Help library itself.                                                                                                                                     |
 
-**Gaps found.** Every surface now has a dedicated Help article; the audit has no
-`gap` rows left. Eight surfaces have an article but no registry entry, so Cif can
-answer questions about them but cannot point at or open them: Solo Adventure, the
-Shelf, guest chat and the guest view, the Entity Table, the Explorer, the dice
-roller and the Settings Schema tab. Adventure, the Shelf, the Entity Table, the
-Explorer and the dice roller need a help area (or a catch-all-area route rule)
-first; the Schema tab can use the existing Schema tab id.
+**Gaps found.** Every surface has a dedicated Help article; the audit has no `gap`
+rows. Seven surfaces have an article but no registry entry, so Cif can answer
+questions about them but cannot point at or open them: Solo Adventure, the
+Shelf, guest chat and the guest view, the Entity Table, the Explorer and the
+dice roller. Each needs a help area (or a catch-all-area route rule) first.

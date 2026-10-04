@@ -36,4 +36,5 @@ export const KNOWN_HELP_IDS = [
   "oracle-guide",
   "chat-commands",
   "themes",
+  "categories-and-labels",
 ] as const;

@@ -66,6 +66,9 @@ describe("remaining coverage retrieval evaluation", () => {
     ],
     ["How do I switch to dark mode?", "backup-and-restore", "theme-settings"],
     ["Where do I change the theme?", "publishing", "theme-settings"],
+    ["How do I add a custom category?", "theme-settings", "schema-settings"],
+    ["Where do I change a category's colour?", "publishing", "schema-settings"],
+    ["How do I switch to dark mode?", "schema-settings", "theme-settings"],
   ])(
     "keeps explicit intent for %s despite the %s screen",
     (question, screen, expected) => {
