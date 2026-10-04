@@ -74,6 +74,9 @@ describe("proof-of-concept registry", () => {
         "lore-oracle",
         "theme-settings",
         "schema-settings",
+        "entity-table",
+        "dice-roller",
+        "solo-adventure",
       ].sort(),
     );
   });
