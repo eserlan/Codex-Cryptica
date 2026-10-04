@@ -78,17 +78,14 @@ describe("VaultSettings - Default Year Suffix", () => {
     );
   });
 
-  it("renders Default Year Suffix label without fallback note when no custom eras exist", () => {
+  it("renders Default Year Suffix and Present Year side-by-side when no custom eras exist", () => {
     render(VaultSettings);
 
     expect(screen.getByLabelText(/Default Year Suffix/i)).toBeDefined();
-    expect(screen.queryByText("Fallback")).toBeNull();
-    expect(
-      screen.queryByText(/Used as fallback for dates outside configured eras/i),
-    ).toBeNull();
+    expect(screen.getByLabelText(/Present Year/i)).toBeDefined();
   });
 
-  it("renders Fallback badge and note when custom eras exist", () => {
+  it("hides top-level Default Year Suffix when custom eras exist, keeping only Present Year", () => {
     calendarStore.config = {
       ...DEFAULT_CALENDAR,
       revision: 1,
@@ -107,14 +104,11 @@ describe("VaultSettings - Default Year Suffix", () => {
 
     render(VaultSettings);
 
-    expect(screen.getByLabelText(/Default Year Suffix/i)).toBeDefined();
-    expect(screen.getByText("Fallback")).toBeDefined();
-    expect(
-      screen.getByText(/Used as fallback for dates outside configured eras/i),
-    ).toBeDefined();
+    expect(screen.queryByLabelText(/Default Year Suffix/i)).toBeNull();
+    expect(screen.getByLabelText(/Present Year/i)).toBeDefined();
   });
 
-  it("updates epochLabel when Default Year Suffix input changes", async () => {
+  it("updates epochLabel when Default Year Suffix input changes in simple calendar mode", async () => {
     render(VaultSettings);
 
     const input = screen.getByLabelText(/Default Year Suffix/i);
