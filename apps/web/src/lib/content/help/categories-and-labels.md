@@ -39,11 +39,9 @@ Choose **Delete category** and confirm. Your entries are not deleted: entries th
 
 ## Campaign Labels
 
-**Project Labels** lists the labels in use in your vault. It is a quick way to see which labels exist.
+**Project Labels** lists every label in use in your vault. You can tidy them here, and the change applies to all of your entries at once:
 
-At the moment the **Rename** and **Delete** buttons in this list do not change your entries. To add or remove labels on entries, use:
+- **Rename** a label to change it on every entry that has it. Labels are stored in lower case, so "Character" becomes "character". If a label with that name already exists, you are asked whether to merge the two, and an entry that had both ends up with just one. When it is done you are told how many entries changed.
+- **Delete** a label to remove it from every entry that has it. Before anything happens you are told how many entries will lose the label, and the entries themselves are never deleted.
 
-- the **Add label** box on an entry, or
-- **Add / remove labels** and **Manage Labels** in the [Entity Table](/help#help/entity-table).
-
-To find entries by label, search with `#label` in the [Explorer](/help#help/entity-explorer) or the Entity Table.
+To add a label to particular entries instead, use the **Add label** box on an entry, or **Add / remove labels** and **Manage Labels** in the [Entity Table](/help#help/entity-table). To find entries by label, search with `#label` in the [Explorer](/help#help/entity-explorer) or the Entity Table.

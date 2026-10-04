@@ -810,6 +810,14 @@ export class VaultStore {
   bulkRemoveLabel(ids: string[], label: string) {
     return this.entityStore.bulkRemoveLabel(ids, label);
   }
+  /** Renames a label on every entity that has it; returns how many changed. */
+  renameLabel(from: string, to: string) {
+    return this.entityStore.renameLabel(from, to);
+  }
+  /** Removes a label from every entity that has it; returns how many changed. */
+  deleteLabel(label: string) {
+    return this.entityStore.deleteLabel(label);
+  }
   batchCreateEntities(newEntitiesList: BatchCreateInput[]) {
     return this.entityStore.batchCreateEntities(newEntitiesList);
   }
