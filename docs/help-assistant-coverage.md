@@ -59,3 +59,69 @@ web build: the older strict Worker rejects the new area, route and panel enums.
 The generated knowledge bundle is a build artifact and is not committed.
 Run the live-answer evaluation separately from deterministic retrieval tests;
 offline recall does not prove model answer quality or refusal of near misses.
+
+## Surface audit (#3615)
+
+Every place a person can go in the app, with the Help article and registry entry
+that cover it, or the reason it does not have one. A test
+(`packages/help-engine/tests/surface-audit.test.ts`) fails when a navigation
+item, an `(app)` route or a Settings tab exists without a row here, when a row
+refers to something that no longer exists, or when a row names an article or
+registry entry that does not exist. **Adding a surface therefore forces the
+Help decision.**
+
+Statuses:
+
+- **covered**: at least one Help article and one registry entry.
+- **article-only**: a Help article, with no registry entry yet (the reason is in the notes).
+- **gap**: no dedicated Help article; the surface is only mentioned inside other articles.
+- **not-needed**: nothing to explain, with the reason.
+
+Surface keys are `nav:<id>` (Activity Bar and menu), `route:<folder>` (under
+`apps/web/src/routes/(app)`) and `settings:<tab>`. Articles use their front-matter
+`id`, which is not always the file name (`default-templates.md` is
+`default-entity-templates`).
+
+| Surface               | Help articles                                                 | Registry                                      | Status       | Notes                                                                                                                   |
+| --------------------- | ------------------------------------------------------------- | --------------------------------------------- | ------------ | ----------------------------------------------------------------------------------------------------------------------- |
+| nav:graph             | graph-basics, saved-views, guided-mode                        | graph-view, guided-mode                       | covered      |                                                                                                                         |
+| nav:map               | map-mode, vtt-session, fog-of-war                             | vtt-map                                       | covered      |                                                                                                                         |
+| nav:canvas            | spatial-canvas, canvas-add-entities                           | canvas                                        | covered      |                                                                                                                         |
+| nav:timeline          | chronology, entity-timeline                                   | chronology                                    | covered      | The registry entry cites `chronology` only; `entity-timeline` is not listed in its `helpIds`.                           |
+| nav:table             | —                                                             | —                                             | gap          | The Entity Table is described only in passing in intro, saved-views and entity-reports; there is no article of its own. |
+| nav:adventure         | adventure-mode                                                | —                                             | article-only | The context schema has no area for Solo Adventure, so there is no screen description yet.                               |
+| nav:random            | random-tables-decks                                           | tables                                        | covered      |                                                                                                                         |
+| nav:explorer          | —                                                             | —                                             | gap          | The explorer sidebar is mentioned in passing in intro and creating-and-editing-entities, with no article of its own.    |
+| nav:oracle            | oracle-guide, chat-commands, gemini-api-key                   | lore-oracle                                   | covered      |                                                                                                                         |
+| nav:generators        | in-app-generators, generate-related                           | campaign-generator, related-entity-generation | covered      |                                                                                                                         |
+| nav:shelf             | entity-shelf                                                  | —                                             | article-only | The context schema has no area for the Shelf, so there is no screen description yet.                                    |
+| nav:quicknote         | quicknote                                                     | session-journal                               | covered      |                                                                                                                         |
+| nav:session-journal   | quicknote                                                     | session-journal                               | covered      |                                                                                                                         |
+| nav:guest-chat        | guest-character-chat                                          | —                                             | article-only | Shown only in a shared guest view; the screen description has no guest surface yet (`public` is reserved).              |
+| route:adventure       | adventure-mode                                                | —                                             | article-only | Same decision as nav:adventure.                                                                                         |
+| route:canvas          | spatial-canvas, canvas-add-entities                           | canvas                                        | covered      |                                                                                                                         |
+| route:decks           | random-tables-decks                                           | tables                                        | covered      |                                                                                                                         |
+| route:dice            | —                                                             | —                                             | gap          | The dice roller is described only inside other articles (random tables, chat /roll, journal); no article of its own.    |
+| route:guest           | publishing, guest-character-chat                              | —                                             | article-only | A reader's view of a published world; same decision as nav:guest-chat.                                                  |
+| route:help            | —                                                             | —                                             | not-needed   | This is the Help library itself.                                                                                        |
+| route:import          | importing, thread-weaver-import                               | archive-import                                | covered      |                                                                                                                         |
+| route:map             | map-mode, vtt-session, fog-of-war                             | vtt-map                                       | covered      |                                                                                                                         |
+| route:oracle          | oracle-guide, chat-commands                                   | lore-oracle                                   | covered      |                                                                                                                         |
+| route:table           | —                                                             | —                                             | gap          | Same decision as nav:table.                                                                                             |
+| route:tables          | random-tables-decks                                           | tables                                        | covered      |                                                                                                                         |
+| route:templates       | default-entity-templates, sharing-templates                   | entity-templates                              | covered      |                                                                                                                         |
+| route:timeline        | chronology, entity-timeline                                   | chronology                                    | covered      |                                                                                                                         |
+| route:vault           | creating-and-editing-entities                                 | entity-editing                                | covered      | The pop-out entity page.                                                                                                |
+| settings:vault        | export-and-backup, cloud-backup, offline-sync, vault-metadata | backup-and-restore                            | covered      |                                                                                                                         |
+| settings:intelligence | gemini-api-key, oracle-guide                                  | lore-oracle                                   | covered      |                                                                                                                         |
+| settings:schema       | —                                                             | —                                             | gap          | The Schema tab (categories and labels) has no article; nothing mentions it by name.                                     |
+| settings:templates    | default-entity-templates, sharing-templates                   | entity-templates                              | covered      |                                                                                                                         |
+| settings:theme        | themes                                                        | —                                             | article-only | No registry entry yet. The context schema already has a Theme tab, so this is the cheapest next entry.                  |
+| settings:publishing   | publishing                                                    | publishing                                    | covered      |                                                                                                                         |
+| settings:about        | —                                                             | —                                             | not-needed   | Version and links only; there is nothing to explain.                                                                    |
+| settings:help         | —                                                             | —                                             | not-needed   | The Help tab hosts the Help library itself.                                                                             |
+
+**Gaps found.** Four surfaces have no dedicated Help article: the Entity Table,
+the Explorer, the dice roller and the Settings Schema tab. Four have an article
+but no registry entry: Solo Adventure, the Shelf, the guest chat and guest view,
+and the Theme tab. Both lists are follow-up work, not part of this audit.
