@@ -47,10 +47,10 @@
       <h4
         class="text-meta font-bold text-theme-secondary uppercase font-header tracking-widest"
       >
-        Calendar Eras & Epochs
+        Calendar Eras
       </h4>
       <p class="text-micro text-theme-muted mt-0.5">
-        Define historical epochs with independent or backward-counting year
+        Define historical eras with independent or backward-counting year
         numbers.
       </p>
     </div>
@@ -70,7 +70,7 @@
       class="p-4 bg-theme-surface/30 border border-dashed border-theme-border/40 rounded text-center"
     >
       <p class="text-xs text-theme-muted">
-        No custom eras defined. Years will be formatted using the global Epoch
+        No custom eras defined. Years will be formatted using the Default Year
         Suffix above.
       </p>
     </div>

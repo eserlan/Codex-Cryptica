@@ -18,9 +18,13 @@ describe("CalendarEraSettings", () => {
     );
   });
 
-  it("renders empty state when no eras are defined", () => {
+  it("renders empty state and Calendar Eras title when no eras are defined", () => {
     render(CalendarEraSettings);
+    expect(
+      screen.getByRole("heading", { name: "Calendar Eras" }),
+    ).toBeDefined();
     expect(screen.getByText(/No custom eras defined/i)).toBeDefined();
+    expect(screen.getByText(/Default Year Suffix above/i)).toBeDefined();
   });
 
   it("adds a new era when ADD ERA button is clicked", async () => {

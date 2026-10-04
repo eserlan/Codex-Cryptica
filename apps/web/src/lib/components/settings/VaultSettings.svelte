@@ -286,10 +286,17 @@
 
       <div class="grid grid-cols-2 gap-4">
         <div class="space-y-1">
-          <label
-            class="text-meta font-bold text-theme-muted uppercase font-header"
-            for="epoch-label">Epoch Suffix</label
-          >
+          <div class="flex items-center justify-between">
+            <label
+              class="text-meta font-bold text-theme-muted uppercase font-header"
+              for="epoch-label">Default Year Suffix</label
+            >
+            {#if (calendarStore.config.eras?.length ?? 0) > 0}
+              <span class="text-nano text-theme-muted/80 font-mono">
+                Fallback
+              </span>
+            {/if}
+          </div>
           <input
             id="epoch-label"
             type="text"
@@ -299,6 +306,11 @@
               updateConfigField("epochLabel", e.currentTarget.value)}
             class="w-full bg-theme-surface border border-theme-border rounded px-3 py-1.5 text-xs text-theme-text font-mono focus:border-theme-primary outline-none"
           />
+          {#if (calendarStore.config.eras?.length ?? 0) > 0}
+            <p class="text-nano text-theme-muted leading-tight">
+              Used as fallback for dates outside configured eras.
+            </p>
+          {/if}
         </div>
         <div class="space-y-1">
           <label
