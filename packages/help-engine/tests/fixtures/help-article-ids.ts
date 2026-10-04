@@ -40,4 +40,6 @@ export const KNOWN_HELP_IDS = [
   "entity-table",
   "dice-roller",
   "adventure-mode",
+  "entity-explorer",
+  "entity-shelf",
 ] as const;

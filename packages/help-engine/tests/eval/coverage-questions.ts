@@ -188,6 +188,22 @@ export const COVERAGE_QUESTIONS = [
     "Does the Oracle add what it invents to my vault?",
     "holdout",
   ],
+  ["entity-explorer", "How do I nest one entry inside another?", "tune"],
+  ["entity-explorer", "Where do I approve or reject drafts?", "tune"],
+  [
+    "entity-explorer",
+    "Can I drag an entry from the sidebar onto my canvas?",
+    "holdout",
+  ],
+  ["entity-explorer", "What does Reject do to a draft?", "holdout"],
+  ["entity-shelf", "How do I copy an entry into another vault?", "tune"],
+  ["entity-shelf", "Where do shelved entries go?", "tune"],
+  ["entity-shelf", "Does shelving change the vault I took it from?", "holdout"],
+  [
+    "entity-shelf",
+    "Can I send an entry to another person with the Shelf?",
+    "holdout",
+  ],
 ] as const;
 
 export const COVERAGE_HELP: Record<string, string[]> = {
@@ -205,6 +221,8 @@ export const COVERAGE_HELP: Record<string, string[]> = {
   "entity-table": ["entity-table"],
   "dice-roller": ["dice-roller"],
   "solo-adventure": ["adventure-mode"],
+  "entity-explorer": ["entity-explorer"],
+  "entity-shelf": ["entity-shelf"],
   "lore-oracle": ["oracle-guide", "chat-commands"],
   "backup-and-restore": ["export-and-backup", "cloud-backup", "offline-sync"],
 };

@@ -126,6 +126,16 @@ const bundle = buildBundle({
       "adventure-mode",
       "## adventure-mode\nAbout adventure-mode.",
     ),
+    article(
+      "entity-explorer",
+      "entity-explorer",
+      "## entity-explorer\nAbout entity-explorer.",
+    ),
+    article(
+      "entity-shelf",
+      "entity-shelf",
+      "## entity-shelf\nAbout entity-shelf.",
+    ),
     article("importing", "importing", "## importing\nAbout importing."),
     article(
       "thread-weaver-import",

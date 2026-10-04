@@ -14,36 +14,37 @@ All entities are transient or build-time. Nothing is written to the vault, Index
 
 Built by `HelpContextStore` on the client; re-validated by the Worker with the same strict schema.
 
-| Field              | Type            | Rule                                                                                                                                                                                                                                                                                                     |
-| ------------------ | --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `v`                | literal `1`     | Schema version; unknown versions rejected                                                                                                                                                                                                                                                                |
-| `routeTemplate`    | string          | A SvelteKit route template only (e.g. `/(app)/vault`), never a resolved path. Every segment must be literal or a `[param]` token.                                                                                                                                                                        |
-| `area`             | enum            | Closed list: `entity-detail`, `graph`, `session-hub`, `tables`, `generators`, `other`                                                                                                                                                                                                                    |
-| `entityKind`       | enum \| null    | One of the seven built-in categories (`character`, `creature`, `location`, `item`, `event`, `faction`, `note`), `custom` for any user-defined category, or `null` when not on an entity. There is no built-in `settlement`: a Settlement is a `location` or, in a vault with a custom category, `custom` |
-| `tab`              | enum \| null    | Closed list of tab IDs (e.g. `status`, `connections`)                                                                                                                                                                                                                                                    |
-| `mode`             | enum            | `view` \| `edit` \| `draft`                                                                                                                                                                                                                                                                              |
-| `surface`          | enum            | `vault` \| `public`. The spike only produces `vault`; `public` is accepted by the schema but reserved (the panel is not shown outside the app)                                                                                                                                                           |
-| `flags`            | string[] (≤ 8)  | Allow-listed material flags only: `generators` (a generator can be opened) and `connections-editable` (the Add button exists; absent in a read-only guest vault)                                                                                                                                         |
-| `availableActions` | string[] (≤ 12) | Allow-listed control/action IDs currently valid on screen                                                                                                                                                                                                                                                |
+| Field              | Type            | Rule                                                                                                                                                                                                                                                                                                                         |
+| ------------------ | --------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `v`                | literal `1`     | Schema version; unknown versions rejected                                                                                                                                                                                                                                                                                    |
+| `routeTemplate`    | string          | A SvelteKit route template only (e.g. `/(app)/vault`), never a resolved path. Every segment must be literal or a `[param]` token.                                                                                                                                                                                            |
+| `area`             | enum            | Closed list: `entity-detail`, `graph`, `session-hub`, `tables`, `generators`, `other`                                                                                                                                                                                                                                        |
+| `entityKind`       | enum \| null    | One of the seven built-in categories (`character`, `creature`, `location`, `item`, `event`, `faction`, `note`), `custom` for any user-defined category, or `null` when not on an entity. There is no built-in `settlement`: a Settlement is a `location` or, in a vault with a custom category, `custom`                     |
+| `tab`              | enum \| null    | Closed list of tab IDs (e.g. `status`, `connections`)                                                                                                                                                                                                                                                                        |
+| `mode`             | enum            | `view` \| `edit` \| `draft`                                                                                                                                                                                                                                                                                                  |
+| `surface`          | enum            | `vault` \| `public`. The spike only produces `vault`; `public` is accepted by the schema but reserved (the panel is not shown outside the app)                                                                                                                                                                               |
+| `flags`            | string[] (≤ 8)  | Allow-listed material flags only: `generators` (a generator can be opened) `connections-editable` (the Add button exists; absent in a read-only guest vault), and the open-panel flags `explorer-open` and `shelf-open` (a sidebar panel is open beside the screen; they add to the description and never change the `area`) |
+| `availableActions` | string[] (≤ 12) | Allow-listed control/action IDs currently valid on screen                                                                                                                                                                                                                                                                    |
 
 Validation: `.strict()` (unknown keys rejected, not silently accepted). Excluded by construction: entity IDs, vault IDs, names, titles, text, URLs, query strings, credentials.
 
 ## FeatureEntry (Registry)
 
-| Field       | Type                      | Notes                                                                                |
-| ----------- | ------------------------- | ------------------------------------------------------------------------------------ |
-| `id`        | string                    | Stable kebab-case, unique (e.g. `entity-connections`)                                |
-| `title`     | string                    | Plain-language name                                                                  |
-| `summary`   | string                    | What it is for, 1–2 sentences                                                        |
-| `channel`   | `production` \| `staging` | Staging-only entries are excluded from production bundles                            |
-| `routes`    | string[]                  | Route templates where it lives                                                       |
-| `areas`     | area[]                    | Matches `HelpContextV1.area`                                                         |
-| `kinds`     | string[] \| `"any"`       | Entity kinds it applies to (labels, not tags)                                        |
-| `tabs`      | string[]                  | Tabs where it applies                                                                |
-| `workflows` | Workflow[]                | Named tasks, see below                                                               |
-| `helpIds`   | string[]                  | IDs of existing `content/help/*.md` articles it draws on; must exist                 |
-| `related`   | string[]                  | Feature IDs; must exist                                                              |
-| `actions`   | ActionRef[]               | Safe actions offerable for this feature; targets must exist in the control catalogue |
+| Field       | Type                      | Notes                                                                                 |
+| ----------- | ------------------------- | ------------------------------------------------------------------------------------- |
+| `id`        | string                    | Stable kebab-case, unique (e.g. `entity-connections`)                                 |
+| `title`     | string                    | Plain-language name                                                                   |
+| `summary`   | string                    | What it is for, 1–2 sentences                                                         |
+| `channel`   | `production` \| `staging` | Staging-only entries are excluded from production bundles                             |
+| `routes`    | string[]                  | Route templates where it lives                                                        |
+| `areas`     | area[]                    | Matches `HelpContextV1.area`                                                          |
+| `kinds`     | string[] \| `"any"`       | Entity kinds it applies to (labels, not tags)                                         |
+| `tabs`      | string[]                  | Tabs where it applies                                                                 |
+| `whenFlag`  | PanelFlag (optional)      | Panel features match only while their `explorer-open` or `shelf-open` flag is present |
+| `workflows` | Workflow[]                | Named tasks, see below                                                                |
+| `helpIds`   | string[]                  | IDs of existing `content/help/*.md` articles it draws on; must exist                  |
+| `related`   | string[]                  | Feature IDs; must exist                                                               |
+| `actions`   | ActionRef[]               | Safe actions offerable for this feature; targets must exist in the control catalogue  |
 
 **Workflow**: `{ id, title, steps: string[] (short, plain), actionIds: string[] }`.
 

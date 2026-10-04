@@ -77,6 +77,8 @@ describe("proof-of-concept registry", () => {
         "entity-table",
         "dice-roller",
         "solo-adventure",
+        "entity-explorer",
+        "entity-shelf",
       ].sort(),
     );
   });
