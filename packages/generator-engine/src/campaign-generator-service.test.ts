@@ -1739,6 +1739,163 @@ describe("AI policy (US2)", () => {
     expect(d.title).toBe("Aric Dawnward");
   });
 
+  it("does not retry just because a name resembles an overused pattern", async () => {
+    const complete = vi.fn(async () => aiJson("Kaelmoor"));
+    const svc = new CampaignGeneratorService({
+      aiPolicy: { isEnabled: true, isAvailable: true },
+      aiGateway: { complete },
+    });
+    const vaultContext = {
+      ...ctx([])!,
+      existingTitles: ["Kaelthorn", "Kaelwyn", "Kaelorin"],
+    };
+    const d = await svc.generateDraft(
+      run("npc", { useAI: true, vaultContext }),
+    );
+    expect(complete).toHaveBeenCalledTimes(1);
+    expect(d.title).toBe("Kaelmoor");
+  });
+
+  describe("name pre-pass", () => {
+    const nameCtx = () => ({
+      ...ctx([])!,
+      targetEntityType: "character",
+      existingTitles: ["Mira", "Tolbert"],
+      nameExamples: ["Mira", "Tolbert", "Zhao Lin", "Okonkwo"],
+    });
+    const isNameCall = (prompt: string) => prompt.includes('{"names"');
+
+    it("asks for names first, then puts the chosen one in the main prompt", async () => {
+      const complete = vi.fn(async (prompt: string) =>
+        isNameCall(prompt)
+          ? JSON.stringify({ names: ["Yusra Odell", "Kellan Voss-Ryn"] })
+          : aiJson("Yusra Odell"),
+      );
+      const svc = new CampaignGeneratorService({
+        aiPolicy: { isEnabled: true, isAvailable: true },
+        aiGateway: { complete },
+      });
+      const d = await svc.generateDraft(
+        run("npc", { useAI: true, vaultContext: nameCtx() }),
+      );
+      expect(complete).toHaveBeenCalledTimes(2);
+      const mainPrompt = complete.mock.calls[1][0];
+      expect(isNameCall(mainPrompt)).toBe(false);
+      expect(mainPrompt).toMatch(
+        /Use "(Yusra Odell|Kellan Voss-Ryn)" as this entity's name/,
+      );
+      expect(d.title).toBe("Yusra Odell");
+    });
+
+    it("carries on with a normal generation when the name call fails", async () => {
+      const complete = vi.fn(async (prompt: string) => {
+        if (isNameCall(prompt)) throw new Error("boom");
+        return aiJson("Aric Dawnward");
+      });
+      const svc = new CampaignGeneratorService({
+        aiPolicy: { isEnabled: true, isAvailable: true },
+        aiGateway: { complete },
+      });
+      const d = await svc.generateDraft(
+        run("npc", { useAI: true, vaultContext: nameCtx() }),
+      );
+      expect(d.title).toBe("Aric Dawnward");
+      expect(complete.mock.calls.at(-1)![0]).not.toContain(
+        "as this entity's name",
+      );
+    });
+
+    it("skips the name call for descriptive generators and thin vaults", async () => {
+      const complete = vi.fn(async () => aiJson("A Rumour"));
+      const svc = new CampaignGeneratorService({
+        aiPolicy: { isEnabled: true, isAvailable: true },
+        aiGateway: { complete },
+      });
+      await svc.generateDraft(
+        run("rumour", { useAI: true, vaultContext: nameCtx() }),
+      );
+      await svc.generateDraft(
+        run("npc", { useAI: true, vaultContext: ctx([]) }),
+      );
+      expect(complete).toHaveBeenCalledTimes(2);
+      for (const call of complete.mock.calls) {
+        expect(call[0]).not.toContain('{"names"');
+      }
+    });
+
+    it("never offers a suggestion that is banned or already in the vault", async () => {
+      const complete = vi.fn(async (prompt: string) =>
+        isNameCall(prompt)
+          ? JSON.stringify({ names: ["Mira", "Vane-Smithe"] })
+          : aiJson("Aric Dawnward"),
+      );
+      const svc = new CampaignGeneratorService({
+        aiPolicy: { isEnabled: true, isAvailable: true },
+        aiGateway: { complete },
+      });
+      await svc.generateDraft(
+        run("npc", {
+          useAI: true,
+          vaultContext: { ...nameCtx(), bannedNames: ["Vane"] },
+        }),
+      );
+      expect(complete.mock.calls.at(-1)![0]).not.toContain(
+        "as this entity's name",
+      );
+    });
+
+    it("does not start the stream when the user cancels during the name call", async () => {
+      const controller = new AbortController();
+      const complete = vi.fn(async () => {
+        controller.abort();
+        return JSON.stringify({ names: ["Yusra Odell"] });
+      });
+      const completeStream = vi.fn(async function* () {
+        yield { type: "complete" as const, text: aiJson("Yusra Odell") };
+      });
+      const svc = new CampaignGeneratorService({
+        aiPolicy: { isEnabled: true, isAvailable: true },
+        aiGateway: { complete, completeStream },
+      });
+      const events: Array<{ type: string }> = [];
+      for await (const e of svc.generateDraftStream(
+        run("npc", { useAI: true, vaultContext: nameCtx() }),
+        controller.signal,
+      )) {
+        events.push(e);
+      }
+      expect(completeStream).not.toHaveBeenCalled();
+      expect(events.some((e) => e.type === "draft")).toBe(false);
+    });
+
+    it("also runs ahead of a streamed generation", async () => {
+      const complete = vi.fn(async () =>
+        JSON.stringify({ names: ["Yusra Odell"] }),
+      );
+      const prompts: string[] = [];
+      const completeStream = vi.fn(async function* (prompt: string) {
+        prompts.push(prompt);
+        yield {
+          type: "complete" as const,
+          text: aiJson("Yusra Odell"),
+        };
+      });
+      const svc = new CampaignGeneratorService({
+        aiPolicy: { isEnabled: true, isAvailable: true },
+        aiGateway: { complete, completeStream },
+      });
+      const events: Array<{ type: string }> = [];
+      for await (const e of svc.generateDraftStream(
+        run("npc", { useAI: true, vaultContext: nameCtx() }),
+      )) {
+        events.push(e);
+      }
+      expect(complete).toHaveBeenCalledTimes(1);
+      expect(prompts[0]).toContain('Use "Yusra Odell" as this entity\'s name');
+      expect(events.some((e) => e.type === "draft")).toBe(true);
+    });
+  });
+
   it("parses and normalises connections from AI output", async () => {
     const complete = vi.fn(async () =>
       JSON.stringify({

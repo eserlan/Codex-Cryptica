@@ -1307,6 +1307,153 @@ describe("buildPrompt cultural naming", () => {
     );
   });
 
+  it("tells the model which name patterns the vault already overuses", () => {
+    const prompt = getGenerator("npc").buildPrompt(
+      run("npc", {
+        vaultContext: {
+          categoryLabels: [],
+          applyTemplate: false,
+          neighbors: [],
+          worldSample: [],
+          existingTitles: ["Kaelthorn", "Kaelwyn", "Kaelorin"],
+          labelSuggestions: [],
+          includedContext: [],
+        },
+      }),
+    );
+    expect(prompt).toContain('"kae-"');
+    expect(prompt).toContain("clearly different sound");
+  });
+
+  it("omits the overused-pattern note for a varied vault", () => {
+    const prompt = getGenerator("npc").buildPrompt(
+      run("npc", {
+        vaultContext: {
+          categoryLabels: [],
+          applyTemplate: false,
+          neighbors: [],
+          worldSample: [],
+          existingTitles: ["Mira", "Tolbert", "Zhao Lin"],
+          labelSuggestions: [],
+          includedContext: [],
+        },
+      }),
+    );
+    expect(prompt).not.toContain("clearly different sound");
+  });
+
+  it("shows the world's own names as style examples", () => {
+    const prompt = getGenerator("npc").buildPrompt(
+      run("npc", {
+        vaultContext: {
+          categoryLabels: [],
+          applyTemplate: false,
+          neighbors: [],
+          worldSample: [],
+          existingTitles: [],
+          labelSuggestions: [],
+          includedContext: [],
+          nameExamples: ["Aranyvér", "Eszter", "Darvold"],
+        },
+      }),
+    );
+    expect(prompt).toContain("Aranyvér, Eszter, Darvold");
+    expect(prompt).toContain("do not reuse or lightly alter");
+  });
+
+  it("omits the examples when there are none", () => {
+    const prompt = getGenerator("npc").buildPrompt(run("npc"));
+    expect(prompt).not.toContain("Existing names from this world");
+  });
+
+  it("drops examples and pattern guidance when a Primary Language is selected", () => {
+    const prompt = getGenerator("npc").buildPrompt(
+      run("npc", {
+        vaultContext: {
+          categoryLabels: [],
+          applyTemplate: false,
+          neighbors: [],
+          worldSample: [],
+          existingTitles: [],
+          labelSuggestions: [],
+          includedContext: [],
+          nameExamples: ["Aranyvér"],
+          existingTitles: ["Kaelthorn", "Kaelwyn", "Kaelorin"],
+          selectedLanguage: {
+            id: "l1",
+            title: "Old Tongue",
+            type: "language",
+            contentExcerpt: "x",
+            legacy: false,
+          },
+        },
+      }),
+    );
+    expect(prompt).not.toContain("Aranyvér");
+    expect(prompt).not.toContain("clearly different sound");
+  });
+
+  it("drops the style examples on refinement turns", () => {
+    const prompt = getGenerator("npc").buildPrompt(
+      run("npc", {
+        interaction: { input: "make it darker" },
+        vaultContext: {
+          categoryLabels: [],
+          applyTemplate: false,
+          neighbors: [],
+          worldSample: [],
+          existingTitles: [],
+          labelSuggestions: [],
+          includedContext: [],
+          nameExamples: ["Aranyvér"],
+        },
+      }),
+    );
+    expect(prompt).not.toContain("Aranyvér");
+  });
+
+  it("includes the culture's recorded naming conventions", () => {
+    const base = {
+      categoryLabels: [],
+      applyTemplate: false,
+      neighbors: [],
+      worldSample: [],
+      existingTitles: [],
+      labelSuggestions: [],
+      includedContext: [],
+      cultureNaming: {
+        culture: "Stormber",
+        guidance: ["Drawing inspiration from the Magyar people."],
+      },
+    };
+    const prompt = getGenerator("npc").buildPrompt(
+      run("npc", { vaultContext: base as never }),
+    );
+    expect(prompt).toContain("Stormber");
+    expect(prompt).toContain("Drawing inspiration from the Magyar people.");
+    const refine = getGenerator("npc").buildPrompt(
+      run("npc", {
+        interaction: { input: "darker" },
+        vaultContext: base as never,
+      }),
+    );
+    expect(refine).not.toContain("Magyar");
+  });
+
+  it("offers the pre-pass name, but not on refinement turns", () => {
+    const fresh = getGenerator("npc").buildPrompt(
+      run("npc", { nameSuggestion: "Yusra Odell" }),
+    );
+    expect(fresh).toContain('Use "Yusra Odell" as this entity\'s name');
+    const refine = getGenerator("npc").buildPrompt(
+      run("npc", {
+        nameSuggestion: "Yusra Odell",
+        interaction: { input: "darker" },
+      }),
+    );
+    expect(refine).not.toContain("Yusra Odell");
+  });
+
   it("uses only an explicitly selected legacy language", () => {
     const prompt = getGenerator("npc").buildPrompt(
       run("npc", {
