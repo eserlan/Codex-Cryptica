@@ -44,6 +44,30 @@ describe("help documentation workflow retrieval", () => {
     ["What does Incomplete only show in the table?", "entity-table"],
     ["How do I select a range of rows in the table?", "entity-table"],
     ["Why is the Summary column empty for some entries?", "entity-table"],
+    [
+      "How do I nest one entry under another in the explorer?",
+      "entity-explorer",
+    ],
+    ["What does Reject do on the Review tab?", "entity-explorer"],
+    ["How do I group entries by category in the sidebar?", "entity-explorer"],
+    ["How do I sort the explorer by last edited?", "entity-explorer"],
+    ["Why is Group by Category greyed out?", "entity-explorer"],
+    ["How do I roll with advantage?", "dice-roller"],
+    ["How do I roll a d20 with a modifier?", "dice-roller"],
+    ["What does the exploding dice formula do?", "dice-roller"],
+    ["How do I roll the same dice again?", "dice-roller"],
+    ["How do I clear my roll history?", "dice-roller"],
+    ["How do I add a custom category?", "categories-and-labels"],
+    ["How do I change the colour of a category?", "categories-and-labels"],
+    [
+      "What does Reset to defaults do to my categories?",
+      "categories-and-labels",
+    ],
+    [
+      "What happens to entries when I delete a category?",
+      "categories-and-labels",
+    ],
+    ["Where can I see all the labels in my vault?", "categories-and-labels"],
   ])("finds a readable guide for %s", (question, helpId) => {
     const result = retrieve(question, bundle, context);
     expect(result.noMatch).toBe(false);
