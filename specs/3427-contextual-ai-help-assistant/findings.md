@@ -282,3 +282,44 @@ One parameter, set on the same sets it is judged on, so treat the gains as small
 - "Graph versus canvas" still misses: both guides are in play and a different on-screen family outranks one of them. It needs a comparison-aware rule, not a weaker boost.
 - The six ranking misses are unchanged and unrelated to screen context.
 - The hybrid (embedding) retrieval path was not re-measured; its match strength uses the larger of lexical and semantic, so it gets the same scaling, but #3760 already found hybrid refusal behaviour worse than lexical.
+
+## Addendum: two-sided comparison questions (#3762)
+
+### What was wrong
+
+A question like "What is the difference between the graph and the canvas?" needs a guide for each side, but ranking is by overall match, so one side (or a third guide that mentions both words, such as Entity Reports) could fill the leading results and push the other side out. On the expanded set this was 6 of the 8 misses.
+
+### Change
+
+`detectComparison` recognises "difference between A and B", "A versus B", "is A the same as / different from B", "does A replace B" and "A or B". It returns each side's words, dropping the purpose clause ("... to make a new NPC") and any word both sides share. Anything else returns null and is ranked exactly as before.
+
+`ensureBothSides` then looks for each side's best chunk using only that side's words. A side is left alone when the top three already contain a chunk from the same feature or article as its best chunk. Otherwise its best chunk replaces the lowest-ranked top-three result that is not covering the other side; what is displaced still follows, so the list keeps its length. A side's best chunk is only used if it is about the side (the side's word is in its title, heading, article or feature name) and matches the side's words at 0.3 or more, so a passing mention in a body cannot displace a ranked result. Comparisons are only handled once the question has cleared the relevance floor, so an unrelated comparison ("Excel or Google Sheets") is still refused with no sources.
+
+### Measured (lexical retrieval, per question)
+
+|                                      | Before        | After             |
+| ------------------------------------ | ------------- | ----------------- |
+| Expanded recall@3                    | 92.5% (86/93) | **94.6% (88/93)** |
+| Frozen recall@3                      | 90.0% (27/30) | **93.3% (28/30)** |
+| Unrelated refusal, expanded / frozen | 100% / 100%   | 100% / 100%       |
+
+Gained: graph versus canvas; generator versus Oracle; and, on the frozen set, "publish a world or export a backup". Lost: nothing. 17 questions across the two sets are detected as comparisons; the rest take the old path unchanged.
+
+### What was tried first
+
+- **Always inserting each side's best chunk** (covered or not): fixed graph versus canvas and Google Drive versus backup but lost two passing questions, because a side already shown in a different chunk of the same article got a second chunk that displaced a good result. Hence "leave a covered side alone".
+- **Covering a side with any chunk that matches it nearly as well:** blocked the graph versus canvas fix, because Entity Reports mentions "canvas" almost as often as the canvas guide does and a single-word match cannot tell a mention from a guide. Hence covering by feature or article.
+- **Requiring the question-wide relevance floor for a side's chunk:** blocked the Oracle guide, whose own words are only one of the question's many. Hence judging a side on its own words.
+
+### Not fixed
+
+- "Does Google Drive sync replace a portable backup?" (covered by the same feature through another article), "Is importing notes the same as generating entries?" (the best generation guide, `related-entity-generation`, is not in the question's expected list), "Do I create an entity on the canvas or in the explorer?" and "Is the fog of war on the map the same as hiding an entry?" (a side has no guide named for it) still miss. "What happens if my import gets interrupted?" is a sparse-wording miss, not a comparison.
+- The expected-source lists were not edited to make questions pass.
+
+### How much tuning was done
+
+Three structural attempts (above) and no numeric sweeps; the side-match threshold (0.3) and the leading window (the top three) were each set once. The top-three window is also the evaluation's own measure, so the gain may be somewhat optimistic. Two of the three gains are on the expanded set that the rule was developed against; the third is on the frozen set.
+
+### Not measured
+
+The embedding (hybrid) path, and any live answer-model quality; these are retrieval results only.
