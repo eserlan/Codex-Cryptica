@@ -151,6 +151,7 @@ export const howDoIKeepPlayersEngagedDuringOtherPlayersTurnsInCombat: AnswerConf
       },
     ],
     relatedAnswers: [
+      "how-do-i-make-combat-faster-without-making-it-less-exciting",
       "how-do-i-balance-rpg-combat-encounters-without-a-tpk",
       "how-do-you-run-dnd-for-a-large-group-of-players",
       "how-do-you-make-a-tabletop-rpg-session-more-engaging",
@@ -168,7 +169,7 @@ export const howDoIKeepPlayersEngagedDuringOtherPlayersTurnsInCombat: AnswerConf
         "how to keep players paying attention during initiative",
       ],
       uniqueValue:
-        "Focuses on attention between combat turns, showing how initiative cues, shared objectives, reactions, visible changes, and beginner support give players a reason to follow the fight. It treats disengagement as feedback about wait time and encounter design, rather than only a behaviour problem.",
+        "Starts by diagnosing the wait between meaningful combat decisions, then shows how clearer changes, shared stakes, initiative cues, and beginner support can keep players engaged without demanding constant visible attention.",
       relatedIntents: [
         "answer-session-engagement",
         "answer-large-group-dnd",
@@ -201,7 +202,7 @@ export const howDoIKeepPlayersEngagedDuringOtherPlayersTurnsInCombat: AnswerConf
       title:
         "How do I keep players engaged during combat turns? | Codex Cryptica",
       description:
-        "Use clear initiative cues, changing threats, shared objectives, and useful player roles to keep attention on the fight between turns.",
+        "Measure waiting time between meaningful combat decisions, shorten avoidable delays, then use clear changes and shared stakes to keep players engaged.",
       image:
         "https://assets.codexcryptica.com/og/how-do-i-keep-players-engaged-during-other-players-turns-in-combat.jpg",
       imageAlt:

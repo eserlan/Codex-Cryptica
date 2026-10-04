@@ -115,6 +115,7 @@ export const howDoIMakeCombatFasterWithoutMakingItLessExciting: AnswerConfigInpu
       },
     ],
     relatedAnswers: [
+      "how-do-i-keep-players-engaged-during-other-players-turns-in-combat",
       "how-do-you-run-dnd-for-a-large-group-of-players",
       "how-do-i-balance-rpg-combat-encounters-without-a-tpk",
       "how-do-you-make-a-tabletop-rpg-session-more-engaging",
