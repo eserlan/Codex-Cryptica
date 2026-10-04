@@ -35,7 +35,7 @@ Open **Settings → Intelligence** to see your connection mode and key controls.
 
 Turn on **AI Disabled** in Settings to stop AI assistance. Manual writing, connections, local roll tables and local generator templates remain available. AI revisions cannot run in a guest vault.
 
-The **Help Assistant** answers questions about using Codex Cryptica. It is separate from the Lore Oracle and cannot edit your vault.
+**Cif**, the Codex guide, answers questions about using Codex Cryptica. It is separate from the Lore Oracle and cannot edit your vault.
 
 ### Related Blog Posts
 

@@ -98,6 +98,17 @@ const bundle = buildBundle({
       "offline-sync",
       "## offline-sync\nAbout offline-sync.",
     ),
+    article("publishing", "publishing", "## publishing\nAbout publishing."),
+    article(
+      "oracle-guide",
+      "oracle-guide",
+      "## oracle-guide\nAbout oracle-guide.",
+    ),
+    article(
+      "chat-commands",
+      "chat-commands",
+      "## chat-commands\nAbout chat-commands.",
+    ),
     article("importing", "importing", "## importing\nAbout importing."),
     article(
       "thread-weaver-import",

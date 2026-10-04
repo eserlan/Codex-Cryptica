@@ -6,6 +6,8 @@ import { chronology } from "./chronology";
 import { familyTree } from "./family-tree";
 import { guidedMode } from "./guided-mode";
 import { sessionPrep } from "./session-prep";
+import { publishing } from "./publishing";
+import { loreOracle } from "./lore-oracle";
 import type { FeatureEntry } from "../schema";
 import { archiveImport } from "./archive-import";
 import { backupAndRestore } from "./backup-and-restore";
@@ -40,4 +42,6 @@ export const FEATURE_REGISTRY: readonly FeatureEntry[] = [
   familyTree,
   guidedMode,
   sessionPrep,
+  publishing,
+  loreOracle,
 ];
