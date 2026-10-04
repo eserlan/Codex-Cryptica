@@ -24,6 +24,10 @@ describe("help documentation workflow retrieval", () => {
       "Can I save a graph selection as an editable report note?",
       "entity-reports",
     ],
+    [
+      "Why is the relationships option unavailable in a report?",
+      "entity-reports",
+    ],
     ["Does making a report change the source entities?", "entity-reports"],
     ["Can I order items in Canvas?", "spatial-canvas"],
     ["How do I move cards around?", "spatial-canvas"],

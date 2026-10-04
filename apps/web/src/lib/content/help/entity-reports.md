@@ -31,7 +31,7 @@ The Graph and Table reports use the selected entities as their scope. Relationsh
 
 Review the preview before saving. You can set **Brief** or **Standard** detail and choose whether to include descriptions, relationships, factions and affiliations, portraits, and GM-only secrets. GM-only secrets are excluded unless you turn them on. When relationships are included, you can also choose canvas lines (for Canvas reports) and graph connections. An option with no matching data is unavailable or explains that there is nothing to include.
 
-You can change the report title in the preview. If the scope is empty, the preview explains that there is nothing to report on and **Save as note** stays unavailable.
+You can change the report title in the preview. If the scope is empty, the preview explains that there is nothing to report on and **Save as note** stays unavailable. Relationship and faction options explain when the selected entities have no matching data; connection options also explain when there are no canvas lines or graph connections to include.
 
 ## Save, edit, and regenerate
 
