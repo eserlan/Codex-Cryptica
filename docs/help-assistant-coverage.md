@@ -33,6 +33,8 @@ registered feature; the coverage test requires it to stay in sync.
 | entity-table              | Entity Table (`/table`)                  | entity-table                                       | Read Help only; never select, label, filter, report on or delete entries.                                                               |
 | dice-roller               | Dice Roller pop-out (`/dice`)            | dice-roller                                        | Read Help only; never roll dice or change history.                                                                                      |
 | solo-adventure            | Solo Adventure (`/adventure`)            | adventure-mode                                     | Read Help only; never start, continue or change an adventure.                                                                           |
+| entity-explorer           | Explorer sidebar (any screen)            | entity-explorer                                    | Read Help only; never search, nest, approve, reject or delete entries.                                                                  |
+| entity-shelf              | Shelf sidebar (any screen)               | entity-shelf                                       | Read Help only; never shelve or import entries.                                                                                         |
 
 ## Context and unavailable actions
 
@@ -96,10 +98,10 @@ Surface keys are `nav:<id>` (Activity Bar and menu), `route:<folder>` (under
 | nav:table             | entity-table                                                  | entity-table                                  | covered      | Read Help only: there is no navigation destination for the table.                                                                         |
 | nav:adventure         | adventure-mode                                                | solo-adventure                                | covered      | Read Help only: there is no navigation destination for Play.                                                                              |
 | nav:random            | random-tables-decks                                           | tables                                        | covered      |                                                                                                                                           |
-| nav:explorer          | entity-explorer                                               | —                                             | article-only | The Explorer is a sidebar panel available on every screen, so it has no help area of its own and no screen description yet.               |
+| nav:explorer          | entity-explorer                                               | entity-explorer                               | covered      | A panel beside every screen: on screen exactly while it is open (`explorer-open`). Read Help only.                                        |
 | nav:oracle            | oracle-guide, chat-commands, gemini-api-key                   | lore-oracle                                   | covered      |                                                                                                                                           |
 | nav:generators        | in-app-generators, generate-related                           | campaign-generator, related-entity-generation | covered      |                                                                                                                                           |
-| nav:shelf             | entity-shelf                                                  | —                                             | article-only | The context schema has no area for the Shelf, so there is no screen description yet.                                                      |
+| nav:shelf             | entity-shelf                                                  | entity-shelf                                  | covered      | A panel beside every screen: on screen exactly while it is open (`shelf-open`). Read Help only.                                           |
 | nav:quicknote         | quicknote                                                     | session-journal                               | covered      |                                                                                                                                           |
 | nav:session-journal   | quicknote                                                     | session-journal                               | covered      |                                                                                                                                           |
 | nav:guest-chat        | guest-character-chat                                          | —                                             | article-only | Shown only in a shared guest view; the screen description has no guest surface yet (`public` is reserved).                                |
@@ -127,9 +129,8 @@ Surface keys are `nav:<id>` (Activity Bar and menu), `route:<folder>` (under
 | settings:help         | —                                                             | —                                             | not-needed   | The Help tab hosts the Help library itself.                                                                                               |
 
 **Gaps found.** Every surface has a dedicated Help article; the audit has no `gap`
-rows. Four surfaces have an article but no registry entry, so Cif can answer
-questions about them but cannot point at or open them: the Explorer, the Shelf,
-guest chat and the guest view. See the next section for why.
+rows. Two surfaces have an article but no registry entry: guest chat and the guest
+view (see the end of the next section).
 
 ## Registry entries without a help area
 
@@ -148,15 +149,19 @@ and they are not equally costly.
    dice roller or Play). This changes `DESTINATION_IDS`, which the Worker
    validates strictly, so it follows the rollout order above: deploy the Worker
    first, then the web app.
-3. **A new area or flag, for panels that sit beside every screen** (the
-   Explorer and the Shelf). A single area is the wrong shape: the screen
-   description has one `area`, so opening the Explorer would replace "graph"
-   (or whatever is behind it) and lose that screen's guidance while the panel is
-   open. A multi-valued flag would fit better, but then the registry schema needs
-   a way to match on a flag, `HELP_FLAGS` and the Worker's enums change, and the
-   rollout order applies. Their Help articles already answer questions about them
-   (the five Explorer questions in the retrieval tests all find `entity-explorer`), so these
-   two stay article-only until there is evidence a registry entry would help.
+3. **A flag, for panels that sit beside every screen** (the Explorer and the
+   Shelf). A single area is the wrong shape: the screen description has one
+   `area`, so opening the Explorer would replace "graph" (or whatever is behind it)
+   and lose that screen's guidance while the panel is open. Instead the screen
+   description carries a flag while the panel is open (`explorer-open`,
+   `shelf-open`, listed in `PANEL_FLAGS`) and a registry entry names it with
+   `whenFlag`. Such an entry is on screen exactly while its flag is present,
+   whatever the area, route or tab, and it sits alongside the screen's own
+   features rather than replacing them. This **is** an enum change, so it follows
+   the rollout order above. As a safety net for the short window when the web app
+   and the Worker deploy together, a client that gets `INVALID_CONTEXT` back
+   retries once without the panel flags (`withoutPanelFlags`), so a mismatch costs
+   only the panel hint.
 
 Guest chat and the guest view are separate: the relevant area is a shared guest
 vault, and the screen description reserves `surface: "public"` for it but does

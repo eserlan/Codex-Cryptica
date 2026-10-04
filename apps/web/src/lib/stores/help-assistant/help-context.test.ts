@@ -49,6 +49,66 @@ describe("HelpContextStore", () => {
     }
   });
 
+  describe("open sidebar panels", () => {
+    it("adds a flag while the Explorer or the Shelf is open", () => {
+      expect(
+        store({ getActiveSidebarTool: () => "explorer" }).ctx.current.flags,
+      ).toContain("explorer-open");
+      expect(
+        store({ getActiveSidebarTool: () => "shelf" }).ctx.current.flags,
+      ).toContain("shelf-open");
+    });
+
+    it("adds no panel flag for the Oracle, for no panel, or when the source is absent", () => {
+      for (const tool of ["oracle", "none"] as const) {
+        const flags = store({ getActiveSidebarTool: () => tool }).ctx.current
+          .flags;
+        expect(flags).not.toContain("explorer-open");
+        expect(flags).not.toContain("shelf-open");
+      }
+      expect(store().ctx.current.flags).toEqual([]);
+    });
+
+    it("keeps the screen's own area, tab and other flags: a panel adds, never replaces", () => {
+      const { ctx, registry } = store({
+        getRouteId: () => "/(app)/canvas",
+        getActiveSidebarTool: () => "explorer",
+        generatorsAvailable: () => true,
+      });
+      expect(ctx.current).toMatchObject({
+        area: "canvas",
+        routeTemplate: "/(app)/canvas",
+      });
+      expect(ctx.current.flags).toEqual(["generators", "explorer-open"]);
+
+      registry.registerEntityDetail(surface());
+      expect(ctx.current).toMatchObject({
+        area: "entity-detail",
+        tab: "connections",
+        entityKind: "location",
+      });
+      expect(ctx.current.flags).toContain("explorer-open");
+    });
+
+    it("does not change the screen signature, so opening a panel does not make an answer look stale", () => {
+      const open = store({ getActiveSidebarTool: () => "shelf" }).ctx;
+      const closed = store({ getActiveSidebarTool: () => "none" }).ctx;
+
+      expect(open.signature).toBe(closed.signature);
+    });
+
+    it("reads the panel live, so it follows the user opening and closing it", () => {
+      let tool: "explorer" | "none" = "none";
+      const { ctx } = store({ getActiveSidebarTool: () => tool });
+
+      expect(ctx.current.flags).not.toContain("explorer-open");
+      tool = "explorer";
+      expect(ctx.current.flags).toContain("explorer-open");
+      tool = "none";
+      expect(ctx.current.flags).not.toContain("explorer-open");
+    });
+  });
+
   it("offers the journal panel only in a ready editable vault", () => {
     expect(
       store({ isGuestMode: () => false, journalAvailable: () => true }).ctx

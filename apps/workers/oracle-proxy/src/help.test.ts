@@ -461,6 +461,34 @@ describe("POST /api/help/ask — validation and failures", () => {
     expect(generate).not.toHaveBeenCalled();
   });
 
+  it("accepts a screen description that says a side panel is open", async () => {
+    const { ask, generate } = harness();
+
+    for (const flags of [
+      ["explorer-open"],
+      ["shelf-open"],
+      ["generators", "explorer-open"],
+    ]) {
+      const res = await ask(valid({ context: { ...context, flags } }));
+      expect(res.status, flags.join()).toBe(200);
+    }
+    expect(generate).toHaveBeenCalled();
+  });
+
+  it("still rejects a flag it does not know, so an unknown panel cannot slip through", async () => {
+    const { ask, generate } = harness();
+
+    const res = await ask(
+      valid({
+        context: { ...context, flags: ["explorer-open", "made-up-panel"] },
+      }),
+    );
+
+    expect(res.status).toBe(400);
+    expect((await res.json()).error.code).toBe("INVALID_CONTEXT");
+    expect(generate).not.toHaveBeenCalled();
+  });
+
   it("rejects malformed JSON and oversized bodies", async () => {
     const { ask } = harness();
     expect((await ask(null, "{nope")).status).toBe(400);

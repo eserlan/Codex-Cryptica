@@ -16,6 +16,7 @@ const screens = Object.fromEntries(
         area: feature.areas[0],
         tab: feature.tabs[0] ?? null,
         entityKind: feature.kinds === "any" ? null : feature.kinds[0],
+        flags: feature.whenFlag ? [feature.whenFlag] : [],
       }),
     ];
   }),
@@ -77,6 +78,13 @@ describe("remaining coverage retrieval evaluation", () => {
       "solo-adventure",
       "schema-settings",
     ],
+    ["How do I send an entry to the Shelf?", "entity-explorer", "entity-shelf"],
+    [
+      "How do I nest one entry inside another?",
+      "entity-shelf",
+      "entity-explorer",
+    ],
+    ["How do I roll with advantage?", "entity-explorer", "dice-roller"],
   ])(
     "keeps explicit intent for %s despite the %s screen",
     (question, screen, expected) => {
@@ -110,6 +118,11 @@ describe("remaining coverage retrieval evaluation", () => {
       "Is publishing my world the same as exporting a backup?",
       "publishing",
       "backup-and-restore",
+    ],
+    [
+      "Is the Explorer the same as the Shelf?",
+      "entity-explorer",
+      "entity-shelf",
     ],
   ])("grounds both sides of %s", (question, first, second) => {
     const result = retrieve(question, bundle, sanitizeHelpContext({}));

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { PANEL_FLAGS } from "../actions/catalogue";
 import { ActionRefSchema, type ActionRef } from "../actions/types";
 import {
   HELP_AREAS,
@@ -34,6 +35,12 @@ export const FeatureEntrySchema = z
     helpIds: z.array(z.string().min(1)).default([]),
     related: z.array(z.string().regex(kebab)).default([]),
     actions: z.array(ActionRefSchema),
+    /**
+     * For a panel that sits beside every screen (the Explorer, the Shelf): the
+     * feature is on screen exactly while this flag is present, whatever the
+     * area, route or tab. `areas` and `routes` are then only labels.
+     */
+    whenFlag: z.enum(PANEL_FLAGS).optional(),
   })
   .strict();
 
@@ -112,6 +119,17 @@ function workflowErrors(entry: FeatureEntry): string[] {
   );
 }
 
+/** A panel feature is matched by its flag alone, so tab and kind rules cannot apply. */
+function panelErrors(entry: FeatureEntry): string[] {
+  if (!entry.whenFlag) return [];
+  const errors: string[] = [];
+  if (entry.tabs.length > 0)
+    errors.push(`Feature ${entry.id}: a panel feature cannot list tabs`);
+  if (entry.kinds !== "any")
+    errors.push(`Feature ${entry.id}: a panel feature must apply to any kind`);
+  return errors;
+}
+
 function referenceErrors(
   entry: FeatureEntry,
   featureIds: ReadonlySet<string>,
@@ -130,6 +148,7 @@ function referenceErrors(
       ),
     ...actionErrors(entry, helpIds, seenActionIds),
     ...workflowErrors(entry),
+    ...panelErrors(entry),
   ];
 }
 

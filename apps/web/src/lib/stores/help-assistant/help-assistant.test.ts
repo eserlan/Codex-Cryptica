@@ -331,3 +331,83 @@ describe("HelpAssistantStore quick prompts", () => {
     expect((sent.context as { tab?: string }).tab).toBe("connections");
   });
 });
+
+describe("HelpAssistantStore when the service does not know the panel flags yet", () => {
+  const withPanel = () =>
+    screen({ flags: ["explorer-open", "connections-editable"] });
+  const invalidContext = {
+    ok: false,
+    error: { kind: "bad-request", code: "INVALID_CONTEXT" },
+  } as unknown as HelpAskResult;
+
+  const flagsOf = (call: unknown) =>
+    ((call as AskInput).context as { flags: string[] }).flags;
+
+  it("retries once without the panel flags and still answers", async () => {
+    let calls = 0;
+    const { store, client } = setup(
+      async () =>
+        ++calls === 1 ? invalidContext : { ok: true, answer: answered() },
+      withPanel(),
+    );
+
+    await store.ask("How do I connect the faction?");
+
+    expect(client.ask).toHaveBeenCalledTimes(2);
+    expect(flagsOf(client.ask.mock.calls[0][0])).toEqual([
+      "explorer-open",
+      "connections-editable",
+    ]);
+    // Only the panel flag is dropped; everything else about the screen stays.
+    expect(flagsOf(client.ask.mock.calls[1][0])).toEqual([
+      "connections-editable",
+    ]);
+    expect(store.status).toBe("answered");
+    expect(store.messages.at(-1)?.text).toContain("Status tab");
+  });
+
+  it("does not retry when there was no panel flag to drop", async () => {
+    const { store, client } = setup(async () => invalidContext, screen());
+
+    await store.ask("How do I connect the faction?");
+
+    expect(client.ask).toHaveBeenCalledTimes(1);
+    expect(store.status).toBe("fallback");
+  });
+
+  it("does not retry for any other kind of failure", async () => {
+    for (const error of [
+      { kind: "bad-request", code: "QUESTION_TOO_LONG" },
+      { kind: "server" },
+      { kind: "offline" },
+      { kind: "timeout" },
+    ]) {
+      const { store, client } = setup(
+        async () => ({ ok: false, error }) as unknown as HelpAskResult,
+        withPanel(),
+      );
+
+      await store.ask("How do I connect the faction?");
+
+      expect(client.ask, JSON.stringify(error)).toHaveBeenCalledTimes(1);
+    }
+  });
+
+  it("gives up after one retry rather than looping", async () => {
+    const { store, client } = setup(async () => invalidContext, withPanel());
+
+    await store.ask("How do I connect the faction?");
+
+    expect(client.ask).toHaveBeenCalledTimes(2);
+    expect(store.status).toBe("fallback");
+  });
+
+  it("sends a normal question once", async () => {
+    const { store, client } = setup(undefined, withPanel());
+
+    await store.ask("How do I connect the faction?");
+
+    expect(client.ask).toHaveBeenCalledTimes(1);
+    expect(flagsOf(client.ask.mock.calls[0][0])).toContain("explorer-open");
+  });
+});
