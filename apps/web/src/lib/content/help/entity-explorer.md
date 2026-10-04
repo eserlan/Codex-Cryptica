@@ -33,7 +33,7 @@ The panel has two tabs:
 
 ## Opening an entry
 
-Click an entry to open it in Zen Mode. Each row also has buttons that appear when you point at it:
+Click an entry to open it. In the sidebar, this opens Zen Mode; in the desktop Explorer workspace, it opens the entry in the workspace view. Each row also has buttons that appear when you point at it:
 
 - **Open in Zen Mode** opens the entry.
 - **Find in Graph** takes you to the entry on the graph. On a phone this also closes the sidebar so you can see it.

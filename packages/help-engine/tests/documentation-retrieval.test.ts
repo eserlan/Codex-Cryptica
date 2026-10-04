@@ -84,6 +84,22 @@ describe("help documentation workflow retrieval", () => {
     expect(result.chunks).toEqual([]);
   });
 
+  it("explains where an Explorer entry opens in the desktop workspace", () => {
+    const result = retrieve(
+      "Where does an entry open when I click it in the desktop Explorer workspace?",
+      bundle,
+      context,
+    );
+
+    expect(result.noMatch).toBe(false);
+    expect(result.chunks.map(({ chunk }) => chunk.helpId)).toContain(
+      "entity-explorer",
+    );
+    expect(result.chunks.map(({ chunk }) => chunk.text).join(" ")).toContain(
+      "in the desktop Explorer workspace, it opens the entry in the workspace view",
+    );
+  });
+
   it("keeps internal help links pointed at included articles", () => {
     const helpIds = new Set(bundle.helpIds);
     for (const chunk of bundle.chunks) {
