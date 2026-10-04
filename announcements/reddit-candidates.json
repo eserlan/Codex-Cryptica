@@ -1,5 +1,5 @@
 {
-  "updated_at": 1791145087,
+  "updated_at": 1791146375,
   "candidates": [
     {
       "id": "reddit-37032544014-my-pirate-arcs-kept-collapsing-into-eith",
@@ -32,14 +32,14 @@
       "created_at": 1791028506
     },
     {
-      "id": "reddit-37230785420-new-answers-on-combat-pacing-and-engagem",
-      "title": "New answers on combat pacing and engagement",
-      "body": "Every GM knows the moment\u2014a player's turn drags on, and you can see the others at the table checking their phones.\n\nCombat is where a lot of campaigns lose energy. I built two answer pages specifically on this because they're actually different problems. One's about keeping players engaged while it's not their turn. The other's about speeding up combat without losing the tension that makes it tense.\n\nWhat you'll find:\n- Techniques to keep the table engaged between turns\n- How to signal when a turn's wrapping up without railroading choices\n- Pacing methods that work across different combat systems\n- Where most GMs make combat drag without realizing it\n\nWhat pulls your table's focus back when combat starts to lag?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/announcements/release-37230785420-0.png)",
-      "url": "https://codexcryptica.com/answers/how-do-i-keep-players-engaged-during-other-players-turns-in-combat",
-      "image_url": "https://assets.codexcryptica.com/announcements/release-37230785420-0.png",
+      "id": "reddit-37230785420-help-documentation-for-core-tools",
+      "title": "Help documentation for core tools",
+      "body": "Your tools are packed with capabilities. But if you haven't found the help panel yet, you might never discover half of them.\n\nI expanded help documentation across core tools\u2014Explorer, Entity Table, Dice Roller, Solo Adventure, and others. Help now lives inside the tools where you need it, answering the questions you actually ask when using them.\n\nWhat's new:\n- Help articles for tools you use every session\n- Contextual guidance tied to what you're doing right now\n- Quick reference that works offline\n- Discover capabilities hiding in features you've already got\n\nIf you could ask one question about a tool you use weekly, what would it be?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/images/help-blog/welcome.png)",
+      "url": "",
+      "image_url": "https://assets.codexcryptica.com/images/help-blog/welcome.png",
       "source_id": "37230785420",
       "status": "approved",
-      "created_at": 1791145087
+      "created_at": 1791146375
     }
   ]
 }
