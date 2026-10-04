@@ -31,6 +31,7 @@ vi.mock("./entities", () => ({
   addLabel: vi.fn(),
   bulkAddLabel: vi.fn(),
   bulkRemoveLabel: vi.fn(),
+  renameLabel: vi.fn(),
   removeLabel: vi.fn(),
   batchCreateEntities: vi.fn(),
 }));
@@ -1023,6 +1024,66 @@ describe("EntityStore", () => {
 
       const count = await store.bulkAddLabel(["hero"], "nonexistent");
       expect(count).toBe(0);
+    });
+
+    it("renames a label vault-wide and saves each changed entity", async () => {
+      const modifiedEntity = { ...repository.entities.hero, labels: ["lead"] };
+      vi.mocked(vaultEntities.renameLabel).mockReturnValue({
+        entities: { ...repository.entities, hero: modifiedEntity },
+        modifiedIds: ["hero"],
+      });
+
+      const count = await store.renameLabel("heroic", "lead");
+
+      expect(vaultEntities.renameLabel).toHaveBeenCalledWith(
+        expect.anything(),
+        "heroic",
+        "lead",
+      );
+      expect(count).toBe(1);
+      expect(repository.saveQueue.enqueue).toHaveBeenCalled();
+    });
+
+    it("does not save anything when a rename changes no entity", async () => {
+      vi.mocked(repository.saveQueue.enqueue).mockClear();
+      vi.mocked(vaultEntities.renameLabel).mockReturnValue({
+        entities: repository.entities,
+        modifiedIds: [],
+      });
+
+      const count = await store.renameLabel("nonexistent", "lead");
+
+      expect(count).toBe(0);
+      expect(repository.saveQueue.enqueue).not.toHaveBeenCalled();
+    });
+
+    it("deletes a label from every entity, not only a chosen few", async () => {
+      const modifiedEntity = { ...repository.entities.hero, labels: [] };
+      vi.mocked(vaultEntities.bulkRemoveLabel).mockReturnValue({
+        entities: { ...repository.entities, hero: modifiedEntity },
+        modifiedIds: ["hero"],
+      });
+
+      const count = await store.deleteLabel("heroic");
+
+      expect(vaultEntities.bulkRemoveLabel).toHaveBeenCalledWith(
+        expect.anything(),
+        Object.keys(repository.entities),
+        "heroic",
+      );
+      expect(count).toBe(1);
+      expect(repository.saveQueue.enqueue).toHaveBeenCalled();
+    });
+
+    it("does not save anything when deleting a label nobody has", async () => {
+      vi.mocked(repository.saveQueue.enqueue).mockClear();
+      vi.mocked(vaultEntities.bulkRemoveLabel).mockReturnValue({
+        entities: repository.entities,
+        modifiedIds: [],
+      });
+
+      expect(await store.deleteLabel("nonexistent")).toBe(0);
+      expect(repository.saveQueue.enqueue).not.toHaveBeenCalled();
     });
 
     it("should return 0 when bulkRemoveLabel has no modified ids", async () => {

@@ -14,6 +14,7 @@ import {
   type AnswerConfig,
 } from "./schema";
 import { answers } from "./pages";
+import { findIntentOwner, getDiscoveryEntries } from "../discovery/registry";
 import { getAllLandingPageSlugs } from "../for/registry";
 import { HEIST_TOPIC_CONFIG } from "../topics/heists";
 import { PUZZLE_TOPIC_CONFIG } from "../topics/puzzles";
@@ -50,6 +51,27 @@ const mockRegistry: Record<string, AnswerConfig> = {
 };
 
 describe("answer registry", () => {
+  it("cross-links combat engagement and combat pacing answers", () => {
+    const engagement =
+      answers[
+        "how-do-i-keep-players-engaged-during-other-players-turns-in-combat"
+      ];
+    const pacing =
+      answers["how-do-i-make-combat-faster-without-making-it-less-exciting"];
+
+    expect(engagement.relatedAnswers).toContain(pacing.slug);
+    expect(pacing.relatedAnswers).toContain(engagement.slug);
+  });
+
+  it("keeps the large-group combat pacing phrasing with its new answer", () => {
+    expect(
+      findIntentOwner(
+        "how to speed up dnd combat with many players",
+        getDiscoveryEntries(),
+      )?.id,
+    ).toBe("answer-faster-exciting-combat");
+  });
+
   it("keeps the civilisation capability habits heading aligned with its items", () => {
     const habits = answers[
       "how-do-i-give-different-civilisations-distinct-strengths-and-weaknesses"
