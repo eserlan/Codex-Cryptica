@@ -202,7 +202,7 @@ describe("buildBundle", () => {
       },
       {
         question: "Does grouping change the relationships between entities?",
-        expectedPhrase: "does not create or change entity relationships",
+        expectedPhrase: "no entity data, relationships, or node positions",
       },
       {
         question: "Can I save my groups?",
