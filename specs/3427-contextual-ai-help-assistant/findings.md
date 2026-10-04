@@ -68,7 +68,7 @@ It is on only at staging, detected from the hostname at run time (plus `VITE_HEL
 5. **The repo's architecture rules said Workers may import only `schema`.** The plan wrongly claimed importing a workspace package matched existing practice. Resolved with a narrow, named exception in `.fallowrc.json` (a `help-engine` zone; workers may import `schema` and `help-engine`; `help-engine` may import only `schema`), approved by the maintainer. The Worker deploy workflow also had no install step, so a build step (Bun, install, bundle) and extra path filters were added.
 6. **The Add button is absent in a read-only guest vault**, so the guide must not be offered there. Added a `connections-editable` flag that the highlight requires.
 7. **Two real bugs found by the tests and live run:** a synonym folding "related" into "connect" sent "generate related entities" to the Connections help; and a cancel issued while the session token was still being fetched still sent the request.
-8. **Screen context can override the question's topic** (see limits): one evaluation question, "How do I generate entries related to this one?" asked from the Connections tab, retrieves Connections help because the on-screen feature is boosted.
+8. **Screen context can override the question's topic** (see limits): one evaluation question, "How do I generate entries related to this one?" asked from the Connections tab, retrieves Connections help because the on-screen feature is boosted. _Addressed in #3617; see the addendum at the end._
 
 ## Decisions and their status
 
@@ -112,7 +112,7 @@ Not walked through by a person in a browser. Automated equivalents cover it:
 ## Limits of the evidence
 
 - **The no-match threshold is tuned on the same 30 questions it is judged on**, and the gap between the weakest in-scope score (0.35) and the strongest out-of-scope score (0.27) is only 0.08. Expect both false refusals and false answers on a larger, independent set. The model is also told to answer "none" when the sources do not cover a question, so a weak match that passes the floor is caught a second time, but that was tested with a stub, not measured live on out-of-scope questions.
-- **Screen context can override a question's topic** (finding 8). Context boosts help the headline case and hurt that one; the balance was set by hand.
+- **Screen context can override a question's topic** (finding 8). Context boosts help the headline case and hurt that one; the balance was set by hand. The boost is now scaled by match strength (#3617 addendum); two on-screen-family comparison questions still miss.
 - **Live runs used only Luna.** The Gemini fallback path was not exercised live (no Gemini key).
 - **"Correct" for the 10 headline runs** was judged by a script checking for the Status tab, Add, the guide and a Connections citation, plus reading three samples. A human reviewer (SC-001) has not read them.
 - **Not evaluated:** the 5-person usability check (SC-010, deliberately deferred); screen-reader and mobile-width behaviour by hand; the deploy workflow change in a real CI run; staging.
@@ -232,3 +232,53 @@ The hybrid retrieves two extra correct sources on the fresh set, including the q
 **Recommendation: defer D1 + Vectorize deployment and retain lexical-plus-context as the acceptance baseline.** The fresh hybrid recall gain is useful evidence for further semantic retrieval work, but the refusal regression violates the unrelated-question target and the expanded recall regression rules out adopting this hybrid as a blanket improvement. A Vectorize storage/index migration does not by itself fix the current normalisation, ranking or refusal behaviour. The fully embedded candidate approaches the size trigger, while the checked-in partially cached bundle is about 734 KB. Removing bundled vectors retains a 233 KB lexical corpus. Treat the size trigger as a reason to review storage only if complete semantic coverage proves worth retaining. Reassess resource adoption after a separate retrieval/refusal change passes independent validation, or when one of the other operational triggers becomes real.
 
 This issue provides the requested comparison and recommendation. It does not deploy resources, change runtime ranking or retune the floor. Live answer-quality and semantic query-latency/cost measurements remain separate work; this offline result cannot settle them.
+
+## Addendum: screen context overriding the topic (#3617)
+
+### Re-baseline
+
+The finding was written against 20 questions with one miss. On the current sets (122 expanded, 40 frozen; lexical retrieval) there are 8 expanded misses. Re-running each miss with no screen context (the `none` screen) separates the causes:
+
+| Miss                                                                                                                                  | Cause                                                                                                                                                           |
+| ------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| "How do I set the default template for a new character?" (Settings)                                                                   | **Screen boost.** `offline-sync` matches on one word (0.18) but its feature is on the Settings screen, so +0.32 lifts it above the real guide (0.49, no boost). |
+| "What is the difference between the graph and the canvas?" (Graph)                                                                    | Screen boost, but between two on-screen families: `entity-reports` (0.72) gains 0.12 and passes `canvas` (0.74). Not a weak-match case.                         |
+| Six others (interrupted import, generator vs Oracle, import vs generating, Google Drive vs backup, canvas vs explorer, fog vs hiding) | Ranking: two-sided comparisons or sparse wording. Identical with and without a screen.                                                                          |
+
+The issue's own example, "How do I generate entries related to this one?" from the Connections tab, **no longer fails**: `registry:related-entity-generation` is first, since the registry coverage added in #3750. It is now a regression test.
+
+Screen context also rescues 6 in-scope questions that miss without it, so removing or weakening it broadly would be a net loss.
+
+### Options tried
+
+Compared on the expanded set, the frozen set and both refusal sets, per question (gains and losses), not only totals.
+
+| Option                                                   | Expanded          | Frozen            | Unrelated refusal | Verdict                                                                    |
+| -------------------------------------------------------- | ----------------- | ----------------- | ----------------- | -------------------------------------------------------------------------- |
+| Current boost                                            | 91.4% (85/93)     | 86.7% (26/30)     | 100% / 100%       | Baseline                                                                   |
+| Cap boost at `k` x match strength, k = 0.3-0.7           | 90.3%             | 86.7-90.0%        | 100% / 100%       | Loses a question                                                           |
+| Cap boost at `k` x match strength, k = 1.0-1.5           | 92.5%             | 86.7%             | 100% / 100%       | Fixes default template only                                                |
+| **Scale boost by match strength, full at 0.35**          | **92.5% (86/93)** | **90.0% (27/30)** | **100% / 100%**   | **Adopted**                                                                |
+| Same, full at 0.45                                       | 91.4%             | 90.0%             | 100% / 100%       | Loses "Should I export to share my world with players?"                    |
+| Same, full at 0.5                                        | 90.3%             | 90.0%             | 100% / 100%       | **Loses the headline "connect the faction I just created"**                |
+| Cap on-screen score at the best off-screen match (alone) | 91.4%             | 86.7%             | 100% / 100%       | No change on its own; adding it to scaling changed nothing either; dropped |
+
+Not tried: weighting action verbs (generate, connect, roll) and applying the boost only to ambiguous questions. The question that motivated them no longer fails, and the remaining screen-caused miss is a weak-match case, so neither was needed.
+
+### Result
+
+The screen boost (up to 0.35 on the Connections tab) is multiplied by `min(1, matchStrength / 0.35)`, where match strength is the larger of lexical and semantic score. The effect:
+
+- A chunk with a strong match gets the full boost, so the headline scenario and the six rescued questions are unchanged.
+- A chunk that shares only a word or two gets a fraction, so it can no longer pass the guide that answers the question.
+- Expanded recall@3 rises from 91.4% to 92.5% and frozen from 86.7% to 90.0%. No question is lost. Unrelated-question refusal stays 100% on both sets.
+
+### How much tuning was done
+
+One parameter, set on the same sets it is judged on, so treat the gains as small and the main value as the removed failure mode. The adopted value sits 0.10 below the first loss (0.45) and the headline breaks at 0.50, so there is limited headroom: **do not raise the threshold without re-running the headline.** One of the two gains is on the frozen set, which was not used to pick the direction.
+
+### Not fixed
+
+- "Graph versus canvas" still misses: both guides are in play and a different on-screen family outranks one of them. It needs a comparison-aware rule, not a weaker boost.
+- The six ranking misses are unchanged and unrelated to screen context.
+- The hybrid (embedding) retrieval path was not re-measured; its match strength uses the larger of lexical and semantic, so it gets the same scaling, but #3760 already found hybrid refusal behaviour worse than lexical.
