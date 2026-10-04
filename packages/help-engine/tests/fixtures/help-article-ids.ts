@@ -13,6 +13,7 @@ export const KNOWN_HELP_IDS = [
   "generate-related",
   "random-tables-decks",
   "spatial-canvas",
+  "entity-reports",
   "canvas-add-entities",
   "map-mode",
   "vtt-session",

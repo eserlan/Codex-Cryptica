@@ -29,6 +29,11 @@ export const COVERAGE_QUESTIONS = [
     "How do I collect graph entities into a report?",
     "holdout",
   ],
+  [
+    "entity-reports",
+    "Can I turn selected table rows into a report?",
+    "holdout",
+  ],
   ["stat-sheets", "Where are an entity's hit points and dice fields?", "tune"],
   [
     "stat-sheets",
@@ -115,7 +120,7 @@ export const COVERAGE_QUESTIONS = [
 
 export const COVERAGE_HELP: Record<string, string[]> = {
   "session-journal": ["quicknote"],
-  "entity-reports": ["spatial-canvas"],
+  "entity-reports": ["entity-reports"],
   "stat-sheets": ["stat-sheets"],
   "entity-templates": ["default-entity-templates"],
   chronology: ["chronology"],
