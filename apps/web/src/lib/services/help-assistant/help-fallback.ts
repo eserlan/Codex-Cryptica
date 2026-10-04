@@ -31,7 +31,7 @@ const MAX_TOPICS = 3;
 export function fallbackMessage(error: HelpClientError): string {
   switch (error.kind) {
     case "offline":
-      return "You're offline, so the help assistant can't answer right now. The help for this screen is still here:";
+      return "You're offline, so Cif can't answer right now. The help for this screen is still here:";
     case "rate-limited":
       return "That's a lot of questions in a short time. Wait a moment and try again. In the meantime, the help for this screen is here:";
     case "timeout":
@@ -46,7 +46,7 @@ export function fallbackMessage(error: HelpClientError): string {
     case "aborted":
       return "";
     default:
-      return "I couldn't reach the help assistant just now. The help for this screen is here:";
+      return "I couldn't get an answer just now. The help for this screen is here:";
   }
 }
 

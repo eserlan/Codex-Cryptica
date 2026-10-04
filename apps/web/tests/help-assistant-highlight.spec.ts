@@ -72,7 +72,7 @@ test.describe("Help assistant: guided highlight", () => {
 
     await page.getByTestId("ask-about-this").click();
     await page
-      .getByLabel(/Ask a question about using Codex Cryptica/i)
+      .getByLabel(/Ask Cif a question about using Codex Cryptica/i)
       .fill("How do I connect the faction I just created?");
     await page.getByRole("button", { name: "Ask", exact: true }).click();
 
@@ -140,7 +140,7 @@ test.describe("Help assistant: guided highlight", () => {
     await page.getByTestId("tab-connections").click();
     await page.getByTestId("ask-about-this").click();
     await page
-      .getByLabel(/Ask a question about using Codex Cryptica/i)
+      .getByLabel(/Ask Cif a question about using Codex Cryptica/i)
       .fill("Where is Add?");
     await page.getByRole("button", { name: "Ask", exact: true }).click();
     await expect(page.getByTestId("help-assistant-answer")).toBeVisible();

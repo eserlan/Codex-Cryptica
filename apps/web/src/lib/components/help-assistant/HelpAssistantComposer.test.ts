@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from "vitest";
 import HelpAssistantComposer from "./HelpAssistantComposer.svelte";
 
 const box = () =>
-  screen.getByLabelText(/Ask a question/i) as HTMLTextAreaElement;
+  screen.getByLabelText(/Ask Cif a question/i) as HTMLTextAreaElement;
 const type = (value: string) => fireEvent.input(box(), { target: { value } });
 const ask = () => fireEvent.click(screen.getByRole("button", { name: "Ask" }));
 

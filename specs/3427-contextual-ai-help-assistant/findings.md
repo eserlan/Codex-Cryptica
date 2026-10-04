@@ -127,7 +127,7 @@ Drafted, not created as GitHub issues (that is outward-facing and awaits approva
 3. **Run the embeddings comparison** — completed in the [#3612 addendum](#addendum-embeddings-comparison-3612).
 4. **Human review of live answers** (SC-001) and a 5-person usability check (SC-010).
 5. **Register more features**, and add a rule or lint that a user-facing feature PR touches the registry.
-6. **Decide the assistant's name, quick prompts and proactive-help setting** (left provisional by the spec).
+6. **Decide the assistant's name, quick prompts and proactive-help setting** (left provisional by the spec). _Name decided; quick prompts proposed and proactive help described, both unbuilt: see "Decisions" in [spec.md](./spec.md) (#3616)._
 7. **Tackle the context-overrides-topic case**, for example by weighting the question's action verbs, or boosting only when the question is ambiguous.
 8. **Exercise the Gemini fallback live**, and add a provider-failure alert on the new log line.
 9. **Streaming the prose** only if p90 regresses.

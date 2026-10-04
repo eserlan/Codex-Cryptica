@@ -55,7 +55,7 @@
     <p class="text-meta text-chrome-muted" role="status">{notice}</p>
   {/if}
   <label for="help-assistant-input" class="sr-only">
-    Ask a question about using Codex Cryptica
+    Ask Cif a question about using Codex Cryptica
   </label>
   <div class="flex items-end gap-2">
     <textarea

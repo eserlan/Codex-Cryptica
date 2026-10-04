@@ -78,7 +78,7 @@ beforeEach(() => {
 });
 
 const type = async (text: string) => {
-  await fireEvent.input(screen.getByLabelText(/Ask a question/i), {
+  await fireEvent.input(screen.getByLabelText(/Ask Cif a question/i), {
     target: { value: text },
   });
 };
@@ -144,12 +144,40 @@ describe("HelpAssistantPanel", () => {
     assistant.open();
     await waitFor(() =>
       expect(
-        screen.getByRole("dialog", { name: "Help assistant" }),
+        screen.getByRole("dialog", { name: "Cif, the Codex guide" }),
       ).toBeTruthy(),
     );
     expect(
-      screen.getByLabelText(/Ask a question about using Codex Cryptica/i),
+      screen.getByLabelText(/Ask Cif a question about using Codex Cryptica/i),
     ).toBeTruthy();
+  });
+
+  it("names the close button so it is not confused with other Close buttons", async () => {
+    const { assistant } = setup();
+    assistant.open();
+    await waitFor(() => screen.getByRole("dialog"));
+
+    expect(screen.getByRole("button", { name: "Close Cif" })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Close" })).toBeNull();
+  });
+
+  it("tells screen readers who said what, because only colour and position show it", async () => {
+    const { assistant } = setup();
+    assistant.open();
+    await waitFor(() => screen.getByRole("dialog"));
+    await type("How do I connect the faction?");
+    await fireEvent.click(screen.getByRole("button", { name: "Ask" }));
+    const answer = await waitFor(() =>
+      screen.getByTestId("help-assistant-answer"),
+    );
+
+    expect(answer.textContent?.trimStart().startsWith("Cif:")).toBe(true);
+    const yours = screen.getByText("How do I connect the faction?");
+    // A real space follows the label, so it is not read as "You:How".
+    expect(yours.textContent?.startsWith("You: How")).toBe(true);
+    // Both prefixes are visually hidden.
+    expect(answer.querySelector(".sr-only")?.textContent).toBe("Cif:");
+    expect(yours.querySelector(".sr-only")?.textContent).toBe("You:");
   });
 
   it("tells the user plainly what is sent", async () => {
@@ -180,7 +208,7 @@ describe("HelpAssistantPanel", () => {
     const { assistant } = setup();
     assistant.open();
     await waitFor(() => screen.getByRole("dialog"));
-    const box = screen.getByLabelText(/Ask a question/i);
+    const box = screen.getByLabelText(/Ask Cif a question/i);
     await type("hello");
     await fireEvent.keyDown(box, { key: "Enter", shiftKey: true });
     expect(assistant.messages).toHaveLength(0);
