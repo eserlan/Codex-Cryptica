@@ -5,6 +5,7 @@ import {
   type GeneratorId,
   type GeneratorOutput,
   type GeneratorRunRequest,
+  type GeneratorVaultContext,
   SUPPORTED_GENERATOR_IDS,
   UnsupportedGeneratorError,
 } from "./campaign-generator-types";
@@ -333,13 +334,26 @@ const OUTPUT_SCHEMA = `{
   ]
 }`;
 
+/**
+ * The world's theme as the model sees it. A theme name alone ("Galactic
+ * Holocron") says little, and the model's default is high fantasy, so state the
+ * genre and the theme's own description and tell it not to slip back.
+ */
+function themeLine(ctx: GeneratorVaultContext): string {
+  const description = ctx.themeDescription ? ` — ${ctx.themeDescription}` : "";
+  const genre = themeIdToLabel[ctx.themeId ?? ""];
+  const line = `World Theme: ${ctx.themeName}${description}`;
+  if (!genre || genre === "Classic Fantasy") return line;
+  return `${line}\nGenre: ${genre}. Keep names, species, factions, technology and tone in this genre. Do not default to fantasy tropes (elves, dwarves, wizards, taverns) unless this vault's own entities already use them.`;
+}
+
 function vaultContextBlock(request: GeneratorRunRequest): string {
   if (request.interaction) return "";
   const ctx = request.vaultContext;
   if (!ctx) return "";
   const lines: string[] = [];
   if (ctx.themeName && ctx.themeId !== "workspace") {
-    lines.push(`World Theme: ${ctx.themeName}`);
+    lines.push(themeLine(ctx));
   }
   if (ctx.currentDate) {
     lines.push(

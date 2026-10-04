@@ -452,6 +452,24 @@ describe("buildVaultContext (T042/T047)", () => {
     expect(ctx.cultureNaming).toBeUndefined();
   });
 
+  it("passes the theme's genre description through to the context", () => {
+    const ctx = buildVaultContext({
+      themeId: "starwars",
+      themeName: "Galactic Holocron",
+      themeDescription: "Space opera, galactic conflict.",
+      categoryLabels: categories,
+      allEntities: {},
+    });
+    expect(ctx.themeDescription).toBe("Space opera, galactic conflict.");
+    expect(
+      buildVaultContext({
+        themeId: "workspace",
+        categoryLabels: categories,
+        allEntities: {},
+      }).themeDescription,
+    ).toBeUndefined();
+  });
+
   it("selects neighbors from connectedIds (graph) when provided", () => {
     const src = entity({ id: "src", title: "Hero", type: "character" });
     const connected = entity({ id: "c1", title: "Ally", type: "faction" });

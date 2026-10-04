@@ -184,6 +184,8 @@ export type TemplateSource = "none" | "system" | "vault-custom";
 export interface GeneratorVaultContext {
   themeId?: string;
   themeName?: string;
+  /** The theme's own genre/tone description (e.g. "Space opera, galactic conflict…"). */
+  themeDescription?: string;
   /** Current in-world campaign date/year, when the vault's calendar sets one. */
   currentDate?: string;
   targetEntityType?: string;

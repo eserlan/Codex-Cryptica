@@ -350,6 +350,7 @@
       const vaultContext = buildVaultContext({
         themeId: themeStore.worldThemeId ?? "workspace",
         themeName: themeStore.activeTheme?.name,
+        themeDescription: themeStore.activeTheme?.description,
         currentDate,
         sourceEntity,
         allEntities: vault.entities,

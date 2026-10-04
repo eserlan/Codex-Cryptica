@@ -176,6 +176,8 @@ export interface BuildVaultContextOptions {
   cultureNaming?: CultureNamingSources;
   themeId: string;
   themeName?: string;
+  /** The theme's own genre/tone description. */
+  themeDescription?: string;
   /** Current in-world campaign date/year, when the vault's calendar sets one. */
   currentDate?: string;
   /** The entity the user launched generation from (contextual mode). */
@@ -304,6 +306,7 @@ export function buildVaultContext(
   const {
     themeId,
     themeName,
+    themeDescription,
     currentDate,
     sourceEntity,
     allEntities,
@@ -459,6 +462,7 @@ export function buildVaultContext(
   return {
     themeId,
     themeName,
+    themeDescription,
     currentDate,
     targetEntityType,
     categoryLabels,
