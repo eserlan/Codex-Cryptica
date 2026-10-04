@@ -37,4 +37,7 @@ export const KNOWN_HELP_IDS = [
   "chat-commands",
   "themes",
   "categories-and-labels",
+  "entity-table",
+  "dice-roller",
+  "adventure-mode",
 ] as const;

@@ -69,6 +69,14 @@ describe("remaining coverage retrieval evaluation", () => {
     ["How do I add a custom category?", "theme-settings", "schema-settings"],
     ["Where do I change a category's colour?", "publishing", "schema-settings"],
     ["How do I switch to dark mode?", "schema-settings", "theme-settings"],
+    ["How do I roll with advantage?", "entity-table", "dice-roller"],
+    ["Which entries have no labels?", "dice-roller", "entity-table"],
+    ["How do I start a solo adventure?", "entity-table", "solo-adventure"],
+    [
+      "Where do I change a category's colour?",
+      "solo-adventure",
+      "schema-settings",
+    ],
   ])(
     "keeps explicit intent for %s despite the %s screen",
     (question, screen, expected) => {
