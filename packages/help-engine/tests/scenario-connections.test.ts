@@ -36,6 +36,11 @@ const bundle = buildBundle({
       "## Nodes\nThe graph draws every entry as a node and every connection as a line. Select a node to see its links.",
     ),
     article(
+      "entity-reports",
+      "Entity Reports",
+      "## Reports\nCollect information about chosen entities into a report.",
+    ),
+    article(
       "session-hub",
       "Session Hub",
       "## Drafts\nGenerated drafts collect in the Session Hub.",

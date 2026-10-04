@@ -1,6 +1,6 @@
 # Contract: Knowledge Store & Sync (Design Only)
 
-**Status**: Designed for the findings deliverable. Not deployed in the spike (see research D1). Adopt when any trigger holds: > ~2,000 chunks, bundle > ~1 MB, lexical recall@3 < 0.85 on the evaluation set, or content must update without a Worker deploy.
+**Status**: Designed for the findings deliverable; not deployed. Review adoption when any trigger holds: > ~2,000 chunks, bundle > ~1 MB, lexical recall@3 < 0.85 on the evaluation set, or content must update without a Worker deploy. The [#3612 comparison](../findings.md#addendum-embeddings-comparison-3612) reaches the approximate bundle-size trigger only for the fully embedded candidate; the checked-in cache produces a roughly 734 KB bundle. Deployment remains deferred because the fully embedded hybrid worsens unrelated-question refusal; a storage migration cannot fix that ranking behaviour. Removing vectors retains a 233 KB lexical bundle.
 
 ## D1 schema (per environment)
 
@@ -37,7 +37,7 @@ Migrations live with the Worker's existing `migrations_dir`; content rows are ne
 
 ## Vectorize
 
-- Index per environment: `cc-help-staging`, `cc-help-prod`; dimension/metric follow the chosen embedding model (Workers AI `@cf/baai/bge-base-en-v1.5`, 768, cosine, evaluated offline first).
+- Index per environment: `cc-help-staging`, `cc-help-prod`; dimension/metric follow the current embedding model (Workers AI `@cf/baai/bge-small-en-v1.5`, 384, cosine, measured offline in #3612). The original spike proposed BGE-base; the application subsequently shipped BGE-small, so the comparison measures that actual path.
 - Vector ID = chunk ID. Metadata (filterable): `documentId`, `featureId`, `kind`, `route`, `channel`, `commit`. No text in metadata; D1 is authoritative for content.
 - Query: filter by `channel`, optional `featureId`; then re-rank with live-context boosts (same function as the lexical path: feature +0.20, route +0.15, entity kind +0.10, tab +0.05).
 

@@ -65,9 +65,12 @@ export function matchesExpectedSources(
 export function evaluateInScope(
   bundle: KnowledgeBundle,
   questions: InScopeQuestion[] = IN_SCOPE,
+  queryVectors?: ReadonlyMap<string, readonly number[]>,
 ): { results: InScopeResult[]; recallAt3: number; answeredRate: number } {
   const results = questions.map((q) => {
-    const r = retrieve(q.question, bundle, SCREENS[q.screen]);
+    const r = retrieve(q.question, bundle, SCREENS[q.screen], {
+      queryVector: queryVectors?.get(q.question),
+    });
     const sources = r.chunks.map((c) => c.chunk.sourceId);
     return {
       question: q.question,
@@ -101,9 +104,12 @@ export const inSplit = <T extends { split: EvalSplit }>(
 export function evaluateOutOfScope(
   bundle: KnowledgeBundle,
   questions: OutOfScopeQuestion[] = ofKind(OUT_OF_SCOPE, "unrelated"),
+  queryVectors?: ReadonlyMap<string, readonly number[]>,
 ) {
   const results = questions.map((q) => {
-    const r = retrieve(q.question, bundle, SCREENS[q.screen]);
+    const r = retrieve(q.question, bundle, SCREENS[q.screen], {
+      queryVector: queryVectors?.get(q.question),
+    });
     return {
       question: q.question,
       split: q.split,

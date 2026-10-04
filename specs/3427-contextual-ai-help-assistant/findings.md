@@ -4,7 +4,7 @@
 
 ## Recommendation
 
-**Proceed to a fuller build, on the architecture the spike used, with D1 + Vectorize deferred.** The vertical slice works end to end with a real model: on Settlement → Connections the assistant answers "How do I connect the faction I just created?" correctly, cites its sources, and offers a two-step guide that opens the Status tab and highlights Add, without changing anything in the vault. Retrieval over the real help articles is good enough at this corpus size (95% recall@3, 100% no-match on undocumented questions), so the extra resources D1 + Vectorize would need are not justified yet.
+**Retain lexical-plus-context retrieval as the baseline and defer deploying D1 + Vectorize.** The [#3612 comparison](#addendum-embeddings-comparison-3612) measured the current corpus: lexical recall@3 is 91.4% on the expanded set and 86.7% on the fresh frozen holdout. The production hybrid algorithm with complete vectors improves fresh recall to 93.3%, but lets two of ten unrelated questions through the retrieval floor; lexical refuses all ten. The fully embedded candidate reaches approximately 1 MB, so its size warrants review, but moving those same vectors to Vectorize would not fix the measured relevance and refusal regressions. Resolve those before extending hybrid retrieval or provisioning new knowledge-store resources.
 
 Three things should be settled before wider exposure: the thin margin on the no-match threshold (see [Limits](#limits-of-the-evidence)), a larger independent evaluation set, and the repo-wide `reasoning_effort: "minimal"` problem described below.
 
@@ -76,7 +76,7 @@ It is on only at staging, detected from the hostname at run time (plus `VITE_HEL
 | --------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | YAML, JSON, TypeScript for the registry | TypeScript data modules: typed, no new dependency, cross-reference validation in tests and the bundle build. Help prose stays in Markdown and is referenced by ID.                                                               |
 | D1 + Vectorize vs AI Search             | **Not built.** None of the adoption triggers is met: 168 chunks and a 140 KB bundle (triggers: over about 2,000 chunks or 1 MB), recall 95% (trigger: below 85%). The design for both remains in `contracts/knowledge-store.md`. |
-| Embeddings vs lexical recall comparison | **Not run.** It needs Cloudflare Workers AI credentials that were not available in the session. Only lexical and context ranking were measured.                                                                                  |
+| Embeddings vs lexical recall comparison | Deferred during the spike because Workers AI credentials were unavailable. Now measured in the [#3612 addendum](#addendum-embeddings-comparison-3612), using the model shipped since the spike.                                  |
 | Cloudflare AI Search                    | **Desk comparison only, not tried.** Kept as the fallback if the ingestion pipeline becomes a burden, since it cannot rank with live UI context.                                                                                 |
 | One workflow or two for knowledge sync  | Two (schema migrations; knowledge sync), recommended for when D1 + Vectorize are adopted. Not built.                                                                                                                             |
 | Streaming                               | Not built. The answer is one validated JSON object; measured p90 is 2.85 s against the 8 s target.                                                                                                                               |
@@ -124,7 +124,7 @@ Drafted, not created as GitHub issues (that is outward-facing and awaits approva
 
 1. **Fix `reasoning_effort: "minimal"` in the `classification` and `utility` operation defaults** (`llm/registry.ts`). They would return 400 from Luna; no live caller yet, so a latent bug.
 2. **Grow the evaluation set to 100+ questions with held-out examples**, including rephrasings, and re-tune the floor and boosts on a train/test split.
-3. **Run the embeddings comparison** (Workers AI, offline) and record recall against lexical-plus-context before deciding on Vectorize.
+3. **Run the embeddings comparison** — completed in the [#3612 addendum](#addendum-embeddings-comparison-3612).
 4. **Human review of live answers** (SC-001) and a 5-person usability check (SC-010).
 5. **Register more features**, and add a rule or lint that a user-facing feature PR touches the registry.
 6. **Decide the assistant's name, quick prompts and proactive-help setting** (left provisional by the spec).
@@ -171,3 +171,64 @@ Two rounds against the `tune` half, plus one correction to the second round's ow
 - Highlight guides for canvas, VTT, Settings and the generators (phase B, #3616).
 - A human reading of live answers.
 - Staging: the Worker has to be redeployed after merge for the new knowledge to reach staging, because the knowledge ships inside the Worker bundle.
+
+---
+
+## Addendum: embeddings comparison (#3612)
+
+**Measured 2026-10-04**, against the production-channel corpus on staging commit `9b359fa55`, with the evaluation implementation in this change. This supersedes the spike's unmeasured embeddings comparison and its old retrieval/adoption figures; the earlier tables remain historical records.
+
+### Method and reproducibility
+
+Compare lexical-plus-context retrieval with the **production hybrid algorithm using complete vectors**, not a pure cosine-only search or a deployed Vectorize index. Both runs use the same 284 chunks, 45 articles, 19 features, questions, context boosts, source-diversity rules, exact-title bypass and relevance floor (0.3). The hybrid takes the larger lexical/normalised semantic score, as production does. No ranking parameters, question wording or expected sources were changed for this experiment.
+
+The model is Workers AI `@cf/baai/bge-small-en-v1.5` (384 dimensions, default mean pooling), already used by the application. The original issue proposed BGE-base; using BGE-small measures the shipped behaviour and reuses valid precomputed chunk vectors. The checked-in cache covers only 176 of the current 284 chunks after hash validation. This experiment fills the remaining 108 chunk vectors and missing question vectors with the same model; it therefore measures complete semantic coverage, not the partially cached bundle or a live deployment snapshot. Corpus vectors are rounded to four decimals like the sync artifact; query vectors retain full precision like the Worker. The model has a [512-token input limit](https://developers.cloudflare.com/workers-ai/models/bge-small-en-v1.5/); long sections may lose tail information. The experiment preserves the production input text rather than introducing new chunking.
+
+The expanded set contains 93 in-scope questions (65 tune, 28 legacy regression) and 29 out-of-scope questions (21 unrelated, eight feature-related near-misses). The separately authored, previously frozen holdout contains 30 in-scope and ten unrelated questions. It remains a validation set, not material to tune against. These are authored fixtures, not user conversations or vault content. No answer-generating model or live Help endpoint is called. Refusal below means **retrieval-floor no-match**, not the model's final refusal.
+
+The runner validates cache model, vector dimensions and finite values. Cache keys are the exact embedding input text, so changed chunks/questions cannot reuse old vectors. Incomplete offline caches fail rather than silently comparing partial semantic coverage. Valid shipped chunk vectors can seed the cache. Raw vectors remain in the ignored `.cache/` directory; the committed [expanded report](./embedding-comparison-expanded.json) and [fresh report](./embedding-comparison-fresh.json) contain per-question results, corpus/question/vector SHA-256 fingerprints and counts, without credentials.
+
+```bash
+# Populate missing vectors using CLOUDFLARE_API_TOKEN + CLOUDFLARE_ACCOUNT_ID,
+# or the existing Wrangler login. Refresh that login with bunx wrangler whoami.
+bun packages/help-engine/tests/eval/run.ts --compare-embeddings --report .cache/help-eval-expanded.json
+bun packages/help-engine/tests/eval/run.ts --compare-embeddings --fresh-holdout --report .cache/help-eval-fresh.json
+
+# Repeat with cached vectors and no network/provider credentials:
+bun packages/help-engine/tests/eval/run.ts --compare-embeddings --offline-embeddings --report .cache/help-eval-expanded.json
+bun packages/help-engine/tests/eval/run.ts --compare-embeddings --offline-embeddings --fresh-holdout --report .cache/help-eval-fresh.json
+```
+
+An alternative cache path can be provided with `--embedding-cache FILE`. The default is `.cache/help-eval-embeddings.json` at the repository root. The offline repeats produced the same recall and refusal counts as the initial runs.
+
+### Measured comparison
+
+| Measure                                        | Lexical + context | Hybrid, complete vectors |
+| ---------------------------------------------- | ----------------- | ------------------------ |
+| Expanded recall@3, all in scope                | 85/93 (91.4%)     | 81/93 (87.1%)            |
+| Expanded tune recall@3                         | 60/65 (92.3%)     | 56/65 (86.2%)            |
+| Expanded legacy regression recall@3            | 25/28 (89.3%)     | 25/28 (89.3%)            |
+| Expanded in-scope questions clearing the floor | 93/93 (100%)      | 93/93 (100%)             |
+| Expanded unrelated questions refused           | 21/21 (100%)      | 11/21 (52.4%)            |
+| Expanded near-misses refused                   | 1/8 (12.5%)       | 0/8 (0%)                 |
+| Expanded all out-of-scope questions refused    | 22/29 (75.9%)     | 11/29 (37.9%)            |
+| Fresh frozen recall@3                          | 26/30 (86.7%)     | 28/30 (93.3%)            |
+| Fresh in-scope questions clearing the floor    | 29/30 (96.7%)     | 30/30 (100%)             |
+| Fresh unrelated questions refused              | 10/10 (100%)      | 8/10 (80%)               |
+
+For the expanded set, weakest in-scope relevance versus strongest unrelated relevance is **0.3202 vs 0.2878** for lexical (gap **+0.0324**) and **0.5657 vs 1.0000** for hybrid (gap **−0.4343**). For the fresh set it is **0.2763 vs 0.1761** for lexical (gap **+0.1002**) and **0.4942 vs 0.5250** for hybrid (gap **−0.0307**). Lexical's positive fresh gap does not mean its current floor answers every valid question: one is below 0.3. Neither hybrid cohort has a single threshold that separates every in-scope question from every unrelated one.
+
+The hybrid retrieves two extra correct sources on the fresh set, including the question about correcting a misspelled character name. It also sends “Calculate a mortgage repayment schedule” and “How do I learn conversational Spanish?” past the floor. In the expanded set it loses correct top-three sources for questions such as linking two characters and saving a generated draft. These observations describe retrieval, not measured hallucinations or final answer quality; the existing answer-model refusal instructions may still refuse those requests. Near-misses already require that second check under lexical retrieval.
+
+### Adoption decision
+
+| Trigger in the knowledge-store contract     | Current evidence                                                                                                        | Decision                                                                               |
+| ------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| More than approximately 2,000 chunks        | 284 chunks                                                                                                              | Not met                                                                                |
+| Bundle larger than approximately 1 MB       | 232,830 bytes lexical; 733,845 with valid checked-in cached vectors; 1,041,468 with complete production-rounded vectors | Not met by the checked-in cache; approximately reached by the fully embedded candidate |
+| Lexical recall@3 below 85%                  | 91.4% expanded, 89.3% legacy regression, 86.7% fresh frozen                                                             | Not met on the current measurements; the old 75% figure is superseded                  |
+| Content must update without a Worker deploy | No new requirement established by this experiment                                                                       | Not established                                                                        |
+
+**Recommendation: defer D1 + Vectorize deployment and retain lexical-plus-context as the acceptance baseline.** The fresh hybrid recall gain is useful evidence for further semantic retrieval work, but the refusal regression violates the unrelated-question target and the expanded recall regression rules out adopting this hybrid as a blanket improvement. A Vectorize storage/index migration does not by itself fix the current normalisation, ranking or refusal behaviour. The fully embedded candidate approaches the size trigger, while the checked-in partially cached bundle is about 734 KB. Removing bundled vectors retains a 233 KB lexical corpus. Treat the size trigger as a reason to review storage only if complete semantic coverage proves worth retaining. Reassess resource adoption after a separate retrieval/refusal change passes independent validation, or when one of the other operational triggers becomes real.
+
+This issue provides the requested comparison and recommendation. It does not deploy resources, change runtime ranking or retune the floor. Live answer-quality and semantic query-latency/cost measurements remain separate work; this offline result cannot settle them.
