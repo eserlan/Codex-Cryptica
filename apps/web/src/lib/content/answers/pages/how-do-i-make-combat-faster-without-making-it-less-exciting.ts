@@ -129,6 +129,7 @@ export const howDoIMakeCombatFasterWithoutMakingItLessExciting: AnswerConfigInpu
         "how to speed up tabletop rpg combat",
         "how to make dnd combat go faster",
         "how to reduce waiting during rpg combat",
+        "how to speed up dnd combat with many players",
         "how to make combat faster for a large group",
       ],
       userJob: "adopt-workflow",
