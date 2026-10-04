@@ -68,6 +68,12 @@ describe("help documentation workflow retrieval", () => {
       "categories-and-labels",
     ],
     ["Where can I see all the labels in my vault?", "categories-and-labels"],
+    ["How do I rename a label on all my entries?", "categories-and-labels"],
+    ["Does deleting a label delete my entries?", "categories-and-labels"],
+    [
+      "What happens if I rename a label to one that already exists?",
+      "categories-and-labels",
+    ],
   ])("finds a readable guide for %s", (question, helpId) => {
     const result = retrieve(question, bundle, context);
     expect(result.noMatch).toBe(false);

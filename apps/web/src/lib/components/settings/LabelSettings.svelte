@@ -10,22 +10,78 @@
     renameValue = label;
   };
 
-  // Rename label logic temporarily disabled
+  const hasLabel = (labels: readonly string[] | undefined, key: string) =>
+    (labels ?? []).some((l) => l.toLowerCase() === key);
+
+  /** How many entries carry the label, so a confirmation can say what will change. */
+  const entriesWith = (label: string) => {
+    const key = label.trim().toLowerCase();
+    return Object.values(vault.entities).filter((entity) =>
+      hasLabel(entity.labels, key),
+    ).length;
+  };
+
+  const entries = (count: number) =>
+    count === 1 ? "1 entry" : `${count} entries`;
+
+  /** Renaming into a label that already exists merges the two, so ask first. */
+  const confirmMerge = (from: string, to: string) =>
+    notificationStore.confirm({
+      title: "Merge Labels",
+      message: `A label named "${to}" already exists. Merge "${from}" into it? ${entries(entriesWith(from))} will use "${to}" instead of "${from}".`,
+      confirmLabel: "Merge",
+    });
+
   const handleRename = async () => {
-    if (editingLabel && renameValue.trim()) {
+    const from = editingLabel;
+    const to = renameValue.trim().toLowerCase();
+    if (!from || !to || vault.isGuest) return;
+
+    // Same name apart from case or spacing: nothing to change.
+    if (to === from.toLowerCase()) {
       editingLabel = null;
+      return;
+    }
+
+    const exists = vault.labelIndex.some((l) => l.toLowerCase() === to);
+    if (exists && !(await confirmMerge(from, to))) return;
+
+    editingLabel = null;
+    try {
+      const count = await vault.renameLabel(from, to);
+      notificationStore.notify(
+        `Renamed "${from}" to "${to}" on ${entries(count)}.`,
+        "success",
+      );
+    } catch (err: any) {
+      notificationStore.notify(
+        `Could not rename the label: ${err.message}`,
+        "error",
+      );
     }
   };
 
   const handleDelete = async (label: string) => {
+    if (vault.isGuest) return;
     const confirmed = await notificationStore.confirm({
       title: "Delete Label",
-      message: `Are you sure you want to delete the label "${label}" from ALL entities?`,
+      message: `Remove the label "${label}" from ${entries(entriesWith(label))}? The entries themselves are not deleted.`,
       confirmLabel: "Delete",
       isDangerous: true,
     });
-    if (confirmed) {
-      // Logic disabled
+    if (!confirmed) return;
+
+    try {
+      const count = await vault.deleteLabel(label);
+      notificationStore.notify(
+        `Removed "${label}" from ${entries(count)}.`,
+        "success",
+      );
+    } catch (err: any) {
+      notificationStore.notify(
+        `Could not delete the label: ${err.message}`,
+        "error",
+      );
     }
   };
 </script>
@@ -49,13 +105,15 @@
                 <input
                   type="text"
                   bind:value={renameValue}
+                  aria-label="New name for the {label} label"
                   class="bg-black border border-theme-primary text-theme-text px-2 py-1 text-xs outline-none flex-1 rounded font-mono"
                   onkeydown={(e) => e.key === "Enter" && handleRename()}
                 />
                 <button
                   type="button"
                   onclick={handleRename}
-                  class="px-3 py-1 bg-theme-primary text-theme-bg text-meta font-bold rounded uppercase font-header transition-colors"
+                  disabled={!renameValue.trim()}
+                  class="px-3 py-1 disabled:opacity-50 bg-theme-primary text-theme-bg text-meta font-bold rounded uppercase font-header transition-colors"
                 >
                   Save
                 </button>
