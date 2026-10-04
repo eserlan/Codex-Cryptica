@@ -181,6 +181,7 @@ export const howDoYouRunDndForALargeGroupOfPlayers: AnswerConfigInput = {
     "can-you-play-a-tabletop-rpg-in-30-minute-sessions",
     "how-do-i-give-specialist-characters-spotlight",
     "how-do-i-run-a-large-battle-when-the-player-characters-are-part-of-an-army",
+    "how-do-i-keep-players-engaged-during-other-players-turns-in-combat",
   ],
   discovery: {
     id: "answer-large-group-dnd",

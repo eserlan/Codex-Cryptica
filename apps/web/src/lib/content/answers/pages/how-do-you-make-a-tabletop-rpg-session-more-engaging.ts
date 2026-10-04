@@ -172,6 +172,7 @@ export const howDoYouMakeATabletopRpgSessionMoreEngaging: AnswerConfigInput = {
     "how-do-i-get-my-rpg-party-to-work-together",
     "how-do-i-give-specialist-characters-spotlight",
     "how-long-should-a-ttrpg-session-be",
+    "how-do-i-keep-players-engaged-during-other-players-turns-in-combat",
   ],
   discovery: {
     id: "answer-session-engagement",
