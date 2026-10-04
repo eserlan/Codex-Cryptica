@@ -19,7 +19,12 @@ describe("help documentation workflow retrieval", () => {
     ],
     ["Where do I add a personal key for Oracle?", "gemini-api-key"],
     ["How do I change app appearance between light and dark?", "themes"],
-    ["How do I generate a report from canvas entities?", "spatial-canvas"],
+    ["How do I generate a report from canvas entities?", "entity-reports"],
+    [
+      "Can I save a graph selection as an editable report note?",
+      "entity-reports",
+    ],
+    ["Does making a report change the source entities?", "entity-reports"],
     ["Can I order items in Canvas?", "spatial-canvas"],
     ["How do I move cards around?", "spatial-canvas"],
     ["Can I bring this card to the front?", "spatial-canvas"],
