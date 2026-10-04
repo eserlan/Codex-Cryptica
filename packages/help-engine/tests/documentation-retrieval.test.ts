@@ -38,6 +38,12 @@ describe("help documentation workflow retrieval", () => {
     ["Where do I manage stat sheet templates?", "stat-sheets"],
     ["How do I keep a generator draft in the editor?", "in-app-generators"],
     ["How do I pin entities to the front page?", "front-page"],
+    ["How do I find entries that have no labels?", "entity-table"],
+    ["How do I add a label to several entries at once?", "entity-table"],
+    ["How do I sort entries by when they were last changed?", "entity-table"],
+    ["What does Incomplete only show in the table?", "entity-table"],
+    ["How do I select a range of rows in the table?", "entity-table"],
+    ["Why is the Summary column empty for some entries?", "entity-table"],
   ])("finds a readable guide for %s", (question, helpId) => {
     const result = retrieve(question, bundle, context);
     expect(result.noMatch).toBe(false);

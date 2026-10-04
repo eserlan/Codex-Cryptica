@@ -130,6 +130,15 @@ export const COVERAGE_QUESTIONS = [
   ["lore-oracle", "Does the Oracle send my notes anywhere?", "holdout"],
   ["lore-oracle", "What does the create command do in Oracle chat?", "holdout"],
   ["lore-oracle", "Can I stop AI from running?", "holdout"],
+  ["theme-settings", "How do I switch to dark mode?", "tune"],
+  ["theme-settings", "Where do I pick a genre theme for my world?", "tune"],
+  ["theme-settings", "Does changing the theme change my notes?", "holdout"],
+  ["theme-settings", "Will my theme still be there tomorrow?", "holdout"],
+  [
+    "theme-settings",
+    "What is the difference between App Appearance and a world theme?",
+    "holdout",
+  ],
 ] as const;
 
 export const COVERAGE_HELP: Record<string, string[]> = {
@@ -142,6 +151,7 @@ export const COVERAGE_HELP: Record<string, string[]> = {
   "guided-mode": ["guided-mode"],
   "session-prep": ["session-prep"],
   publishing: ["publishing"],
+  "theme-settings": ["themes"],
   "lore-oracle": ["oracle-guide", "chat-commands"],
   "backup-and-restore": ["export-and-backup", "cloud-backup", "offline-sync"],
 };

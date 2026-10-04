@@ -64,6 +64,8 @@ describe("remaining coverage retrieval evaluation", () => {
       "family-tree",
       "lore-oracle",
     ],
+    ["How do I switch to dark mode?", "backup-and-restore", "theme-settings"],
+    ["Where do I change the theme?", "publishing", "theme-settings"],
   ])(
     "keeps explicit intent for %s despite the %s screen",
     (question, screen, expected) => {
