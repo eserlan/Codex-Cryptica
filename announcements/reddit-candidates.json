@@ -1,5 +1,5 @@
 {
-  "updated_at": 1791067728,
+  "updated_at": 1791145087,
   "candidates": [
     {
       "id": "reddit-37032544014-my-pirate-arcs-kept-collapsing-into-eith",
@@ -30,6 +30,16 @@
       "source_id": "37120950555",
       "status": "approved",
       "created_at": 1791028506
+    },
+    {
+      "id": "reddit-37230785420-new-answers-on-combat-pacing-and-engagem",
+      "title": "New answers on combat pacing and engagement",
+      "body": "Every GM knows the moment\u2014a player's turn drags on, and you can see the others at the table checking their phones.\n\nCombat is where a lot of campaigns lose energy. I built two answer pages specifically on this because they're actually different problems. One's about keeping players engaged while it's not their turn. The other's about speeding up combat without losing the tension that makes it tense.\n\nWhat you'll find:\n- Techniques to keep the table engaged between turns\n- How to signal when a turn's wrapping up without railroading choices\n- Pacing methods that work across different combat systems\n- Where most GMs make combat drag without realizing it\n\nWhat pulls your table's focus back when combat starts to lag?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/announcements/release-37230785420-0.png)",
+      "url": "https://codexcryptica.com/answers/how-do-i-keep-players-engaged-during-other-players-turns-in-combat",
+      "image_url": "https://assets.codexcryptica.com/announcements/release-37230785420-0.png",
+      "source_id": "37230785420",
+      "status": "approved",
+      "created_at": 1791145087
     }
   ]
 }
