@@ -104,7 +104,7 @@ function chunkTerms(c: HelpChunk): string[] {
  * really about a word, and length normalisation stops a long generic article
  * from winning just because it mentions everything once.
  */
-function lexicalScores(
+export function lexicalScoresFor(
   queryTerms: string[],
   chunks: readonly HelpChunk[],
 ): number[] {
@@ -241,7 +241,7 @@ export function rankChunks(
       .sort((a, b) => a.chunk.id.localeCompare(b.chunk.id));
   }
 
-  const lexical = lexicalScores(terms, chunks);
+  const lexical = lexicalScoresFor(terms, chunks);
   const scored: ScoredChunk[] = [];
   for (let i = 0; i < chunks.length; i++) {
     const result = scoreSingleChunk(

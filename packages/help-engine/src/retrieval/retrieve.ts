@@ -4,6 +4,7 @@ import type { HelpTurn } from "../prompt/build";
 import type { FeatureEntry } from "../registry/schema";
 import { contextualizeQuery } from "./contextualize";
 import { featureMatchesScreen } from "../registry/matches-screen";
+import { detectComparison, ensureBothSides } from "./comparison";
 import { MIN_RELEVANCE, rankChunks, type ScoredChunk } from "./rank";
 
 export interface RetrieveOptions {
@@ -172,18 +173,20 @@ export function retrieve(
   );
   const topRelevance = ranked.reduce((max, r) => Math.max(max, r.relevance), 0);
   const noMatch = topRelevance < floor;
+  const candidates = ranked.filter(
+    (r) => r.relevance >= floor * INCLUSION_RATIO,
+  );
+  const diversified = noMatch ? [] : diversify(candidates, limit, floor);
+  const comparison = noMatch ? null : detectComparison(effectiveQuestion);
   return {
     // The floor decides whether the question is answerable at all. Which
     // chunks to show is decided by the ranking score, so the on-screen
     // evidence wins even when a generic article elsewhere overlaps more words.
-    // A lower bar still keeps out chunks that share almost nothing.
-    chunks: noMatch
-      ? []
-      : diversify(
-          ranked.filter((r) => r.relevance >= floor * INCLUSION_RATIO),
-          limit,
-          floor,
-        ),
+    // A lower bar still keeps out chunks that share almost nothing. A question
+    // that compares two things must hear about both.
+    chunks: comparison
+      ? ensureBothSides(diversified, ranked, comparison, limit)
+      : diversified,
     topRelevance,
     noMatch,
     screenFeatures,
