@@ -3,6 +3,23 @@ import type { SearchEntry, SearchResult, SearchOptions } from "schema";
 import * as Comlink from "comlink";
 import { compressSync, decompressSync, strFromU8, strToU8 } from "fflate";
 
+/**
+ * Rebuilds bytes from a JSON-serialised typed array (`{ "0": 12, "1": 34 }`)
+ * without materialising an intermediate `Object.values()` array.
+ */
+export function bytesFromIndexedObject(source: unknown): Uint8Array {
+  if (!source || typeof source !== "object") return new Uint8Array(0);
+  const record = source as Record<string, number>;
+  const bytes = new Uint8Array(Object.keys(record).length);
+  let i = 0;
+  for (const key in record) {
+    if (Object.prototype.hasOwnProperty.call(record, key)) {
+      bytes[i++] = record[key];
+    }
+  }
+  return bytes;
+}
+
 export const SEARCH_INDEX_COMPRESSION_FORMAT = "fflate-json-v1" as const;
 
 export interface CompressedSearchIndex {
@@ -529,21 +546,7 @@ export class SearchEngine {
                 if (Array.isArray(buffer)) {
                   buffer = new Uint8Array(buffer);
                 } else {
-                  // ⚡ Bolt Optimization: Replace Object.values() with an imperative loop over keys to avoid large array allocation
-                  const bufferObj = buffer ?? {};
-                  let count = 0;
-                  for (const k in bufferObj) {
-                    if (Object.prototype.hasOwnProperty.call(bufferObj, k))
-                      count++;
-                  }
-                  const newBuffer = new Uint8Array(count);
-                  let i = 0;
-                  for (const k in bufferObj) {
-                    if (Object.prototype.hasOwnProperty.call(bufferObj, k)) {
-                      newBuffer[i++] = (bufferObj as any)[k] as number;
-                    }
-                  }
-                  buffer = newBuffer;
+                  buffer = bytesFromIndexedObject(buffer);
                 }
               }
               str = decoder.decode(buffer);
@@ -598,21 +601,7 @@ export class SearchEngine {
               if (Array.isArray(buffer)) {
                 buffer = new Uint8Array(buffer);
               } else {
-                // ⚡ Bolt Optimization: Replace Object.values() with an imperative loop over keys to avoid large array allocation
-                const bufferObj = buffer ?? {};
-                let count = 0;
-                for (const k in bufferObj) {
-                  if (Object.prototype.hasOwnProperty.call(bufferObj, k))
-                    count++;
-                }
-                const newBuffer = new Uint8Array(count);
-                let i = 0;
-                for (const k in bufferObj) {
-                  if (Object.prototype.hasOwnProperty.call(bufferObj, k)) {
-                    newBuffer[i++] = (bufferObj as any)[k] as number;
-                  }
-                }
-                buffer = newBuffer;
+                buffer = bytesFromIndexedObject(buffer);
               }
             }
             decoded = new TextDecoder().decode(buffer);
