@@ -32,4 +32,7 @@ export const KNOWN_HELP_IDS = [
   "family-tree",
   "guided-mode",
   "session-prep",
+  "publishing",
+  "oracle-guide",
+  "chat-commands",
 ] as const;

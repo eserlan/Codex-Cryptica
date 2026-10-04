@@ -26,6 +26,8 @@ registered feature; the coverage test requires it to stay in sync.
 | family-tree               | Character Family                         | family-tree                                        | Open Family only for a character with a tab strip, including read-only browsing; no family link changes.                                |
 | guided-mode               | Graph workspace                          | guided-mode                                        | Read Help; no automatic mode toggle, suggestion acceptance or Quick Start.                                                              |
 | session-prep              | Public Session Prep Builder              | session-prep                                       | Knowledge and Help only. Cif remains in the existing vault Help panel; this does not add a public assistant or run the builder.         |
+| publishing                | Settings → Publishing                    | publishing                                         | Open Publishing settings when available, or read Help; never publish, update, unpublish or list a world.                                |
+| lore-oracle               | Lore Oracle (any screen)                 | oracle-guide, chat-commands                        | Open Intelligence settings when available, or read Help; never ask, revise, create or connect anything.                                 |
 
 ## Context and unavailable actions
 

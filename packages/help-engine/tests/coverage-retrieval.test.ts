@@ -48,6 +48,22 @@ describe("remaining coverage retrieval evaluation", () => {
     ["How do I make a session prep run sheet?", "chronology", "session-prep"],
     ["How do I save an entity report?", "session-prep", "entity-reports"],
     ["Where are Stat Sheets?", "entity-templates", "stat-sheets"],
+    [
+      "How do I publish a read-only copy for my players?",
+      "session-journal",
+      "publishing",
+    ],
+    ["Where do I publish my world?", "entity-templates", "publishing"],
+    [
+      "How do I ask the Lore Oracle about my world?",
+      "chronology",
+      "lore-oracle",
+    ],
+    [
+      "How do I revise a description with the Oracle?",
+      "family-tree",
+      "lore-oracle",
+    ],
   ])(
     "keeps explicit intent for %s despite the %s screen",
     (question, screen, expected) => {
@@ -76,6 +92,11 @@ describe("remaining coverage retrieval evaluation", () => {
       "Are entity templates the same as stat sheet templates?",
       "entity-templates",
       "stat-sheets",
+    ],
+    [
+      "Is publishing my world the same as exporting a backup?",
+      "publishing",
+      "backup-and-restore",
     ],
   ])("grounds both sides of %s", (question, first, second) => {
     const result = retrieve(question, bundle, sanitizeHelpContext({}));

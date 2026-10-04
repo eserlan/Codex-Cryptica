@@ -6,6 +6,7 @@ import {
   ACTION_TYPES,
 } from "../src/actions";
 import { FEATURE_REGISTRY } from "../src/registry";
+import { featureMatchesScreen } from "../src/registry/matches-screen";
 import { retrieve } from "../src/retrieval";
 import { buildRealBundle } from "./eval/evaluate";
 import { readFileSync } from "node:fs";
@@ -19,6 +20,8 @@ const remaining = [
   "family-tree",
   "guided-mode",
   "session-prep",
+  "publishing",
+  "lore-oracle",
 ];
 
 describe("remaining contextual Help coverage", () => {
@@ -146,5 +149,84 @@ describe("remaining contextual Help coverage", () => {
     expect(result.screenFeatures.map((entry) => entry.id)).not.toContain(
       "stat-sheets",
     );
+  });
+
+  it("offers the Publishing panel only when the Publishing tab can be opened, and Help always", () => {
+    const refs = FEATURE_REGISTRY.find((f) => f.id === "publishing")!.actions;
+    const deps = { helpIds: new Set(buildRealBundle().helpIds) };
+    const available = buildActionCandidates(
+      refs,
+      sanitizeHelpContext({
+        area: "settings",
+        tab: "publishing",
+        availableActions: ["settings-publishing"],
+      }),
+      deps,
+    );
+    const unavailable = buildActionCandidates(
+      refs,
+      sanitizeHelpContext({ area: "settings", tab: "publishing" }),
+      deps,
+    );
+
+    expect(available.map((ref) => ref.id)).toEqual([
+      "publishing.open-settings",
+      "publishing.open-help",
+    ]);
+    expect(unavailable.map((ref) => ref.id)).toEqual(["publishing.open-help"]);
+  });
+
+  it("offers Intelligence settings for the Oracle only when they can be opened, and Help always", () => {
+    const refs = FEATURE_REGISTRY.find((f) => f.id === "lore-oracle")!.actions;
+    const deps = { helpIds: new Set(buildRealBundle().helpIds) };
+    const available = buildActionCandidates(
+      refs,
+      sanitizeHelpContext({
+        area: "other",
+        availableActions: ["settings-intelligence"],
+      }),
+      deps,
+    );
+    const unavailable = buildActionCandidates(
+      refs,
+      sanitizeHelpContext({ area: "other" }),
+      deps,
+    );
+
+    expect(available.map((ref) => ref.id)).toEqual([
+      "lore-oracle.open-help",
+      "lore-oracle.open-settings",
+    ]);
+    expect(unavailable.map((ref) => ref.id)).toEqual(["lore-oracle.open-help"]);
+  });
+
+  it("never offers the Oracle or Publishing a way to change anything", () => {
+    for (const id of ["publishing", "lore-oracle"]) {
+      for (const ref of FEATURE_REGISTRY.find((f) => f.id === id)!.actions)
+        expect(["openHelp", "openPanel"], ref.id).toContain(ref.action.type);
+    }
+  });
+
+  it("only treats a catch-all-area feature as on screen on its own route", () => {
+    const oracle = FEATURE_REGISTRY.find((f) => f.id === "lore-oracle")!;
+    const unknownScreen = sanitizeHelpContext({
+      routeTemplate: "/(app)",
+      area: "other",
+    });
+    const oracleRoute = sanitizeHelpContext({
+      routeTemplate: "/(app)/oracle",
+      area: "other",
+    });
+
+    expect(featureMatchesScreen(oracle, unknownScreen)).toBe(false);
+    expect(featureMatchesScreen(oracle, oracleRoute)).toBe(true);
+    // The catch-all must not make the Oracle the screen's help on unrelated screens.
+    expect(
+      retrieve(
+        "What can I do here?",
+        buildRealBundle(),
+        unknownScreen,
+      ).screenFeatures.map((f) => f.id),
+    ).not.toContain("lore-oracle");
   });
 });

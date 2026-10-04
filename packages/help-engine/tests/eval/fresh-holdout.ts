@@ -136,7 +136,7 @@ export const FRESH_IN_SCOPE = [
   q(
     "Should I publish a world or export a backup for safekeeping?",
     "settings",
-    ["publishing"],
+    ["publishing", "registry:publishing"],
     ["export-and-backup", "registry:backup-and-restore"],
   ),
   q("Does switching to a dark interface change my world's genre?", "settings", [

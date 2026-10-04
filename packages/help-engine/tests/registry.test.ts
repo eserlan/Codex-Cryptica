@@ -70,6 +70,8 @@ describe("proof-of-concept registry", () => {
         "family-tree",
         "guided-mode",
         "session-prep",
+        "publishing",
+        "lore-oracle",
       ].sort(),
     );
   });

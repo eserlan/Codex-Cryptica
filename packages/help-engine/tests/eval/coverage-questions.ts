@@ -116,6 +116,20 @@ export const COVERAGE_QUESTIONS = [
     "Does session preparation force a scene order or ending?",
     "holdout",
   ],
+  ["publishing", "How do I give my players a link to my world?", "tune"],
+  ["publishing", "Can I take my published world down again?", "tune"],
+  ["publishing", "What stays hidden when I publish my world?", "holdout"],
+  ["publishing", "How do I list my world in Explore Worlds?", "holdout"],
+  [
+    "publishing",
+    "Does delisting my world also remove the shared link?",
+    "holdout",
+  ],
+  ["lore-oracle", "How do I ask the Oracle a question about my world?", "tune"],
+  ["lore-oracle", "How do I revise a description with AI?", "tune"],
+  ["lore-oracle", "Does the Oracle send my notes anywhere?", "holdout"],
+  ["lore-oracle", "What does the create command do in Oracle chat?", "holdout"],
+  ["lore-oracle", "Can I stop AI from running?", "holdout"],
 ] as const;
 
 export const COVERAGE_HELP: Record<string, string[]> = {
@@ -127,4 +141,7 @@ export const COVERAGE_HELP: Record<string, string[]> = {
   "family-tree": ["family-tree"],
   "guided-mode": ["guided-mode"],
   "session-prep": ["session-prep"],
+  publishing: ["publishing"],
+  "lore-oracle": ["oracle-guide", "chat-commands"],
+  "backup-and-restore": ["export-and-backup", "cloud-backup", "offline-sync"],
 };

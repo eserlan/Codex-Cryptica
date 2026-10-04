@@ -231,12 +231,14 @@ describe("comparison questions against the real help articles", () => {
   });
 
   it("answers publish versus export with the publishing guide as well", () => {
+    const top = sources(
+      "Should I publish a world or export a backup for safekeeping?",
+      "settings",
+    );
+
     expect(
-      sources(
-        "Should I publish a world or export a backup for safekeeping?",
-        "settings",
-      ),
-    ).toContain("publishing");
+      top.some((id) => id === "publishing" || id === "registry:publishing"),
+    ).toBe(true);
   });
 
   it("still refuses an unrelated comparison instead of inventing sources", () => {
