@@ -115,6 +115,17 @@ const bundle = buildBundle({
       "categories-and-labels",
       "## categories-and-labels\nAbout categories-and-labels.",
     ),
+    article(
+      "entity-table",
+      "entity-table",
+      "## entity-table\nAbout entity-table.",
+    ),
+    article("dice-roller", "dice-roller", "## dice-roller\nAbout dice-roller."),
+    article(
+      "adventure-mode",
+      "adventure-mode",
+      "## adventure-mode\nAbout adventure-mode.",
+    ),
     article("importing", "importing", "## importing\nAbout importing."),
     article(
       "thread-weaver-import",

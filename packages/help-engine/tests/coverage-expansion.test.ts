@@ -24,6 +24,9 @@ const remaining = [
   "lore-oracle",
   "theme-settings",
   "schema-settings",
+  "entity-table",
+  "dice-roller",
+  "solo-adventure",
 ];
 
 describe("remaining contextual Help coverage", () => {
@@ -260,15 +263,37 @@ describe("remaining contextual Help coverage", () => {
     ]);
   });
 
-  it("never offers the Oracle, Publishing, Themes or Schema a way to change anything", () => {
+  it("never offers the Oracle, Publishing, Themes, Schema, Table, Dice or Adventure a way to change anything", () => {
     for (const id of [
       "publishing",
       "lore-oracle",
       "theme-settings",
       "schema-settings",
+      "entity-table",
+      "dice-roller",
+      "solo-adventure",
     ]) {
       for (const ref of FEATURE_REGISTRY.find((f) => f.id === id)!.actions)
         expect(["openHelp", "openPanel"], ref.id).toContain(ref.action.type);
+    }
+  });
+
+  it("gives the route-only features nothing but Help to offer, even with every panel available", () => {
+    const deps = { helpIds: new Set(buildRealBundle().helpIds) };
+    for (const id of ["entity-table", "dice-roller", "solo-adventure"]) {
+      const refs = FEATURE_REGISTRY.find((f) => f.id === id)!.actions;
+      const offered = buildActionCandidates(
+        refs,
+        sanitizeHelpContext({
+          area: "other",
+          availableActions: ["settings-vault", "status-tab"],
+        }),
+        deps,
+      );
+      expect(
+        offered.map((ref) => ref.action.type),
+        id,
+      ).toEqual(["openHelp"]);
     }
   });
 

@@ -156,6 +156,38 @@ export const COVERAGE_QUESTIONS = [
     "Where can I see every label used in my vault?",
     "holdout",
   ],
+  [
+    "entity-table",
+    "Which entries are still missing a summary or labels?",
+    "tune",
+  ],
+  ["entity-table", "How do I put a label on twenty entries at once?", "tune"],
+  [
+    "entity-table",
+    "How do I filter the table to entries with no connections?",
+    "holdout",
+  ],
+  ["entity-table", "What does Shift-click do in the table?", "holdout"],
+  ["dice-roller", "How do I roll two d20 and keep the best?", "tune"],
+  ["dice-roller", "Where is my roll history?", "tune"],
+  ["dice-roller", "Why can't I find the dice button?", "holdout"],
+  ["dice-roller", "Can I roll again with the same formula?", "holdout"],
+  [
+    "solo-adventure",
+    "How do I start a solo game with the Oracle as GM?",
+    "tune",
+  ],
+  ["solo-adventure", "How do I continue my adventure?", "tune"],
+  [
+    "solo-adventure",
+    "Will my adventure still be there if I go offline?",
+    "holdout",
+  ],
+  [
+    "solo-adventure",
+    "Does the Oracle add what it invents to my vault?",
+    "holdout",
+  ],
 ] as const;
 
 export const COVERAGE_HELP: Record<string, string[]> = {
@@ -170,6 +202,9 @@ export const COVERAGE_HELP: Record<string, string[]> = {
   publishing: ["publishing"],
   "theme-settings": ["themes"],
   "schema-settings": ["categories-and-labels"],
+  "entity-table": ["entity-table"],
+  "dice-roller": ["dice-roller"],
+  "solo-adventure": ["adventure-mode"],
   "lore-oracle": ["oracle-guide", "chat-commands"],
   "backup-and-restore": ["export-and-backup", "cloud-backup", "offline-sync"],
 };
