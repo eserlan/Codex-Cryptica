@@ -71,4 +71,9 @@ export { starSystemConfig } from "generator-engine";
 export { constellationConfig } from "generator-engine";
 export { alienRaceConfig } from "generator-engine";
 export { creatureConfig } from "generator-engine";
-export { pickFrom } from "./generator-helpers";
+export {
+  nameTable,
+  pickFrom,
+  getRandomItems,
+  generateName,
+} from "./generator-helpers";
