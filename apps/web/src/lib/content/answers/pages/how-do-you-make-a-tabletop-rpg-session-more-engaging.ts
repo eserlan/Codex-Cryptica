@@ -168,6 +168,7 @@ export const howDoYouMakeATabletopRpgSessionMoreEngaging: AnswerConfigInput = {
     "how-do-you-make-a-boss-fight-memorable-in-a-tabletop-rpg",
     "how-do-you-run-a-scene-with-multiple-npcs",
     "how-do-you-run-dnd-for-a-large-group-of-players",
+    "how-do-i-make-combat-faster-without-making-it-less-exciting",
     "can-you-play-a-tabletop-rpg-in-30-minute-sessions",
     "how-do-i-get-my-rpg-party-to-work-together",
     "how-do-i-give-specialist-characters-spotlight",
@@ -193,6 +194,7 @@ export const howDoYouMakeATabletopRpgSessionMoreEngaging: AnswerConfigInput = {
       "answer-session-zero",
       "answer-player-engagement",
       "answer-players-going-off-script",
+      "answer-faster-exciting-combat",
     ],
     acknowledgedOverlap: [
       {
@@ -209,6 +211,11 @@ export const howDoYouMakeATabletopRpgSessionMoreEngaging: AnswerConfigInput = {
         with: "answer-run-scene-multiple-npcs",
         reason:
           "Both address table engagement during play, but this answer covers overall session pacing and player involvement, while the multiple-NPC answer specifically tackles the logistical challenge of running multiple characters in a single scene.",
+      },
+      {
+        with: "answer-faster-exciting-combat",
+        reason:
+          "Session engagement covers pacing and involvement across all play modes; the combat-pacing answer focuses on reducing wait between turns while preserving tactical stakes within fights.",
       },
     ],
   },

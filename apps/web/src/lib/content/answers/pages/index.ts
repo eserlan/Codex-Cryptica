@@ -16,6 +16,7 @@ import { howDoIGiveDifferentCivilisationsDistinctStrengthsAndWeaknesses } from "
 import { howDoIGiveSpecialistCharactersSpotlight } from "./how-do-i-give-specialist-characters-spotlight";
 import { howDoIHandlePlayersAskingAnNpcToTellUsEverythingYouKnow } from "./how-do-i-handle-players-asking-an-npc-to-tell-us-everything-you-know";
 import { howDoIMakeAPlayerBaseMatterInAnRpgCampaign } from "./how-do-i-make-a-player-base-matter-in-an-rpg-campaign";
+import { howDoIMakeCombatFasterWithoutMakingItLessExciting } from "./how-do-i-make-combat-faster-without-making-it-less-exciting";
 import { howDoIMakeDifferentCulturesFeelDistinctWithoutRelyingOnStereotypes } from "./how-do-i-make-different-cultures-feel-distinct-without-relying-on-stereotypes";
 import { howDoIMakeInterviewingNpcsInterestingInAnInvestigation } from "./how-do-i-make-interviewing-npcs-interesting-in-an-investigation";
 import { howDoIMakeRivalCaptainsNaviesAndPirateFactionsMatter } from "./how-do-i-make-rival-captains-navies-and-pirate-factions-matter";
@@ -159,6 +160,7 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     howDoIGiveSpecialistCharactersSpotlight,
     howDoIHandlePlayersAskingAnNpcToTellUsEverythingYouKnow,
     howDoIMakeAPlayerBaseMatterInAnRpgCampaign,
+    howDoIMakeCombatFasterWithoutMakingItLessExciting,
     howDoIMakeDifferentCulturesFeelDistinctWithoutRelyingOnStereotypes,
     howDoIMakeInterviewingNpcsInterestingInAnInvestigation,
     howDoIMakeRivalCaptainsNaviesAndPirateFactionsMatter,

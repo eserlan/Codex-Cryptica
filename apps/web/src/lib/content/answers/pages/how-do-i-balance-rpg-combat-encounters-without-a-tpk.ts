@@ -139,6 +139,7 @@ export const howDoIBalanceRpgCombatEncountersWithoutATpk: AnswerConfigInput = {
     "how-much-rule-of-cool-should-a-dm-allow",
     "how-do-you-make-a-boss-fight-memorable-in-a-tabletop-rpg",
     "how-do-you-run-dnd-for-a-large-group-of-players",
+    "how-do-i-make-combat-faster-without-making-it-less-exciting",
     "what-rpg-should-i-use-for-tactical-combat",
     "how-do-i-run-a-large-battle-when-the-player-characters-are-part-of-an-army",
     "how-do-i-upgrade-a-player-characters-weapon-without-replacing-it",
@@ -157,7 +158,18 @@ export const howDoIBalanceRpgCombatEncountersWithoutATpk: AnswerConfigInput = {
     ],
     uniqueValue:
       "Names what a CR/XP formula misses (action economy, party condition, signalling, objectives, terrain, retreat options and built-in pressure valves) and works one encounter through several ways to soften it without secretly rewriting numbers mid-fight.",
-    relatedIntents: ["answer-random-encounter", "generator-encounter"],
+    relatedIntents: [
+      "answer-random-encounter",
+      "generator-encounter",
+      "answer-faster-exciting-combat",
+    ],
+    acknowledgedOverlap: [
+      {
+        with: "answer-faster-exciting-combat",
+        reason:
+          "Encounter balance concerns whether a fight is fair and survivable; the combat-pacing answer concerns turn flow and reducing dead time while keeping tension and meaningful choices.",
+      },
+    ],
   },
 
   seo: {
