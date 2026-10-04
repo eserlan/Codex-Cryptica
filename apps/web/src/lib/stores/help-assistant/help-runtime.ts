@@ -13,6 +13,7 @@ import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
 import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
 import { vault } from "$lib/stores/vault.svelte";
 import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
+import { systemClock, type Clock } from "$lib/utils/runtime-deps";
 import { HelpAssistantStore } from "./help-assistant.svelte";
 import { HelpContextStore } from "./help-context.svelte";
 import { helpSurfaces } from "./help-surface.svelte";
@@ -70,12 +71,16 @@ const DESTINATIONS: Record<DestinationId, string> = {
   timeline: `${base}/timeline`,
 };
 
-function waitFor(check: () => boolean, ms: number): Promise<boolean> {
+function waitFor(
+  check: () => boolean,
+  ms: number,
+  clock: Clock = systemClock,
+): Promise<boolean> {
   return new Promise((resolve) => {
-    const deadline = Date.now() + ms;
+    const deadline = clock.now() + ms;
     const tick = () => {
       if (check()) return resolve(true);
-      if (Date.now() >= deadline) return resolve(false);
+      if (clock.now() >= deadline) return resolve(false);
       requestAnimationFrame(tick);
     };
     tick();
