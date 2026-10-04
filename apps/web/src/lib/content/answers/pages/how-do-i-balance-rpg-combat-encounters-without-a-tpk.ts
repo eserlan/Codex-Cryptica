@@ -143,6 +143,7 @@ export const howDoIBalanceRpgCombatEncountersWithoutATpk: AnswerConfigInput = {
     "what-rpg-should-i-use-for-tactical-combat",
     "how-do-i-run-a-large-battle-when-the-player-characters-are-part-of-an-army",
     "how-do-i-upgrade-a-player-characters-weapon-without-replacing-it",
+    "how-do-i-keep-players-engaged-during-other-players-turns-in-combat",
   ],
   discovery: {
     id: "answer-encounter-balance",
