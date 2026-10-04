@@ -22,6 +22,20 @@ export const RELEVANCE_SCREEN_BONUS = 0.15;
 /** Keep an exact on-screen feature name ahead of semantically similar guides. */
 export const EXACT_TITLE_MATCH_BONUS = 0.2;
 
+/**
+ * The screen boost counts in full only for a chunk whose words (or meaning)
+ * really match the question, and fades linearly below this match strength.
+ * Without it a chunk on the current screen with a token overlap could climb
+ * past the guide that actually answers the question, because the boost is
+ * worth more than the gap between a token overlap and a real match (#3617).
+ *
+ * Set from the expanded and frozen evaluation sets: the default-template and
+ * frozen geography questions improve, and nothing is lost up to 0.40. From
+ * about 0.45 the headline "connect the faction I just created" starts to
+ * lose, because its on-screen guide matches only through narrative words.
+ */
+export const SCREEN_BOOST_FULL_AT = 0.35;
+
 export const BOOSTS = {
   feature: 0.08,
   route: 0.04,
@@ -127,8 +141,15 @@ function bm25(
   return score;
 }
 
-/** How strongly the current screen favours a feature that is already on it. */
-function contextBoost(feature: FeatureEntry, ctx: HelpContext): number {
+/**
+ * How strongly the current screen favours a feature that is already on it,
+ * scaled by how well the chunk itself matches the question.
+ */
+function contextBoost(
+  feature: FeatureEntry,
+  ctx: HelpContext,
+  matchStrength: number,
+): number {
   let boost: number = BOOSTS.feature;
   if (feature.routes.includes(ctx.routeTemplate)) boost += BOOSTS.route;
   const kindFits =
@@ -136,7 +157,7 @@ function contextBoost(feature: FeatureEntry, ctx: HelpContext): number {
     (feature.kinds === "any" || feature.kinds.includes(ctx.entityKind));
   if (kindFits) boost += BOOSTS.kind;
   if (ctx.tab && feature.tabs.includes(ctx.tab)) boost += BOOSTS.tab;
-  return boost;
+  return boost * Math.min(1, matchStrength / SCREEN_BOOST_FULL_AT);
 }
 
 // fallow-ignore-next-line complexity
@@ -170,7 +191,7 @@ function scoreSingleChunk(
     semantic,
     score:
       matchStrength +
-      (feature && onScreen ? contextBoost(feature, ctx) : 0) +
+      (feature && onScreen ? contextBoost(feature, ctx, matchStrength) : 0) +
       exactTitleBonus,
     relevance:
       matchStrength + (onScreen ? RELEVANCE_SCREEN_BONUS : 0) + exactTitleBonus,
