@@ -139,6 +139,23 @@ export const COVERAGE_QUESTIONS = [
     "What is the difference between App Appearance and a world theme?",
     "holdout",
   ],
+  ["schema-settings", "How do I create my own category for my world?", "tune"],
+  ["schema-settings", "Where do I change a category's colour or icon?", "tune"],
+  [
+    "schema-settings",
+    "Will resetting categories ask me to confirm?",
+    "holdout",
+  ],
+  [
+    "schema-settings",
+    "What happens to my entries if I delete a category?",
+    "holdout",
+  ],
+  [
+    "schema-settings",
+    "Where can I see every label used in my vault?",
+    "holdout",
+  ],
 ] as const;
 
 export const COVERAGE_HELP: Record<string, string[]> = {
@@ -152,6 +169,7 @@ export const COVERAGE_HELP: Record<string, string[]> = {
   "session-prep": ["session-prep"],
   publishing: ["publishing"],
   "theme-settings": ["themes"],
+  "schema-settings": ["categories-and-labels"],
   "lore-oracle": ["oracle-guide", "chat-commands"],
   "backup-and-restore": ["export-and-backup", "cloud-backup", "offline-sync"],
 };

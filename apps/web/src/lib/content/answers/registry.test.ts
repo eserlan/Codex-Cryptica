@@ -51,6 +51,18 @@ const mockRegistry: Record<string, AnswerConfig> = {
 };
 
 describe("answer registry", () => {
+  it("cross-links combat engagement and combat pacing answers", () => {
+    const engagement =
+      answers[
+        "how-do-i-keep-players-engaged-during-other-players-turns-in-combat"
+      ];
+    const pacing =
+      answers["how-do-i-make-combat-faster-without-making-it-less-exciting"];
+
+    expect(engagement.relatedAnswers).toContain(pacing.slug);
+    expect(pacing.relatedAnswers).toContain(engagement.slug);
+  });
+
   it("keeps the large-group combat pacing phrasing with its new answer", () => {
     expect(
       findIntentOwner(

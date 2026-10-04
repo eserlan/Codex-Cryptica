@@ -9,7 +9,7 @@ export const howDoIKeepPlayersEngagedDuringOtherPlayersTurnsInCombat: AnswerConf
       "How do I keep players engaged during other players' turns in combat?",
     kind: "framework",
     shortAnswer:
-      "Give players a reason to follow each turn: make the initiative order visible, announce who is acting and who is next, and let meaningful changes make other characters' choices matter. Reduce decision and resolution delays, give players room to prepare options without locking in a choice, and treat phones or side conversations as clues about waiting time and encounter design before treating them as a discipline problem.",
+      "Measure how long players wait between meaningful decisions and reduce avoidable delays. Give players a reason to follow each turn: make the initiative order visible, announce who is acting and who is next, and let meaningful changes make other characters' choices matter. Invite planning without locking in a choice, and treat phones or side conversations as clues about waiting time and encounter design before treating them as a discipline problem.",
     sections: [
       {
         kind: "prose",
@@ -17,7 +17,27 @@ export const howDoIKeepPlayersEngagedDuringOtherPlayersTurnsInCombat: AnswerConf
         paragraphs: [
           "When attention drops during combat, it is tempting to explain the problem as poor player behaviour. Sometimes a group does need to agree on phones and side conversations. First look at what players are being asked to attend to: if several turns pass without changing what their characters can do, there may be little reason to keep watching.",
           "Engagement improves when the situation changes often enough to reward attention. Combat engagement does not require every player to act on every turn or visibly watch every roll. Some players think while looking away, doodling, fidgeting, or checking notes; aim for situational awareness and easy re-entry, not a constant performance of attention. A player who can quickly answer 'what changed, what matters, and what might I do?' can be engaged without tracking every detail.",
-          "Meaningful changes between turns are only part of the pace. Long rules lookups, repeated ability rereading, unclear targets, extended rulings, avoidable arithmetic or condition bookkeeping, and decisions that begin only when a player's name is called can make each turn drag. Reduce decision latency and resolution latency as well as the gaps between turns.",
+          "Meaningful changes between turns are only part of the pace. Long turns, spell or ability lookups, repeated rereading, unclear targets or battlefield positions, extended rulings, avoidable arithmetic or condition bookkeeping, slow virtual-tabletop interaction, narration longer than the decision, and decisions that begin only when a player's name is called can all make each turn drag. Reduce decision and resolution delays as well as the gaps between turns.",
+        ],
+      },
+      {
+        kind: "list",
+        heading: "Audit the wait",
+        intro:
+          "Ask how long it is from the end of one meaningful decision to the next decision that matters to this player. If that gap is routinely several minutes, inspect the encounter before asking players to pay closer attention:",
+        items: [
+          {
+            term: "Encounter size and turn complexity",
+            text: "Check how many player, NPC, and monster turns sit between a player's meaningful choices. Reduce the number of opponents or simplify routine turns where the system permits.",
+          },
+          {
+            term: "Rules and information friction",
+            text: "Look for repeated lookups, unclear positions or conditions, arithmetic, and slow map or virtual-tabletop interaction. Make the battlefield easier to read and move lookups out of the critical path where possible.",
+          },
+          {
+            term: "Initiative and enemy actions",
+            text: "Consider whether the initiative structure creates long gaps, and whether low-value or identical enemy actions can be grouped where the system permits.",
+          },
         ],
       },
       {
@@ -36,11 +56,11 @@ export const howDoIKeepPlayersEngagedDuringOtherPlayersTurnsInCombat: AnswerConf
           },
           {
             term: "Let characters help one another",
-            text: "Use the system's existing reactions, assists, and teamwork rules. An ally's position or action can set up another character's turn, and a threatened companion can make everyone watch for a chance to intervene. Do not promise a reaction where the rules do not allow one; show the danger clearly so players can plan around it. Extra off-turn actions are not always helpful: each can open another decision window and slow or muddle the fight. Add them only where the game supports them or they solve a specific problem.",
+            text: "Use the system's existing reactions, assists, and teamwork rules where they apply. An ally's position or action can set up another character's turn, and a threatened companion can make others care about the outcome. Do not promise a reaction where the rules do not allow one; extra off-turn decisions can create interrupt chains and lengthen a round, so add them only where they solve a specific problem.",
           },
           {
-            term: "Give the fight a shared objective",
-            text: "A shared objective need not be a countdown or escort. The party might control space, protect a fragile resource, escape with information, delay rather than win, identify the real threat, force an enemy to reveal something, reach or hold a position, or decide whether to continue or withdraw. Tell players what is visibly at stake and show progress or setbacks as they happen.",
+            term: "Use a shared objective when it helps",
+            text: "A shared objective need not be a countdown or escort: the party might control space, protect a fragile resource, escape with information, delay rather than win, identify the real threat, force an enemy to reveal something, reach or hold a position, or decide whether to continue or withdraw. Do not bolt on an external objective just to manufacture attention; a straightforward fight can still matter when positions matter, allies set each other up, enemy behaviour changes, resources are at stake, or the fiction is important. Show progress and setbacks when there is an objective to follow.",
           },
           {
             term: "Use a clear turn rhythm",
@@ -53,6 +73,10 @@ export const howDoIKeepPlayersEngagedDuringOtherPlayersTurnsInCombat: AnswerConf
           {
             term: "Offer a quick re-entry cue",
             text: "Before a turn after a long gap, briefly recap what changed: 'Since your last turn, the gate is half-broken, the scout reached the stairs, and the archer moved onto the roof.' That restores the situation without requiring a player to remember every detail or listen to the whole battlefield being narrated again.",
+          },
+          {
+            term: "Keep turns focused",
+            text: "Summarise the battlefield at turn start only when needed; ask for the player's intent before drilling into mechanics; and resolve routine enemy actions quickly. Prepare monster abilities, use visible condition markers, avoid re-explaining familiar rules every round, and batch identical, low-complexity NPCs where the system allows. Then resolve the action, state what changed, and pass the turn. Leave room to adapt when a new threat or result changes the plan.",
           },
           {
             term: "Give the table small jobs",
@@ -73,11 +97,11 @@ export const howDoIKeepPlayersEngagedDuringOtherPlayersTurnsInCombat: AnswerConf
         kind: "list",
         heading: "Read disengagement before setting a rule",
         intro:
-          "If players disengage, check in this order before deciding the problem is table behaviour:",
+          "Attention can follow a turn for tactical or narrative reasons: it may change positioning, spend a shared resource, threaten an ally, advance an objective, reveal an enemy's capability, or resolve a relationship or emotional beat. First shorten waits, clarify the situation, show what changed, make consequences shared where useful, and invite planning. Revisit table expectations only if needed.",
         items: [
           {
             term: "Check the round and the changing situation",
-            text: "Is the round simply too long? Does the battlefield materially change between turns? Is there a shared objective beyond damage? Can players see who is next and prepare options? Notice whether the same players check out in particular fights; change that part and see whether attention follows.",
+            text: "Is the round simply too long? Does the battlefield materially change between turns? Is there a shared objective beyond damage? Can players see who is next and prepare options? If the same players check out in particular fights, notice whether their meaningful decisions are far apart, the situation is unclear, or their choices repeat; change that part of the encounter and see whether attention follows.",
           },
           {
             term: "Account for a large party",
@@ -93,7 +117,7 @@ export const howDoIKeepPlayersEngagedDuringOtherPlayersTurnsInCombat: AnswerConf
           },
           {
             term: "Talk about table expectations",
-            text: "Only after checking the encounter, set a shared expectation for devices and cross-talk, with sensible room for breaks or urgent messages. Ask what makes it hard to stay with the fight before imposing a blanket ban.",
+            text: "Only after checking the encounter, agree on expectations for devices and cross-talk, with sensible room for breaks or urgent messages. Ask what makes it hard to stay with the fight before imposing a blanket ban.",
           },
         ],
       },
@@ -122,13 +146,16 @@ export const howDoIKeepPlayersEngagedDuringOtherPlayersTurnsInCombat: AnswerConf
         kind: "checklist",
         heading: "Before the next fight",
         items: [
-          "Put the initiative order where the table can see it, and call the next player before their turn.",
-          "Choose a visible threat or shared objective that can change during the fight.",
-          "Check that players can use the system's reaction or assist rules when an ally's turn creates an opening.",
+          "Measure the gap between meaningful decisions and shorten routine waits.",
+          "Clarify the situation, then show what changed after each turn.",
+          "Make consequences shared where useful; invite planning while leaving room to adapt.",
+          "If your game uses ordered initiative, show who is acting and who is next.",
+          "Use existing reaction or assist rules where they fit, without adding off-turn overhead.",
           "Give new players a short reference for the actions they use most often.",
-          "Invite players to prepare options between turns, while letting them adapt to new information.",
-          "Use the declare, resolve, state the change, cue the next turn rhythm, with a brief re-entry recap after a long gap.",
+          "Keep turns focused: resolve routine enemy actions quickly and use visible condition markers where helpful.",
+          "Use a visible threat or shared objective when it adds meaningful choices to the fight.",
           "If attention keeps dropping, check turn length, meaningful changes, unnecessary delays, resolved fights, and the session's combat load before discussing table expectations.",
+          "Revisit table expectations only if attention still drops after pacing and clarity improve.",
         ],
       },
     ],
@@ -166,7 +193,7 @@ export const howDoIKeepPlayersEngagedDuringOtherPlayersTurnsInCombat: AnswerConf
         "how to keep players paying attention during initiative",
       ],
       uniqueValue:
-        "Focuses on attention during and between combat turns, showing how initiative cues, meaningful state changes, shared objectives, responsive preparation, shorter decision and resolution delays, and beginner support give players a reason to follow the fight. It treats disengagement as feedback about wait time and encounter design, rather than only a behaviour problem.",
+        "Starts by diagnosing the wait between meaningful combat decisions, then shows how initiative cues, meaningful changes, shared stakes, responsive preparation, and beginner support help players follow the fight without demanding constant visible attention.",
       relatedIntents: [
         "answer-session-engagement",
         "answer-large-group-dnd",
@@ -199,7 +226,7 @@ export const howDoIKeepPlayersEngagedDuringOtherPlayersTurnsInCombat: AnswerConf
       title:
         "How do I keep players engaged during combat turns? | Codex Cryptica",
       description:
-        "Use clear initiative cues, meaningful changes, and shared objectives to reduce delays and help players follow combat between turns.",
+        "Measure waiting time between meaningful combat decisions, shorten avoidable delays, then use clear changes and shared stakes to keep players engaged.",
       image:
         "https://assets.codexcryptica.com/og/how-do-i-keep-players-engaged-during-other-players-turns-in-combat.jpg",
       imageAlt:

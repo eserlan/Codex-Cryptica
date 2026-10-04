@@ -4,6 +4,7 @@
 
   let editingLabel = $state<string | null>(null);
   let renameValue = $state("");
+  let isProcessing = $state(false);
 
   const startRename = (label: string) => {
     editingLabel = label;
@@ -33,21 +34,24 @@
     });
 
   const handleRename = async () => {
+    if (isProcessing) return;
+    isProcessing = true;
     const from = editingLabel;
     const to = renameValue.trim().toLowerCase();
-    if (!from || !to || vault.isGuest) return;
 
-    // Same name apart from case or spacing: nothing to change.
-    if (to === from.toLowerCase()) {
-      editingLabel = null;
-      return;
-    }
-
-    const exists = vault.labelIndex.some((l) => l.toLowerCase() === to);
-    if (exists && !(await confirmMerge(from, to))) return;
-
-    editingLabel = null;
     try {
+      if (!from || !to || vault.isGuest) return;
+
+      // Same name apart from case or spacing: nothing to change.
+      if (to === from.toLowerCase()) {
+        editingLabel = null;
+        return;
+      }
+
+      const exists = vault.labelIndex.some((l) => l.toLowerCase() === to);
+      if (exists && !(await confirmMerge(from, to))) return;
+
+      editingLabel = null;
       const count = await vault.renameLabel(from, to);
       notificationStore.notify(
         `Renamed "${from}" to "${to}" on ${entries(count)}.`,
@@ -58,20 +62,25 @@
         `Could not rename the label: ${err.message}`,
         "error",
       );
+    } finally {
+      isProcessing = false;
     }
   };
 
   const handleDelete = async (label: string) => {
-    if (vault.isGuest) return;
-    const confirmed = await notificationStore.confirm({
-      title: "Delete Label",
-      message: `Remove the label "${label}" from ${entries(entriesWith(label))}? The entries themselves are not deleted.`,
-      confirmLabel: "Delete",
-      isDangerous: true,
-    });
-    if (!confirmed) return;
+    if (isProcessing) return;
+    isProcessing = true;
 
     try {
+      if (vault.isGuest) return;
+      const confirmed = await notificationStore.confirm({
+        title: "Delete Label",
+        message: `Remove the label "${label}" from ${entries(entriesWith(label))}? The entries themselves are not deleted.`,
+        confirmLabel: "Delete",
+        isDangerous: true,
+      });
+      if (!confirmed) return;
+
       const count = await vault.deleteLabel(label);
       notificationStore.notify(
         `Removed "${label}" from ${entries(count)}.`,
@@ -82,6 +91,8 @@
         `Could not delete the label: ${err.message}`,
         "error",
       );
+    } finally {
+      isProcessing = false;
     }
   };
 </script>
@@ -112,7 +123,7 @@
                 <button
                   type="button"
                   onclick={handleRename}
-                  disabled={!renameValue.trim()}
+                  disabled={isProcessing || !renameValue.trim()}
                   class="px-3 py-1 disabled:opacity-50 bg-theme-primary text-theme-bg text-meta font-bold rounded uppercase font-header transition-colors"
                 >
                   Save
@@ -145,6 +156,7 @@
               <button
                 type="button"
                 onclick={() => startRename(label)}
+                disabled={isProcessing}
                 class="p-2 text-theme-muted hover:text-theme-primary transition-colors"
                 title="Rename Label"
                 aria-label="Rename {label} label"
@@ -157,6 +169,7 @@
               <button
                 type="button"
                 onclick={() => handleDelete(label)}
+                disabled={isProcessing}
                 class="p-2 text-red-900/60 hover:text-red-500 transition-colors"
                 title="Delete Label Project-wide"
                 aria-label="Delete {label} label project-wide"

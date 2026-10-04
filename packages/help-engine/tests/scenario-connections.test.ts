@@ -110,6 +110,11 @@ const bundle = buildBundle({
       "## chat-commands\nAbout chat-commands.",
     ),
     article("themes", "themes", "## themes\nAbout themes."),
+    article(
+      "categories-and-labels",
+      "categories-and-labels",
+      "## categories-and-labels\nAbout categories-and-labels.",
+    ),
     article("importing", "importing", "## importing\nAbout importing."),
     article(
       "thread-weaver-import",

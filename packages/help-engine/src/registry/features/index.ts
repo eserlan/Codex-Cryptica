@@ -9,6 +9,7 @@ import { sessionPrep } from "./session-prep";
 import { publishing } from "./publishing";
 import { loreOracle } from "./lore-oracle";
 import { themeSettings } from "./theme-settings";
+import { schemaSettings } from "./schema-settings";
 import type { FeatureEntry } from "../schema";
 import { archiveImport } from "./archive-import";
 import { backupAndRestore } from "./backup-and-restore";
@@ -46,4 +47,5 @@ export const FEATURE_REGISTRY: readonly FeatureEntry[] = [
   publishing,
   loreOracle,
   themeSettings,
+  schemaSettings,
 ];
