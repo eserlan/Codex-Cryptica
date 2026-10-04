@@ -29,6 +29,11 @@ export const COVERAGE_QUESTIONS = [
     "How do I collect graph entities into a report?",
     "holdout",
   ],
+  [
+    "entity-reports",
+    "Can I turn selected table rows into a report?",
+    "holdout",
+  ],
   ["stat-sheets", "Where are an entity's hit points and dice fields?", "tune"],
   [
     "stat-sheets",
@@ -93,6 +98,12 @@ export const COVERAGE_QUESTIONS = [
     "Does Quick Start create a new world immediately?",
     "holdout",
   ],
+  ["guided-mode", "Why is the dice roller missing from my workspace?", "tune"],
+  [
+    "guided-mode",
+    "Does accepting a faction leader suggestion create it straight away?",
+    "holdout",
+  ],
   ["session-prep", "Can I build a session run sheet without AI?", "tune"],
   ["session-prep", "How do I undo an AI redraft of my prep?", "tune"],
   [
@@ -109,7 +120,7 @@ export const COVERAGE_QUESTIONS = [
 
 export const COVERAGE_HELP: Record<string, string[]> = {
   "session-journal": ["quicknote"],
-  "entity-reports": ["spatial-canvas"],
+  "entity-reports": ["entity-reports"],
   "stat-sheets": ["stat-sheets"],
   "entity-templates": ["default-entity-templates"],
   chronology: ["chronology"],
