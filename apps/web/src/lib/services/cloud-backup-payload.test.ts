@@ -159,6 +159,34 @@ describe("buildCloudBackupPayload", () => {
     }
   });
 
+  it("derives stage durations from an injected clock", async () => {
+    let tick = 1000;
+    const clock = { now: () => (tick += 250) };
+    const timings: { stage: string; durationMs: number }[] = [];
+    await buildCloudBackupPayload("V", [entity("e1")], {
+      clock,
+      resolveImageUrl: async () => "blob:x",
+      fetch: okFetch,
+      onTiming: (timing) => timings.push(timing),
+    });
+
+    expect(timings).toHaveLength(1);
+    expect(timings[0].durationMs).toBeGreaterThan(0);
+    expect(timings[0].durationMs % 250).toBe(0);
+  });
+
+  it("falls back to the real clock when none is injected", async () => {
+    const timings: { durationMs: number }[] = [];
+    await buildCloudBackupPayload("V", [entity("e1")], {
+      resolveImageUrl: async () => "blob:x",
+      fetch: okFetch,
+      onTiming: (timing) => timings.push(timing),
+    });
+
+    expect(timings[0].durationMs).toBeGreaterThanOrEqual(0);
+    expect(Number.isFinite(timings[0].durationMs)).toBe(true);
+  });
+
   it("emits no hydrate stage when there is nothing to hydrate", async () => {
     const timings: { stage: string }[] = [];
     await buildCloudBackupPayload("V", [entity("e1")], {
