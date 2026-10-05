@@ -517,6 +517,12 @@ export const themeIdToLabel: Record<string, string> = {
   "space-western_light": "Space Western",
   superhero: "Superhero / Comic Book",
   superhero_dark: "Superhero / Comic Book",
+  starwars: "Sci-Fi / Space Opera",
+  starwars_light: "Sci-Fi / Space Opera",
+  "space-opera-resistance": "Sci-Fi / Space Opera",
+  "space-opera-resistance_dark": "Sci-Fi / Space Opera",
+  fallout: "Post-Apocalyptic",
+  fallout_light: "Post-Apocalyptic",
 };
 
 export const vampireConfig = {
