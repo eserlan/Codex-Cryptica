@@ -461,4 +461,29 @@ export const exampleEntries: DiscoveryEntryInput[] = [
     indexable: true,
     status: "live",
   },
+  {
+    id: "example-karrow-council-vote",
+    pageKind: "example",
+    canonicalPath: "/examples/the-treasurys-tipping-point-karrow-council-vote",
+    primaryIntent: "rpg council vote example",
+    intentAliases: [
+      "council vote generator example",
+      "rpg senate vote example",
+      "fantasy political vote scenario example",
+      "sample council vote rpg",
+    ],
+    audience: "Classic Fantasy and political intrigue game masters",
+    userJob: "see-an-example",
+    uniqueValue:
+      "A complete, table-ready Senate council vote in the Republic of Karrow with a five-seat room, syndicate blackmail, a 1-2-2 starting tally, and multiple viable coalitions.",
+    parentCluster: "worldbuilding",
+    clusters: ["worldbuilding", "faction-creation"],
+    relatedIntents: [
+      "generator-council-vote",
+      "answer-constitutional-crisis-or-coup",
+      "generator-faction",
+    ],
+    indexable: true,
+    status: "live",
+  },
 ];

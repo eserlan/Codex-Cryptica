@@ -209,6 +209,15 @@ describe("the published examples", () => {
     expect(breakwater.generator.href).toBe("/generators/heist");
   });
 
+  it("publishes a Classic Fantasy council vote filling the council-vote kind gap", () => {
+    const tippingPoint =
+      examples["the-treasurys-tipping-point-karrow-council-vote"];
+    expect(tippingPoint).toBeDefined();
+    expect(tippingPoint.kind).toBe("council-vote");
+    expect(tippingPoint.genre).toBe("Classic Fantasy");
+    expect(tippingPoint.generator.href).toBe("/generators/council-vote");
+  });
+
   it("keys every example by its own slug", () => {
     for (const [key, example] of Object.entries(examples)) {
       expect(key).toBe(example.slug);
