@@ -17,6 +17,7 @@ import { howDoIGiveSpecialistCharactersSpotlight } from "./how-do-i-give-special
 import { howDoIHandleDivinationMagicWithoutLettingOneCharacterSolveEveryMystery } from "./how-do-i-handle-divination-magic-without-letting-one-character-solve-every-mystery";
 import { howDoIHandlePlayersAskingAnNpcToTellUsEverythingYouKnow } from "./how-do-i-handle-players-asking-an-npc-to-tell-us-everything-you-know";
 import { howDoIKeepPlayersEngagedDuringOtherPlayersTurnsInCombat } from "./how-do-i-keep-players-engaged-during-other-players-turns-in-combat";
+import { howDoIMakeACampaignThreatFeelUrgentWithoutRailroading } from "./how-do-i-make-a-campaign-threat-feel-urgent-without-railroading";
 import { howDoIMakeAPlayerBaseMatterInAnRpgCampaign } from "./how-do-i-make-a-player-base-matter-in-an-rpg-campaign";
 import { howDoIMakeCombatFasterWithoutMakingItLessExciting } from "./how-do-i-make-combat-faster-without-making-it-less-exciting";
 import { howDoIMakeDifferentCulturesFeelDistinctWithoutRelyingOnStereotypes } from "./how-do-i-make-different-cultures-feel-distinct-without-relying-on-stereotypes";
@@ -163,6 +164,7 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     howDoIHandleDivinationMagicWithoutLettingOneCharacterSolveEveryMystery,
     howDoIHandlePlayersAskingAnNpcToTellUsEverythingYouKnow,
     howDoIKeepPlayersEngagedDuringOtherPlayersTurnsInCombat,
+    howDoIMakeACampaignThreatFeelUrgentWithoutRailroading,
     howDoIMakeAPlayerBaseMatterInAnRpgCampaign,
     howDoIMakeCombatFasterWithoutMakingItLessExciting,
     howDoIMakeDifferentCulturesFeelDistinctWithoutRelyingOnStereotypes,
