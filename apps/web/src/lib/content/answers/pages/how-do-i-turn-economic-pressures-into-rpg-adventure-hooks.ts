@@ -154,6 +154,7 @@ export const howDoITurnEconomicPressuresIntoRpgAdventureHooks: AnswerConfigInput
       "how-do-i-give-different-civilisations-distinct-strengths-and-weaknesses",
       "how-do-i-make-different-cultures-feel-distinct-without-relying-on-stereotypes",
       "how-do-i-run-a-campaign-where-the-players-own-a-business",
+      "how-should-a-fantasy-adventuring-guild-handle-wages-dues-and-shared-expenses",
     ],
     discovery: {
       id: "answer-economic-pressures-adventure-hooks",
