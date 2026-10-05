@@ -1,5 +1,5 @@
 {
-  "updated_at": 1791178315,
+  "updated_at": 1791200480,
   "candidates": [
     {
       "id": "reddit-37032544014-my-pirate-arcs-kept-collapsing-into-eith",
@@ -50,6 +50,16 @@
       "source_id": "37267958323",
       "status": "approved",
       "created_at": 1791178315
+    },
+    {
+      "id": "reddit-37303537385-letting-divination-work-without-ending-t",
+      "title": "Letting divination work without ending the mystery",
+      "body": "Your murder mystery is two sessions deep, the cleric casts Speak with Dead and asks the victim who killed them. By the book you should answer, but if you do the whole plot collapses and three other players have nothing to do.\n\nI wanted a way to let the spell work without letting one character close the case. I wrote this as a simple rule: answer the question the spell actually asks, truthfully and usefully, then make that answer create the next decision for the whole party.\n\nFull write-up here: https://codexcryptica.com/answers/how-do-i-handle-divination-magic-without-letting-one-character-solve-every-mystery\n\nInside you get:\n- what each common effect can actually know (Commune, Speak with Dead, Detect Thoughts, Zone of Truth, scrying) and where it stops\n- how to keep sources honest about perspective instead of hiding behind riddles\n- why a name is not a case until you have proof, access and timing, and how to prep mysteries in three layers so one answer cannot break them\n- a cost ladder for repeat casting that taxes slots, contacts and political attention instead of making answers vague\n\nTradeoff I am still weighing: it asks more prep up front. You need those extra layers before play, but it saves the argument at the table when the wizard rolls well.\n\nWhat is the one divination spell that has derailed a mystery at your table, and what did you do in the moment?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/announcements/release-37303537385-0.png)",
+      "url": "https://codexcryptica.com/answers/how-do-i-handle-divination-magic-without-letting-one-character-solve-every-mystery",
+      "image_url": "https://assets.codexcryptica.com/announcements/release-37303537385-0.png",
+      "source_id": "37303537385",
+      "status": "approved",
+      "created_at": 1791200480
     }
   ]
 }
