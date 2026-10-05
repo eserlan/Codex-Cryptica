@@ -80,3 +80,9 @@
 **Learning:** When extracting specific logic (like configurations or re-exports) from a 'god file', manually construct the new file with only the extracted code. Do not copy the entire original file contents as a starting point, as failing to completely remove unrelated monolithic classes or orchestrators will cause massive code duplication and widespread module compilation errors.
 
 **Action:** Formulate the extracted content explicitly and write it to the new file, rather than duplicating the original file and attempting to perform surgical regex removals.
+
+## 2026-10-05 - Extract built-in templates from stat-sheet store
+
+**Learning:** Svelte store files can become god files when they embed large static configurations or initial state arrays (like `BUILT_IN_STAT_SHEET_TEMPLATES`, which alone was 800+ lines). Extracting these static defaults into a separate feature-owned file (e.g., `stores/stat-sheet/built-in-templates.ts`) significantly improves the readability of the store logic itself while keeping the data closely co-located.
+
+**Action:** When inspecting stores for god-file improvements, check if massive static arrays or default configurations are inflating the file size. These are prime, low-risk candidates for extraction into a sibling file or subdirectory (e.g., `stores/domain/constants.ts`).
