@@ -56,7 +56,7 @@ export const howDoIHandleDivinationMagicWithoutLettingOneCharacterSolveEveryMyst
         items: [
           {
             term: "Caster asks a meaningful question",
-            text: "Invite a specific, answerable question that ties to the prepared layers. If the question is too broad to fit the effect, narrow it with the player before resolving: for example, split \"who is behind this\" into what Commune or Speak with Dead can actually cover.",
+            text: 'Invite a specific, answerable question that ties to the prepared layers. If the question is too broad to fit the effect, narrow it with the player before resolving: for example, split "who is behind this" into what Commune or Speak with Dead can actually cover.',
           },
           {
             term: "Give a truthful answer within scope",
@@ -85,7 +85,7 @@ export const howDoIHandleDivinationMagicWithoutLettingOneCharacterSolveEveryMyst
         items: [
           {
             term: "The oracle-trap version",
-            text: "The GM lets Speak with Dead name the whole conspiracy in one answer, or blocks it by ruling the dead spirit speaks only in useless riddles and Commune always answers \"unclear.\" In the first case the rest of the party has nothing to investigate. In the second the cleric's prepared magic feels wasted and the group learns to stop asking. Either way one roll replaces the scene.",
+            text: 'The GM lets Speak with Dead name the whole conspiracy in one answer, or blocks it by ruling the dead spirit speaks only in useless riddles and Commune always answers "unclear." In the first case the rest of the party has nothing to investigate. In the second the cleric\'s prepared magic feels wasted and the group learns to stop asking. Either way one roll replaces the scene.',
           },
           {
             term: "The layered version",
@@ -108,7 +108,8 @@ export const howDoIHandleDivinationMagicWithoutLettingOneCharacterSolveEveryMyst
       {
         kind: "checklist",
         heading: "Before you run a mystery with divination at the table",
-        intro: "Check that your preparation leaves room for good questions to succeed:",
+        intro:
+          "Check that your preparation leaves room for good questions to succeed:",
         items: [
           "Write three layers for the mystery: act, authorisation, and reason. Note which questions touch each layer.",
           "For each expected divination effect, note its actual scope, limits, and what a truthful useful answer looks like in one sentence.",
@@ -210,7 +211,8 @@ export const howDoIHandleDivinationMagicWithoutLettingOneCharacterSolveEveryMyst
       ],
     },
     seo: {
-      title: "Handle Divination Magic Without Solving Every Mystery | Codex Cryptica",
+      title:
+        "Handle Divination Magic Without Solving Every Mystery | Codex Cryptica",
       description:
         "Keep divination honest and useful while protecting your mystery. Use scope, layers, proof, and group decisions to handle the spell.",
       image:

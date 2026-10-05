@@ -195,8 +195,8 @@ export const howDoIRunCharacterRolesInAnInvestigativeHorrorRpg: AnswerConfigInpu
       "how-do-i-run-common-character-roles-in-a-sci-fi-or-space-opera-rpg",
       "how-do-i-make-interviewing-npcs-interesting-in-an-investigation",
       "how-do-i-handle-players-asking-an-npc-to-tell-us-everything-you-know",
-    "how-do-i-handle-divination-magic-without-letting-one-character-solve-every-mystery",
-  ],
+      "how-do-i-handle-divination-magic-without-letting-one-character-solve-every-mystery",
+    ],
     discovery: {
       id: "answer-character-roles-investigative-horror",
       parentCluster: "specialist-roles",

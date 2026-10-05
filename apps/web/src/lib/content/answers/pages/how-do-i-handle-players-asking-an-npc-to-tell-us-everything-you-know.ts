@@ -200,8 +200,8 @@ export const howDoIHandlePlayersAskingAnNpcToTellUsEverythingYouKnow: AnswerConf
       "how-do-you-run-a-scene-with-multiple-npcs",
       "how-do-you-run-a-conspiracy-campaign",
       "how-do-you-design-rpg-puzzles-that-do-not-stall-the-game",
-    "how-do-i-handle-divination-magic-without-letting-one-character-solve-every-mystery",
-  ],
+      "how-do-i-handle-divination-magic-without-letting-one-character-solve-every-mystery",
+    ],
     discovery: {
       id: "answer-npc-tell-us-everything",
       parentCluster: "session-prep",
