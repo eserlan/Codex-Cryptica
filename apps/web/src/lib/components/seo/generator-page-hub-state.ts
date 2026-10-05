@@ -11,8 +11,8 @@ import {
   shipConfig,
   socialHubConfig,
   starSystemConfig,
-} from "$lib/services/seo/generator-engine";
-import { themeIdToLabel } from "$lib/services/seo/generator-engine";
+} from "$lib/services/seo/generator-config";
+import { themeIdToLabel } from "$lib/services/seo/generator-config";
 import { UIPersistence, UI_STORAGE_KEYS } from "$lib/stores/ui/persistence";
 import {
   HUB_SLUG_TO_THEME_ID,

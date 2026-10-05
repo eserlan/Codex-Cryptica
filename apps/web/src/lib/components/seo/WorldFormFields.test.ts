@@ -4,7 +4,7 @@ import { fireEvent, render, screen } from "@testing-library/svelte";
 import { describe, expect, it, vi } from "vitest";
 import WorldFormFields from "./WorldFormFields.svelte";
 
-vi.mock("$lib/services/seo/generator-engine", () => ({
+vi.mock("$lib/services/seo/generator-config", () => ({
   worldConfig: {
     worldTypes: ["Terrestrial World", "Ocean World"],
     habitability: ["Earthlike", "Hostile"],

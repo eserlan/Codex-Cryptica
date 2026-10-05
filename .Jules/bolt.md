@@ -22,3 +22,8 @@
 
 **Learning:** When importing indexed datasets (such as a serialized flexsearch index) that may be segmented and stored as JSON payloads, extracting the byte arrays via `Object.values(buffer)` forces heavy intermediate array allocation. In large indexes, this creates unnecessary garbage collection overhead before wrapping it into `Uint8Array`.
 **Action:** Replace `Object.values(buffer ?? {})` inside large parsing workflows (e.g. `SearchEngine.importIndex`) with an imperative `for...in` loop over keys to explicitly determine the count and place each entry into a `Uint8Array` directly, bypassing the intermediate javascript array entirely.
+
+## 2026-10-04 - Refactor Iterator loops
+
+**Learning:** Replaced the `[...html.matchAll()]` spread syntax with an imperative `for...of` loop on the iterator directly to prevent excessive intermediate array allocation overhead.
+**Action:** Always prefer imperative loops over array spread with iterative methods like `.map()` or `.filter()` when manipulating iterators like Regex matchAll outputs.

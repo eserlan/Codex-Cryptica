@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { vampireConfig } from "$lib/services/seo/generator-engine";
+  import { vampireConfig } from "$lib/services/seo/generator-config";
   import SelectWithCustomOption from "$lib/components/forms/SelectWithCustomOption.svelte";
 
   let {
