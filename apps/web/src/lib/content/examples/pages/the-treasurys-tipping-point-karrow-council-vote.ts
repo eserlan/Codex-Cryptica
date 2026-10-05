@@ -17,7 +17,9 @@ export const theTreasurysTippingPoint: ExampleConfigInput = {
   theme: "fantasy",
   summary:
     "A high-stakes senate vote in the Republic of Karrow: provincial tax hoarding, grain syndicate corruption, and a five-seat council teetering on a simple majority.",
-  provenance: "raw",
+  provenance: "lightly-edited",
+  provenanceNote:
+    "Corrected an internal stance contradiction in the smallest-coalition path: Caelric initially leans against the decree, so the party must persuade him.",
   generator: {
     name: "Council Vote Generator",
     href: "/generators/council-vote",
@@ -129,7 +131,7 @@ export const theTreasurysTippingPoint: ExampleConfigInput = {
       items: [
         {
           term: "1. Smallest Viable Coalition",
-          text: "Stabilise Morgrin and secure Caelric's initial leaning towards support. Provide Morgrin with irrefutable evidence that centralisation will directly benefit his district, such as exposing provincial hoarding practices. For Caelric, a personal appeal involving military accolades will secure his support. Branric already supports the decree, so this coalition achieves the necessary three votes (Branric - Support, Morgrin - Support, Caelric - Support) to pass the decree.",
+          text: "Stabilise Morgrin and persuade Caelric, who initially leans against the decree. Provide Morgrin with irrefutable evidence that centralisation will directly benefit his district, such as exposing provincial hoarding practices. For Caelric, a personal appeal involving military accolades will secure his support. Branric already supports the decree, so this coalition achieves the necessary three votes (Branric - Support, Morgrin - Support, Caelric - Support) to pass the decree.",
         },
         {
           term: "2. Broader Alternative",
@@ -168,7 +170,7 @@ export const theTreasurysTippingPoint: ExampleConfigInput = {
     heading: "Turning an institutional crisis into an open political puzzle",
     paragraphs: [
       "In tabletop campaigns, legislative assemblies are notoriously difficult to run without either railroading the outcome or reducing politics to a single Persuasion dice roll. The Treasury's Tipping Point demonstrates how the Council Vote Generator turns a complex constitutional crisis into an interactive, multi-vector puzzle for players.",
-      "Rather than treating the Senate as a monolithic obstacle, the scenario gives each councillor an explicit public posture, private agenda, and tangible vulnerability. Crucially, the 1-2-2 starting vote estimate means victory is mathematically impossible without breaking existing alliances or exposing corruption, yet multiple distinct coalitions remain viable.",
+      "Rather than treating the Senate as a monolithic obstacle, the scenario gives each councillor an explicit public posture, private agenda, and tangible vulnerability. The 1-2-2 starting estimate gives the decree only one confirmed supporter, so the party must persuade at least two more senators; several distinct coalitions can meet that threshold.",
       "The costly best solution highlights the core ethos of political worldbuilding: solving an immediate institutional deadlock by enlisting a charismatic frontier general does not make the crisis vanish—it shifts the danger into civil-military relations for the next arc of the campaign.",
     ],
   },
