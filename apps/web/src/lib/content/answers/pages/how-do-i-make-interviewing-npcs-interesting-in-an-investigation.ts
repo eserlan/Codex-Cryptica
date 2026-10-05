@@ -334,7 +334,8 @@ export const howDoIMakeInterviewingNpcsInterestingInAnInvestigation: AnswerConfi
       "how-do-you-handle-players-going-off-script-as-a-gm",
       "what-rpg-should-i-play-for-investigative-horror",
       "how-do-i-handle-players-asking-an-npc-to-tell-us-everything-you-know",
-    ],
+    "how-do-i-handle-divination-magic-without-letting-one-character-solve-every-mystery",
+  ],
     discovery: {
       id: "answer-interviewing-npcs-investigation",
       parentCluster: "investigative-horror",

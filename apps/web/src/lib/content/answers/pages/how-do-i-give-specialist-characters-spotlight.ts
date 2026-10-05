@@ -162,6 +162,7 @@ export const howDoIGiveSpecialistCharactersSpotlight: AnswerConfigInput = {
     "how-do-i-make-interviewing-npcs-interesting-in-an-investigation",
     "how-do-i-handle-players-asking-an-npc-to-tell-us-everything-you-know",
     "how-do-i-keep-players-engaged-during-other-players-turns-in-combat",
+    "how-do-i-handle-divination-magic-without-letting-one-character-solve-every-mystery",
   ],
   discovery: {
     id: "answer-specialist-character-spotlight",
