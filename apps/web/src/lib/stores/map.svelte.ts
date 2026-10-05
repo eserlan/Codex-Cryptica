@@ -4,6 +4,7 @@ import {
   imageToViewport,
   viewportToImage,
   pointToHex,
+  hexToPoint,
   MAP_LAYER_ORDER,
   type MapLayer,
 } from "map-engine";
@@ -787,22 +788,28 @@ export class MapStore {
     return canvas;
   }
 
-  private computeHexCoordinates(
-    coordinates: Point,
-  ): { q: number; r: number } | undefined {
+  private computeHexPosition(coordinates: Point): {
+    coordinates: Point;
+    hexCoordinates?: { q: number; r: number };
+  } {
     if (
       this.showGrid &&
       (this.gridType === "hex-pointy" || this.gridType === "hex-flat")
     ) {
       const orientation = this.gridType === "hex-flat" ? "flat" : "pointy";
-      return pointToHex(coordinates, {
+      const config = {
         orientation,
         size: this.gridSize || 50,
         offsetX: this.gridOffsetX || 0,
         offsetY: this.gridOffsetY || 0,
-      });
+      } as const;
+      const hexCoordinates = pointToHex(coordinates, config);
+      return {
+        coordinates: hexToPoint(hexCoordinates, config),
+        hexCoordinates,
+      };
     }
-    return undefined;
+    return { coordinates };
   }
 
   // fallow-ignore-next-line complexity
@@ -821,14 +828,14 @@ export class MapStore {
       }
     }
 
-    const hexCoordinates = this.computeHexCoordinates(coordinates);
+    const hexPosition = this.computeHexPosition(coordinates);
 
     const newPin: MapPin = {
       id: this.idGenerator.uuid(),
       mapId: this.activeMapId,
       entityId,
-      coordinates,
-      hexCoordinates,
+      coordinates: hexPosition.coordinates,
+      hexCoordinates: hexPosition.hexCoordinates,
       visuals,
     };
 
@@ -845,11 +852,29 @@ export class MapStore {
     if (!this.activeMapId || !vault.maps?.[this.activeMapId]) return;
     const map = vault.maps[this.activeMapId];
     if (map) {
-      const hexCoordinates = this.computeHexCoordinates(coordinates);
+      const { hexCoordinates } = this.computeHexPosition(coordinates);
       map.pins = map.pins.map((p: MapPin) =>
         p.id === pinId ? { ...p, coordinates, hexCoordinates } : p,
       );
     }
+  }
+
+  snapPinCoordinatesInMemory(pinId: string) {
+    if (!this.activeMapId || !vault.maps?.[this.activeMapId]) return;
+    const map = vault.maps[this.activeMapId];
+    const pin = map?.pins.find((candidate: MapPin) => candidate.id === pinId);
+    if (!map || !pin) return;
+
+    const hexPosition = this.computeHexPosition(pin.coordinates);
+    map.pins = map.pins.map((candidate: MapPin) =>
+      candidate.id === pinId
+        ? {
+            ...candidate,
+            coordinates: hexPosition.coordinates,
+            hexCoordinates: hexPosition.hexCoordinates,
+          }
+        : candidate,
+    );
   }
 
   async removePin(pinId: string) {

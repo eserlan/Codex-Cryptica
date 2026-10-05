@@ -38,7 +38,11 @@ export interface TokenDragDependencies {
 export interface TokenDragState {
   tokenId: string;
   offset: Point;
+  startPoint: Point;
+  hasMoved: boolean;
 }
+
+const TOKEN_DRAG_THRESHOLD = 5;
 
 export class TokenDragHandler {
   dragState: TokenDragState | null = null;
@@ -82,6 +86,8 @@ export class TokenDragHandler {
         x: imgPoint.x - hitToken.x,
         y: imgPoint.y - hitToken.y,
       },
+      startPoint: { ...viewportPoint },
+      hasMoved: false,
     };
     this.deps.setDraggingTokenId(hitToken.id);
     return hitToken;
@@ -89,6 +95,15 @@ export class TokenDragHandler {
 
   move(viewportPoint: Point) {
     if (!this.dragState) return false;
+
+    if (!this.dragState.hasMoved) {
+      const displacement = Math.hypot(
+        viewportPoint.x - this.dragState.startPoint.x,
+        viewportPoint.y - this.dragState.startPoint.y,
+      );
+      if (displacement < TOKEN_DRAG_THRESHOLD) return true;
+      this.dragState.hasMoved = true;
+    }
 
     const imgPoint = this.deps.unproject(viewportPoint);
     const nextX = imgPoint.x - this.dragState.offset.x;
@@ -109,7 +124,7 @@ export class TokenDragHandler {
     if (!this.dragState) return false;
 
     const gridConfig = this.deps.getGridConfig?.();
-    if (gridConfig?.enabled && gridConfig.size > 0) {
+    if (this.dragState.hasMoved && gridConfig?.enabled && gridConfig.size > 0) {
       const token = this.deps
         .getTokens()
         .find((t) => t.id === this.dragState!.tokenId);
@@ -152,7 +167,7 @@ export class TokenDragHandler {
       }
     }
 
-    if (!this.deps.isHostMode()) {
+    if (this.dragState.hasMoved && !this.deps.isHostMode()) {
       this.deps.confirmTokenMove(this.dragState.tokenId);
     }
     this.deps.setDraggingTokenId(null);

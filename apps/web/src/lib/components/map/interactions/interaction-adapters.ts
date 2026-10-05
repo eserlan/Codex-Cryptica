@@ -124,6 +124,7 @@ export function createPinInteractionDependencies(): PinInteractionDependencies {
     canEditPins: () => mapStore.isGMMode && !sessionModeStore.isGuestMode,
     updatePinCoordinates: (pinId, point) =>
       mapStore.updatePinCoordinatesInMemory(pinId, point),
+    snapPinCoordinates: (pinId) => mapStore.snapPinCoordinatesInMemory(pinId),
     saveMaps: () => vault.saveMaps(),
     selectEntity: (entityId, selectionPoint) => {
       layoutUIStore.setLastSelectedNodePosition(selectionPoint);

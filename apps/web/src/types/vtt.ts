@@ -285,6 +285,8 @@ export interface SessionEndedPayload {
 export interface SetGridSettingsPayload {
   type: "SET_GRID_SETTINGS";
   gridSize?: number;
+  gridType?: "square" | "hex-pointy" | "hex-flat";
+  showHexCoordinates?: boolean;
   gridUnit?: string;
   gridDistance?: number;
 }

@@ -55,6 +55,10 @@ export interface VTTSessionSnapshotManagerDependencies {
   setChatMessages: (messages: ChatMessagePayload[]) => void;
   getGridSize: () => number;
   setGridSize: (value: number) => void;
+  getGridType: () => "square" | "hex-pointy" | "hex-flat";
+  setGridType: (value: "square" | "hex-pointy" | "hex-flat") => void;
+  getShowHexCoordinates: () => boolean;
+  setShowHexCoordinates: (value: boolean) => void;
   getGridUnit: () => string;
   setGridUnit: (value: string) => void;
   getGridDistance: () => number;
@@ -97,6 +101,8 @@ export class VTTSessionSnapshotManager {
       savedAt: this.deps.getSavedAt(),
       chatMessages: [...this.deps.getChatMessages()],
       gridSize: this.deps.getGridSize(),
+      gridType: this.deps.getGridType(),
+      showHexCoordinates: this.deps.getShowHexCoordinates(),
       gridUnit: this.deps.getGridUnit(),
       gridDistance: this.deps.getGridDistance(),
       tileDecks: this.deps.getTileDecks().map((deck) => ({
@@ -142,6 +148,18 @@ export class VTTSessionSnapshotManager {
       normalized.mapId === this.deps.getActiveMapId()
     ) {
       this.deps.setGridSize(normalized.gridSize);
+    }
+    if (
+      normalized.gridType &&
+      normalized.mapId === this.deps.getActiveMapId()
+    ) {
+      this.deps.setGridType(normalized.gridType);
+    }
+    if (
+      normalized.showHexCoordinates !== undefined &&
+      normalized.mapId === this.deps.getActiveMapId()
+    ) {
+      this.deps.setShowHexCoordinates(normalized.showHexCoordinates);
     }
     if (normalized.gridUnit !== undefined) {
       this.deps.setGridUnit(normalized.gridUnit);

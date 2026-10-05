@@ -148,6 +148,32 @@ describe("MapStore settings persistence", () => {
     expect(store2.showHexCoordinates).toBe(true);
   });
 
+  it("places and drags pins at hex centers with their axial coordinates", async () => {
+    vaultMock.maps = { "map-hex": makeMap("map-hex") };
+    const store = new MapStore();
+    store.selectMap("map-hex");
+    store.showGrid = true;
+    store.gridType = "hex-pointy";
+    store.gridSize = 50;
+
+    await store.addPin(undefined, { x: 10, y: 10 });
+
+    const pin = (vaultMock.maps as any)["map-hex"].pins[0];
+    expect(pin.coordinates).toEqual({ x: 0, y: 0 });
+    expect(pin.hexCoordinates).toEqual({ q: 0, r: 0 });
+
+    store.updatePinCoordinatesInMemory(pin.id, { x: 10, y: 10 });
+    expect((vaultMock.maps as any)["map-hex"].pins[0].coordinates).toEqual({
+      x: 10,
+      y: 10,
+    });
+    store.snapPinCoordinatesInMemory(pin.id);
+    expect((vaultMock.maps as any)["map-hex"].pins[0]).toMatchObject({
+      coordinates: { x: 0, y: 0 },
+      hexCoordinates: { q: 0, r: 0 },
+    });
+  });
+
   it("restores settings per map id", async () => {
     window.localStorage.setItem(
       "codex-map-settings:map-a",

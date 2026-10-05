@@ -65,14 +65,20 @@
 
     <div class="space-y-6">
       <div class="space-y-2">
-        <label
+        <span
+          id="grid-type-label"
           class="text-micro font-mono text-theme-muted uppercase tracking-widest"
         >
           Grid Type
-        </label>
-        <div class="grid grid-cols-3 gap-2">
+        </span>
+        <div
+          class="grid grid-cols-3 gap-2"
+          role="group"
+          aria-labelledby="grid-type-label"
+        >
           <button
             type="button"
+            aria-pressed={gridType === "square"}
             class="px-2 py-2 rounded-md border text-xs font-medium flex flex-col items-center gap-1 transition-colors {gridType ===
             'square'
               ? 'border-theme-primary bg-theme-primary/10 text-theme-primary font-bold'
@@ -87,6 +93,7 @@
           </button>
           <button
             type="button"
+            aria-pressed={gridType === "hex-pointy"}
             class="px-2 py-2 rounded-md border text-xs font-medium flex flex-col items-center gap-1 transition-colors {gridType ===
             'hex-pointy'
               ? 'border-theme-primary bg-theme-primary/10 text-theme-primary font-bold'
@@ -101,6 +108,7 @@
           </button>
           <button
             type="button"
+            aria-pressed={gridType === "hex-flat"}
             class="px-2 py-2 rounded-md border text-xs font-medium flex flex-col items-center gap-1 transition-colors {gridType ===
             'hex-flat'
               ? 'border-theme-primary bg-theme-primary/10 text-theme-primary font-bold'

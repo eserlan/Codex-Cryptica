@@ -698,6 +698,8 @@ export abstract class MapSessionFacade {
 
   handleRemoteGridSettings(payload: {
     gridSize?: number;
+    gridType?: GridType;
+    showHexCoordinates?: boolean;
     gridUnit?: string;
     gridDistance?: number;
   }) {
