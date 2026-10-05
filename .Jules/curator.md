@@ -74,3 +74,9 @@
 
 **Learning:** Found an overloaded god-file `campaign-generator-service.ts` (~1094 lines) which handled orchestration alongside pure formatting/transformation logic for holidays. Extracted pure functions like `normalizeHolidayGenericOutput` and `formatHolidayContent` into `public-holiday.ts`.
 **Action:** Always consider moving pure data formatting logic out of service orchestrator files and closer to the data definitions or adapter layers where they logically belong.
+
+## 2024-10-05 - Extract built-in templates from stat-sheet store
+
+**Learning:** Svelte store files can become god files when they embed large static configurations or initial state arrays (like `BUILT_IN_STAT_SHEET_TEMPLATES`, which alone was 800+ lines). Extracting these static defaults into a separate feature-owned file (e.g., `stores/stat-sheet/built-in-templates.ts`) significantly improves the readability of the store logic itself while keeping the data closely co-located.
+
+**Action:** When inspecting stores for god-file improvements, check if massive static arrays or default configurations are inflating the file size. These are prime, low-risk candidates for extraction into a sibling file or subdirectory (e.g., `stores/domain/constants.ts`).
