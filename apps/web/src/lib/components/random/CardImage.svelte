@@ -116,7 +116,7 @@
           aria-hidden="true"
           class="pointer-events-none absolute bottom-1.5 right-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-black/50 text-white opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100"
         >
-          <span class="icon-[lucide--maximize-2] h-3.5 w-3.5"></span>
+          <span aria-hidden="true" class="icon-[lucide--maximize-2] h-3.5 w-3.5"></span>
         </span>
       {/if}
     </button>

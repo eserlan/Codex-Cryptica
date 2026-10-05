@@ -47,7 +47,7 @@
       href="{base}/help"
       class="text-xs text-theme-muted hover:text-theme-primary transition-colors uppercase font-mono tracking-widest flex items-center gap-2"
     >
-      <span class="icon-[lucide--chevron-left] w-4 h-4"></span>
+      <span aria-hidden="true" class="icon-[lucide--chevron-left] w-4 h-4"></span>
       All Protocols
     </a>
   </div>

@@ -220,7 +220,7 @@
     <div
       class="flex items-center gap-2 px-4 py-2 bg-theme-surface-alt border-b border-theme-border"
     >
-      <span class="icon-[lucide--mic] w-3.5 h-3.5 text-theme-accent shrink-0"
+      <span aria-hidden="true" class="icon-[lucide--mic] w-3.5 h-3.5 text-theme-accent shrink-0"
       ></span>
       <span
         class="text-xs uppercase tracking-widest font-header text-theme-muted"
@@ -301,13 +301,13 @@
             <div
               class="flex items-center gap-1.5 text-xs text-amber-500 font-medium mb-3"
             >
-              <span class="icon-[lucide--volume-x] w-3.5 h-3.5 shrink-0"></span>
+              <span aria-hidden="true" class="icon-[lucide--volume-x] w-3.5 h-3.5 shrink-0"></span>
               <span>Autoplay blocked by browser. Click Play to listen!</span>
             </div>
           {/if}
         {:else if audioLoading}
           <div class="flex items-center gap-1.5 text-xs text-theme-muted mb-3">
-            <span class="icon-[lucide--loader-2] w-3 h-3 animate-spin"></span>
+            <span aria-hidden="true" class="icon-[lucide--loader-2] w-3 h-3 animate-spin"></span>
             Loading audio…
           </div>
         {:else if !hasAudio}
@@ -338,7 +338,7 @@
                 disabled={!editableTranscript.trim() || isRevising}
               >
                 {#if isRevising}
-                  <span class="icon-[lucide--loader-2] w-3 h-3 animate-spin"
+                  <span aria-hidden="true" class="icon-[lucide--loader-2] w-3 h-3 animate-spin"
                   ></span>
                 {/if}
                 Synthesize Audio
@@ -376,7 +376,7 @@
           <p
             class="text-xs text-theme-muted mt-2 flex items-center gap-1 flex-wrap"
           >
-            <span class="icon-[lucide--mic] w-2.5 h-2.5 shrink-0 opacity-60"
+            <span aria-hidden="true" class="icon-[lucide--mic] w-2.5 h-2.5 shrink-0 opacity-60"
             ></span>
             {parts.join(" ")}
           </p>
@@ -395,7 +395,7 @@
                 disabled={isRevising}
                 title="Revise sound bite"
               >
-                <span class="icon-[lucide--refresh-cw] w-3 h-3"></span>
+                <span aria-hidden="true" class="icon-[lucide--refresh-cw] w-3 h-3"></span>
                 Revise
               </button>
 
@@ -406,7 +406,7 @@
                 disabled={isRevising}
                 title="Edit transcript text"
               >
-                <span class="icon-[lucide--edit] w-3 h-3"></span>
+                <span aria-hidden="true" class="icon-[lucide--edit] w-3 h-3"></span>
                 Edit Text
               </button>
             {/if}
@@ -420,7 +420,7 @@
                 onclick={() => p2pHost.broadcastSoundBitePlay(entity.id)}
                 title="Play sound bite for all connected guests"
               >
-                <span class="icon-[lucide--radio] w-3 h-3"></span>
+                <span aria-hidden="true" class="icon-[lucide--radio] w-3 h-3"></span>
                 Play for all
               </button>
             {/if}
@@ -431,7 +431,7 @@
               onclick={handleCopy}
               title="Copy transcript"
             >
-              <span class="icon-[lucide--copy] w-3 h-3"></span>
+              <span aria-hidden="true" class="icon-[lucide--copy] w-3 h-3"></span>
               Copy
             </button>
 
@@ -443,7 +443,7 @@
                   onclick={() => soundBiteService.discardResult()}
                   title="Discard unsaved changes and restore original"
                 >
-                  <span class="icon-[lucide--x-circle] w-3 h-3"></span>
+                  <span aria-hidden="true" class="icon-[lucide--x-circle] w-3 h-3"></span>
                   Discard
                 </button>
               {/if}
@@ -452,7 +452,7 @@
                 onclick={handleSave}
                 title="Save sound bite to entity"
               >
-                <span class="icon-[lucide--save] w-3 h-3"></span>
+                <span aria-hidden="true" class="icon-[lucide--save] w-3 h-3"></span>
                 Save
               </button>
             {:else if saved}
@@ -461,7 +461,7 @@
                 onclick={handleDelete}
                 title="Remove saved sound bite"
               >
-                <span class="icon-[lucide--trash-2] w-3 h-3"></span>
+                <span aria-hidden="true" class="icon-[lucide--trash-2] w-3 h-3"></span>
                 Remove
               </button>
             {/if}
@@ -497,7 +497,7 @@
                   disabled={!editableTranscript.trim() || isRevising}
                 >
                   {#if isRevising}
-                    <span class="icon-[lucide--loader-2] w-3 h-3 animate-spin"
+                    <span aria-hidden="true" class="icon-[lucide--loader-2] w-3 h-3 animate-spin"
                     ></span>
                   {/if}
                   Synthesize Audio
@@ -544,7 +544,7 @@
                 onclick={handleGenerate}
                 disabled={isRevising}
               >
-                <span class="icon-[lucide--mic] w-3.5 h-3.5"></span>
+                <span aria-hidden="true" class="icon-[lucide--mic] w-3.5 h-3.5"></span>
                 Generate Sound Bite
               </button>
               <button
@@ -552,7 +552,7 @@
                 onclick={startEditing}
                 disabled={isRevising}
               >
-                <span class="icon-[lucide--edit-3] w-3.5 h-3.5"></span>
+                <span aria-hidden="true" class="icon-[lucide--edit-3] w-3.5 h-3.5"></span>
                 Write Custom Text
               </button>
             </div>

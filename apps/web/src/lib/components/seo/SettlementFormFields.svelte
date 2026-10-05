@@ -302,7 +302,7 @@
           <span
             class="inline-flex items-center gap-1.5 pl-2.5 pr-1 py-1 rounded-lg border border-theme-primary/50 bg-theme-primary/10 text-meta text-theme-text"
           >
-            <span class="icon-[lucide--wand-sparkles] w-3 h-3 shrink-0"></span>
+            <span aria-hidden="true" class="icon-[lucide--wand-sparkles] w-3 h-3 shrink-0"></span>
             <span class="font-medium">{choice.label}</span>
             <span class="text-theme-text/80">{choice.value}</span>
             <button
@@ -311,7 +311,7 @@
               aria-label="Remove {choice.label} {choice.value}"
               onclick={() => clearInference(choice)}
             >
-              <span class="icon-[lucide--x] w-3 h-3 block"></span>
+              <span aria-hidden="true" class="icon-[lucide--x] w-3 h-3 block"></span>
             </button>
           </span>
         {/each}

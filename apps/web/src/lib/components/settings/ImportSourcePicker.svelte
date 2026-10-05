@@ -85,7 +85,7 @@
     <div
       class="flex items-center gap-2 text-meta font-bold text-theme-secondary uppercase font-header tracking-wider"
     >
-      <span class="icon-[lucide--history] w-3.5 h-3.5"></span>
+      <span aria-hidden="true" class="icon-[lucide--history] w-3.5 h-3.5"></span>
       Resuming previous import
     </div>
 
@@ -107,7 +107,7 @@
       data-testid="cif-import-error"
     >
       <div class="flex items-center gap-2">
-        <span class="icon-[lucide--alert-triangle] h-4 w-4 text-red-400"></span>
+        <span aria-hidden="true" class="icon-[lucide--alert-triangle] h-4 w-4 text-red-400"></span>
         <p class="text-xs font-bold uppercase tracking-wider text-red-400">
           Import could not be prepared
         </p>

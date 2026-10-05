@@ -160,7 +160,7 @@
           <h2
             class="text-lg font-bold text-theme-text font-header uppercase tracking-widest flex items-center gap-2"
           >
-            <span class="icon-[lucide--layout] w-5 h-5 text-theme-primary"
+            <span aria-hidden="true" class="icon-[lucide--layout] w-5 h-5 text-theme-primary"
             ></span>
             Canvas Registry
           </h2>
@@ -201,7 +201,7 @@
             disabled={isCreating}
             class="px-4 py-2 rounded-lg bg-theme-primary text-theme-bg font-bold text-xs uppercase font-header tracking-widest hover:brightness-110 disabled:opacity-50 transition-all flex items-center gap-2"
           >
-            <span class="icon-[lucide--plus] w-4 h-4"></span>
+            <span aria-hidden="true" class="icon-[lucide--plus] w-4 h-4"></span>
             Create New
           </button>
         </div>
@@ -214,7 +214,7 @@
             <div
               class="w-8 h-8 rounded-lg bg-theme-primary/20 flex items-center justify-center shrink-0"
             >
-              <span class="icon-[lucide--plus] w-4 h-4 text-theme-primary"
+              <span aria-hidden="true" class="icon-[lucide--plus] w-4 h-4 text-theme-primary"
               ></span>
             </div>
             <input
@@ -359,14 +359,14 @@
                     <span
                       class="px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-400 border border-amber-500/30 text-nano font-bold uppercase font-header tracking-widest flex items-center gap-1 shrink-0"
                     >
-                      <span class="icon-[lucide--compass] w-2.5 h-2.5"></span>
+                      <span aria-hidden="true" class="icon-[lucide--compass] w-2.5 h-2.5"></span>
                       Adventure
                     </span>
                   {:else if getCanvasKind(canvas) === "delve"}
                     <span
                       class="px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 text-nano font-bold uppercase font-header tracking-widest flex items-center gap-1 shrink-0"
                     >
-                      <span class="icon-[lucide--castle] w-2.5 h-2.5"></span>
+                      <span aria-hidden="true" class="icon-[lucide--castle] w-2.5 h-2.5"></span>
                       Delve
                     </span>
                   {/if}
@@ -418,7 +418,7 @@
             <div
               class="w-16 h-16 rounded-full bg-theme-surface border border-theme-border flex items-center justify-center mx-auto mb-4 text-theme-muted opacity-20"
             >
-              <span class="icon-[lucide--layout] w-8 h-8"></span>
+              <span aria-hidden="true" class="icon-[lucide--layout] w-8 h-8"></span>
             </div>
             <p
               class="text-sm text-theme-muted font-mono uppercase tracking-widest"

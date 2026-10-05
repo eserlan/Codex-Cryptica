@@ -140,7 +140,7 @@
           onclick={() => modalUIStore.openIntentCreateMenu()}
           data-testid="entities-create-button"
         >
-          <span class="icon-[lucide--plus] h-3.5 w-3.5"></span>
+          <span aria-hidden="true" class="icon-[lucide--plus] h-3.5 w-3.5"></span>
           Create Entity
         </button>
         <button
@@ -149,7 +149,7 @@
           onclick={() => openImportWindow()}
           data-testid="entities-import-button"
         >
-          <span class="icon-[lucide--upload] h-3.5 w-3.5"></span>
+          <span aria-hidden="true" class="icon-[lucide--upload] h-3.5 w-3.5"></span>
           Import
         </button>
       </div>

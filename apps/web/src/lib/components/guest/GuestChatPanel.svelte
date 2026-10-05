@@ -157,7 +157,7 @@
       <h3
         class="text-xs font-bold uppercase tracking-wider text-theme-secondary flex items-center gap-1.5"
       >
-        <span class="icon-[lucide--messages-square] w-4 h-4 text-theme-primary"
+        <span aria-hidden="true" class="icon-[lucide--messages-square] w-4 h-4 text-theme-primary"
         ></span>
         Lore Contacts
       </h3>
@@ -176,7 +176,7 @@
           <div
             class="w-8 h-8 rounded-lg bg-theme-surface/80 border border-theme-border flex items-center justify-center shrink-0"
           >
-            <span class="icon-[lucide--user] w-4 h-4 text-theme-primary"></span>
+            <span aria-hidden="true" class="icon-[lucide--user] w-4 h-4 text-theme-primary"></span>
           </div>
           <div class="flex-1 min-w-0">
             <p class="text-xs truncate">{char.title}</p>
@@ -321,7 +321,7 @@
           <div
             class="self-start flex items-center gap-2 text-theme-muted text-xs p-2"
           >
-            <span class="icon-[lucide--loader-2] w-3.5 h-3.5 animate-spin"
+            <span aria-hidden="true" class="icon-[lucide--loader-2] w-3.5 h-3.5 animate-spin"
             ></span>
             <span>{activeCharacter.title} is thinking...</span>
           </div>
@@ -482,7 +482,7 @@
         <div
           class="w-12 h-12 rounded-full border border-theme-border/80 flex items-center justify-center mx-auto bg-theme-surface/50"
         >
-          <span class="icon-[lucide--messages-square] w-6 h-6 text-theme-muted"
+          <span aria-hidden="true" class="icon-[lucide--messages-square] w-6 h-6 text-theme-muted"
           ></span>
         </div>
         <p class="text-xs text-theme-muted">

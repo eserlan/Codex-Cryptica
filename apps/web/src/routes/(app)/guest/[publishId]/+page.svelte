@@ -158,7 +158,7 @@
         <div
           class="h-16 w-16 rounded-full bg-theme-accent/10 flex items-center justify-center text-theme-accent"
         >
-          <span class="icon-[lucide--alert-triangle] h-8 w-8"></span>
+          <span aria-hidden="true" class="icon-[lucide--alert-triangle] h-8 w-8"></span>
         </div>
 
         <div class="space-y-2">
@@ -173,14 +173,14 @@
             href="{base}/guest"
             class="flex items-center justify-center px-4 py-2.5 rounded-lg font-medium text-sm transition-all border border-theme-border bg-theme-surface hover:bg-theme-bg text-theme-primary"
           >
-            <span class="icon-[lucide--arrow-left] mr-2 h-4 w-4"></span>
+            <span aria-hidden="true" class="icon-[lucide--arrow-left] mr-2 h-4 w-4"></span>
             Back to Shared Worlds
           </a>
           <a
             href="{base}/worlds"
             class="flex items-center justify-center px-4 py-2.5 rounded-lg font-medium text-sm transition-all text-theme-muted hover:text-theme-primary"
           >
-            <span class="icon-[lucide--compass] mr-2 h-4 w-4"></span>
+            <span aria-hidden="true" class="icon-[lucide--compass] mr-2 h-4 w-4"></span>
             Explore Worlds
           </a>
         </div>

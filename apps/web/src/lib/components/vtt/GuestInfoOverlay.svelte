@@ -17,7 +17,7 @@
       class="flex items-center justify-between mb-3 pb-2 border-b border-theme-border/30"
     >
       <div class="flex items-center gap-2">
-        <span class="icon-[lucide--users] w-3.5 h-3.5 text-theme-primary"
+        <span aria-hidden="true" class="icon-[lucide--users] w-3.5 h-3.5 text-theme-primary"
         ></span>
         <span
           class="text-micro font-bold uppercase tracking-[0.2em] font-header text-theme-text"

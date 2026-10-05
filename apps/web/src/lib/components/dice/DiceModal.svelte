@@ -258,7 +258,7 @@
       title="Resize window"
       data-testid="dice-modal-resize-handle"
     >
-      <span class="icon-[lucide--grip-vertical] w-3 h-3 rotate-45"></span>
+      <span aria-hidden="true" class="icon-[lucide--grip-vertical] w-3 h-3 rotate-45"></span>
     </div>
   </div>
 {/if}

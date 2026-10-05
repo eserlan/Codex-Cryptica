@@ -374,7 +374,7 @@
           data-testid="enter-world-button"
         >
           Enter your world
-          <span class="icon-[lucide--arrow-right] h-4 w-4"></span>
+          <span aria-hidden="true" class="icon-[lucide--arrow-right] h-4 w-4"></span>
         </button>
       </div>
     </div>

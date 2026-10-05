@@ -379,7 +379,7 @@
                 isAddMenuOpen = false;
               }}
             >
-              <span class="icon-[lucide--map-pin] w-3.5 h-3.5 text-amber-400"
+              <span aria-hidden="true" class="icon-[lucide--map-pin] w-3.5 h-3.5 text-amber-400"
               ></span>
               Location
             </button>
@@ -391,7 +391,7 @@
                 isAddMenuOpen = false;
               }}
             >
-              <span class="icon-[lucide--users] w-3.5 h-3.5 text-blue-400"
+              <span aria-hidden="true" class="icon-[lucide--users] w-3.5 h-3.5 text-blue-400"
               ></span>
               NPC / Faction
             </button>
@@ -403,7 +403,7 @@
                 isAddMenuOpen = false;
               }}
             >
-              <span class="icon-[lucide--search] w-3.5 h-3.5 text-emerald-400"
+              <span aria-hidden="true" class="icon-[lucide--search] w-3.5 h-3.5 text-emerald-400"
               ></span>
               Clue / Secret
             </button>
@@ -415,7 +415,7 @@
                 isAddMenuOpen = false;
               }}
             >
-              <span class="icon-[lucide--skull] w-3.5 h-3.5 text-rose-400"
+              <span aria-hidden="true" class="icon-[lucide--skull] w-3.5 h-3.5 text-rose-400"
               ></span>
               Threat
             </button>
@@ -427,7 +427,7 @@
                 isAddMenuOpen = false;
               }}
             >
-              <span class="icon-[lucide--flag] w-3.5 h-3.5 text-cyan-400"
+              <span aria-hidden="true" class="icon-[lucide--flag] w-3.5 h-3.5 text-cyan-400"
               ></span>
               Outcome
             </button>
@@ -439,7 +439,7 @@
                 isAddMenuOpen = false;
               }}
             >
-              <span class="icon-[lucide--play] w-3.5 h-3.5 text-purple-400"
+              <span aria-hidden="true" class="icon-[lucide--play] w-3.5 h-3.5 text-purple-400"
               ></span>
               Situation
             </button>
@@ -549,7 +549,7 @@
     <div
       class="flex items-center gap-2 px-3 py-1 bg-theme-primary/10 border border-theme-primary/20 backdrop-blur-sm animate-pulse"
     >
-      <span class="icon-[lucide--save] w-3 h-3 text-theme-primary"></span>
+      <span aria-hidden="true" class="icon-[lucide--save] w-3 h-3 text-theme-primary"></span>
       <span
         class="text-nano font-bold text-theme-primary tracking-[0.2em] uppercase"
       >

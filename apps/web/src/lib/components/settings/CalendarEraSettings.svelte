@@ -60,7 +60,7 @@
       data-testid="add-era-btn"
       class="text-micro font-bold bg-theme-primary/10 border border-theme-primary/30 text-theme-primary px-2.5 py-1 rounded hover:bg-theme-primary hover:text-theme-bg transition-colors font-header flex items-center gap-1.5"
     >
-      <span class="icon-[lucide--plus] h-3.5 w-3.5"></span>
+      <span aria-hidden="true" class="icon-[lucide--plus] h-3.5 w-3.5"></span>
       ADD ERA
     </button>
   </div>
@@ -116,7 +116,7 @@
               aria-label="Remove Era {era.name}"
               class="text-theme-muted hover:text-red-400 p-1 rounded transition-colors"
             >
-              <span class="icon-[lucide--trash-2] h-4 w-4"></span>
+              <span aria-hidden="true" class="icon-[lucide--trash-2] h-4 w-4"></span>
             </button>
           </div>
 

@@ -58,7 +58,7 @@
     <!-- Header -->
     <div class="space-y-3 text-center sm:text-left">
       <div class="flex items-center justify-center sm:justify-start gap-3">
-        <span class="icon-[lucide--book-open] h-8 w-8 text-theme-primary"
+        <span aria-hidden="true" class="icon-[lucide--book-open] h-8 w-8 text-theme-primary"
         ></span>
         <h2
           class="text-2xl font-bold font-header tracking-wide uppercase text-theme-primary"
@@ -101,7 +101,7 @@
           <div
             class="mx-auto w-10 h-10 rounded-full bg-theme-primary/10 flex items-center justify-center text-theme-primary/80"
           >
-            <span class="icon-[lucide--history] w-5 h-5"></span>
+            <span aria-hidden="true" class="icon-[lucide--history] w-5 h-5"></span>
           </div>
           <div class="space-y-1.5 max-w-sm mx-auto">
             <h4
@@ -172,7 +172,7 @@
         href="{base}/"
         class="inline-flex items-center text-xs text-theme-primary hover:underline"
       >
-        <span class="icon-[lucide--arrow-left] mr-1.5 h-3.5 w-3.5"></span>
+        <span aria-hidden="true" class="icon-[lucide--arrow-left] mr-1.5 h-3.5 w-3.5"></span>
         Return to Local RPG Vault Creator
       </a>
     </div>

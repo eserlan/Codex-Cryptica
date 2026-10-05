@@ -231,7 +231,7 @@
         Found at: <span class="text-theme-text">Black Iron Tavern</span>
       </div>
       <div class="flex items-center gap-1 text-theme-primary pt-0.5">
-        <span class="icon-[lucide--search] w-3 h-3 shrink-0"></span>
+        <span aria-hidden="true" class="icon-[lucide--search] w-3 h-3 shrink-0"></span>
         Investigating the Missing Heirloom
       </div>
     </div>

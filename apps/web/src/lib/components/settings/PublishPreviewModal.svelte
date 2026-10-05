@@ -58,7 +58,7 @@
         <h3
           class="text-md font-bold uppercase font-header tracking-wider text-theme-primary flex items-center gap-2"
         >
-          <span class="icon-[lucide--share-2] w-5 h-5 text-theme-primary"
+          <span aria-hidden="true" class="icon-[lucide--share-2] w-5 h-5 text-theme-primary"
           ></span>
           Publish Guest Snapshot
         </h3>
@@ -209,7 +209,7 @@
           disabled={loading || !!error}
           class="px-5 py-2 bg-theme-primary hover:bg-theme-primary/95 disabled:opacity-40 disabled:pointer-events-none text-white text-sm rounded font-bold uppercase font-header tracking-wider transition-all flex items-center gap-2"
         >
-          <span class="icon-[lucide--cloud-upload] w-4 h-4"></span>
+          <span aria-hidden="true" class="icon-[lucide--cloud-upload] w-4 h-4"></span>
           Publish Snapshot
         </button>
       </div>

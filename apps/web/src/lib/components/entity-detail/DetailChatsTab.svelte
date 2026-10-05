@@ -287,7 +287,7 @@
         <h4
           class="font-header text-sm uppercase tracking-widest font-bold text-theme-secondary flex items-center gap-1.5"
         >
-          <span class="icon-[lucide--history] w-4 h-4 text-theme-primary"
+          <span aria-hidden="true" class="icon-[lucide--history] w-4 h-4 text-theme-primary"
           ></span>
           Guest Conversation Logs
         </h4>
@@ -300,7 +300,7 @@
         <div
           class="flex items-center justify-center py-8 text-theme-muted gap-2 text-xs"
         >
-          <span class="icon-[lucide--loader-2] w-4 h-4 animate-spin"></span>
+          <span aria-hidden="true" class="icon-[lucide--loader-2] w-4 h-4 animate-spin"></span>
           Loading transcripts...
         </div>
       {:else if primaryTranscripts.length === 0}
@@ -486,7 +486,7 @@
           <h4
             class="font-header text-sm uppercase tracking-widest font-bold text-theme-secondary flex items-center gap-1.5"
           >
-            <span class="icon-[lucide--user-round] w-4 h-4 text-theme-primary"
+            <span aria-hidden="true" class="icon-[lucide--user-round] w-4 h-4 text-theme-primary"
             ></span>
             Conversations as {entity.title}
           </h4>
@@ -534,7 +534,7 @@
         <div
           class="min-h-52 flex flex-col items-center justify-center text-center p-6 text-theme-muted bg-theme-surface/10 rounded-xl border border-theme-border/50 sm:flex-1"
         >
-          <span class="icon-[lucide--messages-square] w-12 h-12 mb-3 opacity-30"
+          <span aria-hidden="true" class="icon-[lucide--messages-square] w-12 h-12 mb-3 opacity-30"
           ></span>
           <p class="text-sm font-bold uppercase tracking-widest mb-1">
             Chat Disabled

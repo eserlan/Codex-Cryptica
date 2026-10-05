@@ -122,7 +122,7 @@
         class="flex items-center justify-between border-b border-theme-border pb-3"
       >
         <div class="flex items-center gap-2">
-          <span class="icon-[lucide--sparkles] h-5 w-5 text-theme-primary"
+          <span aria-hidden="true" class="icon-[lucide--sparkles] h-5 w-5 text-theme-primary"
           ></span>
           <h2
             id="generate-table-title"
@@ -243,7 +243,7 @@
                 data-testid="generate-table-submit"
                 class="inline-flex items-center gap-1.5 rounded-lg bg-theme-primary px-4 py-1.5 text-xs font-medium text-theme-primary-contrast hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
-                <span class="icon-[lucide--sparkles] h-3.5 w-3.5"></span>
+                <span aria-hidden="true" class="icon-[lucide--sparkles] h-3.5 w-3.5"></span>
                 Generate Entries
               </button>
             </div>
@@ -270,7 +270,7 @@
             <div
               class="mb-3 flex items-center gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-300"
             >
-              <span class="icon-[lucide--wifi-off] h-4 w-4 shrink-0"></span>
+              <span aria-hidden="true" class="icon-[lucide--wifi-off] h-4 w-4 shrink-0"></span>
               <span
                 >Generated using offline deterministic tables (AI unavailable or
                 disabled).</span

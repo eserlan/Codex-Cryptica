@@ -37,7 +37,7 @@
     class="flex items-center gap-2 px-3 py-1.5 bg-theme-surface/80 backdrop-blur border border-theme-border rounded text-micro font-mono tracking-widest text-theme-primary shadow-lg uppercase transition-all hover:border-theme-primary"
     title="Filter by Labels"
   >
-    <span class="icon-[lucide--tag] w-3.5 h-3.5"></span>
+    <span aria-hidden="true" class="icon-[lucide--tag] w-3.5 h-3.5"></span>
     <span>Labels ({activeLabels.size})</span>
     <span
       class="icon-[lucide--chevron-down] w-3 h-3 transition-transform {isOpen
@@ -128,7 +128,7 @@
                 : ''}"
             >
               {#if activeLabels.has(label)}
-                <span class="icon-[heroicons--check] w-2.5 h-2.5 text-theme-bg"
+                <span aria-hidden="true" class="icon-[heroicons--check] w-2.5 h-2.5 text-theme-bg"
                 ></span>
               {/if}
             </span>

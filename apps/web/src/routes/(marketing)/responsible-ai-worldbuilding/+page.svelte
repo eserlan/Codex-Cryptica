@@ -229,7 +229,7 @@
       class="max-w-3xl mx-auto mb-12 p-8 bg-theme-surface/40 border border-theme-border/60 rounded-2xl backdrop-blur-md shadow-lg text-left"
     >
       <div class="flex items-center gap-3 mb-6">
-        <span class="icon-[lucide--info] text-theme-primary w-6 h-6"></span>
+        <span aria-hidden="true" class="icon-[lucide--info] text-theme-primary w-6 h-6"></span>
         <h2 class="font-header font-bold text-lg">AI Principles at a Glance</h2>
       </div>
       <ul class="space-y-3 text-base text-theme-text/85">
@@ -304,7 +304,7 @@
       class="max-w-3xl mx-auto mb-12 p-8 bg-theme-surface/30 border border-theme-border/60 rounded-2xl backdrop-blur-md shadow-lg text-left"
     >
       <div class="flex items-center gap-3 mb-4">
-        <span class="icon-[lucide--lock] text-theme-primary w-6 h-6"></span>
+        <span aria-hidden="true" class="icon-[lucide--lock] text-theme-primary w-6 h-6"></span>
         <h2 class="font-header font-bold text-lg">Local-First Sovereignty</h2>
       </div>
       <p class="text-base text-theme-text/75 leading-relaxed">
@@ -323,7 +323,7 @@
       class="max-w-3xl mx-auto mb-16 p-8 bg-theme-surface/30 border border-theme-border/60 rounded-2xl backdrop-blur-md shadow-lg text-left"
     >
       <div class="flex items-center gap-3 mb-6">
-        <span class="icon-[lucide--eye] text-theme-primary w-6 h-6"></span>
+        <span aria-hidden="true" class="icon-[lucide--eye] text-theme-primary w-6 h-6"></span>
         <h2 class="font-header font-bold text-lg">What the Oracle Can See</h2>
       </div>
       <p class="text-base text-theme-muted mb-6 leading-relaxed">

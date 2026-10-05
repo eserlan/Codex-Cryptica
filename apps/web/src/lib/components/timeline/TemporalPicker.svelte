@@ -665,7 +665,7 @@
             <div
               class="font-bold flex items-center gap-1 text-yellow-500 uppercase font-header tracking-wider"
             >
-              <span class="icon-[lucide--alert-triangle] w-3.5 h-3.5"></span>
+              <span aria-hidden="true" class="icon-[lucide--alert-triangle] w-3.5 h-3.5"></span>
               Calendar Conflict
             </div>
             <p class="text-micro leading-snug text-theme-muted">

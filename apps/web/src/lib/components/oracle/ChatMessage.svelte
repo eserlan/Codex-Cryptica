@@ -173,7 +173,7 @@
               aria-expanded={controller.showDiscoveryChips}
               aria-controls={`found-lore-${message.id}`}
             >
-              <span class="icon-[lucide--sparkles] w-3 h-3"></span>
+              <span aria-hidden="true" class="icon-[lucide--sparkles] w-3 h-3"></span>
               <span>Found lore</span>
               <span
                 class="rounded-full bg-theme-primary/15 px-1.5 py-0.5 text-nano text-theme-primary"
@@ -383,7 +383,7 @@
                     title="Change target to your current selection: {activeEntity!
                       .title}"
                   >
-                    <span class="icon-[lucide--refresh-cw] w-3 h-3 shrink-0"
+                    <span aria-hidden="true" class="icon-[lucide--refresh-cw] w-3 h-3 shrink-0"
                     ></span>
                     <span class="truncate font-header"
                       >USE: {activeEntity!.title.toUpperCase()}</span
@@ -405,7 +405,7 @@
                         aria-hidden="true"
                       ></span>
                     {:else}
-                      <span class="icon-[lucide--wand-2] w-3 h-3 shrink-0"
+                      <span aria-hidden="true" class="icon-[lucide--wand-2] w-3 h-3 shrink-0"
                       ></span>
                     {/if}
                     <span class="truncate font-header"
@@ -455,7 +455,7 @@
                         aria-hidden="true"
                       ></span>
                     {:else}
-                      <span class="icon-[lucide--copy-plus] w-3 h-3 shrink-0"
+                      <span aria-hidden="true" class="icon-[lucide--copy-plus] w-3 h-3 shrink-0"
                       ></span>
                     {/if}
                     <span class="truncate font-header"
@@ -480,7 +480,7 @@
                         aria-hidden="true"
                       ></span>
                     {:else}
-                      <span class="icon-[lucide--scroll-text] w-3 h-3 shrink-0"
+                      <span aria-hidden="true" class="icon-[lucide--scroll-text] w-3 h-3 shrink-0"
                       ></span>
                     {/if}
                     <span class="truncate font-header"
@@ -506,14 +506,14 @@
                 <span
                   class="text-micro text-theme-primary font-bold uppercase font-header tracking-wider flex items-center gap-1"
                 >
-                  <span class="icon-[lucide--sparkles] w-3 h-3"></span>
+                  <span aria-hidden="true" class="icon-[lucide--sparkles] w-3 h-3"></span>
                   DRAFT PROPOSED
                 </span>
               {:else}
                 <span
                   class="text-micro text-green-400 font-bold uppercase font-header tracking-wider flex items-center gap-1"
                 >
-                  <span class="icon-[lucide--check-circle] w-3 h-3"></span>
+                  <span aria-hidden="true" class="icon-[lucide--check-circle] w-3 h-3"></span>
                   SAVED
                 </span>
 
@@ -523,7 +523,7 @@
                     class="text-micro text-theme-muted hover:text-red-400 font-bold uppercase font-header tracking-wider flex items-center gap-1 transition-colors"
                     title="Undo changes (Ctrl+Z)"
                   >
-                    <span class="icon-[lucide--undo-2] w-3 h-3"></span>
+                    <span aria-hidden="true" class="icon-[lucide--undo-2] w-3 h-3"></span>
                     UNDO
                   </button>
                 {/if}

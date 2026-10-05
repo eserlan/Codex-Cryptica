@@ -92,7 +92,7 @@
       <h3
         class="text-theme-secondary font-body italic text-lg flex items-center gap-2"
       >
-        <span class="icon-[lucide--sparkles] w-4 h-4 text-theme-primary"></span>
+        <span aria-hidden="true" class="icon-[lucide--sparkles] w-4 h-4 text-theme-primary"></span>
         <span>Oracle Suggestions</span>
       </h3>
       {#if activeProposals.length > 0}
@@ -218,7 +218,7 @@
           onclick={() => (showHistory = !showHistory)}
           class="text-xs text-theme-muted hover:text-theme-primary flex items-center gap-1 transition-colors"
         >
-          <span class="icon-[lucide--history] w-3 h-3"></span>
+          <span aria-hidden="true" class="icon-[lucide--history] w-3 h-3"></span>
           {showHistory
             ? "Hide Dismissed Proposals"
             : `Show Dismissed Proposals (${activeHistory.length})`}

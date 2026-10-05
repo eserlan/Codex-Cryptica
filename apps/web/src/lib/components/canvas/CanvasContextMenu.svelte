@@ -144,7 +144,7 @@
           onClose();
         }}
       >
-        <span class="icon-[lucide--type] w-3.5 h-3.5"></span>
+        <span aria-hidden="true" class="icon-[lucide--type] w-3.5 h-3.5"></span>
         Edit Label
       </button>
       <div class="border-t border-theme-border/30 my-1"></div>
@@ -160,7 +160,7 @@
             onClose();
           }}
         >
-          <span class="icon-[lucide--clipboard-paste] w-3.5 h-3.5"></span>
+          <span aria-hidden="true" class="icon-[lucide--clipboard-paste] w-3.5 h-3.5"></span>
           Paste Image
         </button>
       {/if}
@@ -173,7 +173,7 @@
             onClose();
           }}
         >
-          <span class="icon-[lucide--sticky-note] w-3.5 h-3.5"></span>
+          <span aria-hidden="true" class="icon-[lucide--sticky-note] w-3.5 h-3.5"></span>
           Add Text Note
         </button>
       {/if}
@@ -189,7 +189,7 @@
             onClose();
           }}
         >
-          <span class="icon-[lucide--map-pin] w-3.5 h-3.5 text-amber-400"
+          <span aria-hidden="true" class="icon-[lucide--map-pin] w-3.5 h-3.5 text-amber-400"
           ></span>
           Add Location
         </button>
@@ -201,7 +201,7 @@
             onClose();
           }}
         >
-          <span class="icon-[lucide--users] w-3.5 h-3.5 text-blue-400"></span>
+          <span aria-hidden="true" class="icon-[lucide--users] w-3.5 h-3.5 text-blue-400"></span>
           Add NPC / Faction
         </button>
         <button
@@ -212,7 +212,7 @@
             onClose();
           }}
         >
-          <span class="icon-[lucide--search] w-3.5 h-3.5 text-emerald-400"
+          <span aria-hidden="true" class="icon-[lucide--search] w-3.5 h-3.5 text-emerald-400"
           ></span>
           Add Clue / Secret
         </button>
@@ -224,7 +224,7 @@
             onClose();
           }}
         >
-          <span class="icon-[lucide--skull] w-3.5 h-3.5 text-rose-400"></span>
+          <span aria-hidden="true" class="icon-[lucide--skull] w-3.5 h-3.5 text-rose-400"></span>
           Add Threat
         </button>
         <button
@@ -235,7 +235,7 @@
             onClose();
           }}
         >
-          <span class="icon-[lucide--flag] w-3.5 h-3.5 text-cyan-400"></span>
+          <span aria-hidden="true" class="icon-[lucide--flag] w-3.5 h-3.5 text-cyan-400"></span>
           Add Outcome
         </button>
         <button
@@ -246,7 +246,7 @@
             onClose();
           }}
         >
-          <span class="icon-[lucide--play] w-3.5 h-3.5 text-purple-400"></span>
+          <span aria-hidden="true" class="icon-[lucide--play] w-3.5 h-3.5 text-purple-400"></span>
           Add Situation
         </button>
       {:else}
@@ -310,7 +310,7 @@
               onClose();
             }}
           >
-            <span class="icon-[lucide--image] w-3.5 h-3.5 opacity-70"></span>
+            <span aria-hidden="true" class="icon-[lucide--image] w-3.5 h-3.5 opacity-70"></span>
             {isAllImageOnly
               ? "Switch All to Card Details"
               : "Switch All to Image Only"}
@@ -325,7 +325,7 @@
               onClose();
             }}
           >
-            <span class="icon-[lucide--info] w-3.5 h-3.5 opacity-70"></span>
+            <span aria-hidden="true" class="icon-[lucide--info] w-3.5 h-3.5 opacity-70"></span>
             {showImageLabels
               ? "Hide Labels on Image Cards"
               : "Show Labels on Image Cards"}
@@ -340,7 +340,7 @@
         class="w-full text-left px-4 py-2.5 text-xs text-theme-text hover:bg-theme-primary/10 hover:text-theme-primary flex items-center gap-3 transition-colors uppercase font-header tracking-widest"
         onclick={handleRevise}
       >
-        <span class="icon-[lucide--sparkles] w-3.5 h-3.5 opacity-70"></span>
+        <span aria-hidden="true" class="icon-[lucide--sparkles] w-3.5 h-3.5 opacity-70"></span>
         Revise Content
       </button>
       <div class="border-t border-theme-border/30 my-1"></div>
@@ -457,7 +457,7 @@
                 aria-hidden="true"
               >
                 {#if largeCard}
-                  <span class="icon-[lucide--check] w-2.5 h-2.5"></span>
+                  <span aria-hidden="true" class="icon-[lucide--check] w-2.5 h-2.5"></span>
                 {/if}
               </span>
               Large card

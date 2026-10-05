@@ -169,7 +169,7 @@
     class="flex flex-col items-center gap-3 py-8 text-center"
     data-testid="stat-sheet-empty"
   >
-    <span class="icon-[lucide--list-checks] h-8 w-8 text-theme-muted"></span>
+    <span aria-hidden="true" class="icon-[lucide--list-checks] h-8 w-8 text-theme-muted"></span>
     <p class="max-w-xs text-xs text-theme-muted">
       No stats added yet. Add fields manually or apply a template to get
       started.

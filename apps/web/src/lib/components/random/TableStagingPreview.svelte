@@ -94,7 +94,7 @@
                   <span
                     class="inline-flex items-center gap-1 rounded bg-theme-accent/15 px-1.5 py-0.5 text-micro font-medium text-theme-accent"
                   >
-                    <span class="icon-[lucide--dices] h-3 w-3"></span>
+                    <span aria-hidden="true" class="icon-[lucide--dices] h-3 w-3"></span>
                     &#123;{subTable}&#125;
                   </span>
                 {/each}
@@ -104,7 +104,7 @@
                   <span
                     class="inline-flex items-center gap-1 rounded bg-theme-primary/15 px-1.5 py-0.5 text-micro font-medium text-theme-primary"
                   >
-                    <span class="icon-[lucide--book-open] h-3 w-3"></span>
+                    <span aria-hidden="true" class="icon-[lucide--book-open] h-3 w-3"></span>
                     {entityName}
                   </span>
                 {/each}
@@ -138,7 +138,7 @@
         data-testid="staging-accept-btn"
         class="inline-flex items-center gap-1.5 rounded-lg bg-theme-primary px-3.5 py-1.5 text-xs font-medium text-theme-primary-contrast transition-colors hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed"
       >
-        <span class="icon-[lucide--check] h-3.5 w-3.5"></span>
+        <span aria-hidden="true" class="icon-[lucide--check] h-3.5 w-3.5"></span>
         Accept {selectedCount}
         {selectedCount === 1 ? "entry" : "entries"}
       </button>

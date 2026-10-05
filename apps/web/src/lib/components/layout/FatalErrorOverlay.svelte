@@ -20,7 +20,7 @@
       ></div>
 
       <h2 class="text-2xl font-black mb-4 flex items-center gap-3">
-        <span class="icon-[lucide--alert-triangle] w-8 h-8"></span>
+        <span aria-hidden="true" class="icon-[lucide--alert-triangle] w-8 h-8"></span>
         SYSTEM FAILURE
       </h2>
       <p class="text-red-400 mb-6 font-bold">
