@@ -14,6 +14,7 @@ import { howDoIGetMyRpgPartyToWorkTogether } from "./how-do-i-get-my-rpg-party-t
 import { howDoIGetPlayersToEngageWithMyCampaignWorld } from "./how-do-i-get-players-to-engage-with-my-campaign-world";
 import { howDoIGiveDifferentCivilisationsDistinctStrengthsAndWeaknesses } from "./how-do-i-give-different-civilisations-distinct-strengths-and-weaknesses";
 import { howDoIGiveSpecialistCharactersSpotlight } from "./how-do-i-give-specialist-characters-spotlight";
+import { howDoIHandleDivinationMagicWithoutLettingOneCharacterSolveEveryMystery } from "./how-do-i-handle-divination-magic-without-letting-one-character-solve-every-mystery";
 import { howDoIHandlePlayersAskingAnNpcToTellUsEverythingYouKnow } from "./how-do-i-handle-players-asking-an-npc-to-tell-us-everything-you-know";
 import { howDoIKeepPlayersEngagedDuringOtherPlayersTurnsInCombat } from "./how-do-i-keep-players-engaged-during-other-players-turns-in-combat";
 import { howDoIMakeACampaignThreatFeelUrgentWithoutRailroading } from "./how-do-i-make-a-campaign-threat-feel-urgent-without-railroading";
@@ -160,6 +161,7 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     howDoIGetPlayersToEngageWithMyCampaignWorld,
     howDoIGiveDifferentCivilisationsDistinctStrengthsAndWeaknesses,
     howDoIGiveSpecialistCharactersSpotlight,
+    howDoIHandleDivinationMagicWithoutLettingOneCharacterSolveEveryMystery,
     howDoIHandlePlayersAskingAnNpcToTellUsEverythingYouKnow,
     howDoIKeepPlayersEngagedDuringOtherPlayersTurnsInCombat,
     howDoIMakeACampaignThreatFeelUrgentWithoutRailroading,
