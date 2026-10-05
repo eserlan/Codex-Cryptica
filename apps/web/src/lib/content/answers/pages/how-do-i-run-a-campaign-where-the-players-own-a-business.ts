@@ -299,6 +299,7 @@ export const howDoIRunACampaignWhereThePlayersOwnABusiness: AnswerConfigInput =
       "what-should-an-rpg-settlement-contain",
       "how-do-you-create-a-fantasy-faction",
       "how-do-you-generate-useful-rpg-rumours",
+      "how-should-a-fantasy-adventuring-guild-handle-wages-dues-and-shared-expenses",
     ],
     discovery: {
       id: "answer-run-player-owned-business",

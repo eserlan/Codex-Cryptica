@@ -105,6 +105,7 @@ import { howMuchCampaignLoreShouldPlayersBeExpectedToRemember } from "./how-much
 import { howMuchOfThePlotShouldADmPrepare } from "./how-much-of-the-plot-should-a-dm-prepare";
 import { howMuchPrepDoYouNeedForAnRpgSession } from "./how-much-prep-do-you-need-for-an-rpg-session";
 import { howMuchRuleOfCoolShouldADmAllow } from "./how-much-rule-of-cool-should-a-dm-allow";
+import { howShouldAFantasyAdventuringGuildHandleWagesDuesAndSharedExpenses } from "./how-should-a-fantasy-adventuring-guild-handle-wages-dues-and-shared-expenses";
 import { howShouldMagicHaveBeenDiscoveredInMyWorld } from "./how-should-magic-have-been-discovered-in-my-world";
 import { howToCreateACyberpunkCityDistrict } from "./how-to-create-a-cyberpunk-city-district";
 import { howToCreateASciFiStarSystemForAnRpg } from "./how-to-create-a-sci-fi-star-system-for-an-rpg";
@@ -252,6 +253,7 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     howMuchOfThePlotShouldADmPrepare,
     howMuchPrepDoYouNeedForAnRpgSession,
     howMuchRuleOfCoolShouldADmAllow,
+    howShouldAFantasyAdventuringGuildHandleWagesDuesAndSharedExpenses,
     howShouldMagicHaveBeenDiscoveredInMyWorld,
     howToCreateACyberpunkCityDistrict,
     howToCreateASciFiStarSystemForAnRpg,
