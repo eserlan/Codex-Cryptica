@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { originConfig, pickFrom } from "$lib/services/seo/generator-engine";
+  import { originConfig, pickFrom } from "$lib/services/seo/generator-config";
   import SelectWithCustomOption from "$lib/components/forms/SelectWithCustomOption.svelte";
 
   // Superhero / Comic Book only, by design (#3111) — no theme/genre select
