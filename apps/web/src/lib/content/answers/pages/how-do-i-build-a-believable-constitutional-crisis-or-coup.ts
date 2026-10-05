@@ -160,7 +160,7 @@ export const howDoIBuildABelievableConstitutionalCrisisOrCoup: AnswerConfigInput
         kind: "example",
         heading: "A worked example: the Republic of Karrow",
         paragraphs: [
-          "Karrow has an elected First Consul, a Senate, independent courts and provincial governors under a written constitution. The Consul's reform bill would move tax collection to the capital. A Senate vote in three weeks comes seven weeks before the election. This compact example tests two assumptions; a dedicated Karrow Council Vote treatment is planned separately.",
+          "Karrow has an elected First Consul, a Senate, independent courts and provincial governors under a written constitution. The Consul's reform bill would move tax collection to the capital. A Senate vote in three weeks comes seven weeks before the election. This compact example tests two assumptions; see the complete Karrow Council Vote breakdown below.",
         ],
         items: [
           {
@@ -180,6 +180,17 @@ export const howDoIBuildABelievableConstitutionalCrisisOrCoup: AnswerConfigInput
             text: "The Consul could trade away the reform to keep the governors' support; Ostrelle could lead a coup he claims will save the constitution; or governors could withhold taxes until a slow secession takes hold. Each path follows from who controls force and money, and every response costs the Consul something.",
           },
         ],
+      },
+      {
+        kind: "prose",
+        heading: "See the complete emergency vote in context",
+        paragraphs: [
+          "A full council vote output shows how the First Consul's reform bill breaks across five senators, their patron obligations, hidden leverages, and three distinct campaign branches.",
+        ],
+        cta: {
+          text: "Read the Karrow Senate council vote example",
+          href: "/examples/the-treasurys-tipping-point-karrow-council-vote",
+        },
       },
       {
         kind: "checklist",
@@ -286,6 +297,7 @@ export const howDoIBuildABelievableConstitutionalCrisisOrCoup: AnswerConfigInput
         "answer-political-intrigue-system-selection",
         "answer-fantasy-faction",
         "answer-track-faction-turns-between-sessions",
+        "example-karrow-council-vote",
       ],
       acknowledgedOverlap: [
         {
