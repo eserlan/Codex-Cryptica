@@ -1,10 +1,22 @@
 import type { Point } from "schema";
 import { drawFogStroke } from "./fog-stroke";
+import {
+  punchHexFogCell,
+  punchHexFogRadius,
+  getActiveHexConfig,
+} from "./hex-fog-stroke";
+import { pointToHex } from "map-engine";
+import type { GridType } from "$lib/stores/map.svelte";
 
 export interface MapFogPainterDeps {
   mapStore: {
     activeMapId: string | null;
     brushRadius: number;
+    showGrid?: boolean;
+    gridType?: GridType;
+    gridSize?: number;
+    gridOffsetX?: number;
+    gridOffsetY?: number;
     unproject(point: Point): Point;
     saveMask(canvas: HTMLCanvasElement): Promise<void>;
   };
@@ -120,10 +132,13 @@ export class MapFogPainter {
     return true;
   }
 
+  private lastPaintedHexKey: string | null = null;
+
   cancel() {
     this.reset();
   }
 
+  // fallow-ignore-next-line complexity
   private paintAt(point: Point, isHiding: boolean) {
     const maskCanvas = this.deps.getMaskCanvas();
     if (!maskCanvas || !this.painting) return;
@@ -132,6 +147,36 @@ export class MapFogPainter {
     const previousCoords = this.lastPaintImgCoords || currentCoords;
     const ctx = maskCanvas.getContext("2d");
     if (!ctx) return;
+
+    const hexConfig = getActiveHexConfig(this.deps.mapStore);
+    if (hexConfig) {
+      const hex = pointToHex(currentCoords, hexConfig);
+      const hexKey = `${hex.q},${hex.r}`;
+
+      if (hexKey !== this.lastPaintedHexKey) {
+        this.lastPaintedHexKey = hexKey;
+        const hexRadius = Math.max(
+          0,
+          Math.floor(
+            (this.deps.mapStore.brushRadius || 50) / (hexConfig.size * 1.5),
+          ),
+        );
+        if (hexRadius > 0) {
+          punchHexFogRadius(
+            ctx,
+            maskCanvas,
+            hex,
+            hexRadius,
+            hexConfig,
+            isHiding,
+          );
+        } else {
+          punchHexFogCell(ctx, maskCanvas, hex, hexConfig, isHiding);
+        }
+      }
+      this.lastPaintImgCoords = currentCoords;
+      return;
+    }
 
     drawFogStroke(
       ctx,
@@ -149,6 +194,7 @@ export class MapFogPainter {
     this.painting = false;
     this.maskSnapshot = null;
     this.lastPaintImgCoords = null;
+    this.lastPaintedHexKey = null;
     this.activeMapId = null;
   }
 }

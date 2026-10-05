@@ -7,6 +7,7 @@ export interface PinInteractionDependencies {
   unproject: (point: Point) => Point;
   canEditPins: () => boolean;
   updatePinCoordinates: (pinId: string, point: Point) => void;
+  snapPinCoordinates: (pinId: string) => void;
   saveMaps: () => Promise<void>;
   selectEntity: (entityId: string, selectionPoint: Point) => void;
 }
@@ -112,6 +113,7 @@ export class PinInteractionHandler {
     }
 
     if (hasMoved && this.deps.canEditPins()) {
+      this.deps.snapPinCoordinates(pinId);
       await this.deps.saveMaps();
     }
     return { type: "dragged", pinId };

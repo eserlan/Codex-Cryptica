@@ -163,7 +163,7 @@ describe("Map Engine Renderer", () => {
     expect(offscreenCtx.lineWidth).toBe(1.5);
   });
 
-  it("should return early for hex grid (not implemented)", () => {
+  it("should draw hex grid using paths without creating rectangular patterns", () => {
     const mockImage = { width: 500, height: 400 } as HTMLImageElement;
     renderMap({
       canvas: mockCanvas,
@@ -182,6 +182,7 @@ describe("Map Engine Renderer", () => {
     });
 
     expect(mockCtx.createPattern).not.toHaveBeenCalled();
+    expect(mockCtx.stroke).toHaveBeenCalled();
   });
 
   it("should use cached pattern if parameters are identical", () => {

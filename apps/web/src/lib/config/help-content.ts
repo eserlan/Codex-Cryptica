@@ -19,6 +19,7 @@ export type { HelpArticle };
 export const FEATURE_HELP_ARTICLES = {
   COMMUNITY_STAT_SHEET_TEMPLATES: "stat-sheets",
   SHARING_ENTITY_TEMPLATES: "sharing-templates",
+  HEXCRAWL_MAPS: "hexcrawl-maps",
 } as const;
 
 export interface FeatureHint {
@@ -796,6 +797,13 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
     content:
       "Change how a Stat Sheet looks without touching its data. Click Presentations to switch between built-in layouts, or write your own in Markdown with field references like {{stat.hp}} and layout sections for groups, cards, and rows. Repeatable Table fields (used for Weapons/Items by default) keep rows of data together: add rows, edit their cells, adjust counters, and roll dice from the table. In the template editor you can customize a Repeatable Table's own column headings and cell types (text, number, dice, counter, or checkbox) so the same table type covers skills, spells, or any other list your system needs, and you can turn off vault-item linking for tables that aren't about items. A live preview and inline warnings catch typos or removed fields as you type, and every layout can be exported and shared with anyone using a matching schema.",
     icon: "icon-[lucide--layout-template]",
+  },
+  "hexcrawl-maps": {
+    id: "hexcrawl-maps",
+    title: "Hexcrawl & Hex Grids",
+    content:
+      "Run overland exploration with point-to-point hex grids. Choose pointy-topped or flat-topped orientation, toggle in-cell coordinates, snap tokens and pins to hex centers, and reveal or hide fog of war by hex. Rulers measure travel distance directly in hexes.",
+    icon: "icon-[lucide--hexagon]",
   },
 };
 

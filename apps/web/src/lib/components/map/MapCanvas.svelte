@@ -125,7 +125,7 @@
       fogColor,
       accentColor: themeStore.activeTheme.tokens.primary,
       grid: {
-        type: mapStore.showGrid ? "square" : "none",
+        type: mapStore.showGrid ? mapStore.gridType : "none",
         size: mapStore.gridSize,
         color: gridColor,
         opacity: 0.65,
@@ -133,6 +133,7 @@
         offsetY: mapStore.gridOffsetY,
         fixed: mapSession.gridMoveMode && mapStore.isGMMode,
         fixedPan: mapSession.gridFixedPan ?? undefined,
+        showCoordinates: mapStore.showHexCoordinates,
       },
       tokens: vttTokens,
       measurement: vttMeasurement,

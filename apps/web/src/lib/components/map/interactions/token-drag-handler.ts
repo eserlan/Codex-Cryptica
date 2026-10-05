@@ -1,6 +1,15 @@
 import type { Point } from "schema";
 import type { Token } from "../../../../types/vtt";
 import { hitTestToken } from "$lib/utils/vtt-helpers";
+import { snapPointToHexCenter, type HexOrientation } from "map-engine";
+
+export interface TokenGridConfig {
+  enabled: boolean;
+  type: "square" | "hex-pointy" | "hex-flat";
+  size: number;
+  offsetX: number;
+  offsetY: number;
+}
 
 export interface TokenDragDependencies {
   getTokens: () => Token[];
@@ -23,12 +32,17 @@ export interface TokenDragDependencies {
   sendTokenMoveRequest: (tokenId: string, x: number, y: number) => void;
   confirmTokenMove: (tokenId: string) => void;
   setDraggingTokenId: (tokenId: string | null) => void;
+  getGridConfig?: () => TokenGridConfig | null;
 }
 
 export interface TokenDragState {
   tokenId: string;
   offset: Point;
+  startPoint: Point;
+  hasMoved: boolean;
 }
+
+const TOKEN_DRAG_THRESHOLD = 5;
 
 export class TokenDragHandler {
   dragState: TokenDragState | null = null;
@@ -72,6 +86,8 @@ export class TokenDragHandler {
         x: imgPoint.x - hitToken.x,
         y: imgPoint.y - hitToken.y,
       },
+      startPoint: { ...viewportPoint },
+      hasMoved: false,
     };
     this.deps.setDraggingTokenId(hitToken.id);
     return hitToken;
@@ -79,6 +95,15 @@ export class TokenDragHandler {
 
   move(viewportPoint: Point) {
     if (!this.dragState) return false;
+
+    if (!this.dragState.hasMoved) {
+      const displacement = Math.hypot(
+        viewportPoint.x - this.dragState.startPoint.x,
+        viewportPoint.y - this.dragState.startPoint.y,
+      );
+      if (displacement < TOKEN_DRAG_THRESHOLD) return true;
+      this.dragState.hasMoved = true;
+    }
 
     const imgPoint = this.deps.unproject(viewportPoint);
     const nextX = imgPoint.x - this.dragState.offset.x;
@@ -94,9 +119,55 @@ export class TokenDragHandler {
     return true;
   }
 
+  // fallow-ignore-next-line complexity
   end() {
     if (!this.dragState) return false;
-    if (!this.deps.isHostMode()) {
+
+    const gridConfig = this.deps.getGridConfig?.();
+    if (this.dragState.hasMoved && gridConfig?.enabled && gridConfig.size > 0) {
+      const token = this.deps
+        .getTokens()
+        .find((t) => t.id === this.dragState!.tokenId);
+      if (token) {
+        let snapped: Point;
+        if (
+          gridConfig.type === "hex-pointy" ||
+          gridConfig.type === "hex-flat"
+        ) {
+          const orientation: HexOrientation =
+            gridConfig.type === "hex-flat" ? "flat" : "pointy";
+          snapped = snapPointToHexCenter(
+            { x: token.x, y: token.y },
+            {
+              orientation,
+              size: gridConfig.size,
+              offsetX: gridConfig.offsetX,
+              offsetY: gridConfig.offsetY,
+            },
+          );
+        } else {
+          snapped = {
+            x:
+              Math.round((token.x - gridConfig.offsetX) / gridConfig.size) *
+                gridConfig.size +
+              gridConfig.offsetX,
+            y:
+              Math.round((token.y - gridConfig.offsetY) / gridConfig.size) *
+                gridConfig.size +
+              gridConfig.offsetY,
+          };
+        }
+
+        if (this.deps.isHostMode()) {
+          this.deps.moveToken(token.id, snapped.x, snapped.y);
+        } else {
+          this.deps.requestTokenMove(token.id, snapped.x, snapped.y, true);
+          this.deps.sendTokenMoveRequest(token.id, snapped.x, snapped.y);
+        }
+      }
+    }
+
+    if (this.dragState.hasMoved && !this.deps.isHostMode()) {
       this.deps.confirmTokenMove(this.dragState.tokenId);
     }
     this.deps.setDraggingTokenId(null);

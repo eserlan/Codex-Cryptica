@@ -10,6 +10,7 @@ import {
   type NoteLayoutWord,
 } from "./note-markdown";
 import { drawStatusEffects } from "./token-status-icons";
+import { drawHexGrid, type HexGridRenderOptions } from "./hex-renderer";
 
 function hexToRgb(hex: string): { r: number; g: number; b: number } | null {
   const m = hex.replace("#", "").match(/.{2}/g);
@@ -95,7 +96,7 @@ export interface RenderOptions {
   measurement?: RenderMeasurement | null;
   accentColor?: string;
   grid?: {
-    type: "none" | "square" | "hex";
+    type: "none" | "square" | "hex" | "hex-pointy" | "hex-flat";
     size: number;
     color: string;
     opacity: number;
@@ -108,6 +109,8 @@ export interface RenderOptions {
      * already was instead of jumping to `pan: {0,0}` — while still staying
      * static (not tracking live pan) as the map is dragged underneath it. */
     fixedPan?: { x: number; y: number };
+    lineWidth?: number;
+    showCoordinates?: boolean;
   };
 }
 
@@ -957,6 +960,15 @@ function drawGrid(
   grid: NonNullable<RenderOptions["grid"]>,
   cache: CanvasCache,
 ) {
+  if (
+    grid.type === "hex" ||
+    grid.type === "hex-pointy" ||
+    grid.type === "hex-flat"
+  ) {
+    drawHexGrid(ctx, transform, canvasSize, grid as HexGridRenderOptions);
+    return;
+  }
+
   if (grid.type === "square") {
     const size = grid.size * transform.zoom;
     if (size < 2) return; // Prevent infinite loops or invisible patterns

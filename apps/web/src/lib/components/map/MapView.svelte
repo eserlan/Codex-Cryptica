@@ -16,11 +16,12 @@
   import MapCanvas from "./MapCanvas.svelte";
   import MapOverlays from "./MapOverlays.svelte";
   import MapContextMenu from "./MapContextMenu.svelte";
-  import { clampPointToBounds, measureDistance } from "$lib/utils/vtt-helpers";
+  import { clampPointToBounds } from "$lib/utils/vtt-helpers";
   import { mapSession } from "../../stores/map-session.svelte";
   import {
     resolveHealthBar,
     getMapDisplayDimensions,
+    formatMeasurementLabel,
   } from "./map-view-helpers";
 
   function hashToColor(input: string) {
@@ -122,10 +123,14 @@
       return null;
     }
 
-    const pixelDist = measureDistance(measurement.start, measurement.end);
-    const gridSize = mapStore.gridSize || 50;
-    const units = (pixelDist / gridSize) * mapSession.gridDistance;
-    const label = `${Math.round(units)}${mapSession.gridUnit}`;
+    const label = formatMeasurementLabel(measurement.start, measurement.end, {
+      gridType: mapStore.gridType,
+      gridSize: mapStore.gridSize,
+      gridDistance: mapSession.gridDistance,
+      gridUnit: mapSession.gridUnit,
+      gridOffsetX: mapStore.gridOffsetX,
+      gridOffsetY: mapStore.gridOffsetY,
+    });
 
     return {
       ...measurement,
@@ -138,10 +143,14 @@
     const rm = mapSession.activeMeasurement;
     if (!rm || !rm.start || !rm.end) return null;
 
-    const pixelDist = measureDistance(rm.start, rm.end);
-    const gridSize = mapStore.gridSize || 50;
-    const units = (pixelDist / gridSize) * mapSession.gridDistance;
-    const label = `${Math.round(units)}${mapSession.gridUnit}`;
+    const label = formatMeasurementLabel(rm.start, rm.end, {
+      gridType: mapStore.gridType,
+      gridSize: mapStore.gridSize,
+      gridDistance: mapSession.gridDistance,
+      gridUnit: mapSession.gridUnit,
+      gridOffsetX: mapStore.gridOffsetX,
+      gridOffsetY: mapStore.gridOffsetY,
+    });
     const color = hashToColor(rm.peerId);
 
     return {

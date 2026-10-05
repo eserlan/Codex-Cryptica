@@ -283,7 +283,7 @@ describe("renderMap", () => {
       width: 100,
       height: 100,
       rotation: 0,
-      baseShape: "circle",
+      baseShape: "circle" as const,
       label: "",
       image: null,
       color: "#64748b",
@@ -519,5 +519,53 @@ describe("renderMap", () => {
     // radius(15) * 0.25 = 3.75, well under the old fixed 8px.
     expect(smallMainBorder).toBeCloseTo(3.75);
     expect(smallMainBorder).toBeLessThan(largeMainBorder);
+  });
+
+  it("renders hex-pointy grid overlay during renderMap", () => {
+    const ctx = createCtxMock();
+    const canvas = createCanvasMock(ctx);
+
+    renderMap({
+      canvas,
+      image: null,
+      transform: { pan: { x: 0, y: 0 }, zoom: 1 },
+      canvasSize: { width: 800, height: 600 },
+      pins: [],
+      maskCanvas: null,
+      showFog: false,
+      grid: {
+        type: "hex-pointy",
+        size: 50,
+        color: "#ffffff",
+        opacity: 0.5,
+      },
+    });
+
+    expect(ctx.stroke).toHaveBeenCalled();
+    expect(ctx.strokeStyle).toBe("#ffffff");
+  });
+
+  it("renders hex-flat grid overlay during renderMap", () => {
+    const ctx = createCtxMock();
+    const canvas = createCanvasMock(ctx);
+
+    renderMap({
+      canvas,
+      image: null,
+      transform: { pan: { x: 0, y: 0 }, zoom: 1 },
+      canvasSize: { width: 800, height: 600 },
+      pins: [],
+      maskCanvas: null,
+      showFog: false,
+      grid: {
+        type: "hex-flat",
+        size: 40,
+        color: "#38bdf8",
+        opacity: 0.7,
+      },
+    });
+
+    expect(ctx.stroke).toHaveBeenCalled();
+    expect(ctx.strokeStyle).toBe("#38bdf8");
   });
 });
