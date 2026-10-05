@@ -1,6 +1,6 @@
 # Feature Specification: Hex Crawling Maps
 
-**Feature Branch**: `1951-hex-crawling-maps`  
+**Feature Branch**: `feat/170-hex-crawling-maps`  
 **Created**: 2026-10-05  
 **Status**: Draft  
 **Input**: Issue #1951: Support Hex Crawling maps with hex grid overlay, axial coordinate system, and hex fog of war

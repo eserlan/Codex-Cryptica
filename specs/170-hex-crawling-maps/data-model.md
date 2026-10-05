@@ -1,6 +1,6 @@
 # Data Model: Hex Crawling Maps
 
-**Feature**: `1951-hex-crawling-maps`  
+**Feature**: `170-hex-crawling-maps`  
 **Date**: 2026-10-05
 
 ## 1. Domain Entities & Value Objects (`packages/map-engine/src/hex.ts`)

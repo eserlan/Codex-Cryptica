@@ -1,6 +1,6 @@
 # Research & Technical Decisions: Hex Crawling Maps
 
-**Feature**: `1951-hex-crawling-maps`  
+**Feature**: `170-hex-crawling-maps`  
 **Date**: 2026-10-05
 
 ## 1. Hexagonal Mathematics & Coordinate Systems

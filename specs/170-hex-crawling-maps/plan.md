@@ -1,6 +1,6 @@
 # Implementation Plan: Hex Crawling Maps
 
-**Branch**: `1951-hex-crawling-maps` | **Date**: 2026-10-05 | **Spec**: [spec.md](./spec.md)  
+**Branch**: `feat/170-hex-crawling-maps` | **Date**: 2026-10-05 | **Spec**: [spec.md](./spec.md)  
 **Input**: Issue #1951: Support Hex Crawling maps with hex grid overlay, axial coordinate system, and hex fog of war
 
 ## Summary
@@ -52,7 +52,7 @@ _Mark N/A: Feature adds internal VTT and spatial map capabilities, not a public 
 ### Documentation (this feature)
 
 ```text
-specs/1951-hex-crawling-maps/
+specs/170-hex-crawling-maps/
 ├── spec.md              # Feature specification
 ├── plan.md              # This plan
 ├── research.md          # Mathematics, geometry & rendering research
