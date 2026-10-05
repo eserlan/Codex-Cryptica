@@ -36,15 +36,11 @@ jobs:
             RUN_ID="$SPECIFIC_RUN"
           else
             # Find the latest successful deploy on the staging branch.
-            # Avoid combining --branch and --workflow in gh run list due to a known
-            # GitHub Actions API pagination bug that returns stale runs from weeks ago.
-            # Instead, fetch recent successful runs and select the latest push to staging.
-            RUN_ID=$(gh run list \
-              --workflow "Deploy to Cloudflare Pages" \
-              --status success \
-              --limit 50 \
-              --json databaseId,headBranch,event \
-              --jq '[.[] | select(.headBranch == "staging" and .event == "push")][0].databaseId')
+            # Filter on the API before limiting results so PR validation runs cannot
+            # crowd the latest successful staging deployment out of the result page.
+            RUN_ID=$(gh api \
+              "repos/$GH_REPO/actions/workflows/deploy.yml/runs?branch=staging&status=success&event=push&per_page=1" \
+              --jq '.workflow_runs[0].id // empty')
           fi
 
           if [ -z "$RUN_ID" ]; then
