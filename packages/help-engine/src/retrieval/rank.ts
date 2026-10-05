@@ -5,7 +5,11 @@ import { tokenize } from "./text";
 import { featureMatchesScreen } from "../registry/matches-screen";
 
 /** Below this normalised relevance the model is not called at all. */
-export const MIN_RELEVANCE = 0.3;
+// Leave a small margin above generic keyword overlap. On the real help bundle,
+// this keeps questions about unsupported integrations (for example exporting
+// directly to Roll20) from being treated as answerable by backup guidance,
+// while preserving the documented Group by Category troubleshooting query.
+export const MIN_RELEVANCE = 0.302;
 
 /** Score given to context-matching registry chunks for "what can I do here?" questions. */
 export const CONTEXT_ONLY_SCORE = 0.35;
