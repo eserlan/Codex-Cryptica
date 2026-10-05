@@ -209,6 +209,33 @@ describe("the published examples", () => {
     expect(breakwater.generator.href).toBe("/generators/heist");
   });
 
+  it("publishes a Classic Fantasy council vote filling the council-vote kind gap", () => {
+    const tippingPoint =
+      examples["the-treasurys-tipping-point-karrow-council-vote"];
+    expect(tippingPoint).toBeDefined();
+    expect(tippingPoint.kind).toBe("council-vote");
+    expect(tippingPoint.genre).toBe("Classic Fantasy");
+    expect(tippingPoint.generator.href).toBe("/generators/council-vote");
+  });
+
+  it("describes Caelric's initial vote and the coalition path consistently", () => {
+    const tippingPoint =
+      examples["the-treasurys-tipping-point-karrow-council-vote"];
+    const output = JSON.stringify(tippingPoint.output);
+
+    expect(tippingPoint.provenance).toBe("lightly-edited");
+    expect(tippingPoint.provenanceNote).toContain(
+      "Caelric initially leans against the decree",
+    );
+    expect(output).toContain(
+      "persuade Caelric, who initially leans against the decree",
+    );
+    expect(output).not.toContain("initial leaning towards support");
+    expect(tippingPoint.annotation.paragraphs.join(" ")).toContain(
+      "persuade at least two more senators",
+    );
+  });
+
   it("keys every example by its own slug", () => {
     for (const [key, example] of Object.entries(examples)) {
       expect(key).toBe(example.slug);

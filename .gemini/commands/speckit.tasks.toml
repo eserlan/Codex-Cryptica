@@ -133,6 +133,8 @@ The tasks.md should be immediately executable - each task must be specific enoug
 
 **Tests are REQUIRED for changed code behaviour** (Constitution II): generate tests before implementation, covering the success path and at least one meaningful failure, cancellation, or negative path. Documentation-only tasks do not need application tests.
 
+**User Help (Constitution VII)**: For every user-facing feature, include a task in the relevant user-story phase to add or update its Help article or description. Ensure help explains what users can do, how to find and use the feature, and important prerequisites or limitations. Consider a `FeatureHint` task when the feature has complex interactions.
+
 ### Checklist Format (REQUIRED)
 
 Every task MUST strictly follow this format:

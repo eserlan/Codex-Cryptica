@@ -50,8 +50,9 @@
     creatureConfig,
     themeIdToLabel,
     themeToQuestGenre,
-    type GeneratorOutput,
-  } from "$lib/services/seo/generator-engine";
+  } from "$lib/services/seo/generator-config";
+  import type { GeneratorOutput } from "$lib/services/seo/generator-engine";
+
   import { loadGeneratorRemixDraft } from "./generator-page-remix";
   import {
     type SlugMetaEntry,

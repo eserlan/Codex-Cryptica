@@ -130,6 +130,7 @@ export const howDoYouKeepTrackOfNpcsInALongCampaign: AnswerConfigInput = {
     "how-much-campaign-lore-should-players-be-expected-to-remember",
     "how-do-i-organise-gm-notes-for-in-person-play",
     "how-do-i-take-useful-rpg-notes-during-play",
+    "how-do-i-make-a-campaign-threat-feel-urgent-without-railroading",
   ],
   discovery: {
     id: "answer-track-npcs-long-campaign",

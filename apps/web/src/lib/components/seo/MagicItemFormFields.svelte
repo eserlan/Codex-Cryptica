@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { magicItemConfig } from "$lib/services/seo/generator-engine";
+  import { magicItemConfig } from "$lib/services/seo/generator-config";
   import SelectWithCustomOption from "$lib/components/forms/SelectWithCustomOption.svelte";
 
   let {

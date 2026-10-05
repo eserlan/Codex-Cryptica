@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { pickFrom, creatureConfig } from "$lib/services/seo/generator-engine";
+  import { pickFrom, creatureConfig } from "$lib/services/seo/generator-config";
   import SelectWithCustomOption from "$lib/components/forms/SelectWithCustomOption.svelte";
 
   let {

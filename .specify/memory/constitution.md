@@ -1,22 +1,22 @@
 <!--
 Sync Impact Report
-- Version change: 1.5.0 -> 1.6.0
-- Modified principles: None
-- Added sections: XIV. Bounded Responsibility (No God Files) — promotes the practice
-  already established by ADR 003 and docs/STYLE_GUIDE.md into a checkable principle
-  (new principle = minor bump)
-- Removed sections: None
-- Templates requiring updates:
-  - ✅ Updated .specify/templates/plan-template.md; added a Bounded Responsibility
-    Check to the Constitution Check gate, mirroring the Discovery Intent Check, so
-    the trigger is answered at plan time rather than discovered in review.
-  - ✅ Verified .specify/templates/spec-template.md; specs describe behaviour, not
-    file layout, so no conflicting guidance.
-  - ✅ Verified .specify/templates/tasks-template.md; no conflicting guidance. A
-    decomposition task is situational and belongs to the plan that finds it, not to
-    every feature's task list.
-- Follow-up TODOs: None. The principle is scoped to files a change touches, so no
-  retroactive audit of the 136 existing files over the trigger is implied.
+- Version change: 1.6.0 -> 1.7.0
+- Modified principles: VII. User Documentation — expanded the requirement from major
+  features to every user-facing feature and defined the minimum useful help content.
+- Added sections: None.
+- Removed sections: None.
+- Templates and guidance requiring updates:
+  - ✅ .specify/templates/plan-template.md — added a User Help Check.
+  - ✅ .specify/templates/tasks-template.md — require a user-help task for user-facing work.
+  - ✅ .specify/templates/spec-template.md — reviewed; no change needed.
+  - ✅ .gemini/commands/speckit.tasks.toml — canonical task-generation guidance updated.
+  - ✅ .gemini/commands/speckit.tasks.md — Markdown compatibility copy updated.
+  - ✅ .codex/commands/speckit.tasks.md — Codex compatibility copy updated.
+  - ✅ .agents/skills/speckit-tasks/SKILL.md — skill compatibility copy updated.
+  - ✅ .agent/workflows/sdd-tasks.md — workflow compatibility copy updated.
+  - ✅ Plan commands reviewed; they derive the Constitution Check from the live
+    constitution and plan template, so no command changes were needed.
+- Follow-up TODOs: None.
 -->
 
 # Codex-Arcana Constitution
@@ -66,7 +66,13 @@ To maintain build integrity and code quality, AI agents MUST:
 
 ### VII. User Documentation
 
-Every major feature MUST include a corresponding user-facing help description or guide article within `apps/web/src/lib/config/help-content.ts`. Features with complex interactions SHOULD also include a `FeatureHint` to guide first-time usage.
+Every new or materially changed user-facing product feature MUST include a clear, task-focused
+help article or description in the app's Help system. The Help system's article source
+is `apps/web/src/lib/content/help/`, with feature hints and Help configuration in
+`apps/web/src/lib/config/help-content.ts`. Help content MUST explain what users can do,
+how to find and use the feature, and any important prerequisites or limitations that
+affect first use. Features with complex interactions SHOULD also include a `FeatureHint`
+to guide first-time usage.
 
 ### VIII. Dependency Injection (DI)
 
@@ -129,4 +135,4 @@ Size is reported for human review, never enforced by a line-count lint rule — 
 
 This constitution is the ultimate arbiter of engineering quality. All implementation plans and code reviews must verify alignment with these principles.
 
-**Version**: 1.6.0 | **Ratified**: 2026-05-23 | **Last Amended**: 2026-09-01
+**Version**: 1.7.0 | **Ratified**: 2026-05-23 | **Last Amended**: 2026-10-05
