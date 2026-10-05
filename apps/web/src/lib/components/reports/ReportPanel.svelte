@@ -123,7 +123,9 @@
       <h2
         class="text-lg font-bold text-theme-text font-header uppercase tracking-widest flex items-center gap-2"
       >
-        <span aria-hidden="true" class="icon-[lucide--file-text] h-5 w-5 text-theme-primary"
+        <span
+          aria-hidden="true"
+          class="icon-[lucide--file-text] h-5 w-5 text-theme-primary"
         ></span>
         Generate report
       </h2>

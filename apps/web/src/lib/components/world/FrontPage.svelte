@@ -460,7 +460,10 @@
               <div
                 class="inline-flex items-center gap-2 rounded-full border border-theme-primary/30 bg-theme-primary/10 px-3 py-1 text-micro font-bold uppercase tracking-[0.2em] text-theme-primary mb-3"
               >
-                <span aria-hidden="true" class="icon-[lucide--sparkles] h-3.5 w-3.5"></span>
+                <span
+                  aria-hidden="true"
+                  class="icon-[lucide--sparkles] h-3.5 w-3.5"
+                ></span>
                 First Steps
               </div>
               <h2
@@ -480,7 +483,8 @@
                 class="inline-flex items-center gap-2 rounded-full bg-theme-primary px-5 py-2.5 text-xs font-bold uppercase tracking-[0.15em] text-theme-bg hover:opacity-90 transition-opacity"
                 onclick={() => modalUIStore.openIntentCreateMenu()}
               >
-                <span aria-hidden="true" class="icon-[lucide--plus] h-4 w-4"></span>
+                <span aria-hidden="true" class="icon-[lucide--plus] h-4 w-4"
+                ></span>
                 Create Entity
               </button>
 
@@ -488,7 +492,8 @@
                 class="inline-flex items-center gap-2 rounded-full border border-theme-border bg-theme-surface hover:bg-theme-bg/50 px-5 py-2.5 text-xs font-bold uppercase tracking-[0.15em] text-theme-text transition-colors"
                 onclick={() => openImportWindow()}
               >
-                <span aria-hidden="true" class="icon-[lucide--upload] h-4 w-4"></span>
+                <span aria-hidden="true" class="icon-[lucide--upload] h-4 w-4"
+                ></span>
                 Import
               </button>
 
@@ -497,7 +502,8 @@
                   class="inline-flex items-center gap-2 rounded-full border border-theme-primary/45 bg-theme-primary/10 hover:bg-theme-primary/20 px-5 py-2.5 text-xs font-bold uppercase tracking-[0.15em] text-theme-primary transition-colors"
                   onclick={handleGenerateStarterWorld}
                 >
-                  <span aria-hidden="true" class="icon-[lucide--bot] h-4 w-4"></span>
+                  <span aria-hidden="true" class="icon-[lucide--bot] h-4 w-4"
+                  ></span>
                   Generate starter world
                 </button>
               {:else}
@@ -505,7 +511,10 @@
                   class="inline-flex items-center gap-2 rounded-full border border-dashed border-theme-border bg-theme-surface/30 hover:bg-theme-surface px-5 py-2.5 text-xs font-medium uppercase tracking-[0.15em] text-theme-muted transition-colors"
                   onclick={() => modalUIStore.openSettings("intelligence")}
                 >
-                  <span aria-hidden="true" class="icon-[lucide--settings] h-4 w-4"></span>
+                  <span
+                    aria-hidden="true"
+                    class="icon-[lucide--settings] h-4 w-4"
+                  ></span>
                   Set up AI to generate
                 </button>
               {/if}
@@ -564,7 +573,10 @@
               href="{base}/worlds"
               class="inline-flex items-center gap-2 text-xs font-medium text-theme-muted hover:text-theme-primary transition-colors"
             >
-              <span aria-hidden="true" class="icon-[lucide--compass] h-3.5 w-3.5"></span>
+              <span
+                aria-hidden="true"
+                class="icon-[lucide--compass] h-3.5 w-3.5"
+              ></span>
               Made with Codex Cryptica &middot; Explore more public worlds
             </a>
           </div>

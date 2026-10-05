@@ -176,7 +176,8 @@
         class="w-full text-center py-2.5 bg-theme-primary text-theme-bg font-bold tracking-widest uppercase text-xs rounded-xl hover:bg-theme-secondary transition flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(var(--color-theme-primary-rgb),0.15)] cursor-pointer"
         data-testid="zen-sidebar-guest-chat-button"
       >
-        <span aria-hidden="true" class="icon-[lucide--messages-square] w-4 h-4"></span>
+        <span aria-hidden="true" class="icon-[lucide--messages-square] w-4 h-4"
+        ></span>
         Chat with {entity.title}
       </button>
     </div>
@@ -311,7 +312,9 @@
       <div
         class="w-full py-2 md:py-4 md:aspect-square rounded-lg border border-dashed border-theme-border flex flex-col items-center justify-center gap-2 md:gap-4 text-theme-muted bg-theme-primary/5 relative overflow-hidden"
       >
-        <span aria-hidden="true" class="icon-[lucide--lock] w-6 h-6 md:w-8 md:h-8 opacity-30"
+        <span
+          aria-hidden="true"
+          class="icon-[lucide--lock] w-6 h-6 md:w-8 md:h-8 opacity-30"
         ></span>
         <span
           class="text-xs font-bold uppercase font-header tracking-widest opacity-40"
@@ -456,7 +459,8 @@
           <div
             class="absolute top-2 left-2 flex items-center gap-2 opacity-30 text-theme-muted select-none pointer-events-none transition-opacity group-hover:opacity-100"
           >
-            <span aria-hidden="true" class="icon-[lucide--pen-tool] w-4 h-4"></span>
+            <span aria-hidden="true" class="icon-[lucide--pen-tool] w-4 h-4"
+            ></span>
             <span
               class="text-nano font-header uppercase tracking-widest font-bold"
               >Image Prompt</span
@@ -561,7 +565,8 @@
           onclick={onDelete}
           class="w-full border border-red-900/30 text-red-800 hover:text-red-500 hover:border-red-600 hover:bg-red-950/30 text-xs font-bold px-4 py-2 rounded tracking-widest transition flex items-center justify-center gap-2"
         >
-          <span aria-hidden="true" class="icon-[lucide--trash-2] w-3 h-3"></span>
+          <span aria-hidden="true" class="icon-[lucide--trash-2] w-3 h-3"
+          ></span>
           DELETE ENTITY
         </button>
       </div>

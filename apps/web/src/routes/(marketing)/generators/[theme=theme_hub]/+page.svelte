@@ -884,7 +884,8 @@
           href="{cleanBase}/generators"
           class="inline-flex items-center gap-2 text-xs font-bold text-theme-muted hover:text-theme-primary transition-colors"
         >
-          <span aria-hidden="true" class="icon-[lucide--arrow-left] h-4 w-4"></span>
+          <span aria-hidden="true" class="icon-[lucide--arrow-left] h-4 w-4"
+          ></span>
           All Generators
         </a>
 

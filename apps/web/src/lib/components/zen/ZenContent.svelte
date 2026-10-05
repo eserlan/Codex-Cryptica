@@ -201,7 +201,8 @@
         <h2
           class="text-xl font-header font-bold text-theme-primary mb-2 flex items-center gap-2 border-b border-theme-border pb-2"
         >
-          <span aria-hidden="true" class="icon-[lucide--book-open] w-5 h-5"></span>
+          <span aria-hidden="true" class="icon-[lucide--book-open] w-5 h-5"
+          ></span>
           {themeStore.jargon.chronicle_header}
         </h2>
         {#if !editState.isEditing && entity && isDelveLocationEntity(entity)}
@@ -234,7 +235,10 @@
                   }}
                   class="px-3.5 py-1.5 bg-theme-primary text-theme-bg font-bold text-micro rounded-lg uppercase font-header tracking-widest hover:bg-theme-secondary transition-colors shrink-0 flex items-center gap-1.5 shadow-md cursor-pointer"
                 >
-                  <span aria-hidden="true" class="icon-[lucide--external-link] w-3.5 h-3.5"></span>
+                  <span
+                    aria-hidden="true"
+                    class="icon-[lucide--external-link] w-3.5 h-3.5"
+                  ></span>
                   Open {delveCanvasLabel}
                 </button>
                 <button
@@ -273,7 +277,10 @@
                   }}
                   class="px-3.5 py-1.5 bg-theme-primary text-theme-bg font-bold text-micro rounded-lg uppercase font-header tracking-widest hover:bg-theme-secondary transition-colors shrink-0 flex items-center gap-1.5 shadow-md cursor-pointer"
                 >
-                  <span aria-hidden="true" class="icon-[lucide--map] w-3.5 h-3.5"></span>
+                  <span
+                    aria-hidden="true"
+                    class="icon-[lucide--map] w-3.5 h-3.5"
+                  ></span>
                   Build {delveCanvasLabel}
                 </button>
               {/if}
@@ -325,7 +332,8 @@
         <h2
           class="text-xl font-header font-bold text-theme-primary mb-2 flex items-center gap-2 border-b border-theme-border pb-2"
         >
-          <span aria-hidden="true" class="icon-[lucide--scroll-text] w-5 h-5"></span>
+          <span aria-hidden="true" class="icon-[lucide--scroll-text] w-5 h-5"
+          ></span>
           {themeStore.jargon.lore_header}
         </h2>
         {#if editState.isEditing}

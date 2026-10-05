@@ -240,7 +240,8 @@
       <span
         class="text-green-400 font-bold uppercase font-header tracking-widest text-micro flex items-center justify-center gap-2"
       >
-        <span aria-hidden="true" class="icon-[heroicons--check-circle] w-4 h-4"></span>
+        <span aria-hidden="true" class="icon-[heroicons--check-circle] w-4 h-4"
+        ></span>
         Merge Draft Prepared
       </span>
     </div>

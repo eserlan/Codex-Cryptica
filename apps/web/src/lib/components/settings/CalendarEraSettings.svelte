@@ -116,7 +116,8 @@
               aria-label="Remove Era {era.name}"
               class="text-theme-muted hover:text-red-400 p-1 rounded transition-colors"
             >
-              <span aria-hidden="true" class="icon-[lucide--trash-2] h-4 w-4"></span>
+              <span aria-hidden="true" class="icon-[lucide--trash-2] h-4 w-4"
+              ></span>
             </button>
           </div>
 

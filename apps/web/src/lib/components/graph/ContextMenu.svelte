@@ -370,7 +370,10 @@
           class="w-full text-left px-3 py-1.5 text-xs text-theme-text hover:bg-theme-primary/10 hover:text-theme-primary transition flex items-center gap-2 rounded-sm"
           onclick={controller.handleGenerateImage}
         >
-          <span aria-hidden="true" class="icon-[lucide--image-plus] h-3.5 w-3.5 opacity-70"></span>
+          <span
+            aria-hidden="true"
+            class="icon-[lucide--image-plus] h-3.5 w-3.5 opacity-70"
+          ></span>
           {controller.imageActionLabel}
         </button>
         <button
@@ -378,7 +381,10 @@
           class="w-full text-left px-3 py-1.5 text-xs text-theme-text hover:bg-theme-primary/10 hover:text-theme-primary transition flex items-center gap-2 rounded-sm"
           onclick={controller.handleReviseContent}
         >
-          <span aria-hidden="true" class="icon-[lucide--sparkles] h-3.5 w-3.5 opacity-70"></span>
+          <span
+            aria-hidden="true"
+            class="icon-[lucide--sparkles] h-3.5 w-3.5 opacity-70"
+          ></span>
           Revise Content
         </button>
       {/if}

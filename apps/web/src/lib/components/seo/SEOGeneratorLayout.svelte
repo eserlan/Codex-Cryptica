@@ -1134,7 +1134,10 @@
             <div
               class="flex flex-col items-center text-center text-theme-muted/40 py-8"
             >
-              <span aria-hidden="true" class="icon-[lucide--scroll] w-8 h-8 mb-3"></span>
+              <span
+                aria-hidden="true"
+                class="icon-[lucide--scroll] w-8 h-8 mb-3"
+              ></span>
               <p class="text-micro uppercase tracking-widest font-header">
                 At the Table
               </p>

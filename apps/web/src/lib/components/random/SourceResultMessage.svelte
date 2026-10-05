@@ -179,7 +179,8 @@
           data-testid="entity-mention-{segment.entityId}"
           class="inline-flex items-center gap-1 rounded bg-theme-primary/10 px-1 py-0.5 font-medium text-theme-primary transition-colors hover:bg-theme-primary/20 hover:underline align-baseline cursor-pointer"
         >
-          <span aria-hidden="true" class="icon-[lucide--book-open] h-3 w-3"></span>
+          <span aria-hidden="true" class="icon-[lucide--book-open] h-3 w-3"
+          ></span>
           {segment.text}
         </button>
       {:else}

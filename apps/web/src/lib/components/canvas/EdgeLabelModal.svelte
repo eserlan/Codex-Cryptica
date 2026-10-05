@@ -54,7 +54,10 @@
     class="p-4 border-b border-theme-border flex items-center justify-between bg-theme-bg/30"
   >
     <div class="flex items-center gap-2">
-      <span aria-hidden="true" class="icon-[lucide--type] w-4 h-4 text-theme-primary"></span>
+      <span
+        aria-hidden="true"
+        class="icon-[lucide--type] w-4 h-4 text-theme-primary"
+      ></span>
       <h3
         id="edge-label-modal-title"
         class="text-xs font-bold text-theme-text font-header uppercase tracking-widest"

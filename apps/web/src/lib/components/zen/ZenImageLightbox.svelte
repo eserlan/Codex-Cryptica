@@ -231,7 +231,10 @@
       />
     {:else}
       <div class="flex flex-col items-center gap-4 text-white/50">
-        <span aria-hidden="true" class="icon-[lucide--loader-2] w-12 h-12 animate-spin"></span>
+        <span
+          aria-hidden="true"
+          class="icon-[lucide--loader-2] w-12 h-12 animate-spin"
+        ></span>
         <span class="text-sm font-mono tracking-widest uppercase"
           >Resolving Neural Visual...</span
         >

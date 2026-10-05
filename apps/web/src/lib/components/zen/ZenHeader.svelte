@@ -534,7 +534,10 @@
           class="touch-target px-2 md:px-4 py-1.5 bg-theme-primary hover:bg-theme-secondary disabled:opacity-50 text-theme-bg text-micro md:text-xs font-bold rounded tracking-widest transition flex items-center gap-2"
         >
           {#if isSaving}
-            <span aria-hidden="true" class="icon-[lucide--loader-2] w-3 h-3 animate-spin"></span>
+            <span
+              aria-hidden="true"
+              class="icon-[lucide--loader-2] w-3 h-3 animate-spin"
+            ></span>
             <span class="hidden sm:inline">SAVING...</span>
           {:else}
             <span aria-hidden="true" class="icon-[lucide--save] w-3 h-3"></span>

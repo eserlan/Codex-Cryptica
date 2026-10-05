@@ -87,7 +87,8 @@
           class="inline-flex items-center gap-1 text-nano font-mono px-1.5 py-0.5 rounded bg-rose-500/10 text-rose-400"
           title={data.stocking.encounters?.join("\n")}
         >
-          <span aria-hidden="true" class="icon-[lucide--swords] w-2.5 h-2.5"></span>
+          <span aria-hidden="true" class="icon-[lucide--swords] w-2.5 h-2.5"
+          ></span>
           {encountersCount}
         </span>
       {/if}
@@ -96,7 +97,10 @@
           class="inline-flex items-center gap-1 text-nano font-mono px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-400"
           title={data.stocking.hazards?.join("\n")}
         >
-          <span aria-hidden="true" class="icon-[lucide--alert-triangle] w-2.5 h-2.5"></span>
+          <span
+            aria-hidden="true"
+            class="icon-[lucide--alert-triangle] w-2.5 h-2.5"
+          ></span>
           {hazardsCount}
         </span>
       {/if}
@@ -105,7 +109,8 @@
           class="inline-flex items-center gap-1 text-nano font-mono px-1.5 py-0.5 rounded bg-yellow-500/10 text-yellow-400"
           title={data.stocking.treasure?.join("\n")}
         >
-          <span aria-hidden="true" class="icon-[lucide--gem] w-2.5 h-2.5"></span>
+          <span aria-hidden="true" class="icon-[lucide--gem] w-2.5 h-2.5"
+          ></span>
           {treasureCount}
         </span>
       {/if}
@@ -114,7 +119,8 @@
           class="inline-flex items-center gap-1 text-nano font-mono px-1.5 py-0.5 rounded bg-purple-500/10 text-purple-400"
           title={data.stocking.secrets?.join("\n")}
         >
-          <span aria-hidden="true" class="icon-[lucide--eye] w-2.5 h-2.5"></span>
+          <span aria-hidden="true" class="icon-[lucide--eye] w-2.5 h-2.5"
+          ></span>
           {secretsCount}
         </span>
       {/if}

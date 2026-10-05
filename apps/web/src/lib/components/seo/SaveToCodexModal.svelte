@@ -35,7 +35,8 @@
       <div
         class="mx-auto w-12 h-12 rounded-full bg-theme-primary/10 border border-theme-primary/30 flex items-center justify-center text-theme-primary mb-2"
       >
-        <span aria-hidden="true" class="icon-[lucide--check-circle-2] w-6 h-6"></span>
+        <span aria-hidden="true" class="icon-[lucide--check-circle-2] w-6 h-6"
+        ></span>
       </div>
 
       <h3
@@ -57,7 +58,8 @@
           onclick={onConfirm}
           class="w-full py-3 bg-theme-primary text-theme-bg font-bold uppercase font-header tracking-widest text-xs rounded-xl shadow-lg hover:brightness-110 transition-all flex items-center justify-center gap-2 whitespace-nowrap"
         >
-          <span aria-hidden="true" class="icon-[lucide--arrow-right] w-4 h-4"></span>
+          <span aria-hidden="true" class="icon-[lucide--arrow-right] w-4 h-4"
+          ></span>
           Open Codex
         </a>
 

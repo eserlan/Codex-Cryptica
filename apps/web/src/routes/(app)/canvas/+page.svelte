@@ -94,7 +94,9 @@
 >
   <div class="flex flex-col items-center gap-4 max-w-md text-center px-6">
     {#if initializationError}
-      <span aria-hidden="true" class="icon-[lucide--alert-circle] w-12 h-12 text-red-500 mb-2"
+      <span
+        aria-hidden="true"
+        class="icon-[lucide--alert-circle] w-12 h-12 text-red-500 mb-2"
       ></span>
       <h2
         class="text-lg font-bold text-theme-text font-mono uppercase font-header tracking-widest"

@@ -128,7 +128,9 @@
                 : ''}"
             >
               {#if activeLabels.has(label)}
-                <span aria-hidden="true" class="icon-[heroicons--check] w-2.5 h-2.5 text-theme-bg"
+                <span
+                  aria-hidden="true"
+                  class="icon-[heroicons--check] w-2.5 h-2.5 text-theme-bg"
                 ></span>
               {/if}
             </span>

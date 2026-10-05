@@ -268,7 +268,9 @@
       <div
         class="mb-4 w-full py-2 md:py-4 md:h-40 rounded border border-dashed border-theme-border flex flex-col items-center justify-center gap-2 md:gap-4 text-theme-muted bg-theme-bg/30"
       >
-        <span aria-hidden="true" class="icon-[lucide--lock] w-4 h-4 md:w-6 md:h-6 opacity-30"
+        <span
+          aria-hidden="true"
+          class="icon-[lucide--lock] w-4 h-4 md:w-6 md:h-6 opacity-30"
         ></span>
         <span
           class="text-nano md:text-nano font-bold uppercase font-header opacity-40"
@@ -302,7 +304,10 @@
           <div
             class="absolute inset-0 flex flex-col items-center justify-center bg-theme-bg/40 animate-pulse text-theme-muted gap-2"
           >
-            <span aria-hidden="true" class="icon-[lucide--image] w-8 h-8 opacity-30"></span>
+            <span
+              aria-hidden="true"
+              class="icon-[lucide--image] w-8 h-8 opacity-30"
+            ></span>
             <span
               class="text-nano font-mono uppercase tracking-wider opacity-40"
               >Resolving Neural Visual...</span
@@ -378,7 +383,9 @@
             <span
               class="mt-2 text-nano font-mono uppercase tracking-wider text-theme-muted group-hover/sil:text-theme-primary transition-colors flex items-center gap-1"
             >
-              <span aria-hidden="true" class="icon-[lucide--sparkles] h-3 w-3 text-theme-accent"
+              <span
+                aria-hidden="true"
+                class="icon-[lucide--sparkles] h-3 w-3 text-theme-accent"
               ></span>
               {entity.silhouette
                 ? "Custom Silhouette"
@@ -468,7 +475,8 @@
           <div
             class="absolute top-2 left-2 flex items-center gap-2 opacity-30 text-theme-muted select-none pointer-events-none transition-opacity group-hover:opacity-100"
           >
-            <span aria-hidden="true" class="icon-[lucide--pen-tool] w-4 h-4"></span>
+            <span aria-hidden="true" class="icon-[lucide--pen-tool] w-4 h-4"
+            ></span>
             <span
               class="text-nano font-header uppercase tracking-widest font-bold"
               >Image Prompt</span

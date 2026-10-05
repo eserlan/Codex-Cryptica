@@ -88,7 +88,9 @@
     class="p-4 border-b border-theme-border bg-theme-surface flex flex-wrap items-center justify-between gap-4"
   >
     <div class="flex items-center gap-3">
-      <span aria-hidden="true" class="icon-[lucide--calendar-days] text-theme-primary w-6 h-6"
+      <span
+        aria-hidden="true"
+        class="icon-[lucide--calendar-days] text-theme-primary w-6 h-6"
       ></span>
       <h2
         class="text-xl font-bold text-theme-text font-mono tracking-wider uppercase font-header"

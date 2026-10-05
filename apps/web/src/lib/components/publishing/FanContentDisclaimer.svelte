@@ -26,7 +26,10 @@
     <div
       class="flex items-center gap-2 font-header font-bold text-theme-text mb-1.5"
     >
-      <span aria-hidden="true" class="icon-[lucide--info] h-4 w-4 text-theme-primary"></span>
+      <span
+        aria-hidden="true"
+        class="icon-[lucide--info] h-4 w-4 text-theme-primary"
+      ></span>
       <span>Unofficial Fan Content Notice</span>
     </div>
     <p class="leading-relaxed whitespace-pre-wrap">{displayText}</p>

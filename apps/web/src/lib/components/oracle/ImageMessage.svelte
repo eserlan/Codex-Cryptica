@@ -66,7 +66,10 @@
         <div
           class="absolute inset-0 flex flex-col items-center justify-center bg-theme-bg/40 animate-pulse text-theme-muted gap-2"
         >
-          <span aria-hidden="true" class="icon-[lucide--image] w-8 h-8 opacity-30"></span>
+          <span
+            aria-hidden="true"
+            class="icon-[lucide--image] w-8 h-8 opacity-30"
+          ></span>
           <span class="text-micro font-mono uppercase tracking-wider opacity-40"
             >Resolving Neural Visual...</span
           >
@@ -123,7 +126,10 @@
           class="flex items-center gap-1.5 px-3 py-1.5 rounded text-micro font-bold tracking-widest transition-all bg-theme-primary/10 text-theme-primary border border-theme-primary/30 hover:bg-theme-primary hover:text-black max-w-[250px] disabled:opacity-50"
         >
           {#if isArchiving}
-            <span aria-hidden="true" class="icon-[lucide--loader-2] w-3 h-3 animate-spin"></span>
+            <span
+              aria-hidden="true"
+              class="icon-[lucide--loader-2] w-3 h-3 animate-spin"
+            ></span>
             ARCHIVING...
           {:else}
             <span aria-hidden="true" class="icon-[lucide--save] w-3 h-3"></span>
@@ -143,7 +149,9 @@
       class="w-full aspect-square bg-theme-surface/30 border border-theme-border rounded-lg flex flex-col items-center justify-center gap-3 animate-pulse"
     >
       <div class="relative">
-        <span aria-hidden="true" class="icon-[lucide--sparkles] w-8 h-8 text-theme-primary/50"
+        <span
+          aria-hidden="true"
+          class="icon-[lucide--sparkles] w-8 h-8 text-theme-primary/50"
         ></span>
         <div
           class="absolute inset-0 bg-theme-primary/20 blur-xl rounded-full"

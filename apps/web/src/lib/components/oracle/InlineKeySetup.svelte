@@ -29,7 +29,10 @@
     <div
       class="w-12 h-12 rounded-xl bg-theme-primary/10 flex items-center justify-center text-theme-primary shrink-0"
     >
-      <span aria-hidden="true" class="icon-[lucide--sparkles] w-6 h-6 animate-pulse"></span>
+      <span
+        aria-hidden="true"
+        class="icon-[lucide--sparkles] w-6 h-6 animate-pulse"
+      ></span>
     </div>
     <div class="space-y-1">
       <h3

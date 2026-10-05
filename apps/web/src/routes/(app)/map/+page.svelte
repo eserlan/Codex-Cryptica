@@ -126,7 +126,10 @@
       <div
         class="w-24 h-24 mb-8 rounded-full bg-theme-primary/10 flex items-center justify-center"
       >
-        <span aria-hidden="true" class="icon-[lucide--map] text-theme-primary w-12 h-12"></span>
+        <span
+          aria-hidden="true"
+          class="icon-[lucide--map] text-theme-primary w-12 h-12"
+        ></span>
       </div>
       <h2
         class="text-3xl font-bold text-theme-text mb-4 font-header uppercase tracking-tight"
@@ -150,7 +153,10 @@
       <div
         class="w-24 h-24 mb-8 rounded-full bg-theme-primary/10 flex items-center justify-center"
       >
-        <span aria-hidden="true" class="icon-[lucide--map] text-theme-primary w-12 h-12"></span>
+        <span
+          aria-hidden="true"
+          class="icon-[lucide--map] text-theme-primary w-12 h-12"
+        ></span>
       </div>
       <h2
         class="text-3xl font-bold text-theme-text mb-4 font-header uppercase tracking-tight"

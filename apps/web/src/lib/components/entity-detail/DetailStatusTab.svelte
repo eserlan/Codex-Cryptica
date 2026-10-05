@@ -157,7 +157,9 @@
           class="mb-4 p-3 bg-theme-primary/5 border border-theme-border rounded-xl flex items-center justify-between gap-3"
         >
           <div class="flex items-center gap-2.5">
-            <span aria-hidden="true" class="icon-[lucide--map] text-theme-primary w-5 h-5 shrink-0"
+            <span
+              aria-hidden="true"
+              class="icon-[lucide--map] text-theme-primary w-5 h-5 shrink-0"
             ></span>
             <div>
               <span
@@ -181,7 +183,10 @@
                 }}
                 class="px-3.5 py-1.5 bg-theme-primary text-theme-bg font-bold text-micro rounded-lg uppercase font-header tracking-widest hover:bg-theme-secondary transition-colors shrink-0 flex items-center gap-1.5 shadow-md cursor-pointer"
               >
-                <span aria-hidden="true" class="icon-[lucide--external-link] w-3.5 h-3.5"></span>
+                <span
+                  aria-hidden="true"
+                  class="icon-[lucide--external-link] w-3.5 h-3.5"
+                ></span>
                 Open {delveCanvasLabel}
               </button>
               <button
@@ -199,7 +204,10 @@
                 }}
                 class="p-1.5 text-theme-muted hover:text-theme-primary transition-colors cursor-pointer"
               >
-                <span aria-hidden="true" class="icon-[lucide--rotate-cw] w-3.5 h-3.5"></span>
+                <span
+                  aria-hidden="true"
+                  class="icon-[lucide--rotate-cw] w-3.5 h-3.5"
+                ></span>
               </button>
             {:else}
               <button
@@ -216,7 +224,8 @@
                 }}
                 class="px-3.5 py-1.5 bg-theme-primary text-theme-bg font-bold text-micro rounded-lg uppercase font-header tracking-widest hover:bg-theme-secondary transition-colors shrink-0 flex items-center gap-1.5 shadow-md cursor-pointer"
               >
-                <span aria-hidden="true" class="icon-[lucide--map] w-3.5 h-3.5"></span>
+                <span aria-hidden="true" class="icon-[lucide--map] w-3.5 h-3.5"
+                ></span>
                 Build {delveCanvasLabel}
               </button>
             {/if}

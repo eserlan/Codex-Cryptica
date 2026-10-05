@@ -55,7 +55,9 @@
           id="edge-modal-title"
           class="font-header font-bold text-base text-theme-text flex items-center gap-2"
         >
-          <span aria-hidden="true" class="icon-[lucide--git-commit] w-4 h-4 text-theme-primary"
+          <span
+            aria-hidden="true"
+            class="icon-[lucide--git-commit] w-4 h-4 text-theme-primary"
           ></span>
           Edit Passage Attributes
         </h3>

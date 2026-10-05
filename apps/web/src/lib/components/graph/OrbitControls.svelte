@@ -12,7 +12,10 @@
   <div class="orbit-controls" transition:fade>
     {#if centralEntity}
       <div class="flex items-center gap-2">
-        <span aria-hidden="true" class="icon-[lucide--info] w-3 h-3 text-theme-primary"></span>
+        <span
+          aria-hidden="true"
+          class="icon-[lucide--info] w-3 h-3 text-theme-primary"
+        ></span>
         <span
           class="text-xs font-bold text-white uppercase font-header tracking-wider"
           >{centralEntity.title}</span

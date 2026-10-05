@@ -60,7 +60,8 @@
       <div
         class="flex flex-col items-center justify-center h-full opacity-30 text-center p-4"
       >
-        <span aria-hidden="true" class="icon-[lucide--activity] w-8 h-8 mb-2"></span>
+        <span aria-hidden="true" class="icon-[lucide--activity] w-8 h-8 mb-2"
+        ></span>
         <p class="text-xs uppercase font-header tracking-tighter">
           No recent activity detected.
         </p>

@@ -592,7 +592,9 @@
       class="flex flex-1 items-center justify-center text-sm text-theme-muted"
       data-testid="entity-table-loading"
     >
-      <span aria-hidden="true" class="icon-[lucide--loader-circle] mr-2 h-4 w-4 animate-spin"
+      <span
+        aria-hidden="true"
+        class="icon-[lucide--loader-circle] mr-2 h-4 w-4 animate-spin"
       ></span>
       Loading vault…
     </div>
