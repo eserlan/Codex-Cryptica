@@ -1,3 +1,5 @@
+export * from "./hex";
+export * from "./hex-renderer";
 export * from "./layers";
 export * from "./math";
 export * from "./note-markdown";

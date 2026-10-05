@@ -5,6 +5,7 @@
 
 import type { Point } from "schema";
 
+// fallow-ignore-next-line code-duplication
 export interface HexCoord {
   readonly q: number;
   readonly r: number;

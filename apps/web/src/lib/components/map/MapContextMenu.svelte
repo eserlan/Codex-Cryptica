@@ -3,7 +3,7 @@
   import { mapStore } from "../../stores/map.svelte";
   import { mapSession } from "../../stores/map-session.svelte";
   import { TOKEN_STATUS_EFFECTS } from "../../../types/vtt";
-  import { isNoteCollapsed } from "map-engine";
+  import { isNoteCollapsed, snapPointToHexCenter } from "map-engine";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
   import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
   import { vault } from "../../stores/vault.svelte";
@@ -473,21 +473,57 @@
                   const gridSize = mapStore.gridSize || 50;
                   const token = mapSession.tokens[tokenId];
                   if (token) {
-                    const snappedX =
-                      Math.round((token.x - mapStore.gridOffsetX) / gridSize) *
-                        gridSize +
-                      mapStore.gridOffsetX;
-                    const snappedY =
-                      Math.round((token.y - mapStore.gridOffsetY) / gridSize) *
-                        gridSize +
-                      mapStore.gridOffsetY;
+                    if (
+                      mapStore.gridType === "hex-pointy" ||
+                      mapStore.gridType === "hex-flat"
+                    ) {
+                      const orientation =
+                        mapStore.gridType === "hex-flat" ? "flat" : "pointy";
+                      const snapped = snapPointToHexCenter(
+                        { x: token.x, y: token.y },
+                        {
+                          orientation,
+                          size: gridSize,
+                          offsetX: mapStore.gridOffsetX,
+                          offsetY: mapStore.gridOffsetY,
+                        },
+                      );
+                      const width =
+                        orientation === "pointy"
+                          ? scale * Math.sqrt(3) * gridSize
+                          : scale * 2 * gridSize;
+                      const height =
+                        orientation === "pointy"
+                          ? scale * 2 * gridSize
+                          : scale * Math.sqrt(3) * gridSize;
 
-                    mapSession.updateToken(tokenId, {
-                      x: snappedX,
-                      y: snappedY,
-                      width: scale * gridSize,
-                      height: scale * gridSize,
-                    });
+                      mapSession.updateToken(tokenId, {
+                        x: snapped.x,
+                        y: snapped.y,
+                        width,
+                        height,
+                      });
+                    } else {
+                      const snappedX =
+                        Math.round(
+                          (token.x - mapStore.gridOffsetX) / gridSize,
+                        ) *
+                          gridSize +
+                        mapStore.gridOffsetX;
+                      const snappedY =
+                        Math.round(
+                          (token.y - mapStore.gridOffsetY) / gridSize,
+                        ) *
+                          gridSize +
+                        mapStore.gridOffsetY;
+
+                      mapSession.updateToken(tokenId, {
+                        x: snappedX,
+                        y: snappedY,
+                        width: scale * gridSize,
+                        height: scale * gridSize,
+                      });
+                    }
                   }
                   onClose();
                   showResizeSubmenu = false;

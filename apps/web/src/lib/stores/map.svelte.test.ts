@@ -109,6 +109,8 @@ describe("MapStore settings persistence", () => {
       expect(JSON.parse(raw!)).toEqual({
         showFog: false,
         showGrid: true,
+        gridType: "square",
+        showHexCoordinates: false,
         brushRadius: 88,
         gridSize: 120,
         gridOffsetX: 12,
@@ -121,6 +123,29 @@ describe("MapStore settings persistence", () => {
         layerLocked: { terrain: false, object: false, token: false },
       });
     });
+  });
+
+  it("persists and restores hex grid settings", async () => {
+    const store = new MapStore();
+    store.selectMap("map-hex");
+
+    store.showGrid = true;
+    store.gridType = "hex-pointy";
+    store.showHexCoordinates = true;
+
+    await waitFor(() => {
+      const raw = window.localStorage.getItem("codex-map-settings:map-hex");
+      expect(raw).not.toBeNull();
+      const parsed = JSON.parse(raw!);
+      expect(parsed.gridType).toBe("hex-pointy");
+      expect(parsed.showHexCoordinates).toBe(true);
+    });
+
+    // Create a new store to verify restoration
+    const store2 = new MapStore();
+    store2.selectMap("map-hex");
+    expect(store2.gridType).toBe("hex-pointy");
+    expect(store2.showHexCoordinates).toBe(true);
   });
 
   it("restores settings per map id", async () => {
@@ -435,5 +460,24 @@ describe("MapStore.createBlankMap", () => {
     expect(
       (vaultMock.maps as Record<string, unknown>)["blank-map-id"],
     ).toBeUndefined();
+  });
+
+  it("records hexCoordinates when adding a pin on a hex grid", async () => {
+    vaultMock.maps = {
+      "map-hex": makeMap("map-hex"),
+    };
+    const store = new MapStore(undefined, { uuid: () => "pin-hex-1" });
+    store.selectMap("map-hex");
+    store.showGrid = true;
+    store.gridType = "hex-pointy";
+    store.gridSize = 50;
+
+    await store.addPin(undefined, { x: 0, y: 0 });
+
+    const pin = (vaultMock.maps as any)["map-hex"].pins.find(
+      (p: any) => p.id === "pin-hex-1",
+    );
+    expect(pin).toBeDefined();
+    expect(pin.hexCoordinates).toEqual({ q: 0, r: 0 });
   });
 });

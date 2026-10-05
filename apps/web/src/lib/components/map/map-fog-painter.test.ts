@@ -10,6 +10,7 @@ function createCanvasMock() {
     lineTo: vi.fn(),
     stroke: vi.fn(),
     fill: vi.fn(),
+    closePath: vi.fn(),
     arc: vi.fn(),
     clearRect: vi.fn(),
     drawImage: vi.fn(),
@@ -153,5 +154,33 @@ describe("MapFogPainter", () => {
     const finished = await blankPainter.finish();
     expect(finished).toBe(true);
     expect(saveMask).toHaveBeenCalledWith(mask.canvas);
+  });
+
+  it("stamps polygon hexes instead of circle brush when hex grid is active", async () => {
+    const hexMask = createCanvasMock();
+    const hexPainter = new MapFogPainter({
+      mapStore: {
+        activeMapId: "map-hex",
+        brushRadius: 10,
+        showGrid: true,
+        gridType: "hex-pointy",
+        gridSize: 50,
+        unproject: vi.fn((p) => p),
+        saveMask,
+      },
+      oracle: { pushUndoAction },
+      getMaskCanvas: () => hexMask.canvas,
+      getMapImage: () => mapImage,
+      createCanvas: () => createCanvasMock().canvas,
+    });
+
+    hexPainter.begin({ x: 0, y: 0 }, false);
+    // Should have filled a 6-vertex polygon path
+    expect(hexMask.ctx.beginPath).toHaveBeenCalled();
+    expect(hexMask.ctx.moveTo).toHaveBeenCalled();
+    expect(hexMask.ctx.lineTo).toHaveBeenCalledTimes(5);
+    expect(hexMask.ctx.closePath).toHaveBeenCalled();
+    expect(hexMask.ctx.fill).toHaveBeenCalled();
+    expect(hexMask.ctx.fillStyle).toBe("white");
   });
 });

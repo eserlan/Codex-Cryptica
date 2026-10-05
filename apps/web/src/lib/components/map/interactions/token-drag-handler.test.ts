@@ -105,4 +105,68 @@ describe("TokenDragHandler", () => {
     expect(setDraggingTokenId).toHaveBeenLastCalledWith(null);
     expect(handler.dragState).toBeNull();
   });
+
+  it("snaps token to nearest hex center on drag end when hex grid is enabled", () => {
+    // Hex size 50, pointy orientation, offset 0, 0
+    handler = new TokenDragHandler({
+      getTokens: () => [{ ...tokens[0], x: 5, y: 5 }],
+      project: (p: any) => p,
+      unproject: (p: any) => p,
+      isHostMode: () => true,
+      getPeerId: () => "peer-a",
+      canMoveToken,
+      moveToken,
+      requestTokenMove,
+      sendTokenMoveRequest,
+      confirmTokenMove,
+      setDraggingTokenId,
+      getGridConfig: () => ({
+        enabled: true,
+        type: "hex-pointy",
+        size: 50,
+        offsetX: 0,
+        offsetY: 0,
+      }),
+    } as any);
+
+    handler.begin({ x: 5, y: 5 });
+    handler.end();
+
+    // Token should have been snapped to nearest hex center
+    expect(moveToken).toHaveBeenCalled();
+    const lastCall = (moveToken as any).mock.calls.at(-1);
+    expect(lastCall[0]).toBe("token-a");
+    // Center of hex containing (30, 40) is (0, 0)
+    expect(lastCall[1]).toBeCloseTo(0);
+    expect(lastCall[2]).toBeCloseTo(0);
+  });
+
+  it("does not snap token when grid is disabled", () => {
+    handler = new TokenDragHandler({
+      getTokens: () => [{ ...tokens[0], x: 33, y: 44 }],
+      project: (p: any) => p,
+      unproject: (p: any) => p,
+      isHostMode: () => true,
+      getPeerId: () => "peer-a",
+      canMoveToken,
+      moveToken,
+      requestTokenMove,
+      sendTokenMoveRequest,
+      confirmTokenMove,
+      setDraggingTokenId,
+      getGridConfig: () => ({
+        enabled: false,
+        type: "hex-pointy",
+        size: 50,
+        offsetX: 0,
+        offsetY: 0,
+      }),
+    } as any);
+
+    handler.begin({ x: 33, y: 44 });
+    handler.end();
+
+    // moveToken not called during end() if grid disabled
+    expect(moveToken).not.toHaveBeenCalled();
+  });
 });

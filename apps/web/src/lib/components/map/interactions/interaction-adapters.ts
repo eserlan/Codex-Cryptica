@@ -87,6 +87,13 @@ export function createTokenDragDependencies(): TokenDragDependencies {
     setDraggingTokenId: (tokenId) => {
       mapSession.draggingTokenId = tokenId;
     },
+    getGridConfig: () => ({
+      enabled: mapStore.showGrid,
+      type: mapStore.gridType,
+      size: mapStore.gridSize,
+      offsetX: mapStore.gridOffsetX,
+      offsetY: mapStore.gridOffsetY,
+    }),
   };
 }
 
