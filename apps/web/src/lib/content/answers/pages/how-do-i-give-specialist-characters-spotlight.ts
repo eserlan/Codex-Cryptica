@@ -161,6 +161,7 @@ export const howDoIGiveSpecialistCharactersSpotlight: AnswerConfigInput = {
     "how-do-i-upgrade-a-player-characters-weapon-without-replacing-it",
     "how-do-i-make-interviewing-npcs-interesting-in-an-investigation",
     "how-do-i-handle-players-asking-an-npc-to-tell-us-everything-you-know",
+    "how-do-i-keep-players-engaged-during-other-players-turns-in-combat",
   ],
   discovery: {
     id: "answer-specialist-character-spotlight",

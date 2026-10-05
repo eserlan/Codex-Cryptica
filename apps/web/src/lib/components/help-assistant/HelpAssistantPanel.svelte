@@ -8,6 +8,7 @@
   import HelpActionOffer from "./HelpActionOffer.svelte";
   import HelpAssistantComposer from "./HelpAssistantComposer.svelte";
   import HelpAssistantMessage from "./HelpAssistantMessage.svelte";
+  import HelpQuickPrompts from "./HelpQuickPrompts.svelte";
 
   let {
     assistant,
@@ -22,6 +23,14 @@
     onOpenLibrary: () => void;
     onClose: () => void;
   } = $props();
+
+  // The prompt list disappears once a question is asked, so hand focus to the
+  // question box rather than leaving it on a removed button.
+  async function askQuickPrompt(question: string) {
+    void assistant.ask(question);
+    await tick();
+    document.getElementById("help-assistant-input")?.focus();
+  }
 
   // A small panel is a micro-interaction (150–250ms); none at all when the
   // user asks for reduced motion.
@@ -74,7 +83,7 @@
   <div
     role="dialog"
     aria-modal="false"
-    aria-label="Help assistant"
+    aria-label="Cif, the Codex guide"
     tabindex="-1"
     data-testid="help-assistant-panel"
     class="fixed bottom-[calc(7.25rem_+_env(safe-area-inset-bottom,0px))] left-3 z-[95] flex max-h-[min(36rem,calc(100dvh_-_11rem_-_env(safe-area-inset-bottom,0px)))] w-[min(24rem,calc(100vw-1.5rem))] flex-col overflow-hidden rounded-lg border border-chrome-border bg-chrome-surface shadow-xl md:bottom-16 md:left-[4.5rem] md:max-h-[min(36rem,calc(100dvh-7rem))]"
@@ -110,7 +119,7 @@
         <button
           type="button"
           onclick={onClose}
-          aria-label="Close"
+          aria-label="Close Cif"
           class="touch-target rounded p-1 text-chrome-muted hover:text-chrome-text focus-visible:outline-2 focus-visible:outline-chrome-accent"
         >
           <span aria-hidden="true" class="icon-[lucide--x] h-4 w-4"></span>
@@ -130,6 +139,10 @@
           Ask Cif how to do something in Codex Cryptica. Cif can also show you
           where a button is, but never changes anything in your vault.
         </p>
+        <HelpQuickPrompts
+          prompts={assistant.quickPrompts}
+          onAsk={askQuickPrompt}
+        />
       {/if}
 
       {#each assistant.messages as message (message.id)}

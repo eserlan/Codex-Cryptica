@@ -80,6 +80,7 @@
     openCanvasReport,
   } from "./open-canvas-report";
   import { useCanvasAreaEnhancement } from "./canvas-area-enhancement.svelte";
+  import { createCanvasDropHandlers } from "./canvas-drop-handlers";
   import {
     bringNodeToFront,
     sendNodeToBack,
@@ -137,6 +138,14 @@
     setNodes: (updater) => {
       logic.nodes = updater(logic.nodes);
     },
+  });
+  const dropHandlers = createCanvasDropHandlers({
+    isGuest: () => vault.isGuest,
+    handleExternalFiles: (files, position) =>
+      fileImport.handleExternalFiles(files, position),
+    screenToFlowPosition: (position) => logic.screenToFlowPosition(position),
+    handleQuickSpawn: (entityId, position) =>
+      logic.handleQuickSpawn(entityId, position),
   });
   const isCanvasToolActive = $derived(
     drawingLogic.isDrawingMode ||
@@ -512,48 +521,6 @@
     }
   }
 
-  function onDragOver(event: DragEvent) {
-    const hasFiles = (event.dataTransfer?.files.length ?? 0) > 0;
-    if (vault.isGuest) {
-      if (hasFiles) {
-        event.preventDefault();
-        if (event.dataTransfer) event.dataTransfer.dropEffect = "none";
-      }
-      return;
-    }
-    event.preventDefault();
-    if (event.dataTransfer) {
-      event.dataTransfer.dropEffect = hasFiles ? "copy" : "move";
-    }
-  }
-
-  async function onDrop(event: DragEvent) {
-    const files = Array.from(event.dataTransfer?.files || []);
-    if (vault.isGuest) {
-      if (files.length > 0) {
-        event.preventDefault();
-        if (event.dataTransfer) event.dataTransfer.dropEffect = "none";
-      }
-      return;
-    }
-    event.preventDefault();
-    if (files.length > 0) {
-      await fileImport.handleExternalFiles(files, {
-        x: event.clientX,
-        y: event.clientY,
-      });
-      return;
-    }
-    const entityId = event.dataTransfer?.getData("application/codex-entity");
-    if (!entityId) return;
-
-    const position = logic.screenToFlowPosition({
-      x: event.clientX,
-      y: event.clientY,
-    });
-    logic.handleQuickSpawn(entityId, position);
-  }
-
   function handleAddTextNode(screenPosition?: { x: number; y: number }) {
     if (vault.isGuest) return;
     const position = logic.screenToFlowPosition(
@@ -673,8 +640,8 @@
 >
   <div
     class="flex-1 relative"
-    ondragover={onDragOver}
-    ondrop={onDrop}
+    ondragover={dropHandlers.onDragOver}
+    ondrop={dropHandlers.onDrop}
     onpointerdowncapture={(e) =>
       rotationLogic.beginTouchRotation(
         e,

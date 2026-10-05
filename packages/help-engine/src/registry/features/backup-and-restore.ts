@@ -33,7 +33,7 @@ export const backupAndRestore: FeatureEntry = {
     },
   ],
   helpIds: ["export-and-backup", "cloud-backup", "offline-sync"],
-  related: ["archive-import"],
+  related: ["archive-import", "publishing"],
   actions: [
     {
       id: "backup.open-settings",

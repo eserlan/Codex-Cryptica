@@ -33,7 +33,7 @@ const outputPath = path.join(
 const BATCH_SIZE = 50;
 
 // fallow-ignore-next-line complexity
-function getWranglerAuth(): { token: string; accountId: string } | null {
+export function getWranglerAuth(): { token: string; accountId: string } | null {
   if (process.env.CLOUDFLARE_API_TOKEN && process.env.CLOUDFLARE_ACCOUNT_ID) {
     return {
       token: process.env.CLOUDFLARE_API_TOKEN,
@@ -67,24 +67,25 @@ function getWranglerAuth(): { token: string; accountId: string } | null {
 }
 
 // fallow-ignore-next-line complexity
-async function requestEmbeddings(
+export async function requestEmbeddings(
   texts: string[],
   auth: { token: string; accountId: string },
+  fetcher: typeof fetch = fetch,
 ): Promise<number[][]> {
   const url = `https://api.cloudflare.com/client/v4/accounts/${auth.accountId}/ai/run/${HELP_EMBEDDING_MODEL}`;
-  const response = await fetch(url, {
+  const response = await fetcher(url, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${auth.token}`,
       "Content-Type": "application/json",
     },
     body: JSON.stringify({ text: texts }),
+    signal: AbortSignal.timeout(30_000),
   });
 
   if (!response.ok) {
-    const errorText = await response.text();
     throw new Error(
-      `Cloudflare Workers AI embedding failed (${response.status}): ${errorText}`,
+      `Cloudflare Workers AI embedding failed (${response.status}).`,
     );
   }
 
@@ -95,9 +96,7 @@ async function requestEmbeddings(
   };
 
   if (!result.success || !result.result?.data) {
-    throw new Error(
-      `Workers AI returned unsuccessful response: ${JSON.stringify(result.errors || result)}`,
-    );
+    throw new Error("Workers AI returned an unsuccessful embedding response.");
   }
 
   return validateEmbeddingBatch(result.result.data, texts.length);
@@ -206,7 +205,9 @@ async function main() {
   );
 }
 
-main().catch((err) => {
-  console.error(err);
-  process.exit(1);
-});
+if (import.meta.main) {
+  main().catch((err) => {
+    console.error(err);
+    process.exit(1);
+  });
+}

@@ -25,7 +25,7 @@ test.describe("Help assistant: offline and failure", () => {
 
   async function ask(page: import("@playwright/test").Page, question: string) {
     await page
-      .getByLabel(/Ask a question about using Codex Cryptica/i)
+      .getByLabel(/Ask Cif a question about using Codex Cryptica/i)
       .fill(question);
     await page.getByRole("button", { name: "Ask", exact: true }).click();
   }
@@ -58,7 +58,7 @@ test.describe("Help assistant: offline and failure", () => {
     await openHelpOnConnections(page);
     await ask(page, "How do I connect the faction?");
     await expect(
-      page.getByText(/couldn't reach the help assistant/i),
+      page.getByText(/couldn't get an answer just now/i),
     ).toBeVisible();
     await expect(
       page.getByRole("button", { name: "Connections Tab" }),

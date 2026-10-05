@@ -78,10 +78,8 @@ include. **Entire canvas** includes the board's entities; **Selected nodes only*
 uses the selected entity cards. If nothing is selected, the preview explains
 that there is nothing to report on rather than saving an empty note.
 
-You can also generate a report from selected entities in the **Knowledge Graph**
-or **Table** view. Saving opens the new Note in Zen Mode. A saved report is a
-snapshot of those entities; cancelling the preview does not create or update
-anything. Cif can explain reports but cannot save or regenerate them for you.
+For report scope, options, and saving behaviour across Canvas, Knowledge Graph,
+and Table, see [Entity Reports](/help#help/entity-reports).
 
 ### Managing Connections
 

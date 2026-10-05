@@ -268,3 +268,15 @@
 **Learning:** When a class manages backup synchronization or caching (like `CloudBackupStore`), directly accessing `window.localStorage` limits testability and creates hidden dependencies. The repository pattern provides `browserStorage` from `$lib/utils/runtime-deps` which handles SSR gracefully and acts as a proper dependency boundary.
 
 **Action:** Refactored `CloudBackupStore`'s `hashCache` persistence to use a `storage: StorageLike` dependency through `CloudBackupDeps`, defaulting to `browserStorage`. Replaced `localStorage.getItem` and `localStorage.setItem` with the injected `storage` accessor.
+
+## 2024-10-24 - cloud-backup-payload.ts: Injecting clock for timestamp generation
+
+**Learning:** `cloud-backup-payload.ts` used a hardcoded `Date.now()` mixed with `performance.now()` in a local helper function `nowMs()`. This made stage timings for telemetry hard to test deterministically. The dependencies object `CloudBackupPayloadDeps` and `CloudBackupDeltaDeps` can be leveraged to inject a `Clock` which allows us to override time in tests, while preserving the use of `performance.now()` in production if the clock is the default `systemClock`.
+
+**Action:** Inject `Clock` via the dependencies payload in utility functions that perform timestamp generation, and create a seam inside the local timestamp helper to fall back to the injected clock's `now()` method when needed. Ensure proper typing using `@codex/runtime` and relative imports where necessary to avoid monorepo pathing issues in tests.
+
+## 2026-10-27 - Injecting Clock into standalone help functions
+
+**Learning:** Standalone utility functions that handle asynchronous waits or timeouts (like `waitFor` in `help-runtime.ts`) frequently rely on a hardcoded `Date.now()`. By injecting a `clock` parameter that defaults to `systemClock`, we maintain correct production functionality while exposing a clean seam for unit tests to control time progression deterministically.
+
+**Action:** When refactoring independent helper functions, append the `clock` dependency to the end of the argument list with a default value. In `waitFor`, compare elapsed time against `clock.now()` instead of `Date.now()`.

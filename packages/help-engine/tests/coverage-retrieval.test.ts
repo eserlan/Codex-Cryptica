@@ -16,6 +16,7 @@ const screens = Object.fromEntries(
         area: feature.areas[0],
         tab: feature.tabs[0] ?? null,
         entityKind: feature.kinds === "any" ? null : feature.kinds[0],
+        flags: feature.whenFlag ? [feature.whenFlag] : [],
       }),
     ];
   }),
@@ -48,6 +49,42 @@ describe("remaining coverage retrieval evaluation", () => {
     ["How do I make a session prep run sheet?", "chronology", "session-prep"],
     ["How do I save an entity report?", "session-prep", "entity-reports"],
     ["Where are Stat Sheets?", "entity-templates", "stat-sheets"],
+    [
+      "How do I publish a read-only copy for my players?",
+      "session-journal",
+      "publishing",
+    ],
+    ["Where do I publish my world?", "entity-templates", "publishing"],
+    [
+      "How do I ask the Lore Oracle about my world?",
+      "chronology",
+      "lore-oracle",
+    ],
+    [
+      "How do I revise a description with the Oracle?",
+      "family-tree",
+      "lore-oracle",
+    ],
+    ["How do I switch to dark mode?", "backup-and-restore", "theme-settings"],
+    ["Where do I change the theme?", "publishing", "theme-settings"],
+    ["How do I add a custom category?", "theme-settings", "schema-settings"],
+    ["Where do I change a category's colour?", "publishing", "schema-settings"],
+    ["How do I switch to dark mode?", "schema-settings", "theme-settings"],
+    ["How do I roll with advantage?", "entity-table", "dice-roller"],
+    ["Which entries have no labels?", "dice-roller", "entity-table"],
+    ["How do I start a solo adventure?", "entity-table", "solo-adventure"],
+    [
+      "Where do I change a category's colour?",
+      "solo-adventure",
+      "schema-settings",
+    ],
+    ["How do I send an entry to the Shelf?", "entity-explorer", "entity-shelf"],
+    [
+      "How do I nest one entry inside another?",
+      "entity-shelf",
+      "entity-explorer",
+    ],
+    ["How do I roll with advantage?", "entity-explorer", "dice-roller"],
   ])(
     "keeps explicit intent for %s despite the %s screen",
     (question, screen, expected) => {
@@ -76,6 +113,16 @@ describe("remaining coverage retrieval evaluation", () => {
       "Are entity templates the same as stat sheet templates?",
       "entity-templates",
       "stat-sheets",
+    ],
+    [
+      "Is publishing my world the same as exporting a backup?",
+      "publishing",
+      "backup-and-restore",
+    ],
+    [
+      "Is the Explorer the same as the Shelf?",
+      "entity-explorer",
+      "entity-shelf",
     ],
   ])("grounds both sides of %s", (question, first, second) => {
     const result = retrieve(question, bundle, sanitizeHelpContext({}));

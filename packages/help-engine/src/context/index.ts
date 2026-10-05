@@ -1,5 +1,9 @@
 import { z } from "zod";
-import { AVAILABLE_ACTION_IDS, HELP_FLAGS } from "../actions/catalogue";
+import {
+  AVAILABLE_ACTION_IDS,
+  HELP_FLAGS,
+  PANEL_FLAGS,
+} from "../actions/catalogue";
 
 export const HELP_CONTEXT_VERSION = 1 as const;
 
@@ -213,4 +217,19 @@ export function sanitizeHelpContext(input: unknown): HelpContext {
 /** A general-guide screen description for when no provider has reported yet. */
 export function emptyHelpContext(): HelpContext {
   return sanitizeHelpContext({});
+}
+
+/**
+ * The same screen description without the open-panel flags. A client sends
+ * this when the service rejects a description because it does not know those
+ * flags yet (the web app and the Worker deploy together, so a short mismatch
+ * is possible); every other fact about the screen is kept.
+ */
+export function withoutPanelFlags(ctx: HelpContext): HelpContext {
+  return {
+    ...ctx,
+    flags: ctx.flags.filter(
+      (flag) => !(PANEL_FLAGS as readonly string[]).includes(flag),
+    ),
+  };
 }

@@ -47,10 +47,10 @@
       <h4
         class="text-meta font-bold text-theme-secondary uppercase font-header tracking-widest"
       >
-        Calendar Eras & Epochs
+        Calendar Eras
       </h4>
       <p class="text-micro text-theme-muted mt-0.5">
-        Define historical epochs with independent or backward-counting year
+        Define historical eras with independent or backward-counting year
         numbers.
       </p>
     </div>
@@ -70,7 +70,7 @@
       class="p-4 bg-theme-surface/30 border border-dashed border-theme-border/40 rounded text-center"
     >
       <p class="text-xs text-theme-muted">
-        No custom eras defined. Years will be formatted using the global Epoch
+        No custom eras defined. Years will be formatted using the Default Year
         Suffix above.
       </p>
     </div>
@@ -198,6 +198,34 @@
           </div>
         </div>
       {/each}
+
+      <div
+        class="flex items-center justify-between gap-4 p-2.5 bg-theme-surface/30 border border-theme-border/40 rounded-lg text-xs"
+      >
+        <div class="space-y-0.5">
+          <label
+            for="era-fallback-suffix"
+            class="text-nano font-bold text-theme-muted uppercase font-header"
+          >
+            Fallback Year Suffix
+          </label>
+          <p class="text-nano text-theme-muted">
+            Used for dates outside configured eras (e.g. ancient history).
+          </p>
+        </div>
+        <input
+          id="era-fallback-suffix"
+          type="text"
+          placeholder="e.g. BCE, Ancient"
+          value={calendarStore.config.epochLabel || ""}
+          oninput={(e) =>
+            calendarStore.setConfig({
+              ...calendarStore.config,
+              epochLabel: e.currentTarget.value,
+            })}
+          class="w-36 bg-theme-surface border border-theme-border rounded px-2.5 py-1 text-xs text-theme-text font-mono focus:border-theme-primary outline-none"
+        />
+      </div>
     </div>
   {/if}
 </div>

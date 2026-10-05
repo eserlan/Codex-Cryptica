@@ -4,6 +4,7 @@ import {
   isTitleBanned,
 } from "./campaign-generator-registry";
 import { getThemeDefaults } from "./campaign-generator-theme";
+import { suggestName } from "./name-candidates";
 import {
   buildDungeonCoherencePrompt,
   buildDungeonRetryMessage,
@@ -586,6 +587,19 @@ export class CampaignGeneratorService {
   }
 
   /**
+   * Runs the fast name-only pre-pass (see `name-candidates.ts`) and returns the
+   * request to build the main prompt from. Falls back to the request unchanged
+   * whenever no name is wanted or the pre-pass fails.
+   */
+  private async withNameSuggestion(
+    request: GeneratorRunRequest,
+  ): Promise<GeneratorRunRequest> {
+    if (!this.aiGateway) return request;
+    const nameSuggestion = await suggestName(this.aiGateway, request);
+    return nameSuggestion ? { ...request, nameSuggestion } : request;
+  }
+
+  /**
    * Produce a transient draft. When `useAI` is true and both AI policy and
    * gateway are available, calls the AI gateway and parses JSON output.
    * Falls back to local table generation on any AI failure.
@@ -676,7 +690,7 @@ export class CampaignGeneratorService {
     ) {
       const { fullPrompt, interaction } = buildGenericGeneratorPrompt(
         generator,
-        mergedRequest,
+        await this.withNameSuggestion(mergedRequest),
       );
       // Retry a few times if the model returns a banned name (including
       // derivatives like "Vane-Smithe"); fall through to local generation if it
@@ -858,9 +872,11 @@ export class CampaignGeneratorService {
       ...(mergedRequest.vaultContext?.existingTitles ?? []),
     ]);
 
+    const promptRequest = await this.withNameSuggestion(mergedRequest);
+    if (signal?.aborted) return; // Cancelled during the name pre-pass.
     const { fullPrompt, interaction } = buildGenericGeneratorPrompt(
       generator,
-      mergedRequest,
+      promptRequest,
     );
 
     // Same retry-on-banned-name policy as generateDraft's generic branch —

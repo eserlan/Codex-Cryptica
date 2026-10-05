@@ -1,6 +1,8 @@
 import {
   MAX_QUESTION_CHARS,
+  quickPromptsFor,
   validateAction,
+  withoutPanelFlags,
   type GuidanceAction,
   type HelpAnswer,
   type HelpContext,
@@ -54,6 +56,15 @@ export class HelpAssistantStore {
   /** A plain-language note about the last attempt, such as a length limit. */
   notice = $state<string | null>(null);
 
+  /**
+   * Tap-to-ask questions for the screen the user is on, shown only while the
+   * conversation is empty and nothing is pending.
+   */
+  get quickPrompts(): readonly string[] {
+    if (this.messages.length > 0 || this.isPending) return [];
+    return quickPromptsFor(this.deps.context.current);
+  }
+
   private controller: AbortController | null = null;
   private run = 0;
   private nextId = 1;
@@ -106,6 +117,24 @@ export class HelpAssistantStore {
     );
   }
 
+  /**
+   * Asks the service. The web app and the Worker deploy together, so for a
+   * short while the Worker may not know the open-panel flags yet and answers
+   * INVALID_CONTEXT. Retry once without those flags: the question is still
+   * answered, it just loses the hint about which panel is open.
+   */
+  private async askService(
+    input: AskInput,
+    context: HelpContext,
+  ): Promise<HelpAskResult> {
+    const result = await this.deps.client.ask(input);
+    if (result.ok || result.error.code !== "INVALID_CONTEXT") return result;
+
+    const withoutPanels = withoutPanelFlags(context);
+    if (withoutPanels.flags.length === context.flags.length) return result;
+    return this.deps.client.ask({ ...input, context: withoutPanels });
+  }
+
   /** Returns true when a request was actually started. */
   async ask(question: string): Promise<boolean> {
     const text = question.trim();
@@ -130,12 +159,15 @@ export class HelpAssistantStore {
     this.push({ role: "user", text });
     this.status = "pending";
 
-    const result = await this.deps.client.ask({
-      question: text,
-      history,
-      context: askedContext,
-      signal: controller.signal,
-    });
+    const result = await this.askService(
+      {
+        question: text,
+        history,
+        context: askedContext,
+        signal: controller.signal,
+      },
+      askedContext,
+    );
 
     // A reset (or a newer question) while this was in flight owns the state now.
     if (run !== this.run) return true;

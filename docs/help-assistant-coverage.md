@@ -26,6 +26,15 @@ registered feature; the coverage test requires it to stay in sync.
 | family-tree               | Character Family                         | family-tree                                        | Open Family only for a character with a tab strip, including read-only browsing; no family link changes.                                |
 | guided-mode               | Graph workspace                          | guided-mode                                        | Read Help; no automatic mode toggle, suggestion acceptance or Quick Start.                                                              |
 | session-prep              | Public Session Prep Builder              | session-prep                                       | Knowledge and Help only. Cif remains in the existing vault Help panel; this does not add a public assistant or run the builder.         |
+| publishing                | Settings → Publishing                    | publishing                                         | Open Publishing settings when available, or read Help; never publish, update, unpublish or list a world.                                |
+| lore-oracle               | Lore Oracle (any screen)                 | oracle-guide, chat-commands                        | Open Intelligence settings when available, or read Help; never ask, revise, create or connect anything.                                 |
+| theme-settings            | Settings → Theme                         | themes                                             | Open Theme settings when available, or read Help; never change the theme, appearance or world genre.                                    |
+| schema-settings           | Settings → Schema                        | categories-and-labels                              | Open Schema settings when available, or read Help; never add, edit, delete or reset a category, and never change a label.               |
+| entity-table              | Entity Table (`/table`)                  | entity-table                                       | Read Help only; never select, label, filter, report on or delete entries.                                                               |
+| dice-roller               | Dice Roller pop-out (`/dice`)            | dice-roller                                        | Read Help only; never roll dice or change history.                                                                                      |
+| solo-adventure            | Solo Adventure (`/adventure`)            | adventure-mode                                     | Read Help only; never start, continue or change an adventure.                                                                           |
+| entity-explorer           | Explorer sidebar (any screen)            | entity-explorer                                    | Read Help only; never search, nest, approve, reject or delete entries.                                                                  |
+| entity-shelf              | Shelf sidebar (any screen)               | entity-shelf                                       | Read Help only; never shelve or import entries.                                                                                         |
 
 ## Context and unavailable actions
 
@@ -57,3 +66,103 @@ web build: the older strict Worker rejects the new area, route and panel enums.
 The generated knowledge bundle is a build artifact and is not committed.
 Run the live-answer evaluation separately from deterministic retrieval tests;
 offline recall does not prove model answer quality or refusal of near misses.
+
+## Surface audit (#3615)
+
+Every place a person can go in the app, with the Help article and registry entry
+that cover it, or the reason it does not have one. A test
+(`packages/help-engine/tests/surface-audit.test.ts`) fails when a navigation
+item, an `(app)` route or a Settings tab exists without a row here, when a row
+refers to something that no longer exists, or when a row names an article or
+registry entry that does not exist. **Adding a surface therefore forces the
+Help decision.**
+
+Statuses:
+
+- **covered**: at least one Help article and one registry entry.
+- **article-only**: a Help article, with no registry entry yet (the reason is in the notes).
+- **gap**: no dedicated Help article; the surface is only mentioned inside other articles.
+- **not-needed**: nothing to explain, with the reason.
+
+Surface keys are `nav:<id>` (Activity Bar and menu), `route:<folder>` (under
+`apps/web/src/routes/(app)`) and `settings:<tab>`. Articles use their front-matter
+`id`, which is not always the file name (`default-templates.md` is
+`default-entity-templates`).
+
+| Surface               | Help articles                                                 | Registry                                      | Status       | Notes                                                                                                                                     |
+| --------------------- | ------------------------------------------------------------- | --------------------------------------------- | ------------ | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| nav:graph             | graph-basics, saved-views, guided-mode                        | graph-view, guided-mode                       | covered      |                                                                                                                                           |
+| nav:map               | map-mode, vtt-session, fog-of-war                             | vtt-map                                       | covered      |                                                                                                                                           |
+| nav:canvas            | spatial-canvas, canvas-add-entities                           | canvas                                        | covered      |                                                                                                                                           |
+| nav:timeline          | chronology, entity-timeline                                   | chronology                                    | covered      | The registry entry cites `chronology` only; `entity-timeline` is not listed in its `helpIds`.                                             |
+| nav:table             | entity-table                                                  | entity-table                                  | covered      | Read Help only: there is no navigation destination for the table.                                                                         |
+| nav:adventure         | adventure-mode                                                | solo-adventure                                | covered      | Read Help only: there is no navigation destination for Play.                                                                              |
+| nav:random            | random-tables-decks                                           | tables                                        | covered      |                                                                                                                                           |
+| nav:explorer          | entity-explorer                                               | entity-explorer                               | covered      | A panel beside every screen: on screen exactly while it is open (`explorer-open`). Read Help only.                                        |
+| nav:oracle            | oracle-guide, chat-commands, gemini-api-key                   | lore-oracle                                   | covered      |                                                                                                                                           |
+| nav:generators        | in-app-generators, generate-related                           | campaign-generator, related-entity-generation | covered      |                                                                                                                                           |
+| nav:shelf             | entity-shelf                                                  | entity-shelf                                  | covered      | A panel beside every screen: on screen exactly while it is open (`shelf-open`). Read Help only.                                           |
+| nav:quicknote         | quicknote                                                     | session-journal                               | covered      |                                                                                                                                           |
+| nav:session-journal   | quicknote                                                     | session-journal                               | covered      |                                                                                                                                           |
+| nav:guest-chat        | guest-character-chat                                          | —                                             | article-only | Shown only in a shared guest view; the screen description has no guest surface yet (`public` is reserved).                                |
+| route:adventure       | adventure-mode                                                | solo-adventure                                | covered      |                                                                                                                                           |
+| route:canvas          | spatial-canvas, canvas-add-entities                           | canvas                                        | covered      |                                                                                                                                           |
+| route:decks           | random-tables-decks                                           | tables                                        | covered      |                                                                                                                                           |
+| route:dice            | dice-roller, random-tables-decks                              | dice-roller                                   | covered      | The roller is a floating window on every screen; its route is only the pop-out window, so the screen boost applies there. Read Help only. |
+| route:guest           | publishing, guest-character-chat                              | —                                             | article-only | A reader's view of a published world; same decision as nav:guest-chat.                                                                    |
+| route:help            | —                                                             | —                                             | not-needed   | This is the Help library itself.                                                                                                          |
+| route:import          | importing, thread-weaver-import                               | archive-import                                | covered      |                                                                                                                                           |
+| route:map             | map-mode, vtt-session, fog-of-war                             | vtt-map                                       | covered      |                                                                                                                                           |
+| route:oracle          | oracle-guide, chat-commands                                   | lore-oracle                                   | covered      |                                                                                                                                           |
+| route:table           | entity-table                                                  | entity-table                                  | covered      |                                                                                                                                           |
+| route:tables          | random-tables-decks                                           | tables                                        | covered      |                                                                                                                                           |
+| route:templates       | default-entity-templates, sharing-templates                   | entity-templates                              | covered      |                                                                                                                                           |
+| route:timeline        | chronology, entity-timeline                                   | chronology                                    | covered      |                                                                                                                                           |
+| route:vault           | creating-and-editing-entities                                 | entity-editing                                | covered      | The pop-out entity page.                                                                                                                  |
+| settings:vault        | export-and-backup, cloud-backup, offline-sync, vault-metadata | backup-and-restore                            | covered      |                                                                                                                                           |
+| settings:intelligence | gemini-api-key, oracle-guide                                  | lore-oracle                                   | covered      |                                                                                                                                           |
+| settings:schema       | categories-and-labels                                         | schema-settings                               | covered      |                                                                                                                                           |
+| settings:templates    | default-entity-templates, sharing-templates                   | entity-templates                              | covered      |                                                                                                                                           |
+| settings:theme        | themes                                                        | theme-settings                                | covered      |                                                                                                                                           |
+| settings:publishing   | publishing                                                    | publishing                                    | covered      |                                                                                                                                           |
+| settings:about        | —                                                             | —                                             | not-needed   | Version and links only; there is nothing to explain.                                                                                      |
+| settings:help         | —                                                             | —                                             | not-needed   | The Help tab hosts the Help library itself.                                                                                               |
+
+**Gaps found.** Every surface has a dedicated Help article; the audit has no `gap`
+rows. Two surfaces have an article but no registry entry: guest chat and the guest
+view (see the end of the next section).
+
+## Registry entries without a help area
+
+A registry entry needs a screen to match. There are three ways to give it one,
+and they are not equally costly.
+
+1. **No new area: the catch-all area plus the route.** A feature filed under
+   `other` counts as on screen only on its own route (see `matches-screen.ts`).
+   This works for any surface that has its own route and is already in the
+   closed route list: the Entity Table (`/(app)/table`), the dice pop-out
+   (`/(app)/dice`), Solo Adventure (`/(app)/adventure`) and the Lore Oracle. It
+   needs **no schema, enum or Worker change**. The limit is guidance: the closed
+   navigation catalogue has no destination for these screens, so their entries can
+   only offer to open the Help article.
+2. **A new navigation destination** (so Cif could offer to open the table, the
+   dice roller or Play). This changes `DESTINATION_IDS`, which the Worker
+   validates strictly, so it follows the rollout order above: deploy the Worker
+   first, then the web app.
+3. **A flag, for panels that sit beside every screen** (the Explorer and the
+   Shelf). A single area is the wrong shape: the screen description has one
+   `area`, so opening the Explorer would replace "graph" (or whatever is behind it)
+   and lose that screen's guidance while the panel is open. Instead the screen
+   description carries a flag while the panel is open (`explorer-open`,
+   `shelf-open`, listed in `PANEL_FLAGS`) and a registry entry names it with
+   `whenFlag`. Such an entry is on screen exactly while its flag is present,
+   whatever the area, route or tab, and it sits alongside the screen's own
+   features rather than replacing them. This **is** an enum change, so it follows
+   the rollout order above. As a safety net for the short window when the web app
+   and the Worker deploy together, a client that gets `INVALID_CONTEXT` back
+   retries once without the panel flags (`withoutPanelFlags`), so a mismatch costs
+   only the panel hint.
+
+Guest chat and the guest view are separate: the relevant area is a shared guest
+vault, and the screen description reserves `surface: "public"` for it but does
+not produce it yet.

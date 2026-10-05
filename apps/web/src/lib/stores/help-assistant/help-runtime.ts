@@ -9,9 +9,11 @@ import { generatorsAvailable } from "$lib/services/help-assistant/generator-avai
 import { helpClient } from "$lib/services/help-assistant/help-client";
 import { helpHighlight } from "$lib/services/help-assistant/help-highlight.svelte";
 import { helpStore } from "$lib/stores/help.svelte";
+import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
 import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
 import { vault } from "$lib/stores/vault.svelte";
 import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
+import { systemClock, type Clock } from "$lib/utils/runtime-deps";
 import { HelpAssistantStore } from "./help-assistant.svelte";
 import { HelpContextStore } from "./help-context.svelte";
 import { helpSurfaces } from "./help-surface.svelte";
@@ -41,6 +43,8 @@ export const helpContext = new HelpContextStore({
         ? "session-journal"
         : null,
   journalAvailable: () => generatorsAvailable(vault, sessionModeStore),
+  isSidebarOpen: () => layoutUIStore.leftSidebarOpen,
+  getActiveSidebarTool: () => layoutUIStore.activeSidebarTool,
 });
 
 const helpIds = () => new Set(getHelpArticles().map((article) => article.id));
@@ -67,12 +71,16 @@ const DESTINATIONS: Record<DestinationId, string> = {
   timeline: `${base}/timeline`,
 };
 
-function waitFor(check: () => boolean, ms: number): Promise<boolean> {
+function waitFor(
+  check: () => boolean,
+  ms: number,
+  clock: Clock = systemClock,
+): Promise<boolean> {
   return new Promise((resolve) => {
-    const deadline = Date.now() + ms;
+    const deadline = clock.now() + ms;
     const tick = () => {
       if (check()) return resolve(true);
-      if (Date.now() >= deadline) return resolve(false);
+      if (clock.now() >= deadline) return resolve(false);
       requestAnimationFrame(tick);
     };
     tick();

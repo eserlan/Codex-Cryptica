@@ -36,6 +36,11 @@ const bundle = buildBundle({
       "## Nodes\nThe graph draws every entry as a node and every connection as a line. Select a node to see its links.",
     ),
     article(
+      "entity-reports",
+      "Entity Reports",
+      "## Reports\nCollect information about chosen entities into a report.",
+    ),
+    article(
       "session-hub",
       "Session Hub",
       "## Drafts\nGenerated drafts collect in the Session Hub.",
@@ -92,6 +97,44 @@ const bundle = buildBundle({
       "offline-sync",
       "offline-sync",
       "## offline-sync\nAbout offline-sync.",
+    ),
+    article("publishing", "publishing", "## publishing\nAbout publishing."),
+    article(
+      "oracle-guide",
+      "oracle-guide",
+      "## oracle-guide\nAbout oracle-guide.",
+    ),
+    article(
+      "chat-commands",
+      "chat-commands",
+      "## chat-commands\nAbout chat-commands.",
+    ),
+    article("themes", "themes", "## themes\nAbout themes."),
+    article(
+      "categories-and-labels",
+      "categories-and-labels",
+      "## categories-and-labels\nAbout categories-and-labels.",
+    ),
+    article(
+      "entity-table",
+      "entity-table",
+      "## entity-table\nAbout entity-table.",
+    ),
+    article("dice-roller", "dice-roller", "## dice-roller\nAbout dice-roller."),
+    article(
+      "adventure-mode",
+      "adventure-mode",
+      "## adventure-mode\nAbout adventure-mode.",
+    ),
+    article(
+      "entity-explorer",
+      "entity-explorer",
+      "## entity-explorer\nAbout entity-explorer.",
+    ),
+    article(
+      "entity-shelf",
+      "entity-shelf",
+      "## entity-shelf\nAbout entity-shelf.",
     ),
     article("importing", "importing", "## importing\nAbout importing."),
     article(
