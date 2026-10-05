@@ -164,6 +164,7 @@ export const howDoYouTrackFactionTurnsBetweenRpgSessions: AnswerConfigInput = {
     "what-should-players-be-able-to-upgrade-in-an-rpg-base",
     "how-much-of-the-plot-should-a-dm-prepare",
     "how-do-i-make-rival-captains-navies-and-pirate-factions-matter",
+    "how-do-i-make-a-campaign-threat-feel-urgent-without-railroading",
   ],
   discovery: {
     id: "answer-track-faction-turns-between-sessions",
