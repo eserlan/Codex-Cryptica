@@ -5,7 +5,7 @@ import type { ExampleConfigInput } from "../schema";
  * A Classic Fantasy Senate vote in the Republic of Karrow showcasing the Council Vote
  * Generator: provincial tax hoarding, syndicate bribery, a five-seat council teetering on
  * a simple majority, and a costly military concession path tied to General Ostrelle.
- * Output reproduced verbatim.
+ * Output lightly edited; see provenanceNote for the change.
  */
 export const theTreasurysTippingPoint: ExampleConfigInput = {
   slug: "the-treasurys-tipping-point-karrow-council-vote",
