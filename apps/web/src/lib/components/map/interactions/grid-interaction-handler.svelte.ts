@@ -46,6 +46,16 @@ const hexOrientation = (
 ): HexOrientation | null =>
   type === "hex-pointy" ? "pointy" : type === "hex-flat" ? "flat" : null;
 
+const hasGridFitDrag = (
+  start: Point,
+  end: Point,
+  orientation: HexOrientation | null,
+): boolean => {
+  if (orientation === "pointy") return Math.abs(end.x - start.x) >= 5;
+  if (orientation === "flat") return Math.abs(end.y - start.y) >= 5;
+  return Math.abs(end.x - start.x) >= 5 || Math.abs(end.y - start.y) >= 5;
+};
+
 /** Hex sizes keep two decimals: whole pixels drift visibly over a dozen hexes. */
 const roundHexSize = (size: number) => Math.round(size * 100) / 100;
 
@@ -198,10 +208,8 @@ export class GridInteractionHandler {
 
     const startImg = this.deps.unproject(this.gridFitStart);
     const endImg = this.deps.unproject(this.gridFitEnd);
-    const dragged =
-      Math.abs(endImg.x - startImg.x) >= 5 ||
-      Math.abs(endImg.y - startImg.y) >= 5;
     const orientation = hexOrientation(this.deps.getGridType?.());
+    const dragged = hasGridFitDrag(startImg, endImg, orientation);
 
     if (dragged && orientation) this.fitHexGrid(orientation, startImg, endImg);
     else if (dragged) this.fitSquareGrid(startImg, endImg);

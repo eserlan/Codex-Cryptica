@@ -349,6 +349,29 @@ describe("GridInteractionHandler on a hex grid", () => {
     expect(gridOffset).toEqual({ x: 0, y: 0 });
   });
 
+  it("ignores a drag perpendicular to the hex grid's measurement axis", () => {
+    gridOffset = { x: 8, y: -6 };
+    handler.startGridFit({ x: 100, y: 100 });
+    handler.updateGridFit({ x: 100, y: 180 });
+
+    handler.commitGridFit();
+
+    expect(gridSize).toBe(50);
+    expect(gridOffset).toEqual({ x: 8, y: -6 });
+  });
+
+  it("ignores a horizontal drag when fitting a flat-top hex column", () => {
+    gridType = "hex-flat";
+    gridOffset = { x: 8, y: -6 };
+    handler.startGridFit({ x: 100, y: 100 });
+    handler.updateGridFit({ x: 180, y: 100 });
+
+    handler.commitGridFit();
+
+    expect(gridSize).toBe(50);
+    expect(gridOffset).toEqual({ x: 8, y: -6 });
+  });
+
   it("moves a hex grid by how far the map was dragged, whole hexes aside", () => {
     moveMode = true;
     fixedPan = { x: 0, y: 0 };
