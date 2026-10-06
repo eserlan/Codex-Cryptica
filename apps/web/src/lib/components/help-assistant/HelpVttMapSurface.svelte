@@ -29,6 +29,7 @@
 
   function facts(): VttHelpFacts {
     const guest = sessionModeStore.isGuestMode;
+    const playerView = !guest && sessionModeStore.sharedMode;
     const isHost = mapStore.isGMMode && !guest;
     const peerId = mapSession.myPeerId;
     const vttOn = mapSession.vttEnabled;
@@ -38,14 +39,14 @@
       vttOn,
       combat: vttOn && mapSession.mode === "combat",
       guest,
-      playerView: !guest && sessionModeStore.sharedMode,
+      playerView,
       grid: gridKind(),
       fogOn: mapStore.showFog,
       tokenSelected: token !== null,
       tokenLinked: !!token?.entityId,
       tokenManageable:
         token !== null && mapSession.canMoveToken(token.id, peerId, isHost),
-      layer: guest ? null : mapSession.activeLayer,
+      layer: guest || playerView ? null : mapSession.activeLayer,
       hasInitiative: mapSession.initiativeEntries.length > 0,
       canAdvanceTurn: mapSession.canAdvanceTurn(peerId, isHost),
       hosting: !guest && p2pHost.isHosting,

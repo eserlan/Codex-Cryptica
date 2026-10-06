@@ -134,7 +134,7 @@ describe("HelpVttMapSurface", () => {
     mocks.session.sharedMode = true;
     render(HelpVttMapSurface);
 
-    expect(facts().playerView).toBe(true);
+    expect(facts()).toMatchObject({ playerView: true, layer: null });
   });
 
   it("stops reporting when the map screen goes away", () => {
