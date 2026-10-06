@@ -58,6 +58,8 @@ export function createFullEncounterSessionFixture(
       },
     ],
     gridSize: 70,
+    gridType: "hex-flat",
+    showHexCoordinates: true,
     gridUnit: "m",
     gridDistance: 2,
     ...overrides,

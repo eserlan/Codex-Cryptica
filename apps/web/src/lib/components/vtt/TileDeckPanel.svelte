@@ -264,17 +264,16 @@
 <section
   class="rounded-xl border border-theme-primary/20 bg-theme-bg/50"
   aria-labelledby="tile-decks-heading"
+  data-help-target="vtt-tile-decks"
 >
   <div class="border-b border-theme-primary/20 px-3 py-3">
     <h2
       id="tile-decks-heading"
       class="text-nano font-black uppercase tracking-[0.35em] text-theme-primary/70 font-header"
+      title="Draw room and corridor images as the map unfolds"
     >
       Tile decks
     </h2>
-    <p class="mt-1 text-xs text-theme-muted">
-      Draw room and corridor images as the map unfolds.
-    </p>
     <button
       type="button"
       onclick={() => tileDeckPanelUIStore.toggleCatalog()}

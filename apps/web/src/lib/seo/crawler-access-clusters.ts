@@ -331,9 +331,8 @@ export function extractOutgoingClusterLinks(
   origin: string,
   currentRoute: string,
 ): string[] {
-  const hrefMatches = [
-    ...html.matchAll(/<a[^>]+href=["']([^"']+)["'][^>]*>/gi),
-  ];
+  // ⚡ Bolt Optimization: Replace [...matchAll] with an imperative iterator loop to avoid intermediate array allocation
+  const hrefMatches = html.matchAll(/<a[^>]+href=["']([^"']+)["'][^>]*>/gi);
   const matched = new Set<string>();
   const normalizedCurrent = currentRoute.replace(/\/+$/, "") || "/";
   const knownSet = new Set(

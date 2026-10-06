@@ -73,6 +73,42 @@ const bundle = buildBundle({
     article("map-mode", "map-mode", "## map-mode\nAbout map-mode."),
     article("vtt-session", "vtt-session", "## vtt-session\nAbout vtt-session."),
     article("fog-of-war", "fog-of-war", "## fog-of-war\nAbout fog-of-war."),
+    article("vtt-tokens", "vtt-tokens", "## vtt-tokens\nAbout vtt-tokens."),
+    article(
+      "vtt-combat-initiative",
+      "vtt-combat-initiative",
+      "## vtt-combat-initiative\nAbout vtt-combat-initiative.",
+    ),
+    article(
+      "vtt-fog-player-view",
+      "vtt-fog-player-view",
+      "## vtt-fog-player-view\nAbout vtt-fog-player-view.",
+    ),
+    article(
+      "vtt-grids-measurement",
+      "vtt-grids-measurement",
+      "## vtt-grids-measurement\nAbout vtt-grids-measurement.",
+    ),
+    article(
+      "vtt-tiles-layers-notes",
+      "vtt-tiles-layers-notes",
+      "## vtt-tiles-layers-notes\nAbout vtt-tiles-layers-notes.",
+    ),
+    article(
+      "vtt-multiplayer",
+      "vtt-multiplayer",
+      "## vtt-multiplayer\nAbout vtt-multiplayer.",
+    ),
+    article(
+      "vtt-troubleshooting",
+      "vtt-troubleshooting",
+      "## vtt-troubleshooting\nAbout vtt-troubleshooting.",
+    ),
+    article(
+      "hexcrawl-maps",
+      "hexcrawl-maps",
+      "## hexcrawl-maps\nAbout hexcrawl-maps.",
+    ),
     article(
       "creating-and-editing-entities",
       "creating-and-editing-entities",

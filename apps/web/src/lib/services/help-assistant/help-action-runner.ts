@@ -1,6 +1,8 @@
 import {
   validateAction,
   entityTabForPanel,
+  VTT_PANEL_IDS,
+  type VttPanelId,
   type PanelId,
   type GuidanceAction,
   type GuidanceStep,
@@ -12,7 +14,7 @@ import type { SettingsTab } from "$lib/stores/ui/modal-ui.svelte";
 import type { HelpHighlightService } from "./help-highlight.svelte";
 
 export interface HelpActionRunnerDeps {
-  surfaces: Pick<HelpSurfaceRegistry, "entityDetail">;
+  surfaces: Pick<HelpSurfaceRegistry, "entityDetail" | "vttMap">;
   highlight: Pick<HelpHighlightService, "show">;
   context: () => HelpContext;
   helpIds: () => ReadonlySet<string>;
@@ -61,6 +63,9 @@ export class HelpActionRunner {
     if (panel.startsWith("settings-")) {
       this.deps.openSettings(panel.slice("settings-".length) as SettingsTab);
       return true;
+    }
+    if ((VTT_PANEL_IDS as readonly string[]).includes(panel)) {
+      return this.deps.surfaces.vttMap?.openPanel(panel as VttPanelId) ?? false;
     }
     const surface = this.deps.surfaces.entityDetail;
     const tab = entityTabForPanel(panel);

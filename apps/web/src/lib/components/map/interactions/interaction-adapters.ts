@@ -87,6 +87,13 @@ export function createTokenDragDependencies(): TokenDragDependencies {
     setDraggingTokenId: (tokenId) => {
       mapSession.draggingTokenId = tokenId;
     },
+    getGridConfig: () => ({
+      enabled: mapStore.showGrid,
+      type: mapStore.gridType,
+      size: mapStore.gridSize,
+      offsetX: mapStore.gridOffsetX,
+      offsetY: mapStore.gridOffsetY,
+    }),
   };
 }
 
@@ -117,6 +124,7 @@ export function createPinInteractionDependencies(): PinInteractionDependencies {
     canEditPins: () => mapStore.isGMMode && !sessionModeStore.isGuestMode,
     updatePinCoordinates: (pinId, point) =>
       mapStore.updatePinCoordinatesInMemory(pinId, point),
+    snapPinCoordinates: (pinId) => mapStore.snapPinCoordinatesInMemory(pinId),
     saveMaps: () => vault.saveMaps(),
     selectEntity: (entityId, selectionPoint) => {
       layoutUIStore.setLastSelectedNodePosition(selectionPoint);
@@ -151,6 +159,9 @@ export function createGridInteractionDependencies(): GridInteractionDependencies
     },
     unproject: (point) => mapStore.unproject(point),
     clearNotification: () => notificationStore.clearNotification(),
+    getGridType: () => mapStore.gridType,
+    getGridOffset: () => ({ x: mapStore.gridOffsetX, y: mapStore.gridOffsetY }),
+    getGridFixedPan: () => mapSession.gridFixedPan,
   };
 }
 

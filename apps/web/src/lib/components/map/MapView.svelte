@@ -16,11 +16,12 @@
   import MapCanvas from "./MapCanvas.svelte";
   import MapOverlays from "./MapOverlays.svelte";
   import MapContextMenu from "./MapContextMenu.svelte";
-  import { clampPointToBounds, measureDistance } from "$lib/utils/vtt-helpers";
+  import { clampPointToBounds } from "$lib/utils/vtt-helpers";
   import { mapSession } from "../../stores/map-session.svelte";
   import {
     resolveHealthBar,
     getMapDisplayDimensions,
+    formatMeasurementLabel,
   } from "./map-view-helpers";
 
   function hashToColor(input: string) {
@@ -87,6 +88,7 @@
     },
     onMaskLoaded: (mask) => {
       maskCanvas = mask;
+      mapStore.fogRevision++;
     },
     onDimensionsLoaded: async (width, height) => {
       const activeMap = mapStore.activeMap;
@@ -122,10 +124,14 @@
       return null;
     }
 
-    const pixelDist = measureDistance(measurement.start, measurement.end);
-    const gridSize = mapStore.gridSize || 50;
-    const units = (pixelDist / gridSize) * mapSession.gridDistance;
-    const label = `${Math.round(units)}${mapSession.gridUnit}`;
+    const label = formatMeasurementLabel(measurement.start, measurement.end, {
+      gridType: mapStore.gridType,
+      gridSize: mapStore.gridSize,
+      gridDistance: mapSession.gridDistance,
+      gridUnit: mapSession.gridUnit,
+      gridOffsetX: mapStore.gridOffsetX,
+      gridOffsetY: mapStore.gridOffsetY,
+    });
 
     return {
       ...measurement,
@@ -138,10 +144,14 @@
     const rm = mapSession.activeMeasurement;
     if (!rm || !rm.start || !rm.end) return null;
 
-    const pixelDist = measureDistance(rm.start, rm.end);
-    const gridSize = mapStore.gridSize || 50;
-    const units = (pixelDist / gridSize) * mapSession.gridDistance;
-    const label = `${Math.round(units)}${mapSession.gridUnit}`;
+    const label = formatMeasurementLabel(rm.start, rm.end, {
+      gridType: mapStore.gridType,
+      gridSize: mapStore.gridSize,
+      gridDistance: mapSession.gridDistance,
+      gridUnit: mapSession.gridUnit,
+      gridOffsetX: mapStore.gridOffsetX,
+      gridOffsetY: mapStore.gridOffsetY,
+    });
     const color = hashToColor(rm.peerId);
 
     return {
@@ -406,6 +416,7 @@
       .then((mask) => {
         if (cancelled) return;
         maskCanvas = mask;
+        mapStore.fogRevision++;
         loadedMaskPath = fogMaskPath;
       });
 
@@ -548,6 +559,9 @@
       imgX={interactions.contextMenu.imgX}
       imgY={interactions.contextMenu.imgY}
       tokenId={interactions.contextMenu.tokenId}
+      hex={interactions.contextMenu.hex}
+      onToggleHexFog={(hex) =>
+        void interactions.fogInteractions.paintHex(hex, !hex.fogged)}
       onClose={() => (interactions.contextMenu = null)}
     />
   {/if}

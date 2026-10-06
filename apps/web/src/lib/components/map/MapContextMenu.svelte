@@ -3,7 +3,7 @@
   import { mapStore } from "../../stores/map.svelte";
   import { mapSession } from "../../stores/map-session.svelte";
   import { TOKEN_STATUS_EFFECTS } from "../../../types/vtt";
-  import { isNoteCollapsed } from "map-engine";
+  import { isNoteCollapsed, snapPointToHexCenter } from "map-engine";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
   import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
   import { vault } from "../../stores/vault.svelte";
@@ -17,6 +17,8 @@
     imgX,
     imgY,
     tokenId,
+    hex,
+    onToggleHexFog,
     onClose,
   }: {
     x: number;
@@ -24,6 +26,8 @@
     imgX: number;
     imgY: number;
     tokenId?: string;
+    hex?: { q: number; r: number; fogged: boolean };
+    onToggleHexFog?: (hex: { q: number; r: number; fogged: boolean }) => void;
     onClose: () => void;
   } = $props();
 
@@ -473,21 +477,57 @@
                   const gridSize = mapStore.gridSize || 50;
                   const token = mapSession.tokens[tokenId];
                   if (token) {
-                    const snappedX =
-                      Math.round((token.x - mapStore.gridOffsetX) / gridSize) *
-                        gridSize +
-                      mapStore.gridOffsetX;
-                    const snappedY =
-                      Math.round((token.y - mapStore.gridOffsetY) / gridSize) *
-                        gridSize +
-                      mapStore.gridOffsetY;
+                    if (
+                      mapStore.gridType === "hex-pointy" ||
+                      mapStore.gridType === "hex-flat"
+                    ) {
+                      const orientation =
+                        mapStore.gridType === "hex-flat" ? "flat" : "pointy";
+                      const snapped = snapPointToHexCenter(
+                        { x: token.x, y: token.y },
+                        {
+                          orientation,
+                          size: gridSize,
+                          offsetX: mapStore.gridOffsetX,
+                          offsetY: mapStore.gridOffsetY,
+                        },
+                      );
+                      const width =
+                        orientation === "pointy"
+                          ? scale * Math.sqrt(3) * gridSize
+                          : scale * 2 * gridSize;
+                      const height =
+                        orientation === "pointy"
+                          ? scale * 2 * gridSize
+                          : scale * Math.sqrt(3) * gridSize;
 
-                    mapSession.updateToken(tokenId, {
-                      x: snappedX,
-                      y: snappedY,
-                      width: scale * gridSize,
-                      height: scale * gridSize,
-                    });
+                      mapSession.updateToken(tokenId, {
+                        x: snapped.x,
+                        y: snapped.y,
+                        width,
+                        height,
+                      });
+                    } else {
+                      const snappedX =
+                        Math.round(
+                          (token.x - mapStore.gridOffsetX) / gridSize,
+                        ) *
+                          gridSize +
+                        mapStore.gridOffsetX;
+                      const snappedY =
+                        Math.round(
+                          (token.y - mapStore.gridOffsetY) / gridSize,
+                        ) *
+                          gridSize +
+                        mapStore.gridOffsetY;
+
+                      mapSession.updateToken(tokenId, {
+                        x: snappedX,
+                        y: snappedY,
+                        width: scale * gridSize,
+                        height: scale * gridSize,
+                      });
+                    }
                   }
                   onClose();
                   showResizeSubmenu = false;
@@ -594,19 +634,38 @@
       </div>
     {/if}
   {:else}
-    <button
-      class="w-full text-left px-3 py-2 text-xs hover:bg-theme-bg/50 transition-colors flex items-center gap-2 text-theme-text"
-      role="menuitem"
-      onclick={() => {
-        mapSession.ping(imgX, imgY);
-        onClose();
-      }}
-    >
-      <span
-        class="icon-[lucide--map-pin] w-3.5 h-3.5 text-theme-primary"
-        aria-hidden="true"
-      ></span>
-      <span>Ping Here</span>
-    </button>
+    {#if mapSession.vttEnabled}
+      <button
+        class="w-full text-left px-3 py-2 text-xs hover:bg-theme-bg/50 transition-colors flex items-center gap-2 text-theme-text"
+        role="menuitem"
+        onclick={() => {
+          mapSession.ping(imgX, imgY);
+          onClose();
+        }}
+      >
+        <span
+          class="icon-[lucide--map-pin] w-3.5 h-3.5 text-theme-primary"
+          aria-hidden="true"
+        ></span>
+        <span>Ping Here</span>
+      </button>
+    {/if}
+    {#if hex}
+      <button
+        type="button"
+        class="w-full text-left px-3 py-2 text-xs hover:bg-theme-bg/50 transition-colors flex items-center gap-2 text-theme-text"
+        role="menuitem"
+        onclick={() => {
+          onToggleHexFog?.(hex);
+          onClose();
+        }}
+      >
+        <span
+          class={`${hex.fogged ? "icon-[lucide--eye]" : "icon-[lucide--eye-off]"} w-3.5 h-3.5 text-theme-primary`}
+          aria-hidden="true"
+        ></span>
+        <span>{hex.fogged ? "Reveal hex" : "Hide hex"}</span>
+      </button>
+    {/if}
   {/if}
 </div>

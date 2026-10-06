@@ -9,6 +9,11 @@ description: "Task list template for feature implementation"
 
 **Tests**: The examples below include test tasks. Tests are REQUIRED for changed code behaviour (Constitution II), with a success path and a meaningful failure, cancellation, or negative path.
 
+**User Help (Constitution VII)**: For every user-facing feature, include a task in the relevant
+user-story phase to add or update its Help article or description. The task must ensure that
+help explains what users can do, how to find and use the feature, and important prerequisites
+or limitations. Consider a `FeatureHint` task when the feature has complex interactions.
+
 **Organization**: Tasks are grouped by user story to enable independent implementation and testing of each story.
 
 ## Format: `[ID] [P?] [Story] Description`

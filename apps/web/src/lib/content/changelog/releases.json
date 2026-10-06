@@ -1,5 +1,21 @@
 [
   {
+    "version": "0.35.0",
+    "title": "The Hexcrawl & Cif Update",
+    "date": "2026-10-06",
+    "type": "minor",
+    "highlights": [
+      "Overland Hexcrawl Maps: Lay a hex grid over any map for overland travel, snap tokens to hexes and use fog of war to reveal the wilds as your party explores.",
+      "Meet Cif, Your Built-in Guide: Ask questions about Codex Cryptica and get answers that fit the screen you are on, with quick prompts to get you started. Cif is also aware of what you have open, from the Explorer to the Shelf.",
+      "Multiple Calendar Eras: Give your calendar several eras and number years from any starting point, with clearer year suffix settings.",
+      "A Livelier Graph: Groups of related entities now sit together on soft backgrounds, images appear faster and the layout spreads out more clearly. You can also hide individual connections from the graph and diagram.",
+      "Smarter Generators: AI-generated names now reflect the culture they come from, and every theme grounds its results in the right genre.",
+      "Share Your Templates: Browse and share entity templates through the community directory, straight from the Explorer and Settings.",
+      "Better on Phones: Larger touch targets, readable text and map controls that fit small screens, with a button to maximise the map or tuck its controls away.",
+      "Maps That Recover: If a map's image cannot be loaded, you now see a clear error with a retry, and can choose a new image. Campaign Label rename and delete now work across the whole vault."
+    ]
+  },
+  {
     "version": "0.34.0",
     "title": "The Session Journal & Reports Update",
     "date": "2026-09-29",

@@ -170,6 +170,7 @@ export const howDoIDecideWhatASettlementProducesImportsAndExports: AnswerConfigI
       "what-can-players-actually-buy-and-sell-in-a-fantasy-settlement",
       "how-do-i-give-different-civilisations-distinct-strengths-and-weaknesses",
       "how-do-i-create-interesting-islands-and-ports-for-a-pirate-campaign",
+      "how-should-a-fantasy-adventuring-guild-handle-wages-dues-and-shared-expenses",
     ],
     discovery: {
       id: "answer-settlement-production-imports-exports",

@@ -9,8 +9,10 @@ import {
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { discoveryPolicyStore } from "$lib/stores/ui/discovery-policy.svelte";
 import {
+  cifPopout,
   helpAssistant,
   helpActionRunner,
+  toggleCif,
 } from "$lib/stores/help-assistant/help-runtime";
 import { helpHighlight } from "$lib/services/help-assistant/help-highlight.svelte";
 import HelpAssistantHost from "./HelpAssistantHost.svelte";
@@ -110,5 +112,47 @@ describe("HelpAssistantHost", () => {
     await waitFor(() => screen.getByRole("button", { name: "Show me" }));
     await fireEvent.click(screen.getByRole("button", { name: "Show me" }));
     await waitFor(() => expect(helpAssistant.isOpen).toBe(false));
+  });
+
+  it("brings an open pop-out forward instead of docking a second Cif", () => {
+    const open = vi.spyOn(cifPopout, "open").mockImplementation(() => {});
+    cifPopout.connected = true;
+
+    toggleCif();
+
+    expect(open).toHaveBeenCalled();
+    expect(helpAssistant.isOpen).toBe(false);
+    cifPopout.connected = false;
+  });
+
+  it("docks Cif when there is no pop-out", () => {
+    toggleCif();
+    expect(helpAssistant.isOpen).toBe(true);
+    toggleCif();
+    expect(helpAssistant.isOpen).toBe(false);
+  });
+
+  it("offers a pop-out button that opens the window", async () => {
+    vi.stubEnv("VITE_HELP_ASSISTANT", "true");
+    const open = vi.spyOn(cifPopout, "open").mockImplementation(() => {});
+    render(HelpAssistantHost);
+    helpAssistant.open();
+    await waitFor(() => screen.getByRole("dialog"));
+
+    await fireEvent.click(await screen.findByTestId("help-assistant-popout"));
+    expect(open).toHaveBeenCalled();
+  });
+
+  it("offers no pop-out in a browser that cannot link two windows", async () => {
+    vi.stubEnv("VITE_HELP_ASSISTANT", "true");
+    cifPopout.stop();
+    vi.stubGlobal("BroadcastChannel", undefined);
+    render(HelpAssistantHost);
+    helpAssistant.open();
+    await waitFor(() => screen.getByRole("dialog"));
+
+    expect(cifPopout.supported).toBe(false);
+    expect(screen.queryByTestId("help-assistant-popout")).toBeNull();
+    vi.unstubAllGlobals();
   });
 });

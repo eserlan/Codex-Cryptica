@@ -316,6 +316,7 @@ export const howDoIRunPoliticalIntrigueAndFactionPlay: AnswerConfigInput = {
     "how-do-i-build-a-believable-constitutional-crisis-or-coup",
     "how-do-i-run-a-large-battle-when-the-player-characters-are-part-of-an-army",
     "how-does-magic-affect-politics-and-government",
+    "how-do-i-make-a-campaign-threat-feel-urgent-without-railroading",
   ],
   discovery: {
     id: "answer-run-political-intrigue",

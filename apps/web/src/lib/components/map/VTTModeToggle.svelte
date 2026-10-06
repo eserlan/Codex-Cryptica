@@ -39,6 +39,7 @@
     aria-haspopup="menu"
     aria-expanded={vttModeMenu.isOpen}
     aria-label="Toggle VTT mode"
+    data-help-target="vtt-mode-toggle"
   >
     VTT {mapSession.vttEnabled ? "ON" : "OFF"}
   </button>

@@ -1,4 +1,12 @@
 import type { MapPin, Point, StatSheetField, ViewportTransform } from "schema";
+import {
+  pointToHex,
+  hexDistance,
+  type HexGridConfig,
+  type HexOrientation,
+} from "map-engine";
+import { measureDistance } from "$lib/utils/vtt-helpers";
+import type { GridType } from "$lib/stores/map.svelte";
 
 export interface PanZoomUpdate {
   pan: Point;
@@ -262,4 +270,50 @@ export function getPinchDistance(a: Point, b: Point): number {
 
 export function getPinchMidpoint(a: Point, b: Point): Point {
   return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+}
+
+export interface MeasurementFormatOptions {
+  gridType?: GridType;
+  gridSize?: number;
+  gridDistance?: number;
+  gridUnit?: string;
+  gridOffsetX?: number;
+  gridOffsetY?: number;
+}
+
+export function formatMeasurementLabel(
+  start: Point,
+  end: Point,
+  options: MeasurementFormatOptions,
+): string {
+  const {
+    gridType = "square",
+    gridSize = 50,
+    gridDistance = 5,
+    gridUnit = "ft",
+    gridOffsetX = 0,
+    gridOffsetY = 0,
+  } = options;
+  const effectiveGridSize = gridSize || 50;
+
+  if (gridType === "hex-pointy" || gridType === "hex-flat") {
+    const orientation: HexOrientation =
+      gridType === "hex-flat" ? "flat" : "pointy";
+    const config: HexGridConfig = {
+      orientation,
+      size: effectiveGridSize,
+      offsetX: gridOffsetX,
+      offsetY: gridOffsetY,
+    };
+    const hexA = pointToHex(start, config);
+    const hexB = pointToHex(end, config);
+    const dist = hexDistance(hexA, hexB);
+    const totalDist = dist * gridDistance;
+    const hexWord = dist === 1 ? "hex" : "hexes";
+    return `${dist} ${hexWord} (${totalDist} ${gridUnit})`;
+  }
+
+  const pixelDist = measureDistance(start, end);
+  const units = (pixelDist / effectiveGridSize) * gridDistance;
+  return `${Math.round(units)}${gridUnit}`;
 }

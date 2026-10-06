@@ -64,14 +64,103 @@ export const PHASE_A_IN_SCOPE: InScopeQuestion[] = [
   q("map", "tune", "map", "How do I drop a pin on the map?", ["map-mode"]),
   q("map", "tune", "map", "How do I hide parts of the map from my players?", [
     "map-mode",
+    "fog-of-war",
+    "vtt-fog-player-view",
   ]),
   q("map", "holdout", "map", "Can I start a game session from a map?", [
     "vtt-session",
     "map-mode",
+    "vtt-multiplayer",
   ]),
-  q("map", "tune", "map", "How do I move a token?", ["vtt-session"]),
+  q("map", "tune", "map", "How do I move a token?", [
+    "vtt-session",
+    "vtt-tokens",
+  ]),
   q("map", "tune", "map", "How do I measure distance on the map?", [
     "vtt-session",
+  ]),
+  q("map", "holdout", "map", "How do I add a character to initiative?", [
+    "vtt-combat-initiative",
+  ]),
+  q("map", "holdout", "map", "Why can't my player move their token?", [
+    "vtt-tokens",
+    "vtt-troubleshooting",
+  ]),
+  q("map", "holdout", "map", "How do I save an encounter to come back to?", [
+    "vtt-combat-initiative",
+  ]),
+  q("map", "holdout", "map", "How do I stock dungeon tiles with encounters?", [
+    "vtt-tiles-layers-notes",
+  ]),
+  q("map", "holdout", "map", "How do I start voice chat with my players?", [
+    "vtt-multiplayer",
+  ]),
+  q("map", "holdout", "map", "How do I change the grid scale to miles?", [
+    "vtt-grids-measurement",
+  ]),
+  q(
+    "map",
+    "holdout",
+    "map",
+    "What is the difference between map fog and a hidden entity?",
+    ["vtt-fog-player-view", "fog-of-war"],
+  ),
+  q(
+    "map",
+    "holdout",
+    "map",
+    "How do I line the hex grid up with hexes already on my map?",
+    ["vtt-grids-measurement", "hexcrawl-maps"],
+  ),
+  q(
+    "existing",
+    "holdout",
+    "graph",
+    "Does the Oracle keep my chat on the AI provider's servers?",
+    ["gemini-api-key"],
+  ),
+  q("existing", "holdout", "graph", "How do I replay the welcome tour?", [
+    "intro",
+  ]),
+  q(
+    "existing",
+    "holdout",
+    "graph",
+    "How do I show every generation in the lineage view?",
+    ["family-tree"],
+  ),
+  q(
+    "existing",
+    "holdout",
+    "graph",
+    "How long does the Oracle remember my chat?",
+    ["gemini-api-key"],
+  ),
+  q("map", "holdout", "map", "Where do I open the grid settings?", [
+    "vtt-grids-measurement",
+    "hexcrawl-maps",
+  ]),
+  q("map", "holdout", "map", "Where is the button for Explore and Combat?", [
+    "vtt-session",
+    "vtt-combat-initiative",
+  ]),
+  q("map", "holdout", "map", "How do I rotate a token?", ["vtt-tokens"]),
+  q("map", "holdout", "map", "How do I show which way a token is facing?", [
+    "vtt-tokens",
+  ]),
+  q("map", "holdout", "map", "How do I use fog of war when I'm playing solo?", [
+    "vtt-fog-player-view",
+    "hexcrawl-maps",
+  ]),
+  q(
+    "map",
+    "holdout",
+    "map",
+    "Why can I still see the map under the fog as the GM?",
+    ["vtt-fog-player-view", "vtt-troubleshooting"],
+  ),
+  q("map", "holdout", "map", "How do I reveal just one hex on a hex map?", [
+    "hexcrawl-maps",
   ]),
   q(
     "map",
@@ -350,7 +439,7 @@ export const PHASE_A_CONFUSION: InScopeQuestion[] = [
     "holdout",
     "map",
     "Is the fog of war on the map the same as hiding an entry?",
-    ["map-mode"],
+    ["map-mode", "vtt-fog-player-view"],
     ["fog-of-war"],
   ),
   q(

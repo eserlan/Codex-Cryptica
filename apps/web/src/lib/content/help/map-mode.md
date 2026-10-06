@@ -38,7 +38,7 @@ Manage mystery and player progression:
 
 Dive deeper into your world:
 
-- You can attach specific sub-maps to entities (e.g., a "Tavern" note can have its own floor plan).
+- You can put a map inside another map by attaching a specific sub-map to an entity (e.g., a "Tavern" note can have its own floor plan).
 - In the **Entity Detail Panel**, go to the **MAP** tab to upload a sub-map.
 - Once attached, pins linked to that entity will show an **ENTER** button, allowing you to dive into the sub-map.
 - Use the breadcrumbs or "Go Back" logic to return to the parent map.
@@ -49,7 +49,7 @@ Transform any map into a live tactical Virtual Tabletop:
 
 1. Click the **VTT OFF** button in the top-right map controls overlay to activate **VTT ON**.
 2. Drag character or monster notes from **Entity Explorer** directly onto the grid to place tokens.
-3. Track initiative, measure spell/movement ranges (`R`), drop map pings (`Shift` + `Click`), and stream live map updates to players via **Host Session**.
+3. Track initiative, measure spell and movement ranges with the ruler, ping the map from the right-click menu, and stream live map updates to players with **Share Campaign**. See [VTT Overview & Modes](/help#help/vtt-session) for the full guide.
 4. For detailed step-by-step instructions, open the [Starting a VTT Session from Maps](/help#help/vtt-session) help article.
 
 ### Map or canvas?

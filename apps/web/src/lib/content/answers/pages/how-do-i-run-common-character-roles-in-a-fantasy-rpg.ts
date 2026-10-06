@@ -173,6 +173,7 @@ export const howDoIRunCommonCharacterRolesInAFantasyRpg: AnswerConfigInput = {
     "how-do-i-run-character-roles-in-a-political-intrigue-rpg",
     "how-do-i-run-common-character-roles-in-a-sci-fi-or-space-opera-rpg",
     "how-do-you-run-character-roles-in-a-cyberpunk-rpg",
+    "how-do-i-handle-divination-magic-without-letting-one-character-solve-every-mystery",
   ],
   discovery: {
     id: "answer-fantasy-character-roles",

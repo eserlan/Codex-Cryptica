@@ -1,6 +1,7 @@
 <script lang="ts">
   import EntityDetailPanel from "$lib/components/EntityDetailPanel.svelte";
   import MapHUD from "$lib/components/map/MapHUD.svelte";
+  import HelpVttMapSurface from "$lib/components/help-assistant/HelpVttMapSurface.svelte";
   import MapUploadOverlay from "$lib/components/map/MapUploadOverlay.svelte";
   import MapView from "$lib/components/map/MapView.svelte";
   import MapVTTControlsHUD from "$lib/components/map/MapVTTControlsHUD.svelte";
@@ -63,6 +64,7 @@
 <div
   class="w-full h-full min-h-0 flex-1 flex flex-col bg-theme-bg overflow-hidden relative"
 >
+  <HelpVttMapSurface />
   {#if mapStore.activeMap}
     <MapView
       onMapDragOver={(event) => controller.onDragOver(event)}

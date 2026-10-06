@@ -1,18 +1,39 @@
 <script lang="ts">
   import { mapSession } from "$lib/stores/map-session.svelte";
-  import { mapStore } from "$lib/stores/map.svelte";
+  import { mapStore, type GridType } from "$lib/stores/map.svelte";
   import { fade } from "svelte/transition";
-  import { notificationStore } from "$lib/stores/ui/notification.svelte";
+  import VTTGridFitSection from "./VTTGridFitSection.svelte";
 
   let { close }: { close: () => void } = $props();
 
   let gridSize = $state(mapStore.gridSize);
+  let gridType = $state<GridType>(mapStore.gridType);
+  let showHexCoordinates = $state(mapStore.showHexCoordinates);
   let gridUnit = $state(mapSession.gridUnit);
   let gridDistance = $state(mapSession.gridDistance);
+
+  const isHex = $derived(gridType !== "square");
+  const hexAxis = $derived(
+    gridType === "hex-flat" ? "down a column" : "across a row",
+  );
+
+  /** Start the fit with the grid type chosen here, not the one last saved. */
+  function startFit() {
+    mapSession.setGridSettings({
+      gridType,
+      showHexCoordinates,
+      gridUnit,
+      gridDistance,
+    });
+    mapSession.gridFitMode = true;
+    close();
+  }
 
   function save() {
     mapSession.setGridSettings({
       gridSize,
+      gridType,
+      showHexCoordinates,
       gridUnit,
       gridDistance,
     });
@@ -61,17 +82,105 @@
 
     <div class="space-y-6">
       <div class="space-y-2">
+        <span
+          id="grid-type-label"
+          class="text-micro font-mono text-theme-muted uppercase tracking-widest"
+        >
+          Grid Type
+        </span>
+        <div
+          class="grid grid-cols-3 gap-2"
+          role="group"
+          aria-labelledby="grid-type-label"
+        >
+          <button
+            type="button"
+            aria-pressed={gridType === "square"}
+            class="px-2 py-2 rounded-md border text-xs font-medium flex flex-col items-center gap-1 transition-colors {gridType ===
+            'square'
+              ? 'border-theme-primary bg-theme-primary/10 text-theme-primary font-bold'
+              : 'border-theme-border text-theme-muted hover:border-theme-muted hover:text-theme-text'}"
+            onclick={() => {
+              gridType = "square";
+            }}
+          >
+            <span class="icon-[lucide--grid-3x3] w-4 h-4" aria-hidden="true"
+            ></span>
+            <span>Square</span>
+          </button>
+          <button
+            type="button"
+            aria-pressed={gridType === "hex-pointy"}
+            class="px-2 py-2 rounded-md border text-xs font-medium flex flex-col items-center gap-1 transition-colors {gridType ===
+            'hex-pointy'
+              ? 'border-theme-primary bg-theme-primary/10 text-theme-primary font-bold'
+              : 'border-theme-border text-theme-muted hover:border-theme-muted hover:text-theme-text'}"
+            onclick={() => {
+              gridType = "hex-pointy";
+            }}
+          >
+            <span class="icon-[lucide--hexagon] w-4 h-4" aria-hidden="true"
+            ></span>
+            <span>Hex (Pointy)</span>
+          </button>
+          <button
+            type="button"
+            aria-pressed={gridType === "hex-flat"}
+            class="px-2 py-2 rounded-md border text-xs font-medium flex flex-col items-center gap-1 transition-colors {gridType ===
+            'hex-flat'
+              ? 'border-theme-primary bg-theme-primary/10 text-theme-primary font-bold'
+              : 'border-theme-border text-theme-muted hover:border-theme-muted hover:text-theme-text'}"
+            onclick={() => {
+              gridType = "hex-flat";
+            }}
+          >
+            <span
+              class="icon-[lucide--hexagon] w-4 h-4 rotate-90"
+              aria-hidden="true"
+            ></span>
+            <span>Hex (Flat)</span>
+          </button>
+        </div>
+      </div>
+
+      {#if gridType === "hex-pointy" || gridType === "hex-flat"}
+        <div
+          class="flex items-center justify-between p-2 rounded-md bg-theme-bg border border-theme-border"
+        >
+          <div class="space-y-0.5">
+            <label
+              class="text-xs font-medium text-theme-text cursor-pointer"
+              for="hex-coords-toggle"
+            >
+              Show Hex Coordinates
+            </label>
+            <p class="text-nano text-theme-muted">
+              Display axial (q.r) labels in hex centers
+            </p>
+          </div>
+          <input
+            id="hex-coords-toggle"
+            type="checkbox"
+            bind:checked={showHexCoordinates}
+            class="accent-theme-primary rounded w-4 h-4 cursor-pointer"
+          />
+        </div>
+      {/if}
+
+      <div class="space-y-2">
         <label
           class="text-micro font-mono text-theme-muted uppercase tracking-widest"
           for="grid-size"
         >
-          Grid Cell Size (Pixels)
+          {gridType === "square"
+            ? "Grid Cell Size (Pixels)"
+            : "Hex Radius (Pixels)"}
         </label>
         <div class="flex items-center gap-4">
           <input
             id="grid-size"
             type="range"
-            min="20"
+            min={isHex ? 5 : 20}
             max="500"
             step="1"
             bind:value={gridSize}
@@ -116,74 +225,7 @@
         </div>
       </div>
 
-      <div class="border-t border-theme-border pt-4 space-y-4">
-        {#if mapSession.gridMoveMode}
-          <div class="space-y-3">
-            <p class="text-micro text-theme-muted text-center">
-              Drag the map to align it with the fixed grid
-            </p>
-          </div>
-        {:else if mapSession.gridFitMode}
-          <div class="space-y-3">
-            <p class="text-micro text-theme-muted text-center">
-              Drag across a few grid squares rather than just one — it's much
-              easier to land accurately on, say, 3 squares than exactly 1. While
-              dragging, hold <span class="font-bold">Shift</span> and scroll to change
-              how many squares the drag spans (1, 2, 3, 5, or 10) to match the tile
-              you're fitting.
-            </p>
-            <button
-              type="button"
-              class="w-full px-4 py-2 rounded-md border border-theme-border text-theme-muted hover:bg-theme-bg transition-all uppercase text-micro font-bold tracking-wider focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-theme-primary"
-              onclick={() => {
-                mapSession.gridFitMode = false;
-              }}
-            >
-              Cancel
-            </button>
-          </div>
-        {:else}
-          <button
-            type="button"
-            class="w-full px-4 py-2.5 rounded-md border border-dashed border-theme-border text-theme-muted text-micro font-bold uppercase tracking-wider transition-all hover:border-theme-primary hover:text-theme-primary hover:bg-theme-primary/5 flex items-center justify-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-theme-primary"
-            onclick={() => {
-              mapSession.gridFitMode = true;
-              close();
-            }}
-          >
-            <span class="icon-[lucide--square] w-3.5 h-3.5" aria-hidden="true"
-            ></span>
-            Fit Grid from Map
-          </button>
-          <p class="text-nano text-theme-muted mt-1 text-center italic">
-            Drag across a span of grid squares (default 3×3) to auto-detect cell
-            size — Shift+Scroll while dragging changes the span
-          </p>
-
-          {#if mapStore.gridSize > 0}
-            <button
-              type="button"
-              class="w-full px-4 py-2.5 rounded-md border border-dashed border-theme-border text-theme-muted text-micro font-bold uppercase tracking-wider transition-all hover:border-theme-primary hover:text-theme-primary hover:bg-theme-primary/5 flex items-center justify-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-theme-primary"
-              onclick={() => {
-                mapSession.gridMoveMode = true;
-                close();
-                notificationStore.notify(
-                  "Drag the map to align it with the grid — release to apply. Esc to cancel.",
-                  "info",
-                  true,
-                );
-              }}
-            >
-              <span class="icon-[lucide--move] w-3.5 h-3.5" aria-hidden="true"
-              ></span>
-              Move Map to Fine-tune
-            </button>
-            <p class="text-nano text-theme-muted mt-1 text-center italic">
-              Drag the map under the fixed grid
-            </p>
-          {/if}
-        {/if}
-      </div>
+      <VTTGridFitSection {isHex} {hexAxis} {close} onStartFit={startFit} />
 
       <div class="pt-2 flex gap-3">
         <button

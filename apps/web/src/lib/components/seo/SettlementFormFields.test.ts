@@ -4,7 +4,7 @@ import { render, screen, fireEvent } from "@testing-library/svelte";
 import { describe, expect, it, vi } from "vitest";
 import SettlementFormFields from "./SettlementFormFields.svelte";
 
-vi.mock("$lib/services/seo/generator-engine", () => ({
+vi.mock("$lib/services/seo/generator-config", () => ({
   settlementConfig: {
     sizesByGenre: {
       Fantasy: [

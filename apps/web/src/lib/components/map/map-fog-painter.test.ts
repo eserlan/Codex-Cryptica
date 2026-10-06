@@ -10,6 +10,7 @@ function createCanvasMock() {
     lineTo: vi.fn(),
     stroke: vi.fn(),
     fill: vi.fn(),
+    closePath: vi.fn(),
     arc: vi.fn(),
     clearRect: vi.fn(),
     drawImage: vi.fn(),
@@ -153,5 +154,159 @@ describe("MapFogPainter", () => {
     const finished = await blankPainter.finish();
     expect(finished).toBe(true);
     expect(saveMask).toHaveBeenCalledWith(mask.canvas);
+  });
+
+  it("stamps polygon hexes instead of circle brush when hex grid is active", async () => {
+    const hexMask = createCanvasMock();
+    const hexPainter = new MapFogPainter({
+      mapStore: {
+        activeMapId: "map-hex",
+        brushRadius: 10,
+        showGrid: true,
+        gridType: "hex-pointy",
+        gridSize: 50,
+        unproject: vi.fn((p) => p),
+        saveMask,
+      },
+      oracle: { pushUndoAction },
+      getMaskCanvas: () => hexMask.canvas,
+      getMapImage: () => mapImage,
+      createCanvas: () => createCanvasMock().canvas,
+    });
+
+    hexPainter.begin({ x: 0, y: 0 }, false);
+    // Should have filled a 6-vertex polygon path
+    expect(hexMask.ctx.beginPath).toHaveBeenCalled();
+    expect(hexMask.ctx.moveTo).toHaveBeenCalled();
+    expect(hexMask.ctx.lineTo).toHaveBeenCalledTimes(5);
+    expect(hexMask.ctx.closePath).toHaveBeenCalled();
+    expect(hexMask.ctx.fill).toHaveBeenCalled();
+    expect(hexMask.ctx.fillStyle).toBe("white");
+  });
+
+  describe("single hex", () => {
+    function hexPainter(opts: { hex?: boolean; alpha?: number } = {}) {
+      const hexMask = createCanvasMock();
+      hexMask.ctx.getImageData = vi.fn(() => ({
+        data: [0, 0, 0, opts.alpha ?? 255],
+      }));
+      const hexSave = vi.fn().mockResolvedValue(undefined);
+      const hexUndo = vi.fn();
+      const instance = new MapFogPainter({
+        mapStore: {
+          activeMapId: "map-hex",
+          brushRadius: 10,
+          showGrid: opts.hex !== false,
+          gridType: "hex-pointy",
+          gridSize: 20,
+          unproject: vi.fn((p) => p),
+          saveMask: hexSave,
+        },
+        oracle: { pushUndoAction: hexUndo },
+        getMaskCanvas: () => hexMask.canvas,
+        getMapImage: () => mapImage,
+        createCanvas: () => createCanvasMock().canvas,
+      });
+      return { instance, hexMask, hexSave, hexUndo };
+    }
+
+    it("reports transparent hexes as fogged and opaque hexes as revealed", () => {
+      expect(hexPainter().instance.hexAt({ x: 0, y: 0 })).toEqual({
+        hex: { q: 0, r: 0 },
+        fogged: false,
+      });
+      expect(
+        hexPainter({ alpha: 0 }).instance.hexAt({ x: 0, y: 0 })?.fogged,
+      ).toBe(true);
+    });
+
+    it("has no hex target without a hex grid or off the mask", () => {
+      expect(
+        hexPainter({ hex: false }).instance.hexAt({ x: 0, y: 0 }),
+      ).toBeNull();
+      expect(hexPainter().instance.hexAt({ x: 5000, y: 0 })).toBeNull();
+    });
+
+    it("reveals one hex, saves the mask and registers undo", async () => {
+      const { instance, hexMask, hexSave, hexUndo } = hexPainter();
+
+      expect(await instance.paintHex({ q: 0, r: 0 }, false)).toBe(true);
+
+      expect(hexMask.ctx.fill).toHaveBeenCalledTimes(1);
+      expect(hexMask.ctx.lineTo).toHaveBeenCalledTimes(5);
+      expect(hexSave).toHaveBeenCalledWith(hexMask.canvas);
+      expect(hexUndo).toHaveBeenCalledWith(
+        "Map Drawing",
+        expect.any(Function),
+        undefined,
+        expect.any(Function),
+      );
+    });
+
+    it("does nothing without a hex grid", async () => {
+      const { instance, hexSave, hexUndo } = hexPainter({ hex: false });
+
+      expect(await instance.paintHex({ q: 0, r: 0 }, false)).toBe(false);
+      expect(hexSave).not.toHaveBeenCalled();
+      expect(hexUndo).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("revealed check", () => {
+    function painterWithAlpha(alpha: number, width = 100, height = 80) {
+      const m = createCanvasMock();
+      m.canvas.width = width;
+      m.canvas.height = height;
+      m.ctx.getImageData = vi.fn(() => ({ data: [0, 0, 0, alpha] }));
+      const instance = new MapFogPainter({
+        mapStore: {
+          activeMapId: "map-1",
+          brushRadius: 10,
+          unproject: vi.fn((p) => p),
+          saveMask,
+        },
+        oracle: { pushUndoAction },
+        getMaskCanvas: () => m.canvas,
+        getMapImage: () => mapImage,
+        createCanvas: () => createCanvasMock().canvas,
+      });
+      return { instance, m };
+    }
+
+    it("is revealed where the mask is opaque and fogged where it is clear", () => {
+      expect(painterWithAlpha(255).instance.isRevealedAt({ x: 0, y: 0 })).toBe(
+        true,
+      );
+      expect(painterWithAlpha(0).instance.isRevealedAt({ x: 0, y: 0 })).toBe(
+        false,
+      );
+    });
+
+    it("reads the mask in centred image coordinates", () => {
+      const { instance, m } = painterWithAlpha(0, 100, 80);
+
+      instance.isRevealedAt({ x: -10, y: 5 });
+
+      expect(m.ctx.getImageData).toHaveBeenCalledWith(40, 45, 1, 1);
+    });
+
+    it("never hides anything it cannot read: off the mask or with no mask", () => {
+      const { instance } = painterWithAlpha(0, 100, 80);
+      expect(instance.isRevealedAt({ x: 5000, y: 0 })).toBe(true);
+
+      const noMask = new MapFogPainter({
+        mapStore: {
+          activeMapId: "map-1",
+          brushRadius: 10,
+          unproject: vi.fn((p) => p),
+          saveMask,
+        },
+        oracle: { pushUndoAction },
+        getMaskCanvas: () => null,
+        getMapImage: () => mapImage,
+        createCanvas: () => createCanvasMock().canvas,
+      });
+      expect(noMask.isRevealedAt({ x: 0, y: 0 })).toBe(true);
+    });
   });
 });

@@ -1,10 +1,22 @@
 import type { Point } from "schema";
 import { drawFogStroke } from "./fog-stroke";
+import {
+  punchHexFogCell,
+  punchHexFogRadius,
+  getActiveHexConfig,
+} from "./hex-fog-stroke";
+import { hexToPoint, pointToHex, type HexCoord } from "map-engine";
+import type { GridType } from "$lib/stores/map.svelte";
 
 export interface MapFogPainterDeps {
   mapStore: {
     activeMapId: string | null;
     brushRadius: number;
+    showGrid?: boolean;
+    gridType?: GridType;
+    gridSize?: number;
+    gridOffsetX?: number;
+    gridOffsetY?: number;
     unproject(point: Point): Point;
     saveMask(canvas: HTMLCanvasElement): Promise<void>;
   };
@@ -83,7 +95,76 @@ export class MapFogPainter {
       return false;
     }
 
-    const snapshotBefore = this.maskSnapshot;
+    this.pushMaskUndo(maskCanvas, currentMapId, this.maskSnapshot);
+
+    await this.deps.mapStore.saveMask(maskCanvas);
+    this.reset();
+    return true;
+  }
+
+  private lastPaintedHexKey: string | null = null;
+
+  cancel() {
+    this.reset();
+  }
+
+  // fallow-ignore-next-line complexity
+  private paintAt(point: Point, isHiding: boolean) {
+    const maskCanvas = this.deps.getMaskCanvas();
+    if (!maskCanvas || !this.painting) return;
+
+    const currentCoords = this.deps.mapStore.unproject(point);
+    const previousCoords = this.lastPaintImgCoords || currentCoords;
+    const ctx = maskCanvas.getContext("2d");
+    if (!ctx) return;
+
+    const hexConfig = getActiveHexConfig(this.deps.mapStore);
+    if (hexConfig) {
+      const hex = pointToHex(currentCoords, hexConfig);
+      const hexKey = `${hex.q},${hex.r}`;
+
+      if (hexKey !== this.lastPaintedHexKey) {
+        this.lastPaintedHexKey = hexKey;
+        const hexRadius = Math.max(
+          0,
+          Math.floor(
+            (this.deps.mapStore.brushRadius || 50) / (hexConfig.size * 1.5),
+          ),
+        );
+        if (hexRadius > 0) {
+          punchHexFogRadius(
+            ctx,
+            maskCanvas,
+            hex,
+            hexRadius,
+            hexConfig,
+            isHiding,
+          );
+        } else {
+          punchHexFogCell(ctx, maskCanvas, hex, hexConfig, isHiding);
+        }
+      }
+      this.lastPaintImgCoords = currentCoords;
+      return;
+    }
+
+    drawFogStroke(
+      ctx,
+      maskCanvas,
+      this.deps.mapStore.brushRadius,
+      previousCoords,
+      currentCoords,
+      isHiding,
+    );
+
+    this.lastPaintImgCoords = currentCoords;
+  }
+
+  private pushMaskUndo(
+    maskCanvas: HTMLCanvasElement,
+    currentMapId: string,
+    snapshotBefore: HTMLCanvasElement | null,
+  ) {
     const snapshotAfter = copyCanvas(maskCanvas, this.deps.createCanvas);
     const applySnapshot = async (snapshot: HTMLCanvasElement | null) => {
       const liveMaskCanvas = this.deps.getMaskCanvas();
@@ -114,41 +195,66 @@ export class MapFogPainter {
         await applySnapshot(snapshotAfter);
       },
     );
-
-    await this.deps.mapStore.saveMask(maskCanvas);
-    this.reset();
-    return true;
   }
 
-  cancel() {
-    this.reset();
-  }
-
-  private paintAt(point: Point, isHiding: boolean) {
+  /**
+   * The hex under an image-space point and whether it is currently fogged, or
+   * null when there is no hex grid, no mask, or the hex lies off the mask.
+   */
+  hexAt(imgPoint: Point): { hex: HexCoord; fogged: boolean } | null {
+    const config = getActiveHexConfig(this.deps.mapStore);
     const maskCanvas = this.deps.getMaskCanvas();
-    if (!maskCanvas || !this.painting) return;
+    const ctx = maskCanvas?.getContext("2d");
+    if (!config || !maskCanvas || !ctx) return null;
 
-    const currentCoords = this.deps.mapStore.unproject(point);
-    const previousCoords = this.lastPaintImgCoords || currentCoords;
-    const ctx = maskCanvas.getContext("2d");
-    if (!ctx) return;
+    const hex = pointToHex(imgPoint, config);
+    const center = hexToPoint(hex, config);
+    const x = Math.floor(center.x + maskCanvas.width / 2);
+    const y = Math.floor(center.y + maskCanvas.height / 2);
+    if (x < 0 || y < 0 || x >= maskCanvas.width || y >= maskCanvas.height) {
+      return null;
+    }
+    // Opaque mask pixels reveal the map; transparent pixels leave fog in place.
+    return { hex, fogged: ctx.getImageData(x, y, 1, 1).data[3] <= 127 };
+  }
 
-    drawFogStroke(
-      ctx,
-      maskCanvas,
-      this.deps.mapStore.brushRadius,
-      previousCoords,
-      currentCoords,
-      isHiding,
-    );
+  /**
+   * Whether the map is revealed at an image-space point. True when there is no
+   * mask to read or the point lies off it, so a missing mask never hides anything.
+   */
+  isRevealedAt(imgPoint: Point): boolean {
+    const maskCanvas = this.deps.getMaskCanvas();
+    const ctx = maskCanvas?.getContext("2d");
+    if (!maskCanvas || !ctx) return true;
 
-    this.lastPaintImgCoords = currentCoords;
+    const x = Math.floor(imgPoint.x + maskCanvas.width / 2);
+    const y = Math.floor(imgPoint.y + maskCanvas.height / 2);
+    if (x < 0 || y < 0 || x >= maskCanvas.width || y >= maskCanvas.height) {
+      return true;
+    }
+    return ctx.getImageData(x, y, 1, 1).data[3] > 127;
+  }
+
+  /** Reveal (isHiding false) or fog (true) exactly one hex, as one undo step. */
+  async paintHex(hex: HexCoord, isHiding: boolean): Promise<boolean> {
+    const config = getActiveHexConfig(this.deps.mapStore);
+    const maskCanvas = this.deps.getMaskCanvas();
+    const mapId = this.deps.mapStore.activeMapId;
+    const ctx = maskCanvas?.getContext("2d");
+    if (this.painting || !config || !maskCanvas || !mapId || !ctx) return false;
+
+    const before = copyCanvas(maskCanvas, this.deps.createCanvas);
+    punchHexFogCell(ctx, maskCanvas, hex, config, isHiding);
+    this.pushMaskUndo(maskCanvas, mapId, before);
+    await this.deps.mapStore.saveMask(maskCanvas);
+    return true;
   }
 
   private reset() {
     this.painting = false;
     this.maskSnapshot = null;
     this.lastPaintImgCoords = null;
+    this.lastPaintedHexKey = null;
     this.activeMapId = null;
   }
 }

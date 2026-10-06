@@ -176,6 +176,8 @@ export const howDoYouCreateAFantasyFaction: AnswerConfigInput = {
     "how-common-should-magic-be-in-a-fantasy-world",
     "how-does-magic-change-society-in-a-fantasy-world",
     "can-multiple-gods-share-a-domain",
+    "how-do-i-make-a-campaign-threat-feel-urgent-without-railroading",
+    "how-should-a-fantasy-adventuring-guild-handle-wages-dues-and-shared-expenses",
   ],
   discovery: {
     id: "answer-fantasy-faction",

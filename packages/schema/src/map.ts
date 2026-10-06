@@ -18,6 +18,12 @@ export const MapPinSchema = z.object({
   mapId: z.string().uuid(),
   entityId: z.string().optional(), // Link to core Lore Entity (NPC, Location, etc.)
   coordinates: PointSchema,
+  hexCoordinates: z
+    .object({
+      q: z.number().int(),
+      r: z.number().int(),
+    })
+    .optional(),
   visuals: z.object({
     icon: z.string().optional(),
     color: z.string().optional(),

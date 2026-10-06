@@ -31,7 +31,9 @@
   <title>Codex Cryptica | {article.title}</title>
 </svelte:head>
 
-<div class="min-h-screen bg-theme-background p-6 lg:p-12 max-w-5xl mx-auto">
+<div
+  class="min-h-full shrink-0 w-full bg-theme-background p-6 lg:p-12 max-w-5xl mx-auto"
+>
   <div class="mb-12 flex justify-between items-end">
     <div>
       <h1

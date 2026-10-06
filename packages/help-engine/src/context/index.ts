@@ -3,9 +3,17 @@ import {
   AVAILABLE_ACTION_IDS,
   HELP_FLAGS,
   PANEL_FLAGS,
+  VTT_ACTION_IDS,
+  VTT_FLAGS,
 } from "../actions/catalogue";
 
 export const HELP_CONTEXT_VERSION = 1 as const;
+
+/** Room for the panel flags and every VTT fact at once. */
+export const MAX_FLAGS = 28;
+
+/** Room for the Settings panels plus every VTT panel and control at once. */
+export const MAX_ACTIONS = 32;
 
 /**
  * Route templates the app can be on, as SvelteKit route IDs. A closed list, so
@@ -122,9 +130,9 @@ export const HelpContextSchema = z
     tab: z.enum(HELP_TABS).nullable(),
     mode: z.enum(HELP_MODES),
     surface: z.enum(HELP_SURFACES),
-    flags: z.array(z.enum(HELP_FLAGS)).max(8),
-    // Room for the entity tabs plus the Settings panels.
-    availableActions: z.array(z.enum(AVAILABLE_ACTION_IDS)).max(16),
+    flags: z.array(z.enum(HELP_FLAGS)).max(MAX_FLAGS),
+    // Room for the entity tabs, the Settings panels and the VTT controls.
+    availableActions: z.array(z.enum(AVAILABLE_ACTION_IDS)).max(MAX_ACTIONS),
   })
   .strict()
   .refine((c) => tabFitsArea(c.area, c.tab), {
@@ -209,8 +217,12 @@ export function sanitizeHelpContext(input: unknown): HelpContext {
     tab: tabFitsArea(area, tab) ? tab : null,
     mode: pick(HELP_MODES, raw.mode) ?? "view",
     surface: pick(HELP_SURFACES, raw.surface) ?? "vault",
-    flags: pickMany(HELP_FLAGS, raw.flags, 8),
-    availableActions: pickMany(AVAILABLE_ACTION_IDS, raw.availableActions, 16),
+    flags: pickMany(HELP_FLAGS, raw.flags, MAX_FLAGS),
+    availableActions: pickMany(
+      AVAILABLE_ACTION_IDS,
+      raw.availableActions,
+      MAX_ACTIONS,
+    ),
   };
 }
 
@@ -220,16 +232,21 @@ export function emptyHelpContext(): HelpContext {
 }
 
 /**
- * The same screen description without the open-panel flags. A client sends
- * this when the service rejects a description because it does not know those
- * flags yet (the web app and the Worker deploy together, so a short mismatch
- * is possible); every other fact about the screen is kept.
+ * The same screen description without what was added after the first
+ * release: the open-panel flags, the VTT facts and the VTT panels and
+ * controls. A client sends this when
+ * the service rejects a description because it does not know those flags yet
+ * (the web app and the Worker deploy together, so a short mismatch is
+ * possible); every other fact about the screen is kept.
  */
 export function withoutPanelFlags(ctx: HelpContext): HelpContext {
+  const newer: readonly string[] = [...PANEL_FLAGS, ...VTT_FLAGS];
   return {
     ...ctx,
-    flags: ctx.flags.filter(
-      (flag) => !(PANEL_FLAGS as readonly string[]).includes(flag),
+    flags: ctx.flags.filter((flag) => !newer.includes(flag)),
+    availableActions: ctx.availableActions.filter(
+      (action) => !VTT_ACTION_IDS.includes(action),
     ),
   };
 }
+export * from "./vtt";

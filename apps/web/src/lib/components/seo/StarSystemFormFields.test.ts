@@ -4,7 +4,7 @@ import { fireEvent, render, screen } from "@testing-library/svelte";
 import { describe, expect, it, vi } from "vitest";
 import StarSystemFormFields from "./StarSystemFormFields.svelte";
 
-vi.mock("$lib/services/seo/generator-engine", () => ({
+vi.mock("$lib/services/seo/generator-config", () => ({
   starSystemConfig: {
     systemTypes: ["Single Star", "Binary System"],
     genres: ["Hard Sci-Fi", "Cyberpunk"],

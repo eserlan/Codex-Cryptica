@@ -2,6 +2,9 @@
   import VTTModeToggle from "$lib/components/map/VTTModeToggle.svelte";
   import MapControlsFab from "$lib/components/map/MapControlsFab.svelte";
   import MapMaximizeToggle from "$lib/components/map/MapMaximizeToggle.svelte";
+  import MapCifButton from "$lib/components/map/MapCifButton.svelte";
+  import MapFogToggles from "$lib/components/map/MapFogToggles.svelte";
+  import MapBrushControls from "$lib/components/map/MapBrushControls.svelte";
   import LayerPanel from "$lib/components/map/LayerPanel.svelte";
   import { LAYER_OPTIONS } from "$lib/components/ui/LayerMenu.svelte";
   import {
@@ -76,6 +79,7 @@
         ? "Disable measurement tool"
         : "Measure: click on map to set start point, click again to set end point"}
       aria-label="Toggle measurement tool"
+      data-help-target="vtt-ruler-toggle"
     >
       <span
         class={`relative z-10 flex h-7 w-7 shrink-0 items-center justify-center rounded-full border transition-all duration-300 ${
@@ -127,6 +131,8 @@
         <MapMaximizeToggle />
       {/if}
 
+      <MapCifButton />
+
       <button
         type="button"
         class={`touch-target px-2.5 py-1.5 rounded-md text-micro font-bold uppercase tracking-wider transition-all ${getPrimaryButtonStateClass(sessionModeStore.sharedMode)}`}
@@ -136,6 +142,7 @@
           ? "Exit Shared Mode (Admin View)"
           : "Enter Shared Mode (Player Preview)"}
         data-testid="shared-mode-toggle"
+        data-help-target="vtt-player-view-toggle"
         aria-pressed={sessionModeStore.sharedMode}
         aria-label="Toggle player view mode"
       >
@@ -143,13 +150,7 @@
       </button>
 
       {#if mapStore.isGMMode}
-        <button
-          type="button"
-          class={`touch-target px-2.5 py-1.5 rounded-md text-micro font-bold uppercase tracking-wider transition-all ${getPrimaryButtonStateClass(mapStore.showFog)}`}
-          onclick={() => (mapStore.showFog = !mapStore.showFog)}
-        >
-          FOG: {mapStore.showFog ? "ON" : "OFF"}
-        </button>
+        <MapFogToggles />
 
         <button
           type="button"
@@ -195,11 +196,16 @@
           onclick={() => (mapStore.showGrid = !mapStore.showGrid)}
           oncontextmenu={openGridSettings}
           title="Toggle Grid (Right-click for settings)"
+          data-help-target="vtt-grid-button"
         >
           GRID: {mapStore.showGrid ? "ON" : "OFF"}
         </button>
 
-        <div class="relative" bind:this={layerPanelContainer}>
+        <div
+          class="relative"
+          bind:this={layerPanelContainer}
+          data-help-target="vtt-layer-control"
+        >
           <button
             type="button"
             class={`touch-target px-2.5 py-1.5 rounded-md transition-all flex items-center ${getPrimaryButtonStateClass(showLayerPanel)}`}
@@ -227,31 +233,7 @@
 
         <VTTModeToggle />
 
-        {#if mapStore.showFog}
-          <div class="flex items-center gap-2 px-2 max-sm:w-full">
-            <span
-              class="text-nano text-theme-muted font-bold tracking-tighter uppercase"
-              >Brush Size</span
-            >
-            <input
-              type="range"
-              min="10"
-              max="500"
-              bind:value={mapStore.brushRadius}
-              class="w-24 accent-theme-primary h-1 max-sm:h-6 max-sm:min-w-0 max-sm:flex-1"
-            />
-            <span class="text-nano text-theme-primary font-mono w-10 shrink-0"
-              >{mapStore.brushRadius}px</span
-            >
-          </div>
-
-          <div
-            class="hidden flex-col justify-center px-2 text-micro text-theme-muted/90 font-semibold italic leading-tight md:flex"
-          >
-            <span>Alt+Drag to Reveal</span>
-            <span>Alt+Shift+Drag to Hide</span>
-          </div>
-        {/if}
+        <MapBrushControls />
       {/if}
     </div>
   </div>

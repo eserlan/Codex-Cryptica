@@ -32,3 +32,13 @@ describe("promote-to-prod workflow IndexNow notification (#3164)", () => {
     expect(workflow).toContain("continue-on-error: true");
   });
 });
+
+describe("promote-to-prod staging run lookup", () => {
+  test("filters successful staging push runs before limiting the API results", () => {
+    expect(workflow).toContain(
+      '"repos/$GH_REPO/actions/workflows/deploy.yml/runs?branch=staging&status=success&event=push&per_page=1"',
+    );
+    expect(workflow).toContain(".workflow_runs[0].id // empty");
+    expect(workflow).not.toContain("--limit 50");
+  });
+});

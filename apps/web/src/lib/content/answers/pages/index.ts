@@ -14,8 +14,10 @@ import { howDoIGetMyRpgPartyToWorkTogether } from "./how-do-i-get-my-rpg-party-t
 import { howDoIGetPlayersToEngageWithMyCampaignWorld } from "./how-do-i-get-players-to-engage-with-my-campaign-world";
 import { howDoIGiveDifferentCivilisationsDistinctStrengthsAndWeaknesses } from "./how-do-i-give-different-civilisations-distinct-strengths-and-weaknesses";
 import { howDoIGiveSpecialistCharactersSpotlight } from "./how-do-i-give-specialist-characters-spotlight";
+import { howDoIHandleDivinationMagicWithoutLettingOneCharacterSolveEveryMystery } from "./how-do-i-handle-divination-magic-without-letting-one-character-solve-every-mystery";
 import { howDoIHandlePlayersAskingAnNpcToTellUsEverythingYouKnow } from "./how-do-i-handle-players-asking-an-npc-to-tell-us-everything-you-know";
 import { howDoIKeepPlayersEngagedDuringOtherPlayersTurnsInCombat } from "./how-do-i-keep-players-engaged-during-other-players-turns-in-combat";
+import { howDoIMakeACampaignThreatFeelUrgentWithoutRailroading } from "./how-do-i-make-a-campaign-threat-feel-urgent-without-railroading";
 import { howDoIMakeAPlayerBaseMatterInAnRpgCampaign } from "./how-do-i-make-a-player-base-matter-in-an-rpg-campaign";
 import { howDoIMakeCombatFasterWithoutMakingItLessExciting } from "./how-do-i-make-combat-faster-without-making-it-less-exciting";
 import { howDoIMakeDifferentCulturesFeelDistinctWithoutRelyingOnStereotypes } from "./how-do-i-make-different-cultures-feel-distinct-without-relying-on-stereotypes";
@@ -103,6 +105,7 @@ import { howMuchCampaignLoreShouldPlayersBeExpectedToRemember } from "./how-much
 import { howMuchOfThePlotShouldADmPrepare } from "./how-much-of-the-plot-should-a-dm-prepare";
 import { howMuchPrepDoYouNeedForAnRpgSession } from "./how-much-prep-do-you-need-for-an-rpg-session";
 import { howMuchRuleOfCoolShouldADmAllow } from "./how-much-rule-of-cool-should-a-dm-allow";
+import { howShouldAFantasyAdventuringGuildHandleWagesDuesAndSharedExpenses } from "./how-should-a-fantasy-adventuring-guild-handle-wages-dues-and-shared-expenses";
 import { howShouldMagicHaveBeenDiscoveredInMyWorld } from "./how-should-magic-have-been-discovered-in-my-world";
 import { howToCreateACyberpunkCityDistrict } from "./how-to-create-a-cyberpunk-city-district";
 import { howToCreateASciFiStarSystemForAnRpg } from "./how-to-create-a-sci-fi-star-system-for-an-rpg";
@@ -159,8 +162,10 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     howDoIGetPlayersToEngageWithMyCampaignWorld,
     howDoIGiveDifferentCivilisationsDistinctStrengthsAndWeaknesses,
     howDoIGiveSpecialistCharactersSpotlight,
+    howDoIHandleDivinationMagicWithoutLettingOneCharacterSolveEveryMystery,
     howDoIHandlePlayersAskingAnNpcToTellUsEverythingYouKnow,
     howDoIKeepPlayersEngagedDuringOtherPlayersTurnsInCombat,
+    howDoIMakeACampaignThreatFeelUrgentWithoutRailroading,
     howDoIMakeAPlayerBaseMatterInAnRpgCampaign,
     howDoIMakeCombatFasterWithoutMakingItLessExciting,
     howDoIMakeDifferentCulturesFeelDistinctWithoutRelyingOnStereotypes,
@@ -248,6 +253,7 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     howMuchOfThePlotShouldADmPrepare,
     howMuchPrepDoYouNeedForAnRpgSession,
     howMuchRuleOfCoolShouldADmAllow,
+    howShouldAFantasyAdventuringGuildHandleWagesDuesAndSharedExpenses,
     howShouldMagicHaveBeenDiscoveredInMyWorld,
     howToCreateACyberpunkCityDistrict,
     howToCreateASciFiStarSystemForAnRpg,

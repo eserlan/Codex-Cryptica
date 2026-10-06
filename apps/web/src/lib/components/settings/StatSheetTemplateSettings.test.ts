@@ -53,8 +53,11 @@ const {
   ],
 }));
 
-vi.mock("$lib/stores/stat-sheet-templates.svelte", () => ({
+vi.mock("$lib/stores/stat-sheet/built-in-templates", () => ({
   BUILT_IN_STAT_SHEET_TEMPLATES: BUILT_INS,
+}));
+
+vi.mock("$lib/stores/stat-sheet-templates.svelte", () => ({
   statSheetTemplates: {
     get templates() {
       return templatesState.templates;

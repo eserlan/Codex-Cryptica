@@ -73,6 +73,9 @@ jobs:
         id: deploy
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          # Without this Wrangler looks the account up through the API, which fails
+          # with a token that cannot list memberships.
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           # Optional override only. One Worker serves every environment, so the
           # CORS allowlist lives in DEFAULT_ALLOWED_ORIGINS (src/index.ts) and
           # every deploy is identical. Setting this per GitHub Environment is

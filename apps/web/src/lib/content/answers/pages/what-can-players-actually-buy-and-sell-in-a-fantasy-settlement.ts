@@ -152,6 +152,7 @@ export const whatCanPlayersActuallyBuyAndSellInAFantasySettlement: AnswerConfigI
       "how-do-i-turn-economic-pressures-into-rpg-adventure-hooks",
       "how-do-i-give-different-civilisations-distinct-strengths-and-weaknesses",
       "how-do-i-upgrade-a-player-characters-weapon-without-replacing-it",
+      "how-should-a-fantasy-adventuring-guild-handle-wages-dues-and-shared-expenses",
     ],
     discovery: {
       id: "answer-settlement-market-buy-sell",

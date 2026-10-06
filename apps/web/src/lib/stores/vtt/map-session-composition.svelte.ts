@@ -342,6 +342,14 @@ export function initializeMapSessionComposition(
     setGridSize: (value) => {
       store.deps.mapStore.gridSize = value;
     },
+    getGridType: () => store.deps.mapStore.gridType,
+    setGridType: (value) => {
+      store.deps.mapStore.gridType = value;
+    },
+    getShowHexCoordinates: () => store.deps.mapStore.showHexCoordinates,
+    setShowHexCoordinates: (value) => {
+      store.deps.mapStore.showHexCoordinates = value;
+    },
     getGridUnit: () => store.gridManager.gridUnit,
     setGridUnit: (value) => {
       store.gridManager.gridUnit = value;
