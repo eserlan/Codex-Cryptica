@@ -58,6 +58,10 @@
   }
 
   function actions(): string[] {
+    // The map route also renders an empty state with this surface mounted;
+    // none of the VTT panels or controls exist until a map is active.
+    if (!mapStore.activeMap) return [];
+
     const guest = sessionModeStore.isGuestMode;
     return reachableVttActions({
       guest,

@@ -5,6 +5,7 @@ import type { VttHelpFacts } from "help-engine";
 
 const mocks = vi.hoisted(() => ({
   mapStore: {
+    activeMap: { id: "map-1" } as { id: string } | null,
     isGMMode: true,
     showGrid: true,
     gridType: "hex-pointy",
@@ -51,6 +52,7 @@ import HelpVttMapSurface from "./HelpVttMapSurface.svelte";
 const facts = (): VttHelpFacts => helpSurfaces.vttMap!.facts();
 
 beforeEach(() => {
+  mocks.mapStore.activeMap = { id: "map-1" };
   mocks.mapStore.isGMMode = true;
   mocks.mapStore.gridType = "hex-pointy";
   mocks.mapSession.vttEnabled = true;
@@ -184,6 +186,15 @@ describe("HelpVttMapSurface actions", () => {
         "vtt-share-button",
       ]),
     );
+  });
+
+  it("offers no VTT actions when the map route has no active map", () => {
+    mocks.mapStore.activeMap = null;
+    render(HelpVttMapSurface);
+
+    expect(offered()).toEqual([]);
+    expect(helpSurfaces.vttMap!.openPanel("vtt-grid-settings")).toBe(false);
+    expect(mocks.mapSession.showGridSettings).toBe(false);
   });
 
   it("offers a player only the sidebar and what a player can see", () => {
