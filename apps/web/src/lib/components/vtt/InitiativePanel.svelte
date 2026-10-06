@@ -113,6 +113,7 @@
 
 <aside
   class={getPanelClass()}
+  data-help-target="vtt-initiative-panel"
   style:max-height={panelMaxHeight}
   role="presentation"
   onmousedown={(e) => e.stopPropagation()}

@@ -1,9 +1,12 @@
 <script lang="ts">
-  import type { VttHelpFacts } from "help-engine";
+  import type { VttHelpFacts, VttPanelId } from "help-engine";
   import { p2pHost } from "$lib/cloud-bridge/p2p/host-service.svelte";
   import { mapSession } from "$lib/stores/map-session.svelte";
   import { mapStore } from "$lib/stores/map.svelte";
+  import { reachableVttActions } from "$lib/services/help-assistant/vtt-help-actions";
   import { helpSurfaces } from "$lib/stores/help-assistant/help-surface.svelte";
+  import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
+  import { mapControlsUIStore } from "$lib/stores/ui/map-controls-ui.svelte";
   import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
 
   /**
@@ -54,5 +57,38 @@
     };
   }
 
-  $effect(() => helpSurfaces.registerVttMap({ facts }));
+  function actions(): string[] {
+    // The map route also renders an empty state with this surface mounted;
+    // none of the VTT panels or controls exist until a map is active.
+    if (!mapStore.activeMap) return [];
+
+    const guest = sessionModeStore.isGuestMode;
+    return reachableVttActions({
+      guest,
+      gm: mapStore.isGMMode && !guest,
+      vttOn: mapSession.vttEnabled,
+      combat: mapSession.mode === "combat",
+    });
+  }
+
+  /** Shows a panel. Only what is on screen changes; the session is left alone. */
+  function openPanel(panel: VttPanelId): boolean {
+    if (!actions().includes(panel)) return false;
+    switch (panel) {
+      case "vtt-sidebar":
+        layoutUIStore.toggleVttSidebar(false);
+        return true;
+      case "vtt-map-controls":
+        mapControlsUIStore.open = true;
+        return true;
+      case "vtt-grid-settings":
+        mapSession.showGridSettings = true;
+        return true;
+      case "vtt-encounters":
+        mapControlsUIStore.showEncounters = true;
+        return true;
+    }
+  }
+
+  $effect(() => helpSurfaces.registerVttMap({ facts, actions, openPanel }));
 </script>

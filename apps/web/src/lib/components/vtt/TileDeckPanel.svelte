@@ -264,6 +264,7 @@
 <section
   class="rounded-xl border border-theme-primary/20 bg-theme-bg/50"
   aria-labelledby="tile-decks-heading"
+  data-help-target="vtt-tile-decks"
 >
   <div class="border-b border-theme-primary/20 px-3 py-3">
     <h2

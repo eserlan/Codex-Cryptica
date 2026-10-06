@@ -1,4 +1,4 @@
-import type { VttHelpFacts } from "help-engine";
+import type { VttHelpFacts, VttPanelId } from "help-engine";
 
 /**
  * What the help assistant is allowed to know about the screen, and the few
@@ -34,6 +34,13 @@ export interface EntityDetailSurface {
  */
 export interface VttMapSurface {
   facts: () => VttHelpFacts;
+  /**
+   * The VTT panels and controls this user can reach right now. Role-aware: a
+   * player is never told about a GM control, so no guide is offered for it.
+   */
+  actions: () => string[];
+  /** Opens a panel. UI only: nothing in the session, a token or the fog changes. */
+  openPanel: (panel: VttPanelId) => boolean;
 }
 
 export class HelpSurfaceRegistry {
