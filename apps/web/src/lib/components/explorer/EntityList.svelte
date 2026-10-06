@@ -497,7 +497,10 @@
             <div
               class="flex items-center gap-2 p-2 border border-theme-border/50 bg-theme-surface/30 rounded-xl"
             >
-              <span class="icon-[lucide--plus] w-3 h-3 text-theme-muted"></span>
+              <span
+                aria-hidden="true"
+                class="icon-[lucide--plus] w-3 h-3 text-theme-muted"
+              ></span>
               <input
                 type="text"
                 bind:value={newChildTitle}

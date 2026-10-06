@@ -2,9 +2,73 @@ import { describe, it, expect } from "vitest";
 import {
   buildCaptureFromRoll,
   captureToEntryInput,
+  formatMapMove,
   JOURNAL_CAPTURE_LIMITS,
   type CapturableRoll,
 } from "../src/capture";
+
+describe("formatMapMove", () => {
+  it("formats a bounded coordinate entry with no names or vault text", () => {
+    const payload = formatMapMove({
+      mapId: "map-1",
+      toHex: { q: 4, r: 7 },
+      hexes: 3,
+      distance: 18,
+      unit: "mi",
+      revealed: 5,
+      showCoordinates: true,
+    });
+    expect(payload).toMatchObject({
+      entryType: "map-move",
+      content: "Moved 3 hexes (18 mi) to 04.07, revealing 5 new hexes.",
+    });
+    expect(payload.sourceRef).toEqual({
+      mapId: "map-1",
+      toHex: { q: 4, r: 7 },
+      hexes: 3,
+      distance: 18,
+      unit: "mi",
+      revealed: 5,
+    });
+    expect(captureToEntryInput(payload).ok).toBe(true);
+    expect(JSON.stringify(payload.sourceRef)).not.toMatch(/name|text/i);
+  });
+
+  it("omits hidden coordinates and zero-reveal wording", () => {
+    const payload = formatMapMove({
+      mapId: "map-1",
+      toHex: { q: 4, r: 7 },
+      hexes: 1,
+      distance: 6,
+      unit: "mi",
+      revealed: 0,
+      showCoordinates: false,
+    });
+    expect(payload.content).toBe("Moved 1 hex (6 mi).");
+    expect(payload.sourceRef).toMatchObject({ toHex: null, revealed: 0 });
+  });
+
+  it("uses singular wording and supports non-hex travel", () => {
+    const one = formatMapMove({
+      mapId: "map-1",
+      toHex: { q: 0, r: 0 },
+      hexes: 1,
+      distance: 6,
+      unit: "mi",
+      revealed: 0,
+    });
+    expect(one.content).toBe("Moved 1 hex (6 mi).");
+    const square = formatMapMove({
+      mapId: "map-1",
+      toHex: null,
+      hexes: null,
+      distance: 15,
+      unit: "mi",
+      revealed: 0,
+    });
+    expect(square.content).toBe("Moved 15 mi.");
+  });
+});
 
 const diceRoll = (over: Partial<CapturableRoll> = {}): CapturableRoll => ({
   total: 11,

@@ -1,4 +1,5 @@
 import {
+  CONSEQUENCE_KEYS,
   findSingleRouteClues,
   type PrepClueDraft,
   type PrepConsequences,
@@ -22,6 +23,29 @@ const CONSEQUENCE_LABELS: Record<keyof PrepConsequences, string> = {
   avoidance: "If they avoid it",
 };
 
+/** Maps each item to a line and keeps the non-empty ones, in a single pass. */
+function linesOf<T>(
+  items: readonly T[],
+  toLine: (item: T) => string,
+): string[] {
+  const lines: string[] = [];
+  for (const item of items) {
+    const line = toLine(item);
+    if (line) lines.push(line);
+  }
+  return lines;
+}
+
+/** Joins the non-empty values, without building a filtered copy. */
+function joinPresent(separator: string, values: readonly string[]): string {
+  let joined = "";
+  for (const value of values) {
+    if (!value) continue;
+    joined = joined ? `${joined}${separator}${value}` : value;
+  }
+  return joined;
+}
+
 function section(heading: string, lines: string[]): string[] {
   return lines.length ? [`## ${heading}\n${lines.join("\n")}`] : [];
 }
@@ -30,69 +54,65 @@ function textSection(heading: string, text: string): string[] {
   return oneLine(text) ? section(heading, [oneLine(text)]) : [];
 }
 
+function personLine(person: SessionPrep["people"][number]): string {
+  const name = oneLine(person.name);
+  if (!name) return "";
+  const details = joinPresent(" ", [
+    oneLine(person.wants) && `wants ${sentence(person.wants)}`,
+    oneLine(person.doesNext) && `Next: ${sentence(person.doesNext)}`,
+  ]);
+  return details ? `- **${name}:** ${details}` : `- **${name}**`;
+}
+
+function placeLine(place: SessionPrep["places"][number]): string {
+  const name = oneLine(place.name);
+  if (!name) return "";
+  const detail = oneLine(place.detail);
+  return detail ? `- **${name}:** ${detail}` : `- **${name}**`;
+}
+
+function clueLine(
+  clue: SessionPrep["information"][number],
+  bottlenecks: ReadonlySet<string>,
+): string {
+  if (!oneLine(clue.fact)) return "";
+  const routes = joinPresent("; ", clue.routes.map(oneLine));
+  const tag = clue.critical
+    ? bottlenecks.has(clue.id)
+      ? " (needed, only one route)"
+      : " (needed)"
+    : "";
+  // Never "**fact**: routes": the shared renderer turns that into a label block.
+  return `- **${sentence(clue.fact)}**${tag}${routes ? ` Found by: ${routes}` : ""}`;
+}
+
+// A plain "- Label: text" line would be restyled as a label block by the
+// shared generator renderer, so bold the label like every other line.
+function noteLine(note: SessionPrep["reserve"][number]): string {
+  const line = oneLine(note.text);
+  return line ? `- ${line.replace(/^([^:*]{1,60}): /, "**$1:** ")}` : "";
+}
+
 /** The table-facing view: only what the GM needs to see during play. */
 export function toRunSheetMarkdown(prep: SessionPrep): string {
   const bottlenecks = new Set(findSingleRouteClues(prep).map((c) => c.id));
-
-  const people = prep.people
-    .filter((person) => oneLine(person.name))
-    .map((person) => {
-      const parts = [
-        oneLine(person.wants) && `wants ${sentence(person.wants)}`,
-        oneLine(person.doesNext) && `Next: ${sentence(person.doesNext)}`,
-      ].filter(Boolean);
-      return parts.length
-        ? `- **${oneLine(person.name)}:** ${parts.join(" ")}`
-        : `- **${oneLine(person.name)}**`;
-    });
-
-  const places = prep.places
-    .filter((place) => oneLine(place.name))
-    .map((place) =>
-      oneLine(place.detail)
-        ? `- **${oneLine(place.name)}:** ${oneLine(place.detail)}`
-        : `- **${oneLine(place.name)}**`,
-    );
-
-  const information = prep.information
-    .filter((clue) => oneLine(clue.fact))
-    .map((clue) => {
-      const routes = clue.routes.map(oneLine).filter(Boolean);
-      const tag = clue.critical
-        ? bottlenecks.has(clue.id)
-          ? " (needed, only one route)"
-          : " (needed)"
-        : "";
-      // Never "**fact**: routes": the shared renderer turns that into a label block.
-      return `- **${sentence(clue.fact)}**${tag}${routes.length ? ` Found by: ${routes.join("; ")}` : ""}`;
-    });
-
-  // A plain "- Label: text" line would be restyled as a label block by the
-  // shared generator renderer, so bold the label like every other line.
-  const notes = (items: SessionPrep["reserve"]) =>
-    items
-      .map((note) => oneLine(note.text))
-      .filter(Boolean)
-      .map((line) => `- ${line.replace(/^([^:*]{1,60}): /, "**$1:** ")}`);
-
-  const consequences = (
-    Object.keys(CONSEQUENCE_LABELS) as (keyof PrepConsequences)[]
-  )
-    .filter((key) => oneLine(prep.consequences[key]))
-    .map(
-      (key) =>
-        `- **${CONSEQUENCE_LABELS[key]}:** ${oneLine(prep.consequences[key])}`,
-    );
+  const consequences = linesOf(CONSEQUENCE_KEYS, (key) => {
+    const text = oneLine(prep.consequences[key]);
+    return text ? `- **${CONSEQUENCE_LABELS[key]}:** ${text}` : "";
+  });
 
   return [
     ...textSection("Open", prep.start),
     ...textSection("Pressure", prep.pressure),
-    ...section("People", people),
-    ...section("Places", places),
-    ...section("Information", information),
-    ...section("Complications", notes(prep.complications)),
+    ...section("People", linesOf(prep.people, personLine)),
+    ...section("Places", linesOf(prep.places, placeLine)),
+    ...section(
+      "Information",
+      linesOf(prep.information, (clue) => clueLine(clue, bottlenecks)),
+    ),
+    ...section("Complications", linesOf(prep.complications, noteLine)),
     ...section("Consequences", consequences),
-    ...section("Reserve", notes(prep.reserve)),
+    ...section("Reserve", linesOf(prep.reserve, noteLine)),
   ].join("\n\n");
 }
 
@@ -109,25 +129,21 @@ export function describeSuggestionOption(
       return oneLine(option as string);
     case "people": {
       const person = option as PrepPersonDraft;
-      return [
+      return joinPresent(", ", [
         oneLine(person.name),
         oneLine(person.wants) && `wants ${oneLine(person.wants)}`,
         oneLine(person.doesNext) && `next: ${oneLine(person.doesNext)}`,
-      ]
-        .filter(Boolean)
-        .join(", ");
+      ]);
     }
     case "places": {
       const place = option as PrepPlaceDraft;
-      return [oneLine(place.name), oneLine(place.detail)]
-        .filter(Boolean)
-        .join(": ");
+      return joinPresent(": ", [oneLine(place.name), oneLine(place.detail)]);
     }
     case "information": {
       const clue = option as PrepClueDraft;
-      const routes = clue.routes.map(oneLine).filter(Boolean);
-      return routes.length
-        ? `${oneLine(clue.fact)} (found by: ${routes.join("; ")})`
+      const routes = joinPresent("; ", clue.routes.map(oneLine));
+      return routes
+        ? `${oneLine(clue.fact)} (found by: ${routes})`
         : oneLine(clue.fact);
     }
     case "complications":
@@ -135,10 +151,14 @@ export function describeSuggestionOption(
       return oneLine((option as PrepNoteDraft).text);
     case "consequences": {
       const set = option as PrepConsequences;
-      return (Object.keys(CONSEQUENCE_LABELS) as (keyof PrepConsequences)[])
-        .filter((key) => oneLine(set[key]))
-        .map((key) => `${CONSEQUENCE_LABELS[key]}: ${oneLine(set[key])}`)
-        .join(" / ");
+      return joinPresent(
+        " / ",
+        CONSEQUENCE_KEYS.map((key) =>
+          oneLine(set[key])
+            ? `${CONSEQUENCE_LABELS[key]}: ${oneLine(set[key])}`
+            : "",
+        ),
+      );
     }
   }
 }

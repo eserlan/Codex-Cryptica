@@ -10,7 +10,9 @@ export const SESSION_JOURNAL_CAPTURE_LISTENER = "session-journal-capture";
 
 /** The slice of `SessionJournalStore` the listener needs. */
 export interface JournalCaptureTarget {
-  readonly current: { id: string; vaultId: string; status: string } | undefined;
+  readonly current:
+    | { id: string; vaultId: string; status: string; captureMapMoves?: boolean }
+    | undefined;
   readonly activeSectionId: string | undefined;
   appendEntry(entry: JournalEntryInput): Promise<unknown>;
 }
@@ -77,6 +79,11 @@ export class SessionJournalCapture {
     if (event.metadata?.remote) return;
     const journal = this.store.current;
     if (journal?.status !== "active") return;
+    if (
+      event.payload.entryType === "map-move" &&
+      journal.captureMapMoves === false
+    )
+      return;
 
     const result = captureToEntryInput(
       event.payload,
@@ -102,6 +109,7 @@ export class SessionJournalCapture {
       current?.status !== "active" ||
       current.id !== journalId ||
       current.vaultId !== vaultId ||
+      (input.type === "map-move" && current.captureMapMoves === false) ||
       !this.isCaptureAllowed()
     ) {
       return;

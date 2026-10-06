@@ -156,7 +156,10 @@
             }}
             class="px-4 py-2 bg-theme-primary text-theme-bg font-bold text-micro rounded uppercase font-header tracking-widest hover:bg-theme-secondary transition-colors shrink-0 flex items-center gap-1.5 cursor-pointer"
           >
-            <span class="icon-[lucide--external-link] w-3.5 h-3.5"></span>
+            <span
+              aria-hidden="true"
+              class="icon-[lucide--external-link] w-3.5 h-3.5"
+            ></span>
             Open {delveCanvasLabel}
           </button>
           <button
@@ -175,7 +178,8 @@
             onclick={handleBuildDelveCanvas}
             class="px-4 py-2 bg-theme-primary text-theme-bg font-bold text-micro rounded uppercase font-header tracking-widest hover:bg-theme-secondary transition-colors shrink-0 flex items-center gap-1.5 cursor-pointer"
           >
-            <span class="icon-[lucide--map] w-3.5 h-3.5"></span>
+            <span aria-hidden="true" class="icon-[lucide--map] w-3.5 h-3.5"
+            ></span>
             Build {delveCanvasLabel}
           </button>
         {/if}
@@ -214,7 +218,7 @@
               goto("/map");
             }}
           >
-            <span class="icon-[lucide--map] w-3 h-3"></span>
+            <span aria-hidden="true" class="icon-[lucide--map] w-3 h-3"></span>
             VIEW MAP
           </button>
         </div>
@@ -263,7 +267,10 @@
       <div
         class="w-12 h-12 rounded-full bg-theme-primary/10 flex items-center justify-center mx-auto mb-4"
       >
-        <span class="icon-[lucide--map-pin] text-theme-primary w-6 h-6"></span>
+        <span
+          aria-hidden="true"
+          class="icon-[lucide--map-pin] text-theme-primary w-6 h-6"
+        ></span>
       </div>
       <h4
         class="text-xs font-bold text-theme-text mb-2 uppercase font-header tracking-tight"

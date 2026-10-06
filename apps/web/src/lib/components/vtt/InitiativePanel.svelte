@@ -189,7 +189,10 @@
                 title="Ping token on map"
                 type="button"
               >
-                <span class="icon-[lucide--radar] w-3.5 h-3.5"></span>
+                <span
+                  aria-hidden="true"
+                  class="icon-[lucide--radar] w-3.5 h-3.5"
+                ></span>
               </button>
               {#if token?.entityId && mapSession.canViewToken(entry.tokenId, mapSession.myPeerId, mapStore.isGMMode)}
                 <button
@@ -202,7 +205,10 @@
                   title="Look at {token.name}"
                   type="button"
                 >
-                  <span class="icon-[lucide--book-open] w-3.5 h-3.5"></span>
+                  <span
+                    aria-hidden="true"
+                    class="icon-[lucide--book-open] w-3.5 h-3.5"
+                  ></span>
                 </button>
               {/if}
               <button

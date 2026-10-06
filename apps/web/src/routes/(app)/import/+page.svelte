@@ -6,13 +6,18 @@
   <title>Codex Cryptica | Archive Importer</title>
 </svelte:head>
 
-<div class="min-h-screen bg-theme-bg p-4 md:p-8 w-full font-body flex flex-col">
+<div
+  class="min-h-full shrink-0 w-full bg-theme-bg p-4 md:p-8 font-body flex flex-col"
+>
   <div class="mb-8 border-b border-theme-border pb-6 shrink-0">
     <div class="flex items-center gap-4 mb-4">
       <div
         class="w-10 h-10 md:w-12 md:h-12 bg-theme-primary/10 rounded-xl flex items-center justify-center text-theme-primary"
       >
-        <span class="icon-[lucide--folder-input] w-5 h-5 md:w-6 md:h-6"></span>
+        <span
+          aria-hidden="true"
+          class="icon-[lucide--folder-input] w-5 h-5 md:w-6 md:h-6"
+        ></span>
       </div>
       <div>
         <h1

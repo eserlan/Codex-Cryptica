@@ -13,7 +13,14 @@ function fakeStore(overrides: Record<string, unknown> = {}) {
       id: "journal-1",
       vaultId: "vault-1",
       status: "active",
-    } as { id: string; vaultId: string; status: string } | undefined,
+    } as
+      | {
+          id: string;
+          vaultId: string;
+          status: string;
+          captureMapMoves?: boolean;
+        }
+      | undefined,
     activeSectionId: undefined as string | undefined,
     appendEntry: vi.fn(async (input: any) => {
       appended.push(input);
@@ -82,6 +89,52 @@ describe("SessionJournalCapture", () => {
     ]);
   });
 
+  it("honours the map capture switch without affecting dice capture", async () => {
+    const { store, appended } = fakeStore({
+      current: {
+        id: "journal-1",
+        vaultId: "vault-1",
+        status: "active",
+        captureMapMoves: false,
+      },
+    });
+    make(store);
+    publish(bus, { entryType: "map-move", content: "Moved 1 hex (6 mi)." });
+    publish(bus, { entryType: "dice-roll", content: "Rolled 1d20: 14" });
+    await flush();
+    expect(appended).toEqual([expect.objectContaining({ type: "dice-roll" })]);
+  });
+
+  it("honours turning map capture off while a map move waits in the save queue", async () => {
+    let releaseFirstWrite!: () => void;
+    const firstWrite = new Promise<void>((resolve) => {
+      releaseFirstWrite = resolve;
+    });
+    const { store, appended } = fakeStore({
+      appendEntry: vi.fn(async (input: any) => {
+        if (input.content === "slow dice") await firstWrite;
+        appended.push(input);
+      }),
+    });
+    make(store);
+
+    publish(bus, { entryType: "dice-roll", content: "slow dice" });
+    publish(bus, { entryType: "map-move", content: "Moved 1 hex (6 mi)." });
+    store.current!.captureMapMoves = false;
+    releaseFirstWrite();
+    await flush();
+
+    expect(appended).toEqual([expect.objectContaining({ type: "dice-roll" })]);
+  });
+
+  it("captures map moves by default when the field is absent", async () => {
+    const { store, appended } = fakeStore();
+    make(store);
+    publish(bus, { entryType: "map-move", content: "Moved 1 hex (6 mi)." });
+    await flush();
+    expect(appended[0].type).toBe("map-move");
+  });
+
   it("puts the entry in the store's current section (FR-032)", async () => {
     const { store, appended } = fakeStore({ activeSectionId: "s1" });
     make(store);
@@ -106,7 +159,7 @@ describe("SessionJournalCapture", () => {
     for (let i = 1; i <= 10; i++) {
       publish(bus, { entryType: "dice-roll", content: String(i) });
     }
-    await new Promise((r) => setTimeout(r, 60));
+    await vi.waitFor(() => expect(saved).toHaveLength(10));
 
     expect(saved.map((e) => e.content)).toEqual(
       Array.from({ length: 10 }, (_, i) => String(i + 1)),

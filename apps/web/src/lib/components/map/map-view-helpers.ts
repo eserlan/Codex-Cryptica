@@ -8,6 +8,62 @@ import {
 import { measureDistance } from "$lib/utils/vtt-helpers";
 import type { GridType } from "$lib/stores/map.svelte";
 
+export function hashToColor(input: string): string {
+  let hash = 0;
+  for (let i = 0; i < input.length; i++) {
+    hash = (hash << 5) - hash + input.charCodeAt(i);
+    hash |= 0;
+  }
+  return `hsl(${Math.abs(hash) % 360} 75% 55%)`;
+}
+
+export function mapAssetSignature(
+  activeMap: {
+    id: string;
+    assetPath: string;
+    dimensions: { width: number; height: number };
+  } | null,
+): string | null {
+  return activeMap
+    ? `${activeMap.id}:${activeMap.assetPath}:${activeMap.dimensions.width}x${activeMap.dimensions.height}`
+    : null;
+}
+
+export function resolveRemoteMeasurement(
+  measurement: {
+    start: Point | null;
+    end: Point | null;
+    peerId: string;
+  } | null,
+  grid: {
+    gridType: GridType;
+    gridSize: number;
+    gridDistance: number;
+    gridUnit: string;
+    gridOffsetX: number;
+    gridOffsetY: number;
+  },
+) {
+  if (!measurement?.start || !measurement.end) return null;
+  return {
+    start: measurement.start,
+    end: measurement.end,
+    label: formatMeasurementLabel(measurement.start, measurement.end, grid),
+    color: hashToColor(measurement.peerId),
+    peerId: measurement.peerId,
+  };
+}
+
+export function visionRevealSignature(
+  tokens: readonly { id: string; x: number; y: number }[],
+  ...context: (string | number | boolean | null)[]
+): string {
+  return [
+    tokens.map((token) => `${token.id}:${token.x}:${token.y}`).join("|"),
+    ...context,
+  ].join(":");
+}
+
 export interface PanZoomUpdate {
   pan: Point;
   zoom: number;

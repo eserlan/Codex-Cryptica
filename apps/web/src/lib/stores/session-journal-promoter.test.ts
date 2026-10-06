@@ -83,6 +83,33 @@ const ask = (
   });
 
 describe("SessionJournalPromoter", () => {
+  it("promotes a map move's human-readable content without sourceRef internals", async () => {
+    const { promoter, deps } = make();
+    await promoter.promote(
+      {
+        ...journal,
+        entries: [
+          {
+            id: "map-move",
+            timestamp: 40,
+            type: "map-move",
+            content: "Moved 1 hex (6 mi) to 04.07.",
+            sourceRef: { mapId: "secret-map-id", toHex: { q: 4, r: 7 } },
+          },
+        ],
+      },
+      { kind: "entry", entryId: "map-move" },
+      {
+        type: "note",
+        title: "Known road",
+        formatTime,
+      },
+    );
+    const data = (deps.createEntity.mock.calls[0] as any[])[2];
+    expect(data.content).toContain("Moved 1 hex (6 mi) to 04.07.");
+    expect(data.content).not.toContain("secret-map-id");
+  });
+
   it.each([
     [
       { kind: "entry", entryId: "e1" } as PromotionScope,

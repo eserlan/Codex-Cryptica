@@ -26,7 +26,7 @@ function controlIsOnScreen(
 ): boolean {
   const spec = CONTROL_CATALOGUE[target];
   if (spec.area !== ctx.area) return false;
-  if (spec.requiresFlag && !ctx.flags.includes(spec.requiresFlag)) return false;
+  if (!controlFlagsAllow(spec, ctx)) return false;
   if (ctx.availableActions.includes(target)) return true;
   // A control inside a panel is reachable when the step before it opens that
   // panel, which is how "open Status, then highlight Add" is one guide.
@@ -34,6 +34,16 @@ function controlIsOnScreen(
     previous?.type === "openPanel" &&
     spec.panel !== undefined &&
     spec.panel === previous.panel
+  );
+}
+
+function controlFlagsAllow(
+  spec: (typeof CONTROL_CATALOGUE)[ControlId],
+  ctx: HelpContext,
+): boolean {
+  return (
+    (!spec.requiresFlag || ctx.flags.includes(spec.requiresFlag)) &&
+    (!spec.requiresNoFlag || !ctx.flags.includes(spec.requiresNoFlag))
   );
 }
 

@@ -6,6 +6,7 @@ import {
   moveEntry as engineMoveEntry,
   renameSection as engineRenameSection,
   startOrResumeJournal,
+  setCaptureMapMoves as engineSetCaptureMapMoves,
   updateEntryContent as engineUpdateEntryContent,
 } from "session-journal-engine";
 import type { MoveEntryDirection } from "session-journal-engine";
@@ -233,6 +234,14 @@ export class SessionJournalStore {
       return result.journal;
     });
     return created!;
+  }
+
+  /** Toggles map move capture for the active journal only. */
+  async setCaptureMapMoves(on: boolean): Promise<void> {
+    if (!this.current || this.current.status !== "active") return;
+    await this.mutateLatest(this.current.id, (latest) =>
+      engineSetCaptureMapMoves(latest, on),
+    );
   }
 
   /**

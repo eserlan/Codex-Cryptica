@@ -117,11 +117,51 @@ describe("validating VTT guides", () => {
       ),
     ).toEqual(show);
   });
+
+  it("offers the travel readout only when solo fog is enabled", () => {
+    const showTravel = {
+      type: "openPanel",
+      panel: "vtt-map-controls",
+      label: "Show me the travel readout",
+      then: {
+        type: "highlight",
+        target: "vtt-travel-readout",
+        label: "Travel readout",
+      },
+    } as const;
+    expect(
+      validateAction(
+        showTravel,
+        map(
+          ["vtt-fog-on", "vtt-solo-fog"],
+          ["vtt-map-controls", "vtt-travel-readout"],
+        ),
+        deps,
+      ),
+    ).toEqual(showTravel);
+    expect(
+      validateAction(
+        showTravel,
+        map([], ["vtt-map-controls", "vtt-travel-readout"]),
+        deps,
+      ),
+    ).toBeNull();
+    expect(
+      validateAction(
+        showTravel,
+        map(
+          ["vtt-fog-on", "vtt-solo-fog", "vtt-guest"],
+          ["vtt-map-controls", "vtt-travel-readout"],
+        ),
+        deps,
+      ),
+    ).toBeNull();
+  });
 });
 
 describe("the VTT actions in the registry", () => {
   const vtt = FEATURE_REGISTRY.find((feature) => feature.id === "vtt-map")!;
-  const gm = map(["vtt-on", "vtt-combat"], [...VTT_ACTION_IDS]);
+  const gm = map(["vtt-on", "vtt-combat", "vtt-solo-fog"], [...VTT_ACTION_IDS]);
   const player = map(
     ["vtt-on", "vtt-combat", "vtt-guest"],
     ["vtt-sidebar", "vtt-initiative-panel"],
@@ -165,6 +205,7 @@ describe("the VTT actions in the registry", () => {
         "vtt.show-initiative",
         "vtt.show-share",
         "vtt.show-fog",
+        "vtt.show-travel-readout",
       ]),
     );
   });

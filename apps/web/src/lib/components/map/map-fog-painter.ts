@@ -7,6 +7,7 @@ import {
 } from "./hex-fog-stroke";
 import { hexToPoint, pointToHex, type HexCoord } from "map-engine";
 import type { GridType } from "$lib/stores/map.svelte";
+import { MaskUndoRecorder } from "./mask-undo-recorder";
 
 export interface MapFogPainterDeps {
   mapStore: {
@@ -33,26 +34,16 @@ export interface MapFogPainterDeps {
   createCanvas: () => HTMLCanvasElement;
 }
 
-function copyCanvas(
-  source: HTMLCanvasElement,
-  createCanvas: () => HTMLCanvasElement,
-) {
-  const canvas = createCanvas();
-  canvas.width = source.width;
-  canvas.height = source.height;
-  if (source.width > 0 && source.height > 0) {
-    canvas.getContext("2d")?.drawImage(source, 0, 0);
-  }
-  return canvas;
-}
-
 export class MapFogPainter {
   private maskSnapshot: HTMLCanvasElement | null = null;
   private lastPaintImgCoords: Point | null = null;
   private activeMapId: string | null = null;
   private painting = false;
+  private undoRecorder: MaskUndoRecorder;
 
-  constructor(private deps: MapFogPainterDeps) {}
+  constructor(private deps: MapFogPainterDeps) {
+    this.undoRecorder = new MaskUndoRecorder(deps);
+  }
 
   get isPainting() {
     return this.painting;
@@ -68,7 +59,7 @@ export class MapFogPainter {
 
     this.painting = true;
     this.activeMapId = activeMapId;
-    this.maskSnapshot = copyCanvas(maskCanvas, this.deps.createCanvas);
+    this.maskSnapshot = this.undoRecorder.snapshot();
     this.lastPaintImgCoords = this.deps.mapStore.unproject(point);
 
     this.paintAt(point, isHiding);
@@ -95,7 +86,7 @@ export class MapFogPainter {
       return false;
     }
 
-    this.pushMaskUndo(maskCanvas, currentMapId, this.maskSnapshot);
+    this.undoRecorder.commit("Map Drawing", this.maskSnapshot);
 
     await this.deps.mapStore.saveMask(maskCanvas);
     this.reset();
@@ -160,43 +151,6 @@ export class MapFogPainter {
     this.lastPaintImgCoords = currentCoords;
   }
 
-  private pushMaskUndo(
-    maskCanvas: HTMLCanvasElement,
-    currentMapId: string,
-    snapshotBefore: HTMLCanvasElement | null,
-  ) {
-    const snapshotAfter = copyCanvas(maskCanvas, this.deps.createCanvas);
-    const applySnapshot = async (snapshot: HTMLCanvasElement | null) => {
-      const liveMaskCanvas = this.deps.getMaskCanvas();
-
-      if (
-        snapshot &&
-        liveMaskCanvas &&
-        this.deps.mapStore.activeMapId === currentMapId
-      ) {
-        const ctx = liveMaskCanvas.getContext("2d");
-        if (ctx) {
-          ctx.clearRect(0, 0, liveMaskCanvas.width, liveMaskCanvas.height);
-          if (snapshot.width > 0 && snapshot.height > 0) {
-            ctx.drawImage(snapshot, 0, 0);
-          }
-          await this.deps.mapStore.saveMask(liveMaskCanvas);
-        }
-      }
-    };
-
-    this.deps.oracle.pushUndoAction(
-      "Map Drawing",
-      async () => {
-        await applySnapshot(snapshotBefore);
-      },
-      undefined,
-      async () => {
-        await applySnapshot(snapshotAfter);
-      },
-    );
-  }
-
   /**
    * The hex under an image-space point and whether it is currently fogged, or
    * null when there is no hex grid, no mask, or the hex lies off the mask.
@@ -219,20 +173,24 @@ export class MapFogPainter {
   }
 
   /**
-   * Whether the map is revealed at an image-space point. True when there is no
-   * mask to read or the point lies off it, so a missing mask never hides anything.
+   * Whether the map is revealed at an image-space point. Unknown mask state is
+   * treated as fogged; a point outside the map image is not covered by fog.
    */
   isRevealedAt(imgPoint: Point): boolean {
     const maskCanvas = this.deps.getMaskCanvas();
     const ctx = maskCanvas?.getContext("2d");
-    if (!maskCanvas || !ctx) return true;
+    if (!maskCanvas || !ctx) return false;
 
     const x = Math.floor(imgPoint.x + maskCanvas.width / 2);
     const y = Math.floor(imgPoint.y + maskCanvas.height / 2);
     if (x < 0 || y < 0 || x >= maskCanvas.width || y >= maskCanvas.height) {
       return true;
     }
-    return ctx.getImageData(x, y, 1, 1).data[3] > 127;
+    try {
+      return ctx.getImageData(x, y, 1, 1).data[3] > 127;
+    } catch {
+      return false;
+    }
   }
 
   /** Reveal (isHiding false) or fog (true) exactly one hex, as one undo step. */
@@ -243,9 +201,9 @@ export class MapFogPainter {
     const ctx = maskCanvas?.getContext("2d");
     if (this.painting || !config || !maskCanvas || !mapId || !ctx) return false;
 
-    const before = copyCanvas(maskCanvas, this.deps.createCanvas);
+    const before = this.undoRecorder.snapshot();
     punchHexFogCell(ctx, maskCanvas, hex, config, isHiding);
-    this.pushMaskUndo(maskCanvas, mapId, before);
+    this.undoRecorder.commit("Map Drawing", before);
     await this.deps.mapStore.saveMask(maskCanvas);
     return true;
   }

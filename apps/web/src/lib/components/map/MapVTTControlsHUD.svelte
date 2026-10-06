@@ -4,6 +4,7 @@
   import MapMaximizeToggle from "$lib/components/map/MapMaximizeToggle.svelte";
   import MapCifButton from "$lib/components/map/MapCifButton.svelte";
   import MapFogToggles from "$lib/components/map/MapFogToggles.svelte";
+  import MapVisionControls from "$lib/components/map/MapVisionControls.svelte";
   import MapBrushControls from "$lib/components/map/MapBrushControls.svelte";
   import LayerPanel from "$lib/components/map/LayerPanel.svelte";
   import { LAYER_OPTIONS } from "$lib/components/ui/LayerMenu.svelte";
@@ -163,23 +164,7 @@
           VISION: {mapStore.visionMode === "selected" ? "SELECTED" : "PARTY"}
         </button>
 
-        <div class="flex items-center gap-2 px-2 max-sm:w-full">
-          <span
-            class="text-nano text-theme-muted font-bold tracking-tighter uppercase"
-            >Vision Range</span
-          >
-          <input
-            type="range"
-            min="5"
-            max="300"
-            step="5"
-            bind:value={mapStore.visionRange}
-            class="w-24 accent-theme-primary h-1 max-sm:h-6 max-sm:min-w-0 max-sm:flex-1"
-          />
-          <span class="text-nano text-theme-primary font-mono w-10 shrink-0"
-            >{mapStore.visionRange}{mapSession.gridUnit}</span
-          >
-        </div>
+        <MapVisionControls />
 
         <button
           type="button"

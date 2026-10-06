@@ -58,6 +58,7 @@ The bar along the bottom of the map has **PLAYER VIEW**, **FOG**, **VISION**, **
 - [Tokens, Players & Permissions](/help#help/vtt-tokens)
 - [Initiative, Combat & Encounters](/help#help/vtt-combat-initiative)
 - [Fog, Player View & Solo Play](/help#help/vtt-fog-player-view)
+- [Solo Map Play](/help#help/vtt-solo-play)
 - [Grids & Measurement](/help#help/vtt-grids-measurement)
 - [Tile Decks, Layers & Map Notes](/help#help/vtt-tiles-layers-notes)
 - [Multiplayer, Chat & Voice](/help#help/vtt-multiplayer)

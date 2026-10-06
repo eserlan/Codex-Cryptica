@@ -170,6 +170,24 @@
     }
   });
 
+  let routeContentEl = $state<HTMLElement>();
+
+  $effect(() => {
+    // When navigating to a new route, if focus is on document.body, focus the
+    // route content container so PageDown, Space, and arrow keys scroll it immediately.
+    const _path = page.url.pathname;
+    if (browser && routeContentEl) {
+      requestAnimationFrame(() => {
+        if (
+          routeContentEl &&
+          (!document.activeElement || document.activeElement === document.body)
+        ) {
+          routeContentEl.focus({ preventScroll: true });
+        }
+      });
+    }
+  });
+
   $effect(() => {
     serviceWorkerSession?.setVaultSessionActive(isVaultCacheSessionActive());
   });
@@ -679,6 +697,7 @@
     searchStore,
     modalUIStore,
     quickNoteStore,
+    oracle,
   });
 </script>
 
@@ -727,7 +746,9 @@
         <!-- Tailwind provides this utility; Fallow cannot resolve generated v4 classes here. -->
         <!-- fallow-ignore-next-line css-broken-reference -->
         <div
-          class="min-h-0 min-w-0 flex-1 flex flex-col h-full overflow-y-auto"
+          bind:this={routeContentEl}
+          class="min-h-0 min-w-0 flex-1 flex flex-col h-full overflow-y-auto outline-none"
+          tabindex="-1"
           inert={(isEntityExplorerWorkspace &&
             !!layoutUIStore.focusedEntityId) ||
             undefined}
