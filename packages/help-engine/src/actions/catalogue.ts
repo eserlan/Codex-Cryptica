@@ -93,11 +93,39 @@ export type ControlId = (typeof CONTROL_IDS)[number];
 export const PANEL_FLAGS = ["explorer-open", "shelf-open"] as const;
 export type PanelFlag = (typeof PANEL_FLAGS)[number];
 
+/**
+ * Facts about the map and VTT the user is looking at. Each is a yes/no about
+ * the user's own state, never a name, ID or piece of content, and they are
+ * only ever reported for the user's own view (a player's description never
+ * mentions anything the GM is hiding from them).
+ */
+export const VTT_FLAGS = [
+  "vtt-on",
+  "vtt-combat",
+  "vtt-guest",
+  "vtt-player-view",
+  "vtt-grid-square",
+  "vtt-grid-hex",
+  "vtt-fog-on",
+  "vtt-token-selected",
+  "vtt-token-linked",
+  "vtt-token-manageable",
+  "vtt-layer-terrain",
+  "vtt-layer-furniture",
+  "vtt-layer-tokens",
+  "vtt-has-initiative",
+  "vtt-can-advance-turn",
+  "vtt-hosting",
+  "vtt-measuring",
+] as const;
+export type VttFlag = (typeof VTT_FLAGS)[number];
+
 /** Material flags a screen description may carry. */
 export const HELP_FLAGS = [
   "generators",
   "connections-editable",
   ...PANEL_FLAGS,
+  ...VTT_FLAGS,
 ] as const;
 export type HelpFlag = (typeof HELP_FLAGS)[number];
 
