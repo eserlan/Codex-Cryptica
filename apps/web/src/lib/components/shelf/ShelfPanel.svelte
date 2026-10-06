@@ -22,11 +22,11 @@
   // import on an entry that no longer exists.
   // ⚡ Bolt Optimization: Replace chained array operations inside $effect with imperative loop
   $effect(() => {
-    const live = new Set();
+    const live = new Set<string>();
     for (const entry of shelf.entries) {
       live.add(entry.id);
     }
-    const pruned = new Set();
+    const pruned = new Set<string>();
     for (const id of selected) {
       if (live.has(id)) {
         pruned.add(id);
