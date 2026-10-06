@@ -15,6 +15,8 @@ export interface VttHelpFacts {
   playerView: boolean;
   grid: "none" | "square" | "hex";
   fogOn: boolean;
+  /** The GM has fog drawn solid, as players see it, to play their own map. */
+  soloFog: boolean;
   /** A token the user can see is selected. */
   tokenSelected: boolean;
   /** That token is linked to an entity the user can open. */
@@ -43,6 +45,7 @@ function alwaysFlags(facts: VttHelpFacts): VttFlag[] {
     [facts.grid === "square", "vtt-grid-square"],
     [facts.grid === "hex", "vtt-grid-hex"],
     [facts.fogOn, "vtt-fog-on"],
+    [facts.fogOn && facts.soloFog, "vtt-solo-fog"],
     [facts.measuring, "vtt-measuring"],
   ]);
 }
@@ -142,7 +145,13 @@ export function describeVttSituation(flags: readonly string[]): string[] {
       ? "the GM is previewing Player View, so GM controls are off"
       : "",
     gridPhrase(has),
-    either(has("vtt-fog-on"), "fog is on", "fog is off"),
+    either(
+      has("vtt-fog-on"),
+      has("vtt-solo-fog")
+        ? "fog is on and drawn solid, as players see it (solo play)"
+        : "fog is on",
+      "fog is off",
+    ),
     has("vtt-measuring") ? "the ruler is active" : "",
     ...(on
       ? [

@@ -29,6 +29,8 @@ export type GridType = "square" | "hex-pointy" | "hex-flat";
 
 type PersistedMapSettings = {
   showFog: boolean;
+  /** Draw fog fully opaque in GM view, as players see it (solo play). */
+  soloFog: boolean;
   showGrid: boolean;
   gridType: GridType;
   showHexCoordinates: boolean;
@@ -61,6 +63,7 @@ type PersistedMapPageState = {
 
 const DEFAULT_MAP_SETTINGS: PersistedMapSettings = {
   showFog: false,
+  soloFog: false,
   showGrid: false,
   gridType: "square",
   showHexCoordinates: false,
@@ -90,9 +93,20 @@ export class MapStore {
   canvasSize = $state({ width: 0, height: 0 });
   pendingPinCoords = $state<Point | null>(null);
   showFog = $state(false);
+  soloFog = $state(false);
+  /**
+   * Counts changes to the fog mask. The mask is a canvas, which Svelte cannot
+   * watch, so anything drawn from it (pin labels) reads this to know to refresh.
+   */
+  fogRevision = $state(0);
   showLabels = $state(true);
   // GM Mode is active whenever we are NOT in Shared Mode (Player View)
   isGMMode = $derived(!sessionModeStore.sharedMode);
+  /**
+   * Fog is drawn fully opaque, so nothing under it shows: always in Player
+   * View, and in GM view when the GM turns on solo fog to play their own map.
+   */
+  fogOpaque = $derived(!this.isGMMode || this.soloFog);
   brushRadius = $state(50);
   navigationStack = $state<string[]>([]);
   showGrid = $state(false);
@@ -150,6 +164,7 @@ export class MapStore {
         $effect(() => {
           const tracked = [
             this.showFog,
+            this.soloFog,
             this.showGrid,
             this.gridType,
             this.showHexCoordinates,
@@ -235,6 +250,10 @@ export class MapStore {
           typeof parsed.showFog === "boolean"
             ? parsed.showFog
             : DEFAULT_MAP_SETTINGS.showFog,
+        soloFog:
+          typeof parsed.soloFog === "boolean"
+            ? parsed.soloFog
+            : DEFAULT_MAP_SETTINGS.soloFog,
         showGrid:
           typeof parsed.showGrid === "boolean"
             ? parsed.showGrid
@@ -320,6 +339,7 @@ export class MapStore {
 
     const payload: PersistedMapSettings = {
       showFog: this.showFog,
+      soloFog: this.soloFog,
       showGrid: this.showGrid,
       gridType: this.gridType,
       showHexCoordinates: this.showHexCoordinates,
@@ -445,6 +465,7 @@ export class MapStore {
     this.isRestoringSettings = true;
     try {
       this.showFog = next.showFog;
+      this.soloFog = next.soloFog;
       this.showGrid = next.showGrid;
       this.gridType = next.gridType;
       this.showHexCoordinates = next.showHexCoordinates;
@@ -701,6 +722,7 @@ export class MapStore {
   }
 
   async saveMask(canvas: HTMLCanvasElement) {
+    this.fogRevision++;
     if (!this.activeMap?.fogOfWar || !this.activeMapId) return;
     const vaultDir = await vault.getActiveVaultHandle();
     if (!vaultDir) return;

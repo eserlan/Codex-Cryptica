@@ -218,6 +218,23 @@ export class MapFogPainter {
     return { hex, fogged: ctx.getImageData(x, y, 1, 1).data[3] <= 127 };
   }
 
+  /**
+   * Whether the map is revealed at an image-space point. True when there is no
+   * mask to read or the point lies off it, so a missing mask never hides anything.
+   */
+  isRevealedAt(imgPoint: Point): boolean {
+    const maskCanvas = this.deps.getMaskCanvas();
+    const ctx = maskCanvas?.getContext("2d");
+    if (!maskCanvas || !ctx) return true;
+
+    const x = Math.floor(imgPoint.x + maskCanvas.width / 2);
+    const y = Math.floor(imgPoint.y + maskCanvas.height / 2);
+    if (x < 0 || y < 0 || x >= maskCanvas.width || y >= maskCanvas.height) {
+      return true;
+    }
+    return ctx.getImageData(x, y, 1, 1).data[3] > 127;
+  }
+
   /** Reveal (isHiding false) or fog (true) exactly one hex, as one undo step. */
   async paintHex(hex: HexCoord, isHiding: boolean): Promise<boolean> {
     const config = getActiveHexConfig(this.deps.mapStore);

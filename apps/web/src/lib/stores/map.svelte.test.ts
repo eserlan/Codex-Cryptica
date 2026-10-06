@@ -108,6 +108,7 @@ describe("MapStore settings persistence", () => {
       expect(raw).not.toBeNull();
       expect(JSON.parse(raw!)).toEqual({
         showFog: false,
+        soloFog: false,
         showGrid: true,
         gridType: "square",
         showHexCoordinates: false,
@@ -123,6 +124,38 @@ describe("MapStore settings persistence", () => {
         layerLocked: { terrain: false, object: false, token: false },
       });
     });
+  });
+
+  it("saves and restores solo fog per map, off by default", async () => {
+    const store = new MapStore();
+    store.selectMap("map-solo");
+    expect(store.soloFog).toBe(false);
+
+    store.soloFog = true;
+    await waitFor(() => {
+      const raw = window.localStorage.getItem("codex-map-settings:map-solo");
+      expect(JSON.parse(raw!).soloFog).toBe(true);
+    });
+
+    const restored = new MapStore();
+    restored.selectMap("map-solo");
+    expect(restored.soloFog).toBe(true);
+
+    restored.selectMap("map-other");
+    expect(restored.soloFog).toBe(false);
+  });
+
+  it("draws fog opaque in Player View, and in GM view only with solo fog on", () => {
+    const store = new MapStore();
+    expect(store.fogOpaque).toBe(false);
+
+    store.soloFog = true;
+    expect(store.fogOpaque).toBe(true);
+
+    store.soloFog = false;
+    sessionModeStore.sharedMode = true;
+    expect(store.fogOpaque).toBe(true);
+    sessionModeStore.sharedMode = false;
   });
 
   it("persists and restores hex grid settings", async () => {

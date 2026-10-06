@@ -11,6 +11,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const mapStoreMock = vi.hoisted(() => ({
   isGMMode: true,
   showFog: true,
+  soloFog: false,
   showGrid: false,
   brushRadius: 50,
   showLabels: true,
@@ -88,6 +89,43 @@ describe("MapVTTControlsHUD", () => {
 
     expect(mapStoreMock.showFog).toBe(false);
     expect(screen.getByRole("button", { name: "GRID: OFF" })).not.toBeNull();
+  });
+
+  describe("solo fog", () => {
+    beforeEach(() => {
+      mapStoreMock.showFog = true;
+      mapStoreMock.soloFog = false;
+      mapStoreMock.isGMMode = true;
+    });
+
+    it("offers a SOLO switch next to FOG, and flips it", async () => {
+      const { container } = render(MapVTTControlsHUD, {
+        props: { chatSidebarOffset: "20rem" },
+      });
+
+      const solo = screen.getByRole("button", { name: "SOLO: OFF" });
+      expect(solo.getAttribute("aria-pressed")).toBe("false");
+      expect(
+        container.querySelector('[data-help-target="vtt-solo-fog-toggle"]'),
+      ).toBe(solo);
+
+      await fireEvent.click(solo);
+      expect(mapStoreMock.soloFog).toBe(true);
+    });
+
+    it("is not offered while fog is off", () => {
+      mapStoreMock.showFog = false;
+      render(MapVTTControlsHUD, { props: { chatSidebarOffset: "20rem" } });
+
+      expect(screen.queryByRole("button", { name: /SOLO/ })).toBeNull();
+    });
+
+    it("is not offered in Player View, where the GM controls are off", () => {
+      mapStoreMock.isGMMode = false;
+      render(MapVTTControlsHUD, { props: { chatSidebarOffset: "20rem" } });
+
+      expect(screen.queryByRole("button", { name: /SOLO/ })).toBeNull();
+    });
   });
 
   it("carries stable help targets for the GM's map controls", () => {
