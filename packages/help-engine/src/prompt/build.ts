@@ -1,6 +1,7 @@
 import type { HelpChunk } from "../bundle/types";
 import type { HelpContext } from "../context";
 import type { ActionRef } from "../actions/types";
+import { describeVttSituation } from "../context/vtt";
 
 export interface HelpTurn {
   role: "user" | "assistant";
@@ -23,6 +24,7 @@ export const SYSTEM_PROMPT = [
   'If the question is not about using Codex Cryptica, set confidence to "out-of-scope".',
   "Never describe a feature, screen, button or step that is not in the SOURCES, and never guess.",
   'Use the SCREEN to work out what "here", "this page" and "this tab" mean. Do not describe a control as available on the current screen unless the SOURCES say it is.',
+  "On the map, the SCREEN situation says what the user can do right now, such as whether they are the GM or a player, the mode, and whether a token is selected. Use it to pick and tailor the answer from the SOURCES. It is never a source of features: do not describe anything the SOURCES do not cover.",
   "Always specify the screen, tool, or location where each action takes place (e.g., 'On the Status tab', 'In the Knowledge Graph', 'In the Lore Oracle chat').",
   "Never present a single method or shortcut as the only way to do something unless the sources explicitly state no other way exists. If the sources describe multiple ways to accomplish a task, summarize the options clearly (e.g. 'You can do this in a few ways...'). If only one method is in the sources, present it as 'One way is...' or 'In [screen/tool]...' rather than an absolute rule.",
   "If the user's current SCREEN offers a direct way to do what they asked, highlight that on-screen option first, but acknowledge other methods if covered in the sources.",
@@ -58,11 +60,14 @@ function describeScreen(ctx: HelpContext): string {
   const settings = ctx.availableActions
     .filter((a) => a.startsWith("settings-"))
     .map((a) => a.slice("settings-".length));
+  const situation =
+    ctx.area === "map" ? describeVttSituation(ctx.flags).join(", ") : "";
   return [
     `area: ${ctx.area}`,
     ctx.entityKind ? `entry kind: ${ctx.entityKind}` : null,
     ctx.tab ? `tab: ${ctx.tab}` : null,
     `mode: ${ctx.mode}`,
+    situation ? `situation: ${situation}` : null,
     onScreen.length ? `controls on screen: ${onScreen.join(", ")}` : null,
     settings.length
       ? `Settings tabs that can be opened from anywhere: ${settings.join(", ")}`

@@ -400,4 +400,93 @@ describe("HelpContextStore", () => {
       "v",
     ]);
   });
+
+  describe("VTT facts on the map", () => {
+    const facts = (over: Record<string, unknown> = {}) => ({
+      vttOn: true,
+      combat: true,
+      guest: false,
+      playerView: false,
+      grid: "hex" as const,
+      fogOn: true,
+      tokenSelected: true,
+      tokenLinked: false,
+      tokenManageable: true,
+      layer: "token" as const,
+      hasInitiative: true,
+      canAdvanceTurn: false,
+      hosting: false,
+      measuring: false,
+      ...over,
+    });
+
+    it("adds the map facts as flags while the map is the screen", () => {
+      const { ctx, registry } = store({ getRouteId: () => "/(app)/map" });
+      registry.registerVttMap({ facts: () => facts() });
+
+      expect(ctx.current.area).toBe("map");
+      expect(ctx.current.flags).toEqual(
+        expect.arrayContaining([
+          "vtt-on",
+          "vtt-combat",
+          "vtt-grid-hex",
+          "vtt-fog-on",
+          "vtt-token-selected",
+          "vtt-token-manageable",
+          "vtt-layer-tokens",
+          "vtt-has-initiative",
+        ]),
+      );
+      expect(ctx.current.flags).not.toContain("vtt-can-advance-turn");
+    });
+
+    it("follows the live state each time it is read", () => {
+      const { ctx, registry } = store({ getRouteId: () => "/(app)/map" });
+      let combat = false;
+      registry.registerVttMap({ facts: () => facts({ combat }) });
+
+      expect(ctx.current.flags).not.toContain("vtt-combat");
+      combat = true;
+      expect(ctx.current.flags).toContain("vtt-combat");
+    });
+
+    it("keeps the map facts off every other screen and under an open dialog", () => {
+      const { ctx, registry } = store({ getRouteId: () => "/(app)/tables" });
+      registry.registerVttMap({ facts: () => facts() });
+      expect(ctx.current.flags).toEqual([]);
+
+      const settings = store({
+        getRouteId: () => "/(app)/map",
+        getOpenSettingsTab: () => "vault",
+      });
+      settings.registry.registerVttMap({ facts: () => facts() });
+      expect(settings.ctx.current.flags.some((f) => f.startsWith("vtt-"))).toBe(
+        false,
+      );
+    });
+
+    it("falls back to a general description if the map cannot report", () => {
+      const { ctx, registry } = store({ getRouteId: () => "/(app)/map" });
+      registry.registerVttMap({
+        facts: () => {
+          throw new Error("store not ready");
+        },
+      });
+
+      expect(ctx.current.area).toBe("other");
+      expect(ctx.current.flags).toEqual([]);
+    });
+
+    it("does not treat a changed selection as a different screen", () => {
+      const { ctx, registry } = store({ getRouteId: () => "/(app)/map" });
+      let selected = false;
+      registry.registerVttMap({
+        facts: () => facts({ tokenSelected: selected }),
+      });
+      const before = ctx.signature;
+      selected = true;
+
+      expect(ctx.signature).toBe(before);
+    });
+  });
 });
