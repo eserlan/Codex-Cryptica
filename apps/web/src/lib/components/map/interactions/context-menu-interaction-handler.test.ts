@@ -90,4 +90,58 @@ describe("ContextMenuInteractionHandler", () => {
 
     expect(handler.contextMenu).toBeNull();
   });
+
+  describe("fog hex target", () => {
+    function withHexTarget(
+      target: { hex: { q: number; r: number }; fogged: boolean } | null,
+    ) {
+      return new ContextMenuInteractionHandler({
+        isVttEnabled: () => vttEnabled,
+        unproject: (point) => point,
+        tokenSelection: new TokenSelectionManager({
+          getTokens: () => [token({ id: "token-a", x: 10, y: 10 })],
+          project: (point) => point,
+          getSelectedTokens: () => new Set(),
+          setSelection: vi.fn(),
+          addToSelection: vi.fn(),
+          removeFromSelection: vi.fn(),
+          setMultiSelection: vi.fn(),
+        }),
+        getFogHexTarget: () => target,
+      });
+    }
+
+    it("carries the empty hex under the cursor", () => {
+      const hexHandler = withHexTarget({ hex: { q: 2, r: -1 }, fogged: true });
+
+      expect(hexHandler.open({ x: 1, y: 1 }, { x: 300, y: 300 })).toBe(true);
+      expect(hexHandler.contextMenu?.hex).toEqual({
+        q: 2,
+        r: -1,
+        fogged: true,
+      });
+    });
+
+    it("opens for a hex even with play off", () => {
+      vttEnabled = false;
+      const hexHandler = withHexTarget({ hex: { q: 0, r: 0 }, fogged: false });
+
+      expect(hexHandler.open({ x: 1, y: 1 }, { x: 300, y: 300 })).toBe(true);
+    });
+
+    it("does not offer a hex when a token is under the cursor", () => {
+      const hexHandler = withHexTarget({ hex: { q: 0, r: 0 }, fogged: true });
+
+      expect(hexHandler.open({ x: 1, y: 1 }, { x: 20, y: 20 })).toBe(true);
+      expect(hexHandler.contextMenu?.hex).toBeUndefined();
+    });
+
+    it("stays closed with play off and no hex target", () => {
+      vttEnabled = false;
+
+      expect(withHexTarget(null).open({ x: 1, y: 1 }, { x: 300, y: 300 })).toBe(
+        false,
+      );
+    });
+  });
 });
