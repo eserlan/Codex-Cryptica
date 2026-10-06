@@ -71,6 +71,16 @@ describe("help-content feature hints", () => {
     expect(article!.content).toMatch(/discard pile/i);
   });
 
+  it("clarifies that a personal API key does not keep Oracle prompts on-device", () => {
+    const article = loadHelpArticles().find((a) => a.id === "gemini-api-key");
+
+    expect(article).toBeDefined();
+    expect(article!.content).toContain(
+      "your prompts and the notes sent as context still leave your browser",
+    );
+    expect(article!.content).not.toContain("fully on your device");
+  });
+
   it("lists the deterministic roll commands alongside the AI ones", () => {
     const commands = loadHelpArticles().find((a) => a.id === "chat-commands");
 

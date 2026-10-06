@@ -36,7 +36,6 @@
   import EdgeLabelModal from "$lib/components/canvas/EdgeLabelModal.svelte";
   import RoomStockingDrawer from "$lib/components/canvas/RoomStockingDrawer.svelte";
   import AdventureNodeDrawer from "$lib/components/canvas/AdventureNodeDrawer.svelte";
-  import CanvasHint from "$lib/components/hints/CanvasHint.svelte";
   import CanvasHUD from "./CanvasHUD.svelte";
   import { page } from "$app/state";
   import { tick, untrack } from "svelte";
@@ -1002,7 +1001,6 @@
     />
   {/if}
 
-  <CanvasHint />
   <EdgeLabelModal
     bind:isOpen={logic.labelModal.isOpen}
     initialValue={logic.labelModal.currentLabel}

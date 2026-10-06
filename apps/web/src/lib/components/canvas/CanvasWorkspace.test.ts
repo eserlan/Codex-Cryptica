@@ -135,12 +135,6 @@ vi.mock("$lib/components/canvas/EdgeLabelModal.svelte", () => ({
   },
 }));
 
-vi.mock("$lib/components/hints/CanvasHint.svelte", () => ({
-  default: function CanvasHintMock() {
-    return {};
-  },
-}));
-
 vi.mock("$lib/components/canvas/CanvasSelectionModal.svelte", async () => ({
   default: (await import("../modals/__tests__/CanvasSelectionModalStub.svelte"))
     .default,

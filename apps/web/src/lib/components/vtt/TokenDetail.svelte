@@ -424,7 +424,7 @@
           {/each}
         </select>
         <p class="text-micro text-theme-muted">
-          Guests can move only tokens assigned to their peer id.
+          Players can move only the tokens assigned to them.
         </p>
       </label>
 

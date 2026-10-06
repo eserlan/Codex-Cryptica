@@ -112,6 +112,30 @@ export const PHASE_A_IN_SCOPE: InScopeQuestion[] = [
     "How do I line the hex grid up with hexes already on my map?",
     ["vtt-grids-measurement", "hexcrawl-maps"],
   ),
+  q(
+    "existing",
+    "holdout",
+    "graph",
+    "Does the Oracle keep my chat on the AI provider's servers?",
+    ["gemini-api-key"],
+  ),
+  q("existing", "holdout", "graph", "How do I replay the welcome tour?", [
+    "intro",
+  ]),
+  q(
+    "existing",
+    "holdout",
+    "graph",
+    "How do I show every generation in the lineage view?",
+    ["family-tree"],
+  ),
+  q(
+    "existing",
+    "holdout",
+    "graph",
+    "How long does the Oracle remember my chat?",
+    ["gemini-api-key"],
+  ),
   q("map", "holdout", "map", "Where do I open the grid settings?", [
     "vtt-grids-measurement",
     "hexcrawl-maps",
