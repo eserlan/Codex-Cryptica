@@ -1,4 +1,9 @@
 import type { Point, ViewportTransform } from "schema";
+import {
+  fitHexGrid,
+  normalizeHexOffset,
+  type HexOrientation,
+} from "map-engine";
 
 /**
  * How many grid squares the fit-drag rectangle is assumed to span. A tile
@@ -29,7 +34,20 @@ export interface GridInteractionDependencies {
   setShowGridSettings: (show: boolean) => void;
   unproject: (point: Point) => Point;
   clearNotification: () => void;
+  /** Absent means a square grid, which is how the handler began. */
+  getGridType?: () => "square" | "hex-pointy" | "hex-flat";
+  getGridOffset?: () => Point;
+  /** Where the map was panned to when grid-move mode began. */
+  getGridFixedPan?: () => Point | null;
 }
+
+const hexOrientation = (
+  type: "square" | "hex-pointy" | "hex-flat" | undefined,
+): HexOrientation | null =>
+  type === "hex-pointy" ? "pointy" : type === "hex-flat" ? "flat" : null;
+
+/** Hex sizes keep two decimals: whole pixels drift visibly over a dozen hexes. */
+const roundHexSize = (size: number) => Math.round(size * 100) / 100;
 
 export class GridInteractionHandler {
   gridFitStart = $state<Point | null>(null);
@@ -43,12 +61,40 @@ export class GridInteractionHandler {
     if (!this.deps.isGridMoveMode()) return false;
 
     const viewport = this.deps.getViewport();
+    if (this.commitHexGridMove(viewport)) return true;
     const canvasSize = this.deps.getCanvasSize();
     const gridSize = this.deps.getGridSize();
     this.deps.setGridOffset({
       x: -((viewport.pan.x + canvasSize.width / 2) / viewport.zoom) % gridSize,
       y: -((viewport.pan.y + canvasSize.height / 2) / viewport.zoom) % gridSize,
     });
+    this.deps.setGridMoveMode(false);
+    this.deps.clearNotification();
+    return true;
+  }
+
+  /**
+   * A hex grid repeats under whole-hex shifts, not whole-size ones, so the
+   * square arithmetic would nudge it out of line. Keep the grid exactly where
+   * it was held on screen and move it by how far the map was dragged.
+   */
+  private commitHexGridMove(viewport: ViewportTransform): boolean {
+    const orientation = hexOrientation(this.deps.getGridType?.());
+    const fixedPan = this.deps.getGridFixedPan?.();
+    const offset = this.deps.getGridOffset?.();
+    if (!orientation || !fixedPan || !offset) return false;
+
+    const zoom = viewport.zoom || 1;
+    this.deps.setGridOffset(
+      normalizeHexOffset(
+        {
+          x: offset.x + (fixedPan.x - viewport.pan.x) / zoom,
+          y: offset.y + (fixedPan.y - viewport.pan.y) / zoom,
+        },
+        this.deps.getGridSize(),
+        orientation,
+      ),
+    );
     this.deps.setGridMoveMode(false);
     this.deps.clearNotification();
     return true;
@@ -105,25 +151,60 @@ export class GridInteractionHandler {
     return true;
   }
 
+  /**
+   * Fits a hex grid to hexes already on the map: the drag spans `gridFitSpan`
+   * hexes along a row (pointy) or column (flat).
+   */
+  private fitHexGrid(
+    orientation: HexOrientation,
+    startImg: Point,
+    endImg: Point,
+  ) {
+    const zoom = this.deps.getViewport().zoom || 1;
+    const fit = fitHexGrid({
+      start: startImg,
+      end: endImg,
+      span: this.gridFitSpan,
+      orientation,
+    });
+    if (fit.size <= 0) return;
+
+    this.deps.setGridSize(
+      roundHexSize(Math.max(MIN_GRID_SCREEN_PX / zoom, fit.size)),
+    );
+    this.deps.setGridOffset({ x: fit.offsetX, y: fit.offsetY });
+  }
+
+  /** Fits a square grid: the drag spans `gridFitSpan` squares. */
+  private fitSquareGrid(startImg: Point, endImg: Point) {
+    const zoom = this.deps.getViewport().zoom || 1;
+    const minCellSize = MIN_GRID_SCREEN_PX / zoom;
+    const dragged = Math.max(
+      Math.abs(endImg.x - startImg.x),
+      Math.abs(endImg.y - startImg.y),
+    );
+    const cellSize = Math.round(
+      Math.max(minCellSize, dragged / this.gridFitSpan),
+    );
+    this.deps.setGridSize(cellSize);
+    this.deps.setGridOffset({
+      x: -(Math.min(startImg.x, endImg.x) % cellSize),
+      y: -(Math.min(startImg.y, endImg.y) % cellSize),
+    });
+  }
+
   commitGridFit() {
     if (!this.gridFitStart || !this.gridFitEnd) return false;
 
     const startImg = this.deps.unproject(this.gridFitStart);
     const endImg = this.deps.unproject(this.gridFitEnd);
-    const imgWidth = Math.abs(endImg.x - startImg.x);
-    const imgHeight = Math.abs(endImg.y - startImg.y);
+    const dragged =
+      Math.abs(endImg.x - startImg.x) >= 5 ||
+      Math.abs(endImg.y - startImg.y) >= 5;
+    const orientation = hexOrientation(this.deps.getGridType?.());
 
-    if (imgWidth >= 5 || imgHeight >= 5) {
-      const zoom = this.deps.getViewport().zoom || 1;
-      const minCellSize = MIN_GRID_SCREEN_PX / zoom;
-      const rawCellSize = Math.max(imgWidth, imgHeight) / this.gridFitSpan;
-      const cellSize = Math.round(Math.max(minCellSize, rawCellSize));
-      this.deps.setGridSize(cellSize);
-      this.deps.setGridOffset({
-        x: -(Math.min(startImg.x, endImg.x) % cellSize),
-        y: -(Math.min(startImg.y, endImg.y) % cellSize),
-      });
-    }
+    if (dragged && orientation) this.fitHexGrid(orientation, startImg, endImg);
+    else if (dragged) this.fitSquareGrid(startImg, endImg);
 
     this.gridFitStart = null;
     this.gridFitEnd = null;

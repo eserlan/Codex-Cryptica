@@ -13,13 +13,14 @@ Codex Cryptica provides native support for overland hexcrawls and region explora
 ### Configuring Hex Grids
 
 1. Open any map in **Map Mode** (`/map`).
-2. Click the **Grid** icon in the map HUD or press `G` to toggle the grid overlay.
-3. Open **Grid Settings** (the sliders icon next to the grid toggle).
+2. Click the **grid button** in the map bar to show the grid overlay.
+3. Right-click the grid button to open **Grid Settings**.
 4. Select your desired **Grid Type**:
    - **Square**: Traditional tactical dungeon grid.
    - **Hex (Pointy)**: Pointy-topped hexagons with vertical columns.
    - **Hex (Flat)**: Flat-topped hexagons with horizontal rows.
 5. Adjust **Hex Radius** (cell size in pixels) and your campaign scale (e.g. `6` `miles` per cell).
+6. If your map image already has hexes drawn on it, choose **Fit Grid from Map** and drag across a few of them to match their size and position. See [Grids & Measurement](/help#help/vtt-grids-measurement).
 
 ### Coordinate Overlays
 

@@ -105,6 +105,13 @@ export const PHASE_A_IN_SCOPE: InScopeQuestion[] = [
     "What is the difference between map fog and a hidden entity?",
     ["vtt-fog-player-view", "fog-of-war"],
   ),
+  q(
+    "map",
+    "holdout",
+    "map",
+    "How do I line the hex grid up with hexes already on my map?",
+    ["vtt-grids-measurement", "hexcrawl-maps"],
+  ),
   q("map", "holdout", "map", "How do I reveal just one hex on a hex map?", [
     "hexcrawl-maps",
   ]),

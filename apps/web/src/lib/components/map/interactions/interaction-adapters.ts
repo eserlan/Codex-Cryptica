@@ -159,6 +159,9 @@ export function createGridInteractionDependencies(): GridInteractionDependencies
     },
     unproject: (point) => mapStore.unproject(point),
     clearNotification: () => notificationStore.clearNotification(),
+    getGridType: () => mapStore.gridType,
+    getGridOffset: () => ({ x: mapStore.gridOffsetX, y: mapStore.gridOffsetY }),
+    getGridFixedPan: () => mapSession.gridFixedPan,
   };
 }
 
