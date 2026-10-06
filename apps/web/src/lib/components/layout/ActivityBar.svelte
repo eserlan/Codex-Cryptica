@@ -9,7 +9,11 @@
     type NavItem,
   } from "./nav-items";
   import { isHelpAssistantAvailable } from "$lib/services/help-assistant/help-availability";
-  import { helpAssistant } from "$lib/stores/help-assistant/help-runtime";
+  import {
+    cifPopout,
+    helpAssistant,
+    toggleCif,
+  } from "$lib/stores/help-assistant/help-runtime";
   import HelpAskButton from "$lib/components/help-assistant/HelpAskButton.svelte";
 
   // fallow-ignore-next-line code-duplication
@@ -122,9 +126,8 @@
         class="w-px h-6 bg-chrome-border md:w-8 md:h-px my-1 md:my-2 mx-0.5 md:mx-0 opacity-50 shrink-0"
       ></div>
       <HelpAskButton
-        open={helpAssistant.isOpen}
-        onToggle={() =>
-          helpAssistant.isOpen ? helpAssistant.close() : helpAssistant.open()}
+        open={helpAssistant.isOpen || cifPopout.connected}
+        onToggle={toggleCif}
       />
     </div>
   {/if}
