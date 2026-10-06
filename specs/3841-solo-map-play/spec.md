@@ -16,8 +16,8 @@ This feature turns that switch into a complete way to play a map alone: what sta
 
 ### Session 2026-10-06
 
-- Q: When a solo GM reveals a hex holding something hidden from players, does it appear straight away? → A: Yes. It appears as soon as its area is revealed (FR-007).
-- Principle: in solo play the GM is the player. There is one person in one role, so "hidden from players" has no audience; fog alone decides what is concealed, and the GM keeps every tool. Requirements about connected players and Player View exist to protect people who use SOLO in a multiplayer game, not because solo play has other players.
+- Q: When a solo GM reveals a hex holding something marked Hide from Guests, does it appear straight away? → A: Yes. It appears as soon as its area is revealed (FR-007).
+- Principle: solo play has exactly one person, the GM, who is also the only player. There is no one to hide anything from but themselves, so fog alone decides what is concealed and the GM keeps every tool. Multiplayer is not part of solo play and is out of scope.
 
 ## User Scenarios & Testing _(mandatory)_
 
@@ -31,11 +31,10 @@ A solo GM prepares a hexcrawl region, stocks some hexes with notes and hidden mo
 
 **Acceptance Scenarios**:
 
-1. **Given** fog is on and SOLO is on, **When** the GM looks at a fogged area, **Then** nothing in it is visible: map image, tokens (including ones hidden from players), pins, pin labels, notes, note markers and hex coordinate labels.
-2. **Given** SOLO is on, **When** the GM reveals an area by brush, by right-clicking a hex, or by a token's vision, **Then** everything in that area appears, including tokens and notes hidden from players.
+1. **Given** fog is on and SOLO is on, **When** the GM looks at a fogged area, **Then** nothing in it is visible: map image, tokens (including ones marked Hide from Guests), pins, pin labels, notes, note markers and hex coordinate labels.
+2. **Given** SOLO is on, **When** the GM reveals an area by brush, by right-clicking a hex, or by a token's vision, **Then** everything in that area appears, including tokens and notes marked Hide from Guests.
 3. **Given** SOLO is on, **When** the GM uses any GM tool (fog brush, Reveal hex, Hide hex, moving any token, adding tokens, tile decks, layers, initiative), **Then** it behaves exactly as with SOLO off.
 4. **Given** SOLO is on, **When** the GM hides an area again, **Then** everything in it is concealed again.
-5. **Given** a session with connected players, **When** the GM turns SOLO on or off, **Then** nothing changes for the players.
 
 ---
 
@@ -93,8 +92,6 @@ Someone who plays alone opens a map and wonders how to keep the map hidden from 
 ### Edge Cases
 
 - **Fog turned off while SOLO is on**: SOLO has no effect without fog; turning fog back on restores SOLO as it was.
-- **SOLO on, then Player View**: Player View behaves exactly as today (GM tools off); leaving Player View returns to GM view with SOLO as it was.
-- **Hosting a live session with SOLO on**: players see what they always see; nothing the GM's screen shows is sent to them because of SOLO.
 - **Map with no fog painted yet**: everything starts hidden, as fog always does; the first reveal shows the start area.
 - **Party token without vision**: moving it reveals nothing; the travel distance is still shown.
 - **Several vision tokens**: each reveals around itself; party versus selected vision behaves as today.
@@ -102,7 +99,6 @@ Someone who plays alone opens a map and wonders how to keep the map hidden from 
 - **Very large reveals** (a long jump across the map): the reveal and the journal entry stay one action, one undo step and one entry.
 - **Hidden token or note in a revealed area**: it appears when the area is revealed (FR-007).
 - **Journal paused or ended mid-move**: nothing is recorded after it stops.
-- **Guest in someone else's session**: SOLO is not offered; nothing about solo play changes their view.
 
 ## Requirements _(mandatory)_
 
@@ -111,12 +107,12 @@ Someone who plays alone opens a map and wonders how to keep the map hidden from 
 **Concealment**
 
 - **FR-001**: The map MUST offer a SOLO setting in GM view while fog is on, as shipped in #3818, and keep it per map on this device.
-- **FR-002**: With SOLO on, fogged areas MUST conceal everything in them: the map image, all tokens (including ones hidden from players), pins, pin labels, notes, note markers and hex coordinate labels.
+- **FR-002**: With SOLO on, fogged areas MUST conceal everything in them: the map image, all tokens (including ones marked Hide from Guests), pins, pin labels, notes, note markers and hex coordinate labels.
 - **FR-003**: With SOLO on, every GM tool MUST keep working exactly as with SOLO off.
-- **FR-004**: SOLO MUST only change what the GM's own screen shows. It MUST NOT change what connected players see, MUST NOT be sent to them, and MUST NOT change Player View.
+- **FR-004**: SOLO MUST only change how the map is shown. It MUST NOT change the map itself, its fog, or its tokens and notes.
 - **FR-005**: Revealing or hiding an area MUST update what is concealed immediately, by any method (brush, hex menu, token vision, undo).
 - **FR-006**: Concealment MUST be safe by default: if the map cannot tell whether an area is revealed, a hint drawn over the map (such as a label) MUST NOT reveal content from a fogged area. The pin label check shipped in #3818 shows a label when the fog state cannot be read; this requirement replaces that behaviour.
-- **FR-007**: With SOLO on, tokens and notes that are hidden from players MUST appear as soon as their area is revealed. In solo play there is no other player to hide them from, so fog is the only thing that conceals; revealing the hex is the discovery.
+- **FR-007**: With SOLO on, tokens and notes that are marked Hide from Guests MUST appear as soon as their area is revealed. In solo play there is no one else to hide them from, so fog is the only thing that conceals; revealing the hex is the discovery.
 
 **Exploration**
 
@@ -143,7 +139,6 @@ Someone who plays alone opens a map and wonders how to keep the map hidden from 
 **Privacy and scope**
 
 - **FR-021**: All solo play state (the setting, travel totals, journal entries) MUST stay on this device and in the vault. Nothing about solo play MUST be sent anywhere, measured or reported.
-- **FR-022**: Multiplayer sessions, Player View and guest views MUST behave exactly as before.
 
 ### Key Entities
 
@@ -158,11 +153,10 @@ Someone who plays alone opens a map and wonders how to keep the map hidden from 
 
 - **SC-001**: With SOLO on, a reviewer checking a prepared test map finds zero items (terrain, tokens, pins, labels, notes, coordinates) visible inside fogged areas.
 - **SC-002**: With SOLO on, all GM tools listed in FR-003 pass the same checks as with SOLO off.
-- **SC-003**: A connected player's view is identical whether the GM has SOLO on or off.
-- **SC-004**: A solo tester can explore ten hexes by moving a party token, with each move revealing the expected hexes, in under two minutes and without opening any menu.
-- **SC-005**: After a ten-hex expedition with a journal running, the journal holds the route in order with no more than one entry per move.
-- **SC-006**: In a usability check, at least four of five people who play solo find SOLO and explain what it does without help, within one minute of opening a fogged map.
-- **SC-007**: Cif retrieves the solo play guide for at least four of five realistic solo play questions in the evaluation set.
+- **SC-003**: A solo tester can explore ten hexes by moving a party token, with each move revealing the expected hexes, in under two minutes and without opening any menu.
+- **SC-004**: After a ten-hex expedition with a journal running, the journal holds the route in order with no more than one entry per move.
+- **SC-005**: In a usability check, at least four of five people who play solo find SOLO and explain what it does without help, within one minute of opening a fogged map.
+- **SC-006**: Cif retrieves the solo play guide for at least four of five realistic solo play questions in the evaluation set.
 
 ## Assumptions
 
@@ -170,11 +164,11 @@ Someone who plays alone opens a map and wonders how to keep the map hidden from 
 - The party is represented by one or more tokens marked as vision sources, which already exist.
 - Hex sight and travel use the map's existing grid size, distance per cell and unit name.
 - Map capture in the journal uses the existing automatic capture and promote paths.
-- Solo play is a GM-side feature; guests in someone else's session are not offered it.
 - No AI is required for any of this. Cif help is optional and covered by the existing AI Disabled setting.
 
 ## Out of Scope
 
+- Multiplayer. Solo play has one person, the GM. Live sessions, connected players, Player View and guests are not part of this feature.
 - An AI game master or narrator. Solo Adventure (spec 160) covers AI-run play.
 - A dimmed "explored but not currently seen" fog tier.
 - Random encounters or weather rolled automatically on entering a hex. The GM can roll tables as today, and rolls are captured.
