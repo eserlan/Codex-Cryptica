@@ -1,5 +1,5 @@
 {
-  "updated_at": 1791204015,
+  "updated_at": 1791265658,
   "candidates": [
     {
       "id": "reddit-37032544014-my-pirate-arcs-kept-collapsing-into-eith",
@@ -60,6 +60,16 @@
       "source_id": "37303537385",
       "status": "approved",
       "created_at": 1791204015
+    },
+    {
+      "id": "reddit-37419820135-overland-hexcrawl-maps-hex-grid-hex-fog-",
+      "title": "Overland hexcrawl maps: hex grid, hex fog and token snapping",
+      "body": "Running overland travel on a square grid always feels slightly off. You count diagonals, you fudge distance, and when you paint fog of war with a round brush the revealed edges come out ragged.\n\nI built proper hex support into the map so overland travel actually runs on hexes. One toggle switches the grid and everything else respects it.\n\nLearn how it works: https://codexcryptica.com/help/hexcrawl-maps\n\n- pointy-top and flat-top hex grids with adjustable radius and miles-per-hex so a 6-mile hex reads as 6 miles\n- fog of war that paints and reveals by whole hex instead of soft brush strokes, with undo and redo\n- token dragging that snaps to hex centres on release and 1x, 2x, 3x sizing to match hex diameter\n- vision that reveals in hex rings as tokens move, instead of circular washes\n- coordinates in (q.r) and a ruler that reports hex count plus converted distance\n\nTradeoff I am still tuning: coordinate labels auto-hide when you zoom out to keep the map readable, so you lose precise refs at very low zoom. I may make that threshold a setting if people want it.\n\nWhat scale do you run overland at \u2014 6 miles per hex, something tighter for point crawls, or larger for regional maps?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/announcements/release-37419820135-0.png)",
+      "url": "https://codexcryptica.com/help/hexcrawl-maps",
+      "image_url": "https://assets.codexcryptica.com/announcements/release-37419820135-0.png",
+      "source_id": "37419820135",
+      "status": "approved",
+      "created_at": 1791265658
     }
   ]
 }
