@@ -12,6 +12,7 @@ const context = sanitizeHelpContext({
 
 describe("help documentation workflow retrieval", () => {
   it.each([
+    ["Can I have a map inside another map?", "map-mode"],
     ["How do I revise an entity in Zen Mode?", "creating-and-editing-entities"],
     [
       "How do I turn off AI and use local generator templates?",

@@ -38,7 +38,7 @@ Manage mystery and player progression:
 
 Dive deeper into your world:
 
-- You can attach specific sub-maps to entities (e.g., a "Tavern" note can have its own floor plan).
+- You can put a map inside another map by attaching a specific sub-map to an entity (e.g., a "Tavern" note can have its own floor plan).
 - In the **Entity Detail Panel**, go to the **MAP** tab to upload a sub-map.
 - Once attached, pins linked to that entity will show an **ENTER** button, allowing you to dive into the sub-map.
 - Use the breadcrumbs or "Go Back" logic to return to the parent map.
