@@ -697,6 +697,7 @@
     searchStore,
     modalUIStore,
     quickNoteStore,
+    oracle,
   });
 </script>
 

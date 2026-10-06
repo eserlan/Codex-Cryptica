@@ -17,6 +17,9 @@ interface ShortcutContext {
     toggle: () => void;
     close: () => void;
   };
+  oracle: {
+    undo: () => void | Promise<void>;
+  };
 }
 
 /**
@@ -36,6 +39,19 @@ export function useGlobalShortcuts(context: ShortcutContext) {
       target?.tagName === "TEXTAREA" ||
       (target as HTMLElement)?.isContentEditable
     ) {
+      return;
+    }
+
+    if (
+      (e.ctrlKey || e.metaKey) &&
+      e.key.toLowerCase() === "z" &&
+      !e.shiftKey
+    ) {
+      const oracleWindow = document.querySelector(".oracle-window-container");
+      if (e.target instanceof Node && oracleWindow?.contains(e.target)) return;
+
+      e.preventDefault();
+      void context.oracle.undo();
       return;
     }
 
