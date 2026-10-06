@@ -4,6 +4,7 @@ import { HelpAssistantStore } from "$lib/stores/help-assistant/help-assistant.sv
 import { HelpContextStore } from "$lib/stores/help-assistant/help-context.svelte";
 import { HelpSurfaceRegistry } from "$lib/stores/help-assistant/help-surface.svelte";
 import { HelpClient } from "./help-client";
+import type { VttHelpFacts } from "help-engine";
 
 /**
  * Drives the real store, context builder and client end to end with a screen
@@ -134,5 +135,118 @@ describe("what leaves the browser when asking for help", () => {
     const { raw, init } = await capture("anything");
     expect(raw).not.toContain("tok");
     expect((init.headers as Headers).get("Authorization")).toBe("Bearer tok");
+  });
+});
+
+describe("what leaves the browser when asking for help on the map", () => {
+  async function askOnMap(facts: VttHelpFacts) {
+    const surfaces = new HelpSurfaceRegistry();
+    surfaces.registerVttMap({ facts: () => facts });
+    const context = new HelpContextStore({
+      getRouteId: () => "/(app)/map",
+      surfaces,
+      isGeneratorOpen: () => false,
+      generatorsAvailable: () => false,
+      getOpenSettingsTab: () => null,
+      isGuestMode: () => facts.guest,
+    });
+    const fetcher = vi.fn(
+      async () =>
+        new Response(
+          JSON.stringify({
+            outcome: "no-match",
+            answer: "x",
+            sources: [],
+            action: null,
+            suggestions: [],
+          }),
+          { status: 200 },
+        ),
+    );
+    const store = new HelpAssistantStore({
+      client: new HelpClient({
+        fetcher: fetcher as never,
+        getToken: async () => "tok",
+        proxyUrl: "https://proxy.test",
+        isOnline: () => true,
+      }),
+      context,
+      fallback: () => ({ message: "x", topics: [], showLibrary: true }),
+      helpIds: () => new Set(),
+    });
+    await store.ask("Why can't I move this?");
+    const [, init] = fetcher.mock.calls[0] as unknown as [string, RequestInit];
+    return JSON.parse(init.body as string);
+  }
+
+  const facts = (over: Partial<VttHelpFacts> = {}): VttHelpFacts => ({
+    vttOn: true,
+    combat: true,
+    guest: false,
+    playerView: false,
+    grid: "hex",
+    fogOn: true,
+    tokenSelected: true,
+    tokenLinked: true,
+    tokenManageable: true,
+    layer: "object",
+    hasInitiative: true,
+    canAdvanceTurn: true,
+    hosting: true,
+    measuring: false,
+    ...over,
+  });
+
+  it("adds yes/no VTT facts and nothing else to the screen description", async () => {
+    const body = await askOnMap(facts());
+
+    expect(Object.keys(body.context).sort()).toEqual([
+      "area",
+      "availableActions",
+      "entityKind",
+      "flags",
+      "mode",
+      "routeTemplate",
+      "surface",
+      "tab",
+      "v",
+    ]);
+    expect(body.context.area).toBe("map");
+    expect(body.context.flags).toContain("vtt-token-selected");
+    expect(
+      body.context.flags.every((flag: string) =>
+        /^[a-z]+(-[a-z]+)*$/.test(flag),
+      ),
+    ).toBe(true);
+  });
+
+  it("gives a player's request nothing that only the GM may know", async () => {
+    const body = await askOnMap(
+      facts({
+        guest: true,
+        layer: null,
+        hosting: false,
+        tokenLinked: false,
+        tokenManageable: false,
+      }),
+    );
+
+    expect(body.context.flags).toContain("vtt-guest");
+    expect(body.context.flags).not.toContain("vtt-hosting");
+    expect(body.context.flags).not.toContain("vtt-token-linked");
+    expect(
+      body.context.flags.filter((flag: string) =>
+        flag.startsWith("vtt-layer-"),
+      ),
+    ).toEqual([]);
+  });
+
+  it("stays bounded however many facts are true", async () => {
+    const body = await askOnMap(
+      facts({ playerView: true, measuring: true, guest: true }),
+    );
+
+    expect(body.context.flags.length).toBeLessThanOrEqual(28);
+    expect(JSON.stringify(body).length).toBeLessThan(2000);
   });
 });

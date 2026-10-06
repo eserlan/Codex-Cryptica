@@ -29,7 +29,7 @@ Click **Cif** in the map controls, or the Cif button in the activity bar, to ope
 
 ## What is sent
 
-Your question, the last few questions in this conversation, and a short description of the screen you are on, such as "an entity's Connections tab". No entity names, text, or IDs are sent. Avoid typing private lore into the question, because the question itself goes to our AI service.
+Your question, the last few questions in this conversation, and a short description of the screen you are on, such as "an entity's Connections tab". On the map, that description also includes a few yes or no facts about how you are using it, such as whether VTT is on, whether it is Combat mode, whether a token is selected and whether you can move it. Players never send anything the GM is hiding from them. No entity names, text, or IDs are sent. Avoid typing private lore into the question, because the question itself goes to our AI service.
 
 ## When Cif cannot answer
 
