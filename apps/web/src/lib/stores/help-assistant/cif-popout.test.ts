@@ -6,6 +6,7 @@ import {
   type CifChannel,
   type HelpAssistantView,
 } from "$lib/services/help-assistant/cif-popout-protocol";
+import type { HelpStatus } from "./help-assistant.svelte";
 import { CifPopoutHost, type PopoutWindow } from "./cif-popout-host.svelte";
 import { CifPopoutClient } from "./cif-popout-client.svelte";
 
@@ -29,15 +30,19 @@ const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
 function fakeAssistant() {
   const assistant = {
     isOpen: true,
-    status: "idle" as const,
+    status: "idle" as HelpStatus,
     messages: [] as any[],
     offer: null as GuidanceAction | null,
     notice: null as string | null,
     quickPrompts: ["How do I measure distance on the map?"],
     isPending: false,
     ask: vi.fn(async (text: string) => {
+      assistant.isPending = true;
+      assistant.status = "pending";
+      await Promise.resolve();
       assistant.messages = [{ id: 1, role: "user", text }];
-      assistant.status = "answered" as never;
+      assistant.status = "answered";
+      assistant.isPending = false;
       return true;
     }),
     reset: vi.fn(),
@@ -119,6 +124,22 @@ describe("Cif pop-out host and client", () => {
 
     assistant.ask.mockResolvedValueOnce(false);
     expect(await client.ask("x".repeat(10))).toBe(false);
+  });
+
+  it("acknowledges an accepted question before its answer is ready", async () => {
+    let finishRequest!: (started: boolean) => void;
+    assistant.ask.mockImplementationOnce(
+      () =>
+        new Promise<boolean>((resolve) => {
+          finishRequest = resolve;
+          assistant.status = "pending";
+          assistant.isPending = true;
+        }),
+    );
+
+    expect(await client.ask("A slow question")).toBe(true);
+    expect(assistant.status).toBe("pending");
+    finishRequest(true);
   });
 
   it("follows later changes to the conversation", async () => {

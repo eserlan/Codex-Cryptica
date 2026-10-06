@@ -113,12 +113,18 @@ export class CifPopoutHost {
 
   private async ask(id: number, text: string): Promise<void> {
     const a = this.deps.assistant;
-    const started = await a.ask(text);
+    const wasPending = a.isPending;
+    const request = a.ask(text);
+    // `ask` sets pending synchronously before its first await. Acknowledge that
+    // the question was accepted now; waiting for the AI response can take
+    // longer than the pop-out client's acknowledgement timeout.
+    const started = !wasPending && a.isPending;
     this.post({
       type: "ask-result",
       id,
-      started: started && a.status !== "idle",
+      started,
     });
+    await request;
   }
 
   private command(
