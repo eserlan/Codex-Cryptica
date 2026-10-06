@@ -81,8 +81,8 @@ shell commands, and other important information, read the [current plan](./specs
 
 ## Active Technologies
 
-- TypeScript 6.0.3, Svelte 5 (Runes), SvelteKit 2, Bun 1.3.14 + Existing `map-engine` (hex maths, renderer), `session-journal-engine` (capture, promote), `@codex/events` (`JOURNAL:CAPTURE`), `help-engine`, Tailwind 4 semantic tokens. No new third-party dependency. (3841-solo-map-play)
-- Existing per-map settings in `localStorage` (`soloFog`, `visionRange`; unchanged); existing IndexedDB `session_journals` (one optional field, `captureMapMoves`; no migration). Travel tally in memory only. (3841-solo-map-play)
+- TypeScript 6.0.3, Svelte 5 (Runes), SvelteKit 2, Bun 1.3.14 + Existing `map-engine` (hex maths, renderer), `session-journal-engine` (capture, promote), `@codex/events` (`JOURNAL:CAPTURE`), `help-engine`, Tailwind 4 semantic tokens. No new third-party dependency. (171-solo-map-play)
+- Existing per-map settings in `localStorage` (`soloFog`, `visionRange`; unchanged); existing IndexedDB `session_journals` (one optional field, `captureMapMoves`; no migration). Travel tally in memory only. (171-solo-map-play)
 
 - TypeScript 6.0.3, Svelte 5 (Runes), SvelteKit 2, Bun 1.3.14 + Canvas 2D API, `@codex/spatial-engine`, Tailwind 4 semantic tokens, Lucide Iconify utility classes (170-hex-crawling-maps)
 - Browser-local OPFS (for standard 2D map mask WebP/PNG persistence) and `localStorage` / vault settings (for per-map grid settings). Zero new databases or external schemas required. (170-hex-crawling-maps)

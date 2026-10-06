@@ -1,7 +1,7 @@
 # Implementation Plan: Solo Map Play
 
-**Branch**: `feat/3841-solo-map-play` | **Date**: 2026-10-06 | **Spec**: [spec.md](./spec.md)
-**Input**: Feature specification from `specs/3841-solo-map-play/spec.md`
+**Branch**: `feat/171-solo-map-play` | **Date**: 2026-10-06 | **Spec**: [spec.md](./spec.md)
+**Input**: Feature specification from `specs/171-solo-map-play/spec.md`
 
 ## Summary
 
@@ -71,7 +71,7 @@ N/A: no public, indexable page is added or repositioned.
 ### Documentation (this feature)
 
 ```text
-specs/3841-solo-map-play/
+specs/171-solo-map-play/
 ├── spec.md
 ├── plan.md
 ├── research.md

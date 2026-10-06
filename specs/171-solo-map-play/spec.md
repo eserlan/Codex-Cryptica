@@ -1,6 +1,6 @@
 # Feature Specification: Solo Map Play
 
-**Feature Branch**: `feat/3841-solo-map-play`
+**Feature Branch**: `feat/171-solo-map-play`
 **Created**: 2026-10-06
 **Status**: Draft
 **Input**: User description: "Solo map play: a "Solo" mode for the VTT map that lets one person be both GM and player. Builds on the shipped SOLO fog toggle (#3818, PR #3838). Cover: solid fog as players see it with all GM tools kept; handling of GM-only tokens and map notes (hidden until revealed vs always shown); hex exploration flow (reveal by moving, vision, travel); capturing what happens into the Session Journal; Cif help and context for solo play; discoverability. Must not change multiplayer or Player View behaviour. Local-first, no tracking."

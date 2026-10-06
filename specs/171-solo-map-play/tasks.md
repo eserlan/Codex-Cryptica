@@ -1,6 +1,6 @@
 # Tasks: Solo Map Play
 
-**Input**: Design documents from `specs/3841-solo-map-play/`
+**Input**: Design documents from `specs/171-solo-map-play/`
 **Prerequisites**: [plan.md](./plan.md), [spec.md](./spec.md), [research.md](./research.md), [data-model.md](./data-model.md), [contracts/solo-exploration.md](./contracts/solo-exploration.md), [quickstart.md](./quickstart.md)
 
 **Tests**: Required for every change in behaviour (Constitution II). Each test task comes before its implementation, and covers the success path and at least one negative path.
@@ -30,7 +30,7 @@ Never run repository-wide suites.
 
 **Purpose**: None needed. The workspace packages, test runners and stores all exist, and there is no new dependency or discovery page (Constitution XIII does not apply).
 
-- [ ] T001 Confirm the branch `feat/3841-solo-map-play` is rebased on `origin/staging`, and that `bunx vitest run src/hex.test.ts` passes in `packages/map-engine` as a baseline
+- [ ] T001 Confirm the branch `feat/171-solo-map-play` is rebased on `origin/staging`, and that `bunx vitest run src/hex.test.ts` passes in `packages/map-engine` as a baseline
 
 ---
 
