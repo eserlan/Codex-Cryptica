@@ -192,7 +192,7 @@ Never run repository-wide suites.
 
 ## Phase 7: Polish & cross-cutting
 
-- [ ] T046 Run quickstart §1–§4 manually on the dev server, and note in the PR anything not exercised by a real browser
+- [x] T046 Run quickstart §1–§4 manually on the dev server, and note in PR #3843 anything not exercised by a real browser
 - [ ] T047 Run the five-person usability check for SC-005 after release: each person who plays solo opens a fogged map and is timed finding SOLO and explaining it. Record the result on #3841. SC-005 is a post-launch measure, so this does not block the PR.
 - [x] T048 Run the validation commands above. Run the `codex-review` skill and fix its findings.
 - [ ] T049 Open a ready-for-review PR to `staging` that closes #3841. After merge: redeploy the Worker locally from `staging` (checkout and `TMPDIR` under `/home`, not `/tmp`), then promote with an explicit `staging_run_id`.
