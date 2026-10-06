@@ -86,3 +86,8 @@
 **Learning:** Svelte store files can become god files when they embed large static configurations or initial state arrays (like `BUILT_IN_STAT_SHEET_TEMPLATES`, which alone was 800+ lines). Extracting these static defaults into a separate feature-owned file (e.g., `stores/stat-sheet/built-in-templates.ts`) significantly improves the readability of the store logic itself while keeping the data closely co-located.
 
 **Action:** When inspecting stores for god-file improvements, check if massive static arrays or default configurations are inflating the file size. These are prime, low-risk candidates for extraction into a sibling file or subdirectory (e.g., `stores/domain/constants.ts`).
+
+## 2025-03-09 - Extract Cloud Backup Admin Routes
+
+**Learning:** Extracted the support-only admin routes (`handleCloudBackupAdminDelete`, `handleCloudBackupAdminLookup`, `handleCloudBackupAdminStats`, `handleCloudBackupReissueCode`) and `MAX_STATS_SCAN_OBJECTS` from `apps/workers/oracle-proxy/src/cloud-backup.ts` to a new sibling module `apps/workers/oracle-proxy/src/cloud-backup-admin.ts` to reduce god-file status. Ensure exact imports in the test file are preserved and the index correctly splits the new imports.
+**Action:** When extracting functions from a god file, especially when dealing with routes mapped from `index.ts`, explicitly remove the deleted function imports in `index.ts` to avoid syntax compilation errors, and meticulously track sibling module dependencies.
