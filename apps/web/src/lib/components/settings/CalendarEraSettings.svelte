@@ -2,6 +2,10 @@
   import { calendarStore } from "$lib/stores/calendar.svelte";
   import type { CalendarEra } from "chronology-engine";
   import { formatEraYear } from "chronology-engine";
+  import { systemIdGenerator, type IdGenerator } from "$lib/utils/runtime-deps";
+
+  let { idGenerator = systemIdGenerator }: { idGenerator?: IdGenerator } =
+    $props();
 
   let eras: CalendarEra[] = $derived(calendarStore.config.eras || []);
 
@@ -10,7 +14,7 @@
       eras.length > 0 ? (eras[eras.length - 1].startYear ?? 0) + 100 : 0;
 
     const newEra: CalendarEra = {
-      id: crypto.randomUUID(),
+      id: idGenerator.uuid(),
       name: `Era ${eras.length + 1}`,
       label: "",
       startYear: nextStart,
