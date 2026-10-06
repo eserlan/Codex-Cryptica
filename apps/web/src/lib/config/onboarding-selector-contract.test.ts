@@ -18,10 +18,10 @@
  *   extra mocking is needed.
  * - GraphEmptyState's empty-state CTA testid: GraphView itself calls into
  *   cytoscape/graph-engine on mount, making a full render disproportionately
- *   expensive for this one assertion. Its target is a static string passed as
- *   a prop (`ctaTestId="graph-empty-state-cta"`), not computed, so a
- *   source-level check is equally reliable for this specific case and is
- *   used instead — documented here as a deliberate, narrow exception.
+ *   expensive for this one assertion. The extracted GraphEmptyState component
+ *   owns the static `ctaTestId="graph-empty-state-cta"` prop, so a source-level
+ *   check there is equally reliable for this specific case and is used instead
+ *   — documented here as a deliberate, narrow exception.
  */
 
 import { readFileSync } from "node:fs";
