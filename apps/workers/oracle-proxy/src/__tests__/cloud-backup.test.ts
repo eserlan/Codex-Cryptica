@@ -9,10 +9,6 @@ import {
   handleCloudBackupDelta,
   handleGetCloudBackupAsset,
   handleDeleteCloudBackup,
-  handleCloudBackupAdminLookup,
-  handleCloudBackupAdminStats,
-  handleCloudBackupReissueCode,
-  handleCloudBackupAdminDelete,
   hashOwnerCode,
   getManifestKey,
   getBundleKey,
@@ -21,6 +17,12 @@ import {
   getShardKey,
   type CloudBackupEnv,
 } from "../cloud-backup";
+import {
+  handleCloudBackupAdminLookup,
+  handleCloudBackupAdminStats,
+  handleCloudBackupReissueCode,
+  handleCloudBackupAdminDelete,
+} from "../cloud-backup-admin";
 import { Bucket } from "./r2-memory-bucket";
 import {
   CLOUD_BACKUP_SCHEMA_V2,
