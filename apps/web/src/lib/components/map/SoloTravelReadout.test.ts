@@ -45,4 +45,16 @@ describe("SoloTravelReadout", () => {
       screen.getByText("Last: 1 hex (6 mi) · Total: 1 hex (6 mi)"),
     ).toBeTruthy();
   });
+
+  it("shows square and gridless travel without hex-only punctuation", () => {
+    const recorder = {
+      lastMove: { hexes: null, distance: 12, unit: "mi" },
+      total: { hexes: null, distance: 12, unit: "mi" },
+      reset: vi.fn(),
+    };
+    render(SoloTravelReadout, {
+      props: { recorder: recorder as never, visible: true },
+    });
+    expect(screen.getByText("Last: 12 mi · Total: 12 mi")).toBeTruthy();
+  });
 });

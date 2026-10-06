@@ -13,11 +13,11 @@
     travel: { hexes: number | null; distance: number; unit: string } | null,
   ) {
     if (!travel) return "—";
-    const hexText =
-      travel.hexes === null
-        ? ""
-        : `${travel.hexes} ${travel.hexes === 1 ? "hex" : "hexes"} `;
-    return `${hexText}(${travel.distance} ${travel.unit})`.trim();
+    const distanceText = `${travel.distance} ${travel.unit}`;
+    if (travel.hexes === null) return distanceText;
+
+    const hexText = `${travel.hexes} ${travel.hexes === 1 ? "hex" : "hexes"}`;
+    return `${hexText} (${distanceText})`;
   }
 </script>
 
