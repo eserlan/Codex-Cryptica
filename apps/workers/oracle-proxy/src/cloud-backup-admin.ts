@@ -11,6 +11,19 @@ import {
   json,
 } from "./cloud-backup";
 
+function checkAdminAccess(
+  request: Request,
+  env: CloudBackupEnv,
+): Response | null {
+  if (!isAdmin(request, env)) {
+    return json(request, { error: { message: "Not found" } }, 404);
+  }
+  if (!env.BUCKET) {
+    return json(request, { error: { message: "Storage unavailable" } }, 500);
+  }
+  return null;
+}
+
 /**
  * The owner route needs the vault's code, which is exactly what a user who
  * cleared their browser, lost the device or wants a takedown no longer has.
@@ -27,12 +40,8 @@ export async function handleCloudBackupAdminDelete(
   env: CloudBackupEnv,
   backupId: string,
 ): Promise<Response> {
-  if (!isAdmin(request, env)) {
-    return json(request, { error: { message: "Not found" } }, 404);
-  }
-  if (!env.BUCKET) {
-    return json(request, { error: { message: "Storage unavailable" } }, 500);
-  }
+  const authError = checkAdminAccess(request, env);
+  if (authError) return authError;
 
   const existed = (await readManifest(env, backupId)) !== null;
   await eraseBackupObjects(env, backupId);
@@ -53,12 +62,8 @@ export async function handleCloudBackupAdminLookup(
   request: Request,
   env: CloudBackupEnv,
 ): Promise<Response> {
-  if (!isAdmin(request, env)) {
-    return json(request, { error: { message: "Not found" } }, 404);
-  }
-  if (!env.BUCKET) {
-    return json(request, { error: { message: "Storage unavailable" } }, 500);
-  }
+  const authError = checkAdminAccess(request, env);
+  if (authError) return authError;
 
   let body: any;
   try {
@@ -103,6 +108,25 @@ export async function handleCloudBackupAdminLookup(
 
 const MAX_STATS_SCAN_OBJECTS = 200_000;
 
+interface StatsAccumulator {
+  vaultCount: number;
+  assetCount: number;
+  totalBytes: number;
+  objectsScanned: number;
+}
+
+function tallyStatsObjects(objects: any[], stats: StatsAccumulator): void {
+  for (const object of objects) {
+    stats.objectsScanned += 1;
+    stats.totalBytes += object.size ?? 0;
+    if (object.key.endsWith("/manifest.json")) {
+      stats.vaultCount += 1;
+    } else if (object.key.includes("/assets/")) {
+      stats.assetCount += 1;
+    }
+  }
+}
+
 /**
  * GET /api/cloud-backup/admin/stats — aggregate counts only.
  *
@@ -117,17 +141,15 @@ export async function handleCloudBackupAdminStats(
   request: Request,
   env: CloudBackupEnv,
 ): Promise<Response> {
-  if (!isAdmin(request, env)) {
-    return json(request, { error: { message: "Not found" } }, 404);
-  }
-  if (!env.BUCKET) {
-    return json(request, { error: { message: "Storage unavailable" } }, 500);
-  }
+  const authError = checkAdminAccess(request, env);
+  if (authError) return authError;
 
-  let vaultCount = 0;
-  let assetCount = 0;
-  let totalBytes = 0;
-  let objectsScanned = 0;
+  const stats: StatsAccumulator = {
+    vaultCount: 0,
+    assetCount: 0,
+    totalBytes: 0,
+    objectsScanned: 0,
+  };
   let cursor: string | undefined;
   let complete = true;
 
@@ -137,13 +159,8 @@ export async function handleCloudBackupAdminStats(
       cursor,
       limit: 1000,
     });
-    for (const object of listed.objects ?? []) {
-      objectsScanned += 1;
-      totalBytes += object.size ?? 0;
-      if (object.key.endsWith("/manifest.json")) vaultCount += 1;
-      else if (object.key.includes("/assets/")) assetCount += 1;
-    }
-    if (objectsScanned >= MAX_STATS_SCAN_OBJECTS && listed.truncated) {
+    tallyStatsObjects(listed.objects ?? [], stats);
+    if (stats.objectsScanned >= MAX_STATS_SCAN_OBJECTS && listed.truncated) {
       complete = false;
       break;
     }
@@ -151,9 +168,9 @@ export async function handleCloudBackupAdminStats(
   } while (cursor);
 
   return json(request, {
-    vaultCount,
-    assetCount,
-    totalBytes,
+    vaultCount: stats.vaultCount,
+    assetCount: stats.assetCount,
+    totalBytes: stats.totalBytes,
     complete,
   });
 }
@@ -169,12 +186,8 @@ export async function handleCloudBackupReissueCode(
   env: CloudBackupEnv,
   backupId: string,
 ): Promise<Response> {
-  if (!isAdmin(request, env)) {
-    return json(request, { error: { message: "Not found" } }, 404);
-  }
-  if (!env.BUCKET) {
-    return json(request, { error: { message: "Storage unavailable" } }, 500);
-  }
+  const authError = checkAdminAccess(request, env);
+  if (authError) return authError;
 
   const record = await readManifest(env, backupId);
   if (!record) return json(request, { error: { message: "Not found" } }, 404);
