@@ -16,7 +16,7 @@
  *   (layoutUIStore.isMobile + menu closed), which — confirmed by reading the
  *   component — never mounts Minimap/GraphViewPresets/TimelineControls, so no
  *   extra mocking is needed.
- * - GraphView's empty-state CTA testid: GraphView itself calls into
+ * - GraphEmptyState's empty-state CTA testid: GraphView itself calls into
  *   cytoscape/graph-engine on mount, making a full render disproportionately
  *   expensive for this one assertion. Its target is a static string passed as
  *   a prop (`ctaTestId="graph-empty-state-cta"`), not computed, so a
@@ -164,7 +164,7 @@ describe("onboarding selector contract", () => {
     }
   });
 
-  it("GraphView's empty-state CTA testid is still wired (source check — see file docstring)", () => {
+  it("GraphEmptyState's empty-state CTA testid is still wired (source check — see file docstring)", () => {
     const remaining = allTargetSelectors.filter(
       (s) =>
         !s.includes('data-testid="activity-bar') &&
@@ -182,11 +182,11 @@ describe("onboarding selector contract", () => {
       ).toBe("graph-empty-state-cta");
     }
 
-    const graphViewSource = readFileSync(
-      path.resolve(__dirname, "../components/GraphView.svelte"),
+    const graphEmptyStateSource = readFileSync(
+      path.resolve(__dirname, "../components/graph/GraphEmptyState.svelte"),
       "utf-8",
     );
-    expect(graphViewSource).toContain('"graph-empty-state-cta"');
+    expect(graphEmptyStateSource).toContain('"graph-empty-state-cta"');
 
     const emptyStateSource = readFileSync(
       path.resolve(__dirname, "../components/ui/EmptyState.svelte"),

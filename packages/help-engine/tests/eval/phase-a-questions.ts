@@ -77,7 +77,7 @@ export const PHASE_A_IN_SCOPE: InScopeQuestion[] = [
     "vtt-tokens",
   ]),
   q("map", "tune", "map", "How do I measure distance on the map?", [
-    "vtt-session",
+    "vtt-grids-measurement",
   ]),
   q("map", "tune", "map", "How do I play this map solo?", ["vtt-solo-play"]),
   q("map", "holdout", "map", "How do I explore a hexcrawl on my own?", [
