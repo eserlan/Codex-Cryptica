@@ -202,7 +202,7 @@ describe("retrieve", () => {
 
   it("returns no match below the relevance floor, so the model is never called", () => {
     const result = retrieve(
-      "Can I export my vault to Roll20?",
+      "Can I stream to Twitch?",
       bundle([connections, ...filler]),
       connectionsScreen,
     );
@@ -213,7 +213,7 @@ describe("retrieve", () => {
 
   it("suggests the closest help topics when nothing matches", () => {
     const result = retrieve(
-      "Can I export my vault to Roll20?",
+      "Can I stream to Twitch?",
       bundle([connections, ...filler]),
       connectionsScreen,
     );

@@ -259,7 +259,10 @@
               <div
                 class="flex items-center gap-1.5 rounded-full bg-theme-primary px-3 py-1.5 text-micro font-bold uppercase tracking-widest text-theme-bg shadow-lg animate-pulse"
               >
-                <span class="icon-[lucide--calendar-plus] h-3.5 w-3.5"></span>
+                <span
+                  aria-hidden="true"
+                  class="icon-[lucide--calendar-plus] h-3.5 w-3.5"
+                ></span>
                 Set date
               </div>
             </div>

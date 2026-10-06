@@ -12,7 +12,10 @@
       <div
         class="w-10 h-10 md:w-12 md:h-12 bg-theme-primary/10 rounded-xl flex items-center justify-center text-theme-primary"
       >
-        <span class="icon-[lucide--folder-input] w-5 h-5 md:w-6 md:h-6"></span>
+        <span
+          aria-hidden="true"
+          class="icon-[lucide--folder-input] w-5 h-5 md:w-6 md:h-6"
+        ></span>
       </div>
       <div>
         <h1

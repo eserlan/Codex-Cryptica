@@ -93,7 +93,7 @@
       onclick={() => quickNoteStore.startNewNote()}
       class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-theme-primary text-theme-bg font-semibold text-xs transition-colors shadow-sm hover:brightness-110"
     >
-      <span class="icon-[lucide--plus] h-3.5 w-3.5"></span>
+      <span aria-hidden="true" class="icon-[lucide--plus] h-3.5 w-3.5"></span>
       New Note
     </button>
     <span class="text-micro text-theme-muted">

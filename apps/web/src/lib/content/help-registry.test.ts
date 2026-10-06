@@ -80,7 +80,7 @@ describe("retrieval over the real help articles", () => {
 
   it("does not treat a capability the product lacks as answerable", () => {
     for (const question of [
-      "Can I export my vault to Roll20?",
+      "Can I stream to Twitch?",
       "What is the weather in Paris?",
       "How do I reset my Netflix password?",
     ]) {

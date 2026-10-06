@@ -259,7 +259,7 @@ const PHASE_ONE_OUT_OF_SCOPE: {
   question: string;
   screen: keyof typeof SCREENS;
 }[] = [
-  { question: "Can I export my vault to Roll20?", screen: "connections" },
+  { question: "Can I stream to Twitch?", screen: "connections" },
   { question: "What is the weather in Paris?", screen: "none" },
   { question: "Write me a poem about dragons", screen: "none" },
   { question: "How do I reset my Netflix password?", screen: "none" },
@@ -308,7 +308,7 @@ export const OUT_OF_SCOPE: OutOfScopeQuestion[] = [
   ...PHASE_ONE_OUT_OF_SCOPE.map((q) => ({
     ...q,
     split: "tune" as const,
-    kind: q.question.includes("Roll20")
+    kind: q.question.includes("Twitch")
       ? ("near-miss" as const)
       : ("unrelated" as const),
   })),
