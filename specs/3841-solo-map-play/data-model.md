@@ -30,7 +30,8 @@ Per open map. Not persisted; cleared on map switch, reload or Reset.
 
 Rules:
 
-- A move is counted when a vision source token's hex changes. Moving within a hex counts nothing.
+- A move is counted when it **completes**: on drag end, or on a single-step move. While a drag is in progress, hexes are revealed live but nothing is counted, undone or recorded.
+- The move runs from the hex the token was in when the move started to the hex it ends in. Ending in the starting hex counts nothing.
 - `hexes` is `hexDistance(from, to)`. `distance` is `hexes * gridDistance` in `gridUnit`.
 - A token placed for the first time sets `lastHexByToken` and counts no travel.
 - On square and gridless maps, travel is the straight-line distance in map units. `hexes` is not shown.
@@ -55,5 +56,5 @@ Produced from a `JOURNAL:CAPTURE` event through the existing `captureToEntryInpu
 
 State rules:
 
-- One entry per move (FR-014).
+- One entry per completed move (FR-014), never one per hex crossed.
 - Written only while a journal is `active`, map capture is on, SOLO is on, and the session is not a guest session (FR-017; the listener already enforces active and non-guest).

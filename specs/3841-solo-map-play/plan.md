@@ -139,7 +139,8 @@ Each slice is independently testable and shippable, matching the spec's stories.
 
 ## Risks
 
-- **Undo noise**: one undo step per move could crowd the undo stack on a long trip. Mitigation: record only moves that reveal something new.
+- **Undo noise**: one undo step per move could crowd the undo stack on a long trip. Mitigation: record only completed moves that reveal something new.
+- **Drags update position every frame**: `TokenDragHandler.move()` moves the token on each pointer movement, so treating every change as a move would flood undo, travel and the journal. Mitigation: reveal live, record once on drag end via an injected settle signal (contract §3).
 - **Moving the effect out of `MapView`**: the reveal-on-move effect is load-bearing for multiplayer GM vision. Mitigation: SOLO-off behaviour is pinned by tests before the move.
 - **Mask reads**: `getImageData` per hex for `newlyRevealedHexes` stays at most about 37 reads for a sight of 3, so it is negligible.
 

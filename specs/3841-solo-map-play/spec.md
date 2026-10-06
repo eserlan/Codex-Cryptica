@@ -17,6 +17,9 @@ This feature turns that switch into a complete way to play a map alone: what sta
 ### Session 2026-10-06
 
 - Q: When a solo GM reveals a hex holding something marked Hide from Guests, does it appear straight away? → A: Yes. It appears as soon as its area is revealed (FR-007).
+- A move is a completed move: when the party token is put down after a drag, or moved in one step. Revealing happens live while dragging; the undo step, the travel and the journal entry are recorded once, when the move completes (FR-011, FR-014).
+- Travel is tracked for tokens marked as a vision source, which is how the party is identified. A token without vision is not tracked.
+- A session, for travel, means since the map was opened or the travel tally was last reset.
 - Principle: solo play has exactly one person, the GM, who is also the only player. There is no one to hide anything from but themselves, so fog alone decides what is concealed and the GM keeps every tool. Multiplayer is not part of solo play and is out of scope.
 
 ## User Scenarios & Testing _(mandatory)_
@@ -67,7 +70,7 @@ While a Session Journal is running, the solo GM's exploration is written into it
 **Acceptance Scenarios**:
 
 1. **Given** a journal is running and SOLO is on, **When** the party token enters a hex, **Then** the journal records the move with the hex coordinates (when coordinates are shown) and the distance.
-2. **Given** several hexes are revealed in quick succession, **When** they are recorded, **Then** they are grouped into one entry rather than one entry per hex.
+2. **Given** the party is dragged across several hexes in one move, **When** the move completes, **Then** it is recorded as one entry, from the starting hex to the final hex.
 3. **Given** no journal is running, **When** the party moves, **Then** nothing is recorded and nothing is stored.
 4. **Given** the GM does not want map events in the journal, **When** they turn map capture off for the journal, **Then** moves and reveals stop being recorded and dice, table and deck capture continue.
 5. **Given** a recorded map entry, **When** the GM promotes it, **Then** it can become a vault entry (for example a location note for a hex) the same way other journal entries can.
@@ -93,12 +96,13 @@ Someone who plays alone opens a map and wonders how to keep the map hidden from 
 
 - **Fog turned off while SOLO is on**: SOLO has no effect without fog; turning fog back on restores SOLO as it was.
 - **Map with no fog painted yet**: everything starts hidden, as fog always does; the first reveal shows the start area.
-- **Party token without vision**: moving it reveals nothing; the travel distance is still shown.
+- **Token without vision**: moving it reveals nothing and is not counted as travel; only vision-source tokens are the party.
 - **Several vision tokens**: each reveals around itself; party versus selected vision behaves as today.
 - **Moving a token onto a hex that is already revealed**: no new reveal, and the journal records the move without a reveal.
-- **Very large reveals** (a long jump across the map): the reveal and the journal entry stay one action, one undo step and one entry.
+- **Very large reveals** (a long drag across the map): the hexes are revealed live as the token passes, and the completed move is still one undo step and one journal entry.
+- **Dragging across several hexes**: the travel counted is from the hex the move started in to the hex it ended in, not every hex the pointer crossed.
 - **Hidden token or note in a revealed area**: it appears when the area is revealed (FR-007).
-- **Journal paused or ended mid-move**: nothing is recorded after it stops.
+- **Journal ended mid-move**: nothing is recorded after it ends.
 
 ## Requirements _(mandatory)_
 
@@ -108,7 +112,7 @@ Someone who plays alone opens a map and wonders how to keep the map hidden from 
 
 - **FR-001**: The map MUST offer a SOLO setting in GM view while fog is on, as shipped in #3818, and keep it per map on this device.
 - **FR-002**: With SOLO on, fogged areas MUST conceal everything in them: the map image, all tokens (including ones marked Hide from Guests), pins, pin labels, notes, note markers and hex coordinate labels.
-- **FR-003**: With SOLO on, every GM tool MUST keep working exactly as with SOLO off.
+- **FR-003**: With SOLO on, every GM tool MUST keep working as with SOLO off. The only differences are the exploration additions in FR-008 to FR-011 (an undo step and travel for party moves).
 - **FR-004**: SOLO MUST only change how the map is shown. It MUST NOT change the map itself, its fog, or its tokens and notes.
 - **FR-005**: Revealing or hiding an area MUST update what is concealed immediately, by any method (brush, hex menu, token vision, undo).
 - **FR-006**: Concealment MUST be safe by default: if the map cannot tell whether an area is revealed, a hint drawn over the map (such as a label) MUST NOT reveal content from a fogged area. The pin label check shipped in #3818 shows a label when the fog state cannot be read; this requirement replaces that behaviour.
@@ -118,14 +122,14 @@ Someone who plays alone opens a map and wonders how to keep the map hidden from 
 
 - **FR-008**: On a hex map with SOLO on, a token marked as a vision source MUST reveal the hexes within its sight when it moves, in whole hexes.
 - **FR-009**: The party's sight on a hex map MUST be settable in hexes, and changing it MUST only affect later reveals.
-- **FR-010**: The map MUST show the hexes travelled and the distance, in the map's units, for the last move and for the current session.
-- **FR-011**: Each move's reveal MUST be a single undo step.
-- **FR-012**: On square-grid and gridless maps, vision and travel MUST keep working as they do today.
+- **FR-010**: The map MUST show the hexes travelled and the distance, in the map's units, for the last completed move and for the session (since the map was opened or the tally was last reset), with a way to reset it.
+- **FR-011**: Each completed move that reveals anything MUST be a single undo step, however many hexes it crossed.
+- **FR-012**: On square-grid and gridless maps, vision MUST keep revealing as it does today, and travel MUST be shown as a straight-line distance in the map's units (no hex count).
 
 **Record**
 
 - **FR-013**: While a Session Journal is running and SOLO is on, entering a hex MUST add a journal entry with the move, the distance and, when shown, the hex coordinates.
-- **FR-014**: Reveals made in quick succession MUST be grouped into a single entry.
+- **FR-014**: A completed move MUST produce at most one journal entry, however many hexes were crossed or revealed during it.
 - **FR-015**: The GM MUST be able to turn map capture off for a journal without affecting dice, table and deck capture.
 - **FR-016**: Map entries MUST be promotable to vault entries like other journal entries.
 - **FR-017**: Nothing MUST be recorded when no journal is running.
@@ -144,7 +148,7 @@ Someone who plays alone opens a map and wonders how to keep the map hidden from 
 
 - **Solo setting**: per map, on this device. Whether fog is shown solid in GM view.
 - **Party sight**: per map. How far vision-source tokens reveal, in hexes on a hex map and in map units otherwise.
-- **Travel record**: per session. The moves made by vision-source tokens: from and to hexes, hexes travelled, distance.
+- **Travel record**: since the map was opened or last reset. The completed moves made by vision-source tokens: from and to hexes, hexes travelled, distance.
 - **Map journal entry**: a Session Journal entry describing a move and its reveals, grouped, promotable like other entries.
 
 ## Success Criteria _(mandatory)_

@@ -70,8 +70,10 @@ interface SoloExplorationDeps {
 class SoloExplorationRecorder {
   readonly lastMove: Travel | null; // reactive
   readonly total: Travel; // reactive
-  /** Called when vision source tokens move or change. */
+  /** Called whenever vision source tokens move or change. Reveals live. */
   onVisionChanged(tokens: Token[]): Promise<void>;
+  /** Called when a move completes (drag end, or a single-step move). Records once. */
+  onMoveSettled(tokens: Token[]): Promise<void>;
   reset(): void;
 }
 ```
@@ -81,10 +83,10 @@ Contract:
 - With `canReveal` false, it does nothing, as today.
 - With SOLO off, it reveals exactly as today: no undo, no travel, no capture (non-solo behaviour unchanged).
 - With SOLO on:
-  - one reveal per call
-  - one undo step labelled "Map Exploration", only if anything was newly revealed
-  - travel updated per token whose hex changed
-  - at most one `map-move` capture per call
+  - `onVisionChanged` reveals live and, on the first change of a move, snapshots the mask. It records no undo, travel or capture.
+  - A move completes on drag end (signalled by `TokenDragHandler.end()` through an injected `onMoveSettled`), or immediately for a position change made outside a drag.
+  - On completion: one undo step labelled "Map Exploration" restoring the snapshot, only if anything was newly revealed; travel from the hex at move start to the final hex, per vision token; at most one `map-move` capture.
+- Only vision source tokens are tracked; other tokens count no travel.
 - On a hex map the radius is `visionRangeInHexes(visionRange, gridDistance)`. Otherwise the existing pixel radius is used.
 
 ## 4. Journal capture payload
