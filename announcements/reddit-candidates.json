@@ -1,5 +1,5 @@
 {
-  "updated_at": 1791265658,
+  "updated_at": 1791267372,
   "candidates": [
     {
       "id": "reddit-37032544014-my-pirate-arcs-kept-collapsing-into-eith",
@@ -62,14 +62,14 @@
       "created_at": 1791204015
     },
     {
-      "id": "reddit-37419820135-overland-hexcrawl-maps-hex-grid-hex-fog-",
-      "title": "Overland hexcrawl maps: hex grid, hex fog and token snapping",
-      "body": "Running overland travel on a square grid always feels slightly off. You count diagonals, you fudge distance, and when you paint fog of war with a round brush the revealed edges come out ragged.\n\nI built proper hex support into the map so overland travel actually runs on hexes. One toggle switches the grid and everything else respects it.\n\nLearn how it works: https://codexcryptica.com/help/hexcrawl-maps\n\n- pointy-top and flat-top hex grids with adjustable radius and miles-per-hex so a 6-mile hex reads as 6 miles\n- fog of war that paints and reveals by whole hex instead of soft brush strokes, with undo and redo\n- token dragging that snaps to hex centres on release and 1x, 2x, 3x sizing to match hex diameter\n- vision that reveals in hex rings as tokens move, instead of circular washes\n- coordinates in (q.r) and a ruler that reports hex count plus converted distance\n\nTradeoff I am still tuning: coordinate labels auto-hide when you zoom out to keep the map readable, so you lose precise refs at very low zoom. I may make that threshold a setting if people want it.\n\nWhat scale do you run overland at \u2014 6 miles per hex, something tighter for point crawls, or larger for regional maps?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/announcements/release-37419820135-0.png)",
-      "url": "https://codexcryptica.com/help/hexcrawl-maps",
-      "image_url": "https://assets.codexcryptica.com/announcements/release-37419820135-0.png",
+      "id": "reddit-37419820135-how-should-a-fantasy-adventuring-guild-h",
+      "title": "How should a fantasy adventuring guild handle wages, dues and shared expenses?",
+      "body": "Most guilds in campaigns feel like a quest board with a fee on top. Nobody knows who pays what, when they pay, or what the shared coin actually covers, so every split turns into an argument at the table.\n\nI wrote a framework that treats the guild like a working institution with one clear money rule you can quote. Pick the model that fits your hall now and move the dials as it gets richer or poorer.\n\nRead the framework: https://codexcryptica.com/answers/how-should-a-fantasy-adventuring-guild-handle-wages-dues-and-shared-expenses\n\n- five models to choose from: fixed monthly dues, percentage of income, cut of guild-arranged contracts, communal pot with a set stipend, and a hybrid that mixes them\n- practical dials like 20 to 40 percent of steady day-job wages and a third to a half on guild-found contracts\n- what the common fund actually pays for: rent, food and lodging, gear and rope, healing, burials, fines, support for dependants and a reserve for bad months\n- how windfalls and blank months are handled per job or per season so irregular adventuring income does not create phantom debt\n\nI kept the numbers as ranges on purpose. Fantasy coin is never precise enough for a correct percentage, so these are levers for drama rather than economics law. That means a bit more judgement at the table, not less.\n\nWhich model fits your hall right now \u2014 flat dues, a contract cut, or a communal pot \u2014 and what would your players argue about first?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/announcements/release-37419820135-1.png)",
+      "url": "https://codexcryptica.com/answers/how-should-a-fantasy-adventuring-guild-handle-wages-dues-and-shared-expenses",
+      "image_url": "https://assets.codexcryptica.com/announcements/release-37419820135-1.png",
       "source_id": "37419820135",
       "status": "approved",
-      "created_at": 1791265658
+      "created_at": 1791267372
     }
   ]
 }
