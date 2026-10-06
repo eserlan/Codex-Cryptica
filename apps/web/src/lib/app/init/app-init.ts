@@ -915,6 +915,15 @@ export function registerServiceWorker(deps?: {
         }
       },
       (error) => {
+        // Document detachment, reload mid-flight, or sandboxed environments throw
+        // InvalidStateError; ignore gracefully without logging noisy errors.
+        if (
+          error instanceof Error &&
+          (error.name === "InvalidStateError" ||
+            error.message?.includes("invalid state"))
+        ) {
+          return;
+        }
         console.warn("Service Worker registration failed:", error);
       },
     );
