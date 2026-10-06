@@ -6,7 +6,6 @@
   import { categories } from "$lib/stores/categories.svelte";
   import { themeStore } from "$lib/stores/theme.svelte";
   import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
-  import FeatureHint from "$lib/components/help/FeatureHint.svelte";
   import AskAboutThis from "$lib/components/help-assistant/AskAboutThis.svelte";
   import {
     buildConnectionNeighbors,
@@ -379,6 +378,4 @@
     Status tab on this entity for the same connections as a keyboard-friendly
     list.
   </p>
-
-  <FeatureHint hintId="connections" />
 </div>

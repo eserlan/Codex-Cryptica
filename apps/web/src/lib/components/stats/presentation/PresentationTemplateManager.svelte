@@ -7,7 +7,6 @@
     analyzePresentationCompatibility,
     importPresentationTemplatePackage,
   } from "@codex/stat-sheet-engine";
-  import FeatureHint from "$lib/components/help/FeatureHint.svelte";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
 
   let {
@@ -251,9 +250,6 @@
     </div>
 
     <div class="flex-1 overflow-y-auto p-4">
-      <div class="mb-3">
-        <FeatureHint hintId="presentation-templates" />
-      </div>
       <ul class="flex flex-col gap-2">
         {#each available as t (t.id)}
           <li

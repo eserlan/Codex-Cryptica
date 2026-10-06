@@ -16,7 +16,6 @@
   } from "random-source-engine";
   import { systemIdGenerator, type IdGenerator } from "$lib/utils/runtime-deps";
   import { computeWindow } from "./virtual-window";
-  import FeatureHint from "$lib/components/help/FeatureHint.svelte";
   import SourceIdentityFields from "./SourceIdentityFields.svelte";
   import TableRoller from "./TableRoller.svelte";
   import TableGenerateDialog from "./TableGenerateDialog.svelte";
@@ -203,10 +202,6 @@
 </script>
 
 <div class="flex flex-col gap-4" data-testid="table-editor">
-  <!-- Reference syntax is exactly the kind of interaction a first-time author
-       cannot guess at, which is what this clause is for (Constitution IX). -->
-  <FeatureHint hintId="random-tables-and-decks" />
-
   {#key source.id}
     <SourceIdentityFields {source} {onChange} {onRename} />
   {/key}

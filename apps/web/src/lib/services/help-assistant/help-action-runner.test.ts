@@ -36,7 +36,7 @@ function setup(over: Partial<HelpActionRunnerDeps> = {}, context = screen()) {
   const openTab = vi.fn();
   const show = vi.fn(() => true);
   const deps: HelpActionRunnerDeps = {
-    surfaces: { entityDetail: { openTab } as never },
+    surfaces: { entityDetail: { openTab } as never, vttMap: null },
     highlight: { show },
     context: () => context,
     helpIds: () => new Set(["graph-basics"]),
@@ -152,7 +152,9 @@ describe("HelpActionRunner", () => {
   });
 
   it("does not open a tab when no entry is on screen", async () => {
-    const { runner } = setup({ surfaces: { entityDetail: null } });
+    const { runner } = setup({
+      surfaces: { entityDetail: null, vttMap: null },
+    });
     expect(await runner.run(guide)).toBe(false);
   });
 
@@ -256,5 +258,92 @@ describe("HelpActionRunner", () => {
     ];
     for (const action of actions) await runner.run(action);
     for (const spy of spies) expect(spy).not.toHaveBeenCalled();
+  });
+
+  describe("VTT guides", () => {
+    const mapContext = () =>
+      sanitizeHelpContext({
+        routeTemplate: "/(app)/map",
+        area: "map",
+        flags: ["vtt-on"],
+        availableActions: ["vtt-sidebar", "vtt-add-token", "vtt-grid-settings"],
+      });
+    const showAddToken = {
+      type: "openPanel",
+      panel: "vtt-sidebar",
+      label: "Show me where to add a token",
+      then: { type: "highlight", target: "vtt-add-token", label: "Add Token" },
+    } as const;
+
+    it("opens the sidebar through the map, then points at the control", async () => {
+      const openPanel = vi.fn(() => true);
+      const { runner, deps } = setup(
+        {
+          surfaces: {
+            entityDetail: null,
+            vttMap: { facts: vi.fn(), actions: vi.fn(), openPanel } as never,
+          },
+        },
+        mapContext(),
+      );
+
+      expect(await runner.run(showAddToken)).toBe(true);
+
+      expect(openPanel).toHaveBeenCalledWith("vtt-sidebar");
+      expect(deps.highlight.show).toHaveBeenCalledWith(
+        "vtt-add-token",
+        "Add Token",
+      );
+    });
+
+    it("does nothing when the map cannot open the panel, and says so", async () => {
+      const { runner, deps } = setup(
+        {
+          surfaces: {
+            entityDetail: null,
+            vttMap: {
+              facts: vi.fn(),
+              actions: vi.fn(),
+              openPanel: () => false,
+            } as never,
+          },
+        },
+        mapContext(),
+      );
+
+      expect(await runner.run(showAddToken)).toBe(false);
+      expect(deps.highlight.show).not.toHaveBeenCalled();
+    });
+
+    it("does nothing when no map is on screen to open it", async () => {
+      const { runner } = setup(
+        { surfaces: { entityDetail: null, vttMap: null } },
+        mapContext(),
+      );
+
+      expect(await runner.run(showAddToken)).toBe(false);
+    });
+
+    it("refuses a guide for a control this user cannot reach", async () => {
+      const player = sanitizeHelpContext({
+        routeTemplate: "/(app)/map",
+        area: "map",
+        flags: ["vtt-on", "vtt-guest"],
+        availableActions: ["vtt-sidebar"],
+      });
+      const openPanel = vi.fn(() => true);
+      const { runner } = setup(
+        {
+          surfaces: {
+            entityDetail: null,
+            vttMap: { facts: vi.fn(), actions: vi.fn(), openPanel } as never,
+          },
+        },
+        player,
+      );
+
+      expect(await runner.run(showAddToken)).toBe(false);
+      expect(openPanel).not.toHaveBeenCalled();
+    });
   });
 });

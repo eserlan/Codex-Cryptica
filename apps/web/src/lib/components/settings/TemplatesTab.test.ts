@@ -10,10 +10,6 @@ vi.mock("./entity-templates/EntityTemplateSettings.svelte", async () => ({
 vi.mock("./StatSheetTemplateSettings.svelte", async () => ({
   default: (await import("./__mocks__/StatSheetSettingsStub.svelte")).default,
 }));
-vi.mock("$lib/components/help/FeatureHint.svelte", async () => ({
-  default: (await import("./__mocks__/HintStub.svelte")).default,
-}));
-
 import TemplatesTab from "./TemplatesTab.svelte";
 
 describe("TemplatesTab", () => {

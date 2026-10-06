@@ -250,3 +250,66 @@ export function formatHexCoordinate(hex: HexCoord): string {
   };
   return `${formatComponent(hex.q)}.${formatComponent(hex.r)}`;
 }
+
+/**
+ * Reduce a hex grid offset to the equivalent one nearest the origin. A hex
+ * grid repeats under any whole-hex shift, so two offsets that differ by one are
+ * the same grid; keeping the small one keeps saved settings tidy.
+ */
+export function normalizeHexOffset(
+  offset: Point,
+  size: number,
+  orientation: HexOrientation,
+): Point {
+  const origin: HexGridConfig = { orientation, size, offsetX: 0, offsetY: 0 };
+  const nearest = hexToPoint(pointToHex(offset, origin), origin);
+  return {
+    x: offset.x - nearest.x || 0,
+    y: offset.y - nearest.y || 0,
+  };
+}
+
+export interface HexFitInput {
+  /** Two opposite corners of the dragged rectangle, in image coordinates. */
+  start: Point;
+  end: Point;
+  /** How many hexes the drag spans, edge to edge. */
+  span: number;
+  orientation: HexOrientation;
+}
+
+export interface HexFitResult {
+  /** Outer radius (centre to corner) in image pixels. */
+  size: number;
+  offsetX: number;
+  offsetY: number;
+}
+
+/**
+ * Work out the hex size and offset that line a grid up with hexes already
+ * drawn on a map image. The user drags across `span` hexes in a straight line:
+ * along a row for pointy-top hexes, down a column for flat-top ones. Those are
+ * the directions where hexes sit flat side to flat side, so the drag is exactly
+ * `span * sqrt(3)` radii long. The other half of the rectangle locates the
+ * line of hexes: its middle is the centre line of the row (or column).
+ *
+ * The first hex of the span is taken to begin at the drag's near edge.
+ */
+export function fitHexGrid(input: HexFitInput): HexFitResult {
+  const { start, end, span, orientation } = input;
+  const pointy = orientation === "pointy";
+
+  const along = pointy ? Math.abs(end.x - start.x) : Math.abs(end.y - start.y);
+  const size = along / (Math.max(1, span) * SQRT_3);
+
+  const nearEdge = pointy ? Math.min(start.x, end.x) : Math.min(start.y, end.y);
+  const midLine = pointy ? (start.y + end.y) / 2 : (start.x + end.x) / 2;
+  // The first hex's centre sits half a hex width in from the near edge.
+  const firstCentre = nearEdge + (SQRT_3 / 2) * size;
+
+  const centre: Point = pointy
+    ? { x: firstCentre, y: midLine }
+    : { x: midLine, y: firstCentre };
+  const offset = normalizeHexOffset(centre, size, orientation);
+  return { size, offsetX: offset.x, offsetY: offset.y };
+}

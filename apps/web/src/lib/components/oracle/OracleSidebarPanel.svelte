@@ -13,7 +13,6 @@
   import { FEATURE_HINTS, HINT_KEYS } from "$lib/config/help-content";
   import { mapSession } from "$lib/stores/map-session.svelte";
   import VTTChat from "../vtt/VTTChat.svelte";
-  import FeatureHint from "../help/FeatureHint.svelte";
   import { discoveryPolicyStore } from "$lib/stores/ui/discovery-policy.svelte";
   import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
@@ -188,9 +187,6 @@
 
   <div class="flex-1 min-h-0 flex flex-col overflow-hidden">
     {#if activeTab === "oracle"}
-      <div class="px-3 pt-2 shrink-0">
-        <FeatureHint hintId="oracle-memory" />
-      </div>
       <OracleChat
         onOpenSettings={() => {
           modalUIStore.openSettings();

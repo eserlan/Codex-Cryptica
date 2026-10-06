@@ -252,7 +252,7 @@ test.describe("Node Merging", () => {
     );
   });
 
-  test.describe("Documentation & Hints", () => {
+  test.describe("Documentation", () => {
     test.beforeEach(async ({ page }) => {
       await setupVaultPage(page);
     });
@@ -274,48 +274,6 @@ test.describe("Node Merging", () => {
       await page.getByText("Merging Nodes").click();
       await expect(page.getByText("Consolidation Power")).toBeVisible();
       await expect(page.getByText("Select Nodes")).toBeVisible();
-    });
-
-    test("should trigger node-merging feature hint when 2 nodes are selected", async ({
-      page,
-    }) => {
-      // 1. Create two entities
-      await page.evaluate(async () => {
-        const v = (window as any).vault;
-        await v.createEntity("note", "Node A", { id: "node-a" });
-        await v.createEntity("note", "Node B", { id: "node-b" });
-      });
-
-      // 2. Wait for idle
-      await page.waitForFunction(
-        () => (window as any).vault?.status === "idle",
-      );
-
-      // 3. Verify hint NOT visible initially
-      await expect(page.getByText("Multi-Selection Actions")).not.toBeVisible();
-
-      // 4. Select two nodes via Cytoscape API
-      await page.evaluate(() => {
-        const cy = (window as any).cy;
-        cy.$id("node-a").select();
-        cy.$id("node-b").select();
-      });
-
-      // 5. Verify hint appears
-      await expect(page.getByText("Multi-Selection Actions")).toBeVisible();
-
-      // 6. Dismiss hint
-      await page.getByTestId("dismiss-hint-button").first().click();
-      await expect(page.getByText("Multi-Selection Actions")).not.toBeVisible();
-
-      // 7. Unselect and re-select to verify it stays dismissed
-      await page.evaluate(() => {
-        const cy = (window as any).cy;
-        cy.nodes().unselect();
-        cy.$id("node-a").select();
-        cy.$id("node-b").select();
-      });
-      await expect(page.getByText("Multi-Selection Actions")).not.toBeVisible();
     });
   });
 });

@@ -11,7 +11,6 @@
   import ContextMenu from "$lib/components/graph/ContextMenu.svelte";
   import SelectionConnector from "$lib/components/graph/SelectionConnector.svelte";
   import GraphReportAction from "$lib/components/graph/GraphReportAction.svelte";
-  import FeatureHint from "$lib/components/help/FeatureHint.svelte";
   import GraphTooltip from "./graph/GraphTooltip.svelte";
   import EdgeEditorModal from "./graph/EdgeEditorModal.svelte";
   import GraphHUD from "./graph/GraphHUD.svelte";
@@ -36,7 +35,7 @@
     buildSelectionAnnouncement,
   } from "./graph/graph-a11y";
   import { createHoverContentLoader } from "./graph/hover-content-loader";
-  import EmptyState from "$lib/components/ui/EmptyState.svelte";
+  import GraphEmptyState from "$lib/components/graph/GraphEmptyState.svelte";
   import { onboardingStore } from "$lib/stores/ui/onboarding.svelte";
   import { onboardingFunnel } from "$lib/app/onboarding/onboarding-funnel";
   import { helpStore } from "$lib/stores/help.svelte";
@@ -738,40 +737,11 @@
     <GraphReportAction cy={controller.cy} />
   {/if}
   {#if hasNoEntities}
-    <div
-      class="absolute inset-0 flex items-center justify-center pointer-events-none"
-      data-testid="graph-empty-state"
-    >
-      <div class="pointer-events-auto">
-        <EmptyState
-          icon="icon-[lucide--network]"
-          headline="Your graph is empty"
-          body={vault.isGuest
-            ? "Nothing has been shared with you yet."
-            : "Add a character or place to begin. Mention another name in its notes, accept the suggested connection, and it'll appear here."}
-          cta={vault.isGuest ? undefined : "＋ Create"}
-          ctaTestId={vault.isGuest ? undefined : "graph-empty-state-cta"}
-          onCta={vault.isGuest
-            ? undefined
-            : () => modalUIStore.openIntentCreateMenu()}
-          secondaryCta={vault.isGuest ? undefined : "Populate with a pack"}
-          onSecondaryCta={vault.isGuest ? undefined : () => openImportWindow()}
-        />
-      </div>
-    </div>
-    {#if !vault.isGuest}
-      <!-- Durable pointer back to onboarding guidance once the welcome
-           screen is dismissed and forgotten (Finding 9, #1791) — a one-time
-           reminder that Settings → Help has a getting-started checklist and
-           a tour-replay button, for whoever created an empty vault without
-           going through the demo/tour flow at all.
-           top-4 (not bottom-4): the bottom-left is already the mobile
-           GraphToolbar FAB's exact position (`bottom-4`, GraphToolbar.svelte)
-           — a corner we spent considerable effort de-crowding this session. -->
-      <div class="absolute top-4 left-4 z-20 max-w-xs pointer-events-auto">
-        <FeatureHint hintId="getting-started" />
-      </div>
-    {/if}
+    <GraphEmptyState
+      isGuest={vault.isGuest}
+      onCreate={() => modalUIStore.openIntentCreateMenu()}
+      onImport={() => openImportWindow()}
+    />
   {/if}
 
   {#if !vault.isGuest}
@@ -869,46 +839,6 @@
         </div>
       </div>
     </div>
-  {/if}
-
-  {#if layoutUIStore.prefersTouchCoaching && !layoutUIStore.isMobile}
-    <!-- Touch tablets (769-1279px + coarse pointer) only — phones already get
-         the fuller mobile coach-mark walkthrough (COACH_MARKS, scoped to
-         isMobile), and this would be redundant there. Unlike the mobile
-         coach marks, this hint is genuinely layout-agnostic (no per-device
-         target selector needed): panning/zooming the graph works the same
-         regardless of where the ActivityBar happens to render (#1791 Phase 4). -->
-    <!-- top uses --header-height (set dynamically in +layout.svelte, grows
-         with the staging banner), not a hardcoded offset — `fixed` escapes
-         the graph's own container (which the header sits above, so the
-         empty-workspace hint above is naturally clear of it via `absolute`),
-         so without this it renders underneath/behind the sticky AppHeader. -->
-    <div
-      class="fixed right-4 z-[60]"
-      style="top: calc(var(--header-height, 65px) + 1rem);"
-      data-testid="touch-gestures-hint"
-    >
-      <FeatureHint hintId="touch-graph-gestures" />
-    </div>
-  {/if}
-  {#if controller.selectedCount === 2}
-    <!-- Same --header-height fix as touch-gestures-hint above (was fixed
-         top-20, a hardcoded offset that only happened to clear the header
-         by coincidence, and would clip under it if the header grows — e.g.
-         the staging banner). Stacked below the touch-gestures hint (+5rem
-         instead of +1rem) rather than sharing its exact position, since a
-         touch-tablet user selecting 2 nodes can have both hints on screen
-         at once. -->
-    <div
-      class="fixed right-4 z-[60]"
-      style="top: calc(var(--header-height, 65px) + 5rem);"
-      data-testid="node-merging-hint"
-    >
-      <FeatureHint hintId="node-merging" />
-    </div>
-  {/if}
-  {#if connectionModeStore.isConnecting}
-    <FeatureHint hintId="connect-mode" />
   {/if}
 </div>
 

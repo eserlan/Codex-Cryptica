@@ -90,6 +90,8 @@ Stat Sheet data lives directly in the entity's note (its `statSheet` frontmatter
 
 Presentation Templates change how a compatible Stat Sheet is arranged without changing its fields or values. Open an entity's **Stats** tab and choose **Presentations** to switch layouts, set a schema default, or build a new one with the visual card editor (a Markdown source tab is also available for direct editing). Templates are limited to the Stat Sheet schema they were made for, so fields always stay compatible.
 
+Write your own layout in Markdown with field references such as `{{stat.hp}}` and layout sections for groups, cards and rows. Repeatable Table fields (used for Weapons and Items by default) keep rows of data together: add rows, edit their cells, adjust counters and roll dice from the table. In the template editor you can customise a Repeatable Table's column headings and cell types (text, number, dice, counter or checkbox), so the same table type can hold skills, spells or any other list.
+
 ## Related reading
 
 - [The Complete Guide to Custom Character Sheets](/blog/custom-stat-sheet-templates) — Build a reusable Stat Template, fill it in per entity, present it your way, and share it.

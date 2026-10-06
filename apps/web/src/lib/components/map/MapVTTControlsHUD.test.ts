@@ -90,6 +90,39 @@ describe("MapVTTControlsHUD", () => {
     expect(screen.getByRole("button", { name: "GRID: OFF" })).not.toBeNull();
   });
 
+  it("carries stable help targets for the GM's map controls", () => {
+    const { container } = render(MapVTTControlsHUD, {
+      props: { chatSidebarOffset: "20rem" },
+    });
+
+    for (const target of [
+      "vtt-ruler-toggle",
+      "vtt-player-view-toggle",
+      "vtt-fog-toggle",
+      "vtt-grid-button",
+      "vtt-layer-control",
+    ]) {
+      expect(
+        container.querySelector(`[data-help-target="${target}"]`),
+      ).not.toBeNull();
+    }
+  });
+
+  it("leaves the GM-only targets out of a player's view", () => {
+    sessionModeStoreMock.isGuestMode = true;
+    const { container } = render(MapVTTControlsHUD, {
+      props: { chatSidebarOffset: "20rem" },
+    });
+
+    expect(
+      container.querySelector('[data-help-target="vtt-fog-toggle"]'),
+    ).toBeNull();
+    expect(
+      container.querySelector('[data-help-target="vtt-ruler-toggle"]'),
+    ).toBeNull();
+    sessionModeStoreMock.isGuestMode = false;
+  });
+
   describe("maximize", () => {
     it("offers a maximize toggle inside the control bar when VTT is off", async () => {
       mapSessionMock.vttEnabled = false;

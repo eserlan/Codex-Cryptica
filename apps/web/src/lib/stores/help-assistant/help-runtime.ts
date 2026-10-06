@@ -117,6 +117,9 @@ export const cifPopout = new CifPopoutHost({
   accept: async (action) => {
     helpAssistant.dismissOffer();
     await helpActionRunner.run(action);
+    // The guide acts on this window. Bring it forward where the browser lets
+    // a window do that, so the control being pointed at is seen.
+    if (typeof window !== "undefined") window.focus();
   },
   openArticle: (id) => helpStore.openHelpToArticle(id),
   openLibrary: () => helpStore.openHelpWindow(),

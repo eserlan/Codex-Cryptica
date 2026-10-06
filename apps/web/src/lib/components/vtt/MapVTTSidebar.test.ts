@@ -112,6 +112,13 @@ describe("MapVTTSidebar", () => {
     expect(screen.queryByTestId("vtt-pinned-inspector")).toBeNull();
   });
 
+  it("carries a help target on Share Campaign, for the host only", () => {
+    const { container } = renderSidebar();
+    expect(
+      container.querySelector('[data-help-target="vtt-share-button"]'),
+    ).not.toBeNull();
+  });
+
   it("renders the pinned contextual inspector when a token is selected", () => {
     renderSidebar({ hasSelectedToken: true });
 

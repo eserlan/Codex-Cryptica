@@ -37,10 +37,11 @@ Tokens snap to the grid, and token sizes on a hex grid match the hex. See [Hexcr
 
 If your map image already shows a grid:
 
-- **Fit Grid from Map**: drag across a few squares of the grid on the image, rather than just one. It is easier to land on 3 squares than exactly 1. While dragging, hold `Shift` and scroll to choose how many squares the drag spans (1, 2, 3, 5 or 10). The cell size is worked out from that.
-- **Move Map to Fine-tune** (shown once a size is set): drag the map under the fixed grid, release to apply, or press `Esc` to cancel.
+- **Fit Grid from Map** on a **square** grid: drag across a few squares of the grid on the image, rather than just one. It is easier to land on 3 squares than exactly 1. While dragging, hold `Shift` and scroll to choose how many squares the drag spans (1, 2, 3, 5 or 10). The cell size is worked out from that.
+- **Fit Grid from Map** on a **hex** grid: choose **Hex (Pointy)** or **Hex (Flat)** to match the hexes on your image, then drag from the outer edge of one hex to the outer edge of another, straight across a row (pointy) or straight down a column (flat), through the middle of the hexes. Spanning a few hexes is easier to land than one. `Shift` + scroll changes how many hexes the drag spans (1, 2, 3, 5 or 10). The hex radius and alignment are worked out together, and the radius keeps decimals so a long row stays lined up.
+- **Move Map to Fine-tune** (shown once a size is set): drag the map under the fixed grid, release to apply, or press `Esc` to cancel. It works on hex grids too.
 
-Fit Grid from Map is built for **square** grids. On a hex map, set the **Hex Radius** by eye and use **Move Map to Fine-tune** to line it up. A fitting tool for hex grids already on a map image is not available yet.
+If the grid is a little off after fitting, use **Move Map to Fine-tune**, or adjust **Hex Radius** or **Grid Cell Size** and fit again.
 
 ## Measuring distance
 

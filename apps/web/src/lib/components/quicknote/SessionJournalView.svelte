@@ -21,7 +21,6 @@
   import JournalHeader from "./JournalHeader.svelte";
   import JournalStartScreen from "./JournalStartScreen.svelte";
   import { JournalPromotionState } from "./journal-promotion.svelte";
-  import FeatureHint from "$lib/components/help/FeatureHint.svelte";
   import { notificationStore } from "$lib/stores/ui/notification.svelte";
 
   /**
@@ -239,8 +238,6 @@
   data-testid="session-journal-view"
   bind:this={viewRoot}
 >
-  <FeatureHint hintId="session-journal" />
-
   <div class="flex items-center justify-end">
     <!-- fallow-ignore-next-line complexity -->
     <button type="button" onclick={toggleHistory}>

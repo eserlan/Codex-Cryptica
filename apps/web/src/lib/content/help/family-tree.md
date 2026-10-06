@@ -43,6 +43,8 @@ If the parent you just added already has a partner on file, you'll be asked whet
 - **Collapse** the parents or children branch to keep large trees tidy.
 - Use the **open** icon on a card to jump to that character's full detail panel.
 
+In the lineage view, drag to pan, scroll or pinch to zoom, and use **⊞** to expand a branch. Choose **Show all generations** to reveal the whole recorded lineage.
+
 ## One source of truth
 
 The Family Tree is just a view of your normal entity connections — it doesn't create a separate family database. Family links you add here also show up in the graph and connection views, and connections you make elsewhere show up here.

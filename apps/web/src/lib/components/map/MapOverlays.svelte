@@ -142,8 +142,14 @@
       style:left={`${Math.min(interactions.gridFitStart.x, interactions.gridFitEnd.x)}px`}
       style:top={`${Math.min(interactions.gridFitStart.y, interactions.gridFitEnd.y) - 28}px`}
     >
-      {interactions.gridFitSpan}×{interactions.gridFitSpan} squares · Shift+Scroll
-      to change
+      {#if mapStore.gridType === "square"}
+        {interactions.gridFitSpan}×{interactions.gridFitSpan} squares
+      {:else}
+        {interactions.gridFitSpan}
+        {interactions.gridFitSpan === 1 ? "hex" : "hexes"}
+        {mapStore.gridType === "hex-flat" ? "down a column" : "across a row"}
+      {/if}
+      · Shift+Scroll to change
     </div>
   </div>
 {/if}

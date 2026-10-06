@@ -48,10 +48,10 @@ describe("HelpStore", () => {
     expect(mockModalUIStore.closeSettings).toHaveBeenCalled();
 
     // Test that it uses the injected storage
-    store.dismissHint("new-hint");
+    store.completeTour();
     expect(customMockStorage.setItem).toHaveBeenCalledWith(
       "codex-cryptica-help-state",
-      expect.stringContaining("new-hint"),
+      expect.stringContaining("initial-onboarding"),
     );
   });
 
@@ -146,7 +146,6 @@ describe("HelpStore", () => {
   it("should handle persistence and initialization from injected storage", async () => {
     const savedState = JSON.stringify({
       completedTours: ["test-tour"],
-      dismissedHints: ["test-hint"],
       lastSeenVersion: "0.0.1",
     });
     mockStorage.getItem.mockReturnValue(savedState);
@@ -154,7 +153,6 @@ describe("HelpStore", () => {
     const store = new HelpStore(undefined, undefined, undefined, mockStorage);
     await store.init();
     expect(store.hasSeen("test-tour")).toBe(true);
-    expect(store.isHintDismissed("test-hint")).toBe(true);
   });
 
   it("should handle help center operations", () => {
@@ -192,13 +190,6 @@ describe("HelpStore", () => {
     await helpStore.copyShareLink("intro");
     expect(writeTextSpy).toHaveBeenCalled();
     expect(writeTextSpy.mock.calls[0][0]).toContain("#help/intro");
-  });
-
-  it("should manage hint dismissal", () => {
-    expect(helpStore.isHintDismissed("hint-1")).toBe(false);
-    helpStore.dismissHint("hint-1");
-    expect(helpStore.isHintDismissed("hint-1")).toBe(true);
-    expect(mockStorage.setItem).toHaveBeenCalled();
   });
 
   it("should force rebuild index", async () => {

@@ -17,7 +17,6 @@ const STORAGE_KEY = "codex-cryptica-help-state";
 interface HelpStoreState {
   completedTours: string[];
   lastSeenVersion: string;
-  dismissedHints: string[];
 }
 
 const SEARCH_FIELDS = ["title", "labels", "content"];
@@ -87,7 +86,6 @@ export class HelpStore {
   private state = $state<HelpStoreState>({
     completedTours: [],
     lastSeenVersion: VERSION,
-    dismissedHints: [],
   });
 
   private index = $state<any>(null);
@@ -115,7 +113,6 @@ export class HelpStore {
         const loaded = JSON.parse(saved);
         if (loaded && typeof loaded === "object") {
           this.state.completedTours = loaded.completedTours || [];
-          this.state.dismissedHints = loaded.dismissedHints || [];
 
           // Version Tracking
           if (loaded.lastSeenVersion !== VERSION) {
@@ -341,19 +338,6 @@ export class HelpStore {
     } catch (e) {
       console.error("[HelpStore] Failed to copy link to clipboard", e);
     }
-  }
-
-  // --- Hint Methods ---
-
-  dismissHint(hintId: string) {
-    if (!this.state.dismissedHints.includes(hintId)) {
-      this.state.dismissedHints.push(hintId);
-      this.save();
-    }
-  }
-
-  isHintDismissed(hintId: string): boolean {
-    return this.state.dismissedHints.includes(hintId);
   }
 }
 
