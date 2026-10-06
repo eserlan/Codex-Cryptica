@@ -557,6 +557,9 @@
       imgX={interactions.contextMenu.imgX}
       imgY={interactions.contextMenu.imgY}
       tokenId={interactions.contextMenu.tokenId}
+      hex={interactions.contextMenu.hex}
+      onToggleHexFog={(hex) =>
+        void interactions.fogInteractions.paintHex(hex, !hex.fogged)}
       onClose={() => (interactions.contextMenu = null)}
     />
   {/if}

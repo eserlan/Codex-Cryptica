@@ -17,6 +17,8 @@
     imgX,
     imgY,
     tokenId,
+    hex,
+    onToggleHexFog,
     onClose,
   }: {
     x: number;
@@ -24,6 +26,8 @@
     imgX: number;
     imgY: number;
     tokenId?: string;
+    hex?: { q: number; r: number; fogged: boolean };
+    onToggleHexFog?: (hex: { q: number; r: number; fogged: boolean }) => void;
     onClose: () => void;
   } = $props();
 
@@ -630,19 +634,38 @@
       </div>
     {/if}
   {:else}
-    <button
-      class="w-full text-left px-3 py-2 text-xs hover:bg-theme-bg/50 transition-colors flex items-center gap-2 text-theme-text"
-      role="menuitem"
-      onclick={() => {
-        mapSession.ping(imgX, imgY);
-        onClose();
-      }}
-    >
-      <span
-        class="icon-[lucide--map-pin] w-3.5 h-3.5 text-theme-primary"
-        aria-hidden="true"
-      ></span>
-      <span>Ping Here</span>
-    </button>
+    {#if mapSession.vttEnabled}
+      <button
+        class="w-full text-left px-3 py-2 text-xs hover:bg-theme-bg/50 transition-colors flex items-center gap-2 text-theme-text"
+        role="menuitem"
+        onclick={() => {
+          mapSession.ping(imgX, imgY);
+          onClose();
+        }}
+      >
+        <span
+          class="icon-[lucide--map-pin] w-3.5 h-3.5 text-theme-primary"
+          aria-hidden="true"
+        ></span>
+        <span>Ping Here</span>
+      </button>
+    {/if}
+    {#if hex}
+      <button
+        type="button"
+        class="w-full text-left px-3 py-2 text-xs hover:bg-theme-bg/50 transition-colors flex items-center gap-2 text-theme-text"
+        role="menuitem"
+        onclick={() => {
+          onToggleHexFog?.(hex);
+          onClose();
+        }}
+      >
+        <span
+          class={`${hex.fogged ? "icon-[lucide--eye]" : "icon-[lucide--eye-off]"} w-3.5 h-3.5 text-theme-primary`}
+          aria-hidden="true"
+        ></span>
+        <span>{hex.fogged ? "Reveal hex" : "Hide hex"}</span>
+      </button>
+    {/if}
   {/if}
 </div>
