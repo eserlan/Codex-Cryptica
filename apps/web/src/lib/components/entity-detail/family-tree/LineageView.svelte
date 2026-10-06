@@ -67,9 +67,14 @@
 
   function toggleBranch(rootId: string) {
     if (expandedBranches === "all") {
-      expandedBranches = new Set(
-        [...lineage.siblingBranches.keys()].filter((id) => id !== rootId),
-      );
+      // ⚡ Bolt Optimization: Replace [...keys].filter with imperative loop
+      const nextExpanded = new Set<string>();
+      for (const id of lineage.siblingBranches.keys()) {
+        if (id !== rootId) {
+          nextExpanded.add(id);
+        }
+      }
+      expandedBranches = nextExpanded;
       return;
     }
     const next = new Set(expandedBranches);

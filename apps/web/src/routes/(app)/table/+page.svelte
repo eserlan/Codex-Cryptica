@@ -382,6 +382,15 @@
     }
   }
 
+  // Single pass over the selection, no intermediate array.
+  function withoutIds(ids: Set<string>, removed: Set<string>) {
+    const remaining = new Set<string>();
+    for (const id of ids) {
+      if (!removed.has(id)) remaining.add(id);
+    }
+    return remaining;
+  }
+
   async function handleDeleteSelected() {
     if (isCommitting) return;
     if (!contextMenu || contextMenu.targetIds.length === 0) return;
@@ -405,9 +414,7 @@
       try {
         const result = await vault.bulkDelete(targetIds);
         const succeededIds = new Set(result.succeededIds);
-        selectedIds = new Set(
-          [...selectedIds].filter((id) => !succeededIds.has(id)),
-        );
+        selectedIds = withoutIds(selectedIds, succeededIds);
         if (result.failedIds.length > 0 || result.cancelledIds.length > 0) {
           notificationStore.notify(
             `Deleted ${result.succeededIds.length} entities; ${
