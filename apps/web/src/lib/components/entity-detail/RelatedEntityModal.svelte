@@ -648,14 +648,17 @@
               stage = "configure";
             }}
           >
-            <span class="icon-[lucide--arrow-left] h-4 w-4"></span>
+            <span aria-hidden="true" class="icon-[lucide--arrow-left] h-4 w-4"
+            ></span>
             Configure
           </button>
           <button
             class="rounded-xl border border-theme-border bg-theme-bg/50 px-4 py-3 text-xs font-bold uppercase tracking-widest text-theme-muted transition-all hover:bg-theme-bg hover:text-theme-text flex items-center gap-2"
             onclick={handleGenerate}
           >
-            <span class="icon-[lucide--rotate-cw] h-4 w-4 animate-spin-reverse"
+            <span
+              aria-hidden="true"
+              class="icon-[lucide--rotate-cw] h-4 w-4 animate-spin-reverse"
             ></span>
             Revise
           </button>
@@ -666,7 +669,8 @@
             disabled={isSaving}
             aria-busy={isSaving}
           >
-            <span class="icon-[lucide--check] h-4 w-4"></span>
+            <span aria-hidden="true" class="icon-[lucide--check] h-4 w-4"
+            ></span>
             Create Entity
           </button>
         {/if}

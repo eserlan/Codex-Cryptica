@@ -410,7 +410,10 @@
             class="flex items-center gap-1.5 pt-1 font-mono text-meta font-bold"
             style="color: {p.panelHighlight}"
           >
-            <span class="icon-[lucide--sparkles] w-4 h-4 shrink-0"></span>
+            <span
+              aria-hidden="true"
+              class="icon-[lucide--sparkles] w-4 h-4 shrink-0"
+            ></span>
             Interactive Web Node
           </div>
         </div>

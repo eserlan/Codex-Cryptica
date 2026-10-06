@@ -240,7 +240,8 @@
     <div
       class="w-16 h-16 bg-theme-primary/10 rounded-full flex items-center justify-center text-theme-primary mb-2"
     >
-      <span class="icon-[heroicons--sparkles] w-8 h-8"></span>
+      <span aria-hidden="true" class="icon-[heroicons--sparkles] w-8 h-8"
+      ></span>
     </div>
     <h3
       class="text-theme-text font-bold uppercase font-header tracking-widest text-xs"

@@ -425,7 +425,9 @@
       in:fade={{ duration: 150 }}
       class="flex flex-col items-center justify-center flex-grow text-center text-theme-muted max-w-sm mx-auto"
     >
-      <span class="icon-[lucide--swords] text-theme-muted/30 w-16 h-16 mb-4"
+      <span
+        aria-hidden="true"
+        class="icon-[lucide--swords] text-theme-muted/30 w-16 h-16 mb-4"
       ></span>
       <h3 class="font-header font-bold text-sm uppercase tracking-widest mb-2">
         No Draft Generated
@@ -446,7 +448,9 @@
       <div
         class="mt-2 text-micro text-amber-500 bg-amber-500/10 border border-amber-500/20 p-2.5 rounded-xl flex items-start gap-2 leading-relaxed animate-in fade-in slide-in-from-top-2 duration-300"
       >
-        <span class="icon-[lucide--alert-triangle] w-4 h-4 shrink-0 mt-0.5"
+        <span
+          aria-hidden="true"
+          class="icon-[lucide--alert-triangle] w-4 h-4 shrink-0 mt-0.5"
         ></span>
         <p>
           Some older unpinned context is omitted from prompts to manage AI
