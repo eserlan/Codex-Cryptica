@@ -135,7 +135,8 @@
         onclick={() => (isFiltersExpanded = !isFiltersExpanded)}
         class="touch-target flex md:hidden items-center gap-2 px-3 py-1.5 bg-theme-surface/80 backdrop-blur border border-theme-border rounded text-xs font-mono tracking-widest text-theme-primary shadow-lg uppercase transition-all hover:border-theme-primary active:scale-95"
       >
-        <span class="icon-[lucide--filter] w-3.5 h-3.5"></span>
+        <span aria-hidden="true" class="icon-[lucide--filter] w-3.5 h-3.5"
+        ></span>
         <span>Filters</span>
         {#if hasActiveFilters}
           <span class="w-1.5 h-1.5 rounded-full bg-theme-primary animate-pulse"
@@ -193,7 +194,10 @@
         class="bg-amber-900/40 backdrop-blur border border-amber-500/30 px-3 py-1 flex items-center gap-2 text-meta font-mono tracking-[0.2em] text-amber-300 shadow-lg uppercase pointer-events-auto"
         transition:fade
       >
-        <span class="icon-[lucide--eye] w-3 h-3 animate-pulse"></span>
+        <span
+          aria-hidden="true"
+          class="icon-[lucide--eye] w-3 h-3 animate-pulse"
+        ></span>
         Shared Mode Active (Player Preview)
       </div>
     </div>
@@ -207,7 +211,10 @@
         class="bg-timeline-dark/40 backdrop-blur border border-timeline-primary/30 px-3 py-1 flex items-center gap-2 text-micro font-mono tracking-[0.2em] text-timeline-primary shadow-lg uppercase pointer-events-auto"
         transition:fade
       >
-        <span class="icon-[lucide--history] w-3 h-3 animate-pulse"></span>
+        <span
+          aria-hidden="true"
+          class="icon-[lucide--history] w-3 h-3 animate-pulse"
+        ></span>
         <span class="hidden md:inline"
           >Chronological Synchrony Active ({graph.timelineAxis === "x"
             ? "Horizontal"
@@ -222,7 +229,8 @@
         class="bg-blue-900/40 backdrop-blur border border-blue-500/30 px-3 py-1 flex items-center gap-2 text-micro font-mono tracking-[0.2em] text-blue-300 shadow-lg uppercase pointer-events-auto"
         transition:fade
       >
-        <span class="icon-[lucide--cpu] w-3 h-3 animate-spin"></span>
+        <span aria-hidden="true" class="icon-[lucide--cpu] w-3 h-3 animate-spin"
+        ></span>
         <span class="hidden md:inline"
           >Neural Layout Synthesis Processing...</span
         >
@@ -252,7 +260,10 @@
         class="bg-blue-500/20 border border-blue-500/50 backdrop-blur-md px-4 py-2 rounded flex items-center gap-3 text-xs font-bold tracking-[0.2em] text-blue-300 shadow-lg uppercase pointer-events-auto"
         transition:fade
       >
-        <span class="icon-[lucide--link] w-3.5 h-3.5 animate-pulse"></span>
+        <span
+          aria-hidden="true"
+          class="icon-[lucide--link] w-3.5 h-3.5 animate-pulse"
+        ></span>
         {#if !connectionModeStore.connectingNodeId}
           <span class="hidden md:inline">Select Source Entity</span>
           <span class="md:hidden">Select Source</span>

@@ -208,7 +208,8 @@
     </div>
     {#if errorMessage}
       <div class="mt-2 text-xs text-red-400 flex items-center gap-1.5">
-        <span class="icon-[lucide--alert-circle] w-3 h-3"></span>
+        <span aria-hidden="true" class="icon-[lucide--alert-circle] w-3 h-3"
+        ></span>
         {errorMessage}
       </div>
     {/if}

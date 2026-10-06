@@ -256,14 +256,20 @@
               <span
                 class="flex items-center gap-1 text-emerald-500 font-semibold"
               >
-                <span class="icon-[lucide--check-circle] w-3.5 h-3.5"></span>
+                <span
+                  aria-hidden="true"
+                  class="icon-[lucide--check-circle] w-3.5 h-3.5"
+                ></span>
                 Found in character lore
               </span>
             {:else}
               <span
                 class="flex items-center gap-1 text-amber-500 font-semibold"
               >
-                <span class="icon-[lucide--alert-triangle] w-3.5 h-3.5"></span>
+                <span
+                  aria-hidden="true"
+                  class="icon-[lucide--alert-triangle] w-3.5 h-3.5"
+                ></span>
                 Missing from lore
               </span>
             {/if}
@@ -308,7 +314,10 @@
             <p
               class="text-micro text-theme-danger flex items-center gap-1 font-semibold"
             >
-              <span class="icon-[lucide--circle-alert] w-3.5 h-3.5"></span>
+              <span
+                aria-hidden="true"
+                class="icon-[lucide--circle-alert] w-3.5 h-3.5"
+              ></span>
               {personalityError}
             </p>
           {/if}

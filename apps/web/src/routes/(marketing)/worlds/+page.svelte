@@ -214,7 +214,8 @@
               <div
                 class="pointer-events-none flex aspect-[16/9] items-center justify-center bg-theme-bg/40 text-theme-text/40"
               >
-                <span class="icon-[lucide--image] h-8 w-8"></span>
+                <span aria-hidden="true" class="icon-[lucide--image] h-8 w-8"
+                ></span>
               </div>
             {/if}
 

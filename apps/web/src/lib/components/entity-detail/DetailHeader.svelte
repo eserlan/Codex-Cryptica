@@ -190,7 +190,10 @@
     <div
       class="w-16 h-16 rounded-full bg-amber-500/10 border border-amber-500/30 flex items-center justify-center mb-6 animate-pulse"
     >
-      <span class="icon-[lucide--eye-off] w-8 h-8 text-amber-500"></span>
+      <span
+        aria-hidden="true"
+        class="icon-[lucide--eye-off] w-8 h-8 text-amber-500"
+      ></span>
     </div>
     <h3
       class="text-xl font-bold text-theme-text uppercase font-header tracking-widest mb-2"

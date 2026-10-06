@@ -77,7 +77,7 @@
   <div
     class="flex items-center gap-2 text-theme-primary font-bold uppercase font-header tracking-[0.2em] text-micro mb-1"
   >
-    <span class="icon-[heroicons--link] w-3.5 h-3.5"></span>
+    <span aria-hidden="true" class="icon-[heroicons--link] w-3.5 h-3.5"></span>
     Connection Wizard
   </div>
 
@@ -169,7 +169,8 @@
       <span
         class="text-green-400 font-bold uppercase font-header tracking-widest text-micro flex items-center justify-center gap-2"
       >
-        <span class="icon-[heroicons--check-circle] w-4 h-4"></span>
+        <span aria-hidden="true" class="icon-[heroicons--check-circle] w-4 h-4"
+        ></span>
         Connection Created
       </span>
     </div>

@@ -88,7 +88,9 @@
       <div
         class="p-4 bg-theme-primary/5 border border-theme-primary/20 rounded flex items-center gap-3"
       >
-        <span class="text-theme-primary icon-[heroicons--sparkles] w-5 h-5"
+        <span
+          aria-hidden="true"
+          class="text-theme-primary icon-[heroicons--sparkles] w-5 h-5"
         ></span>
         <div class="flex-1">
           <span
@@ -108,7 +110,10 @@
       <div
         class="p-4 bg-theme-accent/5 border border-theme-accent/20 rounded flex items-center gap-3"
       >
-        <span class="text-theme-accent icon-[lucide--cloud] w-5 h-5"></span>
+        <span
+          aria-hidden="true"
+          class="text-theme-accent icon-[lucide--cloud] w-5 h-5"
+        ></span>
         <div class="flex-1">
           <span
             class="text-base text-theme-text font-bold uppercase font-header tracking-wider"

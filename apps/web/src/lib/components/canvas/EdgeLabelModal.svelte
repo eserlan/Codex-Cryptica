@@ -54,7 +54,10 @@
     class="p-4 border-b border-theme-border flex items-center justify-between bg-theme-bg/30"
   >
     <div class="flex items-center gap-2">
-      <span class="icon-[lucide--type] w-4 h-4 text-theme-primary"></span>
+      <span
+        aria-hidden="true"
+        class="icon-[lucide--type] w-4 h-4 text-theme-primary"
+      ></span>
       <h3
         id="edge-label-modal-title"
         class="text-xs font-bold text-theme-text font-header uppercase tracking-widest"
@@ -110,7 +113,7 @@
       class="px-6 py-2 bg-theme-primary text-theme-bg rounded-lg font-bold text-micro uppercase font-header tracking-widest hover:brightness-110 transition-all flex items-center gap-2 shadow-lg shadow-theme-primary/10"
       type="button"
     >
-      <span class="icon-[lucide--check] w-3 h-3"></span>
+      <span aria-hidden="true" class="icon-[lucide--check] w-3 h-3"></span>
       Save Label
     </button>
   </div>
