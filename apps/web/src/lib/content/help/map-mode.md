@@ -49,7 +49,7 @@ Transform any map into a live tactical Virtual Tabletop:
 
 1. Click the **VTT OFF** button in the top-right map controls overlay to activate **VTT ON**.
 2. Drag character or monster notes from **Entity Explorer** directly onto the grid to place tokens.
-3. Track initiative, measure spell/movement ranges (`R`), drop map pings (`Shift` + `Click`), and stream live map updates to players via **Host Session**.
+3. Track initiative, measure spell and movement ranges with the ruler, ping the map from the right-click menu, and stream live map updates to players with **Share Campaign**. See [VTT Overview & Modes](/help#help/vtt-session) for the full guide.
 4. For detailed step-by-step instructions, open the [Starting a VTT Session from Maps](/help#help/vtt-session) help article.
 
 ### Map or canvas?
