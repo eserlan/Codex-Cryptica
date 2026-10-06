@@ -108,3 +108,27 @@ tidy-up, not a blocker.
 Not done here: measuring the layout change on a phone, and a manual check that
 a first-time user can find help without the card. Both belong with the
 follow-up that removes it.
+
+## Outcome (follow-up change)
+
+The recommendation was taken further than proposed: **every `FeatureHint`
+card in the app was retired**, not only the VTT one. The `FeatureHint` and
+`CanvasHint` components, the dismissal state in the help store, and the touch
+coaching getter that only the graph hint used are removed. `FEATURE_HINTS`
+stays: it feeds the Features page and the generated llms files.
+
+Because the rule says privacy and limits must stay reachable, the hint text
+that existed nowhere else was moved into Help before the cards were removed:
+
+- Oracle memory and the provider-side storage window (up to 55 days) are now in
+  the Gemini key and connection article, under "What the System Proxy remembers".
+- Lineage view controls (`⊞`, Show all generations), the welcome tour replay,
+  touch gestures and multi-selection actions in the graph, and Presentation
+  Template layouts and Repeatable Tables are added to their articles.
+
+Evaluation questions were added for the Oracle memory disclosure, replaying the
+tour, and the lineage view. Two jargon strings were reworded ("peer id" and the
+share dialog's developer wording), and the tile deck subtitle became a tooltip.
+
+Left as is: the one-time Oracle connection-modes dialog on first open of the
+Oracle panel. It is not a `FeatureHint` card, and it is a connection disclosure.
