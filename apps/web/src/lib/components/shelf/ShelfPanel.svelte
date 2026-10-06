@@ -20,9 +20,18 @@
   // Entries can vanish under us — removed here, or in another tab, since the
   // Shelf is live across tabs. A selection holding a ghost would fail the
   // import on an entry that no longer exists.
+  // ⚡ Bolt Optimization: Replace chained array operations inside $effect with imperative loop
   $effect(() => {
-    const live = new Set(shelf.entries.map((entry) => entry.id));
-    const pruned = new Set([...selected].filter((id) => live.has(id)));
+    const live = new Set();
+    for (const entry of shelf.entries) {
+      live.add(entry.id);
+    }
+    const pruned = new Set();
+    for (const id of selected) {
+      if (live.has(id)) {
+        pruned.add(id);
+      }
+    }
     if (pruned.size !== selected.size) selected = pruned;
   });
 
