@@ -210,14 +210,14 @@ describe("MapFogPainter", () => {
       return { instance, hexMask, hexSave, hexUndo };
     }
 
-    it("reports the hex under a point and whether it is fogged", () => {
+    it("reports transparent hexes as fogged and opaque hexes as revealed", () => {
       expect(hexPainter().instance.hexAt({ x: 0, y: 0 })).toEqual({
         hex: { q: 0, r: 0 },
-        fogged: true,
+        fogged: false,
       });
       expect(
         hexPainter({ alpha: 0 }).instance.hexAt({ x: 0, y: 0 })?.fogged,
-      ).toBe(false);
+      ).toBe(true);
     });
 
     it("has no hex target without a hex grid or off the mask", () => {

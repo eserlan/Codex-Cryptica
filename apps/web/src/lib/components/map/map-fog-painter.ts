@@ -214,7 +214,8 @@ export class MapFogPainter {
     if (x < 0 || y < 0 || x >= maskCanvas.width || y >= maskCanvas.height) {
       return null;
     }
-    return { hex, fogged: ctx.getImageData(x, y, 1, 1).data[3] > 127 };
+    // Opaque mask pixels reveal the map; transparent pixels leave fog in place.
+    return { hex, fogged: ctx.getImageData(x, y, 1, 1).data[3] <= 127 };
   }
 
   /** Reveal (isHiding false) or fog (true) exactly one hex, as one undo step. */
