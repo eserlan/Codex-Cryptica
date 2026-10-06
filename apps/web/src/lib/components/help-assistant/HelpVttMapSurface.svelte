@@ -45,6 +45,7 @@
       playerView,
       grid: gridKind(),
       fogOn: mapStore.showFog,
+      soloFog: mapStore.soloFog,
       tokenSelected: token !== null,
       tokenLinked: !!token?.entityId,
       tokenManageable:

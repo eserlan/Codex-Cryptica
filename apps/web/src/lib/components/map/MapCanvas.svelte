@@ -82,7 +82,7 @@
   const scheduler = new CanvasRedrawScheduler(() => draw());
 
   const fogColor = $derived(
-    `rgba(${hexToRgb(themeStore.activeTheme.tokens.secondary)}, ${mapStore.isGMMode ? 0.6 : 1.0})`,
+    `rgba(${hexToRgb(themeStore.activeTheme.tokens.secondary)}, ${mapStore.fogOpaque ? 1.0 : 0.6})`,
   );
   const gridColor = $derived.by(() => {
     const baseColor =

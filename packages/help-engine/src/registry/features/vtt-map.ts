@@ -54,7 +54,7 @@ export const vttMap: FeatureEntry = {
         "Hold Alt and drag to reveal, or Alt and Shift to hide. On a hex map, right-click a hex and choose Reveal hex or Hide hex.",
         "Use Player View to check what your players see; the fog controls are off while it is on.",
       ],
-      actionIds: ["vtt.show-fog", "vtt.show-player-view"],
+      actionIds: ["vtt.show-fog", "vtt.show-solo-fog", "vtt.show-player-view"],
     },
     {
       id: "build-a-dungeon",
@@ -186,6 +186,19 @@ export const vttMap: FeatureEntry = {
         panel: "vtt-map-controls",
         label: "Show me the fog control",
         then: { type: "highlight", target: "vtt-fog-toggle", label: "Fog" },
+      },
+    },
+    {
+      id: "vtt.show-solo-fog",
+      action: {
+        type: "openPanel",
+        panel: "vtt-map-controls",
+        label: "Show me solo fog",
+        then: {
+          type: "highlight",
+          target: "vtt-solo-fog-toggle",
+          label: "Solo fog",
+        },
       },
     },
     {

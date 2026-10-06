@@ -18,6 +18,7 @@ const REACHABLE: ReadonlyArray<readonly [string, Who, Needs]> = [
   ["vtt-add-token", "host", "vtt"],
   ["vtt-grid-button", "gm", "nothing"],
   ["vtt-fog-toggle", "gm", "nothing"],
+  ["vtt-solo-fog-toggle", "gm", "nothing"],
   ["vtt-layer-control", "gm", "nothing"],
   ["vtt-player-view-toggle", "host", "nothing"],
   ["vtt-ruler-toggle", "host", "vtt"],

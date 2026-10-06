@@ -251,4 +251,62 @@ describe("MapFogPainter", () => {
       expect(hexUndo).not.toHaveBeenCalled();
     });
   });
+
+  describe("revealed check", () => {
+    function painterWithAlpha(alpha: number, width = 100, height = 80) {
+      const m = createCanvasMock();
+      m.canvas.width = width;
+      m.canvas.height = height;
+      m.ctx.getImageData = vi.fn(() => ({ data: [0, 0, 0, alpha] }));
+      const instance = new MapFogPainter({
+        mapStore: {
+          activeMapId: "map-1",
+          brushRadius: 10,
+          unproject: vi.fn((p) => p),
+          saveMask,
+        },
+        oracle: { pushUndoAction },
+        getMaskCanvas: () => m.canvas,
+        getMapImage: () => mapImage,
+        createCanvas: () => createCanvasMock().canvas,
+      });
+      return { instance, m };
+    }
+
+    it("is revealed where the mask is opaque and fogged where it is clear", () => {
+      expect(painterWithAlpha(255).instance.isRevealedAt({ x: 0, y: 0 })).toBe(
+        true,
+      );
+      expect(painterWithAlpha(0).instance.isRevealedAt({ x: 0, y: 0 })).toBe(
+        false,
+      );
+    });
+
+    it("reads the mask in centred image coordinates", () => {
+      const { instance, m } = painterWithAlpha(0, 100, 80);
+
+      instance.isRevealedAt({ x: -10, y: 5 });
+
+      expect(m.ctx.getImageData).toHaveBeenCalledWith(40, 45, 1, 1);
+    });
+
+    it("never hides anything it cannot read: off the mask or with no mask", () => {
+      const { instance } = painterWithAlpha(0, 100, 80);
+      expect(instance.isRevealedAt({ x: 5000, y: 0 })).toBe(true);
+
+      const noMask = new MapFogPainter({
+        mapStore: {
+          activeMapId: "map-1",
+          brushRadius: 10,
+          unproject: vi.fn((p) => p),
+          saveMask,
+        },
+        oracle: { pushUndoAction },
+        getMaskCanvas: () => null,
+        getMapImage: () => mapImage,
+        createCanvas: () => createCanvasMock().canvas,
+      });
+      expect(noMask.isRevealedAt({ x: 0, y: 0 })).toBe(true);
+    });
+  });
 });
