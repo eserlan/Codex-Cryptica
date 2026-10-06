@@ -33,7 +33,7 @@
 **Learning:** Replaced chained .map().filter() in the session prep renderer to avoid short-lived intermediate arrays. Inline loops in each branch pushed the functions over Fallow's cognitive complexity gate.
 **Action:** Put the single-pass loop in one small helper (`linesOf`, `joinPresent`, `present`) and keep callers declarative, so you get both the allocation saving and readable code.
 
-## 2026-10-31 - Replace intermediate array spreads with imperative loops
+## 2026-10-06 - Replace intermediate array spreads with imperative loops
 
 **Learning:** Svelte reactivity blocks (`$derived`, `$effect`) often contain declarative array manipulations that spread iterables into intermediate arrays just to filter them (e.g., `[...selectedIds].filter()`). In hot paths or large datasets, this creates a significant performance overhead by forcing unnecessary Javascript garbage collection for the intermediate arrays.
 **Action:** Always prefer initializing an empty collection and populating it with an imperative `for...of` loop over intermediate array instantiation using spreads when refactoring or optimizing reactivity hooks.
