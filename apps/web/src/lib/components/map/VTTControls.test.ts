@@ -3,12 +3,6 @@
 import { render, screen } from "@testing-library/svelte";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("$lib/components/help/FeatureHint.svelte", () => ({
-  default: function FeatureHintMock() {
-    return {};
-  },
-}));
-
 vi.mock("$lib/components/vtt/EncounterManager.svelte", () => ({
   default: function EncounterManagerMock() {
     return {};

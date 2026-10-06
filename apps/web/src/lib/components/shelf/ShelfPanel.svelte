@@ -1,6 +1,5 @@
 <script lang="ts">
   import type { ImportPlan } from "@codex/entity-shelf";
-  import FeatureHint from "$lib/components/help/FeatureHint.svelte";
   import { shelf as defaultShelf } from "$lib/features/shelf";
   import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
   import type { ShelfStore } from "$lib/features/shelf/shelf.svelte";
@@ -96,8 +95,6 @@
       browser — it is not a backup, and it cannot send anything to anyone else.
     </p>
   </header>
-
-  <FeatureHint hintId="entity-shelf" />
 
   {#if shelf.entries.length === 0}
     <div

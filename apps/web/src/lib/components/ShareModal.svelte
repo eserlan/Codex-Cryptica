@@ -196,7 +196,8 @@
           {/if}
         </button>
         <p class="text-micro text-gray-600 mt-3 text-center">
-          Uses P2P WebRTC. Bypass Google API limits.
+          Players connect directly to your browser. Setting up the connection
+          can still use network services.
         </p>
       {/if}
     </div>

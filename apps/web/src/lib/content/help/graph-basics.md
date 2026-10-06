@@ -17,6 +17,9 @@ The graph is your primary way to navigate.
 - `Scroll`: Zoom in/out.
 - `Drag`: Pan the view.
 - `Click Node`: Focus entity and open detail panel.
+- On a touch screen, drag to pan, pinch to zoom, and tap a node to open it.
+- To connect two entries without Connect Mode, right-click two selected entries, or use the Link button below.
+- With several entries selected, the toolbar offers **Apply Labels** to label them all at once and **Merge** to combine duplicates into a single entry.
 
 ### Toolbar Controls
 

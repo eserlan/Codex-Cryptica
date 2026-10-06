@@ -1,7 +1,6 @@
 <script lang="ts">
   import { mapStore } from "$lib/stores/map.svelte";
   import { mapSession } from "$lib/stores/map-session.svelte";
-  import FeatureHint from "$lib/components/help/FeatureHint.svelte";
   import EncounterManager from "$lib/components/vtt/EncounterManager.svelte";
   import { getPrimaryButtonStateClass } from "./vtt-ui";
   import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
@@ -22,10 +21,6 @@
 </script>
 
 <div class="flex flex-col gap-2 pointer-events-auto">
-  <div class="min-w-0 w-full">
-    <FeatureHint hintId="vtt-mode" />
-  </div>
-
   <div
     class="flex flex-wrap items-center gap-1.5 rounded-lg border border-theme-border bg-theme-surface/90 p-1.5 shadow-lg backdrop-blur min-w-0"
   >

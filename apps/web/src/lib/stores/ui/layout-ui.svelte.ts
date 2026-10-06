@@ -331,15 +331,6 @@ export class LayoutUIStore {
     });
   }
 
-  /**
-   * Whether to show touch-oriented coaching (e.g. the graph pan/zoom coach
-   * marks). True on phones, and on tablet-range viewports that are touch-first,
-   * so iPad users get the same guidance phones already had (#1785).
-   */
-  get prefersTouchCoaching() {
-    return this.isMobile || (this.isTablet && this.isTouch);
-  }
-
   private watchMediaQuery(
     mediaQuery: MediaQueryListLike,
     update: (matches: boolean) => void,

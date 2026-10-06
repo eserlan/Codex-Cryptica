@@ -13,6 +13,10 @@ Open **Settings → Intelligence**. **Connection Mode** shows whether you are us
 - **System Proxy** uses the shared service, subject to its usage limits. You do not need a personal key for this mode.
 - **Personal key** connects directly to the provider. The current personal-key text connection uses Google Gemini, even where the key field is labelled “OpenAI/Luna”. Keys from different providers are not interchangeable.
 
+### What the System Proxy remembers
+
+The Oracle remembers your chat and the notes it has already seen, so each new question only sends what changed, and replies come back quicker and use less of your quota. To do this on the free System Proxy, your conversation and the notes it references are briefly stored on the AI provider's servers (up to 55 days) and then expire. Your vault always stays on your computer; only the chat does this. To keep everything fully on your device, use your own API key instead of the System Proxy.
+
 ### Add or remove a personal key
 
 1. Open **Settings → Intelligence**.

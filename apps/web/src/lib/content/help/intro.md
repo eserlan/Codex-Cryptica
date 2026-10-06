@@ -18,7 +18,7 @@ For power users: your worlds are saved as clean local Markdown files (in the bro
 
 ## Quick Start: Your First 5 Minutes
 
-Follow this quick checklist to set up your first vault and see Codex Cryptica's core workflow in action:
+Follow this quick checklist to set up your first vault and see Codex Cryptica's core workflow in action. The same getting-started checklist is in **Settings → Help**, with a button to replay the welcome tour any time:
 
 1. **Create a vault**: Open the vault switcher, choose **NEW**, and name your world.
 2. **Add an entity**: Use **+ Create** in the header or **+** in the explorer, choose **Character**, and name your character.

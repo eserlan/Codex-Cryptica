@@ -1,7 +1,6 @@
 <script lang="ts">
   import StatSheetTemplateSettings from "./StatSheetTemplateSettings.svelte";
   import EntityTemplateSettings from "./entity-templates/EntityTemplateSettings.svelte";
-  import FeatureHint from "$lib/components/help/FeatureHint.svelte";
 
   const sections = [
     {
@@ -78,7 +77,6 @@
     <p class="text-sm text-chrome-text/70 leading-relaxed">{current.intro}</p>
 
     {#if active === "entity"}
-      <FeatureHint hintId="entity-templates" />
       <EntityTemplateSettings />
     {:else}
       <StatSheetTemplateSettings />

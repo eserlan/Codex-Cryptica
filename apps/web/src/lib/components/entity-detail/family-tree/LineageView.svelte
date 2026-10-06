@@ -2,7 +2,6 @@
   import type { Entity } from "schema";
   import { untrack } from "svelte";
   import { buildLineage, layoutLineage } from "@codex/family-engine";
-  import FeatureHint from "$lib/components/help/FeatureHint.svelte";
   import FamilyMemberCard from "./FamilyMemberCard.svelte";
   import PanZoomContainer from "./PanZoomContainer.svelte";
   import { PanZoomState } from "../pan-zoom.svelte";
@@ -113,9 +112,6 @@
     </p>
   </div>
 {:else}
-  <div class="pb-2">
-    <FeatureHint hintId="lineage-controls" />
-  </div>
   <div class="flex items-center justify-end gap-2 pb-2">
     <button
       type="button"
