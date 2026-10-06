@@ -14,6 +14,11 @@ import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
 import { vault } from "$lib/stores/vault.svelte";
 import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
 import { systemClock, type Clock } from "$lib/utils/runtime-deps";
+import {
+  CIF_POPOUT_WINDOW,
+  createCifChannel,
+} from "$lib/services/help-assistant/cif-popout-protocol";
+import { CifPopoutHost } from "./cif-popout-host.svelte";
 import { HelpAssistantStore } from "./help-assistant.svelte";
 import { HelpContextStore } from "./help-context.svelte";
 import { helpSurfaces } from "./help-surface.svelte";
@@ -101,3 +106,43 @@ export const helpActionRunner = new HelpActionRunner({
     modalUIStore.openGeneratorWorkflow(generatorId ?? null),
   waitFor,
 });
+
+/**
+ * The pop-out window keeps Cif beside the map on another screen. The
+ * conversation and the AI request stay in this window, so what Cif knows about
+ * the screen is exactly what it knows when docked.
+ */
+export const cifPopout = new CifPopoutHost({
+  assistant: helpAssistant,
+  accept: async (action) => {
+    helpAssistant.dismissOffer();
+    await helpActionRunner.run(action);
+  },
+  openArticle: (id) => helpStore.openHelpToArticle(id),
+  openLibrary: () => helpStore.openHelpWindow(),
+  createChannel: createCifChannel,
+  openWindow: () =>
+    window.open(
+      `${window.location.origin}${base}/cif`,
+      CIF_POPOUT_WINDOW,
+      cifPopoutFeatures(),
+    ),
+});
+
+function cifPopoutFeatures(): string {
+  const width = 420;
+  const height = 640;
+  const left = window.screenX + window.outerWidth - width - 24;
+  const top = window.screenY + 80;
+  return `width=${width},height=${height},left=${left},top=${top},toolbar=0,location=0,menubar=0`;
+}
+
+/** Opens or closes Cif, or brings the pop-out forward when it is already out. */
+export function toggleCif(): void {
+  if (cifPopout.connected) {
+    cifPopout.open();
+    return;
+  }
+  if (helpAssistant.isOpen) helpAssistant.close();
+  else helpAssistant.open();
+}

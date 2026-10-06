@@ -4,8 +4,9 @@
   import { quintOut } from "svelte/easing";
   import type { GuidanceAction } from "help-engine";
   import { KeyboardInset } from "$lib/services/help-assistant/keyboard-inset.svelte";
-  import type { HelpAssistantStore } from "$lib/stores/help-assistant/help-assistant.svelte";
+  import type { HelpAssistantView } from "$lib/services/help-assistant/cif-popout-protocol";
   import HelpActionOffer from "./HelpActionOffer.svelte";
+  import HelpAssistantHeader from "./HelpAssistantHeader.svelte";
   import HelpAssistantComposer from "./HelpAssistantComposer.svelte";
   import HelpAssistantMessage from "./HelpAssistantMessage.svelte";
   import HelpQuickPrompts from "./HelpQuickPrompts.svelte";
@@ -16,13 +17,26 @@
     onOpenArticle,
     onOpenLibrary,
     onClose,
+    onPopOut,
+    variant = "docked",
   }: {
-    assistant: HelpAssistantStore;
+    assistant: HelpAssistantView;
     onAccept: (action: GuidanceAction) => void;
     onOpenArticle: (helpId: string) => void;
     onOpenLibrary: () => void;
     onClose: () => void;
+    /** Shown only where a pop-out window is possible. */
+    onPopOut?: () => void;
+    /** `window` fills a pop-out window instead of floating beside the sidebar. */
+    variant?: "docked" | "window";
   } = $props();
+
+  const docked = $derived(variant === "docked");
+  const panelClass = $derived(
+    docked
+      ? "fixed bottom-[calc(7.25rem_+_env(safe-area-inset-bottom,0px))] left-3 z-[95] flex max-h-[min(36rem,calc(100dvh_-_11rem_-_env(safe-area-inset-bottom,0px)))] w-[min(24rem,calc(100vw-1.5rem))] flex-col overflow-hidden rounded-lg border border-chrome-border bg-chrome-surface shadow-xl md:bottom-16 md:left-[4.5rem] md:max-h-[min(36rem,calc(100dvh-7rem))]"
+      : "fixed inset-0 flex flex-col overflow-hidden bg-chrome-surface",
+  );
 
   // The prompt list disappears once a question is asked, so hand focus to the
   // question box rather than leaving it on a removed button.
@@ -42,12 +56,15 @@
   // which would leave the question box underneath. While it is up, sit just
   // above it and fit the panel to what is actually visible.
   const keyboard = new KeyboardInset();
-  $effect(() => (assistant.isOpen ? keyboard.start() : undefined));
+  $effect(() => (docked && assistant.isOpen ? keyboard.start() : undefined));
+  const transitionMs = $derived(docked && !reduceMotion() ? 250 : 0);
   const keyboardLift = $derived(
     keyboard.keyboardOpen
       ? `bottom: ${keyboard.inset + 8}px; max-height: ${keyboard.visibleHeight - 16}px;`
       : undefined,
   );
+
+  const panelStyle = $derived(docked ? keyboardLift : undefined);
 
   let conversation: HTMLDivElement | undefined = $state();
 
@@ -86,46 +103,23 @@
     aria-label="Cif, the Codex guide"
     tabindex="-1"
     data-testid="help-assistant-panel"
-    class="fixed bottom-[calc(7.25rem_+_env(safe-area-inset-bottom,0px))] left-3 z-[95] flex max-h-[min(36rem,calc(100dvh_-_11rem_-_env(safe-area-inset-bottom,0px)))] w-[min(24rem,calc(100vw-1.5rem))] flex-col overflow-hidden rounded-lg border border-chrome-border bg-chrome-surface shadow-xl md:bottom-16 md:left-[4.5rem] md:max-h-[min(36rem,calc(100dvh-7rem))]"
+    class={panelClass}
     transition:fly={{
       x: -24,
-      duration: reduceMotion() ? 0 : 250,
+      duration: transitionMs,
       easing: quintOut,
     }}
-    style={keyboardLift}
+    style={panelStyle}
     onkeydown={onKeydown}
     onoutrostart={(event) =>
       event.currentTarget.setAttribute("aria-hidden", "true")}
   >
-    <header
-      class="flex items-center justify-between gap-2 border-b border-chrome-border px-3 py-2"
-    >
-      <div class="flex items-baseline gap-2">
-        <h2 class="text-sm font-bold text-chrome-text">Cif</h2>
-        <span class="text-meta uppercase tracking-wider text-chrome-muted"
-          >Codex guide</span
-        >
-      </div>
-      <div class="flex items-center gap-1">
-        {#if assistant.messages.length > 0}
-          <button
-            type="button"
-            onclick={() => assistant.reset()}
-            class="touch-target rounded px-2 py-1 text-meta font-bold uppercase tracking-wider text-chrome-muted hover:text-chrome-text focus-visible:outline-2 focus-visible:outline-chrome-accent"
-          >
-            Start over
-          </button>
-        {/if}
-        <button
-          type="button"
-          onclick={onClose}
-          aria-label="Close Cif"
-          class="touch-target rounded p-1 text-chrome-muted hover:text-chrome-text focus-visible:outline-2 focus-visible:outline-chrome-accent"
-        >
-          <span aria-hidden="true" class="icon-[lucide--x] h-4 w-4"></span>
-        </button>
-      </div>
-    </header>
+    <HelpAssistantHeader
+      canStartOver={assistant.messages.length > 0}
+      onStartOver={() => assistant.reset()}
+      {onPopOut}
+      {onClose}
+    />
 
     <div
       class="flex min-h-0 flex-1 flex-col gap-3 overflow-auto px-3 py-3"

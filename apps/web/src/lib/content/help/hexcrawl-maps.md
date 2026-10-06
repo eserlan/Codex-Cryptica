@@ -45,7 +45,7 @@ Reveal wilderness regions hexagon by hexagon without ragged brush strokes:
 
 ### Distance & Travel Measurement
 
-Use the measurement ruler (`R` or the ruler tool in the map HUD) on a hex map:
+Use the measurement ruler (the ruler switch at the bottom left of the map) on a hex map:
 
 - Dragging between two locations calculates the discrete hex distance using axial cube mathematics.
 - The measurement label displays both the total hex count and converted travel distance (for example, `4 hexes (24 mi)`).

@@ -29,6 +29,8 @@ describe("Cif naming", () => {
   it("labels the panel and its controls with the name", () => {
     const panel = markupOf("HelpAssistantPanel.svelte");
     expect(panel).toContain('aria-label="Cif, the Codex guide"');
-    expect(panel).toContain('aria-label="Close Cif"');
+    expect(markupOf("HelpAssistantHeader.svelte")).toContain(
+      'aria-label="Close Cif"',
+    );
   });
 });

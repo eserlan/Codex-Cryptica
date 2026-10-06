@@ -2,6 +2,7 @@
   import VTTModeToggle from "$lib/components/map/VTTModeToggle.svelte";
   import MapControlsFab from "$lib/components/map/MapControlsFab.svelte";
   import MapMaximizeToggle from "$lib/components/map/MapMaximizeToggle.svelte";
+  import MapCifButton from "$lib/components/map/MapCifButton.svelte";
   import LayerPanel from "$lib/components/map/LayerPanel.svelte";
   import { LAYER_OPTIONS } from "$lib/components/ui/LayerMenu.svelte";
   import {
@@ -126,6 +127,8 @@
       {#if !mapSession.vttEnabled}
         <MapMaximizeToggle />
       {/if}
+
+      <MapCifButton />
 
       <button
         type="button"

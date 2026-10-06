@@ -64,14 +64,49 @@ export const PHASE_A_IN_SCOPE: InScopeQuestion[] = [
   q("map", "tune", "map", "How do I drop a pin on the map?", ["map-mode"]),
   q("map", "tune", "map", "How do I hide parts of the map from my players?", [
     "map-mode",
+    "fog-of-war",
+    "vtt-fog-player-view",
   ]),
   q("map", "holdout", "map", "Can I start a game session from a map?", [
     "vtt-session",
     "map-mode",
+    "vtt-multiplayer",
   ]),
-  q("map", "tune", "map", "How do I move a token?", ["vtt-session"]),
+  q("map", "tune", "map", "How do I move a token?", [
+    "vtt-session",
+    "vtt-tokens",
+  ]),
   q("map", "tune", "map", "How do I measure distance on the map?", [
     "vtt-session",
+  ]),
+  q("map", "holdout", "map", "How do I add a character to initiative?", [
+    "vtt-combat-initiative",
+  ]),
+  q("map", "holdout", "map", "Why can't my player move their token?", [
+    "vtt-tokens",
+    "vtt-troubleshooting",
+  ]),
+  q("map", "holdout", "map", "How do I save an encounter to come back to?", [
+    "vtt-combat-initiative",
+  ]),
+  q("map", "holdout", "map", "How do I stock dungeon tiles with encounters?", [
+    "vtt-tiles-layers-notes",
+  ]),
+  q("map", "holdout", "map", "How do I start voice chat with my players?", [
+    "vtt-multiplayer",
+  ]),
+  q("map", "holdout", "map", "How do I change the grid scale to miles?", [
+    "vtt-grids-measurement",
+  ]),
+  q(
+    "map",
+    "holdout",
+    "map",
+    "What is the difference between map fog and a hidden entity?",
+    ["vtt-fog-player-view", "fog-of-war"],
+  ),
+  q("map", "holdout", "map", "How do I reveal just one hex on a hex map?", [
+    "hexcrawl-maps",
   ]),
   q(
     "map",
