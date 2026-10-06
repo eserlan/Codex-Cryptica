@@ -141,7 +141,11 @@ describe("what leaves the browser when asking for help", () => {
 describe("what leaves the browser when asking for help on the map", () => {
   async function askOnMap(facts: VttHelpFacts) {
     const surfaces = new HelpSurfaceRegistry();
-    surfaces.registerVttMap({ facts: () => facts });
+    surfaces.registerVttMap({
+      facts: () => facts,
+      actions: () => [],
+      openPanel: () => false,
+    });
     const context = new HelpContextStore({
       getRouteId: () => "/(app)/map",
       surfaces,

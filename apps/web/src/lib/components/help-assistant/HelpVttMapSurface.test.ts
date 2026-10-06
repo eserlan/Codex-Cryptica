@@ -5,6 +5,7 @@ import type { VttHelpFacts } from "help-engine";
 
 const mocks = vi.hoisted(() => ({
   mapStore: {
+    activeMap: { id: "map-1" } as { id: string } | null,
     isGMMode: true,
     showGrid: true,
     gridType: "hex-pointy",
@@ -13,6 +14,11 @@ const mocks = vi.hoisted(() => ({
   mapSession: {
     vttEnabled: true,
     mode: "combat",
+    showGridSettings: false,
+    setMode: vi.fn(),
+    removeToken: vi.fn(),
+    advanceTurn: vi.fn(),
+    setVttEnabled: vi.fn(),
     selection: "t1" as string | null,
     myPeerId: "peer-1" as string | null,
     activeLayer: "token",
@@ -39,11 +45,14 @@ vi.mock("$lib/cloud-bridge/p2p/host-service.svelte", () => ({
 }));
 
 import { helpSurfaces } from "$lib/stores/help-assistant/help-surface.svelte";
+import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
+import { mapControlsUIStore } from "$lib/stores/ui/map-controls-ui.svelte";
 import HelpVttMapSurface from "./HelpVttMapSurface.svelte";
 
 const facts = (): VttHelpFacts => helpSurfaces.vttMap!.facts();
 
 beforeEach(() => {
+  mocks.mapStore.activeMap = { id: "map-1" };
   mocks.mapStore.isGMMode = true;
   mocks.mapStore.gridType = "hex-pointy";
   mocks.mapSession.vttEnabled = true;
@@ -55,6 +64,19 @@ beforeEach(() => {
   mocks.session.isGuestMode = false;
   mocks.session.sharedMode = false;
   mocks.p2pHost.isHosting = true;
+  mocks.mapSession.mode = "combat";
+  mocks.mapSession.showGridSettings = false;
+  layoutUIStore.vttSidebarCollapsed = true;
+  mapControlsUIStore.open = false;
+  mapControlsUIStore.showEncounters = false;
+  for (const fn of [
+    mocks.mapSession.setMode,
+    mocks.mapSession.removeToken,
+    mocks.mapSession.advanceTurn,
+    mocks.mapSession.setVttEnabled,
+  ]) {
+    fn.mockClear();
+  }
 });
 
 afterEach(() => {
@@ -143,5 +165,100 @@ describe("HelpVttMapSurface", () => {
 
     unmount();
     expect(helpSurfaces.vttMap).toBeNull();
+  });
+});
+
+describe("HelpVttMapSurface actions", () => {
+  const offered = () => helpSurfaces.vttMap!.actions();
+
+  it("offers a GM every panel and control, so a guide can open them first", () => {
+    render(HelpVttMapSurface);
+
+    expect(offered()).toEqual(
+      expect.arrayContaining([
+        "vtt-sidebar",
+        "vtt-map-controls",
+        "vtt-grid-settings",
+        "vtt-encounters",
+        "vtt-mode-switch",
+        "vtt-fog-toggle",
+        "vtt-initiative-panel",
+        "vtt-share-button",
+      ]),
+    );
+  });
+
+  it("offers no VTT actions when the map route has no active map", () => {
+    mocks.mapStore.activeMap = null;
+    render(HelpVttMapSurface);
+
+    expect(offered()).toEqual([]);
+    expect(helpSurfaces.vttMap!.openPanel("vtt-grid-settings")).toBe(false);
+    expect(mocks.mapSession.showGridSettings).toBe(false);
+  });
+
+  it("offers a player only the sidebar and what a player can see", () => {
+    mocks.session.isGuestMode = true;
+    render(HelpVttMapSurface);
+
+    expect(offered()).toEqual(["vtt-sidebar", "vtt-initiative-panel"]);
+  });
+
+  it("switches the GM controls off in Player View, as the screen itself does", () => {
+    mocks.mapStore.isGMMode = false;
+    mocks.session.sharedMode = true;
+    render(HelpVttMapSurface);
+
+    expect(offered()).not.toContain("vtt-grid-settings");
+    expect(offered()).not.toContain("vtt-fog-toggle");
+    expect(offered()).toContain("vtt-player-view-toggle");
+  });
+
+  it("offers nothing VTT-specific while VTT is off, and no initiative outside Combat", () => {
+    mocks.mapSession.vttEnabled = false;
+    render(HelpVttMapSurface);
+    expect(offered()).toEqual(
+      expect.arrayContaining(["vtt-map-controls", "vtt-grid-settings"]),
+    );
+    expect(offered()).not.toContain("vtt-sidebar");
+    expect(offered()).not.toContain("vtt-add-token");
+
+    mocks.mapSession.vttEnabled = true;
+    mocks.mapSession.mode = "exploration";
+    expect(offered()).not.toContain("vtt-initiative-panel");
+  });
+});
+
+describe("HelpVttMapSurface openPanel", () => {
+  const open = (
+    panel: Parameters<NonNullable<typeof helpSurfaces.vttMap>["openPanel"]>[0],
+  ) => helpSurfaces.vttMap!.openPanel(panel);
+
+  it("opens only what is showing, and never touches the session", () => {
+    render(HelpVttMapSurface);
+
+    expect(open("vtt-sidebar")).toBe(true);
+    expect(layoutUIStore.vttSidebarCollapsed).toBe(false);
+    expect(open("vtt-map-controls")).toBe(true);
+    expect(mapControlsUIStore.open).toBe(true);
+    expect(open("vtt-grid-settings")).toBe(true);
+    expect(mocks.mapSession.showGridSettings).toBe(true);
+    expect(open("vtt-encounters")).toBe(true);
+    expect(mapControlsUIStore.showEncounters).toBe(true);
+
+    expect(mocks.mapSession.setMode).not.toHaveBeenCalled();
+    expect(mocks.mapSession.removeToken).not.toHaveBeenCalled();
+    expect(mocks.mapSession.advanceTurn).not.toHaveBeenCalled();
+    expect(mocks.mapSession.setVttEnabled).not.toHaveBeenCalled();
+  });
+
+  it("refuses a host panel for a player, even if asked directly", () => {
+    mocks.session.isGuestMode = true;
+    render(HelpVttMapSurface);
+
+    expect(open("vtt-grid-settings")).toBe(false);
+    expect(open("vtt-encounters")).toBe(false);
+    expect(mocks.mapSession.showGridSettings).toBe(false);
+    expect(mapControlsUIStore.showEncounters).toBe(false);
   });
 });

@@ -76,6 +76,14 @@ describe("InitiativePanel", () => {
     sessionModeStore.isGuestMode = false;
   });
 
+  it("carries a stable help target", () => {
+    const { container } = render(InitiativePanel);
+
+    expect(
+      container.querySelector('[data-help-target="vtt-initiative-panel"]'),
+    ).not.toBeNull();
+  });
+
   it("hides the internal combatant id", () => {
     render(InitiativePanel);
 

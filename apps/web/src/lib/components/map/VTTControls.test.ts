@@ -1,6 +1,7 @@
 /** @vitest-environment jsdom */
 
-import { render, screen } from "@testing-library/svelte";
+import { fireEvent, render, screen } from "@testing-library/svelte";
+import { tick } from "svelte";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("$lib/components/help/FeatureHint.svelte", () => ({
@@ -55,6 +56,7 @@ vi.mock("$lib/stores/map.svelte", () => ({
   },
 }));
 
+import { mapControlsUIStore } from "$lib/stores/ui/map-controls-ui.svelte";
 import VTTControls from "./VTTControls.svelte";
 import { mapSession } from "$lib/stores/map-session.svelte";
 import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
@@ -99,6 +101,41 @@ describe("VTTControls", () => {
     expect(container.firstElementChild?.firstElementChild?.className).toContain(
       "min-w-0",
     );
+  });
+
+  it("carries stable help targets for the mode switch, Add Token and Encounters", () => {
+    const { container } = render(VTTControls);
+
+    for (const target of [
+      "vtt-mode-switch",
+      "vtt-add-token",
+      "vtt-encounters-button",
+    ]) {
+      expect(
+        container.querySelector(`[data-help-target="${target}"]`),
+      ).not.toBeNull();
+    }
+    // The switch wraps both mode buttons, so the highlight rings both.
+    const sw = container.querySelector('[data-help-target="vtt-mode-switch"]')!;
+    expect(sw.querySelectorAll("button")).toHaveLength(2);
+  });
+
+  it("opens Encounter Snapshots from the shared store the help assistant uses", async () => {
+    render(VTTControls);
+    const button = screen.getByRole("button", { name: "Encounters" });
+    expect(button.getAttribute("aria-expanded")).toBe("false");
+
+    mapControlsUIStore.showEncounters = true;
+    await tick();
+    expect(button.getAttribute("aria-expanded")).toBe("true");
+
+    mapControlsUIStore.showEncounters = false;
+    await tick();
+    expect(button.getAttribute("aria-expanded")).toBe("false");
+
+    await fireEvent.click(button);
+    expect(mapControlsUIStore.showEncounters).toBe(true);
+    mapControlsUIStore.showEncounters = false;
   });
 
   it("hides token and encounter management for guests", async () => {

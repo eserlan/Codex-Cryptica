@@ -77,6 +77,7 @@
         ? "Disable measurement tool"
         : "Measure: click on map to set start point, click again to set end point"}
       aria-label="Toggle measurement tool"
+      data-help-target="vtt-ruler-toggle"
     >
       <span
         class={`relative z-10 flex h-7 w-7 shrink-0 items-center justify-center rounded-full border transition-all duration-300 ${
@@ -139,6 +140,7 @@
           ? "Exit Shared Mode (Admin View)"
           : "Enter Shared Mode (Player Preview)"}
         data-testid="shared-mode-toggle"
+        data-help-target="vtt-player-view-toggle"
         aria-pressed={sessionModeStore.sharedMode}
         aria-label="Toggle player view mode"
       >
@@ -150,6 +152,7 @@
           type="button"
           class={`touch-target px-2.5 py-1.5 rounded-md text-micro font-bold uppercase tracking-wider transition-all ${getPrimaryButtonStateClass(mapStore.showFog)}`}
           onclick={() => (mapStore.showFog = !mapStore.showFog)}
+          data-help-target="vtt-fog-toggle"
         >
           FOG: {mapStore.showFog ? "ON" : "OFF"}
         </button>
@@ -198,11 +201,16 @@
           onclick={() => (mapStore.showGrid = !mapStore.showGrid)}
           oncontextmenu={openGridSettings}
           title="Toggle Grid (Right-click for settings)"
+          data-help-target="vtt-grid-button"
         >
           GRID: {mapStore.showGrid ? "ON" : "OFF"}
         </button>
 
-        <div class="relative" bind:this={layerPanelContainer}>
+        <div
+          class="relative"
+          bind:this={layerPanelContainer}
+          data-help-target="vtt-layer-control"
+        >
           <button
             type="button"
             class={`touch-target px-2.5 py-1.5 rounded-md transition-all flex items-center ${getPrimaryButtonStateClass(showLayerPanel)}`}

@@ -112,6 +112,14 @@ export const PHASE_A_IN_SCOPE: InScopeQuestion[] = [
     "How do I line the hex grid up with hexes already on my map?",
     ["vtt-grids-measurement", "hexcrawl-maps"],
   ),
+  q("map", "holdout", "map", "Where do I open the grid settings?", [
+    "vtt-grids-measurement",
+    "hexcrawl-maps",
+  ]),
+  q("map", "holdout", "map", "Where is the button for Explore and Combat?", [
+    "vtt-session",
+    "vtt-combat-initiative",
+  ]),
   q("map", "holdout", "map", "How do I rotate a token?", ["vtt-tokens"]),
   q("map", "holdout", "map", "How do I show which way a token is facing?", [
     "vtt-tokens",
