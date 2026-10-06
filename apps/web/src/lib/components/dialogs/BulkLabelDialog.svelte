@@ -382,7 +382,8 @@
                         : 'bg-theme-bg border-theme-border text-theme-muted hover:bg-red-500/20 hover:border-red-500/50 hover:text-red-400'}"
                     >
                       {label}
-                      <span class="icon-[lucide--x] w-3 h-3"></span>
+                      <span aria-hidden="true" class="icon-[lucide--x] w-3 h-3"
+                      ></span>
                     </button>
                   {/each}
                 </div>

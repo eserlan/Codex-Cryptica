@@ -1,3 +1,5 @@
+import type { VttHelpFacts, VttPanelId } from "help-engine";
+
 /**
  * What the help assistant is allowed to know about the screen, and the few
  * things it is allowed to do there.
@@ -25,15 +27,39 @@ export interface EntityDetailSurface {
   openTab: (tab: HelpTabId) => void;
 }
 
+/**
+ * The map screen's report of the user's own VTT state, as plain facts. It is
+ * read each time a question is asked, so it is always current, and it has no
+ * place for names, IDs or text.
+ */
+export interface VttMapSurface {
+  facts: () => VttHelpFacts;
+  /**
+   * The VTT panels and controls this user can reach right now. Role-aware: a
+   * player is never told about a GM control, so no guide is offered for it.
+   */
+  actions: () => string[];
+  /** Opens a panel. UI only: nothing in the session, a token or the fog changes. */
+  openPanel: (panel: VttPanelId) => boolean;
+}
+
 export class HelpSurfaceRegistry {
   entityDetail = $state.raw<EntityDetailSurface | null>(null);
   zenEntityDetail = $state.raw<EntityDetailSurface | null>(null);
+  vttMap = $state.raw<VttMapSurface | null>(null);
 
   /** Returns an unregister function; a newer registration is never removed by an older one. */
   registerEntityDetail(surface: EntityDetailSurface): () => void {
     this.entityDetail = surface;
     return () => {
       if (this.entityDetail === surface) this.entityDetail = null;
+    };
+  }
+
+  registerVttMap(surface: VttMapSurface): () => void {
+    this.vttMap = surface;
+    return () => {
+      if (this.vttMap === surface) this.vttMap = null;
     };
   }
 

@@ -102,7 +102,7 @@
         style:border-color="var(--theme-selected-border)"
         style:color="var(--theme-icon-active)"
       >
-        <span class="icon-[lucide--database] w-4 h-4"></span>
+        <span aria-hidden="true" class="icon-[lucide--database] w-4 h-4"></span>
       </div>
       <div>
         <div

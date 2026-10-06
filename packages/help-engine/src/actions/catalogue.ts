@@ -33,6 +33,45 @@ export const DESTINATION_IDS = [
 export type DestinationId = (typeof DESTINATION_IDS)[number];
 
 /**
+ * VTT panels `openPanel` may open. Each one only changes what is showing (a
+ * sidebar, a dialog); none of them touches the session, a token or the fog.
+ */
+export const VTT_PANEL_IDS = [
+  "vtt-sidebar",
+  "vtt-map-controls",
+  "vtt-grid-settings",
+  "vtt-encounters",
+] as const;
+export type VttPanelId = (typeof VTT_PANEL_IDS)[number];
+
+/**
+ * VTT controls `highlight` may point at. Pointing at one never operates it, so
+ * a control that changes the session (advancing initiative, deleting an
+ * encounter, starting a hosted session) can be shown but is never pressed.
+ */
+export const VTT_CONTROL_IDS = [
+  "vtt-mode-toggle",
+  "vtt-mode-switch",
+  "vtt-add-token",
+  "vtt-grid-button",
+  "vtt-fog-toggle",
+  "vtt-solo-fog-toggle",
+  "vtt-layer-control",
+  "vtt-player-view-toggle",
+  "vtt-ruler-toggle",
+  "vtt-encounters-button",
+  "vtt-tile-decks",
+  "vtt-initiative-panel",
+  "vtt-share-button",
+] as const;
+
+/** Everything the map can report as available, for the retry against an older Worker. */
+export const VTT_ACTION_IDS: readonly string[] = [
+  ...VTT_PANEL_IDS,
+  ...VTT_CONTROL_IDS,
+];
+
+/**
  * Panels `openPanel` may open: entity detail tabs (matching the real tab IDs)
  * and Settings tabs, written `settings-<tab>`. Only the Settings tabs the
  * registry gives guidance for are listed; there is none for About or Help.
@@ -50,6 +89,7 @@ export const PANEL_IDS = [
   "settings-templates",
   "settings-theme",
   "settings-publishing",
+  ...VTT_PANEL_IDS,
 ] as const;
 export type PanelId = (typeof PANEL_IDS)[number];
 
@@ -83,6 +123,7 @@ export const CONTROL_IDS = [
   "generate-related-button",
   "status-tab",
   "connections-tab",
+  ...VTT_CONTROL_IDS,
 ] as const;
 export type ControlId = (typeof CONTROL_IDS)[number];
 
@@ -93,17 +134,46 @@ export type ControlId = (typeof CONTROL_IDS)[number];
 export const PANEL_FLAGS = ["explorer-open", "shelf-open"] as const;
 export type PanelFlag = (typeof PANEL_FLAGS)[number];
 
+/**
+ * Facts about the map and VTT the user is looking at. Each is a yes/no about
+ * the user's own state, never a name, ID or piece of content, and they are
+ * only ever reported for the user's own view (a player's description never
+ * mentions anything the GM is hiding from them).
+ */
+export const VTT_FLAGS = [
+  "vtt-on",
+  "vtt-combat",
+  "vtt-guest",
+  "vtt-player-view",
+  "vtt-grid-square",
+  "vtt-grid-hex",
+  "vtt-fog-on",
+  "vtt-solo-fog",
+  "vtt-token-selected",
+  "vtt-token-linked",
+  "vtt-token-manageable",
+  "vtt-layer-terrain",
+  "vtt-layer-furniture",
+  "vtt-layer-tokens",
+  "vtt-has-initiative",
+  "vtt-can-advance-turn",
+  "vtt-hosting",
+  "vtt-measuring",
+] as const;
+export type VttFlag = (typeof VTT_FLAGS)[number];
+
 /** Material flags a screen description may carry. */
 export const HELP_FLAGS = [
   "generators",
   "connections-editable",
   ...PANEL_FLAGS,
+  ...VTT_FLAGS,
 ] as const;
 export type HelpFlag = (typeof HELP_FLAGS)[number];
 
 export interface ControlSpec {
   /** Screen area the control lives in. */
-  area: "entity-detail";
+  area: "entity-detail" | "map";
   /**
    * A flag the screen description must carry for the control to exist. The
    * Add button, for example, is absent in a read-only guest vault, so the
@@ -130,6 +200,21 @@ export const CONTROL_CATALOGUE: Record<ControlId, ControlSpec> = {
   },
   "status-tab": { area: "entity-detail" },
   "connections-tab": { area: "entity-detail" },
+  // Whether the user may use a VTT control is decided by the map, which only
+  // lists the controls this user can reach; the flags say what must be on.
+  "vtt-mode-toggle": { area: "map" },
+  "vtt-mode-switch": { area: "map", requiresFlag: "vtt-on" },
+  "vtt-add-token": { area: "map", requiresFlag: "vtt-on" },
+  "vtt-grid-button": { area: "map" },
+  "vtt-fog-toggle": { area: "map" },
+  "vtt-solo-fog-toggle": { area: "map", requiresFlag: "vtt-fog-on" },
+  "vtt-layer-control": { area: "map" },
+  "vtt-player-view-toggle": { area: "map" },
+  "vtt-ruler-toggle": { area: "map", requiresFlag: "vtt-on" },
+  "vtt-encounters-button": { area: "map", requiresFlag: "vtt-on" },
+  "vtt-tile-decks": { area: "map", requiresFlag: "vtt-on" },
+  "vtt-initiative-panel": { area: "map", requiresFlag: "vtt-combat" },
+  "vtt-share-button": { area: "map", requiresFlag: "vtt-on" },
 };
 
 /**

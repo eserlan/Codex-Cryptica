@@ -5,7 +5,7 @@ import {
   punchHexFogRadius,
   getActiveHexConfig,
 } from "./hex-fog-stroke";
-import { pointToHex } from "map-engine";
+import { hexToPoint, pointToHex, type HexCoord } from "map-engine";
 import type { GridType } from "$lib/stores/map.svelte";
 
 export interface MapFogPainterDeps {
@@ -95,37 +95,7 @@ export class MapFogPainter {
       return false;
     }
 
-    const snapshotBefore = this.maskSnapshot;
-    const snapshotAfter = copyCanvas(maskCanvas, this.deps.createCanvas);
-    const applySnapshot = async (snapshot: HTMLCanvasElement | null) => {
-      const liveMaskCanvas = this.deps.getMaskCanvas();
-
-      if (
-        snapshot &&
-        liveMaskCanvas &&
-        this.deps.mapStore.activeMapId === currentMapId
-      ) {
-        const ctx = liveMaskCanvas.getContext("2d");
-        if (ctx) {
-          ctx.clearRect(0, 0, liveMaskCanvas.width, liveMaskCanvas.height);
-          if (snapshot.width > 0 && snapshot.height > 0) {
-            ctx.drawImage(snapshot, 0, 0);
-          }
-          await this.deps.mapStore.saveMask(liveMaskCanvas);
-        }
-      }
-    };
-
-    this.deps.oracle.pushUndoAction(
-      "Map Drawing",
-      async () => {
-        await applySnapshot(snapshotBefore);
-      },
-      undefined,
-      async () => {
-        await applySnapshot(snapshotAfter);
-      },
-    );
+    this.pushMaskUndo(maskCanvas, currentMapId, this.maskSnapshot);
 
     await this.deps.mapStore.saveMask(maskCanvas);
     this.reset();
@@ -188,6 +158,96 @@ export class MapFogPainter {
     );
 
     this.lastPaintImgCoords = currentCoords;
+  }
+
+  private pushMaskUndo(
+    maskCanvas: HTMLCanvasElement,
+    currentMapId: string,
+    snapshotBefore: HTMLCanvasElement | null,
+  ) {
+    const snapshotAfter = copyCanvas(maskCanvas, this.deps.createCanvas);
+    const applySnapshot = async (snapshot: HTMLCanvasElement | null) => {
+      const liveMaskCanvas = this.deps.getMaskCanvas();
+
+      if (
+        snapshot &&
+        liveMaskCanvas &&
+        this.deps.mapStore.activeMapId === currentMapId
+      ) {
+        const ctx = liveMaskCanvas.getContext("2d");
+        if (ctx) {
+          ctx.clearRect(0, 0, liveMaskCanvas.width, liveMaskCanvas.height);
+          if (snapshot.width > 0 && snapshot.height > 0) {
+            ctx.drawImage(snapshot, 0, 0);
+          }
+          await this.deps.mapStore.saveMask(liveMaskCanvas);
+        }
+      }
+    };
+
+    this.deps.oracle.pushUndoAction(
+      "Map Drawing",
+      async () => {
+        await applySnapshot(snapshotBefore);
+      },
+      undefined,
+      async () => {
+        await applySnapshot(snapshotAfter);
+      },
+    );
+  }
+
+  /**
+   * The hex under an image-space point and whether it is currently fogged, or
+   * null when there is no hex grid, no mask, or the hex lies off the mask.
+   */
+  hexAt(imgPoint: Point): { hex: HexCoord; fogged: boolean } | null {
+    const config = getActiveHexConfig(this.deps.mapStore);
+    const maskCanvas = this.deps.getMaskCanvas();
+    const ctx = maskCanvas?.getContext("2d");
+    if (!config || !maskCanvas || !ctx) return null;
+
+    const hex = pointToHex(imgPoint, config);
+    const center = hexToPoint(hex, config);
+    const x = Math.floor(center.x + maskCanvas.width / 2);
+    const y = Math.floor(center.y + maskCanvas.height / 2);
+    if (x < 0 || y < 0 || x >= maskCanvas.width || y >= maskCanvas.height) {
+      return null;
+    }
+    // Opaque mask pixels reveal the map; transparent pixels leave fog in place.
+    return { hex, fogged: ctx.getImageData(x, y, 1, 1).data[3] <= 127 };
+  }
+
+  /**
+   * Whether the map is revealed at an image-space point. True when there is no
+   * mask to read or the point lies off it, so a missing mask never hides anything.
+   */
+  isRevealedAt(imgPoint: Point): boolean {
+    const maskCanvas = this.deps.getMaskCanvas();
+    const ctx = maskCanvas?.getContext("2d");
+    if (!maskCanvas || !ctx) return true;
+
+    const x = Math.floor(imgPoint.x + maskCanvas.width / 2);
+    const y = Math.floor(imgPoint.y + maskCanvas.height / 2);
+    if (x < 0 || y < 0 || x >= maskCanvas.width || y >= maskCanvas.height) {
+      return true;
+    }
+    return ctx.getImageData(x, y, 1, 1).data[3] > 127;
+  }
+
+  /** Reveal (isHiding false) or fog (true) exactly one hex, as one undo step. */
+  async paintHex(hex: HexCoord, isHiding: boolean): Promise<boolean> {
+    const config = getActiveHexConfig(this.deps.mapStore);
+    const maskCanvas = this.deps.getMaskCanvas();
+    const mapId = this.deps.mapStore.activeMapId;
+    const ctx = maskCanvas?.getContext("2d");
+    if (this.painting || !config || !maskCanvas || !mapId || !ctx) return false;
+
+    const before = copyCanvas(maskCanvas, this.deps.createCanvas);
+    punchHexFogCell(ctx, maskCanvas, hex, config, isHiding);
+    this.pushMaskUndo(maskCanvas, mapId, before);
+    await this.deps.mapStore.saveMask(maskCanvas);
+    return true;
   }
 
   private reset() {

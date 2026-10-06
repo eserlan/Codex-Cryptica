@@ -1,6 +1,7 @@
 import {
   emptyHelpContext,
   sanitizeHelpContext,
+  vttFlagsFor,
   type HelpArea,
   type HelpContext,
 } from "help-engine";
@@ -53,11 +54,19 @@ function areaFor(
   return (routeId && ROUTE_AREAS[routeId]) || "other";
 }
 
+/** What the user is doing on the map counts only while the map is the screen. */
+function mapFlagsFor(sources: HelpContextSources, area: HelpArea): string[] {
+  const map = sources.surfaces.vttMap;
+  return area === "map" && map ? vttFlagsFor(map.facts()) : [];
+}
+
 function flagsFor(
   sources: HelpContextSources,
   surface: HelpSurfaceRegistry["entityDetail"],
+  area: HelpArea,
 ): string[] {
   const flags: string[] = [];
+  flags.push(...mapFlagsFor(sources, area));
   if (sources.generatorsAvailable()) flags.push("generators");
   if (surface?.canAddConnection()) flags.push("connections-editable");
   // A side panel adds to the screen description instead of replacing the area.
@@ -99,8 +108,12 @@ function entityActionsFor(
 function availableActionsFor(
   sources: HelpContextSources,
   surface: HelpSurfaceRegistry["entityDetail"],
+  area: HelpArea,
 ): string[] {
   const actions = entityActionsFor(surface);
+  // Controls on the map count only while the map is the screen.
+  if (area === "map")
+    actions.push(...(sources.surfaces.vttMap?.actions() ?? []));
   // Settings is reachable from every screen of a real vault.
   if (!sources.isGuestMode()) actions.push(...SETTINGS_PANEL_IDS);
   if (!sources.isGuestMode() && sources.journalAvailable?.())
@@ -138,8 +151,8 @@ export class HelpContextStore {
             : (surface?.activeTab() ?? null),
         mode: surface?.isEditing() ? "edit" : "view",
         surface: "vault",
-        flags: flagsFor(sources, surface),
-        availableActions: availableActionsFor(sources, surface),
+        flags: flagsFor(sources, surface, area),
+        availableActions: availableActionsFor(sources, surface, area),
       });
     } catch {
       // A misbehaving provider must never break help: fall back to "no idea

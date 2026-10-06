@@ -280,7 +280,10 @@
           rel="noopener noreferrer"
           class="inline-flex items-center gap-1.5 mt-4 text-xs font-bold text-theme-muted hover:text-theme-primary transition-colors"
         >
-          <span class="icon-[lucide--external-link] w-3.5 h-3.5"></span>
+          <span
+            aria-hidden="true"
+            class="icon-[lucide--external-link] w-3.5 h-3.5"
+          ></span>
           Get {pageData.toolLabel ?? pageData.competitorName}
         </a>
       {/if}

@@ -88,6 +88,7 @@
     },
     onMaskLoaded: (mask) => {
       maskCanvas = mask;
+      mapStore.fogRevision++;
     },
     onDimensionsLoaded: async (width, height) => {
       const activeMap = mapStore.activeMap;
@@ -415,6 +416,7 @@
       .then((mask) => {
         if (cancelled) return;
         maskCanvas = mask;
+        mapStore.fogRevision++;
         loadedMaskPath = fogMaskPath;
       });
 
@@ -557,6 +559,9 @@
       imgX={interactions.contextMenu.imgX}
       imgY={interactions.contextMenu.imgY}
       tokenId={interactions.contextMenu.tokenId}
+      hex={interactions.contextMenu.hex}
+      onToggleHexFog={(hex) =>
+        void interactions.fogInteractions.paintHex(hex, !hex.fogged)}
       onClose={() => (interactions.contextMenu = null)}
     />
   {/if}

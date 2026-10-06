@@ -6,6 +6,13 @@ const config = {
     version: {
       pollInterval: 60000,
     },
+    // We register and manage the ServiceWorker lifecycle deterministically via
+    // app-init.ts (supporting vault session caching, cleanup, and dev bypass).
+    // Disable SvelteKit's automatic inline registration to prevent duplicate racing
+    // registrations and InvalidStateError exceptions on prerendered routes.
+    serviceWorker: {
+      register: false,
+    },
     // Using adapter-static to generate a fully static site suitable for Cloudflare Pages (no SSR, only prerendered assets).
     // Cloudflare Pages serves static files directly, and the fallback index.html supports SPA routing for the app shell.
     // See https://svelte.dev/docs/kit/adapters for more information about adapter-static and other deployment targets.

@@ -23,9 +23,15 @@ When the conversation is empty, Cif can show a few questions for the screen you 
 
 Sometimes Cif offers to show you a control. Choose **Show me** and it opens the right tab and outlines the button with a label. Other offers can open a tool or help article. Cif never edits your vault, and you can clear the outline any time by pressing Escape.
 
+On the map, Cif can open Grid Settings, Encounter Snapshots, the VTT sidebar and the map controls, and point at controls such as the Explore and Combat buttons, Add Token, fog, layers, Player View, tile decks, the initiative list and Share Campaign. It only offers what you can use: a player is never shown a host tool. Cif only opens and points. It never moves a token, reveals terrain, advances initiative, changes who owns a token, starts or stops a live session, or deletes an encounter. Those stay yours to do. If you use Cif in its own window, the guide runs in your main Codex Cryptica window, which is brought forward where your browser allows it. If the control cannot be found, the written answer still tells you where to look.
+
+## Keeping Cif beside the map
+
+Click **Cif** in the map controls, or the Cif button in the activity bar, to open Cif on any screen. In the VTT you can also choose the **Open Cif in its own window** button at the top of Cif. Cif moves into a separate window you can drag to a second monitor and resize, so the map stays full size. It keeps the same conversation, and it still knows which screen you are on in the main window. Keep the main Codex Cryptica window open while Cif is in its own window. Closing the window does not lose the conversation; click Cif again to bring it back. Pop-out is not offered on phones, where Cif opens inside the app as usual.
+
 ## What is sent
 
-Your question, the last few questions in this conversation, and a short description of the screen you are on, such as "an entity's Connections tab". No entity names, text, or IDs are sent. Avoid typing private lore into the question, because the question itself goes to our AI service.
+Your question, the last few questions in this conversation, and a short description of the screen you are on, such as "an entity's Connections tab". On the map, that description also includes a few yes or no facts about how you are using it, such as whether VTT is on, whether it is Combat mode, whether a token is selected and whether you can move it. Players never send anything the GM is hiding from them. No entity names, text, or IDs are sent. Avoid typing private lore into the question, because the question itself goes to our AI service.
 
 ## When Cif cannot answer
 

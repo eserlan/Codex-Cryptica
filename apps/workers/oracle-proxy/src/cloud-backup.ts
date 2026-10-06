@@ -25,6 +25,13 @@ import {
   type CloudBackupDelta,
   type CloudBackupManifest,
 } from "../../../../packages/schema/src/publishing";
+import {
+  bundleEntities,
+  groupByShard,
+  hashEntities,
+  type EntityRecord,
+  type Shard,
+} from "./cloud-backup-entities";
 
 export interface CloudBackupEnv {
   BUCKET?: any;
@@ -355,46 +362,6 @@ async function commitSnapshot(
   );
   await pruneAssets(env, backupId, keep);
   return committed;
-}
-
-/* ----------------------------------------------------- v2 entity shards -- */
-
-type EntityRecord = { id: string } & Record<string, unknown>;
-type Shard = Record<string, EntityRecord>;
-
-/** The bundle's entity list when it is shardable; otherwise stored as v1. */
-function bundleEntities(bundle: unknown): EntityRecord[] | null {
-  const entities = (bundle as { entities?: unknown } | null)?.entities;
-  if (!Array.isArray(entities)) return null;
-  return entities.every(
-    (entity) =>
-      !!entity &&
-      typeof entity === "object" &&
-      typeof (entity as { id?: unknown }).id === "string",
-  )
-    ? (entities as EntityRecord[])
-    : null;
-}
-
-function groupByShard(entities: EntityRecord[]): Map<string, Shard> {
-  const shards = new Map<string, Shard>();
-  for (const entity of entities) {
-    const name = cloudBackupShardOf(entity.id);
-    const shard = shards.get(name) ?? Object.create(null);
-    shard[entity.id] = entity;
-    shards.set(name, shard);
-  }
-  return shards;
-}
-
-async function hashEntities(
-  entities: EntityRecord[],
-): Promise<Record<string, string>> {
-  const hashes: Record<string, string> = Object.create(null);
-  for (const entity of entities) {
-    hashes[entity.id] = await hashCloudBackupEntity(entity);
-  }
-  return hashes;
 }
 
 async function readJson<T>(

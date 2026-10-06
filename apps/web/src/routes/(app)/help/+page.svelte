@@ -25,7 +25,9 @@
   <title>Codex Cryptica | Documentation</title>
 </svelte:head>
 
-<div class="min-h-screen bg-theme-background p-6 lg:p-12 max-w-5xl mx-auto">
+<div
+  class="min-h-full shrink-0 w-full bg-theme-background p-6 lg:p-12 max-w-5xl mx-auto"
+>
   <div class="mb-12">
     <h1
       class="text-2xl font-bold text-theme-primary uppercase font-header tracking-[0.2em] mb-2"

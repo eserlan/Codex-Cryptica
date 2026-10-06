@@ -54,7 +54,7 @@
       href="{base}/"
       class="text-theme-primary hover:text-theme-secondary font-mono text-sm flex items-center gap-2"
     >
-      <span class="icon-[lucide--arrow-left] w-4 h-4"></span>
+      <span aria-hidden="true" class="icon-[lucide--arrow-left] w-4 h-4"></span>
       BACK TO CRYPTICA
     </a>
   </div>

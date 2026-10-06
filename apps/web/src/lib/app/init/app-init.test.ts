@@ -669,6 +669,41 @@ describe("app-init", () => {
       warnSpy.mockRestore();
     });
 
+    it("should silently ignore InvalidStateError during registration", async () => {
+      const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+      const error = new Error(
+        "Failed to register a ServiceWorker: The document is in an invalid state.",
+      );
+      error.name = "InvalidStateError";
+      const registerSpy = vi.fn().mockRejectedValue(error);
+      const mockDocument = {
+        readyState: "complete",
+        visibilityState: "visible",
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+      } as any;
+      const mockWindow = {
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+      } as any;
+
+      registerServiceWorker({
+        document: mockDocument,
+        navigator: {
+          serviceWorker: {
+            register: registerSpy,
+          },
+        } as any,
+        window: mockWindow,
+        isDev: false,
+      });
+
+      await Promise.resolve();
+
+      expect(warnSpy).not.toHaveBeenCalled();
+      warnSpy.mockRestore();
+    });
+
     /**
      * Builds a registered worker plus the visibilitychange handler the
      * registration installs, with a clock the test drives by hand.
