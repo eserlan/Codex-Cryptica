@@ -652,6 +652,7 @@
     {/if}
     {#if hex}
       <button
+        type="button"
         class="w-full text-left px-3 py-2 text-xs hover:bg-theme-bg/50 transition-colors flex items-center gap-2 text-theme-text"
         role="menuitem"
         onclick={() => {
