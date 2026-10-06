@@ -148,6 +148,17 @@ export const PHASE_A_IN_SCOPE: InScopeQuestion[] = [
   q("map", "holdout", "map", "How do I show which way a token is facing?", [
     "vtt-tokens",
   ]),
+  q("map", "holdout", "map", "How do I use fog of war when I'm playing solo?", [
+    "vtt-fog-player-view",
+    "hexcrawl-maps",
+  ]),
+  q(
+    "map",
+    "holdout",
+    "map",
+    "Why can I still see the map under the fog as the GM?",
+    ["vtt-fog-player-view", "vtt-troubleshooting"],
+  ),
   q("map", "holdout", "map", "How do I reveal just one hex on a hex map?", [
     "hexcrawl-maps",
   ]),

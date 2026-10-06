@@ -42,7 +42,8 @@ Reveal wilderness regions hexagon by hexagon without ragged brush strokes:
 2. In GM mode, click or drag across shrouded hexes to stamp clean hexagonal reveals into the fog mask.
 3. To reveal or hide exactly one hex, right-click it and choose **Reveal hex** or **Hide hex**. The menu offers whichever one applies to that hex.
 4. Tokens with active vision sources automatically reveal their vision radius in discrete hex rings as they move across the region.
-5. All hex fog changes integrate seamlessly with the Oracle undo/redo stack (`Ctrl+Z`) and local OPFS mask storage.
+5. Exploring on your own? Turn on **SOLO** next to **FOG** so fogged hexes are completely hidden while you keep every GM tool. See [Fog, Player View & Solo Play](/help#help/vtt-fog-player-view).
+6. All hex fog changes integrate seamlessly with the Oracle undo/redo stack (`Ctrl+Z`) and local OPFS mask storage.
 
 ### Distance & Travel Measurement
 

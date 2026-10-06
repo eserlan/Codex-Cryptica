@@ -190,6 +190,7 @@ describe("what leaves the browser when asking for help on the map", () => {
     playerView: false,
     grid: "hex",
     fogOn: true,
+    soloFog: false,
     tokenSelected: true,
     tokenLinked: true,
     tokenManageable: true,

@@ -10,6 +10,7 @@ const mocks = vi.hoisted(() => ({
     showGrid: true,
     gridType: "hex-pointy",
     showFog: true,
+    soloFog: false,
   },
   mapSession: {
     vttEnabled: true,
@@ -94,6 +95,7 @@ describe("HelpVttMapSurface", () => {
       playerView: false,
       grid: "hex",
       fogOn: true,
+      soloFog: false,
       tokenSelected: true,
       tokenLinked: true,
       tokenManageable: true,

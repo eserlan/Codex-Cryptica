@@ -416,6 +416,7 @@ describe("HelpContextStore", () => {
       playerView: false,
       grid: "hex" as const,
       fogOn: true,
+      soloFog: false,
       tokenSelected: true,
       tokenLinked: false,
       tokenManageable: true,

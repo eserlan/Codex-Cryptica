@@ -40,6 +40,7 @@ The map tells you why when you try. The usual reasons are:
 - Reveal needs `Alt` held while you drag. `Alt` + `Shift` hides again.
 - On a hex map the fog follows hexes, so a small brush changes one hex at a time. For a single hex, right-click it and choose **Reveal hex** or **Hide hex**.
 - In **PLAYER VIEW** you cannot paint fog. Switch back to GM view.
+- If you can still see the map under the fog, that is how GM view looks: the fog is light so you can see what you have hidden. Turn on **SOLO** (next to **FOG**) to hide fogged areas completely, for example when playing alone.
 
 ## Initiative will not advance
 

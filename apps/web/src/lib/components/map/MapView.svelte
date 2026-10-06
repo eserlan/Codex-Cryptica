@@ -88,6 +88,7 @@
     },
     onMaskLoaded: (mask) => {
       maskCanvas = mask;
+      mapStore.fogRevision++;
     },
     onDimensionsLoaded: async (width, height) => {
       const activeMap = mapStore.activeMap;
@@ -415,6 +416,7 @@
       .then((mask) => {
         if (cancelled) return;
         maskCanvas = mask;
+        mapStore.fogRevision++;
         loadedMaskPath = fogMaskPath;
       });
 

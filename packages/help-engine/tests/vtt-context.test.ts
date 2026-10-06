@@ -17,6 +17,7 @@ const base: VttHelpFacts = {
   playerView: false,
   grid: "none",
   fogOn: false,
+  soloFog: false,
   tokenSelected: false,
   tokenLinked: false,
   tokenManageable: false,
@@ -42,6 +43,7 @@ describe("vttFlagsFor", () => {
         combat: true,
         grid: "hex",
         fogOn: true,
+        soloFog: false,
         tokenSelected: true,
         tokenLinked: true,
         tokenManageable: true,
@@ -103,6 +105,7 @@ describe("vttFlagsFor", () => {
         combat: true,
         grid: "square",
         fogOn: true,
+        soloFog: false,
         measuring: true,
         tokenSelected: true,
         hosting: true,
@@ -110,6 +113,18 @@ describe("vttFlagsFor", () => {
     );
 
     expect(flags).toEqual(["vtt-grid-square", "vtt-fog-on", "vtt-measuring"]);
+  });
+
+  it("reports solo fog only while fog is on", () => {
+    expect(vttFlagsFor(facts({ fogOn: true, soloFog: true }))).toContain(
+      "vtt-solo-fog",
+    );
+    expect(vttFlagsFor(facts({ fogOn: false, soloFog: true }))).not.toContain(
+      "vtt-solo-fog",
+    );
+    expect(vttFlagsFor(facts({ fogOn: true, soloFog: false }))).not.toContain(
+      "vtt-solo-fog",
+    );
   });
 
   it("tells a previewing GM apart from a player", () => {
@@ -127,6 +142,7 @@ describe("the screen description with VTT flags", () => {
         combat: true,
         grid: "hex",
         fogOn: true,
+        soloFog: false,
         measuring: true,
         tokenSelected: true,
         tokenLinked: true,
@@ -183,6 +199,7 @@ describe("describeVttSituation", () => {
           combat: true,
           grid: "hex",
           fogOn: true,
+          soloFog: false,
           tokenSelected: true,
           tokenManageable: true,
           hasInitiative: true,
@@ -217,6 +234,16 @@ describe("describeVttSituation", () => {
     expect(lines.join("; ")).toContain("the user cannot move it");
     expect(lines).toContain("the user cannot press Next Turn");
     expect(lines.join(" ")).not.toMatch(/editing the/);
+  });
+
+  it("tells the model when fog is solid for solo play", () => {
+    const lines = describeVttSituation(
+      vttFlagsFor(facts({ fogOn: true, soloFog: true })),
+    );
+
+    expect(lines).toContain(
+      "fog is on and drawn solid, as players see it (solo play)",
+    );
   });
 
   it("says plainly when nothing is selected or VTT is off", () => {

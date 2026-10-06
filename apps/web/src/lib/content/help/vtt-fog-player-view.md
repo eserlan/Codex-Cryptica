@@ -36,12 +36,17 @@ Changes are saved with the map, can be undone with `Ctrl` + `Z`, and are sent to
 
 ## Playing solo
 
-When you are both GM and player, the two roles pull in opposite directions: the Player View shows the map honestly, but you can only reveal or hide things from GM view, where much of the map is still visible to you.
+When you are both GM and player, you want the map to look the way a player sees it, with hidden areas truly hidden, while you keep the GM's tools to reveal more as you explore.
 
-Until a solo workflow is added, the practical approach is:
+Use **SOLO**:
 
-1. Work in GM view and reveal areas as your character explores.
-2. Switch to **PLAYER VIEW** to see what your character can see, and switch back to reveal more.
-3. Mark your character's token as a **Vision Source (PC)** so its surroundings clear as it moves.
+1. Turn **FOG: ON** in the map bar.
+2. Turn **SOLO: ON**. Fogged areas now hide the map completely, just as they do for players, and also hide pin labels in those areas.
+3. Explore. Reveal as you go with `Alt` + drag, or right-click a single hex and choose **Reveal hex**. Tokens marked **Vision Source (PC)** clear the fog around them as they move.
+4. Hide an area again with `Alt` + `Shift` + drag or **Hide hex**.
 
-This is a known limitation. Revealing hexes while staying in Player View is not available yet.
+You stay in GM view the whole time, so every GM control keeps working, including moving any token. **SOLO** only changes how the fog looks on your screen. It is remembered for each map on this device, and it does not change what connected players see. Turn it off to see the whole map under a light fog again.
+
+**PLAYER VIEW** is different: it previews what players see and turns the GM controls off, so you cannot reveal or hide anything there. For solo play, use **SOLO** instead.
+
+Tokens you hid from players are still shown to you once their area is revealed, because as the GM you placed them.
