@@ -109,6 +109,7 @@ export class SessionJournalCapture {
       current?.status !== "active" ||
       current.id !== journalId ||
       current.vaultId !== vaultId ||
+      (input.type === "map-move" && current.captureMapMoves === false) ||
       !this.isCaptureAllowed()
     ) {
       return;

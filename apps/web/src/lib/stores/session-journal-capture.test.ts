@@ -105,6 +105,28 @@ describe("SessionJournalCapture", () => {
     expect(appended).toEqual([expect.objectContaining({ type: "dice-roll" })]);
   });
 
+  it("honours turning map capture off while a map move waits in the save queue", async () => {
+    let releaseFirstWrite!: () => void;
+    const firstWrite = new Promise<void>((resolve) => {
+      releaseFirstWrite = resolve;
+    });
+    const { store, appended } = fakeStore({
+      appendEntry: vi.fn(async (input: any) => {
+        if (input.content === "slow dice") await firstWrite;
+        appended.push(input);
+      }),
+    });
+    make(store);
+
+    publish(bus, { entryType: "dice-roll", content: "slow dice" });
+    publish(bus, { entryType: "map-move", content: "Moved 1 hex (6 mi)." });
+    store.current!.captureMapMoves = false;
+    releaseFirstWrite();
+    await flush();
+
+    expect(appended).toEqual([expect.objectContaining({ type: "dice-roll" })]);
+  });
+
   it("captures map moves by default when the field is absent", async () => {
     const { store, appended } = fakeStore();
     make(store);
