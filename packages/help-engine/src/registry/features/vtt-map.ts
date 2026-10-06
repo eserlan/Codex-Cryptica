@@ -30,7 +30,11 @@ export const vttMap: FeatureEntry = {
         "Type each Init value. Use Next Turn to move through the order; only the GM or the owner of the active token can press it.",
         "Use Encounters to save the fight as a snapshot you can load later.",
       ],
-      actionIds: [],
+      actionIds: [
+        "vtt.show-mode-switch",
+        "vtt.show-initiative",
+        "vtt.open-encounters",
+      ],
     },
     {
       id: "host-a-session",
@@ -40,7 +44,7 @@ export const vttMap: FeatureEntry = {
         "Choose Start Live Session and copy the link to your players. Keep your tab open while you play.",
         "Select a token and use Owner to assign it to the player who controls it.",
       ],
-      actionIds: [],
+      actionIds: ["vtt.show-share"],
     },
     {
       id: "reveal-the-map",
@@ -50,7 +54,7 @@ export const vttMap: FeatureEntry = {
         "Hold Alt and drag to reveal, or Alt and Shift to hide. On a hex map, right-click a hex and choose Reveal hex or Hide hex.",
         "Use Player View to check what your players see; the fog controls are off while it is on.",
       ],
-      actionIds: [],
+      actionIds: ["vtt.show-fog", "vtt.show-player-view"],
     },
     {
       id: "build-a-dungeon",
@@ -61,7 +65,7 @@ export const vttMap: FeatureEntry = {
         "Set Stock on draw on a deck to add a table roll or an encounter note to drawn tiles.",
         "Use the layer control to edit Terrain, Furniture and Tokens separately.",
       ],
-      actionIds: [],
+      actionIds: ["vtt.show-tile-decks", "vtt.show-layers"],
     },
   ],
   helpIds: [
@@ -82,6 +86,159 @@ export const vttMap: FeatureEntry = {
     {
       id: "map.open",
       action: { type: "navigate", to: "map", label: "Open Maps" },
+    },
+    // Opening and pointing only. Nothing here moves a token, reveals terrain,
+    // advances initiative, changes an owner, starts or stops a session, or
+    // deletes a snapshot: those stay ordinary actions the user takes.
+    {
+      id: "vtt.open-grid-settings",
+      action: {
+        type: "openPanel",
+        panel: "vtt-grid-settings",
+        label: "Open Grid Settings",
+      },
+    },
+    {
+      id: "vtt.open-encounters",
+      action: {
+        type: "openPanel",
+        panel: "vtt-encounters",
+        label: "Open Encounter Snapshots",
+      },
+    },
+    {
+      id: "vtt.show-mode-switch",
+      action: {
+        type: "openPanel",
+        panel: "vtt-sidebar",
+        label: "Show me the Explore and Combat buttons",
+        then: {
+          type: "highlight",
+          target: "vtt-mode-switch",
+          label: "Explore and Combat",
+        },
+      },
+    },
+    {
+      id: "vtt.show-initiative",
+      action: {
+        type: "highlight",
+        target: "vtt-initiative-panel",
+        label: "Show me the initiative list",
+      },
+    },
+    {
+      id: "vtt.show-add-token",
+      action: {
+        type: "openPanel",
+        panel: "vtt-sidebar",
+        label: "Show me where to add a token",
+        then: {
+          type: "highlight",
+          target: "vtt-add-token",
+          label: "Add Token",
+        },
+      },
+    },
+    {
+      id: "vtt.show-tile-decks",
+      action: {
+        type: "openPanel",
+        panel: "vtt-sidebar",
+        label: "Show me the tile decks",
+        then: {
+          type: "highlight",
+          target: "vtt-tile-decks",
+          label: "Tile Decks",
+        },
+      },
+    },
+    {
+      id: "vtt.show-encounters-button",
+      action: {
+        type: "openPanel",
+        panel: "vtt-sidebar",
+        label: "Show me the Encounters button",
+        then: {
+          type: "highlight",
+          target: "vtt-encounters-button",
+          label: "Encounters",
+        },
+      },
+    },
+    {
+      id: "vtt.show-share",
+      action: {
+        type: "openPanel",
+        panel: "vtt-sidebar",
+        label: "Show me where to share a live session",
+        then: {
+          type: "highlight",
+          target: "vtt-share-button",
+          label: "Share Campaign",
+        },
+      },
+    },
+    {
+      id: "vtt.show-fog",
+      action: {
+        type: "openPanel",
+        panel: "vtt-map-controls",
+        label: "Show me the fog control",
+        then: { type: "highlight", target: "vtt-fog-toggle", label: "Fog" },
+      },
+    },
+    {
+      id: "vtt.show-layers",
+      action: {
+        type: "openPanel",
+        panel: "vtt-map-controls",
+        label: "Show me the layer control",
+        then: {
+          type: "highlight",
+          target: "vtt-layer-control",
+          label: "Layers",
+        },
+      },
+    },
+    {
+      id: "vtt.show-grid-button",
+      action: {
+        type: "openPanel",
+        panel: "vtt-map-controls",
+        label: "Show me the grid button",
+        then: { type: "highlight", target: "vtt-grid-button", label: "Grid" },
+      },
+    },
+    {
+      id: "vtt.show-player-view",
+      action: {
+        type: "openPanel",
+        panel: "vtt-map-controls",
+        label: "Show me Player View",
+        then: {
+          type: "highlight",
+          target: "vtt-player-view-toggle",
+          label: "Player View",
+        },
+      },
+    },
+    {
+      id: "vtt.show-vtt-toggle",
+      action: {
+        type: "openPanel",
+        panel: "vtt-map-controls",
+        label: "Show me the VTT switch",
+        then: { type: "highlight", target: "vtt-mode-toggle", label: "VTT" },
+      },
+    },
+    {
+      id: "vtt.show-ruler",
+      action: {
+        type: "highlight",
+        target: "vtt-ruler-toggle",
+        label: "Show me the ruler",
+      },
     },
   ],
 };

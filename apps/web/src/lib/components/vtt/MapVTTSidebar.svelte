@@ -232,6 +232,7 @@
             type="button"
             title="Share Campaign"
             aria-label="Share Campaign"
+            data-help-target="vtt-share-button"
           >
             <span aria-hidden="true" class="icon-[lucide--share-2] w-4 h-4"
             ></span>

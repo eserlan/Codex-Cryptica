@@ -112,6 +112,14 @@ export const PHASE_A_IN_SCOPE: InScopeQuestion[] = [
     "How do I line the hex grid up with hexes already on my map?",
     ["vtt-grids-measurement", "hexcrawl-maps"],
   ),
+  q("map", "holdout", "map", "Where do I open the grid settings?", [
+    "vtt-grids-measurement",
+    "hexcrawl-maps",
+  ]),
+  q("map", "holdout", "map", "Where is the button for Explore and Combat?", [
+    "vtt-session",
+    "vtt-combat-initiative",
+  ]),
   q("map", "holdout", "map", "How do I reveal just one hex on a hex map?", [
     "hexcrawl-maps",
   ]),

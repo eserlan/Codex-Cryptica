@@ -3,6 +3,7 @@ import {
   CONTROL_CATALOGUE,
   entityTabForPanel,
   GENERATOR_REQUIRED_FLAG,
+  VTT_PANEL_IDS,
   type ControlId,
   type PanelId,
 } from "./catalogue";
@@ -37,6 +38,9 @@ function controlIsOnScreen(
 }
 
 function panelIsValid(panel: PanelId, ctx: HelpContext): boolean {
+  // The VTT panels belong to the map and nowhere else.
+  const isVtt = (VTT_PANEL_IDS as readonly string[]).includes(panel);
+  if (isVtt && ctx.area !== "map") return false;
   const tab = entityTabForPanel(panel);
   if (tab && ctx.area !== "entity-detail") return false;
   if (tab === "family" && ctx.entityKind !== "character") return false;
