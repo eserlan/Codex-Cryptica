@@ -74,6 +74,11 @@ const bundle = buildBundle({
     article("vtt-session", "vtt-session", "## vtt-session\nAbout vtt-session."),
     article("fog-of-war", "fog-of-war", "## fog-of-war\nAbout fog-of-war."),
     article(
+      "hexcrawl-maps",
+      "hexcrawl-maps",
+      "## hexcrawl-maps\nAbout hexcrawl-maps.",
+    ),
+    article(
       "creating-and-editing-entities",
       "creating-and-editing-entities",
       "## creating-and-editing-entities\nAbout creating-and-editing-entities.",

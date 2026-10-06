@@ -18,11 +18,15 @@
   $effect(() => {
     const open = helpAssistant.isOpen;
     if (wasOpen && !open) {
-      document
-        .querySelector<HTMLButtonElement>(
-          '[data-testid="help-assistant-button"]',
-        )
-        ?.focus();
+      // The activity bar button is hidden while the map is maximized, so
+      // fall back to the map's own button.
+      const buttons = document.querySelectorAll<HTMLButtonElement>(
+        '[data-testid="help-assistant-button"], [data-testid="map-cif-button"]',
+      );
+      const visible = Array.from(buttons).find(
+        (button) => button.offsetParent !== null,
+      );
+      (visible ?? buttons[0])?.focus();
     }
     wasOpen = open;
   });

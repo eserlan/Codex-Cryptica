@@ -73,6 +73,9 @@ export const PHASE_A_IN_SCOPE: InScopeQuestion[] = [
   q("map", "tune", "map", "How do I measure distance on the map?", [
     "vtt-session",
   ]),
+  q("map", "holdout", "map", "How do I reveal just one hex on a hex map?", [
+    "hexcrawl-maps",
+  ]),
   q(
     "map",
     "holdout",
