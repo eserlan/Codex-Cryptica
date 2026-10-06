@@ -405,9 +405,14 @@
       try {
         const result = await vault.bulkDelete(targetIds);
         const succeededIds = new Set(result.succeededIds);
-        selectedIds = new Set(
-          [...selectedIds].filter((id) => !succeededIds.has(id)),
-        );
+        // ⚡ Bolt Optimization: Replace [...selectedIds].filter with imperative loop
+        const newSelectedIds = new Set<string>();
+        for (const id of selectedIds) {
+          if (!succeededIds.has(id)) {
+            newSelectedIds.add(id);
+          }
+        }
+        selectedIds = newSelectedIds;
         if (result.failedIds.length > 0 || result.cancelledIds.length > 0) {
           notificationStore.notify(
             `Deleted ${result.succeededIds.length} entities; ${

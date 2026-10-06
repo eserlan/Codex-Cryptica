@@ -355,7 +355,14 @@
   function addImages(incoming: File[]) {
     const pictures = incoming.filter((file) => isImageFile(file));
     const known = new Set(images.map((file) => file.name));
-    images = [...images, ...pictures.filter((file) => !known.has(file.name))];
+    // ⚡ Bolt Optimization: Avoid intermediate array spread and filter
+    const nextImages = [...images];
+    for (const file of pictures) {
+      if (!known.has(file.name)) {
+        nextImages.push(file);
+      }
+    }
+    images = nextImages;
   }
 
   function assignImage(rowIndex: number, value: number) {
