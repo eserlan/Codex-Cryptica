@@ -15,7 +15,7 @@ Open **Settings → Intelligence**. **Connection Mode** shows whether you are us
 
 ### What the System Proxy remembers
 
-The Oracle remembers your chat and the notes it has already seen, so each new question only sends what changed, and replies come back quicker and use less of your quota. To do this on the free System Proxy, your conversation and the notes it references are briefly stored on the AI provider's servers (up to 55 days) and then expire. Your vault always stays on your computer; only the chat does this. To keep everything fully on your device, use your own API key instead of the System Proxy.
+The Oracle remembers your chat and the notes it has already seen, so each new question only sends what changed, and replies come back quicker and use less of your quota. To do this on the free System Proxy, your conversation and the notes it references are briefly stored on the AI provider's servers (up to 55 days) and then expire. Your vault always stays on your computer; only the chat does this. Using your own API key bypasses the System Proxy, but your prompts and the notes sent as context still leave your browser for processing by Google.
 
 ### Add or remove a personal key
 
