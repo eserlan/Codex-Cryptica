@@ -39,8 +39,9 @@ Reveal wilderness regions hexagon by hexagon without ragged brush strokes:
 
 1. Ensure **Fog of War** is enabled on the map.
 2. In GM mode, click or drag across shrouded hexes to stamp clean hexagonal reveals into the fog mask.
-3. Tokens with active vision sources automatically reveal their vision radius in discrete hex rings as they move across the region.
-4. All hex fog reveals integrate seamlessly with the Oracle undo/redo stack (`Ctrl+Z`) and local OPFS mask storage.
+3. To reveal or hide exactly one hex, right-click it and choose **Reveal hex** or **Hide hex**. The menu offers whichever one applies to that hex.
+4. Tokens with active vision sources automatically reveal their vision radius in discrete hex rings as they move across the region.
+5. All hex fog changes integrate seamlessly with the Oracle undo/redo stack (`Ctrl+Z`) and local OPFS mask storage.
 
 ### Distance & Travel Measurement
 
