@@ -497,3 +497,53 @@ describe("HelpAssistantPanel — no authoritative answer and failure", () => {
     expect(screen.queryByTestId("help-action-offer")).toBeNull();
   });
 });
+
+describe("HelpAssistantPanel pop-out", () => {
+  const view = () => ({
+    isOpen: true,
+    status: "idle" as const,
+    messages: [],
+    offer: null,
+    notice: null,
+    quickPrompts: [],
+    isPending: false,
+    ask: vi.fn(async () => true),
+    reset: vi.fn(),
+    cancel: vi.fn(),
+    dismissOffer: vi.fn(),
+  });
+  const handlers = () => ({
+    onAccept: vi.fn(),
+    onOpenArticle: vi.fn(),
+    onOpenLibrary: vi.fn(),
+    onClose: vi.fn(),
+  });
+
+  it("offers a pop-out button only where a window is possible", async () => {
+    const onPopOut = vi.fn();
+    const { unmount } = render(HelpAssistantPanel, {
+      assistant: view(),
+      ...handlers(),
+      onPopOut,
+    });
+
+    await fireEvent.click(screen.getByTestId("help-assistant-popout"));
+    expect(onPopOut).toHaveBeenCalledTimes(1);
+    unmount();
+
+    render(HelpAssistantPanel, { assistant: view(), ...handlers() });
+    expect(screen.queryByTestId("help-assistant-popout")).toBeNull();
+  });
+
+  it("fills its own window when shown as one", () => {
+    render(HelpAssistantPanel, {
+      assistant: view(),
+      ...handlers(),
+      variant: "window",
+    });
+
+    const panel = screen.getByTestId("help-assistant-panel");
+    expect(panel.className).toContain("inset-0");
+    expect(panel.className).not.toContain("left-3");
+  });
+});

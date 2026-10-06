@@ -52,7 +52,7 @@ Codex Cryptica includes an integrated **Virtual Tabletop (VTT)** mode directly a
 - **Layers**: Use the layer control in the map bar to choose which layer you are editing and to show, hide or lock layers.
 - **Grid**: Use the grid button to show the grid, and right-click it for grid settings.
 - **Player view**: **PLAYER VIEW** shows the map the way your players see it. **VISION** chooses whether the party's combined vision or only the selected token's vision lights the map.
-- **Cif**: Click **Cif** in the map bar to ask how any of this works. It stays available when the map is maximized.
+- **Cif**: Click **Cif** in the map bar to ask how any of this works. It stays available when the map is maximized, and you can pop it out into its own window to keep the map full size.
 
 ### Pausing or Ending a Session
 

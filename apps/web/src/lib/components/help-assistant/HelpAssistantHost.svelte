@@ -5,9 +5,11 @@
   import { isHelpAssistantAvailable } from "$lib/services/help-assistant/help-availability";
   import { helpStore } from "$lib/stores/help.svelte";
   import {
+    cifPopout,
     helpActionRunner,
     helpAssistant,
   } from "$lib/stores/help-assistant/help-runtime";
+  import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
   import HelpAssistantPanel from "./HelpAssistantPanel.svelte";
   import HelpHighlightLayer from "./HelpHighlightLayer.svelte";
 
@@ -42,6 +44,21 @@
 
   afterNavigate(() => helpHighlight.clear());
 
+  // Keep an open pop-out window in step with the conversation.
+  $effect(() => {
+    if (!available) return;
+    cifPopout.start();
+    return () => cifPopout.stop();
+  });
+  $effect(() => cifPopout.publish());
+
+  // On a phone there is no second window to move Cif to.
+  const canPopOut = $derived(cifPopout.supported && !layoutUIStore.isMobile);
+
+  function popOut() {
+    cifPopout.open();
+  }
+
   function close() {
     helpHighlight.clear();
     helpAssistant.close();
@@ -62,6 +79,7 @@
     onOpenArticle={(id) => helpStore.openHelpToArticle(id)}
     onOpenLibrary={() => helpStore.openHelpWindow()}
     onClose={close}
+    onPopOut={canPopOut ? popOut : undefined}
   />
   <HelpHighlightLayer highlight={helpHighlight} />
 {/if}
