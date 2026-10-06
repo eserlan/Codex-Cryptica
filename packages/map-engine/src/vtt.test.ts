@@ -143,16 +143,17 @@ describe("VTT domain normalization", () => {
   });
 
   it("treats a stored fallback size as the note's collapsed state", () => {
-    const collapsed = normalizeToken({
+    const input = {
       ...token,
-      kind: "note",
+      kind: "note" as const,
       noteCollapsedFrom: { width: 120, height: 120 },
-    });
+    };
+    const collapsed = normalizeToken(input);
 
     expect(isNoteCollapsed(collapsed)).toBe(true);
     expect(collapsed.noteCollapsedFrom).toEqual({ width: 120, height: 120 });
     // Cloned, so a normalized token never shares the caller's object.
-    expect(collapsed.noteCollapsedFrom).not.toBe(token.noteCollapsedFrom);
+    expect(collapsed.noteCollapsedFrom).not.toBe(input.noteCollapsedFrom);
   });
 
   it("treats a note with no fallback size as expanded", () => {

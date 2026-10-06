@@ -169,6 +169,8 @@ export interface EncounterSession {
   savedAt: number | null;
   chatMessages: ChatMessagePayload[];
   gridSize?: number;
+  gridType?: "square" | "hex-pointy" | "hex-flat";
+  showHexCoordinates?: boolean;
   gridUnit?: string;
   gridDistance?: number;
   tileDecks?: TileDeck[];

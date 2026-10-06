@@ -40,6 +40,8 @@ describe("VTTSessionSnapshotManager", () => {
     expect(harness.state.initiativeOrder).toEqual(["token-1"]);
     expect(harness.state.round).toBe(3);
     expect(harness.state.gridSize).toBe(70);
+    expect(harness.state.gridType).toBe("hex-flat");
+    expect(harness.state.showHexCoordinates).toBe(true);
     expect(harness.state.gridUnit).toBe("m");
     expect(harness.state.gridDistance).toBe(2);
   });

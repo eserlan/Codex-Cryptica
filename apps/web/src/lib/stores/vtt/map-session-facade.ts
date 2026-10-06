@@ -1,6 +1,7 @@
 import { summarizeEncounterSession } from "$lib/services/vtt-session";
 import type { RollResult } from "dice-engine";
 import type { Point } from "schema";
+import type { GridType } from "../map.svelte";
 import type { VTTChatManager } from "./vtt-chat-manager.svelte";
 import type { VTTEncounterManager } from "./vtt-encounter-manager.svelte";
 import type { VTTGridManager } from "./vtt-grid-manager.svelte";
@@ -697,6 +698,8 @@ export abstract class MapSessionFacade {
 
   handleRemoteGridSettings(payload: {
     gridSize?: number;
+    gridType?: GridType;
+    showHexCoordinates?: boolean;
     gridUnit?: string;
     gridDistance?: number;
   }) {
@@ -707,6 +710,8 @@ export abstract class MapSessionFacade {
     gridSize?: number;
     gridUnit?: string;
     gridDistance?: number;
+    gridType?: GridType;
+    showHexCoordinates?: boolean;
   }) {
     this.gridManager.setGridSettings(settings);
   }

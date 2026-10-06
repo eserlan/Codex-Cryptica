@@ -134,6 +134,31 @@ describe("answer registry", () => {
     );
   });
 
+  it("keeps the guild example's contract cut separate from day-job dues", () => {
+    const guild =
+      answers[
+        "how-should-a-fantasy-adventuring-guild-handle-wages-dues-and-shared-expenses"
+      ];
+    const example = guild.sections.find(
+      (section) =>
+        section.kind === "example" &&
+        section.heading?.startsWith("Worked example: the Grey Lanterns"),
+    );
+    const hybrid =
+      example?.kind === "example"
+        ? example.items?.find((item) => item.term === "The clear hybrid")
+        : undefined;
+
+    expect(hybrid?.text).toContain("72 silver goes to the hall");
+    expect(hybrid?.text).toContain("108 silver split four ways");
+    expect(hybrid?.text).toContain(
+      "That bounty is not charged the 30 percent wage contribution a second time",
+    );
+    expect(hybrid?.text).toContain(
+      "steady worker contributes from their actual day-job pay",
+    );
+  });
+
   describe("getAnswer", () => {
     it("returns the parsed answer for a known slug", () => {
       expect(getAnswer("alpha", mockRegistry)?.slug).toBe("alpha");

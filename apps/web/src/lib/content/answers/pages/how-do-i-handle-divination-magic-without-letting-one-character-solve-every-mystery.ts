@@ -9,42 +9,74 @@ export const howDoIHandleDivinationMagicWithoutLettingOneCharacterSolveEveryMyst
       "How do I handle divination magic without letting one character solve every mystery?",
     kind: "framework",
     shortAnswer:
-      "Let divination answer the question it was asked, then make that answer create the party's next decision. Give the caster a truthful, useful result within the spell's actual scope, keep the source's perspective and knowledge honest, and preserve consequence, proof, timing, and access as work the whole group must still do. When one fact no longer settles who ordered it, why, who is compromised, or what to do next, the caster feels powerful and the mystery stays intact.",
+      "Let information magic answer the question it was asked, then let the players decide what to do with the result. Give them exactly the information quality the effect guarantees: do not weaken a guaranteed result or upgrade a limited effect into guaranteed truth. A spell may settle a small mystery outright; the larger situation can still leave meaningful choices about access, persuasion, timing, trust, rescue, or consequence.",
     sections: [
       {
         kind: "prose",
         heading: "Why divination feels like it breaks mysteries",
         paragraphs: [
-          "An information spell does not bypass a mystery by being too strong. It bypasses the mystery when the adventure treats one question as the whole answer. If a single Commune, Divination, Speak with Dead, Detect Thoughts, Zone of Truth, scrying, or prophecy roll can name culprit, motive, and proof, the caster becomes the party oracle and everyone else waits to hear what was learned.",
+          "This answer uses *divination* broadly for magic that gathers information, including effects from other schools such as Speak with Dead and Zone of Truth. Information magic does not break a mystery by being strong. A mystery becomes brittle when one hidden answer is the whole situation, or when the GM changes established facts to blunt a good question.",
           "GMs often respond by making answers evasive, hostile, or uselessly cryptic. The gods answer only in riddles, the dead refuse to speak plainly, every scrying shows fog. That keeps the plot moving for a session, but it teaches players that successful magic is punished. They stop using the tools their characters were built around, or they argue with the ruling, and trust at the table drops.",
-          "The alternative is to keep divination honest and limited by what it can actually know. A truthful result that still leaves choices, consequences, access, proof, and timing unresolved lets the caster feel effective without closing the scenario. You do not need to weaken the spell or retcon facts to protect the mystery. You need a mystery with more than one layer and a clear policy for what each effect can and cannot provide.",
+          "Give the player exactly the information quality the effect guarantees. Do not weaken a guaranteed result, and do not upgrade a limited effect into guaranteed truth. Sometimes the spell should simply solve the small question or even the small mystery; that is part of the character's power. The wider situation can still ask what the party will do with what they learned.",
         ],
       },
       {
         kind: "list",
         heading: "Answer the question, not the whole case",
         intro:
-          "Use these principles to keep divination powerful while keeping group decisions at the centre:",
+          "Use these principles to honour the effect while keeping the group's decisions in play:",
         items: [
           {
-            term: "Honour the ability's scope",
-            text: "Give a truthful, useful answer that fits the effect as written, including its range, number of questions, save, and cost. A yes or no from Commune is reliable within the contacted source's knowledge. Speak with Dead knows what the dead person observed in life, not what the killer was thinking. Detect Thoughts reads surface thoughts of a present target, not an absent mastermind. Scrying shows a place or person, not the meaning of what is seen. When the answer is genuinely useful within that scope, players trust the ruling even when it does not solve everything.",
+            term: "Honour exactly what the effect guarantees",
+            text: "Give the information quality the effect promises, including its range, questions, saves, resistance, and limits. Commune gives correct answers within the contacted deity or proxy's knowledge, with its own rule for receiving no answer after repeated castings. Speak with Dead does not guarantee truth in every situation: its answers are usually brief, cryptic, or repetitive, and a corpse has no compulsion to answer truthfully if it is antagonised or recognises the caster as an enemy. Zone of Truth prevents deliberate lies after a failed save, but a target can refuse or evade and may be sincerely mistaken. Scrying shows what its sensor can perceive; Detect Thoughts reveals thoughts the target is actually having. Do not make an effect more evasive than its rules require or erase a limitation the rules include.",
           },
           {
-            term: "Make perspective and knowledge matter, not riddles",
-            text: "Let the source be limited by what it could actually know, not by an arbitrary decision to be vague. A god may know whether a cult is involved but not which court ally is compromised, because even a higher power is not omniscient about mortal intent. A temple acolyte who died in the courtyard knows who struck them, not who paid the blade. A person compelled by Zone of Truth can be sincere and mistaken, or can refuse to answer. Keep phrasing plain. Reserve cryptic or symbolic delivery for effects where it is explicit in the ability, and keep it readable.",
+            term: "Separate the kinds of information magic",
+            text: "For a source-query such as Commune, Divination, or Speak with Dead, ask who or what answers, what it knows, whether it must answer, whether truth is guaranteed, and what answer format the effect allows. For testimony such as Zone of Truth, check the save, whether an answer is required, whether the target can evade, and whether they could be mistaken. For observation such as Scrying or Clairvoyance, define what the sensor can perceive, what is outside its view, and whether the target can resist or detect it; seeing something does not automatically explain it. For thought-reading such as Detect Thoughts, check whether the effect reaches surface or deeper thoughts, whether the target is present, what resistance applies, and what they actually know.",
           },
           {
-            term: "Separate knowing from proving, reaching, and deciding",
-            text: "Mystery work involves more than identification. After divination, the group still needs proof that will convince others, access to the person or place, timing before the next move, and a decision about whom to trust with what they know. A name without a witness, a document, or a way through the warded door does not resolve the case.",
+            term: "Build important mysteries from independent questions",
+            text: "Questions might concern identity, location, method, motive, timing, allegiance, a target's next move, who can be trusted, or what happens next. What happened, who arranged it, and why it matters now is one useful pattern, not a required structure. Let a strong answer settle whatever it truly settles; established facts stay fixed when a player asks a sharp question.",
           },
           {
-            term: "Build mysteries with multiple layers",
-            text: "Prepare at least three layers for a serious mystery: what happened, who ordered or organised it, and why it matters now. Give each layer separate evidence. If one spell reveals a layer, the other layers and the consequences of exposure still need play. No single question should invalidate the whole structure, and established facts should stay fixed once revealed rather than being quietly changed to blunt a good question.",
+            term: "Ask what remains actionable",
+            text: "After a revelation, the next task might be proof, access, persuasion, timing, rescue, confrontation, prevention, trust, or dealing with a consequence. Proof matters when someone must be convinced; it is irrelevant if the party only needs to choose a safe tunnel, find a monster, or rescue a captive. Do not invent a proof requirement just to keep investigation going.",
           },
           {
-            term: "Let repeated divination cost something other than honesty",
-            text: "When players ask again, keep answers truthful and track what repeated use invites: depleted spell slots, exhausted contacts, wary targets, political attention, or a source that remembers it was consulted. Change cost, time, access, and risk rather than making every second answer vague. If the same question is asked twice, the answer stays consistent unless the fictional situation has changed.",
+            term: "Use the effect's repeat-use rules first",
+            text: "Established facts stay consistent. Repeated use follows the effect's own rules first; only add fictional costs when the setting or situation supports them. A ritual during a deadline costs elapsed time, and a visible rite may draw attention if observers are present. A target reacts only if the effect or established fiction gives them reason to know; a deity or patron may care if that relationship is already part of the game. Sometimes spending the spell or other stated resource is the only cost.",
+          },
+        ],
+      },
+      {
+        kind: "list",
+        heading: "A quick adjudication template",
+        intro:
+          "Before resolving a question, note the effect's limits and the information it can actually provide:",
+        items: [
+          {
+            term: "Effect and guarantee",
+            text: "What does it guarantee, and what does it not guarantee?",
+          },
+          {
+            term: "Source, sensor, or target",
+            text: "Who or what provides the information, and what can it know or perceive?",
+          },
+          {
+            term: "Truth and compulsion",
+            text: "Is truth guaranteed? Must the source or target answer?",
+          },
+          {
+            term: "Limits and resistance",
+            text: "What save, resistance, answer format, or repeated-use rule applies?",
+          },
+          {
+            term: "Question, answer, and remaining uncertainty",
+            text: "What did the player ask? What information did they gain? What genuinely remains unknown?",
+          },
+          {
+            term: "Actions now possible",
+            text: "What can the party do with this information?",
           },
         ],
       },
@@ -56,23 +88,23 @@ export const howDoIHandleDivinationMagicWithoutLettingOneCharacterSolveEveryMyst
         items: [
           {
             term: "Caster asks a meaningful question",
-            text: 'Invite a specific, answerable question that ties to the prepared layers. If the question is too broad to fit the effect, narrow it with the player before resolving: for example, split "who is behind this" into what Commune or Speak with Dead can actually cover.',
+            text: "Invite a specific, answerable question. If it is too broad for the effect, clarify its limits with the player before resolving; do not narrow a question merely to preserve the mystery.",
           },
           {
-            term: "Give a truthful answer within scope",
-            text: "State the result plainly, include what the source does and does not know, and avoid adding evasive qualifications that punish a success. If the spell allows a limited number of questions, answer exactly that many and let the group plan the next one.",
+            term: "Give the guaranteed information quality",
+            text: "State the result plainly, including what the source knows or what the sensor can perceive. Do not add evasive qualifications that weaken a success, and do not promise truth if the effect does not. Follow its limits and repeat-use rules.",
           },
           {
             term: "Name what uncertainty remains",
-            text: "Say aloud what is still unknown after the answer: motive, authorisation, proof, compromised ally, location, timing, or consequence. This keeps the next step visible without withholding what was earned.",
+            text: "If something remains unknown, say what it is: motive, proof, access, a compromised ally, location, timing, or consequence. Do not add uncertainty just to keep the mystery alive; sometimes the question is settled.",
           },
           {
             term: "Turn information into a group decision or action",
-            text: "Present at least two viable ways forward that need more than the caster: who to approach, what proof to secure, which door to risk, what to do with a compromised ally, or how to act before a deadline. Bring the scene back to the table so other characters can contribute access, social standing, practical knowledge, or protection.",
+            text: "State the unresolved pressure clearly and let the players decide how to act on the information. Know the relevant details—where the guard is, who protects them, what happens if they are alerted, what evidence exists, or what deadline matters—then bring the scene back to the table for everyone to contribute.",
           },
           {
-            term: "Let consequences follow what the party does with the answer",
-            text: "Track who now knows the party asked, which factions react, and how the culprit's timeline changes because questions were asked. A useful answer should create new pressure, not end pressure.",
+            term: "Apply only supported costs and consequences",
+            text: "Let consequences follow the spell's rules, elapsed time, established fiction, or active opposition. A faction may advance because time passed, or an observer may notice a visible rite. Do not assume a private, undetectable, instantaneous effect alerts its target or creates backlash. The only added consequence may be spending the spell or resource.",
           },
         ],
       },
@@ -80,20 +112,24 @@ export const howDoIHandleDivinationMagicWithoutLettingOneCharacterSolveEveryMyst
         kind: "example",
         heading: "Worked example: murder in a temple",
         paragraphs: [
-          "A priest is killed in a hillside temple the night before a relic is to be named. The party includes a cleric who can cast Speak with Dead and Commune, alongside companions who have standing with the temple, access to the town, and knowledge of local politics. The GM has prepared three layers: the attacker and method, the patron who ordered it, and the reason the temple was chosen as the stage.",
+          "A priest is killed in a hillside temple the night before a relic is to be named. The party includes a cleric who can cast Speak with Dead and Commune, alongside companions who have standing with the temple, access to the town, and knowledge of local politics. The GM has prepared several independent questions: who struck the blow, who paid them, why the temple was chosen, where the relic is now, and what the conspirators will do next.",
         ],
         items: [
           {
             term: "The oracle-trap version",
-            text: 'The GM lets Speak with Dead name the whole conspiracy in one answer, or blocks it by ruling the dead spirit speaks only in useless riddles and Commune always answers "unclear." In the first case the rest of the party has nothing to investigate. In the second the cleric\'s prepared magic feels wasted and the group learns to stop asking. Either way one roll replaces the scene.',
+            text: 'The GM lets Speak with Dead name the whole conspiracy in one answer, regardless of what the corpse knew or whether it would tell the truth, or blocks it by ruling the dead spirit speaks only in useless riddles and Commune always answers "unclear." In the first case the effect is being given guarantees it does not make. In the second the cleric\'s prepared magic feels wasted. Either way, the GM is ignoring what the effects actually say.',
           },
           {
             term: "The layered version",
-            text: "Speak with Dead is allowed to be good at what it does. The dead priest identifies the masked figure who struck the blow as a temple guard, because that is what they saw. They do not know who ordered it or why, and say so plainly. Commune confirms the murder served a cult that seeks the relic, which answers whether this was a private grudge, but the contacted source does not know which patron in the town council is compromised; it offers that the party's choice of ally will be tested. The GM then names what remains: who in the council sponsored the guard, what proof the conclave will accept, how to reach the guard captain without alerting the cult, and whether to move the relic tonight. The party must interview the watch, decide whom to trust with the relic's location, and secure a witness or document that ties payment to a patron. Their questions also cost time the cult uses to schedule its next move.",
+            text: "The cleric is not antagonistic towards the priest's corpse, and the priest does not recognise them as an enemy. It answers briefly: the masked figure who struck the blow was a temple guard, whom the priest saw. It cannot say who paid the guard because it did not know. Commune confirms the murder served a cult that seeks the relic, within the contacted source's knowledge. Those answers leave questions about the patron, access to the guard captain, and whether to move the relic tonight. The GM states the unresolved pressure and lets the party choose what to do; if the ritual took time and the cult's plans were already advancing, its next move may be closer.",
+          },
+          {
+            term: "A sharp question succeeds decisively",
+            text: 'The cleric asks Commune, "Is Councillor Varro the patron who paid the guard to kill the priest?" The contacted deity knows, and answers, "Yes." Varro is now identified; the GM accepts that loss of uncertainty. The remaining play is whether to confront him, establish what evidence others will accept, protect the relic, or discover what he has already set in motion. If the party only needs to know who paid, the question is settled.',
           },
           {
             term: "Why it works",
-            text: "Divination is trusted and clearly useful: it reduces uncertainty about identity and involvement on the first pass, without substituting for motive, proof, access, or a choice about a potentially compromised ally. Each spell answers within its natural reach, the mystery keeps its layers, and the new information arrives early enough for the whole group to act. Consequences grow from how the party uses the answer, not from making the answer deliberately weak.",
+            text: "The effects provide the information their rules allow, and the GM accepts a decisive answer when a sharp question earns one. Sometimes that solves the small mystery outright. Play continues only where the larger situation leaves something meaningful to decide; it does not need to preserve uncertainty or require proof for its own sake.",
           },
         ],
       },
@@ -101,8 +137,8 @@ export const howDoIHandleDivinationMagicWithoutLettingOneCharacterSolveEveryMyst
         kind: "prose",
         heading: "Handling the table when information magic recurs",
         paragraphs: [
-          "If the same situation keeps inviting divination, keep your rulings consistent and add a visible clock. A cult that learns the temple has been questioned may move the relic, change its courier, or approach the compromised patron for cover. A temple superior who hears that Commune was used will want a report and will remember what the party promised when they borrowed sanctuary. Those pressures give repeated divination a fictional weight without making answers contradictory.",
-          "Talk openly with the player about how you will run information effects: answers are truthful within scope, sources are limited by what they could know, and no single result will bypass proof, access, and consequence. That agreement preserves trust when the party asks a sharp question and the answer is strong but not final. Pair this guidance with the specialist spotlight framework for scene structure generally, and with the investigative horror and mystery structure answers when your case crosses into sustained investigation.",
+          "If the same situation keeps inviting information magic, apply each effect's repeated-use rules and keep established facts consistent. Add a visible clock when events are already time-sensitive. A cult may move the relic because its plans are advancing, or a temple superior may ask for a report if they witnessed the rite or already expect one. Do not make private or undetectable magic automatically alert anyone, and do not invent backlash just because the player used a feature.",
+          "Talk openly with the player about how information effects work at your table: honour their guarantees, keep sources limited by what they could know, and follow the effect's own rules. The result may be strong, final, or enough to resolve the whole question. Pair this guidance with the specialist spotlight framework for scene structure generally, and with the investigative horror and mystery structure answers when your case crosses into sustained investigation.",
         ],
       },
       {
@@ -111,13 +147,13 @@ export const howDoIHandleDivinationMagicWithoutLettingOneCharacterSolveEveryMyst
         intro:
           "Check that your preparation leaves room for good questions to succeed:",
         items: [
-          "Write three layers for the mystery: act, authorisation, and reason. Note which questions touch each layer.",
-          "For each expected divination effect, note its actual scope, limits, and what a truthful useful answer looks like in one sentence.",
+          "Build important mysteries from multiple independent questions, such as identity, location, method, motive, timing, allegiance, or consequence.",
+          "For each expected information effect, note what it guarantees, what it does not, and the information quality a successful use provides.",
           "Decide what each source could know based on its perspective, not on what would be most convenient to withhold.",
-          "List what proof, access, trust, and timing the party still needs after a strong informational hit.",
-          "Plan a consequence for asking: time passes, someone notices, attention shifts, or a faction moves. Keep the consequence proportionate.",
-          "Prepare at least two group decisions that follow the likeliest answers, so the caster's result returns to the whole party.",
-          "Agree with the table that established facts stay fixed and repeated answers remain consistent or change only because the world changed.",
+          "Ask what is actionable after a strong answer. Proof, access, persuasion, timing, rescue, confrontation, prevention, trust, and consequence are possibilities, not mandatory requirements.",
+          "Apply costs and consequences only when the effect's rules, elapsed time, established fiction, or active opposition support them.",
+          "State the unresolved pressure and let the players choose their response; prepare the relevant situation, not a menu of approved actions.",
+          "Keep established facts fixed and follow explicit repeated-use rules before adding fictional costs.",
           "Bring answers back early enough to act, so information creates play rather than closing it.",
         ],
       },
@@ -125,7 +161,7 @@ export const howDoIHandleDivinationMagicWithoutLettingOneCharacterSolveEveryMyst
     codexConnection: {
       heading: "Keep divination answers connected to the case",
       paragraphs: [
-        "When every answer changes who must be questioned, where access is needed, or which patron is still trusted, a linked record of sources, layers, and proof keeps the mystery coherent. Codex Cryptica's knowledge graph lets you attach each divination result to the entity who provided it, the layer it settled, what remains uncertain, and the decision the party made with it, so the next Commune or Speak with Dead builds on the same case rather than rewriting it.",
+        "When an answer settles one question and leaves others actionable, a linked record of sources, decisions, and open questions keeps the case coherent. Codex Cryptica's knowledge graph lets you attach each information result to its source, what it established, what remains uncertain, and the party's response, so the next Commune or Speak with Dead builds on the same case rather than rewriting it.",
       ],
       linkText: "Explore the campaign manager",
       href: "/solutions/campaign-manager",
@@ -184,7 +220,7 @@ export const howDoIHandleDivinationMagicWithoutLettingOneCharacterSolveEveryMyst
       ],
       userJob: "adopt-workflow",
       uniqueValue:
-        "A fantasy specialist-role framework that keeps divination truthful and useful within scope while preserving mystery structure through layers, proof, access, and group decisions, with a reusable information loop and temple murder worked example.",
+        "A fantasy specialist-role framework for information magic that honours each effect's guarantees, lets a spell settle a mystery when it can, and returns remaining decisions to the group, with a reusable adjudication template and temple murder example.",
       relatedIntents: [
         "answer-specialist-character-spotlight",
         "answer-run-investigator-without-sidelining-party",
@@ -201,12 +237,12 @@ export const howDoIHandleDivinationMagicWithoutLettingOneCharacterSolveEveryMyst
         {
           with: "answer-run-investigator-without-sidelining-party",
           reason:
-            "The investigator answer distributes clue discovery and interpretation across the party; this answer focuses on divination effects that reveal information directly, keeping results honest and routing consequences and proof back to the group.",
+            "The investigator answer distributes clue discovery and interpretation across the party; this answer focuses on information effects, their different guarantees, and the actions that may remain after a result.",
         },
         {
           with: "answer-run-mystery-without-railroading",
           reason:
-            "The mystery answer builds resilient clue networks and active culprit timelines; this answer builds layered answers and consistent rulings for divination so one truthful result does not collapse the case.",
+            "The mystery answer builds resilient clue networks and active culprit timelines; this answer focuses on adjudicating information effects and accepting decisive answers without requiring every mystery to remain open.",
         },
       ],
     },
@@ -214,7 +250,7 @@ export const howDoIHandleDivinationMagicWithoutLettingOneCharacterSolveEveryMyst
       title:
         "Handle Divination Magic Without Solving Every Mystery | Codex Cryptica",
       description:
-        "Keep divination honest and useful while protecting your mystery. Use scope, layers, proof, and group decisions to handle the spell.",
+        "Adjudicate information magic by its actual guarantees, keep consequences grounded in rules and fiction, and let strong answers lead to meaningful choices.",
       image:
         "https://assets.codexcryptica.com/og/how-do-i-handle-divination-magic-without-letting-one-character-solve-every-mystery.jpg",
       imageAlt:

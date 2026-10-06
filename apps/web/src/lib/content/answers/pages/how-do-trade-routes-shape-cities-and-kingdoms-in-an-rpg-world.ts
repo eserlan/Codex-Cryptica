@@ -159,6 +159,7 @@ export const howDoTradeRoutesShapeCitiesAndKingdomsInAnRpgWorld: AnswerConfigInp
       "how-do-i-create-interesting-islands-and-ports-for-a-pirate-campaign",
       "how-do-i-make-sea-travel-interesting-in-a-ttrpg",
       "how-do-i-run-a-pirate-campaign-focused-on-exploration",
+      "how-should-a-fantasy-adventuring-guild-handle-wages-dues-and-shared-expenses",
     ],
     discovery: {
       id: "answer-trade-routes-shape-cities-kingdoms",
