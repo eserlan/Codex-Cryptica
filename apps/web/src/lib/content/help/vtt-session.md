@@ -45,6 +45,15 @@ Codex Cryptica includes an integrated **Virtual Tabletop (VTT)** mode directly a
 - Enable **GM MODE** and toggle **FOG** ON in the map controls.
 - Hold `Alt` and **Click-Drag** across the canvas to "paint away" fog, revealing terrain and enemy tokens to players live during play.
 
+#### 6. Token Menu & Map Controls
+
+- **Token menu**: Right-click a token for **Ping Token**, **Clone Token**, **Hide from Guests** or **Show to All**, **Move to Layer**, **Appearance** (including a facing indicator), **Resize**, **Status**, and **Remove Token**. Right-click empty map to **Ping Here**.
+- **Move and turn**: Arrow keys pan the map, `+` and `-` zoom, and `Alt` + `Left` or `Right` arrow turns the selected token.
+- **Layers**: Use the layer control in the map bar to choose which layer you are editing and to show, hide or lock layers.
+- **Grid**: Use the grid button to show the grid, and right-click it for grid settings.
+- **Player view**: **PLAYER VIEW** shows the map the way your players see it. **VISION** chooses whether the party's combined vision or only the selected token's vision lights the map.
+- **Cif**: Click **Cif** in the map bar to ask how any of this works. It stays available when the map is maximized.
+
 ### Pausing or Ending a Session
 
 - Click the **VTT ON** toggle button to return to standard map editing mode (**VTT OFF**).

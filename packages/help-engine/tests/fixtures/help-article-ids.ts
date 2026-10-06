@@ -18,6 +18,7 @@ export const KNOWN_HELP_IDS = [
   "map-mode",
   "vtt-session",
   "fog-of-war",
+  "hexcrawl-maps",
   "creating-and-editing-entities",
   "default-entity-templates",
   "export-and-backup",

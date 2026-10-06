@@ -4,7 +4,7 @@ export const vttMap: FeatureEntry = {
   id: "vtt-map",
   title: "Maps and VTT",
   summary:
-    "Pin your entities onto your own map images, reveal areas with fog of war, and start a tabletop session from a map with tokens and initiative.",
+    "Pin your entities onto your own map images, reveal areas with fog of war, lay a hex grid over a map for overland travel, and start a tabletop session from a map with tokens and initiative.",
   channel: "production",
   routes: ["/(app)/map"],
   areas: ["map"],
@@ -22,7 +22,7 @@ export const vttMap: FeatureEntry = {
       actionIds: ["map.open"],
     },
   ],
-  helpIds: ["map-mode", "vtt-session", "fog-of-war"],
+  helpIds: ["map-mode", "vtt-session", "fog-of-war", "hexcrawl-maps"],
   related: ["canvas"],
   actions: [
     {
