@@ -105,6 +105,14 @@ The following high-impact candidate specifications target performance, scaling, 
 
 ## 🏛️ Historical Roadmap & Release Timeline
 
+### v0.35.0 — The Hexcrawl & Cif Update (2026-10-06)
+
+- **Highlights**: Overland hexcrawl maps with token snapping and hex fog of war; the Cif help assistant with screen-aware retrieval, quick prompts and full Help registry coverage; multiple calendar eras with epoch year numbering; community-aware graph layout with group backgrounds and per-connection hiding; culture-aware AI names and theme-to-genre mapping for generators; community template directory links; mobile touch-target and typography pass; map image error recovery and vault-wide Campaign Label rename/delete.
+- **Associated Specifications**:
+  - [170-hex-crawling-maps](./170-hex-crawling-maps/spec.md) (Hex crawling maps)
+  - [169-calendar-eras](./169-calendar-eras/spec.md) (Calendar eras)
+  - [3427-contextual-ai-help-assistant](./3427-contextual-ai-help-assistant/spec.md) (Cif help assistant)
+
 ### v0.34.0 — The Session Journal & Reports Update (2026-09-29)
 
 - **Highlights**: The Session Journal (a running record reachable from every view, with formatted notes and live preview, editing and reordering, automatic capture of rolls, draws and table results, and promotion of journal content to vault entities); Entity Reports generated from canvas, graph or table selections and saved as editable Note entities; Entity Templates as a vault setting (built-in, legacy-file and user templates, per-type defaults, a markdown editor, import/export, a compact Table Card NPC template, and Oracle revision that follows the chosen template); expandable individual-dice breakdowns across roll tables, the journal, stat sheets and solo adventures, plus multi-die keep-highest/lowest table formulas; canvas entity-card variants with faction rosters and member galleries; saved graph views that keep their layout; delta-based Cloud Backup with attach-to-existing; and the AI-assisted Session Prep Builder.
