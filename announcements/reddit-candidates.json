@@ -1,5 +1,5 @@
 {
-  "updated_at": 1791292050,
+  "updated_at": 1791293044,
   "candidates": [
     {
       "id": "reddit-37032544014-my-pirate-arcs-kept-collapsing-into-eith",
@@ -72,14 +72,14 @@
       "created_at": 1791267372
     },
     {
-      "id": "reddit-37467096025-cif-on-a-second-screen-while-the-map-sta",
-      "title": "Cif on a second screen while the map stays full screen",
-      "body": "When you maximise the map for a fight, everything else disappears. I kept shrinking the map just to ask Cif about fog or initiative, then resizing it again to keep playing.\n\nI built a pop-out for Cif so you can keep the map big and talk to the assistant in its own browser window. When the map is maximised there is a Map button in the controls that opens it straight away.\n\n[How Cif works](https://codexcryptica.com/help/help-assistant)\n\n- pop Cif into a separate window and drag it to a second monitor\n- the window keeps the same conversation, so you do not lose context when you switch back\n- Map button only shows when the map is maximised, so it stays out of the way otherwise\n- close the pop-out and it docks back, no extra state to clean up\n\nOne tradeoff: because it is a real browser window, the first click can be blocked as a popup until you allow it once. That is the price for having it truly separate from the main tab.\n\nDo you run your VTT on one big screen, or do you keep the map on one and notes or Cif on another?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/announcements/release-37467096025-2.png)",
-      "url": "https://codexcryptica.com/cif",
-      "image_url": "https://assets.codexcryptica.com/announcements/release-37467096025-2.png",
+      "id": "reddit-37467096025-cif-now-answers-vtt-questions-from-seven",
+      "title": "Cif now answers VTT questions from seven new guides",
+      "body": "Running a VTT scene has a handful of places where play stalls. Fog not revealing how you expected, a token you cannot select or move, initiative stuck in the wrong order, distance not matching the grid.\n\nI added seven new in-app guides so Cif can answer VTT questions from real docs instead of guessing.\n\n[Combat and initiative guide](https://codexcryptica.com/help/vtt-combat-initiative) - the other six live alongside it in help.\n\n- initiative and combat, how turns advance and what resets them\n- tokens and permissions, who can move or see what\n- fog and Player View, what the GM paints versus what players actually see\n- grids and measuring, square and hex with snapping\n- tiles with layers and notes, plus multiplayer with chat and voice, and a troubleshooting page for the common gotchas\n\nThese are still docs, they do not fix your scene for you. You still apply the steps in your vault, which keeps you in control but means they will not click a button for you.\n\nWhich part still trips your group most often, fog, initiative, or token permissions?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/announcements/release-37467096025-1.png)",
+      "url": "https://codexcryptica.com/help/vtt-combat-initiative",
+      "image_url": "https://assets.codexcryptica.com/announcements/release-37467096025-1.png",
       "source_id": "37467096025",
       "status": "approved",
-      "created_at": 1791292050
+      "created_at": 1791293044
     }
   ]
 }
