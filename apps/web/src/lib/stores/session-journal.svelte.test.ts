@@ -614,3 +614,39 @@ describe("SessionJournalStore — editing, deleting and reordering entries (#347
     expect(store.current?.entries[0].content).toBe("Kept");
   });
 });
+
+describe("SessionJournalStore — map move capture", () => {
+  const newStore = (vaultId: string) =>
+    new SessionJournalStore(
+      fakeVaultRegistry(vaultId) as any,
+      fakeIds(),
+      fakeClock(),
+    );
+
+  it("persists the setting and leaves an ended journal unchanged", async () => {
+    const store = newStore("vault-map-capture");
+    await store.start();
+
+    await store.setCaptureMapMoves(false);
+    expect(store.current?.captureMapMoves).toBe(false);
+
+    const reopened = newStore("vault-map-capture");
+    await reopened.listJournals();
+    expect(reopened.current?.captureMapMoves).toBe(false);
+
+    await reopened.setCaptureMapMoves(true);
+    expect(reopened.current?.captureMapMoves).toBe(true);
+    await reopened.end();
+    await reopened.setCaptureMapMoves(false);
+    expect(reopened.current?.status).toBe("ended");
+    expect(reopened.current?.captureMapMoves).toBe(true);
+  });
+
+  it("does nothing without an active journal", async () => {
+    const store = newStore("vault-map-capture-empty");
+    await store.listJournals();
+
+    await expect(store.setCaptureMapMoves(false)).resolves.toBeUndefined();
+    expect(store.current).toBeUndefined();
+  });
+});

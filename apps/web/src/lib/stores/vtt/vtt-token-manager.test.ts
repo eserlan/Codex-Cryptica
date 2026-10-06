@@ -57,6 +57,17 @@ describe("VTTTokenManager.addToken", () => {
     expect(addTokenToInitiativeState).not.toHaveBeenCalled();
   });
 
+  it("keeps a hidden token visible to the GM while guest visibility stays restricted", () => {
+    const { manager } = createManager();
+    const note = manager.addToken(
+      { name: "Hidden cache", x: 0, y: 0, kind: "note", visibleTo: "gm-only" },
+      true,
+    );
+
+    expect(manager.canViewToken(note.id, null, true)).toBe(true);
+    expect(manager.canViewToken(note.id, "guest-1", false)).toBe(false);
+  });
+
   it("lands a note folded down to a marker, springing back to a full page", () => {
     const { manager } = createManager();
 

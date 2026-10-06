@@ -30,6 +30,10 @@
     return token;
   }
 
+  function reportSoloFog(isHost: boolean, playerView: boolean): boolean {
+    return isHost && !playerView && mapStore.showFog && mapStore.soloFog;
+  }
+
   function facts(): VttHelpFacts {
     const guest = sessionModeStore.isGuestMode;
     const playerView = !guest && sessionModeStore.sharedMode;
@@ -45,7 +49,7 @@
       playerView,
       grid: gridKind(),
       fogOn: mapStore.showFog,
-      soloFog: mapStore.soloFog,
+      soloFog: reportSoloFog(isHost, playerView),
       tokenSelected: token !== null,
       tokenLinked: !!token?.entityId,
       tokenManageable:
@@ -69,6 +73,7 @@
       gm: mapStore.isGMMode && !guest,
       vttOn: mapSession.vttEnabled,
       combat: mapSession.mode === "combat",
+      soloFog: mapStore.soloFog && mapStore.showFog,
     });
   }
 

@@ -4,6 +4,7 @@ import { renderMap } from "./renderer";
 function createCtxMock() {
   return {
     clearRect: vi.fn(),
+    strokeRect: vi.fn(),
     save: vi.fn(),
     restore: vi.fn(),
     translate: vi.fn(),
@@ -170,6 +171,117 @@ describe("renderMap", () => {
     });
 
     expect(events).toEqual(["drawImage", "createPattern"]);
+    vi.restoreAllMocks();
+  });
+
+  it("draws solid fog after the image, pins, tokens and grid", () => {
+    const realCreateElement = document.createElement.bind(document);
+    const events: string[] = [];
+    const ctx = createCtxMock();
+    const tokenImage = { width: 10, height: 10 } as HTMLImageElement;
+    (ctx.drawImage as any).mockImplementation((source: unknown) => {
+      events.push(
+        source === image
+          ? "map-image"
+          : source === tokenImage
+            ? "token-image"
+            : "fog",
+      );
+    });
+    (ctx.arc as any).mockImplementation(() => events.push("shape"));
+    (ctx.fillText as any).mockImplementation((text: string) => {
+      events.push(`text:${text}`);
+    });
+    vi.spyOn(document, "createElement").mockImplementation((tag: string) => {
+      if (tag !== "canvas") return realCreateElement(tag);
+      return {
+        width: 0,
+        height: 0,
+        getContext: () => createCtxMock(),
+      } as unknown as HTMLCanvasElement;
+    });
+    const image = { width: 500, height: 400 } as HTMLImageElement;
+    const mask = { width: 500, height: 400 } as HTMLCanvasElement;
+    const maskCtx = { drawImage: vi.fn() };
+    (mask as any).getContext = vi.fn(
+      () => maskCtx as unknown as CanvasRenderingContext2D,
+    );
+
+    renderMap({
+      canvas: createCanvasMock(ctx),
+      image,
+      transform: { pan: { x: 0, y: 0 }, zoom: 1 },
+      canvasSize: { width: 800, height: 600 },
+      pins: [
+        {
+          id: "p",
+          mapId: "m",
+          coordinates: { x: 0, y: 0 },
+          visuals: { color: "red" },
+        } as any,
+      ],
+      tokens: [
+        {
+          id: "t",
+          x: 0,
+          y: 0,
+          width: 50,
+          height: 50,
+          rotation: 0,
+          image: tokenImage,
+          label: "Guard",
+          visible: true,
+        } as any,
+        {
+          id: "note",
+          kind: "note",
+          x: 70,
+          y: 0,
+          width: 50,
+          height: 50,
+          rotation: 0,
+          noteBody: "Discovery",
+          visible: true,
+        } as any,
+        {
+          id: "collapsed-note",
+          kind: "note",
+          noteCollapsed: true,
+          x: 140,
+          y: 0,
+          width: 50,
+          height: 50,
+          rotation: 0,
+          visible: true,
+        } as any,
+      ],
+      maskCanvas: mask,
+      showFog: true,
+      grid: {
+        type: "hex-pointy",
+        size: 50,
+        color: "white",
+        opacity: 0.5,
+        showCoordinates: true,
+      },
+    });
+
+    const fogIndex = events.lastIndexOf("fog");
+    const lastTextIndex = Math.max(
+      ...events.map((event, index) => (event.startsWith("text:") ? index : -1)),
+    );
+    expect(events.indexOf("map-image")).toBeLessThan(events.indexOf("shape"));
+    expect(events.indexOf("token-image")).toBeLessThan(fogIndex);
+    expect(events).toContain("text:Guard");
+    expect(events).toContain("text:Discovery");
+    expect(events.some((event) => /^text:-?\d+\.-?\d+$/.test(event))).toBe(
+      true,
+    );
+    expect(lastTextIndex).toBeLessThan(fogIndex);
+    expect(events.filter((event) => event === "shape").length).toBeGreaterThan(
+      2,
+    );
+    expect(events.at(-1)).toBe("fog");
     vi.restoreAllMocks();
   });
 

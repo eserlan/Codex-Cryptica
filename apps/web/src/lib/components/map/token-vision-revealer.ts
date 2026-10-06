@@ -29,7 +29,11 @@ export class TokenVisionRevealer {
   constructor(private deps: TokenVisionRevealerDeps) {}
 
   // fallow-ignore-next-line complexity
-  async reveal(tokens: Token[], radius: number): Promise<boolean> {
+  async reveal(
+    tokens: Token[],
+    radius: number,
+    radiusInHexes?: number,
+  ): Promise<boolean> {
     if (tokens.length === 0) return false;
 
     const maskCanvas = this.deps.getMaskCanvas();
@@ -45,10 +49,9 @@ export class TokenVisionRevealer {
 
     const hexConfig = getActiveHexConfig(this.deps.mapStore);
     if (hexConfig) {
-      const radiusInHexes = Math.max(
-        0,
-        Math.round(radius / (hexConfig.size * 1.5)),
-      );
+      const effectiveHexRadius =
+        radiusInHexes ??
+        Math.max(0, Math.round(radius / (hexConfig.size * 1.5)));
 
       for (const token of tokens) {
         const hex = pointToHex({ x: token.x, y: token.y }, hexConfig);
@@ -56,7 +59,7 @@ export class TokenVisionRevealer {
           ctx,
           maskCanvas,
           hex,
-          radiusInHexes,
+          effectiveHexRadius,
           hexConfig,
           false,
         );

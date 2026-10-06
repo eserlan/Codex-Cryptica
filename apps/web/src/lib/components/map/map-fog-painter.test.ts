@@ -290,7 +290,7 @@ describe("MapFogPainter", () => {
       expect(m.ctx.getImageData).toHaveBeenCalledWith(40, 45, 1, 1);
     });
 
-    it("never hides anything it cannot read: off the mask or with no mask", () => {
+    it("treats unknown mask state as fogged but keeps off-mask points visible", () => {
       const { instance } = painterWithAlpha(0, 100, 80);
       expect(instance.isRevealedAt({ x: 5000, y: 0 })).toBe(true);
 
@@ -306,7 +306,28 @@ describe("MapFogPainter", () => {
         getMapImage: () => mapImage,
         createCanvas: () => createCanvasMock().canvas,
       });
-      expect(noMask.isRevealedAt({ x: 0, y: 0 })).toBe(true);
+      expect(noMask.isRevealedAt({ x: 0, y: 0 })).toBe(false);
+
+      const noContext = new MapFogPainter({
+        mapStore: {
+          activeMapId: "map-1",
+          brushRadius: 10,
+          unproject: vi.fn((p) => p),
+          saveMask,
+        },
+        oracle: { pushUndoAction },
+        getMaskCanvas: () =>
+          ({ getContext: () => null }) as unknown as HTMLCanvasElement,
+        getMapImage: () => mapImage,
+        createCanvas: () => createCanvasMock().canvas,
+      });
+      expect(noContext.isRevealedAt({ x: 0, y: 0 })).toBe(false);
+
+      const unreadable = painterWithAlpha(0);
+      unreadable.m.ctx.getImageData.mockImplementation(() => {
+        throw new Error("mask read failed");
+      });
+      expect(unreadable.instance.isRevealedAt({ x: 0, y: 0 })).toBe(false);
     });
   });
 });

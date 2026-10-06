@@ -66,6 +66,23 @@ describe("MapOverlays pin labels under fog", () => {
     expect(labelShown(container)).toBe(false);
   });
 
+  it("keeps the label hidden while the mask is unavailable, then shows it after reveal", async () => {
+    revealed = false;
+    const view = render(MapOverlays, { interactions });
+    expect(labelShown(view.container)).toBe(false);
+
+    revealed = true;
+    mocks.mapStore.fogRevision++;
+    const currentInteractions = interactions as Record<string, unknown>;
+    await view.rerender({
+      interactions: {
+        ...currentInteractions,
+        painter: { isRevealedAt: vi.fn(() => revealed) },
+      } as never,
+    });
+    expect(labelShown(view.container)).toBe(true);
+  });
+
   it("keeps the label when the GM sees translucent fog and can see the spot anyway", () => {
     revealed = false;
     mocks.mapStore.fogOpaque = false;

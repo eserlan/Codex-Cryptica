@@ -56,6 +56,7 @@ export const VTT_CONTROL_IDS = [
   "vtt-grid-button",
   "vtt-fog-toggle",
   "vtt-solo-fog-toggle",
+  "vtt-travel-readout",
   "vtt-layer-control",
   "vtt-player-view-toggle",
   "vtt-ruler-toggle",
@@ -180,6 +181,8 @@ export interface ControlSpec {
    * guide is not offered there.
    */
   requiresFlag?: HelpFlag;
+  /** Some controls are host-only even if a malformed context lists them. */
+  requiresNoFlag?: HelpFlag;
   /**
    * The panel that must be open for the control to be on screen. A control
    * with no panel is always on screen within its area.
@@ -208,6 +211,11 @@ export const CONTROL_CATALOGUE: Record<ControlId, ControlSpec> = {
   "vtt-grid-button": { area: "map" },
   "vtt-fog-toggle": { area: "map" },
   "vtt-solo-fog-toggle": { area: "map", requiresFlag: "vtt-fog-on" },
+  "vtt-travel-readout": {
+    area: "map",
+    requiresFlag: "vtt-solo-fog",
+    requiresNoFlag: "vtt-guest",
+  },
   "vtt-layer-control": { area: "map" },
   "vtt-player-view-toggle": { area: "map" },
   "vtt-ruler-toggle": { area: "map", requiresFlag: "vtt-on" },

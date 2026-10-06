@@ -51,4 +51,6 @@ export interface SessionJournal {
    *  the common case), and the user may reorder without changing any
    *  entry's timestamp (#3476). */
   entries: JournalEntry[];
+  /** Map exploration capture defaults on for older journals. */
+  captureMapMoves?: boolean;
 }

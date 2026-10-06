@@ -21,7 +21,7 @@ function token(input: Partial<Token> & { id: string; x: number; y: number }) {
 }
 
 describe("TokenDragHandler", () => {
-  const tokens = [token({ id: "token-a", x: 10, y: 20 })];
+  let tokens = [token({ id: "token-a", x: 10, y: 20 })];
   let isHost = true;
   let canMoveToken: ReturnType<typeof vi.fn>;
   let moveToken: ReturnType<typeof vi.fn>;
@@ -29,16 +29,22 @@ describe("TokenDragHandler", () => {
   let sendTokenMoveRequest: ReturnType<typeof vi.fn>;
   let confirmTokenMove: ReturnType<typeof vi.fn>;
   let setDraggingTokenId: ReturnType<typeof vi.fn>;
+  let onMoveSettled: ReturnType<typeof vi.fn>;
   let handler: TokenDragHandler;
 
   beforeEach(() => {
     isHost = true;
+    tokens = [token({ id: "token-a", x: 10, y: 20 })];
     canMoveToken = vi.fn(() => true);
-    moveToken = vi.fn();
+    moveToken = vi.fn((id: string, x: number, y: number) => {
+      const movingToken = tokens.find((item) => item.id === id);
+      if (movingToken) Object.assign(movingToken, { x, y });
+    });
     requestTokenMove = vi.fn();
     sendTokenMoveRequest = vi.fn();
     confirmTokenMove = vi.fn();
     setDraggingTokenId = vi.fn();
+    onMoveSettled = vi.fn();
     handler = new TokenDragHandler({
       getTokens: () => tokens,
       project: (point: { x: number; y: number }) => point,
@@ -51,6 +57,7 @@ describe("TokenDragHandler", () => {
       sendTokenMoveRequest,
       confirmTokenMove,
       setDraggingTokenId,
+      onMoveSettled,
     } as any);
   });
 
@@ -60,6 +67,7 @@ describe("TokenDragHandler", () => {
     expect(hit?.id).toBe("token-a");
     expect(handler.dragState).toEqual({
       tokenId: "token-a",
+      initialPosition: { x: 10, y: 20 },
       offset: { x: 10, y: 10 },
       startPoint: { x: 20, y: 30 },
       hasMoved: false,
@@ -107,6 +115,53 @@ describe("TokenDragHandler", () => {
     expect(confirmTokenMove).toHaveBeenCalledWith("token-a");
     expect(setDraggingTokenId).toHaveBeenLastCalledWith(null);
     expect(handler.dragState).toBeNull();
+  });
+
+  it("settles a moved token once after drag end but ignores an unmoved drag", () => {
+    handler.begin({ x: 20, y: 30 });
+    handler.end();
+    expect(onMoveSettled).not.toHaveBeenCalled();
+
+    handler.begin({ x: 20, y: 30 });
+    handler.move({ x: 40, y: 60 });
+    handler.end();
+    expect(onMoveSettled).toHaveBeenCalledOnce();
+    expect(onMoveSettled).toHaveBeenCalledWith(["token-a"]);
+  });
+
+  it("does not settle a drag that snaps back to its starting position", () => {
+    const mutableTokens = [token({ id: "token-a", x: 0, y: 0 })];
+    handler = new TokenDragHandler({
+      getTokens: () => mutableTokens,
+      project: (point: { x: number; y: number }) => point,
+      unproject: (point: { x: number; y: number }) => point,
+      isHostMode: () => true,
+      getPeerId: () => "peer-a",
+      canMoveToken,
+      moveToken: vi.fn((id: string, x: number, y: number) => {
+        const movingToken = mutableTokens.find((item) => item.id === id);
+        if (movingToken) Object.assign(movingToken, { x, y });
+      }),
+      requestTokenMove,
+      sendTokenMoveRequest,
+      confirmTokenMove,
+      setDraggingTokenId,
+      getGridConfig: () => ({
+        enabled: true,
+        type: "square",
+        size: 50,
+        offsetX: 0,
+        offsetY: 0,
+      }),
+      onMoveSettled,
+    } as any);
+
+    handler.begin({ x: 5, y: 5 });
+    handler.move({ x: 11, y: 5 });
+    handler.end();
+
+    expect(mutableTokens[0]).toMatchObject({ x: 0, y: 0 });
+    expect(onMoveSettled).not.toHaveBeenCalled();
   });
 
   it("snaps token to nearest hex center on drag end when hex grid is enabled", () => {

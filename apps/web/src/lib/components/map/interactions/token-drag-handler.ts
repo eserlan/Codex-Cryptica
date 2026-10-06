@@ -33,10 +33,12 @@ export interface TokenDragDependencies {
   confirmTokenMove: (tokenId: string) => void;
   setDraggingTokenId: (tokenId: string | null) => void;
   getGridConfig?: () => TokenGridConfig | null;
+  onMoveSettled?: (tokenIds: string[]) => void;
 }
 
 export interface TokenDragState {
   tokenId: string;
+  initialPosition: Point;
   offset: Point;
   startPoint: Point;
   hasMoved: boolean;
@@ -82,6 +84,7 @@ export class TokenDragHandler {
     const imgPoint = this.deps.unproject(viewportPoint);
     this.dragState = {
       tokenId: hitToken.id,
+      initialPosition: { x: hitToken.x, y: hitToken.y },
       offset: {
         x: imgPoint.x - hitToken.x,
         y: imgPoint.y - hitToken.y,
@@ -169,6 +172,16 @@ export class TokenDragHandler {
 
     if (this.dragState.hasMoved && !this.deps.isHostMode()) {
       this.deps.confirmTokenMove(this.dragState.tokenId);
+    }
+    const finalToken = this.deps
+      .getTokens()
+      .find((token) => token.id === this.dragState!.tokenId);
+    const positionChanged =
+      finalToken !== undefined &&
+      (finalToken.x !== this.dragState.initialPosition.x ||
+        finalToken.y !== this.dragState.initialPosition.y);
+    if (this.dragState.hasMoved && positionChanged) {
+      this.deps.onMoveSettled?.([this.dragState.tokenId]);
     }
     this.deps.setDraggingTokenId(null);
     this.dragState = null;

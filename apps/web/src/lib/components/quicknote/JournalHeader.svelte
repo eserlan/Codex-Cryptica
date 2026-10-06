@@ -13,6 +13,8 @@
     onEnd,
     onBack,
     extras,
+    captureMapMoves = true,
+    onToggleMapMoves,
   }: {
     title: string;
     active: boolean;
@@ -21,6 +23,8 @@
     onBack: () => void;
     /** Small controls shown beside the title (the Make entity toggle). */
     extras?: Snippet;
+    captureMapMoves?: boolean;
+    onToggleMapMoves?: () => void;
   } = $props();
 </script>
 
@@ -35,6 +39,15 @@
   <div class="flex items-center gap-3">
     {@render extras?.()}
     {#if active}
+      <button
+        type="button"
+        onclick={onToggleMapMoves}
+        aria-pressed={captureMapMoves}
+        class="text-micro font-bold uppercase tracking-wider text-theme-muted transition-colors hover:text-theme-primary"
+        aria-label="Record map moves"
+      >
+        Map moves: {captureMapMoves ? "On" : "Off"}
+      </button>
       <button
         type="button"
         onclick={onEnd}
