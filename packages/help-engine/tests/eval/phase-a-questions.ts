@@ -112,6 +112,10 @@ export const PHASE_A_IN_SCOPE: InScopeQuestion[] = [
     "How do I line the hex grid up with hexes already on my map?",
     ["vtt-grids-measurement", "hexcrawl-maps"],
   ),
+  q("map", "holdout", "map", "How do I rotate a token?", ["vtt-tokens"]),
+  q("map", "holdout", "map", "How do I show which way a token is facing?", [
+    "vtt-tokens",
+  ]),
   q("map", "holdout", "map", "How do I reveal just one hex on a hex map?", [
     "hexcrawl-maps",
   ]),
@@ -392,7 +396,7 @@ export const PHASE_A_CONFUSION: InScopeQuestion[] = [
     "holdout",
     "map",
     "Is the fog of war on the map the same as hiding an entry?",
-    ["map-mode"],
+    ["map-mode", "vtt-fog-player-view"],
     ["fog-of-war"],
   ),
   q(
