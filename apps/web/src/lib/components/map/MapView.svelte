@@ -1,13 +1,12 @@
 <script lang="ts">
-  import { type Snippet } from "svelte";
+  import { type Snippet, setContext, untrack } from "svelte";
   import { fade } from "svelte/transition";
   import { isNoteCollapsed, mapLayerRank } from "map-engine";
   import { mapStore } from "../../stores/map.svelte";
   import { vault } from "../../stores/vault.svelte";
   import { oracle } from "../../stores/oracle.svelte";
   import { MapFogPainter } from "./map-fog-painter";
-  import { TokenVisionRevealer } from "./token-vision-revealer";
-  import { resolveVisionSourceTokens, visionRangeToPixels } from "./vtt-vision";
+  import { resolveVisionSourceTokens } from "./vtt-vision";
   import { broadcastActiveMapFogSync } from "./interactions/interaction-adapters";
   import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
   import { notificationStore } from "$lib/stores/ui/notification.svelte";
@@ -19,20 +18,18 @@
   import { clampPointToBounds } from "$lib/utils/vtt-helpers";
   import { mapSession } from "../../stores/map-session.svelte";
   import {
+    SOLO_EXPLORATION_CONTEXT,
+    createSoloExplorationRecorder,
+    publishSoloMapMove,
+  } from "./solo-exploration-recorder.svelte";
+  import {
     resolveHealthBar,
+    mapAssetSignature,
+    resolveRemoteMeasurement,
     getMapDisplayDimensions,
     formatMeasurementLabel,
+    visionRevealSignature,
   } from "./map-view-helpers";
-
-  function hashToColor(input: string) {
-    let hash = 0;
-    for (let i = 0; i < input.length; i++) {
-      hash = (hash << 5) - hash + input.charCodeAt(i);
-      hash |= 0;
-    }
-    const hue = Math.abs(hash) % 360;
-    return `hsl(${hue} 75% 55%)`;
-  }
 
   let {
     children,
@@ -48,8 +45,7 @@
 
   let container = $state<HTMLDivElement | null>(null);
   let mapImage = $state<HTMLImageElement | null>(null);
-  // Set when the background image cannot be resolved or decoded, so the
-  // loading overlay can offer a retry instead of spinning forever.
+  // Marks an unreadable map image so the loading overlay can offer a retry.
   let imageLoadFailed = $state(false);
   let retryNonce = $state(0);
   let maskCanvas = $state<HTMLCanvasElement | null>(null);
@@ -62,15 +58,29 @@
     createCanvas: () => document.createElement("canvas"),
   });
 
+  const soloRecorder = createSoloExplorationRecorder({
+    mapStore,
+    mapSession,
+    sessionModeStore,
+    oracle,
+    painter,
+    getMaskCanvas: () => maskCanvas,
+    getMapImage: () => mapImage,
+    publishCapture: publishSoloMapMove,
+  });
+  setContext(SOLO_EXPLORATION_CONTEXT, soloRecorder);
+
   const interactions = new MapInteractionManager({
     painter,
     getContainer: () => container,
-  });
-
-  const visionRevealer = new TokenVisionRevealer({
-    mapStore,
-    getMaskCanvas: () => maskCanvas,
-    getMapImage: () => mapImage,
+    onMoveSettled: (ids) => {
+      const sources = visionSourceTokens.filter((token) =>
+        ids.includes(token.id),
+      );
+      void soloRecorder
+        .onVisionChanged(sources)
+        .then(() => soloRecorder.onMoveSettled(sources));
+    },
   });
 
   const mapAssets = new MapViewAssetLoader({
@@ -110,11 +120,7 @@
     },
   });
 
-  const activeMapSignature = $derived.by(() => {
-    const activeMap = mapStore.activeMap;
-    if (!activeMap) return null;
-    return `${activeMap.id}:${activeMap.assetPath}:${activeMap.dimensions.width}x${activeMap.dimensions.height}`;
-  });
+  const activeMapSignature = $derived(mapAssetSignature(mapStore.activeMap));
   let lastMapSignature: string | null = null;
   let loadedMaskPath = $state<string | null>(null);
 
@@ -138,30 +144,17 @@
       label,
     };
   });
-  // ⚡ Bolt Optimization: Replace inline Object.values().find() with pre-cached property
   const vttPings = $derived(mapSession.allPings);
-  const remoteMeasurement = $derived.by(() => {
-    const rm = mapSession.activeMeasurement;
-    if (!rm || !rm.start || !rm.end) return null;
-
-    const label = formatMeasurementLabel(rm.start, rm.end, {
+  const remoteMeasurement = $derived(
+    resolveRemoteMeasurement(mapSession.activeMeasurement, {
       gridType: mapStore.gridType,
       gridSize: mapStore.gridSize,
       gridDistance: mapSession.gridDistance,
       gridUnit: mapSession.gridUnit,
       gridOffsetX: mapStore.gridOffsetX,
       gridOffsetY: mapStore.gridOffsetY,
-    });
-    const color = hashToColor(rm.peerId);
-
-    return {
-      start: rm.start,
-      end: rm.end,
-      label,
-      color,
-      peerId: rm.peerId,
-    };
-  });
+    }),
+  );
 
   let tokenImageCache = $state<Record<string, HTMLImageElement | null>>({});
   let tokenImageSourceCache = $state<Record<string, string>>({});
@@ -171,18 +164,6 @@
       mapSession.allTokens,
       mapStore.visionMode,
       mapSession.selection,
-    ),
-  );
-  const visionSourceSignature = $derived(
-    visionSourceTokens
-      .map((token) => `${token.id}:${token.x}:${token.y}`)
-      .join("|"),
-  );
-  const visionRadiusPx = $derived(
-    visionRangeToPixels(
-      mapStore.visionRange,
-      mapSession.gridDistance,
-      mapStore.gridSize,
     ),
   );
 
@@ -428,16 +409,34 @@
   const hasBackgroundImage = $derived(Boolean(mapStore.activeMap?.assetPath));
 
   $effect(() => {
-    const signature = visionSourceSignature;
-    const radius = visionRadiusPx;
-    const canAutoReveal = mapStore.isGMMode && !sessionModeStore.isGuestMode;
-    if (!canAutoReveal || !signature) return;
+    const tokens = visionSourceTokens;
+    const revealSignature = visionRevealSignature(
+      tokens,
+      mapStore.visionRange,
+      mapSession.gridDistance,
+      mapStore.gridSize,
+      mapStore.gridType,
+      mapStore.showGrid,
+      mapStore.isGMMode,
+      sessionModeStore.isGuestMode,
+      mapStore.activeMapId,
+      mapStore.soloFog,
+      mapStore.showFog,
+      mapSession.gridUnit,
+      Boolean(maskCanvas),
+      Boolean(mapImage),
+    );
+    if (!revealSignature) return;
 
-    void visionRevealer.reveal(visionSourceTokens, radius).then((revealed) => {
-      if (revealed && mapSession.vttEnabled) {
-        void broadcastActiveMapFogSync();
-      }
-    });
+    void untrack(() => soloRecorder.onVisionChanged(tokens)).then(
+      async (revealed) => {
+        if (!interactions.tokenDrag.dragState)
+          await soloRecorder.onMoveSettled(tokens);
+        if (revealed && mapSession.vttEnabled) {
+          void broadcastActiveMapFogSync();
+        }
+      },
+    );
   });
 </script>
 

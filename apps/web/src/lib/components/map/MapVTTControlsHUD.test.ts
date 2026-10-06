@@ -13,6 +13,9 @@ const mapStoreMock = vi.hoisted(() => ({
   showFog: true,
   soloFog: false,
   showGrid: false,
+  gridType: "square",
+  gridSize: 50,
+  visionRange: 60,
   brushRadius: 50,
   showLabels: true,
   layerVisibility: { terrain: true, object: true, token: true },
@@ -21,6 +24,9 @@ const mapStoreMock = vi.hoisted(() => ({
 
 const mapSessionMock = vi.hoisted(() => ({
   vttEnabled: true,
+  gridDistance: 6,
+  gridUnit: "mi",
+  allTokens: [] as Array<{ isVisionSource?: boolean }>,
   showGridSettings: false,
   activeLayer: "terrain",
   measurement: {
@@ -66,8 +72,12 @@ describe("MapVTTControlsHUD", () => {
     mapStoreMock.isGMMode = true;
     mapStoreMock.showFog = true;
     mapStoreMock.showGrid = false;
+    mapStoreMock.gridType = "square";
+    mapStoreMock.visionRange = 60;
     mapStoreMock.showLabels = true;
     mapSessionMock.vttEnabled = true;
+    mapSessionMock.gridDistance = 6;
+    mapSessionMock.allTokens = [];
     layoutUIStore.isMobile = false;
     mapControlsUIStore.open = false;
     mapControlsUIStore.maximized = false;
@@ -108,9 +118,26 @@ describe("MapVTTControlsHUD", () => {
       expect(
         container.querySelector('[data-help-target="vtt-solo-fog-toggle"]'),
       ).toBe(solo);
+      expect(solo.getAttribute("aria-describedby")).toBe(
+        "solo-fog-description",
+      );
+      expect(solo.getAttribute("title")).toContain(
+        "Fogged areas stay completely hidden",
+      );
+      solo.focus();
+      expect(
+        document.getElementById("solo-fog-description")?.textContent,
+      ).toContain("Turn fog on first");
 
       await fireEvent.click(solo);
       expect(mapStoreMock.soloFog).toBe(true);
+    });
+
+    it("keeps SOLO available when phone controls are open", () => {
+      layoutUIStore.isMobile = true;
+      mapControlsUIStore.open = true;
+      render(MapVTTControlsHUD, { props: { chatSidebarOffset: "20rem" } });
+      expect(screen.getByRole("button", { name: "SOLO: OFF" })).toBeTruthy();
     });
 
     it("is not offered while fog is off", () => {
@@ -144,6 +171,29 @@ describe("MapVTTControlsHUD", () => {
         container.querySelector(`[data-help-target="${target}"]`),
       ).not.toBeNull();
     }
+  });
+
+  it("sets vision in whole hexes on hex maps and keeps square units unchanged", async () => {
+    mapStoreMock.showGrid = true;
+    mapStoreMock.gridType = "hex-pointy";
+    mapStoreMock.visionRange = 12;
+    const { unmount } = render(MapVTTControlsHUD, {
+      props: { chatSidebarOffset: "20rem" },
+    });
+    expect(screen.getByText("Vision: 2 hexes")).toBeTruthy();
+    const slider = screen.getByRole("slider", {
+      name: "Vision range in hexes",
+    }) as HTMLInputElement;
+    expect(slider.min).toBe("0");
+    expect(slider.max).toBe("10");
+    expect(slider.step).toBe("1");
+    await fireEvent.input(slider, { target: { value: "3" } });
+    expect(mapStoreMock.visionRange).toBe(18);
+
+    unmount();
+    mapStoreMock.gridType = "square";
+    render(MapVTTControlsHUD, { props: { chatSidebarOffset: "20rem" } });
+    expect(screen.getByLabelText("Vision range")).toBeTruthy();
   });
 
   it("leaves the GM-only targets out of a player's view", () => {

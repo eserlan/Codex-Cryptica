@@ -7,6 +7,7 @@ import {
   moveEntry,
   renameSection,
   startOrResumeJournal,
+  setCaptureMapMoves,
   updateEntryContent,
   validateSectionName,
 } from "../src/engine";
@@ -49,6 +50,23 @@ const entry = (
 
 const journalWithEntries = (entries: JournalEntry[]): SessionJournal =>
   activeJournal({ entries });
+
+describe("setCaptureMapMoves", () => {
+  it("defaults legacy journals on and supports toggling both ways", () => {
+    const journal = activeJournal();
+    expect(journal.captureMapMoves ?? true).toBe(true);
+    expect(setCaptureMapMoves(journal, false).captureMapMoves).toBe(false);
+    expect(
+      setCaptureMapMoves({ ...journal, captureMapMoves: false }, true)
+        .captureMapMoves,
+    ).toBe(true);
+  });
+
+  it("leaves an ended journal unchanged", () => {
+    const ended = activeJournal({ status: "ended", captureMapMoves: false });
+    expect(setCaptureMapMoves(ended, true)).toBe(ended);
+  });
+});
 
 describe("startOrResumeJournal", () => {
   it("creates a new active journal when none exists", () => {

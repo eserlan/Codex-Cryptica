@@ -5,6 +5,7 @@ import {
   describeMoveBlocked,
   getKeyboardViewportUpdate,
   getMapDisplayDimensions,
+  visionRevealSignature,
   getZoomViewportUpdate,
   isClickGesture,
   resolveHealthBar,
@@ -68,6 +69,42 @@ describe("describeMoveBlocked", () => {
 });
 
 describe("map-view helpers", () => {
+  it("retries vision reveal when the map image or fog mask becomes available", () => {
+    const context = [
+      30,
+      5,
+      64,
+      "hex-pointy",
+      true,
+      true,
+      false,
+      "map-1",
+      true,
+      true,
+    ] as const;
+    const withoutAssets = visionRevealSignature(
+      [{ id: "party", x: 10, y: 20 }],
+      ...context,
+      false,
+      false,
+    );
+    const withMask = visionRevealSignature(
+      [{ id: "party", x: 10, y: 20 }],
+      ...context,
+      true,
+      false,
+    );
+    const withImage = visionRevealSignature(
+      [{ id: "party", x: 10, y: 20 }],
+      ...context,
+      true,
+      true,
+    );
+
+    expect(withMask).not.toBe(withoutAssets);
+    expect(withImage).not.toBe(withMask);
+  });
+
   it("findClickedPin should return a pin within range", () => {
     const pins = [
       { id: "1", coordinates: { x: 10, y: 10 } },

@@ -20,6 +20,45 @@ export const JOURNAL_CAPTURE_LIMITS = {
   sourceRefBytes: 4_096,
 } as const;
 
+export interface MapMoveCapture {
+  mapId: string;
+  toHex: { q: number; r: number } | null;
+  hexes: number | null;
+  distance: number;
+  unit: string;
+  revealed: number;
+  showCoordinates?: boolean;
+}
+
+/** Builds a local, name-free Session Journal capture for one completed move. */
+export function formatMapMove(move: MapMoveCapture): JournalCapturePayload {
+  const hexText =
+    move.hexes === null
+      ? ""
+      : `${move.hexes} ${move.hexes === 1 ? "hex" : "hexes"}`;
+  const coordinate =
+    move.toHex && move.showCoordinates
+      ? ` to ${String(move.toHex.q).padStart(2, "0")}.${String(move.toHex.r).padStart(2, "0")}`
+      : "";
+  const revealText =
+    move.revealed > 0 ? `, revealing ${move.revealed} new hexes` : "";
+  const movement = hexText
+    ? `${hexText} (${move.distance} ${move.unit})`
+    : `${move.distance} ${move.unit}`;
+  return {
+    entryType: "map-move",
+    content: `Moved ${movement}${coordinate}${revealText}.`,
+    sourceRef: {
+      mapId: move.mapId,
+      toHex: move.showCoordinates ? move.toHex : null,
+      hexes: move.hexes,
+      distance: move.distance,
+      unit: move.unit,
+      revealed: move.revealed,
+    },
+  };
+}
+
 /**
  * The fields the engine reads from a recorded result. Structural, so the
  * engine depends on no app or dice-engine type.

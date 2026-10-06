@@ -36,17 +36,4 @@ Changes are saved with the map, can be undone with `Ctrl` + `Z`, and are sent to
 
 ## Playing solo
 
-When you are both GM and player, you want the map to look the way a player sees it, with hidden areas truly hidden, while you keep the GM's tools to reveal more as you explore.
-
-Use **SOLO**:
-
-1. Turn **FOG: ON** in the map bar.
-2. Turn **SOLO: ON**. Fogged areas now hide the map completely, just as they do for players, and also hide pin labels in those areas.
-3. Explore. Reveal as you go with `Alt` + drag, or right-click a single hex and choose **Reveal hex**. Tokens marked **Vision Source (PC)** clear the fog around them as they move.
-4. Hide an area again with `Alt` + `Shift` + drag or **Hide hex**.
-
-You stay in GM view the whole time, so every GM control keeps working, including moving any token. **SOLO** only changes how the fog looks on your screen. It is remembered for each map on this device, and it does not change what connected players see. Turn it off to see the whole map under a light fog again.
-
-**PLAYER VIEW** is different: it previews what players see and turns the GM controls off, so you cannot reveal or hide anything there. For solo play, use **SOLO** instead.
-
-Tokens you hid from players are still shown to you once their area is revealed, because as the GM you placed them.
+For the full guide to concealment, revealing by moving your party, travel totals, undo and Session Journal capture, see [Solo Map Play](/help#help/vtt-solo-play). In short, turn on **FOG** and then **SOLO**. You stay in GM view with every tool, while fogged areas stay hidden until revealed. **PLAYER VIEW** remains a separate preview that turns GM controls off.
