@@ -57,11 +57,8 @@ import {
   handleCloudBackupDelta,
   handleGetCloudBackupAsset,
   handleDeleteCloudBackup,
-  handleCloudBackupAdminLookup,
-  handleCloudBackupAdminStats,
-  handleCloudBackupReissueCode,
-  handleCloudBackupAdminDelete,
 } from "./cloud-backup";
+import {} from "./cloud-backup-admin";
 import {
   handleCreateGeneratorShare,
   handleDeleteGeneratorShare,
