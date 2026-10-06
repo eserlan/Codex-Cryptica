@@ -39,6 +39,7 @@ export interface MapInteractionHandlers {
 
 export type MapInteractionHandlerOverrides = Partial<MapInteractionHandlers> & {
   broadcastFogSync?: () => unknown;
+  onMoveSettled?: (tokenIds: string[]) => void;
 };
 
 export function createMapInteractionHandlers(
@@ -67,7 +68,10 @@ export function createMapInteractionHandlers(
     tokenSelection,
     tokenDrag:
       overrides.tokenDrag ??
-      new TokenDragHandler(createTokenDragDependencies()),
+      new TokenDragHandler({
+        ...createTokenDragDependencies(),
+        onMoveSettled: overrides.onMoveSettled,
+      }),
     tokenRotation:
       overrides.tokenRotation ??
       new TokenRotationHandler(createTokenRotationDependencies()),

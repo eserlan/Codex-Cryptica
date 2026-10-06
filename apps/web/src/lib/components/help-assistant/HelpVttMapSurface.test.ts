@@ -56,6 +56,8 @@ beforeEach(() => {
   mocks.mapStore.activeMap = { id: "map-1" };
   mocks.mapStore.isGMMode = true;
   mocks.mapStore.gridType = "hex-pointy";
+  mocks.mapStore.showFog = true;
+  mocks.mapStore.soloFog = false;
   mocks.mapSession.vttEnabled = true;
   mocks.mapSession.selection = "t1";
   mocks.mapSession.tokens = { t1: { id: "t1", entityId: "e1" } };
@@ -156,9 +158,22 @@ describe("HelpVttMapSurface", () => {
 
   it("reports the GM previewing Player View", () => {
     mocks.session.sharedMode = true;
+    mocks.mapStore.soloFog = true;
     render(HelpVttMapSurface);
 
-    expect(facts()).toMatchObject({ playerView: true, layer: null });
+    expect(facts()).toMatchObject({
+      playerView: true,
+      layer: null,
+      soloFog: false,
+    });
+  });
+
+  it("does not report the GM's solo fog setting to a guest", () => {
+    mocks.session.isGuestMode = true;
+    mocks.mapStore.soloFog = true;
+    render(HelpVttMapSurface);
+
+    expect(facts().soloFog).toBe(false);
   });
 
   it("stops reporting when the map screen goes away", () => {

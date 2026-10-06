@@ -85,6 +85,11 @@ const bundle = buildBundle({
       "## vtt-fog-player-view\nAbout vtt-fog-player-view.",
     ),
     article(
+      "vtt-solo-play",
+      "vtt-solo-play",
+      "## vtt-solo-play\nExplore a fogged map alone. Turn fog and solo on. Move the party to reveal hexes, track travel, undo moves, and record them in the Session Journal.",
+    ),
+    article(
       "vtt-grids-measurement",
       "vtt-grids-measurement",
       "## vtt-grids-measurement\nAbout vtt-grids-measurement.",

@@ -84,6 +84,29 @@ describe("buildPromotion — entry", () => {
     expect(r.ok && r.content).toBe("Dice roll — Rolled 2d6+3: 9");
   });
 
+  it("promotes map moves as ordinary automatic entries without source internals", () => {
+    const r = build(
+      { kind: "entry", entryId: "move" },
+      journal({
+        entries: [
+          entry("move", 40, "Moved 1 hex (6 mi) to 04.07.", {
+            type: "map-move",
+            sourceRef: {
+              mapId: "secret-map-id",
+              toHex: { q: 4, r: 7 },
+              distance: 6,
+            },
+          }),
+        ],
+      }),
+    );
+    expect(r.ok && r.content).toBe(
+      "Automatic entry — Moved 1 hex (6 mi) to 04.07.",
+    );
+    expect(r.ok && r.content).not.toContain("sourceRef");
+    expect(r.ok && r.content).not.toContain("secret-map-id");
+  });
+
   it("strips basic Markdown markers from the derived title (#3481)", () => {
     const j = journal({
       entries: [entry("e1", 10, "**Found a key** in the *drowned crypt*")],

@@ -85,6 +85,24 @@ function names(values: string[]): string {
 
 const filled = (value: string) => value.trim().length > 0;
 
+/** Maps each item to a value and keeps the non-empty ones, in a single pass. */
+function present<T>(items: readonly T[], pick: (item: T) => string): string[] {
+  const values: string[] = [];
+  for (const item of items) {
+    const value = pick(item);
+    if (value) values.push(value);
+  }
+  return values;
+}
+
+function countFilled(prep: SessionPrep): number {
+  let count = 0;
+  for (const key of CONSEQUENCE_KEYS) {
+    if (filled(prep.consequences[key])) count++;
+  }
+  return count;
+}
+
 /** One line describing what a step holds, for the collapsed adjust view. */
 export function previewSessionPrepStep(
   prep: SessionPrep,
@@ -96,19 +114,15 @@ export function previewSessionPrepStep(
     case "pressure":
       return clip(prep[step]);
     case "people":
-      return names(prep.people.map((p) => p.name.trim()).filter(Boolean));
+      return names(present(prep.people, (p) => p.name.trim()));
     case "places":
-      return names(prep.places.map((p) => p.name.trim()).filter(Boolean));
+      return names(present(prep.places, (p) => p.name.trim()));
     case "information":
-      return names(
-        prep.information.map((clue) => clip(clue.fact)).filter(Boolean),
-      );
+      return names(present(prep.information, (clue) => clip(clue.fact)));
     case "complications":
     case "reserve":
-      return names(prep[step].map((note) => clip(note.text)).filter(Boolean));
+      return names(present(prep[step], (note) => clip(note.text)));
     case "consequences":
-      return `${
-        CONSEQUENCE_KEYS.filter((key) => filled(prep.consequences[key])).length
-      } of ${CONSEQUENCE_KEYS.length} outcomes`;
+      return `${countFilled(prep)} of ${CONSEQUENCE_KEYS.length} outcomes`;
   }
 }

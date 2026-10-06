@@ -77,7 +77,20 @@ export const PHASE_A_IN_SCOPE: InScopeQuestion[] = [
     "vtt-tokens",
   ]),
   q("map", "tune", "map", "How do I measure distance on the map?", [
-    "vtt-session",
+    "vtt-grids-measurement",
+  ]),
+  q("map", "tune", "map", "How do I play this map solo?", ["vtt-solo-play"]),
+  q("map", "holdout", "map", "How do I explore a hexcrawl on my own?", [
+    "vtt-solo-play",
+  ]),
+  q("map", "holdout", "map", "Why can't I see anything on my map?", [
+    "vtt-solo-play",
+  ]),
+  q("map", "holdout", "map", "How far has my party travelled?", [
+    "vtt-solo-play",
+  ]),
+  q("map", "holdout", "map", "Can moves go into my session journal?", [
+    "vtt-solo-play",
   ]),
   q("map", "holdout", "map", "How do I add a character to initiative?", [
     "vtt-combat-initiative",

@@ -50,6 +50,16 @@ export function startOrResumeJournal(
   };
 }
 
+/** Toggles map-move capture without reopening a completed journal. */
+export function setCaptureMapMoves(
+  journal: SessionJournal,
+  on: boolean,
+): SessionJournal {
+  return journal.status === "ended"
+    ? journal
+    : { ...journal, captureMapMoves: on };
+}
+
 export type AppendEntryResult =
   | { ok: true; journal: SessionJournal; entry: JournalEntry }
   | { ok: false; error: string };
