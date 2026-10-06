@@ -9,7 +9,10 @@ import { featureMatchesScreen } from "../registry/matches-screen";
 // this keeps questions about unsupported integrations (for example exporting
 // directly to Roll20) from being treated as answerable by backup guidance,
 // while preserving the documented Group by Category troubleshooting query.
-export const MIN_RELEVANCE = 0.302;
+// Raised from 0.302 when the VTT help grew: more articles make words the
+// corpus lacks (such as "export") count for more, which lifted that Roll20
+// near-miss just over the old floor.
+export const MIN_RELEVANCE = 0.308;
 
 /** Score given to context-matching registry chunks for "what can I do here?" questions. */
 export const CONTEXT_ONLY_SCORE = 0.35;
