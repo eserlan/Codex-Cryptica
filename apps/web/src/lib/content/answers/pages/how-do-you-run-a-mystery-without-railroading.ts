@@ -141,6 +141,7 @@ export const howDoYouRunAMysteryWithoutRailroading: AnswerConfigInput = {
     "how-do-i-make-interviewing-npcs-interesting-in-an-investigation",
     "how-do-i-handle-players-asking-an-npc-to-tell-us-everything-you-know",
     "how-do-i-handle-divination-magic-without-letting-one-character-solve-every-mystery",
+    "how-do-i-prepare-a-dnd-session",
   ],
   discovery: {
     id: "answer-run-mystery-without-railroading",
