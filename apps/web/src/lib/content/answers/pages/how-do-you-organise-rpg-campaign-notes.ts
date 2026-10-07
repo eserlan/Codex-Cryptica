@@ -159,6 +159,7 @@ export const howDoYouOrganiseRpgCampaignNotes: AnswerConfigInput = {
     "how-much-campaign-lore-should-players-be-expected-to-remember",
     "how-do-i-organise-gm-notes-for-in-person-play",
     "how-do-i-take-useful-rpg-notes-during-play",
+    "how-do-i-start-a-dnd-campaign",
   ],
   discovery: {
     id: "answer-campaign-notes",
