@@ -286,3 +286,9 @@
 **Learning:** Svelte 5 components generating list items (like Calendar Eras) often hardcode `crypto.randomUUID()`. This makes testing deterministic ID generation difficult. Injecting `idGenerator` avoids Vitest global pollution and creates a clean test boundary.
 
 **Action:** Identified hardcoded `crypto.randomUUID()` in `CalendarEraSettings.svelte`. Used Svelte 5 `$props()` to inject an `idGenerator` with `systemIdGenerator` from `@codex/runtime` as the default.
+
+## 2024-10-07 - Injected Clock into Canvas Area Enhancement
+
+**Learning:** Extracted `Date.now()` into an injected `clock: Clock = systemClock` dependency in Svelte component hooks (`useCanvasAreaEnhancement`), avoiding hard-coded temporal state and making tests deterministic.
+
+**Action:** Look for `Date.now()` hidden in component hooks or metadata persistence logic, and inject a `Clock` parameter defaulting to `systemClock` from `@codex/runtime` (or `$lib/utils/runtime-deps`) to improve testability.
