@@ -2,7 +2,7 @@
 
 Issue: [#3876](https://github.com/eserlan/Codex-Cryptica/issues/3876)  
 Branch: `feat/3876-explore-topic-section`  
-Status: Planned; implementation has not started.
+Status: Implemented; [PR #3877](https://github.com/eserlan/Codex-Cryptica/pull/3877) is open for review.
 
 ## Goal
 
@@ -20,7 +20,7 @@ Insert **Browse by Topic** immediately after **Find Your Setup** and before **Le
 | ------------------- | -------------------- | ----------------------- |
 | Heists              | `/topics/heists`     | `icon-[lucide--lock]`   |
 | Puzzles             | `/topics/puzzles`    | `icon-[lucide--puzzle]` |
-| Pirates & High Seas | `/topics/pirates`    | `icon-[lucide--ship]`   |
+| Pirates & High-Seas | `/topics/pirates`    | `icon-[lucide--ship]`   |
 | Running D&D         | `/topics/dnd`        | `icon-[lucide--swords]` |
 
 Preserve the current card summaries and order. Each topic destination appears once in the default directory. Learn retains its general resources, including Answers, Devlog, Responsible AI, Import & Migrate, Castle Floorplans and My Stuff.
@@ -35,14 +35,14 @@ Preserve the current card summaries and order. Each topic destination appears on
 
 ## Implementation steps
 
-- [ ] Add focused route coverage in `explore.route.test.ts` for the Browse by Topic heading, description, placement and four destinations. Scope assertions to their containing sections and require one link per topic in the directory, with none remaining in Learn.
-- [ ] Cover the meaningful alternate paths: a label view must not render the directory section; a non-empty search hides the directory, and clearing it restores Browse by Topic. Extend the existing route and search tests rather than adding a second testing abstraction.
-- [ ] Move the four topic card objects from Learn into the new section in `explore-sections.ts`. Shorten their titles to the agreed labels while retaining summaries, icons and URLs.
-- [ ] Update the default directory description in `+page.svelte` to include topics. Suggested final copy: “Every section of Codex Cryptica in one place: features, worlds, examples, generators, tools, topics, guides, and the campaign directory.” Update the existing metadata assertion accordingly.
-- [ ] Add a brief task-focused description to the existing `getting-started` Help entry in `apps/web/src/lib/config/help-content.ts`: explain that Explore is available from the app footer or mobile menu, and that Browse by Topic leads to guides, examples and tools for a chosen subject. Verify those navigation entry points before finalising the wording.
-- [ ] Check the rendered directory at mobile and desktop widths, including keyboard navigation and heading order. Reuse the existing layout without introducing CSS, dependencies, imagery or a new component unless a concrete rendering problem requires it.
-- [ ] Run the implementation validation below and address concrete findings.
-- [ ] Commit the implementation, push the feature branch and open a ready-for-review PR to `staging` that closes #3876.
+- [x] Add focused route coverage in `explore.route.test.ts` for the Browse by Topic heading, description, placement and four destinations. Scope assertions to their containing sections and require one link per topic in the directory, with none remaining in Learn.
+- [x] Cover the meaningful alternate paths: a label view must not render the directory section; a non-empty search hides the directory, and clearing it restores Browse by Topic. Extend the existing route and search tests rather than adding a second testing abstraction.
+- [x] Move the four topic card objects from Learn into the new section in `explore-sections.ts`. Shorten their titles to the agreed labels while retaining summaries, icons and URLs.
+- [x] Update the default directory description in `+page.svelte` to include topics. Suggested final copy: “Every section of Codex Cryptica in one place: features, worlds, examples, generators, tools, topics, guides, and the campaign directory.” Update the existing metadata assertion accordingly.
+- [x] Add a brief task-focused description to the existing `getting-started` Help entry in `apps/web/src/lib/config/help-content.ts`: explain that Explore is available from the app footer or mobile menu, and that Browse by Topic leads to guides, examples and tools for a chosen subject. Verify those navigation entry points before finalising the wording.
+- [x] Check the rendered directory at mobile and desktop widths, including keyboard navigation and heading order. Reuse the existing layout without introducing CSS, dependencies, imagery or a new component unless a concrete rendering problem requires it.
+- [x] Run the implementation validation below and address concrete findings.
+- [x] Commit the implementation, push the feature branch and open a ready-for-review PR to `staging` that closes #3876.
 
 ## Constitution and style check
 
@@ -65,4 +65,4 @@ Run only validation affected by the implementation:
 6. Before each commit or push, run `bunx fallow audit --format json --quiet --explain --gate-marker agent` and resolve blocking introduced findings.
 7. In a real browser, check `/explore` at approximately 390px and 1280px widths: section order, readable card titles, working topic links, visible keyboard focus, search-and-clear behaviour, and `/explore?label=pirate` retaining its results view.
 
-Planning this change does not run application tests or implement these steps. The implementation is complete when all four topics appear exactly once in their new section, the alternate directory views still work, Help guidance is available, and the focused validation passes.
+All implementation steps are complete. PR #3877 is open for review; it closes #3876 when merged.
