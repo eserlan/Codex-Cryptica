@@ -101,6 +101,7 @@ describe("MapStore settings persistence", () => {
     store.gridOffsetX = 12;
     store.gridOffsetY = -8;
     store.gridColor = "#fbbf24";
+    store.fogColor = "#223344";
     store.showLabels = true;
 
     await waitFor(() => {
@@ -117,6 +118,7 @@ describe("MapStore settings persistence", () => {
         gridOffsetX: 12,
         gridOffsetY: -8,
         gridColor: "#fbbf24",
+        fogColor: "#223344",
         showLabels: true,
         visionMode: "party",
         visionRange: 60,
@@ -260,6 +262,24 @@ describe("MapStore settings persistence", () => {
     expect(store.gridSize).toBe(80);
     expect(store.gridColor).toBe(null);
     expect(store.showLabels).toBe(false);
+  });
+
+  it("restores the fog colour per map and falls back to the theme colour", () => {
+    window.localStorage.setItem(
+      "codex-map-settings:map-a",
+      JSON.stringify({ fogColor: "#112233" }),
+    );
+    window.localStorage.setItem(
+      "codex-map-settings:map-b",
+      JSON.stringify({ showFog: true, fogColor: 42 }),
+    );
+
+    const store = new MapStore();
+
+    store.selectMap("map-a");
+    expect(store.fogColor).toBe("#112233");
+    store.selectMap("map-b");
+    expect(store.fogColor).toBeNull();
   });
 
   it("persists a layer visibility/lock toggle and restores it later", async () => {

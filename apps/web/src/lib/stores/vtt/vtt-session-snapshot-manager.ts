@@ -59,6 +59,8 @@ export interface VTTSessionSnapshotManagerDependencies {
   setGridType: (value: "square" | "hex-pointy" | "hex-flat") => void;
   getShowHexCoordinates: () => boolean;
   setShowHexCoordinates: (value: boolean) => void;
+  getFogColor: () => string | null;
+  setFogColor: (value: string | null) => void;
   getGridUnit: () => string;
   setGridUnit: (value: string) => void;
   getGridDistance: () => number;
@@ -103,6 +105,7 @@ export class VTTSessionSnapshotManager {
       gridSize: this.deps.getGridSize(),
       gridType: this.deps.getGridType(),
       showHexCoordinates: this.deps.getShowHexCoordinates(),
+      fogColor: this.deps.getFogColor(),
       gridUnit: this.deps.getGridUnit(),
       gridDistance: this.deps.getGridDistance(),
       tileDecks: this.deps.getTileDecks().map((deck) => ({
@@ -160,6 +163,12 @@ export class VTTSessionSnapshotManager {
       normalized.mapId === this.deps.getActiveMapId()
     ) {
       this.deps.setShowHexCoordinates(normalized.showHexCoordinates);
+    }
+    if (
+      normalized.fogColor !== undefined &&
+      normalized.mapId === this.deps.getActiveMapId()
+    ) {
+      this.deps.setFogColor(normalized.fogColor);
     }
     if (normalized.gridUnit !== undefined) {
       this.deps.setGridUnit(normalized.gridUnit);

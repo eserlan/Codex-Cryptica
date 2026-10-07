@@ -34,3 +34,7 @@ export function hexToRgb(hex: string): string {
   }
   return `${r}, ${g}, ${b}`;
 }
+
+/** True for a `#rrggbb` string; guards colours that arrive over the network. */
+export const isFogHex = (value: unknown): value is string =>
+  typeof value === "string" && /^#[0-9a-fA-F]{6}$/.test(value);

@@ -350,6 +350,10 @@ export function initializeMapSessionComposition(
     setShowHexCoordinates: (value) => {
       store.deps.mapStore.showHexCoordinates = value;
     },
+    getFogColor: () => store.deps.mapStore.fogColor,
+    setFogColor: (value) => {
+      store.deps.mapStore.fogColor = value;
+    },
     getGridUnit: () => store.gridManager.gridUnit,
     setGridUnit: (value) => {
       store.gridManager.gridUnit = value;
