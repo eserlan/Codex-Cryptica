@@ -281,7 +281,7 @@
 
 **Action:** When refactoring independent helper functions, append the `clock` dependency to the end of the argument list with a default value. In `waitFor`, compare elapsed time against `clock.now()` instead of `Date.now()`.
 
-## 2024-05-18 - Inject IdGenerator into CalendarEraSettings
+## 2026-10-07 - Inject IdGenerator into CalendarEraSettings
 
 **Learning:** Svelte 5 components generating list items (like Calendar Eras) often hardcode `crypto.randomUUID()`. This makes testing deterministic ID generation difficult. Injecting `idGenerator` avoids Vitest global pollution and creates a clean test boundary.
 

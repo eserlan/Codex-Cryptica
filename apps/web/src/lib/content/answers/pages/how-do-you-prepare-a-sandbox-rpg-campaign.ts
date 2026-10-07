@@ -172,6 +172,7 @@ export const howDoYouPrepareASandboxRpgCampaign: AnswerConfigInput = {
     "how-do-i-run-exploration-in-a-huge-ruined-city",
     "how-do-i-run-ship-to-ship-combat-without-sidelining-the-party",
     "how-do-i-make-a-campaign-threat-feel-urgent-without-railroading",
+    "how-do-i-start-a-dnd-campaign",
   ],
   discovery: {
     id: "answer-sandbox-campaign-prep",
