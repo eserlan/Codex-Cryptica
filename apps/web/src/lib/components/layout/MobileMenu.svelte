@@ -203,6 +203,7 @@
         >
           <span
             class="icon-[lucide--settings] w-5 h-5 text-theme-muted group-hover:text-theme-primary"
+            aria-hidden="true"
           ></span>
           <span
             class="font-mono text-sm font-bold text-theme-text group-hover:text-theme-primary"

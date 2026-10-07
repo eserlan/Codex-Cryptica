@@ -124,6 +124,7 @@
       <div class="hidden lg:block w-full relative group">
         <span
           class="absolute left-3 top-1/2 -translate-y-1/2 icon-[heroicons--magnifying-glass] w-4 h-4 text-chrome-muted group-focus-within:text-chrome-accent transition-colors"
+          aria-hidden="true"
         ></span>
         <input
           type="text"
