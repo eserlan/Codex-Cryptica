@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { focusTrap } from "$lib/actions/focusTrap";
   import { soloSessionStore } from "$lib/stores/solo-session-instance";
 
   type MapChoice = { id: string; name: string };
@@ -52,6 +53,8 @@
   }
 </script>
 
+<svelte:window onkeydown={onKeydown} />
+
 <div
   class="fixed inset-0 z-[90] flex items-center justify-center bg-black/50 p-4"
   role="presentation"
@@ -62,7 +65,7 @@
     aria-modal="true"
     aria-labelledby="solo-setup-title"
     tabindex="-1"
-    onkeydown={onKeydown}
+    use:focusTrap
   >
     <h2 id="solo-setup-title" class="font-header text-lg text-theme-text">
       Start Solo Session

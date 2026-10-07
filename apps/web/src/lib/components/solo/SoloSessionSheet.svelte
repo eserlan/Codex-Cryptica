@@ -1,14 +1,24 @@
 <script lang="ts">
+  import { onMount } from "svelte";
   import SoloQuickRoll from "./SoloQuickRoll.svelte";
   import SoloActions from "./SoloActions.svelte";
   import SoloSceneField from "./SoloSceneField.svelte";
 
   let { onclose }: { onclose: () => void } = $props();
+  let sheet: HTMLDivElement;
+
+  onMount(() => {
+    const trigger = document.activeElement as HTMLElement | null;
+    sheet.focus();
+    return () => trigger?.focus();
+  });
 
   function onKeydown(event: KeyboardEvent) {
     if (event.key === "Escape") onclose();
   }
 </script>
+
+<svelte:window onkeydown={onKeydown} />
 
 <div
   class="fixed inset-x-0 bottom-16 z-[80] flex max-h-[60dvh] flex-col gap-3 overflow-y-auto rounded-t-xl border-t border-theme-border bg-theme-surface p-4 shadow-2xl"
@@ -17,7 +27,7 @@
   aria-label="Solo session tools"
   tabindex="-1"
   data-testid="solo-sheet"
-  onkeydown={onKeydown}
+  bind:this={sheet}
 >
   <div class="flex items-center justify-between">
     <span class="font-header text-sm uppercase tracking-widest text-theme-text"

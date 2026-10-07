@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { focusTrap } from "$lib/actions/focusTrap";
   import { soloSessionStore } from "$lib/stores/solo-session-instance";
   import { notificationStore } from "$lib/stores/ui/notification.svelte";
 
@@ -34,6 +35,10 @@
   }
 </script>
 
+<svelte:window
+  onkeydown={soloSessionStore.journalRunning ? onKeydown : undefined}
+/>
+
 {#if soloSessionStore.journalRunning}
   <div
     class="fixed inset-0 z-[90] flex items-center justify-center bg-black/50 p-4"
@@ -44,7 +49,7 @@
       aria-modal="true"
       aria-labelledby="solo-end-title"
       tabindex="-1"
-      onkeydown={onKeydown}
+      use:focusTrap
     >
       <h2 id="solo-end-title" class="font-header text-lg text-theme-text">
         End solo session?

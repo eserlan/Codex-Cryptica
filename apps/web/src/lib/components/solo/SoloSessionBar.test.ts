@@ -245,9 +245,10 @@ describe("SoloSessionBar on phones", () => {
     env.layout.isMobile = true;
     render(SoloSessionBar);
     await fireEvent.click(screen.getByTestId("solo-bar-mobile-trigger"));
-    await fireEvent.keyDown(screen.getByTestId("solo-sheet"), {
-      key: "Escape",
-    });
+    await waitFor(() =>
+      expect(document.activeElement).toBe(screen.getByTestId("solo-sheet")),
+    );
+    await fireEvent.keyDown(window, { key: "Escape" });
     expect(screen.queryByTestId("solo-sheet")).toBeNull();
   });
 });

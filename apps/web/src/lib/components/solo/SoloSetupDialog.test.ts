@@ -123,9 +123,9 @@ describe("SoloSetupDialog", () => {
     expect(instance.soloSessionStore.start).not.toHaveBeenCalled();
   });
 
-  it("closes on Escape", async () => {
+  it("closes on Escape when focus is outside the dialog", async () => {
     const { onclose } = renderDialog();
-    await fireEvent.keyDown(screen.getByRole("dialog"), { key: "Escape" });
+    await fireEvent.keyDown(window, { key: "Escape" });
     expect(onclose).toHaveBeenCalled();
   });
 });

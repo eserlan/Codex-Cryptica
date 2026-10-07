@@ -60,6 +60,13 @@ describe("SoloEndDialog with a running journal", () => {
       expect(env.store.end).toHaveBeenCalledWith({ endJournal: true }),
     );
   });
+
+  it("closes on Escape when focus is outside the dialog", async () => {
+    const onclose = vi.fn();
+    render(SoloEndDialog, { props: { onclose } });
+    await fireEvent.keyDown(window, { key: "Escape" });
+    expect(onclose).toHaveBeenCalledTimes(1);
+  });
 });
 
 describe("SoloEndDialog without a running journal", () => {
