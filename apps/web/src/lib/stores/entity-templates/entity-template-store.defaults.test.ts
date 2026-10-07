@@ -57,13 +57,13 @@ describe("EntityTemplateStore: defaults", () => {
     const { store, vault } = makeStore();
     await store.loadForVault("v1", { vault });
     expect(store.effectiveDefaultFor("character")).toBe("builtin:character");
-    expect(store.resolveSync("character")).not.toContain("The Five Elements");
+    expect(store.resolveSync("character")).not.toContain("The Six Elements");
 
     await store.setDefault("character", "builtin:character:table-card");
     expect(store.effectiveDefaultFor("character")).toBe(
       "builtin:character:table-card",
     );
-    expect(store.resolveSync("character")).toContain("## The Five Elements");
+    expect(store.resolveSync("character")).toContain("## The Six Elements");
   });
 
   it("can duplicate Table Card into an editable copy", async () => {

@@ -68,12 +68,12 @@
     bind:value={mode}
     class={selectClass}
   >
-    <option value="table-card">Table Card (5-Element 60-Second Prep)</option>
+    <option value="table-card">Table Card (6-Element 60-Second Prep)</option>
     <option value="dossier">Full Dossier (Detailed Background)</option>
   </select>
   <p class="text-micro text-theme-text/60 leading-relaxed">
     Table cards provide immediate want, mannerism, contradiction, relationship
-    hook, and sensory tag.
+    hook, sensory tag, and knowledge & secrets.
   </p>
 </div>
 

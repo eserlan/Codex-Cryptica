@@ -1,5 +1,5 @@
 /**
- * Table-card (5-element memorable NPC anatomy) helpers for the public NPC
+ * Table-card (6-element memorable NPC anatomy) helpers for the public NPC
  * generator — AI system prompt variant and local-fallback rendering.
  *
  * Split out of `public-npc.ts` to keep that file focused on the shared
@@ -15,14 +15,14 @@ export function buildTableCardSystemInstruction(
   isDelve: boolean,
   sessionContext: string,
 ): string {
-  return `You are an expert RPG campaign writer specialising in ${voice}. You generate punchy, table-ready NPC reference cards in JSON format based on the 5-element memorable NPC anatomy (immediate want, physical mannerism, sharp contradiction, relationship hook, and sensory tag).${delvePromptInstruction}
+  return `You are an expert RPG campaign writer specialising in ${voice}. You generate punchy, table-ready NPC reference cards in JSON format based on the 6-element memorable NPC anatomy (immediate want, physical mannerism, sharp contradiction, relationship hook, sensory tag, and knowledge & secrets).${delvePromptInstruction}
 
 OUTPUT FORMAT — return ONLY a valid JSON object, no markdown fences:
 {
   "title": "NPC name (follow the naming directive in the user message)",
   "summary": "One punchy sentence capturing who this NPC is, their contradiction, and their immediate scene goal.",
-  "content": "Markdown. Use exactly these two section headers in order: '### The Five Elements' and '### Table Delivery'.\\n\\nUnder '### The Five Elements', include exactly these 5 bullet points with bold labels:\\n- **Immediate Want**: One concrete, urgent desire for this scene or from the party right now (tangible and immediate, e.g. 'Needs 40 lbs of bog-iron before Friday' or 'Needs someone expendable to deliver a sealed pouch across the river').\\n- **Physical Mannerism**: One observable physical habit, gesture, or vocal cadence the GM can easily portray without vocal strain.\\n- **Sharp Contradiction**: One trait, habit, or vulnerability that breaks archetype fatigue and directly contradicts their occupation or appearance.\\n- **Relationship Hook**: One active link of debt, family, rivalry, or faction allegiance tying them into the wider local world.\\n- **Sensory Tag**: One vivid sensory detail (scent, sound, or striking visual mark) that sticks in players' memory.\\n\\nUnder '### Table Delivery', provide 2-3 sentences explaining how to introduce them in thirty seconds of table dialogue.",
-  "lore": "Markdown. Use EXACTLY this structure with ### headers and '- **Label**: Value' list items:\\n### At a Glance\\n- **Ancestry**: race and background\\n- **Role**: what they do\\n- **Immediate Want**: urgent scene desire\\n- **Mannerism / Vocal Tell**: physical habit or speech cadence\\n- **Contradiction**: trait subverting archetype\\n- **Relationship Hook**: tie to faction, rival, or NPC\\n- **Sensory Tag**: scent, sound, or visual detail\\n- **Moral Stance**: behavioral anchor${isDelve ? "\\n### Alert & Lair Response\\n- **Stage 1 (Unaware)**: routine in lair\\n- **Stage 2 (Alerted)**: defensive response\\n- **Stage 3 (Lair Defense / Confrontation)**: combat or negotiation leverage" : ""}\\n### Faction Connection\\none sentence on their organisational ties or lack thereof",
+  "content": "Markdown. Use exactly these two section headers in order: '### The Six Elements' and '### Table Delivery'.\\n\\nUnder '### The Six Elements', include exactly these 6 bullet points with bold labels:\\n- **Immediate Want**: One concrete, urgent desire for this scene or from the party right now (tangible and immediate, e.g. 'Needs 40 lbs of bog-iron before Friday' or 'Needs someone expendable to deliver a sealed pouch across the river').\\n- **Physical Mannerism**: One observable physical habit, gesture, or vocal cadence the GM can easily portray without vocal strain.\\n- **Sharp Contradiction**: One trait, habit, or vulnerability that breaks archetype fatigue and directly contradicts their occupation or appearance.\\n- **Relationship Hook**: One active link of debt, family, rivalry, or faction allegiance tying them into the wider local world.\\n- **Sensory Tag**: One vivid sensory detail (scent, sound, or striking visual mark) that sticks in players' memory.\\n- **Knowledge & Secrets**: What they know, what they don't know, and what they're reluctant to reveal (distinguish known info, blind spots, and concealed secrets in 1-2 concise lines).\\n\\nUnder '### Table Delivery', provide 2-3 sentences explaining how to introduce them in thirty seconds of table dialogue.",
+  "lore": "Markdown. Use EXACTLY this structure with ### headers and '- **Label**: Value' list items:\\n### At a Glance\\n- **Ancestry**: race and background\\n- **Role**: what they do\\n- **Immediate Want**: urgent scene desire\\n- **Mannerism / Vocal Tell**: physical habit or speech cadence\\n- **Contradiction**: trait subverting archetype\\n- **Relationship Hook**: tie to faction, rival, or NPC\\n- **Sensory Tag**: scent, sound, or visual detail\\n- **Knowledge & Secrets**: what they know, don't know, and conceal\\n- **Moral Stance**: behavioral anchor${isDelve ? "\\n### Alert & Lair Response\\n- **Stage 1 (Unaware)**: routine in lair\\n- **Stage 2 (Alerted)**: defensive response\\n- **Stage 3 (Lair Defense / Confrontation)**: combat or negotiation leverage" : ""}\\n### Faction Connection\\none sentence on their organisational ties or lack thereof",
   "labels": [${isDelve ? '"delve-boss", "dungeon-npc", ' : ""}"2-4 lowercase labels describing their role and traits, plus 'table-card', 'rpg-character', 'npc-generator', 'imported-draft'"]
 }
 
@@ -30,9 +30,10 @@ QUALITY RULES:
 - Ground the NPC in playable surface cues rather than hidden backstory. Every element must be demonstrable in 60 seconds of dialogue.
 - The immediate want must be urgent and scene-level (something they demand or need from the party right now), not an abstract life ambition.
 - The contradiction must genuinely subvert their archetype or role.
+- Knowledge & Secrets must clearly distinguish known information, unknown information / blind spots, and information the NPC conceals or is reluctant to reveal.
 - ${NAME_BAN_PROMPT}
 ${sessionContext}
-- Silently check that all five elements are present and distinctive before finalising.`;
+- Silently check that all six elements are present and distinctive before finalising.`;
 }
 
 export interface TableCardLocalResult {
@@ -62,14 +63,16 @@ export function generateNpcTableCardLocal(
   const contradiction = resolved.contradiction ?? "";
   const relationshipHook = resolved.relationshipHook ?? "";
   const sensoryTag = resolved.sensoryTag ?? "";
+  const knowledgeSecrets = resolved.knowledgeSecrets ?? "";
   const { isDelve, delveSector, delveRelation, delveSecretTie } = delveContext;
 
-  const content = `### The Five Elements
+  const content = `### The Six Elements
 - **Immediate Want**: ${immediateWant}
 - **Physical Mannerism**: ${mannerism}
 - **Sharp Contradiction**: ${contradiction}
 - **Relationship Hook**: ${relationshipHook}
 - **Sensory Tag**: ${sensoryTag}
+- **Knowledge & Secrets**: ${knowledgeSecrets}
 
 ### Table Delivery
 Introduce ${name} through their sensory tell and mannerism before naming their immediate want. When the party probes their background or negotiates terms, reveal their internal contradiction to break archetype expectations.`;
@@ -90,6 +93,7 @@ ${theme ? `- **Theme / Genre**: ${theme}\n` : ""}- **Ancestry**: ${race}
 - **Contradiction**: ${contradiction}
 - **Relationship Hook**: ${relationshipHook}
 - **Sensory Tag**: ${sensoryTag}
+- **Knowledge & Secrets**: ${knowledgeSecrets}
 - **Moral Stance**: ${moralityLabel}${alertSection}
 
 ### Faction Connection
