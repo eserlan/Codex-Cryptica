@@ -82,4 +82,28 @@ export const topicEntries: DiscoveryEntryInput[] = [
     indexable: true,
     status: "live",
   },
+  {
+    id: "topic-dnd",
+    pageKind: "hub",
+    canonicalPath: "/topics/dnd",
+    primaryIntent: "help running dnd as a dungeon master",
+    intentAliases: [
+      "dnd dm help",
+      "dungeon master help hub",
+      "i am running dnd what do i need",
+      "dnd gm resources",
+    ],
+    audience: "Dungeon Masters running D&D",
+    userJob: "navigate",
+    uniqueValue:
+      "A task-first hub organised by what a D&D Dungeon Master is trying to do (start, prep, build, run, world-build, track), routing to existing system-neutral Answers, generators and the Session Prep Builder. It is a navigator, distinct from the product positioning of /for/dungeons-and-dragons.",
+    parentCluster: "system-guides",
+    relatedIntents: [
+      "for-dungeons-and-dragons",
+      "tools-session-prep-builder",
+      "answer-prepare-session-step-by-step",
+    ],
+    indexable: true,
+    status: "live",
+  },
 ];
