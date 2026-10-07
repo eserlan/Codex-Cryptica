@@ -33,11 +33,11 @@ describe("buildBuiltinTemplates", () => {
       expect(t.source).toBe("builtin");
     });
 
-    it("has the five elements and table delivery, with a summary line", () => {
+    it("has the six elements and table delivery, with a summary line", () => {
       const md = tableCard("workspace").markdown;
       for (const heading of [
         "## Summary",
-        "## The Five Elements",
+        "## The Six Elements",
         "## Table Delivery",
       ]) {
         expect(md).toContain(heading);
@@ -48,6 +48,7 @@ describe("buildBuiltinTemplates", () => {
         "Sharp Contradiction",
         "Relationship Hook",
         "Sensory Tag",
+        "Knowledge & Secrets",
       ]) {
         expect(md).toContain(`- **${label}**:`);
       }
