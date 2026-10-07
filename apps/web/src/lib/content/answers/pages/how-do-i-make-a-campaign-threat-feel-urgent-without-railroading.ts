@@ -302,6 +302,7 @@ export const howDoIMakeACampaignThreatFeelUrgentWithoutRailroading: AnswerConfig
       "how-do-you-create-a-fantasy-faction",
       "how-do-you-keep-track-of-npcs-in-a-long-campaign",
       "how-do-you-run-a-conspiracy-campaign",
+      "how-do-i-improvise-npcs-in-dnd",
     ],
     discovery: {
       id: "answer-campaign-threat-without-railroading",
