@@ -1,3 +1,4 @@
+import { untrack } from "svelte";
 import {
   createSoloSession,
   normaliseSceneName,
@@ -70,6 +71,15 @@ export class SoloSessionStore {
     this.deps.storageEvents.subscribe((key) => {
       const vaultId = this.deps.vaultId();
       if (vaultId && key === soloSessionKey(vaultId)) this.syncVault();
+    });
+
+    // The vault id is often unknown when the store is built, so follow it: a
+    // reload restores the session once the active vault has loaded.
+    $effect.root(() => {
+      $effect(() => {
+        this.deps.vaultId();
+        untrack(() => this.syncVault());
+      });
     });
   }
 

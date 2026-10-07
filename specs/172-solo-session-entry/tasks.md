@@ -394,8 +394,8 @@ No discovery-registry task: `/play` is an app route, not a discovery page (plan,
 - [x] T067 Run `bun run test:changed`, `bun run lint:changed`, and scoped type-checks for every workspace listed by `bun scripts/affected-workspaces.mjs` (for example `cd apps/web && bunx svelte-check --tsconfig ./tsconfig.json --threshold error`, and `bunx tsc --noEmit -p packages/solo-session-engine`). Fix everything to 0 errors.
 - [x] T068 Run `bunx fallow audit --format json --quiet --explain --gate-marker agent` and fix any `fail` findings, such as unused exports in the new package, unreached components or an import cycle between the solo store and the guard. Then check FR-031: a scan of the new and changed files for `fetch(`, `sendBeacon`, `XMLHttpRequest`, `WebSocket` and analytics or telemetry calls finds none.
 - [ ] T069 Walk through every scenario in [quickstart.md](./quickstart.md) in the dev app, on desktop and at phone width, with AI on and with AI off. Record any failure as a new task.
-- [ ] T070 Run the `codex-review` specialist review on the branch and resolve its findings (AGENTS.md PR quality gate).
-- [ ] T071 Open a ready-for-review PR to `staging` that references #3839 ("Phase 1 of #3839"; do not close it). Do not merge until the PR's CI lint and test jobs (`deploy.yml` on `pull_request`) are green; that is how Constitution VI.3 is met alongside the impacted-only local checks. After merge, redeploy the help Worker from `staging` (checkout and `TMPDIR` under `/home`, not `/tmp`), then promote with an explicit `staging_run_id`.
+- [x] T070 Run the `codex-review` specialist review on the branch and resolve its findings (AGENTS.md PR quality gate).
+- [x] T071 Open a ready-for-review PR to `staging` that references #3839 ("Phase 1 of #3839"; do not close it). Do not merge until the PR's CI lint and test jobs (`deploy.yml` on `pull_request`) are green; that is how Constitution VI.3 is met alongside the impacted-only local checks. After merge, redeploy the help Worker from `staging` (checkout and `TMPDIR` under `/home`, not `/tmp`), then promote with an explicit `staging_run_id`.
 
 ---
 
