@@ -113,6 +113,7 @@ export const howDoYouHelpPlayersRememberWhatHappenedInATtrpgCampaign: AnswerConf
       "how-do-you-manage-a-campaign-timeline-in-an-rpg",
       "how-do-i-take-useful-rpg-notes-during-play",
       "how-long-should-a-ttrpg-session-be",
+      "how-do-i-organise-a-dnd-campaign",
     ],
     discovery: {
       id: "answer-campaign-memory-hub",
