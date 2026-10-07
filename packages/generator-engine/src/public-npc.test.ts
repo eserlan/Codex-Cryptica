@@ -282,6 +282,23 @@ describe("Table Card (6-Element) NPC mode", () => {
     expect(out.labels).toContain("table-card");
   });
 
+  it("keeps local knowledge and secrets usable across genres", () => {
+    for (let seed = 0; seed < 30; seed++) {
+      const out = generateNpcLocal(
+        { theme: "Cyberpunk", role: "Street Fixer", mode: "table-card" },
+        seededRng(seed),
+      );
+      const knowledgeSecrets = out.content.match(
+        /- \*\*Knowledge & Secrets\*\*: (.+)/,
+      )?.[1];
+
+      expect(knowledgeSecrets).toBeTruthy();
+      expect(knowledgeSecrets).not.toMatch(
+        /\b(?:baron|archmage|apothecary|garrison|crown|royal)\b/i,
+      );
+    }
+  });
+
   it("builds an AI prompt tailored for the 6-element memorable NPC anatomy", () => {
     const { systemInstruction, resolved } = buildNpcPrompt(
       {

@@ -3,7 +3,7 @@ import type { ExampleConfigInput } from "../schema";
 /**
  * Source: #2757. Fills the other end of the 'character' kind spectrum from
  * Lady Vivienne Morvath (#2656): a condensed NPC Table Card roll from the
- * public NPC generator, table-ready in five elements instead of a dossier.
+ * public NPC generator, table-ready in six elements instead of a dossier.
  * Output reproduced verbatim.
  */
 export const nkiruOkafor: ExampleConfigInput = {
@@ -174,7 +174,7 @@ export const nkiruOkafor: ExampleConfigInput = {
     {
       title: "How do you make NPCs memorable without lots of prep?",
       description:
-        "The five-element approach behind Table Card mode: immediate want, mannerism, contradiction, relationship hook, sensory tag.",
+        "The six-element approach behind Table Card mode: immediate want, mannerism, contradiction, relationship hook, sensory tag, and knowledge & secrets.",
       href: "/answers/how-do-you-make-npcs-memorable-without-lots-of-prep",
     },
   ],
