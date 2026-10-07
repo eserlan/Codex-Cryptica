@@ -147,6 +147,7 @@ export const howDoYouStartWorldbuildingFromScratch: AnswerConfigInput = {
     "how-do-i-build-a-believable-constitutional-crisis-or-coup",
     "how-do-fantasy-cities-defend-against-flying-creatures-and-teleportation",
     "how-should-magic-have-been-discovered-in-my-world",
+    "how-do-i-start-a-dnd-campaign",
   ],
   discovery: {
     id: "answer-worldbuilding-from-scratch",

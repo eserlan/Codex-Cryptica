@@ -180,6 +180,7 @@ export const howDoIExpandASimpleRpgCampaignIdea: AnswerConfigInput = {
     "how-do-you-create-a-fantasy-city-that-feels-alive",
     "how-do-you-prepare-a-sandbox-rpg-campaign",
     "how-do-i-prepare-an-rpg-session-step-by-step",
+    "how-do-i-start-a-dnd-campaign",
   ],
   discovery: {
     id: "answer-expand-simple-rpg-campaign-idea",
