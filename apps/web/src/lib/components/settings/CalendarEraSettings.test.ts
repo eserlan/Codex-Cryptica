@@ -28,12 +28,15 @@ describe("CalendarEraSettings", () => {
   });
 
   it("adds a new era when ADD ERA button is clicked", async () => {
-    render(CalendarEraSettings);
+    render(CalendarEraSettings, {
+      props: { idGenerator: { uuid: () => "test-id" } },
+    });
     const addBtn = screen.getByTestId("add-era-btn");
     await fireEvent.click(addBtn);
 
     expect(calendarStore.setConfig).toHaveBeenCalled();
     expect(calendarStore.config.eras?.length).toBe(1);
+    expect(calendarStore.config.eras?.[0].id).toBe("test-id");
     expect(calendarStore.config.eras?.[0].name).toBe("Era 1");
     expect(calendarStore.config.eras?.[0].startYear).toBe(0);
   });

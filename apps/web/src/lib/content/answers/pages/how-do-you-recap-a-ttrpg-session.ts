@@ -133,6 +133,7 @@ export const howDoYouRecapATtrpgSession: AnswerConfigInput = {
     "how-do-i-organise-gm-notes-for-in-person-play",
     "how-do-i-take-useful-rpg-notes-during-play",
     "how-long-should-a-ttrpg-session-be",
+    "how-do-i-organise-a-dnd-campaign",
   ],
   discovery: {
     id: "answer-session-recap",

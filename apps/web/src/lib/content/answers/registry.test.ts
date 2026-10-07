@@ -72,6 +72,21 @@ describe("answer registry", () => {
     ).toBe("answer-faster-exciting-combat");
   });
 
+  it("describes the Session Prep Builder as hook-driven rather than vault-integrated", () => {
+    const answer = answers["how-do-i-organise-a-dnd-campaign"];
+    const builder = answer.relatedTools?.find(
+      (tool) => tool.href === "/tools/session-prep-builder",
+    );
+    const connection = answer.codexConnection?.paragraphs.join(" ") ?? "";
+
+    expect(builder?.description).toContain("Turn a hook or campaign situation");
+    expect(builder?.description).not.toMatch(
+      /pull(?:s)? .+ into one run sheet/i,
+    );
+    expect(connection).toContain("start with a hook or situation");
+    expect(connection).not.toMatch(/Builder pulls/i);
+  });
+
   it("keeps the civilisation capability habits heading aligned with its items", () => {
     const habits = answers[
       "how-do-i-give-different-civilisations-distinct-strengths-and-weaknesses"
@@ -437,6 +452,12 @@ describe("answer schema", () => {
 describe("published answers", () => {
   const published = getAllAnswers();
 
+  it("avoids banned synthetic phrasing in the D&D session-prep answer", () => {
+    const answer = answers["how-do-i-prepare-a-dnd-session"];
+
+    expect(JSON.stringify(answer)).not.toMatch(/\b(vital|leverage)\b/i);
+  });
+
   it("frames ruined-city routes as weighed trade-offs in the checklist", () => {
     const answer = answers["how-do-i-run-exploration-in-a-huge-ruined-city"];
     const checklist = answer.sections.find(
@@ -548,6 +569,18 @@ describe("published answers", () => {
     for (const answer of published) {
       expect(answer.relatedAnswers).not.toContain(answer.slug);
     }
+  });
+
+  it("does not duplicate the improvised NPC link on the broad NPC answer", () => {
+    const answer =
+      answers[
+        "how-do-i-handle-players-asking-an-npc-to-tell-us-everything-you-know"
+      ];
+
+    expect(answer.relatedAnswers).toContain("how-do-i-improvise-npcs-in-dnd");
+    expect(new Set(answer.relatedAnswers).size).toBe(
+      answer.relatedAnswers.length,
+    );
   });
 
   it("cross-links every answer to at least one other answer", () => {
