@@ -22,8 +22,8 @@ rank: 5
 Entity Reports collect information about chosen entities into a document preview. Start from any of these places:
 
 - **Canvas**: Choose **Generate report** in the canvas header. Pick **Entire canvas** to include its entity cards, or **Selected nodes only** to limit the report to selected cards. Canvas drawings and freehand annotations are not report content.
-- **Knowledge Graph**: Select the entities you want, then use the report action for that selection.
-- **Entity Table**: Select the entities you want, then use the report action for that selection.
+- **Knowledge Graph**: Select at least two entities, then use the report action for that selection.
+- **Entity Table**: Select at least two entities, then use the report action for that selection.
 
 The Graph and Table reports use the selected entities as their scope. Relationships are included only where they connect entities in that report scope. On Canvas, you can choose whether to include lines drawn between the selected cards as well as graph connections.
 
