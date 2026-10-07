@@ -8,7 +8,7 @@ export const howDoIOrganiseADndCampaign: AnswerConfigInput = {
     "How do I organise a D&D campaign and keep track of NPCs, factions and quests?",
   kind: "framework",
   shortAnswer:
-    "Organise a D&D campaign by things and relationships, not as one long document. Give every important NPC, location, faction, quest and item its own short page, link them with named connections, and keep three layers strictly separate: campaign canon for what is true in the world, a dated session journal for what happened at the table, and disposable prep for what might happen next. That split keeps abandoned ideas from becoming canon and makes the single fact you need during play findable in seconds.",
+    "Organise a D&D campaign by things and relationships, not as one long document. Promote an NPC, location, faction, quest or item to its own page when you expect to retrieve or update it independently. Keep world truth, what the party knows, session history and disposable prep distinct; that split keeps abandoned ideas from becoming canon and makes the fact you need during play easier to find.",
   sections: [
     {
       kind: "prose",
@@ -19,14 +19,21 @@ export const howDoIOrganiseADndCampaign: AnswerConfigInput = {
       ],
     },
     {
+      kind: "prose",
+      heading: "Follow the campaign as it grows",
+      paragraphs: [
+        "If you are starting from scratch, begin with [how to start a D&D campaign](/answers/how-do-i-start-a-dnd-campaign). Use this page as the cast, places and open threads grow, then move into [how to prepare a D&D session](/answers/how-do-i-prepare-a-dnd-session) when you are ready to turn the current situation into flexible table prep.",
+      ],
+    },
+    {
       kind: "list",
-      heading: "Seven useful categories, and nothing else until you need it",
+      heading: "Useful categories, and nothing else until you need it",
       intro:
-        "Start with these. Add a category only when you have three or more pages that clearly belong in it and nowhere else.",
+        "Start with these. Add a category only when it makes retrieval easier than leaving those pages in an existing category.",
       items: [
         {
           term: "Characters and NPCs",
-          text: "Every person the party might meet again, from the archmage to the innkeeper who knows the cellar route. One page per person, not one section of a cast list.",
+          text: "Promote a person when you expect to retrieve or update them independently: they are likely to matter again, affect a future choice, or connect to an open thread. A patron who spoke once can stay as a journal line until the party makes them important.",
         },
         {
           term: "Locations",
@@ -34,7 +41,7 @@ export const howDoIOrganiseADndCampaign: AnswerConfigInput = {
         },
         {
           term: "Factions",
-          text: "Guilds, cults, houses, knightly orders, trading companies, and any group that can want something and act on it between sessions. If only one person wants it, it is an NPC goal, not a faction.",
+          text: "Guilds, cults, houses, knightly orders and trading companies. Treat something as a faction when it can act as an organisation beyond one NPC's personal agenda: it has some shared identity or structure, members or agents, resources, and interests that can outlast an individual. A leader's goal may differ from the faction's.",
         },
         {
           term: "Quests and open threads",
@@ -46,7 +53,7 @@ export const howDoIOrganiseADndCampaign: AnswerConfigInput = {
         },
         {
           term: "Sessions and journal",
-          text: "A dated log of what actually happened at the table, in order, never rewritten. The journal is the historical record you reconcile from, not the place you look things up mid-session.",
+          text: "A dated log of what actually happened at the table. Do not rewrite old notes to match the current world; correct recording errors transparently and keep later reinterpretations separate. Use the journal as a historical fallback when the exact sequence or wording matters.",
         },
         {
           term: "Calendar and events",
@@ -56,25 +63,49 @@ export const howDoIOrganiseADndCampaign: AnswerConfigInput = {
     },
     {
       kind: "list",
-      heading: "Three layers that must not mix",
+      heading: "Keep world truth, knowledge, history and prep distinct",
       intro:
-        "The habit that prevents most continuity errors is keeping these apart, especially after prep does not go to plan.",
+        "Track truth separately from knowledge about the truth. You do not need four separate storage systems: a status, label or linked note can make the distinction clear.",
       items: [
         {
-          term: "Campaign canon",
-          text: "Facts that are true in the game world right now. Who rules the city, which inn was burned down, what the party has actually been told. Edited in place when the truth changes, and dated where a change matters.",
+          term: "World truth / GM truth",
+          text: "What is actually true now: who rules the city, which inn burned down, or who is behind the false identity. Keep secrets and unrevealed relationships GM-only when needed. Update current state when it changes; preserve important transitions in dated events or session history, which answers how it became true.",
+        },
+        {
+          term: "Party knowledge and claims",
+          text: "Record what the characters have established separately from world truth. A rumour, lie, incomplete explanation, mistaken witness account, propaganda or theory belongs as a claim with its source and status, not as settled fact. Mark what is party-known, secret or safe to share, especially before showing or sharing notes.",
         },
         {
           term: "Session history",
-          text: "What happened at the table, session by session. Decisions made, dice rolled, outcomes taken. Append-only: you do not rewrite a session log when later events change its meaning, you update the canon pages it affected.",
+          text: "What happened at the table, session by session: decisions made and outcomes taken. Current-state pages answer what is true now; the journal records how it became true and remains the fallback for exact history. Do not rewrite old notes to match later events.",
         },
         {
           term: "Prep",
-          text: "Possibilities for future play: scenes you might run, encounters you might use, dialogue you might need. Almost all of it will be abandoned, adapted, or overtaken by player choices. That is expected. Keep prep on pages you can delete without losing anything true about the world.",
+          text: "Possibilities for future play: situations, encounters or dialogue you might use. Almost all of it will be abandoned, adapted or overtaken by player choices. Keep prep on pages you can delete without losing anything true about the world.",
         },
       ],
       outro:
-        "When prep mixes with canon, an NPC you invented for a single encounter becomes a permanent resident by accident, and a plot you dropped still appears in every search. Deleting a prep page should never delete a fact about the world, and updating a canon page should never require rewriting history.",
+        "When prep mixes with current state, an NPC invented for one encounter becomes a permanent resident by accident, and a dropped plot still appears in every search. Deleting prep should not delete a world fact; changing current state should not erase the history of that change.",
+    },
+    {
+      kind: "list",
+      heading: "D&D continuity worth keeping",
+      intro:
+        "Do not duplicate the full character sheet. Track only character details that create campaign continuity, and only for the characters or developments where they matter.",
+      items: [
+        {
+          term: "Character hooks and ties",
+          text: "PC goals, unresolved backstory hooks, and relevant patrons, deities, oaths or faction ties that can bring the character back into the campaign.",
+        },
+        {
+          term: "Changing assets and effects",
+          text: "Important magic items and who currently holds them, plus lasting curses, boons or other campaign effects that may shape a future choice.",
+        },
+        {
+          term: "Long-running projects and threats",
+          text: "A stronghold, base or recurring downtime project; recurring villains and their current state; and milestone or level-related developments when your table uses them.",
+        },
+      ],
     },
     {
       kind: "prose",
@@ -82,18 +113,18 @@ export const howDoIOrganiseADndCampaign: AnswerConfigInput = {
       paragraphs: [
         "A folder of NPC pages answers who someone is. It does not answer how they connect to the rest of the campaign, and those connections are usually the fact you are trying to find mid-session. A list headed allies on each character page duplicates the same relationship twice, so after a betrayal one page is already wrong.",
         "Record relationships as single, directed links with a reason: who is connected to whom, in which direction, and why. One record, one place to edit, visible from either side. Innkeeper Mara works for the Silver Hart Inn, owes money to the Red Knives, knows Captain Venn, and is involved in the Missing Courier. Each of those is a separate link with its own direction, and changing one does not require editing four pages.",
-        "Start with the simplest label that still carries meaning. Works for, owes money to, reports to, distrusts, and involved in are all usable. Secrecy is worth marking where it matters, so the link can note whether the party knows about it yet. A short link you can read aloud beats a paragraph of backstory when the party asks Mara why she is nervous.",
+        "Start with the simplest label that still carries meaning: works for, owes money to, reports to, distrusts, or involved in. For relationships that matter to play, note whether they are current or ended, known or secret, and optionally when they began or changed. A relationship can be true for the GM while the party believes something else. You do not need this metadata on every link; use it when a change matters.",
       ],
     },
     {
       kind: "list",
       heading: "What deserves a page, and what can stay in the journal",
       intro:
-        "Not everything the party meets needs a page. Track something when it passes one of these tests.",
+        "Not everything the party meets needs a page. Promote something when you expect to retrieve or update it independently; these are useful signs it has earned that attention.",
       items: [
         {
-          term: "The players interacted with it",
-          text: "If they spoke to the NPC, entered the location, or took the item, it is now part of shared memory and will be asked about again.",
+          term: "It is likely to matter again",
+          text: "The party is likely to return to the location, deal with the NPC, or make a decision involving the item. A single interaction alone is not a reason to maintain a page.",
         },
         {
           term: "It can change future decisions",
@@ -113,13 +144,13 @@ export const howDoIOrganiseADndCampaign: AnswerConfigInput = {
         },
       ],
       outro:
-        "Minor colour that passes none of these tests can remain in the session journal as a line of atmosphere. Promote it to a page only if the party later treats it as important. Two sentences added after play are cheaper than a full page maintained for eight sessions on the chance it might matter.",
+        "Minor colour that passes none of these tests can remain in the journal as a line of atmosphere. Promote it if the party later treats it as important. A short note added after play is cheaper than maintaining a page for eight sessions on the chance it might matter.",
     },
     {
       kind: "list",
       heading: "The table-ready view should be smaller than the archive",
       intro:
-        "Your full campaign archive exists for retrieval between sessions. What you bring to the table is a narrow slice copied out of it, not the whole file with a search box.",
+        "Your full campaign archive exists for retrieval between sessions. Bring a narrow, table-ready view: surface or reference canonical facts, and duplicate only the short prompts you need for speed.",
       items: [
         {
           term: "Current location",
@@ -127,7 +158,7 @@ export const howDoIOrganiseADndCampaign: AnswerConfigInput = {
         },
         {
           term: "Active NPCs",
-          text: "Only the people who might plausibly appear tonight, each reduced to how they present, what they want, and one connection worth remembering. Two sentences each, not biographies.",
+          text: "Only people who may become relevant tonight. Keep the top of each page scannable enough to run the NPC cold: how they present, what they want, and the connection worth remembering. Put deeper history below it.",
         },
         {
           term: "Open threads",
@@ -138,8 +169,8 @@ export const howDoIOrganiseADndCampaign: AnswerConfigInput = {
           text: "What the relevant factions want right now, and the next concrete step they take if the party does nothing. One line per faction, visible consequences rather than abstract goals.",
         },
         {
-          term: "Likely scenes and encounters",
-          text: "Two or three scenes you expect to run, each with a single goal. Prep them as disposable pages you can throw away afterwards; only what becomes true gets promoted into canon.",
+          term: "Likely situations and complications",
+          text: "Locations likely to be visited, plausible encounters or complications, and NPCs likely to act. Prepare what may become relevant, not a sequence the players are expected to trigger. Keep it disposable; promote only what becomes true.",
         },
         {
           term: "Quick rules references",
@@ -147,7 +178,7 @@ export const howDoIOrganiseADndCampaign: AnswerConfigInput = {
         },
       ],
       outro:
-        "Assembling this by hand each week is the part that quietly fails when life gets busy. Bring the few relevant facts and links into one session prep sheet, rather than rebuilding the whole archive for every session.",
+        "Assembling this by hand each week is the part that quietly fails when life gets busy. Reference the few relevant facts and links on one session sheet rather than rebuilding the whole archive. After play, promote new facts back to their canonical pages.",
     },
     {
       kind: "example",
@@ -162,7 +193,7 @@ export const howDoIOrganiseADndCampaign: AnswerConfigInput = {
         },
         {
           term: "The things-and-relationships file",
-          text: "Each NPC, location, faction and quest has its own page. Mara's page says she works for the Silver Hart Inn, owes money to the Red Knives, knows Captain Venn, and is involved in the Missing Courier. The courier is its own quest page with a status and the last known location. The north road's current holder lives on the location page, current as of last session. Session logs still exist, but nothing is looked up from them during play.",
+          text: "Pages hold the people, places, factions and quests the DM expects to retrieve or update independently. Mara's page links her to the Silver Hart Inn, the Red Knives, Captain Venn and the Missing Courier. The courier thread has a status and last known location. The north road page says who controls it now; a dated event or journal entry records when and why control changed. Current-state pages answer most active-play questions, while the journal remains available when the exact history matters.",
         },
         {
           term: "Why it works",
@@ -174,24 +205,23 @@ export const howDoIOrganiseADndCampaign: AnswerConfigInput = {
       kind: "checklist",
       heading: "Setting up or tidying a D&D campaign this week",
       intro:
-        "Use this once to convert what you already have, then as a short pass after each session.",
+        "Use this once to convert what you already have, then as a short pass after each session. The maintenance loop is: capture → promote → update → close → archive.",
       items: [
-        "Create one page for each NPC the party has spoken to more than once, and keep it to two sentences you could read aloud cold.",
-        "Create one page for each location you have described on the table, with what is there now and who controls it.",
-        "Create one page per faction that has acted or been named, with what it wants and what it does next if ignored.",
-        "Promote every open quest or half-finished promise onto its own thread page, with its current status and who is waiting.",
-        "Replace ally and enemy lists with directed links that carry a reason, and note whether the party knows about each link.",
-        "Separate any prep material from canon pages so a deleted encounter cannot delete a fact about the world.",
-        "Copy tonight's material onto a single session sheet: location, active NPCs, open threads, immediate faction pressures, likely scenes, and the few rules you will actually look up.",
-        "After play, promote the handful of facts that became true out of the session log and into the pages they belong to, and delete the prep that did not happen.",
+        "Promote a person, place, faction, quest or item when you expect to retrieve or update it independently; leave one-off interactions in the journal until they matter again.",
+        "Separate GM truth from party knowledge and unverified claims; mark GM-only, party-known and safe-to-share information where it matters.",
+        "Keep current state on the relevant page and preserve important transitions as dated events or journal history.",
+        "Use named relationship links; mark current or ended, known or secret, and dates only when the change matters to play.",
+        "Keep prep separate from truth, and prepare likely situations rather than a sequence the players are expected to follow.",
+        "Surface or reference tonight's canonical NPC, location, faction and thread facts on the run sheet; duplicate only quick prompts you need at the table.",
+        "After play, capture what happened, promote what now matters, update current state and relationships, close resolved quests or promises, then archive or delete unused prep.",
       ],
     },
   ],
   codexConnection: {
     heading: "From things and relationships to table-ready prep",
     paragraphs: [
-      "Codex Cryptica is built for exactly this split. Vault entities give every NPC, location, faction, quest and item its own Markdown page you edit in place, so current truth is always where you last left it. Typed links between entities record the relationships once, visible from either side, and the graph shows you the connections you have built rather than a folder tree you have to maintain.",
-      "The Journal keeps a dated record of what happened at the table, separate from your current campaign pages. To prepare the next session, start with a hook or situation in the Session Prep Builder, then add the location, NPCs, open threads and faction pressures you want in its one-page run sheet. Keep the source pages in your vault and the run sheet as disposable prep; only what becomes true at the table needs to be promoted into canon.",
+      "In Codex Cryptica, Vault entities are Markdown pages you can use for current campaign notes, and the Graph lets you browse connections between them. Use those links as a workflow for relationships; mark truth, party knowledge, claims and sharing status in the notes where they matter, since the product does not automatically manage those knowledge states for you.",
+      "The Journal keeps a dated record of what happened at the table, separate from current campaign notes. The Session Prep Builder starts from your hook or situation and builds a run sheet; it does not automatically pull in linked Vault facts. Reference or surface the relevant source-page facts yourself, and keep only the quick prompts you need on the sheet. After play, promote new facts back into the pages they belong to.",
     ],
     linkText: "Open the Session Prep Builder",
     href: "/tools/session-prep-builder",
@@ -225,6 +255,8 @@ export const howDoIOrganiseADndCampaign: AnswerConfigInput = {
     },
   ],
   relatedAnswers: [
+    "how-do-i-start-a-dnd-campaign",
+    "how-do-i-prepare-a-dnd-session",
     "how-do-you-organise-rpg-campaign-notes",
     "how-do-you-keep-track-of-npcs-in-a-long-campaign",
     "how-do-you-organise-npc-relationships",
