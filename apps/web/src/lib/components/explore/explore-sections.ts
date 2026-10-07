@@ -84,6 +84,41 @@ export const EXPLORE_SECTIONS: ExploreSection[] = [
     ],
   },
   {
+    title: "Browse by Topic",
+    description:
+      "Guides, worked examples, and tools for the campaign you’re running.",
+    links: [
+      {
+        href: "/topics/heists",
+        label: "Heists",
+        summary:
+          "Frameworks, prize design checklists, worked genre examples, and tools for running tabletop heists.",
+        icon: "icon-[lucide--lock]",
+      },
+      {
+        href: "/topics/puzzles",
+        label: "Puzzles",
+        summary:
+          "Stall-proof design, hint ladders, worked examples with alternate solutions, and a puzzle generator.",
+        icon: "icon-[lucide--puzzle]",
+      },
+      {
+        href: "/topics/pirates",
+        label: "Pirates & High Seas",
+        summary:
+          "Guides to pirate systems, exploration, sea travel, ship combat, ports, rivals, and tools for building the campaign.",
+        icon: "icon-[lucide--ship]",
+      },
+      {
+        href: "/topics/dnd",
+        label: "Running D&D",
+        summary:
+          "Start a campaign, prep the next session, run the table and keep track, with answers and tools for each job.",
+        icon: "icon-[lucide--swords]",
+      },
+    ],
+  },
+  {
     title: "Learn",
     description:
       "Guides, answers, and the reasoning behind how Codex Cryptica works.",
@@ -121,34 +156,6 @@ export const EXPLORE_SECTIONS: ExploreSection[] = [
         summary:
           "Curated links to real castle and palace floor plans for mapping your own locations.",
         icon: "icon-[lucide--map]",
-      },
-      {
-        href: "/topics/heists",
-        label: "RPG Heists Hub",
-        summary:
-          "Frameworks, prize design checklists, worked genre examples, and tools for running tabletop heists.",
-        icon: "icon-[lucide--lock]",
-      },
-      {
-        href: "/topics/puzzles",
-        label: "RPG Puzzles Hub",
-        summary:
-          "Stall-proof design, hint ladders, worked examples with alternate solutions, and a puzzle generator.",
-        icon: "icon-[lucide--puzzle]",
-      },
-      {
-        href: "/topics/pirates",
-        label: "Pirate & High-Seas Hub",
-        summary:
-          "Guides to pirate systems, exploration, sea travel, ship combat, ports, rivals, and tools for building the campaign.",
-        icon: "icon-[lucide--ship]",
-      },
-      {
-        href: "/topics/dnd",
-        label: "Running D&D Hub",
-        summary:
-          "Start a campaign, prep the next session, run the table and keep track, with answers and tools for each job.",
-        icon: "icon-[lucide--swords]",
       },
       {
         href: "/my-stuff",
