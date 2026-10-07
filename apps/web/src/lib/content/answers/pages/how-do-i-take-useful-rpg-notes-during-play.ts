@@ -285,6 +285,7 @@ export const howDoITakeUsefulRpgNotesDuringPlay: AnswerConfigInput = {
     "how-do-you-track-unresolved-plot-hooks-in-an-rpg-campaign",
     "how-much-campaign-lore-should-players-be-expected-to-remember",
     "how-do-you-manage-a-campaign-timeline-in-an-rpg",
+    "how-do-i-organise-a-dnd-campaign",
   ],
   discovery: {
     id: "answer-player-rpg-notes-during-play",
