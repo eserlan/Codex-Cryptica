@@ -147,7 +147,7 @@ export const howDoIOrganiseADndCampaign: AnswerConfigInput = {
         },
       ],
       outro:
-        "Assembling this by hand each week is the part that quietly fails when life gets busy. A session prep sheet that pulls the right pages into one view, with that session's links intact, keeps the archive useful without adding a weekly rebuild.",
+        "Assembling this by hand each week is the part that quietly fails when life gets busy. Bring the few relevant facts and links into one session prep sheet, rather than rebuilding the whole archive for every session.",
     },
     {
       kind: "example",
@@ -191,7 +191,7 @@ export const howDoIOrganiseADndCampaign: AnswerConfigInput = {
     heading: "From things and relationships to table-ready prep",
     paragraphs: [
       "Codex Cryptica is built for exactly this split. Vault entities give every NPC, location, faction, quest and item its own Markdown page you edit in place, so current truth is always where you last left it. Typed links between entities record the relationships once, visible from either side, and the graph shows you the connections you have built rather than a folder tree you have to maintain.",
-      "The Journal captures session history as a dated stream, separate from canon, and the Session Prep Builder pulls tonight's slice into one run sheet: current location, the NPCs likely to appear, the open threads that could move, and the faction pressures the world applies while the party decides. Prep stays disposable, canon stays current, and the next session starts from pages you can trust mid-scene.",
+      "The Journal keeps a dated record of what happened at the table, separate from your current campaign pages. To prepare the next session, start with a hook or situation in the Session Prep Builder, then add the location, NPCs, open threads and faction pressures you want in its one-page run sheet. Keep the source pages in your vault and the run sheet as disposable prep; only what becomes true at the table needs to be promoted into canon.",
     ],
     linkText: "Open the Session Prep Builder",
     href: "/tools/session-prep-builder",
@@ -200,7 +200,7 @@ export const howDoIOrganiseADndCampaign: AnswerConfigInput = {
     {
       title: "Session Prep Builder",
       description:
-        "Pull tonight's NPCs, locations, open threads and faction pressures into one run sheet, with disposable prep separate from canon.",
+        "Turn a hook or campaign situation into a one-page run sheet; add the NPCs, locations, open threads and faction pressures you want to prepare.",
       href: "/tools/session-prep-builder",
     },
     {
@@ -251,7 +251,7 @@ export const howDoIOrganiseADndCampaign: AnswerConfigInput = {
       "d and d campaign tracker for npcs factions quests",
     ],
     uniqueValue:
-      "A D&D-specific campaign management model that organises the campaign by things and relationships, separates canon, session history and prep, and ties NPCs, factions, quests and locations into a table-ready view via the Graph and Session Prep Builder.",
+      "A D&D-specific campaign management model that organises the campaign by things and relationships, separates canon, session history and prep, and pairs connected campaign pages in the Graph with a separately prepared table-ready run sheet.",
     userJob: "adopt-workflow",
     relatedIntents: [
       "answer-campaign-notes",
@@ -268,7 +268,7 @@ export const howDoIOrganiseADndCampaign: AnswerConfigInput = {
       {
         with: "answer-campaign-notes",
         reason:
-          "That page teaches the general three-layer system for any RPG. This page applies it specifically to D&D campaigns through NPCs, factions, quests, locations and the canon versus prep distinction, and routes the during-session slice into the Session Prep Builder rather than a generic one-page sheet.",
+          "That page teaches the general three-layer system for any RPG. This page applies it specifically to D&D campaigns through NPCs, factions, quests, locations and the canon versus prep distinction, and recommends a separately prepared session sheet rather than a generic one-page sheet.",
       },
       {
         with: "answer-in-person-gm-notes",

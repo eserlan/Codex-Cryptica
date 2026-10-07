@@ -72,6 +72,21 @@ describe("answer registry", () => {
     ).toBe("answer-faster-exciting-combat");
   });
 
+  it("describes the Session Prep Builder as hook-driven rather than vault-integrated", () => {
+    const answer = answers["how-do-i-organise-a-dnd-campaign"];
+    const builder = answer.relatedTools?.find(
+      (tool) => tool.href === "/tools/session-prep-builder",
+    );
+    const connection = answer.codexConnection?.paragraphs.join(" ") ?? "";
+
+    expect(builder?.description).toContain("Turn a hook or campaign situation");
+    expect(builder?.description).not.toMatch(
+      /pull(?:s)? .+ into one run sheet/i,
+    );
+    expect(connection).toContain("start with a hook or situation");
+    expect(connection).not.toMatch(/Builder pulls/i);
+  });
+
   it("keeps the civilisation capability habits heading aligned with its items", () => {
     const habits = answers[
       "how-do-i-give-different-civilisations-distinct-strengths-and-weaknesses"
