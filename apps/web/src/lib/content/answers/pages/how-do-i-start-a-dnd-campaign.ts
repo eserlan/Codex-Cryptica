@@ -207,6 +207,7 @@ export const howDoIStartADndCampaign: AnswerConfigInput = {
     "how-do-you-start-worldbuilding-from-scratch",
     "how-do-i-expand-a-simple-rpg-campaign-idea",
     "how-do-i-prepare-an-rpg-session-step-by-step",
+    "how-do-i-prepare-a-dnd-session",
     "how-do-you-make-a-tabletop-rpg-session-more-engaging",
     "how-do-you-handle-players-going-off-script-as-a-gm",
     "how-do-you-run-dnd-for-a-large-group-of-players",
