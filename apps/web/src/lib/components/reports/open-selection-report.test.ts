@@ -11,6 +11,14 @@ const { notify, entities } = vi.hoisted(() => ({
       connections: [],
       content: "",
     },
+    b: {
+      id: "b",
+      type: "character",
+      title: "B",
+      labels: [],
+      connections: [],
+      content: "",
+    },
   } as Record<string, unknown>,
 }));
 
@@ -29,12 +37,22 @@ describe("openSelectionReport", () => {
   });
 
   it("opens the panel with the selected entities", () => {
-    expect(openSelectionReport("table", ["a"])).toBe(true);
+    expect(openSelectionReport("table", ["a", "b"])).toBe(true);
     expect(reportPanelStore.request?.source).toEqual({
       origin: "table",
-      entityIds: ["a"],
+      entityIds: ["a", "b"],
     });
     expect(reportPanelStore.request?.rescope).toBeUndefined();
+  });
+
+  it("opens nothing for a single selection, even when duplicated", () => {
+    expect(openSelectionReport("graph", ["a"])).toBe(false);
+    expect(openSelectionReport("table", ["a", "a"])).toBe(false);
+    expect(reportPanelStore.request).toBeNull();
+    expect(notify).toHaveBeenCalledWith(
+      "Select at least two entities to generate a report.",
+      "info",
+    );
   });
 
   it("explains and opens nothing for an empty selection", () => {
