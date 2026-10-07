@@ -133,6 +133,7 @@ export const howDoYouHandlePlayersGoingOffScriptAsAGm: AnswerConfigInput = {
     "what-do-you-do-with-murder-hobos-in-an-rpg-campaign",
     "how-do-i-make-interviewing-npcs-interesting-in-an-investigation",
     "how-do-i-make-a-campaign-threat-feel-urgent-without-railroading",
+    "how-do-i-start-a-dnd-campaign",
   ],
   discovery: {
     id: "answer-players-going-off-script",

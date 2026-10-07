@@ -44,6 +44,7 @@ import { howDoIRunHackersOrNetrunnersWithoutSplittingTheParty } from "./how-do-i
 import { howDoIRunPoliticalIntrigueAndFactionPlay } from "./how-do-i-run-political-intrigue-and-faction-play";
 import { howDoIRunShipToShipCombatWithoutSideliningTheParty } from "./how-do-i-run-ship-to-ship-combat-without-sidelining-the-party";
 import { howDoIRunSpiesAndInfiltratorsInAnRpg } from "./how-do-i-run-spies-and-infiltrators-in-an-rpg";
+import { howDoIStartADndCampaign } from "./how-do-i-start-a-dnd-campaign";
 import { howDoIStartGmingForTheFirstTime } from "./how-do-i-start-gming-for-the-first-time";
 import { howDoITakeUsefulRpgNotesDuringPlay } from "./how-do-i-take-useful-rpg-notes-during-play";
 import { howDoITurnAnRpgIdeaIntoAnAdventure } from "./how-do-i-turn-an-rpg-idea-into-an-adventure";
@@ -192,6 +193,7 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     howDoIRunPoliticalIntrigueAndFactionPlay,
     howDoIRunShipToShipCombatWithoutSideliningTheParty,
     howDoIRunSpiesAndInfiltratorsInAnRpg,
+    howDoIStartADndCampaign,
     howDoIStartGmingForTheFirstTime,
     howDoITakeUsefulRpgNotesDuringPlay,
     howDoITurnAnRpgIdeaIntoAnAdventure,
