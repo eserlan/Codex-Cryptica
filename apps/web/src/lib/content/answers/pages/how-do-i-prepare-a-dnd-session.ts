@@ -7,7 +7,7 @@ export const howDoIPrepareADndSession: AnswerConfigInput = {
   question: "How do I prepare a D&D session?",
   kind: "how-to",
   shortAnswer:
-    "Prepare a D&D session by deciding what changed since last time, picking tonight's pressure, and getting ready for the ways 5e groups actually play: ready a mix of combat, exploration and social material, prep encounters and monsters so they can move rather than fire on a fixed cue, and keep compact rules notes for the spells and features that can bypass your obstacles. Work out likely NPCs and places, make sure any vital clue or lead has more than one route to the party, sketch how the situation shifts if the players succeed, fail, stall or go elsewhere, and keep a small reserve of names, rumours and portable encounters. Copy only what you need to run onto a single table-ready sheet.",
+    "Prepare a D&D session by deciding what changed since last time, picking tonight's pressure, and getting ready for the ways 5e groups actually play: ready a mix of combat, exploration and social material, prep encounters and monsters so they can move rather than fire on a fixed cue, and keep compact rules notes for the spells and features that can bypass your obstacles. Work out likely NPCs and places, make sure any key clue or lead has more than one route to the party, sketch how the situation shifts if the players succeed, fail, stall or go elsewhere, and keep a small reserve of names, rumours and portable encounters. Copy only what you need to run onto a single table-ready sheet.",
   sections: [
     {
       kind: "prose",
@@ -33,7 +33,7 @@ export const howDoIPrepareADndSession: AnswerConfigInput = {
         },
         {
           term: "Identify likely NPCs and places",
-          text: "List the people and locations the party can credibly reach tonight. For each NPC note a want, a piece of leverage or information they hold, and what they do next if nobody intervenes. For each place note what is there, who controls it, and what makes it risky or rewarding to enter. Two or three of each is usually enough; a published chapter may already give you more than you need, so prune to what tonight can actually contain.",
+          text: "List the people and locations the party can credibly reach tonight. For each NPC note a want, a source of influence or information they hold, and what they do next if nobody intervenes. For each place note what is there, who controls it, and what makes it risky or rewarding to enter. Two or three of each is usually enough; a published chapter may already give you more than you need, so prune to what tonight can actually contain.",
         },
         {
           term: "Prepare information the party may need",
@@ -156,9 +156,9 @@ export const howDoIPrepareADndSession: AnswerConfigInput = {
       items: [
         "Where did we end last session, and what resources does the party actually have to start tonight?",
         "What is tonight's pressure, and what changes if the party acts, stalls, or goes elsewhere?",
-        "Which NPCs might they meet, what does each one want, and what leverage or information do they hold?",
+        "Which NPCs might they meet, what does each one want, and what influence or information do they hold?",
         "Which places could matter, who controls each one, and what is risky or rewarding about entering?",
-        "Is any vital fact findable at least two ways, including answers for the party's favourite divination or charm spells?",
+        "Is any necessary fact findable at least two ways, including answers for the party's favourite divination or charm spells?",
         "Which one or two encounters are likely, statted compactly with AC, hit points, key saves and a morale or exit condition, ready to appear wherever the fiction puts them?",
         "What are the rest implications tonight, and does the expected number of encounters before the next rest match what the session needs?",
         "What compact rules notes (save DCs, condition effects, page numbers) need to be on the sheet for speed?",
@@ -170,7 +170,7 @@ export const howDoIPrepareADndSession: AnswerConfigInput = {
   codexConnection: {
     heading: "Turn tonight's situation into a run sheet",
     paragraphs: [
-      "When the pressure, people, places and clue routes are clear in your head, the remaining work is turning them into something you can actually use at the table. The Session Prep Builder follows the same eight steps with your own hook: it keeps your pressure, NPCs and places linked, drafts only the steps you leave empty, and flags any vital fact that has only one way to be found so you can add a second route before play.",
+      "When the pressure, people, places and clue routes are clear in your head, the remaining work is turning them into something you can actually use at the table. The Session Prep Builder follows the same eight steps with your own hook: it keeps your pressure, NPCs and places linked, drafts only the steps you leave empty, and flags any necessary fact that has only one way to be found so you can add a second route before play.",
       "The result is a one-page run sheet you can copy, print, or save to the Vault where the same NPCs, locations and factions stay connected for next session. Use a generator only for the gap in front of you: a quick NPC when the bench is empty, a rumour to give a clue a new route, or a spare encounter to keep in reserve.",
     ],
     linkText: "Prepare your next D&D session",
