@@ -183,6 +183,7 @@ export const howDoYouRunDndForALargeGroupOfPlayers: AnswerConfigInput = {
     "how-do-i-give-specialist-characters-spotlight",
     "how-do-i-run-a-large-battle-when-the-player-characters-are-part-of-an-army",
     "how-do-i-keep-players-engaged-during-other-players-turns-in-combat",
+    "how-do-i-start-a-dnd-campaign",
   ],
   discovery: {
     id: "answer-large-group-dnd",
