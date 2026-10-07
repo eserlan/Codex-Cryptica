@@ -173,6 +173,8 @@ export interface EncounterSession {
   showHexCoordinates?: boolean;
   gridUnit?: string;
   gridDistance?: number;
+  /** GM-chosen fog colour (#rrggbb); null means the theme colour. */
+  fogColor?: string | null;
   tileDecks?: TileDeck[];
 }
 

@@ -37,6 +37,7 @@ export function createSnapshotManagerHarness() {
     gridSize: 50,
     gridType: "square" as "square" | "hex-pointy" | "hex-flat",
     showHexCoordinates: false,
+    fogColor: null as string | null,
     gridUnit: "ft",
     gridDistance: 5,
     activeMapId: "map-1" as string | null,
@@ -110,6 +111,10 @@ export function createSnapshotManagerHarness() {
     setGridType: (value) => {
       state.gridType = value;
     },
+    getFogColor: () => state.fogColor,
+    setFogColor: (value) => {
+      state.fogColor = value;
+    },
     getShowHexCoordinates: () => state.showHexCoordinates,
     setShowHexCoordinates: (value) => {
       state.showHexCoordinates = value;
@@ -157,6 +162,7 @@ export function createSnapshotManagerHarness() {
       state.gridSize = fixture.gridSize ?? 50;
       state.gridType = fixture.gridType ?? "square";
       state.showHexCoordinates = fixture.showHexCoordinates ?? false;
+      state.fogColor = fixture.fogColor ?? null;
       state.gridUnit = fixture.gridUnit ?? "ft";
       state.gridDistance = fixture.gridDistance ?? 5;
       return fixture;

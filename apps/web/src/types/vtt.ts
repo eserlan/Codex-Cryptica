@@ -289,6 +289,8 @@ export interface SetGridSettingsPayload {
   showHexCoordinates?: boolean;
   gridUnit?: string;
   gridDistance?: number;
+  /** GM-chosen fog colour (#rrggbb); null returns to the theme colour. */
+  fogColor?: string | null;
 }
 
 export interface ChatClearPayload {
