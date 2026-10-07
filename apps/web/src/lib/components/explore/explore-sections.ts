@@ -144,6 +144,13 @@ export const EXPLORE_SECTIONS: ExploreSection[] = [
         icon: "icon-[lucide--ship]",
       },
       {
+        href: "/topics/dnd",
+        label: "Running D&D Hub",
+        summary:
+          "Start a campaign, prep the next session, run the table and keep track, with answers and tools for each job.",
+        icon: "icon-[lucide--swords]",
+      },
+      {
         href: "/my-stuff",
         label: "My Stuff",
         summary:
