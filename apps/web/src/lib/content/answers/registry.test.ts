@@ -571,6 +571,18 @@ describe("published answers", () => {
     }
   });
 
+  it("does not duplicate the improvised NPC link on the broad NPC answer", () => {
+    const answer =
+      answers[
+        "how-do-i-handle-players-asking-an-npc-to-tell-us-everything-you-know"
+      ];
+
+    expect(answer.relatedAnswers).toContain("how-do-i-improvise-npcs-in-dnd");
+    expect(new Set(answer.relatedAnswers).size).toBe(
+      answer.relatedAnswers.length,
+    );
+  });
+
   it("cross-links every answer to at least one other answer", () => {
     for (const answer of published) {
       expect(
