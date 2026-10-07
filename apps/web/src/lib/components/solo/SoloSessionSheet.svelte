@@ -11,7 +11,7 @@
 </script>
 
 <div
-  class="fixed inset-x-0 bottom-0 z-[80] flex flex-col gap-3 rounded-t-xl border-t border-theme-border bg-theme-surface p-4 shadow-2xl"
+  class="fixed inset-x-0 bottom-16 z-[80] flex max-h-[60dvh] flex-col gap-3 overflow-y-auto rounded-t-xl border-t border-theme-border bg-theme-surface p-4 shadow-2xl"
   role="dialog"
   aria-modal="false"
   aria-label="Solo session tools"
