@@ -104,7 +104,7 @@ export const EXPLORE_SECTIONS: ExploreSection[] = [
       },
       {
         href: "/topics/pirates",
-        label: "Pirates & High-Seas",
+        label: "Pirates & High Seas",
         summary:
           "Guides to pirate systems, exploration, sea travel, ship combat, ports, rivals, and tools for building the campaign.",
         icon: "icon-[lucide--ship]",

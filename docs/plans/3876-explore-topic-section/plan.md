@@ -20,7 +20,7 @@ Insert **Browse by Topic** immediately after **Find Your Setup** and before **Le
 | ------------------- | -------------------- | ----------------------- |
 | Heists              | `/topics/heists`     | `icon-[lucide--lock]`   |
 | Puzzles             | `/topics/puzzles`    | `icon-[lucide--puzzle]` |
-| Pirates & High-Seas | `/topics/pirates`    | `icon-[lucide--ship]`   |
+| Pirates & High Seas | `/topics/pirates`    | `icon-[lucide--ship]`   |
 | Running D&D         | `/topics/dnd`        | `icon-[lucide--swords]` |
 
 Preserve the current card summaries and order. Each topic destination appears once in the default directory. Learn retains its general resources, including Answers, Devlog, Responsible AI, Import & Migrate, Castle Floorplans and My Stuff.

@@ -105,7 +105,7 @@ describe("/explore route", () => {
       topicLinks.map((link) =>
         link.querySelector("span.flex.flex-col > span")?.textContent?.trim(),
       ),
-    ).toEqual(["Heists", "Puzzles", "Pirates & High-Seas", "Running D&D"]);
+    ).toEqual(["Heists", "Puzzles", "Pirates & High Seas", "Running D&D"]);
 
     const learnSection = screen
       .getByRole("heading", { name: "Learn", level: 2 })
