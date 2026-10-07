@@ -151,7 +151,8 @@ export const howDoIPrepareADndSession: AnswerConfigInput = {
     {
       kind: "checklist",
       heading: "D&D session prep checklist",
-      intro: "Run through this before you sit down. Every line should be one sentence on the run sheet:",
+      intro:
+        "Run through this before you sit down. Every line should be one sentence on the run sheet:",
       items: [
         "Where did we end last session, and what resources does the party actually have to start tonight?",
         "What is tonight's pressure, and what changes if the party acts, stalls, or goes elsewhere?",
@@ -210,7 +211,8 @@ export const howDoIPrepareADndSession: AnswerConfigInput = {
   relatedForPages: [
     {
       title: "Dungeons & Dragons",
-      description: "Campaign management for D&D 5e, from prep to session notes.",
+      description:
+        "Campaign management for D&D 5e, from prep to session notes.",
       href: "/for/dungeons-and-dragons",
     },
   ],
@@ -276,7 +278,8 @@ export const howDoIPrepareADndSession: AnswerConfigInput = {
     title: "How Do I Prepare a D&D Session? | Codex Cryptica",
     description:
       "A D&D 5e prep workflow: eight steps from pressure to run sheet, with portable encounters, spell bypasses, compact rules notes, and published versus homebrew prep.",
-    image: "https://assets.codexcryptica.com/og/how-do-i-prepare-a-dnd-session.jpg",
+    image:
+      "https://assets.codexcryptica.com/og/how-do-i-prepare-a-dnd-session.jpg",
     imageAlt:
       "A Dungeon Master's desk by candlelight with a one-page run sheet, D&D stat notes, a coast road map, a sealed ledger and a d20 beside ink and quill",
   },
