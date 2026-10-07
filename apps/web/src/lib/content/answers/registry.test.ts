@@ -452,6 +452,12 @@ describe("answer schema", () => {
 describe("published answers", () => {
   const published = getAllAnswers();
 
+  it("avoids banned synthetic phrasing in the D&D session-prep answer", () => {
+    const answer = answers["how-do-i-prepare-a-dnd-session"];
+
+    expect(JSON.stringify(answer)).not.toMatch(/\b(vital|leverage)\b/i);
+  });
+
   it("frames ruined-city routes as weighed trade-offs in the checklist", () => {
     const answer = answers["how-do-i-run-exploration-in-a-huge-ruined-city"];
     const checklist = answer.sections.find(

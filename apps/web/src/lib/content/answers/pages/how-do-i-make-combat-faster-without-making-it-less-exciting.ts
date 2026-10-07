@@ -120,6 +120,7 @@ export const howDoIMakeCombatFasterWithoutMakingItLessExciting: AnswerConfigInpu
       "how-do-i-balance-rpg-combat-encounters-without-a-tpk",
       "how-do-you-make-a-tabletop-rpg-session-more-engaging",
       "can-you-play-a-tabletop-rpg-in-30-minute-sessions",
+      "how-do-i-prepare-a-dnd-session",
     ],
     discovery: {
       id: "answer-faster-exciting-combat",
