@@ -8,17 +8,10 @@ export function openSelectionReport(
   origin: "graph" | "table",
   selectedIds: string[],
 ): boolean {
-  if (new Set(selectedIds).size < 2) {
-    notificationStore.notify(
-      "Select at least two entities to generate a report.",
-      "info",
-    );
-    return false;
-  }
   const run =
     origin === "graph" ? useGraphReportGeneration : useTableReportGeneration;
   const result = run(selectedIds, (id) => vault.entities[id]);
-  if (!result.input) {
+  if (!result.input || (result.source.entityIds?.length ?? 0) < 2) {
     notificationStore.notify(
       "Select at least two entities to generate a report.",
       "info",

@@ -48,6 +48,7 @@ describe("openSelectionReport", () => {
   it("opens nothing for a single selection, even when duplicated", () => {
     expect(openSelectionReport("graph", ["a"])).toBe(false);
     expect(openSelectionReport("table", ["a", "a"])).toBe(false);
+    expect(openSelectionReport("graph", ["a", "missing"])).toBe(false);
     expect(reportPanelStore.request).toBeNull();
     expect(notify).toHaveBeenCalledWith(
       "Select at least two entities to generate a report.",
