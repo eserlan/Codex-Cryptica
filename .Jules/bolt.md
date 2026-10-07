@@ -37,3 +37,8 @@
 
 **Learning:** Svelte reactivity blocks (`$derived`, `$effect`) often contain declarative array manipulations that spread iterables into intermediate arrays just to filter them (e.g., `[...selectedIds].filter()`). In hot paths or large datasets, this creates a significant performance overhead by forcing unnecessary Javascript garbage collection for the intermediate arrays.
 **Action:** Always prefer initializing an empty collection and populating it with an imperative `for...of` loop over intermediate array instantiation using spreads when refactoring or optimizing reactivity hooks.
+
+## 2025-02-28 - Replace chained array methods with an imperative loop when mapping and filtering IDs
+
+**Learning:** When mapping an array of IDs to entities and filtering out nullish values (e.g., `[...new Set(ids)].map(getEntity).filter(Boolean)`), spreading a Set into an array and using `.map()` operation creates multiple intermediate arrays of potentially undefined values, only to be traversed and discarded by the subsequent `.filter()`. This creates unnecessary garbage collection pressure, particularly when handling UI selections.
+**Action:** Replace `[...new Set].map().filter()` chains with a single imperative `for...of` loop over the Set. This allows valid resolved values to be pushed directly into the final arrays in one pass, eliminating intermediate array allocations.

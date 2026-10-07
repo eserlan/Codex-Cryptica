@@ -14,11 +14,23 @@ export function resolveSelectionReportInput(
   selectedIds: string[],
   getEntity: (id: string) => Entity | undefined,
 ): SelectionReportResult {
-  const ids = [...new Set(selectedIds)];
-  const entities = ids.map(getEntity).filter((e): e is Entity => Boolean(e));
+  // ⚡ Bolt Optimization: Replace [...new Set].map().filter() and entities.map() with an imperative loop
+  // This avoids intermediate array allocations and reduces GC pressure when processing selections.
+  const idSet = new Set(selectedIds);
+  const entities: Entity[] = [];
+  const entityIds: string[] = [];
+
+  for (const id of idSet) {
+    const e = getEntity(id);
+    if (e) {
+      entities.push(e);
+      entityIds.push(e.id);
+    }
+  }
+
   const source: ReportSource = {
     origin,
-    entityIds: entities.map((e) => e.id),
+    entityIds,
   };
   if (entities.length === 0) {
     return { input: null, source, error: "no-selection" };
