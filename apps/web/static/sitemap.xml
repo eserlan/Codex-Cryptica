@@ -622,12 +622,37 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://codexcryptica.com/answers/how-do-i-handle-divination-magic-without-letting-one-character-solve-every-mystery</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://codexcryptica.com/answers/how-do-i-handle-players-asking-an-npc-to-tell-us-everything-you-know</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://codexcryptica.com/answers/how-do-i-improvise-npcs-in-dnd</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://codexcryptica.com/answers/how-do-i-keep-players-engaged-during-other-players-turns-in-combat</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://codexcryptica.com/answers/how-do-i-make-a-campaign-threat-feel-urgent-without-railroading</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://codexcryptica.com/answers/how-do-i-make-a-player-base-matter-in-an-rpg-campaign</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://codexcryptica.com/answers/how-do-i-make-combat-faster-without-making-it-less-exciting</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
@@ -748,6 +773,11 @@
   </url>
   <url>
     <loc>https://codexcryptica.com/answers/how-do-i-run-spies-and-infiltrators-in-an-rpg</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://codexcryptica.com/answers/how-do-i-start-a-dnd-campaign</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
@@ -1057,6 +1087,11 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://codexcryptica.com/answers/how-should-a-fantasy-adventuring-guild-handle-wages-dues-and-shared-expenses</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://codexcryptica.com/answers/how-should-magic-have-been-discovered-in-my-world</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
@@ -1308,6 +1343,11 @@
   </url>
   <url>
     <loc>https://codexcryptica.com/examples/the-null-key-reliquary-cyberpunk-puzzle</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://codexcryptica.com/examples/the-treasurys-tipping-point-karrow-council-vote</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>

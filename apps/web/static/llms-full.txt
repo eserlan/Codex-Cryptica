@@ -3282,6 +3282,10 @@ Reference answers to real RPG and worldbuilding questions, indexed at https://co
 
 **Direct answer:** Treat 'tell us everything you know' as a request for the witness's best relevant summary, not an exhaustive transcript of memory. Resolve the scope first—everything about the burglary, the victim, or last night—then give the account, including what the witness recalls, believes, and remains unsure about. Follow the game's clue procedure, but keep investigation moving through a reliable route that does not depend on one exact phrase or fragile check. Targeted questions can clarify prepared or fictionally supported details, uncertainty, and sources without creating new evidence through repetition.
 
+### [How do I improvise NPCs in D&D?](https://codexcryptica.com/answers/how-do-i-improvise-npcs-in-dnd)
+
+**Direct answer:** Use a tiny six-part sketch you can produce in seconds: role, want, attitude, one memorable detail, useful knowledge, and a boundary or secret they will not give away cheaply. Most improvised NPCs need motives and information more than a stat block, and Charisma checks should influence how far cooperation goes rather than function as mind control. Connect the NPC to an existing faction or location so the improvisation feels intentional, and only expand them into campaign canon if the party returns.
+
 ### [How do I keep players engaged during other players' turns in combat?](https://codexcryptica.com/answers/how-do-i-keep-players-engaged-during-other-players-turns-in-combat)
 
 **Direct answer:** Measure how long players wait between meaningful decisions and reduce avoidable delays. Give players a reason to follow each turn: make the initiative order visible, announce who is acting and who is next, and let meaningful changes make other characters' choices matter. Invite planning without locking in a choice, and treat phones or side conversations as clues about waiting time and encounter design before treating them as a discipline problem.
@@ -3393,6 +3397,10 @@ Reference answers to real RPG and worldbuilding questions, indexed at https://co
 ### [How do I run spies and infiltrators in an RPG?](https://codexcryptica.com/answers/how-do-i-run-spies-and-infiltrators-in-an-rpg)
 
 **Direct answer:** Make infiltration a team operation even when one character goes inside. Give the infiltrator a clear objective, then let the rest of the party create access, cover, distractions, surveillance, or an extraction plan under the same pressure. Reveal useful information while the group can still act on it, and prepare several viable routes with consequences for delay, partial success, and exposure.
+
+### [How do I start a D&D campaign?](https://codexcryptica.com/answers/how-do-i-start-a-dnd-campaign)
+
+**Direct answer:** Start a D&D campaign with a small playable situation the characters have a reason to care about, not a finished world. Choose a clear premise and tone, decide whether to run a published adventure, homebrew, or a mix of both, agree which rules and edition you are using, then run a compact Session 0 to connect the party and set expectations. Prepare only the starting area, the people and factions who can affect it, and a concrete first problem for session one, and let the campaign grow outward from what the players actually do.
 
 ### [How do I start GMing for the first time?](https://codexcryptica.com/answers/how-do-i-start-gming-for-the-first-time)
 
