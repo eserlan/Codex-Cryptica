@@ -39,6 +39,8 @@ type PersistedMapSettings = {
   gridOffsetX: number;
   gridOffsetY: number;
   gridColor: string | null;
+  /** GM-chosen fog colour (#rrggbb); null means the theme colour. */
+  fogColor: string | null;
   showLabels: boolean;
   visionMode: TokenVisionMode;
   /** Vision distance in grid units (e.g. feet), not pixels — converted to
@@ -72,6 +74,7 @@ const DEFAULT_MAP_SETTINGS: PersistedMapSettings = {
   gridOffsetX: 0,
   gridOffsetY: 0,
   gridColor: null,
+  fogColor: null,
   showLabels: true,
   visionMode: "party",
   visionRange: 60,
@@ -116,6 +119,7 @@ export class MapStore {
   gridOffsetX = $state(0);
   gridOffsetY = $state(0);
   gridColor = $state<string | null>(null); // null means use theme primary
+  fogColor = $state<string | null>(null); // null means use theme secondary
   visionMode = $state<TokenVisionMode>("party");
   visionRange = $state(60);
   layerVisibility = $state<Record<MapLayer, boolean>>(layerRecord(true));
@@ -173,6 +177,7 @@ export class MapStore {
             this.gridOffsetX,
             this.gridOffsetY,
             this.gridColor,
+            this.fogColor,
             this.showLabels,
             this.visionMode,
             this.visionRange,
@@ -288,6 +293,10 @@ export class MapStore {
           typeof parsed.gridColor === "string" || parsed.gridColor === null
             ? parsed.gridColor
             : DEFAULT_MAP_SETTINGS.gridColor,
+        fogColor:
+          typeof parsed.fogColor === "string" || parsed.fogColor === null
+            ? parsed.fogColor
+            : DEFAULT_MAP_SETTINGS.fogColor,
         showLabels:
           typeof parsed.showLabels === "boolean"
             ? parsed.showLabels
@@ -348,6 +357,7 @@ export class MapStore {
       gridOffsetX: this.gridOffsetX,
       gridOffsetY: this.gridOffsetY,
       gridColor: this.gridColor,
+      fogColor: this.fogColor,
       showLabels: this.showLabels,
       visionMode: this.visionMode,
       visionRange: this.visionRange,
@@ -474,6 +484,7 @@ export class MapStore {
       this.gridOffsetX = next.gridOffsetX ?? 0;
       this.gridOffsetY = next.gridOffsetY ?? 0;
       this.gridColor = next.gridColor;
+      this.fogColor = next.fogColor ?? null;
       this.showLabels = next.showLabels;
       this.visionMode = next.visionMode;
       this.visionRange = next.visionRange;

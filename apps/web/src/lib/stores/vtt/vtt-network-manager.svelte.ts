@@ -118,6 +118,7 @@ export class VTTNetworkManager {
     showHexCoordinates?: boolean;
     gridUnit?: string;
     gridDistance?: number;
+    fogColor?: string | null;
   }) {
     this.deps.gridManager.handleRemoteGridSettings(payload);
   }

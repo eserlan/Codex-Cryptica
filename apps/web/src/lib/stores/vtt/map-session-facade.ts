@@ -702,6 +702,7 @@ export abstract class MapSessionFacade {
     showHexCoordinates?: boolean;
     gridUnit?: string;
     gridDistance?: number;
+    fogColor?: string | null;
   }) {
     this.networkManager.handleRemoteGridSettings(payload);
   }
@@ -712,6 +713,7 @@ export abstract class MapSessionFacade {
     gridDistance?: number;
     gridType?: GridType;
     showHexCoordinates?: boolean;
+    fogColor?: string | null;
   }) {
     this.gridManager.setGridSettings(settings);
   }

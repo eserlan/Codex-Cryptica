@@ -30,6 +30,7 @@ Choose **FOG: ON** in the map bar. The fog switch only appears in GM view.
 
 - Hold `Alt` and drag to reveal. Hold `Alt` + `Shift` and drag to hide again. **Brush Size** changes how much you paint at once.
 - On a hex map, the fog follows the hex grid, and you can right-click one hex and choose **Reveal hex** or **Hide hex**. See [Hexcrawl & Overland Maps](/help#help/hexcrawl-maps).
+- **Fog colour**: with fog on, use **Fog colour** in the map bar to tint the fog for this map. Your players see the colour you choose. Choose **Theme colour** to go back to the default.
 - **Vision**: tokens marked **Vision Source (PC)** reveal the fog around them. **VISION: PARTY** combines every source and **VISION: SELECTED** uses the selected token. **Vision Range** sets the distance.
 
 Changes are saved with the map, can be undone with `Ctrl` + `Z`, and are sent to connected players straight away.
