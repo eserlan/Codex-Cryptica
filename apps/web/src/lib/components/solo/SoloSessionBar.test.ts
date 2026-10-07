@@ -76,6 +76,7 @@ const MIN_KEY = "codex-solo-bar-minimised";
 beforeEach(() => {
   localStorage.clear();
   env.store.isActive = true;
+  env.store.journalRunning = false;
   env.store.session = { mapId: "m1", sceneName: "", lastRoll: null };
   env.store.resume.mockClear();
   env.store.chooseMap.mockClear();
@@ -250,5 +251,23 @@ describe("SoloSessionBar on phones", () => {
     );
     await fireEvent.keyDown(window, { key: "Escape" });
     expect(screen.queryByTestId("solo-sheet")).toBeNull();
+  });
+
+  it("keeps the sheet open when Escape closes its modal dialog", async () => {
+    env.store.journalRunning = true;
+    env.layout.isMobile = true;
+    render(SoloSessionBar);
+    await fireEvent.click(screen.getByTestId("solo-bar-mobile-trigger"));
+    await fireEvent.click(screen.getByTestId("solo-end"));
+
+    expect(
+      screen.getByRole("dialog", { name: "End solo session?" }),
+    ).toBeTruthy();
+    await fireEvent.keyDown(window, { key: "Escape" });
+
+    expect(
+      screen.queryByRole("dialog", { name: "End solo session?" }),
+    ).toBeNull();
+    expect(screen.getByTestId("solo-sheet")).toBeTruthy();
   });
 });

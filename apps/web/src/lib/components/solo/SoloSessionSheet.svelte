@@ -14,7 +14,13 @@
   });
 
   function onKeydown(event: KeyboardEvent) {
-    if (event.key === "Escape") onclose();
+    if (event.key === "Escape") {
+      // A modal opened from the sheet owns Escape until it closes.
+      if (document.querySelector('[role="dialog"][aria-modal="true"]')) {
+        return;
+      }
+      onclose();
+    }
   }
 </script>
 
