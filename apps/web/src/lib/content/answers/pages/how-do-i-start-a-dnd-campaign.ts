@@ -7,14 +7,14 @@ export const howDoIStartADndCampaign: AnswerConfigInput = {
   question: "How do I start a D&D campaign?",
   kind: "framework",
   shortAnswer:
-    "Start a D&D campaign with a small playable situation the characters have a reason to care about, not a finished world. Choose a clear premise and tone, decide whether to run a published adventure, homebrew, or a mix of both, agree which rules and edition you are using, then run a compact Session 0 to connect the party and set expectations. Prepare only the starting area, the people and factions who can affect it, and a concrete first problem for session one, and let the campaign grow outward from what the players actually do.",
+    "Start a D&D campaign with a playable situation the characters have a reason to care about, not a finished world. Choose a clear premise and tone, decide whether to run a published adventure, homebrew, or a mix, and agree the D&D rules and character-creation choices that affect the start. Then run a compact Session 0 to set expectations and connect the party, prepare the first location and problem, and let the campaign grow from what the players actually do.",
   sections: [
     {
       kind: "prose",
       heading: "Blank page to playable table",
       paragraphs: [
         "The hardest part of starting a D&D campaign is not learning the rules. It is deciding how much to build before the first die roll, and most new Dungeon Masters build far too much in the wrong direction. The impulse to write a continent, a timeline, and a pantheon feels responsible, but it produces a lot of material the table never touches and leaves the actual first session vague.",
-        "A campaign becomes playable when the players have a situation to act on, a reason to act together, and enough surrounding detail that their choices matter. Everything beyond that can wait until play shows you what the group cares about. Your job before session one is to make the first three hours concrete, not to make the whole world complete.",
+        "A campaign becomes playable when the players have a situation to act on, a reason to act together, and enough surrounding detail that their choices matter. Everything beyond that can wait until play shows you what the group cares about. Your job before session one is to make the first session concrete, not to make the whole world complete.",
       ],
     },
     {
@@ -28,23 +28,23 @@ export const howDoIStartADndCampaign: AnswerConfigInput = {
         },
         {
           term: "Decide published, homebrew, or hybrid",
-          text: "A published adventure saves you from inventing the initial situation; homebrew gives you more freedom over setting and pace but makes it easier to overbuild. A hybrid, running a published structure while replacing its town, NPCs, or faction with your own, often gives a new DM the best of both. See the comparison below before you commit.",
+          text: "A published adventure saves you from inventing the initial situation; homebrew gives you more freedom over setting and pace but makes it easier to overbuild. A hybrid, running a published structure while replacing its location, NPCs, or factions with your own, can give you the best of both. For a published adventure, read the overview to understand its premise, then prepare the opening and the material most likely to appear next; you do not need to memorise the whole book before session one. See the comparison below before you commit.",
         },
         {
-          term: "Agree the rules you are actually using",
-          text: "Confirm edition, any optional rules you are keeping or dropping, how you handle character creation, and what sources are in or out. One short note agreed before Session 0 prevents half the table building for a different game. You do not need to master every rule, only the ones the first session will test.",
+          term: "Set the D&D rules and character-creation baseline",
+          text: "Before characters are made, agree which D&D edition or rules baseline you are using, the starting level, and which character-creation sources are allowed. Decide how ability scores and starting equipment will be handled under those rules, whether advancement uses XP, milestones, or another agreed approach, and which house rules affect character creation or session one. Characters can be made together or brought ready-made; say which you expect. Decide the few D&D rules choices that affect character creation and session one, and leave the rest until it matters. You do not need to master every rule: know the basic play loop, know where to look things up, and pre-read only the monsters, abilities, or subsystems likely to come up. If a rule is unclear, make a ruling that suits your table and keep play moving; check it afterwards if needed.",
         },
         {
           term: "Run a compact Session 0",
-          text: 'Use the session to align on expectations, boundaries, scheduling, and character connections, not to deliver a lore lecture. Build or cross-reference characters together so each one has at least one concrete tie to another member of the party. Finish with a clear answer to "where do we start, and why are we together?"',
+          text: 'Use the session to align on expectations, boundaries, scheduling, and character connections, not to deliver a lore lecture. If the group wants a party connection before play, build or cross-reference characters together; characters can also begin as strangers and choose to cooperate during the opening. Finish with a clear answer to "where do we start, and why are we together?"',
         },
         {
-          term: "Create only the starting area and its pressures",
-          text: "Prepare one settlement or small region the party will actually stand in, two or three nearby places they can reach in a session, and the two or three factions or persons whose wants collide there. Give each a current aim and a move they will make if the party does nothing. That is enough map to play on.",
+          term: "Prepare the first playable location or local area",
+          text: "Start where the characters can meaningfully interact: a dungeon, ship, caravan, festival, military camp, prison, isolated manor, stretch of road, planar location, settlement, or wilderness area. A small region with a few nearby places and people with competing aims is a strong sandbox opening; factions and clocks that show how things change when ignored can help when that style fits. They are not requirements for every campaign start.",
         },
         {
           term: "Give the characters a concrete first problem",
-          text: "A missing shipment, a sealed barrow that has started leaking, a patron calling in a debt, a local authority about to make a bad decision. The problem should name people, a place, and a pressure that worsens on a short clock, so the party has to choose an approach rather than wait for a plot to arrive.",
+          text: "Give the party a concrete reason to act: an expedition, a published adventure's opening hook, an escort, a mystery, a siege, a job, an invitation, a bounty, an opportunity, or an unresolved local problem. Make the choices and likely consequences clear; show what changes if the party delays when delay matters. Not every opening needs a countdown.",
         },
         {
           term: "Prepare the first session, not the whole campaign",
@@ -86,21 +86,21 @@ export const howDoIStartADndCampaign: AnswerConfigInput = {
       heading: "The giant-world trap and what to skip",
       paragraphs: [
         "New DMs often assume a good campaign requires a complete world before the characters meet. In practice that assumption trades the material the first session actually needs for material the players may never see. The table does not feel the thousand-year timeline; it feels whether there is a clear choice in front of it, with people who want different outcomes.",
-        "You do not need a continent map, a full pantheon with ten detailed gods, a calendar stretching back through ages, a plotted arc from level 1 to 20, dozens of named NPCs, or a finished wiki before anyone rolls initiative. One well-drawn starting settlement with a market, a place of rest, and a local authority, a handful of NPCs who have visible wants, and one active pressure between factions gives the party more to play with than a binder of distant lore. Let the wider world stay as a few open questions you answer after the players choose a direction.",
+        "You do not need a continent map, a full pantheon with ten detailed gods, a calendar stretching back through ages, a plotted arc from level 1 to 20, dozens of named NPCs, or a finished wiki before anyone rolls initiative. Prepare the first playable location and the details that support the choices there. A settlement with a market, a place to rest, a local authority, a few NPCs with visible wants, and pressure between factions is one useful model; a dungeon, ship, journey, mystery, or published opening may need a different handful of details. Build only enough world to support the decisions players can make now, then answer the wider questions as they choose a direction.",
       ],
     },
     {
       kind: "prose",
       heading: "Give the party a reason to stay together",
       paragraphs: [
-        "Four strangers with separate backstories will not hold together because a Session 0 note says they are a party. Hold is built from a shared stake agreed at the table: a common patron who pays them, a shared debt or oath, a place they are jointly responsible for, a danger that affects them all, or a promise they made to the same person. Ask the players to help choose the tie, and write it on the character sheets as an explicit connection, not a footnote. During play, keep that stake active: the first session's problem should threaten, reward, or test the shared reason, so choosing to act together is the obvious way to pursue individual goals.",
+        "Do not rely on “you are a party now” as the only reason characters keep choosing one another. Some groups begin as strangers and build trust through play; a temporary common goal, a choice to cooperate after the opening incident, or a published adventure's first scenario can create that bond. A shared stake agreed at the table can help too: a common patron who pays them, a shared debt or oath, a place they are jointly responsible for, a danger that affects them all, or a promise they made to the same person. Ask the players to help choose the tie, and write it on the character sheets as an explicit connection, not a footnote. During play, let the first problem test or deepen that connection rather than requiring instant loyalty.",
       ],
     },
     {
       kind: "example",
       heading: "Two starts for the same town",
       paragraphs: [
-        "The same frontier settlement, prepared two ways, for a group about to start a D&D 5e campaign at level 1. Only one is ready to run.",
+        "The same frontier settlement, prepared two ways, for a group starting a D&D campaign at level 1. The players made characters together using the table's agreed rules baseline. Only one start is ready to run.",
       ],
       items: [
         {
@@ -109,36 +109,63 @@ export const howDoIStartADndCampaign: AnswerConfigInput = {
         },
         {
           term: "The playable start",
-          text: "The DM prepares Brindle Heath as a logging settlement with a failing silver mine. Two factions pull against the town: the mine factor who wants to cut deeper despite flooding, and a circle of marsh wardens who say the dig has broken an old seal. The party owe their start together to the same tie, a debt to the same caravan master who got them passage here. The first problem is concrete: a crew did not return from the lower adit, water is rising, and the factor offers coin while the wardens offer a warning. The DM has three places mapped: the market square, the mine headframe, and the flooded adit itself, each with one NPC who wants something now.",
+          text: "The DM prepares Brindle Heath as a logging settlement with a failing silver mine. Two factions pull against the town: the mine factor who wants to cut deeper despite flooding, and a circle of marsh wardens who say the dig has broken an old seal. The party share a debt to the same caravan master, giving them a reason to arrive together; the group could instead let that connection form through play. The first problem is concrete: a crew did not return from the lower adit, water is rising, and the factor offers coin while the wardens offer a warning. The DM has the market square, mine headframe, and flooded adit mapped, plus an NPC who wants something now in each place and the creature stat blocks expected in the mine.",
         },
         {
           term: "Why it works",
-          text: "The second start names people with incompatible wants, a place the party can walk to, and a consequence on a visible clock if nobody acts. Players have to choose who to talk to and whether to descend, and that choice immediately shows the DM what the group cares about. The blocked adit, the missing crew, and the two offers give the next session its direction without any kingdom map. If the party ignore the mine, the factor sends a less careful crew in two days and the seal breaks messily, a change the players will meet whether they investigated or not.",
+          text: "The second start gives the party a playable place, people with different aims, and a clear choice: who to talk to and whether to descend. That choice shows the DM what the group cares about. The blocked adit, missing crew, and two offers give the next session direction without a kingdom map. Here, delay matters: if the party ignore the mine, the factor sends a less careful crew in two days and the seal breaks messily. Another campaign opening might begin with an invitation or destination and no countdown at all.",
         },
       ],
     },
     {
       kind: "checklist",
-      heading: "Before you sit down for session one",
+      heading: "Campaign launch packet: enough to begin",
       intro:
-        "Run through this the night before the first game. If you can answer each line in a sentence, you are ready:",
+        "You are ready when you have these essentials. Build only enough world to support the decisions players can make now; start playing and capture the pieces that become relevant:",
       items: [
-        "You can state the campaign premise and tone in one sentence everyone at Session 0 agreed to.",
-        "You have chosen published, homebrew, or hybrid and know what that choice expects you to have ready.",
-        "You have agreed edition, character creation method, and which optional rules are in or out.",
-        "You have run a compact Session 0 and each character has at least one concrete tie to another party member.",
-        "Your notes cover one starting settlement, two or three nearby places, and two or three persons or factions with current aims and a move they make if the party stalls.",
-        "You have one concrete first problem that names people, a place, and what worsens if the party does nothing.",
-        "Your prep serves the first session only, with one or two spare complications for when play runs short or goes off plan.",
-        "You have a simple way to record which names, places, and threads became canon during play.",
+        "A one-sentence premise and tone.",
+        "An agreed D&D rules and character-creation baseline: edition, starting level, allowed sources, ability scores and equipment, advancement, relevant house rules, and whether characters are made together or arrive ready-made.",
+        "A reason for the characters to start together, or room for them to choose to cooperate during the opening.",
+        "The first playable location or area.",
+        "A first problem, opportunity, invitation, or destination with clear choices and consequences where they apply.",
+        "Two to four NPCs or creatures likely to matter, with the relevant stat blocks to hand.",
+        "Only the maps, rules references, and other material needed for session one; for a published adventure, the overview and opening section, not the whole campaign memorised.",
+        "One place to record what became canon after play.",
+      ],
+    },
+    {
+      kind: "list",
+      heading: "What next?",
+      intro: "Follow the part of getting started you need next:",
+      items: [
+        {
+          term: "First time DM?",
+          text: "Start with [how to GM for the first time](/answers/how-do-i-start-gming-for-the-first-time).",
+        },
+        {
+          term: "Need to align the group?",
+          text: "Use [the Session 0 guide](/answers/how-do-i-run-a-successful-session-0).",
+        },
+        {
+          term: "Ready to play?",
+          text: "Follow [step-by-step first-session prep](/answers/how-do-i-prepare-an-rpg-session-step-by-step).",
+        },
+        {
+          term: "Want an open campaign?",
+          text: "See [how to prepare a sandbox campaign](/answers/how-do-you-prepare-a-sandbox-rpg-campaign).",
+        },
+        {
+          term: "Need to organise what survives session one?",
+          text: "Read [how to organise campaign notes](/answers/how-do-you-organise-rpg-campaign-notes).",
+        },
       ],
     },
   ],
   codexConnection: {
     heading: "Build the first playable pieces of your campaign",
     paragraphs: [
-      "Once the premise and Session 0 are settled, the parts that remain are small, linked details rather than a world bible. Codex Cryptica helps you make those first pieces playable: generate a starting settlement and the handful of NPCs and factions who can actually affect it, note the relationships between them, and keep Session 0 decisions and session-prep notes as linked entities in the Vault so they stay findable when play inevitably goes somewhere you did not plan.",
-      "When the first session is over, the Graph makes the ties you created visible, so the consequences of who the party helped or ignored carry into session two without rebuilding your notes from scratch.",
+      "Once the premise and Session 0 are settled, prepare only the pieces the opening needs. Codex Cryptica can help you capture relevant locations, NPCs, creatures, or factions and connect them to Session 0 decisions and session-prep notes, so useful details stay findable as play expands. You do not need to populate a campaign database before the first session.",
+      "After play, keep the details that became relevant and the relationships the characters changed. The Graph can make those connections visible as the campaign grows, without asking you to plan the whole world in advance.",
     ],
     linkText: "Build your starting area",
     href: "/for/dungeons-and-dragons",
@@ -147,25 +174,25 @@ export const howDoIStartADndCampaign: AnswerConfigInput = {
     {
       title: "Settlement generator",
       description:
-        "Draft the one starting town or village the party will actually stand in, with districts and local pressure built in.",
+        "Draft a town or village if that is the kind of place your campaign starts; districts and local pressure are optional details.",
       href: "/generators/settlement",
     },
     {
       title: "NPC generator",
       description:
-        "Create the two or three NPCs your opening scene needs, each with a visible want the party can act on.",
+        "Create only the NPCs your opening scene needs, with clear reasons for the party to engage.",
       href: "/generators/npc",
     },
     {
       title: "Faction generator",
       description:
-        "Give the settlement's two or three competing groups distinct aims and a move they make if the party does nothing.",
+        "Add competing groups when factions suit your campaign's opening situation.",
       href: "/generators/faction",
     },
     {
       title: "Tavern generator",
       description:
-        "Add a ready-to-run social hub where Session 0 ties and first-session rumours can be heard.",
+        "Add a tavern if it fits the first playable location or opening scene.",
       href: "/generators/tavern",
     },
     {
@@ -253,7 +280,7 @@ export const howDoIStartADndCampaign: AnswerConfigInput = {
   seo: {
     title: "How do I start a D&D campaign? | Codex Cryptica",
     description:
-      "Start your first D&D campaign with a playable first session: premise, published or homebrew, Session 0, starting area, and a concrete first problem.",
+      "Start your D&D campaign with an agreed rules baseline, connected characters, and a playable first situation—not a finished world.",
     image:
       "https://assets.codexcryptica.com/og/how-do-i-start-a-dnd-campaign.jpg",
     imageAlt:
