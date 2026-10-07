@@ -28,12 +28,31 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
+      - name: Download promoted commit
+        uses: actions/download-artifact@v8
+        with:
+          name: promoted-sha
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: promoted/
+
       - name: Merge Staging to Main
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          # Merge the commit that was actually deployed, not whatever staging
+          # has moved on to since the promotion started (#3852).
+          PROMOTED_SHA=$(tr -d '[:space:]' < promoted/promoted-sha.txt)
+          if ! printf '%s' "$PROMOTED_SHA" | grep -Eq '^[0-9a-f]{40}$'; then
+            echo "::error::Promoted commit is missing or malformed: '$PROMOTED_SHA'"
+            exit 1
+          fi
           git fetch origin staging
-          git merge origin/staging --no-ff -m "🚀 promote: merge staging to main after production deployment"
+          if ! git merge-base --is-ancestor "$PROMOTED_SHA" origin/staging; then
+            echo "::error::Promoted commit $PROMOTED_SHA is not part of staging"
+            exit 1
+          fi
+          git merge "$PROMOTED_SHA" --no-ff -m "🚀 promote: merge staging to main after production deployment"
           git push origin main
 
       # A push made with GITHUB_TOKEN does not trigger other workflows, so the
