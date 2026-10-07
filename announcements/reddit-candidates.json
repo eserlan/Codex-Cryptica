@@ -1,16 +1,6 @@
 {
-  "updated_at": 1791322193,
+  "updated_at": 1791374348,
   "candidates": [
-    {
-      "id": "reddit-37120950555-staging-npc-information-scenes-so-player",
-      "title": "Staging NPC information scenes so players can investigate without breaking your improvisation",
-      "body": "You've got an NPC cornered. Your players ask them to spill everything they know: the town's secrets, the merchant's debts, the guard captain's fears. You start improvising and halfway through you realize you've contradicted yourself three times.\n\nI added two new answer pages on NPC interviews so you can stage information-heavy scenes without losing control. One covers how to decide what an NPC would realistically know based on their job, connections, and exposure. The other tackles techniques for pacing information delivery so the scene doesn't stall when someone asks \"what about...\" for the fifth time.\n\nThis hits a specific problem: interrogation scenes feel like they either drag on forever or devolve into you frantically making things up. The answers give you a framework for deciding what to share, when, and how the NPC's personality shapes the way they talk about it.\n\nPractical outputs:\n\n- How to layer an NPC's knowledge by circles of influence (family, profession, social position)\n- Ways to deflect credibly when players ask about something the NPC wouldn't know\n- Techniques for making the NPC's *manner* of answering matter (some NPCs gossip, some reluctantly share, some lecture)\n- Pacing tricks so information scenes feel like interviews, not depositions\n\nWhen you run a scene where players are pumping an NPC for information, do you find yourself winging the answers, or do you have a system for determining what the NPC would actually know?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/announcements/character-nkiru-okafor.jpg)",
-      "url": "",
-      "image_url": "https://assets.codexcryptica.com/announcements/character-nkiru-okafor.jpg",
-      "source_id": "37120950555",
-      "status": "approved",
-      "created_at": 1791028506
-    },
     {
       "id": "reddit-37230785420-help-documentation-for-core-tools",
       "title": "Help documentation for core tools",
