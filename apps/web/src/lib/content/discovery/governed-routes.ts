@@ -79,6 +79,7 @@ const TOPIC_PATHS = [
   "/topics/heists",
   "/topics/puzzles",
   "/topics/pirates",
+  "/topics/dnd",
 ] as const;
 
 export function listGovernedPaths(): string[] {
