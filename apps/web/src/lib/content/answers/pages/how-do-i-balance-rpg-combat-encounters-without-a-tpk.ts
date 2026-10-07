@@ -144,6 +144,7 @@ export const howDoIBalanceRpgCombatEncountersWithoutATpk: AnswerConfigInput = {
     "how-do-i-run-a-large-battle-when-the-player-characters-are-part-of-an-army",
     "how-do-i-upgrade-a-player-characters-weapon-without-replacing-it",
     "how-do-i-keep-players-engaged-during-other-players-turns-in-combat",
+    "how-do-i-prepare-a-dnd-session",
   ],
   discovery: {
     id: "answer-encounter-balance",

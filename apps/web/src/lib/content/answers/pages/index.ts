@@ -26,6 +26,7 @@ import { howDoIMakeRivalCaptainsNaviesAndPirateFactionsMatter } from "./how-do-i
 import { howDoIMakeSeaTravelInterestingInATtrpg } from "./how-do-i-make-sea-travel-interesting-in-a-ttrpg";
 import { howDoIOrganiseGmNotesForInPersonPlay } from "./how-do-i-organise-gm-notes-for-in-person-play";
 import { howDoIPaceAnRpgOneShot } from "./how-do-i-pace-an-rpg-one-shot";
+import { howDoIPrepareADndSession } from "./how-do-i-prepare-a-dnd-session";
 import { howDoIPrepareAnRpgSessionStepByStep } from "./how-do-i-prepare-an-rpg-session-step-by-step";
 import { howDoIRunACampaignWhereThePlayersOwnABusiness } from "./how-do-i-run-a-campaign-where-the-players-own-a-business";
 import { howDoIRunADiplomatNobleOrCourtierInAnRpg } from "./how-do-i-run-a-diplomat-noble-or-courtier-in-an-rpg";
@@ -175,6 +176,7 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     howDoIMakeSeaTravelInterestingInATtrpg,
     howDoIOrganiseGmNotesForInPersonPlay,
     howDoIPaceAnRpgOneShot,
+    howDoIPrepareADndSession,
     howDoIPrepareAnRpgSessionStepByStep,
     howDoIRunACampaignWhereThePlayersOwnABusiness,
     howDoIRunADiplomatNobleOrCourtierInAnRpg,
