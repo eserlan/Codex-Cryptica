@@ -201,7 +201,7 @@ export const howDoIImproviseNpcsInDnd: AnswerConfigInput = {
     relatedIntents: [
       "answer-npc-tell-us-everything",
       "answer-interviewing-npcs-investigation",
-      "answer-specialist-spotlight",
+      "answer-specialist-character-spotlight",
       "generator-npc",
       "generator-dnd-npc",
     ],
