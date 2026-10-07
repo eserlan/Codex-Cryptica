@@ -7,36 +7,68 @@ export const howDoIStartADndCampaign: AnswerConfigInput = {
   question: "How do I start a D&D campaign?",
   kind: "framework",
   shortAnswer:
-    "Start a D&D campaign with a small playable situation the characters have a reason to care about, not a finished world. Choose a clear premise and tone, decide whether to run a published adventure, homebrew, or a mix of both, agree which rules and edition you are using, then run a compact Session 0 to connect the party and set expectations. Prepare only the starting area, the people and factions who can affect it, and a concrete first problem for session one, and let the campaign grow outward from what the players actually do.",
+    "Start a D&D campaign with a group, agreed rules and one playable session, not a finished world. Agree on a premise and tone the group wants to play, choose a published adventure, homebrew, or a mix, settle which rules and character options you will use, then run a compact Session 0 to connect the party and set expectations. Prepare only the starting area, the people and factions who can affect it, and a concrete first situation for session one; let the campaign grow from what the players actually do.",
   sections: [
     {
       kind: "prose",
       heading: "Blank page to playable table",
       paragraphs: [
         "The hardest part of starting a D&D campaign is not learning the rules. It is deciding how much to build before the first die roll, and most new Dungeon Masters build far too much in the wrong direction. The impulse to write a continent, a timeline, and a pantheon feels responsible, but it produces a lot of material the table never touches and leaves the actual first session vague.",
-        "A campaign becomes playable when the players have a situation to act on, a reason to act together, and enough surrounding detail that their choices matter. Everything beyond that can wait until play shows you what the group cares about. Your job before session one is to make the first three hours concrete, not to make the whole world complete.",
+        "A campaign becomes playable when the players have a situation to act on, a reason to act together, and enough surrounding detail that their choices matter. Everything beyond that can wait until play shows you what the group cares about. Your job before session one is to make the first playable session concrete, not to make the whole world complete.",
       ],
     },
     {
       kind: "list",
-      heading: "Eight steps from blank page to first session",
-      intro: "In this order, with only as much of each as the next step needs:",
+      heading: "The minimum viable D&D campaign",
+      intro:
+        "You need a group, agreed rules and one playable session, not a finished campaign:",
+      ordered: true,
       items: [
         {
-          term: "Choose the premise and tone",
-          text: 'Name what this campaign is about in one sentence and how it should feel at the table. A sentence like "level 1 to 5, frontier town under pressure from a failing mine, practical and a little gritty" tells players how to build characters that fit. Tone is a shared agreement, not a lore entry, so state it plainly in Session 0 rather than hoping the first session reveals it.',
+          text: "Get the players together and agree where or how you will play, session length, how often you will meet, and what happens when someone cannot make it.",
+        },
+        {
+          text: "Choose the D&D rules version and character options the group will use.",
+        },
+        {
+          text: "Pick a published adventure, a homebrew start, or a mix of the two.",
+        },
+        {
+          text: "Run Session 0 and give the characters a reason to act together.",
+        },
+        {
+          text: "Prepare one starting location, a few people and one situation the party can act on.",
+        },
+        {
+          text: "Play the first session, then build outward from what the group chooses to pursue.",
+        },
+      ],
+    },
+    {
+      kind: "list",
+      heading: "Nine steps from blank page to first session",
+      intro: "In this order, with only as much of each as the next step needs:",
+      ordered: true,
+      items: [
+        {
+          term: "Set up the real-world table",
+          text: "Confirm who is playing, roughly how many players there will be, where or how you will play, how long sessions will last, how often you will meet, and what happens when someone cannot attend. A workable plan matters more than a perfect one.",
+        },
+        {
+          term: "Choose or pitch a premise the group wants to play",
+          text: 'Bring one strong idea or two or three short pitches, then agree in Session 0 on the version everyone is excited about and how it should feel at the table. A sentence like "level 1 to 5, frontier town under pressure from a failing mine, practical and a little gritty" gives players a direction for characters that fit. Tone is a shared agreement, not a lore entry.',
         },
         {
           term: "Decide published, homebrew, or hybrid",
-          text: "A published adventure saves you from inventing the initial situation; homebrew gives you more freedom over setting and pace but makes it easier to overbuild. A hybrid, running a published structure while replacing its town, NPCs, or faction with your own, often gives a new DM the best of both. See the comparison below before you commit.",
+          text: "A published adventure gives you a prewritten starting situation; homebrew gives you more freedom over setting and pace but makes it easier to overbuild. A hybrid can be a useful middle ground when you want prewritten structure but want to customise the setting, NPCs, or hooks. See the comparison below before you commit.",
         },
         {
-          term: "Agree the rules you are actually using",
-          text: "Confirm edition, any optional rules you are keeping or dropping, how you handle character creation, and what sources are in or out. One short note agreed before Session 0 prevents half the table building for a different game. You do not need to master every rule, only the ones the first session will test.",
+          term: "Agree which D&D rules and character options you are using",
+          text: "Choose the 2024 core rules, the 2014 rules and any Legacy material, or a clearly stated mix. Agree the starting level, which sources players should use to create characters, and whether feats or other optional rules are allowed. You can begin with the free rules for your chosen version; you do not need to buy or master every core book before playing.",
         },
         {
           term: "Run a compact Session 0",
-          text: 'Use the session to align on expectations, boundaries, scheduling, and character connections, not to deliver a lore lecture. Build or cross-reference characters together so each one has at least one concrete tie to another member of the party. Finish with a clear answer to "where do we start, and why are we together?"',
+          text: 'Use the session to align on expectations, boundaries, and character connections, not to deliver a lore lecture. Confirm the practical arrangements, then build or cross-reference characters together so each one has at least one concrete tie to another member of the party. Finish with a clear answer to "where do we start, and why are we together?"',
         },
         {
           term: "Create only the starting area and its pressures",
@@ -44,11 +76,11 @@ export const howDoIStartADndCampaign: AnswerConfigInput = {
         },
         {
           term: "Give the characters a concrete first problem",
-          text: "A missing shipment, a sealed barrow that has started leaking, a patron calling in a debt, a local authority about to make a bad decision. The problem should name people, a place, and a pressure that worsens on a short clock, so the party has to choose an approach rather than wait for a plot to arrive.",
+          text: "A missing shipment, a sealed barrow that has started leaking, a patron calling in a debt, a local authority about to make a bad decision. Give the party a concrete situation with people, place, stakes, and a reason to act. Add a clock when urgency improves the choice; an opportunity, mystery, request, destination, or dangerous place can also draw the party in.",
         },
         {
           term: "Prepare the first session, not the whole campaign",
-          text: "Write the opening scene, two or three likely locations, the NPCs who will definitely appear, and one or two complications you can drop in if things run short or go sideways. Leave the level 5 arc and the distant kingdoms as unanswered questions. Players will tell you what to develop by what they pursue.",
+          text: "Write the opening situation, two or three likely locations, and a few reusable NPCs tied to it who can enter wherever the party goes. Add one or two complications in case play runs short or goes sideways. Leave the level 5 arc and the distant kingdoms as unanswered questions. Players will tell you what to develop by what they pursue.",
         },
         {
           term: "Record what becomes canon and expand from there",
@@ -63,7 +95,7 @@ export const howDoIStartADndCampaign: AnswerConfigInput = {
       rows: [
         [
           "Published adventure",
-          "Less initial content to invent, tested structure for the first sessions",
+          "Prewritten structure, locations, NPCs, and encounters to adapt",
           "More reading and adaptation to your table, some material you will want to change",
           "You want to run soon with less upfront writing",
         ],
@@ -75,7 +107,7 @@ export const howDoIStartADndCampaign: AnswerConfigInput = {
         ],
         [
           "Hybrid",
-          "Reuses a proven opening while your own settlement, NPCs, and factions make it yours",
+          "Uses prewritten structure while your settlement, NPCs, or factions make it your own",
           "You still need to adapt stat blocks and hooks to your changes",
           "You like a published start but want your own location or faction at the centre",
         ],
@@ -100,7 +132,7 @@ export const howDoIStartADndCampaign: AnswerConfigInput = {
       kind: "example",
       heading: "Two starts for the same town",
       paragraphs: [
-        "The same frontier settlement, prepared two ways, for a group about to start a D&D 5e campaign at level 1. Only one is ready to run.",
+        "The same frontier settlement, prepared two ways, for a group about to start a D&D campaign using the 2024 core rules at level 1. Only one is ready to run.",
       ],
       items: [
         {
@@ -121,26 +153,56 @@ export const howDoIStartADndCampaign: AnswerConfigInput = {
       kind: "checklist",
       heading: "Before you sit down for session one",
       intro:
-        "Run through this the night before the first game. If you can answer each line in a sentence, you are ready:",
+        "You are ready when the group knows what campaign they are playing, the characters have a reason to be together, and you can run the first situation without inventing the whole world. Run through this the night before the first game:",
       items: [
+        "You know who is playing, how and where you will meet, how long sessions last, how often you will play, and what happens when someone cannot attend.",
         "You can state the campaign premise and tone in one sentence everyone at Session 0 agreed to.",
         "You have chosen published, homebrew, or hybrid and know what that choice expects you to have ready.",
-        "You have agreed edition, character creation method, and which optional rules are in or out.",
+        "You have agreed whether you are using the 2024 core rules, the 2014 rules and any Legacy material, or a stated mix, along with the starting level, character-creation sources, and optional rules.",
         "You have run a compact Session 0 and each character has at least one concrete tie to another party member.",
         "Your notes cover one starting settlement, two or three nearby places, and two or three persons or factions with current aims and a move they make if the party stalls.",
-        "You have one concrete first problem that names people, a place, and what worsens if the party does nothing.",
+        "You have one concrete first situation with people, a place, stakes, and a reason for the party to act.",
         "Your prep serves the first session only, with one or two spare complications for when play runs short or goes off plan.",
         "You have a simple way to record which names, places, and threads became canon during play.",
+      ],
+    },
+    {
+      kind: "list",
+      heading: "What next?",
+      intro:
+        "Follow the step you need now; the matching answers appear below in this order:",
+      ordered: true,
+      items: [
+        {
+          term: "First time GM?",
+          text: "Start with the first-time GM guide for the core skills and a minimal prep packet.",
+        },
+        {
+          term: "Before play?",
+          text: "Use the Session 0 guide to agree expectations, boundaries, practical arrangements, and character connections.",
+        },
+        {
+          term: "The night before the game?",
+          text: "Follow the step-by-step session-prep guide to get the next session ready.",
+        },
+        {
+          term: "The characters do not naturally fit together?",
+          text: "Use the party-cohesion guide to agree a shared reason for them to act together.",
+        },
+        {
+          term: "The campaign is expanding?",
+          text: "Use the campaign-notes guide to record what becomes relevant and canon as you play. For D&D-specific tools and guides, open the D&D hub below.",
+        },
       ],
     },
   ],
   codexConnection: {
     heading: "Build the first playable pieces of your campaign",
     paragraphs: [
-      "Once the premise and Session 0 are settled, the parts that remain are small, linked details rather than a world bible. Codex Cryptica helps you make those first pieces playable: generate a starting settlement and the handful of NPCs and factions who can actually affect it, note the relationships between them, and keep Session 0 decisions and session-prep notes as linked entities in the Vault so they stay findable when play inevitably goes somewhere you did not plan.",
-      "When the first session is over, the Graph makes the ties you created visible, so the consequences of who the party helped or ignored carry into session two without rebuilding your notes from scratch.",
+      "Start with the D&D hub, then use Codex Cryptica to generate a starting settlement, NPC, or faction only when one would help you run the first situation. Capture Session 0 decisions and the details that become relevant in play; you do not need to build a dense Vault or Graph before the first game.",
+      "After the session, connect what became canon so the consequences of who the party helped or ignored can carry into the next one.",
     ],
-    linkText: "Build your starting area",
+    linkText: "Explore D&D tools and guides",
     href: "/for/dungeons-and-dragons",
   },
   relatedTools: [
@@ -198,18 +260,9 @@ export const howDoIStartADndCampaign: AnswerConfigInput = {
   relatedAnswers: [
     "how-do-i-start-gming-for-the-first-time",
     "how-do-i-run-a-successful-session-0",
-    "how-do-i-get-my-rpg-party-to-work-together",
-    "how-much-prep-do-you-need-for-an-rpg-session",
-    "how-do-you-prepare-a-sandbox-rpg-campaign",
-    "how-do-i-turn-an-rpg-idea-into-an-adventure",
-    "how-do-you-organise-rpg-campaign-notes",
-    "how-do-you-organise-npc-relationships",
-    "how-do-you-start-worldbuilding-from-scratch",
-    "how-do-i-expand-a-simple-rpg-campaign-idea",
     "how-do-i-prepare-an-rpg-session-step-by-step",
-    "how-do-you-make-a-tabletop-rpg-session-more-engaging",
-    "how-do-you-handle-players-going-off-script-as-a-gm",
-    "how-do-you-run-dnd-for-a-large-group-of-players",
+    "how-do-i-get-my-rpg-party-to-work-together",
+    "how-do-you-organise-rpg-campaign-notes",
   ],
   discovery: {
     id: "answer-start-dnd-campaign",
@@ -228,7 +281,7 @@ export const howDoIStartADndCampaign: AnswerConfigInput = {
       "how to start being a dungeon master for dnd",
     ],
     uniqueValue:
-      "D&D-specific start framed as a playable first situation rather than a finished world, with an eight-step flow, a published versus homebrew versus hybrid comparison, an explicit list of what not to build before session one, and a weak versus strong Brindle Heath worked example.",
+      "D&D-specific start framed as a playable first situation rather than a finished world, with a minimum campaign path, a nine-step flow, a published versus homebrew versus hybrid comparison, an explicit list of what not to build before session one, and a weak versus strong Brindle Heath worked example.",
     relatedIntents: [
       "answer-first-time-gm-hub",
       "answer-session-zero",
