@@ -164,10 +164,10 @@ export const howDoIStartADndCampaign: AnswerConfigInput = {
   codexConnection: {
     heading: "Build the first playable pieces of your campaign",
     paragraphs: [
-      "Once the premise and Session 0 are settled, prepare only the pieces the opening needs. Codex Cryptica can help you capture relevant locations, NPCs, creatures, or factions and connect them to Session 0 decisions and session-prep notes, so useful details stay findable as play expands. You do not need to populate a campaign database before the first session.",
+      "Start with the D&D hub, then use Codex Cryptica to capture only the locations, NPCs, creatures, or factions the opening needs. Connect them to Session 0 decisions and session-prep notes so useful details stay findable as play expands; you do not need to populate a campaign database before the first session.",
       "After play, keep the details that became relevant and the relationships the characters changed. The Graph can make those connections visible as the campaign grows, without asking you to plan the whole world in advance.",
     ],
-    linkText: "Build your starting area",
+    linkText: "Explore D&D tools and guides",
     href: "/for/dungeons-and-dragons",
   },
   relatedTools: [
