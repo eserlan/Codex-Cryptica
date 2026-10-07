@@ -33,6 +33,7 @@
   import NotificationToast from "$lib/components/layout/NotificationToast.svelte";
   import FatalErrorOverlay from "$lib/components/layout/FatalErrorOverlay.svelte";
   import ActivityBar from "$lib/components/layout/ActivityBar.svelte";
+  import SoloSessionBar from "$lib/components/solo/SoloSessionBar.svelte";
   import SidebarPanelHost from "$lib/components/layout/SidebarPanelHost.svelte";
   import MobileDemoBanner from "$lib/components/layout/MobileDemoBanner.svelte";
   import GlobalModalProvider from "$lib/components/modals/GlobalModalProvider.svelte";
@@ -730,6 +731,7 @@
       {#if sessionModeStore.isDemoMode}
         <MobileDemoBanner />
       {/if}
+      <SoloSessionBar />
     {/if}
 
     <div

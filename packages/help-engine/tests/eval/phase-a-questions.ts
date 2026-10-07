@@ -355,6 +355,24 @@ export const PHASE_A_IN_SCOPE: InScopeQuestion[] = [
   q("generators", "holdout", "none", "Can I generate a festival?", [
     "generator:holiday",
   ]),
+  // Solo sessions (Play page, solo bar)
+  q("solo", "tune", "none", "How do I play solo?", ["solo-session"]),
+  q("solo", "tune", "none", "How do I start a solo session?", ["solo-session"]),
+  q("solo", "holdout", "none", "What is the solo bar for?", ["solo-session"]),
+  q(
+    "solo",
+    "holdout",
+    "none",
+    "How do I roll dice quickly while playing alone?",
+    ["solo-session"],
+  ),
+  q("solo", "holdout", "none", "How do I end my solo session?", [
+    "solo-session",
+  ]),
+  // In-game questions go to the Oracle, never to product help
+  q("solo", "holdout", "none", "What would the goblin chief do next?", [
+    "oracle-guide",
+  ]),
 ];
 
 /** Questions that are easy to answer from the wrong neighbouring feature. */

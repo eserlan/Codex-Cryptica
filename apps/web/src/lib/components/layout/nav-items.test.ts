@@ -129,11 +129,20 @@ describe("nav items", () => {
       expect(isViewActive(byId("graph")!, "/map")).toBe(false);
     });
 
-    it("lights Play only for the dedicated adventure workspace", () => {
-      const adventure = byId("adventure")!;
+    it("lights Play for the Play page and the Adventure workspace, and nothing else", () => {
+      const play = byId("adventure")!;
 
-      expect(isViewActive(adventure, "/adventure")).toBe(true);
-      expect(isViewActive(adventure, "/oracle")).toBe(false);
+      expect(isViewActive(play, "/play")).toBe(true);
+      expect(isViewActive(play, "/adventure")).toBe(true);
+      expect(isViewActive(play, "/oracle")).toBe(false);
+    });
+
+    it("sends Play to the Play page, not straight to Adventure Mode", () => {
+      const play = byId("adventure")!;
+
+      expect(play.href).toBe("/play");
+      expect(play.title).toMatch(/solo session/i);
+      expect(play.title).toMatch(/Oracle/);
     });
 
     it("never lights a tool by path", () => {

@@ -31,6 +31,11 @@ const bundle = buildBundle({
       "## Automated Discovery\nReview suggested relationships the Oracle finds between entities in your campaign.",
     ),
     article(
+      "solo-session",
+      "Solo Sessions",
+      "## Start a solo session\nOpen Play and choose Start Solo Session. Pick a map and keep the journal option on.\n## The solo bar\nQuick roll, the dice window, Journal, Map, Add note and End session sit under the header while a session runs.",
+    ),
+    article(
       "graph-basics",
       "Graph Basics",
       "## Nodes\nThe graph draws every entry as a node and every connection as a line. Select a node to see its links.",

@@ -148,8 +148,9 @@ export function navItems(): NavItem[] {
       id: "adventure",
       icon: "icon-[lucide--swords]",
       label: "Play",
-      title: "Solo Adventure — play a session guided by your campaign world",
-      href: `${base}/adventure`,
+      title: "Play — start a solo session, or let the Oracle run an adventure",
+      href: `${base}/play`,
+      alsoActiveFor: [`${base}/adventure`],
       group: "view",
       // The desktop rail has room for a first-class Play workspace. On a
       // phone it remains in the navigation drawer, where its label can stay

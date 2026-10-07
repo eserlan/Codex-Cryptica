@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import VaultActionsMenu from "./VaultActionsMenu.svelte";
 import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
 import { openImportWindow } from "$lib/stores/ui/navigation";
+import { soloSessionStore } from "$lib/stores/solo-session-instance";
 
 vi.mock("$lib/stores/ui/modal-ui.svelte", () => ({
   modalUIStore: { openSettings: vi.fn(), openShare: vi.fn() },
@@ -67,5 +68,21 @@ describe("VaultActionsMenu", () => {
     expect(screen.getByTestId("vault-actions-menu").className).toContain(
       "w-full",
     );
+  });
+});
+
+describe("VaultActionsMenu share during a solo session", () => {
+  it("does not open Share while a solo session runs", async () => {
+    const active = vi
+      .spyOn(soloSessionStore, "isActive", "get")
+      .mockReturnValue(true);
+    render(VaultActionsMenu);
+    await fireEvent.click(screen.getByTestId("vault-actions-menu-button"));
+    await fireEvent.click(
+      screen.getByRole("menuitem", { name: /share campaign/i }),
+    );
+
+    expect(modalUIStore.openShare).not.toHaveBeenCalled();
+    active.mockRestore();
   });
 });

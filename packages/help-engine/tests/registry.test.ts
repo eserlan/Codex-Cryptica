@@ -79,6 +79,7 @@ describe("proof-of-concept registry", () => {
         "solo-adventure",
         "entity-explorer",
         "entity-shelf",
+        "solo-session",
       ].sort(),
     );
   });

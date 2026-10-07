@@ -44,6 +44,9 @@ vi.mock("$lib/components/layout/ActivityBar.svelte", () => ({
     return { $$render: () => "<div data-testid='activity-bar'></div>" };
   },
 }));
+vi.mock("$lib/components/solo/SoloSessionBar.svelte", () => ({
+  default: function SoloSessionBarStub() {},
+}));
 vi.mock("$lib/components/layout/SidebarPanelHost.svelte", () => ({
   default: function SidebarPanelHostMock() {
     return { $$render: () => "<div data-testid='sidebar-host'></div>" };

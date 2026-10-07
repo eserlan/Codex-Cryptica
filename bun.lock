@@ -38,7 +38,7 @@
     },
     "apps/web": {
       "name": "web",
-      "version": "0.34.9",
+      "version": "0.35.7",
       "dependencies": {
         "@capacitor/app": "^8.1.1",
         "@capacitor/core": "^8.5.0",
@@ -110,6 +110,7 @@
         "random-source-engine": "workspace:*",
         "schema": "workspace:*",
         "session-journal-engine": "workspace:*",
+        "solo-session-engine": "workspace:*",
         "svelte-tiptap": "^3.0.1",
         "tiptap-markdown": "^0.9.0",
         "zod": "^4.4.3",
@@ -575,6 +576,15 @@
       "dependencies": {
         "@codex/events": "workspace:*",
       },
+      "devDependencies": {
+        "@vitest/coverage-v8": "^5.0.0",
+        "typescript": "^6.0.3",
+        "vitest": "^5.0.0",
+      },
+    },
+    "packages/solo-session-engine": {
+      "name": "solo-session-engine",
+      "version": "0.0.0",
       "devDependencies": {
         "@vitest/coverage-v8": "^5.0.0",
         "typescript": "^6.0.3",
@@ -2306,6 +2316,8 @@
     "socks": ["socks@2.8.8", "", { "dependencies": { "ip-address": "10.1.1", "smart-buffer": "4.2.0" } }, "sha512-NlGELfPrgX2f1TAAcz0WawlLn+0r3FyhhCRpFFK2CemXenPYvzMWWZINv3eDNo9ucdwme7oCHRY0Jnbs4aIkog=="],
 
     "socks-proxy-agent": ["socks-proxy-agent@8.0.5", "", { "dependencies": { "agent-base": "7.1.4", "debug": "4.4.3", "socks": "2.8.8" } }, "sha512-HehCEsotFqbPW9sJ8WVYB6UbmIMv7kUUORIF2Nncq4VQvBfNBLibW9YZR5dlYCSUhwcD628pRllm7n+E+YTzJw=="],
+
+    "solo-session-engine": ["solo-session-engine@workspace:packages/solo-session-engine"],
 
     "source-map": ["source-map@0.7.6", "", {}, "sha512-i5uvt8C3ikiWeNZSVZNWcfZPItFQOsYTUAOkcUPGd8DqDy1uOUikjt5dG+uRlwyvR108Fb9DOd4GvXfT0N2/uQ=="],
 

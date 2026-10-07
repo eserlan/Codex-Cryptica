@@ -15,6 +15,7 @@
   import { mapStore } from "$lib/stores/map.svelte";
   import { mapSession } from "$lib/stores/map-session.svelte";
   import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
+  import { soloPlayGuard } from "$lib/stores/solo-session-instance";
   import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
   import { mapControlsUIStore } from "$lib/stores/ui/map-controls-ui.svelte";
 
@@ -137,11 +138,13 @@
       <button
         type="button"
         class={`touch-target px-2.5 py-1.5 rounded-md text-micro font-bold uppercase tracking-wider transition-all ${getPrimaryButtonStateClass(sessionModeStore.sharedMode)}`}
-        onclick={() =>
-          (sessionModeStore.sharedMode = !sessionModeStore.sharedMode)}
+        disabled={!sessionModeStore.sharedMode &&
+          !!soloPlayGuard.sharedPlayBlockedReason()}
+        onclick={() => soloPlayGuard.toggleSharedMode()}
         title={sessionModeStore.sharedMode
           ? "Exit Shared Mode (Admin View)"
-          : "Enter Shared Mode (Player Preview)"}
+          : (soloPlayGuard.sharedPlayBlockedReason() ??
+            "Enter Shared Mode (Player Preview)")}
         data-testid="shared-mode-toggle"
         data-help-target="vtt-player-view-toggle"
         aria-pressed={sessionModeStore.sharedMode}

@@ -10,7 +10,7 @@ import {
 export const HELP_CONTEXT_VERSION = 1 as const;
 
 /** Room for the panel flags and every VTT fact at once. */
-export const MAX_FLAGS = 28;
+export const MAX_FLAGS = 29;
 
 /** Room for the Settings panels plus every VTT panel and control at once. */
 export const MAX_ACTIONS = 32;
@@ -32,6 +32,7 @@ export const HELP_ROUTE_TEMPLATES = [
   "/(app)/import",
   "/(app)/map",
   "/(app)/oracle",
+  "/(app)/play",
   "/(app)/table",
   "/(app)/tables",
   "/(app)/templates",

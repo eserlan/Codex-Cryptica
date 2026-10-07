@@ -15,7 +15,7 @@ export const soloAdventure: FeatureEntry = {
       id: "start-an-adventure",
       title: "Start a solo adventure",
       steps: [
-        "Open Play from the activity bar.",
+        "Open Play from the activity bar, then choose Let the Oracle run the game.",
         "Enter an Adventure title, a Premise and your Player character name, and optionally a Character description.",
         "Choose Start adventure, then respond to the situations the Oracle presents.",
       ],
@@ -25,7 +25,7 @@ export const soloAdventure: FeatureEntry = {
       id: "continue-an-adventure",
       title: "Continue an adventure",
       steps: [
-        "Open Play from the activity bar.",
+        "Open Play from the activity bar, then choose Let the Oracle run the game.",
         "If this vault already has an active adventure, it is offered so you can carry on.",
         "Starting and continuing turns needs an available Oracle connection; a saved session stays readable offline.",
       ],
