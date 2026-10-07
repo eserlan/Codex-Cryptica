@@ -13,6 +13,7 @@ import { schemaSettings } from "./schema-settings";
 import { entityTable } from "./entity-table";
 import { diceRoller } from "./dice-roller";
 import { soloAdventure } from "./solo-adventure";
+import { soloSession } from "./solo-session";
 import { entityExplorer } from "./entity-explorer";
 import { entityShelf } from "./entity-shelf";
 import type { FeatureEntry } from "../schema";
@@ -56,6 +57,7 @@ export const FEATURE_REGISTRY: readonly FeatureEntry[] = [
   entityTable,
   diceRoller,
   soloAdventure,
+  soloSession,
   entityExplorer,
   entityShelf,
 ];

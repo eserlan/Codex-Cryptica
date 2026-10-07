@@ -545,6 +545,7 @@ export function pickRepresentativeRoutes(
 export const PRIVATE_ROUTE_FAMILIES = [
   "/adventure",
   "/canvas",
+  "/play",
   "/decks",
   "/dice",
   "/guest",
@@ -565,6 +566,7 @@ export const PRIVATE_ROUTE_FAMILIES = [
 export const PRIVATE_ROUTE_SAMPLES = [
   "/adventure",
   "/canvas",
+  "/play",
   "/decks",
   "/dice",
   "/guest",

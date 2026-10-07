@@ -1,3 +1,4 @@
+import { soloSessionStore } from "$lib/stores/solo-session-instance";
 import { goto } from "$app/navigation";
 import { base } from "$app/paths";
 import { page } from "$app/state";
@@ -50,6 +51,7 @@ export const helpContext = new HelpContextStore({
   journalAvailable: () => generatorsAvailable(vault, sessionModeStore),
   isSidebarOpen: () => layoutUIStore.leftSidebarOpen,
   getActiveSidebarTool: () => layoutUIStore.activeSidebarTool,
+  soloSession: () => ({ active: soloSessionStore.isActive }),
 });
 
 const helpIds = () => new Set(getHelpArticles().map((article) => article.id));

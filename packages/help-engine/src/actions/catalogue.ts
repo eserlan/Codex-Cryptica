@@ -118,6 +118,13 @@ export const SETTINGS_PANEL_IDS = PANEL_IDS.filter((id) =>
  */
 export { GENERATOR_IDS, type GeneratorId };
 
+/** Solo session controls: the Play page start, and the bar while a session runs. */
+export const SOLO_CONTROL_IDS = [
+  "play-start-solo-session",
+  "solo-quick-roll",
+  "solo-end-session",
+] as const;
+
 /** Controls `highlight` may point at (`data-help-target` values). */
 export const CONTROL_IDS = [
   "add-connection-button",
@@ -125,6 +132,7 @@ export const CONTROL_IDS = [
   "status-tab",
   "connections-tab",
   ...VTT_CONTROL_IDS,
+  ...SOLO_CONTROL_IDS,
 ] as const;
 export type ControlId = (typeof CONTROL_IDS)[number];
 
@@ -164,17 +172,24 @@ export const VTT_FLAGS = [
 export type VttFlag = (typeof VTT_FLAGS)[number];
 
 /** Material flags a screen description may carry. */
+/** Set while a solo session is running in this vault. */
+export const SESSION_FLAGS = ["solo-session"] as const;
+
 export const HELP_FLAGS = [
   "generators",
   "connections-editable",
   ...PANEL_FLAGS,
   ...VTT_FLAGS,
+  ...SESSION_FLAGS,
 ] as const;
 export type HelpFlag = (typeof HELP_FLAGS)[number];
 
 export interface ControlSpec {
-  /** Screen area the control lives in. */
-  area: "entity-detail" | "map";
+  /**
+   * Screen area the control lives in. `solo` controls appear on every screen
+   * while a solo session runs, so they are not tied to one area.
+   */
+  area: "entity-detail" | "map" | "solo";
   /**
    * A flag the screen description must carry for the control to exist. The
    * Add button, for example, is absent in a read-only guest vault, so the
@@ -223,6 +238,9 @@ export const CONTROL_CATALOGUE: Record<ControlId, ControlSpec> = {
   "vtt-tile-decks": { area: "map", requiresFlag: "vtt-on" },
   "vtt-initiative-panel": { area: "map", requiresFlag: "vtt-combat" },
   "vtt-share-button": { area: "map", requiresFlag: "vtt-on" },
+  "play-start-solo-session": { area: "solo" },
+  "solo-quick-roll": { area: "solo", requiresFlag: "solo-session" },
+  "solo-end-session": { area: "solo", requiresFlag: "solo-session" },
 };
 
 /**

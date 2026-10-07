@@ -11,6 +11,7 @@
   import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
   import { connectionModeStore } from "$lib/stores/ui/connection-mode.svelte";
   import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
+  import { soloPlayGuard } from "$lib/stores/solo-session-instance";
   import type { LayoutRequest } from "graph-engine";
 
   let {
@@ -211,12 +212,14 @@
         ? 'bg-amber-500/20 border-amber-500/50 text-amber-500'
         : 'border-theme-border bg-theme-surface/80 text-theme-muted hover:text-theme-primary'}"
       onclick={() => {
-        sessionModeStore.sharedMode = !sessionModeStore.sharedMode;
+        soloPlayGuard.toggleSharedMode();
         closeMenuIfMobile();
       }}
+      disabled={!sessionModeStore.sharedMode &&
+        !!soloPlayGuard.sharedPlayBlockedReason()}
       title={sessionModeStore.sharedMode
         ? "Exit Shared Mode"
-        : "Enter Shared Mode"}
+        : (soloPlayGuard.sharedPlayBlockedReason() ?? "Enter Shared Mode")}
       data-testid="shared-mode-toggle"
       aria-pressed={sessionModeStore.sharedMode}
       aria-label="Toggle player view mode"

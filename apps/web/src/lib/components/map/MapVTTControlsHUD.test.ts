@@ -7,6 +7,7 @@ import {
   screen,
 } from "@testing-library/svelte";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { soloSessionStore } from "$lib/stores/solo-session-instance";
 
 const mapStoreMock = vi.hoisted(() => ({
   isGMMode: true,
@@ -465,5 +466,40 @@ describe("MapVTTControlsHUD", () => {
     expect(
       screen.queryByRole("button", { name: "Toggle measurement tool" }),
     ).toBeNull();
+  });
+
+  describe("shared play during a solo session", () => {
+    it("disables Player View and says why while a solo session runs", () => {
+      sessionModeStoreMock.sharedMode = false;
+      mapSessionMock.vttEnabled = true;
+      const active = vi
+        .spyOn(soloSessionStore, "isActive", "get")
+        .mockReturnValue(true);
+      render(MapVTTControlsHUD, { props: { chatSidebarOffset: "20rem" } });
+
+      const toggle = screen.getByTestId(
+        "shared-mode-toggle",
+      ) as HTMLButtonElement;
+      expect(toggle.disabled).toBe(true);
+      expect(toggle.title).toBe(
+        "End your solo session to share or preview as a player.",
+      );
+      active.mockRestore();
+    });
+
+    it("still lets the GM leave Player View while a solo session runs", () => {
+      sessionModeStoreMock.sharedMode = true;
+      mapSessionMock.vttEnabled = true;
+      const active = vi
+        .spyOn(soloSessionStore, "isActive", "get")
+        .mockReturnValue(true);
+      render(MapVTTControlsHUD, { props: { chatSidebarOffset: "20rem" } });
+
+      expect(
+        (screen.getByTestId("shared-mode-toggle") as HTMLButtonElement)
+          .disabled,
+      ).toBe(false);
+      active.mockRestore();
+    });
   });
 });

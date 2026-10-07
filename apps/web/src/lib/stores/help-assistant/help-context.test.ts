@@ -313,6 +313,62 @@ describe("HelpContextStore", () => {
     expect(registry.entityDetail).toBe(second);
   });
 
+  describe("solo sessions", () => {
+    it("flags a running solo session and offers its bar controls on any screen", () => {
+      const { ctx } = store({
+        getRouteId: () => "/(app)/map",
+        isGuestMode: () => false,
+        soloSession: () => ({ active: true }),
+      });
+      expect(ctx.current.flags).toContain("solo-session");
+      expect(ctx.current.availableActions).toEqual(
+        expect.arrayContaining(["solo-quick-roll", "solo-end-session"]),
+      );
+      expect(ctx.current.availableActions).not.toContain(
+        "play-start-solo-session",
+      );
+    });
+
+    it("offers starting a session on the Play page only when none is running", () => {
+      const idle = store({
+        getRouteId: () => "/(app)/play",
+        isGuestMode: () => false,
+        soloSession: () => ({ active: false }),
+      });
+      expect(idle.ctx.current.availableActions).toContain(
+        "play-start-solo-session",
+      );
+      expect(idle.ctx.current.flags).not.toContain("solo-session");
+      expect(idle.ctx.current.availableActions).not.toContain(
+        "solo-quick-roll",
+      );
+    });
+
+    it("offers no solo controls in guest mode, and no flag", () => {
+      const { ctx } = store({
+        getRouteId: () => "/(app)/play",
+        isGuestMode: () => true,
+        soloSession: () => ({ active: true }),
+      });
+      expect(ctx.current.flags).not.toContain("solo-session");
+      expect(ctx.current.availableActions).not.toContain("solo-quick-roll");
+      expect(ctx.current.availableActions).not.toContain(
+        "play-start-solo-session",
+      );
+    });
+
+    it("keeps the Play start control off other routes", () => {
+      const { ctx } = store({
+        getRouteId: () => "/(app)/map",
+        isGuestMode: () => false,
+        soloSession: () => ({ active: false }),
+      });
+      expect(ctx.current.availableActions).not.toContain(
+        "play-start-solo-session",
+      );
+    });
+  });
+
   it("describes the canvas, map and import screens from the route", () => {
     for (const [route, area] of [
       ["/(app)/canvas", "canvas"],

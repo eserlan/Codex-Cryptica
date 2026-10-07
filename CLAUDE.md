@@ -6,6 +6,9 @@
 
 ## Active Technologies
 
+- TypeScript 6.0.3, Svelte 5 (Runes), SvelteKit 2, Bun 1.3.14 + Existing `dice-engine` (parser, roller), `session-journal-engine` via `sessionJournalStore` (start, sections, end), `map-engine` via `mapStore` (`selectMap`, `soloFog`), `help-engine` (registry, context, catalogue), `@codex/events` (journal capture through `diceHistory`), Tailwind 4 semantic tokens, Iconify Lucide classes. New internal package `packages/solo-session-engine`. No new third-party dependency. (172-solo-session-entry)
+- `localStorage` through the injected `StorageLike`: `codex-solo-session:<vaultId>` (session record) and `codex-solo-bar-minimised` (preference). No IndexedDB, OPFS or vault changes, so no migration. (172-solo-session-entry)
+
 - TypeScript 6.0.3, Svelte 5 (Runes), SvelteKit 2, Bun 1.3.14 + Existing `map-engine` (hex maths, renderer), `session-journal-engine` (capture, promote), `@codex/events` (`JOURNAL:CAPTURE`), `help-engine`, Tailwind 4 semantic tokens. No new third-party dependency. (171-solo-map-play)
 - Existing per-map settings in `localStorage` (`soloFog`, `visionRange`; unchanged); existing IndexedDB `session_journals` (one optional field, `captureMapMoves`; no migration). Travel tally in memory only. (171-solo-map-play)
 

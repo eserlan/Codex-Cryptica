@@ -23,6 +23,7 @@ export const KNOWN_HELP_IDS = [
   "vtt-combat-initiative",
   "vtt-fog-player-view",
   "vtt-solo-play",
+  "solo-session",
   "vtt-grids-measurement",
   "vtt-tiles-layers-notes",
   "vtt-multiplayer",
