@@ -122,6 +122,21 @@ export const LOCAL_RELATIONSHIP_HOOKS = [
   "Paying quiet monthly hush-money to a corrupt magistrate who knows their true lineage.",
 ] as const;
 
+export const LOCAL_KNOWLEDGE_SECRETS = [
+  "Knows the river toll-house shifts by heart; has no idea the harbormaster was murdered at dawn; will not admit where the smuggled brandy cask is buried.",
+  "Knows the guard patrol schedule along the north wall; completely unaware the commander was bribed; will not reveal the cellar trapdoor key location under any threat.",
+  "Knows which merchant houses are near bankruptcy; blind to the cult meeting in their vaulted cellars; refuses to name their silent backer without immunity.",
+  "Knows the exact layout of the old sewer tunnels; assumes the crypt gates are securely barred; conceals a coded ledger hidden inside their boot heel.",
+  "Knows the market bailiff accepts counterfeit tokens; has never heard of the assassin guild operating across the canal; conceals the true maker of the stolen seal.",
+  "Knows the apothecary's poison antidote recipe; does not know who purchased the belladonna; will never disclose the false identity they used in the capital.",
+  "Knows which city watch sergeants can be bought for silver; assumes the garrison captain is incorruptible; conceals an unexecuted royal warrant in their coat lining.",
+  "Knows the hidden passage behind the tavern hearth; ignorant of the fire trap set in the adjoining tunnel; refuses to reveal who paid for the private upstairs room.",
+  "Knows the safe courier route through the marshes; knows nothing about the ambush waiting at the stone bridge; will not speak of the blood debt owed to the guild.",
+  "Knows which noble family funds the rebel printing press; assumes the crown inquisitors have left town; keeps silent about their own forged letters of marque.",
+  "Knows the secret sign used by the riverside fences; unaware that the fence ring was compromised last night; will not reveal their hidden stash of guild tokens.",
+  "Knows the private vault combination in the customs house; does not suspect the guards have doubled the shift; conceals the name of the clerk who sold the code.",
+] as const;
+
 function forTheme<T>(record: Record<string, T[]>, theme?: string): T[] {
   return (theme && record[theme]) || record["Classic Fantasy"] || [];
 }

@@ -36,6 +36,7 @@ import {
   LOCAL_SENSORY_TAGS,
   LOCAL_IMMEDIATE_WANTS,
   LOCAL_RELATIONSHIP_HOOKS,
+  LOCAL_KNOWLEDGE_SECRETS,
 } from "./public-npc-schema";
 import { resolveSmart, type LockedValue } from "./smart";
 import {
@@ -65,6 +66,7 @@ export {
   LOCAL_SENSORY_TAGS,
   LOCAL_IMMEDIATE_WANTS,
   LOCAL_RELATIONSHIP_HOOKS,
+  LOCAL_KNOWLEDGE_SECRETS,
 } from "./public-npc-schema";
 
 function getDndNpcQuickStats(role: string) {
@@ -164,6 +166,7 @@ export interface ResolvedNpc {
   contradiction?: string;
   relationshipHook?: string;
   sensoryTag?: string;
+  knowledgeSecrets?: string;
 }
 
 export function resolveNpc(
@@ -226,6 +229,9 @@ export function resolveNpc(
   const sensoryTag = isTableCard
     ? pickFrom(LOCAL_SENSORY_TAGS, rng)
     : undefined;
+  const knowledgeSecrets = isTableCard
+    ? pickFrom(LOCAL_KNOWLEDGE_SECRETS, rng)
+    : undefined;
 
   return {
     race,
@@ -250,6 +256,7 @@ export function resolveNpc(
     contradiction,
     relationshipHook,
     sensoryTag,
+    knowledgeSecrets,
   };
 }
 

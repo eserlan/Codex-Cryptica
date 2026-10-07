@@ -124,8 +124,11 @@ Keep secrets hidden. Hide items from your map so players don't see them during a
 ### Switching Stories
 Change your world. Click the folder name at the top to switch to a different story.
 
+### Calendar Eras
+Configure historical eras (such as First Age, Second Age, or Before the Fall / After the Fall) in Vault Settings. Each era can reset year numbering or count backward into the past. Dates across all views display with the appropriate era label while the underlying chronology keeps a continuous integer timeline for precise ordering.
+
 ### Pick Dates
-Select dates using smooth, center-snapping scroll wheels. Features side-by-side vertical tracks, intercalary anchors, inline repair warnings on calendar change, and quick keyboard year/day overrides.
+Select dates using smooth, center-snapping scroll wheels or direct text entry (including era labels like 312 BF). Features side-by-side vertical tracks, era selectors, intercalary anchors, inline repair warnings on calendar change, and quick keyboard year/day overrides.
 
 ### Keyboard Navigation
 Use `Shift+Left` and `Shift+Right` arrows to quickly navigate back and forward through your recently viewed entities. Navigation history is preserved during your session. Shortcuts are disabled while editing text or when modals are open.
@@ -280,6 +283,9 @@ Turn a group of entities into a readable document. On a Spatial Canvas, click Ge
 ### Presentation Templates
 Change how a Stat Sheet looks without touching its data. Click Presentations to switch between built-in layouts, or write your own in Markdown with field references like {{stat.hp}} and layout sections for groups, cards, and rows. Repeatable Table fields (used for Weapons/Items by default) keep rows of data together: add rows, edit their cells, adjust counters, and roll dice from the table. In the template editor you can customize a Repeatable Table's own column headings and cell types (text, number, dice, counter, or checkbox) so the same table type covers skills, spells, or any other list your system needs, and you can turn off vault-item linking for tables that aren't about items. A live preview and inline warnings catch typos or removed fields as you type, and every layout can be exported and shared with anyone using a matching schema.
 
+### Hexcrawl & Hex Grids
+Run overland exploration with point-to-point hex grids. Choose pointy-topped or flat-topped orientation, toggle in-cell coordinates, snap tokens and pins to hex centers, and reveal or hide fog of war by hex. Rulers measure travel distance directly in hexes.
+
 
 ## Help Documentation
 
@@ -295,7 +301,7 @@ For power users: your worlds are saved as clean local Markdown files (in the bro
 
 ## Quick Start: Your First 5 Minutes
 
-Follow this quick checklist to set up your first vault and see Codex Cryptica's core workflow in action:
+Follow this quick checklist to set up your first vault and see Codex Cryptica's core workflow in action. The same getting-started checklist is in **Settings → Help**, with a button to replay the welcome tour any time:
 
 1. **Create a vault**: Open the vault switcher, choose **NEW**, and name your world.
 2. **Add an entity**: Use **+ Create** in the header or **+** in the explorer, choose **Character**, and name your character.
@@ -487,6 +493,9 @@ The graph is your primary way to navigate.
 - `Scroll`: Zoom in/out.
 - `Drag`: Pan the view.
 - `Click Node`: Focus entity and open detail panel.
+- On a touch screen, drag to pan, pinch to zoom, and tap a node to open it.
+- To connect two entries without Connect Mode, right-click two selected entries, or use the Link button below.
+- With several entries selected, the toolbar offers **Apply Labels** to label them all at once and **Merge** to combine duplicates into a single entry.
 
 ### Toolbar Controls
 
@@ -546,6 +555,135 @@ found.
 
 ---
 
+### ENTITY EXPLORER
+
+The **Entity Explorer** is the sidebar list of every entry in your vault. Use it to find an entry, open it, group entries, build a hierarchy, and approve or reject drafts. Open or close it with **Explorer** in the navigation.
+
+For a spreadsheet-style overview with columns, see the [Entity Table](/help#help/entity-table).
+
+## All Entities and Review
+
+The panel has two tabs:
+
+- **All Entities** lists every entry.
+- **Review** lists only entries marked as drafts, with a number showing how many there are. See [Reviewing drafts](#reviewing-drafts).
+
+## Opening an entry
+
+Click an entry to open it. In the sidebar, this opens Zen Mode; in the desktop Explorer workspace, it opens the entry in the workspace view. Each row also has buttons that appear when you point at it:
+
+- **Open in Zen Mode** opens the entry.
+- **Find in Graph** takes you to the entry on the graph. On a phone this also closes the sidebar so you can see it.
+- **Add child entity** creates a new entry nested under this one. Type a name, choose a category and confirm, or cancel.
+
+## Searching and filtering
+
+- **Search entities...** searches your entries as you type. Add `#label` or `@label` to only show entries with that label; the box suggests labels as you type. **Clear search** empties it.
+- **Category icons** above the list filter to one category. Choose **Show all categories** to go back.
+- Active label filters appear as chips; remove one with its x, or choose **Clear All**.
+
+## Sorting and grouping
+
+- **Sort** by **Name** or **Last edited**, and flip between ascending and descending with the arrow beside it.
+- **List View** shows your entries in their hierarchy.
+- **Group by Label** and **Group by Category** gather entries under headings instead. Group by Category is unavailable while a category filter is on, because the list is already one category. Clear the filter to use it.
+
+Long lists show 100 entries per page, with page controls at the bottom.
+
+## Building a hierarchy
+
+In List View you can nest entries, for example a Tavern inside a City:
+
+- **Drag an entry onto another** to make it a child of that entry.
+- **Move to Root** appears while you are dragging. Drop an entry on it to take it out of its parent.
+- Use the arrow on an entry that has children to **Collapse** or **Expand** them.
+
+Codex Cryptica will not let you nest an entry under one of its own descendants, because that would make a loop. The drop simply does nothing.
+
+## Dragging onto a canvas or a map
+
+On the **All Entities** tab you can drag an entry out of the Explorer and drop it onto a [Spatial Canvas](/help#help/spatial-canvas) to add it as a card, or onto a [map](/help#help/map-mode) to place it as a pin or token.
+
+## Reviewing drafts
+
+The **Review** tab shows entries that are still drafts. For each one:
+
+- **Approve draft** turns it into a normal entry.
+- **Reject draft** **deletes the entry**. Check the entry before you reject it.
+
+In a shared world you cannot approve or reject drafts, nest entries or drag them.
+
+---
+
+### ENTITY TABLE
+
+The **Entity Table** lists every entry in your vault in one grid, so you can scan, sort, filter and tidy a lot of entries at once. It is the best place to find entries that are missing something, such as a summary, labels or any connections. Open it from **Table** in the navigation.
+
+To explore the same entries as a network instead, choose **View as graph** at the top right.
+
+## What each column shows
+
+| Column          | What it is                                                          |
+| --------------- | ------------------------------------------------------------------- |
+| **Name**        | The entry's title. Click it to open the entry.                      |
+| **Type**        | Its category, such as Character or Location.                        |
+| **Connections** | How many connections it has, in either direction.                   |
+| **Summary**     | A short preview of its text, or **Missing summary** if it has none. |
+| **Labels**      | Its labels, or **No labels**.                                       |
+| **Created**     | When it was created.                                                |
+| **Modified**    | When it was last changed.                                           |
+
+Long lists are shown 50 entries at a time. Use the page controls under the table to move between pages.
+
+## Sorting
+
+Click a column heading to sort by it. Click the same heading again to reverse the order. Name, Type, Connections, Labels, Created and Modified can be sorted; Summary cannot.
+
+## Searching and filtering
+
+- **Search box**: type words to search your entries. Add `#label` or `@label` to only show entries with that label, for example `#faction`.
+- **Type and label chips**: click a type or a label on any row to filter the table to it. Each active filter appears above the table, and you can remove one on its own or choose **Clear all filters**.
+- **Incomplete only**: shows entries that are missing a summary, labels or connections. The number beside it is how many entries are incomplete right now.
+- **Column filters**: the small filter button next to Connections, Summary, Labels, Created and Modified narrows the table by that column, for example only entries with no connections, only entries with no labels, or only entries that have no created date. **Reset column filter** clears it.
+
+Filters work together, so you can combine a search, a type, a label and a column filter. On a phone, open the filters with the filter button above the table.
+
+If the search index is still being prepared, a text search may use a lighter match until it is ready.
+
+## Selecting entries
+
+- **Click a row** to select it. Click it again to deselect.
+- **Hold Shift** and click another row to select, or deselect, everything between them.
+- **Tick the box in the header** to select every entry that matches your current filters.
+- Press **Escape** to clear the selection.
+
+Double-click a row, or click its name, to open the entry in Zen Mode. Hold Ctrl, Cmd or Shift while clicking the name to open it in a new tab or window instead.
+
+## Working on a selection
+
+Once you select entries, a bar appears above the table showing how many are selected:
+
+- **Add / remove labels** changes the labels of every selected entry at once.
+- **Generate report** collects the selected entries into a report. See [Entity Reports](/help#help/entity-reports).
+- **Clear selection** empties the selection.
+
+Right-click a row for a menu that works on the selection:
+
+- **Send to Shelf** copies the selected entries so you can bring them into another vault. See [The Shelf](/help#help/entity-shelf).
+- **Manage Labels** opens the same label editor.
+- **Change Type** moves the selected entries to another category.
+- **Delete** removes the selected entries.
+
+## Saved views
+
+Save a combination of search, filters and sorting as a named view, and come back to it later. See [Saved Views & View Sync](/help#help/saved-views).
+
+## In a shared world
+
+Someone viewing a published world can search, sort and filter the table, but it is read-only for them: **Generate report** is not offered, and the right-click menu shows "Read-Only Guest Session" with its actions switched off.
+
+---
+
 ### MAP MODE
 
 **Map Mode** transitions Codex Cryptica from a document-heavy manager to a visual, spatial experience. You can plot your campaign data onto custom geographic or tactical canvases.
@@ -578,7 +716,7 @@ Manage mystery and player progression:
 
 Dive deeper into your world:
 
-- You can attach specific sub-maps to entities (e.g., a "Tavern" note can have its own floor plan).
+- You can put a map inside another map by attaching a specific sub-map to an entity (e.g., a "Tavern" note can have its own floor plan).
 - In the **Entity Detail Panel**, go to the **MAP** tab to upload a sub-map.
 - Once attached, pins linked to that entity will show an **ENTER** button, allowing you to dive into the sub-map.
 - Use the breadcrumbs or "Go Back" logic to return to the parent map.
@@ -589,7 +727,7 @@ Transform any map into a live tactical Virtual Tabletop:
 
 1. Click the **VTT OFF** button in the top-right map controls overlay to activate **VTT ON**.
 2. Drag character or monster notes from **Entity Explorer** directly onto the grid to place tokens.
-3. Track initiative, measure spell/movement ranges (`R`), drop map pings (`Shift` + `Click`), and stream live map updates to players via **Host Session**.
+3. Track initiative, measure spell and movement ranges with the ruler, ping the map from the right-click menu, and stream live map updates to players with **Share Campaign**. See [VTT Overview & Modes](/help#help/vtt-session) for the full guide.
 4. For detailed step-by-step instructions, open the [Starting a VTT Session from Maps](/help#help/vtt-session) help article.
 
 ### Map or canvas?
@@ -620,6 +758,115 @@ See [Fog of War](/help#help/fog-of-war) for entity visibility.
 
 - [Introducing Tactical VTT Mode](/blog/vtt-introduction) — Overview of zero-overhead, Peer-to-Peer tactical map sessions.
 - [Spatial Intelligence & Map Navigation](/blog/spatial-intelligence) — Integrating geographic maps, pins, and spatial lore navigation.
+
+---
+
+### GUIDED MODE
+
+Use the **Guided / Full Toolbox** switch in the app header (or the mobile menu) to choose how many tools the workspace shows. Guided mode starts enabled for new users. Your choice is saved in this browser and applies across worlds and sessions; it is not a setting stored in an individual vault.
+
+## What changes in Guided Mode
+
+Guided mode keeps the main workspace focused on your entities and common creation tasks. The **+ Create** action asks what you want to make: a character, place, faction, event, item, or a custom creation. If an entity is selected, the generated draft can use it as context. Choosing **Custom** opens the full generator setup so you can pick a generator yourself.
+
+Some advanced header controls are hidden while Guided mode is on, including the die roller, vault actions menu, sync and voice controls, and the public-world explorer. Switch to **Full Toolbox** to show those controls and the full tool selection. The mode changes which controls are visible; it does not delete, rewrite, or hide campaign entities.
+
+## Contextual suggestions
+
+Guided mode can show a suggestion when an entity has a structural gap, such as a faction without a leader, a location without a settlement, or a threat without a responder. These suggestions are deterministic checks of your local entity connections; they do not call AI or change the vault on their own.
+
+Choose the suggestion's action to open a generator with the related entity as context. The generator creates a draft for you to review; the new entity is added only if you save it. You can dismiss a suggestion without changing your entities. Cif can explain the suggestion and steps, but cannot follow it, save a draft, or change your vault for you.
+
+## Quick Start World
+
+Quick Start World is separate from Guided mode. From the empty workspace, open the vault switcher and choose **Quick Start World**. Choose a world genre and appearance, review the preview of four to six linked starter entities, and optionally enter a seed premise. **Generate Starter World** creates a new vault with those entries and connections, then selects the first entity. The chosen appearance is applied to the workspace and can be changed later in Settings.
+
+When AI is enabled and available, the Oracle writes the entries. Otherwise the built-in local generator does. Quick Start creates the new vault and its content when you choose **Generate Starter World**; review the preview and premise first. This action is different from switching modes or asking Cif a question.
+
+In a shared or read-only vault, use the views available to you. Changing the tool selection does not grant permission to edit that vault.
+
+## Related reading
+
+- [Creating and Editing Entities](/help#help/creating-and-editing-entities)
+- [In-App Generators](/help#help/in-app-generators)
+
+---
+
+### HEXCRAWL & OVERLAND MAPS
+
+Codex Cryptica provides native support for overland hexcrawls and region exploration on any spatial map or battlemap.
+
+### Configuring Hex Grids
+
+1. Open any map in **Map Mode** (`/map`).
+2. Click the **grid button** in the map bar to show the grid overlay.
+3. Right-click the grid button to open **Grid Settings**.
+4. Select your desired **Grid Type**:
+   - **Square**: Traditional tactical dungeon grid.
+   - **Hex (Pointy)**: Pointy-topped hexagons with vertical columns.
+   - **Hex (Flat)**: Flat-topped hexagons with horizontal rows.
+5. Adjust **Hex Radius** (cell size in pixels) and your campaign scale (e.g. `6` `miles` per cell).
+6. If your map image already has hexes drawn on it, choose **Fit Grid from Map** and drag across a few of them to match their size and position. See [Grids & Measurement](/help#help/vtt-grids-measurement).
+
+### Coordinate Overlays
+
+When managing large overland regions, toggle **Show Hex Coordinates** in Grid Settings:
+
+- Visible hexes render centered axial coordinates in `(q.r)` format (such as `01.04` or `02.05`).
+- Labels automatically hide when zoomed out past the legibility threshold to prevent visual clutter and keep navigation smooth.
+
+### Token Snapping & Sizing
+
+- **Automatic Snapping**: Dragging a party token, NPC, or monster token on an active hex map snaps its center to the nearest hex cell upon release.
+- **Hex Diameter Sizing**: Right-click any token and choose **Resize** (1x, 2x, 3x) to scale it to the exact diameter of the hexagonal cell ($2 \times \text{radius}$ or $\sqrt{3} \times \text{radius}$).
+
+### Hex Fog of War Exploration
+
+Reveal wilderness regions hexagon by hexagon without ragged brush strokes:
+
+1. Ensure **Fog of War** is enabled on the map.
+2. In GM mode, click or drag across shrouded hexes to stamp clean hexagonal reveals into the fog mask.
+3. To reveal or hide exactly one hex, right-click it and choose **Reveal hex** or **Hide hex**. The menu offers whichever one applies to that hex.
+4. Tokens with active vision sources reveal their vision radius in discrete hex rings as they move across the region. In SOLO, set sight in whole hexes and see travel totals as you explore; see [Solo Map Play](/help#help/vtt-solo-play).
+5. Exploring on your own? Turn on **SOLO** next to **FOG** so fogged hexes are completely hidden while you keep every GM tool. See [Fog, Player View & Solo Play](/help#help/vtt-fog-player-view).
+6. All hex fog changes integrate seamlessly with the Oracle undo/redo stack (`Ctrl+Z`) and local OPFS mask storage.
+
+### Distance & Travel Measurement
+
+Use the measurement ruler (the ruler switch at the bottom left of the map) on a hex map:
+
+- Dragging between two locations calculates the discrete hex distance using axial cube mathematics.
+- The measurement label displays both the total hex count and converted travel distance (for example, `4 hexes (24 mi)`).
+
+---
+
+### SOLO MAP PLAY
+
+Solo map play is for one person acting as both GM and player. You stay in GM view, so the tools for preparing and changing the map remain available. The **SOLO** setting makes fogged areas look completely hidden on your device.
+
+## Turn on concealment
+
+### Can't see anything on your map?
+
+If you cannot see anything on the map while playing alone, check the fog settings first. In GM view, turn **FOG: ON** and **SOLO: ON** to conceal unrevealed terrain and tokens; reveal the starting area with the brush or **Reveal hex**. Fog hides the map content until an area is revealed, so confirm the area is revealed before changing token visibility. **SOLO** is available only to the GM and only while fog is on. If the map still looks empty, turn **SOLO: OFF** to compare the normal GM view and check the map's layers.
+
+1. Open the map in GM view and choose **FOG: ON**.
+2. Choose **SOLO: ON** beside the fog control.
+3. Reveal areas as you explore. Use the fog brush or right-click a hex and choose **Reveal hex**. Hide an area again with the brush or **Hide hex**.
+
+Terrain, tokens, pins, labels, notes and hex coordinates remain concealed until their area is revealed. A token or note marked **Hide from Guests** appears when its area is revealed: in solo play the fog itself provides concealment. Moving any token, changing layers, using tiles and other GM tools continue to work. SOLO has no effect while fog is off and is available only in GM view. For map fog and player previews, see [Fog, Player View & Solo Play](/help#help/vtt-fog-player-view).
+
+## Explore by moving your party
+
+Mark the party token as a **Vision Source (PC)**. On a hex map, the **Vision** slider is measured in whole hexes; zero reveals the party's current hex only. Moving the party reveals its sight as it travels. A move made by dragging reveals areas live and is recorded when you release the token. One completed move has one undo step; `Ctrl` + `Z` hides the areas revealed by that move.
+
+The travel readout shows the last move and the total since you opened the map or last reset it. On a hex map it shows hexes and the map's distance units; on square or gridless maps it shows straight-line distance. Choose **Reset** to start a fresh tally. Tokens without a vision source still move normally but do not count as party travel.
+
+## Keep an expedition record
+
+Start a [Session Journal](/help#help/quicknote) to record completed party moves alongside dice rolls, table results and card draws. Map entries include distance, destination coordinates when those labels are enabled, and how many new hexes the move revealed. Turn **Map moves** off in the journal header to stop those entries while keeping other automatic capture on. Promote a useful entry to a vault note through the same journal actions as any other entry.
+
+Travel totals are temporary and stay in this browser tab. The journal is saved with your local vault. Solo play does not send or measure your map activity.
 
 ---
 
@@ -690,6 +937,14 @@ to collect their information into a document. Review the report, then choose
 **Save as note** to keep it as a Note entity, or **Cancel** to close without saving.
 This control is unavailable in guest vaults and on Adventure boards.
 
+In the preview, choose **Brief** or **Standard** detail and which information to
+include. **Entire canvas** includes the board's entities; **Selected nodes only**
+uses the selected entity cards. If nothing is selected, the preview explains
+that there is nothing to report on rather than saving an empty note.
+
+For report scope, options, and saving behaviour across Canvas, Knowledge Graph,
+and Table, see [Entity Reports](/help#help/entity-reports).
+
 ### Managing Connections
 
 - **Custom Labels**: Double-click any connection (edge) to open a themed modal and enter a name for the relationship.
@@ -723,49 +978,60 @@ This control is unavailable in guest vaults and on Adventure boards.
 
 ---
 
-### STARTING A VTT SESSION FROM MAPS
+### VTT OVERVIEW & MODES
 
-Codex Cryptica includes an integrated **Virtual Tabletop (VTT)** mode directly accessible from your campaign maps. You can launch tactical encounters, place character tokens, track initiative, and host live multiplayer sessions for your gaming group straight from any map canvas.
+Codex Cryptica includes an integrated **Virtual Tabletop (VTT)** mode on your campaign maps. Turn it on to place tokens, track initiative, measure distance, work with tile decks, and share the live table with your players. It adds a layer on top of the map; your map image, pins and fog are not changed by turning it on or off.
 
 ### How to Start a VTT Session
 
-1. Click the **MAP** tab in the top navigation bar or activity rail.
-2. Select the map or floor plan you wish to use for your session.
-3. In the top-right map control overlay, click the **VTT OFF** button to toggle it to **VTT ON**.
-4. The tactical grid overlay, token management drawer, and encounter controls will immediately activate on your map canvas.
+1. Open **Maps** from the activity bar and choose the map you want to use.
+2. Click the **VTT OFF** button in the map controls to switch it to **VTT ON**.
+3. The **VTT Sidebar** opens on the right, and the map bar adds the player view, fog, vision, layer and grid controls.
 
-### Core VTT Features
+### Explore and Combat modes
 
-#### 1. Placing & Managing Tokens
+The top of the VTT Sidebar has two mode buttons:
 
-- **Drag & Drop Tokens**: Drag characters, NPCs, or monsters directly from the **Entity Explorer** sidebar onto the active map to instantiate tactical tokens linked to your vault notes.
-- **Token Status & Stats**: Right-click or select a token to adjust hit points, apply status conditions (e.g. _Poisoned_, _Blinded_, _Prone_), or toggle player/GM visibility.
+- **Explore** (compass): the everyday mode for moving around, placing tokens and notes, and revealing the map.
+- **Combat** (swords): shows the **Initiative** panel at the top of the sidebar, with the round counter and a **Next Turn** button.
 
-#### 2. Encounter & Initiative Tracking
+Switching mode is shared with connected players. Combat mode does not lock movement to whose turn it is: players can still move their own tokens at any time. What the turn order controls is the **Next Turn** button, which only the GM or the owner of the token whose turn it is can press. See [Initiative, Combat & Encounters](/help#help/vtt-combat-initiative).
 
-- Activate combat tracking from the VTT control bar to open the **Initiative Tracker**.
-- Add participating characters and monsters, roll initiative, and cycle through active combat turns and rounds seamlessly.
+### The VTT Sidebar
 
-#### 3. Live P2P Multiplayer Hosting
+From top to bottom:
 
-- To share the live VTT session with your players, open the session menu and start a **Host Session** (or click the P2P connection icon in the top header).
-- Copy and share the generated session link or Peer ID with your players.
-- Connected guests view map navigation, live token movements, map pings, and Fog of War revelations in real-time in their browser — without requiring player accounts. Session connections can still use network services to establish or relay the connection.
+- **Mode and tools**: Explore and Combat, **Add Token**, the map note button, and **Encounters**.
+- **Initiative** (Combat mode only).
+- **Tile Decks** and **Vault Entities** (GM only): tiles to draw onto the map, and characters, creatures and items to drag onto it as tokens.
+- **Token details** for the selected token.
+- **Share Campaign** (GM only): starts the live session your players join.
 
-#### 4. Measurement & Map Pings
+The VTT chat sits in its own sidebar beside it. Collapse either sidebar to give the map more room.
 
-- **Ruler Tool**: Press `R` or select the measurement icon to compute distance across grid tiles for movement or spell area radii.
-- **Map Pings**: Hold `Shift` + `Click` (or double-click) anywhere on the map canvas to broadcast an animated visual ping to all connected players.
+### Map controls
 
-#### 5. Fog of War Integration
+The bar along the bottom of the map has **PLAYER VIEW**, **FOG**, **VISION**, **LABELS**, the active **layer**, and the grid button. A ruler switch sits at the bottom left of the map. Arrow keys pan the map and `+` and `-` zoom. Press `Alt` + `Left` or `Right` arrow to turn the selected token.
 
-- Enable **GM MODE** and toggle **FOG** ON in the map controls.
-- Hold `Alt` and **Click-Drag** across the canvas to "paint away" fog, revealing terrain and enemy tokens to players live during play.
+### Where to go next
+
+- [Tokens, Players & Permissions](/help#help/vtt-tokens)
+- [Initiative, Combat & Encounters](/help#help/vtt-combat-initiative)
+- [Fog, Player View & Solo Play](/help#help/vtt-fog-player-view)
+- [Solo Map Play](/help#help/vtt-solo-play)
+- [Grids & Measurement](/help#help/vtt-grids-measurement)
+- [Tile Decks, Layers & Map Notes](/help#help/vtt-tiles-layers-notes)
+- [Multiplayer, Chat & Voice](/help#help/vtt-multiplayer)
+- [VTT Troubleshooting](/help#help/vtt-troubleshooting)
+- [Hexcrawl & Overland Maps](/help#help/hexcrawl-maps)
 
 ### Pausing or Ending a Session
 
-- Click the **VTT ON** toggle button to return to standard map editing mode (**VTT OFF**).
-- All token coordinates, revealed fog regions, and encounter metadata automatically persist in your local vault data for your next session.
+Click **VTT ON** to return to ordinary map mode. Token positions, revealed fog and encounter data stay in your local vault for next time. Use **Encounters** to save a named snapshot you can come back to.
+
+### Cif
+
+Click **Cif** in the map bar to ask how any of this works. It stays available when the map is maximized, and you can pop it out into its own window to keep the map full size.
 
 ### Related Blog Posts
 
@@ -831,6 +1097,183 @@ If the canvas you need isn't in the "Recents" list, select **Choose Canvas...** 
 
 ---
 
+### ENTITY REPORTS
+
+Entity Reports collect information about chosen entities into a document preview. Start from any of these places:
+
+- **Canvas**: Choose **Generate report** in the canvas header. Pick **Entire canvas** to include its entity cards, or **Selected nodes only** to limit the report to selected cards. Canvas drawings and freehand annotations are not report content.
+- **Knowledge Graph**: Select at least two entities, then use the report action for that selection.
+- **Entity Table**: Select at least two entities, then use the report action for that selection.
+
+The Graph and Table reports use the selected entities as their scope. Relationships are included only where they connect entities in that report scope. On Canvas, you can choose whether to include lines drawn between the selected cards as well as graph connections.
+
+## Choose the contents
+
+Review the preview before saving. You can set **Brief** or **Standard** detail and choose whether to include descriptions, relationships, factions and affiliations, portraits, and GM-only secrets. GM-only secrets are excluded unless you turn them on. When relationships are included, you can also choose canvas lines (for Canvas reports) and graph connections. An option with no matching data is unavailable or explains that there is nothing to include.
+
+You can change the report title in the preview. If the scope is empty, the preview explains that there is nothing to report on and **Save as note** stays unavailable. Relationship and faction options explain when the selected entities have no matching data; connection options also explain when there are no canvas lines or graph connections to include.
+
+## Save, edit, and regenerate
+
+Choose **Save as note** to create a new Note entity with the report content. The saved report opens in Zen Mode and can be edited like a Note. Saving creates a snapshot: it does not change the source entities, even if you later edit the report.
+
+The saved Note is marked as a report and keeps its source and generation details so the report can be regenerated. Regeneration updates that report Note; it does not edit its source entities. If the report content has manual edits, the app asks you to confirm before replacing those edits.
+
+Choose **Cancel** to close the preview without creating a Note or changing any entities. Cif can explain how reports work, but cannot save or regenerate one for you. The Canvas report control is unavailable in guest vaults and on Adventure boards.
+
+## Reports, Notes, Saved Views, and Canvas
+
+- A **Report** is a point-in-time document made from selected entities. It is stored as a Note, with report provenance that supports regeneration.
+- An ordinary **Note** is a document you write or edit directly; it has no report source details or regeneration behaviour.
+- A **Saved View** stores reusable filters and presentation settings for the Graph or Table. It does not create a document. See [Saved Views & View Sync](/help#help/saved-views).
+- A **Canvas** is a manually arranged workspace of entity cards and visual links. A report can collect information from its cards, but it is a separate document and does not preserve the canvas layout. See [Spatial Canvas](/help#help/spatial-canvas).
+
+---
+
+### FOG, PLAYER VIEW & SOLO PLAY
+
+Codex Cryptica hides things in two separate ways, and they do not affect each other:
+
+- **Map fog** covers areas of a map image. It is painted and revealed on the map itself. See also [Fog of War](/help#help/fog-of-war).
+- **Hidden entities** are lore entries you have hidden from your players in the graph and lists. See [Fog of War](/help#help/fog-of-war) for the Revealed, Hidden and Rumor states.
+
+Hiding a hex does not hide an entity, and hiding an entity does not cover the map. Tokens have their own switch too: **Hide from Guests** and **Show to All** on the token menu.
+
+## GM view and Player View
+
+- **GM view** (the default) is for running the game. You keep every control, and hidden areas are still visible to you.
+- **PLAYER VIEW** shows the map the way your players see it. Hidden areas stay hidden.
+
+Switching to **PLAYER VIEW** turns the GM controls off, including the fog brush and the hex right-click menu. Switch back with **EXIT PLAYER VIEW** to reveal or hide anything.
+
+## Turning fog on
+
+Choose **FOG: ON** in the map bar. The fog switch only appears in GM view.
+
+## Revealing and hiding
+
+- Hold `Alt` and drag to reveal. Hold `Alt` + `Shift` and drag to hide again. **Brush Size** changes how much you paint at once.
+- On a hex map, the fog follows the hex grid, and you can right-click one hex and choose **Reveal hex** or **Hide hex**. See [Hexcrawl & Overland Maps](/help#help/hexcrawl-maps).
+- **Fog colour**: with fog on, use **Fog colour** in the map bar to tint the fog for this map. Your players see the colour you choose. Choose **Theme colour** to go back to the default.
+- **Vision**: tokens marked **Vision Source (PC)** reveal the fog around them. **VISION: PARTY** combines every source and **VISION: SELECTED** uses the selected token. **Vision Range** sets the distance.
+
+Changes are saved with the map, can be undone with `Ctrl` + `Z`, and are sent to connected players straight away.
+
+## Playing solo
+
+For the full guide to concealment, revealing by moving your party, travel totals, undo and Session Journal capture, see [Solo Map Play](/help#help/vtt-solo-play). In short, turn on **FOG** and then **SOLO**. You stay in GM view with every tool, while fogged areas stay hidden until revealed. **PLAYER VIEW** remains a separate preview that turns GM controls off.
+
+---
+
+### GRIDS & MEASUREMENT
+
+Use the **grid button** in the map bar to show or hide the grid. Right-click it to open the grid settings.
+
+## Grid settings
+
+- **Grid type**: **Square**, **Hex (Pointy)** or **Hex (Flat)**. Match the orientation of the hexes on your map.
+- **Show Hex Coordinates**: on hex grids, labels each hex with axial coordinates (q.r) at its centre.
+- **Grid Cell Size** (square) or **Hex Radius** (hex): the size in pixels. Drag the slider from 20 to 500.
+- **Distance per Cell** and **Unit Name**: set the scale, such as `5` and `ft`, or `6` and `mi` for overland maps.
+
+Choose **Apply to All** to save the settings.
+
+Tokens snap to the grid, and token sizes on a hex grid match the hex. See [Hexcrawl & Overland Maps](/help#help/hexcrawl-maps).
+
+## Lining the grid up with your map
+
+If your map image already shows a grid:
+
+- **Fit Grid from Map** on a **square** grid: drag across a few squares of the grid on the image, rather than just one. It is easier to land on 3 squares than exactly 1. While dragging, hold `Shift` and scroll to choose how many squares the drag spans (1, 2, 3, 5 or 10). The cell size is worked out from that.
+- **Fit Grid from Map** on a **hex** grid: choose **Hex (Pointy)** or **Hex (Flat)** to match the hexes on your image, then drag from the outer edge of one hex to the outer edge of another, straight across a row (pointy) or straight down a column (flat), through the middle of the hexes. Spanning a few hexes is easier to land than one. `Shift` + scroll changes how many hexes the drag spans (1, 2, 3, 5 or 10). The hex radius and alignment are worked out together, and the radius keeps decimals so a long row stays lined up.
+- **Move Map to Fine-tune** (shown once a size is set): drag the map under the fixed grid, release to apply, or press `Esc` to cancel. It works on hex grids too.
+
+If the grid is a little off after fitting, use **Move Map to Fine-tune**, or adjust **Hex Radius** or **Grid Cell Size** and fit again.
+
+## Measuring distance
+
+Use the **ruler switch** at the bottom left of the map. Click the map to set the start, then click again to set the end. The label shows the distance using your scale, and on hex maps it also counts hexes, for example `4 hexes (24 mi)`.
+
+## Pings
+
+To point something out, right-click and choose **Ping Here**, or choose **Ping Token** on a token. Everyone connected sees the ping.
+
+---
+
+### INITIATIVE, COMBAT & ENCOUNTERS
+
+Choose **Combat** (the swords button) at the top of the VTT Sidebar. The **Initiative** panel appears with the current **Round** and a **Next Turn** button.
+
+- **Add combatants**: select a token and choose **Add to Initiative** in its details.
+- **Remove a combatant**: right-click its row (GM only). This removes the token from the map as well.
+- **Set initiative**: type a number in the **Init** box on a row, or press the `Up` and `Down` arrow keys inside the box. The list re-sorts from highest to lowest, and keeps the turn on whoever's turn it was.
+- **Reorder by hand**: drag a row to a new position, for example to break a tie your own way.
+- **Ping a token**: use the radar button on a row, or double-click the row.
+- **Look at a token**: the book button opens a linked entity, when you are allowed to see it.
+
+## Turns and rounds
+
+**Next Turn** moves to the next combatant. After the last one, the round counter goes up and the first combatant is up again. The active combatant is highlighted for everyone.
+
+Only the GM, or the player who owns the token whose turn it is, can press **Next Turn**. The button is disabled for everyone else, and also while the list is empty.
+
+Combat mode does not stop tokens moving out of turn. It shows initiative and the turn order. Players can still move their own tokens at any time, so agree at the table when movement is allowed.
+
+## Initiative in its own window
+
+Use **Pop out initiative list** at the top of the panel to open it in a separate window. Drag it to a second screen so the map stays full size.
+
+## Encounter snapshots
+
+Choose **Encounters** (the scroll button) to open **Encounter Snapshots**:
+
+- **Encounter Name**: name what you are saving, for example "Goblin Ambush".
+- **Save Current Encounter**: stores the table as it is now.
+- **New Encounter**: clears tokens, initiative and chat for a fresh start.
+- **Load**: restores a saved snapshot. **Delete** removes it after you confirm.
+
+Each snapshot shows its name, round, token count and mode. A snapshot keeps the tokens and where they are, initiative order and values, the round and whose turn it is, the mode, the fog revealed during the session, the measurement and chat, and the grid settings and tile decks. It does not change your map or your vault entities.
+
+---
+
+### MULTIPLAYER, CHAT & VOICE
+
+Hosting is peer to peer, straight from your browser. There are no player accounts.
+
+1. Turn **VTT ON** for your map.
+2. Choose **Share Campaign** (the share button at the bottom of the VTT Sidebar).
+3. Choose **START LIVE SESSION**, then **COPY** the link.
+4. Send the link to your players. They open it in their browser to join.
+
+Keep the host tab open for as long as the session runs. When it closes, the session ends for everyone. Connecting players can still rely on network services to set up or relay the connection.
+
+## What players see and can do
+
+- Players see the map, the tokens shown to them, pings, the fog as it is revealed, the initiative list in Combat mode, and chat.
+- A player can move only the tokens **assigned to them**, and press **Next Turn** only when it is their token's turn. The host assigns tokens with **Owner** in the token details.
+- Players do not get the host's tools: Tile Decks, Vault Entities, token creation and Share are hidden for them.
+- The host sees everyone connected in the owner list and on the initiative rows.
+
+See [Tokens, Players & Permissions](/help#help/vtt-tokens) and [Fog, Player View & Solo Play](/help#help/vtt-fog-player-view).
+
+## Chat and rolls
+
+The VTT chat sits in its own sidebar. Type a message, or use `/roll` for a roll, for example `/roll 2d20kh1 + 5`. The button beside the message box opens the full roller. Chat and rolls are shared with everyone connected, and the clear button empties the chat. Chat is saved with an encounter snapshot.
+
+## Voice chat
+
+While a live session is running, the host presses **Start voice chat** in the header to open a voice channel. Players choose **Join voice chat** from their own header, and everyone can mute their microphone. The host's button changes to **End voice chat** to close it for everyone.
+
+## Privacy
+
+The session runs between your browser and your players' browsers. Your vault stays on your computer. Players receive what the session shows them, such as visible tokens and revealed fog, not your private notes.
+
+## Phones and tablets
+
+On a phone, the VTT Sidebar fills the screen and the map controls sit behind a button, so the map stays visible. Open the controls with that button.
+
+---
+
 ### THE LORE ORACLE
 
 Open **Lore Oracle** and ask a question about your world. The Oracle retrieves relevant entity descriptions, Lore and connections to help ground its answer in your campaign. Check its suggestions against your notes before keeping them.
@@ -860,7 +1303,7 @@ Open **Settings → Intelligence** to see your connection mode and key controls.
 
 Turn on **AI Disabled** in Settings to stop AI assistance. Manual writing, connections, local roll tables and local generator templates remain available. AI revisions cannot run in a guest vault.
 
-The **Help Assistant** answers questions about using Codex Cryptica. It is separate from the Lore Oracle and cannot edit your vault.
+**Cif**, the Codex guide, answers questions about using Codex Cryptica. It is separate from the Lore Oracle and cannot edit your vault.
 
 ### Related Blog Posts
 
@@ -870,12 +1313,103 @@ The **Help Assistant** answers questions about using Codex Cryptica. It is separ
 
 ---
 
+### TILE DECKS, LAYERS & MAP NOTES
+
+Open **Tile Decks** in the VTT Sidebar (GM only) to build a map from tiles.
+
+- **Add decks**: add a starter pack (Scribble Dungeons, Geomorphs 2013 or Geomorph Collection), or import your own PNG or JPG images with a **Deck name** and tile images.
+- **Draw**: draw a random tile from a deck, or choose a specific tile from the palette (filter it by category). **Draw from all decks** pulls from every installed deck at once.
+- **Place**: drag a tile onto the map, or click it and click the map. Press `Esc` to cancel placing.
+- **Snapping**: new tiles snap edge to edge against tiles already on the map.
+- **Offline**: starter tiles are downloaded once into the current vault, so drawing keeps working offline.
+
+### Stock on draw
+
+Each deck has a **Stock on draw** setting, applied only to tiles you draw at random (a tile you pick by hand is placed as it is):
+
+- **None**: no extra content.
+- **Table Roll**: rolls the **Source Table** you choose from your random tables automatically when the tile is placed. Create a table first if none are listed.
+- **Encounter**: pins an empty encounter note on the tile, ready for you to fill in.
+
+**Frequency** sets how often a drawn tile is stocked, from every tile to one in several.
+
+## Layers
+
+Every tile and token belongs to one of three layers: **Terrain**, **Furniture** or **Tokens**. They are always drawn in that order, so tokens never vanish under the map.
+
+- Use the **layer** control in the map bar to choose which layer you are editing. New placements go there, and only items on that layer can be selected or dragged, so you can work on furniture without nudging tokens or terrain.
+- **Hide** a layer to declutter your view. **Lock** a layer to stop edits to it; a locked layer blocks everyone, including the GM.
+- Right-click a tile or token and choose **Move to Layer** to reassign it.
+- Players moving their own token are not held back by the layer you happen to be editing.
+
+## Map notes
+
+Pin a note anywhere on the map to remember what happens there.
+
+1. Choose the note button (in the VTT Sidebar, or the map bar when VTT is off).
+2. Click the spot, then write the note. Press `Esc` to back out without placing one.
+3. A note lands folded down to a small marker so a stocked dungeon does not hide the map. Double-click a marker to open it, and double-click again to fold it away.
+4. Note text takes basic markdown, and the toolbar above it writes bold, italic, headings and bullet lists for you. `Shift` + scroll over an open note to resize it.
+
+Notes start hidden from players, so you can stock a dungeon ahead of time. Right-click a note to show it when the party finds it. You can link a note to a placed tile so it stays with it, and unlink it again from the token details.
+
+When you roll on a random table, **Pin to map** drops the result onto the map as a note, so a rolled encounter stays attached to its room.
+
+A note belongs to the session. For one that turns out to matter, choose **Keep in vault** to write it into your vault as a Note entity and link the marker to it.
+
+---
+
+### TOKENS, PLAYERS & PERMISSIONS
+
+- **From a vault entity**: open **Vault Entities** in the VTT Sidebar, search your characters, creatures and items, then drag one onto the map. A ghost marker follows your cursor so placement stays precise, and the token is linked to that entity.
+- **Freeform marker**: choose **Add Token** (or double-click an empty spot on the map with VTT on). Type a **Token Name** such as "Goblin Captain" and choose **Create Token** to place a combat marker. You can pick an entity in the same dialog to link it, which fills in the name.
+
+Only the GM can create tokens.
+
+## Moving, resizing and restyling
+
+- **Move**: drag the token. Tokens snap to the grid.
+- **Turn**: drag the handle above a selected token or its facing ring. `Alt` + `Left` or `Right` arrow turns it in 45-degree steps.
+- **Right-click a token** for **Ping Token**, **Clone Token**, **Hide from Guests** or **Show to All**, **Move to Layer**, **Appearance**, **Resize** and **Status**, plus **Remove Token**.
+- **Appearance**: switch the facing indicator on or off, and choose a circle or square base.
+- **Resize**: choose 1x to 4x. On a hex grid the size matches the hex.
+- **Status**: mark a token **Dead**, **Stunned**, **Prone**, **Poisoned** or **Invisible**. The status shows on the token.
+- **Health bar**: double-click a token (with VTT on) to open its health bar control, with buttons to raise or lower the value.
+
+## The token details panel
+
+Select a token and its details appear in the VTT Sidebar. The GM sees:
+
+- **Owner**: which connected player controls this token, or **Unassigned**.
+- **Vision Source (PC)**: lets this token light up the fog around it.
+- **Add to Initiative**: puts it in the turn order.
+- **Open in Zen Mode** for a linked entity.
+- A button to show the token's image to players.
+- **Remove Token**.
+
+## Who can do what
+
+- **The GM** can move, edit, hide and remove any token.
+- **A player** can move only tokens assigned to them. Assign a token with **Owner** in its details. A player's own token is never blocked by the layer you are currently editing, but a **locked** token or a **locked layer** stops everyone, including the GM.
+- **Players only see tokens that are shown to them.** Use **Hide from Guests** and **Show to All** to control that.
+- A linked entity can be opened from the token details, or from the book button on an initiative row, when the person looking is allowed to see that token.
+
+## Vision
+
+Tokens marked as **Vision Source (PC)** reveal the fog around them as they move. **VISION: PARTY** combines every vision source, and **VISION: SELECTED** uses only the selected token. **Vision Range** sets how far they see. See [Fog, Player View & Solo Play](/help#help/vtt-fog-player-view).
+
+---
+
 ### ORACLE AI ACCESS AND PERSONAL KEYS
 
 Open **Settings → Intelligence**. **Connection Mode** shows whether you are using the **System Proxy** or **Direct Connection: Custom Key**.
 
 - **System Proxy** uses the shared service, subject to its usage limits. You do not need a personal key for this mode.
 - **Personal key** connects directly to the provider. The current personal-key text connection uses Google Gemini, even where the key field is labelled “OpenAI/Luna”. Keys from different providers are not interchangeable.
+
+### What the System Proxy remembers
+
+The Oracle remembers your chat and the notes it has already seen, so each new question only sends what changed, and replies come back quicker and use less of your quota. To do this on the free System Proxy, your conversation and the notes it references are briefly stored on the AI provider's servers (up to 55 days) and then expire. Your vault always stays on your computer; only the chat does this. Using your own API key bypasses the System Proxy, but your prompts and the notes sent as context still leave your browser for processing by Google.
 
 ### Add or remove a personal key
 
@@ -1000,6 +1534,58 @@ Saved Views are fully accessible on mobile devices:
 - [Same Content, Different Perspectives: Unified Saved Views in Codex Cryptica](/blog/same-content-different-views) — How to seamlessly switch between topological graphs and dense tables.
 - [Supercharged Lore Discovery](/blog/supercharged-discovery) — Mastering labels and filters for dynamic campaign prep.
 - [Why Codex Cryptica Over Obsidian](/blog/why-codex-cryptica-over-obsidian) — Graph-first worldbuilding without brittle folder structures.
+
+---
+
+### VTT TROUBLESHOOTING
+
+The map tells you why when you try. The usual reasons are:
+
+- **The token is locked.** Unlock it to move it.
+- **Its layer is locked.** Unlock the layer in the layer control. A locked layer blocks everyone, including the GM.
+- **It belongs to someone else.** Only its owner and the GM can move it. Assign it to a player with **Owner** in its details.
+- **You are in PLAYER VIEW.** Switch back to GM view to edit.
+
+## A player cannot see something
+
+- The token may be hidden. Right-click it and choose **Show to All**.
+- Notes start hidden from players. Right-click the note and show it.
+- The area may still be under fog. Reveal it with `Alt` + drag, or give a token **Vision Source (PC)**.
+- Hiding an entity in your lore and covering a map area are separate, so check both. See [Fog, Player View & Solo Play](/help#help/vtt-fog-player-view).
+
+## Fog does not behave as expected
+
+- Check that **FOG** is **ON**. The fog switch only shows in GM view.
+- Reveal needs `Alt` held while you drag. `Alt` + `Shift` hides again.
+- On a hex map the fog follows hexes, so a small brush changes one hex at a time. For a single hex, right-click it and choose **Reveal hex** or **Hide hex**.
+- In **PLAYER VIEW** you cannot paint fog. Switch back to GM view.
+- If you can still see the map under the fog, that is how GM view looks: the fog is light so you can see what you have hidden. Turn on **SOLO** (next to **FOG**) to hide fogged areas completely, for example when playing alone.
+
+## Initiative will not advance
+
+- **Next Turn** only works for the GM, or the owner of the token whose turn it is.
+- It is disabled while the list is empty. Add tokens with **Add to Initiative**.
+- The initiative list only shows in **Combat** mode.
+
+## A player cannot edit or manage something
+
+Players can only move tokens assigned to them, and cannot create tokens, place tiles or change the map. These are host tools by design. Assign their token with **Owner**.
+
+## Voice chat will not connect
+
+- The host has to start voice first. Players see **Join voice chat** once a channel is open.
+- Hover the voice button to see the current state or error. Click it again while connecting to cancel and retry.
+- Check your browser has permission to use the microphone.
+
+## The session will not connect
+
+- The host must keep their tab open with the live session running (see **Share Campaign**).
+- Send the player the full copied link.
+- Ask the player to reload the link.
+
+## Still stuck?
+
+Ask Cif from the map bar, which can see which screen you are on, or open the [VTT Overview](/help#help/vtt-session).
 
 ---
 
@@ -1300,6 +1886,55 @@ The Lore Oracle understands these labels. If you label someone as a "Rival," the
 
 ---
 
+### DICE ROLLER
+
+The **Dice Roller** rolls dice on your own device, for any game system. Open it with the dice button in the header. It opens as a floating window you can move and resize.
+
+If you cannot see the dice button, you may be in Guided mode, which hides it. Switch to **Full Toolbox** to bring it back. See [Guided Mode](/help#help/guided-mode).
+
+The window has three tabs: **Dice**, **Decks** and **Tables**. This page is about Dice; Decks and Tables are in [Random Tables and Decks](/help#help/random-tables-decks). Use **Pop out into new window** to move the roller into a window of its own (the floating one closes), or press **Escape** to close the floating window.
+
+## Rolling
+
+There are two ways to build a roll:
+
+- **Click the dice.** The roller has d4, d6, d8, d10, d12, d20 and d100. Click one to start a formula with one of that die. Click it again to add another of the same die, or click a different die to add it to the formula.
+- **Type a formula** in the box, for example `2d20kh1 + 5`.
+
+Then press **ROLL**. The formula clears so you can roll again.
+
+If the formula is not valid, a short message appears under the box and nothing is rolled.
+
+### Formula examples
+
+Choose **Formula Help** (the question mark) next to the box to see these:
+
+| Formula    | What it does                          |
+| ---------- | ------------------------------------- |
+| `2d20kh1`  | Keep highest (advantage)              |
+| `2d20kl1`  | Keep lowest (disadvantage)            |
+| `4d6!`     | Exploding: a maximum roll rolls again |
+| `1d10 + 5` | Add a modifier                        |
+
+Press the **Up** arrow in the formula box to bring back a formula you rolled earlier, and **Down** to move forward again.
+
+## Your results
+
+Each roll appears in **Session History**, newest first, with the total and the individual dice that made it up. Each roll also has:
+
+- **Reroll this formula**, to roll the same formula again.
+- **Send to chat**, to share the result in a game session's chat.
+
+Choose **Clear** to empty the history. It clears dice and table results together.
+
+## Using the roller with other tools
+
+- During a [VTT session](/help#help/vtt-session), your rolls are shared with the session chat as you make them.
+- If you have a [Session Journal](/help#help/quicknote) running, your dice rolls are added to it automatically.
+- In the Oracle chat, `/roll 2d20kh1 + 5` rolls a formula without opening the roller. See [Chat Commands](/help#help/chat-commands).
+
+---
+
 ### MERGING NODES
 
 Sometimes duplicate entities appear, especially after importing content. The **Merge Nodes** feature allows you to combine them into a single, definitive record.
@@ -1421,7 +2056,7 @@ The scratchpad also has a **Session Journal** tab. It is a running record of wha
 
 A small dot on the button means a journal is currently running.
 
-While a journal is running, your dice rolls, card draws and random table results are added to it automatically, even when the scratchpad is closed. Each one shows up as its own entry with a label and an icon (**Dice roll**, **Card draw** or **Table result**), so you can tell it from a note you typed. They go into whichever section you have chosen. If no journal is running, nothing is added, and your rolls work exactly as before. Rolls made in the solo Adventure prompt and on the map are not added yet.
+While a journal is running, your dice rolls, card draws, random table results and completed SOLO party moves are added automatically, even when the scratchpad is closed. Each appears as its own entry with its result or travel details. Map entries include distance, optional hex coordinates and newly revealed hexes. Use **Map moves** in the journal header to switch map capture off; dice, table and deck capture continue. They go into whichever section you have chosen. If no journal is running, nothing is added, and your rolls work exactly as before.
 
 ### Turning the journal into entities
 
@@ -1526,13 +2161,23 @@ Cif is Codex Cryptica's in-app guide. Cif answers questions about using Codex Cr
 
 Open **Ask Cif** from the Activity Bar, or choose **Ask about this** on an entity's Connections tab. Type your question and press **Ask**. When an answer has a related readable guide, its **Sources** buttons open that article. Answers can include formatted lists, bold controls and command examples.
 
+## Questions you can tap
+
+When the conversation is empty, Cif can show a few questions for the screen you are on, such as "Where do I add a connection?" on an entity's Connections tab. Tap one to ask it. They are the same as typing the question yourself, and they come back after **Start over**. Cif only offers them on screens where it has a reliable answer.
+
 ## Being shown where something is
 
 Sometimes Cif offers to show you a control. Choose **Show me** and it opens the right tab and outlines the button with a label. Other offers can open a tool or help article. Cif never edits your vault, and you can clear the outline any time by pressing Escape.
 
+On the map, Cif can open Grid Settings, Encounter Snapshots, the VTT sidebar and the map controls, and point at controls such as the Explore and Combat buttons, Add Token, fog, layers, Player View, tile decks, the initiative list and Share Campaign. It only offers what you can use: a player is never shown a host tool. Cif only opens and points. It never moves a token, reveals terrain, advances initiative, changes who owns a token, starts or stops a live session, or deletes an encounter. Those stay yours to do. If you use Cif in its own window, the guide runs in your main Codex Cryptica window, which is brought forward where your browser allows it. If the control cannot be found, the written answer still tells you where to look.
+
+## Keeping Cif beside the map
+
+Click **Cif** in the map controls, or the Cif button in the activity bar, to open Cif on any screen. In the VTT you can also choose the **Open Cif in its own window** button at the top of Cif. Cif moves into a separate window you can drag to a second monitor and resize, so the map stays full size. It keeps the same conversation, and it still knows which screen you are on in the main window. Keep the main Codex Cryptica window open while Cif is in its own window. Closing the window does not lose the conversation; click Cif again to bring it back. Pop-out is not offered on phones, where Cif opens inside the app as usual.
+
 ## What is sent
 
-Your question, the last few questions in this conversation, and a short description of the screen you are on, such as "an entity's Connections tab". No entity names, text, or IDs are sent. Avoid typing private lore into the question, because the question itself goes to our AI service.
+Your question, the last few questions in this conversation, and a short description of the screen you are on, such as "an entity's Connections tab". On the map, that description also includes a few yes or no facts about how you are using it, such as whether VTT is on, whether it is Combat mode, whether a token is selected and whether you can move it. Players never send anything the GM is hiding from them. No entity names, text, or IDs are sent. Avoid typing private lore into the question, because the question itself goes to our AI service.
 
 ## When Cif cannot answer
 
@@ -1710,6 +2355,47 @@ If you instead want Codex itself to manage the remote copy, use **Settings → V
 
 - [Google Drive Cloud Sync Walkthrough](/blog/gdrive-cloud-sync) — Step-by-step guide to the in-app Google Drive integration.
 - [Data Sovereignty for Game Masters](/blog/gm-guide-data-sovereignty) — Why local-first storage and user-controlled backups matter.
+
+---
+
+### CATEGORIES AND LABELS
+
+Open **Settings** and choose the **Schema** tab to define how your world is organised. It has two parts: **categories**, which give entries their type, colour and icon, and **Campaign Labels**, a list of the labels used across your vault.
+
+## Categories
+
+A category is the kind of thing an entry is, such as Character or Location. Categories colour the nodes on the graph and group entries in the Explorer and the Entity Table, so a set of your own ones can match how you think about your world.
+
+Each category in the list has:
+
+- a **colour**, chosen with the colour picker;
+- a **name**, which you edit in place. If you clear the box, the old name comes back;
+- an **icon**, chosen with **Change icon** from the Glyph Library of 36 icons;
+- a **Delete category** button.
+
+### Adding a category
+
+1. At the bottom of the list, pick a colour, type a name under **New category...** and choose an icon.
+2. Choose **ADD**.
+
+A category with the same name as an existing one is refused with "Category already exists".
+
+### Deleting a category
+
+Choose **Delete category** and confirm. Your entries are not deleted: entries that used the category fall back to the default style.
+
+### Reset to defaults
+
+**RESET TO DEFAULTS** puts the category list back to the built-in set straight away. **It asks for no confirmation.** Any categories you added are removed from the list, and any colours, names or icons you changed on the built-in ones are put back. Entries that used a removed category fall back to the default style.
+
+## Campaign Labels
+
+**Project Labels** lists every label in use in your vault. You can tidy them here, and the change applies to all of your entries at once:
+
+- **Rename** a label to change it on every entry that has it. Labels are stored in lower case, so "Character" becomes "character". If a label with that name already exists, you are asked whether to merge the two, and an entry that had both ends up with just one. When it is done you are told how many entries changed.
+- **Delete** a label to remove it from every entry that has it. Before anything happens you are told how many entries will lose the label, and the entries themselves are never deleted.
+
+To add a label to particular entries instead, use the **Add label** box on an entry, or **Add / remove labels** and **Manage Labels** in the [Entity Table](/help#help/entity-table). To find entries by label, search with `#label` in the [Explorer](/help#help/entity-explorer) or the Entity Table.
 
 ---
 
@@ -1897,7 +2583,7 @@ Out of the box, the following types come with high-fidelity structures:
 - **Event**: Includes sections for Date/Chronology, Key Participants, Sequence of Events, and Aftermath.
 - **Creature**: Includes sections for Ecology, Combat/Abilities, Behavior, and Lore.
 - **Note**: A clean generic canvas for general-purpose world-building.
-- **Table Card** (an extra Character template): a compact NPC card built on five memorable elements, Immediate Want, Physical Mannerism, Sharp Contradiction, Relationship Hook and Sensory Tag, plus a short line on how to introduce them at the table. Pick it as the Character default in **Settings → Templates** if you improvise a lot of NPCs mid-session.
+- **Table Card** (an extra Character template): a compact NPC card built on six memorable elements, Immediate Want, Physical Mannerism, Sharp Contradiction, Relationship Hook, Sensory Tag and Knowledge & Secrets, plus a short line on how to introduce them at the table. Pick it as the Character default in **Settings → Templates** if you improvise a lot of NPCs mid-session.
 
 ## Managing Templates in Settings
 
@@ -2146,6 +2832,8 @@ If the parent you just added already has a partner on file, you'll be asked whet
 - **Collapse** the parents or children branch to keep large trees tidy.
 - Use the **open** icon on a card to jump to that character's full detail panel.
 
+In the lineage view, drag to pan, scroll or pinch to zoom, and use **⊞** to expand a branch. Choose **Show all generations** to reveal the whole recorded lineage.
+
 ## One source of truth
 
 The Family Tree is just a view of your normal entity connections — it doesn't create a separate family database. Family links you add here also show up in the graph and connection views, and connections you make elsewhere show up here.
@@ -2235,6 +2923,8 @@ Stat Sheet data lives directly in the entity's note (its `statSheet` frontmatter
 
 Presentation Templates change how a compatible Stat Sheet is arranged without changing its fields or values. Open an entity's **Stats** tab and choose **Presentations** to switch layouts, set a schema default, or build a new one with the visual card editor (a Markdown source tab is also available for direct editing). Templates are limited to the Stat Sheet schema they were made for, so fields always stay compatible.
 
+Write your own layout in Markdown with field references such as `{{stat.hp}}` and layout sections for groups, cards and rows. Repeatable Table fields (used for Weapons and Items by default) keep rows of data together: add rows, edit their cells, adjust counters and roll dice from the table. In the template editor you can customise a Repeatable Table's column headings and cell types (text, number, dice, counter or checkbox), so the same table type can hold skills, spells or any other list.
+
 ## Related reading
 
 - [The Complete Guide to Custom Character Sheets](/blog/custom-stat-sheet-templates) — Build a reusable Stat Template, fill it in per entity, present it your way, and share it.
@@ -2277,6 +2967,33 @@ Once Guest Character Chat is enabled, the **Character Chat** panel below it lets
 ## Review conversations
 
 Open the Character's **Chats** tab as the host to see synced guest conversation logs. You can edit or remove messages, delete a whole session, and promote a useful character response into a rumor draft.
+
+---
+
+### SESSION PREP BUILDER
+
+Open the [Session Prep Builder](/tools/session-prep-builder) to prepare a situation for play. You can answer the questions and copy a run sheet without an account or AI.
+
+## Answer the questions
+
+Start with a hook, last session's fallout or the current campaign situation. Work through **Start**, **Pressure**, **People**, **Places**, **Information**, **Complications**, **Consequences** and **Reserve**. The builder prepares people, pressures and options rather than a fixed scene order or ending.
+
+Write your own answers, or explicitly ask AI to answer an empty question. Suggestions appear as options you can keep, edit or reject. **Redraft** replaces a section only when you request it, and you can undo that redraft. AI additions are marked.
+
+When using AI, your hook, prep, instructions and rejected ideas are sent to Google's Gemini API for suggestions. Codex analytics do not collect their text. Without AI, you can answer the questions and build the run sheet online or offline.
+
+## Build and keep the run sheet
+
+Choose **Build my run sheet** to arrange your answers into a run sheet. If you edit the prep afterwards, use **Update run sheet** to include those changes. The builder also flags necessary facts that have only one way to be found.
+
+You can copy the result. Saving opens Codex Cryptica so you can choose a local campaign vault; it does not automatically publish your prep. Cif can explain these steps, but cannot generate answers, save a run sheet or change your prep for you.
+
+Session Prep is different from **Session Journal**, which records what happened during play, and **Session Hub**, which holds generated drafts for reuse.
+
+## Related reading
+
+- [QuickNotes and Session Journal](/help#help/quicknote)
+- [Session Hub](/help#help/session-hub)
 
 ---
 
@@ -2557,13 +3274,29 @@ Reference answers to real RPG and worldbuilding questions, indexed at https://co
 
 **Direct answer:** Spotlight means giving one character a distinctive contribution, not a separate game. Let the specialist use their expertise to change the situation, then give the whole party a meaningful response to that change. Build scenes with shared stakes, intersecting ways to contribute, and decisions that need more than one character's judgement. A brief solo moment can work when it has a clear purpose and returns useful information or a consequential choice to the group.
 
+### [How do I handle divination magic without letting one character solve every mystery?](https://codexcryptica.com/answers/how-do-i-handle-divination-magic-without-letting-one-character-solve-every-mystery)
+
+**Direct answer:** Let information magic answer the question it was asked, then let the players decide what to do with the result. Give them exactly the information quality the effect guarantees: do not weaken a guaranteed result or upgrade a limited effect into guaranteed truth. A spell may settle a small mystery outright; the larger situation can still leave meaningful choices about access, persuasion, timing, trust, rescue, or consequence.
+
 ### [How do I handle players asking an NPC to "tell us everything you know"?](https://codexcryptica.com/answers/how-do-i-handle-players-asking-an-npc-to-tell-us-everything-you-know)
 
 **Direct answer:** Treat 'tell us everything you know' as a request for the witness's best relevant summary, not an exhaustive transcript of memory. Resolve the scope first—everything about the burglary, the victim, or last night—then give the account, including what the witness recalls, believes, and remains unsure about. Follow the game's clue procedure, but keep investigation moving through a reliable route that does not depend on one exact phrase or fragile check. Targeted questions can clarify prepared or fictionally supported details, uncertainty, and sources without creating new evidence through repetition.
 
+### [How do I keep players engaged during other players' turns in combat?](https://codexcryptica.com/answers/how-do-i-keep-players-engaged-during-other-players-turns-in-combat)
+
+**Direct answer:** Measure how long players wait between meaningful decisions and reduce avoidable delays. Give players a reason to follow each turn: make the initiative order visible, announce who is acting and who is next, and let meaningful changes make other characters' choices matter. Invite planning without locking in a choice, and treat phones or side conversations as clues about waiting time and encounter design before treating them as a discipline problem.
+
+### [How do I make a campaign threat feel urgent without railroading the players?](https://codexcryptica.com/answers/how-do-i-make-a-campaign-threat-feel-urgent-without-railroading)
+
+**Direct answer:** Give the threat a goal, a next move and visible consequences that happen whether the players intervene or not. Show those consequences through the world rather than through a forced deadline, and make sure every stage creates new choices instead of closing them down. The threat should keep acting and pressure should be legible, but the players remain free to oppose it, exploit it, ignore it for now, or deal with it later on changed terms.
+
 ### [How do I make a player base matter in an RPG campaign?](https://codexcryptica.com/answers/how-do-i-make-a-player-base-matter-in-an-rpg-campaign)
 
 **Direct answer:** Use four anchors: a purpose the players choose; capabilities that open options; people and relationships that matter to them; and change and consequences, including improvements, vulnerabilities and the world's reactions. A stronghold, crew headquarters or ship matters when returning gives the players meaningful options, familiar people and visible evidence of what they changed. If it only hands out bonuses, it stays a menu.
+
+### [How do I make combat faster without making it less exciting?](https://codexcryptica.com/answers/how-do-i-make-combat-faster-without-making-it-less-exciting)
+
+**Direct answer:** Speed up the gaps around combat decisions, not the decisions themselves: show the initiative order, tell the next player they are up soon, and let everyone plan while another turn resolves. Reduce GM bookkeeping with grouped initiative, average damage, and fewer distinct enemy abilities; give the fight an objective and a changing battlefield; then let enemies retreat or surrender once the outcome is clear. Players still get consequential choices, with less time spent waiting for them.
 
 ### [How do I make different cultures feel distinct without relying on stereotypes?](https://codexcryptica.com/answers/how-do-i-make-different-cultures-feel-distinct-without-relying-on-stereotypes)
 
@@ -2905,6 +3638,10 @@ Reference answers to real RPG and worldbuilding questions, indexed at https://co
 
 **Direct answer:** Use the Rule of Cool when a player attempts something creative that fits the fictional situation, but resolve it using existing game mechanics whenever possible. Let creativity change what a character can attempt within the narrative world, rather than automatically granting a numerically superior mechanical result. By separating narrative permission from mechanical resolution, Dungeon Masters reward clever thinking while preserving tactical balance and avoiding broken campaign precedents.
 
+### [How should a fantasy adventuring guild handle wages, dues, and shared expenses?](https://codexcryptica.com/answers/how-should-a-fantasy-adventuring-guild-handle-wages-dues-and-shared-expenses)
+
+**Direct answer:** Give your adventuring guild one clear money rule that fits its current pressure, not a supposedly correct historical percentage. Choose from fixed dues, a percentage of income, a cut of guild-arranged contracts, communal earnings with a modest stipend, or a hybrid, then set contribution rates as dials. A struggling hall might take around 20 to 40 percent of steady day-job wages and a larger share of guild contracts, pay every member a reliable living allowance, and hold the rest as a common fund for rent, food, gear, healing, burials, fines, dependants, and bad months.
+
 ### [How should magic have been discovered in my world?](https://codexcryptica.com/answers/how-should-magic-have-been-discovered-in-my-world)
 
 **Direct answer:** Choose how your people first learned to use magic separately from where magic itself comes from, then decide who remembers, controls, or forbids that discovery today. The model you pick, whether slow natural enquiry, divine gift, inheritance from a fallen civilisation, planar catastrophe, outsider teaching, rediscovery of banned lore, multiple independent traditions, or an ancient force only recently made usable, shapes who claims authority, which institutions guard the knowledge, and what laws, customs, and beliefs shape play now.
@@ -3151,6 +3888,12 @@ Curated raw or lightly edited output from the Codex Cryptica generators, indexed
 **Genre:** Cyberpunk
 
 **Summary:** Inside the flooded Arasaka Transit Exchange, a biometric-free vault holds the stolen Ghostseed ledger behind a mechanical train-routing maze whose brass relays must be synchronized before the district-wide security purge floods the chamber in eleven minutes.
+
+### [Council vote example: The Treasury's Tipping Point](https://codexcryptica.com/examples/the-treasurys-tipping-point-karrow-council-vote)
+
+**Genre:** Classic Fantasy
+
+**Summary:** A high-stakes senate vote in the Republic of Karrow: provincial tax hoarding, grain syndicate corruption, and a five-seat council teetering on a simple majority.
 
 
 ## Live In-Browser Generators

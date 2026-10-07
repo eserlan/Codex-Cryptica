@@ -240,8 +240,8 @@ describe("Delve Boss / Key NPC contextual generation", () => {
   });
 });
 
-describe("Table Card (5-Element) NPC mode", () => {
-  it("generates 5-element table card locally with want, mannerism, contradiction, relationship, and sensory tag", () => {
+describe("Table Card (6-Element) NPC mode", () => {
+  it("generates 6-element table card locally with want, mannerism, contradiction, relationship, sensory tag, and knowledge/secrets", () => {
     const out = generateNpcLocal(
       {
         role: "Blacksmith",
@@ -251,18 +251,20 @@ describe("Table Card (5-Element) NPC mode", () => {
       seededRng(42),
     );
 
-    expect(out.content).toContain("### The Five Elements");
+    expect(out.content).toContain("### The Six Elements");
     expect(out.content).toContain("- **Immediate Want**:");
     expect(out.content).toContain("- **Physical Mannerism**:");
     expect(out.content).toContain("- **Sharp Contradiction**:");
     expect(out.content).toContain("- **Relationship Hook**:");
     expect(out.content).toContain("- **Sensory Tag**:");
+    expect(out.content).toContain("- **Knowledge & Secrets**:");
     expect(out.content).toContain("### Table Delivery");
 
     expect(out.lore).toContain("- **Immediate Want**:");
     expect(out.lore).toContain("- **Contradiction**:");
     expect(out.lore).toContain("- **Relationship Hook**:");
     expect(out.lore).toContain("- **Sensory Tag**:");
+    expect(out.lore).toContain("- **Knowledge & Secrets**:");
 
     expect(out.labels).toContain("table-card");
   });
@@ -276,11 +278,11 @@ describe("Table Card (5-Element) NPC mode", () => {
       seededRng(7),
     );
 
-    expect(out.content).toContain("### The Five Elements");
+    expect(out.content).toContain("### The Six Elements");
     expect(out.labels).toContain("table-card");
   });
 
-  it("builds an AI prompt tailored for the 5-element memorable NPC anatomy", () => {
+  it("builds an AI prompt tailored for the 6-element memorable NPC anatomy", () => {
     const { systemInstruction, resolved } = buildNpcPrompt(
       {
         role: "Merchant",
@@ -291,12 +293,13 @@ describe("Table Card (5-Element) NPC mode", () => {
     );
 
     expect(resolved.mode).toBe("table-card");
-    expect(systemInstruction).toContain("5-element memorable NPC anatomy");
-    expect(systemInstruction).toContain("### The Five Elements");
+    expect(systemInstruction).toContain("6-element memorable NPC anatomy");
+    expect(systemInstruction).toContain("### The Six Elements");
     expect(systemInstruction).toContain("### Table Delivery");
     expect(systemInstruction).toContain("Immediate Want");
     expect(systemInstruction).toContain("Sharp Contradiction");
     expect(systemInstruction).toContain("Sensory Tag");
+    expect(systemInstruction).toContain("Knowledge & Secrets");
   });
 
   it("parses AI response and injects table-card label in table-card mode", () => {
@@ -310,7 +313,7 @@ describe("Table Card (5-Element) NPC mode", () => {
     );
 
     const json =
-      '{"title":"Master Eldon","summary":"Scholastic fence.","content":"### The Five Elements\\n- **Immediate Want**: Needs ink.","lore":"### At a Glance\\n- **Role**: Scholar","labels":["rpg-character"]}';
+      '{"title":"Master Eldon","summary":"Scholastic fence.","content":"### The Six Elements\\n- **Immediate Want**: Needs ink.","lore":"### At a Glance\\n- **Role**: Scholar","labels":["rpg-character"]}';
     const out = parseNpcResponse(json, {}, resolved);
     expect(out.labels).toContain("table-card");
   });
@@ -323,9 +326,10 @@ describe("Table Card (5-Element) NPC mode", () => {
     expect(resolved.contradiction).toBeUndefined();
     expect(resolved.relationshipHook).toBeUndefined();
     expect(resolved.sensoryTag).toBeUndefined();
+    expect(resolved.knowledgeSecrets).toBeUndefined();
   });
 
-  it("consumes exactly 4 fewer RNG calls in dossier mode than table-card mode", () => {
+  it("consumes exactly 5 fewer RNG calls in dossier mode than table-card mode", () => {
     function countRngCalls(mode: "dossier" | "table-card"): number {
       let calls = 0;
       const base = seededRng(42);
@@ -337,7 +341,7 @@ describe("Table Card (5-Element) NPC mode", () => {
       return calls;
     }
 
-    expect(countRngCalls("table-card") - countRngCalls("dossier")).toBe(4);
+    expect(countRngCalls("table-card") - countRngCalls("dossier")).toBe(5);
   });
 
   it("produces grammatically sound summaries for every immediate-want variant", () => {

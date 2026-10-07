@@ -26,7 +26,7 @@ export const nkiruOkafor: ExampleConfigInput = {
     { label: "Ancestry", value: "Human" },
     { label: "Role", value: "Street Fixer" },
     { label: "Moral stance", value: "Street Pragmatist" },
-    { label: "Prep style", value: "Table Card (5-Element 60-Second Prep)" },
+    { label: "Prep style", value: "Table Card (6-Element 60-Second Prep)" },
   ],
   image: {
     src: "https://assets.codexcryptica.com/announcements/character-nkiru-okafor.jpg",
@@ -35,7 +35,7 @@ export const nkiruOkafor: ExampleConfigInput = {
   output: [
     {
       kind: "list",
-      heading: "The Five Elements",
+      heading: "The Six Elements",
       items: [
         {
           term: "Immediate Want",
@@ -56,6 +56,10 @@ export const nkiruOkafor: ExampleConfigInput = {
         {
           term: "Sensory Tag",
           text: "Smells of clove oil and overheated circuitry, with a strip of luminous orange tape wrapped around her left thumb.",
+        },
+        {
+          term: "Knowledge & Secrets",
+          text: "Knows the corporate checkpoint scanner cycle and security patrol shifts by heart; has no idea the case contains a weaponised bioweapon strain rather than synthetic insulin; will not admit her younger brother is the one who stole it.",
         },
       ],
     },
@@ -91,7 +95,7 @@ export const nkiruOkafor: ExampleConfigInput = {
         {
           label: "Prep style",
           value:
-            "Table Card (5-Element 60-Second Prep), as opposed to the generator's Full Dossier mode",
+            "Table Card (6-Element 60-Second Prep), as opposed to the generator's Full Dossier mode",
         },
       ],
     },
@@ -132,6 +136,11 @@ export const nkiruOkafor: ExampleConfigInput = {
             "Clove oil, hot circuitry, and luminous orange tape wrapped around her left thumb.",
         },
         {
+          label: "Knowledge & Secrets",
+          value:
+            "Knows checkpoint shift schedules; unaware the case contains a bioweapon; conceals that her brother stole it.",
+        },
+        {
           label: "Tags",
           value:
             "street-fixer, corporate-espionage, squeamish-negotiator, table-card, rpg-character",
@@ -140,10 +149,10 @@ export const nkiruOkafor: ExampleConfigInput = {
     },
   ],
   annotation: {
-    heading: "Five cues are often enough to run an NPC",
+    heading: "Six cues are often enough to run an NPC",
     paragraphs: [
       "Nkiru Okafor never gets a biography on this page, and she does not need one. Her immediate want makes her act rather than wait: she is not a background fixture the party might eventually approach, she is already mid-negotiation when they meet her. A GM can run her from the first line without inventing anything extra.",
-      "The mannerism is something a real person at the table can perform in a few seconds: two taps on the wrist, a snapping hand. The contradiction does the heavier lifting. A ruthless deal broker who cannot stand the sight of blood is a more interesting negotiation partner than a generic tough who folds under pressure, because it tells the party exactly what lever to pull if talking fails and violence starts. The relationship hook ties her to a faction and a captive, so pursuing her leads somewhere in the wider setting rather than dead-ending at a single transaction. The sensory tag, clove oil and warm circuitry, is the detail players will remember when she shows up again three sessions later.",
+      "The mannerism is something a real person at the table can perform in a few seconds: two taps on the wrist, a snapping hand. The contradiction does the heavier lifting. A ruthless deal broker who cannot stand the sight of blood is a more interesting negotiation partner than a generic tough who folds under pressure, because it tells the party exactly what lever to pull if talking fails and violence starts. The relationship hook ties her to a faction and a captive, so pursuing her leads somewhere in the wider setting rather than dead-ending at a single transaction. The sensory tag, clove oil and warm circuitry, is the detail players will remember when she shows up again three sessions later. Finally, Knowledge & Secrets establishes clean table boundaries in one breath: what she can verify, what she cannot help with, and what leverage is required to pry loose her hidden stake.",
       "Compare this to Lady Vivienne Morvath, where six plan stages, three lieutenants, and a discovery ladder are appropriate because she is meant to drive months of play. Nkiru is built for a single scene, maybe a recurring contact if the party keeps her alive. Neither format is the better generator output; they answer different questions. A GM prepping a campaign villain needs the dossier. A GM who needs a memorable face for tonight's checkpoint job needs exactly this.",
     ],
   },
@@ -183,6 +192,6 @@ export const nkiruOkafor: ExampleConfigInput = {
     title:
       "Cyberpunk NPC example: Nkiru Okafor, a Table Card roll | Codex Cryptica",
     description:
-      "A table-ready cyberpunk NPC generated in Table Card mode: immediate want, mannerism, contradiction, relationship hook, and sensory tag in five lines.",
+      "A table-ready cyberpunk NPC generated in Table Card mode: immediate want, mannerism, contradiction, relationship hook, sensory tag, and knowledge & secrets.",
   },
 };
