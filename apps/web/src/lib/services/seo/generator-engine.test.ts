@@ -116,7 +116,7 @@ describe("DefaultGeneratorEngine", () => {
       expect(res.lore).not.toContain("Table Rating");
     });
 
-    it("should generate 5-element table card when mode is table-card", async () => {
+    it("should generate 6-element table card when mode is table-card", async () => {
       const res = await engine.generateNPC({
         race: "Dwarf",
         role: "Blacksmith",
@@ -125,15 +125,17 @@ describe("DefaultGeneratorEngine", () => {
         useAI: false,
       });
 
-      expect(res.content).toContain("### The Five Elements");
+      expect(res.content).toContain("### The Six Elements");
       expect(res.content).toContain("- **Immediate Want**:");
       expect(res.content).toContain("- **Physical Mannerism**:");
       expect(res.content).toContain("- **Sharp Contradiction**:");
       expect(res.content).toContain("- **Relationship Hook**:");
       expect(res.content).toContain("- **Sensory Tag**:");
+      expect(res.content).toContain("- **Knowledge & Secrets**:");
       expect(res.content).toContain("### Table Delivery");
       expect(res.lore).toContain("- **Immediate Want**:");
       expect(res.lore).toContain("- **Contradiction**:");
+      expect(res.lore).toContain("- **Knowledge & Secrets**:");
       expect(res.labels).toContain("table-card");
     });
 
