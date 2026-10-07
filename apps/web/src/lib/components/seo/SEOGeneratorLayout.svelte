@@ -11,6 +11,7 @@
   import { onlineStatus } from "$lib/stores/online.svelte";
   import { browser, dev } from "$app/environment";
   import { getGeneratorDocumentLayout } from "$lib/components/seo/generator-document-layout";
+  import { getGeneratorColumnClasses } from "./generator-column-classes";
   import { splitMarkdownForCopy } from "$lib/components/seo/markdown-sections";
   import { handleGeneratorInlineCopy } from "$lib/components/seo/generator-inline-copy";
   import {
@@ -238,26 +239,8 @@
     }
   });
 
-  const SINGLE_COLUMN_CLASS =
-    "lg:col-span-12 lg:w-full lg:max-w-3xl lg:justify-self-center";
   const columnClasses = $derived(
-    singleColumn
-      ? {
-          form: SINGLE_COLUMN_CLASS,
-          output: SINGLE_COLUMN_CLASS,
-          table: SINGLE_COLUMN_CLASS,
-        }
-      : wideForm
-        ? {
-            form: "lg:col-span-5",
-            output: "lg:col-span-7",
-            table: "lg:col-span-12",
-          }
-        : {
-            form: "lg:col-span-3",
-            output: "lg:col-span-6",
-            table: "lg:col-span-3",
-          },
+    getGeneratorColumnClasses(singleColumn, wideForm),
   );
 
   let outputCard = $state<HTMLElement | null>(null);
