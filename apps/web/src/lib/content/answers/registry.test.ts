@@ -83,8 +83,13 @@ describe("answer registry", () => {
     expect(builder?.description).not.toMatch(
       /pull(?:s)? .+ into one run sheet/i,
     );
-    expect(connection).toContain("start with a hook or situation");
-    expect(connection).not.toMatch(/Builder pulls/i);
+    expect(connection).toContain("starts from your hook or situation");
+    expect(connection).toContain(
+      "does not automatically pull in linked Vault facts",
+    );
+    expect(connection).toContain(
+      "promote new facts back into the pages they belong to",
+    );
   });
 
   it("keeps the civilisation capability habits heading aligned with its items", () => {
