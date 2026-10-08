@@ -1,21 +1,18 @@
 <!--
 Sync Impact Report
-- Version change: 1.6.0 -> 1.7.0
-- Modified principles: VII. User Documentation — expanded the requirement from major
-  features to every user-facing feature and defined the minimum useful help content.
+- Version change: 1.7.0 -> 1.8.0
+- Modified principles: VI. Clean Implementation, rule 3 (Validation) — local verification is now
+  the impacted-only checks (lint:changed, test:changed, affected-workspace type-check), with the
+  full suites required to pass in PR CI before merge. This matches the repository rule in
+  AGENTS.md ("No Baseline Tests / Impacted-Only Validation"), which the earlier wording
+  contradicted.
 - Added sections: None.
 - Removed sections: None.
 - Templates and guidance requiring updates:
-  - ✅ .specify/templates/plan-template.md — added a User Help Check.
-  - ✅ .specify/templates/tasks-template.md — require a user-help task for user-facing work.
-  - ✅ .specify/templates/spec-template.md — reviewed; no change needed.
-  - ✅ .gemini/commands/speckit.tasks.toml — canonical task-generation guidance updated.
-  - ✅ .gemini/commands/speckit.tasks.md — Markdown compatibility copy updated.
-  - ✅ .codex/commands/speckit.tasks.md — Codex compatibility copy updated.
-  - ✅ .agents/skills/speckit-tasks/SKILL.md — skill compatibility copy updated.
-  - ✅ .agent/workflows/sdd-tasks.md — workflow compatibility copy updated.
-  - ✅ Plan commands reviewed; they derive the Constitution Check from the live
-    constitution and plan template, so no command changes were needed.
+  - ✅ .specify/templates/*.md — reviewed; none repeat the old validation wording.
+  - ✅ .gemini/commands, .codex/commands, .agent/workflows, .agents/skills — reviewed; none
+    repeat the old validation wording.
+  - ✅ AGENTS.md — already states impacted-only validation; no change needed.
 - Follow-up TODOs: None.
 -->
 
@@ -62,7 +59,7 @@ To maintain build integrity and code quality, AI agents MUST:
 
 1.  **Style Guide**: Adhere strictly to `@docs/STYLE_GUIDE.md` for all visual, behavioral, and architectural patterns (including Svelte 5 Runes, Tailwind 4 tokens, and Data Safety).
 2.  **Implementation Hygiene**: Prefix unused variables/parameters with `_` and ensure comprehensive type definitions (e.g. `node` types) in workspace packages.
-3.  **Validation**: Every code change MUST be verified with `bun run lint` and `bun run test` before considering the task complete.
+3.  **Validation**: Every code change MUST be verified before considering the task complete: locally with the impacted-only checks (`bun run lint:changed`, `bun run test:changed`, and a type-check of each affected workspace), and by the full lint, test and type-check suites passing in PR CI before merge. Repository-wide runs are left to CI.
 
 ### VII. User Documentation
 
@@ -135,4 +132,4 @@ Size is reported for human review, never enforced by a line-count lint rule — 
 
 This constitution is the ultimate arbiter of engineering quality. All implementation plans and code reviews must verify alignment with these principles.
 
-**Version**: 1.7.0 | **Ratified**: 2026-05-23 | **Last Amended**: 2026-10-05
+**Version**: 1.8.0 | **Ratified**: 2026-05-23 | **Last Amended**: 2026-10-08
