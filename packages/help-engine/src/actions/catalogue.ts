@@ -133,6 +133,9 @@ export const SOLO_CONTROL_IDS = [
   "solo-threads-menu",
 ] as const;
 
+/** Session journal controls: the Capture menu in the open journal panel (spec 174, US4). */
+export const JOURNAL_CONTROL_IDS = ["journal-capture-menu"] as const;
+
 /** Controls `highlight` may point at (`data-help-target` values). */
 export const CONTROL_IDS = [
   "add-connection-button",
@@ -141,6 +144,7 @@ export const CONTROL_IDS = [
   "connections-tab",
   ...VTT_CONTROL_IDS,
   ...SOLO_CONTROL_IDS,
+  ...JOURNAL_CONTROL_IDS,
 ] as const;
 export type ControlId = (typeof CONTROL_IDS)[number];
 
@@ -180,8 +184,8 @@ export const VTT_FLAGS = [
 export type VttFlag = (typeof VTT_FLAGS)[number];
 
 /** Material flags a screen description may carry. */
-/** Set while a solo session is running in this vault. */
-export const SESSION_FLAGS = ["solo-session"] as const;
+/** Set while a solo session runs, or while the journal panel is open over the screen. */
+export const SESSION_FLAGS = ["solo-session", "session-journal-open"] as const;
 
 export const HELP_FLAGS = [
   "generators",
@@ -195,7 +199,8 @@ export type HelpFlag = (typeof HELP_FLAGS)[number];
 export interface ControlSpec {
   /**
    * Screen area the control lives in. `solo` controls appear on every screen
-   * while a solo session runs, so they are not tied to one area.
+   * while a solo session runs (or while the journal panel is open), so they are
+   * not tied to one area.
    */
   area: "entity-detail" | "map" | "solo";
   /**
@@ -259,6 +264,11 @@ export const CONTROL_CATALOGUE: Record<ControlId, ControlSpec> = {
   // Threads are also offered on the Play page with no session running, so they
   // carry no solo-session flag; availableActions says where they are on screen.
   "solo-threads-menu": { area: "solo" },
+  // The journal panel sits over any screen, so this uses the same bypass area as the solo controls.
+  "journal-capture-menu": {
+    area: "solo",
+    requiresFlag: "session-journal-open",
+  },
 };
 
 /**

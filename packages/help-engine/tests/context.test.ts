@@ -322,6 +322,31 @@ describe("solo play loop controls (Solo Play Loop)", () => {
       ...over,
     });
 
+  it("points at the journal Capture menu only while the journal panel is open", () => {
+    const highlight = {
+      type: "highlight",
+      target: "journal-capture-menu",
+      label: "Show me",
+    } as const;
+    expect(
+      validateAction(
+        highlight,
+        ctx({
+          flags: ["session-journal-open"],
+          availableActions: ["journal-capture-menu"],
+        }),
+        deps,
+      ),
+    ).not.toBeNull();
+    expect(
+      validateAction(
+        highlight,
+        ctx({ flags: [], availableActions: ["journal-capture-menu"] }),
+        deps,
+      ),
+    ).toBeNull();
+  });
+
   it("refuses solo-threads-menu when it is not on the screen", () => {
     expect(
       validateAction(

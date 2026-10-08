@@ -91,6 +91,8 @@ function flagsFor(
   if (sources.generatorsAvailable()) flags.push("generators");
   if (surface?.canAddConnection()) flags.push("connections-editable");
   flags.push(...sidePanelFlags(sources), ...soloFlags(sources));
+  if (sources.getOpenHelpArea?.() === "session-journal")
+    flags.push("session-journal-open");
   return flags;
 }
 
@@ -162,6 +164,9 @@ function availableActionsFor(
   if (!sources.isGuestMode()) actions.push(...SETTINGS_PANEL_IDS);
   if (!sources.isGuestMode() && sources.journalAvailable?.())
     actions.push("session-journal");
+  // The Capture menu is in the open journal header (spec 174, US4).
+  if (sources.getOpenHelpArea?.() === "session-journal")
+    actions.push("journal-capture-menu");
   actions.push(...soloActionsFor(sources));
   return actions;
 }
