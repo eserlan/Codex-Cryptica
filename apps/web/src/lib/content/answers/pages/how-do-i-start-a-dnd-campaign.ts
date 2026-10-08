@@ -239,6 +239,7 @@ export const howDoIStartADndCampaign: AnswerConfigInput = {
     "how-do-you-handle-players-going-off-script-as-a-gm",
     "how-do-you-run-dnd-for-a-large-group-of-players",
     "how-do-i-organise-a-dnd-campaign",
+    "what-should-a-new-dnd-player-know-before-their-first-game",
   ],
   discovery: {
     id: "answer-start-dnd-campaign",
