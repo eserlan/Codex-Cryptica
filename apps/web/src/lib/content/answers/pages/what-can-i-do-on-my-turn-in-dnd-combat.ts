@@ -7,14 +7,14 @@ export const whatCanIDoOnMyTurnInDndCombat: AnswerConfigInput = {
   question: "What can I do on my turn in D&D combat?",
   kind: "framework",
   shortAnswer:
-    "On your turn in D&D combat you can usually move up to your speed and take one action, and you sometimes have a bonus action if a class feature, spell, or piece of equipment gives you one. You can also interact briefly with something nearby and speak a few words, while reactions happen outside your turn when a specific rule allows them. Your class and features decide the interesting options inside those buckets, so describe what you want to accomplish and let the Dungeon Master tell you which action fits.",
+    "On your turn in D&D combat you can usually move up to your speed and take one action, and you sometimes have a bonus action if a class feature, spell, or piece of equipment gives you one. You can also interact briefly with something nearby and speak a few words. A reaction responds to a specific trigger, often on another creature's turn but sometimes on yours; after you use one, you cannot take another until the start of your next turn. Your class and features decide the interesting options inside those buckets, so describe what you want to accomplish and let the Dungeon Master tell you which action fits.",
   sections: [
     {
       kind: "prose",
       heading: "Think of your turn as a short menu",
       paragraphs: [
         "Combat in D&D pauses the free-form conversation and puts everyone in turn order. At the start of a fight each participant rolls initiative, usually a d20 plus Dexterity modifier, and the Dungeon Master arranges the results from highest to lowest. That order then repeats round after round until the fight ends, and the DM will tell you when initiative begins and when it is over.",
-        "On your turn you pick from a small, repeatable menu rather than recalling a long list of rules from memory. In the current rules that menu is usually movement, one action, a bonus action only if something gives you one, a brief free interaction with an object or the environment, and a few words of communication. A reaction is separate because it happens on someone else's turn when a rule says you can respond.",
+        "On your turn you pick from a small, repeatable menu rather than recalling a long list of rules from memory. In the current rules that menu is usually movement, one action, a bonus action only if something gives you one, a brief free interaction with an object or the environment, and a few words of communication. A reaction responds to a specific trigger, often on another creature's turn but sometimes on yours; after you use one, you cannot take another until the start of your next turn.",
         "That framing helps you decide quickly at the table. You do not need a perfect grasp of every option. You need to know that you can reposition, do one meaningful thing, and sometimes add a small extra if your character has a relevant feature. Everything else is a choice inside those buckets.",
       ],
     },
@@ -34,7 +34,7 @@ export const whatCanIDoOnMyTurnInDndCombat: AnswerConfigInput = {
         },
         {
           term: "Bonus action",
-          text: "You only have a bonus action if a feature, spell, or item grants one. A rogue's Cunning Action, a cleric's Spiritual Weapon, or drinking a potion in some tables' house rules are common examples. If nothing on your sheet says you can do something as a bonus action, you simply do not have one that turn.",
+          text: "You can take at most one bonus action on a turn, and only if a feature, spell, or item grants one. A rogue's Cunning Action, a cleric's Spiritual Weapon, or drinking or administering a Potion of Healing under the 2024 rules are common examples. Other items follow their own descriptions. Under the 2014 rules, drinking or administering a Potion of Healing takes an action. If nothing on your sheet says you can do something as a bonus action, you simply do not have one that turn.",
         },
         {
           term: "Free object interaction",
@@ -46,7 +46,7 @@ export const whatCanIDoOnMyTurnInDndCombat: AnswerConfigInput = {
         },
         {
           term: "Reaction",
-          text: "A reaction happens outside your turn when a rule allows it, and you normally get one per round. Making an opportunity attack when a foe leaves your reach, casting Shield or Counterspell, or using a feature such as Uncanny Dodge are all reactions. Because they trigger on someone else's turn, they are easy to forget until you check your sheet for options that say 'as a reaction'.",
+          text: "A reaction responds to a specific trigger, often on another creature's turn but sometimes on yours. Once you use it, you cannot take another until the start of your next turn. Making an opportunity attack when a foe leaves your reach, casting Shield or Counterspell, or using a feature such as Uncanny Dodge are all reactions. Check your sheet for options that say 'as a reaction'.",
         },
       ],
     },
@@ -70,11 +70,11 @@ export const whatCanIDoOnMyTurnInDndCombat: AnswerConfigInput = {
         },
         {
           term: "Make the next roll more reliable",
-          text: "Dodge makes you harder to hit when you need to hold a doorway or survive until help arrives. Help lets you give an ally advantage on their next task, such as an attack against a tough foe or an ability check to disarm a trap.",
+          text: "Dodge makes you harder to hit when you need to hold a doorway or survive until help arrives. Help can give an ally advantage on an attack roll against an enemy within 5 feet of you. For an ability check, choose one of your skill or tool proficiencies; an ally close enough for you to assist has advantage on their next check using it. The DM decides whether the help is possible, and either benefit expires at the start of your next turn.",
         },
         {
           term: "Control what the enemies can see or reach",
-          text: "Hide lets you use available cover to become unseen when the rules and the environment support it. Ready lets you prepare a response for a trigger you name, such as 'I will shoot the runner if he moves towards the door'.",
+          text: "Hide lets you use available cover to become unseen when the rules and the environment support it. Ready uses your action to prepare a response to a perceivable trigger you name, such as 'I will shoot the runner if he moves towards the door'. If the trigger occurs before your next turn, you can spend your reaction to respond or ignore it.",
         },
         {
           term: "Learn or change the environment",
@@ -82,7 +82,7 @@ export const whatCanIDoOnMyTurnInDndCombat: AnswerConfigInput = {
         },
         {
           term: "Cast, support, or steady the group",
-          text: "Casting a spell, using a class feature, drinking a potion, or steadying a fallen ally can be the right action even when an attack would be possible. Your character sheet shows which of these your character can actually do, so glance at that short list rather than the full rulebook.",
+          text: "Casting a spell, using a class feature, or steadying an ally can be the right choice even when an attack would be possible. Under the 2024 rules, drinking or administering a Potion of Healing uses a bonus action; other items follow their own descriptions. Your character sheet shows which options your character can actually use, so glance at that short list rather than the full rulebook.",
         },
       ],
     },
@@ -107,20 +107,20 @@ export const whatCanIDoOnMyTurnInDndCombat: AnswerConfigInput = {
       kind: "example",
       heading: "Worked example: the same round, two levels of preparation",
       paragraphs: [
-        "A fighter stands 25 feet from an ally who has fallen near a goblin. The fighter knows the goblin is blocking the path and the ally may need assistance. The table uses the current rules with theatre of the mind and a rough sense of distance.",
+        "A goblin stands beside an unconscious ally 25 feet from a fighter. The fighter has a speed of 30 feet, a clear route, and a Potion of Healing. The table uses the current rules with theatre of the mind and a rough sense of distance.",
       ],
       items: [
         {
           term: "The hesitant version",
-          text: "The player is unsure what actions exist, worries about picking the wrong one, and spends the turn re-reading the sheet. They move adjacent to the goblin, make one attack, and end their turn without helping the ally because they did not realise Help, Shove, or using an item were available choices.",
+          text: "The player is unsure what actions exist, worries about picking the wrong one, and spends the turn re-reading the sheet. They move within reach and attack the goblin, then end their turn. The attack is a valid choice, but the ally remains unconscious because the player did not realise they could administer the potion as a bonus action.",
         },
         {
           term: "The menu-driven version",
-          text: "The player thinks in buckets: movement, action, conditional bonus action, and free interaction. They say, 'I move close enough to the ally, use my action to Help the cleric who is next by distracting the goblin, and tell the cleric to get the ally upright.' The DM confirms the movement is within speed, the Help could give the cleric advantage on the next attack or check against the goblin, and the spoken warning costs no action. The fighter has contributed without needing to attack this turn.",
+          text: "The player thinks in buckets: movement, action, conditional bonus action, and free interaction. They say, 'I move 25 feet to the ally, administer my Potion of Healing as a bonus action, then take the Dodge action.' The potion restores hit points, and Dodge gives attackers disadvantage on attack rolls against the fighter until the start of the fighter's next turn. It does not guarantee the fighter's safety, but the player has chosen actions that directly address the danger and the ally's condition.",
         },
         {
           term: "Why it works",
-          text: "The second approach treats the turn as a small set of slots and lets the player's stated goal choose the action, rather than waiting for the rules term to come to mind. The DM translates intent into mechanics, the next player has a clearer job, and the downed ally becomes part of a shared problem rather than a detail the table forgot between turns. The player used language the table already had, not a rule citation they had to memorise.",
+          text: "The second approach treats the turn as a small set of slots and lets the player's stated goal choose the action, rather than waiting for the rules term to come to mind. The player used language the table already had, not a rule citation they had to memorise. An ordinary attack would still be a valid choice; the menu simply makes other options easier to spot.",
         },
       ],
     },
@@ -153,7 +153,7 @@ export const whatCanIDoOnMyTurnInDndCombat: AnswerConfigInput = {
     {
       title: "Encounter generator",
       description:
-        "Sketch a combat objective and opposition you can shape for your party before the session.",
+        "Optional for Dungeon Masters preparing an encounter: sketch a combat objective and opposition you can shape for your party.",
       href: "/generators/encounter",
     },
   ],
@@ -166,6 +166,8 @@ export const whatCanIDoOnMyTurnInDndCombat: AnswerConfigInput = {
     },
   ],
   relatedAnswers: [
+    "what-should-a-new-dnd-player-know-before-their-first-game",
+    "how-do-i-read-a-dnd-character-sheet-as-a-beginner",
     "what-should-a-new-dnd-player-learn-first",
     "where-do-i-start-if-i-have-never-played-a-tabletop-rpg",
     "how-do-i-keep-players-engaged-during-other-players-turns-in-combat",
@@ -185,7 +187,11 @@ export const whatCanIDoOnMyTurnInDndCombat: AnswerConfigInput = {
     ],
     uniqueValue:
       "Reframes the combat turn as a small menu of movement, action, occasional bonus action, interaction, and reaction, with purpose-led actions and a describe-your-intent habit that keeps 2014 and 2024 terminology compatible.",
-    relatedIntents: ["answer-new-dnd-player-learn-first"],
+    relatedIntents: [
+      "answer-new-dnd-player-first-game",
+      "answer-read-dnd-character-sheet-beginner",
+      "answer-new-dnd-player-learn-first",
+    ],
     acknowledgedOverlap: [
       {
         with: "answer-beginner-start",
