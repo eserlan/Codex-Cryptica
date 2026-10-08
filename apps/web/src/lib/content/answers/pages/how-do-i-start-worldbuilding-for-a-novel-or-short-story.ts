@@ -207,8 +207,8 @@ export const howDoIStartWorldbuildingForANovelOrShortStory: AnswerConfigInput =
       relatedIntents: [
         "answer-worldbuilding-from-scratch",
         "answer-create-magic-system",
-        "answer-create-believable-religion",
-        "answer-create-fantasy-city",
+        "answer-fictional-religion",
+        "answer-living-fantasy-city",
       ],
     },
     seo: {
