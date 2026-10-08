@@ -183,6 +183,7 @@ export const howDoIKeepPlayersEngagedDuringOtherPlayersTurnsInCombat: AnswerConf
       "how-do-i-give-specialist-characters-spotlight",
       "how-do-i-prepare-a-dnd-session",
       "what-can-i-do-on-my-turn-in-dnd-combat",
+      "how-do-i-read-a-dnd-character-sheet-as-a-beginner",
     ],
     discovery: {
       id: "answer-player-engagement-combat-turns",

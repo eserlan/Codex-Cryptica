@@ -739,6 +739,40 @@ describe("published answers", () => {
     }
   });
 
+  it("distinguishes 2014 and 2024 rules in the beginner character-sheet answer", () => {
+    const answer = answers["how-do-i-read-a-dnd-character-sheet-as-a-beginner"];
+    const abilityScores = answer.sections
+      .filter((section) => section.kind === "list")
+      .flatMap((section) => (section.kind === "list" ? section.items : []))
+      .find(
+        (item) =>
+          item.term ===
+          "The big number is the score, the small number is the modifier",
+      );
+    const spellSlots = answer.sections
+      .filter((section) => section.kind === "list")
+      .flatMap((section) => (section.kind === "list" ? section.items : []))
+      .find((item) => item.term === "Spell slots");
+    const fighterExample = answer.sections.find(
+      (section) => section.kind === "example",
+    );
+    const fighterWalkthrough =
+      fighterExample?.kind === "example"
+        ? fighterExample.items?.[1]?.text
+        : undefined;
+
+    expect(abilityScores?.text).toContain("Under the 2014 rules");
+    expect(abilityScores?.text).toContain(
+      "the 2024 rules list prepared spells by class level",
+    );
+    expect(spellSlots?.text).toContain(
+      "Warlocks regain all expended Pact Magic slots after a short or long rest",
+    );
+    expect(fighterWalkthrough).toContain(
+      "one use under the 2014 rules, or two uses at 1st level under the 2024 rules",
+    );
+  });
+
   it("requires an R2 OG image on every answer published from 2026-09-07 onward", () => {
     // #2711: seo.image/imageAlt stay optional in the schema so the 17
     // answers published before this date are not broken retroactively, but
