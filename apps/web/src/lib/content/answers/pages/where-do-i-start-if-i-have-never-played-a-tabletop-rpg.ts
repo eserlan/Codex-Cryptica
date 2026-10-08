@@ -134,6 +134,7 @@ export const whereDoIStartIfIHaveNeverPlayedATabletopRpg: AnswerConfigInput = {
     "what-rpg-system-is-good-for-solo-play",
     "what-rpg-feels-like-dnd-but-is-simpler",
     "which-dice-do-i-roll-in-dnd-and-when",
+    "how-do-i-read-a-dnd-character-sheet-as-a-beginner",
   ],
   discovery: {
     id: "answer-beginner-start",
@@ -152,6 +153,13 @@ export const whereDoIStartIfIHaveNeverPlayedATabletopRpg: AnswerConfigInput = {
       "answer-find-rpg-group",
       "answer-system-selection",
       "answer-session-zero",
+    ],
+    acknowledgedOverlap: [
+      {
+        with: "answer-read-dnd-character-sheet-beginner",
+        reason:
+          "Both help beginners enter tabletop play, but this page explains how to start any tabletop RPG while the companion page is a D&D-specific guide to reading a character sheet during play.",
+      },
     ],
   },
 

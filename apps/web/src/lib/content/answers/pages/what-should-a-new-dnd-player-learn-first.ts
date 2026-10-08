@@ -149,6 +149,7 @@ export const whatShouldANewDndPlayerLearnFirst: AnswerConfigInput = {
     "how-do-i-find-a-tabletop-rpg-group-to-play-with",
     "what-rpg-system-should-we-try-instead-of-dnd",
     "which-dice-do-i-roll-in-dnd-and-when",
+    "how-do-i-read-a-dnd-character-sheet-as-a-beginner",
   ],
   discovery: {
     id: "answer-new-dnd-player-learn-first",
