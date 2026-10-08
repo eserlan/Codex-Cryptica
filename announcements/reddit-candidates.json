@@ -1,5 +1,5 @@
 {
-  "updated_at": 1791447209,
+  "updated_at": 1791448581,
   "candidates": [
     {
       "id": "reddit-37230785420-help-documentation-for-core-tools",
@@ -82,14 +82,14 @@
       "created_at": 1791322193
     },
     {
-      "id": "reddit-37747437686-i-wrote-the-five-d-d-campaign-guides-i-k",
-      "title": "I wrote the five D&D campaign guides I kept wishing existed",
-      "body": "Getting a D&D campaign from idea to table usually goes two ways. You write a world bible no one references, or you wing it and stall when the party goes off your notes.\n\nI put together a pack of five new answers that cover that whole loop as checklists, tables and step by step workflows you can run from at the table.\n\nStart with the first one here: https://codexcryptica.com/answers/how-do-i-start-a-dnd-campaign\n\n- How to start a D&D campaign, with a readiness checklist for scope, tone and first session bounds\n- How to prepare a session in blocks, with a time-boxed table for prep that fits a busy week\n- How to organise the ongoing campaign, with a tracker for hooks, NPCs and faction clocks\n- How to improvise NPCs and off-script turns without losing continuity\n- How to run a bard or face so the talker shines without sidelining the rest of the party\n\nThey are written for 5e but the structure is system neutral, not sure if the bard advice translates cleanly to tables where everyone wants equal face time.\n\nWhat part of D&D campaign prep usually eats your time and never pays off once you are actually playing?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/announcements/release-37747437686-0.png)",
-      "url": "https://codexcryptica.com/answers/how-do-i-start-a-dnd-campaign",
-      "image_url": "https://assets.codexcryptica.com/announcements/release-37747437686-0.png",
+      "id": "reddit-37747437686-d-d-answers-now-live-together-in-a-topic",
+      "title": "D&D answers now live together in a topic hub",
+      "body": "The answers were getting hard to browse. If you wanted D&D prep, organisation and improv guides you had to search or scroll the full list and hope you remembered the title.\n\nI built a D&D hub that groups the related campaign guides in one place, and added a Browse by Topic section to Explore so you can jump between them faster.\n\nFind it here: https://codexcryptica.com/topics/dnd\n\n- /topics/dnd collects starting, prepping, organising and improvising a D&D campaign plus the bard/face guide\n- Explore now has Browse by Topic for quicker sideways navigation between related answers\n- Each guide links to the next logical step instead of dropping you back to the index\n\nIt only covers D&D for now, I kept the hub narrow rather than trying to be a general RPG topics index from day one.\n\nWhich topic cluster would actually save you time if it had its own hub next?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/announcements/release-37747437686-1.png)",
+      "url": "https://codexcryptica.com/topics/dnd",
+      "image_url": "https://assets.codexcryptica.com/announcements/release-37747437686-1.png",
       "source_id": "37747437686",
       "status": "approved",
-      "created_at": 1791447209
+      "created_at": 1791448581
     }
   ]
 }
