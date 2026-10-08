@@ -239,6 +239,7 @@ export const howDoIStartADndCampaign: AnswerConfigInput = {
     "how-do-you-handle-players-going-off-script-as-a-gm",
     "how-do-you-run-dnd-for-a-large-group-of-players",
     "how-do-i-organise-a-dnd-campaign",
+    "what-should-a-new-dnd-player-know-before-their-first-game",
   ],
   discovery: {
     id: "answer-start-dnd-campaign",
@@ -270,6 +271,11 @@ export const howDoIStartADndCampaign: AnswerConfigInput = {
         with: "answer-first-time-gm-hub",
         reason:
           "That answer covers starting to GM in any system with a seven-step path and a minimal prep packet; this answer is D&D-specific and focuses on campaign framing, published versus homebrew versus hybrid choice, the giant-world trap, and giving the D&D party a reason to stay together.",
+      },
+      {
+        with: "answer-new-dnd-player-first-game",
+        reason:
+          "This answer is for the GM choosing a D&D campaign premise, rules baseline, and opening situation; the new-player page is for someone learning how to participate at the table after joining that game.",
       },
       {
         with: "answer-sandbox-campaign-prep",
