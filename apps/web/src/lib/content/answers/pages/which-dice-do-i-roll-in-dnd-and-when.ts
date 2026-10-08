@@ -191,6 +191,11 @@ export const whichDiceDoIRollInDndAndWhen: AnswerConfigInput = {
         reason:
           "The general beginner start page covers starting any tabletop RPG, while this page is D&D-specific and teaches the d20 habit, damage dice, notation, and advantage in D&D terms.",
       },
+      {
+        with: "answer-read-dnd-character-sheet-beginner",
+        reason:
+          "The character-sheet guide explains where to find values across the whole sheet, while this page focuses on choosing dice and resolving common rolls at the table.",
+      },
     ],
   },
   seo: {

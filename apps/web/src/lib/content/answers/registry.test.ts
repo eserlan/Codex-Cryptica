@@ -621,6 +621,18 @@ describe("published answers", () => {
     );
   });
 
+  it("records the distinct scope of the D&D dice and character-sheet answers", () => {
+    const overlap = answers[
+      "which-dice-do-i-roll-in-dnd-and-when"
+    ].discovery?.acknowledgedOverlap?.find(
+      (entry) => entry.with === "answer-read-dnd-character-sheet-beginner",
+    );
+
+    expect(overlap?.reason).toContain(
+      "choosing dice and resolving common rolls",
+    );
+  });
+
   it("never links an answer to itself", () => {
     for (const answer of published) {
       expect(answer.relatedAnswers).not.toContain(answer.slug);
