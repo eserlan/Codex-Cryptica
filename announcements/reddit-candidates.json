@@ -1,16 +1,6 @@
 {
-  "updated_at": 1791450142,
+  "updated_at": 1791492142,
   "candidates": [
-    {
-      "id": "reddit-37230785420-help-documentation-for-core-tools",
-      "title": "Help documentation for core tools",
-      "body": "Your tools are packed with capabilities. But if you haven't found the help panel yet, you might never discover half of them.\n\nI expanded help documentation across core tools\u2014Explorer, Entity Table, Dice Roller, Solo Adventure, and others. Help now lives inside the tools where you need it, answering the questions you actually ask when using them.\n\nWhat's new:\n- Help articles for tools you use every session\n- Contextual guidance tied to what you're doing right now\n- Quick reference that works offline\n- Discover capabilities hiding in features you've already got\n\nIf you could ask one question about a tool you use weekly, what would it be?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/images/help-blog/welcome.png)",
-      "url": "",
-      "image_url": "https://assets.codexcryptica.com/images/help-blog/welcome.png",
-      "source_id": "37230785420",
-      "status": "approved",
-      "created_at": 1791146375
-    },
     {
       "id": "reddit-37267958323-generator-names-now-pull-from-your-vault",
       "title": "Generator names now pull from your vault and your cultures",
