@@ -148,6 +148,7 @@ export const whatShouldANewDndPlayerLearnFirst: AnswerConfigInput = {
     "how-do-i-run-a-successful-session-0",
     "how-do-i-find-a-tabletop-rpg-group-to-play-with",
     "what-rpg-system-should-we-try-instead-of-dnd",
+    "what-do-i-need-to-bring-to-my-first-dnd-game",
   ],
   discovery: {
     id: "answer-new-dnd-player-learn-first",

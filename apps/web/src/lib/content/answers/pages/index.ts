@@ -119,6 +119,7 @@ import { howToWriteAnInWorldNewspaperForAnRpg } from "./how-to-write-an-in-world
 import { isMyRpgCampaignIdeaGood } from "./is-my-rpg-campaign-idea-good";
 import { pointCrawlVsHexCrawl } from "./point-crawl-vs-hex-crawl";
 import { whatCanPlayersActuallyBuyAndSellInAFantasySettlement } from "./what-can-players-actually-buy-and-sell-in-a-fantasy-settlement";
+import { whatDoINeedToBringToMyFirstDndGame } from "./what-do-i-need-to-bring-to-my-first-dnd-game";
 import { whatDoYouDoWithMurderHobosInAnRpgCampaign } from "./what-do-you-do-with-murder-hobos-in-an-rpg-campaign";
 import { whatIsAPointCrawl } from "./what-is-a-point-crawl";
 import { whatIsTheDifferenceBetweenGodsAndDemonLordsInAFantasyWorld } from "./what-is-the-difference-between-gods-and-demon-lords-in-a-fantasy-world";
@@ -272,6 +273,7 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     isMyRpgCampaignIdeaGood,
     pointCrawlVsHexCrawl,
     whatCanPlayersActuallyBuyAndSellInAFantasySettlement,
+    whatDoINeedToBringToMyFirstDndGame,
     whatDoYouDoWithMurderHobosInAnRpgCampaign,
     whatIsAPointCrawl,
     whatIsTheDifferenceBetweenGodsAndDemonLordsInAFantasyWorld,

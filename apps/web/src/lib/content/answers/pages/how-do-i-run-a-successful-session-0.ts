@@ -177,6 +177,7 @@ export const howDoIRunASuccessfulSessionZero: AnswerConfigInput = {
     "how-do-i-get-my-rpg-party-to-work-together",
     "what-do-you-do-with-murder-hobos-in-an-rpg-campaign",
     "how-do-i-start-a-dnd-campaign",
+    "what-do-i-need-to-bring-to-my-first-dnd-game",
   ],
   discovery: {
     id: "answer-session-zero",
