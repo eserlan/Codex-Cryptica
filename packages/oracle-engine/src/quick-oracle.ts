@@ -3,7 +3,8 @@
  * Lightweight, crypto-random oracle tools for steering solo RPG play & character dialogue.
  */
 
-export type OracleOdds = "likely" | "even" | "unlikely";
+export type OracleOdds =
+  "very_likely" | "likely" | "even" | "unlikely" | "very_unlikely";
 
 export type OracleTier =
   | "extreme_positive"
@@ -57,7 +58,47 @@ export function rollOracleOutcome(
   let tier: OracleTier;
   let text: string;
 
-  if (odds === "likely") {
+  if (odds === "very_likely") {
+    if (roll <= 25) {
+      tier = "extreme_positive";
+      text = "Yes, and...";
+    } else if (roll <= 75) {
+      tier = "positive";
+      text = "Yes";
+    } else if (roll <= 85) {
+      tier = "mixed_positive";
+      text = "Yes, but...";
+    } else if (roll <= 93) {
+      tier = "mixed_negative";
+      text = "No, but...";
+    } else if (roll <= 98) {
+      tier = "negative";
+      text = "No";
+    } else {
+      tier = "extreme_negative";
+      text = "No, and...";
+    }
+  } else if (odds === "very_unlikely") {
+    if (roll <= 2) {
+      tier = "extreme_positive";
+      text = "Yes, and...";
+    } else if (roll <= 8) {
+      tier = "positive";
+      text = "Yes";
+    } else if (roll <= 12) {
+      tier = "mixed_positive";
+      text = "Yes, but...";
+    } else if (roll <= 22) {
+      tier = "mixed_negative";
+      text = "No, but...";
+    } else if (roll <= 90) {
+      tier = "negative";
+      text = "No";
+    } else {
+      tier = "extreme_negative";
+      text = "No, and...";
+    }
+  } else if (odds === "likely") {
     if (roll <= 15) {
       tier = "extreme_positive";
       text = "Yes, and...";

@@ -467,3 +467,59 @@ describe("formatPartyChange", () => {
     expect(formatPartyChange({ joined: [], left: [] })).toBeNull();
   });
 });
+
+describe("spec 174 formatters", () => {
+  it("formats an oracle answer with its question, odds, roll and answer", async () => {
+    const { formatOracleAnswer } = await import("../src/capture");
+    const payload = formatOracleAnswer({
+      question: "Is the guard asleep?",
+      likelihood: "likely",
+      roll: 34,
+      answer: "Yes, but",
+      event: null,
+    });
+    expect(payload.entryType).toBe("oracle-answer");
+    expect(payload.content).toBe(
+      'Oracle (Likely): "Is the guard asleep?" — Yes, but (34)',
+    );
+  });
+
+  it("writes an oracle answer with no question plainly", async () => {
+    const { formatOracleAnswer } = await import("../src/capture");
+    const payload = formatOracleAnswer({
+      question: "  ",
+      likelihood: "even",
+      roll: 90,
+      answer: "No",
+      event: null,
+    });
+    expect(payload.content).toBe("Oracle (Even): (no question) — No (90)");
+  });
+
+  it("formats a random event and a tension change, and skips an unchanged tension", async () => {
+    const { formatRandomEvent, formatTensionChange } =
+      await import("../src/capture");
+    expect(formatRandomEvent({ text: "A thread moves: reveal." }).content).toBe(
+      "Random event: A thread moves: reveal.",
+    );
+    expect(formatTensionChange(5, 6)?.content).toBe("Tension: 5 → 6");
+    expect(formatTensionChange(6, 6)).toBeNull();
+  });
+
+  it("formats opened, closed (with its note) and reopened threads", async () => {
+    const { formatThreadChange } = await import("../src/capture");
+    const thread = { title: "Why is the keeper lying?", kind: "mystery" };
+    expect(formatThreadChange("opened", thread).content).toBe(
+      "Thread opened (mystery): Why is the keeper lying?",
+    );
+    expect(
+      formatThreadChange("closed", {
+        ...thread,
+        closingNote: "She was his daughter",
+      }).content,
+    ).toBe("Thread closed: Why is the keeper lying? — She was his daughter");
+    expect(formatThreadChange("reopened", thread).content).toBe(
+      "Thread reopened: Why is the keeper lying?",
+    );
+  });
+});
