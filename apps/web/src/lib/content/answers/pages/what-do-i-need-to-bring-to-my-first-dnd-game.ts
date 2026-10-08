@@ -21,7 +21,7 @@ export const whatDoINeedToBringToMyFirstDndGame: AnswerConfigInput = {
       kind: "checklist",
       heading: "Short checklist that covers most tables",
       intro:
-        "If you bring these four things, or confirm the table already covers them, you are ready for almost any first session:",
+        "Bring these basics, or confirm the table already covers them, and you are ready for almost any first session:",
       items: [
         "Your character, as a printed sheet, a digital sheet, or a pre-generated character the DM supplied, with the key numbers you will actually use marked or highlighted.",
         "A way to roll dice: a single set of polyhedral dice, or an agreed digital roller if the group is happy with one.",
