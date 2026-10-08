@@ -469,6 +469,19 @@ describe("formatPartyChange", () => {
 });
 
 describe("spec 174 formatters", () => {
+  it("names a very unlikely answer in words, with no question", async () => {
+    const { formatOracleAnswer } = await import("../src/capture");
+    const payload = formatOracleAnswer({
+      question: "",
+      likelihood: "very_unlikely",
+      roll: 31,
+      answer: "No",
+    } as never);
+    expect(payload.content).toBe(
+      "Oracle (Very unlikely): (no question) — No (31)",
+    );
+  });
+
   it("formats an oracle answer with its question, odds, roll and answer", async () => {
     const { formatOracleAnswer } = await import("../src/capture");
     const payload = formatOracleAnswer({

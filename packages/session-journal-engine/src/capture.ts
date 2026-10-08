@@ -347,6 +347,15 @@ export interface OracleAnswerCapture {
 }
 
 /** An oracle answer in the journal: question, odds, roll and answer. */
+/** How each likelihood reads in the journal. */
+const LIKELIHOOD_LABELS: Record<string, string> = {
+  very_unlikely: "Very unlikely",
+  unlikely: "Unlikely",
+  even: "Even",
+  likely: "Likely",
+  very_likely: "Very likely",
+};
+
 export function formatOracleAnswer(
   answer: OracleAnswerCapture,
 ): JournalCapturePayload {
@@ -354,7 +363,7 @@ export function formatOracleAnswer(
   const asked = question ? `"${question}"` : "(no question)";
   return {
     entryType: "oracle-answer",
-    content: `Oracle (${capitalise(answer.likelihood)}): ${asked} — ${answer.answer} (${answer.roll})`,
+    content: `Oracle (${LIKELIHOOD_LABELS[answer.likelihood] ?? capitalise(answer.likelihood)}): ${asked} — ${answer.answer} (${answer.roll})`,
     sourceRef: {
       kind: "oracle",
       likelihood: answer.likelihood,
