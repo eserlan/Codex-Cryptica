@@ -20,6 +20,10 @@ interface ShortcutContext {
   oracle: {
     undo: () => void | Promise<void>;
   };
+  /** Shared play: "p" toggles it, unless a solo session blocks it (FR-028). */
+  sharedMode?: {
+    toggle: () => boolean;
+  };
 }
 
 /**
@@ -75,6 +79,18 @@ export function useGlobalShortcuts(context: ShortcutContext) {
     ) {
       e.preventDefault();
       context.quickNoteStore.toggle();
+    }
+
+    // "p" toggles shared play. Shift is allowed; Ctrl, Cmd and Alt are not.
+    if (
+      (e.key === "p" || e.key === "P") &&
+      !e.ctrlKey &&
+      !e.metaKey &&
+      !e.altKey &&
+      context.sharedMode
+    ) {
+      context.sharedMode.toggle();
+      return;
     }
 
     // Escape to close active modals/settings/scratchpads

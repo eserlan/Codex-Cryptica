@@ -44,6 +44,9 @@ vi.mock("$lib/components/layout/ActivityBar.svelte", () => ({
     return { $$render: () => "<div data-testid='activity-bar'></div>" };
   },
 }));
+vi.mock("$lib/stores/solo-session-instance", () => ({
+  soloPlayGuard: { toggleSharedMode: () => true, requestShare: () => true },
+}));
 vi.mock("$lib/components/solo/SoloSessionBar.svelte", () => ({
   default: function SoloSessionBarStub() {},
 }));
