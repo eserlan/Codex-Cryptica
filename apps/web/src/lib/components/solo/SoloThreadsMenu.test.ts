@@ -180,6 +180,22 @@ describe("SoloThreadsMenu", () => {
     expect(env.vault.selectedEntityId).toBe("c1");
   });
 
+  it("starts a fresh draft when another thread is opened for editing", async () => {
+    render(SoloThreadsMenu);
+    await openMenu();
+    await addThread("First thread");
+    await addThread("Second thread", "mystery");
+    await fireEvent.click(screen.getAllByText("Edit")[0]);
+    expect(
+      (screen.getByTestId("solo-thread-title") as HTMLInputElement).value,
+    ).toBe("First thread");
+    await fireEvent.click(screen.getAllByText("Edit")[1]);
+    const title = screen.getByTestId("solo-thread-title") as HTMLInputElement;
+    const kind = screen.getByTestId("solo-thread-kind") as HTMLSelectElement;
+    expect(title.value).toBe("Second thread");
+    expect(kind.value).toBe("mystery");
+  });
+
   it("is view-only in a read-only vault, with no add control", async () => {
     env.vault.isGuest = true;
     render(SoloThreadsMenu);

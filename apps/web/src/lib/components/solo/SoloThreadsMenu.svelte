@@ -1,7 +1,6 @@
 <script lang="ts">
   import {
     filterThreads,
-    THREAD_KINDS,
     type Thread,
     type ThreadKind,
   } from "solo-session-engine";
@@ -10,14 +9,8 @@
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
   import SoloMenu from "./SoloMenu.svelte";
   import SoloThreadDialog from "./SoloThreadDialog.svelte";
+  import SoloThreadFilters from "./SoloThreadFilters.svelte";
   import SoloThreadList from "./SoloThreadList.svelte";
-
-  const KIND_LABELS: Record<ThreadKind, string> = {
-    question: "Question",
-    lead: "Lead",
-    objective: "Objective",
-    mystery: "Mystery",
-  };
 
   let kindFilter = $state<ThreadKind | "all">("all");
   let search = $state("");
@@ -74,6 +67,15 @@
   function closeThread(id: string, note: string) {
     report(soloThreads.close(id, note));
   }
+
+  /** What both thread lists do when a row's action is chosen. */
+  const listActions = {
+    onOpenEntity: openEntity,
+    onEdit: (thread: Thread) => (editing = { thread }),
+    onClose: (thread: Thread, note: string) => closeThread(thread.id, note),
+    onReopen: (thread: Thread) => report(soloThreads.reopen(thread.id)),
+    onDelete: (thread: Thread) => report(soloThreads.remove(thread.id)),
+  };
 </script>
 
 <SoloMenu
@@ -94,27 +96,7 @@
         between sessions. Random events can point at them.
       </p>
     {:else}
-      <div class="flex gap-2">
-        <input
-          type="search"
-          placeholder="Search threads"
-          aria-label="Search threads"
-          bind:value={search}
-          class="min-w-0 flex-1 rounded-md border border-theme-border bg-theme-bg px-2 py-1 text-theme-text"
-          data-testid="solo-threads-search"
-        />
-        <select
-          bind:value={kindFilter}
-          aria-label="Filter by kind"
-          class="rounded-md border border-theme-border bg-theme-bg px-2 py-1 text-theme-text"
-          data-testid="solo-threads-filter"
-        >
-          <option value="all">All kinds</option>
-          {#each THREAD_KINDS as option (option)}
-            <option value={option}>{KIND_LABELS[option]}s</option>
-          {/each}
-        </select>
-      </div>
+      <SoloThreadFilters bind:search bind:kindFilter />
     {/if}
 
     {#if message}
@@ -122,14 +104,17 @@
     {/if}
 
     {#if editing}
-      <SoloThreadDialog
-        thread={editing.thread}
-        {entityOptions}
-        onSave={saveEdit}
-        onLink={linkEntry}
-        onUnlink={unlinkEntry}
-        onClose={() => (editing = null)}
-      />
+      <!-- Keyed by thread, so editing another thread starts a fresh draft. -->
+      {#key editing.thread?.id ?? "new"}
+        <SoloThreadDialog
+          thread={editing.thread}
+          {entityOptions}
+          onSave={saveEdit}
+          onLink={linkEntry}
+          onUnlink={unlinkEntry}
+          onClose={() => (editing = null)}
+        />
+      {/key}
     {:else if soloThreads.editable}
       <button
         type="button"
@@ -148,11 +133,7 @@
       emptyMessage={soloThreads.threads.length > 0
         ? "No open threads match."
         : null}
-      onOpenEntity={openEntity}
-      onEdit={(thread) => (editing = { thread })}
-      onClose={(thread, note) => closeThread(thread.id, note)}
-      onReopen={(thread) => report(soloThreads.reopen(thread.id))}
-      onDelete={(thread) => report(soloThreads.remove(thread.id))}
+      {...listActions}
     />
 
     {#if soloThreads.closed.length > 0}
@@ -174,11 +155,7 @@
         testId="solo-threads-closed"
         editable={soloThreads.editable}
         emptyMessage={null}
-        onOpenEntity={openEntity}
-        onEdit={(thread) => (editing = { thread })}
-        onClose={(thread, note) => closeThread(thread.id, note)}
-        onReopen={(thread) => report(soloThreads.reopen(thread.id))}
-        onDelete={(thread) => report(soloThreads.remove(thread.id))}
+        {...listActions}
       />
     {/if}
   </div>
