@@ -93,6 +93,17 @@ describe("answer registry", () => {
     );
   });
 
+  it("records the character-sheet answer's distinct scope from combat turns", () => {
+    const answer = answers["how-do-i-read-a-dnd-character-sheet-as-a-beginner"];
+
+    expect(answer?.discovery?.acknowledgedOverlap).toContainEqual(
+      expect.objectContaining({
+        with: "answer-what-can-i-do-on-my-turn-in-dnd-combat",
+        reason: expect.any(String),
+      }),
+    );
+  });
+
   it("cross-links combat engagement and combat pacing answers", () => {
     const engagement =
       answers[

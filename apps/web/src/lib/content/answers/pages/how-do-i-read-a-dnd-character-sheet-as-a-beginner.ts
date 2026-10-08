@@ -239,6 +239,11 @@ export const howDoIReadADndCharacterSheetAsABeginner: AnswerConfigInput = {
         reason:
           "Both help beginners enter tabletop play, but the broader page explains how to start any tabletop RPG while this page is a D&D-specific guide to reading a character sheet during play.",
       },
+      {
+        with: "answer-what-can-i-do-on-my-turn-in-dnd-combat",
+        reason:
+          "Both help a new D&D player during play, but this page explains how to read the character sheet while the combat-turn page explains which actions a player can choose during their turn.",
+      },
     ],
   },
   seo: {
