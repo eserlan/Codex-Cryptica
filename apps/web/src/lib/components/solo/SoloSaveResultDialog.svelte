@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { focusTrap } from "$lib/actions/focusTrap";
   import type { JournalEntry } from "session-journal-engine";
   import { suggestCategory } from "solo-session-engine";
   import { soloPromoter } from "$lib/stores/solo-session-instance";
@@ -82,6 +83,7 @@
     aria-modal="true"
     aria-labelledby="solo-save-title"
     tabindex="-1"
+    use:focusTrap
     data-testid="solo-save-dialog"
     onkeydown={onKeydown}
   >

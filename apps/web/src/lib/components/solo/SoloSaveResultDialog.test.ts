@@ -61,6 +61,19 @@ function renderDialog(overrides: Record<string, unknown> = {}) {
 }
 
 describe("SoloSaveResultDialog", () => {
+  it("moves focus into the dialog and keeps Tab within it", async () => {
+    renderDialog();
+    const dialog = screen.getByRole("dialog");
+    const category = screen.getByTestId("solo-save-category");
+    const confirm = screen.getByTestId("solo-save-confirm");
+
+    await waitFor(() => expect(document.activeElement).toBe(category));
+    confirm.focus();
+    await fireEvent.keyDown(dialog, { key: "Tab" });
+
+    expect(document.activeElement).toBe(category);
+  });
+
   it("preselects the suggested category and prefills a name from the result", () => {
     renderDialog();
     const category = screen.getByTestId(
