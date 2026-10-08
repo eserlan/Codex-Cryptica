@@ -203,6 +203,7 @@ export const howDoIReadADndCharacterSheetAsABeginner: AnswerConfigInput = {
     intentAliases: [
       "how to read a dnd 5e character sheet",
       "dnd character sheet explained for beginners",
+      "new dnd player character sheet",
       "understanding ability scores vs modifiers 5e",
       "how skills and saving throws work on a dnd sheet",
     ],
@@ -210,6 +211,7 @@ export const howDoIReadADndCharacterSheetAsABeginner: AnswerConfigInput = {
       "Teaches a new player to read a 5e sheet in order of table usefulness, from hit points and Armour Class to modifiers, skills, saves, attacks, and safe-to-ignore fields, with a 1st-level walkthrough and 2014 versus 2024 guidance.",
     relatedIntents: [
       "answer-new-dnd-player-learn-first",
+      "answer-new-dnd-player-first-game",
       "answer-beginner-start",
       "answer-session-zero",
     ],
@@ -217,7 +219,12 @@ export const howDoIReadADndCharacterSheetAsABeginner: AnswerConfigInput = {
       {
         with: "answer-new-dnd-player-learn-first",
         reason:
-          "Both support new D&D players, but the companion page covers what to learn before session one while this page focuses specifically on orienting yourself on the character sheet during play.",
+          "Both support new D&D players, but the companion page covers character and rules preparation before session one while this page focuses specifically on reading and using the character sheet.",
+      },
+      {
+        with: "answer-new-dnd-player-first-game",
+        reason:
+          "The first-game guide offers a brief orientation to the sheet as part of taking part at the table; this page owns the deeper character-sheet walkthrough.",
       },
       {
         with: "answer-beginner-start",

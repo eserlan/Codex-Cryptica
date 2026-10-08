@@ -36,11 +36,11 @@ export const whatShouldANewDndPlayerKnowBeforeTheirFirstGame: AnswerConfigInput 
           },
           {
             term: "A roll happens when the outcome is uncertain",
-            text: "If success and failure both matter and are uncertain, the DM asks for a roll and tells you the modifier to add. If there is no meaningful uncertainty, the action simply happens.",
+            text: "If success and failure both matter and the outcome is uncertain, the DM asks for a roll and tells you the modifier to add. Straightforward actions succeed without a roll; an impossible action cannot work as described.",
           },
           {
             term: "The DM describes what happens next",
-            text: "The result changes the situation, often creating a new choice. A success moves you closer to what you wanted, while a failure introduces a consequence or complication that the group must respond to.",
+            text: "The result may change the situation or simply mean the attempt does not work. Any consequences follow the rules and the situation, and the group decides what to do next.",
           },
         ],
       },
@@ -68,7 +68,7 @@ export const whatShouldANewDndPlayerKnowBeforeTheirFirstGame: AnswerConfigInput 
         kind: "list",
         heading: "You do not need to memorise your character sheet",
         intro:
-          "A character sheet looks dense at first glance. For your first game, only a handful of areas will affect your decisions directly:",
+          "A character sheet looks dense at first glance. For your first game, only a handful of areas will affect your decisions directly. For a closer walkthrough, see [how to read a D&D character sheet as a beginner](/answers/how-do-i-read-a-dnd-character-sheet-as-a-beginner).",
         items: [
           {
             term: "Ability scores and modifiers",
@@ -105,20 +105,20 @@ export const whatShouldANewDndPlayerKnowBeforeTheirFirstGame: AnswerConfigInput 
         kind: "example",
         heading: "Two ways to play the same interaction",
         paragraphs: [
-          "The party need information from a guard about a missing merchant. The player at the table has not prepared a speech and feels uneasy about improvising dialogue. Both approaches move the scene forward correctly.",
+          "The party needs information about a missing merchant. A guard saw Emra leave, but has orders not to discuss watch business, so he is unsure whether to share what he knows. The player has not prepared a speech and feels uneasy about improvising dialogue. Both approaches use the same respectful request.",
         ],
         items: [
           {
             term: "Speaking in character",
-            text: '"Good evening, captain. Have you seen the missing merchant called Emra? She was due back from the market road yesterday, and we are worried." The player uses the character voice because they enjoy it. The DM notes the polite approach and asks for a Persuasion check.',
+            text: '"Good evening. Have you seen the missing merchant called Emra? She was due back from the market road yesterday, and we are worried." The player uses the character voice because they enjoy it. The DM notes the respectful approach and may ask for a Persuasion check because the guard is unsure whether he can share what he knows.',
           },
           {
             term: "Describing the intention",
-            text: '"I ask the guard whether he has seen the missing merchant. I mention her name and when she was expected, and I keep the tone respectful so he does not feel accused." The player describes the same intent without performing dialogue. The DM notes the same respectful approach and asks for the same check.',
+            text: '"I ask the guard whether he has seen the missing merchant. I mention her name and when she was expected, and I keep the tone respectful so he does not feel accused." The player describes the same intent without performing dialogue. The DM notes the same respectful approach and may ask for the same check.',
           },
           {
             term: "Why it works",
-            text: "The DM received the same usable information in both cases: who is addressed, what is asked, and the intended tone. Either phrasing gives the table a clear action to resolve. The guard might answer helpfully on a success, or explain he cannot share watch information on a failure, but neither player needed to perform to earn the roll.",
+            text: "The DM receives the same request and approach in either version, so both are equally valid. Because the guard is unsure whether he can share what he knows, the DM may call for Persuasion. A willing guard could simply answer without a roll.",
           },
         ],
       },
@@ -134,7 +134,7 @@ export const whatShouldANewDndPlayerKnowBeforeTheirFirstGame: AnswerConfigInput 
           },
           {
             term: "Structured combat on initiative",
-            text: "When the situation demands close tracking, usually a fight, the DM asks for initiative rolls and arranges a turn order. On your turn you normally move and take an action, with bonus actions and reactions available only when your features allow them. Between turns you still pay attention, track hit points, and plan your next move, but you wait for your turn to act.",
+            text: "When the situation demands close tracking, usually a fight, the DM asks for initiative rolls and arranges a turn order. On your turn you normally move and take an action. A bonus action needs a rule that grants it. A reaction responds to a specific trigger and can happen on someone else's turn; ask the DM to help you recognise those opportunities. Between turns, listen and plan your next move.",
           },
           {
             term: "The transition is explicit",
@@ -146,9 +146,8 @@ export const whatShouldANewDndPlayerKnowBeforeTheirFirstGame: AnswerConfigInput 
         kind: "prose",
         heading: "Failing a roll is not failing at D&D",
         paragraphs: [
-          "Beginners sometimes treat a low roll as a mistake or a sign they chose the wrong approach. At the table a failed check, saving throw, or attack is part of how the story moves. The character tried something difficult and the dice showed the attempt did not work as intended. The game continues from the new situation.",
-          "A failed roll often creates the most memorable moments: the negotiation that turns cautious after a poor Persuasion check, the stealthy approach that becomes a chase, or the attack that misses and leaves the party to solve the problem another way. Players are not expected to find a single correct solution. The group tries ideas, lives with the consequences, and makes the next choice from there.",
-          "The DM is responsible for making failure interesting rather than punitive. If a failed roll would stall the game entirely, a good DM will offer a cost, complication, or alternative path rather than a dead end. Your part is simply to respond to what the table now knows.",
+          "Beginners sometimes treat a low roll as a mistake or a sign they chose the wrong approach. A failed check, saving throw, or attack is not a player mistake: the character tried something and the dice showed the attempt did not work as intended. The game continues, whether or not the situation changes.",
+          "A missed attack may simply miss, and an unsuccessful attempt to persuade someone may leave them unconvinced. Other failures may have consequences established by the rules and situation. Ask what has changed, then decide whether to try another approach, seek help, or pursue something else.",
         ],
       },
       {
@@ -199,22 +198,10 @@ export const whatShouldANewDndPlayerKnowBeforeTheirFirstGame: AnswerConfigInput 
     },
     relatedTools: [
       {
-        title: "D&D NPC generator",
-        description:
-          "Add a shopkeeper, guard, patron, or rival when your first sessions need a named person quickly.",
-        href: "/generators/dnd-npc",
-      },
-      {
         title: "Fantasy names generator",
         description:
           "Find a character name after you have chosen the concept you want to play.",
         href: "/generators/fantasy-names",
-      },
-      {
-        title: "Tavern generator",
-        description:
-          "Sketch a tavern or inn when the party's first base or meeting place needs detail.",
-        href: "/generators/tavern",
       },
     ],
     relatedForPages: [
@@ -233,12 +220,13 @@ export const whatShouldANewDndPlayerKnowBeforeTheirFirstGame: AnswerConfigInput 
     ],
     relatedAnswers: [
       "what-should-a-new-dnd-player-learn-first",
+      "how-do-i-read-a-dnd-character-sheet-as-a-beginner",
+      "where-do-i-start-if-i-have-never-played-a-tabletop-rpg",
+      "how-do-i-find-a-tabletop-rpg-group-to-play-with",
+      "how-do-i-run-a-successful-session-0",
       "how-do-i-start-a-dnd-campaign",
       "how-do-i-prepare-a-dnd-session",
       "how-do-i-organise-a-dnd-campaign",
-      "where-do-i-start-if-i-have-never-played-a-tabletop-rpg",
-      "how-do-i-run-a-successful-session-0",
-      "how-do-i-find-a-tabletop-rpg-group-to-play-with",
     ],
     discovery: {
       id: "answer-new-dnd-player-first-game",
@@ -253,7 +241,6 @@ export const whatShouldANewDndPlayerKnowBeforeTheirFirstGame: AnswerConfigInput 
         "what should i know before playing dnd",
         "what do you do in dnd",
         "dnd first session tips",
-        "new dnd player character sheet",
         "what do new dnd players need to know",
         "what is confusing for new dnd players",
         "how do i play dnd for the first time",
@@ -261,9 +248,10 @@ export const whatShouldANewDndPlayerKnowBeforeTheirFirstGame: AnswerConfigInput 
         "do i need to know all the rules before playing dnd",
       ],
       uniqueValue:
-        "Player-facing reassurance for a nervous first session: the four-step DM to consequence loop, the d20 and damage-die split, a constrained character-sheet orientation, why roleplaying does not require acting, free-form versus initiative structure, and a five-line reminder framed as normal table questions.",
+        "Player-facing reassurance for a nervous first session: the four-step DM-to-result loop, the d20 and damage-die split, a constrained character-sheet orientation, why roleplaying does not require acting, free-form versus initiative structure, and a five-line reminder framed as normal table questions.",
       relatedIntents: [
         "answer-new-dnd-player-learn-first",
+        "answer-read-dnd-character-sheet-beginner",
         "answer-beginner-start",
         "answer-start-dnd-campaign",
         "answer-prepare-dnd-session",
@@ -273,7 +261,12 @@ export const whatShouldANewDndPlayerKnowBeforeTheirFirstGame: AnswerConfigInput 
         {
           with: "answer-new-dnd-player-learn-first",
           reason:
-            "That answer helps a new player choose what to learn before play with a d20 primer and character-building questions for the DM; this answer is the companion first-table guide focused on the live-play loop, when to roll, how to speak at the table, the relevant character-sheet areas, and normalising questions and failed rolls during the session itself.",
+            "That answer helps a new player prepare before play with a d20 primer and character-building questions for the DM; this answer focuses on participating during play, including the live-play loop, when to roll, how to speak at the table, and normalising questions and failed rolls.",
+        },
+        {
+          with: "answer-read-dnd-character-sheet-beginner",
+          reason:
+            "This first-game guide gives a concise orientation to the few sheet areas used during play; the specialist answer owns detailed character-sheet literacy and explains where to find and use those entries.",
         },
         {
           with: "answer-beginner-start",
