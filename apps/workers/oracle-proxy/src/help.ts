@@ -18,7 +18,9 @@ import {
   generatorActionRefs,
   contextualizeQuery,
   finalizeAnswer,
+  isStoryQuestion,
   noMatchAnswer,
+  oracleRedirectAnswer,
   parseHelpContext,
   retrieve,
   type ActionRef,
@@ -326,6 +328,10 @@ export function createHelpHandler(deps: HelpDeps) {
     });
     if (retrieval.noMatch) {
       // Below the relevance floor: answer honestly without calling the model.
+      if (isStoryQuestion(question)) {
+        metric("out-of-scope", area);
+        return json(oracleRedirectAnswer(), 200, cors);
+      }
       metric("no-match", area);
       return json(noMatchAnswer(retrieval.suggestions), 200, cors);
     }
@@ -368,6 +374,13 @@ export function createHelpHandler(deps: HelpDeps) {
         "Help could not answer right now.",
         cors,
       );
+    }
+
+    if (answer.outcome === "no-match" && isStoryQuestion(question)) {
+      // The model found nothing in the help sources, and this is a story
+      // question: send the player to the Oracle rather than to topic lists.
+      metric("out-of-scope", area);
+      return json(oracleRedirectAnswer(), 200, cors);
     }
 
     metric(answer.outcome, area);
