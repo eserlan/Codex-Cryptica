@@ -256,13 +256,18 @@ export class SoloSessionStore {
   /** Sets the party. While a journal runs, joins and leaves are recorded in it. */
   async setParty(ids: string[]): Promise<void> {
     const session = this.requireSession();
-    const next = withParty(session, ids);
-    const before = new Set(session.partyIds);
+    // Only Characters that still exist count, so a deleted member neither
+    // takes a place in the party nor shows up in the journal.
+    const characters = this.deps.characters();
+    const names = new Map(characters.map((c) => [c.id, c.name]));
+    const known = (list: readonly string[]) =>
+      list.filter((id) => names.has(id));
+    const next = withParty(session, known(ids));
+    const before = new Set(known(session.partyIds));
     const after = new Set(next.partyIds);
-    const names = new Map(this.deps.characters().map((c) => [c.id, c.name]));
     const label = (id: string) => names.get(id) ?? id;
     const joined = next.partyIds.filter((id) => !before.has(id)).map(label);
-    const left = session.partyIds.filter((id) => !after.has(id)).map(label);
+    const left = [...before].filter((id) => !after.has(id)).map(label);
 
     this.write(next);
     if (this.journalRunning && (joined.length || left.length)) {
@@ -287,7 +292,11 @@ export class SoloSessionStore {
       try {
         await this.deps.journal.end();
       } catch {
-        this.deps.notify("The Session Journal could not be ended.");
+        // Keep the session: the journal is still running, and the player can try again.
+        this.deps.notify(
+          "The Session Journal could not be ended. The solo session is still running.",
+        );
+        return;
       }
     }
     this.clear(vaultId);

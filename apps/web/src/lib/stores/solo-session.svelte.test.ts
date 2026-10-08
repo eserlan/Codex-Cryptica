@@ -470,17 +470,21 @@ describe("end", () => {
     expect(store.isActive).toBe(false);
   });
 
-  it("still ends the session when ending the journal fails, and tells the player", async () => {
+  it("keeps the session when ending the journal fails, so the player can try again", async () => {
     const journal = makeJournal({
       end: vi.fn(async () => {
         throw new Error("nope");
       }),
     });
-    const { store, notify } = build({ journal });
+    const { store, notify, storage } = build({ journal });
     await store.start({ mapId: null, journal: true });
+    storage.removeItem.mockClear();
     await store.end({ endJournal: true });
-    expect(store.isActive).toBe(false);
-    expect(notify).toHaveBeenCalled();
+    expect(store.isActive).toBe(true);
+    expect(storage.removeItem).not.toHaveBeenCalled();
+    expect(notify).toHaveBeenCalledWith(
+      expect.stringContaining("still running"),
+    );
   });
 
   it("does not end a journal that is not the session's", async () => {
@@ -543,6 +547,23 @@ describe("party", () => {
     await store.start({ mapId: null, journal: false });
     await store.setParty(["kael", "gone"]);
     expect(store.party).toEqual([{ id: "kael", name: "Kael" }]);
+  });
+
+  it("a deleted member does not push a new member out of the party, or appear in the journal", async () => {
+    const publishCapture = vi.fn();
+    const stale = Array.from({ length: 12 }, (_, i) => `gone${i}`);
+    const { store } = build({
+      publishCapture,
+      characters: [{ id: "kael", name: "Kael" }],
+    });
+    await store.start({ mapId: null, journal: true });
+    // Twelve saved ids for Characters that no longer exist.
+    store.session!.partyIds = [...stale];
+    await store.setParty([...stale, "kael"]);
+    expect(store.session?.partyIds).toEqual(["kael"]);
+    expect(publishCapture.mock.calls.map((c) => c[0].content)).toEqual([
+      "Party: Kael joined.",
+    ]);
   });
 
   it("keeps each vault's party separate", async () => {

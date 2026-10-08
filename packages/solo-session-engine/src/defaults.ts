@@ -101,5 +101,15 @@ export function buildOracleShortcutPrompt(
     if (text) lines.push(`Recent: ${text}`);
   }
 
-  return lines.join("\n").slice(0, MAX_PROMPT);
+  // Keep whole lines only: a cut in the middle of a line would send a broken
+  // sentence. The question line always fits, since it is far shorter.
+  const kept: string[] = [];
+  let size = 0;
+  for (const line of lines) {
+    const next = size + (kept.length > 0 ? 1 : 0) + line.length;
+    if (next > MAX_PROMPT) break;
+    kept.push(line);
+    size = next;
+  }
+  return kept.join("\n");
 }

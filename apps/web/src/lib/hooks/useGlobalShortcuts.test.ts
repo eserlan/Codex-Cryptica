@@ -336,4 +336,32 @@ describe("useGlobalShortcuts", () => {
       ).not.toThrow();
     });
   });
+
+  it("ignores 'p' while a control has focus or a dialog is open", () => {
+    const sharedMode = { toggle: vi.fn(() => true) };
+    const handleKeydown = useGlobalShortcuts({
+      searchStore: { isOpen: false, toggle: vi.fn(), close: vi.fn() },
+      modalUIStore: { showSettings: false, closeSettings: vi.fn() },
+      quickNoteStore: { isOpen: false, toggle: vi.fn(), close: vi.fn() },
+      oracle: { undo: vi.fn() },
+      sharedMode,
+    })!;
+
+    const button = document.createElement("button");
+    document.body.appendChild(button);
+    button.focus();
+    handleKeydown(new KeyboardEvent("keydown", { key: "p" }));
+    button.blur();
+    button.remove();
+
+    const dialog = document.createElement("div");
+    dialog.setAttribute("role", "dialog");
+    document.body.appendChild(dialog);
+    handleKeydown(new KeyboardEvent("keydown", { key: "p" }));
+    dialog.remove();
+
+    expect(sharedMode.toggle).not.toHaveBeenCalled();
+    handleKeydown(new KeyboardEvent("keydown", { key: "p" }));
+    expect(sharedMode.toggle).toHaveBeenCalledOnce();
+  });
 });

@@ -118,6 +118,26 @@ describe("buildOracleShortcutPrompt (Solo Play Loop, FR-018 to FR-021)", () => {
     ).toBe(true);
   });
 
+  it("never cuts a line in half: long context drops whole lines and stays within the limit", () => {
+    const long = {
+      ...ctx,
+      recent: Array.from(
+        { length: 10 },
+        (_, i) => `Result ${i}: ${"x".repeat(120)}`,
+      ),
+    };
+    const prompt = buildOracleShortcutPrompt("npc-reaction", long);
+    expect(prompt.length).toBeLessThanOrEqual(1200);
+    for (const line of prompt.split("\n")) {
+      expect(
+        line === "How does this NPC react?" ||
+          line.startsWith("Context: ") ||
+          /^Recent: Result \d: x+$/.test(line),
+      ).toBe(true);
+    }
+    expect(prompt).toContain("Recent: Result 0:");
+  });
+
   it("includes the scene, place, party and recent results", () => {
     const prompt = buildOracleShortcutPrompt("npc-reaction", ctx);
     expect(prompt).toContain('scene "The flooded crypt"');
