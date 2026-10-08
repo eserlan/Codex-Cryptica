@@ -167,6 +167,7 @@ export const howDoYouRunFactionsInASandboxCampaign: AnswerConfigInput = {
     "how-do-i-handle-divination-magic-without-letting-one-character-solve-every-mystery",
     "how-do-i-make-a-campaign-threat-feel-urgent-without-railroading",
     "how-do-i-organise-a-dnd-campaign",
+    "how-do-i-run-a-bard-or-face-without-sidelining-the-party",
   ],
   discovery: {
     id: "answer-run-factions-sandbox",

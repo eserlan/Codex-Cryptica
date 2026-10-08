@@ -174,6 +174,7 @@ export const howDoIRunCommonCharacterRolesInAFantasyRpg: AnswerConfigInput = {
     "how-do-i-run-common-character-roles-in-a-sci-fi-or-space-opera-rpg",
     "how-do-you-run-character-roles-in-a-cyberpunk-rpg",
     "how-do-i-handle-divination-magic-without-letting-one-character-solve-every-mystery",
+    "how-do-i-run-a-bard-or-face-without-sidelining-the-party",
   ],
   discovery: {
     id: "answer-fantasy-character-roles",
@@ -231,6 +232,11 @@ export const howDoIRunCommonCharacterRolesInAFantasyRpg: AnswerConfigInput = {
         with: "answer-run-investigator-without-sidelining-party",
         reason:
           "The investigator answer focuses on clue access, interpretation, and shared decisions around a detective character; this page applies shared-scene techniques across a fantasy company's mage, sage, priest, ranger, envoy, rogue and summoner roles.",
+      },
+      {
+        with: "answer-run-bard-face-without-sidelining-party",
+        reason:
+          "This answer surveys nine fantasy archetypes and their scene pressures; the bard and face answer gives a detailed procedure for social scenes, negotiation terms and promises shared by the party.",
       },
       {
         with: "answer-run-rogue-scout-without-splitting-party",

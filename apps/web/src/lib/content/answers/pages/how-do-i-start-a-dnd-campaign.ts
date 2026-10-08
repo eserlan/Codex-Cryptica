@@ -238,6 +238,7 @@ export const howDoIStartADndCampaign: AnswerConfigInput = {
     "how-do-you-make-a-tabletop-rpg-session-more-engaging",
     "how-do-you-handle-players-going-off-script-as-a-gm",
     "how-do-you-run-dnd-for-a-large-group-of-players",
+    "how-do-i-organise-a-dnd-campaign",
   ],
   discovery: {
     id: "answer-start-dnd-campaign",
