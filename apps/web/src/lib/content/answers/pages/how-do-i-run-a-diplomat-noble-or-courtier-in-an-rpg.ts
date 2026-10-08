@@ -148,6 +148,7 @@ export const howDoIRunADiplomatNobleOrCourtierInAnRpg: AnswerConfigInput = {
     "how-do-i-run-character-roles-in-an-investigative-horror-rpg",
     "how-do-i-run-common-character-roles-in-a-sci-fi-or-space-opera-rpg",
     "how-do-i-run-common-character-roles-in-a-fantasy-rpg",
+    "how-do-i-run-a-bard-or-face-without-sidelining-the-party",
   ],
   discovery: {
     id: "answer-run-diplomats-nobles-courtiers",

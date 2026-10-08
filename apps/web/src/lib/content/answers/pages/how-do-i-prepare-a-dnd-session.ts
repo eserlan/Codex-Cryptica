@@ -235,6 +235,7 @@ export const howDoIPrepareADndSession: AnswerConfigInput = {
     "how-do-i-turn-an-rpg-idea-into-an-adventure",
     "how-do-i-organise-gm-notes-for-in-person-play",
     "how-do-you-run-a-mystery-without-railroading",
+    "how-do-i-organise-a-dnd-campaign",
   ],
   discovery: {
     id: "answer-prepare-dnd-session",

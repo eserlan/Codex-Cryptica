@@ -160,6 +160,7 @@ export const howDoIRunCharacterRolesInAPoliticalIntrigueRpg: AnswerConfigInput =
       "what-rpg-works-for-political-intrigue-and-faction-play",
       "how-do-i-run-common-character-roles-in-a-sci-fi-or-space-opera-rpg",
       "how-do-i-run-common-character-roles-in-a-fantasy-rpg",
+      "how-do-i-run-a-bard-or-face-without-sidelining-the-party",
     ],
     discovery: {
       id: "answer-run-character-roles-political-intrigue",
