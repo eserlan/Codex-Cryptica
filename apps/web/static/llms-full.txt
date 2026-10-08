@@ -3822,6 +3822,10 @@ Reference answers to real RPG and worldbuilding questions, indexed at https://co
 
 **Direct answer:** The right system for political intrigue depends on which politics your group wants. For criminal crews seizing turf, Blades in the Dark. For courtly alliances and social manoeuvring, Court of Blades. For character-belief-driven drama resolved through social conflict, Burning Wheel. For organisation-level strategy where players direct factions as well as characters, Reign. For supernatural social politics built on status and debt, Vampire: The Masquerade.
 
+### [What should a new D&D player know before their first game?](https://codexcryptica.com/answers/what-should-a-new-dnd-player-know-before-their-first-game)
+
+**Direct answer:** You do not need to understand all of D&D before your first game. Learn the basic conversation at the table, how a d20 roll works when the outcome is uncertain, and the handful of places on your character sheet you will actually use. Describe what your character tries to do in ordinary language, roll when the Dungeon Master asks, and ask questions whenever you are unsure. That is enough to take part with confidence.
+
 ### [What should a new D&D player learn first?](https://codexcryptica.com/answers/what-should-a-new-dnd-player-learn-first)
 
 **Direct answer:** Before your first D&D session, learn only what your own character can do, how the basic d20 roll works, and how the table takes turns describing actions and resolving them. You do not need to memorise every class, species, background, rule, or spell. Ask the Dungeon Master which books and options the campaign uses, bring a simple reason for your character to join the party, and expect to ask questions while you play.

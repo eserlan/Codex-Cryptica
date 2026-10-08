@@ -266,7 +266,7 @@ export const whatShouldANewDndPlayerKnowBeforeTheirFirstGame: AnswerConfigInput 
         "answer-new-dnd-player-learn-first",
         "answer-beginner-start",
         "answer-start-dnd-campaign",
-        "answer-dnd-session-prep",
+        "answer-prepare-dnd-session",
         "answer-session-zero",
       ],
       acknowledgedOverlap: [
