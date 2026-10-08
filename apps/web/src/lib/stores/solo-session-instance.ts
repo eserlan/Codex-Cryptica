@@ -17,7 +17,7 @@ import { modalUIStore } from "./ui/modal-ui.svelte";
 import { notificationStore } from "./ui/notification.svelte";
 import { isSharedPlayOn } from "./ui/shared-play-state";
 import { createSoloPlayGuard } from "./ui/solo-play-guard";
-import { SoloSessionStore } from "./solo-session.svelte";
+import { resolveSoloPlaceName, SoloSessionStore } from "./solo-session.svelte";
 import { createDraftOnlyPromoter } from "./session-journal-promoter";
 import { SoloTablePinsStore } from "./solo-table-pins.svelte";
 import { randomSources } from "$lib/features/random";
@@ -87,8 +87,7 @@ export const soloSessionStore = new SoloSessionStore({
   openThreads: () =>
     soloThreads.open.map((thread) => ({ id: thread.id, title: thread.title })),
   placeName: () => {
-    const mapId = mapStore.activeMapId;
-    return mapId ? (vault.entities?.[mapId]?.title ?? null) : null;
+    return resolveSoloPlaceName(mapStore.activeMapId, vault.maps);
   },
   journal: {
     get current() {

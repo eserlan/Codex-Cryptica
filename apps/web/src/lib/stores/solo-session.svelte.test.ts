@@ -3,12 +3,22 @@ import {
   SoloSessionStore,
   SOLO_SESSION_KEY_PREFIX,
   SHARED_SOLO_NOTE,
+  resolveSoloPlaceName,
   type JournalPort,
   type MapPort,
   type SoloSessionDeps,
 } from "./solo-session.svelte";
 
 const VAULT = "v1";
+
+describe("resolveSoloPlaceName", () => {
+  it("uses the active map's name and returns null when there is no matching map", () => {
+    const maps = { map1: { name: "Greyhollow" } };
+    expect(resolveSoloPlaceName("map1", maps)).toBe("Greyhollow");
+    expect(resolveSoloPlaceName("missing", maps)).toBeNull();
+    expect(resolveSoloPlaceName(null, maps)).toBeNull();
+  });
+});
 
 function memoryStorage(seed: Record<string, string> = {}) {
   const data = new Map(Object.entries(seed));

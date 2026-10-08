@@ -41,6 +41,14 @@ export const SOLO_SHARED_NOTE =
 export const soloSessionKey = (vaultId: string) =>
   `${SOLO_SESSION_KEY_PREFIX}${vaultId}`;
 
+/** The active map's name is the place used by random-event subjects. */
+export function resolveSoloPlaceName(
+  mapId: string | null,
+  maps: Record<string, { name: string }> | undefined,
+): string | null {
+  return mapId ? (maps?.[mapId]?.name ?? null) : null;
+}
+
 /** The journal, as the solo session uses it. */
 export interface JournalPort {
   current: {
