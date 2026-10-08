@@ -734,9 +734,7 @@ describe("published answers", () => {
       .filter((section) => section.kind === "list")
       .flatMap((section) => (section.kind === "list" ? section.items : []))
       .find(
-        (item) =>
-          item.term ===
-          "The big number is the score, the small number is the modifier",
+        (item) => item.term === "Find the score and modifier by their labels",
       );
     const spellSlots = answer.sections
       .filter((section) => section.kind === "list")
@@ -750,7 +748,9 @@ describe("published answers", () => {
         ? fighterExample.items?.[1]?.text
         : undefined;
 
-    expect(abilityScores?.text).toContain("Under the 2014 rules");
+    expect(abilityScores?.text).toContain("labelled Strength");
+    expect(abilityScores?.text).toContain("score of 16");
+    expect(abilityScores?.text).toContain("signed modifier of +3");
     expect(abilityScores?.text).toContain(
       "the 2024 rules list prepared spells by class level",
     );
@@ -758,8 +758,11 @@ describe("published answers", () => {
       "Warlocks regain all expended Pact Magic slots after a short or long rest",
     );
     expect(fighterWalkthrough).toContain(
-      "one use under the 2014 rules, or two uses at 1st level under the 2024 rules",
+      "one use under the 2014 rules or two at 1st level under the 2024 rules",
     );
+    expect(fighterWalkthrough).toContain("a d20 result of 12 plus 5 gives 17");
+    expect(fighterWalkthrough).toContain("do not add either again");
+    expect(fighterWalkthrough).toContain("Resourceful");
   });
 
   it("requires an R2 OG image on every answer published from 2026-09-07 onward", () => {
