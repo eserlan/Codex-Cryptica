@@ -44,6 +44,7 @@ import {
   buildAdventurePrompt,
   generateAdventureLocal,
   adventureConfig,
+  forAdventureGenre,
   type AdventureGeneratorOptions,
 } from "./public-adventure";
 import {
@@ -734,6 +735,19 @@ export function npcRacesForTheme(themeId: string): string[] {
 export function npcRolesForTheme(themeId: string): string[] {
   const genre = themeIdToLabel[themeId] ?? "Classic Fantasy";
   return forGenre(npcThemeConfig.roles, genre);
+}
+/**
+ * Adventure Type and Tone choices for the vault's theme, from the same
+ * genre-keyed tables the Adventure Idea Generator rolls against, so a fantasy
+ * vault isn't offered "Heist in a Corporate Tower" or a sci-fi tone.
+ */
+export function adventureArchetypesForTheme(themeId: string): string[] {
+  const genre = themeIdToLabel[themeId] ?? "Classic Fantasy";
+  return forAdventureGenre(adventureConfig.archetypesByGenre, genre);
+}
+export function adventureTonesForTheme(themeId: string): string[] {
+  const genre = themeIdToLabel[themeId] ?? "Classic Fantasy";
+  return forAdventureGenre(adventureConfig.tonesByGenre, genre);
 }
 const NPC_RACES = npcRacesForTheme("workspace");
 const NPC_ROLES = npcRolesForTheme("workspace");

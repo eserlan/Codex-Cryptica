@@ -25,6 +25,7 @@ const resolves = (href: string): boolean => {
     "/tools/session-prep-builder",
     "/topics/puzzles",
     "/topics/heists",
+    "/topics/dnd-beginners",
     "/solutions/rpg-knowledge-graph",
     "/explore",
   ].includes(path);

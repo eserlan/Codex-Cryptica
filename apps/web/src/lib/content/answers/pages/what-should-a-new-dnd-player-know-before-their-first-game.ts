@@ -204,18 +204,26 @@ export const whatShouldANewDndPlayerKnowBeforeTheirFirstGame: AnswerConfigInput 
         href: "/generators/fantasy-names",
       },
     ],
+    relatedTopics: [
+      {
+        title: "D&D for Beginners",
+        href: "/topics/dnd-beginners",
+        description:
+          "The complete beginner learning path: what to know before session one, character-sheet walkthrough, dice rules, and combat turns.",
+      },
+    ],
     relatedForPages: [
       {
         title: "Dungeons & Dragons",
+        href: "/for/dungeons-and-dragons",
         description:
           "Keep D&D characters, locations, and open threads connected between sessions.",
-        href: "/for/dungeons-and-dragons",
       },
       {
         title: "Fantasy worldbuilding",
+        href: "/for/fantasy-worldbuilding",
         description:
           "Grow the world outward as the party explores, rather than building it all before play.",
-        href: "/for/fantasy-worldbuilding",
       },
     ],
     relatedAnswers: [
@@ -231,7 +239,7 @@ export const whatShouldANewDndPlayerKnowBeforeTheirFirstGame: AnswerConfigInput 
     discovery: {
       id: "answer-new-dnd-player-first-game",
       parentCluster: "getting-started",
-      clusters: ["getting-started", "dnd-campaign"],
+      clusters: ["getting-started", "dnd-campaign", "dnd-new-player"],
       primaryIntent:
         "what should a new dnd player know before their first game",
       intentAliases: [
@@ -250,6 +258,7 @@ export const whatShouldANewDndPlayerKnowBeforeTheirFirstGame: AnswerConfigInput 
       uniqueValue:
         "Player-facing reassurance for a nervous first session: the four-step DM-to-result loop, the d20 and damage-die split, a constrained character-sheet orientation, why roleplaying does not require acting, free-form versus initiative structure, and a five-line reminder framed as normal table questions.",
       relatedIntents: [
+        "topic-dnd-beginners",
         "answer-new-dnd-player-learn-first",
         "answer-read-dnd-character-sheet-beginner",
         "answer-beginner-start",
