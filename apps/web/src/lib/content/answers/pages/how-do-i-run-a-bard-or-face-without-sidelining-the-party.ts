@@ -236,6 +236,16 @@ export const howDoIRunABardOrFaceWithoutSideliningTheParty: AnswerConfigInput =
             "The diplomat answer focuses on status, authority and durable commitments in formal negotiation; this answer covers everyday bard and face play, including informal scenes where protocol is lighter but the same party-decision principle holds.",
         },
         {
+          with: "answer-run-investigator-without-sidelining-party",
+          reason:
+            "Both answers keep a specialist character central without sidelining the party; this answer structures access, negotiation and shared promises for bards and faces, while the investigator answer focuses on clue discovery, interpretation and shared decisions in mysteries.",
+        },
+        {
+          with: "answer-fantasy-character-roles",
+          reason:
+            "The fantasy roles answer surveys nine archetypes and their scene pressures; this answer gives a detailed procedure for bard- or face-led social scenes, negotiation terms and promises shared by the party.",
+        },
+        {
           with: "answer-run-character-roles-political-intrigue",
           reason:
             "The political roles overview summarises several archetypes briefly; this answer is the detailed procedure for keeping social scenes centred on the face while keeping promises with the group.",

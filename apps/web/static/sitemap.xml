@@ -92,6 +92,11 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://codexcryptica.com/topics/dnd</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://codexcryptica.com/tools/vampire-clan-generator</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
@@ -677,6 +682,11 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://codexcryptica.com/answers/how-do-i-organise-a-dnd-campaign</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://codexcryptica.com/answers/how-do-i-organise-gm-notes-for-in-person-play</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
@@ -687,7 +697,17 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://codexcryptica.com/answers/how-do-i-prepare-a-dnd-session</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://codexcryptica.com/answers/how-do-i-prepare-an-rpg-session-step-by-step</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://codexcryptica.com/answers/how-do-i-run-a-bard-or-face-without-sidelining-the-party</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>

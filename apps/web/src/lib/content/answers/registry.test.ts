@@ -51,6 +51,37 @@ const mockRegistry: Record<string, AnswerConfig> = {
 };
 
 describe("answer registry", () => {
+  it("records the bard answer's distinct scope from adjacent specialist answers", () => {
+    const overlaps = [
+      [
+        "how-do-i-run-a-bard-or-face-without-sidelining-the-party",
+        "answer-run-investigator-without-sidelining-party",
+      ],
+      [
+        "how-do-i-run-a-bard-or-face-without-sidelining-the-party",
+        "answer-fantasy-character-roles",
+      ],
+      [
+        "how-do-i-run-an-investigator-without-sidelining-the-party",
+        "answer-run-bard-face-without-sidelining-party",
+      ],
+      [
+        "how-do-i-run-common-character-roles-in-a-fantasy-rpg",
+        "answer-run-bard-face-without-sidelining-party",
+      ],
+    ] as const;
+
+    for (const [slug, relatedIntent] of overlaps) {
+      const answer = answers[slug];
+      expect(answer?.discovery?.acknowledgedOverlap).toContainEqual(
+        expect.objectContaining({
+          with: relatedIntent,
+          reason: expect.any(String),
+        }),
+      );
+    }
+  });
+
   it("cross-links combat engagement and combat pacing answers", () => {
     const engagement =
       answers[
@@ -1119,6 +1150,27 @@ describe("published answers", () => {
 
   it("keeps the specialist spotlight answer in the checked-in discovery indexes", () => {
     const route = "/answers/how-do-i-give-specialist-characters-spotlight";
+    const staticLlms = readFileSync(
+      resolve(process.cwd(), "static/llms-full.txt"),
+      "utf8",
+    );
+    const rootLlms = readFileSync(
+      resolve(process.cwd(), "../../llms-full.txt"),
+      "utf8",
+    );
+    const sitemap = readFileSync(
+      resolve(process.cwd(), "static/sitemap.xml"),
+      "utf8",
+    );
+
+    expect(staticLlms).toContain(route);
+    expect(rootLlms).toContain(route);
+    expect(sitemap).toContain(`https://codexcryptica.com${route}`);
+  });
+
+  it("keeps the bard and face answer in the checked-in discovery indexes", () => {
+    const route =
+      "/answers/how-do-i-run-a-bard-or-face-without-sidelining-the-party";
     const staticLlms = readFileSync(
       resolve(process.cwd(), "static/llms-full.txt"),
       "utf8",

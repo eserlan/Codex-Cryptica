@@ -234,6 +234,11 @@ export const howDoIRunCommonCharacterRolesInAFantasyRpg: AnswerConfigInput = {
           "The investigator answer focuses on clue access, interpretation, and shared decisions around a detective character; this page applies shared-scene techniques across a fantasy company's mage, sage, priest, ranger, envoy, rogue and summoner roles.",
       },
       {
+        with: "answer-run-bard-face-without-sidelining-party",
+        reason:
+          "This answer surveys nine fantasy archetypes and their scene pressures; the bard and face answer gives a detailed procedure for social scenes, negotiation terms and promises shared by the party.",
+      },
+      {
         with: "answer-run-rogue-scout-without-splitting-party",
         reason:
           "The rogue or scout answer is the detailed method for team-supported infiltration and scouting; this company answer places that method inside a wider set of fantasy roles and pressures.",
