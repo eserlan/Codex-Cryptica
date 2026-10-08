@@ -179,6 +179,11 @@ export const howDoIStartGmingForTheFirstTime: AnswerConfigInput = {
         reason:
           "The session-engagement answer is the deeper technique page on making play itself compelling; this hub is the broader beginner path and links out to it rather than duplicating its content.",
       },
+      {
+        with: "answer-new-dnd-player-first-game",
+        reason:
+          "This answer is for someone taking on the GM role and preparing a first session in any system; the new-player page is for a player joining a D&D game and learning how to participate during play.",
+      },
     ],
   },
   seo: {
