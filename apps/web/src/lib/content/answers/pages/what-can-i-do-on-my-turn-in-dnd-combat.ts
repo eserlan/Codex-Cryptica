@@ -185,11 +185,7 @@ export const whatCanIDoOnMyTurnInDndCombat: AnswerConfigInput = {
     ],
     uniqueValue:
       "Reframes the combat turn as a small menu of movement, action, occasional bonus action, interaction, and reaction, with purpose-led actions and a describe-your-intent habit that keeps 2014 and 2024 terminology compatible.",
-    relatedIntents: [
-      "answer-new-dnd-player-learn-first",
-      "answer-read-dnd-character-sheet-beginner",
-      "answer-which-dice-to-roll-in-dnd",
-    ],
+    relatedIntents: ["answer-new-dnd-player-learn-first"],
     acknowledgedOverlap: [
       {
         with: "answer-player-engagement-combat-turns",

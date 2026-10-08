@@ -182,8 +182,8 @@ export const howDoIKeepPlayersEngagedDuringOtherPlayersTurnsInCombat: AnswerConf
       "how-do-you-make-a-tabletop-rpg-session-more-engaging",
       "how-do-i-give-specialist-characters-spotlight",
       "how-do-i-prepare-a-dnd-session",
-    "what-can-i-do-on-my-turn-in-dnd-combat",
-  ],
+      "what-can-i-do-on-my-turn-in-dnd-combat",
+    ],
     discovery: {
       id: "answer-player-engagement-combat-turns",
       parentCluster: "session-prep",
