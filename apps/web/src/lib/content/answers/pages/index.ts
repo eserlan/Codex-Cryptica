@@ -119,6 +119,7 @@ import { howToCreateRumoursForAFantasyTown } from "./how-to-create-rumours-for-a
 import { howToWriteAnInWorldNewspaperForAnRpg } from "./how-to-write-an-in-world-newspaper-for-an-rpg";
 import { isMyRpgCampaignIdeaGood } from "./is-my-rpg-campaign-idea-good";
 import { pointCrawlVsHexCrawl } from "./point-crawl-vs-hex-crawl";
+import { whatCanIDoOnMyTurnInDndCombat } from "./what-can-i-do-on-my-turn-in-dnd-combat";
 import { whatCanPlayersActuallyBuyAndSellInAFantasySettlement } from "./what-can-players-actually-buy-and-sell-in-a-fantasy-settlement";
 import { whatDoINeedToBringToMyFirstDndGame } from "./what-do-i-need-to-bring-to-my-first-dnd-game";
 import { whatDoYouDoWithMurderHobosInAnRpgCampaign } from "./what-do-you-do-with-murder-hobos-in-an-rpg-campaign";
@@ -275,6 +276,7 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     howToWriteAnInWorldNewspaperForAnRpg,
     isMyRpgCampaignIdeaGood,
     pointCrawlVsHexCrawl,
+    whatCanIDoOnMyTurnInDndCombat,
     whatCanPlayersActuallyBuyAndSellInAFantasySettlement,
     whatDoINeedToBringToMyFirstDndGame,
     whatDoYouDoWithMurderHobosInAnRpgCampaign,
