@@ -49,7 +49,7 @@ export const howDoIReadADndCharacterSheetAsABeginner: AnswerConfigInput = {
       items: [
         {
           term: "The big number is the score, the small number is the modifier",
-          text: "Strength 15 or Intelligence 14 are ability scores. They define the character's general capability and are used for a few specific rules such as carrying capacity and how many spells you can prepare. The smaller number beside them, usually +2 or +3 for a starting character, is the ability modifier, and that is the number you add to most rolls.",
+          text: "Strength 15 or Intelligence 14 are ability scores. They define the character's general capability and feed many checks, attacks, and spells. Strength also determines carrying capacity. Under the 2014 rules, some classes use their spellcasting ability modifier to determine how many spells they can prepare; the 2024 rules list prepared spells by class level, so follow the spellcasting feature on your sheet. The smaller number beside an ability score, usually +2 or +3 for a starting character, is its modifier, and that is the number you add to most rolls.",
         },
         {
           term: "When each one matters",
@@ -97,7 +97,7 @@ export const howDoIReadADndCharacterSheetAsABeginner: AnswerConfigInput = {
       items: [
         {
           term: "Spell slots",
-          text: "A set of boxes or numbered rows by level. When you cast a spell that uses a slot, mark one box at that level as spent. Slots return after a long rest for most casters, with a few features recovering on a short rest. Cantrips do not use slots, so they remain available even when slots are gone.",
+          text: "A set of boxes or numbered rows by level. When you cast a spell that uses a slot, mark one box at that level as spent. Most classes regain their spell slots after a long rest. Warlocks regain all expended Pact Magic slots after a short or long rest, and some other features also recover on a short rest. Cantrips do not use slots, so they remain available even when slots are gone.",
         },
         {
           term: "Limited uses",
@@ -122,7 +122,7 @@ export const howDoIReadADndCharacterSheetAsABeginner: AnswerConfigInput = {
         },
         {
           term: "The focused approach",
-          text: "The player locates hit points (12 of 12) and Armour Class (18 with chain mail and shield) at the top of the combat block, notes the Strength modifier (+3) and the longsword line (attack +5, damage 1d8+3 slashing), then highlights Athletics +5 and the Perception +2 the DM is likely to call for. Second Wind (one use, recovers on a short rest) is the only limited feature marked for this session.",
+          text: "The player locates hit points (12 of 12) and Armour Class (18 with chain mail and shield) at the top of the combat block, notes the Strength modifier (+3) and the longsword line (attack +5, damage 1d8+3 slashing), then highlights Athletics +5 and the Perception +2 the DM is likely to call for. Second Wind is the only limited feature marked for this session: it has one use under the 2014 rules, or two uses at 1st level under the 2024 rules. A 2024 fighter regains one expended use on a short rest and all expended uses on a long rest.",
         },
         {
           term: "Why it works",
@@ -233,6 +233,11 @@ export const howDoIReadADndCharacterSheetAsABeginner: AnswerConfigInput = {
         with: "answer-new-dnd-player-learn-first",
         reason:
           "Both support new D&D players, but the companion page covers what to learn before session one while this page focuses specifically on orienting yourself on the character sheet during play.",
+      },
+      {
+        with: "answer-beginner-start",
+        reason:
+          "Both help beginners enter tabletop play, but the broader page explains how to start any tabletop RPG while this page is a D&D-specific guide to reading a character sheet during play.",
       },
     ],
   },

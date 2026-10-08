@@ -153,6 +153,13 @@ export const whereDoIStartIfIHaveNeverPlayedATabletopRpg: AnswerConfigInput = {
       "answer-system-selection",
       "answer-session-zero",
     ],
+    acknowledgedOverlap: [
+      {
+        with: "answer-read-dnd-character-sheet-beginner",
+        reason:
+          "Both help beginners enter tabletop play, but this page explains how to start any tabletop RPG while the companion page is a D&D-specific guide to reading a character sheet during play.",
+      },
+    ],
   },
 
   seo: {
