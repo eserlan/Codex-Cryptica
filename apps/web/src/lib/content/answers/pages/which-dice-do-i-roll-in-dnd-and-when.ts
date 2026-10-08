@@ -29,7 +29,7 @@ export const whichDiceDoIRollInDndAndWhen: AnswerConfigInput = {
         },
         {
           term: "Attack rolls",
-          text: "You try to hit a creature with a weapon or a spell that requires an attack. Roll a d20, add the modifier shown on your character sheet for that attack (often Strength or Dexterity for weapons, or your spellcasting ability for spells), then add any bonus the DM mentions. If the total meets or beats the target's Armour Class, the attack hits and you then roll damage separately.",
+          text: "You try to hit a creature with a weapon or a spell that requires an attack. Roll a d20, add the modifier shown on your character sheet for that attack (often Strength or Dexterity for weapons, or your spellcasting ability for spells), then add any bonus the DM mentions. Usually, a total that meets or beats the target's Armour Class hits; a natural 20 always hits, and a natural 1 always misses. On a hit, you then roll damage separately.",
         },
         {
           term: "Saving throws",

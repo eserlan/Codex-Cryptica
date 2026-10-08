@@ -691,6 +691,18 @@ describe("published answers", () => {
     );
   });
 
+  it("explains the natural 1 and 20 exceptions for attack rolls", () => {
+    const answer = answers["which-dice-do-i-roll-in-dnd-and-when"];
+    const attackRoll = answer.sections
+      .filter((section) => section.kind === "list")
+      .flatMap((section) => section.items)
+      .find((item) => item.term === "Attack rolls");
+
+    expect(attackRoll?.text).toContain(
+      "a natural 20 always hits, and a natural 1 always misses",
+    );
+  });
+
   it("records the distinct scope of the D&D dice and character-sheet answers", () => {
     const overlap = answers[
       "which-dice-do-i-roll-in-dnd-and-when"
