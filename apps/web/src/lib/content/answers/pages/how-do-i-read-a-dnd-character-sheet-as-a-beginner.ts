@@ -7,14 +7,14 @@ export const howDoIReadADndCharacterSheetAsABeginner: AnswerConfigInput = {
   question: "How do I read a D&D character sheet as a beginner?",
   kind: "how-to",
   shortAnswer:
-    "A D&D character sheet is a reference for play, not a document to memorise. At the table you will reach for four things constantly: your current and maximum hit points, your Armour Class, the small modifier you add to a d20 roll, and the block that lists your main attacks, spells, or actions. Learn where those live first, then let ability scores, skills, saving throws, and resources make sense around them.",
+    "A D&D character sheet is a reference for play, not a document to memorise. At the table you will reach for four things constantly: your current and maximum hit points, your Armour Class, the labelled modifier you add to a d20 roll, and the block that lists your main attacks, spells, or actions. Learn where those live first, then let ability scores, skills, saving throws, and resources make sense around them.",
   sections: [
     {
       kind: "prose",
       heading: "Read the sheet in order of usefulness, not top to bottom",
       paragraphs: [
-        "A character sheet packs a lot of numbers into a small space, which makes it look as if every field matters equally. It does not. During play you will describe an intention, the Dungeon Master will call for a roll if one is needed, you will add a modifier and compare the total, and the DM will describe the result. The sheet exists to make that loop fast, so start with the handful of entries that support it directly and leave the rest until it becomes relevant.",
-        "Most modern 5e sheets, whether from the 2014 rules or the revised 2024 presentation, arrange the same information in slightly different places but use the same logic. Ability scores sit near the top, skills and saving throws group under them, hit points and Armour Class sit prominently near combat details, and attacks, features, and resources each have their own block. If you can find hit points, Armour Class, your d20 modifiers, and your action options within a few seconds, you can follow play while the rest falls into place.",
+        "A character sheet packs a lot of numbers into a small space, which makes it look as if every field matters equally. It does not. During play you will describe an intention, the Dungeon Master will call for a roll if one is needed, you will use the relevant printed total and compare it with a target, and the DM will describe the result. The sheet exists to make that loop fast, so start with the handful of entries that support it directly and leave the rest until it becomes relevant.",
+        "Sheets for the 2014 and 2024 rules may arrange information differently, and the rules versions have some differences. Ability scores sit near the top, skills and saving throws group under them, hit points and Armour Class sit prominently near combat details, and attacks, features, and resources each have their own block. If you can find hit points, Armour Class, your d20 modifiers, and your action options within a few seconds, you can follow play while the rest falls into place. Ask your DM which rules version the campaign uses.",
       ],
     },
     {
@@ -25,7 +25,7 @@ export const howDoIReadADndCharacterSheetAsABeginner: AnswerConfigInput = {
       items: [
         {
           term: "Hit points",
-          text: "Two numbers that sit together: current hit points and maximum hit points, often with a small field for temporary hit points nearby. When you take damage, reduce current hit points. When you heal, increase current hit points up to your maximum. If the sheet shows hit dice, that is a rest resource for recovering hit points later, not something you spend every turn.",
+          text: "Two numbers that sit together: current hit points and maximum hit points, often with a field for temporary hit points nearby. Temporary hit points absorb damage first and are tracked separately from current and maximum hit points. When you take damage beyond them, reduce current hit points; when you heal, increase current hit points up to your maximum. If the sheet shows hit dice, that is a rest resource for recovering hit points later, not something you spend every turn.",
         },
         {
           term: "Armour Class",
@@ -33,7 +33,7 @@ export const howDoIReadADndCharacterSheetAsABeginner: AnswerConfigInput = {
         },
         {
           term: "The modifier you add to a d20 roll",
-          text: "Every d20 roll in D&D has the same shape: roll the die, add a modifier printed on your sheet, and compare the total with a target number. That modifier might be an ability modifier, a skill modifier, a saving throw modifier, or an attack bonus. The label on the sheet tells you which situation it applies to, and the DM will often name the right one.",
+          text: "For most checks, saves, and attack rolls, roll a d20 and add the relevant modifier. That might be an ability modifier, a skill modifier, a saving throw modifier, or an attack bonus. The label on the sheet tells you which situation it applies to, and the DM will often name the right one. Some rolls, such as death saves, do not use an ability modifier.",
         },
         {
           term: "Your main attacks, spells, and actions",
@@ -48,8 +48,8 @@ export const howDoIReadADndCharacterSheetAsABeginner: AnswerConfigInput = {
         "This distinction confuses new players more than any other part of the sheet:",
       items: [
         {
-          term: "The big number is the score, the small number is the modifier",
-          text: "Strength 15 or Intelligence 14 are ability scores. They define the character's general capability and feed many checks, attacks, and spells. Strength also determines carrying capacity. Under the 2014 rules, some classes use their spellcasting ability modifier to determine how many spells they can prepare; the 2024 rules list prepared spells by class level, so follow the spellcasting feature on your sheet. The smaller number beside an ability score, usually +2 or +3 for a starting character, is its modifier, and that is the number you add to most rolls.",
+          term: "Find the score and modifier by their labels",
+          text: "An entry labelled Strength might show a score of 16 and a signed modifier of +3. The score describes the character's general capability and feeds many checks, attacks, and spells. Strength also determines carrying capacity. Under the 2014 rules, some classes use their spellcasting ability modifier to determine how many spells they can prepare; the 2024 rules list prepared spells by class level, so follow the spellcasting feature on your sheet. For a roll, use the modifier named by the DM or the rule.",
         },
         {
           term: "When each one matters",
@@ -57,11 +57,11 @@ export const howDoIReadADndCharacterSheetAsABeginner: AnswerConfigInput = {
         },
         {
           term: "Saving throw modifiers may differ",
-          text: "A saving throw entry takes the ability modifier and adds proficiency if your class is trained in that save. The resulting total can be higher than the raw ability modifier, which is why the save line and the ability line can show different numbers for the same ability.",
+          text: "A saving throw entry includes the ability modifier and, if you are proficient in that save, your proficiency bonus. Starting characters are usually proficient in two saves from their class, but other features can grant more. Use the total printed on the saving throw line rather than recalculating it.",
         },
         {
-          term: "2014 and 2024 sheets show the same idea",
-          text: "Both presentations keep the score and modifier paired, but the 2024 revision gives the modifier more visual weight so beginners spot it faster. The calculation behind the modifier has not changed, so either layout rewards the same habit: look for the small signed number when you need to roll.",
+          term: "2014 and 2024 are different rules versions",
+          text: "Both versions pair each score with its modifier, though sheets may give either number more visual weight. Find them by their labels and signed values, such as Strength 16 and +3, not by their size on the page. Follow the rules version your DM says the campaign uses.",
         },
       ],
     },
@@ -77,15 +77,15 @@ export const howDoIReadADndCharacterSheetAsABeginner: AnswerConfigInput = {
         },
         {
           term: "Saving throws",
-          text: "A saving throw is the roll you make when something is happening to you, such as dodging a fireball or resisting a charm. Ability checks are for things you try to do, saving throws are for things you try to endure. Classes are proficient in two saves, so only those lines will show a higher total than the base modifier.",
+          text: "A saving throw is the roll you make when something is happening to you, such as dodging a fireball or resisting a charm. Ability checks are for things you try to do, saving throws are for things you try to endure. Starting characters are usually proficient in two saves from their class, though other features can grant proficiency in more. Use the total printed on the saving throw line.",
         },
         {
           term: "Attacks: roll to hit, then roll damage",
-          text: "An attack always resolves in two steps. First, roll a d20 and add the attack bonus printed beside the weapon or spell. If the total meets or beats the target's Armour Class, it hits. Only then roll the damage dice shown in the same entry and add the listed damage modifier. Beginners sometimes skip straight to damage, but the hit roll comes first.",
+          text: "For a damaging weapon or spell attack that calls for an attack roll, first roll a d20 and add the printed attack bonus. A total that meets or beats the target's Armour Class hits, except a natural 1 always misses and a natural 20 always hits. Then roll the listed damage and add any damage modifier shown. Some spells instead ask the target to make a saving throw or take effect without an attack roll; follow the spell description.",
         },
         {
           term: "Features and spells where your options live",
-          text: "Class features, species traits, and background benefits each sit in their own paragraph or card. Spell lists group by level and show preparation and slot information nearby. For your first sessions, highlight the one passive benefit, the one short rest option, and the one or two spells you expect to use, then read the rest when it comes up.",
+          text: "Class features, species traits, and background benefits each sit in their own paragraph or card. Spell lists group by level and show preparation and slot information nearby. For your first sessions, highlight the options your character actually has and is likely to use, then read the rest when it comes up.",
         },
       ],
     },
@@ -97,15 +97,15 @@ export const howDoIReadADndCharacterSheetAsABeginner: AnswerConfigInput = {
       items: [
         {
           term: "Spell slots",
-          text: "A set of boxes or numbered rows by level. When you cast a spell that uses a slot, mark one box at that level as spent. Most classes regain their spell slots after a long rest. Warlocks regain all expended Pact Magic slots after a short or long rest, and some other features also recover on a short rest. Cantrips do not use slots, so they remain available even when slots are gone.",
+          text: "A set of boxes or numbered rows by level. When you cast a spell that uses a slot, cross one box at that level as spent. Most classes regain their spell slots after a long rest. Warlocks regain all expended Pact Magic slots after a short or long rest, and some other features also recover on a short rest. Cantrips do not use slots, so they remain available even when slots are gone.",
         },
         {
           term: "Limited uses",
-          text: "Features such as a fighter's Second Wind, a bard's Inspiration, or a species ability often show a number of uses per short or long rest. Tick a use when you employ the feature and clear the ticks when the stated rest occurs. If the sheet says proficiency bonus times per day, the total changes as you level up, so check it when your bonus increases.",
+          text: "Features such as a fighter's Second Wind, a bard's Inspiration, or a species ability often show a number of uses per short or long rest. Cross off a use when you employ the feature. Restore only the number of uses the feature says you regain. If the sheet says proficiency bonus times per day, the total changes as you level up, so check it when your bonus increases.",
         },
         {
           term: "Hit dice and death saves",
-          text: "Hit dice are a pool you can spend during a short rest to recover hit points. Death saving throws only matter at zero hit points, when you mark successes and failures until you recover or fail. Neither needs attention while you have hit points remaining.",
+          text: "Hit dice are a pool you can spend during a short rest to recover hit points. Death saving throws only matter at zero hit points, when you mark successes and failures until you recover, become stable, or fail. Neither needs attention while you have hit points remaining.",
         },
       ],
     },
@@ -122,11 +122,11 @@ export const howDoIReadADndCharacterSheetAsABeginner: AnswerConfigInput = {
         },
         {
           term: "The focused approach",
-          text: "The player locates hit points (12 of 12) and Armour Class (18 with chain mail and shield) at the top of the combat block, notes the Strength modifier (+3) and the longsword line (attack +5, damage 1d8+3 slashing), then highlights Athletics +5 and the Perception +2 the DM is likely to call for. Second Wind is the only limited feature marked for this session: it has one use under the 2014 rules, or two uses at 1st level under the 2024 rules. A 2024 fighter regains one expended use on a short rest and all expended uses on a long rest.",
+          text: "Assume a 1st-level human fighter with Strength 16 (+3), Constitution 14 (+2), Wisdom 10 (+0), proficiency bonus +2, and proficiency in Athletics and Perception. The player finds hit points (12 of 12), Armour Class (18 with chain mail and shield), Athletics +5, and Perception +2. The printed longsword attack bonus is +5: a d20 result of 12 plus 5 gives 17, which hits a target with AC 15, so the player rolls damage separately. That printed +5 already includes Strength and proficiency; do not add either again. The longsword deals 1d8+3 slashing damage. Second Wind has one use under the 2014 rules or two at 1st level under the 2024 rules; a 2024 fighter regains one expended use on a short rest and all expended uses on a long rest. Under the 2024 rules, this human also gains Heroic Inspiration after a long rest through Resourceful.",
         },
         {
           term: "Why it works",
-          text: "The player reduced a full page to six numbers and one feature that answer the rolls the next fight or exploration scene actually requires. When the DM calls for a Wisdom saving throw, the player knows to look at the saving throw section rather than recalculate from the ability score, and when the fight ends, the sheet still has the spell or rest rules to revisit later.",
+          text: "The player reduced a full page to a few useful totals and features for the next fight or exploration scene. When the DM calls for a Wisdom saving throw, the player knows to use the printed saving throw total rather than recalculate from the ability score, and when the fight ends, the sheet still has the spell or rest rules to revisit later.",
         },
       ],
     },
@@ -154,7 +154,7 @@ export const howDoIReadADndCharacterSheetAsABeginner: AnswerConfigInput = {
         },
         {
           term: "Inspiration and inspiration-like trackers",
-          text: "Some tables and sheet designs include Inspiration or similar meta-currency. If your DM is not using it, treat it as dormant until they mention it.",
+          text: "Track Inspiration or Heroic Inspiration if your rules give your character one. The DM may award it, and a 2024 human gains Heroic Inspiration after a long rest through the Resourceful trait.",
         },
       ],
     },
@@ -168,9 +168,9 @@ export const howDoIReadADndCharacterSheetAsABeginner: AnswerConfigInput = {
         "Highlight current hit points, maximum hit points, and Armour Class so you can read them without searching.",
         "Circle or underline the two or three d20 modifiers you will add most often, such as your main attack bonus, your best skill, and your two trained saving throws.",
         "Star the one or two actions, spells, or features you plan to use first and note their range, target, and damage or effect in the margin.",
-        "Tick your spell slots and limited-use boxes at full, then decide how you will mark them as spent (cross, tick, or token).",
+        "Leave boxes for available spell slots and limited uses empty; cross each one when spent. Record what you actually have left rather than assuming you start every session with all uses available.",
         "Pencil a small note beside any resource that says when it recovers: short rest, long rest, or daily.",
-        "Ask the DM whether the table uses 2014 or 2024 presentation for any house rule that affects your sheet, and note the answer where you will see it next session.",
+        "Ask the DM whether the campaign uses the 2014 or 2024 rules, and note the answer where you will see it next session.",
       ],
     },
   ],
@@ -183,20 +183,6 @@ export const howDoIReadADndCharacterSheetAsABeginner: AnswerConfigInput = {
     linkText: "Explore Codex Cryptica for D&D",
     href: "/for/dungeons-and-dragons",
   },
-  relatedTools: [
-    {
-      title: "D&D NPC generator",
-      description:
-        "Create a quick supporting character when a session needs a shopkeeper, rival, or guide without building a full sheet.",
-      href: "/generators/dnd-npc",
-    },
-    {
-      title: "Fantasy names generator",
-      description:
-        "Find a character or place name after you have chosen the concept and role you want to play.",
-      href: "/generators/fantasy-names",
-    },
-  ],
   relatedForPages: [
     {
       title: "Codex Cryptica for D&D",
@@ -209,7 +195,6 @@ export const howDoIReadADndCharacterSheetAsABeginner: AnswerConfigInput = {
     "what-should-a-new-dnd-player-learn-first",
     "where-do-i-start-if-i-have-never-played-a-tabletop-rpg",
     "how-do-i-run-a-successful-session-0",
-    "how-do-i-keep-players-engaged-during-other-players-turns-in-combat",
   ],
   discovery: {
     id: "answer-read-dnd-character-sheet-beginner",
@@ -238,6 +223,11 @@ export const howDoIReadADndCharacterSheetAsABeginner: AnswerConfigInput = {
         with: "answer-beginner-start",
         reason:
           "Both help beginners enter tabletop play, but the broader page explains how to start any tabletop RPG while this page is a D&D-specific guide to reading a character sheet during play.",
+      },
+      {
+        with: "answer-what-can-i-do-on-my-turn-in-dnd-combat",
+        reason:
+          "Both help a new D&D player during play, but this page explains how to read the character sheet while the combat-turn page explains which actions a player can choose during their turn.",
       },
     ],
   },

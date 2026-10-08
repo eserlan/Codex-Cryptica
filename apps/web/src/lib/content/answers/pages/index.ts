@@ -119,6 +119,7 @@ import { howToCreateRumoursForAFantasyTown } from "./how-to-create-rumours-for-a
 import { howToWriteAnInWorldNewspaperForAnRpg } from "./how-to-write-an-in-world-newspaper-for-an-rpg";
 import { isMyRpgCampaignIdeaGood } from "./is-my-rpg-campaign-idea-good";
 import { pointCrawlVsHexCrawl } from "./point-crawl-vs-hex-crawl";
+import { whatCanIDoOnMyTurnInDndCombat } from "./what-can-i-do-on-my-turn-in-dnd-combat";
 import { whatCanPlayersActuallyBuyAndSellInAFantasySettlement } from "./what-can-players-actually-buy-and-sell-in-a-fantasy-settlement";
 import { whatDoYouDoWithMurderHobosInAnRpgCampaign } from "./what-do-you-do-with-murder-hobos-in-an-rpg-campaign";
 import { whatIsAPointCrawl } from "./what-is-a-point-crawl";
@@ -135,6 +136,7 @@ import { whatRpgShouldIUseForTacticalCombat } from "./what-rpg-should-i-use-for-
 import { whatRpgSystemIsGoodForSoloPlay } from "./what-rpg-system-is-good-for-solo-play";
 import { whatRpgSystemShouldWeTryInsteadOfDnd } from "./what-rpg-system-should-we-try-instead-of-dnd";
 import { whatRpgWorksForPoliticalIntrigueAndFactionPlay } from "./what-rpg-works-for-political-intrigue-and-faction-play";
+import { whatShouldANewDndPlayerKnowBeforeTheirFirstGame } from "./what-should-a-new-dnd-player-know-before-their-first-game";
 import { whatShouldANewDndPlayerLearnFirst } from "./what-should-a-new-dnd-player-learn-first";
 import { whatShouldAnRpgSettlementContain } from "./what-should-an-rpg-settlement-contain";
 import { whatShouldILookForInAnRpgCampaignManager } from "./what-should-i-look-for-in-an-rpg-campaign-manager";
@@ -274,6 +276,7 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     howToWriteAnInWorldNewspaperForAnRpg,
     isMyRpgCampaignIdeaGood,
     pointCrawlVsHexCrawl,
+    whatCanIDoOnMyTurnInDndCombat,
     whatCanPlayersActuallyBuyAndSellInAFantasySettlement,
     whatDoYouDoWithMurderHobosInAnRpgCampaign,
     whatIsAPointCrawl,
@@ -290,6 +293,7 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     whatRpgSystemIsGoodForSoloPlay,
     whatRpgSystemShouldWeTryInsteadOfDnd,
     whatRpgWorksForPoliticalIntrigueAndFactionPlay,
+    whatShouldANewDndPlayerKnowBeforeTheirFirstGame,
     whatShouldANewDndPlayerLearnFirst,
     whatShouldAnRpgSettlementContain,
     whatShouldILookForInAnRpgCampaignManager,
