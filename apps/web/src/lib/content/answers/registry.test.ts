@@ -51,6 +51,24 @@ const mockRegistry: Record<string, AnswerConfig> = {
 };
 
 describe("answer registry", () => {
+  it("prioritises first-game guidance and the character-sheet guide for packing readers", () => {
+    const answer = answers["what-do-i-need-to-bring-to-my-first-dnd-game"];
+
+    expect(answer.relatedAnswers.slice(0, 2)).toEqual([
+      "what-should-a-new-dnd-player-know-before-their-first-game",
+      "how-do-i-read-a-dnd-character-sheet-as-a-beginner",
+    ]);
+    expect(answer.discovery?.relatedIntents).toContain(
+      "answer-new-dnd-player-first-game",
+    );
+    expect(answer.discovery?.relatedIntents).toContain(
+      "answer-read-dnd-character-sheet-beginner",
+    );
+    expect(answer.relatedTools.map((tool) => tool.href)).not.toContain(
+      "/generators/dnd-npc",
+    );
+  });
+
   it("records the new D&D player's distinct audience from GM startup guides", () => {
     const overlaps = [
       [
