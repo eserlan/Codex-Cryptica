@@ -19,6 +19,8 @@ import { getAllLandingPageSlugs } from "../for/registry";
 import { HEIST_TOPIC_CONFIG } from "../topics/heists";
 import { PUZZLE_TOPIC_CONFIG } from "../topics/puzzles";
 import { PIRATE_TOPIC_CONFIG } from "../topics/pirates";
+import { DND_TOPIC_CONFIG } from "../topics/dnd";
+import { DND_BEGINNERS_TOPIC_CONFIG } from "../topics/dnd-beginners";
 import { solutions } from "$lib/config/seo-pages";
 import { featuresConfig } from "$lib/config/seo-features";
 import { match as isGeneratorSlug } from "../../../params/generator_slug";
@@ -850,6 +852,8 @@ describe("published answers", () => {
       HEIST_TOPIC_CONFIG.canonicalPath,
       PUZZLE_TOPIC_CONFIG.canonicalPath,
       PIRATE_TOPIC_CONFIG.canonicalPath,
+      DND_TOPIC_CONFIG.canonicalPath,
+      DND_BEGINNERS_TOPIC_CONFIG.canonicalPath,
     ]);
     const toolPages = new Set([
       "cyberpunk-nomad-clan-generator",
