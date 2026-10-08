@@ -738,7 +738,7 @@ describe("published answers", () => {
     )?.text;
 
     expect(diceExamples).toContain(
-      "common healing potion restores 2d4 + 2 hit points",
+      "common [2024 Potion of Healing](https://www.dndbeyond.com/magic-items/8960641-potion-of-healing) restores 2d4 + 2 hit points",
     );
   });
 

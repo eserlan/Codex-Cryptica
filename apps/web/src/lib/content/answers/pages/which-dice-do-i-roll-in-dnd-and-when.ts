@@ -7,13 +7,13 @@ export const whichDiceDoIRollInDndAndWhen: AnswerConfigInput = {
   question: "Which dice do I roll in D&D, and when?",
   kind: "framework",
   shortAnswer:
-    "If you are trying something uncertain in D&D, you very often start with a twenty-sided die (d20) and add a modifier the Dungeon Master or your character sheet names. The other dice in the set (d4, d6, d8, d10, d12 and percentile dice) are commonly used afterwards to determine damage, healing or other amounts, and your weapon, spell or feature tells you which one to roll so you do not need to memorise every die from memory.",
+    "If you are trying something uncertain in D&D, you very often start with a twenty-sided die (d20) and add a modifier the Dungeon Master or your character sheet names. For an attack that requires an attack roll, the d20 decides whether it hits and you roll its listed damage on a hit. Other effects name their dice directly, so you do not need to memorise every one.",
   sections: [
     {
       kind: "prose",
       heading: "The simplest useful rule",
       paragraphs: [
-        "D&D uses several dice, but you do not need to choose one from memory each time you act. When the outcome is uncertain, the table very often starts with a d20. The roll determines whether you succeed, hit, or resist something. What happens because of that result, such as how much damage is dealt or how many hit points are restored, is usually determined by a different die afterwards.",
+        "D&D uses several dice, but you do not need to choose one from memory each time you act. When the outcome is uncertain, the table very often starts with a d20. But not every effect begins with a success roll: a healing potion tells you directly to roll its healing dice. Your character sheet, spell, item or feature will name the die.",
         "Your character sheet, a spell description, a class feature, or the Dungeon Master will normally tell you which die to roll. A weapon entry says 1d8, a spell says 2d6, a class feature says roll a d10. Your job is to recognise the instruction and roll what it names, not to recall every possible die combination before play begins.",
       ],
     },
@@ -29,7 +29,7 @@ export const whichDiceDoIRollInDndAndWhen: AnswerConfigInput = {
         },
         {
           term: "Attack rolls",
-          text: "You try to hit a creature with a weapon or a spell that requires an attack. Roll a d20, add the modifier shown on your character sheet for that attack (often Strength or Dexterity for weapons, or your spellcasting ability for spells), then add any bonus the DM mentions. Usually, a total that meets or beats the target's Armour Class hits; a natural 20 always hits, and a natural 1 always misses. On a hit, you then roll damage separately.",
+          text: "You try to hit a creature with a weapon or a spell that requires an attack. Roll a d20 and add the listed attack bonus, such as +5. That total normally already includes your ability modifier and any applicable proficiency bonus, so do not add those again. Apply any additional modifier the rule or DM specifies. Usually, a total that meets or beats the target's Armour Class hits; a natural 20 always hits, and a natural 1 always misses. On a hit, roll the listed damage separately. For full details, see the [2024 Basic Rules: Playing the Game](https://www.dndbeyond.com/sources/dnd/br-2024/playing-the-game) or [2014 Basic Rules: Combat](https://www.dndbeyond.com/sources/dnd/basic-rules-2014/combat).",
         },
         {
           term: "Saving throws",
@@ -41,19 +41,19 @@ export const whichDiceDoIRollInDndAndWhen: AnswerConfigInput = {
       kind: "list",
       heading: "The other dice: damage, healing and amounts",
       intro:
-        "Once the d20 has decided whether something succeeds, another die is often used to decide how much. The rule that grants the effect states the die, so you read it rather than invent it:",
+        "A damaging attack that requires an attack roll uses its listed damage dice on a hit. Other effects name their dice directly:",
       items: [
         {
           term: "d4, d6, d8, d10, d12",
-          text: "These are the dice most often linked to an amount. A dagger might deal 1d4 damage, a longsword 1d8, a greataxe 1d12, a fire bolt 1d10, and a common healing potion restores 2d4 + 2 hit points. Larger dice are not inherently better or worse, they simply reflect the design of that weapon, spell or feature. Your sheet tells you which one applies.",
+          text: "These are the dice most often linked to an amount. A dagger might deal 1d4 damage, a longsword 1d8, a greataxe 1d12, a fire bolt 1d10, and a common [2024 Potion of Healing](https://www.dndbeyond.com/magic-items/8960641-potion-of-healing) restores 2d4 + 2 hit points. Larger dice are not inherently better or worse, they simply reflect the design of that weapon, spell or feature. Your sheet tells you which one applies.",
         },
         {
           term: "d10 as percentile and d100",
-          text: "Two ten-sided dice can be rolled as percentile dice to generate a number from 1 to 100, often written as d100. New players meet this less often, usually on a table that says roll d100 for a random effect. When the rules call for it, the table will say so explicitly, typically by naming one die as the tens and the other as the ones.",
+          text: "Two ten-sided dice can be rolled as percentile dice to generate a number from 1 to 100, often written as d100. New players meet this less often, usually on a table that says roll d100 for a random effect. Before rolling, designate one die as tens and the other as ones: 70 and 3 means 73, while 00 and 0 means 100. See the [2024 Basic Rules: Playing the Game](https://www.dndbeyond.com/sources/dnd/br-2024/playing-the-game) or [2014 Basic Rules: Introduction](https://www.dndbeyond.com/sources/dnd/basic-rules-2014/introduction).",
         },
         {
           term: "Read the source, not your memory",
-          text: "If you cast cure wounds, the spell says how many dice to roll for healing. If you swing a weapon, the weapon entry says which die to use. If a feature grants extra damage, it names the die. When you level up or pick a new spell, check what that new option says to roll and note it where you will see it next session.",
+          text: "If you cast [2024 Cure Wounds](https://www.dndbeyond.com/spells/2619079-cure-wounds), the spell says how many dice to roll for healing. If you swing a weapon, the weapon entry says which die to use. If a feature grants extra damage, it names the die. When you level up or pick a new spell, check what that new option says to roll and note it where you will see it next session.",
         },
       ],
     },
@@ -102,7 +102,7 @@ export const whichDiceDoIRollInDndAndWhen: AnswerConfigInput = {
         },
         {
           term: "Following the sheet and the DM",
-          text: "The DM says make an attack roll. The player finds longsword on the sheet, sees it lists +5 to hit and 1d8 + 3 slashing, rolls a d20, adds 5, and learns the total hits. The DM then says roll damage. The player rolls a d8, adds 3, and the DM describes the result. Later, when a spell forces a saving throw, the DM names the ability and the player rolls a d20 with the saving throw modifier shown on the sheet. Advantage on the next attack simply means rolling two d20s and keeping the higher result.",
+          text: "The DM says make an attack roll. The player finds longsword on the sheet, sees it lists +5 to hit and 1d8 + 3 slashing, rolls a d20 and uses that listed +5 once to learn whether the total hits. The DM then says roll damage. The player rolls a d8, adds 3, and the DM describes the result. Later, when a spell forces a saving throw, the DM names the ability and the player rolls a d20 with the saving throw modifier shown on the sheet. Advantage on the next attack simply means rolling two d20s and keeping the higher result.",
         },
         {
           term: "Why it works",
@@ -133,20 +133,7 @@ export const whichDiceDoIRollInDndAndWhen: AnswerConfigInput = {
     linkText: "Explore Codex Cryptica for D&D",
     href: "/for/dungeons-and-dragons",
   },
-  relatedTools: [
-    {
-      title: "D&D NPC generator",
-      description:
-        "Create a quick supporting character when your first sessions need a shopkeeper, guard, or guide to interact with.",
-      href: "/generators/dnd-npc",
-    },
-    {
-      title: "Fantasy names generator",
-      description:
-        "Find a character or place name while you practise reading the dice codes on your own sheet.",
-      href: "/generators/fantasy-names",
-    },
-  ],
+  relatedTools: [],
   relatedForPages: [
     {
       title: "Codex Cryptica for D&D",
@@ -156,10 +143,10 @@ export const whichDiceDoIRollInDndAndWhen: AnswerConfigInput = {
     },
   ],
   relatedAnswers: [
+    "what-should-a-new-dnd-player-know-before-their-first-game",
+    "how-do-i-read-a-dnd-character-sheet-as-a-beginner",
+    "what-can-i-do-on-my-turn-in-dnd-combat",
     "what-should-a-new-dnd-player-learn-first",
-    "how-do-i-improvise-npcs-in-dnd",
-    "where-do-i-start-if-i-have-never-played-a-tabletop-rpg",
-    "how-do-i-run-a-successful-session-0",
   ],
   discovery: {
     id: "answer-which-dice-to-roll-in-dnd",
@@ -176,15 +163,21 @@ export const whichDiceDoIRollInDndAndWhen: AnswerConfigInput = {
     uniqueValue:
       "Teaches the single d20 habit for checks, attacks and saves, shows how weapon and spell entries name the damage die, decodes notation such as 1d8 + 3, and gives a plain-English advantage and disadvantage rule that reassures beginners the sheet or DM names the die.",
     relatedIntents: [
+      "answer-new-dnd-player-first-game",
+      "answer-read-dnd-character-sheet-beginner",
+      "answer-what-can-i-do-on-my-turn-in-dnd-combat",
       "answer-new-dnd-player-learn-first",
-      "answer-beginner-start",
-      "answer-session-zero",
     ],
     acknowledgedOverlap: [
       {
         with: "answer-new-dnd-player-learn-first",
         reason:
           "The cornerstone orients a new player across the whole first session, while this page focuses only on dice literacy: which die to roll, how to read notation, and how advantage works.",
+      },
+      {
+        with: "answer-new-dnd-player-first-game",
+        reason:
+          "The first-game guide orients a new player across the session, while this page focuses on choosing dice and resolving common rolls.",
       },
       {
         with: "answer-beginner-start",
