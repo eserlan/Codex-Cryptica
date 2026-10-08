@@ -14,7 +14,7 @@ export const howDoIRunABardOrFaceWithoutSideliningTheParty: AnswerConfigInput =
         kind: "prose",
         heading: "The face becomes the party when one voice owns every choice",
         paragraphs: [
-          "A bard or face is often the most reliable speaker at the table, so it is natural to let them handle every negotiation. The problem starts when that competence turns into sole control: the bard speaks for the group, the negotiation runs as a long solo scene, and other players go quiet because their numbers are lower. If one Persuasion roll settles the whole matter, social play has little left for anyone else to affect.",
+          "A bard or face is often the most reliable speaker at the table, so it is natural to let them handle every negotiation. The problem starts when that competence turns into sole control: the bard speaks for the group, the negotiation runs as a long solo scene, and other players go quiet because their numbers are lower. The issue is not one Persuasion roll settling a brief request; it is one roll choosing the promises the party makes.",
           "The tension to preserve is that the specialist should feel genuinely good at social play, without their skill removing the group's need to decide. Treat the face as the character who improves how the offer lands, not the one who chooses the party's goals for them.",
         ],
       },
@@ -42,7 +42,7 @@ export const howDoIRunABardOrFaceWithoutSideliningTheParty: AnswerConfigInput =
         kind: "list",
         heading: "A reusable loop for social scenes",
         intro:
-          "Use this loop when a conversation matters to the campaign. It keeps the face central while giving every character a clear point of contact:",
+          "Use this optional loop for negotiations with competing interests or commitments. Invite contributions without requiring every PC to act or roll; a brief request can resolve with one check after the party agrees its offer, or without a roll when the outcome is clear. For uncertain actions, use the chosen game's procedures: these are possible fictional stakes, not a separate social subsystem.",
         items: [
           {
             term: "Face establishes rapport or access",
@@ -58,11 +58,11 @@ export const howDoIRunABardOrFaceWithoutSideliningTheParty: AnswerConfigInput =
           },
           {
             term: "Party chooses what it will offer or risk",
-            text: "The group decides together what it is willing to promise, withhold or put at hazard. Keep this discussion in character and at the table, not folded into the bard's roll.",
+            text: "The group decides together what it is willing to promise, withhold or put at hazard. Players can confer out of character about commitments that affect them, or delegate the speaking role to the bard within agreed limits.",
           },
           {
             term: "Face turns that position into the best deal available",
-            text: "The bard now negotiates from the party's chosen stance. A check here adjusts attitude, price, trust, timing, information or concessions rather than acting as mind control. On a strong result the NPC concedes more or trusts sooner; on a weak result they demand proof, time, a hostage, or a higher cost.",
+            text: "The bard negotiates from the party's chosen stance. A check here adjusts attitude, price, trust, timing, information or concessions rather than acting as mind control. On a strong result the NPC may concede more or trust sooner. A weak result may bring a demand supported by the NPC's interests and the game's procedures, or end talks without agreement. Any changed terms are a counteroffer, not an accepted obligation: return them to the group to accept, counteroffer or walk away. End when terms are accepted or refused, or talks are paused.",
           },
         ],
       },
@@ -123,7 +123,7 @@ export const howDoIRunABardOrFaceWithoutSideliningTheParty: AnswerConfigInput =
         heading: "When only the bard can plausibly speak",
         paragraphs: [
           "Protocol, danger or custom sometimes means a single speaker is appropriate, such as an audience in a great hall, a parley under truce, or a tense first meeting where too many voices would look like discord. Keep those scenes short and porous. State what is at stake, let the face make the key exchanges, and cut regularly to what others are doing that could affect the next beat: watching who reacts, holding a doorway, drafting terms, assessing whether a promise can be kept, or speaking with people in the antechamber whose interests bear on the negotiation.",
-          "If the scene will run longer than a few exchanges, bring the rest of the party's work into the same pressure: a guard captain times the audience, a rival delegation waits outside, or the household must decide before the evening bell. The face retains the speaking role without the table losing its shared decision.",
+          "Use pressure already established in the fiction to shape the next beat. If there is none, summarise exchanges, invite useful activity or pause for a shared decision rather than adding a deadline because the scene is running long. The face retains the speaking role without the table losing its shared decision.",
         ],
       },
       {
@@ -139,11 +139,15 @@ export const howDoIRunABardOrFaceWithoutSideliningTheParty: AnswerConfigInput =
           },
           {
             term: "The shared-negotiation version",
-            text: "The bard gains the audience and steadies the room after a recent bandit raid has left the household on edge. Lady Varnholt states her terms plainly: grain for the winter, a visible commitment that the ford will be held, and no armed company passing without oversight. The warrior's service on the border makes a promise to ride with the escort believable; the cleric can pledge sanctuary in the abbey and act as surety for good conduct, which the steward trusts more than coin; the rogue, who has scouted the rival lord's camp, can reveal that the pressure on the dale is more bluff than force, giving the party a calmer alternative route to propose; a character who grew up in a dale village can speak to what a heavy grain levy would actually cost. The group confers and chooses its position: it will deliver a fixed grain measure and leave two members to hold the ford for three days, but it will not surrender weapons at the gate. The bard then carries that position back to the lady. A social check now decides whether she accepts those terms as offered, asks for a named hostage or oath-bound witness, or holds the escort until the first grain arrives.",
+            text: "The bard gains the audience and steadies the room after a recent bandit raid has left the household on edge. Lady Varnholt wants grain for winter, a visible commitment to hold the ford, and armed travellers to pass under her escort. The warrior's border service makes that promise credible; the cleric can offer sanctuary and act as surety; the rogue's scouting shows the rival lord's camp has withdrawn, easing the threat she fears; and a local PC explains what a heavy grain levy would cost. Together, the group offers a fixed grain measure and two members to hold the ford for three days. The bard presents those terms. A check using the chosen game's procedures may win acceptance or a counteroffer, such as sending the escort after the first grain arrives. The group can accept that delay, counteroffer or walk away; no one is bound until the players agree.",
           },
           {
             term: "Why it works",
-            text: "The bard's skill determines access, tone and the quality of the final price, while the party decides what it wants and what it will promise. Other PCs change the facts the negotiation rests on: credibility, a verifiable guarantee, a revealed alternative, and a sense of cost. The NPC's wants and limits remain visible throughout, and the party's promise is chosen together rather than implied by one roll. The agreement that follows, an escort, a grain delivery and a three-day holding of the ford, creates a new situation the table can see and honour in later sessions.",
+            text: "The grain supports her villages through winter, while the three-day guard at the ford and passage under escort make her household less exposed. The rogue's evidence lowers the threat she is responding to; it does not erase her need for security. If the group accepts the escort's delayed departure, the resulting agreement is a grain delivery, a three-day watch and passage under escort, all obligations the players chose and can honour in later sessions.",
+          },
+          {
+            term: "A brief, informal request",
+            text: "At a village inn, the party agrees the bard will ask for a room at a reduced rate. A ranger who helped repair the bridge vouches for them, and one check (or none, if the outcome is clear) settles the request. The rest of the negotiation loop is unnecessary.",
           },
         ],
       },
@@ -154,10 +158,10 @@ export const howDoIRunABardOrFaceWithoutSideliningTheParty: AnswerConfigInput =
           "What distinct contribution does the face make here: access, tone, credibility, or improved terms?",
           "What does the NPC want, what will they not accept, and what alternatives do they have?",
           "How will you make those wants and limits legible before the party must decide?",
-          "What can each other PC add: reputation, evidence, a guarantee, a relationship, or a credible alternative?",
+          "Could another PC's contribution change the offer? Invite it without requiring anyone to act or roll.",
           "What promise or risk will the whole party choose, rather than letting one roll choose it?",
           "What will a strong or weak social check change: attitude, price, timing, trust, information, or a specific concession?",
-          "If only the bard can speak, how will you keep the scene short and give others parallel work that affects the next exchange?",
+          "If only the bard can speak, what established pressure shapes the scene? Without one, can you summarise, invite useful activity or pause for a decision?",
           "What visible consequence will show the agreement afterwards: an escort on the road, a held ford, a delivered measure of grain, or a strained household?",
         ],
       },
@@ -216,7 +220,7 @@ export const howDoIRunABardOrFaceWithoutSideliningTheParty: AnswerConfigInput =
       ],
       userJob: "adopt-workflow",
       uniqueValue:
-        "A GM-facing procedure that keeps the bard central to access, tone and terms while moving promises and stakes to the group, with a five-beat loop, guidance on what social checks actually change, and practical contributions for non-face PCs.",
+        "A GM-facing guide to keeping the bard central to access, tone and terms while promises stay with the group, from a quick informal request to a substantial negotiation, with optional scene structure and practical contributions for non-face PCs.",
       relatedIntents: [
         "answer-specialist-character-spotlight",
         "answer-run-diplomats-nobles-courtiers",
@@ -233,7 +237,7 @@ export const howDoIRunABardOrFaceWithoutSideliningTheParty: AnswerConfigInput =
         {
           with: "answer-run-diplomats-nobles-courtiers",
           reason:
-            "The diplomat answer focuses on status, authority and durable commitments in formal negotiation; this answer covers everyday bard and face play, including informal scenes where protocol is lighter but the same party-decision principle holds.",
+            "The diplomat answer focuses on status, authority and durable commitments in formal negotiation; this answer covers everyday bard and face play, including a quick informal request that can resolve without the substantial negotiation loop.",
         },
         {
           with: "answer-run-investigator-without-sidelining-party",
@@ -266,7 +270,7 @@ export const howDoIRunABardOrFaceWithoutSideliningTheParty: AnswerConfigInput =
       title:
         "How to run a bard or face without sidelining the party | Codex Cryptica",
       description:
-        "Keep the bard good at social play without letting one roll decide. Use a five-beat loop that shares promises, stakes and NPC limits with the whole party.",
+        "Keep the bard good at social play without letting one roll choose the party's promises. Use an optional loop to share stakes, contributions and NPC limits.",
       image:
         "https://assets.codexcryptica.com/og/how-do-i-run-a-bard-or-face-without-sidelining-the-party.jpg",
       imageAlt:
