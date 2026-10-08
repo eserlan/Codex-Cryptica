@@ -150,3 +150,27 @@ describe("rollRandomEvent", () => {
     });
   });
 });
+
+describe("originality (FR-008)", () => {
+  // Published systems whose names or table wording must not appear in our text.
+  const PUBLISHED_TERMS = [
+    "mythic",
+    "chaos factor",
+    "fate chart",
+    "fate question",
+    "meaning table",
+    "random event focus",
+    "ironsworn",
+    "burning wheel",
+    "ask the oracle",
+  ];
+
+  it("the event tables and answer scale use none of the published terms", () => {
+    const answers = ["Yes, and", "Yes", "Yes, but", "No, but", "No", "No, and"];
+    const text = [...FOCI.map((f) => f.label), ...ACTIONS, ...answers]
+      .join("\n")
+      .toLowerCase();
+    const found = PUBLISHED_TERMS.filter((term) => text.includes(term));
+    expect(found).toEqual([]);
+  });
+});

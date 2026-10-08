@@ -49,49 +49,52 @@ const isStatus = (v: unknown): v is ThreadStatus =>
   v === "open" || v === "closed";
 const isTime = (v: unknown): v is number =>
   typeof v === "number" && Number.isFinite(v) && v > 0;
+const isText = (v: unknown, max: number): v is string =>
+  typeof v === "string" && v.length <= max;
+const isLinkList = (v: unknown): v is string[] =>
+  Array.isArray(v) && v.every((e) => typeof e === "string");
+
+/** The text fields: id, title (trimmed, within its limit) and both notes. */
+function parseWords(raw: Record<string, unknown>) {
+  const { id, title, note, closingNote } = raw;
+  const cleanTitle = typeof title === "string" ? title.trim() : "";
+  if (typeof id !== "string" || id.length === 0) return null;
+  if (cleanTitle.length === 0 || cleanTitle.length > THREAD_LIMITS.title)
+    return null;
+  if (
+    !isText(note, THREAD_LIMITS.note) ||
+    !isText(closingNote, THREAD_LIMITS.note)
+  )
+    return null;
+  return { id, title: cleanTitle, note, closingNote };
+}
+
+/** The kind and status, both from a fixed set. */
+function parseState(raw: Record<string, unknown>) {
+  const { kind, status } = raw;
+  return isKind(kind) && isStatus(status) ? { kind, status } : null;
+}
+
+/** Created and updated times, where an update is never before its creation. */
+function parseTimes(raw: Record<string, unknown>) {
+  const { createdAt, updatedAt } = raw;
+  if (!isTime(createdAt) || !isTime(updatedAt) || updatedAt < createdAt)
+    return null;
+  return { createdAt, updatedAt };
+}
 
 function parseThread(raw: unknown): Thread | null {
   if (!isRecord(raw)) return null;
-  const {
-    id,
-    title,
-    kind,
-    note,
-    status,
-    closingNote,
-    entityIds,
-    createdAt,
-    updatedAt,
-  } = raw;
-  if (typeof id !== "string" || id.length === 0) return null;
-  if (typeof title !== "string") return null;
-  const cleanTitle = title.trim();
-  if (cleanTitle.length === 0 || cleanTitle.length > THREAD_LIMITS.title)
-    return null;
-  if (!isKind(kind) || !isStatus(status)) return null;
-  if (typeof note !== "string" || note.length > THREAD_LIMITS.note) return null;
-  if (
-    typeof closingNote !== "string" ||
-    closingNote.length > THREAD_LIMITS.note
-  )
-    return null;
-  if (
-    !Array.isArray(entityIds) ||
-    !entityIds.every((e) => typeof e === "string")
-  )
-    return null;
-  if (!isTime(createdAt) || !isTime(updatedAt) || updatedAt < createdAt)
-    return null;
+  const words = parseWords(raw);
+  const state = parseState(raw);
+  const times = parseTimes(raw);
+  const links = isLinkList(raw.entityIds) ? raw.entityIds : null;
+  if (!words || !state || !times || !links) return null;
   return {
-    id,
-    title: cleanTitle,
-    kind,
-    note,
-    status,
-    closingNote,
-    entityIds: [...new Set(entityIds)].slice(0, THREAD_LIMITS.links),
-    createdAt,
-    updatedAt,
+    ...words,
+    ...state,
+    entityIds: [...new Set(links)].slice(0, THREAD_LIMITS.links),
+    ...times,
   };
 }
 

@@ -22,6 +22,50 @@ import { createDraftOnlyPromoter } from "./session-journal-promoter";
 import { SoloTablePinsStore } from "./solo-table-pins.svelte";
 import { randomSources } from "$lib/features/random";
 import { vaultRegistry as registry } from "./vault-registry.svelte";
+import { SoloThreadsStore } from "./solo-threads.svelte";
+import { getVaultDir } from "$lib/utils/opfs";
+import {
+  opfsVaultFiles,
+  type VaultFileAccess,
+} from "$lib/services/vault-threads-file";
+
+/**
+ * The vault's threads file, read and written through the vault's own OPFS
+ * directory. Guests have no vault directory, so their threads are not kept.
+ */
+function vaultFiles(vaultId: string): VaultFileAccess | null {
+  const root = vaultRegistry.rootHandle;
+  if (!root || vault.isGuest) return null;
+  const files = async () =>
+    opfsVaultFiles(await getVaultDir(root, vaultId), vaultId);
+  return {
+    async read(path) {
+      return (await files()).read(path);
+    },
+    async write(path, text) {
+      return (await files()).write(path, text);
+    },
+  };
+}
+
+/** The active vault's threads (spec 174, US3). Production wiring. */
+export const soloThreads = new SoloThreadsStore({
+  vaultId: () => vaultRegistry.activeVaultId ?? null,
+  files: (vaultId) => vaultFiles(vaultId),
+  readOnly: () => vault.isGuest,
+  entityIds: () => new Set(Object.keys(vault.entities ?? {})),
+  ids: systemIdGenerator,
+  clock: systemClock,
+  publishCapture: (payload) => {
+    appEventBus.emit({
+      type: JOURNAL_EVENTS.CAPTURE,
+      domain: "journal",
+      payload,
+      metadata: { timestamp: systemClock.now() },
+    });
+  },
+  notify: (message) => notificationStore.notify(message, "info"),
+});
 
 /** Production wiring. Tests build their own stores with fakes instead. */
 export const soloSessionStore = new SoloSessionStore({
@@ -40,6 +84,12 @@ export const soloSessionStore = new SoloSessionStore({
   clock: systemClock,
   vaultId: () => vaultRegistry.activeVaultId,
   mapIds: () => Object.keys(vault.maps ?? {}),
+  openThreads: () =>
+    soloThreads.open.map((thread) => ({ id: thread.id, title: thread.title })),
+  placeName: () => {
+    const mapId = mapStore.activeMapId;
+    return mapId ? (vault.entities?.[mapId]?.title ?? null) : null;
+  },
   journal: {
     get current() {
       return sessionJournalStore.current ?? null;

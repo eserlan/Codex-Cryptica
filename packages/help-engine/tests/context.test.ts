@@ -329,6 +329,8 @@ describe("solo play loop controls (Solo Play Loop)", () => {
     "solo-party-menu",
     "solo-scene-menu",
     "solo-oracle-menu",
+    "solo-yes-no-menu",
+    "solo-threads-menu",
   ]) {
     it(`points at ${target} while a solo session runs`, () => {
       const action = validateAction(

@@ -77,46 +77,39 @@ function joinNames(names: readonly string[]): string {
   return `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}`;
 }
 
-/**
- * The text a shortcut puts in the Oracle's input (Solo Play Loop, FR-019). It
- * is only prefilled; the player edits it and sends it. The prompt never asks
- * the Oracle to run the game (FR-021).
- */
-export function buildOracleShortcutPrompt(
-  kind: OracleShortcut,
-  context: {
-    question?: string;
-    answer?: string;
-    sceneName: string;
-    mapName: string | null;
-    partyNames: readonly string[];
-    recent: readonly string[];
-  },
-): string {
-  const lines = [SHORTCUT_QUESTION[kind]];
-  // Spec 174, FR-009: the player's own yes/no question and its answer, when interpreting.
-  if (kind === "interpret-answer" && context.answer?.trim()) {
-    const asked = context.question?.trim();
-    lines.push(
-      `Answer: ${context.answer.trim()}${asked ? ` to "${asked}"` : ""}.`,
-    );
-  }
+/** Spec 174, FR-009: the player's own yes/no question and its answer, when interpreting. */
+function answerLines(kind: OracleShortcut, context: PromptContext): string[] {
+  const answer = context.answer?.trim();
+  if (kind !== "interpret-answer" || !answer) return [];
+  const asked = context.question?.trim();
+  return [`Answer: ${answer}${asked ? ` to "${asked}"` : ""}.`];
+}
 
+/** The scene, place and party, on one line. Nothing when all three are empty. */
+function contextLines(context: PromptContext): string[] {
   const facts: string[] = [];
   if (context.sceneName.trim())
     facts.push(`scene "${context.sceneName.trim()}"`);
   if (context.mapName?.trim()) facts.push(`place "${context.mapName.trim()}"`);
   if (context.partyNames.length > 0)
     facts.push(`party ${joinNames(context.partyNames)}`);
-  if (facts.length > 0) lines.push(`Context: ${facts.join(", ")}.`);
+  return facts.length > 0 ? [`Context: ${facts.join(", ")}.`] : [];
+}
 
-  for (const item of context.recent.slice(0, MAX_RECENT)) {
-    const text = item.replace(/\s+/g, " ").trim().slice(0, MAX_RECENT_CHARS);
-    if (text) lines.push(`Recent: ${text}`);
-  }
+/** The latest journal lines, trimmed to a short length each. */
+function recentLines(recent: readonly string[]): string[] {
+  return recent
+    .slice(0, MAX_RECENT)
+    .map((item) => item.replace(/\s+/g, " ").trim().slice(0, MAX_RECENT_CHARS))
+    .filter((text) => text.length > 0)
+    .map((text) => `Recent: ${text}`);
+}
 
-  // Keep whole lines only: a cut in the middle of a line would send a broken
-  // sentence. The question line always fits, since it is far shorter.
+/**
+ * Keeps whole lines only: a cut in the middle of a line would send a broken
+ * sentence. The question line always fits, since it is far shorter.
+ */
+function fitWholeLines(lines: readonly string[]): string {
   const kept: string[] = [];
   let size = 0;
   for (const line of lines) {
@@ -126,4 +119,30 @@ export function buildOracleShortcutPrompt(
     size = next;
   }
   return kept.join("\n");
+}
+
+interface PromptContext {
+  question?: string;
+  answer?: string;
+  sceneName: string;
+  mapName: string | null;
+  partyNames: readonly string[];
+  recent: readonly string[];
+}
+
+/**
+ * The text a shortcut puts in the Oracle's input (Solo Play Loop, FR-019). It
+ * is only prefilled; the player edits it and sends it. The prompt never asks
+ * the Oracle to run the game (FR-021).
+ */
+export function buildOracleShortcutPrompt(
+  kind: OracleShortcut,
+  context: PromptContext,
+): string {
+  return fitWholeLines([
+    SHORTCUT_QUESTION[kind],
+    ...answerLines(kind, context),
+    ...contextLines(context),
+    ...recentLines(context.recent),
+  ]);
 }

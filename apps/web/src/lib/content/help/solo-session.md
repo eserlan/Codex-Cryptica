@@ -110,7 +110,15 @@ Some answers bring a **random event**: a focus, an action and a subject in one s
 
 ## Threads
 
-Threads are open questions, leads, objectives and mysteries that carry a campaign from one session to the next. Open **Threads** to add one with a title and a kind, link it to entries in your vault, close it with a note when it is resolved, and reopen it if it returns. Threads are saved with your vault, so they stay put when you reload, switch vaults or start a new session. Each vault can hold up to 200 threads.
+Threads are open questions, leads, objectives and mysteries that carry a campaign from one session to the next. Open **Threads** to add one with a title and a kind (question, lead, objective or mystery), link it to entries in your vault, close it with a note when it is resolved, and reopen it if it returns. Closed threads sit under **Show closed threads**, one choice away. Use the search box and the kind filter to find one quickly.
+
+Threads are saved in your vault, so they stay put when you reload, switch vaults or start a new session. They are also in a vault export (`.codex.zip`) and in a folder save, so they come along when you restore or move the vault that way. They are not part of Cloud Backup yet. Each vault can hold up to 200 threads. When it is full, close or delete one to add another.
+
+You can view and edit threads from **Play** as well, with no session running. In a read-only vault, you can still read them, but not change them.
+
+## Let the Oracle run a scene
+
+When AI is on, **Ask Oracle** in the solo bar has **Let the Oracle run a scene**. It opens Adventure Mode, where the Oracle runs the game as game master, continuing an existing adventure if there is one. It is an explicit choice: a solo session never starts Adventure Mode on its own, and the entry is hidden when AI is off.
 
 ## Asking for help
 

@@ -9,25 +9,30 @@ const props = (overrides: Record<string, unknown> = {}) => ({
   isEnding: false,
   onEnd: vi.fn(),
   onBack: vi.fn(),
-  onToggleMapMoves: vi.fn(),
+  onToggleCapture: vi.fn(),
   ...overrides,
 });
 
-describe("JournalHeader map capture switch", () => {
-  it("shows the active journal setting and toggles it", async () => {
+describe("JournalHeader capture menu", () => {
+  it("offers the Capture menu for an active journal and passes a switch change up", async () => {
     const input = props({ captureMapMoves: false });
     render(JournalHeader, { props: input as never });
-    const button = screen.getByRole("button", { name: "Record map moves" });
-    expect(button.getAttribute("aria-pressed")).toBe("false");
-    expect(button.textContent).toContain("Off");
-    await fireEvent.click(button);
-    expect(input.onToggleMapMoves).toHaveBeenCalledOnce();
+    expect(screen.getByTestId("journal-capture-menu")).toBeTruthy();
+    const details = screen.getByTestId(
+      "journal-capture-menu",
+    ) as HTMLDetailsElement;
+    details.open = true;
+    await fireEvent(details, new Event("toggle"));
+    const mapMoves = screen.getByTestId(
+      "capture-map-moves",
+    ) as HTMLInputElement;
+    expect(mapMoves.checked).toBe(false);
+    await fireEvent.click(mapMoves);
+    expect(input.onToggleCapture).toHaveBeenCalledWith("map-moves", true);
   });
 
-  it("does not show the setting for a journal that is not active", () => {
+  it("does not show the capture menu for a journal that is not active", () => {
     render(JournalHeader, { props: props({ active: false }) as never });
-    expect(
-      screen.queryByRole("button", { name: "Record map moves" }),
-    ).toBeNull();
+    expect(screen.queryByTestId("journal-capture-menu")).toBeNull();
   });
 });

@@ -135,13 +135,16 @@ function soloActionsFor(sources: HelpContextSources): string[] {
       "solo-pinned-tables",
       "solo-party-menu",
       "solo-scene-menu",
+      "solo-yes-no-menu",
+      "solo-threads-menu",
     ];
     // The Oracle menu is an AI feature: it is listed only while AI is on.
     if (sources.aiEnabled?.()) actions.push("solo-oracle-menu");
     return actions;
   }
+  // Threads can be kept with no session running (spec 174, FR-020).
   return sources.getRouteId() === "/(app)/play"
-    ? ["play-start-solo-session"]
+    ? ["play-start-solo-session", "solo-threads-menu"]
     : [];
 }
 

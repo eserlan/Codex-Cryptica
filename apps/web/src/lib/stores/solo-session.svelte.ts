@@ -28,6 +28,8 @@ import {
   formatPartyChange,
   formatRandomEvent,
   formatTensionChange,
+  isCaptured,
+  type CaptureKind,
   type JournalCapturePayload,
 } from "session-journal-engine";
 
@@ -45,6 +47,8 @@ export interface JournalPort {
     id: string;
     status: "active" | "ended";
     sections: { id: string }[];
+    captureOff?: CaptureKind[];
+    captureMapMoves?: boolean;
   } | null;
   start(): Promise<{ id: string }>;
   end(): Promise<void>;
@@ -230,8 +234,9 @@ export class SoloSessionStore {
     const result = normaliseSceneName(input);
     if (!result.ok) return false;
 
+    // A scene only gets its own journal section while scenes are captured (spec 174, FR-023).
     let sectionId: string | null = null;
-    if (this.journalRunning) {
+    if (this.journalRunning && this.scenesCaptured()) {
       try {
         sectionId = (await this.deps.journal.createSection(result.name)).id;
       } catch {
@@ -240,6 +245,11 @@ export class SoloSessionStore {
     }
     this.write(withSceneAdded(session, result.name, sectionId));
     return true;
+  }
+
+  private scenesCaptured(): boolean {
+    const journal = this.deps.journal.current;
+    return !!journal && isCaptured(journal, "scene");
   }
 
   /** Starts a numbered new visit to a past scene, in a new section (FR-023). */

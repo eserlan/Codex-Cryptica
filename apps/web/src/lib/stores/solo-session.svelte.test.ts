@@ -363,6 +363,26 @@ describe("scenes", () => {
     expect(store.session?.sceneSectionId).toBe("sec1");
   });
 
+  it("with scenes switched off in the journal: changes the scene but creates no section", async () => {
+    const { store, journal } = build();
+    await store.start({ mapId: null, journal: true });
+    journal.current!.captureOff = ["scenes"];
+    const ok = await store.setScene("Arrival");
+    expect(ok).toBe(true);
+    expect(journal.createSection).not.toHaveBeenCalled();
+    expect(store.session?.sceneName).toBe("Arrival");
+    expect(store.session?.sceneSectionId).toBeNull();
+  });
+
+  it("with another kind switched off: still creates the section", async () => {
+    const { store, journal } = build();
+    await store.start({ mapId: null, journal: true });
+    journal.current!.captureOff = ["dice", "oracle"];
+    await store.setScene("Arrival");
+    expect(journal.createSection).toHaveBeenCalledWith("Arrival");
+    expect(store.session?.sceneSectionId).toBe("sec1");
+  });
+
   it("with no journal: stores the name only", async () => {
     const { store, journal } = build();
     await store.start({ mapId: null, journal: false });
@@ -711,5 +731,44 @@ describe("solo oracle, events and tension (spec 174)", () => {
     expect(store.tension).toBe(5);
     store.raiseTension();
     expect(store.tension).toBe(5);
+  });
+
+  it("uses the open threads as random event subjects, and never a closed one", async () => {
+    let seed = 0;
+    const random = () => {
+      // A small deterministic sequence, so the sample is the same every run.
+      seed = (seed * 9301 + 49297) % 233280;
+      return seed / 233280;
+    };
+    const { store } = build({
+      random,
+      openThreads: [{ id: "open-1", title: "Why is the keeper lying?" }],
+    });
+    await store.start({ mapId: null, journal: false });
+    const subjects = Array.from(
+      { length: 300 },
+      () => store.randomEvent().subject,
+    );
+    const threadSubjects = subjects.filter((s) => s.kind === "thread");
+    expect(threadSubjects.length).toBeGreaterThan(0);
+    for (const subject of threadSubjects) {
+      expect(subject.threadId).toBe("open-1");
+      expect(subject.label).toBe("Why is the keeper lying?");
+    }
+  });
+
+  it("falls back to another subject when no thread is open", async () => {
+    let seed = 0;
+    const random = () => {
+      seed = (seed * 9301 + 49297) % 233280;
+      return seed / 233280;
+    };
+    const { store } = build({ random, openThreads: [] });
+    await store.start({ mapId: null, journal: false });
+    const subjects = Array.from(
+      { length: 300 },
+      () => store.randomEvent().subject,
+    );
+    expect(subjects.some((s) => s.kind === "thread")).toBe(false);
   });
 });
