@@ -22,7 +22,7 @@
   });
 </script>
 
-{#if selectedIds.length > 0 && !vault.isGuest}
+{#if selectedIds.length > 1 && !vault.isGuest}
   <button
     type="button"
     class="absolute bottom-4 left-1/2 z-20 -translate-x-1/2 inline-flex items-center gap-2 rounded-lg border border-theme-primary/50 bg-theme-surface/90 px-3 py-1.5 text-xs font-header uppercase tracking-widest text-theme-primary shadow-lg backdrop-blur-md hover:bg-theme-primary/15"

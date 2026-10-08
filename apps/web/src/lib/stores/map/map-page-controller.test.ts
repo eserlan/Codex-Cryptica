@@ -338,6 +338,25 @@ describe("MapPageController", () => {
     expect(modalUIStore.openShare).toHaveBeenCalledTimes(1);
   });
 
+  it("does not open Share during a solo session, and says why", () => {
+    const soloPlayGuard = {
+      sharedPlayBlockedReason: vi.fn(
+        () => "End your solo session to share or preview as a player.",
+      ),
+    };
+    const { controller, modalUIStore, notificationStore } = createController({
+      soloPlayGuard,
+    });
+
+    controller.openShareModal();
+
+    expect(modalUIStore.openShare).not.toHaveBeenCalled();
+    expect(notificationStore.notify).toHaveBeenCalledWith(
+      "End your solo session to share or preview as a player.",
+      "info",
+    );
+  });
+
   describe("chatSidebarOffset", () => {
     it("is flush left when VTT is off, because there is no chat sidebar", () => {
       const { controller } = createController();

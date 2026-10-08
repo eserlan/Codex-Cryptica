@@ -25,7 +25,7 @@ jobs:
       commit_sha: ${{ steps.find.outputs.commit_sha }}
       commit_msg: ${{ steps.find.outputs.commit_msg }}
     steps:
-      - name: Find latest successful staging run
+      - name: Find the latest successful staging run
         id: find
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -35,17 +35,35 @@ jobs:
           if [ -n "$SPECIFIC_RUN" ]; then
             RUN_ID="$SPECIFIC_RUN"
           else
-            # Find the latest successful deploy on the staging branch.
-            # Filter on the API before limiting results so PR validation runs cannot
-            # crowd the latest successful staging deployment out of the result page.
-            RUN_ID=$(gh api \
-              "repos/$GH_REPO/actions/workflows/deploy.yml/runs?branch=staging&status=success&event=push&per_page=1" \
-              --jq '.workflow_runs[0].id // empty')
-          fi
+            # Taking the first result of a "latest successful run" listing
+            # with per_page=1 is unreliable: it once returned a month-old run
+            # and promoted an old build (#3852). Take the newest of a full page
+            # instead, then prove it really is the staging head.
+            RUN=$(gh api \
+              "repos/$GH_REPO/actions/workflows/deploy.yml/runs?branch=staging&status=success&event=push&per_page=100" \
+              --jq '[.workflow_runs[]] | sort_by(.created_at) | last // empty')
+            RUN_ID=$(jq -r '.id // empty' <<<"$RUN")
+            RUN_SHA=$(jq -r '.head_sha // empty' <<<"$RUN")
 
-          if [ -z "$RUN_ID" ]; then
-            echo "Error: No successful staging deployment found to promote."
-            exit 1
+            if [ -z "$RUN_ID" ]; then
+              echo "::error::No successful staging deployment found to promote."
+              exit 1
+            fi
+
+            # The run must build the staging head. The only commits allowed
+            # after it are the post-promotion sync, which touches just the
+            # version-bump files (and, being pushed by GITHUB_TOKEN, never
+            # triggers a build of its own).
+            HEAD_SHA=$(gh api "repos/$GH_REPO/git/ref/heads/staging" --jq '.object.sha')
+            if [ "$RUN_SHA" != "$HEAD_SHA" ]; then
+              STATUS=$(gh api "repos/$GH_REPO/compare/$RUN_SHA...$HEAD_SHA" --jq '.status')
+              EXTRA=$(gh api "repos/$GH_REPO/compare/$RUN_SHA...$HEAD_SHA" \
+                --jq '[.files[].filename] - ["apps/web/package.json","apps/web/src/lib/config/index.ts","apps/web/src/service-worker.ts"] | .[]')
+              if [ "$STATUS" != "ahead" ] || [ -n "$EXTRA" ]; then
+                echo "::error::The newest successful staging run ($RUN_SHA) is not the staging head ($HEAD_SHA); staging has unbuilt changes. Wait for the staging deploy to succeed, or pass staging_run_id to promote a specific run."
+                exit 1
+              fi
+            fi
           fi
 
           COMMIT_SHA=$(gh run view "$RUN_ID" --json headSha --jq '.headSha')
@@ -121,6 +139,35 @@ jobs:
           check "/"
           check "/answers/how-do-you-run-a-heist-in-a-tabletop-rpg"
           check "/generators/heist"
+
+      # The smoke test above only proves the site answers. This proves it is
+      # serving the build that was promoted, not an older one (#3852).
+      - name: Verify production serves the promoted build
+        run: |
+          EXPECTED=$(jq -r .version dist/_app/version.json)
+          for attempt in 1 2 3 4 5 6; do
+            LIVE=$(curl -sS -m 20 "https://codexcryptica.com/_app/version.json?cb=$RANDOM" | jq -r .version 2>/dev/null || true)
+            if [ "$LIVE" = "$EXPECTED" ]; then
+              echo "Production serves build $LIVE"
+              exit 0
+            fi
+            echo "Attempt $attempt: production serves '$LIVE', expected '$EXPECTED'"
+            sleep 10
+          done
+          echo "::error::Production is not serving the promoted build (expected $EXPECTED, got $LIVE)"
+          exit 1
+
+      # merge-staging-to-main merges exactly this commit, not whatever staging
+      # has moved on to since.
+      - name: Record promoted commit
+        run: echo "${{ needs.find-staging-build.outputs.commit_sha }}" > promoted-sha.txt
+
+      - name: Upload promoted commit
+        uses: actions/upload-artifact@v7
+        with:
+          name: promoted-sha
+          path: promoted-sha.txt
+          retention-days: 7
 
       - name: Notify Search Indexes (IndexNow)
         if: success()

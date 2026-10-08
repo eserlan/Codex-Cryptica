@@ -68,7 +68,7 @@
 
   const TITLE = "Explore Codex Cryptica";
   const DESCRIPTION =
-    "Every section of Codex Cryptica in one place: features, worlds, examples, generators, tools, guides, and the campaign directory.";
+    "Every section of Codex Cryptica in one place: features, worlds, examples, generators, tools, topics, guides, and the campaign directory.";
 
   // A hand-picked label link is a genuine, indexable /explore destination.
   // A ?label= filter view is dynamic and thin by construction, so it stays

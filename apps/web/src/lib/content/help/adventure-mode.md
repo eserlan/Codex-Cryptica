@@ -30,3 +30,5 @@ Starting and continuing AI turns needs an available Oracle connection. Your stor
 session remains readable offline; a pending action can be retried after reconnecting.
 Opening Play checks for an active adventure in the current vault so you can continue
 that world’s session.
+
+Adventure Mode is now chosen from the Play page. Starting a solo session does not need it. See [Solo Sessions](/help#help/solo-session).

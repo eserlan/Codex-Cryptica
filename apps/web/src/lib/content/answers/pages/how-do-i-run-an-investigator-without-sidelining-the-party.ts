@@ -222,6 +222,11 @@ export const howDoIRunAnInvestigatorWithoutSideliningTheParty: AnswerConfigInput
             "The specialist spotlight answer covers scene structures for any expert role; this answer focuses on clue access, inference, and decision-making around an investigator character.",
         },
         {
+          with: "answer-run-bard-face-without-sidelining-party",
+          reason:
+            "Both answers keep a specialist character central without sidelining the party; the bard and face answer structures social access, negotiation and shared promises, while this answer focuses on clue discovery, interpretation and shared decisions in mysteries.",
+        },
+        {
           with: "answer-run-mystery-without-railroading",
           reason:
             "The mystery answer covers resilient scenario structure and clue redundancy; this answer focuses on sharing investigative work among PCs while keeping a detective character competent.",

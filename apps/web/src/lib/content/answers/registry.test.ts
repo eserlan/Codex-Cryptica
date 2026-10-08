@@ -51,6 +51,37 @@ const mockRegistry: Record<string, AnswerConfig> = {
 };
 
 describe("answer registry", () => {
+  it("records the bard answer's distinct scope from adjacent specialist answers", () => {
+    const overlaps = [
+      [
+        "how-do-i-run-a-bard-or-face-without-sidelining-the-party",
+        "answer-run-investigator-without-sidelining-party",
+      ],
+      [
+        "how-do-i-run-a-bard-or-face-without-sidelining-the-party",
+        "answer-fantasy-character-roles",
+      ],
+      [
+        "how-do-i-run-an-investigator-without-sidelining-the-party",
+        "answer-run-bard-face-without-sidelining-party",
+      ],
+      [
+        "how-do-i-run-common-character-roles-in-a-fantasy-rpg",
+        "answer-run-bard-face-without-sidelining-party",
+      ],
+    ] as const;
+
+    for (const [slug, relatedIntent] of overlaps) {
+      const answer = answers[slug];
+      expect(answer?.discovery?.acknowledgedOverlap).toContainEqual(
+        expect.objectContaining({
+          with: relatedIntent,
+          reason: expect.any(String),
+        }),
+      );
+    }
+  });
+
   it("cross-links combat engagement and combat pacing answers", () => {
     const engagement =
       answers[
@@ -70,6 +101,26 @@ describe("answer registry", () => {
         getDiscoveryEntries(),
       )?.id,
     ).toBe("answer-faster-exciting-combat");
+  });
+
+  it("describes the Session Prep Builder as hook-driven rather than vault-integrated", () => {
+    const answer = answers["how-do-i-organise-a-dnd-campaign"];
+    const builder = answer.relatedTools?.find(
+      (tool) => tool.href === "/tools/session-prep-builder",
+    );
+    const connection = answer.codexConnection?.paragraphs.join(" ") ?? "";
+
+    expect(builder?.description).toContain("Turn a hook or campaign situation");
+    expect(builder?.description).not.toMatch(
+      /pull(?:s)? .+ into one run sheet/i,
+    );
+    expect(connection).toContain("starts from your hook or situation");
+    expect(connection).toContain(
+      "does not automatically pull in linked Vault facts",
+    );
+    expect(connection).toContain(
+      "promote new facts back into the pages they belong to",
+    );
   });
 
   it("keeps the civilisation capability habits heading aligned with its items", () => {
@@ -437,6 +488,12 @@ describe("answer schema", () => {
 describe("published answers", () => {
   const published = getAllAnswers();
 
+  it("avoids banned synthetic phrasing in the D&D session-prep answer", () => {
+    const answer = answers["how-do-i-prepare-a-dnd-session"];
+
+    expect(JSON.stringify(answer)).not.toMatch(/\b(vital|leverage)\b/i);
+  });
+
   it("frames ruined-city routes as weighed trade-offs in the checklist", () => {
     const answer = answers["how-do-i-run-exploration-in-a-huge-ruined-city"];
     const checklist = answer.sections.find(
@@ -548,6 +605,18 @@ describe("published answers", () => {
     for (const answer of published) {
       expect(answer.relatedAnswers).not.toContain(answer.slug);
     }
+  });
+
+  it("does not duplicate the improvised NPC link on the broad NPC answer", () => {
+    const answer =
+      answers[
+        "how-do-i-handle-players-asking-an-npc-to-tell-us-everything-you-know"
+      ];
+
+    expect(answer.relatedAnswers).toContain("how-do-i-improvise-npcs-in-dnd");
+    expect(new Set(answer.relatedAnswers).size).toBe(
+      answer.relatedAnswers.length,
+    );
   });
 
   it("cross-links every answer to at least one other answer", () => {
@@ -718,7 +787,7 @@ describe("published answers", () => {
     // The pack's editorial rule (#2564). A curated list rather than a broad
     // `\w+ize` pattern, which flags legitimate words like "assize" and "sized".
     const americanisms =
-      /\b(?:organiz|recogniz|realiz|specializ|characteriz|apologiz|analyz|color|honor|behavior|rumor|favorite|neighbor|center|theater|catalog|gray|traveled|traveling|canceled|defense|offense|armor)\w*\b/i;
+      /\b(?:organiz|recogniz|realiz|specializ|characteriz|apologiz|analyz|color|honor|behavior|rumor|favorite|neighbor|center|theater|catalog(?!ue)|gray|traveled|traveling|canceled|defense|offense|armor)\w*\b/i;
     for (const answer of published) {
       const { discovery: _discovery, ...readerFacing } = answer;
       const body = JSON.stringify(readerFacing);
@@ -1081,6 +1150,27 @@ describe("published answers", () => {
 
   it("keeps the specialist spotlight answer in the checked-in discovery indexes", () => {
     const route = "/answers/how-do-i-give-specialist-characters-spotlight";
+    const staticLlms = readFileSync(
+      resolve(process.cwd(), "static/llms-full.txt"),
+      "utf8",
+    );
+    const rootLlms = readFileSync(
+      resolve(process.cwd(), "../../llms-full.txt"),
+      "utf8",
+    );
+    const sitemap = readFileSync(
+      resolve(process.cwd(), "static/sitemap.xml"),
+      "utf8",
+    );
+
+    expect(staticLlms).toContain(route);
+    expect(rootLlms).toContain(route);
+    expect(sitemap).toContain(`https://codexcryptica.com${route}`);
+  });
+
+  it("keeps the bard and face answer in the checked-in discovery indexes", () => {
+    const route =
+      "/answers/how-do-i-run-a-bard-or-face-without-sidelining-the-party";
     const staticLlms = readFileSync(
       resolve(process.cwd(), "static/llms-full.txt"),
       "utf8",

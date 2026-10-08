@@ -25,7 +25,8 @@ function controlIsOnScreen(
   previous?: GuidanceStep,
 ): boolean {
   const spec = CONTROL_CATALOGUE[target];
-  if (spec.area !== ctx.area) return false;
+  // "solo" controls sit on every screen, so only their flags and availability decide.
+  if (spec.area !== "solo" && spec.area !== ctx.area) return false;
   if (!controlFlagsAllow(spec, ctx)) return false;
   if (ctx.availableActions.includes(target)) return true;
   // A control inside a panel is reachable when the step before it opens that

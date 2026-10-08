@@ -26,6 +26,8 @@ export interface HelpContextSources {
   isSidebarOpen?: () => boolean;
   /** The sidebar panel that is open beside the screen, if any. */
   getActiveSidebarTool?: () => "oracle" | "explorer" | "shelf" | "none";
+  /** Whether a solo session is running in this vault. Facts only, no names. */
+  soloSession?: () => { active: boolean };
 }
 
 const ROUTE_AREAS: Record<string, HelpArea> = {
@@ -60,6 +62,23 @@ function mapFlagsFor(sources: HelpContextSources, area: HelpArea): string[] {
   return area === "map" && map ? vttFlagsFor(map.facts()) : [];
 }
 
+/** A side panel adds to the screen description instead of replacing the area. */
+function sidePanelFlags(sources: HelpContextSources): string[] {
+  const panel = sources.isSidebarOpen?.()
+    ? sources.getActiveSidebarTool?.()
+    : "none";
+  if (panel === "explorer") return ["explorer-open"];
+  if (panel === "shelf") return ["shelf-open"];
+  return [];
+}
+
+/** A solo session is a real vault state, so it is never reported to guests. */
+function soloFlags(sources: HelpContextSources): string[] {
+  return !sources.isGuestMode() && sources.soloSession?.().active
+    ? ["solo-session"]
+    : [];
+}
+
 function flagsFor(
   sources: HelpContextSources,
   surface: HelpSurfaceRegistry["entityDetail"],
@@ -69,12 +88,7 @@ function flagsFor(
   flags.push(...mapFlagsFor(sources, area));
   if (sources.generatorsAvailable()) flags.push("generators");
   if (surface?.canAddConnection()) flags.push("connections-editable");
-  // A side panel adds to the screen description instead of replacing the area.
-  const panel = sources.isSidebarOpen?.()
-    ? sources.getActiveSidebarTool?.()
-    : "none";
-  if (panel === "explorer") flags.push("explorer-open");
-  if (panel === "shelf") flags.push("shelf-open");
+  flags.push(...sidePanelFlags(sources), ...soloFlags(sources));
   return flags;
 }
 
@@ -104,6 +118,19 @@ function entityActionsFor(
   return actions;
 }
 
+/**
+ * The Play page offers a start while no session runs. While one runs, the bar's
+ * quick roll and End show on every screen.
+ */
+function soloActionsFor(sources: HelpContextSources): string[] {
+  if (sources.isGuestMode()) return [];
+  if (sources.soloSession?.().active)
+    return ["solo-quick-roll", "solo-end-session"];
+  return sources.getRouteId() === "/(app)/play"
+    ? ["play-start-solo-session"]
+    : [];
+}
+
 /** What is on screen and can be pointed at, by ID. The Add button lives on the Status tab. */
 function availableActionsFor(
   sources: HelpContextSources,
@@ -118,6 +145,7 @@ function availableActionsFor(
   if (!sources.isGuestMode()) actions.push(...SETTINGS_PANEL_IDS);
   if (!sources.isGuestMode() && sources.journalAvailable?.())
     actions.push("session-journal");
+  actions.push(...soloActionsFor(sources));
   return actions;
 }
 

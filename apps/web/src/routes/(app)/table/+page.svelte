@@ -810,7 +810,7 @@
               ></span>
               Add / remove labels
             </button>
-            {#if !vault.isGuest}
+            {#if !vault.isGuest && selectedVisible.length > 1}
               <button
                 type="button"
                 onclick={openBulkReport}

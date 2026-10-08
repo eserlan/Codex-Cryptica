@@ -172,6 +172,8 @@ export const howDoIGetMyRpgPartyToWorkTogether: AnswerConfigInput = {
     "how-do-you-run-character-roles-in-a-cyberpunk-rpg",
     "how-do-i-run-a-rogue-or-scout-without-splitting-the-party",
     "what-do-you-do-with-murder-hobos-in-an-rpg-campaign",
+    "how-do-i-start-a-dnd-campaign",
+    "how-do-i-run-a-bard-or-face-without-sidelining-the-party",
   ],
   discovery: {
     id: "answer-party-cohesion",

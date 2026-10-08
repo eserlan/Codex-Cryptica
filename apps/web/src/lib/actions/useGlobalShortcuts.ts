@@ -2,7 +2,7 @@ import { searchStore } from "$lib/stores/search.svelte";
 import { vault } from "$lib/stores/vault.svelte";
 import { oracle } from "$lib/stores/oracle.svelte";
 import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
-import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
+import { soloPlayGuard } from "$lib/stores/solo-session-instance";
 
 const isTypingTarget = (target: EventTarget | null) => {
   const element = target as HTMLElement | null;
@@ -66,7 +66,7 @@ export const createGlobalShortcutHandler = () => {
       key === "p" && !event.ctrlKey && !event.metaKey && !event.altKey;
 
     if (isSharedModeToggle) {
-      sessionModeStore.sharedMode = !sessionModeStore.sharedMode;
+      soloPlayGuard.toggleSharedMode();
     }
   };
 };

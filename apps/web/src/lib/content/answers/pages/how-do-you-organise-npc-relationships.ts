@@ -173,6 +173,8 @@ export const howDoYouOrganiseNpcRelationships: AnswerConfigInput = {
     "how-do-you-make-a-tabletop-rpg-session-more-engaging",
     "how-do-you-run-a-scene-with-multiple-npcs",
     "how-do-i-make-a-player-base-matter-in-an-rpg-campaign",
+    "how-do-i-organise-a-dnd-campaign",
+    "how-do-i-start-a-dnd-campaign",
   ],
   discovery: {
     id: "answer-npc-relationships",

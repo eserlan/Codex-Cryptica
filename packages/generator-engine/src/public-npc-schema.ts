@@ -122,6 +122,21 @@ export const LOCAL_RELATIONSHIP_HOOKS = [
   "Paying quiet monthly hush-money to a corrupt magistrate who knows their true lineage.",
 ] as const;
 
+export const LOCAL_KNOWLEDGE_SECRETS = [
+  "Knows the checkpoint inspection schedule by heart; has no idea it changed this morning; will not admit who tipped them off.",
+  "Knows which local officials accept bribes; is unaware their contact was detained; will not reveal who paid them without protection.",
+  "Knows the layout of the old service tunnels; assumes the sealed access door still works; conceals the code to a restricted room.",
+  "Knows which suppliers are near bankruptcy; is blind to a buyer switching sides; refuses to name their silent backer without immunity.",
+  "Knows how to falsify a travel permit; has not heard the permit system was updated; conceals who made their forged identity.",
+  "Knows how to make a fast-acting antidote; does not know who purchased the toxin; will never disclose the false identity they used elsewhere.",
+  "Knows which security officers can be bought; assumes the supervisor is incorruptible; conceals an unfiled order in their personal effects.",
+  "Knows the hidden passage behind a service counter; is unaware of the trap set in the adjoining corridor; refuses to reveal who paid for a private room.",
+  "Knows the safe courier route through the wetlands; knows nothing about the ambush at the crossing; will not speak of the debt they owe a local crew.",
+  "Knows who funds the underground press; assumes the investigators have left town; keeps silent about their own forged shipping papers.",
+  "Knows the signal used by local fences; is unaware their network was compromised last night; will not reveal their hidden stash of access tokens.",
+  "Knows the private vault combination at the customs office; does not suspect the guards doubled their shift; conceals the name of the clerk who sold the code.",
+] as const;
+
 function forTheme<T>(record: Record<string, T[]>, theme?: string): T[] {
   return (theme && record[theme]) || record["Classic Fantasy"] || [];
 }

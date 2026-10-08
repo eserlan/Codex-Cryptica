@@ -280,3 +280,15 @@
 **Learning:** Standalone utility functions that handle asynchronous waits or timeouts (like `waitFor` in `help-runtime.ts`) frequently rely on a hardcoded `Date.now()`. By injecting a `clock` parameter that defaults to `systemClock`, we maintain correct production functionality while exposing a clean seam for unit tests to control time progression deterministically.
 
 **Action:** When refactoring independent helper functions, append the `clock` dependency to the end of the argument list with a default value. In `waitFor`, compare elapsed time against `clock.now()` instead of `Date.now()`.
+
+## 2026-10-07 - Inject IdGenerator into CalendarEraSettings
+
+**Learning:** Svelte 5 components generating list items (like Calendar Eras) often hardcode `crypto.randomUUID()`. This makes testing deterministic ID generation difficult. Injecting `idGenerator` avoids Vitest global pollution and creates a clean test boundary.
+
+**Action:** Identified hardcoded `crypto.randomUUID()` in `CalendarEraSettings.svelte`. Used Svelte 5 `$props()` to inject an `idGenerator` with `systemIdGenerator` from `@codex/runtime` as the default.
+
+## 2024-10-07 - Injected Clock into Canvas Area Enhancement
+
+**Learning:** Extracted `Date.now()` into an injected `clock: Clock = systemClock` dependency in Svelte component hooks (`useCanvasAreaEnhancement`), avoiding hard-coded temporal state and making tests deterministic.
+
+**Action:** Look for `Date.now()` hidden in component hooks or metadata persistence logic, and inject a `Clock` parameter defaulting to `systemClock` from `@codex/runtime` (or `$lib/utils/runtime-deps`) to improve testability.

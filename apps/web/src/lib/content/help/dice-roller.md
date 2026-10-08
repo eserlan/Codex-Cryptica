@@ -53,3 +53,5 @@ Choose **Clear** to empty the history. It clears dice and table results together
 - During a [VTT session](/help#help/vtt-session), your rolls are shared with the session chat as you make them.
 - If you have a [Session Journal](/help#help/quicknote) running, your dice rolls are added to it automatically.
 - In the Oracle chat, `/roll 2d20kh1 + 5` rolls a formula without opening the roller. See [Chat Commands](/help#help/chat-commands).
+
+- In a solo session, the solo bar has a quick roll box. Type `d20` or `2d6+1` and press Enter. See [Solo Sessions](/help#help/solo-session).

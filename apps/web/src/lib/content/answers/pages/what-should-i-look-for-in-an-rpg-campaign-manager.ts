@@ -149,6 +149,7 @@ export const whatShouldILookForInAnRpgCampaignManager: AnswerConfigInput = {
     "what-rpg-system-should-we-try-instead-of-dnd",
     "how-do-you-keep-track-of-time-in-a-tabletop-campaign",
     "how-do-i-organise-gm-notes-for-in-person-play",
+    "how-do-i-organise-a-dnd-campaign",
   ],
   discovery: {
     id: "answer-campaign-manager-criteria",

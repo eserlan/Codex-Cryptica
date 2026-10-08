@@ -43,9 +43,14 @@ describe("GraphReportAction", () => {
     expect(screen.queryByTestId("graph-generate-report")).toBeNull();
   });
 
+  it("is hidden for a single selected node", () => {
+    render(GraphReportAction, { props: { cy: fakeCy(["a"]) } });
+    expect(screen.queryByTestId("graph-generate-report")).toBeNull();
+  });
+
   it("is hidden for a guest", () => {
     vaultState.isGuest = true;
-    render(GraphReportAction, { props: { cy: fakeCy(["a"]) } });
+    render(GraphReportAction, { props: { cy: fakeCy(["a", "b"]) } });
     expect(screen.queryByTestId("graph-generate-report")).toBeNull();
   });
 });

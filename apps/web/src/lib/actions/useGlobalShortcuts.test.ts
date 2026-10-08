@@ -37,6 +37,7 @@ import { vault } from "$lib/stores/vault.svelte";
 import { oracle } from "$lib/stores/oracle.svelte";
 import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
 import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
+import { soloSessionStore } from "$lib/stores/solo-session-instance";
 
 describe("createGlobalShortcutHandler", () => {
   let handler: ReturnType<typeof createGlobalShortcutHandler>;
@@ -136,5 +137,20 @@ describe("createGlobalShortcutHandler", () => {
 
     expect(sessionModeStore.sharedMode).toBe(false);
     input.remove();
+  });
+});
+
+describe("shared play during a solo session", () => {
+  it("does not turn shared mode on with 'p' while a solo session runs", () => {
+    const active = vi
+      .spyOn(soloSessionStore, "isActive", "get")
+      .mockReturnValue(true);
+    sessionModeStore.sharedMode = false;
+    const handler = createGlobalShortcutHandler();
+
+    handler(new KeyboardEvent("keydown", { key: "p" }));
+
+    expect(sessionModeStore.sharedMode).toBe(false);
+    active.mockRestore();
   });
 });

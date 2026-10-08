@@ -214,7 +214,7 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
     id: "getting-started",
     title: "New here?",
     content:
-      "Settings → Help has a getting-started checklist, and a button to replay the welcome tour any time.",
+      "Open Explore from the app footer or mobile menu to find your way around. Browse by Topic groups guides, worked examples, and tools for campaigns like heists, puzzles, pirates, and D&D. Settings → Help has a getting-started checklist, and a button to replay the welcome tour any time.",
     icon: "icon-[lucide--compass]",
   },
   "guided-mode-quick-start": {

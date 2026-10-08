@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { validateAction } from "../src/actions/validate";
 import {
   HELP_CONTEXT_KEYS,
   HelpContextSchema,
@@ -205,5 +206,107 @@ describe("sanitizeHelpContext", () => {
 
   it("never produces the reserved public surface for an unknown value", () => {
     expect(sanitizeHelpContext({ surface: "admin" }).surface).toBe("vault");
+  });
+});
+
+describe("solo session context (Start Solo Session)", () => {
+  const playPage = {
+    v: 1,
+    routeTemplate: "/(app)/play",
+    area: "other",
+    entityKind: null,
+    tab: null,
+    mode: "view",
+    surface: "vault",
+    flags: [],
+    availableActions: ["play-start-solo-session"],
+  };
+
+  it("accepts the Play page with its start control", () => {
+    expect(parseHelpContext(playPage).ok).toBe(true);
+  });
+
+  it("accepts the solo flag with the bar controls", () => {
+    expect(
+      parseHelpContext({
+        ...playPage,
+        routeTemplate: "/(app)/map",
+        area: "map",
+        flags: ["solo-session"],
+        availableActions: ["solo-quick-roll", "solo-end-session"],
+      }).ok,
+    ).toBe(true);
+  });
+
+  it("rejects an unknown route template", () => {
+    expect(
+      parseHelpContext({ ...playPage, routeTemplate: "/(app)/play/extra" }).ok,
+    ).toBe(false);
+  });
+});
+
+describe("solo controls in guidance (highlight)", () => {
+  const ctx = (over: Record<string, unknown>) =>
+    sanitizeHelpContext({
+      routeTemplate: "/(app)/map",
+      area: "map",
+      flags: [],
+      availableActions: [],
+      ...over,
+    });
+  const deps = { helpIds: new Set<string>() };
+
+  it("points at the quick roll on any screen while the solo flag is on", () => {
+    const action = validateAction(
+      { type: "highlight", target: "solo-quick-roll", label: "Quick roll" },
+      ctx({
+        routeTemplate: "/(app)",
+        area: "graph",
+        flags: ["solo-session"],
+        availableActions: ["solo-quick-roll"],
+      }),
+      deps,
+    );
+    expect(action).not.toBeNull();
+  });
+
+  it("refuses the quick roll when no solo session is running", () => {
+    expect(
+      validateAction(
+        { type: "highlight", target: "solo-quick-roll", label: "Quick roll" },
+        ctx({ flags: [], availableActions: ["solo-quick-roll"] }),
+        deps,
+      ),
+    ).toBeNull();
+  });
+
+  it("points at the Play start control only when the screen reports it", () => {
+    const onPlay = ctx({
+      routeTemplate: "/(app)/play",
+      area: "other",
+      availableActions: ["play-start-solo-session"],
+    });
+    expect(
+      validateAction(
+        {
+          type: "highlight",
+          target: "play-start-solo-session",
+          label: "Start",
+        },
+        onPlay,
+        deps,
+      ),
+    ).not.toBeNull();
+    expect(
+      validateAction(
+        {
+          type: "highlight",
+          target: "play-start-solo-session",
+          label: "Start",
+        },
+        ctx({ routeTemplate: "/(app)/map", area: "map", availableActions: [] }),
+        deps,
+      ),
+    ).toBeNull();
   });
 });
