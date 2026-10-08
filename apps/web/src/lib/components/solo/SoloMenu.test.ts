@@ -19,6 +19,31 @@ describe("SoloMenu", () => {
     expect(screen.getByTestId("solo-menu-panel")).toBeTruthy();
   });
 
+  it("opens below a trigger near the top of the screen, so it is not clipped", async () => {
+    render(SoloMenuHarness, {
+      props: { label: "Recent", testId: "solo-recent" },
+    });
+    const trigger = screen.getByTestId("solo-recent");
+    trigger.getBoundingClientRect = () => ({ top: 60 }) as DOMRect;
+    await fireEvent.click(trigger);
+    expect(screen.getByTestId("solo-menu-panel").className).toContain(
+      "top-full",
+    );
+  });
+
+  it("opens above a trigger in the lower half of the screen, as on the phone sheet", async () => {
+    render(SoloMenuHarness, {
+      props: { label: "Recent", testId: "solo-recent" },
+    });
+    const trigger = screen.getByTestId("solo-recent");
+    trigger.getBoundingClientRect = () =>
+      ({ top: window.innerHeight - 80 }) as DOMRect;
+    await fireEvent.click(trigger);
+    expect(screen.getByTestId("solo-menu-panel").className).toContain(
+      "bottom-full",
+    );
+  });
+
   it("closes on a second click", async () => {
     render(SoloMenuHarness, {
       props: { label: "Recent", testId: "solo-recent" },

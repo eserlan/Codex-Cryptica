@@ -60,7 +60,9 @@ describe("SoloSceneMenu", () => {
   it("Open shows that scene's section in the journal", async () => {
     render(SoloSceneMenu);
     await openMenu();
-    await fireEvent.click(screen.getAllByRole("button", { name: /^Open/ })[0]);
+    await fireEvent.click(
+      screen.getAllByRole("menuitem", { name: /^Open/ })[0],
+    );
     expect(env.openJournal).toHaveBeenCalledWith({ sectionId: "s1" });
   });
 
@@ -68,7 +70,7 @@ describe("SoloSceneMenu", () => {
     render(SoloSceneMenu);
     await openMenu();
     await fireEvent.click(
-      screen.getAllByRole("button", { name: /Return to scene/ })[0],
+      screen.getAllByRole("menuitem", { name: /Return to scene/ })[0],
     );
     expect(env.returnToScene).toHaveBeenCalledWith(0);
   });

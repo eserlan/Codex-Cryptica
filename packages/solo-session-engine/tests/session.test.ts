@@ -206,4 +206,27 @@ describe("scenes (Solo Play Loop, FR-022 to FR-024)", () => {
     expect(nextVisitName(withVisit, 2)).toBe("Arrival (3)");
     expect(nextVisitName(scenes, 9)).toBeNull();
   });
+
+  it("keeps a visit name within the scene name limit, even for a name at the limit", () => {
+    const longName = "A".repeat(80);
+    const scenes = [scene(longName)];
+    const visit = nextVisitName(scenes, 0);
+    expect(visit).not.toBeNull();
+    expect(visit!.length).toBeLessThanOrEqual(80);
+    expect(visit!.endsWith(" (2)")).toBe(true);
+    // A stored record with the visit is still valid, so returning to it works.
+    const stored = {
+      ...valid,
+      sceneName: visit,
+      sceneSectionId: "sec2",
+      scenes: [
+        { name: longName, sectionId: "sec1" },
+        { name: visit, sectionId: "sec2" },
+      ],
+    };
+    expect(parseSoloSession(stored, "v1")).not.toBeNull();
+    const again = nextVisitName([...scenes, scene(visit!)], 0);
+    expect(again!.length).toBeLessThanOrEqual(80);
+    expect(again!.endsWith(" (3)")).toBe(true);
+  });
 });

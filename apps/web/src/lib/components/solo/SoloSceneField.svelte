@@ -10,6 +10,12 @@
     draft = current;
   });
 
+  // A new scene is only ever a different name: the same name is a visit,
+  // which the scene list starts from the list itself.
+  const canStartNew = $derived(
+    draft.trim().length > 0 && draft.trim() !== current,
+  );
+
   function confirm() {
     const name = draft.trim();
     if (!name) return;
@@ -18,6 +24,11 @@
     } else {
       void soloSessionStore.setScene(name);
     }
+  }
+
+  function startNew() {
+    if (!canStartNew) return;
+    void soloSessionStore.setScene(draft.trim());
   }
 
   function onKeydown(event: KeyboardEvent) {
@@ -49,14 +60,14 @@
     >
       Rename
     </button>
-  {:else}
-    <button
-      type="button"
-      class="rounded-md px-2 py-1 text-sm text-theme-text hover:text-theme-primary"
-      data-testid="solo-scene-new"
-      onclick={confirm}
-    >
-      New scene
-    </button>
   {/if}
+  <button
+    type="button"
+    class="rounded-md px-2 py-1 text-sm text-theme-text hover:text-theme-primary disabled:opacity-40 disabled:hover:text-theme-text"
+    data-testid="solo-scene-new"
+    disabled={!canStartNew}
+    onclick={startNew}
+  >
+    New scene
+  </button>
 </div>

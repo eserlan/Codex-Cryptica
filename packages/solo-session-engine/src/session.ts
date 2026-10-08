@@ -160,10 +160,14 @@ export function withCurrentSceneRenamed(
 }
 
 const VISIT_SUFFIX = /^(.*?) \((\d+)\)$/;
+// Room for the longest visit suffix (" (100)"), so a visit to a name at the
+// length limit still groups with the scene it was made from.
+const VISIT_KEY_LENGTH = MAX_SCENE - 6;
 
 /**
  * The name for a new visit to a scene: "Arrival" becomes "Arrival (2)", and
- * a further visit "Arrival (3)". Null when the index is out of range.
+ * a further visit "Arrival (3)". The base is cut so the name stays within the
+ * scene name limit. Null when the index is out of range.
  */
 export function nextVisitName(
   scenes: readonly SoloScene[],
@@ -171,18 +175,23 @@ export function nextVisitName(
 ): string | null {
   const target = scenes[index];
   if (!target) return null;
-  const base = baseName(target.name);
+  const key = visitKey(target.name);
   let highest = 1;
   for (const scene of scenes) {
-    if (baseName(scene.name) !== base) continue;
+    if (visitKey(scene.name) !== key) continue;
     highest = Math.max(highest, visitNumber(scene.name));
   }
-  return `${base} (${highest + 1})`;
+  const suffix = ` (${highest + 1})`;
+  return `${baseName(target.name).slice(0, MAX_SCENE - suffix.length)}${suffix}`;
 }
 
 function baseName(name: string): string {
   const match = VISIT_SUFFIX.exec(name);
   return match ? match[1] : name;
+}
+
+function visitKey(name: string): string {
+  return baseName(name).slice(0, VISIT_KEY_LENGTH);
 }
 
 function visitNumber(name: string): number {

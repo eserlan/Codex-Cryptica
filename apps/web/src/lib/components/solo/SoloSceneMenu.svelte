@@ -34,6 +34,7 @@
             >
               <button
                 type="button"
+                role="menuitem"
                 class="text-theme-primary"
                 aria-label={`Open ${scene.name} in the journal`}
                 onclick={() => open(scene.sectionId)}
@@ -43,6 +44,7 @@
               {#if index !== currentIndex}
                 <button
                   type="button"
+                  role="menuitem"
                   class="text-theme-muted hover:text-theme-primary"
                   aria-label={`Return to scene: ${scene.name}`}
                   onclick={() => void soloSessionStore.returnToScene(index)}
