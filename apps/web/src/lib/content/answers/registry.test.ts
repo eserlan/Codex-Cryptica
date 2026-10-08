@@ -141,6 +141,39 @@ describe("answer registry", () => {
     );
   });
 
+  it("describes Ready and Dodge without overstating their 2024 rules", () => {
+    const answer = answers["what-can-i-do-on-my-turn-in-dnd-combat"];
+    const options = answer.sections.find(
+      (section) =>
+        section.kind === "list" &&
+        section.heading === "You do not have to attack every turn",
+    );
+    const ready =
+      options?.kind === "list"
+        ? options.items.find(
+            (item) => item.term === "Control what the enemies can see or reach",
+          )
+        : undefined;
+    const example = answer.sections.find(
+      (section) =>
+        section.kind === "example" &&
+        section.heading ===
+          "Worked example: the same round, two levels of preparation",
+    );
+    const menuDriven =
+      example?.kind === "example"
+        ? example.items?.find((item) => item.term === "The menu-driven version")
+        : undefined;
+
+    expect(ready?.text).toContain(
+      "you can use your reaction to respond; you can also ignore the trigger",
+    );
+    expect(ready?.text).not.toContain(
+      "spend your reaction to respond or ignore it",
+    );
+    expect(menuDriven?.text).toContain("if the fighter can see the attacker");
+  });
+
   it("records the character-sheet answer's distinct scope from combat turns", () => {
     const answer = answers["how-do-i-read-a-dnd-character-sheet-as-a-beginner"];
 
