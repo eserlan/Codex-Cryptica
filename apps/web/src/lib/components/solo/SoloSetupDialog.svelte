@@ -3,14 +3,17 @@
   import { soloSessionStore } from "$lib/stores/solo-session-instance";
 
   type MapChoice = { id: string; name: string };
+  type CharacterChoice = { id: string; name: string };
 
   let {
     maps,
+    characters = [],
     defaultMapId,
     journalState,
     onclose,
   }: {
     maps: MapChoice[];
+    characters?: CharacterChoice[];
     defaultMapId: string | null;
     journalState: "start" | "open" | "resume";
     onclose: () => void;
@@ -21,6 +24,7 @@
   const mapChoice = $derived(picked ?? defaultMapId ?? "");
   let withJournal = $state(true);
   let error = $state<string | null>(null);
+  let party = $state<string[]>([]);
   let busy = $state(false);
 
   const journalLabel = $derived(
@@ -36,6 +40,7 @@
       await soloSessionStore.start({
         mapId: mapChoice === "" ? null : mapChoice,
         journal: withJournal,
+        ...(party.length > 0 ? { partyIds: party } : {}),
       });
       onclose();
     } catch (err) {
@@ -90,6 +95,29 @@
       {/each}
       <option value="">No map</option>
     </select>
+
+    {#if characters.length > 0}
+      <fieldset class="mt-4">
+        <legend class="text-sm text-theme-text">Party (optional)</legend>
+        <div class="mt-1 flex flex-col gap-1">
+          {#each characters as character (character.id)}
+            <label class="flex items-center gap-2 text-sm text-theme-text">
+              <input
+                type="checkbox"
+                checked={party.includes(character.id)}
+                onchange={(event) => {
+                  const on = event.currentTarget.checked;
+                  party = on
+                    ? [...party, character.id]
+                    : party.filter((id) => id !== character.id);
+                }}
+              />
+              {character.name}
+            </label>
+          {/each}
+        </div>
+      </fieldset>
+    {/if}
 
     <label class="mt-4 flex items-center gap-2 text-sm text-theme-text">
       <input

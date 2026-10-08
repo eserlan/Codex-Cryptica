@@ -63,6 +63,8 @@ function build(
     mapIds?: string[];
     isGuest?: boolean;
     isSharedPlayOn?: boolean;
+    characters?: { id: string; name: string }[];
+    publishCapture?: (payload: unknown) => void;
   } = {},
 ) {
   const storage = opts.storage ?? memoryStorage();
@@ -85,6 +87,12 @@ function build(
     navigate,
     isGuest: () => opts.isGuest ?? false,
     isSharedPlayOn: () => opts.isSharedPlayOn ?? false,
+    characters: () =>
+      opts.characters ?? [
+        { id: "kael", name: "Kael" },
+        { id: "ivo", name: "Brother Ivo" },
+      ],
+    publishCapture: opts.publishCapture ?? (() => {}),
     notify,
   };
   const store = new SoloSessionStore(deps);
@@ -488,5 +496,114 @@ describe("end", () => {
     expect(store.journalRunning).toBe(true);
     journal.current!.status = "ended";
     expect(store.journalRunning).toBe(false);
+  });
+});
+
+describe("party", () => {
+  it("saves the party and keeps it across a reload", async () => {
+    const storage = memoryStorage();
+    const { store } = build({ storage });
+    await store.start({ mapId: null, journal: false });
+    await store.setParty(["kael", "ivo"]);
+    expect(store.party.map((m) => m.id)).toEqual(["kael", "ivo"]);
+    const reloaded = build({ storage });
+    expect(reloaded.store.session?.partyIds).toEqual(["kael", "ivo"]);
+  });
+
+  it("journals joins and leaves while a journal runs", async () => {
+    const publishCapture = vi.fn();
+    const { store } = build({ publishCapture });
+    await store.start({ mapId: null, journal: true });
+    await store.setParty(["kael"]);
+    await store.setParty(["kael", "ivo"]);
+    await store.setParty(["ivo"]);
+    const contents = publishCapture.mock.calls.map((c) => c[0].content);
+    expect(contents[0]).toBe("Party: Kael joined.");
+    expect(contents[1]).toBe("Party: Brother Ivo joined.");
+    expect(contents[2]).toBe("Party: Kael left.");
+  });
+
+  it("publishes nothing when the party did not change, or when no journal runs", async () => {
+    const publishCapture = vi.fn();
+    const { store } = build({ publishCapture });
+    await store.start({ mapId: null, journal: false });
+    await store.setParty(["kael"]);
+    expect(publishCapture).not.toHaveBeenCalled();
+
+    const journaledCapture = vi.fn();
+    const journaled = build({ publishCapture: journaledCapture });
+    await journaled.store.start({ mapId: null, journal: true });
+    await journaled.store.setParty(["kael"]);
+    await journaled.store.setParty(["kael"]);
+    expect(journaledCapture).toHaveBeenCalledTimes(1);
+  });
+
+  it("resolves names and drops members no longer in the vault", async () => {
+    const { store } = build({ characters: [{ id: "kael", name: "Kael" }] });
+    await store.start({ mapId: null, journal: false });
+    await store.setParty(["kael", "gone"]);
+    expect(store.party).toEqual([{ id: "kael", name: "Kael" }]);
+  });
+
+  it("keeps each vault's party separate", async () => {
+    const storage = memoryStorage();
+    const first = build({ storage, vaultId: "v1" });
+    await first.store.start({ mapId: null, journal: false });
+    await first.store.setParty(["kael"]);
+    const second = build({ storage, vaultId: "v2" });
+    expect(second.store.session).toBeNull();
+    expect(first.store.session?.partyIds).toEqual(["kael"]);
+  });
+});
+
+describe("scene history", () => {
+  it("setScene appends each scene in order", async () => {
+    const { store } = build();
+    await store.start({ mapId: null, journal: false });
+    await store.setScene("Arrival");
+    await store.setScene("The crypt");
+    expect(store.scenes.map((s) => s.name)).toEqual(["Arrival", "The crypt"]);
+  });
+
+  it("renameScene renames only the current scene", async () => {
+    const { store } = build();
+    await store.start({ mapId: null, journal: false });
+    await store.setScene("Arrival");
+    await store.setScene("The crypt");
+    await store.renameScene("The tomb");
+    expect(store.scenes.map((s) => s.name)).toEqual(["Arrival", "The tomb"]);
+  });
+
+  it("returnToScene starts a numbered visit in a new section and leaves earlier sections alone", async () => {
+    const { store, journal } = build();
+    await store.start({ mapId: null, journal: true });
+    await store.setScene("Arrival");
+    await store.setScene("Crypt");
+    const earlierSection = store.session?.scenes[0].sectionId;
+
+    const ok = await store.returnToScene(0);
+
+    expect(ok).toBe(true);
+    expect(journal.createSection).toHaveBeenLastCalledWith("Arrival (2)");
+    expect(store.scenes.map((s) => s.name)).toEqual([
+      "Arrival",
+      "Crypt",
+      "Arrival (2)",
+    ]);
+    expect(store.scenes[0].sectionId).toBe(earlierSection);
+    expect(store.session?.sceneName).toBe("Arrival (2)");
+  });
+
+  it("returnToScene with an index out of range does nothing", async () => {
+    const { store, journal } = build();
+    await store.start({ mapId: null, journal: true });
+    await store.setScene("Arrival");
+    const createSection = journal.createSection as unknown as {
+      mock: { calls: unknown[] };
+    };
+    const calls = createSection.mock.calls.length;
+    expect(await store.returnToScene(7)).toBe(false);
+    expect(createSection.mock.calls.length).toBe(calls);
+    expect(store.scenes.map((s) => s.name)).toEqual(["Arrival"]);
   });
 });

@@ -12,11 +12,22 @@
     ORACLE_CHAT_INPUT_EVENT,
     getOracleChatDraft,
     clearOracleChatDraft,
+    takeOraclePrefill,
   } from "./oracle-chat-input";
 
   let { onOpenSettings } = $props<{ onOpenSettings?: () => void }>();
 
   let input = $state("");
+
+  // A solo shortcut prefills the question here; the player edits and sends it.
+  $effect(() => {
+    if (!oracle.ui.pendingPrompt) return;
+    const prompt = takeOraclePrefill(oracle.ui);
+    if (prompt) {
+      input = prompt;
+      void tick().then(() => textArea?.focus());
+    }
+  });
   let scrollContainer = $state<HTMLDivElement>();
   let textArea = $state<HTMLTextAreaElement>();
   let commandMenu = $state<ReturnType<typeof CommandMenu>>();

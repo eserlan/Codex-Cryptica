@@ -1,10 +1,13 @@
 import { base } from "$app/paths";
+import { appEventBus } from "@codex/events";
+import { JOURNAL_EVENTS } from "session-journal-engine";
 import { goto } from "$app/navigation";
 import {
   browserStorage,
   systemClock,
   systemIdGenerator,
 } from "$lib/utils/runtime-deps";
+import { characterChoices } from "$lib/services/solo-characters";
 import { vault } from "./vault.svelte";
 import { vaultRegistry } from "./vault-registry.svelte";
 import { mapStore } from "./map.svelte";
@@ -15,6 +18,10 @@ import { notificationStore } from "./ui/notification.svelte";
 import { isSharedPlayOn } from "./ui/shared-play-state";
 import { createSoloPlayGuard } from "./ui/solo-play-guard";
 import { SoloSessionStore } from "./solo-session.svelte";
+import { createDraftOnlyPromoter } from "./session-journal-promoter";
+import { SoloTablePinsStore } from "./solo-table-pins.svelte";
+import { randomSources } from "$lib/features/random";
+import { vaultRegistry as registry } from "./vault-registry.svelte";
 
 /** Production wiring. Tests build their own stores with fakes instead. */
 export const soloSessionStore = new SoloSessionStore({
@@ -56,6 +63,15 @@ export const soloSessionStore = new SoloSessionStore({
   isGuest: () => sessionModeStore.isGuestMode || vault.isGuest,
   isSharedPlayOn: () => isSharedPlayOn(),
   notify: (message) => notificationStore.notify(message, "info"),
+  characters: () => characterChoices(vault.entities),
+  publishCapture: (payload) => {
+    appEventBus.emit({
+      type: JOURNAL_EVENTS.CAPTURE,
+      domain: "journal",
+      payload,
+      metadata: { timestamp: systemClock.now() },
+    });
+  },
 });
 
 /** Production guard. Call sites use these, never sessionModeStore.sharedMode directly. */
@@ -68,4 +84,20 @@ export const soloPlayGuard = createSoloPlayGuard({
   },
   openShare: () => modalUIStore.openShare(),
   notify: (message) => notificationStore.notify(message, "info"),
+});
+
+/**
+ * Saves a journal result as a draft from the solo bar. Stays on the current
+ * screen (FR-002): no entity panel opens and the scratchpad is not closed.
+ */
+export const soloPromoter = createDraftOnlyPromoter({
+  createEntity: (type, title, data) => vault.createEntity(type, title, data),
+  notify: (message) => notificationStore.notify(message, "success"),
+});
+
+/** Pinned random tables on the solo bar (per vault, on this device). */
+export const soloTablePins = new SoloTablePinsStore({
+  storage: browserStorage,
+  vaultId: () => registry.activeVaultId,
+  tableIds: () => randomSources.tables.map((table) => table.id),
 });

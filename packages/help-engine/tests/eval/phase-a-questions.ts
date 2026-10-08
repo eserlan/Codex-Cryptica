@@ -355,6 +355,26 @@ export const PHASE_A_IN_SCOPE: InScopeQuestion[] = [
   q("generators", "holdout", "none", "Can I generate a festival?", [
     "generator:holiday",
   ]),
+  // Solo play loop (Solo Play Loop): saving, generating, tables, party, scenes
+  q("solo", "tune", "none", "How do I save an NPC I made up during play?", [
+    "solo-session",
+  ]),
+  q(
+    "solo",
+    "holdout",
+    "none",
+    "How do I roll my own table in a solo session?",
+    ["solo-session"],
+  ),
+  q("solo", "holdout", "none", "How do I add characters to my party?", [
+    "solo-session",
+  ]),
+  q("solo", "holdout", "none", "Can I go back to an earlier scene?", [
+    "solo-session",
+  ]),
+  q("solo", "holdout", "none", "How do I generate a rumour while playing?", [
+    "solo-session",
+  ]),
   // Solo sessions (Play page, solo bar)
   q("solo", "tune", "none", "How do I play solo?", ["solo-session"]),
   q("solo", "tune", "none", "How do I start a solo session?", ["solo-session"]),

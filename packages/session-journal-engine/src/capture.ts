@@ -274,3 +274,65 @@ export function captureToEntryInput(
     return { ok: false, error: "That could not be recorded." };
   }
 }
+
+/**
+ * A generator result the player saw, recorded when it is generated (Solo Play
+ * Loop, FR-008). `generatorId` is kept in `sourceRef` for Cif and filtering.
+ */
+export function formatGeneratedResult(input: {
+  generatorId: string;
+  title: string;
+  summary?: string;
+}): JournalCapturePayload {
+  const kind = GENERATOR_LABEL[input.generatorId] ?? input.generatorId;
+  const title = input.title.trim();
+  const summary = input.summary?.trim();
+  // A blank title gives empty content, which captureToEntryInput rejects.
+  const content = title
+    ? summary
+      ? `Generated ${kind}: ${title} — ${summary}`
+      : `Generated ${kind}: ${title}`
+    : "";
+  return {
+    entryType: "generated-result",
+    content: content.slice(0, GENERATED_RESULT_LIMIT),
+    sourceRef: { generatorId: input.generatorId },
+  };
+}
+
+/** The follow-up entry written when a generated result is saved to the Vault. */
+export function formatGeneratedSaved(input: {
+  title: string;
+  category: string;
+}): JournalCapturePayload {
+  return {
+    entryType: "generated-saved",
+    content: `Saved ${input.title.trim()} to the Vault as a ${capitalise(input.category)}.`,
+  };
+}
+
+/** A change to the solo party, recorded while a journal runs. */
+export function formatPartyChange(input: {
+  joined: string[];
+  left: string[];
+}): JournalCapturePayload | null {
+  const parts: string[] = [];
+  if (input.joined.length > 0) parts.push(`${input.joined.join(", ")} joined.`);
+  if (input.left.length > 0) parts.push(`${input.left.join(", ")} left.`);
+  if (parts.length === 0) return null;
+  return { entryType: "party-change", content: `Party: ${parts.join(" ")}` };
+}
+
+/** Characters kept from a generated result's one-line content (data-model.md). */
+const GENERATED_RESULT_LIMIT = 280;
+
+const GENERATOR_LABEL: Record<string, string> = {
+  npc: "NPC",
+  encounter: "Encounter",
+  rumour: "Rumour",
+  "plot-twist": "Complication",
+};
+
+function capitalise(word: string): string {
+  return word.charAt(0).toUpperCase() + word.slice(1);
+}

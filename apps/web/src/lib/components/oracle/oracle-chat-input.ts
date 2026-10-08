@@ -27,3 +27,13 @@ export function addToOracleChatInput(text: string): boolean {
   window.dispatchEvent(event);
   return true;
 }
+
+/**
+ * Takes a shortcut prompt waiting on the Oracle UI, once. It only fills the
+ * input: the player still edits it and presses Send (Solo Play Loop, FR-019).
+ */
+export function takeOraclePrefill(ui: {
+  takePendingPrompt(): string | null;
+}): string | null {
+  return ui.takePendingPrompt();
+}

@@ -9,6 +9,7 @@
   import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
   import { sessionJournalStore } from "$lib/stores/session-journal.svelte";
   import { vault } from "$lib/stores/vault.svelte";
+  import { characterChoices } from "$lib/services/solo-characters";
 
   let setupOpen = $state(false);
 
@@ -18,6 +19,7 @@
     Object.values(vault.maps ?? {}).map((m) => ({ id: m.id, name: m.name })),
   );
   const journalState = $derived(sessionJournalStore.controlState);
+  const characters = $derived(characterChoices(vault.entities));
 </script>
 
 <svelte:head>
@@ -102,6 +104,7 @@
 {#if setupOpen}
   <SoloSetupDialog
     {maps}
+    {characters}
     defaultMapId={soloSessionStore.defaultMapId()}
     {journalState}
     onclose={() => (setupOpen = false)}

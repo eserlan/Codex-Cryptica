@@ -12,6 +12,11 @@ vi.mock("$lib/stores/solo-session-instance", () => instance);
 
 import SoloSetupDialog from "./SoloSetupDialog.svelte";
 
+const characters = [
+  { id: "kael", name: "Kael" },
+  { id: "ivo", name: "Brother Ivo" },
+];
+
 const maps = [
   { id: "m1", name: "Greyhollow" },
   { id: "m2", name: "The Marsh" },
@@ -25,6 +30,7 @@ beforeEach(() => {
 function renderDialog(
   props: Partial<{
     maps: typeof maps;
+    characters: typeof characters;
     defaultMapId: string | null;
     journalState: "start" | "open" | "resume";
   }> = {},
@@ -33,6 +39,7 @@ function renderDialog(
   render(SoloSetupDialog, {
     props: {
       maps,
+      characters,
       defaultMapId: "m2",
       journalState: "start",
       onclose,
@@ -127,5 +134,37 @@ describe("SoloSetupDialog", () => {
     const { onclose } = renderDialog();
     await fireEvent.keyDown(window, { key: "Escape" });
     expect(onclose).toHaveBeenCalled();
+  });
+
+  it("offers an optional party picker of Character entities", () => {
+    renderDialog();
+    expect(screen.getByRole("checkbox", { name: "Kael" })).toBeTruthy();
+    expect(screen.getByRole("checkbox", { name: "Brother Ivo" })).toBeTruthy();
+    expect(
+      (screen.getByRole("checkbox", { name: "Kael" }) as HTMLInputElement)
+        .checked,
+    ).toBe(false);
+  });
+
+  it("starts with the chosen party", async () => {
+    renderDialog({ defaultMapId: null });
+    await fireEvent.click(screen.getByRole("checkbox", { name: "Kael" }));
+    await fireEvent.click(screen.getByTestId("solo-setup-start"));
+    await waitFor(() =>
+      expect(instance.soloSessionStore.start).toHaveBeenCalledWith(
+        expect.objectContaining({ partyIds: ["kael"] }),
+      ),
+    );
+  });
+
+  it("starts with no party when none is chosen", async () => {
+    renderDialog({ defaultMapId: null });
+    await fireEvent.click(screen.getByTestId("solo-setup-start"));
+    await waitFor(() =>
+      expect(instance.soloSessionStore.start).toHaveBeenCalled(),
+    );
+    expect(instance.soloSessionStore.start.mock.calls[0][0]).not.toHaveProperty(
+      "partyIds",
+    );
   });
 });

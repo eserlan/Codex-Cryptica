@@ -148,4 +148,29 @@ describe("no direct shared-play writes outside the guard", () => {
       .filter((f) => !allowed.includes(f));
     expect(offenders).toEqual([]);
   });
+
+  describe("solo play loop stays on this device (FR-027, SC-005)", () => {
+    const NETWORK = /\b(fetch\(|sendBeacon|XMLHttpRequest|WebSocket)/;
+    const solo = files
+      .map(rel)
+      .filter(
+        (f) =>
+          f.startsWith("lib/components/solo/") ||
+          /^lib\/stores\/solo-/.test(f) ||
+          f === "lib/services/generator-journal-capture.ts" ||
+          f === "lib/services/record-table-roll.ts",
+      )
+      .filter((f) => !f.endsWith(".test.ts"));
+
+    it("the solo modules cover the new code", () => {
+      expect(solo.length).toBeGreaterThan(10);
+    });
+
+    it("no solo module calls the network", () => {
+      const offenders = solo.filter((f) =>
+        NETWORK.test(readFileSync(join(webSrc, f), "utf8")),
+      );
+      expect(offenders).toEqual([]);
+    });
+  });
 });

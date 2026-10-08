@@ -47,6 +47,8 @@ vi.mock("$lib/stores/solo-session-instance", () => ({
     soloStartBlockedReason: () => null,
     sharedPlayBlockedReason: () => null,
   },
+  soloTablePins: { pins: [], pin: () => true, unpin: () => {} },
+  soloPromoter: { promote: vi.fn() },
 }));
 vi.mock("$lib/stores/ui/modal-ui.svelte", () => ({ modalUIStore: env.modal }));
 vi.mock("$lib/stores/ui/layout-ui.svelte", () => ({
@@ -123,14 +125,15 @@ describe("SoloSessionBar actions", () => {
 
   it("Ask Oracle opens the Oracle when AI is on", async () => {
     render(SoloSessionBar);
-    await fireEvent.click(screen.getByTestId("solo-ask-oracle"));
+    await fireEvent.click(screen.getByTestId("solo-oracle-menu"));
+    await fireEvent.click(screen.getByTestId("solo-oracle-open"));
     expect(env.layout.activeSidebarTool).toBe("oracle");
   });
 
   it("hides Ask Oracle when AI is disabled", () => {
     env.discovery.aiDisabled = true;
     render(SoloSessionBar);
-    expect(screen.queryByTestId("solo-ask-oracle")).toBeNull();
+    expect(screen.queryByTestId("solo-oracle-menu")).toBeNull();
   });
 
   it("Journal opens the running journal, resuming it first when needed", async () => {

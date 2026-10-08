@@ -28,3 +28,78 @@ export function resolveQuickRoll(
   if (typed.length > 0) return typed;
   return lastRoll;
 }
+
+const CATEGORY_BY_GENERATOR: Record<string, string> = {
+  npc: "character",
+  rumour: "note",
+  encounter: "event",
+};
+
+/**
+ * The vault category a saved result should suggest. Falls back to "note" when
+ * the suggested category is not one the vault has, so a save never fails on
+ * the suggestion alone.
+ */
+export function suggestCategory(
+  entryType: string,
+  generatorId: string | null,
+  categoryIds: readonly string[],
+): string {
+  const suggested =
+    entryType === "generated-result" && generatorId
+      ? (CATEGORY_BY_GENERATOR[generatorId] ?? "note")
+      : "note";
+  return categoryIds.includes(suggested) ? suggested : "note";
+}
+
+export type OracleShortcut =
+  "npc-reaction" | "complication" | "place-knowledge" | "what-next";
+
+const SHORTCUT_QUESTION: Record<OracleShortcut, string> = {
+  "npc-reaction": "How does this NPC react?",
+  complication: "Add a complication",
+  "place-knowledge": "What is known about this place?",
+  "what-next": "What happens next?",
+};
+
+const MAX_PROMPT = 1200;
+const MAX_RECENT = 10;
+const MAX_RECENT_CHARS = 120;
+
+/** Joins names as "A", "A and B", or "A, B and C". */
+function joinNames(names: readonly string[]): string {
+  if (names.length <= 1) return names.join("");
+  return `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}`;
+}
+
+/**
+ * The text a shortcut puts in the Oracle's input (Solo Play Loop, FR-019). It
+ * is only prefilled; the player edits it and sends it. The prompt never asks
+ * the Oracle to run the game (FR-021).
+ */
+export function buildOracleShortcutPrompt(
+  kind: OracleShortcut,
+  context: {
+    sceneName: string;
+    mapName: string | null;
+    partyNames: readonly string[];
+    recent: readonly string[];
+  },
+): string {
+  const lines = [SHORTCUT_QUESTION[kind]];
+
+  const facts: string[] = [];
+  if (context.sceneName.trim())
+    facts.push(`scene "${context.sceneName.trim()}"`);
+  if (context.mapName?.trim()) facts.push(`place "${context.mapName.trim()}"`);
+  if (context.partyNames.length > 0)
+    facts.push(`party ${joinNames(context.partyNames)}`);
+  if (facts.length > 0) lines.push(`Context: ${facts.join(", ")}.`);
+
+  for (const item of context.recent.slice(0, MAX_RECENT)) {
+    const text = item.replace(/\s+/g, " ").trim().slice(0, MAX_RECENT_CHARS);
+    if (text) lines.push(`Recent: ${text}`);
+  }
+
+  return lines.join("\n").slice(0, MAX_PROMPT);
+}

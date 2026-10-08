@@ -6,7 +6,7 @@
   import SoloQuickRoll from "./SoloQuickRoll.svelte";
   import SoloActions from "./SoloActions.svelte";
   import SoloSessionSheet from "./SoloSessionSheet.svelte";
-  import SoloSceneField from "./SoloSceneField.svelte";
+  import SoloSceneMenu from "./SoloSceneMenu.svelte";
 
   const MINIMISED_KEY = "codex-solo-bar-minimised";
 
@@ -79,7 +79,7 @@
       >
         {mapName ?? "No map"}
       </span>
-      <SoloSceneField />
+      <SoloSceneMenu />
       <SoloQuickRoll />
       <div class="min-w-0 flex-1 overflow-x-auto">
         <SoloActions />

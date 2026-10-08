@@ -107,3 +107,18 @@ export const sessionJournalPromoter = new SessionJournalPromoter({
   closePanel: () => quickNoteStore.close(),
   notify: (message) => notificationStore.notify(message, "success"),
 });
+
+/**
+ * A promoter for solo play (Solo Play Loop, FR-002): it creates the draft and
+ * leaves the player where they are. Opening the new entity or closing the
+ * panel are no-ops, so saving a result never moves the screen.
+ */
+export function createDraftOnlyPromoter(
+  deps: Pick<SessionJournalPromoterDeps, "createEntity" | "notify" | "log">,
+): SessionJournalPromoter {
+  return new SessionJournalPromoter({
+    ...deps,
+    openEntity: () => {},
+    closePanel: () => {},
+  });
+}

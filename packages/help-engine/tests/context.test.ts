@@ -310,3 +310,43 @@ describe("solo controls in guidance (highlight)", () => {
     ).toBeNull();
   });
 });
+
+describe("solo play loop controls (Solo Play Loop)", () => {
+  const deps = { helpIds: new Set<string>() };
+  const ctx = (over: Record<string, unknown>) =>
+    sanitizeHelpContext({
+      routeTemplate: "/(app)/map",
+      area: "map",
+      flags: [],
+      availableActions: [],
+      ...over,
+    });
+
+  for (const target of [
+    "solo-generate-menu",
+    "solo-recent-results",
+    "solo-pinned-tables",
+    "solo-party-menu",
+    "solo-scene-menu",
+    "solo-oracle-menu",
+  ]) {
+    it(`points at ${target} while a solo session runs`, () => {
+      const action = validateAction(
+        { type: "highlight", target, label: "Show me" },
+        ctx({ flags: ["solo-session"], availableActions: [target] }),
+        deps,
+      );
+      expect(action).not.toBeNull();
+    });
+
+    it(`refuses ${target} when no solo session runs`, () => {
+      expect(
+        validateAction(
+          { type: "highlight", target, label: "Show me" },
+          ctx({ flags: [], availableActions: [target] }),
+          deps,
+        ),
+      ).toBeNull();
+    });
+  }
+});
