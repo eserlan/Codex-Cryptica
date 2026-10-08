@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const env = vi.hoisted(() => ({
   party: [{ id: "kael", name: "Kael" }] as { id: string; name: string }[],
+  session: { partyIds: ["kael"] } as { partyIds: string[] } | null,
   setParty: vi.fn(async (_ids: string[]) => {}),
   vault: {
     entities: {
@@ -19,6 +20,9 @@ vi.mock("$lib/stores/solo-session-instance", () => ({
   soloSessionStore: {
     get party() {
       return env.party;
+    },
+    get session() {
+      return env.session;
     },
     setParty: env.setParty,
   },
@@ -35,9 +39,25 @@ const ALL_ENTITIES = {
 
 beforeEach(() => {
   env.party = [{ id: "kael", name: "Kael" }];
+  env.session = { partyIds: ["kael"] };
   env.setParty.mockClear();
   env.vault.selectedEntityId = null;
   env.vault.entities = { ...ALL_ENTITIES };
+});
+
+it("shows every saved member, checked, even when the store's party view lags", async () => {
+  // The saved ids are the source of truth; a stale party view must not hide a member.
+  env.session = { partyIds: ["kael", "ivo"] };
+  env.party = [{ id: "kael", name: "Kael" }];
+  render(SoloPartyMenu);
+  await openMenu();
+  const boxes = screen.getAllByRole("checkbox") as HTMLInputElement[];
+  expect(boxes.map((b) => b.checked)).toEqual([true, true]);
+  expect(
+    screen
+      .getAllByTestId("solo-party-member")
+      .map((b) => b.textContent?.trim()),
+  ).toEqual(["Kael", "Brother Ivo"]);
 });
 
 async function openMenu() {

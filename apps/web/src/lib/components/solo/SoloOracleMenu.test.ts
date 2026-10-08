@@ -5,7 +5,10 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const env = vi.hoisted(() => ({
   aiDisabled: false,
-  layout: { activeSidebarTool: "none" as string },
+  layout: {
+    activeSidebarTool: "none" as string,
+    leftSidebarOpen: false,
+  },
   oracle: { ui: { setPendingPrompt: vi.fn() } },
   session: { sceneName: "The flooded crypt", mapId: "m1" as string | null },
   party: [{ id: "kael", name: "Kael" }] as { id: string; name: string }[],
@@ -54,6 +57,7 @@ import SoloOracleMenu from "./SoloOracleMenu.svelte";
 beforeEach(() => {
   env.aiDisabled = false;
   env.layout.activeSidebarTool = "none";
+  env.layout.leftSidebarOpen = false;
   env.oracle.ui.setPendingPrompt.mockClear();
 });
 
@@ -74,6 +78,7 @@ describe("SoloOracleMenu", () => {
     await openMenu();
     await fireEvent.click(screen.getByTestId("solo-oracle-open"));
     expect(env.layout.activeSidebarTool).toBe("oracle");
+    expect(env.layout.leftSidebarOpen).toBe(true);
     expect(env.oracle.ui.setPendingPrompt).not.toHaveBeenCalled();
   });
 
@@ -84,6 +89,7 @@ describe("SoloOracleMenu", () => {
       screen.getByRole("menuitem", { name: /How does this NPC react/i }),
     );
     expect(env.layout.activeSidebarTool).toBe("oracle");
+    expect(env.layout.leftSidebarOpen).toBe(true);
     expect(env.oracle.ui.setPendingPrompt).toHaveBeenCalledTimes(1);
     const prompt = env.oracle.ui.setPendingPrompt.mock.calls[0][0] as string;
     expect(prompt.startsWith("How does this NPC react?")).toBe(true);

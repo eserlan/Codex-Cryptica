@@ -74,6 +74,7 @@ describe("toggleSharedMode", () => {
     expect(s.guard.toggleSharedMode()).toBe(false);
     expect(s.shared).toBe(false);
     expect(s.deps.setSharedMode).not.toHaveBeenCalled();
+    expect(s.deps.notify).toHaveBeenCalledWith(SOLO_SHARED_NOTE);
   });
 
   it("always allows turning shared mode off, even during a solo session", () => {

@@ -5,14 +5,17 @@
   import SoloMenu from "./SoloMenu.svelte";
 
   const characters = $derived(characterChoices(vault.entities));
-  const memberIds = $derived(new Set(soloSessionStore.party.map((m) => m.id)));
+  // Built from the saved party ids and the live character list, so the chips
+  // and boxes always agree with what is stored (and with each other).
+  const memberIds = $derived(new Set(soloSessionStore.session?.partyIds ?? []));
+  const party = $derived(characters.filter((c) => memberIds.has(c.id)));
 
   function openEntry(id: string) {
     vault.selectedEntityId = id;
   }
 
   function toggle(id: string, on: boolean) {
-    const current = soloSessionStore.party.map((m) => m.id);
+    const current = soloSessionStore.session?.partyIds ?? [];
     const next = on ? [...current, id] : current.filter((c) => c !== id);
     void soloSessionStore.setParty(next);
   }
@@ -20,9 +23,9 @@
 
 <SoloMenu label="Party" testId="solo-party-menu" helpTarget="solo-party-menu">
   <div class="flex w-64 flex-col gap-2">
-    {#if soloSessionStore.party.length > 0}
+    {#if party.length > 0}
       <div class="flex flex-wrap gap-1">
-        {#each soloSessionStore.party as member (member.id)}
+        {#each party as member (member.id)}
           <button
             type="button"
             class="rounded-md border border-theme-border px-2 py-0.5 text-sm text-theme-text hover:text-theme-primary"

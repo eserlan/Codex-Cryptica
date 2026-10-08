@@ -19,7 +19,9 @@
     { kind: "what-next", label: "What happens next?" },
   ];
 
+  // The Oracle lives in the sidebar, which may be closed: open it too.
   function openOracle() {
+    layoutUIStore.leftSidebarOpen = true;
     layoutUIStore.activeSidebarTool = "oracle";
   }
 
