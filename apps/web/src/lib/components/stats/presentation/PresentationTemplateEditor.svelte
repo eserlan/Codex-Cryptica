@@ -17,8 +17,7 @@
     sanitizeSource,
     walkPresentationNodes,
     computeSectionKeys,
-    DISPLAY_MODES_BY_FIELD_TYPE,
-    resolveFieldByKeyOrId,
+      resolveFieldByKeyOrId,
   } from "@codex/stat-sheet-engine";
   import type {
     MissingFieldNode,
