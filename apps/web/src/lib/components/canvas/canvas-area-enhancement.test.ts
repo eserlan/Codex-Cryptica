@@ -4,6 +4,7 @@ import type { Canvas } from "@codex/canvas-engine";
 import { describe, expect, it, vi } from "vitest";
 import type { AreaPopulationProgress } from "$lib/services/delve-area-enhancement";
 import { useCanvasAreaEnhancement } from "./canvas-area-enhancement.svelte";
+import { type Clock } from "$lib/utils/runtime-deps";
 
 function room(id: string, sectorId = "sector-1", name = id) {
   return {
@@ -59,6 +60,9 @@ function makeDeps(overrides: Record<string, unknown> = {}) {
     canvasRegistry: { canvases: { [canvas.id!]: canvas } },
     logic,
     updateRoomData: vi.fn(),
+    clock: {
+      now: () => 42,
+    } as Clock,
     canvas,
     ...overrides,
   };

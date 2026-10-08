@@ -6,10 +6,12 @@ import {
   isPlaceholderDelveAreaName,
   type AreaPopulationProgress,
 } from "$lib/services/delve-area-enhancement";
+
 import {
   flowEdgeToCanvasEdge,
   flowNodesToCanvasNodes,
 } from "./canvas-workspace-helpers";
+import { systemClock, type Clock } from "$lib/utils/runtime-deps";
 
 type AreaPopulationResult = Awaited<
   ReturnType<typeof delveAreaEnhancementService.populateAllAreas>
@@ -32,6 +34,7 @@ export interface CanvasAreaEnhancementDeps {
     edges: Edge[];
   };
   updateRoomData: (updates: DelveRoomNodeData) => void;
+  clock?: Clock;
 }
 
 export function useCanvasAreaEnhancement({
@@ -40,6 +43,7 @@ export function useCanvasAreaEnhancement({
   canvasRegistry,
   logic,
   updateRoomData,
+  clock = systemClock,
 }: CanvasAreaEnhancementDeps) {
   let isRestockingRoom = $state(false);
   let roomEnhancementError = $state<string | null>(null);
@@ -134,7 +138,7 @@ export function useCanvasAreaEnhancement({
         result.failed > 0 || result.failedPassages > 0 ? "partial" : "complete",
       areaPopulationCompleted: result.completed,
       areaPopulationTotal: result.total,
-      areaPopulationUpdatedAt: Date.now(),
+      areaPopulationUpdatedAt: clock.now(),
     };
     const updatedCanvas = {
       ...targetCanvas,
