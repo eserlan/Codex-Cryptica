@@ -181,6 +181,7 @@ export const howDoIImproviseNpcsInDnd: AnswerConfigInput = {
     "how-do-i-give-specialist-characters-spotlight",
     "how-do-i-make-a-campaign-threat-feel-urgent-without-railroading",
     "how-do-i-get-players-to-engage-with-my-campaign-world",
+    "which-dice-do-i-roll-in-dnd-and-when",
   ],
   discovery: {
     id: "answer-improvise-npcs-in-dnd",

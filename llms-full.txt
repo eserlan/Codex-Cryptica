@@ -3854,6 +3854,10 @@ Reference answers to real RPG and worldbuilding questions, indexed at https://co
 
 **Direct answer:** You need less than it looks like: a game or beginner ruleset, a small group (or a solo-friendly option), some way to resolve uncertainty (usually dice), and one short scenario to try. You don't need to read a large rulebook cover to cover first, own special gear, or already know the jargon. You can start as a player in someone else's game, or as the GM running a short beginner adventure for others; both are completely valid entry points, and neither requires the other to happen first.
 
+### [Which dice do I roll in D&D, and when?](https://codexcryptica.com/answers/which-dice-do-i-roll-in-dnd-and-when)
+
+**Direct answer:** If you are trying something uncertain in D&D, you very often start with a twenty-sided die (d20) and add a modifier the Dungeon Master or your character sheet names. The other dice in the set (d4, d6, d8, d10, d12 and percentile dice) are commonly used afterwards to determine damage, healing or other amounts, and your weapon, spell or feature tells you which one to roll so you do not need to memorise every die from memory.
+
 ### [XP vs milestone levelling: which should I use?](https://codexcryptica.com/answers/xp-leveling-vs-milestone-leveling)
 
 **Direct answer:** Use XP levelling when you want progress to be visible and tied to what characters accomplish; use milestones when you want levels to follow agreed campaign goals or story developments. XP can reward the wrong behaviour if its sources are narrow, while milestones can feel arbitrary if players cannot see what moves them forward. Choose the reward signal and pace your group wants, not a universal winner.
