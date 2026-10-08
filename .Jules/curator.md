@@ -91,3 +91,8 @@
 
 **Learning:** Extracted the support-only admin routes (`handleCloudBackupAdminDelete`, `handleCloudBackupAdminLookup`, `handleCloudBackupAdminStats`, `handleCloudBackupReissueCode`) and `MAX_STATS_SCAN_OBJECTS` from `apps/workers/oracle-proxy/src/cloud-backup.ts` to a new sibling module `apps/workers/oracle-proxy/src/cloud-backup-admin.ts` to reduce god-file status. Ensure exact imports in the test file are preserved and the index correctly splits the new imports.
 **Action:** When extracting functions from a god file, especially when dealing with routes mapped from `index.ts`, explicitly remove the deleted function imports in `index.ts` to avoid syntax compilation errors, and meticulously track sibling module dependencies.
+
+## 2024-05-30 - Extract inline menus to presentation components
+
+**Learning:** Component files like `PresentationTemplateEditor.svelte` can become god-files when they mix complex internal state, editing logic, layout definitions, and massive inline modals or context menus. Extracting an inline block like the field context menu to its own `PresentationFieldContextMenu.svelte` simplifies the parent's markup greatly.
+**Action:** Always consider extracting sizable inline UI elements (e.g. context menus) that merely consume state into dedicated child components via props.
