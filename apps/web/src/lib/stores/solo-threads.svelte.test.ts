@@ -25,6 +25,7 @@ function build(
     files?: VaultFileAccess | null;
     readOnly?: boolean;
     entities?: string[];
+    entitiesReady?: boolean;
     publishCapture?: (p: unknown) => void;
     notify?: (m: string) => void;
   } = {},
@@ -35,7 +36,8 @@ function build(
     vaultId: () => (opts.vault === undefined ? "v1" : opts.vault),
     files: () => (opts.files === undefined ? memory.files : opts.files),
     readOnly: () => opts.readOnly ?? false,
-    entityIds: () => new Set(opts.entities ?? []),
+    entityIds: () =>
+      opts.entitiesReady === false ? null : new Set(opts.entities ?? []),
     ids: { uuid: () => `t${++n}` },
     clock: { now: () => 1000 },
     publishCapture:
@@ -184,6 +186,36 @@ describe("SoloThreadsStore", () => {
     );
     await store.load("v1");
     expect(store.threads[0].entityIds).toEqual(["keep"]);
+  });
+
+  it("keeps links while the vault entity list is still loading", async () => {
+    const { store, memory } = build({ entitiesReady: false });
+    memory.store.set(
+      THREADS_PATH.join("/"),
+      JSON.stringify({
+        version: 1,
+        threads: [
+          {
+            id: "t1",
+            title: "Keeper",
+            kind: "mystery",
+            note: "",
+            status: "open",
+            closingNote: "",
+            entityIds: ["keeper"],
+            createdAt: 1,
+            updatedAt: 1,
+          },
+        ],
+      }),
+    );
+
+    await store.load("v1");
+    expect(store.threads[0].entityIds).toEqual(["keeper"]);
+    store.edit("t1", { title: "Keeper mystery" });
+    await flush();
+    const saved = JSON.parse(memory.store.get(THREADS_PATH.join("/"))!);
+    expect(saved.threads[0].entityIds).toEqual(["keeper"]);
   });
 
   it("starts empty with no vault and when the vault has no file access", async () => {

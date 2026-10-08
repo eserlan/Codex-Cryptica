@@ -121,7 +121,7 @@
       {/if}
       {#each linked as entity (entity.id)}
         <div class="flex items-center justify-between gap-2">
-          <span class="truncate">{entity.title}</span>
+          <span class="min-w-0 flex-1 truncate">{entity.title}</span>
           <button
             type="button"
             class="text-xs text-theme-muted underline hover:text-theme-text"

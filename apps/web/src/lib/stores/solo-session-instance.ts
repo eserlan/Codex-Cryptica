@@ -53,7 +53,8 @@ export const soloThreads = new SoloThreadsStore({
   vaultId: () => vaultRegistry.activeVaultId ?? null,
   files: (vaultId) => vaultFiles(vaultId),
   readOnly: () => vault.isGuest,
-  entityIds: () => new Set(Object.keys(vault.entities ?? {})),
+  entityIds: () =>
+    vault.isInitialized ? new Set(Object.keys(vault.entities ?? {})) : null,
   ids: systemIdGenerator,
   clock: systemClock,
   publishCapture: (payload) => {

@@ -28,8 +28,8 @@ export interface SoloThreadsDeps {
   files(vaultId: string): VaultFileAccess | null;
   /** True for a read-only vault: threads can be seen but not changed. */
   readOnly(): boolean;
-  /** The ids of the vault's entries, for dropping links to deleted ones. */
-  entityIds(): Set<string>;
+  /** The ids of the vault's entries, or null until the vault has finished loading. */
+  entityIds(): Set<string> | null;
   ids: { uuid(): string };
   clock: { now(): number };
   publishCapture(payload: JournalCapturePayload): void;
@@ -59,6 +59,13 @@ export class SoloThreadsStore {
       $effect(() => {
         const vaultId = this.deps.vaultId();
         untrack(() => void this.load(vaultId));
+      });
+      // Vault entities load asynchronously after the active vault ID is set.
+      // Reconcile links once that list is available, rather than treating an
+      // empty, not-yet-loaded list as proof that every linked entity was deleted.
+      $effect(() => {
+        const entityIds = this.deps.entityIds();
+        if (entityIds) untrack(() => this.pruneLoadedLinks(entityIds));
       });
     });
   }
@@ -97,7 +104,10 @@ export class SoloThreadsStore {
       const result = await loadThreads(files);
       if (version !== this.loadVersion) return;
       this.valid = result.valid;
-      this.items = pruneLinks(result.threads, this.deps.entityIds());
+      const entityIds = this.deps.entityIds();
+      this.items = entityIds
+        ? pruneLinks(result.threads, entityIds)
+        : result.threads;
       if (!result.valid) this.unreadable();
     } catch {
       if (version !== this.loadVersion) return;
@@ -112,6 +122,11 @@ export class SoloThreadsStore {
     this.deps.notify(
       "The threads file could not be read, so threads cannot be changed.",
     );
+  }
+
+  private pruneLoadedLinks(entityIds: ReadonlySet<string>): void {
+    if (this.loading || !this.valid || !this.loadedFor) return;
+    this.items = pruneLinks(this.items, entityIds);
   }
 
   add(input: { title: string; kind: ThreadKind; note?: string }): ThreadResult {
