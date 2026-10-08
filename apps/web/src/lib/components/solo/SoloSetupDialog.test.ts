@@ -50,6 +50,22 @@ function renderDialog(
 }
 
 describe("SoloSetupDialog", () => {
+  it("keeps the dialog within the screen and scrolls a long party list", () => {
+    const many = Array.from({ length: 200 }, (_, i) => ({
+      id: `c${i}`,
+      name: `Character ${i}`,
+    }));
+    renderDialog({ characters: many });
+    const dialog = screen.getByTestId("solo-setup-dialog");
+    const body = screen.getByTestId("solo-setup-body");
+    expect(dialog.className).toContain("max-h-full");
+    expect(body.className).toContain("overflow-y-auto");
+    // The scrolling body holds the list; the actions sit outside it.
+    expect(body.contains(screen.getByText("Character 199"))).toBe(true);
+    expect(body.contains(screen.getByTestId("solo-setup-start"))).toBe(false);
+    expect(body.contains(screen.getByTestId("solo-setup-cancel"))).toBe(false);
+  });
+
   it("lists the vault's maps plus No map, preselected to the default", () => {
     renderDialog();
     const select = screen.getByTestId("solo-setup-map") as HTMLSelectElement;
