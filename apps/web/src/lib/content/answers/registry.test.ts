@@ -51,6 +51,34 @@ const mockRegistry: Record<string, AnswerConfig> = {
 };
 
 describe("answer registry", () => {
+  it("records the new D&D player's distinct audience from GM startup guides", () => {
+    const overlaps = [
+      [
+        "what-should-a-new-dnd-player-know-before-their-first-game",
+        "answer-start-dnd-campaign",
+      ],
+      ["how-do-i-start-a-dnd-campaign", "answer-new-dnd-player-first-game"],
+      [
+        "what-should-a-new-dnd-player-know-before-their-first-game",
+        "answer-first-time-gm-hub",
+      ],
+      [
+        "how-do-i-start-gming-for-the-first-time",
+        "answer-new-dnd-player-first-game",
+      ],
+    ] as const;
+
+    for (const [slug, relatedIntent] of overlaps) {
+      const answer = answers[slug];
+      expect(answer?.discovery?.acknowledgedOverlap).toContainEqual(
+        expect.objectContaining({
+          with: relatedIntent,
+          reason: expect.any(String),
+        }),
+      );
+    }
+  });
+
   it("records the bard answer's distinct scope from adjacent specialist answers", () => {
     const overlaps = [
       [
