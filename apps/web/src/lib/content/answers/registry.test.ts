@@ -601,6 +601,26 @@ describe("published answers", () => {
     }
   });
 
+  it("gives the correct healing-potion dice example", () => {
+    const answer = answers["which-dice-do-i-roll-in-dnd-and-when"];
+    const diceSection = answer.sections.find(
+      (section) =>
+        section.kind === "list" &&
+        section.heading === "The other dice: damage, healing and amounts",
+    );
+
+    expect(diceSection?.kind).toBe("list");
+    if (diceSection?.kind !== "list") return;
+
+    const diceExamples = diceSection.items.find(
+      (item) => item.term === "d4, d6, d8, d10, d12",
+    )?.text;
+
+    expect(diceExamples).toContain(
+      "common healing potion restores 2d4 + 2 hit points",
+    );
+  });
+
   it("never links an answer to itself", () => {
     for (const answer of published) {
       expect(answer.relatedAnswers).not.toContain(answer.slug);

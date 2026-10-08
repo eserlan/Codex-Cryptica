@@ -45,7 +45,7 @@ export const whichDiceDoIRollInDndAndWhen: AnswerConfigInput = {
       items: [
         {
           term: "d4, d6, d8, d10, d12",
-          text: "These are the dice most often linked to an amount. A dagger might deal 1d4 damage, a longsword 1d8, a greataxe 1d12, a fire bolt 1d10, and a healing potion 2d4. Larger dice are not inherently better or worse, they simply reflect the design of that weapon, spell or feature. Your sheet tells you which one applies.",
+          text: "These are the dice most often linked to an amount. A dagger might deal 1d4 damage, a longsword 1d8, a greataxe 1d12, a fire bolt 1d10, and a common healing potion restores 2d4 + 2 hit points. Larger dice are not inherently better or worse, they simply reflect the design of that weapon, spell or feature. Your sheet tells you which one applies.",
         },
         {
           term: "d10 as percentile and d100",
