@@ -46,7 +46,7 @@ export const howDoIRunABardOrFaceWithoutSideliningTheParty: AnswerConfigInput =
         items: [
           {
             term: "Face establishes rapport or access",
-            text: "The bard secures the audience, sets the tone, and frames the opening request. A social check here can change how much time the NPC gives, how openly they speak, or what audience is present.",
+            text: "The bard secures the audience, sets the tone, and frames the opening request. A social check here can change how much time the NPC gives, how openly they speak, or who else is present.",
           },
           {
             term: "NPC reveals wants, limits or leverage",
@@ -106,7 +106,7 @@ export const howDoIRunABardOrFaceWithoutSideliningTheParty: AnswerConfigInput =
           },
           {
             term: "Guarantees and sanctuary",
-            text: "A cleric, magistrate or guild officer can offer oath, sanctuary, surety or oversight that the bard alone cannot. The guarantee can matter more than the wording around it.",
+            text: "A cleric, magistrate or guild officer can offer an oath, sanctuary, surety or oversight that the bard alone cannot. The guarantee can matter more than the wording around it.",
           },
           {
             term: "Relationships and lived experience",
@@ -143,7 +143,7 @@ export const howDoIRunABardOrFaceWithoutSideliningTheParty: AnswerConfigInput =
           },
           {
             term: "Why it works",
-            text: "The bard's skill determines access, tone and the quality of the final price, not whether the party may want something. Other PCs change the facts the negotiation rests on: credibility, a verifiable guarantee, a revealed alternative, and a sense of cost. The NPC's wants and limits remain visible throughout, and the party's promise is chosen together rather than implied by one roll. The agreement that follows, an escort, a grain delivery and a three-day holding of the ford, creates a new situation the table can see and honour in later sessions.",
+            text: "The bard's skill determines access, tone and the quality of the final price, while the party decides what it wants and what it will promise. Other PCs change the facts the negotiation rests on: credibility, a verifiable guarantee, a revealed alternative, and a sense of cost. The NPC's wants and limits remain visible throughout, and the party's promise is chosen together rather than implied by one roll. The agreement that follows, an escort, a grain delivery and a three-day holding of the ford, creates a new situation the table can see and honour in later sessions.",
           },
         ],
       },
