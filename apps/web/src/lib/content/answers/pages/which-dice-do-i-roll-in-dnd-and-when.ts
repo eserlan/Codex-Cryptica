@@ -196,6 +196,11 @@ export const whichDiceDoIRollInDndAndWhen: AnswerConfigInput = {
         reason:
           "The character-sheet guide explains where to find values across the whole sheet, while this page focuses on choosing dice and resolving common rolls at the table.",
       },
+      {
+        with: "answer-what-can-i-do-on-my-turn-in-dnd-combat",
+        reason:
+          "The combat-turn guide explains which actions are available during a turn, while this page explains which dice resolve checks, attacks, saves, and damage.",
+      },
     ],
   },
   seo: {

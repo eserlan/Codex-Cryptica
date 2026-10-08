@@ -683,6 +683,18 @@ describe("published answers", () => {
     );
   });
 
+  it("records the distinct scope of the D&D dice and combat-turn answers", () => {
+    const overlap = answers[
+      "which-dice-do-i-roll-in-dnd-and-when"
+    ].discovery?.acknowledgedOverlap?.find(
+      (entry) => entry.with === "answer-what-can-i-do-on-my-turn-in-dnd-combat",
+    );
+
+    expect(overlap?.reason).toContain(
+      "which dice resolve checks, attacks, saves, and damage",
+    );
+  });
+
   it("never links an answer to itself", () => {
     for (const answer of published) {
       expect(answer.relatedAnswers).not.toContain(answer.slug);
