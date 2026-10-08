@@ -308,9 +308,9 @@ description: "Task list for Solo Play Loop (Phase 2 of Solo Play Mode, #3884, ep
 - [x] T068 [P] Add a source-scan test to `apps/web/src/lib/stores/ui/solo-play-guard.test.ts` (FR-027, SC-005). New solo modules must not call `fetch(`, `sendBeacon`, `XMLHttpRequest` or `WebSocket`. Scan `components/solo/*`, `stores/solo-*`, `services/generator-journal-capture.ts` and `services/record-table-roll.ts`.
 - [x] T069 Run `bun run test:changed`, `bun run lint:changed`, and `bunx svelte-check --tsconfig ./tsconfig.json --threshold error` in `apps/web`, plus `bun test` with coverage in both engine packages (each at least 70%). Also re-run the Phase 1 suites explicitly: `apps/web/src/lib/stores/ui/solo-play-guard.test.ts`, `shared-play-state.test.ts`, `stores/solo-session.svelte.test.ts` and `components/solo` (FR-028). Fix everything to 0 errors.
 - [x] T070 Run `bunx fallow audit --format json --quiet --explain --gate-marker agent` and fix any introduced findings. Watch for complexity in `SoloActions.svelte` and the session store.
-- [ ] T071 Walk through every scenario in [quickstart.md](./quickstart.md) in the dev app: desktop and phone width (390 px), AI on and AI off. Record any failure as a new task.
-- [ ] T072 Run the `codex-review` specialist review and fix its findings.
-- [ ] T073 Open ready-for-review PRs to `staging` that reference #3884. Suggested split:
+- [ ] T071 Walk through every scenario in [quickstart.md](./quickstart.md) in the dev app: desktop and phone width (390 px), AI on and AI off. Record any failure as a new task. **Partly done:** scenarios 2, 3, 6 (removal), 7 and 10 passed in a throwaway vault. 1, 4, 5, 12 need a map, random tables and a second Character; 8 and 9 need AI configured; 11 (phone width) and 13 were not run. See PR #3908.
+- [x] T072 Run the `codex-review` specialist review and fix its findings.
+- [x] T073 Open ready-for-review PRs to `staging` that reference #3884. Suggested split: Opened as PR #3908 (one PR, not the three-way split; see the PR notes).
   - PR 1: Phases 1–4 (Setup, Foundational, US1, US2);
   - PR 2: US3 and US4;
   - PR 3: US5, US6 and Polish.
