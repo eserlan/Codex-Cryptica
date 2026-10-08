@@ -256,7 +256,9 @@ export const CONTROL_CATALOGUE: Record<ControlId, ControlSpec> = {
   "solo-scene-menu": { area: "solo", requiresFlag: "solo-session" },
   "solo-oracle-menu": { area: "solo", requiresFlag: "solo-session" },
   "solo-yes-no-menu": { area: "solo", requiresFlag: "solo-session" },
-  "solo-threads-menu": { area: "solo", requiresFlag: "solo-session" },
+  // Threads are also offered on the Play page with no session running, so they
+  // carry no solo-session flag; availableActions says where they are on screen.
+  "solo-threads-menu": { area: "solo" },
 };
 
 /**

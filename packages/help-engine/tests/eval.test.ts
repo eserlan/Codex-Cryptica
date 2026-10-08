@@ -124,7 +124,8 @@ describe("retrieval quality over the real help articles", () => {
       answeredRate,
       `refused:\n${refused.join("\n")}`,
     ).toBeGreaterThanOrEqual(0.97);
-  });
+    // Scores the whole in-scope set against the bundle, so it grows with the help content.
+  }, 30_000);
 
   it("sends every unrelated question to no-match without calling the model, in both halves", () => {
     for (const split of ["tune", "holdout"] as const) {
