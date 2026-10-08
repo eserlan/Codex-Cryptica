@@ -68,7 +68,7 @@ export const whatShouldANewDndPlayerKnowBeforeTheirFirstGame: AnswerConfigInput 
         kind: "list",
         heading: "You do not need to memorise your character sheet",
         intro:
-          "A character sheet looks dense at first glance. For your first game, only a handful of areas will affect your decisions directly. For a closer walkthrough, see [how to read a D&D character sheet as a beginner](/answers/how-do-i-read-a-dnd-character-sheet-as-a-beginner).",
+          "A character sheet looks dense at first glance. For your first game, only a handful of areas will affect your decisions directly. For a closer walkthrough, see the character-sheet guide in the related answers below.",
         items: [
           {
             term: "Ability scores and modifiers",
