@@ -32,6 +32,8 @@ export {
   npcRolesForTheme,
   factionTypesForTheme,
   settlementTypesForTheme,
+  adventureArchetypesForTheme,
+  adventureTonesForTheme,
   GENERATOR_ENTITY_TYPE,
   FALLBACK_CATEGORY,
 } from "./campaign-generator-registry";
