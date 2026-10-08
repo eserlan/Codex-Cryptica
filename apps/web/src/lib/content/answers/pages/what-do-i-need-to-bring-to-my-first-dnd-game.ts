@@ -27,7 +27,7 @@ export const whatDoINeedToBringToMyFirstDndGame: AnswerConfigInput = {
         "A way to roll dice: a single set of polyhedral dice, or an agreed digital roller if the group is happy with one.",
         "Something to write with: a pencil and scrap paper, or a notes app on your phone if the table allows devices.",
         "Anything the DM specifically asked you to bring, such as a virtual tabletop link, a headset for online play, or a particular app or reference.",
-        "Water and a way to stay comfortable for a couple of hours, especially if you are heading to someone's home or a shop table.",
+        "Water if you would like it, and anything else that helps you stay comfortable for a couple of hours.",
       ],
     },
     {
@@ -38,11 +38,11 @@ export const whatDoINeedToBringToMyFirstDndGame: AnswerConfigInput = {
       items: [
         {
           term: "Essential for most first games",
-          text: "A character the table has approved, a way to make the rolls that character needs, a pencil or other note-taking method, and the rules source or quick-start the group has agreed on. If your spellcaster uses spells or your class has limited features, bring that short reference too.",
+          text: "A character the table has approved, a way to make its rolls, and a pencil or other note-taking method. If the group asks you to use a particular rules source or app, confirm how to access it. A short reference for your character's spells or features can help; ask the DM where to find it.",
         },
         {
           term: "Useful but not required",
-          text: "A small notebook that fits beside your sheet, water, a charger or power bank if you are using a phone or laptop, and a one-page summary of your most common actions so you are not flipping through a book mid-scene.",
+          text: "A small notebook that fits beside your sheet, water if you want it, a charger or power bank if you are using a phone or laptop, and a one-page summary of your most common actions so you are not flipping through a book mid-scene.",
         },
         {
           term: "Ask your DM or host first",
@@ -69,7 +69,7 @@ export const whatDoINeedToBringToMyFirstDndGame: AnswerConfigInput = {
         },
         {
           term: "Character ready beforehand",
-          text: "Have your digital character open and logged in, with your common rolls and actions where you can find them quickly, so the group is not waiting while you locate a spell description.",
+          text: "If the group wants characters ready beforehand, open your sheet and check any required login. If you are making characters together or using a supplied character, confirm that arrangement instead.",
         },
         {
           term: "A way to take notes that does not mute you",
@@ -81,33 +81,33 @@ export const whatDoINeedToBringToMyFirstDndGame: AnswerConfigInput = {
       kind: "example",
       heading: "Worked example: two ways to prepare for the same first session",
       paragraphs: [
-        "A new player has been invited to a home game. The DM said to bring a level one character and that spare dice will be available, and the group plays in person around a kitchen table.",
+        "A new player has been invited to a home game. The DM confirms they will supply a suitable level-one pre-generated fighter and spare dice, and the group plays in person around a kitchen table.",
       ],
       items: [
         {
           term: "Over-prepared and out of pocket",
-          text: "The player buys the core rulebooks, a premium metal dice set, a miniature before choosing a character, and printed battle maps. They arrive with material the table already owns and spend the first hour worrying about using everything correctly instead of listening to the opening scene.",
+          text: "The player buys the core rulebooks, a premium metal dice set, a miniature before choosing a character, and printed battle maps. The table already has these supplies, so the purchases add cost without adding anything needed for this session.",
         },
         {
           term: "Ready without extra shopping",
-          text: "The player confirms a pre-generated fighter is available, borrows dice at the table, brings a pencil and a small notebook, and writes down their two most common actions with range and damage. They also bring water and check whether snacks are shared or brought individually.",
+          text: "The player confirms the supplied fighter is suitable, borrows the offered dice, brings a pencil and a small notebook, and notes their main attack and any feature they want help using. They check whether snacks are shared or brought individually.",
         },
         {
           term: "Why it works",
-          text: "The second approach matches what the DM offered and what the table already provides. The player can still describe what their character tries, roll when asked, and note the names the DM mentions, which matters more in a first game than owning equipment the group can already supply.",
+          text: "Checking first confirms the DM will provide both a suitable character and dice, so the player can join in without extra spending. They can describe what their character tries, roll when asked, and note the names the DM mentions.",
         },
       ],
     },
     {
       kind: "checklist",
-      heading: "The night before your first session",
+      heading: "Before your first session",
       intro:
-        "A quick pass so you are not sorting it out after the game has started:",
+        "Once the group has confirmed what it supplies and any requested preparation is ready, no further shopping or homework is needed:",
       items: [
         "Message the DM: do I need dice, a printed sheet, or a link, and is there anything I should read beforehand?",
         "Check that your character sheet is the version the DM approved and that your main attack, spell, or feature is easy to find.",
         "Pack a pencil, a few sheets of paper or a notes app, and a way to roll if the table does not supply one.",
-        "For online games, test your mic, invite links, and character login the day before, not at the start time.",
+        "For online games, test your mic, invite links, and any required login before play, when you can.",
         "Know how snacks, drinks, and table devices are handled so you match the host's expectations.",
         "Plan to ask questions like where is that on my sheet, what do I roll, or can I try this, when they come up in play.",
       ],
@@ -117,22 +117,16 @@ export const whatDoINeedToBringToMyFirstDndGame: AnswerConfigInput = {
     heading: "Keep the first session light, organise later",
     paragraphs: [
       "Codex Cryptica is not something you need to set up before your first game. Play first, then decide what you want to keep: the characters you met, the locations the DM described, and the questions you left unanswered are a natural place to start.",
-      "After a session or two, a vault can hold those details as linked notes so you recognise returning names. Generators can fill in a quick NPC or place name when the table needs one, but for a first game the priority is the short checklist above, not extra tools.",
+      "After a session or two, a vault can hold those details as linked notes so you recognise returning names. If you want a name for your own character, a fantasy-name generator can help; for a first game, the priority is the short checklist above, not extra tools.",
     ],
     linkText: "Explore Codex Cryptica for D&D",
     href: "/for/dungeons-and-dragons",
   },
   relatedTools: [
     {
-      title: "D&D NPC generator",
-      description:
-        "Create a quick supporting character when a first session needs a shopkeeper, guard, or patron without stopping play.",
-      href: "/generators/dnd-npc",
-    },
-    {
       title: "Fantasy names generator",
       description:
-        "Find a character or place name after you have chosen the concept you want to play.",
+        "Find a name for your character after you have chosen the concept you want to play.",
       href: "/generators/fantasy-names",
     },
   ],
@@ -145,6 +139,8 @@ export const whatDoINeedToBringToMyFirstDndGame: AnswerConfigInput = {
     },
   ],
   relatedAnswers: [
+    "what-should-a-new-dnd-player-know-before-their-first-game",
+    "how-do-i-read-a-dnd-character-sheet-as-a-beginner",
     "what-should-a-new-dnd-player-learn-first",
     "where-do-i-start-if-i-have-never-played-a-tabletop-rpg",
     "how-do-i-run-a-successful-session-0",
@@ -164,6 +160,8 @@ export const whatDoINeedToBringToMyFirstDndGame: AnswerConfigInput = {
     uniqueValue:
       "Organises first-session preparation into essential, useful, and ask-your-DM tiers with a short top-of-page checklist, so a beginner sees the small minimum without buying unnecessary gear.",
     relatedIntents: [
+      "answer-new-dnd-player-first-game",
+      "answer-read-dnd-character-sheet-beginner",
       "answer-new-dnd-player-learn-first",
       "answer-beginner-start",
       "answer-session-zero",
