@@ -194,4 +194,121 @@ describe("SoloThreadsStore", () => {
     await guest.store.load("v1");
     expect(guest.store.threads).toEqual([]);
   });
+
+  it("clears the old vault's threads and refuses edits while a new vault loads", async () => {
+    const stores = new Map<string, Map<string, string>>([
+      [
+        "a",
+        new Map([
+          [
+            THREADS_PATH.join("/"),
+            JSON.stringify({
+              version: 1,
+              threads: [
+                {
+                  id: "a1",
+                  title: "In A",
+                  kind: "lead",
+                  note: "",
+                  status: "open",
+                  closingNote: "",
+                  entityIds: [],
+                  createdAt: 1,
+                  updatedAt: 1,
+                },
+              ],
+            }),
+          ],
+        ]),
+      ],
+      ["b", new Map()],
+    ]);
+    let releaseB!: () => void;
+    const bRead = new Promise<void>((resolve) => {
+      releaseB = resolve;
+    });
+    let current = "a";
+    const store = new SoloThreadsStore({
+      vaultId: () => current,
+      files: (vaultId) => ({
+        read: async (path) => {
+          if (vaultId === "b") await bRead;
+          return stores.get(vaultId)!.get(path.join("/")) ?? null;
+        },
+        write: async (path, text) => {
+          stores.get(vaultId)!.set(path.join("/"), text);
+        },
+      }),
+      readOnly: () => false,
+      entityIds: () => new Set(),
+      ids: { uuid: () => "new" },
+      clock: { now: () => 2 },
+      publishCapture: () => {},
+      notify: () => {},
+    });
+    await store.load("a");
+    expect(store.threads.map((t) => t.title)).toEqual(["In A"]);
+
+    current = "b";
+    const loading = store.load("b");
+    expect(store.threads).toEqual([]);
+    expect(store.editable).toBe(false);
+    expect(store.add({ title: "Sneaks into B", kind: "lead" }).ok).toBe(false);
+
+    releaseB();
+    await loading;
+    await flush();
+    expect(store.editable).toBe(true);
+    expect(stores.get("b")!.has(THREADS_PATH.join("/"))).toBe(false);
+    expect(
+      JSON.parse(stores.get("a")!.get(THREADS_PATH.join("/"))!).threads,
+    ).toHaveLength(1);
+  });
+
+  it("a save queued before a vault switch still lands in the vault it was made for", async () => {
+    const stores = new Map<string, Map<string, string>>([
+      ["a", new Map()],
+      ["b", new Map()],
+    ]);
+    let releaseWrite!: () => void;
+    const slowWrite = new Promise<void>((resolve) => {
+      releaseWrite = resolve;
+    });
+    let current = "a";
+    const store = new SoloThreadsStore({
+      vaultId: () => current,
+      files: (vaultId) => ({
+        read: async (path) => stores.get(vaultId)!.get(path.join("/")) ?? null,
+        write: async (path, text) => {
+          if (vaultId === "a") await slowWrite;
+          stores.get(vaultId)!.set(path.join("/"), text);
+        },
+      }),
+      readOnly: () => false,
+      entityIds: () => new Set(),
+      ids: {
+        uuid: (() => {
+          let n = 0;
+          return () => `t${++n}`;
+        })(),
+      },
+      clock: { now: () => 2 },
+      publishCapture: () => {},
+      notify: () => {},
+    });
+    await store.load("a");
+    store.add({ title: "Belongs to A", kind: "lead" });
+
+    current = "b";
+    await store.load("b");
+    releaseWrite();
+    await flush();
+    await flush();
+
+    const savedA = JSON.parse(stores.get("a")!.get(THREADS_PATH.join("/"))!);
+    expect(savedA.threads.map((t: { title: string }) => t.title)).toEqual([
+      "Belongs to A",
+    ]);
+    expect(stores.get("b")!.has(THREADS_PATH.join("/"))).toBe(false);
+  });
 });

@@ -44,6 +44,8 @@ export interface SoloThreadsDeps {
 export class SoloThreadsStore {
   private items = $state<Thread[]>([]);
   private valid = $state(true);
+  /** True while a vault's file is being read. Edits are refused then, so none reach the wrong vault. */
+  private loading = $state(false);
   private loadedFor: string | null = null;
   private loadVersion = 0;
   private queue: Promise<void> = Promise.resolve();
@@ -75,41 +77,41 @@ export class SoloThreadsStore {
 
   /** False when the vault's threads file exists but cannot be read; edits are refused then. */
   get editable(): boolean {
-    return this.valid && !this.deps.readOnly();
+    return !this.loading && this.valid && !this.deps.readOnly();
   }
 
-  /** Reads the threads for a vault. A load for an older vault is discarded. */
+  /**
+   * Reads the threads for a vault. The previous vault's threads are cleared at
+   * once, so none of them can be edited or saved into this vault. A load for an
+   * older vault is discarded.
+   */
   async load(vaultId: string | null): Promise<void> {
     const version = ++this.loadVersion;
     this.loadedFor = vaultId;
-    if (!vaultId) {
-      this.items = [];
-      this.valid = true;
-      return;
-    }
-    const files = this.deps.files(vaultId);
-    if (!files) {
-      this.items = [];
-      this.valid = true;
-      return;
-    }
+    this.items = [];
+    this.valid = true;
+    this.loading = true;
     try {
+      const files = vaultId ? this.deps.files(vaultId) : null;
+      if (!files) return;
       const result = await loadThreads(files);
       if (version !== this.loadVersion) return;
       this.valid = result.valid;
       this.items = pruneLinks(result.threads, this.deps.entityIds());
-      if (!result.valid)
-        this.deps.notify(
-          "The threads file could not be read, so threads cannot be changed.",
-        );
+      if (!result.valid) this.unreadable();
     } catch {
       if (version !== this.loadVersion) return;
       this.valid = false;
-      this.items = [];
-      this.deps.notify(
-        "The threads file could not be read, so threads cannot be changed.",
-      );
+      this.unreadable();
+    } finally {
+      if (version === this.loadVersion) this.loading = false;
     }
+  }
+
+  private unreadable(): void {
+    this.deps.notify(
+      "The threads file could not be read, so threads cannot be changed.",
+    );
   }
 
   add(input: { title: string; kind: ThreadKind; note?: string }): ThreadResult {
@@ -190,9 +192,11 @@ export class SoloThreadsStore {
 
   private refuse(): { ok: false; error: string } | null {
     if (this.editable) return null;
-    const error = this.deps.readOnly()
-      ? "This vault is read-only, so threads cannot be changed."
-      : "The threads file could not be read, so threads cannot be changed.";
+    const error = this.loading
+      ? "The vault's threads are still loading."
+      : this.deps.readOnly()
+        ? "This vault is read-only, so threads cannot be changed."
+        : "The threads file could not be read, so threads cannot be changed.";
     this.deps.notify(error);
     return { ok: false, error };
   }
@@ -203,9 +207,11 @@ export class SoloThreadsStore {
     if (!vaultId) return;
     const files = this.deps.files(vaultId);
     if (!files) return;
-    // Queue the write of the latest list, so the last write always holds the newest state.
+    // Each write carries its own snapshot and the vault it was made for, so a
+    // vault switch can never move these threads into another vault's file.
+    // Writes run in order, so the last one holds the newest state.
     this.queue = this.queue
-      .then(() => saveThreads(files, this.items))
+      .then(() => saveThreads(files, next))
       .catch(() => {
         this.deps.notify(
           "The thread could not be saved to the vault. It is kept until you reload.",
