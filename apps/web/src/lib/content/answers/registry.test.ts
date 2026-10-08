@@ -110,6 +110,28 @@ describe("answer registry", () => {
     }
   });
 
+  it("records the combat-turn answer's distinct scope from the beginner-start answer", () => {
+    const answer = answers["what-can-i-do-on-my-turn-in-dnd-combat"];
+
+    expect(answer?.discovery?.acknowledgedOverlap).toContainEqual(
+      expect.objectContaining({
+        with: "answer-beginner-start",
+        reason: expect.any(String),
+      }),
+    );
+  });
+
+  it("records the character-sheet answer's distinct scope from combat turns", () => {
+    const answer = answers["how-do-i-read-a-dnd-character-sheet-as-a-beginner"];
+
+    expect(answer?.discovery?.acknowledgedOverlap).toContainEqual(
+      expect.objectContaining({
+        with: "answer-what-can-i-do-on-my-turn-in-dnd-combat",
+        reason: expect.any(String),
+      }),
+    );
+  });
+
   it("cross-links combat engagement and combat pacing answers", () => {
     const engagement =
       answers[

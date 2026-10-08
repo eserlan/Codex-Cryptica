@@ -133,6 +133,7 @@ export const whereDoIStartIfIHaveNeverPlayedATabletopRpg: AnswerConfigInput = {
     "how-do-i-start-gming-for-the-first-time",
     "what-rpg-system-is-good-for-solo-play",
     "what-rpg-feels-like-dnd-but-is-simpler",
+    "what-can-i-do-on-my-turn-in-dnd-combat",
     "what-should-a-new-dnd-player-know-before-their-first-game",
     "how-do-i-read-a-dnd-character-sheet-as-a-beginner",
   ],
