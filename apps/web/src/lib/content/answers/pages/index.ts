@@ -30,6 +30,7 @@ import { howDoIOrganiseGmNotesForInPersonPlay } from "./how-do-i-organise-gm-not
 import { howDoIPaceAnRpgOneShot } from "./how-do-i-pace-an-rpg-one-shot";
 import { howDoIPrepareADndSession } from "./how-do-i-prepare-a-dnd-session";
 import { howDoIPrepareAnRpgSessionStepByStep } from "./how-do-i-prepare-an-rpg-session-step-by-step";
+import { howDoIReadADndCharacterSheetAsABeginner } from "./how-do-i-read-a-dnd-character-sheet-as-a-beginner";
 import { howDoIRunABardOrFaceWithoutSideliningTheParty } from "./how-do-i-run-a-bard-or-face-without-sidelining-the-party";
 import { howDoIRunACampaignWhereThePlayersOwnABusiness } from "./how-do-i-run-a-campaign-where-the-players-own-a-business";
 import { howDoIRunADiplomatNobleOrCourtierInAnRpg } from "./how-do-i-run-a-diplomat-noble-or-courtier-in-an-rpg";
@@ -184,6 +185,7 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     howDoIPaceAnRpgOneShot,
     howDoIPrepareADndSession,
     howDoIPrepareAnRpgSessionStepByStep,
+    howDoIReadADndCharacterSheetAsABeginner,
     howDoIRunABardOrFaceWithoutSideliningTheParty,
     howDoIRunACampaignWhereThePlayersOwnABusiness,
     howDoIRunADiplomatNobleOrCourtierInAnRpg,
