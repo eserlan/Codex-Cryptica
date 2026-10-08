@@ -119,7 +119,9 @@ import { howToCreateRumoursForAFantasyTown } from "./how-to-create-rumours-for-a
 import { howToWriteAnInWorldNewspaperForAnRpg } from "./how-to-write-an-in-world-newspaper-for-an-rpg";
 import { isMyRpgCampaignIdeaGood } from "./is-my-rpg-campaign-idea-good";
 import { pointCrawlVsHexCrawl } from "./point-crawl-vs-hex-crawl";
+import { whatCanIDoOnMyTurnInDndCombat } from "./what-can-i-do-on-my-turn-in-dnd-combat";
 import { whatCanPlayersActuallyBuyAndSellInAFantasySettlement } from "./what-can-players-actually-buy-and-sell-in-a-fantasy-settlement";
+import { whatDoINeedToBringToMyFirstDndGame } from "./what-do-i-need-to-bring-to-my-first-dnd-game";
 import { whatDoYouDoWithMurderHobosInAnRpgCampaign } from "./what-do-you-do-with-murder-hobos-in-an-rpg-campaign";
 import { whatIsAPointCrawl } from "./what-is-a-point-crawl";
 import { whatIsTheDifferenceBetweenGodsAndDemonLordsInAFantasyWorld } from "./what-is-the-difference-between-gods-and-demon-lords-in-a-fantasy-world";
@@ -144,6 +146,7 @@ import { whatTtrpgShouldIPlayForAPirateCampaign } from "./what-ttrpg-should-i-pl
 import { whatTtrpgShouldIUseForAFantasyDungeonCrawl } from "./what-ttrpg-should-i-use-for-a-fantasy-dungeon-crawl";
 import { whatTtrpgsLetYouBuildAndUpgradeABase } from "./what-ttrpgs-let-you-build-and-upgrade-a-base";
 import { whereDoIStartIfIHaveNeverPlayedATabletopRpg } from "./where-do-i-start-if-i-have-never-played-a-tabletop-rpg";
+import { whichDiceDoIRollInDndAndWhen } from "./which-dice-do-i-roll-in-dnd-and-when";
 import { xpLevelingVsMilestoneLeveling } from "./xp-leveling-vs-milestone-leveling";
 
 /**
@@ -274,7 +277,9 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     howToWriteAnInWorldNewspaperForAnRpg,
     isMyRpgCampaignIdeaGood,
     pointCrawlVsHexCrawl,
+    whatCanIDoOnMyTurnInDndCombat,
     whatCanPlayersActuallyBuyAndSellInAFantasySettlement,
+    whatDoINeedToBringToMyFirstDndGame,
     whatDoYouDoWithMurderHobosInAnRpgCampaign,
     whatIsAPointCrawl,
     whatIsTheDifferenceBetweenGodsAndDemonLordsInAFantasyWorld,
@@ -299,6 +304,7 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     whatTtrpgShouldIUseForAFantasyDungeonCrawl,
     whatTtrpgsLetYouBuildAndUpgradeABase,
     whereDoIStartIfIHaveNeverPlayedATabletopRpg,
+    whichDiceDoIRollInDndAndWhen,
     xpLevelingVsMilestoneLeveling,
   ]
     .map((answer) => AnswerConfigSchema.parse(answer))

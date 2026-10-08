@@ -51,6 +51,24 @@ const mockRegistry: Record<string, AnswerConfig> = {
 };
 
 describe("answer registry", () => {
+  it("prioritises first-game guidance and the character-sheet guide for packing readers", () => {
+    const answer = answers["what-do-i-need-to-bring-to-my-first-dnd-game"];
+
+    expect(answer.relatedAnswers.slice(0, 2)).toEqual([
+      "what-should-a-new-dnd-player-know-before-their-first-game",
+      "how-do-i-read-a-dnd-character-sheet-as-a-beginner",
+    ]);
+    expect(answer.discovery?.relatedIntents).toContain(
+      "answer-new-dnd-player-first-game",
+    );
+    expect(answer.discovery?.relatedIntents).toContain(
+      "answer-read-dnd-character-sheet-beginner",
+    );
+    expect(answer.relatedTools.map((tool) => tool.href)).not.toContain(
+      "/generators/dnd-npc",
+    );
+  });
+
   it("records the new D&D player's distinct audience from GM startup guides", () => {
     const overlaps = [
       [
@@ -77,6 +95,26 @@ describe("answer registry", () => {
         }),
       );
     }
+  });
+
+  it("points first-game readers to the character-sheet guide without raw Markdown", () => {
+    const answer =
+      answers["what-should-a-new-dnd-player-know-before-their-first-game"];
+    const sheetIntro = answer.sections.find(
+      (section) =>
+        section.kind === "list" &&
+        section.heading === "You do not need to memorise your character sheet",
+    );
+
+    expect(
+      sheetIntro?.kind === "list" ? sheetIntro.intro : undefined,
+    ).not.toMatch(/\[[^\]]+\]\([^)]+\)/);
+    expect(answer.relatedAnswers).toContain(
+      "how-do-i-read-a-dnd-character-sheet-as-a-beginner",
+    );
+    expect(
+      getAnswer("how-do-i-read-a-dnd-character-sheet-as-a-beginner"),
+    ).toBeDefined();
   });
 
   it("records the bard answer's distinct scope from adjacent specialist answers", () => {
@@ -108,6 +146,61 @@ describe("answer registry", () => {
         }),
       );
     }
+  });
+
+  it("records the combat-turn answer's distinct scope from the beginner-start answer", () => {
+    const answer = answers["what-can-i-do-on-my-turn-in-dnd-combat"];
+
+    expect(answer?.discovery?.acknowledgedOverlap).toContainEqual(
+      expect.objectContaining({
+        with: "answer-beginner-start",
+        reason: expect.any(String),
+      }),
+    );
+  });
+
+  it("describes Ready and Dodge without overstating their 2024 rules", () => {
+    const answer = answers["what-can-i-do-on-my-turn-in-dnd-combat"];
+    const options = answer.sections.find(
+      (section) =>
+        section.kind === "list" &&
+        section.heading === "You do not have to attack every turn",
+    );
+    const ready =
+      options?.kind === "list"
+        ? options.items.find(
+            (item) => item.term === "Control what the enemies can see or reach",
+          )
+        : undefined;
+    const example = answer.sections.find(
+      (section) =>
+        section.kind === "example" &&
+        section.heading ===
+          "Worked example: the same round, two levels of preparation",
+    );
+    const menuDriven =
+      example?.kind === "example"
+        ? example.items?.find((item) => item.term === "The menu-driven version")
+        : undefined;
+
+    expect(ready?.text).toContain(
+      "you can use your reaction to respond; you can also ignore the trigger",
+    );
+    expect(ready?.text).not.toContain(
+      "spend your reaction to respond or ignore it",
+    );
+    expect(menuDriven?.text).toContain("if the fighter can see the attacker");
+  });
+
+  it("records the character-sheet answer's distinct scope from combat turns", () => {
+    const answer = answers["how-do-i-read-a-dnd-character-sheet-as-a-beginner"];
+
+    expect(answer?.discovery?.acknowledgedOverlap).toContainEqual(
+      expect.objectContaining({
+        with: "answer-what-can-i-do-on-my-turn-in-dnd-combat",
+        reason: expect.any(String),
+      }),
+    );
   });
 
   it("cross-links combat engagement and combat pacing answers", () => {
@@ -627,6 +720,62 @@ describe("published answers", () => {
         expect(slugs, `${answer.slug} → ${related}`).toContain(related);
       }
     }
+  });
+
+  it("gives the correct healing-potion dice example", () => {
+    const answer = answers["which-dice-do-i-roll-in-dnd-and-when"];
+    const diceSection = answer.sections.find(
+      (section) =>
+        section.kind === "list" &&
+        section.heading === "The other dice: damage, healing and amounts",
+    );
+
+    expect(diceSection?.kind).toBe("list");
+    if (diceSection?.kind !== "list") return;
+
+    const diceExamples = diceSection.items.find(
+      (item) => item.term === "d4, d6, d8, d10, d12",
+    )?.text;
+
+    expect(diceExamples).toContain(
+      "common [2024 Potion of Healing](https://www.dndbeyond.com/magic-items/8960641-potion-of-healing) restores 2d4 + 2 hit points",
+    );
+  });
+
+  it("explains the natural 1 and 20 exceptions for attack rolls", () => {
+    const answer = answers["which-dice-do-i-roll-in-dnd-and-when"];
+    const attackRoll = answer.sections
+      .filter((section) => section.kind === "list")
+      .flatMap((section) => section.items)
+      .find((item) => item.term === "Attack rolls");
+
+    expect(attackRoll?.text).toContain(
+      "a natural 20 always hits, and a natural 1 always misses",
+    );
+  });
+
+  it("records the distinct scope of the D&D dice and character-sheet answers", () => {
+    const overlap = answers[
+      "which-dice-do-i-roll-in-dnd-and-when"
+    ].discovery?.acknowledgedOverlap?.find(
+      (entry) => entry.with === "answer-read-dnd-character-sheet-beginner",
+    );
+
+    expect(overlap?.reason).toContain(
+      "choosing dice and resolving common rolls",
+    );
+  });
+
+  it("records the distinct scope of the D&D dice and combat-turn answers", () => {
+    const overlap = answers[
+      "which-dice-do-i-roll-in-dnd-and-when"
+    ].discovery?.acknowledgedOverlap?.find(
+      (entry) => entry.with === "answer-what-can-i-do-on-my-turn-in-dnd-combat",
+    );
+
+    expect(overlap?.reason).toContain(
+      "which dice resolve checks, attacks, saves, and damage",
+    );
   });
 
   it("never links an answer to itself", () => {
