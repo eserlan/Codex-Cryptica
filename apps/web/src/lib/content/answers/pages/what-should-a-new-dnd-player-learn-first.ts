@@ -14,7 +14,7 @@ export const whatShouldANewDndPlayerLearnFirst: AnswerConfigInput = {
       heading: "Start with the game loop, not the whole rulebook",
       paragraphs: [
         "D&D works through a repeating conversation. The Dungeon Master describes a situation, you say what your character tries, and the DM tells you whether a roll is needed. When a roll matters, you add the relevant modifier to a d20 result and compare it with a target number. The DM then describes what happens and the group responds to the new situation.",
-        "That loop is enough to begin. In a fight, the same conversation is organised into turns. Your character normally moves and takes an action, with bonus actions and reactions available only when the character's features allow them. You can describe an intention in ordinary language and let the DM tell you which rule applies. You are not expected to know the name of every rule before you use it.",
+        "That loop is enough to begin. In a fight, the same conversation is organised into turns. Your character normally moves and takes an action. A bonus action needs a rule that grants it. A reaction responds to a specific trigger and can happen on someone else's turn; ask the DM to help you recognise those opportunities. You can describe an intention in ordinary language and let the DM tell you which rule applies. You are not expected to know the name of every rule before you use it.",
       ],
     },
     {
@@ -148,6 +148,7 @@ export const whatShouldANewDndPlayerLearnFirst: AnswerConfigInput = {
     "how-do-i-run-a-successful-session-0",
     "how-do-i-find-a-tabletop-rpg-group-to-play-with",
     "what-rpg-system-should-we-try-instead-of-dnd",
+    "what-do-i-need-to-bring-to-my-first-dnd-game",
     "what-can-i-do-on-my-turn-in-dnd-combat",
     "what-should-a-new-dnd-player-know-before-their-first-game",
     "how-do-i-read-a-dnd-character-sheet-as-a-beginner",

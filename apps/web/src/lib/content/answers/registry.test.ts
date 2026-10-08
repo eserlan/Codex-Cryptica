@@ -79,6 +79,26 @@ describe("answer registry", () => {
     }
   });
 
+  it("points first-game readers to the character-sheet guide without raw Markdown", () => {
+    const answer =
+      answers["what-should-a-new-dnd-player-know-before-their-first-game"];
+    const sheetIntro = answer.sections.find(
+      (section) =>
+        section.kind === "list" &&
+        section.heading === "You do not need to memorise your character sheet",
+    );
+
+    expect(
+      sheetIntro?.kind === "list" ? sheetIntro.intro : undefined,
+    ).not.toMatch(/\[[^\]]+\]\([^)]+\)/);
+    expect(answer.relatedAnswers).toContain(
+      "how-do-i-read-a-dnd-character-sheet-as-a-beginner",
+    );
+    expect(
+      getAnswer("how-do-i-read-a-dnd-character-sheet-as-a-beginner"),
+    ).toBeDefined();
+  });
+
   it("records the bard answer's distinct scope from adjacent specialist answers", () => {
     const overlaps = [
       [
