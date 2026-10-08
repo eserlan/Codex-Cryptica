@@ -1133,7 +1133,9 @@
     x={chipContextMenu.x}
     y={chipContextMenu.y}
     fieldId={chipContextMenu.fieldId}
-    targetField={schema?.fields?.find(field => field.id === chipContextMenu?.fieldId)}
+    targetField={schema?.fields?.find(
+      (field) => field.id === chipContextMenu?.fieldId,
+    )}
     currentOverride={fieldDisplayOverrides[chipContextMenu.fieldId]}
     onClose={closeChipContextMenu}
     onSetDisplayMode={setFieldDisplayMode}
