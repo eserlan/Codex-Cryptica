@@ -183,6 +183,14 @@ export const howDoIReadADndCharacterSheetAsABeginner: AnswerConfigInput = {
     linkText: "Explore Codex Cryptica for D&D",
     href: "/for/dungeons-and-dragons",
   },
+  relatedTopics: [
+    {
+      title: "D&D for Beginners",
+      href: "/topics/dnd-beginners",
+      description:
+        "The complete beginner learning path: what to know before session one, character-sheet walkthrough, dice rules, and combat turns.",
+    },
+  ],
   relatedForPages: [
     {
       title: "Codex Cryptica for D&D",
@@ -199,6 +207,7 @@ export const howDoIReadADndCharacterSheetAsABeginner: AnswerConfigInput = {
   discovery: {
     id: "answer-read-dnd-character-sheet-beginner",
     parentCluster: "beginner-entry",
+    clusters: ["beginner-entry", "dnd-new-player"],
     primaryIntent: "how to read a dnd character sheet as a beginner",
     intentAliases: [
       "how to read a dnd 5e character sheet",
@@ -210,6 +219,7 @@ export const howDoIReadADndCharacterSheetAsABeginner: AnswerConfigInput = {
     uniqueValue:
       "Teaches a new player to read a 5e sheet in order of table usefulness, from hit points and Armour Class to modifiers, skills, saves, attacks, and safe-to-ignore fields, with a 1st-level walkthrough and 2014 versus 2024 guidance.",
     relatedIntents: [
+      "topic-dnd-beginners",
       "answer-new-dnd-player-learn-first",
       "answer-new-dnd-player-first-game",
       "answer-beginner-start",

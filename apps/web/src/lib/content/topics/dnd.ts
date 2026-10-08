@@ -369,6 +369,12 @@ export const DND_TOPIC_CONFIG = {
   relatedHeading: "More about D&D and Codex Cryptica",
   relatedTopics: [
     {
+      title: "D&D for Beginners",
+      href: "/topics/dnd-beginners",
+      description:
+        "Guide your new players to a clear learning path covering the play loop, character sheet, dice and combat turns.",
+    },
+    {
       title: "Codex Cryptica for D&D",
       href: "/for/dungeons-and-dragons",
       description:
