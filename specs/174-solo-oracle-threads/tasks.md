@@ -223,7 +223,7 @@ No discovery task: this feature adds no public, indexable page (Constitution XII
 
 ## Phase 8: Polish & Cross-Cutting Concerns
 
-- [ ] T051 [P] Add the controls `solo-yes-no-menu`, `solo-threads-menu` and `journal-capture-menu` to `packages/help-engine/src/actions/catalogue.ts` (solo area for the first two, gated by the solo-session flag; the journal panel for the third). Update `packages/help-engine/tests/context.test.ts` and `apps/web/src/lib/stores/help-assistant/help-context.svelte.ts` (`soloActionsFor`), with tests.
+- [x] T051 [P] Add the controls `solo-yes-no-menu`, `solo-threads-menu` and `journal-capture-menu` to `packages/help-engine/src/actions/catalogue.ts` (solo area for the first two, gated by the solo-session flag; the journal panel for the third). Update `packages/help-engine/tests/context.test.ts` and `apps/web/src/lib/stores/help-assistant/help-context.svelte.ts` (`soloActionsFor`), with tests.
 - [x] T052 [P] Add workflows to `packages/help-engine/src/registry/features/solo-session.ts`: "Ask the dice a yes or no question", "Get a random event", "Keep track of threads". Add "Choose what the journal records" to the session journal feature. Add five evaluation questions to `packages/help-engine/tests/eval/phase-a-questions.ts`.
 - [x] T053 Regenerate the help bundle (`bun run --cwd packages/help-engine bundle`) and embeddings (`bun scripts/sync-help-embeddings.ts`, after confirming `bunx wrangler whoami`). Run the help evaluation and confirm the new questions retrieve `solo-session` or the session journal article.
 - [x] T054 [P] Extend the source-scan test in `apps/web/src/lib/stores/ui/solo-play-guard.test.ts` to cover `SoloYesNoMenu`, `SoloThreadsMenu`, `SoloThreadDialog`, `solo-threads.svelte.ts` and `vault-threads-file.ts` (no `fetch(`, `sendBeacon`, `XMLHttpRequest` or `WebSocket`; FR-007, SC-006).
@@ -231,8 +231,8 @@ No discovery task: this feature adds no public, indexable page (Constitution XII
 - [x] T056 Run the impacted checks required by constitution VI.3 (1.8.0): `bun run test:changed`, `bun run lint:changed` and `bunx svelte-check --tsconfig ./tsconfig.json --threshold error` in `apps/web`, plus `bun test --coverage` in the three engine packages (each at least 70%). Re-run the Phase 1 and 2 suites explicitly: `components/solo`, `stores/solo-session.svelte.test.ts` and `stores/ui/solo-play-guard.test.ts` (FR-031, FR-032). Fix everything to 0 errors.
 - [x] T057 Run `bunx fallow audit --format json --quiet --explain --gate-marker agent` and fix any introduced findings.
 - [ ] T058 Walk through every scenario in [quickstart.md](./quickstart.md) in the dev app, desktop and phone width (390 px), with AI on and off. Also time SC-002 (an answer within 10 seconds and at most 3 actions from the bar) and note the threads write time with 200 threads (plan goal: under 100 ms). Record any failure as a new task.
-- [ ] T059 Run the `codex-review` specialist review and fix its findings.
-- [ ] T060 Open ready-for-review PRs to `staging` that reference #3885. Suggested split: PR1 Phases 1 to 4 (US1 and US2); PR2 US3; PR3 US4, US5 and Polish.
+- [x] T059 Run the `codex-review` specialist review and fix its findings.
+- [x] T060 Open ready-for-review PRs to `staging` that reference #3885. Suggested split: PR1 Phases 1 to 4 (US1 and US2); PR2 US3; PR3 US4, US5 and Polish.
 
 ---
 
