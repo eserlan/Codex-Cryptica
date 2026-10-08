@@ -291,11 +291,9 @@
       isEnding={isEndingSession}
       onEnd={endSession}
       onBack={() => (selectedPastJournalId = null)}
-      captureMapMoves={displayedJournal?.captureMapMoves !== false}
-      onToggleMapMoves={() =>
-        void store.setCaptureMapMoves(
-          displayedJournal?.captureMapMoves === false,
-        )}
+      captureOff={displayedJournal?.captureOff}
+      captureMapMoves={displayedJournal?.captureMapMoves}
+      onToggleCapture={(kind, on) => void store.setCaptureChoice(kind, on)}
     >
       {#snippet extras()}
         <JournalPromoteToggle

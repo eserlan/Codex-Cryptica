@@ -19,6 +19,7 @@ function fakeStore(overrides: Record<string, unknown> = {}) {
           vaultId: string;
           status: string;
           captureMapMoves?: boolean;
+          captureOff?: string[];
         }
       | undefined,
     activeSectionId: undefined as string | undefined,
@@ -321,5 +322,79 @@ describe("SessionJournalCapture", () => {
 
     expect(log).toHaveBeenCalledTimes(1);
     expect(appended.map((e) => e.content)).toEqual(["works"]);
+  });
+
+  describe("capture switches (spec 174, US4)", () => {
+    const KIND_ENTRIES: [string, string][] = [
+      ["dice", "dice-roll"],
+      ["tables", "table-result"],
+      ["decks", "card-draw"],
+      ["map-moves", "map-move"],
+      ["scenes", "scene"],
+      ["oracle", "oracle-answer"],
+      ["oracle", "random-event"],
+      ["tension", "tension-change"],
+      ["threads", "thread-change"],
+      ["party", "party-change"],
+      ["generated", "generated-result"],
+    ];
+
+    it.each(KIND_ENTRIES)(
+      "blocks %s entries (%s) when that kind is switched off",
+      async (kind, entryType) => {
+        const { store, appended } = fakeStore({
+          current: {
+            id: "journal-1",
+            vaultId: "vault-1",
+            status: "active",
+            captureOff: [kind],
+          },
+        });
+        make(store);
+        publish(bus, { entryType, content: "blocked" });
+        await flush();
+        expect(appended).toEqual([]);
+      },
+    );
+
+    it("still records every other kind when one is switched off", async () => {
+      const { store, appended } = fakeStore({
+        current: {
+          id: "journal-1",
+          vaultId: "vault-1",
+          status: "active",
+          captureOff: ["oracle"],
+        },
+      });
+      make(store);
+      publish(bus, { entryType: "oracle-answer", content: "blocked" });
+      publish(bus, { entryType: "dice-roll", content: "Rolled 1d20: 9" });
+      publish(bus, { entryType: "tension-change", content: "Tension: 5 → 6" });
+      await flush();
+      expect(appended.map((e) => e.type)).toEqual([
+        "dice-roll",
+        "tension-change",
+      ]);
+    });
+
+    it("honours a kind switched off while an entry waits in the save queue", async () => {
+      let releaseFirstWrite!: () => void;
+      const firstWrite = new Promise<void>((resolve) => {
+        releaseFirstWrite = resolve;
+      });
+      const { store, appended } = fakeStore({
+        appendEntry: vi.fn(async (input: any) => {
+          if (input.content === "slow dice") await firstWrite;
+          appended.push(input);
+        }),
+      });
+      make(store);
+      publish(bus, { entryType: "dice-roll", content: "slow dice" });
+      publish(bus, { entryType: "oracle-answer", content: "waiting" });
+      store.current!.captureOff = ["oracle"];
+      releaseFirstWrite();
+      await flush();
+      expect(appended.map((e) => e.type)).toEqual(["dice-roll"]);
+    });
   });
 });

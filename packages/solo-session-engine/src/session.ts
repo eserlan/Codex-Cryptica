@@ -1,3 +1,4 @@
+import { TENSION_DEFAULT, clampTension } from "./oracle";
 import type {
   IdSource,
   ClockSource,
@@ -77,6 +78,14 @@ export function parseSoloSession(
   // A Phase 1 record has no scene list: its current scene becomes the only one.
   const scenes = parseScenes(raw.scenes, raw.sceneName, raw.sceneSectionId);
   if (!scenes) return null;
+  // Phase 3: a record without tension reads as the default (spec 174, FR-010).
+  const tension = raw.tension === undefined ? TENSION_DEFAULT : raw.tension;
+  if (
+    !Number.isInteger(tension) ||
+    (tension as number) < 1 ||
+    (tension as number) > 9
+  )
+    return null;
 
   return {
     version: 1,
@@ -90,6 +99,7 @@ export function parseSoloSession(
     lastRoll: raw.lastRoll,
     partyIds,
     scenes,
+    tension: tension as number,
   };
 }
 
@@ -111,7 +121,13 @@ export function createSoloSession(
     lastRoll: null,
     partyIds: [],
     scenes: [],
+    tension: TENSION_DEFAULT,
   };
+}
+
+/** Sets the tension level, kept to 1 to 9 (spec 174, FR-010). */
+export function withTension(session: SoloSession, value: number): SoloSession {
+  return { ...session, tension: clampTension(value) };
 }
 
 export function withScene(

@@ -91,6 +91,36 @@ export const soloSession: FeatureEntry = {
       ],
       actionIds: ["solo-session.open-help"],
     },
+    {
+      id: "ask-a-yes-or-no-question",
+      title: "Ask the dice a yes or no question",
+      steps: [
+        "Open Yes or no in the solo bar and type your question, or leave it empty.",
+        "Choose how likely a yes is, from very unlikely to very likely, then choose Roll.",
+        "The answer shows with its roll, such as Yes, but. It works with AI off. Interpret with the Oracle is optional and only fills in an Oracle question.",
+      ],
+      actionIds: ["solo-session.open-help"],
+    },
+    {
+      id: "get-a-random-event",
+      title: "Get a random event",
+      steps: [
+        "Open Yes or no in the solo bar and choose Random event.",
+        "Each event names a focus, an action and a subject, such as an open thread, a party member or the place.",
+        "Raise or lower tension with the + and - buttons. Higher tension makes random events happen more often.",
+      ],
+      actionIds: ["solo-session.open-help"],
+    },
+    {
+      id: "keep-track-of-threads",
+      title: "Keep track of threads",
+      steps: [
+        "Open Threads in the solo bar, or on the Play page, and choose Add a thread.",
+        "Pick a kind, question, lead, objective or mystery, then link it to entries in your vault.",
+        "Close a thread with a note when it is resolved. Reopen it from the closed list if it returns.",
+      ],
+      actionIds: ["solo-session.open-help"],
+    },
   ],
   helpIds: ["solo-session"],
   related: ["solo-adventure", "session-journal", "dice-roller", "vtt-map"],

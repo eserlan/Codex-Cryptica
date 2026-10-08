@@ -13,6 +13,8 @@ export interface SoloSession {
   partyIds: string[];
   /** The session's scenes in order; the last one is current (Solo Play Loop). */
   scenes: SoloScene[];
+  /** Tension from 1 to 9 that drives how often random events come (spec 174, FR-010). */
+  tension: number;
 }
 
 export interface SoloScene {
