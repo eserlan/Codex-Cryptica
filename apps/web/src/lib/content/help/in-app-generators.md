@@ -22,6 +22,10 @@ rank: 7
 
 The **Campaign Generators** let you create NPCs, factions, settlements, magic items, and more directly inside your active campaign vault. The **Holiday & Festival** generator creates one observance or a connected calendar. Every result is previewed before you choose to open it as an entity draft.
 
+### Use generators with AI turned off
+
+Turn off AI with **AI Disabled** in Settings to use local generator templates; no AI key is needed. Review each draft before opening it as an entity.
+
 ### How to Open the Generator
 
 - Click the **wand icon** in the vault toolbar at the top of the entity list.

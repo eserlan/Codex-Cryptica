@@ -123,6 +123,12 @@ export const SOLO_CONTROL_IDS = [
   "play-start-solo-session",
   "solo-quick-roll",
   "solo-end-session",
+  "solo-generate-menu",
+  "solo-recent-results",
+  "solo-pinned-tables",
+  "solo-party-menu",
+  "solo-scene-menu",
+  "solo-oracle-menu",
 ] as const;
 
 /** Controls `highlight` may point at (`data-help-target` values). */
@@ -241,6 +247,12 @@ export const CONTROL_CATALOGUE: Record<ControlId, ControlSpec> = {
   "play-start-solo-session": { area: "solo" },
   "solo-quick-roll": { area: "solo", requiresFlag: "solo-session" },
   "solo-end-session": { area: "solo", requiresFlag: "solo-session" },
+  "solo-generate-menu": { area: "solo", requiresFlag: "solo-session" },
+  "solo-recent-results": { area: "solo", requiresFlag: "solo-session" },
+  "solo-pinned-tables": { area: "solo", requiresFlag: "solo-session" },
+  "solo-party-menu": { area: "solo", requiresFlag: "solo-session" },
+  "solo-scene-menu": { area: "solo", requiresFlag: "solo-session" },
+  "solo-oracle-menu": { area: "solo", requiresFlag: "solo-session" },
 };
 
 /**

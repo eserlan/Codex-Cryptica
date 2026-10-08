@@ -50,6 +50,8 @@ Type a name in the scene box and choose **New scene** to start a scene. While a 
 
 Scene names are kept on this device and survive a reload.
 
+Open **Scenes** in the solo bar to see every scene in this session, in order, with the current one marked. **Open** shows that scene's part of the journal. **Return to scene** starts a new visit to it: the scene is named with its visit number, such as "Arrival (2)", and gets its own journal section. Your earlier entries stay where they were, so the journal still reads in the order things happened.
+
 ## Resume a session
 
 Your session is kept across reloads and across switching vaults. Open **Play** again and choose **Resume Solo Session** to return to your map. Resuming does not change any map setting.
@@ -61,6 +63,38 @@ Choose **End session** in the bar. If a journal is running, you can end it too, 
 ## Solo means solo
 
 While a solo session is running, you cannot share your vault or turn on Player View. Those controls explain that you need to end the solo session first. In the same way, you cannot start a solo session while shared play is on. End shared play first.
+
+## Keep what you discover
+
+The **Recent** menu in the solo bar lists the latest 10 results in your running journal, newest first: rolls, table results, card draws, generated results and notes. Choose **Save to Vault** on any of them to make a draft entry. Pick a category (the one suggested is preselected), check the name, and press Save. The draft links back to its journal entry, and you stay where you are.
+
+Results are kept only while a journal runs. If Recent says so, start or continue a journal first.
+
+## Generate during play
+
+**Generate** in the solo bar opens the generators for NPC, Encounter, Rumour and Complication, ready to generate. Choose **All generators…** to open the full generator picker.
+
+Every generated result is recorded in your running journal as soon as it appears, whether or not you keep it. When you save it to the Vault with the generator's usual Save, the journal gets a short follow-up entry noting the save. Closing a generator without generating records nothing.
+
+Generators need your vault to have finished loading. Until then, Generate is greyed out with a short reason.
+
+## Your own tables
+
+Pin up to 3 of your random tables to the solo bar with **Pin a table**. Each pinned table is a button: tap it to roll on the table, and the result appears in the bar. It is recorded in your roll history and in the running journal, the same as a roll from the Tables screen. The map does not move.
+
+Remove a pin with the × beside it. A table you delete from the vault disappears from the bar. Any other table is still available in the dice window.
+
+## Your party
+
+Choose the characters in your party in setup, or later from the **Party** menu in the solo bar. Only Character entries can be in the party. Party members show by name in the menu, and choosing a name opens that character's entry.
+
+While a journal runs, each change to the party is noted in it, such as "Party: Kael joined." Your party is kept with the session, so it is still there after a reload. A character you delete from the vault leaves the party.
+
+## Oracle shortcuts
+
+When AI is on, **Ask Oracle** in the solo bar offers **Open Oracle** and four quick questions: "How does this NPC react?", "Add a complication", "What is known about this place?" and "What happens next?".
+
+Choosing a question opens the Oracle beside your screen with that question already written in its input. It includes the scene name, the place, your party and the most recent journal results. Nothing is sent until you edit it, if you want, and press Send. The Oracle answers the question you send; it does not run the game for you. When AI is turned off, these shortcuts are hidden.
 
 ## Asking for help
 

@@ -14,6 +14,8 @@
     type SessionJournalPromoter,
   } from "$lib/stores/session-journal-promoter";
   import JournalComposer from "./JournalComposer.svelte";
+  import { entriesInSection, sectionIsGone } from "session-journal-engine";
+  import { quickNoteStore } from "$lib/stores/quicknote.svelte";
   import JournalEntryRow from "./JournalEntryRow.svelte";
   import JournalPromoteActions from "./JournalPromoteActions.svelte";
   import JournalPromoteToggle from "./JournalPromoteToggle.svelte";
@@ -72,6 +74,15 @@
           (journal) => journal.id === selectedPastJournalId,
         )
       : undefined) ?? store.current,
+  );
+
+  const shownEntries = $derived(
+    displayedJournal
+      ? entriesInSection(
+          displayedJournal.entries,
+          quickNoteStore.journalSectionFilter,
+        )
+      : [],
   );
 
   $effect(() => {
@@ -345,14 +356,32 @@
         : "This journal has no entries."}
     </p>
   {/if}
-  {#each displayedJournal?.entries ?? [] as entry, index (entry.id)}
+  {#if quickNoteStore.journalSectionFilter && displayedJournal}
+    <div
+      class="flex items-center justify-between gap-2 text-xs text-theme-muted"
+    >
+      {#if sectionIsGone(displayedJournal, quickNoteStore.journalSectionFilter)}
+        <span>This scene's section is gone.</span>
+      {:else}
+        <span>Showing one scene.</span>
+      {/if}
+      <button
+        type="button"
+        class="font-bold uppercase tracking-wider text-theme-primary"
+        onclick={() => quickNoteStore.showAllJournalSections()}
+      >
+        Show all
+      </button>
+    </div>
+  {/if}
+  {#each shownEntries as entry (entry.id)}
     <JournalEntryRow
       {entry}
       sectionName={sectionName(entry.sectionId)}
       selectable={promotion.selecting}
       selected={promotion.isEntrySelected(entry.id)}
       onToggleSelect={() => promotion.toggleEntry(entry.id)}
-      {...entryRowProps(entry, index)}
+      {...entryRowProps(entry, displayedJournal?.entries.indexOf(entry) ?? 0)}
     />
   {/each}
 {/snippet}

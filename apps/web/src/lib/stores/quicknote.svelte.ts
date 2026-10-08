@@ -16,6 +16,8 @@ import { systemClock } from "$lib/utils/runtime-deps";
  * Uses constructor-based Dependency Injection for robust testing.
  */
 export class QuickNoteStore {
+  /** The one section the journal shows, or null for all (Solo Play Loop). */
+  journalSectionFilter = $state<string | null>(null);
   // Reactive states
   isOpen = $state(false);
   /**
@@ -129,9 +131,16 @@ export class QuickNoteStore {
    * auto-selects or creates a Quicknote note as a side effect the journal
    * must not trigger.
    */
-  openJournal(): void {
+  /** Open the journal; with a section, show only that section's entries. */
+  openJournal(options: { sectionId?: string } = {}): void {
     this.isOpen = true;
     this.activeTab = "journal";
+    this.journalSectionFilter = options.sectionId ?? null;
+  }
+
+  /** Shows every section again. */
+  showAllJournalSections(): void {
+    this.journalSectionFilter = null;
   }
 
   /**

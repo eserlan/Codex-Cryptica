@@ -3,6 +3,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
 
 import {
+  takeOraclePrefill,
   addToOracleChatInput,
   clearOracleChatDraft,
   getOracleChatDraft,
@@ -50,5 +51,36 @@ describe("addToOracleChatInput", () => {
   it("does not publish or buffer blank text", () => {
     expect(addToOracleChatInput("   ")).toBe(false);
     expect(getOracleChatDraft()).toBe("");
+  });
+});
+
+describe("takeOraclePrefill (Solo Play Loop, FR-019)", () => {
+  it("returns a waiting shortcut prompt once and clears it", () => {
+    const ui = {
+      pendingPrompt: "How does this NPC react?" as string | null,
+      takePendingPrompt() {
+        const p = this.pendingPrompt;
+        this.pendingPrompt = null;
+        return p;
+      },
+    };
+    expect(takeOraclePrefill(ui)).toBe("How does this NPC react?");
+    expect(ui.pendingPrompt).toBeNull();
+    expect(takeOraclePrefill(ui)).toBeNull();
+  });
+
+  it("does not send: taking a prefill never calls ask", () => {
+    const ui = {
+      pendingPrompt: "What happens next?" as string | null,
+      takePendingPrompt() {
+        const p = this.pendingPrompt;
+        this.pendingPrompt = null;
+        return p;
+      },
+    };
+    const asked = { count: 0 };
+    takeOraclePrefill(ui);
+    expect(asked.count).toBe(0);
+    expect(ui.pendingPrompt).toBeNull();
   });
 });

@@ -13,7 +13,10 @@ vi.mock("./ui/notification.svelte", () => ({
   notificationStore: { notify: vi.fn() },
 }));
 
-import { SessionJournalPromoter } from "./session-journal-promoter";
+import {
+  SessionJournalPromoter,
+  createDraftOnlyPromoter,
+} from "./session-journal-promoter";
 
 function deepFreeze<T>(value: T): T {
   if (value && typeof value === "object") {
@@ -294,5 +297,64 @@ describe("SessionJournalPromoter", () => {
     await ask(bad.promoter, { kind: "journal" });
 
     expect(JSON.stringify(journal)).toBe(before);
+  });
+});
+
+describe("draft-only promoter (solo play)", () => {
+  it("creates a draft from one journal entry, linked back to it, and never navigates", async () => {
+    const createEntity = vi.fn(async () => "ent-9");
+    const notify = vi.fn();
+    const promoter = createDraftOnlyPromoter({ createEntity, notify });
+
+    const result = await promoter.promote(
+      journal,
+      { kind: "entry", entryId: "e2" },
+      { type: "character", title: "Mara One-Eye", formatTime },
+    );
+
+    expect(result).toEqual({ ok: true, entityId: "ent-9" });
+    expect(createEntity).toHaveBeenCalledWith(
+      "character",
+      "Mara One-Eye",
+      expect.objectContaining({
+        status: "draft",
+        discoverySource: expect.any(String),
+      }),
+    );
+    expect(notify).toHaveBeenCalledWith("Created a draft: Mara One-Eye");
+  });
+
+  it("refuses an empty name and creates nothing", async () => {
+    const createEntity = vi.fn(async () => "ent-9");
+    const promoter = createDraftOnlyPromoter({ createEntity, notify: vi.fn() });
+
+    const result = await promoter.promote(
+      journal,
+      { kind: "entry", entryId: "e2" },
+      { type: "character", title: "   ", formatTime },
+    );
+
+    expect(result.ok).toBe(false);
+    expect(createEntity).not.toHaveBeenCalled();
+  });
+
+  it("reports a failed create without throwing", async () => {
+    const log = vi.fn();
+    const promoter = createDraftOnlyPromoter({
+      createEntity: vi.fn(async () => {
+        throw new Error("db down");
+      }),
+      notify: vi.fn(),
+      log,
+    });
+
+    const result = await promoter.promote(
+      journal,
+      { kind: "entry", entryId: "e2" },
+      { type: "note", title: "A note", formatTime },
+    );
+
+    expect(result.ok).toBe(false);
+    expect(log).toHaveBeenCalled();
   });
 });

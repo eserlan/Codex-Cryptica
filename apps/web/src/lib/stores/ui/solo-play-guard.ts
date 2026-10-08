@@ -27,7 +27,11 @@ export function createSoloPlayGuard(deps: SoloPlayGuardDeps) {
   const toggleSharedMode = (): boolean => {
     if (!deps.sharedMode()) {
       const reason = sharedPlayBlockedReason();
-      if (reason) return false;
+      if (reason) {
+        // Say why, so the 'p' shortcut never fails silently.
+        deps.notify(reason);
+        return false;
+      }
     }
     deps.setSharedMode(!deps.sharedMode());
     return true;

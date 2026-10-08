@@ -68,6 +68,34 @@ export function noMatchAnswer(suggestions: HelpTopic[]): HelpAnswer {
   };
 }
 
+/**
+ * Story questions ("what would the goblin do?") are for the Oracle, not product
+ * help (Cif stays product help only, FR-030). Matched only when retrieval found
+ * nothing, so a real product question never reaches this rule. Product words
+ * keep "how do I ..." and "what does the Oracle button do" out of it.
+ */
+const STORY_QUESTION =
+  /\b(what|how) (would|will|might|should|does|do)\b[\w\s',-]{0,40}\b(do|say|react|respond|decide|attack|answer|behave)\b/i;
+const PRODUCT_WORDS =
+  /\b(oracle|button|screen|vault|map|entity|shortcut|settings?|cif|help|how do i|how to|where|which|feature|tab|menu)\b/i;
+
+export const ORACLE_REDIRECT_MESSAGE =
+  "That is a story question, and Cif only explains Codex Cryptica. Ask the Oracle instead: open it from the sidebar, or use Ask Oracle in the solo bar when AI is on.";
+
+export function isStoryQuestion(question: string): boolean {
+  return STORY_QUESTION.test(question) && !PRODUCT_WORDS.test(question);
+}
+
+export function oracleRedirectAnswer(): HelpAnswer {
+  return {
+    outcome: "out-of-scope",
+    answer: ORACLE_REDIRECT_MESSAGE,
+    sources: [],
+    action: null,
+    suggestions: [],
+  };
+}
+
 export function outOfScopeAnswer(): HelpAnswer {
   return {
     outcome: "out-of-scope",

@@ -32,6 +32,56 @@ export const soloSession: FeatureEntry = {
       actionIds: ["solo-session.open-help"],
     },
     {
+      id: "save-a-discovery-to-the-vault",
+      title: "Save a discovery to the Vault",
+      steps: [
+        "Open Recent in the solo bar. It lists the latest results in your running journal.",
+        "Choose Save to Vault on the result, keep the suggested category or pick another, and check the name.",
+        "Press Save. A draft is created and linked to its journal entry, and you stay on the same screen.",
+      ],
+      actionIds: ["solo-session.open-help"],
+    },
+    {
+      id: "generate-during-play",
+      title: "Generate during play",
+      steps: [
+        "Open Generate in the solo bar and choose NPC, Encounter, Rumour or Complication, or All generators.",
+        "Generate a result. It is recorded in your journal whether or not you keep it.",
+        "Save it with the generator's usual Save; the journal notes the save.",
+      ],
+      actionIds: ["solo-session.open-help"],
+    },
+    {
+      id: "roll-a-pinned-table",
+      title: "Roll a pinned table",
+      steps: [
+        "Open Pin a table in the solo bar and pin up to three of your tables.",
+        "Tap a pinned table. The result shows in the bar and is recorded in your journal.",
+        "Remove a pin with the × beside it.",
+      ],
+      actionIds: ["solo-session.open-help"],
+    },
+    {
+      id: "set-your-party",
+      title: "Set your party",
+      steps: [
+        "Open Party in the solo bar, or choose the characters during setup.",
+        "Tick the Character entries in your party. Choosing a name opens that character.",
+        "Changes are noted in the journal while it runs.",
+      ],
+      actionIds: ["solo-session.open-help"],
+    },
+    {
+      id: "return-to-an-earlier-scene",
+      title: "Return to an earlier scene",
+      steps: [
+        "Open Scenes in the solo bar to see every scene in order.",
+        "Choose Open to see that scene's part of the journal, or Return to scene to start a new visit.",
+        "A new visit is numbered, such as Arrival (2), and gets its own journal section.",
+      ],
+      actionIds: ["solo-session.open-help"],
+    },
+    {
       id: "end-a-solo-session",
       title: "End a solo session",
       steps: [

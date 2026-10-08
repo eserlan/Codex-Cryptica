@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { RandomSource, RollOutcome } from "random-source-engine";
-  import { dieFormula } from "random-source-engine";
+  import { recordTableRoll, tableDie } from "$lib/services/record-table-roll";
   import { randomSources } from "$lib/features/random";
   import type { RandomSourceStore } from "$lib/stores/random-source-store.svelte";
   import {
@@ -69,17 +69,10 @@
    * table's range is the sum of its weights, which is what the engine picks
    * across.
    */
-  const dieSides = $derived.by(() => {
-    if (source.selection?.mode === "ranged") return source.selection.die.sides;
-    return (source.entries ?? []).reduce((sum, e) => sum + (e.weight ?? 1), 0);
-  });
-
+  const die = $derived(tableDie(source));
+  const dieSides = $derived(die.sides);
   /** The die notation shown and recorded, e.g. `d6` or `4d6kh3+2`. */
-  const dieLabel = $derived(
-    source.selection?.mode === "ranged"
-      ? dieFormula(source.selection.die)
-      : `d${dieSides}`,
-  );
+  const dieLabel = $derived(die.label);
 
   const hasEntries = $derived((source.entries ?? []).length > 0);
   const resultText = $derived(outcome?.finalText ?? "");
@@ -161,31 +154,13 @@
 
   /** Writes the roll into the shared roll history (FR-018). */
   async function record(result: RollOutcome) {
-    const root = result.chain[0];
-    const value = root?.dieValue;
-    await history.addResult(
-      {
-        total: value ?? 0,
-        parts:
-          root?.rollParts ??
-          (value === undefined
-            ? []
-            : [{ type: "dice", sides: dieSides, rolls: [value], value }]),
-        formula: dieLabel,
-        timestamp: clock.now(),
-      },
-      "table",
-      {
-        label: source.name,
-        source: {
-          sourceId: source.id,
-          sourceName: source.name,
-          kind: source.kind,
-          finalText: result.finalText,
-          chain: result.chain,
-        },
-      },
-    );
+    await recordTableRoll(history, {
+      source,
+      outcome: result,
+      dieSides,
+      dieLabel,
+      clock,
+    });
   }
 </script>
 

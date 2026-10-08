@@ -2,7 +2,7 @@
   import { onMount } from "svelte";
   import SoloQuickRoll from "./SoloQuickRoll.svelte";
   import SoloActions from "./SoloActions.svelte";
-  import SoloSceneField from "./SoloSceneField.svelte";
+  import SoloSceneMenu from "./SoloSceneMenu.svelte";
 
   let { onclose }: { onclose: () => void } = $props();
   let sheet: HTMLDivElement;
@@ -46,7 +46,31 @@
       onclick={onclose}>Close</button
     >
   </div>
-  <SoloSceneField />
-  <SoloQuickRoll />
-  <SoloActions />
+  <section aria-labelledby="solo-group-play" class="flex flex-col gap-2">
+    <h3
+      id="solo-group-play"
+      class="text-micro font-bold uppercase tracking-widest text-theme-muted"
+    >
+      Play
+    </h3>
+    <SoloQuickRoll />
+  </section>
+  <section aria-labelledby="solo-group-story" class="flex flex-col gap-2">
+    <h3
+      id="solo-group-story"
+      class="text-micro font-bold uppercase tracking-widest text-theme-muted"
+    >
+      Story
+    </h3>
+    <SoloSceneMenu />
+  </section>
+  <section aria-labelledby="solo-group-tools" class="flex flex-col gap-2">
+    <h3
+      id="solo-group-tools"
+      class="text-micro font-bold uppercase tracking-widest text-theme-muted"
+    >
+      Tools
+    </h3>
+    <SoloActions />
+  </section>
 </div>

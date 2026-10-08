@@ -28,6 +28,8 @@ export interface HelpContextSources {
   getActiveSidebarTool?: () => "oracle" | "explorer" | "shelf" | "none";
   /** Whether a solo session is running in this vault. Facts only, no names. */
   soloSession?: () => { active: boolean };
+  /** Whether the AI Oracle is turned on for this user (Solo Play Loop). */
+  aiEnabled?: () => boolean;
 }
 
 const ROUTE_AREAS: Record<string, HelpArea> = {
@@ -124,8 +126,20 @@ function entityActionsFor(
  */
 function soloActionsFor(sources: HelpContextSources): string[] {
   if (sources.isGuestMode()) return [];
-  if (sources.soloSession?.().active)
-    return ["solo-quick-roll", "solo-end-session"];
+  if (sources.soloSession?.().active) {
+    const actions = [
+      "solo-quick-roll",
+      "solo-end-session",
+      "solo-generate-menu",
+      "solo-recent-results",
+      "solo-pinned-tables",
+      "solo-party-menu",
+      "solo-scene-menu",
+    ];
+    // The Oracle menu is an AI feature: it is listed only while AI is on.
+    if (sources.aiEnabled?.()) actions.push("solo-oracle-menu");
+    return actions;
+  }
   return sources.getRouteId() === "/(app)/play"
     ? ["play-start-solo-session"]
     : [];

@@ -82,6 +82,32 @@ describe("SoloSceneField", () => {
     expect(env.store.renameScene).not.toHaveBeenCalled();
   });
 
+  it("starts a further scene while one is named, and leaves the current scene alone", async () => {
+    env.store.session = { sceneName: "Arrival", sceneSectionId: "sec1" };
+    render(SoloSceneField);
+    const field = screen.getByTestId("solo-scene");
+    await fireEvent.input(field, { target: { value: "Crypt" } });
+    await fireEvent.click(screen.getByTestId("solo-scene-new"));
+    await waitFor(() =>
+      expect(env.store.setScene).toHaveBeenCalledWith("Crypt"),
+    );
+    expect(env.store.renameScene).not.toHaveBeenCalled();
+  });
+
+  it("offers New scene only for a different, non-empty name", async () => {
+    env.store.session = { sceneName: "Arrival", sceneSectionId: "sec1" };
+    render(SoloSceneField);
+    const field = screen.getByTestId("solo-scene");
+    const newButton = screen.getByTestId("solo-scene-new") as HTMLButtonElement;
+    expect(newButton.disabled).toBe(true);
+    await fireEvent.input(field, { target: { value: "  " } });
+    expect(newButton.disabled).toBe(true);
+    await fireEvent.input(field, { target: { value: "Arrival" } });
+    expect(newButton.disabled).toBe(true);
+    await fireEvent.input(field, { target: { value: "Crypt" } });
+    expect(newButton.disabled).toBe(false);
+  });
+
   it("does not submit an empty name", async () => {
     render(SoloSceneField);
     const field = screen.getByTestId("solo-scene");

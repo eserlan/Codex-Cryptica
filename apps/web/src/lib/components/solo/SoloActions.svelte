@@ -1,12 +1,15 @@
 <script lang="ts">
   import { soloSessionStore } from "$lib/stores/solo-session-instance";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
-  import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
-  import { discoveryPolicyStore } from "$lib/stores/ui/discovery-policy.svelte";
   import { sessionJournalStore } from "$lib/stores/session-journal.svelte";
   import { quickNoteStore } from "$lib/stores/quicknote.svelte";
   import { vault } from "$lib/stores/vault.svelte";
   import SoloEndDialog from "./SoloEndDialog.svelte";
+  import SoloRecentResults from "./SoloRecentResults.svelte";
+  import SoloGenerateMenu from "./SoloGenerateMenu.svelte";
+  import SoloPinnedTables from "./SoloPinnedTables.svelte";
+  import SoloPartyMenu from "./SoloPartyMenu.svelte";
+  import SoloOracleMenu from "./SoloOracleMenu.svelte";
 
   let chooseOpen = $state(false);
   let endOpen = $state(false);
@@ -52,20 +55,12 @@
     More dice
   </button>
 
-  {#if !discoveryPolicyStore.aiDisabled}
-    <button
-      type="button"
-      class="rounded-md px-2 py-1 text-sm text-theme-text hover:text-theme-primary"
-      data-testid="solo-ask-oracle"
-      onclick={() => (layoutUIStore.activeSidebarTool = "oracle")}
-    >
-      <span
-        class="icon-[lucide--sparkles] inline-block h-4 w-4"
-        aria-hidden="true"
-      ></span>
-      Ask Oracle
-    </button>
-  {/if}
+  <SoloOracleMenu />
+
+  <SoloGenerateMenu />
+  <SoloPinnedTables />
+  <SoloRecentResults />
+  <SoloPartyMenu />
 
   <button
     type="button"
