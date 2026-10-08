@@ -35,8 +35,7 @@
   import StarSystemDiagram from "./StarSystemDiagram.svelte";
   import ConstellationChart from "./ConstellationChart.svelte";
   import { blobToDataUrl } from "$lib/utils/svg-export";
-  import { buildAbsoluteUrl } from "$lib/seo/site";
-  import SeoHead from "./SeoHead.svelte";
+  import SEOGeneratorHead from "./SEOGeneratorHead.svelte";
   import { unregisterDevelopmentServiceWorkers } from "$lib/utils/dev-service-worker";
   import {
     getContextSelection,
@@ -46,12 +45,6 @@
   } from "generator-engine";
   import { GeneratorRefinementService } from "$lib/services/GeneratorRefinementService.svelte";
   import { buildLoreMergePlan } from "$lib/utils/lore-sections";
-  import {
-    buildFaqJsonLd,
-    buildSoftwareApplicationJsonLd,
-    buildBreadcrumbJsonLd,
-    buildResultJsonLd,
-  } from "./generator-json-ld";
   import {
     trackEvent,
     trackPublicGeneratorAction,
@@ -91,13 +84,6 @@
     type GeneratorShareSource,
   } from "$lib/services/sharing/generator-share-tracking";
 
-  // Link-preview fallback for generators without a capture of their own. Plain
-  // R2 URL, not the cdn-cgi transform: social crawlers don't negotiate formats.
-  const DEFAULT_OG_IMAGE =
-    "https://assets.codexcryptica.com/screenshots/feature-connect.jpg";
-  const DEFAULT_OG_IMAGE_ALT =
-    "A Codex Cryptica campaign vault showing an entity graph beside an open character record";
-
   let {
     canonicalPath,
     pageTitle = "Free RPG Generator | Codex Cryptica",
@@ -105,7 +91,7 @@
     eyebrow = "Free RPG Tool",
     introTitle = "RPG Generator",
     introText = "Customize options and instantly generate structured drafts to populate your campaign lore database.",
-    ogImage = DEFAULT_OG_IMAGE,
+    ogImage = "https://assets.codexcryptica.com/screenshots/feature-connect.jpg",
     ogImageAlt = undefined,
     keywords = [],
     labels = [],
@@ -365,23 +351,6 @@
       source: "header",
     });
   }
-
-  const faqJsonLd = $derived(buildFaqJsonLd(faqs));
-
-  const softwareApplicationJsonLd = $derived(
-    buildSoftwareApplicationJsonLd({ canonicalPath, metaDescription }),
-  );
-
-  const breadcrumbJsonLd = $derived(
-    buildBreadcrumbJsonLd({ canonicalPath, introTitle }),
-  );
-
-  const resultJsonLd = $derived(buildResultJsonLd(generatedData));
-
-  const resolvedOgImageAlt = $derived(
-    ogImageAlt ??
-      (ogImage === DEFAULT_OG_IMAGE ? DEFAULT_OG_IMAGE_ALT : undefined),
-  );
 
   async function handleGenerate() {
     if (isGenerating) return;
@@ -814,19 +783,16 @@
   }
 </script>
 
-<SeoHead
+<SEOGeneratorHead
   title={pageTitle}
   description={metaDescription}
-  canonicalUrl={canonicalPath ? buildAbsoluteUrl(canonicalPath) : undefined}
+  {introTitle}
+  {canonicalPath}
   image={ogImage}
-  imageAlt={resolvedOgImageAlt}
+  imageAlt={ogImageAlt}
   {keywords}
-  jsonLd={[
-    softwareApplicationJsonLd,
-    breadcrumbJsonLd,
-    faqJsonLd,
-    resultJsonLd,
-  ]}
+  {faqs}
+  {generatedData}
 />
 
 <div
