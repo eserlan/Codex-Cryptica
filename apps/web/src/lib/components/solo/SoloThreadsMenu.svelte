@@ -15,7 +15,13 @@
   let kindFilter = $state<ThreadKind | "all">("all");
   let search = $state("");
   let showClosed = $state(false);
-  let editing = $state<{ thread: Thread | null } | null>(null);
+  /** The thread being edited by id (null for a new one), read from the store so links show at once. */
+  let editing = $state<{ id: string | null } | null>(null);
+  const editingThread = $derived(
+    editing?.id
+      ? (soloThreads.threads.find((t) => t.id === editing?.id) ?? null)
+      : null,
+  );
   let message = $state<string | null>(null);
 
   const visible = $derived(
@@ -44,10 +50,8 @@
   }
 
   function saveEdit(values: { title: string; kind: ThreadKind; note: string }) {
-    const current = editing?.thread;
-    const result = current
-      ? soloThreads.edit(current.id, values)
-      : soloThreads.add(values);
+    const id = editing?.id;
+    const result = id ? soloThreads.edit(id, values) : soloThreads.add(values);
     if (!result.ok) return report(result);
     editing = null;
     return null;
@@ -55,13 +59,11 @@
 
   /** Links an entry to the thread being edited. */
   function linkEntry(entityId: string): string | null {
-    return editing?.thread
-      ? report(soloThreads.link(editing.thread.id, entityId))
-      : null;
+    return editing?.id ? report(soloThreads.link(editing.id, entityId)) : null;
   }
 
   function unlinkEntry(entityId: string) {
-    if (editing?.thread) soloThreads.unlink(editing.thread.id, entityId);
+    if (editing?.id) soloThreads.unlink(editing.id, entityId);
   }
 
   function closeThread(id: string, note: string) {
@@ -71,7 +73,7 @@
   /** What both thread lists do when a row's action is chosen. */
   const listActions = {
     onOpenEntity: openEntity,
-    onEdit: (thread: Thread) => (editing = { thread }),
+    onEdit: (thread: Thread) => (editing = { id: thread.id }),
     onClose: (thread: Thread, note: string) => closeThread(thread.id, note),
     onReopen: (thread: Thread) => report(soloThreads.reopen(thread.id)),
     onDelete: (thread: Thread) => report(soloThreads.remove(thread.id)),
@@ -105,9 +107,9 @@
 
     {#if editing}
       <!-- Keyed by thread, so editing another thread starts a fresh draft. -->
-      {#key editing.thread?.id ?? "new"}
+      {#key editing.id ?? "new"}
         <SoloThreadDialog
-          thread={editing.thread}
+          thread={editingThread}
           {entityOptions}
           onSave={saveEdit}
           onLink={linkEntry}
@@ -120,7 +122,7 @@
         type="button"
         class="rounded-md border border-theme-primary/60 px-3 py-1.5 font-bold text-theme-primary hover:bg-theme-primary/10"
         data-testid="solo-thread-add"
-        onclick={() => (editing = { thread: null })}
+        onclick={() => (editing = { id: null })}
       >
         Add a thread
       </button>

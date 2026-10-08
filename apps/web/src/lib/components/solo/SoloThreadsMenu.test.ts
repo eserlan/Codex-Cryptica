@@ -196,6 +196,18 @@ describe("SoloThreadsMenu", () => {
     expect(kind.value).toBe("mystery");
   });
 
+  it("shows a newly linked entry in the open dialog, so it can be unlinked there", async () => {
+    render(SoloThreadsMenu);
+    await openMenu();
+    await addThread("Ask Mara");
+    await fireEvent.click(screen.getByText("Edit"));
+    await fireEvent.change(screen.getByTestId("solo-thread-link-choice"), {
+      target: { value: "c1" },
+    });
+    await fireEvent.click(screen.getByText("Link"));
+    expect(screen.getByText("Unlink Mara")).toBeTruthy();
+  });
+
   it("is view-only in a read-only vault, with no add control", async () => {
     env.vault.isGuest = true;
     render(SoloThreadsMenu);

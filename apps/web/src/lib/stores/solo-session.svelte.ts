@@ -275,7 +275,7 @@ export class SoloSessionStore {
     const sectionExists =
       !!session.sceneSectionId &&
       !!journal?.sections.some((s) => s.id === session.sceneSectionId);
-    if (sectionExists && this.journalRunning) {
+    if (sectionExists && this.journalRunning && this.scenesCaptured()) {
       await this.deps.journal.renameSection(
         session.sceneSectionId!,
         result.name,

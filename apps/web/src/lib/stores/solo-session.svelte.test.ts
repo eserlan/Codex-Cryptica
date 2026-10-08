@@ -374,6 +374,16 @@ describe("scenes", () => {
     expect(store.session?.sceneSectionId).toBeNull();
   });
 
+  it("with scenes switched off: renaming the scene does not rename its journal section", async () => {
+    const { store, journal } = build();
+    await store.start({ mapId: null, journal: true });
+    await store.setScene("Arrival");
+    journal.current!.captureOff = ["scenes"];
+    await store.renameScene("Harbour");
+    expect(store.session?.sceneName).toBe("Harbour");
+    expect(journal.renameSection).not.toHaveBeenCalled();
+  });
+
   it("with another kind switched off: still creates the section", async () => {
     const { store, journal } = build();
     await store.start({ mapId: null, journal: true });
