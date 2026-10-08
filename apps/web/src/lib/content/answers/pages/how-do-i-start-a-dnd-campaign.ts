@@ -273,6 +273,11 @@ export const howDoIStartADndCampaign: AnswerConfigInput = {
           "That answer covers starting to GM in any system with a seven-step path and a minimal prep packet; this answer is D&D-specific and focuses on campaign framing, published versus homebrew versus hybrid choice, the giant-world trap, and giving the D&D party a reason to stay together.",
       },
       {
+        with: "answer-new-dnd-player-first-game",
+        reason:
+          "This answer is for the GM choosing a D&D campaign premise, rules baseline, and opening situation; the new-player page is for someone learning how to participate at the table after joining that game.",
+      },
+      {
         with: "answer-sandbox-campaign-prep",
         reason:
           "The sandbox answer teaches a 1-3-3-6 prep method for open-world regional play; this campaign-start answer covers the earlier decision of premise, rules agreement, Session 0, and a concrete level-1 opening problem before any sandbox structure is needed.",

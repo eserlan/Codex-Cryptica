@@ -280,6 +280,16 @@ export const whatShouldANewDndPlayerKnowBeforeTheirFirstGame: AnswerConfigInput 
           reason:
             "The existing beginner start covers the minimum needed to begin any tabletop RPG as player or GM; this page is D&D-specific and player-facing, covering D&D's conversational loop, the d20 split, character-sheet orientation, and combat versus free-form expectations.",
         },
+        {
+          with: "answer-start-dnd-campaign",
+          reason:
+            "The D&D campaign-start answer is for the GM choosing a campaign premise, rules baseline, and opening situation; this answer is for a new player learning how to take part once they arrive at the table.",
+        },
+        {
+          with: "answer-first-time-gm-hub",
+          reason:
+            "The first-time GM answer helps someone run a game in any system; this answer helps a player join a D&D game and understand its live-play loop, dice, character sheet, and table conversation.",
+        },
       ],
     },
     seo: {
