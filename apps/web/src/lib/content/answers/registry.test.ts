@@ -82,6 +82,17 @@ describe("answer registry", () => {
     }
   });
 
+  it("records the combat-turn answer's distinct scope from the beginner-start answer", () => {
+    const answer = answers["what-can-i-do-on-my-turn-in-dnd-combat"];
+
+    expect(answer?.discovery?.acknowledgedOverlap).toContainEqual(
+      expect.objectContaining({
+        with: "answer-beginner-start",
+        reason: expect.any(String),
+      }),
+    );
+  });
+
   it("cross-links combat engagement and combat pacing answers", () => {
     const engagement =
       answers[

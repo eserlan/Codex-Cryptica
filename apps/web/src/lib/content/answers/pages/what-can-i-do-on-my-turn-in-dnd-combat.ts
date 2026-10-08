@@ -188,6 +188,11 @@ export const whatCanIDoOnMyTurnInDndCombat: AnswerConfigInput = {
     relatedIntents: ["answer-new-dnd-player-learn-first"],
     acknowledgedOverlap: [
       {
+        with: "answer-beginner-start",
+        reason:
+          "The beginner-start answer covers how to join or run a first tabletop RPG session; this answer assumes a D&D combat is underway and explains the choices available during one turn.",
+      },
+      {
         with: "answer-player-engagement-combat-turns",
         reason:
           "The engagement answer helps the table follow combat between turns; this answer helps the individual player decide what to do on their own turn.",
