@@ -143,6 +143,7 @@ export const howDoYouCreateAFantasyCityThatFeelsAlive: AnswerConfigInput = {
     },
   ],
   relatedAnswers: [
+    "how-do-i-start-worldbuilding-for-a-novel-or-short-story",
     "what-should-an-rpg-settlement-contain",
     "how-do-you-run-an-rpg-campaign-in-one-city",
     "how-to-create-rumours-for-a-fantasy-town",

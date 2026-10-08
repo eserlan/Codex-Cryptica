@@ -131,6 +131,7 @@ export const howDoYouCreateAMagicSystem: AnswerConfigInput = {
     },
   ],
   relatedAnswers: [
+    "how-do-i-start-worldbuilding-for-a-novel-or-short-story",
     "what-is-the-difference-between-gods-and-demon-lords-in-a-fantasy-world",
     "how-do-you-start-worldbuilding-from-scratch",
     "how-do-you-handle-character-death-in-a-tabletop-rpg",
