@@ -189,7 +189,7 @@ export const howDoIRunABardOrFaceWithoutSideliningTheParty: AnswerConfigInput =
         title: "Fantasy RPGs",
         description:
           "Campaign tools and tables for fantasy worlds and road-bound adventures.",
-        href: "/for/fantasy",
+        href: "/for/fantasy-worldbuilding",
       },
     ],
     relatedAnswers: [
