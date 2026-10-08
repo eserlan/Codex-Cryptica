@@ -10,6 +10,7 @@
   import SoloPinnedTables from "./SoloPinnedTables.svelte";
   import SoloPartyMenu from "./SoloPartyMenu.svelte";
   import SoloOracleMenu from "./SoloOracleMenu.svelte";
+  import SoloYesNoMenu from "./SoloYesNoMenu.svelte";
 
   let chooseOpen = $state(false);
   let endOpen = $state(false);
@@ -56,6 +57,8 @@
   </button>
 
   <SoloOracleMenu />
+
+  <SoloYesNoMenu />
 
   <SoloGenerateMenu />
   <SoloPinnedTables />

@@ -65,6 +65,9 @@ function build(
     isSharedPlayOn?: boolean;
     characters?: { id: string; name: string }[];
     publishCapture?: (payload: unknown) => void;
+    random?: () => number;
+    openThreads?: { id: string; title: string }[];
+    placeName?: string | null;
   } = {},
 ) {
   const storage = opts.storage ?? memoryStorage();
@@ -93,6 +96,9 @@ function build(
         { id: "ivo", name: "Brother Ivo" },
       ],
     publishCapture: opts.publishCapture ?? (() => {}),
+    random: opts.random,
+    openThreads: () => opts.openThreads ?? [],
+    placeName: () => opts.placeName ?? null,
     notify,
   };
   const store = new SoloSessionStore(deps);
@@ -626,5 +632,84 @@ describe("scene history", () => {
     expect(await store.returnToScene(7)).toBe(false);
     expect(createSection.mock.calls.length).toBe(calls);
     expect(store.scenes.map((s) => s.name)).toEqual(["Arrival"]);
+  });
+});
+
+describe("solo oracle, events and tension (spec 174)", () => {
+  it("asks the dice and journals the answer while a journal runs", async () => {
+    const publishCapture = vi.fn();
+    const { store } = build({ publishCapture, random: () => 0.5 });
+    await store.start({ mapId: null, journal: true });
+    const answer = store.ask("Is the guard asleep?", "even");
+    expect(answer.question).toBe("Is the guard asleep?");
+    expect(publishCapture.mock.calls[0][0].entryType).toBe("oracle-answer");
+  });
+
+  it("returns the answer with no session, and still publishes it without error", () => {
+    const publishCapture = vi.fn();
+    const { store } = build({ publishCapture, random: () => 0.5 });
+    const answer = store.ask("", "likely");
+    expect([
+      "Yes, and",
+      "Yes",
+      "Yes, but",
+      "No, but",
+      "No",
+      "No, and",
+    ]).toContain(answer.answer);
+    expect(publishCapture).toHaveBeenCalled();
+  });
+
+  it("never calls the network when asking or rolling an event", () => {
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+    const { store } = build({ random: () => 0.3 });
+    store.ask("Q", "very_likely");
+    store.randomEvent();
+    expect(fetchSpy).not.toHaveBeenCalled();
+    fetchSpy.mockRestore();
+  });
+
+  it("attaches a random event when the event roll meets the tension", () => {
+    const publishCapture = vi.fn();
+    // Every d100 roll is 1, so the event always happens at any tension.
+    const { store } = build({ publishCapture, random: () => 0 });
+    store.ask("Q", "even");
+    const types = publishCapture.mock.calls.map((c) => c[0].entryType);
+    expect(types).toEqual(["oracle-answer", "random-event"]);
+  });
+
+  it("names an open thread as the subject when a thread focus is chosen", () => {
+    const threads = [{ id: "t1", title: "Why is the keeper lying?" }];
+    const { store } = build({ random: () => 0.01, openThreads: threads });
+    const event = store.randomEvent();
+    if (event.subject.kind === "thread")
+      expect(event.subject.threadId).toBe("t1");
+    expect(["thread", "party", "place", "newcomer"]).toContain(
+      event.subject.kind,
+    );
+  });
+
+  it("raises and lowers tension within 1 to 9, persists it, and journals each real change", async () => {
+    const storage = memoryStorage();
+    const publishCapture = vi.fn();
+    const { store } = build({ storage, publishCapture });
+    await store.start({ mapId: null, journal: true });
+    for (let i = 0; i < 10; i++) store.raiseTension();
+    expect(store.tension).toBe(9);
+    for (let i = 0; i < 12; i++) store.lowerTension();
+    expect(store.tension).toBe(1);
+    expect(build({ storage }).store.tension).toBe(1);
+    const changes = publishCapture.mock.calls.filter(
+      (c) => c[0].entryType === "tension-change",
+    );
+    // 5 to 9 is four real changes (further raises are no-ops), then 9 to 1 is eight.
+    expect(changes.length).toBe(12);
+  });
+
+  it("uses the default tension with no session, and ignores changes", () => {
+    const { store } = build();
+    expect(store.tension).toBe(5);
+    store.raiseTension();
+    expect(store.tension).toBe(5);
   });
 });

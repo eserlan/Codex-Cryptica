@@ -12,10 +12,22 @@ import {
   withCurrentSceneRenamed,
   nextVisitName,
   type SoloScene,
+  askOracle,
+  rollRandomEvent,
+  withTension,
+  clampTension,
+  TENSION_DEFAULT,
+  type EventContext,
+  type Likelihood,
+  type OracleAnswer,
+  type RandomEvent,
 } from "solo-session-engine";
 import type { StorageLike } from "$lib/utils/runtime-deps";
 import {
+  formatOracleAnswer,
   formatPartyChange,
+  formatRandomEvent,
+  formatTensionChange,
   type JournalCapturePayload,
 } from "session-journal-engine";
 
@@ -64,7 +76,25 @@ export interface SoloSessionDeps {
   characters(): { id: string; name: string }[];
   /** Emits a JOURNAL:CAPTURE; the journal records it only while one runs. */
   publishCapture(payload: JournalCapturePayload): void;
+  /** Random numbers in [0, 1). Defaults to the platform's secure source. */
+  random?: () => number;
+  /** The vault's open threads, offered as event subjects (spec 174, FR-015). */
+  openThreads?: () => { id: string; title: string }[];
+  /** The name of the current place, for events about the place (FR-015). */
+  placeName?: () => string | null;
 }
+
+const secureRandom = (): number => {
+  if (
+    typeof crypto !== "undefined" &&
+    typeof crypto.getRandomValues === "function"
+  ) {
+    const array = new Uint32Array(1);
+    crypto.getRandomValues(array);
+    return array[0] / (0xffffffff + 1);
+  }
+  return Math.random();
+};
 
 /**
  * One solo session per vault. Campaign knowledge stays in the vault and the
@@ -246,6 +276,69 @@ export class SoloSessionStore {
   }
 
   /** The party, resolved to names. Members no longer in the vault are dropped. */
+  /** The session's tension, 1 to 9; the default when no session runs (spec 174, FR-010). */
+  get tension(): number {
+    return this.session?.tension ?? TENSION_DEFAULT;
+  }
+
+  /** Raises or lowers tension one step, kept to 1 to 9, and journals a real change. */
+  setTension(value: number): void {
+    const session = this.session;
+    if (!session) return;
+    const next = clampTension(value);
+    if (next === session.tension) return;
+    const from = session.tension;
+    this.write(withTension(session, next));
+    const payload = formatTensionChange(from, next);
+    if (payload) this.deps.publishCapture(payload);
+  }
+
+  raiseTension(): void {
+    this.setTension(this.tension + 1);
+  }
+
+  lowerTension(): void {
+    this.setTension(this.tension - 1);
+  }
+
+  /** What an event can refer to right now (spec 174, FR-015). */
+  eventContext(): EventContext {
+    return {
+      openThreads: this.deps.openThreads?.() ?? [],
+      partyNames: this.party.map((m) => m.name),
+      placeName: this.deps.placeName?.() ?? null,
+    };
+  }
+
+  /**
+   * Asks the dice a yes/no question. Works with or without a running session
+   * and journal; the journal only records while one runs. Publishes the answer
+   * and, when one follows, the random event (spec 174, FR-005, FR-006, FR-016).
+   */
+  ask(question: string, likelihood: Likelihood): OracleAnswer {
+    const random = this.deps.random ?? secureRandom;
+    const result = askOracle(
+      {
+        question,
+        likelihood,
+        tension: this.tension,
+        context: this.eventContext(),
+      },
+      random,
+    );
+    this.deps.publishCapture(formatOracleAnswer(result));
+    if (result.event) this.deps.publishCapture(formatRandomEvent(result.event));
+    return result;
+  }
+
+  /** A random event on request, recorded like any other (spec 174, FR-013). */
+  randomEvent(): RandomEvent {
+    const random = this.deps.random ?? secureRandom;
+    const event = rollRandomEvent(this.eventContext(), random);
+    this.deps.publishCapture(formatRandomEvent(event));
+    return event;
+  }
+
   get party(): { id: string; name: string }[] {
     const known = new Map(this.deps.characters().map((c) => [c.id, c.name]));
     return (this.session?.partyIds ?? [])
