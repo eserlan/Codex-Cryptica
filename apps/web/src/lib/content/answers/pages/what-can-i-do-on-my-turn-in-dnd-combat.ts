@@ -74,7 +74,7 @@ export const whatCanIDoOnMyTurnInDndCombat: AnswerConfigInput = {
         },
         {
           term: "Control what the enemies can see or reach",
-          text: "Hide lets you use available cover to become unseen when the rules and the environment support it. Ready uses your action to prepare a response to a perceivable trigger you name, such as 'I will shoot the runner if he moves towards the door'. If the trigger occurs before your next turn, you can spend your reaction to respond or ignore it.",
+          text: "Hide lets you use available cover to become unseen when the rules and the environment support it. Ready uses your action to prepare a response to a perceivable trigger you name, such as 'I will shoot the runner if he moves towards the door'. If the trigger occurs before your next turn, you can use your reaction to respond; you can also ignore the trigger.",
         },
         {
           term: "Learn or change the environment",
@@ -116,7 +116,7 @@ export const whatCanIDoOnMyTurnInDndCombat: AnswerConfigInput = {
         },
         {
           term: "The menu-driven version",
-          text: "The player thinks in buckets: movement, action, conditional bonus action, and free interaction. They say, 'I move 25 feet to the ally, administer my Potion of Healing as a bonus action, then take the Dodge action.' The potion restores hit points, and Dodge gives attackers disadvantage on attack rolls against the fighter until the start of the fighter's next turn. It does not guarantee the fighter's safety, but the player has chosen actions that directly address the danger and the ally's condition.",
+          text: "The player thinks in buckets: movement, action, conditional bonus action, and free interaction. They say, 'I move 25 feet to the ally, administer my Potion of Healing as a bonus action, then take the Dodge action.' The potion restores hit points, and attack rolls against the fighter have disadvantage if the fighter can see the attacker until the start of the fighter's next turn. It does not guarantee the fighter's safety, but the player has chosen actions that directly address the danger and the ally's condition.",
         },
         {
           term: "Why it works",
