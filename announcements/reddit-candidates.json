@@ -1,5 +1,5 @@
 {
-  "updated_at": 1791448581,
+  "updated_at": 1791450142,
   "candidates": [
     {
       "id": "reddit-37230785420-help-documentation-for-core-tools",
@@ -82,14 +82,14 @@
       "created_at": 1791322193
     },
     {
-      "id": "reddit-37747437686-d-d-answers-now-live-together-in-a-topic",
-      "title": "D&D answers now live together in a topic hub",
-      "body": "The answers were getting hard to browse. If you wanted D&D prep, organisation and improv guides you had to search or scroll the full list and hope you remembered the title.\n\nI built a D&D hub that groups the related campaign guides in one place, and added a Browse by Topic section to Explore so you can jump between them faster.\n\nFind it here: https://codexcryptica.com/topics/dnd\n\n- /topics/dnd collects starting, prepping, organising and improvising a D&D campaign plus the bard/face guide\n- Explore now has Browse by Topic for quicker sideways navigation between related answers\n- Each guide links to the next logical step instead of dropping you back to the index\n\nIt only covers D&D for now, I kept the hub narrow rather than trying to be a general RPG topics index from day one.\n\nWhich topic cluster would actually save you time if it had its own hub next?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/announcements/release-37747437686-1.png)",
-      "url": "https://codexcryptica.com/topics/dnd",
-      "image_url": "https://assets.codexcryptica.com/announcements/release-37747437686-1.png",
+      "id": "reddit-37747437686-solo-play-now-starts-from-vault-actions-",
+      "title": "Solo play now starts from Vault actions in one tap",
+      "body": "Starting a solo session meant hunting through menus to find setup, then scene fields, then rolls. For a mode you open mid-campaign, that friction adds up.\n\nVault actions now offer Start Solo Session directly. It opens setup, scene fields, quick rolls and the session bar without digging.\n\n- One tap from the vault menu into solo setup\n- Scene fields right there for the current situation and stakes\n- Quick rolls without leaving the solo view\n- Session bar stays visible so you can track and close the session cleanly\n\nIt is just a faster entry point, not a new solo ruleset, the flow inside is the same as before.\n\nWhere do you usually stall when starting a solo session, is it the setup, the oracle, or keeping the scene straight?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/screenshots/feature-run.jpg)",
+      "url": "",
+      "image_url": "https://assets.codexcryptica.com/screenshots/feature-run.jpg",
       "source_id": "37747437686",
       "status": "approved",
-      "created_at": 1791448581
+      "created_at": 1791450142
     }
   ]
 }
