@@ -53,12 +53,17 @@ export function suggestCategory(
 }
 
 export type OracleShortcut =
-  "npc-reaction" | "complication" | "place-knowledge" | "what-next";
+  | "npc-reaction"
+  | "complication"
+  | "place-knowledge"
+  | "what-next"
+  | "interpret-answer";
 
 const SHORTCUT_QUESTION: Record<OracleShortcut, string> = {
   "npc-reaction": "How does this NPC react?",
   complication: "Add a complication",
   "place-knowledge": "What is known about this place?",
+  "interpret-answer": "What does this answer mean for the scene?",
   "what-next": "What happens next?",
 };
 
@@ -80,6 +85,8 @@ function joinNames(names: readonly string[]): string {
 export function buildOracleShortcutPrompt(
   kind: OracleShortcut,
   context: {
+    question?: string;
+    answer?: string;
     sceneName: string;
     mapName: string | null;
     partyNames: readonly string[];
@@ -87,6 +94,13 @@ export function buildOracleShortcutPrompt(
   },
 ): string {
   const lines = [SHORTCUT_QUESTION[kind]];
+  // Spec 174, FR-009: the player's own yes/no question and its answer, when interpreting.
+  if (kind === "interpret-answer" && context.answer?.trim()) {
+    const asked = context.question?.trim();
+    lines.push(
+      `Answer: ${context.answer.trim()}${asked ? ` to "${asked}"` : ""}.`,
+    );
+  }
 
   const facts: string[] = [];
   if (context.sceneName.trim())
