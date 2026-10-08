@@ -722,6 +722,62 @@ describe("published answers", () => {
     }
   });
 
+  it("gives the correct healing-potion dice example", () => {
+    const answer = answers["which-dice-do-i-roll-in-dnd-and-when"];
+    const diceSection = answer.sections.find(
+      (section) =>
+        section.kind === "list" &&
+        section.heading === "The other dice: damage, healing and amounts",
+    );
+
+    expect(diceSection?.kind).toBe("list");
+    if (diceSection?.kind !== "list") return;
+
+    const diceExamples = diceSection.items.find(
+      (item) => item.term === "d4, d6, d8, d10, d12",
+    )?.text;
+
+    expect(diceExamples).toContain(
+      "common healing potion restores 2d4 + 2 hit points",
+    );
+  });
+
+  it("explains the natural 1 and 20 exceptions for attack rolls", () => {
+    const answer = answers["which-dice-do-i-roll-in-dnd-and-when"];
+    const attackRoll = answer.sections
+      .filter((section) => section.kind === "list")
+      .flatMap((section) => section.items)
+      .find((item) => item.term === "Attack rolls");
+
+    expect(attackRoll?.text).toContain(
+      "a natural 20 always hits, and a natural 1 always misses",
+    );
+  });
+
+  it("records the distinct scope of the D&D dice and character-sheet answers", () => {
+    const overlap = answers[
+      "which-dice-do-i-roll-in-dnd-and-when"
+    ].discovery?.acknowledgedOverlap?.find(
+      (entry) => entry.with === "answer-read-dnd-character-sheet-beginner",
+    );
+
+    expect(overlap?.reason).toContain(
+      "choosing dice and resolving common rolls",
+    );
+  });
+
+  it("records the distinct scope of the D&D dice and combat-turn answers", () => {
+    const overlap = answers[
+      "which-dice-do-i-roll-in-dnd-and-when"
+    ].discovery?.acknowledgedOverlap?.find(
+      (entry) => entry.with === "answer-what-can-i-do-on-my-turn-in-dnd-combat",
+    );
+
+    expect(overlap?.reason).toContain(
+      "which dice resolve checks, attacks, saves, and damage",
+    );
+  });
+
   it("never links an answer to itself", () => {
     for (const answer of published) {
       expect(answer.relatedAnswers).not.toContain(answer.slug);
