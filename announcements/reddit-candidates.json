@@ -1,5 +1,5 @@
 {
-  "updated_at": 1791538760,
+  "updated_at": 1791540603,
   "candidates": [
     {
       "id": "reddit-37303537385-the-treasury-s-tipping-point-a-5-seat-co",
@@ -72,14 +72,14 @@
       "created_at": 1791450142
     },
     {
-      "id": "reddit-37903304382-i-kept-leaving-the-solo-bar-to-roll-chec",
-      "title": "I kept leaving the solo bar to roll, check a thread, or note a result",
-      "body": "Solo was working for map and dice, but the loop kept breaking. I would open a separate menu for a Yes or No, flip elsewhere to remember an open thread, then forget to note the result in the journal.\n\nI built Solo Play Loop Phase 2 so the solo bar keeps oracle, threads and journal capture in one flow.\n\nSee how it fits together: https://codexcryptica.com/help/solo-session\n\nWhat changed:\n- Yes/No oracle with five likelihoods from very unlikely to very likely, plus a tension-driven random event check and optional question\n- random events rolled from focus, action and subject tables, subjects prefer open threads and never pick a closed one\n- threads stored in the vault with open, close, reopen, link, filter and search, plus quick add from the bar\n- per-journal capture toggles for oracle answers, random events, tension and thread changes, and recent results you can save to the vault as a draft\n- pinned tables and scene handling so you can return to a scene as a numbered visit without leaving the session\n\nIt is a dice oracle on purpose, not an AI answer, so it stays usable offline. The tradeoff is that Interpret still needs AI on to prefill the Lore Oracle.\n\nFor your solo games, what part of the loop do you track outside the tool today, threads, oracles, or the session log?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/announcements/release-37903304382-2.png)",
-      "url": "https://codexcryptica.com/help/solo-session",
-      "image_url": "https://assets.codexcryptica.com/announcements/release-37903304382-2.png",
+      "id": "reddit-37903304382-my-harbour-town-vault-kept-getting-sunny",
+      "title": "My harbour town vault kept getting sunny heist ideas",
+      "body": "I like the Adventure Idea generator for cold starts, but the suggestions did not match the vault I was actually running. A grim coastal vault would get a bright caper, or vice versa.\n\nI made the Adventure Idea generator respect the vault theme when it picks types and tones.\n\nThe generator is already where it was, under the campaign generators. No new page to learn, it just filters differently now.\n\nWhat it does:\n- reads the vault theme and narrows adventure types to ones that fit that world\n- adjusts tone so a horror vault leans tense and a cosy vault leans lighter\n- keeps variety inside the theme rather than pulling from the whole pool equally\n- falls back to generic options when no theme is set, so it still works on a blank vault\n\nIt is a filter, not a full rewrite of the prompts, so a weird cross-genre idea can still slip through if the vault only hints at tone.\n\nDoes your current vault have a strong theme or are you still mixing ideas, and what kind of adventure would actually fit it next?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/screenshots/generator-adventure-idea-generator.jpg)",
+      "url": "https://codexcryptica.com/generators/adventure-idea-generator",
+      "image_url": "https://assets.codexcryptica.com/screenshots/generator-adventure-idea-generator.jpg",
       "source_id": "37903304382",
       "status": "approved",
-      "created_at": 1791538760
+      "created_at": 1791540603
     }
   ]
 }
