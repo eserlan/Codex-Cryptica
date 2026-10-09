@@ -1,16 +1,6 @@
 {
-  "updated_at": 1791492142,
+  "updated_at": 1791524029,
   "candidates": [
-    {
-      "id": "reddit-37267958323-generator-names-now-pull-from-your-vault",
-      "title": "Generator names now pull from your vault and your cultures",
-      "body": "I kept getting the same few fantasy names no matter what I was building. My desert nomad factions, my orbital settlements, my street gangs all sounded like they came from the same tavern roster.\n\nI built a culture-aware pass for named generators so names actually sound like they belong where you are generating them.\n\n- NPCs, factions, settlements and other named generators now sample names already in your vault\n- a fast filtered pre-pass picks a varied candidate before the main draft, so you get less repetition\n- overused words and sounds are down-weighted\n- if you have culture notes, those notes guide the phrasing directly\n\nIt works best when your vault already has a few names and culture entries to pull from. On a brand new vault with almost nothing written yet, there is less to sample and results stay more generic until you add more.\n\nWhat naming pattern breaks immersion most at your table \u2014 same prefixes showing up, too-smooth fantasy everywhere, or names that ignore the culture you wrote?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/screenshots/generator-npc.jpg)",
-      "url": "",
-      "image_url": "https://assets.codexcryptica.com/screenshots/generator-npc.jpg",
-      "source_id": "37267958323",
-      "status": "approved",
-      "created_at": 1791178315
-    },
     {
       "id": "reddit-37303537385-the-treasury-s-tipping-point-a-5-seat-co",
       "title": "The Treasury's Tipping Point \u2014 a 5-seat council vote for intrigue campaigns",
