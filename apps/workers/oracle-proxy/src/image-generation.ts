@@ -260,6 +260,13 @@ async function getImageBuffer(output: unknown): Promise<ArrayBuffer> {
     typeof output === "object" && output !== null && "image" in output
       ? (output as { image: unknown }).image
       : output;
+  if (image instanceof ArrayBuffer) return image;
+  if (image instanceof Uint8Array) {
+    return image.buffer.slice(
+      image.byteOffset,
+      image.byteOffset + image.byteLength,
+    ) as ArrayBuffer;
+  }
   if (isResponseBody(image)) {
     return new Response(image as BodyInit).arrayBuffer();
   }
