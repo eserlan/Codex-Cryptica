@@ -60,13 +60,12 @@
   import { themeStore } from "$lib/stores/theme.svelte";
   import { getDelveTerm } from "$lib/utils/delve-terminology";
   import {
-    canvasNodeStyle,
-    canvasNodeZIndex,
     createFlowTextNode,
     fitDelveSectorFrames,
     flowEdgeToCanvasEdge,
     flowNodesToCanvasNodes,
   } from "./canvas-workspace-helpers";
+  import { presentCanvasNodes } from "./canvas-workspace-nodes";
   import { exportCanvasImage } from "./canvas-image-export";
   import { finalizeCanvasDossier } from "./finalize-canvas-dossier";
   import {
@@ -263,56 +262,15 @@
     logic.nodes = sendNodeToBack(logic.nodes, nodeId);
   }
 
-  const filteredNodes = $derived.by(() => {
-    const base = (() => {
-      if (isExportingCanvas) return logic.nodes;
-      if (logic.activeCategories.size === 0) return logic.nodes;
-      return logic.nodes.filter((n) =>
-        logic.activeCategories.has(n.data?.type as string),
-      );
-    })();
-    return base.map((node) => {
-      const locked = Boolean((node.data as any)?.locked);
-      const withLock = {
-        ...node,
-        draggable: !locked,
-        style: canvasNodeStyle(node),
-        zIndex: node.type === "delveSectorGroup" ? 0 : canvasNodeZIndex(node),
-      };
-      if (node.type === "file") {
-        return {
-          ...withLock,
-          data: {
-            ...node.data,
-            onUpdateFile: (updates: Record<string, unknown>) =>
-              updateNodeData(node.id, updates),
-          },
-        };
-      }
-      if (node.type === "text") {
-        return {
-          ...withLock,
-          data: {
-            ...node.data,
-            onUpdateText: (updates: Record<string, unknown>) =>
-              updateNodeData(node.id, updates),
-          },
-        };
-      }
-      if (node.type === "entity") {
-        return {
-          ...withLock,
-          data: {
-            ...node.data,
-            showImageLabels,
-            onUpdateEntityNode: (updates: Record<string, unknown>) =>
-              updateNodeData(node.id, updates),
-          },
-        };
-      }
-      return withLock;
-    });
-  });
+  const filteredNodes = $derived(
+    presentCanvasNodes({
+      nodes: logic.nodes as any,
+      activeCategories: logic.activeCategories,
+      isExporting: isExportingCanvas,
+      showImageLabels,
+      updateNodeData,
+    }),
+  );
 
   const nodeTypes = {
     entity: EntityNode,
