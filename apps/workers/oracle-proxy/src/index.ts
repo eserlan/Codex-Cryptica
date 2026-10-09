@@ -1,179 +1,47 @@
 /**
  * Oracle Proxy Worker
  *
- * Forwards requests from Codex Cryptica clients to Google's Gemini API.
- * The system API key is kept secret within this worker environment.
- *
- * Environment variables required:
- * - GEMINI_API_KEY: The system Gemini API key
- * - ALLOWED_ORIGINS: Comma-separated list of allowed origins for CORS
- * - ALLOW_CLOUDFLARE_PAGES_PREVIEW_ORIGINS: Optional opt-in for Pages previews
+ * Forwards requests from Codex Cryptica clients to upstream LLM providers
+ * and exposes edge APIs for publishing, asset galleries, and directory listings.
  */
 
-import { DEFAULT_CF_IMAGE_MODEL } from "./image-defaults";
-import {
-  handlePublishVault,
-  handleGetBundle,
-  handleGetManifest,
-  handleUploadAsset,
-  handleGetAsset,
-  handleDeleteVault,
-  handleDeleteAsset,
-} from "./publish";
-import { handleGetStarterTileDeck } from "./starter-tile-decks";
-import {
-  handleDeletePublicListing,
-  handleGetPublicListing,
-  handleListPublicListings,
-  handlePutPublicListing,
-} from "./directory";
-import { handleGetPublishedNotice, handlePutPublishedNotice } from "./notice";
+import { handleStarterTileDecksRoute } from "./starter-tile-decks";
+import { handleListPublicListings } from "./directory";
 import { handleCopyrightReport } from "./reports";
-import {
-  forwardToGemini,
-  forwardInteractionToGemini,
-} from "./llm/adaptors/gemini-adaptor";
-import {
-  forwardInteractionToOpenAi,
-  extractOpenAiResponseText,
-} from "./llm/adaptors/openai-adaptor";
-import { getModel } from "./llm/registry";
+import { forwardToGemini } from "./llm/adaptors/gemini-adaptor";
 import {
   isLlmOperationRequest,
   handleLlmOperationRequest,
   isLlmOperationStreamRequest,
   handleLlmOperationStreamRequest,
 } from "./llm/handle-operation-request";
+import { handleInteraction } from "./llm/interaction-handler";
 import { handleSessionRequest, enforceLlmSession } from "./session-guard";
 import { handleHelpAsk } from "./help";
 import { handleTemplateDirectoryRoutes } from "./template-directory-routes";
-import {
-  handleEnableCloudBackup,
-  handleCommitCloudBackup,
-  handleCloudBackupAssetUpload,
-  handleGetCloudBackupStatus,
-  handleGetCloudBackupBundle,
-  handleGetCloudBackupIndex,
-  handleCloudBackupDelta,
-  handleGetCloudBackupAsset,
-  handleDeleteCloudBackup,
-} from "./cloud-backup";
-import {
-  handleCloudBackupAdminDelete,
-  handleCloudBackupAdminLookup,
-  handleCloudBackupAdminStats,
-  handleCloudBackupReissueCode,
-} from "./cloud-backup-admin";
-import {
-  handleCreateGeneratorShare,
-  handleDeleteGeneratorShare,
-  handleGetGeneratorShare,
-} from "./generator-shares";
+import { handleCloudBackupRoutes } from "./cloud-backup-routes";
+import { handlePublishedRoutes } from "./publish-routes";
+import { handleGeneratorSharesRoute } from "./generator-shares";
+import { handleAssetGallery } from "./asset-gallery";
+import { enforcePublishRateLimit } from "./rate-limiting";
 import {
   handleBySlugs as handleAnswerBySlugs,
   handleTop as handleAnswerTop,
   handleVote as handleAnswerVote,
-  type D1DatabaseLike,
 } from "./answer-aggregates";
 import { isKnownAnswerSlug } from "./answer-slugs";
-import { handleAssetGallery } from "./asset-gallery";
 import {
   getCorsHeaders,
   handleCorsPreflight,
   isOriginAllowed,
   withCorsHeaders,
-  type CorsEnv,
 } from "./cors";
+import { handleImageGeneration } from "./image-generation";
+import type { Env } from "./env";
 
 export { isOriginAllowed } from "./cors";
-
-interface Env extends CorsEnv {
-  GEMINI_API_KEY: string;
-  OPENAI_API_KEY?: string;
-  ALLOWED_ORIGINS?: string;
-  ALLOW_CLOUDFLARE_PAGES_PREVIEW_ORIGINS?: string;
-  AI?: any;
-  BUCKET?: any; // R2Bucket
-  TURNSTILE_SECRET_KEY?: string;
-  CODEX_AUTOMATION_KEY?: string;
-  PUBLISH_CREATE_RATE_LIMITER?: {
-    limit: (options: { key: string }) => Promise<{ success: boolean }>;
-  };
-  PUBLISH_WRITE_RATE_LIMITER?: {
-    limit: (options: { key: string }) => Promise<{ success: boolean }>;
-  };
-  /** HMAC signing secret for LLM session capability tokens. */
-  SESSION_TOKEN_SECRET?: string;
-  LLM_BURST_RATE_LIMITER?: {
-    limit: (options: { key: string }) => Promise<{ success: boolean }>;
-  };
-  LLM_GENERATION_RATE_LIMITER?: {
-    limit: (options: { key: string }) => Promise<{ success: boolean }>;
-  };
-  LLM_AUTOMATION_RATE_LIMITER?: {
-    limit: (options: { key: string }) => Promise<{ success: boolean }>;
-  };
-  TEMPLATE_ADMIN_TOKEN?: string;
-  /** HMAC key for hashing reporter addresses. Reporting is off without it. */
-  TEMPLATE_REPORT_HASH_KEY?: string;
-  TEMPLATE_REPORT_RATE_LIMITER?: {
-    limit: (options: { key: string }) => Promise<{ success: boolean }>;
-  };
-  ANSWER_AGGREGATES?: D1DatabaseLike;
-  ANSWER_FEEDBACK_RATE_LIMITER?: {
-    limit: (options: { key: string }) => Promise<{ success: boolean }>;
-  };
-  SHARE_CREATE_RATE_LIMITER?: {
-    limit: (options: { key: string }) => Promise<{ success: boolean }>;
-  };
-}
-
-/**
- * FLUX.2 models are served through the multipart image-generation endpoint.
- * Matched by family rather than by an exhaustive list so a new klein or dev
- * variant keeps working without a proxy deploy.
- */
-export function usesMultipartInput(model: string): boolean {
-  return /flux-2/i.test(model);
-}
-
-/**
- * Whether a model's schema declares `negative_prompt`.
- *
- * The AI binding validates input against that schema and answers "8001:
- * Invalid input" for a field the model does not declare — Lucid Origin, for
- * one. The REST endpoint is more forgiving and ignores it, which is how this
- * was missed: the same request succeeded over REST and failed through the
- * binding. An allow-list, because a rejection breaks generation outright while
- * an omitted negative merely goes unused.
- */
-export function supportsNegativePrompt(model: string): boolean {
-  if (usesMultipartInput(model)) return true;
-  return /stable-diffusion|dreamshaper|phoenix/i.test(model);
-}
-
-function buildMultipartInput(
-  prompt: string,
-  width: number,
-  height: number,
-  negativePrompt?: string,
-) {
-  const form = new FormData();
-  form.append("prompt", prompt);
-  form.append("width", String(width));
-  form.append("height", String(height));
-  if (negativePrompt) form.append("negative_prompt", negativePrompt);
-
-  const formResponse = new Response(form);
-  const contentType =
-    formResponse.headers.get("content-type") || "multipart/form-data";
-  return {
-    multipart: {
-      body: formResponse.body || form,
-      contentType,
-    },
-  };
-}
+export { usesMultipartInput, supportsNegativePrompt } from "./image-generation";
+export type { Env } from "./env";
 
 async function handleCachedAssetGallery(
   request: Request,
@@ -242,42 +110,7 @@ export default {
     }
 
     if (pathname.startsWith("/api/starter-tile-decks/")) {
-      if (request.method !== "GET")
-        return withCorsHeaders(
-          request,
-          env,
-          new Response("Method not allowed", { status: 405 }),
-        );
-      const parts = pathname.split("/");
-      const deckId = parts[3] ? decodeURIComponent(parts[3]) : undefined;
-      if (!deckId)
-        return withCorsHeaders(
-          request,
-          env,
-          new Response("Not found", { status: 404 }),
-        );
-      if (parts.length === 4)
-        return withCorsHeaders(
-          request,
-          env,
-          await handleGetStarterTileDeck(env, deckId),
-        );
-      if (parts.length === 6 && parts[4] === "assets") {
-        return withCorsHeaders(
-          request,
-          env,
-          await handleGetStarterTileDeck(
-            env,
-            deckId,
-            decodeURIComponent(parts[5]),
-          ),
-        );
-      }
-      return withCorsHeaders(
-        request,
-        env,
-        new Response("Not found", { status: 404 }),
-      );
+      return handleStarterTileDecksRoute(request, env, pathname);
     }
 
     if (pathname === "/api/session") {
@@ -298,65 +131,12 @@ export default {
       );
     }
 
-    if (pathname.startsWith("/api/template-directory/")) {
-      const origin = request.headers.get("Origin") || "";
-      if (origin && !isOriginAllowed(origin, env)) {
-        return new Response("Forbidden", {
-          status: 403,
-          headers: getCorsHeaders(request.headers, env),
-        });
-      }
-      const rateLimitResponse = await enforcePublishRateLimit(
-        request,
-        env,
-        pathname,
-      );
-      if (rateLimitResponse) return rateLimitResponse;
-    }
-
-    if (
-      pathname === "/api/generator-shares" ||
-      pathname.startsWith("/api/generator-shares/")
-    ) {
-      const origin = request.headers.get("Origin") || "";
-      const isPublicRead =
-        pathname.startsWith("/api/generator-shares/") &&
-        request.method === "GET";
-      if (!isPublicRead && !isOriginAllowed(origin, env)) {
-        return new Response("Forbidden", {
-          status: 403,
-          headers: getCorsHeaders(request.headers, env),
-        });
-      }
-      const rateLimitResponse = await enforcePublishRateLimit(
-        request,
-        env,
-        pathname,
-      );
-      if (rateLimitResponse) return rateLimitResponse;
-
-      if (pathname === "/api/generator-shares") {
-        if (request.method === "POST")
-          return handleCreateGeneratorShare(request, env);
-        return new Response("Method not allowed", {
-          status: 405,
-          headers: getCorsHeaders(request.headers, env),
-        });
-      }
-
-      const shareId = pathname.split("/")[3];
-      if (!shareId || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/i.test(shareId)) {
-        return new Response("Not found", { status: 404 });
-      }
-      if (request.method === "GET")
-        return handleGetGeneratorShare(request, env, shareId);
-      if (request.method === "DELETE")
-        return handleDeleteGeneratorShare(request, env, shareId);
-      return new Response("Method not allowed", {
-        status: 405,
-        headers: getCorsHeaders(request.headers, env),
-      });
-    }
+    const generatorSharesResponse = await handleGeneratorSharesRoute(
+      request,
+      env,
+      pathname,
+    );
+    if (generatorSharesResponse) return generatorSharesResponse;
 
     if (
       pathname === "/api/answer-aggregates/vote" ||
@@ -409,7 +189,24 @@ export default {
       return handleCachedAggregateRead(request, env, ctx, handler);
     }
 
-    if (pathname.startsWith("/api/cloud-backup/")) {
+    const cloudBackupResponse = await handleCloudBackupRoutes(
+      request,
+      env,
+      pathname,
+    );
+    if (cloudBackupResponse) return cloudBackupResponse;
+
+    if (pathname === "/api/directory/listings") {
+      if (request.method === "GET") {
+        return handleListPublicListings(request, env);
+      }
+      return new Response("Method not allowed", {
+        status: 405,
+        headers: getCorsHeaders(request.headers, env),
+      });
+    }
+
+    if (pathname.startsWith("/api/template-directory/")) {
       const origin = request.headers.get("Origin") || "";
       if (origin && !isOriginAllowed(origin, env)) {
         return new Response("Forbidden", {
@@ -423,106 +220,6 @@ export default {
         pathname,
       );
       if (rateLimitResponse) return rateLimitResponse;
-
-      // Admin routes first: they are gated by a worker secret rather than a
-      // vault's ownership code, and must never be reachable by the patterns
-      // below (spec 162, FR-016).
-      if (pathname === "/api/cloud-backup/admin/lookup") {
-        if (request.method !== "POST")
-          return new Response("Method not allowed", {
-            status: 405,
-            headers: getCorsHeaders(request.headers, env),
-          });
-        return handleCloudBackupAdminLookup(request, env);
-      }
-
-      if (pathname === "/api/cloud-backup/admin/stats") {
-        if (request.method !== "GET")
-          return new Response("Method not allowed", {
-            status: 405,
-            headers: getCorsHeaders(request.headers, env),
-          });
-        return handleCloudBackupAdminStats(request, env);
-      }
-
-      if (pathname.startsWith("/api/cloud-backup/admin/")) {
-        const parts = pathname.split("/");
-        // /api/cloud-backup/admin/{backupId}/reissue-code
-        if (
-          parts.length === 6 &&
-          parts[5] === "reissue-code" &&
-          request.method === "POST"
-        ) {
-          return handleCloudBackupReissueCode(request, env, parts[4]);
-        }
-        // /api/cloud-backup/admin/{backupId}
-        if (parts.length === 5 && request.method === "DELETE") {
-          return handleCloudBackupAdminDelete(request, env, parts[4]);
-        }
-        return new Response("Not found", {
-          status: 404,
-          headers: getCorsHeaders(request.headers, env),
-        });
-      }
-
-      if (pathname === "/api/cloud-backup/enable") {
-        if (request.method !== "POST")
-          return new Response("Method not allowed", {
-            status: 405,
-            headers: getCorsHeaders(request.headers, env),
-          });
-        return handleEnableCloudBackup(request, env);
-      }
-
-      const parts = pathname.split("/");
-      const backupId = parts[3];
-      if (backupId) {
-        // /api/cloud-backup/{backupId}
-        if (parts.length === 4 && request.method === "DELETE") {
-          return handleDeleteCloudBackup(request, env, backupId);
-        }
-        if (parts.length === 5) {
-          if (parts[4] === "commit" && request.method === "POST")
-            return handleCommitCloudBackup(request, env, backupId);
-          if (parts[4] === "status" && request.method === "GET")
-            return handleGetCloudBackupStatus(request, env, backupId);
-          if (parts[4] === "bundle" && request.method === "GET")
-            return handleGetCloudBackupBundle(request, env, backupId);
-          if (parts[4] === "index" && request.method === "GET")
-            return handleGetCloudBackupIndex(request, env, backupId);
-          if (parts[4] === "delta" && request.method === "POST")
-            return handleCloudBackupDelta(request, env, backupId);
-        }
-        // /api/cloud-backup/{backupId}/assets/{assetId}
-        if (parts.length === 6 && parts[4] === "assets") {
-          const assetId = parts[5];
-          if (request.method === "GET")
-            return handleGetCloudBackupAsset(request, env, backupId, assetId);
-          if (request.method === "PUT")
-            return handleCloudBackupAssetUpload(
-              request,
-              env,
-              backupId,
-              assetId,
-            );
-        }
-      }
-
-      return new Response("Not found", {
-        status: 404,
-        headers: getCorsHeaders(request.headers, env),
-      });
-    }
-
-    if (pathname === "/api/directory/listings") {
-      if (request.method === "GET") {
-        return handleListPublicListings(request, env);
-      }
-
-      return new Response("Method not allowed", {
-        status: 405,
-        headers: getCorsHeaders(request.headers, env),
-      });
     }
 
     const templateDirectoryResponse = await handleTemplateDirectoryRoutes(
@@ -549,107 +246,12 @@ export default {
       });
     }
 
-    // Route R2 snapshot publishing endpoints
-    if (
-      pathname === "/api/publish-vault" ||
-      pathname.startsWith("/api/published/")
-    ) {
-      const origin = request.headers.get("Origin") || "";
-      const isReadOnlyPublishedRequest =
-        pathname.startsWith("/api/published/") && request.method === "GET";
-      if (!isReadOnlyPublishedRequest && !isOriginAllowed(origin, env)) {
-        return new Response("Forbidden", {
-          status: 403,
-          headers: getCorsHeaders(request.headers, env),
-        });
-      }
-
-      const rateLimitResponse = await enforcePublishRateLimit(
-        request,
-        env,
-        pathname,
-      );
-      if (rateLimitResponse) return rateLimitResponse;
-
-      if (pathname === "/api/publish-vault") {
-        if (request.method === "POST") {
-          return handlePublishVault(request, env);
-        }
-        return new Response("Method not allowed", {
-          status: 405,
-          headers: getCorsHeaders(request.headers, env),
-        });
-      }
-
-      const parts = pathname.split("/");
-      if (parts.length === 4) {
-        // /api/published/:publishId
-        if (request.method === "DELETE") {
-          return handleDeleteVault(request, env, parts[3]);
-        }
-        return new Response("Method not allowed", {
-          status: 405,
-          headers: getCorsHeaders(request.headers, env),
-        });
-      }
-
-      if (parts.length === 5) {
-        // /api/published/:publishId/bundle, manifest, listing, or notice
-        if (parts[4] === "notice") {
-          if (request.method === "GET") {
-            return handleGetPublishedNotice(request, env, parts[3]);
-          }
-          if (request.method === "PUT") {
-            return handlePutPublishedNotice(request, env, parts[3]);
-          }
-        }
-        if (parts[4] === "listing") {
-          if (request.method === "GET") {
-            return handleGetPublicListing(request, env, parts[3]);
-          }
-          if (request.method === "PUT") {
-            return handlePutPublicListing(request, env, parts[3]);
-          }
-          if (request.method === "DELETE") {
-            return handleDeletePublicListing(request, env, parts[3]);
-          }
-        }
-        if (request.method === "GET") {
-          if (parts[4] === "bundle") {
-            return handleGetBundle(request, env, parts[3]);
-          }
-          if (parts[4] === "manifest") {
-            return handleGetManifest(request, env, parts[3]);
-          }
-        }
-        return new Response("Method not allowed", {
-          status: 405,
-          headers: getCorsHeaders(request.headers, env),
-        });
-      }
-
-      if (parts.length === 6 && parts[4] === "assets") {
-        // /api/published/:publishId/assets/:assetId
-        if (request.method === "POST") {
-          return handleUploadAsset(request, env, parts[3], parts[5]);
-        }
-        if (request.method === "GET") {
-          return handleGetAsset(request, env, parts[3], parts[5]);
-        }
-        if (request.method === "DELETE") {
-          return handleDeleteAsset(request, env, parts[3], parts[5]);
-        }
-        return new Response("Method not allowed", {
-          status: 405,
-          headers: getCorsHeaders(request.headers, env),
-        });
-      }
-
-      return new Response("Not found", {
-        status: 404,
-        headers: getCorsHeaders(request.headers, env),
-      });
-    }
+    const publishedResponse = await handlePublishedRoutes(
+      request,
+      env,
+      pathname,
+    );
+    if (publishedResponse) return publishedResponse;
 
     // Only allow POST requests for the fallback Oracle API
     if (request.method !== "POST") {
@@ -663,191 +265,7 @@ export default {
     const isAllowedOrigin = isOriginAllowed(origin, env);
 
     if (url.pathname === "/v1/images/generations") {
-      if (!isAllowedOrigin) {
-        return new Response("Forbidden", {
-          status: 403,
-          headers: getCorsHeaders(request.headers, env),
-        });
-      }
-
-      const ip = request.headers.get("CF-Connecting-IP") || "anonymous";
-      const limitResult = await checkRateLimit(ip);
-      if (!limitResult.allowed) {
-        return new Response(
-          JSON.stringify({
-            error: {
-              message:
-                "Daily image generation limit exceeded. Please try again tomorrow, or configure your own Cloudflare Account ID and API Token in settings.",
-              code: "RATE_LIMIT_EXCEEDED",
-            },
-          }),
-          {
-            status: 429,
-            headers: {
-              ...getCorsHeaders(request.headers, env),
-              "Content-Type": "application/json",
-            },
-          },
-        );
-      }
-
-      try {
-        const body = (await request.json()) as any;
-        const prompt = body.prompt;
-        const targetModel = body.model || DEFAULT_CF_IMAGE_MODEL;
-
-        if (!prompt) {
-          return new Response(
-            JSON.stringify({ error: { message: "Prompt is required" } }),
-            {
-              status: 400,
-              headers: {
-                ...getCorsHeaders(request.headers, env),
-                "Content-Type": "application/json",
-              },
-            },
-          );
-        }
-
-        if (!env.AI) {
-          return new Response(
-            JSON.stringify({
-              error: {
-                message: "Workers AI binding is not configured on the proxy",
-              },
-            }),
-            {
-              status: 500,
-              headers: {
-                ...getCorsHeaders(request.headers, env),
-                "Content-Type": "application/json",
-              },
-            },
-          );
-        }
-
-        console.log(
-          `[Oracle Proxy] Generating image using Workers AI model: ${targetModel}`,
-        );
-        const width = Number(body.width) || 1024;
-        const height = Number(body.height) || 1024;
-        // Forwarded rather than dropped: the client has always sent this and
-        // the proxy has always discarded it, so every negative term composed
-        // for a proxy image went nowhere.
-        const negativePrompt = body.negative_prompt
-          ? String(body.negative_prompt)
-          : undefined;
-
-        // Workers AI does not take one input shape. The FLUX.2 family expects
-        // a multipart body, because that endpoint also accepts reference
-        // images for editing; every other text-to-image model expects a plain
-        // object and answers a multipart body with "field required: prompt".
-        // Sending the wrong one is a 5012, not a soft failure, so the shape
-        // follows the model.
-        const output = usesMultipartInput(targetModel)
-          ? await env.AI.run(
-              targetModel,
-              buildMultipartInput(prompt, width, height, negativePrompt),
-            )
-          : await env.AI.run(targetModel, {
-              prompt,
-              width,
-              height,
-              ...(negativePrompt && supportsNegativePrompt(targetModel)
-                ? { negative_prompt: negativePrompt }
-                : {}),
-            });
-
-        let buffer: ArrayBuffer;
-        if (output instanceof ArrayBuffer) {
-          buffer = output;
-        } else if (output instanceof Uint8Array) {
-          buffer = output.buffer;
-        } else if (
-          typeof output === "object" &&
-          output !== null &&
-          "image" in output
-        ) {
-          const img = (output as any).image;
-          if (typeof img === "string") {
-            // base64 format returned directly
-            return new Response(
-              JSON.stringify({
-                success: true,
-                result: { image: img },
-              }),
-              {
-                status: 200,
-                headers: {
-                  ...getCorsHeaders(request.headers, env),
-                  "Content-Type": "application/json",
-                },
-              },
-            );
-          } else {
-            // If the inner image field is a stream or binary, convert it
-            const res = new Response(img);
-            buffer = await res.arrayBuffer();
-          }
-        } else if (
-          output &&
-          (output instanceof ReadableStream ||
-            typeof (output as any).getReader === "function" ||
-            typeof (output as any).arrayBuffer === "function")
-        ) {
-          const res = new Response(output as any);
-          buffer = await res.arrayBuffer();
-        } else {
-          throw new Error("Invalid output format returned from Workers AI");
-        }
-
-        const b64 = arrayBufferToBase64(buffer);
-
-        return new Response(
-          JSON.stringify({
-            success: true,
-            result: {
-              image: b64,
-            },
-          }),
-          {
-            status: 200,
-            headers: {
-              ...getCorsHeaders(request.headers, env),
-              "Content-Type": "application/json",
-            },
-          },
-        );
-      } catch (error) {
-        console.error(
-          "[Oracle Proxy] Cloudflare Workers AI image error:",
-          error,
-        );
-        const raw =
-          error instanceof Error ? error.message : "Image generation failed";
-        // 4006 is the shared account's daily neuron budget, not a fault in the
-        // request. It reached users as a raw provider string about neurons,
-        // which explains nothing and suggests nothing they can do.
-        const outOfBudget = /\b4006\b|daily free allocation/i.test(raw);
-
-        return new Response(
-          JSON.stringify({
-            error: {
-              message: outOfBudget
-                ? "The shared image allowance for today is used up. It resets daily — or configure your own Cloudflare Account ID and API Token in settings to generate without the shared limit."
-                : raw,
-              code: outOfBudget ? "IMAGE_BUDGET_EXCEEDED" : "IMAGE_GEN_FAILED",
-            },
-          }),
-          {
-            status: outOfBudget ? 429 : 500,
-            headers: {
-              ...getCorsHeaders(request.headers, env),
-              "Content-Type": "application/json",
-            },
-          },
-        );
-      }
+      return handleImageGeneration(request, env, isAllowedOrigin);
     }
 
     // Contextual help (#3427) runs the same session guard itself so it can
@@ -864,11 +282,6 @@ export default {
     // Capability-token guard for the text LLM endpoints. Covers all three
     // paths below (operation pipeline, interactions, legacy passthrough),
     // which together are every text generation request the app makes.
-    //
-    // Image generation (`/v1/images/generations`, handled above) keeps its own
-    // per-IP daily limiter and is deliberately not guarded here: it is served
-    // by a different client that does not carry a capability token, so
-    // enforcing one would break image generation outright.
     const sessionResponse = await enforceLlmSession(
       request,
       env,
@@ -882,9 +295,7 @@ export default {
       const body = (await request.json()) as any;
 
       // Provider-neutral operation pipeline: selected when the client sends
-      // a recognized `operation` field. Requests without it fall through to
-      // the two legacy branches below completely unchanged (FR-007,
-      // research.md R1).
+      // a recognized `operation` field.
       if (isLlmOperationStreamRequest(body)) {
         return await handleLlmOperationStreamRequest(
           body,
@@ -902,9 +313,7 @@ export default {
         );
       }
 
-      // Interactions API path: server-side conversation state. Selected when the
-      // client sends an `input` field (instead of full `contents`). Keeps the
-      // stateless generateContent path below intact as the retention fallback.
+      // Interactions API path: server-side conversation state.
       if (body.input !== undefined) {
         return await handleInteraction(body, request, env);
       }
@@ -979,257 +388,3 @@ export default {
     }
   },
 };
-
-/**
- * Handle an Interactions-style request (server-side conversation state).
- *
- * `body.model` is looked up against the model registry first: an OpenAI
- * registry key (e.g. "luna-fast") routes to OpenAI's Responses API,
- * threading `previous_response_id`; anything else (including raw Gemini
- * model ids not in the registry, for back-compat) forwards to Gemini's
- * `/v1beta/interactions`, threading `previous_interaction_id`. Either way the
- * client only ever sends/receives the provider-neutral `previous_interaction_id`
- * / `{ id, text }` shape — callers (chat/revision/generator sessions) don't
- * need to know which provider is serving a given model key.
- *
- * Returns `{ id, text }`; an expired/invalid previous id is mapped to a typed
- * 409 so the client can reset and replay full history.
- */
-// fallow-ignore-next-line complexity
-async function handleInteraction(
-  body: any,
-  request: Request,
-  env: Env,
-): Promise<Response> {
-  const cors = getCorsHeaders(request.headers, env);
-  const json = (data: unknown, status: number) =>
-    new Response(JSON.stringify(data), {
-      status,
-      headers: { ...cors, "Content-Type": "application/json" },
-    });
-
-  const rawModel = typeof body?.model === "string" ? body.model : undefined;
-  const registryModel = rawModel ? getModel(rawModel) : undefined;
-  const wantsOpenAi = registryModel?.provider === "openai";
-
-  const outgoingBody = {
-    ...body,
-    model: rawModel,
-  };
-
-  if (registryModel && registryModel.provider === "gemini") {
-    outgoingBody.model = registryModel.modelId;
-  }
-
-  const geminiFallbackModel =
-    getModel("gemini-flash-lite")?.modelId ?? "gemini-3.5-flash-lite";
-  const isGeminiContinuation =
-    typeof body?.previous_interaction_id === "string" &&
-    /^(?:v1_|interactions\/)/.test(body.previous_interaction_id);
-
-  let result: any;
-  let isGeminiResult: boolean;
-
-  if (
-    wantsOpenAi &&
-    !isGeminiContinuation &&
-    (env.OPENAI_API_KEY || body.previous_interaction_id)
-  ) {
-    result = await forwardInteractionToOpenAi(
-      outgoingBody,
-      registryModel!.modelId,
-      env,
-    );
-    isGeminiResult = false;
-
-    const isStaleId =
-      body.previous_interaction_id &&
-      (result.status === 404 ||
-        result.status === 400 ||
-        /previous_interaction_id|previous_response_id|interaction.*not found|response.*not found/i.test(
-          (result.data as any)?.error?.message || "",
-        ));
-
-    // A continuation id belongs to the provider that issued it. Do not send a
-    // Gemini id to OpenAI (or retry an OpenAI continuation on Gemini), because
-    // this request contains only the incremental turn and would lose history.
-    if (!result.ok && !isStaleId && !body.previous_interaction_id) {
-      console.warn(
-        `[Oracle Proxy] OpenAI interaction failed (${result.status}), falling back to Gemini (${geminiFallbackModel}):`,
-        (result.data as any)?.error?.message,
-      );
-      const geminiBody = {
-        ...body,
-        model: geminiFallbackModel,
-      };
-      result = await forwardInteractionToGemini(geminiBody, env);
-      isGeminiResult = true;
-    }
-  } else if (wantsOpenAi) {
-    const geminiBody = {
-      ...body,
-      model: geminiFallbackModel,
-    };
-    result = await forwardInteractionToGemini(geminiBody, env);
-    isGeminiResult = true;
-  } else {
-    result = await forwardInteractionToGemini(outgoingBody, env);
-    isGeminiResult = true;
-  }
-
-  if (result.transportError) {
-    return json(
-      { error: { message: "Failed to reach Interactions API" } },
-      502,
-    );
-  }
-  if (result.parseError) {
-    return json(
-      {
-        error: {
-          message: "Proxy error: invalid response from Interactions API",
-          code: "UPSTREAM_PARSE_ERROR",
-        },
-      },
-      502,
-    );
-  }
-
-  const data = result.data as any;
-
-  if (!result.ok) {
-    const message: string =
-      data?.error?.message || "Interaction request failed";
-    // An expired or unknown previous id (retention window elapsed, or an
-    // OpenAI previous_response_id that's aged out) is recoverable: the
-    // client should drop the id and replay full history.
-    const isStaleId =
-      body.previous_interaction_id &&
-      (result.status === 404 ||
-        result.status === 400 ||
-        /previous_interaction_id|previous_response_id|interaction.*not found|response.*not found/i.test(
-          message,
-        ));
-    if (isStaleId) {
-      return json({ error: { message, code: "INTERACTION_NOT_FOUND" } }, 409);
-    }
-    return json({ error: { message } }, result.status);
-  }
-
-  // Gemini's Interactions API: output text lives at steps[].content[].text
-  // (model_output steps). OpenAI's Responses API: output text lives at
-  // output[].content[].text (message items, output_text blocks).
-  const extractedText = isGeminiResult
-    ? (Array.isArray(data.steps) ? data.steps : [])
-        .flatMap((s: any) => (Array.isArray(s?.content) ? s.content : []))
-        .map((c: any) => (typeof c?.text === "string" ? c.text : ""))
-        .filter(Boolean)
-        .join("")
-    : extractOpenAiResponseText(data);
-
-  return json({ id: data.id, text: extractedText }, 200);
-}
-
-async function enforcePublishRateLimit(
-  request: Request,
-  env: Env,
-  pathname: string,
-): Promise<Response | null> {
-  if (request.method === "GET" || request.method === "OPTIONS") return null;
-
-  const isTemplateCreate =
-    pathname === "/api/template-directory/listings" &&
-    request.method === "POST";
-  const isShareCreate =
-    pathname === "/api/generator-shares" && request.method === "POST";
-  const limiter =
-    pathname === "/api/publish-vault" || isTemplateCreate
-      ? env.PUBLISH_CREATE_RATE_LIMITER
-      : isShareCreate
-        ? env.SHARE_CREATE_RATE_LIMITER
-        : env.PUBLISH_WRITE_RATE_LIMITER;
-  if (!limiter) return null;
-
-  const ip = request.headers.get("CF-Connecting-IP") || "anonymous";
-  const publishId = pathname.startsWith("/api/template-directory/listings/")
-    ? pathname.split("/")[4] || "new"
-    : pathname.startsWith("/api/generator-shares/")
-      ? pathname.split("/")[3] || "new"
-      : pathname.split("/")[3] || "new";
-  const key =
-    pathname === "/api/publish-vault" || isTemplateCreate || isShareCreate
-      ? ip
-      : `${ip}:${publishId}`;
-  const { success } = await limiter.limit({ key });
-  if (success) return null;
-
-  return new Response(
-    JSON.stringify({
-      error: {
-        message: "Too many publishing requests. Please try again later.",
-      },
-    }),
-    {
-      status: 429,
-      headers: {
-        ...getCorsHeaders(request.headers, env),
-        "Content-Type": "application/json",
-        "Retry-After": "60",
-      },
-    },
-  );
-}
-
-/**
- * Simple rate limiting using the Cache API.
- * Operates per Cloudflare edge location (colo) without DB dependency.
- */
-async function checkRateLimit(ip: string): Promise<{ allowed: boolean }> {
-  try {
-    const cacheKey = new Request(`https://limit.local/ip-${ip}`);
-    const cache = caches.default;
-    const cachedResponse = await cache.match(cacheKey);
-
-    let count = 0;
-    if (cachedResponse) {
-      const data = (await cachedResponse.json()) as any;
-      count = data.count || 0;
-    }
-
-    const limit = 20; // 20 images per day per user/IP per edge location
-    if (count >= limit) {
-      return { allowed: false };
-    }
-
-    count++;
-    const nextResponse = new Response(JSON.stringify({ count }), {
-      headers: {
-        "Content-Type": "application/json",
-        "Cache-Control": "max-age=86400", // Cache for 24 hours
-      },
-    });
-    await cache.put(cacheKey, nextResponse);
-
-    return { allowed: true };
-  } catch (err) {
-    console.error("[Oracle Proxy] Rate limiter error, default to allow:", err);
-    return { allowed: true };
-  }
-}
-
-/**
- * Safely convert ArrayBuffer to Base64 avoiding stack overflows.
- */
-function arrayBufferToBase64(buffer: ArrayBuffer): string {
-  const bytes = new Uint8Array(buffer);
-  let binary = "";
-  const len = bytes.byteLength;
-  const chunk = 8192;
-  for (let i = 0; i < len; i += chunk) {
-    binary += String.fromCharCode.apply(
-      null,
-      bytes.subarray(i, Math.min(i + chunk, len)) as any,
-    );
-  }
-  return btoa(binary);
-}
