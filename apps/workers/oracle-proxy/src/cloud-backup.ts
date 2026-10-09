@@ -125,15 +125,24 @@ export async function hashOwnerCode(code: string): Promise<string> {
     "SHA-256",
     new TextEncoder().encode(code),
   );
-  return [...new Uint8Array(digest)]
-    .map((byte) => byte.toString(16).padStart(2, "0"))
-    .join("");
+  const bytes = new Uint8Array(digest);
+  let hex = "";
+  // ⚡ Bolt Optimization: Replace chained .map().join() with an imperative loop
+  for (let i = 0; i < bytes.length; i++) {
+    hex += bytes[i].toString(16).padStart(2, "0");
+  }
+  return hex;
 }
 
 /** A fresh ownership code. Opaque, unguessable, unrelated to the backup id. */
 export function generateOwnerCode(): string {
   const bytes = crypto.getRandomValues(new Uint8Array(32));
-  return [...bytes].map((b) => b.toString(16).padStart(2, "0")).join("");
+  let hex = "";
+  // ⚡ Bolt Optimization: Replace chained .map().join() with an imperative loop
+  for (let i = 0; i < bytes.length; i++) {
+    hex += bytes[i].toString(16).padStart(2, "0");
+  }
+  return hex;
 }
 
 export async function readManifest(
