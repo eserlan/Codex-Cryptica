@@ -262,6 +262,13 @@
     logic.nodes = sendNodeToBack(logic.nodes, nodeId);
   }
 
+  const showImageLabels = $derived(
+    Boolean(
+      (canvas?.metadata as Record<string, unknown> | undefined)
+        ?.showImageLabels,
+    ),
+  );
+
   const filteredNodes = $derived(
     presentCanvasNodes({
       nodes: logic.nodes as any,
@@ -555,13 +562,6 @@
     }
     logic.saveNow();
   }
-
-  const showImageLabels = $derived(
-    Boolean(
-      (canvas?.metadata as Record<string, unknown> | undefined)
-        ?.showImageLabels,
-    ),
-  );
 
   function handleToggleShowImageLabels() {
     if (canvas) {
