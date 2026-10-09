@@ -2,34 +2,6 @@ import type { CanvasCache } from "./renderer-types";
 
 export const TAU = Math.PI * 2;
 
-function hexToRgb(hex: string): { r: number; g: number; b: number } | null {
-  const m = hex.replace("#", "").match(/.{2}/g);
-  if (!m || m.length < 3) return null;
-  return {
-    r: parseInt(m[0], 16),
-    g: parseInt(m[1], 16),
-    b: parseInt(m[2], 16),
-  };
-}
-
-export function _lightenColor(hex: string, amount: number): string {
-  const rgb = hexToRgb(hex);
-  if (!rgb) return hex;
-  const r = Math.min(255, Math.round(rgb.r + (255 - rgb.r) * amount));
-  const g = Math.min(255, Math.round(rgb.g + (255 - rgb.g) * amount));
-  const b = Math.min(255, Math.round(rgb.b + (255 - rgb.b) * amount));
-  return `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1)}`;
-}
-
-export function _darkenColor(hex: string, amount: number): string {
-  const rgb = hexToRgb(hex);
-  if (!rgb) return hex;
-  const r = Math.max(0, Math.round(rgb.r * (1 - amount)));
-  const g = Math.max(0, Math.round(rgb.g * (1 - amount)));
-  const b = Math.max(0, Math.round(rgb.b * (1 - amount)));
-  return `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1)}`;
-}
-
 const canvasCaches = new WeakMap<HTMLCanvasElement, CanvasCache>();
 
 /**

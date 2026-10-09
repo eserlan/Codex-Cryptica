@@ -99,202 +99,266 @@ export function drawTokens(
     const center = scratchTokenCenter;
     center.x = minX + width / 2;
     center.y = minY + height / 2;
-    const diameter = Math.max(1, Math.min(width, height));
-    const radius = diameter / 2;
-    const shape = token.baseShape ?? "circle";
-
-    ctx.save();
-    ctx.translate(center.x, center.y);
-    ctx.rotate((token.rotation * Math.PI) / 180);
-
-    traceTokenShape(ctx, shape, width, height);
-    ctx.clip();
-
-    if (token.kind === "note") {
-      if (token.noteCollapsed) {
-        drawCollapsedNote(ctx, width, height, token.color || "#f5b942");
-      } else {
-        drawNoteFace(
-          ctx,
-          width,
-          height,
-          token.color || "#f5b942",
-          token.noteBody ?? "",
-          cache,
-        );
-      }
-    } else if (token.image && token.image.width > 0 && token.image.height > 0) {
-      const imageAspect = token.image.width / token.image.height;
-      const drawWidth = imageAspect > 1 ? diameter * imageAspect : diameter;
-      const drawHeight = imageAspect > 1 ? diameter : diameter / imageAspect;
-
-      // Cover-fit crops whichever axis overflows the token's diameter. By
-      // default that crop is centered (equal amounts trimmed off both
-      // sides) — imageFocus instead pins one edge of the image to the
-      // token's edge, so e.g. a portrait whose subject sits near the top
-      // doesn't get its head cropped off by a symmetric center-crop.
-      let offsetX = -drawWidth / 2;
-      let offsetY = -drawHeight / 2;
-      switch (token.imageFocus) {
-        case "left":
-          offsetX = -diameter / 2;
-          break;
-        case "right":
-          offsetX = diameter / 2 - drawWidth;
-          break;
-        case "top":
-          offsetY = -diameter / 2;
-          break;
-        case "bottom":
-          offsetY = diameter / 2 - drawHeight;
-          break;
-      }
-
-      ctx.drawImage(token.image, offsetX, offsetY, drawWidth, drawHeight);
-    } else if (token.image) {
-      ctx.fillStyle = token.color || "#f59e0b";
-      ctx.fill();
-    } else {
-      ctx.fillStyle = token.color || "#f59e0b";
-      ctx.fill();
-    }
-
-    ctx.restore();
-
-    // Border and shadow OUTSIDE the token (grouped to minimise save/restore thrash)
-    if (token.active || token.selected) {
-      const accent = token.active ? accentColor || "#d97706" : "#3b82f6";
-      // Scale the selection ring relative to the token's own size instead of
-      // a fixed pixel width — a border sized for a typical ~100px token
-      // would visually swallow a much smaller one (e.g. a token sized to a
-      // grid fit to a tile's fine native pixel grid), making an otherwise
-      // correctly-sized token look like it oversteps its cell.
-      const baseBorderWidth = token.active ? 8 : 5;
-      const borderWidth = Math.min(baseBorderWidth, Math.max(2, radius * 0.25));
-      const highlightWidth = Math.min(2, Math.max(1, radius * 0.08));
-      const blurScale = Math.min(1, radius / 25);
-
-      ctx.save();
-      ctx.translate(center.x, center.y);
-      ctx.rotate((token.rotation * Math.PI) / 180);
-
-      // Outer drop shadow (outside only)
-      traceTokenShape(ctx, shape, width + borderWidth, height + borderWidth);
-      ctx.strokeStyle = "rgba(0, 0, 0, 0.5)";
-      ctx.lineWidth = borderWidth + 4;
-      ctx.shadowColor = "rgba(0, 0, 0, 0.7)";
-      ctx.shadowBlur = (token.active ? 20 : 12) * blurScale;
-      ctx.stroke();
-
-      // Main thick border
-      traceTokenShape(ctx, shape, width, height);
-      ctx.strokeStyle = accent;
-      ctx.lineWidth = borderWidth;
-      ctx.shadowColor = accent;
-      ctx.shadowBlur = (token.active ? 16 : 10) * blurScale;
-      ctx.stroke();
-
-      // Thin bright highlight on top
-      traceTokenShape(ctx, shape, width, height);
-      ctx.strokeStyle = "rgba(255, 255, 255, 0.5)";
-      ctx.lineWidth = highlightWidth;
-      ctx.shadowColor = "rgba(255, 255, 255, 0.3)";
-      ctx.shadowBlur = 4 * blurScale;
-      ctx.stroke();
-
-      ctx.restore();
-    }
-
-    if (token.visionActive) {
-      ctx.save();
-      ctx.translate(center.x, center.y);
-      ctx.rotate((token.rotation * Math.PI) / 180);
-      traceTokenShape(ctx, shape, width + 10, height + 10);
-      ctx.strokeStyle = "#22d3ee";
-      ctx.lineWidth = 2;
-      ctx.shadowColor = "#22d3ee";
-      ctx.shadowBlur = 10;
-      ctx.stroke();
-      ctx.restore();
-    }
-
-    if (token.facingIndicator) {
-      ctx.save();
-      ctx.translate(center.x, center.y);
-      drawFacingIndicator(ctx, radius, token.rotation);
-      ctx.restore();
-    }
-
-    if (token.primarySelected ?? token.selected) {
-      drawRotationHandle(
-        ctx,
-        center.x,
-        center.y,
-        width,
-        height,
-        token.rotation,
-        accentColor || "#3b82f6",
-        TOKEN_ROTATION_HANDLE_DISTANCE * transform.zoom,
-      );
-    }
-
-    // Draw status effect overlays: the dead X overlay (if present) and the
-    // floating icon bar for everything else.
-    drawStatusEffects(
+    drawToken(
       ctx,
-      traceTokenShape,
+      token,
       center,
-      token.rotation,
-      shape,
       width,
       height,
-      radius,
-      token.statusEffects,
+      transform.zoom,
+      accentColor,
+      cache,
     );
-
-    let healthBarHeight = 0;
-    if (token.healthBar && token.healthBar.max > 0) {
-      healthBarHeight = drawHealthBar(
-        ctx,
-        center,
-        width,
-        radius,
-        token.healthBar,
-      );
-    }
-
-    if (token.label) {
-      ctx.save();
-      const font = "12px ui-sans-serif, system-ui, sans-serif";
-      ctx.font = font;
-      ctx.textAlign = "center";
-      ctx.textBaseline = "top";
-      const labelX = center.x;
-      const labelY =
-        center.y +
-        height / 2 +
-        6 +
-        (healthBarHeight > 0 ? healthBarHeight + 4 : 0);
-      const metrics = measureTextCached(ctx, token.label, font, cache);
-      const paddingX = 8;
-      const boxWidth = metrics.width + paddingX * 2;
-      const boxHeight = 18;
-      ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
-      ctx.strokeStyle = token.active ? "#f59e0b" : "rgba(255, 255, 255, 0.2)";
-      ctx.lineWidth = 1;
-      drawRoundedRectPath(
-        ctx,
-        labelX - boxWidth / 2,
-        labelY,
-        boxWidth,
-        boxHeight,
-        8,
-      );
-      ctx.fill();
-      ctx.stroke();
-      ctx.fillStyle = "#ffffff";
-      ctx.fillText(token.label, labelX, labelY + 2);
-      ctx.restore();
-    }
   }
+}
+
+function drawToken(
+  ctx: CanvasRenderingContext2D,
+  token: RenderToken,
+  center: { x: number; y: number },
+  width: number,
+  height: number,
+  zoom: number,
+  accentColor: string | undefined,
+  cache: CanvasCache,
+) {
+  const diameter = Math.max(1, Math.min(width, height));
+  const radius = diameter / 2;
+  const shape = token.baseShape ?? "circle";
+
+  ctx.save();
+  ctx.translate(center.x, center.y);
+  ctx.rotate((token.rotation * Math.PI) / 180);
+  traceTokenShape(ctx, shape, width, height);
+  ctx.clip();
+  drawTokenFill(ctx, token, width, height, diameter, cache);
+  ctx.restore();
+
+  drawSelectionRing(
+    ctx,
+    token,
+    center,
+    width,
+    height,
+    radius,
+    shape,
+    accentColor,
+  );
+  drawVisionRing(ctx, token, center, width, height, shape);
+  if (token.facingIndicator) {
+    ctx.save();
+    ctx.translate(center.x, center.y);
+    drawFacingIndicator(ctx, radius, token.rotation);
+    ctx.restore();
+  }
+
+  if (token.primarySelected ?? token.selected) {
+    drawRotationHandle(
+      ctx,
+      center.x,
+      center.y,
+      width,
+      height,
+      token.rotation,
+      accentColor || "#3b82f6",
+      TOKEN_ROTATION_HANDLE_DISTANCE * zoom,
+    );
+  }
+
+  drawStatusEffects(
+    ctx,
+    traceTokenShape,
+    center,
+    token.rotation,
+    shape,
+    width,
+    height,
+    radius,
+    token.statusEffects,
+  );
+  const healthBarHeight =
+    token.healthBar && token.healthBar.max > 0
+      ? drawHealthBar(ctx, center, width, radius, token.healthBar)
+      : 0;
+  drawTokenLabel(ctx, token, center, height, healthBarHeight, cache);
+}
+
+function drawTokenFill(
+  ctx: CanvasRenderingContext2D,
+  token: RenderToken,
+  width: number,
+  height: number,
+  diameter: number,
+  cache: CanvasCache,
+) {
+  if (token.kind === "note") {
+    drawNoteTokenFill(ctx, token, width, height, cache);
+    return;
+  }
+
+  if (!token.image || token.image.width <= 0 || token.image.height <= 0) {
+    ctx.fillStyle = token.color || "#f59e0b";
+    ctx.fill();
+    return;
+  }
+
+  drawImageTokenFill(ctx, token, token.image, diameter);
+}
+
+function drawNoteTokenFill(
+  ctx: CanvasRenderingContext2D,
+  token: RenderToken,
+  width: number,
+  height: number,
+  cache: CanvasCache,
+) {
+  if (token.noteCollapsed) {
+    drawCollapsedNote(ctx, width, height, token.color || "#f5b942");
+    return;
+  }
+  drawNoteFace(
+    ctx,
+    width,
+    height,
+    token.color || "#f5b942",
+    token.noteBody ?? "",
+    cache,
+  );
+}
+
+function drawImageTokenFill(
+  ctx: CanvasRenderingContext2D,
+  token: RenderToken,
+  image: HTMLImageElement,
+  diameter: number,
+) {
+  const imageAspect = image.width / image.height;
+  const drawWidth = imageAspect > 1 ? diameter * imageAspect : diameter;
+  const drawHeight = imageAspect > 1 ? diameter : diameter / imageAspect;
+  const offset = getImageOffset(
+    token.imageFocus,
+    diameter,
+    drawWidth,
+    drawHeight,
+  );
+  ctx.drawImage(image, offset.x, offset.y, drawWidth, drawHeight);
+}
+
+function getImageOffset(
+  focus: RenderToken["imageFocus"],
+  diameter: number,
+  drawWidth: number,
+  drawHeight: number,
+) {
+  const offset = { x: -drawWidth / 2, y: -drawHeight / 2 };
+  switch (focus) {
+    case "left":
+      offset.x = -diameter / 2;
+      break;
+    case "right":
+      offset.x = diameter / 2 - drawWidth;
+      break;
+    case "top":
+      offset.y = -diameter / 2;
+      break;
+    case "bottom":
+      offset.y = diameter / 2 - drawHeight;
+      break;
+  }
+  return offset;
+}
+
+function drawSelectionRing(
+  ctx: CanvasRenderingContext2D,
+  token: RenderToken,
+  center: { x: number; y: number },
+  width: number,
+  height: number,
+  radius: number,
+  shape: NonNullable<RenderToken["baseShape"]>,
+  accentColor: string | undefined,
+) {
+  if (!token.active && !token.selected) return;
+
+  const accent = token.active ? accentColor || "#d97706" : "#3b82f6";
+  const baseBorderWidth = token.active ? 8 : 5;
+  const borderWidth = Math.min(baseBorderWidth, Math.max(2, radius * 0.25));
+  const highlightWidth = Math.min(2, Math.max(1, radius * 0.08));
+  const blurScale = Math.min(1, radius / 25);
+
+  ctx.save();
+  ctx.translate(center.x, center.y);
+  ctx.rotate((token.rotation * Math.PI) / 180);
+  traceTokenShape(ctx, shape, width + borderWidth, height + borderWidth);
+  ctx.strokeStyle = "rgba(0, 0, 0, 0.5)";
+  ctx.lineWidth = borderWidth + 4;
+  ctx.shadowColor = "rgba(0, 0, 0, 0.7)";
+  ctx.shadowBlur = (token.active ? 20 : 12) * blurScale;
+  ctx.stroke();
+
+  traceTokenShape(ctx, shape, width, height);
+  ctx.strokeStyle = accent;
+  ctx.lineWidth = borderWidth;
+  ctx.shadowColor = accent;
+  ctx.shadowBlur = (token.active ? 16 : 10) * blurScale;
+  ctx.stroke();
+
+  traceTokenShape(ctx, shape, width, height);
+  ctx.strokeStyle = "rgba(255, 255, 255, 0.5)";
+  ctx.lineWidth = highlightWidth;
+  ctx.shadowColor = "rgba(255, 255, 255, 0.3)";
+  ctx.shadowBlur = 4 * blurScale;
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawVisionRing(
+  ctx: CanvasRenderingContext2D,
+  token: RenderToken,
+  center: { x: number; y: number },
+  width: number,
+  height: number,
+  shape: NonNullable<RenderToken["baseShape"]>,
+) {
+  if (!token.visionActive) return;
+  ctx.save();
+  ctx.translate(center.x, center.y);
+  ctx.rotate((token.rotation * Math.PI) / 180);
+  traceTokenShape(ctx, shape, width + 10, height + 10);
+  ctx.strokeStyle = "#22d3ee";
+  ctx.lineWidth = 2;
+  ctx.shadowColor = "#22d3ee";
+  ctx.shadowBlur = 10;
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawTokenLabel(
+  ctx: CanvasRenderingContext2D,
+  token: RenderToken,
+  center: { x: number; y: number },
+  height: number,
+  healthBarHeight: number,
+  cache: CanvasCache,
+) {
+  if (!token.label) return;
+  ctx.save();
+  const font = "12px ui-sans-serif, system-ui, sans-serif";
+  ctx.font = font;
+  ctx.textAlign = "center";
+  ctx.textBaseline = "top";
+  const labelX = center.x;
+  const labelY =
+    center.y + height / 2 + 6 + (healthBarHeight > 0 ? healthBarHeight + 4 : 0);
+  const metrics = measureTextCached(ctx, token.label, font, cache);
+  const boxWidth = metrics.width + 16;
+  ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
+  ctx.strokeStyle = token.active ? "#f59e0b" : "rgba(255, 255, 255, 0.2)";
+  ctx.lineWidth = 1;
+  drawRoundedRectPath(ctx, labelX - boxWidth / 2, labelY, boxWidth, 18, 8);
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle = "#ffffff";
+  ctx.fillText(token.label, labelX, labelY + 2);
+  ctx.restore();
 }

@@ -2,7 +2,7 @@ import type { ViewportTransform } from "schema";
 import { drawHexGrid, type HexGridRenderOptions } from "./hex-renderer";
 import type { CanvasCache, RenderOptions } from "./renderer-types";
 
-export function getFogCanvas(
+function getFogCanvas(
   width: number,
   height: number,
   cache: CanvasCache,
@@ -92,76 +92,75 @@ export function drawGrid(
     return;
   }
 
-  if (grid.type === "square") {
-    const size = grid.size * transform.zoom;
-    if (size < 2) return; // Prevent infinite loops or invisible patterns
+  if (grid.type === "square")
+    drawSquareGrid(ctx, transform, canvasSize, grid, cache);
+}
 
-    if (
-      !cache.cachedPattern ||
-      cache.cachedPattern.size !== size ||
-      cache.cachedPattern.color !== grid.color ||
-      cache.cachedPattern.opacity !== grid.opacity
-    ) {
-      const patternCanvas = document.createElement("canvas");
-      const pCtx = patternCanvas.getContext("2d");
-      if (!pCtx) return;
+function drawSquareGrid(
+  ctx: CanvasRenderingContext2D,
+  transform: ViewportTransform,
+  canvasSize: { width: number; height: number },
+  grid: NonNullable<RenderOptions["grid"]>,
+  cache: CanvasCache,
+) {
+  const size = grid.size * transform.zoom;
+  if (size < 2) return;
 
-      patternCanvas.width = size;
-      patternCanvas.height = size;
-      pCtx.strokeStyle = grid.color;
-      pCtx.globalAlpha = grid.opacity;
-      pCtx.lineWidth = 1.5;
-      pCtx.strokeRect(0, 0, size, size);
+  const pattern = getSquareGridPattern(ctx, grid, size, cache);
+  if (!pattern) return;
 
-      const pattern = ctx.createPattern(patternCanvas, "repeat");
-      if (!pattern) return;
+  ctx.save();
+  ctx.fillStyle = pattern;
+  const pan = grid.fixed ? (grid.fixedPan ?? { x: 0, y: 0 }) : transform.pan;
+  const offsetX =
+    (pan.x + canvasSize.width / 2 + (grid.offsetX ?? 0) * transform.zoom) %
+    size;
+  const offsetY =
+    (pan.y + canvasSize.height / 2 + (grid.offsetY ?? 0) * transform.zoom) %
+    size;
+  ctx.translate(offsetX, offsetY);
+  ctx.fillRect(
+    -size,
+    -size,
+    canvasSize.width + size * 2,
+    canvasSize.height + size * 2,
+  );
+  ctx.restore();
+}
 
-      cache.cachedPattern = {
-        pattern,
-        size,
-        color: grid.color,
-        opacity: grid.opacity,
-      };
-    }
-
-    ctx.save();
-    ctx.fillStyle = cache.cachedPattern.pattern;
-
-    if (grid.fixed) {
-      // Fixed grid mode: stays at the pan position it had when fixed mode
-      // began (its `fixedPan` snapshot) instead of tracking the live pan —
-      // so the grid holds still on screen while the map is dragged
-      // underneath it, without jumping to a different phase on entry.
-      const fixedPan = grid.fixedPan ?? { x: 0, y: 0 };
-      const gridOffsetX = (grid.offsetX ?? 0) * transform.zoom;
-      const gridOffsetY = (grid.offsetY ?? 0) * transform.zoom;
-      const offsetX = (fixedPan.x + canvasSize.width / 2 + gridOffsetX) % size;
-      const offsetY = (fixedPan.y + canvasSize.height / 2 + gridOffsetY) % size;
-
-      ctx.translate(offsetX, offsetY);
-      ctx.fillRect(
-        -size,
-        -size,
-        canvasSize.width + size * 2,
-        canvasSize.height + size * 2,
-      );
-    } else {
-      const gridOffsetX = (grid.offsetX ?? 0) * transform.zoom;
-      const gridOffsetY = (grid.offsetY ?? 0) * transform.zoom;
-      const offsetX =
-        (transform.pan.x + canvasSize.width / 2 + gridOffsetX) % size;
-      const offsetY =
-        (transform.pan.y + canvasSize.height / 2 + gridOffsetY) % size;
-
-      ctx.translate(offsetX, offsetY);
-      // Draw slightly larger to cover edges during pan
-      ctx.fillRect(
-        -size,
-        -size,
-        canvasSize.width + size * 2,
-        canvasSize.height + size * 2,
-      );
-    }
-    ctx.restore();
+function getSquareGridPattern(
+  ctx: CanvasRenderingContext2D,
+  grid: NonNullable<RenderOptions["grid"]>,
+  size: number,
+  cache: CanvasCache,
+): CanvasPattern | null {
+  if (
+    cache.cachedPattern?.size === size &&
+    cache.cachedPattern.color === grid.color &&
+    cache.cachedPattern.opacity === grid.opacity
+  ) {
+    return cache.cachedPattern.pattern;
   }
+
+  const patternCanvas = document.createElement("canvas");
+  const patternCtx = patternCanvas.getContext("2d");
+  if (!patternCtx) return null;
+
+  patternCanvas.width = size;
+  patternCanvas.height = size;
+  patternCtx.strokeStyle = grid.color;
+  patternCtx.globalAlpha = grid.opacity;
+  patternCtx.lineWidth = 1.5;
+  patternCtx.strokeRect(0, 0, size, size);
+
+  const pattern = ctx.createPattern(patternCanvas, "repeat");
+  if (pattern) {
+    cache.cachedPattern = {
+      pattern,
+      size,
+      color: grid.color,
+      opacity: grid.opacity,
+    };
+  }
+  return pattern;
 }

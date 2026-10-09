@@ -84,6 +84,18 @@ export function drawNoteFace(
   ctx.fillStyle = "rgba(0, 0, 0, 0.22)";
   ctx.fill();
 
+  drawNoteText(ctx, left, top, width, height, body, cache);
+}
+
+function drawNoteText(
+  ctx: CanvasRenderingContext2D,
+  left: number,
+  top: number,
+  width: number,
+  height: number,
+  body: string,
+  cache: CanvasCache,
+) {
   const text = body.trim();
   if (!text || Math.min(width, height) < NOTE_MIN_TEXT_SIZE) return;
 
@@ -111,14 +123,53 @@ export function drawNoteFace(
   });
   if (lines.length === 0) return;
 
+  if (truncated) markTruncatedNote(lines);
+  drawNoteLines(ctx, lines, {
+    left,
+    top,
+    padding,
+    fontSize,
+    lineHeight,
+    bulletIndent,
+    fontFor,
+    widthOf,
+  });
+}
+
+function markTruncatedNote(
+  lines: ReturnType<typeof layoutNoteMarkdown>["lines"],
+) {
   // Anything that did not fit is signalled rather than silently dropped, so
   // the GM knows to open the note for the rest.
-  if (truncated) {
-    const lastLine = lines[lines.length - 1];
-    const lastWord = lastLine.words[lastLine.words.length - 1];
-    if (lastWord) lastWord.text = `${lastWord.text}…`;
-  }
+  const lastLine = lines[lines.length - 1];
+  const lastWord = lastLine.words[lastLine.words.length - 1];
+  if (lastWord) lastWord.text = `${lastWord.text}…`;
+}
 
+function drawNoteLines(
+  ctx: CanvasRenderingContext2D,
+  lines: ReturnType<typeof layoutNoteMarkdown>["lines"],
+  layout: {
+    left: number;
+    top: number;
+    padding: number;
+    fontSize: number;
+    lineHeight: number;
+    bulletIndent: number;
+    fontFor: (word: NoteLayoutWord) => string;
+    widthOf: (value: string, word: NoteLayoutWord) => number;
+  },
+) {
+  const {
+    left,
+    top,
+    padding,
+    fontSize,
+    lineHeight,
+    bulletIndent,
+    fontFor,
+    widthOf,
+  } = layout;
   ctx.fillStyle = NOTE_TEXT_COLOR;
   ctx.textAlign = "left";
   ctx.textBaseline = "top";
@@ -128,15 +179,12 @@ export function drawNoteFace(
     let x = left + padding + (line.bullet || line.indented ? bulletIndent : 0);
 
     if (line.bullet) {
-      ctx.beginPath();
-      ctx.arc(
+      drawNoteBullet(
+        ctx,
         left + padding + bulletIndent * 0.4,
         y + fontSize * 0.6,
-        Math.max(1, fontSize * 0.13),
-        0,
-        TAU,
+        fontSize,
       );
-      ctx.fill();
     }
 
     for (let w = 0; w < line.words.length; w++) {
@@ -147,4 +195,15 @@ export function drawNoteFace(
       x += widthOf(word.text, word);
     }
   }
+}
+
+function drawNoteBullet(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  fontSize: number,
+) {
+  ctx.beginPath();
+  ctx.arc(x, y, Math.max(1, fontSize * 0.13), 0, TAU);
+  ctx.fill();
 }
