@@ -770,4 +770,44 @@ describe("AdventureManager Phase 2 tools", () => {
     await expect(manager.forceEnd()).rejects.toThrow("revision-conflict");
     expect(manager.session).not.toBeNull();
   });
+
+  it("close releases the lease and resets session to idle without archiving", async () => {
+    const deps: any = dependencies();
+    const coordinatorStop = vi.fn(async () => undefined);
+    deps.coordinator.stop = coordinatorStop;
+    const releaseLease = vi.fn(async () => undefined);
+    deps.authority.release = releaseLease;
+    const clearGenerationInteraction = vi.fn(async () => undefined);
+    deps.clearGenerationInteraction = clearGenerationInteraction;
+    const archiveSpy = vi.spyOn(deps.repository, "archive");
+
+    const manager = new AdventureManager(deps as any);
+    await manager.start({
+      vaultId: "vault-1",
+      title: "Road",
+      premise: "Find the road",
+      playerCharacter: {
+        kind: "provisional",
+        name: "Mara",
+        description: "Guide",
+      },
+    });
+
+    expect(manager.session).not.toBeNull();
+    const sessionId = manager.session!.id;
+    const currentLease = manager.lease;
+    expect(currentLease).not.toBeNull();
+    manager.draft = "an uncommitted action";
+
+    await manager.close();
+
+    expect(manager.session).toBeNull();
+    expect(manager.phase).toBe("idle");
+    expect(manager.readOnly).toBe(false);
+    expect(manager.draft).toBe("");
+    expect(coordinatorStop).toHaveBeenCalled();
+    expect(releaseLease).toHaveBeenCalledWith(currentLease);
+    expect(clearGenerationInteraction).toHaveBeenCalledWith(sessionId);
+    expect(archiveSpy).not.toHaveBeenCalled();
+  });
 });
