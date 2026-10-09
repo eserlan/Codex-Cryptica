@@ -8,6 +8,22 @@ import { isPlaceholderDelveAreaName } from "$lib/services/delve-area-enhancement
 import { autoArrangeCanvasNodes } from "../canvas-auto-arrange";
 import type { CanvasLogic } from "./canvas-logic-type";
 
+function needsAreaPopulation(canvas: Canvas) {
+  if (canvas.metadata?.autoPopulateAreas !== true) return false;
+  if (canvas.metadata?.areaPopulationStatus !== "complete") return true;
+  const needsAreaNames = canvas.nodes.some(
+    (node) =>
+      node.type === "delveRoom" &&
+      isPlaceholderDelveAreaName(node.data as unknown as DelveRoomNodeData),
+  );
+  const needsPassageEnhancement = canvas.edges.some(
+    (edge) =>
+      edge.type === "delveEdge" &&
+      !(edge.data as unknown as DelveEdgeData | undefined)?.aiEnhancedAt,
+  );
+  return needsAreaNames || needsPassageEnhancement;
+}
+
 /**
  * Canvas load/teardown wiring: initialise the logic for the current canvas,
  * auto-arrange untouched layouts once, kick off automatic Area population,
@@ -67,24 +83,11 @@ export function useCanvasLifecycle(deps: {
 
   $effect(() => {
     const currentCanvas: Canvas | undefined = getCanvas();
-    const needsAreaNames = currentCanvas?.nodes.some(
-      (node) =>
-        node.type === "delveRoom" &&
-        isPlaceholderDelveAreaName(node.data as unknown as DelveRoomNodeData),
-    );
-    const needsPassageEnhancement = currentCanvas?.edges.some(
-      (edge) =>
-        edge.type === "delveEdge" &&
-        !(edge.data as unknown as DelveEdgeData | undefined)?.aiEnhancedAt,
-    );
     if (
       !currentCanvas?.id ||
       !logic.hasInitialized ||
       sessionModeStore.isGuestMode ||
-      currentCanvas.metadata?.autoPopulateAreas !== true ||
-      (currentCanvas.metadata?.areaPopulationStatus === "complete" &&
-        !needsAreaNames &&
-        !needsPassageEnhancement) ||
+      !needsAreaPopulation(currentCanvas) ||
       autoPopulationCanvasId === currentCanvas.id
     ) {
       return;

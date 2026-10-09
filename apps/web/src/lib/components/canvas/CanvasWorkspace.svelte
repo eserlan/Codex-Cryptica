@@ -21,6 +21,7 @@
   import CanvasContextMenuHost from "./CanvasContextMenuHost.svelte";
   import CanvasEditorPanels from "./CanvasEditorPanels.svelte";
   import { nodeTypes, edgeTypes } from "./canvas-flow-registry";
+  import { when } from "./canvas-guard";
   import "./canvas-workspace.css";
 
   import { createCanvasLogic } from "./use-canvas-logic.svelte";
@@ -143,6 +144,32 @@
   const canReport = $derived(
     canGenerateCanvasReport(source.canvas, logic.nodes),
   );
+  const canEdit = $derived(!vault.isGuest);
+  const canFinalizeDossier = $derived(
+    canEdit &&
+      Boolean(source.sourceEntity) &&
+      logic.nodes.some((node) => node.type === "delveRoom"),
+  );
+  const sourceEntityType = $derived(
+    source.sourceEntity?.type ||
+      (source.canvas?.metadata?.kind === "adventure" ? "event" : "location"),
+  );
+  const sourceEntityKind = $derived(
+    source.sourceEntity?.kind || (source.canvas?.metadata?.kind as string),
+  );
+  const generateReport = $derived(
+    canReport && source.canvas
+      ? () =>
+          openCanvasReport(
+            source.canvas!,
+            () => logic.nodes,
+            () => logic.edges,
+          )
+      : undefined,
+  );
+  const addAdventureNode = (
+    type: Parameters<typeof logic.handleAddAdventureNode>[0],
+  ) => logic.handleAddAdventureNode(type);
 </script>
 
 <svelte:window
@@ -175,62 +202,43 @@
       canvasName={source.canvas?.name || ""}
       sourceEntityId={source.sourceEntityId}
       sourceEntityTitle={source.sourceEntityTitle}
-      sourceEntityType={source.sourceEntity?.type ||
-        (source.canvas?.metadata?.kind === "adventure" ? "event" : "location")}
-      sourceEntityKind={source.sourceEntity?.kind ||
-        (source.canvas?.metadata?.kind as string)}
+      {sourceEntityType}
+      {sourceEntityKind}
       dossierEntityId={source.dossierEntityId}
       isFinalizingDossier={dossier.isFinalizing}
-      onFinalizeDossier={!vault.isGuest &&
-      source.sourceEntity &&
-      logic.nodes.some((node) => node.type === "delveRoom")
-        ? dossier.finalizeDossier
-        : undefined}
+      onFinalizeDossier={when(canFinalizeDossier, dossier.finalizeDossier)}
       onOpenOrCreateSourceEntity={source.handleOpenOrCreateSourceEntity}
       onAutoArrange={handleAutoArrange}
-      onGenerateReport={canReport && source.canvas
-        ? () =>
-            openCanvasReport(
-              source.canvas!,
-              () => logic.nodes,
-              () => logic.edges,
-            )
-        : undefined}
+      onGenerateReport={generateReport}
       isAllImageOnly={nodeActions.isAllImageOnly}
-      onToggleAllImageOnly={nodeActions.hasEntityNodes && !vault.isGuest
-        ? nodeActions.handleToggleAllImageOnly
-        : undefined}
+      onToggleAllImageOnly={when(
+        nodeActions.hasEntityNodes && canEdit,
+        nodeActions.handleToggleAllImageOnly,
+      )}
       showImageLabels={nodeActions.showImageLabels}
-      onToggleShowImageLabels={nodeActions.hasEntityNodes
-        ? nodeActions.handleToggleShowImageLabels
-        : undefined}
+      onToggleShowImageLabels={when(
+        nodeActions.hasEntityNodes,
+        nodeActions.handleToggleShowImageLabels,
+      )}
       {showMinimap}
       onToggleMinimap={() => (showMinimap = !showMinimap)}
-      onUploadFiles={!vault.isGuest
-        ? fileImport.handleExternalFiles
-        : undefined}
-      onAddTextNode={!vault.isGuest
-        ? () => nodeActions.handleAddTextNode()
-        : undefined}
+      onUploadFiles={when(canEdit, fileImport.handleExternalFiles)}
+      onAddTextNode={when(canEdit, () => nodeActions.handleAddTextNode())}
       isDrawingMode={drawingLogic.isDrawingMode}
       isErasingMode={drawingLogic.isErasingMode}
       drawingColor={drawingLogic.drawingColor}
       drawingWidth={drawingLogic.drawingWidth}
-      onToggleDrawing={!vault.isGuest
-        ? drawingLogic.toggleDrawingMode
-        : undefined}
-      onToggleErasing={!vault.isGuest
-        ? drawingLogic.toggleErasingMode
-        : undefined}
-      onDrawingColorChange={!vault.isGuest
-        ? drawingLogic.handleDrawingColorChange
-        : undefined}
-      onDrawingWidthChange={!vault.isGuest
-        ? drawingLogic.handleDrawingWidthChange
-        : undefined}
-      onAddAdventureNode={source.isAdventureCanvas
-        ? (type) => logic.handleAddAdventureNode(type)
-        : undefined}
+      onToggleDrawing={when(canEdit, drawingLogic.toggleDrawingMode)}
+      onToggleErasing={when(canEdit, drawingLogic.toggleErasingMode)}
+      onDrawingColorChange={when(
+        canEdit,
+        drawingLogic.handleDrawingColorChange,
+      )}
+      onDrawingWidthChange={when(
+        canEdit,
+        drawingLogic.handleDrawingWidthChange,
+      )}
+      onAddAdventureNode={when(source.isAdventureCanvas, addAdventureNode)}
       activeCategories={logic.activeCategories}
       onToggleCategory={logic.toggleCategoryFilter}
       onClearCategories={logic.clearCategoryFilters}
@@ -242,8 +250,8 @@
         bind:edges={logic.edges}
         {nodeTypes}
         {edgeTypes}
-        onconnect={!vault.isGuest ? logic.onConnect : undefined}
-        onreconnect={!vault.isGuest ? logic.onReconnect : undefined}
+        onconnect={when(canEdit, logic.onConnect)}
+        onreconnect={when(canEdit, logic.onReconnect)}
         onconnectstart={interactions.onConnectStart}
         onconnectend={interactions.onConnectEnd}
         onnodecontextmenu={contextMenuLogic.onNodeContextMenu}
