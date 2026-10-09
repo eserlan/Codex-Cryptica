@@ -775,6 +775,44 @@ describe("Oracle Proxy Worker Interactions API", () => {
     expect(sent.model).toBe("gemini-3.5-flash-lite");
   });
 
+  it("continues a Gemini fallback interaction on Gemini for the next OpenAI-model turn", async () => {
+    const fetchMock = vi.fn(
+      async (_url: string | URL | Request) =>
+        new Response(
+          JSON.stringify({
+            id: "v1_gemini_fallback",
+            steps: [{ content: [{ text: "Continued via Gemini." }] }],
+          }),
+          { status: 200, headers: { "Content-Type": "application/json" } },
+        ),
+    );
+    globalThis.fetch = fetchMock as typeof fetch;
+
+    const response = await worker.fetch(
+      request({
+        input: "Next action",
+        model: "luna-fast",
+        previous_interaction_id: "v1_gemini_fallback",
+      }),
+      { ...env, OPENAI_API_KEY: "test-openai-key" },
+      {} as ExecutionContext,
+    );
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({
+      id: "v1_gemini_fallback",
+      text: "Continued via Gemini.",
+    });
+    expect(fetchMock).toHaveBeenCalledOnce();
+    expect(String(fetchMock.mock.calls[0][0])).toContain(
+      "/v1beta/interactions",
+    );
+    const sent = JSON.parse(
+      (fetchMock.mock.calls[0][1] as RequestInit).body as string,
+    );
+    expect(sent.previous_interaction_id).toBe("v1_gemini_fallback");
+  });
+
   it("gracefully falls back to Gemini when OpenAI returns a non-stale error (e.g. 500)", async () => {
     let callCount = 0;
     const fetchMock = vi.fn(async (url: string | URL | Request) => {

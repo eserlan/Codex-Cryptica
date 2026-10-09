@@ -1023,11 +1023,18 @@ async function handleInteraction(
 
   const geminiFallbackModel =
     getModel("gemini-flash-lite")?.modelId ?? "gemini-3.5-flash-lite";
+  const isGeminiContinuation =
+    typeof body?.previous_interaction_id === "string" &&
+    /^(?:v1_|interactions\/)/.test(body.previous_interaction_id);
 
   let result: any;
   let isGeminiResult: boolean;
 
-  if (wantsOpenAi && (env.OPENAI_API_KEY || body.previous_interaction_id)) {
+  if (
+    wantsOpenAi &&
+    !isGeminiContinuation &&
+    (env.OPENAI_API_KEY || body.previous_interaction_id)
+  ) {
     result = await forwardInteractionToOpenAi(
       outgoingBody,
       registryModel!.modelId,
@@ -1043,9 +1050,9 @@ async function handleInteraction(
           (result.data as any)?.error?.message || "",
         ));
 
-    // A continuation id belongs to the provider that issued it. Gemini cannot
-    // resume an OpenAI response, and the Interactions request only contains the
-    // incremental turn, so retrying it without that id would also drop history.
+    // A continuation id belongs to the provider that issued it. Do not send a
+    // Gemini id to OpenAI (or retry an OpenAI continuation on Gemini), because
+    // this request contains only the incremental turn and would lose history.
     if (!result.ok && !isStaleId && !body.previous_interaction_id) {
       console.warn(
         `[Oracle Proxy] OpenAI interaction failed (${result.status}), falling back to Gemini (${geminiFallbackModel}):`,
