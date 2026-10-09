@@ -180,7 +180,12 @@ export function runLintChanged({
     args.push(...lintFiles);
     try {
       console.log(`\n🧹 Running ESLint on ${lintFiles.length} file(s)...`);
-      execFileSync("bunx", args, { cwd, stdio: "inherit" });
+      const runner = process.platform === "win32" ? "npx.cmd" : "bunx";
+      execFileSync(runner, args, {
+        cwd,
+        stdio: "inherit",
+        shell: process.platform === "win32",
+      });
       console.log("✅ ESLint passed.");
     } catch {
       success = false;
@@ -194,7 +199,12 @@ export function runLintChanged({
       console.log(
         `\n🎨 Checking formatting on ${formatFiles.length} file(s)...`,
       );
-      execFileSync("bunx", args, { cwd, stdio: "inherit" });
+      const runner = process.platform === "win32" ? "npx.cmd" : "bunx";
+      execFileSync(runner, args, {
+        cwd,
+        stdio: "inherit",
+        shell: process.platform === "win32",
+      });
       console.log("✅ Prettier check passed.");
     } catch {
       success = false;

@@ -49,6 +49,9 @@ describe("Silhouette Registry & Schema", () => {
       "fantasy-item-alchemist-potion",
       "fantasy-item-royal-crown",
       "fantasy-item-ancient-key",
+      "fantasy-location-kingdom",
+      "fantasy-location-province",
+      "fantasy-location-sailing-ship",
       "fantasy-note-sealed-letter",
       "fantasy-note-treasure-map",
       "fantasy-note-quest-notice",
@@ -273,6 +276,62 @@ describe("resolveEntitySilhouette Heuristic Inference", () => {
       { worldTheme: "fantasy" },
     );
     expect(match.id).toBe("location-fantasy-village");
+  });
+
+  it("resolves fantasy kingdom for a realm location", () => {
+    const match = resolveEntitySilhouette(
+      {
+        type: "location",
+        title: "Kingdom of Valoria",
+        labels: ["kingdom", "realm", "monarchy"],
+        content:
+          "A sovereign high realm spanning across mountain passes and fortified river valleys.",
+      },
+      { worldTheme: "fantasy" },
+    );
+    expect(match.id).toBe("fantasy-location-kingdom");
+  });
+
+  it("resolves fantasy province for a regional domain location", () => {
+    const match = resolveEntitySilhouette(
+      {
+        type: "location",
+        title: "Western Province",
+        labels: ["province", "region", "fiefdom"],
+        content: "A regional domain bordered by rolling hills and watchtowers.",
+      },
+      { worldTheme: "fantasy" },
+    );
+    expect(match.id).toBe("fantasy-location-province");
+  });
+
+  it("resolves fantasy sailing ship for a galleon vessel location", () => {
+    const match = resolveEntitySilhouette(
+      {
+        type: "location",
+        title: "The Sea Dragon",
+        labels: ["ship", "galleon", "sailing-ship"],
+        content:
+          "A majestic three-masted wooden galleon sailing the stormy archipelago.",
+      },
+      { worldTheme: "fantasy" },
+    );
+    expect(match.id).toBe("fantasy-location-sailing-ship");
+  });
+
+  it("does not assign sailing ship location silhouette to an item or character", () => {
+    const match = resolveEntitySilhouette(
+      {
+        type: "item",
+        title: "Ship in a Bottle",
+        labels: ["relic", "curio"],
+        content:
+          "A delicate glass miniature containing an enchanted model ship.",
+      },
+      { worldTheme: "fantasy" },
+    );
+    expect(match.category).toBe("item");
+    expect(match.id).not.toBe("fantasy-location-sailing-ship");
   });
 
   it("resolves a fantasy treasure map for a note", () => {
