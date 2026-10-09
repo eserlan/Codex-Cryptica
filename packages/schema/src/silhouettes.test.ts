@@ -1115,6 +1115,46 @@ describe("Iconic Fantasy Location Silhouette Resolution", () => {
     );
     expect(match.id).toBe("location-frontier-outpost");
   });
+
+  it("resolves kingdom & realm for royal realms and empires", () => {
+    const match = resolveEntitySilhouette(
+      {
+        type: "location",
+        title: "Kingdom of Valoria",
+        labels: ["kingdom", "realm", "empire"],
+        content: "A vast sovereign realm ruled by the high crown.",
+      },
+      { worldTheme: "fantasy" },
+    );
+    expect(match.id).toBe("fantasy-location-kingdom");
+  });
+
+  it("resolves province & duchy for regional fiefdoms and counties", () => {
+    const match = resolveEntitySilhouette(
+      {
+        type: "location",
+        title: "Duchy of Oakhaven",
+        labels: ["province", "duchy", "county"],
+        content: "A fertile northern province and feudal barony.",
+      },
+      { worldTheme: "fantasy" },
+    );
+    expect(match.id).toBe("fantasy-location-province");
+  });
+
+  it("resolves sailing ship & galleon for nautical vessels and frigates", () => {
+    const match = resolveEntitySilhouette(
+      {
+        type: "location",
+        title: "The Sea Dragon",
+        labels: ["ship", "galleon", "vessel"],
+        content:
+          "A three-masted wooden sailing galleon navigating the high seas.",
+      },
+      { worldTheme: "fantasy" },
+    );
+    expect(match.id).toBe("fantasy-location-sailing-ship");
+  });
 });
 
 describe("Iconic Sci-Fi Character Silhouette Resolution", () => {

@@ -58,7 +58,7 @@ const DATA_CATALOG_PATTERNS = [
   /packages\/generator-engine\/src\/public-.*\.ts$/,
   /packages\/generator-engine\/src\/campaign-generator-registry\.ts$/,
   /packages\/generator-engine\/src\/language-profile\.ts$/,
-  /packages\/schema\/src\/silhouettes\.ts$/,
+  /packages\/schema\/src\/silhouettes(\/.*)?\.ts$/,
   /packages\/schema\/src\/theme-templates\.ts$/,
   /packages\/schema\/src\/art-direction-catalogue\.ts$/,
   /apps\/web\/src\/lib\/config\/seo-pages\.ts$/,
