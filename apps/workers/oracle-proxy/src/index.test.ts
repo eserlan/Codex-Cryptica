@@ -737,6 +737,80 @@ describe("Oracle Proxy Worker Interactions API", () => {
       }),
     );
   });
+
+  it("gracefully falls back to Gemini when luna-fast is requested but OPENAI_API_KEY is not configured", async () => {
+    const fetchMock = vi.fn(
+      async () =>
+        new Response(
+          JSON.stringify({
+            id: "v1_gemini_fallback",
+            steps: [{ content: [{ text: "Gemini fallback response." }] }],
+          }),
+          { status: 200, headers: { "Content-Type": "application/json" } },
+        ),
+    );
+    globalThis.fetch = fetchMock as typeof fetch;
+
+    const response = await worker.fetch(
+      request({ input: "Begin adventure", model: "luna-fast" }),
+      env,
+      {} as ExecutionContext,
+    );
+
+    expect(response.status).toBe(200);
+    const body = await response.json();
+    expect(body).toEqual(
+      expect.objectContaining({
+        id: "v1_gemini_fallback",
+        text: "Gemini fallback response.",
+      }),
+    );
+
+    const [calledUrl, init] = fetchMock.mock.calls[0] as unknown as [
+      string,
+      RequestInit,
+    ];
+    expect(String(calledUrl)).toContain("/v1beta/interactions");
+    const sent = JSON.parse(init.body as string);
+    expect(sent.model).toBe("gemini-3.5-flash-lite");
+  });
+
+  it("gracefully falls back to Gemini when OpenAI returns a non-stale error (e.g. 500)", async () => {
+    let callCount = 0;
+    const fetchMock = vi.fn(async (url: string | URL | Request) => {
+      callCount++;
+      if (String(url).includes("/v1/responses")) {
+        return new Response(
+          JSON.stringify({ error: { message: "OpenAI service error" } }),
+          { status: 500, headers: { "Content-Type": "application/json" } },
+        );
+      }
+      return new Response(
+        JSON.stringify({
+          id: "v1_gemini_recovered",
+          steps: [{ content: [{ text: "Recovered via Gemini." }] }],
+        }),
+        { status: 200, headers: { "Content-Type": "application/json" } },
+      );
+    });
+    globalThis.fetch = fetchMock as typeof fetch;
+
+    const response = await worker.fetch(
+      request({ input: "Next turn", model: "luna-fast" }),
+      { ...env, OPENAI_API_KEY: "test-openai-key" },
+      {} as ExecutionContext,
+    );
+
+    expect(response.status).toBe(200);
+    const body = await response.json();
+    expect(body).toEqual(
+      expect.objectContaining({
+        id: "v1_gemini_recovered",
+        text: "Recovered via Gemini.",
+      }),
+    );
+    expect(callCount).toBe(2);
+  });
 });
 
 describe("Oracle Proxy Worker: operation-field discriminator (US1 regression)", () => {

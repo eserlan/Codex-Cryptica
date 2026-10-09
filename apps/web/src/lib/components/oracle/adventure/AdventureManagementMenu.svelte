@@ -138,6 +138,17 @@
             ></span>End adventure
           </button>
         {/if}
+        <button
+          type="button"
+          role="menuitem"
+          class="w-full rounded-md px-3 py-2 text-left text-sm text-theme-primary hover:bg-theme-primary/10 focus-visible:outline-2 focus-visible:outline-theme-primary"
+          onclick={() => run(() => void manager.close())}
+        >
+          <span
+            class="icon-[lucide--arrow-left] mr-2 inline-block h-3.5 w-3.5"
+            aria-hidden="true"
+          ></span>Leave adventure
+        </button>
       </div>
     {/if}
   </div>

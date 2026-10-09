@@ -356,7 +356,11 @@ describe("callOpenAi", () => {
 
     vi.useFakeTimers();
     const resultPromise = callOpenAi(request, model, env, realFetcher);
-    await vi.advanceTimersByTimeAsync(60_001);
+    if (typeof (vi as any).advanceTimersByTimeAsync === "function") {
+      await (vi as any).advanceTimersByTimeAsync(60_001);
+    } else {
+      vi.advanceTimersByTime(60_001);
+    }
     const result = await resultPromise;
     vi.useRealTimers();
 
@@ -375,7 +379,11 @@ describe("callOpenAi", () => {
 
     vi.useFakeTimers();
     const resultPromise = callOpenAi(request, model, env, realFetcher);
-    await vi.advanceTimersByTimeAsync(60_001);
+    if (typeof (vi as any).advanceTimersByTimeAsync === "function") {
+      await (vi as any).advanceTimersByTimeAsync(60_001);
+    } else {
+      vi.advanceTimersByTime(60_001);
+    }
     const result = await resultPromise;
     vi.useRealTimers();
 

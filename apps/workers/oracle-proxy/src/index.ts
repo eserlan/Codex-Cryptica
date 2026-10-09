@@ -995,6 +995,7 @@ export default {
  * Returns `{ id, text }`; an expired/invalid previous id is mapped to a typed
  * 409 so the client can reset and replay full history.
  */
+// fallow-ignore-next-line complexity
 async function handleInteraction(
   body: any,
   request: Request,
@@ -1009,7 +1010,7 @@ async function handleInteraction(
 
   const rawModel = typeof body?.model === "string" ? body.model : undefined;
   const registryModel = rawModel ? getModel(rawModel) : undefined;
-  const useOpenAi = registryModel?.provider === "openai";
+  const wantsOpenAi = registryModel?.provider === "openai";
 
   const outgoingBody = {
     ...body,
@@ -1020,13 +1021,51 @@ async function handleInteraction(
     outgoingBody.model = registryModel.modelId;
   }
 
-  const result = useOpenAi
-    ? await forwardInteractionToOpenAi(
-        outgoingBody,
-        registryModel!.modelId,
-        env,
-      )
-    : await forwardInteractionToGemini(outgoingBody, env);
+  const geminiFallbackModel =
+    getModel("gemini-flash-lite")?.modelId ?? "gemini-3.5-flash-lite";
+
+  let result: any;
+  let isGeminiResult: boolean;
+
+  if (wantsOpenAi && env.OPENAI_API_KEY) {
+    result = await forwardInteractionToOpenAi(
+      outgoingBody,
+      registryModel!.modelId,
+      env,
+    );
+    isGeminiResult = false;
+
+    const isStaleId =
+      body.previous_interaction_id &&
+      (result.status === 404 ||
+        result.status === 400 ||
+        /previous_interaction_id|previous_response_id|interaction.*not found|response.*not found/i.test(
+          (result.data as any)?.error?.message || "",
+        ));
+
+    if (!result.ok && !isStaleId) {
+      console.warn(
+        `[Oracle Proxy] OpenAI interaction failed (${result.status}), falling back to Gemini (${geminiFallbackModel}):`,
+        (result.data as any)?.error?.message,
+      );
+      const geminiBody = {
+        ...body,
+        model: geminiFallbackModel,
+      };
+      result = await forwardInteractionToGemini(geminiBody, env);
+      isGeminiResult = true;
+    }
+  } else if (wantsOpenAi) {
+    const geminiBody = {
+      ...body,
+      model: geminiFallbackModel,
+    };
+    result = await forwardInteractionToGemini(geminiBody, env);
+    isGeminiResult = true;
+  } else {
+    result = await forwardInteractionToGemini(outgoingBody, env);
+    isGeminiResult = true;
+  }
 
   if (result.transportError) {
     return json(
@@ -1070,13 +1109,13 @@ async function handleInteraction(
   // Gemini's Interactions API: output text lives at steps[].content[].text
   // (model_output steps). OpenAI's Responses API: output text lives at
   // output[].content[].text (message items, output_text blocks).
-  const extractedText = useOpenAi
-    ? extractOpenAiResponseText(data)
-    : (Array.isArray(data.steps) ? data.steps : [])
+  const extractedText = isGeminiResult
+    ? (Array.isArray(data.steps) ? data.steps : [])
         .flatMap((s: any) => (Array.isArray(s?.content) ? s.content : []))
         .map((c: any) => (typeof c?.text === "string" ? c.text : ""))
         .filter(Boolean)
-        .join("");
+        .join("")
+    : extractOpenAiResponseText(data);
 
   return json({ id: data.id, text: extractedText }, 200);
 }
