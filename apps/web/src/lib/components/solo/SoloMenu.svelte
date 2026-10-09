@@ -19,16 +19,32 @@
   } = $props();
 
   let open = $state(false);
-  let openBelow = $state(false);
+  // The panel is position:fixed so the bar's overflow-x scroller cannot clip it
+  // (overflow-x: auto also clips vertically, which hid the menus entirely).
+  let panelStyle = $state("");
   let trigger: HTMLButtonElement | undefined = $state();
   let panel: HTMLDivElement | undefined = $state();
+
+  const PANEL_GAP = 8;
+  const PANEL_MAX_WIDTH = 320;
+
+  /** Opens toward the roomier side, kept inside the viewport horizontally. */
+  function placePanel(rect: DOMRect) {
+    const left = Math.max(
+      PANEL_GAP,
+      Math.min(rect.left, window.innerWidth - PANEL_MAX_WIDTH),
+    );
+    const vertical =
+      rect.top < window.innerHeight / 2
+        ? `top: ${rect.bottom + PANEL_GAP}px`
+        : `bottom: ${window.innerHeight - rect.top + PANEL_GAP}px`;
+    return `left: ${left}px; ${vertical}`;
+  }
 
   function toggle() {
     if (disabled) return;
     if (!open && trigger) {
-      // Open toward the roomier side: the bar sits under the header, so a
-      // menu opening upward would be clipped off the top of the screen.
-      openBelow = trigger.getBoundingClientRect().top < window.innerHeight / 2;
+      panelStyle = placePanel(trigger.getBoundingClientRect());
     }
     open = !open;
   }
@@ -58,9 +74,20 @@
       return;
     close(false);
   }
+
+  // A fixed panel would drift away from its trigger when the bar scrolls.
+  $effect(() => {
+    if (!open) return;
+    const closeOnScroll = () => close(false);
+    window.addEventListener("scroll", closeOnScroll, true);
+    return () => window.removeEventListener("scroll", closeOnScroll, true);
+  });
 </script>
 
-<svelte:window onpointerdown={onWindowPointerDown} />
+<svelte:window
+  onpointerdown={onWindowPointerDown}
+  onresize={() => close(false)}
+/>
 
 <div class="relative inline-block">
   <button
@@ -82,9 +109,8 @@
   {#if open}
     <div
       bind:this={panel}
-      class="absolute left-0 z-[85] min-w-48 rounded-lg border border-theme-border bg-theme-surface p-2 shadow-xl {openBelow
-        ? 'top-full mt-2'
-        : 'bottom-full mb-2'}"
+      class="fixed z-[85] min-w-48 rounded-lg border border-theme-border bg-theme-surface p-2 shadow-xl"
+      style={panelStyle}
       data-testid="solo-menu-panel"
       role="menu"
       tabindex="-1"
