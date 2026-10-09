@@ -707,6 +707,11 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://codexcryptica.com/answers/how-do-i-read-a-dnd-character-sheet-as-a-beginner</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://codexcryptica.com/answers/how-do-i-run-a-bard-or-face-without-sidelining-the-party</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
@@ -1227,6 +1232,11 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://codexcryptica.com/answers/what-should-a-new-dnd-player-know-before-their-first-game</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://codexcryptica.com/answers/what-should-a-new-dnd-player-learn-first</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
@@ -1263,6 +1273,11 @@
   </url>
   <url>
     <loc>https://codexcryptica.com/answers/where-do-i-start-if-i-have-never-played-a-tabletop-rpg</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://codexcryptica.com/answers/which-dice-do-i-roll-in-dnd-and-when</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>

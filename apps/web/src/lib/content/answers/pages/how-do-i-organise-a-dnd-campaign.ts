@@ -269,6 +269,7 @@ export const howDoIOrganiseADndCampaign: AnswerConfigInput = {
     "how-do-you-recap-a-ttrpg-session",
     "how-do-you-help-players-remember-what-happened-in-a-ttrpg-campaign",
     "what-should-i-look-for-in-an-rpg-campaign-manager",
+    "what-should-a-new-dnd-player-know-before-their-first-game",
   ],
   discovery: {
     id: "answer-dnd-campaign-organisation",

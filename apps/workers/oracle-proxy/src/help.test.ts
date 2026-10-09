@@ -625,6 +625,31 @@ describe("POST /api/help/ask — no authoritative answer", () => {
     expect(generate).not.toHaveBeenCalled();
   });
 
+  it("redirects a story question to the Oracle, without calling the model", async () => {
+    const { ask, generate } = harness();
+    const res = await ask(valid({ question: "what would the goblin do?" }));
+    const body = await res.json();
+    expect(res.status).toBe(200);
+    expect(body.outcome).toBe("out-of-scope");
+    expect(body.answer).toMatch(/Oracle/);
+    expect(body.action).toBeNull();
+    expect(generate).not.toHaveBeenCalled();
+  });
+
+  it("redirects a story question the model cannot ground to the Oracle", async () => {
+    const { ask } = harness({
+      generate: async () => ({
+        ok: true,
+        content: { ...goodModel, sourceIds: [], confidence: "none" },
+      }),
+    });
+    const body = await (
+      await ask(valid({ question: "what would the goblin do?" }))
+    ).json();
+    expect(body.outcome).toBe("out-of-scope");
+    expect(body.answer).toMatch(/Oracle/);
+  });
+
   it("downgrades an answer whose citations are not in the supplied sources", async () => {
     const { ask } = harness({
       generate: async () => ({

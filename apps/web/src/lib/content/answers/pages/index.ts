@@ -30,6 +30,7 @@ import { howDoIOrganiseGmNotesForInPersonPlay } from "./how-do-i-organise-gm-not
 import { howDoIPaceAnRpgOneShot } from "./how-do-i-pace-an-rpg-one-shot";
 import { howDoIPrepareADndSession } from "./how-do-i-prepare-a-dnd-session";
 import { howDoIPrepareAnRpgSessionStepByStep } from "./how-do-i-prepare-an-rpg-session-step-by-step";
+import { howDoIReadADndCharacterSheetAsABeginner } from "./how-do-i-read-a-dnd-character-sheet-as-a-beginner";
 import { howDoIRunABardOrFaceWithoutSideliningTheParty } from "./how-do-i-run-a-bard-or-face-without-sidelining-the-party";
 import { howDoIRunACampaignWhereThePlayersOwnABusiness } from "./how-do-i-run-a-campaign-where-the-players-own-a-business";
 import { howDoIRunADiplomatNobleOrCourtierInAnRpg } from "./how-do-i-run-a-diplomat-noble-or-courtier-in-an-rpg";
@@ -50,6 +51,7 @@ import { howDoIRunShipToShipCombatWithoutSideliningTheParty } from "./how-do-i-r
 import { howDoIRunSpiesAndInfiltratorsInAnRpg } from "./how-do-i-run-spies-and-infiltrators-in-an-rpg";
 import { howDoIStartADndCampaign } from "./how-do-i-start-a-dnd-campaign";
 import { howDoIStartGmingForTheFirstTime } from "./how-do-i-start-gming-for-the-first-time";
+import { howDoIStartWorldbuildingForANovelOrShortStory } from "./how-do-i-start-worldbuilding-for-a-novel-or-short-story";
 import { howDoITakeUsefulRpgNotesDuringPlay } from "./how-do-i-take-useful-rpg-notes-during-play";
 import { howDoITurnAnRpgIdeaIntoAnAdventure } from "./how-do-i-turn-an-rpg-idea-into-an-adventure";
 import { howDoITurnEconomicPressuresIntoRpgAdventureHooks } from "./how-do-i-turn-economic-pressures-into-rpg-adventure-hooks";
@@ -118,7 +120,9 @@ import { howToCreateRumoursForAFantasyTown } from "./how-to-create-rumours-for-a
 import { howToWriteAnInWorldNewspaperForAnRpg } from "./how-to-write-an-in-world-newspaper-for-an-rpg";
 import { isMyRpgCampaignIdeaGood } from "./is-my-rpg-campaign-idea-good";
 import { pointCrawlVsHexCrawl } from "./point-crawl-vs-hex-crawl";
+import { whatCanIDoOnMyTurnInDndCombat } from "./what-can-i-do-on-my-turn-in-dnd-combat";
 import { whatCanPlayersActuallyBuyAndSellInAFantasySettlement } from "./what-can-players-actually-buy-and-sell-in-a-fantasy-settlement";
+import { whatDoINeedToBringToMyFirstDndGame } from "./what-do-i-need-to-bring-to-my-first-dnd-game";
 import { whatDoYouDoWithMurderHobosInAnRpgCampaign } from "./what-do-you-do-with-murder-hobos-in-an-rpg-campaign";
 import { whatIsAPointCrawl } from "./what-is-a-point-crawl";
 import { whatIsTheDifferenceBetweenGodsAndDemonLordsInAFantasyWorld } from "./what-is-the-difference-between-gods-and-demon-lords-in-a-fantasy-world";
@@ -134,6 +138,7 @@ import { whatRpgShouldIUseForTacticalCombat } from "./what-rpg-should-i-use-for-
 import { whatRpgSystemIsGoodForSoloPlay } from "./what-rpg-system-is-good-for-solo-play";
 import { whatRpgSystemShouldWeTryInsteadOfDnd } from "./what-rpg-system-should-we-try-instead-of-dnd";
 import { whatRpgWorksForPoliticalIntrigueAndFactionPlay } from "./what-rpg-works-for-political-intrigue-and-faction-play";
+import { whatShouldANewDndPlayerKnowBeforeTheirFirstGame } from "./what-should-a-new-dnd-player-know-before-their-first-game";
 import { whatShouldANewDndPlayerLearnFirst } from "./what-should-a-new-dnd-player-learn-first";
 import { whatShouldAnRpgSettlementContain } from "./what-should-an-rpg-settlement-contain";
 import { whatShouldILookForInAnRpgCampaignManager } from "./what-should-i-look-for-in-an-rpg-campaign-manager";
@@ -142,6 +147,7 @@ import { whatTtrpgShouldIPlayForAPirateCampaign } from "./what-ttrpg-should-i-pl
 import { whatTtrpgShouldIUseForAFantasyDungeonCrawl } from "./what-ttrpg-should-i-use-for-a-fantasy-dungeon-crawl";
 import { whatTtrpgsLetYouBuildAndUpgradeABase } from "./what-ttrpgs-let-you-build-and-upgrade-a-base";
 import { whereDoIStartIfIHaveNeverPlayedATabletopRpg } from "./where-do-i-start-if-i-have-never-played-a-tabletop-rpg";
+import { whichDiceDoIRollInDndAndWhen } from "./which-dice-do-i-roll-in-dnd-and-when";
 import { xpLevelingVsMilestoneLeveling } from "./xp-leveling-vs-milestone-leveling";
 
 /**
@@ -183,6 +189,7 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     howDoIPaceAnRpgOneShot,
     howDoIPrepareADndSession,
     howDoIPrepareAnRpgSessionStepByStep,
+    howDoIReadADndCharacterSheetAsABeginner,
     howDoIRunABardOrFaceWithoutSideliningTheParty,
     howDoIRunACampaignWhereThePlayersOwnABusiness,
     howDoIRunADiplomatNobleOrCourtierInAnRpg,
@@ -203,6 +210,7 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     howDoIRunSpiesAndInfiltratorsInAnRpg,
     howDoIStartADndCampaign,
     howDoIStartGmingForTheFirstTime,
+    howDoIStartWorldbuildingForANovelOrShortStory,
     howDoITakeUsefulRpgNotesDuringPlay,
     howDoITurnAnRpgIdeaIntoAnAdventure,
     howDoITurnEconomicPressuresIntoRpgAdventureHooks,
@@ -271,7 +279,9 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     howToWriteAnInWorldNewspaperForAnRpg,
     isMyRpgCampaignIdeaGood,
     pointCrawlVsHexCrawl,
+    whatCanIDoOnMyTurnInDndCombat,
     whatCanPlayersActuallyBuyAndSellInAFantasySettlement,
+    whatDoINeedToBringToMyFirstDndGame,
     whatDoYouDoWithMurderHobosInAnRpgCampaign,
     whatIsAPointCrawl,
     whatIsTheDifferenceBetweenGodsAndDemonLordsInAFantasyWorld,
@@ -287,6 +297,7 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     whatRpgSystemIsGoodForSoloPlay,
     whatRpgSystemShouldWeTryInsteadOfDnd,
     whatRpgWorksForPoliticalIntrigueAndFactionPlay,
+    whatShouldANewDndPlayerKnowBeforeTheirFirstGame,
     whatShouldANewDndPlayerLearnFirst,
     whatShouldAnRpgSettlementContain,
     whatShouldILookForInAnRpgCampaignManager,
@@ -295,6 +306,7 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     whatTtrpgShouldIUseForAFantasyDungeonCrawl,
     whatTtrpgsLetYouBuildAndUpgradeABase,
     whereDoIStartIfIHaveNeverPlayedATabletopRpg,
+    whichDiceDoIRollInDndAndWhen,
     xpLevelingVsMilestoneLeveling,
   ]
     .map((answer) => AnswerConfigSchema.parse(answer))

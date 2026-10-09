@@ -355,6 +355,26 @@ export const PHASE_A_IN_SCOPE: InScopeQuestion[] = [
   q("generators", "holdout", "none", "Can I generate a festival?", [
     "generator:holiday",
   ]),
+  // Solo play loop (Solo Play Loop): saving, generating, tables, party, scenes
+  q("solo", "tune", "none", "How do I save an NPC I made up during play?", [
+    "solo-session",
+  ]),
+  q(
+    "solo",
+    "holdout",
+    "none",
+    "How do I roll my own table in a solo session?",
+    ["solo-session"],
+  ),
+  q("solo", "holdout", "none", "How do I add characters to my party?", [
+    "solo-session",
+  ]),
+  q("solo", "holdout", "none", "Can I go back to an earlier scene?", [
+    "solo-session",
+  ]),
+  q("solo", "holdout", "none", "How do I generate a rumour while playing?", [
+    "solo-session",
+  ]),
   // Solo sessions (Play page, solo bar)
   q("solo", "tune", "none", "How do I play solo?", ["solo-session"]),
   q("solo", "tune", "none", "How do I start a solo session?", ["solo-session"]),
@@ -369,6 +389,42 @@ export const PHASE_A_IN_SCOPE: InScopeQuestion[] = [
   q("solo", "holdout", "none", "How do I end my solo session?", [
     "solo-session",
   ]),
+  // Solo oracle, tension and threads (Solo Oracle and Threads)
+  q(
+    "solo",
+    "holdout",
+    "none",
+    "How do I answer a yes or no question while playing alone?",
+    ["solo-session"],
+  ),
+  q(
+    "solo",
+    "holdout",
+    "none",
+    "How do I make random events happen more often?",
+    ["solo-session"],
+  ),
+  q(
+    "solo",
+    "holdout",
+    "none",
+    "How do I keep track of open threads between sessions?",
+    ["solo-session"],
+  ),
+  q(
+    "solo",
+    "holdout",
+    "none",
+    "How do I stop the journal recording my dice rolls?",
+    ["quicknote"],
+  ),
+  q(
+    "solo",
+    "holdout",
+    "none",
+    "Can I let the Oracle run a scene while I play solo?",
+    ["solo-session"],
+  ),
   // In-game questions go to the Oracle, never to product help
   q("solo", "holdout", "none", "What would the goblin chief do next?", [
     "oracle-guide",

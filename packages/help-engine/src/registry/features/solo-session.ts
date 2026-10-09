@@ -32,12 +32,92 @@ export const soloSession: FeatureEntry = {
       actionIds: ["solo-session.open-help"],
     },
     {
+      id: "save-a-discovery-to-the-vault",
+      title: "Save a discovery to the Vault",
+      steps: [
+        "Open Recent in the solo bar. It lists the latest results in your running journal.",
+        "Choose Save to Vault on the result, keep the suggested category or pick another, and check the name.",
+        "Press Save. A draft is created and linked to its journal entry, and you stay on the same screen.",
+      ],
+      actionIds: ["solo-session.open-help"],
+    },
+    {
+      id: "generate-during-play",
+      title: "Generate during play",
+      steps: [
+        "Open Generate in the solo bar and choose NPC, Encounter, Rumour or Complication, or All generators.",
+        "Generate a result. It is recorded in your journal whether or not you keep it.",
+        "Save it with the generator's usual Save; the journal notes the save.",
+      ],
+      actionIds: ["solo-session.open-help"],
+    },
+    {
+      id: "roll-a-pinned-table",
+      title: "Roll a pinned table",
+      steps: [
+        "Open Pin a table in the solo bar and pin up to three of your tables.",
+        "Tap a pinned table. The result shows in the bar and is recorded in your journal.",
+        "Remove a pin with the × beside it.",
+      ],
+      actionIds: ["solo-session.open-help"],
+    },
+    {
+      id: "set-your-party",
+      title: "Set your party",
+      steps: [
+        "Open Party in the solo bar, or choose the characters during setup.",
+        "Tick the Character entries in your party. Choosing a name opens that character.",
+        "Changes are noted in the journal while it runs.",
+      ],
+      actionIds: ["solo-session.open-help"],
+    },
+    {
+      id: "return-to-an-earlier-scene",
+      title: "Return to an earlier scene",
+      steps: [
+        "Open Scenes in the solo bar to see every scene in order.",
+        "Choose Open to see that scene's part of the journal, or Return to scene to start a new visit.",
+        "A new visit is numbered, such as Arrival (2), and gets its own journal section.",
+      ],
+      actionIds: ["solo-session.open-help"],
+    },
+    {
       id: "end-a-solo-session",
       title: "End a solo session",
       steps: [
         "Choose End session in the solo bar.",
         "Choose whether to end the journal too, or keep it running.",
         "Nothing is deleted. Your journal, rolls, map and vault stay as they are.",
+      ],
+      actionIds: ["solo-session.open-help"],
+    },
+    {
+      id: "ask-a-yes-or-no-question",
+      title: "Ask the dice a yes or no question",
+      steps: [
+        "Open Yes or no in the solo bar and type your question, or leave it empty.",
+        "Choose how likely a yes is, from very unlikely to very likely, then choose Roll.",
+        "The answer shows with its roll, such as Yes, but. It works with AI off. Interpret with the Oracle is optional and only fills in an Oracle question.",
+      ],
+      actionIds: ["solo-session.open-help"],
+    },
+    {
+      id: "get-a-random-event",
+      title: "Get a random event",
+      steps: [
+        "Open Yes or no in the solo bar and choose Random event.",
+        "Each event names a focus, an action and a subject, such as an open thread, a party member or the place.",
+        "Raise or lower tension with the + and - buttons. Higher tension makes random events happen more often.",
+      ],
+      actionIds: ["solo-session.open-help"],
+    },
+    {
+      id: "keep-track-of-threads",
+      title: "Keep track of threads",
+      steps: [
+        "Open Threads in the solo bar, or on the Play page, and choose Add a thread.",
+        "Pick a kind, question, lead, objective or mystery, then link it to entries in your vault.",
+        "Close a thread with a note when it is resolved. Reopen it from the closed list if it returns.",
       ],
       actionIds: ["solo-session.open-help"],
     },

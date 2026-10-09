@@ -113,7 +113,7 @@ describe("retrieval quality over the real help articles", () => {
       );
 
     expect(failures, failures.join("\n")).toEqual([]);
-  });
+  }, 30_000);
 
   it("answers nearly every in-scope question instead of calling it a no-match", () => {
     const { results, answeredRate } = evaluateInScope(bundle);
@@ -124,7 +124,8 @@ describe("retrieval quality over the real help articles", () => {
       answeredRate,
       `refused:\n${refused.join("\n")}`,
     ).toBeGreaterThanOrEqual(0.97);
-  });
+    // Scores the whole in-scope set against the bundle, so it grows with the help content.
+  }, 30_000);
 
   it("sends every unrelated question to no-match without calling the model, in both halves", () => {
     for (const split of ["tune", "holdout"] as const) {
@@ -152,7 +153,7 @@ describe("retrieval quality over the real help articles", () => {
       ...evaluateOutOfScope(bundle).results.map((r) => r.topRelevance),
     );
     expect(weakestIn).toBeGreaterThan(strongestOut);
-  });
+  }, 30_000);
 
   it("does not claim the floor can refuse a near-miss: those are left to the model and the live run", () => {
     // If this ever becomes true for every near-miss the live check is still
@@ -192,7 +193,7 @@ describe("attempts to change the assistant's role (spec FR-026)", () => {
         question,
       ).toBe(true);
     }
-  });
+  }, 30_000);
 });
 
 describe("asking the assistant to change the vault (explain, don't act)", () => {
@@ -203,7 +204,7 @@ describe("asking the assistant to change the vault (explain, don't act)", () => 
         question,
       ).toBe(false);
     }
-  });
+  }, 30_000);
 
   it("instructs the model to explain the steps and say it cannot make the change", () => {
     expect(SYSTEM_PROMPT).toMatch(/cannot change anything in the user's vault/);

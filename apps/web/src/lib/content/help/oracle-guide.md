@@ -33,6 +33,8 @@ See [Chat Commands](/help#help/chat-commands) for syntax, deterministic commands
 
 Open **Settings → Intelligence** to see your connection mode and key controls. The system proxy and a personal key are different ways to reach an AI service; a personal key does not make AI run on your device. Questions and relevant lore used as context leave your browser when you request AI assistance.
 
+The Oracle sends only lore relevant to your question, not your full vault. For a custom NPC grounded in your notes, ask the Lore Oracle; generators use templates for structured drafts.
+
 Turn on **AI Disabled** in Settings to stop AI assistance. Manual writing, connections, local roll tables and local generator templates remain available. AI revisions cannot run in a guest vault.
 
 **Cif**, the Codex guide, answers questions about using Codex Cryptica. It is separate from the Lore Oracle and cannot edit your vault.

@@ -9,11 +9,24 @@ export interface SoloSession {
   sceneName: string;
   sceneSectionId: string | null;
   lastRoll: string | null;
+  /** Character entity ids in the party, at most 12 (Solo Play Loop). */
+  partyIds: string[];
+  /** The session's scenes in order; the last one is current (Solo Play Loop). */
+  scenes: SoloScene[];
+  /** Tension from 1 to 9 that drives how often random events come (spec 174, FR-010). */
+  tension: number;
+}
+
+export interface SoloScene {
+  name: string;
+  sectionId: string | null;
 }
 
 export interface SoloSetup {
   mapId: string | null;
   journal: boolean;
+  /** Optional party chosen in setup (Solo Play Loop, FR-014). */
+  partyIds?: string[];
 }
 
 export interface IdSource {

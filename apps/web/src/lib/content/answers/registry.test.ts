@@ -19,6 +19,8 @@ import { getAllLandingPageSlugs } from "../for/registry";
 import { HEIST_TOPIC_CONFIG } from "../topics/heists";
 import { PUZZLE_TOPIC_CONFIG } from "../topics/puzzles";
 import { PIRATE_TOPIC_CONFIG } from "../topics/pirates";
+import { DND_TOPIC_CONFIG } from "../topics/dnd";
+import { DND_BEGINNERS_TOPIC_CONFIG } from "../topics/dnd-beginners";
 import { solutions } from "$lib/config/seo-pages";
 import { featuresConfig } from "$lib/config/seo-features";
 import { match as isGeneratorSlug } from "../../../params/generator_slug";
@@ -51,6 +53,72 @@ const mockRegistry: Record<string, AnswerConfig> = {
 };
 
 describe("answer registry", () => {
+  it("prioritises first-game guidance and the character-sheet guide for packing readers", () => {
+    const answer = answers["what-do-i-need-to-bring-to-my-first-dnd-game"];
+
+    expect(answer.relatedAnswers.slice(0, 2)).toEqual([
+      "what-should-a-new-dnd-player-know-before-their-first-game",
+      "how-do-i-read-a-dnd-character-sheet-as-a-beginner",
+    ]);
+    expect(answer.discovery?.relatedIntents).toContain(
+      "answer-new-dnd-player-first-game",
+    );
+    expect(answer.discovery?.relatedIntents).toContain(
+      "answer-read-dnd-character-sheet-beginner",
+    );
+    expect(answer.relatedTools.map((tool) => tool.href)).not.toContain(
+      "/generators/dnd-npc",
+    );
+  });
+
+  it("records the new D&D player's distinct audience from GM startup guides", () => {
+    const overlaps = [
+      [
+        "what-should-a-new-dnd-player-know-before-their-first-game",
+        "answer-start-dnd-campaign",
+      ],
+      ["how-do-i-start-a-dnd-campaign", "answer-new-dnd-player-first-game"],
+      [
+        "what-should-a-new-dnd-player-know-before-their-first-game",
+        "answer-first-time-gm-hub",
+      ],
+      [
+        "how-do-i-start-gming-for-the-first-time",
+        "answer-new-dnd-player-first-game",
+      ],
+    ] as const;
+
+    for (const [slug, relatedIntent] of overlaps) {
+      const answer = answers[slug];
+      expect(answer?.discovery?.acknowledgedOverlap).toContainEqual(
+        expect.objectContaining({
+          with: relatedIntent,
+          reason: expect.any(String),
+        }),
+      );
+    }
+  });
+
+  it("points first-game readers to the character-sheet guide without raw Markdown", () => {
+    const answer =
+      answers["what-should-a-new-dnd-player-know-before-their-first-game"];
+    const sheetIntro = answer.sections.find(
+      (section) =>
+        section.kind === "list" &&
+        section.heading === "You do not need to memorise your character sheet",
+    );
+
+    expect(
+      sheetIntro?.kind === "list" ? sheetIntro.intro : undefined,
+    ).not.toMatch(/\[[^\]]+\]\([^)]+\)/);
+    expect(answer.relatedAnswers).toContain(
+      "how-do-i-read-a-dnd-character-sheet-as-a-beginner",
+    );
+    expect(
+      getAnswer("how-do-i-read-a-dnd-character-sheet-as-a-beginner"),
+    ).toBeDefined();
+  });
+
   it("records the bard answer's distinct scope from adjacent specialist answers", () => {
     const overlaps = [
       [
@@ -80,6 +148,61 @@ describe("answer registry", () => {
         }),
       );
     }
+  });
+
+  it("records the combat-turn answer's distinct scope from the beginner-start answer", () => {
+    const answer = answers["what-can-i-do-on-my-turn-in-dnd-combat"];
+
+    expect(answer?.discovery?.acknowledgedOverlap).toContainEqual(
+      expect.objectContaining({
+        with: "answer-beginner-start",
+        reason: expect.any(String),
+      }),
+    );
+  });
+
+  it("describes Ready and Dodge without overstating their 2024 rules", () => {
+    const answer = answers["what-can-i-do-on-my-turn-in-dnd-combat"];
+    const options = answer.sections.find(
+      (section) =>
+        section.kind === "list" &&
+        section.heading === "You do not have to attack every turn",
+    );
+    const ready =
+      options?.kind === "list"
+        ? options.items.find(
+            (item) => item.term === "Control what the enemies can see or reach",
+          )
+        : undefined;
+    const example = answer.sections.find(
+      (section) =>
+        section.kind === "example" &&
+        section.heading ===
+          "Worked example: the same round, two levels of preparation",
+    );
+    const menuDriven =
+      example?.kind === "example"
+        ? example.items?.find((item) => item.term === "The menu-driven version")
+        : undefined;
+
+    expect(ready?.text).toContain(
+      "you can use your reaction to respond; you can also ignore the trigger",
+    );
+    expect(ready?.text).not.toContain(
+      "spend your reaction to respond or ignore it",
+    );
+    expect(menuDriven?.text).toContain("if the fighter can see the attacker");
+  });
+
+  it("records the character-sheet answer's distinct scope from combat turns", () => {
+    const answer = answers["how-do-i-read-a-dnd-character-sheet-as-a-beginner"];
+
+    expect(answer?.discovery?.acknowledgedOverlap).toContainEqual(
+      expect.objectContaining({
+        with: "answer-what-can-i-do-on-my-turn-in-dnd-combat",
+        reason: expect.any(String),
+      }),
+    );
   });
 
   it("cross-links combat engagement and combat pacing answers", () => {
@@ -601,6 +724,62 @@ describe("published answers", () => {
     }
   });
 
+  it("gives the correct healing-potion dice example", () => {
+    const answer = answers["which-dice-do-i-roll-in-dnd-and-when"];
+    const diceSection = answer.sections.find(
+      (section) =>
+        section.kind === "list" &&
+        section.heading === "The other dice: damage, healing and amounts",
+    );
+
+    expect(diceSection?.kind).toBe("list");
+    if (diceSection?.kind !== "list") return;
+
+    const diceExamples = diceSection.items.find(
+      (item) => item.term === "d4, d6, d8, d10, d12",
+    )?.text;
+
+    expect(diceExamples).toContain(
+      "common [2024 Potion of Healing](https://www.dndbeyond.com/magic-items/8960641-potion-of-healing) restores 2d4 + 2 hit points",
+    );
+  });
+
+  it("explains the natural 1 and 20 exceptions for attack rolls", () => {
+    const answer = answers["which-dice-do-i-roll-in-dnd-and-when"];
+    const attackRoll = answer.sections
+      .filter((section) => section.kind === "list")
+      .flatMap((section) => section.items)
+      .find((item) => item.term === "Attack rolls");
+
+    expect(attackRoll?.text).toContain(
+      "a natural 20 always hits, and a natural 1 always misses",
+    );
+  });
+
+  it("records the distinct scope of the D&D dice and character-sheet answers", () => {
+    const overlap = answers[
+      "which-dice-do-i-roll-in-dnd-and-when"
+    ].discovery?.acknowledgedOverlap?.find(
+      (entry) => entry.with === "answer-read-dnd-character-sheet-beginner",
+    );
+
+    expect(overlap?.reason).toContain(
+      "choosing dice and resolving common rolls",
+    );
+  });
+
+  it("records the distinct scope of the D&D dice and combat-turn answers", () => {
+    const overlap = answers[
+      "which-dice-do-i-roll-in-dnd-and-when"
+    ].discovery?.acknowledgedOverlap?.find(
+      (entry) => entry.with === "answer-what-can-i-do-on-my-turn-in-dnd-combat",
+    );
+
+    expect(overlap?.reason).toContain(
+      "which dice resolve checks, attacks, saves, and damage",
+    );
+  });
+
   it("never links an answer to itself", () => {
     for (const answer of published) {
       expect(answer.relatedAnswers).not.toContain(answer.slug);
@@ -673,6 +852,8 @@ describe("published answers", () => {
       HEIST_TOPIC_CONFIG.canonicalPath,
       PUZZLE_TOPIC_CONFIG.canonicalPath,
       PIRATE_TOPIC_CONFIG.canonicalPath,
+      DND_TOPIC_CONFIG.canonicalPath,
+      DND_BEGINNERS_TOPIC_CONFIG.canonicalPath,
     ]);
     const toolPages = new Set([
       "cyberpunk-nomad-clan-generator",
@@ -726,6 +907,43 @@ describe("published answers", () => {
       expect(answer.shortAnswer.length, answer.slug).toBeGreaterThan(140);
       expect(answer.sections.length, answer.slug).toBeGreaterThanOrEqual(3);
     }
+  });
+
+  it("distinguishes 2014 and 2024 rules in the beginner character-sheet answer", () => {
+    const answer = answers["how-do-i-read-a-dnd-character-sheet-as-a-beginner"];
+    const abilityScores = answer.sections
+      .filter((section) => section.kind === "list")
+      .flatMap((section) => (section.kind === "list" ? section.items : []))
+      .find(
+        (item) => item.term === "Find the score and modifier by their labels",
+      );
+    const spellSlots = answer.sections
+      .filter((section) => section.kind === "list")
+      .flatMap((section) => (section.kind === "list" ? section.items : []))
+      .find((item) => item.term === "Spell slots");
+    const fighterExample = answer.sections.find(
+      (section) => section.kind === "example",
+    );
+    const fighterWalkthrough =
+      fighterExample?.kind === "example"
+        ? fighterExample.items?.[1]?.text
+        : undefined;
+
+    expect(abilityScores?.text).toContain("labelled Strength");
+    expect(abilityScores?.text).toContain("score of 16");
+    expect(abilityScores?.text).toContain("signed modifier of +3");
+    expect(abilityScores?.text).toContain(
+      "the 2024 rules list prepared spells by class level",
+    );
+    expect(spellSlots?.text).toContain(
+      "Warlocks regain all expended Pact Magic slots after a short or long rest",
+    );
+    expect(fighterWalkthrough).toContain(
+      "one use under the 2014 rules or two at 1st level under the 2024 rules",
+    );
+    expect(fighterWalkthrough).toContain("a d20 result of 12 plus 5 gives 17");
+    expect(fighterWalkthrough).toContain("do not add either again");
+    expect(fighterWalkthrough).toContain("Resourceful");
   });
 
   it("requires an R2 OG image on every answer published from 2026-09-07 onward", () => {

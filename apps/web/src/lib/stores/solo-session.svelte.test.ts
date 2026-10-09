@@ -3,12 +3,22 @@ import {
   SoloSessionStore,
   SOLO_SESSION_KEY_PREFIX,
   SHARED_SOLO_NOTE,
+  resolveSoloPlaceName,
   type JournalPort,
   type MapPort,
   type SoloSessionDeps,
 } from "./solo-session.svelte";
 
 const VAULT = "v1";
+
+describe("resolveSoloPlaceName", () => {
+  it("uses the active map's name and returns null when there is no matching map", () => {
+    const maps = { map1: { name: "Greyhollow" } };
+    expect(resolveSoloPlaceName("map1", maps)).toBe("Greyhollow");
+    expect(resolveSoloPlaceName("missing", maps)).toBeNull();
+    expect(resolveSoloPlaceName(null, maps)).toBeNull();
+  });
+});
 
 function memoryStorage(seed: Record<string, string> = {}) {
   const data = new Map(Object.entries(seed));
@@ -63,6 +73,11 @@ function build(
     mapIds?: string[];
     isGuest?: boolean;
     isSharedPlayOn?: boolean;
+    characters?: { id: string; name: string }[];
+    publishCapture?: (payload: unknown) => void;
+    random?: () => number;
+    openThreads?: { id: string; title: string }[];
+    placeName?: string | null;
   } = {},
 ) {
   const storage = opts.storage ?? memoryStorage();
@@ -85,6 +100,15 @@ function build(
     navigate,
     isGuest: () => opts.isGuest ?? false,
     isSharedPlayOn: () => opts.isSharedPlayOn ?? false,
+    characters: () =>
+      opts.characters ?? [
+        { id: "kael", name: "Kael" },
+        { id: "ivo", name: "Brother Ivo" },
+      ],
+    publishCapture: opts.publishCapture ?? (() => {}),
+    random: opts.random,
+    openThreads: () => opts.openThreads ?? [],
+    placeName: () => opts.placeName ?? null,
     notify,
   };
   const store = new SoloSessionStore(deps);
@@ -349,6 +373,36 @@ describe("scenes", () => {
     expect(store.session?.sceneSectionId).toBe("sec1");
   });
 
+  it("with scenes switched off in the journal: changes the scene but creates no section", async () => {
+    const { store, journal } = build();
+    await store.start({ mapId: null, journal: true });
+    journal.current!.captureOff = ["scenes"];
+    const ok = await store.setScene("Arrival");
+    expect(ok).toBe(true);
+    expect(journal.createSection).not.toHaveBeenCalled();
+    expect(store.session?.sceneName).toBe("Arrival");
+    expect(store.session?.sceneSectionId).toBeNull();
+  });
+
+  it("with scenes switched off: renaming the scene does not rename its journal section", async () => {
+    const { store, journal } = build();
+    await store.start({ mapId: null, journal: true });
+    await store.setScene("Arrival");
+    journal.current!.captureOff = ["scenes"];
+    await store.renameScene("Harbour");
+    expect(store.session?.sceneName).toBe("Harbour");
+    expect(journal.renameSection).not.toHaveBeenCalled();
+  });
+
+  it("with another kind switched off: still creates the section", async () => {
+    const { store, journal } = build();
+    await store.start({ mapId: null, journal: true });
+    journal.current!.captureOff = ["dice", "oracle"];
+    await store.setScene("Arrival");
+    expect(journal.createSection).toHaveBeenCalledWith("Arrival");
+    expect(store.session?.sceneSectionId).toBe("sec1");
+  });
+
   it("with no journal: stores the name only", async () => {
     const { store, journal } = build();
     await store.start({ mapId: null, journal: false });
@@ -462,17 +516,21 @@ describe("end", () => {
     expect(store.isActive).toBe(false);
   });
 
-  it("still ends the session when ending the journal fails, and tells the player", async () => {
+  it("keeps the session when ending the journal fails, so the player can try again", async () => {
     const journal = makeJournal({
       end: vi.fn(async () => {
         throw new Error("nope");
       }),
     });
-    const { store, notify } = build({ journal });
+    const { store, notify, storage } = build({ journal });
     await store.start({ mapId: null, journal: true });
+    storage.removeItem.mockClear();
     await store.end({ endJournal: true });
-    expect(store.isActive).toBe(false);
-    expect(notify).toHaveBeenCalled();
+    expect(store.isActive).toBe(true);
+    expect(storage.removeItem).not.toHaveBeenCalled();
+    expect(notify).toHaveBeenCalledWith(
+      expect.stringContaining("still running"),
+    );
   });
 
   it("does not end a journal that is not the session's", async () => {
@@ -488,5 +546,249 @@ describe("end", () => {
     expect(store.journalRunning).toBe(true);
     journal.current!.status = "ended";
     expect(store.journalRunning).toBe(false);
+  });
+});
+
+describe("party", () => {
+  it("saves the party and keeps it across a reload", async () => {
+    const storage = memoryStorage();
+    const { store } = build({ storage });
+    await store.start({ mapId: null, journal: false });
+    await store.setParty(["kael", "ivo"]);
+    expect(store.party.map((m) => m.id)).toEqual(["kael", "ivo"]);
+    const reloaded = build({ storage });
+    expect(reloaded.store.session?.partyIds).toEqual(["kael", "ivo"]);
+  });
+
+  it("journals joins and leaves while a journal runs", async () => {
+    const publishCapture = vi.fn();
+    const { store } = build({ publishCapture });
+    await store.start({ mapId: null, journal: true });
+    await store.setParty(["kael"]);
+    await store.setParty(["kael", "ivo"]);
+    await store.setParty(["ivo"]);
+    const contents = publishCapture.mock.calls.map((c) => c[0].content);
+    expect(contents[0]).toBe("Party: Kael joined.");
+    expect(contents[1]).toBe("Party: Brother Ivo joined.");
+    expect(contents[2]).toBe("Party: Kael left.");
+  });
+
+  it("publishes nothing when the party did not change, or when no journal runs", async () => {
+    const publishCapture = vi.fn();
+    const { store } = build({ publishCapture });
+    await store.start({ mapId: null, journal: false });
+    await store.setParty(["kael"]);
+    expect(publishCapture).not.toHaveBeenCalled();
+
+    const journaledCapture = vi.fn();
+    const journaled = build({ publishCapture: journaledCapture });
+    await journaled.store.start({ mapId: null, journal: true });
+    await journaled.store.setParty(["kael"]);
+    await journaled.store.setParty(["kael"]);
+    expect(journaledCapture).toHaveBeenCalledTimes(1);
+  });
+
+  it("resolves names and drops members no longer in the vault", async () => {
+    const { store } = build({ characters: [{ id: "kael", name: "Kael" }] });
+    await store.start({ mapId: null, journal: false });
+    await store.setParty(["kael", "gone"]);
+    expect(store.party).toEqual([{ id: "kael", name: "Kael" }]);
+  });
+
+  it("a deleted member does not push a new member out of the party, or appear in the journal", async () => {
+    const publishCapture = vi.fn();
+    const stale = Array.from({ length: 12 }, (_, i) => `gone${i}`);
+    const { store } = build({
+      publishCapture,
+      characters: [{ id: "kael", name: "Kael" }],
+    });
+    await store.start({ mapId: null, journal: true });
+    // Twelve saved ids for Characters that no longer exist.
+    store.session!.partyIds = [...stale];
+    await store.setParty([...stale, "kael"]);
+    expect(store.session?.partyIds).toEqual(["kael"]);
+    expect(publishCapture.mock.calls.map((c) => c[0].content)).toEqual([
+      "Party: Kael joined.",
+    ]);
+  });
+
+  it("keeps each vault's party separate", async () => {
+    const storage = memoryStorage();
+    const first = build({ storage, vaultId: "v1" });
+    await first.store.start({ mapId: null, journal: false });
+    await first.store.setParty(["kael"]);
+    const second = build({ storage, vaultId: "v2" });
+    expect(second.store.session).toBeNull();
+    expect(first.store.session?.partyIds).toEqual(["kael"]);
+  });
+});
+
+describe("scene history", () => {
+  it("setScene appends each scene in order", async () => {
+    const { store } = build();
+    await store.start({ mapId: null, journal: false });
+    await store.setScene("Arrival");
+    await store.setScene("The crypt");
+    expect(store.scenes.map((s) => s.name)).toEqual(["Arrival", "The crypt"]);
+  });
+
+  it("renameScene renames only the current scene", async () => {
+    const { store } = build();
+    await store.start({ mapId: null, journal: false });
+    await store.setScene("Arrival");
+    await store.setScene("The crypt");
+    await store.renameScene("The tomb");
+    expect(store.scenes.map((s) => s.name)).toEqual(["Arrival", "The tomb"]);
+  });
+
+  it("returnToScene starts a numbered visit in a new section and leaves earlier sections alone", async () => {
+    const { store, journal } = build();
+    await store.start({ mapId: null, journal: true });
+    await store.setScene("Arrival");
+    await store.setScene("Crypt");
+    const earlierSection = store.session?.scenes[0].sectionId;
+
+    const ok = await store.returnToScene(0);
+
+    expect(ok).toBe(true);
+    expect(journal.createSection).toHaveBeenLastCalledWith("Arrival (2)");
+    expect(store.scenes.map((s) => s.name)).toEqual([
+      "Arrival",
+      "Crypt",
+      "Arrival (2)",
+    ]);
+    expect(store.scenes[0].sectionId).toBe(earlierSection);
+    expect(store.session?.sceneName).toBe("Arrival (2)");
+  });
+
+  it("returnToScene with an index out of range does nothing", async () => {
+    const { store, journal } = build();
+    await store.start({ mapId: null, journal: true });
+    await store.setScene("Arrival");
+    const createSection = journal.createSection as unknown as {
+      mock: { calls: unknown[] };
+    };
+    const calls = createSection.mock.calls.length;
+    expect(await store.returnToScene(7)).toBe(false);
+    expect(createSection.mock.calls.length).toBe(calls);
+    expect(store.scenes.map((s) => s.name)).toEqual(["Arrival"]);
+  });
+});
+
+describe("solo oracle, events and tension (spec 174)", () => {
+  it("asks the dice and journals the answer while a journal runs", async () => {
+    const publishCapture = vi.fn();
+    const { store } = build({ publishCapture, random: () => 0.5 });
+    await store.start({ mapId: null, journal: true });
+    const answer = store.ask("Is the guard asleep?", "even");
+    expect(answer.question).toBe("Is the guard asleep?");
+    expect(publishCapture.mock.calls[0][0].entryType).toBe("oracle-answer");
+  });
+
+  it("returns the answer with no session, and still publishes it without error", () => {
+    const publishCapture = vi.fn();
+    const { store } = build({ publishCapture, random: () => 0.5 });
+    const answer = store.ask("", "likely");
+    expect([
+      "Yes, and",
+      "Yes",
+      "Yes, but",
+      "No, but",
+      "No",
+      "No, and",
+    ]).toContain(answer.answer);
+    expect(publishCapture).toHaveBeenCalled();
+  });
+
+  it("never calls the network when asking or rolling an event", () => {
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+    const { store } = build({ random: () => 0.3 });
+    store.ask("Q", "very_likely");
+    store.randomEvent();
+    expect(fetchSpy).not.toHaveBeenCalled();
+    fetchSpy.mockRestore();
+  });
+
+  it("attaches a random event when the event roll meets the tension", () => {
+    const publishCapture = vi.fn();
+    // Every d100 roll is 1, so the event always happens at any tension.
+    const { store } = build({ publishCapture, random: () => 0 });
+    store.ask("Q", "even");
+    const types = publishCapture.mock.calls.map((c) => c[0].entryType);
+    expect(types).toEqual(["oracle-answer", "random-event"]);
+  });
+
+  it("names an open thread as the subject when a thread focus is chosen", () => {
+    const threads = [{ id: "t1", title: "Why is the keeper lying?" }];
+    const { store } = build({ random: () => 0.01, openThreads: threads });
+    const event = store.randomEvent();
+    if (event.subject.kind === "thread")
+      expect(event.subject.threadId).toBe("t1");
+    expect(["thread", "party", "place", "newcomer"]).toContain(
+      event.subject.kind,
+    );
+  });
+
+  it("raises and lowers tension within 1 to 9, persists it, and journals each real change", async () => {
+    const storage = memoryStorage();
+    const publishCapture = vi.fn();
+    const { store } = build({ storage, publishCapture });
+    await store.start({ mapId: null, journal: true });
+    for (let i = 0; i < 10; i++) store.raiseTension();
+    expect(store.tension).toBe(9);
+    for (let i = 0; i < 12; i++) store.lowerTension();
+    expect(store.tension).toBe(1);
+    expect(build({ storage }).store.tension).toBe(1);
+    const changes = publishCapture.mock.calls.filter(
+      (c) => c[0].entryType === "tension-change",
+    );
+    // 5 to 9 is four real changes (further raises are no-ops), then 9 to 1 is eight.
+    expect(changes.length).toBe(12);
+  });
+
+  it("uses the default tension with no session, and ignores changes", () => {
+    const { store } = build();
+    expect(store.tension).toBe(5);
+    store.raiseTension();
+    expect(store.tension).toBe(5);
+  });
+
+  it("uses the open threads as random event subjects, and never a closed one", async () => {
+    let seed = 0;
+    const random = () => {
+      // A small deterministic sequence, so the sample is the same every run.
+      seed = (seed * 9301 + 49297) % 233280;
+      return seed / 233280;
+    };
+    const { store } = build({
+      random,
+      openThreads: [{ id: "open-1", title: "Why is the keeper lying?" }],
+    });
+    await store.start({ mapId: null, journal: false });
+    const subjects = Array.from(
+      { length: 300 },
+      () => store.randomEvent().subject,
+    );
+    const threadSubjects = subjects.filter((s) => s.kind === "thread");
+    expect(threadSubjects.length).toBeGreaterThan(0);
+    for (const subject of threadSubjects) {
+      expect(subject.threadId).toBe("open-1");
+      expect(subject.label).toBe("Why is the keeper lying?");
+    }
+  });
+
+  it("falls back to another subject when no thread is open", async () => {
+    let seed = 0;
+    const random = () => {
+      seed = (seed * 9301 + 49297) % 233280;
+      return seed / 233280;
+    };
+    const { store } = build({ random, openThreads: [] });
+    await store.start({ mapId: null, journal: false });
+    const subjects = Array.from(
+      { length: 300 },
+      () => store.randomEvent().subject,
+    );
+    expect(subjects.some((s) => s.kind === "thread")).toBe(false);
   });
 });

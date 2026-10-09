@@ -30,7 +30,7 @@ The travel readout shows the last move and the total since you opened the map or
 
 ## Keep an expedition record
 
-Start a [Session Journal](/help#help/quicknote) to record completed party moves alongside dice rolls, table results and card draws. Map entries include distance, destination coordinates when those labels are enabled, and how many new hexes the move revealed. Turn **Map moves** off in the journal header to stop those entries while keeping other automatic capture on. Promote a useful entry to a vault note through the same journal actions as any other entry.
+Start a [Session Journal](/help#help/quicknote) to record completed party moves alongside dice rolls, table results and card draws. Map entries include distance, destination coordinates when those labels are enabled, and how many new hexes the move revealed. Open **Capture** in the journal header to switch off map moves, or any other kind of automatic entry, while keeping the rest on. Promote a useful entry to a vault note through the same journal actions as any other entry.
 
 Travel totals are temporary and stay in this browser tab. The journal is saved with your local vault. Solo play does not send or measure your map activity.
 

@@ -1,3 +1,4 @@
+import { discoveryPolicyStore } from "$lib/stores/ui/discovery-policy.svelte";
 import { soloSessionStore } from "$lib/stores/solo-session-instance";
 import { goto } from "$app/navigation";
 import { base } from "$app/paths";
@@ -52,6 +53,7 @@ export const helpContext = new HelpContextStore({
   isSidebarOpen: () => layoutUIStore.leftSidebarOpen,
   getActiveSidebarTool: () => layoutUIStore.activeSidebarTool,
   soloSession: () => ({ active: soloSessionStore.isActive }),
+  aiEnabled: () => !discoveryPolicyStore.aiDisabled,
 });
 
 const helpIds = () => new Set(getHelpArticles().map((article) => article.id));

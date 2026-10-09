@@ -56,6 +56,20 @@ describe("HelpContextStore", () => {
     }
   });
 
+  it("offers the journal Capture menu and its flag only while the journal panel is open", () => {
+    const open = store({ getOpenHelpArea: () => "session-journal" });
+    open.registry.registerEntityDetail(surface());
+    expect(open.ctx.current.flags).toContain("session-journal-open");
+    expect(open.ctx.current.availableActions).toContain("journal-capture-menu");
+
+    const closed = store({ getOpenHelpArea: () => null });
+    closed.registry.registerEntityDetail(surface());
+    expect(closed.ctx.current.flags).not.toContain("session-journal-open");
+    expect(closed.ctx.current.availableActions).not.toContain(
+      "journal-capture-menu",
+    );
+  });
+
   describe("open sidebar panels", () => {
     it("adds a flag while the Explorer or the Shelf is open", () => {
       expect(
@@ -311,6 +325,53 @@ describe("HelpContextStore", () => {
     registry.registerEntityDetail(second);
     first();
     expect(registry.entityDetail).toBe(second);
+  });
+
+  describe("solo play loop controls", () => {
+    const six = [
+      "solo-generate-menu",
+      "solo-recent-results",
+      "solo-pinned-tables",
+      "solo-party-menu",
+      "solo-scene-menu",
+    ];
+
+    it("lists the bar's new menus while a session runs, and the Oracle menu only with AI on", () => {
+      const withAi = store({
+        getRouteId: () => "/(app)/map",
+        isGuestMode: () => false,
+        soloSession: () => ({ active: true }),
+        aiEnabled: () => true,
+      });
+      expect(withAi.ctx.current.availableActions).toEqual(
+        expect.arrayContaining([...six, "solo-oracle-menu"]),
+      );
+
+      const noAi = store({
+        getRouteId: () => "/(app)/map",
+        isGuestMode: () => false,
+        soloSession: () => ({ active: true }),
+        aiEnabled: () => false,
+      });
+      expect(noAi.ctx.current.availableActions).toEqual(
+        expect.arrayContaining(six),
+      );
+      expect(noAi.ctx.current.availableActions).not.toContain(
+        "solo-oracle-menu",
+      );
+    });
+
+    it("lists none of them when no session runs", () => {
+      const idle = store({
+        getRouteId: () => "/(app)/map",
+        isGuestMode: () => false,
+        soloSession: () => ({ active: false }),
+        aiEnabled: () => true,
+      });
+      for (const id of [...six, "solo-oracle-menu"]) {
+        expect(idle.ctx.current.availableActions).not.toContain(id);
+      }
+    });
   });
 
   describe("solo sessions", () => {

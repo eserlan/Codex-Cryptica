@@ -28,6 +28,8 @@ export interface HelpContextSources {
   getActiveSidebarTool?: () => "oracle" | "explorer" | "shelf" | "none";
   /** Whether a solo session is running in this vault. Facts only, no names. */
   soloSession?: () => { active: boolean };
+  /** Whether the AI Oracle is turned on for this user (Solo Play Loop). */
+  aiEnabled?: () => boolean;
 }
 
 const ROUTE_AREAS: Record<string, HelpArea> = {
@@ -89,6 +91,8 @@ function flagsFor(
   if (sources.generatorsAvailable()) flags.push("generators");
   if (surface?.canAddConnection()) flags.push("connections-editable");
   flags.push(...sidePanelFlags(sources), ...soloFlags(sources));
+  if (sources.getOpenHelpArea?.() === "session-journal")
+    flags.push("session-journal-open");
   return flags;
 }
 
@@ -124,10 +128,25 @@ function entityActionsFor(
  */
 function soloActionsFor(sources: HelpContextSources): string[] {
   if (sources.isGuestMode()) return [];
-  if (sources.soloSession?.().active)
-    return ["solo-quick-roll", "solo-end-session"];
+  if (sources.soloSession?.().active) {
+    const actions = [
+      "solo-quick-roll",
+      "solo-end-session",
+      "solo-generate-menu",
+      "solo-recent-results",
+      "solo-pinned-tables",
+      "solo-party-menu",
+      "solo-scene-menu",
+      "solo-yes-no-menu",
+      "solo-threads-menu",
+    ];
+    // The Oracle menu is an AI feature: it is listed only while AI is on.
+    if (sources.aiEnabled?.()) actions.push("solo-oracle-menu");
+    return actions;
+  }
+  // Threads can be kept with no session running (spec 174, FR-020).
   return sources.getRouteId() === "/(app)/play"
-    ? ["play-start-solo-session"]
+    ? ["play-start-solo-session", "solo-threads-menu"]
     : [];
 }
 
@@ -145,6 +164,9 @@ function availableActionsFor(
   if (!sources.isGuestMode()) actions.push(...SETTINGS_PANEL_IDS);
   if (!sources.isGuestMode() && sources.journalAvailable?.())
     actions.push("session-journal");
+  // The Capture menu is in the open journal header (spec 174, US4).
+  if (sources.getOpenHelpArea?.() === "session-journal")
+    actions.push("journal-capture-menu");
   actions.push(...soloActionsFor(sources));
   return actions;
 }

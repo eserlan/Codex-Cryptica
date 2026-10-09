@@ -1,5 +1,8 @@
 import { describe, it, expect } from "vitest";
 import {
+  formatGeneratedResult,
+  formatGeneratedSaved,
+  formatPartyChange,
   buildCaptureFromRoll,
   captureToEntryInput,
   formatMapMove,
@@ -400,6 +403,136 @@ describe("captureToEntryInput", () => {
     });
     expect(result.ok && (result.input.sourceRef as any).cards.length).toBe(
       JOURNAL_CAPTURE_LIMITS.maxCards,
+    );
+  });
+});
+
+describe("generated-result and generated-saved captures (Solo Play Loop, FR-008)", () => {
+  it("records a generated result with its kind, title and summary", () => {
+    const payload = formatGeneratedResult({
+      generatorId: "npc",
+      title: "Mara One-Eye",
+      summary: "a one-eyed smuggler",
+    });
+    expect(payload.entryType).toBe("generated-result");
+    expect(payload.content).toBe(
+      "Generated NPC: Mara One-Eye — a one-eyed smuggler",
+    );
+    expect(payload.sourceRef).toEqual({ generatorId: "npc" });
+  });
+
+  it("clamps a long summary", () => {
+    const payload = formatGeneratedResult({
+      generatorId: "rumour",
+      title: "Gossip",
+      summary: "x".repeat(400),
+    });
+    expect(payload.content.length).toBeLessThanOrEqual(280);
+  });
+
+  it("gives a payload the journal rejects when the title is blank", () => {
+    const payload = formatGeneratedResult({ generatorId: "npc", title: "   " });
+    expect(captureToEntryInput(payload).ok).toBe(false);
+  });
+
+  it("records a save as a short follow-up entry", () => {
+    const payload = formatGeneratedSaved({
+      title: "Mara One-Eye",
+      category: "character",
+    });
+    expect(payload.entryType).toBe("generated-saved");
+    expect(payload.content).toBe(
+      "Saved Mara One-Eye to the Vault as a Character.",
+    );
+  });
+});
+
+describe("formatPartyChange", () => {
+  it("describes who joined and who left", () => {
+    expect(
+      formatPartyChange({ joined: ["Kael"], left: ["Brother Ivo"] })?.content,
+    ).toBe("Party: Kael joined. Brother Ivo left.");
+  });
+
+  it("describes only joins, or only leaves", () => {
+    expect(formatPartyChange({ joined: ["Kael"], left: [] })?.content).toBe(
+      "Party: Kael joined.",
+    );
+    expect(formatPartyChange({ joined: [], left: ["Ivo"] })?.content).toBe(
+      "Party: Ivo left.",
+    );
+  });
+
+  it("returns null when nothing changed", () => {
+    expect(formatPartyChange({ joined: [], left: [] })).toBeNull();
+  });
+});
+
+describe("spec 174 formatters", () => {
+  it("names a very unlikely answer in words, with no question", async () => {
+    const { formatOracleAnswer } = await import("../src/capture");
+    const payload = formatOracleAnswer({
+      question: "",
+      likelihood: "very_unlikely",
+      roll: 31,
+      answer: "No",
+    } as never);
+    expect(payload.content).toBe(
+      "Oracle (Very unlikely): (no question) — No (31)",
+    );
+  });
+
+  it("formats an oracle answer with its question, odds, roll and answer", async () => {
+    const { formatOracleAnswer } = await import("../src/capture");
+    const payload = formatOracleAnswer({
+      question: "Is the guard asleep?",
+      likelihood: "likely",
+      roll: 34,
+      answer: "Yes, but",
+      event: null,
+    });
+    expect(payload.entryType).toBe("oracle-answer");
+    expect(payload.content).toBe(
+      'Oracle (Likely): "Is the guard asleep?" — Yes, but (34)',
+    );
+  });
+
+  it("writes an oracle answer with no question plainly", async () => {
+    const { formatOracleAnswer } = await import("../src/capture");
+    const payload = formatOracleAnswer({
+      question: "  ",
+      likelihood: "even",
+      roll: 90,
+      answer: "No",
+      event: null,
+    });
+    expect(payload.content).toBe("Oracle (Even): (no question) — No (90)");
+  });
+
+  it("formats a random event and a tension change, and skips an unchanged tension", async () => {
+    const { formatRandomEvent, formatTensionChange } =
+      await import("../src/capture");
+    expect(formatRandomEvent({ text: "A thread moves: reveal." }).content).toBe(
+      "Random event: A thread moves: reveal.",
+    );
+    expect(formatTensionChange(5, 6)?.content).toBe("Tension: 5 → 6");
+    expect(formatTensionChange(6, 6)).toBeNull();
+  });
+
+  it("formats opened, closed (with its note) and reopened threads", async () => {
+    const { formatThreadChange } = await import("../src/capture");
+    const thread = { title: "Why is the keeper lying?", kind: "mystery" };
+    expect(formatThreadChange("opened", thread).content).toBe(
+      "Thread opened (mystery): Why is the keeper lying?",
+    );
+    expect(
+      formatThreadChange("closed", {
+        ...thread,
+        closingNote: "She was his daughter",
+      }).content,
+    ).toBe("Thread closed: Why is the keeper lying? — She was his daughter");
+    expect(formatThreadChange("reopened", thread).content).toBe(
+      "Thread reopened: Why is the keeper lying?",
     );
   });
 });

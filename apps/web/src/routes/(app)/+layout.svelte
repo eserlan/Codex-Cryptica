@@ -54,6 +54,7 @@
   import { mapControlsUIStore } from "$lib/stores/ui/map-controls-ui.svelte";
   import { initFullscreenOnFirstInteraction } from "$lib/app/init/fullscreen-on-interaction";
   import { useGlobalShortcuts } from "$lib/hooks/useGlobalShortcuts.svelte";
+  import { soloPlayGuard } from "$lib/stores/solo-session-instance";
   import {
     decideFirstRunAction,
     hasUnseenMinorRelease,
@@ -699,6 +700,7 @@
     modalUIStore,
     quickNoteStore,
     oracle,
+    sharedMode: { toggle: () => soloPlayGuard.toggleSharedMode() },
   });
 </script>
 

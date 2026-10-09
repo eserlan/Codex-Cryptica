@@ -1,15 +1,37 @@
 import { untrack } from "svelte";
 import {
   createSoloSession,
+  withParty,
   normaliseSceneName,
   parseSoloSession,
   resolveDefaultMap,
   withLastRoll,
-  withScene,
   type SoloSession,
   type SoloSetup,
+  withSceneAdded,
+  withCurrentSceneRenamed,
+  nextVisitName,
+  type SoloScene,
+  askOracle,
+  rollRandomEvent,
+  withTension,
+  clampTension,
+  TENSION_DEFAULT,
+  type EventContext,
+  type Likelihood,
+  type OracleAnswer,
+  type RandomEvent,
 } from "solo-session-engine";
 import type { StorageLike } from "$lib/utils/runtime-deps";
+import {
+  formatOracleAnswer,
+  formatPartyChange,
+  formatRandomEvent,
+  formatTensionChange,
+  isCaptured,
+  type CaptureKind,
+  type JournalCapturePayload,
+} from "session-journal-engine";
 
 export const SOLO_SESSION_KEY_PREFIX = "codex-solo-session:";
 export const SHARED_SOLO_NOTE = "End shared play to start a solo session.";
@@ -19,12 +41,22 @@ export const SOLO_SHARED_NOTE =
 export const soloSessionKey = (vaultId: string) =>
   `${SOLO_SESSION_KEY_PREFIX}${vaultId}`;
 
+/** The active map's name is the place used by random-event subjects. */
+export function resolveSoloPlaceName(
+  mapId: string | null,
+  maps: Record<string, { name: string }> | undefined,
+): string | null {
+  return mapId ? (maps?.[mapId]?.name ?? null) : null;
+}
+
 /** The journal, as the solo session uses it. */
 export interface JournalPort {
   current: {
     id: string;
     status: "active" | "ended";
     sections: { id: string }[];
+    captureOff?: CaptureKind[];
+    captureMapMoves?: boolean;
   } | null;
   start(): Promise<{ id: string }>;
   end(): Promise<void>;
@@ -52,7 +84,29 @@ export interface SoloSessionDeps {
   isGuest(): boolean;
   isSharedPlayOn(): boolean;
   notify(message: string): void;
+  /** The vault's Character entities, for resolving party names. */
+  characters(): { id: string; name: string }[];
+  /** Emits a JOURNAL:CAPTURE; the journal records it only while one runs. */
+  publishCapture(payload: JournalCapturePayload): void;
+  /** Random numbers in [0, 1). Defaults to the platform's secure source. */
+  random?: () => number;
+  /** The vault's open threads, offered as event subjects (spec 174, FR-015). */
+  openThreads?: () => { id: string; title: string }[];
+  /** The name of the current place, for events about the place (FR-015). */
+  placeName?: () => string | null;
 }
+
+const secureRandom = (): number => {
+  if (
+    typeof crypto !== "undefined" &&
+    typeof crypto.getRandomValues === "function"
+  ) {
+    const array = new Uint32Array(1);
+    crypto.getRandomValues(array);
+    return array[0] / (0xffffffff + 1);
+  }
+  return Math.random();
+};
 
 /**
  * One solo session per vault. Campaign knowledge stays in the vault and the
@@ -109,29 +163,13 @@ export class SoloSessionStore {
 
   /** Starts a session. Throws, and writes nothing, when it cannot start. */
   async start(setup: SoloSetup): Promise<void> {
-    const vaultId = this.deps.vaultId();
-    if (!vaultId) throw new Error("No vault is open.");
-    if (this.deps.isGuest()) {
-      throw new Error("Solo sessions are not available in guest mode.");
-    }
-    if (this.deps.isSharedPlayOn()) throw new Error(SHARED_SOLO_NOTE);
-    if (this.session || this.starting) {
-      throw new Error("A solo session is already running in this vault.");
-    }
+    const vaultId = this.requireStartableVault();
 
     this.starting = true;
     try {
-      let journalId: string | null = null;
-      if (setup.journal) {
-        try {
-          journalId = (await this.deps.journal.start()).id;
-        } catch {
-          this.deps.notify(
-            "The Session Journal could not start. Your solo session started without it.",
-          );
-        }
-      }
-      this.write(createSoloSession(vaultId, setup, journalId, this.deps));
+      const journalId = setup.journal ? await this.startJournal() : null;
+      const created = createSoloSession(vaultId, setup, journalId, this.deps);
+      this.write(setup.partyIds ? withParty(created, setup.partyIds) : created);
     } finally {
       this.starting = false;
     }
@@ -142,6 +180,32 @@ export class SoloSessionStore {
       await this.deps.navigate("/map");
     } else {
       await this.deps.navigate("/");
+    }
+  }
+
+  /** The vault id a session can start in. Throws when it cannot start. */
+  private requireStartableVault(): string {
+    const vaultId = this.deps.vaultId();
+    if (!vaultId) throw new Error("No vault is open.");
+    if (this.deps.isGuest()) {
+      throw new Error("Solo sessions are not available in guest mode.");
+    }
+    if (this.deps.isSharedPlayOn()) throw new Error(SHARED_SOLO_NOTE);
+    if (this.session || this.starting) {
+      throw new Error("A solo session is already running in this vault.");
+    }
+    return vaultId;
+  }
+
+  /** The journal is optional: if it cannot start, the session starts without one. */
+  private async startJournal(): Promise<string | null> {
+    try {
+      return (await this.deps.journal.start()).id;
+    } catch {
+      this.deps.notify(
+        "The Session Journal could not start. Your solo session started without it.",
+      );
+      return null;
     }
   }
 
@@ -178,16 +242,35 @@ export class SoloSessionStore {
     const result = normaliseSceneName(input);
     if (!result.ok) return false;
 
+    // A scene only gets its own journal section while scenes are captured (spec 174, FR-023).
     let sectionId: string | null = null;
-    if (this.journalRunning) {
+    if (this.journalRunning && this.scenesCaptured()) {
       try {
         sectionId = (await this.deps.journal.createSection(result.name)).id;
       } catch {
         sectionId = null;
       }
     }
-    this.write(withScene(session, result.name, sectionId));
+    this.write(withSceneAdded(session, result.name, sectionId));
     return true;
+  }
+
+  private scenesCaptured(): boolean {
+    const journal = this.deps.journal.current;
+    return !!journal && isCaptured(journal, "scene");
+  }
+
+  /** Starts a numbered new visit to a past scene, in a new section (FR-023). */
+  async returnToScene(index: number): Promise<boolean> {
+    const session = this.requireSession();
+    const name = nextVisitName(session.scenes, index);
+    if (!name) return false;
+    return this.setScene(name);
+  }
+
+  /** The session's scenes in order; the last is current. */
+  get scenes(): SoloScene[] {
+    return this.session?.scenes ?? [];
   }
 
   /** Renames the current scene and, when its journal section still exists, that section. */
@@ -200,14 +283,108 @@ export class SoloSessionStore {
     const sectionExists =
       !!session.sceneSectionId &&
       !!journal?.sections.some((s) => s.id === session.sceneSectionId);
-    if (sectionExists && this.journalRunning) {
+    if (sectionExists && this.journalRunning && this.scenesCaptured()) {
       await this.deps.journal.renameSection(
         session.sceneSectionId!,
         result.name,
       );
     }
-    this.write(withScene(session, result.name, session.sceneSectionId));
+    this.write(withCurrentSceneRenamed(session, result.name));
     return true;
+  }
+
+  /** The party, resolved to names. Members no longer in the vault are dropped. */
+  /** The session's tension, 1 to 9; the default when no session runs (spec 174, FR-010). */
+  get tension(): number {
+    return this.session?.tension ?? TENSION_DEFAULT;
+  }
+
+  /** Raises or lowers tension one step, kept to 1 to 9, and journals a real change. */
+  setTension(value: number): void {
+    const session = this.session;
+    if (!session) return;
+    const next = clampTension(value);
+    if (next === session.tension) return;
+    const from = session.tension;
+    this.write(withTension(session, next));
+    const payload = formatTensionChange(from, next);
+    if (payload) this.deps.publishCapture(payload);
+  }
+
+  raiseTension(): void {
+    this.setTension(this.tension + 1);
+  }
+
+  lowerTension(): void {
+    this.setTension(this.tension - 1);
+  }
+
+  /** What an event can refer to right now (spec 174, FR-015). */
+  eventContext(): EventContext {
+    return {
+      openThreads: this.deps.openThreads?.() ?? [],
+      partyNames: this.party.map((m) => m.name),
+      placeName: this.deps.placeName?.() ?? null,
+    };
+  }
+
+  /**
+   * Asks the dice a yes/no question. Works with or without a running session
+   * and journal; the journal only records while one runs. Publishes the answer
+   * and, when one follows, the random event (spec 174, FR-005, FR-006, FR-016).
+   */
+  ask(question: string, likelihood: Likelihood): OracleAnswer {
+    const random = this.deps.random ?? secureRandom;
+    const result = askOracle(
+      {
+        question,
+        likelihood,
+        tension: this.tension,
+        context: this.eventContext(),
+      },
+      random,
+    );
+    this.deps.publishCapture(formatOracleAnswer(result));
+    if (result.event) this.deps.publishCapture(formatRandomEvent(result.event));
+    return result;
+  }
+
+  /** A random event on request, recorded like any other (spec 174, FR-013). */
+  randomEvent(): RandomEvent {
+    const random = this.deps.random ?? secureRandom;
+    const event = rollRandomEvent(this.eventContext(), random);
+    this.deps.publishCapture(formatRandomEvent(event));
+    return event;
+  }
+
+  get party(): { id: string; name: string }[] {
+    const known = new Map(this.deps.characters().map((c) => [c.id, c.name]));
+    return (this.session?.partyIds ?? [])
+      .filter((id) => known.has(id))
+      .map((id) => ({ id, name: known.get(id)! }));
+  }
+
+  /** Sets the party. While a journal runs, joins and leaves are recorded in it. */
+  async setParty(ids: string[]): Promise<void> {
+    const session = this.requireSession();
+    // Only Characters that still exist count, so a deleted member neither
+    // takes a place in the party nor shows up in the journal.
+    const characters = this.deps.characters();
+    const names = new Map(characters.map((c) => [c.id, c.name]));
+    const known = (list: readonly string[]) =>
+      list.filter((id) => names.has(id));
+    const next = withParty(session, known(ids));
+    const before = new Set(known(session.partyIds));
+    const after = new Set(next.partyIds);
+    const label = (id: string) => names.get(id) ?? id;
+    const joined = next.partyIds.filter((id) => !before.has(id)).map(label);
+    const left = [...before].filter((id) => !after.has(id)).map(label);
+
+    this.write(next);
+    if (this.journalRunning && (joined.length || left.length)) {
+      const payload = formatPartyChange({ joined, left });
+      if (payload) this.deps.publishCapture(payload);
+    }
   }
 
   recordRoll(expression: string): void {
@@ -226,7 +403,11 @@ export class SoloSessionStore {
       try {
         await this.deps.journal.end();
       } catch {
-        this.deps.notify("The Session Journal could not be ended.");
+        // Keep the session: the journal is still running, and the player can try again.
+        this.deps.notify(
+          "The Session Journal could not be ended. The solo session is still running.",
+        );
+        return;
       }
     }
     this.clear(vaultId);

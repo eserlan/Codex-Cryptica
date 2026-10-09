@@ -339,4 +339,24 @@ describe("QuickNoteStore (Svelte 5 Runes)", () => {
 
     expect(unsubscribeMock).toHaveBeenCalled();
   });
+
+  describe("journal section filter (Solo Play Loop, FR-023)", () => {
+    it("opens the journal showing only one section when asked", () => {
+      store.openJournal({ sectionId: "s1" });
+      expect(store.journalSectionFilter).toBe("s1");
+      expect(store.activeTab).toBe("journal");
+    });
+
+    it("opening the journal without a section shows every section", () => {
+      store.openJournal({ sectionId: "s1" });
+      store.openJournal();
+      expect(store.journalSectionFilter).toBeNull();
+    });
+
+    it("Show all clears the section filter", () => {
+      store.openJournal({ sectionId: "s2" });
+      store.showAllJournalSections();
+      expect(store.journalSectionFilter).toBeNull();
+    });
+  });
 });

@@ -279,4 +279,89 @@ describe("useGlobalShortcuts", () => {
     expect(mockContext.quickNoteStore.toggle).not.toHaveBeenCalled();
     expect(mockContext.modalUIStore.closeSettings).not.toHaveBeenCalled();
   });
+
+  describe("shared play with p", () => {
+    const baseContext = () => ({
+      searchStore: { isOpen: false, toggle: vi.fn(), close: vi.fn() },
+      modalUIStore: { showSettings: false, closeSettings: vi.fn() },
+      quickNoteStore: { isOpen: false, toggle: vi.fn(), close: vi.fn() },
+      oracle: { undo: vi.fn() },
+    });
+
+    it("toggles shared play on 'p' through the solo guard", () => {
+      const sharedMode = { toggle: vi.fn(() => true) };
+      const handleKeydown = useGlobalShortcuts({
+        ...baseContext(),
+        sharedMode,
+      })!;
+      handleKeydown(new KeyboardEvent("keydown", { key: "p" }));
+      expect(sharedMode.toggle).toHaveBeenCalledOnce();
+    });
+
+    it("still calls the guard when it refuses, and does not throw", () => {
+      // The guard explains a refusal itself; the hook only asks.
+      const sharedMode = { toggle: vi.fn(() => false) };
+      const handleKeydown = useGlobalShortcuts({
+        ...baseContext(),
+        sharedMode,
+      })!;
+      expect(() =>
+        handleKeydown(new KeyboardEvent("keydown", { key: "p" })),
+      ).not.toThrow();
+      expect(sharedMode.toggle).toHaveBeenCalledOnce();
+    });
+
+    it("ignores 'p' typed into a text field, and Ctrl/Cmd/Alt+p", () => {
+      const sharedMode = { toggle: vi.fn(() => true) };
+      const handleKeydown = useGlobalShortcuts({
+        ...baseContext(),
+        sharedMode,
+      })!;
+      const input = document.createElement("input");
+      document.body.appendChild(input);
+      input.focus();
+      handleKeydown(new KeyboardEvent("keydown", { key: "p" }));
+      input.blur();
+      input.remove();
+      handleKeydown(new KeyboardEvent("keydown", { key: "p", ctrlKey: true }));
+      handleKeydown(new KeyboardEvent("keydown", { key: "p", metaKey: true }));
+      handleKeydown(new KeyboardEvent("keydown", { key: "p", altKey: true }));
+      expect(sharedMode.toggle).not.toHaveBeenCalled();
+    });
+
+    it("does nothing with 'p' when no shared-play control is given", () => {
+      const handleKeydown = useGlobalShortcuts(baseContext())!;
+      expect(() =>
+        handleKeydown(new KeyboardEvent("keydown", { key: "p" })),
+      ).not.toThrow();
+    });
+  });
+
+  it("ignores 'p' while a control has focus or a dialog is open", () => {
+    const sharedMode = { toggle: vi.fn(() => true) };
+    const handleKeydown = useGlobalShortcuts({
+      searchStore: { isOpen: false, toggle: vi.fn(), close: vi.fn() },
+      modalUIStore: { showSettings: false, closeSettings: vi.fn() },
+      quickNoteStore: { isOpen: false, toggle: vi.fn(), close: vi.fn() },
+      oracle: { undo: vi.fn() },
+      sharedMode,
+    })!;
+
+    const button = document.createElement("button");
+    document.body.appendChild(button);
+    button.focus();
+    handleKeydown(new KeyboardEvent("keydown", { key: "p" }));
+    button.blur();
+    button.remove();
+
+    const dialog = document.createElement("div");
+    dialog.setAttribute("role", "dialog");
+    document.body.appendChild(dialog);
+    handleKeydown(new KeyboardEvent("keydown", { key: "p" }));
+    dialog.remove();
+
+    expect(sharedMode.toggle).not.toHaveBeenCalled();
+    handleKeydown(new KeyboardEvent("keydown", { key: "p" }));
+    expect(sharedMode.toggle).toHaveBeenCalledOnce();
+  });
 });

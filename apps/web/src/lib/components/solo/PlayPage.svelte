@@ -9,6 +9,8 @@
   import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
   import { sessionJournalStore } from "$lib/stores/session-journal.svelte";
   import { vault } from "$lib/stores/vault.svelte";
+  import { characterChoices } from "$lib/services/solo-characters";
+  import SoloThreadsMenu from "./SoloThreadsMenu.svelte";
 
   let setupOpen = $state(false);
 
@@ -18,6 +20,7 @@
     Object.values(vault.maps ?? {}).map((m) => ({ id: m.id, name: m.name })),
   );
   const journalState = $derived(sessionJournalStore.controlState);
+  const characters = $derived(characterChoices(vault.entities));
 </script>
 
 <svelte:head>
@@ -81,6 +84,17 @@
       {/if}
     </section>
 
+    <section class="rounded-lg border border-theme-border p-4">
+      <h2 class="font-header text-base text-theme-text">Threads</h2>
+      <p class="mt-1 text-sm text-theme-muted">
+        Open questions, leads and mysteries that carry across sessions. You can
+        keep them here, with or without a session running.
+      </p>
+      <div class="mt-3">
+        <SoloThreadsMenu />
+      </div>
+    </section>
+
     {#if !discoveryPolicyStore.aiDisabled}
       <a
         href="{base}/adventure"
@@ -102,6 +116,7 @@
 {#if setupOpen}
   <SoloSetupDialog
     {maps}
+    {characters}
     defaultMapId={soloSessionStore.defaultMapId()}
     {journalState}
     onclose={() => (setupOpen = false)}

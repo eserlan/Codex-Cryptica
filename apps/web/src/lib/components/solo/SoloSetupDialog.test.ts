@@ -12,6 +12,11 @@ vi.mock("$lib/stores/solo-session-instance", () => instance);
 
 import SoloSetupDialog from "./SoloSetupDialog.svelte";
 
+const characters = [
+  { id: "kael", name: "Kael" },
+  { id: "ivo", name: "Brother Ivo" },
+];
+
 const maps = [
   { id: "m1", name: "Greyhollow" },
   { id: "m2", name: "The Marsh" },
@@ -25,6 +30,7 @@ beforeEach(() => {
 function renderDialog(
   props: Partial<{
     maps: typeof maps;
+    characters: typeof characters;
     defaultMapId: string | null;
     journalState: "start" | "open" | "resume";
   }> = {},
@@ -33,6 +39,7 @@ function renderDialog(
   render(SoloSetupDialog, {
     props: {
       maps,
+      characters,
       defaultMapId: "m2",
       journalState: "start",
       onclose,
@@ -43,6 +50,22 @@ function renderDialog(
 }
 
 describe("SoloSetupDialog", () => {
+  it("keeps the dialog within the screen and scrolls a long party list", () => {
+    const many = Array.from({ length: 200 }, (_, i) => ({
+      id: `c${i}`,
+      name: `Character ${i}`,
+    }));
+    renderDialog({ characters: many });
+    const dialog = screen.getByTestId("solo-setup-dialog");
+    const body = screen.getByTestId("solo-setup-body");
+    expect(dialog.className).toContain("max-h-full");
+    expect(body.className).toContain("overflow-y-auto");
+    // The scrolling body holds the list; the actions sit outside it.
+    expect(body.contains(screen.getByText("Character 199"))).toBe(true);
+    expect(body.contains(screen.getByTestId("solo-setup-start"))).toBe(false);
+    expect(body.contains(screen.getByTestId("solo-setup-cancel"))).toBe(false);
+  });
+
   it("lists the vault's maps plus No map, preselected to the default", () => {
     renderDialog();
     const select = screen.getByTestId("solo-setup-map") as HTMLSelectElement;
@@ -127,5 +150,37 @@ describe("SoloSetupDialog", () => {
     const { onclose } = renderDialog();
     await fireEvent.keyDown(window, { key: "Escape" });
     expect(onclose).toHaveBeenCalled();
+  });
+
+  it("offers an optional party picker of Character entities", () => {
+    renderDialog();
+    expect(screen.getByRole("checkbox", { name: "Kael" })).toBeTruthy();
+    expect(screen.getByRole("checkbox", { name: "Brother Ivo" })).toBeTruthy();
+    expect(
+      (screen.getByRole("checkbox", { name: "Kael" }) as HTMLInputElement)
+        .checked,
+    ).toBe(false);
+  });
+
+  it("starts with the chosen party", async () => {
+    renderDialog({ defaultMapId: null });
+    await fireEvent.click(screen.getByRole("checkbox", { name: "Kael" }));
+    await fireEvent.click(screen.getByTestId("solo-setup-start"));
+    await waitFor(() =>
+      expect(instance.soloSessionStore.start).toHaveBeenCalledWith(
+        expect.objectContaining({ partyIds: ["kael"] }),
+      ),
+    );
+  });
+
+  it("starts with no party when none is chosen", async () => {
+    renderDialog({ defaultMapId: null });
+    await fireEvent.click(screen.getByTestId("solo-setup-start"));
+    await waitFor(() =>
+      expect(instance.soloSessionStore.start).toHaveBeenCalled(),
+    );
+    expect(instance.soloSessionStore.start.mock.calls[0][0]).not.toHaveProperty(
+      "partyIds",
+    );
   });
 });
