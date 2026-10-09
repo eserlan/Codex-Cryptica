@@ -1,5 +1,5 @@
 {
-  "updated_at": 1791535573,
+  "updated_at": 1791537226,
   "candidates": [
     {
       "id": "reddit-37303537385-the-treasury-s-tipping-point-a-5-seat-co",
@@ -72,14 +72,14 @@
       "created_at": 1791450142
     },
     {
-      "id": "reddit-37903304382-i-kept-building-a-continent-before-i-had",
-      "title": "I kept building a continent before I had written a scene",
-      "body": "For a while my novel prep was a pantheon, a thousand years of history, and no opening paragraph. It felt like progress but it did not tell me who walks into the first room or what they want.\n\nI wrote a fiction-first framework for starting worldbuilding before you draft.\n\nIt lives here: https://codexcryptica.com/answers/how-do-i-start-worldbuilding-for-a-novel-or-short-story\n\nInside:\n- a five-step sequence from a one sentence premise to viewpoint, goal and immediate obstacle\n- choosing three setting truths that actually pressure your character, not just flavour\n- building only the single location and handful of people needed for the opening scene\n- tables to test whether a truth limits choices, and checklists for when to stop adding lore\n- a clear lane for fiction, with a pointer to the tabletop sandbox method when you need playable sprawl instead\n\nIt trades completeness for momentum. If you need a full atlas on day one, this will feel thin. If you need to start drafting, it keeps the world tied to the next scene.\n\nWhen you start a story, what do you build first and what do you deliberately leave for later?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/og/fantasy-worldbuilding.jpg)",
-      "url": "https://codexcryptica.com/answers/how-do-i-start-worldbuilding-for-a-novel-or-short-story",
-      "image_url": "https://assets.codexcryptica.com/og/fantasy-worldbuilding.jpg",
+      "id": "reddit-37903304382-beginner-d-d-guides-were-buried-between-",
+      "title": "Beginner D&D guides were buried between deeper prep pages",
+      "body": "Even with the new beginner guides, finding the next step meant knowing the exact title. I wanted one place that tells a new player or GM where to start and what follows.\n\nI built a dedicated D&D Beginners topic hub that groups those guides in one browsable sequence.\n\nBrowse it here: https://codexcryptica.com/topics/dnd-beginners\n\nThe hub gives you:\n- a four-step table loop that explains how D&D actually plays before any rules detail\n- the six beginner guides in reading order, from knowing before your first game to reading the sheet, dice, combat and what to bring\n- a reassurance-first lead that makes clear the DM handles adjudication while you describe intentions\n- direct next-step links so you do not hunt through scattered answers\n\nIt only covers the on-ramp. If you are past your first few sessions, the broader D&D hub still holds the prep and organisation pieces.\n\nIf you were handing a friend one page before their first game, which section would you tell them to read first?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/announcements/release-37903304382-1.png)",
+      "url": "https://codexcryptica.com/topics/dnd-beginners",
+      "image_url": "https://assets.codexcryptica.com/announcements/release-37903304382-1.png",
       "source_id": "37903304382",
       "status": "approved",
-      "created_at": 1791535573
+      "created_at": 1791537226
     }
   ]
 }
