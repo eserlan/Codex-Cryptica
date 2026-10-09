@@ -54,6 +54,21 @@ describe("Oracle Proxy Worker CORS", () => {
     );
   });
 
+  it("returns not found for malformed percent escapes in starter deck paths", async () => {
+    for (const path of [
+      "/api/starter-tile-decks/%ZZ",
+      "/api/starter-tile-decks/kenney-scribble-dungeons/assets/%ZZ.png",
+    ]) {
+      const response = await worker.fetch(
+        new Request(`https://oracle-proxy.espen-erlandsen.workers.dev${path}`),
+        emptyEnv,
+        {} as ExecutionContext,
+      );
+
+      expect(response.status).toBe(404);
+    }
+  });
+
   it("allows Cloudflare Pages preview subdomains for this project", () => {
     expect(
       isOriginAllowed(

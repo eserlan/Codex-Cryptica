@@ -69,14 +69,22 @@ export async function handleStarterTileDecksRoute(
   if (request.method !== "GET")
     return withCors(new Response("Method not allowed", { status: 405 }));
   const parts = pathname.split("/");
-  const deckId = parts[3] ? decodeURIComponent(parts[3]) : undefined;
+  const deckId = parts[3] ? safelyDecodePathSegment(parts[3]) : undefined;
   if (!deckId) return withCors(new Response("Not found", { status: 404 }));
   if (parts.length === 4)
     return withCors(await handleGetStarterTileDeck(env, deckId));
   if (parts.length === 6 && parts[4] === "assets") {
-    return withCors(
-      await handleGetStarterTileDeck(env, deckId, decodeURIComponent(parts[5])),
-    );
+    const assetPath = safelyDecodePathSegment(parts[5]);
+    if (!assetPath) return withCors(new Response("Not found", { status: 404 }));
+    return withCors(await handleGetStarterTileDeck(env, deckId, assetPath));
   }
   return withCors(new Response("Not found", { status: 404 }));
+}
+
+function safelyDecodePathSegment(value: string): string | null {
+  try {
+    return decodeURIComponent(value);
+  } catch {
+    return null;
+  }
 }
