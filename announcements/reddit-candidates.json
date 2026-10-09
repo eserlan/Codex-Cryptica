@@ -1,16 +1,6 @@
 {
-  "updated_at": 1791540603,
+  "updated_at": 1791549895,
   "candidates": [
-    {
-      "id": "reddit-37303537385-the-treasury-s-tipping-point-a-5-seat-co",
-      "title": "The Treasury's Tipping Point \u2014 a 5-seat council vote for intrigue campaigns",
-      "body": "Every intrigue campaign hits the same scene: five people in a room, one vote, and you need it to feel like politics instead of a single persuasion roll.\n\nI generated a full example to have something I could run as is. The Republic of Karrow needs three of five senate votes to pass an Emergency Tax Decree, three weeks before an election, with garrisons about to go unpaid and grain syndicates buying influence.\n\nPlayable example here: https://codexcryptica.com/examples/the-treasurys-tipping-point-karrow-council-vote\n\nYou get a ready-to-run kit:\n- five councillors with public stances, true agendas and leverage (from Branric's treasury contracts to Daxmar's need for General Ostrelle's endorsement)\n- voting rules, current count (1 support, 2 leaning, 2 oppose) and what abstentions actually do\n- syndicate investigation leads for each member so the party earns votes through play\n- three paths to a majority, from a tight three-vote coalition to a costly four-vote deal that trades military oversight for stability\n\nTradeoff is it is written as a Classic Fantasy senate, so pulling it into a corporate board, guild council or star consortium takes renaming, though the vote maths and leverage structure hold as is.\n\nHave you run a council or board vote at your table \u2014 did you make players win votes one by one or handle it as a single check?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/announcements/council-vote-hero-v1.jpg)",
-      "url": "https://codexcryptica.com/examples/the-treasurys-tipping-point-karrow-council-vote",
-      "image_url": "https://assets.codexcryptica.com/announcements/council-vote-hero-v1.jpg",
-      "source_id": "37303537385",
-      "status": "approved",
-      "created_at": 1791204015
-    },
     {
       "id": "reddit-37419820135-how-should-a-fantasy-adventuring-guild-h",
       "title": "How should a fantasy adventuring guild handle wages, dues and shared expenses?",
