@@ -641,6 +641,9 @@ export class AdventureManager {
   async close(): Promise<void> {
     this.generationController?.abort();
     this.generationController = null;
+    if (this.session) {
+      void this.deps.clearGenerationInteraction(this.session.id);
+    }
     await this.deps.coordinator.stop();
     if (this.lease) {
       await this.deps.authority.release(this.lease);
@@ -648,6 +651,7 @@ export class AdventureManager {
     }
     this.session = null;
     this.readOnly = false;
+    this.draft = "";
     this.errorMessage = null;
     this.lastRollResult = null;
     this.phase = "idle";

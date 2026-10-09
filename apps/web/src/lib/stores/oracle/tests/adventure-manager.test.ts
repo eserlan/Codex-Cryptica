@@ -777,6 +777,8 @@ describe("AdventureManager Phase 2 tools", () => {
     deps.coordinator.stop = coordinatorStop;
     const releaseLease = vi.fn(async () => undefined);
     deps.authority.release = releaseLease;
+    const clearGenerationInteraction = vi.fn(async () => undefined);
+    deps.clearGenerationInteraction = clearGenerationInteraction;
     const archiveSpy = vi.spyOn(deps.repository, "archive");
 
     const manager = new AdventureManager(deps as any);
@@ -792,16 +794,20 @@ describe("AdventureManager Phase 2 tools", () => {
     });
 
     expect(manager.session).not.toBeNull();
+    const sessionId = manager.session!.id;
     const currentLease = manager.lease;
     expect(currentLease).not.toBeNull();
+    manager.draft = "an uncommitted action";
 
     await manager.close();
 
     expect(manager.session).toBeNull();
     expect(manager.phase).toBe("idle");
     expect(manager.readOnly).toBe(false);
+    expect(manager.draft).toBe("");
     expect(coordinatorStop).toHaveBeenCalled();
     expect(releaseLease).toHaveBeenCalledWith(currentLease);
+    expect(clearGenerationInteraction).toHaveBeenCalledWith(sessionId);
     expect(archiveSpy).not.toHaveBeenCalled();
   });
 });
