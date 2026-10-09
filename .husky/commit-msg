@@ -1,3 +1,7 @@
 #!/usr/bin/env sh
 [ -d "$HOME/.bun/bin" ] && export PATH="$HOME/.bun/bin:$PATH"
-bunx commitlint --edit "$1"
+if command -v bunx >/dev/null 2>&1; then
+	bunx commitlint --edit "$1"
+else
+	npx commitlint --edit "$1"
+fi
