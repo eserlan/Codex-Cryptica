@@ -1027,7 +1027,7 @@ async function handleInteraction(
   let result: any;
   let isGeminiResult: boolean;
 
-  if (wantsOpenAi && env.OPENAI_API_KEY) {
+  if (wantsOpenAi && (env.OPENAI_API_KEY || body.previous_interaction_id)) {
     result = await forwardInteractionToOpenAi(
       outgoingBody,
       registryModel!.modelId,
@@ -1043,7 +1043,10 @@ async function handleInteraction(
           (result.data as any)?.error?.message || "",
         ));
 
-    if (!result.ok && !isStaleId) {
+    // A continuation id belongs to the provider that issued it. Gemini cannot
+    // resume an OpenAI response, and the Interactions request only contains the
+    // incremental turn, so retrying it without that id would also drop history.
+    if (!result.ok && !isStaleId && !body.previous_interaction_id) {
       console.warn(
         `[Oracle Proxy] OpenAI interaction failed (${result.status}), falling back to Gemini (${geminiFallbackModel}):`,
         (result.data as any)?.error?.message,

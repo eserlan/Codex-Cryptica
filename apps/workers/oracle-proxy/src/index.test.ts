@@ -811,6 +811,55 @@ describe("Oracle Proxy Worker Interactions API", () => {
     );
     expect(callCount).toBe(2);
   });
+
+  it("does not send an OpenAI continuation id to Gemini after a failed continuation", async () => {
+    const fetchMock = vi.fn(
+      async () =>
+        new Response(
+          JSON.stringify({ error: { message: "OpenAI service error" } }),
+          { status: 500, headers: { "Content-Type": "application/json" } },
+        ),
+    );
+    globalThis.fetch = fetchMock as typeof fetch;
+
+    const response = await worker.fetch(
+      request({
+        input: "The next action only",
+        model: "luna-fast",
+        previous_interaction_id: "resp_openai_previous",
+      }),
+      { ...env, OPENAI_API_KEY: "test-openai-key" },
+      {} as ExecutionContext,
+    );
+
+    expect(response.status).toBe(500);
+    expect(await response.json()).toEqual({
+      error: { message: "OpenAI service error" },
+    });
+    expect(fetchMock).toHaveBeenCalledOnce();
+    expect(String(fetchMock.mock.calls[0][0])).toContain("/v1/responses");
+  });
+
+  it("does not send an OpenAI continuation id to Gemini when the key is missing", async () => {
+    const fetchMock = vi.fn();
+    globalThis.fetch = fetchMock as typeof fetch;
+
+    const response = await worker.fetch(
+      request({
+        input: "The next action only",
+        model: "luna-fast",
+        previous_interaction_id: "resp_openai_previous",
+      }),
+      env,
+      {} as ExecutionContext,
+    );
+
+    expect(response.status).toBe(500);
+    expect(await response.json()).toEqual({
+      error: { message: "missing-openai-api-key" },
+    });
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
 });
 
 describe("Oracle Proxy Worker: operation-field discriminator (US1 regression)", () => {
