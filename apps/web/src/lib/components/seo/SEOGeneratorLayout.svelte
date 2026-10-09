@@ -1,88 +1,41 @@
 <script lang="ts">
-  import { base, resolve } from "$app/paths";
-  const cleanBase = base === "/" ? "" : base;
-  import { goto } from "$app/navigation";
-  import { fade } from "svelte/transition";
+  import type { Snippet } from "svelte";
+  import { browser } from "$app/environment";
   import type { GeneratorOutput } from "$lib/services/seo/generator-engine";
   import type { MarkdownSectionForCopy } from "$lib/components/seo/markdown-sections";
-  import { tick } from "svelte";
-  import type { Snippet } from "svelte";
-  import { themeStore } from "$lib/stores/theme.svelte";
-  import { onlineStatus } from "$lib/stores/online.svelte";
-  import { browser, dev } from "$app/environment";
+  import { splitMarkdownForCopy } from "$lib/components/seo/markdown-sections";
   import { getGeneratorDocumentLayout } from "$lib/components/seo/generator-document-layout";
   import { getGeneratorColumnClasses } from "./generator-column-classes";
-  import { splitMarkdownForCopy } from "$lib/components/seo/markdown-sections";
-  import { handleGeneratorInlineCopy } from "$lib/components/seo/generator-inline-copy";
-  import {
-    buildGeneratorMarkdown,
-    buildSectionMarkdown,
-    buildSessionEntityMarkdown,
-  } from "$lib/components/seo/generator-copy";
-  import { renderGeneratorLore } from "$lib/components/seo/markdown-renderers";
+  import { themeStore } from "$lib/stores/theme.svelte";
+  import { onlineStatus } from "$lib/stores/online.svelte";
   import { sessionHubStore } from "$lib/stores/session-hub.svelte";
-  import { loreMergeStore } from "$lib/stores/ui/lore-merge.svelte";
-  import ProvenanceBadge from "./ProvenanceBadge.svelte";
-  import GeneratorIntroPanel from "./GeneratorIntroPanel.svelte";
-  import FaqSection from "./FaqSection.svelte";
-  import RelatedLinksSection from "./RelatedLinksSection.svelte";
-  import SaveToCodexModal from "./SaveToCodexModal.svelte";
-  import EntityDetailModal from "./EntityDetailModal.svelte";
-  import GeneratorRefinementModal from "./GeneratorRefinementModal.svelte";
-  import LoreMergeModal from "$lib/components/modals/LoreMergeModal.svelte";
-  import MonsterLabsSendingModal from "$lib/components/modals/MonsterLabsSendingModal.svelte";
-  import GeneratorOutputCard from "./GeneratorOutputCard.svelte";
-  import StarSystemDiagram from "./StarSystemDiagram.svelte";
-  import ConstellationChart from "./ConstellationChart.svelte";
-  import { blobToDataUrl } from "$lib/utils/svg-export";
-  import SEOGeneratorHead from "./SEOGeneratorHead.svelte";
-  import { unregisterDevelopmentServiceWorkers } from "$lib/utils/dev-service-worker";
-  import {
-    getContextSelection,
-    computeProvenance,
-    type SessionEntity,
-    type RefinementDocument,
-  } from "generator-engine";
-  import { GeneratorRefinementService } from "$lib/services/GeneratorRefinementService.svelte";
-  import { buildLoreMergePlan } from "$lib/utils/lore-sections";
-  import {
-    trackEvent,
-    trackPublicGeneratorAction,
-  } from "$lib/services/analytics/zaraz-analytics";
-  import {
-    trackSaveToCodex,
-    countRelatedEntities,
-  } from "$lib/services/analytics/generator-save-tracking";
-  import { registerShellCtaHandler } from "./marketing-shell";
+  import { getContextSelection, type SessionEntity } from "generator-engine";
   import {
     clipboardService as defaultClipboardService,
     type ClipboardService,
   } from "$lib/services/ClipboardService";
-  import { createMonsterLabsHandoffFlow } from "$lib/services/seo/monsterlabs-handoff-flow.svelte";
+  import { when } from "$lib/utils/when";
+  import { registerShellCtaHandler } from "./marketing-shell";
   import {
     resolveWorldThemeId,
     resolveGeneratorType,
     resolveGeneratedNoun,
     resolveGeneratedSingular,
   } from "./generator-page-identity";
-  import { generatorShareService } from "$lib/services/sharing/GeneratorShareService";
-  import { createGeneratorPageSharing } from "./generator-page-sharing";
-  import {
-    buildAdventureCanvasTransfer,
-    buildDelveCanvasTransfer,
-  } from "./generator-canvas-transfer";
-  import { handoffGeneratorToCanvas } from "./generator-canvas-handoff";
-  import {
-    saveGeneratorOutput,
-    saveSessionHubEntities,
-  } from "$lib/components/seo/generator-save-flow";
-  import {
-    trackGeneratorShareCreated,
-    trackGeneratorShareLinkCopied,
-    trackGeneratorShareCompleted,
-    trackGeneratorShareClicked,
-    type GeneratorShareSource,
-  } from "$lib/services/sharing/generator-share-tracking";
+  import FaqSection from "./FaqSection.svelte";
+  import RelatedLinksSection from "./RelatedLinksSection.svelte";
+  import GeneratorOutputCard from "./GeneratorOutputCard.svelte";
+  import SEOGeneratorHead from "./SEOGeneratorHead.svelte";
+  import GeneratorFormPanel from "./layout/GeneratorFormPanel.svelte";
+  import GeneratorDiagrams from "./layout/GeneratorDiagrams.svelte";
+  import GeneratorRail from "./layout/GeneratorRail.svelte";
+  import GeneratorModals from "./layout/GeneratorModals.svelte";
+  import { useGeneratorSession } from "./layout/use-generator-session.svelte";
+  import { useGeneratorClipboard } from "./layout/use-generator-clipboard.svelte";
+  import { useGeneratorSave } from "./layout/use-generator-save.svelte";
+  import { useGeneratorRefinement } from "./layout/use-generator-refinement.svelte";
+  import { useGeneratorSharing } from "./layout/use-generator-sharing.svelte";
+  import { useGeneratorHandoffs } from "./layout/use-generator-handoffs.svelte";
 
   let {
     canonicalPath,
@@ -184,108 +137,96 @@
     backLabel?: string;
   } = $props();
 
-  let isGenerating = $state(false);
-  // Separate flag for the on-mount seed draft so it never blocks (or is blocked
-  // by) an explicit user Generate (#1494 review follow-up).
-  let isAutoDrafting = $state(false);
-  // Once the user explicitly generates, the in-flight seed draft must not clobber
-  // their result if it resolves later.
-  let userGenerated = $state(false);
-  // Follow-up actions must only use a result from a completed explicit run,
-  // never the example draft left behind after a failed attempt.
-  let userGenerationSucceeded = $state(false);
-  const isBusy = $derived(isGenerating || isAutoDrafting);
-  // Streaming generators can show a usable draft before their final validation
-  // finishes. Keep the loading overlay only until that first preview arrives.
-  let hasStreamedPreview = $state(false);
-  const showOutputLoading = $derived(isBusy && !hasStreamedPreview);
-  let generatedData = $state<GeneratorOutput | null>(null);
-  let isExampleDraft = $state(false);
-  let currentPagePath = $state<string | undefined>(undefined);
-  let appliedInitialDraft: GeneratorOutput | null | undefined;
-
-  $effect(() => {
-    if (canonicalPath !== currentPagePath) {
-      currentPagePath = canonicalPath;
-      userGenerated = initialDraftIsUserGenerated;
-      userGenerationSucceeded = initialDraftIsUserGenerated;
-      generatedData = initialDraft;
-      isExampleDraft = !initialDraftIsUserGenerated;
-      appliedInitialDraft = initialDraft;
-    } else if (
-      initialDraft !== appliedInitialDraft &&
-      initialDraft &&
-      !userGenerated
-    ) {
-      generatedData = initialDraft;
-      userGenerated = initialDraftIsUserGenerated;
-      userGenerationSucceeded = initialDraftIsUserGenerated;
-      isExampleDraft = !initialDraftIsUserGenerated;
-      appliedInitialDraft = initialDraft;
-    }
-  });
-
-  const columnClasses = $derived(
-    getGeneratorColumnClasses(singleColumn, wideForm),
-  );
-
   let outputCard = $state<HTMLElement | null>(null);
-  let starSystemDiagramRef = $state<ReturnType<
-    typeof StarSystemDiagram
-  > | null>(null);
-  let constellationChartRef = $state<ReturnType<
-    typeof ConstellationChart
-  > | null>(null);
-  let errorMessage = $state<string | null>(null);
-  let copied = $state(false);
-  let copiedSectionId = $state<string | null>(null);
-  let copyError = $state(false);
-  let useAI = $state(true);
-  let showSaveModal = $state(false);
-  let redirectQuery = $state("");
+  let diagrams = $state<ReturnType<typeof GeneratorDiagrams> | null>(null);
+  let selectedHubEntity = $state<SessionEntity | null>(null);
 
   // Offline awareness (#1494): generator pages still work offline using local
   // tables, but AI Lore Co-Author mode requires the network. Network status
   // comes from the shared `onlineStatus` store (seeded at module load, so no
   // post-mount "assumed online" flash).
   const isOnline = $derived(onlineStatus.current);
-  // Dismissal flag for the "AI was unavailable, used local" notice; reset on
-  // each new generation so a later failure shows it again.
-  let aiFallbackDismissed = $state(false);
-
-  const refinementService = new GeneratorRefinementService();
-  let refinementOpen = $state(false);
-  let refinementOrigin = $state<"current_output" | "session_hub" | null>(null);
-  let refinementSourceId = $state<string | undefined>(undefined);
-  let refinementSourceDocument = $state<RefinementDocument | null>(null);
-
   const activeThemeId = $derived(resolveWorldThemeId(theme));
-
   // Stable per-page generator identifier for analytics (#1796) — derived from
   // the page's own canonical path (or the eyebrow label as a fallback) so
   // it's available immediately, before any generation happens, unlike
   // generatedData.type which only exists after a successful generate() call.
   const generatorType = $derived(resolveGeneratorType(canonicalPath, eyebrow));
+  const generatedNoun = $derived(resolveGeneratedNoun(eyebrow));
+  const generatedSingular = $derived(resolveGeneratedSingular(eyebrow));
+  const columnClasses = $derived(
+    getGeneratorColumnClasses(singleColumn, wideForm),
+  );
+  const contextSelection = $derived(
+    getContextSelection(sessionHubStore.entities),
+  );
 
-  const pageSharing = createGeneratorPageSharing({
+  const session = useGeneratorSession({
+    getCanonicalPath: () => canonicalPath,
+    getInitialDraft: () => initialDraft,
+    getInitialDraftIsUserGenerated: () => initialDraftIsUserGenerated,
+    getAutoGenerateExplicit: () => autoGenerateExplicit,
+    getAiModeRequired: () => aiModeRequired,
+    getSupportsStreaming: () => supportsStreaming,
+    getSingleColumn: () => singleColumn,
+    getGeneratorType: () => generatorType,
+    getDocumentLayout: () => documentLayout,
+    getContextSelection: () => contextSelection,
+    getOutputCard: () => outputCard,
+    generate: (opts) => generate(opts),
+  });
+
+  const documentLayout = $derived(
+    getGeneratorDocumentLayout(session.generatedData),
+  );
+  const documentSections = $derived(
+    variant === "names" ? [] : splitMarkdownForCopy(documentLayout.content),
+  );
+
+  const clipboard = useGeneratorClipboard({
+    getClipboardService: () => clipboardService,
+    getGeneratorType: () => generatorType,
+    getGeneratedData: () => session.generatedData,
+    getDocumentLayout: () => documentLayout,
+  });
+  const save = useGeneratorSave({
+    getGeneratorType: () => generatorType,
+    getGeneratedData: () => session.generatedData,
+    getDocumentLayout: () => documentLayout,
+    exportDiagramImage: () =>
+      diagrams?.exportDataUrl() ?? Promise.resolve(undefined),
+    setError: (message) => (session.errorMessage = message),
+  });
+  const handoffs = useGeneratorHandoffs({
+    getGeneratorType: () => generatorType,
+    getDocumentLayout: () => documentLayout,
+    setError: (message) => (session.errorMessage = message),
+  });
+  const sharing = useGeneratorSharing({
     getGeneratorType: () => generatorType,
     getTheme: () => theme,
     getWorldTheme: () => worldTheme,
     getCanonicalPath: () => canonicalPath,
     getOgImage: () => ogImage,
-    createShare: (input) => generatorShareService.create(input),
-    revokeShare: (shareId) => generatorShareService.revoke(shareId),
-    onShareCreated: trackGeneratorShareCreated,
+    getGeneratedData: () => session.generatedData,
+    getDocumentLayout: () => documentLayout,
+  });
+  const refinement = useGeneratorRefinement({
+    getGeneratorType: () => generatorType,
+    getGeneratedData: () => session.generatedData,
+    getDocumentLayout: () => documentLayout,
+    getCurrentEntityId: () => session.currentEntityId,
+    getContextSelection: () => contextSelection,
+    canRefineCurrentOutput: () => session.userGenerationSucceeded,
+    applyRefinedOutput: session.applyRefinedOutput,
+    onOpenFromHub: () => (selectedHubEntity = null),
   });
 
-  const generatedNoun = $derived(resolveGeneratedNoun(eyebrow));
+  const canFollowUp = $derived(session.userGenerationSucceeded);
 
-  const generatedSingular = $derived(resolveGeneratedSingular(eyebrow));
-
-  const documentLayout = $derived(getGeneratorDocumentLayout(generatedData));
-  const documentSections = $derived(
-    variant === "names" ? [] : splitMarkdownForCopy(documentLayout.content),
-  );
+  export function triggerExplicitAutoGenerate() {
+    session.triggerExplicitAutoGenerate();
+  }
 
   $effect(() => {
     if (isThemeCustomizable && browser) {
@@ -295,492 +236,9 @@
     }
   });
 
-  let autoDraftAttemptedForPath = $state<string | undefined>(undefined);
-
-  $effect(() => {
-    if (
-      browser &&
-      !generatedData &&
-      !autoGenerateExplicit &&
-      !isAutoDrafting &&
-      autoDraftAttemptedForPath !== canonicalPath
-    ) {
-      autoDraftAttemptedForPath = canonicalPath;
-      void handleGenerateOnMount();
-    }
-  });
-
-  export function triggerExplicitAutoGenerate() {
-    if (autoDraftAttemptedForPath === canonicalPath) return;
-    autoDraftAttemptedForPath = canonicalPath;
-    void handleGenerate();
-  }
-
-  async function handleGenerateOnMount() {
-    if (aiModeRequired || isAutoDrafting || generatedData) return;
-    isAutoDrafting = true;
-    errorMessage = null;
-    try {
-      const draft = await generate({ useAI: false });
-      // The user may have triggered (or finished) an explicit generation while
-      // this seed draft was in flight; don't overwrite their result.
-      if (!userGenerated) generatedData = draft;
-    } catch (err: any) {
-      console.warn("Failed to generate initial draft:", err);
-    } finally {
-      isAutoDrafting = false;
-    }
-  }
-
-  function confirmSaveRedirect() {
-    trackPublicGeneratorAction("open_codex", {
-      generator_type: generatorType,
-      source: "save_confirmation",
-    });
-
-    showSaveModal = false;
-  }
-
   // The shell renders the header CTA now, so this page registers its tracking
   // rather than binding it to a button it no longer owns.
-  $effect(() => registerShellCtaHandler(handleOpenCodex));
-
-  function handleOpenCodex() {
-    trackPublicGeneratorAction("open_codex", {
-      generator_type: generatorType,
-      source: "header",
-    });
-  }
-
-  async function handleGenerate() {
-    if (isGenerating) return;
-    userGenerated = true;
-    userGenerationSucceeded = false;
-    isGenerating = true;
-    errorMessage = null;
-    aiFallbackDismissed = false;
-    hasStreamedPreview = false;
-    // #1796: only ever fires for an explicit user Generate click, never the
-    // silent handleGenerateOnMount() seed draft (that path never sets
-    // userGenerated / calls handleGenerate at all).
-    trackEvent("generator_started", { generator_type: generatorType });
-    // Use AI only when the user opted in *and* we're online. Read the live
-    // status at click time so a generation triggered before status settles
-    // still routes correctly (#1494).
-    const useAINow =
-      useAI && (browser ? navigator.onLine : onlineStatus.current);
-    try {
-      const onPreview = (preview: GeneratorOutput) => {
-        generatedData = preview;
-        isExampleDraft = false;
-        hasStreamedPreview = true;
-      };
-      generatedData =
-        useAINow && supportsStreaming
-          ? await generate({ useAI: useAINow, onPreview })
-          : await generate({ useAI: useAINow });
-      userGenerationSucceeded = true;
-      isExampleDraft = false;
-      // #1796: only on the success path — a caught error below means the
-      // generation did not complete, so it must not count as one.
-      trackEvent("generator_completed", { generator_type: generatorType });
-
-      if (generatedData) {
-        const content = generatedData.summary
-          ? `*${generatedData.summary}*\n\n${documentLayout.content}`
-          : documentLayout.content;
-
-        const currentContext = $state.snapshot(contextSelection);
-
-        currentEntityId = sessionHubStore.addEntity({
-          type: generatedData.type,
-          kind: generatedData.kind,
-          title: generatedData.title,
-          summary: generatedData.summary,
-          content,
-          lore: documentLayout.lore,
-          labels: generatedData.labels,
-          status: generatedData.status,
-          reuseEnabled: true,
-          pinned: false,
-        });
-
-        const record = computeProvenance(
-          currentEntityId,
-          content + "\n" + (documentLayout.lore || ""),
-          currentContext.entities,
-          currentContext.trimmed,
-        );
-        sessionHubStore.addProvenance(record);
-      }
-
-      // Side-by-side layouts already show the output; stacked ones scroll to it.
-      if (browser && (singleColumn || window.innerWidth < 1024) && outputCard) {
-        await tick();
-        outputCard.scrollIntoView({ behavior: "smooth", block: "start" });
-      }
-    } catch (err: any) {
-      errorMessage = "Failed to generate: " + (err.message || err);
-    } finally {
-      isGenerating = false;
-    }
-  }
-
-  let selectedHubEntity = $state<SessionEntity | null>(null);
-  let currentEntityId = $state<string | null>(null);
-  const contextSelection = $derived(
-    getContextSelection(sessionHubStore.entities),
-  );
-
-  function openRefinement(
-    source: Parameters<typeof refinementService.start>[0],
-    origin: "current_output" | "session_hub",
-    sourceId?: string,
-  ) {
-    refinementSourceDocument = refinementService.start(source);
-    refinementOrigin = origin;
-    refinementSourceId = sourceId;
-    refinementOpen = true;
-    trackEvent("generator_refinement_opened", {
-      generator_type: generatorType,
-      source: origin,
-    });
-  }
-
-  function handleOpenCurrentRefinement() {
-    if (!generatedData || !userGenerationSucceeded) return;
-    openRefinement(
-      {
-        ...generatedData,
-        content: documentLayout.content || generatedData.content,
-        lore: documentLayout.lore || generatedData.lore,
-      },
-      "current_output",
-      currentEntityId ?? undefined,
-    );
-  }
-
-  function handleOpenSessionRefinement(entity: SessionEntity) {
-    selectedHubEntity = null;
-    openRefinement(entity, "session_hub", entity.id);
-  }
-
-  function handleRefinementCancel() {
-    refinementService.cancel();
-    refinementSourceDocument = null;
-    refinementOpen = false;
-    refinementOrigin = null;
-    refinementSourceId = undefined;
-    trackEvent("generator_refinement_cancelled", {
-      generator_type: generatorType,
-    });
-  }
-
-  function handleRefinementRequested(repeated: boolean) {
-    trackEvent("generator_refinement_requested", {
-      generator_type: generatorType,
-      source: refinementOrigin ?? "current_output",
-      repeated,
-    });
-  }
-
-  async function handleRefinementAccept(document: RefinementDocument) {
-    const sourceDocument = refinementSourceDocument;
-
-    if (
-      sourceDocument?.lore &&
-      document.lore &&
-      sourceDocument.lore !== document.lore
-    ) {
-      const plan = buildLoreMergePlan(sourceDocument.lore, document.lore);
-      if (plan.hasChanges) {
-        refinementOpen = false;
-        const resolvedLore = await loreMergeStore.request(
-          plan,
-          sourceDocument.title,
-        );
-        if (resolvedLore === null) {
-          refinementOpen = true;
-          return;
-        }
-        document = { ...document, lore: resolvedLore };
-      }
-    }
-
-    const acceptedOrigin = refinementOrigin ?? "current_output";
-    const sourceId = refinementSourceId;
-    const accepted = {
-      ...(acceptedOrigin === "current_output" && generatedData
-        ? generatedData
-        : {}),
-      type: document.type as GeneratorOutput["type"],
-      ...(document.kind ? { kind: document.kind } : {}),
-      title: document.title,
-      summary: document.summary ?? "",
-      content: document.content,
-      lore: document.lore ?? "",
-      labels: document.labels,
-      status: document.status ?? "draft",
-      aiFallback: undefined,
-    } satisfies GeneratorOutput;
-    generatedData = accepted;
-    isExampleDraft = false;
-    userGenerated = true;
-    userGenerationSucceeded = true;
-
-    const content = accepted.summary
-      ? `*${accepted.summary}*\n\n${accepted.content}`
-      : accepted.content;
-    const currentContext = $state.snapshot(contextSelection);
-    const derivedId = sessionHubStore.addEntity({
-      type: accepted.type,
-      kind: accepted.kind,
-      title: accepted.title,
-      summary: accepted.summary,
-      content,
-      lore: accepted.lore,
-      labels: accepted.labels,
-      status: accepted.status,
-      reuseEnabled: true,
-      pinned: false,
-      ...(sourceId ? { derivedFromEntityId: sourceId } : {}),
-      derivation: "refine",
-    });
-    currentEntityId = derivedId;
-    sessionHubStore.addProvenance(
-      computeProvenance(
-        derivedId,
-        content + "\n" + accepted.lore,
-        currentContext.entities,
-        currentContext.trimmed,
-      ),
-    );
-    if (sourceId) sessionHubStore.removeEntity(sourceId);
-    const acceptedIteration = refinementService.iteration;
-    refinementService.accept();
-    refinementOpen = false;
-    refinementOrigin = null;
-    refinementSourceId = undefined;
-    refinementSourceDocument = null;
-    trackEvent("generator_refinement_accepted", {
-      generator_type: generatorType,
-      source: acceptedOrigin,
-      iteration: acceptedIteration,
-    });
-  }
-
-  function handleSaveHubToCodex(entitiesToSave: SessionEntity[]) {
-    if (entitiesToSave.length === 0) return;
-    trackPublicGeneratorAction("save_to_codex", {
-      generator_type: generatorType,
-      is_hub_batch: true,
-      item_count: entitiesToSave.length,
-    });
-    try {
-      redirectQuery = saveSessionHubEntities(
-        entitiesToSave,
-        sessionHubStore.provenance,
-        sessionHubStore.entities,
-        generatorType,
-        {
-          store: (key, value) => localStorage.setItem(key, value),
-          track: trackSaveToCodex,
-          countRelatedEntities,
-        },
-      );
-      showSaveModal = true;
-    } catch {
-      errorMessage = "Storage access is blocked. Please copy drafts manually.";
-    }
-  }
-
-  async function handleSaveToCodex() {
-    if (!generatedData) return;
-    trackPublicGeneratorAction("save_to_codex", {
-      generator_type: generatorType,
-      is_hub_batch: false,
-      item_count: 1,
-    });
-
-    try {
-      redirectQuery = await saveGeneratorOutput(
-        generatedData,
-        documentLayout,
-        generatorType,
-        {
-          store: (key, value) => localStorage.setItem(key, value),
-          track: trackSaveToCodex,
-          countRelatedEntities,
-        },
-        async () => {
-          let blob: Blob | undefined;
-          if (starSystemDiagramRef) {
-            blob = (await starSystemDiagramRef.exportPng()) ?? undefined;
-          } else if (constellationChartRef) {
-            blob = (await constellationChartRef.exportPng()) ?? undefined;
-          }
-          return blob ? blobToDataUrl(blob) : undefined;
-        },
-      );
-      showSaveModal = true;
-    } catch {
-      errorMessage =
-        "Storage access is blocked. Please copy the Markdown below instead.";
-    }
-  }
-
-  async function handleCopyMarkdown() {
-    if (!generatedData) return;
-    trackPublicGeneratorAction("copy", {
-      generator_type: generatorType,
-      copy_target: "markdown",
-    });
-
-    const markdownText = buildGeneratorMarkdown({
-      title: generatedData.title,
-      summary: generatedData.summary,
-      labels: generatedData.labels,
-      content: documentLayout.content,
-      lore: documentLayout.lore,
-    });
-
-    try {
-      const success = await clipboardService.copyContent({
-        markdown: markdownText,
-      });
-      if (!success) throw new Error("Clipboard copy failed");
-      copyError = false;
-      copied = true;
-      setTimeout(() => {
-        copied = false;
-      }, 2000);
-    } catch (err) {
-      console.error("Failed to copy markdown:", err);
-      copyError = true;
-    }
-  }
-
-  // The user confirms in a modal first; only after that confirm does the
-  // Oracle compression call run (shown as its own "loading" state), and
-  // MonsterLabs opens once the URL is ready.
-  const monsterLabsFlow = createMonsterLabsHandoffFlow();
-  function handleSendToMonsterLabs(data: GeneratorOutput) {
-    trackPublicGeneratorAction("copy", {
-      generator_type: generatorType,
-      copy_target: "monsterlabs",
-    });
-    monsterLabsFlow.start({
-      name: data.title,
-      type: data.type,
-      description: [documentLayout.content, documentLayout.lore]
-        .filter((part): part is string => Boolean(part?.trim()))
-        .join("\n\n"),
-    });
-  }
-
-  async function handleCopySection(sectionId: string, markdown: string) {
-    trackPublicGeneratorAction("copy", {
-      generator_type: generatorType,
-      copy_target: "section",
-      section_id: sectionId,
-    });
-    try {
-      const success = await clipboardService.copyContent({
-        markdown: buildSectionMarkdown(markdown),
-      });
-      if (!success) throw new Error("Clipboard copy failed");
-      copyError = false;
-      copiedSectionId = sectionId;
-      setTimeout(() => {
-        if (copiedSectionId === sectionId) copiedSectionId = null;
-      }, 1600);
-    } catch (err) {
-      console.error("Failed to copy section markdown:", err);
-      copyError = true;
-    }
-  }
-
-  async function handleCopySessionEntity(
-    entity: SessionEntity,
-  ): Promise<boolean> {
-    trackPublicGeneratorAction("copy", {
-      generator_type: generatorType,
-      copy_target: "session_hub_detail",
-    });
-    return clipboardService.copyContent({
-      markdown: buildSessionEntityMarkdown(entity),
-    });
-  }
-
-  function shareEvent(source: GeneratorShareSource) {
-    return { generatorType, source };
-  }
-
-  function prepareCurrentOutputShare() {
-    if (!generatedData)
-      throw new Error("There is no generated result to share.");
-    return pageSharing.prepareCurrentOutputShare({
-      title: generatedData.title,
-      summary: generatedData.summary,
-      labels: generatedData.labels,
-      content: documentLayout.content,
-      lore: documentLayout.lore,
-    });
-  }
-
-  function prepareSessionEntityShare(entity: SessionEntity) {
-    return pageSharing.prepareSessionEntityShare(entity);
-  }
-
-  function handleContainerKeydown(event: KeyboardEvent) {
-    if (event.key === "Enter" || event.key === " ") {
-      handleContainerClick(event as unknown as MouseEvent);
-    }
-  }
-
-  function handleContainerClick(event: MouseEvent) {
-    handleGeneratorInlineCopy(event, {
-      clipboard: { writeText: (text) => navigator.clipboard.writeText(text) },
-      trackCopy: () =>
-        trackPublicGeneratorAction("copy", {
-          generator_type: generatorType,
-          copy_target: "inline",
-        }),
-    });
-  }
-
-  async function handleBuildDelveCanvas(data: GeneratorOutput) {
-    try {
-      await handoffGeneratorToCanvas(data, buildDelveCanvasTransfer, {
-        storeTransfer: (key, transfer) =>
-          localStorage.setItem(key, JSON.stringify(transfer)),
-        unregisterDevelopmentServiceWorkers,
-        isDevelopment: dev,
-        navigate: () => goto(resolve("/canvas")),
-        navigateInDevelopment: () => window.location.assign(resolve("/canvas")),
-      });
-    } catch (err) {
-      console.error("[DelveCanvas] Failed to build delve canvas:", err);
-      errorMessage =
-        "The generated delve could not be opened. Your pending canvas has been preserved so you can retry.";
-    }
-  }
-
-  async function handleBuildAdventureCanvas(data: GeneratorOutput) {
-    try {
-      await handoffGeneratorToCanvas(data, buildAdventureCanvasTransfer, {
-        storeTransfer: (key, transfer) =>
-          localStorage.setItem(key, JSON.stringify(transfer)),
-        unregisterDevelopmentServiceWorkers,
-        isDevelopment: dev,
-        navigate: () => goto(resolve("/canvas")),
-        navigateInDevelopment: () => window.location.assign(resolve("/canvas")),
-      });
-    } catch (err) {
-      console.error("[AdventureCanvas] Failed to build adventure canvas:", err);
-      errorMessage = "Failed to open Adventure Canvas for this scenario.";
-    }
-  }
+  $effect(() => registerShellCtaHandler(save.trackHeaderOpenCodex));
 </script>
 
 <SEOGeneratorHead
@@ -792,7 +250,7 @@
   imageAlt={ogImageAlt}
   {keywords}
   {faqs}
-  {generatedData}
+  generatedData={session.generatedData}
 />
 
 <div
@@ -829,142 +287,31 @@
     -->
     <!-- Parameters Column: positioned on the left on desktop -->
     <div class="{columnClasses.form} space-y-6 order-1 lg:order-1">
-      <div
-        class="p-6 bg-theme-surface/40 border border-theme-border/60 rounded-2xl shadow-sm"
-      >
-        <GeneratorIntroPanel
-          {canonicalPath}
-          {eyebrow}
-          {showGeneratorSwitcher}
-          {introTitle}
-          {introText}
-          {labels}
-          {inputHint}
-          {backHref}
-          {backLabel}
-        />
-
-        {#if !isOnline}
-          <div
-            transition:fade={{ duration: 150 }}
-            class="mb-5 p-3 border border-theme-primary/30 bg-theme-primary/10 rounded-xl flex gap-2.5"
-            role="status"
-            aria-live="polite"
-          >
-            <span
-              class="icon-[lucide--wifi-off] w-4 h-4 text-theme-primary shrink-0 mt-0.5"
-              aria-hidden="true"
-            ></span>
-            <div class="flex flex-col gap-1">
-              <p
-                class="text-micro font-bold uppercase tracking-wider font-header text-theme-primary"
-              >
-                {aiModeRequired ? "AI required" : "Local Mode"}
-              </p>
-              <p class="text-micro text-theme-text/70 leading-snug">
-                {offlineMessage ??
-                  "You're offline. Codex will generate from built-in tables and save drafts locally. Reconnect to use AI Lore Co-Author mode again."}
-              </p>
-            </div>
-          </div>
-        {/if}
-
-        <form
-          class="space-y-4"
-          action={canonicalPath ? `${cleanBase}${canonicalPath}` : undefined}
-          method={canonicalPath ? "GET" : undefined}
-          onsubmit={(event) => {
-            event.preventDefault();
-            if (showSubmitButton) void handleGenerate();
-          }}
-        >
-          {@render formFields(() => void handleGenerate())}
-          {#if aiModeRequired && aiDataNotice}
-            <p class="text-micro text-theme-muted leading-relaxed" role="note">
-              {aiDataNotice}
-            </p>
-          {/if}
-
-          {#if showSubmitButton}
-            <button
-              type="submit"
-              disabled={isBusy || (aiModeRequired && !isOnline)}
-              aria-busy={isBusy}
-              class="w-full py-3 mt-4 bg-theme-primary text-theme-bg font-bold uppercase font-header tracking-widest text-xs rounded-xl shadow-lg hover:brightness-110 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
-              id="generate-button"
-              title="Generate a new draft using your current form inputs"
-            >
-              {#if isBusy}
-                <span
-                  class="icon-[lucide--loader-2] animate-spin w-4 h-4"
-                  aria-hidden="true"
-                ></span>
-                {busyLabel ?? "Forging..."}
-              {:else}
-                {generateLabel ?? `Generate ${generatedSingular}`}
-              {/if}
-            </button>
-          {/if}
-
-          {#if showSubmitButton && !aiModeRequired}
-            <div class="flex flex-col gap-1 pt-1">
-              <div class="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  id="ai-toggle"
-                  bind:checked={useAI}
-                  disabled={!isOnline}
-                  aria-describedby="ai-toggle-hint"
-                  class="w-4 h-4 rounded border-theme-border/60 bg-theme-bg/60 text-theme-primary focus:ring-theme-primary/40 focus:outline-none flex-shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
-                />
-                <label
-                  for="ai-toggle"
-                  class="text-micro font-bold uppercase tracking-wider text-theme-muted flex items-center gap-1 {isOnline
-                    ? 'cursor-pointer'
-                    : 'opacity-50 cursor-not-allowed'}"
-                >
-                  <span
-                    class="icon-[lucide--sparkles] text-theme-primary w-3.5 h-3.5"
-                  ></span>
-                  AI Lore Co-Author Mode
-                </label>
-              </div>
-              <p
-                id="ai-toggle-hint"
-                class="text-nano text-theme-muted/70 leading-snug pl-6"
-              >
-                {#if !isOnline}
-                  Offline: using fast local tables. Reconnect to enable AI Lore
-                  Co-Author mode.
-                {:else if useAI}
-                  AI writes unique, rich lore on each generate.
-                {:else}
-                  Fast offline mode — local tables only, no AI.
-                {/if}
-              </p>
-            </div>
-          {/if}
-        </form>
-
-        {#if errorMessage}
-          <div
-            class="mt-4 p-3 border border-red-500/30 bg-red-500/10 rounded-xl text-red-400 text-xs"
-          >
-            {errorMessage}
-          </div>
-        {/if}
-        {#if copyError}
-          <div
-            class="mt-4 text-xs text-theme-danger"
-            role="status"
-            aria-live="polite"
-          >
-            Could not copy
-          </div>
-        {/if}
-
-        <!-- Related links moved to bottom discover section -->
-      </div>
+      <GeneratorFormPanel
+        {canonicalPath}
+        {eyebrow}
+        {showGeneratorSwitcher}
+        {introTitle}
+        {introText}
+        {labels}
+        {inputHint}
+        {backHref}
+        {backLabel}
+        {formFields}
+        onGenerate={() => void session.handleGenerate()}
+        isBusy={session.isBusy}
+        {isOnline}
+        {aiModeRequired}
+        {aiDataNotice}
+        {offlineMessage}
+        {showSubmitButton}
+        {busyLabel}
+        {generateLabel}
+        {generatedSingular}
+        bind:useAI={session.useAI}
+        errorMessage={session.errorMessage}
+        copyError={clipboard.copyError}
+      />
     </div>
 
     <!-- Output Card Column: middle column on desktop -->
@@ -972,131 +319,60 @@
       class="{columnClasses.output} flex flex-col order-2 lg:order-2 scroll-mt-20"
       bind:this={outputCard}
     >
-      {#if generatedData?.labels?.includes("star-system") && generatedData.bodies?.length}
-        <div class="mb-6">
-          <StarSystemDiagram
-            bind:this={starSystemDiagramRef}
-            bodies={generatedData.bodies}
-            starType={generatedData.starType}
-            title={generatedData.title}
-            onCopy={() =>
-              trackPublicGeneratorAction("copy", {
-                generator_type: generatorType,
-                copy_target: "diagram_image",
-              })}
-          />
-        </div>
-      {/if}
-      {#if generatedData?.labels?.includes("constellation") && generatedData.pattern?.stars?.length}
-        <div class="mb-6">
-          <ConstellationChart
-            bind:this={constellationChartRef}
-            pattern={generatedData.pattern}
-            title={generatedData.title}
-            onCopy={() =>
-              trackPublicGeneratorAction("copy", {
-                generator_type: generatorType,
-                copy_target: "diagram_image",
-              })}
-          />
-        </div>
-      {/if}
+      <GeneratorDiagrams
+        bind:this={diagrams}
+        generatedData={session.generatedData}
+        onCopy={clipboard.trackDiagramCopy}
+      />
       <GeneratorOutputCard
-        {generatedData}
-        {aiFallbackDismissed}
-        isBusy={showOutputLoading}
-        {isExampleDraft}
+        generatedData={session.generatedData}
+        aiFallbackDismissed={session.aiFallbackDismissed}
+        isBusy={session.showOutputLoading}
+        isExampleDraft={session.isExampleDraft}
         {generatedSingular}
         {variant}
         worldTheme={theme || worldTheme}
         documentContent={documentLayout.content}
         {documentSections}
-        {copied}
-        {copiedSectionId}
+        copied={clipboard.copied}
+        copiedSectionId={clipboard.copiedSectionId}
         contextTrimmed={contextSelection.trimmed}
-        onDismissAiFallback={() => (aiFallbackDismissed = true)}
-        onSaveToCodex={handleSaveToCodex}
-        onRefine={userGenerationSucceeded
-          ? handleOpenCurrentRefinement
-          : undefined}
-        onCopyMarkdown={handleCopyMarkdown}
+        onDismissAiFallback={session.dismissAiFallback}
+        onSaveToCodex={save.handleSaveToCodex}
+        onRefine={when(canFollowUp, refinement.openForCurrentOutput)}
+        onCopyMarkdown={clipboard.handleCopyMarkdown}
         onCopySection={(sectionId, markdown) =>
-          void handleCopySection(sectionId, markdown)}
-        onPrepareShare={userGenerationSucceeded
-          ? prepareCurrentOutputShare
-          : undefined}
-        onShareClicked={() =>
-          trackGeneratorShareClicked(shareEvent("current_output"))}
-        onShareCompleted={() =>
-          trackGeneratorShareCompleted(shareEvent("current_output"))}
-        onShareLinkCopied={() =>
-          trackGeneratorShareLinkCopied(shareEvent("current_output"))}
-        onContainerClick={handleContainerClick}
-        onContainerKeydown={handleContainerKeydown}
+          void clipboard.handleCopySection(sectionId, markdown)}
+        onPrepareShare={when(canFollowUp, sharing.prepareCurrentOutputShare)}
+        {...sharing.currentOutputTracking}
+        onContainerClick={clipboard.handleContainerClick}
+        onContainerKeydown={clipboard.handleContainerKeydown}
         onSelectHubEntity={(entity) => (selectedHubEntity = entity)}
-        onSaveHubToCodex={handleSaveHubToCodex}
-        onBuildDelveCanvas={handleBuildDelveCanvas}
-        onBuildAdventureCanvas={handleBuildAdventureCanvas}
-        onGeneratePlotTwist={userGenerationSucceeded
-          ? onGeneratePlotTwist
-          : undefined}
-        onGenerateRoster={userGenerationSucceeded
-          ? onGenerateRoster
-          : undefined}
+        onSaveHubToCodex={save.handleSaveHubToCodex}
+        onBuildDelveCanvas={handoffs.handleBuildDelveCanvas}
+        onBuildAdventureCanvas={handoffs.handleBuildAdventureCanvas}
+        onGeneratePlotTwist={when(canFollowUp, onGeneratePlotTwist)}
+        onGenerateRoster={when(canFollowUp, onGenerateRoster)}
         {onOpenMemberAsCharacter}
-        onSendToMonsterLabs={userGenerationSucceeded
-          ? handleSendToMonsterLabs
-          : undefined}
-        isSendingToMonsterLabs={monsterLabsFlow.state === "loading"}
+        onSendToMonsterLabs={when(
+          canFollowUp,
+          handoffs.handleSendToMonsterLabs,
+        )}
+        isSendingToMonsterLabs={handoffs.monsterLabsFlow.state === "loading"}
       />
     </div>
 
     <!-- At the Table Column: positioned on the right on desktop -->
     <div class="{columnClasses.table} order-3 lg:order-3">
-      <!-- Mobile label — hidden on lg where the sticky card makes the context clear -->
-      <p
-        class="lg:hidden text-micro font-bold uppercase tracking-widest font-header text-theme-muted mb-2"
-      >
-        GM Reference
-      </p>
-      <div class="sticky top-24 flex flex-col gap-6">
-        <div
-          class="p-5 bg-theme-surface/50 border border-theme-border/50 rounded-2xl shadow-sm backdrop-blur-sm"
-        >
-          {#if generatedData}
-            <div
-              in:fade={{ duration: 250 }}
-              class="seo-rail seo-md text-sm leading-relaxed text-theme-text/85 {variant ===
-              'names'
-                ? 'max-w-xl mx-auto columns-2 sm:columns-3 gap-8 py-4'
-                : ''}"
-            >
-              {@html renderGeneratorLore(documentLayout.lore, variant)}
-              {#if currentEntityId && sessionHubStore.provenance[currentEntityId]}
-                <ProvenanceBadge
-                  record={sessionHubStore.provenance[currentEntityId]}
-                  onSelect={(e) => (selectedHubEntity = e)}
-                />
-              {/if}
-            </div>
-          {:else}
-            <div
-              class="flex flex-col items-center text-center text-theme-muted/40 py-8"
-            >
-              <span
-                aria-hidden="true"
-                class="icon-[lucide--scroll] w-8 h-8 mb-3"
-              ></span>
-              <p class="text-micro uppercase tracking-widest font-header">
-                At the Table
-              </p>
-              <p class="text-sm mt-2 leading-relaxed">
-                GM utility details appear here after generation.
-              </p>
-            </div>
-          {/if}
-        </div>
-      </div>
+      <GeneratorRail
+        generatedData={session.generatedData}
+        lore={documentLayout.lore}
+        {variant}
+        provenance={session.currentEntityId
+          ? sessionHubStore.provenance[session.currentEntityId]
+          : undefined}
+        onSelectEntity={(entity) => (selectedHubEntity = entity)}
+      />
     </div>
   </div>
 
@@ -1104,100 +380,13 @@
 
   <RelatedLinksSection {relatedLinks} />
 
-  <SaveToCodexModal
-    open={showSaveModal}
-    {redirectQuery}
-    onConfirm={confirmSaveRedirect}
-    onCancel={() => (showSaveModal = false)}
-  />
-
-  <EntityDetailModal
-    entity={selectedHubEntity}
-    onClose={() => (selectedHubEntity = null)}
-    onCopy={handleCopySessionEntity}
-    onRefine={handleOpenSessionRefinement}
-    onPrepareShare={prepareSessionEntityShare}
-    onShareClicked={() =>
-      trackGeneratorShareClicked(shareEvent("session_hub_detail"))}
-    onShareCompleted={() =>
-      trackGeneratorShareCompleted(shareEvent("session_hub_detail"))}
-    onShareLinkCopied={() =>
-      trackGeneratorShareLinkCopied(shareEvent("session_hub_detail"))}
-  />
-
-  <GeneratorRefinementModal
-    open={refinementOpen}
-    service={refinementService}
-    onAccept={handleRefinementAccept}
-    onCancel={handleRefinementCancel}
-    onRequested={handleRefinementRequested}
-  />
-
-  <LoreMergeModal />
-
-  <MonsterLabsSendingModal
-    open={monsterLabsFlow.open}
-    state={monsterLabsFlow.state}
-    entityLabel={monsterLabsFlow.entityLabel}
-    url={monsterLabsFlow.url}
-    onConfirm={monsterLabsFlow.confirm}
-    onOpen={monsterLabsFlow.close}
-    onClose={monsterLabsFlow.close}
+  <GeneratorModals
+    {selectedHubEntity}
+    onCloseHubEntity={() => (selectedHubEntity = null)}
+    {save}
+    {refinement}
+    {handoffs}
+    {clipboard}
+    {sharing}
   />
 </div>
-
-<style>
-  .seo-md :global(h2) {
-    font-family: var(--font-header);
-    font-weight: 700;
-    font-size: 1.125rem;
-    margin: 1.5rem 0 0.75rem;
-    border-bottom: 1px solid
-      color-mix(in srgb, var(--color-border) 40%, transparent);
-    padding-bottom: 0.25rem;
-  }
-  /* Desaturated heading — primary actions keep saturated red (#1272) */
-  .seo-md :global(h3) {
-    font-family: var(--font-header);
-    font-weight: 700;
-    font-size: 1rem;
-    margin: 1rem 0 0.5rem;
-    color: color-mix(in srgb, var(--color-primary) 65%, var(--color-text));
-  }
-  .seo-md :global(ul) {
-    list-style: disc;
-    margin-left: 1rem;
-  }
-  .seo-md :global(p) {
-    margin-bottom: 0.75rem;
-  }
-  .seo-md :global(.seo-label) {
-    text-shadow: 0 0 10px
-      color-mix(in srgb, var(--color-primary) 70%, transparent);
-    filter: brightness(1.2);
-  }
-  /* Rail stat block — compact heading scale, muted palette (#1276) */
-  .seo-rail.seo-md :global(.seo-label) {
-    color: color-mix(in srgb, var(--color-primary) 42%, var(--color-text));
-    text-shadow: none;
-    filter: none;
-  }
-  .seo-rail.seo-md :global(h3) {
-    font-size: var(--type-helper);
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: color-mix(in srgb, var(--color-text) 82%, transparent);
-    margin: 0.875rem 0 0.375rem;
-    border-bottom: none;
-  }
-  .seo-rail.seo-md :global(h2) {
-    font-size: 0.8125rem;
-    border-bottom: 1px solid
-      color-mix(in srgb, var(--color-border) 30%, transparent);
-    margin: 1rem 0 0.5rem;
-    color: color-mix(in srgb, var(--color-text) 88%, transparent);
-  }
-  .seo-rail.seo-md :global(strong) {
-    color: color-mix(in srgb, var(--color-text) 92%, transparent);
-  }
-</style>
