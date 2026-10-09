@@ -392,7 +392,7 @@
                 type="button"
                 onclick={() =>
                   explorerUIStore.toggleLabelFilter(activeLabel, true)}
-                class="flex items-center gap-1 px-2.5 py-1 text-[10px] font-semibold font-mono rounded-full bg-chrome-accent/10 text-chrome-accent border border-chrome-accent/20 hover:bg-chrome-accent/20 hover:border-chrome-accent/30 transition-all shadow-sm cursor-pointer"
+                class="flex items-center gap-1 px-2.5 py-1 text-micro font-semibold font-mono rounded-full bg-chrome-accent/10 text-chrome-accent border border-chrome-accent/20 hover:bg-chrome-accent/20 hover:border-chrome-accent/30 transition-all shadow-sm cursor-pointer"
                 title="Click to remove filter"
                 aria-label={`Remove ${activeLabel} filter`}
               >
@@ -498,7 +498,7 @@
 
                   {#if result.status === "draft"}
                     <span
-                      class="ml-2 px-1.5 py-0.5 rounded bg-chrome-bg text-[9px] font-bold uppercase tracking-wider text-chrome-muted border border-chrome-border"
+                      class="ml-2 px-1.5 py-0.5 rounded bg-chrome-bg text-nano font-bold uppercase tracking-wider text-chrome-muted border border-chrome-border"
                     >
                       Draft
                     </span>
@@ -507,7 +507,7 @@
                   {#if isCanvasPage}
                     <button
                       type="button"
-                      class="ml-auto p-1.5 rounded-md bg-chrome-accent/10 text-chrome-accent hover:bg-chrome-accent hover:text-chrome-surface transition-all text-[10px] font-bold uppercase font-header tracking-wider flex items-center gap-1 group/btn"
+                      class="ml-auto p-1.5 rounded-md bg-chrome-accent/10 text-chrome-accent hover:bg-chrome-accent hover:text-chrome-surface transition-all text-micro font-bold uppercase font-header tracking-wider flex items-center gap-1 group/btn"
                       aria-label={`Add ${result.title} to canvas`}
                       onclick={(e) => {
                         e.stopPropagation();
@@ -533,7 +533,7 @@
                 <div class="flex items-center gap-2 text-xs text-chrome-muted">
                   {#if result.type}
                     <span
-                      class="px-1.5 py-0.5 rounded-sm text-[9px] font-bold uppercase font-header tracking-wider bg-chrome-bg"
+                      class="px-1.5 py-0.5 rounded-sm text-nano font-bold uppercase font-header tracking-wider bg-chrome-bg"
                       style="color: {categories.getColor(result.type)}"
                     >
                       {categories.getCategory(result.type)?.label ||

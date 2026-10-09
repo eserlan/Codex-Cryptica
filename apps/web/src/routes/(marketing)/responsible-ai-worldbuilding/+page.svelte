@@ -203,7 +203,7 @@
   <!-- Hero Section -->
   <section class="max-w-4xl mx-auto px-4 sm:px-6 pt-16 pb-12 text-center">
     <div
-      class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-mono font-bold bg-theme-primary/10 border border-theme-primary/20 text-theme-primary mb-8 uppercase tracking-wider"
+      class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-micro font-mono font-bold bg-theme-primary/10 border border-theme-primary/20 text-theme-primary mb-8 uppercase tracking-wider"
     >
       <span class="w-1.5 h-1.5 rounded-full bg-theme-primary animate-pulse"
       ></span>
@@ -229,7 +229,10 @@
       class="max-w-3xl mx-auto mb-12 p-8 bg-theme-surface/40 border border-theme-border/60 rounded-2xl backdrop-blur-md shadow-lg text-left"
     >
       <div class="flex items-center gap-3 mb-6">
-        <span class="icon-[lucide--info] text-theme-primary w-6 h-6"></span>
+        <span
+          aria-hidden="true"
+          class="icon-[lucide--info] text-theme-primary w-6 h-6"
+        ></span>
         <h2 class="font-header font-bold text-lg">AI Principles at a Glance</h2>
       </div>
       <ul class="space-y-3 text-base text-theme-text/85">
@@ -304,7 +307,10 @@
       class="max-w-3xl mx-auto mb-12 p-8 bg-theme-surface/30 border border-theme-border/60 rounded-2xl backdrop-blur-md shadow-lg text-left"
     >
       <div class="flex items-center gap-3 mb-4">
-        <span class="icon-[lucide--lock] text-theme-primary w-6 h-6"></span>
+        <span
+          aria-hidden="true"
+          class="icon-[lucide--lock] text-theme-primary w-6 h-6"
+        ></span>
         <h2 class="font-header font-bold text-lg">Local-First Sovereignty</h2>
       </div>
       <p class="text-base text-theme-text/75 leading-relaxed">
@@ -323,7 +329,10 @@
       class="max-w-3xl mx-auto mb-16 p-8 bg-theme-surface/30 border border-theme-border/60 rounded-2xl backdrop-blur-md shadow-lg text-left"
     >
       <div class="flex items-center gap-3 mb-6">
-        <span class="icon-[lucide--eye] text-theme-primary w-6 h-6"></span>
+        <span
+          aria-hidden="true"
+          class="icon-[lucide--eye] text-theme-primary w-6 h-6"
+        ></span>
         <h2 class="font-header font-bold text-lg">What the Oracle Can See</h2>
       </div>
       <p class="text-base text-theme-muted mb-6 leading-relaxed">
@@ -374,7 +383,7 @@
             <span class="w-2 h-2 rounded-full bg-red-400"></span>
             Never Saved
           </div>
-          <ul class="space-y-1 text-theme-muted text-[10px]">
+          <ul class="space-y-1 text-theme-muted text-micro">
             <li>• No hosted campaign database</li>
             <li>• No permanent chat files on our servers</li>
             <li>• No cloud logging of your private vault</li>
@@ -410,7 +419,7 @@
             <div class="flex items-center justify-between mb-4">
               <span class="{principle.icon} text-theme-primary w-6 h-6"></span>
               <span
-                class="text-[10px] font-mono font-bold text-theme-muted uppercase tracking-widest"
+                class="text-micro font-mono font-bold text-theme-muted uppercase tracking-widest"
                 >Part {principle.step}</span
               >
             </div>
@@ -430,7 +439,7 @@
             >
               <a
                 href="{base}/blog/{principle.slug}"
-                class="inline-flex items-center gap-1.5 text-[10px] font-bold text-theme-primary hover:text-theme-text transition-colors group font-header"
+                class="inline-flex items-center gap-1.5 text-micro font-bold text-theme-primary hover:text-theme-text transition-colors group font-header"
               >
                 Read Article
                 <span

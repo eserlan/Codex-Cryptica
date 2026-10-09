@@ -20,18 +20,21 @@ function timeCloudBackupSave(timing: CloudBackupTiming): void {
 }
 import { requestPersistentStorage } from "$lib/utils/persistent-storage";
 import { initOracleEventListeners } from "../../listeners/oracle-events";
+import { initSessionJournalCapture } from "../../listeners/session-journal-events";
 import { notificationStore } from "$lib/stores/ui/notification.svelte";
 import { configureAIEngine } from "@codex/ai-engine";
+import { preloadGraphCore } from "graph-engine";
 import { searchService } from "@codex/search-orchestrator";
 import {
   browserPerformanceCapture,
   browserPerformanceRecorder,
 } from "$lib/services/performance/browser-performance-capture";
-import { resolveTemplateSync } from "../../services/EntityTemplateConstants";
+import { entityTemplateStore } from "../../stores/entity-templates/entity-template-store.svelte";
 import { registerFlushSavesOnHide } from "./flush-saves-on-hide";
 import { vault } from "$lib/stores/vault.svelte";
 import { mapRegistry } from "$lib/stores/map-registry.svelte";
 import { canvasRegistry } from "$lib/stores/canvas-registry.svelte";
+import { getDB } from "$lib/utils/idb";
 import {
   cloudBackupStore,
   cloudBackupBrowserStorage,
@@ -62,10 +65,14 @@ export function bootSystem(stores: {
 }): boolean {
   debugStore.log("System booting: Initializing core stores...");
   browserPerformanceCapture.start();
+  // Fetched alongside the vault load instead of after it; a failure here is
+  // retried when the graph is actually created.
+  void preloadGraphCore().catch(() => {});
   searchService.setPerformanceRecorder(browserPerformanceRecorder);
   configureAIEngine({
     searchService,
-    templateResolver: resolveTemplateSync,
+    templateResolver: (type, themeId) =>
+      entityTemplateStore.resolveSync(type, themeId),
   });
   stores.categories.init();
 
@@ -92,6 +99,8 @@ export function initializeGlobalListeners(_calendarStore?: any) {
 
   // Initialize Oracle action listeners
   const unsubOracle: () => void = initOracleEventListeners();
+  // Rolls, draws and table results go into the active Session Journal.
+  const unsubJournalCapture: () => void = initSessionJournalCapture();
 
   const handleGlobalError = (event: ErrorEvent) => {
     if (
@@ -215,10 +224,17 @@ export function initializeGlobalListeners(_calendarStore?: any) {
     },
     dirty: new CloudBackupDirtyStore(),
     timing: timeCloudBackupSave,
-    // Everything the consent screen promises: entities, maps, canvases and
-    // the media all three reference.
-    buildPayload: async (_vaultId: string, signal?: AbortSignal) =>
-      buildCloudBackupPayload(
+    // Everything the consent screen promises: entities, maps, canvases,
+    // session journals, and the media the first three reference.
+    buildPayload: async (vaultId: string, signal?: AbortSignal) => {
+      // Do not use the store's reactive snapshot here: its initial vault read
+      // is asynchronous, so a backup requested immediately after app startup
+      // could otherwise omit existing journals. Read the requested vault's
+      // persisted records directly for this full snapshot.
+      const sessionJournals = await (
+        await getDB()
+      ).getAllFromIndex("session_journals", "by-vault", vaultId);
+      return buildCloudBackupPayload(
         vault.vaultName || "Vault",
         Object.values(vault.entities ?? {}),
         {
@@ -236,8 +252,13 @@ export function initializeGlobalListeners(_calendarStore?: any) {
         {
           maps: mapRegistry.allMaps ?? [],
           canvases: canvasRegistry.allCanvases ?? [],
+          // Session journals are only part of a full backup, never a delta.
+          sessionJournals: sessionJournals.sort(
+            (a, b) => b.startedAt - a.startedAt,
+          ),
         },
-      ),
+      );
+    },
     // Incremental uploads (#3354): only the recorded changes are read.
     buildDelta: async (_vaultId, changes, uploadedAssetIds, signal) =>
       buildCloudBackupDelta(
@@ -289,6 +310,21 @@ export function initializeGlobalListeners(_calendarStore?: any) {
           if (!canvas?.id) continue;
           canvasRegistry.canvases[canvas.id] = canvas as never;
           await canvasRegistry.saveCanvas(canvas.id);
+        }
+      },
+      /**
+       * Writes restored session journals directly into IndexedDB rather than
+       * through the store (spec 163-session-journal, FR-016) — a restore
+       * happens once at import time, not through the store's own
+       * start/append/end lifecycle, and `vaultId` on each record is
+       * rewritten to the *new* vault this restore just created, never the
+       * backup's original vault id.
+       */
+      importSessionJournals: async (vaultId: string, journals: unknown[]) => {
+        const db = await getDB();
+        for (const journal of journals as { id?: string }[]) {
+          if (!journal?.id) continue;
+          await db.put("session_journals", { ...journal, vaultId } as never);
         }
       },
       /**
@@ -355,6 +391,7 @@ export function initializeGlobalListeners(_calendarStore?: any) {
 
   return () => {
     unsubOracle();
+    unsubJournalCapture();
     unsubFlushSaves();
     unsubDurableChanges();
     unsubSyncedChanges();
@@ -878,6 +915,15 @@ export function registerServiceWorker(deps?: {
         }
       },
       (error) => {
+        // Document detachment, reload mid-flight, or sandboxed environments throw
+        // InvalidStateError; ignore gracefully without logging noisy errors.
+        if (
+          error instanceof Error &&
+          (error.name === "InvalidStateError" ||
+            error.message?.includes("invalid state"))
+        ) {
+          return;
+        }
         console.warn("Service Worker registration failed:", error);
       },
     );

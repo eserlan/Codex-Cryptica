@@ -1,7 +1,7 @@
 {
   "name": "web",
   "private": true,
-  "version": "0.33.5",
+  "version": "0.35.9",
   "type": "module",
   "scripts": {
     "dev": "vite dev",
@@ -82,10 +82,13 @@
     "dice-engine": "workspace:*",
     "dompurify": "^3.4.2",
     "editor-core": "workspace:*",
+    "entity-report-engine": "workspace:*",
+    "entity-template-engine": "workspace:*",
     "fflate": "^0.8.3",
     "flexsearch": "^0.8.212",
     "generator-engine": "workspace:*",
     "graph-engine": "workspace:*",
+    "help-engine": "workspace:*",
     "html-to-image": "^1.11.13",
     "idb": "^8.0.3",
     "js-yaml": "^5.2.1",
@@ -95,6 +98,8 @@
     "peerjs": "^1.5.5",
     "random-source-engine": "workspace:*",
     "schema": "workspace:*",
+    "session-journal-engine": "workspace:*",
+    "solo-session-engine": "workspace:*",
     "svelte-tiptap": "^3.0.1",
     "tiptap-markdown": "^0.9.0",
     "zod": "^4.4.3"

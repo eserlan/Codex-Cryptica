@@ -34,6 +34,11 @@
     onClearCategories,
     showMinimap = true,
     onToggleMinimap,
+    isAllImageOnly = false,
+    onToggleAllImageOnly,
+    showImageLabels = false,
+    onToggleShowImageLabels,
+    onGenerateReport,
   } = $props<{
     canvasName: string;
     sourceEntityId?: string;
@@ -63,6 +68,11 @@
     onClearCategories: () => void;
     showMinimap?: boolean;
     onToggleMinimap?: () => void;
+    isAllImageOnly?: boolean;
+    onToggleAllImageOnly?: () => void;
+    showImageLabels?: boolean;
+    onToggleShowImageLabels?: () => void;
+    onGenerateReport?: () => void;
   }>();
 
   let isAddMenuOpen = $state(false);
@@ -153,6 +163,58 @@
         class="flex h-8 w-8 items-center justify-center bg-theme-surface/80 backdrop-blur-md border border-theme-primary/30 shadow-sm pointer-events-auto transition-all hover:border-theme-primary text-theme-muted hover:text-theme-primary"
       >
         <span class="icon-[lucide--wand-2] w-4 h-4" aria-hidden="true"></span>
+      </button>
+    {/if}
+
+    {#if onGenerateReport}
+      <button
+        type="button"
+        onclick={onGenerateReport}
+        title="Generate report"
+        aria-label="Generate report"
+        data-testid="canvas-generate-report"
+        class="flex h-8 w-8 items-center justify-center bg-theme-surface/80 backdrop-blur-md border border-theme-primary/30 shadow-sm pointer-events-auto transition-all hover:border-theme-primary text-theme-muted hover:text-theme-primary"
+      >
+        <span class="icon-[lucide--file-text] w-4 h-4" aria-hidden="true"
+        ></span>
+      </button>
+    {/if}
+
+    {#if onToggleAllImageOnly}
+      <button
+        type="button"
+        onclick={onToggleAllImageOnly}
+        title={isAllImageOnly
+          ? "Switch all cards to detailed view"
+          : "Switch all cards to image only view"}
+        aria-label={isAllImageOnly
+          ? "Switch all cards to detailed view"
+          : "Switch all cards to image only view"}
+        aria-pressed={isAllImageOnly}
+        class="flex h-8 w-8 items-center justify-center bg-theme-surface/80 backdrop-blur-md border border-theme-primary/30 shadow-sm pointer-events-auto transition-all hover:border-theme-primary text-theme-muted hover:text-theme-primary {isAllImageOnly
+          ? 'border-theme-primary bg-theme-primary/15 text-theme-primary'
+          : ''}"
+      >
+        <span class="icon-[lucide--image] w-4 h-4" aria-hidden="true"></span>
+      </button>
+    {/if}
+
+    {#if onToggleShowImageLabels}
+      <button
+        type="button"
+        onclick={onToggleShowImageLabels}
+        title={showImageLabels
+          ? "Hide info text on image cards"
+          : "Show info text on all image cards"}
+        aria-label={showImageLabels
+          ? "Hide info text on image cards"
+          : "Show info text on all image cards"}
+        aria-pressed={showImageLabels}
+        class="flex h-8 w-8 items-center justify-center bg-theme-surface/80 backdrop-blur-md border border-theme-primary/30 shadow-sm pointer-events-auto transition-all hover:border-theme-primary text-theme-muted hover:text-theme-primary {showImageLabels
+          ? 'border-theme-primary bg-theme-primary/15 text-theme-primary'
+          : ''}"
+      >
+        <span class="icon-[lucide--info] w-4 h-4" aria-hidden="true"></span>
       </button>
     {/if}
 
@@ -317,7 +379,9 @@
                 isAddMenuOpen = false;
               }}
             >
-              <span class="icon-[lucide--map-pin] w-3.5 h-3.5 text-amber-400"
+              <span
+                aria-hidden="true"
+                class="icon-[lucide--map-pin] w-3.5 h-3.5 text-amber-400"
               ></span>
               Location
             </button>
@@ -329,7 +393,9 @@
                 isAddMenuOpen = false;
               }}
             >
-              <span class="icon-[lucide--users] w-3.5 h-3.5 text-blue-400"
+              <span
+                aria-hidden="true"
+                class="icon-[lucide--users] w-3.5 h-3.5 text-blue-400"
               ></span>
               NPC / Faction
             </button>
@@ -341,7 +407,9 @@
                 isAddMenuOpen = false;
               }}
             >
-              <span class="icon-[lucide--search] w-3.5 h-3.5 text-emerald-400"
+              <span
+                aria-hidden="true"
+                class="icon-[lucide--search] w-3.5 h-3.5 text-emerald-400"
               ></span>
               Clue / Secret
             </button>
@@ -353,7 +421,9 @@
                 isAddMenuOpen = false;
               }}
             >
-              <span class="icon-[lucide--skull] w-3.5 h-3.5 text-rose-400"
+              <span
+                aria-hidden="true"
+                class="icon-[lucide--skull] w-3.5 h-3.5 text-rose-400"
               ></span>
               Threat
             </button>
@@ -365,7 +435,9 @@
                 isAddMenuOpen = false;
               }}
             >
-              <span class="icon-[lucide--flag] w-3.5 h-3.5 text-cyan-400"
+              <span
+                aria-hidden="true"
+                class="icon-[lucide--flag] w-3.5 h-3.5 text-cyan-400"
               ></span>
               Outcome
             </button>
@@ -377,7 +449,9 @@
                 isAddMenuOpen = false;
               }}
             >
-              <span class="icon-[lucide--play] w-3.5 h-3.5 text-purple-400"
+              <span
+                aria-hidden="true"
+                class="icon-[lucide--play] w-3.5 h-3.5 text-purple-400"
               ></span>
               Situation
             </button>
@@ -407,7 +481,7 @@
           aria-hidden="true"
         ></span>
         <span
-          class="truncate text-[10px] font-bold uppercase tracking-wider text-theme-text group-hover:text-theme-primary"
+          class="truncate text-micro font-bold uppercase tracking-wider text-theme-text group-hover:text-theme-primary"
         >
           {buttonText}
         </span>
@@ -432,7 +506,7 @@
             aria-hidden="true"
           ></span>
           <span
-            class="truncate text-[10px] font-bold uppercase tracking-wider text-theme-text group-hover:text-theme-primary"
+            class="truncate text-micro font-bold uppercase tracking-wider text-theme-text group-hover:text-theme-primary"
           >
             Open Dossier
           </span>
@@ -466,7 +540,7 @@
             aria-hidden="true"
           ></span>
           <span
-            class="truncate text-[10px] font-bold uppercase tracking-wider text-theme-text group-hover:text-theme-primary"
+            class="truncate text-micro font-bold uppercase tracking-wider text-theme-text group-hover:text-theme-primary"
           >
             Finalize Dossier
           </span>
@@ -487,9 +561,12 @@
     <div
       class="flex items-center gap-2 px-3 py-1 bg-theme-primary/10 border border-theme-primary/20 backdrop-blur-sm animate-pulse"
     >
-      <span class="icon-[lucide--save] w-3 h-3 text-theme-primary"></span>
       <span
-        class="text-[8px] font-bold text-theme-primary tracking-[0.2em] uppercase"
+        aria-hidden="true"
+        class="icon-[lucide--save] w-3 h-3 text-theme-primary"
+      ></span>
+      <span
+        class="text-nano font-bold text-theme-primary tracking-[0.2em] uppercase"
       >
         Syncing...
       </span>

@@ -56,7 +56,7 @@
             data-testid="modal-delete-impact"
           >
             <div
-              class="flex items-center gap-1.5 font-bold uppercase tracking-wider text-[10px]"
+              class="flex items-center gap-1.5 font-bold uppercase tracking-wider text-micro"
             >
               <span
                 aria-hidden="true"
@@ -71,7 +71,7 @@
             </p>
           </div>
         {:else}
-          <p class="mt-2 text-[11px] text-theme-muted/80">
+          <p class="mt-2 text-meta text-theme-muted/80">
             This action cannot be undone and will permanently remove this {noun}
             from your vault.
           </p>

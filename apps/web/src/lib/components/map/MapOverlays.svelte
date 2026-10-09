@@ -48,7 +48,7 @@
     <span class="text-xs font-medium text-theme-text">
       Click map to place <strong>{mapSession.armedTile.name}</strong>
     </span>
-    <span class="text-[10px] text-theme-muted">· [Esc] to cancel</span>
+    <span class="text-micro text-theme-muted">· [Esc] to cancel</span>
     <button
       type="button"
       onclick={() => mapSession.clearArmedTile()}
@@ -138,12 +138,18 @@
       style:height={`${Math.abs(interactions.gridFitEnd.y - interactions.gridFitStart.y)}px`}
     ></div>
     <div
-      class="absolute rounded bg-theme-bg/90 px-2 py-1 text-[11px] font-bold text-theme-primary shadow"
+      class="absolute rounded bg-theme-bg/90 px-2 py-1 text-meta font-bold text-theme-primary shadow"
       style:left={`${Math.min(interactions.gridFitStart.x, interactions.gridFitEnd.x)}px`}
       style:top={`${Math.min(interactions.gridFitStart.y, interactions.gridFitEnd.y) - 28}px`}
     >
-      {interactions.gridFitSpan}×{interactions.gridFitSpan} squares · Shift+Scroll
-      to change
+      {#if mapStore.gridType === "square"}
+        {interactions.gridFitSpan}×{interactions.gridFitSpan} squares
+      {:else}
+        {interactions.gridFitSpan}
+        {interactions.gridFitSpan === 1 ? "hex" : "hexes"}
+        {mapStore.gridType === "hex-flat" ? "down a column" : "across a row"}
+      {/if}
+      · Shift+Scroll to change
     </div>
   </div>
 {/if}
@@ -166,7 +172,14 @@
 
 {#each mapStore.pins as pin (pin.id)}
   {@const pos = mapStore.project(pin.coordinates)}
-  {#if pos.x >= -100 && pos.x <= mapStore.canvasSize.width + 100 && pos.y >= -100 && pos.y <= mapStore.canvasSize.height + 100}
+  <!-- Reading the revision makes the label re-check after the fog changes. -->
+  {@const fogRevision = mapStore.fogRevision}
+  {@const hiddenByFog =
+    fogRevision >= 0 &&
+    mapStore.showFog &&
+    mapStore.fogOpaque &&
+    !interactions.painter.isRevealedAt(pin.coordinates)}
+  {#if !hiddenByFog && pos.x >= -100 && pos.x <= mapStore.canvasSize.width + 100 && pos.y >= -100 && pos.y <= mapStore.canvasSize.height + 100}
     {@const entity =
       pin.entityId && vault.entities ? vault.entities[pin.entityId] : null}
     {@const labelText = entity ? entity.title : "Unlinked Pin"}
@@ -184,7 +197,7 @@
         pin.id === interactions.selectedPinId}
     >
       <div
-        class="px-2 py-0.5 bg-theme-surface/90 border border-theme-border/80 rounded-md text-[10px] font-bold text-theme-text shadow-md whitespace-nowrap select-none backdrop-blur-sm flex items-center"
+        class="px-2 py-0.5 bg-theme-surface/90 border border-theme-border/80 rounded-md text-micro font-bold text-theme-text shadow-md whitespace-nowrap select-none backdrop-blur-sm flex items-center"
       >
         {labelText}
       </div>

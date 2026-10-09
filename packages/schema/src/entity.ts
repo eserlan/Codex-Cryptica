@@ -169,6 +169,30 @@ export type ImageArtDirectionRecord = z.infer<
   typeof ImageArtDirectionRecordSchema
 >;
 
+export const ReportProvenanceSchema = z.object({
+  origin: z.enum(["canvas", "graph", "table"]),
+  canvasId: z.string().optional(),
+  selection: z.enum(["entire", "selected"]).optional(),
+  entityIds: z.array(z.string()).optional(),
+  include: z.object({
+    descriptions: z.boolean(),
+    relationships: z.boolean(),
+    factionsAffiliations: z.boolean(),
+    portraits: z.boolean(),
+    notes: z.boolean(),
+    gmOnlySecrets: z.boolean(),
+    // Added later; reports saved before then include both kinds.
+    canvasConnections: z.boolean().optional(),
+    graphConnections: z.boolean().optional(),
+  }),
+  // "detailed" is legacy: still accepted so previously saved reports load.
+  detail: z.enum(["brief", "standard", "detailed"]),
+  generatedAt: z.number(),
+  contentHash: z.string(),
+});
+
+export type ReportProvenance = z.infer<typeof ReportProvenanceSchema>;
+
 export const EntitySchema = z.object({
   id: z.string().min(1),
   type: EntityTypeSchema,
@@ -220,6 +244,7 @@ export const EntitySchema = z.object({
   languageProfileVersion: z.literal(1).optional(),
   languageProfile: LanguageProfileV1Schema.optional(),
   statSheet: StatSheetSchema.optional(),
+  report: ReportProvenanceSchema.optional(),
 });
 
 export type Entity = z.infer<typeof EntitySchema>;

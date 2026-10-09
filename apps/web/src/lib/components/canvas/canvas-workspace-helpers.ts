@@ -6,19 +6,13 @@ import {
   type CanvasEdge,
   type CanvasNode,
 } from "@codex/canvas-engine";
+import { type AdventureNodeType } from "generator-engine";
 import {
-  AdventureFlowLayout,
-  DelveFlowLayout,
-  type AdventureCanvasDocument,
-  type AdventureEdge,
-  type AdventureNode,
-  type AdventureNodeType,
-  type DelveCanvasDocument,
-  type DelveCanvasEdge,
-  type DelveCanvasNode,
-  type DelveRoomNodeData,
-} from "generator-engine";
-import { systemClock, type Clock } from "$lib/utils/runtime-deps";
+  normalizeEntityCardViewPreference,
+  resolveEntityCardVariant,
+  type EntityCardVariant,
+  type EntityCardViewPreference,
+} from "./cards/entity-card-variant";
 
 export type CanvasWorkspacePoint = { x: number; y: number };
 
@@ -476,123 +470,182 @@ export function reconnectFlowEdge(edge: Edge, connection: Connection): Edge {
   };
 }
 
-const ADVENTURE_NODE_TYPES = new Set<AdventureNodeType>([
-  "situation",
-  "location",
-  "npc",
-  "clue",
-  "threat",
-  "outcome",
-]);
-
-function getAdventureNodeType(node: Node): AdventureNodeType | null {
-  const type = (node.data?.type || node.type) as AdventureNodeType;
-  return ADVENTURE_NODE_TYPES.has(type) ? type : null;
+export interface EstimatedNodeSize {
+  width: number;
+  height: number;
 }
 
-export function autoArrangeCanvasNodes(params: {
-  canvasId: string;
-  title: string;
-  nodes: Node[];
-  edges: Edge[];
-  clock?: Clock;
-}): Node[] | null {
-  const clock = params.clock ?? systemClock;
-  const delveRooms = params.nodes.filter((node) => node.type === "delveRoom");
-  if (delveRooms.length > 0) {
-    const now = clock.now();
-    const rawDoc: DelveCanvasDocument = {
-      id: params.canvasId,
-      conceptId: params.canvasId,
-      title: params.title,
-      nodes: params.nodes.map(flowNodeToCanvasNode) as DelveCanvasNode[],
-      edges: params.edges.map((edge) =>
-        flowEdgeToCanvasEdge(edge),
-      ) as DelveCanvasEdge[],
-      metadata: {
-        size: "medium",
-        entranceRoomIds: delveRooms
-          .filter(
-            (node) =>
-              (node.data as unknown as DelveRoomNodeData).role === "entrance",
-          )
-          .map((node) => node.id),
-        createdAt: now,
-        updatedAt: now,
-      },
-    };
-    const positioned = new DelveFlowLayout().applyLayout(rawDoc);
-    const positionedById = new Map(
-      positioned.nodes.map((node) => [node.id, node]),
-    );
-    return params.nodes.map((node) => {
-      const match = positionedById.get(node.id);
-      if (!match) return node;
-      return {
-        ...node,
-        position: match.position,
-        width: match.width,
-        height: match.height,
-        parentId: match.parentId,
-        extent:
-          match.extent === "parent" ? "parent" : (node.extent ?? undefined),
-      };
-    });
-  }
-
-  const adventureNodes = params.nodes.flatMap((node): AdventureNode[] => {
-    const type = getAdventureNodeType(node);
-    if (!type) return [];
-    return [
-      {
-        id: node.id,
-        type,
-        position: node.position,
-        data: {
-          ...(node.data as unknown as AdventureNode["data"]),
-          type,
-          title:
-            typeof node.data?.title === "string"
-              ? node.data.title
-              : "Untitled Node",
-        },
-      },
-    ];
-  });
-  if (adventureNodes.length === 0) return null;
-
-  const adventureNodeIds = new Set(adventureNodes.map((node) => node.id));
-  const now = new Date(clock.now()).toISOString();
-  const rawDoc: AdventureCanvasDocument = {
-    id: params.canvasId,
-    title: params.title,
-    summary: "",
-    genre: "Fantasy",
-    nodes: adventureNodes,
-    edges: params.edges
-      .filter(
-        (edge) =>
-          adventureNodeIds.has(edge.source) &&
-          adventureNodeIds.has(edge.target),
-      )
-      .map((edge): AdventureEdge => ({
-        id: edge.id,
-        source: edge.source,
-        target: edge.target,
-        label: typeof edge.label === "string" ? edge.label : undefined,
-      })),
-    metadata: { kind: "adventure" },
-    createdAt: now,
-    updatedAt: now,
-  };
-  const positioned = new AdventureFlowLayout().applyLayout(rawDoc);
-  const positionedById = new Map(
-    positioned.nodes.map((node) => [node.id, node.position]),
+function getLiveDomSize(
+  node: Node,
+  variant: EntityCardVariant,
+  isLarge: boolean,
+): EstimatedNodeSize | undefined {
+  const nodeEl = findCanvasNodeElement(node.id);
+  if (!nodeEl) return undefined;
+  const contentEl = (nodeEl.firstElementChild as HTMLElement) || nodeEl;
+  const width = Math.max(nodeEl.offsetWidth || 0, contentEl.offsetWidth || 0);
+  const height = Math.max(
+    nodeEl.offsetHeight || 0,
+    contentEl.offsetHeight || 0,
   );
-  return params.nodes.map((node) => {
-    const position = positionedById.get(node.id);
-    return position ? { ...node, position } : node;
-  });
+  return isInvalidLiveSize(width, height, variant, isLarge)
+    ? undefined
+    : { width, height };
+}
+
+function findCanvasNodeElement(id: string): HTMLElement | null {
+  if (
+    typeof document === "undefined" ||
+    typeof document.querySelector !== "function"
+  )
+    return null;
+  return document.querySelector(
+    `.svelte-flow__node[data-id="${id}"], [data-id="${id}"]`,
+  ) as HTMLElement | null;
+}
+
+function isInvalidLiveSize(
+  width: number,
+  height: number,
+  variant: EntityCardVariant,
+  isLarge: boolean,
+): boolean {
+  if (width <= 40 || height <= 40) return true;
+  if (variant === "image_only" && !isLarge) return width > 320;
+  return (
+    variant !== "compact" &&
+    variant !== "image_only" &&
+    width <= 200 &&
+    height <= 260
+  );
+}
+
+function getMeasuredNodeSize(
+  node: Node,
+  variant: EntityCardVariant,
+  isLarge: boolean,
+): EstimatedNodeSize | undefined {
+  const width = (node as any).measured?.width as number | undefined;
+  const height = (node as any).measured?.height as number | undefined;
+  if (!isValidMeasuredSize(width, height)) return undefined;
+  return normalizeMeasuredNodeSize(width, height as number, variant, isLarge);
+}
+
+function normalizeMeasuredNodeSize(
+  width: number,
+  height: number,
+  variant: EntityCardVariant,
+  isLarge: boolean,
+): EstimatedNodeSize {
+  if (variant === "image_only" && !isLarge && width > 320)
+    return { width: 192, height: 256 };
+  if (isSmallCardMeasurement(width, height, variant)) {
+    return { width: isLarge ? 580 : 300, height: isLarge ? 500 : 480 };
+  }
+  return { width, height };
+}
+
+function isValidMeasuredSize(width: unknown, height: unknown): width is number {
+  return (
+    typeof width === "number" &&
+    width > 0 &&
+    typeof height === "number" &&
+    height > 0
+  );
+}
+
+function isSmallCardMeasurement(
+  width: number,
+  height: number | undefined,
+  variant: EntityCardVariant,
+): boolean {
+  return (
+    variant !== "image_only" &&
+    variant !== "compact" &&
+    width <= 200 &&
+    (height ?? Infinity) <= 260
+  );
+}
+
+function getDefaultNodeSize(
+  node: Node,
+  data: Record<string, unknown>,
+  entity: { metadata?: Record<string, unknown>; type?: string } | undefined,
+  cardView: EntityCardViewPreference,
+  variant: EntityCardVariant,
+  isLarge: boolean,
+): EstimatedNodeSize {
+  const width = (node.width as number) || (data.width as number);
+  const height = (node.height as number) || (data.height as number);
+  const fixedSizes: Record<string, EstimatedNodeSize> = {
+    text: { width: 200, height: 140 },
+    file: { width: 220, height: 180 },
+    delveRoom: { width: 280, height: 200 },
+    adventureNode: { width: 280, height: 200 },
+  };
+  const fixedSize = node.type ? fixedSizes[node.type] : undefined;
+  if (fixedSize) return applyExplicitSize(fixedSize, width, height);
+
+  const isFaction = isFactionCard(entity?.type, cardView);
+  const standardSize = isLarge ? LARGE_CARD_SIZE : STANDARD_CARD_SIZE;
+  const defaults: Record<EntityCardVariant, EstimatedNodeSize> = {
+    image_only: isFaction
+      ? FACTION_IMAGE_SIZE
+      : { width: isLarge ? 580 : 192, height: 256 },
+    compact: COMPACT_CARD_SIZE,
+    roster: ROSTER_CARD_SIZE,
+    default: standardSize,
+    character: standardSize,
+    faction: standardSize,
+    location: standardSize,
+  };
+  return applyExplicitSize(defaults[variant], width, height);
+}
+
+const STANDARD_CARD_SIZE = { width: 300, height: 480 };
+const LARGE_CARD_SIZE = { width: 580, height: 480 };
+const COMPACT_CARD_SIZE = { width: 112, height: 160 };
+const ROSTER_CARD_SIZE = { width: 580, height: 540 };
+const FACTION_IMAGE_SIZE = { width: 580, height: 380 };
+
+function isFactionCard(
+  entityType: string | undefined,
+  preference: EntityCardViewPreference,
+): boolean {
+  return (
+    (entityType ?? "").toLowerCase() === "faction" ||
+    preference === "roster" ||
+    preference === "faction"
+  );
+}
+
+function applyExplicitSize(
+  fallback: EstimatedNodeSize,
+  width: number | undefined,
+  height: number | undefined,
+): EstimatedNodeSize {
+  return { width: width || fallback.width, height: height || fallback.height };
+}
+
+export function getEstimatedNodeSize(
+  node: Node,
+  vaultEntities?: Record<
+    string,
+    { metadata?: Record<string, unknown>; type?: string } | undefined
+  >,
+): EstimatedNodeSize {
+  const data = (node.data || {}) as Record<string, unknown>;
+  const cardView = normalizeEntityCardViewPreference(data.cardView);
+  const entityId = (data.entityId as string) || node.id;
+  const entity = vaultEntities?.[entityId];
+  const variant = resolveEntityCardVariant(entity?.type, cardView);
+  const isLarge = Boolean(data.largeCard) || variant === "roster";
+
+  return (
+    getLiveDomSize(node, variant, isLarge) ??
+    getMeasuredNodeSize(node, variant, isLarge) ??
+    getDefaultNodeSize(node, data, entity, cardView, variant, isLarge)
+  );
 }
 
 export function resolveSpawnPosition(params: {

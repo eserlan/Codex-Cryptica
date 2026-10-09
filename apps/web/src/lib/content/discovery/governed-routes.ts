@@ -71,10 +71,17 @@ const GOVERNED_BLOG_PATHS = [
   "/blog/gm-guide-data-sovereignty",
   "/blog/worldbuilding-tool-without-ai",
   "/blog/ai-slop-is-context-failure",
+  "/blog/entity-detail-views",
 ] as const;
 
 /** Topic hubs that act as crawlable cluster entry points (#3118). */
-const TOPIC_PATHS = ["/topics/heists", "/topics/puzzles"] as const;
+const TOPIC_PATHS = [
+  "/topics/heists",
+  "/topics/puzzles",
+  "/topics/pirates",
+  "/topics/dnd",
+  "/topics/dnd-beginners",
+] as const;
 
 export function listGovernedPaths(): string[] {
   return [

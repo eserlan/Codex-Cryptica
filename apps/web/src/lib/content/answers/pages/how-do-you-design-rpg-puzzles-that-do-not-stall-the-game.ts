@@ -3,7 +3,7 @@ import type { AnswerConfigInput } from "../schema";
 export const howDoYouDesignRpgPuzzlesThatDoNotStallTheGame: AnswerConfigInput =
   {
     slug: "how-do-you-design-rpg-puzzles-that-do-not-stall-the-game",
-    category: "session-prep",
+    category: "adventure-design",
     publishedAt: "2026-08-30",
     question: "How do you design RPG puzzles that do not stall the game?",
     kind: "framework",
@@ -154,6 +154,8 @@ export const howDoYouDesignRpgPuzzlesThatDoNotStallTheGame: AnswerConfigInput =
       "how-do-you-run-a-mystery-without-railroading",
       "how-do-you-give-hints-for-an-rpg-puzzle-without-giving-away-the-answer",
       "what-ttrpg-should-i-use-for-a-fantasy-dungeon-crawl",
+      "how-do-i-make-interviewing-npcs-interesting-in-an-investigation",
+      "how-do-i-handle-players-asking-an-npc-to-tell-us-everything-you-know",
     ],
     discovery: {
       id: "answer-rpg-puzzles",

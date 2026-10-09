@@ -1,3 +1,4 @@
+import { soloPlayGuard as defaultSoloPlayGuard } from "$lib/stores/solo-session-instance";
 import { mapStore as defaultMapStore } from "$lib/stores/map.svelte";
 import { mapSession as defaultMapSession } from "$lib/stores/map-session.svelte";
 import { vault as defaultVault } from "$lib/stores/vault.svelte";
@@ -81,6 +82,12 @@ export interface MapPageControllerDependencies {
   notificationStore?: MapPageNotificationStore;
   sessionModeStore?: MapPageSessionModeStore;
   layoutUIStore?: MapPageLayoutStore;
+  soloPlayGuard?: MapPageSoloPlayGuard;
+}
+
+/** Decides whether Share may open (a solo session blocks it). */
+export interface MapPageSoloPlayGuard {
+  sharedPlayBlockedReason(): string | null;
 }
 
 export class MapPageController {
@@ -92,6 +99,7 @@ export class MapPageController {
     defaultNotificationStore;
   private sessionModeStore: MapPageSessionModeStore = defaultSessionModeStore;
   private layoutUIStore: MapPageLayoutStore = defaultLayoutUIStore;
+  private soloPlayGuard: MapPageSoloPlayGuard = defaultSoloPlayGuard;
   private activeVaultId: string | null | undefined;
 
   isDragging = $state(false);
@@ -99,8 +107,13 @@ export class MapPageController {
   mapName = $state("");
   files = $state<FileList | null>(null);
 
+  // The VTT chat sidebar only exists while VTT is on; otherwise HUDs sit flush left.
   chatSidebarOffset = $derived(
-    this.layoutUIStore.vttChatSidebarCollapsed ? "3rem" : "20rem",
+    !this.mapSession.vttEnabled
+      ? "0rem"
+      : this.layoutUIStore.vttChatSidebarCollapsed
+        ? "3rem"
+        : "20rem",
   );
   showInitiativePanel = $derived(
     shouldShowInitiativePanel(this.mapSession.vttEnabled, this.mapSession.mode),
@@ -126,6 +139,7 @@ export class MapPageController {
     this.notificationStore = deps.notificationStore ?? defaultNotificationStore;
     this.sessionModeStore = deps.sessionModeStore ?? defaultSessionModeStore;
     this.layoutUIStore = deps.layoutUIStore ?? defaultLayoutUIStore;
+    this.soloPlayGuard = deps.soloPlayGuard ?? defaultSoloPlayGuard;
     this.activeVaultId = this.vault.activeVaultId;
   }
 
@@ -140,6 +154,11 @@ export class MapPageController {
   }
 
   openShareModal() {
+    const reason = this.soloPlayGuard.sharedPlayBlockedReason();
+    if (reason) {
+      this.notificationStore.notify(reason, "info");
+      return;
+    }
     this.modalUIStore.openShare();
   }
 

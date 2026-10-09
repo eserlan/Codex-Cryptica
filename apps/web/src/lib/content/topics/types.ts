@@ -85,7 +85,7 @@ export interface TopicHubConfig {
   slug: string;
   canonicalPath: string;
   /** Public cluster label shown as the hub's chip. */
-  label: "heist" | "puzzle";
+  label: "heist" | "puzzle" | "pirate";
   title: string;
   metaTitle: string;
   description: string;

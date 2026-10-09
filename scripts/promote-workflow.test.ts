@@ -32,3 +32,24 @@ describe("promote-to-prod workflow IndexNow notification (#3164)", () => {
     expect(workflow).toContain("continue-on-error: true");
   });
 });
+
+describe("promote-to-prod staging run lookup", () => {
+  test("selects the newest successful staging push run from the API page", () => {
+    expect(workflow).toContain(
+      '"repos/$GH_REPO/actions/workflows/deploy.yml/runs?branch=staging&status=success&event=push&per_page=100"',
+    );
+    expect(workflow).toContain("sort_by(.created_at) | last // empty");
+    expect(workflow).toContain(
+      "RUN_SHA=$(jq -r '.head_sha // empty' <<<\"$RUN\")",
+    );
+    expect(workflow).toContain(
+      'HEAD_SHA=$(gh api "repos/$GH_REPO/git/ref/heads/staging"',
+    );
+    expect(workflow).toContain(
+      'if [ "$STATUS" != "ahead" ] || [ -n "$EXTRA" ]; then',
+    );
+    expect(workflow).toContain("staging has unbuilt changes");
+    expect(workflow).toContain('if [ -z "$RUN_ID" ]; then');
+    expect(workflow).not.toContain("--limit 50");
+  });
+});

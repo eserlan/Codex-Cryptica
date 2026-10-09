@@ -1,22 +1,19 @@
 <!--
 Sync Impact Report
-- Version change: 1.5.0 -> 1.6.0
-- Modified principles: None
-- Added sections: XIV. Bounded Responsibility (No God Files) — promotes the practice
-  already established by ADR 003 and docs/STYLE_GUIDE.md into a checkable principle
-  (new principle = minor bump)
-- Removed sections: None
-- Templates requiring updates:
-  - ✅ Updated .specify/templates/plan-template.md; added a Bounded Responsibility
-    Check to the Constitution Check gate, mirroring the Discovery Intent Check, so
-    the trigger is answered at plan time rather than discovered in review.
-  - ✅ Verified .specify/templates/spec-template.md; specs describe behaviour, not
-    file layout, so no conflicting guidance.
-  - ✅ Verified .specify/templates/tasks-template.md; no conflicting guidance. A
-    decomposition task is situational and belongs to the plan that finds it, not to
-    every feature's task list.
-- Follow-up TODOs: None. The principle is scoped to files a change touches, so no
-  retroactive audit of the 136 existing files over the trigger is implied.
+- Version change: 1.7.0 -> 1.8.0
+- Modified principles: VI. Clean Implementation, rule 3 (Validation) — local verification is now
+  the impacted-only checks (lint:changed, test:changed, affected-workspace type-check), with the
+  full suites required to pass in PR CI before merge. This matches the repository rule in
+  AGENTS.md ("No Baseline Tests / Impacted-Only Validation"), which the earlier wording
+  contradicted.
+- Added sections: None.
+- Removed sections: None.
+- Templates and guidance requiring updates:
+  - ✅ .specify/templates/*.md — reviewed; none repeat the old validation wording.
+  - ✅ .gemini/commands, .codex/commands, .agent/workflows, .agents/skills — reviewed; none
+    repeat the old validation wording.
+  - ✅ AGENTS.md — already states impacted-only validation; no change needed.
+- Follow-up TODOs: None.
 -->
 
 # Codex-Arcana Constitution
@@ -62,11 +59,17 @@ To maintain build integrity and code quality, AI agents MUST:
 
 1.  **Style Guide**: Adhere strictly to `@docs/STYLE_GUIDE.md` for all visual, behavioral, and architectural patterns (including Svelte 5 Runes, Tailwind 4 tokens, and Data Safety).
 2.  **Implementation Hygiene**: Prefix unused variables/parameters with `_` and ensure comprehensive type definitions (e.g. `node` types) in workspace packages.
-3.  **Validation**: Every code change MUST be verified with `bun run lint` and `bun run test` before considering the task complete.
+3.  **Validation**: Every code change MUST be verified before considering the task complete: locally with the impacted-only checks (`bun run lint:changed`, `bun run test:changed`, and a type-check of each affected workspace), and by the full lint, test and type-check suites passing in PR CI before merge. Repository-wide runs are left to CI.
 
 ### VII. User Documentation
 
-Every major feature MUST include a corresponding user-facing help description or guide article within `apps/web/src/lib/config/help-content.ts`. Features with complex interactions SHOULD also include a `FeatureHint` to guide first-time usage.
+Every new or materially changed user-facing product feature MUST include a clear, task-focused
+help article or description in the app's Help system. The Help system's article source
+is `apps/web/src/lib/content/help/`, with feature hints and Help configuration in
+`apps/web/src/lib/config/help-content.ts`. Help content MUST explain what users can do,
+how to find and use the feature, and any important prerequisites or limitations that
+affect first use. Features with complex interactions SHOULD also include a `FeatureHint`
+to guide first-time usage.
 
 ### VIII. Dependency Injection (DI)
 
@@ -129,4 +132,4 @@ Size is reported for human review, never enforced by a line-count lint rule — 
 
 This constitution is the ultimate arbiter of engineering quality. All implementation plans and code reviews must verify alignment with these principles.
 
-**Version**: 1.6.0 | **Ratified**: 2026-05-23 | **Last Amended**: 2026-09-01
+**Version**: 1.8.0 | **Ratified**: 2026-05-23 | **Last Amended**: 2026-10-08

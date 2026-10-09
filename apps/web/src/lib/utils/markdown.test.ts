@@ -45,6 +45,16 @@ describe("markdown.ts utility", () => {
       expect(html).not.toContain("<p>");
     });
 
+    it("keeps single newlines as separate paragraphs by default (unchanged behaviour)", () => {
+      const html = renderMarkdown("Line one\nLine two");
+      expect(html).not.toContain("<br");
+    });
+
+    it("turns a single newline into a <br> when breaks is requested (#3481)", () => {
+      const html = renderMarkdown("Line one\nLine two", { breaks: true });
+      expect(html).toContain("<br");
+    });
+
     it("should handle marked.parse errors and return sanitized fallback", async () => {
       // Mock marked.parse to throw an error to test the catch block
       const { marked } = await import("marked");
@@ -305,6 +315,39 @@ describe("markdown.ts utility", () => {
     });
   });
 
+  describe("hidden connections", () => {
+    const base = {
+      id: "eldrin",
+      type: "character",
+      title: "Eldrin",
+      content: "Body",
+    };
+
+    it("keeps a hidden connection's flag through save and reload", () => {
+      const parsed = parseMarkdown(
+        stringifyEntity({
+          ...base,
+          connections: [
+            { target: "keep", type: "located_in", hidden: true },
+            { target: "tower", type: "owns" },
+          ],
+        } as any),
+      );
+      expect(parsed.metadata.connections).toEqual([
+        { target: "keep", type: "located_in", hidden: true },
+        { target: "tower", type: "owns" },
+      ]);
+    });
+
+    it("writes nothing extra for a connection that was never hidden (negative)", () => {
+      const serialized = stringifyEntity({
+        ...base,
+        connections: [{ target: "tower", type: "owns" }],
+      } as any);
+      expect(serialized).not.toContain("hidden");
+    });
+  });
+
   describe("Vault Round-Trip Integration", () => {
     it("should serialize a fully populated entity and re-parse it with full fidelity", () => {
       const fullEntity = {
@@ -428,6 +471,43 @@ describe("markdown.ts utility", () => {
       expect(result).toBe(
         "Initial content.\n\n## Existing Section\nNew content.\n## Another Section\nOther content.",
       );
+    });
+  });
+
+  describe("report provenance round-trip", () => {
+    it("keeps the report field through stringify and parse", () => {
+      const report = {
+        origin: "canvas" as const,
+        canvasId: "c1",
+        selection: "entire" as const,
+        include: {
+          descriptions: true,
+          relationships: true,
+          factionsAffiliations: true,
+          portraits: true,
+          notes: true,
+          gmOnlySecrets: false,
+        },
+        detail: "standard" as const,
+        generatedAt: 5,
+        contentHash: "abc12345",
+      };
+      const entity = EntitySchema.parse({
+        id: "r",
+        type: "note",
+        title: "R",
+        kind: "report",
+        content: "## Overview",
+        report,
+      });
+      const { metadata } = parseMarkdown(stringifyEntity(entity));
+      expect(metadata.report).toEqual(report);
+    });
+
+    it("does not add a report field to ordinary notes", () => {
+      const entity = EntitySchema.parse({ id: "n", type: "note", title: "N" });
+      const { metadata } = parseMarkdown(stringifyEntity(entity));
+      expect(metadata.report).toBeUndefined();
     });
   });
 });

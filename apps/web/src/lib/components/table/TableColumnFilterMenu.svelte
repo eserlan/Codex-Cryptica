@@ -117,7 +117,7 @@
   style:left="{Math.max(10, Math.min(x, window.innerWidth - 220))}px"
 >
   <div
-    class="border-b border-theme-border/40 px-3 pb-1.5 text-[10px] font-bold uppercase tracking-wider text-theme-muted"
+    class="border-b border-theme-border/40 px-3 pb-1.5 text-micro font-bold uppercase tracking-wider text-theme-muted"
   >
     Filter {columnLabel}
   </div>
@@ -135,7 +135,8 @@
     >
       <span>All connections</span>
       {#if active === "all"}
-        <span class="icon-[lucide--check] h-3.5 w-3.5"></span>
+        <span aria-hidden="true" class="icon-[lucide--check] h-3.5 w-3.5"
+        ></span>
       {/if}
     </button>
     <button
@@ -149,7 +150,8 @@
     >
       <span>Zero connections (0)</span>
       {#if active === "zero"}
-        <span class="icon-[lucide--check] h-3.5 w-3.5"></span>
+        <span aria-hidden="true" class="icon-[lucide--check] h-3.5 w-3.5"
+        ></span>
       {/if}
     </button>
     <button
@@ -163,7 +165,8 @@
     >
       <span>Connected (1+)</span>
       {#if active === "has_connections"}
-        <span class="icon-[lucide--check] h-3.5 w-3.5"></span>
+        <span aria-hidden="true" class="icon-[lucide--check] h-3.5 w-3.5"
+        ></span>
       {/if}
     </button>
   {:else if columnKey === "summary"}
@@ -179,7 +182,8 @@
     >
       <span>All rows</span>
       {#if active === "all"}
-        <span class="icon-[lucide--check] h-3.5 w-3.5"></span>
+        <span aria-hidden="true" class="icon-[lucide--check] h-3.5 w-3.5"
+        ></span>
       {/if}
     </button>
     <button
@@ -193,7 +197,8 @@
     >
       <span>Missing summary</span>
       {#if active === "missing_summary"}
-        <span class="icon-[lucide--check] h-3.5 w-3.5"></span>
+        <span aria-hidden="true" class="icon-[lucide--check] h-3.5 w-3.5"
+        ></span>
       {/if}
     </button>
     <button
@@ -207,7 +212,8 @@
     >
       <span>Has summary</span>
       {#if active === "has_summary"}
-        <span class="icon-[lucide--check] h-3.5 w-3.5"></span>
+        <span aria-hidden="true" class="icon-[lucide--check] h-3.5 w-3.5"
+        ></span>
       {/if}
     </button>
   {:else if columnKey === "labels"}
@@ -223,7 +229,8 @@
     >
       <span>All labels</span>
       {#if active === "all"}
-        <span class="icon-[lucide--check] h-3.5 w-3.5"></span>
+        <span aria-hidden="true" class="icon-[lucide--check] h-3.5 w-3.5"
+        ></span>
       {/if}
     </button>
     <button
@@ -237,7 +244,8 @@
     >
       <span>No labels (untagged)</span>
       {#if active === "missing"}
-        <span class="icon-[lucide--check] h-3.5 w-3.5"></span>
+        <span aria-hidden="true" class="icon-[lucide--check] h-3.5 w-3.5"
+        ></span>
       {/if}
     </button>
     <button
@@ -251,7 +259,8 @@
     >
       <span>Has any labels</span>
       {#if active === "has_any"}
-        <span class="icon-[lucide--check] h-3.5 w-3.5"></span>
+        <span aria-hidden="true" class="icon-[lucide--check] h-3.5 w-3.5"
+        ></span>
       {/if}
     </button>
   {:else if columnKey === "created" || columnKey === "modified"}
@@ -270,7 +279,8 @@
     >
       <span>All dates</span>
       {#if active === "all"}
-        <span class="icon-[lucide--check] h-3.5 w-3.5"></span>
+        <span aria-hidden="true" class="icon-[lucide--check] h-3.5 w-3.5"
+        ></span>
       {/if}
     </button>
     <button
@@ -284,7 +294,8 @@
     >
       <span>Has timestamp</span>
       {#if active === "has_date"}
-        <span class="icon-[lucide--check] h-3.5 w-3.5"></span>
+        <span aria-hidden="true" class="icon-[lucide--check] h-3.5 w-3.5"
+        ></span>
       {/if}
     </button>
     <button
@@ -298,7 +309,8 @@
     >
       <span>Missing timestamp</span>
       {#if active === "missing_date"}
-        <span class="icon-[lucide--check] h-3.5 w-3.5"></span>
+        <span aria-hidden="true" class="icon-[lucide--check] h-3.5 w-3.5"
+        ></span>
       {/if}
     </button>
   {/if}
@@ -307,7 +319,7 @@
     <button
       type="button"
       role="menuitem"
-      class="w-full px-3 py-1 text-left text-[11px] text-theme-muted hover:text-theme-text"
+      class="w-full px-3 py-1 text-left text-meta text-theme-muted hover:text-theme-text"
       onclick={clearThisFilter}
     >
       Reset column filter

@@ -32,12 +32,16 @@ describe("IndexNow Route Mapping (#3164)", () => {
     const result = mapChangedFilesToRoutes([
       "apps/web/src/lib/content/examples/pages/the-breakwater-vault-space-western-heist.ts",
       "apps/web/src/lib/content/topics/heists.ts",
+      "apps/web/src/lib/content/topics/pirates.ts",
+      "apps/web/src/lib/content/topics/dnd.ts",
     ]);
 
     expect(result.candidateRoutes).toContain(
       "/examples/the-breakwater-vault-space-western-heist",
     );
     expect(result.candidateRoutes).toContain("/topics/heists");
+    expect(result.candidateRoutes).toContain("/topics/pirates");
+    expect(result.candidateRoutes).toContain("/topics/dnd");
     expect(result.catalogueChanged).toBe(true);
   });
 

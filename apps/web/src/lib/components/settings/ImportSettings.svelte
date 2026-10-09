@@ -94,7 +94,7 @@
           </p>
 
           <p
-            class="text-[10px] text-theme-muted uppercase tracking-[0.2em] font-header"
+            class="text-micro text-theme-muted uppercase tracking-[0.2em] font-header"
           >
             {controller.processingSubtitle}
           </p>
@@ -121,7 +121,7 @@
               ></div>
             </div>
             <div
-              class="flex justify-between text-[9px] uppercase tracking-wider text-theme-muted mt-1 font-mono"
+              class="flex justify-between text-nano uppercase tracking-wider text-theme-muted mt-1 font-mono"
             >
               <span>Progress</span>
               <span
@@ -137,7 +137,7 @@
 
         <button
           onclick={() => connectionModeStore.abortActiveOperations()}
-          class="text-[10px] font-bold text-theme-muted hover:text-red-400 transition-colors uppercase font-header tracking-widest"
+          class="text-micro font-bold text-theme-muted hover:text-red-400 transition-colors uppercase font-header tracking-widest"
         >
           Cancel Import
         </button>
@@ -188,7 +188,7 @@
             ></span>
             <div class="min-w-0">
               <p
-                class="font-header text-[10px] font-bold uppercase tracking-widest text-theme-primary"
+                class="font-header text-micro font-bold uppercase tracking-widest text-theme-primary"
               >
                 {#if controller.ccSession.sourceSystem === "scabard"}
                   Scabard import ready

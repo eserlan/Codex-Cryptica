@@ -121,20 +121,32 @@
   <header
     class="flex flex-wrap items-center justify-between gap-3 border-b border-theme-border bg-theme-surface px-4 py-3"
   >
-    <div>
-      <h2
-        id="adventure-heading"
-        class="font-header text-lg font-bold text-theme-text"
+    <div class="flex items-center gap-3">
+      <button
+        type="button"
+        class="flex min-h-10 min-w-10 items-center justify-center rounded-md border border-theme-border text-theme-primary transition hover:bg-theme-primary/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary"
+        onclick={() => void manager.close()}
+        title="Leave adventure (saves automatically)"
+        aria-label="Leave adventure"
       >
-        {manager.session?.title ?? "Adventure"}
-      </h2>
-      <p class="text-sm text-theme-muted">
-        {manager.readOnly
-          ? "Read-only in this tab"
-          : manager.phase === "offline"
-            ? "Waiting for connection"
-            : manager.phase}
-      </p>
+        <span aria-hidden="true" class="icon-[lucide--arrow-left] h-4 w-4"
+        ></span>
+      </button>
+      <div>
+        <h2
+          id="adventure-heading"
+          class="font-header text-lg font-bold text-theme-text"
+        >
+          {manager.session?.title ?? "Adventure"}
+        </h2>
+        <p class="text-sm text-theme-muted">
+          {manager.readOnly
+            ? "Read-only in this tab"
+            : manager.phase === "offline"
+              ? "Waiting for connection"
+              : manager.phase}
+        </p>
+      </div>
     </div>
     <div class="flex flex-wrap gap-2">
       <button
@@ -173,6 +185,7 @@
   </header>
 
   <div class="flex min-h-0 flex-1 flex-col">
+    <!-- fallow-ignore-next-line css-broken-reference -->
     <main
       bind:this={playViewport}
       class="min-h-0 flex-1 overflow-y-auto p-4 lg:p-6"
@@ -199,6 +212,7 @@
       aria-label="Close adventure tools"
       onclick={closeTools}
     ></button>
+    <!-- fallow-ignore-next-line css-broken-reference -->
     <aside
       id="adventure-utilities"
       class="absolute inset-x-0 bottom-0 z-30 max-h-[80%] overflow-y-auto rounded-t-xl border-t border-theme-border bg-theme-surface p-4 shadow-2xl"

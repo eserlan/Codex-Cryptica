@@ -56,6 +56,19 @@ _Applies when the feature adds behaviour to existing files. Mark N/A when every 
 
 See Principle XIV and ADR 003.
 
+### User Help Check
+
+_Applies when a feature adds or materially changes user-facing behaviour. Mark N/A only
+for internal tooling or infrastructure with no user-facing behaviour._
+
+- [ ] A help article or description is planned in the app's Help system for each
+      user-facing feature.
+- [ ] Help content explains what users can do, how to find and use the feature, and
+      important prerequisites or limitations.
+- [ ] Consider a `FeatureHint` for features with complex interactions.
+
+See Principle VII.
+
 ## Project Structure
 
 ### Documentation (this feature)

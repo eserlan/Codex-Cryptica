@@ -39,6 +39,7 @@ export interface MapInteractionHandlers {
 
 export type MapInteractionHandlerOverrides = Partial<MapInteractionHandlers> & {
   broadcastFogSync?: () => unknown;
+  onMoveSettled?: (tokenIds: string[]) => void;
 };
 
 export function createMapInteractionHandlers(
@@ -51,11 +52,26 @@ export function createMapInteractionHandlers(
   const broadcastFogSync =
     overrides.broadcastFogSync ?? broadcastActiveMapFogSync;
 
+  const fogInteractions =
+    overrides.fogInteractions ??
+    new FogInteractionHandler({
+      painter,
+      canPaint: () => mapStore.isGMMode,
+      shouldBroadcastFogSync: () =>
+        mapStore.isGMMode &&
+        !sessionModeStore.isGuestMode &&
+        mapSession.vttEnabled,
+      broadcastFogSync,
+    });
+
   return {
     tokenSelection,
     tokenDrag:
       overrides.tokenDrag ??
-      new TokenDragHandler(createTokenDragDependencies()),
+      new TokenDragHandler({
+        ...createTokenDragDependencies(),
+        onMoveSettled: overrides.onMoveSettled,
+      }),
     tokenRotation:
       overrides.tokenRotation ??
       new TokenRotationHandler(createTokenRotationDependencies()),
@@ -76,6 +92,10 @@ export function createMapInteractionHandlers(
         isVttEnabled: () => mapSession.vttEnabled,
         unproject: (point) => mapStore.unproject(point),
         tokenSelection,
+        getFogHexTarget: (imgPoint) =>
+          mapStore.showFog && !sessionModeStore.isGuestMode
+            ? fogInteractions.hexTargetAt(imgPoint)
+            : null,
       }),
     tokenResize:
       overrides.tokenResize ??
@@ -92,17 +112,7 @@ export function createMapInteractionHandlers(
         isVttEnabled: () => mapSession.vttEnabled,
         tokenSelection,
       }),
-    fogInteractions:
-      overrides.fogInteractions ??
-      new FogInteractionHandler({
-        painter,
-        canPaint: () => mapStore.isGMMode,
-        shouldBroadcastFogSync: () =>
-          mapStore.isGMMode &&
-          !sessionModeStore.isGuestMode &&
-          mapSession.vttEnabled,
-        broadcastFogSync,
-      }),
+    fogInteractions,
     creationInteractions:
       overrides.creationInteractions ??
       new CreationInteractionHandler({

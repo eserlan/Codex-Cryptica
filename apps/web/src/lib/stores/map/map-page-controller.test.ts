@@ -337,4 +337,55 @@ describe("MapPageController", () => {
 
     expect(modalUIStore.openShare).toHaveBeenCalledTimes(1);
   });
+
+  it("does not open Share during a solo session, and says why", () => {
+    const soloPlayGuard = {
+      sharedPlayBlockedReason: vi.fn(
+        () => "End your solo session to share or preview as a player.",
+      ),
+    };
+    const { controller, modalUIStore, notificationStore } = createController({
+      soloPlayGuard,
+    });
+
+    controller.openShareModal();
+
+    expect(modalUIStore.openShare).not.toHaveBeenCalled();
+    expect(notificationStore.notify).toHaveBeenCalledWith(
+      "End your solo session to share or preview as a player.",
+      "info",
+    );
+  });
+
+  describe("chatSidebarOffset", () => {
+    it("is flush left when VTT is off, because there is no chat sidebar", () => {
+      const { controller } = createController();
+
+      expect(controller.chatSidebarOffset).toBe("0rem");
+    });
+
+    it("makes room for the expanded chat sidebar when VTT is on", () => {
+      const base = createController();
+      base.mapSession.vttEnabled = true;
+      const { controller } = createController({
+        mapStore: base.mapStore,
+        mapSession: base.mapSession,
+      });
+
+      expect(controller.chatSidebarOffset).toBe("20rem");
+    });
+
+    it("only keeps a narrow rail when the VTT chat sidebar is collapsed", () => {
+      const base = createController();
+      base.mapSession.vttEnabled = true;
+      base.layoutUIStore.vttChatSidebarCollapsed = true;
+      const { controller } = createController({
+        mapStore: base.mapStore,
+        mapSession: base.mapSession,
+        layoutUIStore: base.layoutUIStore,
+      });
+
+      expect(controller.chatSidebarOffset).toBe("3rem");
+    });
+  });
 });

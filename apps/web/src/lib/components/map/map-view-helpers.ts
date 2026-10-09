@@ -1,4 +1,68 @@
 import type { MapPin, Point, StatSheetField, ViewportTransform } from "schema";
+import {
+  pointToHex,
+  hexDistance,
+  type HexGridConfig,
+  type HexOrientation,
+} from "map-engine";
+import { measureDistance } from "$lib/utils/vtt-helpers";
+import type { GridType } from "$lib/stores/map.svelte";
+
+export function hashToColor(input: string): string {
+  let hash = 0;
+  for (let i = 0; i < input.length; i++) {
+    hash = (hash << 5) - hash + input.charCodeAt(i);
+    hash |= 0;
+  }
+  return `hsl(${Math.abs(hash) % 360} 75% 55%)`;
+}
+
+export function mapAssetSignature(
+  activeMap: {
+    id: string;
+    assetPath: string;
+    dimensions: { width: number; height: number };
+  } | null,
+): string | null {
+  return activeMap
+    ? `${activeMap.id}:${activeMap.assetPath}:${activeMap.dimensions.width}x${activeMap.dimensions.height}`
+    : null;
+}
+
+export function resolveRemoteMeasurement(
+  measurement: {
+    start: Point | null;
+    end: Point | null;
+    peerId: string;
+  } | null,
+  grid: {
+    gridType: GridType;
+    gridSize: number;
+    gridDistance: number;
+    gridUnit: string;
+    gridOffsetX: number;
+    gridOffsetY: number;
+  },
+) {
+  if (!measurement?.start || !measurement.end) return null;
+  return {
+    start: measurement.start,
+    end: measurement.end,
+    label: formatMeasurementLabel(measurement.start, measurement.end, grid),
+    color: hashToColor(measurement.peerId),
+    peerId: measurement.peerId,
+  };
+}
+
+export function visionRevealSignature(
+  tokens: readonly { id: string; x: number; y: number }[],
+  ...context: (string | number | boolean | null)[]
+): string {
+  return [
+    tokens.map((token) => `${token.id}:${token.x}:${token.y}`).join("|"),
+    ...context,
+  ].join(":");
+}
 
 export interface PanZoomUpdate {
   pan: Point;
@@ -262,4 +326,50 @@ export function getPinchDistance(a: Point, b: Point): number {
 
 export function getPinchMidpoint(a: Point, b: Point): Point {
   return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+}
+
+export interface MeasurementFormatOptions {
+  gridType?: GridType;
+  gridSize?: number;
+  gridDistance?: number;
+  gridUnit?: string;
+  gridOffsetX?: number;
+  gridOffsetY?: number;
+}
+
+export function formatMeasurementLabel(
+  start: Point,
+  end: Point,
+  options: MeasurementFormatOptions,
+): string {
+  const {
+    gridType = "square",
+    gridSize = 50,
+    gridDistance = 5,
+    gridUnit = "ft",
+    gridOffsetX = 0,
+    gridOffsetY = 0,
+  } = options;
+  const effectiveGridSize = gridSize || 50;
+
+  if (gridType === "hex-pointy" || gridType === "hex-flat") {
+    const orientation: HexOrientation =
+      gridType === "hex-flat" ? "flat" : "pointy";
+    const config: HexGridConfig = {
+      orientation,
+      size: effectiveGridSize,
+      offsetX: gridOffsetX,
+      offsetY: gridOffsetY,
+    };
+    const hexA = pointToHex(start, config);
+    const hexB = pointToHex(end, config);
+    const dist = hexDistance(hexA, hexB);
+    const totalDist = dist * gridDistance;
+    const hexWord = dist === 1 ? "hex" : "hexes";
+    return `${dist} ${hexWord} (${totalDist} ${gridUnit})`;
+  }
+
+  const pixelDist = measureDistance(start, end);
+  const units = (pixelDist / effectiveGridSize) * gridDistance;
+  return `${Math.round(units)}${gridUnit}`;
 }

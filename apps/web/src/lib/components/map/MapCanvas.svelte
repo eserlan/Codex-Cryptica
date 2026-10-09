@@ -3,7 +3,7 @@
   import { mapStore } from "../../stores/map.svelte";
   import { mapSession } from "../../stores/map-session.svelte";
   import { themeStore } from "../../stores/theme.svelte";
-  import { hexToRgb } from "../../utils/color";
+  import { hexToRgb, isFogHex } from "../../utils/color";
   import { renderMap } from "map-engine";
   import type { Point } from "schema";
   import type { PingState, Token } from "../../../types/vtt";
@@ -82,7 +82,7 @@
   const scheduler = new CanvasRedrawScheduler(() => draw());
 
   const fogColor = $derived(
-    `rgba(${hexToRgb(themeStore.activeTheme.tokens.secondary)}, ${mapStore.isGMMode ? 0.6 : 1.0})`,
+    `rgba(${hexToRgb(isFogHex(mapStore.fogColor) ? mapStore.fogColor : themeStore.activeTheme.tokens.secondary)}, ${mapStore.fogOpaque ? 1.0 : 0.6})`,
   );
   const gridColor = $derived.by(() => {
     const baseColor =
@@ -125,7 +125,7 @@
       fogColor,
       accentColor: themeStore.activeTheme.tokens.primary,
       grid: {
-        type: mapStore.showGrid ? "square" : "none",
+        type: mapStore.showGrid ? mapStore.gridType : "none",
         size: mapStore.gridSize,
         color: gridColor,
         opacity: 0.65,
@@ -133,6 +133,7 @@
         offsetY: mapStore.gridOffsetY,
         fixed: mapSession.gridMoveMode && mapStore.isGMMode,
         fixedPan: mapSession.gridFixedPan ?? undefined,
+        showCoordinates: mapStore.showHexCoordinates,
       },
       tokens: vttTokens,
       measurement: vttMeasurement,
@@ -373,6 +374,7 @@
     void mapStore.gridOffsetX;
     void mapStore.gridOffsetY;
     void mapStore.gridColor;
+    void mapStore.fogColor;
     void mapSession.gridMoveMode;
     void mapSession.gridFixedPan;
     void themeStore.activeTheme;

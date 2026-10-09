@@ -1,0 +1,37 @@
+import type { FeatureEntry } from "../registry/schema";
+
+export interface HelpChunk {
+  /** `<sourceId>#<n>`, stable for a given source and position. */
+  id: string;
+  sourceId: string;
+  kind: "help" | "registry";
+  /** The registry feature this chunk belongs to, used for context boosting. */
+  featureId: string | null;
+  /** The readable help article to open when citing this chunk. */
+  helpId: string | null;
+  title: string;
+  /** Article title for citations; retrieval keeps the original chunk title. */
+  citationTitle?: string;
+  heading: string;
+  text: string;
+  hash: string;
+  /** Dense vector embedding (e.g. 384 floats from bge-small-en-v1.5) for semantic search. */
+  embedding?: number[];
+}
+
+export interface KnowledgeBundle {
+  version: 1;
+  commit: string;
+  builtAt: string;
+  channel: "production" | "staging";
+  chunks: HelpChunk[];
+  features: FeatureEntry[];
+  /** IDs of the help articles included, for `openHelp` validation. */
+  helpIds: string[];
+}
+
+export interface HelpArticleSource {
+  id: string;
+  title: string;
+  content: string;
+}

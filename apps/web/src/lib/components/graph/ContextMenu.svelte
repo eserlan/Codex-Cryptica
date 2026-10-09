@@ -93,6 +93,19 @@
     {#if controller.targetEdge}
       {#if !vault.isGuest}
         <button
+          type="button"
+          role="menuitem"
+          class="w-full text-left px-4 py-2 text-sm text-theme-text hover:bg-theme-primary/10 hover:text-theme-primary transition flex items-center gap-2 whitespace-nowrap"
+          onclick={controller.handleHideEdge}
+          aria-label="Hide Connection"
+        >
+          <span
+            aria-hidden="true"
+            class="icon-[lucide--eye-off] h-3.5 w-3.5 opacity-70"
+          ></span>
+          <span>Hide Connection</span>
+        </button>
+        <button
           role="menuitem"
           class="w-full text-left px-4 py-2 text-sm text-theme-danger hover:bg-theme-danger/10 transition flex items-center gap-2 whitespace-nowrap"
           onclick={controller.handleDeleteEdge}
@@ -227,7 +240,7 @@
             <div class="flex items-center gap-2">
               {#if controller.hasImage}
                 <span
-                  class="text-[10px] text-theme-muted opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none italic"
+                  class="text-micro text-theme-muted opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none italic"
                 >
                   click to view
                 </span>
@@ -357,7 +370,10 @@
           class="w-full text-left px-3 py-1.5 text-xs text-theme-text hover:bg-theme-primary/10 hover:text-theme-primary transition flex items-center gap-2 rounded-sm"
           onclick={controller.handleGenerateImage}
         >
-          <span class="icon-[lucide--image-plus] h-3.5 w-3.5 opacity-70"></span>
+          <span
+            aria-hidden="true"
+            class="icon-[lucide--image-plus] h-3.5 w-3.5 opacity-70"
+          ></span>
           {controller.imageActionLabel}
         </button>
         <button
@@ -365,14 +381,17 @@
           class="w-full text-left px-3 py-1.5 text-xs text-theme-text hover:bg-theme-primary/10 hover:text-theme-primary transition flex items-center gap-2 rounded-sm"
           onclick={controller.handleReviseContent}
         >
-          <span class="icon-[lucide--sparkles] h-3.5 w-3.5 opacity-70"></span>
+          <span
+            aria-hidden="true"
+            class="icon-[lucide--sparkles] h-3.5 w-3.5 opacity-70"
+          ></span>
           Revise Content
         </button>
       {/if}
       {#if controller.hasImage}
         <div class="h-px bg-theme-border my-1 mx-1"></div>
         <div
-          class="px-3 py-1 text-[9px] font-bold uppercase tracking-widest text-theme-muted"
+          class="px-3 py-1 text-nano font-bold uppercase tracking-widest text-theme-muted"
         >
           Image focus
         </div>

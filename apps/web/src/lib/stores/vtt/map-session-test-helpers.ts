@@ -35,6 +35,9 @@ export function createSnapshotManagerHarness() {
     savedAt: null as number | null,
     chatMessages: [] as ChatMessagePayload[],
     gridSize: 50,
+    gridType: "square" as "square" | "hex-pointy" | "hex-flat",
+    showHexCoordinates: false,
+    fogColor: null as string | null,
     gridUnit: "ft",
     gridDistance: 5,
     activeMapId: "map-1" as string | null,
@@ -104,6 +107,18 @@ export function createSnapshotManagerHarness() {
     setGridSize: (value) => {
       state.gridSize = value;
     },
+    getGridType: () => state.gridType,
+    setGridType: (value) => {
+      state.gridType = value;
+    },
+    getFogColor: () => state.fogColor,
+    setFogColor: (value) => {
+      state.fogColor = value;
+    },
+    getShowHexCoordinates: () => state.showHexCoordinates,
+    setShowHexCoordinates: (value) => {
+      state.showHexCoordinates = value;
+    },
     getGridUnit: () => state.gridUnit,
     setGridUnit: (value) => {
       state.gridUnit = value;
@@ -145,6 +160,9 @@ export function createSnapshotManagerHarness() {
       state.savedAt = fixture.savedAt;
       state.chatMessages = fixture.chatMessages;
       state.gridSize = fixture.gridSize ?? 50;
+      state.gridType = fixture.gridType ?? "square";
+      state.showHexCoordinates = fixture.showHexCoordinates ?? false;
+      state.fogColor = fixture.fogColor ?? null;
       state.gridUnit = fixture.gridUnit ?? "ft";
       state.gridDistance = fixture.gridDistance ?? 5;
       return fixture;

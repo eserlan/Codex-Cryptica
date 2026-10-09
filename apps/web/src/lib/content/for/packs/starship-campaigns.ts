@@ -125,6 +125,13 @@ export const starshipCampaigns: LandingPageConfig = {
       href: "/generators/quest",
       badge: "Generator",
     },
+    {
+      title: "Exploration Sci-Fi Hub",
+      description:
+        "Open exploration-ready generators for the ships, star systems, and diplomatic missions around your fleet.",
+      href: "/generators/optimistic-exploration-sci-fi",
+      badge: "Hub",
+    },
   ],
   cta: {
     title: "Take the Conn of Your Campaign",

@@ -324,6 +324,22 @@ describe("orphaned entries", () => {
     const orphans = findOrphanedEntries(listGovernedPaths(), registry);
     expect(orphans.map((finding) => finding.message)).toEqual([]);
   });
+
+  it("records the distinct scope of the fantasy economy and trade routes answers", () => {
+    const economy = getEntryById("answer-believable-fantasy-economy");
+    const tradeRoutes = getEntryById(
+      "answer-trade-routes-shape-cities-kingdoms",
+    );
+
+    expect(economy?.acknowledgedOverlap).toContainEqual({
+      with: "answer-trade-routes-shape-cities-kingdoms",
+      reason: expect.any(String),
+    });
+    expect(tradeRoutes?.acknowledgedOverlap).toContainEqual({
+      with: "answer-believable-fantasy-economy",
+      reason: expect.any(String),
+    });
+  });
 });
 
 describe("audit — judgement warnings", () => {
@@ -457,11 +473,50 @@ describe("the committed registry", () => {
     ).toBe("hub-post-apocalyptic");
   });
 
+  it("gives steampunk campaign workflow its own discovery intent", () => {
+    expect(
+      findIntentOwner("steampunk campaign worldbuilding", registry)?.id,
+    ).toBe("for-steampunk-rpgs");
+    expect(getEntryByPath("/for/steampunk-rpgs", registry)?.userJob).toBe(
+      "adopt-workflow",
+    );
+    expect(findIntentOwner("steampunk rpg generators", registry)?.id).toBe(
+      "hub-steampunk",
+    );
+  });
+
+  it("gives weird west campaign workflow its own discovery intent, apart from space western", () => {
+    expect(
+      findIntentOwner("weird west campaign worldbuilding", registry)?.id,
+    ).toBe("for-weird-west-rpgs");
+    expect(getEntryByPath("/for/weird-west-rpgs", registry)?.userJob).toBe(
+      "adopt-workflow",
+    );
+    expect(findIntentOwner("western rpg generators", registry)?.id).toBe(
+      "hub-western",
+    );
+    expect(
+      findIntentOwner("space western campaign worldbuilding", registry)?.id,
+    ).toBe("for-space-western");
+  });
+
   it("gives tactical mecha campaigns their own operation-level workflow intent", () => {
     expect(findIntentOwner("mecha rpg campaign manager", registry)?.id).toBe(
       "for-mecha-rpgs",
     );
     expect(getEntryByPath("/for/mecha-rpgs", registry)?.userJob).toBe(
+      "adopt-workflow",
+    );
+  });
+
+  it("gives starship campaigns their own fleet and bridge crew workflow intent", () => {
+    expect(findIntentOwner("starship campaign management", registry)?.id).toBe(
+      "for-starship-campaigns",
+    );
+    expect(findIntentOwner("fleet operations rpg campaign", registry)?.id).toBe(
+      "for-starship-campaigns",
+    );
+    expect(getEntryByPath("/for/starship-campaigns", registry)?.userJob).toBe(
       "adopt-workflow",
     );
   });
@@ -495,6 +550,21 @@ describe("the committed registry", () => {
         ).toBeGreaterThan(40);
       }
     }
+  });
+
+  it("records the distinct scope of sci-fi team roles and investigator guidance", () => {
+    const sciFiCrew = registry.find(
+      (entry) => entry.id === "answer-sci-fi-character-roles",
+    );
+
+    expect(sciFiCrew?.acknowledgedOverlap).toContainEqual({
+      with: "answer-run-investigator-without-sidelining-party",
+      reason: expect.stringContaining("planetary-survey examples"),
+    });
+    expect(sciFiCrew?.acknowledgedOverlap).toContainEqual({
+      with: "answer-specialist-character-spotlight",
+      reason: expect.stringContaining("nine sci-fi and space-opera functions"),
+    });
   });
 
   it("keeps the judgement warnings to a reviewable number", () => {

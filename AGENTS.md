@@ -10,6 +10,7 @@ This file is the Codex-facing instruction layer for this repository.
 - Staging checkout & pull is available through [`.codex/commands/stg.md`](./.codex/commands/stg.md) and [`.gemini/commands/stg.toml`](./.gemini/commands/stg.toml). Trigger it whenever a request mentions `/stg`, "to stg n pull", or "pull stg" to verify tree cleanliness, switch to `staging`, pull `origin/staging`, and clean up any merged local feature branch.
 - Community announcement drafting is available through [`.codex/skills/cc-announcer/SKILL.md`](./.codex/skills/cc-announcer/SKILL.md). Use it whenever a request concerns a Codex Cryptica Reddit post, devlog, release announcement, or community update.
 - Keep command behavior synchronized in the canonical Speckit files first, then mirror any Codex-specific guidance here.
+- Spec Kit is pinned to 1.1.0 with Gemini as the managed integration; maintenance and compatibility-copy rules are in [docs/speckit-maintenance.md](./docs/speckit-maintenance.md). Preserve the installed `constitution-sync` preset and repository policy overrides when upgrading.
 - If these instructions ever conflict with [`.specify/memory/constitution.md`](./.specify/memory/constitution.md), the constitution wins.
 - **Verify against the Constitution**: Always refer to the project constitution at [`.specify/memory/constitution.md`](./.specify/memory/constitution.md) to guide design/architecture decisions, and verify all implementation plans against it. To manage, update, or synchronize the constitution, refer to the [`.agent/workflows/sdd-constitution.md`](./.agent/workflows/sdd-constitution.md) workflow.
 
@@ -74,11 +75,32 @@ This file is the Codex-facing instruction layer for this repository.
 <!-- SPECKIT START -->
 
 For additional context about technologies to be used, project structure,
-shell commands, and other important information, read the [current plan](./specs/2815-smart-copy/plan.md).
+shell commands, and other important information, read the [current plan](./specs/3615-help-registry-expansion/plan.md).
 
 <!-- SPECKIT END -->
 
 ## Active Technologies
+
+- TypeScript 6.0.3, Svelte 5 (Runes), SvelteKit 2, Bun 1.3.14 + Existing `map-engine` (hex maths, renderer), `session-journal-engine` (capture, promote), `@codex/events` (`JOURNAL:CAPTURE`), `help-engine`, Tailwind 4 semantic tokens. No new third-party dependency. (171-solo-map-play)
+- Existing per-map settings in `localStorage` (`soloFog`, `visionRange`; unchanged); existing IndexedDB `session_journals` (one optional field, `captureMapMoves`; no migration). Travel tally in memory only. (171-solo-map-play)
+
+- TypeScript 6.0.3, Svelte 5 (Runes), SvelteKit 2, Bun 1.3.14 + Canvas 2D API, `@codex/spatial-engine`, Tailwind 4 semantic tokens, Lucide Iconify utility classes (170-hex-crawling-maps)
+- Browser-local OPFS (for standard 2D map mask WebP/PNG persistence) and `localStorage` / vault settings (for per-map grid settings). Zero new databases or external schemas required. (170-hex-crawling-maps)
+
+- TypeScript 6.0.3, Svelte 5 (Runes), SvelteKit 2, Bun 1.3.14 + `packages/chronology-engine` (internal framework-free package), Tailwind 4 semantic tokens, Floating UI, `@codex/events`. No new third-party dependency. (3717-calendar-eras)
+- Browser-local IndexedDB via existing `calendarStore` configuration persistence. No new database store or migration needed. (3717-calendar-eras)
+
+- TypeScript 6.0.3, Svelte 5 Runes, SvelteKit 2, Bun 1.3.14 + Existing `apps/workers/oracle-proxy` LLM pipeline and session guard, `discoveryPolicyStore` (AI Disabled gate), existing help content; new internal workspace package `packages/help-engine` (framework-free); no new third-party dependency (3427-contextual-ai-help-assistant)
+- Product knowledge is a build-time JSON bundle generated from `packages/help-engine` and `apps/web/src/lib/content/help` (not committed); the help conversation is in memory only; no new vault storage (3427-contextual-ai-help-assistant)
+
+- TypeScript 6.0.3, Svelte 5 Runes, SvelteKit 2, Bun 1.3.14 + Existing `schema` (Zod, `GENERIC_TEMPLATES`), `@codex/ai-engine` (`configureAIEngine`), `writeOpfsFile`/`runtime-deps`; new internal workspace package `packages/entity-template-engine` (framework-free); no new third-party dependency (167-entity-template-management)
+- Vault OPFS files: `.codex/templates/{id}.json` and `.codex/templates/defaults.json`; legacy `.cc/templates/{type}.md` and `.codex/templates/{type}.md` read-only; no new IndexedDB store (167-entity-template-management)
+
+- TypeScript 6.0.3, Svelte 5 Runes, SvelteKit 2, Bun 1.3.14 + Existing `@codex/vault-engine` (`vault.createEntity`/`updateEntity`), `@codex/canvas-engine` (canvas nodes/edges), `schema` (Zod `Entity` type), existing `ZenView`/`modalUIStore.openZenMode`, existing `ClipboardService` (+ `marked`/`dompurify`, already a dependency per 2815-smart-copy), Cytoscape (Graph view selection, already used by `SelectionConnector.svelte`). **No new third-party dependency.** (166-canvas-entity-reports)
+- Existing browser-local IndexedDB/OPFS vault. A report is an ordinary Note-category entity (`kind: "report"`) with an additive optional `report` provenance field on `EntitySchema` — no new persistence format, no new object store. (166-canvas-entity-reports)
+
+- TypeScript 6.0.3, Svelte 5 Runes, SvelteKit 2, Bun 1.3.14 + Existing `idb` (via `apps/web/src/lib/utils/idb.ts`), existing `vault-registry.svelte.ts`; new internal workspace package `packages/session-journal-engine` (framework-free); no new third-party dependency (163-session-journal)
+- Browser-local IndexedDB via the shared `CodexDB` schema (new `session_journals` object store, `by-vault` index) — not a new database, not Dexie (163-session-journal)
 
 - TypeScript 6.0.3, Svelte 5.55.9 Runes, SvelteKit 2.60.1, Bun 1.3.14 + Existing browser Clipboard API, `marked` 18.0.4, `dompurify` 3.4.2, existing generator document-layout helpers; no new dependency (2815-smart-copy)
 - N/A — clipboard payloads are transient and browser-local (2815-smart-copy)
@@ -136,6 +158,8 @@ shell commands, and other important information, read the [current plan](./specs
 
 ## Recent Changes
 
+- 3427-contextual-ai-help-assistant: Added `packages/help-engine` and a flagged (`VITE_HELP_ASSISTANT`) Help panel backed by `POST /api/help/ask`; no new third-party dependency
+- 163-session-journal: Added TypeScript 6.0.3, Svelte 5 Runes, SvelteKit 2, Bun 1.3.14 + Existing `idb`, `vault-registry.svelte.ts`; new `packages/session-journal-engine`; no new third-party dependency
 - 116-scroll-wheel-date-picker: Added TypeScript 6.0.3, Svelte 5 runes, Bun 1.3.14 workspace + `chronology-engine`, `schema`, Svelte 5, Floating UI, IndexedDB `idb`, existing Tailwind 4 theme tokens
 - 118-graph-important-label: Added TypeScript 6.0.3, Svelte 5 runes, Bun 1.3.14 workspace + Svelte 5, Cytoscape, `graph-engine`, `schema`, existing vault/entity stores, existing Tailwind 4 theme tokens
 

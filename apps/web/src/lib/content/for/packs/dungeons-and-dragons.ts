@@ -85,6 +85,13 @@ export const dungeonsAndDragons: LandingPageConfig = {
   },
   recommendedTools: [
     {
+      title: "Help Running D&D: Prep, Run and Track",
+      description:
+        "Not sure where to start? Pick the job in front of you, from prepping the next session to running a big table.",
+      href: "/topics/dnd",
+      badge: "DM help",
+    },
+    {
       title: "D&D NPC Generator",
       description:
         "Create an NPC with a name, a motive, and a reason to care about the party — during prep or mid-session.",

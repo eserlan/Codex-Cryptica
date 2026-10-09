@@ -13,6 +13,7 @@ vi.mock("../../stores/map.svelte", () => ({
     unproject: vi.fn((p) => p),
     pins: [{ id: "pin-a", coordinates: { x: 100, y: 100 }, visuals: {} }],
     updatePinCoordinatesInMemory: vi.fn(),
+    snapPinCoordinatesInMemory: vi.fn(),
     layerVisibility: { terrain: true, object: true, token: true },
     layerLocked: { terrain: false, object: false, token: false },
   },

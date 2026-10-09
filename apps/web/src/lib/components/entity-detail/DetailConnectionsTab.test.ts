@@ -1,6 +1,15 @@
 /** @vitest-environment jsdom */
 import { render, screen, fireEvent } from "@testing-library/svelte";
-import { describe, it, expect, beforeAll, beforeEach, vi } from "vitest";
+import {
+  describe,
+  it,
+  expect,
+  afterEach,
+  beforeAll,
+  beforeEach,
+  vi,
+} from "vitest";
+import { discoveryPolicyStore } from "$lib/stores/ui/discovery-policy.svelte";
 import type { Entity } from "schema";
 
 const { entities, vaultMock, cyInstances, imageManagerInstances } = vi.hoisted(
@@ -204,6 +213,59 @@ describe("DetailConnectionsTab", () => {
     await Promise.resolve();
 
     expect(screen.getByTestId("connections-empty")).toBeTruthy();
+  });
+
+  describe("hidden connections", () => {
+    const withHidden = (hidden: Record<string, boolean>) =>
+      ({
+        ...entities.king,
+        connections: entities.king.connections.map((c) => ({
+          ...c,
+          hidden: hidden[c.target] || undefined,
+        })),
+      }) as unknown as Entity;
+
+    const drawnNodeIds = () =>
+      cyInstances[0].nodes().map((n: any) => n.id() as string);
+
+    it("leaves a hidden connection's neighbour out of the diagram", async () => {
+      render(DetailConnectionsTab, { entity: withHidden({ duke: true }) });
+      await Promise.resolve();
+      await Promise.resolve();
+      await Promise.resolve();
+
+      const ids = drawnNodeIds();
+      expect(ids).not.toContain("duke");
+      expect(ids).toContain("guard");
+      expect(ids).toContain("king");
+    });
+
+    it("draws every neighbour when nothing is hidden (negative)", async () => {
+      render(DetailConnectionsTab, { entity: withHidden({}) });
+      await Promise.resolve();
+      await Promise.resolve();
+      await Promise.resolve();
+
+      expect(drawnNodeIds()).toEqual(
+        expect.arrayContaining(["king", "duke", "guard"]),
+      );
+    });
+
+    it("explains an empty diagram when every connection is hidden", async () => {
+      render(DetailConnectionsTab, {
+        entity: {
+          ...entities.hermit,
+          connections: [
+            { target: "guard", type: "knows", strength: 1, hidden: true },
+          ],
+        } as unknown as Entity,
+      });
+      await Promise.resolve();
+
+      expect(screen.getByTestId("connections-empty").textContent).toContain(
+        "hidden",
+      );
+    });
   });
 
   describe("cytoscape wiring", () => {
@@ -453,6 +515,35 @@ describe("DetailConnectionsTab", () => {
       // The next, undragged tap still opens it.
       tapNode(lastCy(), "duke");
       expect(vaultMock.selectedEntityId).toBe("duke");
+    });
+  });
+
+  describe("help assistant shortcut", () => {
+    afterEach(() => {
+      vi.unstubAllEnvs();
+      discoveryPolicyStore.aiDisabled = false;
+    });
+
+    it("is absent while the help assistant flag is off", async () => {
+      vi.stubEnv("VITE_HELP_ASSISTANT", "");
+      render(DetailConnectionsTab, { entity: entities.king });
+      await Promise.resolve();
+      expect(screen.queryByTestId("ask-about-this")).toBeNull();
+    });
+
+    it("is shown when the flag is on and AI is not disabled", async () => {
+      vi.stubEnv("VITE_HELP_ASSISTANT", "true");
+      render(DetailConnectionsTab, { entity: entities.king });
+      await Promise.resolve();
+      expect(screen.getByTestId("ask-about-this")).toBeTruthy();
+    });
+
+    it("is absent when the user has turned AI off", async () => {
+      vi.stubEnv("VITE_HELP_ASSISTANT", "true");
+      discoveryPolicyStore.aiDisabled = true;
+      render(DetailConnectionsTab, { entity: entities.king });
+      await Promise.resolve();
+      expect(screen.queryByTestId("ask-about-this")).toBeNull();
     });
   });
 });

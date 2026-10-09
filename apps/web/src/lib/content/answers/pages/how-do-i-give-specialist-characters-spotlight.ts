@@ -2,7 +2,7 @@ import type { AnswerConfigInput } from "../schema";
 
 export const howDoIGiveSpecialistCharactersSpotlight: AnswerConfigInput = {
   slug: "how-do-i-give-specialist-characters-spotlight",
-  category: "session-prep",
+  category: "running-the-game",
   publishedAt: "2026-09-23",
   question:
     "How do I give specialist characters spotlight without sidelining the party?",
@@ -155,6 +155,16 @@ export const howDoIGiveSpecialistCharactersSpotlight: AnswerConfigInput = {
     "how-do-i-run-a-diplomat-noble-or-courtier-in-an-rpg",
     "how-do-i-run-character-roles-in-a-political-intrigue-rpg",
     "how-do-i-run-a-rogue-or-scout-without-splitting-the-party",
+    "how-do-i-run-character-roles-in-an-investigative-horror-rpg",
+    "how-do-i-run-common-character-roles-in-a-sci-fi-or-space-opera-rpg",
+    "how-do-i-run-common-character-roles-in-a-fantasy-rpg",
+    "how-do-i-upgrade-a-player-characters-weapon-without-replacing-it",
+    "how-do-i-make-interviewing-npcs-interesting-in-an-investigation",
+    "how-do-i-handle-players-asking-an-npc-to-tell-us-everything-you-know",
+    "how-do-i-keep-players-engaged-during-other-players-turns-in-combat",
+    "how-do-i-handle-divination-magic-without-letting-one-character-solve-every-mystery",
+    "how-do-i-improvise-npcs-in-dnd",
+    "how-do-i-run-a-bard-or-face-without-sidelining-the-party",
   ],
   discovery: {
     id: "answer-specialist-character-spotlight",

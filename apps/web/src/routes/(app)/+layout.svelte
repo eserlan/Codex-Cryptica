@@ -33,6 +33,7 @@
   import NotificationToast from "$lib/components/layout/NotificationToast.svelte";
   import FatalErrorOverlay from "$lib/components/layout/FatalErrorOverlay.svelte";
   import ActivityBar from "$lib/components/layout/ActivityBar.svelte";
+  import SoloSessionBar from "$lib/components/solo/SoloSessionBar.svelte";
   import SidebarPanelHost from "$lib/components/layout/SidebarPanelHost.svelte";
   import MobileDemoBanner from "$lib/components/layout/MobileDemoBanner.svelte";
   import GlobalModalProvider from "$lib/components/modals/GlobalModalProvider.svelte";
@@ -50,8 +51,10 @@
     type VaultServiceWorkerSession,
   } from "$lib/app/init/app-init";
   import { isVaultAppPath } from "$lib/service-worker/lifecycle";
+  import { mapControlsUIStore } from "$lib/stores/ui/map-controls-ui.svelte";
   import { initFullscreenOnFirstInteraction } from "$lib/app/init/fullscreen-on-interaction";
   import { useGlobalShortcuts } from "$lib/hooks/useGlobalShortcuts.svelte";
+  import { soloPlayGuard } from "$lib/stores/solo-session-instance";
   import {
     decideFirstRunAction,
     hasUnseenMinorRelease,
@@ -123,12 +126,15 @@
   const isZenPopout = $derived(
     /\/vault\/[^/]+\/entity\/[^/]+$/.test(page.url.pathname),
   );
-  const isVttFullscreen = $derived(
-    page.url.pathname.startsWith(`${base}/map`) && !!mapSession?.vttEnabled,
+  // The map goes full-bleed (no header, navigation or footer) while VTT is on,
+  // or when the user has maximized it.
+  const isMapFullscreen = $derived(
+    page.url.pathname.startsWith(`${base}/map`) &&
+      (!!mapSession?.vttEnabled || mapControlsUIStore.maximized),
   );
   const isEntityExplorerWorkspace = $derived(
     !isPopup &&
-      !isVttFullscreen &&
+      !isMapFullscreen &&
       !isZenPopout &&
       layoutUIStore.isEntityExplorerWorkspace,
   );
@@ -163,6 +169,24 @@
   $effect(() => {
     if (browser && !globalListenersCleanup) {
       globalListenersCleanup = initializeGlobalListeners();
+    }
+  });
+
+  let routeContentEl = $state<HTMLElement>();
+
+  $effect(() => {
+    // When navigating to a new route, if focus is on document.body, focus the
+    // route content container so PageDown, Space, and arrow keys scroll it immediately.
+    const _path = page.url.pathname;
+    if (browser && routeContentEl) {
+      requestAnimationFrame(() => {
+        if (
+          routeContentEl &&
+          (!document.activeElement || document.activeElement === document.body)
+        ) {
+          routeContentEl.focus({ preventScroll: true });
+        }
+      });
     }
   });
 
@@ -439,7 +463,7 @@
   $effect(() => {
     if (!browser) return;
 
-    if (isVttFullscreen || !headerEl) {
+    if (isMapFullscreen || !headerEl) {
       document.documentElement.style.setProperty("--header-height", "0px");
       return;
     }
@@ -675,6 +699,8 @@
     searchStore,
     modalUIStore,
     quickNoteStore,
+    oracle,
+    sharedMode: { toggle: () => soloPlayGuard.toggleSharedMode() },
   });
 </script>
 
@@ -702,17 +728,18 @@
   >
     <NotificationToast />
 
-    {#if !isPopup && !isVttFullscreen && !isZenPopout}
+    {#if !isPopup && !isMapFullscreen && !isZenPopout}
       <AppHeader bind:isMobileMenuOpen bind:headerEl />
       {#if sessionModeStore.isDemoMode}
         <MobileDemoBanner />
       {/if}
+      <SoloSessionBar />
     {/if}
 
     <div
       class="flex-1 flex flex-col-reverse md:flex-row min-h-0 relative overflow-hidden"
     >
-      {#if !isPopup && !isVttFullscreen && !isZenPopout && !guidedModeStore.isGuidedMode}
+      {#if !isPopup && !isMapFullscreen && !isZenPopout && !guidedModeStore.isGuidedMode}
         <ActivityBar />
         <SidebarPanelHost />
       {/if}
@@ -723,7 +750,9 @@
         <!-- Tailwind provides this utility; Fallow cannot resolve generated v4 classes here. -->
         <!-- fallow-ignore-next-line css-broken-reference -->
         <div
-          class="min-h-0 min-w-0 flex-1 flex flex-col h-full overflow-y-auto"
+          bind:this={routeContentEl}
+          class="min-h-0 min-w-0 flex-1 flex flex-col h-full overflow-y-auto outline-none"
+          tabindex="-1"
           inert={(isEntityExplorerWorkspace &&
             !!layoutUIStore.focusedEntityId) ||
             undefined}
@@ -746,7 +775,7 @@
       </main>
     </div>
 
-    {#if !isPopup && !isVttFullscreen && !isZenPopout}
+    {#if !isPopup && !isMapFullscreen && !isZenPopout}
       <AppFooter />
     {/if}
   </div>

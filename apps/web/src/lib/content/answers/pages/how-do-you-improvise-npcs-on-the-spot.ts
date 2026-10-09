@@ -2,7 +2,7 @@ import type { AnswerConfigInput } from "../schema";
 
 export const howDoYouImproviseNpcsOnTheSpot: AnswerConfigInput = {
   slug: "how-do-you-improvise-npcs-on-the-spot",
-  category: "session-prep",
+  category: "running-the-game",
   publishedAt: "2026-09-07",
   question: "How do you improvise NPCs on the spot?",
   kind: "how-to",

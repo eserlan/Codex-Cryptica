@@ -39,7 +39,7 @@
     background: rgba(22, 78, 58, 0.15);
     border: 1px solid rgba(22, 78, 58, 0.3);
     border-radius: 0.375rem;
-    font-size: 0.75rem;
+    font-size: var(--type-helper);
     font-weight: 500;
     color: rgb(110, 231, 183);
     white-space: nowrap;

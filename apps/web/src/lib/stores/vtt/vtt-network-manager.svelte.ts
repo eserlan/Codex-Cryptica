@@ -114,8 +114,11 @@ export class VTTNetworkManager {
 
   handleRemoteGridSettings(payload: {
     gridSize?: number;
+    gridType?: "square" | "hex-pointy" | "hex-flat";
+    showHexCoordinates?: boolean;
     gridUnit?: string;
     gridDistance?: number;
+    fogColor?: string | null;
   }) {
     this.deps.gridManager.handleRemoteGridSettings(payload);
   }

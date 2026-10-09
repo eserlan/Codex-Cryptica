@@ -106,7 +106,7 @@
 
     {#if lockedTheme}
       <div
-        class="flex items-center justify-between gap-2 px-3 py-2 bg-theme-primary/5 border border-theme-primary/30 rounded-lg text-[10px]"
+        class="flex items-center justify-between gap-2 px-3 py-2 bg-theme-primary/5 border border-theme-primary/30 rounded-lg text-micro"
       >
         <span class="flex items-center gap-1.5 text-theme-text/80 min-w-0">
           <span
@@ -139,7 +139,7 @@
           keepCategory = true;
           trigger();
         }}
-        class="w-full py-2.5 bg-theme-surface border border-theme-primary/40 text-theme-primary font-bold font-header text-[10px] rounded-lg hover:bg-theme-primary/10 transition-all disabled:opacity-50"
+        class="w-full py-2.5 bg-theme-surface border border-theme-primary/40 text-theme-primary font-bold font-header text-micro rounded-lg hover:bg-theme-primary/10 transition-all disabled:opacity-50"
         id="regenerate-category-btn"
         title="Keep this idea type and roll a fresh one"
       >

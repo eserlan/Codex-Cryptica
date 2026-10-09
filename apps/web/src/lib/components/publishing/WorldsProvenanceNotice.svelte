@@ -18,7 +18,9 @@
       <div
         class="flex items-center gap-2 font-header font-bold text-theme-text"
       >
-        <span class="icon-[lucide--shield-check] h-4 w-4 text-theme-primary"
+        <span
+          aria-hidden="true"
+          class="icon-[lucide--shield-check] h-4 w-4 text-theme-primary"
         ></span>
         <span>{PUBLIC_WORLDS_NOTICE.PROVENANCE_HEADER}</span>
       </div>
@@ -35,16 +37,17 @@
             class="inline-flex items-center gap-1 font-bold text-theme-primary hover:underline"
           >
             <span>{PUBLIC_WORLDS_NOTICE.TERMS_OF_USE_LABEL}</span>
-            <span class="icon-[lucide--external-link] h-3 w-3"></span>
+            <span
+              aria-hidden="true"
+              class="icon-[lucide--external-link] h-3 w-3"
+            ></span>
           </a>
         </div>
       {/if}
     </div>
 
     <div class="flex flex-col items-start gap-2 sm:items-end">
-      <p
-        class="max-w-xs text-left sm:text-right text-[11px] text-theme-text/50"
-      >
+      <p class="max-w-xs text-left sm:text-right text-meta text-theme-text/50">
         {PUBLIC_WORLDS_NOTICE.REPORT_PROMPT}
       </p>
       {#if onReport}
@@ -53,7 +56,8 @@
           onclick={onReport}
           class="inline-flex items-center gap-1.5 rounded border border-theme-border bg-theme-surface px-3 py-1.5 font-bold text-theme-text hover:border-theme-primary/50 hover:text-theme-primary transition-colors"
         >
-          <span class="icon-[lucide--flag] h-3.5 w-3.5"></span>
+          <span aria-hidden="true" class="icon-[lucide--flag] h-3.5 w-3.5"
+          ></span>
           <span>{PUBLIC_WORLDS_NOTICE.REPORT_ACTION_LABEL}</span>
         </button>
       {/if}

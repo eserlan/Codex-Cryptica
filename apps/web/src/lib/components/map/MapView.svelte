@@ -1,36 +1,35 @@
 <script lang="ts">
-  import { type Snippet } from "svelte";
+  import { type Snippet, setContext, untrack } from "svelte";
   import { fade } from "svelte/transition";
   import { isNoteCollapsed, mapLayerRank } from "map-engine";
   import { mapStore } from "../../stores/map.svelte";
   import { vault } from "../../stores/vault.svelte";
   import { oracle } from "../../stores/oracle.svelte";
   import { MapFogPainter } from "./map-fog-painter";
-  import { TokenVisionRevealer } from "./token-vision-revealer";
-  import { resolveVisionSourceTokens, visionRangeToPixels } from "./vtt-vision";
+  import { resolveVisionSourceTokens } from "./vtt-vision";
   import { broadcastActiveMapFogSync } from "./interactions/interaction-adapters";
   import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
+  import { notificationStore } from "$lib/stores/ui/notification.svelte";
   import { MapViewAssetLoader } from "./map-view-loader";
   import { MapInteractionManager } from "./map-interactions.svelte";
   import MapCanvas from "./MapCanvas.svelte";
   import MapOverlays from "./MapOverlays.svelte";
   import MapContextMenu from "./MapContextMenu.svelte";
-  import { clampPointToBounds, measureDistance } from "$lib/utils/vtt-helpers";
+  import { clampPointToBounds } from "$lib/utils/vtt-helpers";
   import { mapSession } from "../../stores/map-session.svelte";
   import {
+    SOLO_EXPLORATION_CONTEXT,
+    createSoloExplorationRecorder,
+    publishSoloMapMove,
+  } from "./solo-exploration-recorder.svelte";
+  import {
     resolveHealthBar,
+    mapAssetSignature,
+    resolveRemoteMeasurement,
     getMapDisplayDimensions,
+    formatMeasurementLabel,
+    visionRevealSignature,
   } from "./map-view-helpers";
-
-  function hashToColor(input: string) {
-    let hash = 0;
-    for (let i = 0; i < input.length; i++) {
-      hash = (hash << 5) - hash + input.charCodeAt(i);
-      hash |= 0;
-    }
-    const hue = Math.abs(hash) % 360;
-    return `hsl(${hue} 75% 55%)`;
-  }
 
   let {
     children,
@@ -46,6 +45,9 @@
 
   let container = $state<HTMLDivElement | null>(null);
   let mapImage = $state<HTMLImageElement | null>(null);
+  // Marks an unreadable map image so the loading overlay can offer a retry.
+  let imageLoadFailed = $state(false);
+  let retryNonce = $state(0);
   let maskCanvas = $state<HTMLCanvasElement | null>(null);
 
   const painter = new MapFogPainter({
@@ -56,15 +58,29 @@
     createCanvas: () => document.createElement("canvas"),
   });
 
+  const soloRecorder = createSoloExplorationRecorder({
+    mapStore,
+    mapSession,
+    sessionModeStore,
+    oracle,
+    painter,
+    getMaskCanvas: () => maskCanvas,
+    getMapImage: () => mapImage,
+    publishCapture: publishSoloMapMove,
+  });
+  setContext(SOLO_EXPLORATION_CONTEXT, soloRecorder);
+
   const interactions = new MapInteractionManager({
     painter,
     getContainer: () => container,
-  });
-
-  const visionRevealer = new TokenVisionRevealer({
-    mapStore,
-    getMaskCanvas: () => maskCanvas,
-    getMapImage: () => mapImage,
+    onMoveSettled: (ids) => {
+      const sources = visionSourceTokens.filter((token) =>
+        ids.includes(token.id),
+      );
+      void soloRecorder
+        .onVisionChanged(sources)
+        .then(() => soloRecorder.onMoveSettled(sources));
+    },
   });
 
   const mapAssets = new MapViewAssetLoader({
@@ -75,12 +91,14 @@
       painter.cancel();
       mapImage = null;
       maskCanvas = null;
+      imageLoadFailed = false;
     },
     onImageLoaded: (img) => {
       mapImage = img;
     },
     onMaskLoaded: (mask) => {
       maskCanvas = mask;
+      mapStore.fogRevision++;
     },
     onDimensionsLoaded: async (width, height) => {
       const activeMap = mapStore.activeMap;
@@ -98,14 +116,11 @@
     },
     onError: (message, err) => {
       console.error(message, err);
+      imageLoadFailed = true;
     },
   });
 
-  const activeMapSignature = $derived.by(() => {
-    const activeMap = mapStore.activeMap;
-    if (!activeMap) return null;
-    return `${activeMap.id}:${activeMap.assetPath}:${activeMap.dimensions.width}x${activeMap.dimensions.height}`;
-  });
+  const activeMapSignature = $derived(mapAssetSignature(mapStore.activeMap));
   let lastMapSignature: string | null = null;
   let loadedMaskPath = $state<string | null>(null);
 
@@ -115,36 +130,31 @@
       return null;
     }
 
-    const pixelDist = measureDistance(measurement.start, measurement.end);
-    const gridSize = mapStore.gridSize || 50;
-    const units = (pixelDist / gridSize) * mapSession.gridDistance;
-    const label = `${Math.round(units)}${mapSession.gridUnit}`;
+    const label = formatMeasurementLabel(measurement.start, measurement.end, {
+      gridType: mapStore.gridType,
+      gridSize: mapStore.gridSize,
+      gridDistance: mapSession.gridDistance,
+      gridUnit: mapSession.gridUnit,
+      gridOffsetX: mapStore.gridOffsetX,
+      gridOffsetY: mapStore.gridOffsetY,
+    });
 
     return {
       ...measurement,
       label,
     };
   });
-  // ⚡ Bolt Optimization: Replace inline Object.values().find() with pre-cached property
   const vttPings = $derived(mapSession.allPings);
-  const remoteMeasurement = $derived.by(() => {
-    const rm = mapSession.activeMeasurement;
-    if (!rm || !rm.start || !rm.end) return null;
-
-    const pixelDist = measureDistance(rm.start, rm.end);
-    const gridSize = mapStore.gridSize || 50;
-    const units = (pixelDist / gridSize) * mapSession.gridDistance;
-    const label = `${Math.round(units)}${mapSession.gridUnit}`;
-    const color = hashToColor(rm.peerId);
-
-    return {
-      start: rm.start,
-      end: rm.end,
-      label,
-      color,
-      peerId: rm.peerId,
-    };
-  });
+  const remoteMeasurement = $derived(
+    resolveRemoteMeasurement(mapSession.activeMeasurement, {
+      gridType: mapStore.gridType,
+      gridSize: mapStore.gridSize,
+      gridDistance: mapSession.gridDistance,
+      gridUnit: mapSession.gridUnit,
+      gridOffsetX: mapStore.gridOffsetX,
+      gridOffsetY: mapStore.gridOffsetY,
+    }),
+  );
 
   let tokenImageCache = $state<Record<string, HTMLImageElement | null>>({});
   let tokenImageSourceCache = $state<Record<string, string>>({});
@@ -154,18 +164,6 @@
       mapSession.allTokens,
       mapStore.visionMode,
       mapSession.selection,
-    ),
-  );
-  const visionSourceSignature = $derived(
-    visionSourceTokens
-      .map((token) => `${token.id}:${token.x}:${token.y}`)
-      .join("|"),
-  );
-  const visionRadiusPx = $derived(
-    visionRangeToPixels(
-      mapStore.visionRange,
-      mapSession.gridDistance,
-      mapStore.gridSize,
     ),
   );
 
@@ -338,7 +336,41 @@
     };
   });
 
+  let replacementInput = $state<HTMLInputElement | null>(null);
+  let replacingImage = $state(false);
+
+  async function replaceActiveMapImage(file: File) {
+    const mapId = mapStore.activeMapId;
+    if (!mapId) return;
+
+    replacingImage = true;
+    try {
+      if (!(await mapStore.replaceMapImage(mapId, file))) {
+        notificationStore.notify(
+          "That image could not be used. Try a different file.",
+          "error",
+        );
+      }
+    } finally {
+      replacingImage = false;
+    }
+  }
+
+  function handleReplacementSelected(event: Event) {
+    const input = event.currentTarget as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = "";
+    if (file) void replaceActiveMapImage(file);
+  }
+
+  function retryImageLoad() {
+    // Forget the last synced signature so the effect below reloads the asset.
+    lastMapSignature = null;
+    retryNonce += 1;
+  }
+
   $effect(() => {
+    void retryNonce;
     if (activeMapSignature === lastMapSignature) {
       return;
     }
@@ -365,6 +397,7 @@
       .then((mask) => {
         if (cancelled) return;
         maskCanvas = mask;
+        mapStore.fogRevision++;
         loadedMaskPath = fogMaskPath;
       });
 
@@ -376,16 +409,34 @@
   const hasBackgroundImage = $derived(Boolean(mapStore.activeMap?.assetPath));
 
   $effect(() => {
-    const signature = visionSourceSignature;
-    const radius = visionRadiusPx;
-    const canAutoReveal = mapStore.isGMMode && !sessionModeStore.isGuestMode;
-    if (!canAutoReveal || !signature) return;
+    const tokens = visionSourceTokens;
+    const revealSignature = visionRevealSignature(
+      tokens,
+      mapStore.visionRange,
+      mapSession.gridDistance,
+      mapStore.gridSize,
+      mapStore.gridType,
+      mapStore.showGrid,
+      mapStore.isGMMode,
+      sessionModeStore.isGuestMode,
+      mapStore.activeMapId,
+      mapStore.soloFog,
+      mapStore.showFog,
+      mapSession.gridUnit,
+      Boolean(maskCanvas),
+      Boolean(mapImage),
+    );
+    if (!revealSignature) return;
 
-    void visionRevealer.reveal(visionSourceTokens, radius).then((revealed) => {
-      if (revealed && mapSession.vttEnabled) {
-        void broadcastActiveMapFogSync();
-      }
-    });
+    void untrack(() => soloRecorder.onVisionChanged(tokens)).then(
+      async (revealed) => {
+        if (!interactions.tokenDrag.dragState)
+          await soloRecorder.onMoveSettled(tokens);
+        if (revealed && mapSession.vttEnabled) {
+          void broadcastActiveMapFogSync();
+        }
+      },
+    );
   });
 </script>
 
@@ -429,19 +480,68 @@
 
   {#if hasBackgroundImage && !mapImage}
     <div
-      class="absolute inset-0 flex items-center justify-center bg-theme-bg/40 backdrop-blur-sm z-50 pointer-events-none"
+      class="pointer-events-none absolute inset-0 z-50 flex items-center justify-center bg-theme-bg/40 px-6 backdrop-blur-sm"
       transition:fade
     >
-      <div class="flex flex-col items-center gap-4">
+      {#if imageLoadFailed}
         <div
-          class="w-12 h-12 border-4 border-theme-primary border-t-transparent rounded-full animate-spin"
-        ></div>
-        <div
-          class="text-[10px] font-mono text-theme-primary uppercase tracking-[0.3em] animate-pulse"
+          class="pointer-events-auto flex max-w-sm flex-col items-center gap-3 text-center"
+          role="alert"
+          data-testid="map-image-error"
         >
-          Synthesizing Spatial Asset...
+          <span
+            class="icon-[lucide--image-off] h-10 w-10 text-theme-muted"
+            aria-hidden="true"
+          ></span>
+          <p class="text-sm text-theme-text">
+            This map's image could not be loaded. It may be missing from this
+            device or the connection may have dropped. You can try again, or
+            choose a new image to keep this map's pins and notes.
+          </p>
+          <div class="flex flex-wrap items-center justify-center gap-2">
+            <button
+              type="button"
+              class="touch-target rounded-lg bg-theme-primary px-4 py-2 text-xs font-bold uppercase tracking-wider text-theme-bg hover:bg-theme-secondary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary disabled:opacity-50"
+              onclick={retryImageLoad}
+              disabled={replacingImage}
+            >
+              Try again
+            </button>
+            {#if !sessionModeStore.isGuestMode}
+              <button
+                type="button"
+                class="touch-target rounded-lg border border-theme-primary px-4 py-2 text-xs font-bold uppercase tracking-wider text-theme-primary hover:bg-theme-primary/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary disabled:opacity-50"
+                onclick={() => replacementInput?.click()}
+                disabled={replacingImage}
+                data-testid="map-image-replace"
+              >
+                {replacingImage ? "Replacing…" : "Choose a new image"}
+              </button>
+              <input
+                bind:this={replacementInput}
+                type="file"
+                accept="image/*"
+                class="sr-only"
+                tabindex="-1"
+                aria-hidden="true"
+                data-testid="map-image-replace-input"
+                onchange={handleReplacementSelected}
+              />
+            {/if}
+          </div>
         </div>
-      </div>
+      {:else}
+        <div class="flex flex-col items-center gap-4" role="status">
+          <div
+            class="h-12 w-12 animate-spin rounded-full border-4 border-theme-primary border-t-transparent"
+          ></div>
+          <div
+            class="animate-pulse text-center font-mono text-micro uppercase tracking-[0.2em] text-theme-primary"
+          >
+            Synthesizing Spatial Asset...
+          </div>
+        </div>
+      {/if}
     </div>
   {/if}
 
@@ -458,6 +558,9 @@
       imgX={interactions.contextMenu.imgX}
       imgY={interactions.contextMenu.imgY}
       tokenId={interactions.contextMenu.tokenId}
+      hex={interactions.contextMenu.hex}
+      onToggleHexFog={(hex) =>
+        void interactions.fogInteractions.paintHex(hex, !hex.fogged)}
       onClose={() => (interactions.contextMenu = null)}
     />
   {/if}

@@ -24,6 +24,7 @@
   import TableViewPresets from "$lib/components/table/TableViewPresets.svelte";
   import type { ViewPreset } from "$lib/stores/view-presets";
   import EmptyState from "$lib/components/ui/EmptyState.svelte";
+  import { openSelectionReport } from "$lib/components/reports/open-selection-report";
   import {
     sortEntities,
     nextSortState,
@@ -381,6 +382,15 @@
     }
   }
 
+  // Single pass over the selection, no intermediate array.
+  function withoutIds(ids: Set<string>, removed: Set<string>) {
+    const remaining = new Set<string>();
+    for (const id of ids) {
+      if (!removed.has(id)) remaining.add(id);
+    }
+    return remaining;
+  }
+
   async function handleDeleteSelected() {
     if (isCommitting) return;
     if (!contextMenu || contextMenu.targetIds.length === 0) return;
@@ -404,9 +414,7 @@
       try {
         const result = await vault.bulkDelete(targetIds);
         const succeededIds = new Set(result.succeededIds);
-        selectedIds = new Set(
-          [...selectedIds].filter((id) => !succeededIds.has(id)),
-        );
+        selectedIds = withoutIds(selectedIds, succeededIds);
         if (result.failedIds.length > 0 || result.cancelledIds.length > 0) {
           notificationStore.notify(
             `Deleted ${result.succeededIds.length} entities; ${
@@ -424,6 +432,13 @@
         isCommitting = false;
       }
     }
+  }
+
+  function openBulkReport() {
+    openSelectionReport(
+      "table",
+      selectedVisible.map((e) => e.id),
+    );
   }
 
   function openBulkLabels() {
@@ -570,7 +585,7 @@
 
     <a
       href={graphHref}
-      class="flex h-8 flex-shrink-0 items-center gap-1.5 whitespace-nowrap rounded border border-theme-border bg-theme-surface/80 px-2 text-[10px] font-bold uppercase tracking-tighter text-theme-muted transition hover:border-theme-primary hover:text-theme-primary"
+      class="flex h-8 flex-shrink-0 items-center gap-1.5 whitespace-nowrap rounded border border-theme-border bg-theme-surface/80 px-2 text-micro font-bold uppercase tracking-tighter text-theme-muted transition hover:border-theme-primary hover:text-theme-primary"
       data-testid="table-browse-as-graph"
       title="Browse the same entities as a knowledge graph"
     >
@@ -584,7 +599,9 @@
       class="flex flex-1 items-center justify-center text-sm text-theme-muted"
       data-testid="entity-table-loading"
     >
-      <span class="icon-[lucide--loader-circle] mr-2 h-4 w-4 animate-spin"
+      <span
+        aria-hidden="true"
+        class="icon-[lucide--loader-circle] mr-2 h-4 w-4 animate-spin"
       ></span>
       Loading vault…
     </div>
@@ -629,7 +646,7 @@
           <span>Filters</span>
           {#if activeFilterCount > 0}
             <span
-              class="rounded-full bg-theme-primary px-1.5 py-0.2 text-[10px] font-bold text-theme-bg"
+              class="rounded-full bg-theme-primary px-1.5 py-0.2 text-micro font-bold text-theme-bg"
               data-testid="entity-table-active-filter-badge"
             >
               {activeFilterCount}
@@ -653,7 +670,7 @@
           ></span>
           Incomplete only
           <span
-            class="rounded-full px-1.5 py-0.2 text-[10px] {showIncompleteOnly
+            class="rounded-full px-1.5 py-0.2 text-micro {showIncompleteOnly
               ? 'bg-amber-500/20 text-amber-600 dark:text-amber-400 font-bold'
               : 'bg-theme-border text-theme-muted'}"
           >
@@ -677,7 +694,7 @@
       </div>
 
       {#if searchStatusMessage}
-        <p class="text-[10px] text-theme-muted" aria-live="polite">
+        <p class="text-micro text-theme-muted" aria-live="polite">
           {searchStatusMessage}
         </p>
       {/if}
@@ -731,7 +748,7 @@
           {/each}
           {#each [...labelFilters].sort() as label (label)}
             <div
-              class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-theme-primary/10 border border-theme-primary/20 text-[9px] font-bold text-theme-primary uppercase tracking-wider"
+              class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-theme-primary/10 border border-theme-primary/20 text-nano font-bold text-theme-primary uppercase tracking-wider"
               data-testid="entity-table-label-filter"
             >
               <span>{label}</span>
@@ -793,6 +810,20 @@
               ></span>
               Add / remove labels
             </button>
+            {#if !vault.isGuest && selectedVisible.length > 1}
+              <button
+                type="button"
+                onclick={openBulkReport}
+                data-testid="entity-table-bulk-generate-report"
+                class="inline-flex items-center gap-1.5 rounded-md border border-theme-primary/50 bg-theme-surface px-2.5 py-1 text-xs font-medium text-theme-primary transition-colors hover:bg-theme-primary/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-theme-accent/40"
+              >
+                <span
+                  class="icon-[lucide--file-text] h-3.5 w-3.5"
+                  aria-hidden="true"
+                ></span>
+                Generate report
+              </button>
+            {/if}
             <button
               type="button"
               onclick={clearSelection}

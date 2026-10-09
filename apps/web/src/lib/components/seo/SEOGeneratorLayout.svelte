@@ -1,7 +1,7 @@
 <script lang="ts">
   import { base, resolve } from "$app/paths";
-  import { goto } from "$app/navigation";
   const cleanBase = base === "/" ? "" : base;
+  import { goto } from "$app/navigation";
   import { fade } from "svelte/transition";
   import type { GeneratorOutput } from "$lib/services/seo/generator-engine";
   import type { MarkdownSectionForCopy } from "$lib/components/seo/markdown-sections";
@@ -11,6 +11,7 @@
   import { onlineStatus } from "$lib/stores/online.svelte";
   import { browser, dev } from "$app/environment";
   import { getGeneratorDocumentLayout } from "$lib/components/seo/generator-document-layout";
+  import { getGeneratorColumnClasses } from "./generator-column-classes";
   import { splitMarkdownForCopy } from "$lib/components/seo/markdown-sections";
   import { handleGeneratorInlineCopy } from "$lib/components/seo/generator-inline-copy";
   import {
@@ -22,7 +23,7 @@
   import { sessionHubStore } from "$lib/stores/session-hub.svelte";
   import { loreMergeStore } from "$lib/stores/ui/lore-merge.svelte";
   import ProvenanceBadge from "./ProvenanceBadge.svelte";
-  import GeneratorSwitcherMenu from "./GeneratorSwitcherMenu.svelte";
+  import GeneratorIntroPanel from "./GeneratorIntroPanel.svelte";
   import FaqSection from "./FaqSection.svelte";
   import RelatedLinksSection from "./RelatedLinksSection.svelte";
   import SaveToCodexModal from "./SaveToCodexModal.svelte";
@@ -34,29 +35,16 @@
   import StarSystemDiagram from "./StarSystemDiagram.svelte";
   import ConstellationChart from "./ConstellationChart.svelte";
   import { blobToDataUrl } from "$lib/utils/svg-export";
-  import { dungeonDelveService } from "$lib/services/dungeon-delve-service";
-  import { buildAbsoluteUrl } from "$lib/seo/site";
-  import SeoHead from "./SeoHead.svelte";
+  import SEOGeneratorHead from "./SEOGeneratorHead.svelte";
   import { unregisterDevelopmentServiceWorkers } from "$lib/utils/dev-service-worker";
-  import {
-    createPendingDelveTransfer,
-    PENDING_DELVE_CANVAS_KEY,
-  } from "$lib/services/seo/pending-delve-transfer";
   import {
     getContextSelection,
     computeProvenance,
-    generateAdventureGraphTopology,
     type SessionEntity,
     type RefinementDocument,
   } from "generator-engine";
   import { GeneratorRefinementService } from "$lib/services/GeneratorRefinementService.svelte";
   import { buildLoreMergePlan } from "$lib/utils/lore-sections";
-  import {
-    buildFaqJsonLd,
-    buildSoftwareApplicationJsonLd,
-    buildBreadcrumbJsonLd,
-    buildResultJsonLd,
-  } from "./generator-json-ld";
   import {
     trackEvent,
     trackPublicGeneratorAction,
@@ -66,7 +54,6 @@
     countRelatedEntities,
   } from "$lib/services/analytics/generator-save-tracking";
   import { registerShellCtaHandler } from "./marketing-shell";
-  import PublicLabelChip from "$lib/components/labels/PublicLabelChip.svelte";
   import {
     clipboardService as defaultClipboardService,
     type ClipboardService,
@@ -81,9 +68,14 @@
   import { generatorShareService } from "$lib/services/sharing/GeneratorShareService";
   import { createGeneratorPageSharing } from "./generator-page-sharing";
   import {
-    buildGeneratorSavePayload,
-    buildHubSaveDrafts,
-  } from "$lib/components/seo/generator-save";
+    buildAdventureCanvasTransfer,
+    buildDelveCanvasTransfer,
+  } from "./generator-canvas-transfer";
+  import { handoffGeneratorToCanvas } from "./generator-canvas-handoff";
+  import {
+    saveGeneratorOutput,
+    saveSessionHubEntities,
+  } from "$lib/components/seo/generator-save-flow";
   import {
     trackGeneratorShareCreated,
     trackGeneratorShareLinkCopied,
@@ -92,13 +84,6 @@
     type GeneratorShareSource,
   } from "$lib/services/sharing/generator-share-tracking";
 
-  // Link-preview fallback for generators without a capture of their own. Plain
-  // R2 URL, not the cdn-cgi transform: social crawlers don't negotiate formats.
-  const DEFAULT_OG_IMAGE =
-    "https://assets.codexcryptica.com/screenshots/feature-connect.jpg";
-  const DEFAULT_OG_IMAGE_ALT =
-    "A Codex Cryptica campaign vault showing an entity graph beside an open character record";
-
   let {
     canonicalPath,
     pageTitle = "Free RPG Generator | Codex Cryptica",
@@ -106,7 +91,7 @@
     eyebrow = "Free RPG Tool",
     introTitle = "RPG Generator",
     introText = "Customize options and instantly generate structured drafts to populate your campaign lore database.",
-    ogImage = DEFAULT_OG_IMAGE,
+    ogImage = "https://assets.codexcryptica.com/screenshots/feature-connect.jpg",
     ogImageAlt = undefined,
     keywords = [],
     labels = [],
@@ -240,26 +225,8 @@
     }
   });
 
-  const SINGLE_COLUMN_CLASS =
-    "lg:col-span-12 lg:w-full lg:max-w-3xl lg:justify-self-center";
   const columnClasses = $derived(
-    singleColumn
-      ? {
-          form: SINGLE_COLUMN_CLASS,
-          output: SINGLE_COLUMN_CLASS,
-          table: SINGLE_COLUMN_CLASS,
-        }
-      : wideForm
-        ? {
-            form: "lg:col-span-5",
-            output: "lg:col-span-7",
-            table: "lg:col-span-12",
-          }
-        : {
-            form: "lg:col-span-3",
-            output: "lg:col-span-6",
-            table: "lg:col-span-3",
-          },
+    getGeneratorColumnClasses(singleColumn, wideForm),
   );
 
   let outputCard = $state<HTMLElement | null>(null);
@@ -384,23 +351,6 @@
       source: "header",
     });
   }
-
-  const faqJsonLd = $derived(buildFaqJsonLd(faqs));
-
-  const softwareApplicationJsonLd = $derived(
-    buildSoftwareApplicationJsonLd({ canonicalPath, metaDescription }),
-  );
-
-  const breadcrumbJsonLd = $derived(
-    buildBreadcrumbJsonLd({ canonicalPath, introTitle }),
-  );
-
-  const resultJsonLd = $derived(buildResultJsonLd(generatedData));
-
-  const resolvedOgImageAlt = $derived(
-    ogImageAlt ??
-      (ogImage === DEFAULT_OG_IMAGE ? DEFAULT_OG_IMAGE_ALT : undefined),
-  );
 
   async function handleGenerate() {
     if (isGenerating) return;
@@ -627,28 +577,17 @@
       item_count: entitiesToSave.length,
     });
     try {
-      const draftsToSave = buildHubSaveDrafts(
+      redirectQuery = saveSessionHubEntities(
         entitiesToSave,
         sessionHubStore.provenance,
         sessionHubStore.entities,
-      );
-      localStorage.setItem(
-        "__codex_pending_import",
-        JSON.stringify(draftsToSave),
-      );
-      // #1796: fires at this outbound-click moment only — see
-      // generator-save-tracking.ts's docstring for why this never observes
-      // what actually happens after the redirect below.
-      trackSaveToCodex({
         generatorType,
-        isHubBatch: true,
-        itemCount: draftsToSave.length,
-        relatedEntityCount: draftsToSave.reduce(
-          (sum, d) => sum + countRelatedEntities(d.content, d.references),
-          0,
-        ),
-      });
-      redirectQuery = `?utm_source=generator-session-hub&utm_medium=save-all&utm_campaign=seo-funnel`;
+        {
+          store: (key, value) => localStorage.setItem(key, value),
+          track: trackSaveToCodex,
+          countRelatedEntities,
+        },
+      );
       showSaveModal = true;
     } catch {
       errorMessage = "Storage access is blocked. Please copy drafts manually.";
@@ -664,42 +603,25 @@
     });
 
     try {
-      // Best-effort: a rasterization failure must never block saving the
-      // draft itself, so this is caught separately from the payload write.
-      let mapImageDataUrl: string | undefined;
-      if (starSystemDiagramRef) {
-        try {
-          const blob = await starSystemDiagramRef.exportPng();
-          if (blob) mapImageDataUrl = await blobToDataUrl(blob);
-        } catch (err) {
-          console.error("Failed to rasterize star system diagram:", err);
-        }
-      } else if (constellationChartRef) {
-        try {
-          const blob = await constellationChartRef.exportPng();
-          if (blob) mapImageDataUrl = await blobToDataUrl(blob);
-        } catch (err) {
-          console.error("Failed to rasterize constellation chart:", err);
-        }
-      }
-
-      const payload = buildGeneratorSavePayload(
+      redirectQuery = await saveGeneratorOutput(
         generatedData,
         documentLayout,
-        mapImageDataUrl,
-      );
-
-      localStorage.setItem("__codex_pending_import", JSON.stringify(payload));
-      // #1796: fires at this outbound-click moment only — see
-      // generator-save-tracking.ts's docstring for why this never observes
-      // what actually happens after the redirect below.
-      trackSaveToCodex({
         generatorType,
-        isHubBatch: false,
-        itemCount: 1,
-        relatedEntityCount: countRelatedEntities(payload.content, undefined),
-      });
-      redirectQuery = `?utm_source=generator-${generatedData.type}&utm_medium=save-to-vault&utm_campaign=seo-funnel`;
+        {
+          store: (key, value) => localStorage.setItem(key, value),
+          track: trackSaveToCodex,
+          countRelatedEntities,
+        },
+        async () => {
+          let blob: Blob | undefined;
+          if (starSystemDiagramRef) {
+            blob = (await starSystemDiagramRef.exportPng()) ?? undefined;
+          } else if (constellationChartRef) {
+            blob = (await constellationChartRef.exportPng()) ?? undefined;
+          }
+          return blob ? blobToDataUrl(blob) : undefined;
+        },
+      );
       showSaveModal = true;
     } catch {
       errorMessage =
@@ -829,27 +751,14 @@
 
   async function handleBuildDelveCanvas(data: GeneratorOutput) {
     try {
-      const canvasDoc = dungeonDelveService.buildDelveCanvasFromConcept(data);
-      const layout = getGeneratorDocumentLayout(data);
-      const content = data.summary
-        ? `*${data.summary}*\n\n${layout.content}`
-        : layout.content;
-      const transfer = createPendingDelveTransfer(canvasDoc, {
-        type: "location",
-        kind: "dungeon",
-        title: data.title,
-        content,
-        lore: layout.lore,
-        labels: data.labels,
-        status: data.status,
+      await handoffGeneratorToCanvas(data, buildDelveCanvasTransfer, {
+        storeTransfer: (key, transfer) =>
+          localStorage.setItem(key, JSON.stringify(transfer)),
+        unregisterDevelopmentServiceWorkers,
+        isDevelopment: dev,
+        navigate: () => goto(resolve("/canvas")),
+        navigateInDevelopment: () => window.location.assign(resolve("/canvas")),
       });
-      localStorage.setItem(PENDING_DELVE_CANVAS_KEY, JSON.stringify(transfer));
-      await unregisterDevelopmentServiceWorkers(dev);
-      if (dev) {
-        window.location.assign(resolve("/canvas"));
-        return;
-      }
-      await goto(resolve("/canvas"));
     } catch (err) {
       console.error("[DelveCanvas] Failed to build delve canvas:", err);
       errorMessage =
@@ -859,25 +768,14 @@
 
   async function handleBuildAdventureCanvas(data: GeneratorOutput) {
     try {
-      const canvasDoc = generateAdventureGraphTopology(data);
-      const content = data.summary ? `*${data.summary}*` : "";
-      const lore = [data.content, data.lore].filter(Boolean).join("\n\n");
-      const transfer = createPendingDelveTransfer(canvasDoc as any, {
-        type: "note",
-        kind: "adventure",
-        title: data.title,
-        content,
-        lore,
-        labels: data.labels,
-        status: data.status,
+      await handoffGeneratorToCanvas(data, buildAdventureCanvasTransfer, {
+        storeTransfer: (key, transfer) =>
+          localStorage.setItem(key, JSON.stringify(transfer)),
+        unregisterDevelopmentServiceWorkers,
+        isDevelopment: dev,
+        navigate: () => goto(resolve("/canvas")),
+        navigateInDevelopment: () => window.location.assign(resolve("/canvas")),
       });
-      localStorage.setItem(PENDING_DELVE_CANVAS_KEY, JSON.stringify(transfer));
-      await unregisterDevelopmentServiceWorkers(dev);
-      if (dev) {
-        window.location.assign(resolve("/canvas"));
-        return;
-      }
-      await goto(resolve("/canvas"));
     } catch (err) {
       console.error("[AdventureCanvas] Failed to build adventure canvas:", err);
       errorMessage = "Failed to open Adventure Canvas for this scenario.";
@@ -885,19 +783,16 @@
   }
 </script>
 
-<SeoHead
+<SEOGeneratorHead
   title={pageTitle}
   description={metaDescription}
-  canonicalUrl={canonicalPath ? buildAbsoluteUrl(canonicalPath) : undefined}
+  {introTitle}
+  {canonicalPath}
   image={ogImage}
-  imageAlt={resolvedOgImageAlt}
+  imageAlt={ogImageAlt}
   {keywords}
-  jsonLd={[
-    softwareApplicationJsonLd,
-    breadcrumbJsonLd,
-    faqJsonLd,
-    resultJsonLd,
-  ]}
+  {faqs}
+  {generatedData}
 />
 
 <div
@@ -937,41 +832,17 @@
       <div
         class="p-6 bg-theme-surface/40 border border-theme-border/60 rounded-2xl shadow-sm"
       >
-        <a
-          href="{cleanBase}{backHref ?? '/generators'}"
-          class="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-widest font-header text-theme-muted hover:text-theme-primary transition-colors mb-3"
-        >
-          <span class="icon-[lucide--arrow-left] w-3 h-3" aria-hidden="true"
-          ></span>
-          {backLabel ?? "All generators"}
-        </a>
-        {#if showGeneratorSwitcher}
-          <GeneratorSwitcherMenu {canonicalPath} {eyebrow} />
-        {/if}
-        <h1
-          class="font-header font-bold text-lg uppercase tracking-wider text-theme-primary mb-4"
-          id="generator-title"
-        >
+        <GeneratorIntroPanel
+          {canonicalPath}
+          {eyebrow}
+          {showGeneratorSwitcher}
           {introTitle}
-        </h1>
-        <p class="text-sm text-theme-text/70 leading-relaxed mb-4">
           {introText}
-        </p>
-        {#if labels.length}
-          <div class="mb-4 flex flex-wrap gap-2">
-            {#each labels as label (label)}
-              <PublicLabelChip {label} size="sm" />
-            {/each}
-          </div>
-        {/if}
-        {#if inputHint}
-          <p
-            class="text-[9px] text-theme-text/45 uppercase tracking-widest font-header mb-5 flex items-center gap-1.5"
-          >
-            <span class="icon-[lucide--arrow-right] w-3 h-3"></span>
-            {inputHint}
-          </p>
-        {/if}
+          {labels}
+          {inputHint}
+          {backHref}
+          {backLabel}
+        />
 
         {#if !isOnline}
           <div
@@ -986,11 +857,11 @@
             ></span>
             <div class="flex flex-col gap-1">
               <p
-                class="text-[10px] font-bold uppercase tracking-wider font-header text-theme-primary"
+                class="text-micro font-bold uppercase tracking-wider font-header text-theme-primary"
               >
                 {aiModeRequired ? "AI required" : "Local Mode"}
               </p>
-              <p class="text-[10px] text-theme-text/70 leading-snug">
+              <p class="text-micro text-theme-text/70 leading-snug">
                 {offlineMessage ??
                   "You're offline. Codex will generate from built-in tables and save drafts locally. Reconnect to use AI Lore Co-Author mode again."}
               </p>
@@ -1009,7 +880,7 @@
         >
           {@render formFields(() => void handleGenerate())}
           {#if aiModeRequired && aiDataNotice}
-            <p class="text-[10px] text-theme-muted leading-relaxed" role="note">
+            <p class="text-micro text-theme-muted leading-relaxed" role="note">
               {aiDataNotice}
             </p>
           {/if}
@@ -1048,7 +919,7 @@
                 />
                 <label
                   for="ai-toggle"
-                  class="text-[10px] font-bold uppercase tracking-wider text-theme-muted flex items-center gap-1 {isOnline
+                  class="text-micro font-bold uppercase tracking-wider text-theme-muted flex items-center gap-1 {isOnline
                     ? 'cursor-pointer'
                     : 'opacity-50 cursor-not-allowed'}"
                 >
@@ -1060,7 +931,7 @@
               </div>
               <p
                 id="ai-toggle-hint"
-                class="text-[9px] text-theme-muted/70 leading-snug pl-6"
+                class="text-nano text-theme-muted/70 leading-snug pl-6"
               >
                 {#if !isOnline}
                   Offline: using fast local tables. Reconnect to enable AI Lore
@@ -1184,7 +1055,7 @@
     <div class="{columnClasses.table} order-3 lg:order-3">
       <!-- Mobile label — hidden on lg where the sticky card makes the context clear -->
       <p
-        class="lg:hidden text-[10px] font-bold uppercase tracking-widest font-header text-theme-muted mb-2"
+        class="lg:hidden text-micro font-bold uppercase tracking-widest font-header text-theme-muted mb-2"
       >
         GM Reference
       </p>
@@ -1212,8 +1083,11 @@
             <div
               class="flex flex-col items-center text-center text-theme-muted/40 py-8"
             >
-              <span class="icon-[lucide--scroll] w-8 h-8 mb-3"></span>
-              <p class="text-[10px] uppercase tracking-widest font-header">
+              <span
+                aria-hidden="true"
+                class="icon-[lucide--scroll] w-8 h-8 mb-3"
+              ></span>
+              <p class="text-micro uppercase tracking-widest font-header">
                 At the Table
               </p>
               <p class="text-sm mt-2 leading-relaxed">
@@ -1309,7 +1183,7 @@
     filter: none;
   }
   .seo-rail.seo-md :global(h3) {
-    font-size: 0.75rem;
+    font-size: var(--type-helper);
     text-transform: uppercase;
     letter-spacing: 0.08em;
     color: color-mix(in srgb, var(--color-text) 82%, transparent);

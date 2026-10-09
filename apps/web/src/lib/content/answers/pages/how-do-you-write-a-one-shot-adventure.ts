@@ -2,7 +2,7 @@ import type { AnswerConfigInput } from "../schema";
 
 export const howDoYouWriteAOneShotAdventure: AnswerConfigInput = {
   slug: "how-do-you-write-a-one-shot-adventure",
-  category: "session-prep",
+  category: "adventure-design",
   publishedAt: "2026-09-04",
   question: "How do you write a one-shot adventure?",
   kind: "framework",

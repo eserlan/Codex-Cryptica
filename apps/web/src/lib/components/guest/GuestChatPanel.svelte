@@ -157,7 +157,9 @@
       <h3
         class="text-xs font-bold uppercase tracking-wider text-theme-secondary flex items-center gap-1.5"
       >
-        <span class="icon-[lucide--messages-square] w-4 h-4 text-theme-primary"
+        <span
+          aria-hidden="true"
+          class="icon-[lucide--messages-square] w-4 h-4 text-theme-primary"
         ></span>
         Lore Contacts
       </h3>
@@ -176,11 +178,14 @@
           <div
             class="w-8 h-8 rounded-lg bg-theme-surface/80 border border-theme-border flex items-center justify-center shrink-0"
           >
-            <span class="icon-[lucide--user] w-4 h-4 text-theme-primary"></span>
+            <span
+              aria-hidden="true"
+              class="icon-[lucide--user] w-4 h-4 text-theme-primary"
+            ></span>
           </div>
           <div class="flex-1 min-w-0">
             <p class="text-xs truncate">{char.title}</p>
-            <p class="text-[9px] text-theme-muted truncate">
+            <p class="text-nano text-theme-muted truncate">
               {char.guestChatConfig?.contextScope === "hybrid"
                 ? "Hybrid Scope"
                 : "Public Scope"}
@@ -223,7 +228,7 @@
             <h2 class="text-sm font-bold text-theme-text">
               {activeCharacter.title}
             </h2>
-            <p class="text-[9px] text-theme-muted uppercase tracking-wider">
+            <p class="text-nano text-theme-muted uppercase tracking-wider">
               In-Character Conversation
             </p>
           </div>
@@ -235,7 +240,7 @@
               type="button"
               onclick={copyConversation}
               disabled={isCopying}
-              class="text-[10px] px-3 py-1.5 border border-theme-border/60 rounded-xl font-bold uppercase tracking-wider text-theme-muted hover:text-theme-primary hover:border-theme-primary/30 transition flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+              class="text-micro px-3 py-1.5 border border-theme-border/60 rounded-xl font-bold uppercase tracking-wider text-theme-muted hover:text-theme-primary hover:border-theme-primary/30 transition flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
               title="Copy conversation"
               aria-label="Copy conversation"
             >
@@ -248,7 +253,7 @@
                 type="button"
                 onclick={sendToJournal}
                 disabled={isSavingJournal}
-                class="text-[10px] px-3 py-1.5 border border-theme-border/60 rounded-xl font-bold uppercase tracking-wider text-theme-muted hover:text-theme-primary hover:border-theme-primary/30 transition flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                class="text-micro px-3 py-1.5 border border-theme-border/60 rounded-xl font-bold uppercase tracking-wider text-theme-muted hover:text-theme-primary hover:border-theme-primary/30 transition flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
                 title="Send to Journal"
                 aria-label="Send to Journal"
               >
@@ -263,7 +268,7 @@
           <button
             type="button"
             onclick={handleResetMemory}
-            class="text-[10px] px-3 py-1.5 border border-theme-border/60 rounded-xl font-bold uppercase tracking-wider text-theme-muted hover:text-theme-danger hover:border-theme-danger/30 transition flex items-center gap-1.5 cursor-pointer"
+            class="text-micro px-3 py-1.5 border border-theme-border/60 rounded-xl font-bold uppercase tracking-wider text-theme-muted hover:text-theme-danger hover:border-theme-danger/30 transition flex items-center gap-1.5 cursor-pointer"
             title="Clear local conversation memory"
             aria-label="Reset conversation memory"
           >
@@ -321,7 +326,9 @@
           <div
             class="self-start flex items-center gap-2 text-theme-muted text-xs p-2"
           >
-            <span class="icon-[lucide--loader-2] w-3.5 h-3.5 animate-spin"
+            <span
+              aria-hidden="true"
+              class="icon-[lucide--loader-2] w-3.5 h-3.5 animate-spin"
             ></span>
             <span>{activeCharacter.title} is thinking...</span>
           </div>
@@ -366,10 +373,10 @@
 
             <!-- Quick Oracle & Roll Shortcuts -->
             <div
-              class="flex flex-wrap items-center gap-1 pt-1.5 border-t border-amber-500/10 text-[10px]"
+              class="flex flex-wrap items-center gap-1 pt-1.5 border-t border-amber-500/10 text-micro"
             >
               <span
-                class="text-amber-400/70 font-mono text-[9px] uppercase tracking-wider select-none mr-0.5"
+                class="text-amber-400/70 font-mono text-nano uppercase tracking-wider select-none mr-0.5"
                 >Quick Roll:</span
               >
               <button
@@ -469,7 +476,7 @@
             type="button"
             onclick={() => sendMessage(messageInput)}
             disabled={!messageInput.trim() || guestChatStore.isGenerating}
-            class="px-4 py-2.5 bg-theme-primary text-theme-bg hover:bg-theme-secondary font-bold uppercase tracking-widest text-[10px] rounded-xl transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center cursor-pointer"
+            class="px-4 py-2.5 bg-theme-primary text-theme-bg hover:bg-theme-secondary font-bold uppercase tracking-widest text-micro rounded-xl transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center cursor-pointer"
             aria-label="Send message"
           >
             <span aria-hidden="true" class="icon-[lucide--send] w-4 h-4"></span>
@@ -482,7 +489,9 @@
         <div
           class="w-12 h-12 rounded-full border border-theme-border/80 flex items-center justify-center mx-auto bg-theme-surface/50"
         >
-          <span class="icon-[lucide--messages-square] w-6 h-6 text-theme-muted"
+          <span
+            aria-hidden="true"
+            class="icon-[lucide--messages-square] w-6 h-6 text-theme-muted"
           ></span>
         </div>
         <p class="text-xs text-theme-muted">

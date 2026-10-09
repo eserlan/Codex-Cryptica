@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { languageConfig, pickFrom } from "$lib/services/seo/generator-engine";
+  import { languageConfig, pickFrom } from "$lib/services/seo/generator-config";
   import SelectWithCustomOption from "$lib/components/forms/SelectWithCustomOption.svelte";
 
   let {
@@ -28,7 +28,7 @@
   const selectClass =
     "w-full min-h-12 bg-theme-bg/60 border border-theme-border/60 rounded-lg px-3 py-2.5 text-base md:text-sm text-theme-text focus:outline-none focus:border-theme-primary/60";
   const labelClass =
-    "text-[10px] font-bold uppercase tracking-wider text-theme-text/80";
+    "text-micro font-bold uppercase tracking-wider text-theme-text/80";
   const helpClass =
     "text-sm text-theme-text/70 leading-6 md:text-[13px] md:leading-relaxed -mt-0.5 text-wrap-pretty";
 
@@ -152,7 +152,7 @@
 <div class="pt-2 flex justify-end">
   <button
     type="button"
-    class="flex items-center gap-1.5 px-3 py-1.5 bg-theme-surface/60 border border-theme-border/60 rounded-lg text-[10px] font-bold uppercase tracking-wider text-theme-text hover:bg-theme-primary hover:text-theme-bg hover:border-theme-primary transition-all cursor-pointer"
+    class="flex items-center gap-1.5 px-3 py-1.5 bg-theme-surface/60 border border-theme-border/60 rounded-lg text-micro font-bold uppercase tracking-wider text-theme-text hover:bg-theme-primary hover:text-theme-bg hover:border-theme-primary transition-all cursor-pointer"
     title="Randomize all options and generate a draft from the result"
     onclick={() => {
       if (!preserveGenreOnSurprise) genre = pickFrom(languageConfig.genres);

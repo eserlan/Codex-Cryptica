@@ -150,8 +150,9 @@ export class AdventureManager {
           if (oracleBridge.isReady) {
             // AbortSignal is not structured-cloneable and must not cross Comlink.
             const { signal: _signal, ...workerOptions } = options ?? {};
+            const sanitizedRequest = $state.snapshot(request);
             return oracleBridge.generateAdventureTurn(
-              request,
+              sanitizedRequest,
               workerOptions,
             ) as any;
           }
@@ -521,6 +522,9 @@ export class AdventureManager {
       kind: "numeric",
       value: result.total,
       label: `${expression} = ${result.total}`,
+      // The dice as actually rolled, persisted with the outcome so the roll
+      // history can show them later without re-deriving anything (#3443).
+      parts: result.parts,
     });
   }
 
@@ -627,6 +631,30 @@ export class AdventureManager {
     await this.deps.coordinator.stop();
     this.lease = null;
     this.phase = "ready";
+  }
+
+  /**
+   * Closes the active adventure view, releases the control lease, and returns
+   * the UI to the start/archive screen without archiving the adventure.
+   * Progress remains safely persisted in the repository.
+   */
+  async close(): Promise<void> {
+    this.generationController?.abort();
+    this.generationController = null;
+    if (this.session) {
+      void this.deps.clearGenerationInteraction(this.session.id);
+    }
+    await this.deps.coordinator.stop();
+    if (this.lease) {
+      await this.deps.authority.release(this.lease);
+      this.lease = null;
+    }
+    this.session = null;
+    this.readOnly = false;
+    this.draft = "";
+    this.errorMessage = null;
+    this.lastRollResult = null;
+    this.phase = "idle";
   }
 
   /**

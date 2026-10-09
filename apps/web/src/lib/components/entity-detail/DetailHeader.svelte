@@ -190,7 +190,10 @@
     <div
       class="w-16 h-16 rounded-full bg-amber-500/10 border border-amber-500/30 flex items-center justify-center mb-6 animate-pulse"
     >
-      <span class="icon-[lucide--eye-off] w-8 h-8 text-amber-500"></span>
+      <span
+        aria-hidden="true"
+        class="icon-[lucide--eye-off] w-8 h-8 text-amber-500"
+      ></span>
     </div>
     <h3
       class="text-xl font-bold text-theme-text uppercase font-header tracking-widest mb-2"
@@ -205,7 +208,7 @@
     <button
       type="button"
       onclick={onClose}
-      class="mt-8 px-6 py-2 border border-theme-border text-theme-secondary hover:text-theme-primary hover:border-theme-primary transition-all text-[10px] font-bold tracking-widest uppercase font-header"
+      class="mt-8 px-6 py-2 border border-theme-border text-theme-secondary hover:text-theme-primary hover:border-theme-primary transition-all text-micro font-bold tracking-widest uppercase font-header"
     >
       Return to Overview
     </button>
@@ -253,7 +256,7 @@
       <button
         type="button"
         onclick={handleSendToShelf}
-        class="transition flex items-center justify-center p-1 {shelvedJustNow
+        class="touch-target transition flex items-center justify-center p-1 {shelvedJustNow
           ? 'text-theme-primary'
           : 'text-[color:var(--theme-icon-default)] hover:text-[color:var(--theme-icon-active)]'}"
         aria-label="Send to Shelf"
@@ -295,7 +298,7 @@
       <button
         type="button"
         onclick={handleFindInGraph}
-        class="transition flex items-center justify-center p-1 text-[color:var(--theme-icon-default)] hover:text-[color:var(--theme-icon-active)]"
+        class="touch-target transition flex items-center justify-center p-1 text-[color:var(--theme-icon-default)] hover:text-[color:var(--theme-icon-active)]"
         aria-label="Find in Graph"
         title="Find in Graph"
         data-testid="find-in-graph-button"
@@ -334,7 +337,7 @@
           if (!alreadyOpen) soundBiteService.loadFromEntity(entity);
           modalUIStore.openSoundBite(entity.id);
         }}
-        class="transition flex items-center justify-center p-1 {entity.soundBite
+        class="touch-target transition flex items-center justify-center p-1 {entity.soundBite
           ? 'text-theme-accent hover:opacity-85'
           : 'text-[color:var(--theme-icon-default)] hover:text-[color:var(--theme-icon-active)]'}"
         aria-label="Sound bite"
@@ -365,7 +368,7 @@
     <button
       type="button"
       onclick={() => modalUIStore.openZenMode(entity.id)}
-      class="transition flex items-center justify-center p-1 text-[color:var(--theme-icon-default)] hover:text-[color:var(--theme-icon-active)]"
+      class="touch-target transition flex items-center justify-center p-1 text-[color:var(--theme-icon-default)] hover:text-[color:var(--theme-icon-active)]"
       aria-label="Enter Zen Mode"
       title="Zen Mode (Full Screen)"
       data-testid="enter-zen-mode-button"
@@ -385,7 +388,7 @@
     <button
       type="button"
       onclick={onClose}
-      class="text-theme-muted hover:text-theme-primary transition p-1 -ml-2 rounded-full shrink-0"
+      class="touch-target flex items-center justify-center text-theme-muted hover:text-theme-primary transition p-1 -ml-2 rounded-full shrink-0"
       aria-label="Back"
     >
       <span aria-hidden="true" class="icon-[lucide--chevron-left] w-7 h-7"
@@ -435,12 +438,12 @@
           {#if entity.aliases && entity.aliases.length > 0}
             <div class="flex flex-wrap gap-1 md:gap-1.5 mt-0.5">
               <span
-                class="text-[8px] md:text-[9px] font-bold text-theme-muted uppercase tracking-widest self-center mr-0.5 md:mr-1"
+                class="text-nano md:text-nano font-bold text-theme-muted uppercase tracking-widest self-center mr-0.5 md:mr-1"
                 >aka:</span
               >
               {#each entity.aliases as alias}
                 <div
-                  class="px-1.5 py-0.5 rounded bg-theme-primary/5 border border-theme-primary/10 text-[8px] md:text-[9px] font-bold text-theme-secondary uppercase tracking-wider"
+                  class="px-1.5 py-0.5 rounded bg-theme-primary/5 border border-theme-primary/10 text-nano md:text-nano font-bold text-theme-secondary uppercase tracking-wider"
                 >
                   {alias}
                 </div>
@@ -484,7 +487,7 @@
               <button
                 type="button"
                 onclick={() => modalUIStore.openParentPicker(entity.id)}
-                class="flex items-center gap-1.5 text-xs text-theme-muted hover:text-theme-primary transition-colors focus:outline-none"
+                class="touch-target flex items-center gap-1.5 text-xs text-theme-muted hover:text-theme-primary transition-colors focus:outline-none"
                 title="Nest this under another entity"
                 data-testid="set-parent-button"
               >
@@ -531,7 +534,7 @@
       {/each}
       {#if statureLabel}
         <span
-          class="px-1.5 py-0.5 rounded bg-theme-primary/10 border border-theme-primary/20 text-[8px] md:text-[9px] font-bold text-theme-secondary uppercase tracking-wider self-center"
+          class="px-1.5 py-0.5 rounded bg-theme-primary/10 border border-theme-primary/20 text-nano md:text-nano font-bold text-theme-secondary uppercase tracking-wider self-center"
           title={statureFromLabel
             ? `Images of this entity are drawn at ${statureLabel} stature, from its labels.`
             : `The Oracle read this as ${statureLabel} in your lore, and images are drawn that way.`}
@@ -546,7 +549,7 @@
             disabled={isKeepingStature}
             title="Add {stature} as a label so it stops being re-read, and stays the same across pictures."
             data-testid="entity-stature-keep"
-            class="px-1.5 py-0.5 rounded border border-dashed border-theme-primary/30 text-[8px] md:text-[9px] font-bold text-theme-primary uppercase tracking-wider self-center transition hover:bg-theme-primary/10 disabled:opacity-50"
+            class="px-1.5 py-0.5 rounded border border-dashed border-theme-primary/30 text-nano md:text-nano font-bold text-theme-primary uppercase tracking-wider self-center transition hover:bg-theme-primary/10 disabled:opacity-50"
           >
             Keep
           </button>
@@ -554,7 +557,7 @@
       {/if}
       {#if !entity.labels?.length && vault.isGuest}
         <span
-          class="text-[9px] text-theme-muted italic uppercase tracking-tighter"
+          class="text-nano text-theme-muted italic uppercase tracking-tighter"
         >
           No labels
         </span>

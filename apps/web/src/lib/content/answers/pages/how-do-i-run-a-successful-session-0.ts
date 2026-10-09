@@ -175,6 +175,12 @@ export const howDoIRunASuccessfulSessionZero: AnswerConfigInput = {
     "how-do-you-run-dnd-for-a-large-group-of-players",
     "can-you-play-a-tabletop-rpg-in-30-minute-sessions",
     "how-do-i-get-my-rpg-party-to-work-together",
+    "what-do-you-do-with-murder-hobos-in-an-rpg-campaign",
+    "how-do-i-start-a-dnd-campaign",
+    "which-dice-do-i-roll-in-dnd-and-when",
+    "what-do-i-need-to-bring-to-my-first-dnd-game",
+    "what-should-a-new-dnd-player-know-before-their-first-game",
+    "how-do-i-read-a-dnd-character-sheet-as-a-beginner",
   ],
   discovery: {
     id: "answer-session-zero",

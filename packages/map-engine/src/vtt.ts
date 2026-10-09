@@ -169,8 +169,12 @@ export interface EncounterSession {
   savedAt: number | null;
   chatMessages: ChatMessagePayload[];
   gridSize?: number;
+  gridType?: "square" | "hex-pointy" | "hex-flat";
+  showHexCoordinates?: boolean;
   gridUnit?: string;
   gridDistance?: number;
+  /** GM-chosen fog colour (#rrggbb); null means the theme colour. */
+  fogColor?: string | null;
   tileDecks?: TileDeck[];
 }
 

@@ -12,6 +12,7 @@
     latestTemporalYear,
     suggestPrimaryLanguageId,
   } from "$lib/services/generators/generator-vault-context";
+  import { resolveCultureNaming } from "$lib/services/generators/generator-culture-naming";
   import {
     CampaignGeneratorService,
     composeDraftVaultFields,
@@ -68,6 +69,10 @@
   import GeneratorConfigForm from "./GeneratorConfigForm.svelte";
   import GeneratorDraftReview from "./GeneratorDraftReview.svelte";
   import { systemClock } from "$lib/utils/runtime-deps";
+  import {
+    publishGeneratedCapture,
+    publishGeneratedSaved,
+  } from "$lib/services/generator-journal-capture";
 
   type Stage = "configure" | "generating" | "review" | "saving" | "error";
 
@@ -329,9 +334,27 @@
           ? `${presentYear}${cal.epochLabel ? ` ${cal.epochLabel}` : ""}`
           : undefined;
 
+      // Look up the naming conventions the vault records for the entity's
+      // culture (labels pick the culture; only its few naming notes are loaded).
+      const cultureNaming = resolveCultureNaming({
+        allEntities: vault.entities,
+        sourceEntity,
+        connectedIds: sourceConnectedIds,
+        instructions: req.instructions,
+        targetEntityType,
+      });
+      if (cultureNaming) {
+        await Promise.all(
+          cultureNaming.docIds.map((id) =>
+            vault.loadEntityContent(id).catch(() => undefined),
+          ),
+        );
+      }
+
       const vaultContext = buildVaultContext({
         themeId: themeStore.worldThemeId ?? "workspace",
         themeName: themeStore.activeTheme?.name,
+        themeDescription: themeStore.activeTheme?.description,
         currentDate,
         sourceEntity,
         allEntities: vault.entities,
@@ -345,6 +368,7 @@
         applyTemplate: !!templateOutline,
         relevantIds,
         primaryLanguageId: req.primaryLanguageId,
+        cultureNaming,
       });
       // When the user gives no instructions, fall back to the category's
       // default brief so the model always has direction.
@@ -419,6 +443,19 @@
           draft = event.draft;
           errorMsg = null;
           stage = "review";
+          // The journal is best-effort: it must never hold up the review.
+          try {
+            publishGeneratedCapture(
+              {
+                generatorId: event.draft.sourceGeneratorId,
+                title: event.draft.title,
+                summary: event.draft.summary,
+              },
+              { clock: systemClock },
+            );
+          } catch (err) {
+            console.error("Could not record the generated result:", err);
+          }
           if (import.meta.env.DEV) {
             console.debug("[Generator stream] modal received final draft");
           }
@@ -461,6 +498,14 @@
         createRelationship,
         ...(workflow.prefillDate ? { start_date: workflow.prefillDate } : {}),
       });
+      try {
+        publishGeneratedSaved(
+          { title: reviewed.title, category: reviewed.entityType },
+          { clock: systemClock },
+        );
+      } catch (err) {
+        console.error("Could not record the save:", err);
+      }
       // Link the star-system generator's rasterized orbital diagram to the
       // new entity's Map tab (#1935 follow-up). Best-effort: a rasterization
       // or upload failure must never block the save that already succeeded.

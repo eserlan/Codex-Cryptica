@@ -199,7 +199,7 @@
     onclick={() => (showGeneratorMenu = !showGeneratorMenu)}
     aria-haspopup="true"
     aria-expanded={showGeneratorMenu}
-    class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-mono font-medium bg-theme-primary/10 border border-theme-primary/20 text-theme-primary hover:bg-theme-primary/20 transition-colors"
+    class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-micro font-mono font-medium bg-theme-primary/10 border border-theme-primary/20 text-theme-primary hover:bg-theme-primary/20 transition-colors"
   >
     <span class="icon-[lucide--wand-sparkles] w-3.5 h-3.5" aria-hidden="true"
     ></span>
@@ -223,7 +223,7 @@
       {#each visibleGroups as group (group.label)}
         <div class="px-3 pt-3 pb-1">
           <p
-            class="text-[9px] font-bold uppercase tracking-widest text-theme-muted/70 font-header mb-1.5"
+            class="text-nano font-bold uppercase tracking-widest text-theme-muted/70 font-header mb-1.5"
           >
             {group.label}
           </p>
@@ -235,7 +235,7 @@
               href="{cleanBase}{item.path}"
               role="menuitem"
               onclick={() => (showGeneratorMenu = false)}
-              class="flex items-center gap-2 px-2 py-1.5 rounded-lg text-[11px] font-medium transition-colors {isCurrent
+              class="flex items-center gap-2 px-2 py-1.5 rounded-lg text-meta font-medium transition-colors {isCurrent
                 ? 'text-theme-primary bg-theme-primary/10'
                 : 'text-theme-text/80 hover:bg-theme-surface/80 hover:text-theme-primary'}"
             >
@@ -257,7 +257,7 @@
           href="{cleanBase}/generators"
           role="menuitem"
           onclick={() => (showGeneratorMenu = false)}
-          class="flex items-center gap-2 px-2 py-1.5 rounded-lg text-[11px] font-medium text-theme-muted hover:text-theme-primary hover:bg-theme-surface/80 transition-colors"
+          class="flex items-center gap-2 px-2 py-1.5 rounded-lg text-meta font-medium text-theme-muted hover:text-theme-primary hover:bg-theme-surface/80 transition-colors"
         >
           <span
             class="icon-[lucide--layout-grid] w-3 h-3 shrink-0"

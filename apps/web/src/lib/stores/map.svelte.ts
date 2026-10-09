@@ -3,11 +3,13 @@ import type { Map, MapPin, Point, ViewportTransform } from "schema";
 import {
   imageToViewport,
   viewportToImage,
+  pointToHex,
+  hexToPoint,
   MAP_LAYER_ORDER,
   type MapLayer,
 } from "map-engine";
 import { convertToWebP } from "../utils/image-processing";
-import { writeOpfsFile } from "../utils/opfs";
+import { deleteOpfsEntry, writeOpfsFile } from "../utils/opfs";
 import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
 import { guestVault } from "./guest-vault.svelte";
 import {
@@ -23,15 +25,22 @@ export const BLANK_MAP_SIZE = 4000;
 const MAP_SETTINGS_STORAGE_PREFIX = "codex-map-settings";
 const MAP_PAGE_STATE_STORAGE_PREFIX = "codex-map-page-state";
 export type TokenVisionMode = "party" | "selected";
+export type GridType = "square" | "hex-pointy" | "hex-flat";
 
 type PersistedMapSettings = {
   showFog: boolean;
+  /** Draw fog fully opaque in GM view, as players see it (solo play). */
+  soloFog: boolean;
   showGrid: boolean;
+  gridType: GridType;
+  showHexCoordinates: boolean;
   brushRadius: number;
   gridSize: number;
   gridOffsetX: number;
   gridOffsetY: number;
   gridColor: string | null;
+  /** GM-chosen fog colour (#rrggbb); null means the theme colour. */
+  fogColor: string | null;
   showLabels: boolean;
   visionMode: TokenVisionMode;
   /** Vision distance in grid units (e.g. feet), not pixels — converted to
@@ -56,12 +65,16 @@ type PersistedMapPageState = {
 
 const DEFAULT_MAP_SETTINGS: PersistedMapSettings = {
   showFog: false,
+  soloFog: false,
   showGrid: false,
+  gridType: "square",
+  showHexCoordinates: false,
   brushRadius: 50,
   gridSize: 50,
   gridOffsetX: 0,
   gridOffsetY: 0,
   gridColor: null,
+  fogColor: null,
   showLabels: true,
   visionMode: "party",
   visionRange: 60,
@@ -83,16 +96,30 @@ export class MapStore {
   canvasSize = $state({ width: 0, height: 0 });
   pendingPinCoords = $state<Point | null>(null);
   showFog = $state(false);
+  soloFog = $state(false);
+  /**
+   * Counts changes to the fog mask. The mask is a canvas, which Svelte cannot
+   * watch, so anything drawn from it (pin labels) reads this to know to refresh.
+   */
+  fogRevision = $state(0);
   showLabels = $state(true);
   // GM Mode is active whenever we are NOT in Shared Mode (Player View)
   isGMMode = $derived(!sessionModeStore.sharedMode);
+  /**
+   * Fog is drawn fully opaque, so nothing under it shows: always in Player
+   * View, and in GM view when the GM turns on solo fog to play their own map.
+   */
+  fogOpaque = $derived(!this.isGMMode || this.soloFog);
   brushRadius = $state(50);
   navigationStack = $state<string[]>([]);
   showGrid = $state(false);
+  gridType = $state<GridType>("square");
+  showHexCoordinates = $state(false);
   gridSize = $state(50);
   gridOffsetX = $state(0);
   gridOffsetY = $state(0);
   gridColor = $state<string | null>(null); // null means use theme primary
+  fogColor = $state<string | null>(null); // null means use theme secondary
   visionMode = $state<TokenVisionMode>("party");
   visionRange = $state(60);
   layerVisibility = $state<Record<MapLayer, boolean>>(layerRecord(true));
@@ -141,12 +168,16 @@ export class MapStore {
         $effect(() => {
           const tracked = [
             this.showFog,
+            this.soloFog,
             this.showGrid,
+            this.gridType,
+            this.showHexCoordinates,
             this.brushRadius,
             this.gridSize,
             this.gridOffsetX,
             this.gridOffsetY,
             this.gridColor,
+            this.fogColor,
             this.showLabels,
             this.visionMode,
             this.visionRange,
@@ -211,6 +242,7 @@ export class MapStore {
     return `${MAP_SETTINGS_STORAGE_PREFIX}:${mapId}`;
   }
 
+  // fallow-ignore-next-line complexity
   private readPersistedSettings(mapId: string): PersistedMapSettings | null {
     if (typeof window === "undefined") return null;
 
@@ -223,10 +255,24 @@ export class MapStore {
           typeof parsed.showFog === "boolean"
             ? parsed.showFog
             : DEFAULT_MAP_SETTINGS.showFog,
+        soloFog:
+          typeof parsed.soloFog === "boolean"
+            ? parsed.soloFog
+            : DEFAULT_MAP_SETTINGS.soloFog,
         showGrid:
           typeof parsed.showGrid === "boolean"
             ? parsed.showGrid
             : DEFAULT_MAP_SETTINGS.showGrid,
+        gridType:
+          parsed.gridType === "hex-pointy" ||
+          parsed.gridType === "hex-flat" ||
+          parsed.gridType === "square"
+            ? parsed.gridType
+            : DEFAULT_MAP_SETTINGS.gridType,
+        showHexCoordinates:
+          typeof parsed.showHexCoordinates === "boolean"
+            ? parsed.showHexCoordinates
+            : DEFAULT_MAP_SETTINGS.showHexCoordinates,
         brushRadius:
           typeof parsed.brushRadius === "number"
             ? parsed.brushRadius
@@ -247,6 +293,10 @@ export class MapStore {
           typeof parsed.gridColor === "string" || parsed.gridColor === null
             ? parsed.gridColor
             : DEFAULT_MAP_SETTINGS.gridColor,
+        fogColor:
+          typeof parsed.fogColor === "string" || parsed.fogColor === null
+            ? parsed.fogColor
+            : DEFAULT_MAP_SETTINGS.fogColor,
         showLabels:
           typeof parsed.showLabels === "boolean"
             ? parsed.showLabels
@@ -298,12 +348,16 @@ export class MapStore {
 
     const payload: PersistedMapSettings = {
       showFog: this.showFog,
+      soloFog: this.soloFog,
       showGrid: this.showGrid,
+      gridType: this.gridType,
+      showHexCoordinates: this.showHexCoordinates,
       brushRadius: this.brushRadius,
       gridSize: this.gridSize,
       gridOffsetX: this.gridOffsetX,
       gridOffsetY: this.gridOffsetY,
       gridColor: this.gridColor,
+      fogColor: this.fogColor,
       showLabels: this.showLabels,
       visionMode: this.visionMode,
       visionRange: this.visionRange,
@@ -421,12 +475,16 @@ export class MapStore {
     this.isRestoringSettings = true;
     try {
       this.showFog = next.showFog;
+      this.soloFog = next.soloFog;
       this.showGrid = next.showGrid;
+      this.gridType = next.gridType;
+      this.showHexCoordinates = next.showHexCoordinates;
       this.brushRadius = next.brushRadius;
       this.gridSize = next.gridSize;
       this.gridOffsetX = next.gridOffsetX ?? 0;
       this.gridOffsetY = next.gridOffsetY ?? 0;
       this.gridColor = next.gridColor;
+      this.fogColor = next.fogColor ?? null;
       this.showLabels = next.showLabels;
       this.visionMode = next.visionMode;
       this.visionRange = next.visionRange;
@@ -559,6 +617,93 @@ export class MapStore {
     return id;
   }
 
+  private async rollbackFailedImageReplacement(
+    mapId: string,
+    previousMap: Map,
+    replacementMap: Map,
+    vaultDir: FileSystemDirectoryHandle,
+    storageName: string,
+  ): Promise<void> {
+    // Keep edits made while the metadata save was pending, but restore the
+    // fields changed by this replacement operation.
+    const currentMap = vault.maps[mapId];
+    if (currentMap?.assetPath === replacementMap.assetPath) {
+      vault.maps[mapId] = {
+        ...currentMap,
+        assetPath: previousMap.assetPath,
+        dimensions: previousMap.dimensions,
+      };
+    }
+
+    await deleteOpfsEntry(vaultDir, ["maps", storageName], vaultDir.name).catch(
+      (err) =>
+        console.warn("[MapStore] Could not remove the unsaved map image", err),
+    );
+  }
+
+  /**
+   * Swaps a map's background image for a new one, keeping its pins, tokens
+   * and fog. Used to recover a map whose image is missing or unreadable.
+   * Dimensions are reset so they are recomputed from the new image on load.
+   */
+  async replaceMapImage(mapId: string, file: File): Promise<boolean> {
+    const map = vault.maps[mapId];
+    const vaultDir = await vault.getActiveVaultHandle();
+    if (!map || !vaultDir) {
+      return false;
+    }
+
+    const storageName = `${this.idGenerator.uuid()}.webp`;
+    try {
+      const webpBlob = await convertToWebP(file, 0.85);
+      await writeOpfsFile(
+        ["maps", storageName],
+        webpBlob,
+        vaultDir,
+        vaultDir.name,
+      );
+    } catch (err) {
+      console.error("[MapStore] Map image replacement failed", err);
+      return false;
+    }
+
+    const previousPath = map.assetPath;
+    const replacementMap: Map = {
+      ...map,
+      assetPath: `maps/${storageName}`,
+      dimensions: { width: 0, height: 0 },
+    };
+    vault.maps[mapId] = replacementMap;
+    if (!(await vault.saveMapsWithResult())) {
+      // saveMaps reports storage errors instead of throwing. Restore the
+      // in-memory map and keep the old image, which the on-disk metadata may
+      // still reference.
+      await this.rollbackFailedImageReplacement(
+        mapId,
+        map,
+        replacementMap,
+        vaultDir,
+        storageName,
+      );
+      return false;
+    }
+
+    // Best-effort cleanup of the old local file and any cached object URL.
+    if (previousPath) {
+      vault.releaseImageUrl?.(previousPath);
+      if (previousPath.startsWith("maps/")) {
+        await deleteOpfsEntry(
+          vaultDir,
+          previousPath.split("/"),
+          vaultDir.name,
+        ).catch((err) =>
+          console.warn("[MapStore] Could not remove the old map image", err),
+        );
+      }
+    }
+    return true;
+  }
+
   /**
    * Creates a map with no background image — a fixed-size blank canvas meant
    * to be built up entirely from placed tile-deck tiles.
@@ -588,6 +733,7 @@ export class MapStore {
   }
 
   async saveMask(canvas: HTMLCanvasElement) {
+    this.fogRevision++;
     if (!this.activeMap?.fogOfWar || !this.activeMapId) return;
     const vaultDir = await vault.getActiveVaultHandle();
     if (!vaultDir) return;
@@ -675,6 +821,31 @@ export class MapStore {
     return canvas;
   }
 
+  private computeHexPosition(coordinates: Point): {
+    coordinates: Point;
+    hexCoordinates?: { q: number; r: number };
+  } {
+    if (
+      this.showGrid &&
+      (this.gridType === "hex-pointy" || this.gridType === "hex-flat")
+    ) {
+      const orientation = this.gridType === "hex-flat" ? "flat" : "pointy";
+      const config = {
+        orientation,
+        size: this.gridSize || 50,
+        offsetX: this.gridOffsetX || 0,
+        offsetY: this.gridOffsetY || 0,
+      } as const;
+      const hexCoordinates = pointToHex(coordinates, config);
+      return {
+        coordinates: hexToPoint(hexCoordinates, config),
+        hexCoordinates,
+      };
+    }
+    return { coordinates };
+  }
+
+  // fallow-ignore-next-line complexity
   async addPin(entityId: string | undefined, coordinates: Point) {
     if (!this.activeMapId || !vault.maps[this.activeMapId]) return;
 
@@ -690,11 +861,14 @@ export class MapStore {
       }
     }
 
+    const hexPosition = this.computeHexPosition(coordinates);
+
     const newPin: MapPin = {
       id: this.idGenerator.uuid(),
       mapId: this.activeMapId,
       entityId,
-      coordinates,
+      coordinates: hexPosition.coordinates,
+      hexCoordinates: hexPosition.hexCoordinates,
       visuals,
     };
 
@@ -706,14 +880,34 @@ export class MapStore {
     }
   }
 
+  // fallow-ignore-next-line complexity
   updatePinCoordinatesInMemory(pinId: string, coordinates: Point) {
     if (!this.activeMapId || !vault.maps?.[this.activeMapId]) return;
     const map = vault.maps[this.activeMapId];
     if (map) {
+      const { hexCoordinates } = this.computeHexPosition(coordinates);
       map.pins = map.pins.map((p: MapPin) =>
-        p.id === pinId ? { ...p, coordinates } : p,
+        p.id === pinId ? { ...p, coordinates, hexCoordinates } : p,
       );
     }
+  }
+
+  snapPinCoordinatesInMemory(pinId: string) {
+    if (!this.activeMapId || !vault.maps?.[this.activeMapId]) return;
+    const map = vault.maps[this.activeMapId];
+    const pin = map?.pins.find((candidate: MapPin) => candidate.id === pinId);
+    if (!map || !pin) return;
+
+    const hexPosition = this.computeHexPosition(pin.coordinates);
+    map.pins = map.pins.map((candidate: MapPin) =>
+      candidate.id === pinId
+        ? {
+            ...candidate,
+            coordinates: hexPosition.coordinates,
+            hexCoordinates: hexPosition.hexCoordinates,
+          }
+        : candidate,
+    );
   }
 
   async removePin(pinId: string) {

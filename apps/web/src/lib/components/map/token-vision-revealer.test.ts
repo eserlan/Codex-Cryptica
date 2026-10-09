@@ -14,6 +14,7 @@ function createCanvasMock() {
     lineTo: vi.fn(),
     stroke: vi.fn(),
     fill: vi.fn(),
+    closePath: vi.fn(),
     arc: vi.fn(),
     lineCap: "",
     lineJoin: "",
@@ -120,5 +121,74 @@ describe("TokenVisionRevealer", () => {
     expect(await noImage.reveal(tokens, 40)).toBe(false);
 
     expect(saveMask).not.toHaveBeenCalled();
+  });
+
+  it("punches hex radius around vision tokens when on a hex grid", async () => {
+    const hexRevealer = new TokenVisionRevealer({
+      mapStore: {
+        activeMapId: "map-1",
+        showGrid: true,
+        gridType: "hex-pointy",
+        gridSize: 50,
+        saveMask,
+      },
+      getMaskCanvas: () => mask.canvas,
+      getMapImage: () => mapImage,
+    });
+
+    const tokens = [createToken({ id: "h1", x: 0, y: 0 })];
+    const revealed = await hexRevealer.reveal(tokens, 75);
+
+    expect(revealed).toBe(true);
+    expect(mask.ctx.globalCompositeOperation).toBe("source-over");
+    expect(mask.ctx.fillStyle).toBe("white");
+    expect(mask.ctx.beginPath).toHaveBeenCalled();
+    expect(mask.ctx.moveTo).toHaveBeenCalled();
+    expect(mask.ctx.lineTo).toHaveBeenCalled();
+    expect(mask.ctx.closePath).toHaveBeenCalled();
+    expect(mask.ctx.fill).toHaveBeenCalled();
+    expect(saveMask).toHaveBeenCalledWith(mask.canvas);
+  });
+
+  it("uses an explicit whole-hex radius when provided", async () => {
+    const hexRevealer = new TokenVisionRevealer({
+      mapStore: {
+        activeMapId: "map-1",
+        showGrid: true,
+        gridType: "hex-pointy",
+        gridSize: 50,
+        saveMask,
+      },
+      getMaskCanvas: () => mask.canvas,
+      getMapImage: () => mapImage,
+    });
+    await hexRevealer.reveal([createToken({ x: 0, y: 0 })], 150, 0);
+    expect(mask.ctx.moveTo).toHaveBeenCalledTimes(1);
+    expect(mask.ctx.lineTo).toHaveBeenCalledTimes(5);
+  });
+
+  it("reveals a circular area on square and gridless maps without adding undo", async () => {
+    const square = new TokenVisionRevealer({
+      mapStore: {
+        activeMapId: "map-1",
+        showGrid: true,
+        gridType: "square",
+        saveMask,
+      },
+      getMaskCanvas: () => mask.canvas,
+      getMapImage: () => mapImage,
+    });
+    await square.reveal([createToken()], 40);
+    expect(mask.ctx.arc).toHaveBeenCalledTimes(1);
+
+    mask.ctx.arc.mockClear();
+    const gridless = new TokenVisionRevealer({
+      mapStore: { activeMapId: "map-1", showGrid: false, saveMask },
+      getMaskCanvas: () => mask.canvas,
+      getMapImage: () => mapImage,
+    });
+    await gridless.reveal([createToken()], 40);
+    expect(mask.ctx.arc).toHaveBeenCalledTimes(1);
+    expect(saveMask).toHaveBeenCalledTimes(2);
   });
 });

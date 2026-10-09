@@ -45,16 +45,8 @@ import {
   handleLlmOperationStreamRequest,
 } from "./llm/handle-operation-request";
 import { handleSessionRequest, enforceLlmSession } from "./session-guard";
-import {
-  handleCreateTemplateListing,
-  handleDeleteTemplateListing,
-  handleGetTemplateListing,
-  handleGetTemplatePackage,
-  handleListTemplateListings,
-  handleReportTemplateListing,
-  handleUpdateTemplateListing,
-  handleAdminSuspendTemplateListing,
-} from "./template-directory";
+import { handleHelpAsk } from "./help";
+import { handleTemplateDirectoryRoutes } from "./template-directory-routes";
 import {
   handleEnableCloudBackup,
   handleCommitCloudBackup,
@@ -65,19 +57,37 @@ import {
   handleCloudBackupDelta,
   handleGetCloudBackupAsset,
   handleDeleteCloudBackup,
+} from "./cloud-backup";
+import {
+  handleCloudBackupAdminDelete,
   handleCloudBackupAdminLookup,
   handleCloudBackupAdminStats,
   handleCloudBackupReissueCode,
-  handleCloudBackupAdminDelete,
-} from "./cloud-backup";
+} from "./cloud-backup-admin";
 import {
   handleCreateGeneratorShare,
   handleDeleteGeneratorShare,
   handleGetGeneratorShare,
 } from "./generator-shares";
+import {
+  handleBySlugs as handleAnswerBySlugs,
+  handleTop as handleAnswerTop,
+  handleVote as handleAnswerVote,
+  type D1DatabaseLike,
+} from "./answer-aggregates";
+import { isKnownAnswerSlug } from "./answer-slugs";
 import { handleAssetGallery } from "./asset-gallery";
+import {
+  getCorsHeaders,
+  handleCorsPreflight,
+  isOriginAllowed,
+  withCorsHeaders,
+  type CorsEnv,
+} from "./cors";
 
-interface Env {
+export { isOriginAllowed } from "./cors";
+
+interface Env extends CorsEnv {
   GEMINI_API_KEY: string;
   OPENAI_API_KEY?: string;
   ALLOWED_ORIGINS?: string;
@@ -104,36 +114,19 @@ interface Env {
     limit: (options: { key: string }) => Promise<{ success: boolean }>;
   };
   TEMPLATE_ADMIN_TOKEN?: string;
+  /** HMAC key for hashing reporter addresses. Reporting is off without it. */
+  TEMPLATE_REPORT_HASH_KEY?: string;
+  TEMPLATE_REPORT_RATE_LIMITER?: {
+    limit: (options: { key: string }) => Promise<{ success: boolean }>;
+  };
+  ANSWER_AGGREGATES?: D1DatabaseLike;
+  ANSWER_FEEDBACK_RATE_LIMITER?: {
+    limit: (options: { key: string }) => Promise<{ success: boolean }>;
+  };
   SHARE_CREATE_RATE_LIMITER?: {
     limit: (options: { key: string }) => Promise<{ success: boolean }>;
   };
 }
-
-/**
- * Allowed origins for CORS — the single source of truth.
- *
- * One `oracle-proxy` Worker serves every environment (no `--env`, no
- * `[env.*]` in wrangler.toml), so this list must cover them all. Setting
- * `ALLOWED_ORIGINS` per deploy is what broke staging on 2026-08-11: the
- * variable is authoritative when present, so a deploy carrying only the
- * production origins cut staging off until the next deploy. Keeping the list
- * here means every deploy is identical no matter who runs it or which
- * environment they thought they were deploying.
- *
- * `ALLOWED_ORIGINS` still overrides this if set, as an escape hatch for
- * locking the Worker down without a code change — it just isn't set normally.
- *
- * Only origins actually served belong here: an entry for a domain nobody owns
- * would hand CORS access to whoever registers it next.
- */
-const DEFAULT_ALLOWED_ORIGINS = [
-  "https://codexcryptica.com",
-  "https://www.codexcryptica.com",
-  "https://staging.codexcryptica.com",
-  "https://codex-cryptica.pages.dev",
-  "http://localhost",
-  "http://127.0.0.1",
-];
 
 /**
  * FLUX.2 models are served through the multipart image-generation endpoint.
@@ -201,6 +194,32 @@ async function handleCachedAssetGallery(
   return response;
 }
 
+/**
+ * Edge-cached public aggregate reads (spec 164). Responses already carry
+ * `Cache-Control: public, max-age=300`; the Cache API put-through covers
+ * edge locations where the CDN would otherwise pass through to D1.
+ * Falls back to a direct read when the Cache API is unavailable (tests).
+ */
+async function handleCachedAggregateRead(
+  request: Request,
+  env: Env,
+  ctx: ExecutionContext,
+  handler: (request: Request, env: Env) => Promise<Response>,
+): Promise<Response> {
+  try {
+    if (typeof caches === "undefined") throw new Error("no cache");
+    const cacheKey = new Request(request.url, { method: "GET" });
+    const cache = caches.default;
+    const cached = await cache.match(cacheKey);
+    if (cached) return cached;
+    const response = await handler(request, env);
+    if (response.ok) ctx.waitUntil(cache.put(cacheKey, response.clone()));
+    return response;
+  } catch {
+    return handler(request, env);
+  }
+}
+
 export default {
   async fetch(
     request: Request,
@@ -223,23 +242,30 @@ export default {
     }
 
     if (pathname.startsWith("/api/starter-tile-decks/")) {
-      const withCors = (response: Response) => {
-        const headers = getCorsHeaders(request.headers, env);
-        for (const [name, value] of Object.entries(headers)) {
-          response.headers.set(name, value);
-        }
-        response.headers.append("Vary", "Origin");
-        return response;
-      };
       if (request.method !== "GET")
-        return withCors(new Response("Method not allowed", { status: 405 }));
+        return withCorsHeaders(
+          request,
+          env,
+          new Response("Method not allowed", { status: 405 }),
+        );
       const parts = pathname.split("/");
       const deckId = parts[3] ? decodeURIComponent(parts[3]) : undefined;
-      if (!deckId) return withCors(new Response("Not found", { status: 404 }));
+      if (!deckId)
+        return withCorsHeaders(
+          request,
+          env,
+          new Response("Not found", { status: 404 }),
+        );
       if (parts.length === 4)
-        return withCors(await handleGetStarterTileDeck(env, deckId));
+        return withCorsHeaders(
+          request,
+          env,
+          await handleGetStarterTileDeck(env, deckId),
+        );
       if (parts.length === 6 && parts[4] === "assets") {
-        return withCors(
+        return withCorsHeaders(
+          request,
+          env,
           await handleGetStarterTileDeck(
             env,
             deckId,
@@ -247,7 +273,11 @@ export default {
           ),
         );
       }
-      return withCors(new Response("Not found", { status: 404 }));
+      return withCorsHeaders(
+        request,
+        env,
+        new Response("Not found", { status: 404 }),
+      );
     }
 
     if (pathname === "/api/session") {
@@ -326,6 +356,57 @@ export default {
         status: 405,
         headers: getCorsHeaders(request.headers, env),
       });
+    }
+
+    if (
+      pathname === "/api/answer-aggregates/vote" ||
+      pathname === "/api/answer-aggregates/top" ||
+      pathname === "/api/answer-aggregates/by-slugs"
+    ) {
+      if (pathname === "/api/answer-aggregates/vote") {
+        const origin = request.headers.get("Origin") || "";
+        if (!isOriginAllowed(origin, env)) {
+          return new Response("Forbidden", {
+            status: 403,
+            headers: getCorsHeaders(request.headers, env),
+          });
+        }
+        if (request.method !== "POST")
+          return withCorsHeaders(
+            request,
+            env,
+            new Response("Method not allowed", { status: 405 }),
+          );
+        const limiter = env.ANSWER_FEEDBACK_RATE_LIMITER;
+        if (limiter) {
+          const ip = request.headers.get("CF-Connecting-IP") || "anonymous";
+          const { success } = await limiter.limit({ key: ip });
+          if (!success) {
+            return new Response(JSON.stringify({ error: "rate_limited" }), {
+              status: 429,
+              headers: {
+                ...getCorsHeaders(request.headers, env),
+                "Content-Type": "application/json",
+                "Retry-After": "60",
+              },
+            });
+          }
+        }
+        return handleAnswerVote(request, env, {
+          isKnownSlug: isKnownAnswerSlug,
+        });
+      }
+      if (request.method !== "GET")
+        return withCorsHeaders(
+          request,
+          env,
+          new Response("Method not allowed", { status: 405 }),
+        );
+      const handler =
+        pathname === "/api/answer-aggregates/top"
+          ? handleAnswerTop
+          : handleAnswerBySlugs;
+      return handleCachedAggregateRead(request, env, ctx, handler);
     }
 
     if (pathname.startsWith("/api/cloud-backup/")) {
@@ -444,55 +525,12 @@ export default {
       });
     }
 
-    if (
-      pathname === "/api/template-directory/admin/suspensions" &&
-      request.method === "POST"
-    ) {
-      return handleAdminSuspendTemplateListing(request, env);
-    }
-
-    if (pathname === "/api/template-directory/listings") {
-      if (request.method === "GET")
-        return handleListTemplateListings(request, env);
-      if (request.method === "POST")
-        return handleCreateTemplateListing(request, env);
-      return new Response("Method not allowed", {
-        status: 405,
-        headers: getCorsHeaders(request.headers, env),
-      });
-    }
-
-    if (pathname.startsWith("/api/template-directory/listings/")) {
-      const parts = pathname.split("/");
-      const listingId = parts[4];
-      if (!listingId) return new Response("Not found", { status: 404 });
-      if (
-        parts.length === 6 &&
-        parts[5] === "package" &&
-        request.method === "GET"
-      ) {
-        return handleGetTemplatePackage(request, env, listingId);
-      }
-      if (
-        parts.length === 6 &&
-        parts[5] === "report" &&
-        request.method === "POST"
-      ) {
-        return handleReportTemplateListing(request, env, listingId);
-      }
-      if (parts.length === 5) {
-        if (request.method === "GET")
-          return handleGetTemplateListing(request, env, listingId);
-        if (request.method === "PUT")
-          return handleUpdateTemplateListing(request, env, listingId);
-        if (request.method === "DELETE")
-          return handleDeleteTemplateListing(request, env, listingId);
-      }
-      return new Response("Method not allowed", {
-        status: 405,
-        headers: getCorsHeaders(request.headers, env),
-      });
-    }
+    const templateDirectoryResponse = await handleTemplateDirectoryRoutes(
+      request,
+      env,
+      pathname,
+    );
+    if (templateDirectoryResponse) return templateDirectoryResponse;
 
     if (pathname === "/api/reports/copyright") {
       const origin = request.headers.get("Origin") || "";
@@ -812,6 +850,17 @@ export default {
       }
     }
 
+    // Contextual help (#3427) runs the same session guard itself so it can
+    // count rate-limited requests; see help.ts.
+    if (url.pathname === "/api/help/ask") {
+      return handleHelpAsk(
+        request,
+        env,
+        getCorsHeaders(request.headers, env),
+        isAllowedOrigin,
+      );
+    }
+
     // Capability-token guard for the text LLM endpoints. Covers all three
     // paths below (operation pipeline, interactions, legacy passthrough),
     // which together are every text generation request the app makes.
@@ -946,6 +995,7 @@ export default {
  * Returns `{ id, text }`; an expired/invalid previous id is mapped to a typed
  * 409 so the client can reset and replay full history.
  */
+// fallow-ignore-next-line complexity
 async function handleInteraction(
   body: any,
   request: Request,
@@ -960,7 +1010,7 @@ async function handleInteraction(
 
   const rawModel = typeof body?.model === "string" ? body.model : undefined;
   const registryModel = rawModel ? getModel(rawModel) : undefined;
-  const useOpenAi = registryModel?.provider === "openai";
+  const wantsOpenAi = registryModel?.provider === "openai";
 
   const outgoingBody = {
     ...body,
@@ -971,13 +1021,61 @@ async function handleInteraction(
     outgoingBody.model = registryModel.modelId;
   }
 
-  const result = useOpenAi
-    ? await forwardInteractionToOpenAi(
-        outgoingBody,
-        registryModel!.modelId,
-        env,
-      )
-    : await forwardInteractionToGemini(outgoingBody, env);
+  const geminiFallbackModel =
+    getModel("gemini-flash-lite")?.modelId ?? "gemini-3.5-flash-lite";
+  const isGeminiContinuation =
+    typeof body?.previous_interaction_id === "string" &&
+    /^(?:v1_|interactions\/)/.test(body.previous_interaction_id);
+
+  let result: any;
+  let isGeminiResult: boolean;
+
+  if (
+    wantsOpenAi &&
+    !isGeminiContinuation &&
+    (env.OPENAI_API_KEY || body.previous_interaction_id)
+  ) {
+    result = await forwardInteractionToOpenAi(
+      outgoingBody,
+      registryModel!.modelId,
+      env,
+    );
+    isGeminiResult = false;
+
+    const isStaleId =
+      body.previous_interaction_id &&
+      (result.status === 404 ||
+        result.status === 400 ||
+        /previous_interaction_id|previous_response_id|interaction.*not found|response.*not found/i.test(
+          (result.data as any)?.error?.message || "",
+        ));
+
+    // A continuation id belongs to the provider that issued it. Do not send a
+    // Gemini id to OpenAI (or retry an OpenAI continuation on Gemini), because
+    // this request contains only the incremental turn and would lose history.
+    if (!result.ok && !isStaleId && !body.previous_interaction_id) {
+      console.warn(
+        `[Oracle Proxy] OpenAI interaction failed (${result.status}), falling back to Gemini (${geminiFallbackModel}):`,
+        (result.data as any)?.error?.message,
+      );
+      const geminiBody = {
+        ...body,
+        model: geminiFallbackModel,
+      };
+      result = await forwardInteractionToGemini(geminiBody, env);
+      isGeminiResult = true;
+    }
+  } else if (wantsOpenAi) {
+    const geminiBody = {
+      ...body,
+      model: geminiFallbackModel,
+    };
+    result = await forwardInteractionToGemini(geminiBody, env);
+    isGeminiResult = true;
+  } else {
+    result = await forwardInteractionToGemini(outgoingBody, env);
+    isGeminiResult = true;
+  }
 
   if (result.transportError) {
     return json(
@@ -1021,57 +1119,15 @@ async function handleInteraction(
   // Gemini's Interactions API: output text lives at steps[].content[].text
   // (model_output steps). OpenAI's Responses API: output text lives at
   // output[].content[].text (message items, output_text blocks).
-  const extractedText = useOpenAi
-    ? extractOpenAiResponseText(data)
-    : (Array.isArray(data.steps) ? data.steps : [])
+  const extractedText = isGeminiResult
+    ? (Array.isArray(data.steps) ? data.steps : [])
         .flatMap((s: any) => (Array.isArray(s?.content) ? s.content : []))
         .map((c: any) => (typeof c?.text === "string" ? c.text : ""))
         .filter(Boolean)
-        .join("");
+        .join("")
+    : extractOpenAiResponseText(data);
 
   return json({ id: data.id, text: extractedText }, 200);
-}
-
-/**
- * Handle CORS preflight requests
- */
-function handleCorsPreflight(request: Request, env: Env): Response {
-  const headers = new Headers();
-  const allowedHeaders =
-    "Content-Type, Authorization, X-Requested-With, X-Turnstile-Token, X-Filename, X-Codex-Automation-Key";
-  const allowedMethods = "GET, POST, PUT, DELETE, OPTIONS";
-
-  // Set CORS headers
-  const origin = request.headers.get("Origin") || "";
-  if (isOriginAllowed(origin, env)) {
-    headers.set("Access-Control-Allow-Origin", origin);
-  }
-
-  headers.set("Access-Control-Allow-Headers", allowedHeaders);
-  headers.set("Access-Control-Allow-Methods", allowedMethods);
-  headers.set("Access-Control-Max-Age", "86400");
-
-  return new Response(null, {
-    status: 204,
-    headers,
-  });
-}
-
-/**
- * Get CORS headers for a response
- */
-function getCorsHeaders(
-  requestHeaders: Headers,
-  env: Env,
-): Record<string, string> {
-  const headers: Record<string, string> = {};
-  const origin = requestHeaders.get("Origin") || "";
-
-  if (isOriginAllowed(origin, env)) {
-    headers["Access-Control-Allow-Origin"] = origin;
-  }
-
-  return headers;
 }
 
 async function enforcePublishRateLimit(
@@ -1122,78 +1178,6 @@ async function enforcePublishRateLimit(
       },
     },
   );
-}
-
-/**
- * Check if origin is allowed
- */
-export function isOriginAllowed(origin: string, env: Env): boolean {
-  if (!origin) return false;
-
-  // 1. Check explicit allowlist if configured
-  if (env.ALLOWED_ORIGINS?.trim()) {
-    const explicitlyAllowedOrigins = env.ALLOWED_ORIGINS.split(",")
-      .map((o) => o.trim())
-      .filter(Boolean);
-    if (explicitlyAllowedOrigins.includes(origin)) return true;
-
-    if (
-      isEnabled(env.ALLOW_CLOUDFLARE_PAGES_PREVIEW_ORIGINS) &&
-      isCloudflarePagesPreviewOrigin(origin)
-    ) {
-      return true;
-    }
-
-    // When ALLOWED_ORIGINS is configured, treat it as authoritative.
-    return false;
-  }
-
-  // 2. Check default internal origins
-  if (DEFAULT_ALLOWED_ORIGINS.includes(origin)) {
-    return true;
-  }
-
-  // 3. Allow Cloudflare Pages preview subdomains
-  if (isCloudflarePagesPreviewOrigin(origin)) {
-    return true;
-  }
-
-  // 4. Allow any local dev port so Vite / wrangler dev port changes do not break CORS.
-  return isLoopbackOrigin(origin);
-}
-
-function isEnabled(value: string | undefined): boolean {
-  return value?.toLowerCase() === "true" || value === "1";
-}
-
-function isCloudflarePagesPreviewOrigin(origin: string): boolean {
-  try {
-    const url = new URL(origin);
-    if (url.protocol !== "https:") {
-      return false;
-    }
-
-    const hostname = url.hostname.toLowerCase();
-    return (
-      hostname === "codex-cryptica.pages.dev" ||
-      hostname.endsWith(".codex-cryptica.pages.dev")
-    );
-  } catch {
-    return false;
-  }
-}
-
-function isLoopbackOrigin(origin: string): boolean {
-  try {
-    const url = new URL(origin);
-    if (url.protocol !== "http:" && url.protocol !== "https:") {
-      return false;
-    }
-    const hostname = url.hostname.toLowerCase();
-    return hostname === "localhost" || hostname === "127.0.0.1";
-  } catch {
-    return false;
-  }
 }
 
 /**

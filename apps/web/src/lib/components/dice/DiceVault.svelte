@@ -144,7 +144,7 @@
           aria-label="Add {die.sides}-sided die (d{die.sides}) to formula"
         >
           <span
-            class="text-[9px] font-bold opacity-50 group-hover:opacity-100 mb-1"
+            class="text-nano font-bold opacity-50 group-hover:opacity-100 mb-1"
             aria-hidden="true">d{die.sides}</span
           >
           <span class="{getDiceIcon(die.sides)} w-5 h-5" aria-hidden="true"
@@ -152,7 +152,7 @@
         </button>
       {/each}
     </div>
-    <p class="text-[9px] text-center text-theme-muted italic opacity-60">
+    <p class="text-nano text-center text-theme-muted italic opacity-60">
       Click dice to build your formula
     </p>
   </div>
@@ -195,7 +195,7 @@
 
     {#if showHelp}
       <div
-        class="bg-theme-bg/50 border border-theme-border/50 rounded-lg p-3 text-[10px] space-y-2"
+        class="bg-theme-bg/50 border border-theme-border/50 rounded-lg p-3 text-micro space-y-2"
         transition:slide
       >
         <div class="grid grid-cols-2 gap-x-4 gap-y-1">
@@ -212,7 +212,7 @@
     {/if}
 
     {#if error}
-      <p class="text-red-500 text-[10px] italic ml-1">{error}</p>
+      <p class="text-red-500 text-micro italic ml-1">{error}</p>
     {/if}
   </div>
 
@@ -222,12 +222,12 @@
       class="px-4 py-2 flex justify-between items-center border-b border-theme-border/30"
     >
       <span
-        class="text-[11px] font-bold text-theme-muted uppercase tracking-tighter"
+        class="text-meta font-bold text-theme-muted uppercase tracking-tighter"
         >Session History</span
       >
       <button
         type="button"
-        class="text-[11px] font-bold text-theme-muted hover:text-red-500 uppercase transition-colors"
+        class="text-meta font-bold text-theme-muted hover:text-red-500 uppercase transition-colors"
         onclick={() => history.clearHistory(["modal", "table"])}
       >
         Clear

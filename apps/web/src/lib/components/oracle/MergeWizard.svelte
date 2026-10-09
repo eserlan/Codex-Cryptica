@@ -100,9 +100,9 @@
 
 <div class="flex flex-col gap-3 p-1">
   <div
-    class="flex items-center gap-2 text-theme-accent font-bold uppercase font-header tracking-[0.2em] text-[10px] mb-1"
+    class="flex items-center gap-2 text-theme-accent font-bold uppercase font-header tracking-[0.2em] text-micro mb-1"
   >
-    <span class="icon-[lucide--merge] w-3.5 h-3.5"></span>
+    <span aria-hidden="true" class="icon-[lucide--merge] w-3.5 h-3.5"></span>
     Merge Wizard
   </div>
 
@@ -128,7 +128,7 @@
         class="flex items-center gap-2 mb-2 px-2 py-1 bg-theme-accent/10 rounded border border-theme-accent/20"
       >
         <span
-          class="text-[10px] font-bold text-theme-accent uppercase font-header"
+          class="text-micro font-bold text-theme-accent uppercase font-header"
           >Absorb:</span
         >
         <span class="text-xs text-theme-text font-mono truncate"
@@ -168,14 +168,14 @@
       <div class="flex flex-col gap-2">
         <div class="flex justify-between items-center">
           <span
-            class="text-[9px] font-bold text-theme-secondary uppercase font-header tracking-wider"
+            class="text-nano font-bold text-theme-secondary uppercase font-header tracking-wider"
             >Merge Strategy</span
           >
           <div
             class="flex bg-theme-bg border border-theme-border rounded p-0.5"
           >
             <button
-              class="px-2 py-0.5 text-[9px] rounded transition-colors {strategy ===
+              class="px-2 py-0.5 text-nano rounded transition-colors {strategy ===
               'concat'
                 ? 'bg-theme-surface text-theme-text'
                 : 'text-theme-muted'}"
@@ -186,7 +186,7 @@
               disabled={isProposing}>Concat</button
             >
             <button
-              class="px-2 py-0.5 text-[9px] rounded transition-colors {strategy ===
+              class="px-2 py-0.5 text-nano rounded transition-colors {strategy ===
               'ai'
                 ? 'bg-theme-primary/20 text-theme-primary'
                 : 'text-theme-muted'}"
@@ -206,14 +206,14 @@
             <div
               class="w-4 h-4 border-2 border-theme-primary/30 border-t-theme-primary rounded-full animate-spin"
             ></div>
-            <span class="text-[10px] font-mono text-theme-muted uppercase"
+            <span class="text-micro font-mono text-theme-muted uppercase"
               >Generating Preview...</span
             >
           </div>
         {:else if proposal}
           <div class="relative group">
             <div
-              class="max-h-32 overflow-y-auto p-2 bg-theme-bg/30 rounded border border-theme-border text-[10px] font-mono whitespace-pre-wrap text-theme-text/70"
+              class="max-h-32 overflow-y-auto p-2 bg-theme-bg/30 rounded border border-theme-border text-micro font-mono whitespace-pre-wrap text-theme-text/70"
             >
               {proposal.suggestedBody}
             </div>
@@ -238,16 +238,17 @@
   {:else if step === "DONE"}
     <div class="py-2 text-center" in:fade>
       <span
-        class="text-green-400 font-bold uppercase font-header tracking-widest text-[10px] flex items-center justify-center gap-2"
+        class="text-green-400 font-bold uppercase font-header tracking-widest text-micro flex items-center justify-center gap-2"
       >
-        <span class="icon-[heroicons--check-circle] w-4 h-4"></span>
+        <span aria-hidden="true" class="icon-[heroicons--check-circle] w-4 h-4"
+        ></span>
         Merge Draft Prepared
       </span>
     </div>
   {/if}
 
   {#if error}
-    <p class="text-[10px] text-red-400 font-mono italic" transition:slide>
+    <p class="text-micro text-red-400 font-mono italic" transition:slide>
       {error}
     </p>
   {/if}
@@ -256,20 +257,20 @@
     {#if step !== "DONE" && step !== "MERGING"}
       <button
         onclick={handleCancel}
-        class="px-3 py-1 text-[10px] font-bold text-theme-muted hover:text-theme-text uppercase font-header tracking-widest transition-all"
+        class="px-3 py-1 text-micro font-bold text-theme-muted hover:text-theme-text uppercase font-header tracking-widest transition-all"
         >Cancel</button
       >
 
       {#if step === "SELECT_SOURCE" || step === "SELECT_TARGET"}
         <button
           onclick={handleNext}
-          class="px-4 py-1 bg-theme-accent text-theme-bg font-bold rounded text-[10px] uppercase font-header tracking-widest hover:opacity-80 active:scale-95 transition-all"
+          class="px-4 py-1 bg-theme-accent text-theme-bg font-bold rounded text-micro uppercase font-header tracking-widest hover:opacity-80 active:scale-95 transition-all"
           >Next</button
         >
       {:else if step === "REVIEW"}
         <button
           onclick={handleMerge}
-          class="px-4 py-1 bg-theme-accent text-theme-bg font-bold rounded text-[10px] uppercase font-header tracking-widest hover:opacity-80 active:scale-95 transition-all"
+          class="px-4 py-1 bg-theme-accent text-theme-bg font-bold rounded text-micro uppercase font-header tracking-widest hover:opacity-80 active:scale-95 transition-all"
           >Confirm Merge</button
         >
       {/if}

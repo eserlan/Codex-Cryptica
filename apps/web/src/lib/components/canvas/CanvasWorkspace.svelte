@@ -1,108 +1,72 @@
 <script lang="ts">
-  import ConnectionLine from "./ConnectionLine.svelte";
   import {
     SvelteFlow,
     Background,
     Controls,
     MiniMap,
-    ViewportPortal,
-    NodeToolbar,
     ConnectionMode,
-    Position,
-    type Node,
   } from "@xyflow/svelte";
-  import {
-    DEFAULT_CANVAS_TEXT_BACKGROUND,
-    DEFAULT_CANVAS_TEXT_FONT_SIZE,
-    normalizeCanvasTextBackground,
-    normalizeCanvasTextFontSize,
-    CanvasStore,
-    type Canvas,
-  } from "@codex/canvas-engine";
+  import type { CanvasStore } from "@codex/canvas-engine";
+  import { page } from "$app/state";
   import { vault } from "$lib/stores/vault.svelte";
   import { canvasRegistry } from "$lib/stores/canvas-registry.svelte";
-  import EntityNode from "$lib/components/canvas/EntityNode.svelte";
-  import FileNode from "$lib/components/canvas/FileNode.svelte";
-  import TextNode from "$lib/components/canvas/TextNode.svelte";
-  import DelveRoomNode from "$lib/components/canvas/DelveRoomNode.svelte";
-  import DelveSectorNode from "$lib/components/canvas/DelveSectorNode.svelte";
-  import AdventureNode from "$lib/components/canvas/AdventureNode.svelte";
-  import CanvasContextMenu from "$lib/components/canvas/CanvasContextMenu.svelte";
-  import CustomEdge from "$lib/components/canvas/CustomEdge.svelte";
-  import DelveEdge from "$lib/components/canvas/DelveEdge.svelte";
-  import EdgeAttributeModal from "$lib/components/canvas/EdgeAttributeModal.svelte";
-  import EdgeLabelModal from "$lib/components/canvas/EdgeLabelModal.svelte";
-  import RoomStockingDrawer from "$lib/components/canvas/RoomStockingDrawer.svelte";
-  import AdventureNodeDrawer from "$lib/components/canvas/AdventureNodeDrawer.svelte";
-  import CanvasHint from "$lib/components/hints/CanvasHint.svelte";
+  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+  import { notificationStore } from "$lib/stores/ui/notification.svelte";
+  import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
+  import ConnectionLine from "./ConnectionLine.svelte";
   import CanvasHUD from "./CanvasHUD.svelte";
-  import { page } from "$app/state";
-  import { tick, untrack } from "svelte";
+  import CanvasRotationToolbar from "./CanvasRotationToolbar.svelte";
+  import CanvasDrawingLayers from "./CanvasDrawingLayers.svelte";
+  import CanvasAutoPopulationStatus from "./CanvasAutoPopulationStatus.svelte";
+  import CanvasContextMenuHost from "./CanvasContextMenuHost.svelte";
+  import CanvasEditorPanels from "./CanvasEditorPanels.svelte";
+  import { nodeTypes, edgeTypes } from "./canvas-flow-registry";
+  import { when } from "./canvas-guard";
+  import "./canvas-workspace.css";
 
   import { createCanvasLogic } from "./use-canvas-logic.svelte";
-  import { useCanvasDrawing } from "./hooks/use-canvas-drawing.svelte";
   import { useCanvasEvents } from "./use-canvas-events.svelte";
-  import { useCanvasNodeRotation } from "./hooks/use-canvas-node-rotation.svelte";
-  import {
-    useCanvasFileImport,
-    centerScreenPosition,
-  } from "./hooks/use-canvas-file-import.svelte";
-
-  import { connectionModeStore } from "$lib/stores/ui/connection-mode.svelte";
-  import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
-  import type { DelveEdgeData, DelveRoomNodeData } from "generator-engine";
-  import { isPlaceholderDelveAreaName } from "$lib/services/delve-area-enhancement";
-  import { delveDossierService } from "$lib/services/delve-dossier-service";
-  import { notificationStore } from "$lib/stores/ui/notification.svelte";
-  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
-  import { themeStore } from "$lib/stores/theme.svelte";
-  import { getDelveTerm } from "$lib/utils/delve-terminology";
-  import {
-    autoArrangeCanvasNodes,
-    canvasNodeStyle,
-    canvasNodeZIndex,
-    createFlowTextNode,
-    fitDelveSectorFrames,
-    flowEdgeToCanvasEdge,
-    flowNodesToCanvasNodes,
-  } from "./canvas-workspace-helpers";
-  import { exportCanvasImage } from "./canvas-image-export";
-  import { openOrCreateSourceEntity } from "./canvas-source-entity";
   import { useCanvasAreaEnhancement } from "./canvas-area-enhancement.svelte";
-
-  import type {
-    DelveCanvasEdge,
-    DelveCanvasNode,
-    AdventureNode as AdventureNodeGraph,
-  } from "generator-engine";
+  import { createCanvasDropHandlers } from "./canvas-drop-handlers";
+  import {
+    canGenerateCanvasReport,
+    openCanvasReport,
+  } from "./open-canvas-report";
+  import { useCanvasDrawing } from "./hooks/use-canvas-drawing.svelte";
+  import { useCanvasNodeRotation } from "./hooks/use-canvas-node-rotation.svelte";
+  import { useCanvasContextMenu } from "./hooks/use-canvas-context-menu.svelte";
+  import { useCanvasFileImport } from "./hooks/use-canvas-file-import.svelte";
+  import { useCanvasSource } from "./hooks/use-canvas-source.svelte";
+  import { useCanvasLifecycle } from "./hooks/use-canvas-lifecycle.svelte";
+  import { useCanvasNodeActions } from "./hooks/use-canvas-node-actions.svelte";
+  import { useCanvasInteractions } from "./hooks/use-canvas-interactions.svelte";
+  import { useCanvasDossier } from "./hooks/use-canvas-dossier.svelte";
+  import { useDelveRoomSelection } from "./hooks/use-delve-room-selection.svelte";
+  import { useAdventureNodeSelection } from "./hooks/use-adventure-node-selection.svelte";
+  import { useEdgeAttributeEditor } from "./hooks/use-edge-attribute-editor.svelte";
 
   let { engine }: { engine: CanvasStore } = $props();
 
-  const canvasSlug = $derived(page.params.slug);
-  const canvas = $derived(
-    canvasRegistry.allCanvases.find(
-      (c) => c.slug === canvasSlug || c.id === canvasSlug,
-    ) as Canvas | undefined,
-  );
-  const canvasId = $derived(canvas?.id || canvasSlug);
-  const sourceEntityId = $derived.by(() => {
-    const id = canvas?.metadata?.sourceEntityId;
-    return typeof id === "string" && id ? id : undefined;
-  });
-  const sourceEntityTitle = $derived(
-    sourceEntityId ? vault.entities[sourceEntityId]?.title : undefined,
-  );
-  const sourceEntity = $derived(
-    sourceEntityId ? vault.entities[sourceEntityId] : undefined,
-  );
-  const dossierEntityId = $derived.by(() => {
-    const id = canvas?.metadata?.dossierEntityId;
-    return typeof id === "string" && id ? id : undefined;
-  });
+  let canvasExportElement = $state<HTMLDivElement>();
+  let showMinimap = $state(true);
 
   const logic = createCanvasLogic(() => engine);
+  const source = useCanvasSource({
+    logic,
+    vault,
+    canvasRegistry,
+    modalUIStore,
+    getSlug: () => page.params.slug,
+  });
   const rotationLogic = useCanvasNodeRotation(logic, vault);
   const drawingLogic = useCanvasDrawing(logic);
+  const contextMenuLogic = useCanvasContextMenu(logic, vault);
+  const isCanvasToolActive = $derived(
+    drawingLogic.isDrawingMode ||
+      drawingLogic.isErasingMode ||
+      rotationLogic.isRotatingNode,
+  );
+
   const fileImport = useCanvasFileImport({
     vault,
     engine: {
@@ -115,61 +79,57 @@
       logic.nodes = updater(logic.nodes);
     },
   });
-  const isCanvasToolActive = $derived(
-    drawingLogic.isDrawingMode ||
-      drawingLogic.isErasingMode ||
-      rotationLogic.isRotatingNode,
-  );
-  let selectedRoomId = $state<string | null>(null);
-  let isFinalizingDossier = $state(false);
-  let isExportingCanvas = $state(false);
-  let canvasExportElement = $state<HTMLDivElement>();
-  let showMinimap = $state(true);
-  let autoPopulationCanvasId: string | null = null;
-  const selectedRoomData = $derived.by(() => {
-    if (!selectedRoomId) return null;
-    const node = logic.nodes.find(
-      (candidate) =>
-        candidate.id === selectedRoomId && candidate.type === "delveRoom",
-    );
-    return (node?.data as unknown as DelveRoomNodeData | undefined) ?? null;
+  const dropHandlers = createCanvasDropHandlers({
+    isGuest: () => vault.isGuest,
+    handleExternalFiles: (files, position) =>
+      fileImport.handleExternalFiles(files, position),
+    screenToFlowPosition: (position) => logic.screenToFlowPosition(position),
+    handleQuickSpawn: (entityId, position) =>
+      logic.handleQuickSpawn(entityId, position),
   });
 
+  const roomSelection = useDelveRoomSelection(logic);
+  const adventureSelection = useAdventureNodeSelection(logic);
+  const edgeEditor = useEdgeAttributeEditor(logic);
   const areaEnhancement = useCanvasAreaEnhancement({
     vault,
     canvasRegistry,
     logic,
-    updateRoomData: saveRoomData,
+    updateRoomData: roomSelection.saveRoomData,
   });
-
-  let selectedAdventureNodeId = $state<string | null>(null);
-  const selectedAdventureNode = $derived.by(() => {
-    if (!selectedAdventureNodeId) return null;
-    const found = logic.nodes.find(
-      (candidate) => candidate.id === selectedAdventureNodeId,
-    );
-    if (!found) return null;
-    return {
-      id: found.id,
-      type: found.type as any,
-      position: found.position,
-      data: (found.data as any) || {},
-    } as AdventureNodeGraph;
+  const dossier = useCanvasDossier({
+    logic,
+    vault,
+    getCanvas: () => source.canvas,
+    getSourceEntity: () => source.sourceEntity,
+    getExportElement: () => canvasExportElement,
   });
-
-  const activeAdventureNode = $derived(
-    (logic.draftAdventureNode as unknown as AdventureNodeGraph | null) ||
-      selectedAdventureNode,
-  );
-
-  let edgeModal = $state<{
-    isOpen: boolean;
-    edgeId: string;
-    edgeData: any;
-  }>({
-    isOpen: false,
-    edgeId: "",
-    edgeData: null,
+  const nodeActions = useCanvasNodeActions({
+    logic,
+    getEngine: () => engine,
+    vault,
+    getCanvas: () => source.canvas,
+    isExporting: () => dossier.isExporting,
+  });
+  const { handleAutoArrange } = useCanvasLifecycle({
+    logic,
+    vault,
+    canvasRegistry,
+    getCanvas: () => source.canvas,
+    getCanvasId: () => source.canvasId,
+    populateCanvasAreas: (canvas) =>
+      areaEnhancement.populateCanvasAreas(canvas),
+  });
+  const interactions = useCanvasInteractions({
+    logic,
+    vault,
+    getCanvas: () => source.canvas,
+    rotationLogic,
+    onSelectRoom: (nodeId) => {
+      areaEnhancement.clearRoomEnhancementError();
+      roomSelection.select(nodeId);
+    },
+    onSelectAdventureNode: adventureSelection.select,
   });
 
   useCanvasEvents({
@@ -181,496 +141,35 @@
     onFlushSave: () => logic.flushSave(),
   });
 
-  $effect(() => {
-    function handleEditDelveEdge(e: Event) {
-      const customEvent = e as CustomEvent;
-      if (customEvent.detail) {
-        edgeModal = {
-          isOpen: true,
-          edgeId: customEvent.detail.edgeId,
-          edgeData: customEvent.detail.edgeData,
-        };
-      }
-    }
-
-    window.addEventListener("edit-delve-edge", handleEditDelveEdge);
-    return () => {
-      window.removeEventListener("edit-delve-edge", handleEditDelveEdge);
-    };
-  });
-
-  function updateNodeData(nodeId: string, updates: Record<string, unknown>) {
-    const { width, height, ...dataUpdates } = updates;
-    logic.nodes = logic.nodes.map((node) =>
-      node.id === nodeId
-        ? {
-            ...node,
-            ...(width !== undefined ? { width: width as number } : null),
-            ...(height !== undefined ? { height: height as number } : null),
-            data: { ...node.data, ...dataUpdates },
-          }
-        : node,
-    );
-  }
-
-  function toggleNodeLock(nodeId: string) {
-    logic.nodes = logic.nodes.map((node) =>
-      node.id === nodeId
-        ? {
-            ...node,
-            data: { ...node.data, locked: !(node.data as any)?.locked },
-          }
-        : node,
-    );
-  }
-
-  function stackableNodeZIndexBounds() {
-    let min = 0;
-    let max = 0;
-    for (const node of logic.nodes) {
-      if (node.type === "delveSectorGroup") continue;
-      const z = canvasNodeZIndex(node);
-      if (z > max) max = z;
-      if (z < min) min = z;
-    }
-    return { min, max };
-  }
-
-  function bringNodeToFront(nodeId: string) {
-    const { max } = stackableNodeZIndexBounds();
-    logic.nodes = logic.nodes.map((node) =>
-      node.id === nodeId
-        ? { ...node, data: { ...node.data, zIndex: max + 1 } }
-        : node,
-    );
-  }
-
-  function sendNodeToBack(nodeId: string) {
-    const { min } = stackableNodeZIndexBounds();
-    logic.nodes = logic.nodes.map((node) =>
-      node.id === nodeId
-        ? { ...node, data: { ...node.data, zIndex: min - 1 } }
-        : node,
-    );
-  }
-
-  const contextMenuNodeLocked = $derived.by(() => {
-    if (logic.contextMenu?.type !== "node") return false;
-    const node = logic.nodes.find((n) => n.id === logic.contextMenu?.id);
-    return Boolean((node?.data as any)?.locked);
-  });
-
-  const contextMenuNodeStackable = $derived.by(() => {
-    if (logic.contextMenu?.type !== "node") return false;
-    const node = logic.nodes.find((n) => n.id === logic.contextMenu?.id);
-    return Boolean(node) && node?.type !== "delveSectorGroup";
-  });
-
-  const contextMenuTextNode = $derived.by(() => {
-    if (logic.contextMenu?.type !== "node") return undefined;
-    const node = logic.nodes.find((n) => n.id === logic.contextMenu?.id);
-    return node?.type === "text" ? node : undefined;
-  });
-
-  const filteredNodes = $derived.by(() => {
-    const base = (() => {
-      if (isExportingCanvas) return logic.nodes;
-      if (logic.activeCategories.size === 0) return logic.nodes;
-      return logic.nodes.filter((n) =>
-        logic.activeCategories.has(n.data?.type as string),
-      );
-    })();
-    return base.map((node) => {
-      const locked = Boolean((node.data as any)?.locked);
-      const withLock = {
-        ...node,
-        draggable: !locked,
-        style: canvasNodeStyle(node),
-        zIndex: node.type === "delveSectorGroup" ? 0 : canvasNodeZIndex(node),
-      };
-      if (node.type === "file") {
-        return {
-          ...withLock,
-          data: {
-            ...node.data,
-            onUpdateFile: (updates: Record<string, unknown>) =>
-              updateNodeData(node.id, updates),
-          },
-        };
-      }
-      if (node.type === "text") {
-        return {
-          ...withLock,
-          data: {
-            ...node.data,
-            onUpdateText: (updates: Record<string, unknown>) =>
-              updateNodeData(node.id, updates),
-          },
-        };
-      }
-      return withLock;
-    });
-  });
-
-  const nodeTypes = {
-    entity: EntityNode,
-    file: FileNode,
-    text: TextNode,
-    delveRoom: DelveRoomNode,
-    delveSectorGroup: DelveSectorNode,
-    adventureNode: AdventureNode,
-    situation: AdventureNode,
-    location: AdventureNode,
-    npc: AdventureNode,
-    clue: AdventureNode,
-    threat: AdventureNode,
-    outcome: AdventureNode,
-  };
-
-  const edgeTypes = {
-    straight: CustomEdge,
-    smoothstep: CustomEdge,
-    delveEdge: DelveEdge,
-    leads_to: CustomEdge,
-    holds_clue: CustomEdge,
-    threatens: CustomEdge,
-    resolves_to: CustomEdge,
-  };
-
-  let arrangedCanvasId = $state<string | null>(null);
-
-  // Initialization & Lifecycle
-  $effect(() => {
-    if (canvasId) {
-      logic.initializeCanvas(canvasId);
-    }
-  });
-
-  $effect(() => {
-    if (canvasId && logic.hasInitialized && arrangedCanvasId !== canvasId) {
-      arrangedCanvasId = canvasId;
-      untrack(() => {
-        const isManual = canvas?.metadata?.layoutState === "manual";
-        if (!isManual) {
-          handleAutoArrange();
-        }
-      });
-    }
-  });
-
-  $effect(() => {
-    const currentCanvas: Canvas | undefined = canvas;
-    const needsAreaNames = currentCanvas?.nodes.some(
-      (node) =>
-        node.type === "delveRoom" &&
-        isPlaceholderDelveAreaName(node.data as unknown as DelveRoomNodeData),
-    );
-    const needsPassageEnhancement = currentCanvas?.edges.some(
-      (edge) =>
-        edge.type === "delveEdge" &&
-        !(edge.data as unknown as DelveEdgeData | undefined)?.aiEnhancedAt,
-    );
-    if (
-      !currentCanvas?.id ||
-      !logic.hasInitialized ||
-      sessionModeStore.isGuestMode ||
-      currentCanvas.metadata?.autoPopulateAreas !== true ||
-      (currentCanvas.metadata?.areaPopulationStatus === "complete" &&
-        !needsAreaNames &&
-        !needsPassageEnhancement) ||
-      autoPopulationCanvasId === currentCanvas.id
-    ) {
-      return;
-    }
-
-    autoPopulationCanvasId = currentCanvas.id;
-    untrack(() => void areaEnhancement.populateCanvasAreas(currentCanvas));
-  });
-
-  // Pruning
-  $effect(() => {
-    logic.pruneNodes();
-  });
-
-  // Sync state to engine
-  $effect(() => {
-    logic.syncEngine();
-  });
-
-  // Monitor batch spawn
-  $effect(() => {
-    if (canvasRegistry.pendingEntities.length > 0) {
-      logic.handleBatchSpawn();
-    }
-  });
-
-  function onNodeContextMenu({
-    event,
-    node,
-  }: {
-    event: MouseEvent;
-    node: any;
-  }) {
-    event.preventDefault();
-    logic.contextMenu = {
-      x: event.clientX,
-      y: event.clientY,
-      type: "node",
-      id: node.id,
-    };
-  }
-
-  function onNodeClick({ node }: { node: any }) {
-    if (!vault.isGuest && rotationLogic.canRotateNode(node.id)) {
-      rotationLogic.selectedRotationNodeId = node.id;
-    }
-    if (node.type === "delveRoom") {
-      areaEnhancement.clearRoomEnhancementError();
-      selectedRoomId = node.id;
-      return;
-    }
-    if (
-      ["situation", "location", "npc", "clue", "threat", "outcome"].includes(
-        node.type,
-      )
-    ) {
-      selectedAdventureNodeId = node.id;
-      return;
-    }
-  }
-
-  function onPaneClick() {
-    rotationLogic.selectedRotationNodeId = null;
-  }
-
-  function onNodeDragStop({
-    targetNode,
-    nodes = [],
-  }: {
-    targetNode?: Node | null;
-    nodes?: Node[];
-  }) {
-    const movedNodes =
-      nodes.length > 0 ? nodes : targetNode ? [targetNode] : [];
-    if (movedNodes.length === 0) return;
-
-    const movedById = new Map(
-      movedNodes.map((movedNode) => [movedNode.id, movedNode] as const),
-    );
-    logic.nodes = logic.nodes.map((candidate) =>
-      movedById.has(candidate.id)
-        ? {
-            ...candidate,
-            position: movedById.get(candidate.id)!.position,
-          }
-        : candidate,
-    );
-    if (movedNodes.some((movedNode) => movedNode.type === "delveRoom")) {
-      logic.nodes = fitDelveSectorFrames(logic.nodes);
-    }
-    if (canvas) {
-      canvas.metadata = {
-        ...(canvas.metadata || {}),
-        layoutState: "manual",
-      };
-    }
-    logic.flushSave();
-  }
-
-  async function finalizeDossier() {
-    if (!canvas || !sourceEntity || isFinalizingDossier) return;
-    isFinalizingDossier = true;
-    isExportingCanvas = true;
-    try {
-      await vault.loadEntityContent(sourceEntity.id);
-      const loadedSourceEntity =
-        vault.entities[sourceEntity.id] ?? sourceEntity;
-      if (!canvasExportElement) {
-        throw new Error("The canvas is not ready to export.");
-      }
-      await tick();
-      const canvasImage = await exportCanvasImage(
-        canvasExportElement,
-        logic.fitGraphForExport,
-      );
-      const result = await delveDossierService.finalize({
-        canvas,
-        sourceEntity: loadedSourceEntity,
-        dossierTerm: getDelveTerm(themeStore.activeTheme.id),
-        nodes: flowNodesToCanvasNodes(
-          logic.nodes,
-        ) as unknown as DelveCanvasNode[],
-        edges: logic.edges.map((edge) =>
-          flowEdgeToCanvasEdge(edge),
-        ) as unknown as DelveCanvasEdge[],
-        canvasImage,
-      });
-      notificationStore.notify(
-        result.created
-          ? "Created the GM dossier."
-          : "Updated the GM dossier from the current canvas.",
-        "success",
-      );
-      modalUIStore.openZenMode(result.entityId);
-    } catch (error) {
-      notificationStore.notify(
-        error instanceof Error
-          ? error.message
-          : "The GM dossier could not be finalized.",
-        "error",
-      );
-    } finally {
-      isExportingCanvas = false;
-      isFinalizingDossier = false;
-    }
-  }
-
-  function saveRoomData(updated: DelveRoomNodeData) {
-    if (!selectedRoomId) return;
-    logic.nodes = logic.nodes.map((node) =>
-      node.id === selectedRoomId
-        ? { ...node, data: { ...node.data, ...updated } }
-        : node,
-    );
-  }
-
-  function onEdgeContextMenu({
-    event,
-    edge,
-  }: {
-    event: MouseEvent;
-    edge: any;
-  }) {
-    event.preventDefault();
-    logic.contextMenu = {
-      x: event.clientX,
-      y: event.clientY,
-      type: "edge",
-      id: edge.id,
-    };
-  }
-
-  function handlePaneContextMenu({ event }: { event: MouseEvent }) {
-    if (vault.isGuest) return;
-    event.preventDefault();
-    logic.contextMenu = {
-      x: event.clientX,
-      y: event.clientY,
-      type: "pane",
-      id: "pane",
-    };
-  }
-
-  function onEdgeClick({ event, edge }: { event: MouseEvent; edge: any }) {
-    if (event.detail === 2) {
-      event.stopPropagation();
-      logic.labelModal = {
-        isOpen: true,
-        edgeId: edge.id,
-        currentLabel: (edge.label as string) || "",
-      };
-    }
-  }
-
-  function onDragOver(event: DragEvent) {
-    const hasFiles = (event.dataTransfer?.files.length ?? 0) > 0;
-    if (vault.isGuest) {
-      if (hasFiles) {
-        event.preventDefault();
-        if (event.dataTransfer) event.dataTransfer.dropEffect = "none";
-      }
-      return;
-    }
-    event.preventDefault();
-    if (event.dataTransfer) {
-      event.dataTransfer.dropEffect = hasFiles ? "copy" : "move";
-    }
-  }
-
-  async function onDrop(event: DragEvent) {
-    const files = Array.from(event.dataTransfer?.files || []);
-    if (vault.isGuest) {
-      if (files.length > 0) {
-        event.preventDefault();
-        if (event.dataTransfer) event.dataTransfer.dropEffect = "none";
-      }
-      return;
-    }
-    event.preventDefault();
-    if (files.length > 0) {
-      await fileImport.handleExternalFiles(files, {
-        x: event.clientX,
-        y: event.clientY,
-      });
-      return;
-    }
-    const entityId = event.dataTransfer?.getData("application/codex-entity");
-    if (!entityId) return;
-
-    const position = logic.screenToFlowPosition({
-      x: event.clientX,
-      y: event.clientY,
-    });
-    logic.handleQuickSpawn(entityId, position);
-  }
-
-  function handleAddTextNode(screenPosition?: { x: number; y: number }) {
-    if (vault.isGuest) return;
-    const position = logic.screenToFlowPosition(
-      screenPosition ?? centerScreenPosition(),
-    );
-    const nodeId = engine.addTextNode("", position);
-    const { max } = stackableNodeZIndexBounds();
-    const node = createFlowTextNode("", position, nodeId);
-    logic.nodes = [
-      ...logic.nodes,
-      { ...node, data: { ...node.data, zIndex: max + 1 } },
-    ];
-    logic.saveNow();
-  }
-
-  let isCreatingSourceEntity = false;
-  async function handleOpenOrCreateSourceEntity() {
-    if (isCreatingSourceEntity) return;
-    isCreatingSourceEntity = true;
-    try {
-      await openOrCreateSourceEntity({
-        sourceEntityId,
-        canvas,
-        vault,
-        canvasRegistry,
-        modalUIStore,
-        nodes: logic.nodes,
-      });
-    } finally {
-      isCreatingSourceEntity = false;
-    }
-  }
-
-  function handleAutoArrange() {
-    const positionedNodes = autoArrangeCanvasNodes({
-      canvasId: canvas?.id || "temp",
-      title: canvas?.name || "Canvas",
-      nodes: logic.nodes,
-      edges: logic.edges,
-    });
-    if (!positionedNodes) return;
-
-    logic.nodes = positionedNodes;
-    if (canvas) {
-      canvas.metadata = {
-        ...(canvas.metadata || {}),
-        layoutState: "auto",
-      };
-    }
-    logic.saveNow();
-  }
-
-  $effect(() => {
-    return () => {
-      logic.flushSave();
-    };
-  });
+  const canReport = $derived(
+    canGenerateCanvasReport(source.canvas, logic.nodes),
+  );
+  const canEdit = $derived(!vault.isGuest);
+  const canFinalizeDossier = $derived(
+    canEdit &&
+      Boolean(source.sourceEntity) &&
+      logic.nodes.some((node) => node.type === "delveRoom"),
+  );
+  const sourceEntityType = $derived(
+    source.sourceEntity?.type ||
+      (source.canvas?.metadata?.kind === "adventure" ? "event" : "location"),
+  );
+  const sourceEntityKind = $derived(
+    source.sourceEntity?.kind || (source.canvas?.metadata?.kind as string),
+  );
+  const generateReport = $derived(
+    canReport && source.canvas
+      ? () =>
+          openCanvasReport(
+            source.canvas!,
+            () => logic.nodes,
+            () => logic.edges,
+          )
+      : undefined,
+  );
+  const addAdventureNode = (
+    type: Parameters<typeof logic.handleAddAdventureNode>[0],
+  ) => logic.handleAddAdventureNode(type);
 </script>
 
 <svelte:window
@@ -688,8 +187,8 @@
 >
   <div
     class="flex-1 relative"
-    ondragover={onDragOver}
-    ondrop={onDrop}
+    ondragover={dropHandlers.onDragOver}
+    ondrop={dropHandlers.onDrop}
     onpointerdowncapture={(e) =>
       rotationLogic.beginTouchRotation(
         e,
@@ -700,49 +199,46 @@
     aria-label="Canvas Workspace"
   >
     <CanvasHUD
-      canvasName={canvas?.name || ""}
-      {sourceEntityId}
-      {sourceEntityTitle}
-      sourceEntityType={sourceEntity?.type ||
-        (canvas?.metadata?.kind === "adventure" ? "event" : "location")}
-      sourceEntityKind={sourceEntity?.kind ||
-        (canvas?.metadata?.kind as string)}
-      {dossierEntityId}
-      {isFinalizingDossier}
-      onFinalizeDossier={!vault.isGuest &&
-      sourceEntity &&
-      logic.nodes.some((node) => node.type === "delveRoom")
-        ? finalizeDossier
-        : undefined}
-      onOpenOrCreateSourceEntity={handleOpenOrCreateSourceEntity}
+      canvasName={source.canvas?.name || ""}
+      sourceEntityId={source.sourceEntityId}
+      sourceEntityTitle={source.sourceEntityTitle}
+      {sourceEntityType}
+      {sourceEntityKind}
+      dossierEntityId={source.dossierEntityId}
+      isFinalizingDossier={dossier.isFinalizing}
+      onFinalizeDossier={when(canFinalizeDossier, dossier.finalizeDossier)}
+      onOpenOrCreateSourceEntity={source.handleOpenOrCreateSourceEntity}
       onAutoArrange={handleAutoArrange}
+      onGenerateReport={generateReport}
+      isAllImageOnly={nodeActions.isAllImageOnly}
+      onToggleAllImageOnly={when(
+        nodeActions.hasEntityNodes && canEdit,
+        nodeActions.handleToggleAllImageOnly,
+      )}
+      showImageLabels={nodeActions.showImageLabels}
+      onToggleShowImageLabels={when(
+        nodeActions.hasEntityNodes,
+        nodeActions.handleToggleShowImageLabels,
+      )}
       {showMinimap}
       onToggleMinimap={() => (showMinimap = !showMinimap)}
-      onUploadFiles={!vault.isGuest
-        ? fileImport.handleExternalFiles
-        : undefined}
-      onAddTextNode={!vault.isGuest ? () => handleAddTextNode() : undefined}
+      onUploadFiles={when(canEdit, fileImport.handleExternalFiles)}
+      onAddTextNode={when(canEdit, () => nodeActions.handleAddTextNode())}
       isDrawingMode={drawingLogic.isDrawingMode}
       isErasingMode={drawingLogic.isErasingMode}
       drawingColor={drawingLogic.drawingColor}
       drawingWidth={drawingLogic.drawingWidth}
-      onToggleDrawing={!vault.isGuest
-        ? drawingLogic.toggleDrawingMode
-        : undefined}
-      onToggleErasing={!vault.isGuest
-        ? drawingLogic.toggleErasingMode
-        : undefined}
-      onDrawingColorChange={!vault.isGuest
-        ? drawingLogic.handleDrawingColorChange
-        : undefined}
-      onDrawingWidthChange={!vault.isGuest
-        ? drawingLogic.handleDrawingWidthChange
-        : undefined}
-      onAddAdventureNode={canvas?.metadata?.kind === "adventure" ||
-      sourceEntity?.kind === "adventure" ||
-      logic.nodes.some((n) => n.type === "adventureNode")
-        ? (type) => logic.handleAddAdventureNode(type)
-        : undefined}
+      onToggleDrawing={when(canEdit, drawingLogic.toggleDrawingMode)}
+      onToggleErasing={when(canEdit, drawingLogic.toggleErasingMode)}
+      onDrawingColorChange={when(
+        canEdit,
+        drawingLogic.handleDrawingColorChange,
+      )}
+      onDrawingWidthChange={when(
+        canEdit,
+        drawingLogic.handleDrawingWidthChange,
+      )}
+      onAddAdventureNode={when(source.isAdventureCanvas, addAdventureNode)}
       activeCategories={logic.activeCategories}
       onToggleCategory={logic.toggleCategoryFilter}
       onClearCategories={logic.clearCategoryFilters}
@@ -750,28 +246,21 @@
 
     <div class="absolute inset-0" bind:this={canvasExportElement}>
       <SvelteFlow
-        nodes={filteredNodes}
+        nodes={nodeActions.filteredNodes}
         bind:edges={logic.edges}
         {nodeTypes}
         {edgeTypes}
-        onconnect={!vault.isGuest ? logic.onConnect : undefined}
-        onreconnect={!vault.isGuest ? logic.onReconnect : undefined}
-        onconnectstart={() => {
-          if (vault.isGuest) return;
-          logic.isConnecting = true;
-          connectionModeStore.isConnecting = true;
-        }}
-        onconnectend={() => {
-          logic.isConnecting = false;
-          connectionModeStore.isConnecting = false;
-        }}
-        onnodecontextmenu={onNodeContextMenu}
-        onnodeclick={onNodeClick}
-        onpaneclick={onPaneClick}
-        onnodedragstop={onNodeDragStop}
-        onedgecontextmenu={onEdgeContextMenu}
-        onedgeclick={onEdgeClick}
-        onpanecontextmenu={handlePaneContextMenu}
+        onconnect={when(canEdit, logic.onConnect)}
+        onreconnect={when(canEdit, logic.onReconnect)}
+        onconnectstart={interactions.onConnectStart}
+        onconnectend={interactions.onConnectEnd}
+        onnodecontextmenu={contextMenuLogic.onNodeContextMenu}
+        onnodeclick={interactions.onNodeClick}
+        onpaneclick={interactions.onPaneClick}
+        onnodedragstop={interactions.onNodeDragStop}
+        onedgecontextmenu={contextMenuLogic.onEdgeContextMenu}
+        onedgeclick={interactions.onEdgeClick}
+        onpanecontextmenu={contextMenuLogic.handlePaneContextMenu}
         defaultEdgeOptions={{ type: "straight" }}
         connectionMode={ConnectionMode.Loose}
         zoomOnDoubleClick={false}
@@ -788,98 +277,8 @@
         fitView
       >
         <Background gap={20} />
-        {#if rotationLogic.selectedRotationNodeId && rotationLogic.canRotateNode(rotationLogic.selectedRotationNodeId)}
-          <NodeToolbar
-            nodeId={rotationLogic.selectedRotationNodeId}
-            position={Position.Top}
-            offset={18}
-            isVisible
-          >
-            <button
-              type="button"
-              class="nodrag nopan touch-none flex h-9 w-9 cursor-grab items-center justify-center rounded-full border border-theme-primary/50 bg-theme-surface text-theme-primary shadow-lg transition-colors hover:bg-theme-primary/15 active:cursor-grabbing"
-              title="Drag to rotate card; use arrow keys for precise rotation"
-              aria-label="Rotate selected card"
-              onpointerdown={rotationLogic.beginDesktopRotation}
-              onkeydown={rotationLogic.rotateSelectedNodeWithKeyboard}
-            >
-              <span class="icon-[lucide--rotate-cw] h-4 w-4" aria-hidden="true"
-              ></span>
-            </button>
-          </NodeToolbar>
-        {/if}
-        <!--
-          Freehand drawing input lives here, outside ViewportPortal, so it
-          always covers the full visible pane regardless of zoom. Content
-          inside ViewportPortal is scaled/translated together with the flow
-          viewport for rendering, which means its own layout box (the thing
-          a background pointerdown needs to land inside) shrinks well below
-          the visible pane at any zoom other than 100% - fitView rarely lands
-          on exactly 100%, so drawing would only "activate" near the flow's
-          transform origin, i.e. wherever the canvas happened to be anchored
-          on screen (in practice, near the top-left HUD).
-        -->
-        <div
-          class="canvas-draw-input-layer"
-          data-testid="canvas-draw-input-layer"
-          aria-hidden="true"
-          style:pointer-events={drawingLogic.isDrawingMode ? "auto" : "none"}
-          style:cursor={drawingLogic.isDrawingMode ? "crosshair" : undefined}
-          onpointerdown={drawingLogic.handleDrawingPointerDown}
-          onpointermove={drawingLogic.handleDrawingPointerMove}
-          onpointerup={(event) => drawingLogic.finishDrawing(event)}
-          onpointercancel={(event) => drawingLogic.finishDrawing(event, true)}
-        ></div>
-        <ViewportPortal target="front">
-          <svg
-            class="canvas-drawing-layer"
-            data-testid="canvas-drawing-layer"
-            role="img"
-            aria-label="Canvas drawing strokes"
-            style:pointer-events={drawingLogic.isErasingMode ? "auto" : "none"}
-            style:cursor={drawingLogic.isErasingMode ? "pointer" : undefined}
-            onpointerdown={drawingLogic.handleEraseLayerPointerDown}
-          >
-            {#each logic.drawings as drawing (drawing.id)}
-              {#if drawingLogic.isErasingMode}
-                <path
-                  data-testid={`eraser-target-${drawing.id}`}
-                  data-drawing-id={drawing.id}
-                  d={drawingLogic.drawingPath(drawing)}
-                  fill="none"
-                  stroke="transparent"
-                  stroke-width={Math.max(drawing.width + 12, 16)}
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  vector-effect="non-scaling-stroke"
-                  pointer-events="stroke"
-                />
-              {/if}
-              <path
-                d={drawingLogic.drawingPath(drawing)}
-                fill="none"
-                stroke={drawing.color}
-                stroke-width={drawing.width}
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                vector-effect="non-scaling-stroke"
-                pointer-events="none"
-              />
-            {/each}
-            {#if drawingLogic.activeDrawing}
-              <path
-                d={drawingLogic.drawingPath(drawingLogic.activeDrawing)}
-                fill="none"
-                stroke={drawingLogic.activeDrawing.color}
-                stroke-width={drawingLogic.activeDrawing.width}
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                vector-effect="non-scaling-stroke"
-                pointer-events="none"
-              />
-            {/if}
-          </svg>
-        </ViewportPortal>
+        <CanvasRotationToolbar {rotationLogic} />
+        <CanvasDrawingLayers {logic} {drawingLogic} />
         {#if !sessionModeStore.isGuestMode}
           <Controls />
         {/if}
@@ -892,162 +291,30 @@
       </SvelteFlow>
     </div>
 
-    {#if areaEnhancement.isAutoPopulating}
-      <div
-        class="absolute bottom-5 left-1/2 z-30 -translate-x-1/2 inline-flex items-center gap-2 rounded-full border border-theme-primary/40 bg-theme-bg/95 px-4 py-2 text-xs font-mono text-theme-text shadow-xl"
-        role="status"
-        aria-live="polite"
-      >
-        <span
-          class="icon-[lucide--sparkles] h-4 w-4 animate-pulse text-theme-primary"
-          aria-hidden="true"
-        ></span>
-        Populating Areas with Location-aware AI…
-        <span class="text-theme-primary">
-          {areaEnhancement.autoPopulationCompleted}/{areaEnhancement.autoPopulationTotal}
-        </span>
-      </div>
-    {:else if areaEnhancement.autoPopulationMessage}
-      <div
-        class="absolute bottom-5 left-1/2 z-30 max-w-md -translate-x-1/2 rounded-lg border border-amber-500/40 bg-theme-bg/95 px-4 py-2 text-xs text-amber-300 shadow-xl"
-        role="status"
-      >
-        {areaEnhancement.autoPopulationMessage}
-      </div>
-    {/if}
+    <CanvasAutoPopulationStatus
+      isPopulating={areaEnhancement.isAutoPopulating}
+      completed={areaEnhancement.autoPopulationCompleted}
+      total={areaEnhancement.autoPopulationTotal}
+      message={areaEnhancement.autoPopulationMessage}
+    />
   </div>
 
-  {#if logic.contextMenu}
-    <CanvasContextMenu
-      x={logic.contextMenu.x}
-      y={logic.contextMenu.y}
-      targetId={logic.contextMenu?.id}
-      targetType={logic.contextMenu.type}
-      isAdventure={canvas?.metadata?.kind === "adventure" ||
-        sourceEntity?.kind === "adventure" ||
-        logic.nodes.some((n) => n.type === "adventureNode")}
-      isLocked={contextMenuNodeLocked}
-      onToggleLock={logic.contextMenu?.type === "node" && logic.contextMenu.id
-        ? () => toggleNodeLock(logic.contextMenu!.id)
-        : undefined}
-      onBringToFront={contextMenuNodeStackable
-        ? () => bringNodeToFront(logic.contextMenu!.id)
-        : undefined}
-      onSendToBack={contextMenuNodeStackable
-        ? () => sendNodeToBack(logic.contextMenu!.id)
-        : undefined}
-      onDelete={logic.handleDelete}
-      onRename={() => {
-        const edge = logic.edges.find((e) => e.id === logic.contextMenu?.id);
-        logic.labelModal = {
-          isOpen: true,
-          edgeId: logic.contextMenu!.id,
-          currentLabel: (edge?.label as string) || "",
-        };
-        logic.contextMenu = null;
-      }}
-      onCreateEntity={logic.handleCreateEntity}
-      onAddAdventureNode={(type) =>
-        logic.handleAddAdventureNode(type, {
-          x: logic.contextMenu?.x || 0,
-          y: logic.contextMenu?.y || 0,
-        })}
-      onPaste={!vault.isGuest
-        ? () =>
-            fileImport.handlePasteFromClipboard({
-              x: logic.contextMenu?.x || 0,
-              y: logic.contextMenu?.y || 0,
-            })
-        : undefined}
-      onAddTextNode={!vault.isGuest
-        ? () =>
-            handleAddTextNode({
-              x: logic.contextMenu?.x || 0,
-              y: logic.contextMenu?.y || 0,
-            })
-        : undefined}
-      textNodeBackground={normalizeCanvasTextBackground(
-        (contextMenuTextNode?.data as any)?.background ?? "",
-        DEFAULT_CANVAS_TEXT_BACKGROUND,
-      )}
-      textNodeFontSize={normalizeCanvasTextFontSize(
-        (contextMenuTextNode?.data as any)?.fontSize,
-        DEFAULT_CANVAS_TEXT_FONT_SIZE,
-      )}
-      onTextNodeBackgroundChange={contextMenuTextNode && !vault.isGuest
-        ? (background: string) =>
-            updateNodeData(contextMenuTextNode!.id, {
-              background: normalizeCanvasTextBackground(
-                background,
-                DEFAULT_CANVAS_TEXT_BACKGROUND,
-              ),
-            })
-        : undefined}
-      onTextNodeFontSizeChange={contextMenuTextNode && !vault.isGuest
-        ? (fontSize: number) =>
-            updateNodeData(contextMenuTextNode!.id, { fontSize })
-        : undefined}
-      onClose={() => (logic.contextMenu = null)}
-    />
-  {/if}
-
-  <CanvasHint />
-  <EdgeLabelModal
-    bind:isOpen={logic.labelModal.isOpen}
-    initialValue={logic.labelModal.currentLabel}
-    onSave={logic.saveLabelModal}
-    onCancel={() => (logic.labelModal.isOpen = false)}
-  />
-  <EdgeAttributeModal
-    isOpen={edgeModal.isOpen}
-    edgeData={edgeModal.edgeData}
-    onSave={(updates) => {
-      logic.edges = logic.edges.map((e) => {
-        if (e.id === edgeModal.edgeId) {
-          return { ...e, data: { ...(e.data as any), ...updates } };
-        }
-        return e;
-      });
-    }}
-    onClose={() => (edgeModal.isOpen = false)}
-  />
-  <RoomStockingDrawer
-    isOpen={selectedRoomData !== null}
-    roomData={selectedRoomData}
-    isRegenerating={areaEnhancement.isRestockingRoom}
-    errorMessage={areaEnhancement.roomEnhancementError}
-    onSave={saveRoomData}
-    onRegenerateAi={(room) => areaEnhancement.enhanceRoom(room, canvas)}
-    onClose={() => (selectedRoomId = null)}
+  <CanvasContextMenuHost
+    {logic}
+    {nodeActions}
+    {contextMenuLogic}
+    {vault}
+    isAdventure={source.isAdventureCanvas}
+    onPasteFromClipboard={fileImport.handlePasteFromClipboard}
   />
 
-  <AdventureNodeDrawer
-    isOpen={activeAdventureNode !== null}
-    node={activeAdventureNode}
-    onClose={() => {
-      selectedAdventureNodeId = null;
-      logic.handleCancelDraftAdventureNode();
-    }}
-    onSave={(updatedNode) => {
-      if (logic.draftAdventureNode) {
-        const flowNode = {
-          ...logic.draftAdventureNode,
-          data: {
-            ...logic.draftAdventureNode.data,
-            ...updatedNode.data,
-          },
-        };
-        logic.handleSaveAdventureNode(flowNode);
-      } else {
-        logic.nodes = logic.nodes.map((n) =>
-          n.id === updatedNode.id
-            ? { ...n, data: { ...(n.data as any), ...updatedNode.data } }
-            : n,
-        );
-        logic.flushSave();
-      }
-      selectedAdventureNodeId = null;
-    }}
+  <CanvasEditorPanels
+    {logic}
+    canvas={source.canvas}
+    {areaEnhancement}
+    {roomSelection}
+    {adventureSelection}
+    {edgeEditor}
   />
 </div>
 
@@ -1058,168 +325,5 @@
     background-repeat: repeat;
     background-position: top left;
     background-attachment: fixed;
-  }
-
-  :global(.svelte-flow__edges) {
-    z-index: 0 !important;
-  }
-
-  :global(.svelte-flow__nodes) {
-    z-index: 10 !important;
-  }
-  :global(.svelte-flow__node-delveSectorGroup) {
-    z-index: 0 !important;
-    pointer-events: none !important;
-  }
-
-  :global(.svelte-flow) {
-    background-color: transparent !important;
-    font-family: var(--font-body), ui-sans-serif;
-    transition:
-      font-family 0.3s ease,
-      background-color 0.3s ease;
-  }
-  :global(.svelte-flow__pane) {
-    background-color: transparent !important;
-  }
-  :global(.svelte-flow__background-pattern) {
-    fill: var(--color-border-primary) !important;
-    opacity: 0.25 !important;
-  }
-  :global(.svelte-flow__edgelabel-renderer) {
-    background: transparent !important;
-    pointer-events: none;
-  }
-  :global(.svelte-flow__edge-label) {
-    background: transparent !important;
-  }
-  :global(.svelte-flow__edge-path) {
-    stroke: var(--color-theme-primary, #78350f) !important;
-    stroke-width: var(--theme-edge-stroke-width, 2) !important;
-    stroke-opacity: 1 !important;
-    visibility: visible !important;
-    transition:
-      stroke-width 0.2s ease,
-      stroke 0.2s ease;
-  }
-  :global(.svelte-flow__edge:hover .svelte-flow__edge-path) {
-    stroke-width: calc(var(--theme-edge-stroke-width, 2) + 2px) !important;
-    stroke: var(--color-theme-primary) !important;
-    filter: drop-shadow(0 0 4px var(--color-theme-primary));
-  }
-  :global(.svelte-flow__edge.selected .svelte-flow__edge-path) {
-    stroke-width: calc(var(--theme-edge-stroke-width, 2) + 2px) !important;
-    stroke: var(--color-theme-primary) !important;
-  }
-  :global(.svelte-flow__edge.animated path) {
-    stroke-dasharray: 5;
-    animation: svelte-flow__dashdraw 0.5s linear infinite;
-  }
-  :global(.svelte-flow__controls) {
-    background: var(--color-theme-surface) !important;
-    border: 1px solid var(--color-theme-border) !important;
-    border-radius: 8px;
-    overflow: hidden;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-  }
-  :global(.svelte-flow__controls-button) {
-    background: var(--color-theme-surface) !important;
-    border-bottom: 1px solid var(--color-theme-border) !important;
-    color: var(--color-theme-primary) !important;
-    fill: var(--color-theme-primary) !important;
-    transition: all 0.2s ease;
-  }
-  :global(.svelte-flow__controls-button:last-child) {
-    border-bottom: none !important;
-  }
-  :global(.svelte-flow__controls-button:hover) {
-    background: var(--color-theme-primary) !important;
-    color: var(--color-theme-bg) !important;
-    fill: var(--color-theme-bg) !important;
-  }
-  :global(.svelte-flow__controls-button svg) {
-    fill: currentColor !important;
-  }
-  :global(.svelte-flow__minimap) {
-    background-color: var(--color-bg-surface) !important;
-    border: 1px solid var(--color-border-primary) !important;
-    border-radius: 8px !important;
-  }
-  @media (max-width: 639px) {
-    :global(.svelte-flow__minimap) {
-      display: none !important;
-    }
-  }
-  :global(.svelte-flow__minimap-mask) {
-    fill: var(--color-theme-primary) !important;
-    fill-opacity: 0.1 !important;
-  }
-  :global(.svelte-flow__connectionline) {
-    z-index: 20 !important;
-  }
-
-  :global(.svelte-flow__viewport-front) {
-    z-index: 30;
-  }
-
-  /*
-   * Without this, the browser treats a single-finger drag on the pane or a
-   * node as a native scroll/zoom gesture instead of handing it to SvelteFlow's
-   * own pointer-driven pan/drag, so touch dragging never starts. Same fix
-   * already applied to MapView and the family-tree PanZoomContainer.
-   */
-  :global(.svelte-flow) {
-    touch-action: none;
-  }
-
-  /*
-   * Rotation is applied here, to the node's content element, rather than to
-   * `.svelte-flow__node` itself. SvelteFlow positions that wrapper with
-   * `transform: translate(...)`, and combining that with a standalone
-   * `rotate` property on the same element breaks their shared
-   * transform-origin, making the node visually jump instead of spinning in
-   * place around its own center.
-   */
-  :global(.svelte-flow__node > *) {
-    rotate: var(--canvas-node-rotate, 0deg);
-  }
-
-  :global(.svelte-flow__panel) {
-    z-index: 40 !important;
-  }
-
-  .canvas-drawing-layer {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    overflow: visible;
-    touch-action: none;
-    user-select: none;
-  }
-
-  /*
-   * Unlike .canvas-drawing-layer (inside ViewportPortal, scaled/panned with
-   * the flow viewport), this sits outside it as a plain SvelteFlow child, so
-   * it's never transformed and always spans the full visible pane. See the
-   * comment above its markup for why that matters.
-   */
-  .canvas-draw-input-layer {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    z-index: 25;
-    touch-action: none;
-    user-select: none;
-  }
-
-  @keyframes svelte-flow__dashdraw {
-    from {
-      stroke-dashoffset: 10;
-    }
-    to {
-      stroke-dashoffset: 0;
-    }
   }
 </style>

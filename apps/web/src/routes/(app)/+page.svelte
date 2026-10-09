@@ -15,7 +15,6 @@
   import { focusEntity } from "$lib/stores/ui/navigation";
   import { seoImportService } from "$lib/services/seo/import-handler";
   import WelcomeGraphPreview from "$lib/components/welcome/WelcomeGraphPreview.svelte";
-  import MarketingFooter from "$lib/components/seo/MarketingFooter.svelte";
   import {
     trackWelcomeFirstClick,
     type WelcomeAction,
@@ -375,7 +374,8 @@
           data-testid="enter-world-button"
         >
           Enter your world
-          <span class="icon-[lucide--arrow-right] h-4 w-4"></span>
+          <span aria-hidden="true" class="icon-[lucide--arrow-right] h-4 w-4"
+          ></span>
         </button>
       </div>
     </div>
@@ -397,12 +397,12 @@
             class="mx-auto flex w-full max-w-6xl flex-col items-center text-center"
           >
             <div
-              class="inline-flex items-center gap-2 px-3.5 py-1.5 mb-4 border border-theme-primary/40 bg-theme-primary/10 rounded-full text-[10px] sm:text-[11px] md:text-sm font-mono text-theme-primary uppercase tracking-[0.1em]"
+              class="inline-flex items-center gap-2 px-3.5 py-1.5 mb-4 border border-theme-primary/40 bg-theme-primary/10 rounded-full text-micro sm:text-meta md:text-sm font-mono text-theme-primary uppercase tracking-[0.1em]"
             >
               <span
                 class="w-1.5 h-1.5 rounded-full bg-theme-primary/60 animate-pulse"
               ></span>
-              Local-first RPG campaign manager • Private by default
+              No account needed • Works offline
             </div>
             <h1
               class="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold text-theme-primary/90 font-header tracking-tight mb-3 md:mb-5 leading-tight"
@@ -435,13 +435,13 @@
                 <div class="min-w-0">
                   <h2
                     id="living-lore-graph"
-                    class="text-[10px] font-mono font-bold uppercase tracking-[0.2em] text-theme-primary"
+                    class="text-micro font-mono font-bold uppercase tracking-[0.2em] text-theme-primary"
                   >
                     Living Lore Graph
                   </h2>
                   <p
                     id="living-lore-graph-copy"
-                    class="mt-1 text-[11px] text-theme-muted"
+                    class="mt-1 text-meta text-theme-muted"
                   >
                     See how characters, factions, secrets, and places connect.
                     Click the graph and Quick Start builds one like this for you
@@ -496,7 +496,8 @@
                 class="group w-full sm:w-auto px-12 py-4 md:py-5 bg-theme-primary text-theme-bg font-bold uppercase font-header tracking-[0.2em] text-sm rounded-lg hover:bg-theme-primary/90 hover:shadow-[0_0_30px_var(--color-accent-primary)] transition-all active:scale-95 flex items-center justify-center gap-2"
                 data-testid="welcome-quick-start-button"
               >
-                <span class="icon-[lucide--sparkles] w-4 h-4"></span>
+                <span class="icon-[lucide--sparkles] w-4 h-4" aria-hidden="true"
+                ></span>
                 Quick Start World
               </button>
               <button
@@ -526,47 +527,52 @@
           </section>
         </section>
 
-        <!-- Below the Hero: Info boxes -->
+        <!-- Below the Hero: product highlights, condensed to a single slim
+             strip. These used to be three tall cards, which pushed the
+             themed-vault picker and footer well below the fold on a first
+             visit; the claims themselves didn't need that much room (#welcomeness). -->
         <div
-          class="mx-auto mb-10 md:mb-14 grid max-w-5xl gap-4 text-left sm:grid-cols-3 w-full"
+          class="mx-auto mb-8 flex w-full max-w-4xl flex-wrap items-center justify-center gap-x-8 gap-y-3 text-left"
           aria-label="Codex Cryptica product highlights"
         >
           {#each agenticProofPoints as point (point.label)}
-            <article
-              class="border border-theme-border/70 bg-theme-surface/45 p-4 text-theme-text shadow-sm"
-            >
-              <div
-                class="mb-3 flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.18em] text-theme-primary"
-              >
-                <span class="{point.icon} h-4 w-4 shrink-0" aria-hidden="true"
-                ></span>
-                <h3>{point.label}</h3>
-              </div>
-              <p class="text-sm leading-relaxed text-theme-muted">
-                {point.copy}
-              </p>
-            </article>
+            <div class="flex items-center gap-2 text-sm text-theme-muted">
+              <span
+                class="{point.icon} h-4 w-4 shrink-0 text-theme-primary"
+                aria-hidden="true"
+              ></span>
+              <span>
+                <span class="font-bold text-theme-text">{point.label}</span>
+                — {point.copy}
+              </span>
+            </div>
           {/each}
         </div>
 
-        <!-- Try it as section -->
-        <section class="text-center mb-10 w-full">
-          <h3
-            class="text-[10px] font-mono text-theme-muted uppercase tracking-[0.3em] mb-6"
+        <!-- Try it as section — collapsed by default so the eight theme
+             chips don't compete with the primary CTAs above; still reachable
+             in one click for anyone who wants a themed starting point. -->
+        <details class="group mb-10 w-full text-center">
+          <summary
+            class="mb-2 inline-flex list-none items-center gap-1.5 text-micro font-mono text-theme-muted uppercase tracking-[0.3em] transition-colors hover:text-theme-primary cursor-pointer [&::-webkit-details-marker]:hidden"
           >
-            Try a themed vault:
-          </h3>
-          <div class="flex flex-wrap justify-center gap-4">
+            <span
+              class="icon-[lucide--chevron-right] h-3 w-3 transition-transform group-open:rotate-90"
+              aria-hidden="true"
+            ></span>
+            Or start from a themed vault
+          </summary>
+          <div class="mt-4 flex flex-wrap justify-center gap-4">
             {#each demoThemes as theme (theme)}
               <button
                 onclick={() => startDemoFromWelcome(theme, "themed_demo")}
-                class="px-4 py-2 text-[10px] font-bold border border-theme-border hover:border-theme-primary text-theme-muted hover:text-theme-primary rounded uppercase font-header tracking-widest transition-all"
+                class="px-4 py-2 text-micro font-bold border border-theme-border hover:border-theme-primary text-theme-muted hover:text-theme-primary rounded uppercase font-header tracking-widest transition-all"
               >
                 {theme}
               </button>
             {/each}
           </div>
-        </section>
+        </details>
 
         <!-- Footer actions & settings -->
         <div class="flex flex-col items-center gap-4 w-full">
@@ -583,12 +589,11 @@
             />
             <label
               for="skip-welcome"
-              class="text-[10px] font-body text-theme-muted uppercase tracking-widest cursor-pointer hover:text-theme-primary transition-colors select-none"
+              class="text-micro font-body text-theme-muted uppercase tracking-widest cursor-pointer hover:text-theme-primary transition-colors select-none"
             >
               Hide welcome screen on startup
             </label>
           </div>
-          <MarketingFooter />
         </div>
       </div>
     </div>

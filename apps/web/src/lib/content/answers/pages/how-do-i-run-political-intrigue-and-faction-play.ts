@@ -2,7 +2,7 @@ import type { AnswerConfigInput } from "../schema";
 
 export const howDoIRunPoliticalIntrigueAndFactionPlay: AnswerConfigInput = {
   slug: "how-do-i-run-political-intrigue-and-faction-play",
-  category: "session-prep",
+  category: "running-the-game",
   publishedAt: "2026-09-21",
   question: "How do I run political intrigue and faction play in an RPG?",
   kind: "how-to",
@@ -314,6 +314,10 @@ export const howDoIRunPoliticalIntrigueAndFactionPlay: AnswerConfigInput = {
     "how-do-i-run-a-diplomat-noble-or-courtier-in-an-rpg",
     "how-do-i-run-character-roles-in-a-political-intrigue-rpg",
     "how-do-i-build-a-believable-constitutional-crisis-or-coup",
+    "how-do-i-run-a-large-battle-when-the-player-characters-are-part-of-an-army",
+    "how-does-magic-affect-politics-and-government",
+    "how-do-i-make-a-campaign-threat-feel-urgent-without-railroading",
+    "how-do-i-run-a-bard-or-face-without-sidelining-the-party",
   ],
   discovery: {
     id: "answer-run-political-intrigue",

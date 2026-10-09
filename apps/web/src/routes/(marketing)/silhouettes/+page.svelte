@@ -263,7 +263,7 @@
           >{SILHOUETTES.length}+ Vector Silhouettes</span
         >
         <span class="text-theme-border">•</span>
-        <span class="text-theme-accent font-mono text-[11px]">CC-BY-4.0</span>
+        <span class="text-theme-accent font-mono text-meta">CC-BY-4.0</span>
       </div>
 
       <!-- Main Heading -->
@@ -327,7 +327,7 @@
               </button>
             {/each}
           </div>
-          <div class="text-[11px] text-theme-muted/80 text-left px-1">
+          <div class="text-meta text-theme-muted/80 text-left px-1">
             {selectedPalette.description}. Dynamically updates vector fills and
             exports below.
           </div>
@@ -373,7 +373,7 @@
         <!-- Genre Filter Chips -->
         <div class="space-y-1.5 flex-1 min-w-0">
           <div
-            class="text-[11px] font-semibold uppercase tracking-wider text-theme-muted flex items-center gap-1"
+            class="text-meta font-semibold uppercase tracking-wider text-theme-muted flex items-center gap-1"
           >
             <span
               aria-hidden="true"
@@ -403,7 +403,7 @@
         <!-- Category Filter Chips -->
         <div class="space-y-1.5 shrink-0">
           <div
-            class="text-[11px] font-semibold uppercase tracking-wider text-theme-muted flex items-center gap-1"
+            class="text-meta font-semibold uppercase tracking-wider text-theme-muted flex items-center gap-1"
           >
             <span
               aria-hidden="true"
@@ -522,7 +522,7 @@
 
                 <!-- Category Badge -->
                 <div
-                  class="self-start text-[9px] uppercase tracking-wider font-semibold text-theme-muted px-1.5 py-0.5 rounded-sm bg-theme-base/60 border border-theme-border/40"
+                  class="self-start text-nano uppercase tracking-wider font-semibold text-theme-muted px-1.5 py-0.5 rounded-sm bg-theme-base/60 border border-theme-border/40"
                 >
                   {s.category}
                 </div>
@@ -543,7 +543,7 @@
                   >
                     {s.name}
                   </div>
-                  <div class="text-[10px] text-theme-muted capitalize truncate">
+                  <div class="text-micro text-theme-muted capitalize truncate">
                     {s.archetype}
                   </div>
                 </div>
@@ -578,7 +578,7 @@
               </span>
             </div>
             <span
-              class="text-[11px] px-2 py-0.5 rounded-full bg-theme-base border border-theme-border/60 text-theme-muted font-mono"
+              class="text-meta px-2 py-0.5 rounded-full bg-theme-base border border-theme-border/60 text-theme-muted font-mono"
             >
               {previewSilhouette.id}
             </span>
@@ -633,14 +633,14 @@
             <!-- Supported Genres -->
             <div class="space-y-1 text-left">
               <div
-                class="text-[10px] uppercase font-bold tracking-wider text-theme-muted"
+                class="text-micro uppercase font-bold tracking-wider text-theme-muted"
               >
                 Supported Genres
               </div>
               <div class="flex flex-wrap gap-1.5">
                 {#each previewSilhouette.genres as genre}
                   <span
-                    class="px-2 py-0.5 rounded-md text-[11px] bg-theme-base border border-theme-border/60 text-theme-primary capitalize"
+                    class="px-2 py-0.5 rounded-md text-meta bg-theme-base border border-theme-border/60 text-theme-primary capitalize"
                   >
                     {genre}
                   </span>
@@ -651,7 +651,7 @@
             <!-- Keywords & Tags -->
             <div class="space-y-1 text-left">
               <div
-                class="text-[10px] uppercase font-bold tracking-wider text-theme-muted"
+                class="text-micro uppercase font-bold tracking-wider text-theme-muted"
               >
                 Tags &amp; Keywords
               </div>
@@ -660,7 +660,7 @@
               >
                 {#each previewSilhouette.tags as tag}
                   <span
-                    class="px-1.5 py-0.5 rounded-xs text-[10px] bg-theme-base/80 border border-theme-border/50 text-theme-muted"
+                    class="px-1.5 py-0.5 rounded-xs text-micro bg-theme-base/80 border border-theme-border/50 text-theme-muted"
                   >
                     #{tag}
                   </span>
@@ -672,10 +672,10 @@
           <!-- Creator Utilities / Export Actions -->
           <div class="pt-4 border-t border-theme-border/50 space-y-2.5">
             <div
-              class="text-[11px] font-bold uppercase tracking-wider text-theme-muted flex items-center justify-between"
+              class="text-meta font-bold uppercase tracking-wider text-theme-muted flex items-center justify-between"
             >
               <span>Creator Utilities</span>
-              <span class="font-mono text-[10px] text-theme-muted/70"
+              <span class="font-mono text-micro text-theme-muted/70"
                 >SVG 1024×1024</span
               >
             </div>

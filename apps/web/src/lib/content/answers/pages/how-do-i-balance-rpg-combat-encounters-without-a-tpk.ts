@@ -2,7 +2,7 @@ import type { AnswerConfigInput } from "../schema";
 
 export const howDoIBalanceRpgCombatEncountersWithoutATpk: AnswerConfigInput = {
   slug: "how-do-i-balance-rpg-combat-encounters-without-a-tpk",
-  category: "session-prep",
+  category: "adventure-design",
   publishedAt: "2026-08-31",
   question: "How do I balance RPG combat encounters without causing a TPK?",
   kind: "framework",
@@ -139,7 +139,12 @@ export const howDoIBalanceRpgCombatEncountersWithoutATpk: AnswerConfigInput = {
     "how-much-rule-of-cool-should-a-dm-allow",
     "how-do-you-make-a-boss-fight-memorable-in-a-tabletop-rpg",
     "how-do-you-run-dnd-for-a-large-group-of-players",
+    "how-do-i-make-combat-faster-without-making-it-less-exciting",
     "what-rpg-should-i-use-for-tactical-combat",
+    "how-do-i-run-a-large-battle-when-the-player-characters-are-part-of-an-army",
+    "how-do-i-upgrade-a-player-characters-weapon-without-replacing-it",
+    "how-do-i-keep-players-engaged-during-other-players-turns-in-combat",
+    "how-do-i-prepare-a-dnd-session",
   ],
   discovery: {
     id: "answer-encounter-balance",
@@ -155,7 +160,18 @@ export const howDoIBalanceRpgCombatEncountersWithoutATpk: AnswerConfigInput = {
     ],
     uniqueValue:
       "Names what a CR/XP formula misses (action economy, party condition, signalling, objectives, terrain, retreat options and built-in pressure valves) and works one encounter through several ways to soften it without secretly rewriting numbers mid-fight.",
-    relatedIntents: ["answer-random-encounter", "generator-encounter"],
+    relatedIntents: [
+      "answer-random-encounter",
+      "generator-encounter",
+      "answer-faster-exciting-combat",
+    ],
+    acknowledgedOverlap: [
+      {
+        with: "answer-faster-exciting-combat",
+        reason:
+          "Encounter balance concerns whether a fight is fair and survivable; the combat-pacing answer concerns turn flow and reducing dead time while keeping tension and meaningful choices.",
+      },
+    ],
   },
 
   seo: {

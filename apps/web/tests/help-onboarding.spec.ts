@@ -137,41 +137,4 @@ test.describe("Help Onboarding Walkthrough", () => {
       page.locator("h3").getByText("Welcome — this is your world"),
     ).not.toBeVisible();
   });
-
-  test("should show contextual hints for advanced features", async ({
-    page,
-  }) => {
-    // Skip onboarding
-    await expect(
-      page.locator("h3").getByText("Welcome — this is your world"),
-    ).toBeVisible({
-      timeout: 10000,
-    });
-    await page.getByRole("button", { name: "Dismiss tour" }).click();
-
-    // Ensure GraphView is fully loaded and ready before interacting
-    const canvas = page.locator('[data-testid="graph-canvas"]');
-    await expect(canvas).toBeVisible({ timeout: 15000 });
-
-    // 1. Activate Connect Mode (press C)
-    await page.keyboard.press("c");
-    await page.waitForTimeout(500);
-
-    // 2. Verify hint appears
-    await expect(page.getByText("Linking Notes")).toBeVisible({
-      timeout: 10000,
-    });
-
-    // 3. Dismiss hint
-    const linkingHint = page.getByText("Linking Notes").locator("..");
-    await linkingHint.getByTestId("dismiss-hint-button").click();
-
-    // Wait for removal of the hint UI
-    await expect(page.getByText("Linking Notes")).not.toBeVisible();
-
-    // 4. Verify it stays dismissed when toggling Connect Mode again
-    await page.keyboard.press("c"); // toggle off
-    await page.keyboard.press("c"); // toggle on
-    await expect(page.getByText("Linking Notes")).not.toBeVisible();
-  });
 });

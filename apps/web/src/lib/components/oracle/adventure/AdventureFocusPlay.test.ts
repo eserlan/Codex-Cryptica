@@ -63,6 +63,7 @@ function manager() {
     adjustResourceCounter: vi.fn(),
     removeResourceCounter: vi.fn(),
     end: vi.fn(),
+    close: vi.fn(),
     cancel: vi.fn(),
   } as any;
 }
@@ -300,5 +301,15 @@ describe("AdventureFocusPlay", () => {
     await waitFor(() => {
       expect(fullscreenButton).toHaveProperty("disabled", false);
     });
+  });
+
+  it("allows leaving the adventure from the header button", async () => {
+    const m = manager();
+    render(AdventureFocusPlay, { props: props({ manager: m }) });
+
+    const leaveButton = screen.getByRole("button", { name: "Leave adventure" });
+    await fireEvent.click(leaveButton);
+
+    expect(m.close).toHaveBeenCalledOnce();
   });
 });

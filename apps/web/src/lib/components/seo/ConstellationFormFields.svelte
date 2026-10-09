@@ -3,7 +3,7 @@
     pickFrom,
     factionConfig,
     constellationConfig,
-  } from "$lib/services/seo/generator-engine";
+  } from "$lib/services/seo/generator-config";
   import SelectWithCustomOption from "$lib/components/forms/SelectWithCustomOption.svelte";
 
   let {
@@ -27,7 +27,7 @@
   const selectClass =
     "w-full min-h-12 rounded-lg border border-theme-border/60 bg-theme-bg/60 px-3 py-2.5 text-base text-theme-text focus:border-theme-primary/60 focus:outline-none md:text-sm";
   const labelClass =
-    "text-[10px] font-bold uppercase tracking-wider text-theme-text/80";
+    "text-micro font-bold uppercase tracking-wider text-theme-text/80";
 
   const modeChoices = [
     { value: "single", label: "Single Constellation" },
@@ -98,7 +98,7 @@
     customPlaceholder="Enter a custom cultural meaning"
   />
 {:else}
-  <p class="text-[11px] text-theme-text/60 leading-relaxed">
+  <p class="text-meta text-theme-text/60 leading-relaxed">
     Generates 8 to 15 constellations for one coherent culture, spanning every
     season, with recurring myths tying some of them together.
   </p>
@@ -107,7 +107,7 @@
 <div class="flex justify-end pt-2">
   <button
     type="button"
-    class="flex cursor-pointer items-center gap-1.5 rounded-lg border border-theme-border/60 bg-theme-surface/60 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-theme-text transition-all hover:border-theme-primary hover:bg-theme-primary hover:text-theme-bg"
+    class="flex cursor-pointer items-center gap-1.5 rounded-lg border border-theme-border/60 bg-theme-surface/60 px-3 py-1.5 text-micro font-bold uppercase tracking-wider text-theme-text transition-all hover:border-theme-primary hover:bg-theme-primary hover:text-theme-bg"
     title="Randomize all options and generate a draft from the result"
     onclick={() => {
       visualImpression = pickFrom(constellationConfig.visualImpressions);
@@ -136,7 +136,7 @@
   ></textarea>
   <p
     id="constellation-campaign-context-help"
-    class="text-[10px] text-theme-text/60 leading-relaxed"
+    class="text-micro text-theme-text/60 leading-relaxed"
   >
     Name the world, sky, or people this constellation belongs to. Anything you
     name here is kept and the constellation is built to fit it.

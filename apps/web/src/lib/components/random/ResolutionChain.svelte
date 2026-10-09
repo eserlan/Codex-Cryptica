@@ -33,7 +33,7 @@
     <li class="flex flex-col gap-1">
       <div class="flex items-start gap-2">
         <span
-          class="mt-0.5 shrink-0 font-mono text-[9px] uppercase tracking-widest text-theme-muted/70"
+          class="mt-0.5 shrink-0 font-mono text-nano uppercase tracking-widest text-theme-muted/70"
         >
           <span data-testid="chain-source">{node.sourceName}</span
           >{#if node.dieValue !== undefined}
@@ -45,7 +45,7 @@
         <span class="min-w-0 flex-1 font-body text-xs text-theme-text">
           {node.text}
           {#if node.status !== "ok"}
-            <span class="ml-1 font-mono text-[9px] uppercase text-amber-500">
+            <span class="ml-1 font-mono text-nano uppercase text-amber-500">
               ({STATUS_LABEL[node.status]})
             </span>
           {/if}

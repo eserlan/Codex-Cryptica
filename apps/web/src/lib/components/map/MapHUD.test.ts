@@ -72,12 +72,16 @@ vi.mock("$lib/stores/guest-vault.svelte", () => ({
 }));
 
 import MapHUD from "./MapHUD.svelte";
+import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
+import { mapControlsUIStore } from "$lib/stores/ui/map-controls-ui.svelte";
 
 describe("MapHUD", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     sessionModeStoreMock.isGuestMode = false;
     guestVaultMock.publishId = null;
+    layoutUIStore.isMobile = false;
+    mapControlsUIStore.open = false;
     vaultMock.allMaps = [{ id: "map-1", name: "World", isWorldMap: false }];
     mapStoreMock.activeMap = {
       id: "map-1",
@@ -100,6 +104,68 @@ describe("MapHUD", () => {
     await fireEvent.click(screen.getByRole("button", { name: "Add Map" }));
 
     expect(onShowUpload).toHaveBeenCalled();
+  });
+
+  describe("back button", () => {
+    it("is absent until the user has followed a link to another map", () => {
+      mapStoreMock.canGoBack = false;
+      render(MapHUD, {
+        props: { chatSidebarOffset: "20rem", onShowUpload: vi.fn() },
+      });
+
+      expect(screen.queryByTestId("map-back-button")).toBeNull();
+    });
+
+    it("is compact (icon only on phones) but still named for assistive tech", async () => {
+      mapStoreMock.canGoBack = true;
+      render(MapHUD, {
+        props: { chatSidebarOffset: "20rem", onShowUpload: vi.fn() },
+      });
+
+      const back = screen.getByRole("button", {
+        name: "Back to the previous map",
+      });
+      expect(back.querySelector("span.hidden.sm\\:inline")?.textContent).toBe(
+        "BACK",
+      );
+
+      await fireEvent.click(back);
+      expect(mapStoreMock.goBack).toHaveBeenCalledTimes(1);
+      mapStoreMock.canGoBack = false;
+    });
+  });
+
+  describe("on phones", () => {
+    it("keeps the map switcher but hides the other actions until revealed", () => {
+      layoutUIStore.isMobile = true;
+      render(MapHUD, {
+        props: { chatSidebarOffset: "20rem", onShowUpload: vi.fn() },
+      });
+
+      expect(screen.getByLabelText("Select Map")).not.toBeNull();
+      expect(screen.queryByRole("button", { name: "Add Map" })).toBeNull();
+      expect(screen.queryByRole("button", { name: /delete/i })).toBeNull();
+    });
+
+    it("shows every action once the controls are revealed", () => {
+      layoutUIStore.isMobile = true;
+      mapControlsUIStore.open = true;
+      render(MapHUD, {
+        props: { chatSidebarOffset: "20rem", onShowUpload: vi.fn() },
+      });
+
+      expect(screen.getByLabelText("Select Map")).not.toBeNull();
+      expect(screen.getByRole("button", { name: "Add Map" })).not.toBeNull();
+    });
+
+    it("still shows all actions on larger screens without any toggle", () => {
+      layoutUIStore.isMobile = false;
+      render(MapHUD, {
+        props: { chatSidebarOffset: "20rem", onShowUpload: vi.fn() },
+      });
+
+      expect(screen.getByRole("button", { name: "Add Map" })).not.toBeNull();
+    });
   });
 
   it("offers the note button out of play, and leaves it to the VTT toolbar in play", async () => {

@@ -6,6 +6,16 @@ import type { SortState } from "$lib/components/table/entityTableSort";
  * Unified saved view presets: named filter & presentation states scoped per vault.
  * Presets bridge both the Graph view and Entity Table view ("Same content, different views").
  */
+/**
+ * Where each entity sat when a view was saved (#3456). Optional and per view:
+ * it is applied on top of the vault's everyday arrangement only while that view
+ * is open, and never rewrites it. Keyed by entity id, so a rename keeps a
+ * position and a deleted entity's entry is simply never used.
+ */
+export interface ViewLayoutSnapshot {
+  positions: Record<string, { x: number; y: number }>;
+}
+
 export interface ViewPresetState {
   /* ─── Shared Content Scope (applies to BOTH Graph & Table) ─── */
   activeLabels: string[];
@@ -29,6 +39,8 @@ export interface ViewPresetState {
   orbitMode?: boolean;
   centralNodeId?: string | null;
   viewport?: { pan: { x: number; y: number }; zoom: number };
+  /** Optional saved arrangement. Absent for filter-only views. */
+  layout?: ViewLayoutSnapshot;
 }
 
 export interface ViewPreset {
@@ -69,6 +81,35 @@ function parseViewport(raw: unknown): ViewPresetState["viewport"] | undefined {
     return undefined;
   }
   return { pan: { x: v.pan.x, y: v.pan.y }, zoom: v.zoom };
+}
+
+/** Keys that must never become properties of a parsed positions map. */
+const UNSAFE_KEYS = new Set(["__proto__", "constructor", "prototype"]);
+
+/**
+ * Reads a saved layout, keeping only well-formed positions. Anything unreadable
+ * gives `undefined`, so a damaged layout turns the view into a filter-only view
+ * instead of breaking it.
+ */
+export function parseLayout(raw: unknown): ViewLayoutSnapshot | undefined {
+  const positionsRaw = (raw as Record<string, unknown> | null)?.positions;
+  if (typeof positionsRaw !== "object" || positionsRaw === null) {
+    return undefined;
+  }
+  if (Array.isArray(positionsRaw)) return undefined;
+  const positions: Record<string, { x: number; y: number }> = {};
+  for (const [id, value] of Object.entries(positionsRaw)) {
+    const point = UNSAFE_KEYS.has(id) ? undefined : parsePoint(value);
+    if (point) positions[id] = point;
+  }
+  return Object.keys(positions).length > 0 ? { positions } : undefined;
+}
+
+function parsePoint(raw: unknown): { x: number; y: number } | undefined {
+  const point = raw as { x?: unknown; y?: unknown } | null;
+  return point && isFiniteNumber(point.x) && isFiniteNumber(point.y)
+    ? { x: point.x, y: point.y }
+    : undefined;
 }
 
 function parseTableSort(raw: unknown): SortState | undefined {
@@ -129,6 +170,10 @@ export function parsePresetState(raw: unknown): ViewPresetState | null {
   }
   if (typeof s.columnFilters === "object" && s.columnFilters !== null) {
     result.columnFilters = s.columnFilters;
+  }
+  const layout = parseLayout(s.layout);
+  if (layout) {
+    result.layout = layout;
   }
   const parsedSort = parseTableSort(s.tableSort);
   if (parsedSort) {

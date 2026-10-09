@@ -8,7 +8,10 @@ export type LlmOperation =
   | "freeform-generation"
   | "revision"
   | "classification"
-  | "utility";
+  | "utility"
+  // Server-internal: only the contextual help route calls it, so it is not in
+  // the public operation list in handle-operation-request.ts (#3427).
+  | "help-answer";
 
 export type LlmProvider = "gemini" | "openai";
 

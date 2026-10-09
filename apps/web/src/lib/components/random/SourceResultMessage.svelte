@@ -149,7 +149,7 @@
 >
   <div class="flex items-center justify-between gap-2">
     <span
-      class="font-mono text-[9px] uppercase tracking-widest text-theme-muted"
+      class="font-mono text-nano uppercase tracking-widest text-theme-muted"
       data-testid="source-result-name"
     >
       {result.sourceName}
@@ -157,7 +157,7 @@
     {#if !isGuest()}
       <button
         type="button"
-        class="rounded border border-theme-border px-2 py-0.5 font-header text-[9px] uppercase tracking-widest text-theme-muted transition-colors hover:border-theme-primary hover:text-theme-primary disabled:opacity-40"
+        class="rounded border border-theme-border px-2 py-0.5 font-header text-nano uppercase tracking-widest text-theme-muted transition-colors hover:border-theme-primary hover:text-theme-primary disabled:opacity-40"
         onclick={keepAsNote}
         disabled={saved}
         data-testid="keep-result"
@@ -179,7 +179,8 @@
           data-testid="entity-mention-{segment.entityId}"
           class="inline-flex items-center gap-1 rounded bg-theme-primary/10 px-1 py-0.5 font-medium text-theme-primary transition-colors hover:bg-theme-primary/20 hover:underline align-baseline cursor-pointer"
         >
-          <span class="icon-[lucide--book-open] h-3 w-3"></span>
+          <span aria-hidden="true" class="icon-[lucide--book-open] h-3 w-3"
+          ></span>
           {segment.text}
         </button>
       {:else}
@@ -189,7 +190,7 @@
   </p>
 
   {#if result.drawnCards && result.drawnCards.length > 1}
-    <p class="font-mono text-[9px] uppercase tracking-widest text-theme-muted">
+    <p class="font-mono text-nano uppercase tracking-widest text-theme-muted">
       {result.drawnCards.length} cards drawn
     </p>
   {/if}

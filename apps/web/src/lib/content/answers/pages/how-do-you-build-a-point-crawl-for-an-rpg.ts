@@ -154,6 +154,11 @@ export const howDoYouBuildAPointCrawlForAnRpg: AnswerConfigInput = {
     "how-much-prep-do-you-need-for-an-rpg-session",
     "point-crawl-vs-hex-crawl",
     "what-ttrpg-should-i-use-for-a-fantasy-dungeon-crawl",
+    "what-rpg-map-making-tool-should-i-use",
+    "how-do-i-run-exploration-in-a-huge-ruined-city",
+    "how-do-i-create-interesting-islands-and-ports-for-a-pirate-campaign",
+    "how-do-i-make-sea-travel-interesting-in-a-ttrpg",
+    "how-do-i-run-a-pirate-campaign-focused-on-exploration",
   ],
   discovery: {
     id: "answer-build-a-point-crawl",

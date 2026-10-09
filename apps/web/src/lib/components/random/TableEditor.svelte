@@ -16,7 +16,6 @@
   } from "random-source-engine";
   import { systemIdGenerator, type IdGenerator } from "$lib/utils/runtime-deps";
   import { computeWindow } from "./virtual-window";
-  import FeatureHint from "$lib/components/help/FeatureHint.svelte";
   import SourceIdentityFields from "./SourceIdentityFields.svelte";
   import TableRoller from "./TableRoller.svelte";
   import TableGenerateDialog from "./TableGenerateDialog.svelte";
@@ -203,10 +202,6 @@
 </script>
 
 <div class="flex flex-col gap-4" data-testid="table-editor">
-  <!-- Reference syntax is exactly the kind of interaction a first-time author
-       cannot guess at, which is what this clause is for (Constitution IX). -->
-  <FeatureHint hintId="random-tables-and-decks" />
-
   {#key source.id}
     <SourceIdentityFields {source} {onChange} {onRename} />
   {/key}
@@ -214,7 +209,7 @@
   <div class="flex flex-wrap items-end gap-4">
     <div class="flex flex-col gap-1">
       <span
-        class="text-[9px] font-bold font-header uppercase tracking-[0.2em] text-theme-muted"
+        class="text-nano font-bold font-header uppercase tracking-[0.2em] text-theme-muted"
         >How entries are picked</span
       >
       <div class="flex overflow-hidden rounded border border-theme-border">
@@ -222,7 +217,7 @@
           <button
             type="button"
             title={option.help}
-            class="px-3 py-1.5 font-header text-[10px] uppercase tracking-widest transition-colors {(isRanged
+            class="px-3 py-1.5 font-header text-micro uppercase tracking-widest transition-colors {(isRanged
               ? 'ranged'
               : 'weighted') === option.mode
               ? 'bg-theme-primary text-theme-bg'
@@ -239,7 +234,7 @@
     {#if isRanged}
       <label class="flex flex-col gap-1">
         <span
-          class="text-[9px] font-bold font-header uppercase tracking-[0.2em] text-theme-muted"
+          class="text-nano font-bold font-header uppercase tracking-[0.2em] text-theme-muted"
           >Dice</span
         >
         <div class="flex flex-wrap items-center gap-1">
@@ -300,7 +295,7 @@
           />
         </div>
         <span
-          class="font-mono text-[10px] text-theme-muted"
+          class="font-mono text-micro text-theme-muted"
           data-testid="table-die-range"
         >
           Rolls {dieBounds.min}–{dieBounds.max}
@@ -323,14 +318,14 @@
 
   <div class="flex items-center justify-between">
     <span
-      class="text-[9px] font-bold font-header uppercase tracking-[0.2em] text-theme-muted"
+      class="text-nano font-bold font-header uppercase tracking-[0.2em] text-theme-muted"
     >
       Entries ({entries.length})
     </span>
     <div class="flex items-center gap-2">
       <button
         type="button"
-        class="flex items-center gap-1.5 rounded border border-theme-border px-2.5 py-1 font-header text-[10px] uppercase tracking-widest text-theme-text transition-colors hover:border-theme-primary hover:text-theme-primary"
+        class="flex items-center gap-1.5 rounded border border-theme-border px-2.5 py-1 font-header text-micro uppercase tracking-widest text-theme-text transition-colors hover:border-theme-primary hover:text-theme-primary"
         onclick={() => (showGenerateDialog = true)}
         data-testid="table-generate-entries-btn"
       >
@@ -342,7 +337,7 @@
       </button>
       <button
         type="button"
-        class="flex items-center gap-1.5 rounded border border-theme-border px-2.5 py-1 font-header text-[10px] uppercase tracking-widest text-theme-text transition-colors hover:border-theme-primary hover:text-theme-primary"
+        class="flex items-center gap-1.5 rounded border border-theme-border px-2.5 py-1 font-header text-micro uppercase tracking-widest text-theme-text transition-colors hover:border-theme-primary hover:text-theme-primary"
         onclick={addEntry}
         data-testid="add-entry"
       >
@@ -367,7 +362,7 @@
         style="height: {ROW_HEIGHT}px"
       >
         <span
-          class="w-8 shrink-0 text-right font-mono text-[10px] text-theme-muted/60"
+          class="w-8 shrink-0 text-right font-mono text-micro text-theme-muted/60"
           >{index + 1}</span
         >
 
@@ -386,7 +381,7 @@
                   },
                 })}
             />
-            <span class="text-[10px] text-theme-muted">–</span>
+            <span class="text-micro text-theme-muted">–</span>
             <input
               type="number"
               aria-label="Highest number for entry {index + 1}"
@@ -424,7 +419,7 @@
           />
           {#if problems.length > 0}
             <span
-              class="truncate text-[10px] {problems.some(
+              class="truncate text-micro {problems.some(
                 (p) => p.severity === 'error',
               )
                 ? 'text-red-500'
@@ -437,7 +432,7 @@
             <!-- References are invisible inside a plain input, so the names
                  this entry pulls in are named under it (FR-013). -->
             <span
-              class="truncate font-mono text-[10px] text-theme-primary/80"
+              class="truncate font-mono text-micro text-theme-primary/80"
               data-testid="entry-references"
             >
               pulls in {references(entry.text).join(", ")}

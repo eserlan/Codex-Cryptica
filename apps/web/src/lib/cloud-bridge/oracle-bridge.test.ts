@@ -10,18 +10,23 @@ const { releaseProxySymbol } = vi.hoisted(() => ({
   releaseProxySymbol: Symbol("releaseProxy"),
 }));
 
-const { setSessionTokenMock } = vi.hoisted(() => ({
-  setSessionTokenMock: vi.fn(),
-}));
+const { setSessionTokenMock, setSessionTokenProviderMock, proxyMock } =
+  vi.hoisted(() => ({
+    setSessionTokenMock: vi.fn(),
+    setSessionTokenProviderMock: vi.fn(),
+    proxyMock: vi.fn((fn: unknown) => fn),
+  }));
 
 vi.mock("comlink", () => ({
   wrap: vi.fn().mockReturnValue({
     generateResponse: vi.fn(),
     expandQuery: vi.fn(),
     setSessionToken: setSessionTokenMock,
+    setSessionTokenProvider: setSessionTokenProviderMock,
     [releaseProxySymbol]: vi.fn(),
   }),
   releaseProxy: releaseProxySymbol,
+  proxy: proxyMock,
 }));
 
 // Mock worker import
@@ -89,6 +94,19 @@ describe("OracleBridge", () => {
   it("should not throw when relaying a session token before the worker is ready", () => {
     (bridge as any).api = null;
     expect(() => bridge.setSessionToken(null)).not.toThrow();
+  });
+
+  it("should wire a Comlink-proxied token provider into the worker", () => {
+    const provider = vi.fn().mockResolvedValue({ token: "t", expiresAt: 1 });
+    bridge.setTokenProvider(provider);
+
+    expect(proxyMock).toHaveBeenCalledWith(provider);
+    expect(setSessionTokenProviderMock).toHaveBeenCalledWith(provider);
+  });
+
+  it("should not throw when wiring a token provider before the worker is ready", () => {
+    (bridge as any).api = null;
+    expect(() => bridge.setTokenProvider(vi.fn())).not.toThrow();
   });
 
   it("should handle worker initialization failure", () => {

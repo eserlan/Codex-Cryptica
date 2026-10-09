@@ -216,6 +216,27 @@ describe("CanvasContextMenu text note styling", () => {
     expect(onTextNodeFontSizeChange).toHaveBeenCalledWith(24);
   });
 
+  it("reports the chosen background preset using onNodeBackgroundChange", async () => {
+    const onNodeBackgroundChange = vi.fn();
+    render(CanvasContextMenu, {
+      props: {
+        x: 10,
+        y: 10,
+        targetId: "entity-1",
+        targetType: "node",
+        onDelete: vi.fn(),
+        nodeBackground: "default",
+        onNodeBackgroundChange,
+        onClose: vi.fn(),
+      } as any,
+    });
+
+    await fireEvent.click(
+      screen.getByRole("button", { name: "Set background to primary" }),
+    );
+    expect(onNodeBackgroundChange).toHaveBeenCalledWith("primary");
+  });
+
   it("does not show text note styling controls for a non-text node", () => {
     render(CanvasContextMenu, {
       props: {
@@ -231,5 +252,291 @@ describe("CanvasContextMenu text note styling", () => {
     expect(
       screen.queryByRole("button", { name: /Set background to/ }),
     ).toBeNull();
+  });
+});
+
+describe("CanvasContextMenu entity card view", () => {
+  it("reports the chosen card view for an entity node", async () => {
+    const onEntityCardViewChange = vi.fn();
+    render(CanvasContextMenu, {
+      props: {
+        x: 10,
+        y: 10,
+        targetId: "node-1",
+        targetType: "node",
+        onDelete: vi.fn(),
+        entityCardView: "auto",
+        onEntityCardViewChange,
+        onClose: vi.fn(),
+      } as any,
+    });
+
+    expect(screen.getByText("Card view")).toBeTruthy();
+    const faction = screen.getByRole("menuitemradio", { name: "Faction" });
+    expect(faction.getAttribute("aria-checked")).toBe("false");
+
+    await fireEvent.click(faction);
+    expect(onEntityCardViewChange).toHaveBeenCalledWith("faction");
+  });
+
+  it("marks the active card view as checked", () => {
+    render(CanvasContextMenu, {
+      props: {
+        x: 10,
+        y: 10,
+        targetId: "node-1",
+        targetType: "node",
+        onDelete: vi.fn(),
+        entityCardView: "character",
+        onEntityCardViewChange: vi.fn(),
+        onClose: vi.fn(),
+      } as any,
+    });
+
+    expect(
+      screen
+        .getByRole("menuitemradio", { name: "Character" })
+        .getAttribute("aria-checked"),
+    ).toBe("true");
+  });
+
+  it("renders and selects the Image only card view option", async () => {
+    const onEntityCardViewChange = vi.fn();
+    render(CanvasContextMenu, {
+      props: {
+        x: 10,
+        y: 10,
+        targetId: "node-1",
+        targetType: "node",
+        onDelete: vi.fn(),
+        entityCardView: "auto",
+        onEntityCardViewChange,
+        onClose: vi.fn(),
+      } as any,
+    });
+
+    const imageOnly = screen.getByRole("menuitemradio", { name: "Image only" });
+    expect(imageOnly.getAttribute("aria-checked")).toBe("false");
+
+    await fireEvent.click(imageOnly);
+    expect(onEntityCardViewChange).toHaveBeenCalledWith("image_only");
+  });
+
+  it("does not show card view controls when unavailable", () => {
+    render(CanvasContextMenu, {
+      props: {
+        x: 10,
+        y: 10,
+        targetId: "node-1",
+        targetType: "node",
+        onDelete: vi.fn(),
+        onClose: vi.fn(),
+      } as any,
+    });
+
+    expect(screen.queryByText("Card view")).toBeNull();
+  });
+});
+
+describe("CanvasContextMenu large card", () => {
+  it("toggles the large card version for an entity node", async () => {
+    const onLargeCardChange = vi.fn();
+    render(CanvasContextMenu, {
+      props: {
+        x: 10,
+        y: 10,
+        targetId: "node-1",
+        targetType: "node",
+        onDelete: vi.fn(),
+        entityCardView: "auto",
+        onEntityCardViewChange: vi.fn(),
+        largeCard: false,
+        onLargeCardChange,
+        onClose: vi.fn(),
+      } as any,
+    });
+
+    await fireEvent.click(
+      screen.getByRole("menuitemcheckbox", { name: "Large card" }),
+    );
+    expect(onLargeCardChange).toHaveBeenCalledWith(true);
+  });
+
+  it("marks large card as checked when active", () => {
+    render(CanvasContextMenu, {
+      props: {
+        x: 10,
+        y: 10,
+        targetId: "node-1",
+        targetType: "node",
+        onDelete: vi.fn(),
+        entityCardView: "auto",
+        onEntityCardViewChange: vi.fn(),
+        largeCard: true,
+        onLargeCardChange: vi.fn(),
+        onClose: vi.fn(),
+      } as any,
+    });
+
+    expect(
+      screen
+        .getByRole("menuitemcheckbox", { name: "Large card" })
+        .getAttribute("aria-checked"),
+    ).toBe("true");
+  });
+
+  it("does not show the large card toggle when unavailable", () => {
+    render(CanvasContextMenu, {
+      props: {
+        x: 10,
+        y: 10,
+        targetId: "node-1",
+        targetType: "node",
+        onDelete: vi.fn(),
+        entityCardView: "auto",
+        onEntityCardViewChange: vi.fn(),
+        onClose: vi.fn(),
+      } as any,
+    });
+
+    expect(
+      screen.queryByRole("menuitemcheckbox", { name: "Large card" }),
+    ).toBeNull();
+  });
+});
+
+describe("CanvasContextMenu image only view toggle", () => {
+  it("toggles image only view from the Card view options", async () => {
+    const onEntityCardViewChange = vi.fn();
+    render(CanvasContextMenu, {
+      props: {
+        x: 10,
+        y: 10,
+        targetId: "node-1",
+        targetType: "node",
+        onDelete: vi.fn(),
+        entityCardView: "auto",
+        onEntityCardViewChange,
+        onClose: vi.fn(),
+      } as any,
+    });
+
+    const option = screen.getByRole("menuitemradio", {
+      name: "Image only",
+    });
+    expect(option.getAttribute("aria-checked")).toBe("false");
+
+    await fireEvent.click(option);
+    expect(onEntityCardViewChange).toHaveBeenCalledWith("image_only");
+  });
+
+  it("toggles off image only view when clicking it while already active", async () => {
+    const onEntityCardViewChange = vi.fn();
+    render(CanvasContextMenu, {
+      props: {
+        x: 10,
+        y: 10,
+        targetId: "node-1",
+        targetType: "node",
+        onDelete: vi.fn(),
+        entityCardView: "image_only",
+        onEntityCardViewChange,
+        onClose: vi.fn(),
+      } as any,
+    });
+
+    const option = screen.getByRole("menuitemradio", {
+      name: "Image only",
+    });
+    expect(option.getAttribute("aria-checked")).toBe("true");
+
+    await fireEvent.click(option);
+    expect(onEntityCardViewChange).toHaveBeenCalledWith("auto");
+  });
+
+  it("renders 'Switch All to Image Only' on pane and calls onToggleAllImageOnly", async () => {
+    const onToggleAllImageOnly = vi.fn();
+    render(CanvasContextMenu, {
+      props: {
+        x: 10,
+        y: 10,
+        targetId: "pane",
+        targetType: "pane",
+        onDelete: vi.fn(),
+        isAllImageOnly: false,
+        onToggleAllImageOnly,
+        onClose: vi.fn(),
+      } as any,
+    });
+
+    const button = screen.getByRole("menuitem", {
+      name: "Switch All to Image Only",
+    });
+    await fireEvent.click(button);
+    expect(onToggleAllImageOnly).toHaveBeenCalledOnce();
+  });
+
+  it("renders 'Switch All to Card Details' on pane when all are image only", () => {
+    render(CanvasContextMenu, {
+      props: {
+        x: 10,
+        y: 10,
+        targetId: "pane",
+        targetType: "pane",
+        onDelete: vi.fn(),
+        isAllImageOnly: true,
+        onToggleAllImageOnly: vi.fn(),
+        onClose: vi.fn(),
+      } as any,
+    });
+
+    expect(
+      screen.getByRole("menuitem", {
+        name: "Switch All to Card Details",
+      }),
+    ).toBeTruthy();
+  });
+
+  it("renders 'Show Labels on Image Cards' on pane and calls onToggleShowImageLabels", async () => {
+    const onToggleShowImageLabels = vi.fn();
+    render(CanvasContextMenu, {
+      props: {
+        x: 10,
+        y: 10,
+        targetId: "pane",
+        targetType: "pane",
+        onDelete: vi.fn(),
+        showImageLabels: false,
+        onToggleShowImageLabels,
+        onClose: vi.fn(),
+      } as any,
+    });
+
+    const button = screen.getByRole("menuitem", {
+      name: "Show Labels on Image Cards",
+    });
+    await fireEvent.click(button);
+    expect(onToggleShowImageLabels).toHaveBeenCalledOnce();
+  });
+
+  it("renders 'Hide Labels on Image Cards' on pane when showImageLabels is true", () => {
+    render(CanvasContextMenu, {
+      props: {
+        x: 10,
+        y: 10,
+        targetId: "pane",
+        targetType: "pane",
+        onDelete: vi.fn(),
+        showImageLabels: true,
+        onToggleShowImageLabels: vi.fn(),
+        onClose: vi.fn(),
+      } as any,
+    });
+
+    expect(
+      screen.getByRole("menuitem", {
+        name: "Hide Labels on Image Cards",
+      }),
+    ).toBeTruthy();
   });
 });

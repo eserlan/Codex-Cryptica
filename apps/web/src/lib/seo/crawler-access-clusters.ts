@@ -93,8 +93,15 @@ export function discoverClusterTargetRoutes(
  * Catches 0 headings, multiple headings, and whitespace-only headings.
  */
 export function validateSingleH1(body: string): CrawlFinding[] {
-  const matches = [...body.matchAll(/<h1(?:\s+[^>]*)?>([\s\S]*?)<\/h1>/gi)];
-  if (matches.length === 0) {
+  // ⚡ Bolt Optimization: Replace [...matchAll] with a lazy iterator to avoid intermediate array allocation
+  let matchesCount = 0;
+  let firstMatch: RegExpExecArray | null = null;
+  for (const match of body.matchAll(/<h1(?:\s+[^>]*)?>([\s\S]*?)<\/h1>/gi)) {
+    matchesCount++;
+    if (!firstMatch) firstMatch = match;
+  }
+
+  if (matchesCount === 0) {
     return [
       {
         code: "h1-missing",
@@ -103,16 +110,17 @@ export function validateSingleH1(body: string): CrawlFinding[] {
       },
     ];
   }
-  if (matches.length > 1) {
+  if (matchesCount > 1) {
     return [
       {
         code: "h1-multiple",
         severity: "error",
-        message: `found ${matches.length} <h1> headings, expected exactly 1`,
+        message: `found ${matchesCount} <h1> headings, expected exactly 1`,
       },
     ];
   }
-  const text = matches[0][1].replace(/<[^>]+>/g, "").trim();
+  const text = firstMatch![1].replace(/<[^>]+>/g, "").trim();
+
   if (!text) {
     return [
       {
@@ -131,23 +139,14 @@ export function validateSingleH1(body: string): CrawlFinding[] {
  */
 export function validateStructuredData(body: string): CrawlFinding[] {
   const findings: CrawlFinding[] = [];
-  const scripts = [
-    ...body.matchAll(
-      /<script[^>]+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi,
-    ),
-  ];
+  // ⚡ Bolt Optimization: Replace [...matchAll] with an iterator loop
+  const iterator = body.matchAll(
+    /<script[^>]+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi,
+  );
 
-  if (scripts.length === 0) {
-    return [
-      {
-        code: "structured-data-missing",
-        severity: "error",
-        message: 'no <script type="application/ld+json"> structured data found',
-      },
-    ];
-  }
-
-  for (const script of scripts) {
+  let hasScripts = false;
+  for (const script of iterator) {
+    hasScripts = true;
     const content = script[1].trim();
     let parsed: any;
     try {
@@ -200,6 +199,16 @@ export function validateStructuredData(body: string): CrawlFinding[] {
         });
       }
     }
+  }
+
+  if (!hasScripts) {
+    return [
+      {
+        code: "structured-data-missing",
+        severity: "error",
+        message: 'no <script type="application/ld+json"> structured data found',
+      },
+    ];
   }
 
   return findings;
@@ -322,9 +331,8 @@ export function extractOutgoingClusterLinks(
   origin: string,
   currentRoute: string,
 ): string[] {
-  const hrefMatches = [
-    ...html.matchAll(/<a[^>]+href=["']([^"']+)["'][^>]*>/gi),
-  ];
+  // ⚡ Bolt Optimization: Replace [...matchAll] with an imperative iterator loop to avoid intermediate array allocation
+  const hrefMatches = html.matchAll(/<a[^>]+href=["']([^"']+)["'][^>]*>/gi);
   const matched = new Set<string>();
   const normalizedCurrent = currentRoute.replace(/\/+$/, "") || "/";
   const knownSet = new Set(

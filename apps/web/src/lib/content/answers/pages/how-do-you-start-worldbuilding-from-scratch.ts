@@ -15,6 +15,7 @@ export const howDoYouStartWorldbuildingFromScratch: AnswerConfigInput = {
       paragraphs: [
         "New creators often begin by sketching continental coastlines, charting pantheons of twenty gods, and detailing five thousand years of royal lineages. While this top-down exercise can be personally satisfying, it rarely benefits your tabletop sessions. Players do not interact with tectonic plates or dynasties from four centuries ago; they interact with the blacksmith who refuses to trade with them, the tax collector demanding silver, and the sinister lights flickering in the nearby woods.",
         "Worldbuilder's disease occurs when expansive macro-level lore replaces playable, immediate micro-detail. By starting with a tiny, vivid focal point, you produce material that directly fuels gameplay while leaving room for the larger world to emerge organically during play.",
+        "If you are worldbuilding to write fiction rather than to run a campaign, where a single viewpoint character and one opening scene set the scope instead of a party that may walk in any direction, use the companion answer on worldbuilding for a novel or short story. It applies the same minimum-viable principle through a story-first sequence built for writers.",
       ],
     },
     {
@@ -137,6 +138,7 @@ export const howDoYouStartWorldbuildingFromScratch: AnswerConfigInput = {
     },
   ],
   relatedAnswers: [
+    "how-do-i-start-worldbuilding-for-a-novel-or-short-story",
     "how-do-you-create-a-magic-system",
     "how-do-you-make-npcs-memorable-without-lots-of-prep",
     "how-do-you-prep-a-weekly-rpg-session-quickly",
@@ -145,6 +147,9 @@ export const howDoYouStartWorldbuildingFromScratch: AnswerConfigInput = {
     "how-to-create-a-sci-fi-star-system-for-an-rpg",
     "how-do-i-start-gming-for-the-first-time",
     "how-do-i-build-a-believable-constitutional-crisis-or-coup",
+    "how-do-fantasy-cities-defend-against-flying-creatures-and-teleportation",
+    "how-should-magic-have-been-discovered-in-my-world",
+    "how-do-i-start-a-dnd-campaign",
   ],
   discovery: {
     id: "answer-worldbuilding-from-scratch",
@@ -166,11 +171,17 @@ export const howDoYouStartWorldbuildingFromScratch: AnswerConfigInput = {
         reason:
           "Magic systems addresses arcane rules and costs, whereas starting worldbuilding covers initial local sandboxes and settlements.",
       },
+      {
+        with: "answer-worldbuilding-for-fiction-writers",
+        reason:
+          "This answer provides a GM-focused local sandbox for tabletop campaigns, whereas the companion fiction answer provides a story-first method for novel and short story writers.",
+      },
     ],
     relatedIntents: [
       "answer-create-magic-system",
       "answer-npcs-memorable",
       "answer-prep-weekly-session-quickly",
+      "answer-worldbuilding-for-fiction-writers",
     ],
   },
   seo: {

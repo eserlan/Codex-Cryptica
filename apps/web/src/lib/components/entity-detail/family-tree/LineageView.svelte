@@ -2,7 +2,6 @@
   import type { Entity } from "schema";
   import { untrack } from "svelte";
   import { buildLineage, layoutLineage } from "@codex/family-engine";
-  import FeatureHint from "$lib/components/help/FeatureHint.svelte";
   import FamilyMemberCard from "./FamilyMemberCard.svelte";
   import PanZoomContainer from "./PanZoomContainer.svelte";
   import { PanZoomState } from "../pan-zoom.svelte";
@@ -68,9 +67,14 @@
 
   function toggleBranch(rootId: string) {
     if (expandedBranches === "all") {
-      expandedBranches = new Set(
-        [...lineage.siblingBranches.keys()].filter((id) => id !== rootId),
-      );
+      // ⚡ Bolt Optimization: Replace [...keys].filter with imperative loop
+      const nextExpanded = new Set<string>();
+      for (const id of lineage.siblingBranches.keys()) {
+        if (id !== rootId) {
+          nextExpanded.add(id);
+        }
+      }
+      expandedBranches = nextExpanded;
       return;
     }
     const next = new Set(expandedBranches);
@@ -113,14 +117,11 @@
     </p>
   </div>
 {:else}
-  <div class="pb-2">
-    <FeatureHint hintId="lineage-controls" />
-  </div>
   <div class="flex items-center justify-end gap-2 pb-2">
     <button
       type="button"
       data-testid="lineage-expand-all"
-      class="rounded border border-theme-border px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-theme-muted hover:border-theme-primary hover:text-theme-primary"
+      class="rounded border border-theme-border px-2 py-1 text-micro font-bold uppercase tracking-wide text-theme-muted hover:border-theme-primary hover:text-theme-primary"
       onclick={expandAllGenerations}
     >
       Show all generations
@@ -184,7 +185,7 @@
                 <button
                   type="button"
                   data-testid="lineage-branch-toggle-{card.id}"
-                  class="mt-1 w-full min-h-[44px] rounded border border-theme-border px-1 py-0.5 text-[9px] font-bold uppercase tracking-wide text-theme-muted hover:border-theme-primary hover:text-theme-primary"
+                  class="mt-1 w-full min-h-[44px] rounded border border-theme-border px-1 py-0.5 text-nano font-bold uppercase tracking-wide text-theme-muted hover:border-theme-primary hover:text-theme-primary"
                   onclick={() => toggleBranch(card.id)}
                 >
                   {isBranchExpanded(card.id)
@@ -204,7 +205,7 @@
       <button
         type="button"
         data-testid="lineage-expander-up"
-        class="rounded border border-theme-border px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-theme-muted hover:border-theme-primary hover:text-theme-primary"
+        class="rounded border border-theme-border px-2 py-1 text-micro font-bold uppercase tracking-wide text-theme-muted hover:border-theme-primary hover:text-theme-primary"
         onclick={expandUp}
       >
         {lineage.truncatedUp.hiddenGenerations} more generations above
@@ -214,7 +215,7 @@
       <button
         type="button"
         data-testid="lineage-expander-down"
-        class="rounded border border-theme-border px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-theme-muted hover:border-theme-primary hover:text-theme-primary"
+        class="rounded border border-theme-border px-2 py-1 text-micro font-bold uppercase tracking-wide text-theme-muted hover:border-theme-primary hover:text-theme-primary"
         onclick={expandDown}
       >
         {lineage.truncatedDown.hiddenGenerations} more generations below

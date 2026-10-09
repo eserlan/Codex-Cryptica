@@ -218,12 +218,12 @@
       Eldrin the Wise
     </div>
     <div
-      class="text-[9px] font-mono uppercase tracking-[0.15em] mb-3"
+      class="text-nano font-mono uppercase tracking-[0.15em] mb-3"
       style="color: {PREVIEW_COLORS.character}"
     >
       Character
     </div>
-    <div class="space-y-1.5 text-[9px] sm:text-[10px] font-body leading-snug">
+    <div class="space-y-1.5 text-nano sm:text-micro font-body leading-snug">
       <div class="text-theme-muted">
         Faction: <span class="text-theme-text">The Gilded Hand</span>
       </div>
@@ -231,7 +231,8 @@
         Found at: <span class="text-theme-text">Black Iron Tavern</span>
       </div>
       <div class="flex items-center gap-1 text-theme-primary pt-0.5">
-        <span class="icon-[lucide--search] w-3 h-3 shrink-0"></span>
+        <span aria-hidden="true" class="icon-[lucide--search] w-3 h-3 shrink-0"
+        ></span>
         Investigating the Missing Heirloom
       </div>
     </div>

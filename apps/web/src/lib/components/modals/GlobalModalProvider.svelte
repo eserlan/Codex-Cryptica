@@ -10,6 +10,8 @@
   import { notificationStore } from "$lib/stores/ui/notification.svelte";
   import { loreMergeStore } from "$lib/stores/ui/lore-merge.svelte";
   import { guestChatStore } from "$lib/stores/guest-chat.svelte";
+  import { reportPanelStore } from "$lib/stores/ui/report-panel.svelte";
+  import { isHelpAssistantEnabled } from "$lib/config/help-assistant";
 
   let {
     isMobileMenuOpen = $bindable(false),
@@ -161,6 +163,20 @@
       {#await loadModal(() => import("$lib/components/canvas/CanvasSelectionModal.svelte"), "CanvasSelectionModal") then CanvasSelectionModal}
         {#if CanvasSelectionModal}
           <CanvasSelectionModal />
+        {/if}
+      {/await}
+    {/if}
+
+    {#if reportPanelStore.request}
+      {#await loadModal(() => import("$lib/components/reports/ReportPanel.svelte"), "ReportPanel") then ReportPanel}
+        {#if ReportPanel && reportPanelStore.request}
+          <ReportPanel
+            input={reportPanelStore.request.input}
+            source={reportPanelStore.request.source}
+            defaultTitle={reportPanelStore.request.defaultTitle}
+            rescope={reportPanelStore.request.rescope}
+            onclose={() => reportPanelStore.close()}
+          />
         {/if}
       {/await}
     {/if}
@@ -327,6 +343,16 @@
       {#await loadModal(() => import("$lib/components/modals/GuestChatModal.svelte"), "GuestChatModal") then GuestChatModal}
         {#if GuestChatModal}
           <GuestChatModal />
+        {/if}
+      {/await}
+    {/if}
+
+    <!-- Contextual help assistant (#3427). Loaded only when the flag is on, so
+         with it off none of the help code is downloaded. -->
+    {#if isHelpAssistantEnabled()}
+      {#await loadModal(() => import("$lib/components/help-assistant/HelpAssistantHost.svelte"), "HelpAssistantHost") then HelpAssistantHost}
+        {#if HelpAssistantHost}
+          <HelpAssistantHost />
         {/if}
       {/await}
     {/if}

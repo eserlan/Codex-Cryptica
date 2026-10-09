@@ -10,7 +10,7 @@
   aria-label="Responsible AI series navigation"
 >
   <p
-    class="text-[10px] font-mono text-theme-muted uppercase tracking-widest mb-4"
+    class="text-micro font-mono text-theme-muted uppercase tracking-widest mb-4"
   >
     Part of the Codex Cryptica Responsible AI Series
   </p>
@@ -18,7 +18,7 @@
     {#each RA_SERIES as article, i}
       <li class="flex items-start gap-3">
         <span
-          class="text-[10px] font-mono text-theme-muted mt-0.5 w-4 shrink-0 text-right"
+          class="text-micro font-mono text-theme-muted mt-0.5 w-4 shrink-0 text-right"
           >{i + 1}.</span
         >
         {#if article.slug === currentSlug}
@@ -28,7 +28,7 @@
           >
             {article.title}
             <span
-              class="ml-1.5 text-[10px] font-mono text-theme-muted normal-case tracking-normal"
+              class="ml-1.5 text-micro font-mono text-theme-muted normal-case tracking-normal"
               >(this article)</span
             >
           </span>

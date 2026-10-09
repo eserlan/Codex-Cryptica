@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { VaultLifecycleManager } from "./lifecycle";
 import { getDB } from "../../utils/idb";
 import { vaultEventBus } from "./events.svelte";
+import { statSheetTemplates } from "../stat-sheet-templates.svelte";
 
 // Mock dependencies
 const { mockThemeStore, mockOracle } = vi.hoisted(() => {
@@ -50,6 +51,17 @@ vi.mock("../vault-registry.svelte", () => ({
 
 vi.mock("../theme.svelte", () => ({
   themeStore: mockThemeStore,
+}));
+
+const { mockEntityTemplates } = vi.hoisted(() => ({
+  mockEntityTemplates: {
+    loadForVault: vi.fn().mockResolvedValue(undefined),
+    clearForGuest: vi.fn(),
+  },
+}));
+
+vi.mock("../entity-templates/entity-template-store.svelte", () => ({
+  entityTemplateStore: mockEntityTemplates,
 }));
 
 vi.mock("../oracle/hooks", () => ({
@@ -172,9 +184,95 @@ describe("VaultLifecycleManager", () => {
       expect(deps.setInitialized).toHaveBeenLastCalledWith(true);
     });
 
+    it("loads entity templates with both handles on switch", async () => {
+      const vault = { name: "vault" } as any;
+      const folder = { name: "folder" } as any;
+      deps.getActiveVaultHandle = vi.fn().mockResolvedValue(vault);
+      deps.getActiveFolderHandle = vi.fn().mockResolvedValue(folder);
+      manager = new VaultLifecycleManager(deps);
+
+      await manager.switchVault("v2");
+
+      expect(mockEntityTemplates.loadForVault).toHaveBeenCalledWith("v2", {
+        vault,
+        folder,
+      });
+    });
+
+    it("skips entity templates in guest mode", async () => {
+      const { sessionModeStore } = await import("../ui/session-mode.svelte");
+      sessionModeStore.isGuestMode = true;
+      try {
+        await manager.switchVault("v2");
+        expect(mockEntityTemplates.loadForVault).not.toHaveBeenCalled();
+        expect(mockEntityTemplates.clearForGuest).toHaveBeenCalled();
+      } finally {
+        sessionModeStore.isGuestMode = false;
+      }
+    });
+
+    it("does not start a pending template load after guest mode begins", async () => {
+      let releaseVaultHandle!: (handle: any) => void;
+      deps.getActiveVaultHandle = vi.fn(
+        () => new Promise((resolve) => (releaseVaultHandle = resolve)),
+      );
+      manager = new VaultLifecycleManager(deps);
+
+      const pendingLoad = manager.loadEntityTemplates("v1");
+      const { sessionModeStore } = await import("../ui/session-mode.svelte");
+      try {
+        sessionModeStore.isGuestMode = true;
+        await manager.loadEntityTemplates("v1");
+        releaseVaultHandle({ name: "vault" });
+        await pendingLoad;
+
+        expect(mockEntityTemplates.clearForGuest).toHaveBeenCalled();
+        expect(mockEntityTemplates.loadForVault).not.toHaveBeenCalled();
+      } finally {
+        sessionModeStore.isGuestMode = false;
+      }
+    });
+
+    it("still switches when entity templates fail to load", async () => {
+      mockEntityTemplates.loadForVault.mockRejectedValueOnce(new Error("disk"));
+      await manager.switchVault("v2");
+      expect(deps.loadFiles).toHaveBeenCalled();
+      expect(deps.setInitialized).toHaveBeenLastCalledWith(true);
+    });
+
     it("should return early if already on the target vault", async () => {
       await manager.switchVault("v1");
       expect(deps.vaultRegistry.setActiveVault).not.toHaveBeenCalled();
+    });
+
+    it("loads the vault's files without waiting for its templates", async () => {
+      let finishTemplates!: () => void;
+      const templates = vi
+        .spyOn(statSheetTemplates, "loadForVault")
+        .mockReturnValue(
+          new Promise<void>((resolve) => (finishTemplates = resolve)),
+        );
+
+      const switching = manager.switchVault("v2");
+      await vi.waitFor(() => expect(deps.loadFiles).toHaveBeenCalled());
+      expect(deps.setInitialized).not.toHaveBeenCalledWith(true);
+
+      finishTemplates();
+      await switching;
+      expect(deps.setInitialized).toHaveBeenLastCalledWith(true);
+      templates.mockRestore();
+    });
+
+    it("still loads the files when a template load fails (negative)", async () => {
+      const templates = vi
+        .spyOn(statSheetTemplates, "loadForVault")
+        .mockRejectedValue(new Error("template store unavailable"));
+
+      await expect(manager.switchVault("v2")).rejects.toThrow(
+        "template store unavailable",
+      );
+      expect(deps.loadFiles).toHaveBeenCalled();
+      templates.mockRestore();
     });
 
     it("should serialize multiple switchVault calls using a lock", async () => {
@@ -342,6 +440,7 @@ describe("VaultLifecycleManager", () => {
       });
 
       await manager.loadDemoData("Demo", entities as any);
+      expect(mockEntityTemplates.clearForGuest).toHaveBeenCalled();
 
       expect(deps.ensureServicesInitialized).toHaveBeenCalled();
       expect(deps.repository.entities).toEqual(entities);

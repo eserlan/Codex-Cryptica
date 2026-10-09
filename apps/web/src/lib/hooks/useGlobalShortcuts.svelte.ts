@@ -17,6 +17,13 @@ interface ShortcutContext {
     toggle: () => void;
     close: () => void;
   };
+  oracle: {
+    undo: () => void | Promise<void>;
+  };
+  /** Shared play: "p" toggles it, unless a solo session blocks it (FR-028). */
+  sharedMode?: {
+    toggle: () => boolean;
+  };
 }
 
 /**
@@ -36,6 +43,19 @@ export function useGlobalShortcuts(context: ShortcutContext) {
       target?.tagName === "TEXTAREA" ||
       (target as HTMLElement)?.isContentEditable
     ) {
+      return;
+    }
+
+    if (
+      (e.ctrlKey || e.metaKey) &&
+      e.key.toLowerCase() === "z" &&
+      !e.shiftKey
+    ) {
+      const oracleWindow = document.querySelector(".oracle-window-container");
+      if (e.target instanceof Node && oracleWindow?.contains(e.target)) return;
+
+      e.preventDefault();
+      void context.oracle.undo();
       return;
     }
 
@@ -59,6 +79,27 @@ export function useGlobalShortcuts(context: ShortcutContext) {
     ) {
       e.preventDefault();
       context.quickNoteStore.toggle();
+    }
+
+    // "p" toggles shared play. Shift is allowed; Ctrl, Cmd and Alt are not.
+    // It stays quiet while a dialog is open or a control has focus, so a stray
+    // key press after a click does not flip shared play.
+    const focusedControl =
+      target?.closest?.(
+        "button, a, select, [role='button'], [role='menuitem']",
+      ) != null;
+    const dialogOpen = document.querySelector("[role='dialog']") !== null;
+    if (
+      (e.key === "p" || e.key === "P") &&
+      !e.ctrlKey &&
+      !e.metaKey &&
+      !e.altKey &&
+      context.sharedMode &&
+      !focusedControl &&
+      !dialogOpen
+    ) {
+      context.sharedMode.toggle();
+      return;
     }
 
     // Escape to close active modals/settings/scratchpads

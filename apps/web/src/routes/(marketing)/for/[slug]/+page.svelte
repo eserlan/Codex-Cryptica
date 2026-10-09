@@ -267,7 +267,7 @@
               {/if}
             </div>
             <span
-              class="self-start sm:self-auto rounded-[var(--for-surface-radius)] border px-3 py-1 font-mono text-[10px] font-bold uppercase tracking-wider {isDark
+              class="self-start sm:self-auto rounded-[var(--for-surface-radius)] border px-3 py-1 font-mono text-micro font-bold uppercase tracking-wider {isDark
                 ? 'border-red-900/60 bg-red-950/80 text-red-300'
                 : 'border-theme-primary/20 bg-theme-primary/10 text-theme-primary'}"
             >
@@ -310,7 +310,7 @@
                   </h3>
                   {#if tool.badge && !tool.title.endsWith(tool.badge)}
                     <span
-                      class="rounded-[var(--for-surface-radius)] border border-theme-primary/20 bg-theme-primary/10 px-2.5 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider text-theme-primary"
+                      class="rounded-[var(--for-surface-radius)] border border-theme-primary/20 bg-theme-primary/10 px-2.5 py-0.5 font-mono text-micro font-bold uppercase tracking-wider text-theme-primary"
                       >{tool.badge}</span
                     >
                   {/if}
@@ -352,7 +352,7 @@
               </p>
             </div>
             <span
-              class="inline-flex shrink-0 items-center gap-2 font-mono text-[11px] font-bold uppercase tracking-wider text-theme-primary"
+              class="inline-flex shrink-0 items-center gap-2 font-mono text-meta font-bold uppercase tracking-wider text-theme-primary"
             >
               Visit the hub
               <span

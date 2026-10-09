@@ -1,4 +1,4 @@
-import { type mapStore } from "../map.svelte";
+import { type mapStore, type GridType } from "../map.svelte";
 import type { Point } from "schema";
 import type { VTTMessage } from "../../../types/vtt";
 import { browserStorage, type StorageLike } from "$lib/utils/runtime-deps";
@@ -73,9 +73,21 @@ export class VTTGridManager {
     gridSize?: number;
     gridUnit?: string;
     gridDistance?: number;
+    gridType?: GridType;
+    showHexCoordinates?: boolean;
+    fogColor?: string | null;
   }) {
     if (settings.gridSize !== undefined) {
       this.deps.mapStore.gridSize = settings.gridSize;
+    }
+    if (settings.gridType !== undefined) {
+      this.deps.mapStore.gridType = settings.gridType;
+    }
+    if (settings.showHexCoordinates !== undefined) {
+      this.deps.mapStore.showHexCoordinates = settings.showHexCoordinates;
+    }
+    if (settings.fogColor !== undefined) {
+      this.deps.mapStore.fogColor = settings.fogColor;
     }
     if (settings.gridUnit !== undefined) {
       this.gridUnit = settings.gridUnit;
@@ -97,9 +109,21 @@ export class VTTGridManager {
     gridSize?: number;
     gridUnit?: string;
     gridDistance?: number;
+    gridType?: GridType;
+    showHexCoordinates?: boolean;
+    fogColor?: string | null;
   }) {
     if (payload.gridSize !== undefined) {
       this.deps.mapStore.gridSize = payload.gridSize;
+    }
+    if (payload.gridType !== undefined) {
+      this.deps.mapStore.gridType = payload.gridType;
+    }
+    if (payload.showHexCoordinates !== undefined) {
+      this.deps.mapStore.showHexCoordinates = payload.showHexCoordinates;
+    }
+    if (payload.fogColor !== undefined) {
+      this.deps.mapStore.fogColor = payload.fogColor;
     }
     if (payload.gridUnit !== undefined) {
       this.gridUnit = payload.gridUnit;

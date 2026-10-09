@@ -264,22 +264,21 @@
 <section
   class="rounded-xl border border-theme-primary/20 bg-theme-bg/50"
   aria-labelledby="tile-decks-heading"
+  data-help-target="vtt-tile-decks"
 >
   <div class="border-b border-theme-primary/20 px-3 py-3">
     <h2
       id="tile-decks-heading"
-      class="text-[9px] font-black uppercase tracking-[0.35em] text-theme-primary/70 font-header"
+      class="text-nano font-black uppercase tracking-[0.35em] text-theme-primary/70 font-header"
+      title="Draw room and corridor images as the map unfolds"
     >
       Tile decks
     </h2>
-    <p class="mt-1 text-xs text-theme-muted">
-      Draw room and corridor images as the map unfolds.
-    </p>
     <button
       type="button"
       onclick={() => tileDeckPanelUIStore.toggleCatalog()}
       aria-expanded={!tileDeckPanelUIStore.catalogCollapsed}
-      class="mt-3 flex w-full items-center gap-1 text-[11px] font-bold uppercase tracking-widest text-theme-muted hover:text-theme-text"
+      class="mt-3 flex w-full items-center gap-1 text-meta font-bold uppercase tracking-widest text-theme-muted hover:text-theme-text"
       ><span
         class="icon-[lucide--chevron-right] h-3.5 w-3.5 transition-transform {tileDeckPanelUIStore.catalogCollapsed
           ? ''
@@ -307,10 +306,10 @@
                   ? `${pack.name} added`
                   : `Add ${pack.name} starter deck`}</button
             >
-            <p class="mt-1 text-[11px] text-theme-muted">
+            <p class="mt-1 text-meta text-theme-muted">
               {pack.description}
             </p>
-            <p class="mt-0.5 text-[10px] text-theme-muted/70">
+            <p class="mt-0.5 text-micro text-theme-muted/70">
               {pack.license} · downloaded once to this vault.
             </p>
           </li>
@@ -374,7 +373,7 @@
       <button
         type="button"
         onclick={() => mapSession.clearArmedTile()}
-        class="shrink-0 rounded px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-theme-primary hover:bg-theme-primary/20"
+        class="shrink-0 rounded px-1.5 py-0.5 text-micro font-bold uppercase tracking-wider text-theme-primary hover:bg-theme-primary/20"
         title="Cancel tile placement (Esc)"
         aria-label="Cancel tile placement"
       >
@@ -417,7 +416,7 @@
             </span>
           </div>
           {#if deck.license}
-            <p class="mt-0.5 text-[10px] text-theme-muted">{deck.license}</p>
+            <p class="mt-0.5 text-micro text-theme-muted">{deck.license}</p>
           {/if}
           <div class="mt-2 flex items-center justify-between gap-2">
             <label class="flex items-center gap-1.5 text-xs text-theme-muted"
@@ -444,7 +443,7 @@
           <div class="mt-2 space-y-2 border-t border-theme-border pt-2">
             <div class="flex items-center justify-between">
               <span
-                class="text-[10px] font-bold uppercase tracking-widest text-theme-muted"
+                class="text-micro font-bold uppercase tracking-widest text-theme-muted"
               >
                 Stock on draw
               </span>
@@ -499,11 +498,11 @@
             {#if stockingModeFor(deck) !== "none"}
               <div class="space-y-1.5 pt-1">
                 <div
-                  class="flex items-center justify-between text-[10px] text-theme-muted font-bold uppercase tracking-widest"
+                  class="flex items-center justify-between text-micro text-theme-muted font-bold uppercase tracking-widest"
                 >
                   <span>Frequency</span>
                   <span
-                    class="text-theme-text font-normal normal-case text-[11px]"
+                    class="text-theme-text font-normal normal-case text-meta"
                   >
                     {(deck.stocking?.frequency ?? 1) === 1
                       ? "Every tile"
@@ -538,7 +537,7 @@
             {/if}
 
             {#if stockingModeFor(deck) === "encounter"}
-              <p class="text-[10px] text-theme-muted leading-tight">
+              <p class="text-micro text-theme-muted leading-tight">
                 Pins an empty encounter note on placed tiles, ready for GM
                 detailing.
               </p>
@@ -547,7 +546,7 @@
             {#if stockingModeFor(deck) === "table"}
               <div class="space-y-1 pt-1">
                 <label
-                  class="block text-[10px] font-bold uppercase tracking-widest text-theme-muted"
+                  class="block text-micro font-bold uppercase tracking-widest text-theme-muted"
                   for="stocking-table-{deck.id}"
                 >
                   Source Table
@@ -566,7 +565,7 @@
                     {/each}
                   </select>
                 {:else}
-                  <p class="text-[10px] text-theme-muted">
+                  <p class="text-micro text-theme-muted">
                     No random tables found in vault. Create a table to roll
                     automatically on placement.
                   </p>
@@ -579,7 +578,7 @@
               type="button"
               onclick={() => tileDeckPanelUIStore.toggleGrid(deck.id)}
               aria-expanded={tileDeckPanelUIStore.isGridExpanded(deck.id)}
-              class="flex w-full items-center gap-1 text-[10px] font-bold uppercase tracking-widest text-theme-muted hover:text-theme-text"
+              class="flex w-full items-center gap-1 text-micro font-bold uppercase tracking-widest text-theme-muted hover:text-theme-text"
               ><span
                 class="icon-[lucide--chevron-right] h-3 w-3 transition-transform {tileDeckPanelUIStore.isGridExpanded(
                   deck.id,
@@ -638,7 +637,7 @@
                       })}
                     aria-pressed={selectedCategoryFor(deck.id) === category}
                     class={[
-                      "rounded-full border px-2 py-0.5 text-[10px] font-medium transition-colors",
+                      "rounded-full border px-2 py-0.5 text-micro font-medium transition-colors",
                       selectedCategoryFor(deck.id) === category
                         ? "border-theme-primary bg-theme-primary/15 text-theme-primary"
                         : "border-theme-border text-theme-muted hover:text-theme-text",
@@ -681,13 +680,13 @@
                       ></span>
                     {/if}
                     <span
-                      class="absolute inset-x-0 bottom-0 truncate bg-theme-bg/85 px-0.5 py-px text-[8px] text-theme-text opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100"
+                      class="absolute inset-x-0 bottom-0 truncate bg-theme-bg/85 px-0.5 py-px text-nano text-theme-text opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100"
                       >{tile.name}</span
                     >
                   </button>
                 {/each}
               </div>
-              <p class="mt-1 text-[10px] text-theme-muted">
+              <p class="mt-1 text-micro text-theme-muted">
                 {visibleTilesFor(deck).length} of {deck.tiles.length} tiles
               </p>
             {/if}

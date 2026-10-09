@@ -104,3 +104,54 @@ describe("VTTGridManager gridMoveMode / gridFixedPan", () => {
     expect(mgr.gridFixedPan).toEqual({ x: 99, y: 99 });
   });
 });
+
+describe("VTTGridManager fog colour", () => {
+  function managerWithMap() {
+    const mapStore = { fogColor: null as string | null };
+    const base = deps(memoryStorage());
+    const d = { ...base, mapStore: mapStore as any };
+    return { mapStore, d, mgr: new VTTGridManager(d) };
+  }
+
+  it("applies a GM-chosen colour and broadcasts it to players", () => {
+    const { mapStore, d, mgr } = managerWithMap();
+
+    mgr.setGridSettings({ fogColor: "#112233" });
+
+    expect(mapStore.fogColor).toBe("#112233");
+    expect(d.emit).toHaveBeenCalledWith({
+      type: "SET_GRID_SETTINGS",
+      fogColor: "#112233",
+    });
+  });
+
+  it("resets to the theme colour when the GM clears it", () => {
+    const { mapStore, d, mgr } = managerWithMap();
+    mapStore.fogColor = "#112233";
+
+    mgr.setGridSettings({ fogColor: null });
+
+    expect(mapStore.fogColor).toBeNull();
+    expect(d.emit).toHaveBeenCalledWith({
+      type: "SET_GRID_SETTINGS",
+      fogColor: null,
+    });
+  });
+
+  it("leaves the colour alone when a grid-only update arrives", () => {
+    const { mapStore, mgr } = managerWithMap();
+    mapStore.fogColor = "#112233";
+
+    mgr.handleRemoteGridSettings({ gridDistance: 10 });
+
+    expect(mapStore.fogColor).toBe("#112233");
+  });
+
+  it("adopts the colour a GM sends to a player", () => {
+    const { mapStore, mgr } = managerWithMap();
+
+    mgr.handleRemoteGridSettings({ fogColor: "#445566" });
+
+    expect(mapStore.fogColor).toBe("#445566");
+  });
+});

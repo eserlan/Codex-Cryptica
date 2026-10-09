@@ -5,7 +5,11 @@ import type {
   StylingTemplate,
   ImageFocus,
 } from "schema";
-import { deriveEntityTypePalette, imageFocusBackgroundPosition } from "schema";
+import {
+  deriveEntityTypePalette,
+  imageFocusBackgroundPosition,
+  isPlaceholderImageUrl,
+} from "schema";
 import { CONNECTION_COLORS } from "./defaults";
 import { isLayoutCollinear } from "./geometry";
 
@@ -133,7 +137,7 @@ export class GraphTransformer {
       for (let j = 0; j < connections.length; j++) {
         if (weightedEdgeCount >= maxEdges) break;
         const conn = connections[j];
-        if (!validIds.has(conn.target)) continue;
+        if (conn.hidden || !validIds.has(conn.target)) continue;
 
         incrementWeight(weights, entity.id);
         incrementWeight(weights, conn.target);
@@ -232,8 +236,11 @@ export class GraphTransformer {
       };
       if (hasPast) nodeData.isPast = true;
       if (hasImportantLabel(entity.labels)) nodeData.isImportant = true;
-      if (entity.image) nodeData.image = entity.image;
-      if (entity.thumbnail) nodeData.thumbnail = entity.thumbnail;
+      // Stock placeholder art is left off so the node gets its silhouette.
+      if (entity.image && !isPlaceholderImageUrl(entity.image))
+        nodeData.image = entity.image;
+      if (entity.thumbnail && !isPlaceholderImageUrl(entity.thumbnail))
+        nodeData.thumbnail = entity.thumbnail;
       if (entity.imageFocus) nodeData.imageFocus = entity.imageFocus;
       if (entity.silhouette) (nodeData as any).silhouette = entity.silhouette;
       (nodeData as any).entity = {
@@ -263,7 +270,11 @@ export class GraphTransformer {
         elements.push({
           group: "nodes",
           data: nodeData,
-          position: coords,
+          // A copy, not the entity's own object: Cytoscape adopts the position
+          // it is given as the node's live one, so sharing it would let moving
+          // a node (or applying a view's saved layout) rewrite the entity's
+          // saved coordinates in place.
+          position: { x: coords!.x, y: coords!.y },
         });
       } else {
         const angle = i * GOLDEN_ANGLE;
@@ -287,8 +298,8 @@ export class GraphTransformer {
         for (let l = 0; l < connections.length; l++) {
           if (renderedEdgeCount >= maxEdges) break;
           const conn = connections[l];
-          // Skip edges to non-existent targets
-          if (!validIds.has(conn.target)) continue;
+          // Skip hidden connections and edges to non-existent targets
+          if (conn.hidden || !validIds.has(conn.target)) continue;
 
           // Construct a unique edge ID: source-target-type
           const edgeId = `${entity.id}-${conn.target}-${conn.type}`;

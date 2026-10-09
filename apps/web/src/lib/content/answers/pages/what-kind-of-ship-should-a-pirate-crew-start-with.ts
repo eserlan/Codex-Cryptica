@@ -167,10 +167,24 @@ export const whatKindOfShipShouldAPirateCrewStartWith: AnswerConfigInput = {
       href: "/generators/settlement",
     },
   ],
+  relatedTopics: [
+    {
+      title: "Pirate & High-Seas Campaign Guides",
+      href: "/topics/pirates",
+      description:
+        "Browse the guide cluster for pirate systems, exploration, voyages, ship combat, islands, ports, and rivals.",
+    },
+  ],
   relatedForPages: [],
   relatedAnswers: [
     "what-kind-of-ship-should-a-sci-fi-rpg-party-start-with",
     "what-should-players-be-able-to-upgrade-in-an-rpg-base",
+    "how-do-i-make-rival-captains-navies-and-pirate-factions-matter",
+    "how-do-i-create-interesting-islands-and-ports-for-a-pirate-campaign",
+    "how-do-i-run-ship-to-ship-combat-without-sidelining-the-party",
+    "how-do-i-make-sea-travel-interesting-in-a-ttrpg",
+    "how-do-i-run-a-pirate-campaign-focused-on-exploration",
+    "what-ttrpg-should-i-play-for-a-pirate-campaign",
   ],
   labels: ["pirate"],
   discovery: {

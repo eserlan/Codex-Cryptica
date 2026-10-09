@@ -1,5 +1,6 @@
 export const VAULT_APP_ROUTE_PREFIXES = [
   "/adventure",
+  "/play",
   "/canvas",
   "/decks",
   "/map",

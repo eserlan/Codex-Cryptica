@@ -3,7 +3,7 @@ import type { AnswerConfigInput } from "../schema";
 export const howDoYouMakeABossFightMemorableInATabletopRpg: AnswerConfigInput =
   {
     slug: "how-do-you-make-a-boss-fight-memorable-in-a-tabletop-rpg",
-    category: "session-prep",
+    category: "adventure-design",
     publishedAt: "2026-09-13",
     question: "How do you make a boss fight memorable in a tabletop RPG?",
     kind: "framework",
@@ -123,6 +123,8 @@ export const howDoYouMakeABossFightMemorableInATabletopRpg: AnswerConfigInput =
       "how-do-you-make-a-tabletop-rpg-session-more-engaging",
       "how-do-you-handle-character-death-in-a-tabletop-rpg",
       "what-rpg-should-i-use-for-tactical-combat",
+      "how-do-i-run-a-large-battle-when-the-player-characters-are-part-of-an-army",
+      "how-do-i-upgrade-a-player-characters-weapon-without-replacing-it",
     ],
     discovery: {
       parentCluster: "encounter-balance",

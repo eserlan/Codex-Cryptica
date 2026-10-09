@@ -92,6 +92,12 @@ export function updateEntity(
     // createdAt is preserved via the spread above; never overwritten on update.
   } as LocalEntity;
 
+  for (const key of Object.keys(updates) as (keyof LocalEntity)[]) {
+    if (updates[key] === undefined) {
+      delete updated[key];
+    }
+  }
+
   if (updated.parent) {
     updated.parent = sanitizeId(updated.parent);
   }
@@ -391,6 +397,49 @@ export function updateConnection(
   };
 }
 
+export function setConnectionHidden(
+  entities: Record<string, LocalEntity>,
+  sourceId: string,
+  targetId: string,
+  type: string,
+  hidden: boolean,
+): {
+  entities: Record<string, LocalEntity>;
+  updatedSource: LocalEntity | null;
+  updatedConnection: Connection | null;
+} {
+  const source = entities[sourceId];
+  if (!source) {
+    return { entities, updatedSource: null, updatedConnection: null };
+  }
+
+  let updatedConnection: Connection | null = null;
+  const connections = (source.connections ?? []).map((c) => {
+    if (c.target !== targetId || c.type !== type) return c;
+    // An unhidden connection drops the flag rather than storing `false`, so
+    // the note's frontmatter stays as it was before it was ever hidden.
+    const { hidden: _previous, ...rest } = c;
+    updatedConnection = hidden ? { ...rest, hidden: true } : rest;
+    return updatedConnection;
+  });
+  if (!updatedConnection) {
+    return { entities, updatedSource: null, updatedConnection: null };
+  }
+
+  const updatedSource = {
+    ...source,
+    connections,
+    updatedAt: systemClock.now(),
+    modifiedAt: systemClock.now(),
+  } as LocalEntity;
+
+  return {
+    entities: { ...entities, [sourceId]: updatedSource },
+    updatedSource,
+    updatedConnection,
+  };
+}
+
 export function removeConnection(
   entities: Record<string, LocalEntity>,
   sourceId: string,
@@ -472,6 +521,55 @@ export function bulkRemoveLabel(
   }
 
   return { entities: newEntities, modifiedIds };
+}
+
+/**
+ * Renames a label on every entity that has it. Labels are compared without
+ * regard to case and stored trimmed and lower-cased, like every other label
+ * operation. If an entity already has the new label, the old one is simply
+ * dropped, so renaming into an existing label merges them without a duplicate.
+ */
+export function renameLabel(
+  entities: Record<string, LocalEntity>,
+  from: string,
+  to: string,
+): { entities: Record<string, LocalEntity>; modifiedIds: string[] } {
+  const fromKey = from.trim().toLowerCase();
+  const toKey = to.trim().toLowerCase();
+  if (!fromKey || !toKey || fromKey === toKey) {
+    return { entities, modifiedIds: [] };
+  }
+
+  const newEntities = { ...entities };
+  const modifiedIds: string[] = [];
+
+  for (const [id, entity] of Object.entries(entities)) {
+    const labels = entity.labels || [];
+    if (!labels.some((l) => l.toLowerCase() === fromKey)) continue;
+
+    const seen = new Set<string>();
+    const renamed = labels
+      .map((l) => (l.toLowerCase() === fromKey ? toKey : l))
+      .filter((l) => {
+        const key = l.toLowerCase();
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+
+    newEntities[id] = {
+      ...entity,
+      labels: renamed,
+      updatedAt: systemClock.now(),
+      modifiedAt: systemClock.now(),
+    } as LocalEntity;
+    modifiedIds.push(id);
+  }
+
+  return {
+    entities: modifiedIds.length > 0 ? newEntities : entities,
+    modifiedIds,
+  };
 }
 
 export function batchCreateEntities(

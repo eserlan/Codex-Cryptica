@@ -3,7 +3,7 @@
     factionConfig,
     npcThemeConfig,
     npcConfig,
-  } from "$lib/services/seo/generator-engine";
+  } from "$lib/services/seo/generator-config";
   import SelectWithCustomOption from "$lib/components/forms/SelectWithCustomOption.svelte";
 
   let {
@@ -27,7 +27,7 @@
   const selectClass =
     "w-full bg-theme-bg/60 border border-theme-border/60 rounded-lg px-3 py-2 text-xs text-theme-text focus:outline-none focus:border-theme-primary/60";
   const labelClass =
-    "text-[10px] font-bold uppercase tracking-wider text-theme-text/80";
+    "text-micro font-bold uppercase tracking-wider text-theme-text/80";
   type MoralityOption = { id: string; label: string };
 
   const availableAncestries = $derived(
@@ -155,12 +155,12 @@
     bind:value={mode}
     class={selectClass}
   >
-    <option value="table-card">Table Card (5-Element 60-Second Prep)</option>
+    <option value="table-card">Table Card (6-Element 60-Second Prep)</option>
     <option value="dossier">Full Dossier (Detailed Background)</option>
   </select>
-  <p class="text-[10px] text-theme-text/60 leading-relaxed">
+  <p class="text-micro text-theme-text/60 leading-relaxed">
     Table cards provide immediate want, mannerism, contradiction, relationship
-    hook, and sensory tag.
+    hook, sensory tag, and knowledge & secrets.
   </p>
 </div>
 
@@ -179,7 +179,7 @@
   ></textarea>
   <p
     id="rpgnpc-campaign-context-help"
-    class="text-[10px] text-theme-text/60 leading-relaxed"
+    class="text-micro text-theme-text/60 leading-relaxed"
   >
     Add a location, faction, villain, or active problem to aim the NPC at your
     table.
@@ -203,7 +203,7 @@
       }
       if (onSurprise) onSurprise();
     }}
-    class="flex items-center gap-1.5 px-3 py-1.5 bg-theme-surface/60 border border-theme-border/60 rounded-lg text-[10px] font-bold uppercase tracking-wider text-theme-text hover:bg-theme-primary hover:text-theme-bg hover:border-theme-primary transition-all cursor-pointer"
+    class="flex items-center gap-1.5 px-3 py-1.5 bg-theme-surface/60 border border-theme-border/60 rounded-lg text-micro font-bold uppercase tracking-wider text-theme-text hover:bg-theme-primary hover:text-theme-bg hover:border-theme-primary transition-all cursor-pointer"
     title="Randomize all options and generate a draft from the result"
   >
     <span class="icon-[lucide--dices] w-3.5 h-3.5" aria-hidden="true"></span>

@@ -30,6 +30,15 @@
   );
 </script>
 
+<svelte:head>
+  <link
+    rel="alternate"
+    type="application/atom+xml"
+    title="Codex Cryptica blog"
+    href="{base}/blog/feed.xml"
+  />
+</svelte:head>
+
 <SeoHead
   title="The Archive | Codex Cryptica Blog"
   description="Explore the official Codex Cryptica blog for guides on local-first RPG world-building, tactical mapping, and data sovereignty."
@@ -58,6 +67,13 @@
         Deep dives into the technology and philosophy behind Codex Cryptica.
         Learn how to secure your lore and master the spatial brain.
       </p>
+      <a
+        href="{base}/blog/feed.xml"
+        class="mt-4 inline-flex items-center gap-2 text-sm text-theme-primary hover:underline"
+      >
+        <span class="icon-[lucide--rss] h-4 w-4" aria-hidden="true"></span>
+        Subscribe to the blog
+      </a>
 
       <!-- Responsible AI Pillar Link Banner -->
       <div
@@ -67,7 +83,8 @@
           <h2
             class="text-xs font-mono font-bold text-theme-primary flex items-center gap-2"
           >
-            <span class="icon-[lucide--shield-alert] h-4 w-4"></span>
+            <span aria-hidden="true" class="icon-[lucide--shield-alert] h-4 w-4"
+            ></span>
             Responsible AI Positioning
           </h2>
           <p class="text-sm text-theme-muted">
@@ -81,7 +98,10 @@
           class="inline-flex items-center gap-2 self-start sm:self-center px-4 py-2 text-xs font-bold font-header bg-theme-primary text-theme-bg rounded-lg hover:brightness-110 active:scale-95 transition-all shadow-md shrink-0"
         >
           Read the Pillar
-          <span class="icon-[lucide--arrow-right] h-3.5 w-3.5"></span>
+          <span
+            aria-hidden="true"
+            class="icon-[lucide--arrow-right] h-3.5 w-3.5"
+          ></span>
         </a>
       </div>
     </header>
@@ -127,7 +147,8 @@
             class="mt-2 flex items-center gap-2 text-theme-primary font-bold uppercase text-xs tracking-[0.2em] group-hover:gap-4 transition-all"
           >
             {themeStore.resolveJargon("blog_action")}
-            <span class="icon-[lucide--arrow-right] w-4 h-4"></span>
+            <span aria-hidden="true" class="icon-[lucide--arrow-right] w-4 h-4"
+            ></span>
           </div>
         </article>
       {/each}

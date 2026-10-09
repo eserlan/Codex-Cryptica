@@ -5,7 +5,8 @@ import {
   getAllLandingPageSlugs,
   getLandingPagesForHub,
 } from "./registry";
-import { isHubThemeSlug } from "../hub-themes";
+import { HUB_THEME_SLUGS, isHubThemeSlug } from "../hub-themes";
+import { GENERATOR_SLUGS } from "../../../params/generator_slug";
 import { LandingPageKindSchema, type LandingPageConfig } from "./schema";
 
 describe("Landing Page Registry", () => {
@@ -950,6 +951,7 @@ describe("Landing Page Registry", () => {
         "A prize taken today can change who controls a port",
       );
       expect(pirates.recommendedTools.map((tool) => tool.href)).toEqual([
+        "/topics/pirates",
         "/answers/what-kind-of-ship-should-a-pirate-crew-start-with",
         "/generators/ship-generator",
         "/generators/settlement",
@@ -1030,6 +1032,129 @@ describe("Landing Page Registry", () => {
     });
   });
 
+  describe("Steampunk & Victorian Industrial Pack", () => {
+    it("uses the steampunk theme and links industrial-relevant generators", () => {
+      const steampunk = getLandingPage("steampunk-rpgs");
+
+      expect(steampunk).toBeDefined();
+      expect(steampunk?.kind).toBe("genre");
+      expect(steampunk?.theme).toBe("steampunk");
+      expect(steampunk?.hub).toBe("steampunk");
+      expect(steampunk?.recommendedTools.map((tool) => tool.href)).toEqual(
+        expect.arrayContaining([
+          "/generators/steampunk",
+          "/generators/artifact-generator",
+          "/generators/faction",
+          "/generators/ship-generator",
+        ]),
+      );
+    });
+
+    it("connects inventions to the guilds, patrons, and conspiracies around them", () => {
+      const steampunk = getLandingPage("steampunk-rpgs")!;
+      const copy = JSON.stringify(steampunk);
+      const [hub, ...spokes] = steampunk.exampleGraph!.steps;
+
+      expect(copy).toMatch(/clockwork/i);
+      expect(copy).toMatch(/guild/i);
+      expect(copy).toMatch(/airship/i);
+      expect(copy).toMatch(/conspirac/i);
+      expect(hub.category).toBe("item");
+      expect(spokes.length).toBeGreaterThanOrEqual(5);
+      for (const spoke of spokes) {
+        expect(spoke.relation, `${spoke.label} has no relation`).toBeTruthy();
+        expect(spoke.category, `${spoke.label} has no category`).toBeDefined();
+      }
+    });
+  });
+
+  describe("Weird West & Frontier Pack", () => {
+    it("uses the western theme and links frontier-relevant generators", () => {
+      const weirdWest = getLandingPage("weird-west-rpgs");
+
+      expect(weirdWest).toBeDefined();
+      expect(weirdWest?.kind).toBe("genre");
+      expect(weirdWest?.theme).toBe("western");
+      expect(weirdWest?.hub).toBe("western");
+      expect(weirdWest?.recommendedTools.map((tool) => tool.href)).toEqual(
+        expect.arrayContaining([
+          "/generators/western",
+          "/generators/settlement",
+          "/generators/faction",
+          "/generators/npc",
+          "/generators/secret-society",
+        ]),
+      );
+    });
+
+    it("only links to generators and hubs that exist", () => {
+      const weirdWest = getLandingPage("weird-west-rpgs")!;
+      const validPaths = new Set([
+        ...GENERATOR_SLUGS.map((slug) => `/generators/${slug}`),
+        ...HUB_THEME_SLUGS.map((theme) => `/generators/${theme}`),
+      ]);
+
+      for (const tool of weirdWest.recommendedTools) {
+        expect(validPaths.has(tool.href), `${tool.href} is not a route`).toBe(
+          true,
+        );
+      }
+    });
+
+    it("connects boomtowns, lawmen, cartels, and the occult beneath them", () => {
+      const weirdWest = getLandingPage("weird-west-rpgs")!;
+      const copy = JSON.stringify(weirdWest);
+      const [hub, ...spokes] = weirdWest.exampleGraph!.steps;
+
+      expect(copy).toMatch(/boomtown/i);
+      expect(copy).toMatch(/marshal/i);
+      expect(copy).toMatch(/cartel/i);
+      expect(copy).toMatch(/rail/i);
+      expect(copy).toMatch(/occult/i);
+      expect(weirdWest.useCases).toHaveLength(4);
+      expect(copy).toMatch(/hauntings/i);
+      expect(copy).toMatch(/strange weather/i);
+      expect(copy).toMatch(/old violence, bargains, or greed/i);
+      expect(copy).toMatch(/today's witness into tomorrow's deputy/i);
+      expect(copy).not.toMatch(/lynching/i);
+      expect(hub.category).toBe("location");
+      expect(spokes.length).toBeGreaterThanOrEqual(5);
+      expect(
+        spokes.find(({ label }) => label === "Marshal Ada Quill")?.relation,
+      ).toBe("Falls under the law of");
+      expect(
+        spokes.find(({ label }) => label === "The Blackrail Company")?.relation,
+      ).toBe("Ships ore to");
+      expect(
+        spokes.find(({ label }) => label === "Silas Crowe")?.relation,
+      ).toBe("Is raided by");
+      expect(
+        spokes.find(({ label }) => label === "The Hollow Choir")?.relation,
+      ).toBe("Awakened");
+      for (const spoke of spokes) {
+        expect(spoke.relation, `${spoke.label} has no relation`).toBeTruthy();
+        expect(spoke.category, `${spoke.label} has no category`).toBeDefined();
+      }
+    });
+
+    it("stays distinct from the space western pack and names no published game", () => {
+      const weirdWest = getLandingPage("weird-west-rpgs")!;
+
+      expect(weirdWest.hub).not.toBe(getLandingPage("space-western")?.hub);
+      expect(JSON.stringify(weirdWest)).not.toMatch(
+        /deadlands|savage worlds|space|starship/i,
+      );
+    });
+
+    it("joins the western hub without emptying the other hubs", () => {
+      expect(getLandingPagesForHub("western").map((page) => page.slug)).toEqual(
+        ["weird-west-rpgs"],
+      );
+      expect(getLandingPagesForHub("space-western").length).toBeGreaterThan(0);
+      expect(getLandingPagesForHub("superhero")).toEqual([]);
+    });
+  });
+
   describe("Tactical Mecha RPG Pack", () => {
     it("is registered as a Lancer-themed genre guide", () => {
       const mecha = getLandingPage("mecha-rpgs");
@@ -1065,6 +1190,92 @@ describe("Landing Page Registry", () => {
       expect(categories).toContain("item");
       expect(categories).toContain("location");
       expect(categories).toContain("event");
+    });
+  });
+
+  describe("Starship Campaigns Pack", () => {
+    it("uses the startrek theme, links optimistic exploration sci-fi hub, and links starship-relevant generators", () => {
+      const starship = getLandingPage("starship-campaigns");
+
+      expect(starship).toBeDefined();
+      expect(starship?.kind).toBe("genre");
+      expect(starship?.theme).toBe("startrek");
+      expect(starship?.hub).toBe("optimistic-exploration-sci-fi");
+      expect(starship?.recommendedTools.map((tool) => tool.href)).toEqual(
+        expect.arrayContaining([
+          "/generators/ship-generator",
+          "/generators/star-system",
+          "/generators/faction",
+          "/generators/settlement",
+          "/generators/quest",
+          "/generators/optimistic-exploration-sci-fi",
+        ]),
+      );
+    });
+
+    it("only links to generators and hubs that exist", () => {
+      const starship = getLandingPage("starship-campaigns")!;
+      const validPaths = new Set([
+        ...GENERATOR_SLUGS.map((slug) => `/generators/${slug}`),
+        ...HUB_THEME_SLUGS.map((theme) => `/generators/${theme}`),
+      ]);
+
+      for (const tool of starship.recommendedTools) {
+        expect(validPaths.has(tool.href), `${tool.href} is not a route`).toBe(
+          true,
+        );
+      }
+    });
+
+    it("connects bridge crews, ship systems, sector maps, starbases, and fleet command webs", () => {
+      const starship = getLandingPage("starship-campaigns")!;
+      const copy = JSON.stringify(starship);
+      const [hub, ...spokes] = starship.exampleGraph!.steps;
+
+      expect(copy).toMatch(/bridge crew/i);
+      expect(copy).toMatch(/ship systems/i);
+      expect(copy).toMatch(/sector map/i);
+      expect(copy).toMatch(/starbase/i);
+      expect(copy).toMatch(/diplomacy|first contact/i);
+      expect(copy).toMatch(/fleet/i);
+      expect(starship.useCases).toHaveLength(4);
+      expect(hub.category).toBe("item");
+      expect(spokes.length).toBeGreaterThanOrEqual(5);
+      expect(
+        spokes.find(({ label }) => label === "Captain Ilsa Renn")?.relation,
+      ).toBe("Commanded by");
+      expect(
+        spokes.find(({ label }) => label === "Sector Command")?.relation,
+      ).toBe("Receives orders from");
+      expect(
+        spokes.find(({ label }) => label === "Starbase Tressel")?.relation,
+      ).toBe("Resupplied at");
+      expect(
+        spokes.find(({ label }) => label === "The Vey Pact")?.relation,
+      ).toBe("Negotiating with");
+      expect(
+        spokes.find(({ label }) => label === "First Contact at Kell Minor")
+          ?.relation,
+      ).toBe("Diverted to");
+      for (const spoke of spokes) {
+        expect(spoke.relation, `${spoke.label} has no relation`).toBeTruthy();
+        expect(spoke.category, `${spoke.label} has no category`).toBeDefined();
+      }
+    });
+
+    it("stays distinct from space opera and space western packs", () => {
+      const starship = getLandingPage("starship-campaigns")!;
+      expect(starship.hub).not.toBe(getLandingPage("space-western")?.hub);
+      expect(starship.slug).not.toBe(getLandingPage("space-opera")?.slug);
+    });
+
+    it("joins the optimistic exploration sci-fi hub without emptying other hubs", () => {
+      expect(
+        getLandingPagesForHub("optimistic-exploration-sci-fi").map(
+          (page) => page.slug,
+        ),
+      ).toEqual(["starship-campaigns"]);
+      expect(getLandingPagesForHub("space-western").length).toBeGreaterThan(0);
     });
   });
 
@@ -1327,7 +1538,8 @@ describe("Landing Page Registry", () => {
     });
 
     it("returns nothing for a hub with no landing pages", () => {
-      expect(getLandingPagesForHub("steampunk")).toEqual([]);
+      expect(getLandingPagesForHub("lancer").length).toBeGreaterThan(0);
+      expect(getLandingPagesForHub("superhero")).toEqual([]);
       expect(getLandingPagesForHub("not-a-hub")).toEqual([]);
     });
   });

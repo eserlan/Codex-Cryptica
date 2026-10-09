@@ -100,7 +100,7 @@
                   ><span class="sr-only"> (past)</span>{/if}
               </div>
               <div
-                class="text-[10px] text-theme-muted uppercase tracking-tighter"
+                class="text-micro text-theme-muted uppercase tracking-tighter"
               >
                 {entity.type}
               </div>

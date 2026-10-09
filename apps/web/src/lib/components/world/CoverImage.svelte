@@ -91,7 +91,7 @@
 
     {#if onCancel && hasImage}
       <button
-        class="rounded-lg px-3 py-1.5 text-[10px] uppercase tracking-[0.2em] text-theme-muted hover:text-theme-text"
+        class="rounded-lg px-3 py-1.5 text-micro uppercase tracking-[0.2em] text-theme-muted hover:text-theme-text"
         onclick={onCancel}
         disabled={isBusy}
       >
@@ -122,7 +122,7 @@
     <div
       class="mb-3 flex h-14 w-14 items-center justify-center rounded-full border border-dashed border-theme-border text-theme-muted"
     >
-      <span class="icon-[lucide--image-plus] h-6 w-6"></span>
+      <span aria-hidden="true" class="icon-[lucide--image-plus] h-6 w-6"></span>
     </div>
 
     <p
@@ -148,7 +148,7 @@
     <div class="mt-4 flex flex-wrap justify-center gap-2">
       <!-- Explicit file-picker button — works on both desktop and mobile -->
       <button
-        class="rounded-lg border border-theme-border bg-theme-surface px-3 py-2 text-[10px] font-bold uppercase tracking-[0.2em] text-theme-text hover:bg-theme-bg/50 disabled:opacity-50"
+        class="touch-target rounded-lg border border-theme-border bg-theme-surface px-3 py-2 text-micro font-bold uppercase tracking-[0.2em] text-theme-text hover:bg-theme-bg/50 disabled:opacity-50"
         onclick={() => fileInput?.click()}
         disabled={isBusy}
         data-testid="choose-image-button"
@@ -160,7 +160,7 @@
         <!-- AI not configured: show link to settings instead of dead-end button -->
         {#if onSetupAI}
           <button
-            class="rounded-lg border border-dashed border-theme-border bg-theme-surface/30 px-3 py-2 text-[10px] font-medium uppercase tracking-[0.2em] text-theme-muted hover:text-theme-text hover:bg-theme-surface transition-colors"
+            class="rounded-lg border border-dashed border-theme-border bg-theme-surface/30 px-3 py-2 text-micro font-medium uppercase tracking-[0.2em] text-theme-muted hover:text-theme-text hover:bg-theme-surface transition-colors"
             onclick={onSetupAI}
             disabled={isBusy}
             title="Configure AI to enable art generation"
@@ -171,7 +171,7 @@
         {/if}
       {:else}
         <button
-          class={`rounded-lg border border-theme-primary/40 bg-theme-primary/10 px-3 py-2 text-[10px] font-bold uppercase tracking-[0.2em] text-theme-primary hover:bg-theme-primary/20 disabled:opacity-50 ${isBusy ? "animate-pulse" : ""}`}
+          class={`touch-target rounded-lg border border-theme-primary/40 bg-theme-primary/10 px-3 py-2 text-micro font-bold uppercase tracking-[0.2em] text-theme-primary hover:bg-theme-primary/20 disabled:opacity-50 ${isBusy ? "animate-pulse" : ""}`}
           onclick={handleGenerate}
           disabled={isBusy}
           data-testid="generate-art-button"
@@ -194,7 +194,7 @@
         </div>
       </div>
       <p
-        class="mt-2 text-[10px] uppercase tracking-[0.2em] text-theme-primary/80"
+        class="mt-2 text-micro uppercase tracking-[0.2em] text-theme-primary/80"
       >
         Generating cover art...
       </p>

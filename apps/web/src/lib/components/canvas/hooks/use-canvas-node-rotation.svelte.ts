@@ -6,6 +6,8 @@ import {
 } from "../canvas-workspace-helpers";
 import type { Node } from "@xyflow/svelte";
 
+type TouchRotationPointer = { nodeId: string; x: number; y: number };
+
 export function useCanvasNodeRotation(
   logic: {
     nodes: Node[];
@@ -17,10 +19,7 @@ export function useCanvasNodeRotation(
   let selectedRotationNodeId = $state<string | null>(null);
   let isRotatingNode = $state(false);
 
-  const touchRotationPointers = new SvelteMap<
-    number,
-    { nodeId: string; x: number; y: number }
-  >();
+  const touchRotationPointers = new SvelteMap<number, TouchRotationPointer>();
 
   let touchRotationGesture = $state<{
     nodeId: string;
@@ -52,6 +51,15 @@ export function useCanvasNodeRotation(
     );
   }
 
+  // Single pass over the pointer map, no intermediate entries array.
+  function touchPointersOnNode(nodeId: string) {
+    const matching: [number, TouchRotationPointer][] = [];
+    for (const entry of touchRotationPointers) {
+      if (entry[1].nodeId === nodeId) matching.push(entry);
+    }
+    return matching;
+  }
+
   function beginTouchRotation(
     event: PointerEvent,
     isDrawingMode: boolean,
@@ -73,9 +81,7 @@ export function useCanvasNodeRotation(
       x: event.clientX,
       y: event.clientY,
     });
-    const matching = [...touchRotationPointers.entries()].filter(
-      ([, pointer]) => pointer.nodeId === nodeId,
-    );
+    const matching = touchPointersOnNode(nodeId);
     if (matching.length !== 2 || touchRotationGesture) return;
 
     const [[firstId, first], [secondId, second]] = matching;

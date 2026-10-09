@@ -2,7 +2,7 @@ import type { AnswerConfigInput } from "../schema";
 
 export const howDoYouTrackFactionTurnsBetweenRpgSessions: AnswerConfigInput = {
   slug: "how-do-you-track-faction-turns-between-rpg-sessions",
-  category: "session-prep",
+  category: "campaign-notes",
   publishedAt: "2026-09-07",
   question: "How do you track faction turns between RPG sessions?",
   kind: "framework",
@@ -162,6 +162,10 @@ export const howDoYouTrackFactionTurnsBetweenRpgSessions: AnswerConfigInput = {
     "how-do-i-build-a-believable-constitutional-crisis-or-coup",
     "how-do-i-make-a-player-base-matter-in-an-rpg-campaign",
     "what-should-players-be-able-to-upgrade-in-an-rpg-base",
+    "how-much-of-the-plot-should-a-dm-prepare",
+    "how-do-i-make-rival-captains-navies-and-pirate-factions-matter",
+    "how-do-i-make-a-campaign-threat-feel-urgent-without-railroading",
+    "how-do-i-organise-a-dnd-campaign",
   ],
   discovery: {
     id: "answer-track-faction-turns-between-sessions",

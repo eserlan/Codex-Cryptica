@@ -131,9 +131,19 @@ export const howDoYouCreateAMagicSystem: AnswerConfigInput = {
     },
   ],
   relatedAnswers: [
+    "how-do-i-start-worldbuilding-for-a-novel-or-short-story",
+    "what-is-the-difference-between-gods-and-demon-lords-in-a-fantasy-world",
     "how-do-you-start-worldbuilding-from-scratch",
     "how-do-you-handle-character-death-in-a-tabletop-rpg",
     "how-do-you-make-npcs-memorable-without-lots-of-prep",
+    "how-do-i-run-common-character-roles-in-a-fantasy-rpg",
+    "how-do-fantasy-cities-defend-against-flying-creatures-and-teleportation",
+    "how-do-i-upgrade-a-player-characters-weapon-without-replacing-it",
+    "how-does-magic-affect-politics-and-government",
+    "how-should-magic-have-been-discovered-in-my-world",
+    "how-does-magic-create-social-classes-and-inequality",
+    "how-common-should-magic-be-in-a-fantasy-world",
+    "how-does-magic-change-society-in-a-fantasy-world",
   ],
   discovery: {
     id: "answer-create-magic-system",
@@ -152,6 +162,29 @@ export const howDoYouCreateAMagicSystem: AnswerConfigInput = {
     relatedIntents: [
       "answer-worldbuilding-from-scratch",
       "answer-npcs-memorable",
+      "answer-magic-affects-politics-and-government",
+    ],
+    acknowledgedOverlap: [
+      {
+        with: "answer-magic-discovery-origin",
+        reason:
+          "This answer designs a magic system's costs and limits and considers their consequences; the discovery answer traces how people learned magic and how that history shapes access and authority.",
+      },
+      {
+        with: "answer-gods-vs-demon-lords",
+        reason:
+          "The magic-system answer defines magical rules, costs, and limits; the gods and demon lords answer applies those questions to supernatural patrons and their grants of power.",
+      },
+      {
+        with: "answer-magic-affects-politics-and-government",
+        reason:
+          "This answer designs magical rules, costs and limits; the politics answer assumes those capabilities exist and traces who controls, regulates and counters them through government and public institutions.",
+      },
+      {
+        with: "answer-magic-creates-social-classes-and-inequality",
+        reason:
+          "This answer designs the rules, costs and limits of magic itself; the social-classes answer assumes a system exists and traces how talent, training and access turn those rules into social stratification.",
+      },
     ],
   },
   seo: {

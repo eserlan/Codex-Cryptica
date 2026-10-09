@@ -60,7 +60,7 @@
           <div class="mt-3 flex flex-col gap-1">
             <label
               for="rename-input"
-              class="font-header text-[9px] font-bold uppercase tracking-wider text-theme-muted"
+              class="font-header text-nano font-bold uppercase tracking-wider text-theme-muted"
             >
               New Name
             </label>
@@ -87,7 +87,7 @@
               data-testid="modal-rename-impact"
             >
               <div
-                class="flex items-center gap-1.5 font-bold uppercase tracking-wider text-[10px]"
+                class="flex items-center gap-1.5 font-bold uppercase tracking-wider text-micro"
               >
                 <span
                   aria-hidden="true"

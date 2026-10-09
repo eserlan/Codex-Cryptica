@@ -11,6 +11,7 @@ import {
   TemplateDirectoryResultSchema,
 } from "schema";
 import { z } from "zod";
+import { getTemplateDirectoryBaseUrl } from "./template-directory-http";
 import {
   getTemplateOwnerToken,
   saveTemplateOwnerToken,
@@ -36,16 +37,7 @@ export class PublicTemplateDirectoryService {
   }
 
   get baseUrl() {
-    return (
-      this.deps.baseUrl ??
-      ((typeof import.meta !== "undefined" &&
-        import.meta.env?.VITE_ORACLE_PROXY_URL) ||
-        (typeof import.meta !== "undefined" &&
-        import.meta.env?.DEV &&
-        !import.meta.env?.VITEST
-          ? "http://localhost:8787"
-          : "https://oracle-proxy.espen-erlandsen.workers.dev"))
-    );
+    return getTemplateDirectoryBaseUrl(this.deps.baseUrl);
   }
 
   async publishTemplate(input: {

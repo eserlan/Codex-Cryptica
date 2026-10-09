@@ -8,11 +8,11 @@
   import ConnectionEditor from "$lib/components/connections/ConnectionEditor.svelte";
   import ConnectionCreator from "$lib/components/connections/ConnectionCreator.svelte";
   import DetailProposals from "./proposals/DetailProposals.svelte";
+  import GenerateRelatedButton from "./GenerateRelatedButton.svelte";
   import EntityProposals from "./EntityProposals.svelte";
   import { themeStore } from "$lib/stores/theme.svelte";
   import { revisionService } from "$lib/services/RevisionService.svelte";
   import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
-  import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
   import { getTemporalLabel } from "./detail-tabs";
   import {
     buildConnectionNeighbors,
@@ -79,6 +79,21 @@
     );
   });
 
+  const hiddenConnections = $derived(allConnections.filter((c) => c.hidden));
+
+  // The connection is stored on whichever entity points outward, so hiding an
+  // incoming one writes to the other entity's record.
+  const setHidden = (conn: (typeof allConnections)[number], hidden: boolean) =>
+    vault.setConnectionHidden(
+      conn.isOutbound ? entity.id : conn.targetId,
+      conn.isOutbound ? conn.targetId : entity.id,
+      conn.type,
+      hidden,
+    );
+
+  const showAllConnections = () =>
+    Promise.all(hiddenConnections.map((c) => setHidden(c, false)));
+
   // Entity auto-link: build flat index of titles + aliases for mention detection.
   // vault.titleAndAliasIndex is available to both host and guest sessions (FR-011).
   // ⚡ Bolt Optimization: Use the pre-cached titleAndAliasIndex with an imperative loop
@@ -113,14 +128,7 @@
   {#if !isEditing}
     {#if !vault.isGuest}
       <div class="flex justify-end">
-        <button
-          type="button"
-          onclick={() => modalUIStore.openGeneratorWorkflowForEntity(entity.id)}
-          class="text-xs font-bold uppercase tracking-widest bg-theme-primary text-theme-bg border border-theme-primary hover:bg-theme-secondary hover:border-theme-secondary px-4 py-2 rounded-xl flex items-center gap-1.5 transition shadow-[0_0_15px_rgba(var(--color-theme-primary-rgb),0.15)] cursor-pointer"
-        >
-          <span class="icon-[lucide--sparkles] w-4 h-4"></span>
-          Generate Related
-        </button>
+        <GenerateRelatedButton entityId={entity.id} />
       </div>
     {/if}
   {/if}
@@ -149,7 +157,9 @@
           class="mb-4 p-3 bg-theme-primary/5 border border-theme-border rounded-xl flex items-center justify-between gap-3"
         >
           <div class="flex items-center gap-2.5">
-            <span class="icon-[lucide--map] text-theme-primary w-5 h-5 shrink-0"
+            <span
+              aria-hidden="true"
+              class="icon-[lucide--map] text-theme-primary w-5 h-5 shrink-0"
             ></span>
             <div>
               <span
@@ -157,7 +167,7 @@
               >
                 Spatial {delveCanvasLabel}
               </span>
-              <span class="text-[10px] text-theme-muted">
+              <span class="text-micro text-theme-muted">
                 {existingCanvas
                   ? "Interactive room & sector floor plan on Spatial Canvas."
                   : "Generate an interactive room & sector floor plan on Spatial Canvas."}
@@ -171,9 +181,12 @@
                 onclick={() => {
                   openCanvasFromZen(existingCanvas, goto);
                 }}
-                class="px-3.5 py-1.5 bg-theme-primary text-theme-bg font-bold text-[10px] rounded-lg uppercase font-header tracking-widest hover:bg-theme-secondary transition-colors shrink-0 flex items-center gap-1.5 shadow-md cursor-pointer"
+                class="px-3.5 py-1.5 bg-theme-primary text-theme-bg font-bold text-micro rounded-lg uppercase font-header tracking-widest hover:bg-theme-secondary transition-colors shrink-0 flex items-center gap-1.5 shadow-md cursor-pointer"
               >
-                <span class="icon-[lucide--external-link] w-3.5 h-3.5"></span>
+                <span
+                  aria-hidden="true"
+                  class="icon-[lucide--external-link] w-3.5 h-3.5"
+                ></span>
                 Open {delveCanvasLabel}
               </button>
               <button
@@ -191,7 +204,10 @@
                 }}
                 class="p-1.5 text-theme-muted hover:text-theme-primary transition-colors cursor-pointer"
               >
-                <span class="icon-[lucide--rotate-cw] w-3.5 h-3.5"></span>
+                <span
+                  aria-hidden="true"
+                  class="icon-[lucide--rotate-cw] w-3.5 h-3.5"
+                ></span>
               </button>
             {:else}
               <button
@@ -206,9 +222,10 @@
                     console.error("[DelveCanvas] Build failed:", err);
                   }
                 }}
-                class="px-3.5 py-1.5 bg-theme-primary text-theme-bg font-bold text-[10px] rounded-lg uppercase font-header tracking-widest hover:bg-theme-secondary transition-colors shrink-0 flex items-center gap-1.5 shadow-md cursor-pointer"
+                class="px-3.5 py-1.5 bg-theme-primary text-theme-bg font-bold text-micro rounded-lg uppercase font-header tracking-widest hover:bg-theme-secondary transition-colors shrink-0 flex items-center gap-1.5 shadow-md cursor-pointer"
               >
-                <span class="icon-[lucide--map] w-3.5 h-3.5"></span>
+                <span aria-hidden="true" class="icon-[lucide--map] w-3.5 h-3.5"
+                ></span>
                 Build {delveCanvasLabel}
               </button>
             {/if}
@@ -223,7 +240,7 @@
       >
         {#if draft}
           <div
-            class="absolute top-0 right-0 p-2 text-[8px] font-bold text-theme-primary uppercase tracking-[0.2em]"
+            class="absolute top-0 right-0 p-2 text-nano font-bold text-theme-primary uppercase tracking-[0.2em]"
           >
             Proposed
           </div>
@@ -232,7 +249,7 @@
           <div
             class="text-theme-muted italic text-sm flex items-center gap-2 py-4"
           >
-            <span class="icon-[lucide--lock] w-4 h-4"></span>
+            <span aria-hidden="true" class="icon-[lucide--lock] w-4 h-4"></span>
             Chronicle is hidden in shared mode
           </div>
         {:else}
@@ -277,8 +294,9 @@
         <button
           type="button"
           onclick={() => (isAddingConnection = true)}
-          class="text-xs font-bold text-theme-primary hover:text-theme-secondary flex items-center gap-1 transition"
+          class="touch-target text-xs font-bold text-theme-primary hover:text-theme-secondary flex items-center gap-1 transition"
           aria-label="Add new connection"
+          data-help-target="add-connection-button"
         >
           <span aria-hidden="true" class="icon-[lucide--plus] w-3.5 h-3.5"
           ></span>
@@ -305,6 +323,28 @@
       />
     {/if}
 
+    {#if hiddenConnections.length > 0}
+      <div
+        class="mb-3 flex items-center justify-between gap-2 text-xs text-theme-muted"
+        data-testid="hidden-connections-bar"
+      >
+        <span
+          >{hiddenConnections.length}
+          {hiddenConnections.length === 1 ? "connection is" : "connections are"} hidden
+          from the graph</span
+        >
+        {#if !vault.isGuest}
+          <button
+            type="button"
+            class="font-bold text-theme-primary hover:text-theme-secondary transition"
+            onclick={showAllConnections}
+          >
+            Show all connections
+          </button>
+        {/if}
+      </div>
+    {/if}
+
     <ul class="space-y-3">
       {#each allConnections as conn}
         {#if editingConnectionTarget === conn.targetId && conn.isOutbound && !conn.isChild}
@@ -317,7 +357,12 @@
             />
           </li>
         {:else}
-          <li class="flex gap-3 text-sm text-theme-muted items-start group">
+          <li
+            class="flex gap-3 text-base md:text-sm text-theme-muted items-start group {conn.hidden
+              ? 'opacity-60'
+              : ''}"
+            data-hidden={conn.hidden || undefined}
+          >
             <span
               aria-hidden="true"
               class="mt-1 w-3 h-3 shrink-0 {conn.isChild
@@ -434,6 +479,24 @@
                       <span
                         aria-hidden="true"
                         class="icon-[lucide--pencil] w-3 h-3"
+                      ></span>
+                    </button>
+                  {/if}
+                  {#if !conn.isChild}
+                    <button
+                      type="button"
+                      class="text-theme-muted hover:text-theme-primary transition p-1"
+                      onclick={() => setHidden(conn, !conn.hidden)}
+                      aria-label="{conn.hidden
+                        ? 'Show'
+                        : 'Hide'} connection to {conn.displayTitle}"
+                      title={conn.hidden ? "Show in graph" : "Hide from graph"}
+                    >
+                      <span
+                        aria-hidden="true"
+                        class="{conn.hidden
+                          ? 'icon-[lucide--eye]'
+                          : 'icon-[lucide--eye-off]'} w-3 h-3"
                       ></span>
                     </button>
                   {/if}

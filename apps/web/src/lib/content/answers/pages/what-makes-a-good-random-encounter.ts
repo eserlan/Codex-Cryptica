@@ -2,7 +2,7 @@ import type { AnswerConfigInput } from "../schema";
 
 export const whatMakesAGoodRandomEncounter: AnswerConfigInput = {
   slug: "what-makes-a-good-random-encounter",
-  category: "session-prep",
+  category: "adventure-design",
   publishedAt: "2026-08-30",
   question: "What makes a good random encounter?",
   kind: "framework",
@@ -171,6 +171,9 @@ export const whatMakesAGoodRandomEncounter: AnswerConfigInput = {
     "how-much-prep-do-you-need-for-an-rpg-session",
     "how-do-you-run-a-heist-in-a-tabletop-rpg",
     "how-do-you-write-a-one-shot-adventure",
+    "how-do-i-run-a-large-battle-when-the-player-characters-are-part-of-an-army",
+    "how-do-i-make-sea-travel-interesting-in-a-ttrpg",
+    "how-do-i-run-a-pirate-campaign-focused-on-exploration",
   ],
   discovery: {
     id: "answer-random-encounter",

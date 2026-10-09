@@ -1,5 +1,6 @@
 <script lang="ts">
   import { quickNoteStore } from "$lib/stores/quicknote.svelte";
+  import SessionJournalIndicator from "./SessionJournalIndicator.svelte";
   import { page } from "$app/state";
   import {
     isToolActive,
@@ -7,10 +8,19 @@
     navItems,
     type NavItem,
   } from "./nav-items";
+  import { isHelpAssistantAvailable } from "$lib/services/help-assistant/help-availability";
+  import {
+    cifPopout,
+    helpAssistant,
+    toggleCif,
+  } from "$lib/stores/help-assistant/help-runtime";
+  import HelpAskButton from "$lib/components/help-assistant/HelpAskButton.svelte";
 
+  // fallow-ignore-next-line code-duplication
   const items = $derived(navItems());
   const views = $derived(items.filter((i) => i.group === "view"));
   const tools = $derived(items.filter((i) => i.group === "tool"));
+  const helpAvailable = $derived(isHelpAssistantAvailable());
 
   /**
    * This row does not wrap and does not scroll on its own, so every item added
@@ -85,11 +95,16 @@
 
       {#if tool.id === "quicknote" && quickNoteStore.count > 0}
         <span
-          class="absolute -top-1 -right-1 flex h-4 min-w-[16px] items-center justify-center rounded-full px-1 text-[9px] font-bold text-chrome-bg bg-chrome-accent shadow-md"
+          class="absolute -top-1 -right-1 flex h-4 min-w-[16px] items-center justify-center rounded-full px-1 text-nano font-bold text-chrome-bg bg-chrome-accent shadow-md"
         >
           {quickNoteStore.count}
         </span>
       {/if}
+
+      <SessionJournalIndicator
+        toolId={tool.id}
+        class="absolute -top-0.5 -right-0.5 bg-chrome-accent shadow-md"
+      />
 
       {#if active}
         <div
@@ -100,4 +115,20 @@
       {/if}
     </button>
   {/each}
+
+  <!-- Bottom Actions: Help & Guidance -->
+  {#if helpAvailable}
+    <div
+      class="md:mt-auto flex flex-row md:flex-col items-center shrink-0"
+      data-testid="activity-bar-bottom"
+    >
+      <div
+        class="w-px h-6 bg-chrome-border md:w-8 md:h-px my-1 md:my-2 mx-0.5 md:mx-0 opacity-50 shrink-0"
+      ></div>
+      <HelpAskButton
+        open={helpAssistant.isOpen || cifPopout.connected}
+        onToggle={toggleCif}
+      />
+    </div>
+  {/if}
 </nav>

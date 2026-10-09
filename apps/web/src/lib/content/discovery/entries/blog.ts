@@ -98,4 +98,21 @@ export const blogEntries: DiscoveryEntryInput[] = [
     indexable: true,
     status: "live",
   },
+  {
+    id: "blog-entity-detail-views",
+    pageKind: "blog",
+    canonicalPath: "/blog/entity-detail-views",
+    primaryIntent: "what can i do from an entity detail view",
+    intentAliases: [
+      "codex cryptica entity sidebar guide",
+      "codex cryptica zen mode guide",
+      "how to use entity detail views",
+    ],
+    userJob: "adopt-workflow",
+    uniqueValue:
+      "A single, task-oriented tour of the entity sidebar and Zen Mode, showing how editing, AI revisions, relationships, maps, family, timelines, stats and reusable entities fit into one workflow.",
+    parentCluster: "entity-workflows",
+    indexable: true,
+    status: "live",
+  },
 ];

@@ -76,8 +76,8 @@ describe("getGraphStyles", () => {
     const performanceNodeStyle = styles.find(
       (s) =>
         s.selector === "node" &&
-        s.style.label === "" &&
-        s.style["background-image"] === "none",
+        s.style["background-image"] === "none" &&
+        s.style["background-opacity"] === 0.72,
     );
     const performanceEdgeStyle = styles.find(
       (s) =>
@@ -94,6 +94,83 @@ describe("getGraphStyles", () => {
     expect(performanceEdgeStyle?.style["haystack-radius"]).toBe(0.5);
     expect(performanceEdgeStyle?.style["target-arrow-shape"]).toBe("none");
     expect(selectedLabelStyle?.style.label).toBe("data(label)");
+  });
+
+  describe("labels in performance mode", () => {
+    const build = (showLabels = true, timelineMode = false) =>
+      getGraphStyles(
+        mockTemplate,
+        mockCategories,
+        true,
+        timelineMode,
+        showLabels,
+        true,
+      );
+    const blanksNodeLabels = (styles: any[]) =>
+      styles.some((s) => s.selector === "node" && s.style.label === "");
+
+    it("does not blank node labels, so zooming in on a large vault can show them", () => {
+      const styles = build();
+
+      expect(blanksNodeLabels(styles)).toBe(false);
+      const perfNode = styles.find(
+        (s) => s.selector === "node" && s.style["background-opacity"] === 0.72,
+      );
+      expect(perfNode?.style["text-opacity"]).toBeUndefined();
+    });
+
+    it("still hides labels when zoomed out, through the level-of-detail rules", () => {
+      const styles = build();
+      const lod = (selector: string) =>
+        styles.find((s) =>
+          String(s.selector)
+            .split(",")
+            .map((x) => x.trim())
+            .includes(selector),
+        )?.style.label;
+
+      expect(lod("node.lod-low")).toBe("");
+      expect(lod("node.lod-medium")).toBe("");
+    });
+
+    it("still hides labels when the user turned them off (negative)", () => {
+      expect(blanksNodeLabels(build(false))).toBe(true);
+    });
+
+    it("still hides labels in timeline mode (negative)", () => {
+      expect(blanksNodeLabels(build(true, true))).toBe(true);
+    });
+  });
+
+  describe("zoomed-out detail levels", () => {
+    const styles = () =>
+      getGraphStyles(mockTemplate, mockCategories, true, false, true);
+    const rule = (selector: string) =>
+      styles().find((s) => s.selector === selector)?.style;
+
+    it("draws distant edges straight or as haystacks, without arrowheads", () => {
+      expect(rule("edge.lod-medium")).toMatchObject({
+        "curve-style": "straight",
+        "target-arrow-shape": "none",
+      });
+      expect(rule("edge.lod-low")).toMatchObject({
+        "curve-style": "haystack",
+        "target-arrow-shape": "none",
+      });
+    });
+
+    it("keeps entity images and silhouettes at the lowest level, dropping only the texture (negative)", () => {
+      const lowNodeImageRules = styles().filter(
+        (s) =>
+          String(s.selector).includes("node.lod-low") &&
+          s.style["background-image"] === "none",
+      );
+      expect(lowNodeImageRules).toHaveLength(1);
+      expect(lowNodeImageRules[0].selector).toContain("[^resolvedImage]");
+      expect(lowNodeImageRules[0].selector).toContain(
+        "[resolvedImage = 'none']",
+      );
+    });
   });
 
   it("keeps relationship labels horizontal and clears dimmed background labels", () => {

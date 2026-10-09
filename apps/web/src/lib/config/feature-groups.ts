@@ -13,8 +13,10 @@
  * deliberate: build, connect, run, then AI. Leading with AI on a page whose
  * problem is looking machine-made would be answering the wrong question.
  *
- * `FEATURE_HINTS` itself is untouched. It is keyed by id and consumed in-app by
- * `FeatureHint.svelte`, so this file references ids rather than moving them.
+ * `FEATURE_HINTS` itself is untouched. It is keyed by id. The in-app hint cards
+ * that used to show it are gone (Cif and the Help library replaced them), so it
+ * now feeds this page and the generated llms files, and this file references
+ * ids rather than moving them.
  *
  * Every hint must appear exactly once across `FEATURE_GROUPS` and
  * `HELP_ONLY_HINT_IDS`. The test enforces that, so adding a hint without
@@ -67,11 +69,15 @@ export const FEATURE_GROUPS: FeatureGroup[] = [
       "table-view-filters",
       "search-indexing",
       "quicknote-scratchpad",
+      "session-journal",
       "era-date-picker",
+      "calendar-eras",
       "creature-packs",
       "front-page",
       "vault-switcher",
       "presentation-templates",
+      "entity-templates",
+      "entity-reports",
     ],
   },
   {
@@ -110,6 +116,7 @@ export const FEATURE_GROUPS: FeatureGroup[] = [
       "vtt-mode",
       "map-mode",
       "fog-of-war",
+      "hexcrawl-maps",
       "guest-entity-links",
       "vtt-entity-list",
       "vtt-tile-decks",

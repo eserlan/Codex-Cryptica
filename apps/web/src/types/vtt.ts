@@ -285,8 +285,12 @@ export interface SessionEndedPayload {
 export interface SetGridSettingsPayload {
   type: "SET_GRID_SETTINGS";
   gridSize?: number;
+  gridType?: "square" | "hex-pointy" | "hex-flat";
+  showHexCoordinates?: boolean;
   gridUnit?: string;
   gridDistance?: number;
+  /** GM-chosen fog colour (#rrggbb); null returns to the theme colour. */
+  fogColor?: string | null;
 }
 
 export interface ChatClearPayload {

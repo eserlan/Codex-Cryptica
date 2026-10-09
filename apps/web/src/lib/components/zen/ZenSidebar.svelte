@@ -176,7 +176,8 @@
         class="w-full text-center py-2.5 bg-theme-primary text-theme-bg font-bold tracking-widest uppercase text-xs rounded-xl hover:bg-theme-secondary transition flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(var(--color-theme-primary-rgb),0.15)] cursor-pointer"
         data-testid="zen-sidebar-guest-chat-button"
       >
-        <span class="icon-[lucide--messages-square] w-4 h-4"></span>
+        <span aria-hidden="true" class="icon-[lucide--messages-square] w-4 h-4"
+        ></span>
         Chat with {entity.title}
       </button>
     </div>
@@ -220,7 +221,7 @@
           <div class="flex flex-wrap gap-1.5">
             {#each entity.aliases as alias}
               <div
-                class="px-2 py-0.5 rounded bg-theme-primary/5 border border-theme-primary/10 text-[10px] font-bold text-theme-secondary uppercase tracking-wider"
+                class="px-2 py-0.5 rounded bg-theme-primary/5 border border-theme-primary/10 text-micro font-bold text-theme-secondary uppercase tracking-wider"
               >
                 {alias}
               </div>
@@ -232,7 +233,7 @@
       <div class="space-y-4">
         <div class="space-y-1">
           <label
-            class="block text-[10px] tracking-widest uppercase font-header text-theme-secondary font-bold"
+            class="block text-micro tracking-widest uppercase font-header text-theme-secondary font-bold"
             for="zen-labels">Labels</label
           >
           <LabelInput entityId={entity?.id || ""} ariaLabel="Labels" />
@@ -262,11 +263,11 @@
         aria-hidden="true"
         tabindex="-1"
       />
-      <div class="mb-2 flex items-center gap-2">
+      <div class="mb-2 flex items-stretch gap-2">
         <button
           type="button"
           onclick={() => fileInput?.click()}
-          class="flex-1 rounded border border-theme-border bg-theme-surface px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-theme-text transition hover:border-theme-primary hover:bg-theme-bg/50"
+          class="touch-target flex-1 rounded border border-theme-border bg-theme-surface px-3 py-2 text-micro font-bold uppercase tracking-widest text-theme-text transition hover:border-theme-primary hover:bg-theme-bg/50"
           aria-describedby={imageUploadError
             ? "zen-image-upload-error"
             : undefined}
@@ -285,7 +286,7 @@
           type="button"
           onclick={() => entity && modalUIStore.openSilhouettePicker(entity)}
           disabled={!entity}
-          class="flex items-center gap-1.5 rounded border border-theme-border bg-theme-surface px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-theme-text transition hover:border-theme-primary hover:bg-theme-bg/50 disabled:cursor-not-allowed disabled:opacity-40"
+          class="touch-target flex items-center gap-1.5 rounded border border-theme-border bg-theme-surface px-3 py-2 text-micro font-bold uppercase tracking-widest text-theme-text transition hover:border-theme-primary hover:bg-theme-bg/50 disabled:cursor-not-allowed disabled:opacity-40"
           title="Customize vector silhouette"
           data-testid="zen-silhouette-button"
         >
@@ -311,7 +312,9 @@
       <div
         class="w-full py-2 md:py-4 md:aspect-square rounded-lg border border-dashed border-theme-border flex flex-col items-center justify-center gap-2 md:gap-4 text-theme-muted bg-theme-primary/5 relative overflow-hidden"
       >
-        <span class="icon-[lucide--lock] w-6 h-6 md:w-8 md:h-8 opacity-30"
+        <span
+          aria-hidden="true"
+          class="icon-[lucide--lock] w-6 h-6 md:w-8 md:h-8 opacity-30"
         ></span>
         <span
           class="text-xs font-bold uppercase font-header tracking-widest opacity-40"
@@ -358,7 +361,7 @@
               class="icon-[lucide--image] w-8 h-8 opacity-30"
             ></span>
             <span
-              class="text-[10px] font-mono uppercase tracking-wider opacity-40"
+              class="text-micro font-mono uppercase tracking-wider opacity-40"
               >Resolving Neural Visual...</span
             >
           </div>
@@ -406,7 +409,7 @@
               class="border-theme-border/60 shadow-lg group-hover/sil:border-theme-primary transition-colors"
             />
             <span
-              class="text-[9px] font-mono uppercase tracking-wider opacity-60 group-hover/sil:text-theme-primary transition-colors flex items-center gap-1"
+              class="text-nano font-mono uppercase tracking-wider opacity-60 group-hover/sil:text-theme-primary transition-colors flex items-center gap-1"
             >
               <span
                 class="icon-[lucide--sparkles] h-3 w-3 text-theme-accent"
@@ -425,7 +428,7 @@
                 aria-hidden="true"
               ></span>
               <div
-                class="text-[9px] md:text-[10px] font-bold uppercase tracking-[0.2em] font-header text-theme-primary text-center px-6"
+                class="text-nano md:text-micro font-bold uppercase tracking-[0.2em] font-header text-theme-primary text-center px-6"
                 aria-live="polite"
               >
                 {#if isVisualizing}
@@ -456,18 +459,19 @@
           <div
             class="absolute top-2 left-2 flex items-center gap-2 opacity-30 text-theme-muted select-none pointer-events-none transition-opacity group-hover:opacity-100"
           >
-            <span class="icon-[lucide--pen-tool] w-4 h-4"></span>
+            <span aria-hidden="true" class="icon-[lucide--pen-tool] w-4 h-4"
+            ></span>
             <span
-              class="text-[8px] font-header uppercase tracking-widest font-bold"
+              class="text-nano font-header uppercase tracking-widest font-bold"
               >Image Prompt</span
             >
           </div>
           <div
             class="absolute top-2 right-2 flex items-center gap-1 opacity-0 text-theme-primary select-none pointer-events-none transition-opacity group-hover:opacity-100 group-focus:opacity-100"
           >
-            <span class="icon-[lucide--copy] w-3 h-3"></span>
+            <span aria-hidden="true" class="icon-[lucide--copy] w-3 h-3"></span>
             <span
-              class="text-[8px] font-header uppercase tracking-widest font-bold"
+              class="text-nano font-header uppercase tracking-widest font-bold"
               >Click to Copy</span
             >
           </div>
@@ -489,7 +493,7 @@
         <button
           onclick={() => oracle.drawEntity(entity.id)}
           disabled={isVisualizing}
-          class="bg-theme-surface/50 hover:bg-theme-surface border border-theme-primary/30 hover:border-theme-primary transition-all flex items-center justify-center gap-2 px-2 py-1 md:px-4 md:py-2 rounded shadow-sm group/btn relative overflow-hidden"
+          class="touch-target bg-theme-surface/50 hover:bg-theme-surface border border-theme-primary/30 hover:border-theme-primary transition-all flex items-center justify-center gap-2 px-2 py-1 md:px-4 md:py-2 rounded shadow-sm group/btn relative overflow-hidden"
           aria-label={oracle.apiKey
             ? `Draw visualization for ${entity.title}`
             : `Generate image prompt for ${entity.title}`}
@@ -501,7 +505,7 @@
               aria-hidden="true"
             ></span>
             <span
-              class="text-[10px] md:text-xs font-bold tracking-widest text-theme-primary text-center font-header uppercase"
+              class="text-micro md:text-xs font-bold tracking-widest text-theme-primary text-center font-header uppercase"
               aria-live="polite"
             >
               {#if oracle.activeStyleTitle}
@@ -519,7 +523,7 @@
               aria-hidden="true"
             ></span>
             <span
-              class="text-[10px] md:text-xs font-bold tracking-widest font-header text-theme-primary relative z-10 uppercase"
+              class="text-micro md:text-xs font-bold tracking-widest font-header text-theme-primary relative z-10 uppercase"
               >{oracle.apiKey ? "DRAW VISUAL" : "GENERATE PROMPT"}</span
             >
           {/if}
@@ -528,7 +532,7 @@
         <button
           type="button"
           onclick={() => modalUIStore.openRevisionDialog(entity.id)}
-          class="bg-theme-surface/50 hover:bg-theme-surface border border-theme-primary/30 hover:border-theme-primary transition-all flex items-center justify-center gap-2 px-2 py-1 md:px-4 md:py-2 rounded shadow-sm group/btn relative overflow-hidden"
+          class="touch-target bg-theme-surface/50 hover:bg-theme-surface border border-theme-primary/30 hover:border-theme-primary transition-all flex items-center justify-center gap-2 px-2 py-1 md:px-4 md:py-2 rounded shadow-sm group/btn relative overflow-hidden"
           aria-label="Revise Chronicle and Lore"
           title="Revise Chronicle and Lore"
         >
@@ -537,7 +541,7 @@
             aria-hidden="true"
           ></span>
           <span
-            class="text-[10px] md:text-xs font-bold tracking-widest font-header text-theme-primary relative z-10 uppercase pointer-events-none"
+            class="text-micro md:text-xs font-bold tracking-widest font-header text-theme-primary relative z-10 uppercase pointer-events-none"
             >REGENERATE</span
           >
         </button>
@@ -561,7 +565,8 @@
           onclick={onDelete}
           class="w-full border border-red-900/30 text-red-800 hover:text-red-500 hover:border-red-600 hover:bg-red-950/30 text-xs font-bold px-4 py-2 rounded tracking-widest transition flex items-center justify-center gap-2"
         >
-          <span class="icon-[lucide--trash-2] w-3 h-3"></span>
+          <span aria-hidden="true" class="icon-[lucide--trash-2] w-3 h-3"
+          ></span>
           DELETE ENTITY
         </button>
       </div>

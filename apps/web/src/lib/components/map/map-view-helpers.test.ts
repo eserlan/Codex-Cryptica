@@ -5,10 +5,12 @@ import {
   describeMoveBlocked,
   getKeyboardViewportUpdate,
   getMapDisplayDimensions,
+  visionRevealSignature,
   getZoomViewportUpdate,
   isClickGesture,
   resolveHealthBar,
   shouldIgnoreMapKeyboardEvent,
+  formatMeasurementLabel,
 } from "./map-view-helpers";
 
 describe("getMapDisplayDimensions", () => {
@@ -67,6 +69,42 @@ describe("describeMoveBlocked", () => {
 });
 
 describe("map-view helpers", () => {
+  it("retries vision reveal when the map image or fog mask becomes available", () => {
+    const context = [
+      30,
+      5,
+      64,
+      "hex-pointy",
+      true,
+      true,
+      false,
+      "map-1",
+      true,
+      true,
+    ] as const;
+    const withoutAssets = visionRevealSignature(
+      [{ id: "party", x: 10, y: 20 }],
+      ...context,
+      false,
+      false,
+    );
+    const withMask = visionRevealSignature(
+      [{ id: "party", x: 10, y: 20 }],
+      ...context,
+      true,
+      false,
+    );
+    const withImage = visionRevealSignature(
+      [{ id: "party", x: 10, y: 20 }],
+      ...context,
+      true,
+      true,
+    );
+
+    expect(withMask).not.toBe(withoutAssets);
+    expect(withImage).not.toBe(withMask);
+  });
+
   it("findClickedPin should return a pin within range", () => {
     const pins = [
       { id: "1", coordinates: { x: 10, y: 10 } },
@@ -238,5 +276,67 @@ describe("resolveHealthBar", () => {
   it("treats a non-numeric value as 0", () => {
     const fields = [counterField({ value: "unset" as any })];
     expect(resolveHealthBar(fields)).toEqual({ value: 0, max: 20 });
+  });
+});
+
+describe("formatMeasurementLabel", () => {
+  it("formats square grid measurement with Euclidean distance", () => {
+    const label = formatMeasurementLabel(
+      { x: 0, y: 0 },
+      { x: 200, y: 0 },
+      {
+        gridType: "square",
+        gridSize: 50,
+        gridDistance: 5,
+        gridUnit: "ft",
+      },
+    );
+    // 200px / 50px = 4 cells * 5ft = 20ft
+    expect(label).toBe("20ft");
+  });
+
+  it("formats hex grid measurement for adjacent hexes (1 hex)", () => {
+    // Hex size 50, pointy orientation: center (0, 0) to neighbor (50 * sqrt(3), 0)
+    const label = formatMeasurementLabel(
+      { x: 0, y: 0 },
+      { x: 50 * Math.sqrt(3), y: 0 },
+      {
+        gridType: "hex-pointy",
+        gridSize: 50,
+        gridDistance: 6,
+        gridUnit: "mi",
+      },
+    );
+    expect(label).toBe("1 hex (6 mi)");
+  });
+
+  it("formats hex grid measurement for multiple hexes (4 hexes)", () => {
+    // Hex size 50, pointy orientation: 4 hex steps along q axis
+    const label = formatMeasurementLabel(
+      { x: 0, y: 0 },
+      { x: 4 * 50 * Math.sqrt(3), y: 0 },
+      {
+        gridType: "hex-pointy",
+        gridSize: 50,
+        gridDistance: 6,
+        gridUnit: "mi",
+      },
+    );
+    expect(label).toBe("4 hexes (24 mi)");
+  });
+
+  it("formats flat hex grid measurement", () => {
+    // Flat orientation: horizontal step is 1.5 * size = 75px
+    const label = formatMeasurementLabel(
+      { x: 0, y: 0 },
+      { x: 150, y: 0 }, // 2 steps along q
+      {
+        gridType: "hex-flat",
+        gridSize: 50,
+        gridDistance: 10,
+        gridUnit: "km",
+      },
+    );
+    expect(label).toBe("2 hexes (20 km)");
   });
 });

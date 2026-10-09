@@ -128,7 +128,7 @@
         <div class="space-y-4">
           <div class="space-y-2">
             <label
-              class="text-[10px] uppercase text-cyan-600 font-bold font-header tracking-widest"
+              class="text-micro uppercase text-cyan-600 font-bold font-header tracking-widest"
               for="p2p-link-input">Active Live Session</label
             >
             <div class="flex gap-2">
@@ -164,10 +164,10 @@
             class="flex items-center gap-2 p-2 bg-cyan-900/10 rounded border border-cyan-900/30"
           >
             <span class="w-2 h-2 rounded-full bg-cyan-500 animate-pulse"></span>
-            <span class="text-[10px] text-cyan-500 uppercase tracking-widest"
+            <span class="text-micro text-cyan-500 uppercase tracking-widest"
               >Broadcasting Active</span
             >
-            <span class="ml-auto text-[10px] text-gray-500">Keep tab open</span>
+            <span class="ml-auto text-micro text-gray-500">Keep tab open</span>
           </div>
         </div>
       {:else}
@@ -195,8 +195,9 @@
             START LIVE SESSION
           {/if}
         </button>
-        <p class="text-[10px] text-gray-600 mt-3 text-center">
-          Uses P2P WebRTC. Bypass Google API limits.
+        <p class="text-micro text-gray-600 mt-3 text-center">
+          Players connect directly to your browser. Setting up the connection
+          can still use network services.
         </p>
       {/if}
     </div>

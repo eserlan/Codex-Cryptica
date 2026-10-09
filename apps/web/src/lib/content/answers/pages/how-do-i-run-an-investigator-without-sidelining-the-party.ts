@@ -3,7 +3,7 @@ import type { AnswerConfigInput } from "../schema";
 export const howDoIRunAnInvestigatorWithoutSideliningTheParty: AnswerConfigInput =
   {
     slug: "how-do-i-run-an-investigator-without-sidelining-the-party",
-    category: "session-prep",
+    category: "running-the-game",
     publishedAt: "2026-09-24",
     question:
       "How do I run an investigator or detective without making other PCs irrelevant?",
@@ -182,6 +182,11 @@ export const howDoIRunAnInvestigatorWithoutSideliningTheParty: AnswerConfigInput
       "how-do-you-run-a-conspiracy-campaign",
       "how-do-i-run-a-rogue-or-scout-without-splitting-the-party",
       "how-do-i-write-a-good-call-of-cthulhu-one-shot",
+      "how-do-i-run-character-roles-in-an-investigative-horror-rpg",
+      "how-do-i-run-common-character-roles-in-a-fantasy-rpg",
+      "how-do-i-make-interviewing-npcs-interesting-in-an-investigation",
+      "how-do-i-handle-players-asking-an-npc-to-tell-us-everything-you-know",
+      "how-do-i-handle-divination-magic-without-letting-one-character-solve-every-mystery",
     ],
     discovery: {
       id: "answer-run-investigator-without-sidelining-party",
@@ -215,6 +220,11 @@ export const howDoIRunAnInvestigatorWithoutSideliningTheParty: AnswerConfigInput
           with: "answer-specialist-character-spotlight",
           reason:
             "The specialist spotlight answer covers scene structures for any expert role; this answer focuses on clue access, inference, and decision-making around an investigator character.",
+        },
+        {
+          with: "answer-run-bard-face-without-sidelining-party",
+          reason:
+            "Both answers keep a specialist character central without sidelining the party; the bard and face answer structures social access, negotiation and shared promises, while this answer focuses on clue discovery, interpretation and shared decisions in mysteries.",
         },
         {
           with: "answer-run-mystery-without-railroading",

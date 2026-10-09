@@ -18,6 +18,8 @@ export type { HelpArticle };
 /** Help articles linked directly from feature entry points. */
 export const FEATURE_HELP_ARTICLES = {
   COMMUNITY_STAT_SHEET_TEMPLATES: "stat-sheets",
+  SHARING_ENTITY_TEMPLATES: "sharing-templates",
+  HEXCRAWL_MAPS: "hexcrawl-maps",
 } as const;
 
 export interface FeatureHint {
@@ -175,6 +177,13 @@ export const COACH_MARKS: CoachMark[] = [
 ];
 
 export const FEATURE_HINTS: Record<string, FeatureHint> = {
+  "entity-templates": {
+    id: "entity-templates",
+    title: "Entity templates",
+    content:
+      "Pick the markdown a new note starts with. Duplicate a built-in template to make your own, edit it as plain markdown, then set it as the default for that type. Changing a template only affects notes you create afterwards; existing notes stay as they are.",
+    icon: "icon-[lucide--layout-template]",
+  },
   // The browser-local caveat is the whole point of this hint (156-entity-shelf,
   // FR-024): people will otherwise assume the Shelf is a backup or a way to
   // send an entity to a co-GM, and find out it is neither at the worst moment.
@@ -205,7 +214,7 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
     id: "getting-started",
     title: "New here?",
     content:
-      "Settings → Help has a getting-started checklist, and a button to replay the welcome tour any time.",
+      "Open Explore from the app footer or mobile menu to find your way around. Browse by Topic groups guides, worked examples, and tools for campaigns like heists, puzzles, pirates, and D&D. Settings → Help has a getting-started checklist, and a button to replay the welcome tour any time.",
     icon: "icon-[lucide--compass]",
   },
   "guided-mode-quick-start": {
@@ -418,11 +427,18 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
       "Change your world. Click the folder name at the top to switch to a different story.",
     icon: "icon-[lucide--folder-sync]",
   },
+  "calendar-eras": {
+    id: "calendar-eras",
+    title: "Calendar Eras",
+    content:
+      "Configure historical eras (such as First Age, Second Age, or Before the Fall / After the Fall) in Vault Settings. Each era can reset year numbering or count backward into the past. Dates across all views display with the appropriate era label while the underlying chronology keeps a continuous integer timeline for precise ordering.",
+    icon: "icon-[lucide--history]",
+  },
   "era-date-picker": {
     id: "era-date-picker",
     title: "Pick Dates",
     content:
-      "Select dates using smooth, center-snapping scroll wheels. Features side-by-side vertical tracks, intercalary anchors, inline repair warnings on calendar change, and quick keyboard year/day overrides.",
+      "Select dates using smooth, center-snapping scroll wheels or direct text entry (including era labels like 312 BF). Features side-by-side vertical tracks, era selectors, intercalary anchors, inline repair warnings on calendar change, and quick keyboard year/day overrides.",
     icon: "icon-[lucide--settings-2]",
   },
   "keyboard-navigation": {
@@ -541,7 +557,7 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
     id: "spatial-canvas",
     title: "Spatial Canvas",
     content:
-      "Design custom layouts like conspiracy boards or quest flowcharts. Sketch with the pencil, remove individual strokes with the eraser, and rotate cards with a two-finger twist or the desktop rotation handle. Drawings and card angles persist with the canvas.",
+      "Drag cards into a freeform layout, then right-click a card to lock it, bring it to the front or send it to the back. Use Auto-arrange for a one-time board layout; there is no grid snapping or automatic sorting. Positions and card settings save with each canvas. Click the workspace name to create, rename, delete or switch boards. Sketch with the pencil, erase individual strokes, and rotate cards with a two-finger twist or the desktop rotation handle.",
     icon: "icon-[lucide--layout-dashboard]",
   },
   "the-archive": {
@@ -761,12 +777,33 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
       "Keep your encounter tables, loot lists, and oracle decks in the vault and roll them mid-session. A table holds entries you can weight or assign explicit die ranges to. Create custom tables manually, paste external spreadsheets via the Import Wizard, or use 'Generate with AI' to build world-grounded random tables referencing your vault's NPCs, locations, and existing sub-tables. Candidate rows appear in an interactive staging review where you can edit, select, or discard entries before adding them. Write {source_name} inside an entry to pull a result from another table (e.g. {weather}), and click recognized entity chips in roll results to immediately inspect linked world lore. Decks work similarly by dealing cards without replacement. Roll or draw from the Oracle chat with /table and /deck commands.",
     icon: "icon-[lucide--dices]",
   },
+  "session-journal": {
+    id: "session-journal",
+    title: "Session Journal",
+    content:
+      "Keep a running record of what happens during play, separate from Quicknote/Scratchpad's transient working notes. Start a Session Journal from the Session Journal button in the toolbar (or the Journal tab of the Quicknote panel), add timestamped notes as the session unfolds, and optionally break a long session into named sections (chapters or scenes). While a journal is running, your dice rolls, card draws and table results are added to it for you, marked so you can tell them from your own notes. When you want to keep something in your world, turn an entry, a section, or the whole journal into a draft entity: choose a type and a name, and the text is filled in for you to edit and approve. The journal itself is never changed. End the session when you're done — the journal stays around afterward, and you can resume an unfinished one exactly where you left off next time. Any entry can be edited (typed notes only), moved up or down, or deleted. If cloud backup is enabled for this vault, journals are included in what gets backed up and restored, same as your entities, maps, and canvases.",
+    icon: "icon-[lucide--book-open]",
+  },
+  "entity-reports": {
+    id: "entity-reports",
+    title: "Entity Reports",
+    content:
+      "Turn a group of entities into a readable document. On a Spatial Canvas, click Generate report in the toolbar. In Graph view, select some nodes and choose Generate report. In Table view, tick some rows and use Generate report in the selection bar. A preview appears where you choose the scope (canvas only), what to include, and how much detail to show. GM-only secrets stay out unless you turn them on. Press Save as note to keep the report as a normal note in your vault, then read and edit it like any other entity. Regenerate refreshes a report from its original source and asks first if you have edited it, and Export copies it as Markdown for use in other tools.",
+    icon: "icon-[lucide--file-text]",
+  },
   "presentation-templates": {
     id: "presentation-templates",
     title: "Presentation Templates",
     content:
       "Change how a Stat Sheet looks without touching its data. Click Presentations to switch between built-in layouts, or write your own in Markdown with field references like {{stat.hp}} and layout sections for groups, cards, and rows. Repeatable Table fields (used for Weapons/Items by default) keep rows of data together: add rows, edit their cells, adjust counters, and roll dice from the table. In the template editor you can customize a Repeatable Table's own column headings and cell types (text, number, dice, counter, or checkbox) so the same table type covers skills, spells, or any other list your system needs, and you can turn off vault-item linking for tables that aren't about items. A live preview and inline warnings catch typos or removed fields as you type, and every layout can be exported and shared with anyone using a matching schema.",
     icon: "icon-[lucide--layout-template]",
+  },
+  "hexcrawl-maps": {
+    id: "hexcrawl-maps",
+    title: "Hexcrawl & Hex Grids",
+    content:
+      "Run overland exploration with point-to-point hex grids. Choose pointy-topped or flat-topped orientation, toggle in-cell coordinates, snap tokens and pins to hex centers, and reveal or hide fog of war by hex. Rulers measure travel distance directly in hexes.",
+    icon: "icon-[lucide--hexagon]",
   },
 };
 

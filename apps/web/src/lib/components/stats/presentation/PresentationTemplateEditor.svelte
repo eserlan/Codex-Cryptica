@@ -7,7 +7,7 @@
   } from "schema";
   import { getUnusedFields } from "./visual-card-parser";
   // We accidentally lost use-visual-layout during a git checkout earlier because it wasn't tracked.
-import { useVisualLayout } from "./use-visual-layout.svelte";
+  import { useVisualLayout } from "./use-visual-layout.svelte";
   import { presentationTemplates } from "$lib/stores/presentation-templates.svelte";
   import { notificationStore } from "$lib/stores/ui/notification.svelte";
   import {
@@ -17,7 +17,6 @@ import { useVisualLayout } from "./use-visual-layout.svelte";
     sanitizeSource,
     walkPresentationNodes,
     computeSectionKeys,
-    DISPLAY_MODES_BY_FIELD_TYPE,
     resolveFieldByKeyOrId,
   } from "@codex/stat-sheet-engine";
   import type {
@@ -27,20 +26,8 @@ import { useVisualLayout } from "./use-visual-layout.svelte";
   } from "@codex/stat-sheet-engine";
   import PresentationRenderer from "./PresentationRenderer.svelte";
   import PresentationSyntaxHelpModal from "./PresentationSyntaxHelpModal.svelte";
+  import PresentationFieldContextMenu from "./PresentationFieldContextMenu.svelte";
   import type { PresentationRenderContext } from "./types";
-
-  const DISPLAY_MODE_OPTIONS = [
-    { mode: undefined, label: "Default" },
-    { mode: "plain", label: "Plain Inline" },
-    { mode: "prominent", label: "Prominent Badge" },
-    { mode: "current-max", label: "Current / Max Counter" },
-    { mode: "counter", label: "Interactive Stepper" },
-    { mode: "progress", label: "Progress Bar" },
-    { mode: "tag-list", label: "Tag List" },
-    { mode: "notes", label: "Notes Area" },
-    { mode: "table", label: "Item Table" },
-    { mode: "name-target", label: "Name & Target" },
-  ] as const;
 
   let {
     schema,
@@ -86,7 +73,9 @@ import { useVisualLayout } from "./use-visual-layout.svelte";
     source: () => source,
     schemaFields: () => schema.fields,
     fieldDisplayOverrides: () => fieldDisplayOverrides,
-    onSourceUpdate: (newSource: string) => { source = newSource; },
+    onSourceUpdate: (newSource: string) => {
+      source = newSource;
+    },
   });
   let isSaving = $state(false);
   let saveError = $state("");
@@ -432,7 +421,7 @@ import { useVisualLayout } from "./use-visual-layout.svelte";
         </h2>
         <button
           type="button"
-          class="flex items-center gap-1 rounded border border-theme-border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-theme-muted hover:border-theme-primary hover:text-theme-primary transition-colors"
+          class="flex items-center gap-1 rounded border border-theme-border px-2 py-0.5 text-micro font-bold uppercase tracking-wide text-theme-muted hover:border-theme-primary hover:text-theme-primary transition-colors"
           onclick={() => (showSyntaxHelp = true)}
           data-testid="presentation-editor-help-btn"
         >
@@ -457,7 +446,7 @@ import { useVisualLayout } from "./use-visual-layout.svelte";
       <div class="grid shrink-0 gap-3 sm:grid-cols-2">
         <div>
           <label
-            class="text-[10px] font-bold uppercase tracking-wide text-theme-muted"
+            class="text-micro font-bold uppercase tracking-wide text-theme-muted"
             for="presentation-template-name"
           >
             Name
@@ -471,7 +460,7 @@ import { useVisualLayout } from "./use-visual-layout.svelte";
         </div>
         <div>
           <label
-            class="text-[10px] font-bold uppercase tracking-wide text-theme-muted"
+            class="text-micro font-bold uppercase tracking-wide text-theme-muted"
             for="presentation-template-description"
           >
             Description
@@ -491,8 +480,8 @@ import { useVisualLayout } from "./use-visual-layout.svelte";
               <button
                 type="button"
                 class={editorMode === "visual"
-                  ? "rounded bg-theme-primary px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-theme-bg"
-                  : "rounded border border-theme-border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-theme-muted hover:border-theme-primary hover:text-theme-primary"}
+                  ? "rounded bg-theme-primary px-2 py-0.5 text-micro font-bold uppercase tracking-wide text-theme-bg"
+                  : "rounded border border-theme-border px-2 py-0.5 text-micro font-bold uppercase tracking-wide text-theme-muted hover:border-theme-primary hover:text-theme-primary"}
                 onclick={() => {
                   if (editorMode !== "visual") {
                     visualLayout.resetFromSource();
@@ -510,8 +499,8 @@ import { useVisualLayout } from "./use-visual-layout.svelte";
               <button
                 type="button"
                 class={editorMode === "code"
-                  ? "rounded bg-theme-primary px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-theme-bg"
-                  : "rounded border border-theme-border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-theme-muted hover:border-theme-primary hover:text-theme-primary"}
+                  ? "rounded bg-theme-primary px-2 py-0.5 text-micro font-bold uppercase tracking-wide text-theme-bg"
+                  : "rounded border border-theme-border px-2 py-0.5 text-micro font-bold uppercase tracking-wide text-theme-muted hover:border-theme-primary hover:text-theme-primary"}
                 onclick={() => (editorMode = "code")}
                 data-testid="presentation-editor-tab-code"
               >
@@ -522,7 +511,7 @@ import { useVisualLayout } from "./use-visual-layout.svelte";
               <div class="flex flex-wrap items-center gap-1">
                 <button
                   type="button"
-                  class="rounded border border-theme-border px-1.5 py-0.5 text-[10px] font-medium text-theme-muted hover:border-theme-primary hover:text-theme-primary"
+                  class="rounded border border-theme-border px-1.5 py-0.5 text-micro font-medium text-theme-muted hover:border-theme-primary hover:text-theme-primary"
                   onclick={generateStarterLayout}
                   title="Generate starter layout from schema fields"
                   data-testid="presentation-editor-auto-layout"
@@ -531,7 +520,7 @@ import { useVisualLayout } from "./use-visual-layout.svelte";
                 </button>
                 <button
                   type="button"
-                  class="rounded border border-theme-border px-1.5 py-0.5 text-[10px] font-medium text-theme-muted hover:border-theme-primary hover:text-theme-primary"
+                  class="rounded border border-theme-border px-1.5 py-0.5 text-micro font-medium text-theme-muted hover:border-theme-primary hover:text-theme-primary"
                   onclick={() => insertSnippet(":::card\n\n:::", 9)}
                   title="Insert Card Container"
                 >
@@ -539,7 +528,7 @@ import { useVisualLayout } from "./use-visual-layout.svelte";
                 </button>
                 <button
                   type="button"
-                  class="rounded border border-theme-border px-1.5 py-0.5 text-[10px] font-medium text-theme-muted hover:border-theme-primary hover:text-theme-primary"
+                  class="rounded border border-theme-border px-1.5 py-0.5 text-micro font-medium text-theme-muted hover:border-theme-primary hover:text-theme-primary"
                   onclick={() =>
                     insertSnippet(":::stat-group columns=2\n\n:::", 24)}
                   title="Insert 2 Column Grid"
@@ -548,7 +537,7 @@ import { useVisualLayout } from "./use-visual-layout.svelte";
                 </button>
                 <button
                   type="button"
-                  class="rounded border border-theme-border px-1.5 py-0.5 text-[10px] font-medium text-theme-muted hover:border-theme-primary hover:text-theme-primary"
+                  class="rounded border border-theme-border px-1.5 py-0.5 text-micro font-medium text-theme-muted hover:border-theme-primary hover:text-theme-primary"
                   onclick={() =>
                     insertSnippet(":::stat-group columns=3\n\n:::", 24)}
                   title="Insert 3 Column Grid"
@@ -557,7 +546,7 @@ import { useVisualLayout } from "./use-visual-layout.svelte";
                 </button>
                 <button
                   type="button"
-                  class="rounded border border-theme-border px-1.5 py-0.5 text-[10px] font-medium text-theme-muted hover:border-theme-primary hover:text-theme-primary"
+                  class="rounded border border-theme-border px-1.5 py-0.5 text-micro font-medium text-theme-muted hover:border-theme-primary hover:text-theme-primary"
                   onclick={() => insertSnippet(":::row\n\n:::", 8)}
                   title="Insert Row Container"
                 >
@@ -565,7 +554,7 @@ import { useVisualLayout } from "./use-visual-layout.svelte";
                 </button>
                 <button
                   type="button"
-                  class="rounded border border-theme-border px-1.5 py-0.5 text-[10px] font-medium text-theme-muted hover:border-theme-primary hover:text-theme-primary"
+                  class="rounded border border-theme-border px-1.5 py-0.5 text-micro font-medium text-theme-muted hover:border-theme-primary hover:text-theme-primary"
                   onclick={() =>
                     insertSnippet(
                       "| Header 1 | Header 2 |\n| --- | --- |\n| Cell 1 | Cell 2 |",
@@ -578,7 +567,7 @@ import { useVisualLayout } from "./use-visual-layout.svelte";
                 <div class="relative">
                   <button
                     type="button"
-                    class="rounded border border-theme-border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-theme-muted hover:border-theme-primary hover:text-theme-primary"
+                    class="rounded border border-theme-border px-2 py-0.5 text-micro font-bold uppercase tracking-wide text-theme-muted hover:border-theme-primary hover:text-theme-primary"
                     onclick={() => (showAutocomplete = !showAutocomplete)}
                     data-testid="presentation-editor-insert-field"
                   >
@@ -632,28 +621,29 @@ import { useVisualLayout } from "./use-visual-layout.svelte";
                   class="flex items-center justify-between border-b border-theme-border pb-1.5"
                 >
                   <span
-                    class="text-[10px] font-bold uppercase tracking-wider text-theme-muted"
+                    class="text-micro font-bold uppercase tracking-wider text-theme-muted"
                   >
                     Available Fields
                   </span>
                   <span
-                    class="rounded bg-theme-bg px-1.5 py-0.5 text-[9px] font-bold text-theme-primary"
+                    class="rounded bg-theme-bg px-1.5 py-0.5 text-nano font-bold text-theme-primary"
                   >
                     {schema?.fields?.filter((f) => f.type !== "heading")
                       .length ?? 0}
                   </span>
                 </div>
-                <p class="text-[9px] text-theme-muted leading-tight">
+                <p class="text-nano text-theme-muted leading-tight">
                   Drag fields into any card row. You can reuse a field multiple
                   times!
                 </p>
                 <div class="flex flex-col gap-1.5 mt-1">
                   {#each schema?.fields?.filter((f) => f.type !== "heading") ?? [] as f (f.id)}
                     <div
-                                role="button"
-                                tabindex="0"
-                                draggable="true"
-                      ondragstart={(e) => visualLayout.handleSidebarFieldDragStart(e, f.id)}
+                      role="button"
+                      tabindex="0"
+                      draggable="true"
+                      ondragstart={(e) =>
+                        visualLayout.handleSidebarFieldDragStart(e, f.id)}
                       class="flex items-center justify-between gap-1 rounded border border-theme-border/70 bg-theme-bg px-2 py-1.5 text-xs text-theme-text font-medium cursor-grab active:cursor-grabbing hover:border-theme-primary/80 hover:bg-theme-primary/5 transition-all shadow-xs"
                     >
                       <div class="flex items-center gap-1.5 min-w-0">
@@ -664,7 +654,7 @@ import { useVisualLayout } from "./use-visual-layout.svelte";
                         <span class="truncate">{f.label}</span>
                       </div>
                       <span
-                        class="text-[9px] font-mono text-theme-muted shrink-0"
+                        class="text-nano font-mono text-theme-muted shrink-0"
                         >[{f.id}]</span
                       >
                     </div>
@@ -678,9 +668,9 @@ import { useVisualLayout } from "./use-visual-layout.svelte";
               >
                 {#each visualLayout.visualCards as card, idx (card.id)}
                   <div
-                                role="button"
-                                tabindex="0"
-                                draggable="true"
+                    role="button"
+                    tabindex="0"
+                    draggable="true"
                     ondragstart={() => visualLayout.handleCardDragStart(idx)}
                     ondragover={(e) => visualLayout.handleCardDragOver(e, idx)}
                     ondragend={visualLayout.handleCardDragEnd}
@@ -693,7 +683,7 @@ import { useVisualLayout } from "./use-visual-layout.svelte";
                           aria-hidden="true"
                         ></span>
                         <span
-                          class="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider {card.mode ===
+                          class="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-nano font-bold uppercase tracking-wider {card.mode ===
                           'table'
                             ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30'
                             : 'bg-theme-primary/15 text-theme-primary border border-theme-primary/30'}"
@@ -718,13 +708,15 @@ import { useVisualLayout } from "./use-visual-layout.svelte";
                             : "Section Title"}
                           oninput={(e) => {
                             card.title = (e.target as HTMLInputElement).value;
-                            visualLayout.handleSyncSourceFromVisualCards(visualLayout.visualCards);
+                            visualLayout.handleSyncSourceFromVisualCards(
+                              visualLayout.visualCards,
+                            );
                           }}
                         />
                       </div>
                       <div class="flex items-center gap-1">
                         <label
-                          class="flex items-center gap-1 text-[10px] text-theme-muted"
+                          class="flex items-center gap-1 text-micro text-theme-muted"
                         >
                           Cols:
                           <input
@@ -780,7 +772,7 @@ import { useVisualLayout } from "./use-visual-layout.svelte";
                         class="flex flex-wrap items-center gap-1.5 rounded border border-amber-500/25 bg-amber-500/5 p-1.5"
                       >
                         <span
-                          class="text-[9px] font-bold uppercase tracking-wider text-theme-muted"
+                          class="text-nano font-bold uppercase tracking-wider text-theme-muted"
                         >
                           Headers
                         </span>
@@ -809,15 +801,16 @@ import { useVisualLayout } from "./use-visual-layout.svelte";
                           rowFields.length < card.columns}
                         <div class="flex items-center gap-1.5">
                           <span
-                            class="text-[9px] font-bold uppercase tracking-wider text-theme-muted"
+                            class="text-nano font-bold uppercase tracking-wider text-theme-muted"
                             >Row {rIdx + 1}</span
                           >
                           <div
-                              role="list"
-                              tabindex="-1"
-                              class="flex flex-1 flex-wrap items-center gap-1.5 min-h-[36px] rounded border border-dashed border-theme-border/60 bg-theme-bg/40 p-1.5 transition-colors"
-                              ondragover={(e) => e.preventDefault()}
-                            ondrop={(e) => visualLayout.handleFieldDropRow(e, card.id, rIdx)}
+                            role="list"
+                            tabindex="-1"
+                            class="flex flex-1 flex-wrap items-center gap-1.5 min-h-[36px] rounded border border-dashed border-theme-border/60 bg-theme-bg/40 p-1.5 transition-colors"
+                            ondragover={(e) => e.preventDefault()}
+                            ondrop={(e) =>
+                              visualLayout.handleFieldDropRow(e, card.id, rIdx)}
                           >
                             {#each rowFields as cell, cIdx (`${cell.kind}-${cIdx}`)}
                               {#if cell.kind === "field"}
@@ -877,14 +870,14 @@ import { useVisualLayout } from "./use-visual-layout.svelte";
                                     {/if}
                                     {#if override?.displayMode && override.displayMode !== "plain"}
                                       <span
-                                        class="rounded bg-theme-primary/20 px-1 py-0.2 text-[9px] font-mono text-theme-primary font-bold"
+                                        class="rounded bg-theme-primary/20 px-1 py-0.2 text-nano font-mono text-theme-primary font-bold"
                                       >
                                         {override.displayMode}
                                       </span>
                                     {/if}
                                     {#if override?.hideLabel}
                                       <span
-                                        class="rounded bg-theme-muted/20 px-1 py-0.2 text-[9px] font-mono text-theme-muted"
+                                        class="rounded bg-theme-muted/20 px-1 py-0.2 text-nano font-mono text-theme-muted"
                                         title="Label hidden"
                                       >
                                         no-lbl
@@ -893,7 +886,7 @@ import { useVisualLayout } from "./use-visual-layout.svelte";
                                   </button>
                                   <button
                                     type="button"
-                                    class="ml-0.5 text-[10px] text-theme-muted hover:text-red-400"
+                                    class="ml-0.5 text-micro text-theme-muted hover:text-red-400"
                                     onclick={() =>
                                       visualLayout.removeFieldFromCardRow(
                                         card.id,
@@ -926,7 +919,7 @@ import { useVisualLayout } from "./use-visual-layout.svelte";
                                   />
                                   <button
                                     type="button"
-                                    class="text-[10px] text-theme-muted hover:text-red-400"
+                                    class="text-micro text-theme-muted hover:text-red-400"
                                     onclick={() =>
                                       visualLayout.removeValueFromTableRow(
                                         card.id,
@@ -948,7 +941,11 @@ import { useVisualLayout } from "./use-visual-layout.svelte";
                                   const val = (e.target as HTMLSelectElement)
                                     .value;
                                   if (val)
-                                    visualLayout.addFieldToCardRow(card.id, rIdx, val);
+                                    visualLayout.addFieldToCardRow(
+                                      card.id,
+                                      rIdx,
+                                      val,
+                                    );
                                   (e.target as HTMLSelectElement).value = "";
                                 }}
                               >
@@ -965,7 +962,10 @@ import { useVisualLayout } from "./use-visual-layout.svelte";
                                 type="button"
                                 class="rounded border border-dashed border-amber-500/40 px-1.5 py-0.5 text-xs text-amber-700 hover:border-amber-500 hover:text-amber-800 dark:text-amber-300 dark:hover:text-amber-200"
                                 onclick={() =>
-                                  visualLayout.addValueToTableRow(card.id, rIdx)}
+                                  visualLayout.addValueToTableRow(
+                                    card.id,
+                                    rIdx,
+                                  )}
                                 data-testid="presentation-editor-add-table-value"
                               >
                                 + Add Value
@@ -975,8 +975,9 @@ import { useVisualLayout } from "./use-visual-layout.svelte";
                           {#if card.rows.length > 1}
                             <button
                               type="button"
-                              class="rounded px-1.5 py-1 text-[10px] text-theme-muted hover:text-red-400"
-                              onclick={() => visualLayout.removeRowFromCard(card.id, rIdx)}
+                              class="rounded px-1.5 py-1 text-micro text-theme-muted hover:text-red-400"
+                              onclick={() =>
+                                visualLayout.removeRowFromCard(card.id, rIdx)}
                               title="Delete Row"
                             >
                               ✕
@@ -986,7 +987,7 @@ import { useVisualLayout } from "./use-visual-layout.svelte";
                       {/each}
                       <button
                         type="button"
-                        class="self-start rounded border border-theme-border/60 px-2 py-0.5 text-[10px] font-bold text-theme-muted hover:border-theme-primary hover:text-theme-primary"
+                        class="self-start rounded border border-theme-border/60 px-2 py-0.5 text-micro font-bold text-theme-muted hover:border-theme-primary hover:text-theme-primary"
                         onclick={() => visualLayout.addRowToCard(card.id)}
                       >
                         + Add Row to {card.mode === "table" ? "Table" : "Card"}
@@ -1037,7 +1038,7 @@ import { useVisualLayout } from "./use-visual-layout.svelte";
             >
               {#each diagnostics.missing as m, i (i)}
                 <li
-                  class="rounded border border-dashed border-amber-500/50 bg-amber-500/10 px-2 py-1 text-[11px] text-amber-600 dark:text-amber-400"
+                  class="rounded border border-dashed border-amber-500/50 bg-amber-500/10 px-2 py-1 text-meta text-amber-600 dark:text-amber-400"
                 >
                   This refers to a field ("{m.fieldId}") that doesn't exist on
                   the schema.
@@ -1045,14 +1046,14 @@ import { useVisualLayout } from "./use-visual-layout.svelte";
               {/each}
               {#each diagnostics.unknown as u, i (i)}
                 <li
-                  class="rounded border border-dashed border-amber-500/50 bg-amber-500/10 px-2 py-1 text-[11px] text-amber-600 dark:text-amber-400"
+                  class="rounded border border-dashed border-amber-500/50 bg-amber-500/10 px-2 py-1 text-meta text-amber-600 dark:text-amber-400"
                 >
                   Unsupported layout section: "{u.name}"
                 </li>
               {/each}
               {#each diagnostics.mismatched as f, i (i)}
                 <li
-                  class="rounded border border-dashed border-amber-500/50 bg-amber-500/10 px-2 py-1 text-[11px] text-amber-600 dark:text-amber-400"
+                  class="rounded border border-dashed border-amber-500/50 bg-amber-500/10 px-2 py-1 text-meta text-amber-600 dark:text-amber-400"
                 >
                   "{f.requestedDisplayMode}" isn't a supported display for "{f.fieldId}"
                   — showing "{f.displayMode}" instead.
@@ -1064,7 +1065,7 @@ import { useVisualLayout } from "./use-visual-layout.svelte";
 
         <div class="flex flex-1 flex-col gap-1.5 min-h-0">
           <span
-            class="text-[10px] font-bold uppercase tracking-wide text-theme-muted"
+            class="text-micro font-bold uppercase tracking-wide text-theme-muted"
             >Preview</span
           >
           <div
@@ -1128,76 +1129,16 @@ import { useVisualLayout } from "./use-visual-layout.svelte";
 {/if}
 
 {#if chipContextMenu}
-  {@const targetField = schema?.fields?.find(
-    (field) => field.id === chipContextMenu?.fieldId,
-  )}
-  {@const currentOverride = fieldDisplayOverrides[chipContextMenu.fieldId]}
-  <button
-    type="button"
-    class="fixed inset-0 z-[220]"
-    onclick={closeChipContextMenu}
-    oncontextmenu={(e) => {
-      e.preventDefault();
-      closeChipContextMenu();
-    }}
-    aria-label="Close field display options"
-  ></button>
-  <div
-    class="fixed z-[230] min-w-[180px] rounded-lg border border-theme-border bg-theme-surface p-1.5 shadow-2xl animate-in fade-in zoom-in-95 duration-100"
-    style:left="{chipContextMenu.x}px"
-    style:top="{chipContextMenu.y}px"
-    role="menu"
-    tabindex="0"
-    aria-label="Field Display Options"
-    onclick={(e) => e.stopPropagation()}
-    onkeydown={(e) => e.key === "Escape" && closeChipContextMenu()}
-  >
-    <div
-      class="border-b border-theme-border/40 px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-wider text-theme-muted"
-    >
-      Display Options — {targetField?.label ?? chipContextMenu.fieldId}
-    </div>
-
-    <div class="py-1">
-      <div
-        class="px-2.5 py-1 text-[9px] font-bold uppercase tracking-widest text-theme-primary"
-      >
-        Display Mode
-      </div>
-      {#each DISPLAY_MODE_OPTIONS.filter((option) => option.mode === undefined || !targetField || DISPLAY_MODES_BY_FIELD_TYPE[targetField.type].allowed.includes(option.mode)) as opt (opt.mode ?? "default")}
-        <button
-          type="button"
-          role="menuitem"
-          class="flex w-full items-center justify-between rounded px-2.5 py-1 text-xs text-theme-text hover:bg-theme-primary/10 hover:text-theme-primary transition-colors text-left"
-          onclick={() =>
-            setFieldDisplayMode(chipContextMenu!.fieldId, opt.mode)}
-        >
-          <span>{opt.label}</span>
-          {#if currentOverride?.displayMode === opt.mode || (!currentOverride?.displayMode && opt.mode === undefined)}
-            <span
-              class="icon-[lucide--check] h-3.5 w-3.5 text-theme-primary"
-              aria-hidden="true"
-            ></span>
-          {/if}
-        </button>
-      {/each}
-    </div>
-
-    <div class="border-t border-theme-border/40 pt-1">
-      <button
-        type="button"
-        role="menuitem"
-        class="flex w-full items-center justify-between rounded px-2.5 py-1 text-xs text-theme-text hover:bg-theme-primary/10 hover:text-theme-primary transition-colors text-left"
-        onclick={() => toggleFieldHideLabel(chipContextMenu!.fieldId)}
-      >
-        <span>Hide Label</span>
-        {#if currentOverride?.hideLabel}
-          <span
-            class="icon-[lucide--check] h-3.5 w-3.5 text-theme-primary"
-            aria-hidden="true"
-          ></span>
-        {/if}
-      </button>
-    </div>
-  </div>
+  <PresentationFieldContextMenu
+    x={chipContextMenu.x}
+    y={chipContextMenu.y}
+    fieldId={chipContextMenu.fieldId}
+    targetField={schema?.fields?.find(
+      (field) => field.id === chipContextMenu?.fieldId,
+    )}
+    currentOverride={fieldDisplayOverrides[chipContextMenu.fieldId]}
+    onClose={closeChipContextMenu}
+    onSetDisplayMode={setFieldDisplayMode}
+    onToggleHideLabel={toggleFieldHideLabel}
+  />
 {/if}

@@ -1,0 +1,17 @@
+[test]
+watch = false
+preload = ["../../tests/bun-preload.ts"]
+coverageSkipTestFiles = true
+coveragePathIgnorePatterns = [
+  "node_modules/**",
+  "tests/**",
+  "**/*.test.ts",
+  "**/*.spec.ts",
+  "**/*.config.ts",
+  ".svelte-kit/**",
+  "src/index.ts",
+  "src/types.ts",
+  "../*/src/**",
+  "../../tests/**",
+  "**/*.md",
+]

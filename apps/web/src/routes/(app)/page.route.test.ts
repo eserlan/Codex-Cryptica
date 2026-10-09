@@ -3,6 +3,7 @@ import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import RoutePage from "./+page.svelte";
 import { onboardingStore } from "$lib/stores/ui/onboarding.svelte";
 import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+import { demoService } from "$lib/services/demo";
 
 vi.mock("$app/state", () => ({
   page: { url: new URL("http://localhost/"), params: {} },
@@ -83,6 +84,7 @@ describe("root +page.svelte — front page overlay keydown", () => {
     modalUIStore.showSettings = false;
     modalUIStore.showDiceModal = false;
     modalUIStore.closeQuickStartModal();
+    vi.mocked(demoService.startDemo).mockClear();
   });
 
   it("presents the root landing page as a private local-first RPG vault", () => {
@@ -128,10 +130,11 @@ describe("root +page.svelte — front page overlay keydown", () => {
 
     // Discord/Reddit/GitHub/Features/Changelog links used to be duplicated
     // directly on the welcome screen; they now live on /explore, and the
-    // welcome page carries only the shared lightweight footer (#2830).
-    expect(screen.getByRole("link", { name: /^explore$/i })).toBeTruthy();
-    expect(screen.getByRole("link", { name: /^terms$/i })).toBeTruthy();
-    expect(screen.getByRole("link", { name: /^privacy$/i })).toBeTruthy();
+    // welcome page carries no footer of its own: the layout's `AppFooter`
+    // already renders the same Explore/Terms/Privacy links beneath it, so a
+    // second copy in the page was a visible duplicate.
+    expect(screen.queryByRole("contentinfo")).toBeNull();
+    expect(screen.queryByRole("link", { name: /^terms$/i })).toBeNull();
   });
 
   it("renders complete Open Graph and Twitter Card tags in head", () => {
@@ -240,5 +243,35 @@ describe("root +page.svelte — front page overlay keydown", () => {
 
     expect(modalUIStore.showQuickStartModal).toBe(true);
     expect(onboardingStore.dismissedLandingPage).toBe(true);
+  });
+
+  it("keeps the themed-vault picker collapsed until opened, so its eight chips don't compete with the primary CTAs", async () => {
+    onboardingStore.skipWelcomeScreen = false;
+    onboardingStore.dismissedLandingPage = false;
+
+    render(RoutePage);
+
+    const disclosure = screen
+      .getByText(/or start from a themed vault/i)
+      .closest("details");
+    expect(disclosure).toBeTruthy();
+    expect(disclosure?.hasAttribute("open")).toBe(false);
+
+    await fireEvent.click(screen.getByText(/or start from a themed vault/i));
+
+    expect(disclosure?.hasAttribute("open")).toBe(true);
+    await fireEvent.click(screen.getByRole("button", { name: /^vampire$/i }));
+    expect(demoService.startDemo).toHaveBeenCalledWith("vampire");
+  });
+
+  it("does not start a themed demo just from opening the disclosure, only from picking a theme", async () => {
+    onboardingStore.skipWelcomeScreen = false;
+    onboardingStore.dismissedLandingPage = false;
+
+    render(RoutePage);
+
+    await fireEvent.click(screen.getByText(/or start from a themed vault/i));
+
+    expect(demoService.startDemo).not.toHaveBeenCalled();
   });
 });

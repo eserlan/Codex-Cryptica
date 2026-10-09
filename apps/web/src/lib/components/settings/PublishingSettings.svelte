@@ -132,7 +132,9 @@
       </div>
     </div>
     <div class="flex items-center gap-3 px-4 py-3">
-      <span class="icon-[lucide--compass] w-4 h-4 shrink-0 text-theme-text/40"
+      <span
+        aria-hidden="true"
+        class="icon-[lucide--compass] w-4 h-4 shrink-0 text-theme-text/40"
       ></span>
       <div>
         <span
@@ -220,7 +222,8 @@
               onclick={handleCopyLink}
               class="px-4 py-2 bg-theme-primary hover:bg-theme-primary/95 text-white text-xs font-bold font-header uppercase tracking-wider rounded transition-all flex items-center gap-1.5"
             >
-              <span class="icon-[lucide--copy] w-4 h-4"></span>
+              <span aria-hidden="true" class="icon-[lucide--copy] w-4 h-4"
+              ></span>
               Copy
             </button>
           </div>
@@ -231,7 +234,7 @@
             class="p-3 bg-theme-surface border border-theme-border/40 rounded"
           >
             <span
-              class="text-[10px] text-theme-text/50 font-header uppercase tracking-wider block"
+              class="text-micro text-theme-text/50 font-header uppercase tracking-wider block"
               >Entities</span
             >
             <span
@@ -243,7 +246,7 @@
             class="p-3 bg-theme-surface border border-theme-border/40 rounded"
           >
             <span
-              class="text-[10px] text-theme-text/50 font-header uppercase tracking-wider block"
+              class="text-micro text-theme-text/50 font-header uppercase tracking-wider block"
               >Connections</span
             >
             <span
@@ -255,7 +258,7 @@
             class="p-3 bg-theme-surface border border-theme-border/40 rounded"
           >
             <span
-              class="text-[10px] text-theme-text/50 font-header uppercase tracking-wider block"
+              class="text-micro text-theme-text/50 font-header uppercase tracking-wider block"
               >Uploaded Assets</span
             >
             <span
@@ -267,7 +270,7 @@
             class="p-3 bg-theme-surface border border-theme-border/40 rounded"
           >
             <span
-              class="text-[10px] text-theme-text/50 font-header uppercase tracking-wider block"
+              class="text-micro text-theme-text/50 font-header uppercase tracking-wider block"
               >Last Published</span
             >
             <span
@@ -286,7 +289,8 @@
             onclick={handleUnpublish}
             class="px-4 py-2 border border-red-500/30 text-red-400 hover:text-red-300 hover:bg-red-500/5 text-xs font-bold font-header uppercase tracking-wider rounded transition-all flex items-center justify-center gap-1.5"
           >
-            <span class="icon-[lucide--trash-2] w-4 h-4"></span>
+            <span aria-hidden="true" class="icon-[lucide--trash-2] w-4 h-4"
+            ></span>
             Unpublish & Delete
           </button>
           <button
@@ -294,7 +298,8 @@
             onclick={() => (showPreviewModal = true)}
             class="px-5 py-2 bg-theme-primary hover:bg-theme-primary/95 text-white text-xs font-bold font-header uppercase tracking-wider rounded transition-all flex items-center justify-center gap-1.5"
           >
-            <span class="icon-[lucide--refresh-cw] w-4 h-4"></span>
+            <span aria-hidden="true" class="icon-[lucide--refresh-cw] w-4 h-4"
+            ></span>
             Publish Update
           </button>
         </div>
@@ -308,7 +313,10 @@
       <div
         class="mx-auto w-12 h-12 rounded-full bg-theme-primary/10 flex items-center justify-center"
       >
-        <span class="icon-[lucide--share-2] w-6 h-6 text-theme-primary"></span>
+        <span
+          aria-hidden="true"
+          class="icon-[lucide--share-2] w-6 h-6 text-theme-primary"
+        ></span>
       </div>
       <div class="max-w-md mx-auto space-y-2">
         <h4
@@ -327,7 +335,8 @@
         disabled={!activeVaultId}
         class="px-6 py-3 bg-theme-primary hover:bg-theme-primary/95 disabled:opacity-40 disabled:pointer-events-none text-white text-xs font-bold font-header uppercase tracking-widest rounded transition-all inline-flex items-center gap-2 shadow-sm"
       >
-        <span class="icon-[lucide--cloud-lightning] w-4 h-4"></span>
+        <span aria-hidden="true" class="icon-[lucide--cloud-lightning] w-4 h-4"
+        ></span>
         Publish Guest Snapshot
       </button>
     </div>

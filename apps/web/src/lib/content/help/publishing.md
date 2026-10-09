@@ -1,6 +1,7 @@
 ---
 id: publishing
 title: Sharing and Publishing Worlds
+description: Publish a read-only, player-safe snapshot of selected campaign lore for others to explore.
 tags: [publishing, guest, share, cloud, r2, worlds, directory, discovery]
 rank: 18
 ---

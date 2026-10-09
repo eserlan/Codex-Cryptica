@@ -5,6 +5,7 @@ import {
   type GeneratorId,
   type GeneratorOutput,
   type GeneratorRunRequest,
+  type GeneratorVaultContext,
   SUPPORTED_GENERATOR_IDS,
   UnsupportedGeneratorError,
 } from "./campaign-generator-types";
@@ -29,12 +30,21 @@ import {
 import { forGenre } from "./public-dungeon-constants";
 import { themeIdToLabel, factionConfig } from "./public-faction-constants";
 import { npcThemeConfig } from "./public-npc-constants";
-import { isTitleBanned, bannedNamesInstruction } from "./naming-policy";
+import {
+  isTitleBanned,
+  bannedNamesInstruction,
+  findOverusedNamePatterns,
+  overusedPatternsInstruction,
+  nameExamplesInstruction,
+  cultureNamingInstruction,
+  type OverusedNamePatterns,
+} from "./naming-policy";
 import { settlementConfig } from "./public-settlement-constants";
 import {
   buildAdventurePrompt,
   generateAdventureLocal,
   adventureConfig,
+  forAdventureGenre,
   type AdventureGeneratorOptions,
 } from "./public-adventure";
 import {
@@ -325,13 +335,26 @@ const OUTPUT_SCHEMA = `{
   ]
 }`;
 
+/**
+ * The world's theme as the model sees it. A theme name alone ("Galactic
+ * Holocron") says little, and the model's default is high fantasy, so state the
+ * genre and the theme's own description and tell it not to slip back.
+ */
+function themeLine(ctx: GeneratorVaultContext): string {
+  const description = ctx.themeDescription ? ` — ${ctx.themeDescription}` : "";
+  const genre = themeIdToLabel[ctx.themeId ?? ""];
+  const line = `World Theme: ${ctx.themeName}${description}`;
+  if (!genre || genre === "Classic Fantasy") return line;
+  return `${line}\nGenre: ${genre}. Keep names, species, factions, technology and tone in this genre. Do not default to fantasy tropes (elves, dwarves, wizards, taverns) unless this vault's own entities already use them.`;
+}
+
 function vaultContextBlock(request: GeneratorRunRequest): string {
   if (request.interaction) return "";
   const ctx = request.vaultContext;
   if (!ctx) return "";
   const lines: string[] = [];
   if (ctx.themeName && ctx.themeId !== "workspace") {
-    lines.push(`World Theme: ${ctx.themeName}`);
+    lines.push(themeLine(ctx));
   }
   if (ctx.currentDate) {
     lines.push(
@@ -428,12 +451,42 @@ function instructionsBlock(request: GeneratorRunRequest): string {
   return `\n[HIGHEST PRIORITY — User instructions, override defaults]\n${inst}\nThe entity you generate MUST directly depict what this instruction describes. Use the world context below only as supporting background — never substitute a different, better-documented event or subject for the one requested.${relationalNote}\n`;
 }
 
+/**
+ * Pattern and style-example guidance for a fresh generation. Refinement turns
+ * keep the name the user already accepted, and a selected Primary Language owns
+ * the names' shared sound, so neither gets guidance that pulls the other way.
+ */
+function overusedPatternsFor(
+  ctx: GeneratorRunRequest["vaultContext"],
+): OverusedNamePatterns {
+  return (
+    ctx?.overusedNamePatterns ??
+    findOverusedNamePatterns(ctx?.existingTitles ?? [])
+  );
+}
+
+function freshNamingGuidance(request: GeneratorRunRequest): {
+  patterns: string;
+  examples: string;
+} {
+  const ctx = request.vaultContext;
+  if (request.interaction || ctx?.selectedLanguage) {
+    return { patterns: "", examples: "" };
+  }
+  return {
+    patterns: overusedPatternsInstruction(overusedPatternsFor(ctx)),
+    examples: nameExamplesInstruction(ctx?.nameExamples ?? []),
+  };
+}
+
 function bannedNamesBlock(request: GeneratorRunRequest): string {
   if (request.interaction) return "";
   const ctx = request.vaultContext;
   const all = [...(ctx?.bannedNames ?? []), ...(ctx?.existingTitles ?? [])];
-  const instruction = bannedNamesInstruction(all);
-  return instruction ? `\n${instruction}` : "";
+  return [bannedNamesInstruction(all), freshNamingGuidance(request).patterns]
+    .filter(Boolean)
+    .map((t) => `\n${t}`)
+    .join("");
 }
 
 // Re-exported for existing callers/tests that import isTitleBanned from this
@@ -447,6 +500,20 @@ export { isTitleBanned };
  * context (e.g. Magyar-flavoured names for a Magyar-inspired culture) rather
  * than defaulting to generic, culture-neutral fantasy names.
  */
+/** The pre-pass name, offered as the entity's name unless it clearly clashes with the concept. */
+function nameSuggestionBlock(request: GeneratorRunRequest): string {
+  const name = request.nameSuggestion;
+  if (!name || request.interaction) return "";
+  return `Use "${name}" as this entity's name (from this world's naming style). Change it only if it clearly clashes with the concept you write.`;
+}
+
+/** The vault's own recorded naming conventions for the entity's culture. Authoritative over a model's defaults. */
+function cultureNamingBlock(request: GeneratorRunRequest): string {
+  const ctx = request.vaultContext;
+  if (request.interaction || ctx?.selectedLanguage) return "";
+  return cultureNamingInstruction(ctx?.cultureNaming);
+}
+
 function namingBlock(request: GeneratorRunRequest): string {
   const ctx = request.vaultContext;
   const hasExamples =
@@ -458,7 +525,14 @@ function namingBlock(request: GeneratorRunRequest): string {
     basis +=
       " and treat the explicitly selected Primary Language as authoritative for names and terminology";
   }
-  return `\nName the entity to match the established naming conventions and cultural/linguistic flavour of this world. ${basis}; do not default to generic, culture-neutral fantasy names.`;
+  return [
+    `\nName the entity to match the established naming conventions and cultural/linguistic flavour of this world. ${basis}; do not default to generic, culture-neutral fantasy names.`,
+    cultureNamingBlock(request),
+    nameSuggestionBlock(request),
+    freshNamingGuidance(request).examples,
+  ]
+    .filter(Boolean)
+    .join(" ");
 }
 
 /**
@@ -661,6 +735,19 @@ export function npcRacesForTheme(themeId: string): string[] {
 export function npcRolesForTheme(themeId: string): string[] {
   const genre = themeIdToLabel[themeId] ?? "Classic Fantasy";
   return forGenre(npcThemeConfig.roles, genre);
+}
+/**
+ * Adventure Type and Tone choices for the vault's theme, from the same
+ * genre-keyed tables the Adventure Idea Generator rolls against, so a fantasy
+ * vault isn't offered "Heist in a Corporate Tower" or a sci-fi tone.
+ */
+export function adventureArchetypesForTheme(themeId: string): string[] {
+  const genre = themeIdToLabel[themeId] ?? "Classic Fantasy";
+  return forAdventureGenre(adventureConfig.archetypesByGenre, genre);
+}
+export function adventureTonesForTheme(themeId: string): string[] {
+  const genre = themeIdToLabel[themeId] ?? "Classic Fantasy";
+  return forAdventureGenre(adventureConfig.tonesByGenre, genre);
 }
 const NPC_RACES = npcRacesForTheme("workspace");
 const NPC_ROLES = npcRolesForTheme("workspace");

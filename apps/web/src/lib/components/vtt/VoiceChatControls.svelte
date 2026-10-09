@@ -108,12 +108,12 @@
           : 'icon-[lucide--headphones]'}"
       ></span>
       <span
-        class="text-[10px] font-sans font-medium uppercase tracking-wider hidden sm:inline"
+        class="text-micro font-sans font-medium uppercase tracking-wider hidden sm:inline"
       >
         {#if active}Voice{:else if busy}…{:else}Voice{/if}
       </span>
       {#if active && vState.participants.length > 0}
-        <span class="text-[10px] font-mono" data-testid="voice-count"
+        <span class="text-micro font-mono" data-testid="voice-count"
           >{vState.participants.length}</span
         >
       {/if}
@@ -155,7 +155,7 @@
         <ul class="space-y-1">
           {#each vState.participants as participant (participant.peerId)}
             <li
-              class="flex items-center justify-between gap-2 text-[11px] text-chrome-muted"
+              class="flex items-center justify-between gap-2 text-meta text-chrome-muted"
             >
               <span class="flex-1 min-w-0 truncate text-chrome-text"
                 >{participant.displayName}{participant.isHost

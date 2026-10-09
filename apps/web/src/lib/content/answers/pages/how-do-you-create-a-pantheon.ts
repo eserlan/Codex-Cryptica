@@ -129,9 +129,14 @@ export const howDoYouCreateAPantheon: AnswerConfigInput = {
     },
   ],
   relatedAnswers: [
+    "what-is-the-difference-between-gods-and-demon-lords-in-a-fantasy-world",
+    "can-multiple-gods-share-a-domain",
     "how-do-you-create-a-believable-fictional-religion",
     "how-do-you-create-a-fantasy-faction",
     "how-do-you-organise-rpg-campaign-notes",
+    "how-do-i-make-different-cultures-feel-distinct-without-relying-on-stereotypes",
+    "how-does-magic-affect-politics-and-government",
+    "how-should-magic-have-been-discovered-in-my-world",
   ],
   discovery: {
     id: "answer-pantheon",
@@ -143,12 +148,24 @@ export const howDoYouCreateAPantheon: AnswerConfigInput = {
     relatedIntents: [
       "generator-pantheon-generator",
       "answer-fictional-religion",
+      "answer-gods-vs-demon-lords",
+      "answer-overlapping-divine-domains",
     ],
     acknowledgedOverlap: [
       {
         with: "answer-fictional-religion",
         reason:
           "Pantheon covers the roster of gods and how they are entangled; religion covers the institution, its rites and its funding. Both pages state the split explicitly and a setting can need either alone.",
+      },
+      {
+        with: "answer-gods-vs-demon-lords",
+        reason:
+          "Pantheon covers the relationships among gods and their portfolios; the gods and demon lords answer compares divine office and other supernatural natures across a wider cosmology.",
+      },
+      {
+        with: "answer-overlapping-divine-domains",
+        reason:
+          "Pantheon design covers the relationships between gods, while the overlapping-domains answer focuses on the cosmological models and table consequences of shared claims.",
       },
     ],
   },

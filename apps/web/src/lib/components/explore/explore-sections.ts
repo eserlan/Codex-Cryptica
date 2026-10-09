@@ -54,6 +54,13 @@ export const EXPLORE_SECTIONS: ExploreSection[] = [
         icon: "icon-[lucide--wrench]",
       },
       {
+        href: "/templates",
+        label: "Templates",
+        summary:
+          "Browse and share entity templates from the community directory.",
+        icon: "icon-[lucide--layout-template]",
+      },
+      {
         href: "/silhouettes",
         label: "Vector Silhouettes",
         summary:
@@ -73,6 +80,48 @@ export const EXPLORE_SECTIONS: ExploreSection[] = [
         summary:
           "Find the right setup for your system, genre, or campaign style.",
         icon: "icon-[lucide--compass]",
+      },
+    ],
+  },
+  {
+    title: "Browse by Topic",
+    description:
+      "Guides, worked examples, and tools for the campaign you’re running.",
+    links: [
+      {
+        href: "/topics/heists",
+        label: "Heists",
+        summary:
+          "Frameworks, prize design checklists, worked genre examples, and tools for running tabletop heists.",
+        icon: "icon-[lucide--lock]",
+      },
+      {
+        href: "/topics/puzzles",
+        label: "Puzzles",
+        summary:
+          "Stall-proof design, hint ladders, worked examples with alternate solutions, and a puzzle generator.",
+        icon: "icon-[lucide--puzzle]",
+      },
+      {
+        href: "/topics/pirates",
+        label: "Pirates & High Seas",
+        summary:
+          "Guides to pirate systems, exploration, sea travel, ship combat, ports, rivals, and tools for building the campaign.",
+        icon: "icon-[lucide--ship]",
+      },
+      {
+        href: "/topics/dnd",
+        label: "Running D&D",
+        summary:
+          "Start a campaign, prep the next session, run the table and keep track, with answers and tools for each job.",
+        icon: "icon-[lucide--swords]",
+      },
+      {
+        href: "/topics/dnd-beginners",
+        label: "D&D for Beginners",
+        summary:
+          "The play loop, character-sheet orientation, dice mechanics, and combat turns for new players.",
+        icon: "icon-[lucide--book-open]",
       },
     ],
   },
@@ -114,20 +163,6 @@ export const EXPLORE_SECTIONS: ExploreSection[] = [
         summary:
           "Curated links to real castle and palace floor plans for mapping your own locations.",
         icon: "icon-[lucide--map]",
-      },
-      {
-        href: "/topics/heists",
-        label: "RPG Heists Hub",
-        summary:
-          "Frameworks, prize design checklists, worked genre examples, and tools for running tabletop heists.",
-        icon: "icon-[lucide--lock]",
-      },
-      {
-        href: "/topics/puzzles",
-        label: "RPG Puzzles Hub",
-        summary:
-          "Stall-proof design, hint ladders, worked examples with alternate solutions, and a puzzle generator.",
-        icon: "icon-[lucide--puzzle]",
       },
       {
         href: "/my-stuff",

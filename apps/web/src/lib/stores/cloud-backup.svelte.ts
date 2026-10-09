@@ -27,6 +27,7 @@ import type {
   CloudBackupDirtyStore,
 } from "./cloud-backup-dirty";
 import type { DurableVaultChange } from "./vault/registry";
+import { browserStorage, type StorageLike } from "$lib/utils/runtime-deps";
 
 /**
  * Cloud Backup status store (spec 162, issue #2593).
@@ -111,6 +112,12 @@ export interface CloudBackupDeps {
     /** Writes the restored maps and canvases back into the new vault. */
     importMaps?: (vaultId: string, maps: unknown[]) => Promise<void>;
     importCanvases?: (vaultId: string, canvases: unknown[]) => Promise<void>;
+    /** Writes the restored session journals back into the new vault (spec
+     *  163-session-journal, FR-016). */
+    importSessionJournals?: (
+      vaultId: string,
+      journals: unknown[],
+    ) => Promise<void>;
     /** Writes one restored media file back into the vault. */
     importAsset?: (
       path: string,
@@ -151,6 +158,8 @@ export interface CloudBackupDeps {
   debounceMs?: number;
   /** Wait before retrying a failed auto-push; overridable in tests. */
   retryMs?: number;
+  /** Local storage for persisting caches across sessions. */
+  storage?: StorageLike;
 }
 
 /**
@@ -225,6 +234,9 @@ export class CloudBackupStore {
   private autoTimer: ReturnType<typeof setTimeout> | null = null;
   private autoListenersAttached = false;
   private hashCache: Record<string, string> = {};
+  private get localStorage(): StorageLike {
+    return this.deps?.storage ?? browserStorage;
+  }
 
   /** Wires the store up. Called once from app init with the real runtime. */
   configure(deps: CloudBackupDeps) {
@@ -493,6 +505,7 @@ export class CloudBackupStore {
       const entities = listFrom("entities");
       const maps = listFrom("maps");
       const canvases = listFrom("canvases");
+      const sessionJournals = listFrom("sessionJournals");
       const vaultId = await this.deps.restore.createVault(
         material.manifest.vaultTitle,
       );
@@ -506,6 +519,14 @@ export class CloudBackupStore {
       }
       if (canvases.length > 0 && this.deps.restore.importCanvases) {
         await this.deps.restore.importCanvases(vaultId, canvases);
+      }
+      // Session journals (spec 163-session-journal, FR-016) — same "content
+      // in its own right" reasoning as maps/canvases above.
+      if (
+        sessionJournals.length > 0 &&
+        this.deps.restore.importSessionJournals
+      ) {
+        await this.deps.restore.importSessionJournals(vaultId, sessionJournals);
       }
 
       // Media, so a restored vault does not come back with broken images.
@@ -1069,7 +1090,7 @@ export class CloudBackupStore {
 
   private loadHashCache(vaultId: string): void {
     try {
-      const raw = localStorage.getItem(this.hashCacheKey(vaultId));
+      const raw = this.localStorage.getItem(this.hashCacheKey(vaultId));
       this.hashCache = raw ? (JSON.parse(raw) as Record<string, string>) : {};
     } catch {
       this.hashCache = {};
@@ -1078,7 +1099,7 @@ export class CloudBackupStore {
 
   private saveHashCache(vaultId: string): void {
     try {
-      localStorage.setItem(
+      this.localStorage.setItem(
         this.hashCacheKey(vaultId),
         JSON.stringify(this.hashCache),
       );
@@ -1099,12 +1120,14 @@ export const cloudBackupStore = new CloudBackupStore();
  * should degrade to "cloud backup unavailable", never to a thrown error on the
  * save path.
  */
-export function cloudBackupBrowserStorage() {
+export function cloudBackupBrowserStorage(
+  storage: StorageLike = browserStorage,
+) {
   const key = (vaultId: string) => `codex.cloud-backup.${vaultId}`;
   return {
     async read(vaultId: string) {
       try {
-        const raw = localStorage.getItem(key(vaultId));
+        const raw = storage.getItem(key(vaultId));
         return raw ? JSON.parse(raw) : null;
       } catch {
         return null;
@@ -1112,14 +1135,14 @@ export function cloudBackupBrowserStorage() {
     },
     async write(vaultId: string, record: unknown) {
       try {
-        localStorage.setItem(key(vaultId), JSON.stringify(record));
+        storage.setItem(key(vaultId), JSON.stringify(record));
       } catch {
         // Storage unavailable; the in-memory state still drives this session.
       }
     },
     async clear(vaultId: string) {
       try {
-        localStorage.removeItem(key(vaultId));
+        storage.removeItem(key(vaultId));
       } catch {
         // Nothing to do.
       }
@@ -1128,10 +1151,10 @@ export function cloudBackupBrowserStorage() {
       const prefix = key("");
       try {
         const entries: { vaultId: string; record: unknown }[] = [];
-        for (let i = 0; i < localStorage.length; i += 1) {
-          const storageKey = localStorage.key(i);
+        for (let i = 0; i < (storage.length ?? 0); i += 1) {
+          const storageKey = storage.key?.(i);
           if (!storageKey?.startsWith(prefix)) continue;
-          const raw = localStorage.getItem(storageKey);
+          const raw = storage.getItem(storageKey);
           if (!raw) continue;
           try {
             entries.push({

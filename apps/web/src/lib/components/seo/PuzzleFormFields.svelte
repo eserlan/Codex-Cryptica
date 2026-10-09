@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { puzzleConfig, pickFrom } from "$lib/services/seo/generator-engine";
+  import { puzzleConfig, pickFrom } from "$lib/services/seo/generator-config";
   import SelectWithCustomOption from "$lib/components/forms/SelectWithCustomOption.svelte";
 
   let {
@@ -37,7 +37,7 @@
   const selectClass =
     "w-full bg-theme-bg/60 border border-theme-border/60 rounded-lg px-3 py-2 text-xs text-theme-text focus:outline-none focus:border-theme-primary/60";
   const labelClass =
-    "text-[11px] font-bold uppercase tracking-wider text-theme-text/80";
+    "text-meta font-bold uppercase tracking-wider text-theme-text/80";
   const choices = (values: readonly string[]) =>
     values.map((value) => ({ value, label: value }));
 </script>
@@ -119,10 +119,10 @@
     class="rounded-lg border border-theme-border/60 bg-theme-surface/30 p-3"
   >
     <summary
-      class="cursor-pointer text-[11px] font-bold uppercase tracking-wider text-theme-text/80"
+      class="cursor-pointer text-meta font-bold uppercase tracking-wider text-theme-text/80"
       >Advanced system-specific details</summary
     >
-    <p class="mt-1 text-[10px] leading-relaxed text-theme-muted">
+    <p class="mt-1 text-micro leading-relaxed text-theme-muted">
       Optional mechanical context for the selected system. These never make a
       class, spell, or ability mandatory.
     </p>
@@ -166,7 +166,7 @@
   ></textarea>
   <p
     id="puzzle-capabilities-help"
-    class="text-[10px] text-theme-muted leading-relaxed"
+    class="text-micro text-theme-muted leading-relaxed"
   >
     Add concepts, abilities, spells, or skills. They create opportunities, never
     requirements.
@@ -186,7 +186,7 @@
   ></textarea>
   <p
     id="puzzle-consequence-help"
-    class="text-[10px] text-theme-muted leading-relaxed"
+    class="text-micro text-theme-muted leading-relaxed"
   >
     For example: the boss loses a shield or reinforcements never arrive.
   </p>
@@ -205,7 +205,7 @@
   ></textarea>
   <p
     id="puzzle-context-help"
-    class="text-[10px] text-theme-muted leading-relaxed"
+    class="text-micro text-theme-muted leading-relaxed"
   >
     Add a location, villain, or situation to ground this encounter.
   </p>
@@ -222,8 +222,9 @@
       failurePressure = pickFrom(puzzleConfig.failurePressures);
       if (onSurprise) onSurprise();
     }}
-    class="flex items-center gap-1.5 px-3 py-1.5 bg-theme-surface/60 border border-theme-border/60 rounded-lg text-[10px] font-bold uppercase tracking-wider text-theme-text hover:bg-theme-primary hover:text-theme-bg hover:border-theme-primary transition-all cursor-pointer"
+    class="flex items-center gap-1.5 px-3 py-1.5 bg-theme-surface/60 border border-theme-border/60 rounded-lg text-micro font-bold uppercase tracking-wider text-theme-text hover:bg-theme-primary hover:text-theme-bg hover:border-theme-primary transition-all cursor-pointer"
     title="Randomize puzzle options and generate a draft"
-    ><span class="icon-[lucide--dices] w-3.5 h-3.5" aria-hidden="true"></span> Surprise Me</button
+    ><span class="icon-[lucide--dices] w-3.5 h-3.5" aria-hidden="true"></span> Surprise
+    Me</button
   >
 </div>

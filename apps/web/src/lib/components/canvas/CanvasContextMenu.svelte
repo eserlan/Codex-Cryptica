@@ -8,6 +8,10 @@
     DEFAULT_CANVAS_TEXT_FONT_SIZE,
   } from "@codex/canvas-engine";
   import { canvasTextBackgroundStyle } from "./canvas-workspace-helpers";
+  import {
+    ENTITY_CARD_VIEW_OPTIONS,
+    type EntityCardViewPreference,
+  } from "./cards/entity-card-variant";
   import SpatialImageControls from "$lib/components/spatial/SpatialImageControls.svelte";
 
   let {
@@ -31,6 +35,16 @@
     textNodeFontSize = DEFAULT_CANVAS_TEXT_FONT_SIZE,
     onTextNodeBackgroundChange,
     onTextNodeFontSizeChange,
+    nodeBackground,
+    onNodeBackgroundChange,
+    entityCardView = "auto",
+    onEntityCardViewChange,
+    largeCard = false,
+    onLargeCardChange,
+    isAllImageOnly = false,
+    onToggleAllImageOnly,
+    showImageLabels = false,
+    onToggleShowImageLabels,
     onClose,
   } = $props<{
     x: number;
@@ -55,8 +69,27 @@
     textNodeFontSize?: number;
     onTextNodeBackgroundChange?: (background: string) => void;
     onTextNodeFontSizeChange?: (fontSize: number) => void;
+    nodeBackground?: string;
+    onNodeBackgroundChange?: (background: string) => void;
+    entityCardView?: EntityCardViewPreference;
+    onEntityCardViewChange?: (view: EntityCardViewPreference) => void;
+    largeCard?: boolean;
+    onLargeCardChange?: (large: boolean) => void;
+    isAllImageOnly?: boolean;
+    onToggleAllImageOnly?: () => void;
+    showImageLabels?: boolean;
+    onToggleShowImageLabels?: () => void;
     onClose: () => void;
   }>();
+
+  const effectiveBackground = $derived(
+    nodeBackground ?? textNodeBackground ?? DEFAULT_CANVAS_TEXT_BACKGROUND,
+  );
+  const handleBackgroundChange = $derived(
+    onNodeBackgroundChange ?? onTextNodeBackgroundChange,
+  );
+
+  const isImageOnly = $derived(entityCardView === "image_only");
 
   const handleRevise = async () => {
     if (targetType !== "node") return;
@@ -111,7 +144,7 @@
           onClose();
         }}
       >
-        <span class="icon-[lucide--type] w-3.5 h-3.5"></span>
+        <span aria-hidden="true" class="icon-[lucide--type] w-3.5 h-3.5"></span>
         Edit Label
       </button>
       <div class="border-t border-theme-border/30 my-1"></div>
@@ -127,7 +160,10 @@
             onClose();
           }}
         >
-          <span class="icon-[lucide--clipboard-paste] w-3.5 h-3.5"></span>
+          <span
+            aria-hidden="true"
+            class="icon-[lucide--clipboard-paste] w-3.5 h-3.5"
+          ></span>
           Paste Image
         </button>
       {/if}
@@ -140,7 +176,10 @@
             onClose();
           }}
         >
-          <span class="icon-[lucide--sticky-note] w-3.5 h-3.5"></span>
+          <span
+            aria-hidden="true"
+            class="icon-[lucide--sticky-note] w-3.5 h-3.5"
+          ></span>
           Add Text Note
         </button>
       {/if}
@@ -156,7 +195,9 @@
             onClose();
           }}
         >
-          <span class="icon-[lucide--map-pin] w-3.5 h-3.5 text-amber-400"
+          <span
+            aria-hidden="true"
+            class="icon-[lucide--map-pin] w-3.5 h-3.5 text-amber-400"
           ></span>
           Add Location
         </button>
@@ -168,7 +209,10 @@
             onClose();
           }}
         >
-          <span class="icon-[lucide--users] w-3.5 h-3.5 text-blue-400"></span>
+          <span
+            aria-hidden="true"
+            class="icon-[lucide--users] w-3.5 h-3.5 text-blue-400"
+          ></span>
           Add NPC / Faction
         </button>
         <button
@@ -179,7 +223,9 @@
             onClose();
           }}
         >
-          <span class="icon-[lucide--search] w-3.5 h-3.5 text-emerald-400"
+          <span
+            aria-hidden="true"
+            class="icon-[lucide--search] w-3.5 h-3.5 text-emerald-400"
           ></span>
           Add Clue / Secret
         </button>
@@ -191,7 +237,10 @@
             onClose();
           }}
         >
-          <span class="icon-[lucide--skull] w-3.5 h-3.5 text-rose-400"></span>
+          <span
+            aria-hidden="true"
+            class="icon-[lucide--skull] w-3.5 h-3.5 text-rose-400"
+          ></span>
           Add Threat
         </button>
         <button
@@ -202,7 +251,10 @@
             onClose();
           }}
         >
-          <span class="icon-[lucide--flag] w-3.5 h-3.5 text-cyan-400"></span>
+          <span
+            aria-hidden="true"
+            class="icon-[lucide--flag] w-3.5 h-3.5 text-cyan-400"
+          ></span>
           Add Outcome
         </button>
         <button
@@ -213,7 +265,10 @@
             onClose();
           }}
         >
-          <span class="icon-[lucide--play] w-3.5 h-3.5 text-purple-400"></span>
+          <span
+            aria-hidden="true"
+            class="icon-[lucide--play] w-3.5 h-3.5 text-purple-400"
+          ></span>
           Add Situation
         </button>
       {:else}
@@ -267,6 +322,43 @@
         >
           Create Lore
         </button>
+        {#if onToggleAllImageOnly}
+          <div class="border-t border-theme-border/30 my-1"></div>
+          <button
+            role="menuitem"
+            class="w-full text-left px-4 py-2.5 text-xs text-theme-text hover:bg-theme-primary/10 hover:text-theme-primary flex items-center gap-3 transition-colors uppercase font-header tracking-widest"
+            onclick={() => {
+              onToggleAllImageOnly?.();
+              onClose();
+            }}
+          >
+            <span
+              aria-hidden="true"
+              class="icon-[lucide--image] w-3.5 h-3.5 opacity-70"
+            ></span>
+            {isAllImageOnly
+              ? "Switch All to Card Details"
+              : "Switch All to Image Only"}
+          </button>
+        {/if}
+        {#if onToggleShowImageLabels}
+          <button
+            role="menuitem"
+            class="w-full text-left px-4 py-2.5 text-xs text-theme-text hover:bg-theme-primary/10 hover:text-theme-primary flex items-center gap-3 transition-colors uppercase font-header tracking-widest"
+            onclick={() => {
+              onToggleShowImageLabels?.();
+              onClose();
+            }}
+          >
+            <span
+              aria-hidden="true"
+              class="icon-[lucide--info] w-3.5 h-3.5 opacity-70"
+            ></span>
+            {showImageLabels
+              ? "Hide Labels on Image Cards"
+              : "Show Labels on Image Cards"}
+          </button>
+        {/if}
       {/if}
     {/if}
 
@@ -276,17 +368,20 @@
         class="w-full text-left px-4 py-2.5 text-xs text-theme-text hover:bg-theme-primary/10 hover:text-theme-primary flex items-center gap-3 transition-colors uppercase font-header tracking-widest"
         onclick={handleRevise}
       >
-        <span class="icon-[lucide--sparkles] w-3.5 h-3.5 opacity-70"></span>
+        <span
+          aria-hidden="true"
+          class="icon-[lucide--sparkles] w-3.5 h-3.5 opacity-70"
+        ></span>
         Revise Content
       </button>
       <div class="border-t border-theme-border/30 my-1"></div>
     {/if}
 
-    {#if targetType === "node" && (onTextNodeBackgroundChange || onTextNodeFontSizeChange)}
-      {#if onTextNodeBackgroundChange}
+    {#if targetType === "node" && (handleBackgroundChange || onTextNodeFontSizeChange)}
+      {#if handleBackgroundChange}
         <div class="px-4 py-2">
           <p
-            class="mb-1.5 text-[10px] font-bold text-theme-muted uppercase tracking-widest"
+            class="mb-1.5 text-micro font-bold text-theme-muted uppercase tracking-widest"
           >
             Background
           </p>
@@ -296,9 +391,9 @@
                 type="button"
                 title={key}
                 aria-label={`Set background to ${key}`}
-                aria-pressed={textNodeBackground === key}
-                onclick={() => onTextNodeBackgroundChange(key)}
-                class="h-6 w-6 rounded-full border transition-transform {textNodeBackground ===
+                aria-pressed={effectiveBackground === key}
+                onclick={() => handleBackgroundChange(key)}
+                class="h-6 w-6 rounded-full border transition-transform {effectiveBackground ===
                 key
                   ? 'border-theme-primary ring-2 ring-theme-primary/40 scale-110'
                   : 'border-theme-border/50'}"
@@ -319,7 +414,7 @@
       {#if onTextNodeFontSizeChange}
         <div class="px-4 py-2">
           <p
-            class="mb-1.5 text-[10px] font-bold text-theme-muted uppercase tracking-widest"
+            class="mb-1.5 text-micro font-bold text-theme-muted uppercase tracking-widest"
           >
             Font Size
           </p>
@@ -331,7 +426,7 @@
                 aria-checked={textNodeFontSize === size}
                 title={`${size}px`}
                 onclick={() => onTextNodeFontSizeChange(size)}
-                class="flex h-6 min-w-6 items-center justify-center rounded px-1 text-[10px] font-semibold transition-colors {textNodeFontSize ===
+                class="flex h-6 min-w-6 items-center justify-center rounded px-1 text-micro font-semibold transition-colors {textNodeFontSize ===
                 size
                   ? 'bg-theme-primary/15 text-theme-primary ring-1 ring-theme-primary'
                   : 'text-theme-muted hover:bg-theme-primary/10'}"
@@ -342,6 +437,68 @@
           </div>
         </div>
       {/if}
+      <div class="border-t border-theme-border/30 my-1"></div>
+    {/if}
+
+    {#if targetType === "node" && onEntityCardViewChange}
+      <div class="px-4 py-2">
+        <p
+          class="mb-1.5 text-micro font-bold text-theme-muted uppercase tracking-widest"
+        >
+          Card view
+        </p>
+        <div class="flex flex-col gap-0.5">
+          {#each ENTITY_CARD_VIEW_OPTIONS as option (option.value)}
+            <button
+              type="button"
+              role="menuitemradio"
+              aria-checked={entityCardView === option.value}
+              onclick={() => {
+                if (
+                  option.value === "image_only" &&
+                  entityCardView === "image_only"
+                ) {
+                  onEntityCardViewChange("auto");
+                } else {
+                  onEntityCardViewChange(option.value);
+                }
+              }}
+              class="w-full text-left px-2 py-1 rounded text-meta transition-colors {entityCardView ===
+              option.value
+                ? 'bg-theme-primary/15 text-theme-primary font-semibold'
+                : 'text-theme-muted hover:bg-theme-primary/10 hover:text-theme-text'}"
+            >
+              {option.label}
+            </button>
+          {/each}
+          {#if onLargeCardChange && !isImageOnly}
+            <button
+              type="button"
+              role="menuitemcheckbox"
+              aria-checked={largeCard}
+              onclick={() => onLargeCardChange(!largeCard)}
+              class="w-full text-left px-2 py-1 rounded text-meta transition-colors flex items-center gap-2 {largeCard
+                ? 'bg-theme-primary/15 text-theme-primary font-semibold'
+                : 'text-theme-muted hover:bg-theme-primary/10 hover:text-theme-text'}"
+            >
+              <span
+                class="flex h-3.5 w-3.5 items-center justify-center rounded-sm border {largeCard
+                  ? 'border-theme-primary bg-theme-primary text-theme-bg'
+                  : 'border-theme-border'}"
+                aria-hidden="true"
+              >
+                {#if largeCard}
+                  <span
+                    aria-hidden="true"
+                    class="icon-[lucide--check] w-2.5 h-2.5"
+                  ></span>
+                {/if}
+              </span>
+              Large card
+            </button>
+          {/if}
+        </div>
+      </div>
       <div class="border-t border-theme-border/30 my-1"></div>
     {/if}
 
@@ -374,7 +531,7 @@
     {/if}
   {:else}
     <div
-      class="px-4 py-3 text-[10px] text-theme-muted italic uppercase tracking-widest"
+      class="px-4 py-3 text-micro text-theme-muted italic uppercase tracking-widest"
     >
       Viewer Mode
     </div>

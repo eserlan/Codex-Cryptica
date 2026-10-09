@@ -2,7 +2,7 @@ import type { AnswerConfigInput } from "../schema";
 
 export const howDoYouRunCharacterRolesInACyberpunkRpg: AnswerConfigInput = {
   slug: "how-do-you-run-character-roles-in-a-cyberpunk-rpg",
-  category: "session-prep",
+  category: "running-the-game",
   labels: ["cyberpunk"],
   publishedAt: "2026-09-23",
   question: "How do you run character roles in a cyberpunk RPG?",
@@ -62,7 +62,7 @@ export const howDoYouRunCharacterRolesInACyberpunkRpg: AnswerConfigInput = {
       kind: "prose",
       heading: "See a fixer's favour in play",
       paragraphs: [
-        "Nkiru Okafor, a street fixer built from a single Table Card roll, shows the debt-and-favour pattern in five lines: she needs the crew to move a case before her clinic gets raided, and the price for her help is already visible in her relationship hook. A GM can lift her directly into a session as the crew's fixer contact.",
+        "Nkiru Okafor, a street fixer built from a single Table Card roll, shows the debt-and-favour pattern in six cues: she needs the crew to move a case before her clinic gets raided, and the price for her help is already visible in her relationship hook. A GM can lift her directly into a session as the crew's fixer contact.",
       ],
       cta: {
         text: "Read the Nkiru Okafor NPC example",
@@ -151,6 +151,8 @@ export const howDoYouRunCharacterRolesInACyberpunkRpg: AnswerConfigInput = {
     "how-do-you-run-a-scene-with-multiple-npcs",
     "how-to-write-an-in-world-newspaper-for-an-rpg",
     "how-do-i-run-a-diplomat-noble-or-courtier-in-an-rpg",
+    "how-do-i-run-common-character-roles-in-a-sci-fi-or-space-opera-rpg",
+    "how-do-i-run-common-character-roles-in-a-fantasy-rpg",
   ],
   discovery: {
     id: "answer-cyberpunk-party-roles",

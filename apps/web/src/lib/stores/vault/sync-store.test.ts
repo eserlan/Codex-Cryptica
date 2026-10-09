@@ -158,6 +158,60 @@ describe("SyncStore", () => {
     expect((store as any).status).toBe("idle");
   });
 
+  describe("re-seeding from the cache on a same-vault reload", () => {
+    const cached = (id: string, title: string, updatedAt: number) =>
+      [
+        id,
+        {
+          lastModified: 1,
+          entity: { id, title, updatedAt, type: "note", content: "" } as any,
+        },
+      ] as const;
+
+    it("keeps the live entity objects and emits nothing when the cache matches", async () => {
+      vi.mocked(cacheService.preloadVault).mockResolvedValue(
+        new Map([cached("a", "A", 5)]),
+      );
+      await store.loadFiles(true);
+      const live = repository.entities["a"];
+      const seeded = repository.entities;
+      live.content = "body loaded later";
+
+      const events: string[] = [];
+      const off = vaultEventBus.subscribe((e) => {
+        events.push(e.type);
+      }, "t");
+      await store.loadFiles(true);
+      off?.();
+
+      expect(repository.entities).toBe(seeded);
+      expect(repository.entities["a"]).toBe(live);
+      expect(live.content).toBe("body loaded later");
+      expect(events).not.toContain("CACHE_LOADED");
+    });
+
+    it("still reseeds when the cache holds an entity memory lacks or a newer one (negative)", async () => {
+      vi.mocked(cacheService.preloadVault).mockResolvedValue(
+        new Map([cached("a", "A", 5)]),
+      );
+      await store.loadFiles(true);
+
+      vi.mocked(cacheService.preloadVault).mockResolvedValue(
+        new Map([cached("a", "A newer", 9), cached("b", "B", 1)]),
+      );
+      const events: string[] = [];
+      const off = vaultEventBus.subscribe((e) => {
+        events.push(e.type);
+      }, "t2");
+      await store.loadFiles(true);
+      off?.();
+
+      expect(repository.entities["a"].title).toBe("A newer");
+      expect(repository.entities["b"]).toBeDefined();
+      expect(events).toContain("CACHE_LOADED");
+    });
+  });
+
   it("calls updateEntityCount when loading from a warm cache", async () => {
     const updateEntityCount = vi.fn().mockResolvedValue(undefined);
     store = new SyncStore({
@@ -1005,7 +1059,29 @@ describe("SyncStore warm-cache reconcile (#2619)", () => {
     await vi.advanceTimersByTimeAsync(2000);
 
     // ...and the cold path follows, so the cache cannot mask the disk.
-    expect(reload).toHaveBeenCalledWith(false);
+    expect(reload).toHaveBeenCalledWith(false, { reuseCache: true });
+  });
+
+  it("lets the reconcile reuse the cache it just loaded, but not an ordinary load", async () => {
+    warmCache();
+    const store = makeStore();
+
+    await store.loadFiles();
+    await vi.advanceTimersByTimeAsync(2000);
+
+    const calls = vi.mocked(cacheService.preloadVault).mock.calls;
+    expect(calls).toEqual([["vault-1"], ["vault-1", { reuse: true }]]);
+  });
+
+  it("re-reads the cache for an explicit cold load (negative)", async () => {
+    warmCache();
+    const store = makeStore();
+
+    await store.loadFiles(false);
+
+    expect(vi.mocked(cacheService.preloadVault).mock.calls).toEqual([
+      ["vault-1"],
+    ]);
   });
 
   it("does not reconcile when the load was already cold", async () => {

@@ -7,7 +7,6 @@
     analyzePresentationCompatibility,
     importPresentationTemplatePackage,
   } from "@codex/stat-sheet-engine";
-  import FeatureHint from "$lib/components/help/FeatureHint.svelte";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
 
   let {
@@ -234,7 +233,7 @@
         >
           Presentation Templates
         </h2>
-        <p class="text-[11px] text-theme-muted mt-0.5">
+        <p class="text-meta text-theme-muted mt-0.5">
           {isEntityLocal
             ? "Custom Character Sheet layouts. Save, export, or copy layouts between characters."
             : `Layouts for "${schema.name}". Apply across all characters using this template.`}
@@ -251,9 +250,6 @@
     </div>
 
     <div class="flex-1 overflow-y-auto p-4">
-      <div class="mb-3">
-        <FeatureHint hintId="presentation-templates" />
-      </div>
       <ul class="flex flex-col gap-2">
         {#each available as t (t.id)}
           <li
@@ -267,21 +263,21 @@
                 </span>
                 {#if t.id === schemaDefaultId}
                   <span
-                    class="rounded bg-theme-primary/10 px-1.5 py-0.5 text-[9px] font-bold text-theme-primary"
+                    class="rounded bg-theme-primary/10 px-1.5 py-0.5 text-nano font-bold text-theme-primary"
                   >
                     Default
                   </span>
                 {/if}
                 {#if t.isBuiltIn}
                   <span
-                    class="rounded bg-theme-bg px-1.5 py-0.5 text-[9px] font-bold text-theme-muted"
+                    class="rounded bg-theme-bg px-1.5 py-0.5 text-nano font-bold text-theme-muted"
                   >
                     Built-in
                   </span>
                 {/if}
               </div>
               {#if t.description}
-                <span class="text-[10px] text-theme-muted truncate"
+                <span class="text-micro text-theme-muted truncate"
                   >{t.description}</span
                 >
               {/if}
@@ -289,7 +285,7 @@
             <div class="flex shrink-0 items-center gap-1">
               <button
                 type="button"
-                class="rounded border border-theme-border px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-theme-muted hover:border-theme-primary hover:text-theme-primary"
+                class="rounded border border-theme-border px-2 py-1 text-micro font-bold uppercase tracking-wide text-theme-muted hover:border-theme-primary hover:text-theme-primary"
                 onclick={() => handleExport(t)}
                 data-testid="presentation-manager-export"
                 aria-label={`Export ${t.name}`}
@@ -299,7 +295,7 @@
               {#if t.isBuiltIn}
                 <button
                   type="button"
-                  class="rounded border border-theme-border px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-theme-muted hover:border-theme-primary hover:text-theme-primary"
+                  class="rounded border border-theme-border px-2 py-1 text-micro font-bold uppercase tracking-wide text-theme-muted hover:border-theme-primary hover:text-theme-primary"
                   onclick={() => openDuplicate(t)}
                   data-testid="presentation-manager-duplicate"
                 >
@@ -309,7 +305,7 @@
                 {#if isEntityLocal && reusableStatSheetTemplates.length > 0}
                   <button
                     type="button"
-                    class="rounded border border-theme-border px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-theme-muted hover:border-theme-primary hover:text-theme-primary"
+                    class="rounded border border-theme-border px-2 py-1 text-micro font-bold uppercase tracking-wide text-theme-muted hover:border-theme-primary hover:text-theme-primary"
                     onclick={() => openPromoteDialog(t)}
                     data-testid="presentation-manager-promote"
                     title="Save this layout to a reusable template so other characters can use it"
@@ -319,7 +315,7 @@
                 {/if}
                 <button
                   type="button"
-                  class="rounded border border-theme-border px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-theme-muted hover:border-theme-primary hover:text-theme-primary"
+                  class="rounded border border-theme-border px-2 py-1 text-micro font-bold uppercase tracking-wide text-theme-muted hover:border-theme-primary hover:text-theme-primary"
                   onclick={() => openEdit(t)}
                   data-testid="presentation-manager-edit"
                 >
@@ -327,7 +323,7 @@
                 </button>
                 <button
                   type="button"
-                  class="rounded border border-theme-border px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-theme-muted hover:border-red-500 hover:text-red-500"
+                  class="rounded border border-theme-border px-2 py-1 text-micro font-bold uppercase tracking-wide text-theme-muted hover:border-red-500 hover:text-red-500"
                   onclick={() => deleteTemplate(t)}
                   data-testid="presentation-manager-delete"
                 >
@@ -415,7 +411,7 @@
           >
             Copy Layout from Another Character or Template
           </h3>
-          <p class="text-[11px] text-theme-muted mt-0.5">
+          <p class="text-meta text-theme-muted mt-0.5">
             Select an existing presentation from your vault to adapt to this
             sheet.
           </p>
@@ -446,12 +442,12 @@
                   >{other.name}</span
                 >
                 {#if other.description}
-                  <span class="text-[10px] text-theme-muted truncate"
+                  <span class="text-micro text-theme-muted truncate"
                     >{other.description}</span
                   >
                 {/if}
                 <span
-                  class="text-[10px] mt-1 font-mono {analysis.compatible
+                  class="text-micro mt-1 font-mono {analysis.compatible
                     ? 'text-emerald-400'
                     : 'text-amber-400'}"
                 >
@@ -508,7 +504,7 @@
           >
             Save to Reusable Stat Sheet Template
           </h3>
-          <p class="text-[11px] text-theme-muted mt-0.5">
+          <p class="text-meta text-theme-muted mt-0.5">
             Save "{templateToPromote.name}" to a reusable template so all
             characters with that template can use it.
           </p>
@@ -541,7 +537,7 @@
                   >{statTemplate.name}</span
                 >
                 <span
-                  class="text-[10px] mt-0.5 font-mono {analysis.compatible
+                  class="text-micro mt-0.5 font-mono {analysis.compatible
                     ? 'text-emerald-400'
                     : 'text-amber-400'}"
                 >

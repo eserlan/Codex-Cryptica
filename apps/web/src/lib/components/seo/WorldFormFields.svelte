@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { pickFrom, worldConfig } from "$lib/services/seo/generator-engine";
+  import { pickFrom, worldConfig } from "$lib/services/seo/generator-config";
   import SelectWithCustomOption from "$lib/components/forms/SelectWithCustomOption.svelte";
 
   let {
@@ -35,7 +35,7 @@
   const selectClass =
     "w-full min-h-12 rounded-lg border border-theme-border/60 bg-theme-bg/60 px-3 py-2.5 text-base text-theme-text focus:border-theme-primary/60 focus:outline-none md:text-sm";
   const labelClass =
-    "text-[10px] font-bold uppercase tracking-wider text-theme-text/80";
+    "text-micro font-bold uppercase tracking-wider text-theme-text/80";
 
   function chooseDifferentTag(excluded: string): string {
     const available = worldConfig.worldTags.filter(
@@ -197,7 +197,7 @@
 <div class="flex justify-end pt-2">
   <button
     type="button"
-    class="flex cursor-pointer items-center gap-1.5 rounded-lg border border-theme-border/60 bg-theme-surface/60 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-theme-text transition-all hover:border-theme-primary hover:bg-theme-primary hover:text-theme-bg"
+    class="flex cursor-pointer items-center gap-1.5 rounded-lg border border-theme-border/60 bg-theme-surface/60 px-3 py-1.5 text-micro font-bold uppercase tracking-wider text-theme-text transition-all hover:border-theme-primary hover:bg-theme-primary hover:text-theme-bg"
     title="Randomize all options and generate a draft from the result"
     onclick={() => {
       worldType = pickFrom(worldConfig.worldTypes);
@@ -238,7 +238,7 @@
   ></textarea>
   <p
     id="world-campaign-context-help"
-    class="text-[10px] text-theme-text/60 leading-relaxed"
+    class="text-micro text-theme-text/60 leading-relaxed"
   >
     Name the system, campaign, or neighbouring powers this world sits among.
     Anything you name here is kept and the world is built to fit it.

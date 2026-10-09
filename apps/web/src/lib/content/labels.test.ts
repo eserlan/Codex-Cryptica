@@ -93,6 +93,18 @@ describe("public label content aggregation (#2762, #2863)", () => {
     expect(groups.get("topic")?.length).toBe(1);
   });
 
+  it("aggregates the pirate campaign cluster under its label", () => {
+    const results = getPublicContentByLabel("pirate");
+    const paths = results.map((result) => result.href);
+    expect(paths).toContain("/topics/pirates");
+    expect(paths).toContain(
+      "/answers/how-do-i-run-a-pirate-campaign-focused-on-exploration",
+    );
+    expect(paths).toContain(
+      "/examples/letters-of-marque-expired-pirate-adventure",
+    );
+  });
+
   it("aggregates all rumour cluster resources", () => {
     const results = getPublicContentByLabel("rumour");
     expect(results.length).toBeGreaterThanOrEqual(4);
@@ -116,12 +128,16 @@ describe("public label content aggregation (#2762, #2863)", () => {
 
   it("aggregates all religion cluster resources", () => {
     const results = getPublicContentByLabel("religion");
-    expect(results.length).toBeGreaterThanOrEqual(3);
+    expect(results.length).toBeGreaterThanOrEqual(5);
 
     const paths = results.map((r) => r.href);
     expect(paths).toContain("/generators/pantheon-generator");
+    expect(paths).toContain("/answers/can-multiple-gods-share-a-domain");
     expect(paths).toContain(
       "/answers/how-do-you-create-a-believable-fictional-religion",
+    );
+    expect(paths).toContain(
+      "/answers/what-is-the-difference-between-gods-and-demon-lords-in-a-fantasy-world",
     );
     expect(paths).toContain(
       "/examples/the-eel-wyrm-classic-fantasy-constellation",
@@ -129,7 +145,7 @@ describe("public label content aggregation (#2762, #2863)", () => {
 
     const groups = groupPublicLabelResults(results);
     expect(groups.get("generator")?.length).toBe(1);
-    expect(groups.get("answer")?.length).toBe(1);
+    expect(groups.get("answer")?.length).toBe(3);
     expect(groups.get("example")?.length).toBe(1);
   });
 

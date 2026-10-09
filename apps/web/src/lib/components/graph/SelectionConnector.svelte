@@ -147,7 +147,7 @@
       >
         <div
           id="connector-title"
-          class="text-[10px] font-mono text-theme-primary uppercase tracking-widest mb-2"
+          class="text-micro font-mono text-theme-primary uppercase tracking-widest mb-2"
         >
           Label Connection
         </div>
@@ -165,7 +165,7 @@
           <div class="flex flex-wrap gap-1 mb-3">
             {#each connectionModeStore.recentConnectionLabels as label}
               <button
-                class="text-[9px] bg-theme-primary/10 text-theme-primary border border-theme-primary/30 px-2 py-0.5 rounded-full hover:bg-theme-primary hover:text-theme-bg transition"
+                class="text-nano bg-theme-primary/10 text-theme-primary border border-theme-primary/30 px-2 py-0.5 rounded-full hover:bg-theme-primary hover:text-theme-bg transition"
                 onclick={() => selectRecent(label)}
                 disabled={isSubmitting}
               >
@@ -177,7 +177,7 @@
 
         <div class="flex justify-end gap-2">
           <button
-            class="text-[10px] font-mono text-theme-muted hover:text-theme-text transition uppercase"
+            class="text-micro font-mono text-theme-muted hover:text-theme-text transition uppercase"
             onclick={() => (connectionModeStore.showSelectionConnector = false)}
             disabled={isSubmitting}
             aria-label="Cancel connection"
@@ -185,7 +185,7 @@
             Cancel
           </button>
           <button
-            class="text-[10px] font-mono text-theme-primary hover:text-theme-accent transition uppercase"
+            class="text-micro font-mono text-theme-primary hover:text-theme-accent transition uppercase"
             onclick={submit}
             disabled={isSubmitting}
             aria-label="Create connection"

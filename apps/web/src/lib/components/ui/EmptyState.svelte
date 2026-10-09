@@ -27,7 +27,7 @@
 >
   <span class="{icon} h-8 w-8 text-theme-muted/40" aria-hidden="true"></span>
   <p
-    class="text-[10px] font-bold font-header uppercase tracking-[0.2em] text-theme-muted"
+    class="text-micro font-bold font-header uppercase tracking-[0.2em] text-theme-muted"
   >
     {headline}
   </p>
@@ -43,7 +43,7 @@
       type="button"
       onclick={onCta}
       data-testid={ctaTestId}
-      class="mt-1 px-3 py-1 text-[10px] font-bold font-header uppercase tracking-wider rounded border border-theme-primary/40 text-theme-primary hover:bg-theme-primary/10 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-theme-accent/40"
+      class="mt-1 px-3 py-1 text-micro font-bold font-header uppercase tracking-wider rounded border border-theme-primary/40 text-theme-primary hover:bg-theme-primary/10 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-theme-accent/40"
     >
       {cta}
     </button>
@@ -53,7 +53,7 @@
       type="button"
       onclick={onSecondaryCta}
       data-testid="empty-state-secondary-cta"
-      class="px-3 py-1 text-[10px] font-bold font-header uppercase tracking-wider rounded border border-theme-border text-theme-muted hover:border-theme-primary/40 hover:text-theme-primary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-theme-accent/40"
+      class="px-3 py-1 text-micro font-bold font-header uppercase tracking-wider rounded border border-theme-border text-theme-muted hover:border-theme-primary/40 hover:text-theme-primary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-theme-accent/40"
     >
       {secondaryCta}
     </button>

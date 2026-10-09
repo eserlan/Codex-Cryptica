@@ -119,6 +119,7 @@ export const howDoYouRunACampaignWhenYouOnlyPlayOnceAMonth: AnswerConfigInput =
       "how-do-you-keep-track-of-npcs-in-a-long-campaign",
       "how-much-campaign-lore-should-players-be-expected-to-remember",
       "how-do-you-organise-rpg-campaign-notes",
+      "how-long-should-a-ttrpg-session-be",
     ],
     discovery: {
       id: "answer-monthly-campaign",

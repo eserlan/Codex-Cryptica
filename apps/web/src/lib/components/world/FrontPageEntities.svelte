@@ -59,7 +59,7 @@
       <div class="group relative flex items-center">
         <button
           type="button"
-          class="icon-[lucide--info] h-3.5 w-3.5 cursor-help text-theme-muted/60 transition-colors hover:text-theme-primary focus-visible:text-theme-primary focus-visible:outline-none"
+          class="relative before:absolute before:-inset-3.5 before:content-[''] icon-[lucide--info] h-3.5 w-3.5 cursor-help text-theme-muted/60 transition-colors hover:text-theme-primary focus-visible:text-theme-primary focus-visible:outline-none"
           aria-label="About relevant entities"
           aria-describedby="relevant-entities-tooltip"
           title="Entities tagged or labeled with frontpage will be pinned to the top of this section."
@@ -107,7 +107,7 @@
       {:else}
         <button
           type="button"
-          class="flex h-10 w-10 items-center justify-center rounded-full border border-theme-primary/40 bg-theme-primary/10 text-sm font-bold text-theme-primary hover:bg-theme-primary/20"
+          class="touch-target flex h-10 w-10 items-center justify-center rounded-full border border-theme-primary/40 bg-theme-primary/10 text-sm font-bold text-theme-primary hover:bg-theme-primary/20"
           aria-label={`Show ${recentLimit} recent entities`}
           title="Set how many recent entities to show"
           onclick={beginEditingRecentLimit}
@@ -136,20 +136,22 @@
       <div class="flex gap-3">
         <button
           type="button"
-          class="inline-flex items-center gap-1.5 rounded-full border border-theme-primary/40 bg-theme-primary/10 px-4 py-2 text-[10px] font-bold uppercase tracking-[0.15em] text-theme-primary hover:bg-theme-primary/20 transition-colors"
+          class="inline-flex items-center gap-1.5 rounded-full border border-theme-primary/40 bg-theme-primary/10 px-4 py-2 text-micro font-bold uppercase tracking-[0.15em] text-theme-primary hover:bg-theme-primary/20 transition-colors"
           onclick={() => modalUIStore.openIntentCreateMenu()}
           data-testid="entities-create-button"
         >
-          <span class="icon-[lucide--plus] h-3.5 w-3.5"></span>
+          <span aria-hidden="true" class="icon-[lucide--plus] h-3.5 w-3.5"
+          ></span>
           Create Entity
         </button>
         <button
           type="button"
-          class="inline-flex items-center gap-1.5 rounded-full border border-theme-border bg-theme-surface/50 px-4 py-2 text-[10px] font-bold uppercase tracking-[0.15em] text-theme-text hover:bg-theme-bg/50 transition-colors"
+          class="inline-flex items-center gap-1.5 rounded-full border border-theme-border bg-theme-surface/50 px-4 py-2 text-micro font-bold uppercase tracking-[0.15em] text-theme-text hover:bg-theme-bg/50 transition-colors"
           onclick={() => openImportWindow()}
           data-testid="entities-import-button"
         >
-          <span class="icon-[lucide--upload] h-3.5 w-3.5"></span>
+          <span aria-hidden="true" class="icon-[lucide--upload] h-3.5 w-3.5"
+          ></span>
           Import
         </button>
       </div>

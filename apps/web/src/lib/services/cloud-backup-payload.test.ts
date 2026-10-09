@@ -159,6 +159,34 @@ describe("buildCloudBackupPayload", () => {
     }
   });
 
+  it("derives stage durations from an injected clock", async () => {
+    let tick = 1000;
+    const clock = { now: () => (tick += 250) };
+    const timings: { stage: string; durationMs: number }[] = [];
+    await buildCloudBackupPayload("V", [entity("e1")], {
+      clock,
+      resolveImageUrl: async () => "blob:x",
+      fetch: okFetch,
+      onTiming: (timing) => timings.push(timing),
+    });
+
+    expect(timings).toHaveLength(1);
+    expect(timings[0].durationMs).toBeGreaterThan(0);
+    expect(timings[0].durationMs % 250).toBe(0);
+  });
+
+  it("falls back to the real clock when none is injected", async () => {
+    const timings: { durationMs: number }[] = [];
+    await buildCloudBackupPayload("V", [entity("e1")], {
+      resolveImageUrl: async () => "blob:x",
+      fetch: okFetch,
+      onTiming: (timing) => timings.push(timing),
+    });
+
+    expect(timings[0].durationMs).toBeGreaterThanOrEqual(0);
+    expect(Number.isFinite(timings[0].durationMs)).toBe(true);
+  });
+
   it("emits no hydrate stage when there is nothing to hydrate", async () => {
     const timings: { stage: string }[] = [];
     await buildCloudBackupPayload("V", [entity("e1")], {
@@ -279,6 +307,29 @@ describe("buildCloudBackupPayload with maps and canvases", () => {
 
     expect(result.bundle.maps).toEqual([]);
     expect(result.bundle.canvases).toEqual([]);
+  });
+});
+
+describe("buildCloudBackupPayload with session journals (spec 163-session-journal, FR-016)", () => {
+  it("carries session journals in the bundle", async () => {
+    const journal = { id: "j1", vaultId: "v1", status: "active" };
+    const result = await buildCloudBackupPayload(
+      "V",
+      [entity("e1")],
+      { resolveImageUrl: async () => "blob:x", fetch: okFetch },
+      { sessionJournals: [journal] },
+    );
+
+    expect(result.bundle.sessionJournals).toEqual([journal]);
+  });
+
+  it("defaults to an empty array when no journals are passed (old backups, or a vault with none)", async () => {
+    const result = await buildCloudBackupPayload("V", [entity("e1")], {
+      resolveImageUrl: async () => "blob:x",
+      fetch: okFetch,
+    });
+
+    expect(result.bundle.sessionJournals).toEqual([]);
   });
 });
 

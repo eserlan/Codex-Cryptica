@@ -157,6 +157,7 @@ describe("ContextMenu", () => {
     (vault as any).isGuest = false;
     (vault as any).entities = {};
     (vault as any).removeConnection = vi.fn().mockResolvedValue(true);
+    (vault as any).setConnectionHidden = vi.fn().mockResolvedValue(true);
   });
 
   it("shows Mark Important for editable graph sessions", async () => {
@@ -220,6 +221,35 @@ describe("ContextMenu", () => {
       "node-b",
       "ally",
     );
+  });
+
+  it("hides the edge's connection without deleting it when Hide Connection is clicked", async () => {
+    render(ContextMenu, { cy: createCy() as any });
+
+    await openEdgeMenu();
+
+    await fireEvent.click(
+      screen.getByRole("menuitem", { name: "Hide Connection" }),
+    );
+
+    expect(vault.setConnectionHidden).toHaveBeenCalledWith(
+      "node-a",
+      "node-b",
+      "ally",
+      true,
+    );
+    expect(vault.removeConnection).not.toHaveBeenCalled();
+  });
+
+  it("offers no Hide Connection to guests", async () => {
+    (vault as any).isGuest = true;
+    render(ContextMenu, { cy: createCy() as any });
+
+    await openEdgeMenu();
+
+    expect(
+      screen.queryByRole("menuitem", { name: "Hide Connection" }),
+    ).toBeNull();
   });
 
   it("hides Delete Connection when right-clicking an edge in guest sessions", async () => {

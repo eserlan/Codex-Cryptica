@@ -113,6 +113,7 @@
 
 <aside
   class={getPanelClass()}
+  data-help-target="vtt-initiative-panel"
   style:max-height={panelMaxHeight}
   role="presentation"
   onmousedown={(e) => e.stopPropagation()}
@@ -124,7 +125,7 @@
       >
         Initiative
       </h3>
-      <p class="text-[10px] text-theme-muted mt-1">
+      <p class="text-micro text-theme-muted mt-1">
         Round {mapSession.round}
       </p>
     </div>
@@ -146,7 +147,7 @@
       {/if}
 
       <button
-        class={`rounded-lg bg-theme-primary text-theme-bg text-[10px] font-bold uppercase tracking-widest ${
+        class={`rounded-lg bg-theme-primary text-theme-bg text-micro font-bold uppercase tracking-widest ${
           compact ? "px-2.5 py-1.5" : "px-3 py-2"
         }`}
         onclick={() => mapSession.advanceTurn()}
@@ -188,7 +189,10 @@
                 title="Ping token on map"
                 type="button"
               >
-                <span class="icon-[lucide--radar] w-3.5 h-3.5"></span>
+                <span
+                  aria-hidden="true"
+                  class="icon-[lucide--radar] w-3.5 h-3.5"
+                ></span>
               </button>
               {#if token?.entityId && mapSession.canViewToken(entry.tokenId, mapSession.myPeerId, mapStore.isGMMode)}
                 <button
@@ -201,7 +205,10 @@
                   title="Look at {token.name}"
                   type="button"
                 >
-                  <span class="icon-[lucide--book-open] w-3.5 h-3.5"></span>
+                  <span
+                    aria-hidden="true"
+                    class="icon-[lucide--book-open] w-3.5 h-3.5"
+                  ></span>
                 </button>
               {/if}
               <button
@@ -223,7 +230,7 @@
                 </div>
                 {#if ownerName(token)}
                   <div
-                    class="text-[9px] text-theme-muted uppercase tracking-wider truncate"
+                    class="text-nano text-theme-muted uppercase tracking-wider truncate"
                   >
                     {ownerName(token)}
                   </div>
@@ -234,7 +241,7 @@
 
           <div class="flex items-center gap-2">
             <label
-              class="text-[10px] uppercase tracking-widest text-theme-muted"
+              class="text-micro uppercase tracking-widest text-theme-muted"
               for={`initiative-${entry.tokenId}`}
             >
               Init

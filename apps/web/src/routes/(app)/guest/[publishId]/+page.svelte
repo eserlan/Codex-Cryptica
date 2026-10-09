@@ -4,6 +4,7 @@
   import { replaceState } from "$app/navigation";
   import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
   import { guestVault } from "$lib/stores/guest-vault.svelte";
+  import { entityTemplateStore } from "$lib/stores/entity-templates/entity-template-store.svelte";
   import { themeStore } from "$lib/stores/theme.svelte";
   import { vault } from "$lib/stores/vault.svelte";
   import { onboardingStore } from "$lib/stores/ui/onboarding.svelte";
@@ -75,6 +76,7 @@
     if (data.bundle) {
       try {
         // 1. Force guest mode
+        entityTemplateStore.clearForGuest();
         sessionModeStore.isGuestMode = true;
 
         // 2. Load the bundle into our reactive guest vault
@@ -156,7 +158,8 @@
         <div
           class="h-16 w-16 rounded-full bg-theme-accent/10 flex items-center justify-center text-theme-accent"
         >
-          <span class="icon-[lucide--alert-triangle] h-8 w-8"></span>
+          <span aria-hidden="true" class="icon-[lucide--alert-triangle] h-8 w-8"
+          ></span>
         </div>
 
         <div class="space-y-2">
@@ -171,14 +174,18 @@
             href="{base}/guest"
             class="flex items-center justify-center px-4 py-2.5 rounded-lg font-medium text-sm transition-all border border-theme-border bg-theme-surface hover:bg-theme-bg text-theme-primary"
           >
-            <span class="icon-[lucide--arrow-left] mr-2 h-4 w-4"></span>
+            <span
+              aria-hidden="true"
+              class="icon-[lucide--arrow-left] mr-2 h-4 w-4"
+            ></span>
             Back to Shared Worlds
           </a>
           <a
             href="{base}/worlds"
             class="flex items-center justify-center px-4 py-2.5 rounded-lg font-medium text-sm transition-all text-theme-muted hover:text-theme-primary"
           >
-            <span class="icon-[lucide--compass] mr-2 h-4 w-4"></span>
+            <span aria-hidden="true" class="icon-[lucide--compass] mr-2 h-4 w-4"
+            ></span>
             Explore Worlds
           </a>
         </div>
@@ -231,7 +238,8 @@
                 onclick={() => (showReportModal = true)}
                 class="inline-flex items-center gap-1.5 text-xs font-bold text-theme-text/60 hover:text-theme-primary transition-colors"
               >
-                <span class="icon-[lucide--flag] h-3.5 w-3.5"></span>
+                <span class="icon-[lucide--flag] h-3.5 w-3.5" aria-hidden="true"
+                ></span>
                 <span>Report copyright concern</span>
               </button>
             </div>
@@ -243,7 +251,8 @@
               onclick={() => (showReportModal = true)}
               class="inline-flex items-center gap-1.5 text-xs font-bold text-theme-text/60 hover:text-theme-primary transition-colors"
             >
-              <span class="icon-[lucide--flag] h-3.5 w-3.5"></span>
+              <span class="icon-[lucide--flag] h-3.5 w-3.5" aria-hidden="true"
+              ></span>
               <span>Report copyright concern</span>
             </button>
           </div>
@@ -267,7 +276,8 @@
             onclick={() => (showReportModal = true)}
             class="inline-flex items-center gap-1.5 rounded border border-theme-border/60 bg-theme-surface/90 px-3 py-1.5 text-xs font-bold text-theme-text/70 shadow hover:border-theme-primary/50 hover:text-theme-primary transition-colors backdrop-blur-sm"
           >
-            <span class="icon-[lucide--flag] h-3.5 w-3.5"></span>
+            <span class="icon-[lucide--flag] h-3.5 w-3.5" aria-hidden="true"
+            ></span>
             <span>Report copyright concern</span>
           </button>
         </div>

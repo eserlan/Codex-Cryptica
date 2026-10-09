@@ -6,10 +6,11 @@
   import { categories } from "$lib/stores/categories.svelte";
   import { themeStore } from "$lib/stores/theme.svelte";
   import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
-  import FeatureHint from "$lib/components/help/FeatureHint.svelte";
+  import AskAboutThis from "$lib/components/help-assistant/AskAboutThis.svelte";
   import {
     buildConnectionNeighbors,
     vaultConnectionContext,
+    withoutHiddenRelations,
     type ConnectionNeighbor,
   } from "./entity-connections";
   import {
@@ -45,7 +46,9 @@
   const allNeighbors = $derived.by<ConnectionNeighbor[]>(() =>
     buildConnectionNeighbors(entity, vaultConnectionContext(vault)),
   );
-  const shownNeighbors = $derived(allNeighbors.slice(0, MAX_SHOWN));
+  const shownNeighbors = $derived(
+    withoutHiddenRelations(allNeighbors).slice(0, MAX_SHOWN),
+  );
 
   const colorOf = (type: string) => categories.getCategory(type)?.color ?? null;
   // --- Cytoscape: layout + paint only ---------------------------------
@@ -274,6 +277,8 @@
     Direct connections only — entities linked straight to {entity.title}.
   </p>
 
+  <AskAboutThis />
+
   <div
     bind:this={graphElement}
     bind:clientHeight={measuredHeight}
@@ -315,7 +320,9 @@
         class="pointer-events-none absolute inset-x-0 bottom-8 text-center text-sm text-theme-muted italic"
         data-testid="connections-empty"
       >
-        No direct connections yet.
+        {allNeighbors.length > 0
+          ? "Every connection is hidden. Show them again from the Status tab."
+          : "No direct connections yet."}
       </p>
     {/if}
 
@@ -338,7 +345,7 @@
       </button>
       <button
         type="button"
-        class="min-w-[2.75rem] rounded px-1 py-1 font-mono text-[10px] text-theme-muted transition hover:bg-theme-primary/10 hover:text-theme-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-theme-primary"
+        class="min-w-[2.75rem] rounded px-1 py-1 font-mono text-micro text-theme-muted transition hover:bg-theme-primary/10 hover:text-theme-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-theme-primary"
         aria-label="Reset zoom"
         title="Reset zoom"
         data-testid="connections-zoom-reset"
@@ -371,6 +378,4 @@
     Status tab on this entity for the same connections as a keyboard-friendly
     list.
   </p>
-
-  <FeatureHint hintId="connections" />
 </div>

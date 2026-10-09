@@ -1,6 +1,7 @@
 <script lang="ts">
   import { tick } from "svelte";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+  import { soloPlayGuard } from "$lib/stores/solo-session-instance";
   import { openImportWindow } from "$lib/stores/ui/navigation";
 
   let { orientation = "horizontal" } = $props<{
@@ -133,7 +134,7 @@
         class="w-full rounded px-3 text-left text-chrome-text hover:bg-chrome-accent/10 hover:text-chrome-accent focus-visible:outline-2 focus-visible:outline-chrome-accent {isVertical
           ? 'py-3 text-sm'
           : 'py-2 text-xs'}"
-        onclick={() => run(() => modalUIStore.openShare())}
+        onclick={() => run(() => soloPlayGuard.requestShare())}
       >
         <span
           class="icon-[lucide--share-2] mr-2 inline-block h-3.5 w-3.5"

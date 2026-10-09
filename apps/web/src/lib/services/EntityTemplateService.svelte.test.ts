@@ -383,4 +383,73 @@ describe("EntityTemplateService", () => {
       expect(service.extractSummary("")).toBe("");
     });
   });
+  // --- 167: vault-scoped template store ---
+  describe("Vault template store (167)", () => {
+    it("uses the store once it has loaded and ignores the handle", async () => {
+      const templateStore = {
+        loaded: true,
+        resolveSync: vi.fn().mockReturnValue("FROM STORE"),
+      };
+      const withStore = new EntityTemplateService({
+        themeStore: mockThemeStore,
+        templateStore,
+      });
+      const handle = {
+        getDirectoryHandle: vi.fn().mockRejectedValue(new Error("unused")),
+      } as any;
+
+      const result = await withStore.resolveTemplate(
+        "character",
+        "fantasy",
+        handle,
+      );
+
+      expect(result).toBe("FROM STORE");
+      expect(templateStore.resolveSync).toHaveBeenCalledWith(
+        "character",
+        "fantasy",
+      );
+      expect(handle.getDirectoryHandle).not.toHaveBeenCalled();
+    });
+
+    it("keeps the previous behaviour while the store has not loaded", async () => {
+      const templateStore = { loaded: false, resolveSync: vi.fn() };
+      const withStore = new EntityTemplateService({
+        themeStore: mockThemeStore,
+        templateStore,
+      });
+
+      const result = await withStore.resolveTemplate("character");
+
+      expect(result).toBe(GENERIC_TEMPLATES.character);
+      expect(templateStore.resolveSync).not.toHaveBeenCalled();
+    });
+
+    it("still returns an empty legacy file as blank before the store loads", async () => {
+      const emptyFile = {
+        kind: "file",
+        getFile: async () => ({ text: async () => "" }),
+      };
+      const templatesDir = {
+        entries: async function* () {
+          yield ["character.md", emptyFile];
+        },
+      };
+      const handle = {
+        getDirectoryHandle: vi.fn(async (name: string) => {
+          if (name === ".cc")
+            return { getDirectoryHandle: async () => templatesDir };
+          throw new Error("nf");
+        }),
+      } as any;
+      const withStore = new EntityTemplateService({
+        themeStore: mockThemeStore,
+        templateStore: { loaded: false, resolveSync: vi.fn() },
+      });
+
+      expect(
+        await withStore.resolveTemplate("character", undefined, handle),
+      ).toBe("");
+    });
+  });
 });

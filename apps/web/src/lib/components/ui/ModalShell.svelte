@@ -58,7 +58,10 @@
         onclick={onClose}
       ></button>
     {:else}
-      <div class="absolute inset-0 h-full w-full {backdropClass}" aria-hidden="true"></div>
+      <div
+        class="absolute inset-0 h-full w-full {backdropClass}"
+        aria-hidden="true"
+      ></div>
     {/if}
     <!-- svelte-ignore a11y_click_events_have_key_events -->
     <div

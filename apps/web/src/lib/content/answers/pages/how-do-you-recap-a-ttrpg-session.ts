@@ -2,7 +2,7 @@ import type { AnswerConfigInput } from "../schema";
 
 export const howDoYouRecapATtrpgSession: AnswerConfigInput = {
   slug: "how-do-you-recap-a-ttrpg-session",
-  category: "session-prep",
+  category: "running-the-game",
   publishedAt: "2026-09-12",
   question: "How do you recap a TTRPG session?",
   kind: "framework",
@@ -131,6 +131,9 @@ export const howDoYouRecapATtrpgSession: AnswerConfigInput = {
     "how-do-i-run-a-successful-session-0",
     "how-much-campaign-lore-should-players-be-expected-to-remember",
     "how-do-i-organise-gm-notes-for-in-person-play",
+    "how-do-i-take-useful-rpg-notes-during-play",
+    "how-long-should-a-ttrpg-session-be",
+    "how-do-i-organise-a-dnd-campaign",
   ],
   discovery: {
     id: "answer-session-recap",

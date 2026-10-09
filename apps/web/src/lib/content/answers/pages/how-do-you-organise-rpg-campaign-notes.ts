@@ -158,6 +158,9 @@ export const howDoYouOrganiseRpgCampaignNotes: AnswerConfigInput = {
     "how-do-you-run-a-campaign-when-you-only-play-once-a-month",
     "how-much-campaign-lore-should-players-be-expected-to-remember",
     "how-do-i-organise-gm-notes-for-in-person-play",
+    "how-do-i-take-useful-rpg-notes-during-play",
+    "how-do-i-organise-a-dnd-campaign",
+    "how-do-i-start-a-dnd-campaign",
   ],
   discovery: {
     id: "answer-campaign-notes",

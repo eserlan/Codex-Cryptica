@@ -2,7 +2,7 @@ import type { AnswerConfigInput } from "../schema";
 
 export const howDoYouRunAHeistInATabletopRpg: AnswerConfigInput = {
   slug: "how-do-you-run-a-heist-in-a-tabletop-rpg",
-  category: "session-prep",
+  category: "adventure-design",
   labels: ["cyberpunk", "heist"],
   publishedAt: "2026-09-04",
   question: "How do you run a heist in a tabletop RPG?",
@@ -193,6 +193,7 @@ export const howDoYouRunAHeistInATabletopRpg: AnswerConfigInput = {
     "how-do-you-run-character-roles-in-a-cyberpunk-rpg",
     "how-do-i-run-spies-and-infiltrators-in-an-rpg",
     "how-do-i-run-a-rogue-or-scout-without-splitting-the-party",
+    "how-do-i-run-common-character-roles-in-a-fantasy-rpg",
   ],
   discovery: {
     id: "answer-run-heist-in-tabletop-rpg",

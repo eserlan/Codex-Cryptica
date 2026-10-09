@@ -277,9 +277,7 @@
                   <span class="text-sm text-theme-text"
                     >{backupLabel(backup)}</span
                   >
-                  <span
-                    class="font-mono text-[10px] uppercase text-theme-muted"
-                  >
+                  <span class="font-mono text-micro uppercase text-theme-muted">
                     {savedAt(backup.lastPushedAt)}
                   </span>
                 </button>
@@ -343,8 +341,8 @@
         >
           <p>
             <strong class="text-theme-text">What gets stored:</strong> everything
-            in this vault — your entities, labels, notes, maps, canvases and the images
-            they use.
+            in this vault — your entities, labels, notes, maps, canvases, session
+            journals, and the images they use.
           </p>
           <p>
             <strong class="text-theme-text">Where:</strong> Codex Cryptica Cloud,
@@ -415,7 +413,7 @@
 
     {#if isOn}
       <span
-        class="shrink-0 font-mono text-[10px] uppercase tracking-wider {status ===
+        class="shrink-0 font-mono text-micro uppercase tracking-wider {status ===
         'error'
           ? 'text-red-400'
           : 'text-theme-primary'}"

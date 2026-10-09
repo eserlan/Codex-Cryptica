@@ -72,11 +72,11 @@
             <span class="font-medium truncate pr-2">
               {getSnippet(note.content)}
             </span>
-            <span class="text-[10px] text-theme-muted shrink-0">
+            <span class="text-micro text-theme-muted shrink-0">
               {formatTime(note.createdAt)}
             </span>
           </div>
-          <span class="text-[11px] text-theme-muted truncate">
+          <span class="text-meta text-theme-muted truncate">
             {note.content.split("\n").slice(1).join(" ").trim() ||
               "No additional content"}
           </span>
@@ -93,10 +93,10 @@
       onclick={() => quickNoteStore.startNewNote()}
       class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-theme-primary text-theme-bg font-semibold text-xs transition-colors shadow-sm hover:brightness-110"
     >
-      <span class="icon-[lucide--plus] h-3.5 w-3.5"></span>
+      <span aria-hidden="true" class="icon-[lucide--plus] h-3.5 w-3.5"></span>
       New Note
     </button>
-    <span class="text-[10px] text-theme-muted">
+    <span class="text-micro text-theme-muted">
       {quickNoteStore.count} active
     </span>
   </div>

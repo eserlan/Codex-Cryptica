@@ -4,6 +4,7 @@ import type {
   ImportWarning,
   RelationshipDraft,
 } from "./package";
+import { isPlaceholderImageUrl } from "schema";
 import { htmlToMarkdown } from "../utils";
 
 export function isScabardExport(jsonObj: unknown): boolean {
@@ -75,6 +76,14 @@ const isStandardMetadataName = (name: string): boolean => {
 const SCABARD_ASSET_BASE_URL = "https://www.scabard.com";
 
 const normalizeScabardImageUrl = (
+  value: string | undefined,
+): string | undefined => {
+  const url = resolveScabardImageUrl(value);
+  // Scabard's stock category icons are not the entry's own picture.
+  return isPlaceholderImageUrl(url) ? undefined : url;
+};
+
+const resolveScabardImageUrl = (
   value: string | undefined,
 ): string | undefined => {
   const trimmed = value?.trim();

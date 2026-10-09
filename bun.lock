@@ -38,7 +38,7 @@
     },
     "apps/web": {
       "name": "web",
-      "version": "0.33.3",
+      "version": "0.35.9",
       "dependencies": {
         "@capacitor/app": "^8.1.1",
         "@capacitor/core": "^8.5.0",
@@ -93,10 +93,13 @@
         "dice-engine": "workspace:*",
         "dompurify": "^3.4.2",
         "editor-core": "workspace:*",
+        "entity-report-engine": "workspace:*",
+        "entity-template-engine": "workspace:*",
         "fflate": "^0.8.3",
         "flexsearch": "^0.8.212",
         "generator-engine": "workspace:*",
         "graph-engine": "workspace:*",
+        "help-engine": "workspace:*",
         "html-to-image": "^1.11.13",
         "idb": "^8.0.3",
         "js-yaml": "^5.2.1",
@@ -106,6 +109,8 @@
         "peerjs": "^1.5.5",
         "random-source-engine": "workspace:*",
         "schema": "workspace:*",
+        "session-journal-engine": "workspace:*",
+        "solo-session-engine": "workspace:*",
         "svelte-tiptap": "^3.0.1",
         "tiptap-markdown": "^0.9.0",
         "zod": "^4.4.3",
@@ -293,6 +298,18 @@
         "vitest": "^5.0.0",
       },
     },
+    "packages/entity-report-engine": {
+      "name": "entity-report-engine",
+      "version": "0.0.0",
+      "dependencies": {
+        "schema": "workspace:*",
+      },
+      "devDependencies": {
+        "@vitest/coverage-v8": "^5.0.0",
+        "typescript": "^6.0.3",
+        "vitest": "^5.0.0",
+      },
+    },
     "packages/entity-shelf": {
       "name": "@codex/entity-shelf",
       "version": "0.0.0",
@@ -302,6 +319,18 @@
       "devDependencies": {
         "@vitest/coverage-v8": "^5.0.0",
         "eslint": "^10.11.0",
+        "typescript": "^6.0.3",
+        "vitest": "^5.0.0",
+      },
+    },
+    "packages/entity-template-engine": {
+      "name": "entity-template-engine",
+      "version": "0.0.0",
+      "dependencies": {
+        "zod": "^4.4.3",
+      },
+      "devDependencies": {
+        "@vitest/coverage-v8": "^5.0.0",
         "typescript": "^6.0.3",
         "vitest": "^5.0.0",
       },
@@ -373,6 +402,19 @@
       "devDependencies": {
         "@vitest/coverage-v8": "^5.0.0",
         "jsdom": "^30.0.1",
+        "typescript": "^6.0.3",
+        "vitest": "^5.0.0",
+      },
+    },
+    "packages/help-engine": {
+      "name": "help-engine",
+      "version": "0.0.0",
+      "dependencies": {
+        "js-yaml": "^5.2.1",
+        "zod": "^4.4.3",
+      },
+      "devDependencies": {
+        "@vitest/coverage-v8": "^5.0.0",
         "typescript": "^6.0.3",
         "vitest": "^5.0.0",
       },
@@ -526,6 +568,27 @@
       },
       "peerDependencies": {
         "svelte": "^5.0.0",
+      },
+    },
+    "packages/session-journal-engine": {
+      "name": "session-journal-engine",
+      "version": "0.0.0",
+      "dependencies": {
+        "@codex/events": "workspace:*",
+      },
+      "devDependencies": {
+        "@vitest/coverage-v8": "^5.0.0",
+        "typescript": "^6.0.3",
+        "vitest": "^5.0.0",
+      },
+    },
+    "packages/solo-session-engine": {
+      "name": "solo-session-engine",
+      "version": "0.0.0",
+      "devDependencies": {
+        "@vitest/coverage-v8": "^5.0.0",
+        "typescript": "^6.0.3",
+        "vitest": "^5.0.0",
       },
     },
     "packages/spatial-engine": {
@@ -1612,6 +1675,10 @@
 
     "entities": ["entities@8.0.0", "", {}, "sha512-zwfzJecQ/Uej6tusMqwAqU/6KL2XaB2VZ2Jg54Je6ahNBGNH6Ek6g3jjNCF0fG9EWQKGZNddNjU5F1ZQn/sBnA=="],
 
+    "entity-report-engine": ["entity-report-engine@workspace:packages/entity-report-engine"],
+
+    "entity-template-engine": ["entity-template-engine@workspace:packages/entity-template-engine"],
+
     "env-paths": ["env-paths@2.2.1", "", {}, "sha512-+h1lkLKhZMTYjog1VEpJNG7NZJWcuc2DDk/qsqSTRRCOXiLjeQ1d1/udrUGhqMxUgAlwKNZ0cf2uqan5GLuS2A=="],
 
     "environment": ["environment@1.1.0", "", {}, "sha512-xUtoPkMggbz0MPyPiIWr1Kp4aeWJjDZ6SMvURhimjdZgsRuDplF5/s9hcgGhyXMhs+6vpnuoiZ2kFiu3FMnS8Q=="],
@@ -1753,6 +1820,8 @@
     "has-flag": ["has-flag@4.0.0", "", {}, "sha512-EykJT/Q1KjTWctppgIAgfSO0tKVuZUjhgMr17kqTumMl6Afv3EISleU7qZUzoXDFTAHTDC4NOoG/ZxU3EvlMPQ=="],
 
     "hashery": ["hashery@1.5.1", "", { "dependencies": { "hookified": "^1.15.0" } }, "sha512-iZyKG96/JwPz1N55vj2Ie2vXbhu440zfUfJvSwEqEbeLluk7NnapfGqa7LH0mOsnDxTF85Mx8/dyR6HfqcbmbQ=="],
+
+    "help-engine": ["help-engine@workspace:packages/help-engine"],
 
     "hookified": ["hookified@1.15.1", "", {}, "sha512-MvG/clsADq1GPM2KGo2nyfaWVyn9naPiXrqIe4jYjXNZQt238kWyOGrsyc/DmRAQ+Re6yeo6yX/yoNCG5KAEVg=="],
 
@@ -2218,6 +2287,8 @@
 
     "semver": ["semver@7.7.4", "", { "bin": { "semver": "bin/semver.js" } }, "sha512-vFKC2IEtQnVhpT78h1Yp8wzwrf8CM+MzKMHGJZfBtzhZNycRFnXsHk6E5TxIkkMsgNS7mdX3AGB7x2QM2di4lA=="],
 
+    "session-journal-engine": ["session-journal-engine@workspace:packages/session-journal-engine"],
+
     "set-cookie-parser": ["set-cookie-parser@3.1.0", "", {}, "sha512-kjnC1DXBHcxaOaOXBHBeRtltsDG2nUiUni+jP92M9gYdW12rsmx92UsfpH7o5tDRs7I1ZZPSQJQGv3UaRfCiuw=="],
 
     "setimmediate": ["setimmediate@1.0.5", "", {}, "sha512-MATJdZp8sLqDl/68LfQmbP8zKPLQNV6BIZoIgrscFDQ+RsvK/BxeDQOgyxKKoh0y/8h3BqVFnCqQ/gd+reiIXA=="],
@@ -2245,6 +2316,8 @@
     "socks": ["socks@2.8.8", "", { "dependencies": { "ip-address": "10.1.1", "smart-buffer": "4.2.0" } }, "sha512-NlGELfPrgX2f1TAAcz0WawlLn+0r3FyhhCRpFFK2CemXenPYvzMWWZINv3eDNo9ucdwme7oCHRY0Jnbs4aIkog=="],
 
     "socks-proxy-agent": ["socks-proxy-agent@8.0.5", "", { "dependencies": { "agent-base": "7.1.4", "debug": "4.4.3", "socks": "2.8.8" } }, "sha512-HehCEsotFqbPW9sJ8WVYB6UbmIMv7kUUORIF2Nncq4VQvBfNBLibW9YZR5dlYCSUhwcD628pRllm7n+E+YTzJw=="],
+
+    "solo-session-engine": ["solo-session-engine@workspace:packages/solo-session-engine"],
 
     "source-map": ["source-map@0.7.6", "", {}, "sha512-i5uvt8C3ikiWeNZSVZNWcfZPItFQOsYTUAOkcUPGd8DqDy1uOUikjt5dG+uRlwyvR108Fb9DOd4GvXfT0N2/uQ=="],
 

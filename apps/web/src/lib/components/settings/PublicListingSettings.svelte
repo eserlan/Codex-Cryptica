@@ -533,7 +533,7 @@
         <div class="flex flex-wrap gap-2">
           {#each labels as label (label)}
             <span
-              class="rounded border border-theme-primary/30 bg-theme-primary/10 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-theme-primary"
+              class="rounded border border-theme-primary/30 bg-theme-primary/10 px-2 py-1 text-micro font-bold uppercase tracking-wider text-theme-primary"
               >{label}</span
             >
           {/each}
@@ -564,7 +564,8 @@
         class="inline-flex items-center gap-1.5 self-start text-xs font-bold uppercase tracking-wider text-theme-primary underline hover:text-theme-primary/80 transition-colors"
         data-testid="public-listing-view-directory"
       >
-        <span class="icon-[lucide--compass] h-3.5 w-3.5"></span>
+        <span aria-hidden="true" class="icon-[lucide--compass] h-3.5 w-3.5"
+        ></span>
         View in Explore Worlds
       </a>
     {/if}

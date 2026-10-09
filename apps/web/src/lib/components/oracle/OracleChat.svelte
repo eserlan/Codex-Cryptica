@@ -12,11 +12,22 @@
     ORACLE_CHAT_INPUT_EVENT,
     getOracleChatDraft,
     clearOracleChatDraft,
+    takeOraclePrefill,
   } from "./oracle-chat-input";
 
   let { onOpenSettings } = $props<{ onOpenSettings?: () => void }>();
 
   let input = $state("");
+
+  // A solo shortcut prefills the question here; the player edits and sends it.
+  $effect(() => {
+    if (!oracle.ui.pendingPrompt) return;
+    const prompt = takeOraclePrefill(oracle.ui);
+    if (prompt) {
+      input = prompt;
+      void tick().then(() => textArea?.focus());
+    }
+  });
   let scrollContainer = $state<HTMLDivElement>();
   let textArea = $state<HTMLTextAreaElement>();
   let commandMenu = $state<ReturnType<typeof CommandMenu>>();
@@ -240,7 +251,8 @@
     <div
       class="w-16 h-16 bg-theme-primary/10 rounded-full flex items-center justify-center text-theme-primary mb-2"
     >
-      <span class="icon-[heroicons--sparkles] w-8 h-8"></span>
+      <span aria-hidden="true" class="icon-[heroicons--sparkles] w-8 h-8"
+      ></span>
     </div>
     <h3
       class="text-theme-text font-bold uppercase font-header tracking-widest text-xs"
@@ -253,14 +265,14 @@
       >
       in the Settings panel.
       {#if !import.meta.env.VITE_SHARED_GEMINI_KEY}
-        <br /><span class="text-[10px] opacity-50">
+        <br /><span class="text-micro opacity-50">
           (Shared key not detected on localhost)</span
         >
       {/if}
     </p>
 
     <button
-      class="px-6 py-2 bg-theme-primary hover:bg-theme-secondary text-theme-bg font-bold rounded-full text-[10px] tracking-widest transition-all active:scale-95 shadow-lg shadow-theme-primary/20"
+      class="px-6 py-2 bg-theme-primary hover:bg-theme-secondary text-theme-bg font-bold rounded-full text-micro tracking-widest transition-all active:scale-95 shadow-lg shadow-theme-primary/20"
       onclick={() => {
         if (onOpenSettings) onOpenSettings();
         else modalUIStore.openSettings();
@@ -269,7 +281,7 @@
       OPEN SETTINGS
     </button>
     <div class="flex flex-col gap-2 w-full pt-4">
-      <p class="text-[10px] text-theme-muted font-header">
+      <p class="text-micro text-theme-muted font-header">
         Vault contents never leave this device except for inference via your own
         API key.
       </p>

@@ -7,6 +7,7 @@
   import GuidedModeToggle from "$lib/components/guided/GuidedModeToggle.svelte";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
   import { quickNoteStore } from "$lib/stores/quicknote.svelte";
+  import SessionJournalIndicator from "./SessionJournalIndicator.svelte";
   import { isToolActive, isViewActive, navItems } from "./nav-items";
 
   let { isOpen = $bindable(false) } = $props();
@@ -161,11 +162,15 @@
               >
               {#if tool.id === "quicknote" && quickNoteStore.count > 0}
                 <span
-                  class="ml-auto rounded-full bg-theme-primary px-1.5 text-[10px] font-bold text-theme-bg"
+                  class="ml-auto rounded-full bg-theme-primary px-1.5 text-micro font-bold text-theme-bg"
                 >
                   {quickNoteStore.count}
                 </span>
               {/if}
+              <SessionJournalIndicator
+                toolId={tool.id}
+                class="ml-auto bg-theme-primary"
+              />
             </button>
           {/each}
         </div>
@@ -198,6 +203,7 @@
         >
           <span
             class="icon-[lucide--settings] w-5 h-5 text-theme-muted group-hover:text-theme-primary"
+            aria-hidden="true"
           ></span>
           <span
             class="font-mono text-sm font-bold text-theme-text group-hover:text-theme-primary"
@@ -271,7 +277,7 @@
     <!-- Footer Info -->
     <div class="p-4 border-t border-theme-border bg-theme-bg/30">
       <div
-        class="text-[10px] font-mono text-theme-muted uppercase tracking-widest text-center"
+        class="text-micro font-mono text-theme-muted uppercase tracking-widest text-center"
       >
         Codex Cryptica
       </div>

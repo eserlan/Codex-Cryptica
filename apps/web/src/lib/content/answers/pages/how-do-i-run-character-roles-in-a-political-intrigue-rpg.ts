@@ -3,7 +3,7 @@ import type { AnswerConfigInput } from "../schema";
 export const howDoIRunCharacterRolesInAPoliticalIntrigueRpg: AnswerConfigInput =
   {
     slug: "how-do-i-run-character-roles-in-a-political-intrigue-rpg",
-    category: "session-prep",
+    category: "running-the-game",
     publishedAt: "2026-09-24",
     question:
       "How do I run common character roles in a political intrigue RPG?",
@@ -158,6 +158,9 @@ export const howDoIRunCharacterRolesInAPoliticalIntrigueRpg: AnswerConfigInput =
       "how-do-i-give-specialist-characters-spotlight",
       "how-do-you-run-factions-in-a-sandbox-campaign",
       "what-rpg-works-for-political-intrigue-and-faction-play",
+      "how-do-i-run-common-character-roles-in-a-sci-fi-or-space-opera-rpg",
+      "how-do-i-run-common-character-roles-in-a-fantasy-rpg",
+      "how-do-i-run-a-bard-or-face-without-sidelining-the-party",
     ],
     discovery: {
       id: "answer-run-character-roles-political-intrigue",

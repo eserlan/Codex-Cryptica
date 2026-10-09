@@ -257,7 +257,7 @@
     <div class="text-center mb-12">
       <a
         href="{cleanBase}/migrations"
-        class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-mono font-medium bg-theme-primary/10 border border-theme-primary/20 text-theme-primary mb-4 hover:bg-theme-primary/20 transition-colors"
+        class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-micro font-mono font-medium bg-theme-primary/10 border border-theme-primary/20 text-theme-primary mb-4 hover:bg-theme-primary/20 transition-colors"
       >
         <span class="icon-[lucide--folder-input] w-3.5 h-3.5" aria-hidden="true"
         ></span>
@@ -280,7 +280,10 @@
           rel="noopener noreferrer"
           class="inline-flex items-center gap-1.5 mt-4 text-xs font-bold text-theme-muted hover:text-theme-primary transition-colors"
         >
-          <span class="icon-[lucide--external-link] w-3.5 h-3.5"></span>
+          <span
+            aria-hidden="true"
+            class="icon-[lucide--external-link] w-3.5 h-3.5"
+          ></span>
           Get {pageData.toolLabel ?? pageData.competitorName}
         </a>
       {/if}
@@ -330,9 +333,7 @@
               ? "your Kanka export ZIP"
               : "your export JSON"} here
         </h3>
-        <p
-          class="text-[11px] text-theme-muted leading-relaxed max-w-md mx-auto"
-        >
+        <p class="text-meta text-theme-muted leading-relaxed max-w-md mx-auto">
           All files are processed client-side in your browser. Your creative
           work never leaves your computer.
         </p>
@@ -341,7 +342,7 @@
       <div class="flex items-center gap-4">
         <label
           for="file-upload"
-          class="px-5 py-2.5 bg-theme-primary text-theme-bg font-bold font-header text-[10px] rounded-lg hover:brightness-110 cursor-pointer shadow-sm transition-all"
+          class="px-5 py-2.5 bg-theme-primary text-theme-bg font-bold font-header text-micro rounded-lg hover:brightness-110 cursor-pointer shadow-sm transition-all"
         >
           Select File
         </label>
@@ -380,14 +381,14 @@
             <h3 class="font-header font-bold text-base text-theme-primary">
               Parsed Preview
             </h3>
-            <p class="text-[10px] font-mono text-theme-muted mt-1">
+            <p class="text-micro font-mono text-theme-muted mt-1">
               Review extracted campaign data
             </p>
           </div>
           <button
             type="button"
             onclick={executeImport}
-            class="px-5 py-2.5 bg-theme-primary text-theme-bg font-bold font-header text-[10px] rounded-lg hover:brightness-110 shadow-sm transition-all"
+            class="px-5 py-2.5 bg-theme-primary text-theme-bg font-bold font-header text-micro rounded-lg hover:brightness-110 shadow-sm transition-all"
           >
             Import {parseStats.total} Entries into Codex
           </button>
@@ -402,7 +403,7 @@
               >{parseStats.total}</span
             >
             <span
-              class="text-[8px] uppercase tracking-widest text-theme-muted font-header"
+              class="text-nano uppercase tracking-widest text-theme-muted font-header"
               >Total</span
             >
           </div>
@@ -413,7 +414,7 @@
               >{parseStats.characters}</span
             >
             <span
-              class="text-[8px] uppercase tracking-widest text-theme-muted font-header"
+              class="text-nano uppercase tracking-widest text-theme-muted font-header"
               >Characters</span
             >
           </div>
@@ -424,7 +425,7 @@
               >{parseStats.locations}</span
             >
             <span
-              class="text-[8px] uppercase tracking-widest text-theme-muted font-header"
+              class="text-nano uppercase tracking-widest text-theme-muted font-header"
               >Locations</span
             >
           </div>
@@ -435,7 +436,7 @@
               >{parseStats.factions}</span
             >
             <span
-              class="text-[8px] uppercase tracking-widest text-theme-muted font-header"
+              class="text-nano uppercase tracking-widest text-theme-muted font-header"
               >Factions</span
             >
           </div>
@@ -446,7 +447,7 @@
               >{parseStats.items}</span
             >
             <span
-              class="text-[8px] uppercase tracking-widest text-theme-muted font-header"
+              class="text-nano uppercase tracking-widest text-theme-muted font-header"
               >Items</span
             >
           </div>
@@ -505,7 +506,7 @@
 
               <!-- Type select -->
               <select
-                class="bg-theme-surface border border-theme-border/40 text-theme-primary text-[10px] font-mono rounded px-1.5 py-1 focus:outline-none focus:ring-1 focus:ring-theme-primary/40 shrink-0"
+                class="bg-theme-surface border border-theme-border/40 text-theme-primary text-micro font-mono rounded px-1.5 py-1 focus:outline-none focus:ring-1 focus:ring-theme-primary/40 shrink-0"
                 bind:value={filesParsed[idx].type}
                 aria-label="Entity type"
               >

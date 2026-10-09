@@ -256,14 +256,20 @@
               <span
                 class="flex items-center gap-1 text-emerald-500 font-semibold"
               >
-                <span class="icon-[lucide--check-circle] w-3.5 h-3.5"></span>
+                <span
+                  aria-hidden="true"
+                  class="icon-[lucide--check-circle] w-3.5 h-3.5"
+                ></span>
                 Found in character lore
               </span>
             {:else}
               <span
                 class="flex items-center gap-1 text-amber-500 font-semibold"
               >
-                <span class="icon-[lucide--alert-triangle] w-3.5 h-3.5"></span>
+                <span
+                  aria-hidden="true"
+                  class="icon-[lucide--alert-triangle] w-3.5 h-3.5"
+                ></span>
                 Missing from lore
               </span>
             {/if}
@@ -275,7 +281,7 @@
               disabled={isGeneratingPersonality ||
                 isGeneratingPersonalityProfile}
               aria-busy={isGeneratingPersonality}
-              class="text-[10px] font-bold text-theme-primary hover:text-theme-secondary flex items-center gap-1 transition disabled:opacity-50 cursor-pointer"
+              class="text-micro font-bold text-theme-primary hover:text-theme-secondary flex items-center gap-1 transition disabled:opacity-50 cursor-pointer"
               title="Write a few quick voice notes into the character's lore"
             >
               <span
@@ -291,7 +297,7 @@
               disabled={isGeneratingPersonality ||
                 isGeneratingPersonalityProfile}
               aria-busy={isGeneratingPersonalityProfile}
-              class="text-[10px] font-bold text-theme-primary hover:text-theme-secondary flex items-center gap-1 transition disabled:opacity-50 cursor-pointer"
+              class="text-micro font-bold text-theme-primary hover:text-theme-secondary flex items-center gap-1 transition disabled:opacity-50 cursor-pointer"
               title="Generate a full structured personality profile (drives, contradiction, pressure response, roleplaying cues) using the Personality Generator"
             >
               <span
@@ -306,9 +312,12 @@
           </div>
           {#if personalityError}
             <p
-              class="text-[10px] text-theme-danger flex items-center gap-1 font-semibold"
+              class="text-micro text-theme-danger flex items-center gap-1 font-semibold"
             >
-              <span class="icon-[lucide--circle-alert] w-3.5 h-3.5"></span>
+              <span
+                aria-hidden="true"
+                class="icon-[lucide--circle-alert] w-3.5 h-3.5"
+              ></span>
               {personalityError}
             </p>
           {/if}
@@ -382,8 +391,7 @@
             ></span>
             <span>
               <strong>Missing Voice Guidance:</strong> Add a
-              <code
-                class="rounded bg-black/30 px-1 py-0.5 font-mono text-[11px]"
+              <code class="rounded bg-black/30 px-1 py-0.5 font-mono text-meta"
                 >## Personality & Voice</code
               > section in character lore or edit this character to generate one.
             </span>

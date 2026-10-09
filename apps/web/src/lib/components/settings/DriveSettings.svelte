@@ -354,7 +354,7 @@
             placeholder="Enter Google Drive Folder ID"
             class="w-full px-3 py-2 bg-theme-bg border border-theme-border rounded-md text-sm text-theme-text focus:outline-none focus:ring-2 focus:ring-theme-primary/50 font-mono"
           />
-          <p class="text-[10px] text-theme-muted italic leading-relaxed">
+          <p class="text-micro text-theme-muted italic leading-relaxed">
             Use this to connect to a folder shared by a co-host or from another
             device.
           </p>

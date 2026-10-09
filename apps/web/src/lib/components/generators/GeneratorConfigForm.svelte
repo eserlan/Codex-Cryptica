@@ -73,6 +73,9 @@
 
 <script lang="ts">
   import {
+    adventureArchetypesForTheme,
+    adventureConfig,
+    adventureTonesForTheme,
     dungeonConfig,
     factionTypesForTheme,
     forDungeonGenre,
@@ -256,6 +259,10 @@
   const suggestedLanguage = $derived(
     languages.find((language) => language.id === suggestedLanguageId),
   );
+  const availableAdventureArchetypes = $derived(
+    adventureArchetypesForTheme(themeId),
+  );
+  const availableAdventureTones = $derived(adventureTonesForTheme(themeId));
   const dungeonGenre = $derived(themeIdToLabel[themeId] ?? "Classic Fantasy");
   const availableDungeonPurposes = $derived(
     forDungeonGenre(dungeonConfig.purposesByGenre, dungeonGenre),
@@ -292,54 +299,30 @@
     }),
   );
 
+  // Options whose choices follow the vault's theme (or another option),
+  // keyed "generator:option".
+  const themedChoices = $derived<Record<string, readonly string[]>>({
+    "world:campaignPressure":
+      stringValue("genre") === "Lancer"
+        ? worldConfig.lancerConflicts
+        : worldConfig.campaignPressures,
+    "npc:race": npcRacesForTheme(themeId),
+    "npc:role": npcRolesForTheme(themeId),
+    "faction:type": factionTypesForTheme(themeId),
+    "settlement:type": settlementTypesForTheme(themeId),
+    "adventure:archetype": availableAdventureArchetypes,
+    "adventure:tone": availableAdventureTones,
+    "villain:threatScale": availableVillainThreatScales,
+    "dungeon:purpose": availableDungeonPurposes,
+    "dungeon:currentState": availableDungeonStates,
+  });
+
   function choicesForOption(option: {
     id: string;
     choices?: Array<{ value: string; label: string }>;
   }): Array<{ value: string; label: string }> {
-    if (selectedId === "world" && option.id === "campaignPressure") {
-      const values =
-        stringValue("genre") === "Lancer"
-          ? worldConfig.lancerConflicts
-          : worldConfig.campaignPressures;
-      return values.map((value) => ({ value, label: value }));
-    }
-    if (selectedId === "npc" && option.id === "race") {
-      return npcRacesForTheme(themeId).map((value) => ({
-        value,
-        label: value,
-      }));
-    }
-    if (selectedId === "npc" && option.id === "role") {
-      return npcRolesForTheme(themeId).map((value) => ({
-        value,
-        label: value,
-      }));
-    }
-    if (selectedId === "faction" && option.id === "type") {
-      return factionTypesForTheme(themeId).map((value) => ({
-        value,
-        label: value,
-      }));
-    }
-    if (selectedId === "settlement" && option.id === "type") {
-      return settlementTypesForTheme(themeId).map((value) => ({
-        value,
-        label: value,
-      }));
-    }
-    if (selectedId === "villain" && option.id === "threatScale") {
-      return availableVillainThreatScales.map((value) => ({
-        value,
-        label: value,
-      }));
-    }
-    if (selectedId !== "dungeon") return option.choices ?? [];
-    if (option.id === "purpose") {
-      return availableDungeonPurposes.map((value) => ({ value, label: value }));
-    }
-    if (option.id === "currentState") {
-      return availableDungeonStates.map((value) => ({ value, label: value }));
-    }
+    const themed = themedChoices[`${selectedId}:${option.id}`];
+    if (themed) return themed.map((value) => ({ value, label: value }));
     return option.choices ?? [];
   }
 
@@ -382,6 +365,32 @@
       !availableDungeonStates.includes(currentState)
     ) {
       nextValues.currentState = availableDungeonStates[0] ?? "";
+      changed = true;
+    }
+    if (changed) optionValues = nextValues;
+  });
+  // The default type (or one picked under another theme) may not exist in this
+  // theme's list; fall back to its first entry rather than a stale value.
+  $effect(() => {
+    if (selectedId !== "adventure") return;
+    const nextValues = { ...optionValues };
+    let changed = false;
+    const archetype = nextValues.archetype;
+    if (
+      typeof archetype === "string" &&
+      adventureConfig.archetypes.includes(archetype) &&
+      !availableAdventureArchetypes.includes(archetype)
+    ) {
+      nextValues.archetype = availableAdventureArchetypes[0] ?? "";
+      changed = true;
+    }
+    const tone = nextValues.tone;
+    if (
+      typeof tone === "string" &&
+      adventureConfig.tones.includes(tone) &&
+      !availableAdventureTones.includes(tone)
+    ) {
+      nextValues.tone = "";
       changed = true;
     }
     if (changed) optionValues = nextValues;
@@ -505,7 +514,7 @@
   {#if favoriteGenerators.length > 0}
     <fieldset class="flex flex-col gap-2">
       <legend
-        class="mb-1 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-chrome-muted"
+        class="mb-1 flex items-center gap-1.5 text-micro font-bold uppercase tracking-wider text-chrome-muted"
       >
         <span
           aria-hidden="true"
@@ -548,7 +557,7 @@
                   {gen.label}
                 </span>
                 <span
-                  class="text-[10px] uppercase tracking-wider text-chrome-muted"
+                  class="text-micro uppercase tracking-wider text-chrome-muted"
                 >
                   Creates {entityTypeLabel}
                 </span>
@@ -599,7 +608,7 @@
   <div class="flex flex-col gap-3">
     <div class="flex items-center justify-between">
       <span
-        class="text-[10px] font-bold uppercase tracking-wider text-chrome-muted"
+        class="text-micro font-bold uppercase tracking-wider text-chrome-muted"
       >
         All Generators
       </span>
@@ -639,7 +648,7 @@
               </span>
             </span>
             <span
-              class="rounded-full bg-chrome-bg/60 px-2 py-0.5 text-[10px] font-medium text-chrome-muted"
+              class="rounded-full bg-chrome-bg/60 px-2 py-0.5 text-micro font-medium text-chrome-muted"
             >
               {group.generators.length}
             </span>
@@ -684,7 +693,7 @@
                           {gen.label}
                         </span>
                         <span
-                          class="text-[10px] uppercase tracking-wider text-chrome-muted"
+                          class="text-micro uppercase tracking-wider text-chrome-muted"
                         >
                           Creates {entityTypeLabel}
                         </span>
@@ -737,7 +746,7 @@
   {#if visibleOptions.length > 0}
     <fieldset class="flex flex-col gap-3">
       <legend
-        class="mb-1 text-[10px] font-bold uppercase tracking-wider text-chrome-muted"
+        class="mb-1 text-micro font-bold uppercase tracking-wider text-chrome-muted"
       >
         Generator options
       </legend>
@@ -754,7 +763,7 @@
             choices={choicesForOption(option)}
             {disabled}
             className="flex flex-col gap-1.5"
-            labelClass="text-[10px] font-bold uppercase tracking-wider text-chrome-muted"
+            labelClass="text-micro font-bold uppercase tracking-wider text-chrome-muted"
             inputClass="w-full rounded border border-chrome-border bg-chrome-bg/50 px-3 py-2 text-sm leading-relaxed text-chrome-text outline-none transition focus:border-chrome-accent focus:ring-1 focus:ring-chrome-accent disabled:opacity-50"
             customPlaceholder={`Enter a custom ${option.label.toLowerCase()}`}
           />
@@ -778,7 +787,7 @@
           <div class="flex flex-col gap-1">
             <label
               for={inputId}
-              class="text-[10px] font-bold uppercase tracking-wider text-chrome-muted"
+              class="text-micro font-bold uppercase tracking-wider text-chrome-muted"
             >
               {option.label}
             </label>
@@ -799,7 +808,7 @@
           <div class="flex flex-col gap-1">
             <label
               for={inputId}
-              class="text-[10px] font-bold uppercase tracking-wider text-chrome-muted"
+              class="text-micro font-bold uppercase tracking-wider text-chrome-muted"
             >
               {option.label}
             </label>
@@ -823,7 +832,7 @@
           <div class="flex flex-col gap-1">
             <label
               for={inputId}
-              class="text-[10px] font-bold uppercase tracking-wider text-chrome-muted"
+              class="text-micro font-bold uppercase tracking-wider text-chrome-muted"
             >
               {option.label}
             </label>
@@ -849,7 +858,7 @@
     <div class="flex flex-col gap-1.5">
       <label
         for="generator-primary-language"
-        class="text-[10px] font-bold uppercase tracking-wider text-chrome-muted"
+        class="text-micro font-bold uppercase tracking-wider text-chrome-muted"
       >
         Naming language
       </label>
@@ -888,7 +897,7 @@
   <div class="flex flex-col gap-1">
     <label
       for="gen-instructions"
-      class="text-[10px] font-bold uppercase tracking-wider text-chrome-muted"
+      class="text-micro font-bold uppercase tracking-wider text-chrome-muted"
     >
       Instructions <span class="normal-case font-normal">(optional)</span>
     </label>

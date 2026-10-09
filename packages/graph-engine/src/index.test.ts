@@ -2,9 +2,24 @@ import { describe, it, expect } from "vitest";
 import type { Core } from "cytoscape";
 import {
   initGraph,
+  preloadGraphCore,
   applyLargeGraphRenderHints,
   isLargeGraphSize,
+  LARGE_GRAPH_EDGE_THRESHOLD,
+  LARGE_GRAPH_NODE_THRESHOLD,
 } from "./index";
+
+describe("preloadGraphCore", () => {
+  it("loads the library once and hands the same instance to initGraph", async () => {
+    const first = preloadGraphCore();
+    expect(preloadGraphCore()).toBe(first);
+    const cytoscape = await first;
+    expect(typeof cytoscape).toBe("function");
+    const cy = await initGraph({ headless: true, elements: [] });
+    expect(cy.nodes().length).toBe(0);
+    cy.destroy();
+  });
+});
 
 describe("initGraph adaptive zoom", () => {
   it("should calculate higher minZoom for small graphs", async () => {
@@ -62,26 +77,34 @@ describe("initGraph adaptive zoom", () => {
   });
 
   it("should enable large-graph viewport render shortcuts", async () => {
-    const manyEdges = Array.from({ length: 1801 }, (_, i) => ({
-      group: "edges",
-      data: {
-        id: `edge-${i}`,
-        source: "source",
-        target: "target",
-      },
-    }));
+    // Nodes, not edges: a few thousand real parallel edges make Cytoscape take
+    // tens of seconds to build, and the edge limit is covered by
+    // `isLargeGraphSize` on its own.
+    const manyNodes = Array.from(
+      { length: LARGE_GRAPH_NODE_THRESHOLD + 1 },
+      (_, i) => ({ group: "nodes", data: { id: `node-${i}` } }),
+    );
 
     const cy = await initGraph({
       headless: true,
-      elements: [
-        { group: "nodes", data: { id: "source" } },
-        { group: "nodes", data: { id: "target" } },
-        ...manyEdges,
-      ] as any,
+      elements: manyNodes as any,
     });
 
     expect((cy as any)._private?.options?.hideEdgesOnViewport).toBe(true);
     expect((cy as any)._private?.options?.motionBlur).toBe(true);
+  });
+
+  it("leaves a graph under the limits alone (negative)", async () => {
+    const cy = await initGraph({
+      headless: true,
+      elements: Array.from({ length: 1625 }, (_, i) => ({
+        group: "nodes",
+        data: { id: `node-${i}` },
+      })) as any,
+    });
+
+    expect((cy as any)._private?.options?.hideEdgesOnViewport).toBeFalsy();
+    expect((cy as any)._private?.options?.motionBlur).toBeFalsy();
   });
 });
 
@@ -137,13 +160,17 @@ describe("initGraph overrides", () => {
 
 describe("isLargeGraphSize", () => {
   it("flags graphs above the node threshold", () => {
-    expect(isLargeGraphSize(701, 0)).toBe(true);
-    expect(isLargeGraphSize(700, 0)).toBe(false);
+    expect(isLargeGraphSize(LARGE_GRAPH_NODE_THRESHOLD + 1, 0)).toBe(true);
+    expect(isLargeGraphSize(LARGE_GRAPH_NODE_THRESHOLD, 0)).toBe(false);
+  });
+
+  it("does not flag a vault of about 1,600 entities and a few thousand connections (negative)", () => {
+    expect(isLargeGraphSize(1625, 4000)).toBe(false);
   });
 
   it("flags graphs above the edge threshold", () => {
-    expect(isLargeGraphSize(0, 1801)).toBe(true);
-    expect(isLargeGraphSize(0, 1800)).toBe(false);
+    expect(isLargeGraphSize(0, LARGE_GRAPH_EDGE_THRESHOLD + 1)).toBe(true);
+    expect(isLargeGraphSize(0, LARGE_GRAPH_EDGE_THRESHOLD)).toBe(false);
   });
 });
 

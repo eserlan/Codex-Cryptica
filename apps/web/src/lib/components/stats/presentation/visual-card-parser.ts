@@ -1,4 +1,5 @@
 import { parseTemplate, resolveFieldByKeyOrId } from "@codex/stat-sheet-engine";
+import { systemIdGenerator } from "$lib/utils/runtime-deps";
 import { PRESENTATION_TEMPLATE_FORMAT_VERSION } from "schema";
 import type { StatSheetField } from "schema";
 
@@ -38,6 +39,7 @@ export function getUnusedFields(
 export function parseCardsFromSource(
   src: string,
   schemaFields: StatSheetField[] = [],
+  idGenerator: () => string = systemIdGenerator.uuid,
 ): VisualCard[] {
   const cards: VisualCard[] = [];
   const res = parseTemplate(src, PRESENTATION_TEMPLATE_FORMAT_VERSION);
@@ -101,7 +103,7 @@ export function parseCardsFromSource(
         if (row.length > 0) rows.push(row);
       }
       cards.push({
-        id: Math.random().toString(36).slice(2, 9),
+        id: idGenerator(),
         title: activeTitle,
         columns: headers.length || 2,
         mode: "table",
@@ -118,7 +120,7 @@ export function parseCardsFromSource(
         }
       }
       cards.push({
-        id: Math.random().toString(36).slice(2, 9),
+        id: idGenerator(),
         title: activeTitle,
         columns: 2,
         mode: "grid",
@@ -137,7 +139,7 @@ export function parseCardsFromSource(
             }
           }
           cards.push({
-            id: Math.random().toString(36).slice(2, 9),
+            id: idGenerator(),
             title: activeTitle,
             columns: cols,
             mode: "grid",
@@ -148,7 +150,7 @@ export function parseCardsFromSource(
           const fIds = extractFieldIdsFromNode(child);
           if (fIds.length > 0) {
             cards.push({
-              id: Math.random().toString(36).slice(2, 9),
+              id: idGenerator(),
               title: activeTitle,
               columns: cols,
               mode: "grid",
@@ -162,7 +164,7 @@ export function parseCardsFromSource(
       const fIds = extractFieldIdsFromNode(node);
       if (fIds.length > 0) {
         cards.push({
-          id: Math.random().toString(36).slice(2, 9),
+          id: idGenerator(),
           title: activeTitle,
           columns: 2,
           mode: "grid",
@@ -203,7 +205,7 @@ export function parseCardsFromSource(
           cards.push(currentCard);
         }
         currentCard = {
-          id: Math.random().toString(36).slice(2, 9),
+          id: idGenerator(),
           title: f.label,
           columns: 2,
           mode: "grid",

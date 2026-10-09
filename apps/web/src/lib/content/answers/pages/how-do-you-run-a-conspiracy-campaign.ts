@@ -2,7 +2,7 @@ import type { AnswerConfigInput } from "../schema";
 
 export const howDoYouRunAConspiracyCampaign: AnswerConfigInput = {
   slug: "how-do-you-run-a-conspiracy-campaign",
-  category: "session-prep",
+  category: "adventure-design",
   labels: ["modern"],
   publishedAt: "2026-08-30",
   question: "How do you run a conspiracy campaign?",
@@ -177,6 +177,11 @@ export const howDoYouRunAConspiracyCampaign: AnswerConfigInput = {
     "how-do-i-run-political-intrigue-and-faction-play",
     "how-do-i-run-an-investigator-without-sidelining-the-party",
     "how-do-i-run-a-journalist-or-media-character-in-an-rpg",
+    "how-do-i-run-character-roles-in-an-investigative-horror-rpg",
+    "how-do-i-make-interviewing-npcs-interesting-in-an-investigation",
+    "how-do-i-handle-players-asking-an-npc-to-tell-us-everything-you-know",
+    "how-do-i-handle-divination-magic-without-letting-one-character-solve-every-mystery",
+    "how-do-i-make-a-campaign-threat-feel-urgent-without-railroading",
   ],
   discovery: {
     id: "answer-conspiracy-campaign",

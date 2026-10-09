@@ -10,6 +10,8 @@ on:
       - master
     paths:
       - 'apps/workers/oracle-proxy/**'
+      - 'packages/help-engine/**'
+      - 'apps/web/src/lib/content/help/**'
       - '.github/workflows/deploy-worker.yml'
   
   # Allow manual trigger from GitHub Actions tab
@@ -50,6 +52,17 @@ jobs:
         with:
           node-version: 24
 
+      # The contextual help assistant (#3427) ships its product knowledge as a
+      # build-time JSON bundle generated from the registry and the in-app help
+      # articles. Build it before wrangler bundles the Worker.
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+
+      - name: Build help knowledge bundle
+        run: |
+          bun install --frozen-lockfile
+          bun run --cwd packages/help-engine bundle
+
       - name: Install Wrangler CLI
         run: npm install -g wrangler@latest
 
@@ -60,6 +73,9 @@ jobs:
         id: deploy
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          # Without this Wrangler looks the account up through the API, which fails
+          # with a token that cannot list memberships.
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           # Optional override only. One Worker serves every environment, so the
           # CORS allowlist lives in DEFAULT_ALLOWED_ORIGINS (src/index.ts) and
           # every deploy is identical. Setting this per GitHub Environment is

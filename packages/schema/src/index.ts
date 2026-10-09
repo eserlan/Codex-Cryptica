@@ -1,5 +1,6 @@
 export * from "./entity";
 export * from "./image-focus";
+export * from "./placeholder-images";
 export * from "./connection";
 export * from "./graph";
 export * from "./search";
@@ -19,6 +20,8 @@ export * from "./art-direction-stature";
 export * from "./art-direction-subject";
 export * from "./migrations";
 export * from "./publishing";
+export * from "./entity-template-listing";
+export * from "./entity-template-public";
 export * from "./generator-share";
 export * from "./language-profile";
 

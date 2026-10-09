@@ -307,6 +307,10 @@ export const howDoIPrepareAnRpgSessionStepByStep: AnswerConfigInput = {
     "how-do-you-run-a-mystery-without-railroading",
     "how-do-you-improvise-npcs-on-the-spot",
     "how-do-i-pace-an-rpg-one-shot",
+    "how-much-of-the-plot-should-a-dm-prepare",
+    "how-long-should-a-ttrpg-session-be",
+    "how-do-i-prepare-a-dnd-session",
+    "how-do-i-start-a-dnd-campaign",
   ],
   discovery: {
     id: "answer-prepare-session-step-by-step",

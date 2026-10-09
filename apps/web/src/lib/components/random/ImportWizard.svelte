@@ -355,7 +355,14 @@
   function addImages(incoming: File[]) {
     const pictures = incoming.filter((file) => isImageFile(file));
     const known = new Set(images.map((file) => file.name));
-    images = [...images, ...pictures.filter((file) => !known.has(file.name))];
+    // ⚡ Bolt Optimization: Avoid intermediate array spread and filter
+    const nextImages = [...images];
+    for (const file of pictures) {
+      if (!known.has(file.name)) {
+        nextImages.push(file);
+      }
+    }
+    images = nextImages;
   }
 
   function assignImage(rowIndex: number, value: number) {
@@ -542,7 +549,7 @@
 >
   <div class="flex items-center justify-between">
     <h2
-      class="font-header text-[11px] font-bold uppercase tracking-[0.2em] text-theme-text"
+      class="font-header text-meta font-bold uppercase tracking-[0.2em] text-theme-text"
     >
       Import a {noun}
     </h2>
@@ -558,7 +565,7 @@
 
   <div class="flex flex-col gap-1.5">
     <span
-      class="font-header text-[9px] font-bold uppercase tracking-[0.2em] text-theme-muted"
+      class="font-header text-nano font-bold uppercase tracking-[0.2em] text-theme-muted"
       >{kind === "deck" ? "Open a file or a folder" : "Open a file"}</span
     >
     <!-- One drop target for the whole import: the text of the deck, its art, or
@@ -592,7 +599,7 @@
                 {selectedFileName}
               </span>
             {/if}
-            <span class="font-body text-[10px] text-theme-muted">
+            <span class="font-body text-micro text-theme-muted">
               {#if images.length > 0}
                 {images.length}
                 {images.length === 1 ? "picture" : "pictures"} ready{selectedFileName
@@ -605,7 +612,7 @@
           </div>
           <div class="mt-1 flex flex-wrap items-center justify-center gap-2">
             <label
-              class="inline-flex cursor-pointer items-center gap-1.5 rounded-lg border border-theme-border bg-theme-surface px-3 py-1.5 font-header text-[10px] font-bold uppercase tracking-wider text-theme-text transition-colors hover:border-theme-primary hover:text-theme-primary shadow-sm"
+              class="inline-flex cursor-pointer items-center gap-1.5 rounded-lg border border-theme-border bg-theme-surface px-3 py-1.5 font-header text-micro font-bold uppercase tracking-wider text-theme-text transition-colors hover:border-theme-primary hover:text-theme-primary shadow-sm"
             >
               <span
                 aria-hidden="true"
@@ -625,7 +632,7 @@
             <button
               type="button"
               onclick={clearSelectedFile}
-              class="inline-flex items-center gap-1.5 rounded-lg border border-theme-border/60 bg-theme-surface/60 px-3 py-1.5 font-header text-[10px] font-bold uppercase tracking-wider text-theme-muted transition-colors hover:border-red-500 hover:text-red-500 shadow-sm"
+              class="inline-flex items-center gap-1.5 rounded-lg border border-theme-border/60 bg-theme-surface/60 px-3 py-1.5 font-header text-micro font-bold uppercase tracking-wider text-theme-muted transition-colors hover:border-red-500 hover:text-red-500 shadow-sm"
               data-testid="import-file-clear"
             >
               <span
@@ -651,7 +658,7 @@
               ? "Drag a file, or a folder of card art, here"
               : "Drag and drop your file here"}
           </p>
-          <p class="font-body text-[10px] text-theme-muted/80">
+          <p class="font-body text-micro text-theme-muted/80">
             {#if kind === "deck"}
               A file exported from Codex Cryptica comes back whole, other text
               lands in the paste box, and pictures are matched to cards by name.
@@ -663,7 +670,7 @@
           </p>
         </div>
         <label
-          class="mt-1 inline-flex cursor-pointer items-center gap-2 rounded-lg border border-theme-primary/40 bg-theme-primary/15 px-4 py-2 font-header text-[10px] font-bold uppercase tracking-wider text-theme-primary transition-all hover:bg-theme-primary hover:text-theme-bg active:scale-95 shadow-sm"
+          class="mt-1 inline-flex cursor-pointer items-center gap-2 rounded-lg border border-theme-primary/40 bg-theme-primary/15 px-4 py-2 font-header text-micro font-bold uppercase tracking-wider text-theme-primary transition-all hover:bg-theme-primary hover:text-theme-bg active:scale-95 shadow-sm"
         >
           <span aria-hidden="true" class="icon-[lucide--folder-open] h-4 w-4"
           ></span>
@@ -723,7 +730,7 @@
         <!-- Renamed rather than asked about: the whole source arrived at once,
              so merging into an existing one is not a thing the user can mean. -->
         <p
-          class="font-body text-[11px] text-amber-600 dark:text-amber-400"
+          class="font-body text-meta text-amber-600 dark:text-amber-400"
           data-testid="import-codex-renamed"
         >
           You already have a {noun} called "{codex.source.name}". This one comes
@@ -733,7 +740,7 @@
 
       {#if codex.imagePaths.length > 0}
         <p
-          class="font-body text-[11px] text-amber-600 dark:text-amber-400"
+          class="font-body text-meta text-amber-600 dark:text-amber-400"
           data-testid="import-codex-images"
         >
           {codex.imagePaths.length}
@@ -750,14 +757,14 @@
       <button
         type="button"
         onclick={onCancel}
-        class="rounded border border-theme-border px-3 py-1.5 font-header text-[10px] uppercase tracking-widest text-theme-muted"
+        class="rounded border border-theme-border px-3 py-1.5 font-header text-micro uppercase tracking-widest text-theme-muted"
       >
         Cancel
       </button>
       <button
         type="button"
         onclick={confirmCodex}
-        class="rounded border border-theme-primary/30 bg-theme-primary/10 px-3 py-1.5 font-header text-[10px] font-bold uppercase tracking-widest text-theme-primary transition-all hover:bg-theme-primary hover:text-theme-bg"
+        class="rounded border border-theme-primary/30 bg-theme-primary/10 px-3 py-1.5 font-header text-micro font-bold uppercase tracking-widest text-theme-primary transition-all hover:bg-theme-primary hover:text-theme-bg"
         data-testid="import-codex-confirm"
       >
         Import {noun}
@@ -766,7 +773,7 @@
   {:else}
     <label class="flex flex-col gap-1">
       <span
-        class="font-header text-[9px] font-bold uppercase tracking-[0.2em] text-theme-muted"
+        class="font-header text-nano font-bold uppercase tracking-[0.2em] text-theme-muted"
         >Name</span
       >
       <input
@@ -779,11 +786,11 @@
 
     <label class="flex flex-col gap-1">
       <span
-        class="font-header text-[9px] font-bold uppercase tracking-[0.2em] text-theme-muted"
+        class="font-header text-nano font-bold uppercase tracking-[0.2em] text-theme-muted"
         >{kind === "deck" ? "Paste your cards" : "Paste your table"}</span
       >
       {#if kind === "deck"}
-        <span class="font-body text-[10px] text-theme-muted/80">
+        <span class="font-body text-micro text-theme-muted/80">
           One card per line: its name, then a tab, then what it means. A card
           with no meaning yet is fine.
         </span>
@@ -801,14 +808,14 @@
       <div class="flex flex-wrap items-end gap-4">
         <div class="flex flex-col gap-1">
           <span
-            class="font-header text-[9px] font-bold uppercase tracking-[0.2em] text-theme-muted"
+            class="font-header text-nano font-bold uppercase tracking-[0.2em] text-theme-muted"
             >Shape</span
           >
           <div class="flex overflow-hidden rounded border border-theme-border">
             {#each [{ id: "lines" as const, label: "One per line" }, { id: "delimited" as const, label: "Columns" }, { id: "markdown-table" as const, label: "Markdown table" }] as option}
               <button
                 type="button"
-                class="px-2.5 py-1.5 font-header text-[10px] uppercase tracking-widest transition-colors {preview.format ===
+                class="px-2.5 py-1.5 font-header text-micro uppercase tracking-widest transition-colors {preview.format ===
                 option.id
                   ? 'bg-theme-primary text-theme-bg'
                   : 'bg-theme-bg text-theme-muted hover:text-theme-text'}"
@@ -826,7 +833,7 @@
           {#each [{ role: "text" as const, label: "Result text" }, { role: "range" as const, label: "Die numbers" }, { role: "weight" as const, label: "Weight" }] as column}
             <label class="flex flex-col gap-1">
               <span
-                class="font-header text-[9px] font-bold uppercase tracking-[0.2em] text-theme-muted"
+                class="font-header text-nano font-bold uppercase tracking-[0.2em] text-theme-muted"
                 >{column.label}</span
               >
               <select
@@ -857,7 +864,7 @@
     {#if preview}
       <div class="flex items-center justify-between">
         <span
-          class="font-header text-[9px] font-bold uppercase tracking-[0.2em] text-theme-muted"
+          class="font-header text-nano font-bold uppercase tracking-[0.2em] text-theme-muted"
           data-testid="import-summary"
         >
           {entries.length} ready{problemCount > 0
@@ -879,25 +886,25 @@
             data-testid="import-row"
           >
             <span
-              class="w-8 shrink-0 text-right font-mono text-[10px] text-theme-muted/60"
+              class="w-8 shrink-0 text-right font-mono text-micro text-theme-muted/60"
               >{index + 1}</span
             >
 
             {#if row.problem && !resolved(index)}
               <div class="flex min-w-0 flex-1 flex-col gap-1">
                 <span
-                  class="truncate font-mono text-[11px] text-theme-text/80"
+                  class="truncate font-mono text-meta text-theme-text/80"
                   title={row.raw}>{row.raw}</span
                 >
                 <span
-                  class="text-[10px] text-amber-600 dark:text-amber-400"
+                  class="text-micro text-amber-600 dark:text-amber-400"
                   data-testid="import-problem">{row.problem}</span
                 >
               </div>
               <div class="flex shrink-0 gap-1">
                 <button
                   type="button"
-                  class="rounded border border-theme-border px-2 py-0.5 font-header text-[9px] uppercase tracking-widest text-theme-text hover:border-theme-primary hover:text-theme-primary"
+                  class="rounded border border-theme-border px-2 py-0.5 font-header text-nano uppercase tracking-widest text-theme-text hover:border-theme-primary hover:text-theme-primary"
                   onclick={() => choose(index, { text: row.raw.trim() })}
                   data-testid="import-accept"
                 >
@@ -905,7 +912,7 @@
                 </button>
                 <button
                   type="button"
-                  class="rounded border border-theme-border px-2 py-0.5 font-header text-[9px] uppercase tracking-widest text-theme-muted hover:border-red-500 hover:text-red-500"
+                  class="rounded border border-theme-border px-2 py-0.5 font-header text-nano uppercase tracking-widest text-theme-muted hover:border-red-500 hover:text-red-500"
                   onclick={() => choose(index, { skipped: true })}
                   data-testid="import-skip"
                 >
@@ -955,11 +962,11 @@
                 data-testid="import-row-text"
               />
               {#if row.entry?.range}
-                <span class="shrink-0 font-mono text-[10px] text-theme-muted"
+                <span class="shrink-0 font-mono text-micro text-theme-muted"
                   >{row.entry.range.min}–{row.entry.range.max}</span
                 >
               {:else if row.entry?.weight !== undefined && row.entry.weight !== 1}
-                <span class="shrink-0 font-mono text-[10px] text-theme-muted"
+                <span class="shrink-0 font-mono text-micro text-theme-muted"
                   >×{row.entry.weight}</span
                 >
               {/if}
@@ -995,7 +1002,7 @@
             {#each kind === "deck" ? [{ id: "merge" as const, label: "Add these cards to it" }, { id: "replace" as const, label: "Replace its cards" }, { id: "new" as const, label: "Save as a new deck" }] : [{ id: "merge" as const, label: "Add to it" }, { id: "replace" as const, label: "Replace its entries" }, { id: "new" as const, label: "Save as a new table" }] as option}
               <button
                 type="button"
-                class="rounded border px-2.5 py-1 font-header text-[10px] uppercase tracking-widest transition-colors {collision ===
+                class="rounded border px-2.5 py-1 font-header text-micro uppercase tracking-widest transition-colors {collision ===
                 option.id
                   ? 'border-theme-primary bg-theme-primary text-theme-bg'
                   : 'border-theme-border text-theme-text hover:border-theme-primary'}"
@@ -1016,10 +1023,10 @@
            the one dropzone at the top. -->
       <div class="flex flex-col gap-1.5" data-testid="import-card-art">
         <span
-          class="font-header text-[9px] font-bold uppercase tracking-[0.2em] text-theme-muted"
+          class="font-header text-nano font-bold uppercase tracking-[0.2em] text-theme-muted"
           >Card pictures</span
         >
-        <p class="font-body text-[10px] text-theme-muted/80">
+        <p class="font-body text-micro text-theme-muted/80">
           Matched by file name, then by anything close, then by number. Pictures
           are copied into your vault, so the deck's art travels with it.
         </p>
@@ -1027,7 +1034,7 @@
         {#if images.length > 0}
           <div class="flex flex-wrap items-center justify-between gap-2 pt-0.5">
             <span
-              class="font-mono text-[10px] text-theme-muted"
+              class="font-mono text-micro text-theme-muted"
               data-testid="import-image-match"
             >
               {matchedImages} of {images.length} matched a card{cardsWithoutImage >
@@ -1038,7 +1045,7 @@
             <button
               type="button"
               onclick={clearImages}
-              class="rounded border border-theme-border/60 px-2 py-0.5 font-header text-[9px] uppercase tracking-widest text-theme-muted transition-colors hover:border-red-500 hover:text-red-500"
+              class="rounded border border-theme-border/60 px-2 py-0.5 font-header text-nano uppercase tracking-widest text-theme-muted transition-colors hover:border-red-500 hover:text-red-500"
               data-testid="import-images-clear"
             >
               Remove pictures
@@ -1062,7 +1069,7 @@
                   >
                   {#if assigned && assigned.method !== "name" && assigned.method !== "chosen"}
                     <span
-                      class="shrink-0 rounded bg-amber-500/15 px-1.5 py-0.5 font-header text-[9px] uppercase tracking-widest text-amber-600 dark:text-amber-400"
+                      class="shrink-0 rounded bg-amber-500/15 px-1.5 py-0.5 font-header text-nano uppercase tracking-widest text-amber-600 dark:text-amber-400"
                       data-testid="import-image-guess"
                       >{assigned.method === "order"
                         ? "by number"
@@ -1070,7 +1077,7 @@
                     >
                   {/if}
                   <select
-                    class="max-w-[45%] shrink-0 rounded border border-theme-border bg-theme-bg px-2 py-1 text-[11px] text-theme-text focus:border-theme-primary focus:outline-none"
+                    class="max-w-[45%] shrink-0 rounded border border-theme-border bg-theme-bg px-2 py-1 text-meta text-theme-text focus:border-theme-primary focus:outline-none"
                     value={assigned ? String(assigned.fileIndex) : "-1"}
                     onchange={(e) =>
                       assignImage(
@@ -1095,9 +1102,7 @@
               class="flex flex-col gap-2 rounded border border-amber-500/40 bg-amber-500/10 p-3"
               data-testid="import-images-unmatched"
             >
-              <p
-                class="font-body text-[11px] text-amber-600 dark:text-amber-400"
-              >
+              <p class="font-body text-meta text-amber-600 dark:text-amber-400">
                 {unmatchedImages.length}
                 {unmatchedImages.length === 1 ? "picture" : "pictures"} found no card:
                 {unmatchedImages
@@ -1111,7 +1116,7 @@
                 <button
                   type="button"
                   onclick={createCardsFromImages}
-                  class="rounded border border-theme-primary/30 bg-theme-primary/10 px-2.5 py-1 font-header text-[10px] font-bold uppercase tracking-widest text-theme-primary transition-all hover:bg-theme-primary hover:text-theme-bg"
+                  class="rounded border border-theme-primary/30 bg-theme-primary/10 px-2.5 py-1 font-header text-micro font-bold uppercase tracking-widest text-theme-primary transition-all hover:bg-theme-primary hover:text-theme-bg"
                   data-testid="import-images-make-cards"
                 >
                   Make {unmatchedImages.length}
@@ -1130,7 +1135,7 @@
       <button
         type="button"
         onclick={onCancel}
-        class="rounded border border-theme-border px-3 py-1.5 font-header text-[10px] uppercase tracking-widest text-theme-muted"
+        class="rounded border border-theme-border px-3 py-1.5 font-header text-micro uppercase tracking-widest text-theme-muted"
       >
         Cancel
       </button>
@@ -1140,7 +1145,7 @@
         disabled={entries.length === 0 ||
           name.trim().length === 0 ||
           (!!existing && !collision)}
-        class="rounded border border-theme-primary/30 bg-theme-primary/10 px-3 py-1.5 font-header text-[10px] font-bold uppercase tracking-widest text-theme-primary transition-all hover:bg-theme-primary hover:text-theme-bg disabled:cursor-not-allowed disabled:opacity-40"
+        class="rounded border border-theme-primary/30 bg-theme-primary/10 px-3 py-1.5 font-header text-micro font-bold uppercase tracking-widest text-theme-primary transition-all hover:bg-theme-primary hover:text-theme-bg disabled:cursor-not-allowed disabled:opacity-40"
         data-testid="import-confirm"
       >
         Import {entries.length}

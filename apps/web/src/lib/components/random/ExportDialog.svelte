@@ -73,7 +73,7 @@
     <button
       type="button"
       onclick={onClose}
-      class="rounded border border-theme-border px-2.5 py-1 font-header text-[10px] uppercase tracking-widest text-theme-muted transition-colors hover:border-theme-primary hover:text-theme-primary"
+      class="rounded border border-theme-border px-2.5 py-1 font-header text-micro uppercase tracking-widest text-theme-muted transition-colors hover:border-theme-primary hover:text-theme-primary"
       data-testid="export-cancel"
     >
       Cancel
@@ -100,11 +100,11 @@
         <span class="flex min-w-0 flex-col gap-0.5">
           <span class="font-header text-xs font-bold text-theme-text">
             {option.label}
-            <span class="font-mono text-[10px] text-theme-muted/70"
+            <span class="font-mono text-micro text-theme-muted/70"
               >{option.extension}</span
             >
           </span>
-          <span class="font-body text-[11px] text-theme-muted"
+          <span class="font-body text-meta text-theme-muted"
             >{option.summary}</span
           >
         </span>
@@ -116,7 +116,7 @@
        a different format, or export the other tables too. -->
   {#if missingReferences.length > 0 || missingImages > 0}
     <div
-      class="flex flex-col gap-1 rounded border border-amber-500/30 bg-amber-500/10 p-2.5 font-body text-[11px] text-amber-700 dark:text-amber-400"
+      class="flex flex-col gap-1 rounded border border-amber-500/30 bg-amber-500/10 p-2.5 font-body text-meta text-amber-700 dark:text-amber-400"
       data-testid="export-warning"
     >
       {#if missingReferences.length > 0}
@@ -143,7 +143,7 @@
   <button
     type="button"
     onclick={download}
-    class="flex items-center justify-center gap-2 rounded border border-theme-primary/30 bg-theme-primary/10 px-3 py-2 font-header text-[10px] font-bold uppercase tracking-widest text-theme-primary transition-all hover:bg-theme-primary hover:text-theme-bg"
+    class="flex items-center justify-center gap-2 rounded border border-theme-primary/30 bg-theme-primary/10 px-3 py-2 font-header text-micro font-bold uppercase tracking-widest text-theme-primary transition-all hover:bg-theme-primary hover:text-theme-bg"
     data-testid="export-download"
   >
     <span aria-hidden="true" class="icon-[lucide--download] h-3.5 w-3.5"></span>

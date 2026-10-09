@@ -81,7 +81,6 @@ import {
   parseShipResponse,
   generateShipLocal,
   buildLanguagePrompt,
-  buildLanguageRepairPrompt,
   generateLanguageLocal,
   buildNewsSheetPrompt,
   parseNewsSheetResponse,
@@ -150,7 +149,7 @@ import {
   GeneratorAITransport,
   LANGUAGE_GENERATION_CONFIG,
 } from "./generator-ai-transport";
-import { assessLanguageOutput } from "./language-output-assessment";
+import { runLanguageGenerationWithRepair } from "./language-generation-repair";
 import { runSeoHeistGeneration } from "./heist-generation-orchestration";
 import { WorldGenerationService } from "./world-generation";
 import { FactionGenerationService } from "./faction-generation";
@@ -162,79 +161,6 @@ export {
   getRandomItems,
   generateName,
 } from "./generator-helpers";
-// NPC content data now lives in the generator-engine package (#1351); re-export
-// it here so existing SEO consumers (form fields, random-idea) keep importing
-// from this module.
-export { npcConfig, npcThemeConfig, holidayConfig } from "generator-engine";
-export {
-  factionConfig,
-  themeIdToLabel,
-  vampireConfig,
-  nomadClanConfig,
-  darkFactionConfig,
-  resolveFaction,
-  resolveNomadClan,
-  resolveVampire,
-  resolveDarkFaction,
-  factionSchema,
-  nomadClanSchema,
-  vampireSchema,
-  darkFactionSchema,
-  FACTION_PRESETS,
-  NOMAD_CLAN_PRESETS,
-  VAMPIRE_PRESETS,
-} from "generator-engine";
-export { factionRosterConfig } from "generator-engine";
-export {
-  settlementConfig,
-  SETTLEMENT_PRESETS,
-  SETTLEMENT_LEXICON,
-  settlementSchema,
-  presetsFor,
-  analyseIntent,
-  applyIntent,
-  resolveSmart,
-  type InferredChoice,
-} from "generator-engine";
-// Magic item content data now lives in the package (#1351).
-export { magicItemConfig } from "generator-engine";
-export { minorMagicItemConfig } from "generator-engine";
-export { artifactConfig } from "generator-engine";
-export {
-  questConfig,
-  questGenreForTheme,
-  themeToQuestGenre,
-} from "generator-engine";
-export { rumourConfig } from "generator-engine";
-export { encounterConfig } from "generator-engine";
-export { puzzleConfig } from "generator-engine";
-export {
-  getVillainThreatScales,
-  villainConfig,
-  comicBookEventConfig,
-  villainSchemeConfig,
-} from "generator-engine";
-export { originConfig } from "generator-engine";
-export { personalityConfig } from "generator-engine";
-export { councilVoteConfig } from "generator-engine";
-export { heistConfig } from "generator-engine";
-export { secretSocietyConfig } from "generator-engine";
-export { socialHubConfig } from "generator-engine";
-export { kingdomConfig } from "generator-engine";
-export { nationConfig } from "generator-engine";
-export { pantheonConfig } from "generator-engine";
-export { nameGeneratorConfig } from "generator-engine";
-export { shipConfig } from "generator-engine";
-export { languageConfig } from "generator-engine";
-export { newsSheetConfig } from "generator-engine";
-export { dungeonConfig, forDungeonGenre } from "generator-engine";
-export { adventureConfig, forAdventureGenre } from "generator-engine";
-export { plotTwistConfig } from "generator-engine";
-export { worldConfig } from "generator-engine";
-export { starSystemConfig } from "generator-engine";
-export { constellationConfig } from "generator-engine";
-export { alienRaceConfig } from "generator-engine";
-export { creatureConfig } from "generator-engine";
 
 import { generateName as _generateName } from "./generator-helpers";
 import type { GeneratorOutput } from "./generator-helpers";
@@ -1050,58 +976,14 @@ export class DefaultGeneratorEngine {
           structure: resolved.structure,
           ...(resolved.context ? { worldContext: resolved.context } : {}),
         };
-        const assess = (raw: string) =>
-          assessLanguageOutput(raw, expected, resolved.bannedNames ?? []);
-
-        const initialRaw = await this.runModel(
+        return runLanguageGenerationWithRepair({
           systemInstruction,
           userMessage,
-          LANGUAGE_GENERATION_CONFIG,
-        );
-        const initial = assess(initialRaw);
-        if (initial.output && initial.issues.length === 0) {
-          return initial.output;
-        }
-
-        let candidateRaw = initialRaw;
-        let candidate = initial;
-        let lastAcceptableOutput =
-          initial.output && initial.blockingIssues.length === 0
-            ? initial.output
-            : undefined;
-        const repairBudget = initial.blockingIssues.length ? 2 : 1;
-        for (
-          let repairAttempt = 0;
-          repairAttempt < repairBudget;
-          repairAttempt += 1
-        ) {
-          try {
-            const repairRaw = await this.runModel(
-              systemInstruction,
-              buildLanguageRepairPrompt(
-                candidateRaw,
-                candidate.issues,
-                userMessage,
-              ),
-              LANGUAGE_GENERATION_CONFIG,
-            );
-            candidateRaw = repairRaw;
-            candidate = assess(repairRaw);
-            if (candidate.output && candidate.issues.length === 0) {
-              return candidate.output;
-            }
-            if (candidate.output && candidate.blockingIssues.length === 0) {
-              lastAcceptableOutput = candidate.output;
-              break;
-            }
-          } catch {
-            // Preserve the last parseable candidate for the remaining repair.
-          }
-        }
-        if (lastAcceptableOutput) return lastAcceptableOutput;
-        throw new Error(
-          `AI language output failed validation: ${candidate.issues.join(" ")}`,
-        );
+          expected,
+          bannedNames: resolved.bannedNames ?? [],
+          runModel: (instruction, message, config) =>
+            this.runModel(instruction, message, config),
+        });
       },
       () => generateLanguageLocal(langOptions),
     );

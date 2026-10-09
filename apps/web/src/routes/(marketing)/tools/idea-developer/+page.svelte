@@ -98,7 +98,7 @@
   <div class="space-y-2">
     <label
       for="idea-mode"
-      class="block text-[10px] font-bold uppercase tracking-wider text-theme-muted"
+      class="block text-micro font-bold uppercase tracking-wider text-theme-muted"
     >
       What would you like to do?
     </label>
@@ -117,7 +117,7 @@
   <div class="space-y-2">
     <label
       for="idea-input"
-      class="block text-[10px] font-bold uppercase tracking-wider text-theme-muted"
+      class="block text-micro font-bold uppercase tracking-wider text-theme-muted"
     >
       Your RPG idea
     </label>
@@ -132,7 +132,7 @@
       class="w-full resize-y rounded-lg border border-theme-border/60 bg-theme-bg/70 px-3 py-2.5 text-sm leading-relaxed text-theme-text placeholder:text-theme-muted/60 focus:border-theme-primary focus:outline-none focus:ring-2 focus:ring-theme-primary/20 disabled:cursor-not-allowed disabled:opacity-50"
       aria-describedby="idea-length-hint"
     ></textarea>
-    <p id="idea-length-hint" class="text-right text-[10px] text-theme-muted">
+    <p id="idea-length-hint" class="text-right text-micro text-theme-muted">
       {idea.length} / {IDEA_MAX_LENGTH} characters
     </p>
   </div>

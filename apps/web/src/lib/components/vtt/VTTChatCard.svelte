@@ -17,7 +17,7 @@
     >
       {#if card.position}
         <span
-          class="block font-mono text-[9px] font-bold uppercase tracking-widest text-theme-primary"
+          class="block font-mono text-nano font-bold uppercase tracking-widest text-theme-primary"
           data-testid="vtt-chat-card-position"
         >
           {card.position}
@@ -44,7 +44,7 @@
           <span aria-hidden="true" class="icon-[lucide--layers] h-4 w-4"></span>
           {#if card.deckName}
             <span
-              class="font-header text-[9px] font-bold uppercase tracking-widest text-theme-muted"
+              class="font-header text-nano font-bold uppercase tracking-widest text-theme-muted"
             >
               {card.deckName}
             </span>
@@ -64,7 +64,7 @@
           </span>
           {#if card.reversed}
             <span
-              class="rounded bg-theme-primary/10 px-1.5 py-0.5 font-mono text-[9px] font-bold uppercase tracking-widest text-theme-primary"
+              class="rounded bg-theme-primary/10 px-1.5 py-0.5 font-mono text-nano font-bold uppercase tracking-widest text-theme-primary"
               data-testid="vtt-chat-card-reversed"
             >
               Reversed

@@ -151,7 +151,7 @@
           {DESTINATION_LABEL[option.id]}
           {#if isActive && option.id !== "none"}
             <span
-              class="ml-auto font-mono text-[10px] uppercase tracking-wider text-theme-primary"
+              class="ml-auto font-mono text-micro uppercase tracking-wider text-theme-primary"
               >In use</span
             >
           {/if}

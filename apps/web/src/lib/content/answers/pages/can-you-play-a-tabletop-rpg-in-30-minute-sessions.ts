@@ -2,7 +2,7 @@ import type { AnswerConfigInput } from "../schema";
 
 export const canYouPlayATabletopRpgIn30MinuteSessions: AnswerConfigInput = {
   slug: "can-you-play-a-tabletop-rpg-in-30-minute-sessions",
-  category: "session-prep",
+  category: "running-the-game",
   publishedAt: "2026-09-16",
   question: "Can you play a tabletop RPG in 30-minute sessions?",
   kind: "framework",
@@ -193,6 +193,7 @@ export const canYouPlayATabletopRpgIn30MinuteSessions: AnswerConfigInput = {
     },
   ],
   relatedAnswers: [
+    "how-do-i-make-combat-faster-without-making-it-less-exciting",
     "how-do-i-start-gming-for-the-first-time",
     "how-do-you-make-a-tabletop-rpg-session-more-engaging",
     "how-much-prep-do-you-need-for-an-rpg-session",
@@ -201,6 +202,7 @@ export const canYouPlayATabletopRpgIn30MinuteSessions: AnswerConfigInput = {
     "how-do-you-run-dnd-for-a-large-group-of-players",
     "how-do-you-run-a-chase-in-a-tabletop-rpg",
     "what-rpg-system-is-good-for-solo-play",
+    "how-long-should-a-ttrpg-session-be",
   ],
   discovery: {
     id: "answer-short-session",
@@ -235,6 +237,11 @@ export const canYouPlayATabletopRpgIn30MinuteSessions: AnswerConfigInput = {
         with: "answer-large-group-dnd",
         reason:
           "Both are companion scheduling-and-format answers in the session-prep cluster, but this answer addresses sessions constrained by time, while the large-group answer addresses sessions constrained by player count.",
+      },
+      {
+        with: "answer-ttrpg-session-length",
+        reason:
+          "This page designs a complete episode for a constrained 30-minute slot; the session-length answer compares general booked lengths across play contexts.",
       },
     ],
   },

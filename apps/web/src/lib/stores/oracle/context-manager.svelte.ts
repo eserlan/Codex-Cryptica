@@ -4,6 +4,7 @@ import * as Comlink from "comlink";
 import { appEventBus } from "@codex/events";
 import { interactionSessions } from "@codex/ai-engine";
 import { getConnectionProposer } from "./hooks";
+import { withLoreTemplate } from "./lore-template";
 import type { OracleUiSnapshot, IOracleStore } from "./types";
 import { createRandomSourceOracleAdapter } from "$lib/features/random/oracle-adapter.svelte";
 
@@ -166,9 +167,28 @@ export class OracleContextManager {
               );
             }
           : undefined,
-        reviseEntityUpdate: wrap(
-          s.textGeneration.reviseEntityUpdate?.bind(s.textGeneration),
-        ),
+        reviseEntityUpdate: s.textGeneration.reviseEntityUpdate
+          ? wrap(
+              (
+                apiKey: string,
+                modelName: string,
+                entity: any,
+                incoming: { chronicle: string; lore: string },
+                relatedEntities?: any[],
+                categories?: any[],
+                options?: any,
+              ) =>
+                s.textGeneration.reviseEntityUpdate!(
+                  apiKey,
+                  modelName,
+                  entity,
+                  incoming,
+                  relatedEntities,
+                  categories,
+                  withLoreTemplate(entity?.type, options),
+                ),
+            )
+          : undefined,
         generatePlotAnalysis: (
           apiKey: string,
           modelName: string,

@@ -398,6 +398,15 @@ export class EntityStore {
     );
   }
 
+  async setConnectionHidden(
+    sourceId: string,
+    targetId: string,
+    type: string,
+    hidden: boolean,
+  ): Promise<boolean> {
+    return this.mutations.setConnectionHidden(sourceId, targetId, type, hidden);
+  }
+
   async removeConnection(
     sourceId: string,
     targetId: string,
@@ -420,6 +429,14 @@ export class EntityStore {
 
   async bulkRemoveLabel(ids: string[], label: string): Promise<number> {
     return this.mutations.bulkRemoveLabel(ids, label);
+  }
+
+  async renameLabel(from: string, to: string): Promise<number> {
+    return this.mutations.renameLabel(from, to);
+  }
+
+  async deleteLabel(label: string): Promise<number> {
+    return this.mutations.deleteLabel(label);
   }
 
   async batchCreateEntities(newEntitiesList: BatchCreateInput[]) {

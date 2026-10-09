@@ -2,7 +2,7 @@ import type { AnswerConfigInput } from "../schema";
 
 export const howDoYouRunAMysteryWithoutRailroading: AnswerConfigInput = {
   slug: "how-do-you-run-a-mystery-without-railroading",
-  category: "session-prep",
+  category: "adventure-design",
   publishedAt: "2026-09-04",
   question: "How do you run a mystery without railroading?",
   kind: "how-to",
@@ -137,6 +137,11 @@ export const howDoYouRunAMysteryWithoutRailroading: AnswerConfigInput = {
     "how-do-i-prepare-an-rpg-session-step-by-step",
     "how-do-i-write-a-good-call-of-cthulhu-one-shot",
     "how-do-i-pace-an-rpg-one-shot",
+    "how-do-i-run-character-roles-in-an-investigative-horror-rpg",
+    "how-do-i-make-interviewing-npcs-interesting-in-an-investigation",
+    "how-do-i-handle-players-asking-an-npc-to-tell-us-everything-you-know",
+    "how-do-i-handle-divination-magic-without-letting-one-character-solve-every-mystery",
+    "how-do-i-prepare-a-dnd-session",
   ],
   discovery: {
     id: "answer-run-mystery-without-railroading",

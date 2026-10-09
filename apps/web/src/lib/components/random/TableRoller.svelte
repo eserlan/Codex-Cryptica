@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { RandomSource, RollOutcome } from "random-source-engine";
-  import { dieFormula } from "random-source-engine";
+  import { recordTableRoll, tableDie } from "$lib/services/record-table-roll";
   import { randomSources } from "$lib/features/random";
   import type { RandomSourceStore } from "$lib/stores/random-source-store.svelte";
   import {
@@ -14,6 +14,7 @@
   import { systemClock, type Clock } from "$lib/utils/runtime-deps";
   import { fade } from "svelte/transition";
   import ResolutionChain from "./ResolutionChain.svelte";
+  import DiceBreakdownDisclosure from "$lib/components/dice/DiceBreakdownDisclosure.svelte";
 
   /**
    * Rolls one table and shows the result, the die value behind it, and a way to
@@ -60,23 +61,18 @@
   const canPinToMap = $derived(Boolean(session.mapId));
 
   const dieValue = $derived(outcome?.chain[0]?.dieValue);
+  /** The dice behind `dieValue`, exactly as the engine rolled them (#3443). */
+  const rollParts = $derived(outcome?.chain[0]?.rollParts);
 
   /**
    * The die a value was read off. Ranged tables carry their own; a weighted
    * table's range is the sum of its weights, which is what the engine picks
    * across.
    */
-  const dieSides = $derived.by(() => {
-    if (source.selection?.mode === "ranged") return source.selection.die.sides;
-    return (source.entries ?? []).reduce((sum, e) => sum + (e.weight ?? 1), 0);
-  });
-
+  const die = $derived(tableDie(source));
+  const dieSides = $derived(die.sides);
   /** The die notation shown and recorded, e.g. `d6` or `4d6kh3+2`. */
-  const dieLabel = $derived(
-    source.selection?.mode === "ranged"
-      ? dieFormula(source.selection.die)
-      : `d${dieSides}`,
-  );
+  const dieLabel = $derived(die.label);
 
   const hasEntries = $derived((source.entries ?? []).length > 0);
   const resultText = $derived(outcome?.finalText ?? "");
@@ -158,31 +154,13 @@
 
   /** Writes the roll into the shared roll history (FR-018). */
   async function record(result: RollOutcome) {
-    const root = result.chain[0];
-    const value = root?.dieValue;
-    await history.addResult(
-      {
-        total: value ?? 0,
-        parts:
-          root?.rollParts ??
-          (value === undefined
-            ? []
-            : [{ type: "dice", sides: dieSides, rolls: [value], value }]),
-        formula: dieLabel,
-        timestamp: clock.now(),
-      },
-      "table",
-      {
-        label: source.name,
-        source: {
-          sourceId: source.id,
-          sourceName: source.name,
-          kind: source.kind,
-          finalText: result.finalText,
-          chain: result.chain,
-        },
-      },
-    );
+    await recordTableRoll(history, {
+      source,
+      outcome: result,
+      dieSides,
+      dieLabel,
+      clock,
+    });
   }
 </script>
 
@@ -192,13 +170,13 @@
 >
   <div class="flex items-center justify-between gap-3">
     <h3
-      class="text-[10px] font-bold font-header uppercase tracking-[0.2em] text-theme-muted"
+      class="text-micro font-bold font-header uppercase tracking-[0.2em] text-theme-muted"
     >
       Roll
     </h3>
     <button
       type="button"
-      class="flex items-center gap-2 rounded-lg border border-theme-primary/30 bg-theme-primary/10 px-3 py-1.5 text-[10px] font-bold font-header uppercase tracking-widest text-theme-primary transition-all hover:bg-theme-primary hover:text-theme-bg active:scale-95 disabled:cursor-not-allowed disabled:opacity-40"
+      class="flex items-center gap-2 rounded-lg border border-theme-primary/30 bg-theme-primary/10 px-3 py-1.5 text-micro font-bold font-header uppercase tracking-widest text-theme-primary transition-all hover:bg-theme-primary hover:text-theme-bg active:scale-95 disabled:cursor-not-allowed disabled:opacity-40"
       onclick={roll}
       disabled={!hasEntries}
       data-testid="roll-table"
@@ -224,7 +202,7 @@
           {dieValue ?? "—"}
         </span>
         <span
-          class="mt-1.5 text-[8px] font-bold uppercase tracking-tighter text-theme-muted"
+          class="mt-1.5 text-nano font-bold uppercase tracking-tighter text-theme-muted"
         >
           {dieLabel}
         </span>
@@ -237,10 +215,18 @@
       </p>
     </div>
 
+    {#key outcome}
+      <DiceBreakdownDisclosure
+        parts={rollParts}
+        total={dieValue ?? 0}
+        formula={dieLabel}
+      />
+    {/key}
+
     <div class="flex flex-wrap gap-2 border-t border-theme-border/40 pt-3">
       <button
         type="button"
-        class="flex items-center gap-1.5 rounded border border-theme-border px-2.5 py-1 font-header text-[9px] uppercase tracking-widest text-theme-muted transition-colors hover:border-theme-primary hover:text-theme-primary disabled:cursor-not-allowed disabled:opacity-40"
+        class="flex items-center gap-1.5 rounded border border-theme-border px-2.5 py-1 font-header text-nano uppercase tracking-widest text-theme-muted transition-colors hover:border-theme-primary hover:text-theme-primary disabled:cursor-not-allowed disabled:opacity-40"
         onclick={addResultToChat}
         disabled={isAddingToChat}
         aria-busy={isAddingToChat}
@@ -254,7 +240,7 @@
       </button>
       <button
         type="button"
-        class="flex items-center gap-1.5 rounded border border-theme-border px-2.5 py-1 font-header text-[9px] uppercase tracking-widest text-theme-muted transition-colors hover:border-theme-primary hover:text-theme-primary disabled:cursor-not-allowed disabled:opacity-40"
+        class="flex items-center gap-1.5 rounded border border-theme-border px-2.5 py-1 font-header text-nano uppercase tracking-widest text-theme-muted transition-colors hover:border-theme-primary hover:text-theme-primary disabled:cursor-not-allowed disabled:opacity-40"
         onclick={pinResultToMap}
         disabled={isPinning || !canPinToMap}
         aria-busy={isPinning}
@@ -269,7 +255,7 @@
       </button>
       <button
         type="button"
-        class="flex items-center gap-1.5 rounded border border-theme-border px-2.5 py-1 font-header text-[9px] uppercase tracking-widest text-theme-muted transition-colors hover:border-theme-primary hover:text-theme-primary"
+        class="flex items-center gap-1.5 rounded border border-theme-border px-2.5 py-1 font-header text-nano uppercase tracking-widest text-theme-muted transition-colors hover:border-theme-primary hover:text-theme-primary"
         onclick={copyResult}
         data-testid="copy-roll-result"
       >
@@ -281,7 +267,7 @@
     {#if isComposed}
       <div class="border-t border-theme-border/40 pt-3">
         <h4
-          class="mb-2 font-header text-[9px] font-bold uppercase tracking-[0.2em] text-theme-muted"
+          class="mb-2 font-header text-nano font-bold uppercase tracking-[0.2em] text-theme-muted"
         >
           Where this came from
         </h4>

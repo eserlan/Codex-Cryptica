@@ -2,7 +2,7 @@ import type { AnswerConfigInput } from "../schema";
 
 export const howDoIRunAJournalistOrMediaCharacterInAnRpg: AnswerConfigInput = {
   slug: "how-do-i-run-a-journalist-or-media-character-in-an-rpg",
-  category: "session-prep",
+  category: "running-the-game",
   labels: ["modern", "cyberpunk"],
   publishedAt: "2026-09-23",
   question:
@@ -167,6 +167,7 @@ export const howDoIRunAJournalistOrMediaCharacterInAnRpg: AnswerConfigInput = {
     "how-do-i-run-hackers-or-netrunners-without-splitting-the-party",
     "how-do-i-run-a-diplomat-noble-or-courtier-in-an-rpg",
     "how-do-i-run-character-roles-in-a-political-intrigue-rpg",
+    "how-do-i-run-character-roles-in-an-investigative-horror-rpg",
   ],
   discovery: {
     id: "answer-journalist-media-character-rpg",

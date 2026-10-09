@@ -88,7 +88,9 @@
     class="p-4 border-b border-theme-border bg-theme-surface flex flex-wrap items-center justify-between gap-4"
   >
     <div class="flex items-center gap-3">
-      <span class="icon-[lucide--calendar-days] text-theme-primary w-6 h-6"
+      <span
+        aria-hidden="true"
+        class="icon-[lucide--calendar-days] text-theme-primary w-6 h-6"
       ></span>
       <h2
         class="text-xl font-bold text-theme-text font-mono tracking-wider uppercase font-header"
@@ -151,7 +153,7 @@
               >
                 <div class="relative">
                   <p
-                    class="text-[10px] uppercase tracking-[0.22em] text-theme-muted"
+                    class="text-micro uppercase tracking-[0.22em] text-theme-muted"
                   >
                     Active month
                   </p>
@@ -164,6 +166,7 @@
                     {timelineStore.calendarMonthView.title}
                     <span
                       class="icon-[lucide--chevrons-up-down] h-4 w-4 text-theme-muted group-hover:text-theme-primary transition-colors"
+                      aria-hidden="true"
                     ></span>
                   </button>
 

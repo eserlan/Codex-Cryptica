@@ -31,6 +31,15 @@ vi.mock("$lib/stores/ui/modal-ui.svelte", () => {
   };
 });
 
+const captureMocks = vi.hoisted(() => ({
+  result: vi.fn(),
+  saved: vi.fn(),
+}));
+vi.mock("$lib/services/generator-journal-capture", () => ({
+  publishGeneratedCapture: captureMocks.result,
+  publishGeneratedSaved: captureMocks.saved,
+}));
+
 vi.mock("$lib/actions/focusTrap", () => ({
   focusTrap: () => ({ destroy: () => {} }),
 }));
@@ -242,5 +251,69 @@ describe("CampaignGeneratorModal", () => {
       "error",
       true,
     );
+  });
+
+  describe("journal capture (Solo Play Loop, FR-008)", () => {
+    beforeEach(() => {
+      captureMocks.result.mockClear();
+      captureMocks.saved.mockClear();
+      saveDraftMock.mockClear();
+    });
+
+    it("records the generated result when the draft reaches review", async () => {
+      store._workflow.generatorId = "dungeon";
+      render(CampaignGeneratorModal);
+
+      await fireEvent.click(screen.getByRole("button", { name: "Generate" }));
+      await screen.findByRole("button", { name: "Open in Editor" });
+
+      expect(captureMocks.result).toHaveBeenCalledTimes(1);
+      expect(captureMocks.result.mock.calls[0][0]).toEqual(
+        expect.objectContaining({ generatorId: "dungeon" }),
+      );
+    });
+
+    it("records a follow-up entry after a successful save", async () => {
+      store._workflow.generatorId = "dungeon";
+      render(CampaignGeneratorModal);
+
+      await fireEvent.click(screen.getByRole("button", { name: "Generate" }));
+      await screen.findByRole("button", { name: "Open in Editor" });
+      await fireEvent.click(
+        screen.getByRole("button", { name: "Open in Editor" }),
+      );
+
+      await vi.waitFor(() =>
+        expect(captureMocks.saved).toHaveBeenCalledTimes(1),
+      );
+    });
+
+    it("does not record a save when saving fails", async () => {
+      store._workflow.generatorId = "dungeon";
+      saveDraftMock.mockRejectedValueOnce(new Error("disk full"));
+      render(CampaignGeneratorModal);
+
+      await fireEvent.click(screen.getByRole("button", { name: "Generate" }));
+      await screen.findByRole("button", { name: "Open in Editor" });
+      await fireEvent.click(
+        screen.getByRole("button", { name: "Open in Editor" }),
+      );
+
+      await vi.waitFor(() => expect(saveDraftMock).toHaveBeenCalledOnce());
+      expect(captureMocks.saved).not.toHaveBeenCalled();
+    });
+
+    it("still reaches review when the journal publisher throws", async () => {
+      store._workflow.generatorId = "dungeon";
+      captureMocks.result.mockImplementationOnce(() => {
+        throw new Error("journal unavailable");
+      });
+      render(CampaignGeneratorModal);
+
+      await fireEvent.click(screen.getByRole("button", { name: "Generate" }));
+      expect(
+        await screen.findByRole("button", { name: "Open in Editor" }),
+      ).toBeTruthy();
+    });
   });
 });

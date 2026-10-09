@@ -64,7 +64,7 @@
 
   {#if showBadge}
     <div
-      class="absolute bottom-1 right-1 z-20 px-1.5 py-0.5 text-[10px] font-mono rounded-xs bg-theme-base/90 text-theme-muted border border-theme-border/40 backdrop-blur-xs"
+      class="absolute bottom-1 right-1 z-20 px-1.5 py-0.5 text-micro font-mono rounded-xs bg-theme-base/90 text-theme-muted border border-theme-border/40 backdrop-blur-xs"
     >
       {resolvedSilhouette.archetype}
     </div>

@@ -4,7 +4,7 @@ import { fireEvent, render, screen } from "@testing-library/svelte";
 import { describe, expect, it, vi } from "vitest";
 import PlotTwistFormFields from "./PlotTwistFormFields.svelte";
 
-vi.mock("$lib/services/seo/generator-engine", () => ({
+vi.mock("$lib/services/seo/generator-config", () => ({
   factionConfig: { themes: ["Classic Fantasy"] },
   plotTwistConfig: {
     twistTypes: ["Random"],

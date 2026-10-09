@@ -2,7 +2,7 @@ import type { AnswerConfigInput } from "../schema";
 
 export const howDoYouMakeTravelInterestingInATabletopRpg: AnswerConfigInput = {
   slug: "how-do-you-make-travel-interesting-in-a-tabletop-rpg",
-  category: "session-prep",
+  category: "adventure-design",
   publishedAt: "2026-09-04",
   question: "How do you make travel interesting in a tabletop RPG?",
   kind: "framework",
@@ -162,6 +162,15 @@ export const howDoYouMakeTravelInterestingInATabletopRpg: AnswerConfigInput = {
     "how-to-create-a-sci-fi-star-system-for-an-rpg",
     "what-kind-of-ship-should-a-sci-fi-rpg-party-start-with",
     "how-do-you-run-a-chase-in-a-tabletop-rpg",
+    "how-do-i-run-common-character-roles-in-a-sci-fi-or-space-opera-rpg",
+    "how-do-i-run-common-character-roles-in-a-fantasy-rpg",
+    "what-rpg-map-making-tool-should-i-use",
+    "how-do-i-run-exploration-in-a-huge-ruined-city",
+    "how-do-i-make-rival-captains-navies-and-pirate-factions-matter",
+    "how-do-i-create-interesting-islands-and-ports-for-a-pirate-campaign",
+    "how-do-i-run-ship-to-ship-combat-without-sidelining-the-party",
+    "how-do-i-make-sea-travel-interesting-in-a-ttrpg",
+    "how-do-i-run-a-pirate-campaign-focused-on-exploration",
   ],
   discovery: {
     id: "answer-travel-interesting",

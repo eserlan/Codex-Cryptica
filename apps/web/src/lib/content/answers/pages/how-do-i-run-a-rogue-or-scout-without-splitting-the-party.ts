@@ -3,7 +3,7 @@ import type { AnswerConfigInput } from "../schema";
 export const howDoIRunARogueOrScoutWithoutSplittingTheParty: AnswerConfigInput =
   {
     slug: "how-do-i-run-a-rogue-or-scout-without-splitting-the-party",
-    category: "session-prep",
+    category: "running-the-game",
     publishedAt: "2026-09-23",
     question: "How do I run a rogue or scout without splitting the party?",
     kind: "framework",
@@ -138,6 +138,7 @@ export const howDoIRunARogueOrScoutWithoutSplittingTheParty: AnswerConfigInput =
       "how-do-i-get-my-rpg-party-to-work-together",
       "how-do-you-run-a-heist-in-a-tabletop-rpg",
       "how-do-i-run-hackers-or-netrunners-without-splitting-the-party",
+      "how-do-i-run-common-character-roles-in-a-fantasy-rpg",
     ],
     discovery: {
       id: "answer-run-rogue-scout-without-splitting-party",

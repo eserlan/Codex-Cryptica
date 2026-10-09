@@ -8,6 +8,8 @@ import type { AssetStore } from "./asset-store.svelte";
 import { vaultEventBus } from "./events.svelte";
 import { statSheetTemplates } from "../stat-sheet-templates.svelte";
 import { presentationTemplates } from "../presentation-templates.svelte";
+import { entityTemplateStore } from "../entity-templates/entity-template-store.svelte";
+import { sessionModeStore } from "../ui/session-mode.svelte";
 
 export interface VaultLifecycleDependencies {
   syncStore: SyncStore;
@@ -15,6 +17,8 @@ export interface VaultLifecycleDependencies {
   repository: any;
   activeVaultId: () => string | null;
   getActiveVaultHandle: () => Promise<FileSystemDirectoryHandle | undefined>;
+  /** The linked local folder, if any. Optional so older callers keep working. */
+  getActiveFolderHandle?: () => Promise<FileSystemDirectoryHandle | undefined>;
   loadFiles: (skipSyncIfWarm?: boolean) => Promise<void>;
   flushPendingSaves: () => Promise<void>;
   ensureServicesInitialized: () => Promise<void>;
@@ -216,10 +220,14 @@ export class VaultLifecycleManager {
         // Load Oracle chat history for the new vault
         await loadOracleForVault(id);
 
+        // Theme first (it styles the graph); templates load alongside files.
         await this.deps.themeStore.loadForVault(id);
-        await statSheetTemplates.loadForVault(id);
-        await presentationTemplates.loadForVault(id);
-        await this.deps.loadFiles();
+        await Promise.all([
+          statSheetTemplates.loadForVault(id),
+          presentationTemplates.loadForVault(id),
+          this.loadEntityTemplates(id),
+          this.deps.loadFiles(),
+        ]);
         this.deps.setInitialized(true);
         if (this.deps.syncStore.status === "loading") {
           this.deps.syncStore.setStatus("idle");
@@ -231,7 +239,33 @@ export class VaultLifecycleManager {
     return this.switchLock;
   }
 
+  /** Template problems must never block opening a vault. */
+  async loadEntityTemplates(vaultId: string) {
+    if (sessionModeStore.isGuestMode) {
+      entityTemplateStore.clearForGuest();
+      return;
+    }
+    try {
+      const [vault, folder] = await Promise.all([
+        this.deps.getActiveVaultHandle(),
+        this.deps.getActiveFolderHandle?.(),
+      ]);
+      // Guest mode can begin while the OPFS handles are resolving. Recheck
+      // before starting a load that could repopulate the guest session.
+      if (sessionModeStore.isGuestMode) {
+        entityTemplateStore.clearForGuest();
+        return;
+      }
+      await entityTemplateStore.loadForVault(vaultId, { vault, folder });
+    } catch (err) {
+      console.warn("[VaultStore] Entity templates failed to load", err);
+    }
+  }
+
   async loadDemoData(name: string, entities: Record<string, LocalEntity>) {
+    // Demo data has no vault-scoped template files. Do not carry templates from
+    // a vault that was active before entering guest or demo mode.
+    entityTemplateStore.clearForGuest();
     this.deps.syncStore.setStatus("loading");
     try {
       await this.deps.ensureServicesInitialized();

@@ -2,7 +2,7 @@
   import {
     factionConfig,
     plotTwistConfig,
-  } from "$lib/services/seo/generator-engine";
+  } from "$lib/services/seo/generator-config";
   import SelectWithCustomOption from "$lib/components/forms/SelectWithCustomOption.svelte";
 
   let {
@@ -30,7 +30,7 @@
   const selectClass =
     "w-full min-h-12 bg-theme-bg/60 border border-theme-border/60 rounded-lg px-3 py-2.5 text-base md:text-sm text-theme-text focus:outline-none focus:border-theme-primary/60";
   const labelClass =
-    "text-[10px] font-bold uppercase tracking-wider text-theme-text/80";
+    "text-micro font-bold uppercase tracking-wider text-theme-text/80";
 </script>
 
 <SelectWithCustomOption

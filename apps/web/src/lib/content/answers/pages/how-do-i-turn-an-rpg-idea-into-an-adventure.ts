@@ -2,7 +2,7 @@ import type { AnswerConfigInput } from "../schema";
 
 export const howDoITurnAnRpgIdeaIntoAnAdventure: AnswerConfigInput = {
   slug: "how-do-i-turn-an-rpg-idea-into-an-adventure",
-  category: "session-prep",
+  category: "adventure-design",
   publishedAt: "2026-09-20",
   question: "How do I turn an RPG idea into an adventure?",
   kind: "framework",
@@ -152,6 +152,9 @@ export const howDoITurnAnRpgIdeaIntoAnAdventure: AnswerConfigInput = {
     "is-my-rpg-campaign-idea-good",
     "how-do-i-expand-a-simple-rpg-campaign-idea",
     "how-do-i-prepare-an-rpg-session-step-by-step",
+    "how-much-of-the-plot-should-a-dm-prepare",
+    "how-do-i-prepare-a-dnd-session",
+    "how-do-i-start-a-dnd-campaign",
   ],
   discovery: {
     id: "answer-turn-rpg-idea-into-adventure",

@@ -262,6 +262,43 @@ export const forEntries: DiscoveryEntryInput[] = [
     status: "live",
   },
   {
+    id: "for-steampunk-rpgs",
+    pageKind: "for",
+    canonicalPath: "/for/steampunk-rpgs",
+    primaryIntent: "steampunk campaign worldbuilding",
+    intentAliases: [
+      "victorian industrial rpg campaign organiser",
+      "steampunk campaign notes",
+    ],
+    audience:
+      "Game masters running steampunk and Victorian industrial campaigns",
+    userJob: "adopt-workflow",
+    uniqueValue:
+      "A steampunk workflow connecting inventions to their inventors, workers, patrons, routes, and the social and industrial consequences of their success or failure.",
+    parentCluster: "genre-guides",
+    relatedIntents: ["hub-steampunk"],
+    indexable: true,
+    status: "live",
+  },
+  {
+    id: "for-weird-west-rpgs",
+    pageKind: "for",
+    canonicalPath: "/for/weird-west-rpgs",
+    primaryIntent: "weird west campaign worldbuilding",
+    intentAliases: [
+      "weird west rpg campaign organiser",
+      "frontier occult western campaign notes",
+    ],
+    audience: "Game masters running weird west and frontier campaigns",
+    userJob: "adopt-workflow",
+    uniqueValue:
+      "A frontier-intrigue workflow connecting boomtowns, claims, lawmen, outlaws, railroad and mining interests, and the occult horrors beneath them, so every killing and land grab leads somewhere.",
+    parentCluster: "genre-guides",
+    relatedIntents: ["hub-western"],
+    indexable: true,
+    status: "live",
+  },
+  {
     id: "for-mecha-rpgs",
     pageKind: "for",
     canonicalPath: "/for/mecha-rpgs",
@@ -379,6 +416,32 @@ export const forEntries: DiscoveryEntryInput[] = [
     relatedIntents: [
       "for-west-marches",
       "answer-campaign-notes",
+      "for-fantasy-worldbuilding",
+    ],
+    indexable: true,
+    status: "live",
+  },
+  {
+    id: "for-economy-trade",
+    pageKind: "for",
+    canonicalPath: "/for/economy-trade",
+    primaryIntent: "ttrpg economy and trade campaign guide",
+    intentAliases: [
+      "fantasy economy trade hub",
+      "rpg trade scarcity prices guide",
+      "codex cryptica for economy and trade",
+    ],
+    audience: "Game masters running trade-heavy campaigns of any genre",
+    userJob: "adopt-workflow",
+    uniqueValue:
+      "Routes a reader from any of the five economy questions to the generators that produce the towns, factions, and rumours behind the answer, with trade-shaped worked examples.",
+    parentCluster: "economy-trade",
+    relatedIntents: [
+      "answer-believable-fantasy-economy",
+      "answer-settlement-production-imports-exports",
+      "answer-trade-routes-shape-cities-kingdoms",
+      "answer-scarcity-shortages-prices-conflict",
+      "answer-economic-pressures-adventure-hooks",
       "for-fantasy-worldbuilding",
     ],
     indexable: true,

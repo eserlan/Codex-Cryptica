@@ -13,7 +13,6 @@
   import { FEATURE_HINTS, HINT_KEYS } from "$lib/config/help-content";
   import { mapSession } from "$lib/stores/map-session.svelte";
   import VTTChat from "../vtt/VTTChat.svelte";
-  import FeatureHint from "../help/FeatureHint.svelte";
   import { discoveryPolicyStore } from "$lib/stores/ui/discovery-policy.svelte";
   import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
@@ -75,12 +74,12 @@
           : ''}"
       ></div>
       <span
-        class="text-[11px] sm:text-[10px] font-bold text-theme-text tracking-[0.2em] uppercase font-header"
+        class="text-meta sm:text-micro font-bold text-theme-text tracking-[0.2em] uppercase font-header"
         >{headerTitle}</span
       >
       {#if discoveryPolicyStore.aiDisabled}
         <span
-          class="text-[8px] font-header bg-theme-primary/20 text-theme-primary px-1.5 py-0.5 rounded border border-theme-primary/30"
+          class="text-nano font-header bg-theme-primary/20 text-theme-primary px-1.5 py-0.5 rounded border border-theme-primary/30"
           >AI DISABLED</span
         >
       {/if}
@@ -146,7 +145,7 @@
   >
     <button
       onclick={() => (activeTab = "oracle")}
-      class="flex-1 py-2 text-[11px] sm:text-[10px] font-bold uppercase font-header tracking-widest transition-all {activeTab ===
+      class="flex-1 py-2 text-meta sm:text-micro font-bold uppercase font-header tracking-widest transition-all {activeTab ===
       'oracle'
         ? 'bg-theme-surface border-theme-border border-x border-t rounded-t -mb-px text-theme-primary shadow-sm'
         : 'text-theme-muted hover:text-theme-text'}"
@@ -155,7 +154,7 @@
     </button>
     <button
       onclick={() => (activeTab = "activity")}
-      class="flex-1 py-2 text-[11px] sm:text-[10px] font-bold uppercase font-header tracking-widest transition-all relative {activeTab ===
+      class="flex-1 py-2 text-meta sm:text-micro font-bold uppercase font-header tracking-widest transition-all relative {activeTab ===
       'activity'
         ? 'bg-theme-surface border-theme-border border-x border-t rounded-t -mb-px text-theme-primary shadow-sm'
         : 'text-theme-muted hover:text-theme-text'}"
@@ -163,14 +162,14 @@
       Activity
       {#if activityCount > 0}
         <span
-          class="ml-1 inline-flex min-w-4 justify-center rounded-full bg-theme-primary/15 px-1 text-[8px] text-theme-primary"
+          class="ml-1 inline-flex min-w-4 justify-center rounded-full bg-theme-primary/15 px-1 text-nano text-theme-primary"
           aria-label={`${activityCount} activity events`}>{activityCount}</span
         >
       {/if}
     </button>
     <button
       onclick={() => (activeTab = "chat")}
-      class="flex-1 py-2 text-[11px] sm:text-[10px] font-bold uppercase font-header tracking-widest transition-all relative {activeTab ===
+      class="flex-1 py-2 text-meta sm:text-micro font-bold uppercase font-header tracking-widest transition-all relative {activeTab ===
       'chat'
         ? 'bg-theme-surface border-theme-border border-x border-t rounded-t -mb-px text-theme-primary shadow-sm'
         : 'text-theme-muted hover:text-theme-text'}"
@@ -178,7 +177,7 @@
       VTT Chat
       {#if mapSession.chatMessages.length > 0}
         <span
-          class="ml-1 inline-flex min-w-4 justify-center rounded-full bg-theme-primary/15 px-1 text-[8px] text-theme-primary"
+          class="ml-1 inline-flex min-w-4 justify-center rounded-full bg-theme-primary/15 px-1 text-nano text-theme-primary"
           aria-label={`${mapSession.chatMessages.length} chat messages`}
           >{mapSession.chatMessages.length}</span
         >
@@ -188,9 +187,6 @@
 
   <div class="flex-1 min-h-0 flex flex-col overflow-hidden">
     {#if activeTab === "oracle"}
-      <div class="px-3 pt-2 shrink-0">
-        <FeatureHint hintId="oracle-memory" />
-      </div>
       <OracleChat
         onOpenSettings={() => {
           modalUIStore.openSettings();
@@ -238,7 +234,7 @@
         <button
           type="button"
           onclick={() => (showHint = false)}
-          class="w-full py-2 bg-theme-primary/10 border border-theme-primary/30 text-theme-primary text-[10px] font-bold uppercase font-header tracking-widest rounded hover:bg-theme-primary/20 transition-colors"
+          class="w-full py-2 bg-theme-primary/10 border border-theme-primary/30 text-theme-primary text-micro font-bold uppercase font-header tracking-widest rounded hover:bg-theme-primary/20 transition-colors"
         >
           Got It
         </button>
@@ -251,9 +247,7 @@
     <div
       class="p-4 bg-theme-primary/5 border-t border-theme-border flex flex-col gap-3"
     >
-      <p
-        class="text-[10px] text-theme-muted italic text-center leading-relaxed"
-      >
+      <p class="text-micro text-theme-muted italic text-center leading-relaxed">
         {demoService.marketingPrompt}
       </p>
       <button
@@ -276,7 +270,7 @@
             );
           }
         }}
-        class="w-full py-2 bg-theme-primary text-theme-bg text-[10px] font-bold uppercase font-header tracking-widest rounded hover:bg-theme-secondary transition-colors"
+        class="w-full py-2 bg-theme-primary text-theme-bg text-micro font-bold uppercase font-header tracking-widest rounded hover:bg-theme-secondary transition-colors"
       >
         Save as {themeStore.jargon.vault}
       </button>

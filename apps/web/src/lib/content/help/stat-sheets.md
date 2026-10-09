@@ -48,9 +48,9 @@ Templates are just a saved snapshot of a layout — there's no separate template
 
 1. On any entity, build the fields you want using **Edit Layout** (add fields, set labels/types, set counter bounds or dice formulas).
 2. Open **Templates** and use the **Save current layout as...** box at the bottom to name and save it.
-3. It's now available from the Templates list on every entity in this vault, and can be renamed or deleted later from **Settings → Schema → Stat Sheet Templates** (where you can also preview any built-in or saved template's fields before applying it).
+3. It's now available from the Templates list on every entity in this vault, and can be renamed or deleted later from **Settings → Templates → Stat sheets** (where you can also preview any built-in or saved template's fields before applying it).
 
-To customize or share a built-in layout without first applying it to an entity, choose **Save copy to Vault** beside it in **Settings → Schema → Stat Sheet Templates**. The new vault copy can then be selected, edited, and published like any other saved template.
+To customize or share a built-in layout without first applying it to an entity, choose **Save copy to Vault** beside it in **Settings → Templates → Stat sheets**. The new vault copy can then be selected, edited, and published like any other saved template.
 
 Saved templates only capture structure (labels, types, dice formulas, counter bounds) — not the values you'd filled in — so applying one to a new entity always starts blank/default.
 
@@ -76,7 +76,7 @@ packages are rejected before anything is saved.
 
 ### Default template per category
 
-In **Settings → Schema → Stat Sheet Templates**, the **Default Template by Category** section lets you pick a template (built-in or saved) for each entity category — e.g. "Character" → D&D Character, "NPC" → D&D NPC. Every new entity of that category then starts with the template's fields already applied, no manual step needed. Leave a category set to "None" if it shouldn't get stats automatically.
+In **Settings → Templates → Stat sheets**, the **Default Template by Category** section lets you pick a template (built-in or saved) for each entity category — e.g. "Character" → D&D Character, "NPC" → D&D NPC. Every new entity of that category then starts with the template's fields already applied, no manual step needed. Leave a category set to "None" if it shouldn't get stats automatically.
 
 ## Rolling dice
 
@@ -89,6 +89,8 @@ Stat Sheet data lives directly in the entity's note (its `statSheet` frontmatter
 ## Presentation Templates
 
 Presentation Templates change how a compatible Stat Sheet is arranged without changing its fields or values. Open an entity's **Stats** tab and choose **Presentations** to switch layouts, set a schema default, or build a new one with the visual card editor (a Markdown source tab is also available for direct editing). Templates are limited to the Stat Sheet schema they were made for, so fields always stay compatible.
+
+Write your own layout in Markdown with field references such as `{{stat.hp}}` and layout sections for groups, cards and rows. Repeatable Table fields (used for Weapons and Items by default) keep rows of data together: add rows, edit their cells, adjust counters and roll dice from the table. In the template editor you can customise a Repeatable Table's column headings and cell types (text, number, dice, counter or checkbox), so the same table type can hold skills, spells or any other list.
 
 ## Related reading
 

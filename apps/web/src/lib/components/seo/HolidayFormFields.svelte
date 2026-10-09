@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { holidayConfig, pickFrom } from "$lib/services/seo/generator-engine";
+  import { holidayConfig, pickFrom } from "$lib/services/seo/generator-config";
   import SelectWithCustomOption from "$lib/components/forms/SelectWithCustomOption.svelte";
 
   let {
@@ -33,7 +33,7 @@
   const selectClass =
     "w-full bg-theme-bg/60 border border-theme-border/60 rounded-lg px-3 py-2 text-xs text-theme-text focus:outline-none focus:border-theme-primary/60";
   const labelClass =
-    "text-[11px] font-bold uppercase tracking-wider text-theme-text/80";
+    "text-meta font-bold uppercase tracking-wider text-theme-text/80";
   const inputClass =
     "w-full bg-theme-bg/60 border border-theme-border/60 rounded-lg px-3 py-2 text-sm text-theme-text focus:outline-none focus:border-theme-primary/60";
 </script>
@@ -140,7 +140,7 @@
       tone = pickFrom(holidayConfig.tones);
       onSurprise?.();
     }}
-    class="flex items-center gap-1.5 px-3 py-1.5 bg-theme-surface/60 border border-theme-border/60 rounded-lg text-[10px] font-bold uppercase tracking-wider text-theme-text hover:bg-theme-primary hover:text-theme-bg transition-all cursor-pointer"
+    class="flex items-center gap-1.5 px-3 py-1.5 bg-theme-surface/60 border border-theme-border/60 rounded-lg text-micro font-bold uppercase tracking-wider text-theme-text hover:bg-theme-primary hover:text-theme-bg transition-all cursor-pointer"
   >
     <span class="icon-[lucide--dices] w-3.5 h-3.5" aria-hidden="true"
     ></span>Surprise Me

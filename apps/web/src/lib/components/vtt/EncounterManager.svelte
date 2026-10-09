@@ -99,7 +99,7 @@
         >
           Encounter Snapshots
         </h2>
-        <p class="text-[10px] text-theme-muted mt-1">
+        <p class="text-micro text-theme-muted mt-1">
           Save the current combat state or restore a previous encounter.
         </p>
       </div>
@@ -116,7 +116,7 @@
     <div class="p-4 space-y-4 max-h-[70vh] overflow-y-auto custom-scrollbar">
       <label class="space-y-2 block">
         <span
-          class="text-[10px] uppercase tracking-widest font-bold text-theme-muted"
+          class="text-micro uppercase tracking-widest font-bold text-theme-muted"
         >
           Encounter Name
         </span>
@@ -132,7 +132,7 @@
 
       <div class="grid gap-2 md:grid-cols-2">
         <button
-          class="w-full px-4 py-3 rounded-lg bg-theme-primary text-theme-bg text-[10px] font-bold uppercase tracking-widest"
+          class="w-full px-4 py-3 rounded-lg bg-theme-primary text-theme-bg text-micro font-bold uppercase tracking-widest"
           onclick={saveSnapshot}
           disabled={loading || !mapSession.mapId}
         >
@@ -144,7 +144,7 @@
         </button>
 
         <button
-          class="w-full px-4 py-3 rounded-lg border border-theme-border text-theme-muted text-[10px] font-bold uppercase tracking-widest hover:text-theme-text"
+          class="w-full px-4 py-3 rounded-lg border border-theme-border text-theme-muted text-micro font-bold uppercase tracking-widest hover:text-theme-text"
           onclick={startNewEncounter}
           disabled={loading || !mapSession.mapId}
         >
@@ -162,13 +162,13 @@
                 {snapshot.name}
               </div>
               <div
-                class="text-[10px] uppercase tracking-widest text-theme-muted"
+                class="text-micro uppercase tracking-widest text-theme-muted"
               >
                 Round {snapshot.round} · {snapshot.tokenCount} tokens · {snapshot.mode}
               </div>
             </div>
             <button
-              class="px-3 py-2 rounded-lg border border-theme-border text-[10px] font-bold uppercase tracking-widest text-theme-muted hover:text-theme-text"
+              class="px-3 py-2 rounded-lg border border-theme-border text-micro font-bold uppercase tracking-widest text-theme-muted hover:text-theme-text"
               onclick={async () => {
                 await mapSession.loadEncounterSnapshot(snapshot.id);
                 close();
@@ -177,7 +177,7 @@
               Load
             </button>
             <button
-              class="px-3 py-2 rounded-lg border border-rose-500/30 text-[10px] font-bold uppercase tracking-widest text-rose-400 hover:text-rose-300"
+              class="px-3 py-2 rounded-lg border border-rose-500/30 text-micro font-bold uppercase tracking-widest text-rose-400 hover:text-rose-300"
               onclick={() => deleteSnapshot(snapshot.id, snapshot.name)}
               disabled={loading}
               aria-label={`Delete ${snapshot.name}`}

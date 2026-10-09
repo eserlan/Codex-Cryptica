@@ -2,7 +2,7 @@ import type { AnswerConfigInput } from "../schema";
 
 export const howDoIGetPlayersToEngageWithMyCampaignWorld: AnswerConfigInput = {
   slug: "how-do-i-get-players-to-engage-with-my-campaign-world",
-  category: "session-prep",
+  category: "running-the-game",
   publishedAt: "2026-08-31",
   question: "How do I get players to engage with my campaign world?",
   kind: "framework",
@@ -115,6 +115,7 @@ export const howDoIGetPlayersToEngageWithMyCampaignWorld: AnswerConfigInput = {
     "how-do-i-start-gming-for-the-first-time",
     "how-do-you-make-a-tabletop-rpg-session-more-engaging",
     "how-do-i-get-my-rpg-party-to-work-together",
+    "how-do-i-improvise-npcs-in-dnd",
   ],
   discovery: {
     id: "answer-player-engagement",

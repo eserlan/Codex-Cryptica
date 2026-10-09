@@ -62,10 +62,19 @@ export interface SilhouetteFetchOptions {
  * cached, so going offline and back does not poison the catalogue.
  */
 const svgCache = new Map<string, Promise<string>>();
+const tintedCache = new Map<string, Promise<string | null>>();
+const objectUrlCache = new Map<string, Promise<string | null>>();
 
 /** Drops the session cache. Test seam; also useful after a failed load. */
 export function clearSilhouetteCache(): void {
   svgCache.clear();
+  tintedCache.clear();
+  for (const pending of objectUrlCache.values()) {
+    void pending.then((url) => {
+      if (url?.startsWith("blob:")) URL.revokeObjectURL(url);
+    });
+  }
+  objectUrlCache.clear();
 }
 
 /**
@@ -115,6 +124,53 @@ export async function loadSilhouetteDataUri(
   fillColor = DEFAULT_SILHOUETTE_FILL,
   options: SilhouetteFetchOptions = {},
 ): Promise<string | null> {
-  const svg = await loadSilhouetteSvg(silhouette, options);
-  return svg === null ? null : svgToDataUri(tintSilhouetteSvg(svg, fillColor));
+  const key = JSON.stringify([
+    getSilhouetteUrl(silhouette, options.base ?? SILHOUETTE_ASSET_BASE),
+    fillColor,
+  ]);
+  const cached = tintedCache.get(key);
+  if (cached) return cached;
+  const pending = loadSilhouetteSvg(silhouette, options).then((svg) => {
+    if (svg === null) {
+      tintedCache.delete(key);
+      return null;
+    }
+    return svgToDataUri(tintSilhouetteSvg(svg, fillColor));
+  });
+  tintedCache.set(key, pending);
+  return pending;
+}
+
+/**
+ * Like `loadSilhouetteDataUri`, but as a short object URL where the browser
+ * supports them. One URL per artwork and colour is kept for the session.
+ */
+export async function loadSilhouetteImageUrl(
+  silhouette: Pick<SilhouetteDefinition, "r2Path">,
+  fillColor = DEFAULT_SILHOUETTE_FILL,
+  options: SilhouetteFetchOptions = {},
+): Promise<string | null> {
+  const canCreate =
+    typeof URL !== "undefined" &&
+    typeof URL.createObjectURL === "function" &&
+    typeof Blob !== "undefined";
+  if (!canCreate) {
+    return loadSilhouetteDataUri(silhouette, fillColor, options);
+  }
+  const key = JSON.stringify([
+    getSilhouetteUrl(silhouette, options.base ?? SILHOUETTE_ASSET_BASE),
+    fillColor,
+  ]);
+  const cached = objectUrlCache.get(key);
+  if (cached) return cached;
+  const pending = loadSilhouetteSvg(silhouette, options).then((svg) => {
+    if (svg === null) {
+      objectUrlCache.delete(key);
+      return null;
+    }
+    const tinted = tintSilhouetteSvg(svg, fillColor);
+    return URL.createObjectURL(new Blob([tinted], { type: "image/svg+xml" }));
+  });
+  objectUrlCache.set(key, pending);
+  return pending;
 }

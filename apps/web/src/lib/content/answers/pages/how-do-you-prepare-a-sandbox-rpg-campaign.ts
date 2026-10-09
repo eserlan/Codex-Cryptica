@@ -166,6 +166,13 @@ export const howDoYouPrepareASandboxRpgCampaign: AnswerConfigInput = {
     "how-do-i-expand-a-simple-rpg-campaign-idea",
     "xp-leveling-vs-milestone-leveling",
     "how-do-i-make-a-player-base-matter-in-an-rpg-campaign",
+    "how-much-of-the-plot-should-a-dm-prepare",
+    "how-do-i-build-a-believable-economy-for-a-fantasy-world",
+    "what-rpg-map-making-tool-should-i-use",
+    "how-do-i-run-exploration-in-a-huge-ruined-city",
+    "how-do-i-run-ship-to-ship-combat-without-sidelining-the-party",
+    "how-do-i-make-a-campaign-threat-feel-urgent-without-railroading",
+    "how-do-i-start-a-dnd-campaign",
   ],
   discovery: {
     id: "answer-sandbox-campaign-prep",

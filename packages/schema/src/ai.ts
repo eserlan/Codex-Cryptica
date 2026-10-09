@@ -140,6 +140,14 @@ export interface TextGenerationService {
       instructions?: string;
       priority?: "instructions-first" | "incoming-first" | "preserve-existing";
       themeId?: string;
+      /**
+       * The lore template to steer the revision toward, already resolved on the
+       * main thread. Required for vault templates to reach the worker, which has
+       * its own module scope (like `interactionsEnabled`). "" means a blank
+       * template, so no structure is imposed; undefined falls back to the
+       * built-in template for the entity type.
+       */
+      loreTemplate?: string;
       interactionsEnabled?: boolean;
     },
   ): Promise<{

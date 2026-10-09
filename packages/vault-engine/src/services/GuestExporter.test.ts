@@ -166,4 +166,65 @@ describe("GuestExporter", () => {
     expect(bundle.canvases[0].edges).toHaveLength(1);
     expect(bundle.canvases[0].edges[0].id).toBe("edge-1-3");
   });
+
+  describe("report entities", () => {
+    const report: Entity = {
+      id: "report-1",
+      type: "note",
+      title: "Party Report",
+      status: "active",
+      kind: "report",
+      content: "## Overview",
+      connections: [],
+    };
+    const normalNote: Entity = {
+      id: "note-1",
+      type: "note",
+      title: "Party Notes",
+      status: "active",
+      content: "Regular note",
+      connections: [{ target: "report-1", type: "neutral" }],
+    };
+
+    it("excludes reports and connections that target them", () => {
+      const bundle = GuestExporter.export({
+        ...defaultOptions,
+        entities: [normalNote, report],
+      });
+      const ids = bundle.entities.map((e) => e.id);
+      expect(ids).not.toContain("report-1");
+      expect(bundle.relationships.some((r) => r.target === "report-1")).toBe(
+        false,
+      );
+    });
+
+    it("still exports an ordinary note", () => {
+      const bundle = GuestExporter.export({
+        ...defaultOptions,
+        entities: [normalNote, report],
+      });
+      expect(bundle.entities.map((e) => e.id)).toContain("note-1");
+    });
+
+    it("drops canvas nodes that point at a report", () => {
+      const bundle = GuestExporter.export({
+        ...defaultOptions,
+        entities: [normalNote, report],
+        canvases: [
+          {
+            id: "c",
+            name: "C",
+            playerVisible: true,
+            nodes: [
+              { id: "n1", type: "entity", entityId: "report-1" },
+              { id: "n2", type: "entity", entityId: "note-1" },
+            ],
+            edges: [],
+          } as any,
+        ],
+      });
+      const nodes = bundle.canvases?.[0]?.nodes.map((n: any) => n.id);
+      expect(nodes).toEqual(["n2"]);
+    });
+  });
 });

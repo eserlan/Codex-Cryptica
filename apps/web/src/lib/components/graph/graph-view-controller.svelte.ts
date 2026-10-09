@@ -1,11 +1,18 @@
 import { untrack } from "svelte";
 import { unsavedPositionUpdates } from "./position-persistence";
+import {
+  applyLayoutSnapshot,
+  restoreEverydayPositions,
+  type LayoutPositions,
+} from "./graph-layout-snapshot";
 import type { Core } from "cytoscape";
 import {
   initGraph,
   isLayoutCollinear,
   LayoutManager,
   GraphImageManager,
+  attachCommunityHulls,
+  type CommunityHullOverlay,
   setupGraphEvents,
   syncGraphElements,
   applyLargeGraphRenderHints,
@@ -24,7 +31,7 @@ import type { connectionModeStore as connectionModeStoreType } from "$lib/stores
 import type { modalUIStore as modalUIStoreType } from "$lib/stores/ui/modal-ui.svelte";
 import {
   resolveEntitySilhouette,
-  loadSilhouetteDataUri,
+  loadSilhouetteImageUrl,
   deriveEntityTypePalette,
 } from "schema";
 import { themeStore } from "$lib/stores/theme.svelte";
@@ -36,7 +43,7 @@ import {
   markSearchEntityFocusHandled,
 } from "../search/search-focus";
 import type { LocalEntity } from "$lib/stores/vault/types";
-import { systemClock } from "$lib/utils/runtime-deps";
+import { systemClock, type Clock } from "$lib/utils/runtime-deps";
 import {
   browserPerformanceCapture,
   browserPerformanceRecorder,
@@ -79,6 +86,7 @@ export function resolveViewport(
 }
 
 export interface GraphViewDependencies {
+  clock?: Clock;
   graph: typeof graphStore;
   vault: typeof vaultStore;
   debugStore: typeof debugStoreType;
@@ -92,6 +100,7 @@ export class GraphViewController {
   cy = $state<Core | undefined>();
   layoutManager = $state<LayoutManager | undefined>();
   imageManager = $state<GraphImageManager | undefined>();
+  communityHulls = $state<CommunityHullOverlay | undefined>();
 
   isLayoutRunning = $state(false);
   graphVisible = $derived(this.cy !== undefined);
@@ -179,6 +188,7 @@ export class GraphViewController {
   private searchFocusListener: ((event: Event) => void) | null = null;
 
   private deps: GraphViewDependencies;
+  private clock: Clock;
 
   constructor(
     options: { selectedId: string | null },
@@ -186,6 +196,7 @@ export class GraphViewController {
   ) {
     this.selectedId = options.selectedId;
     this.deps = deps;
+    this.clock = deps.clock ?? systemClock;
   }
 
   setVisibilityInputs = (inputs: GraphVisibilityInputs) => {
@@ -305,6 +316,17 @@ export class GraphViewController {
         (window as any).graphViewController = this;
       }
 
+      const hullCanvas = container.querySelector<HTMLCanvasElement>(
+        "canvas[data-community-hulls]",
+      );
+      this.communityHulls?.destroy();
+      this.communityHulls = hullCanvas
+        ? attachCommunityHulls(instance, hullCanvas, {
+            enabled: untrack(() => this.communityHullsWanted()),
+            strong: untrack(() => this.deps.graph.communityMode === "strong"),
+          })
+        : undefined;
+
       this.cleanupEvents = setupGraphEvents(instance, {
         onNodeMouseOver: (id, renderedPos) => {
           this.hoverPosition = renderedPos;
@@ -319,7 +341,7 @@ export class GraphViewController {
             typeof node?.cy === "function" ? node.cy() : this.cy;
           const lastCxtTap =
             (cyInstance?.scratch?.("_lastCxtTap") as number | undefined) ?? 0;
-          if (Date.now() - lastCxtTap < 400) {
+          if (this.clock.now() - lastCxtTap < 400) {
             return;
           }
 
@@ -483,6 +505,8 @@ export class GraphViewController {
       this.cleanupEvents();
       this.cleanupEvents = undefined;
     }
+    this.communityHulls?.destroy();
+    this.communityHulls = undefined;
     this.clearNodeSelectTimer();
     this.clearRenderReadyMeasurement();
     if (this.layoutManager) {
@@ -595,6 +619,14 @@ export class GraphViewController {
               this.isSuspended
             ) {
               this.needsVisibilityReconcile = true;
+              return;
+            }
+            // A view's own layout is open (#3456): keep it on screen after any
+            // layout pass, and never write it, or positions worked out around
+            // it, into the vault's everyday arrangement.
+            const openLayout = this.deps.graph.layoutOverride;
+            if (openLayout) {
+              applyLayoutSnapshot(this.cy, openLayout);
               return;
             }
             const notLoading = this.deps.vault.status !== "loading";
@@ -760,6 +792,30 @@ export class GraphViewController {
     this.nodeSelectSpan = null;
   };
 
+  /**
+   * The graph only places an entity when it is first added, so when a view's
+   * saved layout opens or closes, entities already on screen are moved here:
+   * to their saved positions, or back to the vault's everyday ones. Entities
+   * added later are placed from the layout by the elements themselves.
+   * Timeline and orbit arrange entities on their own, so they are left alone.
+   */
+  private lastLayoutOverride: LayoutPositions | null = null;
+  private syncLayoutOverride() {
+    const override = this.deps.graph.layoutOverride ?? null;
+    if (override === this.lastLayoutOverride) return;
+    const previous = this.lastLayoutOverride;
+    this.lastLayoutOverride = override;
+    if (override) {
+      if (this.deps.graph.timelineMode || this.deps.graph.orbitMode) return;
+      applyLayoutSnapshot(this.cy, override);
+    } else if (previous) {
+      restoreEverydayPositions(
+        this.cy,
+        (id) => this.deps.vault.entities[id]?.metadata?.coordinates,
+      );
+    }
+  }
+
   // Sync Logic
   syncElements = () => {
     if (this.isSuspended) {
@@ -800,6 +856,7 @@ export class GraphViewController {
       this.lastSyncedGraphStructureVersion = graphStructureVersion;
       this.lastSyncedFilterSignature = filterSignature;
 
+      this.syncLayoutOverride();
       syncGraphElements(this.cy, {
         elements: this.deps.graph.elements,
         vaultStatus: this.deps.vault.status,
@@ -888,6 +945,17 @@ export class GraphViewController {
     }
   };
 
+  /** Timeline and orbit arrange nodes by date or distance, not by community. */
+  private communityHullsWanted() {
+    const g = this.deps.graph;
+    return g.communityMode !== "off" && !g.timelineMode && !g.orbitMode;
+  }
+
+  syncCommunityHulls = () => {
+    this.communityHulls?.setEnabled(this.communityHullsWanted());
+    this.communityHulls?.setStrong(this.deps.graph.communityMode === "strong");
+  };
+
   syncImages = () => {
     if (this.isSuspended) {
       this.needsVisibilityReconcile = true;
@@ -939,7 +1007,7 @@ export class GraphViewController {
             // The artwork lives in R2, so this is a fetch (cached per URL for
             // the session). A node whose silhouette cannot be reached simply
             // paints without a glyph.
-            return loadSilhouetteDataUri(sil, glyphColor);
+            return loadSilhouetteImageUrl(sil, glyphColor);
           },
           onBatchApplied: (count) => {
             this.deps.debugStore.log(

@@ -6,7 +6,16 @@ import {
   viewPresetsStore as defaultViewPresetsStore,
   type ViewPresetsStore,
 } from "./view-presets.svelte";
-import type { ViewPreset, ViewPresetState } from "./view-presets";
+import type {
+  ViewLayoutSnapshot,
+  ViewPreset,
+  ViewPresetState,
+} from "./view-presets";
+import {
+  resolveLayoutOverride,
+  withLayoutOverride,
+  type LayoutPositions,
+} from "$lib/components/graph/graph-layout-snapshot";
 import { explorerUIStore } from "$lib/stores/ui/explorer-ui.svelte";
 import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
 import { connectionModeStore } from "$lib/stores/ui/connection-mode.svelte";
@@ -25,6 +34,11 @@ export const FOCUS_BASE_COUNT = 500;
 export const FOCUS_DETAIL_STEP = 150;
 /** Avoid a dense focus neighbourhood overwhelming the renderer. */
 export const FOCUS_EDGE_CAP = 2_000;
+
+type CommunityMode = "off" | "soft" | "strong";
+
+const nextCommunityMode = (mode: CommunityMode): CommunityMode =>
+  mode === "off" ? "soft" : mode === "soft" ? "strong" : "off";
 
 export class GraphStore {
   // Dependencies
@@ -104,6 +118,14 @@ export class GraphStore {
     return this.isLargeGraph && !this.showFullGraph;
   }
 
+  /**
+   * Saved positions of the view that is open, laid over the vault's everyday
+   * arrangement while it is (#3456). `null` when the open view has no layout or
+   * none is open. Held as a plain value: it can be large, is only ever replaced
+   * whole, and must never be written back to the vault.
+   */
+  layoutOverride = $state.raw<LayoutPositions | null>(null);
+
   elements = $derived.by(() => {
     const focusComputeSpan = browserPerformanceRecorder.start(
       "graph_focus_compute",
@@ -168,7 +190,7 @@ export class GraphStore {
               renderedNodeCount: renderEntities.length,
               renderedEdgeCount: result.length - renderEntities.length,
             }));
-            return result;
+            return withLayoutOverride(result, this.layoutOverride);
           }
         }
       }
@@ -183,7 +205,7 @@ export class GraphStore {
         renderedNodeCount: visibleEntities.length,
         renderedEdgeCount: result.length - visibleEntities.length,
       }));
-      return result;
+      return withLayoutOverride(result, this.layoutOverride);
     } catch (error) {
       focusComputeSpan.fail("unexpected");
       throw error;
@@ -204,6 +226,11 @@ export class GraphStore {
   // Labels state
   showLabels = $state(true);
   showImages = $state(true);
+  /** Backgrounds behind large communities of linked entities: off, soft or strong. */
+  communityMode = $state<CommunityMode>("soft");
+  get showCommunities() {
+    return this.communityMode !== "off";
+  }
   stableLayout = $state(true);
   recentLabels = $state<string[]>([]);
   labelFilterMode = $state<"AND" | "OR">("OR");
@@ -474,15 +501,7 @@ export class GraphStore {
       this.eras = savedEras;
     }
 
-    const savedShowLabels = await db.get("settings", "graphShowLabels");
-    if (savedShowLabels !== undefined) {
-      this.showLabels = savedShowLabels;
-    }
-
-    const savedShowImages = await db.get("settings", "graphShowImages");
-    if (savedShowImages !== undefined) {
-      this.showImages = savedShowImages;
-    }
+    await this.loadDisplayToggles(db);
 
     const savedStableLayout = await db.get("settings", "graphStableLayout");
     if (savedStableLayout !== undefined) {
@@ -526,13 +545,18 @@ export class GraphStore {
   // ── View presets ────────────────────────────────────────────────────────
   async loadViewPresets() {
     const vaultId = this.vault.activeVaultId ?? "default";
+    // Another vault's layout must never carry over.
+    if (this.presetsStore.loadedVaultId !== vaultId) this.layoutOverride = null;
     return await this.presetsStore.loadPresets(vaultId);
   }
 
-  captureViewState(viewport?: {
-    pan: { x: number; y: number };
-    zoom: number;
-  }): ViewPresetState {
+  captureViewState(
+    viewport?: {
+      pan: { x: number; y: number };
+      zoom: number;
+    },
+    layout?: ViewLayoutSnapshot,
+  ): ViewPresetState {
     return {
       activeLabels: Array.from(this.activeLabels),
       labelFilterMode: this.labelFilterMode,
@@ -547,36 +571,61 @@ export class GraphStore {
       orbitMode: this.orbitMode,
       centralNodeId: this.centralNodeId,
       viewport,
+      // Only present when the user chose to keep the layout, so filter-only
+      // views are saved exactly as they always were.
+      ...(layout ? { layout } : {}),
     };
+  }
+
+  /** The id of the saved view that is open, if any. */
+  get activeViewPresetId(): string | null {
+    return this.presetsStore.activePresetId;
   }
 
   async saveViewPreset(
     name: string,
     viewport?: { pan: { x: number; y: number }; zoom: number },
+    layout?: ViewLayoutSnapshot,
   ): Promise<ViewPreset | null> {
     const trimmed = name.trim();
     if (!trimmed) return null;
     const vaultId = this.vault.activeVaultId ?? "default";
-    const state = this.captureViewState(viewport);
-    return await this.presetsStore.savePreset(vaultId, trimmed, state);
+    const state = this.captureViewState(viewport, layout);
+    const saved = await this.presetsStore.savePreset(vaultId, trimmed, state);
+    // The view just saved is now the open one, so its layout is what is shown.
+    if (saved) this.layoutOverride = layout?.positions ?? null;
+    return saved;
   }
 
   /**
-   * Restores a preset's visual state. Filters that reference labels,
-   * categories, or orbit centers that no longer exist in the vault are
-   * skipped instead of failing (preset drift).
-   *
-   * Returns the preset and whether a mode (timeline/orbit) flipped — callers
-   * use that to decide if restoring the stored viewport is safe or whether
-   * the mode layout's own fit should win.
+   * Sets, replaces or removes a view's saved layout ("Update layout snapshot").
+   * If that view is the open one, the screen follows it at once. Returns `null`
+   * and changes nothing when the view is missing or the change cannot be stored.
    */
-  applyViewPreset(
+  async updateViewPresetLayout(
     id: string,
-  ): { preset: ViewPreset; modeChanged: boolean } | null {
-    const preset = this.presetsStore.applyPreset(id);
-    if (!preset) return null;
-    const s = preset.state;
+    viewport: { pan: { x: number; y: number }; zoom: number } | undefined,
+    layout: ViewLayoutSnapshot | null,
+  ): Promise<ViewPreset | null> {
+    const vaultId = this.vault.activeVaultId ?? "default";
+    const updated = await this.presetsStore.setPresetLayout(
+      vaultId,
+      id,
+      layout,
+      viewport,
+    );
+    if (updated && this.presetsStore.activePresetId === id) {
+      this.layoutOverride = updated.state.layout?.positions ?? null;
+    }
+    return updated;
+  }
 
+  /**
+   * The parts of a preset's filters that still exist in the vault. Labels,
+   * categories and an orbit centre that were deleted since the view was saved
+   * are dropped instead of failing (preset drift).
+   */
+  private resolveAvailableFilters(s: ViewPresetState) {
     const entities = this.vault.allEntities;
     let labels = s.activeLabels;
     let categories = s.activeCategories;
@@ -596,16 +645,19 @@ export class GraphStore {
         centralNodeId = null;
       }
     }
+    return { labels, categories, centralNodeId };
+  }
 
-    const wasTimeline = this.timelineMode;
-    const wasOrbit = this.orbitMode;
-
-    this.activeLabels = new Set(labels);
-    this.labelFilterMode = s.labelFilterMode;
-    this.activeCategories = new Set(categories);
+  private applyDisplayFlags(s: ViewPresetState) {
     this.showLabels = s.showLabels !== false;
     this.showImages = s.showImages !== false;
     this.stableLayout = s.stableLayout !== false;
+  }
+
+  private applyTimelineAndOrbit(
+    s: ViewPresetState,
+    centralNodeId: string | null,
+  ) {
     this.timelineAxis = s.timelineAxis === "y" ? "y" : "x";
     this.timelineRange = {
       start: s.timelineRange?.start ?? null,
@@ -613,12 +665,51 @@ export class GraphStore {
     };
     this.timelineScale = s.timelineScale ?? 100;
     this.timelineMode = s.timelineMode === true;
-    this.centralNodeId = centralNodeId ?? null;
-    this.orbitMode = s.orbitMode === true && (centralNodeId ?? null) !== null;
+    this.centralNodeId = centralNodeId;
+    this.orbitMode = s.orbitMode === true && centralNodeId !== null;
+  }
+
+  /**
+   * Restores a preset's visual state. Filters that reference labels,
+   * categories, or orbit centers that no longer exist in the vault are
+   * skipped instead of failing (preset drift).
+   *
+   * Returns the preset and whether a mode (timeline/orbit) flipped — callers
+   * use that to decide if restoring the stored viewport is safe or whether
+   * the mode layout's own fit should win.
+   */
+  applyViewPreset(id: string): {
+    preset: ViewPreset;
+    modeChanged: boolean;
+    layoutApplied: boolean;
+  } | null {
+    const preset = this.presetsStore.applyPreset(id);
+    if (!preset) return null;
+    const s = preset.state;
+
+    const { labels, categories, centralNodeId } =
+      this.resolveAvailableFilters(s);
+
+    const wasTimeline = this.timelineMode;
+    const wasOrbit = this.orbitMode;
+
+    this.activeLabels = new Set(labels);
+    this.labelFilterMode = s.labelFilterMode;
+    this.activeCategories = new Set(categories);
+    this.applyDisplayFlags(s);
+    this.applyTimelineAndOrbit(s, centralNodeId ?? null);
 
     const modeChanged =
       wasTimeline !== this.timelineMode || wasOrbit !== this.orbitMode;
-    return { preset, modeChanged };
+
+    // Timeline and orbit arrange entities themselves, so a saved layout has
+    // nothing to say there. Applying any view replaces the previous layout, so
+    // a view without one shows the everyday arrangement again.
+    this.layoutOverride = resolveLayoutOverride(
+      s.layout,
+      this.timelineMode || this.orbitMode,
+    );
+    return { preset, modeChanged, layoutApplied: this.layoutOverride !== null };
   }
 
   async renameViewPreset(id: string, name: string) {
@@ -628,10 +719,13 @@ export class GraphStore {
 
   async deleteViewPreset(id: string) {
     const vaultId = this.vault.activeVaultId ?? "default";
+    const wasOpen = this.presetsStore.activePresetId === id;
     await this.presetsStore.deletePreset(vaultId, id);
+    if (wasOpen) this.layoutOverride = null;
   }
 
   resetView() {
+    this.layoutOverride = null;
     this.activeLabels = new Set();
     this.activeCategories = new Set();
     this.labelFilterMode = "OR";
@@ -710,6 +804,38 @@ export class GraphStore {
       await db.put("settings", newValue, "graphShowImages");
     } catch (error) {
       console.error("[GraphStore] Failed to persist graphShowImages:", error);
+    }
+  }
+
+  /** Display switches saved as plain booleans; a missing value keeps the default. */
+  private async loadDisplayToggles(db: Awaited<ReturnType<typeof getDB>>) {
+    const [labels, images, mode, legacy] = await Promise.all([
+      db.get("settings", "graphShowLabels"),
+      db.get("settings", "graphShowImages"),
+      db.get("settings", "graphCommunityMode"),
+      // Before there were three states this was a plain on/off flag.
+      db.get("settings", "graphShowCommunities"),
+    ]);
+    if (labels !== undefined) this.showLabels = labels;
+    if (images !== undefined) this.showImages = images;
+    const saved = mode ?? (legacy === false ? "off" : undefined);
+    if (saved === "off" || saved === "soft" || saved === "strong") {
+      this.communityMode = saved;
+    }
+  }
+
+  /** Cycles the group backgrounds: off, soft, strong, and back to off. */
+  async toggleCommunities() {
+    const next: CommunityMode = nextCommunityMode(this.communityMode);
+    this.communityMode = next;
+    try {
+      const db = await getDB();
+      await db.put("settings", next, "graphCommunityMode");
+    } catch (error) {
+      console.error(
+        "[GraphStore] Failed to persist graphCommunityMode:",
+        error,
+      );
     }
   }
 

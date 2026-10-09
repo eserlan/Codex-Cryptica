@@ -1,11 +1,13 @@
 <script lang="ts">
   import { vault } from "$lib/stores/vault.svelte";
   import type { EntityIndexEntry } from "$lib/utils/entity-mention-detector";
+  import HelpZenDetailSurface from "$lib/components/help-assistant/HelpZenDetailSurface.svelte";
   import { themeStore } from "$lib/stores/theme.svelte";
   import MarkdownEditor from "$lib/components/MarkdownEditor.svelte";
   import TemporalEditor from "$lib/components/timeline/TemporalEditor.svelte";
   import { revisionService } from "$lib/services/RevisionService.svelte";
   import DetailProposals from "$lib/components/entity-detail/proposals/DetailProposals.svelte";
+  import GenerateRelatedButton from "$lib/components/entity-detail/GenerateRelatedButton.svelte";
   import EntityProposals from "$lib/components/entity-detail/EntityProposals.svelte";
   import ZenConnections from "./ZenConnections.svelte";
   import { getTemporalLabel } from "$lib/components/entity-detail/detail-tabs";
@@ -95,6 +97,7 @@
   style="background-image: var(--bg-texture-overlay)"
   data-testid="zen-content"
 >
+  <HelpZenDetailSurface {entity} isEditing={editState.isEditing} />
   <div class="max-w-3xl mx-auto space-y-6">
     {#if entity && !editState.isEditing && !vault.isGuest}
       <div class="flex flex-wrap justify-end gap-2">
@@ -118,14 +121,7 @@
             AI Revise
           {/if}
         </button>
-        <button
-          type="button"
-          onclick={() => modalUIStore.openGeneratorWorkflowForEntity(entity.id)}
-          class="text-xs font-bold uppercase tracking-widest bg-theme-primary text-theme-bg border border-theme-primary hover:bg-theme-secondary hover:border-theme-secondary px-4 py-2 rounded-xl flex items-center gap-1.5 transition shadow-[0_0_15px_rgba(var(--color-theme-primary-rgb),0.15)] cursor-pointer"
-        >
-          <span class="icon-[lucide--sparkles] w-4 h-4"></span>
-          Generate Related
-        </button>
+        <GenerateRelatedButton entityId={entity.id} />
       </div>
     {/if}
     <!-- Temporal Data -->
@@ -205,7 +201,8 @@
         <h2
           class="text-xl font-header font-bold text-theme-primary mb-2 flex items-center gap-2 border-b border-theme-border pb-2"
         >
-          <span class="icon-[lucide--book-open] w-5 h-5"></span>
+          <span aria-hidden="true" class="icon-[lucide--book-open] w-5 h-5"
+          ></span>
           {themeStore.jargon.chronicle_header}
         </h2>
         {#if !editState.isEditing && entity && isDelveLocationEntity(entity)}
@@ -222,7 +219,7 @@
                 >
                   Spatial {delveCanvasLabel}
                 </span>
-                <span class="text-[10px] text-theme-muted">
+                <span class="text-micro text-theme-muted">
                   {existingCanvas
                     ? "Interactive room & sector floor plan on Spatial Canvas."
                     : "Generate an interactive room & sector floor plan on Spatial Canvas."}
@@ -236,9 +233,12 @@
                   onclick={() => {
                     openCanvasFromZen(existingCanvas, goto);
                   }}
-                  class="px-3.5 py-1.5 bg-theme-primary text-theme-bg font-bold text-[10px] rounded-lg uppercase font-header tracking-widest hover:bg-theme-secondary transition-colors shrink-0 flex items-center gap-1.5 shadow-md cursor-pointer"
+                  class="px-3.5 py-1.5 bg-theme-primary text-theme-bg font-bold text-micro rounded-lg uppercase font-header tracking-widest hover:bg-theme-secondary transition-colors shrink-0 flex items-center gap-1.5 shadow-md cursor-pointer"
                 >
-                  <span class="icon-[lucide--external-link] w-3.5 h-3.5"></span>
+                  <span
+                    aria-hidden="true"
+                    class="icon-[lucide--external-link] w-3.5 h-3.5"
+                  ></span>
                   Open {delveCanvasLabel}
                 </button>
                 <button
@@ -275,9 +275,12 @@
                       console.error("[DelveCanvas] Build failed:", err);
                     }
                   }}
-                  class="px-3.5 py-1.5 bg-theme-primary text-theme-bg font-bold text-[10px] rounded-lg uppercase font-header tracking-widest hover:bg-theme-secondary transition-colors shrink-0 flex items-center gap-1.5 shadow-md cursor-pointer"
+                  class="px-3.5 py-1.5 bg-theme-primary text-theme-bg font-bold text-micro rounded-lg uppercase font-header tracking-widest hover:bg-theme-secondary transition-colors shrink-0 flex items-center gap-1.5 shadow-md cursor-pointer"
                 >
-                  <span class="icon-[lucide--map] w-3.5 h-3.5"></span>
+                  <span
+                    aria-hidden="true"
+                    class="icon-[lucide--map] w-3.5 h-3.5"
+                  ></span>
                   Build {delveCanvasLabel}
                 </button>
               {/if}
@@ -298,7 +301,7 @@
           >
             {#if draft}
               <div
-                class="absolute top-0 right-0 p-2 text-[8px] font-bold text-theme-primary uppercase tracking-[0.2em]"
+                class="absolute top-0 right-0 p-2 text-nano font-bold text-theme-primary uppercase tracking-[0.2em]"
               >
                 Proposed
               </div>
@@ -317,7 +320,7 @@
           <div
             class="text-theme-muted italic text-sm flex items-center gap-2 py-4"
           >
-            <span class="icon-[lucide--lock] w-4 h-4"></span>
+            <span aria-hidden="true" class="icon-[lucide--lock] w-4 h-4"></span>
             Chronicle is hidden in shared mode
           </div>
         {/if}
@@ -329,7 +332,8 @@
         <h2
           class="text-xl font-header font-bold text-theme-primary mb-2 flex items-center gap-2 border-b border-theme-border pb-2"
         >
-          <span class="icon-[lucide--scroll-text] w-5 h-5"></span>
+          <span aria-hidden="true" class="icon-[lucide--scroll-text] w-5 h-5"
+          ></span>
           {themeStore.jargon.lore_header}
         </h2>
         {#if editState.isEditing}
@@ -346,7 +350,7 @@
           >
             {#if draft}
               <div
-                class="absolute top-0 right-0 p-2 text-[8px] font-bold text-theme-primary uppercase tracking-[0.2em]"
+                class="absolute top-0 right-0 p-2 text-nano font-bold text-theme-primary uppercase tracking-[0.2em]"
               >
                 Proposed
               </div>
@@ -375,3 +379,14 @@
     />
   </div>
 </div>
+
+<style>
+  /* Images inside an entity's text stay a comfortable size in the reading view. */
+  .prose-container :global(img) {
+    max-width: 100%;
+    max-height: 16rem;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+  }
+</style>

@@ -115,6 +115,7 @@ describe("GraphViewController", () => {
 
   beforeEach(() => {
     deps = {
+      clock: { now: () => 1000 },
       graph: {
         elements: [],
         timelineMode: false,
@@ -125,6 +126,7 @@ describe("GraphViewController", () => {
         stableLayout: true,
         stats: { nodeCount: 0 },
         showImages: true,
+        communityMode: "soft",
         isLargeGraph: false,
         perfStylingActive: false,
         activeLabels: new Set(),
@@ -295,7 +297,7 @@ describe("GraphViewController", () => {
       if (val !== undefined) scratchStore[key] = val;
       return scratchStore[key];
     }) as any;
-    mockCy.scratch("_lastCxtTap", Date.now());
+    mockCy.scratch("_lastCxtTap", 1000);
 
     const mockNode = {
       id: () => "node-1",
@@ -762,6 +764,149 @@ describe("GraphViewController", () => {
     });
   });
 
+  describe("a view's saved layout (#3456)", () => {
+    /** Fake nodes with just what the layout helpers touch. */
+    function fakeNodes(list: Array<{ id: string; x: number; y: number }>) {
+      const state = list.map((n) => ({ ...n }));
+      const nodes = state.map((n) => ({
+        id: () => n.id,
+        position: (p?: { x: number; y: number }) => {
+          if (p) {
+            n.x = p.x;
+            n.y = p.y;
+            return undefined;
+          }
+          return { x: n.x, y: n.y };
+        },
+      }));
+      return {
+        state,
+        collection: { forEach: (cb: (n: any) => void) => nodes.forEach(cb) },
+      };
+    }
+    const at = (x: number, y: number) => ({
+      metadata: { coordinates: { x, y } },
+    });
+
+    async function ready() {
+      await controller.init(document.createElement("div"), {});
+      controller.loadPhase = "ready";
+    }
+
+    it("moves the entities already on the graph to their saved positions when the layout opens", async () => {
+      await ready();
+      const { state, collection } = fakeNodes([
+        { id: "a", x: 0, y: 0 },
+        { id: "b", x: 0, y: 0 },
+      ]);
+      vi.mocked(controller.cy!.nodes).mockReturnValueOnce(collection as any);
+      deps.graph.layoutOverride = { a: { x: 11, y: 22 } };
+
+      controller.syncElements();
+
+      expect(state.find((n) => n.id === "a")).toMatchObject({ x: 11, y: 22 });
+      // Not in the layout: left where it is.
+      expect(state.find((n) => n.id === "b")).toMatchObject({ x: 0, y: 0 });
+    });
+
+    it("puts entities back where the vault keeps them when the layout closes", async () => {
+      await ready();
+      deps.vault.entities = { a: at(5, 6) };
+      const opened = fakeNodes([{ id: "a", x: 0, y: 0 }]);
+      vi.mocked(controller.cy!.nodes).mockReturnValueOnce(
+        opened.collection as any,
+      );
+      deps.graph.layoutOverride = { a: { x: 11, y: 22 } };
+      controller.syncElements();
+
+      const closing = fakeNodes([{ id: "a", x: 11, y: 22 }]);
+      vi.mocked(controller.cy!.nodes).mockReturnValueOnce(
+        closing.collection as any,
+      );
+      deps.graph.layoutOverride = null;
+      controller.syncElements();
+
+      expect(closing.state[0]).toMatchObject({ x: 5, y: 6 });
+    });
+
+    it("restores everyday positions before switching an open layout to timeline mode", async () => {
+      await ready();
+      deps.vault.entities = { a: at(5, 6) };
+      const opening = fakeNodes([{ id: "a", x: 0, y: 0 }]);
+      vi.mocked(controller.cy!.nodes).mockReturnValueOnce(
+        opening.collection as any,
+      );
+      deps.graph.layoutOverride = { a: { x: 11, y: 22 } };
+      controller.syncElements();
+
+      const switching = fakeNodes([{ id: "a", x: 11, y: 22 }]);
+      vi.mocked(controller.cy!.nodes).mockReturnValueOnce(
+        switching.collection as any,
+      );
+      deps.graph.timelineMode = true;
+      deps.graph.layoutOverride = null;
+      controller.syncElements();
+
+      expect(switching.state[0]).toMatchObject({ x: 5, y: 6 });
+    });
+
+    it("does nothing again while the same layout stays open (negative)", async () => {
+      await ready();
+      const override = { a: { x: 1, y: 1 } };
+      deps.graph.layoutOverride = override;
+      vi.mocked(controller.cy!.nodes).mockReturnValueOnce(
+        fakeNodes([{ id: "a", x: 0, y: 0 }]).collection as any,
+      );
+      controller.syncElements();
+      vi.mocked(controller.cy!.nodes).mockClear();
+
+      controller.syncElements();
+
+      expect(controller.cy!.nodes).not.toHaveBeenCalled();
+    });
+
+    it("does not move anything when no layout is open and none was (negative)", async () => {
+      await ready();
+      vi.mocked(controller.cy!.nodes).mockClear();
+
+      controller.syncElements();
+
+      expect(controller.cy!.nodes).not.toHaveBeenCalled();
+    });
+
+    it("never saves positions to the vault while a view's layout is open, and keeps the layout on screen", async () => {
+      await ready();
+      deps.vault.entities = { placed: at(5, 5), unplaced: { metadata: {} } };
+      deps.graph.layoutOverride = { placed: { x: 90, y: 90 } };
+      // Consume the move that happens when the layout first opens.
+      vi.mocked(controller.cy!.nodes).mockReturnValueOnce(
+        fakeNodes([]).collection as any,
+      );
+      controller.syncElements();
+      await controller.applyCurrentLayout({
+        reason: "Initial Load",
+        isInitial: true,
+      } as any);
+      const calls = (controller.layoutManager as any).apply.mock.calls;
+      const onPositions = calls[calls.length - 1][1].onPositionsUpdated as (
+        updates: Record<string, unknown>,
+        meta?: { healed?: boolean },
+      ) => void;
+      const shown = fakeNodes([{ id: "placed", x: 3, y: 3 }]);
+      vi.mocked(controller.cy!.nodes).mockReturnValueOnce(
+        shown.collection as any,
+      );
+
+      onPositions(
+        { placed: at(100, 100), unplaced: at(40, 40) },
+        { healed: true },
+      );
+
+      expect(deps.vault.batchUpdate).not.toHaveBeenCalled();
+      expect(shown.state[0]).toMatchObject({ x: 90, y: 90 });
+    });
+  });
+
   describe("viewport policy", () => {
     // apply is now called as apply(request, options) — viewport lives on request
     const lastPolicy = () => {
@@ -847,6 +992,45 @@ describe("GraphViewController", () => {
     });
   });
 
+  describe("community backgrounds", () => {
+    it("are shown normally and hidden in timeline mode or when turned off", () => {
+      const setEnabled = vi.fn();
+      const setStrong = vi.fn();
+      controller.communityHulls = { setEnabled, setStrong, destroy: vi.fn() };
+
+      controller.syncCommunityHulls();
+      expect(setEnabled).toHaveBeenLastCalledWith(true);
+      expect(setStrong).toHaveBeenLastCalledWith(false);
+
+      deps.graph.communityMode = "strong";
+      controller.syncCommunityHulls();
+      expect(setEnabled).toHaveBeenLastCalledWith(true);
+      expect(setStrong).toHaveBeenLastCalledWith(true);
+      deps.graph.communityMode = "soft";
+
+      deps.graph.timelineMode = true;
+      controller.syncCommunityHulls();
+      expect(setEnabled).toHaveBeenLastCalledWith(false);
+
+      deps.graph.timelineMode = false;
+      deps.graph.communityMode = "off";
+      controller.syncCommunityHulls();
+      expect(setEnabled).toHaveBeenLastCalledWith(false);
+    });
+
+    it("are torn down with the controller (negative: no further drawing)", () => {
+      const destroy = vi.fn();
+      controller.communityHulls = {
+        setEnabled: vi.fn(),
+        setStrong: vi.fn(),
+        destroy,
+      };
+      controller.destroy();
+      expect(destroy).toHaveBeenCalled();
+      expect(controller.communityHulls).toBeUndefined();
+    });
+  });
+
   describe("silhouette tinting (issue #2680)", () => {
     const ARTWORK =
       '<svg width="512" height="512" viewBox="0 0 512 512"><path fill="currentColor" d="M0 0h1v1H0z"/></svg>';
@@ -893,7 +1077,28 @@ describe("GraphViewController", () => {
     const glyphFor = (type: string) =>
       deriveEntityTypeTone(categories.getColor(type), PIRATE_DARK.tokens).glyph;
 
+    // Silhouettes reach the graph as object URLs; read the SVG behind one.
+    const blobs = new Map<string, Blob>();
+    const svgOf = async (url: string | null | undefined) => {
+      if (!url) return "";
+      const blob = blobs.get(url);
+      if (!blob) return decodeURIComponent(url);
+      return await new Promise<string>((resolve) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result));
+        reader.readAsText(blob);
+      });
+    };
+
     it("fills a silhouette with its own type's glyph colour", async () => {
+      let n = 0;
+      const create = vi
+        .spyOn(URL, "createObjectURL")
+        .mockImplementation((blob: Blob | MediaSource) => {
+          const url = `blob:silhouette-${++n}`;
+          blobs.set(url, blob as Blob);
+          return url;
+        });
       const options = await syncOptions();
 
       // Artwork comes from R2, so resolving one is a fetch.
@@ -902,13 +1107,14 @@ describe("GraphViewController", () => {
         node("character"),
       );
 
-      expect(location).toContain(encodeURIComponent(glyphFor("location")));
-      expect(character).toContain(encodeURIComponent(glyphFor("character")));
+      expect(await svgOf(location)).toContain(glyphFor("location"));
+      expect(await svgOf(character)).toContain(glyphFor("character"));
       // A moss node needs a lighter glyph than the theme primary to clear 3:1;
       // the blue character tone does not, so it keeps the theme's own colour.
       expect(glyphFor("location")).not.toBe(PIRATE_DARK.tokens.primary);
       expect(glyphFor("character")).toBe(PIRATE_DARK.tokens.primary);
       expect(location).not.toBe(character);
+      create.mockRestore();
     });
 
     it("keys the silhouette on the theme so a theme switch re-tints it", async () => {

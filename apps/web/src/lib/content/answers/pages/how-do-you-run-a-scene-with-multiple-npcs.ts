@@ -2,7 +2,7 @@ import type { AnswerConfigInput } from "../schema";
 
 export const howDoYouRunASceneWithMultipleNpcs: AnswerConfigInput = {
   slug: "how-do-you-run-a-scene-with-multiple-npcs",
-  category: "session-prep",
+  category: "running-the-game",
   publishedAt: "2026-09-14",
   question:
     "How do you run a scene with multiple NPCs without talking to yourself?",
@@ -156,6 +156,8 @@ export const howDoYouRunASceneWithMultipleNpcs: AnswerConfigInput = {
     "how-do-you-create-a-fantasy-faction",
     "how-do-you-run-dnd-for-a-large-group-of-players",
     "how-do-you-run-character-roles-in-a-cyberpunk-rpg",
+    "how-do-i-make-interviewing-npcs-interesting-in-an-investigation",
+    "how-do-i-handle-players-asking-an-npc-to-tell-us-everything-you-know",
   ],
   discovery: {
     id: "answer-run-scene-multiple-npcs",

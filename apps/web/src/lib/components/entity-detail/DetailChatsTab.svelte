@@ -287,7 +287,9 @@
         <h4
           class="font-header text-sm uppercase tracking-widest font-bold text-theme-secondary flex items-center gap-1.5"
         >
-          <span class="icon-[lucide--history] w-4 h-4 text-theme-primary"
+          <span
+            aria-hidden="true"
+            class="icon-[lucide--history] w-4 h-4 text-theme-primary"
           ></span>
           Guest Conversation Logs
         </h4>
@@ -300,7 +302,10 @@
         <div
           class="flex items-center justify-center py-8 text-theme-muted gap-2 text-xs"
         >
-          <span class="icon-[lucide--loader-2] w-4 h-4 animate-spin"></span>
+          <span
+            aria-hidden="true"
+            class="icon-[lucide--loader-2] w-4 h-4 animate-spin"
+          ></span>
           Loading transcripts...
         </div>
       {:else if primaryTranscripts.length === 0}
@@ -325,12 +330,12 @@
                   <span class="font-bold text-theme-text"
                     >{transcript.guestName}</span
                   >
-                  <span class="text-[10px] text-theme-muted"
+                  <span class="text-micro text-theme-muted"
                     >({transcript.guestId.slice(0, 6)})</span
                   >
                 </div>
                 <div class="flex items-center gap-1.5">
-                  <span class="text-[10px] text-theme-muted">
+                  <span class="text-micro text-theme-muted">
                     {new Date(transcript.lastUpdated).toLocaleString()}
                   </span>
                   <button
@@ -377,7 +382,7 @@
               <div class="space-y-3.5 pt-1">
                 {#each transcript.messages as msg (msg.id)}
                   <div class="space-y-1 group/msg relative">
-                    <div class="flex justify-between items-center text-[10px]">
+                    <div class="flex justify-between items-center text-micro">
                       <span
                         class="font-bold uppercase tracking-wider {msg.role ===
                         'user'
@@ -424,7 +429,7 @@
                             type="button"
                             onclick={() =>
                               proposerStore.promoteToRumor(msg.content)}
-                            class="text-[9px] font-bold text-theme-primary hover:text-theme-secondary uppercase tracking-widest flex items-center gap-0.5 transition cursor-pointer"
+                            class="text-nano font-bold text-theme-primary hover:text-theme-secondary uppercase tracking-widest flex items-center gap-0.5 transition cursor-pointer"
                             title="Promote this response to a rumor draft"
                           >
                             <span
@@ -450,7 +455,7 @@
                           <button
                             type="button"
                             onclick={() => (editingMessageId = null)}
-                            class="text-[9px] font-bold text-theme-muted hover:text-theme-text uppercase px-2 py-1"
+                            class="text-nano font-bold text-theme-muted hover:text-theme-text uppercase px-2 py-1"
                           >
                             Cancel
                           </button>
@@ -458,7 +463,7 @@
                             type="button"
                             onclick={() =>
                               saveHostMessageEdit(transcript, msg.id)}
-                            class="text-[9px] font-bold bg-theme-primary text-theme-bg rounded px-2 py-1 hover:bg-theme-secondary transition"
+                            class="text-nano font-bold bg-theme-primary text-theme-bg rounded px-2 py-1 hover:bg-theme-secondary transition"
                           >
                             Save
                           </button>
@@ -486,7 +491,9 @@
           <h4
             class="font-header text-sm uppercase tracking-widest font-bold text-theme-secondary flex items-center gap-1.5"
           >
-            <span class="icon-[lucide--user-round] w-4 h-4 text-theme-primary"
+            <span
+              aria-hidden="true"
+              class="icon-[lucide--user-round] w-4 h-4 text-theme-primary"
             ></span>
             Conversations as {entity.title}
           </h4>
@@ -509,7 +516,7 @@
                 <span class="block text-xs font-bold text-theme-text">
                   With {session.characterTitle}
                 </span>
-                <span class="block text-[10px] text-theme-muted">
+                <span class="block text-micro text-theme-muted">
                   {session.messages.length} message{session.messages.length ===
                   1
                     ? ""
@@ -534,7 +541,9 @@
         <div
           class="min-h-52 flex flex-col items-center justify-center text-center p-6 text-theme-muted bg-theme-surface/10 rounded-xl border border-theme-border/50 sm:flex-1"
         >
-          <span class="icon-[lucide--messages-square] w-12 h-12 mb-3 opacity-30"
+          <span
+            aria-hidden="true"
+            class="icon-[lucide--messages-square] w-12 h-12 mb-3 opacity-30"
           ></span>
           <p class="text-sm font-bold uppercase tracking-widest mb-1">
             Chat Disabled
@@ -571,7 +580,7 @@
         <!-- Active Chat Window -->
         <div class="flex justify-between items-center px-1 text-xs">
           <span
-            class="text-[10px] font-bold uppercase tracking-wider text-theme-muted"
+            class="text-micro font-bold uppercase tracking-wider text-theme-muted"
           >
             Conversation
           </span>
@@ -579,7 +588,7 @@
             <button
               type="button"
               onclick={copyGuestTranscript}
-              class="flex items-center gap-1 text-[10px] font-bold uppercase tracking-widest text-theme-muted hover:text-theme-primary transition cursor-pointer"
+              class="flex items-center gap-1 text-micro font-bold uppercase tracking-widest text-theme-muted hover:text-theme-primary transition cursor-pointer"
               title="Copy conversation"
               aria-label="Copy conversation"
             >
@@ -601,7 +610,7 @@
                 : 'self-start items-start'}"
             >
               <div
-                class="flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-wider text-theme-muted"
+                class="flex items-center gap-1.5 text-nano font-bold uppercase tracking-wider text-theme-muted"
               >
                 <span>{msg.role === "user" ? "You" : entity.title}</span>
                 {#if editingMessageId !== msg.id}
@@ -649,14 +658,14 @@
                     <button
                       type="button"
                       onclick={() => (editingMessageId = null)}
-                      class="text-[9px] font-bold text-theme-muted hover:text-theme-text uppercase px-2 py-1"
+                      class="text-nano font-bold text-theme-muted hover:text-theme-text uppercase px-2 py-1"
                     >
                       Cancel
                     </button>
                     <button
                       type="button"
                       onclick={() => saveGuestMessageEdit(msg.id)}
-                      class="text-[9px] font-bold bg-theme-primary text-theme-bg rounded px-2 py-1 hover:bg-theme-secondary transition"
+                      class="text-nano font-bold bg-theme-primary text-theme-bg rounded px-2 py-1 hover:bg-theme-secondary transition"
                     >
                       Save
                     </button>
@@ -673,7 +682,7 @@
                 </div>
               {/if}
 
-              <span class="text-[8px] text-theme-muted select-none">
+              <span class="text-nano text-theme-muted select-none">
                 {new Date(msg.timestamp).toLocaleTimeString([], {
                   hour: "2-digit",
                   minute: "2-digit",
@@ -687,7 +696,7 @@
               class="flex flex-col gap-1 w-full max-w-[85%] self-start items-start"
             >
               <span
-                class="text-[9px] font-bold uppercase tracking-wider text-theme-muted"
+                class="text-nano font-bold uppercase tracking-wider text-theme-muted"
                 >{entity.title}</span
               >
               <div

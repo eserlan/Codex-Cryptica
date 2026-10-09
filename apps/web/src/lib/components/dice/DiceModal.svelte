@@ -8,6 +8,7 @@
     getCenteredBounds,
     getViewportSize,
     loadSavedBounds,
+    resizePointerDelta,
     saveBounds,
     type WindowBounds,
     MIN_WINDOW_WIDTH,
@@ -120,10 +121,7 @@
 
   function handleResizePointerMove(e: PointerEvent) {
     if (!isResizing) return;
-    const deltaX = e.clientX - resizeStart.x;
-    const deltaY = e.clientY - resizeStart.y;
-
-    const viewport = getViewportSize();
+    const { deltaX, deltaY, viewport } = resizePointerDelta(e, resizeStart);
     const maxAvailableWidth = viewport.width - bounds.x - 8;
     const maxAvailableHeight = viewport.height - bounds.y - 8;
 
@@ -197,7 +195,10 @@
       title="Drag to move"
     >
       <div class="flex items-center gap-2 pointer-events-none">
-        <span class="{headerInfo.icon} w-5 h-5 text-theme-primary"></span>
+        <span
+          class="{headerInfo.icon} w-5 h-5 text-theme-primary"
+          aria-hidden="true"
+        ></span>
         <h2
           class="text-sm font-bold font-header tracking-widest text-theme-text uppercase"
         >
@@ -260,7 +261,10 @@
       title="Resize window"
       data-testid="dice-modal-resize-handle"
     >
-      <span class="icon-[lucide--grip-vertical] w-3 h-3 rotate-45"></span>
+      <span
+        aria-hidden="true"
+        class="icon-[lucide--grip-vertical] w-3 h-3 rotate-45"
+      ></span>
     </div>
   </div>
 {/if}

@@ -2,7 +2,7 @@
   import {
     newsSheetConfig,
     pickFrom,
-  } from "$lib/services/seo/generator-engine";
+  } from "$lib/services/seo/generator-config";
   import SelectWithCustomOption from "$lib/components/forms/SelectWithCustomOption.svelte";
 
   let {
@@ -36,7 +36,7 @@
   const inputClass =
     "w-full bg-theme-bg/60 border border-theme-border/60 rounded-lg px-3 py-2 text-base md:text-xs text-theme-text focus:outline-none focus:border-theme-primary/60";
   const labelClass =
-    "text-[10px] font-bold uppercase tracking-wider text-theme-muted";
+    "text-micro font-bold uppercase tracking-wider text-theme-muted";
 
   let publicationTypes = $derived(
     newsSheetConfig.publicationTypesByGenre[genre] ??
@@ -179,7 +179,7 @@
   ></textarea>
   <p
     id="news-sheet-context-help"
-    class="text-[10px] text-theme-text/60 leading-relaxed"
+    class="text-micro text-theme-text/60 leading-relaxed"
   >
     Add factions, recent events, NPCs, or tensions and the sheet will report on
     them in its own biased voice.
@@ -202,7 +202,7 @@
         onSurprise();
       }
     }}
-    class="flex items-center gap-1.5 px-3 py-1.5 bg-theme-surface/60 border border-theme-border/60 rounded-lg text-[10px] font-bold uppercase tracking-wider text-theme-text hover:bg-theme-primary hover:text-theme-bg hover:border-theme-primary transition-all cursor-pointer"
+    class="flex items-center gap-1.5 px-3 py-1.5 bg-theme-surface/60 border border-theme-border/60 rounded-lg text-micro font-bold uppercase tracking-wider text-theme-text hover:bg-theme-primary hover:text-theme-bg hover:border-theme-primary transition-all cursor-pointer"
     title="Randomize all options and generate a draft from the result"
   >
     <span class="icon-[lucide--dices] w-3.5 h-3.5" aria-hidden="true"></span>

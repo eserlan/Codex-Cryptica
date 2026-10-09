@@ -3,7 +3,8 @@
  * Lightweight, crypto-random oracle tools for steering solo RPG play & character dialogue.
  */
 
-export type OracleOdds = "likely" | "even" | "unlikely";
+export type OracleOdds =
+  "very_likely" | "likely" | "even" | "unlikely" | "very_unlikely";
 
 export type OracleTier =
   | "extreme_positive"
@@ -43,6 +44,63 @@ function getSecureRandom(rng?: () => number): number {
   return Math.min(Math.max(value, 0), 1 - Number.EPSILON);
 }
 
+/** Upper bound (inclusive) of each d100 band, with its tier and wording, per odds. */
+type Band = readonly [upper: number, tier: OracleTier, text: string];
+
+const LADDERS: Record<OracleOdds, readonly Band[]> = {
+  very_likely: [
+    [25, "extreme_positive", "Yes, and..."],
+    [75, "positive", "Yes"],
+    [85, "mixed_positive", "Yes, but..."],
+    [93, "mixed_negative", "No, but..."],
+    [98, "negative", "No"],
+    [100, "extreme_negative", "No, and..."],
+  ],
+  likely: [
+    [15, "extreme_positive", "Yes, and..."],
+    [65, "positive", "Yes"],
+    [80, "mixed_positive", "Yes, but..."],
+    [90, "mixed_negative", "No, but..."],
+    [97, "negative", "No"],
+    [100, "extreme_negative", "No, and..."],
+  ],
+  even: [
+    [10, "extreme_positive", "Yes, and..."],
+    [45, "positive", "Yes"],
+    [55, "mixed_positive", "Yes, but..."],
+    [65, "mixed_negative", "No, but..."],
+    [90, "negative", "No"],
+    [100, "extreme_negative", "No, and..."],
+  ],
+  unlikely: [
+    [3, "extreme_positive", "Yes, and..."],
+    [10, "positive", "Yes"],
+    [20, "mixed_positive", "Yes, but..."],
+    [35, "mixed_negative", "No, but..."],
+    [85, "negative", "No"],
+    [100, "extreme_negative", "No, and..."],
+  ],
+  very_unlikely: [
+    [2, "extreme_positive", "Yes, and..."],
+    [8, "positive", "Yes"],
+    [12, "mixed_positive", "Yes, but..."],
+    [22, "mixed_negative", "No, but..."],
+    [90, "negative", "No"],
+    [100, "extreme_negative", "No, and..."],
+  ],
+};
+
+/** The band a d100 roll lands in. Unknown odds read as even. */
+function tierFor(
+  odds: OracleOdds,
+  roll: number,
+): readonly [OracleTier, string] {
+  const ladder = LADDERS[odds] ?? LADDERS.even;
+  const band =
+    ladder.find(([upper]) => roll <= upper) ?? ladder[ladder.length - 1];
+  return [band[1], band[2]];
+}
+
 /**
  * Standard 6-tier Solo RPG Oracle (Yes/No with qualifiers)
  * Supports probability weighting: Even (50/50), Likely (70/30), Unlikely (30/70).
@@ -54,71 +112,7 @@ export function rollOracleOutcome(
   // Roll d100 (1 to 100)
   const roll = Math.floor(getSecureRandom(rng) * 100) + 1;
 
-  let tier: OracleTier;
-  let text: string;
-
-  if (odds === "likely") {
-    if (roll <= 15) {
-      tier = "extreme_positive";
-      text = "Yes, and...";
-    } else if (roll <= 65) {
-      tier = "positive";
-      text = "Yes";
-    } else if (roll <= 80) {
-      tier = "mixed_positive";
-      text = "Yes, but...";
-    } else if (roll <= 90) {
-      tier = "mixed_negative";
-      text = "No, but...";
-    } else if (roll <= 97) {
-      tier = "negative";
-      text = "No";
-    } else {
-      tier = "extreme_negative";
-      text = "No, and...";
-    }
-  } else if (odds === "unlikely") {
-    if (roll <= 3) {
-      tier = "extreme_positive";
-      text = "Yes, and...";
-    } else if (roll <= 10) {
-      tier = "positive";
-      text = "Yes";
-    } else if (roll <= 20) {
-      tier = "mixed_positive";
-      text = "Yes, but...";
-    } else if (roll <= 35) {
-      tier = "mixed_negative";
-      text = "No, but...";
-    } else if (roll <= 85) {
-      tier = "negative";
-      text = "No";
-    } else {
-      tier = "extreme_negative";
-      text = "No, and...";
-    }
-  } else {
-    // Even odds
-    if (roll <= 10) {
-      tier = "extreme_positive";
-      text = "Yes, and...";
-    } else if (roll <= 45) {
-      tier = "positive";
-      text = "Yes";
-    } else if (roll <= 55) {
-      tier = "mixed_positive";
-      text = "Yes, but...";
-    } else if (roll <= 65) {
-      tier = "mixed_negative";
-      text = "No, but...";
-    } else if (roll <= 90) {
-      tier = "negative";
-      text = "No";
-    } else {
-      tier = "extreme_negative";
-      text = "No, and...";
-    }
-  }
+  const [tier, text] = tierFor(odds, roll);
 
   const formattedCue =
     odds === "even" ? `Oracle: ${text}` : `Oracle (${odds}): ${text}`;

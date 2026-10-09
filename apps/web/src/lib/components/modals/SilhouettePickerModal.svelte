@@ -154,7 +154,10 @@
             id="silhouette-picker-title"
             class="text-lg font-semibold text-theme-primary flex items-center gap-2"
           >
-            <span class="icon-[lucide--user] h-5 w-5 text-theme-accent"></span>
+            <span
+              aria-hidden="true"
+              class="icon-[lucide--user] h-5 w-5 text-theme-accent"
+            ></span>
             Choose Entity Silhouette
           </h2>
           <p class="text-xs text-theme-muted mt-0.5">
@@ -169,7 +172,7 @@
           class="p-1.5 rounded-lg text-theme-muted hover:text-theme-primary hover:bg-theme-border/40 transition-colors"
           aria-label="Close modal"
         >
-          <span class="icon-[lucide--x] h-5 w-5"></span>
+          <span aria-hidden="true" class="icon-[lucide--x] h-5 w-5"></span>
         </button>
       </div>
 
@@ -195,7 +198,8 @@
               class="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-theme-muted hover:text-theme-primary"
               aria-label="Clear search"
             >
-              <span class="icon-[lucide--x] h-3.5 w-3.5"></span>
+              <span aria-hidden="true" class="icon-[lucide--x] h-3.5 w-3.5"
+              ></span>
             </button>
           {/if}
         </div>
@@ -260,7 +264,10 @@
                   <div
                     class="flex items-center gap-2 text-xs font-semibold text-theme-accent"
                   >
-                    <span class="icon-[lucide--sparkles] h-3.5 w-3.5"></span>
+                    <span
+                      aria-hidden="true"
+                      class="icon-[lucide--sparkles] h-3.5 w-3.5"
+                    ></span>
                     Auto-Inferred Match
                   </div>
                   <div class="text-sm font-medium text-theme-primary">
@@ -302,9 +309,12 @@
                 <!-- Auto Badge -->
                 {#if isAuto}
                   <div
-                    class="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded-xs text-[9px] font-semibold bg-theme-accent/20 text-theme-accent border border-theme-accent/30 flex items-center gap-1"
+                    class="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded-xs text-nano font-semibold bg-theme-accent/20 text-theme-accent border border-theme-accent/30 flex items-center gap-1"
                   >
-                    <span class="icon-[lucide--sparkles] h-2.5 w-2.5"></span>
+                    <span
+                      aria-hidden="true"
+                      class="icon-[lucide--sparkles] h-2.5 w-2.5"
+                    ></span>
                     auto
                   </div>
                 {/if}
@@ -314,7 +324,10 @@
                   <div
                     class="absolute top-1.5 right-1.5 w-4 h-4 rounded-full bg-theme-accent text-theme-accent-contrast flex items-center justify-center"
                   >
-                    <span class="icon-[lucide--check] h-3 w-3"></span>
+                    <span
+                      aria-hidden="true"
+                      class="icon-[lucide--check] h-3 w-3"
+                    ></span>
                   </div>
                 {/if}
 
@@ -331,7 +344,7 @@
                 >
                   {s.name}
                 </div>
-                <div class="text-[10px] text-theme-muted capitalize mt-0.5">
+                <div class="text-micro text-theme-muted capitalize mt-0.5">
                   {s.archetype}
                 </div>
               </button>
@@ -340,7 +353,9 @@
 
           {#if filteredSilhouettes.length === 0}
             <div class="py-12 text-center text-theme-muted space-y-2">
-              <span class="icon-[lucide--search-x] h-8 w-8 mx-auto opacity-50"
+              <span
+                aria-hidden="true"
+                class="icon-[lucide--search-x] h-8 w-8 mx-auto opacity-50"
               ></span>
               <p class="text-sm">No silhouettes match your current filters.</p>
               <button
@@ -366,12 +381,13 @@
           <div class="w-full flex flex-col items-center text-center space-y-4">
             <!-- Status Badge -->
             <div
-              class="flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-0.5 rounded-full {hoveredSilhouette
+              class="flex items-center gap-1.5 text-meta font-semibold px-2.5 py-0.5 rounded-full {hoveredSilhouette
                 ? 'bg-theme-accent/20 text-theme-accent border border-theme-accent/40'
                 : 'bg-theme-border/60 text-theme-muted'}"
             >
               {#if hoveredSilhouette}
-                <span class="icon-[lucide--eye] h-3 w-3"></span>
+                <span aria-hidden="true" class="icon-[lucide--eye] h-3 w-3"
+                ></span>
                 Hover Preview
               {:else if activeSelectedId === previewSilhouette.id}
                 <span
@@ -379,7 +395,9 @@
                 ></span>
                 Active Selection
               {:else}
-                <span class="icon-[lucide--sparkles] h-3 w-3 text-theme-accent"
+                <span
+                  aria-hidden="true"
+                  class="icon-[lucide--sparkles] h-3 w-3 text-theme-accent"
                 ></span>
                 Auto-Detected
               {/if}
@@ -424,14 +442,14 @@
               class="w-full pt-3 border-t border-theme-border/30 space-y-2 text-left"
             >
               <div
-                class="text-[10px] uppercase font-bold tracking-wider text-theme-muted"
+                class="text-micro uppercase font-bold tracking-wider text-theme-muted"
               >
                 Keywords & Tags
               </div>
               <div class="flex flex-wrap gap-1">
                 {#each previewSilhouette.tags as tag}
                   <span
-                    class="px-2 py-0.5 rounded-md text-[10px] bg-theme-base/80 border border-theme-border/60 text-theme-text/80"
+                    class="px-2 py-0.5 rounded-md text-micro bg-theme-base/80 border border-theme-border/60 text-theme-text/80"
                   >
                     {tag}
                   </span>
@@ -447,7 +465,10 @@
               onclick={() => (activeSelectedId = hoveredSilhouette!.id)}
               class="w-full mt-4 py-2 px-3 rounded-lg text-xs font-semibold bg-theme-accent/20 hover:bg-theme-accent hover:text-theme-accent-contrast text-theme-accent border border-theme-accent/40 transition-all flex items-center justify-center gap-1.5"
             >
-              <span class="icon-[lucide--pointer] h-3.5 w-3.5"></span>
+              <span
+                aria-hidden="true"
+                class="icon-[lucide--pointer] h-3.5 w-3.5"
+              ></span>
               Select {hoveredSilhouette.name}
             </button>
           {/if}
@@ -473,7 +494,7 @@
           <div class="text-sm font-medium text-theme-primary truncate">
             {selectedSilhouette.name}
           </div>
-          <div class="text-[11px] text-theme-muted capitalize truncate">
+          <div class="text-meta text-theme-muted capitalize truncate">
             {selectedSilhouette.category} &middot; {selectedSilhouette.archetype}
           </div>
         </div>
@@ -491,7 +512,10 @@
               disabled={isSaving}
               class="text-xs text-theme-muted hover:text-theme-primary flex items-center gap-1.5 px-3 py-1.5 rounded-lg hover:bg-theme-border/30 transition-colors disabled:opacity-50"
             >
-              <span class="icon-[lucide--rotate-ccw] h-3.5 w-3.5"></span>
+              <span
+                aria-hidden="true"
+                class="icon-[lucide--rotate-ccw] h-3.5 w-3.5"
+              ></span>
               Reset to Auto-Detect
             </button>
           {/if}
@@ -512,7 +536,8 @@
             disabled={isSaving}
             class="px-4 py-2 text-xs font-medium rounded-lg bg-theme-accent text-theme-accent-contrast hover:opacity-90 transition-opacity shadow-xs flex items-center gap-1.5 disabled:opacity-50"
           >
-            <span class="icon-[lucide--check] h-4 w-4"></span>
+            <span aria-hidden="true" class="icon-[lucide--check] h-4 w-4"
+            ></span>
             {isSaving ? "Saving..." : "Apply Silhouette"}
           </button>
         </div>

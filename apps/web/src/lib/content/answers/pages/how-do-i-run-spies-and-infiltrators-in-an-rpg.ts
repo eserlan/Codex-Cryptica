@@ -2,7 +2,7 @@ import type { AnswerConfigInput } from "../schema";
 
 export const howDoIRunSpiesAndInfiltratorsInAnRpg: AnswerConfigInput = {
   slug: "how-do-i-run-spies-and-infiltrators-in-an-rpg",
-  category: "session-prep",
+  category: "running-the-game",
   publishedAt: "2026-09-24",
   question: "How do I run spies and infiltrators in an RPG?",
   kind: "framework",
@@ -189,6 +189,8 @@ export const howDoIRunSpiesAndInfiltratorsInAnRpg: AnswerConfigInput = {
     "how-do-i-run-a-diplomat-noble-or-courtier-in-an-rpg",
     "how-do-i-run-character-roles-in-a-political-intrigue-rpg",
     "how-do-i-run-a-rogue-or-scout-without-splitting-the-party",
+    "how-do-i-run-character-roles-in-an-investigative-horror-rpg",
+    "how-do-i-run-common-character-roles-in-a-fantasy-rpg",
   ],
   discovery: {
     id: "answer-run-spies-infiltrators-rpg",

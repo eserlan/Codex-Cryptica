@@ -14,6 +14,7 @@ This document establishes the core design principles and component implementatio
 6.  **Simplicity**: Prefer established patterns and avoid over-engineering (YAGNI).
 
 7.  **Clipboard intent**: Copy authored or generated document content through the shared smart-copy service so Markdown/plain text and sanitised rich text are written together. Keep literal values such as URLs, secrets, prompts, identifiers, raw source, logs, and image-only exports on the plain or format-specific clipboard path.
+8.  **Art Direction & Editorial Imagery**: Follow [docs/ART_DIRECTION_EDITORIAL_IMAGES.md](./ART_DIRECTION_EDITORIAL_IMAGES.md) for public-facing discovery, answer page, and social share illustrations (grounded cinematic realism, full-bleed 16:9, strictly no text or storybook frames), and [docs/ART_DIRECTION_V2.md](./ART_DIRECTION_V2.md) for in-app Lore Oracle entity image generation.
 
 ## Naming Conventions
 

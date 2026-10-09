@@ -16,6 +16,14 @@ describe("getPublicContentByLabel", () => {
     });
   });
 
+  it("leads the pirate label with its topic hub", () => {
+    const results = getPublicContentByLabel("pirate");
+    expect(results[0]).toMatchObject({
+      kind: "topic",
+      href: "/topics/pirates",
+    });
+  });
+
   it("adds no topic hub for other public labels", () => {
     const results = getPublicContentByLabel("cyberpunk");
     expect(results.some((r) => r.kind === "topic")).toBe(false);

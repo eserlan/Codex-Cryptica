@@ -7,6 +7,8 @@
   } from "schema";
   import type { PresentationRenderContext } from "../types";
   import { rollStatSheetDiceField } from "$lib/utils/stat-sheet-field-actions";
+  import DiceBreakdownDisclosure from "$lib/components/dice/DiceBreakdownDisclosure.svelte";
+  import type { RollResult } from "dice-engine";
   import { vault } from "$lib/stores/vault.svelte";
 
   const linkableItemTypes = ["item", "weapon", "gear", "artifact", "object"];
@@ -32,7 +34,13 @@
   let rollStateMap = $state<
     Record<
       string,
-      { rolling: boolean; text?: string; success?: boolean; isError?: boolean }
+      {
+        rolling: boolean;
+        text?: string;
+        success?: boolean;
+        isError?: boolean;
+        roll?: RollResult;
+      }
     >
   >({});
   let showItemPicker = $state(false);
@@ -278,6 +286,7 @@
         text: res.text,
         isError: res.isError,
         success: res.success,
+        roll: res.roll,
       };
     } catch {
       rollStateMap[key] = {
@@ -348,7 +357,7 @@
         {#if linkEnabled}
           <button
             type="button"
-            class="inline-flex items-center gap-1 rounded border border-theme-border/60 bg-theme-surface/40 px-2 py-0.5 text-[10px] font-bold text-theme-muted transition-colors hover:border-theme-primary hover:text-theme-primary"
+            class="inline-flex items-center gap-1 rounded border border-theme-border/60 bg-theme-surface/40 px-2 py-0.5 text-micro font-bold text-theme-muted transition-colors hover:border-theme-primary hover:text-theme-primary"
             onclick={() => (showItemPicker = !showItemPicker)}
             data-testid="item-table-link-item"
           >
@@ -358,7 +367,7 @@
         {/if}
         <button
           type="button"
-          class="inline-flex items-center gap-1 rounded border border-theme-border/60 bg-theme-surface/40 px-2 py-0.5 text-[10px] font-bold text-theme-muted transition-colors hover:border-theme-primary hover:text-theme-primary"
+          class="inline-flex items-center gap-1 rounded border border-theme-border/60 bg-theme-surface/40 px-2 py-0.5 text-micro font-bold text-theme-muted transition-colors hover:border-theme-primary hover:text-theme-primary"
           onclick={handleAddRow}
           data-testid="item-table-add-row"
         >
@@ -374,7 +383,7 @@
       class="flex items-center gap-2 border-b border-theme-border/60 bg-theme-surface/20 px-3 py-2"
     >
       <label
-        class="text-[10px] font-bold uppercase tracking-wide text-theme-muted"
+        class="text-micro font-bold uppercase tracking-wide text-theme-muted"
         for="item-table-link-select"
       >
         Vault item
@@ -526,6 +535,11 @@
                           >
                         {/if}
                       </button>
+                      <DiceBreakdownDisclosure
+                        parts={rollState?.roll?.parts}
+                        total={rollState?.roll?.total ?? 0}
+                        formula={rollState?.roll?.formula}
+                      />
                     {:else if context.readOnly}
                       <span class="font-mono text-xs text-theme-muted"
                         >{formula}</span

@@ -8,6 +8,7 @@
   import { themeStore } from "$lib/stores/theme.svelte";
   import CloudDestinationSettings from "./CloudDestinationSettings.svelte";
   import VaultBackupSettings from "./VaultBackupSettings.svelte";
+  import CalendarEraSettings from "./CalendarEraSettings.svelte";
   import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
   import { notificationStore } from "$lib/stores/ui/notification.svelte";
@@ -80,7 +81,7 @@
         >
           Transmuting Exploration into Reality
         </h3>
-        <p class="text-[11px] text-theme-muted mt-1 leading-relaxed">
+        <p class="text-meta text-theme-muted mt-1 leading-relaxed">
           You are currently in **Demo Mode**. All changes are transient. <br />
           Save this dataset as a new {themeStore.jargon.vault} to begin your permanent
           chronicle.
@@ -126,7 +127,7 @@
       <div class="flex flex-col gap-4">
         <div>
           <span
-            class="block text-[10px] font-bold text-theme-muted mb-1 uppercase font-header tracking-wider"
+            class="block text-micro font-bold text-theme-muted mb-1 uppercase font-header tracking-wider"
             >Status</span
           >
           <span class="text-sm font-mono text-theme-text"
@@ -135,7 +136,7 @@
         </div>
         <div>
           <span
-            class="block text-[10px] font-bold text-theme-muted mb-1 uppercase font-header tracking-wider"
+            class="block text-micro font-bold text-theme-muted mb-1 uppercase font-header tracking-wider"
             >Entity Count</span
           >
           <span class="text-sm font-mono text-theme-text"
@@ -148,7 +149,7 @@
           >
             <div>
               <span
-                class="block text-[10px] font-bold text-amber-500 mb-1 uppercase font-header tracking-wider"
+                class="block text-micro font-bold text-amber-500 mb-1 uppercase font-header tracking-wider"
               >
                 Sync Conflicts Detected
               </span>
@@ -211,7 +212,7 @@
             class="block text-sm font-bold text-theme-text mb-1 uppercase font-header"
             >Default Entity Visibility</label
           >
-          <p class="text-[11px] text-theme-muted leading-relaxed">
+          <p class="text-meta text-theme-muted leading-relaxed">
             Determines if nodes are shown or hidden by default when Shared Mode
             is active.
           </p>
@@ -229,11 +230,11 @@
 
       <div class="border-t border-theme-border/30 pt-4">
         <h4
-          class="text-[11px] font-bold text-theme-secondary uppercase font-header mb-2"
+          class="text-meta font-bold text-theme-secondary uppercase font-header mb-2"
         >
           Tag Reference
         </h4>
-        <ul class="space-y-2 text-[11px] font-mono">
+        <ul class="space-y-2 text-meta font-mono">
           <li class="flex gap-2">
             <span class="text-red-400 font-bold shrink-0">hidden:</span>
             <span class="text-theme-muted"
@@ -270,7 +271,7 @@
             class="block text-sm font-bold text-theme-text uppercase font-header"
             >Standard Gregorian</span
           >
-          <p class="text-[11px] text-theme-muted">
+          <p class="text-meta text-theme-muted">
             Use the 12-month Earth calendar logic.
           </p>
         </div>
@@ -283,25 +284,31 @@
         />
       </div>
 
-      <div class="grid grid-cols-2 gap-4">
+      <div
+        class="grid gap-4 {(calendarStore.config.eras?.length ?? 0) === 0
+          ? 'grid-cols-2'
+          : 'grid-cols-1 max-w-xs'}"
+      >
+        {#if (calendarStore.config.eras?.length ?? 0) === 0}
+          <div class="space-y-1">
+            <label
+              class="text-meta font-bold text-theme-muted uppercase font-header"
+              for="epoch-label">Default Year Suffix</label
+            >
+            <input
+              id="epoch-label"
+              type="text"
+              placeholder="e.g. AF, AC"
+              value={calendarStore.config.epochLabel || ""}
+              oninput={(e) =>
+                updateConfigField("epochLabel", e.currentTarget.value)}
+              class="w-full bg-theme-surface border border-theme-border rounded px-3 py-1.5 text-xs text-theme-text font-mono focus:border-theme-primary outline-none"
+            />
+          </div>
+        {/if}
         <div class="space-y-1">
           <label
-            class="text-[11px] font-bold text-theme-muted uppercase font-header"
-            for="epoch-label">Epoch Suffix</label
-          >
-          <input
-            id="epoch-label"
-            type="text"
-            placeholder="e.g. AF, AC"
-            value={calendarStore.config.epochLabel || ""}
-            oninput={(e) =>
-              updateConfigField("epochLabel", e.currentTarget.value)}
-            class="w-full bg-theme-surface border border-theme-border rounded px-3 py-1.5 text-xs text-theme-text font-mono focus:border-theme-primary outline-none"
-          />
-        </div>
-        <div class="space-y-1">
-          <label
-            class="text-[11px] font-bold text-theme-muted uppercase font-header"
+            class="text-meta font-bold text-theme-muted uppercase font-header"
             for="present-year">Present Year</label
           >
           <input
@@ -323,13 +330,13 @@
         <div transition:slide class="pt-4 border-t border-theme-border/20">
           <div class="flex items-center justify-between mb-4">
             <h4
-              class="text-[11px] font-bold text-theme-secondary uppercase font-header tracking-widest"
+              class="text-meta font-bold text-theme-secondary uppercase font-header tracking-widest"
             >
               Custom Month Structure
             </h4>
             <button
               onclick={addMonth}
-              class="text-[10px] font-bold bg-theme-primary/10 border border-theme-primary/30 text-theme-primary px-2 py-1 rounded hover:bg-theme-primary hover:text-theme-bg transition-colors font-header"
+              class="text-micro font-bold bg-theme-primary/10 border border-theme-primary/30 text-theme-primary px-2 py-1 rounded hover:bg-theme-primary hover:text-theme-bg transition-colors font-header"
             >
               + ADD MONTH
             </button>
@@ -338,7 +345,7 @@
           <div class="space-y-2 max-h-64 overflow-y-auto pr-2 custom-scrollbar">
             {#each calendarStore.config.months as month, i (month.id)}
               <div class="flex items-center gap-2 group">
-                <span class="w-4 text-[10px] font-mono text-theme-muted"
+                <span class="w-4 text-micro font-mono text-theme-muted"
                   >{i + 1}</span
                 >
                 <input
@@ -363,7 +370,7 @@
                     class="w-12 bg-transparent text-center py-1 text-sm text-theme-text focus:outline-none"
                   />
                   <span
-                    class="px-2 text-[10px] font-bold text-theme-muted uppercase font-header border-l border-theme-border"
+                    class="px-2 text-micro font-bold text-theme-muted uppercase font-header border-l border-theme-border"
                     >Days</span
                   >
                 </div>
@@ -383,6 +390,8 @@
           </div>
         </div>
       {/if}
+
+      <CalendarEraSettings />
     </div>
   </div>
 </div>
