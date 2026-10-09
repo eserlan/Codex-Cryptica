@@ -34,6 +34,8 @@ const IGNORED_PREFIXES = [
   "dist/",
   ".gemini/",
   ".codex/",
+  ".jules/",
+  ".Jules/",
 ];
 
 export function isIgnoredPath(filePath) {
@@ -132,22 +134,25 @@ export function getChangedFiles({
     }
   }
 
-  // Also include any currently uncommitted working tree changes
-  try {
-    const uncommittedOutput = execFileSync("git", ["status", "--porcelain"], {
-      cwd,
-      encoding: "utf8",
-    });
-    for (const line of uncommittedOutput.split("\n")) {
-      if (!line) continue;
-      const pathPart = line.slice(3).trim();
-      const finalPath = pathPart.includes(" -> ")
-        ? pathPart.split(" -> ")[1].trim()
-        : pathPart;
-      if (finalPath) fileSet.add(finalPath);
+  // Also include any currently uncommitted working tree changes when not checking a specific base commit range
+  if (!base) {
+    try {
+      const uncommittedOutput = execFileSync("git", ["status", "--porcelain"], {
+        cwd,
+        encoding: "utf8",
+      });
+      for (const line of uncommittedOutput.split("\n")) {
+        if (!line) continue;
+        if (line.startsWith("??")) continue; // Skip untracked files
+        const pathPart = line.slice(3).trim();
+        const finalPath = pathPart.includes(" -> ")
+          ? pathPart.split(" -> ")[1].trim()
+          : pathPart;
+        if (finalPath) fileSet.add(finalPath);
+      }
+    } catch {
+      // Ignore status errors
     }
-  } catch {
-    // Ignore status errors
   }
 
   return Array.from(fileSet);
