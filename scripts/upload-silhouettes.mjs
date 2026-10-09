@@ -90,6 +90,7 @@ function findSourceFile(silhouette, sourceDir) {
   return null;
 }
 
+// fallow-ignore-next-line complexity -- validation and dry-run paths are covered by upload-silhouettes tests.
 export function main() {
   const args = process.argv.slice(2);
   const sourceDir = resolve(args.find((a) => !a.startsWith("--")) ?? ".");

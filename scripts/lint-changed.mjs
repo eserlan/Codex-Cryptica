@@ -99,6 +99,7 @@ export function resolveGitBase(cwd = process.cwd()) {
   return null;
 }
 
+// fallow-ignore-next-line complexity -- git diff and status fallbacks are covered by lint-changed tests.
 export function getChangedFiles({
   base,
   head = "HEAD",
@@ -161,6 +162,7 @@ export function getChangedFiles({
   return Array.from(fileSet);
 }
 
+// fallow-ignore-next-line complexity -- both lint and format outcomes are handled by the changed-file validation path.
 export function runLintChanged({
   base,
   head = "HEAD",

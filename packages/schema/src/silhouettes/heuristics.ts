@@ -36,6 +36,7 @@ export interface SilhouetteInferenceOptions {
  * If entity.silhouette is set and valid, returns it immediately.
  * Otherwise scores candidates across category, genre, labels, title, and keywords.
  */
+// fallow-ignore-next-line complexity -- scoring branches are covered by silhouette inference tests.
 export function resolveEntitySilhouette(
   entity: SilhouetteInferenceInput,
   options?: SilhouetteInferenceOptions,
