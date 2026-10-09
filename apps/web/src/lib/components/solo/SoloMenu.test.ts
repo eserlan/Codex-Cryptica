@@ -24,11 +24,13 @@ describe("SoloMenu", () => {
       props: { label: "Recent", testId: "solo-recent" },
     });
     const trigger = screen.getByTestId("solo-recent");
-    trigger.getBoundingClientRect = () => ({ top: 60 }) as DOMRect;
+    trigger.getBoundingClientRect = () =>
+      ({ top: 60, bottom: 90, left: 40 }) as DOMRect;
     await fireEvent.click(trigger);
-    expect(screen.getByTestId("solo-menu-panel").className).toContain(
-      "top-full",
-    );
+    const style = screen.getByTestId("solo-menu-panel").getAttribute("style");
+    expect(style).toContain("top: 98px");
+    expect(style).toContain(`max-height: ${window.innerHeight - 98}px`);
+    expect(style).not.toContain("bottom");
   });
 
   it("opens above a trigger in the lower half of the screen, as on the phone sheet", async () => {
@@ -37,11 +39,62 @@ describe("SoloMenu", () => {
     });
     const trigger = screen.getByTestId("solo-recent");
     trigger.getBoundingClientRect = () =>
-      ({ top: window.innerHeight - 80 }) as DOMRect;
+      ({
+        top: window.innerHeight - 80,
+        bottom: window.innerHeight - 50,
+        left: 40,
+      }) as DOMRect;
     await fireEvent.click(trigger);
-    expect(screen.getByTestId("solo-menu-panel").className).toContain(
-      "bottom-full",
-    );
+    const style = screen.getByTestId("solo-menu-panel").getAttribute("style");
+    expect(style).toContain("bottom: 88px");
+    expect(style).toContain(`max-height: ${window.innerHeight - 88}px`);
+    expect(style).not.toContain("top:");
+  });
+
+  it("is fixed to the viewport so a scrolling bar cannot clip it", async () => {
+    render(SoloMenuHarness, {
+      props: { label: "Recent", testId: "solo-recent" },
+    });
+    await fireEvent.click(screen.getByTestId("solo-recent"));
+    expect(screen.getByTestId("solo-menu-panel").className).toContain("fixed");
+  });
+
+  it("keeps the panel inside the right edge of the window", async () => {
+    render(SoloMenuHarness, {
+      props: { label: "Recent", testId: "solo-recent" },
+    });
+    const trigger = screen.getByTestId("solo-recent");
+    trigger.getBoundingClientRect = () =>
+      ({ top: 60, bottom: 90, left: window.innerWidth - 10 }) as DOMRect;
+    await fireEvent.click(trigger);
+    expect(
+      screen.getByTestId("solo-menu-panel").getAttribute("style"),
+    ).toContain(`left: ${window.innerWidth - 320}px`);
+  });
+
+  it("closes when the bar scrolls or the window resizes", async () => {
+    render(SoloMenuHarness, {
+      props: { label: "Recent", testId: "solo-recent" },
+    });
+    const trigger = screen.getByTestId("solo-recent");
+    await fireEvent.click(trigger);
+    await fireEvent.scroll(document.body);
+    expect(screen.queryByTestId("solo-menu-panel")).toBeNull();
+
+    await fireEvent.click(trigger);
+    await fireEvent.resize(window);
+    expect(screen.queryByTestId("solo-menu-panel")).toBeNull();
+  });
+
+  it("keeps the menu open while its contents scroll", async () => {
+    render(SoloMenuHarness, {
+      props: { label: "Recent", testId: "solo-recent" },
+    });
+    await fireEvent.click(screen.getByTestId("solo-recent"));
+    const panel = screen.getByTestId("solo-menu-panel");
+    expect(panel.className).toContain("overflow-y-auto");
+    await fireEvent.scroll(panel);
+    expect(screen.getByTestId("solo-menu-panel")).toBeTruthy();
   });
 
   it("closes on a second click", async () => {
