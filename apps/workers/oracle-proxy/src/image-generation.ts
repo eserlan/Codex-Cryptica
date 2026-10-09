@@ -27,7 +27,7 @@ export function supportsNegativePrompt(model: string): boolean {
   return /stable-diffusion|dreamshaper|phoenix/i.test(model);
 }
 
-export function buildMultipartInput(
+function buildMultipartInput(
   prompt: string,
   width: number,
   height: number,
@@ -53,7 +53,7 @@ export function buildMultipartInput(
 /**
  * Safely convert ArrayBuffer to Base64 avoiding stack overflows.
  */
-export function arrayBufferToBase64(buffer: ArrayBuffer): string {
+function arrayBufferToBase64(buffer: ArrayBuffer): string {
   const bytes = new Uint8Array(buffer);
   let binary = "";
   const len = bytes.byteLength;
@@ -153,71 +153,17 @@ export async function handleImageGeneration(
     // object and answers a multipart body with "field required: prompt".
     // Sending the wrong one is a 5012, not a soft failure, so the shape
     // follows the model.
-    const output = usesMultipartInput(targetModel)
-      ? await env.AI.run(
-          targetModel,
-          buildMultipartInput(prompt, width, height, negativePrompt),
-        )
-      : await env.AI.run(targetModel, {
-          prompt,
-          width,
-          height,
-          ...(negativePrompt && supportsNegativePrompt(targetModel)
-            ? { negative_prompt: negativePrompt }
-            : {}),
-        });
-
-    let buffer: ArrayBuffer;
-    if (output instanceof ArrayBuffer) {
-      buffer = output;
-    } else if (output instanceof Uint8Array) {
-      buffer = output.buffer;
-    } else if (
-      typeof output === "object" &&
-      output !== null &&
-      "image" in output
-    ) {
-      const img = (output as any).image;
-      if (typeof img === "string") {
-        // base64 format returned directly
-        return new Response(
-          JSON.stringify({
-            success: true,
-            result: { image: img },
-          }),
-          {
-            status: 200,
-            headers: {
-              ...getCorsHeaders(request.headers, env),
-              "Content-Type": "application/json",
-            },
-          },
-        );
-      } else {
-        // If the inner image field is a stream or binary, convert it
-        const res = new Response(img);
-        buffer = await res.arrayBuffer();
-      }
-    } else if (
-      output &&
-      (output instanceof ReadableStream ||
-        typeof (output as any).getReader === "function" ||
-        typeof (output as any).arrayBuffer === "function")
-    ) {
-      const res = new Response(output as any);
-      buffer = await res.arrayBuffer();
-    } else {
-      throw new Error("Invalid output format returned from Workers AI");
-    }
-
-    const b64 = arrayBufferToBase64(buffer);
+    const image = await generateImage(env, targetModel, {
+      prompt,
+      width,
+      height,
+      negativePrompt,
+    });
 
     return new Response(
       JSON.stringify({
         success: true,
-        result: {
-          image: b64,
-        },
+        result: { image },
       }),
       {
         status: 200,
@@ -228,30 +174,104 @@ export async function handleImageGeneration(
       },
     );
   } catch (error) {
-    console.error("[Oracle Proxy] Cloudflare Workers AI image error:", error);
-    const raw =
-      error instanceof Error ? error.message : "Image generation failed";
-    // 4006 is the shared account's daily neuron budget, not a fault in the
-    // request. It reached users as a raw provider string about neurons,
-    // which explains nothing and suggests nothing they can do.
-    const outOfBudget = /\b4006\b|daily free allocation/i.test(raw);
-
-    return new Response(
-      JSON.stringify({
-        error: {
-          message: outOfBudget
-            ? "The shared image allowance for today is used up. It resets daily — or configure your own Cloudflare Account ID and API Token in settings to generate without the shared limit."
-            : raw,
-          code: outOfBudget ? "IMAGE_BUDGET_EXCEEDED" : "IMAGE_GEN_FAILED",
-        },
-      }),
-      {
-        status: outOfBudget ? 429 : 500,
-        headers: {
-          ...getCorsHeaders(request.headers, env),
-          "Content-Type": "application/json",
-        },
-      },
-    );
+    return imageGenerationErrorResponse(request, env, error);
   }
+}
+
+function imageGenerationErrorResponse(
+  request: Request,
+  env: Env,
+  error: unknown,
+): Response {
+  console.error("[Oracle Proxy] Cloudflare Workers AI image error:", error);
+  const raw =
+    error instanceof Error ? error.message : "Image generation failed";
+  // 4006 is the shared account's daily neuron budget, not a fault in the
+  // request. It reached users as a raw provider string about neurons,
+  // which explains nothing and suggests nothing they can do.
+  const outOfBudget = /\b4006\b|daily free allocation/i.test(raw);
+
+  return new Response(
+    JSON.stringify({
+      error: {
+        message: outOfBudget
+          ? "The shared image allowance for today is used up. It resets daily — or configure your own Cloudflare Account ID and API Token in settings to generate without the shared limit."
+          : raw,
+        code: outOfBudget ? "IMAGE_BUDGET_EXCEEDED" : "IMAGE_GEN_FAILED",
+      },
+    }),
+    {
+      status: outOfBudget ? 429 : 500,
+      headers: {
+        ...getCorsHeaders(request.headers, env),
+        "Content-Type": "application/json",
+      },
+    },
+  );
+}
+
+async function generateImage(
+  env: Env,
+  model: string,
+  input: {
+    prompt: string;
+    width: number;
+    height: number;
+    negativePrompt?: string;
+  },
+): Promise<string> {
+  const { prompt, width, height, negativePrompt } = input;
+  const modelInput = usesMultipartInput(model)
+    ? buildMultipartInput(prompt, width, height, negativePrompt)
+    : {
+        prompt,
+        width,
+        height,
+        ...(negativePrompt && supportsNegativePrompt(model)
+          ? { negative_prompt: negativePrompt }
+          : {}),
+      };
+  const output = await env.AI!.run(model, modelInput);
+  const base64Image = getBase64Image(output);
+  if (base64Image !== null) return base64Image;
+
+  const buffer = await getImageBuffer(output);
+  return arrayBufferToBase64(buffer);
+}
+
+function getBase64Image(output: unknown): string | null {
+  if (typeof output !== "object" || output === null || !("image" in output)) {
+    return null;
+  }
+  const image = (output as { image: unknown }).image;
+  return typeof image === "string" ? image : null;
+}
+
+async function getImageBuffer(output: unknown): Promise<ArrayBuffer> {
+  if (output instanceof ArrayBuffer) return output;
+  if (output instanceof Uint8Array) {
+    return output.buffer.slice(
+      output.byteOffset,
+      output.byteOffset + output.byteLength,
+    ) as ArrayBuffer;
+  }
+
+  const image =
+    typeof output === "object" && output !== null && "image" in output
+      ? (output as { image: unknown }).image
+      : output;
+  if (isResponseBody(image)) {
+    return new Response(image as BodyInit).arrayBuffer();
+  }
+
+  throw new Error("Invalid output format returned from Workers AI");
+}
+
+function isResponseBody(value: unknown): boolean {
+  return (
+    value instanceof ReadableStream ||
+    (typeof value === "object" &&
+      value !== null &&
+      ("getReader" in value || "arrayBuffer" in value))
+  );
 }

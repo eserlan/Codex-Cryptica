@@ -8,29 +8,11 @@ export async function enforcePublishRateLimit(
 ): Promise<Response | null> {
   if (request.method === "GET" || request.method === "OPTIONS") return null;
 
-  const isTemplateCreate =
-    pathname === "/api/template-directory/listings" &&
-    request.method === "POST";
-  const isShareCreate =
-    pathname === "/api/generator-shares" && request.method === "POST";
-  const limiter =
-    pathname === "/api/publish-vault" || isTemplateCreate
-      ? env.PUBLISH_CREATE_RATE_LIMITER
-      : isShareCreate
-        ? env.SHARE_CREATE_RATE_LIMITER
-        : env.PUBLISH_WRITE_RATE_LIMITER;
+  const limiter = getPublishLimiter(request, env, pathname);
   if (!limiter) return null;
 
   const ip = request.headers.get("CF-Connecting-IP") || "anonymous";
-  const publishId = pathname.startsWith("/api/template-directory/listings/")
-    ? pathname.split("/")[4] || "new"
-    : pathname.startsWith("/api/generator-shares/")
-      ? pathname.split("/")[3] || "new"
-      : pathname.split("/")[3] || "new";
-  const key =
-    pathname === "/api/publish-vault" || isTemplateCreate || isShareCreate
-      ? ip
-      : `${ip}:${publishId}`;
+  const key = getPublishRateLimitKey(pathname, request.method, ip);
   const { success } = await limiter.limit({ key });
   if (success) return null;
 
@@ -49,6 +31,44 @@ export async function enforcePublishRateLimit(
       },
     },
   );
+}
+
+function getPublishLimiter(request: Request, env: Env, pathname: string) {
+  const isTemplateCreate =
+    pathname === "/api/template-directory/listings" &&
+    request.method === "POST";
+  const isShareCreate =
+    pathname === "/api/generator-shares" && request.method === "POST";
+  const limiter =
+    pathname === "/api/publish-vault" || isTemplateCreate
+      ? env.PUBLISH_CREATE_RATE_LIMITER
+      : isShareCreate
+        ? env.SHARE_CREATE_RATE_LIMITER
+        : env.PUBLISH_WRITE_RATE_LIMITER;
+  return limiter;
+}
+
+function getPublishRateLimitKey(
+  pathname: string,
+  method: string,
+  ip: string,
+): string {
+  if (pathname === "/api/publish-vault") return ip;
+  if (
+    method === "POST" &&
+    (pathname === "/api/template-directory/listings" ||
+      pathname === "/api/generator-shares")
+  ) {
+    return ip;
+  }
+
+  const segments = pathname.split("/");
+  const publishIdIndex = pathname.startsWith(
+    "/api/template-directory/listings/",
+  )
+    ? 4
+    : 3;
+  return `${ip}:${segments[publishIdIndex] || "new"}`;
 }
 
 /**

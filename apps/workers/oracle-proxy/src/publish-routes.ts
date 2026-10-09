@@ -47,81 +47,118 @@ export async function handlePublishedRoutes(
   if (rateLimitResponse) return rateLimitResponse;
 
   if (pathname === "/api/publish-vault") {
-    if (request.method === "POST") {
-      return handlePublishVault(request, env);
-    }
-    return new Response("Method not allowed", {
-      status: 405,
-      headers: getCorsHeaders(request.headers, env),
-    });
+    return handlePublishVaultRoute(request, env);
   }
 
   const parts = pathname.split("/");
   if (parts.length === 4) {
-    // /api/published/:publishId
-    if (request.method === "DELETE") {
-      return handleDeleteVault(request, env, parts[3]);
-    }
-    return new Response("Method not allowed", {
-      status: 405,
-      headers: getCorsHeaders(request.headers, env),
-    });
+    return handlePublishedVaultRoute(request, env, parts[3]);
   }
 
   if (parts.length === 5) {
-    // /api/published/:publishId/bundle, manifest, listing, or notice
-    if (parts[4] === "notice") {
-      if (request.method === "GET") {
-        return handleGetPublishedNotice(request, env, parts[3]);
-      }
-      if (request.method === "PUT") {
-        return handlePutPublishedNotice(request, env, parts[3]);
-      }
-    }
-    if (parts[4] === "listing") {
-      if (request.method === "GET") {
-        return handleGetPublicListing(request, env, parts[3]);
-      }
-      if (request.method === "PUT") {
-        return handlePutPublicListing(request, env, parts[3]);
-      }
-      if (request.method === "DELETE") {
-        return handleDeletePublicListing(request, env, parts[3]);
-      }
-    }
-    if (request.method === "GET") {
-      if (parts[4] === "bundle") {
-        return handleGetBundle(request, env, parts[3]);
-      }
-      if (parts[4] === "manifest") {
-        return handleGetManifest(request, env, parts[3]);
-      }
-    }
-    return new Response("Method not allowed", {
-      status: 405,
-      headers: getCorsHeaders(request.headers, env),
-    });
+    return handlePublishedSubresourceRoute(request, env, parts[3], parts[4]);
   }
 
   if (parts.length === 6 && parts[4] === "assets") {
-    // /api/published/:publishId/assets/:assetId
-    if (request.method === "POST") {
-      return handleUploadAsset(request, env, parts[3], parts[5]);
-    }
-    if (request.method === "GET") {
-      return handleGetAsset(request, env, parts[3], parts[5]);
-    }
-    if (request.method === "DELETE") {
-      return handleDeleteAsset(request, env, parts[3], parts[5]);
-    }
-    return new Response("Method not allowed", {
-      status: 405,
-      headers: getCorsHeaders(request.headers, env),
-    });
+    return handlePublishedAssetRoute(request, env, parts[3], parts[5]);
   }
 
   return new Response("Not found", {
     status: 404,
+    headers: getCorsHeaders(request.headers, env),
+  });
+}
+
+function handlePublishVaultRoute(
+  request: Request,
+  env: Env,
+): Promise<Response> | Response {
+  return request.method === "POST"
+    ? handlePublishVault(request, env)
+    : methodNotAllowed(request, env);
+}
+
+function handlePublishedVaultRoute(
+  request: Request,
+  env: Env,
+  publishId: string,
+): Promise<Response> | Response {
+  return request.method === "DELETE"
+    ? handleDeleteVault(request, env, publishId)
+    : methodNotAllowed(request, env);
+}
+
+function handlePublishedSubresourceRoute(
+  request: Request,
+  env: Env,
+  publishId: string,
+  resource: string,
+): Promise<Response> | Response {
+  if (resource === "notice")
+    return handlePublishedNoticeRoute(request, env, publishId);
+  if (resource === "listing")
+    return handlePublicListingRoute(request, env, publishId);
+  if (request.method === "GET")
+    return handlePublishedDocumentRoute(request, env, publishId, resource);
+  return methodNotAllowed(request, env);
+}
+
+function handlePublishedNoticeRoute(
+  request: Request,
+  env: Env,
+  publishId: string,
+): Promise<Response> | Response {
+  if (request.method === "GET")
+    return handleGetPublishedNotice(request, env, publishId);
+  if (request.method === "PUT")
+    return handlePutPublishedNotice(request, env, publishId);
+  return methodNotAllowed(request, env);
+}
+
+function handlePublicListingRoute(
+  request: Request,
+  env: Env,
+  publishId: string,
+): Promise<Response> | Response {
+  if (request.method === "GET")
+    return handleGetPublicListing(request, env, publishId);
+  if (request.method === "PUT")
+    return handlePutPublicListing(request, env, publishId);
+  if (request.method === "DELETE")
+    return handleDeletePublicListing(request, env, publishId);
+  return methodNotAllowed(request, env);
+}
+
+function handlePublishedDocumentRoute(
+  request: Request,
+  env: Env,
+  publishId: string,
+  resource: string,
+): Promise<Response> | Response {
+  if (resource === "bundle") return handleGetBundle(request, env, publishId);
+  if (resource === "manifest")
+    return handleGetManifest(request, env, publishId);
+  return methodNotAllowed(request, env);
+}
+
+function handlePublishedAssetRoute(
+  request: Request,
+  env: Env,
+  publishId: string,
+  assetId: string,
+): Promise<Response> | Response {
+  if (request.method === "POST")
+    return handleUploadAsset(request, env, publishId, assetId);
+  if (request.method === "GET")
+    return handleGetAsset(request, env, publishId, assetId);
+  if (request.method === "DELETE")
+    return handleDeleteAsset(request, env, publishId, assetId);
+  return methodNotAllowed(request, env);
+}
+
+function methodNotAllowed(request: Request, env: Env): Response {
+  return new Response("Method not allowed", {
+    status: 405,
     headers: getCorsHeaders(request.headers, env),
   });
 }
