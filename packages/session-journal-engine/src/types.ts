@@ -53,4 +53,20 @@ export interface SessionJournal {
   entries: JournalEntry[];
   /** Map exploration capture defaults on for older journals. */
   captureMapMoves?: boolean;
+  /** Event kinds the player has switched off for this journal (spec 174, FR-023 to FR-026).
+   *  Missing means every kind is captured. */
+  captureOff?: CaptureKind[];
 }
+
+/** The event kinds a journal can capture or leave out (spec 174, FR-023). */
+export type CaptureKind =
+  | "dice"
+  | "tables"
+  | "decks"
+  | "map-moves"
+  | "scenes"
+  | "oracle"
+  | "tension"
+  | "threads"
+  | "party"
+  | "generated";

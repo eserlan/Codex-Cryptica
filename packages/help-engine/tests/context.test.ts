@@ -322,6 +322,50 @@ describe("solo play loop controls (Solo Play Loop)", () => {
       ...over,
     });
 
+  it("points at the journal Capture menu only while the journal panel is open", () => {
+    const highlight = {
+      type: "highlight",
+      target: "journal-capture-menu",
+      label: "Show me",
+    } as const;
+    expect(
+      validateAction(
+        highlight,
+        ctx({
+          flags: ["session-journal-open"],
+          availableActions: ["journal-capture-menu"],
+        }),
+        deps,
+      ),
+    ).not.toBeNull();
+    expect(
+      validateAction(
+        highlight,
+        ctx({ flags: [], availableActions: ["journal-capture-menu"] }),
+        deps,
+      ),
+    ).toBeNull();
+  });
+
+  it("refuses solo-threads-menu when it is not on the screen", () => {
+    expect(
+      validateAction(
+        { type: "highlight", target: "solo-threads-menu", label: "Show me" },
+        ctx({ flags: [], availableActions: [] }),
+        deps,
+      ),
+    ).toBeNull();
+  });
+
+  it("points at solo-threads-menu on the Play page with no session running", () => {
+    const action = validateAction(
+      { type: "highlight", target: "solo-threads-menu", label: "Show me" },
+      ctx({ flags: [], availableActions: ["solo-threads-menu"] }),
+      deps,
+    );
+    expect(action).not.toBeNull();
+  });
+
   for (const target of [
     "solo-generate-menu",
     "solo-recent-results",
@@ -329,6 +373,7 @@ describe("solo play loop controls (Solo Play Loop)", () => {
     "solo-party-menu",
     "solo-scene-menu",
     "solo-oracle-menu",
+    "solo-yes-no-menu",
   ]) {
     it(`points at ${target} while a solo session runs`, () => {
       const action = validateAction(
