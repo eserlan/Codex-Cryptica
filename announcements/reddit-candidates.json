@@ -1,5 +1,5 @@
 {
-  "updated_at": 1791537226,
+  "updated_at": 1791538760,
   "candidates": [
     {
       "id": "reddit-37303537385-the-treasury-s-tipping-point-a-5-seat-co",
@@ -72,14 +72,14 @@
       "created_at": 1791450142
     },
     {
-      "id": "reddit-37903304382-beginner-d-d-guides-were-buried-between-",
-      "title": "Beginner D&D guides were buried between deeper prep pages",
-      "body": "Even with the new beginner guides, finding the next step meant knowing the exact title. I wanted one place that tells a new player or GM where to start and what follows.\n\nI built a dedicated D&D Beginners topic hub that groups those guides in one browsable sequence.\n\nBrowse it here: https://codexcryptica.com/topics/dnd-beginners\n\nThe hub gives you:\n- a four-step table loop that explains how D&D actually plays before any rules detail\n- the six beginner guides in reading order, from knowing before your first game to reading the sheet, dice, combat and what to bring\n- a reassurance-first lead that makes clear the DM handles adjudication while you describe intentions\n- direct next-step links so you do not hunt through scattered answers\n\nIt only covers the on-ramp. If you are past your first few sessions, the broader D&D hub still holds the prep and organisation pieces.\n\nIf you were handing a friend one page before their first game, which section would you tell them to read first?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/announcements/release-37903304382-1.png)",
-      "url": "https://codexcryptica.com/topics/dnd-beginners",
-      "image_url": "https://assets.codexcryptica.com/announcements/release-37903304382-1.png",
+      "id": "reddit-37903304382-i-kept-leaving-the-solo-bar-to-roll-chec",
+      "title": "I kept leaving the solo bar to roll, check a thread, or note a result",
+      "body": "Solo was working for map and dice, but the loop kept breaking. I would open a separate menu for a Yes or No, flip elsewhere to remember an open thread, then forget to note the result in the journal.\n\nI built Solo Play Loop Phase 2 so the solo bar keeps oracle, threads and journal capture in one flow.\n\nSee how it fits together: https://codexcryptica.com/help/solo-session\n\nWhat changed:\n- Yes/No oracle with five likelihoods from very unlikely to very likely, plus a tension-driven random event check and optional question\n- random events rolled from focus, action and subject tables, subjects prefer open threads and never pick a closed one\n- threads stored in the vault with open, close, reopen, link, filter and search, plus quick add from the bar\n- per-journal capture toggles for oracle answers, random events, tension and thread changes, and recent results you can save to the vault as a draft\n- pinned tables and scene handling so you can return to a scene as a numbered visit without leaving the session\n\nIt is a dice oracle on purpose, not an AI answer, so it stays usable offline. The tradeoff is that Interpret still needs AI on to prefill the Lore Oracle.\n\nFor your solo games, what part of the loop do you track outside the tool today, threads, oracles, or the session log?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/announcements/release-37903304382-2.png)",
+      "url": "https://codexcryptica.com/help/solo-session",
+      "image_url": "https://assets.codexcryptica.com/announcements/release-37903304382-2.png",
       "source_id": "37903304382",
       "status": "approved",
-      "created_at": 1791537226
+      "created_at": 1791538760
     }
   ]
 }
