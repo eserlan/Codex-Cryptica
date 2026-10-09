@@ -29,6 +29,7 @@ describe("SoloMenu", () => {
     await fireEvent.click(trigger);
     const style = screen.getByTestId("solo-menu-panel").getAttribute("style");
     expect(style).toContain("top: 98px");
+    expect(style).toContain(`max-height: ${window.innerHeight - 98}px`);
     expect(style).not.toContain("bottom");
   });
 
@@ -46,6 +47,7 @@ describe("SoloMenu", () => {
     await fireEvent.click(trigger);
     const style = screen.getByTestId("solo-menu-panel").getAttribute("style");
     expect(style).toContain("bottom: 88px");
+    expect(style).toContain(`max-height: ${window.innerHeight - 88}px`);
     expect(style).not.toContain("top:");
   });
 
@@ -82,6 +84,17 @@ describe("SoloMenu", () => {
     await fireEvent.click(trigger);
     await fireEvent.resize(window);
     expect(screen.queryByTestId("solo-menu-panel")).toBeNull();
+  });
+
+  it("keeps the menu open while its contents scroll", async () => {
+    render(SoloMenuHarness, {
+      props: { label: "Recent", testId: "solo-recent" },
+    });
+    await fireEvent.click(screen.getByTestId("solo-recent"));
+    const panel = screen.getByTestId("solo-menu-panel");
+    expect(panel.className).toContain("overflow-y-auto");
+    await fireEvent.scroll(panel);
+    expect(screen.getByTestId("solo-menu-panel")).toBeTruthy();
   });
 
   it("closes on a second click", async () => {

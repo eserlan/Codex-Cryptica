@@ -28,17 +28,23 @@
   const PANEL_GAP = 8;
   const PANEL_MAX_WIDTH = 320;
 
-  /** Opens toward the roomier side, kept inside the viewport horizontally. */
+  /** Opens toward the roomier side and keeps the panel inside the viewport. */
   function placePanel(rect: DOMRect) {
     const left = Math.max(
       PANEL_GAP,
       Math.min(rect.left, window.innerWidth - PANEL_MAX_WIDTH),
     );
-    const vertical =
-      rect.top < window.innerHeight / 2
-        ? `top: ${rect.bottom + PANEL_GAP}px`
-        : `bottom: ${window.innerHeight - rect.top + PANEL_GAP}px`;
-    return `left: ${left}px; ${vertical}`;
+    const spaceAbove = Math.max(0, rect.top - PANEL_GAP);
+    const spaceBelow = Math.max(
+      0,
+      window.innerHeight - rect.bottom - PANEL_GAP,
+    );
+    const opensBelow = spaceBelow >= spaceAbove;
+    const vertical = opensBelow
+      ? `top: ${rect.bottom + PANEL_GAP}px`
+      : `bottom: ${window.innerHeight - rect.top + PANEL_GAP}px`;
+    const maxHeight = opensBelow ? spaceBelow : spaceAbove;
+    return `left: ${left}px; ${vertical}; max-height: ${maxHeight}px`;
   }
 
   function toggle() {
@@ -78,7 +84,10 @@
   // A fixed panel would drift away from its trigger when the bar scrolls.
   $effect(() => {
     if (!open) return;
-    const closeOnScroll = () => close(false);
+    const closeOnScroll = (event: Event) => {
+      if (event.target instanceof Node && panel?.contains(event.target)) return;
+      close(false);
+    };
     window.addEventListener("scroll", closeOnScroll, true);
     return () => window.removeEventListener("scroll", closeOnScroll, true);
   });
@@ -109,7 +118,7 @@
   {#if open}
     <div
       bind:this={panel}
-      class="fixed z-[85] min-w-48 rounded-lg border border-theme-border bg-theme-surface p-2 shadow-xl"
+      class="fixed z-[85] min-w-48 overflow-y-auto rounded-lg border border-theme-border bg-theme-surface p-2 shadow-xl"
       style={panelStyle}
       data-testid="solo-menu-panel"
       role="menu"
