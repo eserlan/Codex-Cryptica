@@ -1,10 +1,12 @@
+import { withCorsHeaders, type CorsEnv } from "./cors";
+
 interface R2Object {
   body: ReadableStream;
   httpMetadata?: { contentType?: string };
   etag: string;
 }
 
-interface StarterDeckEnv {
+interface StarterDeckEnv extends CorsEnv {
   BUCKET?: { get(key: string): Promise<R2Object | null> };
 }
 
@@ -56,4 +58,25 @@ function isSafeAssetPath(value: string) {
           /^[a-z0-9_-]+\.png$/.test(segment) || /^[a-z0-9_-]+$/.test(segment),
       )
   );
+}
+
+export async function handleStarterTileDecksRoute(
+  request: Request,
+  env: StarterDeckEnv,
+  pathname: string,
+): Promise<Response> {
+  const withCors = (res: Response) => withCorsHeaders(request, env, res);
+  if (request.method !== "GET")
+    return withCors(new Response("Method not allowed", { status: 405 }));
+  const parts = pathname.split("/");
+  const deckId = parts[3] ? decodeURIComponent(parts[3]) : undefined;
+  if (!deckId) return withCors(new Response("Not found", { status: 404 }));
+  if (parts.length === 4)
+    return withCors(await handleGetStarterTileDeck(env, deckId));
+  if (parts.length === 6 && parts[4] === "assets") {
+    return withCors(
+      await handleGetStarterTileDeck(env, deckId, decodeURIComponent(parts[5])),
+    );
+  }
+  return withCors(new Response("Not found", { status: 404 }));
 }
