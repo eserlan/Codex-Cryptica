@@ -313,7 +313,7 @@
             <div
               class="w-full h-full flex items-center justify-center bg-theme-primary/10 text-theme-primary"
             >
-              <span class="{getIconClass(category?.icon)} w-6 h-6"></span>
+              <span class="{getIconClass(category?.icon)} w-6 h-6" aria-hidden="true"></span>
             </div>
           {/if}
         </div>

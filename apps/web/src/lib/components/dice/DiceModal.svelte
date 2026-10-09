@@ -195,7 +195,7 @@
       title="Drag to move"
     >
       <div class="flex items-center gap-2 pointer-events-none">
-        <span class="{headerInfo.icon} w-5 h-5 text-theme-primary"></span>
+        <span class="{headerInfo.icon} w-5 h-5 text-theme-primary" aria-hidden="true"></span>
         <h2
           class="text-sm font-bold font-header tracking-widest text-theme-text uppercase"
         >

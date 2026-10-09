@@ -24,7 +24,7 @@
         : 'text-theme-muted hover:text-theme-text hover:bg-theme-primary/5'}"
       title="Switch to {mode.label} View"
     >
-      <span class="{mode.icon} w-3.5 h-3.5"></span>
+      <span class="{mode.icon} w-3.5 h-3.5" aria-hidden="true"></span>
       <span class="hidden md:inline uppercase">{mode.label}</span>
     </button>
   {/each}

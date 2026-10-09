@@ -120,7 +120,7 @@
             data-testid={`intent-${intent.category}`}
             class="flex flex-col items-center gap-2 p-4 rounded-xl border border-theme-border bg-theme-bg/40 hover:border-theme-primary hover:bg-theme-primary/10 transition-colors text-theme-text"
           >
-            <span class="{intent.icon} w-6 h-6 text-theme-primary"></span>
+            <span class="{intent.icon} w-6 h-6 text-theme-primary" aria-hidden="true"></span>
             <span class="text-xs font-bold uppercase tracking-wider"
               >{intent.label}</span
             >
