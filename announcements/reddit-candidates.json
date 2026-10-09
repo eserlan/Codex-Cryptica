@@ -1,5 +1,5 @@
 {
-  "updated_at": 1791534107,
+  "updated_at": 1791535573,
   "candidates": [
     {
       "id": "reddit-37303537385-the-treasury-s-tipping-point-a-5-seat-co",
@@ -72,14 +72,14 @@
       "created_at": 1791450142
     },
     {
-      "id": "reddit-37903304382-first-game-nerves-are-usually-about-the-",
-      "title": "First game nerves are usually about the sheet and the dice, not the lore",
-      "body": "I was answering the same questions for every new player at my table. Where is my hit points box, which die am I supposed to roll, what am I even allowed to do on my turn. The rulebook explains everything at once, which makes it harder to find the four things you actually need.\n\nI built six plain-English beginner guides that each cover only what matters before your first session.\n\nStart with the core guide: https://codexcryptica.com/answers/what-should-a-new-dnd-player-know-before-their-first-game\n\nThe bundle covers:\n- how to read a character sheet in order of usefulness, hit points and Armour Class first, then the modifier for a d20 roll and your main attacks or spells\n- which dice to roll and when, the d20 for checks, attacks and saves plus when you just roll what the feature names\n- what you can do on your turn in combat, movement, one action, a bonus action only if something gives you one, and a reaction on its trigger\n- what to bring to your first game, and what most tables will already lend you so you do not need to buy anything upfront\n- what to learn first versus what you can safely ignore until it comes up at the table\n\nThe sheets assume both the 2014 and 2024 layouts, so your print may put the same box in a slightly different spot. I kept them short on purpose, which means they do not cover every class edge case.\n\nWhat confused you or your newest player most the first time you sat down, the sheet layout, the dice, or the combat turn?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/announcements/release-37903304382-3.png)",
-      "url": "https://codexcryptica.com/answers/which-dice-do-i-roll-in-dnd-and-when",
-      "image_url": "https://assets.codexcryptica.com/announcements/release-37903304382-3.png",
+      "id": "reddit-37903304382-i-kept-building-a-continent-before-i-had",
+      "title": "I kept building a continent before I had written a scene",
+      "body": "For a while my novel prep was a pantheon, a thousand years of history, and no opening paragraph. It felt like progress but it did not tell me who walks into the first room or what they want.\n\nI wrote a fiction-first framework for starting worldbuilding before you draft.\n\nIt lives here: https://codexcryptica.com/answers/how-do-i-start-worldbuilding-for-a-novel-or-short-story\n\nInside:\n- a five-step sequence from a one sentence premise to viewpoint, goal and immediate obstacle\n- choosing three setting truths that actually pressure your character, not just flavour\n- building only the single location and handful of people needed for the opening scene\n- tables to test whether a truth limits choices, and checklists for when to stop adding lore\n- a clear lane for fiction, with a pointer to the tabletop sandbox method when you need playable sprawl instead\n\nIt trades completeness for momentum. If you need a full atlas on day one, this will feel thin. If you need to start drafting, it keeps the world tied to the next scene.\n\nWhen you start a story, what do you build first and what do you deliberately leave for later?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/og/fantasy-worldbuilding.jpg)",
+      "url": "https://codexcryptica.com/answers/how-do-i-start-worldbuilding-for-a-novel-or-short-story",
+      "image_url": "https://assets.codexcryptica.com/og/fantasy-worldbuilding.jpg",
       "source_id": "37903304382",
       "status": "approved",
-      "created_at": 1791534107
+      "created_at": 1791535573
     }
   ]
 }
