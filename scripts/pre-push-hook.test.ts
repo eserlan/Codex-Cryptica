@@ -56,7 +56,11 @@ function runHook(bunExitCode: number) {
     const result = spawnSync("sh", [hookPath], {
       cwd: repoDir,
       encoding: "utf8",
-      env: { ...process.env, PATH: `${binDir}${delimiter}${process.env.PATH}` },
+      env: {
+        ...process.env,
+        HOME: tempDir,
+        PATH: `${binDir}${delimiter}${process.env.PATH}`,
+      },
       input: `refs/heads/feature ${head} refs/heads/main ${base}\n`,
     });
 
