@@ -118,6 +118,7 @@
         <!-- Color -->
         <input
           type="color"
+          aria-label="Category Color for {cat.label}"
           value={cat.color}
           oninput={(e) =>
             categories.updateCategory(cat.id, {
@@ -129,6 +130,7 @@
         <!-- Label -->
         <input
           type="text"
+          aria-label="Category Name for {cat.label}"
           value={cat.label}
           onchange={(e) => handleLabelUpdate(cat.id, e.currentTarget.value)}
           class="flex-1 bg-transparent border-0 text-sm font-medium text-theme-text focus:text-theme-primary focus:outline-none transition-colors py-0.5 px-0"
@@ -177,11 +179,13 @@
     <div class="flex items-center gap-3">
       <input
         type="color"
+        aria-label="New category color"
         bind:value={newColor}
         class="w-6 h-6 bg-transparent border border-theme-primary/30 p-0.5 cursor-pointer rounded-full shrink-0"
       />
       <input
         type="text"
+        aria-label="New category name"
         bind:value={newLabel}
         placeholder="New category..."
         class="flex-1 bg-theme-surface border border-theme-border rounded px-3 py-1.5 text-sm text-theme-text focus:outline-none focus:border-theme-primary placeholder-theme-muted"
