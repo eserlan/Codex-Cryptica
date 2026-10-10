@@ -6,6 +6,8 @@
 
 ## Active Technologies
 
+- TypeScript 6.0.3, Svelte 5 (Runes), SvelteKit 2, Bun 1.3.14 + Existing `oracle-engine` (`rollOracleOutcome`, widened), `solo-session-engine` and `session-journal-engine` (both extended), the vault file helpers (`getVaultDir`, `writeOpfsFile`, `readOpfsBlob`), `@codex/events` (`JOURNAL:CAPTURE`), the Oracle `ui` manager's pending prompt, Adventure Mode at `/adventure`, `help-engine`, Tailwind 4 semantic tokens and Iconify classes. No new third-party dependency. (174-solo-oracle-threads)
+
 - TypeScript 6.0.3, Svelte 5 (Runes), SvelteKit 2, Bun 1.3.14 + Existing `solo-session-engine` and `session-journal-engine` (both extended), `random-source-engine` via `randomSourceStore.roll`, the generator workflow (`modalUIStore.openGeneratorWorkflow`, `CampaignGeneratorModal`), `SessionJournalPromoter`, the Oracle `ui` manager and `OracleChat`, `@codex/events` (`JOURNAL:CAPTURE`), `help-engine`, Tailwind 4 semantic tokens and Iconify classes. No new third-party dependency. (173-solo-play-loop)
 - Extended `codex-solo-session:<vaultId>` record (new optional `partyIds` and `scenes`, still version 1, and Phase 1 records stay valid). New `codex-solo-table-pins:<vaultId>` in `localStorage`. Three new journal entry types written through the existing capture path. No IndexedDB, OPFS or vault schema change. (173-solo-play-loop)
 

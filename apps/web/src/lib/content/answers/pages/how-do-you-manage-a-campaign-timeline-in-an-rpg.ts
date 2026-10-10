@@ -136,6 +136,7 @@ export const howDoYouManageACampaignTimelineInAnRpg: AnswerConfigInput = {
     "how-do-i-take-useful-rpg-notes-during-play",
     "how-do-i-make-a-campaign-threat-feel-urgent-without-railroading",
     "how-do-i-organise-a-dnd-campaign",
+    "how-do-i-plan-story-arcs-for-an-rpg-campaign",
   ],
   discovery: {
     id: "answer-manage-campaign-timeline",

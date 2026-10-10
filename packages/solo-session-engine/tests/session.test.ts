@@ -8,6 +8,7 @@ import {
   withParty,
   withScene,
   withSceneAdded,
+  withTension,
 } from "../src/session";
 
 const valid = {
@@ -28,6 +29,7 @@ describe("parseSoloSession", () => {
       ...valid,
       partyIds: [],
       scenes: [{ name: "Arrival", sectionId: "sec1" }],
+      tension: 5,
     });
   });
 
@@ -81,6 +83,7 @@ describe("createSoloSession", () => {
       lastRoll: null,
       partyIds: [],
       scenes: [],
+      tension: 5,
     });
   });
 
@@ -228,5 +231,20 @@ describe("scenes (Solo Play Loop, FR-022 to FR-024)", () => {
     const again = nextVisitName([...scenes, scene(visit!)], 0);
     expect(again!.length).toBeLessThanOrEqual(80);
     expect(again!.endsWith(" (3)")).toBe(true);
+  });
+});
+
+describe("tension (spec 174, FR-010)", () => {
+  it("rejects a tension that is not an integer from 1 to 9", () => {
+    for (const bad of [0, 10, 4.5, "5"]) {
+      expect(parseSoloSession({ ...valid, tension: bad }, "v1")).toBeNull();
+    }
+  });
+
+  it("clamps withTension to the 1 to 9 scale", () => {
+    const session = parseSoloSession(valid, "v1")!;
+    expect(withTension(session, 12).tension).toBe(9);
+    expect(withTension(session, -3).tension).toBe(1);
+    expect(withTension(session, 7).tension).toBe(7);
   });
 });

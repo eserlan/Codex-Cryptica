@@ -159,6 +159,7 @@ export const howDoYouCreateABelievableFictionalReligion: AnswerConfigInput = {
     },
   ],
   relatedAnswers: [
+    "how-do-i-start-worldbuilding-for-a-novel-or-short-story",
     "what-is-the-difference-between-gods-and-demon-lords-in-a-fantasy-world",
     "can-multiple-gods-share-a-domain",
     "how-do-you-create-a-fictional-language-for-an-rpg",

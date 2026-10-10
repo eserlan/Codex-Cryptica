@@ -1,7 +1,9 @@
 import type { AppEventBus } from "@codex/events";
 import {
+  isCaptured,
   JOURNAL_EVENTS,
   captureToEntryInput,
+  type CaptureKind,
   type JournalEntryInput,
 } from "session-journal-engine";
 
@@ -11,7 +13,13 @@ export const SESSION_JOURNAL_CAPTURE_LISTENER = "session-journal-capture";
 /** The slice of `SessionJournalStore` the listener needs. */
 export interface JournalCaptureTarget {
   readonly current:
-    | { id: string; vaultId: string; status: string; captureMapMoves?: boolean }
+    | {
+        id: string;
+        vaultId: string;
+        status: string;
+        captureMapMoves?: boolean;
+        captureOff?: CaptureKind[];
+      }
     | undefined;
   readonly activeSectionId: string | undefined;
   appendEntry(entry: JournalEntryInput): Promise<unknown>;
@@ -79,11 +87,8 @@ export class SessionJournalCapture {
     if (event.metadata?.remote) return;
     const journal = this.store.current;
     if (journal?.status !== "active") return;
-    if (
-      event.payload.entryType === "map-move" &&
-      journal.captureMapMoves === false
-    )
-      return;
+    // The Capture menu's switches decide which automatic kinds are recorded (spec 174, FR-023).
+    if (!isCaptured(journal, event.payload.entryType)) return;
 
     const result = captureToEntryInput(
       event.payload,
@@ -109,7 +114,7 @@ export class SessionJournalCapture {
       current?.status !== "active" ||
       current.id !== journalId ||
       current.vaultId !== vaultId ||
-      (input.type === "map-move" && current.captureMapMoves === false) ||
+      !isCaptured(current, input.type) ||
       !this.isCaptureAllowed()
     ) {
       return;

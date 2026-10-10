@@ -116,6 +116,13 @@ export const EXPLORE_SECTIONS: ExploreSection[] = [
           "Start a campaign, prep the next session, run the table and keep track, with answers and tools for each job.",
         icon: "icon-[lucide--swords]",
       },
+      {
+        href: "/topics/dnd-beginners",
+        label: "D&D for Beginners",
+        summary:
+          "The play loop, character-sheet orientation, dice mechanics, and combat turns for new players.",
+        icon: "icon-[lucide--book-open]",
+      },
     ],
   },
   {

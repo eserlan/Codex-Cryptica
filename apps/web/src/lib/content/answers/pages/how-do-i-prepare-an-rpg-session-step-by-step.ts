@@ -311,6 +311,7 @@ export const howDoIPrepareAnRpgSessionStepByStep: AnswerConfigInput = {
     "how-long-should-a-ttrpg-session-be",
     "how-do-i-prepare-a-dnd-session",
     "how-do-i-start-a-dnd-campaign",
+    "how-do-i-plan-story-arcs-for-an-rpg-campaign",
   ],
   discovery: {
     id: "answer-prepare-session-step-by-step",

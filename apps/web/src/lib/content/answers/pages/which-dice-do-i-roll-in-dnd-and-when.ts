@@ -133,6 +133,14 @@ export const whichDiceDoIRollInDndAndWhen: AnswerConfigInput = {
     linkText: "Explore Codex Cryptica for D&D",
     href: "/for/dungeons-and-dragons",
   },
+  relatedTopics: [
+    {
+      title: "D&D for Beginners",
+      href: "/topics/dnd-beginners",
+      description:
+        "The complete beginner learning path: what to know before session one, character-sheet walkthrough, dice rules, and combat turns.",
+    },
+  ],
   relatedTools: [],
   relatedForPages: [
     {
@@ -147,10 +155,14 @@ export const whichDiceDoIRollInDndAndWhen: AnswerConfigInput = {
     "how-do-i-read-a-dnd-character-sheet-as-a-beginner",
     "what-can-i-do-on-my-turn-in-dnd-combat",
     "what-should-a-new-dnd-player-learn-first",
+    "how-do-i-improvise-npcs-in-dnd",
+    "how-do-i-run-a-successful-session-0",
+    "where-do-i-start-if-i-have-never-played-a-tabletop-rpg",
   ],
   discovery: {
     id: "answer-which-dice-to-roll-in-dnd",
     parentCluster: "beginner-entry",
+    clusters: ["beginner-entry", "dnd-new-player"],
     primaryIntent: "which dice to roll in dnd and when",
     intentAliases: [
       "which dice do i roll in dnd",
@@ -163,6 +175,7 @@ export const whichDiceDoIRollInDndAndWhen: AnswerConfigInput = {
     uniqueValue:
       "Teaches the single d20 habit for checks, attacks and saves, shows how weapon and spell entries name the damage die, decodes notation such as 1d8 + 3, and gives a plain-English advantage and disadvantage rule that reassures beginners the sheet or DM names the die.",
     relatedIntents: [
+      "topic-dnd-beginners",
       "answer-new-dnd-player-first-game",
       "answer-read-dnd-character-sheet-beginner",
       "answer-what-can-i-do-on-my-turn-in-dnd-combat",

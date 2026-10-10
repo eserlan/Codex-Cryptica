@@ -327,6 +327,13 @@ export const DND_TOPIC_CONFIG = {
           badge: "Answer",
         },
         {
+          title: "How do I plan story arcs for a long-running RPG campaign?",
+          href: "/answers/how-do-i-plan-story-arcs-for-an-rpg-campaign",
+          description:
+            "Plan in three horizons so each arc resolves and player choices still matter.",
+          badge: "Answer",
+        },
+        {
           title: "Link your NPCs, factions and places",
           href: "/solutions/rpg-knowledge-graph",
           description:
@@ -368,6 +375,12 @@ export const DND_TOPIC_CONFIG = {
 
   relatedHeading: "More about D&D and Codex Cryptica",
   relatedTopics: [
+    {
+      title: "D&D for Beginners",
+      href: "/topics/dnd-beginners",
+      description:
+        "Guide your new players to a clear learning path covering the play loop, character sheet, dice and combat turns.",
+    },
     {
       title: "Codex Cryptica for D&D",
       href: "/for/dungeons-and-dragons",

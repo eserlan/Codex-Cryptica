@@ -73,6 +73,9 @@
 
 <script lang="ts">
   import {
+    adventureArchetypesForTheme,
+    adventureConfig,
+    adventureTonesForTheme,
     dungeonConfig,
     factionTypesForTheme,
     forDungeonGenre,
@@ -256,6 +259,10 @@
   const suggestedLanguage = $derived(
     languages.find((language) => language.id === suggestedLanguageId),
   );
+  const availableAdventureArchetypes = $derived(
+    adventureArchetypesForTheme(themeId),
+  );
+  const availableAdventureTones = $derived(adventureTonesForTheme(themeId));
   const dungeonGenre = $derived(themeIdToLabel[themeId] ?? "Classic Fantasy");
   const availableDungeonPurposes = $derived(
     forDungeonGenre(dungeonConfig.purposesByGenre, dungeonGenre),
@@ -292,54 +299,30 @@
     }),
   );
 
+  // Options whose choices follow the vault's theme (or another option),
+  // keyed "generator:option".
+  const themedChoices = $derived<Record<string, readonly string[]>>({
+    "world:campaignPressure":
+      stringValue("genre") === "Lancer"
+        ? worldConfig.lancerConflicts
+        : worldConfig.campaignPressures,
+    "npc:race": npcRacesForTheme(themeId),
+    "npc:role": npcRolesForTheme(themeId),
+    "faction:type": factionTypesForTheme(themeId),
+    "settlement:type": settlementTypesForTheme(themeId),
+    "adventure:archetype": availableAdventureArchetypes,
+    "adventure:tone": availableAdventureTones,
+    "villain:threatScale": availableVillainThreatScales,
+    "dungeon:purpose": availableDungeonPurposes,
+    "dungeon:currentState": availableDungeonStates,
+  });
+
   function choicesForOption(option: {
     id: string;
     choices?: Array<{ value: string; label: string }>;
   }): Array<{ value: string; label: string }> {
-    if (selectedId === "world" && option.id === "campaignPressure") {
-      const values =
-        stringValue("genre") === "Lancer"
-          ? worldConfig.lancerConflicts
-          : worldConfig.campaignPressures;
-      return values.map((value) => ({ value, label: value }));
-    }
-    if (selectedId === "npc" && option.id === "race") {
-      return npcRacesForTheme(themeId).map((value) => ({
-        value,
-        label: value,
-      }));
-    }
-    if (selectedId === "npc" && option.id === "role") {
-      return npcRolesForTheme(themeId).map((value) => ({
-        value,
-        label: value,
-      }));
-    }
-    if (selectedId === "faction" && option.id === "type") {
-      return factionTypesForTheme(themeId).map((value) => ({
-        value,
-        label: value,
-      }));
-    }
-    if (selectedId === "settlement" && option.id === "type") {
-      return settlementTypesForTheme(themeId).map((value) => ({
-        value,
-        label: value,
-      }));
-    }
-    if (selectedId === "villain" && option.id === "threatScale") {
-      return availableVillainThreatScales.map((value) => ({
-        value,
-        label: value,
-      }));
-    }
-    if (selectedId !== "dungeon") return option.choices ?? [];
-    if (option.id === "purpose") {
-      return availableDungeonPurposes.map((value) => ({ value, label: value }));
-    }
-    if (option.id === "currentState") {
-      return availableDungeonStates.map((value) => ({ value, label: value }));
-    }
+    const themed = themedChoices[`${selectedId}:${option.id}`];
+    if (themed) return themed.map((value) => ({ value, label: value }));
     return option.choices ?? [];
   }
 
@@ -382,6 +365,32 @@
       !availableDungeonStates.includes(currentState)
     ) {
       nextValues.currentState = availableDungeonStates[0] ?? "";
+      changed = true;
+    }
+    if (changed) optionValues = nextValues;
+  });
+  // The default type (or one picked under another theme) may not exist in this
+  // theme's list; fall back to its first entry rather than a stale value.
+  $effect(() => {
+    if (selectedId !== "adventure") return;
+    const nextValues = { ...optionValues };
+    let changed = false;
+    const archetype = nextValues.archetype;
+    if (
+      typeof archetype === "string" &&
+      adventureConfig.archetypes.includes(archetype) &&
+      !availableAdventureArchetypes.includes(archetype)
+    ) {
+      nextValues.archetype = availableAdventureArchetypes[0] ?? "";
+      changed = true;
+    }
+    const tone = nextValues.tone;
+    if (
+      typeof tone === "string" &&
+      adventureConfig.tones.includes(tone) &&
+      !availableAdventureTones.includes(tone)
+    ) {
+      nextValues.tone = "";
       changed = true;
     }
     if (changed) optionValues = nextValues;
