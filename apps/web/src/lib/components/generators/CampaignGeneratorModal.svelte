@@ -68,11 +68,16 @@
 
   import GeneratorConfigForm from "./GeneratorConfigForm.svelte";
   import GeneratorDraftReview from "./GeneratorDraftReview.svelte";
+  import { soloSessionStore } from "$lib/stores/solo-session-instance";
   import { systemClock } from "$lib/utils/runtime-deps";
   import {
     publishGeneratedCapture,
     publishGeneratedSaved,
   } from "$lib/services/generator-journal-capture";
+
+  // Generators whose output is a plot the player will go on to play. During a
+  // solo session these open with the spoilers hidden.
+  const SPOILER_SHIELDED_GENERATORS = new Set(["adventure"]);
 
   type Stage = "configure" | "generating" | "review" | "saving" | "error";
 
@@ -806,6 +811,8 @@
         showRelationshipToggle={workflow.launchMode === "contextual" &&
           !!workflow.sourceEntityId}
         backLabel={workflow.autoGenerate ? "Customize" : "Back"}
+        spoilerShield={soloSessionStore.isActive &&
+          SPOILER_SHIELDED_GENERATORS.has(draft.sourceGeneratorId ?? "")}
         onsave={onSave}
         onback={() => {
           stage = "configure";
