@@ -2,7 +2,7 @@
   import type { GeneratedDraft } from "generator-engine";
   import type { Category } from "schema";
   import { getDelveLocationTypeLabel } from "$lib/utils/delve-terminology";
-  import { renderMarkdown } from "$lib/utils/markdown";
+  import DraftBody from "./DraftBody.svelte";
 
   interface Props {
     draft: GeneratedDraft;
@@ -20,6 +20,12 @@
     onGeneratePlotTwist?: () => void;
     /** Open Boss / Key NPC generator seeded from a delve/dungeon draft (#1827). */
     onGenerateBoss?: () => void;
+    /**
+     * Solo play: hide the parts of the draft that spell out what happens
+     * (content and GM reference) until the player chooses to reveal them, so
+     * the person who will play the adventure isn't handed its plot.
+     */
+    spoilerShield?: boolean;
   }
 
   let {
@@ -33,6 +39,7 @@
     backLabel = "Back",
     onGeneratePlotTwist,
     onGenerateBoss,
+    spoilerShield = false,
   }: Props = $props();
 
   let createRelationship = $state(false);
@@ -160,53 +167,7 @@
     />
   </div>
 
-  {#if draft.summary}
-    <div class="flex flex-col gap-1">
-      <span
-        class="text-micro font-bold uppercase tracking-wider text-chrome-muted"
-      >
-        Summary
-      </span>
-      <div
-        class="draft-preview max-h-32 overflow-y-auto rounded border border-chrome-border bg-chrome-bg/30 px-3 py-2"
-      >
-        <!-- eslint-disable-next-line svelte/no-at-html-tags -->
-        {@html renderMarkdown(draft.summary)}
-      </div>
-    </div>
-  {/if}
-
-  {#if draft.content}
-    <div class="flex flex-col gap-1">
-      <span
-        class="text-micro font-bold uppercase tracking-wider text-chrome-muted"
-      >
-        Content
-      </span>
-      <div
-        class="draft-preview min-h-48 max-h-80 overflow-y-auto rounded border border-chrome-border bg-chrome-bg/30 px-3 py-2"
-      >
-        <!-- eslint-disable-next-line svelte/no-at-html-tags -->
-        {@html renderMarkdown(draft.content)}
-      </div>
-    </div>
-  {/if}
-
-  {#if draft.lore}
-    <div class="flex flex-col gap-1">
-      <span
-        class="text-micro font-bold uppercase tracking-wider text-chrome-muted"
-      >
-        GM Reference
-      </span>
-      <div
-        class="draft-preview min-h-48 max-h-64 overflow-y-auto rounded border border-chrome-border bg-chrome-bg/30 px-3 py-2"
-      >
-        <!-- eslint-disable-next-line svelte/no-at-html-tags -->
-        {@html renderMarkdown(draft.lore)}
-      </div>
-    </div>
-  {/if}
+  <DraftBody {draft} {spoilerShield} />
 
   {#if draft.connections?.length}
     <div class="flex flex-col gap-1">
@@ -293,47 +254,3 @@
     </div>
   </div>
 </form>
-
-<style>
-  .draft-preview :global(h1),
-  .draft-preview :global(h2),
-  .draft-preview :global(h3) {
-    font-size: 0.8rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: var(--color-chrome-accent, #e6b450);
-    margin-top: 0.75rem;
-    margin-bottom: 0.25rem;
-  }
-  .draft-preview :global(h1:first-child),
-  .draft-preview :global(h2:first-child),
-  .draft-preview :global(h3:first-child) {
-    margin-top: 0;
-  }
-  .draft-preview :global(p) {
-    font-size: 0.8125rem;
-    color: var(--color-chrome-text, #e2e8f0);
-    line-height: 1.6;
-    margin-bottom: 0.5rem;
-  }
-  .draft-preview :global(strong) {
-    font-weight: 600;
-    color: var(--color-chrome-text, #e2e8f0);
-  }
-  .draft-preview :global(ul),
-  .draft-preview :global(ol) {
-    padding-left: 1.25rem;
-    margin-bottom: 0.5rem;
-    font-size: 0.8125rem;
-    color: var(--color-chrome-text, #e2e8f0);
-  }
-  .draft-preview :global(li) {
-    margin-bottom: 0.15rem;
-    line-height: 1.5;
-  }
-  .draft-preview :global(em) {
-    font-style: italic;
-    opacity: 0.85;
-  }
-</style>

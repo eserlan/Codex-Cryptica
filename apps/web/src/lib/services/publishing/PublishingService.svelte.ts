@@ -81,8 +81,13 @@ export class PublishingService {
   private async calculateHash(blob: Blob): Promise<string> {
     const buffer = await blob.arrayBuffer();
     const hashBuffer = await crypto.subtle.digest("SHA-256", buffer);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
+    const bytes = new Uint8Array(hashBuffer);
+    let hex = "";
+    // ⚡ Bolt Optimization: Replace chained .map().join() with an imperative loop
+    for (let i = 0; i < bytes.length; i++) {
+      hex += bytes[i].toString(16).padStart(2, "0");
+    }
+    return hex;
   }
 
   private async resolveAsset(path: string) {

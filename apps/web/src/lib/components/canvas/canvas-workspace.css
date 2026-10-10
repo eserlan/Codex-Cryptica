@@ -1,0 +1,135 @@
+.svelte-flow__edges {
+  z-index: 0 !important;
+}
+
+.svelte-flow__nodes {
+  z-index: 10 !important;
+}
+.svelte-flow__node-delveSectorGroup {
+  z-index: 0 !important;
+  pointer-events: none !important;
+}
+
+.svelte-flow {
+  background-color: transparent !important;
+  font-family: var(--font-body), ui-sans-serif;
+  transition:
+    font-family 0.3s ease,
+    background-color 0.3s ease;
+}
+.svelte-flow__pane {
+  background-color: transparent !important;
+}
+.svelte-flow__background-pattern {
+  fill: var(--color-border-primary) !important;
+  opacity: 0.25 !important;
+}
+.svelte-flow__edgelabel-renderer {
+  background: transparent !important;
+  pointer-events: none;
+}
+.svelte-flow__edge-label {
+  background: transparent !important;
+}
+.svelte-flow__edge-path {
+  stroke: var(--color-theme-primary, #78350f) !important;
+  stroke-width: var(--theme-edge-stroke-width, 2) !important;
+  stroke-opacity: 1 !important;
+  visibility: visible !important;
+  transition:
+    stroke-width 0.2s ease,
+    stroke 0.2s ease;
+}
+.svelte-flow__edge:hover .svelte-flow__edge-path {
+  stroke-width: calc(var(--theme-edge-stroke-width, 2) + 2px) !important;
+  stroke: var(--color-theme-primary) !important;
+  filter: drop-shadow(0 0 4px var(--color-theme-primary));
+}
+.svelte-flow__edge.selected .svelte-flow__edge-path {
+  stroke-width: calc(var(--theme-edge-stroke-width, 2) + 2px) !important;
+  stroke: var(--color-theme-primary) !important;
+}
+.svelte-flow__edge.animated path {
+  stroke-dasharray: 5;
+  animation: svelte-flow__dashdraw 0.5s linear infinite;
+}
+.svelte-flow__controls {
+  background: var(--color-theme-surface) !important;
+  border: 1px solid var(--color-theme-border) !important;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+.svelte-flow__controls-button {
+  background: var(--color-theme-surface) !important;
+  border-bottom: 1px solid var(--color-theme-border) !important;
+  color: var(--color-theme-primary) !important;
+  fill: var(--color-theme-primary) !important;
+  transition: all 0.2s ease;
+}
+.svelte-flow__controls-button:last-child {
+  border-bottom: none !important;
+}
+.svelte-flow__controls-button:hover {
+  background: var(--color-theme-primary) !important;
+  color: var(--color-theme-bg) !important;
+  fill: var(--color-theme-bg) !important;
+}
+.svelte-flow__controls-button svg {
+  fill: currentColor !important;
+}
+.svelte-flow__minimap {
+  background-color: var(--color-bg-surface) !important;
+  border: 1px solid var(--color-border-primary) !important;
+  border-radius: 8px !important;
+}
+@media (max-width: 639px) {
+  .svelte-flow__minimap {
+    display: none !important;
+  }
+}
+.svelte-flow__minimap-mask {
+  fill: var(--color-theme-primary) !important;
+  fill-opacity: 0.1 !important;
+}
+.svelte-flow__connectionline {
+  z-index: 20 !important;
+}
+
+.svelte-flow__viewport-front {
+  z-index: 30;
+}
+
+/*
+   * Without this, the browser treats a single-finger drag on the pane or a
+   * node as a native scroll/zoom gesture instead of handing it to SvelteFlow's
+   * own pointer-driven pan/drag, so touch dragging never starts. Same fix
+   * already applied to MapView and the family-tree PanZoomContainer.
+   */
+.svelte-flow {
+  touch-action: none;
+}
+
+/*
+   * Rotation is applied here, to the node's content element, rather than to
+   * `.svelte-flow__node` itself. SvelteFlow positions that wrapper with
+   * `transform: translate(...)`, and combining that with a standalone
+   * `rotate` property on the same element breaks their shared
+   * transform-origin, making the node visually jump instead of spinning in
+   * place around its own center.
+   */
+.svelte-flow__node > * {
+  rotate: var(--canvas-node-rotate, 0deg);
+}
+
+.svelte-flow__panel {
+  z-index: 40 !important;
+}
+@keyframes svelte-flow__dashdraw {
+  from {
+    stroke-dashoffset: 10;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}

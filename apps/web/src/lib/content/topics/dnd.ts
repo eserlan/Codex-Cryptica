@@ -327,6 +327,13 @@ export const DND_TOPIC_CONFIG = {
           badge: "Answer",
         },
         {
+          title: "How do I plan story arcs for a long-running RPG campaign?",
+          href: "/answers/how-do-i-plan-story-arcs-for-an-rpg-campaign",
+          description:
+            "Plan in three horizons so each arc resolves and player choices still matter.",
+          badge: "Answer",
+        },
+        {
           title: "Link your NPCs, factions and places",
           href: "/solutions/rpg-knowledge-graph",
           description:

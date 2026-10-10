@@ -40,6 +40,20 @@ vi.mock("$lib/services/generator-journal-capture", () => ({
   publishGeneratedSaved: captureMocks.saved,
 }));
 
+const soloMock = vi.hoisted(() => ({ isActive: false }));
+vi.mock("$lib/stores/solo-session-instance", () => ({
+  soloSessionStore: soloMock,
+}));
+
+const draftOverrides = vi.hoisted(
+  () => ({}) as Partial<import("generator-engine").GeneratedDraft>,
+);
+const streamMock = vi.hoisted(() => ({
+  events: [] as Array<{ type: "field"; key: string; value: string }>,
+  waitForRelease: null as Promise<void> | null,
+  release: null as (() => void) | null,
+}));
+
 vi.mock("$lib/actions/focusTrap", () => ({
   focusTrap: () => ({ destroy: () => {} }),
 }));
@@ -106,7 +120,12 @@ vi.mock("generator-engine", async () => {
   };
   class FakeCampaignGeneratorService extends actual.CampaignGeneratorService {
     async *generateDraftStream() {
-      yield { type: "draft" as const, draft };
+      for (const event of streamMock.events) yield event;
+      if (streamMock.waitForRelease) await streamMock.waitForRelease;
+      yield {
+        type: "draft" as const,
+        draft: { ...draft, ...draftOverrides },
+      };
     }
     saveDraft = saveDraftMock;
   }
@@ -128,6 +147,13 @@ const store = modalUIStore as typeof modalUIStore & {
 describe("CampaignGeneratorModal", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    soloMock.isActive = false;
+    for (const key of Object.keys(draftOverrides)) {
+      delete (draftOverrides as Record<string, unknown>)[key];
+    }
+    streamMock.events = [];
+    streamMock.waitForRelease = null;
+    streamMock.release = null;
     store._workflow.launchMode = "workspace";
     store._workflow.sourceEntityId = null;
     store._workflow.generatorId = null;
@@ -313,6 +339,74 @@ describe("CampaignGeneratorModal", () => {
       await fireEvent.click(screen.getByRole("button", { name: "Generate" }));
       expect(
         await screen.findByRole("button", { name: "Open in Editor" }),
+      ).toBeTruthy();
+    });
+  });
+
+  describe("spoiler shield (solo play)", () => {
+    const generateAdventure = async (generatorId: string) => {
+      store._workflow.generatorId = generatorId;
+      Object.assign(draftOverrides, {
+        sourceGeneratorId: generatorId,
+        content: "The harbourmaster is the cultist.",
+      });
+      render(CampaignGeneratorModal);
+      await fireEvent.click(screen.getByRole("button", { name: "Generate" }));
+      await screen.findByRole("button", { name: "Open in Editor" });
+    };
+
+    it("hides an adventure's plot during a solo session", async () => {
+      soloMock.isActive = true;
+      await generateAdventure("adventure");
+
+      expect(screen.getByTestId("spoiler-shield")).toBeTruthy();
+      expect(
+        screen.queryByText("The harbourmaster is the cultist."),
+      ).toBeNull();
+    });
+
+    it("does not show streamed adventure lore during a solo session", async () => {
+      soloMock.isActive = true;
+      store._workflow.generatorId = "adventure";
+      streamMock.events = [
+        {
+          type: "field",
+          key: "lore",
+          value: "The harbourmaster is the cultist.",
+        },
+      ];
+      streamMock.waitForRelease = new Promise<void>((resolve) => {
+        streamMock.release = resolve;
+      });
+      render(CampaignGeneratorModal);
+
+      await fireEvent.click(screen.getByRole("button", { name: "Generate" }));
+      await screen.findByTestId("generator-stream-preview");
+
+      expect(
+        screen.queryByText("The harbourmaster is the cultist."),
+      ).toBeNull();
+
+      streamMock.release?.();
+      await screen.findByRole("button", { name: "Open in Editor" });
+    });
+
+    it("shows the adventure in full outside a solo session", async () => {
+      await generateAdventure("adventure");
+
+      expect(screen.queryByTestId("spoiler-shield")).toBeNull();
+      expect(
+        screen.getByText("The harbourmaster is the cultist."),
+      ).toBeTruthy();
+    });
+
+    it("leaves other generators unshielded during a solo session", async () => {
+      soloMock.isActive = true;
+      await generateAdventure("dungeon");
+
+      expect(screen.queryByTestId("spoiler-shield")).toBeNull();
+      expect(
+        screen.getByText("The harbourmaster is the cultist."),
       ).toBeTruthy();
     });
   });

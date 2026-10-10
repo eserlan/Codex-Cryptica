@@ -155,6 +155,9 @@ export const whichDiceDoIRollInDndAndWhen: AnswerConfigInput = {
     "how-do-i-read-a-dnd-character-sheet-as-a-beginner",
     "what-can-i-do-on-my-turn-in-dnd-combat",
     "what-should-a-new-dnd-player-learn-first",
+    "how-do-i-improvise-npcs-in-dnd",
+    "how-do-i-run-a-successful-session-0",
+    "where-do-i-start-if-i-have-never-played-a-tabletop-rpg",
   ],
   discovery: {
     id: "answer-which-dice-to-roll-in-dnd",
