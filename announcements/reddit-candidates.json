@@ -1,16 +1,6 @@
 {
-  "updated_at": 1791647953,
+  "updated_at": 1791651879,
   "candidates": [
-    {
-      "id": "reddit-37499836178-solo-fog-see-fog-like-a-player-while-sta",
-      "title": "Solo Fog: see fog like a player while staying in GM mode",
-      "body": "Running solo, you get stuck between two views. GM mode lets you run everything but the fog stays translucent so you can see what is meant to be hidden. Player View looks right but you lose reveal, hide and token control.\n\nI built SOLO as a toggle right next to FOG that keeps you in GM mode but renders fog fully opaque, exactly as players see it.\n\nHow it works: https://codexcryptica.com/help/vtt-fog-player-view\n\n- SOLO lives beside FOG in the VTT controls, one click to flip\n- you keep all GM controls while it is on, paint and erase fog, reveal and hide, drag any token\n- respects whatever fog you have already painted, no extra setup or new tool\n\nI left it as a separate toggle instead of changing the default GM view, since for group play most GMs need that washed-out peek to keep track of what is hidden. Not sure yet whether SOLO should remember its state per map or reset each time you open the VTT, leaning toward per-map.\n\nWhen you run solo, do you keep fog honest and hidden from yourself, or do you prefer the GM peek so you do not lose your place?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/announcements/release-37499836178-0.png)",
-      "url": "https://codexcryptica.com/help/vtt-fog-player-view",
-      "image_url": "https://assets.codexcryptica.com/announcements/release-37499836178-0.png",
-      "source_id": "37499836178",
-      "status": "approved",
-      "created_at": 1791306204
-    },
     {
       "id": "reddit-37533749630-solo-travel-now-reveals-fog-as-you-drag",
       "title": "Solo travel now reveals fog as you drag",
