@@ -1,16 +1,6 @@
 {
-  "updated_at": 1791651879,
+  "updated_at": 1791667831,
   "candidates": [
-    {
-      "id": "reddit-37533749630-solo-travel-now-reveals-fog-as-you-drag",
-      "title": "Solo travel now reveals fog as you drag",
-      "body": "Solo hexcrawls kept breaking my flow. I would drag the token, then switch tools to paint fog off by hand to match vision, then pause to note how far I had actually moved. Every hex was three separate jobs.\n\nI built SOLO travel so moving your token does the exploration work for you.\n\n- drag reveals fog hex by hex from that token's vision, no manual painting\n- live readout shows last move distance and running total while you explore\n- undo the last reveal if you overshoot a corridor or hex\n- each completed move is captured straight into the Session Journal\n\nTradeoff I am still watching is journal noise. It only logs completed drags so tiny nudges do not spam your session, but that means very short scouting steps will not appear unless you make them a deliberate move.\n\nDo you track overland travel hex by hex at your table, or do you just estimate distance once the session is over?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/images/help-blog/map.png)",
-      "url": "",
-      "image_url": "https://assets.codexcryptica.com/images/help-blog/map.png",
-      "source_id": "37533749630",
-      "status": "approved",
-      "created_at": 1791322193
-    },
     {
       "id": "reddit-37747437686-solo-play-now-starts-from-vault-actions-",
       "title": "Solo play now starts from Vault actions in one tap",
