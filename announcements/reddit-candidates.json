@@ -1,16 +1,6 @@
 {
-  "updated_at": 1791632807,
+  "updated_at": 1791638917,
   "candidates": [
-    {
-      "id": "reddit-37467096025-cif-now-answers-vtt-questions-from-seven",
-      "title": "Cif now answers VTT questions from seven new guides",
-      "body": "Running a VTT scene has a handful of places where play stalls. Fog not revealing how you expected, a token you cannot select or move, initiative stuck in the wrong order, distance not matching the grid.\n\nI added seven new in-app guides so Cif can answer VTT questions from real docs instead of guessing.\n\n[Combat and initiative guide](https://codexcryptica.com/help/vtt-combat-initiative) - the other six live alongside it in help.\n\n- initiative and combat, how turns advance and what resets them\n- tokens and permissions, who can move or see what\n- fog and Player View, what the GM paints versus what players actually see\n- grids and measuring, square and hex with snapping\n- tiles with layers and notes, plus multiplayer with chat and voice, and a troubleshooting page for the common gotchas\n\nThese are still docs, they do not fix your scene for you. You still apply the steps in your vault, which keeps you in control but means they will not click a button for you.\n\nWhich part still trips your group most often, fog, initiative, or token permissions?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/announcements/release-37467096025-1.png)",
-      "url": "https://codexcryptica.com/help/vtt-combat-initiative",
-      "image_url": "https://assets.codexcryptica.com/announcements/release-37467096025-1.png",
-      "source_id": "37467096025",
-      "status": "approved",
-      "created_at": 1791293044
-    },
     {
       "id": "reddit-37490752846-printed-hexes-on-your-map-image-the-grid",
       "title": "Printed hexes on your map image? The grid now snaps to them",
