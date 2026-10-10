@@ -1,16 +1,6 @@
 {
-  "updated_at": 1791549974,
+  "updated_at": 1791613049,
   "candidates": [
-    {
-      "id": "reddit-37419820135-how-should-a-fantasy-adventuring-guild-h",
-      "title": "How should a fantasy adventuring guild handle wages, dues and shared expenses?",
-      "body": "Most guilds in campaigns feel like a quest board with a fee on top. Nobody knows who pays what, when they pay, or what the shared coin actually covers, so every split turns into an argument at the table.\n\nI wrote a framework that treats the guild like a working institution with one clear money rule you can quote. Pick the model that fits your hall now and move the dials as it gets richer or poorer.\n\nRead the framework: https://codexcryptica.com/answers/how-should-a-fantasy-adventuring-guild-handle-wages-dues-and-shared-expenses\n\n- five models to choose from: fixed monthly dues, percentage of income, cut of guild-arranged contracts, communal pot with a set stipend, and a hybrid that mixes them\n- practical dials like 20 to 40 percent of steady day-job wages and a third to a half on guild-found contracts\n- what the common fund actually pays for: rent, food and lodging, gear and rope, healing, burials, fines, support for dependants and a reserve for bad months\n- how windfalls and blank months are handled per job or per season so irregular adventuring income does not create phantom debt\n\nI kept the numbers as ranges on purpose. Fantasy coin is never precise enough for a correct percentage, so these are levers for drama rather than economics law. That means a bit more judgement at the table, not less.\n\nWhich model fits your hall right now \u2014 flat dues, a contract cut, or a communal pot \u2014 and what would your players argue about first?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/announcements/release-37419820135-1.png)",
-      "url": "https://codexcryptica.com/answers/how-should-a-fantasy-adventuring-guild-handle-wages-dues-and-shared-expenses",
-      "image_url": "https://assets.codexcryptica.com/announcements/release-37419820135-1.png",
-      "source_id": "37419820135",
-      "status": "approved",
-      "created_at": 1791267372
-    },
     {
       "id": "reddit-37467096025-cif-now-answers-vtt-questions-from-seven",
       "title": "Cif now answers VTT questions from seven new guides",
