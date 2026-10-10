@@ -1,16 +1,6 @@
 {
-  "updated_at": 1791638917,
+  "updated_at": 1791647953,
   "candidates": [
-    {
-      "id": "reddit-37490752846-printed-hexes-on-your-map-image-the-grid",
-      "title": "Printed hexes on your map image? The grid now snaps to them",
-      "body": "I kept importing wilderness and dungeon maps that already had hexes drawn on, then spending ages nudging the overlay grid one pixel at a time and never quite getting it to sit right.\n\nI built hex fitting for Fit Grid from Map. Drag straight across the printed hexes and the grid sets its size and position together to match them.\n\nDetails and the step by step are in [Grids & Measurement](https://codexcryptica.com/help/vtt-grids-measurement):\n\n- drag across a row for pointy hexes or a column for flat hexes, through the centres from outer edge to outer edge\n- span a few hexes for a better average, Shift plus scroll switches between 1, 2, 3, 5 or 10\n- hex radius keeps decimals so a long run of hexes stays lined up, not rounded off\n- use Move Map after fitting to slide the image under the fixed grid and fine tune, Esc to cancel\n\nA short span is quicker to draw, a longer span is more accurate if you hold a steady line. Printed hexes are rarely perfect so you may still need a tiny fine tune.\n\nWhich map have you left square because the hex version never lined up?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/announcements/release-37490752846-0.png)",
-      "url": "https://codexcryptica.com/help/vtt-grids-measurement",
-      "image_url": "https://assets.codexcryptica.com/announcements/release-37490752846-0.png",
-      "source_id": "37490752846",
-      "status": "approved",
-      "created_at": 1791302308
-    },
     {
       "id": "reddit-37499836178-solo-fog-see-fog-like-a-player-while-sta",
       "title": "Solo Fog: see fog like a player while staying in GM mode",
