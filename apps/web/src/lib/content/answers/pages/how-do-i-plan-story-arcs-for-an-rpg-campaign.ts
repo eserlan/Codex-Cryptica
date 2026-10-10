@@ -7,14 +7,14 @@ export const howDoIPlanStoryArcsForAnRpgCampaign: AnswerConfigInput = {
   question: "How do I plan story arcs for a long-running RPG campaign?",
   kind: "framework",
   shortAnswer:
-    "Sketch the campaign's central tensions and possible direction, develop the current arc and a few future possibilities, but prepare only the next session in detail. Give each arc its own problem and resolution that changes the situation, and let player decisions decide what follows. Use three horizons to keep prep light: a broad campaign horizon for threats and factions, an arc horizon for the current conflict and its stakes, and a session horizon for the locations, NPCs and choices you need next time you play.",
+    "Sketch the campaign's central tensions and possible direction, develop the current arc and a few future possibilities, but prepare only the next session in detail. Give each arc its own problem and resolution that changes the situation, and let player decisions decide what follows. A simple way to keep prep light is three horizons: a broad campaign horizon for threats and factions, an arc horizon for the current conflict and its stakes, and a session horizon for the locations, NPCs and choices you need next time you play.",
   sections: [
     {
       kind: "prose",
       heading: "Why long campaigns drift without arcs",
       paragraphs: [
-        "Many new GMs start with a strong overarching idea, often a big bad, a faction, or a threat tied to a character backstory, and then face the same choice: plan every chapter now, plan in rigid blocks of three to five sessions, or improvise week by week. The first produces a script the party will not follow. The second turns a flexible grouping into a deadline that forces pacing. The third leaves the campaign without a through line, so sessions feel busy but do not build toward anything the players can recognise.",
-        "Story arcs solve that when you treat them as flexible groupings of play, not as prewritten episodes. An arc is a stretch of sessions organised around one meaningful problem. It has a clear conflict, active opposition and a resolution that changes the situation, whether the players succeed, fail or find a third way. Arcs give the campaign shape without deciding the players' actions in advance. The rest of this page shows how to separate what you plan far ahead from what you prepare for next week, and how to let player choices genuinely change what comes next.",
+        "Many new GMs start with a strong overarching idea, often a big bad, a faction, or a threat tied to a character backstory, and then face a choice: plan every chapter now, plan in fixed blocks of three to five sessions, or improvise week by week. Each can work at some tables, but each carries a risk. Planning every chapter can produce a script the party will not follow. Fixed blocks can turn a flexible grouping into a deadline that forces pacing. Pure improvisation can leave sessions feeling busy without building toward anything the players recognise. Arcs are one way to get shape without those risks.",
+        "Story arcs help with that when you treat them as flexible groupings of play, not as prewritten episodes. An arc is a stretch of sessions organised around one meaningful problem. It has a clear conflict, active opposition and a resolution that changes the situation, whether the players succeed, fail or find a third way. Arcs give the campaign shape without deciding the players' actions in advance. The rest of this page shows how to separate what you plan far ahead from what you prepare for next week, and how to let player choices genuinely change what comes next.",
       ],
     },
     {
@@ -119,8 +119,8 @@ export const howDoIPlanStoryArcsForAnRpgCampaign: AnswerConfigInput = {
       paragraphs: [
         "The branching only pays off if you visibly adjust after play. Take three common divergences from the example and what the DM does next.",
         "If the party ally with the suspected enemy, honour the advantage and the cost. Trading the ledger to Varnholt's house in Arc 1 buys coin, patronage and safer passage on the road tonight, but it removes the clean paper trail Arc 2 expected. The DM keeps the trial idea but changes its engine: the case now rests on witness testimony and the harbourmaster's charts, Varnholt's house becomes a creditor the party owe, and the cult's recruitment shifts to the docks where witnesses are easier to intimidate. No new invention is needed, only a change in which consequence fires.",
-        "If the party bypass a location you prepared, let it stand and change its meaning. Skipping the flooded cistern before the trial means the cult keeps a usable sanctuary. The DM leaves the cistern on the map, moves the portable encounter to the warehouse where the cult is still meeting, and lets the cistern return later as the place the wardens must inspect once the trial forces a survey of the sea wall. The prep transfers because the rites were a pressure with more than one possible venue.",
-        "If the party resolve a conflict unexpectedly, close the arc there and follow the change. Ending the warehouse confrontation with a negotiated amnesty for the rank and file finishes Arc 2 without a courtroom. The DM marks the arc resolved, notes the amnesty as a faction relationship change, and lets Arc 3 start from that new fact: the cult's leadership flees to the cistern with fewer hands, while former members offer the party the tide charts that make the cistern navigable. The campaign moves forward because each resolution was written as a changed situation, not as a scene the players had to reach.",
+        "If the party bypass a location you prepared, let it stand and change its meaning. Suppose they skip the warehouse raid and take their evidence straight to the magistrate. The cult is still meeting in the warehouse, so the DM keeps it as a live site and moves the portable encounter there, perhaps when a witness is followed. The flooded cistern stays on the map for Arc 3, and returns as the place the wardens must inspect once the trial forces a survey of the sea wall. The prep transfers because the rites were a pressure with more than one possible venue.",
+        "If the party resolve a conflict unexpectedly, close the arc there and follow the change. Arc 2 asks who answers for the seizures. A completed trial answers it with an evidence-backed verdict, but a negotiated amnesty for the cult's rank and file also answers it, without a courtroom. The DM marks Arc 2 resolved, notes the amnesty as a faction relationship change, and lets Arc 3 start from that new fact: the cult's leadership withdraws to the cistern with fewer hands, while former members offer the party the tide charts that make it navigable. Unlike a verdict, the amnesty leaves Varnholt unnamed, so she stays a quiet pressure rather than being forced into the open. Adjust the consequences rather than adding more lore. The campaign moves forward because each resolution was written as a changed situation, not as a scene the players had to reach.",
       ],
     },
     {
@@ -144,11 +144,19 @@ export const howDoIPlanStoryArcsForAnRpgCampaign: AnswerConfigInput = {
     heading: "Keep arcs, backstories and consequences connected",
     paragraphs: [
       "In Codex Cryptica you can keep the same three horizons in one place without building an arc-specific workflow around them. Give the overarching threat, its factions and key NPCs their own linked pages for the campaign horizon. Use separate linked pages for the current arc's conflict, its actors and its possible resolutions, and keep future arcs as short linked notes you can replace when play changes them. Mark character backstory links as optional relationships rather than required plot, so they surface when a player pursues them and stay quiet when they do not.",
-      "For the session horizon, capture your next-session notes alongside the same entities and let the relationship graph show which faction or backstory thread each choice would pull on. After play, update the pages that changed, close the arc when its exit point is reached, and promote what mattered into the campaign pages. The graph then shows the next arc's starting conditions at a glance, without a separate episode manager.",
+      "For the session horizon, capture your next-session notes alongside the same entities and use the links between pages to see which faction or backstory thread each choice would pull on. After play, update the pages that changed, close the arc when its exit point is reached, and promote what mattered into the campaign pages. Before the next arc, read through the changed pages and note by hand which relationships, prices or attitudes now start from a different state. Codex Cryptica does not track arcs or their consequences for you; it keeps the pages and links in one place so that review is quick.",
     ],
     linkText: "Explore the campaign manager",
     href: "/solutions/campaign-manager",
   },
+  relatedTopics: [
+    {
+      title: "Running D&D: Help for Your Next Session",
+      href: "/topics/dnd",
+      description:
+        "Guides and tools for starting, prepping and tracking a D&D campaign, including plot preparation.",
+    },
+  ],
   relatedTools: [
     {
       title: "BBEG Generator",
