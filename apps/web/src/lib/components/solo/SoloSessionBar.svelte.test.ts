@@ -2,9 +2,6 @@
 import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
 import { render, fireEvent, screen } from "@testing-library/svelte";
 import SoloSessionBar from "./SoloSessionBar.svelte";
-import { soloSessionStore } from "$lib/stores/solo-session-instance";
-import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
-import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
 
 // Mock the stores
 vi.mock("$lib/stores/solo-session-instance", () => ({
@@ -35,11 +32,10 @@ vi.mock("$lib/stores/vault.svelte", () => ({
 }));
 
 // Provide minimal mocks for child components to avoid complex rendering errors
-vi.mock("./SoloQuickRoll.svelte", () => ({ default: function() {} }));
-vi.mock("./SoloActions.svelte", () => ({ default: function() {} }));
-vi.mock("./SoloSessionSheet.svelte", () => ({ default: function() {} }));
-vi.mock("./SoloSceneMenu.svelte", () => ({ default: function() {} }));
-
+vi.mock("./SoloQuickRoll.svelte", () => ({ default: function () {} }));
+vi.mock("./SoloActions.svelte", () => ({ default: function () {} }));
+vi.mock("./SoloSessionSheet.svelte", () => ({ default: function () {} }));
+vi.mock("./SoloSceneMenu.svelte", () => ({ default: function () {} }));
 
 describe("SoloSessionBar", () => {
   let mockStorage: Map<string, string>;
@@ -49,7 +45,9 @@ describe("SoloSessionBar", () => {
     mockStorage = new Map();
     fakeStorage = {
       getItem: vi.fn((key: string) => mockStorage.get(key) ?? null),
-      setItem: vi.fn((key: string, value: string) => mockStorage.set(key, value)),
+      setItem: vi.fn((key: string, value: string) =>
+        mockStorage.set(key, value),
+      ),
       removeItem: vi.fn((key: string) => mockStorage.delete(key)),
     };
   });
@@ -78,8 +76,12 @@ describe("SoloSessionBar", () => {
   });
 
   it("handles storage throwing errors without crashing", async () => {
-    fakeStorage.getItem.mockImplementation(() => { throw new Error("Blocked"); });
-    fakeStorage.setItem.mockImplementation(() => { throw new Error("Blocked"); });
+    fakeStorage.getItem.mockImplementation(() => {
+      throw new Error("Blocked");
+    });
+    fakeStorage.setItem.mockImplementation(() => {
+      throw new Error("Blocked");
+    });
 
     render(SoloSessionBar, { props: { storage: fakeStorage } });
 
