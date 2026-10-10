@@ -8,11 +8,15 @@
   import SoloSessionSheet from "./SoloSessionSheet.svelte";
   import SoloSceneMenu from "./SoloSceneMenu.svelte";
 
+  import { browserStorage, type StorageLike } from "$lib/utils/runtime-deps";
+
   const MINIMISED_KEY = "codex-solo-bar-minimised";
+
+  let { storage = browserStorage }: { storage?: StorageLike } = $props();
 
   function readMinimised(): boolean {
     try {
-      return localStorage.getItem(MINIMISED_KEY) === "1";
+      return storage.getItem(MINIMISED_KEY) === "1";
     } catch {
       return false;
     }
@@ -20,8 +24,8 @@
 
   function writeMinimised(on: boolean) {
     try {
-      if (on) localStorage.setItem(MINIMISED_KEY, "1");
-      else localStorage.removeItem(MINIMISED_KEY);
+      if (on) storage.setItem(MINIMISED_KEY, "1");
+      else storage.removeItem(MINIMISED_KEY);
     } catch {
       // Keeping the preference is a convenience; the bar still works without it.
     }
