@@ -48,6 +48,11 @@ vi.mock("$lib/stores/solo-session-instance", () => ({
 const draftOverrides = vi.hoisted(
   () => ({}) as Partial<import("generator-engine").GeneratedDraft>,
 );
+const streamMock = vi.hoisted(() => ({
+  events: [] as Array<{ type: "field"; key: string; value: string }>,
+  waitForRelease: null as Promise<void> | null,
+  release: null as (() => void) | null,
+}));
 
 vi.mock("$lib/actions/focusTrap", () => ({
   focusTrap: () => ({ destroy: () => {} }),
@@ -115,6 +120,8 @@ vi.mock("generator-engine", async () => {
   };
   class FakeCampaignGeneratorService extends actual.CampaignGeneratorService {
     async *generateDraftStream() {
+      for (const event of streamMock.events) yield event;
+      if (streamMock.waitForRelease) await streamMock.waitForRelease;
       yield {
         type: "draft" as const,
         draft: { ...draft, ...draftOverrides },
@@ -144,6 +151,9 @@ describe("CampaignGeneratorModal", () => {
     for (const key of Object.keys(draftOverrides)) {
       delete (draftOverrides as Record<string, unknown>)[key];
     }
+    streamMock.events = [];
+    streamMock.waitForRelease = null;
+    streamMock.release = null;
     store._workflow.launchMode = "workspace";
     store._workflow.sourceEntityId = null;
     store._workflow.generatorId = null;
@@ -353,6 +363,32 @@ describe("CampaignGeneratorModal", () => {
       expect(
         screen.queryByText("The harbourmaster is the cultist."),
       ).toBeNull();
+    });
+
+    it("does not show streamed adventure lore during a solo session", async () => {
+      soloMock.isActive = true;
+      store._workflow.generatorId = "adventure";
+      streamMock.events = [
+        {
+          type: "field",
+          key: "lore",
+          value: "The harbourmaster is the cultist.",
+        },
+      ];
+      streamMock.waitForRelease = new Promise<void>((resolve) => {
+        streamMock.release = resolve;
+      });
+      render(CampaignGeneratorModal);
+
+      await fireEvent.click(screen.getByRole("button", { name: "Generate" }));
+      await screen.findByTestId("generator-stream-preview");
+
+      expect(
+        screen.queryByText("The harbourmaster is the cultist."),
+      ).toBeNull();
+
+      streamMock.release?.();
+      await screen.findByRole("button", { name: "Open in Editor" });
     });
 
     it("shows the adventure in full outside a solo session", async () => {

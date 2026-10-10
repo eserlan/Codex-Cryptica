@@ -78,6 +78,8 @@
   // Generators whose output is a plot the player will go on to play. During a
   // solo session these open with the spoilers hidden.
   const SPOILER_SHIELDED_GENERATORS = new Set(["adventure"]);
+  const shouldShieldSpoilers = (id?: string | null) =>
+    soloSessionStore.isActive && SPOILER_SHIELDED_GENERATORS.has(id ?? "");
 
   type Stage = "configure" | "generating" | "review" | "saving" | "error";
 
@@ -746,7 +748,7 @@
                 {streamedFields.summary}
               </p>
             {/if}
-            {#if streamedFields.lore}
+            {#if streamedFields.lore && !shouldShieldSpoilers(generatorId)}
               <p
                 class="max-h-40 overflow-y-auto whitespace-pre-wrap text-xs text-chrome-muted"
               >
@@ -811,8 +813,7 @@
         showRelationshipToggle={workflow.launchMode === "contextual" &&
           !!workflow.sourceEntityId}
         backLabel={workflow.autoGenerate ? "Customize" : "Back"}
-        spoilerShield={soloSessionStore.isActive &&
-          SPOILER_SHIELDED_GENERATORS.has(draft.sourceGeneratorId ?? "")}
+        spoilerShield={shouldShieldSpoilers(draft.sourceGeneratorId)}
         onsave={onSave}
         onback={() => {
           stage = "configure";
