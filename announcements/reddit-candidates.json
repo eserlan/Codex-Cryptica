@@ -1,5 +1,5 @@
 {
-  "updated_at": 1791613310,
+  "updated_at": 1791631162,
   "candidates": [
     {
       "id": "reddit-37467096025-cif-now-answers-vtt-questions-from-seven",
@@ -60,6 +60,16 @@
       "source_id": "37903304382",
       "status": "approved",
       "created_at": 1791540603
+    },
+    {
+      "id": "reddit-38045827408-solo-adventure-drafts-now-stay-spoiler-f",
+      "title": "Solo adventure drafts now stay spoiler free until you reveal them",
+      "body": "I was spoiling my own twists in solo play. I would generate an adventure idea mid session to bank something for later, then the full draft would open and show me the villain, the secret and the ending before my character should know any of it.\n\nI built a small spoiler shield for that. Adventure drafts you open while a solo session is running now show only the summary until you tap to reveal the rest.\n\n- summary stays readable so you can decide if the hook fits\n- twists, motives and endings stay collapsed per draft until you reveal\n- revealing one draft does not expose the next one you saved\n- generating and saving still works the same, just without the accidental read\n\nIt adds one extra tap when you do want the full text, which feels worth it for solo, but I am still tuning how much the summary should show before it starts to spoil itself.\n\nHow do you handle it when you generate something you do not want to read yet, do you hold it blind or peek and try to forget?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/screenshots/generator-adventure-generator.jpg)",
+      "url": "",
+      "image_url": "https://assets.codexcryptica.com/screenshots/generator-adventure-generator.jpg",
+      "source_id": "38045827408",
+      "status": "approved",
+      "created_at": 1791631162
     }
   ]
 }
