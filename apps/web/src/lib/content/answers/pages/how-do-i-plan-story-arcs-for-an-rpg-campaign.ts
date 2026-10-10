@@ -214,9 +214,11 @@ export const howDoIPlanStoryArcsForAnRpgCampaign: AnswerConfigInput = {
     "how-do-you-generate-useful-rpg-rumours",
   ],
   discovery: {
+    id: "answer-plan-story-arcs-rpg-campaign",
     parentCluster: "campaign-notes",
+    primaryIntent: "how to plan story arcs for an rpg campaign",
+    userJob: "adopt-workflow",
     intentAliases: [
-      "how to plan story arcs for an rpg campaign",
       "how to structure a dnd campaign into arcs",
       "how many sessions should a campaign arc last",
       "should i plan my whole dnd campaign in advance",
