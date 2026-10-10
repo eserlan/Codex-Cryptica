@@ -1,5 +1,5 @@
 {
-  "updated_at": 1791631162,
+  "updated_at": 1791632807,
   "candidates": [
     {
       "id": "reddit-37467096025-cif-now-answers-vtt-questions-from-seven",
@@ -62,14 +62,14 @@
       "created_at": 1791540603
     },
     {
-      "id": "reddit-38045827408-solo-adventure-drafts-now-stay-spoiler-f",
-      "title": "Solo adventure drafts now stay spoiler free until you reveal them",
-      "body": "I was spoiling my own twists in solo play. I would generate an adventure idea mid session to bank something for later, then the full draft would open and show me the villain, the secret and the ending before my character should know any of it.\n\nI built a small spoiler shield for that. Adventure drafts you open while a solo session is running now show only the summary until you tap to reveal the rest.\n\n- summary stays readable so you can decide if the hook fits\n- twists, motives and endings stay collapsed per draft until you reveal\n- revealing one draft does not expose the next one you saved\n- generating and saving still works the same, just without the accidental read\n\nIt adds one extra tap when you do want the full text, which feels worth it for solo, but I am still tuning how much the summary should show before it starts to spoil itself.\n\nHow do you handle it when you generate something you do not want to read yet, do you hold it blind or peek and try to forget?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/screenshots/generator-adventure-generator.jpg)",
-      "url": "",
-      "image_url": "https://assets.codexcryptica.com/screenshots/generator-adventure-generator.jpg",
+      "id": "reddit-38045827408-how-i-plan-story-arcs-that-actually-pay-",
+      "title": "How I plan story arcs that actually pay off over a long campaign",
+      "body": "I can run a solid single session idea, but stretching it into something that still pays off ten sessions later is where I lose the thread. Either I overplan one plot or I run a string of jobs that never connect.\n\nI wrote a new long form answer that turns a loose hook into linked arcs you can prep in layers. It starts from one sentence and builds out so the early sessions set up later payoffs.\n\nYou can read it here: https://codexcryptica.com/answers/how-do-i-plan-story-arcs-for-an-rpg-campaign\n\n- three horizon split for immediate play, mid arc build and campaign resolution\n- worked harbour cult branching example you can lift or reskin for your own setting\n- compact template to map foreshadowing, complications and payoff beats\n- notes on keeping arcs linked when the party drifts without locking them to one path\n\nIt is a longer read than the other answers, so it asks more up front than just rolling a generator. I am not sure yet if the three horizons are too heavy for short mini campaigns, so I tried to keep the template usable if you only fill two.\n\nWhat is a loose idea you have been sitting on that you have not turned into linked arcs yet, and which part do you usually skip when you prep?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/announcements/release-38045827408-0.png)",
+      "url": "https://codexcryptica.com/answers/how-do-i-plan-story-arcs-for-an-rpg-campaign",
+      "image_url": "https://assets.codexcryptica.com/announcements/release-38045827408-0.png",
       "source_id": "38045827408",
       "status": "approved",
-      "created_at": 1791631162
+      "created_at": 1791632807
     }
   ]
 }
