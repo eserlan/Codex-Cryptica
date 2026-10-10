@@ -222,3 +222,8 @@
 
 **Learning:** Svelte dropdowns, action buttons, or interactive elements within generic modals (like `TemplateImportModal`, `EntityTemplatePublishModal`, `ReportListingModal`, and `EntityTemplateInstallModal`) can contain decorative icons (`<span class="icon-[lucide--...]">`). Although the elements containing them often have clear text descriptors or descriptive `aria-label` attributes, the decorative inner icons may be missing `aria-hidden="true"`, risking screen readers announcing the CSS icon classes unnecessarily.
 **Action:** Always add `aria-hidden="true"` to purely decorative icons nested inside actionable buttons across generic overlay or modal components.
+
+## 2024-11-20 - Ensure explicit aria-label for settings form inputs
+
+**Learning:** Form inputs in dynamic list components (like `CategorySettings.svelte`) often lack `<label>` associations or `aria-label`s, breaking accessibility for screen readers.
+**Action:** Always add descriptive `aria-label` attributes to inputs in dynamic form lists when conventional labels aren't present in the layout.
