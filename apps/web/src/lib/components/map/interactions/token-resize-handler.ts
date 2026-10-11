@@ -61,9 +61,13 @@ export class TokenResizeHandler {
     );
 
     if (nextScale !== currentScale) {
+      const nextWidth = nextScale * gridSize;
       this.deps.updateToken(hitToken.id, {
-        width: nextScale * gridSize,
-        height: nextScale * gridSize,
+        width: nextWidth,
+        height:
+          hitToken.kind === "tile" && hitToken.width > 0
+            ? (nextWidth * hitToken.height) / hitToken.width
+            : nextWidth,
       });
     }
 
