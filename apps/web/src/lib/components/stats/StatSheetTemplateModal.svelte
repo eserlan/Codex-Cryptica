@@ -3,6 +3,7 @@
   import { vault } from "$lib/stores/vault.svelte";
   import { statSheetTemplates } from "$lib/stores/stat-sheet-templates.svelte";
   import { notificationStore } from "$lib/stores/ui/notification.svelte";
+  import StatSheetTemplateOptions from "./StatSheetTemplateOptions.svelte";
   import { applyDerivedModifiers } from "$lib/utils/stat-sheet-field-actions";
 
   let { entity, onClose = () => {} } = $props<{
@@ -178,21 +179,11 @@
           </button>
         </div>
       {/if}
-      {#each displayedTemplates as template (template.id)}
-        <button
-          type="button"
-          class="flex flex-col items-start gap-0.5 rounded border border-theme-border p-2 text-left hover:border-theme-primary"
-          onclick={() => applyTemplate(template.id)}
-          data-testid="stat-sheet-template-option"
-        >
-          <span class="text-xs font-bold text-theme-text">{template.name}</span>
-          {#if template.description}
-            <span class="text-micro text-theme-muted"
-              >{template.description}</span
-            >
-          {/if}
-        </button>
-      {/each}
+      <StatSheetTemplateOptions
+        templates={displayedTemplates}
+        category={entity.type}
+        onApply={applyTemplate}
+      />
       {#if hasHiddenTemplates}
         <button
           type="button"
