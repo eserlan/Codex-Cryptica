@@ -33,12 +33,14 @@
       {/if}
       <div class="flex gap-4">
         <button
+          type="button"
           onclick={() => window.location.reload()}
           class="flex-1 py-3 bg-red-600 hover:bg-red-500 text-black font-bold rounded transition-all active:scale-95 shadow-[0_0_15px_rgba(220,38,38,0.4)]"
         >
           REBOOT SYSTEM
         </button>
         <button
+          type="button"
           onclick={() => notificationStore.clearGlobalError()}
           class="px-6 py-3 border border-red-900 text-red-900 hover:text-red-500 hover:border-red-500 transition-colors"
         >
