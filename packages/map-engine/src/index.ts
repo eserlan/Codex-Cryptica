@@ -5,5 +5,6 @@ export * from "./layers";
 export * from "./math";
 export * from "./note-markdown";
 export * from "./renderer";
+export * from "./tile-beneath";
 export * from "./token-geometry";
 export * from "./vtt";

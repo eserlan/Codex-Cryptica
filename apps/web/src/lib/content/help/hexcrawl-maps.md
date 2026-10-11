@@ -33,6 +33,7 @@ When managing large overland regions, toggle **Show Hex Coordinates** in Grid Se
 
 - **Automatic Snapping**: Dragging a party token, NPC, or monster token on an active hex map snaps its center to the nearest hex cell upon release.
 - **Hex Diameter Sizing**: Right-click any token and choose **Resize** (1x, 2x, 3x) to scale it to the exact diameter of the hexagonal cell ($2 \times \text{radius}$ or $\sqrt{3} \times \text{radius}$).
+- **Hex Info Under a Token**: Select the party token on the Token layer and the token panel shows the tile it stands on, with that tile's room details and stocked notes. You can read and edit them without switching to the Terrain layer. **Select tile** jumps to the tile itself. Only the GM sees this.
 
 ### Hex Fog of War Exploration
 
