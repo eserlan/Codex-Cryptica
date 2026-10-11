@@ -39,7 +39,11 @@ export function partitionTemplatesForCategory<
   const category = entityCategory?.trim().toLowerCase();
   if (!category) return { suggested: [], other: [...templates] };
 
-  const related = new Set(RELATED_SHEET_CATEGORIES[category] ?? []);
+  const related = new Set(
+    Object.hasOwn(RELATED_SHEET_CATEGORIES, category)
+      ? RELATED_SHEET_CATEGORIES[category]
+      : [],
+  );
   const exact: T[] = [];
   const near: T[] = [];
   const other: T[] = [];

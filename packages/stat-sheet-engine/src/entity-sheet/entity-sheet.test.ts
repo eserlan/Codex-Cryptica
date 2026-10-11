@@ -310,6 +310,17 @@ describe("partitionTemplatesForCategory", () => {
       expect(other).toHaveLength(templates.length);
     }
   });
+
+  it("treats object prototype names as ordinary custom categories", () => {
+    for (const category of ["constructor", "toString", "__proto__"]) {
+      const { suggested, other } = partitionTemplatesForCategory(
+        templates,
+        category,
+      );
+      expect(suggested).toEqual([]);
+      expect(other).toHaveLength(templates.length);
+    }
+  });
 });
 
 describe("custom sheet on a Location", () => {
