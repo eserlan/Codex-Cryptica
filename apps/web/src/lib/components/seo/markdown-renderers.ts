@@ -11,31 +11,31 @@ export function replaceEmojisWithIcons(htmlStr: string): string {
   return htmlStr
     .replace(
       /👤/g,
-      '<span class="icon-[lucide--user] w-3.5 h-3.5 inline-block align-text-bottom mr-1 text-theme-primary"></span>',
+      '<span class="icon-[lucide--user] w-3.5 h-3.5 inline-block align-text-bottom mr-1 text-theme-primary" aria-hidden="true"></span>',
     )
     .replace(
       /👥/g,
-      '<span class="icon-[lucide--users] w-3.5 h-3.5 inline-block align-text-bottom mr-1 text-theme-primary"></span>',
+      '<span class="icon-[lucide--users] w-3.5 h-3.5 inline-block align-text-bottom mr-1 text-theme-primary" aria-hidden="true"></span>',
     )
     .replace(
       /📍/g,
-      '<span class="icon-[lucide--map-pin] w-3.5 h-3.5 inline-block align-text-bottom mr-1 text-theme-primary"></span>',
+      '<span class="icon-[lucide--map-pin] w-3.5 h-3.5 inline-block align-text-bottom mr-1 text-theme-primary" aria-hidden="true"></span>',
     )
     .replace(
       /📅|⚡/g,
-      '<span class="icon-[lucide--calendar] w-3.5 h-3.5 inline-block align-text-bottom mr-1 text-theme-primary"></span>',
+      '<span class="icon-[lucide--calendar] w-3.5 h-3.5 inline-block align-text-bottom mr-1 text-theme-primary" aria-hidden="true"></span>',
     )
     .replace(
       /🐾/g,
-      '<span class="icon-[lucide--paw-print] w-3.5 h-3.5 inline-block align-text-bottom mr-1 text-theme-primary"></span>',
+      '<span class="icon-[lucide--paw-print] w-3.5 h-3.5 inline-block align-text-bottom mr-1 text-theme-primary" aria-hidden="true"></span>',
     )
     .replace(
       /📦/g,
-      '<span class="icon-[lucide--package] w-3.5 h-3.5 inline-block align-text-bottom mr-1 text-theme-primary"></span>',
+      '<span class="icon-[lucide--package] w-3.5 h-3.5 inline-block align-text-bottom mr-1 text-theme-primary" aria-hidden="true"></span>',
     )
     .replace(
       /📄/g,
-      '<span class="icon-[lucide--file-text] w-3.5 h-3.5 inline-block align-text-bottom mr-1 text-theme-primary"></span>',
+      '<span class="icon-[lucide--file-text] w-3.5 h-3.5 inline-block align-text-bottom mr-1 text-theme-primary" aria-hidden="true"></span>',
     );
 }
 
@@ -64,7 +64,7 @@ export function labelValueHtml(
             data-copy-text="${escapedLabel}"
             title="Copy name to clipboard"
           >
-            <span class="icon-[lucide--copy] w-3.5 h-3.5"></span>
+            <span class="icon-[lucide--copy] w-3.5 h-3.5" aria-hidden="true"></span>
           </button>
         </div>
         <span class="text-xs md:text-sm text-theme-text/80 leading-relaxed">${renderMd(value, { inline: true })}</span>

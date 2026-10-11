@@ -12,6 +12,12 @@ const instance = vi.hoisted(() => ({
     defaultMapId: () => null,
   },
   soloPlayGuard: { soloStartBlockedReason: vi.fn(() => null as string | null) },
+  soloThreads: {
+    threads: [] as unknown[],
+    open: [] as unknown[],
+    closed: [] as unknown[],
+    editable: true,
+  },
 }));
 vi.mock("$lib/stores/solo-session-instance", () => instance);
 
@@ -85,5 +91,16 @@ describe("PlayPage", () => {
     render(PlayPage);
     expect(screen.queryByTestId("play-start-solo")).toBeNull();
     expect(screen.getByText(/not available in guest/i)).toBeTruthy();
+  });
+
+  it("keeps Threads reachable with no session running", () => {
+    render(PlayPage);
+    expect(screen.getByTestId("solo-threads-menu")).toBeTruthy();
+  });
+
+  it("hides Threads in guest mode, which has no vault to keep them in", () => {
+    sessionModeStore.isGuestMode = true;
+    render(PlayPage);
+    expect(screen.queryByTestId("solo-threads-menu")).toBeNull();
   });
 });

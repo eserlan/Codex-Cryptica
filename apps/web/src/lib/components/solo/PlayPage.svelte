@@ -10,6 +10,7 @@
   import { sessionJournalStore } from "$lib/stores/session-journal.svelte";
   import { vault } from "$lib/stores/vault.svelte";
   import { characterChoices } from "$lib/services/solo-characters";
+  import SoloThreadsMenu from "./SoloThreadsMenu.svelte";
 
   let setupOpen = $state(false);
 
@@ -81,6 +82,17 @@
           <p class="mt-2 text-sm text-theme-muted">{blockedReason}</p>
         {/if}
       {/if}
+    </section>
+
+    <section class="rounded-lg border border-theme-border p-4">
+      <h2 class="font-header text-base text-theme-text">Threads</h2>
+      <p class="mt-1 text-sm text-theme-muted">
+        Open questions, leads and mysteries that carry across sessions. You can
+        keep them here, with or without a session running.
+      </p>
+      <div class="mt-3">
+        <SoloThreadsMenu />
+      </div>
     </section>
 
     {#if !discoveryPolicyStore.aiDisabled}

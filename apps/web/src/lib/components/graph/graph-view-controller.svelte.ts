@@ -8,7 +8,6 @@ import {
 import type { Core } from "cytoscape";
 import {
   initGraph,
-  isLayoutCollinear,
   LayoutManager,
   GraphImageManager,
   attachCommunityHulls,
@@ -60,6 +59,7 @@ import {
   FOCUS_ZOOM_STEP_FACTOR,
   resolveFocusDepth,
 } from "./graph-focus-zoom-ratchet";
+import { hasDegenerateSavedCoordinates } from "./saved-coordinate-health";
 
 export type LoadPhase = "idle" | "elements" | "finalized" | "ready";
 
@@ -1135,14 +1135,7 @@ export class GraphViewController {
   };
 
   private areSavedCoordsDegenerate = (): boolean => {
-    const positions: { x: number; y: number }[] = [];
-    for (const entity of this.deps.vault.allEntities) {
-      const c = entity?.metadata?.coordinates;
-      if (c && Number.isFinite(c.x) && Number.isFinite(c.y)) {
-        positions.push({ x: c.x, y: c.y });
-      }
-    }
-    return isLayoutCollinear(positions);
+    return hasDegenerateSavedCoordinates(this.deps.vault.allEntities);
   };
 
   private scheduleSlashGuard = () => {

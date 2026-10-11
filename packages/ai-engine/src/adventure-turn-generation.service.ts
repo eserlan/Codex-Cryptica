@@ -358,7 +358,7 @@ export class AdventureTurnGenerationService {
     request: AdventureTurnGenerationRequest,
     prompt: ReturnType<typeof buildAdventurePrompt>,
     systemInstruction: string,
-    options: { modelName?: string },
+    options: { modelName?: string; signal?: AbortSignal },
   ): Promise<AdventureTurnProposal> {
     const sendInteraction = this.aiClient.sendInteraction;
     if (!sendInteraction) throw new Error("interaction-client-unavailable");
@@ -384,6 +384,7 @@ export class AdventureTurnGenerationService {
         systemInstruction,
         previousInteractionId,
         generationConfig: { responseMimeType: "application/json" },
+        signal: options.signal ?? request.signal,
       });
       return { result, sourceEntries };
     };

@@ -7,9 +7,10 @@ import {
   renameSection as engineRenameSection,
   startOrResumeJournal,
   setCaptureMapMoves as engineSetCaptureMapMoves,
+  withCaptureChoice,
   updateEntryContent as engineUpdateEntryContent,
 } from "session-journal-engine";
-import type { MoveEntryDirection } from "session-journal-engine";
+import type { CaptureKind, MoveEntryDirection } from "session-journal-engine";
 import type {
   JournalEntry,
   JournalEntryInput,
@@ -234,6 +235,20 @@ export class SessionJournalStore {
       return result.journal;
     });
     return created!;
+  }
+
+  /**
+   * Switches one automatic capture kind on or off for a journal (spec 174,
+   * FR-023). Saved with the journal, so the choice survives a reload. A
+   * journal that was started before this existed captures everything.
+   */
+  async setCaptureChoice(kind: CaptureKind, on: boolean): Promise<void> {
+    if (!this.current || this.current.status !== "active") return;
+    await this.mutateLatest(this.current.id, (latest) => {
+      const next = withCaptureChoice(latest, kind, on);
+      // Map moves also have the older flag, which the capture check still reads.
+      return kind === "map-moves" ? { ...next, captureMapMoves: on } : next;
+    });
   }
 
   /** Toggles map move capture for the active journal only. */

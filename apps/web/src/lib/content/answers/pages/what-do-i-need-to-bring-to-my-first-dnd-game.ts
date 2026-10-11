@@ -130,6 +130,14 @@ export const whatDoINeedToBringToMyFirstDndGame: AnswerConfigInput = {
       href: "/generators/fantasy-names",
     },
   ],
+  relatedTopics: [
+    {
+      title: "D&D for Beginners",
+      href: "/topics/dnd-beginners",
+      description:
+        "The complete beginner learning path: what to know before session one, character-sheet walkthrough, dice rules, and combat turns.",
+    },
+  ],
   relatedForPages: [
     {
       title: "Codex Cryptica for D&D",
@@ -149,6 +157,7 @@ export const whatDoINeedToBringToMyFirstDndGame: AnswerConfigInput = {
   discovery: {
     id: "answer-bring-to-first-dnd-game",
     parentCluster: "beginner-entry",
+    clusters: ["beginner-entry", "dnd-new-player"],
     primaryIntent: "what to bring to your first dnd game",
     intentAliases: [
       "what do i need to bring to my first dnd game",
@@ -160,6 +169,7 @@ export const whatDoINeedToBringToMyFirstDndGame: AnswerConfigInput = {
     uniqueValue:
       "Organises first-session preparation into essential, useful, and ask-your-DM tiers with a short top-of-page checklist, so a beginner sees the small minimum without buying unnecessary gear.",
     relatedIntents: [
+      "topic-dnd-beginners",
       "answer-new-dnd-player-first-game",
       "answer-read-dnd-character-sheet-beginner",
       "answer-new-dnd-player-learn-first",

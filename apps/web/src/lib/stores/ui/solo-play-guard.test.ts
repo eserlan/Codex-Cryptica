@@ -159,12 +159,22 @@ describe("no direct shared-play writes outside the guard", () => {
           f.startsWith("lib/components/solo/") ||
           /^lib\/stores\/solo-/.test(f) ||
           f === "lib/services/generator-journal-capture.ts" ||
-          f === "lib/services/record-table-roll.ts",
+          f === "lib/services/record-table-roll.ts" ||
+          f === "lib/services/vault-threads-file.ts",
       )
       .filter((f) => !f.endsWith(".test.ts"));
 
     it("the solo modules cover the new code", () => {
       expect(solo.length).toBeGreaterThan(10);
+      expect(solo).toEqual(
+        expect.arrayContaining([
+          "lib/components/solo/SoloYesNoMenu.svelte",
+          "lib/components/solo/SoloThreadsMenu.svelte",
+          "lib/components/solo/SoloThreadDialog.svelte",
+          "lib/stores/solo-threads.svelte.ts",
+          "lib/services/vault-threads-file.ts",
+        ]),
+      );
     });
 
     it("no solo module calls the network", () => {

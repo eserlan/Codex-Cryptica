@@ -198,4 +198,16 @@ describe("buildOracleShortcutPrompt (Solo Play Loop, FR-018 to FR-021)", () => {
       expect(prompt).not.toContain("run the game");
     }
   });
+
+  it("interprets a yes/no answer, quoting the question and the answer", () => {
+    const prompt = buildOracleShortcutPrompt("interpret-answer", {
+      ...ctx,
+      question: "Is the guard asleep?",
+      answer: "Yes, but",
+    });
+    expect(prompt.startsWith("What does this answer mean for the scene?")).toBe(
+      true,
+    );
+    expect(prompt).toContain('Answer: Yes, but to "Is the guard asleep?".');
+  });
 });

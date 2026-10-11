@@ -4,6 +4,8 @@ import {
   rollPbtAMove,
   rollActionSpark,
   rollD20,
+  type OracleOdds,
+  type OracleTier,
 } from "./quick-oracle";
 
 describe("quick-oracle", () => {
@@ -118,5 +120,45 @@ describe("quick-oracle", () => {
     it("rejects a non-finite injected random value", () => {
       expect(() => rollD20(() => Number.NaN)).toThrow(RangeError);
     });
+  });
+});
+
+// A random source that gives exactly this d100 roll.
+const rollAs = (roll: number) => () => (roll - 1 + 0.5) / 100;
+
+const YES: OracleTier[] = ["extreme_positive", "positive", "mixed_positive"];
+
+const yesCount = (odds: OracleOdds) => {
+  let count = 0;
+  for (let roll = 1; roll <= 100; roll++) {
+    if (YES.includes(rollOracleOutcome(odds, rollAs(roll)).tier)) count++;
+  }
+  return count;
+};
+
+describe("rollOracleOutcome with the spec 174 odds", () => {
+  it("returns a valid tier for very likely and very unlikely", () => {
+    for (const odds of ["very_likely", "very_unlikely"] as const) {
+      for (const roll of [1, 30, 60, 90, 100]) {
+        const outcome = rollOracleOutcome(odds, rollAs(roll));
+        expect(outcome.roll).toBe(roll);
+        expect(outcome.text).toMatch(/^(Yes|No)/);
+      }
+    }
+  });
+
+  it("gives yes at least as often from unlikely to very likely", () => {
+    expect(yesCount("very_unlikely")).toBeLessThanOrEqual(yesCount("unlikely"));
+    expect(yesCount("unlikely")).toBeLessThanOrEqual(yesCount("even"));
+    expect(yesCount("even")).toBeLessThanOrEqual(yesCount("likely"));
+    expect(yesCount("likely")).toBeLessThanOrEqual(yesCount("very_likely"));
+  });
+
+  it("keeps the existing three odds unchanged for fixed rolls", () => {
+    expect(rollOracleOutcome("likely", rollAs(15)).text).toBe("Yes, and...");
+    expect(rollOracleOutcome("likely", rollAs(66)).text).toBe("Yes, but...");
+    expect(rollOracleOutcome("unlikely", rollAs(4)).text).toBe("Yes");
+    expect(rollOracleOutcome("even", rollAs(50)).text).toBe("Yes, but...");
+    expect(rollOracleOutcome("even", rollAs(91)).text).toBe("No, and...");
   });
 });

@@ -56,6 +56,20 @@ describe("HelpContextStore", () => {
     }
   });
 
+  it("offers the journal Capture menu and its flag only while the journal panel is open", () => {
+    const open = store({ getOpenHelpArea: () => "session-journal" });
+    open.registry.registerEntityDetail(surface());
+    expect(open.ctx.current.flags).toContain("session-journal-open");
+    expect(open.ctx.current.availableActions).toContain("journal-capture-menu");
+
+    const closed = store({ getOpenHelpArea: () => null });
+    closed.registry.registerEntityDetail(surface());
+    expect(closed.ctx.current.flags).not.toContain("session-journal-open");
+    expect(closed.ctx.current.availableActions).not.toContain(
+      "journal-capture-menu",
+    );
+  });
+
   describe("open sidebar panels", () => {
     it("adds a flag while the Explorer or the Shelf is open", () => {
       expect(

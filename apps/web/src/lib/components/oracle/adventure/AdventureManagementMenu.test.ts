@@ -10,6 +10,7 @@ function manager(overrides: Record<string, unknown> = {}) {
     readOnly: false,
     end: vi.fn(),
     forceEnd: vi.fn(),
+    close: vi.fn(),
     ...overrides,
   } as any;
 }
@@ -61,6 +62,20 @@ describe("AdventureManagementMenu", () => {
     );
 
     expect(m.end).toHaveBeenCalledOnce();
+  });
+
+  it("leaves the adventure from the menu", async () => {
+    const m = manager();
+    render(AdventureManagementMenu, { props: { manager: m } });
+
+    await fireEvent.click(
+      screen.getByTestId("adventure-management-menu-button"),
+    );
+    await fireEvent.click(
+      screen.getByRole("menuitem", { name: /leave adventure/i }),
+    );
+
+    expect(m.close).toHaveBeenCalledOnce();
   });
 
   it("opens with ArrowDown and returns focus to the trigger on Escape", async () => {

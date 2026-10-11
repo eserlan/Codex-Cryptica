@@ -222,3 +222,8 @@
 
 **Learning:** Svelte dropdowns, action buttons, or interactive elements within generic modals (like `TemplateImportModal`, `EntityTemplatePublishModal`, `ReportListingModal`, and `EntityTemplateInstallModal`) can contain decorative icons (`<span class="icon-[lucide--...]">`). Although the elements containing them often have clear text descriptors or descriptive `aria-label` attributes, the decorative inner icons may be missing `aria-hidden="true"`, risking screen readers announcing the CSS icon classes unnecessarily.
 **Action:** Always add `aria-hidden="true"` to purely decorative icons nested inside actionable buttons across generic overlay or modal components.
+
+## 2024-10-09 - Decorative Dynamic Icons
+
+**Learning:** When using dynamic class names for icons inside Svelte components (e.g. `<span class="{item.icon}">`), it's easy to forget `aria-hidden="true"`, which causes screen readers to redundantly announce confusing class names if they aren't explicitly hidden, even when they reside alongside visible descriptive text or within a button with an `aria-label`.
+**Action:** Always include `aria-hidden="true"` on inner decorative icon elements, regardless of whether their classes are static or dynamic.

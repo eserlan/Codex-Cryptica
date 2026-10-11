@@ -143,6 +143,7 @@ export const howDoYouCreateAFantasyFaction: AnswerConfigInput = {
     },
   ],
   relatedAnswers: [
+    "how-do-i-start-worldbuilding-for-a-novel-or-short-story",
     "how-do-you-organise-npc-relationships",
     "how-do-you-create-a-believable-fictional-religion",
     "how-do-you-run-a-conspiracy-campaign",

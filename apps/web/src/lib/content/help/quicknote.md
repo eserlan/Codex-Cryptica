@@ -44,7 +44,11 @@ The scratchpad also has a **Session Journal** tab. It is a running record of wha
 
 A small dot on the button means a journal is currently running.
 
-While a journal is running, your dice rolls, card draws, random table results and completed SOLO party moves are added automatically, even when the scratchpad is closed. Each appears as its own entry with its result or travel details. Map entries include distance, optional hex coordinates and newly revealed hexes. Use **Map moves** in the journal header to switch map capture off; dice, table and deck capture continue. They go into whichever section you have chosen. If no journal is running, nothing is added, and your rolls work exactly as before.
+While a journal is running, your dice rolls, card draws, random table results and completed SOLO party moves are added automatically, even when the scratchpad is closed. Each appears as its own entry with its result or travel details. Map entries include distance, optional hex coordinates and newly revealed hexes. They go into whichever section you have chosen. If no journal is running, nothing is added, and your rolls work exactly as before.
+
+### Choose what the journal records
+
+Open **Capture** in the journal header to choose which automatic entries this journal keeps. Each kind has its own switch: dice rolls, table results, card draws, map moves, scene changes, Oracle answers and random events, tension changes, thread changes, party changes and generated results. Your choices are saved with that journal, so a new journal starts with everything on. Notes you type yourself are always kept. Switching a kind off stops new entries of that kind; it does not remove entries already in the journal.
 
 ### Turning the journal into entities
 

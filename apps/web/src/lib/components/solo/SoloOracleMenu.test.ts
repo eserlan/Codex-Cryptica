@@ -73,6 +73,17 @@ describe("SoloOracleMenu", () => {
     expect(screen.getAllByTestId("solo-oracle-shortcut")).toHaveLength(4);
   });
 
+  it("offers Let the Oracle run a scene as a link to Adventure Mode, and nothing is prefilled", async () => {
+    render(SoloOracleMenu);
+    await openMenu();
+    const entry = screen.getByTestId(
+      "solo-adventure-entry",
+    ) as HTMLAnchorElement;
+    expect(entry.getAttribute("href")).toMatch(/\/adventure$/);
+    expect(entry.textContent).toContain("Let the Oracle run a scene");
+    expect(env.oracle.ui.setPendingPrompt).not.toHaveBeenCalled();
+  });
+
   it("Open Oracle opens the Oracle sidebar without prefilling anything", async () => {
     render(SoloOracleMenu);
     await openMenu();
@@ -103,5 +114,6 @@ describe("SoloOracleMenu", () => {
     env.aiDisabled = true;
     render(SoloOracleMenu);
     expect(screen.queryByTestId("solo-oracle-menu")).toBeNull();
+    expect(screen.queryByTestId("solo-adventure-entry")).toBeNull();
   });
 });

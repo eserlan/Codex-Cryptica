@@ -199,7 +199,10 @@ export async function forwardInteractionToGemini(
     payload.system_instruction = systemInstruction;
   }
   if (body.generation_config || body.generationConfig) {
-    payload.generation_config = body.generation_config || body.generationConfig;
+    const rawConfig = {
+      ...(body.generation_config || body.generationConfig || {}),
+    } as Record<string, unknown>;
+    payload.generation_config = mapGenerationConfig(rawConfig);
   }
 
   const url = `https://generativelanguage.googleapis.com/v1beta/interactions?key=${env.GEMINI_API_KEY}`;

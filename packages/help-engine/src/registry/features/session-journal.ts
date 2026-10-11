@@ -21,6 +21,16 @@ export const sessionJournal: FeatureEntry = {
       ],
       actionIds: ["session-journal.open", "session-journal.help"],
     },
+    {
+      id: "choose-what-the-journal-records",
+      title: "Choose what the journal records",
+      steps: [
+        "Open the journal and choose Capture in the journal header.",
+        "Switch off the kinds you do not want, such as dice rolls or map moves.",
+        "Your choices are saved with that journal. Notes you type are always kept.",
+      ],
+      actionIds: ["session-journal.open", "session-journal.help"],
+    },
   ],
   helpIds: ["quicknote"],
   related: ["session-hub"],

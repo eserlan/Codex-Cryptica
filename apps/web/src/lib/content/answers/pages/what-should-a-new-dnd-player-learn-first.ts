@@ -135,6 +135,14 @@ export const whatShouldANewDndPlayerLearnFirst: AnswerConfigInput = {
       href: "/generators/fantasy-names",
     },
   ],
+  relatedTopics: [
+    {
+      title: "D&D for Beginners",
+      href: "/topics/dnd-beginners",
+      description:
+        "The complete beginner learning path: what to know before session one, character-sheet walkthrough, dice rules, and combat turns.",
+    },
+  ],
   relatedForPages: [
     {
       title: "Codex Cryptica for D&D",
@@ -157,6 +165,7 @@ export const whatShouldANewDndPlayerLearnFirst: AnswerConfigInput = {
   discovery: {
     id: "answer-new-dnd-player-learn-first",
     parentCluster: "beginner-entry",
+    clusters: ["beginner-entry", "dnd-new-player"],
     primaryIntent:
       "what a new dnd player should learn before their first session",
     intentAliases: [
@@ -169,6 +178,7 @@ export const whatShouldANewDndPlayerLearnFirst: AnswerConfigInput = {
     uniqueValue:
       "Reduces D&D's character and rules choices to the small set a player needs before session one, with a d20 primer, a playable-concept test, and questions to ask the DM.",
     relatedIntents: [
+      "topic-dnd-beginners",
       "answer-beginner-start",
       "answer-session-zero",
       "answer-system-selection",

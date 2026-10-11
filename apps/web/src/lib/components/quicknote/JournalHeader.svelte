@@ -1,5 +1,7 @@
 <script lang="ts">
   import type { Snippet } from "svelte";
+  import type { CaptureKind } from "session-journal-engine";
+  import JournalCaptureMenu from "./JournalCaptureMenu.svelte";
 
   /**
    * The title row of an open journal (#3402 slice 1, #3406): the journal's
@@ -13,8 +15,9 @@
     onEnd,
     onBack,
     extras,
-    captureMapMoves = true,
-    onToggleMapMoves,
+    captureOff,
+    captureMapMoves,
+    onToggleCapture,
   }: {
     title: string;
     active: boolean;
@@ -23,8 +26,10 @@
     onBack: () => void;
     /** Small controls shown beside the title (the Make entity toggle). */
     extras?: Snippet;
+    /** Which automatic kinds the journal records (spec 174, US4). */
+    captureOff?: CaptureKind[];
     captureMapMoves?: boolean;
-    onToggleMapMoves?: () => void;
+    onToggleCapture?: (kind: CaptureKind, on: boolean) => void;
   } = $props();
 </script>
 
@@ -39,15 +44,11 @@
   <div class="flex items-center gap-3">
     {@render extras?.()}
     {#if active}
-      <button
-        type="button"
-        onclick={onToggleMapMoves}
-        aria-pressed={captureMapMoves}
-        class="text-micro font-bold uppercase tracking-wider text-theme-muted transition-colors hover:text-theme-primary"
-        aria-label="Record map moves"
-      >
-        Map moves: {captureMapMoves ? "On" : "Off"}
-      </button>
+      <JournalCaptureMenu
+        {captureOff}
+        {captureMapMoves}
+        onToggle={(kind, on) => onToggleCapture?.(kind, on)}
+      />
       <button
         type="button"
         onclick={onEnd}

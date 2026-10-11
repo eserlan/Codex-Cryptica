@@ -336,3 +336,81 @@ const GENERATOR_LABEL: Record<string, string> = {
 function capitalise(word: string): string {
   return word.charAt(0).toUpperCase() + word.slice(1);
 }
+
+/** A solo oracle answer, as shown in the bar (spec 174, FR-006). */
+export interface OracleAnswerCapture {
+  question: string;
+  likelihood: string;
+  roll: number;
+  answer: string;
+  event: { focus: string; text: string } | null;
+}
+
+/** An oracle answer in the journal: question, odds, roll and answer. */
+/** How each likelihood reads in the journal. */
+const LIKELIHOOD_LABELS: Record<string, string> = {
+  very_unlikely: "Very unlikely",
+  unlikely: "Unlikely",
+  even: "Even",
+  likely: "Likely",
+  very_likely: "Very likely",
+};
+
+export function formatOracleAnswer(
+  answer: OracleAnswerCapture,
+): JournalCapturePayload {
+  const question = answer.question.trim();
+  const asked = question ? `"${question}"` : "(no question)";
+  return {
+    entryType: "oracle-answer",
+    content: `Oracle (${LIKELIHOOD_LABELS[answer.likelihood] ?? capitalise(answer.likelihood)}): ${asked} — ${answer.answer} (${answer.roll})`,
+    sourceRef: {
+      kind: "oracle",
+      likelihood: answer.likelihood,
+      roll: answer.roll,
+    },
+  };
+}
+
+/** A random event in the journal, in one sentence. */
+export function formatRandomEvent(event: {
+  text: string;
+}): JournalCapturePayload {
+  return {
+    entryType: "random-event",
+    content: `Random event: ${event.text.trim()}`,
+    sourceRef: { kind: "oracle" },
+  };
+}
+
+/** A change in tension. Null when the level did not change. */
+export function formatTensionChange(
+  from: number,
+  to: number,
+): JournalCapturePayload | null {
+  if (from === to) return null;
+  return {
+    entryType: "tension-change",
+    content: `Tension: ${from} → ${to}`,
+    sourceRef: { kind: "tension" },
+  };
+}
+
+/** A thread opened, closed or reopened. */
+export function formatThreadChange(
+  change: "opened" | "closed" | "reopened",
+  thread: { title: string; kind?: string; closingNote?: string },
+): JournalCapturePayload {
+  const title = thread.title.trim();
+  const note = thread.closingNote?.trim();
+  const kind = thread.kind ? ` (${thread.kind})` : "";
+  let content: string;
+  if (change === "opened") content = `Thread opened${kind}: ${title}`;
+  else if (change === "reopened") content = `Thread reopened: ${title}`;
+  else content = `Thread closed: ${title}${note ? ` — ${note}` : ""}`;
+  return {
+    entryType: "thread-change",
+    content,
+    sourceRef: { kind: "threads" },
+  };
+}

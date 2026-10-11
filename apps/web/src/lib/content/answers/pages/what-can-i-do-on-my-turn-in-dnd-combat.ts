@@ -157,6 +157,14 @@ export const whatCanIDoOnMyTurnInDndCombat: AnswerConfigInput = {
       href: "/generators/encounter",
     },
   ],
+  relatedTopics: [
+    {
+      title: "D&D for Beginners",
+      href: "/topics/dnd-beginners",
+      description:
+        "The complete beginner learning path: what to know before session one, character-sheet walkthrough, dice rules, and combat turns.",
+    },
+  ],
   relatedForPages: [
     {
       title: "Codex Cryptica for D&D",
@@ -172,10 +180,12 @@ export const whatCanIDoOnMyTurnInDndCombat: AnswerConfigInput = {
     "where-do-i-start-if-i-have-never-played-a-tabletop-rpg",
     "how-do-i-keep-players-engaged-during-other-players-turns-in-combat",
     "how-do-i-make-combat-faster-without-making-it-less-exciting",
+    "which-dice-do-i-roll-in-dnd-and-when",
   ],
   discovery: {
     id: "answer-what-can-i-do-on-my-turn-in-dnd-combat",
     parentCluster: "beginner-entry",
+    clusters: ["beginner-entry", "dnd-new-player"],
     primaryIntent: "what can i do on my turn in dnd combat",
     intentAliases: [
       "what can you do on your turn in dnd",
@@ -188,6 +198,7 @@ export const whatCanIDoOnMyTurnInDndCombat: AnswerConfigInput = {
     uniqueValue:
       "Reframes the combat turn as a small menu of movement, action, occasional bonus action, interaction, and reaction, with purpose-led actions and a describe-your-intent habit that keeps 2014 and 2024 terminology compatible.",
     relatedIntents: [
+      "topic-dnd-beginners",
       "answer-new-dnd-player-first-game",
       "answer-read-dnd-character-sheet-beginner",
       "answer-new-dnd-player-learn-first",

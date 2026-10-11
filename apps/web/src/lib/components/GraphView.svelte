@@ -796,7 +796,7 @@
           <div
             class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-theme-primary/10 text-theme-primary"
           >
-            <span class="{mark.icon} h-4 w-4"></span>
+            <span class="{mark.icon} h-4 w-4" aria-hidden="true"></span>
           </div>
           <div class="flex-1 min-w-0">
             <p

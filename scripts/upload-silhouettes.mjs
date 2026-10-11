@@ -23,7 +23,7 @@ import { SILHOUETTES } from "../packages/schema/src/silhouettes.ts";
 
 const BUCKET = "codex-cryptica-statics";
 const REMOTE_PREFIX = "silhouettes";
-const CACHE_CONTROL = "public, max-age=86400";
+const CACHE_CONTROL = "public,max-age=86400";
 
 /** Returns a list of problems; empty means the artwork is safe to publish. */
 export function validateSilhouetteSvg(svg) {
@@ -90,6 +90,7 @@ function findSourceFile(silhouette, sourceDir) {
   return null;
 }
 
+// fallow-ignore-next-line complexity -- validation and dry-run paths are covered by upload-silhouettes tests.
 export function main() {
   const args = process.argv.slice(2);
   const sourceDir = resolve(args.find((a) => !a.startsWith("--")) ?? ".");
@@ -147,24 +148,44 @@ export function main() {
       );
       if (dryRun) continue;
       try {
-        execFileSync(
-          "bunx",
-          [
-            "wrangler",
-            "r2",
-            "object",
-            "put",
-            `${BUCKET}/${remotePath}`,
-            "--file",
-            filePath,
-            "--content-type",
-            "image/svg+xml",
-            "--cache-control",
-            CACHE_CONTROL,
-            "--remote",
-          ],
-          { stdio: "inherit" },
-        );
+        if (process.platform === "win32") {
+          execFileSync(
+            resolve("./node_modules/.bin/wrangler.cmd"),
+            [
+              "r2",
+              "object",
+              "put",
+              `${BUCKET}/${remotePath}`,
+              "--file",
+              filePath,
+              "--content-type",
+              "image/svg+xml",
+              "--cache-control",
+              CACHE_CONTROL,
+              "--remote",
+            ],
+            { stdio: "inherit", shell: true },
+          );
+        } else {
+          execFileSync(
+            "bunx",
+            [
+              "wrangler",
+              "r2",
+              "object",
+              "put",
+              `${BUCKET}/${remotePath}`,
+              "--file",
+              filePath,
+              "--content-type",
+              "image/svg+xml",
+              "--cache-control",
+              CACHE_CONTROL,
+              "--remote",
+            ],
+            { stdio: "inherit" },
+          );
+        }
       } catch (err) {
         console.error(`Failed to upload ${sil.id} to ${remotePath}:`, err);
         process.exitCode = 1;

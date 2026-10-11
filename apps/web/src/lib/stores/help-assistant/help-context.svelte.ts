@@ -91,6 +91,8 @@ function flagsFor(
   if (sources.generatorsAvailable()) flags.push("generators");
   if (surface?.canAddConnection()) flags.push("connections-editable");
   flags.push(...sidePanelFlags(sources), ...soloFlags(sources));
+  if (sources.getOpenHelpArea?.() === "session-journal")
+    flags.push("session-journal-open");
   return flags;
 }
 
@@ -135,13 +137,16 @@ function soloActionsFor(sources: HelpContextSources): string[] {
       "solo-pinned-tables",
       "solo-party-menu",
       "solo-scene-menu",
+      "solo-yes-no-menu",
+      "solo-threads-menu",
     ];
     // The Oracle menu is an AI feature: it is listed only while AI is on.
     if (sources.aiEnabled?.()) actions.push("solo-oracle-menu");
     return actions;
   }
+  // Threads can be kept with no session running (spec 174, FR-020).
   return sources.getRouteId() === "/(app)/play"
-    ? ["play-start-solo-session"]
+    ? ["play-start-solo-session", "solo-threads-menu"]
     : [];
 }
 
@@ -159,6 +164,9 @@ function availableActionsFor(
   if (!sources.isGuestMode()) actions.push(...SETTINGS_PANEL_IDS);
   if (!sources.isGuestMode() && sources.journalAvailable?.())
     actions.push("session-journal");
+  // The Capture menu is in the open journal header (spec 174, US4).
+  if (sources.getOpenHelpArea?.() === "session-journal")
+    actions.push("journal-capture-menu");
   actions.push(...soloActionsFor(sources));
   return actions;
 }

@@ -183,6 +183,14 @@ export const howDoIReadADndCharacterSheetAsABeginner: AnswerConfigInput = {
     linkText: "Explore Codex Cryptica for D&D",
     href: "/for/dungeons-and-dragons",
   },
+  relatedTopics: [
+    {
+      title: "D&D for Beginners",
+      href: "/topics/dnd-beginners",
+      description:
+        "The complete beginner learning path: what to know before session one, character-sheet walkthrough, dice rules, and combat turns.",
+    },
+  ],
   relatedForPages: [
     {
       title: "Codex Cryptica for D&D",
@@ -195,10 +203,16 @@ export const howDoIReadADndCharacterSheetAsABeginner: AnswerConfigInput = {
     "what-should-a-new-dnd-player-learn-first",
     "where-do-i-start-if-i-have-never-played-a-tabletop-rpg",
     "how-do-i-run-a-successful-session-0",
+    "how-do-i-keep-players-engaged-during-other-players-turns-in-combat",
+    "what-can-i-do-on-my-turn-in-dnd-combat",
+    "what-do-i-need-to-bring-to-my-first-dnd-game",
+    "what-should-a-new-dnd-player-know-before-their-first-game",
+    "which-dice-do-i-roll-in-dnd-and-when",
   ],
   discovery: {
     id: "answer-read-dnd-character-sheet-beginner",
     parentCluster: "beginner-entry",
+    clusters: ["beginner-entry", "dnd-new-player"],
     primaryIntent: "how to read a dnd character sheet as a beginner",
     intentAliases: [
       "how to read a dnd 5e character sheet",
@@ -210,6 +224,7 @@ export const howDoIReadADndCharacterSheetAsABeginner: AnswerConfigInput = {
     uniqueValue:
       "Teaches a new player to read a 5e sheet in order of table usefulness, from hit points and Armour Class to modifiers, skills, saves, attacks, and safe-to-ignore fields, with a 1st-level walkthrough and 2014 versus 2024 guidance.",
     relatedIntents: [
+      "topic-dnd-beginners",
       "answer-new-dnd-player-learn-first",
       "answer-new-dnd-player-first-game",
       "answer-beginner-start",

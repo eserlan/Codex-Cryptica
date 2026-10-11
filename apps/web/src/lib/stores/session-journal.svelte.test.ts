@@ -642,6 +642,50 @@ describe("SessionJournalStore — map move capture", () => {
     expect(reopened.current?.captureMapMoves).toBe(true);
   });
 
+  it("saves each capture switch per journal, and a new journal starts with everything on", async () => {
+    const store = newStore("vault-capture-choice");
+    await store.start();
+
+    await store.setCaptureChoice("dice", false);
+    await store.setCaptureChoice("oracle", false);
+    expect(store.current?.captureOff).toEqual(["dice", "oracle"]);
+
+    const reopened = newStore("vault-capture-choice");
+    await reopened.listJournals();
+    expect(reopened.current?.captureOff).toEqual(["dice", "oracle"]);
+
+    await reopened.setCaptureChoice("dice", true);
+    expect(reopened.current?.captureOff).toEqual(["oracle"]);
+
+    await reopened.end();
+    const next = newStore("vault-capture-choice");
+    await next.start();
+    expect(next.current?.captureOff).toBeUndefined();
+  });
+
+  it("keeps the map-move flag in step with the map-moves switch", async () => {
+    const store = newStore("vault-capture-map-sync");
+    await store.start();
+
+    await store.setCaptureChoice("map-moves", false);
+    expect(store.current?.captureMapMoves).toBe(false);
+    expect(store.current?.captureOff).toEqual(["map-moves"]);
+
+    await store.setCaptureChoice("map-moves", true);
+    expect(store.current?.captureMapMoves).toBe(true);
+    expect(store.current?.captureOff).toBeUndefined();
+  });
+
+  it("leaves an ended journal's capture choices unchanged", async () => {
+    const store = newStore("vault-capture-ended");
+    await store.start();
+    await store.end();
+
+    await store.setCaptureChoice("dice", false);
+    expect(store.current?.status).toBe("ended");
+    expect(store.current?.captureOff).toBeUndefined();
+  });
+
   it("does nothing without an active journal", async () => {
     const store = newStore("vault-map-capture-empty");
     await store.listJournals();

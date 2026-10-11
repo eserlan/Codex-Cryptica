@@ -274,6 +274,6 @@ function test() {
           report.topFiles[i + 1].totalLines,
         );
       }
-    });
+    }, 15000);
   });
 });

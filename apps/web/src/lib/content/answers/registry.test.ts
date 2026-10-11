@@ -19,6 +19,8 @@ import { getAllLandingPageSlugs } from "../for/registry";
 import { HEIST_TOPIC_CONFIG } from "../topics/heists";
 import { PUZZLE_TOPIC_CONFIG } from "../topics/puzzles";
 import { PIRATE_TOPIC_CONFIG } from "../topics/pirates";
+import { DND_TOPIC_CONFIG } from "../topics/dnd";
+import { DND_BEGINNERS_TOPIC_CONFIG } from "../topics/dnd-beginners";
 import { solutions } from "$lib/config/seo-pages";
 import { featuresConfig } from "$lib/config/seo-features";
 import { match as isGeneratorSlug } from "../../../params/generator_slug";
@@ -51,6 +53,19 @@ const mockRegistry: Record<string, AnswerConfig> = {
 };
 
 describe("answer registry", () => {
+  it("registers story arc planning as its own workflow intent", () => {
+    const answer = answers["how-do-i-plan-story-arcs-for-an-rpg-campaign"];
+    const entry = getDiscoveryEntries().find(
+      (candidate) => candidate.canonicalPath === `/answers/${answer.slug}`,
+    );
+
+    expect(entry).toMatchObject({
+      id: "answer-plan-story-arcs-rpg-campaign",
+      primaryIntent: "how to plan story arcs for an rpg campaign",
+      userJob: "adopt-workflow",
+    });
+  });
+
   it("prioritises first-game guidance and the character-sheet guide for packing readers", () => {
     const answer = answers["what-do-i-need-to-bring-to-my-first-dnd-game"];
 
@@ -850,6 +865,8 @@ describe("published answers", () => {
       HEIST_TOPIC_CONFIG.canonicalPath,
       PUZZLE_TOPIC_CONFIG.canonicalPath,
       PIRATE_TOPIC_CONFIG.canonicalPath,
+      DND_TOPIC_CONFIG.canonicalPath,
+      DND_BEGINNERS_TOPIC_CONFIG.canonicalPath,
     ]);
     const toolPages = new Set([
       "cyberpunk-nomad-clan-generator",

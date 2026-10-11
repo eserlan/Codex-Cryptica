@@ -96,6 +96,30 @@ When AI is on, **Ask Oracle** in the solo bar offers **Open Oracle** and four qu
 
 Choosing a question opens the Oracle beside your screen with that question already written in its input. It includes the scene name, the place, your party and the most recent journal results. Nothing is sent until you edit it, if you want, and press Send. The Oracle answers the question you send; it does not run the game for you. When AI is turned off, these shortcuts are hidden.
 
+## Yes or no
+
+Ask the dice a question when there is no GM to ask. Open **Yes or no** in the solo bar (or the sheet), type your question if you like, choose how likely a yes is, and press **Roll**. The answer appears with its roll, and goes into the journal with the question.
+
+The answers run from **Yes, and** to **No, and**, with qualified answers such as **Yes, but** in between. This works without AI.
+
+## Random events and tension
+
+Some answers bring a **random event**: a focus, an action and a subject in one sentence. You can also press **Random event** whenever you want one. The subject can be an open thread, a party member, the current place, or someone new.
+
+**Tension** runs from 1 to 9 and starts at 5. Raise it when things heat up and lower it when they calm down. Higher tension means random events come up more often. Changes are noted in the journal.
+
+## Threads
+
+Threads are open questions, leads, objectives and mysteries that carry a campaign from one session to the next. Open **Threads** to add one with a title and a kind (question, lead, objective or mystery), link it to entries in your vault, close it with a note when it is resolved, and reopen it if it returns. Closed threads sit under **Show closed threads**, one choice away. Use the search box and the kind filter to find one quickly.
+
+Threads are saved in your vault, so they stay put when you reload, switch vaults or start a new session. They are also in a vault export (`.codex.zip`) and in a folder save, so they come along when you restore or move the vault that way. They are not part of Cloud Backup yet. Each vault can hold up to 200 threads. When it is full, close or delete one to add another.
+
+You can view and edit threads from **Play** as well, with no session running. In a read-only vault, you can still read them, but not change them.
+
+## Let the Oracle run a scene
+
+When AI is on, **Ask Oracle** in the solo bar has **Let the Oracle run a scene**. It opens Adventure Mode, where the Oracle runs the game as game master, continuing an existing adventure if there is one. It is an explicit choice: a solo session never starts Adventure Mode on its own, and the entry is hidden when AI is off.
+
 ## Asking for help
 
 Cif answers questions about how Codex Cryptica works, including Play and the solo bar. Questions about what happens in your story belong to the [Oracle](/help#help/oracle-guide), or to your own tables and prep.

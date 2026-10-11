@@ -62,7 +62,7 @@ describe("/explore route", () => {
     expect(silhouettesLink?.textContent).toContain("Vector Silhouettes");
   });
 
-  it("groups the four topic links under Browse by Topic in directory order", () => {
+  it("groups the topic links under Browse by Topic in directory order", () => {
     render(Page, { props: { data: emptyData } });
 
     const headingNames = screen
@@ -92,12 +92,14 @@ describe("/explore route", () => {
       "/topics/puzzles",
       "/topics/pirates",
       "/topics/dnd",
+      "/topics/dnd-beginners",
     ]);
     for (const href of [
       "/topics/heists",
       "/topics/puzzles",
       "/topics/pirates",
       "/topics/dnd",
+      "/topics/dnd-beginners",
     ]) {
       expect(document.querySelectorAll(`a[href="${href}"]`)).toHaveLength(1);
     }
@@ -105,7 +107,13 @@ describe("/explore route", () => {
       topicLinks.map((link) =>
         link.querySelector("span.flex.flex-col > span")?.textContent?.trim(),
       ),
-    ).toEqual(["Heists", "Puzzles", "Pirates & High Seas", "Running D&D"]);
+    ).toEqual([
+      "Heists",
+      "Puzzles",
+      "Pirates & High Seas",
+      "Running D&D",
+      "D&D for Beginners",
+    ]);
 
     const learnSection = screen
       .getByRole("heading", { name: "Learn", level: 2 })
