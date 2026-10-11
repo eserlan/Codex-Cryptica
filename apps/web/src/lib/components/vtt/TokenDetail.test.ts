@@ -411,4 +411,88 @@ describe("TokenDetail", () => {
       expect(screen.queryByTestId("token-note-save-to-vault")).toBeNull();
     });
   });
+
+  describe("the tile beneath a token", () => {
+    beforeEach(() => {
+      sessionModeStore.isGuestMode = false;
+      mapStore.isGMMode = true;
+      mapSession.tokens["tile-1"] = {
+        ...mapSession.tokens["token-1"],
+        id: "tile-1",
+        name: "Autumn Forest",
+        kind: "tile",
+        layer: "terrain",
+        x: 0,
+        y: 0,
+        width: 100,
+        height: 100,
+        tileDetails: {
+          description: "Golden leaves",
+          encounter: "Wolves",
+          contents: "",
+          notes: "",
+        },
+      } as any;
+      mapSession.activeLayer = "token";
+    });
+
+    it("shows the room details of the tile under the selected token", async () => {
+      render(TokenDetail);
+
+      const section = await screen.findByTestId("token-tile-beneath");
+      expect(section.textContent).toContain("Autumn Forest");
+      expect(
+        (screen.getByDisplayValue("Golden leaves") as HTMLTextAreaElement)
+          .disabled,
+      ).toBe(false);
+      expect(screen.getByDisplayValue("Wolves")).toBeTruthy();
+    });
+
+    it("writes edits back to the tile, not the token", async () => {
+      render(TokenDetail);
+
+      const description = await screen.findByDisplayValue("Golden leaves");
+      await fireEvent.input(description, {
+        target: { value: "Bare branches" },
+      });
+
+      expect(mapSession.tokens["tile-1"].tileDetails?.description).toBe(
+        "Bare branches",
+      );
+      expect(mapSession.tokens["tile-1"].tileDetails?.encounter).toBe("Wolves");
+      expect(mapSession.tokens["token-1"].tileDetails).toBeUndefined();
+    });
+
+    it("selects the tile on its own layer", async () => {
+      render(TokenDetail);
+
+      await fireEvent.click(
+        await screen.findByRole("button", { name: "Select tile" }),
+      );
+
+      expect(mapSession.activeLayer).toBe("terrain");
+      expect(mapSession.selectedToken?.id).toBe("tile-1");
+    });
+
+    it("shows nothing when the token stands on bare map", async () => {
+      mapSession.tokens["token-1"].x = 500;
+      mapSession.tokens["token-1"].y = 500;
+
+      render(TokenDetail);
+
+      await screen.findByText("Goblin");
+      expect(screen.queryByTestId("token-tile-beneath")).toBeNull();
+    });
+
+    it("keeps room details from guests", async () => {
+      sessionModeStore.isGuestMode = true;
+      mapStore.isGMMode = false;
+
+      render(TokenDetail);
+
+      await screen.findByText("Goblin");
+      expect(screen.queryByTestId("token-tile-beneath")).toBeNull();
+      expect(screen.queryByDisplayValue("Wolves")).toBeNull();
+    });
+  });
 });
