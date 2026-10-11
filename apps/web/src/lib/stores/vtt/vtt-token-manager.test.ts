@@ -41,6 +41,34 @@ describe("VTTTokenManager.addToken", () => {
     expect(addTokenToInitiativeState).not.toHaveBeenCalled();
   });
 
+  it("keeps a hex tile inside the map when snapping it near an edge", () => {
+    const { manager } = createManager({
+      getMapStore: () => ({
+        activeMap: { dimensions: { width: 1000, height: 1000 } },
+        showGrid: true,
+        gridType: "hex-flat",
+        gridSize: 50,
+        gridOffsetX: 0,
+        gridOffsetY: 0,
+      }),
+    });
+
+    const tile = manager.addToken(
+      {
+        name: "Edge room",
+        x: 490,
+        y: 490,
+        width: 100,
+        height: Math.sqrt(3) * 50,
+        kind: "tile",
+      },
+      true,
+    );
+
+    expect(tile.x + tile.width).toBeLessThanOrEqual(500);
+    expect(tile.y + tile.height).toBeLessThanOrEqual(500);
+  });
+
   it("places a note hidden from players and out of the initiative tracker", () => {
     const { manager, addTokenToInitiativeState } = createManager();
 

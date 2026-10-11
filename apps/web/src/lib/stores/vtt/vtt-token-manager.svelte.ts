@@ -339,6 +339,7 @@ export class VTTTokenManager {
     size: { width: number; height: number },
     fitCell = false,
   ): { x: number; y: number; width: number; height: number } | null {
+    const mapStore = this.deps.getMapStore();
     const config = this.hexGridConfig();
     if (!config) return null;
     const flat = config.orientation === "flat";
@@ -351,9 +352,26 @@ export class VTTTokenManager {
       ),
       config,
     );
+    const topLeft = { x: centre.x - width / 2, y: centre.y - height / 2 };
+    const bounded = mapStore.activeMap
+      ? clampPointToBounds(topLeft, mapStore.activeMap.dimensions, {
+          width,
+          height,
+        })
+      : topLeft;
+    const rounded = {
+      x: roundTokenCoordinate(bounded.x),
+      y: roundTokenCoordinate(bounded.y),
+    };
+    const finalPosition = mapStore.activeMap
+      ? clampPointToBounds(rounded, mapStore.activeMap.dimensions, {
+          width,
+          height,
+        })
+      : rounded;
     return {
-      x: roundTokenCoordinate(centre.x - width / 2),
-      y: roundTokenCoordinate(centre.y - height / 2),
+      x: finalPosition.x,
+      y: finalPosition.y,
       width,
       height,
     };
