@@ -7,7 +7,7 @@
   import TokenQuickStats from "./TokenQuickStats.svelte";
   import SpatialImageDetails from "$lib/components/spatial/SpatialImageDetails.svelte";
   import TokenNoteEditor from "./TokenNoteEditor.svelte";
-  import { isNoteCollapsed } from "map-engine";
+  import { findTileBeneath, isNoteCollapsed } from "map-engine";
   import { oracle } from "$lib/stores/oracle.svelte";
   import { themeStore } from "$lib/stores/theme.svelte";
   import { notificationStore } from "$lib/stores/ui/notification.svelte";
@@ -60,6 +60,19 @@
   );
   const attachedNotes = $derived(
     selectedToken?.id ? mapSession.getChildNotes(selectedToken.id) : [],
+  );
+  /**
+   * The terrain tile the selected token is standing on. During hex play the
+   * GM works on the token layer to move the party, where tiles can't be
+   * clicked, so the room details of the hex underneath are surfaced here.
+   * GM only: room details carry encounters and secrets players shouldn't see.
+   */
+  const tileBeneath = $derived.by(() => {
+    if (!selectedToken || !canManageToken) return null;
+    return findTileBeneath(selectedToken, mapSession.allTokens);
+  });
+  const tileBeneathNotes = $derived(
+    tileBeneath ? mapSession.getChildNotes(tileBeneath.id) : [],
   );
 
   let pendingVaultSyncTimeout: ReturnType<typeof setTimeout> | null = null;
@@ -396,6 +409,65 @@
             })}
         />
       {/if}
+    {/if}
+
+    {#if tileBeneath}
+      <div class="space-y-2" data-testid="token-tile-beneath">
+        <div
+          class="flex items-center justify-between gap-2 rounded-lg border border-theme-primary/30 bg-theme-primary/10 px-3 py-1.5 text-xs text-theme-primary"
+        >
+          <span class="flex min-w-0 items-center gap-1.5">
+            <span
+              class="icon-[lucide--hexagon] h-3.5 w-3.5 shrink-0"
+              aria-hidden="true"
+            ></span>
+            <span class="truncate"
+              >Standing on <strong>{tileBeneath.name || "Tile"}</strong></span
+            >
+          </span>
+          <button
+            type="button"
+            onclick={() => {
+              mapSession.activeLayer = tileBeneath.layer ?? "terrain";
+              mapSession.setSelection(tileBeneath.id);
+            }}
+            class="shrink-0 rounded px-1.5 py-0.5 text-micro font-bold uppercase tracking-wider text-theme-primary hover:bg-theme-primary/20"
+            title="Select this tile on its own layer"
+          >
+            Select tile
+          </button>
+        </div>
+
+        {#if tileBeneathNotes.length > 0}
+          <div class="space-y-1">
+            {#each tileBeneathNotes as note (note.id)}
+              <button
+                type="button"
+                onclick={() => mapSession.setSelection(note.id)}
+                class="flex w-full items-center justify-between rounded-md border border-theme-border bg-theme-surface px-2.5 py-1.5 text-xs text-theme-text hover:border-theme-primary hover:text-theme-primary transition-colors text-left"
+              >
+                <span class="truncate font-medium"
+                  >{note.name || "Untitled Note"}</span
+                >
+                <span
+                  class="icon-[lucide--chevron-right] h-3.5 w-3.5 shrink-0 text-theme-muted"
+                  aria-hidden="true"
+                ></span>
+              </button>
+            {/each}
+          </div>
+        {/if}
+
+        {#if tileBeneath.tileDetails}
+          <SpatialImageDetails
+            details={tileBeneath.tileDetails}
+            onChange={(updates) =>
+              mapSession.updateToken(tileBeneath.id, {
+                tileDetails: { ...tileBeneath.tileDetails!, ...updates },
+              })}
+          />
+        {/if}
+      </div>
     {/if}
 
     {#if canManageToken}
