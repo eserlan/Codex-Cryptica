@@ -38,7 +38,7 @@ export const howDoIMakeRoleplayMoreEngaging: AnswerConfigInput = {
         },
         {
           term: "Resists",
-          text: "Why they cannot simply say yes. A recent loss, a debt, a rival claimant, a household that will suffer if they agree too easily. Resistance is not stonewalling; it is the competing pressure that makes the conversation matter.",
+          text: "Why saying yes is not free. A recent loss, a debt, a rival claimant, a household that will suffer if they agree too easily. Not every NPC needs one, and a friendly NPC can simply be asked for more than they can give. Resistance is not stonewalling; it is the competing pressure that makes the conversation matter.",
         },
         {
           term: "Knows and can trade",
@@ -170,11 +170,11 @@ export const howDoIMakeRoleplayMoreEngaging: AnswerConfigInput = {
         },
         {
           term: "After: a situation with terms to weigh",
-          text: "Lord Halden wants to help. He needs the road open for his own grain wagons, knows the mountain pass is already watched by a rival house, and can offer sealed letters of passage and two guides. He resists because granting armed passage without surety will draw that rival's attention to his household, and his steward warns the granary cannot spare an escort. His boundary: he will not risk the winter grain. The steward lays this out plainly and Halden listens while the party considers. The party can offer collateral such as leaving horses or a hostage, bring evidence that the rival already knows they are moving, seek a concurrent favour from the river guild to offset Halden's risk, accept passage on condition they carry grain south, or walk away and take the exposed pass.",
+          text: "Lord Halden wants to help. He needs the road open for his own grain wagons, knows the mountain pass is already watched by a rival house, and can offer sealed letters of passage and two guides. He resists because letting an armed party through without surety will draw that rival's attention to his household. His boundary: he will not risk the winter grain. The steward lays this out plainly and Halden listens while the party considers. The party can offer collateral such as leaving horses or a hostage, bring evidence that the rival already knows they are moving, seek a concurrent favour from the river guild to offset Halden's risk, accept passage on condition they carry grain south, or walk away and take the exposed pass.",
         },
         {
           term: "How rolls support the fiction",
-          text: "The table states intent before dice touch the table. If the bard presents the grain-carrying offer warmly, a strong Persuasion result might reduce the collateral or add the guides for no extra cost. If a scout lays out what they saw on the pass, that evidence can change the steward's understanding regardless of Charisma. If a cleric offers sanctuary as surety, the nature of the guarantee matters more than the wording. A weak result does not produce stonewalling: the steward holds firm on the grain but might offer a smaller escort tomorrow if the party accepts a cost elsewhere. The outcome of any check adjusts terms, reveals a constraint, or establishes advantage for what follows; it does not pre-decide whether the negotiation is interesting.",
+          text: "The table states intent before dice touch the table. If the bard presents the grain-carrying offer warmly, a strong Persuasion result might reduce the collateral or add the guides for no extra cost. If a scout lays out what they saw on the pass, that evidence can change the steward's understanding regardless of Charisma. If a cleric offers sanctuary as surety, the nature of the guarantee matters more than the wording. A weak result does not produce stonewalling: the steward holds firm on the grain but might offer one guide tomorrow if the party accepts a cost elsewhere. The outcome of any check adjusts terms, reveals a constraint, or establishes advantage for what follows; it does not pre-decide whether the negotiation is interesting.",
         },
         {
           term: "A short outcome is still good",
@@ -193,7 +193,7 @@ export const howDoIMakeRoleplayMoreEngaging: AnswerConfigInput = {
         "For each NPC who will face a consequential conversation, check you have:",
       items: [
         "What this NPC wants from the scene, stated as a concrete outcome.",
-        "Why they cannot grant the request immediately, with a named competing pressure or risk.",
+        "What it would cost them to say yes, with a named competing pressure or risk, if the scene needs one.",
         "Something useful they know, control, or can trade that the party can discover early enough to use.",
         "A clear boundary they will hold, and what it would cost them to break it.",
         "What will actually change if the conversation goes differently: resources, relationships, access, obligations, or future consequences on the road or in town.",
@@ -259,7 +259,7 @@ export const howDoIMakeRoleplayMoreEngaging: AnswerConfigInput = {
       "make rpg conversations more engaging for shy players",
     ],
     uniqueValue:
-      "A GM-facing framework that replaces padding dialogue time with meaningful decisions: situation prep for NPCs, a question that changes resources or relationships, and rolls that adjust terms rather than skipping interaction.",
+      "A GM-facing framework for social scenes where the players have no real choice: situation prep for NPCs, a question whose stakes the players choose how to settle, and rolls that adjust terms rather than skipping interaction.",
     userJob: "adopt-workflow",
     relatedIntents: [
       "answer-player-engagement",
@@ -303,9 +303,9 @@ export const howDoIMakeRoleplayMoreEngaging: AnswerConfigInput = {
     ],
   },
   seo: {
-    title: "How do I make roleplay more engaging? | Codex Cryptica",
+    title: "Make roleplay more engaging: give scenes a choice | Codex Cryptica",
     description:
-      "A GM framework for engaging social scenes: prepare situations not scripts, frame a question that changes the world, and let dice adjust terms rather than skip the conversation.",
+      "Flat social scenes give players nothing to decide. Prepare an NPC situation, frame a question with stakes the players choose how to settle, and let dice adjust terms, not skip the talk.",
     image:
       "https://assets.codexcryptica.com/og/how-do-i-make-roleplay-more-engaging.jpg",
     imageAlt:
