@@ -292,3 +292,8 @@
 **Learning:** Extracted `Date.now()` into an injected `clock: Clock = systemClock` dependency in Svelte component hooks (`useCanvasAreaEnhancement`), avoiding hard-coded temporal state and making tests deterministic.
 
 **Action:** Look for `Date.now()` hidden in component hooks or metadata persistence logic, and inject a `Clock` parameter defaulting to `systemClock` from `@codex/runtime` (or `$lib/utils/runtime-deps`) to improve testability.
+
+## 2024-05-18 - Replacing hard-coded localStorage in SoloSessionBar component
+
+**Learning:** For simple preferences like a UI bar being minimized in a Svelte component, directly using `try { localStorage.getItem() } catch {}` makes it impossible to unit test deterministically without overriding globals.
+**Action:** Used the `storage` parameter prop approach `let { storage = browserStorage }: { storage?: StorageLike } = $props()` from `$lib/utils/runtime-deps`. The component remains simple, but the dependencies are clear and testable.
