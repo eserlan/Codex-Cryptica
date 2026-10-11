@@ -20,15 +20,18 @@
     transition:fade
   >
     <span
-      class="icon-[lucide--check-circle] w-5 h-5" aria-hidden="true"
+      class="icon-[lucide--check-circle] w-5 h-5"
+      aria-hidden="true"
       class:hidden={notification.type !== "success"}
     ></span>
     <span
-      class="icon-[lucide--info] w-5 h-5" aria-hidden="true"
+      class="icon-[lucide--info] w-5 h-5"
+      aria-hidden="true"
       class:hidden={notification.type !== "info"}
     ></span>
     <span
-      class="icon-[lucide--alert-circle] w-5 h-5" aria-hidden="true"
+      class="icon-[lucide--alert-circle] w-5 h-5"
+      aria-hidden="true"
       class:hidden={notification.type !== "error"}
     ></span>
     <span class="font-header text-xs font-bold uppercase tracking-widest"
