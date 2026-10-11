@@ -24,6 +24,7 @@ import { howDoIMakeCombatFasterWithoutMakingItLessExciting } from "./how-do-i-ma
 import { howDoIMakeDifferentCulturesFeelDistinctWithoutRelyingOnStereotypes } from "./how-do-i-make-different-cultures-feel-distinct-without-relying-on-stereotypes";
 import { howDoIMakeInterviewingNpcsInterestingInAnInvestigation } from "./how-do-i-make-interviewing-npcs-interesting-in-an-investigation";
 import { howDoIMakeRivalCaptainsNaviesAndPirateFactionsMatter } from "./how-do-i-make-rival-captains-navies-and-pirate-factions-matter";
+import { howDoIMakeRoleplayMoreEngaging } from "./how-do-i-make-roleplay-more-engaging";
 import { howDoIMakeSeaTravelInterestingInATtrpg } from "./how-do-i-make-sea-travel-interesting-in-a-ttrpg";
 import { howDoIOrganiseADndCampaign } from "./how-do-i-organise-a-dnd-campaign";
 import { howDoIOrganiseGmNotesForInPersonPlay } from "./how-do-i-organise-gm-notes-for-in-person-play";
@@ -184,6 +185,7 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     howDoIMakeDifferentCulturesFeelDistinctWithoutRelyingOnStereotypes,
     howDoIMakeInterviewingNpcsInterestingInAnInvestigation,
     howDoIMakeRivalCaptainsNaviesAndPirateFactionsMatter,
+    howDoIMakeRoleplayMoreEngaging,
     howDoIMakeSeaTravelInterestingInATtrpg,
     howDoIOrganiseADndCampaign,
     howDoIOrganiseGmNotesForInPersonPlay,
