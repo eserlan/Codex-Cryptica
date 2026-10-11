@@ -21,6 +21,21 @@ export interface VTTTileDeckManagerDependencies {
     point: { x: number; y: number },
     size: { width: number; height: number },
   ) => { x: number; y: number; width: number; height: number };
+  /**
+   * On a hex grid, fits the tile to the hex cell under the point (box and
+   * centre). Returns null off a hex grid, where `normalizePlacement` applies.
+   */
+  fitTileToHexCell?: (
+    point: { x: number; y: number },
+    size: { width: number; height: number },
+  ) => { x: number; y: number; width: number; height: number } | null;
+  /** Hex cell a rect is centred in, or null off a hex grid. */
+  hexCellKey?: (rect: {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  }) => string | null;
   getActiveLayer: () => MapLayer;
   setActiveLayer: (layer: MapLayer) => void;
   /**
@@ -61,6 +76,8 @@ export class VTTTileDeckManager {
     x: number;
     y: number;
     size: number;
+    /** Equals `size` except on a hex grid, where a hex is wider than tall (or the reverse). */
+    height: number;
     valid: boolean;
     /** Only a *drawn* tile is stocked; one picked by hand is placed as-is. */
     stock: boolean;
@@ -208,6 +225,7 @@ export class VTTTileDeckManager {
       x: 0,
       y: 0,
       size,
+      height: size,
       valid: true,
       stock,
     };
@@ -217,25 +235,32 @@ export class VTTTileDeckManager {
   updatePendingPlacement(x: number, y: number) {
     const pending = this.pendingPlacement;
     if (!pending) return;
-    const normalized = this.deps.normalizePlacement?.(
+    const hexFit = this.deps.fitTileToHexCell?.(
       { x, y },
-      { width: pending.size, height: pending.size },
-    ) ?? { x, y, width: pending.size, height: pending.size };
+      { width: pending.size, height: pending.height },
+    );
+    // On a hex grid the tile lands centred in its cell, so there is nothing
+    // left for edge-snapping to improve — and snapping to a neighbour's
+    // bounding box would pull the tile off the cell.
+    const normalized = hexFit ??
+      this.deps.normalizePlacement?.(
+        { x, y },
+        { width: pending.size, height: pending.height },
+      ) ?? { x, y, width: pending.size, height: pending.height };
 
     // Magnetically align to nearby placed tiles' edges so a room/geomorph
     // pack can be assembled edge-to-edge without pixel-perfect dragging.
     const snapThreshold = Math.max(12, normalized.width * 0.12);
-    const snapped = snapToNeighborTiles(
-      normalized,
-      this.existingTiles(),
-      snapThreshold,
-    );
+    const snapped = hexFit
+      ? { x: normalized.x, y: normalized.y }
+      : snapToNeighborTiles(normalized, this.existingTiles(), snapThreshold);
 
     this.pendingPlacement = {
       ...pending,
       x: snapped.x,
       y: snapped.y,
       size: normalized.width,
+      height: normalized.height,
       valid: this.canPlace(pending.deckId, {
         x: snapped.x,
         y: snapped.y,
@@ -254,6 +279,7 @@ export class VTTTileDeckManager {
       pending.x,
       pending.y,
       pending.size,
+      pending.height,
     );
     const deck = this.decks.find(
       (candidate) => candidate.id === pending.deckId,
@@ -297,6 +323,7 @@ export class VTTTileDeckManager {
     x: number,
     y: number,
     size: number,
+    height = size,
   ) {
     const deck = this.decks.find((candidate) => candidate.id === deckId);
     if (!deck) return null;
@@ -327,7 +354,7 @@ export class VTTTileDeckManager {
         x,
         y,
         width: size,
-        height: size,
+        height,
         baseShape: "square",
         facingIndicator: false,
         imageUrl: tile.imagePath,
@@ -398,13 +425,16 @@ export class VTTTileDeckManager {
     excludeId?: string,
   ) {
     const deck = this.decks.find((item) => item.id === deckId);
-    return (
-      !deck?.hardEdges ||
-      canPlaceSpatialImage(
-        candidate,
-        this.existingTiles().filter((tile) => tile.id !== excludeId),
-      )
-    );
+    if (!deck?.hardEdges) return true;
+    const others = this.existingTiles().filter((tile) => tile.id !== excludeId);
+    // Hex tiles are not their bounding boxes: neighbouring cells' boxes
+    // overlap at the points, so a box test would refuse every adjacent tile.
+    // On a hex grid the rule is simply one tile per cell.
+    const cell = this.deps.hexCellKey?.(candidate);
+    if (cell) {
+      return !others.some((tile) => this.deps.hexCellKey?.(tile) === cell);
+    }
+    return canPlaceSpatialImage(candidate, others);
   }
 
   private existingTiles() {

@@ -609,7 +609,29 @@ export function renderMap(options: RenderOptions) {
     traceTokenShape(ctx, shape, width, height);
     ctx.clip();
 
-    if (token.kind === "note") {
+    if (
+      token.kind === "tile" &&
+      token.image &&
+      token.image.width > 0 &&
+      token.image.height > 0
+    ) {
+      // A tile is artwork, not a portrait: contain-fit it so none of the
+      // image is cropped (a hex's left/right points sit right on the edge of
+      // its bounding box and a cover-fit trims them off).
+      const scale = Math.min(
+        width / token.image.width,
+        height / token.image.height,
+      );
+      const tileWidth = token.image.width * scale;
+      const tileHeight = token.image.height * scale;
+      ctx.drawImage(
+        token.image,
+        -tileWidth / 2,
+        -tileHeight / 2,
+        tileWidth,
+        tileHeight,
+      );
+    } else if (token.kind === "note") {
       if (token.noteCollapsed) {
         drawCollapsedNote(ctx, width, height, token.color || "#f5b942");
       } else {

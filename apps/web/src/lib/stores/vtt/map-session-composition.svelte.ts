@@ -160,6 +160,9 @@ export function initializeMapSessionComposition(
     persistDraft: () => store.persistenceManager.persistDraft(),
     normalizePlacement: (point, size) =>
       store.tokenManager.clampAndSnapPosition(point, size),
+    fitTileToHexCell: (point, size) =>
+      store.tokenManager.snapTileToHexCell(point, size, true),
+    hexCellKey: (rect) => store.tokenManager.hexCellKey(rect),
     getActiveLayer: () => store.layerManager.activeLayer,
     setActiveLayer: (layer) => store.layerManager.setActiveLayer(layer),
     rollStockingTable: (tableId) => {

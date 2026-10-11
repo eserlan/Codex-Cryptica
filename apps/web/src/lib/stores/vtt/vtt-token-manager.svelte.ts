@@ -14,6 +14,9 @@ import {
   nextZIndexInLayer,
   isNoteCollapsed,
   NOTE_COLLAPSED_SCALE,
+  hexToPoint,
+  pointToHex,
+  type HexGridConfig,
   type MapLayer,
 } from "map-engine";
 import {
@@ -25,6 +28,7 @@ import { snapToNeighborTiles } from "@codex/spatial-engine";
 import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
 import { type IdGenerator, systemIdGenerator } from "$lib/utils/runtime-deps";
 
+const SQRT_3 = Math.sqrt(3);
 const TOKEN_COORD_PRECISION = 2;
 /** Smallest a freshly-placed character token defaults to, regardless of how fine the map's grid is. */
 const MIN_DEFAULT_TOKEN_SIZE = 30;
@@ -302,6 +306,75 @@ export class VTTTokenManager {
     };
   }
 
+  /**
+   * The visible hex grid, or null on a square/hidden grid. Tiles on a hex grid
+   * are placed by cell, not by pixel: a hex image is not a square, so the
+   * square-grid snap would both crop its points and leave it off-centre.
+   */
+  private hexGridConfig(): HexGridConfig | null {
+    const mapStore = this.deps.getMapStore();
+    if (!mapStore.activeMap || !mapStore.showGrid) return null;
+    if (
+      mapStore.gridType !== "hex-flat" &&
+      mapStore.gridType !== "hex-pointy"
+    ) {
+      return null;
+    }
+    return {
+      orientation: mapStore.gridType === "hex-flat" ? "flat" : "pointy",
+      size: mapStore.gridSize || 50,
+      offsetX: mapStore.gridOffsetX || 0,
+      offsetY: mapStore.gridOffsetY || 0,
+    };
+  }
+
+  /**
+   * Snaps a tile's centre to the centre of its hex cell. With `fitCell` the
+   * box also becomes the cell's own bounding box (2R x sqrt(3)R for flat-top,
+   * sqrt(3)R x 2R for pointy-top), which is exactly the box a hex tile image
+   * is cut to. Returns null when the grid isn't hex.
+   */
+  snapTileToHexCell(
+    point: Point,
+    size: { width: number; height: number },
+    fitCell = false,
+  ): { x: number; y: number; width: number; height: number } | null {
+    const config = this.hexGridConfig();
+    if (!config) return null;
+    const flat = config.orientation === "flat";
+    const width = fitCell ? (flat ? 2 : SQRT_3) * config.size : size.width;
+    const height = fitCell ? (flat ? SQRT_3 : 2) * config.size : size.height;
+    const centre = hexToPoint(
+      pointToHex(
+        { x: point.x + size.width / 2, y: point.y + size.height / 2 },
+        config,
+      ),
+      config,
+    );
+    return {
+      x: roundTokenCoordinate(centre.x - width / 2),
+      y: roundTokenCoordinate(centre.y - height / 2),
+      width,
+      height,
+    };
+  }
+
+  /** Identifies the hex cell a rect's centre sits in, or null off a hex grid. */
+  hexCellKey(rect: {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  }): string | null {
+    const config = this.hexGridConfig();
+    if (!config) return null;
+    const { q, r } = pointToHex(
+      { x: rect.x + rect.width / 2, y: rect.y + rect.height / 2 },
+      config,
+    );
+    return `${q},${r}`;
+  }
+
   clampAndSnapPosition(
     point: Point,
     tokenSize: { width: number; height: number },
@@ -382,11 +455,18 @@ export class VTTTokenManager {
 
   addToken(input: TokenCreationInput, silent = false) {
     const token = this.getTokenDefaults(input);
-    const snapped = this.clampAndSnapPosition(
-      { x: token.x, y: token.y },
-      { width: token.width, height: token.height },
-      { snapToTheGrid: token.kind !== "note" },
-    );
+    const snapped =
+      (token.kind === "tile"
+        ? this.snapTileToHexCell(
+            { x: token.x, y: token.y },
+            { width: token.width, height: token.height },
+          )
+        : null) ??
+      this.clampAndSnapPosition(
+        { x: token.x, y: token.y },
+        { width: token.width, height: token.height },
+        { snapToTheGrid: token.kind !== "note" },
+      );
     const positioned = {
       ...token,
       x: snapped.x,
@@ -447,9 +527,22 @@ export class VTTTokenManager {
     const visionSourceChanged = updates.isVisionSource !== undefined;
     const shouldDebounceBroadcast = posChanged || sizeChanged;
 
+    const movedPoint = {
+      x: updates.x !== undefined ? roundTokenCoordinate(updates.x) : current.x,
+      y: updates.y !== undefined ? roundTokenCoordinate(updates.y) : current.y,
+    };
+    const movedSize = {
+      width: updates.width ?? current.width,
+      height: updates.height ?? current.height,
+    };
+    const hexSnapped =
+      current.kind === "tile" && (posChanged || sizeChanged)
+        ? this.snapTileToHexCell(movedPoint, movedSize)
+        : null;
     const snapped =
       posChanged || sizeChanged
-        ? this.clampAndSnapPosition(
+        ? (hexSnapped ??
+          this.clampAndSnapPosition(
             {
               x:
                 updates.x !== undefined
@@ -465,7 +558,7 @@ export class VTTTokenManager {
               height: updates.height ?? current.height,
             },
             { snapToTheGrid: current.kind !== "note" },
-          )
+          ))
         : {
             x: current.x,
             y: current.y,
@@ -476,7 +569,7 @@ export class VTTTokenManager {
     // Repositioning a placed tile magnetically aligns it to nearby tiles'
     // edges too, same as initial placement — otherwise dragging a tile to
     // nudge it into alignment with its neighbors would only grid-snap.
-    if (current.kind === "tile" && (posChanged || sizeChanged)) {
+    if (current.kind === "tile" && !hexSnapped && (posChanged || sizeChanged)) {
       // ⚡ Bolt Optimization: Avoid intermediate array allocations during token movement hot path
       const neighbors: Token[] = [];
       for (const key in this.tokens) {
