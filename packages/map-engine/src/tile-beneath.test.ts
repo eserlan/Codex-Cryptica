@@ -124,4 +124,28 @@ describe("findTileAtPoint", () => {
     const tile = makeToken({ id: "forest", kind: "tile" });
     expect(findTileAtPoint({ x: 50, y: 50 }, [tile], "forest")).toBeNull();
   });
+
+  it("includes the rotated tile area outside its unrotated bounds", () => {
+    const tile = makeToken({
+      id: "rotated",
+      kind: "tile",
+      width: 100,
+      height: 50,
+      rotation: 90,
+    });
+
+    expect(findTileAtPoint({ x: 50, y: 60 }, [tile])?.id).toBe("rotated");
+  });
+
+  it("excludes unrotated bounding-box corners outside a rotated tile", () => {
+    const tile = makeToken({
+      id: "rotated",
+      kind: "tile",
+      width: 100,
+      height: 100,
+      rotation: 45,
+    });
+
+    expect(findTileAtPoint({ x: 5, y: 5 }, [tile])).toBeNull();
+  });
 });

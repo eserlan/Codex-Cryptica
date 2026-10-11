@@ -33,15 +33,21 @@ export function findTileAtPoint(
 
   for (const candidate of tokens) {
     if (candidate.kind !== "tile" || candidate.id === excludeId) continue;
-    const minX = Math.min(candidate.x, candidate.x + candidate.width);
-    const maxX = Math.max(candidate.x, candidate.x + candidate.width);
-    const minY = Math.min(candidate.y, candidate.y + candidate.height);
-    const maxY = Math.max(candidate.y, candidate.y + candidate.height);
-    if (point.x < minX || point.x > maxX || point.y < minY || point.y > maxY) {
+    const center = getTokenCenter(candidate);
+    const radians = (candidate.rotation * Math.PI) / 180;
+    const dx = point.x - center.x;
+    const dy = point.y - center.y;
+    // The canvas rotates tiles around their centre. Undo that rotation before
+    // checking their local rectangle, so the lookup matches the rendered tile.
+    const localX = dx * Math.cos(radians) + dy * Math.sin(radians);
+    const localY = -dx * Math.sin(radians) + dy * Math.cos(radians);
+    if (
+      Math.abs(localX) > Math.abs(candidate.width) / 2 ||
+      Math.abs(localY) > Math.abs(candidate.height) / 2
+    ) {
       continue;
     }
 
-    const center = getTokenCenter(candidate);
     const distance = Math.hypot(point.x - center.x, point.y - center.y);
     if (
       distance < bestDistance ||
