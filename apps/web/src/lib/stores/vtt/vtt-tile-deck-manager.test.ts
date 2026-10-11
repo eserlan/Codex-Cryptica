@@ -537,5 +537,30 @@ describe("VTTTileDeckManager stocking", () => {
       expect(manager.pendingPlacement?.valid).toBe(false);
       expect(manager.placePending()).toBeNull();
     });
+
+    it("centres a stocked note using the fitted hex tile height", () => {
+      const pinTileNote = vi.fn();
+      const { manager } = createManager({
+        hexRadius: 100,
+        pinTileNote,
+        random: () => 0,
+      });
+      const deck = manager.createDeck("Hexes", [
+        { name: "Tower", imagePath: "files/tower.png" },
+      ])!;
+      manager.setStocking(deck.id, { mode: "encounter" });
+
+      manager.draw(deck.id, 150);
+      manager.updatePendingPlacement(160, 20);
+      const placement = manager.pendingPlacement!;
+      manager.placePending();
+
+      expect(pinTileNote).toHaveBeenCalledWith({
+        name: "Encounter",
+        body: "",
+        x: placement.x + placement.size / 2,
+        y: placement.y + placement.height / 2,
+      });
+    });
   });
 });

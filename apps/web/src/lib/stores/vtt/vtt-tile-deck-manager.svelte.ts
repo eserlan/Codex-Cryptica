@@ -289,6 +289,7 @@ export class VTTTileDeckManager {
         x: pending.x,
         y: pending.y,
         size: pending.size,
+        height: pending.height,
       });
     }
     this.pendingPlacement = null;
@@ -388,7 +389,7 @@ export class VTTTileDeckManager {
    */
   private stockDrawnTile(
     deck: TileDeck,
-    placement: { x: number; y: number; size: number },
+    placement: { x: number; y: number; size: number; height: number },
   ) {
     const stocking = deck.stocking;
     if (!stocking || stocking.mode === "none") return;
@@ -400,7 +401,7 @@ export class VTTTileDeckManager {
 
     const centre = {
       x: placement.x + placement.size / 2,
-      y: placement.y + placement.size / 2,
+      y: placement.y + placement.height / 2,
     };
     if (stocking.mode === "encounter") {
       // Deliberately empty: an encounter is generated from the note itself,
