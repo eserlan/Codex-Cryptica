@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { isNoteCollapsed } from "map-engine";
+import { hexToPoint, isNoteCollapsed, pointToHex } from "map-engine";
 import { VTTTokenManager } from "./vtt-token-manager.svelte";
 
 function createManager(overrides: Partial<any> = {}) {
@@ -65,7 +65,20 @@ describe("VTTTokenManager.addToken", () => {
       true,
     );
 
+    const centre = { x: tile.x + tile.width / 2, y: tile.y + tile.height / 2 };
+    const config = {
+      orientation: "flat" as const,
+      size: 50,
+      offsetX: 0,
+      offsetY: 0,
+    };
+    const hex = pointToHex(centre, config);
+    const snappedCentre = hexToPoint(hex, config);
+    expect(centre.x).toBeCloseTo(snappedCentre.x, 2);
+    expect(centre.y).toBeCloseTo(snappedCentre.y, 2);
+    expect(tile.x).toBeGreaterThanOrEqual(-500);
     expect(tile.x + tile.width).toBeLessThanOrEqual(500);
+    expect(tile.y).toBeGreaterThanOrEqual(-500);
     expect(tile.y + tile.height).toBeLessThanOrEqual(500);
   });
 

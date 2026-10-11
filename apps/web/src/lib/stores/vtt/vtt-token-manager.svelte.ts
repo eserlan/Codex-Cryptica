@@ -14,6 +14,7 @@ import {
   nextZIndexInLayer,
   isNoteCollapsed,
   NOTE_COLLAPSED_SCALE,
+  getHexRange,
   hexToPoint,
   pointToHex,
   type HexGridConfig,
@@ -345,20 +346,56 @@ export class VTTTokenManager {
     const flat = config.orientation === "flat";
     const width = fitCell ? (flat ? 2 : SQRT_3) * config.size : size.width;
     const height = fitCell ? (flat ? SQRT_3 : 2) * config.size : size.height;
-    const centre = hexToPoint(
-      pointToHex(
-        { x: point.x + size.width / 2, y: point.y + size.height / 2 },
-        config,
-      ),
-      config,
-    );
+    const targetCentre = {
+      x: point.x + size.width / 2,
+      y: point.y + size.height / 2,
+    };
+    const targetHex = pointToHex(targetCentre, config);
+    const centre = hexToPoint(targetHex, config);
     const topLeft = { x: centre.x - width / 2, y: centre.y - height / 2 };
-    const bounded = mapStore.activeMap
-      ? clampPointToBounds(topLeft, mapStore.activeMap.dimensions, {
-          width,
-          height,
-        })
-      : topLeft;
+    let bounded = topLeft;
+    if (mapStore.activeMap) {
+      const bounds = mapStore.activeMap.dimensions;
+      const minCentreX = -bounds.width / 2 + width / 2;
+      const maxCentreX = bounds.width / 2 - width / 2;
+      const minCentreY = -bounds.height / 2 + height / 2;
+      const maxCentreY = bounds.height / 2 - height / 2;
+
+      // Clamping the box directly moves it off-grid. Near an image edge, pick
+      // the closest neighbouring whole cell that fits inside the map instead.
+      const validCells = getHexRange(targetHex, 3)
+        .map((hex) => ({ hex, centre: hexToPoint(hex, config) }))
+        .filter(
+          ({ centre: candidate }) =>
+            candidate.x >= minCentreX &&
+            candidate.x <= maxCentreX &&
+            candidate.y >= minCentreY &&
+            candidate.y <= maxCentreY,
+        )
+        .sort(
+          (a, b) =>
+            Math.hypot(
+              a.centre.x - targetCentre.x,
+              a.centre.y - targetCentre.y,
+            ) -
+            Math.hypot(
+              b.centre.x - targetCentre.x,
+              b.centre.y - targetCentre.y,
+            ),
+        );
+
+      if (validCells.length > 0) {
+        const fittedCentre = validCells[0].centre;
+        bounded = {
+          x: fittedCentre.x - width / 2,
+          y: fittedCentre.y - height / 2,
+        };
+      } else {
+        // If the map is smaller than one cell, preserve the existing bounds
+        // behaviour; no whole-cell placement can fit in that image.
+        bounded = clampPointToBounds(topLeft, bounds, { width, height });
+      }
+    }
     const rounded = {
       x: roundTokenCoordinate(bounded.x),
       y: roundTokenCoordinate(bounded.y),
