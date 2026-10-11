@@ -142,13 +142,7 @@ describe("renderMap", () => {
       ],
     });
 
-    expect(ctx.drawImage).toHaveBeenCalledWith(
-      tileImage,
-      -50,
-      -50,
-      100,
-      100,
-    );
+    expect(ctx.drawImage).toHaveBeenCalledWith(tileImage, -50, -50, 100, 100);
   });
 
   it("draws the grid above tiles/tokens, not underneath them", () => {

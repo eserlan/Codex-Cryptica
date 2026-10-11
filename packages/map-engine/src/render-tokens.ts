@@ -191,29 +191,7 @@ function drawTokenFill(
   diameter: number,
   cache: CanvasCache,
 ) {
-  if (
-    token.kind === "tile" &&
-    token.image &&
-    token.image.width > 0 &&
-    token.image.height > 0
-  ) {
-    // Tiles are artwork, so contain-fit them inside the token bounds. A
-    // cover-fit would crop the points of hex tiles at the bounding-box edge.
-    const scale = Math.min(
-      width / token.image.width,
-      height / token.image.height,
-    );
-    const tileWidth = token.image.width * scale;
-    const tileHeight = token.image.height * scale;
-    ctx.drawImage(
-      token.image,
-      -tileWidth / 2,
-      -tileHeight / 2,
-      tileWidth,
-      tileHeight,
-    );
-    return;
-  }
+  if (drawTileTokenFill(ctx, token, width, height)) return;
 
   if (token.kind === "note") {
     drawNoteTokenFill(ctx, token, width, height, cache);
@@ -227,6 +205,39 @@ function drawTokenFill(
   }
 
   drawImageTokenFill(ctx, token, token.image, diameter);
+}
+
+function drawTileTokenFill(
+  ctx: CanvasRenderingContext2D,
+  token: RenderToken,
+  width: number,
+  height: number,
+): boolean {
+  if (
+    token.kind !== "tile" ||
+    !token.image ||
+    token.image.width <= 0 ||
+    token.image.height <= 0
+  ) {
+    return false;
+  }
+
+  // Tiles are artwork, so contain-fit them inside the token bounds. A
+  // cover-fit would crop the points of hex tiles at the bounding-box edge.
+  const scale = Math.min(
+    width / token.image.width,
+    height / token.image.height,
+  );
+  const tileWidth = token.image.width * scale;
+  const tileHeight = token.image.height * scale;
+  ctx.drawImage(
+    token.image,
+    -tileWidth / 2,
+    -tileHeight / 2,
+    tileWidth,
+    tileHeight,
+  );
+  return true;
 }
 
 function drawNoteTokenFill(
