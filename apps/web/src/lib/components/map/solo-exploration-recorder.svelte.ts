@@ -1,3 +1,4 @@
+import { systemClock, type Clock } from "@codex/runtime";
 import type { Point } from "schema";
 import {
   hexToPoint,
@@ -72,12 +73,15 @@ interface TokenTravel {
 
 export const SOLO_EXPLORATION_CONTEXT = Symbol("solo-exploration-recorder");
 
-export function publishSoloMapMove(payload: JournalCapturePayload): void {
+export function publishSoloMapMove(
+  payload: JournalCapturePayload,
+  clock: Clock = systemClock,
+): void {
   appEventBus.emit({
     type: JOURNAL_EVENTS.CAPTURE,
     domain: "journal",
     payload,
-    metadata: { timestamp: Date.now() },
+    metadata: { timestamp: clock.now() },
   });
 }
 
