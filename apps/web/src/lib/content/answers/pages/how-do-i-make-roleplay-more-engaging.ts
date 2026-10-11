@@ -14,7 +14,7 @@ export const howDoIMakeRoleplayMoreEngaging: AnswerConfigInput = {
       heading: "Short is not the same as flat",
       paragraphs: [
         "A social scene that resolves in five minutes is not automatically a failure. If the conversation changed who trusts the party, what it costs to proceed, or which future path is now open or closed, five minutes was enough. What feels flat is a scene where nothing could change except a yes or no, so the check is made and the table has nothing left to do with the result.",
-        "Before changing your whole campaign, check what \"roleplay heavy\" means at your table and whether the players want it. Some groups love extended in-character dialogue, others prefer crisp third person narration, and most have a mix. A player who says \"my knight offers safe passage for the refugees and asks what the steward needs in return\" is roleplaying. If you measure roleplay by minutes spent performing, you will miss the engagement that is already there and push a format enthusiasm alone cannot sustain.",
+        'Before changing your whole campaign, check what "roleplay heavy" means at your table and whether the players want it. Some groups love extended in-character dialogue, others prefer crisp third person narration, and most have a mix. A player who says "my knight offers safe passage for the refugees and asks what the steward needs in return" is roleplaying. If you measure roleplay by minutes spent performing, you will miss the engagement that is already there and push a format enthusiasm alone cannot sustain.',
         "The useful question is not how to make every conversation longer. It is how to make the next important conversation contain a choice the table will remember after the session.",
       ],
     },
@@ -29,11 +29,12 @@ export const howDoIMakeRoleplayMoreEngaging: AnswerConfigInput = {
     {
       kind: "list",
       heading: "A four-line NPC situation note",
-      intro: "Keep these legible at the table. They are what you return to when the players do something you did not expect:",
+      intro:
+        "Keep these legible at the table. They are what you return to when the players do something you did not expect:",
       items: [
         {
           term: "Wants",
-          text: "What this NPC wants from the PCs or from the current situation, in concrete terms. \"Leave the north road open through winter\" is playable; \"wants respect\" is not.",
+          text: 'What this NPC wants from the PCs or from the current situation, in concrete terms. "Leave the north road open through winter" is playable; "wants respect" is not.',
         },
         {
           term: "Resists",
@@ -101,7 +102,8 @@ export const howDoIMakeRoleplayMoreEngaging: AnswerConfigInput = {
     },
     {
       kind: "list",
-      heading: "Make the whole party relevant without requiring everyone to speak",
+      heading:
+        "Make the whole party relevant without requiring everyone to speak",
       intro:
         "A common worry when moving to roleplay heavy sessions is that one face character will do all the talking while everyone else waits. The fix is to distribute ways to change the negotiation, not to distribute lines of dialogue:",
       items: [
@@ -187,7 +189,8 @@ export const howDoIMakeRoleplayMoreEngaging: AnswerConfigInput = {
     {
       kind: "checklist",
       heading: "Social scene prep checklist",
-      intro: "For each NPC who will face a consequential conversation, check you have:",
+      intro:
+        "For each NPC who will face a consequential conversation, check you have:",
       items: [
         "What this NPC wants from the scene, stated as a concrete outcome.",
         "Why they cannot grant the request immediately, with a named competing pressure or risk.",
@@ -303,7 +306,8 @@ export const howDoIMakeRoleplayMoreEngaging: AnswerConfigInput = {
     title: "How do I make roleplay more engaging? | Codex Cryptica",
     description:
       "A GM framework for engaging social scenes: prepare situations not scripts, frame a question that changes the world, and let dice adjust terms rather than skip the conversation.",
-    image: "https://assets.codexcryptica.com/og/how-do-i-make-roleplay-more-engaging.jpg",
+    image:
+      "https://assets.codexcryptica.com/og/how-do-i-make-roleplay-more-engaging.jpg",
     imageAlt:
       "Adventurers negotiating with a lord at a wooden table, maps and sealed letters spread between them, warm hall light behind",
   },

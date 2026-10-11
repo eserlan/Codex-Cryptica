@@ -204,8 +204,8 @@ export const howDoIRunABardOrFaceWithoutSideliningTheParty: AnswerConfigInput =
       "how-do-you-run-factions-in-a-sandbox-campaign",
       "how-do-i-run-common-character-roles-in-a-fantasy-rpg",
       "how-do-i-run-character-roles-in-a-political-intrigue-rpg",
-    "how-do-i-make-roleplay-more-engaging",
-  ],
+      "how-do-i-make-roleplay-more-engaging",
+    ],
     discovery: {
       id: "answer-run-bard-face-without-sidelining-party",
       parentCluster: "specialist-roles",
