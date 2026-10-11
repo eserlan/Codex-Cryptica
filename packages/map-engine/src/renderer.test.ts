@@ -113,6 +113,38 @@ describe("renderMap", () => {
     expect(ctx.imageSmoothingEnabled).toBe(false);
   });
 
+  it("contains tile artwork inside a non-square token box", () => {
+    const ctx = createCtxMock();
+    const canvas = createCanvasMock(ctx);
+    const tileImage = { width: 100, height: 100 } as HTMLImageElement;
+
+    renderMap({
+      canvas,
+      image: null,
+      transform: { pan: { x: 0, y: 0 }, zoom: 1 },
+      canvasSize: { width: 800, height: 600 },
+      pins: [],
+      maskCanvas: null,
+      showFog: false,
+      tokens: [
+        {
+          id: "hex-tile",
+          kind: "tile",
+          x: 0,
+          y: 0,
+          width: 200,
+          height: 100,
+          rotation: 0,
+          label: "",
+          color: "#64748b",
+          image: tileImage,
+        },
+      ],
+    });
+
+    expect(ctx.drawImage).toHaveBeenCalledWith(tileImage, -50, -50, 100, 100);
+  });
+
   it("draws the grid above tiles/tokens, not underneath them", () => {
     // jsdom has no real canvas backend; drawGrid's offscreen pattern canvas
     // needs a working 2d context to reach ctx.createPattern.

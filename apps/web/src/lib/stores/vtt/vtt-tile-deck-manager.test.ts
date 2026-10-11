@@ -1,6 +1,28 @@
 import { describe, expect, it, vi } from "vitest";
 import { VTTTileDeckManager } from "./vtt-tile-deck-manager.svelte";
 
+/** Flat-top hex cells of radius r with the origin at a cell centre. */
+function hexFit(
+  r: number,
+  point: { x: number; y: number },
+  size: { width: number; height: number },
+) {
+  const w = 2 * r;
+  const h = Math.sqrt(3) * r;
+  const cx = point.x + size.width / 2;
+  const cy = point.y + size.height / 2;
+  // Column spacing 1.5r; rows are offset by half a cell on odd columns.
+  const col = Math.round(cx / (1.5 * r));
+  const offset = col % 2 === 0 ? 0 : h / 2;
+  const row = Math.round((cy - offset) / h);
+  return {
+    x: col * 1.5 * r - w / 2,
+    y: row * h + offset - h / 2,
+    width: w,
+    height: h,
+  };
+}
+
 function createManager(options?: {
   normalizePlacement?: (point: { x: number; y: number }) => {
     x: number;
@@ -20,6 +42,8 @@ function createManager(options?: {
     y: number;
   }) => void;
   random?: () => number;
+  /** Simulates a flat-top hex grid of the given radius. */
+  hexRadius?: number;
 }) {
   const tokens: Record<string, any> = options?.tokens ?? {};
   const addToken = vi.fn((input) => {
@@ -43,6 +67,15 @@ function createManager(options?: {
       persistDraft,
       normalizePlacement: options?.normalizePlacement
         ? (point) => options.normalizePlacement!(point)
+        : undefined,
+      fitTileToHexCell: options?.hexRadius
+        ? (point, size) => hexFit(options.hexRadius!, point, size)
+        : undefined,
+      hexCellKey: options?.hexRadius
+        ? (rect) => {
+            const fit = hexFit(options.hexRadius!, rect, rect);
+            return `${fit.x},${fit.y}`;
+          }
         : undefined,
       getActiveLayer,
       setActiveLayer,
@@ -449,5 +482,85 @@ describe("VTTTileDeckManager stocking", () => {
     expect(manager.decks[0].stocking).toBeUndefined();
     // createDeck + both stocking changes.
     expect(persistDraft).toHaveBeenCalledTimes(3);
+  });
+
+  describe("on a hex grid", () => {
+    it("fits a tile to the hex cell's own box and centres it there", () => {
+      const { manager, addToken } = createManager({ hexRadius: 100 });
+      const deck = manager.createDeck("Hexes", [
+        { name: "Tower", imagePath: "files/tower.png" },
+      ]);
+
+      manager.draw(deck!.id, 150);
+      manager.updatePendingPlacement(160, 20);
+      const pending = manager.pendingPlacement!;
+
+      expect(pending.size).toBe(200);
+      expect(pending.height).toBeCloseTo(Math.sqrt(3) * 100);
+      manager.placePending();
+      expect(addToken.mock.calls[0][0]).toMatchObject({
+        width: 200,
+        x: 200,
+      });
+      expect(addToken.mock.calls[0][0].height).toBeCloseTo(Math.sqrt(3) * 100);
+    });
+
+    it("allows hard-edge tiles in adjacent cells whose boxes overlap", () => {
+      const { manager } = createManager({ hexRadius: 100 });
+      const deck = manager.createDeck("Hexes", [
+        { name: "Tower", imagePath: "files/tower.png" },
+      ]);
+      manager.setHardEdges(deck!.id, true);
+
+      manager.draw(deck!.id);
+      manager.updatePendingPlacement(-100, -86);
+      manager.placePending();
+
+      manager.draw(deck!.id);
+      manager.updatePendingPlacement(50, -86 + 86.6);
+      expect(manager.pendingPlacement?.valid).toBe(true);
+    });
+
+    it("refuses a second hard-edge tile in an occupied cell", () => {
+      const { manager } = createManager({ hexRadius: 100 });
+      const deck = manager.createDeck("Hexes", [
+        { name: "Tower", imagePath: "files/tower.png" },
+      ]);
+      manager.setHardEdges(deck!.id, true);
+
+      manager.draw(deck!.id);
+      manager.updatePendingPlacement(-100, -86);
+      manager.placePending();
+
+      manager.draw(deck!.id);
+      manager.updatePendingPlacement(-90, -70);
+      expect(manager.pendingPlacement?.valid).toBe(false);
+      expect(manager.placePending()).toBeNull();
+    });
+
+    it("centres a stocked note using the fitted hex tile height", () => {
+      const pinTileNote = vi.fn();
+      const { manager } = createManager({
+        hexRadius: 100,
+        pinTileNote,
+        random: () => 0,
+      });
+      const deck = manager.createDeck("Hexes", [
+        { name: "Tower", imagePath: "files/tower.png" },
+      ])!;
+      manager.setStocking(deck.id, { mode: "encounter" });
+
+      manager.draw(deck.id, 150);
+      manager.updatePendingPlacement(160, 20);
+      const placement = manager.pendingPlacement!;
+      manager.placePending();
+
+      expect(pinTileNote).toHaveBeenCalledWith({
+        name: "Encounter",
+        body: "",
+        x: placement.x + placement.size / 2,
+        y: placement.y + placement.height / 2,
+      });
+    });
   });
 });
