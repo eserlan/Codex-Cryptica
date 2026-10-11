@@ -145,6 +145,14 @@ describe("PresentationTemplateManager", () => {
     expect(screen.queryByText("Other Char Layout")).toBeNull();
   });
 
+  it("describes layouts in entity-neutral terms for any category (#3960)", () => {
+    render(PresentationTemplateManager, { schema, entityType: "location" });
+    expect(
+      screen.getByText(/Apply across every entity using this template/),
+    ).toBeTruthy();
+    expect(screen.queryByText(/characters/i)).toBeNull();
+  });
+
   it("triggers export when clicking the Export button on a template row", async () => {
     render(PresentationTemplateManager, { schema });
 
