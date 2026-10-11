@@ -46,6 +46,51 @@ function roundTokenCoordinate(value: number) {
   return Math.round(value * factor) / factor;
 }
 
+function findBoundedHexTilePosition(
+  targetCentre: Point,
+  config: HexGridConfig,
+  bounds: { width: number; height: number },
+  width: number,
+  height: number,
+  fallback: Point,
+): Point {
+  const minCentreX = -bounds.width / 2 + width / 2;
+  const maxCentreX = bounds.width / 2 - width / 2;
+  const minCentreY = -bounds.height / 2 + height / 2;
+  const maxCentreY = bounds.height / 2 - height / 2;
+  const canFit = minCentreX <= maxCentreX && minCentreY <= maxCentreY;
+  const searchCentre = canFit
+    ? {
+        x: Math.min(Math.max(targetCentre.x, minCentreX), maxCentreX),
+        y: Math.min(Math.max(targetCentre.y, minCentreY), maxCentreY),
+      }
+    : targetCentre;
+  const searchHex = pointToHex(searchCentre, config);
+  const validCells = getHexRange(searchHex, 3)
+    .map((hex) => ({ centre: hexToPoint(hex, config) }))
+    .filter(
+      ({ centre }) =>
+        centre.x >= minCentreX &&
+        centre.x <= maxCentreX &&
+        centre.y >= minCentreY &&
+        centre.y <= maxCentreY,
+    )
+    .sort(
+      (a, b) =>
+        Math.hypot(a.centre.x - targetCentre.x, a.centre.y - targetCentre.y) -
+        Math.hypot(b.centre.x - targetCentre.x, b.centre.y - targetCentre.y),
+    );
+
+  if (validCells.length === 0) {
+    return clampPointToBounds(fallback, bounds, { width, height });
+  }
+
+  return {
+    x: validCells[0].centre.x - width / 2,
+    y: validCells[0].centre.y - height / 2,
+  };
+}
+
 export { normalizeToken } from "map-engine";
 
 export interface VTTTokenManagerDependencies {
@@ -355,46 +400,16 @@ export class VTTTokenManager {
     const topLeft = { x: centre.x - width / 2, y: centre.y - height / 2 };
     let bounded = topLeft;
     if (mapStore.activeMap) {
-      const bounds = mapStore.activeMap.dimensions;
-      const minCentreX = -bounds.width / 2 + width / 2;
-      const maxCentreX = bounds.width / 2 - width / 2;
-      const minCentreY = -bounds.height / 2 + height / 2;
-      const maxCentreY = bounds.height / 2 - height / 2;
-
       // Clamping the box directly moves it off-grid. Near an image edge, pick
       // the closest neighbouring whole cell that fits inside the map instead.
-      const validCells = getHexRange(targetHex, 3)
-        .map((hex) => ({ hex, centre: hexToPoint(hex, config) }))
-        .filter(
-          ({ centre: candidate }) =>
-            candidate.x >= minCentreX &&
-            candidate.x <= maxCentreX &&
-            candidate.y >= minCentreY &&
-            candidate.y <= maxCentreY,
-        )
-        .sort(
-          (a, b) =>
-            Math.hypot(
-              a.centre.x - targetCentre.x,
-              a.centre.y - targetCentre.y,
-            ) -
-            Math.hypot(
-              b.centre.x - targetCentre.x,
-              b.centre.y - targetCentre.y,
-            ),
-        );
-
-      if (validCells.length > 0) {
-        const fittedCentre = validCells[0].centre;
-        bounded = {
-          x: fittedCentre.x - width / 2,
-          y: fittedCentre.y - height / 2,
-        };
-      } else {
-        // If the map is smaller than one cell, preserve the existing bounds
-        // behaviour; no whole-cell placement can fit in that image.
-        bounded = clampPointToBounds(topLeft, bounds, { width, height });
-      }
+      bounded = findBoundedHexTilePosition(
+        targetCentre,
+        config,
+        mapStore.activeMap.dimensions,
+        width,
+        height,
+        topLeft,
+      );
     }
     const rounded = {
       x: roundTokenCoordinate(bounded.x),

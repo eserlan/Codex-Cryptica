@@ -82,6 +82,44 @@ describe("VTTTokenManager.addToken", () => {
     expect(tile.y + tile.height).toBeLessThanOrEqual(500);
   });
 
+  it("keeps an off-map hex tile aligned when the pointer is far beyond the edge", () => {
+    const { manager } = createManager({
+      getMapStore: () => ({
+        activeMap: { dimensions: { width: 1000, height: 1000 } },
+        showGrid: true,
+        gridType: "hex-flat",
+        gridSize: 50,
+        gridOffsetX: 0,
+        gridOffsetY: 0,
+      }),
+    });
+
+    const tile = manager.addToken(
+      {
+        name: "Off-map room",
+        x: 10_000,
+        y: 10_000,
+        width: 100,
+        height: Math.sqrt(3) * 50,
+        kind: "tile",
+      },
+      true,
+    );
+
+    const centre = { x: tile.x + tile.width / 2, y: tile.y + tile.height / 2 };
+    const config = {
+      orientation: "flat" as const,
+      size: 50,
+      offsetX: 0,
+      offsetY: 0,
+    };
+    const snappedCentre = hexToPoint(pointToHex(centre, config), config);
+    expect(centre.x).toBeCloseTo(snappedCentre.x, 2);
+    expect(centre.y).toBeCloseTo(snappedCentre.y, 2);
+    expect(tile.x + tile.width).toBeLessThanOrEqual(500);
+    expect(tile.y + tile.height).toBeLessThanOrEqual(500);
+  });
+
   it("places a note hidden from players and out of the initiative tracker", () => {
     const { manager, addTokenToInitiativeState } = createManager();
 
