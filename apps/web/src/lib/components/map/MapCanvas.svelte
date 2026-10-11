@@ -70,6 +70,7 @@
       x: number;
       y: number;
       size: number;
+      height: number;
       valid: boolean;
       tile: { name: string };
       image: HTMLImageElement | null;
@@ -193,6 +194,7 @@
           y: tilePlacementPreview.y,
         });
         const size = tilePlacementPreview.size * mapStore.viewport.zoom;
+        const height = tilePlacementPreview.height * mapStore.viewport.zoom;
         ctx.save();
         ctx.globalAlpha = 0.65;
         ctx.setLineDash([8, 4]);
@@ -209,15 +211,15 @@
             topLeft.x,
             topLeft.y,
             size,
-            size,
+            height,
           );
         } else {
           // No image decoded yet — show the valid/invalid tint as a
           // placeholder. Once the image is available, let it show through
           // clearly rather than tinting over it.
-          ctx.fillRect(topLeft.x, topLeft.y, size, size);
+          ctx.fillRect(topLeft.x, topLeft.y, size, height);
         }
-        ctx.strokeRect(topLeft.x, topLeft.y, size, size);
+        ctx.strokeRect(topLeft.x, topLeft.y, size, height);
         ctx.setLineDash([]);
         ctx.fillStyle = ctx.strokeStyle;
         ctx.font = "600 12px sans-serif";
