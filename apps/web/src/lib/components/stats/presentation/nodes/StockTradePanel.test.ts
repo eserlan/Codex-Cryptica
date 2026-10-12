@@ -289,6 +289,51 @@ describe("StockTradePanel confirmation", () => {
     });
   });
 
+  it("shows and locks the original price when the stock line price changed", async () => {
+    const changedPrice = gp(9);
+    const originalRow = field.rows![0] as Record<string, unknown>;
+    const originalStock = originalRow.stock as Record<string, unknown>;
+    const interruptedField: StatSheetField = {
+      ...field,
+      rows: [
+        {
+          ...originalRow,
+          stock: { ...originalStock, price: changedPrice },
+        },
+      ],
+      tradeLog: [
+        {
+          tradeId: "trade-pending",
+          kind: "purchase",
+          rowId: "rope",
+          itemName: "Rope",
+          quantity: 2,
+          total: gp(4),
+          accounting: "wallet",
+          counterpartyId: "hero",
+          status: "pending",
+          at: "2026-10-12T12:00:00.000Z",
+        },
+      ],
+    };
+    const { execute } = setup({
+      field: interruptedField,
+      row: interruptedField.rows![0] as Record<string, any>,
+    });
+
+    expect((screen.getByTestId("trade-price") as HTMLInputElement).value).toBe(
+      "2",
+    );
+    expect(
+      (screen.getByTestId("trade-price") as HTMLInputElement).disabled,
+    ).toBe(true);
+    expect(preview()).toContain("Finishing a trade that was already started");
+
+    await fireEvent.click(screen.getByTestId("trade-confirm"));
+    await waitFor(() => expect(execute).toHaveBeenCalledTimes(1));
+    expect(execute.mock.calls[0][0].command.unitPrice).toEqual(gp(2));
+  });
+
   it("blocks a recovery attempt after its accounting terms are changed", async () => {
     const interruptedField: StatSheetField = {
       ...field,

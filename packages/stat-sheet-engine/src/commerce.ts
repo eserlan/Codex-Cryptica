@@ -54,6 +54,7 @@ export type TradeErrorCode =
   | "price-required"
   | "invalid-price"
   | "amount-too-large"
+  | "too-many-pending-trades"
   | "wallet-needs-counterparty"
   | "wallet-unavailable"
   | "wallet-precision"
@@ -123,16 +124,43 @@ function checkCommandShape(command: TradeCommand): TradeRejection | null {
 }
 
 /** A logged trade id means "already started"; a different trade must not reuse it. */
+function matchesLoggedTerms(
+  existing: StockTradeRecord,
+  command: TradeCommand,
+): boolean {
+  return (
+    existing.kind === command.kind &&
+    existing.rowId === command.rowId &&
+    existing.quantity === command.quantity &&
+    existing.accounting === command.accounting &&
+    existing.counterpartyId === command.counterpartyId
+  );
+}
+
+function matchesLoggedPrice(
+  existing: StockTradeRecord,
+  command: TradeCommand,
+  rows: readonly StockRow[],
+): boolean {
+  const row = rows.find((candidate) => candidate[ROW_ID_KEY] === command.rowId);
+  const price = command.unitPrice ?? (row && stockOf(row).price);
+  const requestedTotal = price && multiplyMoney(price, command.quantity);
+  return (
+    !!requestedTotal &&
+    requestedTotal.units === existing.total.units &&
+    requestedTotal.currency === existing.total.currency &&
+    requestedTotal.precision === existing.total.precision
+  );
+}
+
 function checkLogged(
   existing: StockTradeRecord,
   command: TradeCommand,
+  rows: readonly StockRow[],
 ): DuplicateTrade | TradeRejection {
   if (
-    existing.kind !== command.kind ||
-    existing.rowId !== command.rowId ||
-    existing.quantity !== command.quantity ||
-    existing.accounting !== command.accounting ||
-    existing.counterpartyId !== command.counterpartyId
+    !matchesLoggedTerms(existing, command) ||
+    !matchesLoggedPrice(existing, command, rows)
   ) {
     return reject(
       "invalid-trade",
@@ -140,6 +168,15 @@ function checkLogged(
     );
   }
   return { ok: true, duplicate: true, record: existing };
+}
+
+function hasTradeLogCapacity(
+  log: readonly StockTradeRecord[] | undefined,
+): boolean {
+  return (
+    (log?.length ?? 0) < TRADE_LOG_LIMIT ||
+    log?.some((entry) => entry.status === "complete") === true
+  );
 }
 
 const SALE_BLOCKED: Record<string, string> = {
@@ -239,7 +276,14 @@ export function planTrade(
   const existing = input.tradeLog?.find(
     (entry) => entry.tradeId === command.tradeId,
   );
-  if (existing) return checkLogged(existing, command);
+  if (existing) return checkLogged(existing, command, input.rows);
+
+  if (!hasTradeLogCapacity(input.tradeLog)) {
+    return reject(
+      "too-many-pending-trades",
+      "Finish one of this shop's pending trades before recording another.",
+    );
+  }
 
   const { kind, rowId, quantity } = command;
   if (!Number.isSafeInteger(quantity) || quantity < 1) {

@@ -48,6 +48,15 @@
   // svelte-ignore state_referenced_locally
   const linePrice = row.stock?.price as
     { units: number; currency: string; precision: number } | undefined;
+  const pendingUnitsPerItem = pendingTrade
+    ? pendingTrade.total.units / pendingTrade.quantity
+    : undefined;
+  const pendingUnitPrice =
+    pendingTrade &&
+    pendingUnitsPerItem !== undefined &&
+    Number.isSafeInteger(pendingUnitsPerItem)
+      ? { ...pendingTrade.total, units: pendingUnitsPerItem }
+      : undefined;
 
   // The form fields start from the line as it was when the panel opened and
   // are then the operator's own edits, so they are deliberately local copies.
@@ -55,7 +64,13 @@
   let quantityText = $state<string | number | null>(
     pendingTrade?.quantity ?? 1,
   );
-  let priceText = $state(linePrice ? formatMoney(linePrice, false) : "");
+  let priceText = $state(
+    pendingUnitPrice
+      ? formatMoney(pendingUnitPrice, false)
+      : linePrice
+        ? formatMoney(linePrice, false)
+        : "",
+  );
   let unit = $state(
     pendingTrade?.total.currency ?? linePrice?.currency ?? "gp",
   );
@@ -243,6 +258,7 @@
           id={`trade-price-${tradeId}`}
           type="text"
           inputmode="decimal"
+          disabled={!!pendingTrade}
           class="w-16 rounded border border-theme-border/60 bg-theme-bg/80 px-1 py-0.5 text-center font-mono text-xs text-theme-text"
           bind:value={priceText}
           data-testid="trade-price"
@@ -250,6 +266,7 @@
         <input
           type="text"
           aria-label="Price unit"
+          disabled={!!pendingTrade}
           class="w-12 rounded border border-theme-border/60 bg-theme-bg/80 px-1 py-0.5 text-center text-xs text-theme-text"
           bind:value={unit}
           data-testid="trade-unit"

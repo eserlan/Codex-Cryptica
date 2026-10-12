@@ -307,6 +307,61 @@ describe("planTrade duplicate submissions", () => {
     ).toMatchObject({ ok: false, code: "invalid-trade" });
   });
 
+  it("refuses a retry with a different price", () => {
+    const pending: StockTradeRecord = {
+      ...done,
+      accounting: "wallet",
+      counterpartyId: "hero",
+      status: "pending",
+    };
+
+    expect(
+      plan(
+        {
+          accounting: "wallet",
+          counterpartyId: "hero",
+          unitPrice: gp(3),
+        },
+        { tradeLog: [pending] },
+      ),
+    ).toMatchObject({ ok: false, code: "invalid-trade" });
+  });
+
+  it("refuses a retry when the supplied total uses another currency or precision", () => {
+    const pending: StockTradeRecord = {
+      ...done,
+      accounting: "wallet",
+      counterpartyId: "hero",
+      status: "pending",
+    };
+
+    for (const unitPrice of [
+      { units: 2, currency: "sp", precision: 0 },
+      { units: 20, currency: "gp", precision: 1 },
+    ]) {
+      expect(
+        plan(
+          { accounting: "wallet", counterpartyId: "hero", unitPrice },
+          { tradeLog: [pending] },
+        ),
+      ).toMatchObject({ ok: false, code: "invalid-trade" });
+    }
+  });
+
+  it("keeps every pending trade recoverable when the log is full", () => {
+    const pending = Array.from({ length: TRADE_LOG_LIMIT }, (_, index) => ({
+      ...done,
+      tradeId: `pending-${index}`,
+      status: "pending" as const,
+    }));
+
+    expect(plan({}, { tradeLog: pending })).toMatchObject({
+      ok: false,
+      code: "too-many-pending-trades",
+    });
+    expect(pending).toHaveLength(TRADE_LOG_LIMIT);
+  });
+
   it("rejects a missing trade reference", () => {
     expect(plan({ tradeId: "" })).toMatchObject({
       ok: false,
