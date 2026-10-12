@@ -184,6 +184,7 @@ export const howDoIKeepPlayersEngagedDuringOtherPlayersTurnsInCombat: AnswerConf
       "how-do-i-prepare-a-dnd-session",
       "what-can-i-do-on-my-turn-in-dnd-combat",
       "how-do-i-read-a-dnd-character-sheet-as-a-beginner",
+      "how-do-i-combine-multiple-enemies-into-one-squad-in-an-rpg",
     ],
     discovery: {
       id: "answer-player-engagement-combat-turns",

@@ -6,6 +6,7 @@ import { howDoFantasyCitiesDefendAgainstFlyingCreaturesAndTeleportation } from "
 import { howDoIBalanceRpgCombatEncountersWithoutATpk } from "./how-do-i-balance-rpg-combat-encounters-without-a-tpk";
 import { howDoIBuildABelievableConstitutionalCrisisOrCoup } from "./how-do-i-build-a-believable-constitutional-crisis-or-coup";
 import { howDoIBuildABelievableEconomyForAFantasyWorld } from "./how-do-i-build-a-believable-economy-for-a-fantasy-world";
+import { howDoICombineMultipleEnemiesIntoOneSquadInAnRpg } from "./how-do-i-combine-multiple-enemies-into-one-squad-in-an-rpg";
 import { howDoICreateInterestingIslandsAndPortsForAPirateCampaign } from "./how-do-i-create-interesting-islands-and-ports-for-a-pirate-campaign";
 import { howDoIDecideWhatASettlementProducesImportsAndExports } from "./how-do-i-decide-what-a-settlement-produces-imports-and-exports";
 import { howDoIExpandASimpleRpgCampaignIdea } from "./how-do-i-expand-a-simple-rpg-campaign-idea";
@@ -168,6 +169,7 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     howDoIBalanceRpgCombatEncountersWithoutATpk,
     howDoIBuildABelievableConstitutionalCrisisOrCoup,
     howDoIBuildABelievableEconomyForAFantasyWorld,
+    howDoICombineMultipleEnemiesIntoOneSquadInAnRpg,
     howDoICreateInterestingIslandsAndPortsForAPirateCampaign,
     howDoIDecideWhatASettlementProducesImportsAndExports,
     howDoIExpandASimpleRpgCampaignIdea,
