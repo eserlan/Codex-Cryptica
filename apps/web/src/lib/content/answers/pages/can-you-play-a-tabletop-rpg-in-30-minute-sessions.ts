@@ -203,6 +203,7 @@ export const canYouPlayATabletopRpgIn30MinuteSessions: AnswerConfigInput = {
     "how-do-you-run-a-chase-in-a-tabletop-rpg",
     "what-rpg-system-is-good-for-solo-play",
     "how-long-should-a-ttrpg-session-be",
+    "what-are-the-pros-and-cons-of-becoming-a-dungeon-master",
   ],
   discovery: {
     id: "answer-short-session",
