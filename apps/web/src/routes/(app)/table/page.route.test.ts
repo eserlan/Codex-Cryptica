@@ -163,6 +163,9 @@ describe("/table page", () => {
       "vault-audit-panel",
     );
     expect(screen.getByText("Vault Audit")).toBeTruthy();
+    expect(
+      screen.getByText("Missing summary, labels, or connections"),
+    ).toBeTruthy();
   });
 
   it("closes VaultAuditPanel when the audit query is removed", async () => {

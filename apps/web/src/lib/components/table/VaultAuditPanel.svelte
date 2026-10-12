@@ -168,7 +168,9 @@
         </span>
       </div>
       <span class="text-xs font-semibold text-theme-text">All flagged</span>
-      <span class="text-nano text-theme-muted/70">Any missing field</span>
+      <span class="text-nano text-theme-muted/70"
+        >Missing summary, labels, or connections</span
+      >
     </button>
   </div>
 
