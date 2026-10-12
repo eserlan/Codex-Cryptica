@@ -6,6 +6,8 @@ import {
   type ViewPresetState,
 } from "../view-presets";
 import { ViewPresetsStore } from "../view-presets.svelte";
+import { filterEntities } from "$lib/components/explorer/entityListFiltering";
+import type { Entity } from "schema";
 
 describe("view-presets serialization & parsing", () => {
   const fakeClock = { now: () => 1234567890 };
@@ -212,6 +214,102 @@ describe("ViewPresetsStore", () => {
     expect(reloaded?.state.columnFilters?.connectionsMode).toBe(
       "has_connections",
     );
+  });
+
+  it("persists and applies image filters, while legacy presets keep the default", async () => {
+    const persisted = new Map<string, unknown>();
+    mockDb.put.mockImplementation(async (_storeName, value, key) => {
+      persisted.set(String(key), value);
+    });
+    mockDb.get.mockImplementation(
+      async (_storeName, key) => persisted.get(String(key)) ?? null,
+    );
+
+    const modes = ["has_image", "missing_image"] as const;
+    for (const imageMode of modes) {
+      await store.savePreset("v1", `${imageMode} view`, {
+        activeLabels: [],
+        labelFilterMode: "OR",
+        activeCategories: [],
+        columnFilters: { imageMode },
+      });
+    }
+
+    const saved = persisted.get("viewPresets:v1") as Array<{
+      id: string;
+      name: string;
+      createdAt: number;
+      updatedAt: number;
+      state: ViewPresetState;
+    }>;
+    saved.push({
+      id: "legacy-view",
+      name: "Legacy view",
+      createdAt: 1000,
+      updatedAt: 1000,
+      state: {
+        activeLabels: [],
+        labelFilterMode: "OR",
+        activeCategories: [],
+        columnFilters: { connectionsMode: "all" },
+      },
+    });
+
+    const reloadedStore = new ViewPresetsStore({
+      clock: mockClock,
+      idGenerator: mockIdGenerator,
+      getDb: vi.fn().mockResolvedValue(mockDb) as any,
+    });
+    await reloadedStore.loadPresets("v1");
+
+    for (const imageMode of modes) {
+      const preset = reloadedStore.presets.find(
+        (candidate) => candidate.name === `${imageMode} view`,
+      );
+      expect(preset).toBeDefined();
+      const applied = reloadedStore.applyPreset(preset!.id);
+      expect(applied?.state.columnFilters?.imageMode).toBe(imageMode);
+    }
+
+    const legacy = reloadedStore.applyPreset("legacy-view");
+    expect(legacy?.state.columnFilters?.imageMode).toBeUndefined();
+    const legacyResults = filterEntities(
+      [
+        {
+          id: "with-image",
+          type: "character",
+          title: "With",
+          image: "portrait.png",
+          status: "active",
+          labels: [],
+          aliases: [],
+          connections: [],
+          content: "",
+        },
+        {
+          id: "without-image",
+          type: "character",
+          title: "Without",
+          status: "active",
+          labels: [],
+          aliases: [],
+          connections: [],
+          content: "",
+        },
+      ] as Entity[],
+      {
+        searchQuery: "",
+        typeFilters: new Set(),
+        labelFilters: new Set(),
+        allowedTypes: null,
+        showDraftsOnly: false,
+        columnFilters: legacy?.state.columnFilters,
+      },
+    );
+    expect(legacyResults.map((entity) => entity.id)).toEqual([
+      "with-image",
+      "without-image",
+    ]);
   });
 
   it("resets activePresetId when switching between different vaults", async () => {
