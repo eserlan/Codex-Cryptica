@@ -279,6 +279,23 @@ describe("duplicates and retries", () => {
     expect(rope(h).stock.quantity).toBe(1);
     expect(h.captures).toHaveLength(2);
   });
+
+  it("serialises overlapping trades with different ids against fresh stock", async () => {
+    const h = harness();
+    const [first, second] = await Promise.all([
+      h.service.execute(request({ tradeId: "trade-a" })),
+      h.service.execute(request({ tradeId: "trade-b" })),
+    ]);
+
+    expect(first.status).toBe("done");
+    expect(second.status).toBe("done");
+    expect(rope(h).stock.quantity).toBe(1);
+    expect(log(h)?.map(({ tradeId }) => tradeId)).toEqual([
+      "trade-a",
+      "trade-b",
+    ]);
+    expect(h.captures).toHaveLength(2);
+  });
 });
 
 describe("persistence failure", () => {

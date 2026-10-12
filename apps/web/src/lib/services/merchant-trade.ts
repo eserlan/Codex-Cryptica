@@ -139,6 +139,8 @@ const RECOVERY_MARK =
 export class MerchantTradeService {
   /** Trade ids being applied right now, so a double click runs once. */
   private readonly inFlight = new Set<string>();
+  /** Serialises distinct trades so each plan reads the previous trade's save. */
+  private operationQueue: Promise<void> = Promise.resolve();
 
   constructor(private readonly deps: MerchantTradeDeps) {}
 
@@ -151,8 +153,13 @@ export class MerchantTradeService {
       };
     }
     this.inFlight.add(tradeId);
+    const operation = this.operationQueue.then(() => this.run(request));
+    this.operationQueue = operation.then(
+      () => undefined,
+      () => undefined,
+    );
     try {
-      return await this.run(request);
+      return await operation;
     } finally {
       this.inFlight.delete(tradeId);
     }
