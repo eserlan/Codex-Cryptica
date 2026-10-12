@@ -107,6 +107,16 @@ A merchant sheet reaches players only through one projection. Choosing the Brows
 - **Preview as player** renders `projectCatalogueFields` with the same title lookup, so it cannot drift from what is sent. Players get a read-only table with no Trade or sharing controls, and the host has no message that lets a guest change an entity.
 - **Capability seam.** The `stock-table` capability's `project` returns the sheet unchanged for `"gm"` and the player catalogue for any other audience.
 
+## Suggested stock (#3965)
+
+`packages/stat-sheet-engine/src/stock-suggestions.ts` proposes opening stock for a shop. It is pure, offline and deterministic (a seed re-rolls it), so manual shops and generators stay independent.
+
+- `deriveShopContext` reads the shop's text and its connected places' text into a genre, wealth and focus/plentiful/scarce themes. `proposeStock` turns that into candidate lines with quantity, price, availability and a plain reason; scarce goods are few and dear, plentiful goods cheaper.
+- `reviewProposal` marks lines the shop already stocks (by name or linked Item title) and offers an Item link only when an Item with that exact title exists. `applyAcceptedLines` appends accepted lines after the existing rows, which are returned untouched, and skips any already present.
+- Nothing is saved or linked without the GM's choice. Suggested prices are labelled as suggestions in the private line note and are never presented as official.
+- It reads text, not the Business (#3627) or Settlement Economy (#3559) generators, which are not built yet. When they exist they should feed `ShopContextInput` (or the same themes) rather than define another stock model. See also #3509.
+- Not done here: rules-profile reference catalogues (for example ToV) and AI-written stock.
+
 ## Compatibility promises
 
 - Old `statSheet` frontmatter, vault templates, presentation templates and marketplace packages load unchanged. `packages/stat-sheet-engine/src/__fixtures__/legacy-sheets.ts` holds pre-#3960 data, and `entity-sheet.test.ts` asserts it parses and projects without being rewritten.

@@ -20,6 +20,7 @@
   import { vault } from "$lib/stores/vault.svelte";
   import StockTradePanel from "./StockTradePanel.svelte";
   import ShopSharingPanel from "./ShopSharingPanel.svelte";
+  import StockSuggestionPanel from "./StockSuggestionPanel.svelte";
 
   const linkableItemTypes = ["item", "weapon", "gear", "artifact", "object"];
 
@@ -494,6 +495,7 @@
 
   {#if tradingEnabled}
     <ShopSharingPanel {field} {context} />
+    <StockSuggestionPanel {field} {context} />
   {/if}
 
   {#if showItemPicker && linkEnabled && !context.readOnly}

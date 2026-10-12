@@ -92,6 +92,18 @@ Untick the box to stop sharing. In a live session the catalogue disappears from 
 
 Linked Items and the shop's own page follow the normal rules for what players can see. Sharing a catalogue does not make an Item or the shop's description visible, and hiding an Item from players is separate from the catalogue.
 
+## Suggest stock
+
+A new shop does not have to start empty. On a shop's Stats tab, choose **Suggest stock** to get a first set of goods. It works offline and needs no AI.
+
+- It reads the shop's own text and the places it is connected to, such as a settlement. Goods the place makes or sells are cheaper and plentiful. Goods it is short of are few and cost more.
+- Pick a setting (fantasy, sci-fi or generic), or leave it on **Read from the shop**. **Try another set** gives a different spread.
+- Each line shows why it is there. Untick lines you do not want, and change the quantity or price before you add them.
+- Lines the shop already stocks are marked and left alone. Your existing prices and quantities are never changed, and running it again does not add a line twice.
+- If you already have an Item with the same name, you can choose to link it. Nothing is linked or created for you.
+
+Suggested prices are rough starting points, not official prices. Each added line is marked as a suggestion in your private line note.
+
 ## Make your own shop template
 
 Use **Edit Layout** to add fields to your shop, then save the layout from **Templates**. Saved layouts can be shared like any other template. Saved templates keep the field layout, not your stock.
