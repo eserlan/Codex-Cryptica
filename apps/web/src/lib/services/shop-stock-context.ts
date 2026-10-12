@@ -29,7 +29,7 @@ function sheetText(fields: readonly StatSheetField[]): string {
         SHOP_TEXT_FIELDS.has(field.id) &&
         (field.type === "text" || field.type === "longtext"),
     )
-    .map((field) => (typeof field.value === "string" ? field.value : ""))
+    .map((field) => clip(typeof field.value === "string" ? field.value : ""))
     .join("\n");
 }
 
