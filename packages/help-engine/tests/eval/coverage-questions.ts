@@ -86,6 +86,8 @@ export const COVERAGE_QUESTIONS = [
     "holdout",
   ],
   ["family-tree", "Can a character become their own ancestor?", "holdout"],
+  ["guided-setup", "How do I restart guided setup?", "tune"],
+  ["guided-setup", "Does guided setup change anything in my vault?", "holdout"],
   ["guided-mode", "How do I show the Full Toolbox?", "tune"],
   ["guided-mode", "Does switching Guided mode delete my entities?", "tune"],
   [
@@ -214,6 +216,7 @@ export const COVERAGE_HELP: Record<string, string[]> = {
   chronology: ["chronology"],
   "family-tree": ["family-tree"],
   "guided-mode": ["guided-mode"],
+  "guided-setup": ["guided-setup"],
   "session-prep": ["session-prep"],
   publishing: ["publishing"],
   "theme-settings": ["themes"],

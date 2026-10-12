@@ -5,6 +5,7 @@ import { entityTemplates } from "./entity-templates";
 import { chronology } from "./chronology";
 import { familyTree } from "./family-tree";
 import { guidedMode } from "./guided-mode";
+import { guidedSetup } from "./guided-setup";
 import { sessionPrep } from "./session-prep";
 import { publishing } from "./publishing";
 import { loreOracle } from "./lore-oracle";
@@ -49,6 +50,7 @@ export const FEATURE_REGISTRY: readonly FeatureEntry[] = [
   chronology,
   familyTree,
   guidedMode,
+  guidedSetup,
   sessionPrep,
   publishing,
   loreOracle,

@@ -363,3 +363,42 @@ test.describe("Demo graph zoom (#1296)", () => {
     );
   });
 });
+
+test.describe("Mobile first-run guidance interaction (spec 175)", () => {
+  test("phone invitation as bottom sheet; graph coach marks hidden while invitation active, shown after Explore", async ({
+    page,
+  }) => {
+    await page.setViewportSize(MOBILE_VIEWPORT);
+    await page.addInitScript(() => {
+      try {
+        localStorage.setItem("codex_skip_landing", "true");
+        localStorage.setItem("codex_guided_mode_active", "false");
+        localStorage.removeItem("codex_mobile_graph_coach_marks_seen");
+        localStorage.removeItem("codex_goal_invitation");
+      } catch {
+        /* ignore */
+      }
+    });
+
+    await page.goto("/");
+    await waitForVaultReady(page);
+    await dismissFrontPage(page);
+
+    // Goal invitation is displayed on mobile
+    const invitation = page.getByTestId("goal-invitation");
+    await expect(invitation).toBeVisible({ timeout: 10000 });
+
+    // Coach marks should not be visible while firstRunGuidanceActive is true
+    await expect(page.getByTestId("mobile-coach-mark")).not.toBeVisible();
+
+    // Choose explore and dismiss
+    await page.getByTestId("goal-invitation-explore").click();
+    await page.getByTestId("goal-invitation-no-thanks").click();
+    await expect(invitation).not.toBeVisible();
+
+    // Coach marks should now appear on the mobile graph
+    await expect(page.getByTestId("mobile-coach-mark")).toBeVisible({
+      timeout: 10000,
+    });
+  });
+});

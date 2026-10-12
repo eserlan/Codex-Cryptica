@@ -42,6 +42,7 @@ export const KNOWN_HELP_IDS = [
   "chronology",
   "family-tree",
   "guided-mode",
+  "guided-setup",
   "session-prep",
   "publishing",
   "oracle-guide",

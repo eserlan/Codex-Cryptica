@@ -43,10 +43,18 @@ const TARGET_WAIT_MS = 1000;
 export class HelpActionRunner {
   constructor(private readonly deps: HelpActionRunnerDeps) {}
 
-  /** Returns true when at least the first step ran. */
-  async run(action: GuidanceAction): Promise<boolean> {
+  /**
+   * Returns true when at least the first step ran. `extraAvailable` lists
+   * controls the caller vouches for in this call only (onboarding journeys
+   * pass the shell controls); it never changes the screen description.
+   */
+  async run(
+    action: GuidanceAction,
+    options: { extraAvailable?: readonly string[] } = {},
+  ): Promise<boolean> {
     const valid = validateAction(action, this.deps.context(), {
       helpIds: this.deps.helpIds(),
+      extraAvailable: options.extraAvailable,
     });
     if (!valid) return false;
 

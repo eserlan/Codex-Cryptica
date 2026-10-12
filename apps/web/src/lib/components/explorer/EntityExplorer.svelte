@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { recordEntryFound } from "$lib/app/onboarding/journey/journey-milestones-runtime";
   import { vault } from "$lib/stores/vault.svelte";
   import EntityList from "./EntityList.svelte";
 
@@ -18,11 +19,14 @@
         layoutUIStore.clearEntityExplorerWorkspaceFocus();
       } else {
         layoutUIStore.openEntityExplorerWorkspace(entity.id);
+        recordEntryFound();
       }
       return;
     }
 
     modalUIStore.openZenMode(entity.id);
+    // Opening an entry from the Explorer counts as finding it again (spec 175).
+    recordEntryFound();
   }
 
   function onDragStart(event: DragEvent, entityId: string) {

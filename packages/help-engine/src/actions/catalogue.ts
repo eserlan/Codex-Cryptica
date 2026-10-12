@@ -136,6 +136,14 @@ export const SOLO_CONTROL_IDS = [
 /** Session journal controls: the Capture menu in the open journal panel (spec 174, US4). */
 export const JOURNAL_CONTROL_IDS = ["journal-capture-menu"] as const;
 
+/**
+ * App-chrome controls only onboarding journeys may point at (spec 175). They
+ * are never advertised in a screen description, so Cif and the Worker cannot
+ * propose them: a journey vouches for them per call with `extraAvailable`.
+ * Each one is placed on every responsive variant of its control.
+ */
+export const SHELL_CONTROL_IDS = ["create-entry", "open-search"] as const;
+
 /** Controls `highlight` may point at (`data-help-target` values). */
 export const CONTROL_IDS = [
   "add-connection-button",
@@ -145,6 +153,7 @@ export const CONTROL_IDS = [
   ...VTT_CONTROL_IDS,
   ...SOLO_CONTROL_IDS,
   ...JOURNAL_CONTROL_IDS,
+  ...SHELL_CONTROL_IDS,
 ] as const;
 export type ControlId = (typeof CONTROL_IDS)[number];
 
@@ -200,9 +209,10 @@ export interface ControlSpec {
   /**
    * Screen area the control lives in. `solo` controls appear on every screen
    * while a solo session runs (or while the journal panel is open), so they are
-   * not tied to one area.
+   * not tied to one area. `shell` controls are app chrome (the header and
+   * the Create buttons), on screen everywhere.
    */
-  area: "entity-detail" | "map" | "solo";
+  area: "entity-detail" | "map" | "solo" | "shell";
   /**
    * A flag the screen description must carry for the control to exist. The
    * Add button, for example, is absent in a read-only guest vault, so the
@@ -269,6 +279,10 @@ export const CONTROL_CATALOGUE: Record<ControlId, ControlSpec> = {
     area: "solo",
     requiresFlag: "session-journal-open",
   },
+  // App chrome for onboarding journeys. Create always opens the intent menu,
+  // whatever the flags are, so none of these needs a flag.
+  "create-entry": { area: "shell" },
+  "open-search": { area: "shell" },
 };
 
 /**
@@ -285,7 +299,10 @@ export const GENERATOR_REQUIRED_FLAG: HelpFlag = "generators";
  */
 export const AVAILABLE_ACTION_IDS = Array.from(
   new Set<string>([
-    ...CONTROL_IDS,
+    // Shell controls are journey-only and never reach the Worker.
+    ...CONTROL_IDS.filter(
+      (id) => !(SHELL_CONTROL_IDS as readonly string[]).includes(id),
+    ),
     ...PANEL_IDS,
     ...DESTINATION_IDS,
     ...GENERATOR_IDS,

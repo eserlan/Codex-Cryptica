@@ -74,6 +74,36 @@ async function assertTooltipWithinViewport(page: Page) {
     .toBeLessThanOrEqual(0);
 }
 
+/**
+ * A new user is offered the goal invitation (spec 175), not the tour. The
+ * tour is one tap away: "Explore on my own", then "Take the short tour".
+ */
+async function startTourFromInvitation(
+  page: Page,
+  { emptyVault = true }: { emptyVault?: boolean } = {},
+) {
+  await expect(page.getByTestId("goal-invitation")).toBeVisible();
+  // The graph's empty state mounts a moment after the invitation. The tour
+  // skips steps whose target is not on screen yet, so wait for it first.
+  // A converted demo has entries, so it never shows that empty state.
+  if (emptyVault) {
+    await expect(page.getByTestId("graph-empty-state-cta")).toBeVisible();
+  }
+  // The dev-only Debug Log overlay can sit on top of the invitation, so the
+  // clicks are dispatched directly (the same convention as mobile-map-controls).
+  await page.getByTestId("goal-invitation-explore").dispatchEvent("click");
+  await page.getByTestId("goal-invitation-tour").dispatchEvent("click");
+  await waitForTourActive(page);
+}
+
+async function expectNoAutoTour(page: Page) {
+  await expect(page.getByTestId("goal-invitation")).toBeVisible();
+  const active = await page.evaluate(
+    () => (window as any).helpStore?.activeTour != null,
+  );
+  expect(active).toBe(false);
+}
+
 test.describe("First-run onboarding tour — walkthrough", () => {
   test.beforeEach(async ({ page }) => {
     await page.addInitScript(() => {
@@ -86,15 +116,27 @@ test.describe("First-run onboarding tour — walkthrough", () => {
     });
   });
 
+  test("shows the goal invitation instead of starting the tour by itself", async ({
+    page,
+  }) => {
+    await page.goto("/");
+    await waitForVaultReady(page);
+    await expectNoAutoTour(page);
+    await expect(page.getByTestId("goal-invitation-world")).toBeVisible();
+    await expect(page.getByTestId("goal-invitation-story")).toBeVisible();
+    await expect(page.getByTestId("goal-invitation-campaign")).toBeVisible();
+    await expect(page.getByTestId("goal-invitation-explore")).toBeVisible();
+  });
+
   test("desktop: walks all 4 steps, tooltip stays on-screen at each, and completion is recorded", async ({
     page,
   }) => {
     await page.goto("/");
     await waitForVaultReady(page);
-    await waitForTourActive(page);
+    await startTourFromInvitation(page);
 
     // Step 1: welcome (target "body" — centered, no spotlight)
-    await expectTourStepTitle(page, "Welcome — this is your world");
+    await expectTourStepTitle(page, "Welcome: this is your world");
     await assertTooltipWithinViewport(page);
     await page.getByRole("button", { name: "Go to next step" }).click();
 
@@ -129,9 +171,9 @@ test.describe("First-run onboarding tour — walkthrough", () => {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto("/");
     await waitForVaultReady(page);
-    await waitForTourActive(page);
+    await startTourFromInvitation(page);
 
-    await expectTourStepTitle(page, "Welcome — this is your world");
+    await expectTourStepTitle(page, "Welcome: this is your world");
     await assertTooltipWithinViewport(page);
     await page.getByRole("button", { name: "Go to next step" }).click();
 
@@ -174,9 +216,9 @@ test.describe("First-run onboarding tour — demo-to-build chain", () => {
     );
 
     await page.getByTestId("save-as-campaign-button").click();
-    await waitForTourActive(page);
+    await startTourFromInvitation(page, { emptyVault: false });
 
-    await expectTourStepTitle(page, "Welcome — this is your world");
+    await expectTourStepTitle(page, "Welcome: this is your world");
     await page.getByRole("button", { name: "Go to next step" }).click();
 
     // The converted vault already has entities, so pruneStepsToDom removes

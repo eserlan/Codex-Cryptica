@@ -42,7 +42,7 @@
 
 <div class="help-tab-container" class:p-2={!isStandalone}>
   <HelpHeader {isStandalone} />
-  <GettingStartedChecklist />
+  <GettingStartedChecklist {isStandalone} />
 
   <div class="space-y-3">
     {#each helpStore.searchResults as article (article.id)}
