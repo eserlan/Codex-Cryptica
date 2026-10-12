@@ -184,6 +184,7 @@ test.describe("Graph coach marks (#1295)", () => {
           "codex-cryptica-help-state",
           JSON.stringify({ completedTours: ["initial-onboarding"] }),
         );
+        localStorage.setItem("codex_goal_invitation", "dismissed");
         // Clear coach marks only on first load (not on reload, so persistence is testable)
         if (!sessionStorage.getItem("_coach_marks_test_initialized")) {
           sessionStorage.setItem("_coach_marks_test_initialized", "1");
@@ -392,8 +393,10 @@ test.describe("Mobile first-run guidance interaction (spec 175)", () => {
     await expect(page.getByTestId("mobile-coach-mark")).not.toBeVisible();
 
     // Choose explore and dismiss
-    await page.getByTestId("goal-invitation-explore").click();
-    await page.getByTestId("goal-invitation-no-thanks").click();
+    // The dev-only Debug Log can overlap these mobile actions, so dispatch
+    // them directly as in the first-run onboarding E2E helper.
+    await page.getByTestId("goal-invitation-explore").dispatchEvent("click");
+    await page.getByTestId("goal-invitation-no-thanks").dispatchEvent("click");
     await expect(invitation).not.toBeVisible();
 
     // Coach marks should now appear on the mobile graph

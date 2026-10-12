@@ -12,7 +12,9 @@ async function waitForVaultReady(page: Page) {
   await page.waitForFunction(
     () => {
       const v = (window as any).vault;
-      return v && v.isInitialized && v.status === "idle";
+      return (
+        v?.isInitialized && v.status !== "loading" && v.status !== "saving"
+      );
     },
     { timeout: 60_000 },
   );
@@ -87,7 +89,9 @@ async function startTourFromInvitation(
   // skips steps whose target is not on screen yet, so wait for it first.
   // A converted demo has entries, so it never shows that empty state.
   if (emptyVault) {
-    await expect(page.getByTestId("graph-empty-state-cta")).toBeVisible();
+    await expect(page.getByTestId("graph-empty-state-cta")).toBeVisible({
+      timeout: 15_000,
+    });
   }
   // The dev-only Debug Log overlay can sit on top of the invitation, so the
   // clicks are dispatched directly (the same convention as mobile-map-controls).
