@@ -8,14 +8,14 @@ export const whatAreTheProsAndConsOfBecomingADungeonMaster: AnswerConfigInput =
     question: "What are the pros and cons of becoming a Dungeon Master?",
     kind: "comparison",
     shortAnswer:
-      "Becoming a Dungeon Master suits you if you enjoy preparing situations, improvising around unexpected player choices, and helping other people have memorable moments at the table. That enjoyment comes with more responsibility than playing: you organise the session, make rulings, share attention fairly, and decide how much to prepare. A low-risk way to find out is to run a short standalone one-shot for your group or a few friends while you keep playing in your current campaign.",
+      "Becoming a Dungeon Master may appeal if you enjoy setting up situations, improvising around unexpected player choices, and helping the group have memorable moments at the table. The role brings different responsibilities from playing: you prepare situations, make rulings, and share attention fairly. Scheduling, hosting, and note-taking can be shared with other players, and everyone contributes to considerate play. A low-risk way to find out is to run a short standalone one-shot for your group or a few friends while you keep playing in your current campaign.",
     sections: [
       {
         kind: "prose",
         heading: "Is this about whether you would enjoy it, not how to do it?",
         paragraphs: [
-          "This question sits just before the how to start guides. You have played a few sessions, you like the game, and you are wondering whether you would enjoy running it. That is a different decision from learning procedures, picking a system, or writing an adventure. The guides that teach you how to run a first session still matter afterwards, but this page helps you decide if you want to try at all.",
-          "The simplest test is appetite. Do you find yourself thinking about the situation between sessions, sketching places the party might visit, or wondering how different players would tackle the same problem? If that kind of preparation feels interesting rather than draining, the core of DMing will probably suit you. If it sounds like homework, playing may already be giving you what you want from D&D.",
+          "You have played a few sessions, like the game, and are wondering whether you would enjoy running it. That is a different decision from learning how to run a first session, picking a system, or writing an adventure. This page helps you decide whether to try at all.",
+          "Notice what makes you curious: sketching a place, adapting a published adventure, or wondering how different players would tackle the same problem. Original preparation is one possible attraction, not a requirement for enjoying DMing. The amount and kind of preparation can vary, and you can share practical jobs with the group. If running sounds like homework, playing may already give you what you want from D&D.",
         ],
       },
       {
@@ -42,7 +42,7 @@ export const whatAreTheProsAndConsOfBecomingADungeonMaster: AnswerConfigInput =
           },
           {
             term: "A different kind of social contribution",
-            text: "Hosting and organising play is a way of looking after the group. Some people enjoy being the one who brings everyone together, keeps things moving, and makes sure each player gets a turn in the spotlight.",
+            text: "Some people enjoy bringing everyone together and keeping play moving. Scheduling, hosting, and taking notes are optional jobs another player can handle; everyone can help make the table considerate and share the spotlight.",
           },
         ],
       },
@@ -57,8 +57,8 @@ export const whatAreTheProsAndConsOfBecomingADungeonMaster: AnswerConfigInput =
             text: "You decide what to prepare and what to leave flexible. That choice is the skill, and early on it can feel inefficient while you learn how much your group actually needs. Preparing a focused situation for a short session is far less work than writing a novel-like setting, and it is usually the better use of time.",
           },
           {
-            term: "You organise people as well as fiction",
-            text: "Scheduling, communicating expectations, and keeping momentum between sessions often takes more effort than the in-game material. An interesting situation still needs a date, a venue or call link, and a clear start and end time.",
+            term: "Session logistics take time",
+            text: "Scheduling, agreeing expectations, and keeping momentum between sessions can take more effort than the in-game material. A session needs a date, a venue or call link, and a clear start and end time, but another player can organise these or take notes. Everyone shares responsibility for communicating considerately.",
           },
           {
             term: "You make rulings in the moment",
@@ -106,8 +106,8 @@ export const whatAreTheProsAndConsOfBecomingADungeonMaster: AnswerConfigInput =
           ],
           [
             "Social weight",
-            "You contribute to the evening and help others shine in their moments",
-            "You host the evening: you bring the material, hold the structure, and close the loop afterwards",
+            "You contribute to the evening and help others shine; you can also share scheduling, hosting, or notes",
+            "You bring the game material and hold its structure; scheduling, hosting, and notes can be shared",
           ],
         ],
       },
@@ -125,7 +125,7 @@ export const whatAreTheProsAndConsOfBecomingADungeonMaster: AnswerConfigInput =
         heading: "Critical Role, Tal'Dorei, and expectations",
         paragraphs: [
           "Being inspired by Critical Role or by the Tal'Dorei setting is a strong starting point. Those shows demonstrate attentive facilitation, clear character voices, and deep setting knowledge at a professional standard that no home table is expected to match. Enjoy the inspiration and leave the production values where they belong.",
-          "Home play is smaller, messier, and more uneven. You are not performing for an audience. You are describing a room, listening to three or four people with different ideas, and making a ruling so play can continue. That scale is where D&D is most enjoyable, and it does not require acting skill or a memorised canon.",
+          "Home play is smaller, messier, and more uneven. You are not performing for an audience. You are describing a room, listening to three or four people with different ideas, and making a ruling so play can continue. Ordinary home play can be enjoyable without acting skill or a memorised canon.",
           "A published setting helps in the same way. Tal'Dorei or any other setting can give you names, geography, and ready-made conflicts so you do not have to invent from scratch. Use what you need: a town, a faction with a pressing problem, a wilderness area with a clear objective. You do not need to recreate every detail of a published world or reproduce how someone else runs it. Borrow the scaffolding; make the session your own.",
         ],
       },
@@ -142,11 +142,11 @@ export const whatAreTheProsAndConsOfBecomingADungeonMaster: AnswerConfigInput =
           },
           {
             term: "The focused situation approach",
-            text: "The DM instead prepares one page: a sketch of the inn and the river crossing, three NPCs each with a want and a limit (the innkeeper wants the road open but will not risk guests' safety, the caravan master wants his goods moving and will pay for help, the guard wants no one on a dangerous structure), a clear objective of getting help or supplies across, and two complications that can be dropped in wherever play goes (a stranded traveller with useful knowledge, a rising water level that raises the stakes). Pre-made level 1 or 2 characters are offered so the DM can estimate capability. When the players rig a crossing with the immovable rod, the DM adjudicates the check, shifts the guard NPC's stance, and lets the fiction respond.",
+            text: "The DM instead prepares a short note: a sketch of the inn and river crossing, and a few optional NPCs—for example, an innkeeper who wants the road open but will not risk guests' safety, a caravan master who wants his goods moving and will pay for help, and a guard who wants no one on a dangerous structure. The objective is to get help or supplies across. Two possible developments have causes in the fiction: a stranded traveller on the far bank may know another route if the players search there, and continued rain may raise the river and increase the cost of delay. They are possibilities, not required scenes. Pre-made level 1 or 2 characters are offered as one way to estimate the party's capabilities. If the players have an immovable rod, they can use it as a fixed anchor for a rope; otherwise, they might find a suitable anchor for ordinary rope. The DM describes the crossing and calls for a roll only if a specific part of the attempt is uncertain.",
           },
           {
             term: "Why it works",
-            text: "The second version leaves room for the players' choices because it prepares people who want things and a situation with a visible cost to delay, not a fixed plot. It gives every scene something the players can see or decide, which is exactly the part of DMing new DMs wonder whether they will enjoy. If adapting on the fly felt energising, that is a reliable sign the role suits you; if it felt draining even at this scale, a longer commitment is unlikely to feel better.",
+            text: "The second version leaves room for the players' choices because it prepares people who want things and a situation with a visible cost to delay, not a fixed plot. Optional developments follow from what is happening in the fiction; they do not undo an earned solution or preserve a prepared sequence. First-session nerves and unfamiliar rules can be tiring even when you like DMing. If you remain curious, try less preparation, a published adventure, or more help from the group; if you prefer playing, there is no obligation to continue.",
           },
         ],
       },
@@ -158,7 +158,7 @@ export const whatAreTheProsAndConsOfBecomingADungeonMaster: AnswerConfigInput =
         items: [
           "Pick a straightforward situation with a clear objective, such as reaching a place, rescuing someone, or resolving a local dispute. Use a published micro-adventure if you prefer, or a single location of your own with two to three scenes.",
           "Offer pre-made characters or ask players to bring level 1 or 2 characters built under the same rules. Share them ahead of time so players can choose quickly and you know what the party can actually do.",
-          "Prepare a one-page note: a quick sketch of the location, three to four NPCs each with a want, a hesitation, and something useful they know, and two complications you can introduce if play needs momentum.",
+          "Prepare a short note if useful: a location sketch, a few optional NPCs with a want and something useful they know, and possible developments tied to the situation—for example, continued rain raising the river or a traveller stranded where the party might look for help. These are prompts, not quotas or scenes to force in.",
           "Book a short session with a defined end point, roughly two and a half to three hours. Agree it is a standalone trial so everyone knows there is no obligation to continue, even if it goes well.",
           "Run the game, make steady rulings, and note what you enjoyed and what tired you. Afterwards ask players what they found clear and what they wanted more of. That feedback is a better guide to your next prep than any self-assessment in isolation.",
         ],
@@ -214,6 +214,14 @@ export const whatAreTheProsAndConsOfBecomingADungeonMaster: AnswerConfigInput =
         href: "/for/fantasy-worldbuilding",
       },
     ],
+    relatedTopics: [
+      {
+        title: "D&D for Beginners",
+        href: "/topics/dnd-beginners",
+        description:
+          "A player-focused learning path through the table conversation, character sheets, dice, and combat turns.",
+      },
+    ],
     relatedAnswers: [
       "how-do-i-start-gming-for-the-first-time",
       "how-do-i-start-a-dnd-campaign",
@@ -242,6 +250,7 @@ export const whatAreTheProsAndConsOfBecomingADungeonMaster: AnswerConfigInput =
       uniqueValue:
         "Decision guide for curious D&D players weighing whether to DM, with a balanced pro and con review, a player versus DM comparison table, guidance on trying a one-shot without leaving the current campaign, and realistic expectations for Critical Role and published settings.",
       relatedIntents: [
+        "topic-dnd-beginners",
         "answer-first-time-gm-hub",
         "answer-start-dnd-campaign",
         "answer-session-prep",
@@ -273,6 +282,6 @@ export const whatAreTheProsAndConsOfBecomingADungeonMaster: AnswerConfigInput =
       image:
         "https://assets.codexcryptica.com/og/what-are-the-pros-and-cons-of-becoming-a-dungeon-master.jpg",
       imageAlt:
-        "A Dungeon Master screen, dice, and a small inn scene sketch laid out for a first one-shot session",
+        "Players gathered around an inn-and-bridge map with dice and miniatures during a D&D game",
     },
   };
