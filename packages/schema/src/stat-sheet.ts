@@ -28,6 +28,50 @@ export const StatSheetFieldKeySchema = z
     "Key must start with a letter or underscore and contain only letters, numbers, and underscores",
   );
 
+/**
+ * Money value contract (#3961): an integer count of the smallest unit plus
+ * explicit denomination metadata, so totals never pass through floating
+ * point and no exchange rate is implied. `precision` is the number of decimal
+ * places the displayed amount uses (units / 10^precision); `currency` is a
+ * free-form code or denomination ("gp", "cr", "Imperial Credits").
+ */
+export const MoneyAmountSchema = z.object({
+  units: z.number().int().safe(),
+  currency: z.string().trim().min(1).max(40),
+  precision: z.number().int().min(0).max(6).default(0),
+});
+
+export type MoneyAmount = z.infer<typeof MoneyAmountSchema>;
+
+export const StockAvailabilitySchema = z.enum([
+  "available",
+  "reserved",
+  "hidden",
+  "sold-out",
+]);
+
+export type StockAvailability = z.infer<typeof StockAvailabilitySchema>;
+
+export const StockLineKindSchema = z.enum(["item", "service", "commission"]);
+
+export type StockLineKind = z.infer<typeof StockLineKindSchema>;
+
+/**
+ * Shop-local stock metadata for one `item-table` row. It lives on the row,
+ * never on the linked Item entity, so price and quantity are independent
+ * per shop and per lot.
+ */
+export const StockMetaSchema = z.object({
+  kind: StockLineKindSchema.optional(),
+  quantity: z.number().int().min(0).safe().optional(),
+  price: MoneyAmountSchema.optional(),
+  condition: z.string().max(120).optional(),
+  availability: StockAvailabilitySchema.optional(),
+  note: z.string().max(500).optional(),
+});
+
+export type StockMeta = z.infer<typeof StockMetaSchema>;
+
 export const StatSheetFieldSchema = z.object({
   id: z.string().min(1),
   key: StatSheetFieldKeySchema.optional(),
@@ -47,7 +91,14 @@ export const StatSheetFieldSchema = z.object({
       z.object({
         id: z.string().min(1),
         label: z.string().min(1),
-        type: z.enum(["text", "number", "dice", "counter", "checkbox"]),
+        type: z.enum([
+          "text",
+          "number",
+          "dice",
+          "counter",
+          "checkbox",
+          "money",
+        ]),
         // "dice" columns: the roll formula applied to every row (e.g.
         // "1d6+2"). Rows may still override it per-row (see `rows` below).
         formula: z.string().optional(),
@@ -69,6 +120,8 @@ export const StatSheetFieldSchema = z.object({
           z.number(),
           z.boolean(),
           z.object({ value: z.number(), max: z.number().optional() }),
+          MoneyAmountSchema,
+          StockMetaSchema,
         ]),
       ),
     )
@@ -79,6 +132,10 @@ export const StatSheetFieldSchema = z.object({
   // tables, which never set this); template authors can opt custom
   // non-item tables (e.g. a Mythras skills table) out explicitly.
   linkVaultItems: z.boolean().optional(),
+  // For "item-table" type fields: merchant stock ledger mode (#3961). Rows
+  // get a stable `rowId` and shop-local `stock` metadata (quantity, price,
+  // condition, availability, note). Undefined/false keeps legacy semantics.
+  stockLedger: z.boolean().optional(),
   // Id of another field on the same sheet (typically a "number" ability
   // score) whose value drives this field's dice modifier — e.g. a "STR
   // Check" dice field derives its flat bonus from a "STR" score field via
