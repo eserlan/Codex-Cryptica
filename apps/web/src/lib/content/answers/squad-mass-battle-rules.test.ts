@@ -9,6 +9,11 @@ describe("squad and mass-battle answer rules", () => {
 
     expect(answerText).toContain("current general rules are in NPC Core");
     expect(answerText).toContain("four contiguous 10-foot-square segments");
+    expect(answerText).toContain("level 6 Troop with 99 HP and four segments");
+    expect(answerText).toContain("basic Reflex save (DC 21)");
+    expect(answerText).toContain(
+      "When its HP reaches 66 and then 33, it loses a segment",
+    );
     expect(answerText).toContain(
       "its defences and weaknesses depend on the rules and stat block",
     );
