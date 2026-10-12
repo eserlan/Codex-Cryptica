@@ -36,6 +36,17 @@ describe("codex-review skill layout", () => {
     expect(canonicalSkill).toContain("documentation and spec artifacts");
     expect(canonicalSkill).toContain("bun run --cwd apps/web build");
     expect(canonicalSkill).not.toContain("bun --cwd apps/web run build");
+    expect(canonicalSkill).toContain("Component Mount Hierarchy");
+    expect(canonicalSkill).toContain(
+      "Untrusted Markdown & Privacy (Constitution IV)",
+    );
+    expect(canonicalSkill).toContain("Canvas 2D / 60 FPS Render Budgets");
+    expect(canonicalSkill).toContain("Adversarial Premise Inversion");
+    expect(canonicalSkill).toContain("Multi-Theme Contrast");
+    expect(canonicalSkill).toContain(
+      'Assertion Completeness (Not Just "Tests Pass")',
+    );
+
     expect(patterns).toContain("## Trust, Privacy & Public Boundaries");
     expect(patterns).toContain("AI Output Is Untrusted Input");
     expect(patterns).toContain("AbortSignal");
@@ -43,6 +54,26 @@ describe("codex-review skill layout", () => {
     expect(patterns).toContain("Persisted Schema and Migration Compatibility");
     expect(patterns).toContain("onclick={openLightbox}");
     expect(patterns).not.toContain('onclick="{openLightbox}"');
+    expect(patterns).toContain(
+      "Component Mount Hierarchy vs Navigation Lifecycles",
+    );
+    expect(patterns).toContain("Domain Grounding & Fact Consistency");
+    expect(patterns).toContain("Remote Tracking (Constitution IV)");
+    expect(patterns).toContain(
+      "Multi-Theme Optical Contrast on Semi-Transparent Overlays",
+    );
+    expect(patterns).toContain(
+      "Debounce Timers & Async Invalidation Lifecycle",
+    );
+    expect(patterns).toContain(
+      "Canvas 2D Hot-Path Compositing & 60 FPS Budgets",
+    );
+    expect(patterns).toContain(
+      "Adversarial Premise Inversion in Optimizations",
+    );
+    expect(patterns).toContain(
+      'Assertion Completeness (Not Just "Tests Pass")',
+    );
 
     for (const adapterPath of adapterPaths) {
       const adapter = readFileSync(

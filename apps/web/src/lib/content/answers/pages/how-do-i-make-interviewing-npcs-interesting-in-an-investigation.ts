@@ -336,6 +336,7 @@ export const howDoIMakeInterviewingNpcsInterestingInAnInvestigation: AnswerConfi
       "how-do-i-handle-players-asking-an-npc-to-tell-us-everything-you-know",
       "how-do-i-handle-divination-magic-without-letting-one-character-solve-every-mystery",
       "how-do-i-improvise-npcs-in-dnd",
+      "how-do-i-make-roleplay-more-engaging",
     ],
     discovery: {
       id: "answer-interviewing-npcs-investigation",

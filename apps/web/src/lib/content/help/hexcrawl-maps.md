@@ -22,17 +22,19 @@ Codex Cryptica provides native support for overland hexcrawls and region explora
 5. Adjust **Hex Radius** (cell size in pixels) and your campaign scale (e.g. `6` `miles` per cell).
 6. If your map image already has hexes drawn on it, choose **Fit Grid from Map** and drag across a few of them to match their size and position. See [Grids & Measurement](/help#help/vtt-grids-measurement).
 
-### Coordinate Overlays
+### Coordinate Overlays & Labels
 
-When managing large overland regions, toggle **Show Hex Coordinates** in Grid Settings:
+When managing large overland regions, configure **Hex Labels** in Grid Settings:
 
-- Visible hexes render centered axial coordinates in `(q.r)` format (such as `01.04` or `02.05`).
+- Choose between **Alphanumeric** (e.g. `A01`, `B03` with customizable starting column/row, padding, and separator—ideal for classic wargame/TTRPG hexcrawls), **Numeric** (e.g. `01.04`), or mathematical **Axial** (`(q, r)`).
+- Right-click any hex on the map to see its formatted label and select **Copy hex coordinate** to copy it directly to your clipboard.
 - Labels automatically hide when zoomed out past the legibility threshold to prevent visual clutter and keep navigation smooth.
 
 ### Token Snapping & Sizing
 
 - **Automatic Snapping**: Dragging a party token, NPC, or monster token on an active hex map snaps its center to the nearest hex cell upon release.
 - **Hex Diameter Sizing**: Right-click any token and choose **Resize** (1x, 2x, 3x) to scale it to the exact diameter of the hexagonal cell ($2 \times \text{radius}$ or $\sqrt{3} \times \text{radius}$).
+- **Hex Info Under a Token**: Select the party token on the Token layer and the token panel shows the tile it stands on, with that tile's room details and stocked notes. You can read and edit them without switching to the Terrain layer. **Select tile** jumps to the tile itself. Only the GM sees this.
 
 ### Hex Fog of War Exploration
 

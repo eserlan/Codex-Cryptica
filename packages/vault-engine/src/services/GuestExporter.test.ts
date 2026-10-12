@@ -227,4 +227,112 @@ describe("GuestExporter", () => {
       expect(nodes).toEqual(["n2"]);
     });
   });
+  describe("stat sheets (#3964)", () => {
+    const CANARY = "CANARY-GM-ONLY";
+    const shop: Entity = {
+      id: "shop-1",
+      type: "location",
+      title: "Tallow's Goods",
+      status: "active",
+      content: "A shop.",
+      connections: [],
+      statSheet: {
+        templateId: "builtin-shop-merchant",
+        fields: [
+          {
+            id: "gm_notes",
+            label: "GM notes",
+            type: "longtext",
+            value: CANARY,
+          },
+          {
+            id: "stock",
+            label: "Stock",
+            type: "item-table",
+            stockLedger: true,
+            rows: [
+              {
+                rowId: "r1",
+                entityId: "entity-2",
+                stock: { quantity: 1, note: CANARY },
+              },
+            ],
+          },
+        ],
+      },
+    } as Entity;
+    const character: Entity = {
+      id: "char-1",
+      type: "character",
+      title: "Mira",
+      status: "active",
+      content: "",
+      connections: [],
+      statSheet: {
+        templateId: null,
+        fields: [{ id: "hp", label: "HP", type: "counter", value: 8 }],
+      },
+    } as Entity;
+    const options = (
+      extra: Partial<ExporterOptions> = {},
+    ): ExporterOptions => ({
+      ...defaultOptions,
+      entities: [shop, character, secretEntity],
+      ...extra,
+    });
+    const sheetOf = (
+      bundle: ReturnType<typeof GuestExporter.export>,
+      id: string,
+    ) => bundle.entities.find((e) => e.id === id)?.statSheet;
+
+    it("withholds a merchant ledger when no sanitiser is given, so it fails closed", () => {
+      const bundle = GuestExporter.export(options());
+      expect(sheetOf(bundle, "shop-1")).toEqual({
+        templateId: null,
+        fields: [],
+      });
+      expect(JSON.stringify(bundle)).not.toContain(CANARY);
+    });
+
+    it("leaves an ordinary sheet unchanged when no sanitiser is given", () => {
+      const bundle = GuestExporter.export(options());
+      expect(sheetOf(bundle, "char-1")).toEqual(character.statSheet);
+    });
+
+    it("hands each sheet to the sanitiser and uses what it returns", () => {
+      const bundle = GuestExporter.export(
+        options({
+          sanitizeStatSheet: (sheet) => ({
+            templateId: sheet.templateId,
+            fields: sheet.fields.filter((f) => f.id !== "gm_notes"),
+          }),
+        }),
+      );
+      const fields = sheetOf(bundle, "shop-1")!.fields.map((f) => f.id);
+      expect(fields).toEqual(["stock"]);
+    });
+
+    it("names a linked Item only when that Item is itself in the export", () => {
+      const asked: Record<string, string | undefined> = {};
+      GuestExporter.export(
+        options({
+          entities: [shop, character, secretEntity, publicEntity2],
+          sanitizeStatSheet: (sheet, { resolveName }) => {
+            asked["entity-2"] = resolveName("entity-2");
+            asked["entity-3"] = resolveName("entity-3");
+            return sheet;
+          },
+        }),
+      );
+      // entity-2 is hidden (fog of war), entity-3 is published.
+      expect(asked["entity-2"]).toBeUndefined();
+      expect(asked["entity-3"]).toBe("Public Note 2");
+    });
+
+    it("does not change the sheet on the GM's entity", () => {
+      const before = JSON.stringify(shop);
+      GuestExporter.export(options());
+      expect(JSON.stringify(shop)).toBe(before);
+    });
+  });
 });

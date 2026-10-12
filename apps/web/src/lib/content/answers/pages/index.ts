@@ -24,10 +24,12 @@ import { howDoIMakeCombatFasterWithoutMakingItLessExciting } from "./how-do-i-ma
 import { howDoIMakeDifferentCulturesFeelDistinctWithoutRelyingOnStereotypes } from "./how-do-i-make-different-cultures-feel-distinct-without-relying-on-stereotypes";
 import { howDoIMakeInterviewingNpcsInterestingInAnInvestigation } from "./how-do-i-make-interviewing-npcs-interesting-in-an-investigation";
 import { howDoIMakeRivalCaptainsNaviesAndPirateFactionsMatter } from "./how-do-i-make-rival-captains-navies-and-pirate-factions-matter";
+import { howDoIMakeRoleplayMoreEngaging } from "./how-do-i-make-roleplay-more-engaging";
 import { howDoIMakeSeaTravelInterestingInATtrpg } from "./how-do-i-make-sea-travel-interesting-in-a-ttrpg";
 import { howDoIOrganiseADndCampaign } from "./how-do-i-organise-a-dnd-campaign";
 import { howDoIOrganiseGmNotesForInPersonPlay } from "./how-do-i-organise-gm-notes-for-in-person-play";
 import { howDoIPaceAnRpgOneShot } from "./how-do-i-pace-an-rpg-one-shot";
+import { howDoIPlanStoryArcsForAnRpgCampaign } from "./how-do-i-plan-story-arcs-for-an-rpg-campaign";
 import { howDoIPrepareADndSession } from "./how-do-i-prepare-a-dnd-session";
 import { howDoIPrepareAnRpgSessionStepByStep } from "./how-do-i-prepare-an-rpg-session-step-by-step";
 import { howDoIReadADndCharacterSheetAsABeginner } from "./how-do-i-read-a-dnd-character-sheet-as-a-beginner";
@@ -120,6 +122,7 @@ import { howToCreateRumoursForAFantasyTown } from "./how-to-create-rumours-for-a
 import { howToWriteAnInWorldNewspaperForAnRpg } from "./how-to-write-an-in-world-newspaper-for-an-rpg";
 import { isMyRpgCampaignIdeaGood } from "./is-my-rpg-campaign-idea-good";
 import { pointCrawlVsHexCrawl } from "./point-crawl-vs-hex-crawl";
+import { whatAreTheProsAndConsOfBecomingADungeonMaster } from "./what-are-the-pros-and-cons-of-becoming-a-dungeon-master";
 import { whatCanIDoOnMyTurnInDndCombat } from "./what-can-i-do-on-my-turn-in-dnd-combat";
 import { whatCanPlayersActuallyBuyAndSellInAFantasySettlement } from "./what-can-players-actually-buy-and-sell-in-a-fantasy-settlement";
 import { whatDoINeedToBringToMyFirstDndGame } from "./what-do-i-need-to-bring-to-my-first-dnd-game";
@@ -148,6 +151,7 @@ import { whatTtrpgShouldIUseForAFantasyDungeonCrawl } from "./what-ttrpg-should-
 import { whatTtrpgsLetYouBuildAndUpgradeABase } from "./what-ttrpgs-let-you-build-and-upgrade-a-base";
 import { whereDoIStartIfIHaveNeverPlayedATabletopRpg } from "./where-do-i-start-if-i-have-never-played-a-tabletop-rpg";
 import { whichDiceDoIRollInDndAndWhen } from "./which-dice-do-i-roll-in-dnd-and-when";
+import { whichTabletopRpgsHaveSquadAndMassBattleRules } from "./which-tabletop-rpgs-have-squad-and-mass-battle-rules";
 import { xpLevelingVsMilestoneLeveling } from "./xp-leveling-vs-milestone-leveling";
 
 /**
@@ -183,10 +187,12 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     howDoIMakeDifferentCulturesFeelDistinctWithoutRelyingOnStereotypes,
     howDoIMakeInterviewingNpcsInterestingInAnInvestigation,
     howDoIMakeRivalCaptainsNaviesAndPirateFactionsMatter,
+    howDoIMakeRoleplayMoreEngaging,
     howDoIMakeSeaTravelInterestingInATtrpg,
     howDoIOrganiseADndCampaign,
     howDoIOrganiseGmNotesForInPersonPlay,
     howDoIPaceAnRpgOneShot,
+    howDoIPlanStoryArcsForAnRpgCampaign,
     howDoIPrepareADndSession,
     howDoIPrepareAnRpgSessionStepByStep,
     howDoIReadADndCharacterSheetAsABeginner,
@@ -279,6 +285,7 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     howToWriteAnInWorldNewspaperForAnRpg,
     isMyRpgCampaignIdeaGood,
     pointCrawlVsHexCrawl,
+    whatAreTheProsAndConsOfBecomingADungeonMaster,
     whatCanIDoOnMyTurnInDndCombat,
     whatCanPlayersActuallyBuyAndSellInAFantasySettlement,
     whatDoINeedToBringToMyFirstDndGame,
@@ -307,6 +314,7 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     whatTtrpgsLetYouBuildAndUpgradeABase,
     whereDoIStartIfIHaveNeverPlayedATabletopRpg,
     whichDiceDoIRollInDndAndWhen,
+    whichTabletopRpgsHaveSquadAndMassBattleRules,
     xpLevelingVsMilestoneLeveling,
   ]
     .map((answer) => AnswerConfigSchema.parse(answer))

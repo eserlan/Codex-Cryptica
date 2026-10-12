@@ -153,6 +153,13 @@
     });
     isEditingLayout = false;
   }
+
+  // The same context plus the entity it belongs to, which a shop's stock table
+  // needs to record a trade (#3963). Re-read whenever the sheet changes.
+  const sheetContext: PresentationRenderContext = $derived({
+    ...renderContext,
+    entityId: entity.id,
+  });
 </script>
 
 <div class="flex flex-col gap-3 pb-8" data-testid="detail-stats-tab">
@@ -211,7 +218,7 @@
       <PresentationTemplatePicker {entity} {schema} />
     {/if}
     {#if usable && presentationAst}
-      <PresentationRenderer nodes={presentationAst} context={renderContext} />
+      <PresentationRenderer nodes={presentationAst} context={sheetContext} />
     {:else}
       <StatSheetView {entity} onOpenEditor={() => (isEditingLayout = true)} />
     {/if}

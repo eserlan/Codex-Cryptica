@@ -8,6 +8,7 @@ import type {
   TileDeck,
   VTTMessage,
 } from "../../../types/vtt";
+import type { HexLabelConfig } from "map-engine";
 import { createFullEncounterSessionFixture } from "./map-session-test-fixtures";
 import type { VTTSessionSnapshotManagerDependencies } from "./vtt-session-snapshot-manager";
 
@@ -37,6 +38,7 @@ export function createSnapshotManagerHarness() {
     gridSize: 50,
     gridType: "square" as "square" | "hex-pointy" | "hex-flat",
     showHexCoordinates: false,
+    hexLabelConfig: { style: "none" } as HexLabelConfig | undefined,
     fogColor: null as string | null,
     gridUnit: "ft",
     gridDistance: 5,
@@ -119,6 +121,10 @@ export function createSnapshotManagerHarness() {
     setShowHexCoordinates: (value) => {
       state.showHexCoordinates = value;
     },
+    getHexLabelConfig: () => state.hexLabelConfig,
+    setHexLabelConfig: (value) => {
+      state.hexLabelConfig = value;
+    },
     getGridUnit: () => state.gridUnit,
     setGridUnit: (value) => {
       state.gridUnit = value;
@@ -162,6 +168,7 @@ export function createSnapshotManagerHarness() {
       state.gridSize = fixture.gridSize ?? 50;
       state.gridType = fixture.gridType ?? "square";
       state.showHexCoordinates = fixture.showHexCoordinates ?? false;
+      state.hexLabelConfig = fixture.hexLabelConfig;
       state.fogColor = fixture.fogColor ?? null;
       state.gridUnit = fixture.gridUnit ?? "ft";
       state.gridDistance = fixture.gridDistance ?? 5;

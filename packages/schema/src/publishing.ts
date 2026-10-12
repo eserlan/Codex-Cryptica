@@ -311,7 +311,7 @@ const TemplateColumnSchema = z
   .object({
     id: z.string().trim().min(1).max(120),
     label: z.string().trim().min(1).max(200),
-    type: z.enum(["text", "number", "dice", "counter", "checkbox"]),
+    type: z.enum(["text", "number", "dice", "counter", "checkbox", "money"]),
   })
   .strict();
 const TemplateFieldSchema = z
@@ -335,6 +335,7 @@ const TemplateFieldSchema = z
     step: z.number().finite().positive().optional(),
     columns: z.array(TemplateColumnSchema).max(30).optional(),
     linkVaultItems: z.boolean().optional(),
+    stockLedger: z.boolean().optional(),
     modifierSource: z.string().trim().max(120).optional(),
   })
   .strict();

@@ -180,6 +180,7 @@ export const whatCanIDoOnMyTurnInDndCombat: AnswerConfigInput = {
     "where-do-i-start-if-i-have-never-played-a-tabletop-rpg",
     "how-do-i-keep-players-engaged-during-other-players-turns-in-combat",
     "how-do-i-make-combat-faster-without-making-it-less-exciting",
+    "which-dice-do-i-roll-in-dnd-and-when",
   ],
   discovery: {
     id: "answer-what-can-i-do-on-my-turn-in-dnd-combat",

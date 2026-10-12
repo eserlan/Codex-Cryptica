@@ -36,4 +36,9 @@ if [ "$blog_only" = "true" ]; then
 fi
 
 base="$(git merge-base HEAD origin/staging 2>/dev/null || git rev-parse HEAD^ 2>/dev/null || git hash-object -t tree /dev/null)"
-bun scripts/lint-changed.mjs --base "$base"
+if command -v bun >/dev/null 2>&1; then
+	bun scripts/lint-changed.mjs --base "$base"
+else
+	echo "Bun is required to run the changed-file lint before pushing." >&2
+	exit 1
+fi

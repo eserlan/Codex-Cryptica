@@ -1,6 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
+import { appEventBus } from "@codex/events";
+import type { Clock } from "@codex/runtime";
+import { JOURNAL_EVENTS } from "session-journal-engine";
 import type { Token } from "../../../types/vtt";
 import {
+  publishSoloMapMove,
   SoloExplorationRecorder,
   type SoloExplorationState,
 } from "./solo-exploration-recorder.svelte";
@@ -28,6 +32,30 @@ const source = (x: number): Token => ({
   imageUrl: null,
   statusEffects: [],
   isVisionSource: true,
+});
+
+describe("publishSoloMapMove", () => {
+  it("uses the injected clock for the capture event timestamp", () => {
+    const payload = { entryType: "map-move", content: "Moved 1 hex." };
+    const clock: Clock = { now: () => 1234 };
+    const listener = vi.fn();
+    const unsubscribe = appEventBus.subscribe(JOURNAL_EVENTS.CAPTURE, listener);
+
+    try {
+      publishSoloMapMove(payload, clock);
+    } finally {
+      unsubscribe();
+    }
+
+    expect(listener).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: JOURNAL_EVENTS.CAPTURE,
+        domain: "journal",
+        payload,
+        metadata: { timestamp: 1234 },
+      }),
+    );
+  });
 });
 
 function setup(
@@ -187,5 +215,35 @@ describe("SoloExplorationRecorder", () => {
     state.assetsReady = true;
     await recorder.onVisionChanged([source(0)]);
     expect(revealer.reveal).toHaveBeenCalledTimes(2);
+  });
+
+  it("uses formatHex from state when publishing a move capture", async () => {
+    const { recorder, publishCapture } = setup({
+      formatHex: (coord) => `Hex-${coord.q}-${coord.r}`,
+    });
+    await recorder.onVisionChanged([source(0)]);
+    await recorder.onVisionChanged([source(55)]);
+    await recorder.onMoveSettled([source(55)]);
+
+    expect(publishCapture).toHaveBeenCalledWith(
+      expect.objectContaining({
+        entryType: "map-move",
+        content: "Moved 2 hexes (12 mi) to Hex-2-0, revealing 1 new hexes.",
+      }),
+    );
+  });
+
+  it("omits coordinates when the active label style is off", async () => {
+    const { recorder, publishCapture } = setup({ formatHex: () => "" });
+    await recorder.onVisionChanged([source(0)]);
+    await recorder.onVisionChanged([source(55)]);
+    await recorder.onMoveSettled([source(55)]);
+
+    expect(publishCapture).toHaveBeenCalledWith(
+      expect.objectContaining({
+        entryType: "map-move",
+        content: "Moved 2 hexes (12 mi), revealing 1 new hexes.",
+      }),
+    );
   });
 });

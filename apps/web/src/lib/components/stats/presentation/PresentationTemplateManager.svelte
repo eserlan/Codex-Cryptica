@@ -235,8 +235,8 @@
         </h2>
         <p class="text-meta text-theme-muted mt-0.5">
           {isEntityLocal
-            ? "Custom Character Sheet layouts. Save, export, or copy layouts between characters."
-            : `Layouts for "${schema.name}". Apply across all characters using this template.`}
+            ? "Layouts for this custom sheet. Save, export, or copy layouts between entities."
+            : `Layouts for "${schema.name}". Apply across every entity using this template.`}
         </p>
       </div>
       <button
@@ -308,7 +308,7 @@
                     class="rounded border border-theme-border px-2 py-1 text-micro font-bold uppercase tracking-wide text-theme-muted hover:border-theme-primary hover:text-theme-primary"
                     onclick={() => openPromoteDialog(t)}
                     data-testid="presentation-manager-promote"
-                    title="Save this layout to a reusable template so other characters can use it"
+                    title="Save this layout to a reusable template so other entities can use it"
                   >
                     Save to Template
                   </button>
@@ -409,7 +409,7 @@
             id="copy-presentation-title"
             class="font-header text-sm font-bold uppercase tracking-widest text-theme-text"
           >
-            Copy Layout from Another Character or Template
+            Copy Layout from Another Entity or Template
           </h3>
           <p class="text-meta text-theme-muted mt-0.5">
             Select an existing presentation from your vault to adapt to this
@@ -505,8 +505,8 @@
             Save to Reusable Stat Sheet Template
           </h3>
           <p class="text-meta text-theme-muted mt-0.5">
-            Save "{templateToPromote.name}" to a reusable template so all
-            characters with that template can use it.
+            Save "{templateToPromote.name}" to a reusable template so every
+            entity with that template can use it.
           </p>
         </div>
         <button

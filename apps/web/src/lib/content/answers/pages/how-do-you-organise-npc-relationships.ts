@@ -175,6 +175,7 @@ export const howDoYouOrganiseNpcRelationships: AnswerConfigInput = {
     "how-do-i-make-a-player-base-matter-in-an-rpg-campaign",
     "how-do-i-organise-a-dnd-campaign",
     "how-do-i-start-a-dnd-campaign",
+    "how-do-i-make-roleplay-more-engaging",
   ],
   discovery: {
     id: "answer-npc-relationships",

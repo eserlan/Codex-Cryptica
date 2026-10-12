@@ -160,6 +160,9 @@ export function initializeMapSessionComposition(
     persistDraft: () => store.persistenceManager.persistDraft(),
     normalizePlacement: (point, size) =>
       store.tokenManager.clampAndSnapPosition(point, size),
+    fitTileToHexCell: (point, size) =>
+      store.tokenManager.snapTileToHexCell(point, size, true),
+    hexCellKey: (rect) => store.tokenManager.hexCellKey(rect),
     getActiveLayer: () => store.layerManager.activeLayer,
     setActiveLayer: (layer) => store.layerManager.setActiveLayer(layer),
     rollStockingTable: (tableId) => {
@@ -349,6 +352,10 @@ export function initializeMapSessionComposition(
     getShowHexCoordinates: () => store.deps.mapStore.showHexCoordinates,
     setShowHexCoordinates: (value) => {
       store.deps.mapStore.showHexCoordinates = value;
+    },
+    getHexLabelConfig: () => store.deps.mapStore.hexLabelConfig,
+    setHexLabelConfig: (value) => {
+      store.deps.mapStore.hexLabelConfig = value;
     },
     getFogColor: () => store.deps.mapStore.fogColor,
     setFogColor: (value) => {

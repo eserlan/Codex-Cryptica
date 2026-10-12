@@ -8,7 +8,11 @@ import type {
   Token,
   VTTMessage,
 } from "../../../types/vtt";
-import { cloneMeasurement, normalizeEncounterSession } from "map-engine";
+import {
+  cloneMeasurement,
+  normalizeEncounterSession,
+  type HexLabelConfig,
+} from "map-engine";
 import { type IdGenerator, systemIdGenerator } from "$lib/utils/runtime-deps";
 
 export interface VTTSessionSnapshotManagerDependencies {
@@ -59,6 +63,8 @@ export interface VTTSessionSnapshotManagerDependencies {
   setGridType: (value: "square" | "hex-pointy" | "hex-flat") => void;
   getShowHexCoordinates: () => boolean;
   setShowHexCoordinates: (value: boolean) => void;
+  getHexLabelConfig: () => HexLabelConfig | undefined;
+  setHexLabelConfig: (value: HexLabelConfig) => void;
   getFogColor: () => string | null;
   setFogColor: (value: string | null) => void;
   getGridUnit: () => string;
@@ -105,6 +111,7 @@ export class VTTSessionSnapshotManager {
       gridSize: this.deps.getGridSize(),
       gridType: this.deps.getGridType(),
       showHexCoordinates: this.deps.getShowHexCoordinates(),
+      hexLabelConfig: this.deps.getHexLabelConfig(),
       fogColor: this.deps.getFogColor(),
       gridUnit: this.deps.getGridUnit(),
       gridDistance: this.deps.getGridDistance(),
@@ -115,6 +122,7 @@ export class VTTSessionSnapshotManager {
     };
   }
 
+  // fallow-ignore-next-line complexity
   applySnapshot(snapshot: EncounterSession, silent = true) {
     const normalized = normalizeEncounterSession(snapshot);
     this.deps.clearPendingSessionSnapshotBroadcast();
@@ -163,6 +171,12 @@ export class VTTSessionSnapshotManager {
       normalized.mapId === this.deps.getActiveMapId()
     ) {
       this.deps.setShowHexCoordinates(normalized.showHexCoordinates);
+    }
+    if (
+      normalized.hexLabelConfig !== undefined &&
+      normalized.mapId === this.deps.getActiveMapId()
+    ) {
+      this.deps.setHexLabelConfig(normalized.hexLabelConfig);
     }
     if (
       normalized.fogColor !== undefined &&

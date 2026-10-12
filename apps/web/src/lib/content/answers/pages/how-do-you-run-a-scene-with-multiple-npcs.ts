@@ -158,6 +158,7 @@ export const howDoYouRunASceneWithMultipleNpcs: AnswerConfigInput = {
     "how-do-you-run-character-roles-in-a-cyberpunk-rpg",
     "how-do-i-make-interviewing-npcs-interesting-in-an-investigation",
     "how-do-i-handle-players-asking-an-npc-to-tell-us-everything-you-know",
+    "how-do-i-make-roleplay-more-engaging",
   ],
   discovery: {
     id: "answer-run-scene-multiple-npcs",

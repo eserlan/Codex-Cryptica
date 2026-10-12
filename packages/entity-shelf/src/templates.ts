@@ -17,6 +17,7 @@ function projectSchemaTemplate(template: StatSheetTemplate): string {
     name: template.name,
     description: template.description ?? null,
     category: template.category ?? null,
+    capabilities: template.capabilities ?? [],
     fields: template.fields ?? [],
   });
 }

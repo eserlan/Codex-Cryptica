@@ -15,8 +15,12 @@ export const howDoYouStartWorldbuildingFromScratch: AnswerConfigInput = {
       paragraphs: [
         "New creators often begin by sketching continental coastlines, charting pantheons of twenty gods, and detailing five thousand years of royal lineages. While this top-down exercise can be personally satisfying, it rarely benefits your tabletop sessions. Players do not interact with tectonic plates or dynasties from four centuries ago; they interact with the blacksmith who refuses to trade with them, the tax collector demanding silver, and the sinister lights flickering in the nearby woods.",
         "Worldbuilder's disease occurs when expansive macro-level lore replaces playable, immediate micro-detail. By starting with a tiny, vivid focal point, you produce material that directly fuels gameplay while leaving room for the larger world to emerge organically during play.",
-        "If you are worldbuilding to write fiction rather than to run a campaign, where a single viewpoint character and one opening scene set the scope instead of a party that may walk in any direction, use the companion answer on worldbuilding for a novel or short story. It applies the same minimum-viable principle through a story-first sequence built for writers.",
+        "If you are worldbuilding to write fiction rather than run a campaign, a single viewpoint character and opening scene set the scope instead of a party that may walk in any direction. This answer focuses on a playable local area for a game table.",
       ],
+      cta: {
+        text: "For fiction writers: build a world around your opening scene",
+        href: "/answers/how-do-i-start-worldbuilding-for-a-novel-or-short-story",
+      },
     },
     {
       kind: "list",

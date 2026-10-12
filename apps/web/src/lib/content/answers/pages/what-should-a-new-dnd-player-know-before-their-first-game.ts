@@ -235,6 +235,10 @@ export const whatShouldANewDndPlayerKnowBeforeTheirFirstGame: AnswerConfigInput 
       "how-do-i-start-a-dnd-campaign",
       "how-do-i-prepare-a-dnd-session",
       "how-do-i-organise-a-dnd-campaign",
+      "what-can-i-do-on-my-turn-in-dnd-combat",
+      "what-do-i-need-to-bring-to-my-first-dnd-game",
+      "which-dice-do-i-roll-in-dnd-and-when",
+      "what-are-the-pros-and-cons-of-becoming-a-dungeon-master",
     ],
     discovery: {
       id: "answer-new-dnd-player-first-game",

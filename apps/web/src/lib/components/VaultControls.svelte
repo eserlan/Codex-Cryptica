@@ -370,7 +370,10 @@
                   onclick={() => runNoVaultAction(item.action)}
                   data-testid={item.testid}
                 >
-                  <span class="{item.icon} w-3.5 h-3.5 shrink-0"></span>
+                  <span
+                    class="{item.icon} w-3.5 h-3.5 shrink-0"
+                    aria-hidden="true"
+                  ></span>
                   {item.label}
                 </button>
               {/each}

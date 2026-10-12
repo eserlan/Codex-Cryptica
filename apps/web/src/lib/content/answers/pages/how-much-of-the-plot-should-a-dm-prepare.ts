@@ -172,6 +172,7 @@ export const howMuchOfThePlotShouldADmPrepare: AnswerConfigInput = {
     "how-do-you-track-faction-turns-between-rpg-sessions",
     "how-do-you-manage-a-campaign-timeline-in-an-rpg",
     "how-do-you-create-quest-hooks-without-railroading",
+    "how-do-i-plan-story-arcs-for-an-rpg-campaign",
   ],
   discovery: {
     id: "answer-how-much-plot-should-a-dm-prepare",

@@ -25,8 +25,41 @@ export const statSheets: FeatureEntry = {
         "stat-sheets.help",
       ],
     },
+    {
+      id: "set-up-a-shop",
+      title: "Set up a shop",
+      steps: [
+        "Open a Location or Organisation and choose Stats, then Templates.",
+        "Choose Shop / Merchant, then fill in the owner, reputation and services.",
+        "Add stock lines, link Items, and set quantity, price and availability.",
+        "Use Presentations to switch between GM Stock Manager and Browse Catalogue.",
+      ],
+      actionIds: ["stat-sheets.open", "stat-sheets.merchant-help"],
+    },
+    {
+      id: "record-a-trade",
+      title: "Record a trade",
+      steps: [
+        "On a shop's Stats tab, choose Trade on a stock line in the GM Stock Manager.",
+        "Pick buy or sell, the quantity and the price, and optionally who is trading.",
+        "Check the preview. It says whether any funds will move.",
+        "Choose Confirm trade. Nothing changes before that, and Cancel changes nothing.",
+      ],
+      actionIds: ["stat-sheets.open", "stat-sheets.merchant-help"],
+    },
+    {
+      id: "share-a-shop-with-players",
+      title: "Share a shop with players",
+      steps: [
+        "On the shop's Stats tab, tick Share this catalogue with players.",
+        "Choose which business details players may also see.",
+        "Choose Preview as player to see exactly what they receive.",
+        "Untick the box to stop sharing. Lines marked Hidden are never shared.",
+      ],
+      actionIds: ["stat-sheets.open", "stat-sheets.merchant-help"],
+    },
   ],
-  helpIds: ["stat-sheets", "sharing-templates"],
+  helpIds: ["stat-sheets", "merchant-sheets", "sharing-templates"],
   related: ["entity-templates"],
   actions: [
     {
@@ -43,6 +76,14 @@ export const statSheets: FeatureEntry = {
         type: "openPanel",
         panel: "settings-templates",
         label: "Open template settings",
+      },
+    },
+    {
+      id: "stat-sheets.merchant-help",
+      action: {
+        type: "openHelp",
+        helpId: "merchant-sheets",
+        label: "Read about Shops and Merchants",
       },
     },
     {
