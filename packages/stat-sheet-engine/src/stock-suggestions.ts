@@ -1,4 +1,5 @@
 import type { MoneyAmount, StockMeta } from "schema";
+import { parseMoney } from "./stock";
 import { STOCK_KEY, ensureRowIds, type StockRow } from "./stock";
 
 /**
@@ -617,7 +618,13 @@ export function editedStock(stock: StockMeta, edit: LineEdit = {}): StockMeta {
   const next: StockMeta = { ...stock };
   const quantity = wholeNumber(edit.quantity, 0);
   if (quantity !== undefined) next.quantity = quantity;
-  const units = wholeNumber(edit.price, 1);
-  if (units !== undefined && next.price) next.price = { ...next.price, units };
+  if (edit.price !== undefined && next.price) {
+    const price = parseMoney(
+      edit.price,
+      next.price.currency,
+      next.price.precision,
+    );
+    if (price && price.units >= 1) next.price = price;
+  }
   return next;
 }

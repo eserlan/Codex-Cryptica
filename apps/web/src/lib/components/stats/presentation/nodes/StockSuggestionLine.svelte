@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { ReviewedLine } from "@codex/stat-sheet-engine";
+  import { formatMoney, type ReviewedLine } from "@codex/stat-sheet-engine";
 
   export interface LineChoice {
     on?: boolean;
@@ -61,9 +61,10 @@
       <label class="flex items-center gap-1">
         <input
           type="number"
-          min="1"
+          min={10 ** -line.stock.price.precision}
+          step={10 ** -line.stock.price.precision}
           class="w-16 rounded border border-theme-border bg-theme-bg px-1 py-0.5 font-mono"
-          value={choice.price ?? String(line.stock.price.units)}
+          value={choice.price ?? formatMoney(line.stock.price, false)}
           oninput={(event) => onChange({ price: read(event).value })}
           aria-label={`Price for ${line.name}`}
         />

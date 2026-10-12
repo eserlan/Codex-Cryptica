@@ -127,6 +127,42 @@ describe("StockSuggestionPanel (#3965)", () => {
     expect(row.stock.price.units).toBe(42);
   });
 
+  it("shows and edits prices using fractional shop precision", async () => {
+    const existing = {
+      rowId: "priced-row",
+      name: "Existing stock",
+      stock: {
+        quantity: 1,
+        price: { units: 123, currency: "gp", precision: 2 },
+      },
+    };
+    const { onUpdateField } = setup([existing]);
+    await open();
+    const price = screen.getAllByLabelText(
+      /^Price for /,
+    )[0] as HTMLInputElement;
+    const name = price.getAttribute("aria-label")!.replace("Price for ", "");
+    expect(price.value).toMatch(/^\d+\.\d{2}$/);
+    expect(price.step).toBe("0.01");
+    await fireEvent.input(price, { target: { value: "1.50" } });
+    for (const box of screen.getAllByRole("checkbox", { name: /^Add / })) {
+      if (box.getAttribute("aria-label") !== `Add ${name}`) {
+        await fireEvent.click(box);
+      }
+    }
+    await fireEvent.click(screen.getByTestId("stock-suggest-add"));
+    const rows = onUpdateField.mock.calls[0][1].rows as {
+      name: string;
+      stock: { price?: unknown };
+    }[];
+    const added = rows.find((row) => row.name === name)!;
+    expect(added.stock.price).toEqual({
+      units: 150,
+      currency: "gp",
+      precision: 2,
+    });
+  });
+
   it("flags lines the shop already has and will not add them", async () => {
     const { onUpdateField } = setup([
       { rowId: "r", name: "Smoked river fish", stock: { quantity: 1 } },

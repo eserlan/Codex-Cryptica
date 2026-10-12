@@ -232,6 +232,18 @@ describe("editedStock", () => {
     expect(out.price).toEqual({ units: 25, currency: "gp", precision: 0 });
   });
 
+  test("parses decimal prices using the stock precision", () => {
+    const fractional = {
+      ...stock,
+      price: { units: 100, currency: "gp", precision: 2 },
+    };
+    expect(editedStock(fractional, { price: "1.50" }).price).toEqual({
+      units: 150,
+      currency: "gp",
+      precision: 2,
+    });
+  });
+
   test("ignores blank, fractional, negative and zero-price text", () => {
     expect(editedStock(stock, { quantity: "", price: "0" })).toEqual(stock);
     expect(editedStock(stock, { quantity: "2.5", price: "-4" })).toEqual(stock);
