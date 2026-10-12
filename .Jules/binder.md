@@ -303,3 +303,8 @@
 **Learning:** Standalone utility functions that publish domain events (like `publishSoloMapMove` in `solo-exploration-recorder.svelte.ts`) frequently rely on a hardcoded `Date.now()` for metadata timestamps. By injecting a `clock` parameter that defaults to `systemClock`, we maintain correct production functionality while exposing a clean seam for unit tests to control event timestamps deterministically.
 
 **Action:** When refactoring independent helper functions, append the `clock` dependency to the argument list with a default value of `systemClock`. Use `clock.now()` instead of `Date.now()`.
+
+## 2024-10-27 - Injecting IdGenerator into Svelte 5 component
+
+**Learning:** Svelte components that generate runtime IDs for logs or trades (e.g., `StockTradePanel.svelte`) occasionally hardcode `globalThis.crypto.randomUUID()`. This couples the component to the browser global, limiting testability.
+**Action:** Inject an `IdGenerator` prop via `$props()`, defaulting to `systemIdGenerator` from `$lib/utils/runtime-deps`, replacing hardcoded crypto calls with `idGenerator.uuid()`.

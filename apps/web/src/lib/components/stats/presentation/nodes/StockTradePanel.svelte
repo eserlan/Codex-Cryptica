@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { systemIdGenerator, type IdGenerator } from "$lib/utils/runtime-deps";
+
   import type { StatSheetField } from "schema";
   import {
     findWalletField,
@@ -25,6 +27,7 @@
     service = merchantTradeService,
     onClose,
     onDone = () => {},
+    idGenerator = systemIdGenerator,
   }: {
     shopId: string;
     field: StatSheetField;
@@ -34,6 +37,7 @@
     service?: Pick<MerchantTradeService, "execute">;
     onClose: () => void;
     onDone?: (outcome: TradeOutcome) => void;
+    idGenerator?: IdGenerator;
   } = $props();
 
   // A persisted pending record survives closing the panel or reloading the
@@ -42,8 +46,7 @@
   const pendingTrade = field.tradeLog?.find(
     (entry) => entry.status === "pending" && entry.rowId === row.rowId,
   );
-  const tradeId =
-    pendingTrade?.tradeId ?? `trade-${globalThis.crypto.randomUUID()}`;
+  const tradeId = pendingTrade?.tradeId ?? `trade-${idGenerator.uuid()}`;
 
   // svelte-ignore state_referenced_locally
   const linePrice = row.stock?.price as

@@ -343,6 +343,12 @@ Run all targeted tests and static analyses before committing:
    bun run lint:types
    bun run lint:affected
    ```
+6. **Rendered Deployment Smoke Check (#4013)**:
+   Once a Cloudflare Pages preview or staging build is available, verify the exact rendered artifact:
+   ```sh
+   bun run verify:rendered-answer <slug> [--base-url <preview-url>] [--mobile]
+   ```
+   _Asserts HTTP 200, matching H1, non-empty excerpt, canonical and SEO metadata, live R2 image assets (HEAD 200), valid internal links, and no horizontal overflow on mobile viewports (375px)._
 
 ---
 
