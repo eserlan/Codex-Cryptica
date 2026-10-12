@@ -44,13 +44,19 @@
   );
 
   const resolveName = (id: string) => vault.entities[id]?.title;
-  const findItem = (title: string) => {
-    const wanted = title.trim().toLowerCase();
-    const found = Object.values(vault.entities).find(
-      (e) => LINKABLE.includes(e.type) && e.title.toLowerCase() === wanted,
-    );
-    return found ? { id: found.id, title: found.title } : undefined;
-  };
+  // One pass over the vault per change, not one per suggested line.
+  const itemsByTitle = $derived.by(() => {
+    const index = new Map<string, { id: string; title: string }>();
+    for (const e of Object.values(vault.entities)) {
+      const key = e.title.toLowerCase();
+      if (LINKABLE.includes(e.type) && !index.has(key)) {
+        index.set(key, { id: e.id, title: e.title });
+      }
+    }
+    return index;
+  });
+  const findItem = (title: string) =>
+    itemsByTitle.get(title.trim().toLowerCase());
 
   const reviewed = $derived.by<{
     lines: ReviewedLine[];

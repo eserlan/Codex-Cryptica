@@ -279,3 +279,45 @@ describe("review fixes", () => {
     );
   });
 });
+
+describe("mixed shortage and surplus claims", () => {
+  test("imports and exports in one sentence are told apart", () => {
+    const ctx = deriveShopContext({
+      placeText: "Greyhaven imports salt and exports barley.",
+    });
+    expect(ctx.scarce).toContain("salt");
+    expect(ctx.plentiful).toContain("grain");
+    expect(ctx.plentiful).not.toContain("salt");
+  });
+
+  test("a 'but' clause does not flip the earlier claim", () => {
+    const ctx = deriveShopContext({
+      placeText: "Salt is scarce here, but timber is plentiful.",
+    });
+    expect(ctx.scarce).toContain("salt");
+    expect(ctx.plentiful).toContain("timber");
+    expect(ctx.plentiful).not.toContain("salt");
+  });
+
+  test("a scarce good is never cheaper or more plentiful than the baseline", () => {
+    const base = proposeStock(
+      deriveShopContext({ genre: "fantasy", shopText: "Sells salt." }),
+      { seed: "m" },
+    );
+    const scarce = proposeStock(
+      deriveShopContext({
+        genre: "fantasy",
+        shopText: "Sells salt.",
+        placeText: "The town imports salt and exports barley.",
+      }),
+      { seed: "m" },
+    );
+    const salt = (p: typeof base) => p.lines.find((l) => /salt/i.test(l.name))!;
+    expect(salt(scarce).stock.price!.units).toBeGreaterThan(
+      salt(base).stock.price!.units,
+    );
+    expect(salt(scarce).stock.quantity!).toBeLessThanOrEqual(
+      salt(base).stock.quantity!,
+    );
+  });
+});

@@ -220,17 +220,26 @@ function themesIn(text: string): string[] {
  * exports is plentiful, and an unmarked mention counts as plentiful because
  * a place that mentions timber usually has it.
  */
+/** Splits a sentence that makes both a shortage and a surplus claim. */
+function claimsOf(sentence: string): string[] {
+  if (!SCARCE_CUE.test(sentence) || !PLENTY_CUE.test(sentence)) {
+    return [sentence];
+  }
+  return sentence.split(/,|\b(?:but|and|while|whereas|yet)\b/i);
+}
+
 function placeThemes(text: string): { plentiful: string[]; scarce: string[] } {
   const plentiful = new Set<string>();
   const scarce = new Set<string>();
   for (const sentence of text.split(/[.!?\n;]+/)) {
-    const themes = themesIn(sentence);
-    if (themes.length === 0) continue;
-    const short = SCARCE_CUE.test(sentence);
-    const plenty = PLENTY_CUE.test(sentence);
-    for (const theme of themes) {
-      if (short && !plenty) scarce.add(theme);
-      else plentiful.add(theme);
+    for (const claim of claimsOf(sentence)) {
+      const themes = themesIn(claim);
+      const short = SCARCE_CUE.test(claim);
+      const plenty = PLENTY_CUE.test(claim);
+      for (const theme of themes) {
+        if (short && !plenty) scarce.add(theme);
+        else plentiful.add(theme);
+      }
     }
   }
   for (const theme of scarce) plentiful.delete(theme);
