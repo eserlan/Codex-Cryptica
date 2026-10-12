@@ -3,7 +3,11 @@
   import { mapStore } from "../../stores/map.svelte";
   import { mapSession } from "../../stores/map-session.svelte";
   import { TOKEN_STATUS_EFFECTS } from "../../../types/vtt";
-  import { isNoteCollapsed, snapPointToHexCenter } from "map-engine";
+  import {
+    formatHexLabel,
+    isNoteCollapsed,
+    snapPointToHexCenter,
+  } from "map-engine";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
   import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
   import { vault } from "../../stores/vault.svelte";
@@ -652,7 +656,8 @@
       </button>
     {/if}
     {#if hex}
-      {@const hexLabel = mapStore.formatHex(hex)}
+      {@const hexLabel =
+        mapStore.formatHex(hex) || formatHexLabel(hex, { style: "numeric" })}
       <div
         class="px-3 py-1.5 text-nano font-mono uppercase tracking-wider text-theme-muted border-b border-theme-border/50 mb-1 flex items-center justify-between gap-2"
       >

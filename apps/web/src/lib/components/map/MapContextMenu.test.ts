@@ -211,4 +211,53 @@ describe("MapContextMenu hex actions", () => {
     );
     expect(onClose).toHaveBeenCalled();
   });
+
+  it("uses a numeric coordinate when map labels are disabled", async () => {
+    mapStoreMock.formatHex.mockReturnValue("");
+    const onClose = vi.fn();
+    render(MapContextMenu, {
+      props: {
+        x: 10,
+        y: 20,
+        imgX: 50,
+        imgY: 50,
+        hex: { q: 1, r: 2, fogged: false },
+        onClose,
+      },
+    });
+
+    expect(screen.getByText("Hex 01.02")).toBeTruthy();
+    await fireEvent.click(
+      screen.getByRole("menuitem", { name: /Copy hex coordinate/ }),
+    );
+
+    expect(navigator.clipboard.writeText).toHaveBeenCalledWith("01.02");
+    expect(onClose).toHaveBeenCalled();
+  });
+
+  it("reports clipboard failures and closes the menu", async () => {
+    const writeText = vi.fn().mockRejectedValue(new Error("clipboard denied"));
+    Object.assign(navigator, { clipboard: { writeText } });
+    const onClose = vi.fn();
+    render(MapContextMenu, {
+      props: {
+        x: 10,
+        y: 20,
+        imgX: 50,
+        imgY: 50,
+        hex: { q: 1, r: 2, fogged: false },
+        onClose,
+      },
+    });
+
+    await fireEvent.click(
+      screen.getByRole("menuitem", { name: /Copy hex coordinate/ }),
+    );
+
+    expect(notificationStoreMock.notify).toHaveBeenCalledWith(
+      "Failed to copy hex coordinate",
+      "error",
+    );
+    expect(onClose).toHaveBeenCalled();
+  });
 });
