@@ -153,6 +153,7 @@ export const howDoIFindATabletopRpgGroupToPlayWith: AnswerConfigInput = {
     "how-do-i-run-a-successful-session-0",
     "what-do-i-need-to-bring-to-my-first-dnd-game",
     "what-should-a-new-dnd-player-know-before-their-first-game",
+    "how-do-i-get-my-friends-interested-in-playing-dnd",
   ],
   discovery: {
     id: "answer-find-rpg-group",

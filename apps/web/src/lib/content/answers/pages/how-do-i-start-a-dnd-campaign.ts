@@ -242,6 +242,7 @@ export const howDoIStartADndCampaign: AnswerConfigInput = {
     "what-should-a-new-dnd-player-know-before-their-first-game",
     "how-do-i-plan-story-arcs-for-an-rpg-campaign",
     "what-are-the-pros-and-cons-of-becoming-a-dungeon-master",
+    "how-do-i-get-my-friends-interested-in-playing-dnd",
   ],
   discovery: {
     id: "answer-start-dnd-campaign",

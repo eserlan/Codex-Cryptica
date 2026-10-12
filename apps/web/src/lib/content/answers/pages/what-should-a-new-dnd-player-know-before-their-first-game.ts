@@ -239,6 +239,7 @@ export const whatShouldANewDndPlayerKnowBeforeTheirFirstGame: AnswerConfigInput 
       "what-do-i-need-to-bring-to-my-first-dnd-game",
       "which-dice-do-i-roll-in-dnd-and-when",
       "what-are-the-pros-and-cons-of-becoming-a-dungeon-master",
+      "how-do-i-get-my-friends-interested-in-playing-dnd",
     ],
     discovery: {
       id: "answer-new-dnd-player-first-game",
