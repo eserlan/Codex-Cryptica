@@ -1,6 +1,20 @@
-import type { Entity } from "schema";
-import type { SearchOptions, SearchResult } from "schema";
+import {
+  isPlaceholderImageUrl,
+  type Entity,
+  type SearchOptions,
+  type SearchResult,
+} from "schema";
 import { matchesEntityQuery } from "$lib/utils/entity-search-match";
+
+export function hasEntityImage(entity: Entity): boolean {
+  if (!entity.image || typeof entity.image !== "string") return false;
+  const trimmed = entity.image.trim();
+  if (trimmed.length === 0) return false;
+  if (trimmed.startsWith("silhouette:") || trimmed === "placeholder")
+    return false;
+  if (isPlaceholderImageUrl(trimmed)) return false;
+  return true;
+}
 
 export interface EntitySearchService {
   search(query: string, options?: SearchOptions): Promise<SearchResult[]>;
@@ -100,9 +114,11 @@ export interface EntityMissingFields {
   summary: boolean;
   labels: boolean;
   connections: boolean;
+  image: boolean;
   isIncomplete: boolean;
 }
 
+export type ImageFilterMode = "all" | "has_image" | "missing_image";
 export type LabelFilterMode = "all" | "has_any" | "missing" | "has_none";
 export type ConnectionsFilterMode = "all" | "zero" | "has_connections";
 export type SummaryFilterMode = "all" | "has_summary" | "missing_summary";
@@ -110,6 +126,7 @@ export type DateFilterMode = "all" | "has_date" | "missing_date";
 
 export interface TableColumnFilters {
   nameQuery?: string;
+  imageMode?: ImageFilterMode;
   typeValues?: Set<string>;
   labelMode?: LabelFilterMode;
   labelValues?: Set<string>;
@@ -142,15 +159,18 @@ export function evaluateEntityMissingFields(
     connectionSummary?.total ??
     (connectionSummary?.inbound ?? 0) + (connectionSummary?.outbound ?? 0);
   const hasConnections = total > 0;
+  const hasImage = hasEntityImage(entity);
 
   const summaryMissing = !hasSummary;
   const labelsMissing = !hasLabels;
   const connectionsMissing = !hasConnections;
+  const imageMissing = !hasImage;
 
   return {
     summary: summaryMissing,
     labels: labelsMissing,
     connections: connectionsMissing,
+    image: imageMissing,
     isIncomplete: summaryMissing || labelsMissing || connectionsMissing,
   };
 }
@@ -243,6 +263,12 @@ export function filterEntities(
         if (!e.title.toLowerCase().includes(nameQ)) {
           continue;
         }
+      }
+
+      if (colFilters.imageMode === "missing_image") {
+        if (hasEntityImage(e)) continue;
+      } else if (colFilters.imageMode === "has_image") {
+        if (!hasEntityImage(e)) continue;
       }
 
       if (colFilters.typeValues && colFilters.typeValues.size > 0) {

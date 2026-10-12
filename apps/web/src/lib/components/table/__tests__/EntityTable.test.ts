@@ -466,5 +466,34 @@ describe("EntityTable", () => {
       expect(screen.getByTestId("column-filter-menu-connections")).toBeTruthy();
       expect(screen.getByText("Zero connections (0)")).toBeTruthy();
     });
+
+    it("opens title column filter menu and filters by missing image / portrait", async () => {
+      const onUpdateColumnFilters = vi.fn();
+      render(EntityTable, {
+        props: {
+          entities: rows,
+          vaultId: "v1",
+          sort,
+          connectionCounts,
+          onSort: vi.fn(),
+          onUpdateColumnFilters,
+        },
+      });
+
+      const titleFilterBtn = screen.getByTestId("column-filter-btn-title");
+      expect(titleFilterBtn).toBeTruthy();
+      await fireEvent.click(titleFilterBtn);
+
+      expect(screen.getByTestId("column-filter-menu-title")).toBeTruthy();
+      expect(screen.getByText("Missing image / portrait")).toBeTruthy();
+      expect(screen.getByText("Has image / portrait")).toBeTruthy();
+
+      await fireEvent.click(screen.getByText("Missing image / portrait"));
+      expect(onUpdateColumnFilters).toHaveBeenCalledWith(
+        expect.objectContaining({
+          imageMode: "missing_image",
+        }),
+      );
+    });
   });
 });
