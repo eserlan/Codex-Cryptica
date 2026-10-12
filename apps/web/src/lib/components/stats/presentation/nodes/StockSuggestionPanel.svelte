@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { StatSheetField } from "schema";
+  import type { MoneyAmount, StatSheetField } from "schema";
   import {
     applyAcceptedLines,
     deriveShopContext,
@@ -67,15 +67,14 @@
       genre: genre === "auto" ? undefined : genre,
       ...text,
     });
-    const currency = existingRows
-      .map(
-        (row) =>
-          (row.stock as { price?: { currency?: string } })?.price?.currency,
-      )
+    const priced = existingRows
+      .map((row) => (row.stock as { price?: MoneyAmount })?.price)
       .find(Boolean);
+    const { currency, precision } = priced ?? {};
     const proposal = proposeStock(ctx, {
       seed: `${context.entityId}:${round}`,
       currency,
+      precision,
     });
     const parts: string[] = [ctx.genre];
     if (ctx.plentiful.length)

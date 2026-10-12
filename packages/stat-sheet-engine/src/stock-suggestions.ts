@@ -316,6 +316,8 @@ export interface ProposeOptions {
   count?: number;
   /** Currency to use when the shop already prices things in one. */
   currency?: string;
+  /** Decimal places the shop already prices in; suggestions match it. */
+  precision?: number;
 }
 
 function scoreEntry(
@@ -339,8 +341,13 @@ function scoreEntry(
   return { score, matched };
 }
 
-function money(units: number, currency: string): MoneyAmount {
-  return { units: Math.max(1, Math.round(units)), currency, precision: 0 };
+function money(
+  price: number,
+  currency: string,
+  precision: number,
+): MoneyAmount {
+  const units = Math.round(price * 10 ** precision);
+  return { units: Math.max(1, units), currency, precision };
 }
 
 interface Supply {
@@ -389,6 +396,7 @@ function lineFor(
   context: ShopContext,
   matched: string[],
   currency: string,
+  precision: number,
   random: () => number,
   key: string,
 ): ProposedStockLine {
@@ -399,7 +407,7 @@ function lineFor(
   const service = item.kind === "service";
   const stock: StockMeta = {
     kind: service ? "service" : "item",
-    price: money(item.price * supply.multiplier, currency),
+    price: money(item.price * supply.multiplier, currency, precision),
     availability:
       supply.quantity <= 1 && supply.multiplier > 1 ? "reserved" : "available",
     note: SUGGESTION_NOTE,
@@ -449,6 +457,10 @@ export function proposeStock(
 ): StockProposal {
   const random = seeded(options.seed ?? "shop");
   const currency = options.currency?.trim() || CURRENCY[context.genre];
+  const precision = Math.min(
+    Math.max(Math.trunc(options.precision ?? 0), 0),
+    6,
+  );
   const maxRarity = WEALTH_RANK[context.wealth];
   const count = Math.min(Math.max(options.count ?? 8, 1), 16);
 
@@ -474,6 +486,7 @@ export function proposeStock(
       context,
       candidate.matched,
       currency,
+      precision,
       random,
       `s${index}`,
     ),
@@ -596,7 +609,7 @@ function wholeNumber(
 ): number | undefined {
   if (text === undefined || text.trim() === "") return undefined;
   const value = Number(text);
-  return Number.isInteger(value) && value >= min ? value : undefined;
+  return Number.isSafeInteger(value) && value >= min ? value : undefined;
 }
 
 /** The proposed stock with the GM's edits applied; invalid text is ignored. */

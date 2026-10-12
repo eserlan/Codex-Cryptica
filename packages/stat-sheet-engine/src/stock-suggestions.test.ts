@@ -243,3 +243,27 @@ describe("editedStock", () => {
     expect(stock.quantity).toBe(3);
   });
 });
+
+describe("review fixes", () => {
+  test("suggested prices follow the shop's currency and precision", () => {
+    const p = proposeStock(deriveShopContext({ genre: "fantasy" }), {
+      currency: "sp",
+      precision: 2,
+    });
+    for (const l of p.lines) {
+      expect(l.stock.price?.currency).toBe("sp");
+      expect(l.stock.price?.precision).toBe(2);
+      expect(l.stock.price!.units).toBeGreaterThanOrEqual(100);
+    }
+  });
+
+  test("an unsafe typed number is ignored", () => {
+    const stock = {
+      quantity: 3,
+      price: { units: 10, currency: "gp", precision: 0 },
+    };
+    expect(editedStock(stock, { quantity: "1e21", price: "1e300" })).toEqual(
+      stock,
+    );
+  });
+});
