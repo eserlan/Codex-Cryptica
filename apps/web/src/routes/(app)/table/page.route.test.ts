@@ -217,4 +217,89 @@ describe("/table page", () => {
     expect(rows).toHaveLength(1);
     expect(rows[0].textContent).toContain("Aldric");
   });
+
+  it("opens VaultAuditPanel with distribution tab when URL has ?mode=overview", () => {
+    mockPage.url = new URL("http://localhost/table?mode=overview");
+    mutableVault.allEntities = [
+      entity({ id: "e1", title: "Aldric", type: "character" }),
+      entity({ id: "e2", title: "Brindlewood", type: "location" }),
+    ];
+    render(RoutePage);
+
+    expect(screen.getByTestId("vault-audit-panel")).toBeTruthy();
+    expect(screen.getByTestId("vault-distribution-chart")).toBeTruthy();
+  });
+
+  it("switches between findings and distribution tabs inside VaultAuditPanel", async () => {
+    mutableVault.allEntities = [
+      entity({ id: "e1", title: "Aldric", type: "character" }),
+      entity({ id: "e2", title: "Brindlewood", type: "location" }),
+    ];
+    render(RoutePage);
+
+    const auditBtn = screen.getByTestId("entity-table-audit-toggle");
+    await fireEvent.click(auditBtn);
+
+    // Starts in findings tab
+    expect(screen.getByTestId("audit-card-missing-images")).toBeTruthy();
+
+    // Click distribution tab
+    const distTab = screen.getByTestId("audit-tab-distribution");
+    await fireEvent.click(distTab);
+
+    expect(screen.getByTestId("vault-distribution-chart")).toBeTruthy();
+    expect(screen.queryByTestId("audit-card-missing-images")).toBeNull();
+
+    // Switch back to findings tab
+    const findingsTab = screen.getByTestId("audit-tab-findings");
+    await fireEvent.click(findingsTab);
+
+    expect(screen.getByTestId("audit-card-missing-images")).toBeTruthy();
+  });
+
+  it("filters table entities when clicking a distribution category bar", async () => {
+    mockPage.url = new URL("http://localhost/table?mode=overview");
+    mutableVault.allEntities = [
+      entity({ id: "e1", title: "Aldric", type: "character" }),
+      entity({ id: "e2", title: "Brindlewood", type: "location" }),
+    ];
+    render(RoutePage);
+
+    const charBar = screen.getByTestId("distribution-bar-character");
+    await fireEvent.click(charBar);
+
+    const rows = screen.getAllByTestId("entity-table-row");
+    expect(rows).toHaveLength(1);
+    expect(rows[0].textContent).toContain("Aldric");
+  });
+
+  it("filters table entities when clicking a distribution label bar", async () => {
+    mockPage.url = new URL("http://localhost/table?mode=overview");
+    mutableVault.allEntities = [
+      entity({
+        id: "e1",
+        title: "Aldric",
+        type: "character",
+        labels: ["Hero"],
+      }),
+      entity({
+        id: "e2",
+        title: "Brindlewood",
+        type: "location",
+        labels: ["Place"],
+      }),
+    ];
+    render(RoutePage);
+
+    // Switch to By Label
+    const labelGroupBtn = screen.getByTestId("distribution-group-label");
+    await fireEvent.click(labelGroupBtn);
+
+    const heroBar = screen.getByTestId("distribution-bar-Hero");
+    await fireEvent.click(heroBar);
+
+    const rows = screen.getAllByTestId("entity-table-row");
+    expect(rows).toHaveLength(1);
+    expect(rows[0].textContent).toContain("Aldric");
+  });
 });
