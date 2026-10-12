@@ -202,6 +202,30 @@ describe("StockSuggestionPanel (#3965)", () => {
     expect(linked.filter((r) => r.entityId === "lantern")).toHaveLength(1);
   });
 
+  it("trying another set changes the proposal and clears earlier choices", async () => {
+    setup();
+    await open();
+    const snapshot = () =>
+      screen
+        .getAllByTestId("stock-suggest-line")
+        .map((l) => l.textContent)
+        .join("|");
+    const first = snapshot();
+    const [firstBox] = screen.getAllByRole("checkbox", { name: /^Add / });
+    await fireEvent.click(firstBox);
+    expect((firstBox as HTMLInputElement).checked).toBe(false);
+
+    let changed = false;
+    for (let i = 0; i < 6 && !changed; i++) {
+      await fireEvent.click(screen.getByTestId("stock-suggest-reroll"));
+      changed = snapshot() !== first;
+    }
+    expect(changed).toBe(true);
+    for (const box of screen.getAllByRole("checkbox", { name: /^Add / })) {
+      expect((box as HTMLInputElement).checked).toBe(true);
+    }
+  });
+
   it("cancel adds nothing", async () => {
     const { onUpdateField } = setup();
     await open();

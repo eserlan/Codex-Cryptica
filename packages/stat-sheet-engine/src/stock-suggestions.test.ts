@@ -321,3 +321,15 @@ describe("mixed shortage and surplus claims", () => {
     );
   });
 });
+
+describe("re-rolling", () => {
+  test("different seeds give different proposals for the same context", () => {
+    const ctx = deriveShopContext({ genre: "fantasy" });
+    const seen = new Set(
+      ["a", "b", "c", "d", "e", "f"].map((seed) =>
+        JSON.stringify(proposeStock(ctx, { seed }).lines),
+      ),
+    );
+    expect(seen.size).toBeGreaterThan(1);
+  });
+});
