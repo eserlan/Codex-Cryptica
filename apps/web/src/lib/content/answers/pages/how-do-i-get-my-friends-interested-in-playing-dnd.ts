@@ -49,7 +49,7 @@ export const howDoIGetMyFriendsInterestedInPlayingDnd: AnswerConfigInput = {
           text: "A My Little Pony-inspired friendship fantasy, or any other setting you love to create, is fine if the group likes the premise. The skill to build is not abandoning homebrew but starting it in one small location with a playable problem. Loving to create a world and giving players things to do in it are related but not the same: the first belongs in your notes, the second belongs in the opening scene.",
         },
         {
-          term: "Make the first twenty minutes playable",
+          term: "Make the opening playable early in the session",
           text: "Begin with a concrete choice, a small mystery, or a request from an approachable non-player character. Give each person a chance to contribute through a decision rather than a performance test, and show a consequence quickly so choices feel real. Two to three leads, one conversation, and one meaningful decision is plenty for an evening.",
         },
         {
@@ -99,7 +99,7 @@ export const howDoIGetMyFriendsInterestedInPlayingDnd: AnswerConfigInput = {
         },
         {
           term: "Why it works",
-          text: "The opening is playable in twenty minutes, uses no lore beyond what the DM says in the square, and does not require voices or acting skill. The sealed letter creates curiosity without coercion, the leads keep the table moving, and the final decision has a visible, friendly consequence the players can recognise next time they meet Mara. The homebrew premise sets tone without adding required reading, and the clean ending respects consent: curiosity was enough to start, and continuation is a real choice.",
+          text: "The opening can become playable early in the session, uses no lore beyond what the DM says in the square, and does not require voices or acting skill. The sealed letter creates curiosity without coercion, the leads keep the table moving, and the final decision has a visible, friendly consequence the players can recognise next time they meet Mara. The homebrew premise sets tone without adding required reading, and the clean ending respects consent: curiosity was enough to start, and continuation is a real choice.",
         },
       ],
     },
@@ -116,7 +116,7 @@ export const howDoIGetMyFriendsInterestedInPlayingDnd: AnswerConfigInput = {
         "You have told the group that describing actions in third person is valid and that no one must do voices.",
         "Any prop is a single, low-effort item to reveal at the table, not a task sent between sessions.",
         "If you use homebrew, the first session is one small location with a playable problem, not the whole setting.",
-        "The opening gives a concrete choice within twenty minutes and a visible consequence before the session ends.",
+        "The opening gives a concrete choice early in the session and a visible consequence before the session ends.",
         "You have a short, kind question ready for afterwards: what did you enjoy and do you want to continue, change, or stop?",
       ],
     },
@@ -212,7 +212,7 @@ export const howDoIGetMyFriendsInterestedInPlayingDnd: AnswerConfigInput = {
       {
         with: "answer-session-engagement",
         reason:
-          "The session-engagement answer covers making play itself compelling once the group is at the table; this page is the earlier step of securing a low-pressure try-out and making the first twenty minutes playable for beginners.",
+          "The session-engagement answer covers making play itself compelling once the group is at the table; this page is the earlier step of securing a low-pressure try-out and making the opening playable early in the session for beginners.",
       },
       {
         with: "answer-session-zero",
@@ -235,7 +235,7 @@ export const howDoIGetMyFriendsInterestedInPlayingDnd: AnswerConfigInput = {
     title:
       "How do I get my friends interested in playing D&D? | Codex Cryptica",
     description:
-      "Invite curious friends to a low-pressure D&D try-out: short adventure, no homework, optional props, and a playable first twenty minutes.",
+      "Invite curious friends to a low-pressure D&D try-out: short adventure, no homework, optional props, and a playable opening early in the session.",
     image:
       "https://assets.codexcryptica.com/og/how-do-i-get-my-friends-interested-in-playing-dnd.jpg",
     imageAlt:
