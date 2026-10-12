@@ -2,6 +2,7 @@ import type { ImageFocus, Point } from "schema";
 import { normalizeImageFocus } from "schema";
 import { normalizeSpatialImageTransform } from "@codex/spatial-engine";
 import { normalizeMapLayer, type MapLayer } from "./layers";
+import type { HexLabelConfig } from "./hex-labels";
 
 export type SessionMode = "exploration" | "combat";
 export type TokenVisibility = "all" | "gm-only";
@@ -171,6 +172,7 @@ export interface EncounterSession {
   gridSize?: number;
   gridType?: "square" | "hex-pointy" | "hex-flat";
   showHexCoordinates?: boolean;
+  hexLabelConfig?: HexLabelConfig;
   gridUnit?: string;
   gridDistance?: number;
   /** GM-chosen fog colour (#rrggbb); null means the theme colour. */

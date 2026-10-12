@@ -175,4 +175,55 @@ describe("drawHexGrid", () => {
     const texts = textCalls.map((c: any[]) => c[0]);
     expect(texts.some((t: string) => /^-?\d{2}\.-?\d{2}$/.test(t))).toBe(true);
   });
+
+  it("renders alphanumeric coordinate labels when labelConfig style is alphanumeric", () => {
+    const ctx = createCtxMock();
+    const transform = { pan: { x: 0, y: 0 }, zoom: 1 };
+    const canvasSize = { width: 400, height: 400 };
+    const grid: HexGridRenderOptions = {
+      type: "hex-pointy",
+      size: 50,
+      color: "#ffffff",
+      opacity: 0.7,
+      labelConfig: {
+        style: "alphanumeric",
+        startCol: "A",
+        startRow: 1,
+        rowPadding: 2,
+      },
+    };
+
+    drawHexGrid(ctx, transform, canvasSize, grid);
+
+    expect(ctx.stroke).toHaveBeenCalled();
+    expect(ctx.fillText).toHaveBeenCalled();
+    const textCalls = (ctx.fillText as any).mock.calls;
+    const texts = textCalls.map((c: any[]) => c[0]);
+    expect(texts.some((t: string) => /^[A-Z]\d{2}$/.test(t))).toBe(true);
+  });
+
+  it("renders axial coordinate labels when labelConfig style is axial", () => {
+    const ctx = createCtxMock();
+    const transform = { pan: { x: 0, y: 0 }, zoom: 1 };
+    const canvasSize = { width: 400, height: 400 };
+    const grid: HexGridRenderOptions = {
+      type: "hex-pointy",
+      size: 50,
+      color: "#ffffff",
+      opacity: 0.7,
+      labelConfig: {
+        style: "axial",
+      },
+    };
+
+    drawHexGrid(ctx, transform, canvasSize, grid);
+
+    expect(ctx.stroke).toHaveBeenCalled();
+    expect(ctx.fillText).toHaveBeenCalled();
+    const textCalls = (ctx.fillText as any).mock.calls;
+    const texts = textCalls.map((c: any[]) => c[0]);
+    expect(texts.some((t: string) => /^\(-?\d+,\s*-?\d+\)$/.test(t))).toBe(
+      true,
+    );
+  });
 });

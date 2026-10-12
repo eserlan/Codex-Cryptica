@@ -113,6 +113,7 @@ describe("MapStore settings persistence", () => {
         showGrid: true,
         gridType: "square",
         showHexCoordinates: false,
+        hexLabelConfig: { style: "none" },
         brushRadius: 88,
         gridSize: 120,
         gridOffsetX: 12,
@@ -167,6 +168,12 @@ describe("MapStore settings persistence", () => {
     store.showGrid = true;
     store.gridType = "hex-pointy";
     store.showHexCoordinates = true;
+    store.hexLabelConfig = {
+      style: "alphanumeric",
+      startCol: "A",
+      startRow: 1,
+      rowPadding: 2,
+    };
 
     await waitFor(() => {
       const raw = window.localStorage.getItem("codex-map-settings:map-hex");
@@ -174,6 +181,7 @@ describe("MapStore settings persistence", () => {
       const parsed = JSON.parse(raw!);
       expect(parsed.gridType).toBe("hex-pointy");
       expect(parsed.showHexCoordinates).toBe(true);
+      expect(parsed.hexLabelConfig.style).toBe("alphanumeric");
     });
 
     // Create a new store to verify restoration
@@ -181,6 +189,24 @@ describe("MapStore settings persistence", () => {
     store2.selectMap("map-hex");
     expect(store2.gridType).toBe("hex-pointy");
     expect(store2.showHexCoordinates).toBe(true);
+    expect(store2.hexLabelConfig.style).toBe("alphanumeric");
+    expect(store2.formatHex({ q: 1, r: 0 })).toBe("B01");
+  });
+
+  it("falls back to the legacy numeric style for invalid saved label configs", () => {
+    window.localStorage.setItem(
+      "codex-map-settings:map-invalid-labels",
+      JSON.stringify({
+        showHexCoordinates: true,
+        hexLabelConfig: { style: "unknown" },
+      }),
+    );
+
+    const store = new MapStore();
+    store.selectMap("map-invalid-labels");
+
+    expect(store.hexLabelConfig).toEqual({ style: "numeric" });
+    expect(store.formatHex({ q: 1, r: 4 })).toBe("01.04");
   });
 
   it("places and drags pins at hex centers with their axial coordinates", async () => {

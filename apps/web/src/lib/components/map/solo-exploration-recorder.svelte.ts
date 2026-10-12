@@ -45,6 +45,7 @@ export interface SoloExplorationState {
   showHexCoordinates: boolean;
   mapId: string | null;
   assetsReady: boolean;
+  formatHex?: (hex: HexCoord) => string;
 }
 
 export interface SoloExplorationRecorderDeps {
@@ -121,6 +122,7 @@ export function createSoloExplorationRecorder(deps: {
       showHexCoordinates: deps.mapStore.showHexCoordinates,
       mapId: deps.mapStore.activeMapId,
       assetsReady: Boolean(deps.getMaskCanvas() && deps.getMapImage()),
+      formatHex: (coord) => deps.mapStore.formatHex(coord),
     }),
   });
 }
@@ -406,6 +408,11 @@ export class SoloExplorationRecorder {
     };
     if (this.pendingBefore && this.pendingNeedsUndo)
       this.deps.undo.commit("Map Exploration", this.pendingBefore);
+    const toHexLabel =
+      move.destination && state.formatHex
+        ? state.formatHex(move.destination)
+        : null;
+    const showCoordinates = state.showHexCoordinates && toHexLabel !== "";
     this.deps.publishCapture(
       formatMapMove({
         mapId: state.mapId!,
@@ -414,7 +421,8 @@ export class SoloExplorationRecorder {
         distance: move.travel.distance,
         unit: move.travel.unit,
         revealed: this.pendingRevealed.size,
-        showCoordinates: state.showHexCoordinates,
+        showCoordinates,
+        toHexLabel,
       }),
     );
   }

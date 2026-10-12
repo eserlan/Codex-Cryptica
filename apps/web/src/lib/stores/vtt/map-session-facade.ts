@@ -1,6 +1,7 @@
 import { summarizeEncounterSession } from "$lib/services/vtt-session";
 import type { RollResult } from "dice-engine";
 import type { Point } from "schema";
+import type { HexLabelConfig } from "map-engine";
 import type { GridType } from "../map.svelte";
 import type { VTTChatManager } from "./vtt-chat-manager.svelte";
 import type { VTTEncounterManager } from "./vtt-encounter-manager.svelte";
@@ -700,6 +701,7 @@ export abstract class MapSessionFacade {
     gridSize?: number;
     gridType?: GridType;
     showHexCoordinates?: boolean;
+    hexLabelConfig?: HexLabelConfig;
     gridUnit?: string;
     gridDistance?: number;
     fogColor?: string | null;
@@ -713,6 +715,7 @@ export abstract class MapSessionFacade {
     gridDistance?: number;
     gridType?: GridType;
     showHexCoordinates?: boolean;
+    hexLabelConfig?: HexLabelConfig;
     fogColor?: string | null;
   }) {
     this.gridManager.setGridSettings(settings);
