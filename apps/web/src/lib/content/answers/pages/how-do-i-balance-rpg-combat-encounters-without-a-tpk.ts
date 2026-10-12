@@ -146,6 +146,7 @@ export const howDoIBalanceRpgCombatEncountersWithoutATpk: AnswerConfigInput = {
     "how-do-i-keep-players-engaged-during-other-players-turns-in-combat",
     "how-do-i-prepare-a-dnd-session",
     "how-do-i-combine-multiple-enemies-into-one-squad-in-an-rpg",
+    "which-tabletop-rpgs-have-squad-and-mass-battle-rules",
   ],
   discovery: {
     id: "answer-encounter-balance",

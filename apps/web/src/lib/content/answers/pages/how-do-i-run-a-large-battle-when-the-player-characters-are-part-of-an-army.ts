@@ -199,6 +199,7 @@ export const howDoIRunALargeBattleWhenThePlayerCharactersArePartOfAnArmy: Answer
       "how-do-fantasy-cities-defend-against-flying-creatures-and-teleportation",
       "how-do-i-run-ship-to-ship-combat-without-sidelining-the-party",
       "how-do-i-combine-multiple-enemies-into-one-squad-in-an-rpg",
+      "which-tabletop-rpgs-have-squad-and-mass-battle-rules",
     ],
     discovery: {
       id: "answer-large-battle-pcs-in-army",
