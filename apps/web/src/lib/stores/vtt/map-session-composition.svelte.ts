@@ -353,6 +353,10 @@ export function initializeMapSessionComposition(
     setShowHexCoordinates: (value) => {
       store.deps.mapStore.showHexCoordinates = value;
     },
+    getHexLabelConfig: () => store.deps.mapStore.hexLabelConfig,
+    setHexLabelConfig: (value) => {
+      store.deps.mapStore.hexLabelConfig = value;
+    },
     getFogColor: () => store.deps.mapStore.fogColor,
     setFogColor: (value) => {
       store.deps.mapStore.fogColor = value;

@@ -1,6 +1,11 @@
 <script lang="ts">
   import { mapSession } from "$lib/stores/map-session.svelte";
   import { mapStore, type GridType } from "$lib/stores/map.svelte";
+  import {
+    type HexLabelConfig,
+    type HexLabelStyle,
+    formatHexLabel,
+  } from "map-engine";
   import { fade } from "svelte/transition";
   import VTTGridFitSection from "./VTTGridFitSection.svelte";
 
@@ -8,7 +13,13 @@
 
   let gridSize = $state(mapStore.gridSize);
   let gridType = $state<GridType>(mapStore.gridType);
-  let showHexCoordinates = $state(mapStore.showHexCoordinates);
+  const initialHexConfig = mapStore.hexLabelConfig;
+  let hexLabelStyle = $state<HexLabelStyle>(initialHexConfig.style);
+  let hexStartColumn = $state(initialHexConfig.startColumn ?? "A");
+  let hexStartRow = $state(initialHexConfig.startRow ?? 1);
+  let hexRowPadding = $state(initialHexConfig.rowPadding ?? 2);
+  let hexSeparator = $state(initialHexConfig.separator ?? "");
+  let hexInvertRow = $state(initialHexConfig.invertRow ?? false);
   let gridUnit = $state(mapSession.gridUnit);
   let gridDistance = $state(mapSession.gridDistance);
 
@@ -17,11 +28,31 @@
     gridType === "hex-flat" ? "down a column" : "across a row",
   );
 
+  const currentHexLabelConfig = $derived<HexLabelConfig>({
+    style: hexLabelStyle,
+    startCol: (hexStartColumn || "A").toUpperCase(),
+    startColumn: (hexStartColumn || "A").toUpperCase(),
+    startRow: Number(hexStartRow) || 1,
+    rowPadding: Number(hexRowPadding) || 2,
+    separator: hexSeparator,
+    invertRow: hexInvertRow,
+  });
+
+  const previewHexLabel = $derived.by(() => {
+    if (hexLabelStyle === "off") return "None";
+    return formatHexLabel(
+      { q: 0, r: 0 },
+      currentHexLabelConfig,
+      gridType === "hex-flat" ? "flat" : "pointy",
+    );
+  });
+
   /** Start the fit with the grid type chosen here, not the one last saved. */
   function startFit() {
     mapSession.setGridSettings({
       gridType,
-      showHexCoordinates,
+      showHexCoordinates: hexLabelStyle !== "off",
+      hexLabelConfig: currentHexLabelConfig,
       gridUnit,
       gridDistance,
     });
@@ -33,7 +64,8 @@
     mapSession.setGridSettings({
       gridSize,
       gridType,
-      showHexCoordinates,
+      showHexCoordinates: hexLabelStyle !== "off",
+      hexLabelConfig: currentHexLabelConfig,
       gridUnit,
       gridDistance,
     });
@@ -50,6 +82,7 @@
   }
 </script>
 
+<!-- fallow-ignore-next-line complexity -->
 <svelte:window onkeydown={onKeyDown} />
 
 <div class="fixed inset-0 flex items-center justify-center z-[200] p-4">
@@ -60,7 +93,7 @@
     aria-label="Dismiss Grid Settings Backdrop"
   ></button>
   <div
-    class="bg-theme-surface border border-theme-border p-6 rounded-xl max-w-sm w-full shadow-2xl relative z-10"
+    class="bg-theme-surface border border-theme-border p-6 rounded-xl max-w-md w-full shadow-2xl relative z-10 max-h-[90vh] overflow-y-auto"
     onclick={(e) => e.stopPropagation()}
     onkeydown={(e) => e.stopPropagation()}
     transition:fade={{ duration: 150 }}
@@ -145,25 +178,185 @@
 
       {#if gridType === "hex-pointy" || gridType === "hex-flat"}
         <div
-          class="flex items-center justify-between p-2 rounded-md bg-theme-bg border border-theme-border"
+          class="space-y-3 p-3 rounded-lg bg-theme-bg border border-theme-border"
         >
-          <div class="space-y-0.5">
-            <label
-              class="text-xs font-medium text-theme-text cursor-pointer"
-              for="hex-coords-toggle"
+          <div class="flex items-center justify-between">
+            <span
+              id="hex-label-style-label"
+              class="text-micro font-mono text-theme-muted uppercase tracking-widest"
             >
-              Show Hex Coordinates
-            </label>
-            <p class="text-nano text-theme-muted">
-              Display axial (q.r) labels in hex centers
-            </p>
+              Hex Labels
+            </span>
+            {#if hexLabelStyle !== "off"}
+              <span
+                class="text-nano font-mono text-theme-primary bg-theme-primary/10 px-1.5 py-0.5 rounded border border-theme-primary/20"
+              >
+                Sample: {previewHexLabel}
+              </span>
+            {/if}
           </div>
-          <input
-            id="hex-coords-toggle"
-            type="checkbox"
-            bind:checked={showHexCoordinates}
-            class="accent-theme-primary rounded w-4 h-4 cursor-pointer"
-          />
+
+          <!-- Label Style Selector -->
+          <div
+            class="grid grid-cols-2 gap-2"
+            role="group"
+            aria-labelledby="hex-label-style-label"
+          >
+            <button
+              type="button"
+              aria-pressed={hexLabelStyle === "off"}
+              class="px-2 py-1.5 rounded border text-xs font-medium flex items-center justify-center gap-1.5 transition-colors {hexLabelStyle ===
+              'off'
+                ? 'border-theme-primary bg-theme-primary/10 text-theme-primary font-bold'
+                : 'border-theme-border text-theme-muted hover:border-theme-muted hover:text-theme-text'}"
+              onclick={() => {
+                hexLabelStyle = "off";
+              }}
+            >
+              <span
+                class="icon-[lucide--eye-off] w-3.5 h-3.5"
+                aria-hidden="true"
+              ></span>
+              <span>Off</span>
+            </button>
+            <button
+              type="button"
+              aria-pressed={hexLabelStyle === "alphanumeric"}
+              class="px-2 py-1.5 rounded border text-xs font-medium flex items-center justify-center gap-1.5 transition-colors {hexLabelStyle ===
+              'alphanumeric'
+                ? 'border-theme-primary bg-theme-primary/10 text-theme-primary font-bold'
+                : 'border-theme-border text-theme-muted hover:border-theme-muted hover:text-theme-text'}"
+              onclick={() => {
+                hexLabelStyle = "alphanumeric";
+              }}
+            >
+              <span class="icon-[lucide--type] w-3.5 h-3.5" aria-hidden="true"
+              ></span>
+              <span>Alphanumeric (A01)</span>
+            </button>
+            <button
+              type="button"
+              aria-pressed={hexLabelStyle === "numeric"}
+              class="px-2 py-1.5 rounded border text-xs font-medium flex items-center justify-center gap-1.5 transition-colors {hexLabelStyle ===
+              'numeric'
+                ? 'border-theme-primary bg-theme-primary/10 text-theme-primary font-bold'
+                : 'border-theme-border text-theme-muted hover:border-theme-muted hover:text-theme-text'}"
+              onclick={() => {
+                hexLabelStyle = "numeric";
+              }}
+            >
+              <span class="icon-[lucide--hash] w-3.5 h-3.5" aria-hidden="true"
+              ></span>
+              <span>Numeric (01.04)</span>
+            </button>
+            <button
+              type="button"
+              aria-pressed={hexLabelStyle === "axial"}
+              class="px-2 py-1.5 rounded border text-xs font-medium flex items-center justify-center gap-1.5 transition-colors {hexLabelStyle ===
+              'axial'
+                ? 'border-theme-primary bg-theme-primary/10 text-theme-primary font-bold'
+                : 'border-theme-border text-theme-muted hover:border-theme-muted hover:text-theme-text'}"
+              onclick={() => {
+                hexLabelStyle = "axial";
+              }}
+            >
+              <span
+                class="icon-[lucide--compass] w-3.5 h-3.5"
+                aria-hidden="true"
+              ></span>
+              <span>Axial (q, r)</span>
+            </button>
+          </div>
+
+          {#if hexLabelStyle === "alphanumeric"}
+            <div class="pt-2 border-t border-theme-border/50 space-y-3">
+              <div class="grid grid-cols-2 gap-3">
+                <div class="space-y-1">
+                  <label
+                    class="text-nano font-mono text-theme-muted uppercase tracking-wider block"
+                    for="hex-start-col"
+                  >
+                    Start Column
+                  </label>
+                  <input
+                    id="hex-start-col"
+                    type="text"
+                    maxlength="3"
+                    bind:value={hexStartColumn}
+                    placeholder="A"
+                    class="w-full bg-theme-surface border border-theme-border text-theme-text px-2.5 py-1.5 rounded text-xs focus:border-theme-primary outline-none font-mono uppercase"
+                  />
+                </div>
+                <div class="space-y-1">
+                  <label
+                    class="text-nano font-mono text-theme-muted uppercase tracking-wider block"
+                    for="hex-start-row"
+                  >
+                    Start Row
+                  </label>
+                  <input
+                    id="hex-start-row"
+                    type="number"
+                    min="0"
+                    max="999"
+                    bind:value={hexStartRow}
+                    class="w-full bg-theme-surface border border-theme-border text-theme-text px-2.5 py-1.5 rounded text-xs focus:border-theme-primary outline-none font-mono"
+                  />
+                </div>
+              </div>
+
+              <div class="grid grid-cols-2 gap-3">
+                <div class="space-y-1">
+                  <label
+                    class="text-nano font-mono text-theme-muted uppercase tracking-wider block"
+                    for="hex-row-padding"
+                  >
+                    Row Digits
+                  </label>
+                  <select
+                    id="hex-row-padding"
+                    bind:value={hexRowPadding}
+                    class="w-full bg-theme-surface border border-theme-border text-theme-text px-2 py-1.5 rounded text-xs focus:border-theme-primary outline-none"
+                  >
+                    <option value={2}>2 digits (01, 02)</option>
+                    <option value={1}>1 digit (1, 2)</option>
+                  </select>
+                </div>
+                <div class="space-y-1">
+                  <label
+                    class="text-nano font-mono text-theme-muted uppercase tracking-wider block"
+                    for="hex-separator"
+                  >
+                    Separator
+                  </label>
+                  <select
+                    id="hex-separator"
+                    bind:value={hexSeparator}
+                    class="w-full bg-theme-surface border border-theme-border text-theme-text px-2 py-1.5 rounded text-xs focus:border-theme-primary outline-none"
+                  >
+                    <option value="">None (A01)</option>
+                    <option value="-">Hyphen (A-01)</option>
+                    <option value=".">Dot (A.01)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="flex items-center justify-between pt-1">
+                <label
+                  class="text-xs text-theme-text cursor-pointer flex items-center gap-2"
+                  for="hex-invert-row"
+                >
+                  <input
+                    id="hex-invert-row"
+                    type="checkbox"
+                    bind:checked={hexInvertRow}
+                    class="accent-theme-primary rounded w-3.5 h-3.5 cursor-pointer"
+                  />
+                  <span>Count south-to-north (inverted)</span>
+                </label>
+              </div>
+            </div>
+          {/if}
         </div>
       {/if}
 

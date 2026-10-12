@@ -10,6 +10,7 @@
   import SpatialImageControls from "$lib/components/spatial/SpatialImageControls.svelte";
   import ImageFocusMenu from "$lib/components/ui/ImageFocusMenu.svelte";
   import LayerMenu from "$lib/components/ui/LayerMenu.svelte";
+  import { notificationStore } from "$lib/stores/ui/notification.svelte";
 
   let {
     x,
@@ -651,6 +652,41 @@
       </button>
     {/if}
     {#if hex}
+      {@const hexLabel = mapStore.formatHex(hex)}
+      <div
+        class="px-3 py-1.5 text-nano font-mono uppercase tracking-wider text-theme-muted border-b border-theme-border/50 mb-1 flex items-center justify-between gap-2"
+      >
+        <span class="flex items-center gap-1.5 font-bold text-theme-primary">
+          <span
+            class="icon-[lucide--hexagon] w-3 h-3 text-theme-primary"
+            aria-hidden="true"
+          ></span>
+          <span>Hex {hexLabel}</span>
+        </span>
+      </div>
+      <button
+        type="button"
+        class="w-full text-left px-3 py-2 text-xs hover:bg-theme-bg/50 transition-colors flex items-center gap-2 text-theme-text"
+        role="menuitem"
+        onclick={async () => {
+          try {
+            await navigator.clipboard.writeText(hexLabel);
+            notificationStore.notify(
+              `Copied hex coordinate "${hexLabel}"`,
+              "info",
+            );
+          } catch (_err) {
+            notificationStore.notify("Failed to copy hex coordinate", "error");
+          }
+          onClose();
+        }}
+      >
+        <span
+          class="icon-[lucide--copy] w-3.5 h-3.5 text-theme-muted"
+          aria-hidden="true"
+        ></span>
+        <span>Copy hex coordinate</span>
+      </button>
       <button
         type="button"
         class="w-full text-left px-3 py-2 text-xs hover:bg-theme-bg/50 transition-colors flex items-center gap-2 text-theme-text"

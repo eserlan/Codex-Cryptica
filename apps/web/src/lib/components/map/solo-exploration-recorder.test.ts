@@ -216,4 +216,20 @@ describe("SoloExplorationRecorder", () => {
     await recorder.onVisionChanged([source(0)]);
     expect(revealer.reveal).toHaveBeenCalledTimes(2);
   });
+
+  it("uses formatHex from state when publishing a move capture", async () => {
+    const { recorder, publishCapture } = setup({
+      formatHex: (coord) => `Hex-${coord.q}-${coord.r}`,
+    });
+    await recorder.onVisionChanged([source(0)]);
+    await recorder.onVisionChanged([source(55)]);
+    await recorder.onMoveSettled([source(55)]);
+
+    expect(publishCapture).toHaveBeenCalledWith(
+      expect.objectContaining({
+        entryType: "map-move",
+        content: "Moved 2 hexes (12 mi) to Hex-2-0, revealing 1 new hexes.",
+      }),
+    );
+  });
 });

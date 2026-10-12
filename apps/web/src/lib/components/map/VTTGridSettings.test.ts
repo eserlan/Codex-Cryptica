@@ -7,6 +7,10 @@ const mocks = vi.hoisted(() => ({
     gridSize: 50,
     gridType: "square",
     showHexCoordinates: false,
+    hexLabelConfig: {
+      style: "off" as "off" | "none" | "numeric" | "alphanumeric" | "axial",
+      startColumn: "A",
+    },
   },
   mapSession: {
     gridUnit: "ft",
@@ -86,5 +90,60 @@ describe("VTTGridSettings fitting", () => {
 
     await fireEvent.click(screen.getByText("Hex (Pointy)"));
     expect(slider.min).toBe("5");
+  });
+});
+
+describe("VTTGridSettings hex label configuration", () => {
+  it("configures alphanumeric hex labels and saves settings", async () => {
+    const close = vi.fn();
+    render(VTTGridSettings, { close });
+
+    await fireEvent.click(screen.getByText("Hex (Pointy)"));
+    await fireEvent.click(screen.getByText("Alphanumeric (A01)"));
+
+    expect(screen.getByText(/Sample:\s*A01/)).toBeTruthy();
+
+    const startColInput = screen.getByLabelText(
+      "Start Column",
+    ) as HTMLInputElement;
+    await fireEvent.input(startColInput, { target: { value: "B" } });
+
+    expect(screen.getByText(/Sample:\s*B01/)).toBeTruthy();
+
+    await fireEvent.click(screen.getByText("Apply to All"));
+
+    expect(mocks.mapSession.setGridSettings).toHaveBeenCalledWith(
+      expect.objectContaining({
+        gridType: "hex-pointy",
+        showHexCoordinates: true,
+        hexLabelConfig: expect.objectContaining({
+          style: "alphanumeric",
+          startColumn: "B",
+          startRow: 1,
+          rowPadding: 2,
+        }),
+      }),
+    );
+    expect(close).toHaveBeenCalled();
+  });
+
+  it("turns hex labels off", async () => {
+    mocks.mapStore.hexLabelConfig = { style: "alphanumeric", startColumn: "A" };
+    const close = vi.fn();
+    render(VTTGridSettings, { close });
+
+    await fireEvent.click(screen.getByText("Hex (Pointy)"));
+    await fireEvent.click(screen.getByText("Off"));
+
+    await fireEvent.click(screen.getByText("Apply to All"));
+
+    expect(mocks.mapSession.setGridSettings).toHaveBeenCalledWith(
+      expect.objectContaining({
+        showHexCoordinates: false,
+        hexLabelConfig: expect.objectContaining({
+          style: "off",
+        }),
+      }),
+    );
   });
 });

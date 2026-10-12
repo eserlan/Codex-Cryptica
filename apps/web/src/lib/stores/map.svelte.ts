@@ -5,7 +5,10 @@ import {
   viewportToImage,
   pointToHex,
   hexToPoint,
+  formatHexLabel,
   MAP_LAYER_ORDER,
+  type HexCoord,
+  type HexLabelConfig,
   type MapLayer,
 } from "map-engine";
 import { convertToWebP } from "../utils/image-processing";
@@ -34,6 +37,7 @@ type PersistedMapSettings = {
   showGrid: boolean;
   gridType: GridType;
   showHexCoordinates: boolean;
+  hexLabelConfig?: HexLabelConfig;
   brushRadius: number;
   gridSize: number;
   gridOffsetX: number;
@@ -69,6 +73,7 @@ const DEFAULT_MAP_SETTINGS: PersistedMapSettings = {
   showGrid: false,
   gridType: "square",
   showHexCoordinates: false,
+  hexLabelConfig: { style: "none" },
   brushRadius: 50,
   gridSize: 50,
   gridOffsetX: 0,
@@ -115,6 +120,7 @@ export class MapStore {
   showGrid = $state(false);
   gridType = $state<GridType>("square");
   showHexCoordinates = $state(false);
+  hexLabelConfig = $state<HexLabelConfig>({ style: "none" });
   gridSize = $state(50);
   gridOffsetX = $state(0);
   gridOffsetY = $state(0);
@@ -172,6 +178,7 @@ export class MapStore {
             this.showGrid,
             this.gridType,
             this.showHexCoordinates,
+            this.hexLabelConfig,
             this.brushRadius,
             this.gridSize,
             this.gridOffsetX,
@@ -273,6 +280,16 @@ export class MapStore {
           typeof parsed.showHexCoordinates === "boolean"
             ? parsed.showHexCoordinates
             : DEFAULT_MAP_SETTINGS.showHexCoordinates,
+        hexLabelConfig:
+          parsed.hexLabelConfig && typeof parsed.hexLabelConfig === "object"
+            ? parsed.hexLabelConfig
+            : {
+                style:
+                  typeof parsed.showHexCoordinates === "boolean" &&
+                  parsed.showHexCoordinates
+                    ? "numeric"
+                    : "none",
+              },
         brushRadius:
           typeof parsed.brushRadius === "number"
             ? parsed.brushRadius
@@ -352,6 +369,7 @@ export class MapStore {
       showGrid: this.showGrid,
       gridType: this.gridType,
       showHexCoordinates: this.showHexCoordinates,
+      hexLabelConfig: this.hexLabelConfig,
       brushRadius: this.brushRadius,
       gridSize: this.gridSize,
       gridOffsetX: this.gridOffsetX,
@@ -479,6 +497,9 @@ export class MapStore {
       this.showGrid = next.showGrid;
       this.gridType = next.gridType;
       this.showHexCoordinates = next.showHexCoordinates;
+      this.hexLabelConfig = next.hexLabelConfig ?? {
+        style: next.showHexCoordinates ? "numeric" : "none",
+      };
       this.brushRadius = next.brushRadius;
       this.gridSize = next.gridSize;
       this.gridOffsetX = next.gridOffsetX ?? 0;
@@ -493,6 +514,11 @@ export class MapStore {
     } finally {
       this.isRestoringSettings = false;
     }
+  }
+
+  formatHex(hex: HexCoord): string {
+    const orientation = this.gridType === "hex-flat" ? "flat" : "pointy";
+    return formatHexLabel(hex, this.hexLabelConfig, orientation);
   }
 
   async setAsWorldMap(id: string) {

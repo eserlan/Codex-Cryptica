@@ -8,6 +8,11 @@ const mapStoreMock = vi.hoisted(() => ({
   gridSize: 50,
   gridOffsetX: 0,
   gridOffsetY: 0,
+  formatHex: vi.fn((_hex) => `B03`),
+}));
+
+const notificationStoreMock = vi.hoisted(() => ({
+  notify: vi.fn(),
 }));
 
 const token = vi.hoisted(() => ({
@@ -57,6 +62,9 @@ vi.mock("$lib/stores/ui/modal-ui.svelte", () => ({
   modalUIStore: { openZenMode: vi.fn() },
 }));
 vi.mock("$lib/stores/vault.svelte", () => ({ vault: vaultMock }));
+vi.mock("$lib/stores/ui/notification.svelte", () => ({
+  notificationStore: notificationStoreMock,
+}));
 
 import MapContextMenu from "./MapContextMenu.svelte";
 
@@ -163,5 +171,44 @@ describe("MapContextMenu appearance controls", () => {
     expect(
       screen.queryByRole("menuitem", { name: "Move to Layer" }),
     ).toBeNull();
+  });
+});
+
+describe("MapContextMenu hex actions", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    Object.assign(navigator, {
+      clipboard: {
+        writeText: vi.fn().mockResolvedValue(undefined),
+      },
+    });
+  });
+
+  it("shows hex coordinate header and copies coordinate to clipboard", async () => {
+    const onClose = vi.fn();
+    render(MapContextMenu, {
+      props: {
+        x: 10,
+        y: 20,
+        imgX: 50,
+        imgY: 50,
+        hex: { q: 1, r: 2, fogged: false },
+        onClose,
+      },
+    });
+
+    expect(screen.getByText("Hex B03")).toBeTruthy();
+
+    const copyBtn = screen.getByRole("menuitem", {
+      name: /Copy hex coordinate/,
+    });
+    await fireEvent.click(copyBtn);
+
+    expect(navigator.clipboard.writeText).toHaveBeenCalledWith("B03");
+    expect(notificationStoreMock.notify).toHaveBeenCalledWith(
+      'Copied hex coordinate "B03"',
+      "info",
+    );
+    expect(onClose).toHaveBeenCalled();
   });
 });

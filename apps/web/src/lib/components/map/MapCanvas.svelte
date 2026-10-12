@@ -135,6 +135,7 @@
         fixed: mapSession.gridMoveMode && mapStore.isGMMode,
         fixedPan: mapSession.gridFixedPan ?? undefined,
         showCoordinates: mapStore.showHexCoordinates,
+        labelConfig: mapStore.hexLabelConfig,
       },
       tokens: vttTokens,
       measurement: vttMeasurement,
