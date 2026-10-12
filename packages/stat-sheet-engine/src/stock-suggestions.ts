@@ -188,6 +188,42 @@ const WEALTH_CUES: Array<[Wealth, RegExp]> = [
   ["comfortable", /\b(comfortable|well-off|thriving|busy)\b/i],
 ];
 
+const WEALTH_ORDER: Record<Wealth, number> = {
+  poor: 0,
+  modest: 1,
+  comfortable: 2,
+  rich: 3,
+};
+
+const NEGATED_WEALTH_CUE =
+  /\b(?:not(?!\s+only)|never|no longer|neither|without|isn't|aren't|wasn't|weren't|ain't|cannot|can't)\b(?:\W+\w+){0,2}\W*$/i;
+
+function inferWealth(shopText: string): Wealth {
+  const found: Wealth[] = [];
+  for (const [wealth, pattern] of WEALTH_CUES) {
+    const matcher = new RegExp(pattern.source, "gi");
+    for (const match of shopText.matchAll(matcher)) {
+      const before = shopText.slice(0, match.index);
+      const clauseStart = Math.max(
+        before.lastIndexOf("."),
+        before.lastIndexOf("!"),
+        before.lastIndexOf("?"),
+        before.lastIndexOf(";"),
+        ...["but", "although", "however", "yet"].map((word) =>
+          before.toLowerCase().lastIndexOf(word),
+        ),
+      );
+      if (!NEGATED_WEALTH_CUE.test(before.slice(clauseStart + 1))) {
+        found.push(wealth);
+      }
+    }
+  }
+  return (
+    found.sort((left, right) => WEALTH_ORDER[left] - WEALTH_ORDER[right])[0] ??
+    "modest"
+  );
+}
+
 export interface ShopContextInput {
   /** Explicit choice; otherwise it is read from the text. */
   genre?: StockGenre;
@@ -258,8 +294,7 @@ export function deriveShopContext(input: ShopContextInput): ShopContext {
   const placeText = input.placeText ?? "";
   const all = `${shopText}\n${placeText}`;
   const place = placeThemes(placeText);
-  const wealth =
-    WEALTH_CUES.find(([, pattern]) => pattern.test(shopText))?.[0] ?? "modest";
+  const wealth = inferWealth(shopText);
   return {
     genre: input.genre ?? inferGenre(all),
     wealth,
@@ -620,6 +655,29 @@ function wholeNumber(
   if (text === undefined || text.trim() === "") return undefined;
   const value = Number(text);
   return Number.isSafeInteger(value) && value >= min ? value : undefined;
+}
+
+/** Fields with typed values that cannot be applied to the suggested stock. */
+export function invalidLineEditFields(
+  stock: StockMeta,
+  edit: LineEdit = {},
+): Array<"quantity" | "price"> {
+  const invalid: Array<"quantity" | "price"> = [];
+  if (
+    edit.quantity !== undefined &&
+    wholeNumber(edit.quantity, 0) === undefined
+  ) {
+    invalid.push("quantity");
+  }
+  if (edit.price !== undefined && stock.price) {
+    const price = parseMoney(
+      edit.price,
+      stock.price.currency,
+      stock.price.precision,
+    );
+    if (!price || price.units < 1) invalid.push("price");
+  }
+  return invalid;
 }
 
 /** The proposed stock with the GM's edits applied; invalid text is ignored. */

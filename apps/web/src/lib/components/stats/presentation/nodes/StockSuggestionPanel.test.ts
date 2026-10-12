@@ -127,6 +127,38 @@ describe("StockSuggestionPanel (#3965)", () => {
     expect(row.stock.price.units).toBe(42);
   });
 
+  it("shows invalid edits and blocks Add until each value is corrected", async () => {
+    const { onUpdateField } = setup();
+    await open();
+    const quantity = screen.getAllByLabelText(/^Quantity for /)[0];
+    const name = quantity
+      .getAttribute("aria-label")!
+      .replace("Quantity for ", "");
+    const price = screen.getByLabelText(`Price for ${name}`);
+    await fireEvent.input(quantity, { target: { value: "2.5" } });
+    await fireEvent.input(price, { target: { value: "0" } });
+
+    expect(quantity.getAttribute("aria-invalid")).toBe("true");
+    expect(price.getAttribute("aria-invalid")).toBe("true");
+    expect(screen.getAllByRole("alert")).toHaveLength(2);
+    const add = screen.getByTestId("stock-suggest-add") as HTMLButtonElement;
+    expect(add.disabled).toBe(true);
+    expect(onUpdateField).not.toHaveBeenCalled();
+
+    await fireEvent.input(quantity, { target: { value: "2" } });
+    await fireEvent.input(price, { target: { value: "1" } });
+    expect(add.disabled).toBe(false);
+    await fireEvent.click(add);
+
+    const rows = onUpdateField.mock.calls[0][1].rows as {
+      name: string;
+      stock: { quantity: number; price: { units: number } };
+    }[];
+    const added = rows.find((row) => row.name === name)!;
+    expect(added.stock.quantity).toBe(2);
+    expect(added.stock.price.units).toBe(1);
+  });
+
   it("shows and edits prices using fractional shop precision", async () => {
     const existing = {
       rowId: "priced-row",

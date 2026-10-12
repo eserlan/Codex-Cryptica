@@ -17,6 +17,7 @@ const SHOP_TEXT_FIELDS = new Set([
 const PLACE_TYPE =
   /location|settlement|place|region|city|town|village|station|district|port/i;
 const MAX_PLACES = 5;
+const MAX_CONNECTIONS_INSPECTED = 50;
 const MAX_CHARS = 1500;
 
 const clip = (text: string | undefined): string =>
@@ -52,8 +53,11 @@ export function gatherShopText(
   ].join("\n");
 
   const places: string[] = [];
+  let inspected = 0;
   for (const connection of shop.connections) {
     if (places.length >= MAX_PLACES) break;
+    if (inspected >= MAX_CONNECTIONS_INSPECTED) break;
+    inspected += 1;
     const place = entityById(connection.target);
     if (!place || !PLACE_TYPE.test(place.type)) continue;
     places.push(

@@ -5,6 +5,7 @@ import {
   deriveShopContext,
   editedStock,
   inferGenre,
+  invalidLineEditFields,
   proposeStock,
   reviewProposal,
 } from "./stock-suggestions";
@@ -31,6 +32,15 @@ describe("deriveShopContext", () => {
     expect(deriveShopContext({ shopText: "A struggling stall" }).wealth).toBe(
       "poor",
     );
+    expect(
+      deriveShopContext({ shopText: "Not wealthy, but struggling." }).wealth,
+    ).toBe("poor");
+    expect(
+      deriveShopContext({ shopText: "Wealthy, but struggling." }).wealth,
+    ).toBe("poor");
+    expect(
+      deriveShopContext({ shopText: "Not poor; the shop is thriving." }).wealth,
+    ).toBe("comfortable");
     expect(deriveShopContext({ shopText: "A stall" }).wealth).toBe("modest");
   });
 
@@ -248,6 +258,15 @@ describe("editedStock", () => {
     expect(editedStock(stock, { quantity: "", price: "0" })).toEqual(stock);
     expect(editedStock(stock, { quantity: "2.5", price: "-4" })).toEqual(stock);
     expect(editedStock(stock, { quantity: "-1" })).toEqual(stock);
+  });
+
+  test("identifies edits that cannot be applied so the review can block Add", () => {
+    expect(
+      invalidLineEditFields(stock, { quantity: "2.5", price: "-4" }),
+    ).toEqual(["quantity", "price"]);
+    expect(
+      invalidLineEditFields(stock, { quantity: "0", price: "25" }),
+    ).toEqual([]);
   });
 
   test("never mutates its input", () => {

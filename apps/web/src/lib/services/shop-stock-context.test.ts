@@ -59,4 +59,17 @@ describe("gatherShopText (#3965)", () => {
     expect(placeText).not.toContain("Bob");
     expect((placeText.match(/Town\d/g) ?? []).length).toBe(5);
   });
+
+  it("caps connections inspected when no places are found", () => {
+    const connections = Array.from({ length: 1000 }, (_, i) => ({
+      target: `missing-${i}`,
+      type: "in",
+    }));
+    let inspected = 0;
+    gatherShopText(shop({ connections } as never), [], () => {
+      inspected += 1;
+      return undefined;
+    });
+    expect(inspected).toBe(50);
+  });
 });

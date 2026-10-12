@@ -4,6 +4,7 @@
     applyAcceptedLines,
     deriveShopContext,
     editedStock,
+    invalidLineEditFields,
     proposeStock,
     reviewProposal,
     type AcceptedLine,
@@ -99,6 +100,12 @@
   const isOn = (line: ReviewedLine) =>
     line.status === "new" && (edits[line.key]?.on ?? true);
   const accepted = $derived(reviewed.lines.filter(isOn));
+  const hasInvalidEdits = $derived(
+    accepted.some(
+      (line) =>
+        invalidLineEditFields(line.stock, edits[line.key] ?? {}).length > 0,
+    ),
+  );
 
   function setEdit(key: string, patch: LineChoice) {
     edits[key] = { ...edits[key], ...patch };
@@ -192,6 +199,10 @@
           <StockSuggestionLine
             {line}
             choice={edits[line.key] ?? {}}
+            invalidFields={invalidLineEditFields(
+              line.stock,
+              edits[line.key] ?? {},
+            )}
             onChange={(patch) => setEdit(line.key, patch)}
           />
         {/each}
@@ -201,7 +212,7 @@
         <button
           type="button"
           class="rounded border border-theme-primary bg-theme-primary/10 px-2 py-0.5 font-bold text-theme-primary disabled:opacity-40"
-          disabled={accepted.length === 0}
+          disabled={accepted.length === 0 || hasInvalidEdits}
           onclick={addAccepted}
           data-testid="stock-suggest-add"
         >
