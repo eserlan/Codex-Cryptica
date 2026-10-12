@@ -118,7 +118,7 @@
         <!-- Color -->
         <input
           type="color"
-          aria-label="Category Color for {cat.label}"
+          aria-label="Category color for {cat.label}"
           value={cat.color}
           oninput={(e) =>
             categories.updateCategory(cat.id, {
@@ -130,7 +130,7 @@
         <!-- Label -->
         <input
           type="text"
-          aria-label="Category Name for {cat.label}"
+          aria-label="Category name for {cat.label}"
           value={cat.label}
           onchange={(e) => handleLabelUpdate(cat.id, e.currentTarget.value)}
           class="flex-1 bg-transparent border-0 text-sm font-medium text-theme-text focus:text-theme-primary focus:outline-none transition-colors py-0.5 px-0"
