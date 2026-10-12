@@ -142,7 +142,7 @@ export const whatAreTheProsAndConsOfBecomingADungeonMaster: AnswerConfigInput =
           },
           {
             term: "The focused situation approach",
-            text: "The DM makes a sketch of the inn and river crossing, then notes a few NPCs with competing aims: an innkeeper who wants the road open but will not risk guests, a caravan master willing to pay for help, and a guard worried about the crossing. The objective is to get help or supplies across. A stranded traveller may know another route, while continued rain may raise the river and increase the cost of delay. These developments follow from the situation but are not required scenes. The DM hears the players' plan, describes what they find along the bank, and calls for a roll only if a specific part of the attempt is uncertain.",
+            text: "The DM sketches the inn and river crossing, then notes a few NPCs with competing aims: an innkeeper who wants the road open but will not risk guests, a caravan master willing to pay for help, and a guard worried about the crossing. The objective is to get help or supplies across. A stranded traveller may know another route, while continued rain may raise the river and increase the cost of delay. These developments follow from the situation but are not required scenes. Pre-made level 1 or 2 characters can help the DM estimate the party's capabilities. If the players have an immovable rod, they can use it as a fixed rope anchor; otherwise, they might find a suitable anchor. The DM hears their plan, describes what they find along the bank, and calls for a roll only if a specific part of the attempt is uncertain.",
           },
           {
             term: "Why it works",
@@ -159,7 +159,7 @@ export const whatAreTheProsAndConsOfBecomingADungeonMaster: AnswerConfigInput =
           "Pick a straightforward situation with a clear objective, such as reaching a place, rescuing someone, or resolving a local dispute. Use a published micro-adventure or a single location of your own with two or three scenes.",
           "Offer pre-made characters or ask players to bring level 1 or 2 characters built under the same rules. Share them ahead of time so players can choose quickly and you know what the party can actually do.",
           "Prepare a short note if useful: a location sketch, a few optional NPCs with a want and something useful they know, and possible developments tied to the situation, such as continued rain raising the river. Treat these as prompts, not scenes to force in.",
-          "Book a short session with a defined end point, roughly two and a half to three hours. Agree that it is a standalone trial, with no obligation to continue.",
+          "Book a short session with a defined end point, roughly two and a half to three hours. Agree that it is a standalone trial, with no obligation to continue, even if it goes well.",
           "Run the game, make steady rulings, and note what you enjoyed and what tired you. Afterwards ask players what they found clear and what they wanted more of. That feedback is a better guide to your next prep than any self-assessment in isolation.",
         ],
       },
