@@ -178,6 +178,16 @@ describe("Demo merchant", () => {
     expect(JSON.stringify(sheet)).toBe(before);
   });
 
+  it("never shares nested data with the built-in template", () => {
+    const sheet = createDemoMerchantSheet();
+    const stock = sheet.fields.find((f) => f.id === SHOP_STOCK_FIELD_ID)!;
+    stock.columns!.push({ id: "extra", label: "Extra", type: "text" });
+    const template = SHOP_MERCHANT_TEMPLATE.fields.find(
+      (f) => f.id === SHOP_STOCK_FIELD_ID,
+    )!;
+    expect(template.columns).toHaveLength(1);
+  });
+
   it("returns an independent copy each time", () => {
     const first = createDemoMerchantSheet();
     const second = createDemoMerchantSheet();

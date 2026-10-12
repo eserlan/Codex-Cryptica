@@ -142,9 +142,11 @@ const gp = (units: number) => ({ units, currency: "gp", precision: 0 });
  * service, and one has a GM-only note.
  */
 export function createDemoMerchantSheet(): StatSheet {
-  const fields: StatSheetField[] = SHOP_MERCHANT_TEMPLATE.fields.map(
-    (field) => ({ ...field }) as StatSheetField,
-  );
+  // Deep copy: columns are nested arrays, and a caller editing the demo must
+  // never be able to change the shared built-in template.
+  const fields = structuredClone(
+    SHOP_MERCHANT_TEMPLATE.fields,
+  ) as StatSheetField[];
   const set = (id: string, patch: Partial<StatSheetField>) => {
     const index = fields.findIndex((field) => field.id === id);
     fields[index] = { ...fields[index], ...patch } as StatSheetField;
