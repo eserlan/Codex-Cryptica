@@ -99,6 +99,26 @@ describe("TokenResizeHandler", () => {
     });
   });
 
+  it("preserves a non-square tile's aspect ratio while resizing", () => {
+    tokens = [
+      token({
+        id: "hex-tile",
+        x: 10,
+        y: 10,
+        width: 100,
+        height: Math.sqrt(3) * 50,
+        kind: "tile",
+      }),
+    ];
+
+    expect(handler.resizeAt({ x: 20, y: 20 }, -100)).toBe(true);
+
+    expect(updateToken).toHaveBeenCalledWith("hex-tile", {
+      width: 150,
+      height: (150 * Math.sqrt(3) * 50) / 100,
+    });
+  });
+
   it("caps a tile's grow at 20x grid", () => {
     tokens = [
       token({

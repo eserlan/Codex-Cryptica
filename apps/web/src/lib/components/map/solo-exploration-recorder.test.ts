@@ -1,6 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
+import { appEventBus } from "@codex/events";
+import type { Clock } from "@codex/runtime";
+import { JOURNAL_EVENTS } from "session-journal-engine";
 import type { Token } from "../../../types/vtt";
 import {
+  publishSoloMapMove,
   SoloExplorationRecorder,
   type SoloExplorationState,
 } from "./solo-exploration-recorder.svelte";
@@ -28,6 +32,30 @@ const source = (x: number): Token => ({
   imageUrl: null,
   statusEffects: [],
   isVisionSource: true,
+});
+
+describe("publishSoloMapMove", () => {
+  it("uses the injected clock for the capture event timestamp", () => {
+    const payload = { entryType: "map-move", content: "Moved 1 hex." };
+    const clock: Clock = { now: () => 1234 };
+    const listener = vi.fn();
+    const unsubscribe = appEventBus.subscribe(JOURNAL_EVENTS.CAPTURE, listener);
+
+    try {
+      publishSoloMapMove(payload, clock);
+    } finally {
+      unsubscribe();
+    }
+
+    expect(listener).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: JOURNAL_EVENTS.CAPTURE,
+        domain: "journal",
+        payload,
+        metadata: { timestamp: 1234 },
+      }),
+    );
+  });
 });
 
 function setup(

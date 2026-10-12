@@ -192,6 +192,24 @@ export type StatSheetTemplateField = z.infer<
   typeof StatSheetTemplateFieldSchema
 >;
 
+/**
+ * Opt-in Entity Sheet capability id (#3960), e.g. `stock-table` or
+ * `commerce.trade`. A capability is declared by id only — its behaviour
+ * (registered actions, read-only projections) lives in code registered with
+ * `SheetCapabilityRegistry` (`@codex/stat-sheet-engine`), never in template
+ * Markdown. See docs/entity-sheets.md.
+ */
+export const SheetCapabilityIdSchema = z
+  .string()
+  .min(1)
+  .max(64)
+  .regex(
+    /^[a-z][a-z0-9-]*(\.[a-z][a-z0-9-]*)*$/,
+    "Capability ids are lowercase words joined by hyphens or dots",
+  );
+
+export type SheetCapabilityId = z.infer<typeof SheetCapabilityIdSchema>;
+
 export const StatSheetTemplateSchema = z.object({
   id: z.string().min(1),
   name: z.string().min(1),
@@ -199,6 +217,10 @@ export const StatSheetTemplateSchema = z.object({
   category: z.string().optional(),
   isBuiltIn: z.boolean().optional(),
   fields: z.array(StatSheetTemplateFieldSchema).default([]),
+  // Optional and absent on every pre-#3960 template, so legacy templates
+  // load unchanged. Ids this client has no registered capability for are
+  // kept, not dropped, so a newer template survives a round trip.
+  capabilities: z.array(SheetCapabilityIdSchema).optional(),
 });
 
 export type StatSheetTemplate = z.infer<typeof StatSheetTemplateSchema>;

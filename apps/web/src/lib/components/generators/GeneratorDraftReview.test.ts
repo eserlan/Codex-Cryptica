@@ -203,4 +203,67 @@ describe("GeneratorDraftReview", () => {
 
     expect(screen.queryByTestId("in-vault-provenance")).toBeNull();
   });
+
+  describe("spoiler shield (solo play)", () => {
+    const adventure = () =>
+      dungeonDraft({
+        title: "The Drowned Bell",
+        sourceGeneratorId: "adventure",
+        summary: "A bell tolls under the harbour.",
+        content: "The harbourmaster is the cultist.",
+        lore: "The bell wakes the drowned at dawn.",
+      });
+    const props = (spoilerShield: boolean) => ({
+      draft: adventure(),
+      categories,
+      saving: false,
+      onsave: vi.fn(),
+      onback: vi.fn(),
+      spoilerShield,
+    });
+
+    it("keeps the plot hidden but shows the hook until revealed", async () => {
+      render(GeneratorDraftReview, { props: props(true) });
+
+      expect(screen.getByText("A bell tolls under the harbour.")).toBeTruthy();
+      expect(screen.getByTestId("spoiler-shield")).toBeTruthy();
+      expect(
+        screen.queryByText("The harbourmaster is the cultist."),
+      ).toBeNull();
+      expect(screen.queryByText("GM Reference")).toBeNull();
+
+      await fireEvent.click(screen.getByTestId("spoiler-reveal"));
+
+      expect(
+        screen.getByText("The harbourmaster is the cultist."),
+      ).toBeTruthy();
+      expect(screen.getByText("GM Reference")).toBeTruthy();
+      expect(screen.queryByTestId("spoiler-shield")).toBeNull();
+    });
+
+    it("still saves the full draft while the plot is hidden", async () => {
+      const onsave = vi.fn();
+      render(GeneratorDraftReview, {
+        props: { ...props(true), onsave },
+      });
+
+      await fireEvent.submit(
+        screen.getByTestId("spoiler-shield").closest("form")!,
+      );
+
+      expect(onsave).toHaveBeenCalledOnce();
+      expect(onsave.mock.calls[0][0].content).toBe(
+        "The harbourmaster is the cultist.",
+      );
+    });
+
+    it("shows everything when the shield is off", () => {
+      render(GeneratorDraftReview, { props: props(false) });
+
+      expect(screen.queryByTestId("spoiler-shield")).toBeNull();
+      expect(
+        screen.getByText("The harbourmaster is the cultist."),
+      ).toBeTruthy();
+    });
+  });
 });

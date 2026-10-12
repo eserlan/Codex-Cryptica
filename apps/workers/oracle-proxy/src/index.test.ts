@@ -54,6 +54,21 @@ describe("Oracle Proxy Worker CORS", () => {
     );
   });
 
+  it("returns not found for malformed percent escapes in starter deck paths", async () => {
+    for (const path of [
+      "/api/starter-tile-decks/%ZZ",
+      "/api/starter-tile-decks/kenney-scribble-dungeons/assets/%ZZ.png",
+    ]) {
+      const response = await worker.fetch(
+        new Request(`https://oracle-proxy.espen-erlandsen.workers.dev${path}`),
+        emptyEnv,
+        {} as ExecutionContext,
+      );
+
+      expect(response.status).toBe(404);
+    }
+  });
+
   it("allows Cloudflare Pages preview subdomains for this project", () => {
     expect(
       isOriginAllowed(
@@ -306,6 +321,28 @@ describe("Oracle Proxy Worker image generation", () => {
         }),
       }),
     );
+  });
+
+  it("converts nested binary image outputs to base64", async () => {
+    const outputs = [
+      { image: new Uint8Array([9, 1, 2, 3, 9]).subarray(1, 4) },
+      { image: new Uint8Array([1, 2, 3]).buffer },
+    ];
+
+    for (const output of outputs) {
+      const ai = { run: vi.fn(async () => output) };
+      const response = await worker.fetch(
+        request({ prompt: "castle at sunset" }),
+        { GEMINI_API_KEY: "test-key", AI: ai },
+        {} as ExecutionContext,
+      );
+
+      expect(response.status).toBe(200);
+      expect(await response.json()).toEqual({
+        success: true,
+        result: { image: "AQID" },
+      });
+    }
   });
 
   it("forwards the requested size and the negative prompt as multipart", async () => {

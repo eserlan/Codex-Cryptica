@@ -53,6 +53,19 @@ const mockRegistry: Record<string, AnswerConfig> = {
 };
 
 describe("answer registry", () => {
+  it("registers story arc planning as its own workflow intent", () => {
+    const answer = answers["how-do-i-plan-story-arcs-for-an-rpg-campaign"];
+    const entry = getDiscoveryEntries().find(
+      (candidate) => candidate.canonicalPath === `/answers/${answer.slug}`,
+    );
+
+    expect(entry).toMatchObject({
+      id: "answer-plan-story-arcs-rpg-campaign",
+      primaryIntent: "how to plan story arcs for an rpg campaign",
+      userJob: "adopt-workflow",
+    });
+  });
+
   it("prioritises first-game guidance and the character-sheet guide for packing readers", () => {
     const answer = answers["what-do-i-need-to-bring-to-my-first-dnd-game"];
 

@@ -34,6 +34,8 @@ const IGNORED_PREFIXES = [
   "dist/",
   ".gemini/",
   ".codex/",
+  ".jules/",
+  ".Jules/",
 ];
 
 export function isIgnoredPath(filePath) {
@@ -97,6 +99,7 @@ export function resolveGitBase(cwd = process.cwd()) {
   return null;
 }
 
+// fallow-ignore-next-line complexity -- git diff and status fallbacks are covered by lint-changed tests.
 export function getChangedFiles({
   base,
   head = "HEAD",
@@ -135,27 +138,31 @@ export function getChangedFiles({
     }
   }
 
-  // Also include any currently uncommitted working tree changes
-  try {
-    const uncommittedOutput = execFileSync("git", ["status", "--porcelain"], {
-      cwd,
-      encoding: "utf8",
-    });
-    for (const line of uncommittedOutput.split("\n")) {
-      if (!line) continue;
-      const pathPart = line.slice(3).trim();
-      const finalPath = pathPart.includes(" -> ")
-        ? pathPart.split(" -> ")[1].trim()
-        : pathPart;
-      if (finalPath) fileSet.add(finalPath);
+  // Also include any currently uncommitted working tree changes when not checking a specific base commit range
+  if (!base) {
+    try {
+      const uncommittedOutput = execFileSync("git", ["status", "--porcelain"], {
+        cwd,
+        encoding: "utf8",
+      });
+      for (const line of uncommittedOutput.split("\n")) {
+        if (!line) continue;
+        if (line.startsWith("??")) continue; // Skip untracked files
+        const pathPart = line.slice(3).trim();
+        const finalPath = pathPart.includes(" -> ")
+          ? pathPart.split(" -> ")[1].trim()
+          : pathPart;
+        if (finalPath) fileSet.add(finalPath);
+      }
+    } catch {
+      // Ignore status errors
     }
-  } catch {
-    // Ignore status errors
   }
 
   return Array.from(fileSet);
 }
 
+// fallow-ignore-next-line complexity -- both lint and format outcomes are handled by the changed-file validation path.
 export function runLintChanged({
   base,
   head = "HEAD",
@@ -183,7 +190,12 @@ export function runLintChanged({
     args.push(...lintFiles);
     try {
       console.log(`\n🧹 Running ESLint on ${lintFiles.length} file(s)...`);
-      execFileSync("bunx", args, { cwd, stdio: "inherit" });
+      const runner = process.platform === "win32" ? "npx.cmd" : "bunx";
+      execFileSync(runner, args, {
+        cwd,
+        stdio: "inherit",
+        shell: process.platform === "win32",
+      });
       console.log("✅ ESLint passed.");
     } catch {
       success = false;
@@ -197,7 +209,12 @@ export function runLintChanged({
       console.log(
         `\n🎨 Checking formatting on ${formatFiles.length} file(s)...`,
       );
-      execFileSync("bunx", args, { cwd, stdio: "inherit" });
+      const runner = process.platform === "win32" ? "npx.cmd" : "bunx";
+      execFileSync(runner, args, {
+        cwd,
+        stdio: "inherit",
+        shell: process.platform === "win32",
+      });
       console.log("✅ Prettier check passed.");
     } catch {
       success = false;

@@ -8,6 +8,9 @@ import {
   hashOwnerToken as hashToken,
   readJson,
 } from "./template-directory-shared";
+import { getCorsHeaders, isOriginAllowed } from "./cors";
+import { enforcePublishRateLimit } from "./rate-limiting";
+import type { Env } from "./env";
 
 interface GeneratorShareEnv {
   BUCKET?: any;
@@ -200,4 +203,54 @@ export async function handleDeleteGeneratorShare(
   }
   await env.BUCKET.delete(getGeneratorShareKey(shareId));
   return json(request, { revoked: true });
+}
+
+export async function handleGeneratorSharesRoute(
+  request: Request,
+  env: Env,
+  pathname: string,
+): Promise<Response | null> {
+  if (
+    pathname !== "/api/generator-shares" &&
+    !pathname.startsWith("/api/generator-shares/")
+  ) {
+    return null;
+  }
+  const origin = request.headers.get("Origin") || "";
+  const isPublicRead =
+    pathname.startsWith("/api/generator-shares/") && request.method === "GET";
+  if (!isPublicRead && !isOriginAllowed(origin, env)) {
+    return new Response("Forbidden", {
+      status: 403,
+      headers: getCorsHeaders(request.headers, env),
+    });
+  }
+  const rateLimitResponse = await enforcePublishRateLimit(
+    request,
+    env,
+    pathname,
+  );
+  if (rateLimitResponse) return rateLimitResponse;
+
+  if (pathname === "/api/generator-shares") {
+    if (request.method === "POST")
+      return handleCreateGeneratorShare(request, env);
+    return new Response("Method not allowed", {
+      status: 405,
+      headers: getCorsHeaders(request.headers, env),
+    });
+  }
+
+  const shareId = pathname.split("/")[3];
+  if (!shareId || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/i.test(shareId)) {
+    return new Response("Not found", { status: 404 });
+  }
+  if (request.method === "GET")
+    return handleGetGeneratorShare(request, env, shareId);
+  if (request.method === "DELETE")
+    return handleDeleteGeneratorShare(request, env, shareId);
+  return new Response("Method not allowed", {
+    status: 405,
+    headers: getCorsHeaders(request.headers, env),
+  });
 }

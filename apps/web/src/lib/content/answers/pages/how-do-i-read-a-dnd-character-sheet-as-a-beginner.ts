@@ -203,6 +203,11 @@ export const howDoIReadADndCharacterSheetAsABeginner: AnswerConfigInput = {
     "what-should-a-new-dnd-player-learn-first",
     "where-do-i-start-if-i-have-never-played-a-tabletop-rpg",
     "how-do-i-run-a-successful-session-0",
+    "how-do-i-keep-players-engaged-during-other-players-turns-in-combat",
+    "what-can-i-do-on-my-turn-in-dnd-combat",
+    "what-do-i-need-to-bring-to-my-first-dnd-game",
+    "what-should-a-new-dnd-player-know-before-their-first-game",
+    "which-dice-do-i-roll-in-dnd-and-when",
   ],
   discovery: {
     id: "answer-read-dnd-character-sheet-beginner",

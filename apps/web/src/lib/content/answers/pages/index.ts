@@ -24,10 +24,12 @@ import { howDoIMakeCombatFasterWithoutMakingItLessExciting } from "./how-do-i-ma
 import { howDoIMakeDifferentCulturesFeelDistinctWithoutRelyingOnStereotypes } from "./how-do-i-make-different-cultures-feel-distinct-without-relying-on-stereotypes";
 import { howDoIMakeInterviewingNpcsInterestingInAnInvestigation } from "./how-do-i-make-interviewing-npcs-interesting-in-an-investigation";
 import { howDoIMakeRivalCaptainsNaviesAndPirateFactionsMatter } from "./how-do-i-make-rival-captains-navies-and-pirate-factions-matter";
+import { howDoIMakeRoleplayMoreEngaging } from "./how-do-i-make-roleplay-more-engaging";
 import { howDoIMakeSeaTravelInterestingInATtrpg } from "./how-do-i-make-sea-travel-interesting-in-a-ttrpg";
 import { howDoIOrganiseADndCampaign } from "./how-do-i-organise-a-dnd-campaign";
 import { howDoIOrganiseGmNotesForInPersonPlay } from "./how-do-i-organise-gm-notes-for-in-person-play";
 import { howDoIPaceAnRpgOneShot } from "./how-do-i-pace-an-rpg-one-shot";
+import { howDoIPlanStoryArcsForAnRpgCampaign } from "./how-do-i-plan-story-arcs-for-an-rpg-campaign";
 import { howDoIPrepareADndSession } from "./how-do-i-prepare-a-dnd-session";
 import { howDoIPrepareAnRpgSessionStepByStep } from "./how-do-i-prepare-an-rpg-session-step-by-step";
 import { howDoIReadADndCharacterSheetAsABeginner } from "./how-do-i-read-a-dnd-character-sheet-as-a-beginner";
@@ -183,10 +185,12 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     howDoIMakeDifferentCulturesFeelDistinctWithoutRelyingOnStereotypes,
     howDoIMakeInterviewingNpcsInterestingInAnInvestigation,
     howDoIMakeRivalCaptainsNaviesAndPirateFactionsMatter,
+    howDoIMakeRoleplayMoreEngaging,
     howDoIMakeSeaTravelInterestingInATtrpg,
     howDoIOrganiseADndCampaign,
     howDoIOrganiseGmNotesForInPersonPlay,
     howDoIPaceAnRpgOneShot,
+    howDoIPlanStoryArcsForAnRpgCampaign,
     howDoIPrepareADndSession,
     howDoIPrepareAnRpgSessionStepByStep,
     howDoIReadADndCharacterSheetAsABeginner,
