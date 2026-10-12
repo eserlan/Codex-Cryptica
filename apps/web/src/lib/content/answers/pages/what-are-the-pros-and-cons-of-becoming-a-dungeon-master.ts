@@ -245,7 +245,7 @@ export const whatAreTheProsAndConsOfBecomingADungeonMaster: AnswerConfigInput =
         "answer-first-time-gm-hub",
         "answer-start-dnd-campaign",
         "answer-session-prep",
-        "answer-one-shot-pacing",
+        "answer-pace-rpg-one-shot",
         "answer-session-zero",
       ],
       acknowledgedOverlap: [
