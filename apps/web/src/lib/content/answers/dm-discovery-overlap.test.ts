@@ -26,4 +26,25 @@ describe("Dungeon Master answer discovery metadata", () => {
     });
     expect(answer?.discovery?.relatedIntents).toContain("topic-dnd-beginners");
   });
+
+  it("labels the worked example by its actual preparation contrast", () => {
+    const answer =
+      answers["what-are-the-pros-and-cons-of-becoming-a-dungeon-master"];
+    const example = answer?.sections.find(
+      (section) => section.kind === "example",
+    );
+
+    expect(example?.kind).toBe("example");
+    if (example?.kind !== "example") return;
+
+    expect(example.heading).toBe(
+      "Worked example: the same one-shot idea, two preparation approaches",
+    );
+    expect(example.items?.map((item) => item.term)).toContain(
+      "The fixed-sequence approach",
+    );
+    expect(example.items?.map((item) => item.term)).toContain(
+      "The focused situation approach",
+    );
+  });
 });

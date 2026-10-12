@@ -155,3 +155,66 @@ describe("VTTGridManager fog colour", () => {
     expect(mapStore.fogColor).toBe("#445566");
   });
 });
+
+describe("VTTGridManager hex label visibility", () => {
+  function managerWithGridSettings() {
+    const mapStore = {
+      showHexCoordinates: true,
+      hexLabelConfig: { style: "numeric" },
+    };
+    const base = deps(memoryStorage());
+    const d = { ...base, mapStore: mapStore as any };
+    return { mapStore, mgr: new VTTGridManager(d) };
+  }
+
+  it("turns labels off when local settings use the off style", () => {
+    const { mapStore, mgr } = managerWithGridSettings();
+
+    mgr.setGridSettings({ hexLabelConfig: { style: "off" } });
+
+    expect(mapStore.showHexCoordinates).toBe(false);
+  });
+
+  it("turns labels off when a remote setting uses the off style", () => {
+    const { mapStore, mgr } = managerWithGridSettings();
+
+    mgr.handleRemoteGridSettings({ hexLabelConfig: { style: "off" } });
+
+    expect(mapStore.showHexCoordinates).toBe(false);
+  });
+
+  it("maps legacy local visibility settings to the numeric label style", () => {
+    const { mapStore, mgr } = managerWithGridSettings();
+    mapStore.hexLabelConfig = { style: "none" };
+
+    mgr.setGridSettings({ showHexCoordinates: true });
+
+    expect(mapStore.showHexCoordinates).toBe(true);
+    expect(mapStore.hexLabelConfig).toEqual({ style: "numeric" });
+  });
+
+  it("maps legacy remote visibility settings to the numeric label style", () => {
+    const { mapStore, mgr } = managerWithGridSettings();
+    mapStore.hexLabelConfig = { style: "none" };
+
+    mgr.handleRemoteGridSettings({ showHexCoordinates: true });
+
+    expect(mapStore.showHexCoordinates).toBe(true);
+    expect(mapStore.hexLabelConfig).toEqual({ style: "numeric" });
+  });
+
+  it("ignores a malformed remote label config without rejecting other settings", () => {
+    const { mapStore, mgr } = managerWithGridSettings();
+
+    expect(() =>
+      mgr.handleRemoteGridSettings({
+        gridDistance: 10,
+        hexLabelConfig: null as never,
+      }),
+    ).not.toThrow();
+
+    expect(mapStore.hexLabelConfig).toEqual({ style: "numeric" });
+    expect(mapStore.showHexCoordinates).toBe(true);
+    expect(mgr.gridDistance).toBe(10);
+  });
+});

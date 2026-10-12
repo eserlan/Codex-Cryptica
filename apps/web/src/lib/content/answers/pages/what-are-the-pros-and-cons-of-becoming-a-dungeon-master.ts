@@ -8,14 +8,14 @@ export const whatAreTheProsAndConsOfBecomingADungeonMaster: AnswerConfigInput =
     question: "What are the pros and cons of becoming a Dungeon Master?",
     kind: "comparison",
     shortAnswer:
-      "Becoming a Dungeon Master may appeal if you enjoy setting up situations, improvising around unexpected player choices, and helping the group have memorable moments at the table. The role brings different responsibilities from playing: you prepare situations, make rulings, and share attention fairly. Scheduling, hosting, and note-taking can be shared with other players, and everyone contributes to considerate play. A low-risk way to find out is to run a short standalone one-shot for your group or a few friends while you keep playing in your current campaign.",
+      "Becoming a Dungeon Master may appeal if you enjoy setting up situations, improvising around unexpected player choices, and helping the group have memorable moments at the table. The role brings different responsibilities from playing: you prepare situations, make rulings, and share attention fairly. A low-risk way to find out is to run a short standalone one-shot for your group or a few friends while you keep playing in your current campaign.",
     sections: [
       {
         kind: "prose",
-        heading: "Is this about whether you would enjoy it, not how to do it?",
+        heading: "Would you enjoy running a game?",
         paragraphs: [
-          "You have played a few sessions, like the game, and are wondering whether you would enjoy running it. That is a different decision from learning how to run a first session, picking a system, or writing an adventure. This page helps you decide whether to try at all.",
-          "Notice what makes you curious: sketching a place, adapting a published adventure, or wondering how different players would tackle the same problem. Original preparation is one possible attraction, not a requirement for enjoying DMing. The amount and kind of preparation can vary, and you can share practical jobs with the group. If running sounds like homework, playing may already give you what you want from D&D.",
+          "You have played a few sessions, like the game, and are wondering whether you would enjoy running it. Deciding whether to try is separate from learning how to run a first session, pick a system, or write an adventure.",
+          "Notice what makes you curious: sketching a place, adapting a published adventure, or wondering how different players would tackle the same problem. Original preparation is one possible attraction, not a requirement for enjoying DMing. The group can share scheduling, hosting, and note-taking, so running does not make you responsible for every practical job. If it sounds like homework, playing may already give you what you want from D&D.",
         ],
       },
       {
@@ -42,7 +42,7 @@ export const whatAreTheProsAndConsOfBecomingADungeonMaster: AnswerConfigInput =
           },
           {
             term: "A different kind of social contribution",
-            text: "Some people enjoy bringing everyone together and keeping play moving. Scheduling, hosting, and taking notes are optional jobs another player can handle; everyone can help make the table considerate and share the spotlight.",
+            text: "Some people enjoy bringing everyone together and keeping play moving. You help make the table considerate and give everyone room to contribute.",
           },
         ],
       },
@@ -54,11 +54,11 @@ export const whatAreTheProsAndConsOfBecomingADungeonMaster: AnswerConfigInput =
         items: [
           {
             term: "Preparation takes time and judgement",
-            text: "You decide what to prepare and what to leave flexible. That choice is the skill, and early on it can feel inefficient while you learn how much your group actually needs. Preparing a focused situation for a short session is far less work than writing a novel-like setting, and it is usually the better use of time.",
+            text: "You decide what to prepare and what to leave flexible. Early on, it can be hard to judge how much your group needs, and learning that takes practice.",
           },
           {
             term: "Session logistics take time",
-            text: "Scheduling, agreeing expectations, and keeping momentum between sessions can take more effort than the in-game material. A session needs a date, a venue or call link, and a clear start and end time, but another player can organise these or take notes. Everyone shares responsibility for communicating considerately.",
+            text: "Agreeing expectations and keeping momentum between sessions takes coordination. The group needs a date, a venue or call link, and a clear start and end time, and gaps can make it harder to resume.",
           },
           {
             term: "You make rulings in the moment",
@@ -106,8 +106,8 @@ export const whatAreTheProsAndConsOfBecomingADungeonMaster: AnswerConfigInput =
           ],
           [
             "Social weight",
-            "You contribute to the evening and help others shine; you can also share scheduling, hosting, or notes",
-            "You bring the game material and hold its structure; scheduling, hosting, and notes can be shared",
+            "You contribute to the evening and help others shine",
+            "You bring the game material and hold its structure",
           ],
         ],
       },
@@ -115,38 +115,38 @@ export const whatAreTheProsAndConsOfBecomingADungeonMaster: AnswerConfigInput =
         kind: "prose",
         heading: "Can you try DMing while staying in your current campaign?",
         paragraphs: [
-          "Yes, and this is the most common way people start. You remain a player in your existing group and run something separate, usually a one-shot or a short two-session adventure for some or all of the same players, or for a different group of friends. The two games do not compete; a separate evening or a spare slot in the schedule keeps them distinct.",
-          "If you want to offer your current Dungeon Master a break, frame it as an extra, not a replacement. Say that you enjoyed playing and would like to try running a single short session. Ask whether they would like a week off, whether they would enjoy playing for once, and whether the group is interested. Do not suggest that the current campaign needs fixing or that you expect to take it over. A DM who hears the offer as help and curiosity is far more likely to say yes than one who hears an implied criticism.",
-          "Coordinate logistics clearly. Agree a date, a length, and what you will run, then check with the group rather than assuming everyone wants to switch. If your current DM would rather keep running without interruption, accept that and organise your one-shot separately. You will still learn whether you enjoy the role without putting any existing game at risk.",
+          "You can stay a player in your existing group and run a separate one-shot or short adventure for some or all of the same players, or for other friends. A separate evening or spare slot keeps the games distinct.",
+          "If you want to offer your current Dungeon Master a break, frame it as an extra, not a replacement. Say that you enjoy playing and would like to try one short session. Ask whether they would like a week off, whether they would enjoy playing for once, and whether the group is interested. Do not imply that the campaign needs fixing or that you expect to take it over. If they would rather keep running, accept that and arrange your trial separately.",
+          "Agree the date, length, and plan with the group rather than assuming everyone wants to switch. You can learn whether you enjoy the role while keeping the existing game intact.",
         ],
       },
       {
         kind: "prose",
         heading: "Critical Role, Tal'Dorei, and expectations",
         paragraphs: [
-          "Being inspired by Critical Role or by the Tal'Dorei setting is a strong starting point. Those shows demonstrate attentive facilitation, clear character voices, and deep setting knowledge at a professional standard that no home table is expected to match. Enjoy the inspiration and leave the production values where they belong.",
-          "Home play is smaller, messier, and more uneven. You are not performing for an audience. You are describing a room, listening to three or four people with different ideas, and making a ruling so play can continue. Ordinary home play can be enjoyable without acting skill or a memorised canon.",
-          "A published setting helps in the same way. Tal'Dorei or any other setting can give you names, geography, and ready-made conflicts so you do not have to invent from scratch. Use what you need: a town, a faction with a pressing problem, a wilderness area with a clear objective. You do not need to recreate every detail of a published world or reproduce how someone else runs it. Borrow the scaffolding; make the session your own.",
+          "Critical Role can inspire attentive facilitation, character voices, and setting detail, but its professional production is not a home-table expectation. At home, you describe a room, listen to players with different ideas, and make rulings so play can continue. You do not need acting skill or a memorised canon.",
+          "The Tal'Dorei setting, like other published worlds, gives you names, geography, and conflicts to draw on. Use a town, a faction with a pressing problem, or a wilderness area with a clear objective; you need not recreate the whole world or run it as someone else does.",
         ],
       },
       {
         kind: "example",
-        heading: "Worked example: the same one-shot idea, two levels of prep",
+        heading:
+          "Worked example: the same one-shot idea, two preparation approaches",
         paragraphs: [
           "A new DM who enjoys designing situations decides to test the role with a one-shot for three friends. The premise is simple: a roadside inn cut off by a washed-out bridge, with supplies running low and two groups who disagree about what to do next.",
         ],
         items: [
           {
-            term: "The heavy prep approach",
-            text: "The DM writes four pages of inn history, full stat blocks for every guest, a timeline of the flood, and a scripted sequence where the party must negotiate, then fetch wood, then fight at the bridge. At the table the players bypass the negotiation, propose using an immovable rod and rope to rig a crossing, and head straight for the river. The DM stalls to rewrite on the spot because the plan allowed only one route.",
+            term: "The fixed-sequence approach",
+            text: "The DM sketches the inn, gives its keeper a reason to need the bridge repaired, and prepares clues to the damage, a storehouse with rope, and a guard who objects to a risky crossing. They expect the party to discover the damage, fetch the rope, then persuade the guard. Instead, the players ask a local to guide them along the riverbank. The prepared clues no longer fit the order of events, and the DM is unsure what the party can learn or whether the route is safe.",
           },
           {
             term: "The focused situation approach",
-            text: "The DM instead prepares a short note: a sketch of the inn and river crossing, and a few optional NPCs—for example, an innkeeper who wants the road open but will not risk guests' safety, a caravan master who wants his goods moving and will pay for help, and a guard who wants no one on a dangerous structure. The objective is to get help or supplies across. Two possible developments have causes in the fiction: a stranded traveller on the far bank may know another route if the players search there, and continued rain may raise the river and increase the cost of delay. They are possibilities, not required scenes. Pre-made level 1 or 2 characters are offered as one way to estimate the party's capabilities. If the players have an immovable rod, they can use it as a fixed anchor for a rope; otherwise, they might find a suitable anchor for ordinary rope. The DM describes the crossing and calls for a roll only if a specific part of the attempt is uncertain.",
+            text: "The DM sketches the inn and river crossing, then notes a few NPCs with competing aims: an innkeeper who wants the road open but will not risk guests, a caravan master willing to pay for help, and a guard worried about the crossing. The objective is to get help or supplies across. A stranded traveller may know another route, while continued rain may raise the river and increase the cost of delay. These developments follow from the situation but are not required scenes. Pre-made level 1 or 2 characters can help the DM estimate the party's capabilities. If the players have an immovable rod, they can use it as a fixed rope anchor; otherwise, they might find a suitable anchor. The DM hears their plan, describes what they find along the bank, and calls for a roll only if a specific part of the attempt is uncertain.",
           },
           {
             term: "Why it works",
-            text: "The second version leaves room for the players' choices because it prepares people who want things and a situation with a visible cost to delay, not a fixed plot. Optional developments follow from what is happening in the fiction; they do not undo an earned solution or preserve a prepared sequence. First-session nerves and unfamiliar rules can be tiring even when you like DMing. If you remain curious, try less preparation, a published adventure, or more help from the group; if you prefer playing, there is no obligation to continue.",
+            text: "The second version prepares people with aims and a visible cost to delay, so the DM can respond to the route the players choose. First-session nerves and unfamiliar rules can still be tiring. If you remain curious, try a published adventure or ask for more help; if you prefer playing, there is no obligation to continue.",
           },
         ],
       },
@@ -154,12 +154,12 @@ export const whatAreTheProsAndConsOfBecomingADungeonMaster: AnswerConfigInput =
         kind: "checklist",
         heading: "Your low-stakes experiment",
         intro:
-          "A compact one-shot gives you a real answer without risking your campaign or overcommitting your week:",
+          "A one-shot lets you try the role while keeping your campaign intact:",
         items: [
-          "Pick a straightforward situation with a clear objective, such as reaching a place, rescuing someone, or resolving a local dispute. Use a published micro-adventure if you prefer, or a single location of your own with two to three scenes.",
+          "Pick a straightforward situation with a clear objective, such as reaching a place, rescuing someone, or resolving a local dispute. Use a published micro-adventure or a single location of your own with two or three scenes.",
           "Offer pre-made characters or ask players to bring level 1 or 2 characters built under the same rules. Share them ahead of time so players can choose quickly and you know what the party can actually do.",
-          "Prepare a short note if useful: a location sketch, a few optional NPCs with a want and something useful they know, and possible developments tied to the situation—for example, continued rain raising the river or a traveller stranded where the party might look for help. These are prompts, not quotas or scenes to force in.",
-          "Book a short session with a defined end point, roughly two and a half to three hours. Agree it is a standalone trial so everyone knows there is no obligation to continue, even if it goes well.",
+          "Prepare a short note if useful: a location sketch, a few optional NPCs with a want and something useful they know, and possible developments tied to the situation, such as continued rain raising the river. Treat these as prompts, not scenes to force in.",
+          "Book a short session with a defined end point, roughly two and a half to three hours. Agree that it is a standalone trial, with no obligation to continue, even if it goes well.",
           "Run the game, make steady rulings, and note what you enjoyed and what tired you. Afterwards ask players what they found clear and what they wanted more of. That feedback is a better guide to your next prep than any self-assessment in isolation.",
         ],
       },
@@ -167,8 +167,8 @@ export const whatAreTheProsAndConsOfBecomingADungeonMaster: AnswerConfigInput =
         kind: "prose",
         heading: "Where this points next",
         paragraphs: [
-          "If the one-shot left you wanting to do it again, the next questions become practical: how to start GMing for the first time with a manageable first-session plan, and how to frame a D&D campaign as a playable opening situation rather than a finished world. The links below take you to both.",
-          "If it confirmed that you prefer playing, that is a useful answer too. Knowing where you have the most fun helps the whole group. Tell your current DM what you appreciated about the trial and what you are excited to bring back to the character you play.",
+          "If you want to run again, learn how to start GMing with a first-session plan and frame a D&D campaign as a playable opening situation. The links below cover both.",
+          "If you prefer playing, tell your current DM what you appreciated about the trial and what you are excited to bring back to your character.",
         ],
       },
     ],

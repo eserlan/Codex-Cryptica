@@ -37,6 +37,22 @@ describe("formatMapMove", () => {
     expect(JSON.stringify(payload.sourceRef)).not.toMatch(/name|text/i);
   });
 
+  it("uses custom toHexLabel when provided", () => {
+    const payload = formatMapMove({
+      mapId: "map-1",
+      toHex: { q: 1, r: 2 },
+      hexes: 1,
+      distance: 6,
+      unit: "mi",
+      revealed: 2,
+      showCoordinates: true,
+      toHexLabel: "B03",
+    });
+    expect(payload.content).toBe(
+      "Moved 1 hex (6 mi) to B03, revealing 2 new hexes.",
+    );
+  });
+
   it("omits hidden coordinates and zero-reveal wording", () => {
     const payload = formatMapMove({
       mapId: "map-1",

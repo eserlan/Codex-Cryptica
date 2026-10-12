@@ -527,7 +527,11 @@ export class SearchEngine {
           const decoder = new TextDecoder();
           let processed = 0;
 
-          for (const [k, value] of Object.entries(data.segments)) {
+          // ⚡ Bolt Optimization: Replace Object.entries() with an imperative loop over keys to avoid allocating an intermediate array of tuples
+          for (const k in data.segments) {
+            if (!Object.prototype.hasOwnProperty.call(data.segments, k))
+              continue;
+            const value = data.segments[k];
             let buffer: any = value;
             let str: string;
             if (typeof buffer === "string") {

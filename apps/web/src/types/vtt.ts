@@ -8,6 +8,7 @@ import type {
   TokenBaseShape,
   TokenImageFocus,
   TokenKind,
+  HexLabelConfig,
 } from "map-engine";
 
 export type {
@@ -29,6 +30,7 @@ export type {
   TileDetails,
   TokenKind,
   TokenVisibility,
+  HexLabelConfig,
 } from "map-engine";
 
 export interface SharedTokenImageState {
@@ -287,6 +289,7 @@ export interface SetGridSettingsPayload {
   gridSize?: number;
   gridType?: "square" | "hex-pointy" | "hex-flat";
   showHexCoordinates?: boolean;
+  hexLabelConfig?: HexLabelConfig;
   gridUnit?: string;
   gridDistance?: number;
   /** GM-chosen fog colour (#rrggbb); null returns to the theme colour. */
