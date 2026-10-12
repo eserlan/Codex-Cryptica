@@ -199,7 +199,7 @@ const NEGATED_WEALTH_CUE =
   /\b(?:not(?!\s+only)|never|no longer|neither|without|isn't|aren't|wasn't|weren't|ain't|cannot|can't)\b(?:\W+\w+){0,2}\W*$/i;
 
 function inferWealth(shopText: string): Wealth {
-  const found: Wealth[] = [];
+  const found: Array<{ wealth: Wealth; index: number }> = [];
   for (const [wealth, pattern] of WEALTH_CUES) {
     const matcher = new RegExp(pattern.source, "gi");
     for (const match of shopText.matchAll(matcher)) {
@@ -214,13 +214,23 @@ function inferWealth(shopText: string): Wealth {
         ),
       );
       if (!NEGATED_WEALTH_CUE.test(before.slice(clauseStart + 1))) {
-        found.push(wealth);
+        found.push({ wealth, index: match.index });
       }
     }
   }
+  found.sort((left, right) => left.index - right.index);
+  const correction = found
+    .filter(({ index }) =>
+      /\b(?:but|however|yet)\b[^.!?;]{0,40}\b(?:now|currently|is|are|was|were|became|become)\s*$/i.test(
+        shopText.slice(0, index),
+      ),
+    )
+    .at(-1);
+  if (correction) return correction.wealth;
   return (
-    found.sort((left, right) => WEALTH_ORDER[left] - WEALTH_ORDER[right])[0] ??
-    "modest"
+    found.sort(
+      (left, right) => WEALTH_ORDER[left.wealth] - WEALTH_ORDER[right.wealth],
+    )[0]?.wealth ?? "modest"
   );
 }
 

@@ -41,6 +41,11 @@ describe("deriveShopContext", () => {
     expect(
       deriveShopContext({ shopText: "Not poor; the shop is thriving." }).wealth,
     ).toBe("comfortable");
+    expect(
+      deriveShopContext({
+        shopText: "The shop was poor, but is now wealthy.",
+      }).wealth,
+    ).toBe("rich");
     expect(deriveShopContext({ shopText: "A stall" }).wealth).toBe("modest");
   });
 
@@ -267,6 +272,13 @@ describe("editedStock", () => {
     expect(
       invalidLineEditFields(stock, { quantity: "0", price: "25" }),
     ).toEqual([]);
+  });
+
+  test("flags unsafe quantity and price edits so the review can block Add", () => {
+    expect(invalidLineEditFields(stock, { quantity: "1e21" })).toEqual([
+      "quantity",
+    ]);
+    expect(invalidLineEditFields(stock, { price: "1e300" })).toEqual(["price"]);
   });
 
   test("never mutates its input", () => {

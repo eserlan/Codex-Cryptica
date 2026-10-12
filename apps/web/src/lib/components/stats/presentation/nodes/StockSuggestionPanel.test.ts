@@ -159,6 +159,28 @@ describe("StockSuggestionPanel (#3965)", () => {
     expect(added.stock.price.units).toBe(1);
   });
 
+  it("flags unsafe quantity and price edits and blocks Add", async () => {
+    const { onUpdateField } = setup();
+    await open();
+    const quantity = screen.getAllByLabelText(
+      /^Quantity for /,
+    )[0] as HTMLInputElement;
+    const name = quantity
+      .getAttribute("aria-label")!
+      .replace("Quantity for ", "");
+    const price = screen.getByLabelText(`Price for ${name}`);
+    await fireEvent.input(quantity, { target: { value: "1e21" } });
+    await fireEvent.input(price, { target: { value: "1e300" } });
+
+    expect(quantity.getAttribute("aria-invalid")).toBe("true");
+    expect(price.getAttribute("aria-invalid")).toBe("true");
+    expect(screen.getAllByRole("alert")).toHaveLength(2);
+    expect(
+      (screen.getByTestId("stock-suggest-add") as HTMLButtonElement).disabled,
+    ).toBe(true);
+    expect(onUpdateField).not.toHaveBeenCalled();
+  });
+
   it("shows and edits prices using fractional shop precision", async () => {
     const existing = {
       rowId: "priced-row",
