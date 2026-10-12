@@ -44,6 +44,7 @@
     { value: "dice", label: "Dice Formula" },
     { value: "counter", label: "Counter" },
     { value: "checkbox", label: "Checkbox" },
+    { value: "money", label: "Price (amount + unit)" },
   ];
 
   let fields = $state<StatSheetField[]>(
@@ -521,6 +522,18 @@
                 })}
             />
             Allow linking rows to vault items
+          </label>
+          <label class="flex items-center gap-1.5">
+            <input
+              type="checkbox"
+              data-testid="stock-ledger-toggle"
+              checked={field.stockLedger ?? false}
+              onchange={(e) =>
+                updateField(field.id, {
+                  stockLedger: (e.target as HTMLInputElement).checked,
+                })}
+            />
+            Merchant stock ledger (quantity, shop price, availability)
           </label>
           {#each tableColumns(field) as col, colIndex (col.id)}
             <div

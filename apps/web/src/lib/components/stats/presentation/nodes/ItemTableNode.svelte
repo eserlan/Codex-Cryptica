@@ -9,6 +9,14 @@
   import { rollStatSheetDiceField } from "$lib/utils/stat-sheet-field-actions";
   import DiceBreakdownDisclosure from "$lib/components/dice/DiceBreakdownDisclosure.svelte";
   import type { RollResult } from "dice-engine";
+  import {
+    adjustQuantity,
+    ensureRowIds,
+    formatMoney,
+    parseMoney,
+    patchStock,
+    resolveStockDisplay,
+  } from "@codex/stat-sheet-engine";
   import { vault } from "$lib/stores/vault.svelte";
 
   const linkableItemTypes = ["item", "weapon", "gear", "artifact", "object"];
@@ -30,6 +38,10 @@
   // Defaults to enabled for back-compat with existing weapon/item tables
   // (which never set this flag); template authors can opt custom tables out.
   const linkEnabled = $derived(field.linkVaultItems ?? true);
+
+  // Merchant stock ledger mode (#3961): stable row ids + shop-local stock.
+  const stockEnabled = $derived(field.stockLedger === true);
+  let stockNotice = $state("");
 
   let rollStateMap = $state<
     Record<
@@ -82,32 +94,114 @@
   }
 
   function updateRows(nextRows: Record<string, any>[]) {
-    context.onUpdateField(field.id, { rows: nextRows });
+    context.onUpdateField(field.id, {
+      rows: stockEnabled ? ensureRowIds(nextRows) : nextRows,
+    });
+  }
+
+  // Legacy rows gain ids the first time an editor opens a stock ledger.
+  $effect(() => {
+    if (!stockEnabled || context.readOnly) return;
+    if (ensureRowIds(rows) !== rows) updateRows(rows);
+  });
+
+  function rowKey(row: Record<string, any>, index: number): string {
+    return stockEnabled && typeof row.rowId === "string" && row.rowId
+      ? row.rowId
+      : `idx-${index}`;
+  }
+
+  const defaultStock = () => ({
+    kind: "item" as const,
+    quantity: 1,
+    availability: "available" as const,
+  });
+
+  function handleStockPatch(rowIndex: number, patch: Record<string, any>) {
+    updateRows(rows.map((r, i) => (i === rowIndex ? patchStock(r, patch) : r)));
+  }
+
+  function handleStockQuantity(rowIndex: number, next: number | null) {
+    const current = rows[rowIndex]?.stock?.quantity;
+    const result =
+      next === null || !Number.isFinite(next)
+        ? { quantity: current ?? 0, clamped: false }
+        : adjustQuantity(0, next);
+    stockNotice = result.clamped ? "Stock can't go below 0." : "";
+    handleStockPatch(rowIndex, { quantity: result.quantity });
+  }
+
+  function handleStockStep(rowIndex: number, delta: number) {
+    const result = adjustQuantity(rows[rowIndex]?.stock?.quantity, delta);
+    stockNotice = result.clamped ? "Stock can't go below 0." : "";
+    handleStockPatch(rowIndex, { quantity: result.quantity });
+  }
+
+  function handleStockPrice(rowIndex: number, amount: string, unit: string) {
+    if (amount.trim() === "") {
+      handleStockPatch(rowIndex, { price: undefined });
+      stockNotice = "";
+      return;
+    }
+    const precision = Math.min(6, (amount.split(".")[1] ?? "").length);
+    const price = parseMoney(amount, unit, precision);
+    if (!price) {
+      stockNotice = "Enter a price as digits, with a unit such as gp.";
+      return;
+    }
+    stockNotice = "";
+    handleStockPatch(rowIndex, { price });
+  }
+
+  function handleMoneyCell(
+    rowIndex: number,
+    colId: string,
+    amount: string,
+    unit: string,
+  ) {
+    if (amount.trim() === "") return handleCellChange(rowIndex, colId, "");
+    const precision = Math.min(6, (amount.split(".")[1] ?? "").length);
+    const money = parseMoney(amount, unit, precision);
+    if (money) handleCellChange(rowIndex, colId, money);
+  }
+
+  function moneyCell(row: Record<string, any>, colId: string) {
+    const v = row[colId];
+    return v && typeof v === "object" && typeof v.units === "number"
+      ? (v as { units: number; currency: string; precision: number })
+      : undefined;
+  }
+
+  function defaultCellValue(col: (typeof columns)[number]) {
+    switch (col.type) {
+      case "counter": {
+        const max = col.max ?? 6;
+        return { value: Math.max(col.min ?? 0, max), max };
+      }
+      case "number":
+        return 0;
+      case "dice":
+        return col.formula || "1d6";
+      case "checkbox":
+        return false;
+      default:
+        return "";
+    }
   }
 
   function handleAddRow() {
     const newRow: Record<string, any> = {};
-    for (const col of columns) {
-      if (col.type === "counter") {
-        const max = col.max ?? 6;
-        const value = Math.max(col.min ?? 0, max);
-        newRow[col.id] = { value, max };
-      } else if (col.type === "number") {
-        newRow[col.id] = 0;
-      } else if (col.type === "dice") {
-        newRow[col.id] = col.formula || "1d6";
-      } else if (col.type === "checkbox") {
-        newRow[col.id] = false;
-      } else {
-        newRow[col.id] = "";
-      }
-    }
+    for (const col of columns) newRow[col.id] = defaultCellValue(col);
+    if (stockEnabled) newRow.stock = defaultStock();
     updateRows([...rows, newRow]);
   }
 
   function handleLinkItem(entityId: string) {
     if (!entityId) return;
-    updateRows([...rows, { entityId }]);
+    updateRows([
+      ...rows,
+      stockEnabled ? { entityId, stock: defaultStock() } : { entityId },
+    ]);
     showItemPicker = false;
   }
 
@@ -403,6 +497,13 @@
     </div>
   {/if}
 
+  <p class="sr-only" role="status" aria-live="polite">{stockNotice}</p>
+  {#if stockNotice}
+    <p class="px-3 py-1 text-micro text-amber-400" data-testid="stock-notice">
+      {stockNotice}
+    </p>
+  {/if}
+
   <div class="overflow-x-auto">
     <table class="w-full min-w-full border-collapse text-xs text-theme-text">
       <thead>
@@ -435,7 +536,7 @@
             </td>
           </tr>
         {:else}
-          {#each rows as row, rIdx (rIdx)}
+          {#each rows as row, rIdx (rowKey(row, rIdx))}
             {@const linked = linkedEntity(row)}
             <tr
               class="group/row border-b border-theme-border/30 transition-colors hover:bg-theme-surface/30"
@@ -603,6 +704,34 @@
                         </button>
                       </div>
                     {/if}
+                  {:else if col.type === "money"}
+                    {@const money = moneyCell(row, col.id)}
+                    {#if context.readOnly}
+                      <span class="font-mono text-theme-text"
+                        >{money ? formatMoney(money) : "—"}</span
+                      >
+                    {:else}
+                      <div class="inline-flex items-center gap-0.5">
+                        <input
+                          type="text"
+                          inputmode="decimal"
+                          data-col-id={col.id}
+                          aria-label={`${col.label} amount for item ${rIdx + 1}`}
+                          class="w-16 rounded border border-theme-border/60 bg-theme-bg/80 px-1 py-0.5 text-center font-mono text-xs text-theme-text focus:border-theme-primary focus:outline-none"
+                          value={money ? formatMoney(money, false) : ""}
+                          onchange={(e) =>
+                            handleMoneyCell(
+                              rIdx,
+                              col.id,
+                              (e.target as HTMLInputElement).value,
+                              money?.currency ?? "gp",
+                            )}
+                        />
+                        <span class="text-micro text-theme-muted"
+                          >{money?.currency ?? "gp"}</span
+                        >
+                      </div>
+                    {/if}
                   {:else if col.type === "checkbox"}
                     <input
                       type="checkbox"
@@ -681,6 +810,207 @@
                 </td>
               {/if}
             </tr>
+            {#if stockEnabled}
+              {@const stock = row.stock ?? {}}
+              {@const display = resolveStockDisplay(row, linked)}
+              <tr
+                class="border-b border-theme-border/30 bg-theme-surface/10"
+                data-testid="stock-row"
+                data-row-id={row.rowId}
+              >
+                <td
+                  colspan={columns.length + (context.readOnly ? 0 : 1)}
+                  class="px-2 py-1.5"
+                >
+                  {#if context.readOnly}
+                    {#if stock.availability !== "hidden"}
+                      <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
+                        <span class="font-bold text-theme-text"
+                          >{display.name}</span
+                        >
+                        {#if stock.kind !== "service" && stock.kind !== "commission" && stock.quantity !== undefined}
+                          <span class="font-mono">×{stock.quantity}</span>
+                        {/if}
+                        {#if display.shopPrice}
+                          <span class="font-mono"
+                            >{formatMoney(display.shopPrice)}</span
+                          >
+                        {:else if display.sourcePrice}
+                          <span class="font-mono">{display.sourcePrice}</span>
+                        {/if}
+                        {#if stock.condition}<span>{stock.condition}</span>{/if}
+                        {#if stock.availability && stock.availability !== "available"}
+                          <span class="italic text-theme-muted"
+                            >{stock.availability}</span
+                          >
+                        {/if}
+                        {#if stock.note}<span class="text-theme-muted"
+                            >{stock.note}</span
+                          >{/if}
+                      </div>
+                    {/if}
+                  {:else}
+                    <div class="flex flex-wrap items-end gap-2">
+                      <label class="flex flex-col text-micro text-theme-muted">
+                        Kind
+                        <select
+                          class="rounded border border-theme-border/60 bg-theme-bg px-1 py-0.5 text-xs text-theme-text"
+                          value={stock.kind ?? "item"}
+                          onchange={(e) =>
+                            handleStockPatch(rIdx, {
+                              kind: (e.target as HTMLSelectElement).value,
+                            })}
+                        >
+                          <option value="item">Item</option>
+                          <option value="service">Service</option>
+                          <option value="commission">Commission</option>
+                        </select>
+                      </label>
+                      {#if (stock.kind ?? "item") === "item"}
+                        <div class="flex flex-col text-micro text-theme-muted">
+                          <span>Quantity</span>
+                          <div class="inline-flex items-center gap-0.5">
+                            <button
+                              type="button"
+                              data-action="stock-dec"
+                              aria-label={`Decrease quantity of ${display.name}`}
+                              class="flex h-5 w-5 items-center justify-center rounded text-xs font-bold text-theme-muted hover:text-theme-primary"
+                              onclick={() => handleStockStep(rIdx, -1)}
+                              >—</button
+                            >
+                            <input
+                              type="number"
+                              min="0"
+                              step="1"
+                              data-action="stock-qty"
+                              aria-label={`Quantity of ${display.name}`}
+                              class="w-14 rounded border border-theme-border/60 bg-theme-bg/80 px-1 py-0.5 text-center font-mono text-xs text-theme-text"
+                              value={stock.quantity ?? 0}
+                              onchange={(e) => {
+                                const raw = (e.target as HTMLInputElement)
+                                  .value;
+                                handleStockQuantity(
+                                  rIdx,
+                                  raw === "" ? null : Math.trunc(Number(raw)),
+                                );
+                              }}
+                            />
+                            <button
+                              type="button"
+                              data-action="stock-inc"
+                              aria-label={`Increase quantity of ${display.name}`}
+                              class="flex h-5 w-5 items-center justify-center rounded text-xs font-bold text-theme-muted hover:text-theme-primary"
+                              onclick={() => handleStockStep(rIdx, 1)}>+</button
+                            >
+                          </div>
+                        </div>
+                      {/if}
+                      <div class="flex flex-col text-micro text-theme-muted">
+                        <span>Shop price</span>
+                        <div class="inline-flex items-center gap-0.5">
+                          <input
+                            type="text"
+                            inputmode="decimal"
+                            data-action="stock-price"
+                            aria-label={`Shop price of ${display.name}`}
+                            class="w-16 rounded border border-theme-border/60 bg-theme-bg/80 px-1 py-0.5 text-center font-mono text-xs text-theme-text"
+                            value={stock.price
+                              ? formatMoney(stock.price, false)
+                              : ""}
+                            onchange={(e) => {
+                              const unitEl = (
+                                e.target as HTMLInputElement
+                              ).parentElement?.querySelector<HTMLInputElement>(
+                                "[data-action='stock-unit']",
+                              );
+                              handleStockPrice(
+                                rIdx,
+                                (e.target as HTMLInputElement).value,
+                                unitEl?.value || stock.price?.currency || "gp",
+                              );
+                            }}
+                          />
+                          <input
+                            type="text"
+                            data-action="stock-unit"
+                            aria-label={`Price unit of ${display.name}`}
+                            class="w-12 rounded border border-theme-border/60 bg-theme-bg/80 px-1 py-0.5 text-center text-xs text-theme-text"
+                            value={stock.price?.currency ?? "gp"}
+                            onchange={(e) => {
+                              if (!stock.price) return;
+                              handleStockPrice(
+                                rIdx,
+                                formatMoney(stock.price, false),
+                                (e.target as HTMLInputElement).value,
+                              );
+                            }}
+                          />
+                        </div>
+                        <span data-testid="price-source" class="italic">
+                          {#if display.priceIsOverride}
+                            Shop override{display.sourcePrice
+                              ? ` (item: ${display.sourcePrice})`
+                              : ""}
+                          {:else if display.sourcePrice}
+                            Using item price: {display.sourcePrice}
+                          {:else}
+                            No price set
+                          {/if}
+                        </span>
+                      </div>
+                      <label class="flex flex-col text-micro text-theme-muted">
+                        Availability
+                        <select
+                          class="rounded border border-theme-border/60 bg-theme-bg px-1 py-0.5 text-xs text-theme-text"
+                          value={stock.availability ?? "available"}
+                          onchange={(e) =>
+                            handleStockPatch(rIdx, {
+                              availability: (e.target as HTMLSelectElement)
+                                .value,
+                            })}
+                        >
+                          <option value="available">Available</option>
+                          <option value="reserved">Reserved</option>
+                          <option value="sold-out">Sold out</option>
+                          <option value="hidden">Hidden</option>
+                        </select>
+                      </label>
+                      <label class="flex flex-col text-micro text-theme-muted">
+                        Condition
+                        <input
+                          type="text"
+                          class="w-24 rounded border border-theme-border/60 bg-theme-bg/80 px-1 py-0.5 text-xs text-theme-text"
+                          value={stock.condition ?? ""}
+                          oninput={(e) =>
+                            handleStockPatch(rIdx, {
+                              condition: (e.target as HTMLInputElement).value,
+                            })}
+                        />
+                      </label>
+                      <label
+                        class="flex min-w-[8rem] flex-1 flex-col text-micro text-theme-muted"
+                      >
+                        Note
+                        <input
+                          type="text"
+                          class="rounded border border-theme-border/60 bg-theme-bg/80 px-1 py-0.5 text-xs text-theme-text"
+                          value={stock.note ?? ""}
+                          oninput={(e) =>
+                            handleStockPatch(rIdx, {
+                              note: (e.target as HTMLInputElement).value,
+                            })}
+                        />
+                      </label>
+                      {#if display.missing}
+                        <span class="text-micro italic text-theme-muted"
+                          >Linked item no longer exists; showing the saved name.</span
+                        >
+                      {/if}
+                    </div>
+                  {/if}
+                </td>
+              </tr>
+            {/if}
           {/each}
         {/if}
       </tbody>

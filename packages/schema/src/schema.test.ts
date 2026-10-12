@@ -823,3 +823,40 @@ describe("TemporalMetadataSchema Compatibility Validation", () => {
     });
   });
 });
+
+describe("stock ledger schema (#3961)", () => {
+  it("accepts money columns, stock metadata and legacy rows together", async () => {
+    const { StatSheetFieldSchema } = await import("./stat-sheet");
+    const parsed = StatSheetFieldSchema.parse({
+      id: "stock",
+      label: "Stock",
+      type: "item-table",
+      stockLedger: true,
+      columns: [{ id: "cost", label: "Cost", type: "money" }],
+      rows: [
+        { name: "Legacy", hp: { value: 1, max: 2 } },
+        {
+          rowId: "r1",
+          cost: { units: 1250, currency: "cr", precision: 2 },
+          stock: { quantity: 3, price: { units: 5, currency: "gp" } },
+        },
+      ],
+    });
+    expect(parsed.rows?.[0]).toEqual({
+      name: "Legacy",
+      hp: { value: 1, max: 2 },
+    });
+    expect((parsed.rows?.[1].stock as any).price.precision).toBe(0);
+  });
+
+  it("rejects fractional, unsafe or negative stock values", async () => {
+    const { MoneyAmountSchema, StockMetaSchema } = await import("./stat-sheet");
+    expect(
+      MoneyAmountSchema.safeParse({ units: 1.5, currency: "gp" }).success,
+    ).toBe(false);
+    expect(
+      MoneyAmountSchema.safeParse({ units: 2 ** 60, currency: "gp" }).success,
+    ).toBe(false);
+    expect(StockMetaSchema.safeParse({ quantity: -1 }).success).toBe(false);
+  });
+});
