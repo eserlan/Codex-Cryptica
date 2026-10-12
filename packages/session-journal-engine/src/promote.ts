@@ -41,6 +41,7 @@ const AUTOMATIC_LABELS: Record<string, string> = {
   "dice-roll": "Dice roll",
   "card-draw": "Card draw",
   "table-result": "Table result",
+  trade: "Trade",
 };
 const GENERIC_AUTOMATIC_LABEL = "Automatic entry";
 const MANUAL_NOTE = "manual-note";

@@ -36,6 +36,17 @@ export const statSheets: FeatureEntry = {
       ],
       actionIds: ["stat-sheets.open", "stat-sheets.merchant-help"],
     },
+    {
+      id: "record-a-trade",
+      title: "Record a trade",
+      steps: [
+        "On a shop's Stats tab, choose Trade on a stock line in the GM Stock Manager.",
+        "Pick buy or sell, the quantity and the price, and optionally who is trading.",
+        "Check the preview. It says whether any funds will move.",
+        "Choose Confirm trade. Nothing changes before that, and Cancel changes nothing.",
+      ],
+      actionIds: ["stat-sheets.open", "stat-sheets.merchant-help"],
+    },
   ],
   helpIds: ["stat-sheets", "merchant-sheets", "sharing-templates"],
   related: ["entity-templates"],

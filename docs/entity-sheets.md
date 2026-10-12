@@ -80,6 +80,20 @@ The first built-in sheet that uses a capability. It lives in `packages/stat-shee
 - **Not access control.** The catalogue is a layout choice on the GM's own screen. Hidden lines and notes are still in the stored sheet. A safe player view must come from `projectEntitySheet` at the transport boundary (#3964).
 - **Demo data.** `createDemoMerchantSheet()` returns a fantasy example with a linked item, a sold-out line, a service, a hidden line and a GM note, for tests and docs.
 
+## Merchant trades (#3963)
+
+Explicit buy and sell on a Shop / Merchant sheet. The rules are pure code in `packages/stat-sheet-engine/src/commerce.ts`; applying them is `apps/web/src/lib/services/merchant-trade.ts`; the form is `StockTradePanel.svelte`.
+
+- **Registered actions.** The `stock-table` capability declares `purchase` and `sell`, both `mutates: true`. The service refuses a trade unless the sheet's template declares the capability and `registry.actionsFor(template)` lists the action. Presentation Markdown only shows the control; it carries no logic. `createCommerceRegistry()` builds the registry.
+- **Nothing happens without a confirm.** The form previews the result with the same `planTrade` the service runs, and the service runs only from the Confirm button. Cancel and Escape never reach it.
+- **Validation** (`planTrade`): whole quantity of 1 or more, enough stock, line available (not sold out, reserved or hidden), a price present, a total that stays a safe integer, items only for the shop to buy. Services trade one at a time. The last unit sold flips a line to sold-out; buying into a sold-out line reopens it.
+- **Record-only is the default** and is one write to the shop entity. It moves no funds and no items, and the form, result and journal say so.
+- **Wallet mode.** A character with a `number` field keyed `wallet_<unit>` (for example `wallet_gp`) can be charged or paid. The unit must equal the price's unit, there is no exchange rate, and the price must be whole numbers. Items are never moved into an inventory.
+- **No all-or-none write across entities.** The vault saves each entity on its own, so a wallet trade uses a recoverable order: (1) shop stock plus the trade logged as `pending`, (2) the wallet balance plus the trade id on the wallet field, (3) the shop record marked `complete`. A failure at step 2 restores step 1. If a restore or step 3 also fails, the `pending` record stays and confirming the same trade again finishes it. The wallet already carries the trade id, so it is never charged twice.
+- **Idempotency.** `StatSheetField.tradeLog` (at most 25 records, oldest finished ones dropped first) holds `StockTradeRecord`s. A trade id already logged is not applied again, and reusing an id for a different trade is refused. The form mints one id per opened panel and reuses it on retry.
+- **In-flight guard.** The service ignores a second call with a trade id that is still being applied, so a double click runs once.
+- **Journal.** One `trade` entry via `JOURNAL:CAPTURE` after success, from `describeTrade`. It is not part of any capture-control kind, so it is always recorded while a journal runs. A rejected, failed or cancelled trade emits nothing, and a duplicate retry of a finished trade emits nothing. A journal failure never fails the trade.
+
 ## Compatibility promises
 
 - Old `statSheet` frontmatter, vault templates, presentation templates and marketplace packages load unchanged. `packages/stat-sheet-engine/src/__fixtures__/legacy-sheets.ts` holds pre-#3960 data, and `entity-sheet.test.ts` asserts it parses and projects without being rewritten.

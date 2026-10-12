@@ -18,6 +18,7 @@
     resolveStockDisplay,
   } from "@codex/stat-sheet-engine";
   import { vault } from "$lib/stores/vault.svelte";
+  import StockTradePanel from "./StockTradePanel.svelte";
 
   const linkableItemTypes = ["item", "weapon", "gear", "artifact", "object"];
 
@@ -49,6 +50,15 @@
   // Merchant stock ledger mode (#3961): stable row ids + shop-local stock.
   const stockEnabled = $derived(field.stockLedger === true);
   let stockNotice = $state("");
+  // The stock line whose trade form is open (#3963). One at a time.
+  let tradeRowId = $state<string | null>(null);
+  const tradingEnabled = $derived(
+    stockEnabled &&
+      !catalogue &&
+      !context.readOnly &&
+      context.mode === "view" &&
+      !!context.entityId,
+  );
 
   let rollStateMap = $state<
     Record<
@@ -1040,6 +1050,24 @@
                               })}
                           />
                         </label>
+                        {#if tradingEnabled && typeof row.rowId === "string"}
+                          <button
+                            type="button"
+                            data-action="open-trade"
+                            aria-expanded={tradeRowId === row.rowId}
+                            aria-label={`Trade ${display.name}`}
+                            class="inline-flex items-center gap-1 rounded border border-theme-border/60 bg-theme-surface/40 px-2 py-0.5 text-micro font-bold text-theme-muted transition-colors hover:border-theme-primary hover:text-theme-primary"
+                            onclick={() =>
+                              (tradeRowId =
+                                tradeRowId === row.rowId ? null : row.rowId)}
+                          >
+                            <span
+                              class="icon-[lucide--hand-coins] h-3 w-3"
+                              aria-hidden="true"
+                            ></span>
+                            Trade
+                          </button>
+                        {/if}
                         {#if display.linked && typeof row.entityId === "string"}
                           <button
                             type="button"
@@ -1063,6 +1091,15 @@
                           >
                         {/if}
                       </div>
+                      {#if tradingEnabled && tradeRowId !== null && tradeRowId === row.rowId && context.entityId}
+                        <StockTradePanel
+                          shopId={context.entityId}
+                          {field}
+                          {row}
+                          name={display.name}
+                          onClose={() => (tradeRowId = null)}
+                        />
+                      {/if}
                     {/if}
                   </td>
                 </tr>

@@ -1,5 +1,9 @@
 import { getDB } from "../utils/idb";
-import { type StatSheetTemplate, type StatSheetField } from "schema";
+import {
+  type StatSheetTemplate,
+  type StatSheetTemplateField,
+  type StatSheetField,
+} from "schema";
 import { vaultRegistry } from "./vault-registry.svelte";
 import { type IdGenerator, systemIdGenerator } from "$lib/utils/runtime-deps";
 import {
@@ -8,6 +12,18 @@ import {
 } from "@codex/stat-sheet-engine";
 import type { PublicTemplatePackage } from "schema";
 import { BUILT_IN_STAT_SHEET_TEMPLATES } from "./stat-sheet/built-in-templates";
+
+/**
+ * A sheet's fields as a reusable template keeps structure only: no values,
+ * collapsed state or trade log. A trade log belongs to the shop it was
+ * recorded on, so it never travels into a template (#3963).
+ */
+function templateFieldsOf(fields: StatSheetField[]): StatSheetTemplateField[] {
+  return fields.map(
+    ({ value: _value, collapsed: _collapsed, tradeLog: _tradeLog, ...rest }) =>
+      rest,
+  );
+}
 
 export class StatSheetTemplateStore {
   templates = $state<StatSheetTemplate[]>([]);
@@ -186,9 +202,7 @@ export class StatSheetTemplateStore {
       description: options.description,
       category: options.category,
       isBuiltIn: false,
-      fields: fields.map(
-        ({ value: _value, collapsed: _collapsed, ...rest }) => rest,
-      ),
+      fields: templateFieldsOf(fields),
     };
 
     try {
@@ -268,51 +282,47 @@ export class StatSheetTemplateStore {
     }
   }
 
-  async renameTemplate(id: string, name: string): Promise<boolean> {
+  /** Saves an edited copy of a template and swaps it into the list. */
+  private async persistEdit(
+    updated: StatSheetTemplate,
+    failure: string,
+  ): Promise<boolean> {
     const vaultId = vaultRegistry.activeVaultId;
-    const existing = this.templates.find((t) => t.id === id);
-    if (!vaultId || !existing) return false;
-
-    const updated: StatSheetTemplate = { ...$state.snapshot(existing), name };
+    if (!vaultId) return false;
     try {
       const db = await getDB();
       await db.put("stat_sheet_templates", { ...updated, vaultId });
-      this.templates = this.templates.map((t) => (t.id === id ? updated : t));
+      this.templates = this.templates.map((t) =>
+        t.id === updated.id ? updated : t,
+      );
       return true;
     } catch (e) {
-      console.error("[StatSheetTemplateStore] Failed to rename template:", e);
+      console.error(`[StatSheetTemplateStore] ${failure}`, e);
       return false;
     }
+  }
+
+  async renameTemplate(id: string, name: string): Promise<boolean> {
+    const existing = this.templates.find((t) => t.id === id);
+    if (!existing) return false;
+    return this.persistEdit(
+      { ...$state.snapshot(existing), name },
+      "Failed to rename template:",
+    );
   }
 
   async updateTemplateFields(
     id: string,
     fields: StatSheetField[],
   ): Promise<boolean> {
-    const vaultId = vaultRegistry.activeVaultId;
     const existing = this.templates.find((t) => t.id === id);
-    if (!vaultId || !existing) return false;
+    if (!existing) return false;
     // #3180 backstop, mirroring saveAsTemplate.
     if (validateFieldKeys(fields).length > 0) return false;
-
-    const updated: StatSheetTemplate = {
-      ...$state.snapshot(existing),
-      fields: fields.map(
-        ({ value: _value, collapsed: _collapsed, ...rest }) => rest,
-      ),
-    };
-    try {
-      const db = await getDB();
-      await db.put("stat_sheet_templates", { ...updated, vaultId });
-      this.templates = this.templates.map((t) => (t.id === id ? updated : t));
-      return true;
-    } catch (e) {
-      console.error(
-        "[StatSheetTemplateStore] Failed to update template fields:",
-        e,
-      );
-      return false;
-    }
+    return this.persistEdit(
+      { ...$state.snapshot(existing), fields: templateFieldsOf(fields) },
+      "Failed to update template fields:",
+    );
   }
 
   // Preserves each field's template-defined id (e.g. "hp", "ac") so
@@ -325,7 +335,10 @@ export class StatSheetTemplateStore {
     existingFields: StatSheetField[] = [],
   ): StatSheetField[] {
     const usedIds = new Set(existingFields.map((f) => f.id));
-    return template.fields.map((f) => {
+    return template.fields.map((field) => {
+      // Never inherit another sheet's trade history, even from an older
+      // template that was saved or imported with one (#3963).
+      const { tradeLog: _tradeLog, ...f } = field as StatSheetField;
       const id = usedIds.has(f.id) ? `field-${this.idGenerator.uuid()}` : f.id;
       usedIds.add(id);
       return {
