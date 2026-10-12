@@ -305,7 +305,7 @@ export const howDoIMakeRoleplayMoreEngaging: AnswerConfigInput = {
   seo: {
     title: "Make roleplay more engaging: give scenes a choice | Codex Cryptica",
     description:
-      "Flat social scenes leave players no meaningful choice before or after a request. Prepare an NPC situation, invite an approach or commitment, and let one roll settle the request when the rules allow.",
+      "Make roleplay engaging with NPCs who want something, invite a clear player approach, and use one roll to resolve a meaningful choice.",
     image:
       "https://assets.codexcryptica.com/og/how-do-i-make-roleplay-more-engaging.jpg",
     imageAlt:
