@@ -8,6 +8,9 @@ describe("answer slug allowlist", () => {
         "how-do-i-combine-multiple-enemies-into-one-squad-in-an-rpg",
       ),
     ).toBe(true);
+    expect(
+      isKnownAnswerSlug("which-tabletop-rpgs-have-squad-and-mass-battle-rules"),
+    ).toBe(true);
   });
 
   it("rejects unknown answer slugs", () => {

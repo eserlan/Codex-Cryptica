@@ -156,6 +156,7 @@ export const ANSWER_SLUGS: ReadonlySet<string> = new Set([
   "what-ttrpgs-let-you-build-and-upgrade-a-base",
   "where-do-i-start-if-i-have-never-played-a-tabletop-rpg",
   "which-dice-do-i-roll-in-dnd-and-when",
+  "which-tabletop-rpgs-have-squad-and-mass-battle-rules",
   "xp-leveling-vs-milestone-leveling",
 ]);
 
