@@ -250,6 +250,11 @@ export const whatAreTheProsAndConsOfBecomingADungeonMaster: AnswerConfigInput =
       ],
       acknowledgedOverlap: [
         {
+          with: "answer-new-dnd-player-first-game",
+          reason:
+            "The first-game guide helps a player take part in D&D through the play loop, dice, and table conversation; this page helps a player decide whether to try DMing by weighing its rewards and demands and planning a low-risk one-shot.",
+        },
+        {
           with: "answer-first-time-gm-hub",
           reason:
             "The existing first-time GM guide teaches how to run a first session in any system; this page decides whether to try DMing at all, with D&D-specific pros and cons, a player versus DM comparison, and a low-risk one-shot test that points to that guide for the next step.",
