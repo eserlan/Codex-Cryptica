@@ -203,5 +203,22 @@ describe("hex-labels", () => {
         ),
       ).toBe("");
     });
+
+    it("bounds malformed persisted separators and start columns", () => {
+      const oversized = "x".repeat(100_000);
+      expect(
+        formatHexLabel(
+          { q: 0, r: 0 },
+          {
+            style: "alphanumeric",
+            startCol: oversized,
+            separator: oversized,
+          },
+        ),
+      ).toBe("A01");
+      expect(
+        formatHexLabel({ q: 0, r: 0 }, { style: "invalid" as never }),
+      ).toBe("");
+    });
   });
 });

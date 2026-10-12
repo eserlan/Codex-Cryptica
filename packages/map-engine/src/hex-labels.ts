@@ -123,7 +123,12 @@ function formatAlphanumericHex(
   config: HexLabelConfig | undefined,
   orientation: HexOrientation,
 ): string {
-  const startColLetters = config?.startCol ?? config?.startColumn ?? "A";
+  const requestedStartCol = config?.startCol ?? config?.startColumn;
+  const startColLetters =
+    typeof requestedStartCol === "string" &&
+    /^[A-Za-z]{1,3}$/.test(requestedStartCol)
+      ? requestedStartCol
+      : "A";
   const startColIndex = columnLettersToIndex(startColLetters);
   const startRow = config?.startRow ?? 1;
   const requestedPadding = config?.rowPadding ?? 2;
@@ -132,7 +137,11 @@ function formatAlphanumericHex(
   const rowPadding = Number.isFinite(requestedPadding)
     ? Math.min(32, Math.max(1, Math.trunc(requestedPadding)))
     : 2;
-  const separator = config?.separator ?? "";
+  const requestedSeparator = config?.separator;
+  const separator =
+    typeof requestedSeparator === "string" && requestedSeparator.length <= 1
+      ? requestedSeparator
+      : "";
   const invertRow = config?.invertRow ?? false;
 
   const originQ = config?.originQ ?? 0;
@@ -185,6 +194,10 @@ export function formatHexLabel(
 
   if (style === "numeric") {
     return `${formatNumericComponent(hex.q)}.${formatNumericComponent(hex.r)}`;
+  }
+
+  if (style !== "alphanumeric") {
+    return "";
   }
 
   return formatAlphanumericHex(hex, config, orientation);
