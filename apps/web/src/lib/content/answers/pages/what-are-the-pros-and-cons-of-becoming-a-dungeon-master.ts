@@ -130,13 +130,14 @@ export const whatAreTheProsAndConsOfBecomingADungeonMaster: AnswerConfigInput =
       },
       {
         kind: "example",
-        heading: "Worked example: the same one-shot idea, two levels of prep",
+        heading:
+          "Worked example: the same one-shot idea, two preparation approaches",
         paragraphs: [
           "A new DM who enjoys designing situations decides to test the role with a one-shot for three friends. The premise is simple: a roadside inn cut off by a washed-out bridge, with supplies running low and two groups who disagree about what to do next.",
         ],
         items: [
           {
-            term: "The heavy prep approach",
+            term: "The fixed-sequence approach",
             text: "The DM sketches the inn, gives its keeper a reason to need the bridge repaired, and prepares clues to the damage, a storehouse with rope, and a guard who objects to a risky crossing. They expect the party to discover the damage, fetch the rope, then persuade the guard. Instead, the players ask a local to guide them along the riverbank. The prepared clues no longer fit the order of events, and the DM is unsure what the party can learn or whether the route is safe.",
           },
           {
