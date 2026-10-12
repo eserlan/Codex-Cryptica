@@ -193,6 +193,22 @@ describe("MapStore settings persistence", () => {
     expect(store2.formatHex({ q: 1, r: 0 })).toBe("B01");
   });
 
+  it("falls back to the legacy numeric style for invalid saved label configs", () => {
+    window.localStorage.setItem(
+      "codex-map-settings:map-invalid-labels",
+      JSON.stringify({
+        showHexCoordinates: true,
+        hexLabelConfig: { style: "unknown" },
+      }),
+    );
+
+    const store = new MapStore();
+    store.selectMap("map-invalid-labels");
+
+    expect(store.hexLabelConfig).toEqual({ style: "numeric" });
+    expect(store.formatHex({ q: 1, r: 4 })).toBe("01.04");
+  });
+
   it("places and drags pins at hex centers with their axial coordinates", async () => {
     vaultMock.maps = { "map-hex": makeMap("map-hex") };
     const store = new MapStore();

@@ -56,6 +56,26 @@ type PersistedMapSettings = {
   layerLocked: Record<MapLayer, boolean>;
 };
 
+const HEX_LABEL_STYLES = new Set<HexLabelConfig["style"]>([
+  "none",
+  "off",
+  "numeric",
+  "alphanumeric",
+  "axial",
+]);
+
+function isPersistedHexLabelConfig(value: unknown): value is HexLabelConfig {
+  if (value === null || typeof value !== "object" || Array.isArray(value)) {
+    return false;
+  }
+
+  const style = (value as Record<string, unknown>).style;
+  return (
+    typeof style === "string" &&
+    HEX_LABEL_STYLES.has(style as HexLabelConfig["style"])
+  );
+}
+
 function layerRecord<T>(value: T): Record<MapLayer, T> {
   return Object.fromEntries(
     MAP_LAYER_ORDER.map((layer) => [layer, value]),
@@ -280,16 +300,15 @@ export class MapStore {
           typeof parsed.showHexCoordinates === "boolean"
             ? parsed.showHexCoordinates
             : DEFAULT_MAP_SETTINGS.showHexCoordinates,
-        hexLabelConfig:
-          parsed.hexLabelConfig && typeof parsed.hexLabelConfig === "object"
-            ? parsed.hexLabelConfig
-            : {
-                style:
-                  typeof parsed.showHexCoordinates === "boolean" &&
-                  parsed.showHexCoordinates
-                    ? "numeric"
-                    : "none",
-              },
+        hexLabelConfig: isPersistedHexLabelConfig(parsed.hexLabelConfig)
+          ? parsed.hexLabelConfig
+          : {
+              style:
+                typeof parsed.showHexCoordinates === "boolean" &&
+                parsed.showHexCoordinates
+                  ? "numeric"
+                  : "none",
+            },
         brushRadius:
           typeof parsed.brushRadius === "number"
             ? parsed.brushRadius
