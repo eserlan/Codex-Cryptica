@@ -1,6 +1,7 @@
 <script lang="ts">
   import { tick } from "svelte";
   import { base } from "$app/paths";
+  import { page } from "$app/state";
   import { vault } from "$lib/stores/vault.svelte";
   import { categories } from "$lib/stores/categories.svelte";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
@@ -22,6 +23,11 @@
   import EntityTableSearch from "$lib/components/table/EntityTableSearch.svelte";
   import TableContextMenu from "$lib/components/table/TableContextMenu.svelte";
   import TableViewPresets from "$lib/components/table/TableViewPresets.svelte";
+  import VaultAuditPanel from "$lib/components/table/VaultAuditPanel.svelte";
+  import {
+    computeVaultAuditCounts,
+    type VaultAuditPreset,
+  } from "$lib/components/table/vaultAudit";
   import type { ViewPreset } from "$lib/stores/view-presets";
   import EmptyState from "$lib/components/ui/EmptyState.svelte";
   import { openSelectionReport } from "$lib/components/reports/open-selection-report";
@@ -46,6 +52,14 @@
   let labelFilters = $state<Set<string>>(new Set());
   let showIncompleteOnly = $state(false);
   let columnFilters = $state<TableColumnFilters>({});
+  let showAuditPanel = $state(false);
+  let activeAuditPresetId = $state<string | null>(null);
+
+  $effect(() => {
+    showAuditPanel =
+      page.url.searchParams.get("mode") === "audit" ||
+      page.url.searchParams.get("audit") === "true";
+  });
   let textMatchIds = $state<Set<string> | null>(null);
   let textSearchPending = $state(false);
   let textSearchUnavailable = $state(false);
@@ -164,6 +178,10 @@
     }
     return count;
   });
+
+  const auditCounts = $derived(
+    computeVaultAuditCounts(vault.allEntities, connectionCounts),
+  );
 
   const typeCounts = $derived(
     countEntityTypes(vault.allEntities, {
@@ -488,6 +506,58 @@
     });
   }
 
+  function toggleAuditPanel() {
+    showAuditPanel = !showAuditPanel;
+  }
+
+  function handleApplyAuditPreset(preset: VaultAuditPreset) {
+    measureTableOperation("table_filter", () => {
+      activeAuditPresetId = preset.id;
+      searchQuery = "";
+      labelFilters = new Set();
+      if (preset.typeFilter) {
+        typeFilters = new Set([preset.typeFilter]);
+      } else {
+        typeFilters = new Set();
+      }
+      showIncompleteOnly = preset.showIncompleteOnly ?? false;
+      columnFilters = preset.columnFilters ? { ...preset.columnFilters } : {};
+    });
+  }
+
+  function handleAuditDrillDown(
+    finding:
+      | "missing_images"
+      | "missing_descriptions"
+      | "zero_connections"
+      | "unlabelled"
+      | "incomplete",
+  ) {
+    measureTableOperation("table_filter", () => {
+      activeAuditPresetId = null;
+      searchQuery = "";
+      typeFilters = new Set();
+      labelFilters = new Set();
+
+      if (finding === "missing_images") {
+        showIncompleteOnly = false;
+        columnFilters = { imageMode: "missing_image" };
+      } else if (finding === "missing_descriptions") {
+        showIncompleteOnly = false;
+        columnFilters = { summaryMode: "missing_summary" };
+      } else if (finding === "zero_connections") {
+        showIncompleteOnly = false;
+        columnFilters = { connectionsMode: "zero" };
+      } else if (finding === "unlabelled") {
+        showIncompleteOnly = false;
+        columnFilters = { labelMode: "missing" };
+      } else if (finding === "incomplete") {
+        showIncompleteOnly = true;
+        columnFilters = {};
+      }
+    });
+  }
+
   function clearFilters() {
     measureTableOperation("table_filter", () => {
       searchQuery = "";
@@ -495,6 +565,7 @@
       labelFilters = new Set();
       showIncompleteOnly = false;
       columnFilters = {};
+      activeAuditPresetId = null;
     });
   }
 
@@ -538,6 +609,7 @@
 
   function handleApplyPreset(preset: ViewPreset) {
     const s = preset.state;
+    activeAuditPresetId = null;
     searchQuery = s.searchQuery ?? "";
     typeFilters = new Set(s.activeCategories);
     labelFilters = new Set(s.activeLabels);
@@ -549,6 +621,7 @@
   }
 
   function handleResetFilters() {
+    activeAuditPresetId = null;
     searchQuery = "";
     typeFilters = new Set();
     labelFilters = new Set();
@@ -655,6 +728,25 @@
           {/if}
         </button>
 
+        <!-- Mobile Audit toggle button -->
+        <button
+          type="button"
+          onclick={toggleAuditPanel}
+          aria-pressed={showAuditPanel}
+          aria-expanded={showAuditPanel}
+          aria-controls={showAuditPanel ? "vault-audit-panel" : undefined}
+          data-testid="entity-table-mobile-audit-toggle"
+          class="inline-flex md:hidden items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-theme-accent/40 shrink-0 {showAuditPanel
+            ? 'border-theme-primary bg-theme-primary/10 text-theme-primary'
+            : 'border-theme-border bg-theme-surface text-theme-muted hover:text-theme-text'}"
+        >
+          <span
+            class="icon-[lucide--clipboard-check] h-3.5 w-3.5"
+            aria-hidden="true"
+          ></span>
+          <span>Audit</span>
+        </button>
+
         <!-- Desktop Incomplete only toggle -->
         <button
           type="button"
@@ -679,6 +771,25 @@
           </span>
         </button>
 
+        <!-- Desktop Audit toggle -->
+        <button
+          type="button"
+          onclick={toggleAuditPanel}
+          aria-pressed={showAuditPanel}
+          aria-expanded={showAuditPanel}
+          aria-controls={showAuditPanel ? "vault-audit-panel" : undefined}
+          data-testid="entity-table-audit-toggle"
+          class="hidden md:inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-theme-accent/40 {showAuditPanel
+            ? 'border-theme-primary bg-theme-primary/15 text-theme-primary'
+            : 'border-theme-border bg-theme-surface text-theme-muted hover:border-theme-primary/50 hover:text-theme-text'}"
+        >
+          <span
+            class="icon-[lucide--clipboard-check] h-3.5 w-3.5"
+            aria-hidden="true"
+          ></span>
+          Audit
+        </button>
+
         <TableViewPresets
           activeVaultId={vaultId}
           currentFilterState={{
@@ -693,6 +804,16 @@
           onResetFilters={handleResetFilters}
         />
       </div>
+
+      {#if showAuditPanel}
+        <VaultAuditPanel
+          counts={auditCounts}
+          activePresetId={activeAuditPresetId}
+          onApplyPreset={handleApplyAuditPreset}
+          onDrillDown={handleAuditDrillDown}
+          onClose={() => (showAuditPanel = false)}
+        />
+      {/if}
 
       {#if searchStatusMessage}
         <p class="text-micro text-theme-muted" aria-live="polite">

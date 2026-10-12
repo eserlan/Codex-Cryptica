@@ -175,6 +175,7 @@ export const howDoYouMakeATabletopRpgSessionMoreEngaging: AnswerConfigInput = {
     "how-long-should-a-ttrpg-session-be",
     "how-do-i-keep-players-engaged-during-other-players-turns-in-combat",
     "how-do-i-start-a-dnd-campaign",
+    "how-do-i-get-my-friends-interested-in-playing-dnd",
   ],
   discovery: {
     id: "answer-session-engagement",
