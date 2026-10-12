@@ -12,6 +12,7 @@ import {
   planTrade,
   planWalletChange,
   type DuplicateTrade,
+  STOCK_TABLE_PROJECTOR,
   type SheetCapabilityDefinition,
   type TradePlan,
   type TradeCommand,
@@ -45,6 +46,8 @@ export const STOCK_TABLE_CAPABILITY: SheetCapabilityDefinition = {
   description:
     "A merchant stock ledger that can record explicit, confirmed trades.",
   categories: ["location", "faction", "organization"],
+  // Players only ever get the published catalogue (#3964).
+  project: STOCK_TABLE_PROJECTOR,
   actions: [
     {
       id: "purchase",

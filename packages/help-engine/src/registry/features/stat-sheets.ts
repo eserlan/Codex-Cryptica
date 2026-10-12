@@ -47,6 +47,17 @@ export const statSheets: FeatureEntry = {
       ],
       actionIds: ["stat-sheets.open", "stat-sheets.merchant-help"],
     },
+    {
+      id: "share-a-shop-with-players",
+      title: "Share a shop with players",
+      steps: [
+        "On the shop's Stats tab, tick Share this catalogue with players.",
+        "Choose which business details players may also see.",
+        "Choose Preview as player to see exactly what they receive.",
+        "Untick the box to stop sharing. Lines marked Hidden are never shared.",
+      ],
+      actionIds: ["stat-sheets.open", "stat-sheets.merchant-help"],
+    },
   ],
   helpIds: ["stat-sheets", "merchant-sheets", "sharing-templates"],
   related: ["entity-templates"],

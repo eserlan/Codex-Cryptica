@@ -6,6 +6,7 @@ import type { Entity } from "schema";
 import {
   SHOP_MERCHANT_TEMPLATE,
   createDemoMerchantSheet,
+  sanitizeSheetForGuests,
   getShopPresentationTemplates,
 } from "@codex/stat-sheet-engine";
 
@@ -96,5 +97,58 @@ describe("a shop on the Stats tab (#3962, #3963)", () => {
     } finally {
       vaultState.isGuest = false;
     }
+  });
+  describe("what a guest sees (#3964)", () => {
+    function guestShop(published: boolean) {
+      const demo = createDemoMerchantSheet();
+      const ledger = demo.fields.find((f) => f.id === "stock")!;
+      ledger.playerCatalogue = { published, fields: ["services"] };
+      return {
+        ...shop(gmLayout.id),
+        // Exactly what the host sends: the sanitised sheet, nothing else.
+        statSheet: sanitizeSheetForGuests(demo),
+      } as unknown as Entity;
+    }
+
+    it("shows only the published catalogue, read-only, with no GM controls", () => {
+      vaultState.isGuest = true;
+      try {
+        render(DetailStatsTab, { entity: guestShop(true) });
+
+        expect(screen.getByText(/Hempen rope/)).toBeTruthy();
+        // Long text is shown in a disabled box, so it is matched by its value.
+        const services = screen.getByDisplayValue(/Repairs to packs/);
+        expect((services as HTMLTextAreaElement).disabled).toBe(true);
+        // Hidden line, line notes, GM notes and purchasing power never arrive.
+        for (const secret of [
+          "Signet ring",
+          "Do not mention",
+          "back room",
+          "About 200 gp",
+        ]) {
+          expect(screen.queryByText(new RegExp(secret))).toBeNull();
+        }
+        expect(
+          screen.queryAllByRole("button", { name: /^Trade / }),
+        ).toHaveLength(0);
+        expect(screen.queryByTestId("shop-sharing")).toBeNull();
+        expect(screen.queryByTestId("item-table-add-row")).toBeNull();
+        expect(screen.queryAllByRole("spinbutton")).toHaveLength(0);
+      } finally {
+        vaultState.isGuest = false;
+      }
+    });
+
+    it("shows a guest nothing for a shop that is not shared", () => {
+      vaultState.isGuest = true;
+      try {
+        render(DetailStatsTab, { entity: guestShop(false) });
+        expect(screen.queryByText(/Hempen rope/)).toBeNull();
+        expect(screen.queryByText(/back room/)).toBeNull();
+        expect(updateEntity).not.toHaveBeenCalled();
+      } finally {
+        vaultState.isGuest = false;
+      }
+    });
   });
 });

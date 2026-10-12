@@ -19,6 +19,7 @@
   } from "@codex/stat-sheet-engine";
   import { vault } from "$lib/stores/vault.svelte";
   import StockTradePanel from "./StockTradePanel.svelte";
+  import ShopSharingPanel from "./ShopSharingPanel.svelte";
 
   const linkableItemTypes = ["item", "weapon", "gear", "artifact", "object"];
 
@@ -50,6 +51,8 @@
   // Merchant stock ledger mode (#3961): stable row ids + shop-local stock.
   const stockEnabled = $derived(field.stockLedger === true);
   let stockNotice = $state("");
+  // GM-only shop controls (#3963 trading, #3964 sharing) show on an
+  // editable ledger with a known owner entity, never to players.
   // The stock line whose trade form is open (#3963). One at a time.
   let tradeRowId = $state<string | null>(null);
   const tradingEnabled = $derived(
@@ -488,6 +491,10 @@
       </div>
     {/if}
   </div>
+
+  {#if tradingEnabled}
+    <ShopSharingPanel {field} {context} />
+  {/if}
 
   {#if showItemPicker && linkEnabled && !context.readOnly}
     <div
