@@ -93,7 +93,8 @@
     aria-label="Dismiss Grid Settings Backdrop"
   ></button>
   <div
-    class="bg-theme-surface border border-theme-border p-6 rounded-xl max-w-md w-full shadow-2xl relative z-10 max-h-[90vh] overflow-y-auto"
+    class="bg-theme-surface border border-theme-border p-6 rounded-xl max-w-md w-full shadow-2xl relative z-10 max-h-[90vh]"
+    style="overflow-y: auto"
     onclick={(e) => e.stopPropagation()}
     onkeydown={(e) => e.stopPropagation()}
     transition:fade={{ duration: 150 }}

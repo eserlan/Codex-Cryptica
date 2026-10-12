@@ -155,3 +155,31 @@ describe("VTTGridManager fog colour", () => {
     expect(mapStore.fogColor).toBe("#445566");
   });
 });
+
+describe("VTTGridManager hex label visibility", () => {
+  function managerWithGridSettings() {
+    const mapStore = {
+      showHexCoordinates: true,
+      hexLabelConfig: { style: "numeric" },
+    };
+    const base = deps(memoryStorage());
+    const d = { ...base, mapStore: mapStore as any };
+    return { mapStore, mgr: new VTTGridManager(d) };
+  }
+
+  it("turns labels off when local settings use the off style", () => {
+    const { mapStore, mgr } = managerWithGridSettings();
+
+    mgr.setGridSettings({ hexLabelConfig: { style: "off" } });
+
+    expect(mapStore.showHexCoordinates).toBe(false);
+  });
+
+  it("turns labels off when a remote setting uses the off style", () => {
+    const { mapStore, mgr } = managerWithGridSettings();
+
+    mgr.handleRemoteGridSettings({ hexLabelConfig: { style: "off" } });
+
+    expect(mapStore.showHexCoordinates).toBe(false);
+  });
+});

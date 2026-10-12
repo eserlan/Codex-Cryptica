@@ -6,6 +6,10 @@ import { browserStorage, type StorageLike } from "$lib/utils/runtime-deps";
 
 const GRID_MEASURE_PREFIX = "codex.vtt.grid-measure";
 
+function hasVisibleHexLabels(config: HexLabelConfig): boolean {
+  return config.style !== "none" && config.style !== "off";
+}
+
 export interface VTTGridManagerDependencies {
   mapStore: typeof mapStore;
   getMapId: () => string | null;
@@ -90,8 +94,9 @@ export class VTTGridManager {
     }
     if (settings.hexLabelConfig !== undefined) {
       this.deps.mapStore.hexLabelConfig = settings.hexLabelConfig;
-      this.deps.mapStore.showHexCoordinates =
-        settings.hexLabelConfig.style !== "none";
+      this.deps.mapStore.showHexCoordinates = hasVisibleHexLabels(
+        settings.hexLabelConfig,
+      );
     }
     if (settings.fogColor !== undefined) {
       this.deps.mapStore.fogColor = settings.fogColor;
@@ -132,8 +137,9 @@ export class VTTGridManager {
     }
     if (payload.hexLabelConfig !== undefined) {
       this.deps.mapStore.hexLabelConfig = payload.hexLabelConfig;
-      this.deps.mapStore.showHexCoordinates =
-        payload.hexLabelConfig.style !== "none";
+      this.deps.mapStore.showHexCoordinates = hasVisibleHexLabels(
+        payload.hexLabelConfig,
+      );
     }
     if (payload.fogColor !== undefined) {
       this.deps.mapStore.fogColor = payload.fogColor;

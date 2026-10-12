@@ -232,4 +232,18 @@ describe("SoloExplorationRecorder", () => {
       }),
     );
   });
+
+  it("omits coordinates when the active label style is off", async () => {
+    const { recorder, publishCapture } = setup({ formatHex: () => "" });
+    await recorder.onVisionChanged([source(0)]);
+    await recorder.onVisionChanged([source(55)]);
+    await recorder.onMoveSettled([source(55)]);
+
+    expect(publishCapture).toHaveBeenCalledWith(
+      expect.objectContaining({
+        entryType: "map-move",
+        content: "Moved 2 hexes (12 mi), revealing 1 new hexes.",
+      }),
+    );
+  });
 });

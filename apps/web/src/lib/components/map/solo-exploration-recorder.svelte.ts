@@ -412,6 +412,7 @@ export class SoloExplorationRecorder {
       move.destination && state.formatHex
         ? state.formatHex(move.destination)
         : null;
+    const showCoordinates = state.showHexCoordinates && toHexLabel !== "";
     this.deps.publishCapture(
       formatMapMove({
         mapId: state.mapId!,
@@ -420,7 +421,7 @@ export class SoloExplorationRecorder {
         distance: move.travel.distance,
         unit: move.travel.unit,
         revealed: this.pendingRevealed.size,
-        showCoordinates: state.showHexCoordinates,
+        showCoordinates,
         toHexLabel,
       }),
     );
