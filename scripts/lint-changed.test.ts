@@ -1,11 +1,25 @@
 import { describe, expect, test } from "bun:test";
 import {
+  filterAnswerPageFiles,
   filterFormattableFiles,
   filterLintableFiles,
   isIgnoredPath,
 } from "./lint-changed.mjs";
 
 describe("lint-changed", () => {
+  test("selects changed Answer pages for the editorial check", () => {
+    const page =
+      "apps/web/src/lib/content/answers/pages/how-do-i-prepare-a-dnd-session.ts";
+    expect(
+      filterAnswerPageFiles([
+        page,
+        "apps/web/src/lib/content/answers/registry.test.ts",
+        "apps/web/src/lib/content/answers/pages/deleted-answer.ts",
+        "apps/web/src/lib/content/blog/front-page.md",
+      ]),
+    ).toEqual([page]);
+  });
+
   test("identifies ignored directory paths", () => {
     expect(isIgnoredPath("node_modules/pkg/index.js")).toBe(true);
     expect(isIgnoredPath(".svelte-kit/types/src/routes.d.ts")).toBe(true);
