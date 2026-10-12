@@ -28,6 +28,7 @@ export interface MapMoveCapture {
   unit: string;
   revealed: number;
   showCoordinates?: boolean;
+  toHexLabel?: string | null;
 }
 
 /** Builds a local, name-free Session Journal capture for one completed move. */
@@ -38,7 +39,7 @@ export function formatMapMove(move: MapMoveCapture): JournalCapturePayload {
       : `${move.hexes} ${move.hexes === 1 ? "hex" : "hexes"}`;
   const coordinate =
     move.toHex && move.showCoordinates
-      ? ` to ${String(move.toHex.q).padStart(2, "0")}.${String(move.toHex.r).padStart(2, "0")}`
+      ? ` to ${move.toHexLabel ?? `${String(move.toHex.q).padStart(2, "0")}.${String(move.toHex.r).padStart(2, "0")}`}`
       : "";
   const revealText =
     move.revealed > 0 ? `, revealing ${move.revealed} new hexes` : "";

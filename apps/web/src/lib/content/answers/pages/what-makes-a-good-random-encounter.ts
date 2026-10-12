@@ -174,6 +174,7 @@ export const whatMakesAGoodRandomEncounter: AnswerConfigInput = {
     "how-do-i-run-a-large-battle-when-the-player-characters-are-part-of-an-army",
     "how-do-i-make-sea-travel-interesting-in-a-ttrpg",
     "how-do-i-run-a-pirate-campaign-focused-on-exploration",
+    "which-tabletop-rpgs-have-squad-and-mass-battle-rules",
   ],
   discovery: {
     id: "answer-random-encounter",

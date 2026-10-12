@@ -4,10 +4,10 @@ import {
   pointToHex,
   hexToPoint,
   getHexCorners,
-  formatHexCoordinate,
   type HexGridConfig,
   type HexOrientation,
 } from "./hex";
+import { formatHexLabel, type HexLabelConfig } from "./hex-labels";
 
 export interface HexGridRenderOptions {
   type: "hex" | "hex-pointy" | "hex-flat";
@@ -20,6 +20,7 @@ export interface HexGridRenderOptions {
   fixedPan?: { x: number; y: number };
   lineWidth?: number;
   showCoordinates?: boolean;
+  labelConfig?: HexLabelConfig;
 }
 
 /**
@@ -39,6 +40,12 @@ export function drawHexGrid(
 
   const orientation: HexOrientation =
     grid.type === "hex-flat" ? "flat" : "pointy";
+
+  const labelConfig: HexLabelConfig = grid.labelConfig ?? {
+    style: grid.showCoordinates ? "numeric" : "none",
+  };
+  const shouldShowCoordinates =
+    labelConfig.style !== "none" && (grid.showCoordinates ?? true);
 
   const effectiveTransform: ViewportTransform = grid.fixed
     ? { zoom: transform.zoom, pan: grid.fixedPan ?? { x: 0, y: 0 } }
@@ -132,7 +139,7 @@ export function drawHexGrid(
       ctx.lineTo(corners[2].x, corners[2].y);
       ctx.lineTo(corners[3].x, corners[3].y);
 
-      if (grid.showCoordinates && screenRadius >= 25) {
+      if (shouldShowCoordinates && screenRadius >= 25) {
         if (
           center.x >= minX - grid.size &&
           center.x <= maxX + grid.size &&
@@ -148,7 +155,7 @@ export function drawHexGrid(
   ctx.stroke();
   ctx.restore();
 
-  if (grid.showCoordinates && screenRadius >= 25 && visibleHexes.length > 0) {
+  if (shouldShowCoordinates && screenRadius >= 25 && visibleHexes.length > 0) {
     ctx.save();
     const fontSize = Math.min(14, Math.max(9, Math.floor(screenRadius * 0.26)));
     ctx.font = `bold ${fontSize}px ui-sans-serif, system-ui, sans-serif`;
@@ -159,7 +166,10 @@ export function drawHexGrid(
 
     for (const hex of visibleHexes) {
       const vp = imageToViewport(hex.center, effectiveTransform, canvasSize);
-      ctx.fillText(formatHexCoordinate(hex), vp.x, vp.y);
+      const labelText = formatHexLabel(hex, labelConfig, orientation);
+      if (labelText) {
+        ctx.fillText(labelText, vp.x, vp.y);
+      }
     }
     ctx.restore();
   }

@@ -305,7 +305,7 @@ export const howDoIMakeRoleplayMoreEngaging: AnswerConfigInput = {
   seo: {
     title: "Make roleplay more engaging: give scenes a choice | Codex Cryptica",
     description:
-      "Make roleplay engaging with NPCs who want something, invite a clear player approach, and use one roll to resolve a meaningful choice.",
+      "Make roleplay more engaging by giving players meaningful choices: prepare an NPC situation, invite an approach or commitment, and use one roll when the rules call for it.",
     image:
       "https://assets.codexcryptica.com/og/how-do-i-make-roleplay-more-engaging.jpg",
     imageAlt:

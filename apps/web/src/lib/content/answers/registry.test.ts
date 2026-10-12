@@ -287,6 +287,29 @@ describe("answer registry", () => {
     expect(pathfinder?.href).toBe("https://2e.aonprd.com/Rules.aspx?ID=3365");
   });
 
+  it("keeps the squad worked example's casualty counts consistent", () => {
+    const squad =
+      answers["how-do-i-combine-multiple-enemies-into-one-squad-in-an-rpg"];
+    const example = squad.sections.find(
+      (section) =>
+        section.kind === "example" &&
+        section.heading === "Worked example: five orcs become one squad",
+    );
+    const attrition =
+      example?.kind === "example"
+        ? example.items?.find(
+            (item) => item.term === "Two turns that show attrition in practice",
+          )
+        : undefined;
+
+    expect(attrition?.text).toContain(
+      "activates at reduced strength with three orcs",
+    );
+    expect(attrition?.text).toContain(
+      "down to two orcs and without its leader",
+    );
+  });
+
   it("matches the economic hooks example heading to its brief cases", () => {
     const example = answers[
       "how-do-i-turn-economic-pressures-into-rpg-adventure-hooks"
