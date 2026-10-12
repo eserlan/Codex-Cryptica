@@ -161,6 +161,7 @@ export const whatRpgSystemShouldWeTryInsteadOfDnd: AnswerConfigInput = {
     "what-rpg-should-i-play-for-investigative-horror",
     "what-rpg-works-for-political-intrigue-and-faction-play",
     "what-ttrpgs-let-you-build-and-upgrade-a-base",
+    "what-are-the-best-classless-fantasy-rpgs-with-skill-based-progression",
   ],
   discovery: {
     id: "answer-system-selection",

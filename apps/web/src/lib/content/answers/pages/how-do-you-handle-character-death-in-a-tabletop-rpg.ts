@@ -129,6 +129,7 @@ export const howDoYouHandleCharacterDeathInATabletopRpg: AnswerConfigInput = {
     "how-do-you-create-a-magic-system",
     "how-do-you-make-a-boss-fight-memorable-in-a-tabletop-rpg",
     "how-do-i-run-a-large-battle-when-the-player-characters-are-part-of-an-army",
+    "what-are-the-best-classless-fantasy-rpgs-with-skill-based-progression",
   ],
   discovery: {
     id: "answer-handle-character-death",
