@@ -110,7 +110,11 @@
     node={{ type: "missing-field", fieldId: node.fieldId, label: node.label }}
   />
 {:else if field.type === "item-table"}
-  <ItemTableNode {field} {context} />
+  <ItemTableNode
+    {field}
+    catalogue={mode === "catalogue"}
+    context={mode === "catalogue" ? { ...context, readOnly: true } : context}
+  />
 {:else if mode === "counter" || mode === "current-max" || mode === "progress"}
   <div
     class="{rowClass} rounded border border-theme-border px-2 py-1"

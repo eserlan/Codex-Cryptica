@@ -24,9 +24,13 @@
   let {
     field,
     context,
+    catalogue = false,
   }: {
     field: StatSheetField;
     context: PresentationRenderContext;
+    /** Customer-facing read-only view (#3962): hides hidden lines and GM
+     * notes. A presentation choice only, not access control. */
+    catalogue?: boolean;
   } = $props();
 
   let tableContainer: HTMLDivElement | undefined = $state();
@@ -532,484 +536,534 @@
               colspan={columns.length + (context.readOnly ? 0 : 1)}
               class="px-3 py-3 text-center text-xs italic text-theme-muted"
             >
-              No rows yet. {#if !context.readOnly}Click "+ Add Row" to add one.{/if}
+              {#if catalogue}
+                Nothing is for sale right now.
+              {:else}
+                No rows yet. {#if !context.readOnly}Click "+ Add Row" to add
+                  one.{/if}
+              {/if}
             </td>
           </tr>
         {:else}
           {#each rows as row, rIdx (rowKey(row, rIdx))}
             {@const linked = linkedEntity(row)}
-            <tr
-              class="group/row border-b border-theme-border/30 transition-colors hover:bg-theme-surface/30"
-              data-row-index={rIdx}
-              onkeydown={(e) => handleRowKeyDown(e, rIdx)}
-            >
-              {#each columns as col (col.id)}
-                {@const isTextLeft = [
-                  "name",
-                  "title",
-                  "item",
-                  "effects",
-                  "traits",
-                  "description",
-                  "notes",
-                  "special",
-                ].includes(col.id)}
-                <td class={getColumnCellClass(col)}>
-                  {#if col.type === "text"}
-                    {#if context.readOnly}
-                      <span class="font-medium text-theme-text"
-                        >{linkedValue(row, col.id) ?? row[col.id] ?? "—"}</span
-                      >
-                    {:else if linked && linkedValue(row, col.id) !== undefined}
-                      <span class="font-medium text-theme-text"
-                        >{linkedValue(row, col.id)}</span
-                      >
-                    {:else}
-                      <input
-                        type="text"
-                        data-col-id={col.id}
-                        aria-label={`${col.label} for item ${rIdx + 1}`}
-                        class="w-full rounded border border-theme-border/60 bg-theme-bg/80 px-1.5 py-0.5 {isTextLeft
-                          ? 'text-left'
-                          : 'text-center'} text-xs text-theme-text transition-colors focus:border-theme-primary focus:bg-theme-bg focus:outline-none"
-                        value={row[col.id] ?? ""}
-                        oninput={(e) =>
-                          handleCellChange(
-                            rIdx,
-                            col.id,
-                            (e.target as HTMLInputElement).value,
-                          )}
-                      />
-                    {/if}
-                  {:else if col.type === "number"}
-                    {#if context.readOnly}
-                      <span class="font-mono text-theme-text"
-                        >{linkedValue(row, col.id) ?? row[col.id] ?? "—"}</span
-                      >
-                    {:else if linked && linkedValue(row, col.id) !== undefined}
-                      <span class="font-mono text-theme-text"
-                        >{linkedValue(row, col.id)}</span
-                      >
-                    {:else}
-                      <input
-                        type="number"
-                        data-col-id={col.id}
-                        aria-label={`${col.label} for item ${rIdx + 1}`}
-                        class="w-full max-w-[4rem] mx-auto rounded border border-theme-border/60 bg-theme-bg/80 px-1 py-0.5 text-center font-mono text-xs text-theme-text transition-colors focus:border-theme-primary focus:bg-theme-bg focus:outline-none"
-                        value={row[col.id] ?? 0}
-                        oninput={(e) =>
-                          handleCellChange(
-                            rIdx,
-                            col.id,
-                            Number((e.target as HTMLInputElement).value),
-                          )}
-                      />
-                    {/if}
-                  {:else if col.type === "dice"}
-                    {@const formula = row[col.id] || col.formula || "1d6"}
-                    {@const key = `${rIdx}-${col.id}`}
-                    {@const rollState = rollStateMap[key]}
-                    {#if context.mode === "view"}
-                      <button
-                        type="button"
-                        data-col-id={col.id}
-                        data-action="roll"
-                        aria-label={`Roll ${formula} for ${row.name || `item ${rIdx + 1}`}`}
-                        class="inline-flex max-w-full items-center justify-center gap-1 rounded border border-theme-border/80 bg-theme-bg/60 px-1.5 py-0.5 font-mono text-xs text-theme-primary transition-all hover:border-theme-primary hover:bg-theme-primary/10 disabled:opacity-50"
-                        disabled={rollState?.rolling}
-                        onclick={() => handleDiceRoll(rIdx, col.id, formula)}
-                        title="Click to roll {formula}"
-                      >
-                        <span
-                          class="icon-[lucide--dice-5] h-3 w-3 shrink-0"
-                          aria-hidden="true"
-                        ></span>
-                        <span class="truncate">{formula}</span>
-                        {#if rollState?.text}
-                          <span
-                            class={rollState.isError
-                              ? "ml-0.5 font-bold text-red-400"
-                              : rollState.success === false
-                                ? "ml-0.5 font-bold text-red-400"
-                                : "ml-0.5 font-bold text-green-400"}
-                            >({rollState.text})</span
-                          >
-                        {/if}
-                      </button>
-                      <DiceBreakdownDisclosure
-                        parts={rollState?.roll?.parts}
-                        total={rollState?.roll?.total ?? 0}
-                        formula={rollState?.roll?.formula}
-                      />
-                    {:else if context.readOnly}
-                      <span class="font-mono text-xs text-theme-muted"
-                        >{formula}</span
-                      >
-                    {:else}
-                      <input
-                        type="text"
-                        data-col-id={col.id}
-                        aria-label={`${col.label} formula for item ${rIdx + 1}`}
-                        class="w-full max-w-[5.5rem] mx-auto rounded border border-theme-border/60 bg-theme-bg/80 px-1 py-0.5 text-center font-mono text-xs text-theme-text transition-colors focus:border-theme-primary focus:bg-theme-bg focus:outline-none"
-                        value={formula}
-                        oninput={(e) =>
-                          handleCellChange(
-                            rIdx,
-                            col.id,
-                            (e.target as HTMLInputElement).value,
-                          )}
-                      />
-                    {/if}
-                  {:else if col.type === "counter"}
-                    {@const val =
-                      typeof row[col.id] === "object"
-                        ? row[col.id]?.value
-                        : (row[col.id] ?? 0)}
-                    {@const max =
-                      typeof row[col.id] === "object"
-                        ? row[col.id]?.max
-                        : undefined}
-                    {#if context.readOnly}
-                      <span class="font-mono text-xs text-theme-text">
-                        {val}{max !== undefined ? ` / ${max}` : ""}
-                      </span>
-                    {:else}
-                      <div
-                        class="inline-flex items-center justify-center gap-0.5"
-                      >
-                        <button
-                          type="button"
-                          data-col-id={col.id}
-                          data-counter-action="dec"
-                          aria-label={`Decrease ${col.label} for ${row.name || `item ${rIdx + 1}`}`}
-                          class="flex h-5 w-5 items-center justify-center rounded text-theme-muted hover:bg-theme-surface/60 hover:text-theme-primary text-xs font-bold disabled:opacity-30"
-                          onclick={() =>
-                            handleCounterAdjust(rIdx, col.id, -(col.step ?? 1))}
+            {#if !(catalogue && row.stock?.availability === "hidden")}
+              <tr
+                class="group/row border-b border-theme-border/30 transition-colors hover:bg-theme-surface/30"
+                data-row-index={rIdx}
+                onkeydown={(e) => handleRowKeyDown(e, rIdx)}
+              >
+                {#each columns as col (col.id)}
+                  {@const isTextLeft = [
+                    "name",
+                    "title",
+                    "item",
+                    "effects",
+                    "traits",
+                    "description",
+                    "notes",
+                    "special",
+                  ].includes(col.id)}
+                  <td class={getColumnCellClass(col)}>
+                    {#if col.type === "text"}
+                      {#if context.readOnly}
+                        <span class="font-medium text-theme-text"
+                          >{linkedValue(row, col.id) ??
+                            row[col.id] ??
+                            "—"}</span
                         >
-                          —
-                        </button>
-                        <span class="font-mono text-xs text-theme-text px-0.5">
-                          {val}{max !== undefined ? ` / ${max}` : ""}
-                        </span>
-                        <button
-                          type="button"
-                          data-col-id={col.id}
-                          data-counter-action="inc"
-                          aria-label={`Increase ${col.label} for ${row.name || `item ${rIdx + 1}`}`}
-                          class="flex h-5 w-5 items-center justify-center rounded text-theme-muted hover:bg-theme-surface/60 hover:text-theme-primary text-xs font-bold disabled:opacity-30"
-                          onclick={() =>
-                            handleCounterAdjust(rIdx, col.id, col.step ?? 1)}
+                      {:else if linked && linkedValue(row, col.id) !== undefined}
+                        <span class="font-medium text-theme-text"
+                          >{linkedValue(row, col.id)}</span
                         >
-                          +
-                        </button>
-                      </div>
-                    {/if}
-                  {:else if col.type === "money"}
-                    {@const money = moneyCell(row, col.id)}
-                    {#if context.readOnly}
-                      <span class="font-mono text-theme-text"
-                        >{money ? formatMoney(money) : "—"}</span
-                      >
-                    {:else}
-                      <div class="inline-flex items-center gap-0.5">
+                      {:else}
                         <input
                           type="text"
-                          inputmode="decimal"
                           data-col-id={col.id}
-                          aria-label={`${col.label} amount for item ${rIdx + 1}`}
-                          class="w-16 rounded border border-theme-border/60 bg-theme-bg/80 px-1 py-0.5 text-center font-mono text-xs text-theme-text focus:border-theme-primary focus:outline-none"
-                          value={money ? formatMoney(money, false) : ""}
-                          onchange={(e) =>
-                            handleMoneyCell(
+                          aria-label={`${col.label} for item ${rIdx + 1}`}
+                          class="w-full rounded border border-theme-border/60 bg-theme-bg/80 px-1.5 py-0.5 {isTextLeft
+                            ? 'text-left'
+                            : 'text-center'} text-xs text-theme-text transition-colors focus:border-theme-primary focus:bg-theme-bg focus:outline-none"
+                          value={row[col.id] ?? ""}
+                          oninput={(e) =>
+                            handleCellChange(
                               rIdx,
                               col.id,
                               (e.target as HTMLInputElement).value,
-                              money?.currency ?? "gp",
                             )}
                         />
-                        <span class="text-micro text-theme-muted"
-                          >{money?.currency ?? "gp"}</span
+                      {/if}
+                    {:else if col.type === "number"}
+                      {#if context.readOnly}
+                        <span class="font-mono text-theme-text"
+                          >{linkedValue(row, col.id) ??
+                            row[col.id] ??
+                            "—"}</span
                         >
-                      </div>
-                    {/if}
-                  {:else if col.type === "checkbox"}
-                    <input
-                      type="checkbox"
-                      data-col-id={col.id}
-                      aria-label={`${col.label} for item ${rIdx + 1}`}
-                      class="h-3.5 w-3.5 rounded border-theme-border text-theme-primary focus:ring-0 focus:ring-offset-0 cursor-pointer"
-                      checked={row[col.id] === true}
-                      disabled={context.readOnly}
-                      onchange={(e) =>
-                        handleCellChange(
-                          rIdx,
-                          col.id,
-                          (e.target as HTMLInputElement).checked,
-                        )}
-                    />
-                  {/if}
-                </td>
-              {/each}
-              {#if !context.readOnly}
-                {@const rowLabel =
-                  row.name ||
-                  (linked ? linked.title : undefined) ||
-                  `item ${rIdx + 1}`}
-                <td
-                  class="w-12 px-1 py-0.5 text-center align-middle whitespace-nowrap"
-                >
-                  <div
-                    class="inline-flex items-center justify-center gap-0.5 opacity-70 group-hover/row:opacity-100 transition-opacity"
-                  >
-                    <div
-                      class="flex flex-col items-center justify-center -space-y-0.5"
-                    >
-                      <button
-                        type="button"
-                        data-action="move-up"
-                        aria-label={`Move ${rowLabel} up`}
-                        class="flex h-3.5 w-4 items-center justify-center rounded-xs text-theme-muted hover:text-theme-primary hover:bg-theme-surface/60 active:scale-95 disabled:opacity-20 disabled:hover:bg-transparent disabled:hover:text-theme-muted disabled:active:scale-100 transition-all"
-                        disabled={rIdx === 0}
-                        onclick={() => handleMoveRow(rIdx, -1)}
-                        title="Move item up (Ctrl+↑)"
-                      >
-                        <span
-                          class="icon-[lucide--chevron-up] h-3 w-3"
-                          aria-hidden="true"
-                        ></span>
-                      </button>
-                      <button
-                        type="button"
-                        data-action="move-down"
-                        aria-label={`Move ${rowLabel} down`}
-                        class="flex h-3.5 w-4 items-center justify-center rounded-xs text-theme-muted hover:text-theme-primary hover:bg-theme-surface/60 active:scale-95 disabled:opacity-20 disabled:hover:bg-transparent disabled:hover:text-theme-muted disabled:active:scale-100 transition-all"
-                        disabled={rIdx === rows.length - 1}
-                        onclick={() => handleMoveRow(rIdx, 1)}
-                        title="Move item down (Ctrl+↓)"
-                      >
-                        <span
-                          class="icon-[lucide--chevron-down] h-3 w-3"
-                          aria-hidden="true"
-                        ></span>
-                      </button>
-                    </div>
-                    <button
-                      type="button"
-                      data-action="remove"
-                      aria-label={`Remove ${row.name || `item ${rIdx + 1}`}`}
-                      class="flex h-5 w-5 items-center justify-center rounded text-theme-muted hover:bg-red-500/15 hover:text-red-400 active:scale-95 transition-all"
-                      onclick={() => handleRemoveRow(rIdx)}
-                      title="Remove item"
-                    >
-                      <span
-                        class="icon-[lucide--trash-2] h-3.5 w-3.5"
-                        aria-hidden="true"
-                      ></span>
-                    </button>
-                  </div>
-                </td>
-              {/if}
-            </tr>
-            {#if stockEnabled}
-              {@const stock = row.stock ?? {}}
-              {@const display = resolveStockDisplay(row, linked)}
-              <tr
-                class="border-b border-theme-border/30 bg-theme-surface/10"
-                data-testid="stock-row"
-                data-row-id={row.rowId}
-              >
-                <td
-                  colspan={columns.length + (context.readOnly ? 0 : 1)}
-                  class="px-2 py-1.5"
-                >
-                  {#if context.readOnly}
-                    {#if stock.availability !== "hidden"}
-                      <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
-                        <span class="font-bold text-theme-text"
-                          >{display.name}</span
+                      {:else if linked && linkedValue(row, col.id) !== undefined}
+                        <span class="font-mono text-theme-text"
+                          >{linkedValue(row, col.id)}</span
                         >
-                        {#if stock.kind !== "service" && stock.kind !== "commission" && stock.quantity !== undefined}
-                          <span class="font-mono">×{stock.quantity}</span>
-                        {/if}
-                        {#if display.shopPrice}
-                          <span class="font-mono"
-                            >{formatMoney(display.shopPrice)}</span
-                          >
-                        {:else if display.sourcePrice}
-                          <span class="font-mono">{display.sourcePrice}</span>
-                        {/if}
-                        {#if stock.condition}<span>{stock.condition}</span>{/if}
-                        {#if stock.availability && stock.availability !== "available"}
-                          <span class="italic text-theme-muted"
-                            >{stock.availability}</span
-                          >
-                        {/if}
-                        {#if stock.note}<span class="text-theme-muted"
-                            >{stock.note}</span
-                          >{/if}
-                      </div>
-                    {/if}
-                  {:else}
-                    <div class="flex flex-wrap items-end gap-2">
-                      <label class="flex flex-col text-micro text-theme-muted">
-                        Kind
-                        <select
-                          class="rounded border border-theme-border/60 bg-theme-bg px-1 py-0.5 text-xs text-theme-text"
-                          value={stock.kind ?? "item"}
-                          onchange={(e) =>
-                            handleStockPatch(rIdx, {
-                              kind: (e.target as HTMLSelectElement).value,
-                            })}
+                      {:else}
+                        <input
+                          type="number"
+                          data-col-id={col.id}
+                          aria-label={`${col.label} for item ${rIdx + 1}`}
+                          class="w-full max-w-[4rem] mx-auto rounded border border-theme-border/60 bg-theme-bg/80 px-1 py-0.5 text-center font-mono text-xs text-theme-text transition-colors focus:border-theme-primary focus:bg-theme-bg focus:outline-none"
+                          value={row[col.id] ?? 0}
+                          oninput={(e) =>
+                            handleCellChange(
+                              rIdx,
+                              col.id,
+                              Number((e.target as HTMLInputElement).value),
+                            )}
+                        />
+                      {/if}
+                    {:else if col.type === "dice"}
+                      {@const formula = row[col.id] || col.formula || "1d6"}
+                      {@const key = `${rIdx}-${col.id}`}
+                      {@const rollState = rollStateMap[key]}
+                      {#if context.mode === "view"}
+                        <button
+                          type="button"
+                          data-col-id={col.id}
+                          data-action="roll"
+                          aria-label={`Roll ${formula} for ${row.name || `item ${rIdx + 1}`}`}
+                          class="inline-flex max-w-full items-center justify-center gap-1 rounded border border-theme-border/80 bg-theme-bg/60 px-1.5 py-0.5 font-mono text-xs text-theme-primary transition-all hover:border-theme-primary hover:bg-theme-primary/10 disabled:opacity-50"
+                          disabled={rollState?.rolling}
+                          onclick={() => handleDiceRoll(rIdx, col.id, formula)}
+                          title="Click to roll {formula}"
                         >
-                          <option value="item">Item</option>
-                          <option value="service">Service</option>
-                          <option value="commission">Commission</option>
-                        </select>
-                      </label>
-                      {#if (stock.kind ?? "item") === "item"}
-                        <div class="flex flex-col text-micro text-theme-muted">
-                          <span>Quantity</span>
-                          <div class="inline-flex items-center gap-0.5">
-                            <button
-                              type="button"
-                              data-action="stock-dec"
-                              aria-label={`Decrease quantity of ${display.name}`}
-                              class="flex h-5 w-5 items-center justify-center rounded text-xs font-bold text-theme-muted hover:text-theme-primary"
-                              onclick={() => handleStockStep(rIdx, -1)}
-                              >—</button
+                          <span
+                            class="icon-[lucide--dice-5] h-3 w-3 shrink-0"
+                            aria-hidden="true"
+                          ></span>
+                          <span class="truncate">{formula}</span>
+                          {#if rollState?.text}
+                            <span
+                              class={rollState.isError
+                                ? "ml-0.5 font-bold text-red-400"
+                                : rollState.success === false
+                                  ? "ml-0.5 font-bold text-red-400"
+                                  : "ml-0.5 font-bold text-green-400"}
+                              >({rollState.text})</span
                             >
-                            <input
-                              type="number"
-                              min="0"
-                              step="1"
-                              data-action="stock-qty"
-                              aria-label={`Quantity of ${display.name}`}
-                              class="w-14 rounded border border-theme-border/60 bg-theme-bg/80 px-1 py-0.5 text-center font-mono text-xs text-theme-text"
-                              value={stock.quantity ?? 0}
-                              onchange={(e) => {
-                                const raw = (e.target as HTMLInputElement)
-                                  .value;
-                                handleStockQuantity(
-                                  rIdx,
-                                  raw === "" ? null : Math.trunc(Number(raw)),
-                                );
-                              }}
-                            />
-                            <button
-                              type="button"
-                              data-action="stock-inc"
-                              aria-label={`Increase quantity of ${display.name}`}
-                              class="flex h-5 w-5 items-center justify-center rounded text-xs font-bold text-theme-muted hover:text-theme-primary"
-                              onclick={() => handleStockStep(rIdx, 1)}>+</button
-                            >
-                          </div>
+                          {/if}
+                        </button>
+                        <DiceBreakdownDisclosure
+                          parts={rollState?.roll?.parts}
+                          total={rollState?.roll?.total ?? 0}
+                          formula={rollState?.roll?.formula}
+                        />
+                      {:else if context.readOnly}
+                        <span class="font-mono text-xs text-theme-muted"
+                          >{formula}</span
+                        >
+                      {:else}
+                        <input
+                          type="text"
+                          data-col-id={col.id}
+                          aria-label={`${col.label} formula for item ${rIdx + 1}`}
+                          class="w-full max-w-[5.5rem] mx-auto rounded border border-theme-border/60 bg-theme-bg/80 px-1 py-0.5 text-center font-mono text-xs text-theme-text transition-colors focus:border-theme-primary focus:bg-theme-bg focus:outline-none"
+                          value={formula}
+                          oninput={(e) =>
+                            handleCellChange(
+                              rIdx,
+                              col.id,
+                              (e.target as HTMLInputElement).value,
+                            )}
+                        />
+                      {/if}
+                    {:else if col.type === "counter"}
+                      {@const val =
+                        typeof row[col.id] === "object"
+                          ? row[col.id]?.value
+                          : (row[col.id] ?? 0)}
+                      {@const max =
+                        typeof row[col.id] === "object"
+                          ? row[col.id]?.max
+                          : undefined}
+                      {#if context.readOnly}
+                        <span class="font-mono text-xs text-theme-text">
+                          {val}{max !== undefined ? ` / ${max}` : ""}
+                        </span>
+                      {:else}
+                        <div
+                          class="inline-flex items-center justify-center gap-0.5"
+                        >
+                          <button
+                            type="button"
+                            data-col-id={col.id}
+                            data-counter-action="dec"
+                            aria-label={`Decrease ${col.label} for ${row.name || `item ${rIdx + 1}`}`}
+                            class="flex h-5 w-5 items-center justify-center rounded text-theme-muted hover:bg-theme-surface/60 hover:text-theme-primary text-xs font-bold disabled:opacity-30"
+                            onclick={() =>
+                              handleCounterAdjust(
+                                rIdx,
+                                col.id,
+                                -(col.step ?? 1),
+                              )}
+                          >
+                            —
+                          </button>
+                          <span
+                            class="font-mono text-xs text-theme-text px-0.5"
+                          >
+                            {val}{max !== undefined ? ` / ${max}` : ""}
+                          </span>
+                          <button
+                            type="button"
+                            data-col-id={col.id}
+                            data-counter-action="inc"
+                            aria-label={`Increase ${col.label} for ${row.name || `item ${rIdx + 1}`}`}
+                            class="flex h-5 w-5 items-center justify-center rounded text-theme-muted hover:bg-theme-surface/60 hover:text-theme-primary text-xs font-bold disabled:opacity-30"
+                            onclick={() =>
+                              handleCounterAdjust(rIdx, col.id, col.step ?? 1)}
+                          >
+                            +
+                          </button>
                         </div>
                       {/if}
-                      <div class="flex flex-col text-micro text-theme-muted">
-                        <span>Shop price</span>
+                    {:else if col.type === "money"}
+                      {@const money = moneyCell(row, col.id)}
+                      {#if context.readOnly}
+                        <span class="font-mono text-theme-text"
+                          >{money ? formatMoney(money) : "—"}</span
+                        >
+                      {:else}
                         <div class="inline-flex items-center gap-0.5">
                           <input
                             type="text"
                             inputmode="decimal"
-                            data-action="stock-price"
-                            aria-label={`Shop price of ${display.name}`}
-                            class="w-16 rounded border border-theme-border/60 bg-theme-bg/80 px-1 py-0.5 text-center font-mono text-xs text-theme-text"
-                            value={stock.price
-                              ? formatMoney(stock.price, false)
-                              : ""}
-                            onchange={(e) => {
-                              const unitEl = (
-                                e.target as HTMLInputElement
-                              ).parentElement?.querySelector<HTMLInputElement>(
-                                "[data-action='stock-unit']",
-                              );
-                              handleStockPrice(
+                            data-col-id={col.id}
+                            aria-label={`${col.label} amount for item ${rIdx + 1}`}
+                            class="w-16 rounded border border-theme-border/60 bg-theme-bg/80 px-1 py-0.5 text-center font-mono text-xs text-theme-text focus:border-theme-primary focus:outline-none"
+                            value={money ? formatMoney(money, false) : ""}
+                            onchange={(e) =>
+                              handleMoneyCell(
                                 rIdx,
+                                col.id,
                                 (e.target as HTMLInputElement).value,
-                                unitEl?.value || stock.price?.currency || "gp",
-                              );
-                            }}
+                                money?.currency ?? "gp",
+                              )}
                           />
+                          <span class="text-micro text-theme-muted"
+                            >{money?.currency ?? "gp"}</span
+                          >
+                        </div>
+                      {/if}
+                    {:else if col.type === "checkbox"}
+                      <input
+                        type="checkbox"
+                        data-col-id={col.id}
+                        aria-label={`${col.label} for item ${rIdx + 1}`}
+                        class="h-3.5 w-3.5 rounded border-theme-border text-theme-primary focus:ring-0 focus:ring-offset-0 cursor-pointer"
+                        checked={row[col.id] === true}
+                        disabled={context.readOnly}
+                        onchange={(e) =>
+                          handleCellChange(
+                            rIdx,
+                            col.id,
+                            (e.target as HTMLInputElement).checked,
+                          )}
+                      />
+                    {/if}
+                  </td>
+                {/each}
+                {#if !context.readOnly}
+                  {@const rowLabel =
+                    row.name ||
+                    (linked ? linked.title : undefined) ||
+                    `item ${rIdx + 1}`}
+                  <td
+                    class="w-12 px-1 py-0.5 text-center align-middle whitespace-nowrap"
+                  >
+                    <div
+                      class="inline-flex items-center justify-center gap-0.5 opacity-70 group-hover/row:opacity-100 transition-opacity"
+                    >
+                      <div
+                        class="flex flex-col items-center justify-center -space-y-0.5"
+                      >
+                        <button
+                          type="button"
+                          data-action="move-up"
+                          aria-label={`Move ${rowLabel} up`}
+                          class="flex h-3.5 w-4 items-center justify-center rounded-xs text-theme-muted hover:text-theme-primary hover:bg-theme-surface/60 active:scale-95 disabled:opacity-20 disabled:hover:bg-transparent disabled:hover:text-theme-muted disabled:active:scale-100 transition-all"
+                          disabled={rIdx === 0}
+                          onclick={() => handleMoveRow(rIdx, -1)}
+                          title="Move item up (Ctrl+↑)"
+                        >
+                          <span
+                            class="icon-[lucide--chevron-up] h-3 w-3"
+                            aria-hidden="true"
+                          ></span>
+                        </button>
+                        <button
+                          type="button"
+                          data-action="move-down"
+                          aria-label={`Move ${rowLabel} down`}
+                          class="flex h-3.5 w-4 items-center justify-center rounded-xs text-theme-muted hover:text-theme-primary hover:bg-theme-surface/60 active:scale-95 disabled:opacity-20 disabled:hover:bg-transparent disabled:hover:text-theme-muted disabled:active:scale-100 transition-all"
+                          disabled={rIdx === rows.length - 1}
+                          onclick={() => handleMoveRow(rIdx, 1)}
+                          title="Move item down (Ctrl+↓)"
+                        >
+                          <span
+                            class="icon-[lucide--chevron-down] h-3 w-3"
+                            aria-hidden="true"
+                          ></span>
+                        </button>
+                      </div>
+                      <button
+                        type="button"
+                        data-action="remove"
+                        aria-label={`Remove ${row.name || `item ${rIdx + 1}`}`}
+                        class="flex h-5 w-5 items-center justify-center rounded text-theme-muted hover:bg-red-500/15 hover:text-red-400 active:scale-95 transition-all"
+                        onclick={() => handleRemoveRow(rIdx)}
+                        title="Remove item"
+                      >
+                        <span
+                          class="icon-[lucide--trash-2] h-3.5 w-3.5"
+                          aria-hidden="true"
+                        ></span>
+                      </button>
+                    </div>
+                  </td>
+                {/if}
+              </tr>
+              {#if stockEnabled}
+                {@const stock = row.stock ?? {}}
+                {@const display = resolveStockDisplay(row, linked)}
+                <tr
+                  class="border-b border-theme-border/30 bg-theme-surface/10"
+                  data-testid="stock-row"
+                  data-row-id={row.rowId}
+                >
+                  <td
+                    colspan={columns.length + (context.readOnly ? 0 : 1)}
+                    class="px-2 py-1.5"
+                  >
+                    {#if context.readOnly}
+                      {#if stock.availability !== "hidden"}
+                        <div
+                          class="flex flex-wrap items-center gap-x-3 gap-y-1"
+                        >
+                          {#if !catalogue}
+                            <span class="font-bold text-theme-text"
+                              >{display.name}</span
+                            >
+                          {/if}
+                          {#if stock.kind !== "service" && stock.kind !== "commission" && stock.quantity !== undefined}
+                            <span class="font-mono">×{stock.quantity}</span>
+                          {/if}
+                          {#if display.shopPrice}
+                            <span class="font-mono"
+                              >{formatMoney(display.shopPrice)}</span
+                            >
+                          {:else if display.sourcePrice}
+                            <span class="font-mono">{display.sourcePrice}</span>
+                          {/if}
+                          {#if stock.condition}<span>{stock.condition}</span
+                            >{/if}
+                          {#if stock.availability && stock.availability !== "available"}
+                            <span class="italic text-theme-muted"
+                              >{stock.availability}</span
+                            >
+                          {/if}
+                          {#if stock.note && !catalogue}<span
+                              class="text-theme-muted">{stock.note}</span
+                            >{/if}
+                        </div>
+                      {/if}
+                    {:else}
+                      <div class="flex flex-wrap items-end gap-2">
+                        <label
+                          class="flex flex-col text-micro text-theme-muted"
+                        >
+                          Kind
+                          <select
+                            class="rounded border border-theme-border/60 bg-theme-bg px-1 py-0.5 text-xs text-theme-text"
+                            value={stock.kind ?? "item"}
+                            onchange={(e) =>
+                              handleStockPatch(rIdx, {
+                                kind: (e.target as HTMLSelectElement).value,
+                              })}
+                          >
+                            <option value="item">Item</option>
+                            <option value="service">Service</option>
+                            <option value="commission">Commission</option>
+                          </select>
+                        </label>
+                        {#if (stock.kind ?? "item") === "item"}
+                          <div
+                            class="flex flex-col text-micro text-theme-muted"
+                          >
+                            <span>Quantity</span>
+                            <div class="inline-flex items-center gap-0.5">
+                              <button
+                                type="button"
+                                data-action="stock-dec"
+                                aria-label={`Decrease quantity of ${display.name}`}
+                                class="flex h-5 w-5 items-center justify-center rounded text-xs font-bold text-theme-muted hover:text-theme-primary"
+                                onclick={() => handleStockStep(rIdx, -1)}
+                                >—</button
+                              >
+                              <input
+                                type="number"
+                                min="0"
+                                step="1"
+                                data-action="stock-qty"
+                                aria-label={`Quantity of ${display.name}`}
+                                class="w-14 rounded border border-theme-border/60 bg-theme-bg/80 px-1 py-0.5 text-center font-mono text-xs text-theme-text"
+                                value={stock.quantity ?? 0}
+                                onchange={(e) => {
+                                  const raw = (e.target as HTMLInputElement)
+                                    .value;
+                                  handleStockQuantity(
+                                    rIdx,
+                                    raw === "" ? null : Math.trunc(Number(raw)),
+                                  );
+                                }}
+                              />
+                              <button
+                                type="button"
+                                data-action="stock-inc"
+                                aria-label={`Increase quantity of ${display.name}`}
+                                class="flex h-5 w-5 items-center justify-center rounded text-xs font-bold text-theme-muted hover:text-theme-primary"
+                                onclick={() => handleStockStep(rIdx, 1)}
+                                >+</button
+                              >
+                            </div>
+                          </div>
+                        {/if}
+                        <div class="flex flex-col text-micro text-theme-muted">
+                          <span>Shop price</span>
+                          <div class="inline-flex items-center gap-0.5">
+                            <input
+                              type="text"
+                              inputmode="decimal"
+                              data-action="stock-price"
+                              aria-label={`Shop price of ${display.name}`}
+                              class="w-16 rounded border border-theme-border/60 bg-theme-bg/80 px-1 py-0.5 text-center font-mono text-xs text-theme-text"
+                              value={stock.price
+                                ? formatMoney(stock.price, false)
+                                : ""}
+                              onchange={(e) => {
+                                const unitEl = (
+                                  e.target as HTMLInputElement
+                                ).parentElement?.querySelector<HTMLInputElement>(
+                                  "[data-action='stock-unit']",
+                                );
+                                handleStockPrice(
+                                  rIdx,
+                                  (e.target as HTMLInputElement).value,
+                                  unitEl?.value ||
+                                    stock.price?.currency ||
+                                    "gp",
+                                );
+                              }}
+                            />
+                            <input
+                              type="text"
+                              data-action="stock-unit"
+                              aria-label={`Price unit of ${display.name}`}
+                              class="w-12 rounded border border-theme-border/60 bg-theme-bg/80 px-1 py-0.5 text-center text-xs text-theme-text"
+                              value={stock.price?.currency ?? "gp"}
+                              onchange={(e) => {
+                                if (!stock.price) return;
+                                handleStockPrice(
+                                  rIdx,
+                                  formatMoney(stock.price, false),
+                                  (e.target as HTMLInputElement).value,
+                                );
+                              }}
+                            />
+                          </div>
+                          <span data-testid="price-source" class="italic">
+                            {#if display.priceIsOverride}
+                              Shop override{display.sourcePrice
+                                ? ` (item: ${display.sourcePrice})`
+                                : ""}
+                            {:else if display.sourcePrice}
+                              Using item price: {display.sourcePrice}
+                            {:else}
+                              No price set
+                            {/if}
+                          </span>
+                        </div>
+                        <label
+                          class="flex flex-col text-micro text-theme-muted"
+                        >
+                          Availability
+                          <select
+                            class="rounded border border-theme-border/60 bg-theme-bg px-1 py-0.5 text-xs text-theme-text"
+                            value={stock.availability ?? "available"}
+                            onchange={(e) =>
+                              handleStockPatch(rIdx, {
+                                availability: (e.target as HTMLSelectElement)
+                                  .value,
+                              })}
+                          >
+                            <option value="available">Available</option>
+                            <option value="reserved">Reserved</option>
+                            <option value="sold-out">Sold out</option>
+                            <option value="hidden">Hidden</option>
+                          </select>
+                        </label>
+                        <label
+                          class="flex flex-col text-micro text-theme-muted"
+                        >
+                          Condition
                           <input
                             type="text"
-                            data-action="stock-unit"
-                            aria-label={`Price unit of ${display.name}`}
-                            class="w-12 rounded border border-theme-border/60 bg-theme-bg/80 px-1 py-0.5 text-center text-xs text-theme-text"
-                            value={stock.price?.currency ?? "gp"}
-                            onchange={(e) => {
-                              if (!stock.price) return;
-                              handleStockPrice(
-                                rIdx,
-                                formatMoney(stock.price, false),
-                                (e.target as HTMLInputElement).value,
-                              );
-                            }}
+                            class="w-24 rounded border border-theme-border/60 bg-theme-bg/80 px-1 py-0.5 text-xs text-theme-text"
+                            value={stock.condition ?? ""}
+                            oninput={(e) =>
+                              handleStockPatch(rIdx, {
+                                condition: (e.target as HTMLInputElement).value,
+                              })}
                           />
-                        </div>
-                        <span data-testid="price-source" class="italic">
-                          {#if display.priceIsOverride}
-                            Shop override{display.sourcePrice
-                              ? ` (item: ${display.sourcePrice})`
-                              : ""}
-                          {:else if display.sourcePrice}
-                            Using item price: {display.sourcePrice}
-                          {:else}
-                            No price set
-                          {/if}
-                        </span>
+                        </label>
+                        <label
+                          class="flex min-w-[8rem] flex-1 flex-col text-micro text-theme-muted"
+                        >
+                          Note
+                          <input
+                            type="text"
+                            class="rounded border border-theme-border/60 bg-theme-bg/80 px-1 py-0.5 text-xs text-theme-text"
+                            value={stock.note ?? ""}
+                            oninput={(e) =>
+                              handleStockPatch(rIdx, {
+                                note: (e.target as HTMLInputElement).value,
+                              })}
+                          />
+                        </label>
+                        {#if display.linked && typeof row.entityId === "string"}
+                          <button
+                            type="button"
+                            data-action="open-linked-item"
+                            aria-label={`Open ${display.name}`}
+                            class="inline-flex items-center gap-1 rounded border border-theme-border/60 bg-theme-surface/40 px-2 py-0.5 text-micro font-bold text-theme-muted transition-colors hover:border-theme-primary hover:text-theme-primary"
+                            onclick={() =>
+                              (vault.selectedEntityId = row.entityId)}
+                          >
+                            <span
+                              class="icon-[lucide--external-link] h-3 w-3"
+                              aria-hidden="true"
+                            ></span>
+                            Open item
+                          </button>
+                        {/if}
+                        {#if display.missing}
+                          <span class="text-micro italic text-theme-muted"
+                            >Linked item no longer exists; showing the saved
+                            name.</span
+                          >
+                        {/if}
                       </div>
-                      <label class="flex flex-col text-micro text-theme-muted">
-                        Availability
-                        <select
-                          class="rounded border border-theme-border/60 bg-theme-bg px-1 py-0.5 text-xs text-theme-text"
-                          value={stock.availability ?? "available"}
-                          onchange={(e) =>
-                            handleStockPatch(rIdx, {
-                              availability: (e.target as HTMLSelectElement)
-                                .value,
-                            })}
-                        >
-                          <option value="available">Available</option>
-                          <option value="reserved">Reserved</option>
-                          <option value="sold-out">Sold out</option>
-                          <option value="hidden">Hidden</option>
-                        </select>
-                      </label>
-                      <label class="flex flex-col text-micro text-theme-muted">
-                        Condition
-                        <input
-                          type="text"
-                          class="w-24 rounded border border-theme-border/60 bg-theme-bg/80 px-1 py-0.5 text-xs text-theme-text"
-                          value={stock.condition ?? ""}
-                          oninput={(e) =>
-                            handleStockPatch(rIdx, {
-                              condition: (e.target as HTMLInputElement).value,
-                            })}
-                        />
-                      </label>
-                      <label
-                        class="flex min-w-[8rem] flex-1 flex-col text-micro text-theme-muted"
-                      >
-                        Note
-                        <input
-                          type="text"
-                          class="rounded border border-theme-border/60 bg-theme-bg/80 px-1 py-0.5 text-xs text-theme-text"
-                          value={stock.note ?? ""}
-                          oninput={(e) =>
-                            handleStockPatch(rIdx, {
-                              note: (e.target as HTMLInputElement).value,
-                            })}
-                        />
-                      </label>
-                      {#if display.missing}
-                        <span class="text-micro italic text-theme-muted"
-                          >Linked item no longer exists; showing the saved name.</span
-                        >
-                      {/if}
-                    </div>
-                  {/if}
-                </td>
-              </tr>
+                    {/if}
+                  </td>
+                </tr>
+              {/if}
             {/if}
           {/each}
         {/if}
