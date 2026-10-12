@@ -36,10 +36,14 @@
     onDone?: (outcome: TradeOutcome) => void;
   } = $props();
 
-  // One id per opened panel. A retry after a failure reuses it, which is what
-  // lets the service finish a half-done trade without applying it twice.
+  // A persisted pending record survives closing the panel or reloading the
+  // page, so reopening its row resumes with the original id and terms.
   // svelte-ignore state_referenced_locally
-  const tradeId = `trade-${globalThis.crypto.randomUUID()}`;
+  const pendingTrade = field.tradeLog?.find(
+    (entry) => entry.status === "pending" && entry.rowId === row.rowId,
+  );
+  const tradeId =
+    pendingTrade?.tradeId ?? `trade-${globalThis.crypto.randomUUID()}`;
 
   // svelte-ignore state_referenced_locally
   const linePrice = row.stock?.price as
@@ -47,12 +51,16 @@
 
   // The form fields start from the line as it was when the panel opened and
   // are then the operator's own edits, so they are deliberately local copies.
-  let kind = $state<TradeKind>("purchase");
-  let quantityText = $state<string | number | null>(1);
+  let kind = $state<TradeKind>(pendingTrade?.kind ?? "purchase");
+  let quantityText = $state<string | number | null>(
+    pendingTrade?.quantity ?? 1,
+  );
   let priceText = $state(linePrice ? formatMoney(linePrice, false) : "");
-  let unit = $state(linePrice?.currency ?? "gp");
-  let counterpartyId = $state("");
-  let useWallet = $state(false);
+  let unit = $state(
+    pendingTrade?.total.currency ?? linePrice?.currency ?? "gp",
+  );
+  let counterpartyId = $state(pendingTrade?.counterpartyId ?? "");
+  let useWallet = $state(pendingTrade?.accounting === "wallet");
   let busy = $state(false);
   let outcome = $state<TradeOutcome | null>(null);
 
@@ -73,7 +81,7 @@
     const precision = Math.min(6, (text.split(".")[1] ?? "").length);
     return parseMoney(text, unit, precision) ?? null;
   });
-  const priceInvalid = $derived(parsedPrice === null);
+  const priceInvalid = $derived(!pendingTrade && parsedPrice === null);
 
   const walletField = $derived(
     counterparty?.statSheet
@@ -154,7 +162,7 @@
   const confirmLabel = $derived(
     busy
       ? "Recording…"
-      : outcome?.status === "needs-recovery"
+      : outcome?.status === "needs-recovery" || resuming
         ? "Finish trade"
         : "Confirm trade",
   );

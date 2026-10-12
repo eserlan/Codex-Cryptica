@@ -252,6 +252,42 @@ describe("StockTradePanel confirmation", () => {
       execute.mock.calls[0][0].command.tradeId,
     );
   });
+
+  it("reopens a persisted pending trade with its original id and terms", async () => {
+    const interruptedField: StatSheetField = {
+      ...field,
+      tradeLog: [
+        {
+          tradeId: "trade-pending",
+          kind: "purchase",
+          rowId: "rope",
+          itemName: "Rope",
+          quantity: 2,
+          total: gp(4),
+          accounting: "wallet",
+          counterpartyId: "hero",
+          status: "pending",
+          at: "2026-10-12T12:00:00.000Z",
+        },
+      ],
+    };
+    const { execute } = setup({ field: interruptedField });
+
+    expect(preview()).toContain("Finishing a trade that was already started");
+    expect(screen.getByTestId("trade-confirm").textContent).toContain(
+      "Finish trade",
+    );
+    await fireEvent.click(screen.getByTestId("trade-confirm"));
+    await waitFor(() => expect(execute).toHaveBeenCalledTimes(1));
+    expect(execute.mock.calls[0][0].command).toMatchObject({
+      tradeId: "trade-pending",
+      kind: "purchase",
+      rowId: "rope",
+      quantity: 2,
+      accounting: "wallet",
+      counterpartyId: "hero",
+    });
+  });
 });
 
 describe("StockTradePanel wallet", () => {
