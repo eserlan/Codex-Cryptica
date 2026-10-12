@@ -182,4 +182,19 @@ describe("VTTGridManager hex label visibility", () => {
 
     expect(mapStore.showHexCoordinates).toBe(false);
   });
+
+  it("ignores a malformed remote label config without rejecting other settings", () => {
+    const { mapStore, mgr } = managerWithGridSettings();
+
+    expect(() =>
+      mgr.handleRemoteGridSettings({
+        gridDistance: 10,
+        hexLabelConfig: null as never,
+      }),
+    ).not.toThrow();
+
+    expect(mapStore.hexLabelConfig).toEqual({ style: "numeric" });
+    expect(mapStore.showHexCoordinates).toBe(true);
+    expect(mgr.gridDistance).toBe(10);
+  });
 });

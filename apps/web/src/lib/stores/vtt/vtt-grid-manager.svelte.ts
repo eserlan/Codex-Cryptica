@@ -6,6 +6,69 @@ import { browserStorage, type StorageLike } from "$lib/utils/runtime-deps";
 
 const GRID_MEASURE_PREFIX = "codex.vtt.grid-measure";
 
+const HEX_LABEL_STYLES = new Set<HexLabelConfig["style"]>([
+  "none",
+  "off",
+  "numeric",
+  "alphanumeric",
+  "axial",
+]);
+
+function isValidHexLabelColumn(value: unknown): boolean {
+  return (
+    value === undefined ||
+    (typeof value === "string" && /^[A-Za-z]{1,3}$/.test(value))
+  );
+}
+
+function isFiniteOptionalNumber(value: unknown): boolean {
+  return (
+    value === undefined || (typeof value === "number" && Number.isFinite(value))
+  );
+}
+
+function isValidHexLabelSeparator(value: unknown): boolean {
+  return (
+    value === undefined || (typeof value === "string" && value.length <= 1)
+  );
+}
+
+function isOptionalBoolean(value: unknown): boolean {
+  return value === undefined || typeof value === "boolean";
+}
+
+function isPlainRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === "object" && !Array.isArray(value);
+}
+
+function hasValidHexLabelStyle(config: Record<string, unknown>): boolean {
+  return HEX_LABEL_STYLES.has(config.style as HexLabelConfig["style"]);
+}
+
+function hasValidHexLabelColumns(config: Record<string, unknown>): boolean {
+  return ["startCol", "startColumn"].every((key) =>
+    isValidHexLabelColumn(config[key]),
+  );
+}
+
+function hasFiniteHexLabelNumbers(config: Record<string, unknown>): boolean {
+  return ["startRow", "rowPadding", "originQ", "originR"].every((key) =>
+    isFiniteOptionalNumber(config[key]),
+  );
+}
+
+function isValidHexLabelConfig(value: unknown): value is HexLabelConfig {
+  if (!isPlainRecord(value)) return false;
+
+  return (
+    hasValidHexLabelStyle(value) &&
+    hasValidHexLabelColumns(value) &&
+    hasFiniteHexLabelNumbers(value) &&
+    isValidHexLabelSeparator(value.separator) &&
+    isOptionalBoolean(value.invertRow)
+  );
+}
+
 function hasVisibleHexLabels(config: HexLabelConfig): boolean {
   return config.style !== "none" && config.style !== "off";
 }
@@ -92,7 +155,7 @@ export class VTTGridManager {
     if (settings.showHexCoordinates !== undefined) {
       this.deps.mapStore.showHexCoordinates = settings.showHexCoordinates;
     }
-    if (settings.hexLabelConfig !== undefined) {
+    if (isValidHexLabelConfig(settings.hexLabelConfig)) {
       this.deps.mapStore.hexLabelConfig = settings.hexLabelConfig;
       this.deps.mapStore.showHexCoordinates = hasVisibleHexLabels(
         settings.hexLabelConfig,
@@ -135,7 +198,7 @@ export class VTTGridManager {
     if (payload.showHexCoordinates !== undefined) {
       this.deps.mapStore.showHexCoordinates = payload.showHexCoordinates;
     }
-    if (payload.hexLabelConfig !== undefined) {
+    if (isValidHexLabelConfig(payload.hexLabelConfig)) {
       this.deps.mapStore.hexLabelConfig = payload.hexLabelConfig;
       this.deps.mapStore.showHexCoordinates = hasVisibleHexLabels(
         payload.hexLabelConfig,
