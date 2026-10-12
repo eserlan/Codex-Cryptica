@@ -130,7 +130,9 @@ function checkLogged(
   if (
     existing.kind !== command.kind ||
     existing.rowId !== command.rowId ||
-    existing.quantity !== command.quantity
+    existing.quantity !== command.quantity ||
+    existing.accounting !== command.accounting ||
+    existing.counterpartyId !== command.counterpartyId
   ) {
     return reject(
       "invalid-trade",

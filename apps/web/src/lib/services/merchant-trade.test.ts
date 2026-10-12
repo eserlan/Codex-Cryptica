@@ -449,4 +449,32 @@ describe("wallet trade", () => {
     });
     expect(rope(h).stock.quantity).toBe(3);
   });
+
+  it("refuses to resume a wallet trade as record-only or for another character", async () => {
+    const h = harness();
+    h.failWhen.current = (id, n) => id === "hero" || (id === "shop" && n === 2);
+    await h.service.execute(wallet());
+    h.failWhen.current = () => false;
+
+    const changedAccounting = await h.service.execute(
+      wallet({ accounting: "record-only" }),
+    );
+    const changedCounterparty = await h.service.execute(
+      wallet({ counterpartyId: "pauper" }),
+    );
+
+    expect(changedAccounting).toMatchObject({
+      status: "rejected",
+      code: "invalid-trade",
+    });
+    expect(changedCounterparty).toMatchObject({
+      status: "rejected",
+      code: "invalid-trade",
+    });
+    expect(gold(h)).toBe(20);
+    expect(h.entities.shop.statSheet!.fields[0].tradeLog![0].status).toBe(
+      "pending",
+    );
+    expect(h.captures).toEqual([]);
+  });
 });

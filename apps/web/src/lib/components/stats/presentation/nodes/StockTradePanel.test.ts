@@ -288,6 +288,35 @@ describe("StockTradePanel confirmation", () => {
       counterpartyId: "hero",
     });
   });
+
+  it("blocks a recovery attempt after its accounting terms are changed", async () => {
+    const interruptedField: StatSheetField = {
+      ...field,
+      tradeLog: [
+        {
+          tradeId: "trade-pending",
+          kind: "purchase",
+          rowId: "rope",
+          itemName: "Rope",
+          quantity: 2,
+          total: gp(4),
+          accounting: "wallet",
+          counterpartyId: "hero",
+          status: "pending",
+          at: "2026-10-12T12:00:00.000Z",
+        },
+      ],
+    };
+    const { execute } = setup({ field: interruptedField });
+
+    await fireEvent.click(screen.getByTestId("trade-use-wallet"));
+
+    expect(preview()).toContain("already used for a different trade");
+    expect(
+      (screen.getByTestId("trade-confirm") as HTMLButtonElement).disabled,
+    ).toBe(true);
+    expect(execute).not.toHaveBeenCalled();
+  });
 });
 
 describe("StockTradePanel wallet", () => {

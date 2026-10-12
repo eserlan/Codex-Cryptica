@@ -285,6 +285,28 @@ describe("planTrade duplicate submissions", () => {
     });
   });
 
+  it("refuses a retry that changes accounting or counterparty", () => {
+    const pending: StockTradeRecord = {
+      ...done,
+      accounting: "wallet",
+      counterpartyId: "hero",
+      status: "pending",
+    };
+
+    expect(
+      plan(
+        { accounting: "record-only", counterpartyId: "hero" },
+        { tradeLog: [pending] },
+      ),
+    ).toMatchObject({ ok: false, code: "invalid-trade" });
+    expect(
+      plan(
+        { accounting: "wallet", counterpartyId: "someone-else" },
+        { tradeLog: [pending] },
+      ),
+    ).toMatchObject({ ok: false, code: "invalid-trade" });
+  });
+
   it("rejects a missing trade reference", () => {
     expect(plan({ tradeId: "" })).toMatchObject({
       ok: false,
