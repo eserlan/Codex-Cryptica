@@ -227,6 +227,7 @@ export const howDoICombineMultipleEnemiesIntoOneSquadInAnRpg: AnswerConfigInput 
       },
     ],
     relatedAnswers: [
+      "which-tabletop-rpgs-have-squad-and-mass-battle-rules",
       "how-do-i-run-a-large-battle-when-the-player-characters-are-part-of-an-army",
       "which-tabletop-rpgs-have-squad-and-mass-battle-rules",
       "how-do-i-balance-rpg-combat-encounters-without-a-tpk",
