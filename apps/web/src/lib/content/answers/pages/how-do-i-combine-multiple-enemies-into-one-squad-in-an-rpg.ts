@@ -46,7 +46,7 @@ export const howDoICombineMultipleEnemiesIntoOneSquadInAnRpg: AnswerConfigInput 
         heading: "How this differs from an army battle",
         paragraphs: [
           "This page covers the middle row: a handful of ordinary opponents that you treat as a single encounter unit so a normal combat moves faster whilst still feeling like a group. If the player characters are soldiers inside a larger field battle, with fronts, reserves and orders that outlive one encounter, use the army-scale method instead. That method keeps the wider war as a changing environment around player-scale scenes, not as a bigger squad stat block. For the distinction and the army procedure, see how to run a large battle when the player characters are part of an army.",
-          "A companion Answer surveys which published systems already provide squad, troop and mass-battle procedures, so you can see whether your own game already has a tested version of this tool. This page gives you a system-neutral recipe you can use with any game, clearly marked as illustrative rather than official rules.",
+          "Pathfinder 2e's troop rules offer a published example of this kind of tool; see the system note below. This page gives you a system-neutral recipe you can use with any game, clearly marked as illustrative rather than official rules.",
         ],
       },
       {
@@ -110,7 +110,7 @@ export const howDoICombineMultipleEnemiesIntoOneSquadInAnRpg: AnswerConfigInput 
           },
           {
             term: "Two turns that show attrition in practice",
-            text: "Round one: the fighter hits the formation and deals enough damage to cross the first threshold, so one orc falls and the squad is noted as four remaining. The wizard catches the tight formation in a burst. The GM rules that area effects apply their damage once to the shared pool but count heavily towards the next threshold, so the spell pushes the squad across a second step. The squad then activates at reduced strength with four orcs, making its single attack at visibly diminished effect rather than at the full opening value. Round two: the rogue singles out the orc sergeant at the table's agreed cost, removing the leader's extra ability but not the whole formation. The squad, already thinned, now checks morale because it has lost more than half its members and its leader; it fails and breaks into two fleeing individuals rather than fighting as a perfect unit to the last body.",
+            text: "Round one: the fighter hits the formation and deals enough damage to cross the first threshold, so one orc falls and the squad is noted as four remaining. The wizard catches the tight formation in a burst. The GM rules that area effects apply their damage once to the shared pool but count heavily towards the next threshold, so the spell pushes the squad across a second step. The squad then activates at reduced strength with three orcs, making its single attack at visibly diminished effect rather than at the full opening value. Round two: the rogue singles out the orc sergeant at the table's agreed cost, removing the leader's extra ability but not the whole formation. The squad, now down to two orcs and without its leader, checks morale because it has lost more than half its members; it fails and breaks into two fleeing individuals rather than fighting as a perfect unit to the last body.",
           },
           {
             term: "How different PC actions interact",
