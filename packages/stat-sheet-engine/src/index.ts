@@ -17,3 +17,4 @@ export * from "./commerce";
 export * from "./catalogue";
 export * from "./catalogue-capability";
 export * from "./entity-sheet";
+export * from "./stock-suggestions";

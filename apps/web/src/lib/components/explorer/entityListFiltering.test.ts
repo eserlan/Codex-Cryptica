@@ -6,6 +6,7 @@ import {
   parseEntitySearchQuery,
   searchEntityText,
   evaluateEntityMissingFields,
+  hasEntityImage,
   type EntityWithPreview,
 } from "./entityListFiltering";
 import type { Entity } from "schema";
@@ -480,6 +481,254 @@ describe("entityListFiltering pure functions", () => {
         },
       });
       expect(hasDateResult.map((e) => e.id)).toEqual(["t1"]);
+    });
+  });
+
+  describe("hasEntityImage", () => {
+    it("returns false for undefined, null, or non-string image", () => {
+      expect(hasEntityImage({ image: undefined } as any)).toBe(false);
+      expect(hasEntityImage({ image: null } as any)).toBe(false);
+      expect(hasEntityImage({ image: 123 } as any)).toBe(false);
+      expect(hasEntityImage({} as any)).toBe(false);
+    });
+
+    it("returns false for empty or whitespace-only image strings", () => {
+      expect(hasEntityImage({ image: "" } as any)).toBe(false);
+      expect(hasEntityImage({ image: "   " } as any)).toBe(false);
+    });
+
+    it("returns false for silhouette tokens", () => {
+      expect(hasEntityImage({ image: "silhouette:character" } as any)).toBe(
+        false,
+      );
+      expect(
+        hasEntityImage({ image: "silhouette:location/castle" } as any),
+      ).toBe(false);
+    });
+
+    it("returns false for literal 'placeholder' or Scabard placeholder URLs", () => {
+      expect(hasEntityImage({ image: "placeholder" } as any)).toBe(false);
+      expect(
+        hasEntityImage({
+          image:
+            "https://www.scabard.com/images/cross_categories/character.png",
+        } as any),
+      ).toBe(false);
+      expect(
+        hasEntityImage({
+          image: "https://scabard.com/images/cross_categories/event.png",
+        } as any),
+      ).toBe(false);
+    });
+
+    it("returns true for valid image paths, URLs, and data URIs", () => {
+      expect(
+        hasEntityImage({ image: "https://example.com/portrait.webp" } as any),
+      ).toBe(true);
+      expect(
+        hasEntityImage({ image: "/api/vault/images/abc.jpg" } as any),
+      ).toBe(true);
+      expect(hasEntityImage({ image: "character-portrait.png" } as any)).toBe(
+        true,
+      );
+      expect(
+        hasEntityImage({ image: "blob:http://localhost/123" } as any),
+      ).toBe(true);
+    });
+  });
+
+  describe("evaluateEntityMissingFields image evaluation", () => {
+    it("reports image: true when entity has no valid image, without affecting isIncomplete", () => {
+      const missingImageEntity: EntityWithPreview = {
+        id: "e-complete-no-img",
+        title: "Complete but no image",
+        type: "character",
+        labels: ["Hero"],
+        status: "active",
+        content: "Detailed description.",
+        aliases: [],
+        connections: [],
+        image: undefined,
+        updatedAt: 0,
+      };
+
+      const result = evaluateEntityMissingFields(missingImageEntity, {
+        total: 1,
+      });
+
+      expect(result.image).toBe(true);
+      // Incomplete status remains strictly defined by summary, labels, and connections
+      expect(result.isIncomplete).toBe(false);
+    });
+
+    it("reports image: false when entity has a valid image", () => {
+      const withImageEntity: EntityWithPreview = {
+        id: "e-img",
+        title: "With image",
+        type: "character",
+        labels: ["Hero"],
+        status: "active",
+        content: "Detailed description.",
+        aliases: [],
+        connections: [],
+        image: "https://example.com/portrait.png",
+        updatedAt: 0,
+      };
+
+      const result = evaluateEntityMissingFields(withImageEntity, {
+        total: 1,
+      });
+
+      expect(result.image).toBe(false);
+      expect(result.isIncomplete).toBe(false);
+    });
+  });
+
+  describe("vault audit filters: type + missing image (#4018)", () => {
+    const auditEntities: Entity[] = [
+      {
+        id: "char-with-portrait",
+        title: "Alice the Cleric",
+        type: "character",
+        image: "https://example.com/portraits/alice.png",
+        status: "active",
+        labels: ["Hero"],
+        aliases: [],
+        connections: [],
+        content: "A brave cleric.",
+        updatedAt: 100,
+      },
+      {
+        id: "char-missing-portrait-none",
+        title: "Bob the Bard",
+        type: "character",
+        image: undefined,
+        status: "active",
+        labels: ["Hero"],
+        aliases: [],
+        connections: [],
+        content: "A singing bard with no portrait.",
+        updatedAt: 100,
+      },
+      {
+        id: "char-missing-portrait-silhouette",
+        title: "Cedric the Rogue",
+        type: "character",
+        image: "silhouette:character/rogue",
+        status: "active",
+        labels: ["Scoundrel"],
+        aliases: [],
+        connections: [],
+        content: "A stealthy rogue with a placeholder silhouette.",
+        updatedAt: 100,
+      },
+      {
+        id: "char-missing-portrait-scabard",
+        title: "Diana the Druid",
+        type: "character",
+        image: "https://www.scabard.com/images/cross_categories/character.png",
+        status: "active",
+        labels: ["Nature"],
+        aliases: [],
+        connections: [],
+        content: "A druid with a stock Scabard icon.",
+        updatedAt: 100,
+      },
+      {
+        id: "loc-no-image",
+        title: "Dark Cave",
+        type: "location",
+        image: undefined,
+        status: "active",
+        labels: ["Dungeon"],
+        aliases: [],
+        connections: [],
+        content: "A pitch black cavern.",
+        updatedAt: 100,
+      },
+      {
+        id: "loc-with-image",
+        title: "Emerald Forest",
+        type: "location",
+        image: "https://example.com/maps/forest.jpg",
+        status: "active",
+        labels: ["Wilds"],
+        aliases: [],
+        connections: [],
+        content: "A lush forest.",
+        updatedAt: 100,
+      },
+    ];
+
+    it("filters only characters missing portraits (Type = character AND imageMode = missing_image)", () => {
+      const result = filterEntities(auditEntities, {
+        searchQuery: "",
+        typeFilters: new Set(["character"]),
+        labelFilters: new Set(),
+        allowedTypes: null,
+        showDraftsOnly: false,
+        columnFilters: {
+          imageMode: "missing_image",
+        },
+      });
+
+      // Should return only characters lacking genuine portraits: Bob, Cedric, Diana.
+      // Must exclude Alice (character with portrait) and Dark Cave (location with no image).
+      expect(result.map((e) => e.id)).toEqual([
+        "char-missing-portrait-none",
+        "char-missing-portrait-silhouette",
+        "char-missing-portrait-scabard",
+      ]);
+    });
+
+    it("filters characters with portraits (Type = character AND imageMode = has_image)", () => {
+      const result = filterEntities(auditEntities, {
+        searchQuery: "",
+        typeFilters: new Set(["character"]),
+        labelFilters: new Set(),
+        allowedTypes: null,
+        showDraftsOnly: false,
+        columnFilters: {
+          imageMode: "has_image",
+        },
+      });
+
+      expect(result.map((e) => e.id)).toEqual(["char-with-portrait"]);
+    });
+
+    it("combines missing portrait filter with labels and search query", () => {
+      const result = filterEntities(auditEntities, {
+        searchQuery: "singing",
+        typeFilters: new Set(["character"]),
+        labelFilters: new Set(["Hero"]),
+        allowedTypes: null,
+        showDraftsOnly: false,
+        columnFilters: {
+          imageMode: "missing_image",
+        },
+      });
+
+      expect(result.map((e) => e.id)).toEqual(["char-missing-portrait-none"]);
+    });
+
+    it("returns all entries when imageMode is 'all' or omitted", () => {
+      const result = filterEntities(auditEntities, {
+        searchQuery: "",
+        typeFilters: new Set(["character"]),
+        labelFilters: new Set(),
+        allowedTypes: null,
+        showDraftsOnly: false,
+        columnFilters: {
+          imageMode: "all",
+        },
+      });
+
+      expect(result.map((e) => e.id)).toEqual([
+        "char-with-portrait",
+        "char-missing-portrait-none",
+        "char-missing-portrait-silhouette",
+        "char-missing-portrait-scabard",
+      ]);
     });
   });
 });
