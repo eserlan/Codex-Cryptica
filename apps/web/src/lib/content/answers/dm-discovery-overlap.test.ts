@@ -13,4 +13,17 @@ describe("Dungeon Master answer discovery metadata", () => {
       }),
     );
   });
+
+  it("links prospective DMs to the player-focused D&D beginner hub", () => {
+    const answer =
+      answers["what-are-the-pros-and-cons-of-becoming-a-dungeon-master"];
+
+    expect(answer?.relatedTopics).toContainEqual({
+      title: "D&D for Beginners",
+      href: "/topics/dnd-beginners",
+      description:
+        "A player-focused learning path through the table conversation, character sheets, dice, and combat turns.",
+    });
+    expect(answer?.discovery?.relatedIntents).toContain("topic-dnd-beginners");
+  });
 });
