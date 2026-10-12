@@ -32,14 +32,18 @@
     style: hexLabelStyle,
     startCol: (hexStartColumn || "A").toUpperCase(),
     startColumn: (hexStartColumn || "A").toUpperCase(),
-    startRow: Number(hexStartRow) || 1,
+    startRow: Number.isFinite(hexStartRow) ? hexStartRow : 1,
     rowPadding: Number(hexRowPadding) || 2,
     separator: hexSeparator,
     invertRow: hexInvertRow,
   });
 
+  const hexLabelsEnabled = $derived(
+    hexLabelStyle !== "off" && hexLabelStyle !== "none",
+  );
+
   const previewHexLabel = $derived.by(() => {
-    if (hexLabelStyle === "off") return "None";
+    if (!hexLabelsEnabled) return "None";
     return formatHexLabel(
       { q: 0, r: 0 },
       currentHexLabelConfig,
@@ -51,7 +55,7 @@
   function startFit() {
     mapSession.setGridSettings({
       gridType,
-      showHexCoordinates: hexLabelStyle !== "off",
+      showHexCoordinates: hexLabelsEnabled,
       hexLabelConfig: currentHexLabelConfig,
       gridUnit,
       gridDistance,
@@ -64,7 +68,7 @@
     mapSession.setGridSettings({
       gridSize,
       gridType,
-      showHexCoordinates: hexLabelStyle !== "off",
+      showHexCoordinates: hexLabelsEnabled,
       hexLabelConfig: currentHexLabelConfig,
       gridUnit,
       gridDistance,
@@ -205,7 +209,7 @@
           >
             <button
               type="button"
-              aria-pressed={hexLabelStyle === "off"}
+              aria-pressed={!hexLabelsEnabled}
               class="px-2 py-1.5 rounded border text-xs font-medium flex items-center justify-center gap-1.5 transition-colors {hexLabelStyle ===
               'off'
                 ? 'border-theme-primary bg-theme-primary/10 text-theme-primary font-bold'

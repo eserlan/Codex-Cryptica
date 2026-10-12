@@ -146,4 +146,32 @@ describe("VTTGridSettings hex label configuration", () => {
       }),
     );
   });
+
+  it("preserves a zero start row and treats the none style as disabled", async () => {
+    mocks.mapStore.hexLabelConfig = {
+      style: "none",
+      startColumn: "A",
+    };
+    render(VTTGridSettings, { close: vi.fn() });
+
+    await fireEvent.click(screen.getByText("Hex (Pointy)"));
+    expect(screen.getByText(/Sample:\s*None/)).toBeTruthy();
+    expect(
+      screen.getByRole("button", { name: "Off" }).getAttribute("aria-pressed"),
+    ).toBe("true");
+
+    await fireEvent.click(screen.getByText("Alphanumeric (A01)"));
+    const startRowInput = screen.getByLabelText(
+      "Start Row",
+    ) as HTMLInputElement;
+    await fireEvent.input(startRowInput, { target: { value: "0" } });
+    await fireEvent.click(screen.getByText("Apply to All"));
+
+    expect(mocks.mapSession.setGridSettings).toHaveBeenCalledWith(
+      expect.objectContaining({
+        showHexCoordinates: true,
+        hexLabelConfig: expect.objectContaining({ startRow: 0 }),
+      }),
+    );
+  });
 });
