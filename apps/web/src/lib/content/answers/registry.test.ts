@@ -291,23 +291,60 @@ describe("answer registry", () => {
     const squad =
       answers["how-do-i-combine-multiple-enemies-into-one-squad-in-an-rpg"];
     const example = squad.sections.find(
-      (section) =>
-        section.kind === "example" &&
-        section.heading === "Worked example: five orcs become one squad",
+      (section) => section.kind === "example",
     );
-    const attrition =
-      example?.kind === "example"
-        ? example.items?.find(
-            (item) => item.term === "Two turns that show attrition in practice",
-          )
-        : undefined;
+    if (!example || example.kind !== "example") {
+      throw new Error("Squad worked example is missing");
+    }
+    expect(example.heading).toBe("Worked example: five orcs become one squad");
+    expect(example.items?.some((item) => item.term === "Why it works")).toBe(
+      true,
+    );
+    const checklist = squad.sections.find(
+      (section) => section.kind === "checklist",
+    );
+    expect(checklist?.kind).toBe("checklist");
+    if (checklist?.kind === "checklist") {
+      expect(checklist.heading).toBe("Squad prep checklist");
+      expect(checklist.items.length).toBeGreaterThanOrEqual(2);
+    }
 
-    expect(attrition?.text).toContain(
-      "activates at reduced strength with three orcs",
+    const roundOne = example.items?.[1]?.text;
+    const roundTwo = example.items?.[2]?.text;
+
+    expect(roundOne).toContain("track from 30 to 24");
+    expect(roundOne).toContain(
+      "track to 12 and removing two more ordinary orcs",
     );
-    expect(attrition?.text).toContain(
-      "down to two orcs and without its leader",
+    expect(roundOne).toContain("two orcs are left");
+    expect(roundOne).toContain("attack bonus is +5");
+    expect(roundTwo).toContain("track falls from 12 to 6");
+    expect(roundTwo).toContain(
+      "one ordinary orc and removing the sergeant's +1",
     );
+    expect(roundTwo).toContain("8 + 2 = 10, below DC 12");
+  });
+
+  it("uses rendered related-answer links instead of Markdown in squad copy", () => {
+    const squad =
+      answers["how-do-i-combine-multiple-enemies-into-one-squad-in-an-rpg"];
+    const paragraphs = squad.sections.flatMap((section) =>
+      section.kind === "prose" ? section.paragraphs : [],
+    );
+    const pathfinder = squad.systemsThatSupportThis?.find(
+      (system) => system.system === "Pathfinder 2e",
+    );
+
+    expect(squad.relatedAnswers).toEqual(
+      expect.arrayContaining([
+        "how-do-i-make-combat-faster-without-making-it-less-exciting",
+        "how-do-i-run-a-large-battle-when-the-player-characters-are-part-of-an-army",
+        "which-tabletop-rpgs-have-squad-and-mass-battle-rules",
+      ]),
+    );
+    expect(paragraphs.join(" ")).not.toMatch(/\[[^\]]+\]\(/);
+    expect(pathfinder?.rationale).not.toMatch(/\[[^\]]+\]\(/);
+    expect(pathfinder?.href).toBe("https://2e.aonprd.com/Rules.aspx?ID=3365");
   });
 
   it("matches the economic hooks example heading to its brief cases", () => {
