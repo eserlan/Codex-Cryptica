@@ -108,6 +108,24 @@ export class VTTGridManager {
     return this.deps.storage ?? browserStorage;
   }
 
+  private applyHexLabelSettings(
+    showHexCoordinates?: boolean,
+    hexLabelConfig?: HexLabelConfig,
+  ) {
+    if (showHexCoordinates !== undefined) {
+      this.deps.mapStore.showHexCoordinates = showHexCoordinates;
+      if (hexLabelConfig === undefined) {
+        this.deps.mapStore.hexLabelConfig = {
+          style: showHexCoordinates ? "numeric" : "none",
+        };
+      }
+    }
+    if (!isValidHexLabelConfig(hexLabelConfig)) return;
+
+    this.deps.mapStore.hexLabelConfig = hexLabelConfig;
+    this.deps.mapStore.showHexCoordinates = hasVisibleHexLabels(hexLabelConfig);
+  }
+
   loadGridMeasure(mapId: string) {
     if (typeof window === "undefined") return;
     try {
@@ -152,15 +170,10 @@ export class VTTGridManager {
     if (settings.gridType !== undefined) {
       this.deps.mapStore.gridType = settings.gridType;
     }
-    if (settings.showHexCoordinates !== undefined) {
-      this.deps.mapStore.showHexCoordinates = settings.showHexCoordinates;
-    }
-    if (isValidHexLabelConfig(settings.hexLabelConfig)) {
-      this.deps.mapStore.hexLabelConfig = settings.hexLabelConfig;
-      this.deps.mapStore.showHexCoordinates = hasVisibleHexLabels(
-        settings.hexLabelConfig,
-      );
-    }
+    this.applyHexLabelSettings(
+      settings.showHexCoordinates,
+      settings.hexLabelConfig,
+    );
     if (settings.fogColor !== undefined) {
       this.deps.mapStore.fogColor = settings.fogColor;
     }
@@ -195,15 +208,10 @@ export class VTTGridManager {
     if (payload.gridType !== undefined) {
       this.deps.mapStore.gridType = payload.gridType;
     }
-    if (payload.showHexCoordinates !== undefined) {
-      this.deps.mapStore.showHexCoordinates = payload.showHexCoordinates;
-    }
-    if (isValidHexLabelConfig(payload.hexLabelConfig)) {
-      this.deps.mapStore.hexLabelConfig = payload.hexLabelConfig;
-      this.deps.mapStore.showHexCoordinates = hasVisibleHexLabels(
-        payload.hexLabelConfig,
-      );
-    }
+    this.applyHexLabelSettings(
+      payload.showHexCoordinates,
+      payload.hexLabelConfig,
+    );
     if (payload.fogColor !== undefined) {
       this.deps.mapStore.fogColor = payload.fogColor;
     }

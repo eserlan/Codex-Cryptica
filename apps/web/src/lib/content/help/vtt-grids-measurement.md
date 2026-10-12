@@ -25,7 +25,7 @@ Use the **grid button** in the map bar to show or hide the grid. Right-click it 
 ## Grid settings
 
 - **Grid type**: **Square**, **Hex (Pointy)** or **Hex (Flat)**. Match the orientation of the hexes on your map.
-- **Hex Labels**: on hex grids, configure labels in hex centers: **Off**, **Alphanumeric** (classic hexcrawl column letters and row numbers such as `A01`, `B03` with customizable start column/row, padding, separator, and row direction), **Numeric** (offset coordinates such as `01.04`), or **Axial** (`(q, r)`).
+- **Hex Labels**: on hex grids, configure labels in hex centers: **Off**, **Alphanumeric** (classic hexcrawl column letters and row numbers such as `A01`, `B03` with customizable start column/row, padding, separator, and row direction), **Numeric** (axial coordinates such as `01.04`), or **Axial** (`(q, r)`).
 - **Grid Cell Size** (square) or **Hex Radius** (hex): the size in pixels. Drag the slider from 20 to 500.
 - **Distance per Cell** and **Unit Name**: set the scale, such as `5` and `ft`, or `6` and `mi` for overland maps.
 
