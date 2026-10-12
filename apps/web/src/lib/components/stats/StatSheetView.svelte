@@ -476,6 +476,7 @@
         {:else if field.type === "item-table"}
           <ItemTableNode
             {field}
+            catalogue={readOnly && field.stockLedger === true}
             context={{
               fields,
               readOnly,
