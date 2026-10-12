@@ -325,6 +325,28 @@ describe("answer registry", () => {
     expect(roundTwo).toContain("8 + 2 = 10, below DC 12");
   });
 
+  it("uses rendered related-answer links instead of Markdown in squad copy", () => {
+    const squad =
+      answers["how-do-i-combine-multiple-enemies-into-one-squad-in-an-rpg"];
+    const paragraphs = squad.sections.flatMap((section) =>
+      section.kind === "prose" ? section.paragraphs : [],
+    );
+    const pathfinder = squad.systemsThatSupportThis?.find(
+      (system) => system.system === "Pathfinder 2e",
+    );
+
+    expect(squad.relatedAnswers).toEqual(
+      expect.arrayContaining([
+        "how-do-i-make-combat-faster-without-making-it-less-exciting",
+        "how-do-i-run-a-large-battle-when-the-player-characters-are-part-of-an-army",
+        "which-tabletop-rpgs-have-squad-and-mass-battle-rules",
+      ]),
+    );
+    expect(paragraphs.join(" ")).not.toMatch(/\[[^\]]+\]\(/);
+    expect(pathfinder?.rationale).not.toMatch(/\[[^\]]+\]\(/);
+    expect(pathfinder?.href).toBe("https://2e.aonprd.com/Rules.aspx?ID=3365");
+  });
+
   it("matches the economic hooks example heading to its brief cases", () => {
     const example = answers[
       "how-do-i-turn-economic-pressures-into-rpg-adventure-hooks"

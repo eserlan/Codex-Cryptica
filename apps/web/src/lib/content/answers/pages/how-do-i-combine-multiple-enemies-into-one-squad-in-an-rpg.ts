@@ -15,7 +15,7 @@ export const howDoICombineMultipleEnemiesIntoOneSquadInAnRpg: AnswerConfigInput 
         kind: "prose",
         heading: "What you are actually building",
         paragraphs: [
-          "Five separate orcs give you five turns, positions, health pools and chances to act. You can speed up their handling without combining them: let them share initiative and batch routine rolls while keeping their positions, health and targets distinct, as described in [how to make combat faster without making it less exciting](/answers/how-do-i-make-combat-faster-without-making-it-less-exciting). If you want them to act as one squad instead, choose what kind of consolidation you mean; the three common approaches behave differently at the table.",
+          "Five separate orcs give you five turns, positions, health pools and chances to act. You can speed up their handling without combining them: let them share initiative and batch routine rolls while keeping their positions, health and targets distinct, as described in the related answer on making combat faster without making it less exciting. If you want them to act as one squad instead, choose what kind of consolidation you mean; the three common approaches behave differently at the table.",
           "Naming the abstraction up front prevents confusion later, especially if your group already uses terms like troop, mob or squad differently. Use the table below to match your table's need to the right tool, then build only that tool. Do not treat them as interchangeable dialects of the same idea.",
         ],
       },
@@ -45,8 +45,8 @@ export const howDoICombineMultipleEnemiesIntoOneSquadInAnRpg: AnswerConfigInput 
         kind: "prose",
         heading: "How this differs from an army battle",
         paragraphs: [
-          "This page covers the middle row: a handful of ordinary opponents that you treat as a single encounter unit so a normal combat moves faster whilst still feeling like a group. If the player characters are soldiers inside a larger field battle, with fronts, reserves and orders that outlive one encounter, use the army-scale method instead. That method keeps the wider war as a changing environment around player-scale scenes, not as a bigger squad stat block. For the distinction and army procedure, see [how to run a large battle when the player characters are part of an army](/answers/how-do-i-run-a-large-battle-when-the-player-characters-are-part-of-an-army).",
-          "Pathfinder Second Edition's NPC Core has published troop rules; see the system note below. To compare games with published squad or mass-battle subsystems, see [which tabletop RPGs have squad and mass-battle rules](/answers/which-tabletop-rpgs-have-squad-and-mass-battle-rules). The recipe here is a separate, system-neutral method, not an official rule set.",
+          "This page covers the middle row: a handful of ordinary opponents that you treat as a single encounter unit so a normal combat moves faster whilst still feeling like a group. If the player characters are soldiers inside a larger field battle, with fronts, reserves and orders that outlive one encounter, use the army-scale method instead. That method keeps the wider war as a changing environment around player-scale scenes, not as a bigger squad stat block. For the distinction and army procedure, see the related answer on running a large battle with the player characters inside an army.",
+          "Pathfinder Second Edition's NPC Core has published troop rules; see the system note below. To compare games with published squad or mass-battle subsystems, see the related answer on tabletop RPGs with squad and mass-battle rules. The recipe here is a separate, system-neutral method, not an official rule set.",
         ],
       },
       {
@@ -185,7 +185,7 @@ export const howDoICombineMultipleEnemiesIntoOneSquadInAnRpg: AnswerConfigInput 
       {
         system: "Pathfinder 2e",
         rationale:
-          "Pathfinder Second Edition's NPC Core [Running Troops rules](https://2e.aonprd.com/Rules.aspx?ID=3365) use four footprint segments, shared hit points and coordinated actions as the troop thins. Area-related weaknesses depend on the individual troop stat block; they are not a rule for every troop. See also [this troop ability entry](https://2e.aonprd.com/MonsterAbilities.aspx?ID=86&Redirected=1).",
+          "Pathfinder Second Edition's NPC Core includes Running Troops rules that use four footprint segments, shared hit points and coordinated actions as the troop thins. Area-related weaknesses depend on the individual troop stat block; they are not a rule for every troop.",
         href: "https://2e.aonprd.com/Rules.aspx?ID=3365",
       },
     ],
