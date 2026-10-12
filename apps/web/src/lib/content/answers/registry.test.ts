@@ -297,6 +297,18 @@ describe("answer registry", () => {
       throw new Error("Squad worked example is missing");
     }
     expect(example.heading).toBe("Worked example: five orcs become one squad");
+    expect(example.items?.some((item) => item.term === "Why it works")).toBe(
+      true,
+    );
+    const checklist = squad.sections.find(
+      (section) => section.kind === "checklist",
+    );
+    expect(checklist?.kind).toBe("checklist");
+    if (checklist?.kind === "checklist") {
+      expect(checklist.heading).toBe("Squad prep checklist");
+      expect(checklist.items.length).toBeGreaterThanOrEqual(2);
+    }
+
     const roundOne = example.items?.[1]?.text;
     const roundTwo = example.items?.[2]?.text;
 

@@ -108,6 +108,24 @@ export const howDoICombineMultipleEnemiesIntoOneSquadInAnRpg: AnswerConfigInput 
             term: "Round two: a targeted leader falls and morale breaks",
             text: "The rogue names the sergeant at the exposed flank as the target. The attack roll is 10 + 5 = 15 against AC 13, dealing 6 damage; the track falls from 12 to 6, leaving one ordinary orc and removing the sergeant's +1. Because the sergeant has fallen, the survivors check morale: 8 + 2 = 10, below DC 12, so the last orc flees and the squad ends.",
           },
+          {
+            term: "Why it works",
+            text: "The visible track shows exactly when orcs fall, the squad's attack weakens with its numbers, and the sergeant's loss changes both its attack and the survivors' morale. The group acts as one unit without hiding the consequences of each casualty.",
+          },
+        ],
+      },
+      {
+        kind: "checklist",
+        heading: "Squad prep checklist",
+        intro: "Set these rulings before initiative:",
+        items: [
+          "Confirm the enemies are similar enough to act as one unit, and note how many creatures it represents.",
+          "Choose the squad's footprint and decide how it handles doors, cover and difficult terrain.",
+          "Set a visible casualty or strength track, including the thresholds where members fall and capabilities change.",
+          "Write one attack for each strength threshold and resolve the squad only once per activation.",
+          "Decide how area effects and single-target attacks affect the track, including when a named member can be targeted.",
+          "Choose a morale trigger and what the survivors do if they fail: retreat, scatter, surrender or rout.",
+          "Check the rules against the party's actual attacks and control effects, then adjust the threat before play.",
         ],
       },
       {
