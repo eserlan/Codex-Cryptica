@@ -278,6 +278,11 @@ function sourceNeedle(finding: EditorialFinding): string | undefined {
     .slice(0, 50);
 }
 
+/** Keep content-derived text on one GitHub Actions workflow-command line. */
+export function escapeWorkflowCommandData(value: string): string {
+  return value.replace(/%/g, "%25").replace(/\r/g, "%0D").replace(/\n/g, "%0A");
+}
+
 /** Baseline: tolerated legacy error counts, keyed `slug` → `rule` → count. */
 export type EditorialBaseline = Record<
   string,
@@ -391,7 +396,7 @@ function annotationFor(
 ): string {
   if (!process.env.GITHUB_ACTIONS) return "";
   const position = line ? `,line=${line}` : "";
-  return `\n::${finding.severity} file=${file}${position},title=Answer ${finding.rule}::${finding.field}: ${finding.message}`;
+  return `\n::${finding.severity} file=${file}${position},title=Answer ${finding.rule}::${escapeWorkflowCommandData(`${finding.field}: ${finding.message}`)}`;
 }
 
 function formatFinding(

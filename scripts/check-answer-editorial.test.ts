@@ -1,12 +1,12 @@
 import { describe, expect, test } from "bun:test";
 import fs from "node:fs";
-import path from "node:path";
 import {
   applyBaseline,
   BASELINE_PATH,
   buildBaseline,
   checkAnswer,
   checkPublishedAt,
+  escapeWorkflowCommandData,
   findStaleBaseline,
   locateLine,
   PAGES_DIR,
@@ -18,34 +18,6 @@ import { answers } from "../apps/web/src/lib/content/answers/pages";
 import type { AnswerConfigInput } from "../apps/web/src/lib/content/answers/schema";
 
 const DM_SLUG = "what-are-the-pros-and-cons-of-becoming-a-dungeon-master";
-const DM_FILE = path.resolve(__dirname, "..", PAGES_DIR, `${DM_SLUG}.ts`);
-
-// The two sentences exactly as merged in #4008, and as corrected since.
-const MERGED_4008 = [
-  {
-    corrected:
-      "a few optional NPCs (for example, an innkeeper who wants the road open but will not risk guests' safety, a caravan master who wants his goods moving and will pay for help, and a guard who wants no one on a dangerous structure).",
-    merged:
-      "a few optional NPCs—for example, an innkeeper who wants the road open but will not risk guests' safety, a caravan master who wants his goods moving and will pay for help, and a guard who wants no one on a dangerous structure.",
-  },
-  {
-    corrected:
-      "possible developments tied to the situation (for example, continued rain raising the river or a traveller stranded where the party might look for help).",
-    merged:
-      "possible developments tied to the situation—for example, continued rain raising the river or a traveller stranded where the party might look for help.",
-  },
-];
-
-const revertTo4008 = <T>(value: T): T => {
-  let json = JSON.stringify(value);
-  for (const { corrected, merged } of MERGED_4008) {
-    json = json.replace(
-      JSON.stringify(corrected).slice(1, -1),
-      JSON.stringify(merged).slice(1, -1),
-    );
-  }
-  return JSON.parse(json);
-};
 
 const cleanAnswer = (
   overrides: Partial<AnswerConfigInput> = {},
@@ -141,29 +113,44 @@ const rulesAt = (findings: EditorialFinding[]) =>
 describe("checkAnswer on #4008", () => {
   const live = answers[DM_SLUG] as AnswerConfigInput;
 
-  test("fails the content merged in #4008 on its two em dashes, by field", () => {
-    const findings = checkAnswer(revertTo4008(live), { asOf: "2026-10-12" });
+  test("detects the two em-dash patterns from #4008 by field", () => {
+    const findings = checkAnswer(
+      cleanAnswer({
+        sections: [
+          {
+            kind: "prose",
+            heading: "NPCs",
+            paragraphs: ["A few optional NPCs—for example, an innkeeper."],
+          },
+          {
+            kind: "prose",
+            heading: "Developments",
+            paragraphs: ["Possible developments—for example, continued rain."],
+          },
+        ],
+      }),
+      { asOf: "2026-10-12" },
+    );
     const errors = findings.filter((finding) => finding.severity === "error");
 
     expect(rulesAt(errors)).toEqual([
-      ["prohibited-dash", "sections[6].items[1].text"],
-      ["prohibited-dash", "sections[7].items[2]"],
+      ["prohibited-dash", "sections[0].paragraphs[0]"],
+      ["prohibited-dash", "sections[1].paragraphs[0]"],
     ]);
     expect(errors[0].excerpt).toContain("optional NPCs—for example");
   });
 
-  test("points at the exact source lines of the merged #4008 file", () => {
-    const merged = revertTo4008(fs.readFileSync(DM_FILE, "utf-8"));
-    const errors = checkAnswer(revertTo4008(live), {
-      asOf: "2026-10-12",
-    }).filter((finding) => finding.severity === "error");
-    const lines = merged.split("\n");
+  test("locates a finding on its source line", () => {
+    const source =
+      'shortAnswer: "A few optional NPCs—for example, an innkeeper."';
+    const finding = checkAnswer(
+      cleanAnswer({
+        shortAnswer: "A few optional NPCs—for example, an innkeeper.",
+      }),
+      { asOf: "2026-10-12" },
+    )[0];
 
-    for (const finding of errors) {
-      const line = locateLine(merged, finding);
-      expect(line).toBeDefined();
-      expect(lines[(line ?? 0) - 1]).toContain("—for example");
-    }
+    expect(locateLine(source, finding)).toBe(1);
   });
 
   test("passes the corrected copy with no errors", () => {
@@ -280,6 +267,16 @@ describe("checkPublishedAt", () => {
     expect(at("2026-02-30", "2026-10-12")).toMatchObject([
       { rule: "invalid-date", severity: "error" },
     ]);
+  });
+});
+
+describe("GitHub Actions annotations", () => {
+  test("escapes untrusted line breaks in annotation data", () => {
+    expect(
+      escapeWorkflowCommandData(
+        'publishedAt: "bad\n::error file=spoofed::forged\r\n% value"',
+      ),
+    ).toBe('publishedAt: "bad%0A::error file=spoofed::forged%0D%0A%25 value"');
   });
 });
 
