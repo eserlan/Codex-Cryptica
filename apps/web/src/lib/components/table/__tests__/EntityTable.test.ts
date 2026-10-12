@@ -473,6 +473,7 @@ describe("EntityTable", () => {
         props: {
           entities: rows,
           vaultId: "v1",
+          columnFilters: { imageMode: "missing_image" },
           sort,
           connectionCounts,
           onSort: vi.fn(),
@@ -485,10 +486,20 @@ describe("EntityTable", () => {
       await fireEvent.click(titleFilterBtn);
 
       expect(screen.getByTestId("column-filter-menu-title")).toBeTruthy();
-      expect(screen.getByText("Missing image / portrait")).toBeTruthy();
-      expect(screen.getByText("Has image / portrait")).toBeTruthy();
+      expect(
+        screen
+          .getByRole("menuitemradio", { name: "Missing image / portrait" })
+          .getAttribute("aria-checked"),
+      ).toBe("true");
+      expect(
+        screen
+          .getByRole("menuitemradio", { name: "Has image / portrait" })
+          .getAttribute("aria-checked"),
+      ).toBe("false");
 
-      await fireEvent.click(screen.getByText("Missing image / portrait"));
+      await fireEvent.click(
+        screen.getByRole("menuitemradio", { name: "Missing image / portrait" }),
+      );
       expect(onUpdateColumnFilters).toHaveBeenCalledWith(
         expect.objectContaining({
           imageMode: "missing_image",

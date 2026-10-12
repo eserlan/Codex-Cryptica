@@ -136,7 +136,8 @@
     {@const active = columnFilters.imageMode ?? "all"}
     <button
       type="button"
-      role="menuitem"
+      role="menuitemradio"
+      aria-checked={active === "all"}
       class="flex w-full items-center justify-between px-3 py-1.5 text-xs text-theme-text transition-colors hover:bg-theme-primary/10 hover:text-theme-primary {active ===
       'all'
         ? 'font-bold text-theme-primary'
@@ -151,7 +152,8 @@
     </button>
     <button
       type="button"
-      role="menuitem"
+      role="menuitemradio"
+      aria-checked={active === "missing_image"}
       class="flex w-full items-center justify-between px-3 py-1.5 text-xs text-theme-text transition-colors hover:bg-theme-primary/10 hover:text-theme-primary {active ===
       'missing_image'
         ? 'font-bold text-theme-primary'
@@ -166,7 +168,8 @@
     </button>
     <button
       type="button"
-      role="menuitem"
+      role="menuitemradio"
+      aria-checked={active === "has_image"}
       class="flex w-full items-center justify-between px-3 py-1.5 text-xs text-theme-text transition-colors hover:bg-theme-primary/10 hover:text-theme-primary {active ===
       'has_image'
         ? 'font-bold text-theme-primary'
