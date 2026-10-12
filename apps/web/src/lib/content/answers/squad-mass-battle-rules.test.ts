@@ -7,14 +7,13 @@ describe("squad and mass-battle answer rules", () => {
       whichTabletopRpgsHaveSquadAndMassBattleRules,
     );
 
-    expect(answerText).toContain("current troop rules are in NPC Core");
+    expect(answerText).toContain("current general rules are in NPC Core");
     expect(answerText).toContain("four contiguous 10-foot-square segments");
     expect(answerText).toContain(
-      "do not assume every Troop is weak to area or splash damage",
+      "its defences and weaknesses depend on the rules and stat block",
     );
-    expect(answerText).toContain("until one side breaks");
     expect(answerText).toContain(
-      "rather than ending after a preset number of rounds",
+      "A separate character-scale mission can also create an advantage, but that is optional scene framing, not a required part of each round",
     );
   });
 });
