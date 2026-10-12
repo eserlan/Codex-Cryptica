@@ -552,6 +552,50 @@
           onRecentLimitChange={handleRecentLimitChange}
         />
 
+        {#if !isEmpty && !sessionModeStore.isGuestMode}
+          <div
+            data-testid="front-page-audit-card"
+            class="rounded-3xl border border-theme-border/70 bg-theme-surface/70 p-5 sm:p-6 backdrop-blur-sm shadow-lg flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 transition-colors hover:border-theme-primary/40"
+          >
+            <div class="flex items-start sm:items-center gap-4">
+              <div
+                class="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-theme-primary/10 text-theme-primary border border-theme-primary/20 shadow-sm"
+              >
+                <span
+                  aria-hidden="true"
+                  class="icon-[lucide--stethoscope] h-5 w-5"
+                ></span>
+              </div>
+              <div class="space-y-1">
+                <div class="flex items-center gap-2">
+                  <span
+                    class="text-micro font-bold uppercase tracking-[0.2em] text-theme-primary"
+                  >
+                    World Health
+                  </span>
+                </div>
+                <h3 class="text-base font-bold text-theme-text font-header">
+                  Vault Audit Workbench
+                </h3>
+                <p class="text-xs text-theme-muted max-w-xl leading-relaxed">
+                  Review and clean up incomplete entities, missing portraits,
+                  sparse summaries, and unconnected lore across your campaign.
+                </p>
+              </div>
+            </div>
+            <a
+              href="{base}/table?mode=audit"
+              class="inline-flex shrink-0 items-center justify-center gap-2 rounded-full border border-theme-primary/40 bg-theme-primary/10 px-5 py-2.5 text-xs font-bold uppercase tracking-[0.15em] text-theme-primary transition-all hover:bg-theme-primary hover:text-theme-bg"
+            >
+              <span>Open Audit</span>
+              <span
+                aria-hidden="true"
+                class="icon-[lucide--arrow-right] h-4 w-4"
+              ></span>
+            </a>
+          </div>
+        {/if}
+
         <FrontPageBriefing
           bind:draftDescription
           {isEditingBriefing}

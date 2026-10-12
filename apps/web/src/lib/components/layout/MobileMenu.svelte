@@ -121,7 +121,7 @@
           {#each views as view}
             <a
               href={view.href}
-              class={entryClass(isViewActive(view, page.url.pathname))}
+              class={entryClass(isViewActive(view, page.url))}
               title={view.title ?? view.label}
               data-testid="mobile-menu-{view.id}"
               onclick={close}
