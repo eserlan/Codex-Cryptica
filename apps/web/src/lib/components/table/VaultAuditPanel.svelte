@@ -137,7 +137,7 @@
         </span>
       </div>
       <span class="text-xs font-semibold text-theme-text">Unlabelled</span>
-      <span class="text-nano text-theme-muted/70">No tags / labels</span>
+      <span class="text-nano text-theme-muted/70">No labels</span>
     </button>
 
     <!-- Incomplete -->
@@ -159,7 +159,9 @@
         </span>
       </div>
       <span class="text-xs font-semibold text-theme-text">All flagged</span>
-      <span class="text-nano text-theme-muted/70">Any missing field</span>
+      <span class="text-nano text-theme-muted/70"
+        >Missing summary, labels, or connections</span
+      >
     </button>
   </div>
 {/snippet}
@@ -190,6 +192,7 @@
 {/snippet}
 
 <div
+  id="vault-audit-panel"
   class="rounded-xl border border-theme-border bg-theme-surface/90 p-3.5 sm:p-4 shadow-sm backdrop-blur transition-all flex flex-col gap-3.5"
   data-testid="vault-audit-panel"
   role="region"

@@ -90,7 +90,10 @@ export function isViewActive(
     return matchesPath(itemPath, pathname);
   }
 
-  if (item.id === "table" && search.includes("mode=audit")) {
+  if (
+    item.id === "table" &&
+    new URLSearchParams(search).get("mode") === "audit"
+  ) {
     return false;
   }
 

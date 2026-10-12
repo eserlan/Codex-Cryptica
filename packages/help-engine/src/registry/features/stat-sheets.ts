@@ -58,6 +58,17 @@ export const statSheets: FeatureEntry = {
       ],
       actionIds: ["stat-sheets.open", "stat-sheets.merchant-help"],
     },
+    {
+      id: "suggest-shop-stock",
+      title: "Suggest stock for a shop",
+      steps: [
+        "On the shop's Stats tab, choose Suggest stock.",
+        "Pick a setting, or leave it on Read from the shop.",
+        "Untick lines you do not want and edit quantities or prices.",
+        "Choose Add to stock. Lines the shop already has are never changed.",
+      ],
+      actionIds: ["stat-sheets.open", "stat-sheets.merchant-help"],
+    },
   ],
   helpIds: ["stat-sheets", "merchant-sheets", "sharing-templates"],
   related: ["entity-templates"],
