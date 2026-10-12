@@ -1180,4 +1180,28 @@ describe("FrontPage", () => {
       worldStore.recentActivity = originalRecentActivity;
     }
   });
+
+  it("renders Vault Audit workbench card and links to /table?mode=audit", async () => {
+    render(FrontPage);
+
+    await waitFor(() =>
+      expect(screen.getByTestId("front-page-audit-card")).toBeTruthy(),
+    );
+    expect(screen.getByText("Vault Audit Workbench")).toBeTruthy();
+    const auditLink = screen.getByRole("link", { name: /Open Audit/i });
+    expect(auditLink.getAttribute("href")).toContain("/table?mode=audit");
+  });
+
+  it("does not render Vault Audit workbench card in guest mode", async () => {
+    const { sessionModeStore } =
+      await import("$lib/stores/ui/session-mode.svelte");
+    sessionModeStore.isGuestMode = true;
+
+    try {
+      render(FrontPage);
+      expect(screen.queryByTestId("front-page-audit-card")).toBeNull();
+    } finally {
+      sessionModeStore.isGuestMode = false;
+    }
+  });
 });

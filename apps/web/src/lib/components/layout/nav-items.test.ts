@@ -61,6 +61,7 @@ describe("nav items", () => {
         "adventure",
         "random",
         "generators",
+        "audit",
         "shelf",
         "quicknote",
         "session-journal",
@@ -81,6 +82,7 @@ describe("nav items", () => {
 
       const ids = navItems().map((i) => i.id);
 
+      expect(ids).not.toContain("audit");
       expect(ids).not.toContain("generators");
       expect(ids).not.toContain("shelf");
       expect(ids).not.toContain("quicknote");
@@ -122,6 +124,25 @@ describe("nav items", () => {
     it("does not light the entity table from the random tables route", () => {
       expect(isViewActive(byId("table")!, "/tables")).toBe(false);
       expect(isViewActive(byId("table")!, "/table")).toBe(true);
+    });
+
+    it("lights the audit slot when mode=audit is in search params, not the table slot", () => {
+      const audit = byId("audit")!;
+      const table = byId("table")!;
+
+      expect(
+        isViewActive(audit, { pathname: "/table", search: "?mode=audit" }),
+      ).toBe(true);
+      expect(
+        isViewActive(table, { pathname: "/table", search: "?mode=audit" }),
+      ).toBe(false);
+
+      expect(isViewActive(audit, { pathname: "/table", search: "" })).toBe(
+        false,
+      );
+      expect(isViewActive(table, { pathname: "/table", search: "" })).toBe(
+        true,
+      );
     });
 
     it("lights the graph at the root but nowhere else", () => {

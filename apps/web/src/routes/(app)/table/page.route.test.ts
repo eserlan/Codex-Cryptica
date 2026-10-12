@@ -11,6 +11,16 @@ import { explorerUIStore } from "$lib/stores/ui/explorer-ui.svelte";
 vi.mock("$app/paths", () => ({ base: "" }));
 vi.mock("$app/navigation", () => ({ goto: vi.fn() }));
 
+const { mockPage } = vi.hoisted(() => ({
+  mockPage: {
+    url: new URL("http://localhost/table"),
+  },
+}));
+
+vi.mock("$app/state", () => ({
+  page: mockPage,
+}));
+
 type MutableVaultMock = {
   activeVaultId: string | null;
   isInitialized: boolean;
@@ -44,6 +54,7 @@ const mutableVault = vault as unknown as MutableVaultMock;
 
 describe("/table page", () => {
   beforeEach(() => {
+    mockPage.url = new URL("http://localhost/table");
     mutableVault.activeVaultId = "v1";
     mutableVault.isInitialized = true;
     mutableVault.allEntities = [];
@@ -132,5 +143,78 @@ describe("/table page", () => {
 
     const graphLink = screen.getByTestId("table-browse-as-graph");
     expect(graphLink.getAttribute("href")).toBe("/");
+  });
+
+  it("opens VaultAuditPanel automatically when URL has ?mode=audit", () => {
+    mockPage.url = new URL("http://localhost/table?mode=audit");
+    mutableVault.allEntities = [
+      entity({ id: "e1", title: "Aldric", type: "character", image: "" }),
+      entity({ id: "e2", title: "Brindlewood", type: "location" }),
+    ];
+    render(RoutePage);
+
+    expect(screen.getByTestId("vault-audit-panel")).toBeTruthy();
+    expect(screen.getByText("Vault Audit")).toBeTruthy();
+  });
+
+  it("toggles VaultAuditPanel via the desktop audit button", async () => {
+    mutableVault.allEntities = [
+      entity({ id: "e1", title: "Aldric", type: "character" }),
+    ];
+    render(RoutePage);
+
+    expect(screen.queryByTestId("vault-audit-panel")).toBeNull();
+    const auditBtn = screen.getByTestId("entity-table-audit-toggle");
+    await fireEvent.click(auditBtn);
+    expect(screen.getByTestId("vault-audit-panel")).toBeTruthy();
+
+    await fireEvent.click(screen.getByTestId("vault-audit-close"));
+    expect(screen.queryByTestId("vault-audit-panel")).toBeNull();
+  });
+
+  it("applies an audit preset when clicked", async () => {
+    mutableVault.allEntities = [
+      entity({ id: "e1", title: "Aldric", type: "character", image: "" }),
+      entity({
+        id: "e2",
+        title: "Lyra",
+        type: "character",
+        image: "images/lyra.png",
+      }),
+      entity({ id: "e3", title: "Old Keep", type: "location", image: "" }),
+    ];
+    render(RoutePage);
+
+    const auditBtn = screen.getByTestId("entity-table-audit-toggle");
+    await fireEvent.click(auditBtn);
+
+    const presetBtn = screen.getByTestId(
+      "audit-preset-characters-missing-portraits",
+    );
+    await fireEvent.click(presetBtn);
+
+    // Filtered rows should only show Aldric (character with missing image)
+    const rows = screen.getAllByTestId("entity-table-row");
+    expect(rows).toHaveLength(1);
+    expect(rows[0].textContent).toContain("Aldric");
+  });
+
+  it("applies finding drill-down when a finding card is clicked", async () => {
+    mutableVault.allEntities = [
+      entity({ id: "e1", title: "Aldric", content: "" }),
+      entity({ id: "e2", title: "Brindlewood", content: "A bustling town." }),
+    ];
+    render(RoutePage);
+
+    const auditBtn = screen.getByTestId("entity-table-audit-toggle");
+    await fireEvent.click(auditBtn);
+
+    const card = screen.getByTestId("audit-card-missing-descriptions");
+    await fireEvent.click(card);
+
+    // Filtered rows should only show Aldric (no summary)
+    const rows = screen.getAllByTestId("entity-table-row");
+    expect(rows).toHaveLength(1);
+    expect(rows[0].textContent).toContain("Aldric");
   });
 });

@@ -60,8 +60,9 @@ const stripSlash = (path: string) => path.replace(/\/+$/, "");
  * `/table`, so a prefix test lit up the Entity Table alongside it.
  */
 export function matchesPath(href: string, pathname: string): boolean {
-  const target = stripSlash(href);
-  const current = stripSlash(pathname);
+  const targetPath = href.split("?")[0];
+  const target = stripSlash(targetPath);
+  const current = stripSlash(pathname.split("?")[0]);
   // The app root has no segment of its own to anchor on, so a prefix test
   // would match every route beneath it. Compared against `base` rather than
   // "" so this still holds if the app is ever served from a subpath.
@@ -69,8 +70,30 @@ export function matchesPath(href: string, pathname: string): boolean {
   return current === target || current.startsWith(`${target}/`);
 }
 
-export function isViewActive(item: NavItem, pathname: string): boolean {
+export function isViewActive(
+  item: NavItem,
+  urlOrPath: string | { pathname: string; search?: string },
+): boolean {
   if (!item.href) return false;
+  const pathname =
+    typeof urlOrPath === "string" ? urlOrPath : urlOrPath.pathname;
+  const search = typeof urlOrPath === "string" ? "" : (urlOrPath.search ?? "");
+
+  const [itemPath, itemQuery] = item.href.split("?");
+
+  if (itemQuery) {
+    const itemParams = new URLSearchParams(itemQuery);
+    const currentParams = new URLSearchParams(search);
+    for (const [key, val] of itemParams.entries()) {
+      if (currentParams.get(key) !== val) return false;
+    }
+    return matchesPath(itemPath, pathname);
+  }
+
+  if (item.id === "table" && search.includes("mode=audit")) {
+    return false;
+  }
+
   return [item.href, ...(item.alsoActiveFor ?? [])].some((href) =>
     matchesPath(href, pathname),
   );
@@ -214,6 +237,17 @@ export function navItems(): NavItem[] {
   }
 
   if (!sessionModeStore.isGuestMode) {
+    items.push({
+      id: "audit",
+      icon: "icon-[lucide--clipboard-check]",
+      label: "Vault Audit",
+      title:
+        "Vault Audit — review missing portraits, descriptions, and connections",
+      href: `${base}/table?mode=audit`,
+      group: "view",
+      placement: "overflow",
+    });
+
     items.push({
       id: "shelf",
       icon: "icon-[lucide--library]",
