@@ -47,6 +47,12 @@ describe("isCaptured", () => {
     expect(isCaptured({ captureMapMoves: false }, "dice-roll")).toBe(true);
   });
 
+  it("always records a confirmed trade, whatever is switched off", () => {
+    // A trade is a deliberate, confirmed action, not an automatic capture.
+    const journal = { captureOff: [...CAPTURE_KINDS], captureMapMoves: false };
+    expect(isCaptured(journal, "trade")).toBe(true);
+  });
+
   it("always records manual notes, whatever is switched off", () => {
     const journal = { captureOff: [...CAPTURE_KINDS], captureMapMoves: false };
     expect(isCaptured(journal, "manual-note")).toBe(true);

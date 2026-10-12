@@ -479,6 +479,7 @@
             context={{
               fields,
               readOnly,
+              entityId: entity.id,
               mode: "view",
               sectionKeys: new Map(),
               isSectionCollapsed: () => false,

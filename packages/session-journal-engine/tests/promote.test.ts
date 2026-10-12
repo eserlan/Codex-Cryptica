@@ -63,6 +63,7 @@ describe("entryTypeLabel", () => {
     expect(entryTypeLabel("dice-roll")).toBe("Dice roll");
     expect(entryTypeLabel("card-draw")).toBe("Card draw");
     expect(entryTypeLabel("table-result")).toBe("Table result");
+    expect(entryTypeLabel("trade")).toBe("Trade");
     expect(entryTypeLabel("generator-output")).toBe("Automatic entry");
   });
 });

@@ -338,6 +338,48 @@ describe("StatSheetTemplateStore", () => {
     expect(persisted?.vaultId).toBe("test-vault");
   });
 
+  it("keeps a shop's trade history out of a saved template and out of new sheets", async () => {
+    const record = {
+      tradeId: "t1",
+      kind: "purchase" as const,
+      rowId: "rope",
+      itemName: "Rope",
+      quantity: 1,
+      total: { units: 2, currency: "gp", precision: 0 },
+      accounting: "record-only" as const,
+      status: "complete" as const,
+      at: "2026-10-12T12:00:00.000Z",
+    };
+    store = new StatSheetTemplateStore({ uuid: vi.fn(() => "log-id") });
+
+    const saved = await store.saveAsTemplate("Shop copy", [
+      {
+        id: "stock",
+        label: "Stock",
+        type: "item-table",
+        stockLedger: true,
+        tradeLog: [record],
+      },
+    ]);
+    expect(saved?.fields[0]).not.toHaveProperty("tradeLog");
+    expect(saved?.fields[0]).toMatchObject({ stockLedger: true });
+
+    // An older template that already carries a log still starts clean.
+    const cloned = store.cloneTemplateFields({
+      id: "old",
+      name: "Old",
+      fields: [
+        {
+          id: "stock",
+          label: "Stock",
+          type: "item-table",
+          tradeLog: [record],
+        },
+      ],
+    });
+    expect(cloned[0]).not.toHaveProperty("tradeLog");
+  });
+
   it("loads previously saved templates scoped to the active vault on init", async () => {
     const db = await getDB();
     await db.put("stat_sheet_templates", {
