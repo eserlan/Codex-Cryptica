@@ -125,6 +125,7 @@ export const howDoYouMakeABossFightMemorableInATabletopRpg: AnswerConfigInput =
       "what-rpg-should-i-use-for-tactical-combat",
       "how-do-i-run-a-large-battle-when-the-player-characters-are-part-of-an-army",
       "how-do-i-upgrade-a-player-characters-weapon-without-replacing-it",
+      "how-do-i-combine-multiple-enemies-into-one-squad-in-an-rpg",
     ],
     discovery: {
       parentCluster: "encounter-balance",

@@ -176,6 +176,7 @@ export const whatRpgShouldIUseForTacticalCombat: AnswerConfigInput = {
     "what-rpg-should-i-play-for-investigative-horror",
     "what-rpg-works-for-political-intrigue-and-faction-play",
     "how-do-i-run-a-large-battle-when-the-player-characters-are-part-of-an-army",
+    "how-do-i-combine-multiple-enemies-into-one-squad-in-an-rpg",
     "which-tabletop-rpgs-have-squad-and-mass-battle-rules",
   ],
   discovery: {
