@@ -7,6 +7,7 @@ import {
   checkAnswer,
   checkPublishedAt,
   escapeWorkflowCommandData,
+  findBaselineIncreases,
   findStaleBaseline,
   locateLine,
   PAGES_DIR,
@@ -338,6 +339,27 @@ describe("baseline", () => {
         { ...dash("b"), severity: "warning" },
       ]),
     ).toEqual({ a: { "prohibited-dash": 1 } });
+  });
+
+  test("rejects baseline updates that increase an allowance", () => {
+    expect(
+      findBaselineIncreases(
+        { legacy: { "prohibited-dash": 2 } },
+        {
+          legacy: { "prohibited-dash": 3 },
+          "newly-broken": { emoji: 1 },
+        },
+      ),
+    ).toEqual([
+      "legacy: prohibited-dash would increase from 2 to 3.",
+      "newly-broken: emoji would increase from 0 to 1.",
+    ]);
+    expect(
+      findBaselineIncreases(
+        { legacy: { "prohibited-dash": 2 } },
+        { legacy: { "prohibited-dash": 1 } },
+      ),
+    ).toEqual([]);
   });
 
   test("covers every published answer, so only new violations fail", () => {

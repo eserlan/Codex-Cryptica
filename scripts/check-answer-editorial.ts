@@ -310,6 +310,21 @@ export function buildBaseline(findings: EditorialFinding[]): EditorialBaseline {
   );
 }
 
+/** Reject baseline updates that would grant new legacy allowances. */
+export function findBaselineIncreases(
+  current: EditorialBaseline,
+  proposed: EditorialBaseline,
+): string[] {
+  return Object.entries(proposed).flatMap(([slug, rules]) =>
+    Object.entries(rules).flatMap(([rule, count]) => {
+      const previous = current[slug]?.[rule as EditorialRule] ?? 0;
+      return count > previous
+        ? [`${slug}: ${rule} would increase from ${previous} to ${count}.`]
+        : [];
+    }),
+  );
+}
+
 /**
  * Splits errors into those the baseline tolerates and those it does not.
  * A slug/rule pair over its baselined count fails as a whole, so a new
@@ -465,6 +480,19 @@ export async function runCli(args = process.argv.slice(2)): Promise<number> {
 
   if (updateBaseline) {
     const baseline = buildBaseline(findings);
+    if (fs.existsSync(BASELINE_PATH)) {
+      const increases = findBaselineIncreases(readBaseline(), baseline);
+      if (increases.length > 0) {
+        console.error(
+          "\n✖ Baseline updates may only reduce existing allowances:",
+        );
+        for (const increase of increases) console.error(`  ${increase}`);
+        console.error(
+          "\nRemove the new editorial violations before updating the baseline.",
+        );
+        return 1;
+      }
+    }
     fs.writeFileSync(BASELINE_PATH, `${JSON.stringify(baseline, null, 2)}\n`);
     console.log(
       `Wrote baseline for ${Object.keys(baseline).length} answer(s) to ${path.relative(REPO_ROOT, BASELINE_PATH)}.`,
