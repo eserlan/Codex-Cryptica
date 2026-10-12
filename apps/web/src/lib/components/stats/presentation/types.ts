@@ -6,6 +6,8 @@ import type { StatSheetField } from "schema";
 export interface PresentationRenderContext {
   fields: StatSheetField[];
   readOnly: boolean;
+  /** The entity this sheet belongs to. Needed to record a trade (#3963). */
+  entityId?: string;
   mode: "view" | "preview";
   onUpdateFieldValue: (
     fieldId: string,

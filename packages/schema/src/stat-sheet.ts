@@ -72,6 +72,27 @@ export const StockMetaSchema = z.object({
 
 export type StockMeta = z.infer<typeof StockMetaSchema>;
 
+/**
+ * One trade recorded on the stock field it changed (#3963). The log is what
+ * makes a retry safe: a trade id already in the log is never applied twice.
+ * `pending` means the stock changed but a linked wallet update is not yet
+ * confirmed; `complete` means every part of the trade is done.
+ */
+export const StockTradeRecordSchema = z.object({
+  tradeId: z.string().min(1).max(80),
+  kind: z.enum(["purchase", "sell"]),
+  rowId: z.string().min(1).max(120),
+  itemName: z.string().max(200),
+  quantity: z.number().int().min(1).safe(),
+  total: MoneyAmountSchema,
+  accounting: z.enum(["record-only", "wallet"]),
+  counterpartyId: z.string().max(120).optional(),
+  status: z.enum(["pending", "complete"]),
+  at: z.string().max(40),
+});
+
+export type StockTradeRecord = z.infer<typeof StockTradeRecordSchema>;
+
 export const StatSheetFieldSchema = z.object({
   id: z.string().min(1),
   key: StatSheetFieldKeySchema.optional(),
@@ -136,6 +157,9 @@ export const StatSheetFieldSchema = z.object({
   // get a stable `rowId` and shop-local `stock` metadata (quantity, price,
   // condition, availability, note). Undefined/false keeps legacy semantics.
   stockLedger: z.boolean().optional(),
+  // Bounded record of recent trades on a stock ledger, or of the trades that
+  // changed a wallet number field (#3963). Absent on every older sheet.
+  tradeLog: z.array(StockTradeRecordSchema).max(25).optional(),
   // Id of another field on the same sheet (typically a "number" ability
   // score) whose value drives this field's dice modifier — e.g. a "STR
   // Check" dice field derives its flat bonus from a "STR" score field via

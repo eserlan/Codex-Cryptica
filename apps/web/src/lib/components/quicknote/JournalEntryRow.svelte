@@ -76,6 +76,7 @@
     "dice-roll": "icon-[lucide--dices]",
     "card-draw": "icon-[lucide--layers]",
     "table-result": "icon-[lucide--table]",
+    trade: "icon-[lucide--hand-coins]",
   };
   const GENERIC_ICON = "icon-[lucide--zap]";
 
