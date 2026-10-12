@@ -76,6 +76,22 @@ Switch to **Browse Catalogue** in **Presentations**. It shows the same stock as 
 
 The catalogue is a preview on your own screen. It is not a way to share the shop with players, and the player view is planned separately. Do not treat Hidden or Note as secret from anyone looking at your screen or your vault.
 
+## Share the catalogue with players
+
+A shop is private until you share it. When you host a shared session or publish your world, a shop's stock, prices and notes are not sent to players unless you switch sharing on.
+
+1. On the shop's **Stats** tab, tick **Share this catalogue with players** above the stock table.
+2. Choose which business details players may also see, such as the speciality or services. Everything you leave unticked stays private.
+3. Choose **Preview as player**. It shows exactly what players receive, and nothing else about the shop is sent.
+
+Players see each line's name, price, quantity, condition and whether it is available, read-only. They cannot buy or change anything. You handle every trade, and a player has no Trade button.
+
+Never shared, whatever you tick: lines marked **Hidden**, your note on each line, **Purchasing power**, **GM notes**, trade history, and links to the Items behind each line. A line with no name of its own shows the title of the Item it links to, so give a line its own name if that Item's title is a spoiler.
+
+Untick the box to stop sharing. In a live session the catalogue disappears from players' screens straight away. A published world only changes the next time you publish it again.
+
+Linked Items and the shop's own page follow the normal rules for what players can see. Sharing a catalogue does not make an Item or the shop's description visible, and hiding an Item from players is separate from the catalogue.
+
 ## Make your own shop template
 
 Use **Edit Layout** to add fields to your shop, then save the layout from **Templates**. Saved layouts can be shared like any other template. Saved templates keep the field layout, not your stock.

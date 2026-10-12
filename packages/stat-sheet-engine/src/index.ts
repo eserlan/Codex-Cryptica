@@ -14,4 +14,6 @@ export * from "./stat-block";
 export * from "./stock";
 export * from "./merchant";
 export * from "./commerce";
+export * from "./catalogue";
+export * from "./catalogue-capability";
 export * from "./entity-sheet";

@@ -94,6 +94,19 @@ Explicit buy and sell on a Shop / Merchant sheet. The rules are pure code in `pa
 - **In-flight guard.** The service ignores a second call with a trade id that is still being applied, so a double click runs once.
 - **Journal.** One `trade` entry via `JOURNAL:CAPTURE` after success, from `describeTrade`. It is not part of any capture-control kind, so it is always recorded while a journal runs. A rejected, failed or cancelled trade emits nothing, and a duplicate retry of a finished trade emits nothing. A journal failure never fails the trade.
 
+## Sharing a shop with players (#3964)
+
+A merchant sheet reaches players only through one projection. Choosing the Browse Catalogue layout is not a permission: it is a presentation of data the viewer already has.
+
+- **Allowlist, not a filter.** `projectCatalogueFields` (`packages/stat-sheet-engine/src/catalogue.ts`) builds a new object from named pieces. A stock line contributes its name, kind, quantity, condition, availability and a validated price. Nothing else is copied, so a field added to the sheet later stays private until it is added here deliberately. Never shared: `entityId` links, row ids, line notes, extra columns, Hidden lines, trade history, purchasing power and GM notes.
+- **Private by default.** `StatSheetField.playerCatalogue` (`{ published, fields }`) is absent on every existing sheet. Until a GM sets `published`, nothing about the shop is sent. `fields` is an opt-in list of business details by id, limited to `SHAREABLE_SHEET_FIELD_IDS` (`owner`, `speciality`, `reputation`, `services`, `public_notices`); an id outside the list is ignored even if the stored settings contain it.
+- **Where it is applied.** `sanitizeSheetForGuests` is the only way a stat sheet goes to guests, and it is called from the two places guests are fed: `sanitizeEntityForGuestTransport` (the initial shared graph, live updates and batch updates) and `GuestExporter` (published worlds). Before #3964 both copied `statSheet` whole, so a shop's hidden stock and GM notes reached guests.
+- **Fails closed.** A sheet is recognised as a merchant sheet by its stock ledger, not by its template, so a deleted template cannot expose it. `GuestExporter` withholds any ledger sheet when it is given no sanitiser. Every other sheet is passed on without its `tradeLog`.
+- **Revoking a share.** Guests merge each update over the entity they hold, so an unpublished shop sends an explicit empty sheet (`{ templateId: null, fields: [] }`). Omitting the sheet would leave the old catalogue on screen. A published world is a snapshot and changes only when it is published again.
+- **Linked Item titles.** A stock line with no name of its own shows the linked Item's title, supplied by the caller. In a published world the title is looked up only among entities that are in the export, so an Item hidden by fog of war is never named. In a live session it follows what that session already shares.
+- **Preview as player** renders `projectCatalogueFields` with the same title lookup, so it cannot drift from what is sent. Players get a read-only table with no Trade or sharing controls, and the host has no message that lets a guest change an entity.
+- **Capability seam.** The `stock-table` capability's `project` returns the sheet unchanged for `"gm"` and the player catalogue for any other audience.
+
 ## Compatibility promises
 
 - Old `statSheet` frontmatter, vault templates, presentation templates and marketplace packages load unchanged. `packages/stat-sheet-engine/src/__fixtures__/legacy-sheets.ts` holds pre-#3960 data, and `entity-sheet.test.ts` asserts it parses and projects without being rewritten.

@@ -1,5 +1,9 @@
 import type { Entity, Map } from "schema";
 import { redactGmOnlyNote } from "map-engine";
+import {
+  sanitizeSheetForGuests,
+  type CatalogueOptions,
+} from "@codex/stat-sheet-engine";
 import type { EncounterSession, Token, VTTMessage } from "../../../types/vtt";
 import type { SerializedGraph } from "../types";
 import type {
@@ -10,7 +14,17 @@ import { systemClock } from "$lib/utils/runtime-deps";
 
 type GuestRoster = Record<string, GuestSession>;
 
-export function sanitizeEntityForGuestTransport(entity: Entity): Entity {
+/**
+ * The one way an entity goes to guests. Lore stays with the GM, and the
+ * stat sheet is replaced by what players may see (#3964): a merchant sheet
+ * becomes its published catalogue, or an empty sheet when it is not
+ * published, and no sheet carries trade history. `options.resolveName` lets
+ * an unnamed stock line show the title of the Item it links to.
+ */
+export function sanitizeEntityForGuestTransport(
+  entity: Entity,
+  options: CatalogueOptions = {},
+): Entity {
   const {
     _fsHandle,
     lore: _lore,
@@ -19,6 +33,12 @@ export function sanitizeEntityForGuestTransport(entity: Entity): Entity {
     _fsHandle?: unknown;
     lore?: string;
   };
+  if (safeEntity.statSheet) {
+    safeEntity.statSheet = sanitizeSheetForGuests(
+      safeEntity.statSheet,
+      options,
+    );
+  }
   return safeEntity as Entity;
 }
 
@@ -133,8 +153,12 @@ export function buildSharedGraphPayload(
   const entities: Record<string, Entity> = {};
   const assets: Record<string, string> = {};
 
+  const resolveName = (entityId: string) => rawEntities[entityId]?.title;
+
   for (const [id, localEntity] of Object.entries(rawEntities)) {
-    const safeEntity = sanitizeEntityForGuestTransport(localEntity);
+    const safeEntity = sanitizeEntityForGuestTransport(localEntity, {
+      resolveName,
+    });
     entities[id] = safeEntity;
 
     if (safeEntity.image && !safeEntity.image.startsWith("http")) {

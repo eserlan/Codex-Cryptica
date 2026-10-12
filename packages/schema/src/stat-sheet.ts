@@ -93,6 +93,21 @@ export const StockTradeRecordSchema = z.object({
 
 export type StockTradeRecord = z.infer<typeof StockTradeRecordSchema>;
 
+/**
+ * Opt-in sharing of a merchant's stock with players (#3964). Absent or
+ * `published: false` means nothing about the shop leaves the GM's device.
+ * `fields` lists which optional business details (by field id) players may
+ * also see; anything not listed stays private.
+ */
+export const PlayerCatalogueSettingsSchema = z.object({
+  published: z.boolean(),
+  fields: z.array(z.string().min(1).max(64)).max(20).default([]),
+});
+
+export type PlayerCatalogueSettings = z.infer<
+  typeof PlayerCatalogueSettingsSchema
+>;
+
 export const StatSheetFieldSchema = z.object({
   id: z.string().min(1),
   key: StatSheetFieldKeySchema.optional(),
@@ -157,6 +172,8 @@ export const StatSheetFieldSchema = z.object({
   // get a stable `rowId` and shop-local `stock` metadata (quantity, price,
   // condition, availability, note). Undefined/false keeps legacy semantics.
   stockLedger: z.boolean().optional(),
+  // Whether and how this stock ledger is shared with players (#3964).
+  playerCatalogue: PlayerCatalogueSettingsSchema.optional(),
   // Bounded record of recent trades on a stock ledger, or of the trades that
   // changed a wallet number field (#3963). Absent on every older sheet.
   tradeLog: z.array(StockTradeRecordSchema).max(25).optional(),
