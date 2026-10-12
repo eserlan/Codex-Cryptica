@@ -509,6 +509,7 @@
   const hasActiveColumnFilters = $derived(
     Boolean(
       columnFilters.nameQuery ||
+      (columnFilters.imageMode && columnFilters.imageMode !== "all") ||
       (columnFilters.typeValues && columnFilters.typeValues.size > 0) ||
       (columnFilters.labelMode && columnFilters.labelMode !== "all") ||
       (columnFilters.labelValues && columnFilters.labelValues.size > 0) ||
@@ -764,6 +765,32 @@
               </button>
             </div>
           {/each}
+          {#if columnFilters.imageMode && columnFilters.imageMode !== "all"}
+            <div
+              class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-theme-primary/10 border border-theme-primary/20 text-nano font-bold text-theme-primary uppercase tracking-wider"
+              data-testid="entity-table-image-filter"
+            >
+              <span
+                >{columnFilters.imageMode === "missing_image"
+                  ? "Missing image"
+                  : "Has image"}</span
+              >
+              <button
+                type="button"
+                onclick={() => {
+                  const next = { ...columnFilters };
+                  delete next.imageMode;
+                  handleUpdateColumnFilters(next);
+                }}
+                title="Remove image filter"
+                aria-label="Remove image filter"
+                class="hover:text-theme-text transition-colors flex items-center justify-center cursor-pointer"
+              >
+                <span aria-hidden="true" class="icon-[lucide--x] w-2.5 h-2.5"
+                ></span>
+              </button>
+            </div>
+          {/if}
           {#if hasActiveFilters}
             <button
               type="button"

@@ -142,7 +142,13 @@
   }
 
   const columns: Column[] = [
-    { id: "title", key: "title", label: "Name", class: "min-w-[12rem]" },
+    {
+      id: "title",
+      key: "title",
+      label: "Name",
+      filterable: true,
+      class: "min-w-[12rem]",
+    },
     { id: "type", key: "type", label: "Type", class: "min-w-[8rem]" },
     {
       id: "connections",
@@ -187,6 +193,10 @@
   }
 
   function isColumnFiltered(id: string): boolean {
+    if (id === "title")
+      return Boolean(
+        columnFilters.imageMode && columnFilters.imageMode !== "all",
+      );
     if (id === "connections")
       return Boolean(
         columnFilters.connectionsMode &&

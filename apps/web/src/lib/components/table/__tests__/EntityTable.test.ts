@@ -466,5 +466,45 @@ describe("EntityTable", () => {
       expect(screen.getByTestId("column-filter-menu-connections")).toBeTruthy();
       expect(screen.getByText("Zero connections (0)")).toBeTruthy();
     });
+
+    it("opens title column filter menu and filters by missing image / portrait", async () => {
+      const onUpdateColumnFilters = vi.fn();
+      render(EntityTable, {
+        props: {
+          entities: rows,
+          vaultId: "v1",
+          columnFilters: { imageMode: "missing_image" },
+          sort,
+          connectionCounts,
+          onSort: vi.fn(),
+          onUpdateColumnFilters,
+        },
+      });
+
+      const titleFilterBtn = screen.getByTestId("column-filter-btn-title");
+      expect(titleFilterBtn).toBeTruthy();
+      await fireEvent.click(titleFilterBtn);
+
+      expect(screen.getByTestId("column-filter-menu-title")).toBeTruthy();
+      expect(
+        screen
+          .getByRole("menuitemradio", { name: "Missing image / portrait" })
+          .getAttribute("aria-checked"),
+      ).toBe("true");
+      expect(
+        screen
+          .getByRole("menuitemradio", { name: "Has image / portrait" })
+          .getAttribute("aria-checked"),
+      ).toBe("false");
+
+      await fireEvent.click(
+        screen.getByRole("menuitemradio", { name: "Missing image / portrait" }),
+      );
+      expect(onUpdateColumnFilters).toHaveBeenCalledWith(
+        expect.objectContaining({
+          imageMode: "missing_image",
+        }),
+      );
+    });
   });
 });
