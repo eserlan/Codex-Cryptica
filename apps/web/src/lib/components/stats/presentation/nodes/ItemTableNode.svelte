@@ -38,6 +38,9 @@
   const columns = $derived(field.columns ?? DEFAULT_ITEM_TABLE_COLUMNS);
 
   let rows = $derived<Record<string, any>[]>(field.rows ?? []);
+  const hasVisibleRows = $derived(
+    rows.some((row) => !catalogue || row.stock?.availability !== "hidden"),
+  );
 
   // Defaults to enabled for back-compat with existing weapon/item tables
   // (which never set this flag); template authors can opt custom tables out.
@@ -530,7 +533,7 @@
         </tr>
       </thead>
       <tbody>
-        {#if rows.length === 0}
+        {#if !hasVisibleRows}
           <tr>
             <td
               colspan={columns.length + (context.readOnly ? 0 : 1)}

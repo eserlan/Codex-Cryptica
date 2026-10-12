@@ -127,6 +127,27 @@ describe("ItemTableNode catalogue view (#3962)", () => {
     expect(screen.getByText(/Nothing is for sale right now/)).toBeTruthy();
   });
 
+  it("says so when every stock line is hidden", () => {
+    render(ItemTableNode, {
+      props: {
+        field: {
+          ...stock,
+          rows: stock.rows?.map((row) => ({
+            ...row,
+            stock: {
+              ...(row.stock as Record<string, unknown>),
+              availability: "hidden" as const,
+            },
+          })),
+        },
+        context: makeContext(true),
+        catalogue: true,
+      },
+    });
+    expect(screen.getByText(/Nothing is for sale right now/)).toBeTruthy();
+    expect(screen.queryAllByTestId("stock-row")).toHaveLength(0);
+  });
+
   it("keeps GM notes and hidden lines visible in the plain read-only view", () => {
     render(ItemTableNode, {
       props: { field: stock, context: makeContext(true) },
