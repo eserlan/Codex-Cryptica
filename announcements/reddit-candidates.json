@@ -1,16 +1,6 @@
 {
-  "updated_at": 1791740157,
+  "updated_at": 1791795764,
   "candidates": [
-    {
-      "id": "reddit-37747437686-solo-play-now-starts-from-vault-actions-",
-      "title": "Solo play now starts from Vault actions in one tap",
-      "body": "Starting a solo session meant hunting through menus to find setup, then scene fields, then rolls. For a mode you open mid-campaign, that friction adds up.\n\nVault actions now offer Start Solo Session directly. It opens setup, scene fields, quick rolls and the session bar without digging.\n\n- One tap from the vault menu into solo setup\n- Scene fields right there for the current situation and stakes\n- Quick rolls without leaving the solo view\n- Session bar stays visible so you can track and close the session cleanly\n\nIt is just a faster entry point, not a new solo ruleset, the flow inside is the same as before.\n\nWhere do you usually stall when starting a solo session, is it the setup, the oracle, or keeping the scene straight?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/screenshots/feature-run.jpg)",
-      "url": "",
-      "image_url": "https://assets.codexcryptica.com/screenshots/feature-run.jpg",
-      "source_id": "37747437686",
-      "status": "approved",
-      "created_at": 1791450142
-    },
     {
       "id": "reddit-37903304382-my-harbour-town-vault-kept-getting-sunny",
       "title": "My harbour town vault kept getting sunny heist ideas",
