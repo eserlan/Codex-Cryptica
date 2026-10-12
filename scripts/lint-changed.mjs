@@ -66,6 +66,21 @@ export function filterFormattableFiles(files, root = process.cwd()) {
   });
 }
 
+const ANSWER_PAGES_PREFIX = "apps/web/src/lib/content/answers/pages/";
+
+/** Changed Answer page files that the editorial checker should inspect (#4012). */
+export function filterAnswerPageFiles(files, root = process.cwd()) {
+  return files.filter((file) => {
+    const normalized = file.replace(/\\/g, "/");
+    return (
+      normalized.startsWith(ANSWER_PAGES_PREFIX) &&
+      normalized.endsWith(".ts") &&
+      !normalized.endsWith(".test.ts") &&
+      existsSync(resolve(root, normalized))
+    );
+  });
+}
+
 export function resolveGitBase(cwd = process.cwd()) {
   const candidates = [
     () =>
@@ -219,6 +234,23 @@ export function runLintChanged({
     } catch {
       success = false;
       console.error("❌ Prettier check failed.");
+    }
+  }
+
+  const answerFiles = filterAnswerPageFiles(changedFiles, cwd);
+  if (answerFiles.length > 0) {
+    try {
+      console.log(
+        `\n📝 Checking Answer editorial rules on ${answerFiles.length} file(s)...`,
+      );
+      execFileSync(
+        "bun",
+        ["scripts/check-answer-editorial.ts", "--files", ...answerFiles],
+        { cwd, stdio: "inherit" },
+      );
+    } catch {
+      success = false;
+      console.error("❌ Answer editorial check failed.");
     }
   }
 
