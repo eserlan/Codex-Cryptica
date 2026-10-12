@@ -1,6 +1,7 @@
 /** @vitest-environment jsdom */
 
-import { render, screen, fireEvent } from "@testing-library/svelte";
+import { render, screen, fireEvent, waitFor } from "@testing-library/svelte";
+import { SvelteURL } from "svelte/reactivity";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { Entity } from "schema";
 import RoutePage from "./+page.svelte";
@@ -146,7 +147,7 @@ describe("/table page", () => {
   });
 
   it("opens VaultAuditPanel automatically when URL has ?mode=audit", () => {
-    mockPage.url = new URL("http://localhost/table?mode=audit");
+    mockPage.url = new SvelteURL("http://localhost/table?mode=audit");
     mutableVault.allEntities = [
       entity({ id: "e1", title: "Aldric", type: "character", image: "" }),
       entity({ id: "e2", title: "Brindlewood", type: "location" }),
@@ -154,7 +155,23 @@ describe("/table page", () => {
     render(RoutePage);
 
     expect(screen.getByTestId("vault-audit-panel")).toBeTruthy();
+    expect(screen.getByTestId("vault-audit-panel").id).toBe(
+      "vault-audit-panel",
+    );
     expect(screen.getByText("Vault Audit")).toBeTruthy();
+  });
+
+  it("closes VaultAuditPanel when the audit query is removed", async () => {
+    mockPage.url = new SvelteURL("http://localhost/table?mode=audit");
+    mutableVault.allEntities = [entity({ id: "e1", title: "Aldric" })];
+    render(RoutePage);
+
+    expect(screen.getByTestId("vault-audit-panel")).toBeTruthy();
+    mockPage.url.search = "";
+
+    await waitFor(() => {
+      expect(screen.queryByTestId("vault-audit-panel")).toBeNull();
+    });
   });
 
   it("toggles VaultAuditPanel via the desktop audit button", async () => {

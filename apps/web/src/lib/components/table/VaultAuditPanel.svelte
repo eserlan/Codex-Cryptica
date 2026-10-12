@@ -28,6 +28,7 @@
 </script>
 
 <div
+  id="vault-audit-panel"
   class="rounded-xl border border-theme-border bg-theme-surface/90 p-3.5 sm:p-4 shadow-sm backdrop-blur transition-all flex flex-col gap-3.5"
   data-testid="vault-audit-panel"
   role="region"

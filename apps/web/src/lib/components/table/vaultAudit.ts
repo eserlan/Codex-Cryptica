@@ -48,9 +48,15 @@ export function computeVaultAuditCounts(
   let zeroConnections = 0;
   let unlabelled = 0;
   let incomplete = 0;
+  let totalEntities = 0;
 
   for (let i = 0; i < entities.length; i++) {
     const e = entities[i];
+    // Match the table's default view: drafts are hidden unless explicitly
+    // selected, so they must not contribute to audit counts or their total.
+    if (e.status === "draft") continue;
+
+    totalEntities++;
     if (!hasEntityImage(e)) missingImages++;
     if (!hasDescription(e)) missingDescriptions++;
     if (hasZeroConnections(e.id, connectionCounts)) zeroConnections++;
@@ -61,7 +67,7 @@ export function computeVaultAuditCounts(
   }
 
   return {
-    totalEntities: entities.length,
+    totalEntities,
     missingImages,
     missingDescriptions,
     zeroConnections,

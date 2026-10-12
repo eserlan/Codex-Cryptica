@@ -16,6 +16,49 @@ describe("vaultAudit pure functions", () => {
       });
     });
 
+    it("excludes drafts from audit counts and the audited total", () => {
+      const entities: EntityWithPreview[] = [
+        {
+          id: "active",
+          title: "Complete Knight",
+          type: "character",
+          content: "A veteran warrior.",
+          image: "https://example.com/knight.png",
+          labels: ["Hero"],
+          status: "active",
+          aliases: [],
+          connections: [],
+          updatedAt: 0,
+        },
+        {
+          id: "draft",
+          title: "Unfinished Draft",
+          type: "character",
+          content: "",
+          image: undefined,
+          labels: [],
+          status: "draft",
+          aliases: [],
+          connections: [],
+          updatedAt: 0,
+        },
+      ];
+
+      expect(
+        computeVaultAuditCounts(entities, {
+          active: { total: 1 },
+          draft: { total: 0 },
+        }),
+      ).toEqual({
+        totalEntities: 1,
+        missingImages: 0,
+        missingDescriptions: 0,
+        zeroConnections: 0,
+        unlabelled: 0,
+        incomplete: 0,
+      });
+    });
+
     it("accurately categorizes findings across a sample vault", () => {
       const entities: EntityWithPreview[] = [
         {

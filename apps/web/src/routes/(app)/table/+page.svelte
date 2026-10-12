@@ -56,12 +56,9 @@
   let activeAuditPresetId = $state<string | null>(null);
 
   $effect(() => {
-    if (
+    showAuditPanel =
       page.url.searchParams.get("mode") === "audit" ||
-      page.url.searchParams.get("audit") === "true"
-    ) {
-      showAuditPanel = true;
-    }
+      page.url.searchParams.get("audit") === "true";
   });
   let textMatchIds = $state<Set<string> | null>(null);
   let textSearchPending = $state(false);
