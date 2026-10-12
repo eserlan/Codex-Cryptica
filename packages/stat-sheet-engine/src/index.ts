@@ -12,4 +12,5 @@ export * from "./presentation/built-ins";
 export * from "./presentation/package";
 export * from "./stat-block";
 export * from "./stock";
+export * from "./merchant";
 export * from "./entity-sheet";

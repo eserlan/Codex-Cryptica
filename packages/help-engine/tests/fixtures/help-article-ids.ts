@@ -37,6 +37,7 @@ export const KNOWN_HELP_IDS = [
   "thread-weaver-import",
   "quicknote",
   "stat-sheets",
+  "merchant-sheets",
   "sharing-templates",
   "chronology",
   "family-tree",

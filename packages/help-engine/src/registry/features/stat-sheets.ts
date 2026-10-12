@@ -25,8 +25,19 @@ export const statSheets: FeatureEntry = {
         "stat-sheets.help",
       ],
     },
+    {
+      id: "set-up-a-shop",
+      title: "Set up a shop",
+      steps: [
+        "Open a Location or Organisation and choose Stats, then Templates.",
+        "Choose Shop / Merchant, then fill in the owner, reputation and services.",
+        "Add stock lines, link Items, and set quantity, price and availability.",
+        "Use Presentations to switch between GM Stock Manager and Browse Catalogue.",
+      ],
+      actionIds: ["stat-sheets.open", "stat-sheets.merchant-help"],
+    },
   ],
-  helpIds: ["stat-sheets", "sharing-templates"],
+  helpIds: ["stat-sheets", "merchant-sheets", "sharing-templates"],
   related: ["entity-templates"],
   actions: [
     {
@@ -43,6 +54,14 @@ export const statSheets: FeatureEntry = {
         type: "openPanel",
         panel: "settings-templates",
         label: "Open template settings",
+      },
+    },
+    {
+      id: "stat-sheets.merchant-help",
+      action: {
+        type: "openHelp",
+        helpId: "merchant-sheets",
+        label: "Read about Shops and Merchants",
       },
     },
     {

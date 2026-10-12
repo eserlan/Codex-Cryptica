@@ -70,6 +70,16 @@ The registry is a plain class with no global instance. Create it where it is nee
 
 Player-facing views and sharing must read from a projection at the transport boundary, never hide GM values with CSS.
 
+## Shop / Merchant sheet (#3962)
+
+The first built-in sheet that uses a capability. It lives in `packages/stat-sheet-engine/src/merchant.ts` and is added to the built-in templates in `apps/web/src/lib/stores/stat-sheet/built-in-templates.ts`.
+
+- **Template** `builtin-shop-merchant` ("Shop / Merchant"), category `location`, capability `stock-table`. Fields: owner, speciality, reputation, purchasing power, services, a `stock` item table in stock-ledger mode, public notices and GM notes. It is opt-in: the category only decides where the picker suggests it, and nothing sets it as a default.
+- **Presentations** "GM Stock Manager" and "Browse Catalogue". They are the only built-in layouts offered for this schema, because the generic ones reference `hp` and `ac`. Both read the same fields, so switching never copies or changes data.
+- **`display="catalogue"`** is a display mode for `item-table` fields. It renders the table read-only and for customers: lines marked Hidden are dropped, GM notes are not shown, and an empty table says nothing is for sale. It never writes.
+- **Not access control.** The catalogue is a layout choice on the GM's own screen. Hidden lines and notes are still in the stored sheet. A safe player view must come from `projectEntitySheet` at the transport boundary (#3964).
+- **Demo data.** `createDemoMerchantSheet()` returns a fantasy example with a linked item, a sold-out line, a service, a hidden line and a GM note, for tests and docs.
+
 ## Compatibility promises
 
 - Old `statSheet` frontmatter, vault templates, presentation templates and marketplace packages load unchanged. `packages/stat-sheet-engine/src/__fixtures__/legacy-sheets.ts` holds pre-#3960 data, and `entity-sheet.test.ts` asserts it parses and projects without being rewritten.

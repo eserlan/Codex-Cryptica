@@ -12,6 +12,7 @@
     { mode: "tag-list", label: "Tag List" },
     { mode: "notes", label: "Notes Area" },
     { mode: "table", label: "Item Table" },
+    { mode: "catalogue", label: "Read-only Catalogue" },
     { mode: "name-target", label: "Name & Target" },
   ] as const;
 
