@@ -182,5 +182,26 @@ describe("hex-labels", () => {
       // North of origin (row < 0, but staying in column A with q: 1)
       expect(formatHexLabel({ q: 1, r: -2 }, config, "pointy")).toBe("A-01");
     });
+
+    it("bounds malformed persisted padding and rejects non-finite coordinates", () => {
+      expect(
+        formatHexLabel(
+          { q: 0, r: 0 },
+          { style: "alphanumeric", rowPadding: 1_000_000_000 },
+        ),
+      ).toBe(`A${"0".repeat(31)}1`);
+      expect(
+        formatHexLabel(
+          { q: 0, r: 0 },
+          { style: "alphanumeric", rowPadding: Number.POSITIVE_INFINITY },
+        ),
+      ).toBe("A01");
+      expect(
+        formatHexLabel(
+          { q: Number.POSITIVE_INFINITY, r: 0 },
+          { style: "alphanumeric" },
+        ),
+      ).toBe("");
+    });
   });
 });

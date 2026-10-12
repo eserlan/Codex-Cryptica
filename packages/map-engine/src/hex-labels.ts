@@ -35,6 +35,7 @@ export interface HexLabelConfig {
  * 0 -> "A", 25 -> "Z", 26 -> "AA", 27 -> "AB", etc.
  */
 export function indexToColumnLetters(index: number): string {
+  if (!Number.isSafeInteger(index) || index < 0) return "";
   let letters = "";
   let n = index;
   while (n >= 0) {
@@ -125,12 +126,20 @@ function formatAlphanumericHex(
   const startColLetters = config?.startCol ?? config?.startColumn ?? "A";
   const startColIndex = columnLettersToIndex(startColLetters);
   const startRow = config?.startRow ?? 1;
-  const rowPadding = Math.max(1, config?.rowPadding ?? 2);
+  const requestedPadding = config?.rowPadding ?? 2;
+  // Configs can come from persisted settings or session snapshots. Keep a bad
+  // value from asking padStart to allocate an unbounded string during render.
+  const rowPadding = Number.isFinite(requestedPadding)
+    ? Math.min(32, Math.max(1, Math.trunc(requestedPadding)))
+    : 2;
   const separator = config?.separator ?? "";
   const invertRow = config?.invertRow ?? false;
 
   const originQ = config?.originQ ?? 0;
   const originR = config?.originR ?? 0;
+  if (![hex.q, hex.r, originQ, originR, startRow].every(Number.isFinite)) {
+    return "";
+  }
   const originOffset = axialToOffset({ q: originQ, r: originR }, orientation);
   const targetOffset = axialToOffset(hex, orientation);
 
@@ -139,12 +148,15 @@ function formatAlphanumericHex(
   const rowDiff = invertRow ? -rowDiffRaw : rowDiffRaw;
 
   const finalColIndex = startColIndex + colDiff;
+  const finalRowNum = startRow + rowDiff;
+  if (!Number.isSafeInteger(finalColIndex) || !Number.isFinite(finalRowNum)) {
+    return "";
+  }
   const colStr =
     finalColIndex >= 0
       ? indexToColumnLetters(finalColIndex)
       : `-${indexToColumnLetters(Math.abs(finalColIndex) - 1)}`;
 
-  const finalRowNum = startRow + rowDiff;
   const rowStr =
     finalRowNum >= 0
       ? String(finalRowNum).padStart(rowPadding, "0")
