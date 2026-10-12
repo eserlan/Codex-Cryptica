@@ -143,6 +143,19 @@ describe("nav items", () => {
       expect(isViewActive(table, { pathname: "/table", search: "" })).toBe(
         true,
       );
+
+      expect(
+        isViewActive(audit, {
+          pathname: "/table",
+          search: "?filter=mode=audit",
+        }),
+      ).toBe(false);
+      expect(
+        isViewActive(table, {
+          pathname: "/table",
+          search: "?filter=mode=audit",
+        }),
+      ).toBe(true);
     });
 
     it("lights the graph at the root but nowhere else", () => {

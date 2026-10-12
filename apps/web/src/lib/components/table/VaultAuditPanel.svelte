@@ -146,7 +146,7 @@
         </span>
       </div>
       <span class="text-xs font-semibold text-theme-text">Unlabelled</span>
-      <span class="text-nano text-theme-muted/70">No tags / labels</span>
+      <span class="text-nano text-theme-muted/70">No labels</span>
     </button>
 
     <!-- Incomplete -->

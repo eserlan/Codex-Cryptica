@@ -53,6 +53,10 @@ function entity(
 
 const mutableVault = vault as unknown as MutableVaultMock;
 
+async function openAuditPanel() {
+  await fireEvent.click(screen.getByTestId("entity-table-audit-toggle"));
+}
+
 describe("/table page", () => {
   beforeEach(() => {
     mockPage.url = new URL("http://localhost/table");
@@ -233,5 +237,125 @@ describe("/table page", () => {
     const rows = screen.getAllByTestId("entity-table-row");
     expect(rows).toHaveLength(1);
     expect(rows[0].textContent).toContain("Aldric");
+  });
+
+  it("applies the unconnected characters preset to the table rows", async () => {
+    mutableVault.allEntities = [
+      entity({ id: "e1", title: "Isolated Character", type: "character" }),
+      entity({
+        id: "e2",
+        title: "Connected Character",
+        type: "character",
+        connections: [{ target: "e1", type: "related_to", strength: 1 }],
+      }),
+      entity({ id: "e3", title: "Isolated Location", type: "location" }),
+    ];
+    render(RoutePage);
+
+    await openAuditPanel();
+    await fireEvent.click(
+      screen.getByTestId("audit-preset-unconnected-characters"),
+    );
+
+    const rows = screen.getAllByTestId("entity-table-row");
+    expect(rows).toHaveLength(1);
+    expect(rows[0].textContent).toContain("Isolated Character");
+  });
+
+  it("applies the sparse locations preset to the table rows", async () => {
+    mutableVault.allEntities = [
+      entity({ id: "e1", title: "Sparse Location", type: "location" }),
+      entity({
+        id: "e2",
+        title: "Described Location",
+        type: "location",
+        content: "A busy market town.",
+      }),
+      entity({ id: "e3", title: "Undescribed Character", type: "character" }),
+    ];
+    render(RoutePage);
+
+    await openAuditPanel();
+    await fireEvent.click(screen.getByTestId("audit-preset-sparse-locations"));
+
+    const rows = screen.getAllByTestId("entity-table-row");
+    expect(rows).toHaveLength(1);
+    expect(rows[0].textContent).toContain("Sparse Location");
+  });
+
+  it("applies the all flagged preset to the table rows", async () => {
+    mutableVault.allEntities = [
+      entity({ id: "e1", title: "Flagged Entity" }),
+      entity({
+        id: "e2",
+        title: "Complete Entity",
+        content: "A complete description.",
+        labels: ["reviewed"],
+        connections: [{ target: "e1", type: "related_to", strength: 1 }],
+      }),
+    ];
+    render(RoutePage);
+
+    await openAuditPanel();
+    await fireEvent.click(screen.getByTestId("audit-preset-all-flagged"));
+
+    const rows = screen.getAllByTestId("entity-table-row");
+    expect(rows).toHaveLength(1);
+    expect(rows[0].textContent).toContain("Flagged Entity");
+  });
+
+  it("applies the zero connections drill-down to the table rows", async () => {
+    mutableVault.allEntities = [
+      entity({ id: "e1", title: "Isolated Entity" }),
+      entity({
+        id: "e2",
+        title: "Connected Entity",
+        connections: [{ target: "e1", type: "related_to", strength: 1 }],
+      }),
+    ];
+    render(RoutePage);
+
+    await openAuditPanel();
+    await fireEvent.click(screen.getByTestId("audit-card-zero-connections"));
+
+    const rows = screen.getAllByTestId("entity-table-row");
+    expect(rows).toHaveLength(1);
+    expect(rows[0].textContent).toContain("Isolated Entity");
+  });
+
+  it("applies the unlabelled drill-down to the table rows", async () => {
+    mutableVault.allEntities = [
+      entity({ id: "e1", title: "Unlabelled Entity" }),
+      entity({ id: "e2", title: "Labelled Entity", labels: ["reviewed"] }),
+    ];
+    render(RoutePage);
+
+    await openAuditPanel();
+    await fireEvent.click(screen.getByTestId("audit-card-unlabelled"));
+
+    const rows = screen.getAllByTestId("entity-table-row");
+    expect(rows).toHaveLength(1);
+    expect(rows[0].textContent).toContain("Unlabelled Entity");
+  });
+
+  it("applies the incomplete drill-down to the table rows", async () => {
+    mutableVault.allEntities = [
+      entity({ id: "e1", title: "Incomplete Entity" }),
+      entity({
+        id: "e2",
+        title: "Complete Entity",
+        content: "A complete description.",
+        labels: ["reviewed"],
+        connections: [{ target: "e1", type: "related_to", strength: 1 }],
+      }),
+    ];
+    render(RoutePage);
+
+    await openAuditPanel();
+    await fireEvent.click(screen.getByTestId("audit-card-incomplete"));
+
+    const rows = screen.getAllByTestId("entity-table-row");
+    expect(rows).toHaveLength(1);
+    expect(rows[0].textContent).toContain("Incomplete Entity");
   });
 });
