@@ -15,7 +15,9 @@
   let gridType = $state<GridType>(mapStore.gridType);
   const initialHexConfig = mapStore.hexLabelConfig;
   let hexLabelStyle = $state<HexLabelStyle>(initialHexConfig.style);
-  let hexStartColumn = $state(initialHexConfig.startColumn ?? "A");
+  let hexStartColumn = $state(
+    initialHexConfig.startColumn ?? initialHexConfig.startCol ?? "A",
+  );
   let hexStartRow = $state(initialHexConfig.startRow ?? 1);
   let hexRowPadding = $state(initialHexConfig.rowPadding ?? 2);
   let hexSeparator = $state(initialHexConfig.separator ?? "");

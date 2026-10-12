@@ -44,6 +44,12 @@ beforeEach(() => {
         }) as unknown as Animation,
     );
   }
+  Object.assign(mocks.mapStore, {
+    gridSize: 50,
+    gridType: "square",
+    showHexCoordinates: false,
+    hexLabelConfig: { style: "off", startColumn: "A" },
+  });
   mocks.mapStore.gridType = "square";
   mocks.mapSession.gridFitMode = false;
   mocks.mapSession.setGridSettings.mockClear();
@@ -125,6 +131,30 @@ describe("VTTGridSettings hex label configuration", () => {
       }),
     );
     expect(close).toHaveBeenCalled();
+  });
+
+  it("preserves the startCol alias when reopening settings", async () => {
+    Object.assign(mocks.mapStore, {
+      hexLabelConfig: { style: "alphanumeric", startCol: "D" },
+    });
+    render(VTTGridSettings, { close: vi.fn() });
+
+    await fireEvent.click(screen.getByText("Hex (Pointy)"));
+
+    expect(screen.getByLabelText("Start Column")).toHaveProperty("value", "D");
+    expect(screen.getByText(/Sample:\s*D01/)).toBeTruthy();
+
+    await fireEvent.click(screen.getByText("Apply to All"));
+
+    expect(mocks.mapSession.setGridSettings).toHaveBeenCalledWith(
+      expect.objectContaining({
+        hexLabelConfig: expect.objectContaining({
+          style: "alphanumeric",
+          startCol: "D",
+          startColumn: "D",
+        }),
+      }),
+    );
   });
 
   it("turns hex labels off", async () => {
