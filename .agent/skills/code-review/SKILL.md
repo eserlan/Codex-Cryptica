@@ -31,6 +31,8 @@ not a finding by itself.
   error paths that leave the user in a misleading state.
 - Check interfaces at both ends of a changed call: callers, implementations,
   serialization, and returned errors must agree.
+- Apply adversarial premise inversion: test whether optimizations or simplifications that
+  assume typical, remote, or large-scale states break on small, sparse, or boundary inputs.
 
 ### Trust and Security Boundaries
 
@@ -61,6 +63,9 @@ not a finding by itself.
 - Tests should prove the changed behaviour and the failure mode the design is meant
   to prevent. Add a focused invalid-input, error, cancellation, permission, or
   cleanup test when that boundary changed.
+- Verify assertion completeness: ensure that every newly added configuration key,
+  stored setting, timer delay, and error branch is explicitly asserted. Passing test
+  counts on existing suites do not prove that new code paths are exercised.
 - Run only the repository's focused changed-file checks and affected-workspace
   validation. A broad baseline run does not replace reasoning about the diff.
 - Check user-visible documentation, configuration, migration notes, and release
