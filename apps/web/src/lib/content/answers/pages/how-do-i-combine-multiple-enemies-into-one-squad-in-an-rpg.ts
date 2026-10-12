@@ -9,13 +9,13 @@ export const howDoICombineMultipleEnemiesIntoOneSquadInAnRpg: AnswerConfigInput 
       "How do I combine multiple enemies into one squad in a tabletop RPG?",
     kind: "framework",
     shortAnswer:
-      "To combine several similar enemies into one squad, decide what you want to abstract and what must stay visible: one shared turn and position for speed, one shared health or strength track that shows casualties, one coherent attack per activation rather than five stacked attacks, and clear rules for movement, surrounding, area effects and morale. The unit should feel like a group that loses members and weakens as it takes losses, not a single giant creature that happens to have more hit points.",
+      "To combine similar enemies into one squad, decide what to abstract and what to keep visible: its footprint, a casualty track, one activation whose attack reflects its remaining strength, and clear rules for targeting, area effects and morale. Show members falling and the squad changing as it takes losses, rather than turning it into a single giant creature with extra hit points.",
     sections: [
       {
         kind: "prose",
         heading: "What you are actually building",
         paragraphs: [
-          "Five separate orcs give you five turns, five positions, five health pools and five chances to act. That is precise but slow, and it often makes a group of ordinary foes feel less dangerous than one tough monster simply because the GM cannot run them sharply. Consolidating them saves time, but you need to be clear what kind of consolidation you mean, because the three common approaches behave differently at the table.",
+          "Five separate orcs give you five turns, positions, health pools and chances to act. You can speed up their handling without combining them: let them share initiative and batch routine rolls while keeping their positions, health and targets distinct, as described in [how to make combat faster without making it less exciting](/answers/how-do-i-make-combat-faster-without-making-it-less-exciting). If you want them to act as one squad instead, choose what kind of consolidation you mean; the three common approaches behave differently at the table.",
           "Naming the abstraction up front prevents confusion later, especially if your group already uses terms like troop, mob or squad differently. Use the table below to match your table's need to the right tool, then build only that tool. Do not treat them as interchangeable dialects of the same idea.",
         ],
       },
@@ -45,8 +45,8 @@ export const howDoICombineMultipleEnemiesIntoOneSquadInAnRpg: AnswerConfigInput 
         kind: "prose",
         heading: "How this differs from an army battle",
         paragraphs: [
-          "This page covers the middle row: a handful of ordinary opponents that you treat as a single encounter unit so a normal combat moves faster whilst still feeling like a group. If the player characters are soldiers inside a larger field battle, with fronts, reserves and orders that outlive one encounter, use the army-scale method instead. That method keeps the wider war as a changing environment around player-scale scenes, not as a bigger squad stat block. For the distinction and the army procedure, see how to run a large battle when the player characters are part of an army.",
-          "Pathfinder 2e's troop rules offer a published example of this kind of tool; see the system note below. This page gives you a system-neutral recipe you can use with any game, clearly marked as illustrative rather than official rules.",
+          "This page covers the middle row: a handful of ordinary opponents that you treat as a single encounter unit so a normal combat moves faster whilst still feeling like a group. If the player characters are soldiers inside a larger field battle, with fronts, reserves and orders that outlive one encounter, use the army-scale method instead. That method keeps the wider war as a changing environment around player-scale scenes, not as a bigger squad stat block. For the distinction and army procedure, see [how to run a large battle when the player characters are part of an army](/answers/how-do-i-run-a-large-battle-when-the-player-characters-are-part-of-an-army).",
+          "Pathfinder Second Edition's NPC Core has published troop rules; see the system note below. To compare games with published squad or mass-battle subsystems, see [which tabletop RPGs have squad and mass-battle rules](/answers/which-tabletop-rpgs-have-squad-and-mass-battle-rules). The recipe here is a separate, system-neutral method, not an official rule set.",
         ],
       },
       {
@@ -65,11 +65,11 @@ export const howDoICombineMultipleEnemiesIntoOneSquadInAnRpg: AnswerConfigInput 
           },
           {
             term: "One coherent activation, not five stacked attacks",
-            text: "Let the squad act once on its turn with one attack or one combined effect, then reduce that effect as the unit thins. Sensible choices include a formation strike that represents the best positioned members attacking, or a limited pool of attacks that shrinks when numbers fall. Do not let one activation produce the accuracy and damage of five independent creatures acting separately; that preserves the bookkeeping you were trying to remove whilst keeping the lethality of five turns.",
+            text: "Resolve the squad once with a combined attack or a pool of attacks that shrinks as it loses members. Consolidation changes burst damage, target choice and opponents' chances to intervene; expected damage can stay similar, but is not the only measure of threat. Choose output that suits your system and encounter, rather than treating GM handling time as a balancing resource or assuming damage must always fall.",
           },
           {
             term: "Movement, surrounding and area effects",
-            text: "Decide how the unit moves, how much space it controls, and how it interacts with effects that hit an area. State whether the squad can surround a target, how it occupies a doorway or a narrow passage, and whether a fireball, a grenade or a burst spell hits the whole formation or a portion of it. A common ruling is that area effects apply their damage once to the shared pool but count strongly towards thresholds or morale, whilst single-target effects remove or weaken one member. Write your ruling down before it matters.",
+            text: "Decide how the unit moves, how much space it controls, and whether an area effect hits all or only some of it. Say how area and single-target effects change the casualty track; for example, area damage might affect several members while a single-target attack can name one member only when the attacker can reach or see them. Write the ruling down before it matters.",
           },
           {
             term: "Morale, suppression, breaking and surrender",
@@ -86,43 +86,27 @@ export const howDoICombineMultipleEnemiesIntoOneSquadInAnRpg: AnswerConfigInput 
         heading: "Tuning the recipe for different groups",
         paragraphs: [
           "A tight melee formation that holds a doorway behaves differently from a scattered band of archers, even if both use the same track. For close-quarters squads, emphasise shared position, limited facing, and the ability to block or be flanked. For ranged squads, emphasise dispersed placement, cover, and how suppression or a charge can break their line. A mixed-quality group with a leader, a standard bearer and ordinary fighters needs a way to recognise the leader: perhaps losing the leader triggers morale earlier, or the specialist grants one distinct ability that is lost when that member falls. Elite units should not simply be ordinary squads with higher numbers; give them better thresholds, slower degradation, steadier morale, or a cleaner split into individuals rather than a rout when they are reduced.",
-          "Whatever you choose, playtest the numbers against your own system's action economy and encounter maths. A squad is a shortcut through that economy, so run a short mock combat with the party's actual abilities, including area damage and conditions, and adjust the output until the squad is quicker to run without being more lethal than the five individuals it replaces.",
+          "Whatever you choose, check the output against your system's action economy and encounter maths. A squad changes burst damage, targeting and chances for players to intervene; run a short mock combat with the party's actual abilities, including area damage and conditions, then adjust for the kind of threat you intend.",
         ],
       },
       {
         kind: "example",
         heading: "Worked example: five orcs become one squad",
         paragraphs: [
-          "Imagine a corridor where five ordinary orcs block the way to a guard post. The GM wants one clear opposition unit instead of five similar stat blocks. The numbers below are illustrative and not presented as balanced or official for any system. Any values that matter at your table should be set from your own game's maths after a brief playtest.",
+          "Five orcs block a 10-foot-wide corridor leading to a guard post, and the rogue has reached their exposed flank. This compact toy model is illustrative only: it is not balanced or official for any game, and it is separate from Pathfinder's segment-based troop rules. It uses a 10-foot-square footprint; each orc represents 6 points on a shared 30-point track, and every 6 damage removes one orc. Damage beyond a threshold carries over. Unless a player has reached or exposed a named member, casualties remove ordinary orcs from the rear first; a reachable named target is removed when a threshold is crossed. The sergeant is one of the five and grants +1 to the squad's attack while alive. For the example, PC attacks are d20 + 5 vs AC 13 and deal 6 damage on a hit; the wizard's area spell hits the whole footprint and deals one rolled total to the shared track. A control effect that can legally cover the footprint gets one squad save, d20 + 2 vs DC 13; on a failure, its listed effect applies to the whole squad, while a single-target effect applies only to its named target. The squad attacks once: at five or four orcs, d20 + 5 for 1d8 + 3 damage; at three or two, d20 + 4 for 1d6 + 2; at one, d20 + 3 for 1d4 + 1. The sergeant adds +1 to each attack roll. Check morale when the third orc falls and again if the sergeant later falls: d20 + 2 vs DC 12; on a failure, the survivors flee as individuals.",
         ],
         items: [
           {
             term: "Before: five individuals",
-            text: "Five turns to track, five positions that need placing, five health totals, five separate attacks that each need a roll. The action economy favours the orcs through sheer number of chances, initiative takes longer to order, and any area spell or burst forces five identical saves. The GM spends most of the round managing the orcs rather than adjudicating player choices.",
+            text: "The GM can keep all five orcs distinct, each with a position, health total and target, while putting them on one initiative count and batching routine attack rolls. That saves handling time without changing them into a squad or removing player choices about which orc to engage.",
           },
           {
-            term: "After: one squad token with a casualty track",
-            text: "One token that occupies the corridor width. One activation per round. One shared health pool divided into five illustrative thresholds: healthy (five orcs), four orcs, three orcs, two orcs, one orc. Each threshold represents a visible casualty and a step down in what the squad can do. The token's position, a note of its current strength, and its morale state are all the GM needs to track.",
+            term: "Round one: the squad thins",
+            text: "The fighter rolls 11 + 5 = 16 against AC 13 and deals 6 damage, taking the track from 30 to 24 and removing one orc. The wizard's area spell catches the whole footprint; its 4d6 roll is 12, taking the track to 12 and removing two more ordinary orcs. The third casualty triggers morale: the orcs roll 14 + 2 = 16 against DC 12 and hold. The sergeant remains, so two orcs are left and its attack bonus is +5 (+4 for its strength, +1 for the sergeant). It rolls 9 + 5 = 14 against the fighter's AC 14 and hits; 1d6 + 2 comes up 3 + 2, dealing 5 damage.",
           },
           {
-            term: "One activation and sensible attack output",
-            text: "On its turn the squad makes one formation attack rather than five separate rolls, representing the two or three orcs best placed to strike. At full strength it uses its listed formation attack. After each casualty the GM steps the output down in a way that is visible: perhaps one fewer damage die at three orcs, and a reduced ability to pin or surround at two. The activation stays single throughout, so the fight speeds up without quietly multiplying lethality.",
-          },
-          {
-            term: "Two turns that show attrition in practice",
-            text: "Round one: the fighter hits the formation and deals enough damage to cross the first threshold, so one orc falls and the squad is noted as four remaining. The wizard catches the tight formation in a burst. The GM rules that area effects apply their damage once to the shared pool but count heavily towards the next threshold, so the spell pushes the squad across a second step. The squad then activates at reduced strength with three orcs, making its single attack at visibly diminished effect rather than at the full opening value. Round two: the rogue singles out the orc sergeant at the table's agreed cost, removing the leader's extra ability but not the whole formation. The squad, now down to two orcs and without its leader, checks morale because it has lost more than half its members; it fails and breaks into two fleeing individuals rather than fighting as a perfect unit to the last body.",
-          },
-          {
-            term: "How different PC actions interact",
-            text: "Single-target attack: damages the shared pool and may also remove one member when a threshold is crossed, which the table sees as a body falling. Area attack: damages the shared pool once and advances the casualty track quickly because the tight formation counts against the defenders, rather than being treated as a single-target hit. Crowd control that slows, shoves or frightens: suppresses or repositions the whole formation on a success, or peels one member off to be dealt with individually, rather than locking down five independent fighters with one effect. In each case the fiction matches what the players can see: members falling, the line thinning, or the formation wobbling.",
-          },
-          {
-            term: "Morale and the point where the squad stops being a unit",
-            text: "After serious losses, here after dropping to two orcs plus the loss of a leader, the GM calls for a waver check using the table's normal procedure. On a poor result the squad no longer acts as one token: survivors scatter, surrender, or retreat, and any remaining pursuit is handled as individual opponents. This prevents a familiar pitfall where a nearly defeated group still attacks as if it were intact. The point where the squad dissolves should be visible before it happens, such as a standard or leader going down, so players can press or spare the survivors with intent.",
-          },
-          {
-            term: "Why it works",
-            text: "The table never tracked five identical health bars, yet every player action changed something visible: a threshold crossing, a reduced attack, a leader removed, an area effect that clearly mattered, and a morale break the party could see coming. The squad felt dangerous at full strength because it was coherent, and it felt demoralised later because the mechanics showed the losses. The same method ports to archers, town guards or mercenary companies by adjusting footprint, ranged output and morale quality rather than by inventing a new subsystem.",
+            term: "Round two: a targeted leader falls and morale breaks",
+            text: "The rogue names the sergeant at the exposed flank as the target. The attack roll is 10 + 5 = 15 against AC 13, dealing 6 damage; the track falls from 12 to 6, leaving one ordinary orc and removing the sergeant's +1. Because the sergeant has fallen, the survivors check morale: 8 + 2 = 10, below DC 12, so the last orc flees and the squad ends.",
           },
         ],
       },
@@ -135,7 +119,7 @@ export const howDoICombineMultipleEnemiesIntoOneSquadInAnRpg: AnswerConfigInput 
           "When a player commands a friendly squad, treat their contribution as positioning, orders and plausible leverage rather than an extra set of attacks the squad gains for free. A character who can see the field, shout a clear order, or hold a position that anchors the formation may let the squad act more reliably or hold morale longer. A character who is hidden, silenced, separated by distance, or busy fighting for their own life cannot credibly steer the whole unit at once. Let a command take an action or invoke a check where your system expects one, so the squad's turn remains the fiction of the squad acting, not a silent extension of a single hero's activation.",
           "When the party fights alongside a squad, keep the squad's fictive role distinct: it holds ground, covers a flank, or fixes part of the enemy line whilst the player characters handle the decisive problem inside that context. Let players see the consequence of where the squad holds or breaks. If the allied line gives way, the party faces enemies from a new direction; if it holds, they keep a corridor to reach a leader or an objective. Avoid letting the squad quietly solve the encounter whilst the party watches, or vanish without consequence when it is convenient to do so.",
           "When a player singles out a leader, specialist or exposed member, let the fiction decide the cost. Reaching a figure in the middle of a tight formation should plausibly require getting through the formation first, whether that means movement, a check, or assistance from another character. An exposed skirmisher on the edge may be targetable directly. If the singled-out figure matters to the squad's capability, state so before the attack, and remove that capability when they fall rather than letting the squad fight as if nothing happened.",
-          "Finally, do not let a single hero dominate a whole formation without leverage that matches the scale. A lone fighter who challenges a wall of spears head-on without surprise, terrain, magic or help should be treated as one body against many, however skilled the character is. Conversely, a hero who collapses a gate onto the formation, sets its supplies alight, turns its leader, or brings timely aid has changed the terms and should be rewarded accordingly. The test is always what a person in that position could credibly achieve, not what the character sheet says about a one-to-one duel.",
+          "Judge a hero's effect on the formation by the genre, the system's actual abilities and the established fiction. In grounded play, support, position or terrain may be needed to overcome a formed line; in heroic play, a character's abilities may themselves provide that leverage. Honour what a legal ability can do, and let a collapsed gate, a turned leader or timely aid matter when the fiction supports it. Do not add restrictions simply to preserve the squad's threat.",
         ],
       },
       {
@@ -157,10 +141,6 @@ export const howDoICombineMultipleEnemiesIntoOneSquadInAnRpg: AnswerConfigInput 
             text: "A tangle of rooms, pillars, chokepoints and cover is often the most interesting part of the encounter. Forcing a single token into a kitchen, a cloister or a crowded market squeezes the fiction to fit the shortcut rather than letting it breathe.",
           },
           {
-            term: "Your system already gives you a better-fitted tool",
-            text: "Some games provide their own troop, mob or swarm rules with tested thresholds and weaknesses. If your table trusts that subsystem, use it for this encounter and keep this recipe for other games, rather than stacking two abstractions on top of one another.",
-          },
-          {
             term: "You need every foe to have individual stakes",
             text: "When surrender, capture, interrogation or mistaken identity matters for specific members, tracking them individually preserves those branches. A shared pool blurs which figure actually fell or was taken.",
           },
@@ -173,18 +153,6 @@ export const howDoICombineMultipleEnemiesIntoOneSquadInAnRpg: AnswerConfigInput 
           "Groups that feel wrong usually fail in one of these ways. Each has a simple correction you can apply before the next round.",
         items: [
           {
-            term: "Five attacks on one activation",
-            text: "Letting a squad roll a full attack for every member it contains keeps the lethality of five creatures whilst removing the handling cost that balances those creatures. Use one coherent attack that weakens as the unit thins, and shorten the description as it degrades rather than lengthening the roll.",
-          },
-          {
-            term: "Full strength until the last hit point",
-            text: "A squad that fights at peak output whilst supposedly riddled with casualties breaks the fiction the abstraction was meant to support. Tie weakening to visible thresholds so the third and fourth loss change what the squad can attempt.",
-          },
-          {
-            term: "Treating area effects as single-target hits",
-            text: "A fireball that would catch four of five orcs should not be adjudicated as though it struck one. Apply its damage to the shared pool and let the formation's density move the casualty track accordingly, or let the spell's narrative effect, such as scattering, apply to the whole unit.",
-          },
-          {
             term: "Turning a group into an inexplicable giant",
             text: "A squad should not mysteriously gain reach, movement or durability that none of its members had alone. Size, speed and resilience should stay close to what a tight group of ordinary creatures could achieve together, with any extra capability explained by formation or equipment rather than by scaling numbers into a brute.",
           },
@@ -192,28 +160,6 @@ export const howDoICombineMultipleEnemiesIntoOneSquadInAnRpg: AnswerConfigInput 
             term: "More bookkeeping than the individuals would have needed",
             text: "If the track, conditions and exceptions for the squad cost more time than five health bars, retire the shortcut. A good squad reduces what the GM tracks to position, current strength and morale state, with at most one extra condition from a leader or specialist.",
           },
-          {
-            term: "No way out for a broken group",
-            text: "Forgetting morale or surrender leaves ordinary fighters behaving like automatons. Set the waver point before the fight and honour it, so the encounter can end through flight or capture rather than grinding to zeros.",
-          },
-        ],
-      },
-      {
-        kind: "checklist",
-        heading: "Squad prep checklist",
-        intro:
-          "Run through this before initiative when you plan to consolidate:",
-        items: [
-          "Confirm the squad is worth abstracting: similar foes whose individual abilities are not the puzzle.",
-          "Note size, footprint and whether the token shares a space or covers a small area. Decide how doors, cover and difficult terrain affect it.",
-          "Choose one casualty or strength track and write the thresholds where capability visibly steps down.",
-          "Set one formation attack for a full squad and how it reduces at each threshold. Avoid multiplying attacks across the whole group.",
-          "Record how movement, surrounding and area effects work for this unit, including the difference between area and single-target results.",
-          "Set a morale trigger and the consequence when it fails: fallback, scatter into individuals, surrender or rout.",
-          "Decide how players can engage the whole unit versus a leader or exposed member, and what position or cost each requires.",
-          "Adjust for melee, ranged or mixed composition and for elite steadiness if any member is notably tougher or better led.",
-          "Playtest the block against your system's encounter maths and action economy with the party's actual tools, including area damage and control.",
-          "Prepare a way for the encounter to end early through flight, surrender or a changed objective once the squad breaks.",
         ],
       },
     ],
@@ -221,7 +167,7 @@ export const howDoICombineMultipleEnemiesIntoOneSquadInAnRpg: AnswerConfigInput 
       {
         system: "Pathfinder 2e",
         rationale:
-          "Troop rules turn a formation of allied creatures into a single creature with shared hit points, weaknesses to area damage, and reduced effectiveness as it thins.",
+          "Pathfinder Second Edition's NPC Core [Running Troops rules](https://2e.aonprd.com/Rules.aspx?ID=3365) use four footprint segments, shared hit points and coordinated actions as the troop thins. Area-related weaknesses depend on the individual troop stat block; they are not a rule for every troop. See also [this troop ability entry](https://2e.aonprd.com/MonsterAbilities.aspx?ID=86&Redirected=1).",
         href: "https://2e.aonprd.com/Rules.aspx?ID=3365",
       },
     ],
@@ -264,6 +210,7 @@ export const howDoICombineMultipleEnemiesIntoOneSquadInAnRpg: AnswerConfigInput 
     ],
     relatedAnswers: [
       "how-do-i-run-a-large-battle-when-the-player-characters-are-part-of-an-army",
+      "which-tabletop-rpgs-have-squad-and-mass-battle-rules",
       "how-do-i-balance-rpg-combat-encounters-without-a-tpk",
       "how-do-you-make-a-boss-fight-memorable-in-a-tabletop-rpg",
       "how-do-i-make-combat-faster-without-making-it-less-exciting",

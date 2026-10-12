@@ -291,23 +291,26 @@ describe("answer registry", () => {
     const squad =
       answers["how-do-i-combine-multiple-enemies-into-one-squad-in-an-rpg"];
     const example = squad.sections.find(
-      (section) =>
-        section.kind === "example" &&
-        section.heading === "Worked example: five orcs become one squad",
+      (section) => section.kind === "example",
     );
-    const attrition =
-      example?.kind === "example"
-        ? example.items?.find(
-            (item) => item.term === "Two turns that show attrition in practice",
-          )
-        : undefined;
+    if (!example || example.kind !== "example") {
+      throw new Error("Squad worked example is missing");
+    }
+    expect(example.heading).toBe("Worked example: five orcs become one squad");
+    const roundOne = example.items?.[1]?.text;
+    const roundTwo = example.items?.[2]?.text;
 
-    expect(attrition?.text).toContain(
-      "activates at reduced strength with three orcs",
+    expect(roundOne).toContain("track from 30 to 24");
+    expect(roundOne).toContain(
+      "track to 12 and removing two more ordinary orcs",
     );
-    expect(attrition?.text).toContain(
-      "down to two orcs and without its leader",
+    expect(roundOne).toContain("two orcs are left");
+    expect(roundOne).toContain("attack bonus is +5");
+    expect(roundTwo).toContain("track falls from 12 to 6");
+    expect(roundTwo).toContain(
+      "one ordinary orc and removing the sergeant's +1",
     );
+    expect(roundTwo).toContain("8 + 2 = 10, below DC 12");
   });
 
   it("matches the economic hooks example heading to its brief cases", () => {
