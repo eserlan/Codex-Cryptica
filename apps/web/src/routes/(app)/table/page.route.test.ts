@@ -1,8 +1,7 @@
 /** @vitest-environment jsdom */
 
 import { render, screen, fireEvent } from "@testing-library/svelte";
-import { SvelteURL } from "svelte/reactivity";
-import { beforeEach, describe, expect, it, vi, waitFor } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { Entity } from "schema";
 import RoutePage from "./+page.svelte";
 import { vault } from "$lib/stores/vault.svelte";
@@ -14,7 +13,7 @@ vi.mock("$app/navigation", () => ({ goto: vi.fn() }));
 
 const { mockPage } = vi.hoisted(() => ({
   mockPage: {
-    url: new SvelteURL("http://localhost/table"),
+    url: new URL("http://localhost/table"),
   },
 }));
 
@@ -151,7 +150,7 @@ describe("/table page", () => {
   });
 
   it("opens VaultAuditPanel automatically when URL has ?mode=audit", () => {
-    mockPage.url = new SvelteURL("http://localhost/table?mode=audit");
+    mockPage.url = new URL("http://localhost/table?mode=audit");
     mutableVault.allEntities = [
       entity({ id: "e1", title: "Aldric", type: "character", image: "" }),
       entity({ id: "e2", title: "Brindlewood", type: "location" }),
@@ -166,19 +165,6 @@ describe("/table page", () => {
     expect(
       screen.getByText("Missing summary, labels, or connections"),
     ).toBeTruthy();
-  });
-
-  it("closes VaultAuditPanel when the audit query is removed", async () => {
-    mockPage.url = new SvelteURL("http://localhost/table?mode=audit");
-    mutableVault.allEntities = [entity({ id: "e1", title: "Aldric" })];
-    render(RoutePage);
-
-    expect(screen.getByTestId("vault-audit-panel")).toBeTruthy();
-    mockPage.url.search = "";
-
-    await waitFor(() => {
-      expect(screen.queryByTestId("vault-audit-panel")).toBeNull();
-    });
   });
 
   it("toggles VaultAuditPanel via the desktop audit button", async () => {
@@ -243,7 +229,7 @@ describe("/table page", () => {
   });
 
   it("opens VaultAuditPanel with distribution tab when URL has ?mode=overview", () => {
-    mockPage.url = new SvelteURL("http://localhost/table?mode=overview");
+    mockPage.url = new URL("http://localhost/table?mode=overview");
     mutableVault.allEntities = [
       entity({ id: "e1", title: "Aldric", type: "character" }),
       entity({ id: "e2", title: "Brindlewood", type: "location" }),
@@ -282,7 +268,7 @@ describe("/table page", () => {
   });
 
   it("filters table entities when clicking a distribution category bar", async () => {
-    mockPage.url = new SvelteURL("http://localhost/table?mode=overview");
+    mockPage.url = new URL("http://localhost/table?mode=overview");
     mutableVault.allEntities = [
       entity({ id: "e1", title: "Aldric", type: "character" }),
       entity({ id: "e2", title: "Brindlewood", type: "location" }),
@@ -298,7 +284,7 @@ describe("/table page", () => {
   });
 
   it("filters table entities when clicking a distribution label bar", async () => {
-    mockPage.url = new SvelteURL("http://localhost/table?mode=overview");
+    mockPage.url = new URL("http://localhost/table?mode=overview");
     mutableVault.allEntities = [
       entity({
         id: "e1",

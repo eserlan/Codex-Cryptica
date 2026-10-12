@@ -186,9 +186,10 @@ describe("VaultDistributionChart component", () => {
       onSelectUnlabelled: vi.fn(),
     });
 
-    const summaryText = screen.getByTestId(
-      "distribution-summary-text",
-    ).textContent;
+    const summaryText = screen
+      .getByTestId("distribution-summary-text")
+      .textContent?.replace(/\s+/g, " ")
+      .trim();
     expect(summaryText).toContain("42 of 360 entities matching filters");
   });
 
