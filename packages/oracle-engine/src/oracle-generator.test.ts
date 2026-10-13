@@ -86,6 +86,50 @@ describe("OracleGenerator", () => {
       await generator.generateChatResponse("q", mockContext, vi.fn());
       expect(mockContext.textGeneration.generateResponse).toHaveBeenCalled();
     });
+
+    it("retrieves context once per turn and sends that lore to the model", async () => {
+      const result = await generator.generateChatResponse(
+        "q",
+        mockContext,
+        vi.fn(),
+      );
+      expect(
+        mockContext.contextRetrieval.retrieveContext,
+      ).toHaveBeenCalledTimes(1);
+      expect(mockContext.textGeneration.generateResponse.mock.calls[0][3]).toBe(
+        "ctx",
+      );
+      expect(result).toEqual({ primaryEntityId: "e1", sourceIds: ["e1"] });
+    });
+
+    it("does not generate when retrieval fails", async () => {
+      mockContext.contextRetrieval.retrieveContext.mockRejectedValueOnce(
+        new Error("index unavailable"),
+      );
+      await expect(
+        generator.generateChatResponse("q", mockContext, vi.fn()),
+      ).rejects.toThrow("index unavailable");
+      expect(
+        mockContext.textGeneration.generateResponse,
+      ).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("generateCreationResponse", () => {
+    it("retrieves context once per turn", async () => {
+      mockContext.textGeneration.generateStructuredEntity = vi.fn();
+      await generator.generateCreationResponse(
+        "create a tavern",
+        mockContext,
+        vi.fn(),
+      );
+      expect(
+        mockContext.contextRetrieval.retrieveContext,
+      ).toHaveBeenCalledTimes(1);
+      expect(
+        mockContext.textGeneration.generateStructuredEntity.mock.calls[0][2],
+      ).toBe("ctx");
+    });
   });
 
   describe("visualizations", () => {

@@ -205,6 +205,32 @@ describe("DefaultTextGenerationService", () => {
       const result = await resolvePronounsLocally(query, history);
       expect(result).toBe("what does kardos do?");
     });
+
+    it("keeps a multi-word proper name whole instead of its first word (#4055)", async () => {
+      const history = [
+        {
+          role: "user" as const,
+          content: "Tell me about Grand Archmage Elara Voss",
+        },
+      ];
+      const result = await resolvePronounsLocally(
+        "Give me four facts about her",
+        history,
+      );
+      expect(result).toBe("Give me four facts about Grand Archmage Elara Voss");
+    });
+
+    it("never substitutes a pronoun such as 'me' as the subject (#4055)", async () => {
+      const history = [
+        { role: "user" as const, content: "tell me about the grand archmage" },
+      ];
+      const result = await resolvePronounsLocally(
+        "Give me four facts about her",
+        history,
+      );
+      expect(result).not.toMatch(/about me\b/);
+      expect(result).toContain("grand archmage");
+    });
   });
 
   describe("distillContext", () => {
