@@ -20,7 +20,7 @@ const COMMON_QUERY_WORDS = new Set([
 ]);
 
 const words = (text: string): string[] =>
-  text.toLocaleLowerCase().match(/[\\p{L}\\p{N}]{3,}/gu) || [];
+  text.toLocaleLowerCase().match(/[\p{L}\p{N}]{3,}/gu) || [];
 
 export function isUnrelatedSuggestedSearch(
   query: string,
