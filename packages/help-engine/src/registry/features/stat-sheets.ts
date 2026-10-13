@@ -69,6 +69,17 @@ export const statSheets: FeatureEntry = {
       ],
       actionIds: ["stat-sheets.open", "stat-sheets.merchant-help"],
     },
+    {
+      id: "apply-market-pressure",
+      title: "Apply a shortage or restock to a shop",
+      steps: [
+        "On the shop's Stats tab, open Market pressure.",
+        "Pick a kind, choose which lines it applies to, and review the changes.",
+        "Name the change, say why, then choose Apply.",
+        "Choose Undo on the change to put the old values back.",
+      ],
+      actionIds: ["stat-sheets.open", "stat-sheets.merchant-help"],
+    },
   ],
   helpIds: ["stat-sheets", "merchant-sheets", "sharing-templates"],
   related: ["entity-templates"],

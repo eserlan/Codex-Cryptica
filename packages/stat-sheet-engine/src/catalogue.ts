@@ -159,8 +159,8 @@ export function projectShopSheetForPlayers(
 }
 
 function withoutTradeLog(field: StatSheetField): StatSheetField {
-  if (!("tradeLog" in field)) return field;
-  const { tradeLog: _tradeLog, ...rest } = field;
+  if (!("tradeLog" in field) && !("marketHistory" in field)) return field;
+  const { tradeLog: _tradeLog, marketHistory: _history, ...rest } = field;
   return rest;
 }
 

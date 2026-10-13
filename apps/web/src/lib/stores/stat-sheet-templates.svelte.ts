@@ -20,8 +20,13 @@ import { BUILT_IN_STAT_SHEET_TEMPLATES } from "./stat-sheet/built-in-templates";
  */
 function templateFieldsOf(fields: StatSheetField[]): StatSheetTemplateField[] {
   return fields.map(
-    ({ value: _value, collapsed: _collapsed, tradeLog: _tradeLog, ...rest }) =>
-      rest,
+    ({
+      value: _value,
+      collapsed: _collapsed,
+      tradeLog: _tradeLog,
+      marketHistory: _marketHistory,
+      ...rest
+    }) => rest,
   );
 }
 
@@ -338,7 +343,11 @@ export class StatSheetTemplateStore {
     return template.fields.map((field) => {
       // Never inherit another sheet's trade history, even from an older
       // template that was saved or imported with one (#3963).
-      const { tradeLog: _tradeLog, ...f } = field as StatSheetField;
+      const {
+        tradeLog: _tradeLog,
+        marketHistory: _marketHistory,
+        ...f
+      } = field as StatSheetField;
       const id = usedIds.has(f.id) ? `field-${this.idGenerator.uuid()}` : f.id;
       usedIds.add(id);
       return {

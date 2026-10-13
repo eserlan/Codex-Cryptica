@@ -108,6 +108,52 @@ export type PlayerCatalogueSettings = z.infer<
   typeof PlayerCatalogueSettingsSchema
 >;
 
+/**
+ * One bulk market change applied to a shop's stock (#3966). It records, per
+ * row, what each changed value was before and after, which is what makes the
+ * change reversible without touching values the GM edited since. Absent on a
+ * shop that has never used market pressure.
+ */
+const PriceShiftSchema = z.object({
+  before: MoneyAmountSchema,
+  after: MoneyAmountSchema,
+});
+const QuantityShiftSchema = z.object({
+  before: z.number().int().min(0).safe(),
+  after: z.number().int().min(0).safe(),
+});
+const AvailabilityShiftSchema = z.object({
+  before: StockAvailabilitySchema.optional(),
+  after: StockAvailabilitySchema,
+});
+
+export const MarketRowChangeSchema = z.object({
+  rowId: z.string().min(1).max(120),
+  name: z.string().max(200),
+  price: PriceShiftSchema.optional(),
+  quantity: QuantityShiftSchema.optional(),
+  availability: AvailabilityShiftSchema.optional(),
+});
+
+export type MarketRowChange = z.infer<typeof MarketRowChangeSchema>;
+
+export const MarketChangeSchema = z.object({
+  id: z.string().min(1).max(80),
+  label: z.string().min(1).max(120),
+  /** What caused it: the GM directly, or an approved outside signal. */
+  cause: z.object({
+    kind: z.enum(["gm", "signal"]),
+    source: z.string().max(120).optional(),
+  }),
+  /** Plain-language reason shown beside the changed price. */
+  reason: z.string().max(300),
+  at: z.string().max(40),
+  status: z.enum(["applied", "reverted"]),
+  rows: z.array(MarketRowChangeSchema).max(200),
+});
+
+export type MarketChange = z.infer<typeof MarketChangeSchema>;
+
 export const StatSheetFieldSchema = z.object({
   id: z.string().min(1),
   key: StatSheetFieldKeySchema.optional(),
@@ -177,6 +223,9 @@ export const StatSheetFieldSchema = z.object({
   // Bounded record of recent trades on a stock ledger, or of the trades that
   // changed a wallet number field (#3963). Absent on every older sheet.
   tradeLog: z.array(StockTradeRecordSchema).max(25).optional(),
+  // Recent bulk market changes (shortage, glut, restock) on a stock ledger
+  // (#3966). Opt-in: absent until the GM applies one.
+  marketHistory: z.array(MarketChangeSchema).max(20).optional(),
   // Id of another field on the same sheet (typically a "number" ability
   // score) whose value drives this field's dice modifier — e.g. a "STR
   // Check" dice field derives its flat bonus from a "STR" score field via

@@ -330,6 +330,49 @@ describe("sanitizeSheetForGuests", () => {
     expect(sheet.fields[1].tradeLog).toHaveLength(1);
   });
 
+  it("never sends market history or the GM's reasons to players (#3966)", () => {
+    const sheet = gmSheet(true);
+    const history = [
+      {
+        id: "m1",
+        label: "CANARY-MARKET-LABEL",
+        reason: "CANARY-MARKET-REASON",
+        cause: { kind: "signal" as const, source: "CANARY-MARKET-SOURCE" },
+        at: "2026-10-13T00:00:00.000Z",
+        status: "applied" as const,
+        rows: [
+          {
+            rowId: "r1",
+            name: "CANARY-MARKET-ROW",
+            price: { before: gp(1), after: gp(9) },
+          },
+        ],
+      },
+    ];
+    sheet.fields = sheet.fields.map((f) =>
+      f.stockLedger ? { ...f, marketHistory: history } : f,
+    );
+    const shop = JSON.stringify(sanitizeSheetForGuests(sheet));
+    expect(shop).not.toContain("CANARY-MARKET");
+    expect(shop).not.toContain("marketHistory");
+
+    const other: StatSheet = {
+      templateId: null,
+      fields: [
+        {
+          id: "w",
+          label: "Gold",
+          type: "number",
+          value: 1,
+          marketHistory: history,
+        },
+      ],
+    };
+    expect(JSON.stringify(sanitizeSheetForGuests(other))).not.toContain(
+      "CANARY-MARKET",
+    );
+  });
+
   it("leaves an absent sheet absent", () => {
     expect(sanitizeSheetForGuests(undefined)).toBeUndefined();
   });
