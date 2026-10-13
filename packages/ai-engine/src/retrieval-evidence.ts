@@ -16,7 +16,7 @@ const COMMON_QUERY_WORDS = new Set([
   "please", "show", "some", "tell", "than", "that", "them", "then",
   "there", "these", "they", "this", "those", "their", "what", "when",
   "where", "which", "while", "will", "with", "would", "your", "were",
-  "have", "many", "might", "does", "whom", "whose", "just", "about",
+  "many", "might", "whom", "whose", "just", "the", "and", "was", "are", "for", "who", "how", "why", "had",
 ]);
 
 const words = (text: string): string[] =>
