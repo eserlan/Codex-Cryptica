@@ -9,7 +9,7 @@ export const whatAreTheBestClasslessFantasyRpgsWithSkillBasedProgression: Answer
       "What are the best classless fantasy RPGs with skill-based progression?",
     kind: "comparison",
     shortAnswer:
-      "For a group leaving Warhammer Fantasy Roleplay 4e, Mythras and GURPS are conditional candidates; neither is a verified winner. Mythras offers classless skill improvement and session-refreshing Luck that can downgrade a Major Wound, but its injury rules can still maim or kill. GURPS offers classless point-buy and a limited reroll, while injury, resurrection, and campaign pace depend on the chosen rules package. Verify those trade-offs and the Foundry functions you need before choosing. Dragonbane is a lighter, profession-framed option whose push rerolls cost a condition but do not protect a character from death. Savage Worlds has no fixed classes, but its Rank-based Advances gate Edges. Against the Darkmaster is a vocation-and-level mismatch; check Symbaroum’s core rules before ranking its advancement for this brief.",
+      "For a group leaving Warhammer Fantasy Roleplay 4e, Mythras and GURPS are conditional candidates; neither is a verified winner. Mythras offers classless skill improvement and session-refreshing Luck that can downgrade a Major Wound, but its injury rules can still maim or kill. GURPS offers classless point-buy and a limited reroll, while injury, resurrection, and campaign pace depend on the chosen rules package. Verify those trade-offs and the Foundry functions you need before choosing. Dragonbane is a lighter, profession-framed option whose push rerolls cost a condition but do not protect a character from death. Savage Worlds has no fixed classes, but its Rank-based Advances gate Edges. Against the Darkmaster is a vocation-and-level mismatch.",
     sections: [
       {
         kind: "prose",
@@ -51,12 +51,6 @@ export const whatAreTheBestClasslessFantasyRpgsWithSkillBasedProgression: Answer
             "No character classes or levels. Professions frame starting characters; marked skills and heroic abilities shape later choices. Check improvement frequency, skill limits, and later options before projecting a multi-year campaign.",
             "At 0 HP, a character falls and can only try to rally. On each later turn, they make a CON death roll: three successes restore d6 HP; three failures kill. Another character can rally them or use Healing, and magic can save them. If combat ends first, keep counting rounds until the rolls are complete. Further damage at 0 HP counts as a failed death roll; one attack that would reduce HP to its full starting value below zero kills outright. Optional pushing rerolls a failed skill or attribute roll but gives a condition; it is not death protection. See the [publisher Quickstart](https://freeleaguepublishing.com/shop/dragonbane/quickstart-guide/).",
             "[Official system](https://foundryvtt.com/packages/dragonbane): v4.1.1, Foundry 14 (verified 14); v3.2, Foundry 13 (verified 13). Listing documents character, NPC and monster sheets, rolls, combat damage, and push support. The [paid Core Rules module](https://foundryvtt.com/packages/dragonbane-coreset) includes rules journals, actors, items, roll tables, scenes, and macros.",
-          ],
-          [
-            "Symbaroum",
-            "I could not verify Symbaroum’s advancement rules from accessible primary rules here. Check the paid Core Rules module’s advancement chapter for its gates, costs, and later options before ranking it as a classless, long-campaign match.",
-            "I could not verify edition-specific injury, corruption, or resurrection rules from accessible primary rules here, so check the chosen printing before ranking Symbaroum on those points.",
-            "[Officially endorsed system](https://foundryvtt.com/packages/symbaroum), community-developed and maintained; v6.1.6, verified Foundry 13. It includes character/NPC sheets, item types, base compendiums, and enhanced combat. The [paid Core Rules module](https://freeleaguepublishing.com/shop/symbaroum/foundry-vtt-module-core-rulebook/) adds the full core rules and book content. Endorsement does not mean compatibility with Foundry 14.",
           ],
           [
             "Against the Darkmaster",
@@ -178,7 +172,7 @@ export const whatAreTheBestClasslessFantasyRpgsWithSkillBasedProgression: Answer
         "skill based fantasy rpg no levels",
       ],
       uniqueValue:
-        "Compares six mechanically distinct fantasy systems against the same classless progression, lethality, safety-net, and Foundry criteria to produce a shortlist for post-WFRP groups.",
+        "Compares five mechanically distinct fantasy systems against the same classless progression, lethality, safety-net, and Foundry criteria to produce a shortlist for post-WFRP groups.",
       userJob: "evaluate",
       relatedIntents: [
         "answer-system-selection",
@@ -217,7 +211,7 @@ export const whatAreTheBestClasslessFantasyRpgsWithSkillBasedProgression: Answer
     seo: {
       title: "Best Classless Fantasy RPGs for Skill Growth | Codex Cryptica",
       description:
-        "Compare Mythras, GURPS, Savage Worlds, Dragonbane, Symbaroum and more for classless skill growth, gritty combat, luck safety nets and Foundry VTT support.",
+        "Compare Mythras, GURPS, Savage Worlds, Dragonbane and more for classless skill growth, gritty combat, luck safety nets and Foundry VTT support.",
       image:
         "https://assets.codexcryptica.com/og/what-are-the-best-classless-fantasy-rpgs-with-skill-based-progression.jpg",
       imageAlt:
