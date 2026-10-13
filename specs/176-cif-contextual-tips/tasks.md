@@ -29,7 +29,7 @@ description: "Task list for Cif Contextual Tips (#3998)"
 
 ## Phase 1: Setup
 
-- [x] T001 Confirm branch `4019-cif-contextual-tips` is checked out and `bun install` is current; run the existing `packages/onboarding-journey-engine` tests once (`cd packages/onboarding-journey-engine && bun test`) to record a green baseline for the files this feature extends
+- [x] T001 Confirm branch `176-cif-contextual-tips` is checked out and `bun install` is current; run the existing `packages/onboarding-journey-engine` tests once (`cd packages/onboarding-journey-engine && bun test`) to record a green baseline for the files this feature extends
 
 ---
 

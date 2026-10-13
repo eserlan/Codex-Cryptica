@@ -1,6 +1,6 @@
 # Implementation Plan: Cif Contextual Tips
 
-**Branch**: `4019-cif-contextual-tips` | **Date**: 2026-10-13 | **Spec**: [spec.md](./spec.md)
+**Branch**: `176-cif-contextual-tips` | **Date**: 2026-10-13 | **Spec**: [spec.md](./spec.md)
 **Input**: Feature specification from `/specs/176-cif-contextual-tips/spec.md`
 
 ## Summary

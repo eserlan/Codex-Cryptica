@@ -1,6 +1,6 @@
 # Feature Specification: Cif Contextual Tips
 
-**Feature Branch**: `4019-cif-contextual-tips`
+**Feature Branch**: `176-cif-contextual-tips`
 **Created**: 2026-10-13
 **Status**: Draft
 **Input**: Cif onboarding P2 (#3998): goal-aware contextual feature discovery after first success. Parent epic #3994.
