@@ -395,3 +395,28 @@ describe("stored-size limits", () => {
     expect(back.conflicts[0].kept).toEqual(["price", "quantity"]);
   });
 });
+
+describe("lines without a counted quantity", () => {
+  const rows = [{ rowId: "u", name: "Untracked", stock: { price: gp(10) } }];
+
+  test("a quantity change skips them, so nothing can turn into ×0", () => {
+    const plan = planPressure(rows, { quantity: { mode: "add", value: 3 } });
+    expect(plan[0].skipped).toBe("no-quantity");
+    expect(applyPlan(rows, plan, meta())).toBeNull();
+  });
+
+  test("a price change still applies, and undo leaves no quantity behind", () => {
+    const out = applyPlan(
+      rows,
+      planPressure(rows, {
+        pricePercent: 50,
+        quantity: { mode: "add", value: 3 },
+      }),
+      meta(),
+    )!;
+    expect(out.change.rows[0].quantity).toBeUndefined();
+    const back = revertChange(out.rows, [out.change], "c1");
+    expect("quantity" in (back.rows[0].stock as object)).toBe(false);
+    expect(stockOf(back.rows, "u").price).toEqual(gp(10));
+  });
+});
