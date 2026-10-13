@@ -201,9 +201,13 @@ describe("remaining contextual Help coverage", () => {
 
     expect(available.map((ref) => ref.id)).toEqual([
       "lore-oracle.open-help",
+      "lore-oracle.open-mentions-help",
       "lore-oracle.open-settings",
     ]);
-    expect(unavailable.map((ref) => ref.id)).toEqual(["lore-oracle.open-help"]);
+    expect(unavailable.map((ref) => ref.id)).toEqual([
+      "lore-oracle.open-help",
+      "lore-oracle.open-mentions-help",
+    ]);
   });
 
   it("offers the Theme panel only when it can be opened, and Help always", () => {

@@ -47,6 +47,7 @@ export const KNOWN_HELP_IDS = [
   "publishing",
   "oracle-guide",
   "chat-commands",
+  "mention-entities",
   "themes",
   "categories-and-labels",
   "entity-table",
