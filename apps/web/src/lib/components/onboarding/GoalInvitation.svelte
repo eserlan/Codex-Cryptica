@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import type { Goal, InvitationChoice } from "onboarding-journey-engine";
-  import { isEditable, restoreFocus } from "./focus";
+  import { enterCard, escapeBelongsToCard, restoreFocus } from "./focus";
 
   let {
     aiAvailable,
@@ -41,11 +41,11 @@
   onMount(() => {
     previousFocus = document.activeElement;
     // Never take focus from someone typing (FR-027); announce instead.
-    if (isEditable(previousFocus)) {
-      announcement = "What would you like to do first? Choices are below.";
-    } else {
-      heading?.focus({ preventScroll: true });
-    }
+    announcement = enterCard(
+      heading,
+      previousFocus,
+      "What would you like to do first? Choices are below.",
+    );
   });
 
   function leave(callback: () => void) {
@@ -69,9 +69,8 @@
 
   function handleKeydown(event: KeyboardEvent) {
     if (event.key !== "Escape") return;
-    const active = document.activeElement;
     // Escape belongs to the invitation only when focus is in it, or nowhere.
-    if (active && active !== document.body && !root?.contains(active)) return;
+    if (!escapeBelongsToCard(root)) return;
     event.preventDefault();
     close();
   }
