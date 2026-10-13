@@ -651,7 +651,7 @@ export class DefaultContextRetrievalService implements ContextRetrievalService {
 
     if (noRelevantMatch) {
       const note =
-        "--- Retrieval Status ---\\nNo relevant Vault evidence was found for this turn. Listed record names are navigation hints, not supporting facts.\\n\\n";
+        "--- Retrieval Status ---\nNo relevant Vault evidence was found for this turn. Listed record names are navigation hints, not supporting facts.\n\n";
       finalContent = note + finalContent;
       // Carry the status through the Interactions API lore-delta path too.
       entries.unshift({
