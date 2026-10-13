@@ -1,5 +1,5 @@
 {
-  "updated_at": 1791891784,
+  "updated_at": 1791893287,
   "candidates": [
     {
       "id": "reddit-38045827408-how-i-plan-story-arcs-that-actually-pay-",
@@ -22,14 +22,14 @@
       "created_at": 1791740157
     },
     {
-      "id": "reddit-38391363178-any-location-can-be-a-shop-now-with-a-st",
-      "title": "Any Location can be a shop now, with a stock ledger that remembers",
-      "body": "Running a shop by scribbled notes always fell apart for me. A player asks what is in stock three sessions later and I am guessing, or I forget to remove the sold healing potion.\n\nI built system-neutral Shop sheets so any Location or Organisation can act as a merchant with a stable ledger. It lives in the same stat sheet system as characters and items, not a separate tool.\n\n- stable stock rows that persist between sessions\n- GM layout and a read-only player catalogue\n- confirm-first buy and sell with total preview before it writes\n- safe allowlist sharing with a preview so you see what players will get\n- context-aware stock suggestions pulled from settlement connections\n- optional market pressure you can review and undo, off by default\n\nI left market pressure optional on purpose. Automatic price swings feel right for some tables and noisy for others, so it stays as a reviewable step rather than a silent background change.\n\nWhat is the shop your players keep returning to, and what is the one item they always expect on its shelves?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/screenshots/feature-build.jpg)",
-      "url": "",
-      "image_url": "https://assets.codexcryptica.com/screenshots/feature-build.jpg",
+      "id": "reddit-38391363178-five-new-answer-guides-from-first-dm-ner",
+      "title": "Five new Answer guides \u2014 from first DM nerves to squad combat",
+      "body": "Same five questions kept coming up in different words, so I wrote them up properly instead of answering in fragments.\n\nI added five new reference guides in Answers, each with a framework and worked examples you can copy to your own prep.\n\n- pros and cons of becoming a Dungeon Master, for when you are on the fence\n- best classless fantasy RPGs with skill-based progression, with what each does differently\n- which TTRPGs have squad and mass-battle rules, and how they scale\n- how to combine enemies into one squad token without losing threat\n- how to get friends interested in playing D&D when they have never rolled before\n\nThey lean system-neutral where I can, but I left in concrete D&D and fantasy examples when a generic answer would be too vague. That is the tradeoff I will keep tuning.\n\nWhich of those five would actually help your table right now, and what would you add to it?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/announcements/release-38391363178-0.png)",
+      "url": "https://codexcryptica.com/answers/what-are-the-pros-and-cons-of-becoming-a-dungeon-master",
+      "image_url": "https://assets.codexcryptica.com/announcements/release-38391363178-0.png",
       "source_id": "38391363178",
       "status": "approved",
-      "created_at": 1791891784
+      "created_at": 1791893287
     }
   ]
 }
