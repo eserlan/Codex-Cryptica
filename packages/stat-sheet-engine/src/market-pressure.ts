@@ -559,13 +559,24 @@ export function replayChanges(
   return rows;
 }
 
+// A record with no `before` means the line had no quantity. Older records
+// stored 0 for such a line, so a zero still matches an uncounted line.
+function quantityStartsFrom(
+  stock: StockMeta,
+  shift: NonNullable<MarketRowChange["quantity"]>,
+): boolean {
+  return shift.before === undefined
+    ? stock.quantity === undefined
+    : (stock.quantity ?? 0) === shift.before;
+}
+
 function startsFrom(row: StockRow, change: MarketRowChange): boolean {
   const stock = stockOf(row);
   const priceOk =
     !change.price ||
     (!!stock.price && sameMoney(stock.price, change.price.before));
   const quantityOk =
-    !change.quantity || stock.quantity === change.quantity.before;
+    !change.quantity || quantityStartsFrom(stock, change.quantity);
   const availabilityOk =
     !change.availability ||
     availabilityOf(stock) === (change.availability.before ?? "available");

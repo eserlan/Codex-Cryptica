@@ -468,6 +468,22 @@ describe("lines without a counted quantity", () => {
     expect(stockOf(replayChanges(counted, [out.change]), "u").quantity).toBe(9);
   });
 
+  test("replay still understands older records that stored 0 for an uncounted line", () => {
+    const start = rows();
+    const legacy = {
+      id: "old",
+      label: "Restock",
+      reason: "Earlier format",
+      cause: { kind: "gm" as const },
+      at: "t",
+      status: "applied" as const,
+      rows: [
+        { rowId: "u", name: "Untracked", quantity: { before: 0, after: 3 } },
+      ],
+    };
+    expect(stockOf(replayChanges(start, [legacy]), "u").quantity).toBe(3);
+  });
+
   test("services still have no quantity to change", () => {
     const plan = planPressure(shop(), { quantity: { mode: "add", value: 3 } });
     expect(plan.find((p) => p.rowId === "map")!.skipped).toBe("no-quantity");
