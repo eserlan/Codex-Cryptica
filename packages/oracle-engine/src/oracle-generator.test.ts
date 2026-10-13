@@ -118,7 +118,6 @@ describe("OracleGenerator", () => {
         mockContext.contextRetrieval.retrieveContext.mock.calls[0][1];
       expect(excluded.size).toBe(0);
     });
-
     it("does not generate when retrieval fails", async () => {
       mockContext.contextRetrieval.retrieveContext.mockRejectedValueOnce(
         new Error("index unavailable"),

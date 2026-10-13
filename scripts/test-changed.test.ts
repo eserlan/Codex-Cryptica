@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import {
   findCoLocatedTests,
+  getWorkspaceTestInvocation,
   groupTestsByWorkspace,
   isUnitTestFile,
 } from "./test-changed.mjs";
@@ -49,5 +50,23 @@ describe("test-changed", () => {
     expect(isUnitTestFile("packages/adventure-engine/tests/core.test.ts")).toBe(
       true,
     );
+  });
+
+  test("runs workspace tests through the workspace's declared test script", () => {
+    expect(
+      getWorkspaceTestInvocation("packages/ai-engine", "@codex/ai-engine", [
+        "packages/ai-engine/src/example.test.ts",
+      ]),
+    ).toEqual({
+      cwd: "packages/ai-engine",
+      args: [
+        "run",
+        "--filter",
+        "@codex/ai-engine",
+        "test",
+        "--",
+        "src/example.test.ts",
+      ],
+    });
   });
 });
