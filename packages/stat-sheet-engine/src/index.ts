@@ -18,3 +18,4 @@ export * from "./catalogue";
 export * from "./catalogue-capability";
 export * from "./entity-sheet";
 export * from "./stock-suggestions";
+export * from "./market-pressure";
