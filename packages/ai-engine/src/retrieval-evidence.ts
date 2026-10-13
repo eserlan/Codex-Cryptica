@@ -48,7 +48,7 @@ export function isUnrelatedSuggestedSearch(
       entity.content,
       entity.lore,
       ...(entity.labels || []),
-      ...(entity.tags || []),
+      ...((entity as typeof entity & { tags?: string[] }).tags || []),
       metadata,
     ].filter(Boolean).join(" ")));
     if (meaningful.some((word) => candidateWords.has(word))) return false;
