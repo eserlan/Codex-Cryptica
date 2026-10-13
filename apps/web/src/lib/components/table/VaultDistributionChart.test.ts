@@ -40,23 +40,25 @@ const mockSummary: VaultDistributionSummary = {
   ],
   labels: [
     {
-      id: "Pagen",
+      id: "label:Pagen",
       label: "Pagen",
+      labelValue: "Pagen",
       count: 150,
       totalCount: 150,
       percentage: 41.7,
       icon: "icon-[lucide--tag]",
     },
     {
-      id: "Major",
+      id: "label:Major",
       label: "Major",
+      labelValue: "Major",
       count: 80,
       totalCount: 80,
       percentage: 22.2,
       icon: "icon-[lucide--tag]",
     },
     {
-      id: "__unlabelled__",
+      id: "synthetic:unlabelled",
       label: "Unlabelled",
       count: 25,
       totalCount: 25,
@@ -133,20 +135,91 @@ describe("VaultDistributionChart component", () => {
     await fireEvent.click(labelGroupBtn);
 
     expect(screen.getByTestId("distribution-label-note")).toBeDefined();
-    expect(screen.getByTestId("distribution-bar-Pagen")).toBeDefined();
+    expect(screen.getByTestId("distribution-bar-label:Pagen")).toBeDefined();
     expect(
-      screen.getByTestId("distribution-count-Pagen").textContent?.trim(),
+      screen.getByTestId("distribution-count-label:Pagen").textContent?.trim(),
     ).toBe("150");
 
     // Click regular label
-    await fireEvent.click(screen.getByTestId("distribution-bar-Pagen"));
+    await fireEvent.click(screen.getByTestId("distribution-bar-label:Pagen"));
     expect(onSelectLabel).toHaveBeenCalledWith("Pagen");
 
     // Click unlabelled item
     await fireEvent.click(
-      screen.getByTestId("distribution-bar-__unlabelled__"),
+      screen.getByTestId("distribution-bar-synthetic:unlabelled"),
     );
     expect(onSelectUnlabelled).toHaveBeenCalledTimes(1);
+  });
+
+  it("keeps real sentinel-like labels distinct from Unlabelled and preserves their value", async () => {
+    const onSelectLabel = vi.fn();
+    const onSelectUnlabelled = vi.fn();
+    const summary: VaultDistributionSummary = {
+      ...mockSummary,
+      labels: [
+        {
+          id: "label:__unlabelled__",
+          label: "__unlabelled__",
+          labelValue: "__unlabelled__",
+          count: 1,
+          totalCount: 1,
+          percentage: 50,
+          icon: "icon-[lucide--tag]",
+        },
+        {
+          id: "synthetic:unlabelled",
+          label: "Unlabelled",
+          count: 1,
+          totalCount: 1,
+          percentage: 50,
+          isUnlabelled: true,
+          icon: "icon-[lucide--tag-off]",
+        },
+      ],
+    };
+
+    render(VaultDistributionChart, {
+      summary,
+      onSelectCategory: vi.fn(),
+      onSelectLabel,
+      onSelectUnlabelled,
+    });
+
+    await fireEvent.click(screen.getByTestId("distribution-group-label"));
+    await fireEvent.click(
+      screen.getByTestId("distribution-bar-label:__unlabelled__"),
+    );
+    await fireEvent.click(
+      screen.getByTestId("distribution-bar-synthetic:unlabelled"),
+    );
+
+    expect(onSelectLabel).toHaveBeenCalledExactlyOnceWith("__unlabelled__");
+    expect(onSelectUnlabelled).toHaveBeenCalledOnce();
+  });
+
+  it("links the distribution tab to its panel and supports arrow navigation", async () => {
+    render(VaultDistributionChart, {
+      summary: mockSummary,
+      onSelectCategory: vi.fn(),
+      onSelectLabel: vi.fn(),
+      onSelectUnlabelled: vi.fn(),
+    });
+
+    const categoryTab = screen.getByTestId("distribution-group-category");
+    const labelTab = screen.getByTestId("distribution-group-label");
+    expect(categoryTab.getAttribute("aria-controls")).toBe(
+      "distribution-panel",
+    );
+    expect(screen.getByRole("tabpanel").getAttribute("aria-labelledby")).toBe(
+      categoryTab.id,
+    );
+
+    await fireEvent.keyDown(categoryTab, { key: "ArrowRight" });
+    expect(labelTab.getAttribute("aria-selected")).toBe("true");
+    expect(labelTab.getAttribute("tabindex")).toBe("0");
+    expect(screen.getByRole("tabpanel").getAttribute("aria-labelledby")).toBe(
+      labelTab.id,
+    );
   });
 
   it("toggles to data table view and allows row action clicks", async () => {

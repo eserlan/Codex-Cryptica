@@ -598,6 +598,7 @@
   function handleSelectDistributionUnlabelled() {
     measureTableOperation("table_filter", () => {
       activeAuditPresetId = null;
+      labelFilters = new Set();
       columnFilters = {
         ...columnFilters,
         labelMode: columnFilters.labelMode === "missing" ? "all" : "missing",

@@ -285,6 +285,14 @@ describe("/table page", () => {
     await fireEvent.click(findingsTab);
 
     expect(screen.getByTestId("audit-card-missing-images")).toBeTruthy();
+    expect(findingsTab.getAttribute("aria-controls")).toBe("audit-panel");
+    expect(screen.getByRole("tabpanel").getAttribute("aria-labelledby")).toBe(
+      findingsTab.id,
+    );
+
+    await fireEvent.keyDown(findingsTab, { key: "ArrowRight" });
+    expect(distTab.getAttribute("aria-selected")).toBe("true");
+    expect(distTab.getAttribute("tabindex")).toBe("0");
   });
 
   it("filters table entities when clicking a distribution category bar", async () => {
@@ -325,12 +333,35 @@ describe("/table page", () => {
     const labelGroupBtn = screen.getByTestId("distribution-group-label");
     await fireEvent.click(labelGroupBtn);
 
-    const heroBar = screen.getByTestId("distribution-bar-Hero");
+    const heroBar = screen.getByTestId("distribution-bar-label:Hero");
     await fireEvent.click(heroBar);
 
     const rows = screen.getAllByTestId("entity-table-row");
     expect(rows).toHaveLength(1);
     expect(rows[0].textContent).toContain("Aldric");
+  });
+
+  it("clears an active label filter when drilling down to unlabelled entities", async () => {
+    mockPage.url = new URL("http://localhost/table?mode=overview");
+    mutableVault.allEntities = [
+      entity({ id: "e1", title: "Unlabelled", labels: [] }),
+      entity({ id: "e2", title: "Labelled", labels: ["reviewed"] }),
+    ];
+    render(RoutePage);
+
+    await fireEvent.click(screen.getByTestId("distribution-group-label"));
+    await fireEvent.click(
+      screen.getByTestId("distribution-bar-label:reviewed"),
+    );
+    expect(screen.getAllByTestId("entity-table-row")).toHaveLength(1);
+
+    await fireEvent.click(
+      screen.getByTestId("distribution-bar-synthetic:unlabelled"),
+    );
+
+    const rows = screen.getAllByTestId("entity-table-row");
+    expect(rows).toHaveLength(1);
+    expect(rows[0].textContent).toContain("Unlabelled");
   });
 
   it("applies the unconnected characters preset to the table rows", async () => {

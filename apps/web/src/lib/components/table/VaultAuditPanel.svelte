@@ -55,6 +55,28 @@
     localTab = tab;
     onTabChange?.(tab);
   }
+
+  function handleTabKeydown(event: KeyboardEvent) {
+    let nextTab: "findings" | "distribution";
+    if (event.key === "ArrowRight" || event.key === "ArrowLeft") {
+      nextTab = currentTab === "findings" ? "distribution" : "findings";
+    } else if (event.key === "Home") {
+      nextTab = "findings";
+    } else if (event.key === "End") {
+      nextTab = "distribution";
+    } else {
+      return;
+    }
+
+    event.preventDefault();
+    switchTab(nextTab);
+    const index = nextTab === "findings" ? 0 : 1;
+    const buttons =
+      event.currentTarget instanceof HTMLElement
+        ? event.currentTarget.querySelectorAll<HTMLElement>('[role="tab"]')
+        : [];
+    buttons[index]?.focus();
+  }
 </script>
 
 {#snippet findingCards()}
@@ -191,6 +213,23 @@
   </div>
 {/snippet}
 
+{#snippet auditPanelContent()}
+  {#if currentTab === "findings" || !distributionSummary}
+    {@render findingCards()}
+    {@render quickPresets()}
+  {:else}
+    <VaultDistributionChart
+      summary={distributionSummary}
+      {activeTypeFilter}
+      {activeLabelFilter}
+      {activeLabelMode}
+      onSelectCategory={onSelectCategory ?? (() => {})}
+      onSelectLabel={onSelectLabel ?? (() => {})}
+      onSelectUnlabelled={onSelectUnlabelled ?? (() => {})}
+    />
+  {/if}
+{/snippet}
+
 <div
   id="vault-audit-panel"
   class="rounded-xl border border-theme-border bg-theme-surface/90 p-3.5 sm:p-4 shadow-sm backdrop-blur transition-all flex flex-col gap-3.5"
@@ -235,11 +274,16 @@
     <div
       class="flex items-center gap-1 border-b border-theme-border/50 pb-2"
       role="tablist"
+      tabindex="-1"
       aria-label="Vault audit views"
+      onkeydown={handleTabKeydown}
     >
       <button
         type="button"
         role="tab"
+        id="audit-findings-tab"
+        aria-controls="audit-panel"
+        tabindex={currentTab === "findings" ? 0 : -1}
         aria-selected={currentTab === "findings"}
         onclick={() => switchTab("findings")}
         class="flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-theme-accent/40 {currentTab ===
@@ -265,6 +309,9 @@
       <button
         type="button"
         role="tab"
+        id="audit-distribution-tab"
+        aria-controls="audit-panel"
+        tabindex={currentTab === "distribution" ? 0 : -1}
         aria-selected={currentTab === "distribution"}
         onclick={() => switchTab("distribution")}
         class="flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-theme-accent/40 {currentTab ===
@@ -285,18 +332,14 @@
     </div>
   {/if}
 
-  {#if currentTab === "findings" || !distributionSummary}
-    {@render findingCards()}
-    {@render quickPresets()}
-  {:else}
-    <VaultDistributionChart
-      summary={distributionSummary}
-      {activeTypeFilter}
-      {activeLabelFilter}
-      {activeLabelMode}
-      onSelectCategory={onSelectCategory ?? (() => {})}
-      onSelectLabel={onSelectLabel ?? (() => {})}
-      onSelectUnlabelled={onSelectUnlabelled ?? (() => {})}
-    />
-  {/if}
+  <div
+    id="audit-panel"
+    role="tabpanel"
+    aria-labelledby={currentTab === "findings" || !distributionSummary
+      ? "audit-findings-tab"
+      : "audit-distribution-tab"}
+    tabindex="0"
+  >
+    {@render auditPanelContent()}
+  </div>
 </div>

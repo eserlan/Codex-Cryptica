@@ -47,7 +47,7 @@
     if (item.isUnlabelled) {
       return activeLabelMode === "missing";
     }
-    return activeLabelFilter === item.id;
+    return activeLabelFilter === item.labelValue;
   }
 
   function handleItemClick(item: DistributionItem) {
@@ -56,8 +56,36 @@
     } else if (item.isUnlabelled) {
       onSelectUnlabelled();
     } else {
-      onSelectLabel(item.id);
+      onSelectLabel(item.labelValue ?? item.label);
     }
+  }
+
+  function handleTabKeydown(
+    event: KeyboardEvent,
+    selectedIndex: number,
+    select: (index: number) => void,
+  ) {
+    const lastIndex = 1;
+    let nextIndex: number;
+    if (event.key === "ArrowRight") {
+      nextIndex = (selectedIndex + 1) % (lastIndex + 1);
+    } else if (event.key === "ArrowLeft") {
+      nextIndex = (selectedIndex + lastIndex) % (lastIndex + 1);
+    } else if (event.key === "Home") {
+      nextIndex = 0;
+    } else if (event.key === "End") {
+      nextIndex = lastIndex;
+    } else {
+      return;
+    }
+
+    event.preventDefault();
+    select(nextIndex);
+    const tabs =
+      event.currentTarget instanceof HTMLElement
+        ? event.currentTarget.querySelectorAll<HTMLElement>('[role="tab"]')
+        : [];
+    tabs[nextIndex]?.focus();
   }
 
   function getBarWidth(count: number): number {
@@ -174,11 +202,19 @@
     <div
       class="inline-flex rounded-lg border border-theme-border/70 bg-theme-bg/60 p-0.5 text-xs font-medium"
       role="tablist"
+      tabindex="-1"
       aria-label="Group distribution by"
+      onkeydown={(event) =>
+        handleTabKeydown(event, groupBy === "category" ? 0 : 1, (index) => {
+          groupBy = index === 0 ? "category" : "label";
+        })}
     >
       <button
         type="button"
         role="tab"
+        id="distribution-category-tab"
+        aria-controls="distribution-panel"
+        tabindex={groupBy === "category" ? 0 : -1}
         aria-selected={groupBy === "category"}
         onclick={() => (groupBy = "category")}
         class="flex items-center gap-1.5 rounded-md px-2.5 py-1 transition {groupBy ===
@@ -198,6 +234,9 @@
       <button
         type="button"
         role="tab"
+        id="distribution-label-tab"
+        aria-controls="distribution-panel"
+        tabindex={groupBy === "label" ? 0 : -1}
         aria-selected={groupBy === "label"}
         onclick={() => (groupBy = "label")}
         class="flex items-center gap-1.5 rounded-md px-2.5 py-1 transition {groupBy ===
@@ -334,22 +373,31 @@
 >
   {@render toolbar()}
 
-  {#if groupBy === "label"}
-    {@render labelNote()}
-  {/if}
+  <div
+    id="distribution-panel"
+    role="tabpanel"
+    aria-labelledby={groupBy === "category"
+      ? "distribution-category-tab"
+      : "distribution-label-tab"}
+    tabindex="0"
+  >
+    {#if groupBy === "label"}
+      {@render labelNote()}
+    {/if}
 
-  {#if currentItems.length === 0}
-    <div
-      class="rounded-lg border border-dashed border-theme-border p-6 text-center text-xs text-theme-muted"
-      data-testid="distribution-empty"
-    >
-      {groupBy === "category"
-        ? "No categories found in this vault."
-        : "No labels found in this vault."}
-    </div>
-  {:else if viewMode === "bars"}
-    {@render barsView()}
-  {:else}
-    {@render tableView()}
-  {/if}
+    {#if currentItems.length === 0}
+      <div
+        class="rounded-lg border border-dashed border-theme-border p-6 text-center text-xs text-theme-muted"
+        data-testid="distribution-empty"
+      >
+        {groupBy === "category"
+          ? "No categories found in this vault."
+          : "No labels found in this vault."}
+      </div>
+    {:else if viewMode === "bars"}
+      {@render barsView()}
+    {:else}
+      {@render tableView()}
+    {/if}
+  </div>
 </div>

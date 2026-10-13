@@ -5,6 +5,7 @@ import { getIconClass } from "$lib/utils/icons";
 export interface DistributionItem {
   id: string;
   label: string;
+  labelValue?: string;
   count: number;
   totalCount: number;
   percentage: number;
@@ -130,8 +131,9 @@ function computeLabelItems(
   for (const [label, totalCount] of allData.counts.entries()) {
     const count = filteredData.counts.get(label) ?? 0;
     items.push({
-      id: label,
+      id: `label:${label}`,
       label,
+      labelValue: label,
       count,
       totalCount,
       percentage: calcPercentage(count, totalFiltered),
@@ -141,7 +143,7 @@ function computeLabelItems(
 
   if (allData.unlabelled > 0) {
     items.push({
-      id: "__unlabelled__",
+      id: "synthetic:unlabelled",
       label: "Unlabelled",
       count: filteredData.unlabelled,
       totalCount: allData.unlabelled,

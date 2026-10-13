@@ -142,28 +142,29 @@ describe("vaultDistribution", () => {
     expect(summary.unlabelledTotalCount).toBe(1);
 
     // Labels sorted by count: Pagen (2), Major (2), LegacyTag (1), Unlabelled (1)
-    const pagen = summary.labels.find((l) => l.id === "Pagen");
+    const pagen = summary.labels.find((l) => l.labelValue === "Pagen");
     expect(pagen).toEqual({
-      id: "Pagen",
+      id: "label:Pagen",
       label: "Pagen",
+      labelValue: "Pagen",
       count: 2,
       totalCount: 2,
       percentage: 40,
       icon: "icon-[lucide--tag]",
     });
 
-    const major = summary.labels.find((l) => l.id === "Major");
+    const major = summary.labels.find((l) => l.labelValue === "Major");
     expect(major).toBeDefined();
     expect(major?.count).toBe(2);
 
-    const legacy = summary.labels.find((l) => l.id === "LegacyTag");
+    const legacy = summary.labels.find((l) => l.labelValue === "LegacyTag");
     expect(legacy).toBeDefined();
     expect(legacy?.count).toBe(1);
 
     const unlabelled = summary.labels.find((l) => l.isUnlabelled);
     expect(unlabelled).toBeDefined();
     expect(unlabelled).toEqual({
-      id: "__unlabelled__",
+      id: "synthetic:unlabelled",
       label: "Unlabelled",
       count: 1,
       totalCount: 1,
@@ -182,11 +183,31 @@ describe("vaultDistribution", () => {
       mockCategories,
     );
 
-    expect(summary.labels.find((label) => label.id === "Hero")).toMatchObject({
-      count: 1,
-      totalCount: 1,
-      percentage: 100,
-    });
+    expect(
+      summary.labels.find((label) => label.labelValue === "Hero"),
+    ).toMatchObject({ count: 1, totalCount: 1, percentage: 100 });
+  });
+
+  it("keeps user labels distinct from the synthetic Unlabelled row", () => {
+    const entities = [
+      createEntity("1", "character", ["__unlabelled__"]),
+      createEntity("2", "character"),
+    ];
+
+    const summary = computeVaultDistribution(
+      entities,
+      entities,
+      mockCategories,
+    );
+    const labelItem = summary.labels.find(
+      (item) => item.labelValue === "__unlabelled__",
+    );
+    const unlabelledItem = summary.labels.find((item) => item.isUnlabelled);
+
+    expect(labelItem?.id).toBe("label:__unlabelled__");
+    expect(labelItem?.labelValue).toBe("__unlabelled__");
+    expect(unlabelledItem?.id).toBe("synthetic:unlabelled");
+    expect(labelItem?.id).not.toBe(unlabelledItem?.id);
   });
 
   it("correctly tracks filtered counts alongside total vault counts", () => {
