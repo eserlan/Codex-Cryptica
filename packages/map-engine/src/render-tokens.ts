@@ -7,11 +7,12 @@ import {
   drawRotationHandle,
   drawRoundedRectPath,
   traceTokenShape,
+  type TokenShape,
 } from "./render-token-overlays";
 import { drawCollapsedNote, drawNoteFace } from "./render-notes";
 import { drawStatusEffects } from "./token-status-icons";
 import { TOKEN_ROTATION_HANDLE_DISTANCE } from "./token-geometry";
-import type { CanvasCache, RenderToken } from "./renderer-types";
+import type { CanvasCache, RenderOptions, RenderToken } from "./renderer-types";
 
 // Reusable scratch points to minimize GC pressure during animation frames
 const scratchPinPos = { x: 0, y: 0 };
@@ -54,6 +55,81 @@ export function drawPins(
   }
 }
 
+export function resolveTokenShape(
+  token: RenderToken,
+  grid?: RenderOptions["grid"],
+): TokenShape {
+  if (
+    token.baseShape === "hex" ||
+    token.baseShape === "hex-pointy" ||
+    token.baseShape === "hex-flat"
+  ) {
+    return token.baseShape;
+  }
+  if (token.kind === "tile") {
+    if (grid?.type === "hex-flat") return "hex-flat";
+    if (grid?.type === "hex-pointy") return "hex-pointy";
+    if (grid?.type === "hex") return "hex";
+    return token.baseShape ?? "square";
+  }
+  return token.baseShape ?? "circle";
+}
+
+interface TokenViewportBounds {
+  center: { x: number; y: number };
+  width: number;
+  height: number;
+}
+
+const scratchTokenBounds: TokenViewportBounds = {
+  center: scratchTokenCenter,
+  width: 0,
+  height: 0,
+};
+
+function getVisibleTokenBounds(
+  token: RenderToken,
+  transform: ViewportTransform,
+  canvasSize: { width: number; height: number },
+): TokenViewportBounds | null {
+  scratchTokenPt.x = token.x;
+  scratchTokenPt.y = token.y;
+  const topLeft = imageToViewport(
+    scratchTokenPt,
+    transform,
+    canvasSize,
+    scratchTokenTopLeft,
+  );
+  scratchTokenPt.x = token.x + token.width;
+  scratchTokenPt.y = token.y + token.height;
+  const bottomRight = imageToViewport(
+    scratchTokenPt,
+    transform,
+    canvasSize,
+    scratchTokenBottomRight,
+  );
+
+  const minX = Math.min(topLeft.x, bottomRight.x);
+  const minY = Math.min(topLeft.y, bottomRight.y);
+  const width = Math.abs(bottomRight.x - topLeft.x);
+  const height = Math.abs(bottomRight.y - topLeft.y);
+
+  if (
+    minX > canvasSize.width + 40 ||
+    minY > canvasSize.height + 40 ||
+    minX + width < -40 ||
+    minY + height < -40
+  ) {
+    return null;
+  }
+
+  scratchTokenCenter.x = minX + width / 2;
+  scratchTokenCenter.y = minY + height / 2;
+  scratchTokenBounds.width = width;
+  scratchTokenBounds.height = height;
+  return scratchTokenBounds;
+}
+
 export function drawTokens(
   ctx: CanvasRenderingContext2D,
   tokens: RenderToken[],
@@ -61,54 +137,70 @@ export function drawTokens(
   canvasSize: { width: number; height: number },
   accentColor: string | undefined,
   cache: CanvasCache,
+  grid?: RenderOptions["grid"],
+  renderSelectionOverlays = true,
 ) {
   for (const token of tokens) {
     if (token.visible === false) continue;
+    const bounds = getVisibleTokenBounds(token, transform, canvasSize);
+    if (!bounds) continue;
 
-    scratchTokenPt.x = token.x;
-    scratchTokenPt.y = token.y;
-    const topLeft = imageToViewport(
-      scratchTokenPt,
-      transform,
-      canvasSize,
-      scratchTokenTopLeft,
-    );
-    scratchTokenPt.x = token.x + token.width;
-    scratchTokenPt.y = token.y + token.height;
-    const bottomRight = imageToViewport(
-      scratchTokenPt,
-      transform,
-      canvasSize,
-      scratchTokenBottomRight,
-    );
-
-    const minX = Math.min(topLeft.x, bottomRight.x);
-    const minY = Math.min(topLeft.y, bottomRight.y);
-    const width = Math.abs(bottomRight.x - topLeft.x);
-    const height = Math.abs(bottomRight.y - topLeft.y);
-
-    if (
-      minX > canvasSize.width + 40 ||
-      minY > canvasSize.height + 40 ||
-      minX + width < -40 ||
-      minY + height < -40
-    ) {
-      continue;
-    }
-
-    const center = scratchTokenCenter;
-    center.x = minX + width / 2;
-    center.y = minY + height / 2;
     drawToken(
       ctx,
       token,
-      center,
-      width,
-      height,
+      bounds.center,
+      bounds.width,
+      bounds.height,
       transform.zoom,
       accentColor,
       cache,
+      grid,
+      renderSelectionOverlays,
     );
+  }
+}
+
+export function drawTokenSelectionOverlays(
+  ctx: CanvasRenderingContext2D,
+  tokens: RenderToken[],
+  transform: ViewportTransform,
+  canvasSize: { width: number; height: number },
+  accentColor: string | undefined,
+  grid?: RenderOptions["grid"],
+) {
+  for (const token of tokens) {
+    if (token.visible === false) continue;
+    if (!token.active && !token.selected) continue;
+    const bounds = getVisibleTokenBounds(token, transform, canvasSize);
+    if (!bounds) continue;
+
+    const diameter = Math.max(1, Math.min(bounds.width, bounds.height));
+    const radius = diameter / 2;
+    const shape = resolveTokenShape(token, grid);
+
+    drawSelectionRing(
+      ctx,
+      token,
+      bounds.center,
+      bounds.width,
+      bounds.height,
+      radius,
+      shape,
+      accentColor,
+    );
+
+    if (token.primarySelected ?? token.selected) {
+      drawRotationHandle(
+        ctx,
+        bounds.center.x,
+        bounds.center.y,
+        bounds.width,
+        bounds.height,
+        token.rotation,
+        accentColor || "#3b82f6",
+        TOKEN_ROTATION_HANDLE_DISTANCE * transform.zoom,
+      );
+    }
   }
 }
 
@@ -121,10 +213,12 @@ function drawToken(
   zoom: number,
   accentColor: string | undefined,
   cache: CanvasCache,
+  grid?: RenderOptions["grid"],
+  renderSelectionOverlays = true,
 ) {
   const diameter = Math.max(1, Math.min(width, height));
   const radius = diameter / 2;
-  const shape = token.baseShape ?? "circle";
+  const shape = resolveTokenShape(token, grid);
 
   ctx.save();
   ctx.translate(center.x, center.y);
@@ -134,16 +228,18 @@ function drawToken(
   drawTokenFill(ctx, token, width, height, diameter, cache);
   ctx.restore();
 
-  drawSelectionRing(
-    ctx,
-    token,
-    center,
-    width,
-    height,
-    radius,
-    shape,
-    accentColor,
-  );
+  if (renderSelectionOverlays) {
+    drawSelectionRing(
+      ctx,
+      token,
+      center,
+      width,
+      height,
+      radius,
+      shape,
+      accentColor,
+    );
+  }
   drawVisionRing(ctx, token, center, width, height, shape);
   if (token.facingIndicator) {
     ctx.save();
@@ -152,7 +248,7 @@ function drawToken(
     ctx.restore();
   }
 
-  if (token.primarySelected ?? token.selected) {
+  if (renderSelectionOverlays && (token.primarySelected ?? token.selected)) {
     drawRotationHandle(
       ctx,
       center.x,
@@ -310,7 +406,7 @@ function drawSelectionRing(
   width: number,
   height: number,
   radius: number,
-  shape: NonNullable<RenderToken["baseShape"]>,
+  shape: TokenShape,
   accentColor: string | undefined,
 ) {
   if (!token.active && !token.selected) return;
@@ -353,7 +449,7 @@ function drawVisionRing(
   center: { x: number; y: number },
   width: number,
   height: number,
-  shape: NonNullable<RenderToken["baseShape"]>,
+  shape: TokenShape,
 ) {
   if (!token.visionActive) return;
   ctx.save();

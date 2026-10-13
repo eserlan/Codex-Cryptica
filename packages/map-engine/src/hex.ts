@@ -189,6 +189,41 @@ export function getHexCorners(
 }
 
 /**
+ * Test whether a point (in coordinates relative to the hex center) lies inside
+ * or on the boundary of a regular hexagon with the specified outer radius
+ * (center to corner vertex) and orientation.
+ */
+export function isPointInHex(
+  point: Point,
+  radius: number,
+  orientation: HexOrientation,
+  tolerance = 0,
+): boolean {
+  if (radius <= 0) return false;
+  const effectiveRadius = radius + tolerance;
+  const eps = 1e-5;
+  const qx = Math.abs(point.x);
+  const qy = Math.abs(point.y);
+  if (orientation === "flat") {
+    if (
+      qx > effectiveRadius + eps ||
+      qy > (effectiveRadius * SQRT_3) / 2 + eps
+    ) {
+      return false;
+    }
+    return SQRT_3 * qx + qy <= SQRT_3 * effectiveRadius + eps;
+  } else {
+    if (
+      qy > effectiveRadius + eps ||
+      qx > (effectiveRadius * SQRT_3) / 2 + eps
+    ) {
+      return false;
+    }
+    return qx + SQRT_3 * qy <= SQRT_3 * effectiveRadius + eps;
+  }
+}
+
+/**
  * Interpolate linear coordinates between two cube coordinates.
  */
 function cubeLerp(

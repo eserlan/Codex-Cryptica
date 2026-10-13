@@ -10,6 +10,7 @@ export interface TokenSelectionDependencies {
   addToSelection: (tokenId: string) => void;
   removeFromSelection: (tokenId: string) => void;
   setMultiSelection: (tokenIds: string[]) => void;
+  getGridType?: () => string;
 }
 
 export class TokenSelectionManager {
@@ -21,6 +22,7 @@ export class TokenSelectionManager {
       this.deps.project,
       point.x,
       point.y,
+      this.deps.getGridType?.(),
     );
   }
 

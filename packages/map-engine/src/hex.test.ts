@@ -14,6 +14,7 @@ import {
   formatHexCoordinate,
   normalizeHexOffset,
   fitHexGrid,
+  isPointInHex,
   type HexCoord,
   type HexGridConfig,
 } from "./hex";
@@ -294,5 +295,86 @@ describe("hex grid fitting", () => {
       expect(onNear.x).toBeCloseTo(centre.x, 6);
       expect(onNear.y).toBeCloseTo(centre.y, 6);
     }
+  });
+
+  describe("isPointInHex", () => {
+    it("returns false for non-positive radius", () => {
+      expect(isPointInHex({ x: 0, y: 0 }, 0, "flat")).toBe(false);
+      expect(isPointInHex({ x: 0, y: 0 }, -10, "pointy")).toBe(false);
+    });
+
+    it("identifies points inside and outside a flat-topped hex", () => {
+      const R = 50;
+      // Center is inside
+      expect(isPointInHex({ x: 0, y: 0 }, R, "flat")).toBe(true);
+
+      // Vertices are on boundary (inside)
+      const corners = getHexCorners({ x: 0, y: 0 }, R, "flat");
+      for (const corner of corners) {
+        expect(isPointInHex(corner, R, "flat")).toBe(true);
+      }
+
+      // Midpoints of edges are on boundary (inside)
+      for (let i = 0; i < 6; i++) {
+        const next = (i + 1) % 6;
+        const mid = {
+          x: (corners[i].x + corners[next].x) / 2,
+          y: (corners[i].y + corners[next].y) / 2,
+        };
+        expect(isPointInHex(mid, R, "flat")).toBe(true);
+      }
+
+      // Rectangular bounding box corner (R, (sqrt(3)/2) * R) is OUTSIDE the hex
+      const sqrt3 = Math.sqrt(3);
+      expect(isPointInHex({ x: R, y: (R * sqrt3) / 2 }, R, "flat")).toBe(false);
+      expect(isPointInHex({ x: -R, y: (R * sqrt3) / 2 }, R, "flat")).toBe(
+        false,
+      );
+      expect(isPointInHex({ x: R, y: (-R * sqrt3) / 2 }, R, "flat")).toBe(
+        false,
+      );
+      expect(isPointInHex({ x: -R, y: (-R * sqrt3) / 2 }, R, "flat")).toBe(
+        false,
+      );
+
+      // Points strictly outside
+      expect(isPointInHex({ x: R + 1, y: 0 }, R, "flat")).toBe(false);
+      expect(isPointInHex({ x: 0, y: (R * sqrt3) / 2 + 1 }, R, "flat")).toBe(
+        false,
+      );
+    });
+
+    it("identifies points inside and outside a pointy-topped hex", () => {
+      const R = 60;
+      // Center is inside
+      expect(isPointInHex({ x: 0, y: 0 }, R, "pointy")).toBe(true);
+
+      // Vertices are on boundary (inside)
+      const corners = getHexCorners({ x: 0, y: 0 }, R, "pointy");
+      for (const corner of corners) {
+        expect(isPointInHex(corner, R, "pointy")).toBe(true);
+      }
+
+      // Rectangular bounding box corners are OUTSIDE the hex
+      const sqrt3 = Math.sqrt(3);
+      expect(isPointInHex({ x: (R * sqrt3) / 2, y: R }, R, "pointy")).toBe(
+        false,
+      );
+      expect(isPointInHex({ x: (-R * sqrt3) / 2, y: R }, R, "pointy")).toBe(
+        false,
+      );
+      expect(isPointInHex({ x: (R * sqrt3) / 2, y: -R }, R, "pointy")).toBe(
+        false,
+      );
+      expect(isPointInHex({ x: (-R * sqrt3) / 2, y: -R }, R, "pointy")).toBe(
+        false,
+      );
+
+      // Points strictly outside
+      expect(isPointInHex({ x: 0, y: R + 2 }, R, "pointy")).toBe(false);
+      expect(isPointInHex({ x: (R * sqrt3) / 2 + 2, y: 0 }, R, "pointy")).toBe(
+        false,
+      );
+    });
   });
 });

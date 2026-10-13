@@ -64,6 +64,7 @@ export class TokenDragHandler {
       this.deps.project,
       viewportPoint.x,
       viewportPoint.y,
+      this.deps.getGridConfig?.()?.type,
     );
 
     this.blockedToken = null;

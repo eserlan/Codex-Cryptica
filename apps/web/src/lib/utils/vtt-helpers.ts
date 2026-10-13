@@ -1,4 +1,5 @@
 import type { Point, ViewportTransform } from "schema";
+import { isPointInHex, type HexOrientation } from "map-engine";
 import type { Token, MeasurementState } from "../../types/vtt";
 
 export function hashToColor(input: string) {
@@ -72,11 +73,42 @@ export function projectRectToViewport(
   };
 }
 
+function isPointInTokenHex(
+  token: Token,
+  point: Point,
+  bounds: { minX: number; maxX: number; minY: number; maxY: number },
+  gridType?: string,
+): boolean {
+  const orientation: HexOrientation =
+    token.baseShape === "hex-flat" || gridType === "hex-flat"
+      ? "flat"
+      : token.baseShape === "hex-pointy" || gridType === "hex-pointy"
+        ? "pointy"
+        : bounds.maxX - bounds.minX > bounds.maxY - bounds.minY
+          ? "flat"
+          : "pointy";
+  const width = bounds.maxX - bounds.minX;
+  const height = bounds.maxY - bounds.minY;
+  const radius = orientation === "flat" ? width / 2 : height / 2;
+  const centerX = (bounds.minX + bounds.maxX) / 2;
+  const centerY = (bounds.minY + bounds.maxY) / 2;
+  const dx = point.x - centerX;
+  const dy = point.y - centerY;
+  // fallow-ignore-next-line code-duplication
+  const radians = ((token.rotation ?? 0) * Math.PI) / 180;
+  const localX = dx * Math.cos(radians) + dy * Math.sin(radians);
+  const localY = -dx * Math.sin(radians) + dy * Math.cos(radians);
+
+  return isPointInHex({ x: localX, y: localY }, radius, orientation);
+}
+
+// fallow-ignore-next-line complexity
 export function hitTestToken(
   tokens: Token[],
   project: (point: Point) => Point,
   x: number,
   y: number,
+  gridType?: string,
 ): Token | null {
   let bestHit: Token | null = null;
   let bestZIndex = -Infinity;
@@ -93,13 +125,25 @@ export function hitTestToken(
     const minY = Math.min(topLeft.y, bottomRight.y);
     const maxY = Math.max(topLeft.y, bottomRight.y);
 
+    if (x < minX || x > maxX || y < minY || y > maxY) {
+      continue;
+    }
+
+    const isHex =
+      token.baseShape === "hex" ||
+      token.baseShape === "hex-pointy" ||
+      token.baseShape === "hex-flat" ||
+      (token.kind === "tile" &&
+        (gridType === "hex-pointy" || gridType === "hex-flat"));
+
     if (
-      x >= minX &&
-      x <= maxX &&
-      y >= minY &&
-      y <= maxY &&
-      token.zIndex >= bestZIndex
+      isHex &&
+      !isPointInTokenHex(token, { x, y }, { minX, maxX, minY, maxY }, gridType)
     ) {
+      continue;
+    }
+
+    if (token.zIndex >= bestZIndex) {
       bestHit = token;
       bestZIndex = token.zIndex;
     }

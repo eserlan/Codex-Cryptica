@@ -7,7 +7,8 @@ import type { HexLabelConfig } from "./hex-labels";
 export type SessionMode = "exploration" | "combat";
 export type TokenVisibility = "all" | "gm-only";
 export type LegacyTokenVisibility = TokenVisibility | "owner-only";
-export type TokenBaseShape = "circle" | "square";
+export type TokenBaseShape =
+  "circle" | "square" | "hex" | "hex-pointy" | "hex-flat";
 /** What a map element *is*: a combatant, a piece of terrain art, or a GM note
  * pinned to a spot on the map. Governs defaults and how it renders, not which
  * layer it sits on (see `MapLayer`). */
@@ -213,6 +214,21 @@ export function normalizeTokenVisibility(
 
 export const normalizeTokenImageFocus = normalizeImageFocus;
 
+export function normalizeTokenBaseShape(
+  shape?: TokenBaseShape,
+): TokenBaseShape {
+  if (
+    shape === "square" ||
+    shape === "hex" ||
+    shape === "hex-pointy" ||
+    shape === "hex-flat"
+  ) {
+    return shape;
+  }
+  return "circle";
+}
+
+// fallow-ignore-next-line complexity
 export function normalizeToken(
   token:
     | Token
@@ -229,7 +245,7 @@ export function normalizeToken(
     ownerPeerId: token.ownerPeerId ?? null,
     ownerGuestName: token.ownerGuestName ?? null,
     visibleTo: normalizeTokenVisibility(token.visibleTo),
-    baseShape: token.baseShape === "square" ? "square" : "circle",
+    baseShape: normalizeTokenBaseShape(token.baseShape),
     facingIndicator: token.facingIndicator === true,
     imageFocus: normalizeTokenImageFocus(token.imageFocus),
     statusEffects: [...(token.statusEffects ?? [])],

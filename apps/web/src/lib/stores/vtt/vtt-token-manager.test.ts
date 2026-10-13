@@ -136,6 +136,47 @@ describe("VTTTokenManager.addToken", () => {
     expect(addTokenToInitiativeState).not.toHaveBeenCalled();
   });
 
+  it("defaults tile baseShape to hex-flat on a hex-flat grid and hex-pointy on a hex-pointy grid", () => {
+    const { manager: flatManager } = createManager({
+      getMapStore: () => ({
+        activeMap: null,
+        gridType: "hex-flat",
+        gridSize: 50,
+      }),
+    });
+    const flatTile = flatManager.addToken(
+      { name: "Hex flat tile", x: 0, y: 0, kind: "tile" },
+      true,
+    );
+    expect(flatTile.baseShape).toBe("hex-flat");
+
+    const { manager: pointyManager } = createManager({
+      getMapStore: () => ({
+        activeMap: null,
+        gridType: "hex-pointy",
+        gridSize: 50,
+      }),
+    });
+    const pointyTile = pointyManager.addToken(
+      { name: "Hex pointy tile", x: 0, y: 0, kind: "tile" },
+      true,
+    );
+    expect(pointyTile.baseShape).toBe("hex-pointy");
+
+    const { manager: squareManager } = createManager({
+      getMapStore: () => ({
+        activeMap: null,
+        gridType: "square",
+        gridSize: 50,
+      }),
+    });
+    const squareTile = squareManager.addToken(
+      { name: "Square tile", x: 0, y: 0, kind: "tile" },
+      true,
+    );
+    expect(squareTile.baseShape).toBe("square");
+  });
+
   it("keeps a hidden token visible to the GM while guest visibility stays restricted", () => {
     const { manager } = createManager();
     const note = manager.addToken(

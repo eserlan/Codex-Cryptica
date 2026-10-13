@@ -2,6 +2,7 @@ import type {
   DragPreview,
   SessionMode,
   Token,
+  TokenBaseShape,
   TokenCreationInput,
   TokenStateUpdateInput,
   VTTMessage,
@@ -299,6 +300,7 @@ export class VTTTokenManager {
     const mapStore = this.deps.getMapStore();
     const kind = input.kind ?? "token";
     const isNote = kind === "note";
+    const isTile = kind === "tile";
     // gridSize can legitimately be very small — it's fit to a tile's native
     // pixel grid (e.g. ~15px for some geomorph packs), which is correct for
     // alignment/snapping but useless as a default character-token size: a
@@ -313,6 +315,15 @@ export class VTTTokenManager {
     // asks for an explicit size wants the note at that size, so it lands open.
     const landsCollapsed = isNote && input.width === undefined;
     const size = landsCollapsed ? this.collapsedNoteSize() : defaultSize;
+    const defaultShape: TokenBaseShape = isNote
+      ? "square"
+      : isTile
+        ? mapStore.gridType === "hex-flat"
+          ? "hex-flat"
+          : mapStore.gridType === "hex-pointy"
+            ? "hex-pointy"
+            : "square"
+        : "circle";
     return {
       id: this.idGenerator.uuid(),
       entityId: input.entityId ?? null,
@@ -322,7 +333,7 @@ export class VTTTokenManager {
       width: input.width ?? size,
       height: input.height ?? size,
       rotation: input.rotation ?? 0,
-      baseShape: input.baseShape ?? (isNote ? "square" : "circle"),
+      baseShape: input.baseShape ?? defaultShape,
       facingIndicator: input.facingIndicator ?? !isNote,
       zIndex: input.zIndex ?? Object.keys(this.tokens).length,
       ownerPeerId: input.ownerPeerId ?? null,

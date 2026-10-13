@@ -259,4 +259,41 @@ describe("TokenDragHandler", () => {
     expect(requestTokenMove).not.toHaveBeenCalled();
     expect(confirmTokenMove).not.toHaveBeenCalled();
   });
+
+  it("begins drag inside hex tile but ignores clicks in bounding box corners", () => {
+    const hexTile = token({
+      id: "tile-hex-drag",
+      kind: "tile",
+      baseShape: "hex-pointy",
+      x: 0,
+      y: 0,
+      width: 86.6,
+      height: 100,
+    });
+    const hexHandler = new TokenDragHandler({
+      getTokens: () => [hexTile],
+      project: (p: any) => p,
+      unproject: (p: any) => p,
+      isHostMode: () => true,
+      getPeerId: () => "peer-a",
+      canMoveToken: () => true,
+      moveToken,
+      requestTokenMove,
+      sendTokenMoveRequest,
+      confirmTokenMove,
+      setDraggingTokenId,
+      getGridConfig: () => ({
+        enabled: true,
+        type: "hex-pointy",
+        size: 50,
+        offsetX: 0,
+        offsetY: 0,
+      }),
+    } as any);
+
+    // Corner (x=2, y=2) is in bounding box but outside pointy hex
+    expect(hexHandler.begin({ x: 2, y: 2 })).toBeNull();
+    // Center (x=43.3, y=50) is inside pointy hex
+    expect(hexHandler.begin({ x: 43.3, y: 50 })?.id).toBe("tile-hex-drag");
+  });
 });

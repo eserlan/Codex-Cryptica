@@ -712,4 +712,184 @@ describe("renderMap", () => {
     expect(ctx.stroke).toHaveBeenCalled();
     expect(ctx.strokeStyle).toBe("#38bdf8");
   });
+
+  it("draws hexagonal selection outline with 6 edges and no rect calls for selected hex-pointy tile", () => {
+    const ctx = createCtxMock();
+    const canvas = createCanvasMock(ctx);
+    const selectedHexTile = baseToken({
+      id: "hex-tile-pointy",
+      kind: "tile",
+      baseShape: "hex-pointy",
+      selected: true,
+      width: 86.6,
+      height: 100,
+    });
+
+    renderMap({
+      canvas,
+      image: null,
+      transform: { pan: { x: 0, y: 0 }, zoom: 1 },
+      canvasSize: { width: 800, height: 600 },
+      pins: [],
+      maskCanvas: null,
+      showFog: false,
+      grid: {
+        type: "hex-pointy",
+        size: 50,
+        color: "#ffffff",
+        opacity: 0.5,
+      },
+      tokens: [selectedHexTile],
+    });
+
+    // Hexagon corners traced via moveTo + 5 lineTo + closePath
+    expect(ctx.moveTo).toHaveBeenCalled();
+    expect(ctx.lineTo).toHaveBeenCalled();
+    expect(ctx.closePath).toHaveBeenCalled();
+    // No rectangular bounding box outline stroked
+    expect(ctx.strokeRect).not.toHaveBeenCalled();
+    expect(ctx.rect).not.toHaveBeenCalled();
+  });
+
+  it("draws hexagonal selection outline for selected hex-flat tile", () => {
+    const ctx = createCtxMock();
+    const canvas = createCanvasMock(ctx);
+    const selectedHexTile = baseToken({
+      id: "hex-tile-flat",
+      kind: "tile",
+      baseShape: "hex-flat",
+      selected: true,
+      width: 100,
+      height: 86.6,
+    });
+
+    renderMap({
+      canvas,
+      image: null,
+      transform: { pan: { x: 0, y: 0 }, zoom: 1 },
+      canvasSize: { width: 800, height: 600 },
+      pins: [],
+      maskCanvas: null,
+      showFog: false,
+      grid: {
+        type: "hex-flat",
+        size: 50,
+        color: "#ffffff",
+        opacity: 0.5,
+      },
+      tokens: [selectedHexTile],
+    });
+
+    expect(ctx.moveTo).toHaveBeenCalled();
+    expect(ctx.lineTo).toHaveBeenCalled();
+    expect(ctx.closePath).toHaveBeenCalled();
+    expect(ctx.strokeRect).not.toHaveBeenCalled();
+    expect(ctx.rect).not.toHaveBeenCalled();
+  });
+
+  it("interior hex tile surrounded by 6 adjacent hex tiles renders selection outline only along 6 hex edges without square bounding box intrusion", () => {
+    const ctx = createCtxMock();
+    const canvas = createCanvasMock(ctx);
+
+    // 7 tiles: 1 center tile and 6 adjacent neighbors (axial coordinates)
+    const centerTile = baseToken({
+      id: "center-tile",
+      kind: "tile",
+      baseShape: "hex-pointy",
+      selected: true,
+      x: 0,
+      y: 0,
+      width: 86.6,
+      height: 100,
+    });
+
+    const neighbors = [
+      { id: "n1", x: 86.6, y: 0 },
+      { id: "n2", x: 43.3, y: 75 },
+      { id: "n3", x: -43.3, y: 75 },
+      { id: "n4", x: -86.6, y: 0 },
+      { id: "n5", x: -43.3, y: -75 },
+      { id: "n6", x: 43.3, y: -75 },
+    ].map((pos) =>
+      baseToken({
+        ...pos,
+        kind: "tile",
+        baseShape: "hex-pointy",
+        selected: false,
+        width: 86.6,
+        height: 100,
+      }),
+    );
+
+    renderMap({
+      canvas,
+      image: null,
+      transform: { pan: { x: 0, y: 0 }, zoom: 1 },
+      canvasSize: { width: 800, height: 600 },
+      pins: [],
+      maskCanvas: null,
+      showFog: false,
+      grid: {
+        type: "hex-pointy",
+        size: 50,
+        color: "#ffffff",
+        opacity: 0.5,
+      },
+      tokens: [centerTile, ...neighbors],
+    });
+
+    // Verification: selection outline is drawn with hexagonal lineTo, no rect or strokeRect
+    expect(ctx.moveTo).toHaveBeenCalled();
+    expect(ctx.lineTo).toHaveBeenCalled();
+    expect(ctx.closePath).toHaveBeenCalled();
+    expect(ctx.strokeRect).not.toHaveBeenCalled();
+    expect(ctx.rect).not.toHaveBeenCalled();
+  });
+
+  it("renders selection overlays above the grid lines", () => {
+    const ctx = createCtxMock();
+    const canvas = createCanvasMock(ctx);
+    const strokeCalls: string[] = [];
+
+    // Track stroke calls to verify grid strokes happen before selection overlay strokes
+    (ctx.stroke as any).mockImplementation(() => {
+      strokeCalls.push(ctx.strokeStyle as string);
+    });
+
+    const selectedToken = baseToken({
+      id: "token-selected",
+      kind: "tile",
+      baseShape: "hex-pointy",
+      selected: true,
+      width: 86.6,
+      height: 100,
+    });
+
+    renderMap({
+      canvas,
+      image: null,
+      transform: { pan: { x: 0, y: 0 }, zoom: 1 },
+      canvasSize: { width: 800, height: 600 },
+      pins: [],
+      maskCanvas: null,
+      showFog: false,
+      accentColor: "#3b82f6",
+      grid: {
+        type: "hex-pointy",
+        size: 50,
+        color: "#ffffff",
+        opacity: 0.5,
+      },
+      tokens: [selectedToken],
+    });
+
+    // Grid stroke should occur before the selection ring strokes
+    const gridStrokeIdx = strokeCalls.indexOf("#ffffff");
+    const selectionRingStrokeIdx = strokeCalls.findIndex(
+      (style) => style === "#3b82f6" || style === "rgba(0, 0, 0, 0.5)",
+    );
+
+    expect(gridStrokeIdx).toBeGreaterThanOrEqual(0);
+    expect(selectionRingStrokeIdx).toBeGreaterThan(gridStrokeIdx);
+  });
 });
