@@ -22,7 +22,7 @@ type Fixture = {
   content: string;
   aliases?: string[];
   lore?: string;
-  visibility?: "visible" | "hidden";
+  labels?: string[];
   connections?: { target: string; label: string }[];
 };
 type Case = {
@@ -64,7 +64,7 @@ const records: Fixture[] = [
     content: "The Cobalt Protocol requires three lanterns to signal a safe approach to the harbour." },
   { id: "captain", title: "Captain Maren", aliases: ["Watch Captain"], type: "character",
     content: "Captain Maren survived the river ambush and was promoted to command the Eastern Gate." },
-  { id: "shadow", title: "Shadow Rite", type: "note", visibility: "hidden",
+  { id: "shadow", title: "Shadow Rite", type: "note", labels: ["hidden"],
     content: "GM SECRET: The Shadow Rite will open the gateway beneath the Black Tower." },
   { id: "wardenA", title: "Warden Holt", type: "character", aliases: ["The Warden"],
     content: "Warden Holt patrols the northern ridge." },
@@ -110,7 +110,7 @@ const cases: Case[] = [
 function namedCandidates(query: string, guest: boolean): Fixture[] {
   const lower = query.toLocaleLowerCase();
   const named = records.filter((r) => {
-    if (guest && r.visibility === "hidden") return false;
+    if (guest && r.labels?.includes("hidden")) return false;
     return [r.title, ...(r.aliases || [])].some((name) => {
       if (name.length < 3) return false;
       const escaped = name.toLocaleLowerCase().replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -122,7 +122,7 @@ function namedCandidates(query: string, guest: boolean): Fixture[] {
     const matchingAliases = (r.aliases || []).filter((a) => lower.includes(a.toLocaleLowerCase()));
     return !matchingAliases.some((a) =>
       records.filter((other) =>
-        other.visibility !== (guest ? "hidden" : "__none__") &&
+        (!guest || !other.labels?.includes("hidden")) &&
         [other.title, ...(other.aliases || [])].some((name) => name.toLocaleLowerCase() === a.toLocaleLowerCase())
       ).length > 1
     );
@@ -190,12 +190,18 @@ async function evaluate(
     // Did context preserve at least the distinctive end of the source text?
     return !retrieved.content.includes(fact);
   });
+  const primaryIsCorrect = c.kind === "negative"
+    ? !retrieved.primaryEntityId && retrieved.sourceIds.length === 0
+    : c.kind === "relationship"
+      ? c.required.includes(retrieved.primaryEntityId || "")
+      : retrieved.primaryEntityId === c.required[0];
   return {
     id: c.id, kind: c.kind, query: c.query,
+    primaryIsCorrect,
     primaryEntityId: retrieved.primaryEntityId || null,
     sourceIds: retrieved.sourceIds,
     found, missing, missingFacts, forbidden,
-    grounded: missing.length === 0 && missingFacts.length === 0 && forbidden.length === 0,
+    grounded: missing.length === 0 && missingFacts.length === 0 && forbidden.length === 0 && primaryIsCorrect,
     contextChars: retrieved.content.length, searchCalls, durationMs,
   };
 }
@@ -226,6 +232,7 @@ describe("Oracle RAG query planning A/B spike (#4063)", () => {
     const sum = (items: typeof a) => ({
       allRequiredSources: items.filter((r) => r.missing.length === 0).length,
       fullyGrounded: items.filter((r) => r.grounded).length,
+      primaryCorrect: items.filter((r) => r.primaryIsCorrect).length,
       totalSourceMatches: items.reduce((n, r) => n + r.found.length, 0),
       totalRequiredSources: cases.reduce((n, c) => n + c.required.length, 0),
       irrelevantSourceCount: items.reduce((n, r, i) =>
@@ -242,6 +249,7 @@ describe("Oracle RAG query planning A/B spike (#4063)", () => {
       baselineMissing: a[i].missing, plannerMissing: b[i].missing,
       baselineMissingFacts: a[i].missingFacts, plannerMissingFacts: b[i].missingFacts,
       baselinePrimary: a[i].primaryEntityId, plannerPrimary: b[i].primaryEntityId,
+      baselinePrimaryCorrect: a[i].primaryIsCorrect, plannerPrimaryCorrect: b[i].primaryIsCorrect,
       baselineSources: a[i].sourceIds, plannerSources: b[i].sourceIds,
       baselineMs: a[i].durationMs, plannerMs: b[i].durationMs,
     }));
