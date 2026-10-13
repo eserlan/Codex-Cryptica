@@ -41,11 +41,21 @@ describe("VTT domain normalization", () => {
 
     const invalid = normalizeToken({
       ...token,
-      baseShape: "hex" as any,
+      baseShape: "triangle" as any,
       facingIndicator: 1 as any,
     });
     expect(invalid.baseShape).toBe("circle");
     expect(invalid.facingIndicator).toBe(false);
+
+    expect(normalizeToken({ ...token, baseShape: "hex" }).baseShape).toBe(
+      "hex",
+    );
+    expect(
+      normalizeToken({ ...token, baseShape: "hex-pointy" }).baseShape,
+    ).toBe("hex-pointy");
+    expect(normalizeToken({ ...token, baseShape: "hex-flat" }).baseShape).toBe(
+      "hex-flat",
+    );
   });
 
   it("normalizes imageFocus, rejecting unknown values", () => {

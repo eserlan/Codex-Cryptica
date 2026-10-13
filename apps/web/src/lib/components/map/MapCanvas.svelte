@@ -5,6 +5,7 @@
   import { themeStore } from "../../stores/theme.svelte";
   import { hexToRgb, isFogHex } from "../../utils/color";
   import { renderMap } from "map-engine";
+  import { drawTilePlacementPreview } from "./tile-placement-preview";
   import type { Point } from "schema";
   import type { PingState, Token } from "../../../types/vtt";
   import type { MapInteractionManager } from "./map-interactions.svelte";
@@ -196,36 +197,21 @@
         });
         const size = tilePlacementPreview.size * mapStore.viewport.zoom;
         const height = tilePlacementPreview.height * mapStore.viewport.zoom;
-        ctx.save();
-        ctx.globalAlpha = 0.65;
-        ctx.setLineDash([8, 4]);
-        ctx.lineWidth = 2;
-        ctx.strokeStyle = tilePlacementPreview.valid
-          ? themeStore.activeTheme.tokens.primary
-          : "#ef4444";
-        ctx.fillStyle = tilePlacementPreview.valid
-          ? "rgba(16, 185, 129, 0.18)"
-          : "rgba(239, 68, 68, 0.18)";
-        if (tilePlacementPreview.image) {
-          ctx.drawImage(
-            tilePlacementPreview.image,
-            topLeft.x,
-            topLeft.y,
-            size,
-            height,
-          );
-        } else {
-          // No image decoded yet — show the valid/invalid tint as a
-          // placeholder. Once the image is available, let it show through
-          // clearly rather than tinting over it.
-          ctx.fillRect(topLeft.x, topLeft.y, size, height);
-        }
-        ctx.strokeRect(topLeft.x, topLeft.y, size, height);
-        ctx.setLineDash([]);
-        ctx.fillStyle = ctx.strokeStyle;
-        ctx.font = "600 12px sans-serif";
-        ctx.fillText(tilePlacementPreview.tile.name, topLeft.x, topLeft.y - 8);
-        ctx.restore();
+        const isHex =
+          mapStore.gridType === "hex-pointy" ||
+          mapStore.gridType === "hex-flat";
+        drawTilePlacementPreview(ctx, {
+          topLeft,
+          size,
+          height,
+          isHex,
+          hexShape:
+            mapStore.gridType === "hex-flat" ? "hex-flat" : "hex-pointy",
+          valid: tilePlacementPreview.valid,
+          image: tilePlacementPreview.image,
+          name: tilePlacementPreview.tile.name,
+          accentColor: themeStore.activeTheme.tokens.primary,
+        });
       }
     }
 

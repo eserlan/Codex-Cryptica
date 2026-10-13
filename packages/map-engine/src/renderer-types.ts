@@ -8,7 +8,7 @@ export interface RenderToken {
   width: number;
   height: number;
   rotation: number;
-  baseShape?: "circle" | "square";
+  baseShape?: "circle" | "square" | "hex" | "hex-pointy" | "hex-flat";
   facingIndicator?: boolean;
   color: string;
   label: string;

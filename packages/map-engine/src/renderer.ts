@@ -1,6 +1,10 @@
 import { imageToViewport } from "./math";
 import { getCache } from "./render-cache";
-import { drawPins, drawTokens } from "./render-tokens";
+import {
+  drawPins,
+  drawTokens,
+  drawTokenSelectionOverlays,
+} from "./render-tokens";
 import { drawGrid, drawFogOfWar } from "./render-grid-fog";
 import { drawMeasurement } from "./render-measurement";
 import type { RenderOptions } from "./renderer-types";
@@ -80,7 +84,16 @@ export function renderMap(options: RenderOptions) {
   drawPins(ctx, pins, transform, canvasSize);
 
   // 5. Draw tokens above the map and pins
-  drawTokens(ctx, tokens, transform, canvasSize, options.accentColor, cache);
+  drawTokens(
+    ctx,
+    tokens,
+    transform,
+    canvasSize,
+    options.accentColor,
+    cache,
+    grid,
+    false,
+  );
 
   // 5b. Draw Grid above tiles/tokens (translucent) so it stays visible over
   // large tile art (e.g. geomorph packs) instead of being hidden beneath it —
@@ -88,6 +101,16 @@ export function renderMap(options: RenderOptions) {
   if (grid && grid.type !== "none") {
     drawGrid(ctx, transform, canvasSize, grid, cache);
   }
+
+  // 5c. Draw selection rings & handles for selected tokens above the grid
+  drawTokenSelectionOverlays(
+    ctx,
+    tokens,
+    transform,
+    canvasSize,
+    options.accentColor,
+    grid,
+  );
 
   // 6. Draw Fog of War above pins and tokens so the reveal state masks them.
   // Applying destination-out directly on the main canvas would erase the map
