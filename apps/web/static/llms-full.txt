@@ -19,6 +19,9 @@ It is especially relevant to users searching for:
 
 ## Core Features
 
+### Mention an entity
+Type @ and a name to pick an entity. The Oracle answers from that exact entry, even when two entities share a name. Hidden entities are never offered.
+
 ### Entity templates
 Pick the markdown a new note starts with. Duplicate a built-in template to make your own, edit it as plain markdown, then set it as the default for that type. Changing a template only affects notes you create afterwards; existing notes stay as they are.
 
@@ -621,6 +624,10 @@ The **Entity Table** lists every entry in your vault in one grid, so you can sca
 
 To explore the same entries as a network instead, choose **View as graph** at the top right.
 
+## Vault Audit
+
+Choose **Audit** in the table toolbar to review entries missing a portrait, description or connection. You can also open it from the **Vault Audit** workbench card on the Front Page. Toggle **Audit** again to return to the full table list.
+
 ## What each column shows
 
 | Column          | What it is                                                          |
@@ -701,6 +708,16 @@ A small card shows the current step. A step is ticked off only when you really d
 - **Show me** opens the right screen or points at the right control. It only runs when you tap it.
 - **Back** shows an earlier step, **Skip** moves past a step, and **Stop guided setup** ends it straight away. Press **Escape** inside the card, or use the minimise button, to shrink it to a small pill.
 - If you reload the page, the card comes back on the same step. When you come back another day, it stays out of the way until you choose **Continue**.
+
+## Tips from Cif
+
+Once guided setup has finished or you have left it, Cif can offer one small tip about something that suits the goal you chose. Tips are off until you turn them on in **Settings → AI → Show tips from Cif**. When guided setup ends, you are also asked once whether you would like occasional tips; either answer means you are not asked again.
+
+- A tip shows as a small chip beside the Cif button. It shows at most once per visit.
+- Nothing is sent until you tap the tip, and then Cif answers the question it names.
+- Tips never appear while you are typing, in a dialog, or while a tour or Cif is open.
+- Dismissing a tip removes it for good. Dismissing two tips on the same screen quiets that screen until you turn the setting off and on again.
+- Tips never read your vault, and they are off when AI is turned off.
 
 ## What it never does
 
@@ -1551,6 +1568,41 @@ Select a token and its details appear in the VTT Sidebar. The GM sees:
 ## Vision
 
 Tokens marked as **Vision Source (PC)** reveal the fog around them as they move. **VISION: PARTY** combines every vision source, and **VISION: SELECTED** uses only the selected token. **Vision Range** sets how far they see. See [Fog, Player View & Solo Play](/help#help/vtt-fog-player-view).
+
+---
+
+### MENTION ENTITIES WITH @
+
+Type **@** in the Lore Oracle input, then start typing a name. A short list of matching entities appears above the input. Choose one and the Oracle answers from that exact entry.
+
+- **Pick with the mouse or a tap**: select the entity in the list.
+- **Pick with the keyboard**: use **Up** and **Down** to move, then **Enter** or **Tab** to choose.
+- **Close the list**: press **Escape**. Your text stays as it is.
+
+A chosen entity appears in the message as a link. Select the link to open the entity.
+
+### Mention several entities
+
+Add as many mentions as you need in one question, for example "How is @Elara Voss connected to @Royal Academy of Pagen?". Every mentioned entity is included in what the Oracle reads.
+
+### Type a name without picking
+
+You can type `@` and a name, then send. If one entity matches the name or one of its aliases, the Oracle uses it. If several entities match, the Oracle asks you which one you mean. Choose one, or choose **Send as text** to send the message without a link. If nothing matches, you see a short note and the message is sent as plain text.
+
+### What the Oracle can see
+
+- Only entities in the Vault you have open are offered.
+- In a guest or shared view, hidden entities are never suggested, linked, or sent to the Oracle. A mention for one is sent as plain text.
+- In your own Vault, mentions follow the same rules as the rest of the Oracle's context.
+- Mentions only pin an entity into the Oracle's context. Your entries are not changed.
+
+### Limits
+
+- Mentions work in the Lore Oracle for the Vault you have open.
+- They are not available in the Cif help assistant or in VTT Chat yet.
+- When an entity is renamed, its mention shows the new name. When an entity is deleted, the mention shows as unavailable and is no longer a link.
+
+See [The Lore Oracle](/help#help/oracle-guide) for the wider chat workflow.
 
 ---
 
@@ -3248,6 +3300,19 @@ A new shop does not have to start empty. On a shop's Stats tab, choose **Suggest
 
 Suggested prices are rough starting points, not official prices. Each added line is marked as a suggestion in your private line note.
 
+## Market pressure (optional)
+
+Most shops never need this. If you want a shop to react to events in your setting, open **Market pressure** on its Stats tab.
+
+- Pick a kind: **Shortage**, **Glut**, **Embargo**, **Festival** or **Restock**. Each fills in starting numbers you can change: a price change in whole percent, a quantity change, and a status such as Sold out.
+- Choose which lines it applies to. Type a word such as "iron" to pick matching lines, and untick any line you want left alone.
+- You see every change before anything happens: the price before and after, the quantity, and the status. Lines that cannot take the change say why.
+- Choose **Apply**. Name the change and say why, for example "Road to the mine is closed". It is recorded with whether you or an outside signal caused it.
+- The shop then shows the usual price next to the asking price for each affected line, with the reason.
+- **Undo** puts back the values the change set. If you have since set a price yourself, or a trade changed a quantity, that value is kept and you are told which.
+
+Prices stay in the shop's own currency and decimal places, and nothing is converted. Nothing changes unless you press Apply, other shops and your Items are never touched, and the history is never shared with players.
+
 ## Make your own shop template
 
 Use **Edit Layout** to add fields to your shop, then save the layout from **Templates**. Saved layouts can be shared like any other template. Saved templates keep the field layout, not your stock.
@@ -3530,6 +3595,10 @@ Reference answers to real RPG and worldbuilding questions, indexed at https://co
 ### [How do I find a tabletop RPG group to play with?](https://codexcryptica.com/answers/how-do-i-find-a-tabletop-rpg-group-to-play-with)
 
 **Direct answer:** Finding a tabletop RPG group comes down to three main routes: using a dedicated group-finding platform with structured filters (for system, schedule, language, and play format), tapping into local offline communities like friendly game stores, conventions, and clubs, or building a table yourself with friends or fellow players. Selecting the right route depends on whether you are looking for an in-person or online game, and taking a few minutes to check group fit and table expectations beforehand makes joining a new group substantially smoother.
+
+### [How do I get my friends interested in playing D&D for the first time?](https://codexcryptica.com/answers/how-do-i-get-my-friends-interested-in-playing-dnd)
+
+**Direct answer:** Do not ask your friends to care about your campaign before they have had a chance to enjoy playing it. Invite them to try a short, low-pressure adventure with a clear ending, let them help choose the premise and tone, and make their choices matter at the table. Send no required homework, treat actual-play shows as optional inspiration, and explain the rules as you play. Curiosity is a good starting point: enthusiasm may grow after the first session, and it is normal for it to differ from yours.
 
 ### [How do I get my RPG party to work together?](https://codexcryptica.com/answers/how-do-i-get-my-rpg-party-to-work-together)
 
@@ -3978,6 +4047,10 @@ Reference answers to real RPG and worldbuilding questions, indexed at https://co
 ### [Point crawl vs hex crawl: which should you use?](https://codexcryptica.com/answers/point-crawl-vs-hex-crawl)
 
 **Direct answer:** Use a point crawl when play is about choosing between known or rumoured destinations and routes, with each journey carrying a clear cost. Use a hex crawl when finding the landscape is itself the game: the party chooses a direction, exposes unknown ground, and manages time and supplies across a broad region. Neither is more open by default; they make different parts of exploration visible at the table.
+
+### [What are the best classless fantasy RPGs with skill-based progression?](https://codexcryptica.com/answers/what-are-the-best-classless-fantasy-rpgs-with-skill-based-progression)
+
+**Direct answer:** For a group leaving Warhammer Fantasy Roleplay 4e, Mythras and GURPS are conditional candidates; neither is a verified winner. Mythras offers classless skill improvement and session-refreshing Luck that can downgrade a Major Wound, but its injury rules can still maim or kill. GURPS offers classless point-buy and a limited reroll, while injury, resurrection, and campaign pace depend on the chosen rules package. Verify those trade-offs against your group's own requirements before choosing. Dragonbane is a lighter, profession-framed option whose push rerolls cost a condition but do not protect a character from death. Savage Worlds has no fixed classes, but its Rank-based Advances gate Edges. Against the Darkmaster is a vocation-and-level mismatch.
 
 ### [What are the pros and cons of becoming a Dungeon Master?](https://codexcryptica.com/answers/what-are-the-pros-and-cons-of-becoming-a-dungeon-master)
 

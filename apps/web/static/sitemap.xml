@@ -97,6 +97,11 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://codexcryptica.com/topics/dnd-beginners</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://codexcryptica.com/tools/vampire-clan-generator</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
@@ -587,6 +592,11 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://codexcryptica.com/answers/how-do-i-combine-multiple-enemies-into-one-squad-in-an-rpg</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://codexcryptica.com/answers/how-do-i-create-interesting-islands-and-ports-for-a-pirate-campaign</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
@@ -603,6 +613,11 @@
   </url>
   <url>
     <loc>https://codexcryptica.com/answers/how-do-i-find-a-tabletop-rpg-group-to-play-with</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://codexcryptica.com/answers/how-do-i-get-my-friends-interested-in-playing-dnd</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
@@ -677,6 +692,11 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://codexcryptica.com/answers/how-do-i-make-roleplay-more-engaging</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://codexcryptica.com/answers/how-do-i-make-sea-travel-interesting-in-a-ttrpg</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
@@ -693,6 +713,11 @@
   </url>
   <url>
     <loc>https://codexcryptica.com/answers/how-do-i-pace-an-rpg-one-shot</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://codexcryptica.com/answers/how-do-i-plan-story-arcs-for-an-rpg-campaign</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
@@ -808,6 +833,11 @@
   </url>
   <url>
     <loc>https://codexcryptica.com/answers/how-do-i-start-gming-for-the-first-time</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://codexcryptica.com/answers/how-do-i-start-worldbuilding-for-a-novel-or-short-story</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
@@ -1152,7 +1182,27 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://codexcryptica.com/answers/what-are-the-best-classless-fantasy-rpgs-with-skill-based-progression</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://codexcryptica.com/answers/what-are-the-pros-and-cons-of-becoming-a-dungeon-master</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://codexcryptica.com/answers/what-can-i-do-on-my-turn-in-dnd-combat</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://codexcryptica.com/answers/what-can-players-actually-buy-and-sell-in-a-fantasy-settlement</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://codexcryptica.com/answers/what-do-i-need-to-bring-to-my-first-dnd-game</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
@@ -1278,6 +1328,11 @@
   </url>
   <url>
     <loc>https://codexcryptica.com/answers/which-dice-do-i-roll-in-dnd-and-when</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://codexcryptica.com/answers/which-tabletop-rpgs-have-squad-and-mass-battle-rules</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
@@ -1531,13 +1586,13 @@
     <lastmod>2026-03-05T12:00:00.000Z</lastmod>
   </url>
   <url>
-    <loc>https://codexcryptica.com/blog/gm-guide-data-sovereignty</loc>
+    <loc>https://codexcryptica.com/blog/spatial-intelligence</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
     <lastmod>2026-03-01T10:00:00.000Z</lastmod>
   </url>
   <url>
-    <loc>https://codexcryptica.com/blog/spatial-intelligence</loc>
+    <loc>https://codexcryptica.com/blog/gm-guide-data-sovereignty</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
     <lastmod>2026-03-01T10:00:00.000Z</lastmod>
