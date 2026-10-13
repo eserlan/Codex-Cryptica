@@ -3,6 +3,7 @@ import {
   actOnTip,
   decideTip,
   dismissTip,
+  finishArea,
   emptyTipsRecord,
   SILENCE_AFTER_DISMISSALS,
   TIP_CATALOGUE,
@@ -28,7 +29,7 @@ function input(over: Partial<TipDecisionInput> = {}): TipDecisionInput {
     goal: "world",
     goalInvitation: "goal",
     setupEnded: true,
-    area: "map",
+    area: "graph",
     shownThisSession: false,
     blockers: NO_BLOCKERS,
     unavailableAreas: [],
@@ -45,7 +46,7 @@ describe("decideTip: showing a tip (FR-010, FR-013)", () => {
     expect(d.kind).toBe("show");
     if (d.kind === "show") {
       expect(d.tip.goal).toBe("world");
-      expect(d.tip.area).toBe("map");
+      expect(d.tip.area).toBe("graph");
     }
   });
 
@@ -143,7 +144,7 @@ describe("decideTip: quiet rules (FR-012, FR-014, FR-015)", () => {
 });
 
 describe("dismissal, acting and silencing (FR-022, FR-023)", () => {
-  const tip = TIP_CATALOGUE.find((t) => t.id === "world-pin-map")!;
+  const tip = TIP_CATALOGUE.find((t) => t.id === "world-explore-graph")!;
 
   it("never offers a dismissed tip again", () => {
     const record = dismissTip(ON, tip);
@@ -156,32 +157,35 @@ describe("dismissal, acting and silencing (FR-022, FR-023)", () => {
   });
 
   it("silences a screen after repeated dismissals", () => {
-    let record = ON;
-    const other = TIP_CATALOGUE.find((t) => t.id === "world-explore-graph")!;
-    record = dismissTip(record, tip);
+    // Each goal has one tip per screen; two goals' generator tips make two dismissals on one screen.
+    const worldGen = TIP_CATALOGUE.find(
+      (t) => t.id === "world-generate-faction",
+    )!;
+    const campaignGen = TIP_CATALOGUE.find(
+      (t) => t.id === "campaign-generator-or-oracle",
+    )!;
+    let record = dismissTip(ON, worldGen);
     expect(record.silencedAreas).toEqual([]);
-    record = dismissTip(record, {
-      ...other,
-      area: "map",
-      id: "x",
-    } as typeof tip);
-    expect(record.dismissCounts.map).toBe(SILENCE_AFTER_DISMISSALS);
-    expect(record.silencedAreas).toEqual(["map"]);
-    expect(reason(decideTip(input({ record })))).toBe("area-silenced");
+    record = dismissTip(record, campaignGen);
+    expect(record.dismissCounts.generators).toBe(SILENCE_AFTER_DISMISSALS);
+    expect(record.silencedAreas).toEqual(["generators"]);
+    expect(
+      reason(decideTip(input({ record, goal: "story", area: "generators" }))),
+    ).toBe("area-silenced");
   });
 
   it("does not double-count the same tip dismissed twice (negative case)", () => {
     const once = dismissTip(ON, tip);
     const twice = dismissTip(once, tip);
-    expect(twice.dismissed).toEqual(["world-pin-map"]);
-    expect(twice.dismissCounts.map).toBe(1);
+    expect(twice.dismissed).toEqual(["world-explore-graph"]);
+    expect(twice.dismissCounts.graph).toBe(1);
   });
 
   it("leaves other screens unaffected by a silenced screen", () => {
     const silenced: TipsRecord = {
       ...ON,
-      dismissCounts: { map: 2 },
-      silencedAreas: ["map"],
+      dismissCounts: { generators: 2 },
+      silencedAreas: ["generators"],
     };
     const d = decideTip(input({ record: silenced, area: "graph" }));
     expect(d.kind).toBe("show");
@@ -190,13 +194,35 @@ describe("dismissal, acting and silencing (FR-022, FR-023)", () => {
 
 describe("goal change (FR-025)", () => {
   it("follows the new goal without resetting what was dismissed", () => {
-    const world = TIP_CATALOGUE.find((t) => t.id === "world-pin-map")!;
+    const world = TIP_CATALOGUE.find((t) => t.id === "world-explore-graph")!;
     const record = dismissTip(ON, world);
     const campaign = decideTip(
-      input({ record, goal: "campaign", area: "map" }),
+      input({ record, goal: "campaign", area: "tables" }),
     );
     expect(campaign.kind).toBe("show");
     if (campaign.kind === "show") expect(campaign.tip.goal).toBe("campaign");
-    expect(record.dismissed).toEqual(["world-pin-map"]);
+    expect(record.dismissed).toEqual(["world-explore-graph"]);
+  });
+});
+
+describe("finish-target skip (research D8)", () => {
+  it("names each goal's finish screen from its journey", () => {
+    expect(finishArea("world")).toBe("map");
+    expect(finishArea("campaign")).toBe("map");
+    expect(finishArea("story")).toBe("canvas");
+  });
+
+  it("does not suggest the screen a goal already ends on", () => {
+    expect(reason(decideTip(input({ goal: "world", area: "map" })))).toBe(
+      "no-eligible-tip",
+    );
+    expect(reason(decideTip(input({ goal: "story", area: "canvas" })))).toBe(
+      "no-eligible-tip",
+    );
+  });
+
+  it("still suggests other screens for the same goal (negative case)", () => {
+    const d = decideTip(input({ goal: "world", area: "graph" }));
+    expect(d.kind).toBe("show");
   });
 });

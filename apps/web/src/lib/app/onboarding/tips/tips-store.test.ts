@@ -42,7 +42,7 @@ function setup(
     goal: "world",
     goalInvitation: "goal",
     setupEnded: true,
-    area: "map" as HelpArea,
+    area: "graph" as HelpArea,
     unavailableAreas: [],
     blockers: { ...CLEAR },
     ...over,
@@ -131,7 +131,7 @@ describe("TipsStore: showing and acting on a tip (FR-008, FR-017, FR-018)", () =
     const t = setup();
     t.store.setEnabled(true);
     t.store.evaluate();
-    expect(t.store.current?.area).toBe("map");
+    expect(t.store.current?.area).toBe("graph");
     expect(t.sessionStorage.data.get(TIPS_SESSION_KEY)).toBe("1");
   });
 
@@ -151,7 +151,7 @@ describe("TipsStore: showing and acting on a tip (FR-008, FR-017, FR-018)", () =
     t.store.setEnabled(true);
     t.store.evaluate();
     t.store.dismiss();
-    t.ctx.area = "graph" as HelpArea;
+    t.ctx.area = "generators" as HelpArea;
     t.store.evaluate();
     expect(t.store.current).toBeNull();
   });
@@ -162,9 +162,9 @@ describe("TipsStore: showing and acting on a tip (FR-008, FR-017, FR-018)", () =
     t.store.evaluate();
     t.sessionStorage.data.clear();
     t.store.dismiss();
-    t.ctx.area = "graph" as HelpArea;
+    t.ctx.area = "generators" as HelpArea;
     t.store.evaluate();
-    expect(t.store.current?.area).toBe("graph");
+    expect(t.store.current?.area).toBe("generators");
   });
 
   it("act asks Cif the tip's exact prompt once and records it as used", () => {
@@ -180,7 +180,7 @@ describe("TipsStore: showing and acting on a tip (FR-008, FR-017, FR-018)", () =
   });
 
   it("shows nothing when the tip's feature is not offered here (FR-013)", () => {
-    const t = setup({ unavailableAreas: ["map"] as HelpArea[] });
+    const t = setup({ unavailableAreas: ["graph"] as HelpArea[] });
     t.store.setEnabled(true);
     t.store.evaluate();
     expect(t.store.current).toBeNull();
@@ -208,7 +208,10 @@ describe("TipsStore: quiet rules (FR-014, FR-015)", () => {
   });
 
   it("drops a waiting tip when the person has left the screen (research D3)", () => {
-    const t = setup({ blockers: { ...CLEAR, dialogOpen: true } });
+    const t = setup({
+      blockers: { ...CLEAR, dialogOpen: true },
+      area: "generators" as HelpArea,
+    });
     t.store.setEnabled(true);
     t.store.evaluate();
     t.ctx.area = "graph" as HelpArea;
@@ -259,31 +262,31 @@ describe("TipsStore: dismissals (FR-021 to FR-023)", () => {
   });
 
   it("silences a screen after two dismissals, until the setting is cycled", () => {
-    // Each goal has one tip per screen, so two dismissals on the map come from two goals.
-    const t = setup();
+    // Each goal has one tip per screen, so two dismissals on generators come from two goals.
+    const t = setup({ area: "generators" as HelpArea });
     t.store.setEnabled(true);
     t.store.evaluate();
-    expect(t.store.current?.area).toBe("map");
+    expect(t.store.current?.area).toBe("generators");
     t.store.dismiss();
 
     t.ctx.goal = "campaign";
     t.sessionStorage.data.clear();
     t.store.evaluate();
-    expect(t.store.current?.area).toBe("map");
+    expect(t.store.current?.area).toBe("generators");
     t.store.dismiss();
 
     t.sessionStorage.data.clear();
-    t.ctx.goal = "world";
+    t.ctx.goal = "story";
     t.store.evaluate();
     expect(t.store.current).toBeNull();
 
     t.store.setEnabled(false);
     t.store.setEnabled(true);
     t.sessionStorage.data.clear();
+    t.ctx.goal = "world";
     t.store.evaluate();
     expect(t.store.current).toBeNull();
-    // The dismissed world tip stays dismissed; a silence is cleared, but the map
-    // tips for the other goal are both dismissed, so only a fresh area can show.
+    // Both generator tips are dismissed, so the silence cannot be lifted by a new visit alone.
     t.ctx.area = "graph" as HelpArea;
     t.store.evaluate();
     expect(t.store.current?.area).toBe("graph");

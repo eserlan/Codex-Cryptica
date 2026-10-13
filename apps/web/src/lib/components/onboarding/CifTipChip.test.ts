@@ -4,6 +4,15 @@ import { fireEvent, render, screen } from "@testing-library/svelte";
 import { describe, expect, it, vi } from "vitest";
 import CifTipChip from "./CifTipChip.svelte";
 
+// jsdom has no ResizeObserver: run the position once, as autoUpdate would on mount.
+vi.mock("@floating-ui/dom", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@floating-ui/dom")>()),
+  autoUpdate: (_ref: unknown, _floating: unknown, update: () => void) => {
+    update();
+    return () => {};
+  },
+}));
+
 function setup() {
   const props = {
     label: "Drop a pin on a map",
@@ -70,5 +79,24 @@ describe("CifTipChip (spec 176, US2 and US3)", () => {
     expect(
       screen.getByRole("button", { name: "Dismiss tip" }).className,
     ).toContain("min-w-11");
+  });
+
+  it("sits beside the Cif button when it is on screen (plan D7)", async () => {
+    const button = document.createElement("button");
+    button.setAttribute("data-testid", "help-assistant-button");
+    document.body.appendChild(button);
+    setup();
+    const chip = screen.getByTestId("cif-tip-chip");
+    await vi.waitFor(() => expect(chip.style.left).toMatch(/px$/));
+    expect(chip.style.top).toMatch(/px$/);
+    expect(chip.className).not.toContain("bottom-24");
+    button.remove();
+  });
+
+  it("keeps the fixed corner when the Cif button is not on screen (negative case)", () => {
+    setup();
+    const chip = screen.getByTestId("cif-tip-chip");
+    expect(chip.className).toContain("bottom-24");
+    expect(chip.style.left).toBe("");
   });
 });

@@ -1,5 +1,6 @@
 import { HELP_AREAS, type HelpArea } from "help-engine";
 import { z } from "zod";
+import { journeyForGoal } from "./journeys";
 import type { Goal } from "./types";
 
 /** A fixed, reviewed "Cif has a tip" suggestion (spec 176, FR-016, FR-020). */
@@ -258,14 +259,35 @@ export function decideTip(input: TipDecisionInput): TipDecision {
     return none("feature-unavailable");
   }
 
+  // A tip never suggests the screen the journey already ends on (research D8).
+  const finish = finishArea(input.goal);
   const tip = TIP_CATALOGUE.find(
     (t) =>
       t.goal === input.goal &&
       t.area === input.area &&
+      t.area !== finish &&
       !record.dismissed.includes(t.id) &&
       !record.acted.includes(t.id),
   );
   return tip ? { kind: "show", tip } : none("no-eligible-tip");
+}
+
+/**
+ * The screen a goal's guided setup ends on, from its journey definition: a
+ * navigate step names the destination, and the canvas help topic is the canvas.
+ */
+export function finishArea(goal: Goal): HelpArea | null {
+  const next = journeyForGoal(goal).finish.next;
+  if (!next) return null;
+  if (next.type === "navigate") {
+    return (HELP_AREAS as readonly string[]).includes(next.to)
+      ? (next.to as HelpArea)
+      : null;
+  }
+  if (next.type === "openHelp" && next.helpId === "spatial-canvas") {
+    return "canvas";
+  }
+  return null;
 }
 
 function none(reason: NoTipReason): TipDecision {

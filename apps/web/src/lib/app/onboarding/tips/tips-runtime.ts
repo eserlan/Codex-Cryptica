@@ -13,6 +13,7 @@ import { generatorsAvailable } from "$lib/services/help-assistant/generator-avai
 import { isEditable } from "$lib/components/onboarding/focus";
 import { browserSessionStorage, browserStorage } from "$lib/utils/runtime-deps";
 import { journeyStore } from "$lib/app/onboarding/journey/journey-runtime";
+import { askCifPrompt } from "$lib/stores/help-assistant/ask-cif";
 import { TipsStore } from "./tips-store.svelte";
 import { tipContextFrom } from "./tips-context";
 
@@ -38,9 +39,5 @@ export const tipsStore = new TipsStore({
       firstRunGuidanceActive: onboardingStore.firstRunGuidanceActive,
       cifOpen: helpAssistant.isOpen || cifPopout.connected,
     }),
-  askCif: (prompt) => {
-    if (cifPopout.connected) cifPopout.open();
-    else helpAssistant.open();
-    void helpAssistant.ask(prompt);
-  },
+  askCif: (prompt) => askCifPrompt(prompt),
 });
