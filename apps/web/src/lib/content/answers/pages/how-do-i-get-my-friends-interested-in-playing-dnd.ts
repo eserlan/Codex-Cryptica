@@ -34,19 +34,19 @@ export const howDoIGetMyFriendsInterestedInPlayingDnd: AnswerConfigInput = {
         },
         {
           term: "Remove required homework",
-          text: "A long playlist and a favourite actual-play series can be shared as optional extras, not prerequisites. Explain the basic loop at the table: the DM describes the situation, the players say what they try, the DM asks for a roll when the outcome is uncertain, then the DM describes what happens. Provide pre-generated characters or a quick-start sheet, a one-page reference for common rolls, and let the rest be learned by doing.",
+          text: "Explain the basic loop at the table: the DM describes the situation, the players say what they try, the DM asks for a roll when the outcome is uncertain, then describes what happens. Have pre-generated characters or a quick-start sheet ready. Videos and a favourite actual-play series can be optional inspiration; if someone wants a preview, share the [D&D beginner guide](/topics/dnd-beginners) as further help, not homework.",
         },
         {
           term: "Treat actual-play as inspiration, not a standard",
-          text: "A streamed cast has experience, editing, and a job to entertain an audience. Your friends do not need to act, do voices, or improvise clever dialogue to play well. Saying what your character does in third person, or taking a moment to decide, counts as roleplaying. Make that explicit so shy players are not put on the spot.",
+          text: "A streamed cast has experience, editing, and an audience to entertain. Your friends can describe what their characters do in their own words, take a moment to decide, or pass when unsure; none of that makes them worse players. Say so up front, especially if anyone seems shy.",
         },
         {
           term: "Use props as invitations, not obligations",
-          text: "A sealed letter, a simple hand-drawn map, or a small physical clue at the table can spark curiosity if you hand it over in play. Do not use props to pressure friends to attend, read lore between sessions, or prove enthusiasm before the game. Avoid spending days on presentation for a game you have not yet tested as fun.",
+          text: "A small prop can make the fiction tangible, and revealing it during play is an easy default. If a friend is willing to try the game, you can also send an optional invitation or clue beforehand. Keep it simple and never make a prop a test of enthusiasm.",
         },
         {
           term: "Keep homebrew small and playable",
-          text: "A My Little Pony-inspired friendship fantasy, or any other setting you love to create, is fine if the group likes the premise. The skill to build is not abandoning homebrew but starting it in one small location with a playable problem. Loving to create a world and giving players things to do in it are related but not the same: the first belongs in your notes, the second belongs in the opening scene.",
+          text: "A My Little Pony-inspired friendship fantasy, or any setting you love, is fine if the group likes the premise. Start in one small location with a problem they can affect tonight; keep the wider setting in your notes until play gives the group a reason to explore it.",
         },
         {
           term: "Make the opening playable early in the session",
@@ -59,31 +59,15 @@ export const howDoIGetMyFriendsInterestedInPlayingDnd: AnswerConfigInput = {
       ],
     },
     {
-      kind: "prose",
-      heading: "Homework and comparison are the usual traps",
-      paragraphs: [
-        "Two patterns stall first games more than any lack of enthusiasm. The first is assigning study: pages of lore, a calendar to memorise, a series to watch to understand how D&D should sound. The table does not need that background to make a first decision, and requiring it tells friends that enjoyment depends on preparation they never agreed to. Offer material as a take-it-or-leave-it extra after they have played, not as an entry fee.",
-        "The second is holding the table to a performance standard set by actual play. New players who think they must speak in character, be funny on cue, or act with the polish of a regular cast will hesitate rather than try. State the alternative plainly: describe intent in your own words, roll when asked, and let character come through choices. Third-person play, short answers, and passing when unsure are all legitimate.",
-      ],
-    },
-    {
-      kind: "prose",
-      heading: "Props and homebrew: enthusiasm without pressure",
-      paragraphs: [
-        "Physical props work because they make a fictional item present in the room, not because they oblige anyone to engage outside the session. Hand a sealed letter across the table after the characters have already met the sender, not as a summons sent days before anyone has agreed to play. Keep preparation cheap: one letter, one simple map, or one clue the players can handle is enough to test whether the idea delights the group. If it does, you can do more next time. If not, nothing important is lost.",
-        "Homebrew follows the same principle. Players do not need the full setting bible to enjoy the first session. Start with one village, one festival, or one roadside inn, people the characters can talk to, and a problem they can affect tonight. Let the world expand based on what they pursue, not on what you prepared in advance. That approach respects both your creative investment and their right to shape the story through play.",
-      ],
-    },
-    {
       kind: "example",
       heading: "Worked example: the missing keepsake",
       paragraphs: [
-        "A one-session friendship-fantasy opening for three to five new players at level 1. No setting lore or rules homework is required. The characters use pre-generated sheets, the DM explains rolls as they come up, and a sealed letter is an optional table prop handed out during play, not sent beforehand.",
+        "A one-session friendship-fantasy opening for three to five new players at level 1. The harvest festival can go ahead even if the lantern is not found.",
       ],
       items: [
         {
           term: "Setup in one village square",
-          text: "The village of Bramble Hollow is preparing its harvest festival. A modest keepsake, a ribbon-bound lantern that the village lights together at dusk, has vanished from the hall where it was stored. The elder who tends it, Mara Finch, is worried but not grand: the ceremony can still happen another way if the lantern is not found. Two rumours circulate: a wind spirit seen near the orchard wall, and muddy prints leading toward the old mill. The map is a simple sketch of square, orchard, and mill.",
+          text: "Bramble Hollow is preparing its harvest festival. The village's ribbon-bound lantern, lit together at dusk, is missing from the hall. Mara Finch, who tends it, knows Tamsin Reed at the old mill borrowed it to mend a cracked frame and has not brought it back; she tells the party if they ask. Mud tracks beneath the hall's open side shutter lead towards the mill. An orchard keeper's tale of a wind spirit began when a gust caught the lantern's ribbon as Tamsin carried it past the orchard. Sketch the square, orchard, hall, and mill.",
         },
         {
           term: "The invitation as a table prop",
@@ -91,32 +75,23 @@ export const howDoIGetMyFriendsInterestedInPlayingDnd: AnswerConfigInput = {
         },
         {
           term: "Two to three leads, one conversation, one decision",
-          text: "The party can examine the hall for clues, follow the prints to the mill, or ask the orchard keeper what the wind story really was. Each lead gives a short, playable detail: a loose shutter, a half-finished repair, a neighbour who borrowed the lantern to mend its frame and forgot to return it. The keeper is a friendly, low-stakes conversation that teaches new players how talking to a non-player character works: the DM describes what the keeper wants, the players say what they try, and a roll happens only if the outcome is uncertain. Give each player one decision by name, without spotlight pressure: who checks the hall, who talks, who decides what to do with the keepsake if it is simply misplaced rather than stolen.",
+          text: "The party can inspect the hall, follow the prints, or ask the orchard keeper about the wind story. The shutter is open and the prints lead to the mill; either clue can point them towards Tamsin. The keeper says they saw Tamsin carrying the lantern that way, and explains how the wind caught its ribbon. At the mill, Tamsin is midway through repairing its cracked frame and is embarrassed to have kept it so long. Give these facts through sensible looking and conversation; no roll is needed to find the essential clues. Let the players choose who investigates, what they ask, and how they respond to Tamsin.",
         },
         {
           term: "How choices shape what comes next",
-          text: "If the party return the lantern quietly, the festival lights on time and Mara remembers their discretion. If they reveal the borrower, the village thanks them but the neighbour is embarrassed, which changes who offers help next session. If they leave the lantern where it is and help the neighbour finish the repair, the ceremony uses a substitute and the repaired lantern becomes a small gift later. The DM notes the choice, closes the evening with the lights going up or a kind alternative, and asks whether the group wants a second outing. The adventure ends cleanly tonight and can continue only if everyone wants it to.",
-        },
-        {
-          term: "Why it works",
-          text: "The opening can become playable early in the session, uses no lore beyond what the DM says in the square, and does not require voices or acting skill. The sealed letter creates curiosity without coercion, the leads keep the table moving, and the final decision has a visible, friendly consequence the players can recognise next time they meet Mara. The homebrew premise sets tone without adding required reading, and the clean ending respects consent: curiosity was enough to start, and continuation is a real choice.",
+          text: "For example, the players might help Tamsin finish the repair and return the lantern before dusk, or tell Mara it will be late so she can light a substitute. They could also choose another approach. If they help, Tamsin might thank them later with a small carved token from the mill; the ceremonial lantern remains the village's. Mara can welcome them at the festival either way, with or without the lantern. End by asking whether they would like another outing; the story continues only if they do.",
         },
       ],
     },
     {
       kind: "checklist",
       heading: "Before you invite friends to a first game",
-      intro:
-        "Run through this once before you pitch and once before the table meets:",
+      intro: "A quick practical recap:",
       items: [
         "You have asked what themes and tone sound fun to them, and made clear that playing is optional.",
         "You are offering one or two sessions with a clear objective and ending, not an open-ended campaign.",
-        "No video playlist, reading list, or lore document is required. Anything shared is marked optional.",
-        "Pre-generated or quick-start characters, a one-page rules summary, and dice or a shared roller are ready.",
-        "You have told the group that describing actions in third person is valid and that no one must do voices.",
-        "Any prop is a single, low-effort item to reveal at the table, not a task sent between sessions.",
-        "If you use homebrew, the first session is one small location with a playable problem, not the whole setting.",
-        "The opening gives a concrete choice early in the session and a visible consequence before the session ends.",
+        "Ready-made characters and a simple rules reference are on hand; you can explain rolls as they come up.",
+        "The opening has one small location, a playable problem, and an early choice with a visible consequence.",
         "You have a short, kind question ready for afterwards: what did you enjoy and do you want to continue, change, or stop?",
       ],
     },
