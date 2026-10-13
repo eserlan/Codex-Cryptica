@@ -540,7 +540,7 @@
           bind:value={selectedTemplateId}
           aria-label="Entity Template"
           data-testid="new-entity-template-select"
-          class="px-2 py-1.5 text-xs bg-chrome-bg border border-chrome-border text-chrome-text rounded focus:outline-none focus:border-chrome-accent font-sans {isVertical
+          class="px-2 py-1.5 text-xs bg-chrome-bg border border-chrome-border text-chrome-text rounded focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-chrome-text focus:border-chrome-accent font-sans {isVertical
             ? 'py-3 text-sm'
             : ''}"
         >

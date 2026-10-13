@@ -246,7 +246,7 @@
           bind:value={selectedTemplateId}
           aria-label="Entity Template"
           data-testid="mobile-create-entity-template"
-          class="w-full px-4 py-3 text-sm bg-chrome-bg border border-chrome-border text-chrome-text rounded-lg focus:outline-none focus:border-chrome-accent"
+          class="w-full px-4 py-3 text-sm bg-chrome-bg border border-chrome-border text-chrome-text rounded-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-chrome-text focus:border-chrome-accent"
         >
           {#each availableTemplates as t}
             <option value={t.id}>
