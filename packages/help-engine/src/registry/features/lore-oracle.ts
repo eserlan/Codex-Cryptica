@@ -22,6 +22,16 @@ export const loreOracle: FeatureEntry = {
       actionIds: ["lore-oracle.open-help"],
     },
     {
+      id: "mention-an-entity",
+      title: "Mention an entity with @",
+      steps: [
+        "In the chat input, type @ and start typing a name, then pick an entity from the list with a tap, or with Up, Down and Enter.",
+        "Send the question. The answer is grounded in the entity you picked, even when two entities share a name.",
+        "Mentions work for the open Vault only. Cif and VTT Chat do not support them yet.",
+      ],
+      actionIds: ["lore-oracle.open-mentions-help"],
+    },
+    {
       id: "revise-an-entity",
       title: "Revise an entity's description with AI",
       steps: [
@@ -41,7 +51,7 @@ export const loreOracle: FeatureEntry = {
       actionIds: ["lore-oracle.open-settings"],
     },
   ],
-  helpIds: ["oracle-guide", "chat-commands"],
+  helpIds: ["oracle-guide", "mention-entities", "chat-commands"],
   related: ["entity-editing", "related-entity-generation"],
   actions: [
     {
@@ -50,6 +60,14 @@ export const loreOracle: FeatureEntry = {
         type: "openHelp",
         helpId: "oracle-guide",
         label: "Read: The Lore Oracle",
+      },
+    },
+    {
+      id: "lore-oracle.open-mentions-help",
+      action: {
+        type: "openHelp",
+        helpId: "mention-entities",
+        label: "Read: Mention Entities with @",
       },
     },
     {

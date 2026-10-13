@@ -151,6 +151,11 @@ const bundle = buildBundle({
       "## oracle-guide\nAbout oracle-guide.",
     ),
     article(
+      "mention-entities",
+      "mention-entities",
+      "## mention-entities\nAbout mention-entities.",
+    ),
+    article(
       "chat-commands",
       "chat-commands",
       "## chat-commands\nAbout chat-commands.",
