@@ -161,6 +161,7 @@ export const whatShouldANewDndPlayerLearnFirst: AnswerConfigInput = {
     "what-can-i-do-on-my-turn-in-dnd-combat",
     "what-should-a-new-dnd-player-know-before-their-first-game",
     "how-do-i-read-a-dnd-character-sheet-as-a-beginner",
+    "how-do-i-get-my-friends-interested-in-playing-dnd",
   ],
   discovery: {
     id: "answer-new-dnd-player-learn-first",

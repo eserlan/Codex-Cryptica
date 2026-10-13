@@ -13,6 +13,10 @@ The **Entity Table** lists every entry in your vault in one grid, so you can sca
 
 To explore the same entries as a network instead, choose **View as graph** at the top right.
 
+## Vault Audit
+
+Choose **Vault Audit** in the navigation to review entries missing a portrait, description or connection. The audit opens this table in a focused view; choose **Table** to return to the full list.
+
 ## What each column shows
 
 | Column          | What it is                                                          |
