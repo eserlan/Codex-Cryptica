@@ -2,6 +2,7 @@ import { isEntityVisible } from "schema";
 import type { ContextRetrievalService, VaultMinimal } from "schema";
 import { entityContentHash, type LoreEntry } from "@codex/oracle-engine";
 import { getAISearchService, type AISearchService } from "./config";
+import { isUnrelatedSuggestedSearch } from "./retrieval-evidence";
 
 export class DefaultContextRetrievalService implements ContextRetrievalService {
   private styleCache: string | null = null;
@@ -203,6 +204,7 @@ export class DefaultContextRetrievalService implements ContextRetrievalService {
     sourceIds: string[];
     entries: LoreEntry[];
     activeStyleTitle?: string;
+    noRelevantMatch?: boolean;
   }> {
     let styleContext = "";
     let activeStyleTitle: string | undefined;
@@ -397,6 +399,31 @@ export class DefaultContextRetrievalService implements ContextRetrievalService {
       );
     }
 
+    // FlexSearch's suggested hits can carry a high field-weight score even
+    // when none of the user's distinctive terms occurs in the retrieved lore.
+    // Only reject the whole hit set when there is *zero* lexical evidence and
+    // the user has not anchored this turn to an explicit/active/follow-up file.
+    // Record bodies are hydrated above so lore-only hits remain eligible.
+    const activeRecord = activeId ? vault.entities[activeId] : null;
+    const validActiveRecord =
+      !!activeRecord &&
+      (!vault.isGuest ||
+        isEntityVisible(activeRecord, {
+          sharedMode: true,
+          defaultVisibility: vault.defaultVisibility,
+        }));
+    const hasSubjectAnchor =
+      !!explicitSubject ||
+      validActiveRecord ||
+      (isFollowUp && !!lastEntityId && primaryEntityId === lastEntityId);
+    const rejectedSuggestedHits =
+      !hasSubjectAnchor && isUnrelatedSuggestedSearch(query, results, vault);
+    if (rejectedSuggestedHits) {
+      results = [];
+      primaryEntityId = undefined;
+    }
+    const noRelevantMatch = !hasSubjectAnchor && results.length === 0;
+
     const contextMap = new Map<string, string>();
     const sourceIds: string[] = [];
     // Per-entity records for lore-delta tracking. The hash covers the stable
@@ -525,7 +552,7 @@ export class DefaultContextRetrievalService implements ContextRetrievalService {
       addEntityToContext(res.id);
     }
 
-    if (lastEntityId && currentTotal < MAX_CHARS) {
+    if (lastEntityId && !noRelevantMatch && currentTotal < MAX_CHARS) {
       addEntityToContext(lastEntityId);
     }
 
@@ -622,6 +649,18 @@ export class DefaultContextRetrievalService implements ContextRetrievalService {
       }
     }
 
+    if (noRelevantMatch) {
+      const note =
+        "--- Retrieval Status ---\\nNo relevant Vault evidence was found for this turn. Listed record names are navigation hints, not supporting facts.\\n\\n";
+      finalContent = note + finalContent;
+      // Carry the status through the Interactions API lore-delta path too.
+      entries.unshift({
+        id: "__retrieval_status__",
+        snippet: note,
+        hash: entityContentHash(note),
+      });
+    }
+
     // The global art-style block follows the same send-once / resend-on-change
     // rule under a synthetic id so it is not re-uploaded every turn.
     if (styleContext) {
@@ -638,6 +677,7 @@ export class DefaultContextRetrievalService implements ContextRetrievalService {
       sourceIds,
       entries,
       activeStyleTitle,
+      noRelevantMatch,
     };
   }
 
