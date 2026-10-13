@@ -1,6 +1,8 @@
 /** @vitest-environment jsdom */
 
 import { render, screen, fireEvent } from "@testing-library/svelte";
+import { tick } from "svelte";
+import { SvelteURL } from "svelte/reactivity";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { Entity } from "schema";
 import RoutePage from "./+page.svelte";
@@ -238,6 +240,24 @@ describe("/table page", () => {
 
     expect(screen.getByTestId("vault-audit-panel")).toBeTruthy();
     expect(screen.getByTestId("vault-distribution-chart")).toBeTruthy();
+  });
+
+  it("closes and resets VaultAuditPanel when its URL mode is removed", async () => {
+    mockPage.url = new SvelteURL("http://localhost/table?mode=overview");
+    mutableVault.allEntities = [
+      entity({ id: "e1", title: "Aldric", type: "character" }),
+    ];
+    render(RoutePage);
+
+    expect(screen.getByTestId("vault-distribution-chart")).toBeTruthy();
+
+    mockPage.url.searchParams.delete("mode");
+    await tick();
+
+    expect(screen.queryByTestId("vault-audit-panel")).toBeNull();
+
+    await fireEvent.click(screen.getByTestId("entity-table-audit-toggle"));
+    expect(screen.getByTestId("audit-card-missing-images")).toBeTruthy();
   });
 
   it("switches between findings and distribution tabs inside VaultAuditPanel", async () => {

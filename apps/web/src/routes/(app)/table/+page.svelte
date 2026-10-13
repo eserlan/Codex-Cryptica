@@ -66,6 +66,9 @@
     } else if (mode === "overview") {
       showAuditPanel = true;
       auditPanelTab = "distribution";
+    } else {
+      showAuditPanel = false;
+      auditPanelTab = "findings";
     }
   });
   let textMatchIds = $state<Set<string> | null>(null);

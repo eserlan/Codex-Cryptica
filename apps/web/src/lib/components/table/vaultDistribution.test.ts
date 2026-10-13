@@ -173,6 +173,22 @@ describe("vaultDistribution", () => {
     });
   });
 
+  it("counts a duplicate label only once per entity", () => {
+    const entities = [createEntity("1", "character", ["Hero", "Hero"])];
+
+    const summary = computeVaultDistribution(
+      entities,
+      entities,
+      mockCategories,
+    );
+
+    expect(summary.labels.find((label) => label.id === "Hero")).toMatchObject({
+      count: 1,
+      totalCount: 1,
+      percentage: 100,
+    });
+  });
+
   it("correctly tracks filtered counts alongside total vault counts", () => {
     const allEntities = [
       createEntity("1", "character", ["Pagen"]),

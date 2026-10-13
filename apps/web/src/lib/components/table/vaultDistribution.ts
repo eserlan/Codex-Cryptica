@@ -75,8 +75,7 @@ function countEntityLabels(entities: EntityWithPreview[]): LabelCountResult {
       unlabelled++;
       continue;
     }
-    for (let j = 0; j < labels.length; j++) {
-      const l = labels[j];
+    for (const l of new Set(labels)) {
       counts.set(l, (counts.get(l) ?? 0) + 1);
     }
   }
