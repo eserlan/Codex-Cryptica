@@ -90,13 +90,6 @@ export function isViewActive(
     return matchesPath(itemPath, pathname);
   }
 
-  if (
-    item.id === "table" &&
-    new URLSearchParams(search).get("mode") === "audit"
-  ) {
-    return false;
-  }
-
   return [item.href, ...(item.alsoActiveFor ?? [])].some((href) =>
     matchesPath(href, pathname),
   );
@@ -240,17 +233,6 @@ export function navItems(): NavItem[] {
   }
 
   if (!sessionModeStore.isGuestMode) {
-    items.push({
-      id: "audit",
-      icon: "icon-[lucide--clipboard-check]",
-      label: "Vault Audit",
-      title:
-        "Vault Audit — review missing portraits, descriptions, and connections",
-      href: `${base}/table?mode=audit`,
-      group: "view",
-      placement: "overflow",
-    });
-
     items.push({
       id: "shelf",
       icon: "icon-[lucide--library]",
