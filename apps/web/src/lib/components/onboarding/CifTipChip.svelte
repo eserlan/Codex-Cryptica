@@ -33,10 +33,19 @@
   let announcement = $state("");
   let root = $state<HTMLElement>();
   let anchored = $state(false);
+  // Bumped on resize so a Cif button that mounts later is found (no timers).
+  let lookupTick = $state(0);
+
+  $effect(() => {
+    const bump = () => lookupTick++;
+    window.addEventListener("resize", bump);
+    return () => window.removeEventListener("resize", bump);
+  });
 
   // Keeps the chip beside the Cif button as the layout changes (scroll, resize,
   // the sidebar opening). With no button on screen the chip keeps its fixed corner.
   $effect(() => {
+    void lookupTick;
     const el = root;
     if (!el) return;
     const anchor = document.querySelector<HTMLElement>(anchorSelector);
@@ -95,7 +104,7 @@
   </button>
   <button
     type="button"
-    class="touch-target flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-full text-theme-muted transition-colors hover:text-theme-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-theme-primary"
+    class="touch-target flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-full text-theme-text transition-colors hover:text-theme-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-theme-primary"
     aria-label="Dismiss tip"
     data-testid="cif-tip-dismiss"
     onclick={onDismiss}

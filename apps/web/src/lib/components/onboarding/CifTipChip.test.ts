@@ -99,4 +99,24 @@ describe("CifTipChip (spec 176, US2 and US3)", () => {
     expect(chip.className).toContain("bottom-24");
     expect(chip.style.left).toBe("");
   });
+
+  it("finds a Cif button that mounts after the chip, on resize", async () => {
+    setup();
+    const chip = screen.getByTestId("cif-tip-chip");
+    expect(chip.className).toContain("bottom-24");
+    const button = document.createElement("button");
+    button.setAttribute("data-testid", "help-assistant-button");
+    document.body.appendChild(button);
+    window.dispatchEvent(new Event("resize"));
+    await vi.waitFor(() => expect(chip.style.left).toMatch(/px$/));
+    expect(chip.className).not.toContain("bottom-24");
+    button.remove();
+  });
+
+  it("keeps the dismiss control readable in every theme (text token, not muted)", () => {
+    setup();
+    const dismiss = screen.getByRole("button", { name: "Dismiss tip" });
+    expect(dismiss.className).toContain("text-theme-text");
+    expect(dismiss.className).not.toContain("text-theme-muted");
+  });
 });

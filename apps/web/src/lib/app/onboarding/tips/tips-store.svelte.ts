@@ -91,6 +91,12 @@ export class TipsStore {
   /** Decides what the chip shows for the screen the person is on now. */
   evaluate(): void {
     this.syncAi();
+    // Focus changes call this on every move; with tips off, do not read the screen.
+    if (!this.record.enabled) {
+      this.current = null;
+      this.pendingArea = null;
+      return;
+    }
     const ctx = this.deps.context();
 
     // A tip is only ever for the screen it was shown on, and never stays up

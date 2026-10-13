@@ -293,6 +293,30 @@ describe("TipsStore: dismissals (FR-021 to FR-023)", () => {
   });
 });
 
+describe("TipsStore: cost while tips are off (checklist: hot paths)", () => {
+  it("does not read the screen on focus changes while tips are off", () => {
+    const context = vi.fn(() => ({
+      goal: "world" as const,
+      goalInvitation: "goal" as const,
+      setupEnded: true,
+      area: "graph" as HelpArea,
+      unavailableAreas: [],
+      blockers: { ...CLEAR },
+    }));
+    const store = new TipsStore({
+      storage: memoryStorage(),
+      sessionStorage: memoryStorage(),
+      aiAvailable: () => true,
+      context,
+      askCif: vi.fn(),
+    });
+    store.evaluate();
+    store.evaluate();
+    expect(context).not.toHaveBeenCalled();
+    expect(store.current).toBeNull();
+  });
+});
+
 describe("TipsStore: no goal and storage failures (FR-024, FR-031)", () => {
   it("shows no goal-based tip when the person explored without choosing (FR-024)", () => {
     const t = setup({ goalInvitation: "explore" });
