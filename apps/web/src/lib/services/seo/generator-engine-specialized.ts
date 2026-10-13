@@ -19,10 +19,16 @@ import {
   type AlienRaceGeneratorOptions,
   type CreatureGeneratorOptions,
   type PublicGeneratorOutput,
+  buildTomePrompt,
+  parseTomeResponse,
+  generateTomeLocal,
+  type TomeGeneratorOptions,
 } from "generator-engine";
+import { getSessionContext } from "./session-context";
 import {
   generationInputHistoryStore,
   summarizeResolvedInputs,
+  formatRecentInputsNote,
 } from "./generation-input-history";
 
 import type { GeneratorOutput } from "./generator-helpers";
@@ -184,5 +190,29 @@ export class GeneratorEngineSpecialized extends GeneratorEngineWorldbuilding {
     options: CreatureGeneratorOptions & { useAI?: boolean } = {},
   ): Promise<GeneratorOutput> {
     return this.worldGeneration.generateCreature(options);
+  }
+
+  /** Tome and forbidden book generation delegates to the generator-engine package. */
+  async generateTome(
+    options: TomeGeneratorOptions & { useAI?: boolean } = {},
+  ): Promise<GeneratorOutput> {
+    const { useAI, ...tomeOptions } = options;
+    const recentInputs = generationInputHistoryStore.recent("tome");
+    return this.runWithAIFallback(
+      useAI,
+      async () => {
+        const { systemInstruction, userMessage, resolved } = buildTomePrompt(
+          tomeOptions,
+          getSessionContext() + formatRecentInputsNote(recentInputs),
+        );
+        generationInputHistoryStore.record(
+          "tome",
+          summarizeResolvedInputs(resolved),
+        );
+        const text = await this.runModel(systemInstruction, userMessage);
+        return parseTomeResponse(text, resolved) as GeneratorOutput;
+      },
+      () => generateTomeLocal(tomeOptions) as GeneratorOutput,
+    );
   }
 }

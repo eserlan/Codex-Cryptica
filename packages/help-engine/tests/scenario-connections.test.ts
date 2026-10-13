@@ -56,6 +56,11 @@ const bundle = buildBundle({
       "## Generate\nGenerate characters, factions and locations. A faction generator makes a guild with a leader.",
     ),
     article(
+      "tome-generator",
+      "Tome & Forbidden Book Generator",
+      "## Create a tome\nChoose a setting, format, custodian and reading hazard. Review the draft's provenance, clues and risks before saving. Local mode works without AI.",
+    ),
+    article(
       "generate-related",
       "Generate Related",
       "## Related\nGenerate entries related to the one you are viewing.",

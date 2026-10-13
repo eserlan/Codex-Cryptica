@@ -3,6 +3,7 @@ import type {
   ConstellationPattern,
   ConstellationInterpretation,
   NightSkyData,
+  SuggestedConnection,
 } from "generator-engine";
 
 export const nameTable = {
@@ -486,6 +487,8 @@ export interface GeneratorOutput {
   }>;
   /** Dominant conflict domain of a generated BBEG villain (e.g. "Cult Ritual"), tracked for session variety. */
   conflictDomain?: string;
+  /** Optional connections or relationships to other entities. */
+  connections?: SuggestedConnection[];
 }
 
 /**

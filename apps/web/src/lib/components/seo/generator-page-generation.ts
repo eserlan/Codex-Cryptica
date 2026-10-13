@@ -75,6 +75,7 @@ export interface GenerationContext {
   constellation: Record<string, unknown>;
   alienRace: Record<string, unknown>;
   creature: Record<string, unknown>;
+  tome: Record<string, unknown>;
   getActiveTheme: () => string;
   getPlotTwistPremise: () => string;
   getHandoffQuestPremise: () => string;
@@ -301,6 +302,12 @@ export function createGeneratorHandlers(
         ...(ctx.creature as object),
         useAI,
         avoidNames: collectSessionNames(ctx.getSessionEntities() as never[]),
+      } as never),
+    tome: (useAI) =>
+      engine.generateTome({
+        ...(ctx.tome as object),
+        primaryHazard: (ctx.tome as Record<string, unknown>).hazard,
+        useAI,
       } as never),
   } as GeneratorHandlers;
 }

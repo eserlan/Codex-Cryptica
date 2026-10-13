@@ -47,7 +47,7 @@
       class={`draft-preview ${section.height} overflow-y-auto rounded border border-chrome-border bg-chrome-bg/30 px-3 py-2`}
     >
       <!-- eslint-disable-next-line svelte/no-at-html-tags -->
-      {@html renderMarkdown(section.markdown ?? "")}
+      {@html renderMarkdown(section.markdown ?? "", { allowImages: false })}
     </div>
   </div>
 {/each}

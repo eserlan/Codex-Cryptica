@@ -114,6 +114,7 @@ function makeFakeEngine(): any {
     generateCreature: vi
       .fn()
       .mockResolvedValue({ type: "note", title: "creature" }),
+    generateTome: vi.fn().mockResolvedValue({ type: "item", title: "tome" }),
     generateWithPreview: vi
       .fn()
       .mockImplementation(
@@ -136,6 +137,10 @@ function makeBaseCtx(overrides: any) {
   };
   const base: Record<string, unknown> = {
     npc: { theme: "x", ancestry: "y" },
+    tome: {
+      theme: "Cyberpunk / Corporate",
+      hazard: "Social / Investigation Risk",
+    },
     settlement: { genre: "Fantasy" },
     magicItem: { type: "Sword" },
     minorMagicItem: { form: "Ring" },
@@ -313,6 +318,21 @@ describe("generator-page-generation", () => {
           ._engine.generateNPC,
       ).toHaveBeenCalledWith(
         expect.objectContaining({ useAI: true, theme: "x" }),
+      );
+    });
+
+    it("maps the tome form hazard to the engine's primaryHazard option", async () => {
+      const engine = makeFakeEngine();
+      const handlers = createGeneratorHandlers(makeCtx({ engine }));
+
+      await handlers.tome(false);
+
+      expect(engine.generateTome).toHaveBeenCalledWith(
+        expect.objectContaining({
+          theme: "Cyberpunk / Corporate",
+          primaryHazard: "Social / Investigation Risk",
+          useAI: false,
+        }),
       );
     });
 

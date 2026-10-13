@@ -22,6 +22,7 @@ import type { LanguageGeneratorOptions } from "./public-language";
 import type {
   GeneratedDraft,
   GeneratorRunRequest,
+  SuggestedConnection,
 } from "./campaign-generator-types";
 import type { LanguageProfileV1 } from "schema";
 import type { StarSystemBody } from "./public-star-system";
@@ -82,6 +83,10 @@ export interface PublicGeneratorOutput {
    * same domain (#2325 follow-up).
    */
   conflictDomain?: string;
+  /**
+   * Optional connections or relationships to other entities.
+   */
+  connections?: SuggestedConnection[];
 }
 
 /** First non-blank value, or the last one if all are blank. */

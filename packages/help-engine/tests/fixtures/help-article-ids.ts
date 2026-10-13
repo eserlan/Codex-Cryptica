@@ -10,6 +10,7 @@ export const KNOWN_HELP_IDS = [
   "graph-basics",
   "session-hub",
   "in-app-generators",
+  "tome-generator",
   "generate-related",
   "random-tables-decks",
   "spatial-canvas",

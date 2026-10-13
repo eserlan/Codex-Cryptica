@@ -40,6 +40,7 @@
   import ConstellationFormFields from "$lib/components/seo/ConstellationFormFields.svelte";
   import AlienRaceFormFields from "$lib/components/seo/AlienRaceFormFields.svelte";
   import CreatureFormFields from "$lib/components/seo/CreatureFormFields.svelte";
+  import TomeFormFields from "$lib/components/seo/TomeFormFields.svelte";
   type StringState = Record<string, string>;
   type PantheonState = StringState & {
     mode: "single" | "pantheon";
@@ -108,6 +109,7 @@
     constellation = $bindable(),
     alienRace = $bindable(),
     creature = $bindable(),
+    tome = $bindable(),
     onPersonalityGenreChange,
     onRumourGenreChange,
     onPuzzleGenreChange,
@@ -162,6 +164,7 @@
     constellation: ConstellationState;
     alienRace: StringState;
     creature: StringState;
+    tome?: StringState;
     onPersonalityGenreChange: (genre: string) => void;
     onRumourGenreChange: (genre: string) => void;
     onPuzzleGenreChange: (genre: string) => void;
@@ -183,6 +186,7 @@
     "faction-roster",
     "quest",
     "holiday",
+    "tome",
   ]);
   const socialSlugs = new Set([
     "personality",
@@ -277,6 +281,18 @@
       bind:currentStatus={artifact.currentStatus}
       bind:curseCost={artifact.curseCost}
       bind:campaignContext={artifact.campaignContext}
+      onSurprise={trigger}
+    />
+  {:else if slug === "tome" && tome}
+    <TomeFormFields
+      bind:theme={activeTheme}
+      bind:tomeType={tome.tomeType}
+      bind:format={tome.format}
+      bind:rarity={tome.rarity}
+      bind:custodian={tome.custodian}
+      bind:hazard={tome.hazard}
+      bind:language={tome.language}
+      bind:campaignContext={tome.campaignContext}
       onSurprise={trigger}
     />
   {:else if slug === "faction"}

@@ -646,6 +646,39 @@ describe("DefaultGeneratorEngine", () => {
     });
   });
 
+  describe("generateTome", () => {
+    it("should generate tome details locally when useAI is false", async () => {
+      const res = await engine.generateTome({
+        theme: "Cosmic Horror",
+        format: "Leather-bound Quarto",
+        rarity: "Unique Original Manuscript",
+        useAI: false,
+      });
+
+      expect(res.type).toBe("item");
+      expect(res.title).toBeDefined();
+      expect(res.content).toContain("Physical Description & Format");
+      expect(res.content).toContain("Provenance & Transmission");
+      expect(res.content).toContain("Contents & Revelations");
+      expect(res.lore).toContain("At the Table Reference");
+      expect(res.labels).toContain("tome");
+      expect(res.labels).toContain("item");
+    });
+
+    it("should generate tome via AI and fall back gracefully on failure", async () => {
+      mockClientManager.getModel.mockRejectedValue(
+        new Error("AI network error"),
+      );
+      const res = await engine.generateTome({
+        useAI: true,
+      });
+
+      expect(res.type).toBe("item");
+      expect(res.title).toBeDefined();
+      expect(res.content).toBeDefined();
+    });
+  });
+
   describe("generateHoliday", () => {
     it("generates either one observance or a coherent local calendar", async () => {
       const one = await engine.generateHoliday({
