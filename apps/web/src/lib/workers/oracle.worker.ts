@@ -62,6 +62,11 @@ class OracleWorker {
     this.eventBus.postMessage(event);
   }
 
+  /** Forgets the Interactions API state for a cleared chat (see ChatManager). */
+  resetConversation(conversationId: string): void {
+    this.textGeneration.resetConversation(conversationId);
+  }
+
   async expandQuery(
     apiKey: string,
     query: string,

@@ -14,6 +14,7 @@ import {
   DEFAULT_CUSTOM_IMAGE_MODEL,
 } from "./image-defaults";
 import { resolveFocusQuery } from "./conversation-focus";
+import { oracleConversationId } from "./conversation-id";
 
 interface VisualEntityLike {
   id?: string;
@@ -231,7 +232,10 @@ Treat these labels as strong direction for the subject's appearance, attire, and
 
     const retrieved = await context.contextRetrieval.retrieveContext(
       searchQuery,
-      this.getSentTitles(context.chatHistory.messages),
+      // Lore is re-sent every turn on purpose: the stateless path has no
+      // memory between calls, and the Interactions path tracks what it has
+      // already sent per conversation (LoreDeltaTracker).
+      new Set<string>(),
       context.vault,
       lastEntityId,
       false,
@@ -323,7 +327,7 @@ Treat these labels as strong direction for the subject's appearance, attire, and
         loreEntries,
         // Keep normal Oracle context namespaced away from Adventure sessions
         // and any future Oracle surfaces that use the same worker.
-        conversationId: `oracle:${context.vaultId}:normal`,
+        conversationId: oracleConversationId(context.vaultId),
         interactionsEnabled: context.interactionsEnabled,
       },
     );
@@ -614,20 +618,5 @@ Treat these labels as strong direction for the subject's appearance, attire, and
       return undefined;
     }
     return entity;
-  }
-
-  private getSentTitles(messages: ChatMessage[]): Set<string> {
-    const titles = new Set<string>();
-    messages.forEach((m) => {
-      if (m.role === "user") {
-        const matches = m.content.matchAll(
-          /--- (?:\[ACTIVE FILE\] )?File: ([^\n-]+) ---/g,
-        );
-        for (const match of matches) {
-          titles.add(match[1]);
-        }
-      }
-    });
-    return titles;
   }
 }

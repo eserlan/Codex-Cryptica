@@ -102,6 +102,22 @@ describe("OracleGenerator", () => {
       expect(result).toEqual({ primaryEntityId: "e1", sourceIds: ["e1"] });
     });
 
+    it("never excludes records from retrieval, so lore is re-sent every turn (#4059)", async () => {
+      mockContext.chatHistory.messages = [
+        {
+          role: "user",
+          content: "--- File: Entity 1 ---\nbody",
+          entityId: "e1",
+        },
+        { role: "assistant", content: "answer", entityId: "e1" },
+        { role: "user", content: "and her?" },
+        { role: "assistant", content: "" },
+      ];
+      await generator.generateChatResponse("and her?", mockContext, vi.fn());
+      const excluded =
+        mockContext.contextRetrieval.retrieveContext.mock.calls[0][1];
+      expect(excluded.size).toBe(0);
+    });
     it("does not generate when retrieval fails", async () => {
       mockContext.contextRetrieval.retrieveContext.mockRejectedValueOnce(
         new Error("index unavailable"),

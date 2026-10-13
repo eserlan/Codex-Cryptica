@@ -1,4 +1,8 @@
-import { OracleCommandParser, type ChatMessage } from "@codex/oracle-engine";
+import {
+  OracleCommandParser,
+  oracleConversationId,
+  type ChatMessage,
+} from "@codex/oracle-engine";
 import type { IOracleStore } from "./types";
 import {
   systemClock,
@@ -86,6 +90,21 @@ export class OracleChatManager {
     ) {
       await this.store.chatHistoryService.clear();
       this.store.sessionActivity.clear();
+      await this.resetModelConversation();
+    }
+  }
+
+  /**
+   * The model keeps its own copy of the chat server-side. Without this, a
+   * cleared conversation would keep steering later answers.
+   */
+  private async resetModelConversation() {
+    try {
+      await this.store.textGeneration.resetConversation?.(
+        oracleConversationId(this.store.vault.activeVaultId),
+      );
+    } catch (err) {
+      console.warn("[OracleChatManager] Could not reset model chat:", err);
     }
   }
 
@@ -100,6 +119,7 @@ export class OracleChatManager {
   async reset() {
     if (this.store.chatHistoryService) {
       await this.store.chatHistoryService.setMessages([]);
+      await this.resetModelConversation();
     }
   }
 
