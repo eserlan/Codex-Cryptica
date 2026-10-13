@@ -142,6 +142,7 @@
     <div
       class="h-2 w-full overflow-hidden rounded-full bg-theme-border/30"
       role="progressbar"
+      aria-label={`${item.label} count`}
       aria-valuenow={item.count}
       aria-valuemin={0}
       aria-valuemax={maxCount}

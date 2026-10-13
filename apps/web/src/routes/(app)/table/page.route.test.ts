@@ -72,6 +72,19 @@ describe("/table page", () => {
     await fireEvent.click(screen.getByTestId("entity-table-audit-toggle"));
   };
 
+  const applySearchAndSummaryColumnFilter = async () => {
+    await fireEvent.input(
+      screen.getByRole("combobox", { name: "Search entities" }),
+      {
+        target: { value: "Al" },
+      },
+    );
+    await fireEvent.click(screen.getByTestId("column-filter-btn-summary"));
+    await fireEvent.click(
+      screen.getByRole("menuitem", { name: "Missing summary" }),
+    );
+  };
+
   it("shows a loading state until the vault is initialized", () => {
     mutableVault.isInitialized = false;
     render(RoutePage);
@@ -300,9 +313,18 @@ describe("/table page", () => {
     mockPage.url = new URL("http://localhost/table?mode=overview");
     mutableVault.allEntities = [
       entity({ id: "e1", title: "Aldric", type: "character" }),
-      entity({ id: "e2", title: "Brindlewood", type: "location" }),
+      entity({
+        id: "e2",
+        title: "Alaric",
+        type: "character",
+        content: "Has a summary",
+      }),
+      entity({ id: "e3", title: "Albrook", type: "location" }),
     ];
     render(RoutePage);
+
+    await applySearchAndSummaryColumnFilter();
+    expect(screen.getAllByTestId("entity-table-row")).toHaveLength(2);
 
     const charBar = screen.getByTestId("distribution-bar-character");
     await fireEvent.click(charBar);
@@ -310,6 +332,13 @@ describe("/table page", () => {
     const rows = screen.getAllByTestId("entity-table-row");
     expect(rows).toHaveLength(1);
     expect(rows[0].textContent).toContain("Aldric");
+    expect(
+      (
+        screen.getByRole("combobox", {
+          name: "Search entities",
+        }) as HTMLInputElement
+      ).value,
+    ).toBe("Al");
   });
 
   it("filters table entities when clicking a distribution label bar", async () => {
@@ -322,13 +351,23 @@ describe("/table page", () => {
         labels: ["Hero"],
       }),
       entity({
+        id: "e3",
+        title: "Alaric",
+        type: "character",
+        labels: ["Hero"],
+        content: "Has a summary",
+      }),
+      entity({
         id: "e2",
-        title: "Brindlewood",
+        title: "Albrook",
         type: "location",
         labels: ["Place"],
       }),
     ];
     render(RoutePage);
+
+    await applySearchAndSummaryColumnFilter();
+    expect(screen.getAllByTestId("entity-table-row")).toHaveLength(2);
 
     // Switch to By Label
     const labelGroupBtn = screen.getByTestId("distribution-group-label");
@@ -340,6 +379,13 @@ describe("/table page", () => {
     const rows = screen.getAllByTestId("entity-table-row");
     expect(rows).toHaveLength(1);
     expect(rows[0].textContent).toContain("Aldric");
+    expect(
+      (
+        screen.getByRole("combobox", {
+          name: "Search entities",
+        }) as HTMLInputElement
+      ).value,
+    ).toBe("Al");
   });
 
   it("clears an active label filter when drilling down to unlabelled entities", async () => {

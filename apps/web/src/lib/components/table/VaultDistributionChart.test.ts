@@ -86,6 +86,9 @@ describe("VaultDistributionChart component", () => {
 
     expect(screen.getByTestId("distribution-bar-character")).toBeDefined();
     expect(
+      screen.getByRole("progressbar", { name: "Characters count" }),
+    ).toBeDefined();
+    expect(
       screen.getByTestId("distribution-count-character").textContent?.trim(),
     ).toBe("200");
     expect(
