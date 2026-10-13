@@ -296,6 +296,7 @@ Treat these labels as strong direction for the subject's appearance, attire, and
       focusTitle,
       content: aiContext,
       entries: loreEntries,
+      noRelevantMatch,
     } = await this.retrieveForQuery(query, context);
 
     // 2. Trigger Generation
