@@ -17,6 +17,11 @@ import {
 export interface ActionDeps {
   /** IDs of help articles that exist, so `openHelp` cannot point nowhere. */
   helpIds: ReadonlySet<string>;
+  /**
+   * Extra IDs the caller vouches for in this call only (onboarding journeys
+   * pass `SHELL_CONTROL_IDS`). Never written back into the screen description.
+   */
+  extraAvailable?: readonly string[];
 }
 
 function controlIsOnScreen(
@@ -25,8 +30,10 @@ function controlIsOnScreen(
   previous?: GuidanceStep,
 ): boolean {
   const spec = CONTROL_CATALOGUE[target];
-  // "solo" controls sit on every screen, so only their flags and availability decide.
-  if (spec.area !== "solo" && spec.area !== ctx.area) return false;
+  // "solo" and "shell" controls sit on every screen, so only their flags and
+  // availability decide.
+  if (spec.area !== "solo" && spec.area !== "shell" && spec.area !== ctx.area)
+    return false;
   if (!controlFlagsAllow(spec, ctx)) return false;
   if (ctx.availableActions.includes(target)) return true;
   // A control inside a panel is reachable when the step before it opens that
@@ -93,8 +100,16 @@ export function validateAction(
   if (!parsed.success) return null;
   const action = parsed.data as GuidanceAction;
 
-  if (!stepIsValid(action, ctx, deps)) return null;
-  if (action.then && !stepIsValid(action.then, ctx, deps, action)) return null;
+  // A copy, so the caller's extra IDs count for this call only.
+  const scoped = deps.extraAvailable?.length
+    ? {
+        ...ctx,
+        availableActions: [...ctx.availableActions, ...deps.extraAvailable],
+      }
+    : ctx;
+  if (!stepIsValid(action, scoped, deps)) return null;
+  if (action.then && !stepIsValid(action.then, scoped, deps, action))
+    return null;
   return action;
 }
 

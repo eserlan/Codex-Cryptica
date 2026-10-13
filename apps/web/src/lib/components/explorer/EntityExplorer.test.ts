@@ -34,7 +34,12 @@ vi.mock("$lib/stores/ui/notification.svelte", () => ({
   },
 }));
 
+vi.mock("$lib/app/onboarding/journey/journey-milestones-runtime", () => ({
+  recordEntryFound: vi.fn(),
+}));
+
 import EntityExplorer from "./EntityExplorer.svelte";
+import { recordEntryFound } from "$lib/app/onboarding/journey/journey-milestones-runtime";
 import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
 import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
 import { focusEntity } from "$lib/stores/ui/navigation";
@@ -102,5 +107,24 @@ describe("EntityExplorer", () => {
     expect(modalUIStore.openZenMode).toHaveBeenCalledWith("entity-1");
     expect(layoutUIStore.leftSidebarOpen).toBe(true);
     expect(layoutUIStore.activeSidebarTool).toBe("explorer");
+  });
+
+  describe("guided setup (spec 175)", () => {
+    it("reports an entry found when one is opened, passing no entry data", async () => {
+      render(EntityExplorer);
+      await fireEvent.click(screen.getByTestId("entity-select"));
+      expect(recordEntryFound).toHaveBeenCalledTimes(1);
+      expect(recordEntryFound).toHaveBeenCalledWith();
+    });
+
+    it("reports it from the Explorer workspace too, but not when closing it", async () => {
+      layoutUIStore.isWideViewport = true;
+      render(EntityExplorer);
+      await fireEvent.click(screen.getByTestId("entity-select"));
+      expect(recordEntryFound).toHaveBeenCalledTimes(1);
+      await fireEvent.click(screen.getByTestId("entity-select"));
+      expect(layoutUIStore.focusedEntityId).toBeNull();
+      expect(recordEntryFound).toHaveBeenCalledTimes(1);
+    });
   });
 });

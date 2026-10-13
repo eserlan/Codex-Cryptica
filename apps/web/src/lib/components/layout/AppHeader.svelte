@@ -135,6 +135,7 @@
           value={searchStore.query}
           oninput={(e) => searchStore.setQuery(e.currentTarget.value)}
           data-testid="search-input"
+          data-help-target="open-search"
         />
       </div>
       <button
@@ -143,6 +144,7 @@
         onclick={() => searchStore.open()}
         aria-label="Search"
         data-testid="mobile-search-button"
+        data-help-target="open-search"
       >
         <span
           class="icon-[heroicons--magnifying-glass] w-6 h-6"
@@ -197,6 +199,7 @@
           class="hidden lg:flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-theme-primary text-theme-bg text-xs font-bold uppercase tracking-wider hover:brightness-110 transition-all"
           onclick={() => modalUIStore.openIntentCreateMenu()}
           data-testid="header-create-button"
+          data-help-target="create-entry"
           aria-label="Create new entity"
           title="Create"
         >

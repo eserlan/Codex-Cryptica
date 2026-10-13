@@ -106,6 +106,7 @@
         "map-engine": "workspace:*",
         "marked": "^18.0.4",
         "marked-gfm-heading-id": "^4.1.4",
+        "onboarding-journey-engine": "workspace:*",
         "peerjs": "^1.5.5",
         "random-source-engine": "workspace:*",
         "schema": "workspace:*",
@@ -449,6 +450,19 @@
       "dependencies": {
         "@codex/spatial-engine": "workspace:*",
         "schema": "workspace:*",
+      },
+      "devDependencies": {
+        "@vitest/coverage-v8": "^5.0.0",
+        "typescript": "^6.0.3",
+        "vitest": "^5.0.0",
+      },
+    },
+    "packages/onboarding-journey-engine": {
+      "name": "onboarding-journey-engine",
+      "version": "0.0.0",
+      "dependencies": {
+        "help-engine": "workspace:*",
+        "zod": "^4.4.3",
       },
       "devDependencies": {
         "@vitest/coverage-v8": "^5.0.0",
@@ -2082,6 +2096,8 @@
     "obug": ["obug@2.2.1", "", {}, "sha512-XrsrhT5sybtKI6wakr2SPOlGZWWYbUXZ7a0jT8/QOeAPau+1X/bSegNe5YR75oJmEZQbKningirmGOEJCIk61Q=="],
 
     "omggif": ["omggif@1.0.10", "", {}, "sha512-LMJTtvgc/nugXj0Vcrrs68Mn2D1r0zf630VNtqtpI1FEO7e+O9FP4gqs9AcnBaSEeoHIPm28u6qgPR0oyEpGSw=="],
+
+    "onboarding-journey-engine": ["onboarding-journey-engine@workspace:packages/onboarding-journey-engine"],
 
     "onetime": ["onetime@6.0.0", "", { "dependencies": { "mimic-fn": "4.0.0" } }, "sha512-1FlR+gjXK7X+AsAHso35MnyN5KqGwJRi/31ft6x0M194ht7S+rWAvd7PHss9xSKMzE0asv1pyIHaJYq+BbacAQ=="],
 

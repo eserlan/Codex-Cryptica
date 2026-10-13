@@ -25,6 +25,7 @@
         : "Add a character or place to begin. Mention another name in its notes, accept the suggested connection, and it'll appear here."}
       cta={isGuest ? undefined : "＋ Create"}
       ctaTestId={isGuest ? undefined : "graph-empty-state-cta"}
+      ctaHelpTarget={isGuest ? undefined : "create-entry"}
       onCta={isGuest ? undefined : onCreate}
       secondaryCta={isGuest ? undefined : "Populate with a pack"}
       onSecondaryCta={isGuest ? undefined : onImport}

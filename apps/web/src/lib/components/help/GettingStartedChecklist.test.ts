@@ -11,6 +11,25 @@ vi.mock("$lib/app/onboarding/onboarding-funnel", () => ({
   },
 }));
 
+const journey = vi.hoisted(() => ({
+  store: {
+    definition: null as null | { goal: string; title: string },
+    canContinue: false,
+    start: vi.fn(),
+    resume: vi.fn(),
+    startOver: vi.fn(),
+  },
+  closeSettings: vi.fn(),
+}));
+
+vi.mock("$lib/app/onboarding/journey/journey-runtime", () => ({
+  journeyStore: journey.store,
+}));
+vi.mock("$lib/stores/ui/modal-ui.svelte", () => ({
+  modalUIStore: { closeSettings: journey.closeSettings },
+}));
+
+import { fireEvent } from "@testing-library/svelte";
 import GettingStartedChecklist from "./GettingStartedChecklist.svelte";
 
 describe("GettingStartedChecklist", () => {
@@ -59,5 +78,54 @@ describe("GettingStartedChecklist", () => {
     render(GettingStartedChecklist);
 
     expect(screen.queryByText(/replay tour/i)).toBeNull();
+  });
+
+  describe("Guided setup (spec 175)", () => {
+    const reset = () => {
+      mockCompleted.mockReturnValue([]);
+      journey.store.definition = null;
+      journey.store.canContinue = false;
+      vi.clearAllMocks();
+    };
+
+    it("offers the three journeys and starts one, closing Help", async () => {
+      reset();
+      render(GettingStartedChecklist);
+      expect(screen.getByTestId("guided-setup")).toBeTruthy();
+      await fireEvent.click(screen.getByTestId("guided-setup-story"));
+      expect(journey.store.start).toHaveBeenCalledWith("story");
+      expect(journey.closeSettings).toHaveBeenCalled();
+      expect(screen.getByTestId("guided-setup-world")).toBeTruthy();
+      expect(screen.getByTestId("guided-setup-campaign")).toBeTruthy();
+    });
+
+    it("offers Continue only for an exited, unfinished journey", async () => {
+      reset();
+      const first = render(GettingStartedChecklist);
+      expect(screen.queryByTestId("guided-setup-continue")).toBeNull();
+      first.unmount();
+
+      journey.store.definition = { goal: "story", title: "Write a story" };
+      journey.store.canContinue = true;
+      render(GettingStartedChecklist);
+      await fireEvent.click(screen.getByTestId("guided-setup-continue"));
+      expect(journey.store.resume).toHaveBeenCalled();
+      expect(journey.closeSettings).toHaveBeenCalled();
+    });
+
+    it("Start over restarts the vault's journey", async () => {
+      reset();
+      journey.store.definition = { goal: "world", title: "Build a world" };
+      render(GettingStartedChecklist);
+      await fireEvent.click(screen.getByTestId("guided-setup-start-over"));
+      expect(journey.store.startOver).toHaveBeenCalledWith();
+    });
+
+    it("is hidden in the standalone Help window", () => {
+      reset();
+      render(GettingStartedChecklist, { isStandalone: true });
+      expect(screen.queryByTestId("guided-setup")).toBeNull();
+      expect(screen.getByText("Start a campaign")).toBeTruthy();
+    });
   });
 });

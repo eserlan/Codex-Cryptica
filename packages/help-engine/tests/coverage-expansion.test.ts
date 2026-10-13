@@ -19,6 +19,7 @@ const remaining = [
   "chronology",
   "family-tree",
   "guided-mode",
+  "guided-setup",
   "session-prep",
   "publishing",
   "lore-oracle",

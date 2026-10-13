@@ -118,8 +118,10 @@
       // these teach touch-specific chrome navigation, a different story from
       // the tour's task-oriented steps. Without this, both could render at
       // once on a touch device (two competing cards), exactly what the
-      // orchestrator (#1780) exists to prevent.
-      !helpStore.activeTour,
+      // orchestrator (#1780) exists to prevent. The goal invitation and a
+      // guided-setup journey hold them back for the same reason (spec 175).
+      !helpStore.activeTour &&
+      !onboardingStore.firstRunGuidanceActive,
   );
 
   let coachMarkTargetRect = $state<DOMRect | null>(null);
@@ -755,6 +757,7 @@
       title="Create"
       aria-label="Create new entity"
       data-testid="graph-fab-create"
+      data-help-target="create-entry"
       class="absolute bottom-6 right-6 z-40 flex lg:hidden items-center justify-center w-14 h-14 rounded-full bg-theme-primary text-theme-bg shadow-[0_4px_20px_rgba(var(--theme-primary-rgb),0.4)] hover:brightness-110 transition-all"
     >
       <span class="icon-[lucide--plus] w-6 h-6" aria-hidden="true"></span>

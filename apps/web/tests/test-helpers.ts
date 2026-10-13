@@ -28,6 +28,8 @@ export function seedOnboardingComplete() {
       "codex-cryptica-help-state",
       JSON.stringify({ completedTours: ["initial-onboarding"] }),
     );
+    localStorage.setItem("codex_goal_invitation", "dismissed");
+    localStorage.setItem("codex_mobile_graph_coach_marks_seen", "true");
   } catch {
     /* ignore */
   }

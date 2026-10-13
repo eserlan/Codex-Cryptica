@@ -133,6 +133,26 @@ describe("HelpActionRunner", () => {
     await expect(runner.run(guide)).resolves.toBe(true); // the tab still opened
   });
 
+  it("does not run a chained highlight after cancellation", async () => {
+    let finishWait!: () => void;
+    const controller = new AbortController();
+    const show = vi.fn(() => true);
+    const { runner, openTab } = setup({
+      highlight: { show },
+      waitFor: () =>
+        new Promise<boolean>((resolve) => {
+          finishWait = () => resolve(false);
+        }),
+    });
+    const pending = runner.run(guide, { signal: controller.signal });
+    await Promise.resolve();
+    controller.abort();
+    finishWait();
+    await pending;
+    expect(show).not.toHaveBeenCalled();
+    expect(openTab).toHaveBeenCalledWith("status");
+  });
+
   it("discards a guide that is no longer valid for the current screen", async () => {
     const { runner, openTab, show } = setup(
       {},
@@ -344,6 +364,40 @@ describe("HelpActionRunner", () => {
 
       expect(await runner.run(showAddToken)).toBe(false);
       expect(openPanel).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("journey shell controls (spec 175)", () => {
+    const graph = () =>
+      screen({ area: "graph", tab: null, availableActions: [] });
+    const createEntry: GuidanceAction = {
+      type: "highlight",
+      target: "create-entry",
+      label: "Create",
+    };
+
+    it("highlights a shell control the caller vouches for", async () => {
+      const { runner, show } = setup({}, graph());
+      expect(
+        await runner.run(createEntry, { extraAvailable: ["create-entry"] }),
+      ).toBe(true);
+      expect(show).toHaveBeenCalledWith("create-entry", "Create");
+    });
+
+    it("refuses a shell control without extraAvailable", async () => {
+      const { runner, show } = setup({}, graph());
+      expect(await runner.run(createEntry)).toBe(false);
+      expect(show).not.toHaveBeenCalled();
+    });
+
+    it("resolves false when the vouched control is not rendered", async () => {
+      const { runner } = setup(
+        { highlight: { show: vi.fn(() => false) } },
+        graph(),
+      );
+      expect(
+        await runner.run(createEntry, { extraAvailable: ["create-entry"] }),
+      ).toBe(false);
     });
   });
 });

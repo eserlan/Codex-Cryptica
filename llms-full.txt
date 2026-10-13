@@ -684,6 +684,34 @@ Someone viewing a published world can search, sort and filter the table, but it 
 
 ---
 
+### GUIDED SETUP
+
+Guided setup walks you through one short task in your own vault, step by step, until you can see the result. You choose the goal:
+
+- **Build a world**: add a place and a character, connect them, and see them on the Graph.
+- **Write a story**: add a character and a place or a plot note, link them, and find one again with Search or the Explorer.
+- **Prepare an RPG campaign**: prepare a character or location with a generator, save it, then add a second one for your table, for example with **Generate related**.
+
+A small card shows the current step. A step is ticked off only when you really do it, for example when the new place is saved. You can do the steps in any order: the card always shows the first one you still need.
+
+## Starting, pausing and stopping
+
+- The first time you open Codex Cryptica, a small card asks what you would like to do first. Pick a goal, choose **Explore on my own**, or close it.
+- To start later, or to switch goal, open **Help** and use **Guided setup** under **Getting Started**. **Continue** picks up where you stopped, and **Start over** begins again.
+- **Show me** opens the right screen or points at the right control. It only runs when you tap it.
+- **Back** shows an earlier step, **Skip** moves past a step, and **Stop guided setup** ends it straight away. Press **Escape** inside the card, or use the minimise button, to shrink it to a small pill.
+- If you reload the page, the card comes back on the same step. When you come back another day, it stays out of the way until you choose **Continue**.
+
+## What it never does
+
+Guided setup never creates, changes or deletes anything in your vault. Everything in your vault afterwards is something you made yourself. It works without AI and offline, and it sends nothing anywhere. Your progress is kept on this device only, and holds which steps you finished, never your entry names or text.
+
+## Cif and the Oracle
+
+Cif is the guide to using Codex Cryptica: it explains where things are and how they work. Some steps offer **Ask Cif**, which asks Cif a question about that step. It only appears when AI is turned on, and only sends a question when you tap it. The Oracle and the generators are different: they make ideas and content for your world.
+
+---
+
 ### MAP MODE
 
 **Map Mode** transitions Codex Cryptica from a document-heavy manager to a visual, spatial experience. You can plot your campaign data onto custom geographic or tactical canvases.
@@ -808,17 +836,19 @@ Codex Cryptica provides native support for overland hexcrawls and region explora
 5. Adjust **Hex Radius** (cell size in pixels) and your campaign scale (e.g. `6` `miles` per cell).
 6. If your map image already has hexes drawn on it, choose **Fit Grid from Map** and drag across a few of them to match their size and position. See [Grids & Measurement](/help#help/vtt-grids-measurement).
 
-### Coordinate Overlays
+### Coordinate Overlays & Labels
 
-When managing large overland regions, toggle **Show Hex Coordinates** in Grid Settings:
+When managing large overland regions, configure **Hex Labels** in Grid Settings:
 
-- Visible hexes render centered axial coordinates in `(q.r)` format (such as `01.04` or `02.05`).
+- Choose between **Alphanumeric** (e.g. `A01`, `B03` with customizable starting column/row, padding, and separator—ideal for classic wargame/TTRPG hexcrawls), **Numeric** (e.g. `01.04`), or mathematical **Axial** (`(q, r)`).
+- Right-click any hex on the map to see its formatted label and select **Copy hex coordinate** to copy it directly to your clipboard.
 - Labels automatically hide when zoomed out past the legibility threshold to prevent visual clutter and keep navigation smooth.
 
 ### Token Snapping & Sizing
 
 - **Automatic Snapping**: Dragging a party token, NPC, or monster token on an active hex map snaps its center to the nearest hex cell upon release.
 - **Hex Diameter Sizing**: Right-click any token and choose **Resize** (1x, 2x, 3x) to scale it to the exact diameter of the hexagonal cell ($2 \times \text{radius}$ or $\sqrt{3} \times \text{radius}$).
+- **Hex Info Under a Token**: Select the party token on the Token layer and the token panel shows the tile it stands on, with that tile's room details and stocked notes. You can read and edit them without switching to the Terrain layer. **Select tile** jumps to the tile itself. Only the GM sees this.
 
 ### Hex Fog of War Exploration
 
@@ -864,7 +894,7 @@ The travel readout shows the last move and the total since you opened the map or
 
 ## Keep an expedition record
 
-Start a [Session Journal](/help#help/quicknote) to record completed party moves alongside dice rolls, table results and card draws. Map entries include distance, destination coordinates when those labels are enabled, and how many new hexes the move revealed. Turn **Map moves** off in the journal header to stop those entries while keeping other automatic capture on. Promote a useful entry to a vault note through the same journal actions as any other entry.
+Start a [Session Journal](/help#help/quicknote) to record completed party moves alongside dice rolls, table results and card draws. Map entries include distance, destination coordinates when those labels are enabled, and how many new hexes the move revealed. Open **Capture** in the journal header to switch off map moves, or any other kind of automatic entry, while keeping the rest on. Promote a useful entry to a vault note through the same journal actions as any other entry.
 
 Travel totals are temporary and stay in this browser tab. The journal is saved with your local vault. Solo play does not send or measure your map activity.
 
@@ -961,6 +991,30 @@ While a journal runs, each change to the party is noted in it, such as "Party: K
 When AI is on, **Ask Oracle** in the solo bar offers **Open Oracle** and four quick questions: "How does this NPC react?", "Add a complication", "What is known about this place?" and "What happens next?".
 
 Choosing a question opens the Oracle beside your screen with that question already written in its input. It includes the scene name, the place, your party and the most recent journal results. Nothing is sent until you edit it, if you want, and press Send. The Oracle answers the question you send; it does not run the game for you. When AI is turned off, these shortcuts are hidden.
+
+## Yes or no
+
+Ask the dice a question when there is no GM to ask. Open **Yes or no** in the solo bar (or the sheet), type your question if you like, choose how likely a yes is, and press **Roll**. The answer appears with its roll, and goes into the journal with the question.
+
+The answers run from **Yes, and** to **No, and**, with qualified answers such as **Yes, but** in between. This works without AI.
+
+## Random events and tension
+
+Some answers bring a **random event**: a focus, an action and a subject in one sentence. You can also press **Random event** whenever you want one. The subject can be an open thread, a party member, the current place, or someone new.
+
+**Tension** runs from 1 to 9 and starts at 5. Raise it when things heat up and lower it when they calm down. Higher tension means random events come up more often. Changes are noted in the journal.
+
+## Threads
+
+Threads are open questions, leads, objectives and mysteries that carry a campaign from one session to the next. Open **Threads** to add one with a title and a kind (question, lead, objective or mystery), link it to entries in your vault, close it with a note when it is resolved, and reopen it if it returns. Closed threads sit under **Show closed threads**, one choice away. Use the search box and the kind filter to find one quickly.
+
+Threads are saved in your vault, so they stay put when you reload, switch vaults or start a new session. They are also in a vault export (`.codex.zip`) and in a folder save, so they come along when you restore or move the vault that way. They are not part of Cloud Backup yet. Each vault can hold up to 200 threads. When it is full, close or delete one to add another.
+
+You can view and edit threads from **Play** as well, with no session running. In a read-only vault, you can still read them, but not change them.
+
+## Let the Oracle run a scene
+
+When AI is on, **Ask Oracle** in the solo bar has **Let the Oracle run a scene**. It opens Adventure Mode, where the Oracle runs the game as game master, continuing an existing adventure if there is one. It is an explicit choice: a solo session never starts Adventure Mode on its own, and the entry is hidden when AI is off.
 
 ## Asking for help
 
@@ -1270,7 +1324,7 @@ Use the **grid button** in the map bar to show or hide the grid. Right-click it 
 ## Grid settings
 
 - **Grid type**: **Square**, **Hex (Pointy)** or **Hex (Flat)**. Match the orientation of the hexes on your map.
-- **Show Hex Coordinates**: on hex grids, labels each hex with axial coordinates (q.r) at its centre.
+- **Hex Labels**: on hex grids, configure labels in hex centers: **Off**, **Alphanumeric** (classic hexcrawl column letters and row numbers such as `A01`, `B03` with customizable start column/row, padding, separator, and row direction), **Numeric** (axial coordinates such as `01.04`), or **Axial** (`(q, r)`).
 - **Grid Cell Size** (square) or **Hex Radius** (hex): the size in pixels. Drag the slider from 20 to 500.
 - **Distance per Cell** and **Unit Name**: set the scale, such as `5` and `ft`, or `6` and `mi` for overland maps.
 
@@ -2162,7 +2216,11 @@ The scratchpad also has a **Session Journal** tab. It is a running record of wha
 
 A small dot on the button means a journal is currently running.
 
-While a journal is running, your dice rolls, card draws, random table results and completed SOLO party moves are added automatically, even when the scratchpad is closed. Each appears as its own entry with its result or travel details. Map entries include distance, optional hex coordinates and newly revealed hexes. Use **Map moves** in the journal header to switch map capture off; dice, table and deck capture continue. They go into whichever section you have chosen. If no journal is running, nothing is added, and your rolls work exactly as before.
+While a journal is running, your dice rolls, card draws, random table results and completed SOLO party moves are added automatically, even when the scratchpad is closed. Each appears as its own entry with its result or travel details. Map entries include distance, optional hex coordinates and newly revealed hexes. They go into whichever section you have chosen. If no journal is running, nothing is added, and your rolls work exactly as before.
+
+### Choose what the journal records
+
+Open **Capture** in the journal header to choose which automatic entries this journal keeps. Each kind has its own switch: dice rolls, table results, card draws, map moves, scene changes, Oracle answers and random events, tension changes, thread changes, party changes and generated results. Your choices are saved with that journal, so a new journal starts with everything on. Notes you type yourself are always kept. Switching a kind off stops new entries of that kind; it does not remove entries already in the journal.
 
 ### Turning the journal into entities
 
@@ -3103,6 +3161,109 @@ Session Prep is different from **Session Journal**, which records what happened 
 
 ---
 
+### SHOPS AND MERCHANTS
+
+A shop in Codex Cryptica is an ordinary entity, usually a Location or an Organisation, that uses the **Shop / Merchant** stat sheet. It keeps the owner, reputation, services and a stock table on the entity itself. It works for any game system and needs no AI.
+
+## Set up a shop
+
+1. Open the Location or Organisation and choose **Stats**.
+2. Open **Templates** and choose **Shop / Merchant**. It sits in the suggested list for Locations.
+3. Fill in the owner, speciality, reputation and services. **Purchasing power** is optional.
+
+The template is opt-in. Nothing changes on your other Locations unless you apply it to them.
+
+## Manage the stock
+
+Use the **GM Stock Manager** layout from **Presentations**. Each stock line has:
+
+- **Item**: type a name, or choose **Link Vault Item** to point at an existing Item.
+- **Quantity**: use the **+** and **-** buttons or type a number. Stock stops at 0.
+- **Shop price**: the price in this shop, with its own unit such as `gp` or `cr`. A linked Item keeps its own price, which shows as a hint.
+- **Availability**: Available, Reserved, Sold out or Hidden.
+- **Condition** and **Note**: the Note is for you. The catalogue never shows it.
+
+Choose **Open item** on a linked line to jump to that Item. If a linked Item is later deleted, the line keeps the name you saw and stays editable. Use the arrows on a row, or **Ctrl+Up** and **Ctrl+Down**, to reorder lines. Links survive reordering.
+
+A line can also be a **Service** or a **Commission**, which have no quantity.
+
+## Record a trade
+
+Choose **Trade** on a stock line to record a sale or a purchase. Nothing changes until you press **Confirm trade**. The form shows what will happen first: the total, the stock before and after, and whether any funds move.
+
+1. Choose **Customer buys from the shop** or **Customer sells to the shop**.
+2. Set the quantity. The price starts as the line's shop price, and you can change it for this trade only.
+3. Optionally choose who is trading. Leave it on **No one** to just record the trade.
+4. Check the preview, then press **Confirm trade**, or **Cancel** to change nothing.
+
+A trade is refused, with a reason, if there is not enough stock, the line is sold out, reserved or hidden, the quantity is not a whole number, or there is no price. Services and commissions are traded one at a time, and a shop only buys items. When the last unit sells, the line becomes **Sold out**. When the shop buys goods for a sold-out line, it becomes **Available** again.
+
+### Record only, or update a wallet
+
+By default a trade is **record only**: the shop's stock changes and the trade is logged, but **no funds move** and nothing is added to anyone's inventory. The form says so every time.
+
+To move money as well, choose a character and tick **Also update their wallet**. That option appears only when the character has a **number** field with the key `wallet_gp` for gold pieces, `wallet_cr` for credits, and so on. The unit must match the price, because there is no exchange rate. Wallets use whole numbers, so a price with decimals is record only. A purchase is refused if the character cannot afford it.
+
+The shop's own **Purchasing power** is a text note and is never changed by a trade. Moving items into a character's inventory is not automatic; add them yourself.
+
+### If something goes wrong
+
+If saving fails, the form tells you and nothing is changed. If the wallet cannot be updated, the stock change is undone. In the rare case that a trade is left half finished, the button changes to **Finish trade**. Confirm it again and it completes without doing anything twice. Pressing Confirm twice, or confirming a trade that already went through, records it once.
+
+### Journal
+
+While a Session Journal is running, each completed trade adds one **Trade** entry, such as "Mira bought 2× Rope from Tallow's Goods for 4 gp (record only, no funds moved)." A cancelled or refused trade adds nothing.
+
+## Show the catalogue
+
+Switch to **Browse Catalogue** in **Presentations**. It shows the same stock as a compact, read-only list with prices, availability and services. Hidden lines and your notes are left out. Switching layouts never changes your data.
+
+The catalogue is a preview on your own screen. It is not a way to share the shop with players, and the player view is planned separately. Do not treat Hidden or Note as secret from anyone looking at your screen or your vault.
+
+## Share the catalogue with players
+
+A shop is private until you share it. When you host a shared session or publish your world, a shop's stock, prices and notes are not sent to players unless you switch sharing on.
+
+1. On the shop's **Stats** tab, tick **Share this catalogue with players** above the stock table.
+2. Choose which business details players may also see, such as the speciality or services. Everything you leave unticked stays private.
+3. Choose **Preview as player**. It shows exactly what players receive, and nothing else about the shop is sent.
+
+Players see each line's name, price, quantity, condition and whether it is available, read-only. They cannot buy or change anything. You handle every trade, and a player has no Trade button.
+
+Never shared, whatever you tick: lines marked **Hidden**, your note on each line, **Purchasing power**, **GM notes**, trade history, and links to the Items behind each line. A line with no name of its own shows the title of the Item it links to, so give a line its own name if that Item's title is a spoiler.
+
+Untick the box to stop sharing. In a live session the catalogue disappears from players' screens straight away. A published world only changes the next time you publish it again.
+
+Linked Items and the shop's own page follow the normal rules for what players can see. Sharing a catalogue does not make an Item or the shop's description visible, and hiding an Item from players is separate from the catalogue.
+
+## Suggest stock
+
+A new shop does not have to start empty. On a shop's Stats tab, choose **Suggest stock** to get a first set of goods. It works offline and needs no AI.
+
+- It reads the shop's own text and the places it is connected to, such as a settlement. Goods the place makes or sells are cheaper and plentiful. Goods it is short of are few and cost more.
+- Pick a setting (fantasy, sci-fi or generic), or leave it on **Read from the shop**. **Try another set** gives a different spread.
+- Each line shows why it is there. Untick lines you do not want, and change the quantity or price before you add them.
+- Lines the shop already stocks are marked and left alone. Your existing prices and quantities are never changed, and running it again does not add a line twice.
+- If you already have an Item with the same name, you can choose to link it. Nothing is linked or created for you.
+
+Suggested prices are rough starting points, not official prices. Each added line is marked as a suggestion in your private line note.
+
+## Make your own shop template
+
+Use **Edit Layout** to add fields to your shop, then save the layout from **Templates**. Saved layouts can be shared like any other template. Saved templates keep the field layout, not your stock.
+
+## Which tool should I use?
+
+| You want                                      | Use                                                               |
+| --------------------------------------------- | ----------------------------------------------------------------- |
+| Prices and stock you can edit and browse      | A shop with this sheet                                            |
+| A quick NPC with wants, quirks and secrets    | The **Table Card** character template                             |
+| An invented business with staff and a history | A business generator, which is planned and not part of this sheet |
+
+This sheet only holds what a shop sells and how it looks to a customer. It does not invent the business. You can use more than one tool together: a shopkeeper can be a Table Card NPC who owns a shop with this sheet.
+
+---
+
 ### THE SHELF
 
 Built a monster you want in another campaign? A stash of magic items worth reusing? The Shelf carries entities from one vault into another without anything leaving the app.
@@ -3350,6 +3511,10 @@ Reference answers to real RPG and worldbuilding questions, indexed at https://co
 
 **Direct answer:** Build a believable fantasy economy by tracing six links for each region: what it has and needs, how resources are worked, how goods and labour move, who controls access or takes a share, what strains the arrangement, and what the players can see changing as a result. A believable economy does not need a perfectly calibrated price list; it needs causes the players can see, such as bread costing more after a blocked pass, a mine town having coin but no food, or someone with power responding to the strain.
 
+### [How do I combine multiple enemies into one squad in a tabletop RPG?](https://codexcryptica.com/answers/how-do-i-combine-multiple-enemies-into-one-squad-in-an-rpg)
+
+**Direct answer:** To combine similar enemies into one squad, decide what to abstract and what to keep visible: its footprint, a casualty track, one activation whose attack reflects its remaining strength, and clear rules for targeting, area effects and morale. Show members falling and the squad changing as it takes losses, rather than turning it into a single giant creature with extra hit points.
+
 ### [How do I create interesting islands and ports for a pirate campaign?](https://codexcryptica.com/answers/how-do-i-create-interesting-islands-and-ports-for-a-pirate-campaign)
 
 **Direct answer:** Give each island or port a clear identity, an active pressure locals are already responding to, and a reason outsiders could change the balance. Establish why ships come, where they can land or anchor, what the terrain and season make difficult, and who controls law, access, navigation, services, trade, and local legitimacy. Add a landmark, an economic role or trade need, useful ship services, and nearby or inland sites. Track the pressure, factions, and resources so the crew's actions and time away shape what they find on return.
@@ -3422,6 +3587,10 @@ Reference answers to real RPG and worldbuilding questions, indexed at https://co
 
 **Direct answer:** Give each rival captain, navy, company, or pirate faction a concrete goal, an asset or dependency, and a move that can change the sea around the crew. Review factions at natural breaks in fictional time, often between sessions, and advance only moves that had the time, means, and opportunity to progress. Show the results in prices, patrols, routes, port access, and local reputation; let recurring rivals change their relationship with the crew as well as their plans.
 
+### [How do I make roleplay more engaging in a tabletop RPG?](https://codexcryptica.com/answers/how-do-i-make-roleplay-more-engaging)
+
+**Direct answer:** Make social scenes engaging by giving players an approach or commitment to choose before resolving the request. One roll can settle it; continue only while meaningful decisions remain. Give important NPCs a want, a reason to hesitate, something useful they know, and a boundary they will not cross, then let the players choose how to engage with those pressures and let the dice support the fiction when the outcome is genuinely uncertain.
+
 ### [How do I make sea travel interesting in a TTRPG?](https://codexcryptica.com/answers/how-do-i-make-sea-travel-interesting-in-a-ttrpg)
 
 **Direct answer:** Make sea travel interesting by deciding which passages can be summarised and where a meaningful choice deserves close attention. Offer different courses or sailing strategies, then bring in only the pressures, sightings, and discoveries that matter to this voyage. Let consequences carry forward whether the crew sails for merchants or a navy, leads an expedition, works a fishing fleet, or raids as pirates.
@@ -3437,6 +3606,10 @@ Reference answers to real RPG and worldbuilding questions, indexed at https://co
 ### [How do I pace an RPG one-shot?](https://codexcryptica.com/answers/how-do-i-pace-an-rpg-one-shot)
 
 **Direct answer:** Pace an RPG one-shot by budgeting backward from your hard stop: reserve the final 50 to 70 minutes of usable play for the climax and epilogue, place one explicit checkpoint at the halfway mark to test momentum, and prepare an elastic middle encounter that can expand or vanish entirely depending on the table clock.
+
+### [How do I plan story arcs for a long-running RPG campaign?](https://codexcryptica.com/answers/how-do-i-plan-story-arcs-for-an-rpg-campaign)
+
+**Direct answer:** Sketch the campaign's central tensions and possible direction, develop the current arc and a few future possibilities, but prepare only the next session in detail. Give each arc its own problem and resolution that changes the situation, and let player decisions decide what follows. A simple way to keep prep light is three horizons: a broad campaign horizon for threats and factions, an arc horizon for the current conflict and its stakes, and a session horizon for the locations, NPCs and choices you need next time you play.
 
 ### [How do I prepare a D&D session?](https://codexcryptica.com/answers/how-do-i-prepare-a-dnd-session)
 
@@ -3529,6 +3702,10 @@ Reference answers to real RPG and worldbuilding questions, indexed at https://co
 ### [How do I start GMing for the first time?](https://codexcryptica.com/answers/how-do-i-start-gming-for-the-first-time)
 
 **Direct answer:** Pick a system or a beginner-friendly published scenario you can actually run soon, prepare the next session rather than an entire world, and hold at least a short Session 0 to align expectations before play. Build only the NPCs, places, factions, and conflicts the players are likely to encounter, expect them to go off script and prepare situations rather than a fixed plot, and focus on clear choices, pacing, and spotlight over elaborate lore or performance. After the first session, keep only the notes that actually became real at the table. You do not need voices, acting skill, encyclopedic rules knowledge, or hours of prep to run a good first session.
+
+### [How do I start worldbuilding for a novel or short story?](https://codexcryptica.com/answers/how-do-i-start-worldbuilding-for-a-novel-or-short-story)
+
+**Direct answer:** Start with the story, not an encyclopaedia. Write a one or two sentence premise, name your viewpoint character and their immediate obstacle, then choose three setting truths that put pressure on them. Prepare only the place and people the opening needs, then draft and add lore as later scenes call for it.
 
 ### [How do I take useful RPG notes during play without missing the session?](https://codexcryptica.com/answers/how-do-i-take-useful-rpg-notes-during-play)
 
@@ -3802,9 +3979,21 @@ Reference answers to real RPG and worldbuilding questions, indexed at https://co
 
 **Direct answer:** Use a point crawl when play is about choosing between known or rumoured destinations and routes, with each journey carrying a clear cost. Use a hex crawl when finding the landscape is itself the game: the party chooses a direction, exposes unknown ground, and manages time and supplies across a broad region. Neither is more open by default; they make different parts of exploration visible at the table.
 
+### [What are the pros and cons of becoming a Dungeon Master?](https://codexcryptica.com/answers/what-are-the-pros-and-cons-of-becoming-a-dungeon-master)
+
+**Direct answer:** Becoming a Dungeon Master may appeal if you enjoy setting up situations, improvising around unexpected player choices, and helping the group have memorable moments at the table. The role brings different responsibilities from playing: you prepare situations, make rulings, and share attention fairly. A low-risk way to find out is to run a short standalone one-shot for your group or a few friends while you keep playing in your current campaign.
+
+### [What can I do on my turn in D&D combat?](https://codexcryptica.com/answers/what-can-i-do-on-my-turn-in-dnd-combat)
+
+**Direct answer:** On your turn in D&D combat you can usually move up to your speed and take one action, and you sometimes have a bonus action if a class feature, spell, or piece of equipment gives you one. You can also interact briefly with something nearby and speak a few words. A reaction responds to a specific trigger, often on another creature's turn but sometimes on yours; after you use one, you cannot take another until the start of your next turn. Your class and features decide the interesting options inside those buckets, so describe what you want to accomplish and let the Dungeon Master tell you which action fits.
+
 ### [What can players actually buy and sell in a fantasy settlement?](https://codexcryptica.com/answers/what-can-players-actually-buy-and-sell-in-a-fantasy-settlement)
 
 **Direct answer:** Give each settlement a small market profile: its scale, the common goods always about, the imports that arrive irregularly, the specialists who make or commission the rest, the buyers able to absorb treasure or bulk, and the current pressure bending all of it. A hamlet sells bread and buys nothing precious; a regional market stocks ordinary gear and takes ordinary treasure; only a city or port moves luxuries, bulk cargo, or extraordinary items, and then through named brokers, guild permission, or waiting time. Availability stays separate from affordability: the sword can hang on the rack beyond any purse, or sit affordable in the capital but absent here.
+
+### [What do I need to bring to my first D&D game?](https://codexcryptica.com/answers/what-do-i-need-to-bring-to-my-first-dnd-game)
+
+**Direct answer:** For most first D&D games you need only your character, a way to roll dice, something to take notes with, and anything the Dungeon Master specifically asked you to bring. You do not need to buy rulebooks, expensive dice, miniatures or accessories before you have played. Many tables will lend you dice, explain the rules, or supply a ready-made character, so check what your group already covers before you buy anything.
 
 ### [What do you do with murder hobos in your RPG campaign?](https://codexcryptica.com/answers/what-do-you-do-with-murder-hobos-in-an-rpg-campaign)
 
@@ -3904,7 +4093,11 @@ Reference answers to real RPG and worldbuilding questions, indexed at https://co
 
 ### [Which dice do I roll in D&D, and when?](https://codexcryptica.com/answers/which-dice-do-i-roll-in-dnd-and-when)
 
-**Direct answer:** If you are trying something uncertain in D&D, you very often start with a twenty-sided die (d20) and add a modifier the Dungeon Master or your character sheet names. The other dice in the set (d4, d6, d8, d10, d12 and percentile dice) are commonly used afterwards to determine damage, healing or other amounts, and your weapon, spell or feature tells you which one to roll so you do not need to memorise every die from memory.
+**Direct answer:** If you are trying something uncertain in D&D, you very often start with a twenty-sided die (d20) and add a modifier the Dungeon Master or your character sheet names. For an attack that requires an attack roll, the d20 decides whether it hits and you roll its listed damage on a hit. Other effects name their dice directly, so you do not need to memorise every one.
+
+### [Which tabletop RPGs have useful squad, unit and mass-battle rules?](https://codexcryptica.com/answers/which-tabletop-rpgs-have-squad-and-mass-battle-rules)
+
+**Direct answer:** Different TTRPGs solve different scales of group combat, so pick by the job you need. Pathfinder Second Edition Troops represent a formation as one creature on the map; 13th Age Mooks share hit point bookkeeping but still move and attack individually; Savage Worlds Adventure Edition resolves army clashes with an abstract Mass Battle procedure that PC actions can support; and Reign resolves organisation-level Company conflict alongside character play. These mechanics abstract different things: a shared hit point pool does not remove individual activations, and no one system here covers every scale equally well.
 
 ### [XP vs milestone levelling: which should I use?](https://codexcryptica.com/answers/xp-leveling-vs-milestone-leveling)
 

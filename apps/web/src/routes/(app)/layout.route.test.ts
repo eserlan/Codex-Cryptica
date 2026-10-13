@@ -29,6 +29,11 @@ vi.mock("$lib/components/layout/AppHeader.svelte", () => ({
     return { $$render: () => "<div data-testid='app-header'></div>" };
   },
 }));
+vi.mock("$lib/components/onboarding/OnboardingHost.svelte", () => ({
+  default: function OnboardingHostMock() {
+    return { $$render: () => "" };
+  },
+}));
 vi.mock("$lib/components/layout/NotificationToast.svelte", () => ({
   default: function NotificationToastMock() {
     return { $$render: () => "" };
@@ -179,6 +184,8 @@ vi.mock("$lib/stores/ui/onboarding.svelte", () => ({
     dismissedWorldPage: true,
     skipWelcomeScreen: true,
     lastSeenVersion: "0.0.0",
+    goalInvitation: null,
+    firstRunGuidanceActive: false,
     markVersionAsSeen: vi.fn(),
   },
 }));
@@ -289,6 +296,8 @@ describe("+layout.svelte", () => {
     (onboardingStore as any).isLandingPageVisible = false;
     onboardingStore.dismissedWorldPage = true;
     onboardingStore.showChangelog = false;
+    onboardingStore.goalInvitation = null;
+    onboardingStore.firstRunGuidanceActive = false;
     sessionModeStore.isGuestMode = false;
     (modalUIStore as any).isAnyModalOpen = false;
     modalUIStore.showVaultSwitcher = false;
@@ -568,13 +577,38 @@ describe("+layout.svelte", () => {
     expect(modalUIStore.openVaultThemePrompt).not.toHaveBeenCalled();
   });
 
-  it("does not start the welcome tour while the vault selector is open", async () => {
+  it("never starts the welcome tour itself (the goal invitation replaces it)", async () => {
     vi.mocked(helpStore.hasSeen).mockReturnValue(false);
-    modalUIStore.showVaultSwitcher = true;
 
     render(LayoutTestHost);
     await tick();
 
     expect(helpStore.startTour).not.toHaveBeenCalled();
+  });
+
+  it("prompts for the vault theme after the goal invitation, without the tour (FR-003a)", async () => {
+    vi.mocked(helpStore.hasSeen).mockReturnValue(false);
+    onboardingStore.goalInvitation = "explore";
+    (vault as any).allEntities = [{ id: "entity-1", title: "First Entity" }];
+    vi.mocked(vaultThemePromptStore.shouldAutoPrompt).mockReturnValue(true);
+    vi.mocked(themeStore.hasSavedThemeForVault).mockResolvedValue(false);
+
+    render(LayoutTestHost);
+
+    await waitFor(() =>
+      expect(modalUIStore.openVaultThemePrompt).toHaveBeenCalledWith("v1"),
+    );
+  });
+
+  it("holds the vault theme prompt while guided setup is showing", async () => {
+    onboardingStore.firstRunGuidanceActive = true;
+    (vault as any).allEntities = [{ id: "entity-1", title: "First Entity" }];
+    vi.mocked(vaultThemePromptStore.shouldAutoPrompt).mockReturnValue(true);
+    vi.mocked(themeStore.hasSavedThemeForVault).mockResolvedValue(false);
+
+    render(LayoutTestHost);
+    await tick();
+
+    expect(modalUIStore.openVaultThemePrompt).not.toHaveBeenCalled();
   });
 });

@@ -196,6 +196,7 @@ const bundle = buildBundle({
       "chronology",
       "family-tree",
       "guided-mode",
+      "guided-setup",
       "session-prep",
     ].map((id) => article(id, id, `## ${id}\nAbout ${id}.`)),
   ],

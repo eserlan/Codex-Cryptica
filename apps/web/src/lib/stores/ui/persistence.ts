@@ -34,6 +34,8 @@ export const UI_STORAGE_KEYS = {
   VTT_SIDEBAR_COLLAPSED: "codex_vtt_sidebar_collapsed",
   WORLD_PAGE_DISMISSED_AT: "codex_world_page_dismissed_at",
   MOBILE_GRAPH_COACH_MARKS_SEEN: "codex_mobile_graph_coach_marks_seen",
+  GOAL_INVITATION: "codex_goal_invitation",
+  CHOSEN_GOAL: "codex_chosen_goal",
   PRESENTATION_COLLAPSED_SECTIONS: "codex_presentation_collapsed_sections",
   GUIDED_MODE_ACTIVE: "codex_guided_mode_active",
   GUIDED_MODE_DISMISSED_RECOMMENDATIONS:

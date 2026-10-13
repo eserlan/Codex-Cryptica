@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import {
   decideFirstRunAction,
   hasUnseenMinorRelease,
+  isOnboarded,
   type FirstRunState,
 } from "./onboarding-orchestrator";
 
@@ -13,11 +14,30 @@ const base: FirstRunState = {
   vaultSwitcherOpen: false,
   hasDemoQueryParam: false,
   hasSeenTour: false,
-  entityCount: 3,
+  goalInvitationResolved: false,
+  journeyActive: false,
   activeTour: false,
   anyModalOpen: false,
   hasUnseenRelease: false,
 };
+
+const onboarded = { hasSeenTour: true };
+
+describe("isOnboarded", () => {
+  it.each([
+    [false, false, false],
+    [true, false, true],
+    [false, true, true],
+    [true, true, true],
+  ])(
+    "tour seen %s, invitation resolved %s → %s",
+    (hasSeenTour, goalInvitationResolved, expected) => {
+      expect(isOnboarded({ hasSeenTour, goalInvitationResolved })).toBe(
+        expected,
+      );
+    },
+  );
+});
 
 describe("decideFirstRunAction", () => {
   it("does nothing before the vault is initialized", () => {
@@ -38,74 +58,73 @@ describe("decideFirstRunAction", () => {
     });
   });
 
-  it("starts the tour for an onboarding user with a populated vault", () => {
-    expect(
-      decideFirstRunAction({ ...base, hasSeenTour: false, entityCount: 5 }),
-    ).toEqual({ kind: "tour" });
+  it("offers the goal invitation to a user who is not onboarded, never the tour", () => {
+    expect(decideFirstRunAction(base)).toEqual({ kind: "goal-invitation" });
   });
 
-  it("runs the guided empty flow for an onboarding user with 0 entities (no demo hijack)", () => {
-    expect(
-      decideFirstRunAction({ ...base, hasSeenTour: false, entityCount: 0 }),
-    ).toEqual({ kind: "guided-empty" });
+  it("offers the invitation whatever the vault holds (empty, converted demo, imported)", () => {
+    // The state carries no entity count at all (clarification Q2).
+    expect("entityCount" in base).toBe(false);
+    expect(decideFirstRunAction({ ...base, isDemoMode: false })).toEqual({
+      kind: "goal-invitation",
+    });
   });
 
-  it("does not restart a tour that is already running (no reset loop)", () => {
+  it("never offers the invitation to a user who finished the old tour", () => {
+    expect(decideFirstRunAction({ ...base, ...onboarded })).toEqual({
+      kind: "none",
+    });
+  });
+
+  it("never offers it again once answered, explored or closed", () => {
     expect(
-      decideFirstRunAction({
-        ...base,
-        hasSeenTour: false,
-        entityCount: 5,
-        activeTour: true,
-      }),
+      decideFirstRunAction({ ...base, goalInvitationResolved: true }),
     ).toEqual({ kind: "none" });
   });
 
-  it("does not launch the first-run tour over an open modal", () => {
-    expect(
-      decideFirstRunAction({
-        ...base,
-        hasSeenTour: false,
-        entityCount: 0,
-        anyModalOpen: true,
-      }),
-    ).toEqual({ kind: "none" });
+  it.each([
+    ["a tour is running", { activeTour: true }],
+    ["a modal is open", { anyModalOpen: true }],
+    ["a journey is running", { journeyActive: true }],
+  ])("waits while %s", (_label, patch) => {
+    expect(decideFirstRunAction({ ...base, ...patch })).toEqual({
+      kind: "none",
+    });
   });
 
   it("shows the changelog for a returning user with an unseen release", () => {
     expect(
+      decideFirstRunAction({ ...base, ...onboarded, hasUnseenRelease: true }),
+    ).toEqual({ kind: "changelog" });
+  });
+
+  it("shows the changelog to a user onboarded through the invitation", () => {
+    expect(
       decideFirstRunAction({
         ...base,
-        hasSeenTour: true,
+        goalInvitationResolved: true,
         hasUnseenRelease: true,
       }),
     ).toEqual({ kind: "changelog" });
   });
 
-  it("suppresses the changelog while a tour is active", () => {
+  it.each([
+    ["a tour is active", { activeTour: true }],
+    ["a modal is open", { anyModalOpen: true }],
+    ["a journey is running", { journeyActive: true }],
+  ])("holds the changelog while %s", (_label, patch) => {
     expect(
       decideFirstRunAction({
         ...base,
-        hasSeenTour: true,
+        ...onboarded,
         hasUnseenRelease: true,
-        activeTour: true,
-      }),
-    ).toEqual({ kind: "none" });
-  });
-
-  it("suppresses the changelog while a modal is open", () => {
-    expect(
-      decideFirstRunAction({
-        ...base,
-        hasSeenTour: true,
-        hasUnseenRelease: true,
-        anyModalOpen: true,
+        ...patch,
       }),
     ).toEqual({ kind: "none" });
   });
 
   it("does nothing for a returning user with no unseen release", () => {
-    expect(decideFirstRunAction({ ...base, hasSeenTour: true })).toEqual({
+    expect(decideFirstRunAction({ ...base, ...onboarded })).toEqual({
       kind: "none",
     });
   });

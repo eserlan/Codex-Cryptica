@@ -61,4 +61,25 @@ describe("EmptyState", () => {
     await fireEvent.click(screen.getByTestId("empty-state-secondary-cta"));
     expect(onSecondaryCta).toHaveBeenCalledOnce();
   });
+
+  it("puts a help target on the CTA only when one is given", () => {
+    const { unmount } = render(EmptyState, {
+      headline: "Your graph is empty",
+      cta: "Create",
+      onCta: vi.fn(),
+      ctaTestId: "cta",
+      ctaHelpTarget: "create-entry",
+    });
+    expect(screen.getByTestId("cta").dataset.helpTarget).toBe("create-entry");
+    unmount();
+    render(EmptyState, {
+      headline: "Your graph is empty",
+      cta: "Create",
+      onCta: vi.fn(),
+      ctaTestId: "cta",
+    });
+    expect(screen.getByTestId("cta").hasAttribute("data-help-target")).toBe(
+      false,
+    );
+  });
 });

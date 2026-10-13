@@ -55,7 +55,7 @@ test.describe("Help Onboarding Walkthrough", () => {
 
     // Wait for the welcome modal to actually render before tests run
     await expect(
-      page.locator("h3").getByText("Welcome — this is your world"),
+      page.locator("h3").getByText("Welcome: this is your world"),
     ).toBeVisible({ timeout: 10000 });
   });
 
@@ -64,7 +64,7 @@ test.describe("Help Onboarding Walkthrough", () => {
   }) => {
     // 1. Check if welcome modal appears
     await expect(
-      page.locator("h3").getByText("Welcome — this is your world"),
+      page.locator("h3").getByText("Welcome: this is your world"),
     ).toBeVisible({
       timeout: 10000,
     });
@@ -97,11 +97,11 @@ test.describe("Help Onboarding Walkthrough", () => {
 
     // 5. Verify tour is gone and doesn't reappear
     await expect(
-      page.locator("h3").getByText("Welcome — this is your world"),
+      page.locator("h3").getByText("Welcome: this is your world"),
     ).not.toBeVisible();
     await page.reload();
     await expect(
-      page.locator("h3").getByText("Welcome — this is your world"),
+      page.locator("h3").getByText("Welcome: this is your world"),
     ).not.toBeVisible();
   });
 
@@ -110,7 +110,7 @@ test.describe("Help Onboarding Walkthrough", () => {
   }) => {
     // Welcome step targets "body" so should NOT show dimming overlay
     await expect(
-      page.locator("h3").getByText("Welcome — this is your world"),
+      page.locator("h3").getByText("Welcome: this is your world"),
     ).toBeVisible();
 
     // The dimming overlay has role="presentation" and a specific class
@@ -124,17 +124,17 @@ test.describe("Help Onboarding Walkthrough", () => {
 
   test("should allow skipping the tour", async ({ page }) => {
     await expect(
-      page.locator("h3").getByText("Welcome — this is your world"),
+      page.locator("h3").getByText("Welcome: this is your world"),
     ).toBeVisible();
     await page.getByRole("button", { name: "Dismiss tour" }).click();
     await expect(
-      page.locator("h3").getByText("Welcome — this is your world"),
+      page.locator("h3").getByText("Welcome: this is your world"),
     ).not.toBeVisible();
 
     // Verify it doesn't reappear
     await page.reload();
     await expect(
-      page.locator("h3").getByText("Welcome — this is your world"),
+      page.locator("h3").getByText("Welcome: this is your world"),
     ).not.toBeVisible();
   });
 });
