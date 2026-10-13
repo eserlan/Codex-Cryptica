@@ -334,11 +334,12 @@
 
   <div
     id="audit-panel"
-    role="tabpanel"
-    aria-labelledby={currentTab === "findings" || !distributionSummary
-      ? "audit-findings-tab"
-      : "audit-distribution-tab"}
-    tabindex="0"
+    role={distributionSummary ? "tabpanel" : undefined}
+    aria-labelledby={distributionSummary
+      ? currentTab === "findings"
+        ? "audit-findings-tab"
+        : "audit-distribution-tab"
+      : undefined}
   >
     {@render auditPanelContent()}
   </div>

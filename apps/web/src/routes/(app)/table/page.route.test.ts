@@ -293,6 +293,7 @@ describe("/table page", () => {
     await fireEvent.keyDown(findingsTab, { key: "ArrowRight" });
     expect(distTab.getAttribute("aria-selected")).toBe("true");
     expect(distTab.getAttribute("tabindex")).toBe("0");
+    expect(document.activeElement).toBe(distTab);
   });
 
   it("filters table entities when clicking a distribution category bar", async () => {

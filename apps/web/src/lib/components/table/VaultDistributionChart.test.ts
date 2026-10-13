@@ -197,7 +197,7 @@ describe("VaultDistributionChart component", () => {
     expect(onSelectUnlabelled).toHaveBeenCalledOnce();
   });
 
-  it("links the distribution tab to its panel and supports arrow navigation", async () => {
+  it("links the distribution tab to its panel and supports keyboard navigation", async () => {
     render(VaultDistributionChart, {
       summary: mockSummary,
       onSelectCategory: vi.fn(),
@@ -217,9 +217,22 @@ describe("VaultDistributionChart component", () => {
     await fireEvent.keyDown(categoryTab, { key: "ArrowRight" });
     expect(labelTab.getAttribute("aria-selected")).toBe("true");
     expect(labelTab.getAttribute("tabindex")).toBe("0");
+    expect(document.activeElement).toBe(labelTab);
     expect(screen.getByRole("tabpanel").getAttribute("aria-labelledby")).toBe(
       labelTab.id,
     );
+
+    await fireEvent.keyDown(labelTab, { key: "ArrowLeft" });
+    expect(categoryTab.getAttribute("aria-selected")).toBe("true");
+    expect(document.activeElement).toBe(categoryTab);
+
+    await fireEvent.keyDown(categoryTab, { key: "End" });
+    expect(labelTab.getAttribute("aria-selected")).toBe("true");
+    expect(document.activeElement).toBe(labelTab);
+
+    await fireEvent.keyDown(labelTab, { key: "Home" });
+    expect(categoryTab.getAttribute("aria-selected")).toBe("true");
+    expect(document.activeElement).toBe(categoryTab);
   });
 
   it("toggles to data table view and allows row action clicks", async () => {
