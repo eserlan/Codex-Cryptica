@@ -107,16 +107,21 @@ export function resolveTome(
   const sampleTitles =
     tomeConfig.sampleTitlesByTheme[genre] ??
     tomeConfig.sampleTitlesByTheme["Cosmic Horror"];
+  const era = resolveTomeEra(genre, rng);
+  const eraCompatibleTitles = sampleTitles.filter((sampleTitle) => {
+    const titleYear = sampleTitle.match(/\b(?:1[0-9]{3}|20[0-9]{2})\b/)?.[0];
+    return !titleYear || era.includes(titleYear);
+  });
   const title =
     concept ||
     pickFrom(
-      sampleTitles.filter((t) => !options.avoidNames?.includes(t)),
+      eraCompatibleTitles.filter((t) => !options.avoidNames?.includes(t)),
       rng,
     ) ||
+    eraCompatibleTitles[0] ||
     sampleTitles[0];
 
   const author = generateName(rng);
-  const era = resolveTomeEra(genre, rng);
 
   return {
     genre,

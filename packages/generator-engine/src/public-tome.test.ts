@@ -114,6 +114,39 @@ describe("public-tome generator", () => {
       expect(out.lore.toLowerCase()).toContain("compiled the work in the");
       expect(out.lore).not.toContain("seventeenth-century");
     });
+
+    it("keeps date-bearing sample titles consistent with the selected era", () => {
+      for (let seed = 0; seed < 100; seed += 1) {
+        const resolved = resolveTome(
+          { genre: "Modern Conspiracy" },
+          seededRng(seed),
+        );
+        const titleYear = resolved.title.match(
+          /\b(?:1[0-9]{3}|20[0-9]{2})\b/,
+        )?.[0];
+
+        if (titleYear) expect(resolved.era).toContain(titleYear);
+      }
+    });
+
+    it.each([
+      ["Physical / Environmental Hazard", "compromised casing"],
+      ["Mental / Obsessive Toll", "Repeated study encourages fixation"],
+      ["Supernatural / Entity Attraction", "draws the attention"],
+      [
+        "Uncatalogued hazard",
+        "Study carries the stated risk of uncatalogued hazard",
+      ],
+    ])(
+      "describes the selected %s in the primary risk",
+      (primaryHazard, expectedRisk) => {
+        const out = generateTomeLocal({ primaryHazard }, seededRng(23));
+        const primaryRisk =
+          out.content.match(/\*\*Primary hazard[^\n]+/)?.[0] ?? "";
+
+        expect(primaryRisk).toContain(expectedRisk);
+      },
+    );
   });
 
   describe("buildTomePrompt", () => {
