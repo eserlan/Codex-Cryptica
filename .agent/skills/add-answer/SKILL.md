@@ -59,6 +59,7 @@ One page owns one genuine user intent (Constitution XIII). The substantive answe
    - **At least one actionable checklist block** (`kind: "checklist"`): Specific, practical prep items the reader can take straight to their table.
 6. **Honest Product Connection**:
    - `codexConnection` belongs at the end of the article, after the substantive answer is already complete. It must explain how Codex tools/graphs assist the specific workflow, not read as a mid-article sales pitch.
+   - **Never link to a competing product.** Answers are our own reference content, so they do not send readers to a competitor. Do not link to virtual tabletops or campaign and world managers (Foundry VTT, Roll20, Fantasy Grounds, Owlbear Rodeo, World Anvil, Kanka, LegendKeeper, Obsidian Portal), in prose, tables, `systemsThatSupportThis` or any other field. If a reader's question names one, say in plain text what they need to know (for example that an official system exists) and link to the publisher or rules source instead. Do not build a page around a competitor's compatibility, package versions or listings, and do not target a competitor's name in `discovery` intents. The `competitor-link` check enforces the links; the list lives in `COMPETITOR_DOMAINS` in `scripts/check-answer-editorial.ts`.
 7. **Clean List Item Titles (No Redundant Numbering)**:
    - When items in a `list` block use bold lead-in terms (`term: "..."`), do not set `ordered: true` and do not prefix the term with digits (e.g. use `term: "Review hooks"` rather than `term: "1. Review hooks"`). The template renders clean terms without duplicate numbers.
 8. **Optional `systemsThatSupportThis` (#2769)**:
@@ -80,6 +81,7 @@ The rules a machine can decide without judgement are enforced by `scripts/check-
 | `image-alt-missing` | `seo.image` is set but `seo.imageAlt` is missing or blank.                                                                                                                                                         |
 | `invalid-date`      | `publishedAt` is not a real calendar date (e.g. `2026-02-30`).                                                                                                                                                     |
 | `future-date`       | `publishedAt` is after the check date. See the date policy below.                                                                                                                                                  |
+| `competitor-link`   | A link to a product that competes with Codex Cryptica (virtual tabletops and campaign managers such as Foundry VTT, Roll20 and World Anvil), in any field including `href`. See the competitor links rule above.   |
 
 Not checked: URLs (`href`, `seo.image`, `seo.canonical`), slugs, enums, labels, `relatedAnswers` and the `discovery` block, which are metadata rather than copy. Prose economy, argument quality and whether an example is realistic stay with editorial review; do not add regex checks for them.
 
