@@ -157,6 +157,12 @@ import {
   creatureConfig,
   type CreatureGeneratorOptions,
 } from "./public-creature";
+import {
+  buildTomePrompt,
+  generateTomeLocal,
+  tomeConfig,
+  type TomeGeneratorOptions,
+} from "./public-tome";
 
 /**
  * Generator id -> default vault category id.
@@ -195,6 +201,7 @@ export const GENERATOR_ENTITY_TYPE: Record<GeneratorId, string> = {
   encounter: "note",
   heist: "note",
   holiday: "note",
+  tome: "item",
 };
 
 /** Fallback category used when a mapped category is absent from the campaign. */
@@ -1204,6 +1211,54 @@ export function buildCampaignHeistPrompt(request: GeneratorRunRequest) {
 
 function heistPrompt(request: GeneratorRunRequest): string {
   return buildCampaignHeistPrompt(request).userMessage;
+}
+
+function tomeOptions(request: GeneratorRunRequest): TomeGeneratorOptions {
+  return {
+    genre: optionString(
+      request,
+      "genre",
+      themeIdToLabel[request.themeId] ?? "Cosmic Horror",
+    ),
+    tomeType: optionString(request, "tomeType", ""),
+    format: optionString(request, "format", ""),
+    rarity: optionString(request, "rarity", ""),
+    custodian: optionString(request, "custodian", ""),
+    primaryHazard: optionString(request, "primaryHazard", ""),
+    language: optionString(request, "language", ""),
+    concept: request.instructions?.trim() || undefined,
+    campaignContext: contextChain(request),
+    avoidNames: [
+      ...(request.vaultContext?.bannedNames ?? []),
+      ...(request.vaultContext?.existingTitles ?? []),
+    ],
+  };
+}
+
+function generateTome(request: GeneratorRunRequest): GeneratorOutput {
+  const result = generateTomeLocal(tomeOptions(request));
+  return {
+    title: result.title,
+    summary: result.summary ?? "",
+    lore: result.lore,
+    content: result.content,
+    labels: result.labels,
+    connections: result.connections,
+  };
+}
+
+export function buildCampaignTomePrompt(request: GeneratorRunRequest) {
+  const prompt = buildTomePrompt(tomeOptions(request));
+  const context = contextChain(request);
+  return {
+    ...prompt,
+    userMessage: `${context}\n\n${prompt.userMessage}`,
+    reviewContext: context,
+  };
+}
+
+function tomePrompt(request: GeneratorRunRequest): string {
+  return buildCampaignTomePrompt(request).userMessage;
 }
 
 function questOptions(request: GeneratorRunRequest): QuestGeneratorOptions {
@@ -3823,6 +3878,65 @@ const REGISTRY: Record<GeneratorId, CampaignGeneratorDefinition> = {
     },
     mapOutputToDraft: mapOutputToDraft("random-table"),
     buildPrompt: randomTablePrompt,
+  },
+  tome: {
+    id: "tome",
+    label: "Tome & Forbidden Book",
+    description:
+      "Generate grimoires, occult treatises, heretical chronicles, research logs, and dangerous manuscripts with physical provenance, hazardous study costs, and adventure hooks.",
+    entityType: GENERATOR_ENTITY_TYPE.tome,
+    defaultInstruction:
+      "An evocative, historically grounded tome or forbidden manuscript with binding and physical condition, provenance, translated excerpt, actionable revelations, study hazards, and adventure hooks.",
+    icon: "lucide:book-marked",
+    options: [
+      {
+        id: "tomeType",
+        label: "Type of Book",
+        control: "select",
+        choices: tomeConfig.tomeTypes.map((t) => ({ value: t, label: t })),
+      },
+      {
+        id: "format",
+        label: "Format & Binding",
+        control: "select",
+        choices: tomeConfig.formats.map((f) => ({ value: f, label: f })),
+      },
+      {
+        id: "rarity",
+        label: "Rarity / Edition",
+        control: "select",
+        choices: tomeConfig.rarities.map((r) => ({ value: r, label: r })),
+      },
+      {
+        id: "custodian",
+        label: "Current Custodian",
+        control: "select",
+        choices: tomeConfig.custodians.map((c) => ({ value: c, label: c })),
+      },
+      {
+        id: "primaryHazard",
+        label: "Primary Hazard / Cost",
+        control: "select",
+        choices: tomeConfig.primaryHazards.map((h) => ({ value: h, label: h })),
+      },
+      {
+        id: "language",
+        label: "Language / Script",
+        control: "select",
+        choices: tomeConfig.languages.map((l) => ({ value: l, label: l })),
+      },
+    ],
+    defaults: {
+      tomeType: "",
+      format: "",
+      rarity: "",
+      custodian: "",
+      primaryHazard: "",
+      language: "",
+    },
+    generate: generateTome,
+    mapOutputToDraft: mapOutputToDraft("tome"),
+    buildPrompt: tomePrompt,
   },
 };
 

@@ -71,6 +71,7 @@ export { starSystemConfig } from "generator-engine";
 export { constellationConfig } from "generator-engine";
 export { alienRaceConfig } from "generator-engine";
 export { creatureConfig } from "generator-engine";
+export { tomeConfig } from "generator-engine";
 export {
   nameTable,
   pickFrom,

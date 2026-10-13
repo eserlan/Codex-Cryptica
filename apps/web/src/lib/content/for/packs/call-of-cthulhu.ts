@@ -110,6 +110,13 @@ export const callOfCthulhu: LandingPageConfig = {
       badge: "Generator",
     },
     {
+      title: "Forbidden Tome & Grimoire Generator",
+      description:
+        "Draft occult manuscripts, cursed diaries, and alien codices with authentic excerpts, research hazards, and clues for your Investigators to decipher.",
+      href: "/generators/tome",
+      badge: "Generator",
+    },
+    {
       title: "News Sheet & Handout Generator",
       description:
         "Create in-world period newspaper clippings, police blotters, and classified notices as physical or digital handouts for your Investigators.",

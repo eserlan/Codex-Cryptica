@@ -119,6 +119,10 @@
           label: "Artifact & Relic Generator",
           path: "/generators/artifact-generator",
         },
+        {
+          label: "Tome & Forbidden Book Generator",
+          path: "/generators/tome",
+        },
         { label: "Tavern Generator", path: "/generators/tavern" },
         { label: "Social Hub Generator", path: "/generators/social-hub" },
         {

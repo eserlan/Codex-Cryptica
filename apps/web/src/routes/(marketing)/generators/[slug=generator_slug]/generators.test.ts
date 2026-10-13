@@ -66,6 +66,7 @@ describe("Generators SvelteKit Route", () => {
         { slug: "heist" },
         { slug: "holiday" },
         { slug: "personality" },
+        { slug: "tome" },
       ]);
     });
   });

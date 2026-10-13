@@ -537,6 +537,23 @@ export const generatorEntries: DiscoveryEntryInput[] = [
     status: "live",
   },
   {
+    id: "generator-tome",
+    pageKind: "generator",
+    canonicalPath: "/generators/tome",
+    primaryIntent: "tome generator",
+    intentAliases: [
+      "forbidden book generator",
+      "grimoire generator",
+      "occult book generator",
+    ],
+    userJob: "create",
+    uniqueValue:
+      "Forbidden books, cursed grimoires, occult field diaries, and alien data-codices with physical binding details, excerpted passages, research hazards, and campaign hooks.",
+    parentCluster: "item-creation",
+    indexable: true,
+    status: "live",
+  },
+  {
     id: "generator-ship-generator",
     pageKind: "generator",
     canonicalPath: "/generators/ship-generator",

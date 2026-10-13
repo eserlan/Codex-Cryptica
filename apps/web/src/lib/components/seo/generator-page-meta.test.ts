@@ -47,6 +47,7 @@ const allExpectedSlugs: ValidSlug[] = [
   "heist",
   "holiday",
   "personality",
+  "tome",
 ];
 
 describe("generator-page-meta completeness and social preview tags", () => {

@@ -45,6 +45,7 @@
       "magic-item": "loot-lore",
       "minor-magic-item": "loot-lore",
       artifact: "loot-lore",
+      tome: "loot-lore",
       language: "loot-lore",
       "news-sheet": "loot-lore",
       "random-table": "loot-lore",

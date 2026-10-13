@@ -22,7 +22,8 @@ export interface RandomIdeaCategory {
     | "creature"
     | "encounter"
     | "origin"
-    | "holiday";
+    | "holiday"
+    | "tome";
   label: string;
   generate: (
     engine: DefaultGeneratorEngine,
@@ -180,6 +181,11 @@ export const randomIdeaCategories: RandomIdeaCategory[] = [
     key: "origin",
     label: "Superhero Origin",
     generate: (engine, useAI) => engine.generateOrigin({ useAI }),
+  },
+  {
+    key: "tome",
+    label: "Forbidden Tome",
+    generate: (engine, useAI, theme) => engine.generateTome({ theme, useAI }),
   },
 ];
 

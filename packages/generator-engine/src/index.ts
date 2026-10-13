@@ -652,6 +652,16 @@ export {
   type ResolvedCreature,
 } from "./public-creature";
 export {
+  tomeConfig,
+  resolveTome,
+  buildTomePrompt,
+  parseTomeResponse,
+  generateTomeLocal,
+  type TomeGeneratorOptions,
+  type ResolvedTome,
+  type TomePrompt,
+} from "./public-tome";
+export {
   createIncrementalJsonScanner,
   extractPartialJsonStringFields,
   type IncrementalJsonField,

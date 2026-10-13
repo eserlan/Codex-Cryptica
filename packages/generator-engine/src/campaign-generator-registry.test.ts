@@ -72,6 +72,7 @@ describe("registry lookup", () => {
       "encounter",
       "heist",
       "holiday",
+      "tome",
     ]);
   });
 
@@ -1810,6 +1811,7 @@ describe("generator id -> vault category mapping (FR-041)", () => {
       encounter: "note",
       heist: "note",
       holiday: "note",
+      tome: "item",
     });
   });
 
@@ -1846,5 +1848,36 @@ describe("generator id -> vault category mapping (FR-041)", () => {
     expect(resolveEntityType("settlement", ["character", "location"])).toBe(
       "location",
     );
+  });
+});
+
+describe("tome generator", () => {
+  it("builds and generates a tome draft with item entityType", () => {
+    const generator = getGenerator("tome");
+    const request = run("tome", {
+      options: {
+        tomeType: "Occult Treatise / Cosmology",
+        format: "Leather-bound Quarto",
+        rarity: "Unique Original Manuscript",
+      },
+    });
+
+    expect(GENERATOR_ENTITY_TYPE.tome).toBe("item");
+    const prompt = generator.buildPrompt(request);
+    expect(prompt).toContain("Occult Treatise / Cosmology");
+    expect(prompt).toContain("Leather-bound Quarto");
+
+    const output = generator.generate(request);
+    expect(output.title).toBeTruthy();
+    expect(output.content).toContain("### Physical Description & Format");
+    expect(output.content).toContain("### Provenance & Transmission");
+    expect(output.content).toContain("### Contents & Revelations");
+    expect(output.content).toContain("### Risks & Costs of Study");
+    expect(output.content).toContain("### Adventure Hooks");
+    expect(output.lore).toContain("### At the Table Reference");
+
+    const draft = generator.mapOutputToDraft(output, request);
+    expect(draft.entityType).toBe("item");
+    expect(draft.labels).toContain("tome");
   });
 });
