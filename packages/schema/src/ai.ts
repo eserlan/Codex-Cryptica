@@ -68,6 +68,8 @@ export interface ContextRetrievalService {
      */
     entries?: LoreContextEntry[];
     activeStyleTitle?: string;
+    /** No reliable match this turn; do not treat unrelated records as evidence. */
+    noRelevantMatch?: boolean;
   }>;
   getConsolidatedContext(
     entity: Entity,

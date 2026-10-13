@@ -3,6 +3,10 @@ import type { ContextRetrievalService, VaultMinimal } from "schema";
 import { entityContentHash, type LoreEntry } from "@codex/oracle-engine";
 import { getAISearchService, type AISearchService } from "./config";
 import { buildLinkedSummaryLines, filterPinnedIds } from "./pinned-context";
+import {
+  hasDistinctiveTerms,
+  isUnrelatedSuggestedSearch,
+} from "./retrieval-evidence";
 
 export class DefaultContextRetrievalService implements ContextRetrievalService {
   private styleCache: string | null = null;
@@ -205,6 +209,7 @@ export class DefaultContextRetrievalService implements ContextRetrievalService {
     sourceIds: string[];
     entries: LoreEntry[];
     activeStyleTitle?: string;
+    noRelevantMatch?: boolean;
   }> {
     let styleContext = "";
     let activeStyleTitle: string | undefined;
@@ -404,6 +409,42 @@ export class DefaultContextRetrievalService implements ContextRetrievalService {
       );
     }
 
+    // FlexSearch's suggested hits can carry a high field-weight score even
+    // when none of the user's distinctive terms occurs in the retrieved lore.
+    // Only reject the whole hit set when there is *zero* lexical evidence and
+    // the user has not anchored this turn to an explicit/active/follow-up file.
+    // Record bodies are hydrated above so lore-only hits remain eligible.
+    const activeRecord = activeId ? vault.entities[activeId] : null;
+    const validActiveRecord =
+      !!activeRecord &&
+      (!vault.isGuest ||
+        isEntityVisible(activeRecord, {
+          sharedMode: true,
+          defaultVisibility: vault.defaultVisibility,
+        }));
+    // Entities the user picked with `@` are an explicit anchor too (#4052).
+    const hasSubjectAnchor =
+      pinned.length > 0 ||
+      !!explicitSubject ||
+      validActiveRecord ||
+      (isFollowUp && !!lastEntityId && primaryEntityId === lastEntityId);
+    const rejectedSuggestedHits =
+      !hasSubjectAnchor && isUnrelatedSuggestedSearch(query, results, vault);
+    if (rejectedSuggestedHits) {
+      results = [];
+      primaryEntityId = undefined;
+    }
+    // Signal "no evidence" only when hits were rejected, or when a specific
+    // question found nothing and there is no conversation subject to fall back
+    // on. Chit-chat, one-word prompts and ongoing conversations keep the old
+    // behaviour.
+    const noRelevantMatch =
+      rejectedSuggestedHits ||
+      (!hasSubjectAnchor &&
+        !lastEntityId &&
+        results.length === 0 &&
+        hasDistinctiveTerms(query));
+
     const contextMap = new Map<string, string>();
     const sourceIds: string[] = [];
     // Per-entity records for lore-delta tracking. The hash covers the stable
@@ -548,7 +589,7 @@ export class DefaultContextRetrievalService implements ContextRetrievalService {
       addEntityToContext(res.id);
     }
 
-    if (lastEntityId && currentTotal < MAX_CHARS) {
+    if (lastEntityId && !rejectedSuggestedHits && currentTotal < MAX_CHARS) {
       addEntityToContext(lastEntityId);
     }
 
@@ -653,6 +694,16 @@ export class DefaultContextRetrievalService implements ContextRetrievalService {
       }
     }
 
+    if (noRelevantMatch) {
+      const note =
+        "--- Retrieval Status ---\nNo relevant Vault evidence was found for this turn. Listed record names are navigation hints, not supporting facts.\n\n";
+      // Stateless path only. It is kept out of `entries`: the Interactions
+      // lore delta sends an entry once and never withdraws it, so a stored
+      // note would keep weakening later, grounded turns. That path gets the
+      // per-turn status in the model query instead.
+      finalContent = note + finalContent;
+    }
+
     // The global art-style block follows the same send-once / resend-on-change
     // rule under a synthetic id so it is not re-uploaded every turn.
     if (styleContext) {
@@ -669,6 +720,7 @@ export class DefaultContextRetrievalService implements ContextRetrievalService {
       sourceIds,
       entries,
       activeStyleTitle,
+      noRelevantMatch,
     };
   }
 

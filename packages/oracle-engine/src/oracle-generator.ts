@@ -302,6 +302,7 @@ Treat these labels as strong direction for the subject's appearance, attire, and
       focusTitle,
       content: aiContext,
       entries: loreEntries,
+      noRelevantMatch,
     } = await this.retrieveForQuery(query, context, options.pinnedEntityIds);
 
     // 2. Trigger Generation
@@ -309,9 +310,11 @@ Treat these labels as strong direction for the subject's appearance, attire, and
 
     // The model only sees the raw query, so name the record the follow-up is
     // about rather than leaving it to guess from similar names in the lore.
-    const modelQuery = focusTitle
-      ? `${query}\n\n[CONVERSATION FOCUS] Pronouns here most likely refer to "${focusTitle}", the subject of the previous answer, unless the user says otherwise.`
-      : query;
+    const modelQuery = noRelevantMatch
+      ? `${query}\n\n[VAULT RETRIEVAL STATUS] No matching Vault evidence was found for this question. Do not treat unrelated records, a list of available titles, or earlier conversation lore as evidence for this subject. If the user requests creative ideas, offer them clearly as proposals rather than established canon.`
+      : focusTitle
+        ? `${query}\n\n[CONVERSATION FOCUS] Pronouns here most likely refer to "${focusTitle}", the subject of the previous answer, unless the user says otherwise.`
+        : query;
 
     await context.textGeneration.generateResponse(
       apiKey,
