@@ -16,6 +16,7 @@ import {
   OracleSettingsService,
   UndoRedoService,
   type ChatMessage,
+  type MessageMention,
   type UndoableAction,
   type OracleExecutionContext,
   type DiscoveryProposal,
@@ -394,8 +395,8 @@ export class OracleStore implements IOracleStore {
   }
 
   /** Alias for sendMessage used by chat commands */
-  async ask(content: string) {
-    await this.chat.ask(content);
+  async ask(content: string, mentions: MessageMention[] = []) {
+    await this.chat.ask(content, mentions);
   }
 
   async drawEntity(entityId: string) {
