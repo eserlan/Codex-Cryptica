@@ -516,6 +516,9 @@ export class DefaultContextRetrievalService implements ContextRetrievalService {
     };
 
     if (activeId) addEntityToContext(activeId);
+    // The resolved subject goes in before other search hits so a run of
+    // similar records cannot use up the budget and leave it out (#4055).
+    if (primaryEntityId) addEntityToContext(primaryEntityId);
 
     for (const res of results) {
       if (currentTotal >= MAX_CHARS) break;
