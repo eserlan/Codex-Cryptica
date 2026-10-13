@@ -14,6 +14,7 @@
 import { describe, expect, it } from "vitest";
 import { SearchEngine } from "../../search-engine/src/index";
 import { DefaultContextRetrievalService } from "./context-retrieval.service";
+import { resolveFocusQuery } from "../../oracle-engine/src/conversation-focus";
 
 type Fixture = {
   id: string;
@@ -171,6 +172,10 @@ async function evaluate(
     activeVaultId: "rag-ab-synthetic",
     entities: Object.fromEntries(records.map((r) => [r.id, r])),
     allEntities: records,
+    titleAndAliasIndex: records.flatMap((r) => [
+      { entityId: r.id, actualTitle: r.title, lowercaseText: r.title.toLocaleLowerCase(), status: "published", isAlias: false, labels: r.labels },
+      ...(r.aliases || []).map((alias) => ({ entityId: r.id, actualTitle: r.title, lowercaseText: alias.toLocaleLowerCase(), status: "published", isAlias: true, labels: r.labels })),
+    ]),
     inboundConnections: {},
     selectedEntityId: null,
     isGuest: Boolean(c.guest),
@@ -178,7 +183,9 @@ async function evaluate(
   };
   const service = new DefaultContextRetrievalService({ search } as any);
   const start = performance.now();
-  const retrieved = await service.retrieveContext(c.query, new Set(), vault, c.focus);
+  const focus = c.focus ? records.find((record) => record.id === c.focus) : undefined;
+  const resolvedQuery = focus ? resolveFocusQuery(c.query, focus, records) || c.query : c.query;
+  const retrieved = await service.retrieveContext(resolvedQuery, new Set(), vault, c.focus);
   const durationMs = Math.round((performance.now() - start) * 100) / 100;
   const found = c.required.filter((id) => retrieved.sourceIds.includes(id));
   const missing = c.required.filter((id) => !retrieved.sourceIds.includes(id));
