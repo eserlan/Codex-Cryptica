@@ -18,6 +18,77 @@ describe("ChatExecutor", () => {
     (globalThis as any).URL = originalURL;
   });
 
+  describe("@mentions (#4052)", () => {
+    const mentionedIntent = {
+      type: "chat",
+      query: "Who is @Elara Voss?",
+      mentions: [
+        {
+          entityId: "e-elara",
+          displayName: "Elara Voss",
+          entityType: "character",
+          start: 7,
+          end: 18,
+        },
+      ],
+      pinnedEntityIds: ["e-elara"],
+    } as any;
+
+    const buildContext = () => {
+      const addMessage = vi.fn();
+      return {
+        addMessage,
+        context: {
+          chatHistory: { messages: [], addMessage, setMessages: vi.fn() },
+          eventBus: { emit: vi.fn() },
+          uiStore: { entityDiscoveryMode: "off" },
+        } as any,
+      };
+    };
+
+    it("stores the mentions on the user message and pins them for retrieval", async () => {
+      const generator = {
+        generateChatResponse: vi
+          .fn()
+          .mockResolvedValue({ primaryEntityId: "e-elara", sourceIds: [] }),
+      };
+      const executor = new ChatExecutor(generator as any);
+      const { addMessage, context } = buildContext();
+
+      await executor.execute(mentionedIntent, context);
+
+      expect(addMessage).toHaveBeenCalledWith(
+        expect.objectContaining({
+          role: "user",
+          mentions: mentionedIntent.mentions,
+        }),
+      );
+      expect(generator.generateChatResponse).toHaveBeenCalledWith(
+        "Who is @Elara Voss?",
+        context,
+        expect.any(Function),
+        expect.objectContaining({ pinnedEntityIds: ["e-elara"] }),
+      );
+    });
+
+    it("leaves plain messages without a mentions field", async () => {
+      const generator = {
+        generateChatResponse: vi
+          .fn()
+          .mockResolvedValue({ primaryEntityId: undefined, sourceIds: [] }),
+      };
+      const executor = new ChatExecutor(generator as any);
+      const { addMessage, context } = buildContext();
+
+      await executor.execute({ type: "chat", query: "hello" } as any, context);
+
+      const userCall = addMessage.mock.calls.find(
+        (c: any[]) => c[0].role === "user",
+      );
+      expect(userCall?.[0]).not.toHaveProperty("mentions");
+    });
+  });
+
   it("should handle simple chat queries", async () => {
     const generator = {
       generateChatResponse: vi

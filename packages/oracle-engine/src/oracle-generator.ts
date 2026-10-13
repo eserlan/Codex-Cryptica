@@ -219,6 +219,7 @@ Treat these labels as strong direction for the subject's appearance, attire, and
   private async retrieveForQuery(
     query: string,
     context: OracleExecutionContext,
+    pinnedEntityIds: string[] = [],
   ) {
     const lastEntityId = context.chatHistory.messages.findLast(
       (m: ChatMessage) => m.entityId,
@@ -230,6 +231,8 @@ Treat these labels as strong direction for the subject's appearance, attire, and
       lastEntityId,
     );
 
+    // Pins are only passed when present, so plain turns keep the same call.
+    const pinOption = pinnedEntityIds.length > 0 ? [{ pinnedEntityIds }] : [];
     const retrieved = await context.contextRetrieval.retrieveContext(
       searchQuery,
       // Lore is re-sent every turn on purpose: the stateless path has no
@@ -239,6 +242,7 @@ Treat these labels as strong direction for the subject's appearance, attire, and
       context.vault,
       lastEntityId,
       false,
+      ...pinOption,
     );
 
     return { ...retrieved, searchQuery, focusTitle };
@@ -285,6 +289,8 @@ Treat these labels as strong direction for the subject's appearance, attire, and
       requestId?: string;
       vaultId?: string;
       existingEntities?: any[];
+      /** Entities the user picked with `@` in the composer (#4052). */
+      pinnedEntityIds?: string[];
     } = {},
   ): Promise<{ primaryEntityId?: string; sourceIds: string[] }> {
     const apiKey = context.effectiveApiKey || "";
@@ -297,7 +303,7 @@ Treat these labels as strong direction for the subject's appearance, attire, and
       content: aiContext,
       entries: loreEntries,
       noRelevantMatch,
-    } = await this.retrieveForQuery(query, context);
+    } = await this.retrieveForQuery(query, context, options.pinnedEntityIds);
 
     // 2. Trigger Generation
     const categoryList = this.getCategoryIds(context);

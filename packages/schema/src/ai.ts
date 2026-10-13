@@ -56,6 +56,7 @@ export interface ContextRetrievalService {
     vault: VaultMinimal,
     lastEntityId?: string,
     isImage?: boolean,
+    options?: { pinnedEntityIds?: string[] },
   ): Promise<{
     content: string;
     primaryEntityId?: string;
