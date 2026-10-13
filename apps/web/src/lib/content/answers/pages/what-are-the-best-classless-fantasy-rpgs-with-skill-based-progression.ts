@@ -77,6 +77,10 @@ export const whatAreTheBestClasslessFantasyRpgsWithSkillBasedProgression: Answer
             term: "Choose Mythras, with one accepted compromise",
             text: "The group compares Mythras with GURPS. Both allow classless skill growth, but of these two only the Mythras rules it checked provide the required resource: Luck can reroll and downgrade a Major Wound to a Serious Wound. It checks its chosen low-magic rules for routine resurrection and Foundry 13 compatibility, then picks Mythras, accepting hit-location combat and a community Foundry system whose listing does not promise specific sheet or automation coverage. The listing is v2.3.0, verified for Foundry 13; the group tests the procedures it needs before committing.",
           },
+          {
+            term: "Why it works",
+            text: "Mythras meets this group's stated priorities: classless skill growth, a Luck Point that can reroll and downgrade a Major Wound, and a ruleset the group can check for routine resurrection. They accept hit-location combat and test the community Foundry system's needed procedures because its listing does not promise specific sheet or automation coverage.",
+          },
         ],
       },
       {
