@@ -1,8 +1,16 @@
+import { GOALS, type Goal } from "onboarding-journey-engine";
 import type { UIPersistence } from "./persistence";
 import {
   UIPersistence as DefaultPersistence,
   UI_STORAGE_KEYS,
 } from "./persistence";
+
+export type GoalInvitationAnswer = "goal" | "explore" | "dismissed";
+const ANSWERS: readonly GoalInvitationAnswer[] = [
+  "goal",
+  "explore",
+  "dismissed",
+];
 
 export class OnboardingStore {
   private persistence: UIPersistence;
@@ -15,6 +23,16 @@ export class OnboardingStore {
   lastSeenVersion = $state<string | null>(null);
   showChangelog = $state(false);
   dismissedMobileGraphCoachMarks = $state(false);
+  /** How the goal invitation was answered on this device (spec 175). */
+  goalInvitation = $state<GoalInvitationAnswer | null>(null);
+  /** The goal the user last picked. Never inferred from vault content. */
+  chosenGoal = $state<Goal | null>(null);
+  /**
+   * Not persisted. True while the goal invitation is open or a guided-setup
+   * journey runs, so other first-run prompts (theme prompt, phone coach
+   * marks) wait.
+   */
+  firstRunGuidanceActive = $state(false);
 
   constructor(
     persistence: UIPersistence = new DefaultPersistence(),
@@ -63,6 +81,29 @@ export class OnboardingStore {
       (v) => v === "true",
       false,
     );
+
+    this.goalInvitation = this.persistence.read(
+      UI_STORAGE_KEYS.GOAL_INVITATION,
+      (v) => (ANSWERS.includes(v as GoalInvitationAnswer) ? v : null),
+      null,
+    ) as GoalInvitationAnswer | null;
+    this.chosenGoal = this.persistence.read(
+      UI_STORAGE_KEYS.CHOSEN_GOAL,
+      (v) => (GOALS.includes(v as Goal) ? (v as Goal) : null),
+      null,
+    );
+  }
+
+  /** Records how the invitation was answered, so it never shows again. */
+  resolveGoalInvitation(answer: GoalInvitationAnswer) {
+    this.goalInvitation = answer;
+    this.persistence.write(UI_STORAGE_KEYS.GOAL_INVITATION, answer, String);
+  }
+
+  /** Remembers the goal on this device only (FR-007). */
+  chooseGoal(goal: Goal) {
+    this.chosenGoal = goal;
+    this.persistence.write(UI_STORAGE_KEYS.CHOSEN_GOAL, goal, String);
   }
 
   get isLandingPageVisible() {

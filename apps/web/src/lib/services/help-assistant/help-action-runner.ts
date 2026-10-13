@@ -27,8 +27,12 @@ export interface HelpActionRunnerDeps {
   openSettings: (tab: SettingsTab) => void;
   /** Opens the journal tab only; starting a journal is a separate user action. */
   openJournal: () => void;
-  /** Resolves true once `check` passes, or false after `ms`. */
-  waitFor: (check: () => boolean, ms: number) => Promise<boolean>;
+  /** Resolves true once `check` passes, or false after `ms` or cancellation. */
+  waitFor: (
+    check: () => boolean,
+    ms: number,
+    signal?: AbortSignal,
+  ) => Promise<boolean>;
 }
 
 const TARGET_WAIT_MS = 1000;
@@ -43,15 +47,24 @@ const TARGET_WAIT_MS = 1000;
 export class HelpActionRunner {
   constructor(private readonly deps: HelpActionRunnerDeps) {}
 
-  /** Returns true when at least the first step ran. */
-  async run(action: GuidanceAction): Promise<boolean> {
+  /**
+   * Returns true when at least the first step ran. `extraAvailable` lists
+   * controls the caller vouches for in this call only (onboarding journeys
+   * pass the shell controls); it never changes the screen description.
+   */
+  async run(
+    action: GuidanceAction,
+    options: { extraAvailable?: readonly string[]; signal?: AbortSignal } = {},
+  ): Promise<boolean> {
     const valid = validateAction(action, this.deps.context(), {
       helpIds: this.deps.helpIds(),
+      extraAvailable: options.extraAvailable,
     });
     if (!valid) return false;
 
-    const first = await this.step(valid);
-    if (first && valid.then) await this.step(valid.then);
+    const first = await this.step(valid, options.signal);
+    if (first && valid.then && !options.signal?.aborted)
+      await this.step(valid.then, options.signal);
     return first;
   }
 
@@ -74,7 +87,11 @@ export class HelpActionRunner {
     return true;
   }
 
-  private async step(step: GuidanceStep): Promise<boolean> {
+  private async step(
+    step: GuidanceStep,
+    signal?: AbortSignal,
+  ): Promise<boolean> {
+    if (signal?.aborted) return false;
     switch (step.type) {
       case "navigate":
         await this.deps.goto(this.deps.destinationPath(step.to));
@@ -90,10 +107,15 @@ export class HelpActionRunner {
       case "highlight": {
         // The control may only mount after the previous step (a tab opening).
         let shown = false;
-        await this.deps.waitFor(() => {
-          shown = this.deps.highlight.show(step.target, step.label);
-          return shown;
-        }, TARGET_WAIT_MS);
+        await this.deps.waitFor(
+          () => {
+            if (signal?.aborted) return false;
+            shown = this.deps.highlight.show(step.target, step.label);
+            return shown;
+          },
+          TARGET_WAIT_MS,
+          signal,
+        );
         return shown;
       }
     }

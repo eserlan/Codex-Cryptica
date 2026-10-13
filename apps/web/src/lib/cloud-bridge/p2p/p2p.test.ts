@@ -423,6 +423,141 @@ describe("P2P Services", () => {
       });
     });
 
+    describe("merchant catalogue sharing (#3964)", () => {
+      const CANARY = "CANARY-GM-ONLY";
+      const gp = (units: number) => ({ units, currency: "gp", precision: 0 });
+
+      const shop = (published: boolean) => ({
+        id: "shop-1",
+        title: "Tallow's Goods",
+        type: "location",
+        lore: CANARY,
+        statSheet: {
+          templateId: "builtin-shop-merchant",
+          fields: [
+            {
+              id: "services",
+              label: "Services",
+              type: "longtext",
+              value: "Repairs",
+            },
+            {
+              id: "gm_notes",
+              label: "GM notes",
+              type: "longtext",
+              value: CANARY,
+            },
+            {
+              id: "stock",
+              label: "Stock",
+              type: "item-table",
+              stockLedger: true,
+              playerCatalogue: { published, fields: ["services"] },
+              tradeLog: [{ tradeId: CANARY }],
+              rows: [
+                {
+                  rowId: "rope",
+                  name: "Rope",
+                  stock: {
+                    quantity: 2,
+                    price: gp(1),
+                    availability: "available",
+                    note: CANARY,
+                  },
+                },
+                {
+                  rowId: "ring",
+                  name: CANARY,
+                  stock: { quantity: 1, availability: "hidden" },
+                },
+              ],
+            },
+          ],
+        },
+      });
+
+      const sentTo = (
+        conn: { send: { mock: { calls: any[][] } } },
+        type: string,
+      ): any[] =>
+        conn.send.mock.calls
+          .map(([message]) => message)
+          .filter((message) => message.type === type);
+
+      it("sends guests the published catalogue in live and batch updates, never the GM sheet", async () => {
+        await startHostingHelper(hostService);
+        const transport = (hostService as any).transport;
+        const conn = new MockConnection("guest-1");
+        (transport as any)._connections.push(conn as any);
+
+        await vault.onEntityUpdate?.(shop(true) as any);
+        vault.onBatchUpdate?.({ "shop-1": shop(true) } as any);
+
+        await vi.waitFor(() => {
+          expect(sentTo(conn, "ENTITY_UPDATE")).toHaveLength(1);
+          expect(sentTo(conn, "ENTITY_BATCH_UPDATE")).toHaveLength(1);
+        });
+        const update = sentTo(conn, "ENTITY_UPDATE")[0].payload;
+        const batch = sentTo(conn, "ENTITY_BATCH_UPDATE")[0].payload["shop-1"];
+
+        for (const sent of [update, batch]) {
+          expect(JSON.stringify(sent)).not.toContain(CANARY);
+          expect(sent.statSheet.fields.map((f: any) => f.id)).toEqual([
+            "services",
+            "stock",
+          ]);
+          expect(sent.statSheet.fields[1].rows).toEqual([
+            { name: "Rope", stock: expect.objectContaining({ quantity: 2 }) },
+          ]);
+        }
+      });
+
+      it("withdraws a catalogue with an explicit empty sheet when it is unpublished", async () => {
+        await startHostingHelper(hostService);
+        const transport = (hostService as any).transport;
+        const conn = new MockConnection("guest-1");
+        (transport as any)._connections.push(conn as any);
+
+        await vault.onEntityUpdate?.(shop(false) as any);
+
+        await vi.waitFor(() => {
+          expect(sentTo(conn, "ENTITY_UPDATE")).toHaveLength(1);
+        });
+        const sent = sentTo(conn, "ENTITY_UPDATE")[0].payload;
+        // Guests merge updates over what they hold, so the sheet must be
+        // present and empty rather than missing.
+        expect(sent.statSheet).toEqual({ templateId: null, fields: [] });
+        expect(JSON.stringify(sent)).not.toContain(CANARY);
+      });
+
+      it("gives a joining guest the catalogue, not the GM sheet, in the initial graph", async () => {
+        (vault.entities as any)["shop-1"] = shop(true);
+        try {
+          await startHostingHelper(hostService);
+          const transport = (hostService as any).transport;
+          const peerInstance = (transport as any).peer;
+          const conn = new MockConnection("guest-1");
+          peerInstance.emit("connection", conn);
+          conn.emit("open");
+          conn.emit("data", {
+            type: "GUEST_JOIN",
+            payload: { displayName: "Ava" },
+          });
+
+          await vi.waitFor(() => {
+            expect(sentTo(conn, "GRAPH_SYNC")).toHaveLength(1);
+          });
+          const graph = sentTo(conn, "GRAPH_SYNC")[0].payload;
+          expect(JSON.stringify(graph)).not.toContain(CANARY);
+          expect(
+            graph.entities["shop-1"].statSheet.fields.map((f: any) => f.id),
+          ).toEqual(["services", "stock"]);
+        } finally {
+          delete (vault.entities as any)["shop-1"];
+        }
+      });
+    });
+
     it("should debounce token movement broadcasts into a session snapshot", async () => {
       vi.useFakeTimers();
       await startHostingHelper(hostService);

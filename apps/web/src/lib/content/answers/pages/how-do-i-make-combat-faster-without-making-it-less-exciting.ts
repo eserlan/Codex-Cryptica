@@ -122,6 +122,7 @@ export const howDoIMakeCombatFasterWithoutMakingItLessExciting: AnswerConfigInpu
       "can-you-play-a-tabletop-rpg-in-30-minute-sessions",
       "how-do-i-prepare-a-dnd-session",
       "what-can-i-do-on-my-turn-in-dnd-combat",
+      "how-do-i-combine-multiple-enemies-into-one-squad-in-an-rpg",
     ],
     discovery: {
       id: "answer-faster-exciting-combat",

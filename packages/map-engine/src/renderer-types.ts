@@ -1,4 +1,5 @@
 import type { MapPin, ViewportTransform } from "schema";
+import type { HexLabelConfig } from "./hex-labels";
 
 export interface RenderToken {
   id: string;
@@ -71,6 +72,7 @@ export interface RenderOptions {
     fixedPan?: { x: number; y: number };
     lineWidth?: number;
     showCoordinates?: boolean;
+    labelConfig?: HexLabelConfig;
   };
 }
 

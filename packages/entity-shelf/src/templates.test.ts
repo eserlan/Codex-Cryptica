@@ -89,6 +89,17 @@ describe("decideTemplate — schema templates", () => {
     expect(decision.kind).toBe("conflict-keep-existing");
     expect(decision.unresolved).toBe(true);
   });
+
+  it("raises a conflict when capability declarations differ", () => {
+    const decision = decideTemplate({
+      flavour: "schema",
+      incoming: schemaTemplate({ capabilities: ["stock-table"] }),
+      existing: schemaTemplate(),
+    });
+
+    expect(decision.kind).toBe("conflict-keep-existing");
+    expect(decision.unresolved).toBe(true);
+  });
 });
 
 describe("decideTemplate — presentation templates", () => {

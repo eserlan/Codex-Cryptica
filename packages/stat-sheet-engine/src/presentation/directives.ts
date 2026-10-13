@@ -27,6 +27,7 @@ export const PRESENTATION_DISPLAY_MODES = [
   "table",
   "notes",
   "name-target",
+  "catalogue",
 ] as const;
 
 export type PresentationDisplayMode =
@@ -71,7 +72,9 @@ export const DISPLAY_MODES_BY_FIELD_TYPE: Record<
   },
   "item-table": {
     default: "table",
-    allowed: ["table", "plain"],
+    // "catalogue" is a read-only shop view of the same rows (#3962): it never
+    // adds editing controls, so the GM can preview it without changing data.
+    allowed: ["table", "plain", "catalogue"],
   },
 };
 

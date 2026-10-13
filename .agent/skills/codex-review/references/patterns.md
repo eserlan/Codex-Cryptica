@@ -49,6 +49,36 @@ a concrete failure mode, and an appropriate focused validation or regression tes
   changes, run `bun --cwd apps/web run build`; that build executes
   `apps/web/scripts/check-compiled-runes.js`.
 
+### Component Mount Hierarchy vs Navigation Lifecycles
+
+- **Issue**: Registering view-level contexts, Help Assistant surfaces, or global listeners inside a child component that only renders for one tab in a multi-tab view (e.g. `ZenContent.svelte` mounted only inside the Overview tab of `ZenView.svelte`). When the user switches tabs (to Connections, Map, Family, etc.), the child component unmounts, tearing down the registered context while the view is still active, causing Help to fall back or features to become unreactive.
+- **Pattern**: Register persistent view-level contexts and lifecycles in the root view component (e.g. `ZenView.svelte`) and reactively pass or derive the active tab. Never place view-wide lifecycle bindings in sub-components that unmount during internal tab navigation.
+- **Example**:
+
+```svelte
+<!-- Bad: Help surface unmounts whenever activeTab != 'overview' -->
+<!-- ZenContent.svelte -->
+<script>
+  $effect(() => {
+    helpContextStore.registerSurface({ id: 'zen', name: 'Zen Mode' });
+    return () => helpContextStore.unregisterSurface('zen');
+  });
+</script>
+
+<!-- Good: Registered at the persistent container, reacting to activeTab -->
+<!-- ZenView.svelte -->
+<script>
+  $effect(() => {
+    helpContextStore.registerSurface({
+      id: 'zen',
+      name: `Zen Mode (${activeTab})`,
+      currentTab: activeTab
+    });
+    return () => helpContextStore.unregisterSurface('zen');
+  });
+</script>
+```
+
 ## Oracle & AI Logic
 
 ### Aggressive Regex Parsing
@@ -84,15 +114,17 @@ a concrete failure mode, and an appropriate focused validation or regression tes
 - **Check**: Are malformed, missing-field, oversized, and cancellation/error responses covered by
   focused tests?
 
+### Domain Grounding & Fact Consistency
+
+- **Issue**: Documentation, Help assistant feature registries, or AI prompts make assertions about product restrictions or workflows that contradict the actual codebase (e.g. claiming Demo vaults are read-only and block entity revisions, when Demo vaults actually operate in in-memory "TRANSIENT MODE" allowing mutations and revisions are only rejected in Guest mode).
+- **Pattern**: Cross-reference documented product capabilities and restrictions with the actual implementation (`isDemo` vs `isGuest`, store mutation guards) before encoding rules into help registries or system prompts. AI grounding must reflect codebase reality.
+
 ## Trust, Privacy & Public Boundaries
 
-### Untrusted Markdown and HTML
+### Untrusted Markdown, HTML and Remote Tracking (Constitution IV)
 
-- **Issue**: Rendering imported, generated, or remote text through `{@html}` without sanitizing it
-  creates an XSS boundary.
-- **Pattern**: Use the existing `renderMarkdown` utility, which sanitizes output with DOMPurify, or
-  use a deliberately allowlisted structured renderer. Never add a raw `{@html value}` path for
-  user, AI, import, or network content.
+- **Issue**: Rendering imported, generated, or remote text through `{@html}` without sanitizing it creates an XSS boundary. Furthermore, default DOMPurify configurations permit `<img>` tags and `https:`, `data:`, and `blob:` URLs. If untrusted AI model output or imported notes contain `![tracking](https://attacker.com/pixel.png)`, the browser automatically issues a remote fetch, leaking the user's IP address, timestamp, and session metadata—violating local-first privacy (Constitution Principle IV).
+- **Pattern**: Use the existing `renderMarkdown` utility with strict configuration, or use an allowlisted structured renderer. For AI-generated content (such as Help responses or Oracle chat), use an explicit allowlist of safe formatting tags (e.g. `p`, `strong`, `em`, `code`, `pre`, `ul`, `ol`, `li`, `blockquote`) that strictly excludes `<img>`, `<audio>`, `<video>`, `@import`, and arbitrary remote asset URLs. Add focused tests proving remote image tags are stripped before DOM injection.
 
 ### External Responses and Stored Documents
 
@@ -176,6 +208,24 @@ a concrete failure mode, and an appropriate focused validation or regression tes
   an accessible name, keep focus inside while open, support Escape when dismissal is allowed, and
   restore focus to the triggering control. Verify keyboard-only navigation.
 
+### Multi-Theme Optical Contrast on Semi-Transparent Overlays
+
+- **Issue**: Applying opacity utility classes or semi-transparent background colors (e.g. `bg-primary/50 text-theme-primary`) to interactive icons or action buttons. When rendered over graph backgrounds, canvas surfaces, or varied theme palettes (such as Fantasy Dark or Modern Light), the combined opacity reduces optical contrast below the 3:1 WCAG 2.1 AA minimum for actionable user interface controls (e.g. falling to 2.77:1 or 2.35:1), making controls hard to distinguish.
+- **Pattern**: When styling actionable controls, test contrast against the full theme matrix (Fantasy Dark, Modern Light, Cyberpunk). For active or "strong" toggle states, prefer solid, opaque tokens with high-contrast foregrounds (e.g. `bg-theme-primary text-theme-bg`), matching the accessible control pattern across the app.
+- **Example**:
+
+```svelte
+<!-- Bad: 50% opacity primary fill with primary text drops contrast to 2.35:1 in Modern Light -->
+<button class="bg-primary/50 text-theme-primary ...">
+  <span class="icon-[lucide--layers] h-4 w-4"></span>
+</button>
+
+<!-- Good: Solid primary fill with background text maintains > 4.5:1 contrast across all themes -->
+<button class="bg-theme-primary text-theme-bg ...">
+  <span class="icon-[lucide--layers] h-4 w-4"></span>
+</button>
+```
+
 ## Event Bus & Lifecycles
 
 ### Subscription Memory Leaks in Stores & Tests
@@ -212,6 +262,11 @@ class FeatureStore {
 - **Pattern**: Thread `AbortSignal` through cancellable work, stop progress/state updates once it is
   aborted, and dispose listeners, workers, object URLs, and subscriptions during teardown. Test a
   cancellation between meaningful phases, not only before the task starts.
+
+### Debounce Timers & Async Invalidation Lifecycle
+
+- **Issue**: Introducing async delayed operations or debounce timers (e.g. `setTimeout(..., SHARPEN_DELAY_MS)`) without clearing the timeout on component destroy or when new operations supersede them. Uncancelled timers outlive the component lifecycle, cause memory leaks, or update stale DOM nodes. Furthermore, lack of fake-timer unit tests leaves rapid re-triggering and coarse-to-fine invalidations unverified.
+- **Pattern**: Always store timer IDs and invoke `clearTimeout()` in cleanup functions (`onDestroy` or `$effect` return). Add unit tests using `vi.useFakeTimers()` to verify that rapid successive calls properly debounce, and that timers cancel cleanly when superseded.
 
 ## Data Gating & Optimization
 
@@ -273,6 +328,11 @@ class FeatureStore {
 - **Pattern**: Keep readers compatible with absent/legacy fields, add an explicit migration when a
   transformation is necessary, and preserve unknown data unless a deliberate migration removes it.
   Test a legacy document, the new document, and an invalid document before changing persistence.
+
+### Canvas 2D Hot-Path Compositing & 60 FPS Budgets
+
+- **Issue**: In continuous interactive animation, panning, or zooming loops (such as Cytoscape overlay canvas, map renderers, or `requestAnimationFrame` loops), allocating offscreen buffers, performing per-entity full-canvas clears (`ctx.clearRect(0, 0, w, h)`), or repeatedly blitting whole bitmaps (`ctx.drawImage`) exhausts the 16.6ms frame budget (e.g. 24 hulls doing full-canvas clear + drawImage = 48 full-canvas compositing passes _per animation frame_ on high-DPI displays), inducing severe frame drops and jank.
+- **Pattern**: Composite directly onto the target viewport canvas in a single draw pass, or strictly constrain clears and copies to tight local bounding boxes (`dirtyRect`). Never perform full-viewport canvas clearing or intermediate canvas blits inside a loop over individual graph entities.
 
 ## JavaScript & HTML Best Practices
 
@@ -341,3 +401,16 @@ class FeatureStore {
 - **Pattern**: Report only a changed-code defect with its location, reproduction or failure mode,
   user impact, and a concrete remediation. If the evidence is insufficient, record the uncertainty
   as a validation gap rather than presenting it as a bug.
+
+### Adversarial Premise Inversion in Optimizations
+
+- **Issue**: A performance optimization or algorithmic simplification relies on a premise that holds in typical or large-scale usage but fails at the boundaries (e.g., "calculating bounding boxes for every label is slow on fit-bounds, and labels aren't visible when zoomed far out anyway, so measure only node extents"—which completely clips labels and curved/self-loop edges in small or sparse graphs of 2–3 nodes where `zoom >= 0.5` and labels _are_ visible).
+- **Pattern**: Actively test the inverse of the author's optimization premise. Ask: "Under what input scale, viewport size, coordinate distribution, or user interaction is this premise false?" Verify edge conditions with focused unit tests.
+
+### Assertion Completeness (Not Just "Tests Pass")
+
+- **Issue**: A PR introduces new configuration keys (e.g. `graphShowCommunities` in persisted settings), environment flags, or async debounce timers (`SHARPEN_DELAY_MS`), and existing test suites pass with hundreds of green tests, but the _newly added_ keys, timers, or error branches are completely unasserted in the test suite. Passing test counts create a false sense of security.
+- **Pattern**: Audit tests specifically for the newly introduced code branches and keys:
+  1. Does every new settings/persisted property have an assertion verifying its load, save, and default fallback values?
+  2. Does every new async timer have fake-timer assertions (`vi.useFakeTimers()`) exercising cancellation, re-triggering, and tick execution?
+  3. Does every error branch or negative condition have an explicit test expecting the error or fallback?

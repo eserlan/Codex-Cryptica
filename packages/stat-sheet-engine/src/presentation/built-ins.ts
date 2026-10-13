@@ -1,4 +1,8 @@
 import type { PresentationTemplate } from "schema";
+import {
+  SHOP_MERCHANT_TEMPLATE_ID,
+  getShopPresentationTemplates,
+} from "../merchant";
 
 const CREATED_AT = "2026-08-02T00:00:00.000Z";
 
@@ -186,6 +190,11 @@ const MYTHRAS_CHARACTER_SHEET_SOURCE = `:::row
 export function getBuiltInPresentationTemplates(
   schemaTemplateId: string,
 ): PresentationTemplate[] {
+  // The merchant sheet has no hp/ac, so the generic layouts above would
+  // render nothing but missing-field flags. It gets its own two layouts.
+  if (schemaTemplateId === SHOP_MERCHANT_TEMPLATE_ID) {
+    return getShopPresentationTemplates();
+  }
   return [
     builtIn(
       `builtin-presentation-mythras-character-sheet-${schemaTemplateId}`,

@@ -171,6 +171,7 @@ export const whatRpgFeelsLikeDndButIsSimpler: AnswerConfigInput = {
     "what-rpg-system-is-good-for-solo-play",
     "where-do-i-start-if-i-have-never-played-a-tabletop-rpg",
     "what-rpg-should-i-use-for-tactical-combat",
+    "what-are-the-best-classless-fantasy-rpgs-with-skill-based-progression",
   ],
   discovery: {
     id: "answer-simpler-dnd-alternative",

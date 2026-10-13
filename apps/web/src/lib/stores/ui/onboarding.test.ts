@@ -126,4 +126,66 @@ describe("OnboardingStore", () => {
       "codex_world_page_dismissed_at",
     );
   });
+
+  describe("goal invitation (spec 175)", () => {
+    const storeWith = (
+      values: Record<string, string> = {},
+      failWrites = false,
+    ) => {
+      const storage = {
+        getItem: vi.fn((key: string) => values[key] ?? null),
+        setItem: vi.fn((key: string, value: string) => {
+          if (failWrites) throw new Error("quota");
+          values[key] = value;
+        }),
+        removeItem: vi.fn(),
+      };
+      return {
+        store: new OnboardingStore(new UIPersistence({ storage })),
+        storage,
+        values,
+      };
+    };
+
+    it("defaults to unanswered with no goal and no guidance showing", () => {
+      const { store } = storeWith();
+      expect(store.goalInvitation).toBeNull();
+      expect(store.chosenGoal).toBeNull();
+      expect(store.firstRunGuidanceActive).toBe(false);
+    });
+
+    it("persists the answer and the goal", () => {
+      const { store, values } = storeWith();
+      store.resolveGoalInvitation("goal");
+      store.chooseGoal("story");
+      expect(values).toEqual({
+        codex_goal_invitation: "goal",
+        codex_chosen_goal: "story",
+      });
+      const again = storeWith(values).store;
+      expect(again.goalInvitation).toBe("goal");
+      expect(again.chosenGoal).toBe("story");
+    });
+
+    it("reads invalid stored values as unanswered", () => {
+      const { store } = storeWith({
+        codex_goal_invitation: "maybe",
+        codex_chosen_goal: "explore",
+      });
+      expect(store.goalInvitation).toBeNull();
+      expect(store.chosenGoal).toBeNull();
+    });
+
+    it("keeps the answer in memory when storage fails", () => {
+      const { store } = storeWith({}, true);
+      store.resolveGoalInvitation("dismissed");
+      expect(store.goalInvitation).toBe("dismissed");
+    });
+
+    it("never writes the guidance flag to storage", () => {
+      const { store, storage } = storeWith();
+      store.firstRunGuidanceActive = true;
+      expect(storage.setItem).not.toHaveBeenCalled();
+    });
+  });
 });

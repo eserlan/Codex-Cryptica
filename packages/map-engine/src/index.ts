@@ -1,4 +1,5 @@
 export * from "./hex";
+export * from "./hex-labels";
 export * from "./hex-travel";
 export * from "./hex-renderer";
 export * from "./layers";

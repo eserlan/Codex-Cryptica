@@ -238,6 +238,7 @@ export const howDoIPrepareADndSession: AnswerConfigInput = {
     "how-do-i-organise-a-dnd-campaign",
     "what-should-a-new-dnd-player-know-before-their-first-game",
     "how-do-i-plan-story-arcs-for-an-rpg-campaign",
+    "what-are-the-pros-and-cons-of-becoming-a-dungeon-master",
   ],
   discovery: {
     id: "answer-prepare-dnd-session",

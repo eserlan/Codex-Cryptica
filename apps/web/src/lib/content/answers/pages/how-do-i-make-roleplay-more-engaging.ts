@@ -7,15 +7,15 @@ export const howDoIMakeRoleplayMoreEngaging: AnswerConfigInput = {
   question: "How do I make roleplay more engaging in a tabletop RPG?",
   kind: "framework",
   shortAnswer:
-    "Make social scenes engaging by giving them more to decide, not more time to fill. Replace the single Persuasion check that settles a conversation with a situation built around a meaningful question: what might change because the party had this conversation at all. Give important NPCs a want, a reason to hesitate, something useful they know, and a boundary they will not cross, then let the players choose how to engage with those pressures and let the dice support the fiction when the outcome is genuinely uncertain.",
+    "Make social scenes engaging by giving players an approach or commitment to choose before resolving the request. One roll can settle it; continue only while meaningful decisions remain. Give important NPCs a want, a reason to hesitate, something useful they know, and a boundary they will not cross, then let the players choose how to engage with those pressures and let the dice support the fiction when the outcome is genuinely uncertain.",
   sections: [
     {
       kind: "prose",
       heading: "Short is not the same as flat",
       paragraphs: [
-        "A social scene that resolves in five minutes is not automatically a failure. If the conversation changed who trusts the party, what it costs to proceed, or which future path is now open or closed, five minutes was enough. What feels flat is a scene where nothing could change except a yes or no, so the check is made and the table has nothing left to do with the result.",
+        "A social scene that resolves in five minutes is not automatically a failure. If the conversation changed who trusts the party, what it costs to proceed, or which future path is now open or closed, five minutes was enough. A yes or no can change access, relationships, or future paths, and one roll can settle an approach the players chose. What feels flat is a request resolved before the players choose an approach, or a result that leaves them no meaningful decision about what follows.",
         'Before changing your whole campaign, check what "roleplay heavy" means at your table and whether the players want it. Some groups love extended in-character dialogue, others prefer crisp third person narration, and most have a mix. A player who says "my knight offers safe passage for the refugees and asks what the steward needs in return" is roleplaying. If you measure roleplay by minutes spent performing, you will miss the engagement that is already there and push a format enthusiasm alone cannot sustain.',
-        "The useful question is not how to make every conversation longer. It is how to make the next important conversation contain a choice the table will remember after the session.",
+        "The useful question is not how to make every conversation longer. It is whether the players have a meaningful choice before the request is resolved, and whether anything remains for them to decide afterwards.",
       ],
     },
     {
@@ -56,11 +56,11 @@ export const howDoIMakeRoleplayMoreEngaging: AnswerConfigInput = {
       kind: "list",
       heading: "Give the scene a question that matters",
       intro:
-        "A scene becomes engaging when the outcome changes something the players care about. Frame the encounter around a genuine question, not a single obstacle to pass:",
+        "A scene becomes engaging when the players have a meaningful choice and the outcome changes something they care about. A request may still be resolved with one check; access itself can be a meaningful stake. Frame the encounter around a genuine question:",
       items: [
         {
           term: "What might change",
-          text: "Resources, relationships, reputation, access, or future obligations. If the only change is permission granted or denied, consider whether the negotiation is the point or merely the tollbooth before it.",
+          text: "Resources, relationships, reputation, access, or future obligations. Permission granted or denied can be a meaningful change; give players an approach or commitment to choose before resolving it.",
         },
         {
           term: "Competing goals",
@@ -68,7 +68,7 @@ export const howDoIMakeRoleplayMoreEngaging: AnswerConfigInput = {
         },
         {
           term: "Terms, not just success",
-          text: "The question is rarely whether help is possible but on what terms. A yes with conditions can be more interesting than a hard no, and a no that leaves a clear alternative route is more engaging than a silent wall.",
+          text: "The question is often whether help is possible and on what terms. Conditions can be interesting when they fit the declared stakes, but a resolved request need not become further negotiation. A no that leaves a clear alternative route can give the party a decision too.",
         },
         {
           term: "Revelation with consequence",
@@ -80,15 +80,15 @@ export const howDoIMakeRoleplayMoreEngaging: AnswerConfigInput = {
       kind: "list",
       heading: "Let mechanics support the fiction",
       intro:
-        "Dice and fiction should work together. Use rolls when the outcome is both uncertain and consequential, and let the result change the terms available rather than skipping the conversation entirely:",
+        "Dice and fiction should work together. Use rolls when the outcome is both uncertain and consequential. A roll can resolve the declared request under the game's procedure; adjust terms only when the stakes leave room for that, and honour a result that settles the request:",
       items: [
         {
           term: "Roll when it matters",
           text: "If failure would change what happens next, or success would earn something specific, a check is worth making. If the outcome is clear or the cost of failure is negligible, resolve the exchange through description and agreed terms.",
         },
         {
-          term: "A success changes the offer",
-          text: "In many games a strong Persuasion, Deception, or Insight result might reduce a cost, extend a deadline, reveal a useful constraint, win a concession, or establish advantage for a follow-up action. It does not need to remove all interaction or override an NPC's core boundary, and in a different system the same principle applies under that system's social rules.",
+          term: "A result follows the declared stakes",
+          text: "A successful Persuasion, Deception, or Insight result can settle the request if that is what the players put at stake and the game's procedure allows it. When the declared stakes leave room for further negotiation, a result might instead reduce a cost, extend a deadline, reveal a useful constraint, or win a concession. Do not add conditions after a result has resolved the request or override an NPC's core boundary; follow the system's social rules.",
         },
         {
           term: "Do not make players audition for a roll",
@@ -154,7 +154,7 @@ export const howDoIMakeRoleplayMoreEngaging: AnswerConfigInput = {
       heading: "Talk with the players before changing the campaign",
       paragraphs: [
         "If you have run dungeon focused campaigns for years, do not turn the whole next arc into sustained dialogue and hope the table follows. Name the shift you would like to try and ask what kind of roleplay appeals to them: extended in-character scenes, shorter third person negotiations, or a blend where only important conversations get full focus.",
-        "Start with one focused scene that contains a real choice, then check what landed. Did the players enjoy weighing the trade-off, or were they waiting for a check to settle it. Their answer tells you more about how to pace your campaign than any procedure for calibrating scene length.",
+        "Start with one focused scene that contains a real choice, then check what landed. Did the players enjoy weighing the trade-off, or did the scene leave them without a choice before the check. Their answer tells you more about how to pace your campaign than any procedure for calibrating scene length.",
       ],
     },
     {
@@ -165,24 +165,24 @@ export const howDoIMakeRoleplayMoreEngaging: AnswerConfigInput = {
       ],
       items: [
         {
-          term: "Before: one roll, no choice",
-          text: "The party enters the hall. The GM asks for a Persuasion check. The bard rolls well, the lord grants passage, and the scene ends in four minutes. On a low roll, the lord refuses and the table must decide out of character whether to find a different route with no new information. The roll decided the outcome, but no decision inside the fiction changed the party's resources, relationships, or understanding of the valley.",
+          term: "Before: a roll without a choice",
+          text: "The party enters the hall. The GM asks for a Persuasion check. The bard rolls well and the lord grants passage, plainly changing the party's access; the scene ends in four minutes. The weakness is that the GM called for a check without inviting the party to choose an approach or commitment first. On a low roll, the lord refuses and the table must decide out of character whether to find a different route, with no new information or meaningful choice about how to make the request.",
         },
         {
           term: "After: a situation with terms to weigh",
-          text: "Lord Halden wants to help. He needs the road open for his own grain wagons, knows the mountain pass is already watched by a rival house, and can offer sealed letters of passage and two guides. He resists because letting an armed party through without surety will draw that rival's attention to his household. His boundary: he will not risk the winter grain. The steward lays this out plainly and Halden listens while the party considers. The party can offer collateral such as leaving horses or a hostage, bring evidence that the rival already knows they are moving, seek a concurrent favour from the river guild to offset Halden's risk, accept passage on condition they carry grain south, or walk away and take the exposed pass.",
+          text: "Lord Halden wants to help, but the rival house has been seizing unescorted wagons on the mountain road. Halden fears it will take his next shipment and blame his household for letting it pass. He will not risk the grain reserved for winter, but this is an outgoing surplus shipment. The party can ask for passage with two guides and sealed letters if they escort that wagon south; this protects the cargo while giving them a route through the valley. They can also refuse the bargain and take the exposed pass. The steward explains the risk and boundary before the party decides.",
         },
         {
           term: "How rolls support the fiction",
-          text: "The table states intent before dice touch the table. If the bard presents the grain-carrying offer warmly, a strong Persuasion result might reduce the collateral or add the guides for no extra cost. If a scout lays out what they saw on the pass, that evidence can change the steward's understanding regardless of Charisma. If a cleric offers sanctuary as surety, the nature of the guarantee matters more than the wording. A weak result does not produce stonewalling: the steward holds firm on the grain but might offer one guide tomorrow if the party accepts a cost elsewhere. The outcome of any check adjusts terms, reveals a constraint, or establishes advantage for what follows; it does not pre-decide whether the negotiation is interesting.",
+          text: "The party asks for two guides and sealed letters in exchange for escorting the surplus shipment. If the system calls for a Persuasion check and the result succeeds, Halden grants the request and the party has passage; the scene can end there. On failure, he refuses the extra guide and letters but counteroffers passage with one guide if they still escort the wagon. Evidence of a rival's order to seize the shipment changes Halden's belief from a general risk to an imminent threat, so he may grant passage with two guides without a roll. The party can accept either offer, counteroffer, refuse, or leave. Resolve each roll by the system's procedure, and do not reopen the request after a result settles it.",
         },
         {
           term: "A short outcome is still good",
-          text: "If the party quickly agrees to carry grain in exchange for letters and guides, the scene can end in six minutes and still be excellent. They have made a consequential choice about resources and obligations that will matter on the road. Equally, the negotiation can develop over a longer exchange if the table wants to press for better terms, reveal more of the rival's position, or bring another faction into the arrangement. Duration follows the number of meaningful decisions, not a target runtime.",
+          text: "If the party quickly agrees to escort the surplus shipment for passage and the offered guides, the scene can end in six minutes and still be excellent. They have made a consequential choice about risk and obligation that will matter on the road. Continue only if the table wants to press for terms or act on new information; duration follows the decisions still open, not a target runtime.",
         },
         {
           term: "Why it works",
-          text: "No additional dialogue was padded in. The conversation became engaging because three pressures were visible: Halden's desire to help, his political risk, and his hard limit around the grain. Players could act through different kinds of leverage, and any roll changed specific terms rather than bypassing the question of what the party was willing to risk. The noble remains consistent whether the party is persuasive, blunt, or quietly practical, and the steward's reactions and the later consequence on the road make the choice feel consequential.",
+          text: "No additional dialogue was padded in. The conversation became engaging because three pressures were visible: Halden's desire to help, the rival's threat to his unescorted shipment, and his boundary around the winter reserve. The party's escort directly reduces that risk, while evidence of an imminent seizure changes what Halden believes. A roll can settle the requested concession, and the party remains free to accept, counteroffer, refuse, or leave.",
         },
       ],
     },
@@ -259,7 +259,7 @@ export const howDoIMakeRoleplayMoreEngaging: AnswerConfigInput = {
       "make rpg conversations more engaging for shy players",
     ],
     uniqueValue:
-      "A GM-facing framework for social scenes where the players have no real choice: situation prep for NPCs, a question whose stakes the players choose how to settle, and rolls that adjust terms rather than skipping interaction.",
+      "A GM-facing framework for social scenes that need a meaningful player choice: situation prep for NPCs, an approach or commitment before a request is resolved, and rolls that can settle the request or adjust terms when the stakes allow.",
     userJob: "adopt-workflow",
     relatedIntents: [
       "answer-player-engagement",
@@ -305,7 +305,7 @@ export const howDoIMakeRoleplayMoreEngaging: AnswerConfigInput = {
   seo: {
     title: "Make roleplay more engaging: give scenes a choice | Codex Cryptica",
     description:
-      "Flat social scenes give players nothing to decide. Prepare an NPC situation, frame a question with stakes the players choose how to settle, and let dice adjust terms, not skip the talk.",
+      "Make roleplay more engaging by giving players meaningful choices: prepare an NPC situation, invite an approach or commitment, and use one roll when the rules call for it.",
     image:
       "https://assets.codexcryptica.com/og/how-do-i-make-roleplay-more-engaging.jpg",
     imageAlt:

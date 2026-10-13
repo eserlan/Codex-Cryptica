@@ -6,6 +6,7 @@
     cta,
     onCta,
     ctaTestId,
+    ctaHelpTarget,
     secondaryCta,
     onSecondaryCta,
   }: {
@@ -17,6 +18,8 @@
     /** Optional testid for the primary CTA — lets callers target it reliably
      *  (e.g. the onboarding tour) without a generic, ambiguous selector. */
     ctaTestId?: string;
+    /** Optional `data-help-target`, so a guide can point at the CTA. */
+    ctaHelpTarget?: string;
     secondaryCta?: string;
     onSecondaryCta?: () => void;
   } = $props();
@@ -43,6 +46,7 @@
       type="button"
       onclick={onCta}
       data-testid={ctaTestId}
+      data-help-target={ctaHelpTarget}
       class="mt-1 px-3 py-1 text-micro font-bold font-header uppercase tracking-wider rounded border border-theme-primary/40 text-theme-primary hover:bg-theme-primary/10 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-theme-accent/40"
     >
       {cta}

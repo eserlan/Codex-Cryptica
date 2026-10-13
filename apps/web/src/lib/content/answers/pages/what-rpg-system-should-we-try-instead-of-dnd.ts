@@ -161,6 +161,7 @@ export const whatRpgSystemShouldWeTryInsteadOfDnd: AnswerConfigInput = {
     "what-rpg-should-i-play-for-investigative-horror",
     "what-rpg-works-for-political-intrigue-and-faction-play",
     "what-ttrpgs-let-you-build-and-upgrade-a-base",
+    "what-are-the-best-classless-fantasy-rpgs-with-skill-based-progression",
   ],
   discovery: {
     id: "answer-system-selection",
@@ -188,6 +189,11 @@ export const whatRpgSystemShouldWeTryInsteadOfDnd: AnswerConfigInput = {
         with: "answer-base-building-system-selection",
         reason:
           "This answer provides a broad play-style and genre chooser; the base-building answer compares specific home-base progression procedures and how much of a campaign they occupy.",
+      },
+      {
+        with: "answer-classless-fantasy-skill-progression",
+        reason:
+          "This answer gives a broad play-style and genre chooser; the classless fantasy answer evaluates skill-driven advancement, and gritty tone controls for long campaigns.",
       },
     ],
   },

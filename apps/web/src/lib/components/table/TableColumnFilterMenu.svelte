@@ -2,6 +2,7 @@
   import type {
     ConnectionsFilterMode,
     DateFilterMode,
+    ImageFilterMode,
     LabelFilterMode,
     SummaryFilterMode,
     TableColumnFilters,
@@ -52,6 +53,14 @@
     };
   });
 
+  function setImageMode(mode: ImageFilterMode) {
+    onUpdateFilters({
+      ...columnFilters,
+      imageMode: mode === "all" ? undefined : mode,
+    });
+    onClose();
+  }
+
   function setConnectionsMode(mode: ConnectionsFilterMode) {
     onUpdateFilters({
       ...columnFilters,
@@ -93,6 +102,7 @@
 
   function clearThisFilter() {
     const next = { ...columnFilters };
+    if (columnKey === "title") delete next.imageMode;
     if (columnKey === "connections") delete next.connectionsMode;
     if (columnKey === "summary") delete next.summaryMode;
     if (columnKey === "labels") {
@@ -122,7 +132,57 @@
     Filter {columnLabel}
   </div>
 
-  {#if columnKey === "connections"}
+  {#if columnKey === "title"}
+    {@const active = columnFilters.imageMode ?? "all"}
+    <button
+      type="button"
+      role="menuitemradio"
+      aria-checked={active === "all"}
+      class="flex w-full items-center justify-between px-3 py-1.5 text-xs text-theme-text transition-colors hover:bg-theme-primary/10 hover:text-theme-primary {active ===
+      'all'
+        ? 'font-bold text-theme-primary'
+        : ''}"
+      onclick={() => setImageMode("all")}
+    >
+      <span>All entries</span>
+      {#if active === "all"}
+        <span aria-hidden="true" class="icon-[lucide--check] h-3.5 w-3.5"
+        ></span>
+      {/if}
+    </button>
+    <button
+      type="button"
+      role="menuitemradio"
+      aria-checked={active === "missing_image"}
+      class="flex w-full items-center justify-between px-3 py-1.5 text-xs text-theme-text transition-colors hover:bg-theme-primary/10 hover:text-theme-primary {active ===
+      'missing_image'
+        ? 'font-bold text-theme-primary'
+        : ''}"
+      onclick={() => setImageMode("missing_image")}
+    >
+      <span>Missing image / portrait</span>
+      {#if active === "missing_image"}
+        <span aria-hidden="true" class="icon-[lucide--check] h-3.5 w-3.5"
+        ></span>
+      {/if}
+    </button>
+    <button
+      type="button"
+      role="menuitemradio"
+      aria-checked={active === "has_image"}
+      class="flex w-full items-center justify-between px-3 py-1.5 text-xs text-theme-text transition-colors hover:bg-theme-primary/10 hover:text-theme-primary {active ===
+      'has_image'
+        ? 'font-bold text-theme-primary'
+        : ''}"
+      onclick={() => setImageMode("has_image")}
+    >
+      <span>Has image / portrait</span>
+      {#if active === "has_image"}
+        <span aria-hidden="true" class="icon-[lucide--check] h-3.5 w-3.5"
+        ></span>
+      {/if}
+    </button>
+  {:else if columnKey === "connections"}
     {@const active = columnFilters.connectionsMode ?? "all"}
     <button
       type="button"

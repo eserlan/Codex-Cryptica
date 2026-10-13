@@ -78,11 +78,16 @@
         "patterns": ["packages/help-engine/**"]
       },
       {
+        "name": "onboarding-journey-engine",
+        "patterns": ["packages/onboarding-journey-engine/**"]
+      },
+      {
         "name": "packages",
         "patterns": [
           "packages/**",
           "!packages/schema/**",
-          "!packages/help-engine/**"
+          "!packages/help-engine/**",
+          "!packages/onboarding-journey-engine/**"
         ]
       },
       {
@@ -120,6 +125,11 @@
       {
         "from": "help-engine",
         "allow": ["schema"]
+      },
+      {
+        "comment": "Journeys reuse Cif's guidance action schema and quick prompts (spec 175, research R1).",
+        "from": "onboarding-journey-engine",
+        "allow": ["schema", "packages", "help-engine"]
       },
       {
         "from": "workers",

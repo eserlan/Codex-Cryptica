@@ -561,7 +561,7 @@ export const PHASE_A_OUT_OF_SCOPE: OutOfScopeQuestion[] = [
   out("unrelated", "tune", "none", "What is the best way to lose weight?"),
   out("unrelated", "holdout", "none", "How do I make a pivot table in Excel?"),
   out(
-    "unrelated",
+    "near-miss",
     "tune",
     "graph",
     "Is Codex Cryptica better than World Anvil?",

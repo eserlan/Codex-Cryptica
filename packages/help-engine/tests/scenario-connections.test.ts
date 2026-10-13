@@ -191,10 +191,12 @@ const bundle = buildBundle({
     ...[
       "quicknote",
       "stat-sheets",
+      "merchant-sheets",
       "sharing-templates",
       "chronology",
       "family-tree",
       "guided-mode",
+      "guided-setup",
       "session-prep",
     ].map((id) => article(id, id, `## ${id}\nAbout ${id}.`)),
   ],

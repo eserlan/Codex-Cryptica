@@ -50,7 +50,7 @@
 >
   <!-- Main Views -->
   {#each views as view}
-    {@const active = isViewActive(view, page.url.pathname)}
+    {@const active = isViewActive(view, page.url)}
     <a
       href={view.href}
       class="{shellClass(view)} {stateClass(active)}"

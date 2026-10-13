@@ -8,7 +8,7 @@ export const howDoIStartWorldbuildingForANovelOrShortStory: AnswerConfigInput =
     question: "How do I start worldbuilding for a novel or short story?",
     kind: "framework",
     shortAnswer:
-      "Start with the story, not an encyclopaedia. Write a one or two sentence premise, name your viewpoint character and their immediate obstacle, decide three concrete truths about the setting that create pressure on them, build only the single location and handful of people needed for your opening scene, then begin drafting and add new lore only when the next scene demands it.",
+      "Start with the story, not an encyclopaedia. Write a one or two sentence premise, name your viewpoint character and their immediate obstacle, then choose three setting truths that put pressure on them. Prepare only the place and people the opening needs, then draft and add lore as later scenes call for it.",
     sections: [
       {
         kind: "prose",
@@ -16,8 +16,12 @@ export const howDoIStartWorldbuildingForANovelOrShortStory: AnswerConfigInput =
         paragraphs: [
           "Many new writers stall because they imagine a novel requires a finished world before the first sentence. They open a blank document, sketch a continent, name a pantheon, draft a thousand years of history, then feel more overwhelmed than when they started. That work feels like progress, but it does not tell you what happens on page one.",
           "A short story or novel needs far less. Your reader meets your world through one character, in one place, facing one problem. If you can make that single scene feel specific and consequential, you have enough world to begin. Everything else can be discovered as you write, which is how the world stays tightly tied to character and plot instead of sitting beside them as separate lore.",
-          "This answer is written for fiction writers. If you are building a world for tabletop play, where several players may walk in any direction and need playable locations and factions from the first session, see the companion answer on starting worldbuilding from scratch, which uses a local sandbox framework built for the table. The method below solves a different problem: how much world you need before you can write your first scene.",
+          "This answer is written for fiction writers. If you are building a world for tabletop play, several players may walk in any direction and need playable locations and factions from the first session. The method below solves a different problem: how much world you need before you can write your first scene.",
         ],
+        cta: {
+          text: "For campaign worldbuilding: start with a local sandbox",
+          href: "/answers/how-do-you-start-worldbuilding-from-scratch",
+        },
       },
       {
         kind: "list",
@@ -39,7 +43,7 @@ export const howDoIStartWorldbuildingForANovelOrShortStory: AnswerConfigInput =
           },
           {
             term: "Build the minimum viable setting for the opening",
-            text: "Define one primary location with a sensory detail you can describe, three to five people your character will actually interact with, and only the rules that matter for this scene. Sketch a single room, street, or workplace rather than a city. Leave the rest of the map blank on purpose.",
+            text: "Define one primary location with a sensory detail you can describe, only the people the opening needs, and the rules that matter for this scene. Your opening may need no supporting cast. Sketch a single room, street, or workplace rather than a city; leave the rest of the map blank for now.",
           },
           {
             term: "Draft the scene, then note what it raised",
@@ -73,23 +77,23 @@ export const howDoIStartWorldbuildingForANovelOrShortStory: AnswerConfigInput =
           },
           {
             term: "Viewpoint, goal and obstacle",
-            text: "Viewpoint: Eline, twenty two, careful but anxious, who has been warned that one more mistake will end her placement. Goal: photograph one file that proves the street exists. Obstacle: Master Hargrove returns at noon and will dismiss her if he finds her away from her desk, and the rain is forecast to stop by eleven.",
+            text: "Viewpoint: Eline, twenty two, careful but anxious, whose probation review is at noon. Goal: photograph one file that proves the street exists. Obstacle: Master Hargrove will dismiss her if he finds her away from her desk before the review, and the rain is forecast to stop by eleven.",
           },
           {
             term: "Three setting truths that create pressure",
-            text: "First, the street, called Grey Row, exists only while rain wets its cobbles; in dry weather there is a blank brick wall where the alley mouth should be. Second, living memory is regulated: the Archive classifies which streets and events are officially remembered, and unauthorised records are destroyed, so most citizens accept the wall without question. Third, lingering on Grey Row after the rain weakens has a cost: people who are still there when the street fades lose a small, specific memory, which is why older clerks refuse to talk about it.",
+            text: "First, the street, called Grey Row, exists only while rain wets its cobbles; in dry weather there is a blank brick wall where the alley mouth should be. Second, living memory is regulated: the Archive classifies which streets and events are officially remembered, and unauthorised records are destroyed, so most citizens accept the wall without question. Third, Eline can leave Grey Row only while rain still falls. If she is there when it stops, the street fades and sends her back to the yard, costing her one small, specific memory; this is why older clerks refuse to talk about it.",
           },
           {
             term: "Minimum viable setting for scene one",
-            text: "One location: the Archive reading room and the narrow yard that leads to Grey Row, with the smell of wet paper, the clack of the wall clock, and a single high window showing the darkening sky. Five people: Eline, Master Hargrove, the porter Jonn who pretends not to see her leave, an older file clerk who once worked Grey Row and is now oddly forgetful, and a rival junior who would report her to keep her own place. One rule that matters now: she can only enter and leave while it rains, and she must keep track of time.",
+            text: "One location: the Archive reading room and the narrow yard that leads to Grey Row, with the smell of wet paper, the clack of the wall clock, and a single high window showing the darkening sky. The people the opening needs are Eline, Master Hargrove and the porter Jonn, who pretends not to see her leave. One rule that matters now: she can leave only while rain still falls, so she must keep track of time.",
           },
           {
             term: "Opening scene sketch",
-            text: "The scene opens at 09:40 as Eline watches rain hammer the yard. She slips from her desk with a borrowed key and a small camera, steps through the alley mouth that was not there yesterday, and finds Grey Row lined with shuttered houses whose numbers do not fit the city's grid. She has perhaps an hour. She finds the right door, 14 Grey Row, and inside a single damp ledger that lists her own grandmother as a resident. A church bell counts the hour, the rain eases, and she must decide whether to take the ledger and risk being caught with contraband, or copy one page and leave before the street takes its price. The tension comes directly from the setting truths: the rain as a closing door, the Archive's prohibition, and the personal cost of lingering.",
+            text: "The scene opens at 09:40 as Eline watches rain hammer the yard. She slips from her desk with a borrowed key and a small camera, steps through the alley mouth that was not there yesterday, and finds Grey Row lined with shuttered houses whose numbers do not fit the city's grid. She has perhaps an hour. At 14 Grey Row she finds a damp ledger listing her grandmother among several residents; the surrounding entries and the physical book preserve a fuller record than one photograph. As the rain eases, she must choose: take the bulky ledger, whose absence Hargrove will notice at the noon review, or photograph one page and leave the forbidden copy concealed in her camera. If she remains when the rain stops, Grey Row will fade and send her back to the yard without the chance to leave by the alley, costing her one small memory. The rain sets her deadline, while either unauthorised record risks her placement.",
           },
           {
             term: "Deliberately left blank",
-            text: "No city-wide map, no history of why Grey Row was erased, no full magic system, no pantheon, no trade economy. Those questions exist, but they are not needed to write this scene. The story bible for now holds four lines: Grey Row appears only in rain, the Archive forbids unauthorised records, fading costs a memory, and Eline's probation ends today. If a later chapter needs the city's founding or the mechanism behind the street, that is the moment to decide it, not before.",
+            text: "No city-wide map, no history of why Grey Row was erased, no full magic system, no pantheon, no trade economy. Those questions are not needed to write this scene. The brief story note holds four settled facts: Grey Row appears only in rain, Eline can leave only while it rains, fading sends her back to the yard at a cost of one memory, and her probation review is at noon. If a later chapter needs the city's founding or the mechanism behind the street, decide then; a mystery or serial may also need a concise note of a settled future constraint before its reveal.",
           },
           {
             term: "Why it works",
@@ -101,9 +105,9 @@ export const howDoIStartWorldbuildingForANovelOrShortStory: AnswerConfigInput =
         kind: "prose",
         heading: "Writing a series without building an encyclopaedia first",
         paragraphs: [
-          "A short story can hold almost everything in your head. A novel or serial needs a light system so you do not contradict a rule you set in chapter two by chapter twelve.",
-          "Keep a story bible of one or two pages, not a world bible of fifty. After each writing session, add only what the draft has now made true: the spellings of names and places as you actually used them, the three setting truths and any rule you added, a one line note for each new location, and any promise you made to the reader that will need a later payoff. If a detail never appeared in a scene, it does not need a record yet.",
-          "When you need to expand between stories or volumes, return to the five steps rather than inventing lore in isolation. Ask what the next story's viewpoint character wants, what stands in their way, and which single new location or rule that story requires. Series worldbuilding then grows as a chain of minimum viable settings, each linked to the last, rather than as a single upfront design that must account for everything you might one day write.",
+          "A short story can hold almost everything in your head. A novel or serial benefits from a brief record of settled facts and future dependencies, so a later scene does not contradict an earlier decision.",
+          "After each writing session, note established facts such as names and places as they appear, rules the draft depends on, and promises that need a later payoff. You may also record a settled cause, clue or constraint before its reveal when later scenes depend on it; mark it as planned until it appears in the draft. Label provisional ideas so you can revise them. Keep the record as brief as useful, rather than trying to document the whole world.",
+          "When you expand between stories or volumes, return to the five steps and ask what the next viewpoint character wants, what stands in their way, and which new location or rule that story requires. Let drafting guide the expansion, with targeted advance planning wherever later consequences depend on it.",
         ],
       },
       {
@@ -114,7 +118,7 @@ export const howDoIStartWorldbuildingForANovelOrShortStory: AnswerConfigInput =
         items: [
           {
             term: "Endless preparation",
-            text: "Research and map-making feel productive because they produce artefacts. Set a hard limit: thirty minutes of world notes per writing session, then Draft. If you catch yourself colouring a regional map for the third evening without writing a paragraph, you have moved from preparation to avoidance.",
+            text: "Research and map-making feel productive because they produce artefacts. If you tend to overprepare, a short timer can help you move on to drafting. If you have spent several evenings colouring a regional map without writing a paragraph, return to the next scene and note only what it needs.",
           },
           {
             term: "Disconnected encyclopaedia entries",
@@ -126,23 +130,22 @@ export const howDoIStartWorldbuildingForANovelOrShortStory: AnswerConfigInput =
           },
           {
             term: "Solving every world question up front",
-            text: "You do not need to settle whether gods are real, how the economy functions, or what lies beyond the mountains until a scene depends on it. Leaving those open is not a plot hole; it is room to let later story needs shape the answers more precisely than early guessing could.",
+            text: "Leave questions open until a scene depends on them, while recording any settled future constraint that affects what can happen later. This keeps room for discovery without losing continuity.",
           },
         ],
       },
       {
         kind: "checklist",
-        heading:
-          "Fifteen-minute starter: are you ready to write the first scene?",
+        heading: "A starter checklist for the first scene",
         intro:
-          "Spend fifteen minutes on these prompts, then begin your opening scene without further preparation:",
+          "A fifteen-minute target can help you begin, but use as much or as little preparation as you need:",
         items: [
           "Write your premise in one or two sentences that name a specific character, their near-term goal, and one unusual fact about the situation.",
           "Name the viewpoint character, what they want in the next scene, and the single immediate obstacle that could make them fail today.",
           "List three setting truths: what is different here, what constrains ordinary life, and what generates conflict for this character.",
-          "Define the minimum for scene one: one location you can describe with two sensory details, three to five people, and only the rule that governs this scene.",
+          "Define the minimum for scene one: one location you can describe, the people it needs, and the rules that govern this scene. A solitary opening may need no supporting cast.",
           "Choose the scene's decision point: what must the character choose, risk, or reveal before the scene ends, and how does a setting truth raise the stakes?",
-          "Set a timer and draft the scene for at least three hundred words without stopping to invent additional lore; keep a separate note of questions that arise and answer only those the next scene needs.",
+          "Draft without stopping to invent additional lore; if a word target helps, aim for three hundred words. Keep a separate note of questions that arise and answer those the next scene needs.",
         ],
       },
     ],

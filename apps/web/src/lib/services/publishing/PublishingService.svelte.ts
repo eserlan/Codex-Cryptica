@@ -1,4 +1,5 @@
-import { GuestExporter } from "@codex/vault-engine";
+import { GuestExporter, type ExporterOptions } from "@codex/vault-engine";
+import { sanitizeSheetForGuests } from "@codex/stat-sheet-engine";
 import type { PublishRegistry } from "schema";
 import { getPublishTurnstileToken } from "./turnstile";
 import { retryWithBackoff } from "$lib/utils/retry";
@@ -118,35 +119,55 @@ export class PublishingService {
     }
   }
 
+  /**
+   * Compiles the guest bundle. Every export goes through here so stat sheets
+   * always reach players as their published catalogue, never as the GM's
+   * sheet (#3964).
+   */
+  private compileGuestBundle(
+    publishId: string,
+    extra: Partial<ExporterOptions> = {},
+  ) {
+    const activeTheme = this.deps.themeStore.activeTheme;
+    return GuestExporter.export({
+      sanitizeStatSheet: sanitizeSheetForGuests,
+      entities: this.deps.vault.allEntities || [],
+      defaultVisibility: this.deps.vault.defaultVisibility || "visible",
+      activeTheme: activeTheme ? $state.snapshot(activeTheme) : {},
+      publishId,
+      vaultTitle: this.deps.vault.activeVaultRecord?.name || "Untitled World",
+      publisherVersion: "1.0.0",
+      maps: this.deps.mapRegistry.allMaps || [],
+      canvases: this.deps.canvasRegistry.allCanvases || [],
+      ...extra,
+    });
+  }
+
+  /** The local image, thumbnail and map files a bundle refers to. */
+  private collectLocalPaths(
+    bundle: ReturnType<typeof GuestExporter.export>,
+  ): Set<string> {
+    const paths = new Set<string>();
+    const add = (path?: string) => {
+      if (path && this.isLocalPath(path)) paths.add(path);
+    };
+    for (const e of bundle.entities) {
+      add(e.image);
+      add(e.thumbnail);
+    }
+    for (const m of bundle.maps || []) add(m.assetPath);
+    return paths;
+  }
+
   async getPublishPreview(_vaultId: string) {
     const entities = this.deps.vault.allEntities || [];
     const maps = this.deps.mapRegistry.allMaps || [];
     const canvases = this.deps.canvasRegistry.allCanvases || [];
-    const defaultVisibility = this.deps.vault.defaultVisibility || "visible";
-    const activeTheme = this.deps.themeStore.activeTheme;
 
     // Dry run
-    const bundle = GuestExporter.export({
-      entities,
-      defaultVisibility,
-      activeTheme: activeTheme ? $state.snapshot(activeTheme) : {},
-      publishId: "preview-id",
-      vaultTitle: this.deps.vault.activeVaultRecord?.name || "Untitled World",
-      publisherVersion: "1.0.0",
-      maps,
-      canvases,
-    });
+    const bundle = this.compileGuestBundle("preview-id");
 
-    const localPaths = new Set<string>();
-    for (const e of bundle.entities) {
-      if (e.image && this.isLocalPath(e.image)) localPaths.add(e.image);
-      if (e.thumbnail && this.isLocalPath(e.thumbnail))
-        localPaths.add(e.thumbnail);
-    }
-    for (const m of bundle.maps || []) {
-      if (m.assetPath && this.isLocalPath(m.assetPath))
-        localPaths.add(m.assetPath);
-    }
+    const localPaths = this.collectLocalPaths(bundle);
 
     return {
       included: {
@@ -179,35 +200,10 @@ export class PublishingService {
     this.statusMessage = "Preparing campaign snapshot...";
 
     try {
-      const entities = this.deps.vault.allEntities || [];
-      const maps = this.deps.mapRegistry.allMaps || [];
-      const canvases = this.deps.canvasRegistry.allCanvases || [];
-      const defaultVisibility = this.deps.vault.defaultVisibility || "visible";
-      const activeTheme = this.deps.themeStore.activeTheme;
-
       // Identify referenced assets
-      const localPaths = new Set<string>();
-
-      const tempBundle = GuestExporter.export({
-        entities,
-        defaultVisibility,
-        activeTheme: activeTheme ? $state.snapshot(activeTheme) : {},
-        publishId: "temp-preview-id",
-        vaultTitle: this.deps.vault.activeVaultRecord?.name || "Untitled World",
-        publisherVersion: "1.0.0",
-        maps,
-        canvases,
-      });
-
-      for (const e of tempBundle.entities) {
-        if (e.image && this.isLocalPath(e.image)) localPaths.add(e.image);
-        if (e.thumbnail && this.isLocalPath(e.thumbnail))
-          localPaths.add(e.thumbnail);
-      }
-      for (const m of tempBundle.maps || []) {
-        if (m.assetPath && this.isLocalPath(m.assetPath))
-          localPaths.add(m.assetPath);
-      }
+      const localPaths = this.collectLocalPaths(
+        this.compileGuestBundle("temp-preview-id"),
+      );
 
       this.statusMessage = `Resolving local assets (0/${localPaths.size})...`;
       this.progress = 5;
@@ -283,15 +279,7 @@ export class PublishingService {
       this.statusMessage = "Compiling final guest bundle...";
       this.progress = 25;
 
-      const finalBundle = GuestExporter.export({
-        entities,
-        defaultVisibility,
-        activeTheme: activeTheme ? $state.snapshot(activeTheme) : {},
-        publishId,
-        vaultTitle: this.deps.vault.activeVaultRecord?.name || "Untitled World",
-        publisherVersion: "1.0.0",
-        maps,
-        canvases,
+      const finalBundle = this.compileGuestBundle(publishId, {
         assetManifest,
         metadata: worldStore.metadata
           ? {

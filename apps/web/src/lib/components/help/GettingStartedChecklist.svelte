@@ -1,5 +1,9 @@
 <script lang="ts">
   import { onboardingFunnel } from "$lib/app/onboarding/onboarding-funnel";
+  import GuidedSetupGroup from "./GuidedSetupGroup.svelte";
+
+  /** The standalone /help window has no app shell, so no journey can run there. */
+  let { isStandalone = false }: { isStandalone?: boolean } = $props();
 
   /**
    * Gives the onboarding funnel (#1786) its first real consumer, and closes
@@ -52,6 +56,10 @@
   >
     Getting Started
   </h3>
+
+  {#if !isStandalone}
+    <GuidedSetupGroup />
+  {/if}
 
   {#if allDone}
     <p class="text-xs text-theme-text/80 flex items-center gap-2">

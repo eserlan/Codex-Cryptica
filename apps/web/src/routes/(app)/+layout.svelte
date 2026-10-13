@@ -41,6 +41,7 @@
   import QuickNoteScratchpad from "$lib/components/quicknote/QuickNoteScratchpad.svelte";
   import EntityExplorerWorkspace from "$lib/components/layout/EntityExplorerWorkspace.svelte";
   import NavigationShortcuts from "$lib/components/layout/NavigationShortcuts.svelte";
+  import OnboardingHost from "$lib/components/onboarding/OnboardingHost.svelte";
 
   // Logic & Hooks
   import {
@@ -55,10 +56,7 @@
   import { initFullscreenOnFirstInteraction } from "$lib/app/init/fullscreen-on-interaction";
   import { useGlobalShortcuts } from "$lib/hooks/useGlobalShortcuts.svelte";
   import { soloPlayGuard } from "$lib/stores/solo-session-instance";
-  import {
-    decideFirstRunAction,
-    hasUnseenMinorRelease,
-  } from "$lib/app/onboarding/onboarding-orchestrator";
+  import { shouldConsiderVaultThemePrompt as themePromptGate } from "$lib/app/onboarding/vault-theme-prompt-gate";
   import { initOnboardingFunnel } from "$lib/app/onboarding/onboarding-funnel-init";
   import { onboardingStore } from "$lib/stores/ui/onboarding.svelte";
   import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
@@ -379,22 +377,25 @@
     })();
   });
 
-  const shouldConsiderVaultThemePrompt = (
-    activeVaultId: string,
-    hasCompletedInitialGuide: boolean,
-  ) =>
-    browser &&
-    vault.isInitialized &&
-    isDocumentVisible &&
-    !!activeVaultId &&
-    !sessionModeStore.isDemoMode &&
-    !sessionModeStore.isGuestMode &&
-    !onboardingStore.isLandingPageVisible &&
-    onboardingStore.dismissedWorldPage &&
-    !onboardingStore.showChangelog &&
-    hasCompletedInitialGuide &&
-    !helpStore.activeTour &&
-    !modalUIStore.isAnyModalOpen;
+  // A user who answered the goal invitation never takes the tour, so the
+  // prompt asks whether they are onboarded at all (spec 175, FR-003a).
+  const shouldConsiderVaultThemePrompt = (activeVaultId: string) =>
+    themePromptGate({
+      isBrowser: browser,
+      isInitialized: vault.isInitialized,
+      isDocumentVisible,
+      activeVaultId,
+      isDemoMode: sessionModeStore.isDemoMode,
+      isGuestMode: sessionModeStore.isGuestMode,
+      isLandingVisible: onboardingStore.isLandingPageVisible,
+      dismissedWorldPage: onboardingStore.dismissedWorldPage,
+      showChangelog: onboardingStore.showChangelog,
+      hasSeenTour: helpStore.hasSeen("initial-onboarding"),
+      goalInvitationResolved: onboardingStore.goalInvitation !== null,
+      firstRunGuidanceActive: onboardingStore.firstRunGuidanceActive,
+      activeTour: !!helpStore.activeTour,
+      anyModalOpen: modalUIStore.isAnyModalOpen,
+    });
 
   $effect(() => {
     const activeVaultId = vault.activeVaultId;
@@ -498,70 +499,15 @@
     }
   });
 
-  // Unified first-run orchestrator (#1780). One decision function owns what a
-  // first-time user sees first, so the tour, guided empty state, and changelog
-  // never stack or compete. See onboarding-orchestrator.ts.
-  $effect(() => {
-    if (!browser) return;
-
-    const action = decideFirstRunAction({
-      isInitialized: vault.isInitialized,
-      isGuestMode: sessionModeStore.isGuestMode,
-      isDemoMode: sessionModeStore.isDemoMode,
-      isLandingVisible: onboardingStore.isLandingPageVisible,
-      vaultSwitcherOpen: modalUIStore.showVaultSwitcher,
-      hasDemoQueryParam: page.url.searchParams.has("demo"),
-      hasSeenTour: helpStore.hasSeen("initial-onboarding"),
-      entityCount: vault.allEntities.length,
-      activeTour: !!helpStore.activeTour,
-      anyModalOpen: modalUIStore.isAnyModalOpen || modalUIStore.showZenMode,
-      hasUnseenRelease: hasUnseenMinorRelease(
-        onboardingStore.lastSeenVersion,
-        releases.map((r) => r.version),
-      ),
-    });
-
-    switch (action.kind) {
-      case "tour":
-      case "guided-empty":
-        // Both start the short, task-focused tour. In the empty-vault case the
-        // graph's guided empty state teaches the "create your first entity"
-        // step, and we deliberately do NOT auto-load a demo (#1782).
-        helpStore.startTour("initial-onboarding");
-        break;
-      case "changelog": {
-        // Small delay so it never races an overlay that is about to open.
-        const timeout = setTimeout(() => {
-          if (
-            !helpStore.activeTour &&
-            !modalUIStore.showZenMode &&
-            !sessionModeStore.isDemoMode &&
-            !onboardingStore.showChangelog
-          ) {
-            onboardingStore.showChangelog = true;
-          }
-        }, 2000);
-        return () => clearTimeout(timeout);
-      }
-      case "none":
-      default:
-        break;
-    }
-  });
-
   // Theme discovery should happen after the user has some real time in the
   // vault, not immediately after creation or a single first edit.
   $effect(() => {
     const activeVaultId = vault.activeVaultId;
     const entityCount = vault.allEntities.length;
-    const hasCompletedInitialGuide = helpStore.hasSeen("initial-onboarding");
 
     if (
       !activeVaultId ||
-      !shouldConsiderVaultThemePrompt(
-        activeVaultId,
-        hasCompletedInitialGuide,
-      ) ||
+      !shouldConsiderVaultThemePrompt(activeVaultId) ||
       !vaultThemePromptStore.shouldAutoPrompt(activeVaultId, entityCount)
     ) {
       return;
@@ -571,10 +517,7 @@
       if (
         !hasTheme &&
         vault.activeVaultId === activeVaultId &&
-        shouldConsiderVaultThemePrompt(
-          activeVaultId,
-          helpStore.hasSeen("initial-onboarding"),
-        ) &&
+        shouldConsiderVaultThemePrompt(activeVaultId) &&
         vaultThemePromptStore.shouldAutoPrompt(
           activeVaultId,
           vault.allEntities.length,
@@ -727,6 +670,10 @@
     aria-hidden={isBackgroundInert || undefined}
   >
     <NotificationToast />
+
+    {#if !isPopup && !isZenPopout}
+      <OnboardingHost />
+    {/if}
 
     {#if !isPopup && !isMapFullscreen && !isZenPopout}
       <AppHeader bind:isMobileMenuOpen bind:headerEl />

@@ -6,10 +6,12 @@ import { howDoFantasyCitiesDefendAgainstFlyingCreaturesAndTeleportation } from "
 import { howDoIBalanceRpgCombatEncountersWithoutATpk } from "./how-do-i-balance-rpg-combat-encounters-without-a-tpk";
 import { howDoIBuildABelievableConstitutionalCrisisOrCoup } from "./how-do-i-build-a-believable-constitutional-crisis-or-coup";
 import { howDoIBuildABelievableEconomyForAFantasyWorld } from "./how-do-i-build-a-believable-economy-for-a-fantasy-world";
+import { howDoICombineMultipleEnemiesIntoOneSquadInAnRpg } from "./how-do-i-combine-multiple-enemies-into-one-squad-in-an-rpg";
 import { howDoICreateInterestingIslandsAndPortsForAPirateCampaign } from "./how-do-i-create-interesting-islands-and-ports-for-a-pirate-campaign";
 import { howDoIDecideWhatASettlementProducesImportsAndExports } from "./how-do-i-decide-what-a-settlement-produces-imports-and-exports";
 import { howDoIExpandASimpleRpgCampaignIdea } from "./how-do-i-expand-a-simple-rpg-campaign-idea";
 import { howDoIFindATabletopRpgGroupToPlayWith } from "./how-do-i-find-a-tabletop-rpg-group-to-play-with";
+import { howDoIGetMyFriendsInterestedInPlayingDnd } from "./how-do-i-get-my-friends-interested-in-playing-dnd";
 import { howDoIGetMyRpgPartyToWorkTogether } from "./how-do-i-get-my-rpg-party-to-work-together";
 import { howDoIGetPlayersToEngageWithMyCampaignWorld } from "./how-do-i-get-players-to-engage-with-my-campaign-world";
 import { howDoIGiveDifferentCivilisationsDistinctStrengthsAndWeaknesses } from "./how-do-i-give-different-civilisations-distinct-strengths-and-weaknesses";
@@ -122,6 +124,8 @@ import { howToCreateRumoursForAFantasyTown } from "./how-to-create-rumours-for-a
 import { howToWriteAnInWorldNewspaperForAnRpg } from "./how-to-write-an-in-world-newspaper-for-an-rpg";
 import { isMyRpgCampaignIdeaGood } from "./is-my-rpg-campaign-idea-good";
 import { pointCrawlVsHexCrawl } from "./point-crawl-vs-hex-crawl";
+import { whatAreTheBestClasslessFantasyRpgsWithSkillBasedProgression } from "./what-are-the-best-classless-fantasy-rpgs-with-skill-based-progression";
+import { whatAreTheProsAndConsOfBecomingADungeonMaster } from "./what-are-the-pros-and-cons-of-becoming-a-dungeon-master";
 import { whatCanIDoOnMyTurnInDndCombat } from "./what-can-i-do-on-my-turn-in-dnd-combat";
 import { whatCanPlayersActuallyBuyAndSellInAFantasySettlement } from "./what-can-players-actually-buy-and-sell-in-a-fantasy-settlement";
 import { whatDoINeedToBringToMyFirstDndGame } from "./what-do-i-need-to-bring-to-my-first-dnd-game";
@@ -150,6 +154,7 @@ import { whatTtrpgShouldIUseForAFantasyDungeonCrawl } from "./what-ttrpg-should-
 import { whatTtrpgsLetYouBuildAndUpgradeABase } from "./what-ttrpgs-let-you-build-and-upgrade-a-base";
 import { whereDoIStartIfIHaveNeverPlayedATabletopRpg } from "./where-do-i-start-if-i-have-never-played-a-tabletop-rpg";
 import { whichDiceDoIRollInDndAndWhen } from "./which-dice-do-i-roll-in-dnd-and-when";
+import { whichTabletopRpgsHaveSquadAndMassBattleRules } from "./which-tabletop-rpgs-have-squad-and-mass-battle-rules";
 import { xpLevelingVsMilestoneLeveling } from "./xp-leveling-vs-milestone-leveling";
 
 /**
@@ -167,10 +172,12 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     howDoIBalanceRpgCombatEncountersWithoutATpk,
     howDoIBuildABelievableConstitutionalCrisisOrCoup,
     howDoIBuildABelievableEconomyForAFantasyWorld,
+    howDoICombineMultipleEnemiesIntoOneSquadInAnRpg,
     howDoICreateInterestingIslandsAndPortsForAPirateCampaign,
     howDoIDecideWhatASettlementProducesImportsAndExports,
     howDoIExpandASimpleRpgCampaignIdea,
     howDoIFindATabletopRpgGroupToPlayWith,
+    howDoIGetMyFriendsInterestedInPlayingDnd,
     howDoIGetMyRpgPartyToWorkTogether,
     howDoIGetPlayersToEngageWithMyCampaignWorld,
     howDoIGiveDifferentCivilisationsDistinctStrengthsAndWeaknesses,
@@ -283,6 +290,8 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     howToWriteAnInWorldNewspaperForAnRpg,
     isMyRpgCampaignIdeaGood,
     pointCrawlVsHexCrawl,
+    whatAreTheBestClasslessFantasyRpgsWithSkillBasedProgression,
+    whatAreTheProsAndConsOfBecomingADungeonMaster,
     whatCanIDoOnMyTurnInDndCombat,
     whatCanPlayersActuallyBuyAndSellInAFantasySettlement,
     whatDoINeedToBringToMyFirstDndGame,
@@ -311,6 +320,7 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     whatTtrpgsLetYouBuildAndUpgradeABase,
     whereDoIStartIfIHaveNeverPlayedATabletopRpg,
     whichDiceDoIRollInDndAndWhen,
+    whichTabletopRpgsHaveSquadAndMassBattleRules,
     xpLevelingVsMilestoneLeveling,
   ]
     .map((answer) => AnswerConfigSchema.parse(answer))

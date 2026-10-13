@@ -181,6 +181,8 @@ export const howDoIRunASuccessfulSessionZero: AnswerConfigInput = {
     "what-do-i-need-to-bring-to-my-first-dnd-game",
     "what-should-a-new-dnd-player-know-before-their-first-game",
     "how-do-i-read-a-dnd-character-sheet-as-a-beginner",
+    "what-are-the-pros-and-cons-of-becoming-a-dungeon-master",
+    "how-do-i-get-my-friends-interested-in-playing-dnd",
   ],
   discovery: {
     id: "answer-session-zero",

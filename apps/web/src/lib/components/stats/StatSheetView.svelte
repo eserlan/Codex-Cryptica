@@ -476,9 +476,11 @@
         {:else if field.type === "item-table"}
           <ItemTableNode
             {field}
+            catalogue={readOnly && field.stockLedger === true}
             context={{
               fields,
               readOnly,
+              entityId: entity.id,
               mode: "view",
               sectionKeys: new Map(),
               isSectionCollapsed: () => false,

@@ -59,12 +59,42 @@ One page owns one genuine user intent (Constitution XIII). The substantive answe
    - **At least one actionable checklist block** (`kind: "checklist"`): Specific, practical prep items the reader can take straight to their table.
 6. **Honest Product Connection**:
    - `codexConnection` belongs at the end of the article, after the substantive answer is already complete. It must explain how Codex tools/graphs assist the specific workflow, not read as a mid-article sales pitch.
+   - **Never link to a competing product.** Answers are our own reference content, so they do not send readers to a competitor. Do not link to virtual tabletops or campaign and world managers (Foundry VTT, Roll20, Fantasy Grounds, Owlbear Rodeo, World Anvil, Kanka, LegendKeeper, Obsidian Portal), in prose, tables, `systemsThatSupportThis` or any other field. If a reader's question names one, say in plain text what they need to know (for example that an official system exists) and link to the publisher or rules source instead. Do not build a page around a competitor's compatibility, package versions or listings, and do not target a competitor's name in `discovery` intents. The `competitor-link` check enforces the links; the list lives in `COMPETITOR_DOMAINS` in `scripts/check-answer-editorial.ts`.
 7. **Clean List Item Titles (No Redundant Numbering)**:
    - When items in a `list` block use bold lead-in terms (`term: "..."`), do not set `ordered: true` and do not prefix the term with digits (e.g. use `term: "Review hooks"` rather than `term: "1. Review hooks"`). The template renders clean terms without duplicate numbers.
 8. **Optional `systemsThatSupportThis` (#2769)**:
    - Only add an entry when a named RPG system has an actual rule or procedure for this topic (a named mechanic, not a matching genre or vibe). "Blades in the Dark" belongs on a heist answer because of its flashback/clock rules; a generic fantasy heartbreaker that merely permits heists does not.
    - Each entry needs `system`, one-sentence `rationale` naming the specific mechanic, and an external `href` to the system's own site or its publisher.
    - Roughly 2 to 4 entries where genuinely applicable. Omit the field entirely rather than padding it with a loosely-related system.
+
+---
+
+## Automated Editorial Checks (#4012)
+
+The rules a machine can decide without judgement are enforced by `scripts/check-answer-editorial.ts`. It runs on every changed Answer page inside `bun run lint:changed`, so CI's changed-file Lint step fails with the file, line, field path (e.g. `sections[6].items[1].text`) and an excerpt, plus an inline PR annotation.
+
+| Rule                | What fails                                                                                                                                                                                                         |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `prohibited-dash`   | An em dash (U+2014) or en dash (U+2013) in any reader-facing field: question, `shortAnswer`, every section field, `codexConnection`, CTAs, system rationales, link titles/descriptions, SEO title/description/alt. |
+| `emoji`             | An emoji-presentation character (🎲, ✨, ❤️). Plain notation symbols such as ★, ✓, →, © and ™ are not flagged.                                                                                                     |
+| `blank-text`        | A whitespace-only question, `shortAnswer`, section heading, `codexConnection` heading/link text, or SEO title/description/alt.                                                                                     |
+| `image-alt-missing` | `seo.image` is set but `seo.imageAlt` is missing or blank.                                                                                                                                                         |
+| `invalid-date`      | `publishedAt` is not a real calendar date (e.g. `2026-02-30`).                                                                                                                                                     |
+| `future-date`       | `publishedAt` is after the check date. See the date policy below.                                                                                                                                                  |
+| `competitor-link`   | A link to a product that competes with Codex Cryptica (virtual tabletops and campaign managers such as Foundry VTT, Roll20 and World Anvil), in any field including `href`. See the competitor links rule above.   |
+
+Not checked: URLs (`href`, `seo.image`, `seo.canonical`), slugs, enums, labels, `relatedAnswers` and the `discovery` block, which are metadata rather than copy. Prose economy, argument quality and whether an example is realistic stay with editorial review; do not add regex checks for them.
+
+**Publication date policy.** Answers have no scheduled publishing: a page is live as soon as it deploys, whatever its `publishedAt`. Set `publishedAt` to the date the page will actually ship. A date up to 7 days ahead of the check date only warns (for example, an Answer merged on 2026-10-12 for the next day's release with `publishedAt: "2026-10-13"`). More than 7 days ahead fails. Pass `--as-of YYYY-MM-DD` to check against a planned release date instead of today.
+
+**Rules owned elsewhere** (not repeated by this checker): British English, SEO length limits, the R2 image requirement and live-route links are in `apps/web/src/lib/content/answers/registry.test.ts`; related-answer links and reciprocity in `bun run check:answer-mesh`; intent ownership in `bun scripts/discovery-audit.mjs`.
+
+**Legacy debt.** Violations that predate the checker are counted per answer and rule in `scripts/answer-editorial-baseline.json`. A changed file passes only while its count for each rule stays at or below the baseline; any new violation fails the whole rule for that file. The baseline only goes down: when a changed file has fewer violations than its baseline allows, the check fails until you run `bun scripts/check-answer-editorial.ts --update-baseline` in the same change. Never raise it to let new copy through.
+
+```sh
+bun scripts/check-answer-editorial.ts --files apps/web/src/lib/content/answers/pages/<slug>.ts
+bun run check:answer-editorial   # full audit, lists baselined legacy violations too
+```
 
 ---
 
@@ -299,16 +329,27 @@ Run all targeted tests and static analyses before committing:
    bun test apps/web/src/lib/content/answers/ scripts/check-answer-mesh.test.ts
    ```
    _Verifies schema validation, British English spelling check, slug uniqueness, link liveness, structured data, and category coverage._
-3. **Discovery Intent Audit**:
+3. **Answer Editorial Check**:
+   ```sh
+   bun scripts/check-answer-editorial.ts --files apps/web/src/lib/content/answers/pages/<slug>.ts
+   ```
+   _Fails on em/en dashes, emoji, blank headings, missing image alt text and bad `publishedAt` dates. Also runs inside `bun run lint:changed`. See Automated Editorial Checks above._
+4. **Discovery Intent Audit**:
    ```sh
    bun scripts/discovery-audit.mjs
    ```
    _Ensures 0 overlap errors and verifies canonical registration._
-4. **Type & Lint Check**:
+5. **Type & Lint Check**:
    ```sh
    bun run lint:types
    bun run lint:affected
    ```
+6. **Rendered Deployment Smoke Check (#4013)**:
+   Once a Cloudflare Pages preview or staging build is available, verify the exact rendered artifact:
+   ```sh
+   bun run verify:rendered-answer <slug> [--base-url <preview-url>] [--mobile]
+   ```
+   _Asserts HTTP 200, matching H1, non-empty excerpt, canonical and SEO metadata, live R2 image assets (HEAD 200), valid internal links, and no horizontal overflow on mobile viewports (375px)._
 
 ---
 

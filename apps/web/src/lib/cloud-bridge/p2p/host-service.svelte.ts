@@ -308,11 +308,19 @@ export class P2PHostService {
     this.transport.broadcast(payload);
   }
 
+  /** Lets a published catalogue name a stock line after the Item it links to. */
+  private catalogueOptions() {
+    return {
+      resolveName: (entityId: string): string | undefined =>
+        this.vault.entities?.[entityId]?.title,
+    };
+  }
+
   private async broadcastEntityUpdate(entity: any) {
     const { sanitizeEntityForGuestTransport } = await import("./p2p-helpers");
     this.transport.broadcast({
       type: "ENTITY_UPDATE",
-      payload: sanitizeEntityForGuestTransport(entity),
+      payload: sanitizeEntityForGuestTransport(entity, this.catalogueOptions()),
     });
   }
 
@@ -324,7 +332,10 @@ export class P2PHostService {
     const { sanitizeEntityForGuestTransport } = await import("./p2p-helpers");
     const sanitized: Record<string, any> = {};
     for (const [id, entity] of Object.entries(updates)) {
-      sanitized[id] = sanitizeEntityForGuestTransport(entity);
+      sanitized[id] = sanitizeEntityForGuestTransport(
+        entity,
+        this.catalogueOptions(),
+      );
     }
     this.transport.broadcast({
       type: "ENTITY_BATCH_UPDATE",

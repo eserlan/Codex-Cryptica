@@ -60,6 +60,7 @@ export function createFullEncounterSessionFixture(
     gridSize: 70,
     gridType: "hex-flat",
     showHexCoordinates: true,
+    hexLabelConfig: { style: "numeric" },
     gridUnit: "m",
     gridDistance: 2,
     ...overrides,

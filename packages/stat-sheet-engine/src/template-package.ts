@@ -167,6 +167,7 @@ export function projectTemplatePackage(
         step,
         columns,
         linkVaultItems,
+        stockLedger,
         modifierSource,
       } = field;
       return {
@@ -189,6 +190,7 @@ export function projectTemplatePackage(
             }
           : {}),
         ...(linkVaultItems !== undefined ? { linkVaultItems } : {}),
+        ...(stockLedger !== undefined ? { stockLedger } : {}),
         ...(modifierSource !== undefined && modifierSource !== ""
           ? { modifierSource }
           : {}),

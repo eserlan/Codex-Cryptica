@@ -1,3 +1,4 @@
+import { SHOP_MERCHANT_TEMPLATE } from "@codex/stat-sheet-engine";
 import {
   DEFAULT_ITEM_TABLE_COLUMNS,
   type StatSheetTemplate,
@@ -27,6 +28,7 @@ const DND5E_LEGENDARY_ACTION_TABLE_COLUMNS: NonNullable<
 ];
 
 export const BUILT_IN_STAT_SHEET_TEMPLATES: StatSheetTemplate[] = [
+  SHOP_MERCHANT_TEMPLATE,
   {
     id: "builtin-dnd-character",
     name: "D&D Character",

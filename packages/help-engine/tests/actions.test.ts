@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
   ACTION_TYPES,
+  AVAILABLE_ACTION_IDS,
+  CONTROL_CATALOGUE,
+  SHELL_CONTROL_IDS,
   buildActionCandidates,
   validateAction,
   type ActionRef,
@@ -330,5 +333,76 @@ describe("buildActionCandidates", () => {
     });
     const ids = buildActionCandidates(refs, graphScreen, deps).map((c) => c.id);
     expect(ids).not.toContain("connections.add-guide");
+  });
+});
+
+describe("shell controls for onboarding journeys (spec 175)", () => {
+  const graphScreen = sanitizeHelpContext({
+    routeTemplate: "/(app)",
+    area: "graph",
+    surface: "vault",
+    flags: [],
+    availableActions: [],
+  });
+
+  it("refuses a shell highlight unless the caller vouches for it in that call", () => {
+    for (const target of SHELL_CONTROL_IDS) {
+      const action = { type: "highlight", target, label: "Show me" } as const;
+      expect(validateAction(action, graphScreen, deps)).toBeNull();
+      expect(
+        validateAction(action, graphScreen, {
+          ...deps,
+          extraAvailable: SHELL_CONTROL_IDS,
+        }),
+      ).toEqual(action);
+    }
+  });
+
+  it("never writes the extra ids back into the screen description", () => {
+    const before = [...graphScreen.availableActions];
+    validateAction(
+      { type: "highlight", target: "create-entry", label: "Create" },
+      graphScreen,
+      { ...deps, extraAvailable: SHELL_CONTROL_IDS },
+    );
+    expect(graphScreen.availableActions).toEqual(before);
+  });
+
+  it("accepts a shell highlight on any screen area, with every flag off", () => {
+    for (const area of ["graph", "entity-detail", "map", "canvas", "other"]) {
+      const ctx = sanitizeHelpContext({ area, surface: "vault", flags: [] });
+      expect(
+        validateAction(
+          { type: "highlight", target: "open-search", label: "Search" },
+          ctx,
+          { ...deps, extraAvailable: SHELL_CONTROL_IDS },
+        ),
+      ).not.toBeNull();
+    }
+    for (const id of SHELL_CONTROL_IDS) {
+      expect(CONTROL_CATALOGUE[id].area).toBe("shell");
+      expect(CONTROL_CATALOGUE[id].requiresFlag).toBeUndefined();
+    }
+  });
+
+  it("keeps existing actions unchanged without extraAvailable", () => {
+    expect(validateAction(guide, connectionsScreen, deps)).toEqual(guide);
+    expect(
+      validateAction(guide, connectionsScreen, {
+        ...deps,
+        extraAvailable: SHELL_CONTROL_IDS,
+      }),
+    ).toEqual(guide);
+  });
+
+  it("never lets a shell id reach the Worker in a screen description", () => {
+    const ctx = sanitizeHelpContext({
+      area: "graph",
+      availableActions: [...SHELL_CONTROL_IDS, "status-tab"],
+    });
+    for (const id of SHELL_CONTROL_IDS) {
+      expect(ctx.availableActions).not.toContain(id);
+      expect(AVAILABLE_ACTION_IDS).not.toContain(id);
+    }
   });
 });
