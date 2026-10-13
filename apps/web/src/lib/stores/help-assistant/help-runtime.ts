@@ -15,7 +15,7 @@ import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
 import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
 import { vault } from "$lib/stores/vault.svelte";
 import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
-import { systemClock, type Clock } from "$lib/utils/runtime-deps";
+import { waitFor } from "./help-wait-for";
 import {
   CIF_POPOUT_WINDOW,
   createCifChannel,
@@ -79,22 +79,6 @@ const DESTINATIONS: Record<DestinationId, string> = {
   import: `${base}/import`,
   timeline: `${base}/timeline`,
 };
-
-function waitFor(
-  check: () => boolean,
-  ms: number,
-  clock: Clock = systemClock,
-): Promise<boolean> {
-  return new Promise((resolve) => {
-    const deadline = clock.now() + ms;
-    const tick = () => {
-      if (check()) return resolve(true);
-      if (clock.now() >= deadline) return resolve(false);
-      requestAnimationFrame(tick);
-    };
-    tick();
-  });
-}
 
 export const helpActionRunner = new HelpActionRunner({
   surfaces: helpSurfaces,

@@ -27,8 +27,12 @@ export interface HelpActionRunnerDeps {
   openSettings: (tab: SettingsTab) => void;
   /** Opens the journal tab only; starting a journal is a separate user action. */
   openJournal: () => void;
-  /** Resolves true once `check` passes, or false after `ms`. */
-  waitFor: (check: () => boolean, ms: number) => Promise<boolean>;
+  /** Resolves true once `check` passes, or false after `ms` or cancellation. */
+  waitFor: (
+    check: () => boolean,
+    ms: number,
+    signal?: AbortSignal,
+  ) => Promise<boolean>;
 }
 
 const TARGET_WAIT_MS = 1000;
@@ -103,11 +107,15 @@ export class HelpActionRunner {
       case "highlight": {
         // The control may only mount after the previous step (a tab opening).
         let shown = false;
-        await this.deps.waitFor(() => {
-          if (signal?.aborted) return false;
-          shown = this.deps.highlight.show(step.target, step.label);
-          return shown;
-        }, TARGET_WAIT_MS);
+        await this.deps.waitFor(
+          () => {
+            if (signal?.aborted) return false;
+            shown = this.deps.highlight.show(step.target, step.label);
+            return shown;
+          },
+          TARGET_WAIT_MS,
+          signal,
+        );
         return shown;
       }
     }
