@@ -4,6 +4,7 @@
   import SeoHead from "$lib/components/seo/SeoHead.svelte";
   import { buildAbsoluteUrl } from "$lib/seo/site";
   import { answerPath } from "$lib/content/answers/registry";
+  import { parseInlineLinks } from "$lib/content/answers/inline-links";
   import {
     buildAnswerFaqJsonLd,
     buildAnswerBreadcrumbJsonLd,
@@ -63,6 +64,22 @@
     });
   });
 </script>
+
+<!-- Authored copy may cite sources as [label](url); render those as links
+     rather than printing the markdown. -->
+{#snippet inline(text: string)}
+  {#each parseInlineLinks(text) as segment, segmentIndex (segmentIndex)}
+    {#if segment.kind === "link"}
+      <a
+        href={segment.external ? segment.href : `${cleanBase}${segment.href}`}
+        target={segment.external ? "_blank" : undefined}
+        rel={segment.external ? "noopener noreferrer" : undefined}
+        class="text-theme-primary underline decoration-theme-primary/40 underline-offset-2 transition-colors hover:decoration-theme-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-accent"
+        >{segment.text}</a
+      >
+    {:else}{segment.text}{/if}
+  {/each}
+{/snippet}
 
 <SeoHead
   title={answer.seo.title}
@@ -166,7 +183,7 @@
           {/if}
           {#each section.paragraphs as paragraph}
             <p class="mb-4 leading-relaxed text-theme-muted last:mb-0">
-              {paragraph}
+              {@render inline(paragraph)}
             </p>
           {/each}
           {#if section.cta}
@@ -209,7 +226,9 @@
             </h2>
           {/if}
           {#if section.intro}
-            <p class="mb-4 leading-relaxed text-theme-muted">{section.intro}</p>
+            <p class="mb-4 leading-relaxed text-theme-muted">
+              {@render inline(section.intro)}
+            </p>
           {/if}
           <svelte:element
             this={section.ordered ? "ol" : "ul"}
@@ -228,13 +247,16 @@
                     >{item.term}</strong
                   >
                 {/if}
-                <span class="leading-relaxed text-theme-muted">{item.text}</span
+                <span class="leading-relaxed text-theme-muted"
+                  >{@render inline(item.text)}</span
                 >
               </li>
             {/each}
           </svelte:element>
           {#if section.outro}
-            <p class="mt-4 leading-relaxed text-theme-muted">{section.outro}</p>
+            <p class="mt-4 leading-relaxed text-theme-muted">
+              {@render inline(section.outro)}
+            </p>
           {/if}
         {:else if section.kind === "example"}
           <div
@@ -250,7 +272,9 @@
               {section.heading}
             </h2>
             {#each section.paragraphs as paragraph}
-              <p class="mb-4 leading-relaxed text-theme-muted">{paragraph}</p>
+              <p class="mb-4 leading-relaxed text-theme-muted">
+                {@render inline(paragraph)}
+              </p>
             {/each}
             {#if section.items}
               <dl class="flex flex-col gap-4">
@@ -262,7 +286,7 @@
                       </dt>
                     {/if}
                     <dd class="leading-relaxed text-theme-muted">
-                      {item.text}
+                      {@render inline(item.text)}
                     </dd>
                   </div>
                 {/each}
@@ -277,36 +301,67 @@
               {section.heading}
             </h2>
           {/if}
-          <div class="overflow-x-auto border border-theme-border">
+          <!-- Wide tables break out of the reading column on large screens.
+               Below md every row stacks into a labelled block, so phones never
+               scroll sideways; the explicit roles keep table semantics when
+               the cells are displayed as blocks. -->
+          <div
+            class="md:overflow-x-auto md:border md:border-theme-border {section
+              .headers.length > 2
+              ? 'lg:relative lg:left-1/2 lg:w-[min(72rem,calc(100vw-4rem))] lg:-translate-x-1/2'
+              : ''}"
+            data-testid="answer-table"
+          >
+            <!-- svelte-ignore a11y_no_redundant_roles -->
             <table
-              class="w-full min-w-[40rem] border-collapse text-left text-sm"
+              role="table"
+              class="w-full border-collapse text-left text-base max-md:block md:text-sm"
             >
-              <thead class="bg-theme-surface text-theme-text">
-                <tr>
+              <!-- svelte-ignore a11y_no_redundant_roles -->
+              <thead
+                role="rowgroup"
+                class="bg-theme-surface text-theme-text max-md:sr-only"
+              >
+                <!-- svelte-ignore a11y_no_redundant_roles -->
+                <tr role="row">
                   {#each section.headers as heading}
                     <th
+                      role="columnheader"
                       scope="col"
-                      class="border-b border-theme-border px-3 py-2 font-header font-bold"
+                      class="border-b border-theme-border px-3 py-2 align-bottom font-header font-bold"
                     >
                       {heading}
                     </th>
                   {/each}
                 </tr>
               </thead>
-              <tbody>
+              <!-- svelte-ignore a11y_no_redundant_roles -->
+              <tbody
+                role="rowgroup"
+                class="max-md:flex max-md:flex-col max-md:gap-4"
+              >
                 {#each section.rows as row}
-                  <tr class="border-b border-theme-border last:border-b-0">
+                  <!-- svelte-ignore a11y_no_redundant_roles -->
+                  <tr
+                    role="row"
+                    class="max-md:block max-md:border max-md:border-theme-border max-md:bg-theme-surface md:border-b md:border-theme-border md:last:border-b-0"
+                  >
                     {#each row as cell, cellIndex}
                       {#if cellIndex === 0}
                         <th
+                          role="rowheader"
                           scope="row"
-                          class="px-3 py-2 align-top font-header font-bold text-theme-text"
+                          class="px-3 py-2 align-top font-header font-bold text-theme-text max-md:block max-md:border-b max-md:border-theme-border max-md:px-4 max-md:py-3 md:min-w-[8rem]"
                         >
-                          {cell}
+                          {@render inline(cell)}
                         </th>
                       {:else}
-                        <td class="px-3 py-2 align-top text-theme-muted">
-                          {cell}
+                        <td
+                          role="cell"
+                          data-label={section.headers[cellIndex]}
+                          class="px-3 py-2 align-top text-theme-muted max-md:block max-md:px-4 max-md:before:mb-1 max-md:before:block max-md:before:font-mono max-md:before:text-xs max-md:before:uppercase max-md:before:tracking-[0.14em] max-md:before:text-theme-text max-md:before:content-[attr(data-label)] md:min-w-[10rem]"
+                        >
+                          {@render inline(cell)}
                         </td>
                       {/if}
                     {/each}
@@ -322,7 +377,9 @@
             {section.heading}
           </h2>
           {#if section.intro}
-            <p class="mb-4 leading-relaxed text-theme-muted">{section.intro}</p>
+            <p class="mb-4 leading-relaxed text-theme-muted">
+              {@render inline(section.intro)}
+            </p>
           {/if}
           <ul class="flex list-none flex-col gap-2">
             {#each section.items as item}
@@ -333,7 +390,7 @@
                   class="icon-[lucide--check] mt-1 h-4 w-4 shrink-0 text-theme-primary"
                   aria-hidden="true"
                 ></span>
-                <span>{item}</span>
+                <span>{@render inline(item)}</span>
               </li>
             {/each}
           </ul>
