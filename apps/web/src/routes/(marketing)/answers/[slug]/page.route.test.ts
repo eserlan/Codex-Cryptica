@@ -83,6 +83,25 @@ describe("answer page tables", () => {
     expect(narrow.className).not.toContain("lg:-translate-x-1/2");
   });
 
+  it("keeps four-plus column tables stacked until large screens", () => {
+    renderAnswer([
+      table,
+      {
+        kind: "table",
+        headers: ["System", "Scale", "Upkeep", "Upgrades"],
+        rows: [["Ironsworn", "Settlement", "Low", "Assets"]],
+      },
+    ]);
+
+    const [threeColumns, fourColumns] = screen.getAllByTestId("answer-table");
+    const threeCell = within(threeColumns).getAllByRole("cell")[0];
+    const fourCell = within(fourColumns).getAllByRole("cell")[0];
+    expect(threeCell.className).toContain("max-md:block");
+    expect(threeCell.className).not.toContain("max-lg:block");
+    expect(fourCell.className).toContain("max-lg:block");
+    expect(fourCell.className).not.toContain("max-md:block");
+  });
+
   it("keeps unsafe link syntax as plain text in list items", () => {
     renderAnswer([
       {

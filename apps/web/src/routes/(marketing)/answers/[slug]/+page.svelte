@@ -49,6 +49,35 @@
     comparison: "Comparison",
   } as const;
 
+  // Answer tables stack into labelled blocks on narrow screens. Two- and
+  // three-column tables fit as a table from md; four or more columns need
+  // lg before every column gets a readable width. Both sets are spelled out
+  // in full so Tailwind can see every class.
+  const TABLE_STACKED_BELOW_MD = {
+    wrapper: "md:overflow-x-auto md:border md:border-theme-border",
+    table: "w-full border-collapse text-left text-base max-md:block md:text-sm",
+    thead: "bg-theme-surface text-theme-text max-md:sr-only",
+    tbody: "max-md:flex max-md:flex-col max-md:gap-4",
+    row: "max-md:block max-md:border max-md:border-theme-border max-md:bg-theme-surface md:border-b md:border-theme-border md:last:border-b-0",
+    rowHeader:
+      "px-3 py-2 align-top font-header font-bold text-theme-text max-md:block max-md:border-b max-md:border-theme-border max-md:px-4 max-md:py-3 md:min-w-[8rem]",
+    cell: "px-3 py-2 align-top text-theme-muted max-md:block max-md:px-4 max-md:before:mb-1 max-md:before:block max-md:before:font-mono max-md:before:text-xs max-md:before:uppercase max-md:before:tracking-[0.14em] max-md:before:text-theme-text max-md:before:content-[attr(data-label)] md:min-w-[10rem]",
+  };
+  const TABLE_STACKED_BELOW_LG = {
+    wrapper: "lg:overflow-x-auto lg:border lg:border-theme-border",
+    table: "w-full border-collapse text-left text-base max-lg:block lg:text-sm",
+    thead: "bg-theme-surface text-theme-text max-lg:sr-only",
+    tbody: "max-lg:flex max-lg:flex-col max-lg:gap-4",
+    row: "max-lg:block max-lg:border max-lg:border-theme-border max-lg:bg-theme-surface lg:border-b lg:border-theme-border lg:last:border-b-0",
+    rowHeader:
+      "px-3 py-2 align-top font-header font-bold text-theme-text max-lg:block max-lg:border-b max-lg:border-theme-border max-lg:px-4 max-lg:py-3 lg:min-w-[8rem]",
+    cell: "px-3 py-2 align-top text-theme-muted max-lg:block max-lg:px-4 max-lg:before:mb-1 max-lg:before:block max-lg:before:font-mono max-lg:before:text-xs max-lg:before:uppercase max-lg:before:tracking-[0.14em] max-lg:before:text-theme-text max-lg:before:content-[attr(data-label)] lg:min-w-[10rem]",
+  };
+
+  function tableClasses(columnCount: number) {
+    return columnCount > 3 ? TABLE_STACKED_BELOW_LG : TABLE_STACKED_BELOW_MD;
+  }
+
   // See discovery-tracking.ts: this route reuses one component instance
   // across /answers/a -> /answers/b navigations, so the guard (not just
   // onMount) is what keeps discovery_page_viewed to one fire per slug.
@@ -305,23 +334,17 @@
                Below md every row stacks into a labelled block, so phones never
                scroll sideways; the explicit roles keep table semantics when
                the cells are displayed as blocks. -->
+          {@const tc = tableClasses(section.headers.length)}
           <div
-            class="md:overflow-x-auto md:border md:border-theme-border {section
-              .headers.length > 2
+            class="{tc.wrapper} {section.headers.length > 2
               ? 'lg:relative lg:left-1/2 lg:w-[min(72rem,calc(100vw-4rem))] lg:-translate-x-1/2'
               : ''}"
             data-testid="answer-table"
           >
             <!-- svelte-ignore a11y_no_redundant_roles -->
-            <table
-              role="table"
-              class="w-full border-collapse text-left text-base max-md:block md:text-sm"
-            >
+            <table role="table" class={tc.table}>
               <!-- svelte-ignore a11y_no_redundant_roles -->
-              <thead
-                role="rowgroup"
-                class="bg-theme-surface text-theme-text max-md:sr-only"
-              >
+              <thead role="rowgroup" class={tc.thead}>
                 <!-- svelte-ignore a11y_no_redundant_roles -->
                 <tr role="row">
                   {#each section.headers as heading}
@@ -336,30 +359,20 @@
                 </tr>
               </thead>
               <!-- svelte-ignore a11y_no_redundant_roles -->
-              <tbody
-                role="rowgroup"
-                class="max-md:flex max-md:flex-col max-md:gap-4"
-              >
+              <tbody role="rowgroup" class={tc.tbody}>
                 {#each section.rows as row}
                   <!-- svelte-ignore a11y_no_redundant_roles -->
-                  <tr
-                    role="row"
-                    class="max-md:block max-md:border max-md:border-theme-border max-md:bg-theme-surface md:border-b md:border-theme-border md:last:border-b-0"
-                  >
+                  <tr role="row" class={tc.row}>
                     {#each row as cell, cellIndex}
                       {#if cellIndex === 0}
-                        <th
-                          role="rowheader"
-                          scope="row"
-                          class="px-3 py-2 align-top font-header font-bold text-theme-text max-md:block max-md:border-b max-md:border-theme-border max-md:px-4 max-md:py-3 md:min-w-[8rem]"
-                        >
+                        <th role="rowheader" scope="row" class={tc.rowHeader}>
                           {@render inline(cell)}
                         </th>
                       {:else}
                         <td
                           role="cell"
                           data-label={section.headers[cellIndex]}
-                          class="px-3 py-2 align-top text-theme-muted max-md:block max-md:px-4 max-md:before:mb-1 max-md:before:block max-md:before:font-mono max-md:before:text-xs max-md:before:uppercase max-md:before:tracking-[0.14em] max-md:before:text-theme-text max-md:before:content-[attr(data-label)] md:min-w-[10rem]"
+                          class={tc.cell}
                         >
                           {@render inline(cell)}
                         </td>
