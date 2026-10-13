@@ -272,13 +272,14 @@ function checkImageAlt({ slug, seo }: AnswerConfigInput): EditorialFinding[] {
   ];
 }
 
-const URL_IN_TEXT = /https?:\/\/[^\s)"'<>\]]+/gi;
+// Lookahead so a URL nested inside another one (a redirect) is found too.
+const URL_IN_TEXT = /(?=(https?:\/\/[^\s)"'<>\]]+))/gi;
 
 /** The competitor a link points at, or undefined for any other host. */
 export function competitorOf(url: string): string | undefined {
   let host: string;
   try {
-    host = new URL(url).hostname.toLowerCase();
+    host = new URL(url).hostname.toLowerCase().replace(/\.$/, "");
   } catch {
     return undefined;
   }
@@ -290,7 +291,7 @@ export function competitorOf(url: string): string | undefined {
 function checkCompetitorLinks(answer: AnswerConfigInput): EditorialFinding[] {
   return collectAllStrings(answer).flatMap(({ field, value }) =>
     Array.from(value.matchAll(URL_IN_TEXT)).flatMap((match) => {
-      const competitor = competitorOf(match[0]);
+      const competitor = competitorOf(match[1]);
       if (!competitor) return [];
       return [
         {
@@ -299,7 +300,7 @@ function checkCompetitorLinks(answer: AnswerConfigInput): EditorialFinding[] {
           slug: answer.slug,
           field,
           message: `Do not link to ${competitor}, a competing product. Name it in the text if the reader needs to know, and link to the publisher or rules source instead.`,
-          excerpt: excerptAround(value, match.index, match[0].length),
+          excerpt: excerptAround(value, match.index, match[1].length),
         },
       ];
     }),

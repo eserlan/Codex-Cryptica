@@ -443,6 +443,16 @@ describe("competitor links", () => {
     expect(competitorOf("not a url")).toBeUndefined();
   });
 
+  test("catches a trailing-dot host and a competitor nested in another URL", () => {
+    expect(competitorOf("https://foundryvtt.com./x")).toBe("foundryvtt.com");
+    const findings = competitorFindings(
+      withProse(
+        "[x](https://example.org/?u=https://foundryvtt.com/packages/y)",
+      ),
+    );
+    expect(findings).toHaveLength(1);
+  });
+
   test("allows naming a competitor and linking publishers or rules sources", () => {
     expect(
       competitorFindings(

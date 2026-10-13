@@ -50,7 +50,7 @@ export const whatAreTheBestClasslessFantasyRpgsWithSkillBasedProgression: Answer
             "Dragonbane",
             "No character classes or levels. Professions frame starting characters; marked skills and heroic abilities shape later choices. Check improvement frequency, skill limits, and later options before projecting a multi-year campaign.",
             "At 0 HP, a character falls and can only try to rally. On each later turn, they make a CON death roll: three successes restore d6 HP; three failures kill. Another character can rally them or use Healing, and magic can save them. If combat ends first, keep counting rounds until the rolls are complete. Further damage at 0 HP counts as a failed death roll; one attack that would reduce HP to its full starting value below zero kills outright. Optional pushing rerolls a failed skill or attribute roll but gives a condition; it is not death protection. See the [publisher Quickstart](https://freeleaguepublishing.com/shop/dragonbane/quickstart-guide/).",
-            "Published by Free League; see the [publisher page](https://freeleaguepublishing.com/games/dragonbane/) and the Quickstart guide linked in the previous column.",
+            "Published by Free League; see the [publisher page](https://freeleaguepublishing.com/games/dragonbane/) and its [Quickstart guide](https://freeleaguepublishing.com/shop/dragonbane/quickstart-guide/).",
           ],
           [
             "Against the Darkmaster",
