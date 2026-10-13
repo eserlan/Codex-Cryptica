@@ -73,33 +73,56 @@ export function projectRectToViewport(
   };
 }
 
-function isPointInTokenHex(
-  token: Token,
-  point: Point,
+function getTokenHexOrientation(
+  baseShape: Token["baseShape"],
   bounds: { minX: number; maxX: number; minY: number; maxY: number },
   gridType?: string,
-): boolean {
-  const orientation: HexOrientation =
-    token.baseShape === "hex-flat" || gridType === "hex-flat"
-      ? "flat"
-      : token.baseShape === "hex-pointy" || gridType === "hex-pointy"
-        ? "pointy"
-        : bounds.maxX - bounds.minX > bounds.maxY - bounds.minY
-          ? "flat"
-          : "pointy";
-  const width = bounds.maxX - bounds.minX;
-  const height = bounds.maxY - bounds.minY;
-  const radius = orientation === "flat" ? width / 2 : height / 2;
+): HexOrientation {
+  if (baseShape === "hex-flat" || gridType === "hex-flat") return "flat";
+  if (baseShape === "hex-pointy" || gridType === "hex-pointy") {
+    return "pointy";
+  }
+  return bounds.maxX - bounds.minX > bounds.maxY - bounds.minY
+    ? "flat"
+    : "pointy";
+}
+
+function inverseRotatePointInBounds(
+  point: Point,
+  bounds: { minX: number; maxX: number; minY: number; maxY: number },
+  rotation: number,
+): Point {
   const centerX = (bounds.minX + bounds.maxX) / 2;
   const centerY = (bounds.minY + bounds.maxY) / 2;
   const dx = point.x - centerX;
   const dy = point.y - centerY;
   // fallow-ignore-next-line code-duplication
-  const radians = ((token.rotation ?? 0) * Math.PI) / 180;
-  const localX = dx * Math.cos(radians) + dy * Math.sin(radians);
-  const localY = -dx * Math.sin(radians) + dy * Math.cos(radians);
+  const radians = (rotation * Math.PI) / 180;
+  return {
+    x: dx * Math.cos(radians) + dy * Math.sin(radians),
+    y: -dx * Math.sin(radians) + dy * Math.cos(radians),
+  };
+}
 
-  return isPointInHex({ x: localX, y: localY }, radius, orientation);
+function isPointInTokenHex(
+  point: Point,
+  baseShape: Token["baseShape"],
+  bounds: { minX: number; maxX: number; minY: number; maxY: number },
+  rotation: number,
+  gridType?: string,
+): boolean {
+  const orientation = getTokenHexOrientation(baseShape, bounds, gridType);
+  const width = bounds.maxX - bounds.minX;
+  const height = bounds.maxY - bounds.minY;
+  const radius = orientation === "flat" ? width / 2 : height / 2;
+  const localPoint = inverseRotatePointInBounds(point, bounds, rotation);
+  const isWithinBounds =
+    localPoint.x >= -width / 2 &&
+    localPoint.x <= width / 2 &&
+    localPoint.y >= -height / 2 &&
+    localPoint.y <= height / 2;
+
+  return isWithinBounds && isPointInHex(localPoint, radius, orientation);
 }
 
 // fallow-ignore-next-line complexity
@@ -125,10 +148,6 @@ export function hitTestToken(
     const minY = Math.min(topLeft.y, bottomRight.y);
     const maxY = Math.max(topLeft.y, bottomRight.y);
 
-    if (x < minX || x > maxX || y < minY || y > maxY) {
-      continue;
-    }
-
     const isHex =
       token.baseShape === "hex" ||
       token.baseShape === "hex-pointy" ||
@@ -136,10 +155,19 @@ export function hitTestToken(
       (token.kind === "tile" &&
         (gridType === "hex-pointy" || gridType === "hex-flat"));
 
-    if (
-      isHex &&
-      !isPointInTokenHex(token, { x, y }, { minX, maxX, minY, maxY }, gridType)
-    ) {
+    if (isHex) {
+      if (
+        !isPointInTokenHex(
+          { x, y },
+          token.baseShape,
+          { minX, maxX, minY, maxY },
+          token.rotation ?? 0,
+          gridType,
+        )
+      ) {
+        continue;
+      }
+    } else if (x < minX || x > maxX || y < minY || y > maxY) {
       continue;
     }
 

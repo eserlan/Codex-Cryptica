@@ -1,6 +1,6 @@
 import { TOKEN_ROTATION_HANDLE_RADIUS } from "./token-geometry";
 import { TAU } from "./render-cache";
-import { getHexCorners, type HexOrientation } from "./hex";
+import type { HexOrientation } from "./hex";
 
 export type TokenShape =
   "circle" | "square" | "hex" | "hex-pointy" | "hex-flat";
@@ -37,10 +37,23 @@ function traceHexCorners(
           ? "flat"
           : "pointy";
   const radius = orientation === "flat" ? width / 2 : height / 2;
-  const corners = getHexCorners({ x: 0, y: 0 }, radius, orientation);
-  ctx.moveTo(corners[0].x, corners[0].y);
-  for (let i = 1; i < 6; i++) {
-    ctx.lineTo(corners[i].x, corners[i].y);
+  const halfRadius = radius / 2;
+  const halfWidth = (Math.sqrt(3) * radius) / 2;
+
+  if (orientation === "pointy") {
+    ctx.moveTo(halfWidth, halfRadius);
+    ctx.lineTo(0, radius);
+    ctx.lineTo(-halfWidth, halfRadius);
+    ctx.lineTo(-halfWidth, -halfRadius);
+    ctx.lineTo(0, -radius);
+    ctx.lineTo(halfWidth, -halfRadius);
+  } else {
+    ctx.moveTo(radius, 0);
+    ctx.lineTo(halfRadius, halfWidth);
+    ctx.lineTo(-halfRadius, halfWidth);
+    ctx.lineTo(-radius, 0);
+    ctx.lineTo(-halfRadius, -halfWidth);
+    ctx.lineTo(halfRadius, -halfWidth);
   }
 }
 

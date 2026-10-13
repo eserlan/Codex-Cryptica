@@ -133,6 +133,33 @@ describe("vtt-helpers", () => {
     );
   });
 
+  it("hit-tests visible hex edges after token rotation", () => {
+    const pointyHex: Token = {
+      id: "rotated-hex",
+      entityId: null,
+      name: "Rotated Hex",
+      x: 100 - (50 * Math.sqrt(3)) / 2,
+      y: 50,
+      width: 50 * Math.sqrt(3),
+      height: 100,
+      rotation: 90,
+      baseShape: "hex-pointy",
+      zIndex: 1,
+      ownerPeerId: null,
+      ownerGuestName: null,
+      visibleTo: "all",
+      color: "#fff",
+      imageUrl: null,
+      statusEffects: [],
+    };
+
+    // This visible rotated point is 47px from centre, outside the original
+    // 86.6px-wide unrotated bounds but inside the rotated pointy hex.
+    expect(hitTestToken([pointyHex], (point) => point, 147, 100)?.id).toBe(
+      "rotated-hex",
+    );
+  });
+
   it("projects points into the viewport", () => {
     expect(
       toViewportPoint(
