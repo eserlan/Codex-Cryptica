@@ -273,13 +273,17 @@ function checkImageAlt({ slug, seo }: AnswerConfigInput): EditorialFinding[] {
 }
 
 // Lookahead so a URL nested inside another one (a redirect) is found too.
-const URL_IN_TEXT = /(?=(https?:\/\/[^\s)"'<>\]]+))/gi;
+// Also matches a protocol-relative `//host/path`, which a browser resolves to
+// that host; the lookbehind keeps the `//` of `https://` from matching twice.
+const URL_IN_TEXT = /(?=((?:https?:\/\/|(?<![:\w/])\/\/)[^\s)"'<>\]]+))/gi;
 
 /** The competitor a link points at, or undefined for any other host. */
 export function competitorOf(url: string): string | undefined {
   let host: string;
   try {
-    host = new URL(url).hostname.toLowerCase().replace(/\.$/, "");
+    host = new URL(url.startsWith("//") ? `https:${url}` : url).hostname
+      .toLowerCase()
+      .replace(/\.$/, "");
   } catch {
     return undefined;
   }
