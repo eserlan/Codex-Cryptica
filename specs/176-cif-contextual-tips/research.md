@@ -53,7 +53,8 @@ Spec Story 3 says a blocked tip waits for the block to clear; FR-015 says a bloc
 
 ### D7. Where the chip sits
 
-- **Decision**: `OnboardingHost` renders `CifTipChip`, positioned with Floating UI against the existing Cif button (`HelpAskButton`), falling back to a fixed bottom corner when the anchor is absent. The chip is a button with a separate dismiss button, not a popover.
+- **Decision**: `OnboardingHost` renders `CifTipChip`, positioned with Floating UI against the existing Cif button (`HelpAskButton`), falling back to a fixed bottom corner when the anchor is absent or clipped out of view. The chip is a button with a separate dismiss button, not a popover.
+- **Visual check (T049)**: screenshots at 375×812, 1280×1100 and 1280×800 showed two problems the position test alone missed: on phones the chip covered the front page's "Enter your world" button, and at 1280×800 the Cif button is below the clipped rail, so the chip pointed at nothing. Fixed by making the front page a blocker and by Floating UI's `hide` middleware sending the chip to the corner. A later run, after the graph had finished loading, showed a third: on phones the chip landed on the graph's floating buttons (create and controls), which render after the chip. The chip now rises just above any control it would cover (`chip-placement.ts`) and re-checks when the page's elements change.
 - **Rationale**: `OnboardingHost` already owns first-run layering, so tips cannot stack with the invitation or journey card. The activity bar is a narrow rail on desktop and a non-wrapping row on phones, so placing the chip inside it would crowd the tap targets.
 - **Alternatives**: Render inside `ActivityBar` (tight on phones; rejected). A toast (competes with the notification system and auto-dismisses; rejected).
 

@@ -22,10 +22,11 @@ Guarantees: no function reads the clock, storage, the DOM or the network. `decid
 
 ## 2. Storage
 
-| Key                      | Store            | Value             | Written when              |
-| ------------------------ | ---------------- | ----------------- | ------------------------- |
-| `codex-cif-tips`         | `localStorage`   | `TipsRecord` JSON | Any change to the record. |
-| `codex-cif-tips-session` | `sessionStorage` | `"1"`             | A tip is shown.           |
+| Key                      | Store            | Value               | Written when                                    |
+| ------------------------ | ---------------- | ------------------- | ----------------------------------------------- |
+| `codex-cif-tips`         | `localStorage`   | `TipsRecord` JSON   | Any change to the record.                       |
+| `codex-cif-tips-session` | `sessionStorage` | `"1"`               | A tip is shown.                                 |
+| `codex-cif-tips-probe`   | `localStorage`   | `"1"`, then removed | Just before a tip shows, to confirm saves land. |
 
 Neither key is part of a vault, exported, synced or sent anywhere.
 
@@ -41,7 +42,8 @@ Neither key is part of a vault, exported, synced or sent anywhere.
 ### Tip chip (`CifTipChip`)
 
 - A compact button reading the tip's `label`, with a "Cif has a tip" prefix for screen readers, and a separate dismiss button labelled "Dismiss tip".
-- Anchored beside the Cif button; falls back to a fixed corner when the anchor is missing.
+- Anchored beside the Cif button with Floating UI (to its right on wide screens, above it on phones). Falls back to a fixed corner, above the footer, when the button is missing or clipped out of view (`hide` middleware).
+- Never covers another control; a browser test checks that no visible button, link or field sits under it.
 - Announced once through a polite live region; never moves focus (FR-026).
 - Tap target at least 44px; dismiss by click, tap or Escape while focus is inside it.
 - No motion under `prefers-reduced-motion`; a simple fade otherwise.

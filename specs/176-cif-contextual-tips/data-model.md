@@ -37,6 +37,10 @@ Key: `codex-cif-tips` in `localStorage`, JSON. Defined by the engine, written by
 
 Key: `codex-cif-tips-session` in `sessionStorage`. Value: `"1"`. Written when a tip is shown. Its presence is the session limit (FR-008).
 
+## Saving and storage failure (app)
+
+The browser wrapper (`browserStorage`) swallows storage errors, so every save is confirmed by reading the value back. Before a tip shows, the store writes `"1"` to `codex-cif-tips-probe`, reads it back and removes it, because re-saving an unchanged record cannot reveal a dropped write. Any failed save (record, probe or session marker) turns tips off for the rest of the visit: no tip, no one-time question, and the switch reads off (FR-031, review finding on #4056). A tip therefore only shows when its dismissal can be saved.
+
 ## TipDecisionInput
 
 ```ts
@@ -55,6 +59,7 @@ interface TipDecisionInput {
     tourActive: boolean;
     journeyOrInvitationActive: boolean;
     cifOpen: boolean; // docked panel or pop-out
+    firstRunPage: boolean; // the vault's front page covers the graph
   };
 }
 

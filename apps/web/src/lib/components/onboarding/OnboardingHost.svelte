@@ -147,6 +147,11 @@
     void onboardingStore.firstRunGuidanceActive;
     void helpAssistant.isOpen;
     void cifPopout.connected;
+    // The front page blocks tips until the person enters their world.
+    void onboardingStore.dismissedWorldPage;
+    void onboardingStore.skipWelcomeScreen;
+    void vault.isInitialized;
+    void vault.selectedEntityId;
     untrack(() => tipsStore.evaluate());
   });
 

@@ -8,16 +8,24 @@ import {
   type TipsStoreDeps,
 } from "./tips-store.svelte";
 
-function memoryStorage(fail = false) {
+/**
+ * `fail` throws on every call. `dropWrites` reads normally but silently
+ * discards writes, which is what the production wrapper (`browserStorage`)
+ * does when the browser's storage is blocked or full.
+ */
+function memoryStorage(fail = false, opts: { dropWrites?: boolean } = {}) {
   const data = new Map<string, string>();
+  const state = { dropWrites: opts.dropWrites ?? false };
   return {
     data,
+    state,
     getItem: (k: string) => {
       if (fail) throw new Error("blocked");
       return data.get(k) ?? null;
     },
     setItem: (k: string, v: string) => {
       if (fail) throw new Error("blocked");
+      if (state.dropWrites) return;
       data.set(k, v);
     },
     removeItem: (k: string) => data.delete(k),
@@ -30,6 +38,7 @@ const CLEAR = {
   tourActive: false,
   journeyOrInvitationActive: false,
   cifOpen: false,
+  firstRunPage: false,
 };
 
 function setup(
@@ -325,11 +334,57 @@ describe("TipsStore: no goal and storage failures (FR-024, FR-031)", () => {
     expect(t.store.current).toBeNull();
   });
 
-  it("behaves as off when storage fails, without throwing", () => {
+  it("behaves as off when storage throws, without throwing itself (FR-031)", () => {
     const t = setup({}, { storageFails: true });
     expect(() => t.store.setEnabled(true)).not.toThrow();
     expect(() => t.store.evaluate()).not.toThrow();
-    expect(t.store.enabled).toBe(true);
+    expect(t.store.enabled).toBe(false);
+    expect(t.store.current).toBeNull();
+  });
+
+  it("stays off when writes are silently dropped, as the browser wrapper does (FR-031)", () => {
+    const t = setup();
+    t.storage.state.dropWrites = true;
+    t.store.setEnabled(true);
+    expect(t.store.enabled).toBe(false);
+    t.store.evaluate();
+    expect(t.store.current).toBeNull();
+    expect(t.store.shouldAskOptIn).toBe(false);
+  });
+
+  it("shows no tip once saving fails, so a dismissal can never be lost", () => {
+    // Tips were switched on while storage worked; later writes start failing.
+    const t = setup();
+    t.store.setEnabled(true);
+    t.storage.state.dropWrites = true;
+    const again = new TipsStore(t.deps);
+    expect(again.enabled).toBe(true);
+    again.evaluate();
+    expect(again.current).toBeNull();
+    expect(again.enabled).toBe(false);
+  });
+
+  it("removes a showing tip when saving its dismissal fails", () => {
+    const t = setup();
+    t.store.setEnabled(true);
+    t.store.evaluate();
+    expect(t.store.current).not.toBeNull();
+    t.storage.state.dropWrites = true;
+    t.store.dismiss();
+    expect(t.store.current).toBeNull();
+    expect(t.store.enabled).toBe(false);
+    t.ctx.area = "generators" as HelpArea;
+    t.sessionStorage.data.clear();
+    t.store.evaluate();
+    expect(t.store.current).toBeNull();
+  });
+
+  it("shows no tip when the visit marker cannot be saved, even silently (FR-031)", () => {
+    const t = setup();
+    t.sessionStorage.state.dropWrites = true;
+    t.store.setEnabled(true);
+    t.store.evaluate();
+    expect(t.store.current).toBeNull();
   });
 
   it("shows no tip when session storage cannot be read or written (FR-031)", () => {
