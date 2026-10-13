@@ -132,6 +132,26 @@ describe("answer registry", () => {
     ).toBeDefined();
   });
 
+  it("links the optional D&D beginner guide through the structured topic links", () => {
+    const answer = answers["how-do-i-get-my-friends-interested-in-playing-dnd"];
+    const homeworkAdvice = answer.sections.find(
+      (section) =>
+        section.kind === "list" &&
+        section.heading === "Eight ways to make the first invitation work",
+    );
+    const beginnerPreview =
+      homeworkAdvice?.kind === "list"
+        ? homeworkAdvice.items.find(
+            (item) => item.term === "Remove required homework",
+          )
+        : undefined;
+
+    expect(beginnerPreview?.text).not.toMatch(/\[[^\]]+\]\([^)]+\)/);
+    expect(answer.relatedTopics).toContainEqual(
+      expect.objectContaining({ href: "/topics/dnd-beginners" }),
+    );
+  });
+
   it("records the bard answer's distinct scope from adjacent specialist answers", () => {
     const overlaps = [
       [
