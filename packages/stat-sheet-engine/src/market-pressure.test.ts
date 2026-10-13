@@ -397,26 +397,79 @@ describe("stored-size limits", () => {
 });
 
 describe("lines without a counted quantity", () => {
-  const rows = [{ rowId: "u", name: "Untracked", stock: { price: gp(10) } }];
+  const rows = () => [
+    { rowId: "u", name: "Untracked", stock: { price: gp(10) } },
+    {
+      rowId: "s",
+      name: "Sold out",
+      stock: { availability: "sold-out", price: gp(4) },
+    },
+  ];
+  const keys = (row: Record<string, unknown>) =>
+    Object.keys(row.stock as object);
 
-  test("a quantity change skips them, so nothing can turn into ×0", () => {
-    const plan = planPressure(rows, { quantity: { mode: "add", value: 3 } });
-    expect(plan[0].skipped).toBe("no-quantity");
-    expect(applyPlan(rows, plan, meta())).toBeNull();
+  test("they are treated as none on hand, so a restock counts from zero", () => {
+    const plan = planPressure(rows(), { quantity: { mode: "add", value: 3 } });
+    const sold = plan.find((p) => p.rowId === "s")!;
+    expect(sold.change.quantity).toEqual({ after: 3 });
+    expect(sold.change.availability).toEqual({
+      before: "sold-out",
+      after: "available",
+    });
   });
 
-  test("a price change still applies, and undo leaves no quantity behind", () => {
+  test("undo removes the quantity instead of leaving ×0, and restores the status", () => {
+    const start = rows();
     const out = applyPlan(
-      rows,
-      planPressure(rows, {
+      start,
+      planPressure(start, {
         pricePercent: 50,
         quantity: { mode: "add", value: 3 },
       }),
       meta(),
     )!;
-    expect(out.change.rows[0].quantity).toBeUndefined();
+    expect(stockOf(out.rows, "u").quantity).toBe(3);
     const back = revertChange(out.rows, [out.change], "c1");
-    expect("quantity" in (back.rows[0].stock as object)).toBe(false);
+    expect(keys(back.rows[0])).not.toContain("quantity");
+    expect(keys(back.rows[1])).not.toContain("quantity");
+    expect(stockOf(back.rows, "s").availability).toBe("sold-out");
     expect(stockOf(back.rows, "u").price).toEqual(gp(10));
+    expect(back.conflicts).toEqual([]);
+  });
+
+  test("a count the shop has started since is kept, not removed", () => {
+    const start = rows();
+    const out = applyPlan(
+      start,
+      planPressure(start, { quantity: { mode: "add", value: 3 } }),
+      meta(),
+    )!;
+    const traded = out.rows.map((r) =>
+      r.rowId === "u"
+        ? { ...r, stock: { ...(r.stock as object), quantity: 1 } }
+        : r,
+    );
+    const back = revertChange(traded, [out.change], "c1");
+    expect(stockOf(back.rows, "u").quantity).toBe(1);
+    expect(back.conflicts[0].kept).toEqual(["quantity"]);
+  });
+
+  test("replay keeps them uncounted until the change applies", () => {
+    const start = rows();
+    const out = applyPlan(
+      start,
+      planPressure(start, { quantity: { mode: "add", value: 3 } }),
+      meta(),
+    )!;
+    expect(stockOf(replayChanges(start, [out.change]), "u").quantity).toBe(3);
+    const counted = start.map((r) =>
+      r.rowId === "u" ? { ...r, stock: { price: gp(10), quantity: 9 } } : r,
+    );
+    expect(stockOf(replayChanges(counted, [out.change]), "u").quantity).toBe(9);
+  });
+
+  test("services still have no quantity to change", () => {
+    const plan = planPressure(shop(), { quantity: { mode: "add", value: 3 } });
+    expect(plan.find((p) => p.rowId === "map")!.skipped).toBe("no-quantity");
   });
 });

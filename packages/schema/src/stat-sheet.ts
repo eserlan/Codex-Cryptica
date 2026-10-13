@@ -119,7 +119,8 @@ const PriceShiftSchema = z.object({
   after: MoneyAmountSchema,
 });
 const QuantityShiftSchema = z.object({
-  before: z.number().int().min(0).safe(),
+  // Absent when the line had no counted quantity before the change.
+  before: z.number().int().min(0).safe().optional(),
   after: z.number().int().min(0).safe(),
 });
 const AvailabilityShiftSchema = z.object({
