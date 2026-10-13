@@ -96,9 +96,12 @@ export function resolveCanvasReportInput(params: {
     const entity = getEntity(node.entityId as string);
     if (entity) entityByNode.set(node.id, entity);
   }
-  const entities = [
-    ...new Map([...entityByNode.values()].map((e) => [e.id, e])).values(),
-  ];
+  // ⚡ Bolt Optimization: Replace nested intermediate array allocations with imperative loop
+  const uniqueEntities = new Map<string, Entity>();
+  for (const e of entityByNode.values()) {
+    uniqueEntities.set(e.id, e);
+  }
+  const entities = [...uniqueEntities.values()];
   if (entities.length === 0)
     return { input: null, source, error: "no-entities" };
 

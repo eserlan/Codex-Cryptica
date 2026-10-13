@@ -47,3 +47,8 @@
 
 **Learning:** Using chained `.map().join("")` on an array derived from a `Uint8Array` to generate a hex string allocates multiple intermediate arrays, causing unnecessary garbage collection pressure and reducing performance by roughly 3x in hot paths.
 **Action:** Replace `[...bytes].map().join("")` with an imperative loop (`let hex = ""; for (...) { hex += bytes[i]... }`) to convert byte arrays to hex strings without intermediate array allocations.
+
+## 2026-10-25 - Avoid nested intermediate array allocations in unique Map generation
+
+**Learning:** Constructing a Map to deduplicate entities using `new Map([...entityByNode.values()].map((e) => [e.id, e]))` allocates multiple unnecessary intermediate arrays (the spread values and the mapped tuple array) before the Map is even instantiated, significantly increasing garbage collection pressure.
+**Action:** Use an imperative `for...of` loop to iterate over values and set them directly into a newly instantiated Map to eliminate the intermediate array allocations.
