@@ -10,7 +10,7 @@ No `NEEDS CLARIFICATION` remained after the spec. This records the design decisi
 - **F2. The AI gate already exists.** `isHelpAssistantAvailable()` is true only when the Cif build flag is on and `discoveryPolicyStore.aiDisabled` is false (`help-availability.ts`). The tips switch hangs off the same function (FR-002).
 - **F3. The goal and setup state already exist.** `OnboardingStore.chosenGoal`, `goalInvitation` (`"goal" | "explore" | "dismissed"`), and `JourneyProgress.outcome` (`running | exited | finished`) per vault (`onboarding.svelte.ts`, `journey-store.svelte.ts`, spec 175 data model). A person who chose "Explore on my own" has `goalInvitation = "explore"` and no journey.
 - **F4. Tapping a prompt already has a path.** `journey-runtime.ts` `askCif` opens the pop-out when connected, otherwise the docked panel, then calls `helpAssistant.ask(prompt)`. That is the only request path, and it needs a tap.
-- **F5. Cif already degrades to a static guide.** When the service fails or is unreachable, `HelpAssistantStore.ask` builds a fallback from `FEATURE_REGISTRY` and help-article titles (`buildFallback`). So "open the static guide when Cif cannot answer" (FR-018) needs no new code.
+- **F5. Cif already degrades to a static guide.** When the service fails or is unreachable, `HelpAssistantStore.ask` builds a fallback from `FEATURE_REGISTRY` and help-article titles (`buildFallback`). So "show the static guide when Cif cannot answer" (FR-018) needs no new code, but a test (T021) proves a failed ask still ends on that fallback message.
 - **F6. Verified prompts per screen exist** in `QUICK_PROMPT_SETS` for: `entity-editing`, `entity-connections`, `graph`, `canvas`, `map`, `generators`, `tables`, `import`, `settings`. Areas come from `HELP_AREAS` (`graph`, `canvas`, `map`, `generators`, `tables`, `session-hub`, ...).
 - **F7. Screen arrival is observable without tracking.** `helpContext.current.area` is already reactive and is what the journey store uses for the graph step.
 - **F8. Quiet signals already exist.** `isEditable(document.activeElement)` (`components/onboarding/focus.ts`), `modalUIStore.isAnyModalOpen` and `showZenMode`, `helpStore.activeTour`, `journeyStore.active`, the invitation flag in `OnboardingHost`, `helpAssistant.isOpen`, `cifPopout.connected`.
@@ -36,7 +36,7 @@ Spec Story 3 says a blocked tip waits for the block to clear; FR-015 says a bloc
 
 ### D4. One tip per session, defined by `sessionStorage`
 
-- **Decision**: A `sessionStorage` flag is written when a tip is actually shown. `decideTip` returns `none("session-limit")` when it is set.
+- **Decision**: A `sessionStorage` flag is written when a tip is actually shown. `decideTip` returns `none("session-limit")` when it is set. If `sessionStorage` cannot be read or written, the store treats the marker as present, so no tip shows.
 - **Rationale**: Matches clarification Q1 and the spec's definition of session (tab or window lifetime; reload keeps it). `sessionStorage` has exactly those semantics.
 - **Alternatives**: In-memory flag (lost on reload, so a reload would re-show; rejected). `localStorage` timestamp (changes the meaning to "per day"; rejected by Q1).
 
@@ -65,6 +65,11 @@ Spec Story 3 says a blocked tip waits for the block to clear; FR-015 says a bloc
   - **campaign** (Prepare an RPG campaign): `map` ("How do I hide parts of the map from my players?"), `tables` ("How do I roll on a random table?"), `generators` ("Should I use a generator or the Oracle to make a new NPC?").
 - **Rationale**: Each prompt is already a test-verified question that finds its guide (3427 rule 4). Final tip wording is fixed copy written in tasks, never built from the vault (FR-016).
 - **Note**: Tips on the same screen as the journey's own `finish.next` are skipped to avoid suggesting the same thing twice (checked in the catalogue test).
+
+### D8a. Availability by context
+
+- **Decision**: `decideTip` takes `unavailableAreas`, built from the Cif context (for example `generators` is unavailable when `generatorsAvailable()` is false, as in a guest vault) and returns `none("feature-unavailable")` for a tip whose area is listed.
+- **Rationale**: Spec Story 2 scenario 5 and FR-013. A tip must not point at a feature that does not work in the current context. The context already computes these flags for Cif.
 
 ### D9. Telemetry
 

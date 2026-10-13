@@ -112,12 +112,13 @@ As someone who chose "Explore on my own" or dismissed the invitation, I get no g
 - A person finishes setup in one vault and opens another: the goal is a per-device choice, but "setup finished or left" is per vault, so a tip shows only where that vault's setup has finished or been left.
 - A person who skipped setup but chose a goal: tips begin once the setup is left, not before.
 - The tip's screen is reached while Cif is loading or unavailable: the static guide route is used, or no chip is shown when neither exists.
-- A feature registered for a tip has been renamed or removed: its tip is dropped silently; there is no chip to nowhere.
+- A feature registered for a tip is renamed or removed: the catalogue check fails before release, so a tip for a missing feature never ships and there is no chip to nowhere.
 - A goal has no available, unseen tip left: nothing is shown; tips do not repeat to fill the gap.
 - Several rules apply at once (blocked by a dialog and silenced): the most restrictive wins; there is never a queue of tips waiting to appear when a block ends.
 - AI is disabled mid-session while a chip is showing: the chip is removed.
 - Two windows (the docked panel and the pop-out) are open: only one chip is ever shown.
-- Storage is unavailable or cleared: tips behave as off and nothing breaks.
+- Storage is unavailable or cleared: tips behave as off and nothing breaks. If only per-visit storage cannot be read or written, no tip is shown, because the one-per-session limit could not be kept.
+- A tip's screen exists but the feature is not available there (for example generators in a guest vault): no tip is shown for it.
 
 ## Requirements _(mandatory)_
 
@@ -128,7 +129,7 @@ As someone who chose "Explore on my own" or dismissed the invitation, I get no g
 - **FR-001**: The system MUST provide exactly one setting, **Show tips from Cif**, off by default, placed in Settings beside the AI controls.
 - **FR-002**: The setting MUST be forced off, and its switch hidden, whenever AI is disabled or Cif is unavailable.
 - **FR-003**: The setting MUST be stored on the device like other interface preferences. It MUST NOT be part of the vault, synced, or sent anywhere.
-- **FR-004**: Turning AI back on MUST NOT turn tips back on by itself.
+- **FR-004**: When AI becomes unavailable the stored choice MUST be switched off, so turning AI back on MUST NOT turn tips back on by itself.
 - **FR-005**: No tip, chip or tip-related message of any kind MUST appear while the setting is off.
 - **FR-006**: Choosing a goal MUST NOT turn the setting on. When the guided setup finishes or is consciously left, the system MUST ask once, inline and non-modally, whether the person wants occasional tips; Yes turns the setting on, No leaves it off. The question MUST NOT be shown again after any answer or dismissal, MUST NOT be shown when AI is disabled or Cif is unavailable, and MUST NOT make any AI request.
 
@@ -137,7 +138,7 @@ As someone who chose "Explore on my own" or dismissed the invitation, I get no g
 - **FR-007**: A tip MUST be a compact "Cif has a tip" chip beside the Cif button. It MUST NOT be a modal, a pop-up over work, a banner, or an automatically opened panel or chat.
 - **FR-008**: At most one tip MUST be shown per session in total, across all screens, and never more than one visible at any moment. A tip that is blocked or dismissed uses up nothing until it has actually been shown.
 - **FR-009**: A tip MAY appear only after the first-session setup for the current vault is finished or has been consciously left.
-- **FR-010**: The choice of tip MUST be decided only from: the goal the person selected, a fixed list of verified feature identifiers, the screen the person is on, and the existing local milestones.
+- **FR-010**: The choice of tip MUST be decided only from: the goal the person selected, a fixed list of verified feature identifiers, the screen the person is on, whether that feature is available there, and whether guided setup has ended.
 - **FR-011**: The system MUST NOT read vault content (entry names, text, links, images) to choose, word or time a tip.
 - **FR-012**: The system MUST NOT watch typing or clicking, measure idle time, or infer that someone is stuck or frustrated.
 - **FR-013**: A tip MUST suggest a capability that fits the selected goal and is available on the current screen. If none qualifies, nothing is shown.
@@ -148,7 +149,7 @@ As someone who chose "Explore on my own" or dismissed the invitation, I get no g
 **Using a tip**
 
 - **FR-017**: Showing a tip MUST NOT make any AI request or send anything to any service.
-- **FR-018**: Tapping a tip MUST open Cif with a verified, existing quick prompt for that screen already asked, or, when Cif or AI cannot answer, the matching static guide.
+- **FR-018**: Tapping a tip MUST open Cif with a verified, existing quick prompt for that screen already asked. When Cif cannot answer, it MUST show the static guide it already offers in that situation.
 - **FR-019**: A tip MUST NOT run any action that changes the vault, and MUST NOT be a means to create, edit or delete content.
 - **FR-020**: Every tip MUST map to a registered feature and a prompt or guide that is covered by tests; an unverified tip MUST NOT ship.
 
@@ -168,9 +169,9 @@ As someone who chose "Explore on my own" or dismissed the invitation, I get no g
 
 **Reuse and boundaries**
 
-- **FR-029**: The feature MUST reuse the existing goal choice, per-vault journey progress, milestones, Cif quick prompts and guidance actions. It MUST NOT add a second tour, a second banner system, or a second progress record.
+- **FR-029**: The feature MUST reuse the existing goal choice, per-vault journey progress, Cif quick prompts and guidance actions. It MUST NOT add a second tour, a second banner system, or a second progress record.
 - **FR-030**: Cif MUST remain a guide to using Codex Cryptica; tips MUST NOT suggest in-world or campaign content (that belongs to the Oracle).
-- **FR-031**: If storage is unavailable or its contents are unreadable, tips MUST behave as off and the app MUST continue normally.
+- **FR-031**: If storage is unavailable or its contents are unreadable, tips MUST behave as off and the app MUST continue normally. If the per-visit (session) storage cannot be read or written, no tip MUST be shown.
 
 ### Key Entities
 
@@ -194,7 +195,7 @@ As someone who chose "Explore on my own" or dismissed the invitation, I get no g
 ## Assumptions
 
 - The first-run goal choice, per-vault journey progress and "finished or left" outcome from `175-cif-guided-onboarding` are the inputs; this feature does not change them.
-- "Available" means the registered feature exists and its target can be reached from the current screen; it does not mean the person has permission to use it.
+- "Available" means the registered feature exists and is offered in the current context (for example, generators are not offered in a guest vault); it does not mean the person has permission to use it.
 - Tip content is limited to a small, hand-written set (a few per goal). More are added later through the same registry and tests.
 - "Setup finished or left" for tip purposes means the journey outcome is finished or exited, or the person chose a goal and then closed the card; skipping the invitation without a goal counts as "no goal".
 - A "session" is one visit to the app, from opening it until the tab or window is closed; a reload within it is the same session.

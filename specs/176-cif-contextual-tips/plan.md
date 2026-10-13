@@ -17,7 +17,7 @@ Technical approach: put the catalogue and the decision function in the existing 
 **Testing**: Vitest (package and web), Testing Library for components, one Playwright smoke for the chip on phone and desktop widths.
 **Target Platform**: Browser, desktop, tablet and phone; keyboard and screen reader.
 **Project Type**: Web application with internal framework-free packages.
-**Performance Goals**: Tip decision is a pure function over a handful of values; it MUST run in under 1 ms and add no network call. No new bundle beyond about 2 KB gzipped in the engine.
+**Performance Goals**: Tip decision is a pure function over a handful of values; it MUST run in under 1 ms (checked in `tests/budgets.test.ts`) and add no network call. The engine package stays under its existing 10 KB gzipped budget (currently about 3.2 KB).
 **Constraints**: No AI or network request on show; no vault reads; no telemetry; no focus moves; reduced motion honoured.
 **Scale/Scope**: About 9 catalogue tips (3 per goal), 1 setting, 1 chip, 1 opt-in card.
 

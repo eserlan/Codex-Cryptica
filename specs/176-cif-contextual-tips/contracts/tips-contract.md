@@ -60,5 +60,6 @@ Neither key is part of a vault, exported, synced or sent anywhere.
 3. Tapping a tip calls the same open-and-ask path the journey card uses, with the catalogue's exact `prompt`.
 4. In every blocked state, no chip renders.
 5. After one tip is shown in a session, no second tip renders until a new session.
-6. Disabling AI removes a visible chip and hides the switch.
-7. Unreadable storage behaves as tips off.
+6. Disabling AI removes a visible chip, hides the switch and stores the setting as off; re-enabling AI does not turn it back on.
+7. Unreadable storage behaves as tips off; unreadable session storage shows no tip.
+8. A tip whose feature is unavailable in the current context (for example generators in a guest vault) is never shown.

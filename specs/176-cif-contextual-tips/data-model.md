@@ -47,6 +47,7 @@ interface TipDecisionInput {
   goalInvitation: "goal" | "explore" | "dismissed" | null;
   setupEnded: boolean; // active vault's journey outcome is finished or exited
   area: HelpArea; // current screen
+  unavailableAreas: readonly HelpArea[]; // areas whose feature is not offered here (e.g. generators in a guest vault)
   shownThisSession: boolean; // session marker present
   blockers: {
     typing: boolean;
@@ -68,6 +69,7 @@ type NoTipReason =
   | "session-limit"
   | "blocked"
   | "area-silenced"
+  | "feature-unavailable"
   | "no-eligible-tip";
 ```
 
@@ -83,4 +85,6 @@ on ──show tip──► session marker set ──dismiss──► tip in dism
 ```
 
 - `optInAsked` flips to `true` on Yes, No, or closing the question, and never flips back.
-- "Forced off" while AI is unavailable is derived, not stored: `enabled && aiAvailable`. The stored choice is kept, so re-enabling AI does not silently turn tips on if the stored value was `false`, and does not erase a deliberate choice either (FR-004 is satisfied because `enabled` is only ever set by an explicit action).
+- When AI becomes unavailable, the store writes `enabled = false` (FR-002, FR-004). Turning AI back on therefore leaves tips off until the person turns them on again. The derived `enabled && aiAvailable` is still used as a read-time guard, but the stored value is what makes FR-004 true.
+- If `sessionStorage` cannot be read or written, the session marker is treated as present: no tip is shown (FR-031).
+- Turning the setting on while on a screen re-evaluates that screen once, because the person is already there.
