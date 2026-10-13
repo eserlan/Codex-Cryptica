@@ -337,6 +337,16 @@ describe("JourneyStore", () => {
     expect(t.store.active).toBe(false);
   });
 
+  it("setupEnded is true only once the journey is finished or exited (spec 176)", () => {
+    const t = setup();
+    expect(t.store.setupEnded).toBe(false);
+    t.store.load("v1");
+    t.store.start("world");
+    expect(t.store.setupEnded).toBe(false);
+    t.store.exit();
+    expect(t.store.setupEnded).toBe(true);
+  });
+
   describe("Getting Started controls", () => {
     it("startOver resets progress with a fresh start time", () => {
       const t = setup();

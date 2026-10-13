@@ -1,11 +1,10 @@
 import { helpStore } from "$lib/stores/help.svelte";
 import { categories } from "$lib/stores/categories.svelte";
 import {
-  cifPopout,
   helpActionRunner,
-  helpAssistant,
   helpContext,
 } from "$lib/stores/help-assistant/help-runtime";
+import { askCifPrompt } from "$lib/stores/help-assistant/ask-cif";
 import { isHelpAssistantAvailable } from "$lib/services/help-assistant/help-availability";
 import {
   browserSessionStorage,
@@ -23,10 +22,6 @@ export const journeyStore = new JourneyStore({
   runGuide: (action, options) => helpActionRunner.run(action, options),
   categoryIds: () => categories.list.map((c) => c.id),
   askCifAvailable: () => isHelpAssistantAvailable(),
-  askCif: (prompt) => {
-    if (cifPopout.connected) cifPopout.open();
-    else helpAssistant.open();
-    void helpAssistant.ask(prompt);
-  },
+  askCif: (prompt) => askCifPrompt(prompt),
   tour: helpStore,
 });
