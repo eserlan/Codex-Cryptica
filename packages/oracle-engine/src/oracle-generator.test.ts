@@ -75,6 +75,30 @@ describe("OracleGenerator", () => {
     });
   });
 
+  describe("explicit @mention pins (#4052)", () => {
+    it("passes pinned entity ids to retrieval as the sixth argument", async () => {
+      await generator.generateChatResponse("q", mockContext, vi.fn(), {
+        pinnedEntityIds: ["e2", "e3"],
+      });
+      expect(mockContext.contextRetrieval.retrieveContext).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.any(Set),
+        expect.any(Object),
+        undefined,
+        false,
+        { pinnedEntityIds: ["e2", "e3"] },
+      );
+    });
+
+    it("leaves the retrieval call unchanged when nothing is pinned", async () => {
+      await generator.generateChatResponse("q", mockContext, vi.fn(), {
+        pinnedEntityIds: [],
+      });
+      const args = mockContext.contextRetrieval.retrieveContext.mock.calls[0];
+      expect(args).toHaveLength(5);
+    });
+  });
+
   describe("generateChatResponse", () => {
     it("should proceed even if no api key (proxy mode)", async () => {
       mockContext.effectiveApiKey = null;

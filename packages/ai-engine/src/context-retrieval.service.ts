@@ -2,6 +2,7 @@ import { isEntityVisible } from "schema";
 import type { ContextRetrievalService, VaultMinimal } from "schema";
 import { entityContentHash, type LoreEntry } from "@codex/oracle-engine";
 import { getAISearchService, type AISearchService } from "./config";
+import { buildLinkedSummaryLines, filterPinnedIds } from "./pinned-context";
 
 export class DefaultContextRetrievalService implements ContextRetrievalService {
   private styleCache: string | null = null;
@@ -197,6 +198,7 @@ export class DefaultContextRetrievalService implements ContextRetrievalService {
     vault: VaultMinimal,
     lastEntityId?: string,
     _isImage: boolean = false,
+    options: { pinnedEntityIds?: string[] } = {},
   ): Promise<{
     content: string;
     primaryEntityId?: string;
@@ -338,6 +340,9 @@ export class DefaultContextRetrievalService implements ContextRetrievalService {
     }
 
     const activeId = vault.selectedEntityId;
+    // Explicit `@` mentions (#4052) are validated here, so a stale or
+    // hand-edited id cannot bypass the visibility rules.
+    const pinned = filterPinnedIds(options.pinnedEntityIds, vault);
     const explicitSubject = this.findExplicitSubject(query, vault);
     const topSearchResult = results[0];
     const isHighConfidenceSearch =
@@ -346,7 +351,9 @@ export class DefaultContextRetrievalService implements ContextRetrievalService {
 
     let primaryEntityId: string | undefined;
 
-    if (explicitSubject) {
+    if (pinned.length > 0) {
+      primaryEntityId = pinned[0];
+    } else if (explicitSubject) {
       primaryEntityId = explicitSubject;
     } else if (isHighConfidenceSearch) {
       primaryEntityId = topSearchResult.id;
@@ -406,7 +413,11 @@ export class DefaultContextRetrievalService implements ContextRetrievalService {
     const MAX_CHARS = 10000;
     let currentTotal = styleContext.length;
 
-    const addEntityToContext = (id: string, isEnrichment: boolean = false) => {
+    const addEntityToContext = (
+      id: string,
+      isEnrichment: boolean = false,
+      isPinned: boolean = false,
+    ) => {
       if (contextMap.has(id)) return;
       const entity = vault.entities[id];
       if (!entity || internalExclusions.has(entity.title)) return;
@@ -500,6 +511,17 @@ export class DefaultContextRetrievalService implements ContextRetrievalService {
               ),
             });
             currentTotal = MAX_CHARS;
+          } else if (isPinned) {
+            // A pinned entity the user chose must not vanish silently when the
+            // budget is spent: keep its header and mark the trimmed body.
+            const marker = `${header}[truncated content]`;
+            contextMap.set(id, marker);
+            sourceIds.push(id);
+            entries.push({
+              id,
+              snippet: marker,
+              hash: entityContentHash(entity.content || ""),
+            });
           }
         }
         return;
@@ -515,6 +537,7 @@ export class DefaultContextRetrievalService implements ContextRetrievalService {
       currentTotal += fullSnippet.length + 2;
     };
 
+    for (const id of pinned) addEntityToContext(id, false, true);
     if (activeId) addEntityToContext(activeId);
     // The resolved subject goes in before other search hits so a run of
     // similar records cannot use up the budget and leave it out (#4055).
@@ -550,6 +573,14 @@ export class DefaultContextRetrievalService implements ContextRetrievalService {
     }
 
     let finalContent = Array.from(contextMap.values()).join("\n\n");
+    const linkedLines = buildLinkedSummaryLines(
+      pinned,
+      vault,
+      Math.max(0, MAX_CHARS - currentTotal),
+    );
+    if (linkedLines.length > 0) {
+      finalContent += `\n\n--- Linked entities ---\n${linkedLines.join("\n")}`;
+    }
     if (contextMap.size === 0 && excludeTitles.size === 0) {
       // ⚡ Bolt Optimization: Use pre-derived vault.allEntities and build string in a single pass
       // to avoid an extra titles array from .map(), reducing GC overhead.

@@ -19,6 +19,12 @@
     shouldShowCreateAction,
   } from "./chat-message.helpers";
   import { ChatMessageController } from "./chat-message-controller.svelte";
+  import MentionText from "./MentionText.svelte";
+  import {
+    createVaultMentionSource,
+    sourceEntitiesFor,
+  } from "$lib/stores/oracle/mention-source";
+  import { entityLinkClicks, linkEntityTitlesInHtml } from "./link-entity-html";
   import { sanitizeId } from "$lib/utils/markdown";
   import { revisionService } from "$lib/services/RevisionService.svelte";
   import Autocomplete from "../ui/Autocomplete.svelte";
@@ -109,6 +115,16 @@
   const handleUndo = async () => {
     await controller.undo();
   };
+  // Titles the reply was grounded in become links to their entries (#4052).
+  const linkedHtml = $derived(
+    linkEntityTitlesInHtml(
+      controller.htmlCache,
+      sourceEntitiesFor(
+        message.sources ?? [],
+        createVaultMentionSource(vault as any),
+      ),
+    ),
+  );
 </script>
 
 <div
@@ -146,9 +162,11 @@
             message.type === 'roll'
               ? 'mt-4 border-t border-theme-border/30 pt-2'
               : ''}"
+            use:entityLinkClicks={(entityId) =>
+              (vault.selectedEntityId = entityId)}
           >
             {#if controller.htmlCache}
-              {@html controller.htmlCache}
+              {@html linkedHtml}
             {:else}
               <div class="space-y-2 animate-pulse py-1">
                 <div class="bg-theme-border/20 h-3 w-full rounded"></div>
@@ -551,7 +569,13 @@
         {/if}
       {/if}
     {:else}
-      {message.content}
+      <MentionText
+        text={message.content}
+        mentions={message.mentions ?? []}
+        lookup={(id) =>
+          createVaultMentionSource(vault as any).getEntity(id)?.title}
+        onOpen={(id) => (vault.selectedEntityId = id)}
+      />
     {/if}
   </div>
 </div>

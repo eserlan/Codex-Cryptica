@@ -37,6 +37,7 @@ export interface FeatureHint {
 export const HINT_KEYS = {
   ORACLE_CONNECTION: "oracle-hint-seen",
   IN_APP_GENERATORS: "in-app-generators-hint-seen",
+  ORACLE_MENTIONS: "oracle-mention-hint-seen",
   CREATURE_PACKS: "creature-packs-hint-seen",
   ADVENTURE: "adventure-hint-seen",
 } as const;
@@ -177,6 +178,13 @@ export const COACH_MARKS: CoachMark[] = [
 ];
 
 export const FEATURE_HINTS: Record<string, FeatureHint> = {
+  "oracle-mentions": {
+    id: "oracle-mentions",
+    title: "Mention an entity",
+    content:
+      "Type @ and a name to pick an entity. The Oracle answers from that exact entry, even when two entities share a name. Hidden entities are never offered.",
+    icon: "icon-[lucide--at-sign]",
+  },
   "entity-templates": {
     id: "entity-templates",
     title: "Entity templates",

@@ -83,6 +83,8 @@ export class ChatExecutor
           id: userMsgId,
           role: "user",
           content: query,
+          // Only set when the user picked entities with `@` (#4052).
+          ...(intent.mentions?.length ? { mentions: intent.mentions } : {}),
         });
 
         if (!isAIIntent) {
@@ -201,6 +203,9 @@ export class ChatExecutor
                 {
                   requestId: assistantMsg.id,
                   vaultId: context.vaultId,
+                  ...(intent.pinnedEntityIds?.length
+                    ? { pinnedEntityIds: intent.pinnedEntityIds }
+                    : {}),
                 },
               );
 

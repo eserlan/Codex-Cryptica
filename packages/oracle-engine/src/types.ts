@@ -24,6 +24,15 @@ export interface OracleAutomationPolicy {
  */
 export type MessageRole = "user" | "assistant" | "system";
 
+/** A stored `@` mention. The entity id is the only thing used for resolution. */
+export interface MessageMention {
+  entityId: string;
+  displayName: string;
+  entityType: string;
+  start: number;
+  end: number;
+}
+
 /**
  * Oracle message structure
  */
@@ -36,6 +45,10 @@ export interface ChatMessage {
   imageUrl?: string;
   imageBlob?: Blob;
   entityId?: string;
+  /** Entities picked with `@` in the composer (#4052). Stored as data, never as text. */
+  mentions?: MessageMention[];
+  /** Entity ids the assistant reply was grounded in (#4052). Stored as data. */
+  sources?: string[];
   archiveTargetId?: string;
   wizardType?: "connection" | "merge";
   timestamp?: number;
@@ -77,6 +90,10 @@ export interface OracleIntent {
   type: OracleIntentType;
   query?: string;
   cue?: string;
+  /** Mentions resolved at send time (#4052). */
+  mentions?: MessageMention[];
+  /** Resolved, visible entity ids to pin into retrieval (#4052). */
+  pinnedEntityIds?: string[];
   data?: any;
   entityId?: string;
   entityName?: string;

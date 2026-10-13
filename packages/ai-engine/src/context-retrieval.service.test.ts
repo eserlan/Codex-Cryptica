@@ -340,3 +340,150 @@ describe("ContextRetrievalService", () => {
     expect(result.content).toContain("Available Records");
   });
 });
+
+describe("ContextRetrievalService pinned entities (#4052)", () => {
+  const entity = (id: string, title: string) => ({
+    id,
+    title,
+    type: "character",
+    labels: [],
+    connections: [],
+    content: `${title} lore`,
+  });
+
+  const vault = (): any => ({
+    entities: { a: entity("a", "Alpha"), b: entity("b", "Beta") },
+    selectedEntityId: null,
+    inboundConnections: {},
+    isGuest: false,
+    defaultVisibility: "visible",
+  });
+
+  it("makes the first pinned entity primary, ahead of a stronger search hit", async () => {
+    const search = {
+      search: vi
+        .fn()
+        .mockResolvedValue([{ id: "a", score: 0.95, matchType: "title" }]),
+    };
+    const service = new DefaultContextRetrievalService(search as any);
+
+    const result = await service.retrieveContext(
+      "what is their role",
+      new Set(),
+      vault(),
+      undefined,
+      false,
+      {
+        pinnedEntityIds: ["b"],
+      },
+    );
+
+    expect(result.primaryEntityId).toBe("b");
+    expect(result.sourceIds[0]).toBe("b");
+    expect(result.content).toContain("Beta lore");
+  });
+
+  it("keeps every pinned entity, in mention order, when several are picked", async () => {
+    const search = { search: vi.fn().mockResolvedValue([]) };
+    const service = new DefaultContextRetrievalService(search as any);
+    const many: any = {
+      entities: {
+        a: entity("a", "Alpha"),
+        b: entity("b", "Beta"),
+        c: entity("c", "Gamma"),
+      },
+      selectedEntityId: null,
+      inboundConnections: {},
+      isGuest: false,
+      defaultVisibility: "visible",
+    };
+
+    const result = await service.retrieveContext(
+      "compare them",
+      new Set(),
+      many,
+      undefined,
+      false,
+      {
+        pinnedEntityIds: ["c", "a", "c", "b"],
+      },
+    );
+
+    expect(result.primaryEntityId).toBe("c");
+    expect(result.sourceIds).toEqual(["c", "a", "b"]);
+  });
+
+  it("keeps the existing primary choice when nothing is pinned", async () => {
+    const search = {
+      search: vi
+        .fn()
+        .mockResolvedValue([{ id: "a", score: 0.95, matchType: "title" }]),
+    };
+    const service = new DefaultContextRetrievalService(search as any);
+
+    const result = await service.retrieveContext(
+      "who is alpha",
+      new Set(),
+      vault(),
+    );
+
+    expect(result.primaryEntityId).toBe("a");
+  });
+
+  it("drops an unknown pinned id and still answers from the normal search", async () => {
+    const search = {
+      search: vi
+        .fn()
+        .mockResolvedValue([{ id: "a", score: 0.95, matchType: "title" }]),
+    };
+    const service = new DefaultContextRetrievalService(search as any);
+
+    const result = await service.retrieveContext(
+      "who is alpha",
+      new Set(),
+      vault(),
+      undefined,
+      false,
+      {
+        pinnedEntityIds: ["ghost"],
+      },
+    );
+
+    expect(result.primaryEntityId).toBe("a");
+    expect(result.sourceIds).not.toContain("ghost");
+  });
+
+  it("keeps every pin in order when the context cap is reached, marking the trimmed ones", async () => {
+    const search = { search: vi.fn().mockResolvedValue([]) };
+    const service = new DefaultContextRetrievalService(search as any);
+    const big = (id: string, title: string) => ({
+      ...entity(id, title),
+      content: `${title} ${"x".repeat(6000)}`,
+    });
+    const crowded: any = {
+      entities: {
+        a: big("a", "Alpha"),
+        b: big("b", "Beta"),
+        c: big("c", "Gamma"),
+      },
+      selectedEntityId: null,
+      inboundConnections: {},
+      isGuest: false,
+      defaultVisibility: "visible",
+    };
+
+    const result = await service.retrieveContext(
+      "compare them",
+      new Set(),
+      crowded,
+      undefined,
+      false,
+      { pinnedEntityIds: ["a", "b", "c"] },
+    );
+
+    expect(result.primaryEntityId).toBe("a");
+    expect(result.sourceIds).toEqual(["a", "b", "c"]);
+    expect(result.content).toContain("Alpha");
+    expect(result.content).toContain("[truncated content]");
+  });
+});
