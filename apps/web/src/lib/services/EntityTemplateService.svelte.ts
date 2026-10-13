@@ -23,6 +23,17 @@ export interface EntityTemplateServiceDeps {
   templateStore?: {
     loaded: boolean;
     resolveSync(type: string, themeId?: string): string;
+    resolveContextual?(
+      type: string,
+      options?: {
+        templateId?: string | null;
+        parentEntity?: {
+          member_template?: string;
+          metadata?: Record<string, unknown>;
+        } | null;
+        themeId?: string;
+      },
+    ): string;
   };
 }
 
@@ -39,15 +50,28 @@ export class EntityTemplateService {
    * @param type - The entity type (e.g., 'character', 'location')
    * @param themeId - Optional override active theme ID (falls back to worldThemeId)
    * @param customTemplatesDirHandle - FileSystemDirectoryHandle pointing to the local vault/root folder
+   * @param options - Optional templateId or parentEntity for contextual resolution
    * @returns The resolved template content as a string
    */
   async resolveTemplate(
     type: string,
     themeId?: string,
     customTemplatesDirHandle?: FileSystemDirectoryHandle | null,
+    options?: {
+      templateId?: string | null;
+      parentEntity?: {
+        member_template?: string;
+        metadata?: Record<string, unknown>;
+      } | null;
+    },
   ): Promise<string> {
     const store = this.deps.templateStore;
-    if (store?.loaded) return store.resolveSync(type, themeId);
+    if (store?.loaded) {
+      if (store.resolveContextual) {
+        return store.resolveContextual(type, { ...options, themeId });
+      }
+      return store.resolveSync(type, themeId);
+    }
 
     const normalizedType = type.toLowerCase();
 

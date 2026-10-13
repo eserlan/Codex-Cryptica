@@ -132,6 +132,76 @@ export class EntityTemplateStore {
     });
   }
 
+  /** All templates available for a given entity type (built-in, legacy, user-created). */
+  templatesFor(type: string): EntityTemplate[] {
+    const key = normalizeType(type);
+    return this.list.filter((t) => normalizeType(t.entityType) === key);
+  }
+
+  /** Resolves the exact markdown of a template by its ID, if it exists. */
+  resolveById(id: string): string | undefined {
+    const found = this.list.find((t) => t.id === id);
+    return found ? templateMarkdown(found) : undefined;
+  }
+
+  /**
+   * Finds a matching archetype template specified by a parent entity's
+   * `member_template` frontmatter (by ID or case-insensitive name).
+   */
+  contextualTemplateFor(
+    type: string,
+    parentEntity?: {
+      member_template?: string;
+      metadata?: Record<string, unknown>;
+    } | null,
+  ): EntityTemplate | undefined {
+    if (!parentEntity) return undefined;
+    const raw =
+      parentEntity.member_template ||
+      (typeof parentEntity.metadata?.member_template === "string"
+        ? (parentEntity.metadata.member_template as string)
+        : undefined);
+    if (!raw || typeof raw !== "string") return undefined;
+    const query = raw.trim().toLowerCase();
+    if (!query) return undefined;
+
+    const available = this.templatesFor(type);
+    return (
+      available.find((t) => t.id.toLowerCase() === query) ||
+      available.find((t) => t.name.trim().toLowerCase() === query)
+    );
+  }
+
+  /**
+   * Resolves template markdown with contextual awareness:
+   * 1. Explicit `templateId` (if provided and valid)
+   * 2. Parent-inherited `member_template` (if matched)
+   * 3. Vault effective default for `type`
+   */
+  resolveContextual(
+    type: string,
+    options?: {
+      templateId?: string | null;
+      parentEntity?: {
+        member_template?: string;
+        metadata?: Record<string, unknown>;
+      } | null;
+      themeId?: string;
+    },
+  ): string {
+    if (options?.templateId) {
+      const explicit = this.resolveById(options.templateId);
+      if (explicit !== undefined) return explicit;
+    }
+
+    if (options?.parentEntity) {
+      const contextual = this.contextualTemplateFor(type, options.parentEntity);
+      if (contextual) return templateMarkdown(contextual);
+    }
+
+    return this.resolveSync(type, options?.themeId);
+  }
+
   previewMarkdown(id: string): string {
     const found = this.list.find((t) => t.id === id);
     return found ? templateMarkdown(found) : "";
