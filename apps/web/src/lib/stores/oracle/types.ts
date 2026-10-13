@@ -1,4 +1,5 @@
 import type {
+  MessageMention,
   ChatMessage,
   DiscoveryProposal,
   OracleExecutionContext,
@@ -133,7 +134,7 @@ export interface IOracleStore {
   undo(): Promise<void>;
   redo(): Promise<void>;
   sendMessage(content: string): Promise<void>;
-  ask(content: string): Promise<void>;
+  ask(content: string, mentions?: MessageMention[]): Promise<void>;
   drawEntity(entityId: string): Promise<void>;
   drawMessage(messageId: string): Promise<void>;
   generateEntityFromPrompt(

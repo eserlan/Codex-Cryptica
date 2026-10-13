@@ -10,7 +10,11 @@
   } from "$lib/app/onboarding/onboarding-orchestrator";
   import { journeyStore } from "$lib/app/onboarding/journey/journey-runtime";
   import { journeyMilestones } from "$lib/app/onboarding/journey/journey-milestones-runtime";
-  import { helpContext } from "$lib/stores/help-assistant/help-runtime";
+  import {
+    cifPopout,
+    helpAssistant,
+    helpContext,
+  } from "$lib/stores/help-assistant/help-runtime";
   import { helpHighlight } from "$lib/services/help-assistant/help-highlight.svelte";
   import { isHelpAssistantAvailable } from "$lib/services/help-assistant/help-availability";
   import { helpStore } from "$lib/stores/help.svelte";
@@ -18,8 +22,11 @@
   import { onboardingStore } from "$lib/stores/ui/onboarding.svelte";
   import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
+  import { tipsStore } from "$lib/app/onboarding/tips/tips-runtime";
   import GoalInvitation from "./GoalInvitation.svelte";
   import JourneyCard from "./JourneyCard.svelte";
+  import CifTipChip from "./CifTipChip.svelte";
+  import TipsOptIn from "./TipsOptIn.svelte";
 
   /**
    * Owns "what does a first-time user see first?" (#1780, spec 175): the
@@ -126,6 +133,41 @@
     }
   });
 
+  // Cif tips follow the screen, the switch and the blockers (spec 176). Nothing
+  // here runs on a timer: only these reactive inputs and focus changes.
+  $effect(() => {
+    void helpContext.current.area;
+    void tipsStore.enabled;
+    void onboardingStore.goalInvitation;
+    void onboardingStore.chosenGoal;
+    void journeyStore.setupEnded;
+    void helpStore.activeTour;
+    void modalUIStore.isAnyModalOpen;
+    void modalUIStore.showZenMode;
+    void onboardingStore.firstRunGuidanceActive;
+    void helpAssistant.isOpen;
+    void cifPopout.connected;
+    // The front page blocks tips until the person enters their world.
+    void onboardingStore.dismissedWorldPage;
+    void onboardingStore.skipWelcomeScreen;
+    void vault.isInitialized;
+    void vault.selectedEntityId;
+    untrack(() => tipsStore.evaluate());
+  });
+
+  // Typing or focus moves are blockers: check when focus moves in (hide a tip)
+  // and when it leaves (a tip that waited on this screen may now show).
+  onMount(() => {
+    const onIn = () => tipsStore.evaluate();
+    const onOut = () => tipsStore.reevaluate();
+    document.addEventListener("focusin", onIn);
+    document.addEventListener("focusout", onOut);
+    return () => {
+      document.removeEventListener("focusin", onIn);
+      document.removeEventListener("focusout", onOut);
+    };
+  });
+
   function choose(choice: InvitationChoice) {
     if (choice === "explore") {
       onboardingStore.resolveGoalInvitation("explore");
@@ -158,3 +200,18 @@
   store={journeyStore}
   highlightRect={() => helpHighlight.current?.rect ?? null}
 />
+
+{#if tipsStore.shouldAskOptIn}
+  <TipsOptIn
+    onYes={() => tipsStore.answerOptIn(true)}
+    onNo={() => tipsStore.closeOptIn()}
+  />
+{/if}
+
+{#if tipsStore.current}
+  <CifTipChip
+    label={tipsStore.current.label}
+    onAct={() => tipsStore.act()}
+    onDismiss={() => tipsStore.dismiss()}
+  />
+{/if}

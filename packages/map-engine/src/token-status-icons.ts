@@ -1,8 +1,10 @@
+import type { TokenShape } from "./render-token-overlays";
+
 const TAU = Math.PI * 2;
 
 export type TraceTokenShape = (
   ctx: CanvasRenderingContext2D,
-  shape: "circle" | "square",
+  shape: TokenShape,
   width: number,
   height: number,
 ) => void;
@@ -17,7 +19,7 @@ export function drawDeadOverlay(
   traceShape: TraceTokenShape,
   center: { x: number; y: number },
   rotation: number,
-  shape: "circle" | "square",
+  shape: TokenShape,
   width: number,
   height: number,
   radius: number,
@@ -188,7 +190,7 @@ export function drawStatusEffects(
   traceShape: TraceTokenShape,
   center: { x: number; y: number },
   rotation: number,
-  shape: "circle" | "square",
+  shape: TokenShape,
   width: number,
   height: number,
   radius: number,

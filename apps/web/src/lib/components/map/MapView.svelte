@@ -167,6 +167,7 @@
     ),
   );
 
+  // fallow-ignore-next-line complexity
   const vttTokens = $derived.by(() => {
     const isHost = mapStore.isGMMode;
     const peerId = mapSession.myPeerId;
@@ -188,6 +189,15 @@
       ) {
         result.push({
           ...token,
+          baseShape:
+            token.baseShape ??
+            (token.kind === "tile"
+              ? mapStore.gridType === "hex-flat"
+                ? "hex-flat"
+                : mapStore.gridType === "hex-pointy"
+                  ? "hex-pointy"
+                  : "square"
+              : undefined),
           // Tiles are terrain/room pieces, not combatants — no name label.
           label: token.kind === "tile" ? "" : token.name,
           // A collapsed note keeps its label: the name is all there is to

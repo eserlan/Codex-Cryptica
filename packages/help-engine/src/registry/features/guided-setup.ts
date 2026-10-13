@@ -21,10 +21,28 @@ export const guidedSetup: FeatureEntry = {
       ],
       actionIds: ["guided-setup.help"],
     },
+    {
+      id: "tips",
+      title: "Turn tips from Cif on or off",
+      steps: [
+        "Open Settings and choose the AI tab.",
+        "Turn on Show tips from Cif. It is off until you turn it on, and you are also asked once when guided setup ends.",
+        "Turn it off at any time. A tip you dismissed does not come back.",
+      ],
+      actionIds: ["guided-setup.tips-settings"],
+    },
   ],
   helpIds: ["guided-setup"],
   related: ["guided-mode", "graph-view"],
   actions: [
+    {
+      id: "guided-setup.tips-settings",
+      action: {
+        type: "openPanel",
+        panel: "settings-intelligence",
+        label: "Open AI settings",
+      },
+    },
     {
       id: "guided-setup.help",
       action: {

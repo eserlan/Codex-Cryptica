@@ -56,6 +56,7 @@ export interface ContextRetrievalService {
     vault: VaultMinimal,
     lastEntityId?: string,
     isImage?: boolean,
+    options?: { pinnedEntityIds?: string[] },
   ): Promise<{
     content: string;
     primaryEntityId?: string;
@@ -67,6 +68,8 @@ export interface ContextRetrievalService {
      */
     entries?: LoreContextEntry[];
     activeStyleTitle?: string;
+    /** No reliable match this turn; do not treat unrelated records as evidence. */
+    noRelevantMatch?: boolean;
   }>;
   getConsolidatedContext(
     entity: Entity,
@@ -75,6 +78,12 @@ export interface ContextRetrievalService {
 }
 
 export interface TextGenerationService {
+  /**
+   * Forgets the server-side Interactions API state for a conversation, so the
+   * next turn starts fresh and re-sends full lore. Optional: stateless
+   * implementations have nothing to forget.
+   */
+  resetConversation?(conversationId: string): void | Promise<void>;
   expandQuery(
     apiKey: string,
     query: string,

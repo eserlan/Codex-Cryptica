@@ -15,7 +15,7 @@ To explore the same entries as a network instead, choose **View as graph** at th
 
 ## Vault Audit
 
-Choose **Vault Audit** in the navigation to review entries missing a portrait, description or connection. The audit opens this table in a focused view; choose **Table** to return to the full list.
+Choose **Audit** in the table toolbar to review entries missing a portrait, description or connection. You can also open it from the **Vault Audit** workbench card on the Front Page. Toggle **Audit** again to return to the full table list.
 
 ## What each column shows
 

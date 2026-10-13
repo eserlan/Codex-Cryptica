@@ -66,6 +66,7 @@ export function createTokenSelectionDependencies(): TokenSelectionDependencies {
     addToSelection: (tokenId) => mapSession.addToSelection(tokenId),
     removeFromSelection: (tokenId) => mapSession.removeFromSelection(tokenId),
     setMultiSelection: (tokenIds) => mapSession.setMultiSelection(tokenIds),
+    getGridType: () => mapStore.gridType,
   };
 }
 

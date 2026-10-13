@@ -61,7 +61,6 @@ describe("nav items", () => {
         "adventure",
         "random",
         "generators",
-        "audit",
         "shelf",
         "quicknote",
         "session-journal",
@@ -82,7 +81,6 @@ describe("nav items", () => {
 
       const ids = navItems().map((i) => i.id);
 
-      expect(ids).not.toContain("audit");
       expect(ids).not.toContain("generators");
       expect(ids).not.toContain("shelf");
       expect(ids).not.toContain("quicknote");
@@ -126,30 +124,16 @@ describe("nav items", () => {
       expect(isViewActive(byId("table")!, "/table")).toBe(true);
     });
 
-    it("lights the audit slot when mode=audit is in search params, not the table slot", () => {
-      const audit = byId("audit")!;
+    it("lights the entity table for /table, including with query parameters like mode=audit", () => {
       const table = byId("table")!;
 
-      expect(
-        isViewActive(audit, { pathname: "/table", search: "?mode=audit" }),
-      ).toBe(true);
+      expect(byId("audit")).toBeUndefined();
       expect(
         isViewActive(table, { pathname: "/table", search: "?mode=audit" }),
-      ).toBe(false);
-
-      expect(isViewActive(audit, { pathname: "/table", search: "" })).toBe(
-        false,
-      );
+      ).toBe(true);
       expect(isViewActive(table, { pathname: "/table", search: "" })).toBe(
         true,
       );
-
-      expect(
-        isViewActive(audit, {
-          pathname: "/table",
-          search: "?filter=mode=audit",
-        }),
-      ).toBe(false);
       expect(
         isViewActive(table, {
           pathname: "/table",

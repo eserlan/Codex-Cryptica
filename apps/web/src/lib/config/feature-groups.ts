@@ -148,6 +148,7 @@ export const FEATURE_GROUPS: FeatureGroup[] = [
       "proposer-discovery",
       "draft-review",
       "oracle-connection-modes",
+      "oracle-mentions",
       "oracle-memory",
       "oracle-automation",
       "proactive-discovery",

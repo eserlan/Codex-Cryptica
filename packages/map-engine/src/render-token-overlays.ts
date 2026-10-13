@@ -1,5 +1,9 @@
 import { TOKEN_ROTATION_HANDLE_RADIUS } from "./token-geometry";
 import { TAU } from "./render-cache";
+import type { HexOrientation } from "./hex";
+
+export type TokenShape =
+  "circle" | "square" | "hex" | "hex-pointy" | "hex-flat";
 
 export function drawRoundedRectPath(
   ctx: CanvasRenderingContext2D,
@@ -18,17 +22,54 @@ export function drawRoundedRectPath(
   ctx.rect(x, y, width, height);
 }
 
+function traceHexCorners(
+  ctx: CanvasRenderingContext2D,
+  shape: "hex" | "hex-pointy" | "hex-flat",
+  width: number,
+  height: number,
+) {
+  const orientation: HexOrientation =
+    shape === "hex-flat"
+      ? "flat"
+      : shape === "hex-pointy"
+        ? "pointy"
+        : width > height
+          ? "flat"
+          : "pointy";
+  const radius = orientation === "flat" ? width / 2 : height / 2;
+  const halfRadius = radius / 2;
+  const halfWidth = (Math.sqrt(3) * radius) / 2;
+
+  if (orientation === "pointy") {
+    ctx.moveTo(halfWidth, halfRadius);
+    ctx.lineTo(0, radius);
+    ctx.lineTo(-halfWidth, halfRadius);
+    ctx.lineTo(-halfWidth, -halfRadius);
+    ctx.lineTo(0, -radius);
+    ctx.lineTo(halfWidth, -halfRadius);
+  } else {
+    ctx.moveTo(radius, 0);
+    ctx.lineTo(halfRadius, halfWidth);
+    ctx.lineTo(-halfRadius, halfWidth);
+    ctx.lineTo(-radius, 0);
+    ctx.lineTo(-halfRadius, -halfWidth);
+    ctx.lineTo(halfRadius, -halfWidth);
+  }
+}
+
 export function traceTokenShape(
   ctx: CanvasRenderingContext2D,
-  shape: "circle" | "square",
+  shape: TokenShape,
   width: number,
   height: number,
 ) {
   ctx.beginPath();
   if (shape === "square") {
     ctx.rect(-width / 2, -height / 2, width, height);
-  } else {
+  } else if (shape === "circle") {
     ctx.arc(0, 0, Math.min(width, height) / 2, 0, TAU);
+  } else {
+    traceHexCorners(ctx, shape, width, height);
   }
   ctx.closePath();
 }

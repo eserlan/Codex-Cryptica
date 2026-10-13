@@ -51,6 +51,21 @@ vi.mock("$lib/stores/ui/session-mode.svelte", () => ({
 vi.mock("$lib/stores/ui/modal-ui.svelte", () => ({ modalUIStore: h.modal }));
 vi.mock("$lib/stores/help-assistant/help-runtime", () => ({
   helpContext: { current: { area: "other" } },
+  helpAssistant: { isOpen: false },
+  cifPopout: { connected: false },
+}));
+vi.mock("$lib/app/onboarding/tips/tips-runtime", () => ({
+  tipsStore: {
+    enabled: false,
+    current: null,
+    shouldAskOptIn: false,
+    evaluate: () => {},
+    reevaluate: () => {},
+    answerOptIn: () => {},
+    closeOptIn: () => {},
+    act: () => {},
+    dismiss: () => {},
+  },
 }));
 vi.mock("$lib/services/help-assistant/help-highlight.svelte", () => ({
   helpHighlight: { current: null },
