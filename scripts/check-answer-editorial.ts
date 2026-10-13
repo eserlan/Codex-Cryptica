@@ -32,13 +32,32 @@ export const BASELINE_PATH = path.join(
  */
 export const FUTURE_DATE_GRACE_DAYS = 7;
 
+/**
+ * Products that compete with Codex Cryptica: virtual tabletops and campaign
+ * or world managers. Answers may name them when a reader needs to know, but
+ * must not link to them, so an Answer never sends readers to a competitor.
+ * Publishers, rulebook sellers and rules references are not listed. Add a
+ * domain here when a competitor appears; subdomains match automatically.
+ */
+export const COMPETITOR_DOMAINS: readonly string[] = [
+  "foundryvtt.com",
+  "roll20.net",
+  "fantasygrounds.com",
+  "owlbear.rodeo",
+  "worldanvil.com",
+  "kanka.io",
+  "legendkeeper.com",
+  "obsidianportal.com",
+];
+
 export type EditorialRule =
   | "prohibited-dash"
   | "emoji"
   | "blank-text"
   | "image-alt-missing"
   | "invalid-date"
-  | "future-date";
+  | "future-date"
+  | "competitor-link";
 
 export interface EditorialFinding {
   rule: EditorialRule;
@@ -98,23 +117,37 @@ export function collectProseFields(
   value: unknown,
   fieldPath = "",
 ): Array<{ field: string; value: string }> {
+  return collectStrings(value, fieldPath, NON_PROSE_KEYS);
+}
+
+/** Every string in the answer, metadata such as hrefs included. */
+function collectAllStrings(value: unknown) {
+  return collectStrings(value, "", new Set());
+}
+
+function collectStrings(
+  value: unknown,
+  fieldPath: string,
+  skipKeys: ReadonlySet<string>,
+): Array<{ field: string; value: string }> {
   if (typeof value === "string") return [{ field: fieldPath, value }];
-  return childEntries(value, fieldPath).flatMap(([childPath, child]) =>
-    collectProseFields(child, childPath),
+  return childEntries(value, fieldPath, skipKeys).flatMap(
+    ([childPath, child]) => collectStrings(child, childPath, skipKeys),
   );
 }
 
-/** Child values of an array or object with their field paths, skipping metadata. */
+/** Child values of an array or object with their field paths. */
 function childEntries(
   value: unknown,
   fieldPath: string,
+  skipKeys: ReadonlySet<string>,
 ): Array<[string, unknown]> {
   if (Array.isArray(value)) {
     return value.map((item, index) => [`${fieldPath}[${index}]`, item]);
   }
   if (!value || typeof value !== "object") return [];
   return Object.entries(value)
-    .filter(([key]) => !NON_PROSE_KEYS.has(key))
+    .filter(([key]) => !skipKeys.has(key))
     .map(([key, child]) => [fieldPath ? `${fieldPath}.${key}` : key, child]);
 }
 
@@ -239,6 +272,41 @@ function checkImageAlt({ slug, seo }: AnswerConfigInput): EditorialFinding[] {
   ];
 }
 
+// Lookahead so a URL nested inside another one (a redirect) is found too.
+const URL_IN_TEXT = /(?=(https?:\/\/[^\s)"'<>\]]+))/gi;
+
+/** The competitor a link points at, or undefined for any other host. */
+export function competitorOf(url: string): string | undefined {
+  let host: string;
+  try {
+    host = new URL(url).hostname.toLowerCase().replace(/\.$/, "");
+  } catch {
+    return undefined;
+  }
+  return COMPETITOR_DOMAINS.find(
+    (domain) => host === domain || host.endsWith(`.${domain}`),
+  );
+}
+
+function checkCompetitorLinks(answer: AnswerConfigInput): EditorialFinding[] {
+  return collectAllStrings(answer).flatMap(({ field, value }) =>
+    Array.from(value.matchAll(URL_IN_TEXT)).flatMap((match) => {
+      const competitor = competitorOf(match[1]);
+      if (!competitor) return [];
+      return [
+        {
+          rule: "competitor-link" as const,
+          severity: "error" as const,
+          slug: answer.slug,
+          field,
+          message: `Do not link to ${competitor}, a competing product. Name it in the text if the reader needs to know, and link to the publisher or rules source instead.`,
+          excerpt: excerptAround(value, match.index, match[1].length),
+        },
+      ];
+    }),
+  );
+}
+
 export function checkAnswer(
   answer: AnswerConfigInput,
   { asOf }: { asOf: string },
@@ -248,6 +316,7 @@ export function checkAnswer(
       checkProseField(answer.slug, field, value),
     ),
     ...checkImageAlt(answer),
+    ...checkCompetitorLinks(answer),
     ...checkPublishedAt(answer, asOf),
   ];
 }
