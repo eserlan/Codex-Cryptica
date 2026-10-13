@@ -453,6 +453,34 @@ describe("competitor links", () => {
     expect(findings).toHaveLength(1);
   });
 
+  test("catches a protocol-relative link, once, without flagging paths or comments", () => {
+    expect(competitorOf("//foundryvtt.com/packages/x")).toBe("foundryvtt.com");
+    const cta = competitorFindings(
+      cleanAnswer({
+        codexConnection: {
+          heading: "Keep going",
+          paragraphs: ["Text."],
+          linkText: "Open it",
+          href: "//foundryvtt.com/packages/example",
+        },
+      } as Partial<AnswerConfigInput>),
+    );
+    expect(cta.map((finding) => finding.field)).toEqual([
+      "codexConnection.href",
+    ]);
+    expect(
+      competitorFindings(withProse("See https://foundryvtt.com/x here.")),
+    ).toHaveLength(1);
+    expect(
+      competitorFindings(
+        withProse("Use a/b//c paths or a // foundryvtt.com comment."),
+      ),
+    ).toEqual([]);
+    expect(
+      competitorFindings(withProse("[x](//www.sjgames.com/gurps/)")),
+    ).toEqual([]);
+  });
+
   test("allows naming a competitor and linking publishers or rules sources", () => {
     expect(
       competitorFindings(
