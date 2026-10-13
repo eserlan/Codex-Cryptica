@@ -80,6 +80,21 @@ describe("Entity Schema Validation", () => {
     }
   });
 
+  it("should validate an entity with member_template", () => {
+    const factionEntity = {
+      id: "faction-1",
+      type: "faction",
+      title: "Iron Hand Syndicate",
+      member_template: "syndicate-operative",
+    };
+
+    const result = EntitySchema.safeParse(factionEntity);
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.member_template).toBe("syndicate-operative");
+    }
+  });
+
   it("should accept custom entity types (flexible categories)", () => {
     const customTypeEntity = {
       id: "artifact-1",

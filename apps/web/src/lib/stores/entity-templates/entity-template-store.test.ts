@@ -218,4 +218,147 @@ describe("EntityTemplateStore: read-only and failures", () => {
     const methods = Object.getOwnPropertyNames(Object.getPrototypeOf(store));
     expect(methods.join(" ")).not.toMatch(/entit(y|ies)(?!Template)/i);
   });
+
+  describe("archetypes & contextual resolution", () => {
+    it("templatesFor filters templates by entity type", async () => {
+      const repository = makeRepository({
+        loadAll: vi.fn().mockResolvedValue(
+          loaded({
+            templates: [
+              storedUser({
+                id: "guard",
+                name: "City Guard",
+                entityType: "character",
+              }),
+              storedUser({
+                id: "dungeon",
+                name: "Dungeon Outpost",
+                entityType: "location",
+              }),
+            ],
+          }),
+        ),
+      } as any);
+      const { store, vault } = makeStore({ repository });
+      await store.loadForVault("v1", { vault });
+
+      const characterTemplates = store.templatesFor("character");
+      expect(characterTemplates.some((t) => t.id === "guard")).toBe(true);
+      expect(
+        characterTemplates.every(
+          (t) => t.entityType.toLowerCase() === "character",
+        ),
+      ).toBe(true);
+      expect(characterTemplates.some((t) => t.id === "dungeon")).toBe(false);
+    });
+
+    it("resolveById returns markdown content for existing template or undefined for non-existing", async () => {
+      const repository = makeRepository({
+        loadAll: vi.fn().mockResolvedValue(
+          loaded({
+            templates: [
+              storedUser({
+                id: "guard",
+                name: "City Guard",
+                markdown: "## Duty Post\n",
+              }),
+            ],
+          }),
+        ),
+      } as any);
+      const { store, vault } = makeStore({ repository });
+      await store.loadForVault("v1", { vault });
+
+      expect(store.resolveById("guard")).toBe("## Duty Post\n");
+      expect(store.resolveById("non-existent")).toBeUndefined();
+    });
+
+    it("contextualTemplateFor matches parent member_template by ID or case-insensitive name", async () => {
+      const repository = makeRepository({
+        loadAll: vi.fn().mockResolvedValue(
+          loaded({
+            templates: [
+              storedUser({
+                id: "syndicate-op",
+                name: "Syndicate Operative",
+                entityType: "character",
+              }),
+            ],
+          }),
+        ),
+      } as any);
+      const { store, vault } = makeStore({ repository });
+      await store.loadForVault("v1", { vault });
+
+      // Match by exact ID
+      const byId = store.contextualTemplateFor("character", {
+        member_template: "syndicate-op",
+      });
+      expect(byId?.id).toBe("syndicate-op");
+
+      // Match by case-insensitive name
+      const byName = store.contextualTemplateFor("character", {
+        member_template: "syndicate operative",
+      });
+      expect(byName?.id).toBe("syndicate-op");
+
+      // Match from metadata property
+      const byMeta = store.contextualTemplateFor("character", {
+        metadata: { member_template: "Syndicate Operative" },
+      });
+      expect(byMeta?.id).toBe("syndicate-op");
+
+      // Negative: no match
+      const noMatch = store.contextualTemplateFor("character", {
+        member_template: "unknown-role",
+      });
+      expect(noMatch).toBeUndefined();
+
+      // Negative: undefined parent
+      expect(store.contextualTemplateFor("character", null)).toBeUndefined();
+    });
+
+    it("resolveContextual respects explicit templateId, then parent member_template, then default", async () => {
+      const repository = makeRepository({
+        loadAll: vi.fn().mockResolvedValue(
+          loaded({
+            templates: [
+              storedUser({
+                id: "guard",
+                name: "Guard",
+                markdown: "## Guard Body\n",
+              }),
+              storedUser({
+                id: "syndicate-op",
+                name: "Syndicate Op",
+                markdown: "## Syndicate Body\n",
+              }),
+            ],
+          }),
+        ),
+      } as any);
+      const { store, vault } = makeStore({ repository });
+      await store.loadForVault("v1", { vault });
+
+      // 1. Explicit templateId wins over parent member_template
+      const explicit = store.resolveContextual("character", {
+        templateId: "guard",
+        parentEntity: { member_template: "syndicate-op" },
+      });
+      expect(explicit).toBe("## Guard Body\n");
+
+      // 2. Parent member_template is used when templateId is not provided
+      const contextual = store.resolveContextual("character", {
+        parentEntity: { member_template: "syndicate-op" },
+      });
+      expect(contextual).toBe("## Syndicate Body\n");
+
+      // 3. Fallback to default when templateId is invalid and parent member_template is missing
+      const fallback = store.resolveContextual("character", {
+        templateId: "invalid-id",
+        parentEntity: { member_template: "non-existent" },
+      });
+      expect(fallback).toBe(GENERIC_TEMPLATES.character);
+    });
+  });
 });

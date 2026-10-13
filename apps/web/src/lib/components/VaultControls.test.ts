@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 
-import { render, screen } from "@testing-library/svelte";
+import { fireEvent, render, screen } from "@testing-library/svelte";
 import { describe, expect, it, vi, beforeEach } from "vitest";
 
 vi.mock("$lib/stores/vault.svelte", () => ({
@@ -15,7 +15,31 @@ vi.mock("$lib/stores/vault.svelte", () => ({
     isDirty: false,
     loadPhase: "idle",
     syncStats: { total: 0, progress: 0 },
+    createEntity: vi.fn(async () => "new-id"),
+    getActiveFolderHandle: vi.fn(async () => null),
+    getActiveVaultHandle: vi.fn(async () => null),
   },
+}));
+
+const mockEntityTemplateStore = vi.hoisted(() => ({
+  loaded: true,
+  templatesFor: vi.fn(() => [
+    {
+      id: "tmpl-char-default",
+      name: "Default Character",
+      entityType: "character",
+    },
+    {
+      id: "tmpl-char-operative",
+      name: "Syndicate Operative",
+      entityType: "character",
+    },
+  ]),
+  effectiveDefaultFor: vi.fn(() => "tmpl-char-default"),
+}));
+
+vi.mock("$lib/stores/entity-templates/entity-template-store.svelte", () => ({
+  entityTemplateStore: mockEntityTemplateStore,
 }));
 
 vi.mock("$lib/stores/categories.svelte", () => ({
@@ -89,10 +113,12 @@ vi.mock("$lib/stores/proposer.svelte", () => ({
 
 import VaultControls from "./VaultControls.svelte";
 import { guidedModeStore } from "$lib/stores/ui/guided-mode.svelte";
+import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
 
 describe("VaultControls", () => {
   beforeEach(() => {
     guidedModeStore.setGuidedMode(true);
+    modalUIStore.pendingCreateEntity = false;
   });
 
   it("hides the vault-actions/save cluster in Guided Mode", () => {
@@ -124,5 +150,43 @@ describe("VaultControls", () => {
     render(VaultControls);
 
     expect(screen.queryByTestId("new-entity-button")).toBeNull();
+  });
+
+  it("renders template archetype selector when multiple templates exist for new entity type", () => {
+    guidedModeStore.setGuidedMode(false);
+    modalUIStore.pendingCreateEntity = true;
+    render(VaultControls);
+
+    const templateSelect = screen.getByTestId(
+      "new-entity-template-select",
+    ) as HTMLSelectElement;
+    expect(templateSelect).toBeTruthy();
+    expect(templateSelect.value).toBe("tmpl-char-default");
+  });
+
+  it("passes selected templateId to entityTemplateService.resolveTemplate on entity creation", async () => {
+    const { entityTemplateService } =
+      await import("$lib/services/EntityTemplateService.svelte");
+    guidedModeStore.setGuidedMode(false);
+    modalUIStore.pendingCreateEntity = true;
+    render(VaultControls);
+
+    const titleInput = screen.getByTestId("new-entity-title-input");
+    await fireEvent.input(titleInput, { target: { value: "Bob Operative" } });
+
+    const templateSelect = screen.getByTestId("new-entity-template-select");
+    await fireEvent.change(templateSelect, {
+      target: { value: "tmpl-char-operative" },
+    });
+
+    const form = titleInput.closest("form")!;
+    await fireEvent.submit(form);
+
+    expect(entityTemplateService.resolveTemplate).toHaveBeenCalledWith(
+      "character",
+      "fantasy",
+      null,
+      { templateId: "tmpl-char-operative" },
+    );
   });
 });

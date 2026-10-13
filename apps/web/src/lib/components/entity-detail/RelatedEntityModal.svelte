@@ -8,6 +8,7 @@
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
   import { textGenerationService } from "@codex/ai-engine";
   import { entityTemplateService } from "$lib/services/EntityTemplateService.svelte";
+  import { entityTemplateStore } from "$lib/stores/entity-templates/entity-template-store.svelte";
   import { discoveryPolicyStore } from "$lib/stores/ui/discovery-policy.svelte";
   import type { ConnectedEntityPromptContext } from "schema";
   import DecorativeGlowFrame from "$lib/components/ui/DecorativeGlowFrame.svelte";
@@ -31,6 +32,32 @@
   let selectedRelationship = $state("related to");
   let customRelationship = $state("");
   let customInstructions = $state("");
+  let selectedTemplateId = $state<string | null>(null);
+
+  const availableTemplates = $derived(
+    targetType !== "Surprise Me" && entityTemplateStore.loaded
+      ? entityTemplateStore.templatesFor(targetType)
+      : [],
+  );
+
+  $effect(() => {
+    if (!isOpen || targetType === "Surprise Me") {
+      selectedTemplateId = null;
+      return;
+    }
+    const contextual = entityTemplateStore.contextualTemplateFor(
+      targetType,
+      sourceEntity,
+    );
+    if (contextual) {
+      selectedTemplateId = contextual.id;
+      return;
+    }
+    selectedTemplateId =
+      entityTemplateStore.effectiveDefaultFor(targetType) ??
+      availableTemplates[0]?.id ??
+      null;
+  });
 
   // Wizard Stages: 'configure' | 'loading' | 'review'
   let stage = $state<"configure" | "loading" | "review">("configure");
@@ -184,7 +211,12 @@
       // Resolve layout templates to pass down structures
       const templateOutline =
         targetType !== "Surprise Me"
-          ? await entityTemplateService.resolveTemplate(targetType)
+          ? await entityTemplateService.resolveTemplate(
+              targetType,
+              undefined,
+              undefined,
+              { templateId: selectedTemplateId, parentEntity: sourceEntity },
+            )
           : "";
 
       loadingStatus = "Generating related entity...";
@@ -297,6 +329,7 @@
   }
 </script>
 
+<!-- fallow-ignore-next-line complexity -->
 <svelte:window onkeydown={handleKeydown} />
 
 {#if isOpen}
@@ -409,6 +442,33 @@
                   <option value="Surprise Me">🎲 Surprise Me</option>
                 </select>
               </div>
+
+              {#if targetType !== "Surprise Me" && availableTemplates.length > 1}
+                <!-- Template / Archetype Selector -->
+                <div class="flex flex-col gap-2">
+                  <label
+                    for="target-template"
+                    class="text-xs font-bold uppercase tracking-wider text-theme-text"
+                  >
+                    Template / Archetype
+                  </label>
+                  <select
+                    id="target-template"
+                    bind:value={selectedTemplateId}
+                    data-testid="related-entity-template-select"
+                    class="w-full rounded-xl border border-theme-border bg-theme-bg px-4 py-3 text-sm text-theme-text focus:outline-none focus:border-theme-primary"
+                  >
+                    {#each availableTemplates as t}
+                      <option value={t.id}>
+                        {t.name}{t.id ===
+                        entityTemplateStore.effectiveDefaultFor(targetType)
+                          ? " (Default)"
+                          : ""}
+                      </option>
+                    {/each}
+                  </select>
+                </div>
+              {/if}
 
               <!-- Relationship Selector -->
               <div class="flex flex-col gap-2">
