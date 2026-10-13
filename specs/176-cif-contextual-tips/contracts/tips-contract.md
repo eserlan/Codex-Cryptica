@@ -22,10 +22,11 @@ Guarantees: no function reads the clock, storage, the DOM or the network. `decid
 
 ## 2. Storage
 
-| Key                      | Store            | Value             | Written when              |
-| ------------------------ | ---------------- | ----------------- | ------------------------- |
-| `codex-cif-tips`         | `localStorage`   | `TipsRecord` JSON | Any change to the record. |
-| `codex-cif-tips-session` | `sessionStorage` | `"1"`             | A tip is shown.           |
+| Key                      | Store            | Value               | Written when                                    |
+| ------------------------ | ---------------- | ------------------- | ----------------------------------------------- |
+| `codex-cif-tips`         | `localStorage`   | `TipsRecord` JSON   | Any change to the record.                       |
+| `codex-cif-tips-session` | `sessionStorage` | `"1"`               | A tip is shown.                                 |
+| `codex-cif-tips-probe`   | `localStorage`   | `"1"`, then removed | Just before a tip shows, to confirm saves land. |
 
 Neither key is part of a vault, exported, synced or sent anywhere.
 
