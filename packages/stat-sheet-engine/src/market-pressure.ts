@@ -82,7 +82,7 @@ export type SkipReason =
 
 const SKIP_TEXT: Record<SkipReason, string> = {
   "no-price": "Has no price to change.",
-  "no-quantity": "A service has no quantity to change.",
+  "no-quantity": "Has no counted quantity to change.",
   "unsafe-price": "The new price is too large to store exactly.",
   "unsafe-quantity": "The new quantity is too large to store exactly.",
   "no-change": "Nothing would change.",
@@ -160,7 +160,10 @@ function quantityStep(
   quantity: PressureEffect["quantity"],
 ): { shift?: MarketRowChange["quantity"]; reason?: string; skip?: SkipReason } {
   if (!quantity) return {};
-  if (stock.kind === "service" || stock.kind === "commission") {
+  // A line with no quantity is not counted at all, so there is nothing to
+  // change, and undoing could not tell "none" from "zero".
+  const untracked = stock.quantity === undefined;
+  if (untracked || stock.kind === "service" || stock.kind === "commission") {
     return { skip: "no-quantity" };
   }
   const before = stock.quantity ?? 0;
