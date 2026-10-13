@@ -1,6 +1,7 @@
 /** @vitest-environment jsdom */
 
-import { render, screen, fireEvent, waitFor } from "@testing-library/svelte";
+import { render, screen, fireEvent } from "@testing-library/svelte";
+import { tick } from "svelte";
 import { SvelteURL } from "svelte/reactivity";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { Entity } from "schema";
@@ -53,10 +54,6 @@ function entity(
 
 const mutableVault = vault as unknown as MutableVaultMock;
 
-async function openAuditPanel() {
-  await fireEvent.click(screen.getByTestId("entity-table-audit-toggle"));
-}
-
 describe("/table page", () => {
   beforeEach(() => {
     mockPage.url = new URL("http://localhost/table");
@@ -70,6 +67,23 @@ describe("/table page", () => {
     explorerUIStore.clearLabelFilters();
     vi.clearAllMocks();
   });
+
+  const openAuditPanel = async () => {
+    await fireEvent.click(screen.getByTestId("entity-table-audit-toggle"));
+  };
+
+  const applySearchAndSummaryColumnFilter = async () => {
+    await fireEvent.input(
+      screen.getByRole("combobox", { name: "Search entities" }),
+      {
+        target: { value: "Al" },
+      },
+    );
+    await fireEvent.click(screen.getByTestId("column-filter-btn-summary"));
+    await fireEvent.click(
+      screen.getByRole("menuitem", { name: "Missing summary" }),
+    );
+  };
 
   it("shows a loading state until the vault is initialized", () => {
     mutableVault.isInitialized = false;
@@ -151,7 +165,7 @@ describe("/table page", () => {
   });
 
   it("opens VaultAuditPanel automatically when URL has ?mode=audit", () => {
-    mockPage.url = new SvelteURL("http://localhost/table?mode=audit");
+    mockPage.url = new URL("http://localhost/table?mode=audit");
     mutableVault.allEntities = [
       entity({ id: "e1", title: "Aldric", type: "character", image: "" }),
       entity({ id: "e2", title: "Brindlewood", type: "location" }),
@@ -166,19 +180,6 @@ describe("/table page", () => {
     expect(
       screen.getByText("Missing summary, labels, or connections"),
     ).toBeTruthy();
-  });
-
-  it("closes VaultAuditPanel when the audit query is removed", async () => {
-    mockPage.url = new SvelteURL("http://localhost/table?mode=audit");
-    mutableVault.allEntities = [entity({ id: "e1", title: "Aldric" })];
-    render(RoutePage);
-
-    expect(screen.getByTestId("vault-audit-panel")).toBeTruthy();
-    mockPage.url.search = "";
-
-    await waitFor(() => {
-      expect(screen.queryByTestId("vault-audit-panel")).toBeNull();
-    });
   });
 
   it("toggles VaultAuditPanel via the desktop audit button", async () => {
@@ -240,6 +241,174 @@ describe("/table page", () => {
     const rows = screen.getAllByTestId("entity-table-row");
     expect(rows).toHaveLength(1);
     expect(rows[0].textContent).toContain("Aldric");
+  });
+
+  it("opens VaultAuditPanel with distribution tab when URL has ?mode=overview", () => {
+    mockPage.url = new URL("http://localhost/table?mode=overview");
+    mutableVault.allEntities = [
+      entity({ id: "e1", title: "Aldric", type: "character" }),
+      entity({ id: "e2", title: "Brindlewood", type: "location" }),
+    ];
+    render(RoutePage);
+
+    expect(screen.getByTestId("vault-audit-panel")).toBeTruthy();
+    expect(screen.getByTestId("vault-distribution-chart")).toBeTruthy();
+  });
+
+  it("closes and resets VaultAuditPanel when its URL mode is removed", async () => {
+    mockPage.url = new SvelteURL("http://localhost/table?mode=overview");
+    mutableVault.allEntities = [
+      entity({ id: "e1", title: "Aldric", type: "character" }),
+    ];
+    render(RoutePage);
+
+    expect(screen.getByTestId("vault-distribution-chart")).toBeTruthy();
+
+    mockPage.url.searchParams.delete("mode");
+    await tick();
+
+    expect(screen.queryByTestId("vault-audit-panel")).toBeNull();
+
+    await fireEvent.click(screen.getByTestId("entity-table-audit-toggle"));
+    expect(screen.getByTestId("audit-card-missing-images")).toBeTruthy();
+  });
+
+  it("switches between findings and distribution tabs inside VaultAuditPanel", async () => {
+    mutableVault.allEntities = [
+      entity({ id: "e1", title: "Aldric", type: "character" }),
+      entity({ id: "e2", title: "Brindlewood", type: "location" }),
+    ];
+    render(RoutePage);
+
+    const auditBtn = screen.getByTestId("entity-table-audit-toggle");
+    await fireEvent.click(auditBtn);
+
+    // Starts in findings tab
+    expect(screen.getByTestId("audit-card-missing-images")).toBeTruthy();
+
+    // Click distribution tab
+    const distTab = screen.getByTestId("audit-tab-distribution");
+    await fireEvent.click(distTab);
+
+    expect(screen.getByTestId("vault-distribution-chart")).toBeTruthy();
+    expect(screen.queryByTestId("audit-card-missing-images")).toBeNull();
+
+    // Switch back to findings tab
+    const findingsTab = screen.getByTestId("audit-tab-findings");
+    await fireEvent.click(findingsTab);
+
+    expect(screen.getByTestId("audit-card-missing-images")).toBeTruthy();
+    expect(findingsTab.getAttribute("aria-controls")).toBe("audit-panel");
+    expect(screen.getByRole("tabpanel").getAttribute("aria-labelledby")).toBe(
+      findingsTab.id,
+    );
+
+    await fireEvent.keyDown(findingsTab, { key: "ArrowRight" });
+    expect(distTab.getAttribute("aria-selected")).toBe("true");
+    expect(distTab.getAttribute("tabindex")).toBe("0");
+    expect(document.activeElement).toBe(distTab);
+  });
+
+  it("filters table entities when clicking a distribution category bar", async () => {
+    mockPage.url = new URL("http://localhost/table?mode=overview");
+    mutableVault.allEntities = [
+      entity({ id: "e1", title: "Aldric", type: "character" }),
+      entity({
+        id: "e2",
+        title: "Alaric",
+        type: "character",
+        content: "Has a summary",
+      }),
+      entity({ id: "e3", title: "Albrook", type: "location" }),
+    ];
+    render(RoutePage);
+
+    await applySearchAndSummaryColumnFilter();
+    expect(screen.getAllByTestId("entity-table-row")).toHaveLength(2);
+
+    const charBar = screen.getByTestId("distribution-bar-character");
+    await fireEvent.click(charBar);
+
+    const rows = screen.getAllByTestId("entity-table-row");
+    expect(rows).toHaveLength(1);
+    expect(rows[0].textContent).toContain("Aldric");
+    expect(
+      (
+        screen.getByRole("combobox", {
+          name: "Search entities",
+        }) as HTMLInputElement
+      ).value,
+    ).toBe("Al");
+  });
+
+  it("filters table entities when clicking a distribution label bar", async () => {
+    mockPage.url = new URL("http://localhost/table?mode=overview");
+    mutableVault.allEntities = [
+      entity({
+        id: "e1",
+        title: "Aldric",
+        type: "character",
+        labels: ["Hero"],
+      }),
+      entity({
+        id: "e3",
+        title: "Alaric",
+        type: "character",
+        labels: ["Hero"],
+        content: "Has a summary",
+      }),
+      entity({
+        id: "e2",
+        title: "Albrook",
+        type: "location",
+        labels: ["Place"],
+      }),
+    ];
+    render(RoutePage);
+
+    await applySearchAndSummaryColumnFilter();
+    expect(screen.getAllByTestId("entity-table-row")).toHaveLength(2);
+
+    // Switch to By Label
+    const labelGroupBtn = screen.getByTestId("distribution-group-label");
+    await fireEvent.click(labelGroupBtn);
+
+    const heroBar = screen.getByTestId("distribution-bar-label:Hero");
+    await fireEvent.click(heroBar);
+
+    const rows = screen.getAllByTestId("entity-table-row");
+    expect(rows).toHaveLength(1);
+    expect(rows[0].textContent).toContain("Aldric");
+    expect(
+      (
+        screen.getByRole("combobox", {
+          name: "Search entities",
+        }) as HTMLInputElement
+      ).value,
+    ).toBe("Al");
+  });
+
+  it("clears an active label filter when drilling down to unlabelled entities", async () => {
+    mockPage.url = new URL("http://localhost/table?mode=overview");
+    mutableVault.allEntities = [
+      entity({ id: "e1", title: "Unlabelled", labels: [] }),
+      entity({ id: "e2", title: "Labelled", labels: ["reviewed"] }),
+    ];
+    render(RoutePage);
+
+    await fireEvent.click(screen.getByTestId("distribution-group-label"));
+    await fireEvent.click(
+      screen.getByTestId("distribution-bar-label:reviewed"),
+    );
+    expect(screen.getAllByTestId("entity-table-row")).toHaveLength(1);
+
+    await fireEvent.click(
+      screen.getByTestId("distribution-bar-synthetic:unlabelled"),
+    );
+
+    const rows = screen.getAllByTestId("entity-table-row");
+    expect(rows).toHaveLength(1);
+    expect(rows[0].textContent).toContain("Unlabelled");
   });
 
   it("applies the unconnected characters preset to the table rows", async () => {
