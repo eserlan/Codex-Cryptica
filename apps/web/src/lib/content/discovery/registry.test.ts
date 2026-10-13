@@ -552,6 +552,24 @@ describe("the committed registry", () => {
     }
   });
 
+  it("records mutual scope between the broad system chooser and classless fantasy answer", () => {
+    const systemSelection = registry.find(
+      (entry) => entry.id === "answer-system-selection",
+    );
+    const classlessFantasy = registry.find(
+      (entry) => entry.id === "answer-classless-fantasy-skill-progression",
+    );
+
+    expect(systemSelection?.acknowledgedOverlap).toContainEqual({
+      with: "answer-classless-fantasy-skill-progression",
+      reason: expect.stringContaining("broad play-style and genre chooser"),
+    });
+    expect(classlessFantasy?.acknowledgedOverlap).toContainEqual({
+      with: "answer-system-selection",
+      reason: expect.stringContaining("skill-driven advancement"),
+    });
+  });
+
   it("records the distinct scope of sci-fi team roles and investigator guidance", () => {
     const sciFiCrew = registry.find(
       (entry) => entry.id === "answer-sci-fi-character-roles",

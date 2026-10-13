@@ -205,6 +205,7 @@ export const whatRpgSystemIsGoodForSoloPlay: AnswerConfigInput = {
     "can-you-play-a-tabletop-rpg-in-30-minute-sessions",
     "what-rpg-feels-like-dnd-but-is-simpler",
     "what-ttrpgs-let-you-build-and-upgrade-a-base",
+    "what-are-the-best-classless-fantasy-rpgs-with-skill-based-progression",
   ],
   discovery: {
     id: "answer-solo-rpg-system-selection",

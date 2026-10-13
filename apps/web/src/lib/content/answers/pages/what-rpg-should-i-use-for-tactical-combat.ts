@@ -178,6 +178,7 @@ export const whatRpgShouldIUseForTacticalCombat: AnswerConfigInput = {
     "how-do-i-run-a-large-battle-when-the-player-characters-are-part-of-an-army",
     "how-do-i-combine-multiple-enemies-into-one-squad-in-an-rpg",
     "which-tabletop-rpgs-have-squad-and-mass-battle-rules",
+    "what-are-the-best-classless-fantasy-rpgs-with-skill-based-progression",
   ],
   discovery: {
     id: "answer-tactical-combat-system-selection",
