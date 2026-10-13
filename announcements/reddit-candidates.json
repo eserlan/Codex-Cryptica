@@ -1,16 +1,6 @@
 {
-  "updated_at": 1791795764,
+  "updated_at": 1791886454,
   "candidates": [
-    {
-      "id": "reddit-37903304382-my-harbour-town-vault-kept-getting-sunny",
-      "title": "My harbour town vault kept getting sunny heist ideas",
-      "body": "I like the Adventure Idea generator for cold starts, but the suggestions did not match the vault I was actually running. A grim coastal vault would get a bright caper, or vice versa.\n\nI made the Adventure Idea generator respect the vault theme when it picks types and tones.\n\nThe generator is already where it was, under the campaign generators. No new page to learn, it just filters differently now.\n\nWhat it does:\n- reads the vault theme and narrows adventure types to ones that fit that world\n- adjusts tone so a horror vault leans tense and a cosy vault leans lighter\n- keeps variety inside the theme rather than pulling from the whole pool equally\n- falls back to generic options when no theme is set, so it still works on a blank vault\n\nIt is a filter, not a full rewrite of the prompts, so a weird cross-genre idea can still slip through if the vault only hints at tone.\n\nDoes your current vault have a strong theme or are you still mixing ideas, and what kind of adventure would actually fit it next?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/screenshots/generator-adventure-idea-generator.jpg)",
-      "url": "https://codexcryptica.com/generators/adventure-idea-generator",
-      "image_url": "https://assets.codexcryptica.com/screenshots/generator-adventure-idea-generator.jpg",
-      "source_id": "37903304382",
-      "status": "approved",
-      "created_at": 1791540603
-    },
     {
       "id": "reddit-38045827408-how-i-plan-story-arcs-that-actually-pay-",
       "title": "How I plan story arcs that actually pay off over a long campaign",
