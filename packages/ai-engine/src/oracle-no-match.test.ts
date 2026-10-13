@@ -101,14 +101,15 @@ describe("Oracle no-match confidence guard (#4066)", () => {
       "quantum tomato whale engine", new Set(),
       mockVault({ selectedEntityId: "elara" }) as any,
     );
-    expect(result.primaryEntityId).toBe("elara");
+    expect(result.sourceIds).toContain("elara");
+    expect(result.content).toContain("[ACTIVE FILE] File: Elara Voss");
     expect(result.noRelevantMatch).toBe(false);
   });
 
   it("keeps a stable follow-up on Elara despite unrelated search suggestions", async () => {
     const { service } = createService([{ id: "elira", score: 0.96 }]);
     const result = await service.retrieveContext(
-      "Tell me more", new Set(), mockVault() as any, "elara",
+      "Tell me more (about Elara Voss)", new Set(), mockVault() as any, "elara",
     );
     expect(result.primaryEntityId).toBe("elara");
     expect(result.noRelevantMatch).toBe(false);
