@@ -34,7 +34,7 @@ export const howDoIGetMyFriendsInterestedInPlayingDnd: AnswerConfigInput = {
         },
         {
           term: "Remove required homework",
-          text: "Explain the basic loop at the table: the DM describes the situation, the players say what they try, the DM asks for a roll when the outcome is uncertain, then describes what happens. Have pre-generated characters or a quick-start sheet ready. Videos and a favourite actual-play series can be optional inspiration; if someone wants a preview, share the [D&D beginner guide](/topics/dnd-beginners) as further help, not homework.",
+          text: "Explain the basic loop at the table: the DM describes the situation, the players say what they try, the DM asks for a roll when the outcome is uncertain, then describes what happens. Have pre-generated characters or a quick-start sheet ready. Videos and a favourite actual-play series can be optional inspiration; if someone wants a preview, share the D&D beginner guide as further help, not homework.",
         },
         {
           term: "Treat actual-play as inspiration, not a standard",
@@ -117,6 +117,14 @@ export const howDoIGetMyFriendsInterestedInPlayingDnd: AnswerConfigInput = {
       description:
         "Create a friendly first-session contact with a clear want, without writing a full cast.",
       href: "/generators/npc",
+    },
+  ],
+  relatedTopics: [
+    {
+      title: "D&D for Beginners",
+      description:
+        "Share the beginner learning path as optional preparation for friends who want a preview before their first game.",
+      href: "/topics/dnd-beginners",
     },
   ],
   relatedForPages: [
