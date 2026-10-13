@@ -9,13 +9,13 @@ export const whatAreTheBestClasslessFantasyRpgsWithSkillBasedProgression: Answer
       "What are the best classless fantasy RPGs with skill-based progression?",
     kind: "comparison",
     shortAnswer:
-      "For a group leaving Warhammer Fantasy Roleplay 4e, Mythras is the closest fit for classless skill growth with a resource that can both reroll and downgrade a major wound; GURPS offers point-buy growth if the GM wants to tune the rules package. Dragonbane is a lighter, profession-framed option whose push rerolls cost a condition but do not protect a character from death. Savage Worlds has no fixed classes, but its Rank-based Advances gate Edges. Against the Darkmaster is a vocation-and-level mismatch; check Symbaroum’s core rules before ranking its advancement for this brief.",
+      "For a group leaving Warhammer Fantasy Roleplay 4e, Mythras and GURPS are conditional candidates; neither is a verified winner. Mythras offers classless skill improvement and session-refreshing Luck that can downgrade a Major Wound, but its injury rules can still maim or kill. GURPS offers classless point-buy and a limited reroll, while injury, resurrection, and campaign pace depend on the chosen rules package. Verify those trade-offs and the Foundry functions you need before choosing. Dragonbane is a lighter, profession-framed option whose push rerolls cost a condition but do not protect a character from death. Savage Worlds has no fixed classes, but its Rank-based Advances gate Edges. Against the Darkmaster is a vocation-and-level mismatch; check Symbaroum’s core rules before ranking its advancement for this brief.",
     sections: [
       {
         kind: "prose",
         heading: "Start with the constraints",
         paragraphs: [
-          "For a group leaving WFRP 4e, “Shadowrun but fantasy” means player-directed skill growth, room to develop over a long campaign, dangerous combat without routine random maiming, and a clear answer to whether luck can reroll a test or mitigate a lethal consequence. Check the chosen edition’s injury and resurrection rules, and Foundry compatibility with your installed version, before ranking preferences.",
+          "For a group leaving WFRP 4e, “Shadowrun but fantasy” means player-directed skill growth, room to develop over a long campaign, dangerous combat without routine random lasting maiming, a meaningful luck or fate safety net, rare resurrection, and working Foundry support. Treat these as hard filters before comparing tone or speed. Check the selected rules configuration’s injury and resurrection rules, progression pace, resource limits and refresh, and the exact Foundry release and functions you need.",
         ],
       },
       {
@@ -25,25 +25,25 @@ export const whatAreTheBestClasslessFantasyRpgsWithSkillBasedProgression: Answer
           "System",
           "Advancement and campaign growth",
           "Harm and safety net",
-          "Foundry VTT snapshot and content",
+          "Foundry VTT snapshot (checked 13 October 2026) and content",
         ],
         rows: [
           [
             "Mythras",
-            "Classless, with no character levels. Skill improvement uses experience rolls; cultures and careers shape starting skills. For a long campaign, check its award rate and improvement limits.",
-            "The free [publisher Mythras Imperative rules](https://thedesignmechanism.com/mythras-imperative/) distinguish rerolls from mitigation: Luck can reroll and downgrade a Major Wound to a Serious Wound. This is not a general death save. Check the full rules for injury, healing, and Luck refresh timing.",
+            "Classless, with no character levels. Experience Rolls improve chosen skills; higher skills improve more slowly, and a new Professional skill requires a teacher, a month of study, and three rolls. The GM sets awards, so this supports directed growth but does not establish multi-year campaign headroom.",
+            "In the free introductory Mythras Imperative rules, Luck Points refresh at the start of each session; one point can reroll dice just rolled, force a reroll of an attack or damage roll that hit, or downgrade a Major Wound to Serious. Major Wounds can still maim or kill, and untreated injuries may leave permanent damage. Check the full Mythras rules and agree the injury risk before treating it as a match.",
             "[Community implementation](https://foundryvtt.com/packages/mythras), v2.3.0, Foundry 11+ (verified 13). The listing does not enumerate sheet or automation coverage. [Mythras Imperative](https://thedesignmechanism.com/mythras-imperative/) is free; the full [Mythras rules](https://thedesignmechanism.com/mythras/) are a separate purchase.",
           ],
           [
             "GURPS 4e",
             "Classless point-buy; earned character points buy eligible traits and skills subject to prerequisites. Ordinary skill costs depend on difficulty and relative level, not a rising cost for every +1; above the relevant threshold, each additional level costs 4 points. See the [SJ Games conversion table](https://www.sjgames.com/gurps/resources/4eupdate.pdf) and [official FAQ](https://www.sjgames.com/gurps/faq/FAQ4-3.html). Award rate and available options control the pace and remaining choices.",
-            "Injury severity, luck advantages, and resurrection depend on the selected rules and setting. Choose those rules explicitly; the basic game does not impose one universal fate pool or fantasy death policy.",
+            "The [GURPS Lite rules](https://www.sjgames.com/gurps/lite/) give Luck a limited reroll (once per hour of play); it does not itself reduce injury. The selected Basic Set options and supplements determine injury, crippling, death, and resurrection, so verify a named fantasy configuration against the group’s safety requirements.",
             "[Unofficial GURPS 4e Game Aid](https://foundryvtt.com/packages/gurps), v0.18.23, Foundry 13 to 14 (verified 14.367). Its [guide](https://docs.google.com/document/d/1NMBPt9KhA9aGG1_kZxyk8ncuOKhz9Z6o7vPS8JcjdWc/edit) documents character and combat aids, including hit locations and active defences. It contains no paid-book rules; use the GURPS books or PDFs you choose.",
           ],
           [
             "Savage Worlds Adventure Edition + Fantasy Companion",
             "There are no fixed classes, but this is not unrestricted point-buy: characters take Advances, and Rank gates Edges. Skills, Attributes, prerequisites, and Rank each affect what an Advance can buy. Long-campaign fit depends on the pace and which later Edges remain available.",
-            "Bennies are a spendable resource. Check the current SWADE rules for permitted rerolls, Soak use, limits, and refresh. The Fantasy Companion is a separate paid supplement, not content supplied by the core Foundry system.",
+            "SWADE uses Bennies, but verify in the current core rules which rerolls and Soak options are available, their limits, and how Bennies refresh before counting them as survival protection. The Fantasy Companion is a separate paid supplement, not content supplied by the core Foundry system.",
             "[Official system](https://foundryvtt.com/packages/swade): v6.0.4, Foundry 14 (verified 14); v5.2.6 is listed for Foundry 13 (verified 13). Its package page identifies the official system but does not detail automation coverage. Buy the [Fantasy Companion](https://peginc.com/campaign/fantasy_swade/) separately for its fantasy rules; the [Foundry VTT edition](https://peginc.com/savage-settings/savage-worlds/) is a separate product.",
           ],
           [
@@ -62,7 +62,7 @@ export const whatAreTheBestClasslessFantasyRpgsWithSkillBasedProgression: Answer
             "Against the Darkmaster",
             "Not a qualifying classless match: characters gain levels, and vocations set development points per skill category per level, restrict where those points can be spent, and determine spell access. Ordinary skill ranks cost 1 development point each; high ranks do not cost more. This is a vocation-and-level mismatch, not unrestricted skill-point advancement. See the [publisher SRD](https://srd.vsdarkmaster.com/) and [Vocations](https://srd.vsdarkmaster.com/character-vocations.html).",
             "I could not verify edition-specific Drive, injury, and resurrection claims beyond those SRD pages, so check the core rules before comparing its survival mechanics.",
-            "[Official system](https://foundryvtt.com/packages/vsd), v12.290, Foundry 9 to 12 (verified 12); it is not a community system. The separate [paid core content module](https://foundryvtt.com/packages/vsd-core) adds rules journals, actor templates, tables, and macros. The listing does not establish compatibility with Foundry 13 or 14.",
+            "[Official system](https://foundryvtt.com/packages/vsd), v12.290, targets Foundry 12 (verified 12); it is not a community system. Earlier package releases targeted earlier Foundry generations; that package history does not make v12.290 compatible with them. The separate [paid core content module](https://foundryvtt.com/packages/vsd-core) adds rules journals, actor templates, tables, and macros. The listing does not establish compatibility with Foundry 13 or 14.",
           ],
         ],
       },
@@ -70,16 +70,12 @@ export const whatAreTheBestClasslessFantasyRpgsWithSkillBasedProgression: Answer
         kind: "example",
         heading: "A decision for the WFRP 4e group",
         paragraphs: [
-          "Suppose the group uses Foundry 13 and requires classless skill growth, a resource that can mitigate a lethal wound, and no assumption of routine resurrection. It checks rules and package listings before ranking tone or speed.",
+          "The group uses Foundry 13 and makes classless skill growth, no routine random lasting maiming, a useful survival resource, rare resurrection, and multi-year growth hard filters. It checks both finalists against the same list before comparing tone or speed.",
         ],
         items: [
           {
-            term: "Choose Mythras, with one accepted compromise",
-            text: "The group compares Mythras with GURPS. Both allow classless skill growth, but of these two only the Mythras rules it checked provide the required resource: Luck can reroll and downgrade a Major Wound to a Serious Wound. It checks its chosen low-magic rules for routine resurrection and Foundry 13 compatibility, then picks Mythras, accepting hit-location combat and a community Foundry system whose listing does not promise specific sheet or automation coverage. The listing is v2.3.0, verified for Foundry 13; the group tests the procedures it needs before committing.",
-          },
-          {
-            term: "Why it works",
-            text: "Mythras meets this group's stated priorities: classless skill growth, a Luck Point that can reroll and downgrade a Major Wound, and a ruleset the group can check for routine resurrection. They accept hit-location combat and test the community Foundry system's needed procedures because its listing does not promise specific sheet or automation coverage.",
+            term: "Keep Mythras and GURPS conditional",
+            text: "Both pass the classless-growth filter: Mythras improves chosen skills with Experience Rolls, while GURPS buys eligible skills with character points. Mythras Luck refreshes each session and can downgrade a Major Wound, but its rules still allow random location injuries to maim or kill. That filter remains unresolved unless the group accepts this risk or agrees an injury house rule. GURPS Luck rerolls a bad roll once per hour but does not reduce injury; the chosen fantasy configuration’s crippling, resurrection, and long-campaign pace remain unchecked. Both list packages compatible with Foundry 13, but neither listing verifies the procedures this group needs. Neither candidate clears every hard filter yet; verify injury policy, resurrection assumptions, campaign advancement pace, and needed sheets or automation before choosing.",
           },
         ],
       },
@@ -100,7 +96,7 @@ export const whatAreTheBestClasslessFantasyRpgsWithSkillBasedProgression: Answer
       {
         system: "Mythras",
         rationale:
-          "Classless skill improvement through experience rolls with Luck Points that can mitigate lethal results.",
+          "Classless skill improvement through Experience Rolls and session-refreshing Luck Points; Major Wounds can still maim or kill.",
         href: "https://thedesignmechanism.com/mythras",
       },
       {
@@ -112,13 +108,13 @@ export const whatAreTheBestClasslessFantasyRpgsWithSkillBasedProgression: Answer
       {
         system: "Savage Worlds",
         rationale:
-          "Bennies that reroll tests and soak Wounds, providing the most explicit fate-style safety net in this comparison.",
+          "Bennies are spendable; verify SWADE's reroll and Soak limits and refresh before counting them as injury protection.",
         href: "https://peginc.com/savage-worlds/",
       },
       {
         system: "GURPS",
         rationale:
-          "Point-buy character building where fantasy tone, injury detail, and resurrection are set by chosen campaign switches.",
+          "Point-buy growth with Luck as a limited reroll; injury, crippling, and resurrection depend on the chosen rules configuration.",
         href: "https://www.sjgames.com/gurps/",
       },
     ],
