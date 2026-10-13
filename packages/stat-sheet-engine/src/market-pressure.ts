@@ -72,16 +72,19 @@ export const PRESSURE_PRESETS: readonly PressurePreset[] = [
 ];
 
 export const MARKET_HISTORY_LIMIT = 20;
+/** The most lines one change can cover; matches the stored schema. */
+export const MAX_CHANGE_ROWS = 200;
 const MAX_PRICE_PERCENT = 500;
 const MIN_PRICE_PERCENT = -90;
 
 export type SkipReason =
-  "no-price" | "no-quantity" | "unsafe-price" | "no-change";
+  "no-price" | "no-quantity" | "unsafe-price" | "unsafe-quantity" | "no-change";
 
 const SKIP_TEXT: Record<SkipReason, string> = {
   "no-price": "Has no price to change.",
   "no-quantity": "A service has no quantity to change.",
   "unsafe-price": "The new price is too large to store exactly.",
+  "unsafe-quantity": "The new quantity is too large to store exactly.",
   "no-change": "Nothing would change.",
 };
 
@@ -162,6 +165,7 @@ function quantityStep(
   }
   const before = stock.quantity ?? 0;
   const after = shiftedQuantity(before, quantity);
+  if (!Number.isSafeInteger(after)) return { skip: "unsafe-quantity" };
   if (after === before) return {};
   return { shift: { before, after }, reason: `Quantity ${before} to ${after}` };
 }
@@ -320,7 +324,7 @@ export function applyPlan(
   const byId = new Map(
     plan.filter((p) => !p.skipped).map((p) => [p.rowId, p.change]),
   );
-  if (byId.size === 0) return null;
+  if (byId.size === 0 || byId.size > MAX_CHANGE_ROWS) return null;
   const next = rows.map((row) => {
     const change = byId.get(String(row.rowId));
     return change ? patchedRow(row, change) : row;
@@ -361,6 +365,14 @@ export interface RevertResult {
 }
 
 type ValuePatch = Partial<StockMeta>;
+
+function changedValues(change: MarketRowChange): RevertConflict["kept"] {
+  const names: RevertConflict["kept"] = [];
+  if (change.price) names.push("price");
+  if (change.quantity) names.push("quantity");
+  if (change.availability) names.push("availability");
+  return names;
+}
 
 // Each returns the values to put back, or null when the value changed since.
 function priceBack(stock: StockMeta, shift: MarketRowChange["price"]) {
@@ -458,7 +470,7 @@ export function revertChange(
       conflicts.push({
         rowId: change.rowId,
         name: change.name,
-        kept: ["price"],
+        kept: changedValues(change),
       });
     }
   }

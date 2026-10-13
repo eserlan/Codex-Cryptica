@@ -4,6 +4,7 @@
     PRESSURE_PRESETS,
     appendChange,
     applyPlan,
+    MAX_CHANGE_ROWS,
     effectProblem,
     planPressure,
     revertChange,
@@ -91,6 +92,7 @@
   const selected = $derived(
     plan.filter((row) => !row.skipped && isOn(row.rowId)),
   );
+  const tooMany = $derived(selected.length > MAX_CHANGE_ROWS);
   const standing = $derived(standingPressure(rows, history));
 
   function choosePreset(next: PressurePreset["kind"]) {
@@ -104,7 +106,7 @@
   }
 
   function apply() {
-    if (problem || selected.length === 0) return;
+    if (problem || tooMany || selected.length === 0) return;
     const text = label.trim() || preset.label;
     const result = applyPlan(rows, selected, {
       id: `market-${idGenerator.uuid()}`,
@@ -255,11 +257,21 @@
         />
       {/if}
 
+      {#if tooMany}
+        <p
+          class="text-micro text-theme-error"
+          role="alert"
+          data-testid="market-too-many"
+        >
+          That is {selected.length} lines. Choose {MAX_CHANGE_ROWS} or fewer at a
+          time, for example by narrowing "Applies to lines containing".
+        </p>
+      {/if}
       <div class="flex items-center gap-2">
         <button
           type="button"
           class="rounded border border-theme-primary bg-theme-primary/10 px-2 py-0.5 font-bold text-theme-primary disabled:opacity-40"
-          disabled={!!problem || selected.length === 0}
+          disabled={!!problem || tooMany || selected.length === 0}
           onclick={apply}
           data-testid="market-apply"
         >

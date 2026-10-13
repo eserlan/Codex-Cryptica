@@ -125,6 +125,26 @@ describe("MarketPressurePanel (#3966)", () => {
     expect(onUpdateField).not.toHaveBeenCalled();
   });
 
+  it("refuses to apply to more lines than can be stored", async () => {
+    const rows = Array.from({ length: 201 }, (_, i) => ({
+      rowId: `r${i}`,
+      name: `Item ${i}`,
+      stock: { quantity: 2, price: gp(2) },
+    }));
+    const { onUpdateField } = setup({ rows } as never);
+    await open();
+    expect(screen.getByTestId("market-too-many").textContent).toContain("201");
+    const apply = screen.getByTestId("market-apply") as HTMLButtonElement;
+    expect(apply.disabled).toBe(true);
+    await fireEvent.click(apply);
+    expect(onUpdateField).not.toHaveBeenCalled();
+    await fireEvent.input(screen.getByTestId("market-applies-to"), {
+      target: { value: "Item 1" },
+    });
+    expect(screen.queryByTestId("market-too-many")).toBeNull();
+    expect(apply.disabled).toBe(false);
+  });
+
   it("undo restores the lines, and keeps a price the GM set since", async () => {
     const applied = {
       id: "m1",

@@ -11,6 +11,7 @@ import {
   rowsMatching,
   standingPressure,
   MARKET_HISTORY_LIMIT,
+  MAX_CHANGE_ROWS,
   type ApplyMeta,
 } from "./market-pressure";
 
@@ -339,5 +340,58 @@ describe("limits and signals", () => {
 
   test("an empty filter selects every row", () => {
     expect(rowsMatching(shop(), "").size).toBe(4);
+  });
+});
+
+describe("stored-size limits", () => {
+  test("a quantity that cannot be stored exactly is skipped, not saved", () => {
+    const rows = [
+      { rowId: "a", name: "A", stock: { quantity: 5, price: gp(1) } },
+    ];
+    const plan = planPressure(rows, {
+      quantity: { mode: "add", value: Number.MAX_SAFE_INTEGER },
+    });
+    expect(plan[0].skipped).toBe("unsafe-quantity");
+    expect(applyPlan(rows, plan, meta())).toBeNull();
+  });
+
+  test("a change is refused if it would cover more lines than can be stored", () => {
+    const rows = Array.from({ length: MAX_CHANGE_ROWS + 1 }, (_, i) => ({
+      rowId: `r${i}`,
+      name: `Item ${i}`,
+      stock: { quantity: 2, price: gp(10) },
+    }));
+    const plan = planPressure(rows, { pricePercent: 10 });
+    expect(plan).toHaveLength(MAX_CHANGE_ROWS + 1);
+    expect(applyPlan(rows, plan, meta())).toBeNull();
+    const limited = planPressure(
+      rows,
+      { pricePercent: 10 },
+      {
+        rowIds: new Set(rows.slice(0, MAX_CHANGE_ROWS).map((r) => r.rowId)),
+      },
+    );
+    expect(applyPlan(rows, limited, meta())!.change.rows).toHaveLength(
+      MAX_CHANGE_ROWS,
+    );
+  });
+
+  test("a row removed from the shop reports every value that could not be put back", () => {
+    const rows = shop();
+    const out = applyPlan(
+      rows,
+      planPressure(
+        rows,
+        { pricePercent: 50, quantity: { mode: "add", value: 1 } },
+        { rowIds: new Set(["iron"]) },
+      ),
+      meta(),
+    )!;
+    const back = revertChange(
+      out.rows.filter((r) => r.rowId !== "iron"),
+      [out.change],
+      "c1",
+    );
+    expect(back.conflicts[0].kept).toEqual(["price", "quantity"]);
   });
 });
