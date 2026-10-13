@@ -346,8 +346,7 @@ export const whatAreTheBestClasslessFantasyRpgsWithSkillBasedProgression: Answer
       ],
     },
     seo: {
-      title:
-        "What are the best classless fantasy RPGs with skill-based progression? | Codex Cryptica",
+      title: "Best Classless Fantasy RPGs with Skill-Based Progression",
       description:
         "Compare Mythras, GURPS, Savage Worlds, Dragonbane, Symbaroum and more for classless skill growth, gritty combat, luck safety nets and Foundry VTT support.",
       image:
