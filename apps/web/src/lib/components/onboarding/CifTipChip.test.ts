@@ -4,13 +4,20 @@ import { fireEvent, render, screen } from "@testing-library/svelte";
 import { describe, expect, it, vi } from "vitest";
 import CifTipChip from "./CifTipChip.svelte";
 
-// jsdom has no ResizeObserver: run the position once, as autoUpdate would on mount.
+// jsdom has no layout or ResizeObserver: run the position once, as autoUpdate
+// would on mount, and decide from the test whether the Cif button is in view.
+const floating = vi.hoisted(() => ({ referenceHidden: false }));
 vi.mock("@floating-ui/dom", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@floating-ui/dom")>()),
   autoUpdate: (_ref: unknown, _floating: unknown, update: () => void) => {
     update();
     return () => {};
   },
+  computePosition: async () => ({
+    x: 12,
+    y: 34,
+    middlewareData: { hide: { referenceHidden: floating.referenceHidden } },
+  }),
 }));
 
 function setup() {
@@ -82,6 +89,7 @@ describe("CifTipChip (spec 176, US2 and US3)", () => {
   });
 
   it("sits beside the Cif button when it is on screen (plan D7)", async () => {
+    floating.referenceHidden = false;
     const button = document.createElement("button");
     button.setAttribute("data-testid", "help-assistant-button");
     document.body.appendChild(button);
@@ -118,5 +126,19 @@ describe("CifTipChip (spec 176, US2 and US3)", () => {
     const dismiss = screen.getByRole("button", { name: "Dismiss tip" });
     expect(dismiss.className).toContain("text-theme-text");
     expect(dismiss.className).not.toContain("text-theme-muted");
+  });
+
+  it("uses the corner when the Cif button is clipped out of view (negative case)", async () => {
+    floating.referenceHidden = true;
+    const button = document.createElement("button");
+    button.setAttribute("data-testid", "help-assistant-button");
+    document.body.appendChild(button);
+    setup();
+    const chip = screen.getByTestId("cif-tip-chip");
+    await vi.waitFor(() => expect(chip.className).toContain("bottom-24"));
+    expect(chip.style.left).toBe("");
+    expect(chip.style.top).toBe("");
+    button.remove();
+    floating.referenceHidden = false;
   });
 });

@@ -41,7 +41,8 @@ Neither key is part of a vault, exported, synced or sent anywhere.
 ### Tip chip (`CifTipChip`)
 
 - A compact button reading the tip's `label`, with a "Cif has a tip" prefix for screen readers, and a separate dismiss button labelled "Dismiss tip".
-- Anchored beside the Cif button; falls back to a fixed corner when the anchor is missing.
+- Anchored beside the Cif button with Floating UI (to its right on wide screens, above it on phones). Falls back to a fixed corner, above the footer, when the button is missing or clipped out of view (`hide` middleware).
+- Never covers another control; a browser test checks that no visible button, link or field sits under it.
 - Announced once through a polite live region; never moves focus (FR-026).
 - Tap target at least 44px; dismiss by click, tap or Escape while focus is inside it.
 - No motion under `prefers-reduced-motion`; a simple fade otherwise.

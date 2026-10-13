@@ -116,6 +116,8 @@ As someone who chose "Explore on my own" or dismissed the invitation, I get no g
 - A goal has no available, unseen tip left: nothing is shown; tips do not repeat to fill the gap.
 - Several rules apply at once (blocked by a dialog and silenced): the most restrictive wins; there is never a queue of tips waiting to appear when a block ends.
 - AI is disabled mid-session while a chip is showing: the chip is removed.
+- The vault's front page ("Start your world") is showing: no tip until the person enters their world, so the chip never covers its main button.
+- The Cif button is scrolled or clipped out of view (for example a short desktop window cuts off the bottom of the activity rail): the chip uses its corner position, above the footer, rather than pointing at a button nobody can see.
 - Two windows (the docked panel and the pop-out) are open: only one chip is ever shown.
 - Storage is unavailable or cleared: tips behave as off and nothing breaks. If only per-visit storage cannot be read or written, no tip is shown, because the one-per-session limit could not be kept.
 - A tip's screen exists but the feature is not available there (for example generators in a guest vault): no tip is shown for it.
@@ -142,7 +144,7 @@ As someone who chose "Explore on my own" or dismissed the invitation, I get no g
 - **FR-011**: The system MUST NOT read vault content (entry names, text, links, images) to choose, word or time a tip.
 - **FR-012**: The system MUST NOT watch typing or clicking, measure idle time, or infer that someone is stuck or frustrated.
 - **FR-013**: A tip MUST suggest a capability that fits the selected goal and is available on the current screen. If none qualifies, nothing is shown.
-- **FR-014**: A tip MUST NOT appear while a dialog is open, a text field is focused, a tour or guided journey is running, or the Cif conversation is open in the panel or the pop-out.
+- **FR-014**: A tip MUST NOT appear while a dialog is open, a text field is focused, a tour or guided journey is running, the Cif conversation is open in the panel or the pop-out, or a first-run page such as the vault's front page ("Start your world") covers the screen.
 - **FR-015**: A tip that is blocked MUST NOT be queued or shown later in a burst when the block ends.
 - **FR-016**: Tip text MUST be fixed, plain-language copy written by us, never built from the vault.
 

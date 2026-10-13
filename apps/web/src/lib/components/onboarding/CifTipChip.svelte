@@ -4,6 +4,7 @@
     autoUpdate,
     computePosition,
     flip,
+    hide,
     offset,
     shift,
   } from "@floating-ui/dom";
@@ -49,16 +50,19 @@
     const el = root;
     if (!el) return;
     const anchor = document.querySelector<HTMLElement>(anchorSelector);
-    anchored = !!anchor;
+    anchored = false;
     if (!anchor) return;
     const beside = window.innerWidth >= 768;
     return autoUpdate(anchor, el, () => {
       void computePosition(anchor, el, {
         placement: beside ? "right" : "top-start",
-        middleware: [offset(8), flip(), shift({ padding: 8 })],
-      }).then(({ x, y }) => {
-        el.style.left = `${x}px`;
-        el.style.top = `${y}px`;
+        middleware: [offset(8), flip(), shift({ padding: 8 }), hide()],
+      }).then(({ x, y, middlewareData }) => {
+        // A Cif button scrolled or clipped out of view (a short window can cut
+        // off the bottom of the rail) is no anchor: use the corner instead.
+        anchored = !middlewareData.hide?.referenceHidden;
+        el.style.left = anchored ? `${x}px` : "";
+        el.style.top = anchored ? `${y}px` : "";
       });
     });
   });
@@ -87,7 +91,7 @@
   data-testid="cif-tip-chip"
   class="fixed z-[80] flex max-w-[calc(100vw-2rem)] items-center gap-1 rounded-full border border-theme-primary/40 bg-theme-surface/95 pl-3 pr-1 py-1 text-xs text-theme-text shadow-lg backdrop-blur-md motion-safe:transition-opacity motion-safe:duration-200 {anchored
     ? 'left-0 top-0'
-    : 'bottom-24 right-4 sm:bottom-6'}"
+    : 'bottom-24 right-4 sm:bottom-16'}"
 >
   <span
     class="icon-[lucide--sparkles] h-3.5 w-3.5 shrink-0 text-theme-primary"

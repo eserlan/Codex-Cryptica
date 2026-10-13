@@ -55,6 +55,7 @@ interface TipDecisionInput {
     tourActive: boolean;
     journeyOrInvitationActive: boolean;
     cifOpen: boolean; // docked panel or pop-out
+    firstRunPage: boolean; // the vault's front page covers the graph
   };
 }
 

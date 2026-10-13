@@ -50,6 +50,7 @@ describe("budgets (plan Performance Goals)", () => {
         tourActive: false,
         journeyOrInvitationActive: false,
         cifOpen: false,
+        firstRunPage: false,
       },
       unavailableAreas: [],
     };
