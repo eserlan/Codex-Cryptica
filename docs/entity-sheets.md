@@ -117,6 +117,17 @@ A merchant sheet reaches players only through one projection. Choosing the Brows
 - It reads text, not the Business (#3627) or Settlement Economy (#3559) generators, which are not built yet. When they exist they should feed `ShopContextInput` (or the same themes) rather than define another stock model. See also #3509.
 - Not done here: rules-profile reference catalogues (for example ToV) and AI-written stock.
 
+## Market pressure (#3966)
+
+`packages/stat-sheet-engine/src/market-pressure.ts` is an opt-in layer over the stock rows. A shop that never uses it has no `marketHistory` and no extra data.
+
+- A `PressureEffect` (price percent, quantity by percent or add, availability) is planned against chosen rows with `planPressure`, which only returns a diff. `applyPlan` changes just the planned rows and returns a `MarketChange`; other rows are the same objects.
+- A `MarketChange` stores, per row, each value before and after. `revertChange` restores a value only if it is still exactly what the change left, so a price the GM set (or a quantity a trade changed) since is kept and reported. `replayChanges` rebuilds a shop from a baseline and a change list; the same inputs give the same rows.
+- `standingPressure` gives each affected row's baseline price, asking price and reasons, derived from the history, so there is no second copy of the price to drift.
+- Prices use the shop's own currency and precision with whole-unit rounding, a floor of one unit and an exact-integer check. No currency conversion. Per-line GM overrides are protected by choosing lines in the diff and by the exact-value check on undo.
+- `marketHistory` is bounded (20 changes), is stripped when a field is saved into a template or sent to guests, and the player catalogue allowlist never carries it.
+- Signals from the Settlement Economy (#3559) and Business (#3627) generators plug in through `MarketSignal` and `draftFromSignal`, which only draft a preset and a line filter for the GM to review. Not built here: automatic restocking, NPC buying, and genre or rules adapters (these would be separate adapters over `PressureEffect`).
+
 ## Compatibility promises
 
 - Old `statSheet` frontmatter, vault templates, presentation templates and marketplace packages load unchanged. `packages/stat-sheet-engine/src/__fixtures__/legacy-sheets.ts` holds pre-#3960 data, and `entity-sheet.test.ts` asserts it parses and projects without being rewritten.

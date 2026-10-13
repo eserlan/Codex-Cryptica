@@ -104,6 +104,19 @@ A new shop does not have to start empty. On a shop's Stats tab, choose **Suggest
 
 Suggested prices are rough starting points, not official prices. Each added line is marked as a suggestion in your private line note.
 
+## Market pressure (optional)
+
+Most shops never need this. If you want a shop to react to events in your setting, open **Market pressure** on its Stats tab.
+
+- Pick a kind: **Shortage**, **Glut**, **Embargo**, **Festival** or **Restock**. Each fills in starting numbers you can change: a price change in whole percent, a quantity change, and a status such as Sold out.
+- Choose which lines it applies to. Type a word such as "iron" to pick matching lines, and untick any line you want left alone.
+- You see every change before anything happens: the price before and after, the quantity, and the status. Lines that cannot take the change say why.
+- Choose **Apply**. Name the change and say why, for example "Road to the mine is closed". It is recorded with whether you or an outside signal caused it.
+- The shop then shows the usual price next to the asking price for each affected line, with the reason.
+- **Undo** puts back the values the change set. If you have since set a price yourself, or a trade changed a quantity, that value is kept and you are told which.
+
+Prices stay in the shop's own currency and decimal places, and nothing is converted. Nothing changes unless you press Apply, other shops and your Items are never touched, and the history is never shared with players.
+
 ## Make your own shop template
 
 Use **Edit Layout** to add fields to your shop, then save the layout from **Templates**. Saved layouts can be shared like any other template. Saved templates keep the field layout, not your stock.

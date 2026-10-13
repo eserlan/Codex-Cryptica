@@ -125,6 +125,12 @@ export class JourneyStore {
     return !!this.step?.quickPrompt && this.deps.askCifAvailable();
   }
 
+  /** Guided setup for this vault is finished or was consciously left (spec 176). */
+  get setupEnded(): boolean {
+    const outcome = this.progress?.outcome;
+    return outcome === "finished" || outcome === "exited";
+  }
+
   /** An exited, unfinished journey Getting Started can continue. */
   get canContinue(): boolean {
     return this.progress?.outcome === "exited";

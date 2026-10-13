@@ -3,6 +3,7 @@ import {
   ASPECT_RATIO_DIMENSIONS,
   composeImagePrompt,
   formatForProvider,
+  isEntityVisible,
   type AspectRatio,
   type ComposedPromptMetadata,
   type ImageProviderId,
@@ -12,6 +13,8 @@ import {
   DEFAULT_CF_IMAGE_MODEL,
   DEFAULT_CUSTOM_IMAGE_MODEL,
 } from "./image-defaults";
+import { resolveFocusQuery } from "./conversation-focus";
+import { oracleConversationId } from "./conversation-id";
 
 interface VisualEntityLike {
   id?: string;
@@ -201,40 +204,74 @@ Treat these labels as strong direction for the subject's appearance, attire, and
     primaryEntityId?: string;
     sourceIds: string[];
     searchQuery: string;
+    /** Set when the query was read as a follow-up about this record. */
+    focusTitle?: string;
   }> {
-    const alreadySentTitles = this.getSentTitles(context.chatHistory.messages);
-    const apiKey = context.effectiveApiKey || "";
+    const { primaryEntityId, sourceIds, searchQuery, focusTitle } =
+      await this.retrieveForQuery(query, context);
+    return { primaryEntityId, sourceIds, searchQuery, focusTitle };
+  }
 
-    // 1. Expand query if follow-up
-    let searchQuery = query;
+  /**
+   * Resolves the query and runs retrieval once per turn. The same result
+   * feeds both the primary-entity choice and the lore sent to the model.
+   */
+  private async retrieveForQuery(
+    query: string,
+    context: OracleExecutionContext,
+  ) {
+    const lastEntityId = context.chatHistory.messages.findLast(
+      (m: ChatMessage) => m.entityId,
+    )?.entityId;
+
+    const { searchQuery, focusTitle } = await this.buildSearchQuery(
+      query,
+      context,
+      lastEntityId,
+    );
+
+    const retrieved = await context.contextRetrieval.retrieveContext(
+      searchQuery,
+      // Lore is re-sent every turn on purpose: the stateless path has no
+      // memory between calls, and the Interactions path tracks what it has
+      // already sent per conversation (LoreDeltaTracker).
+      new Set<string>(),
+      context.vault,
+      lastEntityId,
+      false,
+    );
+
+    return { ...retrieved, searchQuery, focusTitle };
+  }
+
+  /**
+   * Resolves a follow-up against the focus entity's id first; free-text
+   * pronoun expansion only runs when there is no usable focus (#4055).
+   */
+  private async buildSearchQuery(
+    query: string,
+    context: OracleExecutionContext,
+    lastEntityId?: string,
+  ): Promise<{ searchQuery: string; focusTitle?: string }> {
+    const focus = this.getVisibleEntity(context, lastEntityId);
+    const focusQuery =
+      focus &&
+      resolveFocusQuery(
+        query,
+        focus,
+        context.vault.allEntities || Object.values(context.vault.entities),
+      );
+    if (focusQuery) return { searchQuery: focusQuery, focusTitle: focus.title };
+
     if (context.chatHistory.messages.length > 2 && context.textGeneration) {
-      searchQuery = await context.textGeneration.expandQuery(
-        apiKey,
+      const searchQuery = await context.textGeneration.expandQuery(
+        context.effectiveApiKey || "",
         query,
         context.chatHistory.messages.slice(0, -2),
       );
+      return { searchQuery };
     }
-
-    // 2. Identify focus entity
-    let lastEntityId: string | undefined;
-    for (let i = context.chatHistory.messages.length - 1; i >= 0; i--) {
-      if (context.chatHistory.messages[i].entityId) {
-        lastEntityId = context.chatHistory.messages[i].entityId;
-        break;
-      }
-    }
-
-    // 3. Retrieve RAG Context
-    const { primaryEntityId, sourceIds } =
-      await context.contextRetrieval.retrieveContext(
-        searchQuery,
-        alreadySentTitles,
-        context.vault,
-        lastEntityId,
-        false,
-      );
-
-    return { primaryEntityId, sourceIds, searchQuery };
+    return { searchQuery: query };
   }
 
   /**
@@ -250,42 +287,29 @@ Treat these labels as strong direction for the subject's appearance, attire, and
       existingEntities?: any[];
     } = {},
   ): Promise<{ primaryEntityId?: string; sourceIds: string[] }> {
-    const alreadySentTitles = this.getSentTitles(context.chatHistory.messages);
-
     const apiKey = context.effectiveApiKey || "";
 
-    // 1. Identify primary entity and gather context metadata
-    const { primaryEntityId, sourceIds, searchQuery } =
-      await this.identifyPrimaryEntity(query, context);
+    // 1. Resolve the query, pick the primary entity and gather its lore
+    const {
+      primaryEntityId,
+      sourceIds,
+      focusTitle,
+      content: aiContext,
+      entries: loreEntries,
+    } = await this.retrieveForQuery(query, context);
 
-    // 2. Retrieve the actual context content for the identified entities
-    // (Optimization: we could fold this into identifyPrimaryEntity if needed,
-    // but keeping them distinct for clarity here).
-    const lastEntityId = context.chatHistory.messages.findLast(
-      (m: ChatMessage) => m.entityId,
-    )?.entityId;
+    // 2. Trigger Generation
+    const categoryList = this.getCategoryIds(context);
 
-    const { content: aiContext, entries: loreEntries } =
-      await context.contextRetrieval.retrieveContext(
-        searchQuery, // Use expanded search query for specific retrieval here
-        alreadySentTitles,
-        context.vault,
-        lastEntityId,
-        false,
-      );
-
-    // 3. Trigger Generation
-    const categoryList = Array.from(
-      new Set(
-        (context.categories || [])
-          .map((c: any) => String(c?.id || "").trim())
-          .filter(Boolean),
-      ),
-    );
+    // The model only sees the raw query, so name the record the follow-up is
+    // about rather than leaving it to guess from similar names in the lore.
+    const modelQuery = focusTitle
+      ? `${query}\n\n[CONVERSATION FOCUS] Pronouns here most likely refer to "${focusTitle}", the subject of the previous answer, unless the user says otherwise.`
+      : query;
 
     await context.textGeneration.generateResponse(
       apiKey,
-      query,
+      modelQuery,
       context.chatHistory.messages.slice(0, -2),
       aiContext,
       context.modelName,
@@ -303,7 +327,7 @@ Treat these labels as strong direction for the subject's appearance, attire, and
         loreEntries,
         // Keep normal Oracle context namespaced away from Adventure sessions
         // and any future Oracle surfaces that use the same worker.
-        conversationId: `oracle:${context.vaultId}:normal`,
+        conversationId: oracleConversationId(context.vaultId),
         interactionsEnabled: context.interactionsEnabled,
       },
     );
@@ -319,32 +343,15 @@ Treat these labels as strong direction for the subject's appearance, attire, and
     context: OracleExecutionContext,
     onPartial: (partial: string) => void,
   ): Promise<{ primaryEntityId?: string; sourceIds: string[] }> {
-    const alreadySentTitles = this.getSentTitles(context.chatHistory.messages);
     const apiKey = context.effectiveApiKey || "";
 
-    const { primaryEntityId, sourceIds, searchQuery } =
-      await this.identifyPrimaryEntity(query, context);
+    const {
+      primaryEntityId,
+      sourceIds,
+      content: aiContext,
+    } = await this.retrieveForQuery(query, context);
 
-    const lastEntityId = context.chatHistory.messages.findLast(
-      (m: ChatMessage) => m.entityId,
-    )?.entityId;
-
-    const { content: aiContext } =
-      await context.contextRetrieval.retrieveContext(
-        searchQuery,
-        alreadySentTitles,
-        context.vault,
-        lastEntityId,
-        false,
-      );
-
-    const categoryList = Array.from(
-      new Set(
-        (context.categories || [])
-          .map((c: any) => String(c?.id || "").trim())
-          .filter(Boolean),
-      ),
-    );
+    const categoryList = this.getCategoryIds(context);
 
     if (context.textGeneration.generateStructuredEntity) {
       await context.textGeneration.generateStructuredEntity(
@@ -587,18 +594,29 @@ Treat these labels as strong direction for the subject's appearance, attire, and
     );
   }
 
-  private getSentTitles(messages: ChatMessage[]): Set<string> {
-    const titles = new Set<string>();
-    messages.forEach((m) => {
-      if (m.role === "user") {
-        const matches = m.content.matchAll(
-          /--- (?:\[ACTIVE FILE\] )?File: ([^\n-]+) ---/g,
-        );
-        for (const match of matches) {
-          titles.add(match[1]);
-        }
-      }
-    });
-    return titles;
+  private getCategoryIds(context: OracleExecutionContext): string[] {
+    return Array.from(
+      new Set(
+        (context.categories || [])
+          .map((c: any) => String(c?.id || "").trim())
+          .filter(Boolean),
+      ),
+    );
+  }
+
+  /** The entity behind a focus id, if it exists and this viewer may see it. */
+  private getVisibleEntity(context: OracleExecutionContext, entityId?: string) {
+    const entity = entityId ? context.vault.entities?.[entityId] : undefined;
+    if (!entity) return undefined;
+    if (
+      context.vault.isGuest &&
+      !isEntityVisible(entity, {
+        sharedMode: true,
+        defaultVisibility: context.vault.defaultVisibility,
+      })
+    ) {
+      return undefined;
+    }
+    return entity;
   }
 }

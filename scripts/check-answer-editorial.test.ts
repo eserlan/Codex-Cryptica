@@ -6,6 +6,8 @@ import {
   buildBaseline,
   checkAnswer,
   checkPublishedAt,
+  COMPETITOR_DOMAINS,
+  competitorOf,
   escapeWorkflowCommandData,
   findBaselineIncreases,
   findStaleBaseline,
@@ -390,5 +392,118 @@ describe("slugsForChangedFiles", () => {
         new Set(["known"]),
       ),
     ).toEqual(["known"]);
+  });
+});
+
+describe("competitor links", () => {
+  const withProse = (text: string) =>
+    cleanAnswer({
+      sections: [{ kind: "prose", heading: "Tools", paragraphs: [text] }],
+    });
+  const competitorFindings = (answer: AnswerConfigInput) =>
+    checkAnswer(answer, { asOf: "2026-10-12" }).filter(
+      (finding) => finding.rule === "competitor-link",
+    );
+
+  test("flags a markdown link to a virtual tabletop, with its field path", () => {
+    const findings = competitorFindings(
+      withProse("See the [package](https://foundryvtt.com/packages/swade)."),
+    );
+    expect(findings).toHaveLength(1);
+    expect(findings[0]).toMatchObject({
+      severity: "error",
+      field: "sections[0].paragraphs[0]",
+    });
+    expect(findings[0].message).toContain("foundryvtt.com");
+  });
+
+  test("flags competitors in href metadata, which prose scans skip", () => {
+    const findings = competitorFindings(
+      cleanAnswer({
+        systemsThatSupportThis: [
+          {
+            system: "Example",
+            rationale: "Has a named mechanic for this.",
+            href: "https://www.roll20.net/compendium/x",
+          },
+        ],
+      } as Partial<AnswerConfigInput>),
+    );
+    expect(findings.map((finding) => finding.field)).toEqual([
+      "systemsThatSupportThis[0].href",
+    ]);
+  });
+
+  test("matches subdomains and ignores case, not look-alike hosts", () => {
+    expect(competitorOf("https://app.WorldAnvil.com/x")).toBe("worldanvil.com");
+    expect(competitorOf("https://notfoundryvtt.com/x")).toBeUndefined();
+    expect(
+      competitorOf("https://foundryvtt.com.example.org/x"),
+    ).toBeUndefined();
+    expect(competitorOf("not a url")).toBeUndefined();
+  });
+
+  test("catches a trailing-dot host and a competitor nested in another URL", () => {
+    expect(competitorOf("https://foundryvtt.com./x")).toBe("foundryvtt.com");
+    const findings = competitorFindings(
+      withProse(
+        "[x](https://example.org/?u=https://foundryvtt.com/packages/y)",
+      ),
+    );
+    expect(findings).toHaveLength(1);
+  });
+
+  test("catches a protocol-relative link, once, without flagging paths or comments", () => {
+    expect(competitorOf("//foundryvtt.com/packages/x")).toBe("foundryvtt.com");
+    const cta = competitorFindings(
+      cleanAnswer({
+        codexConnection: {
+          heading: "Keep going",
+          paragraphs: ["Text."],
+          linkText: "Open it",
+          href: "//foundryvtt.com/packages/example",
+        },
+      } as Partial<AnswerConfigInput>),
+    );
+    expect(cta.map((finding) => finding.field)).toEqual([
+      "codexConnection.href",
+    ]);
+    expect(
+      competitorFindings(withProse("See https://foundryvtt.com/x here.")),
+    ).toHaveLength(1);
+    expect(
+      competitorFindings(
+        withProse("Use a/b//c paths or a // foundryvtt.com comment."),
+      ),
+    ).toEqual([]);
+    expect(
+      competitorFindings(withProse("[x](//www.sjgames.com/gurps/)")),
+    ).toEqual([]);
+  });
+
+  test("allows naming a competitor and linking publishers or rules sources", () => {
+    expect(
+      competitorFindings(
+        withProse(
+          "A Foundry system exists; buy the [rules](https://www.sjgames.com/gurps/) from the publisher.",
+        ),
+      ),
+    ).toEqual([]);
+  });
+
+  test("covers the virtual tabletops and campaign managers it names", () => {
+    for (const domain of COMPETITOR_DOMAINS) {
+      expect(competitorOf(`https://${domain}/page`)).toBe(domain);
+    }
+    expect(COMPETITOR_DOMAINS).toContain("foundryvtt.com");
+  });
+
+  test("no published answer links to a competitor", () => {
+    const offenders = Object.values(answers).flatMap((answer) =>
+      competitorFindings(answer as AnswerConfigInput).map(
+        (finding) => `${finding.slug}: ${finding.field}`,
+      ),
+    );
+    expect(offenders).toEqual([]);
   });
 });

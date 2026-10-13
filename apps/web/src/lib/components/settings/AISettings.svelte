@@ -4,6 +4,9 @@
   import InlineKeySetup from "../oracle/InlineKeySetup.svelte";
   import { notificationStore } from "$lib/stores/ui/notification.svelte";
   import { discoveryPolicyStore } from "$lib/stores/ui/discovery-policy.svelte";
+  import { isHelpAssistantAvailable } from "$lib/services/help-assistant/help-availability";
+  import { tipsStore } from "$lib/app/onboarding/tips/tips-runtime";
+  import CifTipsSetting from "./CifTipsSetting.svelte";
   import { DEFAULT_CF_IMAGE_MODEL } from "@codex/oracle-engine";
 
   onMount(() => {
@@ -209,6 +212,17 @@
       </div>
     </div>
   </div>
+
+  <!-- Cif tips (spec 176): opt-in, hidden when AI is off -->
+  {#if isHelpAssistantAvailable()}
+    <div class="mb-6 pt-6 border-t border-theme-border/30">
+      <CifTipsSetting
+        aiAvailable={isHelpAssistantAvailable()}
+        enabled={tipsStore.enabled}
+        onToggle={(on) => tipsStore.setEnabled(on)}
+      />
+    </div>
+  {/if}
 
   <!-- API Key Management -->
   {#if !oracle.apiKey}

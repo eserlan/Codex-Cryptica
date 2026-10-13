@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import { execFileSync } from "node:child_process";
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { dirname, join, relative, resolve } from "node:path";
 import { getChangedFiles } from "./lint-changed.mjs";
 
@@ -113,6 +113,60 @@ export function isUnitTestFile(file) {
   return !file.replace(/\\/g, "/").startsWith("apps/web/tests/");
 }
 
+export function getWorkspaceTestInvocation(workspace, packageName, files) {
+  if (workspace === "root") {
+    return { cwd: ".", args: ["test", ...files] };
+  }
+
+  const workspacePath = workspace.replace(/\\/g, "/");
+  const relativeFiles = files.map((file) =>
+    relative(workspacePath, file).replace(/\\/g, "/"),
+  );
+  return {
+    cwd: workspacePath,
+    args: ["run", "--filter", packageName, "test", "--", ...relativeFiles],
+  };
+}
+
+function runWebTests(files, cwd) {
+  const relativeFiles = files.map((file) =>
+    relative("apps/web", file).replace(/\\/g, "/"),
+  );
+  execFileSync("bunx", ["vitest", "run", ...relativeFiles], {
+    cwd: resolve(cwd, "apps/web"),
+    stdio: "inherit",
+  });
+}
+
+function runPackageTests(workspace, files, cwd) {
+  const manifestPath = resolve(cwd, workspace, "package.json");
+  const manifest = JSON.parse(readFileSync(manifestPath, "utf8"));
+  const invocation = getWorkspaceTestInvocation(
+    workspace,
+    manifest.name,
+    files,
+  );
+  execFileSync("bun", invocation.args, {
+    cwd: resolve(cwd, invocation.cwd),
+    stdio: "inherit",
+  });
+}
+
+function runWorkspaceTests(workspace, files, cwd) {
+  try {
+    if (workspace === "apps/web") {
+      runWebTests(files, cwd);
+    } else {
+      runPackageTests(workspace, files, cwd);
+    }
+    console.log(`✅ ${workspace} tests passed.`);
+    return true;
+  } catch {
+    console.error(`❌ ${workspace} tests failed.`);
+    return false;
+  }
+}
+
 export function runTestChanged({
   base,
   head = "HEAD",
@@ -147,35 +201,7 @@ export function runTestChanged({
     console.log(
       `\n🧪 Running tests for ${workspace} (${files.length} test file(s))...`,
     );
-
-    if (workspace === "apps/web") {
-      // In apps/web, vitest runs relative to apps/web directory
-      const relativeFiles = files.map((f) =>
-        relative("apps/web", f).replace(/\\/g, "/"),
-      );
-      try {
-        execFileSync("bunx", ["vitest", "run", ...relativeFiles], {
-          cwd: resolve(cwd, "apps/web"),
-          stdio: "inherit",
-        });
-        console.log(`✅ ${workspace} tests passed.`);
-      } catch {
-        allPassed = false;
-        console.error(`❌ ${workspace} tests failed.`);
-      }
-    } else {
-      // For packages or root, use bun test
-      try {
-        execFileSync("bun", ["test", ...files], {
-          cwd,
-          stdio: "inherit",
-        });
-        console.log(`✅ ${workspace} tests passed.`);
-      } catch {
-        allPassed = false;
-        console.error(`❌ ${workspace} tests failed.`);
-      }
-    }
+    if (!runWorkspaceTests(workspace, files, cwd)) allPassed = false;
   }
 
   return allPassed;

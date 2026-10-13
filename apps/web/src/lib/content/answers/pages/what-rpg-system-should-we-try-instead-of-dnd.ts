@@ -193,7 +193,7 @@ export const whatRpgSystemShouldWeTryInsteadOfDnd: AnswerConfigInput = {
       {
         with: "answer-classless-fantasy-skill-progression",
         reason:
-          "This answer gives a broad play-style and genre chooser; the classless fantasy answer evaluates skill-driven advancement, gritty tone controls, and Foundry constraints for long campaigns.",
+          "This answer gives a broad play-style and genre chooser; the classless fantasy answer evaluates skill-driven advancement, and gritty tone controls for long campaigns.",
       },
     ],
   },
