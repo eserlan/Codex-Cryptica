@@ -16,6 +16,7 @@ This builds the one "Show tips from Cif" setting that the deferred "Proactive he
 ### Session 2026-10-13
 
 - Q: Does choosing a goal in the first-run invitation count as opting in to tips? → A: No. Choosing a goal never turns tips on. When the guided setup finishes or is left, Cif asks once, inline, whether the person wants occasional tips (Yes or No). Yes turns the setting on; No leaves it off. The question is never asked again, and the Settings switch stays the only place to change the answer.
+- Q: How many tips can a person see in total, across all screens, before Cif goes quiet for the session? → A: At most one tip per session in total; the next tip waits for the next session.
 
 ## User Scenarios & Testing _(mandatory)_
 
@@ -134,7 +135,7 @@ As someone who chose "Explore on my own" or dismissed the invitation, I get no g
 **What a tip is and when it may show**
 
 - **FR-007**: A tip MUST be a compact "Cif has a tip" chip beside the Cif button. It MUST NOT be a modal, a pop-up over work, a banner, or an automatically opened panel or chat.
-- **FR-008**: At most one tip MUST be visible at any moment, and at most one tip per screen per session.
+- **FR-008**: At most one tip MUST be shown per session in total, across all screens, and never more than one visible at any moment. A tip that is blocked or dismissed uses up nothing until it has actually been shown.
 - **FR-009**: A tip MAY appear only after the first-session setup for the current vault is finished or has been consciously left.
 - **FR-010**: The choice of tip MUST be decided only from: the goal the person selected, a fixed list of verified feature identifiers, the screen the person is on, and the existing local milestones.
 - **FR-011**: The system MUST NOT read vault content (entry names, text, links, images) to choose, word or time a tip.
@@ -184,7 +185,7 @@ As someone who chose "Explore on my own" or dismissed the invitation, I get no g
 - **SC-001**: With the setting off, there are zero tips across every screen, goal and device size (verified by tests).
 - **SC-002**: Showing a tip causes zero AI requests and zero network requests of any kind (verified by tests).
 - **SC-003**: In every blocked situation (typing, dialog, tour, journey, open Cif panel or pop-out), zero chips appear (verified by tests).
-- **SC-004**: A person sees no more than one chip at a time and no more than one per screen per session.
+- **SC-004**: A person sees no more than one tip per session in total, and never more than one chip at a time.
 - **SC-005**: A dismissed tip never reappears on the same device, and a screen dismissed twice stays silent until the setting is cycled.
 - **SC-006**: 100% of shipped tips map to a registered feature and a covered prompt or guide; removing a feature removes its tip with no broken chip.
 - **SC-007**: A tip chip and its setting are fully usable by keyboard and screen reader, and pass the app's existing accessibility checks at phone, tablet and desktop widths.
@@ -196,5 +197,6 @@ As someone who chose "Explore on my own" or dismissed the invitation, I get no g
 - "Available" means the registered feature exists and its target can be reached from the current screen; it does not mean the person has permission to use it.
 - Tip content is limited to a small, hand-written set (a few per goal). More are added later through the same registry and tests.
 - "Setup finished or left" for tip purposes means the journey outcome is finished or exited, or the person chose a goal and then closed the card; skipping the invitation without a goal counts as "no goal".
+- A "session" is one visit to the app, from opening it until the tab or window is closed; a reload within it is the same session.
 - English only, British spelling, matching the rest of the app.
 - Out of scope: resuming journeys on a later visit and gradually quieter guidance (#3999), measurement or analytics of tips, tips for people without a goal, tips driven by vault content or behaviour, and any tip that changes the vault.
