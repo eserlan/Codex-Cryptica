@@ -75,6 +75,12 @@ export interface ContextRetrievalService {
 }
 
 export interface TextGenerationService {
+  /**
+   * Forgets the server-side Interactions API state for a conversation, so the
+   * next turn starts fresh and re-sends full lore. Optional: stateless
+   * implementations have nothing to forget.
+   */
+  resetConversation?(conversationId: string): void | Promise<void>;
   expandQuery(
     apiKey: string,
     query: string,

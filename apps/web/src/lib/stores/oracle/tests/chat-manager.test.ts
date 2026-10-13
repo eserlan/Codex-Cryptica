@@ -27,6 +27,10 @@ describe("OracleChatManager", () => {
       executor: { execute: vi.fn() },
       notificationStore: { confirm: vi.fn().mockResolvedValue(true) },
       sessionActivity: { clear: vi.fn() },
+      textGeneration: {
+        resetConversation: vi.fn().mockResolvedValue(undefined),
+      },
+      vault: { activeVaultId: "v1" },
     };
     manager = new OracleChatManager(mockStore as IOracleStore);
   });
@@ -40,5 +44,43 @@ describe("OracleChatManager", () => {
     expect(mockStore.notificationStore.confirm).toHaveBeenCalled();
     expect(mockChatService.clear).toHaveBeenCalled();
     expect(mockStore.sessionActivity.clear).toHaveBeenCalled();
+  });
+
+  it("resets the model's copy of the chat when history is cleared", async () => {
+    await manager.clearMessages();
+    expect(mockStore.textGeneration.resetConversation).toHaveBeenCalledWith(
+      "oracle:v1:normal",
+    );
+  });
+
+  it("does not reset the model's chat when the user cancels", async () => {
+    mockStore.notificationStore.confirm.mockResolvedValue(false);
+    await manager.clearMessages();
+    expect(mockChatService.clear).not.toHaveBeenCalled();
+    expect(mockStore.textGeneration.resetConversation).not.toHaveBeenCalled();
+  });
+
+  it("still clears history when the model reset fails", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    mockStore.textGeneration.resetConversation.mockRejectedValue(
+      new Error("worker gone"),
+    );
+    await expect(manager.clearMessages()).resolves.toBeUndefined();
+    expect(mockChatService.clear).toHaveBeenCalled();
+    warn.mockRestore();
+  });
+
+  it("works when the text generation service cannot reset", async () => {
+    mockStore.textGeneration = {};
+    await expect(manager.clearMessages()).resolves.toBeUndefined();
+    expect(mockChatService.clear).toHaveBeenCalled();
+  });
+
+  it("resets the model's chat when the store is reset", async () => {
+    await manager.reset();
+    expect(mockChatService.setMessages).toHaveBeenCalledWith([]);
+    expect(mockStore.textGeneration.resetConversation).toHaveBeenCalledWith(
+      "oracle:v1:normal",
+    );
   });
 });
