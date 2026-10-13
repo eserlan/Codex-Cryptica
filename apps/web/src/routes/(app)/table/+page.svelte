@@ -28,6 +28,7 @@
     computeVaultAuditCounts,
     type VaultAuditPreset,
   } from "$lib/components/table/vaultAudit";
+  import { computeVaultDistribution } from "$lib/components/table/vaultDistribution";
   import type { ViewPreset } from "$lib/stores/view-presets";
   import EmptyState from "$lib/components/ui/EmptyState.svelte";
   import { openSelectionReport } from "$lib/components/reports/open-selection-report";
@@ -54,11 +55,21 @@
   let columnFilters = $state<TableColumnFilters>({});
   let showAuditPanel = $state(false);
   let activeAuditPresetId = $state<string | null>(null);
+  let auditPanelTab = $state<"findings" | "distribution">("findings");
 
   $effect(() => {
-    showAuditPanel =
-      page.url.searchParams.get("mode") === "audit" ||
-      page.url.searchParams.get("audit") === "true";
+    const mode = page.url.searchParams.get("mode");
+    const audit = page.url.searchParams.get("audit");
+    if (mode === "audit" || audit === "true") {
+      showAuditPanel = true;
+      auditPanelTab = "findings";
+    } else if (mode === "overview") {
+      showAuditPanel = true;
+      auditPanelTab = "distribution";
+    } else {
+      showAuditPanel = false;
+      auditPanelTab = "findings";
+    }
   });
   let textMatchIds = $state<Set<string> | null>(null);
   let textSearchPending = $state(false);
@@ -204,6 +215,10 @@
       columnFilters,
       connectionCounts,
     }),
+  );
+
+  const distributionSummary = $derived(
+    computeVaultDistribution(vault.allEntities, filtered, categories.list),
   );
 
   const searchStatusMessage = $derived(
@@ -558,6 +573,39 @@
     });
   }
 
+  function handleSelectDistributionCategory(typeId: string) {
+    measureTableOperation("table_filter", () => {
+      activeAuditPresetId = null;
+      if (typeFilters.size === 1 && typeFilters.has(typeId)) {
+        typeFilters = new Set();
+      } else {
+        typeFilters = new Set([typeId]);
+      }
+    });
+  }
+
+  function handleSelectDistributionLabel(label: string) {
+    measureTableOperation("table_filter", () => {
+      activeAuditPresetId = null;
+      if (labelFilters.size === 1 && labelFilters.has(label)) {
+        labelFilters = new Set();
+      } else {
+        labelFilters = new Set([label]);
+      }
+    });
+  }
+
+  function handleSelectDistributionUnlabelled() {
+    measureTableOperation("table_filter", () => {
+      activeAuditPresetId = null;
+      labelFilters = new Set();
+      columnFilters = {
+        ...columnFilters,
+        labelMode: columnFilters.labelMode === "missing" ? "all" : "missing",
+      };
+    });
+  }
+
   function clearFilters() {
     measureTableOperation("table_filter", () => {
       searchQuery = "";
@@ -808,6 +856,19 @@
       {#if showAuditPanel}
         <VaultAuditPanel
           counts={auditCounts}
+          {distributionSummary}
+          activeTypeFilter={typeFilters.size === 1
+            ? Array.from(typeFilters)[0]
+            : null}
+          activeLabelFilter={labelFilters.size === 1
+            ? Array.from(labelFilters)[0]
+            : null}
+          activeLabelMode={columnFilters.labelMode ?? null}
+          activeTab={auditPanelTab}
+          onTabChange={(tab) => (auditPanelTab = tab)}
+          onSelectCategory={handleSelectDistributionCategory}
+          onSelectLabel={handleSelectDistributionLabel}
+          onSelectUnlabelled={handleSelectDistributionUnlabelled}
           activePresetId={activeAuditPresetId}
           onApplyPreset={handleApplyAuditPreset}
           onDrillDown={handleAuditDrillDown}
