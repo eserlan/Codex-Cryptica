@@ -1,5 +1,5 @@
 {
-  "updated_at": 1791886454,
+  "updated_at": 1791891784,
   "candidates": [
     {
       "id": "reddit-38045827408-how-i-plan-story-arcs-that-actually-pay-",
@@ -20,6 +20,16 @@
       "source_id": "38159898218",
       "status": "approved",
       "created_at": 1791740157
+    },
+    {
+      "id": "reddit-38391363178-any-location-can-be-a-shop-now-with-a-st",
+      "title": "Any Location can be a shop now, with a stock ledger that remembers",
+      "body": "Running a shop by scribbled notes always fell apart for me. A player asks what is in stock three sessions later and I am guessing, or I forget to remove the sold healing potion.\n\nI built system-neutral Shop sheets so any Location or Organisation can act as a merchant with a stable ledger. It lives in the same stat sheet system as characters and items, not a separate tool.\n\n- stable stock rows that persist between sessions\n- GM layout and a read-only player catalogue\n- confirm-first buy and sell with total preview before it writes\n- safe allowlist sharing with a preview so you see what players will get\n- context-aware stock suggestions pulled from settlement connections\n- optional market pressure you can review and undo, off by default\n\nI left market pressure optional on purpose. Automatic price swings feel right for some tables and noisy for others, so it stays as a reviewable step rather than a silent background change.\n\nWhat is the shop your players keep returning to, and what is the one item they always expect on its shelves?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/screenshots/feature-build.jpg)",
+      "url": "",
+      "image_url": "https://assets.codexcryptica.com/screenshots/feature-build.jpg",
+      "source_id": "38391363178",
+      "status": "approved",
+      "created_at": 1791891784
     }
   ]
 }
