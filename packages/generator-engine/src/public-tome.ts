@@ -55,6 +55,36 @@ export interface ResolvedTome {
   era: string;
 }
 
+function resolveTomeEra(genre: string, rng: Rng): string {
+  const eras = [
+    "Late 14th century",
+    "Mid-16th century",
+    "Winter of 1684",
+    "Early 18th century",
+    "Autumn of 1888",
+    "Interwar period, 1924",
+    "Pre-Collapse era",
+    "Second Age of Strife",
+  ];
+  const setting = genre.toLowerCase();
+  if (/sci-fi|space opera|lancer/.test(setting)) {
+    return pickFrom(["Pre-Collapse era", "Second Age of Strife"], rng);
+  }
+  if (/cyberpunk/.test(setting)) {
+    return pickFrom(["Late 21st century", "Near-future era"], rng);
+  }
+  if (/modern conspiracy/.test(setting)) {
+    return pickFrom(
+      ["Interwar period, 1924", "Late 20th century", "Early 21st century"],
+      rng,
+    );
+  }
+  if (/post-apocalyptic/.test(setting)) {
+    return pickFrom(["Pre-Collapse era", "Interwar period, 1924"], rng);
+  }
+  return pickFrom(eras, rng);
+}
+
 export function resolveTome(
   options: TomeGeneratorOptions,
   rng: Rng = defaultRng,
@@ -86,17 +116,7 @@ export function resolveTome(
     sampleTitles[0];
 
   const author = generateName(rng);
-  const eras = [
-    "Late 14th century",
-    "Mid-16th century",
-    "Winter of 1684",
-    "Early 18th century",
-    "Autumn of 1888",
-    "Interwar period, 1924",
-    "Pre-Collapse era",
-    "Second Age of Strife",
-  ];
-  const era = pickFrom(eras, rng);
+  const era = resolveTomeEra(genre, rng);
 
   return {
     genre,
@@ -150,6 +170,7 @@ Follow these strict writing guidelines:
 
 ### Requested Parameters:
 - **Genre / Setting Vibe**: ${resolved.genre}
+- **Composition Era**: ${resolved.era}
 - **Type of Book**: ${resolved.tomeType}
 - **Physical Format**: ${resolved.format}
 - **Rarity / Edition**: ${resolved.rarity}
@@ -282,51 +303,160 @@ export function parseTomeResponse(
   }
 }
 
+function isAdvancedSetting(genre: string): boolean {
+  return /cyberpunk|sci-fi|space opera|lancer|modern|post-apocalyptic/i.test(
+    genre,
+  );
+}
+
+function describeBody(format: string): string {
+  const normalized = format.toLowerCase();
+  if (/vellum|parchment/.test(normalized)) return "vellum or parchment leaves";
+  if (/leather/.test(normalized)) return "paper leaves beneath a leather cover";
+  if (/notebook/.test(normalized)) return "stitched paper leaves";
+  if (/sheaves/.test(normalized))
+    return "loose paper sheets held together as a set";
+  return "printed paper leaves";
+}
+
+function describeAnnotations(
+  resolved: ResolvedTome,
+  advanced: boolean,
+): string {
+  if (!advanced) {
+    return `The writing is in ${resolved.language}; later owners added marginal notes, corrections, and a few deliberate redactions.`;
+  }
+  const translation = /alien|precursor|glyph/i.test(resolved.language)
+    ? "; an incomplete machine translation sits beside unfamiliar glyphs"
+    : ".";
+  return `The copy bears access codes, redactions, and later notes${translation}`;
+}
+
+function describeMaterial(resolved: ResolvedTome, advanced: boolean): string {
+  const isDigitalSource =
+    /datapad|data-slate|telemetry|digital|protocol|file|archive|transcript/i.test(
+      resolved.tomeType,
+    );
+  const sourceMedium = isDigitalSource
+    ? ` It reproduces material from a ${/slate|datapad/i.test(resolved.tomeType) ? "data-slate" : "digital record"}, with missing entries and signs of repeated copying.`
+    : "";
+  const production = advanced
+    ? "Its text was copied or printed for the institutions of its setting."
+    : "Its text was copied by hand or set for print in keeping with its period.";
+  return `The ${resolved.format.toLowerCase()} has ${describeBody(resolved.format)} and a binding consistent with its stated format. ${production}${sourceMedium} ${describeAnnotations(resolved, advanced)}`;
+}
+
+function describeOrigin(resolved: ResolvedTome, advanced: boolean): string {
+  if (advanced) {
+    return `Compiled in the ${resolved.era} by ${resolved.author}, the work records material suppressed by the authorities or organisation that controlled its original access. Its surviving copy passed through several owners before reaching the ${resolved.custodian.toLowerCase()}.`;
+  }
+  return `Authored in the ${resolved.era} by ${resolved.author}, the work was suppressed after its claims challenged the beliefs or interests of its original authorities. This ${resolved.rarity.toLowerCase()} passed through several owners before reaching the ${resolved.custodian.toLowerCase()}.`;
+}
+
+function describeClue(resolved: ResolvedTome, advanced: boolean): string {
+  const method = advanced
+    ? "cross-checking the dates and damaged entries reveals when the evidence can be recovered"
+    : "comparing its dated entries with the marginal corrections reveals when the evidence can be found";
+  return `The records point to a specific hidden site or event tied to ${resolved.tomeType.toLowerCase()}; ${method}. One account is deliberately altered to protect the original source.`;
+}
+
+function describeRisk(resolved: ResolvedTome): string {
+  const hazard = resolved.primaryHazard.toLowerCase();
+  if (/physical|environmental/.test(hazard)) {
+    return `Handling or operating the damaged ${resolved.format.toLowerCase()} exposes the reader to a concrete hazard: its compromised casing, contaminated pages, or unstable components can cause injury unless inspected and secured first.`;
+  }
+  if (/social|investigation/.test(hazard)) {
+    return `Accessing the material leaves an audit trail. The ${resolved.custodian.toLowerCase()} and interested parties can identify readers, creating a risk of surveillance, questioning, or confiscation.`;
+  }
+  if (/mental|obsessive/.test(hazard)) {
+    return "Repeated study encourages fixation: the reader starts treating an unresolved pattern in the text as urgent evidence, risking lost sleep and poor decisions until they step away or verify it independently.";
+  }
+  if (/supernatural|entity/.test(hazard)) {
+    return "Studying the material draws the attention of something connected to its subject. Each attempt to decode or use it can reveal the reader's location or intentions to that presence.";
+  }
+  return `Study carries the stated risk of ${resolved.primaryHazard.toLowerCase()}; investigators should identify who or what enforces it before sharing, handling, or acting on the text.`;
+}
+
+function describeAdventureHooks(
+  resolved: ResolvedTome,
+  advanced: boolean,
+): string[] {
+  if (advanced) {
+    return [
+      `A source hires the party to recover a missing data partition before the ${resolved.custodian.toLowerCase()} erases its access logs.`,
+      `The party discovers that a planned operation relies on the document's falsified date and must find the authentic record.`,
+      `A rival offers the party a copy of the ${resolved.tomeType.toLowerCase()} in exchange for identifying who altered its findings.`,
+    ];
+  }
+  return [
+    `An agent of the ${resolved.custodian.toLowerCase()} hires the party to recover a missing section before a rival collector does.`,
+    "A local group is acting on the author's false conclusion; the party must find the original passage before its next gathering.",
+    "The party inherits an uncatalogued copy and must identify its owner before interested buyers arrive.",
+  ];
+}
+
+function localTomeDetails(resolved: ResolvedTome) {
+  const advanced = isAdvancedSetting(resolved.genre);
+  const material = describeMaterial(resolved, advanced);
+  const origin = describeOrigin(resolved, advanced);
+  const clue = describeClue(resolved, advanced);
+  const risk = describeRisk(resolved);
+  const faction = advanced
+    ? "The Information Control Bureau"
+    : "The Silt Brotherhood";
+  const location = advanced
+    ? "The restricted facility identified in the source records"
+    : "The archive or ruin where the original account was made";
+  const hooks = describeAdventureHooks(resolved, advanced);
+
+  return { material, origin, clue, risk, faction, location, hooks };
+}
+
 export function generateTomeLocal(
   options: TomeGeneratorOptions,
   rng: Rng = defaultRng,
 ): PublicGeneratorOutput {
   const resolved = resolveTome(options, rng);
 
-  const custodianName = `${generateName(rng)} Antiquarian Society`;
   const authorName = resolved.author;
+  const details = localTomeDetails(resolved);
 
   const content = `### Physical Description & Format
-Bound in ${resolved.format.toLowerCase()} with tarnished brass corners and secure clasp fastenings. The volume comprises roughly eighty leaves of heavy, unevenly trimmed parchment, displaying noticeable water-staining along the lower margins. The principal text is penned in a disciplined, upright clerical hand using sepia iron-gall ink. Frequent marginal glosses in at least three distinct later hands are visible throughout, executed in faded red ochre and carbon ink, with several passages scored through and amended in the margins.
+${details.material}
 
 ### Provenance & Transmission
-Authored during the ${resolved.era.toLowerCase()} by ${authorName}, a renegade scholar whose radical astronomical observations were formally suppressed by the governing synod. Only a handful of hand-copied transcriptions survived the purge of the author's scriptorium. This specific volume represents a ${resolved.rarity.toLowerCase()}, preserved for over a century within a secluded monastic library before entering private circulation. It is currently held in the ${resolved.custodian.toLowerCase()}, catalogued under private provenance.
+${details.origin}
 
 ### Contents & Revelations
-The work purports to be an analytical exposition of ${resolved.tomeType.toLowerCase()}, composed in ${resolved.language}. It collates seasonal planetary conjunctions with subterranean acoustic phenomena recorded across deep coastal fissures.
+The work purports to be an analytical exposition of ${resolved.tomeType.toLowerCase()}, composed in ${resolved.language}, within a ${resolved.genre} setting. Its account combines observations, claims, and records relevant to its chosen subject and setting.
 
-> *"When the tide forsakes the eastern shoals beneath the unblinking eye of the red wanderer, the hollow stones shall drink what the priests refused to pour."*
-> — *Section IV, Folio 22r*
+> *"The record is incomplete where the original account should name its source; compare the surviving entries before trusting the conclusion."*
+> — *${resolved.format}, annotated copy*
 
-The text provides an actionable clue: a verified timetable predicting the exact opening of the drowned lower sluice gates beneath the bay. However, the author was mistaken regarding the nature of the entity inhabiting the trench, falsely assuming it could be appeased through classical liturgical repetition.
+${details.clue} The author's central interpretation remains unverified and should be treated as a claim, not established fact.
 
 ### Risks & Costs of Study
-- **Physical**: The parchment leaves are coated in a volatile dusting of toxic mould; handling without dry protective cloths induces burning of the mucous membranes and blurred vision.
-- **Social / Legal**: The current custodian has reported this edition as stolen property, and antiquarian agents are actively pursuing leads among regional bookbinders.
-- **Mental**: Prolonged translation of the third discourse causes persistent auditory fixation, leaving the reader unable to sleep without hearing the rhythm of breaking surf.
+- **Primary hazard (${resolved.primaryHazard})**: ${details.risk}
+- **Social / Legal**: The current custodian has restricted access, and a rival interested party is seeking the same material.
+- **Mental**: The text's contradictions make premature conclusions tempting; investigators who do not verify its claims may act on false information.
 
 ### Adventure Hooks
-1. **The Missing Gathering**: An agent representing the ${custodianName} hires the party to recover a detached gathering of four leaves stolen during transit between private collections.
-2. **The Erroneous Chant**: A local fraternal lodge is preparing to perform the appeasement rite on the upcoming equinox, completely unaware that the author's translation inverts the sealing verses.
-3. **The Collector's Bequest**: The party inherits an uncatalogued trunk containing this manuscript, along with a sealed letter warning that three rival purchasers will arrive before nightfall.`;
+1. **Recover the Missing Section**: ${details.hooks[0]}
+2. **Correct the Record**: ${details.hooks[1]}
+3. **Trace the Copy**: ${details.hooks[2]}`;
 
   const lore = `### At the Table Reference
 
 ### Connected Entities
-- **${authorName}** (Author / Origin): The seventeenth-century scholar who documented the coastal rites.
-- **${custodianName}** (Current Custodian / Archive): Holds the institutional accession record and security lease.
-- **The Silt Brotherhood** (Interested Faction): Seeks the unredacted cipher notes in the margins.
-- **Saint Orra's Undercroft** (Associated Location): Where the original observations were recorded.
+- **${authorName}** (Author / Origin): Compiled the work in the ${resolved.era}; their account reflects the limits and pressures of its time.
+- **${resolved.custodian}** (Current Custodian / Archive): Holds the access or accession record for this copy.
+- **${details.faction}** (Interested Faction): Seeks the withheld information in the manuscript.
+- **${details.location}** (Associated Location): Tied to the original records and their missing context.
 
 ### Quick Checks & Mechanics
 - **Deciphering**: Requires fluency in ${resolved.language} or two days of laborious reference translation with an academic lexicon.
-- **The Deception / Flaw**: The author's ritual chant does not banish the entity; it pacifies it for only an hour while increasing its territorial aggression.
-- **Safe Handling**: Keep enclosed in a dry cedar box with desiccating salts; touching damp margins bare-handed requires immediate cleansing with alcohol.`;
+- **The Deception / Flaw**: ${details.clue}
+- **Safe Handling**: Account for the primary hazard (${resolved.primaryHazard}) before studying or sharing the material.`;
 
   return {
     type: "item",
@@ -343,7 +473,7 @@ The text provides an actionable clue: a verified timetable predicting the exact 
     ],
     connections: [
       {
-        targetTitle: custodianName,
+        targetTitle: resolved.custodian,
         relationship: "catalogued in collection of",
       },
     ],

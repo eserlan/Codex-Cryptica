@@ -90,6 +90,30 @@ describe("public-tome generator", () => {
       expect(out1.content).toBe(out2.content);
       expect(out1.lore).toBe(out2.lore);
     });
+
+    it("uses the selected modern setting, era, format, and hazard in local mode", () => {
+      const options = {
+        genre: "Cyberpunk / Corporate",
+        tomeType: "Leaked Research Log",
+        format: "Redacted Printed Octavo",
+        primaryHazard: "Social / Investigation Risk",
+        custodian: "University Restricted Archive",
+      };
+      const resolved = resolveTome(options, seededRng(8));
+      const out = generateTomeLocal(options, seededRng(8));
+
+      expect(out.content).toContain("Cyberpunk / Corporate");
+      expect(out.content).toContain("Social / Investigation Risk");
+      expect(out.content).toContain("audit trail");
+      expect(out.content.toLowerCase()).toContain("redacted printed octavo");
+      expect(out.content).not.toContain("iron-gall ink");
+      expect(out.content).not.toContain("governing synod");
+      expect(out.content).toContain(resolved.era);
+      expect(out.lore).toContain(resolved.era);
+      expect(["Late 21st century", "Near-future era"]).toContain(resolved.era);
+      expect(out.lore.toLowerCase()).toContain("compiled the work in the");
+      expect(out.lore).not.toContain("seventeenth-century");
+    });
   });
 
   describe("buildTomePrompt", () => {
@@ -97,6 +121,7 @@ describe("public-tome generator", () => {
       const prompt = buildTomePrompt(
         {
           genre: "Modern Conspiracy",
+          primaryHazard: "Social / Investigation Risk",
           concept: "Operation Black Archive",
           avoidNames: ["Project Chiron", "MK-Ultra"],
           campaignContext: "A cold-war occult research group",
@@ -109,7 +134,11 @@ describe("public-tome generator", () => {
       expect(prompt.systemInstruction).toContain("System-neutral");
 
       expect(prompt.userMessage).toContain("Modern Conspiracy");
+      expect(prompt.userMessage).toContain(
+        `Composition Era**: ${prompt.resolved.era}`,
+      );
       expect(prompt.userMessage).toContain("Operation Black Archive");
+      expect(prompt.userMessage).toContain("Social / Investigation Risk");
       expect(prompt.userMessage).toContain("A cold-war occult research group");
       expect(prompt.userMessage).toContain("Project Chiron");
       expect(prompt.userMessage).toContain("Previous session");

@@ -306,6 +306,7 @@ export function createGeneratorHandlers(
     tome: (useAI) =>
       engine.generateTome({
         ...(ctx.tome as object),
+        primaryHazard: (ctx.tome as Record<string, unknown>).hazard,
         useAI,
       } as never),
   } as GeneratorHandlers;
