@@ -270,6 +270,11 @@ test.describe("Cif tip chip placement (spec 176, plan D7)", () => {
       await page.setViewportSize(size);
       await seedSetupEnded(page);
 
+      // The graph's floating buttons (below the lg breakpoint) render late;
+      // measure once they are up.
+      if (size.width < 1024) {
+        await expect(page.getByTestId("graph-fab-create")).toBeVisible();
+      }
       const chip = page.getByTestId("cif-tip-chip");
       await expect(chip).toBeVisible();
       const button = page.getByTestId("help-assistant-button");
@@ -277,12 +282,19 @@ test.describe("Cif tip chip placement (spec 176, plan D7)", () => {
 
       const chipBox = (await chip.boundingBox())!;
       const buttonBox = (await button.boundingBox())!;
-      const gap =
-        size.width >= 768
-          ? chipBox.x - (buttonBox.x + buttonBox.width) // beside, to the right
-          : buttonBox.y - (chipBox.y + chipBox.height); // above, on phones
-      expect(gap).toBeGreaterThanOrEqual(0);
-      expect(gap).toBeLessThan(40);
+      if (size.width >= 768) {
+        // Beside the button, to its right.
+        const gap = chipBox.x - (buttonBox.x + buttonBox.width);
+        expect(gap).toBeGreaterThanOrEqual(0);
+        expect(gap).toBeLessThan(40);
+      } else {
+        // Above the button, in its column; it may rise past the graph's buttons.
+        expect(chipBox.y + chipBox.height).toBeLessThanOrEqual(buttonBox.y);
+        const rightEdges = Math.abs(
+          chipBox.x + chipBox.width - (buttonBox.x + buttonBox.width),
+        );
+        expect(rightEdges).toBeLessThan(24);
+      }
       expect(chipBox.x).toBeGreaterThanOrEqual(0);
       expect(chipBox.x + chipBox.width).toBeLessThanOrEqual(size.width);
       expect(await controlsUnderChip(page)).toEqual([]);

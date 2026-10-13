@@ -141,4 +141,80 @@ describe("CifTipChip (spec 176, US2 and US3)", () => {
     button.remove();
     floating.referenceHidden = false;
   });
+
+  describe("never covers another control (Story 3, scenario 5)", () => {
+    // jsdom has no layout: give the chip and test buttons real-looking boxes.
+    const boxes: Record<string, DOMRect> = {
+      "cif-tip-chip": DOMRect.fromRect({
+        x: 12,
+        y: 34,
+        width: 200,
+        height: 20,
+      }),
+      "graph-fab-create": DOMRect.fromRect({
+        x: 100,
+        y: 30,
+        width: 56,
+        height: 56,
+      }),
+    };
+    function stubBoxes() {
+      return vi
+        .spyOn(HTMLElement.prototype, "getBoundingClientRect")
+        .mockImplementation(function (this: HTMLElement) {
+          const id = this.getAttribute("data-testid") ?? "";
+          return (
+            boxes[id] ?? DOMRect.fromRect({ x: 0, y: 0, width: 0, height: 0 })
+          );
+        });
+    }
+    function anchorButton() {
+      const button = document.createElement("button");
+      button.setAttribute("data-testid", "help-assistant-button");
+      document.body.appendChild(button);
+      return button;
+    }
+    function fab() {
+      const b = document.createElement("button");
+      b.setAttribute("data-testid", "graph-fab-create");
+      document.body.appendChild(b);
+      return b;
+    }
+
+    it("rises just above a floating button it would cover", async () => {
+      const spy = stubBoxes();
+      const anchor = anchorButton();
+      const button = fab();
+      setup();
+      const chip = screen.getByTestId("cif-tip-chip");
+      // The button's top is 30; 8px gap; chip is 20 tall.
+      await vi.waitFor(() => expect(chip.style.top).toBe(`${30 - 8 - 20}px`));
+      button.remove();
+      anchor.remove();
+      spy.mockRestore();
+    });
+
+    it("moves when a control renders after the chip, as the graph's buttons do", async () => {
+      const spy = stubBoxes();
+      const anchor = anchorButton();
+      setup();
+      const chip = screen.getByTestId("cif-tip-chip");
+      await vi.waitFor(() => expect(chip.style.top).toBe("34px"));
+      const button = fab();
+      await vi.waitFor(() => expect(chip.style.top).toBe(`${30 - 8 - 20}px`));
+      button.remove();
+      anchor.remove();
+      spy.mockRestore();
+    });
+
+    it("stays put when nothing is underneath (negative case)", async () => {
+      const spy = stubBoxes();
+      const anchor = anchorButton();
+      setup();
+      const chip = screen.getByTestId("cif-tip-chip");
+      await vi.waitFor(() => expect(chip.style.top).toBe("34px"));
+      anchor.remove();
+      spy.mockRestore();
+    });
+  });
 });

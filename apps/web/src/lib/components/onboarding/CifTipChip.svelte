@@ -8,9 +8,20 @@
     offset,
     shift,
   } from "@floating-ui/dom";
+  import { clearOfControls, type Box } from "./chip-placement";
 
   /** The Cif button the chip sits beside (plan D7). */
   const CIF_BUTTON = '[data-testid="help-assistant-button"]';
+  const CONTROLS =
+    'button, a[href], input, select, textarea, [role="button"], [role="tab"]';
+
+  /** Visible controls the chip must not cover, other than itself and the Cif button. */
+  function controlBoxes(chip: HTMLElement, anchor: HTMLElement): Box[] {
+    return [...document.querySelectorAll<HTMLElement>(CONTROLS)]
+      .filter((c) => c !== anchor && !chip.contains(c))
+      .map((c) => c.getBoundingClientRect())
+      .filter((r) => r.width > 0 && r.height > 0);
+  }
 
   /**
    * A single, dismissible "Cif has a tip" chip (spec 176). It never moves focus,
@@ -53,7 +64,7 @@
     anchored = false;
     if (!anchor) return;
     const beside = window.innerWidth >= 768;
-    return autoUpdate(anchor, el, () => {
+    const update = () => {
       void computePosition(anchor, el, {
         placement: beside ? "right" : "top-start",
         middleware: [offset(8), flip(), shift({ padding: 8 }), hide()],
@@ -61,10 +72,33 @@
         // A Cif button scrolled or clipped out of view (a short window can cut
         // off the bottom of the rail) is no anchor: use the corner instead.
         anchored = !middlewareData.hide?.referenceHidden;
+        const { width, height } = el.getBoundingClientRect();
+        const box = { x, y, width, height };
+        // Rise above floating buttons, such as the graph's on phones (Story 3, scenario 5).
+        const top = clearOfControls(box, controlBoxes(el, anchor)) ?? y;
         el.style.left = anchored ? `${x}px` : "";
-        el.style.top = anchored ? `${y}px` : "";
+        el.style.top = anchored ? `${top}px` : "";
+      });
+    };
+    const stopAutoUpdate = autoUpdate(anchor, el, update);
+
+    // Controls that render after the chip (the graph's buttons load late) move
+    // it too. Batched to one update per frame, and only while a chip is showing.
+    let frame = 0;
+    const observer = new MutationObserver(() => {
+      if (frame) return;
+      frame = requestAnimationFrame(() => {
+        frame = 0;
+        update();
       });
     });
+    observer.observe(document.body, { childList: true, subtree: true });
+
+    return () => {
+      stopAutoUpdate();
+      observer.disconnect();
+      cancelAnimationFrame(frame);
+    };
   });
 
   onMount(() => {
