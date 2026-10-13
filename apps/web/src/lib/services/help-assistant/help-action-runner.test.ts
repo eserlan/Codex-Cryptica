@@ -133,6 +133,26 @@ describe("HelpActionRunner", () => {
     await expect(runner.run(guide)).resolves.toBe(true); // the tab still opened
   });
 
+  it("does not run a chained highlight after cancellation", async () => {
+    let finishWait!: () => void;
+    const controller = new AbortController();
+    const show = vi.fn(() => true);
+    const { runner, openTab } = setup({
+      highlight: { show },
+      waitFor: () =>
+        new Promise<boolean>((resolve) => {
+          finishWait = () => resolve(false);
+        }),
+    });
+    const pending = runner.run(guide, { signal: controller.signal });
+    await Promise.resolve();
+    controller.abort();
+    finishWait();
+    await pending;
+    expect(show).not.toHaveBeenCalled();
+    expect(openTab).toHaveBeenCalledWith("status");
+  });
+
   it("discards a guide that is no longer valid for the current screen", async () => {
     const { runner, openTab, show } = setup(
       {},

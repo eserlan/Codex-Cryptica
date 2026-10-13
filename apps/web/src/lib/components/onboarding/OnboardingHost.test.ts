@@ -188,6 +188,29 @@ describe("OnboardingHost", () => {
     expect(onboardingStore.showChangelog).toBe(true);
   });
 
+  it("cancels the changelog timer when the host unmounts", async () => {
+    vi.useFakeTimers();
+    h.helpStore.hasSeen.mockReturnValue(true);
+    onboardingStore.lastSeenVersion = "0.1.0";
+    const host = render(OnboardingHost);
+    await tick();
+    host.unmount();
+    await vi.advanceTimersByTimeAsync(2100);
+    expect(onboardingStore.showChangelog).toBe(false);
+  });
+
+  it("cancels the changelog timer when its effect is superseded", async () => {
+    vi.useFakeTimers();
+    h.helpStore.hasSeen.mockReturnValue(true);
+    onboardingStore.lastSeenVersion = "0.1.0";
+    render(OnboardingHost);
+    await tick();
+    onboardingStore.lastSeenVersion = "0.9.0";
+    await tick();
+    await vi.advanceTimersByTimeAsync(2100);
+    expect(onboardingStore.showChangelog).toBe(false);
+  });
+
   it("steps aside when a tour starts, so the two never show together", async () => {
     render(OnboardingHost);
     await tick();

@@ -50,7 +50,7 @@ export class HelpActionRunner {
    */
   async run(
     action: GuidanceAction,
-    options: { extraAvailable?: readonly string[] } = {},
+    options: { extraAvailable?: readonly string[]; signal?: AbortSignal } = {},
   ): Promise<boolean> {
     const valid = validateAction(action, this.deps.context(), {
       helpIds: this.deps.helpIds(),
@@ -58,8 +58,9 @@ export class HelpActionRunner {
     });
     if (!valid) return false;
 
-    const first = await this.step(valid);
-    if (first && valid.then) await this.step(valid.then);
+    const first = await this.step(valid, options.signal);
+    if (first && valid.then && !options.signal?.aborted)
+      await this.step(valid.then, options.signal);
     return first;
   }
 
@@ -82,7 +83,11 @@ export class HelpActionRunner {
     return true;
   }
 
-  private async step(step: GuidanceStep): Promise<boolean> {
+  private async step(
+    step: GuidanceStep,
+    signal?: AbortSignal,
+  ): Promise<boolean> {
+    if (signal?.aborted) return false;
     switch (step.type) {
       case "navigate":
         await this.deps.goto(this.deps.destinationPath(step.to));
@@ -99,6 +104,7 @@ export class HelpActionRunner {
         // The control may only mount after the previous step (a tab opening).
         let shown = false;
         await this.deps.waitFor(() => {
+          if (signal?.aborted) return false;
           shown = this.deps.highlight.show(step.target, step.label);
           return shown;
         }, TARGET_WAIT_MS);

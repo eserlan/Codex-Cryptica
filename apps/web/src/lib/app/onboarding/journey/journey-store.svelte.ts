@@ -38,7 +38,7 @@ export interface JourneyStoreDeps {
   /** Runs a "Show me" guide; false means "show the written instructions". */
   runGuide: (
     action: GuidanceAction,
-    options: { extraAvailable: readonly string[] },
+    options: { extraAvailable: readonly string[]; signal?: AbortSignal },
   ) => Promise<boolean>;
   /** The vault's category ids. */
   categoryIds: () => readonly string[];
@@ -72,6 +72,7 @@ export class JourneyStore {
   announcement = $state("");
 
   private vaultId: string | null = null;
+  private showMeController: AbortController | null = null;
 
   constructor(private readonly deps: JourneyStoreDeps) {}
 
@@ -135,6 +136,7 @@ export class JourneyStore {
    * otherwise it pauses as exited and Getting Started offers Continue.
    */
   load(vaultId: string | null): void {
+    this.cancelShowMe();
     this.vaultId = vaultId;
     this.visible = false;
     this.collapsed = false;
@@ -238,11 +240,26 @@ export class JourneyStore {
   }
 
   async showMe(): Promise<void> {
-    const action = this.step?.showMe;
-    if (!action) return;
+    const step = this.step;
+    const journeyId = this.progress?.journeyId;
+    if (!step?.showMe || !journeyId || !this.active || !this.running) return;
+    await this.runShowMe(step.showMe, journeyId, step.id);
+  }
+
+  private async runShowMe(
+    action: GuidanceAction,
+    journeyId: JourneyId,
+    stepId: string,
+  ): Promise<void> {
+    this.cancelShowMe();
+    const controller = new AbortController();
+    this.showMeController = controller;
     const ran = await this.deps.runGuide(action, {
       extraAvailable: SHELL_CONTROL_IDS,
+      signal: controller.signal,
     });
+    if (!this.isCurrentShowMe(controller, journeyId, stepId)) return;
+    this.showMeController = null;
     if (!ran) {
       this.showingFallback = true;
       this.announce(this.step?.fallback ?? "");
@@ -267,6 +284,7 @@ export class JourneyStore {
   }
 
   private show(progress: JourneyProgress): void {
+    this.cancelShowMe();
     this.commit(progress);
     this.visible = true;
     this.collapsed = false;
@@ -276,6 +294,7 @@ export class JourneyStore {
   }
 
   private hide(): void {
+    this.cancelShowMe();
     this.visible = false;
     this.collapsed = false;
     this.showingFallback = false;
@@ -286,9 +305,7 @@ export class JourneyStore {
     const prev = this.progress;
     if (!prev || next === prev) return;
     const def = this.definition!;
-    if (currentStep(next, def)?.id !== currentStep(prev, def)?.id) {
-      this.showingFallback = false;
-    }
+    this.prepareTransition(prev, next, def);
     this.commit(next);
     this.announceChange(prev, next);
     if (syncAfter && next.outcome !== "finished") this.syncScreen();
@@ -311,6 +328,36 @@ export class JourneyStore {
 
   private announce(text: string): void {
     this.announcement = text;
+  }
+
+  private cancelShowMe(): void {
+    this.showMeController?.abort();
+    this.showMeController = null;
+  }
+
+  private isCurrentShowMe(
+    controller: AbortController,
+    journeyId: JourneyId | undefined,
+    stepId: string | undefined,
+  ): boolean {
+    return (
+      this.showMeController === controller &&
+      this.active &&
+      this.running &&
+      this.progress?.journeyId === journeyId &&
+      this.step?.id === stepId
+    );
+  }
+
+  private prepareTransition(
+    prev: JourneyProgress,
+    next: JourneyProgress,
+    def: JourneyDefinition,
+  ): void {
+    const stepChanged =
+      currentStep(next, def)?.id !== currentStep(prev, def)?.id;
+    if (stepChanged || next.outcome !== prev.outcome) this.cancelShowMe();
+    if (stepChanged) this.showingFallback = false;
   }
 
   private commit(progress: JourneyProgress): void {

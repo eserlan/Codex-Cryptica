@@ -17,6 +17,7 @@ function guarded<T extends object>(value: T, allowed: string[]): T {
 }
 
 function setup() {
+  let activeVaultId: string | null = "v1";
   let vaultListener: ((e: VaultEvent) => void) | null = null;
   let appListener: ((e: { payload?: unknown }) => void) | null = null;
   const offVault = vi.fn();
@@ -37,6 +38,7 @@ function setup() {
     },
     target,
     clock: { now: () => 500 },
+    activeVaultId: () => activeVaultId,
   });
   const seen: Milestone[] = [];
   const stop = milestones.start((m) => seen.push(m));
@@ -49,11 +51,12 @@ function setup() {
     target,
     vault: (e: VaultEvent) => vaultListener?.(e),
     app: (e: { payload?: unknown }) => appListener?.(e),
+    setActiveVaultId: (id: string | null) => (activeVaultId = id),
   };
 }
 
 describe("JourneyMilestones", () => {
-  it("emits one entry-created per entity with only its category", () => {
+  it("emits one entry-created per distinct category in the active vault", () => {
     const t = setup();
     const entity = (type: string) =>
       guarded({ type, title: "Secret", id: "e1", content: "x" }, ["type"]);
@@ -62,9 +65,13 @@ describe("JourneyMilestones", () => {
         {
           type: "BATCH_CREATED",
           vaultId: "v1",
-          entities: [entity("location"), entity("character")],
+          entities: [
+            entity("location"),
+            entity("character"),
+            entity("location"),
+          ],
         },
-        ["type", "entities"],
+        ["type", "vaultId", "entities"],
       ) as VaultEvent,
     );
     expect(t.seen).toEqual([
@@ -85,10 +92,28 @@ describe("JourneyMilestones", () => {
           connectionType: "rival",
           label: "Rival",
         },
-        ["type"],
+        ["type", "vaultId"],
       ) as VaultEvent,
     );
     expect(t.seen).toEqual([{ kind: "connection-added", at: 500 }]);
+  });
+
+  it("ignores entity and connection events from another vault", () => {
+    const t = setup();
+    t.setActiveVaultId("v2");
+    t.vault({
+      type: "BATCH_CREATED",
+      vaultId: "v1",
+      entities: [{ type: "location" }] as never,
+    });
+    t.vault({
+      type: "CONNECTION_ADDED",
+      vaultId: "v1",
+      sourceId: "a",
+      targetId: "b",
+      connectionType: "rival",
+    });
+    expect(t.seen).toEqual([]);
   });
 
   it("emits generator-saved for a generator save and nothing for other journal entries", () => {

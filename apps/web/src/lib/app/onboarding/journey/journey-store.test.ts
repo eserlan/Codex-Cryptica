@@ -231,10 +231,47 @@ describe("JourneyStore", () => {
     await t.store.showMe();
     expect(t.deps.runGuide).toHaveBeenCalledWith(
       { type: "highlight", target: "create-entry", label: "Create" },
-      { extraAvailable: SHELL_CONTROL_IDS },
+      {
+        extraAvailable: SHELL_CONTROL_IDS,
+        signal: expect.any(AbortSignal),
+      },
     );
     expect(t.store.showingFallback).toBe(false);
   });
+
+  it.each(["exit", "replacement"] as const)(
+    "cancels a pending Show me guide after journey %s",
+    async (change) => {
+      let resolveGuide!: (ran: boolean) => void;
+      let signal: AbortSignal | undefined;
+      const runGuide = vi.fn(
+        (
+          _action: Parameters<JourneyStoreDeps["runGuide"]>[0],
+          options: Parameters<JourneyStoreDeps["runGuide"]>[1],
+        ) => {
+          signal = options.signal;
+          return new Promise<boolean>((resolve) => (resolveGuide = resolve));
+        },
+      );
+      const t = setup({ runGuide });
+      t.store.load("v1");
+      t.store.start("world");
+      const pending = t.store.showMe();
+      expect(signal?.aborted).toBe(false);
+
+      if (change === "exit") t.store.exit();
+      else t.store.start("story");
+      expect(signal?.aborted).toBe(true);
+
+      resolveGuide(false);
+      await pending;
+      expect(t.store.showingFallback).toBe(false);
+      if (change === "replacement") {
+        expect(t.store.active).toBe(true);
+        expect(t.store.definition?.id).toBe("writer");
+      }
+    },
+  );
 
   it("falls back to written instructions when Show me cannot run", async () => {
     const t = setup({ runGuide: vi.fn(async () => false) });

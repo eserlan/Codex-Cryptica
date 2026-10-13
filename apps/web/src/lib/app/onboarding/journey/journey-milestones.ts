@@ -18,6 +18,7 @@ export interface MilestoneSources {
   };
   target: Pick<EventTarget, "addEventListener" | "removeEventListener"> | null;
   clock: Clock;
+  activeVaultId: () => string | null;
 }
 
 type Listener = (milestone: Milestone) => void;
@@ -40,10 +41,15 @@ export class JourneyMilestones {
     this.listener = listener;
     const offVault = this.sources.vaultBus.subscribe((event) => {
       if (event.type === "BATCH_CREATED") {
+        if (event.vaultId !== this.sources.activeVaultId()) return;
+        const categories = new Set<string>();
         for (const entity of event.entities) {
-          this.emit({ kind: "entry-created", category: String(entity.type) });
+          categories.add(String(entity.type));
         }
+        for (const category of categories)
+          this.emit({ kind: "entry-created", category });
       } else if (event.type === "CONNECTION_ADDED") {
+        if (event.vaultId !== this.sources.activeVaultId()) return;
         this.emit({ kind: "connection-added" });
       }
     }, "onboarding-journey");
