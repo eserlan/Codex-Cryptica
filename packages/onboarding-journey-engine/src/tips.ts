@@ -103,6 +103,8 @@ export interface TipBlockers {
   tourActive: boolean;
   journeyOrInvitationActive: boolean;
   cifOpen: boolean;
+  /** A first-run page, such as the vault's front page, covers the screen. */
+  firstRunPage: boolean;
 }
 
 export type GoalInvitationAnswer = "goal" | "explore" | "dismissed";

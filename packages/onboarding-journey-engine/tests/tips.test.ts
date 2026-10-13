@@ -18,6 +18,7 @@ const NO_BLOCKERS: TipBlockers = {
   tourActive: false,
   journeyOrInvitationActive: false,
   cifOpen: false,
+  firstRunPage: false,
 };
 
 const ON: TipsRecord = { ...emptyTipsRecord(), enabled: true };
@@ -116,6 +117,7 @@ describe("decideTip: quiet rules (FR-012, FR-014, FR-015)", () => {
     "tourActive",
     "journeyOrInvitationActive",
     "cifOpen",
+    "firstRunPage",
   ] as const;
 
   for (const name of blockerNames) {

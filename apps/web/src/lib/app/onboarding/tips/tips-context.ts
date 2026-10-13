@@ -23,10 +23,31 @@ export interface TipSources {
   area: HelpArea;
   generatorsOffered: boolean;
   typing: boolean;
-  modalOpen: boolean;
+  anyModalOpen: boolean;
+  zenMode: boolean;
   tourActive: boolean;
   firstRunGuidanceActive: boolean;
-  cifOpen: boolean;
+  cifPanelOpen: boolean;
+  cifPopoutConnected: boolean;
+  // What the graph route reads to decide whether the front page shows.
+  vaultInitialized: boolean;
+  skipWelcomeScreen: boolean;
+  worldPageDismissed: boolean;
+  entitySelected: boolean;
+}
+
+/**
+ * The vault's front page ("Start your world") covers the graph: the same
+ * condition the graph route uses to render it.
+ */
+export function frontPageShowing(s: TipSources): boolean {
+  return (
+    s.area === "graph" &&
+    s.vaultInitialized &&
+    s.skipWelcomeScreen &&
+    !s.worldPageDismissed &&
+    !s.entitySelected
+  );
 }
 
 /** Pure: turns app state into the context the tip decision reads (no DOM, no stores). */
@@ -39,10 +60,11 @@ export function tipContextFrom(s: TipSources): TipContext {
     unavailableAreas: s.generatorsOffered ? [] : ["generators"],
     blockers: {
       typing: s.typing,
-      dialogOpen: s.modalOpen,
+      dialogOpen: s.anyModalOpen || s.zenMode,
       tourActive: s.tourActive,
       journeyOrInvitationActive: s.firstRunGuidanceActive,
-      cifOpen: s.cifOpen,
+      cifOpen: s.cifPanelOpen || s.cifPopoutConnected,
+      firstRunPage: frontPageShowing(s),
     },
   };
 }

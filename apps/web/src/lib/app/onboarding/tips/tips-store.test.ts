@@ -30,6 +30,7 @@ const CLEAR = {
   tourActive: false,
   journeyOrInvitationActive: false,
   cifOpen: false,
+  firstRunPage: false,
 };
 
 function setup(
