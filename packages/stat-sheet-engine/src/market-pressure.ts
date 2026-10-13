@@ -163,11 +163,16 @@ function quantityStep(
   if (stock.kind === "service" || stock.kind === "commission") {
     return { skip: "no-quantity" };
   }
-  const before = stock.quantity ?? 0;
-  const after = shiftedQuantity(before, quantity);
+  // No quantity means none on hand (as when selling), but it is recorded as
+  // absent so undoing removes the quantity instead of writing a zero.
+  const before = stock.quantity;
+  const start = before ?? 0;
+  const after = shiftedQuantity(start, quantity);
   if (!Number.isSafeInteger(after)) return { skip: "unsafe-quantity" };
-  if (after === before) return {};
-  return { shift: { before, after }, reason: `Quantity ${before} to ${after}` };
+  if (after === start) return {};
+  const shift: NonNullable<MarketRowChange["quantity"]> =
+    before === undefined ? { after } : { before, after };
+  return { shift, reason: `Quantity ${start} to ${after}` };
 }
 
 function availabilityStep(
@@ -399,6 +404,14 @@ function availabilityBack(
     : null;
 }
 
+/** Puts the values back; a quantity that was absent before is removed. */
+function restoredRow(row: StockRow, patch: ValuePatch): StockRow {
+  const next = patchStock(row, patch);
+  if (!("quantity" in patch) || patch.quantity !== undefined) return next;
+  const { quantity: _removed, ...stock } = stockOf(next);
+  return { ...next, [STOCK_KEY]: stock };
+}
+
 function revertRow(
   row: StockRow,
   change: MarketRowChange,
@@ -422,7 +435,7 @@ function revertRow(
       restored += 1;
     }
   }
-  return { row: restored ? patchStock(row, patch) : row, restored, kept };
+  return { row: restored ? restoredRow(row, patch) : row, restored, kept };
 }
 
 /**
@@ -552,7 +565,7 @@ function startsFrom(row: StockRow, change: MarketRowChange): boolean {
     !change.price ||
     (!!stock.price && sameMoney(stock.price, change.price.before));
   const quantityOk =
-    !change.quantity || (stock.quantity ?? 0) === change.quantity.before;
+    !change.quantity || stock.quantity === change.quantity.before;
   const availabilityOk =
     !change.availability ||
     availabilityOf(stock) === (change.availability.before ?? "available");
