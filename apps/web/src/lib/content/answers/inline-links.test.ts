@@ -37,6 +37,15 @@ describe("parseInlineLinks", () => {
     expect(parseInlineLinks(unsafe)).toEqual([{ kind: "text", text: unsafe }]);
   });
 
+  it("does not treat protocol-relative URLs as site links", () => {
+    for (const text of [
+      "Go [there](//evil.example/path).",
+      "Go [there](/\\evil.example/path).",
+    ]) {
+      expect(parseInlineLinks(text)).toEqual([{ kind: "text", text }]);
+    }
+  });
+
   it("handles a string that is only a link", () => {
     expect(parseInlineLinks("[SRD](https://srd.example.com/)")).toEqual([
       {

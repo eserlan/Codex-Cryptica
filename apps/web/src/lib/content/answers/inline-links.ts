@@ -11,7 +11,9 @@ export type InlineSegment =
   | { kind: "text"; text: string }
   | { kind: "link"; text: string; href: string; external: boolean };
 
-const LINK_PATTERN = /\[([^\]\n]+)\]\(((?:https?:\/\/|\/)[^)\s]+)\)/g;
+// A site path is a single "/" — "//host" and "/\host" are protocol-relative
+// URLs to another origin, so they must not pass as internal links.
+const LINK_PATTERN = /\[([^\]\n]+)\]\(((?:https?:\/\/|\/(?![/\\]))[^)\s]+)\)/g;
 
 export function parseInlineLinks(source: string): InlineSegment[] {
   const segments: InlineSegment[] = [];
