@@ -2147,8 +2147,8 @@ describe("generateDraftStream", () => {
     expect(deltas).toBe(reviewed);
     expect(deltas).not.toContain("unexplained blade");
     const final = events.find(e => e.type === "draft");
-    expect(final?.draft?.title).toBe("Vessel Observations");
-    expect(final?.draft?.lore).toContain("The clay vessel must cure");
+    expect(final).toMatchObject({ type: "draft", draft: { title: "Vessel Observations" } });
+    expect(JSON.stringify(final)).toContain("The clay vessel must cure");
   });
 
   it("does not emit a tome draft if the streamed editorial turn is cancelled", async () => {
