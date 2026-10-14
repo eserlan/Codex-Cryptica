@@ -58,6 +58,8 @@
           class="trim"
           d="M60 126 C77 91 102 64 129 57 C153 50 170 75 194 110"
         />
+        <path class="brow brow-left" d="M96 88 Q111 82 127 88" />
+        <path class="brow brow-right" d="M147 86 Q162 80 177 85" />
         <g class="eye eye-open">
           <ellipse
             class="eye-shape"
@@ -75,6 +77,10 @@
             ry="15"
             transform="rotate(8 161 109)"
           />
+        </g>
+        <g class="eye eye-happy">
+          <path class="eye-arc" d="M100 120 Q112 98 125 120" />
+          <path class="eye-arc" d="M148 118 Q161 96 174 117" />
         </g>
         <g class="eye eye-think">
           <path
@@ -126,13 +132,27 @@
   .eye-shape {
     fill: var(--chrome-surface);
   }
+  .eye-arc,
+  .brow {
+    fill: none;
+    stroke: var(--chrome-surface);
+    stroke-linecap: round;
+  }
+  .eye-arc {
+    stroke-width: 8;
+  }
+  .brow {
+    stroke-width: 6.5;
+  }
 
   .head,
   .body,
   .arm-left,
   .arm-right,
-  .eye {
+  .eye,
+  .brow {
     transform-box: fill-box;
+    transform-origin: center;
   }
   .head {
     transform-origin: 50% 87%;
@@ -153,6 +173,7 @@
   [data-mood="idle"] .eye-open,
   [data-mood="curious"] .eye-open,
   [data-mood="explaining"] .eye-open,
+  [data-mood="delighted"] .eye-happy,
   [data-mood="thinking"] .eye-think,
   [data-mood="confused"] .eye-confused {
     opacity: 1;
@@ -198,6 +219,44 @@
     transform: rotate(-22deg);
   }
 
+  /* Brows carry most of the expression at header size. */
+  [data-mood="curious"] .brow-right {
+    transform: translateY(-5px) rotate(-6deg);
+  }
+  [data-mood="curious"] .brow-left {
+    transform: translateY(-2px);
+  }
+  [data-mood="thinking"] .brow-left {
+    transform: translateY(3px) rotate(10deg);
+  }
+  [data-mood="thinking"] .brow-right {
+    transform: translateY(3px) rotate(-10deg);
+  }
+  [data-mood="explaining"] .brow {
+    transform: translateY(-3px);
+  }
+  [data-mood="confused"] .brow-left {
+    transform: translateY(-3px) rotate(-14deg);
+  }
+  [data-mood="confused"] .brow-right {
+    transform: translateY(4px) rotate(10deg);
+  }
+  [data-mood="delighted"] .brow {
+    transform: translateY(-7px);
+  }
+  [data-mood="delighted"] .head {
+    transform: translateY(-6px) rotate(-4deg);
+  }
+  [data-mood="delighted"] .body {
+    transform: scale(1.06, 1.03);
+  }
+  [data-mood="delighted"] .arm-left {
+    transform: rotate(-30deg) translateY(-6px);
+  }
+  [data-mood="delighted"] .arm-right {
+    transform: rotate(30deg) translateY(-6px);
+  }
+
   /* Pose changes ease in and the figure hovers gently, unless the user asks
      for reduced motion, in which case poses switch instantly and stay still. */
   @media (prefers-reduced-motion: no-preference) {
@@ -205,7 +264,8 @@
     .body,
     .arm-left,
     .arm-right,
-    .eye {
+    .eye,
+    .brow {
       transition:
         transform 430ms cubic-bezier(0.22, 0.8, 0.2, 1),
         opacity 250ms ease;
@@ -215,6 +275,51 @@
     }
     [data-mood="thinking"] .hover {
       animation-duration: 4.6s;
+    }
+    /* Blink on a slightly uneven beat. Uses `scale` and `translate` so it
+       never fights the pose `transform`. */
+    .eye {
+      animation: cif-blink 5.8s ease-in-out infinite;
+    }
+    [data-mood="thinking"] .eye-think {
+      animation:
+        cif-blink 5.8s ease-in-out infinite,
+        cif-glance 3.4s ease-in-out infinite;
+    }
+    .body {
+      animation: cif-breathe 4.2s ease-in-out infinite;
+    }
+  }
+
+  @keyframes cif-blink {
+    0%,
+    93%,
+    100% {
+      scale: 1 1;
+    }
+    96% {
+      scale: 1 0.1;
+    }
+  }
+
+  @keyframes cif-glance {
+    0%,
+    100% {
+      translate: 0 0;
+    }
+    35%,
+    65% {
+      translate: -7px -2px;
+    }
+  }
+
+  @keyframes cif-breathe {
+    0%,
+    100% {
+      scale: 1 1;
+    }
+    50% {
+      scale: 1.02 1.025;
     }
   }
 
