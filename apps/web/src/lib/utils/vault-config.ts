@@ -29,12 +29,16 @@ export interface VaultConfigDependencies {
 
 export type VaultConfigUpdater = (
   vaultId: string,
-  update: (config: Record<string, unknown>) => void,
+  update: (config: Record<string, unknown>) => void | Promise<void>,
 ) => Promise<void>;
 
+/**
+ * `ensureHeld` is supplied by locks that can lose ownership mid-operation
+ * (the IndexedDB lease). Call it before a write; it rejects if the lock was lost.
+ */
 export type VaultConfigLock = <T>(
   name: string,
-  operation: () => Promise<T>,
+  operation: (ensureHeld?: () => Promise<void>) => Promise<T>,
 ) => Promise<T>;
 
 const FALLBACK_LOCK_LEASE_MS = 15_000;
@@ -51,7 +55,7 @@ function createLockToken(): string {
 
 async function withIndexedDbLock<T>(
   name: string,
-  operation: () => Promise<T>,
+  operation: (ensureHeld?: () => Promise<void>) => Promise<T>,
 ): Promise<T> {
   const key = `vault-config-lock:${name}`;
   const owner = createLockToken();
@@ -92,8 +96,18 @@ async function withIndexedDbLock<T>(
       .catch(() => undefined);
   }, FALLBACK_LOCK_RENEW_MS);
 
+  const ensureHeld = async () => {
+    const stillHeld = await entityDb.appSettings.get(key);
+    if (
+      stillHeld?.value.owner !== owner ||
+      stillHeld.value.expiresAt <= Date.now()
+    ) {
+      throw new Error("Vault config lock was lost before the write completed");
+    }
+  };
+
   try {
-    return await operation();
+    return await operation(ensureHeld);
   } finally {
     clearInterval(renew);
     await entityDb.transaction("rw", entityDb.appSettings, async () => {
@@ -107,7 +121,7 @@ async function withIndexedDbLock<T>(
 
 const withBrowserLock: VaultConfigLock = async (name, operation) => {
   if (typeof navigator !== "undefined" && navigator.locks) {
-    return navigator.locks.request(name, operation);
+    return navigator.locks.request(name, () => operation());
   }
   return withIndexedDbLock(name, operation);
 };
@@ -123,7 +137,7 @@ export function createVaultConfigUpdater(
     const current = previous
       .catch(() => undefined)
       .then(() =>
-        withLock(`codex-vault-config:${vaultId}`, async () => {
+        withLock(`codex-vault-config:${vaultId}`, async (ensureHeld) => {
           const root = await dependencies.getOpfsRoot();
           const vaultDir = await dependencies.getVaultDir(root, vaultId);
           let config: Record<string, unknown> = {};
@@ -131,11 +145,14 @@ export function createVaultConfigUpdater(
             config = JSON.parse(
               await dependencies.readFileAsText(vaultDir, CONFIG_PATH),
             );
-          } catch {
-            // A missing or unreadable config starts from an empty object.
+          } catch (err) {
+            // Only a missing file starts empty. Never overwrite a config we
+            // failed to read or parse, or unrelated keys would be lost.
+            if ((err as Error)?.name !== "NotFoundError") throw err;
           }
 
-          update(config);
+          await update(config);
+          await ensureHeld?.();
           await dependencies.writeOpfsFile(
             CONFIG_PATH,
             JSON.stringify(config, null, 2),
