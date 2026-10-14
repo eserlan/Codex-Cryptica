@@ -69,6 +69,17 @@ describe("default system profile persistence adapter", () => {
     expect(db.put).not.toHaveBeenCalled();
   });
 
+  it("saves non-neutral profiles under the vault-scoped IndexedDB key", async () => {
+    await storage.saveToCache("vault-save", TOV_SYSTEM_ID);
+
+    expect(db.put).toHaveBeenCalledWith(
+      "settings",
+      TOV_SYSTEM_ID,
+      "system_profile_vault-save",
+    );
+    expect(db.delete).not.toHaveBeenCalled();
+  });
+
   it("loads the legacy system field when systemId is absent", async () => {
     readFileAsText.mockResolvedValue(JSON.stringify({ system: TOV_SYSTEM_ID }));
 

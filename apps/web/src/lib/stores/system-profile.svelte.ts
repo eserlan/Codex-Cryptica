@@ -105,6 +105,7 @@ export class SystemProfileStore {
   private registry: GameSystemRegistry;
   private storage: ISystemProfileStorage;
   private initGeneration = 0;
+  private cacheUpdates = new Map<string, Promise<void>>();
 
   activeProfile = $derived.by(() => {
     return this.registry.get(this.vaultSystemId);
@@ -156,10 +157,14 @@ export class SystemProfileStore {
 
       // 2. If not in cache, fallback to reading disk
       if (!systemId) {
-        systemId = await this.storage.loadFromDisk(selectedVaultId);
-        if (systemId) {
-          await this.storage.saveToCache(selectedVaultId, systemId);
-        }
+        systemId = await this.updateCacheForVault(selectedVaultId, async () => {
+          const loadedSystemId =
+            await this.storage.loadFromDisk(selectedVaultId);
+          if (loadedSystemId && generation === this.initGeneration) {
+            await this.storage.saveToCache(selectedVaultId, loadedSystemId);
+          }
+          return loadedSystemId;
+        });
       }
 
       if (generation !== this.initGeneration) return;
@@ -187,11 +192,35 @@ export class SystemProfileStore {
       systemId && systemId.trim() !== "" ? systemId.trim() : null;
     this.vaultSystemId = normalized;
 
-    if (this.activeVaultId) {
+    const selectedVaultId = this.activeVaultId;
+    if (selectedVaultId) {
       await Promise.all([
-        this.storage.saveToCache(this.activeVaultId, normalized),
-        this.storage.saveToDisk(this.activeVaultId, normalized),
+        this.updateCacheForVault(selectedVaultId, () =>
+          this.storage.saveToCache(selectedVaultId, normalized),
+        ),
+        this.storage.saveToDisk(selectedVaultId, normalized),
       ]);
+    }
+  }
+
+  private async updateCacheForVault<T>(
+    vaultId: string,
+    update: () => Promise<T>,
+  ): Promise<T> {
+    const previous = this.cacheUpdates.get(vaultId) ?? Promise.resolve();
+    const current = previous.catch(() => undefined).then(update);
+    const tail = current.then(
+      () => undefined,
+      () => undefined,
+    );
+    this.cacheUpdates.set(vaultId, tail);
+
+    try {
+      return await current;
+    } finally {
+      if (this.cacheUpdates.get(vaultId) === tail) {
+        this.cacheUpdates.delete(vaultId);
+      }
     }
   }
 

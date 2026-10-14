@@ -89,6 +89,32 @@ describe("SystemProfileStore (#3943)", () => {
     );
   });
 
+  it("does not repopulate cache from an obsolete disk load after a reset", async () => {
+    let resolveDiskRead!: (value: string | null) => void;
+    const delayedStorage: ISystemProfileStorage = {
+      ...mockStorage,
+      loadFromDisk: vi.fn(
+        () =>
+          new Promise<string | null>((resolve) => {
+            resolveDiskRead = resolve;
+          }),
+      ),
+    };
+    const delayedStore = new SystemProfileStore(registry, delayedStorage);
+    const pendingInit = delayedStore.init("vault-a");
+    await Promise.resolve();
+    await Promise.resolve();
+
+    const reset = delayedStore.setVaultSystemId(null);
+    resolveDiskRead(TOV_SYSTEM_ID);
+    await Promise.all([pendingInit, reset]);
+
+    expect(delayedStore.vaultSystemId).toBeNull();
+    expect(cacheStore.has("vault-a")).toBe(false);
+    expect(delayedStorage.saveToCache).toHaveBeenCalledTimes(1);
+    expect(delayedStorage.saveToCache).toHaveBeenCalledWith("vault-a", null);
+  });
+
   it("keeps the newest vault profile when initialization completes out of order", async () => {
     let resolveVaultA!: (value: string | null) => void;
     const delayedStorage: ISystemProfileStorage = {

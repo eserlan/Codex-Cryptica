@@ -23,6 +23,7 @@ export interface VaultConfigDependencies {
     root: FileSystemDirectoryHandle,
     vaultId: string,
   ): Promise<void>;
+  withLock?: VaultConfigLock;
 }
 
 export type VaultConfigUpdater = (
@@ -30,35 +31,50 @@ export type VaultConfigUpdater = (
   update: (config: Record<string, unknown>) => void,
 ) => Promise<void>;
 
+export type VaultConfigLock = <T>(
+  name: string,
+  operation: () => Promise<T>,
+) => Promise<T>;
+
+const withBrowserLock: VaultConfigLock = async (name, operation) => {
+  if (typeof navigator !== "undefined" && navigator.locks) {
+    return navigator.locks.request(name, operation);
+  }
+  return operation();
+};
+
 export function createVaultConfigUpdater(
   dependencies: VaultConfigDependencies,
 ): VaultConfigUpdater {
   const pendingWrites = new Map<string, Promise<void>>();
+  const withLock = dependencies.withLock ?? withBrowserLock;
 
   return async (vaultId, update) => {
     const previous = pendingWrites.get(vaultId) ?? Promise.resolve();
     const current = previous
       .catch(() => undefined)
-      .then(async () => {
-        const root = await dependencies.getOpfsRoot();
-        const vaultDir = await dependencies.getVaultDir(root, vaultId);
-        let config: Record<string, unknown> = {};
-        try {
-          config = JSON.parse(
-            await dependencies.readFileAsText(vaultDir, CONFIG_PATH),
-          );
-        } catch {
-          // A missing or unreadable config starts from an empty object.
-        }
+      .then(() =>
+        withLock(`codex-vault-config:${vaultId}`, async () => {
+          const root = await dependencies.getOpfsRoot();
+          const vaultDir = await dependencies.getVaultDir(root, vaultId);
+          let config: Record<string, unknown> = {};
+          try {
+            config = JSON.parse(
+              await dependencies.readFileAsText(vaultDir, CONFIG_PATH),
+            );
+          } catch {
+            // A missing or unreadable config starts from an empty object.
+          }
 
-        update(config);
-        await dependencies.writeOpfsFile(
-          CONFIG_PATH,
-          JSON.stringify(config, null, 2),
-          vaultDir,
-          vaultId,
-        );
-      });
+          update(config);
+          await dependencies.writeOpfsFile(
+            CONFIG_PATH,
+            JSON.stringify(config, null, 2),
+            vaultDir,
+            vaultId,
+          );
+        }),
+      );
     pendingWrites.set(vaultId, current);
 
     try {
