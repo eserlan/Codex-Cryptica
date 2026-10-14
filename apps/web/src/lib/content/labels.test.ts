@@ -88,7 +88,7 @@ describe("public label content aggregation (#2762, #2863)", () => {
 
     const groups = groupPublicLabelResults(results);
     expect(groups.get("generator")?.length).toBe(1);
-    expect(groups.get("answer")?.length).toBe(3);
+    expect(groups.get("answer")?.length).toBe(4);
     expect(groups.get("example")?.length).toBe(3);
     expect(groups.get("topic")?.length).toBe(1);
   });

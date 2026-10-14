@@ -12,6 +12,13 @@ import {
 import { sessionHubStore } from "$lib/stores/session-hub.svelte";
 import { generationInputHistoryStore } from "./generation-input-history";
 
+function expectPromptToContain(
+  generateContent: { mock: { calls: unknown[][] } },
+  expected: string,
+) {
+  expect(generateContent.mock.calls[0]?.[0]).toContain(expected);
+}
+
 describe("DefaultGeneratorEngine", () => {
   let mockClientManager: any;
   let engine: DefaultGeneratorEngine;
@@ -199,8 +206,9 @@ describe("DefaultGeneratorEngine", () => {
 
       expect(mockClientManager.getModel).toHaveBeenCalled();
       expect(mockModel.generateContent).toHaveBeenCalled();
-      expect(mockModel.generateContent).toHaveBeenCalledWith(
-        expect.stringContaining("a ruined elven academy"),
+      expectPromptToContain(
+        mockModel.generateContent,
+        "a ruined elven academy",
       );
       expect(res.title).toBe("Aelwen The Wise");
       expect(res.content).toBe("AI Generated Bio");
@@ -297,8 +305,9 @@ describe("DefaultGeneratorEngine", () => {
       });
 
       expect(mockClientManager.getModel).toHaveBeenCalled();
-      expect(mockModel.generateContent).toHaveBeenCalledWith(
-        expect.stringContaining("a kingdom recovering from a succession war"),
+      expectPromptToContain(
+        mockModel.generateContent,
+        "a kingdom recovering from a succession war",
       );
       expect(res.type).toBe("faction");
       expect(res.title).toBe("The Argent Loom");
@@ -331,8 +340,9 @@ describe("DefaultGeneratorEngine", () => {
         useAI: true,
       });
 
-      expect(mockModel.generateContent).toHaveBeenCalledWith(
-        expect.stringContaining("Theme/Genre: Cyberpunk / Corporate"),
+      expectPromptToContain(
+        mockModel.generateContent,
+        "Theme/Genre: Cyberpunk / Corporate",
       );
       expect(res.title).toBe("Cyberdine Corp");
 
@@ -399,8 +409,9 @@ describe("DefaultGeneratorEngine", () => {
       });
 
       expect(mockClientManager.getModel).toHaveBeenCalled();
-      expect(mockModel.generateContent).toHaveBeenCalledWith(
-        expect.stringContaining("The Compact fixes prices across three ports."),
+      expectPromptToContain(
+        mockModel.generateContent,
+        "The Compact fixes prices across three ports.",
       );
       expect(res.type).toBe("note");
       expect(res.title).toBe("The Compact's Inner Circle");
@@ -468,18 +479,13 @@ describe("DefaultGeneratorEngine", () => {
         "gemini-3.5-flash-lite",
         "You are an assistant that generates detailed RPG campaign elements in JSON format.",
       );
-      expect(mockModel.generateContent).toHaveBeenCalledWith(
-        expect.stringContaining("an ancient cathedral ruin"),
+      expectPromptToContain(
+        mockModel.generateContent,
+        "an ancient cathedral ruin",
       );
-      expect(mockModel.generateContent).toHaveBeenCalledWith(
-        expect.stringContaining("- **👤 Sire Name**"),
-      );
-      expect(mockModel.generateContent).toHaveBeenCalledWith(
-        expect.stringContaining("- **👤 Thrall Name**"),
-      );
-      expect(mockModel.generateContent).toHaveBeenCalledWith(
-        expect.stringContaining("- **👥 Rival Name**"),
-      );
+      expectPromptToContain(mockModel.generateContent, "- **👤 Sire Name**");
+      expectPromptToContain(mockModel.generateContent, "- **👤 Thrall Name**");
+      expectPromptToContain(mockModel.generateContent, "- **👥 Rival Name**");
       expect(res.type).toBe("faction");
       expect(res.title).toBe("House Karnstein");
       expect(res.content).toBe("AI Generated Vampire Clan");
@@ -616,18 +622,19 @@ describe("DefaultGeneratorEngine", () => {
       });
 
       expect(mockClientManager.getModel).toHaveBeenCalled();
-      expect(mockModel.generateContent).toHaveBeenCalledWith(
-        expect.stringContaining("### Points of Interest"),
+      expectPromptToContain(
+        mockModel.generateContent,
+        "### Points of Interest",
       );
-      expect(mockModel.generateContent).toHaveBeenCalledWith(
-        expect.stringContaining("- **📍 Location Name**"),
+      expectPromptToContain(
+        mockModel.generateContent,
+        "- **📍 Location Name**",
       );
-      expect(mockModel.generateContent).toHaveBeenCalledWith(
-        expect.stringContaining("### Controlling / Important Factions"),
+      expectPromptToContain(
+        mockModel.generateContent,
+        "### Controlling / Important Factions",
       );
-      expect(mockModel.generateContent).toHaveBeenCalledWith(
-        expect.stringContaining("- **👥 Faction Name**"),
-      );
+      expectPromptToContain(mockModel.generateContent, "- **👥 Faction Name**");
       expect(res.title).toBe("Stonebridge");
       expect(res.lore).toBe("AI settlement lore");
     });
@@ -1380,8 +1387,9 @@ describe("DefaultGeneratorEngine", () => {
       });
 
       expect(mockClientManager.getModel).toHaveBeenCalled();
-      expect(mockModel.generateContent).toHaveBeenCalledWith(
-        expect.stringContaining("a corp-controlled district"),
+      expectPromptToContain(
+        mockModel.generateContent,
+        "a corp-controlled district",
       );
       expect(res.title).toBe("Reyes' Noodle Hole");
       expect(res.labels).toContain("social-hub-generator");
@@ -1467,9 +1475,7 @@ describe("DefaultGeneratorEngine", () => {
       });
 
       expect(mockClientManager.getModel).toHaveBeenCalled();
-      expect(mockModel.generateContent).toHaveBeenCalledWith(
-        expect.stringContaining("a port under blockade"),
-      );
+      expectPromptToContain(mockModel.generateContent, "a port under blockade");
       expect(res.title).toBe("The Sullen Lantern");
       expect(res.summary).toBe("A grim dockside alehouse.");
       expect(res.labels).toContain("tavern-generator");
@@ -1559,9 +1565,7 @@ describe("DefaultGeneratorEngine", () => {
       });
 
       expect(mockClientManager.getModel).toHaveBeenCalled();
-      expect(mockModel.generateContent).toHaveBeenCalledWith(
-        expect.stringContaining("a succession crisis"),
-      );
+      expectPromptToContain(mockModel.generateContent, "a succession crisis");
       expect(res.title).toBe("The Kingdom of Vaelthorn");
       expect(res.labels).toContain("kingdom-generator");
     });
@@ -1658,8 +1662,9 @@ describe("DefaultGeneratorEngine", () => {
       });
 
       expect(mockClientManager.getModel).toHaveBeenCalled();
-      expect(mockModel.generateContent).toHaveBeenCalledWith(
-        expect.stringContaining("a corp war over water rights"),
+      expectPromptToContain(
+        mockModel.generateContent,
+        "a corp war over water rights",
       );
       expect(res.title).toBe("Axiom Industrial Authority");
       expect(res.labels).toContain("nation-generator");
@@ -1886,23 +1891,20 @@ describe("DefaultGeneratorEngine", () => {
         useAI: true,
       });
 
-      expect(mockModel.generateContent).toHaveBeenCalledWith(
-        expect.stringContaining("- **👤 Deity Type**"),
+      expectPromptToContain(mockModel.generateContent, "- **👤 Deity Type**");
+      expectPromptToContain(
+        mockModel.generateContent,
+        "- **✨ Primary Domain**",
       );
-      expect(mockModel.generateContent).toHaveBeenCalledWith(
-        expect.stringContaining("- **✨ Primary Domain**"),
+      expectPromptToContain(mockModel.generateContent, "- **👥 Worshippers**");
+      expectPromptToContain(
+        mockModel.generateContent,
+        "- **📍 Sacred Symbol**",
       );
-      expect(mockModel.generateContent).toHaveBeenCalledWith(
-        expect.stringContaining("- **👥 Worshippers**"),
-      );
-      expect(mockModel.generateContent).toHaveBeenCalledWith(
-        expect.stringContaining("- **📍 Sacred Symbol**"),
-      );
-      expect(mockModel.generateContent).toHaveBeenCalledWith(
-        expect.stringContaining("- **📅 Secret**"),
-      );
-      expect(mockModel.generateContent).toHaveBeenCalledWith(
-        expect.stringContaining("- **⚔ Immediate Hook**"),
+      expectPromptToContain(mockModel.generateContent, "- **📅 Secret**");
+      expectPromptToContain(
+        mockModel.generateContent,
+        "- **⚔ Immediate Hook**",
       );
     });
 

@@ -139,6 +139,15 @@ function runWebTests(files, cwd) {
 }
 
 function runPackageTests(workspace, files, cwd) {
+  if (workspace === "root") {
+    const invocation = getWorkspaceTestInvocation(workspace, "", files);
+    execFileSync("bun", invocation.args, {
+      cwd: resolve(cwd, invocation.cwd),
+      stdio: "inherit",
+    });
+    return;
+  }
+
   const manifestPath = resolve(cwd, workspace, "package.json");
   const manifest = JSON.parse(readFileSync(manifestPath, "utf8"));
   const invocation = getWorkspaceTestInvocation(
