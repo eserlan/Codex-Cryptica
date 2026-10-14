@@ -43,7 +43,7 @@ export const GENERATOR_IDS = GENERATORS.map((g) => g.id) as unknown as readonly 
 `;
 
 fs.writeFileSync(output, body);
-execFileSync("bunx", ["prettier", "--write", output], {
+execFileSync("npx", ["prettier", "--write", output], {
   cwd: root,
   stdio: "ignore",
 });
