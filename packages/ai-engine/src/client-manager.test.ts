@@ -175,6 +175,22 @@ describe("DefaultAIClientManager", () => {
       expect(result.response.text()).toBe("Test response");
     });
 
+    it("forwards the generateContent abort signal to the proxy fetch", async () => {
+      vi.mocked(fetch).mockResolvedValue({
+        ok: true,
+        json: vi.fn().mockResolvedValue({ content: "Test response" }),
+      } as any);
+      const model = await manager.getModel("", "gemini-1.5-pro");
+      const controller = new AbortController();
+
+      await model.generateContent("Test message", {
+        signal: controller.signal,
+      });
+
+      const callArgs = vi.mocked(fetch).mock.calls[0][1] as RequestInit;
+      expect(callArgs.signal).toBe(controller.signal);
+    });
+
     it("maps responseMimeType application/json to the structured-generation operation", async () => {
       const mockResponse = {
         ok: true,
@@ -724,6 +740,19 @@ describe("DefaultAIClientManager streaming (generateContentStream)", () => {
     const body = JSON.parse(callArgs.body as string);
     expect(body.stream).toBe(true);
     expect(body.operation).toBe("freeform-generation");
+  });
+
+  it("forwards the streaming abort signal to the proxy fetch", async () => {
+    vi.mocked(fetch).mockResolvedValue(sseResponse([]) as any);
+    const model = await manager.getModel("", "gemini-1.5-pro");
+    const controller = new AbortController();
+
+    await collect(
+      (model as any).generateContentStream("hi", controller.signal),
+    );
+
+    const callArgs = vi.mocked(fetch).mock.calls[0][1] as RequestInit;
+    expect(callArgs.signal).toBe(controller.signal);
   });
 
   it("yields a single error event for a non-text (legacy passthrough) request, without calling fetch", async () => {

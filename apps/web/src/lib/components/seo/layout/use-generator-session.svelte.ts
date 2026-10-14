@@ -208,8 +208,14 @@ export function useGeneratorSession(inputs: GeneratorSessionInputs) {
     currentEntityId = entityId;
   }
 
+  /** Swaps in an edited version of the current result (e.g. one scene redone). */
+  function replaceOutput(output: GeneratorOutput) {
+    generatedData = output;
+  }
+
   return {
     handleGenerate,
+    replaceOutput,
     triggerExplicitAutoGenerate,
     applyRefinedOutput,
     dismissAiFallback() {
