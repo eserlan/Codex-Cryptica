@@ -1074,6 +1074,7 @@ async function prepareTomeReview(
     "7. Cross-section contradictions: all directions, locations, chronology, actions, consequences and GM quick-reference rules must agree.",
     "8. User-facing clarity: players must have discoverable clues, not just an assertion in a GM-only answer.",
     "9. Genre fidelity: no unexplained modern institutions or technology in secondary-world fantasy.",
+    `10. ${/fantasy/i.test(resolved.genre) ? "For secondary-world fantasy, avoid technology that conflicts with its period." : `Keep technology consistent with the ${resolved.genre} setting and Composition Era.`}`,
     "",
     "NON-BLOCKING EDITORIAL TESTS:",
     "Remove repetitive explanations and clichés while preserving the best detail, flavour and adventure hooks.",
