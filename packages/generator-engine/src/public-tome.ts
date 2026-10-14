@@ -738,8 +738,15 @@ ${details.clue} The author's central interpretation is compromised by deliberate
 }
 
 export interface TomeConsistencyAuditResult {
+  /** True when there are no blocking issues; warnings never affect this. */
   valid: boolean;
+  /** Structural or factual defects that justify rejecting the output. */
   issues: string[];
+  /**
+   * Heuristic editorial and genre findings. Wording-based checks misfire on
+   * legitimate output, so they are reported but never reject a generation.
+   */
+  warnings: string[];
 }
 
 function checkRequiredSections(
@@ -937,6 +944,7 @@ export function auditTomeConsistency(
   resolved?: ResolvedTome,
 ): TomeConsistencyAuditResult {
   const issues: string[] = [];
+  const warnings: string[] = [];
   const content = output.content;
   const lore = output.lore ?? "";
 
@@ -944,12 +952,13 @@ export function auditTomeConsistency(
   checkGroundTruthElements(lore, issues);
   checkUnitContradictions(`${content}\n${lore}`.toLowerCase(), issues);
   checkParagraphRedundancy(content, lore, issues);
-  checkGenreFidelity(`${content}\n${lore}`, resolved?.genre, issues);
-  checkSentenceRepetition(content, lore, issues);
-  checkFactsEchoed(output.tomeFacts, `${content}\n${lore}`, issues);
+  checkGenreFidelity(`${content}\n${lore}`, resolved?.genre, warnings);
+  checkSentenceRepetition(content, lore, warnings);
+  checkFactsEchoed(output.tomeFacts, `${content}\n${lore}`, warnings);
 
   return {
     valid: issues.length === 0,
     issues,
+    warnings,
   };
 }
