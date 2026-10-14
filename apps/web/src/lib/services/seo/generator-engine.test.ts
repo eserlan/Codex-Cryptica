@@ -677,6 +677,28 @@ describe("DefaultGeneratorEngine", () => {
       expect(res.title).toBeDefined();
       expect(res.content).toBeDefined();
     });
+
+    it("falls back when AI tome output fails the consistency audit", async () => {
+      mockClientManager.getModel.mockResolvedValue({
+        generateContent: vi.fn().mockResolvedValue({
+          response: {
+            text: () =>
+              JSON.stringify({
+                title: "Incomplete Tome",
+                content: "Only a fragment.",
+                lore: "No required table sections.",
+              }),
+          },
+        }),
+      });
+
+      const result = await engine.generateTome({ useAI: true });
+
+      expect(result.aiFallback).toBe(true);
+      expect(result.content).toContain("### Physical Description & Format");
+      expect(result.content).toContain("### Adventure Hooks");
+      expect(result.lore).toContain("### Ground Truth for the GM");
+    });
   });
 
   describe("generateHoliday", () => {

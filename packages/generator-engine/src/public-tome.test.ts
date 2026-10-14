@@ -238,6 +238,10 @@ describe("public-tome generator", () => {
       expect(parsed.title).toBeTruthy();
       expect(parsed.content).toContain("### Physical Description & Format");
       expect(parsed.labels).toContain("tome");
+      expect(parsed.content).toContain("Condition:");
+      expect(parsed.content).toContain("The records point to");
+      expect(parsed.content).not.toContain("undefined");
+      expect(parsed.lore).not.toContain("undefined");
     });
 
     it("injects Ground Truth for the GM when omitted by the model response", () => {

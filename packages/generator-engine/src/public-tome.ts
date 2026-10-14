@@ -380,17 +380,10 @@ export function parseTomeResponse(
   text: string,
   resolved?: Partial<ResolvedTome>,
 ): PublicGeneratorOutput {
-  const fallback = generateTomeLocal(
-    (resolved as ResolvedTome | undefined) ?? {
-      genre: "Cosmic Horror",
-      tomeType: "Occult Treatise / Cosmology",
-      format: "Leather-bound Quarto",
-      rarity: "Unique Original Manuscript",
-      custodian: "University Restricted Archive",
-      primaryHazard: "Mental / Obsessive Toll",
-      language: "Archaic Latin",
-    },
-  );
+  const fallback = generateTomeLocal({
+    ...resolveTome(resolved ?? {}),
+    ...resolved,
+  });
 
   try {
     const data = parseFencedJson<Record<string, unknown>>(text);
