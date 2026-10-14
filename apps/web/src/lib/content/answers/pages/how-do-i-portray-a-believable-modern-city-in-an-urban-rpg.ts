@@ -24,7 +24,7 @@ export const howDoIPortrayABelievableModernCityInAnUrbanRpg: AnswerConfigInput =
         kind: "list",
         heading: "Research for anchors, not for a textbook",
         intro:
-          "Gather a small set of checked details you can use in play, then stop. Half an hour of focused looking beats an evening of general reading:",
+          "Gather a small set of checked details you can use in play, then stop. Focused research is more useful than broad, unspecific reading:",
         items: [
           {
             term: "Street map and transport pattern",
