@@ -53,6 +53,21 @@ const mockRegistry: Record<string, AnswerConfig> = {
 };
 
 describe("answer registry", () => {
+  it("keeps an actionable practice checklist in the NPC roleplay answer", () => {
+    const answer = answers["how-do-i-roleplay-npcs-if-im-not-good-at-acting"];
+
+    expect(answer.sections).toContainEqual(
+      expect.objectContaining({
+        kind: "checklist",
+        heading: "A small, optional exercise for next session",
+        items: expect.arrayContaining([
+          "Write the NPC's name and role.",
+          "Note what they want in this scene and their starting attitude toward the party.",
+        ]),
+      }),
+    );
+  });
+
   it("registers story arc planning as its own workflow intent", () => {
     const answer = answers["how-do-i-plan-story-arcs-for-an-rpg-campaign"];
     const entry = getDiscoveryEntries().find(
