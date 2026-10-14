@@ -10,6 +10,21 @@ describe("cifMood", () => {
     expect(cifMood({ status: "pending", messageCount: 1 })).toBe("thinking");
   });
 
+  it("beams just after an answer arrives, then explains", () => {
+    expect(
+      cifMood({ status: "answered", messageCount: 2, delighted: true }),
+    ).toBe("delighted");
+    expect(
+      cifMood({ status: "answered", messageCount: 2, delighted: false }),
+    ).toBe("explaining");
+  });
+
+  it("never beams on a failure, even if the flag is stale", () => {
+    expect(
+      cifMood({ status: "fallback", messageCount: 2, delighted: true }),
+    ).toBe("confused");
+  });
+
   it("explains once an answer arrives", () => {
     expect(cifMood({ status: "answered", messageCount: 2 })).toBe("explaining");
   });
