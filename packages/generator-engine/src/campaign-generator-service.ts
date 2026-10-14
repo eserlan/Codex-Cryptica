@@ -952,10 +952,11 @@ export class CampaignGeneratorService {
       // Run both calls in one background promise *within this request*.
       // The queue bridges the second pass's provider stream to our async
       // generator without exposing the unreviewed first pass.
+      let passNumber = 0;
       const task = generateTomeTwoPass(
         prompt,
         async (instruction, message, passSignal) => {
-          if (!instruction.startsWith("You are an independent")) {
+          if (++passNumber === 1) {
             return completeText(
               await gateway.complete(message, instruction, {
                 signal: passSignal,
