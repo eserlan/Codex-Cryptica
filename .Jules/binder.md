@@ -308,3 +308,9 @@
 
 **Learning:** Svelte components that generate runtime IDs for logs or trades (e.g., `StockTradePanel.svelte`) occasionally hardcode `globalThis.crypto.randomUUID()`. This couples the component to the browser global, limiting testability.
 **Action:** Inject an `IdGenerator` prop via `$props()`, defaulting to `systemIdGenerator` from `$lib/utils/runtime-deps`, replacing hardcoded crypto calls with `idGenerator.uuid()`.
+
+## 2024-10-13 - Inject `systemIdGenerator.uuid()` instead of `crypto.randomUUID()` in default factories
+
+**Learning:** When defining default factory functions for dependencies like IDs, relying on browser globals like `crypto.randomUUID()` introduces a hidden hardcoded dependency that cannot be intercepted by standard testing mocks without polluting the global scope.
+
+**Action:** Always utilize centralized dependency injection utilities like `@codex/runtime`'s `systemIdGenerator` which defaults to `crypto.randomUUID()` but provides a testable seam to mock IDs deterministically across the codebase.
