@@ -218,6 +218,11 @@ export const howDoYouRunAHeistInATabletopRpg: AnswerConfigInput = {
     ],
     acknowledgedOverlap: [
       {
+        with: "answer-run-stealth-mission-in-tabletop-rpg",
+        reason:
+          "This answer frames the complete score from casing through escape; the stealth mission answer provides a zone-based procedure for resolving movement, group roles, and gradual detection during the mission itself.",
+      },
+      {
         with: "answer-run-rogue-scout-without-splitting-party",
         reason:
           "This answer covers the full heist score and its preparation; the rogue and scout guide handles the narrower reconnaissance scene and how its discoveries return decisions to the party.",

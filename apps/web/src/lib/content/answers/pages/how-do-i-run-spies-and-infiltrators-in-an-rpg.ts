@@ -257,6 +257,11 @@ export const howDoIRunSpiesAndInfiltratorsInAnRpg: AnswerConfigInput = {
         reason:
           "The rogue and scout guide focuses on short reconnaissance scenes and the choices a scout's findings create; this answer handles sustained infiltration operations, cover, exposure, and outside-team work.",
       },
+      {
+        with: "answer-run-stealth-mission-in-tabletop-rpg",
+        reason:
+          "This answer coordinates an infiltrator and an outside team across a covert operation; the stealth mission answer gives the whole party a zone-based procedure for movement, consequential checks, and escalating detection.",
+      },
     ],
   },
   seo: {
