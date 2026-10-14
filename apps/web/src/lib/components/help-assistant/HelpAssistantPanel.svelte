@@ -7,7 +7,7 @@
   import type { HelpAssistantView } from "$lib/services/help-assistant/cif-popout-protocol";
   import HelpActionOffer from "./HelpActionOffer.svelte";
   import HelpAssistantHeader from "./HelpAssistantHeader.svelte";
-  import { cifMood } from "./cif-mood";
+  import { cifMood, DELIGHT_MS } from "./cif-mood";
   import HelpAssistantComposer from "./HelpAssistantComposer.svelte";
   import HelpAssistantMessage from "./HelpAssistantMessage.svelte";
   import HelpQuickPrompts from "./HelpQuickPrompts.svelte";
@@ -33,10 +33,23 @@
   } = $props();
 
   const docked = $derived(variant === "docked");
+  // Beam briefly when an answer lands, then settle. It is a pose change, not
+  // movement, so reduced motion keeps it.
+  let delighted = $state(false);
+  $effect(() => {
+    if (assistant.status !== "answered") {
+      delighted = false;
+      return;
+    }
+    delighted = true;
+    const timer = setTimeout(() => (delighted = false), DELIGHT_MS);
+    return () => clearTimeout(timer);
+  });
   const mood = $derived(
     cifMood({
       status: assistant.status,
       messageCount: assistant.messages.length,
+      delighted,
     }),
   );
   const panelClass = $derived(
