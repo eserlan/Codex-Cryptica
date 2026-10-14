@@ -27,6 +27,10 @@ describe("ToV Luck rules", () => {
     expect(adjustTovLuck(5, 1, 7)).toEqual({ value: 6, clamped: false });
   });
 
+  it("allows spending down an imported value above its cap", () => {
+    expect(adjustTovLuck(7, -1, 5)).toEqual({ value: 6, clamped: false });
+  });
+
   it("rejects zero and fractional changes", () => {
     expect(adjustTovLuck(2, 0)).toMatchObject({ value: 2, clamped: true });
     expect(adjustTovLuck(2, 0.5)).toMatchObject({ value: 2, clamped: true });

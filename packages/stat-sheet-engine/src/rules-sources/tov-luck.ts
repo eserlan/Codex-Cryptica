@@ -72,7 +72,7 @@ export function adjustTovLuck(
     };
   }
   const requested = current + delta;
-  if (requested > max) {
+  if (delta > 0 && requested > max) {
     return {
       value: Math.max(current, max),
       clamped: true,
