@@ -1128,15 +1128,66 @@ export async function generateTomeTwoPass(
   return chooseTomeResult(reviewedText, prepared, prompt.resolved);
 }
 
+
+type EditorialStream = (
+  instruction: string,
+  message: string,
+  signal?: AbortSignal,
+) => AsyncIterable<GenerationEvent>;
+
+function completeEditorialText(
+  accumulated: string,
+  fullText: string | undefined,
+): { text: string; delta: string } {
+  if (!fullText || fullText.length <= accumulated.length) {
+    return { text: accumulated, delta: "" };
+  }
+  return {
+    text: fullText,
+    delta: fullText.startsWith(accumulated)
+      ? fullText.slice(accumulated.length)
+      : "",
+  };
+}
+
+/** Forward editorial deltas while collecting a validated terminal model reply. */
+async function* pipeTomeEditorialDeltas(
+  stream: EditorialStream,
+  message: string,
+  signal?: AbortSignal,
+): AsyncGenerator<{ type: "delta"; text: string }, string | null> {
+  let text = "";
+  let completed = false;
+  try {
+    for await (const event of stream(
+      "You are an independent, sceptical continuity editor. Repair logical errors and bad provisional canonical facts. Return complete JSON only.",
+      message,
+      signal,
+    )) {
+      if (signal?.aborted) return null;
+      if (event.type === "delta") {
+        text += event.text;
+        yield { type: "delta", text: event.text };
+      } else if (event.type === "complete") {
+        completed = true;
+        const merged = completeEditorialText(text, event.text);
+        text = merged.text;
+        if (merged.delta) yield { type: "delta", text: merged.delta };
+      } else if (event.type === "error") {
+        throw new Error(event.error);
+      }
+    }
+  } catch {
+    return null;
+  }
+  return completed ? text : null;
+}
+
 /** Stream only the final editorial pass; the first draft is deliberately hidden. */
 export async function* streamTomeTwoPass(
   prompt: TomePrompt,
   complete: TomeComplete,
-  streamReview: (
-    systemInstruction: string,
-    message: string,
-    signal?: AbortSignal,
-  ) => AsyncIterable<GenerationEvent>,
+  streamReview: EditorialStream,
   signal?: AbortSignal,
 ): AsyncGenerator<TomeStreamingReviewEvent> {
   if (signal?.aborted) return;
@@ -1145,42 +1196,14 @@ export async function* streamTomeTwoPass(
   if (!prepared || signal?.aborted) return;
 
   yield { type: "phase", label: "Editorial review — streaming the final draft" };
-  let reviewedText = "";
-  let sawComplete = false;
-  try {
-    for await (const event of streamReview(
-      "You are an independent, sceptical continuity editor. Repair logical errors and bad provisional canonical facts. Return complete JSON only.",
-      prepared.reviewMessage,
-      signal,
-    )) {
-      if (signal?.aborted) return;
-      if (event.type === "delta" && event.text) {
-        reviewedText += event.text;
-        yield { type: "delta", text: event.text };
-      } else if (event.type === "complete") {
-        sawComplete = true;
-        // Providers may return the whole final document only in this frame.
-        if (event.text && event.text.length > reviewedText.length) {
-          const extra = event.text.startsWith(reviewedText)
-            ? event.text.slice(reviewedText.length)
-            : "";
-          if (extra) yield { type: "delta", text: extra };
-          reviewedText = event.text;
-        }
-      } else if (event.type === "error") {
-        throw new Error(event.error || "Editorial stream failed");
-      }
-    }
-  } catch {
-    // Restore the good first draft on a second-turn failure.
-  }
+  const reviewedText = yield* pipeTomeEditorialDeltas(
+    streamReview,
+    prepared.reviewMessage,
+    signal,
+  );
   if (signal?.aborted) return;
   yield {
     type: "result",
-    output: chooseTomeResult(
-      sawComplete ? reviewedText : null,
-      prepared,
-      prompt.resolved,
-    ),
+    output: chooseTomeResult(reviewedText, prepared, prompt.resolved),
   };
 }
