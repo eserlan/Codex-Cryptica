@@ -2,6 +2,7 @@
   import ShelfPanel from "$lib/components/shelf/ShelfPanel.svelte";
   import { onMount } from "svelte";
   import { debugStore } from "$lib/stores/debug.svelte";
+  import { KeyboardInset } from "$lib/services/help-assistant/keyboard-inset.svelte";
   import ResizerHandle from "./ResizerHandle.svelte";
   import {
     layoutUIStore,
@@ -15,6 +16,19 @@
 
   const isSpecialEnv =
     import.meta.env.DEV || import.meta.env.VITE_STAGING === "true";
+  
+  // On mobile the Oracle sidebar is a fixed full-screen overlay. A soft
+  // keyboard may cover its bottom without resizing the layout viewport.
+  // Reuse Cif's visual-viewport tracker to keep the composer above it.
+  const keyboard = new KeyboardInset();
+  $effect(() => {
+    if (
+      !layoutUIStore.isMobile ||
+      !layoutUIStore.leftSidebarOpen ||
+      layoutUIStore.activeSidebarTool !== "oracle"
+    ) return;
+    return keyboard.start();
+  });
 
   const logError = (name: string, error: any) => {
     loadError = name;
@@ -48,6 +62,9 @@
     style:width={layoutUIStore.isMobile
       ? "100%"
       : `${layoutUIStore.leftSidebarWidth}px`}
+    style:bottom={layoutUIStore.isMobile && keyboard.keyboardOpen
+      ? `${keyboard.inset}px`
+      : undefined}
     data-testid="sidebar-panel-host"
   >
     {#if !layoutUIStore.isMobile}
