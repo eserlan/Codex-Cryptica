@@ -657,9 +657,12 @@ export {
   buildTomePrompt,
   parseTomeResponse,
   generateTomeLocal,
+  ensureGroundTruthInLore,
+  auditTomeConsistency,
   type TomeGeneratorOptions,
   type ResolvedTome,
   type TomePrompt,
+  type TomeConsistencyAuditResult,
 } from "./public-tome";
 export {
   createIncrementalJsonScanner,
