@@ -423,7 +423,7 @@ describe("public-tome generator", () => {
         },
         resolved,
       );
-      expect(audit.issues.join(" ")).toContain("not reflected");
+      expect(audit.warnings.join(" ")).toContain("not reflected");
     });
 
     it("ignores blank or non-string authored facts and tolerates a bare resolver", () => {
@@ -455,8 +455,23 @@ describe("public-tome generator", () => {
         },
         resolved,
       );
-      expect(audit.valid).toBe(false);
-      expect(audit.issues.join(" ")).toContain("Genre drift");
+      expect(audit.valid).toBe(true);
+      expect(audit.warnings.join(" ")).toContain("Genre drift");
+    });
+
+    it("never rejects a generation over heuristic warnings alone", () => {
+      const line =
+        "Reverse every left and right turn printed in the route before the expedition enters the lower vaults.";
+      const audit = auditTomeConsistency(
+        {
+          ...base,
+          content: `${base.content}\nSeized in Thessaloniki in 1924.\n\n### Adventure Hooks\n${line}\n\n### Contents & Revelations\n${line}`,
+        },
+        resolved,
+      );
+      expect(audit.warnings.length).toBeGreaterThan(0);
+      expect(audit.issues).toEqual([]);
+      expect(audit.valid).toBe(true);
     });
 
     it("does not mistake ordinary numbers for real-world years", () => {
@@ -467,7 +482,7 @@ describe("public-tome generator", () => {
         },
         resolved,
       );
-      expect(audit.issues.join(" ")).not.toContain("Genre drift");
+      expect(audit.warnings.join(" ")).not.toContain("Genre drift");
     });
 
     it("does not flag the same text for Cosmic Horror", () => {
@@ -479,7 +494,7 @@ describe("public-tome generator", () => {
         },
         horror,
       );
-      expect(audit.issues.join(" ")).not.toContain("Genre drift");
+      expect(audit.warnings.join(" ")).not.toContain("Genre drift");
     });
 
     it("flags the same instruction restated across sections", () => {
@@ -489,7 +504,8 @@ describe("public-tome generator", () => {
         ...base,
         content: `${base.content}\n\n### Contents & Revelations\n${line}\n\n### Adventure Hooks\n${line}`,
       });
-      expect(audit.issues.join(" ")).toContain("Repeated explanation");
+      expect(audit.valid).toBe(true);
+      expect(audit.warnings.join(" ")).toContain("Repeated explanation");
     });
   });
 

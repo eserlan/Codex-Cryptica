@@ -213,6 +213,9 @@ export class GeneratorEngineSpecialized extends GeneratorEngineWorldbuilding {
         const text = await this.runModel(systemInstruction, userMessage);
         const parsed = parseTomeResponse(text, resolved);
         const audit = auditTomeConsistency(parsed, resolved);
+        if (audit.warnings.length > 0) {
+          console.warn("Tome editorial warnings:", audit.warnings);
+        }
         return audit.valid
           ? (parsed as GeneratorOutput)
           : ({
