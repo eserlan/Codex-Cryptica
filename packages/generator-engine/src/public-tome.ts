@@ -525,6 +525,7 @@ export function ensureGroundTruthInLore(
 export function parseTomeResponse(
   text: string,
   resolved?: Partial<ResolvedTome>,
+  allowEditorialCorrections = false,
 ): PublicGeneratorOutput {
   const fallbackResolved = {
     ...resolveTome(resolved ?? {}),
@@ -550,11 +551,22 @@ export function parseTomeResponse(
       type: "item",
       ...(resolved
         ? {
-            tomeFacts: buildTomeFacts(fallbackResolved, {
-              centralRule: authored.centralRule as string | undefined,
-              productionMethod: authored.productionMethod as string | undefined,
-              errorSource: authored.errorSource as string | undefined,
-            }),
+            tomeFacts: {
+              ...buildTomeFacts(fallbackResolved, {
+                centralRule: authored.centralRule as string | undefined,
+                productionMethod: authored.productionMethod as string | undefined,
+                errorSource: authored.errorSource as string | undefined,
+              }),
+              // The first pass cannot override seeded anchors. The independent
+              // editor may correct a demonstrably impossible generated anchor.
+              ...(allowEditorialCorrections
+                ? Object.fromEntries(
+                    (["bookClaim", "deception", "objectiveTruth", "actionableClue"] as const)
+                      .filter((key) => typeof authored[key] === "string" && (authored[key] as string).trim())
+                      .map((key) => [key, (authored[key] as string).trim()]),
+                  )
+                : {}),
+            },
           }
         : {}),
       title: parseTextString(data.title, fallback.title),
@@ -991,6 +1003,7 @@ export function auditTomeConsistency(
  * because semantic problems such as suddenly substituting a blade for a clay
  * vessel cannot reliably be detected by keyword heuristics alone.
  * Never discard a structurally valid first draft if the editorial pass fails.
+// First pass is kept silent by the caller; the second can be streamed to the UI.
  */
 export async function generateTomeTwoPass(
   prompt: TomePrompt,
@@ -1003,7 +1016,10 @@ export async function generateTomeTwoPass(
 ): Promise<PublicGeneratorOutput | null> {
   const { resolved } = prompt;
 
-  function candidate(text: string): PublicGeneratorOutput | null {
+  function candidate(
+    text: string,
+    editorial = false,
+  ): PublicGeneratorOutput | null {
     try {
       const raw = parseFencedJson<Record<string, unknown>>(text);
       const requiredText = raw && [
@@ -1020,7 +1036,7 @@ export async function generateTomeTwoPass(
       ) {
         return null;
       }
-      return parseTomeResponse(text, resolved);
+      return parseTomeResponse(text, resolved, editorial);
     } catch {
       return null;
     }
@@ -1047,6 +1063,8 @@ export async function generateTomeTwoPass(
     "You MUST preserve explicit user constraints, selected genre, format and known campaign-world facts.",
     "You MAY correct an objectively incoherent generated premise, clue, procedure or derived canonical fact.",
     "If a generated anchor is impossible, repair the anchor AND all dependent fields together.",
+    "When you correct an anchor, also return its corrected value in canonicalFacts.bookClaim, canonicalFacts.deception, canonicalFacts.objectiveTruth or canonicalFacts.actionableClue, as applicable.",
+    "Otherwise omit those extra keys and preserve the provisional facts.",
     "Do not change canon just for variety or style. Preserve the mystery where a coherent repair is possible.",
     "GENRE:",
     resolved.genre,
@@ -1094,7 +1112,7 @@ export async function generateTomeTwoPass(
       signal,
     );
     if (signal?.aborted) return null;
-    const revised = candidate(revisedText);
+    const revised = candidate(revisedText, true);
     if (revised) {
       const revisedAudit = auditTomeConsistency(revised, resolved);
       if (revisedAudit.valid) {
