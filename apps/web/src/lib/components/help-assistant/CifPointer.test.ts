@@ -28,13 +28,39 @@ describe("CifPointer", () => {
   });
 });
 
+describe("CifPointer flight", () => {
+  afterEach(() => vi.useRealTimers());
+
+  it("waits in the corner, takes off, then stops transitioning once landed", async () => {
+    vi.useFakeTimers();
+    const { getByTestId } = render(CifPointer, { rect });
+    const pointer = getByTestId("cif-pointer");
+    const parked = pointer.style.transform;
+    expect(pointer.classList.contains("landed")).toBe(false);
+
+    await vi.advanceTimersByTimeAsync(50);
+    expect(pointer.style.transform).not.toBe(parked);
+    expect(pointer.classList.contains("landed")).toBe(false);
+
+    await vi.advanceTimersByTimeAsync(700);
+    expect(pointer.classList.contains("landed")).toBe(true);
+  });
+
+  it("cancels its timers when it goes away", () => {
+    vi.useFakeTimers();
+    const { unmount } = render(CifPointer, { rect });
+    unmount();
+    expect(vi.getTimerCount()).toBe(0);
+  });
+});
+
 describe("HelpHighlightLayer with Cif", () => {
   const service = (current: unknown) =>
     ({ current, announcement: "" }) as never;
 
   it("sends Cif along with a highlight", () => {
     const { queryByTestId } = render(HelpHighlightLayer, {
-      highlight: service({ target: "x", label: "Here", rect }),
+      highlight: service({ id: 1, target: "x", label: "Here", rect }),
     });
     expect(queryByTestId("help-highlight")).not.toBeNull();
     expect(queryByTestId("cif-pointer")).not.toBeNull();

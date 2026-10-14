@@ -30,7 +30,10 @@
       {label}
     </span>
   </div>
-  <CifPointer {rect} />
+  <!-- Keyed so each new highlight gets its own flight, even for the same control. -->
+  {#key highlight.current.id}
+    <CifPointer {rect} />
+  {/key}
 {/if}
 
 <style>
