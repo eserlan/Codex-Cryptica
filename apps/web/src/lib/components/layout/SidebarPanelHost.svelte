@@ -31,6 +31,10 @@
     return keyboard.start();
   });
 
+  const keyboardStyle = $derived(
+    layoutUIStore.isMobile ? keyboard.visibleStyle : undefined,
+  );
+
   const logError = (name: string, error: any) => {
     loadError = name;
     if (isSpecialEnv) {
@@ -63,9 +67,7 @@
     style:width={layoutUIStore.isMobile
       ? "100%"
       : `${layoutUIStore.leftSidebarWidth}px`}
-    style:bottom={layoutUIStore.isMobile && keyboard.keyboardOpen
-      ? `${keyboard.inset}px`
-      : undefined}
+    style={keyboardStyle}
     data-testid="sidebar-panel-host"
   >
     {#if !layoutUIStore.isMobile}

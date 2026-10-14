@@ -46,15 +46,19 @@ describe("standalone Oracle keyboard inset", () => {
     render(OraclePage);
 
     const container = screen.getByTestId("standalone-oracle-container");
-    expect(container.style.bottom).toBe("");
+    expect(container.style.height).toBe("");
 
     viewport.height = fullHeight - 320;
     viewport.dispatchEvent(new Event("resize"));
-    await waitFor(() => expect(container.style.bottom).toBe("320px"));
+    await waitFor(() =>
+      expect(container.style.height).toBe(`${fullHeight - 320}px`),
+    );
+    expect(container.style.top).toBe("0px");
 
     viewport.height = fullHeight;
     viewport.dispatchEvent(new Event("resize"));
-    await waitFor(() => expect(container.style.bottom).toBe(""));
+    await waitFor(() => expect(container.style.height).toBe(""));
+    expect(container.style.bottom).toBe("");
   });
 
   it("does not apply a desktop viewport shrink as a keyboard inset", async () => {
@@ -68,6 +72,7 @@ describe("standalone Oracle keyboard inset", () => {
     render(OraclePage);
 
     const container = screen.getByTestId("standalone-oracle-container");
-    await waitFor(() => expect(container.style.bottom).toBe(""));
+    await waitFor(() => expect(container.style.height).toBe(""));
+    expect(container.style.bottom).toBe("");
   });
 });

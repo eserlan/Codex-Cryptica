@@ -27,6 +27,8 @@ export class KeyboardInset {
   inset = $state(0);
   /** Height of the part of the page that is visible. */
   visibleHeight = $state(0);
+  /** Where the visible part starts, from the top of the layout viewport. */
+  offsetTop = $state(0);
 
   constructor(
     private readonly win: InsetWindow | null = typeof window === "undefined"
@@ -38,6 +40,17 @@ export class KeyboardInset {
     return this.inset > KEYBOARD_THRESHOLD_PX;
   }
 
+  /**
+   * Fixed-position style that pins an element to exactly the visible part of
+   * the page while the keyboard is up, or `undefined` when it is not. Pinning
+   * the top and height, rather than lifting the bottom edge, does not depend on
+   * the layout viewport and the visual viewport agreeing about the screen size.
+   */
+  get visibleStyle(): string | undefined {
+    if (!this.keyboardOpen) return undefined;
+    return `top: ${this.offsetTop}px; height: ${this.visibleHeight}px; bottom: auto;`;
+  }
+
   /** Starts tracking. Returns a function that stops it. */
   start(): () => void {
     const win = this.win;
@@ -46,6 +59,7 @@ export class KeyboardInset {
 
     const update = () => {
       this.visibleHeight = vv.height;
+      this.offsetTop = vv.offsetTop;
       this.inset = Math.max(0, win.innerHeight - vv.height - vv.offsetTop);
     };
     update();
@@ -55,6 +69,7 @@ export class KeyboardInset {
       vv.removeEventListener("resize", update);
       vv.removeEventListener("scroll", update);
       this.inset = 0;
+      this.offsetTop = 0;
     };
   }
 }

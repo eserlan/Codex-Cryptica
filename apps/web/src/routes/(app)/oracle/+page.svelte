@@ -27,9 +27,7 @@
 
 <div
   class="fixed inset-x-0 top-0 bottom-0 bg-theme-bg flex flex-col overflow-hidden"
-  style:bottom={layoutUIStore.isMobile && keyboard.keyboardOpen
-    ? `${keyboard.inset}px`
-    : undefined}
+  style={layoutUIStore.isMobile ? keyboard.visibleStyle : undefined}
   data-testid="standalone-oracle-container"
 >
   <!-- Standalone Header -->
