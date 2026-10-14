@@ -663,6 +663,7 @@ export {
   type ResolvedTome,
   type TomePrompt,
   type TomeConsistencyAuditResult,
+  type TomeCanonicalFacts,
 } from "./public-tome";
 export {
   createIncrementalJsonScanner,
