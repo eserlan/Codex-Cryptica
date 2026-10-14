@@ -2001,6 +2001,32 @@ describe("generateDraftStream", () => {
     return events;
   }
 
+  it("stops the buffered tome editorial pass and suppresses its draft on cancellation", async () => {
+    const controller = new AbortController();
+    const complete = vi.fn(
+      async (
+        _prompt: string,
+        _instruction: string,
+        _options?: { signal?: AbortSignal },
+      ) => {
+        controller.abort();
+        return "invalid JSON";
+      },
+    );
+    const svc = new CampaignGeneratorService({
+      aiPolicy: { isEnabled: true, isAvailable: true },
+      aiGateway: { complete },
+    });
+
+    const events = await collect(
+      svc.generateDraftStream(run("tome", { useAI: true }), controller.signal),
+    );
+
+    expect(complete).toHaveBeenCalledTimes(1);
+    expect(complete.mock.calls[0]?.[2]?.signal).toBe(controller.signal);
+    expect(events.some((event) => event.type === "draft")).toBe(false);
+  });
+
   it("turns structured holiday completion payloads into a final campaign draft", async () => {
     const json = JSON.stringify({
       title: "The First Spill of Neshur",

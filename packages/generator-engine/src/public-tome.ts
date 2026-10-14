@@ -974,7 +974,12 @@ export function auditTomeConsistency(
  */
 export async function generateTomeTwoPass(
   prompt: TomePrompt,
-  complete: (systemInstruction: string, userMessage: string) => Promise<string>,
+  complete: (
+    systemInstruction: string,
+    userMessage: string,
+    signal?: AbortSignal,
+  ) => Promise<string>,
+  signal?: AbortSignal,
 ): Promise<PublicGeneratorOutput | null> {
   const { resolved } = prompt;
 
@@ -1001,10 +1006,13 @@ export async function generateTomeTwoPass(
     }
   }
 
+  if (signal?.aborted) return null;
   const firstText = await complete(
     prompt.systemInstruction,
     prompt.userMessage,
+    signal,
   );
+  if (signal?.aborted) return null;
   const first = candidate(firstText);
   const initialAudit = first ? auditTomeConsistency(first, resolved) : null;
 
@@ -1028,7 +1036,7 @@ export async function generateTomeTwoPass(
     "2. Check that scrolls, rolls, codices, gatherings and leaves make physical sense together. Explain any intentional hybrid artefact.",
     "3. Check the exact mechanism: correct steps, corrupted steps, timing, preconditions, failure outcome, and clue must agree between Contents, Ground Truth and Quick Checks.",
     "4. Check all locations, custodians, dates, chronological transmission, quantities and missing material.",
-    "5. Check genre and period fidelity; avoid importing modern technology into secondary-world fantasy.",
+    `5. Check genre and period fidelity. ${/fantasy/i.test(resolved.genre) ? "For secondary-world fantasy, avoid technology that conflicts with its period." : `Keep technology consistent with the ${resolved.genre} setting and Composition Era.`}`,
     "6. Check that maps, ciphers, reflections, directions and physical evidence actually work as described.",
     "7. Remove needless repetition. Keep the GM reference concise; adventure hooks should introduce situations rather than disclose the solution.",
     "8. Preserve specific atmosphere, playable clues, surprising consequences and all established names and connections.",
@@ -1050,10 +1058,13 @@ export async function generateTomeTwoPass(
   ].join("\n");
 
   try {
+    if (signal?.aborted) return null;
     const revisedText = await complete(
-      "You are an independent, meticulous fantasy manuscript continuity editor and tabletop usability reviewer. Repair existing prose without altering its canonical plot facts. Return JSON only.",
+      "You are an independent, meticulous manuscript continuity editor and tabletop usability reviewer. Repair existing prose without altering its canonical plot facts or requested setting. Return JSON only.",
       reviewMessage,
+      signal,
     );
+    if (signal?.aborted) return null;
     const revised = candidate(revisedText);
     if (revised) {
       const revisedAudit = auditTomeConsistency(revised, resolved);

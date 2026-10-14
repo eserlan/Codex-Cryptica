@@ -609,6 +609,7 @@ export class CampaignGeneratorService {
     generator: ReturnType<typeof getGenerator>,
     request: GeneratorRunRequest,
     bannedNames: Set<string>,
+    signal?: AbortSignal,
   ): Promise<GeneratedDraft | null> {
     const gateway = this.aiGateway;
     if (!gateway) return null;
@@ -616,8 +617,13 @@ export class CampaignGeneratorService {
       const prompt = buildCampaignTomePrompt(request);
       const reviewed = await generateTomeTwoPass(
         prompt,
-        async (instruction, message) =>
-          completeText(await gateway.complete(message, instruction)),
+        async (instruction, message, passSignal) =>
+          completeText(
+            await gateway.complete(message, instruction, {
+              signal: passSignal,
+            }),
+          ),
+        signal,
       );
       if (!reviewed || isTitleBanned(reviewed.title, bannedNames)) return null;
 
@@ -644,13 +650,14 @@ export class CampaignGeneratorService {
     generator: ReturnType<typeof getGenerator>,
     request: GeneratorRunRequest,
     bannedNames: Set<string>,
+    signal?: AbortSignal,
   ): Promise<GeneratedDraft | null> {
     const gateway = this.aiGateway;
     if (!gateway) return null;
 
     switch (request.generatorId) {
       case "tome":
-        return this.generateTomeWithAI(generator, request, bannedNames);
+        return this.generateTomeWithAI(generator, request, bannedNames, signal);
       case "heist":
         try {
           const output = await generateCampaignHeist(request, gateway);
@@ -676,6 +683,7 @@ export class CampaignGeneratorService {
     generator: ReturnType<typeof getGenerator>,
     request: GeneratorRunRequest,
     bannedNames: Set<string>,
+    signal?: AbortSignal,
   ): Promise<GeneratedDraft | null> {
     const canUseAI =
       request.useAI &&
@@ -684,7 +692,7 @@ export class CampaignGeneratorService {
       !!this.aiGateway;
     request.useAI = canUseAI;
     return canUseAI
-      ? this.generateAIDraft(generator, request, bannedNames)
+      ? this.generateAIDraft(generator, request, bannedNames, signal)
       : null;
   }
 
@@ -851,7 +859,10 @@ export class CampaignGeneratorService {
    * Throws {@link UnsupportedGeneratorError} for unknown generator ids.
    * Does not write to the vault.
    */
-  async generateDraft(request: GeneratorRunRequest): Promise<GeneratedDraft> {
+  async generateDraft(
+    request: GeneratorRunRequest,
+    signal?: AbortSignal,
+  ): Promise<GeneratedDraft> {
     const generator = getGenerator(request.generatorId);
     const themeDefaults = getThemeDefaults(
       request.themeId,
@@ -871,6 +882,7 @@ export class CampaignGeneratorService {
       generator,
       mergedRequest,
       bannedNames,
+      signal,
     );
     return (
       aiDraft ?? this.generateLocalDraft(generator, mergedRequest, bannedNames)
@@ -961,7 +973,8 @@ export class CampaignGeneratorService {
 
     if (!this.aiGateway?.completeStream || !isStreamableGenericGenerator) {
       yield { type: "started" };
-      yield { type: "draft", draft: await this.generateDraft(request) };
+      const draft = await this.generateDraft(request, signal);
+      if (!signal?.aborted) yield { type: "draft", draft };
       return;
     }
 

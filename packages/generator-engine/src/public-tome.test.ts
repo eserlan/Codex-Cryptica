@@ -364,6 +364,32 @@ describe("public-tome generator", () => {
       const prompt = buildTomePrompt({}, undefined, seededRng(3));
       expect(prompt.systemInstruction).not.toContain("secondary world");
     });
+
+    it("keeps editorial technology guidance appropriate to the resolved genre", async () => {
+      const prompt = buildTomePrompt(
+        { genre: "Cyberpunk" },
+        undefined,
+        seededRng(3),
+      );
+      let editorialInstruction = "";
+      let editorialMessage = "";
+
+      await generateTomeTwoPass(prompt, async (instruction, message) => {
+        if (message.includes("EDITORIAL PASS 2 OF 2")) {
+          editorialInstruction = instruction;
+          editorialMessage = message;
+        }
+        return "invalid JSON";
+      });
+
+      expect(editorialInstruction).not.toContain("fantasy");
+      expect(editorialMessage).toContain(
+        "Keep technology consistent with the Cyberpunk setting and Composition Era.",
+      );
+      expect(editorialMessage).not.toContain(
+        "avoid importing modern technology",
+      );
+    });
   });
 
   describe("canonical facts", () => {
@@ -716,6 +742,25 @@ ${duplicatedParagraph}
       );
       expect(count).toBe(2);
       expect(out?.title).toBe("The River-Clay Rite");
+    });
+
+    it("does not start the editorial pass or return a draft after cancellation", async () => {
+      const prompt = buildTomePrompt({}, undefined, seededRng(7));
+      const controller = new AbortController();
+      let calls = 0;
+      const out = await generateTomeTwoPass(
+        prompt,
+        async (_instruction, _message, signal) => {
+          calls += 1;
+          expect(signal).toBe(controller.signal);
+          controller.abort();
+          return response(content);
+        },
+        controller.signal,
+      );
+
+      expect(calls).toBe(1);
+      expect(out).toBeNull();
     });
 
     it("rejects both drafts when neither passes structural validation", async () => {
