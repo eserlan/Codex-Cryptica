@@ -1034,19 +1034,24 @@ function mapToTovNpc(ir: StatBlockIR): StatSheetField[] {
     max: 5,
   });
 
-  const firstAtk = ir.actionsAndAttacks.find((a) => a.attackDice);
-  fields.push({
-    id: "atk",
-    label: "Attack Roll",
-    type: "dice",
-    formula: firstAtk?.attackDice ?? "1d20+3",
-  });
-  fields.push({
-    id: "damage",
-    label: "Damage Roll",
-    type: "dice",
-    formula: firstAtk?.damageDice ?? "1d6+2",
-  });
+  const firstAttack = ir.actionsAndAttacks.find((a) => a.attackDice);
+  if (firstAttack?.attackDice) {
+    fields.push({
+      id: "atk",
+      label: "Attack Roll",
+      type: "dice",
+      formula: firstAttack.attackDice,
+    });
+  }
+  const firstDamage = ir.actionsAndAttacks.find((a) => a.damageDice);
+  if (firstDamage?.damageDice) {
+    fields.push({
+      id: "damage",
+      label: "Damage Roll",
+      type: "dice",
+      formula: firstDamage.damageDice,
+    });
+  }
 
   if (ir.traitsAndFeatures.length > 0 || ir.actionsAndAttacks.length > 0) {
     const notesParts: string[] = [];

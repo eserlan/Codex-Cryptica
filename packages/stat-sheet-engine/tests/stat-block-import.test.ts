@@ -970,6 +970,22 @@ Broadsword. 3d6<=14. 2d+1 cut damage.
       expect(result.ir.actionsAndAttacks[2]?.attackDice).toBeUndefined();
     });
 
+    it("does not map roll fields when a Foundry NPC weapon has unresolved formulas", () => {
+      const result = importStatBlock(
+        {
+          name: "Sparse Foundry NPC",
+          flags: { "black-flag": {} },
+          system: { attributes: { hp: { value: 10 }, ac: { value: 12 } } },
+          items: [{ name: "Unspecified Knife", type: "weapon", system: {} }],
+        },
+        { systemHint: "tales-of-the-valiant", category: "npc" },
+      );
+
+      const fieldIds = result.fields.map((field) => field.id);
+      expect(fieldIds).not.toContain("atk");
+      expect(fieldIds).not.toContain("damage");
+    });
+
     it("imports lightweight ToV NPC input to builtin-tov-npc", () => {
       const npcInput = {
         name: "Village Informant",
