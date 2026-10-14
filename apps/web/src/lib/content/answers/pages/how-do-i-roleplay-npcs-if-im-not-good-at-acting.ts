@@ -7,7 +7,7 @@ export const howDoIRoleplayNpcsIfImNotGoodAtActing: AnswerConfigInput = {
   question: "How do I roleplay NPCs if I'm not good at acting?",
   kind: "framework",
   shortAnswer:
-    'You do not need acting talent to roleplay believable NPCs: speaking in third person such as "The guard explains the gate stays shut until sunrise" is full roleplay, not a lesser version of it. Give each NPC a want, an attitude toward the party, and one small behavioural or speech habit, then use simple signals like tempo, word choice, or posture to mark who is speaking and name the speaker when you switch. With that, consistency of motives and reactions will carry far more weight than voices or impressions.',
+    'You do not need acting talent to roleplay believable NPCs: speaking in third person such as "The guard explains the gate stays shut until sunrise" is full roleplay, not a lesser version of it. Give each NPC a want, an attitude toward the party, and one small behavioural or speech habit, then use simple signals like tempo, word choice, or posture to mark who is speaking and name the speaker when you switch.',
   sections: [
     {
       kind: "prose",
@@ -15,7 +15,7 @@ export const howDoIRoleplayNpcsIfImNotGoodAtActing: AnswerConfigInput = {
       paragraphs: [
         "Many new DMs assume that running an NPC means performing a character voice, holding eye contact, and improvising dialogue that sounds like a scripted scene. When that does not come naturally, the whole task feels exposed and the safest move seems to avoid dialogue altogether or to hand the NPC to someone else at the table.",
         'The game asks for less than that, and counts more of what you already do. If you say "The guard explains she cannot open the gate until sunrise, but she can send word to the captain if you leave a name", you have roleplayed the guard: you established what the character knows, what she wants, and what she will offer. First person speech, third person narration, and a mix of the two are all legitimate, and players can respond in kind with "My paladin thanks her and asks whether the night patrol saw anything" without anyone needing to act.',
-        "The judgement players actually make is not whether your voice sounded convincing, but whether the NPC behaved consistently when the situation changed. An innkeeper who was nervous about the watch at the start should still be nervous when the party offers coin, only in a way that reflects what has been offered. That continuity is what makes an NPC feel like a person, and it depends on a playable note, not on talent.",
+        "A playable note gives you something to return to when the situation changes. An innkeeper who is nervous about the watch can respond to an offer of coin in a way that reflects both that worry and what the party has offered.",
       ],
     },
     {
@@ -77,41 +77,38 @@ export const howDoIRoleplayNpcsIfImNotGoodAtActing: AnswerConfigInput = {
       kind: "example",
       heading: "Same gatehouse, three workable ways to play it",
       paragraphs: [
-        "The party reaches a locked town gate after dark and needs entry. Two NPCs are present: Sergeant Brenn, who decides whether the gate opens, and Mara, a kitchen runner who saw something on the wall earlier. The GM has the same three-part cues either way: Brenn wants an uneventful watch and is wary of strangers; Mara wants to get back inside before she is noticed and is nervous but eager to help.",
+        'The party reaches a locked town gate after dark and needs entry. Sergeant Brenn decides whether it opens; he wants an uneventful watch and is wary of strangers. Mara, a kitchen runner who wants to get back inside before she is noticed, is nervous but eager to help. She saw an unmarked cart leave through the postern at dusk, without lights or papers. In each version Brenn says the gate stays shut until sunrise but offers to send a name to the captain; Mara shares what she saw. When a player asks if she saw anything else, she glances at the door and says, "That is all I saw, and I need to get back inside before anyone notices." The party can ask Brenn to send a name, follow up on what Mara saw, or try something else.',
       ],
       items: [
         {
           term: "First person with light cues",
-          text: 'GM as Brenn, steady and clipped: "Sergeant Brenn says: Gate stays shut until sunrise. Orders. You can leave a name and I will send it to the captain." Beat. Softer, quicker: "Mara adds: I was on the wall at dusk, I saw a cart leave by the postern. No lights, no papers." Both lines use the same voice at different tempos and name each speaker once. The table hears who Brenn is and what Mara noticed while the GM stays in a comfortable register.',
+          text: 'In a steady, clipped voice: "Brenn: The gate stays shut until sunrise. Orders. Leave a name and I will send it to the captain." In a quicker, softer voice: "Mara: I was on the wall at dusk. I saw an unmarked cart leave through the postern, without lights or papers." After the player asks if she saw anything else: "Mara glances at the door. That is all I saw, and I need to get back inside before anyone notices."',
         },
         {
           term: "Third person narration",
-          text: 'GM: "Sergeant Brenn explains the gate stays shut until sunrise on standing orders. He offers to send a name to the captain if the party leaves one. Mara, the runner hovering by the door, says she was on the wall at dusk and saw an unmarked cart slip out through the postern without papers." No dialogue performance, no voice change. The players have the same facts, the same NPC wants, and the same choice: press Brenn, follow up with Mara, or try something else.',
+          text: 'The GM narrates: "Brenn explains the gate stays shut until sunrise on standing orders, but he will send a name to the captain if you leave one. Mara, a kitchen runner, says she saw an unmarked cart leave through the postern at dusk, without lights or papers. Asked if she saw anything else, she glances at the door and says that is all she saw and she needs to get inside before anyone notices." No dialogue performance or voice change is needed.',
         },
         {
           term: "Low-effort character markers",
-          text: 'GM places a single die forward for Brenn and taps it when he speaks, hands folded; when Mara speaks, the GM leans slightly forward and glances at a note card, speaking faster and in shorter sentences. The visual and tempo shift mark the switch cleanly. Both approaches keep NPC-to-NPC friction brief: Brenn and Mara do not debate each other for minutes. The GM summarises: "Brenn frowns, Mara shrinks back toward the door. Brenn looks to you: do you vouch for the cart, or let it go?"',
+          text: 'The GM places a die forward for Brenn and taps it while saying, in a steady, clipped voice: "Brenn: The gate stays shut until sunrise. Orders. Leave a name and I will send it to the captain." For Mara, the GM leans forward, glances at a note card and speaks more quickly: "Mara: I was on the wall at dusk. I saw an unmarked cart leave through the postern, without lights or papers." Asked if she saw anything else, the GM glances at the door and repeats Mara\'s response: "That is all I saw, and I need to get back inside before anyone notices."',
         },
         {
           term: "Why it works",
-          text: "Each version honours the same underlying notes: Brenn protects routine, Mara trades information for safety. The table can tell who is speaking, what each one wants, and where the pressure sits. No accent or costume carries the scene; naming, tempo, word choice, and a single physical habit do. The party leaves the gate with a real decision and a reason to seek Mara again if they want more.",
+          text: "Brenn's offer follows his wish to keep the watch uneventful. Mara answers the request, then signals that she wants to get inside unseen; that shapes her reaction without deciding what the players can persuade her to do.",
         },
       ],
     },
     {
-      kind: "prose",
-      heading: "A tiny prep template you can copy",
-      paragraphs: [
-        "For the next session, prepare two NPCs only. Copy this template twice onto an index card or a small note where you can see it during play:",
-        "Name | Role | Want (next few minutes) | Attitude to party | One habit | Knows or can offer | Will not do without cost\nExample: Mara | Kitchen runner | Get back inside unseen | Nervous, eager to help | Short clipped answers, glances at door | Saw unmarked cart at dusk | Will not name who ordered it without a promise of protection\nWhen either NPC speaks, glance at the card and let the want set the first line, the attitude set the tone, and the habit shape the delivery. After the session, only keep what the players actually heard and saw; add detail between sessions if they return to that person.",
-      ],
-    },
-    {
-      kind: "prose",
-      heading: "An achievable practice plan that does not feel like homework",
-      paragraphs: [
-        "Confidence grows from repeating a small, successful interaction, not from rehearsing a cast. Before your next session, choose two NPCs who contrast cleanly: one unhurried authority figure and one rushed, lower-status helper, or one formal and one blunt. Write the three-part cue for each, then practise a single short exchange out loud at home: a greeting, one offer or refusal tied to the want, and one response to a player push. Thirty seconds per NPC is enough; you are rehearsing the cue, not a script.",
-        "At the table, use third person whenever it feels steadier and switch to first person only for a line or two when you want a moment to land. Keep any NPC-to-NPC moment to a sentence or two of summary before asking the party what they do. After the session, note one thing that worked and one to adjust next time: whether the attitude actually shifted, whether the habit was visible, whether you named the speaker each time. Build from that single point rather than adding new voices or mannerisms before the current ones feel settled.",
+      kind: "checklist",
+      heading: "A small, optional exercise for next session",
+      intro:
+        "Starting with two contrasting NPCs is a manageable default, not a limit. For each one you expect to speak, prepare these cues:",
+      items: [
+        "Write the NPC's name and role.",
+        "Note what they want in this scene and their starting attitude toward the party.",
+        "Choose one simple speech or behaviour cue you can repeat without strain.",
+        "Write one useful thing they know or can offer, plus a boundary they will keep.",
+        "Rehearse one greeting, one offer or request, and one response to a player question.",
       ],
     },
     {
@@ -120,35 +117,15 @@ export const howDoIRoleplayNpcsIfImNotGoodAtActing: AnswerConfigInput = {
       paragraphs: [
         "Asking a friend to drop in as a barkeep, informant, or rival delegate for a session can be enjoyable, and it is not a cop-out to try it. A guest performer can bring energy to a single conversation and give you a break from switching, which some tables find fun for a special occasion.",
         "It does not solve the underlying table flow problem on its own. Someone still needs to decide what each NPC wants, when to bring the party back into the conversation, and how to keep extended dialogue from becoming a performance the players watch. If the guest and the GM fall into a long exchange between two characters, the party is still waiting for a turn.",
-        "If you try it, set boundaries before play: which NPCs the guest will play and for how long, what that NPC actually wants and will not give away cheaply, how you will signal an exit or a hand-off back to the main GM, and that any promises or information the NPC offers count as established fiction. Agree that the GM can step in, summarise, and return attention to the players at any point. Most tables find a guest works best as an occasional addition for a single scene, not as a regular solution for every conversation.",
-      ],
-    },
-    {
-      kind: "checklist",
-      heading: "Try this at your next session",
-      intro: "Before you sit down, check you have these in place:",
-      items: [
-        "Two contrasting NPCs prepared with want, attitude, and one behaviour or speech habit each, plus what they know and what they will not do without a cost.",
-        "A simple way to mark who is speaking: name every switch, and one extra cue such as tempo, word choice, posture, or a token you move when the speaker changes.",
-        "Permission to narrate in third person whenever it feels steadier, and to reserve first person for short lines that matter.",
-        "A plan to keep NPC-to-NPC friction to one or two summarised lines before asking the party what they do.",
-        "One short exchange rehearsed out loud for each NPC: greeting, offer or refusal, response to a push. No accent or costume required.",
-        "A note after play: what the players learned about each NPC, and one small adjustment for next time.",
-      ],
-    },
-    {
-      kind: "prose",
-      heading: "The habit that earns trust at the table",
-      paragraphs: [
-        "Players remember whether an NPC's motives stayed legible and whether their responses followed from what happened, not whether you sounded like a different person. A guard who holds to routine until given a reason to bend, a runner who trades what she saw for a promise of safety, and a GM who names each speaker and keeps passing the conversation back to the party create believable characters with tools any new DM can sustain.",
+        "If you try it, set boundaries before play: which NPCs the guest will play and for how long, what that NPC actually wants and will not give away cheaply, how you will signal an exit or a hand-off back to the main GM, and that any promises or information the NPC offers count as established fiction. Agree that the GM can step in, summarise, and return attention to the players at any point. A guest can be an occasional addition for a single scene; regular co-GM arrangements can also work when everyone has clear responsibilities.",
       ],
     },
   ],
   codexConnection: {
     heading: "Keep the NPCs the party actually met",
     paragraphs: [
-      "The cues above are most useful when they survive beyond the conversation they were written for. Codex Cryptica keeps the NPCs the party spoke to as linked entities alongside the locations, factions, and quests they touched, so the runner who saw the cart and the sergeant who held the gate are still findable next session with their wants and boundaries intact.",
-      "Generate a quick NPC for tonight and keep only the ones the players engaged with. The note you wrote becomes the starting point for the next time they meet, not something you reconstruct from memory.",
+      "The cues above are most useful when they survive beyond the conversation they were written for. Save the NPCs your players met as entities, record their cues, and link them to the locations, factions, and quests they touched. The runner who saw the cart and the sergeant who held the gate will then be easier to find next session with their wants and boundaries intact.",
+      "Generate a quick NPC for tonight, then save the ones your players engaged with and link them to relevant entities. This gives you a starting point for their next appearance instead of leaving you to reconstruct your notes from memory.",
     ],
     linkText: "Generate an NPC",
     href: "/generators/npc",
@@ -205,7 +182,7 @@ export const howDoIRoleplayNpcsIfImNotGoodAtActing: AnswerConfigInput = {
     ],
     userJob: "adopt-workflow",
     uniqueValue:
-      "A beginner DM framework that treats third-person narration as full roleplay, separates NPCs with a three-part cue and minimal non-accent signals, and shows the same gatehouse scene in dialogue, cue, and narration forms with a copyable prep template.",
+      "A beginner DM framework that treats third-person narration as full roleplay, separates NPCs with a three-part cue and minimal non-accent signals, and shows the same gatehouse scene in dialogue, cue, and narration forms with an optional prep exercise.",
     relatedIntents: [
       "answer-run-scene-multiple-npcs",
       "answer-make-roleplay-more-engaging",

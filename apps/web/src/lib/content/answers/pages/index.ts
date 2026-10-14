@@ -43,6 +43,7 @@ import { howDoIRunAJournalistOrMediaCharacterInAnRpg } from "./how-do-i-run-a-jo
 import { howDoIRunALargeBattleWhenThePlayerCharactersArePartOfAnArmy } from "./how-do-i-run-a-large-battle-when-the-player-characters-are-part-of-an-army";
 import { howDoIRunAPirateCampaignFocusedOnExploration } from "./how-do-i-run-a-pirate-campaign-focused-on-exploration";
 import { howDoIRunARogueOrScoutWithoutSplittingTheParty } from "./how-do-i-run-a-rogue-or-scout-without-splitting-the-party";
+import { howDoIRunAStealthMissionInATabletopRpg } from "./how-do-i-run-a-stealth-mission-in-a-tabletop-rpg";
 import { howDoIRunASuccessfulSessionZero } from "./how-do-i-run-a-successful-session-0";
 import { howDoIRunAnInvestigatorWithoutSideliningTheParty } from "./how-do-i-run-an-investigator-without-sidelining-the-party";
 import { howDoIRunCharacterRolesInAPoliticalIntrigueRpg } from "./how-do-i-run-character-roles-in-a-political-intrigue-rpg";
@@ -210,6 +211,7 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     howDoIRunALargeBattleWhenThePlayerCharactersArePartOfAnArmy,
     howDoIRunAPirateCampaignFocusedOnExploration,
     howDoIRunARogueOrScoutWithoutSplittingTheParty,
+    howDoIRunAStealthMissionInATabletopRpg,
     howDoIRunASuccessfulSessionZero,
     howDoIRunAnInvestigatorWithoutSideliningTheParty,
     howDoIRunCharacterRolesInAPoliticalIntrigueRpg,

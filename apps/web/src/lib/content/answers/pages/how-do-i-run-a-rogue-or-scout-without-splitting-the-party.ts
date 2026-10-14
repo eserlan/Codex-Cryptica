@@ -139,6 +139,7 @@ export const howDoIRunARogueOrScoutWithoutSplittingTheParty: AnswerConfigInput =
       "how-do-you-run-a-heist-in-a-tabletop-rpg",
       "how-do-i-run-hackers-or-netrunners-without-splitting-the-party",
       "how-do-i-run-common-character-roles-in-a-fantasy-rpg",
+      "how-do-i-run-a-stealth-mission-in-a-tabletop-rpg",
     ],
     discovery: {
       id: "answer-run-rogue-scout-without-splitting-party",
@@ -195,6 +196,11 @@ export const howDoIRunARogueOrScoutWithoutSplittingTheParty: AnswerConfigInput =
           with: "answer-run-hackers-netrunners",
           reason:
             "The hacker answer connects a digital intrusion to the crew's physical action; this page covers physical reconnaissance, stealth, traps, and hazards when a scout moves ahead of the group.",
+        },
+        {
+          with: "answer-run-stealth-mission-in-tabletop-rpg",
+          reason:
+            "This page handles brief reconnaissance and the immediate group choices it creates; the stealth mission answer covers sustained zone-based movement with a role for every character and gradually increasing detection.",
         },
       ],
     },
