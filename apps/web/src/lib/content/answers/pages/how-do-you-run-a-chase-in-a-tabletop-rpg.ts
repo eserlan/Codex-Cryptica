@@ -139,6 +139,7 @@ export const howDoYouRunAChaseInATabletopRpg: AnswerConfigInput = {
     "how-do-i-run-ship-to-ship-combat-without-sidelining-the-party",
     "how-do-i-make-sea-travel-interesting-in-a-ttrpg",
     "how-do-i-run-a-pirate-campaign-focused-on-exploration",
+    "how-do-i-run-a-stealth-mission-in-a-tabletop-rpg",
   ],
   discovery: {
     id: "answer-run-chase-in-tabletop-rpg",

@@ -191,6 +191,7 @@ export const howDoIRunSpiesAndInfiltratorsInAnRpg: AnswerConfigInput = {
     "how-do-i-run-a-rogue-or-scout-without-splitting-the-party",
     "how-do-i-run-character-roles-in-an-investigative-horror-rpg",
     "how-do-i-run-common-character-roles-in-a-fantasy-rpg",
+    "how-do-i-run-a-stealth-mission-in-a-tabletop-rpg",
   ],
   discovery: {
     id: "answer-run-spies-infiltrators-rpg",
@@ -255,6 +256,11 @@ export const howDoIRunSpiesAndInfiltratorsInAnRpg: AnswerConfigInput = {
         with: "answer-run-rogue-scout-without-splitting-party",
         reason:
           "The rogue and scout guide focuses on short reconnaissance scenes and the choices a scout's findings create; this answer handles sustained infiltration operations, cover, exposure, and outside-team work.",
+      },
+      {
+        with: "answer-run-stealth-mission-in-tabletop-rpg",
+        reason:
+          "This answer coordinates an infiltrator and an outside team across a covert operation; the stealth mission answer gives the whole party a zone-based procedure for movement, consequential checks, and escalating detection.",
       },
     ],
   },

@@ -1213,6 +1213,40 @@ describe("published answers", () => {
     });
   });
 
+  it("records the stealth mission overlap in both discovery entries", () => {
+    const stealth = answers["how-do-i-run-a-stealth-mission-in-a-tabletop-rpg"];
+    const relatedSlugs = [
+      [
+        "how-do-you-run-a-heist-in-a-tabletop-rpg",
+        "answer-run-heist-in-tabletop-rpg",
+      ],
+      [
+        "how-do-i-run-spies-and-infiltrators-in-an-rpg",
+        "answer-run-spies-infiltrators-rpg",
+      ],
+      [
+        "how-do-i-run-a-rogue-or-scout-without-splitting-the-party",
+        "answer-run-rogue-scout-without-splitting-party",
+      ],
+    ] as const;
+
+    for (const [slug, intentId] of relatedSlugs) {
+      const related = answers[slug];
+      const stealthAcknowledgement =
+        stealth.discovery?.acknowledgedOverlap?.find(
+          (entry) => entry.with === intentId,
+        );
+      const relatedAcknowledgement =
+        related.discovery?.acknowledgedOverlap?.find(
+          (entry) =>
+            entry.with === "answer-run-stealth-mission-in-tabletop-rpg",
+        );
+
+      expect(stealthAcknowledgement?.reason).toBeTruthy();
+      expect(relatedAcknowledgement?.reason).toBeTruthy();
+    }
+  });
+
   it("publishes the short-session answer around one playable unit", () => {
     const shortSessionAnswer =
       answers["can-you-play-a-tabletop-rpg-in-30-minute-sessions"];

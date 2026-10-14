@@ -194,6 +194,7 @@ export const howDoYouRunAHeistInATabletopRpg: AnswerConfigInput = {
     "how-do-i-run-spies-and-infiltrators-in-an-rpg",
     "how-do-i-run-a-rogue-or-scout-without-splitting-the-party",
     "how-do-i-run-common-character-roles-in-a-fantasy-rpg",
+    "how-do-i-run-a-stealth-mission-in-a-tabletop-rpg",
   ],
   discovery: {
     id: "answer-run-heist-in-tabletop-rpg",
@@ -216,6 +217,11 @@ export const howDoYouRunAHeistInATabletopRpg: AnswerConfigInput = {
       "answer-heist-target-design",
     ],
     acknowledgedOverlap: [
+      {
+        with: "answer-run-stealth-mission-in-tabletop-rpg",
+        reason:
+          "This answer frames the complete score from casing through escape; the stealth mission answer provides a zone-based procedure for resolving movement, group roles, and gradual detection during the mission itself.",
+      },
       {
         with: "answer-run-rogue-scout-without-splitting-party",
         reason:
