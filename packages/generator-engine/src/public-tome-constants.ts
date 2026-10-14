@@ -237,7 +237,29 @@ export const tomeConfig = {
       unit: "signature",
       count: 1,
     },
+    { description: "A passage scraped away beneath a second coat of red pigment", unit: "passage", count: 1 },
+    { description: "Seven pages darkened by smoke without any material removed", unit: "pages", count: 7 },
+    { description: "The lower margin of a diagram abraded by repeated folding", unit: "margin", count: 1 },
+    { description: "One additional leaf inserted by a later annotator", unit: "leaf", count: 1 },
   ],
+  damageProfilesByFormat: {
+    roll: [
+      { description: "The final handspan of the parchment strip torn away at a join", unit: "strip", count: 1 },
+      { description: "Three lines scraped from the outer winding of the roll", unit: "lines", count: 3 },
+      { description: "Two stitched parchment panels scorched but still attached", unit: "panels", count: 2 },
+      { description: "A later vellum strip stitched over the original closing formula", unit: "strip", count: 1 },
+    ],
+    tablets: [
+      { description: "One wax tablet erased and recut, leaving the original strokes faintly visible", unit: "tablet", count: 1 },
+      { description: "A snapped hinge connecting the third and fourth tablets", unit: "hinge", count: 1 },
+      { description: "A later layer of wax concealing four original lines", unit: "layer", count: 1 },
+    ],
+    sheaves: [
+      { description: "Two loose sheets missing from the numbered sheaf", unit: "sheets", count: 2 },
+      { description: "Three sheets out of sequence with conflicting foliation", unit: "sheets", count: 3 },
+      { description: "A forged replacement sheet inserted into the bundle", unit: "sheet", count: 1 },
+    ],
+  },
   locationsByTheme: {
     "Cosmic Horror": [
       "The drowned chancel of Saint Jude-in-the-Fens",
@@ -350,22 +372,52 @@ export const tomeConfig = {
     ],
     "Classic Fantasy": [
       {
-        claim:
-          "The third chapter instructs the caster to quench the soul-forged blade in consecrated water",
-        deception:
-          "Consecrated water violently shatters the containment matrix and releases the bound spirit into the room",
-        truth:
-          "The vessel requires virgin river-clay and slow air-cooling over three nights",
-        clue: "A scorch mark on page 42 where the author's previous apprentice attempted the quenching",
+        claim: "The amended third chapter instructs the celebrant to pour consecrated water onto a newly sealed river-clay spirit vessel",
+        deception: "The temple censor substituted a washing rite for the original dry-curing instruction; consecrated water ruptures the vessel",
+        truth: "Shape the vessel from virgin river-clay, leave it to cure in open air for two nights, and seal the name on the third",
+        clue: "A scorch beside the amended line overlays pale clay residue and a scratched instruction to let the vessel dry",
       },
       {
-        claim:
-          "The labyrinth map on the centerfold shows the only safe route through the lower vaults",
-        deception:
-          "The map was deliberately mirrored by the guild architect to trap unauthorised intruders",
-        truth:
-          "Reversing all left and right turns navigates the true gallery without tripping the deadfall traps",
-        clue: "The compass rose in the margin points west rather than north",
+        claim: "The centrefold labyrinth map tells entrants to follow its printed lateral turns exactly",
+        deception: "The guild cartographer reflected the passage plan across the north-south axis, exchanging east and west while preserving north and south",
+        truth: "Keeping north and south fixed, exchange every east and west turn to avoid the deadfalls along the false route",
+        clue: "The margin's compass preserves the north and south labels but visibly exchanges east and west; a surviving survey line confirms the reflection",
+      },
+      {
+        claim: "The royal mortuary register records that the last heir was cremated at the winter solstice",
+        deception: "The officiant forged the cremation certificate to conceal an heir raised under an unrelated family name",
+        truth: "The heir survived and was fostered beyond the court's jurisdiction; the true identity can be proven from matching birthmarks and dated service rolls",
+        clue: "The charcoal purchase entry for the cremation is dated two weeks after the listed funeral, while a nurse's signed ledger records the child's departure",
+      },
+      {
+        claim: "An apothecary's manuscript asserts that powdered moonstone cures the river-plague",
+        deception: "The physician swapped the names of the curative and poisonous minerals to protect a commercial monopoly",
+        truth: "Only the grey shale infusion calms the fever; the silver moonstone powder causes temporary paralysis",
+        clue: "The original herbarium illustration shows an unmistakable dark shale vein beneath a scraped silver caption",
+      },
+      {
+        claim: "The abbey's tide calendar declares the causeway traversable at the sixth evening bell",
+        deception: "An abbot moved the reference bell by one watch to keep strangers from reaching the island shrine",
+        truth: "The passage is exposed only during the previous watch's falling tide, and the sixth bell now sounds after the path floods",
+        clue: "A centuries-old bell schedule and barnacle marks on the old milepost disagree with the later annotated tide table",
+      },
+      {
+        claim: "The siege chronicle claims the western bastion fell to enemy mining",
+        deception: "The engineer hid a deliberate structural failure ordered by the royal chamberlain",
+        truth: "The bastion was sabotaged from inside to close an escape tunnel used by the palace household",
+        clue: "The masonry cut marks point outward and the expense ledger pays the chamberlain's quarrymen after the siege",
+      },
+      {
+        claim: "A liturgical commentary teaches that the bound guardian must be addressed by its ceremonial title",
+        deception: "A copyist reversed the order of the guardian's oath and its release formula, giving the title the force of a command",
+        truth: "The guardian recognises its original service name before the oath, and the ceremonial title awakens its defence instead",
+        clue: "A marginal acrostic records the older name and predates the corrected rubric in noticeably different ink",
+      },
+      {
+        claim: "The pilgrim's star atlas places the forgotten sanctuary beneath the winter constellation",
+        deception: "A priest transposed the names of the summer and winter sky sectors to hide the sanctuary's location",
+        truth: "The sanctuary lies beneath the summer rising of the same asterism; following the winter bearings leads to an empty ridge",
+        clue: "A dated eclipse observation could only have been made under summer skies at the recorded latitude",
       },
     ],
     "Vampire / Gothic Noir": [
