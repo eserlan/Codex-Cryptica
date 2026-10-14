@@ -139,17 +139,14 @@ jobs:
           for file in apps/web/static/images/blog/meet-cif/cif-{curious,thinking,explaining,delighted}.svg; do
             test -s "$file"
             key="images/blog/meet-cif/${file##*/}"
-            bunx wrangler r2 object put "codex-cryptica-statics/$key" \\
-              --file="$file" --content-type="image/svg+xml" --remote
+            bunx wrangler r2 object put "codex-cryptica-statics/$key" --file="$file" --content-type="image/svg+xml" --remote
           done
 
       - name: Verify published Cif illustrations
         run: |
           set -euo pipefail
           for mood in curious thinking explaining delighted; do
-            curl --fail --silent --show-error --retry 3 --retry-delay 2 \\
-              --output /dev/null \\
-              "https://assets.codexcryptica.com/images/blog/meet-cif/cif-$mood.svg"
+            curl --fail --silent --show-error --retry 3 --retry-delay 2 --output /dev/null "https://assets.codexcryptica.com/images/blog/meet-cif/cif-$mood.svg"
           done
 
       - name: Build Application
