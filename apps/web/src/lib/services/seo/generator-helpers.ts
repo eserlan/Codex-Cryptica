@@ -489,6 +489,8 @@ export interface GeneratorOutput {
   conflictDomain?: string;
   /** Optional connections or relationships to other entities. */
   connections?: SuggestedConnection[];
+  /** Structured one-shot adventure, so single scenes can be regenerated. */
+  oneShot?: import("generator-engine").OneShotAdventure;
 }
 
 /**

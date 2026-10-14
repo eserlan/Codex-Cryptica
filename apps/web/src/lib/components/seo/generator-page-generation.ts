@@ -13,6 +13,7 @@ export const NON_STREAMABLE_SLUGS: readonly ValidSlug[] = [
   "dungeon-generator",
   "adventure-generator",
   "adventure-idea-generator",
+  "one-shot-adventure-generator",
   "language-generator",
 ] as const;
 
@@ -70,6 +71,7 @@ export interface GenerationContext {
   comicBookEvent: Record<string, unknown>;
   origin: Record<string, unknown>;
   villainScheme: Record<string, unknown>;
+  oneShot: Record<string, unknown>;
   world: Record<string, unknown>;
   starSystem: Record<string, unknown>;
   constellation: Record<string, unknown>;
@@ -268,6 +270,13 @@ export function createGeneratorHandlers(
       } as never),
     "origin-generator": (useAI) =>
       engine.generateOrigin({ ...(ctx.origin as object), useAI } as never),
+    "one-shot-adventure-generator": (useAI) =>
+      engine.generateOneShot({
+        ...(ctx.oneShot as object),
+        durationHours: Number(ctx.oneShot.durationHours),
+        partySize: Number(ctx.oneShot.partySize),
+        useAI,
+      } as never),
     "villain-scheme-generator": (useAI) =>
       engine.generateVillainScheme({
         ...(ctx.villainScheme as object),

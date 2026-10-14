@@ -55,6 +55,7 @@
     supportsStreaming = false,
     generate,
     formFields,
+    outputExtras = undefined,
     worldTheme = "workspace",
     initialDraft = null,
     variant = "default",
@@ -99,6 +100,10 @@
       onPreview?: (preview: GeneratorOutput) => void;
     }) => Promise<GeneratorOutput>;
     formFields: Snippet<[() => void]>;
+    /** Extra controls under the output card, e.g. per-part regeneration. */
+    outputExtras?: Snippet<
+      [GeneratorOutput, (output: GeneratorOutput) => void, boolean]
+    >;
     worldTheme?: string;
     initialDraft?: GeneratorOutput | null;
     variant?: "default" | "names";
@@ -360,6 +365,13 @@
         )}
         isSendingToMonsterLabs={handoffs.monsterLabsFlow.state === "loading"}
       />
+      {#if outputExtras && session.generatedData && !session.isExampleDraft}
+        {@render outputExtras(
+          session.generatedData,
+          session.replaceOutput,
+          session.useAI,
+        )}
+      {/if}
     </div>
 
     <!-- At the Table Column: positioned on the right on desktop -->

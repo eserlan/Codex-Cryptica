@@ -168,6 +168,12 @@ export const howDoIPaceAnRpgOneShot: AnswerConfigInput = {
   },
   relatedTools: [
     {
+      title: "One-shot adventure builder",
+      description:
+        "Get a one-shot with a minute budget that adds up to your session, essential and optional scenes, and a running-late path.",
+      href: "/generators/one-shot-adventure-generator",
+    },
+    {
       title: "Session prep builder",
       description:
         "Generate focused single-session run sheets with modular beats and cuttable encounters.",

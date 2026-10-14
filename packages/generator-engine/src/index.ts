@@ -286,6 +286,35 @@ export {
   type QuestPrompt,
 } from "./public-quest";
 export {
+  oneShotConfig,
+  resolveOneShot,
+  sceneCountFor,
+  buildOneShotAdventure,
+  buildOneShotPrompt,
+  parseOneShotResponse,
+  generateOneShotLocal,
+  oneShotToOutput,
+  regenerateOneShotLocal,
+  buildOneShotRegenPrompt,
+  applyOneShotRegenResponse,
+  renderOneShotMarkdown,
+  renderGmSheet,
+  validateOneShot,
+  normaliseTimeBudget,
+  type OneShotPrompt,
+  type ResolvedOneShot,
+  type OneShotRegenTarget,
+  type OneShotRegenResult,
+} from "./public-one-shot";
+export type {
+  OneShotAdventure,
+  OneShotGeneratorOptions,
+  OneShotScene,
+  OneShotNpc,
+  OneShotClue,
+  OneShotIssue,
+} from "./one-shot-types";
+export {
   buildRumourPrompt,
   parseRumourResponse,
   generateRumourLocal,

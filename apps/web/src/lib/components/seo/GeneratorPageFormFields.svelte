@@ -2,6 +2,7 @@
   import RPGNPCFormFields from "$lib/components/seo/RPGNPCFormFields.svelte";
   import FactionFormFields from "$lib/components/seo/FactionFormFields.svelte";
   import FactionRosterFormFields from "$lib/components/seo/FactionRosterFormFields.svelte";
+  import OneShotFormFields from "$lib/components/seo/OneShotFormFields.svelte";
   import QuestFormFields from "$lib/components/seo/QuestFormFields.svelte";
   import PersonalityFormFields from "$lib/components/seo/PersonalityFormFields.svelte";
   import RumourFormFields from "$lib/components/seo/RumourFormFields.svelte";
@@ -104,6 +105,7 @@
     comicBookEvent = $bindable(),
     origin = $bindable(),
     villainScheme = $bindable(),
+    oneShot = $bindable(),
     world = $bindable(),
     starSystem = $bindable(),
     constellation = $bindable(),
@@ -159,6 +161,7 @@
     comicBookEvent: StringState;
     origin: StringState;
     villainScheme: StringState;
+    oneShot: StringState;
     world: StringState;
     starSystem: StringState;
     constellation: ConstellationState;
@@ -218,6 +221,7 @@
   const storySlugs = new Set([
     "adventure-generator",
     "adventure-idea-generator",
+    "one-shot-adventure-generator",
     "plot-twist-generator",
     "bbeg-generator",
     "comic-book-event-generator",
@@ -641,6 +645,21 @@
       bind:originType={origin.originType}
       bind:tone={origin.tone}
       bind:campaignContext={origin.campaignContext}
+      onSurprise={trigger}
+    />
+  {:else if slug === "one-shot-adventure-generator"}
+    <OneShotFormFields
+      bind:genre={oneShot.genre}
+      bind:system={oneShot.system}
+      bind:durationHours={oneShot.durationHours}
+      bind:partySize={oneShot.partySize}
+      bind:partyLevel={oneShot.partyLevel}
+      bind:emphasis={oneShot.emphasis}
+      bind:structure={oneShot.structure}
+      bind:tone={oneShot.tone}
+      bind:premise={oneShot.premise}
+      bind:boundaries={oneShot.boundaries}
+      bind:campaignContext={oneShot.campaignContext}
       onSurprise={trigger}
     />
   {:else if slug === "villain-scheme-generator"}

@@ -84,6 +84,10 @@
           label: "Adventure Idea Generator",
           path: "/generators/adventure-generator",
         },
+        {
+          label: "One-Shot Adventure Builder",
+          path: "/generators/one-shot-adventure-generator",
+        },
         { label: "Quest Hook Generator", path: "/generators/quest" },
         { label: "Rumour Generator", path: "/generators/rumour" },
         { label: "Encounter Generator", path: "/generators/encounter" },

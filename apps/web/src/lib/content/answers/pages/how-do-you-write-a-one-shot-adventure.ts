@@ -140,6 +140,12 @@ export const howDoYouWriteAOneShotAdventure: AnswerConfigInput = {
   ],
   relatedTools: [
     {
+      title: "One-shot adventure builder",
+      description:
+        "Generate a run-ready one-shot with a timed scene list, clues with multiple routes, two or more endings and a one-page GM sheet.",
+      href: "/generators/one-shot-adventure-generator",
+    },
+    {
       title: "Adventure generator",
       description:
         "Generate one-shot quest concepts, dramatic catalysts, and villain motivations.",
