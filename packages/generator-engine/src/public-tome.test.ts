@@ -776,6 +776,21 @@ ${duplicatedParagraph}
       expect(calls).toHaveLength(2);
       expect(calls[1].message).toContain("FIRST-PASS DRAFT JSON");
       expect(calls[1].message).toContain("PROVISIONAL CANONICAL FACTS");
+      expect(calls[1].instruction).toContain(
+        "objectively incoherent generated premise",
+      );
+      expect(calls[1].instruction).toContain(
+        "preserving explicit user constraints",
+      );
+      expect(calls[1].instruction).not.toContain(
+        "without altering its canonical plot facts",
+      );
+      expect(calls[1].message).toContain(
+        "You MAY correct an objectively incoherent generated premise",
+      );
+      expect(calls[1].message).toContain(
+        "MUST preserve explicit user constraints",
+      );
       expect(calls[1].message).toContain("blade");
       expect(out?.content).toContain("river-clay vessel");
       expect(out?.content).not.toContain("soul-forged blade");

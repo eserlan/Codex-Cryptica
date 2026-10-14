@@ -2171,6 +2171,85 @@ describe("generateDraftStream", () => {
     expect(events.some((event) => event.type === "draft")).toBe(false);
   });
 
+  it("stops forwarding streamed editorial events and suppresses the draft after cancellation", async () => {
+    const controller = new AbortController();
+    const first = JSON.stringify({
+      title: "First Pass Tome",
+      summary: "An initial manuscript.",
+      content: [
+        "### Physical Description & Format",
+        "A manuscript in a leather binding.",
+        "### Provenance & Transmission",
+        "Written by an apprentice.",
+        "### Contents & Revelations",
+        "The clay vessel must cure in dry air.",
+        "### Risks & Costs of Study",
+        "Water breaks the containment.",
+        "### Adventure Hooks",
+        "1. Retrieve the broken clay vessel.",
+      ].join("\n\n"),
+      lore: [
+        "### At the Table Reference",
+        "A recoverable ritual.",
+        "### Ground Truth for the GM",
+        "- **What the Book Claims**: Wash the vessel.",
+        "- **The Deception / Flaw**: A copyist altered the rite.",
+        "- **The Objective Truth**: Let the clay cure in dry air.",
+        "- **Actionable Clue**: The dry clay stain.",
+        "### Connected Entities",
+        "- **Author / Compiler**: The apprentice.",
+        "### Quick Checks & Mechanics",
+        "- **The Failure Condition**: Water destroys the ward.",
+      ].join("\n\n"),
+      labels: ["tome", "item"],
+      connections: [],
+    });
+    const complete = vi.fn(async () => first);
+    let continueEditorial: (() => void) | undefined;
+    const editorialReady = new Promise<void>((resolve) => {
+      continueEditorial = resolve;
+    });
+    let receivedSignal: AbortSignal | undefined;
+    const completeStream = vi.fn(async function* (
+      _message: string,
+      _instruction: string,
+      options?: { signal?: AbortSignal },
+    ) {
+      receivedSignal = options?.signal;
+      yield { type: "started" as const };
+      yield { type: "delta" as const, text: '{"title":"Edited' };
+      await editorialReady;
+      yield { type: "field" as const, key: "title", value: "Too Late" };
+      yield { type: "complete" as const, text: "{}" };
+    });
+    const svc = new CampaignGeneratorService({
+      aiPolicy: { isEnabled: true, isAvailable: true },
+      aiGateway: { complete, completeStream },
+    });
+
+    const events: Array<{ type: string; [k: string]: unknown }> = [];
+    const consuming = (async () => {
+      for await (const event of svc.generateDraftStream(
+        run("tome", { useAI: true }),
+        controller.signal,
+      )) {
+        events.push(event);
+        if (event.type === "delta") {
+          controller.abort();
+          continueEditorial?.();
+        }
+      }
+    })();
+    await consuming;
+
+    expect(complete).toHaveBeenCalledTimes(1);
+    expect(completeStream).toHaveBeenCalledTimes(1);
+    expect(receivedSignal).toBe(controller.signal);
+    expect(events.filter((event) => event.type === "delta")).toHaveLength(1);
+    expect(events.some((event) => event.type === "field")).toBe(false);
+    expect(events.some((event) => event.type === "draft")).toBe(false);
+  });
+
   it("turns structured holiday completion payloads into a final campaign draft", async () => {
     const json = JSON.stringify({
       title: "The First Spill of Neshur",

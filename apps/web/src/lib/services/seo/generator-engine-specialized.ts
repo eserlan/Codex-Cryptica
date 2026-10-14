@@ -20,7 +20,8 @@ import {
   type CreatureGeneratorOptions,
   type PublicGeneratorOutput,
   buildTomePrompt,
-  generateTomeLocal,
+  generateTomeLocalFromResolved,
+  resolveTome,
   generateTomeTwoPass,
   type TomeGeneratorOptions,
 } from "generator-engine";
@@ -203,6 +204,15 @@ export class GeneratorEngineSpecialized extends GeneratorEngineWorldbuilding {
       return match ? [match[1].trim()] : [];
     });
     const variedOptions = { ...tomeOptions, avoidDeceptionKeys };
+    const generateLocal = () => {
+      const resolved = resolveTome(variedOptions);
+      const output = generateTomeLocalFromResolved(resolved);
+      generationInputHistoryStore.record(
+        "tome",
+        `deceptionKey: ${resolved.deceptionKey}`,
+      );
+      return output as GeneratorOutput;
+    };
     return this.runWithAIFallback(
       useAI,
       async () => {
@@ -223,11 +233,11 @@ export class GeneratorEngineSpecialized extends GeneratorEngineWorldbuilding {
         return reviewed
           ? (reviewed as GeneratorOutput)
           : ({
-              ...generateTomeLocal(tomeOptions),
+              ...generateLocal(),
               aiFallback: true,
             } as GeneratorOutput);
       },
-      () => generateTomeLocal(tomeOptions) as GeneratorOutput,
+      generateLocal,
     );
   }
 }

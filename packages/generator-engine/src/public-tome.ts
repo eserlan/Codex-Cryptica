@@ -544,7 +544,7 @@ export function parseTomeResponse(
     ...resolveTome(resolved ?? {}),
     ...resolved,
   };
-  const fallback = generateTomeFromResolved(fallbackResolved);
+  const fallback = generateTomeLocalFromResolved(fallbackResolved);
 
   try {
     const data = parseFencedJson<Record<string, unknown>>(text);
@@ -718,10 +718,11 @@ export function generateTomeLocal(
   options: TomeGeneratorOptions,
   rng: Rng = defaultRng,
 ): PublicGeneratorOutput {
-  return generateTomeFromResolved(resolveTome(options, rng));
+  return generateTomeLocalFromResolved(resolveTome(options, rng));
 }
 
-function generateTomeFromResolved(
+/** Generate a local tome from anchors already resolved for prompt/history use. */
+export function generateTomeLocalFromResolved(
   resolved: ResolvedTome,
 ): PublicGeneratorOutput {
   const authorName = resolved.author;
@@ -1132,7 +1133,7 @@ export async function generateTomeTwoPass(
   try {
     if (signal?.aborted) return null;
     const revisedText = await complete(
-      "You are an independent, meticulous manuscript continuity editor and tabletop usability reviewer. Repair existing prose without altering its canonical plot facts or requested setting. Return JSON only.",
+      "You are an independent, meticulous manuscript continuity editor and tabletop usability reviewer. Repair existing prose and objectively incoherent generated premises with their matching canonical facts while preserving explicit user constraints and the requested setting. Return JSON only.",
       reviewMessage,
       signal,
     );
