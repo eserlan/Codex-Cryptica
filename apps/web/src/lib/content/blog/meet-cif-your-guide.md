@@ -16,7 +16,7 @@ publishedAt: 2026-10-14T15:00:00Z
 
 *Lost in a menu? Wondering what a button does? There's a small hooded fellow who can help.*
 
-![Cif, looking curious](/images/blog/meet-cif/cif-curious.svg)
+![Cif, looking curious](https://assets.codexcryptica.com/images/blog/meet-cif/cif-curious.svg)
 
 Codex Cryptica has grown quite a bit. There are maps and graphs, generators, timelines, tables, a virtual tabletop, and enough settings to keep a particularly organised wizard occupied for an afternoon.
 
@@ -39,7 +39,7 @@ Cif can explain how a feature works, give you a few steps to follow, and link to
 
 He also knows which part of Codex Cryptica you're currently using. A question about a grid makes rather more sense when you're already looking at a map, after all. And when you first open his chat, he'll offer a few questions suited to that part of the app. Handy if you're not sure where to start.
 
-![Cif, thinking through a question](/images/blog/meet-cif/cif-thinking.svg)
+![Cif, thinking through a question](https://assets.codexcryptica.com/images/blog/meet-cif/cif-thinking.svg)
 
 ## Sometimes it's easier to show than tell
 
@@ -51,7 +51,7 @@ So Cif can offer to **show you**. When the relevant control is available, you'll
 
 He won't quietly start clicking through your work on his own. You choose whether to follow the suggestion, and his guidance doesn't change anything in your vault.
 
-![Cif, explaining where to look](/images/blog/meet-cif/cif-explaining.svg)
+![Cif, explaining where to look](https://assets.codexcryptica.com/images/blog/meet-cif/cif-explaining.svg)
 
 ## A little help, right where you need it
 
@@ -71,7 +71,7 @@ The **Oracle** helps with your fictional world — its characters, places, stori
 
 That separation is intentional. You should be able to ask how to do something without turning it into a conversation about your campaign. Cif uses limited information about the app screen you're on to tailor his guidance; he doesn't need to read your world's lore to tell you where the grid settings are.
 
-![Cif, rather pleased to have helped](/images/blog/meet-cif/cif-delighted.svg)
+![Cif, rather pleased to have helped](https://assets.codexcryptica.com/images/blog/meet-cif/cif-delighted.svg)
 
 ## Say hello
 
