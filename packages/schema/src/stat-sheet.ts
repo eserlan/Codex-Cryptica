@@ -306,6 +306,7 @@ export const StatSheetTemplateSchema = z.object({
   name: z.string().min(1),
   description: z.string().optional(),
   category: z.string().optional(),
+  systemId: z.string().optional(),
   isBuiltIn: z.boolean().optional(),
   fields: z.array(StatSheetTemplateFieldSchema).default([]),
   // Optional and absent on every pre-#3960 template, so legacy templates

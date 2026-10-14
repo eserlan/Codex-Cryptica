@@ -1,3 +1,4 @@
+// fallow-ignore-file complexity
 import { describe, expect, it } from "vitest";
 import {
   detectStatBlockSystem,
@@ -7,7 +8,15 @@ import {
   parseMythrasJson,
   parseVtmJson,
   parseTextStatBlock,
+  parseTovJson,
 } from "../src/stat-block";
+import {
+  TOV_HERO_LEVEL_1_FIXTURE,
+  TOV_CAVE_GOBLIN_FIXTURE,
+  TOV_CHARACTER_TEMPLATE_ID,
+  TOV_MONSTER_TEMPLATE_ID,
+  TOV_NPC_TEMPLATE_ID,
+} from "../src";
 
 describe("Stat Block Import Pipeline", () => {
   describe("detectStatBlockSystem", () => {
@@ -60,6 +69,49 @@ describe("Stat Block Import Pipeline", () => {
           luck: 3,
         }),
       ).toBe("tales-of-the-valiant");
+    });
+
+    it("detects Foundry VTT Black Flag actor exports by flags and attributes while keeping 5e intact (#3945)", () => {
+      // 1. By flags
+      expect(
+        detectStatBlockSystem({
+          flags: { "black-flag": {} },
+          system: { attributes: { hp: { value: 12 }, ac: { value: 16 } } },
+        }),
+      ).toBe("tales-of-the-valiant");
+
+      // 2. By Luck in attributes
+      expect(
+        detectStatBlockSystem({
+          system: {
+            attributes: {
+              hp: { value: 12 },
+              ac: { value: 16 },
+              luck: { value: 3 },
+            },
+          },
+        }),
+      ).toBe("tales-of-the-valiant");
+
+      // 3. By Lineage/Heritage in details
+      expect(
+        detectStatBlockSystem({
+          system: {
+            attributes: { hp: { value: 12 }, ac: { value: 16 } },
+            details: { lineage: "Human", heritage: "Cloudborn" },
+          },
+        }),
+      ).toBe("tales-of-the-valiant");
+
+      // 4. Ordinary 5e actor without Black Flag signatures remains dnd5e
+      expect(
+        detectStatBlockSystem({
+          system: {
+            attributes: { hp: { value: 12 }, ac: { value: 16 } },
+            details: { race: "Human", alignment: "Neutral" },
+          },
+        }),
+      ).toBe("dnd5e");
     });
 
     it("detects GURPS structures and attributes", () => {
@@ -766,6 +818,257 @@ Broadsword. 3d6<=14. 2d+1 cut damage.
     });
   });
 
+  describe("Tales of the Valiant / Black Flag Import Pipeline (#3944, #3945)", () => {
+    it("imports TOV_HERO_LEVEL_1_FIXTURE to builtin-tov-character with Luck, Lineage, and rollable attacks", () => {
+      const result = importStatBlock(TOV_HERO_LEVEL_1_FIXTURE);
+
+      expect(result.ir.system).toBe("tales-of-the-valiant");
+      expect(result.targetTemplateId).toBe(TOV_CHARACTER_TEMPLATE_ID);
+
+      const fieldMap = new Map(result.fields.map((f) => [f.id, f]));
+
+      // Identity & Lineage
+      expect(fieldMap.get("lineage")?.value).toBe("Human");
+      expect(fieldMap.get("heritage")?.value).toBe("Cloudborn");
+      expect(fieldMap.get("background")?.value).toBe("Soldier");
+      expect(fieldMap.get("class")?.value).toBe("Fighter");
+      expect(fieldMap.get("level")?.value).toBe(1);
+
+      // Vitals & Luck
+      expect(fieldMap.get("hp")?.value).toBe(12);
+      expect(fieldMap.get("ac")?.value).toBe(16);
+      expect(fieldMap.get("speed")?.value).toBe("30 ft");
+      expect(fieldMap.get("luck")?.value).toBe(3);
+
+      // Ability scores
+      expect(fieldMap.get("str_score")?.value).toBe(16);
+      expect(fieldMap.get("dex_score")?.value).toBe(14);
+      expect(fieldMap.get("con_score")?.value).toBe(14);
+      expect(fieldMap.get("int_score")?.value).toBe(10);
+      expect(fieldMap.get("wis_score")?.value).toBe(12);
+      expect(fieldMap.get("cha_score")?.value).toBe(8);
+
+      // Saves with modifierSource
+      expect(fieldMap.get("str_save")?.formula).toBe("1d20+5");
+      expect(fieldMap.get("str_save")?.modifierSource).toBe("str_score");
+      expect(fieldMap.get("dex_save")?.formula).toBe("1d20+2");
+
+      // Attacks item table
+      const attacksField = fieldMap.get("attacks");
+      expect(attacksField?.type).toBe("item-table");
+      expect(attacksField?.rows).toHaveLength(2);
+      expect(attacksField?.rows?.[0]?.name).toBe("Longsword");
+      expect(attacksField?.rows?.[0]?.attack).toBe("1d20+5");
+      expect(attacksField?.rows?.[0]?.damage).toBe("1d8+3");
+      expect(attacksField?.rows?.[1]?.name).toBe("Heavy Crossbow");
+      expect(attacksField?.rows?.[1]?.attack).toBe("1d20+4");
+      expect(attacksField?.rows?.[1]?.damage).toBe("1d10+2");
+
+      // Features
+      expect(fieldMap.get("features")?.value).toContain(
+        "Fighting Style: Defense",
+      );
+      expect(fieldMap.get("features")?.value).toContain("Second Wind");
+    });
+
+    it("imports TOV_CAVE_GOBLIN_FIXTURE to builtin-tov-monster with CR, defences, and actions", () => {
+      const result = importStatBlock(TOV_CAVE_GOBLIN_FIXTURE);
+
+      expect(result.ir.system).toBe("tales-of-the-valiant");
+      expect(result.targetTemplateId).toBe(TOV_MONSTER_TEMPLATE_ID);
+
+      const fieldMap = new Map(result.fields.map((f) => [f.id, f]));
+
+      // Identity & CR
+      expect(fieldMap.get("size")?.value).toBe("Small");
+      expect(fieldMap.get("creature_type")?.value).toBe("Humanoid (Goblinoid)");
+      expect(fieldMap.get("cr")?.value).toBe("1/4");
+
+      // Defences
+      expect(fieldMap.get("ac")?.value).toBe(13);
+      expect(fieldMap.get("hp")?.value).toBe(7);
+
+      // Actions item table
+      const actionsField = fieldMap.get("actions");
+      expect(actionsField?.type).toBe("item-table");
+      expect(actionsField?.rows).toHaveLength(2);
+      expect(actionsField?.rows?.[0]?.name).toBe("Scimitar");
+      expect(actionsField?.rows?.[0]?.attack).toBe("1d20+4");
+      expect(actionsField?.rows?.[0]?.damage).toBe("1d6+2");
+
+      // Bonus actions
+      const bonusField = fieldMap.get("bonus_actions");
+      expect(bonusField?.type).toBe("item-table");
+      expect(bonusField?.rows).toHaveLength(1);
+      expect(bonusField?.rows?.[0]?.name).toBe("Nimble Escape");
+    });
+
+    it("maps parsed damage and condition defences to the monster template", () => {
+      const result = importStatBlock(
+        {
+          name: "Ash Warden",
+          category: "creature",
+          hp: 30,
+          ac: 15,
+          vulnerabilities: ["cold"],
+          damageResistances: ["fire", "lightning"],
+          immunities: ["poison"],
+          conditionImmunities: ["poisoned", "frightened"],
+        },
+        { systemHint: "tales-of-the-valiant", category: "creature" },
+      );
+
+      const fieldMap = new Map(result.fields.map((field) => [field.id, field]));
+      expect(fieldMap.get("damage_vulnerabilities")?.value).toBe("cold");
+      expect(fieldMap.get("damage_resistances")?.value).toBe("fire, lightning");
+      expect(fieldMap.get("damage_immunities")?.value).toBe("poison");
+      expect(fieldMap.get("condition_immunities")?.value).toBe(
+        "poisoned, frightened",
+      );
+    });
+
+    it("uses Foundry weapon formulas and actor modifiers without inventing missing rolls", () => {
+      const result = importStatBlock(
+        {
+          name: "Foundry Warden",
+          flags: { "black-flag": {} },
+          system: {
+            attributes: { hp: { value: 20 }, ac: { value: 14 }, prof: 2 },
+            abilities: { str: { value: 16, mod: 3 } },
+          },
+          items: [
+            {
+              name: "Warhammer",
+              type: "weapon",
+              system: {
+                proficient: true,
+                attack: { ability: "str", bonus: 1 },
+                damage: { parts: [["1d8 + @mod", "bludgeoning"]] },
+              },
+            },
+            { name: "Unspecified Knife", type: "weapon", system: {} },
+            {
+              name: "Unresolved Knife",
+              type: "weapon",
+              system: { attack: { ability: "str", bonus: 1 } },
+            },
+          ],
+        },
+        { systemHint: "tales-of-the-valiant" },
+      );
+
+      expect(result.ir.actionsAndAttacks[0]).toMatchObject({
+        name: "Warhammer",
+        attackDice: "1d20+6",
+        damageDice: "1d8 + 3",
+      });
+      expect(result.ir.actionsAndAttacks[1]).toMatchObject({
+        name: "Unspecified Knife",
+      });
+      expect(result.ir.actionsAndAttacks[1]?.attackDice).toBeUndefined();
+      expect(result.ir.actionsAndAttacks[1]?.damageDice).toBeUndefined();
+      expect(result.ir.actionsAndAttacks[2]?.attackDice).toBeUndefined();
+    });
+
+    it("does not map roll fields when a Foundry NPC weapon has unresolved formulas", () => {
+      const result = importStatBlock(
+        {
+          name: "Sparse Foundry NPC",
+          flags: { "black-flag": {} },
+          system: { attributes: { hp: { value: 10 }, ac: { value: 12 } } },
+          items: [{ name: "Unspecified Knife", type: "weapon", system: {} }],
+        },
+        { systemHint: "tales-of-the-valiant", category: "npc" },
+      );
+
+      const fieldIds = result.fields.map((field) => field.id);
+      expect(fieldIds).not.toContain("atk");
+      expect(fieldIds).not.toContain("damage");
+    });
+
+    it("does not combine partial roll formulas from separate NPC actions", () => {
+      const result = importStatBlock(
+        {
+          name: "Split Roll NPC",
+          category: "npc",
+          hp: 10,
+          ac: 12,
+          attacks: [
+            { name: "Claw", attackFormula: "1d20+4" },
+            { name: "Bite", damageFormula: "1d6+2" },
+          ],
+        },
+        { systemHint: "tales-of-the-valiant", category: "npc" },
+      );
+
+      const fieldMap = new Map(result.fields.map((field) => [field.id, field]));
+      expect(fieldMap.get("atk")?.formula).toBe("1d20+4");
+      expect(fieldMap.has("damage")).toBe(false);
+    });
+
+    it("imports lightweight ToV NPC input to builtin-tov-npc", () => {
+      const npcInput = {
+        name: "Village Informant",
+        category: "npc",
+        hp: 15,
+        ac: 12,
+        luck: 2,
+        attacks: [
+          { name: "Dagger", attackFormula: "1d20+4", damageFormula: "1d4+2" },
+        ],
+        traits: [
+          { name: "Streetwise", description: "Knows the local alleys." },
+        ],
+      };
+
+      const result = importStatBlock(npcInput, {
+        systemHint: "tales-of-the-valiant",
+        category: "npc",
+      });
+
+      expect(result.targetTemplateId).toBe(TOV_NPC_TEMPLATE_ID);
+      const fieldMap = new Map(result.fields.map((f) => [f.id, f]));
+      expect(fieldMap.get("hp")?.value).toBe(15);
+      expect(fieldMap.get("ac")?.value).toBe(12);
+      expect(fieldMap.get("luck")?.value).toBe(2);
+      expect(fieldMap.get("atk")?.formula).toBe("1d20+4");
+      expect(fieldMap.get("damage")?.formula).toBe("1d4+2");
+      expect(fieldMap.get("notes")?.value).toContain("Streetwise");
+    });
+
+    it("allows manual target template override when user specifies a different template", () => {
+      const result = importStatBlock(TOV_HERO_LEVEL_1_FIXTURE, {
+        targetTemplateId: "builtin-dnd-character",
+      });
+
+      expect(result.targetTemplateId).toBe("builtin-dnd-character");
+      const fieldMap = new Map(result.fields.map((f) => [f.id, f]));
+      expect(fieldMap.get("hp")?.value).toBe(12);
+      expect(fieldMap.get("ac")?.value).toBe(16);
+    });
+
+    it("parses ToV raw text block with Lineage, Heritage, and Luck Points", () => {
+      const text = `
+Aric of the Cloudborn
+Medium Human (Cloudborn), Soldier, Fighter 1
+Armor Class 16
+Hit Points 12 (1d10)
+Speed 30 ft
+Luck Points: 3
+STR 16 (+3) DEX 14 (+2) CON 14 (+2) INT 10 (+0) WIS 12 (+1) CHA 8 (-1)
+Longsword. Melee Weapon Attack: +5 to hit, reach 5 ft. Hit: 1d8+3 slashing.
+`;
+      const detected = detectStatBlockSystem(text);
+      expect(detected).toBe("tales-of-the-valiant");
+
+      const result = importStatBlock(text, {
+        systemHint: "tales-of-the-valiant",
+        category: "character",
+      });
+      expect(result.targetTemplateId).toBe(TOV_CHARACTER_TEMPLATE_ID);
+    });
+  });
+
   describe("Negative and failure paths", () => {
     it("throws descriptive error when input is neither string nor object", () => {
       expect(() => importStatBlock(null)).toThrow(/Invalid stat block input/);
@@ -792,6 +1095,10 @@ Broadsword. 3d6<=14. 2d+1 cut damage.
       const vtmIr = parseVtmJson({});
       expect(vtmIr.identity.name).toBe("Unnamed Kindred");
       expect(vtmIr.vitals.find((v) => v.id === "blood")?.current).toBe(1);
+
+      const tovIr = parseTovJson({});
+      expect(tovIr.identity.name).toBe("Unnamed ToV Entity");
+      expect(tovIr.vitals[0].current).toBe(10);
     });
   });
 });

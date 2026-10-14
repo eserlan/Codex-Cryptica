@@ -100,7 +100,7 @@ export function createSystemProfileStorage(
   };
 }
 
-export const defaultSystemProfileStorage = createSystemProfileStorage();
+const defaultSystemProfileStorage = createSystemProfileStorage();
 
 export class SystemProfileStore {
   activeVaultId = $state<string | null>(null);
@@ -277,8 +277,8 @@ export class SystemProfileStore {
     });
   }
 
-  listAvailableProfiles(): GameSystemProfile[] {
-    return this.registry.list();
+  resolveSystemId(entity?: { systemId?: string | null }): string {
+    return this.resolveEntitySystem(entity).id;
   }
 }
 

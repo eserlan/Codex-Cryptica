@@ -1,3 +1,4 @@
+// fallow-ignore-file complexity
 import type { StatBlockSystem } from "./types";
 
 /**
@@ -19,9 +20,46 @@ function isPathbuilderObject(obj: Record<string, unknown>): boolean {
   return "build" in obj && typeof obj.build === "object" && obj.build !== null;
 }
 
+// fallow-ignore-next-line complexity
+function isFoundryTovActor(
+  flags: Record<string, unknown> | null,
+  system: Record<string, unknown> | null,
+  attrs: Record<string, unknown> | null,
+): boolean {
+  if (flags?.["black-flag"] !== undefined || flags?.blackFlag !== undefined) {
+    return true;
+  }
+  if (
+    system?.rules === "black-flag" ||
+    system?.rules === "tales-of-the-valiant"
+  ) {
+    return true;
+  }
+  if (typeof system?.source === "string") {
+    const s = system.source.toLowerCase();
+    if (s.includes("tales of the valiant") || s.includes("black flag")) {
+      return true;
+    }
+  }
+  if (attrs && (attrs.luck !== undefined || attrs.doom !== undefined)) {
+    return true;
+  }
+  const details = asRecord(system?.details);
+  if (details && ("lineage" in details || "heritage" in details)) {
+    return true;
+  }
+  return false;
+}
+
 function isFoundryActor(obj: Record<string, unknown>): StatBlockSystem | null {
+  const flags = asRecord(obj.flags);
   const system = asRecord(obj.system);
   const attrs = asRecord(system?.attributes);
+
+  if (isFoundryTovActor(flags, system, attrs)) {
+    return "tales-of-the-valiant";
+  }
+
   if (!attrs) return null;
   if (hasKeys(attrs, ["perception", "ac", "hp"])) return "pf2e";
   if (hasKeys(attrs, ["hp", "ac"])) return "dnd5e";
@@ -64,6 +102,10 @@ function isGurpsObject(obj: Record<string, unknown>): boolean {
 }
 
 function isDnd5eObject(obj: Record<string, unknown>): StatBlockSystem | null {
+  if (obj.system === "tales-of-the-valiant" || obj.system === "black-flag") {
+    return "tales-of-the-valiant";
+  }
+
   const required = [
     ["str", "strength"],
     ["dex", "dexterity"],
@@ -72,10 +114,21 @@ function isDnd5eObject(obj: Record<string, unknown>): StatBlockSystem | null {
   ];
   if (!required.every((aliases) => aliases.some((key) => key in obj)))
     return null;
-  return "luck" in obj || "doom" in obj ? "tales-of-the-valiant" : "dnd5e";
+  return "luck" in obj ||
+    "doom" in obj ||
+    "doomPoints" in obj ||
+    "lineage" in obj ||
+    "heritage" in obj ||
+    "talents" in obj
+    ? "tales-of-the-valiant"
+    : "dnd5e";
 }
 
 function detectFromObject(obj: Record<string, unknown>): StatBlockSystem {
+  if (obj.system === "tales-of-the-valiant" || obj.system === "black-flag") {
+    return "tales-of-the-valiant";
+  }
+
   if (isPathbuilderObject(obj)) return "pf2e";
 
   const foundrySystem = isFoundryActor(obj);
@@ -141,13 +194,19 @@ function isPf2eText(lower: string): boolean {
 
 function isDndText(lower: string): StatBlockSystem | null {
   const hasDefence =
-    lower.includes("armor class") || lower.includes("hit points");
+    lower.includes("armor class") ||
+    lower.includes("hit points") ||
+    lower.includes("ac ");
   if (!hasDefence) return null;
 
   if (
     lower.includes("luck points") ||
-    lower.includes("doom") ||
-    lower.includes("tales of the valiant")
+    lower.includes("doom points") ||
+    lower.includes("tales of the valiant") ||
+    lower.includes("black flag") ||
+    (lower.includes("lineage") && lower.includes("heritage")) ||
+    lower.includes("luck:") ||
+    lower.includes("doom:")
   ) {
     return "tales-of-the-valiant";
   }

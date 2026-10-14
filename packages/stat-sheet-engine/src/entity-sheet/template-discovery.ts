@@ -30,29 +30,61 @@ export interface PartitionedSheetTemplates<T> {
  * rest, keeping the input order within each group. Nothing is hidden: every
  * template stays selectable for every category.
  */
+// fallow-ignore-next-line complexity
 export function partitionTemplatesForCategory<
-  T extends Pick<StatSheetTemplate, "category">,
+  T extends Pick<StatSheetTemplate, "category"> & { systemId?: string | null },
 >(
   templates: readonly T[],
   entityCategory: string | null | undefined,
+  systemId?: string | null,
 ): PartitionedSheetTemplates<T> {
   const category = entityCategory?.trim().toLowerCase();
-  if (!category) return { suggested: [], other: [...templates] };
+  const sys = systemId?.trim().toLowerCase();
+  if (!category) {
+    if (sys) {
+      const matchSys = templates.filter(
+        (t) => t.systemId?.toLowerCase() === sys,
+      );
+      const rest = templates.filter((t) => t.systemId?.toLowerCase() !== sys);
+      return { suggested: matchSys, other: rest };
+    }
+    return { suggested: [], other: [...templates] };
+  }
 
   const related = new Set(
     Object.hasOwn(RELATED_SHEET_CATEGORIES, category)
       ? RELATED_SHEET_CATEGORIES[category]
       : [],
   );
-  const exact: T[] = [];
-  const near: T[] = [];
+  const exactMatchingSystem: T[] = [];
+  const exactOtherSystem: T[] = [];
+  const nearMatchingSystem: T[] = [];
+  const nearOtherSystem: T[] = [];
   const other: T[] = [];
+
   for (const template of templates) {
     const templateCategory = template.category?.trim().toLowerCase();
-    if (templateCategory === category) exact.push(template);
-    else if (templateCategory && related.has(templateCategory))
-      near.push(template);
-    else other.push(template);
+    const templateSys = template.systemId?.trim().toLowerCase();
+    const matchesSystem = Boolean(sys && templateSys === sys);
+
+    if (templateCategory === category) {
+      if (matchesSystem) exactMatchingSystem.push(template);
+      else exactOtherSystem.push(template);
+    } else if (templateCategory && related.has(templateCategory)) {
+      if (matchesSystem) nearMatchingSystem.push(template);
+      else nearOtherSystem.push(template);
+    } else {
+      other.push(template);
+    }
   }
-  return { suggested: [...exact, ...near], other };
+
+  return {
+    suggested: [
+      ...exactMatchingSystem,
+      ...exactOtherSystem,
+      ...nearMatchingSystem,
+      ...nearOtherSystem,
+    ],
+    other,
+  };
 }

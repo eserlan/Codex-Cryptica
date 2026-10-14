@@ -267,5 +267,16 @@ describe("SystemProfileStore (#3943)", () => {
       expect(entityProfile.id).toBe(SYSTEM_NEUTRAL_ID);
       expect(entityProfile.isDefault).toBe(true);
     });
+
+    it("resolves system IDs through the entity and vault profile precedence", async () => {
+      await store.init("vault-tov");
+      await store.setVaultSystemId(TOV_SYSTEM_ID);
+
+      expect(store.resolveSystemId()).toBe(TOV_SYSTEM_ID);
+      expect(store.resolveSystemId({ systemId: "dnd5e" })).toBe("dnd5e");
+
+      await store.setVaultSystemId(null);
+      expect(store.resolveSystemId()).toBe(SYSTEM_NEUTRAL_ID);
+    });
   });
 });
