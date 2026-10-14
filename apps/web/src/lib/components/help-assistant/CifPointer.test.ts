@@ -54,6 +54,27 @@ describe("CifPointer flight", () => {
   });
 });
 
+describe("CifPointer with reduced motion", () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it("is beside the control on the first frame and never flies", () => {
+    vi.stubGlobal("matchMedia", (query: string) => ({
+      matches: query.includes("reduce"),
+      addEventListener: () => {},
+      removeEventListener: () => {},
+    }));
+    const { getByTestId } = render(CifPointer, { rect });
+    const pointer = getByTestId("cif-pointer");
+    // Beside the control (right of x = 180), not parked in the corner.
+    const x = Number(
+      /translate\((-?[\d.]+)px/.exec(pointer.style.transform)?.[1],
+    );
+    expect(x).toBeGreaterThan(180);
+    expect(x).toBeLessThan(400);
+    expect(pointer.classList.contains("landed")).toBe(true);
+  });
+});
+
 describe("HelpHighlightLayer with Cif", () => {
   const service = (current: unknown) =>
     ({ current, announcement: "" }) as never;
@@ -72,5 +93,24 @@ describe("HelpHighlightLayer with Cif", () => {
     });
     expect(queryByTestId("help-highlight")).toBeNull();
     expect(queryByTestId("cif-pointer")).toBeNull();
+  });
+
+  it("restarts the flight when the same control is highlighted again", async () => {
+    vi.useFakeTimers();
+    const first = { id: 1, target: "x", label: "Here", rect };
+    const host = { current: first as unknown, announcement: "" };
+    const { getByTestId, rerender } = render(HelpHighlightLayer, {
+      highlight: host as never,
+    });
+    await vi.advanceTimersByTimeAsync(700);
+    expect(getByTestId("cif-pointer").classList.contains("landed")).toBe(true);
+
+    await rerender({
+      highlight: { ...host, current: { ...first, id: 2 } } as never,
+    });
+    expect(getByTestId("cif-pointer").classList.contains("landed")).toBe(false);
+    await vi.advanceTimersByTimeAsync(700);
+    expect(getByTestId("cif-pointer").classList.contains("landed")).toBe(true);
+    vi.useRealTimers();
   });
 });

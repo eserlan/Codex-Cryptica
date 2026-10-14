@@ -8,9 +8,20 @@
   /** The flight takes this long; after it Cif just tracks the control. */
   const FLIGHT_MS = 650;
 
-  let viewport = $state({ width: 1024, height: 768 });
-  let launched = $state(false);
-  let landed = $state(false);
+  const readViewport = () =>
+    typeof window === "undefined"
+      ? { width: 1024, height: 768 }
+      : { width: window.innerWidth, height: window.innerHeight };
+
+  // Reduced motion: no flight at all. Cif is placed beside the control on his
+  // first frame and only fades in, rather than moving across the screen.
+  const reducedMotion =
+    typeof window !== "undefined" &&
+    (window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches ?? false);
+
+  let viewport = $state(readViewport());
+  let launched = $state(reducedMotion);
+  let landed = $state(reducedMotion);
 
   const target = $derived(placeCifPointer(rect, viewport));
   // Before take-off Cif waits in the bottom-right corner, where the chat
@@ -26,10 +37,11 @@
   );
 
   $effect(() => {
-    viewport = { width: window.innerWidth, height: window.innerHeight };
-    const onResize = () =>
-      (viewport = { width: window.innerWidth, height: window.innerHeight });
+    const onResize = () => (viewport = readViewport());
     window.addEventListener("resize", onResize);
+    if (reducedMotion) {
+      return () => window.removeEventListener("resize", onResize);
+    }
     const start = requestAnimationFrame(() => (launched = true));
     const land = setTimeout(() => (landed = true), FLIGHT_MS);
     return () => {
