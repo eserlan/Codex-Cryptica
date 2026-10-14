@@ -148,6 +148,7 @@ export const howDoIStartGmingForTheFirstTime: AnswerConfigInput = {
     "how-do-i-start-a-dnd-campaign",
     "what-are-the-pros-and-cons-of-becoming-a-dungeon-master",
     "how-do-i-get-my-friends-interested-in-playing-dnd",
+    "how-do-i-roleplay-npcs-if-im-not-good-at-acting",
   ],
   discovery: {
     id: "answer-first-time-gm-hub",

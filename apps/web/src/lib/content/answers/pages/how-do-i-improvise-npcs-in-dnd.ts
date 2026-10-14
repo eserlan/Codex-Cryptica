@@ -182,6 +182,7 @@ export const howDoIImproviseNpcsInDnd: AnswerConfigInput = {
     "how-do-i-make-a-campaign-threat-feel-urgent-without-railroading",
     "how-do-i-get-players-to-engage-with-my-campaign-world",
     "which-dice-do-i-roll-in-dnd-and-when",
+    "how-do-i-roleplay-npcs-if-im-not-good-at-acting",
   ],
   discovery: {
     id: "answer-improvise-npcs-in-dnd",
@@ -205,6 +206,13 @@ export const howDoIImproviseNpcsInDnd: AnswerConfigInput = {
       "answer-specialist-character-spotlight",
       "generator-npc",
       "generator-dnd-npc",
+    ],
+    acknowledgedOverlap: [
+      {
+        with: "answer-roleplay-npcs-without-acting",
+        reason:
+          "This answer focuses on inventing an unexpected NPC from scratch with a six-part sketch; that answer focuses on portraying and switching between already-planned NPCs without acting talent using minimal non-accent cues.",
+      },
     ],
   },
   seo: {
