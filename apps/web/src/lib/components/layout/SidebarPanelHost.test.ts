@@ -1,7 +1,7 @@
 /** @vitest-environment jsdom */
 
 import { render, screen, waitFor } from "@testing-library/svelte";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("./ResizerHandle.svelte", () => ({
   default: function ResizerHandleMock() {
@@ -49,6 +49,40 @@ describe("SidebarPanelHost", () => {
     layoutUIStore.activeSidebarTool = "none";
     layoutUIStore.isMobile = false;
     layoutUIStore.leftSidebarWidth = 280;
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("keeps the mobile Oracle composer above the soft keyboard", async () => {
+    // Chrome on Android can shrink only the visual viewport while fixed
+    // overlays remain sized to the layout viewport.
+    const fullHeight = window.innerHeight;
+    const viewport = Object.assign(new EventTarget(), {
+      height: fullHeight,
+      offsetTop: 0,
+    });
+    vi.stubGlobal("visualViewport", viewport);
+
+    layoutUIStore.isMobile = true;
+    layoutUIStore.leftSidebarOpen = true;
+    layoutUIStore.activeSidebarTool = "oracle";
+    render(SidebarPanelHost);
+
+    const sidebar = screen.getByTestId("sidebar-panel-host");
+    await waitFor(() =>
+      expect(screen.getByTestId("oracle-sidebar-panel")).toBeTruthy(),
+    );
+    expect(sidebar.style.bottom).toBe("");
+
+    viewport.height = fullHeight - 320;
+    viewport.dispatchEvent(new Event("resize"));
+    await waitFor(() => expect(sidebar.style.bottom).toBe("320px"));
+
+    viewport.height = fullHeight;
+    viewport.dispatchEvent(new Event("resize"));
+    await waitFor(() => expect(sidebar.style.bottom).toBe(""));
   });
 
   it("renders the Oracle sidebar panel when the Oracle tool is open", async () => {
