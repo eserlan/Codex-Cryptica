@@ -956,13 +956,23 @@ function checkGenreFidelity(
   }
 }
 
+const FACT_NEGATION_TOKENS = new Set([
+  "cannot",
+  "neither",
+  "never",
+  "nor",
+  "not",
+  "no",
+  "without",
+]);
+
 function sentenceTokens(sentence: string): Set<string> {
   return new Set(
     sentence
       .toLowerCase()
       .replace(/[^a-z0-9\s]/g, " ")
       .split(/\s+/)
-      .filter((w) => w.length > 3),
+      .filter((w) => w.length > 3 || FACT_NEGATION_TOKENS.has(w)),
   );
 }
 
@@ -975,10 +985,25 @@ function similarity(a: Set<string>, b: Set<string>): number {
 function factEchoRatio(fact: string, text: string): number {
   const tokens = sentenceTokens(fact);
   if (tokens.size < 4) return 1;
-  const body = sentenceTokens(text);
-  let covered = 0;
-  for (const token of tokens) if (body.has(token)) covered += 1;
-  return covered / tokens.size;
+  const factIsNegated = [...tokens].some((token) =>
+    FACT_NEGATION_TOKENS.has(token),
+  );
+  const sentences = text.split(/(?<=[.!?])\s+|\n+/);
+  let bestCoverage = 0;
+  for (const sentence of sentences) {
+    const body = sentenceTokens(sentence);
+    let covered = 0;
+    for (const token of tokens) if (body.has(token)) covered += 1;
+    const coverage = covered / tokens.size;
+    if (coverage >= 0.5) {
+      const sentenceIsNegated = [...body].some((token) =>
+        FACT_NEGATION_TOKENS.has(token),
+      );
+      if (sentenceIsNegated !== factIsNegated) return 0;
+    }
+    bestCoverage = Math.max(bestCoverage, coverage);
+  }
+  return bestCoverage;
 }
 
 function revisedFactsAreReflected(

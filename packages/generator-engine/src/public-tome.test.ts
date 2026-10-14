@@ -891,6 +891,25 @@ ${duplicatedParagraph}
       expect(result?.content).toBe(content);
     });
 
+    it("rejects a negated canonical correction when unchanged prose states the opposite", async () => {
+      const prompt = buildTomePrompt({}, undefined, seededRng(13));
+      const contradictory = JSON.parse(response(content));
+      contradictory.canonicalFacts.centralRule =
+        "The river-clay vessel must not dry in open air.";
+      const result = await generateTomeTwoPass(
+        prompt,
+        async (_system, message) =>
+          message.includes("EDITORIAL PASS 2")
+            ? JSON.stringify(contradictory)
+            : response(content),
+      );
+
+      expect(result?.tomeFacts?.objectiveTruth).not.toBe(
+        contradictory.canonicalFacts.centralRule,
+      );
+      expect(result?.content).toBe(content);
+    });
+
     it("retains a valid first draft when the editorial response is malformed", async () => {
       const prompt = buildTomePrompt({}, undefined, seededRng(7));
       let count = 0;
