@@ -50,6 +50,18 @@ describe("GeneratorAITransport", () => {
       );
     });
 
+    it("passes the abort signal in the SDK request options for one-shot calls", async () => {
+      const signal = new AbortController().signal;
+      const generateContent = vi.fn().mockResolvedValue({
+        response: { text: () => "response" },
+      });
+      clientManager.getModel.mockResolvedValue({ generateContent });
+
+      await transport.runModel("system", "user", undefined, true, signal);
+
+      expect(generateContent).toHaveBeenCalledWith("user", { signal });
+    });
+
     it("can keep the first pass silent while streaming the editorial pass", async () => {
       const generateContent = vi.fn().mockResolvedValue({
         response: { text: () => '{"title":"first"}' },
@@ -98,6 +110,21 @@ describe("GeneratorAITransport", () => {
 
       expect(text).toBe("foobar");
       expect(previews).toEqual(["foo", "foobar"]);
+    });
+
+    it("passes the abort signal directly to the streaming model", async () => {
+      const signal = new AbortController().signal;
+      const generateContentStream = vi.fn(async function* () {
+        yield { type: "complete" as const, text: "response" };
+      });
+      clientManager.getModel.mockResolvedValue({ generateContentStream });
+
+      await transport.generateWithPreview(
+        () => transport.runModel("system", "user", undefined, true, signal),
+        vi.fn(),
+      );
+
+      expect(generateContentStream).toHaveBeenCalledWith("user", signal);
     });
   });
 

@@ -452,6 +452,35 @@ export const generatorEntries: DiscoveryEntryInput[] = [
     status: "live",
   },
   {
+    id: "generator-one-shot-adventure-generator",
+    pageKind: "generator",
+    canonicalPath: "/generators/one-shot-adventure-generator",
+    primaryIntent: "one shot adventure generator",
+    intentAliases: ["rpg one shot builder", "run ready one shot generator"],
+    userJob: "create",
+    uniqueValue:
+      "A complete, timed single-session adventure a GM can run tonight: scenes with minute budgets, multi-route clues, endings and a GM cheat sheet, with single-scene regeneration.",
+    parentCluster: "adventure-design",
+    relatedIntents: [
+      "generator-adventure-generator",
+      "generator-adventure-idea-generator",
+    ],
+    acknowledgedOverlap: [
+      {
+        with: "generator-adventure-idea-generator",
+        reason:
+          "The idea generator returns a premise or seed; this builder returns a playable, timed session with scenes, NPCs, clues and a cheat sheet.",
+      },
+      {
+        with: "generator-adventure-generator",
+        reason:
+          "The adventure generator makes campaign-scale adventure concepts; this builder makes a constrained single-session scenario.",
+      },
+    ],
+    indexable: true,
+    status: "live",
+  },
+  {
     id: "generator-adventure-idea-generator",
     pageKind: "generator",
     canonicalPath: "/generators/adventure-idea-generator",

@@ -50,6 +50,7 @@ export {
   comicBookEventConfig,
   villainSchemeConfig,
 } from "generator-engine";
+export { oneShotConfig } from "generator-engine";
 export { originConfig } from "generator-engine";
 export { personalityConfig } from "generator-engine";
 export { councilVoteConfig } from "generator-engine";

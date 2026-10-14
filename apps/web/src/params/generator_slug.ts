@@ -37,6 +37,7 @@ export const GENERATOR_SLUGS = [
   "dungeon-generator",
   "adventure-generator",
   "adventure-idea-generator",
+  "one-shot-adventure-generator",
   "plot-twist-generator",
   "bbeg-generator",
   "comic-book-event-generator",

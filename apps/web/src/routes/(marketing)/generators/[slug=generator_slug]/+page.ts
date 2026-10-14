@@ -48,6 +48,7 @@ export const load: PageLoad = ({ params }) => {
       | "comic-book-event-generator"
       | "origin-generator"
       | "villain-scheme-generator"
+      | "one-shot-adventure-generator"
       | "world"
       | "council-vote"
       | "secret-society"

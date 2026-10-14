@@ -177,4 +177,15 @@ describe("useGeneratorSession", () => {
     expect(ctx.session.userGenerationSucceeded).toBe(true);
     expect(ctx.session.isExampleDraft).toBe(false);
   });
+
+  it("swaps in an edited result without touching the saved entity", () => {
+    const ctx = setup();
+    cleanup = ctx.cleanup;
+
+    ctx.session.applyRefinedOutput({ ...output, title: "Refined" }, "e9");
+    ctx.session.replaceOutput({ ...output, title: "Edited scene" });
+
+    expect(ctx.session.generatedData?.title).toBe("Edited scene");
+    expect(ctx.session.currentEntityId).toBe("e9");
+  });
 });

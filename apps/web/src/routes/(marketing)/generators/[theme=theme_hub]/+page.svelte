@@ -162,6 +162,13 @@
       icon: "icon-[lucide--map]",
     },
     {
+      slug: "one-shot-adventure-generator",
+      label: "One-Shot Adventure Builder",
+      summary:
+        "Build a run-ready, timed one-shot with scenes, NPCs, clues, endings and a GM cheat sheet.",
+      icon: "icon-[lucide--hourglass]",
+    },
+    {
       slug: "minor-magic-item",
       label: "Minor Magic Item Generator",
       summary:

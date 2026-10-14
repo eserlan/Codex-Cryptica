@@ -125,6 +125,7 @@ async function sendViaOperationPipeline(params: {
   generationConfig: any;
   finalSysInst?: string;
   modelName: string;
+  signal?: AbortSignal;
 }) {
   const {
     proxyUrl,
@@ -133,6 +134,7 @@ async function sendViaOperationPipeline(params: {
     generationConfig,
     finalSysInst,
     modelName,
+    signal,
   } = params;
 
   const body = buildOperationPipelineBody({
@@ -155,6 +157,7 @@ async function sendViaOperationPipeline(params: {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
+    signal,
   });
 
   console.log(
@@ -694,7 +697,9 @@ export class DefaultAIClientManager {
 
       async generateContent(
         request: string | Array<GenerativeContentBlob | string> | any,
+        requestOptions?: { signal?: AbortSignal },
       ) {
+        const { signal } = requestOptions ?? {};
         // Model logging happens further down, once we know which path this
         // request takes: the operation pipeline (the common case) resolves
         // its own model server-side via the registry and only ever treats
@@ -713,6 +718,7 @@ export class DefaultAIClientManager {
               generationConfig,
               finalSysInst,
               modelName,
+              signal,
             });
           }
 
@@ -737,6 +743,7 @@ export class DefaultAIClientManager {
               "Content-Type": "application/json",
             },
             body: JSON.stringify(body),
+            signal,
           });
 
           console.log(
