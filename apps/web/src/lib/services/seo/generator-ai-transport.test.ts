@@ -59,12 +59,23 @@ describe("GeneratorAITransport", () => {
         yield { type: "delta", text: 'viewed"}' };
         yield { type: "complete", text: '{"title":"reviewed"}' };
       });
-      clientManager.getModel.mockResolvedValue({ generateContent, generateContentStream });
+      clientManager.getModel.mockResolvedValue({
+        generateContent,
+        generateContentStream,
+      });
       const previews: string[] = [];
-      await transport.generateWithPreview(async () => {
-        await transport.runModel("writer", "initial prompt", undefined, false);
-        return transport.runModel("editor", "review prompt", undefined, true);
-      }, (preview) => previews.push(preview));
+      await transport.generateWithPreview(
+        async () => {
+          await transport.runModel(
+            "writer",
+            "initial prompt",
+            undefined,
+            false,
+          );
+          return transport.runModel("editor", "review prompt", undefined, true);
+        },
+        (preview) => previews.push(preview),
+      );
       expect(generateContent).toHaveBeenCalledTimes(1);
       expect(generateContentStream).toHaveBeenCalledTimes(1);
       expect(previews).toEqual(['{"title":"re', '{"title":"reviewed"}']);

@@ -136,6 +136,46 @@ function pickThemed(
   return explicit?.trim() || pickFrom(byTheme[genre] ?? shared, rng);
 }
 
+function pickDamageProfile(format: string, rng: Rng): string {
+  const profileGroups = [
+    [/roll|scroll/i, tomeConfig.damageProfilesByFormat.roll],
+    [/tablet|slate/i, tomeConfig.damageProfilesByFormat.tablets],
+    [/sheaves|loose.leaf/i, tomeConfig.damageProfilesByFormat.sheaves],
+  ] as const;
+  const profiles =
+    profileGroups.find(([pattern]) => pattern.test(format))?.[1] ??
+    tomeConfig.damageProfiles;
+  return pickFrom(profiles, rng).description;
+}
+
+type DeceptionProfile =
+  (typeof tomeConfig.deceptionProfilesByTheme)[string][number];
+
+function pickDeceptionProfile(
+  genre: string,
+  avoidedKeys: string[] | undefined,
+  rng: Rng,
+): { profile: DeceptionProfile; key: string } {
+  const profiles = tomeConfig.deceptionProfilesByTheme[genre] ??
+    tomeConfig.deceptionProfilesByTheme["Cosmic Horror"] ?? [
+      {
+        claim:
+          "The central thesis asserts that repeating the ritual chant binds the threshold",
+        deception:
+          "The chant inverts the seal, pacifying the entity for only an hour while drawing it closer",
+        truth:
+          "The entity cannot be appeased by prayer; it must be turned aside by cold iron and salt-flame",
+        clue: "A dated parish margin notes three drownings on the exact night of the claimed success",
+      },
+    ];
+  const choices = profiles.map((profile, index) => ({ profile, index }));
+  const eligible = choices.filter(
+    ({ index }) => !avoidedKeys?.includes(`${genre}:${index}`),
+  );
+  const selected = pickFrom(eligible.length ? eligible : choices, rng);
+  return { profile: selected.profile, key: `${genre}:${selected.index}` };
+}
+
 export function resolveTome(
   options: TomeGeneratorOptions,
   rng: Rng = defaultRng,
@@ -196,14 +236,7 @@ export function resolveTome(
 
   const author = generateName(rng);
 
-  const specialDamage = /roll|scroll/i.test(format)
-    ? tomeConfig.damageProfilesByFormat.roll
-    : /tablet|slate/i.test(format)
-      ? tomeConfig.damageProfilesByFormat.tablets
-      : /sheaves|loose.leaf/i.test(format)
-        ? tomeConfig.damageProfilesByFormat.sheaves
-        : tomeConfig.damageProfiles;
-  const exactDamage = pickFrom(specialDamage, rng).description;
+  const exactDamage = pickDamageProfile(format, rng);
 
   const locations = tomeConfig.locationsByTheme[genre] ??
     tomeConfig.locationsByTheme["Cosmic Horror"] ?? [
@@ -211,29 +244,9 @@ export function resolveTome(
     ];
   const associatedLocation = pickFrom(locations, rng);
 
-  const deceptions = tomeConfig.deceptionProfilesByTheme[genre] ??
-    tomeConfig.deceptionProfilesByTheme["Cosmic Horror"] ?? [
-      {
-        claim:
-          "The central thesis asserts that repeating the ritual chant binds the threshold",
-        deception:
-          "The chant inverts the seal, pacifying the entity for only an hour while drawing it closer",
-        truth:
-          "The entity cannot be appeased by prayer; it must be turned aside by cold iron and salt-flame",
-        clue: "A dated parish margin notes three drownings on the exact night of the claimed success",
-      },
-    ];
-  const eligibleDeceptions = deceptions
-    .map((profile, index) => ({ profile, index }))
-    .filter(({ index }) => !options.avoidDeceptionKeys?.includes(`${genre}:${index}`));
-  const selectedDeception = pickFrom(
-    eligibleDeceptions.length
-      ? eligibleDeceptions
-      : deceptions.map((profile, index) => ({ profile, index })),
-    rng,
-  );
-  const deceptionProfile = selectedDeception.profile;
-  const deceptionKey = `${genre}:${selectedDeception.index}`;
+  const { profile: selectedDeception, key: deceptionKey } =
+    pickDeceptionProfile(genre, options.avoidDeceptionKeys, rng);
+  const deceptionProfile = selectedDeception;
   const bookClaim = deceptionProfile.claim;
   const deceptionOrFlaw = deceptionProfile.deception;
   const objectiveTruth = deceptionProfile.truth;
@@ -554,15 +567,27 @@ export function parseTomeResponse(
             tomeFacts: {
               ...buildTomeFacts(fallbackResolved, {
                 centralRule: authored.centralRule as string | undefined,
-                productionMethod: authored.productionMethod as string | undefined,
+                productionMethod: authored.productionMethod as
+                  string | undefined,
                 errorSource: authored.errorSource as string | undefined,
               }),
               // The first pass cannot override seeded anchors. The independent
               // editor may correct a demonstrably impossible generated anchor.
               ...(allowEditorialCorrections
                 ? Object.fromEntries(
-                    (["bookClaim", "deception", "objectiveTruth", "actionableClue"] as const)
-                      .filter((key) => typeof authored[key] === "string" && (authored[key] as string).trim())
+                    (
+                      [
+                        "bookClaim",
+                        "deception",
+                        "objectiveTruth",
+                        "actionableClue",
+                      ] as const
+                    )
+                      .filter(
+                        (key) =>
+                          typeof authored[key] === "string" &&
+                          (authored[key] as string).trim(),
+                      )
                       .map((key) => [key, (authored[key] as string).trim()]),
                   )
                 : {}),

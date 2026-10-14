@@ -2078,29 +2078,45 @@ describe("generateDraftStream", () => {
 
   it("streams only pass two of tome generation and commits its reviewed draft", async () => {
     const content = [
-      "### Physical Description & Format", "A manuscript in a leather binding.",
-      "### Provenance & Transmission", "Written by an apprentice.",
-      "### Contents & Revelations", "The clay vessel must cure in dry air.",
-      "### Risks & Costs of Study", "Water breaks the containment.",
-      "### Adventure Hooks", "1. Retrieve the broken clay vessel."
+      "### Physical Description & Format",
+      "A manuscript in a leather binding.",
+      "### Provenance & Transmission",
+      "Written by an apprentice.",
+      "### Contents & Revelations",
+      "The clay vessel must cure in dry air.",
+      "### Risks & Costs of Study",
+      "Water breaks the containment.",
+      "### Adventure Hooks",
+      "1. Retrieve the broken clay vessel.",
     ].join("\n\n");
     const lore = [
-      "### At the Table Reference", "A recoverable ritual.",
+      "### At the Table Reference",
+      "A recoverable ritual.",
       "### Ground Truth for the GM",
       "- **What the Book Claims**: Wash the vessel.",
       "- **The Deception / Flaw**: A copyist altered the rite.",
       "- **The Objective Truth**: Let the clay cure in dry air.",
       "- **Actionable Clue**: The dry clay stain.",
-      "### Connected Entities", "- **Author / Compiler**: The apprentice.",
-      "### Quick Checks & Mechanics", "- **The Failure Condition**: Water destroys the ward."
+      "### Connected Entities",
+      "- **Author / Compiler**: The apprentice.",
+      "### Quick Checks & Mechanics",
+      "- **The Failure Condition**: Water destroys the ward.",
     ].join("\n\n");
     const first = JSON.stringify({
-      title: "First Pass Tome", summary: "The initial manuscript.",
-      content, lore, labels: ["tome", "item"], connections: []
+      title: "First Pass Tome",
+      summary: "The initial manuscript.",
+      content,
+      lore,
+      labels: ["tome", "item"],
+      connections: [],
     });
     const final = JSON.stringify({
-      title: "Edited Tome", summary: "A revised manuscript.",
-      content, lore, labels: ["tome", "item"], connections: []
+      title: "Edited Tome",
+      summary: "A revised manuscript.",
+      content,
+      lore,
+      labels: ["tome", "item"],
+      connections: [],
     });
     const complete = vi.fn(async () => first);
     const completeStream = fakeCompleteStream(final, "Edited Tome");
@@ -2109,13 +2125,21 @@ describe("generateDraftStream", () => {
       aiGateway: { complete, completeStream },
     });
 
-    const events = await collect(svc.generateDraftStream(run("tome", { useAI: true })));
+    const events = await collect(
+      svc.generateDraftStream(run("tome", { useAI: true })),
+    );
     expect(complete).toHaveBeenCalledTimes(1);
     expect(completeStream).toHaveBeenCalledTimes(1);
     expect(events[0]).toEqual({ type: "started" });
     expect(events.filter((e) => e.type === "started")).toHaveLength(1);
-    expect(events.some((e) => e.type === "delta" && String(e.text).includes("Edited Tome"))).toBe(true);
-    expect(events.some((e) => e.type === "field" && e.value === "Edited Tome")).toBe(true);
+    expect(
+      events.some(
+        (e) => e.type === "delta" && String(e.text).includes("Edited Tome"),
+      ),
+    ).toBe(true);
+    expect(
+      events.some((e) => e.type === "field" && e.value === "Edited Tome"),
+    ).toBe(true);
     const finalEvent = events.at(-1);
     expect(finalEvent?.type).toBe("draft");
     expect((finalEvent?.draft as GeneratedDraft).title).toBe("Edited Tome");

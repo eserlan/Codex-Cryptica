@@ -680,7 +680,10 @@ ${duplicatedParagraph}
     it("has broad Classic Fantasy mystery variety", () => {
       const keys = new Set<string>();
       for (let seed = 1; seed < 120; seed++) {
-        keys.add(resolveTome({ genre: "Classic Fantasy" }, seededRng(seed * 501)).deceptionKey);
+        keys.add(
+          resolveTome({ genre: "Classic Fantasy" }, seededRng(seed * 501))
+            .deceptionKey,
+        );
       }
       expect(keys.size).toBeGreaterThanOrEqual(6);
     });
@@ -691,7 +694,9 @@ ${duplicatedParagraph}
           { genre: "Classic Fantasy", format: "Scorched Parchment Roll" },
           seededRng(seed),
         );
-        expect(resolved.exactDamage).not.toMatch(/gathering|quire|leaves|signature/i);
+        expect(resolved.exactDamage).not.toMatch(
+          /gathering|quire|leaves|signature/i,
+        );
       }
     });
 
@@ -699,7 +704,9 @@ ${duplicatedParagraph}
       const cases = Array.from({ length: 120 }, (_, i) =>
         resolveTome({ genre: "Classic Fantasy" }, seededRng(i * 503 + 1)),
       );
-      const vessel = cases.find((c) => /river-clay spirit vessel/.test(c.bookClaim));
+      const vessel = cases.find((c) =>
+        /river-clay spirit vessel/.test(c.bookClaim),
+      );
       expect(vessel).toBeDefined();
       expect(vessel!.bookClaim).not.toMatch(/blade/);
       expect(vessel!.objectiveTruth).toMatch(/vessel/);
@@ -785,29 +792,45 @@ ${duplicatedParagraph}
           title: "The Survey",
           summary: "A flawed route survey.",
           content: [
-            "### Physical Description & Format", "A folio.", "### Provenance & Transmission",
-            "Compiled by a surveyor.", "### Contents & Revelations",
+            "### Physical Description & Format",
+            "A folio.",
+            "### Provenance & Transmission",
+            "Compiled by a surveyor.",
+            "### Contents & Revelations",
             "The eastern glyph had been swapped with its western counterpart.",
-            "### Risks & Costs of Study", "Rash explorers fall into pits.",
-            "### Adventure Hooks", "1. Trace the forged plan."
+            "### Risks & Costs of Study",
+            "Rash explorers fall into pits.",
+            "### Adventure Hooks",
+            "1. Trace the forged plan.",
           ].join("\n\n"),
           lore: [
-            "### At the Table Reference", "Use the compass clue.", "### Ground Truth for the GM",
+            "### At the Table Reference",
+            "Use the compass clue.",
+            "### Ground Truth for the GM",
             "- **What the Book Claims**: Trust the chart.",
             "- **The Deception / Flaw**: Directions are reversed.",
             "- **The Objective Truth**: Reverse the lateral directions.",
             "- **Actionable Clue**: The east and west glyphs are swapped.",
-            "### Connected Entities", "- **Author**: Surveyor.", "### Quick Checks & Mechanics",
-            "- **The Failure Condition**: Following the route trips a pit."
+            "### Connected Entities",
+            "- **Author**: Surveyor.",
+            "### Quick Checks & Mechanics",
+            "- **The Failure Condition**: Following the route trips a pit.",
           ].join("\n\n"),
           canonicalFacts: {
             centralRule: "Reverse east and west without rotating north.",
             productionMethod: "Handwritten parchment.",
             errorSource: "A later copyist transposed east and west.",
-            ...(corrected ? { actionableClue: "The compass swaps east and west, preserving north and south." } : {}),
+            ...(corrected
+              ? {
+                  actionableClue:
+                    "The compass swaps east and west, preserving north and south.",
+                }
+              : {}),
           },
         });
-      const result = await generateTomeTwoPass(prompt, async () => answer(++calls === 2));
+      const result = await generateTomeTwoPass(prompt, async () =>
+        answer(++calls === 2),
+      );
       expect(result?.tomeFacts?.actionableClue).toBe(
         "The compass swaps east and west, preserving north and south.",
       );
