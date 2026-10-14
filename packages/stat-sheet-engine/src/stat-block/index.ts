@@ -4,6 +4,7 @@ import { parsePf2eJson } from "./parsers/pf2e-json";
 import { parseMythrasJson } from "./parsers/mythras-json";
 import { parseVtmJson } from "./parsers/vtm-json";
 import { parseGurpsJson } from "./parsers/gurps-json";
+import { parseTovJson } from "./parsers/tov-json";
 import { parseTextStatBlock } from "./parsers/text-heuristic";
 import { mapIrToStatSheet } from "./mapper";
 import type {
@@ -16,6 +17,7 @@ export * from "./types";
 export * from "./detect";
 export * from "./mapper";
 export * from "./parsers/dnd5e-json";
+export * from "./parsers/tov-json";
 export * from "./parsers/pf2e-json";
 export * from "./parsers/mythras-json";
 export * from "./parsers/vtm-json";
@@ -50,8 +52,10 @@ export function importStatBlock(
       case "gurps":
         ir = parseGurpsJson(obj);
         break;
-      case "dnd5e":
       case "tales-of-the-valiant":
+        ir = parseTovJson(obj);
+        break;
+      case "dnd5e":
       default:
         ir = parseDnd5eJson(obj);
         ir.system = detectedSystem;

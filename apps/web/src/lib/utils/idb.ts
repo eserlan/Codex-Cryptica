@@ -245,6 +245,7 @@ export function getDB(): Promise<IDBPDatabase<CodexDB>> {
       }
 
       return openDB<CodexDB>(DB_NAME, targetVersion, {
+        // fallow-ignore-next-line complexity
         upgrade(db, oldVersion, _newVersion, transaction) {
           if (!db.objectStoreNames.contains("settings")) {
             db.createObjectStore("settings");

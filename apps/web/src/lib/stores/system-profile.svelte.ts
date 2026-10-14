@@ -233,6 +233,10 @@ export class SystemProfileStore {
     });
   }
 
+  resolveSystemId(entity?: { systemId?: string | null }): string {
+    return this.resolveEntitySystem(entity).id;
+  }
+
   listAvailableProfiles(): GameSystemProfile[] {
     return this.registry.list();
   }

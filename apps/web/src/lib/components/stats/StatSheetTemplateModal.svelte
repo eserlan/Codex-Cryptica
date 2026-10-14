@@ -5,6 +5,7 @@
   import { notificationStore } from "$lib/stores/ui/notification.svelte";
   import StatSheetTemplateOptions from "./StatSheetTemplateOptions.svelte";
   import { applyDerivedModifiers } from "$lib/utils/stat-sheet-field-actions";
+  import { systemProfileStore } from "$lib/stores/system-profile.svelte";
 
   let { entity, onClose = () => {} } = $props<{
     entity: Entity;
@@ -182,6 +183,9 @@
       <StatSheetTemplateOptions
         templates={displayedTemplates}
         category={entity.type}
+        systemId={systemProfileStore?.resolveSystemId
+          ? systemProfileStore.resolveSystemId(entity)
+          : undefined}
         onApply={applyTemplate}
       />
       {#if hasHiddenTemplates}
