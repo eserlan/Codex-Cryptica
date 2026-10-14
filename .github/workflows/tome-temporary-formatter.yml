@@ -1,0 +1,40 @@
+name: Temporary Tome Formatting
+on:
+  push:
+    branches:
+      - feat/tome-adversarial-editor-streamed-review
+permissions:
+  contents: write
+jobs:
+  format:
+    if: ${{ github.event.head_commit.message != 'style(tome): format edited sources' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/tome-adversarial-editor-streamed-review
+          persist-credentials: true
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+      - name: Format touched files
+        run: |
+          bunx prettier --write \
+            packages/generator-engine/src/public-tome.ts \
+            packages/generator-engine/src/public-tome.test.ts \
+            packages/generator-engine/src/public-tome-constants.ts \
+            packages/generator-engine/src/campaign-generator-service.ts \
+            packages/generator-engine/src/campaign-generator-service.test.ts \
+            packages/generator-engine/src/index.ts \
+            apps/web/src/lib/services/seo/generator-ai-transport.ts \
+            apps/web/src/lib/services/seo/generator-engine-base.ts \
+            apps/web/src/lib/services/seo/generator-engine-specialized.ts \
+            apps/web/src/lib/services/seo/generator-engine.test.ts
+      - name: Commit formatting
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add packages/generator-engine/src apps/web/src/lib/services/seo/
+          if ! git diff --cached --quiet; then
+            git commit -m "style(tome): format edited sources"
+            git push origin HEAD:feat/tome-adversarial-editor-streamed-review
+          fi
