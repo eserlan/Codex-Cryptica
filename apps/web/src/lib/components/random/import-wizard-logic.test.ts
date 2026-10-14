@@ -76,6 +76,9 @@ describe("ImportWizard logic", () => {
     expect(
       updateColumnMapping({ text: 0, weight: 2 }, undefined, "range", 1),
     ).toEqual({ text: 0, range: 1 });
+    expect(
+      updateColumnMapping({ text: 0, range: 1 }, undefined, "range", undefined),
+    ).toEqual({ text: 0 });
     expect(nextUniqueName("Deck", (name) => name === "Deck 2")).toBe("Deck 3");
   });
 
