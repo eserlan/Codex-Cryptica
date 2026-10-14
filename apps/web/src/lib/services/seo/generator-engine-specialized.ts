@@ -198,20 +198,26 @@ export class GeneratorEngineSpecialized extends GeneratorEngineWorldbuilding {
   ): Promise<GeneratorOutput> {
     const { useAI, ...tomeOptions } = options;
     const recentInputs = generationInputHistoryStore.recent("tome");
+    const recentDeceptions = generationInputHistoryStore.recent("tome-mysteries");
     return this.runWithAIFallback(
       useAI,
       async () => {
         const { systemInstruction, userMessage, resolved } = buildTomePrompt(
-          tomeOptions,
+          { ...tomeOptions, avoidDeceptions: recentDeceptions },
           getSessionContext() + formatRecentInputsNote(recentInputs),
         );
         generationInputHistoryStore.record(
           "tome",
           summarizeResolvedInputs(resolved),
         );
+        generationInputHistoryStore.record("tome-mysteries", resolved.deceptionOrFlaw);
+        let pass = 0;
         const reviewed = await generateTomeTwoPass(
           { systemInstruction, userMessage, resolved },
-          (instruction, message) => this.runModel(instruction, message),
+          (instruction, message) =>
+            ++pass === 1
+              ? this.runModelWithoutPreview(instruction, message)
+              : this.runModel(instruction, message),
         );
         return reviewed
           ? (reviewed as GeneratorOutput)
