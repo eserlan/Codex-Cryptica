@@ -99,25 +99,17 @@ export const howDoIRoleplayNpcsIfImNotGoodAtActing: AnswerConfigInput = {
       ],
     },
     {
-      kind: "list",
+      kind: "checklist",
       heading: "A small, optional exercise for next session",
       intro:
-        "Starting with two contrasting NPCs is a manageable default, not a limit. Copy this card for each if useful:",
+        "Starting with two contrasting NPCs is a manageable default, not a limit. For each one you expect to speak, prepare these cues:",
       items: [
-        { term: "Name and role", text: "__________ | __________" },
-        { term: "Want and attitude", text: "__________ | __________" },
-        { term: "One habit", text: "__________ (optional)" },
-        {
-          term: "Knows or can offer; boundary",
-          text: "__________ | __________",
-        },
-        {
-          term: "Example",
-          text: "Mara | Kitchen runner | Get back inside unseen | Nervous, eager to help | Short clipped answers, glances at door | Saw unmarked cart at dusk | Will not name who ordered it without a promise of protection",
-        },
+        "Write the NPC's name and role.",
+        "Note what they want in this scene and their starting attitude toward the party.",
+        "Choose one simple speech or behaviour cue you can repeat without strain.",
+        "Write one useful thing they know or can offer, plus a boundary they will keep.",
+        "Rehearse one greeting, one offer or request, and one response to a player question.",
       ],
-      outro:
-        "If it helps, rehearse one greeting, request or offer, and response to a player request. Use third person whenever it feels steadier; extra cues and rehearsal are optional. After play, note one thing to adjust next time. Keep what happened and any private cue you still need to portray them consistently; leave further biography until it becomes useful.",
     },
     {
       kind: "prose",
