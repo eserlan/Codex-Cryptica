@@ -660,6 +660,8 @@ export {
   ensureGroundTruthInLore,
   auditTomeConsistency,
   generateTomeTwoPass,
+  streamTomeTwoPass,
+  type TomeStreamingReviewEvent,
   type TomeGeneratorOptions,
   type ResolvedTome,
   type TomePrompt,
