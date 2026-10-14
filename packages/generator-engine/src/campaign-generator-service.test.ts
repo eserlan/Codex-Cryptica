@@ -2102,6 +2102,94 @@ describe("generateDraftStream", () => {
     expect(events.some((event) => event.type === "draft")).toBe(false);
   });
 
+
+  it("streams only the tome's final editorial turn and yields its reviewed draft", async () => {
+    const content = [
+      "### Physical Description & Format", "A brass-cased parchment leaf.",
+      "### Provenance & Transmission", "An old scribe handed it to the temple.",
+      "### Contents & Revelations", "The clay vessel must cure without water.",
+      "### Risks & Costs of Study", "Washing the clay releases the bound spirit.",
+      "### Adventure Hooks", "1. Recover the vessel before it is washed.",
+    ].join("\n\n");
+    const lore = [
+      "### At the Table Reference", "Investigate the alteration.",
+      "### Ground Truth for the GM",
+      "- **What the Book Claims**: Wash the vessel.",
+      "- **The Deception / Flaw**: The censor changed the text.",
+      "- **The Objective Truth**: The vessel must cure dry.",
+      "- **Actionable Clue**: A clay smear survives.",
+      "### Connected Entities", "- **Author**: Temple scribe",
+      "### Quick Checks & Mechanics", "- **Failure Condition**: Washing frees the spirit.",
+    ].join("\n\n");
+    const response = (text: string) => JSON.stringify({
+      title: "Vessel Observations", summary: "A suppressed binding rite.",
+      content: text, lore, labels: ["tome", "item"], connections: [],
+      canonicalFacts: {
+        centralRule: "Allow the clay vessel to cure.",
+        productionMethod: "Hand-copied manuscript.",
+        errorSource: "The temple censor.",
+      },
+    });
+    const first = response(content.replace("clay vessel", "unexplained blade"));
+    const reviewed = response(content);
+    const complete = vi.fn(async () => first);
+    const completeStream = fakeCompleteStream(reviewed, "Vessel Observations");
+    const svc = new CampaignGeneratorService({
+      aiPolicy: { isEnabled: true, isAvailable: true },
+      aiGateway: { complete, completeStream },
+    });
+
+    const events = await collect(svc.generateDraftStream(run("tome", { useAI: true })));
+    expect(complete).toHaveBeenCalledTimes(1);
+    expect(completeStream).toHaveBeenCalledTimes(1);
+    expect(events.filter(e => e.type === "phase")).toHaveLength(2);
+    const deltas = events.filter(e => e.type === "delta").map(e => e.text).join("");
+    expect(deltas).toBe(reviewed);
+    expect(deltas).not.toContain("unexplained blade");
+    const final = events.find(e => e.type === "draft");
+    expect(final?.draft?.title).toBe("Vessel Observations");
+    expect(final?.draft?.lore).toContain("The clay vessel must cure");
+  });
+
+  it("does not emit a tome draft if the streamed editorial turn is cancelled", async () => {
+    const controller = new AbortController();
+    const content = [
+      "### Physical Description & Format", "Rag paper.",
+      "### Provenance & Transmission", "Copied from a temple.",
+      "### Contents & Revelations", "A corrected rite.",
+      "### Risks & Costs of Study", "The risk is immediate.",
+      "### Adventure Hooks", "1. Find the original rite.",
+    ].join("\n\n");
+    const lore = [
+      "### At the Table Reference", "Use the text as evidence.",
+      "### Ground Truth for the GM",
+      "- **What the Book Claims**: The rite is safe.",
+      "- **The Deception / Flaw**: The rite is changed.",
+      "- **The Objective Truth**: It is dangerous.",
+      "- **Actionable Clue**: The older margin.",
+      "### Connected Entities", "- **Author**: Scribe",
+      "### Quick Checks & Mechanics", "- **Failure Condition**: Injury.",
+    ].join("\n\n");
+    const first = JSON.stringify({
+      title: "Observations", summary: "A changed rite.",
+      content, lore, labels: ["tome"], connections: [],
+    });
+    const complete = vi.fn(async () => first);
+    const completeStream = vi.fn(async function* () {
+      yield { type: "delta" as const, text: '{"title":"par' };
+      controller.abort();
+      yield { type: "complete" as const, text: first };
+    });
+    const svc = new CampaignGeneratorService({
+      aiPolicy: { isEnabled: true, isAvailable: true },
+      aiGateway: { complete, completeStream },
+    });
+    const events = await collect(svc.generateDraftStream(
+      run("tome", { useAI: true }), controller.signal,
+    ));
+    expect(events.some(e => e.type === "draft")).toBe(false);
+  });
+
   it("turns structured holiday completion payloads into a final campaign draft", async () => {
     const json = JSON.stringify({
       title: "The First Spill of Neshur",
