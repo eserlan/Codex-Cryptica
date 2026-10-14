@@ -891,11 +891,11 @@ ${duplicatedParagraph}
       expect(result?.content).toBe(content);
     });
 
-    it("rejects a negated canonical correction when unchanged prose states the opposite", async () => {
+    it("rejects a contracted negated objective truth when unchanged prose states the opposite", async () => {
       const prompt = buildTomePrompt({}, undefined, seededRng(13));
       const contradictory = JSON.parse(response(content));
-      contradictory.canonicalFacts.centralRule =
-        "The river-clay vessel must not dry in open air.";
+      contradictory.canonicalFacts.objectiveTruth =
+        "The river-clay vessel mustn't dry in open air.";
       const result = await generateTomeTwoPass(
         prompt,
         async (_system, message) =>
@@ -904,8 +904,8 @@ ${duplicatedParagraph}
             : response(content),
       );
 
-      expect(result?.tomeFacts?.objectiveTruth).not.toBe(
-        contradictory.canonicalFacts.centralRule,
+      expect(result?.tomeFacts?.objectiveTruth).toBe(
+        prompt.resolved.objectiveTruth,
       );
       expect(result?.content).toBe(content);
     });

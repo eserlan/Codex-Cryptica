@@ -970,6 +970,13 @@ function sentenceTokens(sentence: string): Set<string> {
   return new Set(
     sentence
       .toLowerCase()
+      .replace(/\b(can)['’]t\b/g, "$1not")
+      .replace(/\b(won)['’]t\b/g, "will not")
+      .replace(/\b(shan)['’]t\b/g, "shall not")
+      .replace(
+        /\b(can|could|did|do|does|had|has|have|is|are|was|were|should|would|must|might|need)n['’]t\b/g,
+        "$1 not",
+      )
       .replace(/[^a-z0-9\s]/g, " ")
       .split(/\s+/)
       .filter((w) => w.length > 3 || FACT_NEGATION_TOKENS.has(w)),
