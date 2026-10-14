@@ -18,6 +18,7 @@ export interface VaultRecord {
   entityCount: number;
   lastInternalChange?: number;
   lastSavedToFolder?: number;
+  systemId?: string;
   syncState?: {
     lastSyncMs: number | null;
     remoteHash: string | null;
