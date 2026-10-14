@@ -744,6 +744,55 @@ describe("DefaultGeneratorEngine", () => {
       expect(result.content).not.toContain("soul-forged blade");
     });
 
+
+    it("keeps the initial tome draft hidden and streams only the editorial turn", async () => {
+      const content = [
+        "### Physical Description & Format", "A parchment codex.",
+        "### Provenance & Transmission", "Copied by a court scribe.",
+        "### Contents & Revelations", "The clay vessel is left to dry.",
+        "### Risks & Costs of Study", "Washing the vessel breaks the seal.",
+        "### Adventure Hooks", "1. Recover the authentic rite.",
+      ].join("\n\n");
+      const lore = [
+        "### At the Table Reference", "Compare the readings.",
+        "### Ground Truth for the GM",
+        "- **What the Book Claims**: Wash the vessel.",
+        "- **The Deception / Flaw**: The censor changed it.",
+        "- **The Objective Truth**: Dry the vessel.",
+        "- **Actionable Clue**: The scraped line.",
+        "### Connected Entities", "- **Author**: Court scribe",
+        "### Quick Checks & Mechanics", "- **The Failure Condition**: Rupture.",
+      ].join("\n\n");
+      const response = (body: string) => JSON.stringify({
+        title: "The River Vessel", summary: "An altered ritual.",
+        content: body, lore, labels: ["tome"], connections: [],
+      });
+      const hidden = response(content.replace("clay vessel", "unrelated sword"));
+      const edited = response(content);
+      const generateContent = vi.fn().mockResolvedValue({
+        response: { text: () => hidden },
+      });
+      const generateContentStream = vi.fn(async function* () {
+        yield { type: "delta" as const, text: edited.slice(0, 50) };
+        yield { type: "delta" as const, text: edited.slice(50) };
+        yield { type: "complete" as const, text: edited };
+      });
+      mockClientManager.getModel.mockResolvedValue({
+        generateContent,
+        generateContentStream,
+      });
+      const previews: string[] = [];
+      const out = await engine.generateWithPreview(
+        () => engine.generateTome({ useAI: true, genre: "Classic Fantasy" }),
+        (text) => previews.push(text),
+      );
+      expect(generateContent).toHaveBeenCalledTimes(1);
+      expect(generateContentStream).toHaveBeenCalledTimes(1);
+      expect(previews).toEqual([edited.slice(0, 50), edited]);
+      expect(previews.join("")).not.toContain("unrelated sword");
+      expect(out.content).toContain("clay vessel");
+    });
+
     it("falls back when AI tome output fails the consistency audit", async () => {
       mockClientManager.getModel.mockResolvedValue({
         generateContent: vi.fn().mockResolvedValue({
