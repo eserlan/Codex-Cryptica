@@ -659,6 +659,7 @@ export {
   generateTomeLocal,
   ensureGroundTruthInLore,
   auditTomeConsistency,
+  generateTomeTwoPass,
   type TomeGeneratorOptions,
   type ResolvedTome,
   type TomePrompt,

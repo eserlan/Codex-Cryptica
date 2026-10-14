@@ -281,6 +281,81 @@ function languageAiJson(mutate?: (value: Record<string, any>) => void): string {
 }
 
 describe("generateDraft", () => {
+  it("rejects direct tome generation when cancellation reaches the local fallback", async () => {
+    const controller = new AbortController();
+    const complete = vi.fn(async () => {
+      controller.abort();
+      return "invalid JSON";
+    });
+    const svc = new CampaignGeneratorService({
+      aiPolicy: { isEnabled: true, isAvailable: true },
+      aiGateway: { complete },
+    });
+
+    await expect(
+      svc.generateDraft(run("tome", { useAI: true }), controller.signal),
+    ).rejects.toMatchObject({ name: "AbortError" });
+    expect(complete).toHaveBeenCalledTimes(1);
+  });
+
+  it("rejects direct tome generation when the editorial pass rejects after cancellation", async () => {
+    const controller = new AbortController();
+    const content = [
+      "### Physical Description & Format",
+      "A clay tablet bound in twine.",
+      "### Provenance & Transmission",
+      "The temple archived the tablet after its scribe vanished.",
+      "### Contents & Revelations",
+      "A river-clay vessel must dry in open air. A later censor substituted water.",
+      "### Risks & Costs of Study",
+      "Adding water to the vessel releases its resident spirit.",
+      "### Adventure Hooks",
+      "1. Retrieve the vessel before the rite begins.",
+    ].join("\n\n");
+    const lore = [
+      "### At the Table Reference",
+      "Use the vessel as an investigation.",
+      "### Ground Truth for the GM",
+      "- **What the Book Claims**: Apply water.",
+      "- **The Deception / Flaw**: The censor changed the method.",
+      "- **The Objective Truth**: The vessel must dry in open air.",
+      "- **Actionable Clue**: A scorch exposes the correction.",
+      "### Connected Entities",
+      "- **Author / Compiler**: A temple scribe.",
+      "### Quick Checks & Mechanics",
+      "- **The Failure Condition**: Water releases the spirit.",
+    ].join("\n\n");
+    const firstDraft = JSON.stringify({
+      title: "The River-Clay Rite",
+      summary: "A forbidden ritual tablet.",
+      canonicalFacts: {
+        centralRule: "Let the river-clay vessel dry in open air.",
+        productionMethod: "Handwritten on a clay tablet.",
+        errorSource: "A temple censor replaced drying with water.",
+      },
+      content,
+      lore,
+      labels: ["tome", "item"],
+      connections: [],
+    });
+    const complete = vi
+      .fn()
+      .mockResolvedValueOnce(firstDraft)
+      .mockImplementationOnce(async () => {
+        controller.abort();
+        throw new DOMException("Cancelled", "AbortError");
+      });
+    const svc = new CampaignGeneratorService({
+      aiPolicy: { isEnabled: true, isAvailable: true },
+      aiGateway: { complete },
+    });
+
+    await expect(
+      svc.generateDraft(run("tome", { useAI: true }), controller.signal),
+    ).rejects.toMatchObject({ name: "AbortError" });
+    expect(complete).toHaveBeenCalledTimes(2);
+  });
+
   it("produces a draft for each supported generator with useAI false", async () => {
     const svc = new CampaignGeneratorService();
     for (const id of ["npc", "faction", "settlement", "magic-item"] as const) {
@@ -2000,6 +2075,32 @@ describe("generateDraftStream", () => {
     for await (const event of gen) events.push(event);
     return events;
   }
+
+  it("stops the buffered tome editorial pass and suppresses its draft on cancellation", async () => {
+    const controller = new AbortController();
+    const complete = vi.fn(
+      async (
+        _prompt: string,
+        _instruction: string,
+        _options?: { signal?: AbortSignal },
+      ) => {
+        controller.abort();
+        return "invalid JSON";
+      },
+    );
+    const svc = new CampaignGeneratorService({
+      aiPolicy: { isEnabled: true, isAvailable: true },
+      aiGateway: { complete },
+    });
+
+    const events = await collect(
+      svc.generateDraftStream(run("tome", { useAI: true }), controller.signal),
+    );
+
+    expect(complete).toHaveBeenCalledTimes(1);
+    expect(complete.mock.calls[0]?.[2]?.signal).toBe(controller.signal);
+    expect(events.some((event) => event.type === "draft")).toBe(false);
+  });
 
   it("turns structured holiday completion payloads into a final campaign draft", async () => {
     const json = JSON.stringify({
