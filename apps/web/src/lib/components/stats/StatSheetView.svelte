@@ -9,6 +9,8 @@
   } from "$lib/utils/stat-sheet-field-actions";
   import { type IdGenerator, systemIdGenerator } from "$lib/utils/runtime-deps";
   import ItemTableNode from "./presentation/nodes/ItemTableNode.svelte";
+  import TovLuckControl from "./TovLuckControl.svelte";
+  import { isTovLuckField } from "@codex/stat-sheet-engine";
 
   let {
     entity,
@@ -220,6 +222,13 @@
             ></span>
             {field.label}
           </button>
+        {:else if isTovLuckField(entity.statSheet?.templateId, field)}
+          <TovLuckControl
+            {field}
+            {readOnly}
+            onChange={(value) => updateFieldValue(field.id, value)}
+            testIdPrefix="stat-sheet-tov-luck"
+          />
         {:else if field.type === "counter"}
           <div
             class="flex flex-wrap items-center justify-between gap-2 rounded border border-theme-border px-2 py-1.5"

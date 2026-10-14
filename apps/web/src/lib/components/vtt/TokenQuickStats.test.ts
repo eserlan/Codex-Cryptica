@@ -230,4 +230,44 @@ describe("TokenQuickStats", () => {
 
     expect(addResult).toHaveBeenCalled();
   });
+  it("always shows ToV Luck and writes the same canonical field", async () => {
+    const entity = buildEntity({
+      statSheet: {
+        templateId: "builtin-tov-character",
+        fields: [
+          {
+            id: "luck",
+            label: "Luck Points",
+            type: "counter",
+            value: 2,
+            min: 0,
+            max: 5,
+          },
+        ],
+      },
+    });
+    render(TokenQuickStats, { entity });
+    expect(screen.getByTestId("token-tov-luck-value").textContent).toMatch(
+      /2\s*\/\s*5/,
+    );
+    await fireEvent.click(screen.getByLabelText("Gain 1 Luck Points"));
+    expect(updateEntity).toHaveBeenCalledWith("goblin-1", {
+      statSheet: {
+        templateId: "builtin-tov-character",
+        fields: [expect.objectContaining({ id: "luck", value: 3 })],
+      },
+    });
+  });
+
+  it("leaves a non-ToV counter named luck as a plain, unpinned counter", () => {
+    const entity = buildEntity({
+      statSheet: {
+        templateId: "builtin-mythras-character",
+        fields: [{ id: "luck", label: "Luck", type: "counter", value: 2 }],
+      },
+    });
+    render(TokenQuickStats, { entity });
+    expect(screen.queryByTestId("token-tov-luck")).toBeNull();
+    expect(screen.getByTestId("token-quick-stats-empty")).toBeTruthy();
+  });
 });

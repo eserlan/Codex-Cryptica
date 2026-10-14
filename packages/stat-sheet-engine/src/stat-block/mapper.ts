@@ -1,6 +1,7 @@
 // fallow-ignore-file complexity
 import type { StatSheetField, StatSheetTemplate } from "schema";
 import type { StatBlockIR, StatBlockImportResult } from "./types";
+import { TOV_LUCK_FIXTURE } from "../rules-sources/fixtures/tov-luck.fixture";
 import {
   TOV_CHARACTER_TEMPLATE_ID,
   TOV_NPC_TEMPLATE_ID,
@@ -881,7 +882,7 @@ function mapToTovCharacter(ir: StatBlockIR): StatSheetField[] {
     type: "counter",
     value: luckVital?.current ?? 0,
     min: 0,
-    max: 5,
+    max: luckVital?.max ?? TOV_LUCK_FIXTURE.defaultMax,
   });
 
   // Ability Scores
@@ -1031,7 +1032,7 @@ function mapToTovNpc(ir: StatBlockIR): StatSheetField[] {
     type: "counter",
     value: luckVital?.current ?? 0,
     min: 0,
-    max: 5,
+    max: luckVital?.max ?? TOV_LUCK_FIXTURE.defaultMax,
   });
 
   const firstRollAction = ir.actionsAndAttacks.find(
