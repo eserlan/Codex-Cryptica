@@ -431,11 +431,49 @@ function extractTovActions(
         if (itemObj.type === "weapon") {
           const itemSystem = asRecord(itemObj.system);
           const itemDesc = asRecord(itemSystem?.description);
+          const attack = asRecord(itemSystem?.attack);
+          const actorSystem = asRecord(input.system);
+          const actorAttributes = asRecord(actorSystem?.attributes);
+          const abilities = asRecord(actorSystem?.abilities);
+          const ability = readString(attack?.ability ?? itemSystem?.ability);
+          const abilityData = ability ? asRecord(abilities?.[ability]) : null;
+          const abilityModifier = abilityData
+            ? readNumber(abilityData.mod ?? abilityData.modifier)
+            : undefined;
+          const proficiencyBonus = readNumber(actorAttributes?.prof);
+          const isProficient =
+            typeof itemSystem?.proficient === "boolean"
+              ? itemSystem.proficient
+              : typeof attack?.proficient === "boolean"
+                ? attack.proficient
+                : undefined;
+          const attackFormula =
+            readFormula(itemSystem?.attackFormula ?? itemSystem?.attackDice) ??
+            readAttackFormula(
+              attack?.bonus ?? itemSystem?.attackBonus,
+              abilityModifier,
+              isProficient ? proficiencyBonus : 0,
+              isProficient,
+            );
+          const damage = asRecord(itemSystem?.damage);
+          const damageParts = Array.isArray(damage?.parts)
+            ? damage.parts[0]
+            : undefined;
+          const damagePart = Array.isArray(damageParts)
+            ? damageParts[0]
+            : damageParts;
+          const damageFormula = readFormula(
+            itemSystem?.damageFormula ?? itemSystem?.damageDice ?? damagePart,
+          );
           result.push({
             name: String(itemObj.name || "Weapon"),
             actionType: "action",
-            attackDice: "1d20+0",
-            damageDice: "1d6+0",
+            attackDice: attackFormula,
+            damageDice: resolveWeaponDamageFormula(
+              damageFormula,
+              abilityModifier,
+              proficiencyBonus,
+            ),
             description: readString(itemDesc?.value),
           });
         }
@@ -444,6 +482,58 @@ function extractTovActions(
   }
 
   return result;
+}
+
+function readFormula(value: unknown): string | undefined {
+  if (typeof value !== "string" && typeof value !== "number") return undefined;
+  const formula = String(value).trim();
+  return formula.length > 0 ? formula : undefined;
+}
+
+function readNumber(value: unknown): number | undefined {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value === "string" && value.trim() !== "") {
+    const parsed = Number(value);
+    if (Number.isFinite(parsed)) return parsed;
+  }
+  return undefined;
+}
+
+function readAttackFormula(
+  rawBonus: unknown,
+  abilityModifier: number | undefined,
+  proficiencyBonus: number | undefined,
+  isProficient: boolean | undefined,
+): string | undefined {
+  const bonus = readNumber(rawBonus);
+  if (abilityModifier === undefined || isProficient === undefined)
+    return undefined;
+  if (isProficient && proficiencyBonus === undefined) return undefined;
+  return `1d20${formatSignedBonus(
+    abilityModifier + (proficiencyBonus ?? 0) + (bonus ?? 0),
+  )}`;
+}
+
+function formatSignedBonus(bonus: number): string {
+  return bonus >= 0 ? `+${bonus}` : String(bonus);
+}
+
+function resolveWeaponDamageFormula(
+  formula: string | undefined,
+  abilityModifier: number | undefined,
+  proficiencyBonus: number | undefined,
+): string | undefined {
+  if (!formula) return undefined;
+  const resolved = formula
+    .replace(
+      /@mod\b/g,
+      abilityModifier === undefined ? "@mod" : String(abilityModifier),
+    )
+    .replace(
+      /@prof\b/g,
+      proficiencyBonus === undefined ? "@prof" : String(proficiencyBonus),
+    );
+  return /@[a-zA-Z_][\w.]*/.test(resolved) ? undefined : resolved;
 }
 
 function extractTovSkills(

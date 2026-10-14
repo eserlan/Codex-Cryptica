@@ -903,6 +903,73 @@ Broadsword. 3d6<=14. 2d+1 cut damage.
       expect(bonusField?.rows?.[0]?.name).toBe("Nimble Escape");
     });
 
+    it("maps parsed damage and condition defences to the monster template", () => {
+      const result = importStatBlock(
+        {
+          name: "Ash Warden",
+          category: "creature",
+          hp: 30,
+          ac: 15,
+          vulnerabilities: ["cold"],
+          damageResistances: ["fire", "lightning"],
+          immunities: ["poison"],
+          conditionImmunities: ["poisoned", "frightened"],
+        },
+        { systemHint: "tales-of-the-valiant", category: "creature" },
+      );
+
+      const fieldMap = new Map(result.fields.map((field) => [field.id, field]));
+      expect(fieldMap.get("damage_vulnerabilities")?.value).toBe("cold");
+      expect(fieldMap.get("damage_resistances")?.value).toBe("fire, lightning");
+      expect(fieldMap.get("damage_immunities")?.value).toBe("poison");
+      expect(fieldMap.get("condition_immunities")?.value).toBe(
+        "poisoned, frightened",
+      );
+    });
+
+    it("uses Foundry weapon formulas and actor modifiers without inventing missing rolls", () => {
+      const result = importStatBlock(
+        {
+          name: "Foundry Warden",
+          flags: { "black-flag": {} },
+          system: {
+            attributes: { hp: { value: 20 }, ac: { value: 14 }, prof: 2 },
+            abilities: { str: { value: 16, mod: 3 } },
+          },
+          items: [
+            {
+              name: "Warhammer",
+              type: "weapon",
+              system: {
+                proficient: true,
+                attack: { ability: "str", bonus: 1 },
+                damage: { parts: [["1d8 + @mod", "bludgeoning"]] },
+              },
+            },
+            { name: "Unspecified Knife", type: "weapon", system: {} },
+            {
+              name: "Unresolved Knife",
+              type: "weapon",
+              system: { attack: { ability: "str", bonus: 1 } },
+            },
+          ],
+        },
+        { systemHint: "tales-of-the-valiant" },
+      );
+
+      expect(result.ir.actionsAndAttacks[0]).toMatchObject({
+        name: "Warhammer",
+        attackDice: "1d20+6",
+        damageDice: "1d8 + 3",
+      });
+      expect(result.ir.actionsAndAttacks[1]).toMatchObject({
+        name: "Unspecified Knife",
+      });
+      expect(result.ir.actionsAndAttacks[1]?.attackDice).toBeUndefined();
+      expect(result.ir.actionsAndAttacks[1]?.damageDice).toBeUndefined();
+      expect(result.ir.actionsAndAttacks[2]?.attackDice).toBeUndefined();
+    });
+
     it("imports lightweight ToV NPC input to builtin-tov-npc", () => {
       const npcInput = {
         name: "Village Informant",

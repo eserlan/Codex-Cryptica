@@ -1226,6 +1226,25 @@ function mapToTovMonster(ir: StatBlockIR): StatSheetField[] {
       type: "text",
       value: ir.defences.languages,
     });
+  const defenceFields = [
+    [
+      "damage_vulnerabilities",
+      "Damage Vulnerabilities",
+      ir.defences.vulnerabilities,
+    ],
+    ["damage_resistances", "Damage Resistances", ir.defences.resistances],
+    ["damage_immunities", "Damage Immunities", ir.defences.immunities],
+    [
+      "condition_immunities",
+      "Condition Immunities",
+      ir.defences.conditionImmunities,
+    ],
+  ] as const;
+  for (const [id, label, values] of defenceFields) {
+    if (values?.length) {
+      fields.push({ id, label, type: "text", value: values.join(", ") });
+    }
+  }
 
   // Traits
   if (ir.traitsAndFeatures.length > 0) {
