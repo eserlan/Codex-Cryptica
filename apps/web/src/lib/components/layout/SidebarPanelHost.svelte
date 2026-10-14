@@ -16,7 +16,7 @@
 
   const isSpecialEnv =
     import.meta.env.DEV || import.meta.env.VITE_STAGING === "true";
-  
+
   // On mobile the Oracle sidebar is a fixed full-screen overlay. A soft
   // keyboard may cover its bottom without resizing the layout viewport.
   // Reuse Cif's visual-viewport tracker to keep the composer above it.
@@ -26,7 +26,8 @@
       !layoutUIStore.isMobile ||
       !layoutUIStore.leftSidebarOpen ||
       layoutUIStore.activeSidebarTool !== "oracle"
-    ) return;
+    )
+      return;
     return keyboard.start();
   });
 
