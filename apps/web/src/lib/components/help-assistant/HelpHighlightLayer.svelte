@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { HelpHighlightService } from "$lib/services/help-assistant/help-highlight.svelte";
+  import CifPointer from "./CifPointer.svelte";
 
   let { highlight }: { highlight: HelpHighlightService } = $props();
 
@@ -29,6 +30,10 @@
       {label}
     </span>
   </div>
+  <!-- Keyed so each new highlight gets its own flight, even for the same control. -->
+  {#key highlight.current.id}
+    <CifPointer {rect} />
+  {/key}
 {/if}
 
 <style>

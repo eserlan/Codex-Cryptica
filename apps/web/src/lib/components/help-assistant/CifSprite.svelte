@@ -1,8 +1,11 @@
 <script lang="ts">
   import type { CifMood } from "./cif-mood";
 
-  let { mood, class: className = "" }: { mood: CifMood; class?: string } =
-    $props();
+  let {
+    mood,
+    flip = false,
+    class: className = "",
+  }: { mood: CifMood; flip?: boolean; class?: string } = $props();
 </script>
 
 <!--
@@ -13,6 +16,7 @@
 -->
 <span
   class="cif-sprite inline-block shrink-0 {className}"
+  class:cif-flip={flip}
   data-mood={mood}
   data-testid="cif-sprite"
   aria-hidden="true"
@@ -173,6 +177,7 @@
   [data-mood="idle"] .eye-open,
   [data-mood="curious"] .eye-open,
   [data-mood="explaining"] .eye-open,
+  [data-mood="pointing"] .eye-open,
   [data-mood="delighted"] .eye-happy,
   [data-mood="thinking"] .eye-think,
   [data-mood="confused"] .eye-confused {
@@ -206,6 +211,25 @@
   [data-mood="explaining"] .arm-right {
     transform: rotate(-31deg) translateY(-4px);
   }
+  /* Pointing: one arm thrown out sideways toward the control, head turned the
+     same way. The sprite is mirrored (cif-flip) when the control is on the
+     other side. */
+  [data-mood="pointing"] .head {
+    transform: rotate(-9deg) translateX(-3px);
+  }
+  [data-mood="pointing"] .arm-left {
+    transform: rotate(-16deg) translate(-5px, -4px) scale(1.08);
+  }
+  [data-mood="pointing"] .arm-right {
+    transform: rotate(-24deg) translateY(2px);
+  }
+  [data-mood="pointing"] .brow {
+    transform: translateY(-4px);
+  }
+  .cif-flip {
+    transform: scaleX(-1);
+  }
+
   [data-mood="confused"] .head {
     transform: rotate(-17deg) translateY(5px);
   }

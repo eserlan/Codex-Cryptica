@@ -31,6 +31,14 @@ describe("HelpHighlightService", () => {
     expect(service.announcement).toMatch(/Add a connection here highlighted/);
   });
 
+  it("gives every highlight a new id, even for the same control", () => {
+    mount(button);
+    service.show("add-connection-button", "Add");
+    const first = service.current?.id;
+    service.show("add-connection-button", "Add");
+    expect(service.current?.id).not.toBe(first);
+  });
+
   it("does nothing, and raises nothing, when the control is missing", () => {
     mount("<p>nothing here</p>");
     expect(service.show("add-connection-button", "Add")).toBe(false);
