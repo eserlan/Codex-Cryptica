@@ -911,6 +911,119 @@ export class CampaignGeneratorService {
   ): AsyncGenerator<
     GenerationEvent | { type: "draft"; draft: GeneratedDraft }
   > {
+    if (request.generatorId === "tome") {
+      if (signal?.aborted) return;
+      yield { type: "started" };
+      const mergedRequest: GeneratorRunRequest = {
+        ...request,
+        options: {
+          ...getThemeDefaults(request.themeId, "tome"),
+          ...request.options,
+        },
+      };
+      const gateway = this.aiGateway;
+      if (
+        !request.useAI ||
+        !this.aiPolicy.isEnabled ||
+        !this.aiPolicy.isAvailable ||
+        !gateway?.completeStream
+      ) {
+        const draft = await this.generateDraft(mergedRequest, signal);
+        if (!signal?.aborted) yield { type: "draft", draft };
+        return;
+      }
+
+      const generator = getGenerator("tome");
+      const bannedNames = new Set([
+        ...(mergedRequest.vaultContext?.bannedNames ?? []),
+        ...(mergedRequest.vaultContext?.existingTitles ?? []),
+      ]);
+      const prompt = buildCampaignTomePrompt(mergedRequest);
+      const events: GenerationEvent[] = [];
+      let wake: (() => void) | undefined;
+      let finished = false;
+      let reviewed: Awaited<ReturnType<typeof generateTomeTwoPass>> = null;
+      const enqueue = (event: GenerationEvent) => {
+        events.push(event);
+        wake?.();
+        wake = undefined;
+      };
+
+      // Run both calls in one background promise *within this request*.
+      // The queue bridges the second pass's provider stream to our async
+      // generator without exposing the unreviewed first pass.
+      const task = generateTomeTwoPass(
+        prompt,
+        async (instruction, message, passSignal) => {
+          if (!instruction.startsWith("You are an independent")) {
+            return completeText(
+              await gateway.complete(message, instruction, {
+                signal: passSignal,
+              }),
+            );
+          }
+          let buffer = "";
+          let completed = false;
+          for await (const event of gateway.completeStream!(
+            message,
+            instruction,
+            { signal: passSignal },
+          )) {
+            if (passSignal?.aborted) throw new Error("Tome generation cancelled");
+            if (event.type === "delta") {
+              buffer += event.text;
+              enqueue(event);
+            } else if (event.type === "field") {
+              enqueue(event);
+            } else if (event.type === "complete") {
+              buffer = event.text || buffer;
+              completed = true;
+            } else if (event.type === "error") {
+              throw new Error(event.error);
+            }
+          }
+          if (!completed) throw new Error("Editorial stream ended without completion");
+          return buffer;
+        },
+        signal,
+      )
+        .then((output) => {
+          reviewed = output;
+        })
+        .catch(() => {
+          // Keep the same local fallback as the buffered path.
+        })
+        .finally(() => {
+          finished = true;
+          wake?.();
+          wake = undefined;
+        });
+
+      while (!finished || events.length > 0) {
+        if (signal?.aborted) return;
+        const event = events.shift();
+        if (event) {
+          yield event;
+        } else {
+          await new Promise<void>((resolve) => {
+            wake = resolve;
+          });
+        }
+      }
+      await task;
+      if (signal?.aborted) return;
+
+      const draft =
+        reviewed && !isTitleBanned(reviewed.title, bannedNames)
+          ? generator.mapOutputToDraft(
+              { ...reviewed, summary: reviewed.summary ?? "" },
+              mergedRequest,
+            )
+          : this.generateLocalDraft(generator, mergedRequest, bannedNames);
+      yield { type: "draft", draft };
+      return;
+    }
+
     if (request.generatorId === "heist") {
       if (signal?.aborted) return;
       yield { type: "started" };
