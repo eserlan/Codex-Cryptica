@@ -29,12 +29,8 @@ import type {
 import { browser } from "$app/environment";
 import { getDB } from "../utils/idb";
 import { hexToRgb } from "../utils/color";
-import {
-  getOpfsRoot,
-  getVaultDir,
-  readFileAsText,
-  writeOpfsFile,
-} from "../utils/opfs";
+import { getOpfsRoot, getVaultDir, readFileAsText } from "../utils/opfs";
+import { updateVaultConfig } from "../utils/vault-config";
 import { sessionModeStore } from "$lib/stores/ui/session-mode.svelte";
 
 import { guestVault } from "./guest-vault.svelte";
@@ -213,24 +209,9 @@ export class ThemeStore {
       },
       async saveToDisk(vaultId, themeId) {
         try {
-          const root = await getOpfsRoot();
-          const vaultDir = await getVaultDir(root, vaultId);
-
-          let config: any = {};
-          try {
-            const json = await readFileAsText(vaultDir, CONFIG_PATH);
-            config = JSON.parse(json);
-          } catch {
-            // New config
-          }
-
-          config.theme = themeId;
-          await writeOpfsFile(
-            CONFIG_PATH,
-            JSON.stringify(config, null, 2),
-            vaultDir,
-            vaultId,
-          );
+          await updateVaultConfig(vaultId, (config) => {
+            config.theme = themeId;
+          });
         } catch (err) {
           console.warn("[ThemeStore] Failed to save theme to disk", err);
         }

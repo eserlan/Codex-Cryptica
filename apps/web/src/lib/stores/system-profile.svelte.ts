@@ -6,14 +6,16 @@ import {
   TOV_SYSTEM_ID,
 } from "schema";
 import { getDB } from "../utils/idb";
-import {
-  getOpfsRoot,
-  getVaultDir,
-  readFileAsText,
-  writeOpfsFile,
-} from "../utils/opfs";
+import { getOpfsRoot, getVaultDir, readFileAsText } from "../utils/opfs";
+import { updateVaultConfig } from "../utils/vault-config";
 
-const CONFIG_PATH = [".codex", "config.json"];
+export interface SystemProfileStorageDependencies {
+  getDB: typeof getDB;
+  getOpfsRoot: typeof getOpfsRoot;
+  getVaultDir: typeof getVaultDir;
+  readFileAsText: typeof readFileAsText;
+  updateVaultConfig: typeof updateVaultConfig;
+}
 
 export interface ISystemProfileStorage {
   loadFromCache(vaultId: string): Promise<string | null>;
@@ -22,78 +24,77 @@ export interface ISystemProfileStorage {
   saveToDisk(vaultId: string, systemId: string | null): Promise<void>;
 }
 
-export const defaultSystemProfileStorage: ISystemProfileStorage = {
-  async loadFromCache(vaultId: string): Promise<string | null> {
-    try {
-      const db = await getDB();
-      const value = await db.get("settings", `system_profile_${vaultId}`);
-      return value ?? null;
-    } catch {
-      return null;
-    }
+export function createSystemProfileStorage(
+  dependencies: SystemProfileStorageDependencies = {
+    getDB,
+    getOpfsRoot,
+    getVaultDir,
+    readFileAsText,
+    updateVaultConfig,
   },
-  async saveToCache(vaultId: string, systemId: string | null): Promise<void> {
-    try {
-      const db = await getDB();
-      if (
-        systemId &&
-        systemId.trim() !== "" &&
-        systemId !== SYSTEM_NEUTRAL_ID
-      ) {
-        await db.put("settings", systemId, `system_profile_${vaultId}`);
-      } else {
-        await db.delete("settings", `system_profile_${vaultId}`);
-      }
-    } catch (err) {
-      console.warn("[SystemProfileStore] Failed to save to cache", err);
-    }
-  },
-  async loadFromDisk(vaultId: string): Promise<string | null> {
-    try {
-      const root = await getOpfsRoot();
-      const vaultDir = await getVaultDir(root, vaultId);
-      const json = await readFileAsText(vaultDir, CONFIG_PATH);
-      const config = JSON.parse(json);
-      return config.systemId ?? config.system ?? null;
-    } catch {
-      return null;
-    }
-  },
-  async saveToDisk(vaultId: string, systemId: string | null): Promise<void> {
-    // fallow-ignore-next-line code-duplication
-    try {
-      const root = await getOpfsRoot();
-      const vaultDir = await getVaultDir(root, vaultId);
-      let config: Record<string, unknown> = {};
+): ISystemProfileStorage {
+  return {
+    async loadFromCache(vaultId: string): Promise<string | null> {
       try {
-        const json = await readFileAsText(vaultDir, CONFIG_PATH);
-        config = JSON.parse(json);
+        const db = await dependencies.getDB();
+        const value = await db.get("settings", `system_profile_${vaultId}`);
+        return value ?? null;
       } catch {
-        // Fresh config if not existing
+        return null;
       }
-
-      if (
-        systemId &&
-        systemId.trim() !== "" &&
-        systemId !== SYSTEM_NEUTRAL_ID
-      ) {
-        config.systemId = systemId;
-      } else {
-        delete config.systemId;
-        delete config.system;
+    },
+    async saveToCache(vaultId: string, systemId: string | null): Promise<void> {
+      try {
+        const db = await dependencies.getDB();
+        if (
+          systemId &&
+          systemId.trim() !== "" &&
+          systemId !== SYSTEM_NEUTRAL_ID
+        ) {
+          await db.put("settings", systemId, `system_profile_${vaultId}`);
+        } else {
+          await db.delete("settings", `system_profile_${vaultId}`);
+        }
+      } catch (err) {
+        console.warn("[SystemProfileStore] Failed to save to cache", err);
       }
+    },
+    async loadFromDisk(vaultId: string): Promise<string | null> {
+      try {
+        const root = await dependencies.getOpfsRoot();
+        const vaultDir = await dependencies.getVaultDir(root, vaultId);
+        const json = await dependencies.readFileAsText(vaultDir, [
+          ".codex",
+          "config.json",
+        ]);
+        const config = JSON.parse(json);
+        return config.systemId ?? config.system ?? null;
+      } catch {
+        return null;
+      }
+    },
+    async saveToDisk(vaultId: string, systemId: string | null): Promise<void> {
+      try {
+        await dependencies.updateVaultConfig(vaultId, (config) => {
+          if (
+            systemId &&
+            systemId.trim() !== "" &&
+            systemId !== SYSTEM_NEUTRAL_ID
+          ) {
+            config.systemId = systemId;
+          } else {
+            delete config.systemId;
+            delete config.system;
+          }
+        });
+      } catch (err) {
+        console.warn("[SystemProfileStore] Failed to save to disk", err);
+      }
+    },
+  };
+}
 
-      await writeOpfsFile(
-        CONFIG_PATH,
-        JSON.stringify(config, null, 2),
-        vaultDir,
-        vaultId,
-      );
-    } catch (err) {
-      console.warn("[SystemProfileStore] Failed to save to disk", err);
-    }
-  },
-};
+export const defaultSystemProfileStorage = createSystemProfileStorage();
 
 export class SystemProfileStore {
   activeVaultId = $state<string | null>(null);
@@ -103,6 +104,7 @@ export class SystemProfileStore {
 
   private registry: GameSystemRegistry;
   private storage: ISystemProfileStorage;
+  private initGeneration = 0;
 
   activeProfile = $derived.by(() => {
     return this.registry.get(this.vaultSystemId);
@@ -136,26 +138,31 @@ export class SystemProfileStore {
   }
 
   async init(vaultId?: string | null): Promise<void> {
+    const generation = ++this.initGeneration;
     this.activeVaultId = vaultId ?? null;
     if (!this.activeVaultId) {
       this.vaultSystemId = null;
       this.isInitialized = true;
+      this.isLoading = false;
       return;
     }
 
+    const selectedVaultId = this.activeVaultId;
     this.isLoading = true;
+    this.isInitialized = false;
     try {
       // 1. Try cache first for fast paint
-      let systemId = await this.storage.loadFromCache(this.activeVaultId);
+      let systemId = await this.storage.loadFromCache(selectedVaultId);
 
       // 2. If not in cache, fallback to reading disk
       if (!systemId) {
-        systemId = await this.storage.loadFromDisk(this.activeVaultId);
+        systemId = await this.storage.loadFromDisk(selectedVaultId);
         if (systemId) {
-          await this.storage.saveToCache(this.activeVaultId, systemId);
+          await this.storage.saveToCache(selectedVaultId, systemId);
         }
       }
 
+      if (generation !== this.initGeneration) return;
       this.vaultSystemId = systemId;
       this.isInitialized = true;
     } catch (err) {
@@ -163,14 +170,19 @@ export class SystemProfileStore {
         "[SystemProfileStore] Init error, falling back to neutral",
         err,
       );
-      this.vaultSystemId = null;
-      this.isInitialized = true;
+      if (generation === this.initGeneration) {
+        this.vaultSystemId = null;
+        this.isInitialized = true;
+      }
     } finally {
-      this.isLoading = false;
+      if (generation === this.initGeneration) this.isLoading = false;
     }
   }
 
   async setVaultSystemId(systemId: string | null): Promise<void> {
+    this.initGeneration += 1;
+    this.isLoading = false;
+    this.isInitialized = true;
     const normalized =
       systemId && systemId.trim() !== "" ? systemId.trim() : null;
     this.vaultSystemId = normalized;

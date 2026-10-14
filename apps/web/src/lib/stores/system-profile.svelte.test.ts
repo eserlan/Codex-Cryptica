@@ -89,6 +89,53 @@ describe("SystemProfileStore (#3943)", () => {
     );
   });
 
+  it("keeps the newest vault profile when initialization completes out of order", async () => {
+    let resolveVaultA!: (value: string | null) => void;
+    const delayedStorage: ISystemProfileStorage = {
+      ...mockStorage,
+      loadFromCache: vi.fn((vaultId: string) =>
+        vaultId === "vault-a"
+          ? new Promise<string | null>((resolve) => {
+              resolveVaultA = resolve;
+            })
+          : Promise.resolve(TOV_SYSTEM_ID),
+      ),
+    };
+    const delayedStore = new SystemProfileStore(registry, delayedStorage);
+
+    const olderInit = delayedStore.init("vault-a");
+    await delayedStore.init("vault-b");
+    resolveVaultA("custom-vault-a");
+    await olderInit;
+
+    expect(delayedStore.activeVaultId).toBe("vault-b");
+    expect(delayedStore.vaultSystemId).toBe(TOV_SYSTEM_ID);
+    expect(delayedStore.isLoading).toBe(false);
+  });
+
+  it("does not restore a profile after the active vault is cleared during initialization", async () => {
+    let resolvePending!: (value: string | null) => void;
+    const delayedStorage: ISystemProfileStorage = {
+      ...mockStorage,
+      loadFromCache: vi.fn(
+        () =>
+          new Promise<string | null>((resolve) => {
+            resolvePending = resolve;
+          }),
+      ),
+    };
+    const delayedStore = new SystemProfileStore(registry, delayedStorage);
+
+    const pendingInit = delayedStore.init("vault-a");
+    await delayedStore.init(null);
+    resolvePending(TOV_SYSTEM_ID);
+    await pendingInit;
+
+    expect(delayedStore.activeVaultId).toBeNull();
+    expect(delayedStore.vaultSystemId).toBeNull();
+    expect(delayedStore.isLoading).toBe(false);
+  });
+
   it("allows opting into Tales of the Valiant at vault level and persists to cache and disk", async () => {
     await store.init("campaign-a");
     expect(store.isNeutral).toBe(true);
