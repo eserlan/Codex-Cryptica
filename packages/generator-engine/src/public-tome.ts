@@ -44,6 +44,8 @@ export interface TomeGeneratorOptions {
   avoidNames?: string[];
   /** Recent randomly selected mysteries, to avoid repeats in this session. */
   avoidDeceptionKeys?: string[];
+  /** Recent delivered mystery text, including editorially corrected mysteries. */
+  avoidDeceptions?: string[];
 }
 
 export interface ResolvedTome {
@@ -154,6 +156,7 @@ type DeceptionProfile =
 function pickDeceptionProfile(
   genre: string,
   avoidedKeys: string[] | undefined,
+  avoidedDeceptions: string[] | undefined,
   rng: Rng,
 ): { profile: DeceptionProfile; key: string } {
   const profiles = tomeConfig.deceptionProfilesByTheme[genre] ??
@@ -170,7 +173,9 @@ function pickDeceptionProfile(
     ];
   const choices = profiles.map((profile, index) => ({ profile, index }));
   const eligible = choices.filter(
-    ({ index }) => !avoidedKeys?.includes(`${genre}:${index}`),
+    ({ profile, index }) =>
+      !avoidedKeys?.includes(`${genre}:${index}`) &&
+      !avoidedDeceptions?.includes(profile.deception),
   );
   const selected = pickFrom(eligible.length ? eligible : choices, rng);
   return { profile: selected.profile, key: `${genre}:${selected.index}` };
@@ -245,7 +250,12 @@ export function resolveTome(
   const associatedLocation = pickFrom(locations, rng);
 
   const { profile: selectedDeception, key: deceptionKey } =
-    pickDeceptionProfile(genre, options.avoidDeceptionKeys, rng);
+    pickDeceptionProfile(
+      genre,
+      options.avoidDeceptionKeys,
+      options.avoidDeceptions,
+      rng,
+    );
   const deceptionProfile = selectedDeception;
   const bookClaim = deceptionProfile.claim;
   const deceptionOrFlaw = deceptionProfile.deception;
@@ -317,6 +327,10 @@ Follow these strict writing guidelines:
     options.avoidNames && options.avoidNames.length > 0
       ? avoidNamesExcludingContext(options.avoidNames, resolved.campaignContext)
       : "";
+  const recentDeceptionBlock =
+    options.avoidDeceptions && options.avoidDeceptions.length > 0
+      ? `### Recently used mystery profiles\nDo not repeat these recent deceptions unless the requested campaign context requires one: ${options.avoidDeceptions.join(" | ")}\n`
+      : "";
 
   const userMessage = `Generate a comprehensive, system-neutral Tome / Forbidden Book entry for a TTRPG campaign.
 
@@ -332,6 +346,7 @@ Follow these strict writing guidelines:
 ${resolved.concept ? `- **User Concept / Working Title**: ${resolved.concept}` : ""}
 ${formatCampaignContextBlock(resolved.campaignContext)}
 ${sessionContext ? `### Recent Session Context:\n${sessionContext}\n` : ""}
+${recentDeceptionBlock}
 ${avoidBlock}
 ${NAME_BAN_PROMPT}
 
@@ -502,10 +517,6 @@ export function ensureGroundTruthInLore(
   lore: string,
   resolved: Partial<ResolvedTome>,
 ): string {
-  if (/### Ground Truth for the GM/i.test(lore)) {
-    return lore;
-  }
-
   const claim =
     resolved.bookClaim ??
     "The surface text asserts a ritual or historical premise";
@@ -524,6 +535,13 @@ export function ensureGroundTruthInLore(
 - **The Deception / Flaw**: ${deception}
 - **The Objective Truth**: ${truth}
 - **Actionable Clue**: ${clue}\n\n`;
+
+  if (/### Ground Truth for the GM/i.test(lore)) {
+    return lore.replace(
+      /### Ground Truth for the GM\s*[\s\S]*?(?=\n### |$)/i,
+      groundTruthBlock.trimEnd(),
+    );
+  }
 
   if (/### At the Table Reference/i.test(lore)) {
     return lore.replace(
@@ -550,22 +568,40 @@ export function parseTomeResponse(
     const data = parseFencedJson<Record<string, unknown>>(text);
     if (!data || typeof data !== "object") return fallback;
 
-    let rawLore = parseTextString(data.lore, fallback.lore);
-    if (resolved) {
-      rawLore = ensureGroundTruthInLore(rawLore, resolved);
-    }
-
     const authored =
       data.canonicalFacts && typeof data.canonicalFacts === "object"
         ? (data.canonicalFacts as Record<string, unknown>)
         : {};
+    const finalResolved =
+      resolved && allowEditorialCorrections
+        ? {
+            ...fallbackResolved,
+            bookClaim: textOr(authored.bookClaim, fallbackResolved.bookClaim),
+            deceptionOrFlaw: textOr(
+              authored.deception,
+              fallbackResolved.deceptionOrFlaw,
+            ),
+            objectiveTruth: textOr(
+              authored.objectiveTruth,
+              fallbackResolved.objectiveTruth,
+            ),
+            actionableClue: textOr(
+              authored.actionableClue,
+              fallbackResolved.actionableClue,
+            ),
+          }
+        : fallbackResolved;
+    let rawLore = parseTextString(data.lore, fallback.lore);
+    if (resolved) {
+      rawLore = ensureGroundTruthInLore(rawLore, finalResolved);
+    }
 
     return {
       type: "item",
       ...(resolved
         ? {
             tomeFacts: {
-              ...buildTomeFacts(fallbackResolved, {
+              ...buildTomeFacts(finalResolved, {
                 centralRule: authored.centralRule as string | undefined,
                 productionMethod: authored.productionMethod as
                   string | undefined,
@@ -920,13 +956,30 @@ function checkGenreFidelity(
   }
 }
 
+const FACT_NEGATION_TOKENS = new Set([
+  "cannot",
+  "neither",
+  "never",
+  "nor",
+  "not",
+  "no",
+  "without",
+]);
+
 function sentenceTokens(sentence: string): Set<string> {
   return new Set(
     sentence
       .toLowerCase()
+      .replace(/\b(can)['’]t\b/g, "$1not")
+      .replace(/\b(won)['’]t\b/g, "will not")
+      .replace(/\b(shan)['’]t\b/g, "shall not")
+      .replace(
+        /\b(can|could|did|do|does|had|has|have|is|are|was|were|should|would|must|might|need)n['’]t\b/g,
+        "$1 not",
+      )
       .replace(/[^a-z0-9\s]/g, " ")
       .split(/\s+/)
-      .filter((w) => w.length > 3),
+      .filter((w) => w.length > 3 || FACT_NEGATION_TOKENS.has(w)),
   );
 }
 
@@ -934,6 +987,65 @@ function similarity(a: Set<string>, b: Set<string>): number {
   let shared = 0;
   for (const w of a) if (b.has(w)) shared += 1;
   return shared / (a.size + b.size - shared || 1);
+}
+
+function factEchoRatio(fact: string, text: string): number {
+  const tokens = sentenceTokens(fact);
+  if (tokens.size < 4) return 1;
+  const factIsNegated = [...tokens].some((token) =>
+    FACT_NEGATION_TOKENS.has(token),
+  );
+  const sentences = text.split(/(?<=[.!?])\s+|\n+/);
+  let bestCoverage = 0;
+  for (const sentence of sentences) {
+    const body = sentenceTokens(sentence);
+    let covered = 0;
+    for (const token of tokens) if (body.has(token)) covered += 1;
+    const coverage = covered / tokens.size;
+    if (coverage >= 0.5) {
+      const sentenceIsNegated = [...body].some((token) =>
+        FACT_NEGATION_TOKENS.has(token),
+      );
+      if (sentenceIsNegated !== factIsNegated) return 0;
+    }
+    bestCoverage = Math.max(bestCoverage, coverage);
+  }
+  return bestCoverage;
+}
+
+function revisedFactsAreReflected(
+  revised: PublicGeneratorOutput,
+  resolved: ResolvedTome,
+): boolean {
+  if (!revised.tomeFacts) return true;
+  const originalFacts = {
+    bookClaim: resolved.bookClaim,
+    deception: resolved.deceptionOrFlaw,
+    objectiveTruth: resolved.objectiveTruth,
+    actionableClue: resolved.actionableClue,
+  };
+  const fields = [
+    "bookClaim",
+    "deception",
+    "objectiveTruth",
+    "actionableClue",
+  ] as const;
+  return fields.every((field) => {
+    const fact = revised.tomeFacts?.[field] ?? "";
+    return (
+      fact === originalFacts[field] ||
+      factEchoRatio(fact, revised.content) >= 0.5
+    );
+  });
+}
+
+function isAcceptedTomeRevision(
+  revised: PublicGeneratorOutput | null,
+  resolved: ResolvedTome,
+): revised is PublicGeneratorOutput {
+  if (!revised) return false;
+  const audit = auditTomeConsistency(revised, resolved);
+  return audit.valid && revisedFactsAreReflected(revised, resolved);
 }
 
 /** Flags near-verbatim restatement of one sentence in several sections. */
@@ -1139,13 +1251,10 @@ export async function generateTomeTwoPass(
     );
     if (signal?.aborted) return null;
     const revised = candidate(revisedText, true);
-    if (revised) {
-      const revisedAudit = auditTomeConsistency(revised, resolved);
-      if (revisedAudit.valid) {
-        // The editorial model may rephrase the facts, but they remain locked
-        // to the original draft's semantic ledger for downstream consumers.
-        return revised;
-      }
+    if (isAcceptedTomeRevision(revised, resolved)) {
+      // The editorial model may rephrase the facts, but they remain locked
+      // to the original draft's semantic ledger for downstream consumers.
+      return revised;
     }
   } catch {
     // Second-pass failure must never throw away a good first-pass draft.

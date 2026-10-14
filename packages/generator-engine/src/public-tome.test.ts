@@ -328,7 +328,7 @@ describe("public-tome generator", () => {
   });
 
   describe("ensureGroundTruthInLore", () => {
-    it("preserves existing Ground Truth for the GM without duplicating", () => {
+    it("reconciles existing Ground Truth for the GM without duplicating", () => {
       const existingLore = `### At the Table Reference
 
 ### Ground Truth for the GM
@@ -341,8 +341,9 @@ describe("public-tome generator", () => {
         bookClaim: "Fallback claim",
       });
 
-      expect(result).toBe(existingLore);
-      expect(result).not.toContain("Fallback claim");
+      expect(result).toContain("Fallback claim");
+      expect(result).not.toContain("Custom claim");
+      expect(result.match(/### Ground Truth for the GM/g)).toHaveLength(1);
     });
   });
 
@@ -677,6 +678,19 @@ ${duplicatedParagraph}
       expect(next.objectiveTruth).not.toBe(first.objectiveTruth);
     });
 
+    it("also excludes recently delivered mystery text", () => {
+      const first = resolveTome({ genre: "Classic Fantasy" }, seededRng(7));
+      const next = resolveTome(
+        {
+          genre: "Classic Fantasy",
+          avoidDeceptions: [first.deceptionOrFlaw],
+        },
+        seededRng(7),
+      );
+
+      expect(next.deceptionOrFlaw).not.toBe(first.deceptionOrFlaw);
+    });
+
     it("has broad Classic Fantasy mystery variety", () => {
       const keys = new Set<string>();
       for (let seed = 1; seed < 120; seed++) {
@@ -813,6 +827,9 @@ ${duplicatedParagraph}
             "Compiled by a surveyor.",
             "### Contents & Revelations",
             "The eastern glyph had been swapped with its western counterpart.",
+            ...(corrected
+              ? ["The compass swaps east and west, preserving north and south."]
+              : []),
             "### Risks & Costs of Study",
             "Rash explorers fall into pits.",
             "### Adventure Hooks",
@@ -849,7 +866,48 @@ ${duplicatedParagraph}
       expect(result?.tomeFacts?.actionableClue).toBe(
         "The compass swaps east and west, preserving north and south.",
       );
+      expect(result?.lore).toContain(
+        "The compass swaps east and west, preserving north and south.",
+      );
       expect(calls).toBe(2);
+    });
+
+    it("rejects corrected canonical facts that are absent from unchanged narrative prose", async () => {
+      const prompt = buildTomePrompt({}, undefined, seededRng(13));
+      const contradictory = JSON.parse(response(content));
+      contradictory.canonicalFacts.actionableClue =
+        "A hidden blue cipher reveals the eastern gate's lunar alignment.";
+      const result = await generateTomeTwoPass(
+        prompt,
+        async (_system, message) =>
+          message.includes("EDITORIAL PASS 2")
+            ? JSON.stringify(contradictory)
+            : response(content),
+      );
+
+      expect(result?.tomeFacts?.actionableClue).not.toBe(
+        contradictory.canonicalFacts.actionableClue,
+      );
+      expect(result?.content).toBe(content);
+    });
+
+    it("rejects a contracted negated objective truth when unchanged prose states the opposite", async () => {
+      const prompt = buildTomePrompt({}, undefined, seededRng(13));
+      const contradictory = JSON.parse(response(content));
+      contradictory.canonicalFacts.objectiveTruth =
+        "The river-clay vessel mustn't dry in open air.";
+      const result = await generateTomeTwoPass(
+        prompt,
+        async (_system, message) =>
+          message.includes("EDITORIAL PASS 2")
+            ? JSON.stringify(contradictory)
+            : response(content),
+      );
+
+      expect(result?.tomeFacts?.objectiveTruth).toBe(
+        prompt.resolved.objectiveTruth,
+      );
+      expect(result?.content).toBe(content);
     });
 
     it("retains a valid first draft when the editorial response is malformed", async () => {

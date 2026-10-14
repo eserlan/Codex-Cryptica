@@ -6,6 +6,8 @@ import {
   BANNED_NAMES,
   NAME_BAN_PROMPT,
   generateLanguageLocal,
+  tomeConfig,
+  type PublicGeneratorOutput,
 } from "generator-engine";
 import { sessionHubStore } from "$lib/stores/session-hub.svelte";
 import { generationInputHistoryStore } from "./generation-input-history";
@@ -666,29 +668,38 @@ describe("DefaultGeneratorEngine", () => {
       expect(res.labels).toContain("item");
     });
 
-    it("avoids and records the selected mystery across local tome generations", async () => {
-      let history: string[] = [];
+    it("avoids recent mystery text and records the delivered result on local and AI fallback", async () => {
+      const profiles = tomeConfig.deceptionProfilesByTheme["Classic Fantasy"];
+      const allowed = profiles[profiles.length - 1];
+      const recentMysteries = profiles
+        .slice(0, -1)
+        .map((profile) => profile.deception);
       const recent = vi
         .spyOn(generationInputHistoryStore, "recent")
-        .mockImplementation(() => history);
-      const record = vi
-        .spyOn(generationInputHistoryStore, "record")
-        .mockImplementation((_generatorId, summary) => {
-          if (summary) history = [summary, ...history].slice(0, 3);
-        });
+        .mockImplementation((generatorId) =>
+          generatorId === "tome-mysteries" ? recentMysteries : [],
+        );
+      const record = vi.spyOn(generationInputHistoryStore, "record");
 
       try {
-        await engine.generateTome({ useAI: false });
-        const firstKey = history[0]?.match(/deceptionKey: ([^,|]+)/)?.[1];
-        expect(firstKey).toBeTruthy();
+        for (const useAI of [false, true]) {
+          if (useAI) {
+            mockClientManager.getModel.mockRejectedValueOnce(
+              new Error("AI network error"),
+            );
+          }
+          const result = (await engine.generateTome({
+            genre: "Classic Fantasy",
+            useAI,
+          })) as PublicGeneratorOutput;
 
-        await engine.generateTome({ useAI: false });
-        const secondKey = history[0]?.match(/deceptionKey: ([^,|]+)/)?.[1];
-
-        expect(secondKey).toBeTruthy();
-        expect(secondKey).not.toBe(firstKey);
-        expect(recent).toHaveBeenCalledTimes(2);
-        expect(record).toHaveBeenCalledTimes(2);
+          expect(result.tomeFacts?.deception).toBe(allowed.deception);
+          expect(record).toHaveBeenLastCalledWith(
+            "tome-mysteries",
+            result.tomeFacts?.deception,
+          );
+        }
+        expect(recent).toHaveBeenCalledWith("tome-mysteries");
       } finally {
         recent.mockRestore();
         record.mockRestore();
@@ -734,7 +745,9 @@ describe("DefaultGeneratorEngine", () => {
         "### Quick Checks & Mechanics",
         "- **The Failure Condition**: Washing ruptures the vessel.",
       ].join("\n\n");
-      const response = (content: string) =>
+      const correctedDeception =
+        "A censor falsely claimed the clay vessel must be immersed in river water.";
+      const response = (content: string, deception?: string) =>
         JSON.stringify({
           title: "The Vessel Manuscript",
           summary: "An altered spirit-binding rite.",
@@ -744,6 +757,7 @@ describe("DefaultGeneratorEngine", () => {
             centralRule: "Dry the vessel in open air.",
             productionMethod: "Handwritten vellum.",
             errorSource: "A censor altered the original line.",
+            ...(deception ? { deception } : {}),
           },
           labels: ["tome", "item"],
           connections: [],
@@ -759,19 +773,35 @@ describe("DefaultGeneratorEngine", () => {
           },
         })
         .mockResolvedValueOnce({
-          response: { text: () => response(fullContent) },
+          response: {
+            text: () =>
+              response(
+                `${fullContent}\n\n${correctedDeception}`,
+                correctedDeception,
+              ),
+          },
         });
       mockClientManager.getModel.mockResolvedValue({ generateContent });
+      const record = vi.spyOn(generationInputHistoryStore, "record");
 
-      const result = await engine.generateTome({
-        theme: "Classic Fantasy",
-        useAI: true,
-      });
+      try {
+        const result = (await engine.generateTome({
+          theme: "Classic Fantasy",
+          useAI: true,
+        })) as PublicGeneratorOutput;
 
-      expect(generateContent).toHaveBeenCalledTimes(2);
-      expect(result.aiFallback).not.toBe(true);
-      expect(result.content).toContain("The vessel rests");
-      expect(result.content).not.toContain("soul-forged blade");
+        expect(generateContent).toHaveBeenCalledTimes(2);
+        expect(result.aiFallback).not.toBe(true);
+        expect(result.content).toContain("The vessel rests");
+        expect(result.content).not.toContain("soul-forged blade");
+        expect(result.tomeFacts?.deception).toBe(correctedDeception);
+        expect(record).toHaveBeenLastCalledWith(
+          "tome-mysteries",
+          correctedDeception,
+        );
+      } finally {
+        record.mockRestore();
+      }
     });
 
     it("falls back when AI tome output fails the consistency audit", async () => {

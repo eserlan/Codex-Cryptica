@@ -62,6 +62,23 @@ async function runWithSingleRepair<
   return second.rejected ? first.output : second.output;
 }
 
+function recordTomeHistory(
+  output: GeneratorOutput,
+  inputSummary: string,
+  selectedDeceptionKey?: string,
+): void {
+  generationInputHistoryStore.record(
+    "tome",
+    selectedDeceptionKey
+      ? `${inputSummary}, deceptionKey: ${selectedDeceptionKey}`
+      : inputSummary,
+  );
+  generationInputHistoryStore.record(
+    "tome-mysteries",
+    (output as PublicGeneratorOutput).tomeFacts?.deception,
+  );
+}
+
 export class GeneratorEngineSpecialized extends GeneratorEngineWorldbuilding {
   /** Dungeon & Delve generation delegates to the generator-engine package. */
   async generateDungeon(
@@ -199,31 +216,40 @@ export class GeneratorEngineSpecialized extends GeneratorEngineWorldbuilding {
   ): Promise<GeneratorOutput> {
     const { useAI, ...tomeOptions } = options;
     const recentInputs = generationInputHistoryStore.recent("tome");
+    const recentMysteries =
+      generationInputHistoryStore.recent("tome-mysteries");
     const avoidDeceptionKeys = recentInputs.flatMap((entry) => {
       const match = entry.match(/deceptionKey: ([^,|]+)/);
       return match ? [match[1].trim()] : [];
     });
-    const variedOptions = { ...tomeOptions, avoidDeceptionKeys };
+    const variedOptions = {
+      ...tomeOptions,
+      avoidDeceptionKeys,
+      avoidDeceptions: recentMysteries,
+    };
+    let inputSummary = "";
+    let selectedDeceptionKey: string | undefined;
     const generateLocal = () => {
       const resolved = resolveTome(variedOptions);
+      inputSummary = summarizeResolvedInputs({
+        ...resolved,
+        deceptionKey: "",
+      });
+      selectedDeceptionKey = resolved.deceptionKey;
       const output = generateTomeLocalFromResolved(resolved);
-      generationInputHistoryStore.record(
-        "tome",
-        `deceptionKey: ${resolved.deceptionKey}`,
-      );
       return output as GeneratorOutput;
     };
-    return this.runWithAIFallback(
+    const output = await this.runWithAIFallback(
       useAI,
       async () => {
         const { systemInstruction, userMessage, resolved } = buildTomePrompt(
           variedOptions,
           getSessionContext() + formatRecentInputsNote(recentInputs),
         );
-        generationInputHistoryStore.record(
-          "tome",
-          summarizeResolvedInputs(resolved),
-        );
+        inputSummary = summarizeResolvedInputs({
+          ...resolved,
+          deceptionKey: "",
+        });
         let pass = 0;
         const reviewed = await generateTomeTwoPass(
           { systemInstruction, userMessage, resolved },
@@ -239,5 +265,7 @@ export class GeneratorEngineSpecialized extends GeneratorEngineWorldbuilding {
       },
       generateLocal,
     );
+    recordTomeHistory(output, inputSummary, selectedDeceptionKey);
+    return output;
   }
 }
