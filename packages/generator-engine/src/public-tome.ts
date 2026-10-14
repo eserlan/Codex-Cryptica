@@ -12,7 +12,7 @@ import type {
   PublicGeneratorOutput,
   TomeCanonicalFacts,
 } from "./public-generator-adapters";
-import type { SuggestedConnection } from "./campaign-generator-types";
+import type { SuggestedConnection, GenerationEvent } from "./campaign-generator-types";
 import { NAME_BAN_PROMPT } from "./public-npc";
 import {
   type Rng,
@@ -1136,9 +1136,7 @@ export async function* streamTomeTwoPass(
     systemInstruction: string,
     message: string,
     signal?: AbortSignal,
-  ) => AsyncIterable<
-    { type: "started" | "delta" | "complete" | "error"; text?: string; error?: string }
-  >,
+  ) => AsyncIterable<GenerationEvent>,
   signal?: AbortSignal,
 ): AsyncGenerator<TomeStreamingReviewEvent> {
   if (signal?.aborted) return;
