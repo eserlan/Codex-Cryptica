@@ -77,6 +77,8 @@ export interface VaultMetadataRecord {
   description?: string;
   /** Local OPFS path or external URL to the campaign cover art. */
   coverImage?: string;
+  /** Optional game system profile ID for this vault (e.g. 'tales-of-the-valiant'). */
+  systemId?: string;
   /** Last update timestamp. */
   lastModified: number;
 }

@@ -21,6 +21,7 @@ export interface VaultMetadataRecord {
   tagline?: string;
   description?: string;
   coverImage?: string;
+  systemId?: string;
   lastModified: number;
 }
 
@@ -30,6 +31,7 @@ export interface WorldMetadata {
   tagline?: string;
   description?: string;
   coverImage?: string;
+  systemId?: string;
 }
 
 export interface RecentActivity {
@@ -187,6 +189,7 @@ export class WorldServiceImplementation {
       tagline: record?.tagline,
       description: record?.description,
       coverImage: record?.coverImage,
+      systemId: record?.systemId,
     };
   }
 
@@ -203,6 +206,7 @@ export class WorldServiceImplementation {
       tagline: metadata.tagline ?? existing?.tagline ?? undefined,
       description: metadata.description ?? existing?.description ?? undefined,
       coverImage: metadata.coverImage ?? existing?.coverImage ?? undefined,
+      systemId: metadata.systemId ?? existing?.systemId ?? undefined,
       lastModified: this.getNow(),
     };
 
