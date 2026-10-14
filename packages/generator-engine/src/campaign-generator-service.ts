@@ -884,6 +884,7 @@ export class CampaignGeneratorService {
       bannedNames,
       signal,
     );
+    signal?.throwIfAborted();
     return (
       aiDraft ?? this.generateLocalDraft(generator, mergedRequest, bannedNames)
     );
@@ -973,7 +974,13 @@ export class CampaignGeneratorService {
 
     if (!this.aiGateway?.completeStream || !isStreamableGenericGenerator) {
       yield { type: "started" };
-      const draft = await this.generateDraft(request, signal);
+      let draft: GeneratedDraft;
+      try {
+        draft = await this.generateDraft(request, signal);
+      } catch (error) {
+        if (signal?.aborted) return;
+        throw error;
+      }
       if (!signal?.aborted) yield { type: "draft", draft };
       return;
     }
