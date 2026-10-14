@@ -139,6 +139,7 @@ export const howDoIRunARogueOrScoutWithoutSplittingTheParty: AnswerConfigInput =
       "how-do-you-run-a-heist-in-a-tabletop-rpg",
       "how-do-i-run-hackers-or-netrunners-without-splitting-the-party",
       "how-do-i-run-common-character-roles-in-a-fantasy-rpg",
+      "how-do-i-run-a-stealth-mission-in-a-tabletop-rpg",
     ],
     discovery: {
       id: "answer-run-rogue-scout-without-splitting-party",

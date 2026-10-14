@@ -191,6 +191,7 @@ export const howDoIRunSpiesAndInfiltratorsInAnRpg: AnswerConfigInput = {
     "how-do-i-run-a-rogue-or-scout-without-splitting-the-party",
     "how-do-i-run-character-roles-in-an-investigative-horror-rpg",
     "how-do-i-run-common-character-roles-in-a-fantasy-rpg",
+    "how-do-i-run-a-stealth-mission-in-a-tabletop-rpg",
   ],
   discovery: {
     id: "answer-run-spies-infiltrators-rpg",

@@ -183,6 +183,7 @@ export const howDoIImproviseNpcsInDnd: AnswerConfigInput = {
     "how-do-i-get-players-to-engage-with-my-campaign-world",
     "which-dice-do-i-roll-in-dnd-and-when",
     "how-do-i-roleplay-npcs-if-im-not-good-at-acting",
+    "how-do-i-run-a-stealth-mission-in-a-tabletop-rpg",
   ],
   discovery: {
     id: "answer-improvise-npcs-in-dnd",
