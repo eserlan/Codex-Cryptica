@@ -70,6 +70,14 @@ export class GeneratorEngineBase {
     );
   }
 
+  /** First draft in a multi-pass generator: never show this unreviewed JSON. */
+  protected runModelWithoutPreview(
+    systemInstruction: string,
+    userMessage: string,
+  ): Promise<string> {
+    return this.transport.runModel(systemInstruction, userMessage, undefined, false);
+  }
+
   protected startChat(systemInstruction: string) {
     return this.transport.startChat(systemInstruction);
   }
