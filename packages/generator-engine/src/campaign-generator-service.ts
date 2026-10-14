@@ -1,5 +1,6 @@
 import {
   buildCampaignDungeonPrompt,
+  buildCampaignTomePrompt,
   getGenerator,
   isTitleBanned,
 } from "./campaign-generator-registry";
@@ -31,6 +32,7 @@ export { parseConnections };
 import type { PublicGeneratorOutput } from "./public-generator-adapters";
 import type { StarSystemBody } from "./public-star-system";
 import { parseLanguageResponse } from "./public-language";
+import { generateTomeTwoPass } from "./public-tome";
 import {
   buildLanguageRepairPrompt,
   classifyAILanguageQuality,
@@ -631,6 +633,37 @@ export class CampaignGeneratorService {
       ...(mergedRequest.vaultContext?.existingTitles ?? []),
     ]);
 
+    // Tomes need an independent second editorial turn, not just a prompt
+    // telling the first model to proofread itself.
+    if (canUseAI && this.aiGateway && mergedRequest.generatorId === "tome") {
+      try {
+        const prompt = buildCampaignTomePrompt(mergedRequest);
+        const gateway = this.aiGateway;
+        const reviewed = await generateTomeTwoPass(
+          prompt,
+          async (instruction, message) =>
+            completeText(await gateway.complete(message, instruction)),
+        );
+        if (reviewed && !isTitleBanned(reviewed.title, bannedNames)) {
+          this.onPromptMetrics?.(
+            promptMetrics({
+              request: mergedRequest,
+              fullPrompt: prompt.userMessage,
+              sentPrompt: prompt.userMessage,
+              usedInteraction: false,
+              replayed: false,
+            }),
+          );
+          return generator.mapOutputToDraft(
+            { ...reviewed, summary: reviewed.summary ?? "" },
+            mergedRequest,
+          );
+        }
+      } catch {
+        // An invalid first or second pass falls back to local generation.
+      }
+    }
+
     if (canUseAI && this.aiGateway && mergedRequest.generatorId === "heist") {
       try {
         const output = await generateCampaignHeist(
@@ -686,6 +719,7 @@ export class CampaignGeneratorService {
       mergedRequest.generatorId !== "dungeon" &&
       mergedRequest.generatorId !== "language" &&
       mergedRequest.generatorId !== "heist" &&
+      mergedRequest.generatorId !== "tome" &&
       mergedRequest.generatorId !== "council-vote"
     ) {
       const { fullPrompt, interaction } = buildGenericGeneratorPrompt(
@@ -835,8 +869,11 @@ export class CampaignGeneratorService {
       return;
     }
 
+    // Multi-pass tomes must not stream an unreviewed draft as final output.
     const isStreamableGenericGenerator =
-      request.generatorId !== "dungeon" && request.generatorId !== "language";
+      request.generatorId !== "dungeon" &&
+      request.generatorId !== "language" &&
+      request.generatorId !== "tome";
 
     if (!this.aiGateway?.completeStream || !isStreamableGenericGenerator) {
       yield { type: "started" };
