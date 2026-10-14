@@ -160,7 +160,7 @@ vi.mock("$lib/content/changelog/releases.json", () => ({
   default: [],
 }));
 vi.mock("schema", async (importOriginal) => {
-  const actual = await importOriginal();
+  const actual = await importOriginal<typeof import("schema")>();
   return {
     ...actual,
     THEMES: {},
