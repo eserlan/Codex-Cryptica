@@ -678,6 +678,70 @@ describe("DefaultGeneratorEngine", () => {
       expect(res.content).toBeDefined();
     });
 
+
+    it("returns the corrected second-pass tome rather than the first AI draft", async () => {
+      const fullContent = [
+        "### Physical Description & Format",
+        "A parchment manuscript kept in a brass case.",
+        "### Provenance & Transmission",
+        "The temple collected this account of the rite.",
+        "### Contents & Revelations",
+        "The vessel rests until its clay dries in the open air.",
+        "### Risks & Costs of Study",
+        "The false washing rite releases the bound spirit.",
+        "### Adventure Hooks",
+        "1. Recover the sealed vessel before an acolyte performs the rite.",
+      ].join("\n\n");
+      const lore = [
+        "### At the Table Reference",
+        "Inspect the manuscript.",
+        "### Ground Truth for the GM",
+        "- **What the Book Claims**: Wash the vessel.",
+        "- **The Deception / Flaw**: The censor altered the line.",
+        "- **The Objective Truth**: Dry the vessel in air.",
+        "- **Actionable Clue**: A marginal correction.",
+        "### Connected Entities",
+        "- **Author / Compiler**: A temple scribe.",
+        "### Quick Checks & Mechanics",
+        "- **The Failure Condition**: Washing ruptures the vessel.",
+      ].join("\n\n");
+      const response = (content: string) =>
+        JSON.stringify({
+          title: "The Vessel Manuscript",
+          summary: "An altered spirit-binding rite.",
+          content,
+          lore,
+          canonicalFacts: {
+            centralRule: "Dry the vessel in open air.",
+            productionMethod: "Handwritten vellum.",
+            errorSource: "A censor altered the original line.",
+          },
+          labels: ["tome", "item"],
+          connections: [],
+        });
+      const generateContent = vi
+        .fn()
+        .mockResolvedValueOnce({
+          response: {
+            text: () => response(fullContent.replace("vessel rests", "soul-forged blade rests")),
+          },
+        })
+        .mockResolvedValueOnce({
+          response: { text: () => response(fullContent) },
+        });
+      mockClientManager.getModel.mockResolvedValue({ generateContent });
+
+      const result = await engine.generateTome({
+        theme: "Classic Fantasy",
+        useAI: true,
+      });
+
+      expect(generateContent).toHaveBeenCalledTimes(2);
+      expect(result.aiFallback).not.toBe(true);
+      expect(result.content).toContain("The vessel rests");
+      expect(result.content).not.toContain("soul-forged blade");
+    });
+
     it("falls back when AI tome output fails the consistency audit", async () => {
       mockClientManager.getModel.mockResolvedValue({
         generateContent: vi.fn().mockResolvedValue({
