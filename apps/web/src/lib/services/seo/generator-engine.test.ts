@@ -8,6 +8,7 @@ import {
   generateLanguageLocal,
 } from "generator-engine";
 import { sessionHubStore } from "$lib/stores/session-hub.svelte";
+import { generationInputHistoryStore } from "./generation-input-history";
 
 describe("DefaultGeneratorEngine", () => {
   let mockClientManager: any;
@@ -663,6 +664,35 @@ describe("DefaultGeneratorEngine", () => {
       expect(res.lore).toContain("At the Table Reference");
       expect(res.labels).toContain("tome");
       expect(res.labels).toContain("item");
+    });
+
+    it("avoids and records the selected mystery across local tome generations", async () => {
+      let history: string[] = [];
+      const recent = vi
+        .spyOn(generationInputHistoryStore, "recent")
+        .mockImplementation(() => history);
+      const record = vi
+        .spyOn(generationInputHistoryStore, "record")
+        .mockImplementation((_generatorId, summary) => {
+          if (summary) history = [summary, ...history].slice(0, 3);
+        });
+
+      try {
+        await engine.generateTome({ useAI: false });
+        const firstKey = history[0]?.match(/deceptionKey: ([^,|]+)/)?.[1];
+        expect(firstKey).toBeTruthy();
+
+        await engine.generateTome({ useAI: false });
+        const secondKey = history[0]?.match(/deceptionKey: ([^,|]+)/)?.[1];
+
+        expect(secondKey).toBeTruthy();
+        expect(secondKey).not.toBe(firstKey);
+        expect(recent).toHaveBeenCalledTimes(2);
+        expect(record).toHaveBeenCalledTimes(2);
+      } finally {
+        recent.mockRestore();
+        record.mockRestore();
+      }
     });
 
     it("should generate tome via AI and fall back gracefully on failure", async () => {

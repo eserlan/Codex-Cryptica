@@ -2076,6 +2076,75 @@ describe("generateDraftStream", () => {
     return events;
   }
 
+  it("streams only pass two of tome generation and commits its reviewed draft", async () => {
+    const content = [
+      "### Physical Description & Format",
+      "A manuscript in a leather binding.",
+      "### Provenance & Transmission",
+      "Written by an apprentice.",
+      "### Contents & Revelations",
+      "The clay vessel must cure in dry air.",
+      "### Risks & Costs of Study",
+      "Water breaks the containment.",
+      "### Adventure Hooks",
+      "1. Retrieve the broken clay vessel.",
+    ].join("\n\n");
+    const lore = [
+      "### At the Table Reference",
+      "A recoverable ritual.",
+      "### Ground Truth for the GM",
+      "- **What the Book Claims**: Wash the vessel.",
+      "- **The Deception / Flaw**: A copyist altered the rite.",
+      "- **The Objective Truth**: Let the clay cure in dry air.",
+      "- **Actionable Clue**: The dry clay stain.",
+      "### Connected Entities",
+      "- **Author / Compiler**: The apprentice.",
+      "### Quick Checks & Mechanics",
+      "- **The Failure Condition**: Water destroys the ward.",
+    ].join("\n\n");
+    const first = JSON.stringify({
+      title: "First Pass Tome",
+      summary: "The initial manuscript.",
+      content,
+      lore,
+      labels: ["tome", "item"],
+      connections: [],
+    });
+    const final = JSON.stringify({
+      title: "Edited Tome",
+      summary: "A revised manuscript.",
+      content,
+      lore,
+      labels: ["tome", "item"],
+      connections: [],
+    });
+    const complete = vi.fn(async () => first);
+    const completeStream = fakeCompleteStream(final, "Edited Tome");
+    const svc = new CampaignGeneratorService({
+      aiPolicy: { isEnabled: true, isAvailable: true },
+      aiGateway: { complete, completeStream },
+    });
+
+    const events = await collect(
+      svc.generateDraftStream(run("tome", { useAI: true })),
+    );
+    expect(complete).toHaveBeenCalledTimes(1);
+    expect(completeStream).toHaveBeenCalledTimes(1);
+    expect(events[0]).toEqual({ type: "started" });
+    expect(events.filter((e) => e.type === "started")).toHaveLength(1);
+    expect(
+      events.some(
+        (e) => e.type === "delta" && String(e.text).includes("Edited Tome"),
+      ),
+    ).toBe(true);
+    expect(
+      events.some((e) => e.type === "field" && e.value === "Edited Tome"),
+    ).toBe(true);
+    const finalEvent = events.at(-1);
+    expect(finalEvent?.type).toBe("draft");
+    expect((finalEvent?.draft as GeneratedDraft).title).toBe("Edited Tome");
+  });
+
   it("stops the buffered tome editorial pass and suppresses its draft on cancellation", async () => {
     const controller = new AbortController();
     const complete = vi.fn(
@@ -2099,6 +2168,85 @@ describe("generateDraftStream", () => {
 
     expect(complete).toHaveBeenCalledTimes(1);
     expect(complete.mock.calls[0]?.[2]?.signal).toBe(controller.signal);
+    expect(events.some((event) => event.type === "draft")).toBe(false);
+  });
+
+  it("stops forwarding streamed editorial events and suppresses the draft after cancellation", async () => {
+    const controller = new AbortController();
+    const first = JSON.stringify({
+      title: "First Pass Tome",
+      summary: "An initial manuscript.",
+      content: [
+        "### Physical Description & Format",
+        "A manuscript in a leather binding.",
+        "### Provenance & Transmission",
+        "Written by an apprentice.",
+        "### Contents & Revelations",
+        "The clay vessel must cure in dry air.",
+        "### Risks & Costs of Study",
+        "Water breaks the containment.",
+        "### Adventure Hooks",
+        "1. Retrieve the broken clay vessel.",
+      ].join("\n\n"),
+      lore: [
+        "### At the Table Reference",
+        "A recoverable ritual.",
+        "### Ground Truth for the GM",
+        "- **What the Book Claims**: Wash the vessel.",
+        "- **The Deception / Flaw**: A copyist altered the rite.",
+        "- **The Objective Truth**: Let the clay cure in dry air.",
+        "- **Actionable Clue**: The dry clay stain.",
+        "### Connected Entities",
+        "- **Author / Compiler**: The apprentice.",
+        "### Quick Checks & Mechanics",
+        "- **The Failure Condition**: Water destroys the ward.",
+      ].join("\n\n"),
+      labels: ["tome", "item"],
+      connections: [],
+    });
+    const complete = vi.fn(async () => first);
+    let continueEditorial: (() => void) | undefined;
+    const editorialReady = new Promise<void>((resolve) => {
+      continueEditorial = resolve;
+    });
+    let receivedSignal: AbortSignal | undefined;
+    const completeStream = vi.fn(async function* (
+      _message: string,
+      _instruction: string,
+      options?: { signal?: AbortSignal },
+    ) {
+      receivedSignal = options?.signal;
+      yield { type: "started" as const };
+      yield { type: "delta" as const, text: '{"title":"Edited' };
+      await editorialReady;
+      yield { type: "field" as const, key: "title", value: "Too Late" };
+      yield { type: "complete" as const, text: "{}" };
+    });
+    const svc = new CampaignGeneratorService({
+      aiPolicy: { isEnabled: true, isAvailable: true },
+      aiGateway: { complete, completeStream },
+    });
+
+    const events: Array<{ type: string; [k: string]: unknown }> = [];
+    const consuming = (async () => {
+      for await (const event of svc.generateDraftStream(
+        run("tome", { useAI: true }),
+        controller.signal,
+      )) {
+        events.push(event);
+        if (event.type === "delta") {
+          controller.abort();
+          continueEditorial?.();
+        }
+      }
+    })();
+    await consuming;
+
+    expect(complete).toHaveBeenCalledTimes(1);
+    expect(completeStream).toHaveBeenCalledTimes(1);
+    expect(receivedSignal).toBe(controller.signal);
+    expect(events.filter((event) => event.type === "delta")).toHaveLength(1);
+    expect(events.some((event) => event.type === "field")).toBe(false);
     expect(events.some((event) => event.type === "draft")).toBe(false);
   });
 

@@ -663,6 +663,56 @@ ${duplicatedParagraph}
     });
   });
 
+  describe("mystery variety and physical construction", () => {
+    it("uses different mystery profiles when the first was recently selected", () => {
+      const first = resolveTome({ genre: "Classic Fantasy" }, seededRng(7));
+      const next = resolveTome(
+        {
+          genre: "Classic Fantasy",
+          avoidDeceptionKeys: [first.deceptionKey],
+        },
+        seededRng(7),
+      );
+      expect(next.deceptionKey).not.toBe(first.deceptionKey);
+      expect(next.objectiveTruth).not.toBe(first.objectiveTruth);
+    });
+
+    it("has broad Classic Fantasy mystery variety", () => {
+      const keys = new Set<string>();
+      for (let seed = 1; seed < 120; seed++) {
+        keys.add(
+          resolveTome({ genre: "Classic Fantasy" }, seededRng(seed * 501))
+            .deceptionKey,
+        );
+      }
+      expect(keys.size).toBeGreaterThanOrEqual(6);
+    });
+
+    it("gives rolls damage compatible with parchment strips, not codex gatherings", () => {
+      for (let seed = 1; seed < 40; seed++) {
+        const resolved = resolveTome(
+          { genre: "Classic Fantasy", format: "Scorched Parchment Roll" },
+          seededRng(seed),
+        );
+        expect(resolved.exactDamage).not.toMatch(
+          /gathering|quire|leaves|signature/i,
+        );
+      }
+    });
+
+    it("does not seed a disconnected blade in the clay vessel mystery", () => {
+      const cases = Array.from({ length: 120 }, (_, i) =>
+        resolveTome({ genre: "Classic Fantasy" }, seededRng(i * 503 + 1)),
+      );
+      const vessel = cases.find((c) =>
+        /river-clay spirit vessel/.test(c.bookClaim),
+      );
+      expect(vessel).toBeDefined();
+      expect(vessel!.bookClaim).not.toMatch(/blade/);
+      expect(vessel!.objectiveTruth).toMatch(/vessel/);
+    });
+  });
+
   describe("generateTomeTwoPass", () => {
     const content = [
       "### Physical Description & Format",
@@ -725,13 +775,81 @@ ${duplicatedParagraph}
 
       expect(calls).toHaveLength(2);
       expect(calls[1].message).toContain("FIRST-PASS DRAFT JSON");
-      expect(calls[1].message).toContain("LOCKED CANONICAL FACTS");
+      expect(calls[1].message).toContain("PROVISIONAL CANONICAL FACTS");
+      expect(calls[1].instruction).toContain(
+        "objectively incoherent generated premise",
+      );
+      expect(calls[1].instruction).toContain(
+        "preserving explicit user constraints",
+      );
+      expect(calls[1].instruction).not.toContain(
+        "without altering its canonical plot facts",
+      );
+      expect(calls[1].message).toContain(
+        "You MAY correct an objectively incoherent generated premise",
+      );
+      expect(calls[1].message).toContain(
+        "MUST preserve explicit user constraints",
+      );
       expect(calls[1].message).toContain("blade");
       expect(out?.content).toContain("river-clay vessel");
       expect(out?.content).not.toContain("soul-forged blade");
       expect(out?.tomeFacts?.centralRule).toBe(
         "Let the river-clay vessel dry in open air.",
       );
+    });
+
+    it("allows the adversarial editor to correct a defective derived fact", async () => {
+      const prompt = buildTomePrompt({}, undefined, seededRng(13));
+      let calls = 0;
+      const answer = (corrected: boolean) =>
+        JSON.stringify({
+          title: "The Survey",
+          summary: "A flawed route survey.",
+          content: [
+            "### Physical Description & Format",
+            "A folio.",
+            "### Provenance & Transmission",
+            "Compiled by a surveyor.",
+            "### Contents & Revelations",
+            "The eastern glyph had been swapped with its western counterpart.",
+            "### Risks & Costs of Study",
+            "Rash explorers fall into pits.",
+            "### Adventure Hooks",
+            "1. Trace the forged plan.",
+          ].join("\n\n"),
+          lore: [
+            "### At the Table Reference",
+            "Use the compass clue.",
+            "### Ground Truth for the GM",
+            "- **What the Book Claims**: Trust the chart.",
+            "- **The Deception / Flaw**: Directions are reversed.",
+            "- **The Objective Truth**: Reverse the lateral directions.",
+            "- **Actionable Clue**: The east and west glyphs are swapped.",
+            "### Connected Entities",
+            "- **Author**: Surveyor.",
+            "### Quick Checks & Mechanics",
+            "- **The Failure Condition**: Following the route trips a pit.",
+          ].join("\n\n"),
+          canonicalFacts: {
+            centralRule: "Reverse east and west without rotating north.",
+            productionMethod: "Handwritten parchment.",
+            errorSource: "A later copyist transposed east and west.",
+            ...(corrected
+              ? {
+                  actionableClue:
+                    "The compass swaps east and west, preserving north and south.",
+                }
+              : {}),
+          },
+        });
+      const result = await generateTomeTwoPass(prompt, async () =>
+        answer(++calls === 2),
+      );
+      expect(result?.tomeFacts?.actionableClue).toBe(
+        "The compass swaps east and west, preserving north and south.",
+      );
+      expect(calls).toBe(2);
     });
 
     it("retains a valid first draft when the editorial response is malformed", async () => {

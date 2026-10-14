@@ -657,6 +657,7 @@ export {
   buildTomePrompt,
   parseTomeResponse,
   generateTomeLocal,
+  generateTomeLocalFromResolved,
   ensureGroundTruthInLore,
   auditTomeConsistency,
   generateTomeTwoPass,
