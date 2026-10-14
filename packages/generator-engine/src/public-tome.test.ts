@@ -7,6 +7,7 @@ import {
   ensureGroundTruthInLore,
   generateTomeLocal,
   generateTomeTwoPass,
+  streamTomeTwoPass,
   parseTomeResponse,
   resolveTome,
   tomeConfig,
@@ -118,6 +119,28 @@ describe("public-tome generator", () => {
       expect(["Late 21st century", "Near-future era"]).toContain(resolved.era);
       expect(out.lore.toLowerCase()).toContain("compiled the work in the");
       expect(out.lore).not.toContain("seventeenth-century");
+    });
+
+
+    it("excludes recent deception profiles while alternatives remain", () => {
+      const seeded = seededRng(21);
+      const old = resolveTome({ genre: "Classic Fantasy" }, seeded);
+      const next = resolveTome(
+        { genre: "Classic Fantasy", avoidDeceptions: [old.deceptionOrFlaw] },
+        seededRng(21),
+      );
+      expect(next.deceptionOrFlaw).not.toBe(old.deceptionOrFlaw);
+      expect(tomeConfig.deceptionProfilesByTheme["Classic Fantasy"].length).toBeGreaterThanOrEqual(7);
+    });
+
+    it("does not choose bound-gathering damage for rolls or tablets", () => {
+      for (let i = 0; i < 100; i++) {
+        const resolved = resolveTome(
+          { genre: "Classic Fantasy", format: "Scorched Parchment Roll" },
+          seededRng(i),
+        );
+        expect(resolved.exactDamage).not.toMatch(/gathering|signature|quire|leaves|pages/i);
+      }
     });
 
     it("never gives Classic Fantasy a real-world calendar year", () => {
@@ -725,13 +748,83 @@ ${duplicatedParagraph}
 
       expect(calls).toHaveLength(2);
       expect(calls[1].message).toContain("FIRST-PASS DRAFT JSON");
-      expect(calls[1].message).toContain("LOCKED CANONICAL FACTS");
+      expect(calls[1].message).toContain("PROVISIONAL FIRST-PASS FACTS");
       expect(calls[1].message).toContain("blade");
       expect(out?.content).toContain("river-clay vessel");
       expect(out?.content).not.toContain("soul-forged blade");
       expect(out?.tomeFacts?.centralRule).toBe(
         "Let the river-clay vessel dry in open air.",
       );
+    });
+
+
+    it("lets the critic correct an impossible source clue and updates the structured truth", async () => {
+      const prompt = buildTomePrompt({ genre: "Classic Fantasy" }, undefined, seededRng(4));
+      const fixed = JSON.parse(response(content));
+      fixed.canonicalFacts.actionableClue = "The east and west initials are swapped, but the north bearing stays fixed.";
+      fixed.canonicalFacts.objectiveTruth = "A left-right reflection requires swapping all turns, while north stays fixed.";
+      const out = await generateTomeTwoPass(prompt, async (_system, message) =>
+        message.includes("EDITORIAL PASS 2") ? JSON.stringify(fixed) : response(content),
+      );
+      expect(out?.tomeFacts?.actionableClue).toContain("east and west");
+      expect(out?.tomeFacts?.objectiveTruth).toContain("reflection");
+      expect(out?.tomeFacts?.associatedLocation).toBe(prompt.resolved.associatedLocation);
+      expect(out?.tomeFacts?.missingMaterial).toBe(prompt.resolved.exactDamage);
+    });
+
+    it("streams only pass two in pieces, then publishes a single validated result", async () => {
+      const prompt = buildTomePrompt({}, undefined, seededRng(4));
+      const final = response(content);
+      const events = [];
+      for await (const event of streamTomeTwoPass(
+        prompt,
+        async () => response(content.replace("river-clay vessel", "unfinished vessel")),
+        async function* () {
+          yield { type: "started" as const };
+          yield { type: "delta" as const, text: final.slice(0, 95) };
+          yield { type: "delta" as const, text: final.slice(95) };
+          yield { type: "complete" as const, text: final };
+        },
+      )) events.push(event);
+
+      expect(events.map(e => e.type)).toEqual(["phase", "phase", "delta", "delta", "result"]);
+      expect(events.filter(e => e.type === "delta").map(e => "text" in e ? e.text : "").join("")).toBe(final);
+      const outcome = events.at(-1);
+      expect(outcome?.type).toBe("result");
+      if (outcome?.type === "result") expect(outcome.output?.content).toContain("river-clay vessel");
+    });
+
+    it("streams the editorial pass but restores a valid first draft if the revision fails", async () => {
+      const prompt = buildTomePrompt({}, undefined, seededRng(4));
+      const events = [];
+      for await (const event of streamTomeTwoPass(
+        prompt,
+        async () => response(content),
+        async function* () {
+          yield { type: "delta" as const, text: "not JSON" };
+          yield { type: "error" as const, error: "connection lost" };
+        },
+      )) events.push(event);
+      expect(events.map(e => e.type)).toEqual(["phase", "phase", "delta", "result"]);
+      const outcome = events.at(-1);
+      if (outcome?.type === "result") expect(outcome.output?.title).toBe("The River-Clay Rite");
+    });
+
+    it("does not stream a final result after cancellation", async () => {
+      const prompt = buildTomePrompt({}, undefined, seededRng(4));
+      const controller = new AbortController();
+      const events = [];
+      for await (const event of streamTomeTwoPass(
+        prompt,
+        async () => response(content),
+        async function* () {
+          yield { type: "delta" as const, text: "partial" };
+          controller.abort();
+          yield { type: "complete" as const, text: response(content) };
+        },
+        controller.signal,
+      )) events.push(event);
+      expect(events.some(e => e.type === "result")).toBe(false);
     });
 
     it("retains a valid first draft when the editorial response is malformed", async () => {
