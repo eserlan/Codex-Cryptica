@@ -499,10 +499,6 @@ export function ensureGroundTruthInLore(
   lore: string,
   resolved: Partial<ResolvedTome>,
 ): string {
-  if (/### Ground Truth for the GM/i.test(lore)) {
-    return lore;
-  }
-
   const claim =
     resolved.bookClaim ??
     "The surface text asserts a ritual or historical premise";
@@ -521,6 +517,13 @@ export function ensureGroundTruthInLore(
 - **The Deception / Flaw**: ${deception}
 - **The Objective Truth**: ${truth}
 - **Actionable Clue**: ${clue}\n\n`;
+
+  if (/### Ground Truth for the GM/i.test(lore)) {
+    return lore.replace(
+      /### Ground Truth for the GM\s*[\s\S]*?(?=\n### |$)/i,
+      groundTruthBlock.trimEnd(),
+    );
+  }
 
   if (/### At the Table Reference/i.test(lore)) {
     return lore.replace(
@@ -547,22 +550,38 @@ export function parseTomeResponse(
     const data = parseFencedJson<Record<string, unknown>>(text);
     if (!data || typeof data !== "object") return fallback;
 
-    let rawLore = parseTextString(data.lore, fallback.lore);
-    if (resolved) {
-      rawLore = ensureGroundTruthInLore(rawLore, resolved);
-    }
-
     const authored =
       data.canonicalFacts && typeof data.canonicalFacts === "object"
         ? (data.canonicalFacts as Record<string, unknown>)
         : {};
+    const finalResolved =
+      resolved && allowEditorialCorrections
+        ? {
+            ...fallbackResolved,
+            bookClaim: textOr(authored.bookClaim, fallbackResolved.bookClaim),
+            deceptionOrFlaw: textOr(
+              authored.deception,
+              fallbackResolved.deceptionOrFlaw,
+            ),
+            objectiveTruth: textOr(
+              authored.objectiveTruth,
+              fallbackResolved.objectiveTruth,
+            ),
+            actionableClue: textOr(
+              authored.actionableClue,
+              fallbackResolved.actionableClue,
+            ),
+          }
+        : fallbackResolved;
+    let rawLore = parseTextString(data.lore, fallback.lore);
+    if (resolved) rawLore = ensureGroundTruthInLore(rawLore, finalResolved);
 
     return {
       type: "item",
       ...(resolved
         ? {
             tomeFacts: {
-              ...buildTomeFacts(fallbackResolved, {
+              ...buildTomeFacts(finalResolved, {
                 centralRule: authored.centralRule as string | undefined,
                 productionMethod: authored.productionMethod as
                   string | undefined,
@@ -572,19 +591,19 @@ export function parseTomeResponse(
                 ? {
                     bookClaim: textOr(
                       authored.bookClaim,
-                      fallbackResolved.bookClaim,
+                      finalResolved.bookClaim,
                     ),
                     deception: textOr(
                       authored.deception,
-                      fallbackResolved.deceptionOrFlaw,
+                      finalResolved.deceptionOrFlaw,
                     ),
                     objectiveTruth: textOr(
                       authored.objectiveTruth,
-                      fallbackResolved.objectiveTruth,
+                      finalResolved.objectiveTruth,
                     ),
                     actionableClue: textOr(
                       authored.actionableClue,
-                      fallbackResolved.actionableClue,
+                      finalResolved.actionableClue,
                     ),
                   }
                 : {}),
@@ -932,6 +951,41 @@ function similarity(a: Set<string>, b: Set<string>): number {
   return shared / (a.size + b.size - shared || 1);
 }
 
+function factEchoRatio(fact: string, text: string): number {
+  const tokens = sentenceTokens(fact);
+  if (tokens.size < 4) return 1;
+  const body = sentenceTokens(text);
+  let covered = 0;
+  for (const token of tokens) if (body.has(token)) covered += 1;
+  return covered / tokens.size;
+}
+
+function revisedFactsAreReflected(
+  revised: PublicGeneratorOutput,
+  resolved: ResolvedTome,
+): boolean {
+  if (!revised.tomeFacts) return true;
+  const originalFacts = {
+    bookClaim: resolved.bookClaim,
+    deception: resolved.deceptionOrFlaw,
+    objectiveTruth: resolved.objectiveTruth,
+    actionableClue: resolved.actionableClue,
+  };
+  const fields = [
+    "bookClaim",
+    "deception",
+    "objectiveTruth",
+    "actionableClue",
+  ] as const;
+  return fields.every((field) => {
+    const fact = revised.tomeFacts?.[field] ?? "";
+    return (
+      fact === originalFacts[field] ||
+      factEchoRatio(fact, revised.content) >= 0.5
+    );
+  });
+}
+
 /** Flags near-verbatim restatement of one sentence in several sections. */
 function checkSentenceRepetition(
   content: string,
@@ -1159,7 +1213,11 @@ function chooseTomeResult(
 ): PublicGeneratorOutput | null {
   if (reviewedText) {
     const revised = validTomeCandidate(reviewedText, resolved, true);
-    if (revised && auditTomeConsistency(revised, resolved).valid)
+    if (
+      revised &&
+      auditTomeConsistency(revised, resolved).valid &&
+      revisedFactsAreReflected(revised, resolved)
+    )
       return revised;
   }
   return prepared.first && prepared.initialAudit?.valid ? prepared.first : null;

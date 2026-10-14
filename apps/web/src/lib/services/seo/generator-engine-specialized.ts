@@ -200,7 +200,7 @@ export class GeneratorEngineSpecialized extends GeneratorEngineWorldbuilding {
     const recentInputs = generationInputHistoryStore.recent("tome");
     const recentDeceptions =
       generationInputHistoryStore.recent("tome-mysteries");
-    return this.runWithAIFallback(
+    const output = await this.runWithAIFallback(
       useAI,
       async () => {
         const { systemInstruction, userMessage, resolved } = buildTomePrompt(
@@ -210,10 +210,6 @@ export class GeneratorEngineSpecialized extends GeneratorEngineWorldbuilding {
         generationInputHistoryStore.record(
           "tome",
           summarizeResolvedInputs(resolved),
-        );
-        generationInputHistoryStore.record(
-          "tome-mysteries",
-          resolved.deceptionOrFlaw,
         );
         let pass = 0;
         const reviewed = await generateTomeTwoPass(
@@ -226,11 +222,24 @@ export class GeneratorEngineSpecialized extends GeneratorEngineWorldbuilding {
         return reviewed
           ? (reviewed as GeneratorOutput)
           : ({
-              ...generateTomeLocal(tomeOptions),
+              ...generateTomeLocal({
+                ...tomeOptions,
+                avoidDeceptions: recentDeceptions,
+              }),
               aiFallback: true,
             } as GeneratorOutput);
       },
-      () => generateTomeLocal(tomeOptions) as GeneratorOutput,
+      () =>
+        generateTomeLocal({
+          ...tomeOptions,
+          avoidDeceptions: recentDeceptions,
+        }) as GeneratorOutput,
     );
+    const tomeOutput = output as PublicGeneratorOutput;
+    generationInputHistoryStore.record(
+      "tome-mysteries",
+      tomeOutput.tomeFacts?.deception,
+    );
+    return output;
   }
 }

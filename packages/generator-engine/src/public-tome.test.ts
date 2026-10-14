@@ -354,7 +354,7 @@ describe("public-tome generator", () => {
   });
 
   describe("ensureGroundTruthInLore", () => {
-    it("preserves existing Ground Truth for the GM without duplicating", () => {
+    it("reconciles existing Ground Truth for the GM without duplicating", () => {
       const existingLore = `### At the Table Reference
 
 ### Ground Truth for the GM
@@ -367,8 +367,9 @@ describe("public-tome generator", () => {
         bookClaim: "Fallback claim",
       });
 
-      expect(result).toBe(existingLore);
-      expect(result).not.toContain("Fallback claim");
+      expect(result).toContain("Fallback claim");
+      expect(result).not.toContain("Custom claim");
+      expect(result.match(/### Ground Truth for the GM/g)).toHaveLength(1);
     });
   });
 
@@ -771,6 +772,10 @@ ${duplicatedParagraph}
         "The east and west initials are swapped, but the north bearing stays fixed.";
       fixed.canonicalFacts.objectiveTruth =
         "A left-right reflection requires swapping all turns, while north stays fixed.";
+      fixed.content = fixed.content.replace(
+        "A river-clay vessel must dry in open air. A later censor substituted water.",
+        "A river-clay vessel must dry in open air. A later censor substituted water. The east and west initials are swapped, but the north bearing stays fixed. A left-right reflection requires swapping all turns, while north stays fixed.",
+      );
       const out = await generateTomeTwoPass(prompt, async (_system, message) =>
         message.includes("EDITORIAL PASS 2")
           ? JSON.stringify(fixed)
@@ -782,6 +787,30 @@ ${duplicatedParagraph}
         prompt.resolved.associatedLocation,
       );
       expect(out?.tomeFacts?.missingMaterial).toBe(prompt.resolved.exactDamage);
+      expect(out?.lore).toContain(
+        "The east and west initials are swapped, but the north bearing stays fixed.",
+      );
+    });
+
+    it("rejects corrected canonical facts that contradict unchanged narrative prose", async () => {
+      const prompt = buildTomePrompt(
+        { genre: "Classic Fantasy" },
+        undefined,
+        seededRng(4),
+      );
+      const contradictory = JSON.parse(response(content));
+      contradictory.canonicalFacts.actionableClue =
+        "A hidden blue cipher reveals the eastern gate's lunar alignment.";
+      const out = await generateTomeTwoPass(prompt, async (_system, message) =>
+        message.includes("EDITORIAL PASS 2")
+          ? JSON.stringify(contradictory)
+          : response(content),
+      );
+
+      expect(out?.tomeFacts?.actionableClue).not.toBe(
+        contradictory.canonicalFacts.actionableClue,
+      );
+      expect(out?.content).toBe(content);
     });
 
     it("streams only pass two in pieces, then publishes a single validated result", async () => {

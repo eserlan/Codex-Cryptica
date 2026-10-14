@@ -8,6 +8,8 @@ import {
   generateLanguageLocal,
 } from "generator-engine";
 import { sessionHubStore } from "$lib/stores/session-hub.svelte";
+import { generationInputHistoryStore } from "./generation-input-history";
+import { tomeConfig, type PublicGeneratorOutput } from "generator-engine";
 
 describe("DefaultGeneratorEngine", () => {
   let mockClientManager: any;
@@ -647,6 +649,40 @@ describe("DefaultGeneratorEngine", () => {
   });
 
   describe("generateTome", () => {
+    it("avoids recent mysteries in local and AI fallback results and records the delivered profile", async () => {
+      const profiles = tomeConfig.deceptionProfilesByTheme["Classic Fantasy"];
+      const allowed = profiles[profiles.length - 1];
+      const recent = profiles.slice(0, -1).map((profile) => profile.deception);
+      const recentSpy = vi
+        .spyOn(generationInputHistoryStore, "recent")
+        .mockReturnValue(recent);
+      const recordSpy = vi.spyOn(generationInputHistoryStore, "record");
+
+      try {
+        for (const useAI of [false, true]) {
+          if (useAI) {
+            mockClientManager.getModel.mockRejectedValueOnce(
+              new Error("AI network error"),
+            );
+          }
+          const result = (await engine.generateTome({
+            genre: "Classic Fantasy",
+            useAI,
+          })) as PublicGeneratorOutput;
+
+          expect(result.tomeFacts?.deception).toBe(allowed.deception);
+          expect(recordSpy).toHaveBeenLastCalledWith(
+            "tome-mysteries",
+            result.tomeFacts?.deception,
+          );
+        }
+        expect(recentSpy).toHaveBeenCalledWith("tome-mysteries");
+      } finally {
+        recentSpy.mockRestore();
+        recordSpy.mockRestore();
+      }
+    });
+
     it("should generate tome details locally when useAI is false", async () => {
       const res = await engine.generateTome({
         theme: "Cosmic Horror",
