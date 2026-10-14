@@ -1,5 +1,5 @@
 {
-  "updated_at": 1791978465,
+  "updated_at": 1791998494,
   "candidates": [
     {
       "id": "reddit-38159898218-social-scenes-kept-ending-on-one-persuas",
@@ -20,6 +20,16 @@
       "source_id": "38391363178",
       "status": "approved",
       "created_at": 1791893287
+    },
+    {
+      "id": "reddit-38605236753-i-kept-handing-out-the-same-forbidden-bo",
+      "title": "I kept handing out the same forbidden book with a new name, so I built a tome generator that remembers what is inside",
+      "body": "My forbidden books all sounded alike in play. A dusty author, a vague warning, and nothing concrete for players to actually find, study, or chase.\n\nI built a Tome and Forbidden Book generator that turns a one-line idea into a layered, game-ready volume. It runs in the browser with no login, and it stays consistent at the table instead of contradicting itself between readouts.\n\nYou can try it here: https://codexcryptica.com/generators/tome\n\nIt gives you:\n- a provenance chain you can place in a specific library, ruin, or faction vault\n- physical excerpts and marginalia you can hand to players as is\n- hazardous study costs and requirements before anyone learns anything useful\n- hooks tied to who wants it, who hid it, and what happens if it is opened\n- genre fidelity so a fantasy grimoire reads differently from a sci-fi codex or cosmic horror manuscript\n\nTradeoff I am still tuning: the live two-pass editorial polish streams in after the first draft, which adds a few seconds. It catches contradictions and repeated phrases, but for very niche settings I still want a human check before I call it canon.\n\nWhat was the last book in your campaign your players were told not to open, and what did they do anyway?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/announcements/artifact-vaelgrasp-ruin.jpg)",
+      "url": "",
+      "image_url": "https://assets.codexcryptica.com/announcements/artifact-vaelgrasp-ruin.jpg",
+      "source_id": "38605236753",
+      "status": "approved",
+      "created_at": 1791998494
     }
   ]
 }
