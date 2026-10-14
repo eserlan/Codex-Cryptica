@@ -20,7 +20,8 @@ import {
   type CreatureGeneratorOptions,
   type PublicGeneratorOutput,
   buildTomePrompt,
-  generateTomeLocal,
+  generateTomeLocalFromResolved,
+  resolveTome,
   generateTomeTwoPass,
   type TomeGeneratorOptions,
 } from "generator-engine";
@@ -59,6 +60,23 @@ async function runWithSingleRepair<
   const second = parse(retryText);
   if (second.problems.length === 0) return second.output;
   return second.rejected ? first.output : second.output;
+}
+
+function recordTomeHistory(
+  output: GeneratorOutput,
+  inputSummary: string,
+  selectedDeceptionKey?: string,
+): void {
+  generationInputHistoryStore.record(
+    "tome",
+    selectedDeceptionKey
+      ? `${inputSummary}, deceptionKey: ${selectedDeceptionKey}`
+      : inputSummary,
+  );
+  generationInputHistoryStore.record(
+    "tome-mysteries",
+    (output as PublicGeneratorOutput).tomeFacts?.deception,
+  );
 }
 
 export class GeneratorEngineSpecialized extends GeneratorEngineWorldbuilding {
@@ -198,48 +216,56 @@ export class GeneratorEngineSpecialized extends GeneratorEngineWorldbuilding {
   ): Promise<GeneratorOutput> {
     const { useAI, ...tomeOptions } = options;
     const recentInputs = generationInputHistoryStore.recent("tome");
-    const recentDeceptions =
+    const recentMysteries =
       generationInputHistoryStore.recent("tome-mysteries");
+    const avoidDeceptionKeys = recentInputs.flatMap((entry) => {
+      const match = entry.match(/deceptionKey: ([^,|]+)/);
+      return match ? [match[1].trim()] : [];
+    });
+    const variedOptions = {
+      ...tomeOptions,
+      avoidDeceptionKeys,
+      avoidDeceptions: recentMysteries,
+    };
+    let inputSummary = "";
+    let selectedDeceptionKey: string | undefined;
+    const generateLocal = () => {
+      const resolved = resolveTome(variedOptions);
+      inputSummary = summarizeResolvedInputs({
+        ...resolved,
+        deceptionKey: "",
+      });
+      selectedDeceptionKey = resolved.deceptionKey;
+      const output = generateTomeLocalFromResolved(resolved);
+      return output as GeneratorOutput;
+    };
     const output = await this.runWithAIFallback(
       useAI,
       async () => {
         const { systemInstruction, userMessage, resolved } = buildTomePrompt(
-          { ...tomeOptions, avoidDeceptions: recentDeceptions },
+          variedOptions,
           getSessionContext() + formatRecentInputsNote(recentInputs),
         );
-        generationInputHistoryStore.record(
-          "tome",
-          summarizeResolvedInputs(resolved),
-        );
+        inputSummary = summarizeResolvedInputs({
+          ...resolved,
+          deceptionKey: "",
+        });
         let pass = 0;
         const reviewed = await generateTomeTwoPass(
           { systemInstruction, userMessage, resolved },
           (instruction, message) =>
-            ++pass === 1
-              ? this.runModelWithoutPreview(instruction, message)
-              : this.runModel(instruction, message),
+            this.runModel(instruction, message, undefined, ++pass === 2),
         );
         return reviewed
           ? (reviewed as GeneratorOutput)
           : ({
-              ...generateTomeLocal({
-                ...tomeOptions,
-                avoidDeceptions: recentDeceptions,
-              }),
+              ...generateLocal(),
               aiFallback: true,
             } as GeneratorOutput);
       },
-      () =>
-        generateTomeLocal({
-          ...tomeOptions,
-          avoidDeceptions: recentDeceptions,
-        }) as GeneratorOutput,
+      generateLocal,
     );
-    const tomeOutput = output as PublicGeneratorOutput;
-    generationInputHistoryStore.record(
-      "tome-mysteries",
-      tomeOutput.tomeFacts?.deception,
-    );
+    recordTomeHistory(output, inputSummary, selectedDeceptionKey);
     return output;
   }
 }

@@ -239,35 +239,88 @@ export const tomeConfig = {
     },
     {
       description:
-        "A strip of the opening panel burnt away without removing any complete leaf",
-      unit: "panel",
+        "A passage scraped away beneath a second coat of red pigment",
+      unit: "passage",
       count: 1,
     },
     {
-      description:
-        "Six lines of the central rite obscured by a later patch of black iron ink",
-      unit: "lines",
-      count: 6,
-    },
-    {
-      description:
-        "The outer corner of two leaves clipped away where the marginal key once ran",
-      unit: "corners",
-      count: 2,
-    },
-    {
-      description:
-        "Five loose pages stained with saltwater and bound back in the wrong order",
+      description: "Seven pages darkened by smoke without any material removed",
       unit: "pages",
-      count: 5,
+      count: 7,
     },
     {
-      description:
-        "A missing vellum flap that once concealed the inner fold's diagram",
-      unit: "flap",
+      description: "The lower margin of a diagram abraded by repeated folding",
+      unit: "margin",
+      count: 1,
+    },
+    {
+      description: "One additional leaf inserted by a later annotator",
+      unit: "leaf",
       count: 1,
     },
   ],
+  damageProfilesByFormat: {
+    roll: [
+      {
+        description:
+          "The final handspan of the parchment strip torn away at a join",
+        unit: "strip",
+        count: 1,
+      },
+      {
+        description: "Three lines scraped from the outer winding of the roll",
+        unit: "lines",
+        count: 3,
+      },
+      {
+        description:
+          "Two stitched parchment panels scorched but still attached",
+        unit: "panels",
+        count: 2,
+      },
+      {
+        description:
+          "A later vellum strip stitched over the original closing formula",
+        unit: "strip",
+        count: 1,
+      },
+    ],
+    tablets: [
+      {
+        description:
+          "One wax tablet erased and recut, leaving the original strokes faintly visible",
+        unit: "tablet",
+        count: 1,
+      },
+      {
+        description: "A snapped hinge connecting the third and fourth tablets",
+        unit: "hinge",
+        count: 1,
+      },
+      {
+        description: "A later layer of wax concealing four original lines",
+        unit: "layer",
+        count: 1,
+      },
+    ],
+    sheaves: [
+      {
+        description: "Two loose sheets missing from the numbered sheaf",
+        unit: "sheets",
+        count: 2,
+      },
+      {
+        description: "Three sheets out of sequence with conflicting foliation",
+        unit: "sheets",
+        count: 3,
+      },
+      {
+        description: "A forged replacement sheet inserted into the bundle",
+        unit: "sheet",
+        count: 1,
+      },
+    ],
+  },
   locationsByTheme: {
     "Cosmic Horror": [
       "The drowned chancel of Saint Jude-in-the-Fens",
@@ -381,75 +434,75 @@ export const tomeConfig = {
     "Classic Fantasy": [
       {
         claim:
-          "The third chapter directs the celebrant to wash the newly sealed spirit vessel with consecrated water",
+          "The amended third chapter instructs the celebrant to pour consecrated water onto a newly sealed river-clay spirit vessel",
         deception:
-          "A temple censor substituted a purification wash for the required drying interval; the water ruptures the vessel and releases its spirit",
+          "The temple censor substituted a washing rite for the original dry-curing instruction; consecrated water ruptures the vessel",
         truth:
-          "A vessel formed from untouched river-clay must cure undisturbed in open air; only after the third night may its name be bound",
-        clue: "A clay smear and scorch beside the scraped instruction show where an apprentice tested the later gloss and shattered the vessel",
+          "Shape the vessel from virgin river-clay, leave it to cure in open air for two nights, and seal the name on the third",
+        clue: "A scorch beside the amended line overlays pale clay residue and a scratched instruction to let the vessel dry",
       },
       {
         claim:
-          "The labyrinth plan is marked as the sole safe route through the undercrypt and gives left and right turns at each fork",
+          "The centrefold labyrinth map tells entrants to follow its printed lateral turns exactly",
         deception:
-          "The guild surveyor drew a left-right reflection of the passages to lead outsiders into the counterweighted deadfalls",
+          "The guild cartographer reflected the passage plan across the north-south axis, exchanging east and west while preserving north and south",
         truth:
-          "East and west were transposed while north and south were retained; swapping every left and right turn reveals the traversable route",
-        clue: "The drawing preserves its north and south bearings but swaps the east and west initials on the compass rose; a fixed doorway on the west wall is depicted on the east",
+          "Keeping north and south fixed, exchange every east and west turn to avoid the deadfalls along the false route",
+        clue: "The margin's compass preserves the north and south labels but visibly exchanges east and west; a surviving survey line confirms the reflection",
       },
       {
         claim:
-          "The royal inheritance register states that the final heir died childless, leaving the marsh estates to the crown",
+          "The royal mortuary register records that the last heir was cremated at the winter solstice",
         deception:
-          "A royal registrar omitted the living daughter's legitimisation decree to secure the property for the treasury",
+          "The officiant forged the cremation certificate to conceal an heir raised under an unrelated family name",
         truth:
-          "The recognised daughter and her descendants hold the lawful claim; the original decree is filed under the mother's household name",
-        clue: "The register's regnal-date sequence skips a sealed entry, while the household index preserves its matching wax impression",
+          "The heir survived and was fostered beyond the court's jurisdiction; the true identity can be proven from matching birthmarks and dated service rolls",
+        clue: "The charcoal purchase entry for the cremation is dated two weeks after the listed funeral, while a nurse's signed ledger records the child's departure",
       },
       {
         claim:
-          "The field liturgy commands wardens to ring the western warning bell at moonrise to keep the mountain pass sealed",
+          "An apothecary's manuscript asserts that powdered moonstone cures the river-plague",
         deception:
-          "The bell-ringer changed the timing from moonset to moonrise so the sound would release, rather than renew, the watch-spell",
+          "The physician swapped the names of the curative and poisonous minerals to protect a commercial monopoly",
         truth:
-          "The western bell must sound at moonset, after the sentinel brazier goes dark, to renew the ward for the next night",
-        clue: "A scorched duty tablet records two otherwise identical vigils: the moonrise bell preceded a breach, whereas the moonset bell held the gate",
+          "Only the grey shale infusion calms the fever; the silver moonstone powder causes temporary paralysis",
+        clue: "The original herbarium illustration shows an unmistakable dark shale vein beneath a scraped silver caption",
       },
       {
         claim:
-          "A merchant's black ledger credits the plague year's vanished grain shipments to theft by the river guild",
+          "The abbey's tide calendar declares the causeway traversable at the sixth evening bell",
         deception:
-          "The city steward inserted false cargo totals to hide grain diverted to an illegally built refuge",
+          "An abbot moved the reference bell by one watch to keep strangers from reaching the island shrine",
         truth:
-          "The grain reached a hidden hill granary, where survivors maintained stores throughout the siege",
-        clue: "The barges' recorded draught marks show fully laden boats leaving the river before the supposed theft occurred",
+          "The passage is exposed only during the previous watch's falling tide, and the sixth bell now sounds after the path floods",
+        clue: "A centuries-old bell schedule and barnacle marks on the old milepost disagree with the later annotated tide table",
       },
       {
         claim:
-          "The observatory's calendar predicts that the sanctuary roof opens only when the three winter stars align",
+          "The siege chronicle claims the western bastion fell to enemy mining",
         deception:
-          "The astronomer copied an equinox observation into the winter tables to stop rival surveyors reaching the sanctuary",
+          "The engineer hid a deliberate structural failure ordered by the royal chamberlain",
         truth:
-          "The roof's counterweight releases on the spring equinox when sunlight strikes a bronze pin at the southern meridian",
-        clue: "Two dated drawings show the same roof-shadow length in different seasons; the annotated spring sketch matches the fixed bronze pin",
+          "The bastion was sabotaged from inside to close an escape tunnel used by the palace household",
+        clue: "The masonry cut marks point outward and the expense ledger pays the chamberlain's quarrymen after the siege",
       },
       {
         claim:
-          "The burial office records that a warrior's oath is broken when their name is erased from the memorial slab",
+          "A liturgical commentary teaches that the bound guardian must be addressed by its ceremonial title",
         deception:
-          "A court priest altered the ritual commentary so the name would be erased, severing the living household's protection",
+          "A copyist reversed the order of the guardian's oath and its release formula, giving the title the force of a command",
         truth:
-          "The oath remains active only while the name can be read aloud from the slab; abrasion weakens the ward rather than releasing the dead",
-        clue: "An uncensored stone rubbing preserves the name and shows the ward fading precisely where a later chisel removed two letters",
+          "The guardian recognises its original service name before the oath, and the ceremonial title awakens its defence instead",
+        clue: "A marginal acrostic records the older name and predates the corrected rubric in noticeably different ink",
       },
       {
         claim:
-          "The pilgrim charter declares the crossing stones safe when the river lies still",
+          "The pilgrim's star atlas places the forgotten sanctuary beneath the winter constellation",
         deception:
-          "A ferryman added the still-water condition to lure travellers across during a concealed undertow",
+          "A priest transposed the names of the summer and winter sky sectors to hide the sanctuary's location",
         truth:
-          "The crossing is safe only while the reed flags bow upstream, signalling that the deep side-channel is drained",
-        clue: "A ferryman's sketch beneath the seal marks the upstream-bending reeds and a hidden sluice wheel missing from the public instructions",
+          "The sanctuary lies beneath the summer rising of the same asterism; following the winter bearings leads to an empty ridge",
+        clue: "A dated eclipse observation could only have been made under summer skies at the recorded latitude",
       },
     ],
     "Vampire / Gothic Noir": [

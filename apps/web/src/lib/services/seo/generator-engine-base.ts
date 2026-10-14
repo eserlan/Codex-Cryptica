@@ -62,24 +62,13 @@ export class GeneratorEngineBase {
     systemInstruction: string,
     userMessage: string,
     generationConfig?: typeof LANGUAGE_GENERATION_CONFIG,
+    emitPreview = true,
   ): Promise<string> {
     return this.transport.runModel(
       systemInstruction,
       userMessage,
       generationConfig,
-    );
-  }
-
-  /** First draft in a multi-pass generator: never show this unreviewed JSON. */
-  protected runModelWithoutPreview(
-    systemInstruction: string,
-    userMessage: string,
-  ): Promise<string> {
-    return this.transport.runModel(
-      systemInstruction,
-      userMessage,
-      undefined,
-      false,
+      emitPreview,
     );
   }
 

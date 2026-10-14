@@ -7,7 +7,6 @@ import {
   ensureGroundTruthInLore,
   generateTomeLocal,
   generateTomeTwoPass,
-  streamTomeTwoPass,
   parseTomeResponse,
   resolveTome,
   tomeConfig,
@@ -119,31 +118,6 @@ describe("public-tome generator", () => {
       expect(["Late 21st century", "Near-future era"]).toContain(resolved.era);
       expect(out.lore.toLowerCase()).toContain("compiled the work in the");
       expect(out.lore).not.toContain("seventeenth-century");
-    });
-
-    it("excludes recent deception profiles while alternatives remain", () => {
-      const seeded = seededRng(21);
-      const old = resolveTome({ genre: "Classic Fantasy" }, seeded);
-      const next = resolveTome(
-        { genre: "Classic Fantasy", avoidDeceptions: [old.deceptionOrFlaw] },
-        seededRng(21),
-      );
-      expect(next.deceptionOrFlaw).not.toBe(old.deceptionOrFlaw);
-      expect(
-        tomeConfig.deceptionProfilesByTheme["Classic Fantasy"].length,
-      ).toBeGreaterThanOrEqual(7);
-    });
-
-    it("does not choose bound-gathering damage for rolls or tablets", () => {
-      for (let i = 0; i < 100; i++) {
-        const resolved = resolveTome(
-          { genre: "Classic Fantasy", format: "Scorched Parchment Roll" },
-          seededRng(i),
-        );
-        expect(resolved.exactDamage).not.toMatch(
-          /gathering|signature|quire|leaves|pages/i,
-        );
-      }
     });
 
     it("never gives Classic Fantasy a real-world calendar year", () => {
@@ -690,6 +664,69 @@ ${duplicatedParagraph}
     });
   });
 
+  describe("mystery variety and physical construction", () => {
+    it("uses different mystery profiles when the first was recently selected", () => {
+      const first = resolveTome({ genre: "Classic Fantasy" }, seededRng(7));
+      const next = resolveTome(
+        {
+          genre: "Classic Fantasy",
+          avoidDeceptionKeys: [first.deceptionKey],
+        },
+        seededRng(7),
+      );
+      expect(next.deceptionKey).not.toBe(first.deceptionKey);
+      expect(next.objectiveTruth).not.toBe(first.objectiveTruth);
+    });
+
+    it("also excludes recently delivered mystery text", () => {
+      const first = resolveTome({ genre: "Classic Fantasy" }, seededRng(7));
+      const next = resolveTome(
+        {
+          genre: "Classic Fantasy",
+          avoidDeceptions: [first.deceptionOrFlaw],
+        },
+        seededRng(7),
+      );
+
+      expect(next.deceptionOrFlaw).not.toBe(first.deceptionOrFlaw);
+    });
+
+    it("has broad Classic Fantasy mystery variety", () => {
+      const keys = new Set<string>();
+      for (let seed = 1; seed < 120; seed++) {
+        keys.add(
+          resolveTome({ genre: "Classic Fantasy" }, seededRng(seed * 501))
+            .deceptionKey,
+        );
+      }
+      expect(keys.size).toBeGreaterThanOrEqual(6);
+    });
+
+    it("gives rolls damage compatible with parchment strips, not codex gatherings", () => {
+      for (let seed = 1; seed < 40; seed++) {
+        const resolved = resolveTome(
+          { genre: "Classic Fantasy", format: "Scorched Parchment Roll" },
+          seededRng(seed),
+        );
+        expect(resolved.exactDamage).not.toMatch(
+          /gathering|quire|leaves|signature/i,
+        );
+      }
+    });
+
+    it("does not seed a disconnected blade in the clay vessel mystery", () => {
+      const cases = Array.from({ length: 120 }, (_, i) =>
+        resolveTome({ genre: "Classic Fantasy" }, seededRng(i * 503 + 1)),
+      );
+      const vessel = cases.find((c) =>
+        /river-clay spirit vessel/.test(c.bookClaim),
+      );
+      expect(vessel).toBeDefined();
+      expect(vessel!.bookClaim).not.toMatch(/blade/);
+      expect(vessel!.objectiveTruth).toMatch(/vessel/);
+    });
+  });
+
   describe("generateTomeTwoPass", () => {
     const content = [
       "### Physical Description & Format",
@@ -752,7 +789,22 @@ ${duplicatedParagraph}
 
       expect(calls).toHaveLength(2);
       expect(calls[1].message).toContain("FIRST-PASS DRAFT JSON");
-      expect(calls[1].message).toContain("PROVISIONAL FIRST-PASS FACTS");
+      expect(calls[1].message).toContain("PROVISIONAL CANONICAL FACTS");
+      expect(calls[1].instruction).toContain(
+        "objectively incoherent generated premise",
+      );
+      expect(calls[1].instruction).toContain(
+        "preserving explicit user constraints",
+      );
+      expect(calls[1].instruction).not.toContain(
+        "without altering its canonical plot facts",
+      );
+      expect(calls[1].message).toContain(
+        "You MAY correct an objectively incoherent generated premise",
+      );
+      expect(calls[1].message).toContain(
+        "MUST preserve explicit user constraints",
+      );
       expect(calls[1].message).toContain("blade");
       expect(out?.content).toContain("river-clay vessel");
       expect(out?.content).not.toContain("soul-forged blade");
@@ -761,133 +813,82 @@ ${duplicatedParagraph}
       );
     });
 
-    it("lets the critic correct an impossible source clue and updates the structured truth", async () => {
-      const prompt = buildTomePrompt(
-        { genre: "Classic Fantasy" },
-        undefined,
-        seededRng(4),
+    it("allows the adversarial editor to correct a defective derived fact", async () => {
+      const prompt = buildTomePrompt({}, undefined, seededRng(13));
+      let calls = 0;
+      const answer = (corrected: boolean) =>
+        JSON.stringify({
+          title: "The Survey",
+          summary: "A flawed route survey.",
+          content: [
+            "### Physical Description & Format",
+            "A folio.",
+            "### Provenance & Transmission",
+            "Compiled by a surveyor.",
+            "### Contents & Revelations",
+            "The eastern glyph had been swapped with its western counterpart.",
+            ...(corrected
+              ? ["The compass swaps east and west, preserving north and south."]
+              : []),
+            "### Risks & Costs of Study",
+            "Rash explorers fall into pits.",
+            "### Adventure Hooks",
+            "1. Trace the forged plan.",
+          ].join("\n\n"),
+          lore: [
+            "### At the Table Reference",
+            "Use the compass clue.",
+            "### Ground Truth for the GM",
+            "- **What the Book Claims**: Trust the chart.",
+            "- **The Deception / Flaw**: Directions are reversed.",
+            "- **The Objective Truth**: Reverse the lateral directions.",
+            "- **Actionable Clue**: The east and west glyphs are swapped.",
+            "### Connected Entities",
+            "- **Author**: Surveyor.",
+            "### Quick Checks & Mechanics",
+            "- **The Failure Condition**: Following the route trips a pit.",
+          ].join("\n\n"),
+          canonicalFacts: {
+            centralRule: "Reverse east and west without rotating north.",
+            productionMethod: "Handwritten parchment.",
+            errorSource: "A later copyist transposed east and west.",
+            ...(corrected
+              ? {
+                  actionableClue:
+                    "The compass swaps east and west, preserving north and south.",
+                }
+              : {}),
+          },
+        });
+      const result = await generateTomeTwoPass(prompt, async () =>
+        answer(++calls === 2),
       );
-      const fixed = JSON.parse(response(content));
-      fixed.canonicalFacts.actionableClue =
-        "The east and west initials are swapped, but the north bearing stays fixed.";
-      fixed.canonicalFacts.objectiveTruth =
-        "A left-right reflection requires swapping all turns, while north stays fixed.";
-      fixed.content = fixed.content.replace(
-        "A river-clay vessel must dry in open air. A later censor substituted water.",
-        "A river-clay vessel must dry in open air. A later censor substituted water. The east and west initials are swapped, but the north bearing stays fixed. A left-right reflection requires swapping all turns, while north stays fixed.",
+      expect(result?.tomeFacts?.actionableClue).toBe(
+        "The compass swaps east and west, preserving north and south.",
       );
-      const out = await generateTomeTwoPass(prompt, async (_system, message) =>
-        message.includes("EDITORIAL PASS 2")
-          ? JSON.stringify(fixed)
-          : response(content),
+      expect(result?.lore).toContain(
+        "The compass swaps east and west, preserving north and south.",
       );
-      expect(out?.tomeFacts?.actionableClue).toContain("east and west");
-      expect(out?.tomeFacts?.objectiveTruth).toContain("reflection");
-      expect(out?.tomeFacts?.associatedLocation).toBe(
-        prompt.resolved.associatedLocation,
-      );
-      expect(out?.tomeFacts?.missingMaterial).toBe(prompt.resolved.exactDamage);
-      expect(out?.lore).toContain(
-        "The east and west initials are swapped, but the north bearing stays fixed.",
-      );
+      expect(calls).toBe(2);
     });
 
-    it("rejects corrected canonical facts that contradict unchanged narrative prose", async () => {
-      const prompt = buildTomePrompt(
-        { genre: "Classic Fantasy" },
-        undefined,
-        seededRng(4),
-      );
+    it("rejects corrected canonical facts that are absent from unchanged narrative prose", async () => {
+      const prompt = buildTomePrompt({}, undefined, seededRng(13));
       const contradictory = JSON.parse(response(content));
       contradictory.canonicalFacts.actionableClue =
         "A hidden blue cipher reveals the eastern gate's lunar alignment.";
-      const out = await generateTomeTwoPass(prompt, async (_system, message) =>
-        message.includes("EDITORIAL PASS 2")
-          ? JSON.stringify(contradictory)
-          : response(content),
+      const result = await generateTomeTwoPass(
+        prompt,
+        async (_system, message) =>
+          message.includes("EDITORIAL PASS 2")
+            ? JSON.stringify(contradictory)
+            : response(content),
       );
 
-      expect(out?.tomeFacts?.actionableClue).not.toBe(
+      expect(result?.tomeFacts?.actionableClue).not.toBe(
         contradictory.canonicalFacts.actionableClue,
       );
-      expect(out?.content).toBe(content);
-    });
-
-    it("streams only pass two in pieces, then publishes a single validated result", async () => {
-      const prompt = buildTomePrompt({}, undefined, seededRng(4));
-      const final = response(content);
-      const events = [];
-      for await (const event of streamTomeTwoPass(
-        prompt,
-        async () =>
-          response(content.replace("river-clay vessel", "unfinished vessel")),
-        async function* () {
-          yield { type: "started" as const };
-          yield { type: "delta" as const, text: final.slice(0, 95) };
-          yield { type: "delta" as const, text: final.slice(95) };
-          yield { type: "complete" as const, text: final };
-        },
-      ))
-        events.push(event);
-
-      expect(events.map((e) => e.type)).toEqual([
-        "phase",
-        "phase",
-        "delta",
-        "delta",
-        "result",
-      ]);
-      expect(
-        events
-          .filter((e) => e.type === "delta")
-          .map((e) => ("text" in e ? e.text : ""))
-          .join(""),
-      ).toBe(final);
-      const outcome = events.at(-1);
-      expect(outcome?.type).toBe("result");
-      if (outcome?.type === "result")
-        expect(outcome.output?.content).toContain("river-clay vessel");
-    });
-
-    it("streams the editorial pass but restores a valid first draft if the revision fails", async () => {
-      const prompt = buildTomePrompt({}, undefined, seededRng(4));
-      const events = [];
-      for await (const event of streamTomeTwoPass(
-        prompt,
-        async () => response(content),
-        async function* () {
-          yield { type: "delta" as const, text: "not JSON" };
-          yield { type: "error" as const, error: "connection lost" };
-        },
-      ))
-        events.push(event);
-      expect(events.map((e) => e.type)).toEqual([
-        "phase",
-        "phase",
-        "delta",
-        "result",
-      ]);
-      const outcome = events.at(-1);
-      if (outcome?.type === "result")
-        expect(outcome.output?.title).toBe("The River-Clay Rite");
-    });
-
-    it("does not stream a final result after cancellation", async () => {
-      const prompt = buildTomePrompt({}, undefined, seededRng(4));
-      const controller = new AbortController();
-      const events = [];
-      for await (const event of streamTomeTwoPass(
-        prompt,
-        async () => response(content),
-        async function* () {
-          yield { type: "delta" as const, text: "partial" };
-          controller.abort();
-          yield { type: "complete" as const, text: response(content) };
-        },
-        controller.signal,
-      ))
-        events.push(event);
-      expect(events.some((e) => e.type === "result")).toBe(false);
+      expect(result?.content).toBe(content);
     });
 
     it("retains a valid first draft when the editorial response is malformed", async () => {

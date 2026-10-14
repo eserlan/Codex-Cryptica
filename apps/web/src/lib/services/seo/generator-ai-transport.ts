@@ -25,29 +25,36 @@ export function toSeoOutput(o: PublicGeneratorOutput): GeneratorOutput {
   return { ...o, type: o.type as GeneratorOutput["type"] };
 }
 
-type GeneratorStreamEvent =
-  | { type: "delta"; text: string }
-  | { type: "complete"; text: string }
-  | { type: "error"; error: string }
-  | { type: "started" };
+type StreamingModel = {
+  generateContentStream?(
+    request: unknown,
+  ): AsyncGenerator<
+    | { type: "delta"; text: string }
+    | { type: "complete"; text: string }
+    | { type: "error"; error: string }
+    | { type: "started" }
+  >;
+};
 
-async function collectGeneratorStream(
-  stream: AsyncGenerator<GeneratorStreamEvent>,
+async function streamModelPreview(
+  model: StreamingModel,
+  request: unknown,
   onPreview: (text: string) => void,
 ): Promise<string> {
   let text = "";
-  for await (const event of stream) {
-    switch (event.type) {
-      case "delta":
-        text += event.text;
-        onPreview(text);
-        break;
-      case "complete":
-        // Prefer accumulated deltas unless the terminal frame is more complete.
-        if (event.text.trim().length > text.trim().length) text = event.text;
-        break;
-      case "error":
-        throw new Error(event.error);
+  for await (const event of model.generateContentStream!(request)) {
+    if (event.type === "delta") {
+      text += event.text;
+      onPreview(text);
+    } else if (event.type === "complete") {
+      // Provider terminal frames occasionally carry only whitespace or a
+      // short trailing fragment. The accumulated deltas are the source of
+      // truth unless this frame contains a strictly more complete body.
+      if (event.text.trim().length > text.trim().length) {
+        text = event.text;
+      }
+    } else if (event.type === "error") {
+      throw new Error(event.error);
     }
   }
   return text.trim();
@@ -124,8 +131,7 @@ export class GeneratorAITransport {
     systemInstruction: string,
     userMessage: string,
     generationConfig?: typeof LANGUAGE_GENERATION_CONFIG,
-    /** Exclude an internal draft from the public preview stream. */
-    previewEnabled = true,
+    emitPreview = true,
   ): Promise<string> {
     const model = await this.clientManager.getModel(
       "",
@@ -138,20 +144,13 @@ export class GeneratorAITransport {
           generationConfig,
         }
       : userMessage;
-    const streamingModel = model as unknown as {
-      generateContentStream?(
-        request: unknown,
-      ): AsyncGenerator<GeneratorStreamEvent>;
-    };
+    const streamingModel = model as unknown as StreamingModel;
     if (
-      previewEnabled &&
+      emitPreview &&
       this.streamPreview &&
       streamingModel.generateContentStream
     ) {
-      return collectGeneratorStream(
-        streamingModel.generateContentStream(request),
-        this.streamPreview,
-      );
+      return streamModelPreview(streamingModel, request, this.streamPreview);
     }
     const response = await model.generateContent(request);
     return response.response.text().trim();
