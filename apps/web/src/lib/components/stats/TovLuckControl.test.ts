@@ -62,6 +62,9 @@ describe("TovLuckControl", () => {
     expect(screen.getByTestId("tov-luck-value").textContent).toMatch(
       /3\s*\/\s*5/,
     );
+    expect(
+      screen.getByText(/provided they did not spend Luck on that roll/),
+    ).toBeTruthy();
     expect(screen.getByText(/Source: BFRD/)).toBeTruthy();
   });
 });

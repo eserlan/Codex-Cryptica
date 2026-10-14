@@ -75,6 +75,7 @@
       >How Luck works</summary
     >
     <p>{TOV_LUCK_REFERENCE.summary}</p>
+    <p>Earn: {TOV_LUCK_REFERENCE.earn}</p>
     <p>{TOV_LUCK_REFERENCE.note}</p>
     <p>Source: {TOV_LUCK_REFERENCE.source}</p>
   </details>
