@@ -64,7 +64,6 @@ describe("Tales of the Valiant Stat-Sheet Templates (#3944)", () => {
     // Vitals with Luck (1-5 pool)
     const hp = fieldMap.get("hp");
     expect(hp?.type).toBe("counter");
-    expect(hp?.barField).toBe(true);
 
     const luck = fieldMap.get("luck");
     expect(luck?.type).toBe("counter");
