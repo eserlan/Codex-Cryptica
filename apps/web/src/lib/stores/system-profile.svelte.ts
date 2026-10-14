@@ -21,7 +21,8 @@ export interface ISystemProfileStorage {
   loadFromCache(vaultId: string): Promise<string | null>;
   saveToCache(vaultId: string, systemId: string | null): Promise<void>;
   loadFromDisk(vaultId: string): Promise<string | null>;
-  saveToDisk(vaultId: string, systemId: string | null): Promise<void>;
+  /** Resolves true only when the value was persisted to disk. */
+  saveToDisk(vaultId: string, systemId: string | null): Promise<boolean>;
 }
 
 export function createSystemProfileStorage(
@@ -73,7 +74,10 @@ export function createSystemProfileStorage(
         return null;
       }
     },
-    async saveToDisk(vaultId: string, systemId: string | null): Promise<void> {
+    async saveToDisk(
+      vaultId: string,
+      systemId: string | null,
+    ): Promise<boolean> {
       try {
         await dependencies.updateVaultConfig(vaultId, (config) => {
           if (
@@ -87,14 +91,16 @@ export function createSystemProfileStorage(
             delete config.system;
           }
         });
+        return true;
       } catch (err) {
         console.warn("[SystemProfileStore] Failed to save to disk", err);
+        return false;
       }
     },
   };
 }
 
-export const defaultSystemProfileStorage = createSystemProfileStorage();
+const defaultSystemProfileStorage = createSystemProfileStorage();
 
 export class SystemProfileStore {
   activeVaultId = $state<string | null>(null);
@@ -152,24 +158,7 @@ export class SystemProfileStore {
     this.isLoading = true;
     this.isInitialized = false;
     try {
-      // 1. Try cache first for fast paint
-      let systemId = await this.storage.loadFromCache(selectedVaultId);
-
-      // 2. If not in cache, fallback to reading disk
-      if (!systemId) {
-        systemId = await this.updateCacheForVault(selectedVaultId, async () => {
-          const loadedSystemId =
-            await this.storage.loadFromDisk(selectedVaultId);
-          if (loadedSystemId && generation === this.initGeneration) {
-            await this.storage.saveToCache(selectedVaultId, loadedSystemId);
-          }
-          return loadedSystemId;
-        });
-      }
-
-      if (generation !== this.initGeneration) return;
-      this.vaultSystemId = systemId;
-      this.isInitialized = true;
+      await this.loadProfile(selectedVaultId, generation);
     } catch (err) {
       console.warn(
         "[SystemProfileStore] Init error, falling back to neutral",
@@ -184,23 +173,78 @@ export class SystemProfileStore {
     }
   }
 
-  async setVaultSystemId(systemId: string | null): Promise<void> {
-    this.initGeneration += 1;
+  /**
+   * Resolves false when the choice could not be saved to disk; the previous
+   * profile is restored and the cache is left untouched.
+   */
+  async setVaultSystemId(systemId: string | null): Promise<boolean> {
+    const generation = ++this.initGeneration;
     this.isLoading = false;
     this.isInitialized = true;
     const normalized =
       systemId && systemId.trim() !== "" ? systemId.trim() : null;
+    const previous = this.vaultSystemId;
     this.vaultSystemId = normalized;
 
     const selectedVaultId = this.activeVaultId;
-    if (selectedVaultId) {
-      await Promise.all([
-        this.updateCacheForVault(selectedVaultId, () =>
-          this.storage.saveToCache(selectedVaultId, normalized),
-        ),
-        this.storage.saveToDisk(selectedVaultId, normalized),
-      ]);
+    if (!selectedVaultId) return true;
+
+    const saved = await this.storage.saveToDisk(selectedVaultId, normalized);
+    if (!saved) {
+      if (
+        generation === this.initGeneration &&
+        this.activeVaultId === selectedVaultId
+      ) {
+        this.vaultSystemId = previous;
+      }
+      return false;
     }
+    await this.updateCacheForVault(selectedVaultId, () =>
+      this.storage.saveToCache(selectedVaultId, normalized),
+    );
+    return true;
+  }
+
+  private async loadProfile(
+    vaultId: string,
+    generation: number,
+  ): Promise<void> {
+    // 1. Try cache first for fast paint
+    const cachedSystemId = await this.storage.loadFromCache(vaultId);
+    if (generation !== this.initGeneration) return;
+    if (cachedSystemId) {
+      this.vaultSystemId = cachedSystemId;
+      this.isInitialized = true;
+    }
+
+    // 2. Reconcile with the vault's own config on disk, which is the source
+    // of truth. A missing or unreadable disk value never clears the cache.
+    const diskSystemId = await this.reconcileWithDisk(
+      vaultId,
+      cachedSystemId,
+      generation,
+    );
+    if (generation !== this.initGeneration) return;
+    this.vaultSystemId = diskSystemId ?? cachedSystemId;
+    this.isInitialized = true;
+  }
+
+  private reconcileWithDisk(
+    vaultId: string,
+    cachedSystemId: string | null,
+    generation: number,
+  ): Promise<string | null> {
+    return this.updateCacheForVault(vaultId, async () => {
+      const loadedSystemId = await this.storage.loadFromDisk(vaultId);
+      if (
+        loadedSystemId &&
+        loadedSystemId !== cachedSystemId &&
+        generation === this.initGeneration
+      ) {
+        await this.storage.saveToCache(vaultId, loadedSystemId);
+      }
+      return loadedSystemId;
+    });
   }
 
   private async updateCacheForVault<T>(
@@ -237,9 +281,6 @@ export class SystemProfileStore {
     return this.resolveEntitySystem(entity).id;
   }
 
-  listAvailableProfiles(): GameSystemProfile[] {
-    return this.registry.list();
-  }
 }
 
 export const systemProfileStore = new SystemProfileStore();

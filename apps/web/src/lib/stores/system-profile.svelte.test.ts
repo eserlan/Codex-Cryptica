@@ -36,6 +36,7 @@ describe("SystemProfileStore (#3943)", () => {
         } else {
           diskStore.delete(vaultId);
         }
+        return true;
       }),
     };
 
@@ -72,7 +73,26 @@ describe("SystemProfileStore (#3943)", () => {
     expect(store.hasLuck).toBe(true);
     expect(store.hasDoom).toBe(true);
     expect(store.activeProfile.label).toBe("Tales of the Valiant");
-    expect(mockStorage.loadFromDisk).not.toHaveBeenCalled();
+  });
+
+  it("prefers the vault's disk config over a stale cache entry", async () => {
+    cacheStore.set("vault-stale", TOV_SYSTEM_ID);
+    diskStore.set("vault-stale", "custom-sci-fi-rules");
+
+    await store.init("vault-stale");
+
+    expect(store.vaultSystemId).toBe("custom-sci-fi-rules");
+    expect(cacheStore.get("vault-stale")).toBe("custom-sci-fi-rules");
+  });
+
+  it("keeps the cached profile when the disk has no readable value", async () => {
+    cacheStore.set("vault-cached", TOV_SYSTEM_ID);
+
+    await store.init("vault-cached");
+
+    expect(mockStorage.loadFromDisk).toHaveBeenCalledWith("vault-cached");
+    expect(store.vaultSystemId).toBe(TOV_SYSTEM_ID);
+    expect(cacheStore.get("vault-cached")).toBe(TOV_SYSTEM_ID);
   });
 
   it("falls back to disk when cache is empty, populating cache", async () => {
@@ -175,6 +195,20 @@ describe("SystemProfileStore (#3943)", () => {
     expect(diskStore.get("campaign-a")).toBe(TOV_SYSTEM_ID);
   });
 
+  it("restores the previous profile and skips the cache when the disk save fails", async () => {
+    cacheStore.set("campaign-fail", TOV_SYSTEM_ID);
+    diskStore.set("campaign-fail", TOV_SYSTEM_ID);
+    await store.init("campaign-fail");
+    vi.mocked(mockStorage.saveToDisk).mockResolvedValueOnce(false);
+
+    const saved = await store.setVaultSystemId(null);
+
+    expect(saved).toBe(false);
+    expect(store.vaultSystemId).toBe(TOV_SYSTEM_ID);
+    expect(cacheStore.get("campaign-fail")).toBe(TOV_SYSTEM_ID);
+    expect(diskStore.get("campaign-fail")).toBe(TOV_SYSTEM_ID);
+  });
+
   it("allows cleanly reverting to system-neutral at any time", async () => {
     cacheStore.set("campaign-b", TOV_SYSTEM_ID);
     diskStore.set("campaign-b", TOV_SYSTEM_ID);
@@ -234,7 +268,7 @@ describe("SystemProfileStore (#3943)", () => {
       expect(entityProfile.isDefault).toBe(true);
     });
 
-    it("resolves system ID directly via resolveSystemId helper", async () => {
+    it("resolves system IDs through the entity and vault profile precedence", async () => {
       await store.init("vault-tov");
       await store.setVaultSystemId(TOV_SYSTEM_ID);
 

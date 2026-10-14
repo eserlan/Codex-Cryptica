@@ -126,7 +126,7 @@ describe("default system profile persistence adapter", () => {
     ).resolves.toBeUndefined();
     await expect(
       failingStorage.saveToDisk("vault-4", TOV_SYSTEM_ID),
-    ).resolves.toBeUndefined();
+    ).resolves.toBe(false);
     expect(warn).toHaveBeenCalled();
     warn.mockRestore();
   });

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   clearSessionPrepStep,
   createEmptySessionPrep,
+  defaultIdFactory,
   emptySessionPrepSteps,
   findSingleRouteClues,
   hasSessionPrepContent,
@@ -9,6 +10,7 @@ import {
   sessionPrepTitle,
   type SessionPrep,
 } from "./model";
+import { systemIdGenerator } from "@codex/runtime";
 
 function sequentialIds() {
   let n = 0;
@@ -233,5 +235,24 @@ describe("sessionPrepTitle", () => {
     expect(sessionPrepTitle(prep)).toBe("Session prep");
     prep.start = "Rain on the harbour";
     expect(sessionPrepTitle(prep)).toBe("Session prep: Rain on the harbour");
+  });
+});
+
+describe("defaultIdFactory", () => {
+  it("delegates to the runtime systemIdGenerator", () => {
+    const originalUuid = systemIdGenerator.uuid;
+    let called = false;
+    systemIdGenerator.uuid = () => {
+      called = true;
+      return "test-id";
+    };
+
+    try {
+      const id = defaultIdFactory();
+      expect(called).toBe(true);
+      expect(id).toBe("test-id");
+    } finally {
+      systemIdGenerator.uuid = originalUuid;
+    }
   });
 });

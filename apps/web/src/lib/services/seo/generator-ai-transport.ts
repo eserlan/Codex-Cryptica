@@ -25,6 +25,41 @@ export function toSeoOutput(o: PublicGeneratorOutput): GeneratorOutput {
   return { ...o, type: o.type as GeneratorOutput["type"] };
 }
 
+type StreamingModel = {
+  generateContentStream?(
+    request: unknown,
+  ): AsyncGenerator<
+    | { type: "delta"; text: string }
+    | { type: "complete"; text: string }
+    | { type: "error"; error: string }
+    | { type: "started" }
+  >;
+};
+
+async function streamModelPreview(
+  model: StreamingModel,
+  request: unknown,
+  onPreview: (text: string) => void,
+): Promise<string> {
+  let text = "";
+  for await (const event of model.generateContentStream!(request)) {
+    if (event.type === "delta") {
+      text += event.text;
+      onPreview(text);
+    } else if (event.type === "complete") {
+      // Provider terminal frames occasionally carry only whitespace or a
+      // short trailing fragment. The accumulated deltas are the source of
+      // truth unless this frame contains a strictly more complete body.
+      if (event.text.trim().length > text.trim().length) {
+        text = event.text;
+      }
+    } else if (event.type === "error") {
+      throw new Error(event.error);
+    }
+  }
+  return text.trim();
+}
+
 /**
  * Shared AI transport for every SEO generator (#1494): resolves the model,
  * streams or awaits its response, and provides the AI-with-local-fallback
@@ -96,6 +131,7 @@ export class GeneratorAITransport {
     systemInstruction: string,
     userMessage: string,
     generationConfig?: typeof LANGUAGE_GENERATION_CONFIG,
+    emitPreview = true,
   ): Promise<string> {
     const model = await this.clientManager.getModel(
       "",
@@ -108,34 +144,13 @@ export class GeneratorAITransport {
           generationConfig,
         }
       : userMessage;
-    const streamingModel = model as unknown as {
-      generateContentStream?(
-        request: unknown,
-      ): AsyncGenerator<
-        | { type: "delta"; text: string }
-        | { type: "complete"; text: string }
-        | { type: "error"; error: string }
-        | { type: "started" }
-      >;
-    };
-    if (this.streamPreview && streamingModel.generateContentStream) {
-      let text = "";
-      for await (const event of streamingModel.generateContentStream(request)) {
-        if (event.type === "delta") {
-          text += event.text;
-          this.streamPreview(text);
-        } else if (event.type === "complete") {
-          // Provider terminal frames occasionally carry only whitespace or a
-          // short trailing fragment. The accumulated deltas are the source of
-          // truth unless this frame contains a strictly more complete body.
-          if (event.text.trim().length > text.trim().length) {
-            text = event.text;
-          }
-        } else if (event.type === "error") {
-          throw new Error(event.error);
-        }
-      }
-      return text.trim();
+    const streamingModel = model as unknown as StreamingModel;
+    if (
+      emitPreview &&
+      this.streamPreview &&
+      streamingModel.generateContentStream
+    ) {
+      return streamModelPreview(streamingModel, request, this.streamPreview);
     }
     const response = await model.generateContent(request);
     return response.response.text().trim();

@@ -62,11 +62,13 @@ export class GeneratorEngineBase {
     systemInstruction: string,
     userMessage: string,
     generationConfig?: typeof LANGUAGE_GENERATION_CONFIG,
+    emitPreview = true,
   ): Promise<string> {
     return this.transport.runModel(
       systemInstruction,
       userMessage,
       generationConfig,
+      emitPreview,
     );
   }
 

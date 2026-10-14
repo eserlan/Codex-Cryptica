@@ -1,3 +1,4 @@
+import { systemIdGenerator } from "@codex/runtime";
 export const SESSION_PREP_STEPS = [
   "start",
   "pressure",
@@ -93,7 +94,7 @@ export interface SessionPrepDraft {
 
 export type IdFactory = () => string;
 
-export const defaultIdFactory: IdFactory = () => crypto.randomUUID();
+export const defaultIdFactory: IdFactory = () => systemIdGenerator.uuid();
 
 export function createEmptySessionPrep(seed = ""): SessionPrep {
   return {

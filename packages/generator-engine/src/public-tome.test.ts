@@ -2,9 +2,11 @@ import { describe, expect, it } from "vitest";
 import { EXEMPLARS } from "./campaign-generator-exemplars";
 import {
   auditTomeConsistency,
+  buildTomeFacts,
   buildTomePrompt,
   ensureGroundTruthInLore,
   generateTomeLocal,
+  generateTomeTwoPass,
   parseTomeResponse,
   resolveTome,
   tomeConfig,
@@ -116,6 +118,35 @@ describe("public-tome generator", () => {
       expect(["Late 21st century", "Near-future era"]).toContain(resolved.era);
       expect(out.lore.toLowerCase()).toContain("compiled the work in the");
       expect(out.lore).not.toContain("seventeenth-century");
+    });
+
+    it("never gives Classic Fantasy a real-world calendar year", () => {
+      for (let seed = 0; seed < 200; seed += 1) {
+        const resolved = resolveTome(
+          { genre: "Classic Fantasy" },
+          seededRng(seed),
+        );
+        expect(resolved.era).not.toMatch(/\b\d{3,4}\b|century|Interwar/);
+      }
+    });
+
+    it("keeps Classic Fantasy format, rarity, custodian and language in-world", () => {
+      for (let seed = 0; seed < 200; seed += 1) {
+        const r = resolveTome({ genre: "Classic Fantasy" }, seededRng(seed));
+        expect(
+          `${r.format} ${r.rarity} ${r.custodian} ${r.language}`,
+        ).not.toMatch(
+          /Printed|Pirated|University|Byzantine|Latin|Pocket Field/i,
+        );
+      }
+    });
+
+    it("still honours explicit user choices over theme lists", () => {
+      const r = resolveTome(
+        { genre: "Classic Fantasy", format: "Redacted Printed Octavo" },
+        seededRng(1),
+      );
+      expect(r.format).toBe("Redacted Printed Octavo");
     });
 
     it("keeps date-bearing sample titles consistent with the selected era", () => {
@@ -297,7 +328,7 @@ describe("public-tome generator", () => {
   });
 
   describe("ensureGroundTruthInLore", () => {
-    it("preserves existing Ground Truth for the GM without duplicating", () => {
+    it("reconciles existing Ground Truth for the GM without duplicating", () => {
       const existingLore = `### At the Table Reference
 
 ### Ground Truth for the GM
@@ -310,8 +341,199 @@ describe("public-tome generator", () => {
         bookClaim: "Fallback claim",
       });
 
-      expect(result).toBe(existingLore);
-      expect(result).not.toContain("Fallback claim");
+      expect(result).toContain("Fallback claim");
+      expect(result).not.toContain("Custom claim");
+      expect(result.match(/### Ground Truth for the GM/g)).toHaveLength(1);
+    });
+  });
+
+  describe("prompt editorial and logic rules", () => {
+    it("states genre fidelity, spatial logic, production method and anti-repetition", () => {
+      const prompt = buildTomePrompt(
+        { genre: "Classic Fantasy" },
+        undefined,
+        seededRng(3),
+      );
+      const all = `${prompt.systemInstruction}\n${prompt.userMessage}`;
+      expect(all).toContain("secondary world");
+      expect(all).toContain("mirrored map swaps east and west");
+      expect(all).toContain("production method");
+      expect(all).toContain("Editorial economy");
+    });
+
+    it("does not forbid real-world references for Cosmic Horror", () => {
+      const prompt = buildTomePrompt({}, undefined, seededRng(3));
+      expect(prompt.systemInstruction).not.toContain("secondary world");
+    });
+
+    it("keeps editorial technology guidance appropriate to the resolved genre", async () => {
+      const prompt = buildTomePrompt(
+        { genre: "Cyberpunk" },
+        undefined,
+        seededRng(3),
+      );
+      let editorialInstruction = "";
+      let editorialMessage = "";
+
+      await generateTomeTwoPass(prompt, async (instruction, message) => {
+        if (message.includes("EDITORIAL PASS 2 OF 2")) {
+          editorialInstruction = instruction;
+          editorialMessage = message;
+        }
+        return "invalid JSON";
+      });
+
+      expect(editorialInstruction).not.toContain("fantasy");
+      expect(editorialMessage).toContain(
+        "Keep technology consistent with the Cyberpunk setting and Composition Era.",
+      );
+      expect(editorialMessage).not.toContain(
+        "avoid importing modern technology",
+      );
+    });
+  });
+
+  describe("canonical facts", () => {
+    it("attaches structured facts to local output", () => {
+      const resolved = resolveTome({ genre: "Classic Fantasy" }, seededRng(9));
+      const out = generateTomeLocal({ genre: "Classic Fantasy" }, seededRng(9));
+      expect(out.tomeFacts?.missingMaterial).toBe(resolved.exactDamage);
+      expect(out.tomeFacts?.associatedLocation).toBe(
+        resolved.associatedLocation,
+      );
+      expect(out.tomeFacts?.centralRule).toBeTruthy();
+      expect(auditTomeConsistency(out, resolved).issues).toEqual([]);
+    });
+
+    it("keeps resolver anchors authoritative over model-supplied facts", () => {
+      const prompt = buildTomePrompt({}, undefined, seededRng(4));
+      const out = parseTomeResponse(
+        JSON.stringify({
+          title: "T",
+          content: "x",
+          lore: "y",
+          canonicalFacts: {
+            centralRule: "Reverse every left and right turn",
+            productionMethod: "Printed facsimile of a handwritten notebook",
+            errorSource: "The later glossator",
+            missingMaterial: "ninety leaves",
+          },
+        }),
+        prompt.resolved,
+      );
+      expect(out.tomeFacts?.centralRule).toBe(
+        "Reverse every left and right turn",
+      );
+      expect(out.tomeFacts?.errorSource).toBe("The later glossator");
+      expect(out.tomeFacts?.missingMaterial).toBe(prompt.resolved.exactDamage);
+    });
+
+    it("falls back to defaults when the model omits canonicalFacts", () => {
+      const prompt = buildTomePrompt({}, undefined, seededRng(4));
+      const out = parseTomeResponse(
+        JSON.stringify({ title: "T", content: "x", lore: "y" }),
+        prompt.resolved,
+      );
+      expect(out.tomeFacts?.productionMethod).toBe(prompt.resolved.format);
+    });
+
+    it("flags a central rule that never appears in the prose", () => {
+      const resolved = resolveTome({ genre: "Classic Fantasy" }, seededRng(9));
+      const out = generateTomeLocal({ genre: "Classic Fantasy" }, seededRng(9));
+      const audit = auditTomeConsistency(
+        {
+          ...out,
+          tomeFacts: {
+            ...out.tomeFacts!,
+            centralRule: "Submerge the vellum overnight in brine and moonlight",
+            objectiveTruth: "Zebras guard the quarry gate at dusk",
+          },
+        },
+        resolved,
+      );
+      expect(audit.warnings.join(" ")).toContain("not reflected");
+    });
+
+    it("ignores blank or non-string authored facts and tolerates a bare resolver", () => {
+      const facts = buildTomeFacts(
+        {},
+        { centralRule: "   ", productionMethod: 5 as unknown as string },
+      );
+      expect(facts.centralRule).toBe("");
+      expect(facts.productionMethod).toBe("Unspecified");
+      expect(facts.errorSource).toContain("recoverable");
+    });
+
+    it("prompt asks the model to decide canonicalFacts first", () => {
+      const prompt = buildTomePrompt({}, undefined, seededRng(4));
+      expect(prompt.userMessage).toContain('"canonicalFacts"');
+      expect(prompt.userMessage).toContain("Decide");
+    });
+  });
+
+  describe("auditTomeConsistency genre and repetition", () => {
+    const base = generateTomeLocal({ genre: "Classic Fantasy" }, seededRng(5));
+    const resolved = resolveTome({ genre: "Classic Fantasy" }, seededRng(5));
+
+    it("flags real-world references in a Classic Fantasy tome", () => {
+      const audit = auditTomeConsistency(
+        {
+          ...base,
+          content: `${base.content}\nSeized in Thessaloniki in 1924.`,
+        },
+        resolved,
+      );
+      expect(audit.valid).toBe(true);
+      expect(audit.warnings.join(" ")).toContain("Genre drift");
+    });
+
+    it("never rejects a generation over heuristic warnings alone", () => {
+      const line =
+        "Reverse every left and right turn printed in the route before the expedition enters the lower vaults.";
+      const audit = auditTomeConsistency(
+        {
+          ...base,
+          content: `${base.content}\nSeized in Thessaloniki in 1924.\n\n### Adventure Hooks\n${line}\n\n### Contents & Revelations\n${line}`,
+        },
+        resolved,
+      );
+      expect(audit.warnings.length).toBeGreaterThan(0);
+      expect(audit.issues).toEqual([]);
+      expect(audit.valid).toBe(true);
+    });
+
+    it("does not mistake ordinary numbers for real-world years", () => {
+      const audit = auditTomeConsistency(
+        {
+          ...base,
+          content: `${base.content}\nThe vault holds 1600 gold crowns.`,
+        },
+        resolved,
+      );
+      expect(audit.warnings.join(" ")).not.toContain("Genre drift");
+    });
+
+    it("does not flag the same text for Cosmic Horror", () => {
+      const horror = resolveTome({ genre: "Cosmic Horror" }, seededRng(5));
+      const audit = auditTomeConsistency(
+        {
+          ...base,
+          content: `${base.content}\nSeized in Thessaloniki in 1924.`,
+        },
+        horror,
+      );
+      expect(audit.warnings.join(" ")).not.toContain("Genre drift");
+    });
+
+    it("flags the same instruction restated across sections", () => {
+      const line =
+        "Reverse every left and right turn printed in the route before the expedition enters the lower vaults.";
+      const audit = auditTomeConsistency({
+        ...base,
+        content: `${base.content}\n\n### Contents & Revelations\n${line}\n\n### Adventure Hooks\n${line}`,
+      });
+      expect(audit.valid).toBe(true);
+      expect(audit.warnings.join(" ")).toContain("Repeated explanation");
     });
   });
 
@@ -439,6 +661,293 @@ ${duplicatedParagraph}
           i.includes("Lore contains duplicated prose paragraph from content"),
         ),
       ).toBe(true);
+    });
+  });
+
+  describe("mystery variety and physical construction", () => {
+    it("uses different mystery profiles when the first was recently selected", () => {
+      const first = resolveTome({ genre: "Classic Fantasy" }, seededRng(7));
+      const next = resolveTome(
+        {
+          genre: "Classic Fantasy",
+          avoidDeceptionKeys: [first.deceptionKey],
+        },
+        seededRng(7),
+      );
+      expect(next.deceptionKey).not.toBe(first.deceptionKey);
+      expect(next.objectiveTruth).not.toBe(first.objectiveTruth);
+    });
+
+    it("also excludes recently delivered mystery text", () => {
+      const first = resolveTome({ genre: "Classic Fantasy" }, seededRng(7));
+      const next = resolveTome(
+        {
+          genre: "Classic Fantasy",
+          avoidDeceptions: [first.deceptionOrFlaw],
+        },
+        seededRng(7),
+      );
+
+      expect(next.deceptionOrFlaw).not.toBe(first.deceptionOrFlaw);
+    });
+
+    it("has broad Classic Fantasy mystery variety", () => {
+      const keys = new Set<string>();
+      for (let seed = 1; seed < 120; seed++) {
+        keys.add(
+          resolveTome({ genre: "Classic Fantasy" }, seededRng(seed * 501))
+            .deceptionKey,
+        );
+      }
+      expect(keys.size).toBeGreaterThanOrEqual(6);
+    });
+
+    it("gives rolls damage compatible with parchment strips, not codex gatherings", () => {
+      for (let seed = 1; seed < 40; seed++) {
+        const resolved = resolveTome(
+          { genre: "Classic Fantasy", format: "Scorched Parchment Roll" },
+          seededRng(seed),
+        );
+        expect(resolved.exactDamage).not.toMatch(
+          /gathering|quire|leaves|signature/i,
+        );
+      }
+    });
+
+    it("does not seed a disconnected blade in the clay vessel mystery", () => {
+      const cases = Array.from({ length: 120 }, (_, i) =>
+        resolveTome({ genre: "Classic Fantasy" }, seededRng(i * 503 + 1)),
+      );
+      const vessel = cases.find((c) =>
+        /river-clay spirit vessel/.test(c.bookClaim),
+      );
+      expect(vessel).toBeDefined();
+      expect(vessel!.bookClaim).not.toMatch(/blade/);
+      expect(vessel!.objectiveTruth).toMatch(/vessel/);
+    });
+  });
+
+  describe("generateTomeTwoPass", () => {
+    const content = [
+      "### Physical Description & Format",
+      "A clay tablet bound in twine.",
+      "### Provenance & Transmission",
+      "The temple archived the tablet after its scribe vanished.",
+      "### Contents & Revelations",
+      "A river-clay vessel must dry in open air. A later censor substituted water.",
+      "### Risks & Costs of Study",
+      "Adding water to the vessel releases its resident spirit.",
+      "### Adventure Hooks",
+      "1. Retrieve the vessel before the rite begins.",
+    ].join("\n\n");
+    const lore = [
+      "### At the Table Reference",
+      "Use the vessel as an investigation.",
+      "### Ground Truth for the GM",
+      "- **What the Book Claims**: Apply water.",
+      "- **The Deception / Flaw**: The censor changed the method.",
+      "- **The Objective Truth**: The vessel must dry in open air.",
+      "- **Actionable Clue**: A scorch exposes the correction.",
+      "### Connected Entities",
+      "- **Author / Compiler**: A temple scribe.",
+      "### Quick Checks & Mechanics",
+      "- **The Failure Condition**: Water releases the spirit.",
+    ].join("\n\n");
+    const response = (body: string) =>
+      JSON.stringify({
+        title: "The River-Clay Rite",
+        summary: "A forbidden ritual tablet.",
+        canonicalFacts: {
+          centralRule: "Let the river-clay vessel dry in open air.",
+          productionMethod: "Handwritten on a clay tablet.",
+          errorSource: "A temple censor replaced drying with water.",
+        },
+        content: body,
+        lore,
+        labels: ["tome", "item"],
+        connections: [],
+      });
+
+    it("runs two distinct calls and returns the editorially repaired output", async () => {
+      const prompt = buildTomePrompt(
+        { genre: "Classic Fantasy" },
+        undefined,
+        seededRng(8),
+      );
+      const calls: { instruction: string; message: string }[] = [];
+      const out = await generateTomeTwoPass(
+        prompt,
+        async (instruction, message) => {
+          calls.push({ instruction, message });
+          return calls.length === 1
+            ? response(
+                content.replace("river-clay vessel", "soul-forged blade"),
+              )
+            : response(content);
+        },
+      );
+
+      expect(calls).toHaveLength(2);
+      expect(calls[1].message).toContain("FIRST-PASS DRAFT JSON");
+      expect(calls[1].message).toContain("PROVISIONAL CANONICAL FACTS");
+      expect(calls[1].instruction).toContain(
+        "objectively incoherent generated premise",
+      );
+      expect(calls[1].instruction).toContain(
+        "preserving explicit user constraints",
+      );
+      expect(calls[1].instruction).not.toContain(
+        "without altering its canonical plot facts",
+      );
+      expect(calls[1].message).toContain(
+        "You MAY correct an objectively incoherent generated premise",
+      );
+      expect(calls[1].message).toContain(
+        "MUST preserve explicit user constraints",
+      );
+      expect(calls[1].message).toContain("blade");
+      expect(out?.content).toContain("river-clay vessel");
+      expect(out?.content).not.toContain("soul-forged blade");
+      expect(out?.tomeFacts?.centralRule).toBe(
+        "Let the river-clay vessel dry in open air.",
+      );
+    });
+
+    it("allows the adversarial editor to correct a defective derived fact", async () => {
+      const prompt = buildTomePrompt({}, undefined, seededRng(13));
+      let calls = 0;
+      const answer = (corrected: boolean) =>
+        JSON.stringify({
+          title: "The Survey",
+          summary: "A flawed route survey.",
+          content: [
+            "### Physical Description & Format",
+            "A folio.",
+            "### Provenance & Transmission",
+            "Compiled by a surveyor.",
+            "### Contents & Revelations",
+            "The eastern glyph had been swapped with its western counterpart.",
+            ...(corrected
+              ? ["The compass swaps east and west, preserving north and south."]
+              : []),
+            "### Risks & Costs of Study",
+            "Rash explorers fall into pits.",
+            "### Adventure Hooks",
+            "1. Trace the forged plan.",
+          ].join("\n\n"),
+          lore: [
+            "### At the Table Reference",
+            "Use the compass clue.",
+            "### Ground Truth for the GM",
+            "- **What the Book Claims**: Trust the chart.",
+            "- **The Deception / Flaw**: Directions are reversed.",
+            "- **The Objective Truth**: Reverse the lateral directions.",
+            "- **Actionable Clue**: The east and west glyphs are swapped.",
+            "### Connected Entities",
+            "- **Author**: Surveyor.",
+            "### Quick Checks & Mechanics",
+            "- **The Failure Condition**: Following the route trips a pit.",
+          ].join("\n\n"),
+          canonicalFacts: {
+            centralRule: "Reverse east and west without rotating north.",
+            productionMethod: "Handwritten parchment.",
+            errorSource: "A later copyist transposed east and west.",
+            ...(corrected
+              ? {
+                  actionableClue:
+                    "The compass swaps east and west, preserving north and south.",
+                }
+              : {}),
+          },
+        });
+      const result = await generateTomeTwoPass(prompt, async () =>
+        answer(++calls === 2),
+      );
+      expect(result?.tomeFacts?.actionableClue).toBe(
+        "The compass swaps east and west, preserving north and south.",
+      );
+      expect(result?.lore).toContain(
+        "The compass swaps east and west, preserving north and south.",
+      );
+      expect(calls).toBe(2);
+    });
+
+    it("rejects corrected canonical facts that are absent from unchanged narrative prose", async () => {
+      const prompt = buildTomePrompt({}, undefined, seededRng(13));
+      const contradictory = JSON.parse(response(content));
+      contradictory.canonicalFacts.actionableClue =
+        "A hidden blue cipher reveals the eastern gate's lunar alignment.";
+      const result = await generateTomeTwoPass(
+        prompt,
+        async (_system, message) =>
+          message.includes("EDITORIAL PASS 2")
+            ? JSON.stringify(contradictory)
+            : response(content),
+      );
+
+      expect(result?.tomeFacts?.actionableClue).not.toBe(
+        contradictory.canonicalFacts.actionableClue,
+      );
+      expect(result?.content).toBe(content);
+    });
+
+    it("rejects a contracted negated objective truth when unchanged prose states the opposite", async () => {
+      const prompt = buildTomePrompt({}, undefined, seededRng(13));
+      const contradictory = JSON.parse(response(content));
+      contradictory.canonicalFacts.objectiveTruth =
+        "The river-clay vessel mustn't dry in open air.";
+      const result = await generateTomeTwoPass(
+        prompt,
+        async (_system, message) =>
+          message.includes("EDITORIAL PASS 2")
+            ? JSON.stringify(contradictory)
+            : response(content),
+      );
+
+      expect(result?.tomeFacts?.objectiveTruth).toBe(
+        prompt.resolved.objectiveTruth,
+      );
+      expect(result?.content).toBe(content);
+    });
+
+    it("retains a valid first draft when the editorial response is malformed", async () => {
+      const prompt = buildTomePrompt({}, undefined, seededRng(7));
+      let count = 0;
+      const out = await generateTomeTwoPass(prompt, async () =>
+        ++count === 1 ? response(content) : "invalid JSON",
+      );
+      expect(count).toBe(2);
+      expect(out?.title).toBe("The River-Clay Rite");
+    });
+
+    it("does not start the editorial pass or return a draft after cancellation", async () => {
+      const prompt = buildTomePrompt({}, undefined, seededRng(7));
+      const controller = new AbortController();
+      let calls = 0;
+      const out = await generateTomeTwoPass(
+        prompt,
+        async (_instruction, _message, signal) => {
+          calls += 1;
+          expect(signal).toBe(controller.signal);
+          controller.abort();
+          return response(content);
+        },
+        controller.signal,
+      );
+
+      expect(calls).toBe(1);
+      expect(out).toBeNull();
+    });
+
+    it("rejects both drafts when neither passes structural validation", async () => {
+      const prompt = buildTomePrompt({}, undefined, seededRng(7));
+      let count = 0;
+      const out = await generateTomeTwoPass(prompt, async () => {
+        count += 1;
+        return response("Broken document with missing sections.");
+      });
+      expect(count).toBe(2);
+      expect(out).toBeNull();
     });
   });
 });

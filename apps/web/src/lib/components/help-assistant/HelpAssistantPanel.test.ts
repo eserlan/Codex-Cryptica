@@ -5,6 +5,7 @@ import { sanitizeHelpContext, type HelpAnswer } from "help-engine";
 import type { HelpAskResult } from "$lib/services/help-assistant/help-client";
 import { HelpAssistantStore } from "$lib/stores/help-assistant/help-assistant.svelte";
 import HelpAssistantPanel from "./HelpAssistantPanel.svelte";
+import { DELIGHT_MS } from "./cif-mood";
 
 const context = sanitizeHelpContext({
   routeTemplate: "/(app)",
@@ -279,6 +280,39 @@ describe("HelpAssistantPanel", () => {
     await fireEvent.keyDown(screen.getByRole("dialog"), { key: "Escape" });
     expect(onClose).toHaveBeenCalled();
     expect(assistant.messages).toHaveLength(2);
+  });
+
+  it("poses Cif to match the conversation, hidden from screen readers", async () => {
+    let resolve: (result: HelpAskResult) => void = () => {};
+    const { assistant } = setup(
+      () => new Promise<HelpAskResult>((r) => (resolve = r)),
+    );
+    assistant.open();
+    const sprite = await screen.findByTestId("cif-sprite");
+    expect(sprite.getAttribute("aria-hidden")).toBe("true");
+    expect(sprite.dataset.mood).toBe("curious");
+
+    await type("How do I connect the faction?");
+    await fireEvent.click(screen.getByRole("button", { name: "Ask" }));
+    await waitFor(() => expect(sprite.dataset.mood).toBe("thinking"));
+
+    resolve({ ok: true, answer: answered });
+    await waitFor(() => expect(sprite.dataset.mood).toBe("delighted"));
+    await waitFor(() => expect(sprite.dataset.mood).toBe("explaining"), {
+      timeout: DELIGHT_MS + 1500,
+    });
+  });
+
+  it("looks confused when Cif cannot answer", async () => {
+    const { assistant } = setup(async () => ({
+      ok: false,
+      error: { kind: "offline" },
+    }));
+    assistant.open();
+    const sprite = await screen.findByTestId("cif-sprite");
+    await type("Anything");
+    await fireEvent.click(screen.getByRole("button", { name: "Ask" }));
+    await waitFor(() => expect(sprite.dataset.mood).toBe("confused"));
   });
 
   it("shows progress and a cancel button while an answer is pending", async () => {

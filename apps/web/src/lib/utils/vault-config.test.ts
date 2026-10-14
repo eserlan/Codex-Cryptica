@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createVaultConfigUpdater } from "./vault-config";
+import { entityDb } from "./entity-db";
 
 describe("vault config updates", () => {
   afterEach(() => {
@@ -167,5 +168,73 @@ describe("vault config updates", () => {
       systemId: "tov",
       theme: "fantasy",
     });
+  });
+
+  const makeDeps = (readFileAsText: (...args: never[]) => Promise<string>) => ({
+    getOpfsRoot: vi.fn().mockResolvedValue({} as FileSystemDirectoryHandle),
+    getVaultDir: vi.fn().mockResolvedValue({} as FileSystemDirectoryHandle),
+    readFileAsText: vi.fn(readFileAsText),
+    writeOpfsFile: vi.fn().mockResolvedValue(undefined),
+  });
+
+  it("does not overwrite a config that cannot be parsed", async () => {
+    const deps = makeDeps(async () => "{ not json");
+    const update = createVaultConfigUpdater(deps);
+
+    await expect(
+      update("vault-corrupt", (config) => {
+        config.systemId = "tov";
+      }),
+    ).rejects.toThrow();
+    expect(deps.writeOpfsFile).not.toHaveBeenCalled();
+  });
+
+  it("does not overwrite a config when the read fails for a non-missing reason", async () => {
+    const deps = makeDeps(async () => {
+      throw new Error("OPFS read failed");
+    });
+    const update = createVaultConfigUpdater(deps);
+
+    await expect(
+      update("vault-read-fail", (config) => {
+        config.systemId = "tov";
+      }),
+    ).rejects.toThrow("OPFS read failed");
+    expect(deps.writeOpfsFile).not.toHaveBeenCalled();
+  });
+
+  it("starts from an empty config when the file does not exist", async () => {
+    const deps = makeDeps(async () => {
+      const error = new Error("File not found");
+      error.name = "NotFoundError";
+      throw error;
+    });
+    const update = createVaultConfigUpdater(deps);
+
+    await update("vault-missing", (config) => {
+      config.systemId = "tov";
+    });
+
+    expect(JSON.parse(deps.writeOpfsFile.mock.calls[0][1] as string)).toEqual({
+      systemId: "tov",
+    });
+  });
+
+  it("refuses to write when the IndexedDB lock lease was taken over", async () => {
+    vi.stubGlobal("navigator", {});
+    const deps = makeDeps(async () => JSON.stringify({ existing: true }));
+    const update = createVaultConfigUpdater(deps);
+
+    await expect(
+      update("vault-lease-lost", async (config) => {
+        config.systemId = "tov";
+        await entityDb.appSettings.put({
+          key: "vault-config-lock:codex-vault-config:vault-lease-lost",
+          value: { owner: "another-tab", expiresAt: Date.now() + 60_000 },
+          updatedAt: Date.now(),
+        });
+      }),
+    ).rejects.toThrow("lock was lost");
+    expect(deps.writeOpfsFile).not.toHaveBeenCalled();
   });
 });
