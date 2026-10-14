@@ -986,6 +986,26 @@ Broadsword. 3d6<=14. 2d+1 cut damage.
       expect(fieldIds).not.toContain("damage");
     });
 
+    it("does not combine partial roll formulas from separate NPC actions", () => {
+      const result = importStatBlock(
+        {
+          name: "Split Roll NPC",
+          category: "npc",
+          hp: 10,
+          ac: 12,
+          attacks: [
+            { name: "Claw", attackFormula: "1d20+4" },
+            { name: "Bite", damageFormula: "1d6+2" },
+          ],
+        },
+        { systemHint: "tales-of-the-valiant", category: "npc" },
+      );
+
+      const fieldMap = new Map(result.fields.map((field) => [field.id, field]));
+      expect(fieldMap.get("atk")?.formula).toBe("1d20+4");
+      expect(fieldMap.has("damage")).toBe(false);
+    });
+
     it("imports lightweight ToV NPC input to builtin-tov-npc", () => {
       const npcInput = {
         name: "Village Informant",

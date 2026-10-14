@@ -1034,22 +1034,23 @@ function mapToTovNpc(ir: StatBlockIR): StatSheetField[] {
     max: 5,
   });
 
-  const firstAttack = ir.actionsAndAttacks.find((a) => a.attackDice);
-  if (firstAttack?.attackDice) {
+  const firstRollAction = ir.actionsAndAttacks.find(
+    (a) => a.attackDice || a.damageDice,
+  );
+  if (firstRollAction?.attackDice) {
     fields.push({
       id: "atk",
       label: "Attack Roll",
       type: "dice",
-      formula: firstAttack.attackDice,
+      formula: firstRollAction.attackDice,
     });
   }
-  const firstDamage = ir.actionsAndAttacks.find((a) => a.damageDice);
-  if (firstDamage?.damageDice) {
+  if (firstRollAction?.damageDice) {
     fields.push({
       id: "damage",
       label: "Damage Roll",
       type: "dice",
-      formula: firstDamage.damageDice,
+      formula: firstRollAction.damageDice,
     });
   }
 
