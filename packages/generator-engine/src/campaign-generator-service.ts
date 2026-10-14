@@ -32,7 +32,7 @@ export { parseConnections };
 import type { PublicGeneratorOutput } from "./public-generator-adapters";
 import type { StarSystemBody } from "./public-star-system";
 import { parseLanguageResponse } from "./public-language";
-import { generateTomeTwoPass } from "./public-tome";
+import { generateTomeTwoPass, streamTomeTwoPass } from "./public-tome";
 import {
   buildLanguageRepairPrompt,
   classifyAILanguageQuality,
@@ -967,7 +967,70 @@ export class CampaignGeneratorService {
       return;
     }
 
-    // Multi-pass tomes must not stream an unreviewed draft as final output.
+    // The first tome pass remains private; the independent editorial turn
+    // streams deltas live and only emits a saved draft after validation.
+    if (request.generatorId === "tome" && this.aiGateway?.completeStream) {
+      if (signal?.aborted) return;
+      yield { type: "started" };
+      const mergedRequest: GeneratorRunRequest = {
+        ...request,
+        options: {
+          ...getThemeDefaults(request.themeId, "tome"),
+          ...request.options,
+        },
+      };
+      const generator = getGenerator("tome");
+      const canUseAI =
+        request.useAI &&
+        this.aiPolicy.isEnabled &&
+        this.aiPolicy.isAvailable;
+      if (!canUseAI) {
+        const draft = await this.generateDraft({ ...mergedRequest, useAI: false }, signal);
+        if (!signal?.aborted) yield { type: "draft", draft };
+        return;
+      }
+
+      const gateway = this.aiGateway;
+      const bannedNames = new Set([
+        ...(mergedRequest.vaultContext?.bannedNames ?? []),
+        ...(mergedRequest.vaultContext?.existingTitles ?? []),
+      ]);
+      let output: Awaited<ReturnType<typeof generateTomeTwoPass>> = null;
+      try {
+        const prompt = buildCampaignTomePrompt(mergedRequest);
+        for await (const event of streamTomeTwoPass(
+          prompt,
+          async (instruction, message, passSignal) =>
+            completeText(await gateway.complete(message, instruction, { signal: passSignal })),
+          (instruction, message, passSignal) =>
+            gateway.completeStream!(message, instruction, { signal: passSignal }),
+          signal,
+        )) {
+          if (signal?.aborted) return;
+          if (event.type === "result") {
+            output = event.output;
+          } else {
+            yield event;
+          }
+        }
+      } catch {
+        if (signal?.aborted) return;
+        // Fall through to a safe local draft if AI generation fails.
+      }
+      if (signal?.aborted) return;
+      const draft =
+        output && !isTitleBanned(output.title, bannedNames)
+          ? generator.mapOutputToDraft(
+              { ...output, summary: output.summary ?? "" },
+              mergedRequest,
+            )
+          : await this.generateDraft({ ...mergedRequest, useAI: false }, signal);
+      if (!signal?.aborted) yield { type: "draft", draft };
+      return;
+    }
+
+    // Other non-streamable workflows and providers without streaming support
+    // still use buffered generation.
     const isStreamableGenericGenerator = isGenericStreamable(
       request.generatorId,
     );
