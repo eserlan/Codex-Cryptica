@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { EXEMPLARS } from "./campaign-generator-exemplars";
 import {
   auditTomeConsistency,
+  buildTomeFacts,
   buildTomePrompt,
   ensureGroundTruthInLore,
   generateTomeLocal,
@@ -116,6 +117,35 @@ describe("public-tome generator", () => {
       expect(["Late 21st century", "Near-future era"]).toContain(resolved.era);
       expect(out.lore.toLowerCase()).toContain("compiled the work in the");
       expect(out.lore).not.toContain("seventeenth-century");
+    });
+
+    it("never gives Classic Fantasy a real-world calendar year", () => {
+      for (let seed = 0; seed < 200; seed += 1) {
+        const resolved = resolveTome(
+          { genre: "Classic Fantasy" },
+          seededRng(seed),
+        );
+        expect(resolved.era).not.toMatch(/\b\d{3,4}\b|century|Interwar/);
+      }
+    });
+
+    it("keeps Classic Fantasy format, rarity, custodian and language in-world", () => {
+      for (let seed = 0; seed < 200; seed += 1) {
+        const r = resolveTome({ genre: "Classic Fantasy" }, seededRng(seed));
+        expect(
+          `${r.format} ${r.rarity} ${r.custodian} ${r.language}`,
+        ).not.toMatch(
+          /Printed|Pirated|University|Byzantine|Latin|Pocket Field/i,
+        );
+      }
+    });
+
+    it("still honours explicit user choices over theme lists", () => {
+      const r = resolveTome(
+        { genre: "Classic Fantasy", format: "Redacted Printed Octavo" },
+        seededRng(1),
+      );
+      expect(r.format).toBe("Redacted Printed Octavo");
     });
 
     it("keeps date-bearing sample titles consistent with the selected era", () => {
@@ -312,6 +342,154 @@ describe("public-tome generator", () => {
 
       expect(result).toBe(existingLore);
       expect(result).not.toContain("Fallback claim");
+    });
+  });
+
+  describe("prompt editorial and logic rules", () => {
+    it("states genre fidelity, spatial logic, production method and anti-repetition", () => {
+      const prompt = buildTomePrompt(
+        { genre: "Classic Fantasy" },
+        undefined,
+        seededRng(3),
+      );
+      const all = `${prompt.systemInstruction}\n${prompt.userMessage}`;
+      expect(all).toContain("secondary world");
+      expect(all).toContain("mirrored map swaps east and west");
+      expect(all).toContain("production method");
+      expect(all).toContain("Editorial economy");
+    });
+
+    it("does not forbid real-world references for Cosmic Horror", () => {
+      const prompt = buildTomePrompt({}, undefined, seededRng(3));
+      expect(prompt.systemInstruction).not.toContain("secondary world");
+    });
+  });
+
+  describe("canonical facts", () => {
+    it("attaches structured facts to local output", () => {
+      const resolved = resolveTome({ genre: "Classic Fantasy" }, seededRng(9));
+      const out = generateTomeLocal({ genre: "Classic Fantasy" }, seededRng(9));
+      expect(out.tomeFacts?.missingMaterial).toBe(resolved.exactDamage);
+      expect(out.tomeFacts?.associatedLocation).toBe(
+        resolved.associatedLocation,
+      );
+      expect(out.tomeFacts?.centralRule).toBeTruthy();
+      expect(auditTomeConsistency(out, resolved).issues).toEqual([]);
+    });
+
+    it("keeps resolver anchors authoritative over model-supplied facts", () => {
+      const prompt = buildTomePrompt({}, undefined, seededRng(4));
+      const out = parseTomeResponse(
+        JSON.stringify({
+          title: "T",
+          content: "x",
+          lore: "y",
+          canonicalFacts: {
+            centralRule: "Reverse every left and right turn",
+            productionMethod: "Printed facsimile of a handwritten notebook",
+            errorSource: "The later glossator",
+            missingMaterial: "ninety leaves",
+          },
+        }),
+        prompt.resolved,
+      );
+      expect(out.tomeFacts?.centralRule).toBe(
+        "Reverse every left and right turn",
+      );
+      expect(out.tomeFacts?.errorSource).toBe("The later glossator");
+      expect(out.tomeFacts?.missingMaterial).toBe(prompt.resolved.exactDamage);
+    });
+
+    it("falls back to defaults when the model omits canonicalFacts", () => {
+      const prompt = buildTomePrompt({}, undefined, seededRng(4));
+      const out = parseTomeResponse(
+        JSON.stringify({ title: "T", content: "x", lore: "y" }),
+        prompt.resolved,
+      );
+      expect(out.tomeFacts?.productionMethod).toBe(prompt.resolved.format);
+    });
+
+    it("flags a central rule that never appears in the prose", () => {
+      const resolved = resolveTome({ genre: "Classic Fantasy" }, seededRng(9));
+      const out = generateTomeLocal({ genre: "Classic Fantasy" }, seededRng(9));
+      const audit = auditTomeConsistency(
+        {
+          ...out,
+          tomeFacts: {
+            ...out.tomeFacts!,
+            centralRule: "Submerge the vellum overnight in brine and moonlight",
+            objectiveTruth: "Zebras guard the quarry gate at dusk",
+          },
+        },
+        resolved,
+      );
+      expect(audit.issues.join(" ")).toContain("not reflected");
+    });
+
+    it("ignores blank or non-string authored facts and tolerates a bare resolver", () => {
+      const facts = buildTomeFacts(
+        {},
+        { centralRule: "   ", productionMethod: 5 as unknown as string },
+      );
+      expect(facts.centralRule).toBe("");
+      expect(facts.productionMethod).toBe("Unspecified");
+      expect(facts.errorSource).toContain("recoverable");
+    });
+
+    it("prompt asks the model to decide canonicalFacts first", () => {
+      const prompt = buildTomePrompt({}, undefined, seededRng(4));
+      expect(prompt.userMessage).toContain('"canonicalFacts"');
+      expect(prompt.userMessage).toContain("Decide");
+    });
+  });
+
+  describe("auditTomeConsistency genre and repetition", () => {
+    const base = generateTomeLocal({ genre: "Classic Fantasy" }, seededRng(5));
+    const resolved = resolveTome({ genre: "Classic Fantasy" }, seededRng(5));
+
+    it("flags real-world references in a Classic Fantasy tome", () => {
+      const audit = auditTomeConsistency(
+        {
+          ...base,
+          content: `${base.content}\nSeized in Thessaloniki in 1924.`,
+        },
+        resolved,
+      );
+      expect(audit.valid).toBe(false);
+      expect(audit.issues.join(" ")).toContain("Genre drift");
+    });
+
+    it("does not mistake ordinary numbers for real-world years", () => {
+      const audit = auditTomeConsistency(
+        {
+          ...base,
+          content: `${base.content}\nThe vault holds 1600 gold crowns.`,
+        },
+        resolved,
+      );
+      expect(audit.issues.join(" ")).not.toContain("Genre drift");
+    });
+
+    it("does not flag the same text for Cosmic Horror", () => {
+      const horror = resolveTome({ genre: "Cosmic Horror" }, seededRng(5));
+      const audit = auditTomeConsistency(
+        {
+          ...base,
+          content: `${base.content}\nSeized in Thessaloniki in 1924.`,
+        },
+        horror,
+      );
+      expect(audit.issues.join(" ")).not.toContain("Genre drift");
+    });
+
+    it("flags the same instruction restated across sections", () => {
+      const line =
+        "Reverse every left and right turn printed in the route before the expedition enters the lower vaults.";
+      const audit = auditTomeConsistency({
+        ...base,
+        content: `${base.content}\n\n### Contents & Revelations\n${line}\n\n### Adventure Hooks\n${line}`,
+      });
+      expect(audit.issues.join(" ")).toContain("Repeated explanation");
     });
   });
 

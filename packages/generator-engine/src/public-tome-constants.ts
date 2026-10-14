@@ -116,6 +116,50 @@ export const tomeConfig = {
     "Cathedral / Temple Undercroft",
     "Estate Sale / Black Market Auction",
   ],
+  /**
+   * Theme-specific overrides for lists that otherwise carry real-world
+   * material (printed editions, universities, Greek manuscripts). A theme
+   * without an entry uses the shared list above.
+   */
+  formatsByTheme: {
+    "Classic Fantasy": [
+      "Illuminated Vellum Folio",
+      "Leather-bound Quarto",
+      "Hand-copied Pilgrim's Codex",
+      "Bound Loose-leaf Sheaves",
+      "Scorched Parchment Roll",
+      "Wax-tablet Ledger",
+    ],
+  } as Record<string, string[]>,
+  raritiesByTheme: {
+    "Classic Fantasy": [
+      "Unique Original Manuscript",
+      "Unlicensed Scriptorium Copy",
+      "Corrupted Fragmentary Translation",
+      "Censored Temple Copy",
+      "One of Three Known Survivors",
+    ],
+  } as Record<string, string[]>,
+  custodiansByTheme: {
+    "Classic Fantasy": [
+      "Private Collector's Vault",
+      "Chartered Library of a Free City",
+      "Forgotten Estate Attic",
+      "Active Cult / Secret Society",
+      "Cathedral / Temple Undercroft",
+      "Smugglers' Auction House",
+    ],
+  } as Record<string, string[]>,
+  languagesByTheme: {
+    "Classic Fantasy": [
+      "Old High Elvish",
+      "Court Cipher of the Fallen Crown",
+      "Temple Liturgical Tongue",
+      "Dwarven Rune-script",
+      "Obscure Cipher / Shorthand",
+      "Parallel Dual-Language Translation",
+    ],
+  } as Record<string, string[]>,
   primaryHazards: [
     "Physical / Environmental Hazard",
     "Social / Investigation Risk",

@@ -8,7 +8,10 @@
  * hazardous study costs, and adventure hooks.
  */
 
-import type { PublicGeneratorOutput } from "./public-generator-adapters";
+import type {
+  PublicGeneratorOutput,
+  TomeCanonicalFacts,
+} from "./public-generator-adapters";
 import type { SuggestedConnection } from "./campaign-generator-types";
 import { NAME_BAN_PROMPT } from "./public-npc";
 import {
@@ -25,6 +28,7 @@ import {
 import { tomeConfig } from "./public-tome-constants";
 
 export { tomeConfig };
+export type { TomeCanonicalFacts };
 
 export interface TomeGeneratorOptions {
   genre?: string;
@@ -61,6 +65,29 @@ export interface ResolvedTome {
   actionableClue: string;
 }
 
+const FANTASY_ERAS = [
+  "Third Age of the Hollow Crown",
+  "Reign of the Ninth Archon",
+  "Years of the Long Winter",
+  "Age of Shattered Banners",
+  "Early days of the Free Cities",
+  "Twilight of the Old Kingdom",
+];
+
+/**
+ * Setting-specific guidance so the model stays inside the selected genre and
+ * does not borrow real-world dates, places or technology.
+ */
+function genreFidelityRule(genre: string): string {
+  if (/fantasy/i.test(genre)) {
+    return `Genre fidelity: "${genre}" is a secondary world. Use invented places, in-world ages and period-appropriate technology only. Do NOT use real-world calendar years, real cities or countries, universities, customs authorities, machine-made paper, printing-press industry or modern antiquities law. Hand-copied manuscripts, guilds, temples and chartered libraries fit; a 1920s investigation does not.`;
+  }
+  if (/sci-fi|space opera|lancer|cyberpunk/i.test(genre)) {
+    return `Genre fidelity: keep the book inside the "${genre}" setting. Do not import real-world historical occult scholarship or pre-industrial manuscript culture unless the format requires it.`;
+  }
+  return `Genre fidelity: keep every date, place, institution and technology consistent with the "${genre}" setting and the stated Composition Era.`;
+}
+
 function resolveTomeEra(genre: string, rng: Rng): string {
   const eras = [
     "Late 14th century",
@@ -73,6 +100,10 @@ function resolveTomeEra(genre: string, rng: Rng): string {
     "Second Age of Strife",
   ];
   const setting = genre.toLowerCase();
+  if (/fantasy/.test(setting)) {
+    // Secondary-world setting: in-world ages only, never real calendar years.
+    return pickFrom(FANTASY_ERAS, rng);
+  }
   if (/sci-fi|space opera|lancer/.test(setting)) {
     return pickFrom(["Pre-Collapse era", "Second Age of Strife"], rng);
   }
@@ -91,6 +122,17 @@ function resolveTomeEra(genre: string, rng: Rng): string {
   return pickFrom(eras, rng);
 }
 
+/** A user's explicit choice, else a pick from the theme's list or the shared one. */
+function pickThemed(
+  explicit: string | undefined,
+  byTheme: Record<string, string[]>,
+  genre: string,
+  shared: string[],
+  rng: Rng,
+): string {
+  return explicit?.trim() || pickFrom(byTheme[genre] ?? shared, rng);
+}
+
 export function resolveTome(
   options: TomeGeneratorOptions,
   rng: Rng = defaultRng,
@@ -99,14 +141,36 @@ export function resolveTome(
     options.theme?.trim() || options.genre?.trim() || "Cosmic Horror";
   const themeTypes = tomeConfig.tomeTypesByTheme[genre] ?? tomeConfig.tomeTypes;
   const tomeType = options.tomeType?.trim() || pickFrom(themeTypes, rng);
-  const format = options.format?.trim() || pickFrom(tomeConfig.formats, rng);
-  const rarity = options.rarity?.trim() || pickFrom(tomeConfig.rarities, rng);
-  const custodian =
-    options.custodian?.trim() || pickFrom(tomeConfig.custodians, rng);
+  const format = pickThemed(
+    options.format,
+    tomeConfig.formatsByTheme,
+    genre,
+    tomeConfig.formats,
+    rng,
+  );
+  const rarity = pickThemed(
+    options.rarity,
+    tomeConfig.raritiesByTheme,
+    genre,
+    tomeConfig.rarities,
+    rng,
+  );
+  const custodian = pickThemed(
+    options.custodian,
+    tomeConfig.custodiansByTheme,
+    genre,
+    tomeConfig.custodians,
+    rng,
+  );
   const primaryHazard =
     options.primaryHazard?.trim() || pickFrom(tomeConfig.primaryHazards, rng);
-  const language =
-    options.language?.trim() || pickFrom(tomeConfig.languages, rng);
+  const language = pickThemed(
+    options.language,
+    tomeConfig.languagesByTheme,
+    genre,
+    tomeConfig.languages,
+    rng,
+  );
   const concept = options.concept?.trim() || undefined;
   const campaignContext = options.campaignContext?.trim() || undefined;
 
@@ -209,7 +273,12 @@ Follow these strict writing guidelines:
     - Procedure & Mechanics Continuity: If a ritual, procedure, or false instruction is described, the failure condition in Revelations and Quick Checks must match identically. If step 1 and step 2 inversion triggers the flaw, Quick Checks must not claim step 3 was the trigger.
     - Location Continuity: The physical site of the secret, ruin, or revelation must remain identical across Provenance, Contents, Adventure Hooks, and Lore.
     - Chronology & Lifespans: Historical figures from centuries past must not appear as living people in contemporary adventure hooks unless the text explicitly designates them as possessing an unnatural lifespan or supernatural trait.
-    - Layered GM Ground Truth vs Intentional Unreliability: Distinguish intentional in-world unreliability (what the author claimed vs what the censor changed) from authorial continuity errors. In 'lore', provide a clean, non-redundant 'Ground Truth for the GM' cheat sheet rather than duplicating prose from 'content'.`;
+    - Layered GM Ground Truth vs Intentional Unreliability: Distinguish intentional in-world unreliability (what the author claimed vs what the censor changed) from authorial continuity errors. In 'lore', provide a clean, non-redundant 'Ground Truth for the GM' cheat sheet rather than duplicating prose from 'content'.
+12. ${genreFidelityRule(resolved.genre)}
+13. Spatial and logical coherence: any puzzle, map, route or cipher must work as described. A mirrored map swaps east and west but keeps north and south; a rotated map moves all four. A clue must describe the transformation that actually produces the stated effect.
+14. Material coherence: state once how the artefact was made (handwritten, printed, copied, or a printed facsimile with handwritten annotations) and keep script, binding, ruling and marginalia compatible with that single method.
+15. Error attribution: if the deception is a mistranslation or misreading, name who made it (the copyist, translator, glossator or censor) in one place, and make the original text the recoverable clue. Do not blame a translator the provenance never introduced.
+16. Editorial economy: establish each canonical fact in full once, in the section where it belongs. Elsewhere refer to its consequences, not its wording. Adventure hooks demonstrate consequences and complications; they must not restate the GM solution. Do not repeat a quantity, instruction or phrase near-verbatim across sections unless that section serves a distinct reader need.`;
 
   const avoidBlock =
     options.avoidNames && options.avoidNames.length > 0
@@ -219,7 +288,7 @@ Follow these strict writing guidelines:
   const userMessage = `Generate a comprehensive, system-neutral Tome / Forbidden Book entry for a TTRPG campaign.
 
 ### Requested Parameters:
-- **Genre / Setting Vibe**: ${resolved.genre}
+- **Genre / Setting Vibe**: ${resolved.genre} (a hard constraint, not a tag)
 - **Composition Era**: ${resolved.era}
 - **Type of Book**: ${resolved.tomeType}
 - **Physical Format**: ${resolved.format}
@@ -241,10 +310,17 @@ ${NAME_BAN_PROMPT}
 - **The Objective Reality**: ${resolved.objectiveTruth}
 - **Actionable Clue**: ${resolved.actionableClue}
 
+Decide "canonicalFacts" first, then write every section from them. Do not contradict them and do not restate them verbatim in more than one section.
+
 Return a valid JSON object matching this schema exactly:
 {
   "title": "Historical title of the work, with alternate vernacular name or catalog number if applicable",
   "summary": "A concise 1-2 sentence overview: format, author, subject, and current significance.",
+  "canonicalFacts": {
+    "centralRule": "The single rule or procedure the book turns on, in one sentence (decide this first; every section derives from it)",
+    "productionMethod": "How this artefact was made: handwritten, printed, copied, or a facsimile with annotations",
+    "errorSource": "Who introduced the error (author, copyist, translator, glossator or censor) and how the original text lets players recover the truth"
+  },
   "content": "Full markdown document containing these exact sections in order:
 ### Physical Description & Format
 Describe binding material, paper/vellum/slate, ink, handwriting or type, seals, physical damage (${resolved.exactDamage}), and marginalia.
@@ -294,6 +370,14 @@ Strict cross-section consistency audit:
 4. Historical personages from past centuries must not appear alive without explanation.
 5. In 'lore', provide a clean, non-redundant 'Ground Truth for the GM' cheat sheet rather than duplicating prose from 'content'.
 
+Logical and genre check:
+6. ${genreFidelityRule(resolved.genre)}
+7. Any map, route, cipher or procedure must be spatially and mechanically sound (a mirror swaps one axis only; a rotation moves all). Check the clue describes the transformation that really produces the effect.
+8. The production method (handwritten, printed, copied, facsimile) and who introduced any error must be established once and stay compatible with script, binding and marginalia.
+
+Editorial refinement:
+9. Each canonical fact appears in full once. Other sections reference its consequence in fresh words. Adventure hooks show consequences and complications, not the GM solution. Remove any sentence that merely restates another section.
+
 Return ONLY the raw JSON object. Do not wrap in markdown code blocks like \`\`\`json.`;
 
   return {
@@ -337,6 +421,48 @@ function parseConnections(
       targetTitle: c.targetTitle.trim(),
       relationship: c.relationship.trim(),
     }));
+}
+
+type AuthoredTomeFacts = Partial<
+  Pick<TomeCanonicalFacts, "centralRule" | "productionMethod" | "errorSource">
+>;
+
+function textOr(value: unknown, fallback: string): string {
+  return typeof value === "string" && value.trim() ? value.trim() : fallback;
+}
+
+export function buildTomeFacts(
+  resolved: Partial<ResolvedTome>,
+  authored: AuthoredTomeFacts = {},
+): TomeCanonicalFacts {
+  const r = {
+    author: "",
+    custodian: "",
+    associatedLocation: "",
+    exactDamage: "",
+    bookClaim: "",
+    deceptionOrFlaw: "",
+    objectiveTruth: "",
+    actionableClue: "",
+    format: "Unspecified",
+    ...resolved,
+  };
+  return {
+    author: r.author,
+    custodian: r.custodian,
+    associatedLocation: r.associatedLocation,
+    missingMaterial: r.exactDamage,
+    bookClaim: r.bookClaim,
+    deception: r.deceptionOrFlaw,
+    objectiveTruth: r.objectiveTruth,
+    actionableClue: r.actionableClue,
+    centralRule: textOr(authored.centralRule, r.objectiveTruth),
+    productionMethod: textOr(authored.productionMethod, r.format),
+    errorSource: textOr(
+      authored.errorSource,
+      "The author's own misunderstanding, recoverable from the original text",
+    ),
+  };
 }
 
 export function ensureGroundTruthInLore(
@@ -395,8 +521,22 @@ export function parseTomeResponse(
       rawLore = ensureGroundTruthInLore(rawLore, resolved);
     }
 
+    const authored =
+      data.canonicalFacts && typeof data.canonicalFacts === "object"
+        ? (data.canonicalFacts as Record<string, unknown>)
+        : {};
+
     return {
       type: "item",
+      ...(resolved
+        ? {
+            tomeFacts: buildTomeFacts(fallbackResolved, {
+              centralRule: authored.centralRule as string | undefined,
+              productionMethod: authored.productionMethod as string | undefined,
+              errorSource: authored.errorSource as string | undefined,
+            }),
+          }
+        : {}),
       title: parseTextString(data.title, fallback.title),
       summary: parseTextString(data.summary, fallback.summary ?? ""),
       content: parseTextString(data.content, fallback.content),
@@ -575,6 +715,7 @@ ${details.clue} The author's central interpretation is compromised by deliberate
 
   return {
     type: "item",
+    tomeFacts: buildTomeFacts(resolved),
     title: resolved.title,
     summary: `${resolved.title}: A ${resolved.rarity.toLowerCase()} of ${resolved.tomeType.toLowerCase()} in ${resolved.language}, currently located in the ${resolved.custodian.toLowerCase()}.`,
     content,
@@ -697,9 +838,103 @@ function checkParagraphRedundancy(
   }
 }
 
+const REAL_WORLD_TERMS =
+  /\b(?:in|of|anno|year|c\.)\s+(?:1[5-9]\d{2}|20\d{2})\b|\b(?:thessaloniki|constantinople|byzantine|london|paris|vienna|athens|rome|oxford|cambridge)\b|\b(?:university|customs (?:office|authorit\w+)|machine-made paper|antiquities law)\b/i;
+
+function checkGenreFidelity(
+  combined: string,
+  genre: string | undefined,
+  issues: string[],
+): void {
+  if (!genre || !/fantasy/i.test(genre)) return;
+  const hit = combined.match(REAL_WORLD_TERMS);
+  if (hit) {
+    issues.push(
+      `Genre drift: "${hit[0]}" is a real-world reference in a ${genre} tome.`,
+    );
+  }
+}
+
+function sentenceTokens(sentence: string): Set<string> {
+  return new Set(
+    sentence
+      .toLowerCase()
+      .replace(/[^a-z0-9\s]/g, " ")
+      .split(/\s+/)
+      .filter((w) => w.length > 3),
+  );
+}
+
+function similarity(a: Set<string>, b: Set<string>): number {
+  let shared = 0;
+  for (const w of a) if (b.has(w)) shared += 1;
+  return shared / (a.size + b.size - shared || 1);
+}
+
+/** Flags near-verbatim restatement of one sentence in several sections. */
+function checkSentenceRepetition(
+  content: string,
+  lore: string,
+  issues: string[],
+): void {
+  const sections = `${content}\n\n${lore}`
+    .split(/^###\s+/m)
+    .map((block) => block.split("\n").slice(1).join(" "));
+  const seen: { tokens: Set<string>; section: number; text: string }[] = [];
+  const reported = new Set<string>();
+
+  sections.forEach((block, section) => {
+    for (const raw of block.split(/(?<=[.!?])\s+/)) {
+      const text = raw.trim();
+      const tokens = sentenceTokens(text);
+      if (tokens.size < 6) continue;
+      const twin = seen.find(
+        (s) => s.section !== section && similarity(s.tokens, tokens) >= 0.75,
+      );
+      if (twin && !reported.has(twin.text)) {
+        reported.add(twin.text);
+        issues.push(
+          `Repeated explanation across sections: "${twin.text.slice(0, 70)}..."`,
+        );
+      }
+      seen.push({ tokens, section, text });
+    }
+  });
+}
+
+function checkFactsEchoed(
+  facts: TomeCanonicalFacts | undefined,
+  combined: string,
+  issues: string[],
+): void {
+  if (!facts) return;
+  const required: Array<keyof TomeCanonicalFacts> = [
+    "centralRule",
+    "productionMethod",
+    "errorSource",
+    "missingMaterial",
+    "associatedLocation",
+  ];
+  for (const key of required) {
+    if (!facts[key].trim()) issues.push(`Canonical fact '${key}' is empty`);
+  }
+  const body = sentenceTokens(combined);
+  for (const key of ["centralRule", "objectiveTruth"] as const) {
+    const tokens = sentenceTokens(facts[key]);
+    if (tokens.size < 4) continue;
+    let covered = 0;
+    for (const w of tokens) if (body.has(w)) covered += 1;
+    if (covered / tokens.size < 0.5) {
+      issues.push(
+        `Canonical fact '${key}' is not reflected anywhere in the text`,
+      );
+    }
+  }
+}
+
 export function auditTomeConsistency(
   output: PublicGeneratorOutput,
-  _resolved?: ResolvedTome,
+  resolved?: ResolvedTome,
 ): TomeConsistencyAuditResult {
   const issues: string[] = [];
   const content = output.content;
@@ -709,6 +944,9 @@ export function auditTomeConsistency(
   checkGroundTruthElements(lore, issues);
   checkUnitContradictions(`${content}\n${lore}`.toLowerCase(), issues);
   checkParagraphRedundancy(content, lore, issues);
+  checkGenreFidelity(`${content}\n${lore}`, resolved?.genre, issues);
+  checkSentenceRepetition(content, lore, issues);
+  checkFactsEchoed(output.tomeFacts, `${content}\n${lore}`, issues);
 
   return {
     valid: issues.length === 0,

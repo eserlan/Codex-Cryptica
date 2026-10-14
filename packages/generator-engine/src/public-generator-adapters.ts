@@ -33,6 +33,29 @@ import type {
 } from "./public-constellation";
 
 /** Minimal subset of the SEO GeneratorOutput used by public pages. */
+/**
+ * Structured canonical facts behind a generated tome. The prose is derived
+ * from these, so audits and Oracle can check text against facts instead of
+ * guessing at them.
+ */
+export interface TomeCanonicalFacts {
+  author: string;
+  custodian: string;
+  associatedLocation: string;
+  /** Exact quantity and unit of lost material (leaves vs gatherings). */
+  missingMaterial: string;
+  bookClaim: string;
+  deception: string;
+  objectiveTruth: string;
+  actionableClue: string;
+  /** The one rule or procedure the whole book turns on, stated once. */
+  centralRule: string;
+  /** How the artefact was made (handwritten, printed, copied, facsimile). */
+  productionMethod: string;
+  /** Who introduced the error (author, copyist, translator, glossator, censor). */
+  errorSource: string;
+}
+
 export interface PublicGeneratorOutput {
   type: string;
   /**
@@ -87,6 +110,8 @@ export interface PublicGeneratorOutput {
    * Optional connections or relationships to other entities.
    */
   connections?: SuggestedConnection[];
+  /** Structured canonical facts for tomes; prose is derived from these. */
+  tomeFacts?: TomeCanonicalFacts;
 }
 
 /** First non-blank value, or the last one if all are blank. */
