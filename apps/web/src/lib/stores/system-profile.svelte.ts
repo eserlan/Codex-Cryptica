@@ -280,7 +280,6 @@ export class SystemProfileStore {
   resolveSystemId(entity?: { systemId?: string | null }): string {
     return this.resolveEntitySystem(entity).id;
   }
-
 }
 
 export const systemProfileStore = new SystemProfileStore();

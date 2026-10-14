@@ -61,7 +61,14 @@ export const TOV_CHARACTER_TEMPLATE: StatSheetTemplate = {
     { id: "proficiency_bonus", label: "Proficiency Bonus", type: "number" },
 
     { id: "sec_vitals", label: "Vitals & Defences", type: "heading" },
-    { id: "hp", label: "Hit Points", type: "counter", min: 0, max: 100 },
+    {
+      id: "hp",
+      label: "Hit Points",
+      type: "counter",
+      min: 0,
+      max: 100,
+      barField: true,
+    },
     { id: "ac", label: "Armor Class", type: "number" },
     { id: "speed", label: "Speed", type: "text" },
     { id: "hit_dice", label: "Hit Dice", type: "text" },
@@ -329,7 +336,14 @@ export const TOV_NPC_TEMPLATE: StatSheetTemplate = {
   systemId: TOV_SYSTEM_ID,
   isBuiltIn: true,
   fields: [
-    { id: "hp", label: "Hit Points", type: "counter", min: 0, max: 100 },
+    {
+      id: "hp",
+      label: "Hit Points",
+      type: "counter",
+      min: 0,
+      max: 100,
+      barField: true,
+    },
     { id: "ac", label: "Armor Class", type: "number" },
     { id: "luck", label: "Luck Points", type: "counter", min: 0, max: 5 },
     { id: "atk", label: "Attack Roll", type: "dice", formula: "1d20+3" },
@@ -364,7 +378,14 @@ export const TOV_MONSTER_TEMPLATE: StatSheetTemplate = {
     { id: "sec_defence", label: "Defence & Movement", type: "heading" },
     { id: "ac", label: "Armor Class", type: "number" },
     { id: "ac_details", label: "AC Source / Details", type: "text" },
-    { id: "hp", label: "Hit Points", type: "counter", min: 0, max: 200 },
+    {
+      id: "hp",
+      label: "Hit Points",
+      type: "counter",
+      min: 0,
+      max: 200,
+      barField: true,
+    },
     { id: "hit_dice", label: "Hit Point Maximum / Hit Dice", type: "text" },
     { id: "speed", label: "Speed", type: "text" },
 
