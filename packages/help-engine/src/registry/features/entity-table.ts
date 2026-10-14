@@ -22,6 +22,16 @@ export const entityTable: FeatureEntry = {
       actionIds: ["entity-table.open-help"],
     },
     {
+      id: "audit-your-vault",
+      title: "Check what your vault is missing with the Vault Audit",
+      steps: [
+        "Open Table in the navigation, then choose Audit in the toolbar.",
+        "Choose a card, such as Missing portraits or No connections, to filter the table to those entries.",
+        "Choose Audit again to return to the full table list.",
+      ],
+      actionIds: ["entity-table.open-help"],
+    },
+    {
       id: "label-several-entries",
       title: "Add or remove a label on many entries",
       steps: [
@@ -41,7 +51,7 @@ export const entityTable: FeatureEntry = {
       actionIds: ["entity-table.open-help"],
     },
   ],
-  helpIds: ["entity-table"],
+  helpIds: ["entity-table", "vault-audit"],
   related: ["entity-reports", "graph-view"],
   actions: [
     {
