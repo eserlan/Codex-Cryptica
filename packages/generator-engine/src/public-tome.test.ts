@@ -233,11 +233,20 @@ describe("public-tome generator", () => {
     });
 
     it("falls back to local generator when given invalid or malformed JSON", () => {
-      const parsed = parseTomeResponse("not json at all");
+      const parsed = parseTomeResponse("not json at all", {
+        exactDamage: "exactly three leaves are missing",
+        associatedLocation: "the sealed west archive",
+        bookClaim: "The archive records the true names of the dead",
+      });
       expect(parsed.type).toBe("item");
       expect(parsed.title).toBeTruthy();
       expect(parsed.content).toContain("### Physical Description & Format");
       expect(parsed.labels).toContain("tome");
+      expect(parsed.content).toContain("exactly three leaves are missing");
+      expect(parsed.content).toContain("the sealed west archive");
+      expect(parsed.lore).toContain(
+        "The archive records the true names of the dead",
+      );
       expect(parsed.content).toContain("Condition:");
       expect(parsed.content).toContain("The records point to");
       expect(parsed.content).not.toContain("undefined");

@@ -380,10 +380,11 @@ export function parseTomeResponse(
   text: string,
   resolved?: Partial<ResolvedTome>,
 ): PublicGeneratorOutput {
-  const fallback = generateTomeLocal({
+  const fallbackResolved = {
     ...resolveTome(resolved ?? {}),
     ...resolved,
-  });
+  };
+  const fallback = generateTomeFromResolved(fallbackResolved);
 
   try {
     const data = parseFencedJson<Record<string, unknown>>(text);
@@ -520,8 +521,12 @@ export function generateTomeLocal(
   options: TomeGeneratorOptions,
   rng: Rng = defaultRng,
 ): PublicGeneratorOutput {
-  const resolved = resolveTome(options, rng);
+  return generateTomeFromResolved(resolveTome(options, rng));
+}
 
+function generateTomeFromResolved(
+  resolved: ResolvedTome,
+): PublicGeneratorOutput {
   const authorName = resolved.author;
   const details = localTomeDetails(resolved);
 
