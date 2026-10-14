@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
+import { EXEMPLARS } from "./campaign-generator-exemplars";
 import {
+  auditTomeConsistency,
   buildTomePrompt,
+  ensureGroundTruthInLore,
   generateTomeLocal,
   parseTomeResponse,
   resolveTome,
@@ -230,11 +233,212 @@ describe("public-tome generator", () => {
     });
 
     it("falls back to local generator when given invalid or malformed JSON", () => {
-      const parsed = parseTomeResponse("not json at all");
+      const parsed = parseTomeResponse("not json at all", {
+        exactDamage: "exactly three leaves are missing",
+        associatedLocation: "the sealed west archive",
+        bookClaim: "The archive records the true names of the dead",
+      });
       expect(parsed.type).toBe("item");
       expect(parsed.title).toBeTruthy();
       expect(parsed.content).toContain("### Physical Description & Format");
       expect(parsed.labels).toContain("tome");
+      expect(parsed.content).toContain("exactly three leaves are missing");
+      expect(parsed.content).toContain("the sealed west archive");
+      expect(parsed.lore).toContain(
+        "The archive records the true names of the dead",
+      );
+      expect(parsed.content).toContain("Condition:");
+      expect(parsed.content).toContain("The records point to");
+      expect(parsed.content).not.toContain("undefined");
+      expect(parsed.lore).not.toContain("undefined");
+    });
+
+    it("injects Ground Truth for the GM when omitted by the model response", () => {
+      const json = JSON.stringify({
+        title: "Test Codex",
+        summary: "A mysterious book.",
+        content: "### Physical Description & Format\nText.",
+        lore: "### At the Table Reference\n\n### Connected Entities\n- **Author**: Test",
+      });
+
+      const parsed = parseTomeResponse(json, {
+        genre: "Cosmic Horror",
+        tomeType: "Occult Treatise",
+        format: "Octavo",
+        rarity: "Unique",
+        custodian: "University Archive",
+        primaryHazard: "Mental / Obsessive Toll",
+        language: "Latin",
+        title: "Test Codex",
+        author: "Test Author",
+        era: "17th century",
+        exactDamage: "Three leaves excised from the second quire",
+        associatedLocation: "The Subterranean Vaults",
+        bookClaim: "Page 68 asserts that the tenth seal is a ward",
+        deceptionOrFlaw: "The tenth seal is an authorising release trigger",
+        objectiveTruth:
+          "Nine wards bind the threshold; breaking the tenth dissolves the barrier",
+        actionableClue:
+          "A marginal note in red ochre noting the parish register discrepancy",
+      });
+
+      expect(parsed.lore).toContain("### Ground Truth for the GM");
+      expect(parsed.lore).toContain("What the Book Claims");
+      expect(parsed.lore).toContain(
+        "Page 68 asserts that the tenth seal is a ward",
+      );
+      expect(parsed.lore).toContain("The Deception / Flaw");
+      expect(parsed.lore).toContain(
+        "The tenth seal is an authorising release trigger",
+      );
+      expect(parsed.lore).toContain("The Objective Truth");
+      expect(parsed.lore).toContain("Actionable Clue");
+    });
+  });
+
+  describe("ensureGroundTruthInLore", () => {
+    it("preserves existing Ground Truth for the GM without duplicating", () => {
+      const existingLore = `### At the Table Reference
+
+### Ground Truth for the GM
+- **What the Book Claims**: Custom claim
+- **The Deception / Flaw**: Custom flaw
+- **The Objective Truth**: Custom truth
+- **Actionable Clue**: Custom clue`;
+
+      const result = ensureGroundTruthInLore(existingLore, {
+        bookClaim: "Fallback claim",
+      });
+
+      expect(result).toBe(existingLore);
+      expect(result).not.toContain("Fallback claim");
+    });
+  });
+
+  describe("auditTomeConsistency", () => {
+    it("passes cleanly on locally generated tomes", () => {
+      const out = generateTomeLocal({ genre: "Cosmic Horror" }, seededRng(42));
+      const audit = auditTomeConsistency(out);
+      expect(audit.valid).toBe(true);
+      expect(audit.issues).toEqual([]);
+    });
+
+    it("passes consistency audit on the campaign generator exemplar", () => {
+      const parsed = parseTomeResponse(EXEMPLARS.tome);
+      const audit = auditTomeConsistency(parsed);
+      expect(audit.valid).toBe(true);
+      expect(audit.issues).toEqual([]);
+    });
+
+    it("flags missing content and lore sections", () => {
+      const incomplete: any = {
+        type: "item",
+        title: "Incomplete Book",
+        content: "### Physical Description & Format\nSome text.",
+        lore: "### At the Table Reference\nNotes.",
+      };
+      const audit = auditTomeConsistency(incomplete);
+      expect(audit.valid).toBe(false);
+      expect(audit.issues).toContain(
+        "Content is missing required section: ### Provenance & Transmission",
+      );
+      expect(audit.issues).toContain(
+        "Content is missing required section: ### Contents & Revelations",
+      );
+      expect(audit.issues).toContain(
+        "Content is missing required section: ### Risks & Costs of Study",
+      );
+      expect(audit.issues).toContain(
+        "Content is missing required section: ### Adventure Hooks",
+      );
+      expect(audit.issues).toContain(
+        "Lore is missing required section: ### Ground Truth for the GM",
+      );
+    });
+
+    it("detects unit contradiction between leaves and gatherings", () => {
+      const contradictory: any = {
+        type: "item",
+        title: "Contradictory Tome",
+        content: `### Physical Description & Format
+Seven leaves are missing from the binding.
+
+### Provenance & Transmission
+Passed down through generations.
+
+### Contents & Revelations
+Describes ancient wards.
+
+### Risks & Costs of Study
+Handling burns fingers.
+
+### Adventure Hooks
+1. Three gatherings are missing and currently in private hands.`,
+        lore: `### At the Table Reference
+
+### Ground Truth for the GM
+- **What the Book Claims**: The wards hold.
+- **The Deception / Flaw**: The wards collapsed.
+- **The Objective Truth**: Nothing remains sealed.
+- **Actionable Clue**: The broken seal.
+
+### Connected Entities
+- **Author**: Marcus
+
+### Quick Checks & Mechanics
+- **Deciphering**: Latin`,
+      };
+
+      const audit = auditTomeConsistency(contradictory);
+      expect(audit.valid).toBe(false);
+      expect(
+        audit.issues.some((i) => i.includes("Potential unit contradiction")),
+      ).toBe(true);
+    });
+
+    it("detects duplicated prose paragraphs between content and lore", () => {
+      const duplicatedParagraph =
+        "Compiled in the seventeenth century by Father Marcellan of the northern diocesan archive, the volume combines ecclesiastical reports with suppressed depositions from provincial witch trials. Its surviving vellum copy was passed between clandestine collectors for over two centuries.";
+
+      const redundant: any = {
+        type: "item",
+        title: "Redundant Tome",
+        content: `### Physical Description & Format
+Vellum binding.
+
+### Provenance & Transmission
+${duplicatedParagraph}
+
+### Contents & Revelations
+Describes rites.
+
+### Risks & Costs of Study
+Mould hazard.
+
+### Adventure Hooks
+1. Find the copy.`,
+        lore: `### At the Table Reference
+
+### Ground Truth for the GM
+- **What the Book Claims**: The rites work.
+- **The Deception / Flaw**: The rites fail.
+- **The Objective Truth**: The truth is lost.
+- **Actionable Clue**: The date gap.
+
+### Connected Entities
+${duplicatedParagraph}
+
+### Quick Checks & Mechanics
+- **Deciphering**: Latin`,
+      };
+
+      const audit = auditTomeConsistency(redundant);
+      expect(audit.valid).toBe(false);
+      expect(
+        audit.issues.some((i) =>
+          i.includes("Lore contains duplicated prose paragraph from content"),
+        ),
+      ).toBe(true);
     });
   });
 });

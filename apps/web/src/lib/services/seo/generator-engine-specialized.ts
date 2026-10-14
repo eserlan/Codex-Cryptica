@@ -22,6 +22,7 @@ import {
   buildTomePrompt,
   parseTomeResponse,
   generateTomeLocal,
+  auditTomeConsistency,
   type TomeGeneratorOptions,
 } from "generator-engine";
 import { getSessionContext } from "./session-context";
@@ -210,7 +211,14 @@ export class GeneratorEngineSpecialized extends GeneratorEngineWorldbuilding {
           summarizeResolvedInputs(resolved),
         );
         const text = await this.runModel(systemInstruction, userMessage);
-        return parseTomeResponse(text, resolved) as GeneratorOutput;
+        const parsed = parseTomeResponse(text, resolved);
+        const audit = auditTomeConsistency(parsed, resolved);
+        return audit.valid
+          ? (parsed as GeneratorOutput)
+          : ({
+              ...generateTomeLocal(tomeOptions),
+              aiFallback: true,
+            } as GeneratorOutput);
       },
       () => generateTomeLocal(tomeOptions) as GeneratorOutput,
     );
