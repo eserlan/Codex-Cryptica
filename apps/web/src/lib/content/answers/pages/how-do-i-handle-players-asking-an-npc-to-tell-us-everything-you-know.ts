@@ -203,6 +203,7 @@ export const howDoIHandlePlayersAskingAnNpcToTellUsEverythingYouKnow: AnswerConf
       "how-do-i-handle-divination-magic-without-letting-one-character-solve-every-mystery",
       "how-do-i-improvise-npcs-in-dnd",
       "how-do-i-prepare-a-dnd-session",
+      "how-do-i-roleplay-npcs-if-im-not-good-at-acting",
     ],
     discovery: {
       id: "answer-npc-tell-us-everything",
