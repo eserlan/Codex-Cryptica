@@ -6,6 +6,7 @@ import {
   buildTomePrompt,
   ensureGroundTruthInLore,
   generateTomeLocal,
+  generateTomeTwoPass,
   parseTomeResponse,
   resolveTome,
   tomeConfig,
@@ -633,6 +634,94 @@ ${duplicatedParagraph}
           i.includes("Lore contains duplicated prose paragraph from content"),
         ),
       ).toBe(true);
+    });
+  });
+
+  describe("generateTomeTwoPass", () => {
+    const content = [
+      "### Physical Description & Format",
+      "A clay tablet bound in twine.",
+      "### Provenance & Transmission",
+      "The temple archived the tablet after its scribe vanished.",
+      "### Contents & Revelations",
+      "A river-clay vessel must dry in open air. A later censor substituted water.",
+      "### Risks & Costs of Study",
+      "Adding water to the vessel releases its resident spirit.",
+      "### Adventure Hooks",
+      "1. Retrieve the vessel before the rite begins.",
+    ].join("\n\n");
+    const lore = [
+      "### At the Table Reference",
+      "Use the vessel as an investigation.",
+      "### Ground Truth for the GM",
+      "- **What the Book Claims**: Apply water.",
+      "- **The Deception / Flaw**: The censor changed the method.",
+      "- **The Objective Truth**: The vessel must dry in open air.",
+      "- **Actionable Clue**: A scorch exposes the correction.",
+      "### Connected Entities",
+      "- **Author / Compiler**: A temple scribe.",
+      "### Quick Checks & Mechanics",
+      "- **The Failure Condition**: Water releases the spirit.",
+    ].join("\n\n");
+    const response = (body: string) =>
+      JSON.stringify({
+        title: "The River-Clay Rite",
+        summary: "A forbidden ritual tablet.",
+        canonicalFacts: {
+          centralRule: "Let the river-clay vessel dry in open air.",
+          productionMethod: "Handwritten on a clay tablet.",
+          errorSource: "A temple censor replaced drying with water.",
+        },
+        content: body,
+        lore,
+        labels: ["tome", "item"],
+        connections: [],
+      });
+
+    it("runs two distinct calls and returns the editorially repaired output", async () => {
+      const prompt = buildTomePrompt(
+        { genre: "Classic Fantasy" },
+        undefined,
+        seededRng(8),
+      );
+      const calls: { instruction: string; message: string }[] = [];
+      const out = await generateTomeTwoPass(prompt, async (instruction, message) => {
+        calls.push({ instruction, message });
+        return calls.length === 1
+          ? response(content.replace("river-clay vessel", "soul-forged blade"))
+          : response(content);
+      });
+
+      expect(calls).toHaveLength(2);
+      expect(calls[1].message).toContain("FIRST-PASS DRAFT JSON");
+      expect(calls[1].message).toContain("LOCKED CANONICAL FACTS");
+      expect(calls[1].message).toContain("blade");
+      expect(out?.content).toContain("river-clay vessel");
+      expect(out?.content).not.toContain("soul-forged blade");
+      expect(out?.tomeFacts?.centralRule).toBe(
+        "Let the river-clay vessel dry in open air.",
+      );
+    });
+
+    it("retains a valid first draft when the editorial response is malformed", async () => {
+      const prompt = buildTomePrompt({}, undefined, seededRng(7));
+      let count = 0;
+      const out = await generateTomeTwoPass(prompt, async () =>
+        ++count === 1 ? response(content) : "invalid JSON",
+      );
+      expect(count).toBe(2);
+      expect(out?.title).toBe("The River-Clay Rite");
+    });
+
+    it("rejects both drafts when neither passes structural validation", async () => {
+      const prompt = buildTomePrompt({}, undefined, seededRng(7));
+      let count = 0;
+      const out = await generateTomeTwoPass(prompt, async () => {
+        count += 1;
+        return response("Broken document with missing sections.");
+      });
+      expect(count).toBe(2);
+      expect(out).toBeNull();
     });
   });
 });
