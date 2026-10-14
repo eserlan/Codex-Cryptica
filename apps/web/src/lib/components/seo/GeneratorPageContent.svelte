@@ -6,6 +6,7 @@
   import { sessionHubStore } from "$lib/stores/session-hub.svelte";
   import { UI_STORAGE_KEYS, UIPersistence } from "$lib/stores/ui/persistence";
   import SEOGeneratorLayout from "./SEOGeneratorLayout.svelte";
+  import OneShotRefinePanel from "./OneShotRefinePanel.svelte";
   import GeneratorPageFormFields from "./GeneratorPageFormFields.svelte";
   import {
     npcConfig,
@@ -43,6 +44,7 @@
     comicBookEventConfig,
     originConfig,
     villainSchemeConfig,
+    oneShotConfig,
     worldConfig,
     starSystemConfig,
     constellationConfig,
@@ -583,6 +585,20 @@
     campaignContext: "",
   });
 
+  let oneShot = $state({
+    genre: oneShotConfig.genres[0],
+    system: oneShotConfig.systems[0],
+    durationHours: "3",
+    partySize: "4",
+    partyLevel: "",
+    emphasis: oneShotConfig.emphases[0],
+    structure: oneShotConfig.structures[1],
+    tone: "",
+    premise: "",
+    boundaries: "",
+    campaignContext: "",
+  });
+
   let villainScheme = $state({
     powerScale: villainSchemeConfig.powerScales[0],
     tone: villainSchemeConfig.tones[0],
@@ -929,6 +945,7 @@
     comicBookEvent,
     origin,
     villainScheme,
+    oneShot,
     world,
     starSystem,
     constellation,
@@ -994,6 +1011,11 @@
     : undefined}
   autoGenerateExplicit={slug === "faction-roster"}
 >
+  {#snippet outputExtras(output, replaceOutput, useAI)}
+    {#if slug === "one-shot-adventure-generator"}
+      <OneShotRefinePanel {output} {useAI} onReplace={replaceOutput} />
+    {/if}
+  {/snippet}
   {#snippet formFields(trigger)}
     <GeneratorPageFormFields
       {slug}
@@ -1036,6 +1058,7 @@
       bind:comicBookEvent
       bind:origin
       bind:villainScheme
+      bind:oneShot
       bind:world
       bind:starSystem
       bind:constellation

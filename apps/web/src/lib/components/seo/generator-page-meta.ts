@@ -1485,6 +1485,61 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
       { href: "/generators/quest", label: "Quest Hook Generator" },
     ],
   },
+  "one-shot-adventure-generator": {
+    pageTitle:
+      "One-Shot Adventure Generator | Run-Ready, Timed RPG One-Shots | Codex Cryptica",
+    metaDescription:
+      "Generate a one-shot you can run tonight: a timed scene list, NPCs, clues with more than one route, a climax with two or more endings and a one-page GM cheat sheet. System-neutral and free.",
+    introTitle: "One-Shot Adventure Builder",
+    eyebrow: "One-Shot Adventure Generator",
+    introText:
+      "Pick a genre, session length and style, and get a complete single-session adventure: a GM briefing, an opening scene, three to six scenes with minute budgets, NPCs, challenges, clues, a finale and a cheat sheet. Each scene is marked essential or optional, with a way to shorten or skip it and a running-late path. Regenerate one scene or NPC without changing the rest. Works without login.",
+    canonicalPath: "/generators/one-shot-adventure-generator",
+    keywords: [
+      "one shot adventure generator",
+      "rpg one shot generator",
+      "one shot builder",
+      "ttrpg one shot ideas",
+      "last minute rpg adventure",
+    ],
+    faqs: [
+      {
+        question: "What do I get from the One-Shot Adventure Builder?",
+        answer:
+          "A GM briefing, an opening scene with a first decision, three to six scenes with times, NPCs with motivations and roleplay cues, challenges with fail-forward outcomes, clues, at least two endings and a one-page GM cheat sheet. It is meant to be run, not just read.",
+      },
+      {
+        question: "Will it fit my session length?",
+        answer:
+          "Scene times plus a buffer add up to the session length you pick (2, 3, 4 or 6 hours). Optional scenes can be cut, and a running-late path lists what to drop first. Times are planning guidance, not a promise about how your table will pace.",
+      },
+      {
+        question: "Does it include stat blocks or rules for my system?",
+        answer:
+          "No. It is system-neutral and never invents stat blocks, difficulty numbers or rules text. If you pick a system, it reminds you to supply the mechanics yourself.",
+      },
+      {
+        question: "Can I change one scene without losing the rest?",
+        answer:
+          "Yes. Regenerate a single scene or NPC. The core truth, clues, times, scene links and NPC names stay put, and you are warned if a change could cause a contradiction.",
+      },
+    ],
+    relatedLinks: [
+      {
+        href: "/generators/adventure-generator",
+        label: "Adventure Idea Generator",
+      },
+      { href: "/generators/npc", label: "NPC Generator" },
+      {
+        href: "/answers/how-do-you-write-a-one-shot-adventure",
+        label: "How to write a one-shot adventure",
+      },
+      {
+        href: "/answers/how-do-i-pace-an-rpg-one-shot",
+        label: "How to pace an RPG one-shot",
+      },
+    ],
+  },
   "council-vote": {
     pageTitle:
       "Council Vote Generator | RPG Political Quest Creator | Codex Cryptica",

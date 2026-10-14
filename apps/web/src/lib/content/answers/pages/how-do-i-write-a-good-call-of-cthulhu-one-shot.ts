@@ -153,6 +153,12 @@ export const howDoIWriteAGoodCallOfCthulhuOneShot: AnswerConfigInput = {
   },
   relatedTools: [
     {
+      title: "One-shot adventure builder",
+      description:
+        "Build a system-neutral Horror one-shot with an investigation structure, multiple routes to every vital clue and a GM cheat sheet.",
+      href: "/generators/one-shot-adventure-generator",
+    },
+    {
       title: "Rumour generator",
       description:
         "Generate eerie period rumours, whispered warnings, and suspicious local folklore.",

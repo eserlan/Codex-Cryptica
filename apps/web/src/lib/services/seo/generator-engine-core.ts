@@ -29,6 +29,16 @@ import {
   buildComicBookEventPrompt,
   parseComicBookEventResponse,
   generateComicBookEventLocal,
+  buildOneShotPrompt,
+  parseOneShotResponse,
+  generateOneShotLocal,
+  regenerateOneShotLocal,
+  buildOneShotRegenPrompt,
+  applyOneShotRegenResponse,
+  type OneShotAdventure,
+  type OneShotGeneratorOptions,
+  type OneShotRegenResult,
+  type OneShotRegenTarget,
   buildVillainSchemePrompt,
   parseVillainSchemeResponse,
   generateVillainSchemeLocal,
@@ -428,6 +438,63 @@ export class GeneratorEngineCore extends GeneratorEngineBase {
       },
       () => generateComicBookEventLocal(eventOptions),
     );
+  }
+
+  async generateOneShot(
+    options: OneShotGeneratorOptions & { useAI?: boolean } = {},
+  ): Promise<GeneratorOutput> {
+    const { useAI, ...oneShotOptions } = options;
+    const recentInputs = generationInputHistoryStore.recent("one-shot");
+    return this.runWithAIFallback(
+      useAI,
+      async () => {
+        const { systemInstruction, userMessage, resolved } = buildOneShotPrompt(
+          oneShotOptions,
+          getSessionContext() + formatRecentInputsNote(recentInputs),
+        );
+        generationInputHistoryStore.record(
+          "one-shot",
+          summarizeResolvedInputs(resolved),
+        );
+        const text = await this.runModel(systemInstruction, userMessage);
+        return parseOneShotResponse(text, resolved);
+      },
+      () => generateOneShotLocal(oneShotOptions),
+    );
+  }
+
+  /**
+   * Regenerate one scene or NPC of a one-shot, leaving the rest alone. Falls
+   * back to the local re-roll when AI is off, unavailable or replies badly.
+   */
+  async regenerateOneShotPart(
+    adventure: OneShotAdventure,
+    target: OneShotRegenTarget,
+    options: {
+      useAI?: boolean;
+      instruction?: string;
+      signal?: AbortSignal;
+    } = {},
+  ): Promise<OneShotRegenResult> {
+    const local = () => regenerateOneShotLocal(adventure, target);
+    if (!options.useAI) return local();
+    try {
+      const { systemInstruction, userMessage } = buildOneShotRegenPrompt(
+        adventure,
+        target,
+        options.instruction,
+      );
+      const text = await this.runModel(
+        systemInstruction,
+        userMessage,
+        undefined,
+        true,
+        options.signal,
+      );
+      return applyOneShotRegenResponse(adventure, target, text);
+    } catch {
+      return local();
+    }
   }
 
   async generateVillainScheme(
