@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { HelpHighlightService } from "$lib/services/help-assistant/help-highlight.svelte";
+  import CifPointer from "./CifPointer.svelte";
 
   let { highlight }: { highlight: HelpHighlightService } = $props();
 
@@ -29,6 +30,7 @@
       {label}
     </span>
   </div>
+  <CifPointer {rect} />
 {/if}
 
 <style>

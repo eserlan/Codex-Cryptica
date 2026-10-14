@@ -1,7 +1,14 @@
 import type { HelpStatus } from "$lib/stores/help-assistant/help-assistant.svelte";
 
 export type CifMood =
-  "idle" | "curious" | "thinking" | "explaining" | "delighted" | "confused";
+  | "idle"
+  | "curious"
+  | "thinking"
+  | "explaining"
+  | "delighted"
+  | "confused"
+  /** Only the flying pointer uses this; `cifMood` never returns it. */
+  | "pointing";
 
 /** How long Cif beams after an answer arrives, before settling to explaining. */
 export const DELIGHT_MS = 1600;
