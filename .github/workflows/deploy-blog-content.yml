@@ -127,28 +127,6 @@ jobs:
       - name: Install Dependencies
         run: bun install --frozen-lockfile
 
-      # Blog media belongs in R2 (docs/deployment/assets.md), not just the
-      # Cloudflare Pages bundle. The SVG files checked into the blog branch
-      # are the exact, source-controlled moods of the in-app Cif character.
-      - name: Upload Cif illustrations to R2
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-        run: |
-          set -euo pipefail
-          for file in apps/web/static/images/blog/meet-cif/cif-{curious,thinking,explaining,delighted}.svg; do
-            test -s "$file"
-            key="images/blog/meet-cif/${file##*/}"
-            bunx wrangler r2 object put "codex-cryptica-statics/$key" --file="$file" --content-type="image/svg+xml" --remote
-          done
-
-      - name: Verify published Cif illustrations
-        run: |
-          set -euo pipefail
-          for mood in curious thinking explaining delighted; do
-            curl --fail --silent --show-error --retry 3 --retry-delay 2 --output /dev/null "https://assets.codexcryptica.com/images/blog/meet-cif/cif-$mood.svg"
-          done
-
       - name: Build Application
         # VITE_BLOG_CONTENT_BASE_URL is intentionally omitted so blog pages prerender
         # from the overlaid local files (deterministic — no raw.githubusercontent cache races).
