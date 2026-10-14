@@ -75,7 +75,12 @@ export class GeneratorEngineBase {
     systemInstruction: string,
     userMessage: string,
   ): Promise<string> {
-    return this.transport.runModel(systemInstruction, userMessage, undefined, false);
+    return this.transport.runModel(
+      systemInstruction,
+      userMessage,
+      undefined,
+      false,
+    );
   }
 
   protected startChat(systemInstruction: string) {

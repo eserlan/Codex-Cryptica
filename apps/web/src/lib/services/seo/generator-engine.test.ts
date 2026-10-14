@@ -744,30 +744,44 @@ describe("DefaultGeneratorEngine", () => {
       expect(result.content).not.toContain("soul-forged blade");
     });
 
-
     it("keeps the initial tome draft hidden and streams only the editorial turn", async () => {
       const content = [
-        "### Physical Description & Format", "A parchment codex.",
-        "### Provenance & Transmission", "Copied by a court scribe.",
-        "### Contents & Revelations", "The clay vessel is left to dry.",
-        "### Risks & Costs of Study", "Washing the vessel breaks the seal.",
-        "### Adventure Hooks", "1. Recover the authentic rite.",
+        "### Physical Description & Format",
+        "A parchment codex.",
+        "### Provenance & Transmission",
+        "Copied by a court scribe.",
+        "### Contents & Revelations",
+        "The clay vessel is left to dry.",
+        "### Risks & Costs of Study",
+        "Washing the vessel breaks the seal.",
+        "### Adventure Hooks",
+        "1. Recover the authentic rite.",
       ].join("\n\n");
       const lore = [
-        "### At the Table Reference", "Compare the readings.",
+        "### At the Table Reference",
+        "Compare the readings.",
         "### Ground Truth for the GM",
         "- **What the Book Claims**: Wash the vessel.",
         "- **The Deception / Flaw**: The censor changed it.",
         "- **The Objective Truth**: Dry the vessel.",
         "- **Actionable Clue**: The scraped line.",
-        "### Connected Entities", "- **Author**: Court scribe",
-        "### Quick Checks & Mechanics", "- **The Failure Condition**: Rupture.",
+        "### Connected Entities",
+        "- **Author**: Court scribe",
+        "### Quick Checks & Mechanics",
+        "- **The Failure Condition**: Rupture.",
       ].join("\n\n");
-      const response = (body: string) => JSON.stringify({
-        title: "The River Vessel", summary: "An altered ritual.",
-        content: body, lore, labels: ["tome"], connections: [],
-      });
-      const hidden = response(content.replace("clay vessel", "unrelated sword"));
+      const response = (body: string) =>
+        JSON.stringify({
+          title: "The River Vessel",
+          summary: "An altered ritual.",
+          content: body,
+          lore,
+          labels: ["tome"],
+          connections: [],
+        });
+      const hidden = response(
+        content.replace("clay vessel", "unrelated sword"),
+      );
       const edited = response(content);
       const generateContent = vi.fn().mockResolvedValue({
         response: { text: () => hidden },

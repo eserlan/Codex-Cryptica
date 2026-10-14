@@ -25,6 +25,34 @@ export function toSeoOutput(o: PublicGeneratorOutput): GeneratorOutput {
   return { ...o, type: o.type as GeneratorOutput["type"] };
 }
 
+type GeneratorStreamEvent =
+  | { type: "delta"; text: string }
+  | { type: "complete"; text: string }
+  | { type: "error"; error: string }
+  | { type: "started" };
+
+async function collectGeneratorStream(
+  stream: AsyncGenerator<GeneratorStreamEvent>,
+  onPreview: (text: string) => void,
+): Promise<string> {
+  let text = "";
+  for await (const event of stream) {
+    switch (event.type) {
+      case "delta":
+        text += event.text;
+        onPreview(text);
+        break;
+      case "complete":
+        // Prefer accumulated deltas unless the terminal frame is more complete.
+        if (event.text.trim().length > text.trim().length) text = event.text;
+        break;
+      case "error":
+        throw new Error(event.error);
+    }
+  }
+  return text.trim();
+}
+
 /**
  * Shared AI transport for every SEO generator (#1494): resolves the model,
  * streams or awaits its response, and provides the AI-with-local-fallback
@@ -113,31 +141,17 @@ export class GeneratorAITransport {
     const streamingModel = model as unknown as {
       generateContentStream?(
         request: unknown,
-      ): AsyncGenerator<
-        | { type: "delta"; text: string }
-        | { type: "complete"; text: string }
-        | { type: "error"; error: string }
-        | { type: "started" }
-      >;
+      ): AsyncGenerator<GeneratorStreamEvent>;
     };
-    if (previewEnabled && this.streamPreview && streamingModel.generateContentStream) {
-      let text = "";
-      for await (const event of streamingModel.generateContentStream(request)) {
-        if (event.type === "delta") {
-          text += event.text;
-          this.streamPreview(text);
-        } else if (event.type === "complete") {
-          // Provider terminal frames occasionally carry only whitespace or a
-          // short trailing fragment. The accumulated deltas are the source of
-          // truth unless this frame contains a strictly more complete body.
-          if (event.text.trim().length > text.trim().length) {
-            text = event.text;
-          }
-        } else if (event.type === "error") {
-          throw new Error(event.error);
-        }
-      }
-      return text.trim();
+    if (
+      previewEnabled &&
+      this.streamPreview &&
+      streamingModel.generateContentStream
+    ) {
+      return collectGeneratorStream(
+        streamingModel.generateContentStream(request),
+        this.streamPreview,
+      );
     }
     const response = await model.generateContent(request);
     return response.response.text().trim();

@@ -198,7 +198,8 @@ export class GeneratorEngineSpecialized extends GeneratorEngineWorldbuilding {
   ): Promise<GeneratorOutput> {
     const { useAI, ...tomeOptions } = options;
     const recentInputs = generationInputHistoryStore.recent("tome");
-    const recentDeceptions = generationInputHistoryStore.recent("tome-mysteries");
+    const recentDeceptions =
+      generationInputHistoryStore.recent("tome-mysteries");
     return this.runWithAIFallback(
       useAI,
       async () => {
@@ -210,7 +211,10 @@ export class GeneratorEngineSpecialized extends GeneratorEngineWorldbuilding {
           "tome",
           summarizeResolvedInputs(resolved),
         );
-        generationInputHistoryStore.record("tome-mysteries", resolved.deceptionOrFlaw);
+        generationInputHistoryStore.record(
+          "tome-mysteries",
+          resolved.deceptionOrFlaw,
+        );
         let pass = 0;
         const reviewed = await generateTomeTwoPass(
           { systemInstruction, userMessage, resolved },

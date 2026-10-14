@@ -386,8 +386,7 @@ export const tomeConfig = {
           "A temple censor substituted a purification wash for the required drying interval; the water ruptures the vessel and releases its spirit",
         truth:
           "A vessel formed from untouched river-clay must cure undisturbed in open air; only after the third night may its name be bound",
-        clue:
-          "A clay smear and scorch beside the scraped instruction show where an apprentice tested the later gloss and shattered the vessel",
+        clue: "A clay smear and scorch beside the scraped instruction show where an apprentice tested the later gloss and shattered the vessel",
       },
       {
         claim:
@@ -396,8 +395,7 @@ export const tomeConfig = {
           "The guild surveyor drew a left-right reflection of the passages to lead outsiders into the counterweighted deadfalls",
         truth:
           "East and west were transposed while north and south were retained; swapping every left and right turn reveals the traversable route",
-        clue:
-          "The drawing preserves its north and south bearings but swaps the east and west initials on the compass rose; a fixed doorway on the west wall is depicted on the east",
+        clue: "The drawing preserves its north and south bearings but swaps the east and west initials on the compass rose; a fixed doorway on the west wall is depicted on the east",
       },
       {
         claim:
@@ -406,8 +404,7 @@ export const tomeConfig = {
           "A royal registrar omitted the living daughter's legitimisation decree to secure the property for the treasury",
         truth:
           "The recognised daughter and her descendants hold the lawful claim; the original decree is filed under the mother's household name",
-        clue:
-          "The register's regnal-date sequence skips a sealed entry, while the household index preserves its matching wax impression",
+        clue: "The register's regnal-date sequence skips a sealed entry, while the household index preserves its matching wax impression",
       },
       {
         claim:
@@ -416,8 +413,7 @@ export const tomeConfig = {
           "The bell-ringer changed the timing from moonset to moonrise so the sound would release, rather than renew, the watch-spell",
         truth:
           "The western bell must sound at moonset, after the sentinel brazier goes dark, to renew the ward for the next night",
-        clue:
-          "A scorched duty tablet records two otherwise identical vigils: the moonrise bell preceded a breach, whereas the moonset bell held the gate",
+        clue: "A scorched duty tablet records two otherwise identical vigils: the moonrise bell preceded a breach, whereas the moonset bell held the gate",
       },
       {
         claim:
@@ -426,8 +422,7 @@ export const tomeConfig = {
           "The city steward inserted false cargo totals to hide grain diverted to an illegally built refuge",
         truth:
           "The grain reached a hidden hill granary, where survivors maintained stores throughout the siege",
-        clue:
-          "The barges' recorded draught marks show fully laden boats leaving the river before the supposed theft occurred",
+        clue: "The barges' recorded draught marks show fully laden boats leaving the river before the supposed theft occurred",
       },
       {
         claim:
@@ -436,8 +431,7 @@ export const tomeConfig = {
           "The astronomer copied an equinox observation into the winter tables to stop rival surveyors reaching the sanctuary",
         truth:
           "The roof's counterweight releases on the spring equinox when sunlight strikes a bronze pin at the southern meridian",
-        clue:
-          "Two dated drawings show the same roof-shadow length in different seasons; the annotated spring sketch matches the fixed bronze pin",
+        clue: "Two dated drawings show the same roof-shadow length in different seasons; the annotated spring sketch matches the fixed bronze pin",
       },
       {
         claim:
@@ -446,8 +440,7 @@ export const tomeConfig = {
           "A court priest altered the ritual commentary so the name would be erased, severing the living household's protection",
         truth:
           "The oath remains active only while the name can be read aloud from the slab; abrasion weakens the ward rather than releasing the dead",
-        clue:
-          "An uncensored stone rubbing preserves the name and shows the ward fading precisely where a later chisel removed two letters",
+        clue: "An uncensored stone rubbing preserves the name and shows the ward fading precisely where a later chisel removed two letters",
       },
       {
         claim:
@@ -456,8 +449,7 @@ export const tomeConfig = {
           "A ferryman added the still-water condition to lure travellers across during a concealed undertow",
         truth:
           "The crossing is safe only while the reed flags bow upstream, signalling that the deep side-channel is drained",
-        clue:
-          "A ferryman's sketch beneath the seal marks the upstream-bending reeds and a hidden sluice wheel missing from the public instructions",
+        clue: "A ferryman's sketch beneath the seal marks the upstream-bending reeds and a hidden sluice wheel missing from the public instructions",
       },
     ],
     "Vampire / Gothic Noir": [

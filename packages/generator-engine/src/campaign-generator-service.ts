@@ -307,6 +307,15 @@ export interface CampaignGeneratorServiceDeps {
 /** Max AI generation attempts when the model keeps returning a banned name. */
 const MAX_AI_ATTEMPTS = 3;
 
+type GenericStreamAttempt = {
+  raw: string;
+  interactionId?: string;
+  replayed: boolean;
+  sawComplete: boolean;
+};
+
+type GenericStreamAttemptOutcome = "retry" | "stop" | "complete";
+
 function isGenericStreamable(generatorId: string): boolean {
   return !["dungeon", "language", "tome"].includes(generatorId);
 }
@@ -912,46 +921,7 @@ export class CampaignGeneratorService {
     GenerationEvent | { type: "draft"; draft: GeneratedDraft }
   > {
     if (request.generatorId === "heist") {
-      if (signal?.aborted) return;
-      yield { type: "started" };
-      const mergedRequest = {
-        ...request,
-        options: {
-          ...getThemeDefaults(request.themeId, "heist"),
-          ...request.options,
-        },
-      };
-      const generator = getGenerator("heist");
-      if (
-        request.useAI &&
-        this.aiPolicy.isEnabled &&
-        this.aiPolicy.isAvailable &&
-        this.aiGateway
-      ) {
-        try {
-          const output = yield* streamCampaignHeist(
-            mergedRequest,
-            this.aiGateway,
-            signal,
-          );
-          if (!signal?.aborted)
-            yield {
-              type: "draft",
-              draft: generator.mapOutputToDraft(
-                { ...output, summary: output.summary ?? "" },
-                mergedRequest,
-              ),
-            };
-          return;
-        } catch {
-          if (signal?.aborted) return;
-        }
-      }
-      if (!signal?.aborted)
-        yield {
-          type: "draft",
-          draft: await this.generateDraft({ ...mergedRequest, useAI: false }),
-        };
+      yield* this.streamHeistDraft(request, signal);
       return;
     }
     if (request.generatorId === "council-vote") {
@@ -970,81 +940,198 @@ export class CampaignGeneratorService {
     // The first tome pass remains private; the independent editorial turn
     // streams deltas live and only emits a saved draft after validation.
     if (request.generatorId === "tome" && this.aiGateway?.completeStream) {
-      if (signal?.aborted) return;
-      yield { type: "started" };
-      const mergedRequest: GeneratorRunRequest = {
-        ...request,
-        options: {
-          ...getThemeDefaults(request.themeId, "tome"),
-          ...request.options,
-        },
-      };
-      const generator = getGenerator("tome");
-      const canUseAI =
-        request.useAI &&
-        this.aiPolicy.isEnabled &&
-        this.aiPolicy.isAvailable;
-      if (!canUseAI) {
-        const draft = await this.generateDraft({ ...mergedRequest, useAI: false }, signal);
-        if (!signal?.aborted) yield { type: "draft", draft };
-        return;
-      }
-
-      const gateway = this.aiGateway;
-      const bannedNames = new Set([
-        ...(mergedRequest.vaultContext?.bannedNames ?? []),
-        ...(mergedRequest.vaultContext?.existingTitles ?? []),
-      ]);
-      let output: Awaited<ReturnType<typeof generateTomeTwoPass>> = null;
-      try {
-        const prompt = buildCampaignTomePrompt(mergedRequest);
-        for await (const event of streamTomeTwoPass(
-          prompt,
-          async (instruction, message, passSignal) =>
-            completeText(await gateway.complete(message, instruction, { signal: passSignal })),
-          (instruction, message, passSignal) =>
-            gateway.completeStream!(message, instruction, { signal: passSignal }),
-          signal,
-        )) {
-          if (signal?.aborted) return;
-          if (event.type === "result") {
-            output = event.output;
-          } else {
-            yield event;
-          }
-        }
-      } catch {
-        if (signal?.aborted) return;
-        // Fall through to a safe local draft if AI generation fails.
-      }
-      if (signal?.aborted) return;
-      const draft =
-        output && !isTitleBanned(output.title, bannedNames)
-          ? generator.mapOutputToDraft(
-              { ...output, summary: output.summary ?? "" },
-              mergedRequest,
-            )
-          : await this.generateDraft({ ...mergedRequest, useAI: false }, signal);
-      if (!signal?.aborted) yield { type: "draft", draft };
+      yield* this.streamTomeDraft(request, this.aiGateway, signal);
       return;
     }
 
+    yield* this.streamGenericDraft(request, signal);
+  }
+
+  private async *streamHeistDraft(
+    request: GeneratorRunRequest,
+    signal?: AbortSignal,
+  ): AsyncGenerator<
+    GenerationEvent | { type: "draft"; draft: GeneratedDraft }
+  > {
+    if (signal?.aborted) return;
+    yield { type: "started" };
+    const mergedRequest = {
+      ...request,
+      options: {
+        ...getThemeDefaults(request.themeId, "heist"),
+        ...request.options,
+      },
+    };
+    const draft = yield* this.streamHeistAIDraft(mergedRequest, signal);
+    if (draft) {
+      yield { type: "draft", draft };
+      return;
+    }
+    yield* this.streamHeistFallback(mergedRequest, signal);
+  }
+
+  private canUseAI(request: GeneratorRunRequest): boolean {
+    return !!(
+      request.useAI &&
+      this.aiPolicy.isEnabled &&
+      this.aiPolicy.isAvailable &&
+      this.aiGateway
+    );
+  }
+
+  private getBannedNames(request: GeneratorRunRequest): Set<string> {
+    return new Set([
+      ...(request.vaultContext?.bannedNames ?? []),
+      ...(request.vaultContext?.existingTitles ?? []),
+    ]);
+  }
+
+  private async *streamHeistAIDraft(
+    request: GeneratorRunRequest,
+    signal?: AbortSignal,
+  ): AsyncGenerator<GenerationEvent, GeneratedDraft | null> {
+    if (!this.canUseAI(request) || !this.aiGateway) return null;
+    try {
+      const output = yield* streamCampaignHeist(
+        request,
+        this.aiGateway,
+        signal,
+      );
+      if (signal?.aborted) return null;
+      return getGenerator("heist").mapOutputToDraft(
+        { ...output, summary: output.summary ?? "" },
+        request,
+      );
+    } catch {
+      return null;
+    }
+  }
+
+  private async *streamHeistFallback(
+    request: GeneratorRunRequest,
+    signal?: AbortSignal,
+  ): AsyncGenerator<
+    GenerationEvent | { type: "draft"; draft: GeneratedDraft }
+  > {
+    if (!signal?.aborted) {
+      yield {
+        type: "draft",
+        draft: await this.generateDraft({ ...request, useAI: false }),
+      };
+    }
+  }
+
+  private async *streamTomeDraft(
+    request: GeneratorRunRequest,
+    gateway: NonNullable<CampaignGeneratorService["aiGateway"]>,
+    signal?: AbortSignal,
+  ): AsyncGenerator<
+    GenerationEvent | { type: "draft"; draft: GeneratedDraft }
+  > {
+    if (signal?.aborted) return;
+    yield { type: "started" };
+    const mergedRequest = this.mergeTomeRequest(request);
+    if (!this.canUseAI(request)) {
+      yield* this.streamTomeFallback(mergedRequest, signal);
+      return;
+    }
+
+    const bannedNames = this.getBannedNames(mergedRequest);
+    const output = yield* this.streamTomeReview(mergedRequest, gateway, signal);
+    if (signal?.aborted) return;
+    const draft = await this.toTomeDraft(
+      output,
+      mergedRequest,
+      bannedNames,
+      signal,
+    );
+    if (!signal?.aborted) yield { type: "draft", draft };
+  }
+
+  private mergeTomeRequest(request: GeneratorRunRequest): GeneratorRunRequest {
+    return {
+      ...request,
+      options: {
+        ...getThemeDefaults(request.themeId, "tome"),
+        ...request.options,
+      },
+    };
+  }
+
+  private async toTomeDraft(
+    output: PublicGeneratorOutput | null,
+    request: GeneratorRunRequest,
+    bannedNames: Set<string>,
+    signal?: AbortSignal,
+  ): Promise<GeneratedDraft> {
+    if (output && !isTitleBanned(output.title, bannedNames)) {
+      return getGenerator("tome").mapOutputToDraft(
+        { ...output, summary: output.summary ?? "" },
+        request,
+      );
+    }
+    return this.generateDraft({ ...request, useAI: false }, signal);
+  }
+
+  private async *streamTomeFallback(
+    request: GeneratorRunRequest,
+    signal?: AbortSignal,
+  ): AsyncGenerator<
+    GenerationEvent | { type: "draft"; draft: GeneratedDraft }
+  > {
+    const draft = await this.generateDraft(
+      { ...request, useAI: false },
+      signal,
+    );
+    if (!signal?.aborted) yield { type: "draft", draft };
+  }
+
+  private async *streamTomeReview(
+    request: GeneratorRunRequest,
+    gateway: NonNullable<CampaignGeneratorService["aiGateway"]>,
+    signal?: AbortSignal,
+  ): AsyncGenerator<GenerationEvent, PublicGeneratorOutput | null> {
+    let output: PublicGeneratorOutput | null = null;
+    try {
+      const prompt = buildCampaignTomePrompt(request);
+      for await (const event of streamTomeTwoPass(
+        prompt,
+        async (instruction, message, passSignal) =>
+          completeText(
+            await gateway.complete(message, instruction, {
+              signal: passSignal,
+            }),
+          ),
+        (instruction, message, passSignal) =>
+          gateway.completeStream!(message, instruction, {
+            signal: passSignal,
+          }),
+        signal,
+      )) {
+        if (signal?.aborted) return null;
+        if (event.type === "result") output = event.output;
+        else yield event;
+      }
+    } catch {
+      if (signal?.aborted) return null;
+      // Fall through to a safe local draft if AI generation fails.
+    }
+    return output;
+  }
+
+  private async *streamGenericDraft(
+    request: GeneratorRunRequest,
+    signal?: AbortSignal,
+  ): AsyncGenerator<
+    GenerationEvent | { type: "draft"; draft: GeneratedDraft }
+  > {
     // Other non-streamable workflows and providers without streaming support
     // still use buffered generation.
-    const isStreamableGenericGenerator = isGenericStreamable(
-      request.generatorId,
-    );
-
-    if (!this.aiGateway?.completeStream || !isStreamableGenericGenerator) {
-      yield { type: "started" };
-      let draft: GeneratedDraft;
-      try {
-        draft = await this.generateDraft(request, signal);
-      } catch (error) {
-        if (signal?.aborted) return;
-        throw error;
-      }
-      if (!signal?.aborted) yield { type: "draft", draft };
+    if (
+      !this.aiGateway?.completeStream ||
+      !isGenericStreamable(request.generatorId)
+    ) {
+      yield* this.streamBufferedDraft(request, signal);
       return;
     }
 
@@ -1058,23 +1145,41 @@ export class CampaignGeneratorService {
       options: { ...themeDefaults, ...request.options },
     };
 
-    const canUseAI =
-      request.useAI &&
-      this.aiPolicy.isEnabled &&
-      this.aiPolicy.isAvailable &&
-      !!this.aiGateway;
-    mergedRequest.useAI = canUseAI;
-
-    if (!canUseAI) {
-      yield { type: "started" };
-      yield { type: "draft", draft: await this.generateDraft(request) };
+    mergedRequest.useAI = this.canUseAI(request);
+    if (!mergedRequest.useAI) {
+      yield* this.streamBufferedDraft(request);
       return;
     }
 
-    const bannedNames = new Set([
-      ...(mergedRequest.vaultContext?.bannedNames ?? []),
-      ...(mergedRequest.vaultContext?.existingTitles ?? []),
-    ]);
+    yield* this.streamGenericAI(request, mergedRequest, generator, signal);
+  }
+
+  private async *streamBufferedDraft(
+    request: GeneratorRunRequest,
+    signal?: AbortSignal,
+  ): AsyncGenerator<
+    GenerationEvent | { type: "draft"; draft: GeneratedDraft }
+  > {
+    yield { type: "started" };
+    let draft: GeneratedDraft;
+    try {
+      draft = await this.generateDraft(request, signal);
+    } catch (error) {
+      if (signal?.aborted) return;
+      throw error;
+    }
+    if (!signal?.aborted) yield { type: "draft", draft };
+  }
+
+  private async *streamGenericAI(
+    request: GeneratorRunRequest,
+    mergedRequest: GeneratorRunRequest,
+    generator: ReturnType<typeof getGenerator>,
+    signal?: AbortSignal,
+  ): AsyncGenerator<
+    GenerationEvent | { type: "draft"; draft: GeneratedDraft }
+  > {
+    const bannedNames = this.getBannedNames(mergedRequest);
 
     const promptRequest = await this.withNameSuggestion(mergedRequest);
     if (signal?.aborted) return; // Cancelled during the name pre-pass.
@@ -1083,71 +1188,154 @@ export class CampaignGeneratorService {
       promptRequest,
     );
 
-    // Same retry-on-banned-name policy as generateDraft's generic branch —
-    // each attempt is a fresh stream, since a name-ban rejection can only be
-    // known after the model's response is fully parsed.
+    yield* this.streamGenericAIAttempts(
+      request,
+      mergedRequest,
+      generator,
+      bannedNames,
+      fullPrompt,
+      interaction,
+      signal,
+    );
+  }
+
+  private async *streamGenericAIAttempts(
+    request: GeneratorRunRequest,
+    mergedRequest: GeneratorRunRequest,
+    generator: ReturnType<typeof getGenerator>,
+    bannedNames: Set<string>,
+    fullPrompt: string,
+    interaction: ReturnType<typeof buildGenericGeneratorPrompt>["interaction"],
+    signal?: AbortSignal,
+  ): AsyncGenerator<
+    GenerationEvent | { type: "draft"; draft: GeneratedDraft }
+  > {
     for (let attempt = 0; attempt < MAX_AI_ATTEMPTS; attempt++) {
-      let raw = "";
-      let interactionId: string | undefined;
-      let replayed = false;
-      let sawComplete = false;
-
-      try {
-        for await (const event of this.aiGateway.completeStream(
-          fullPrompt,
-          SYSTEM_INSTRUCTION,
-          { interaction, signal },
-        )) {
-          if (event.type === "complete") {
-            raw = event.text;
-            interactionId = event.interactionId;
-            replayed = !!event.replayed;
-            sawComplete = true;
-          }
-          yield event;
-        }
-      } catch {
-        if (signal?.aborted) return; // User cancelled — no fallback draft.
-        break; // Network/stream failure — fall through to local.
-      }
-
-      if (signal?.aborted) return; // User cancelled — no fallback draft.
-      if (!sawComplete) break; // Adaptor reported an `error` event — fall through to local.
-
-      const output = parseGenericGeneratorOutput(
-        raw,
-        mergedRequest.generatorId,
+      const outcome = yield* this.streamGenericAIAttempt(
+        mergedRequest,
+        generator,
+        bannedNames,
+        fullPrompt,
+        interaction,
+        signal,
       );
-      if (!output) break; // Valid stream, wrong shape — fall through to local.
-      if (isTitleBanned(output.title, bannedNames)) continue;
-
-      if (interaction && interactionId) {
-        this.onInteractionResult?.({
-          text: raw,
-          interactionId,
-          usedInteraction: true,
-          replayed,
-        });
-      }
-      this.onPromptMetrics?.(
-        promptMetrics({
-          request: mergedRequest,
-          fullPrompt,
-          sentPrompt: replayed
-            ? (interaction?.replayPrompt ?? fullPrompt)
-            : (interaction?.input ?? fullPrompt),
-          usedInteraction: !!interaction,
-          replayed,
-        }),
-      );
-      yield {
-        type: "draft",
-        draft: generator.mapOutputToDraft(output, mergedRequest),
-      };
-      return;
+      if (signal?.aborted || outcome === "complete") return;
+      if (outcome === "stop") break;
     }
 
     yield { type: "draft", draft: await this.generateDraft(request) };
+  }
+
+  private async *streamGenericAIAttempt(
+    request: GeneratorRunRequest,
+    generator: ReturnType<typeof getGenerator>,
+    bannedNames: Set<string>,
+    fullPrompt: string,
+    interaction: ReturnType<typeof buildGenericGeneratorPrompt>["interaction"],
+    signal?: AbortSignal,
+  ): AsyncGenerator<
+    GenerationEvent | { type: "draft"; draft: GeneratedDraft },
+    GenericStreamAttemptOutcome
+  > {
+    let result: GenericStreamAttempt;
+    try {
+      result = yield* this.streamGenericAttempt(
+        fullPrompt,
+        interaction,
+        signal,
+      );
+    } catch {
+      return "stop";
+    }
+    if (signal?.aborted || !result.sawComplete) return "stop";
+
+    const output = parseGenericGeneratorOutput(result.raw, request.generatorId);
+    if (!output) return "stop";
+    if (isTitleBanned(output.title, bannedNames)) return "retry";
+
+    this.recordGenericStreamMetrics(request, fullPrompt, interaction, result);
+    yield {
+      type: "draft",
+      draft: generator.mapOutputToDraft(output, request),
+    };
+    return "complete";
+  }
+
+  private recordGenericStreamMetrics(
+    request: GeneratorRunRequest,
+    fullPrompt: string,
+    interaction: ReturnType<typeof buildGenericGeneratorPrompt>["interaction"],
+    result: GenericStreamAttempt,
+  ): void {
+    if (interaction && result.interactionId) {
+      this.publishGenericStreamInteraction(result);
+    }
+    this.onPromptMetrics?.(
+      promptMetrics({
+        request,
+        fullPrompt,
+        sentPrompt: this.getGenericStreamSentPrompt(
+          result,
+          interaction,
+          fullPrompt,
+        ),
+        usedInteraction: !!interaction,
+        replayed: result.replayed,
+      }),
+    );
+  }
+
+  private publishGenericStreamInteraction(result: GenericStreamAttempt): void {
+    if (!result.interactionId) return;
+    this.onInteractionResult?.({
+      text: result.raw,
+      interactionId: result.interactionId,
+      usedInteraction: true,
+      replayed: result.replayed,
+    });
+  }
+
+  private getGenericStreamSentPrompt(
+    result: GenericStreamAttempt,
+    interaction: ReturnType<typeof buildGenericGeneratorPrompt>["interaction"],
+    fullPrompt: string,
+  ): string {
+    return result.replayed
+      ? (interaction?.replayPrompt ?? fullPrompt)
+      : (interaction?.input ?? fullPrompt);
+  }
+
+  private async *streamGenericAttempt(
+    fullPrompt: string,
+    interaction: ReturnType<typeof buildGenericGeneratorPrompt>["interaction"],
+    signal?: AbortSignal,
+  ): AsyncGenerator<GenerationEvent, GenericStreamAttempt> {
+    let raw = "";
+    let interactionId: string | undefined;
+    let replayed = false;
+    let sawComplete = false;
+    const gateway = this.aiGateway;
+    if (!gateway?.completeStream) {
+      return { raw, replayed, sawComplete };
+    }
+
+    for await (const event of gateway.completeStream(
+      fullPrompt,
+      SYSTEM_INSTRUCTION,
+      {
+        interaction,
+        signal,
+      },
+    )) {
+      if (event.type === "complete") {
+        raw = event.text;
+        interactionId = event.interactionId;
+        replayed = !!event.replayed;
+        sawComplete = true;
+      }
+      yield event;
+    }
+    return { raw, interactionId, replayed, sawComplete };
   }
 
   /**
