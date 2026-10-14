@@ -7,6 +7,7 @@
   import { modalUIStore } from "$lib/stores/ui/modal-ui.svelte";
   import { focusTrap } from "$lib/actions/focusTrap";
   import { entityTemplateService } from "$lib/services/EntityTemplateService.svelte";
+  import { entityTemplateStore } from "$lib/stores/entity-templates/entity-template-store.svelte";
   import { proposerStore } from "$lib/stores/proposer.svelte";
 
   let newTitle = $state("");
@@ -15,6 +16,17 @@
   let isCreating = $state(false);
   let createError = $state<string | null>(null);
   let useTemplate = $state(true);
+  let selectedTemplateId = $state<string | null>(null);
+
+  const availableTemplates = $derived(
+    entityTemplateStore.loaded ? entityTemplateStore.templatesFor(newType) : [],
+  );
+
+  $effect(() => {
+    const effectiveDefault = entityTemplateStore.effectiveDefaultFor(newType);
+    selectedTemplateId = effectiveDefault ?? availableTemplates[0]?.id ?? null;
+  });
+
   let inputEl = $state<HTMLInputElement | undefined>();
   let prefillStartDate = $state<{
     year: number;
@@ -78,6 +90,7 @@
           newType,
           themeStore.worldThemeId,
           customTemplatesDirHandle,
+          { templateId: selectedTemplateId },
         );
         resolvedContent = entityTemplateService.extractSummary(resolvedLore);
       }
@@ -227,6 +240,23 @@
           <option value={cat.id}>{cat.label}</option>
         {/each}
       </select>
+
+      {#if useTemplate && availableTemplates.length > 1}
+        <select
+          bind:value={selectedTemplateId}
+          aria-label="Entity Template"
+          data-testid="mobile-create-entity-template"
+          class="w-full px-4 py-3 text-sm bg-chrome-bg border border-chrome-border text-chrome-text rounded-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-chrome-text focus:border-chrome-accent"
+        >
+          {#each availableTemplates as t}
+            <option value={t.id}>
+              {t.name}{t.id === entityTemplateStore.effectiveDefaultFor(newType)
+                ? " (Default)"
+                : ""}
+            </option>
+          {/each}
+        </select>
+      {/if}
 
       {#if prefillStartDate}
         <div

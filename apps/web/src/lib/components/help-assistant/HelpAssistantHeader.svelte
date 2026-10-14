@@ -1,10 +1,15 @@
 <script lang="ts">
+  import type { CifMood } from "./cif-mood";
+  import CifSprite from "./CifSprite.svelte";
+
   let {
+    mood,
     canStartOver,
     onStartOver,
     onPopOut,
     onClose,
   }: {
+    mood: CifMood;
     canStartOver: boolean;
     onStartOver: () => void;
     /** Shown only where a pop-out window is possible. */
@@ -16,11 +21,14 @@
 <header
   class="flex items-center justify-between gap-2 border-b border-chrome-border px-3 py-2"
 >
-  <div class="flex items-baseline gap-2">
-    <h2 class="text-sm font-bold text-chrome-text">Cif</h2>
-    <span class="text-meta uppercase tracking-wider text-chrome-muted"
-      >Codex guide</span
-    >
+  <div class="flex items-center gap-2">
+    <CifSprite {mood} class="-my-2 h-12 w-11" />
+    <div class="flex items-baseline gap-2">
+      <h2 class="text-sm font-bold text-chrome-text">Cif</h2>
+      <span class="text-meta uppercase tracking-wider text-chrome-muted"
+        >Codex guide</span
+      >
+    </div>
   </div>
   <div class="flex items-center gap-1">
     {#if canStartOver}

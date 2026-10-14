@@ -245,6 +245,8 @@ export const EntitySchema = z.object({
   languageProfile: LanguageProfileV1Schema.optional(),
   statSheet: StatSheetSchema.optional(),
   report: ReportProvenanceSchema.optional(),
+  member_template: z.string().optional(),
+  systemId: z.string().optional(),
 });
 
 export type Entity = z.infer<typeof EntitySchema>;

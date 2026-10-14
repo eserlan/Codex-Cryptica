@@ -3,9 +3,15 @@
   import { categories } from "$lib/stores/categories.svelte";
   import { partitionTemplatesForCategory } from "@codex/stat-sheet-engine";
 
-  let { templates, category, onApply } = $props<{
+  let {
+    templates,
+    category,
+    systemId = null,
+    onApply,
+  } = $props<{
     templates: StatSheetTemplate[];
     category: string;
+    systemId?: string | null;
     onApply: (templateId: string) => void;
   }>();
 
@@ -13,7 +19,11 @@
   // Location or Faction is not buried under character sheets. Nothing is
   // hidden by category; the rest stay selectable below.
   const groups = $derived(
-    partitionTemplatesForCategory<StatSheetTemplate>(templates, category),
+    partitionTemplatesForCategory<StatSheetTemplate>(
+      templates,
+      category,
+      systemId,
+    ),
   );
   const categoryLabel = $derived(
     categories.getCategory(category)?.label ?? category,

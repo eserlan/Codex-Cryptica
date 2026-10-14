@@ -82,8 +82,33 @@ describe("StatSheetTemplateStore", () => {
         "builtin-item-dnd-magic",
         "builtin-item-cyberpunk-gear",
         "builtin-item-mythras-gear",
+        "builtin-tov-character",
+        "builtin-tov-npc",
+        "builtin-tov-monster",
       ]),
     );
+  });
+
+  it("includes native Tales of the Valiant templates with stable IDs and BFRD mechanics (#3944)", () => {
+    const tovChar = store.allTemplates.find(
+      (t) => t.id === "builtin-tov-character",
+    );
+    expect(tovChar).toBeDefined();
+    expect(tovChar?.systemId).toBe("tales-of-the-valiant");
+    expect(tovChar?.fields.map((f) => f.id)).toContain("lineage");
+    expect(tovChar?.fields.map((f) => f.id)).toContain("heritage");
+    expect(tovChar?.fields.map((f) => f.id)).toContain("luck");
+
+    const tovMonster = store.allTemplates.find(
+      (t) => t.id === "builtin-tov-monster",
+    );
+    expect(tovMonster).toBeDefined();
+    expect(tovMonster?.systemId).toBe("tales-of-the-valiant");
+    expect(tovMonster?.fields.map((f) => f.id)).toContain("doom");
+
+    const tovNpc = store.allTemplates.find((t) => t.id === "builtin-tov-npc");
+    expect(tovNpc).toBeDefined();
+    expect(tovNpc?.systemId).toBe("tales-of-the-valiant");
   });
 
   it("tags item templates with the real 'item' category so they surface as defaults for the Item category", () => {

@@ -281,6 +281,81 @@ function languageAiJson(mutate?: (value: Record<string, any>) => void): string {
 }
 
 describe("generateDraft", () => {
+  it("rejects direct tome generation when cancellation reaches the local fallback", async () => {
+    const controller = new AbortController();
+    const complete = vi.fn(async () => {
+      controller.abort();
+      return "invalid JSON";
+    });
+    const svc = new CampaignGeneratorService({
+      aiPolicy: { isEnabled: true, isAvailable: true },
+      aiGateway: { complete },
+    });
+
+    await expect(
+      svc.generateDraft(run("tome", { useAI: true }), controller.signal),
+    ).rejects.toMatchObject({ name: "AbortError" });
+    expect(complete).toHaveBeenCalledTimes(1);
+  });
+
+  it("rejects direct tome generation when the editorial pass rejects after cancellation", async () => {
+    const controller = new AbortController();
+    const content = [
+      "### Physical Description & Format",
+      "A clay tablet bound in twine.",
+      "### Provenance & Transmission",
+      "The temple archived the tablet after its scribe vanished.",
+      "### Contents & Revelations",
+      "A river-clay vessel must dry in open air. A later censor substituted water.",
+      "### Risks & Costs of Study",
+      "Adding water to the vessel releases its resident spirit.",
+      "### Adventure Hooks",
+      "1. Retrieve the vessel before the rite begins.",
+    ].join("\n\n");
+    const lore = [
+      "### At the Table Reference",
+      "Use the vessel as an investigation.",
+      "### Ground Truth for the GM",
+      "- **What the Book Claims**: Apply water.",
+      "- **The Deception / Flaw**: The censor changed the method.",
+      "- **The Objective Truth**: The vessel must dry in open air.",
+      "- **Actionable Clue**: A scorch exposes the correction.",
+      "### Connected Entities",
+      "- **Author / Compiler**: A temple scribe.",
+      "### Quick Checks & Mechanics",
+      "- **The Failure Condition**: Water releases the spirit.",
+    ].join("\n\n");
+    const firstDraft = JSON.stringify({
+      title: "The River-Clay Rite",
+      summary: "A forbidden ritual tablet.",
+      canonicalFacts: {
+        centralRule: "Let the river-clay vessel dry in open air.",
+        productionMethod: "Handwritten on a clay tablet.",
+        errorSource: "A temple censor replaced drying with water.",
+      },
+      content,
+      lore,
+      labels: ["tome", "item"],
+      connections: [],
+    });
+    const complete = vi
+      .fn()
+      .mockResolvedValueOnce(firstDraft)
+      .mockImplementationOnce(async () => {
+        controller.abort();
+        throw new DOMException("Cancelled", "AbortError");
+      });
+    const svc = new CampaignGeneratorService({
+      aiPolicy: { isEnabled: true, isAvailable: true },
+      aiGateway: { complete },
+    });
+
+    await expect(
+      svc.generateDraft(run("tome", { useAI: true }), controller.signal),
+    ).rejects.toMatchObject({ name: "AbortError" });
+    expect(complete).toHaveBeenCalledTimes(2);
+  });
+
   it("produces a draft for each supported generator with useAI false", async () => {
     const svc = new CampaignGeneratorService();
     for (const id of ["npc", "faction", "settlement", "magic-item"] as const) {
@@ -2000,6 +2075,180 @@ describe("generateDraftStream", () => {
     for await (const event of gen) events.push(event);
     return events;
   }
+
+  it("streams only pass two of tome generation and commits its reviewed draft", async () => {
+    const content = [
+      "### Physical Description & Format",
+      "A manuscript in a leather binding.",
+      "### Provenance & Transmission",
+      "Written by an apprentice.",
+      "### Contents & Revelations",
+      "The clay vessel must cure in dry air.",
+      "### Risks & Costs of Study",
+      "Water breaks the containment.",
+      "### Adventure Hooks",
+      "1. Retrieve the broken clay vessel.",
+    ].join("\n\n");
+    const lore = [
+      "### At the Table Reference",
+      "A recoverable ritual.",
+      "### Ground Truth for the GM",
+      "- **What the Book Claims**: Wash the vessel.",
+      "- **The Deception / Flaw**: A copyist altered the rite.",
+      "- **The Objective Truth**: Let the clay cure in dry air.",
+      "- **Actionable Clue**: The dry clay stain.",
+      "### Connected Entities",
+      "- **Author / Compiler**: The apprentice.",
+      "### Quick Checks & Mechanics",
+      "- **The Failure Condition**: Water destroys the ward.",
+    ].join("\n\n");
+    const first = JSON.stringify({
+      title: "First Pass Tome",
+      summary: "The initial manuscript.",
+      content,
+      lore,
+      labels: ["tome", "item"],
+      connections: [],
+    });
+    const final = JSON.stringify({
+      title: "Edited Tome",
+      summary: "A revised manuscript.",
+      content,
+      lore,
+      labels: ["tome", "item"],
+      connections: [],
+    });
+    const complete = vi.fn(async () => first);
+    const completeStream = fakeCompleteStream(final, "Edited Tome");
+    const svc = new CampaignGeneratorService({
+      aiPolicy: { isEnabled: true, isAvailable: true },
+      aiGateway: { complete, completeStream },
+    });
+
+    const events = await collect(
+      svc.generateDraftStream(run("tome", { useAI: true })),
+    );
+    expect(complete).toHaveBeenCalledTimes(1);
+    expect(completeStream).toHaveBeenCalledTimes(1);
+    expect(events[0]).toEqual({ type: "started" });
+    expect(events.filter((e) => e.type === "started")).toHaveLength(1);
+    expect(
+      events.some(
+        (e) => e.type === "delta" && String(e.text).includes("Edited Tome"),
+      ),
+    ).toBe(true);
+    expect(
+      events.some((e) => e.type === "field" && e.value === "Edited Tome"),
+    ).toBe(true);
+    const finalEvent = events.at(-1);
+    expect(finalEvent?.type).toBe("draft");
+    expect((finalEvent?.draft as GeneratedDraft).title).toBe("Edited Tome");
+  });
+
+  it("stops the buffered tome editorial pass and suppresses its draft on cancellation", async () => {
+    const controller = new AbortController();
+    const complete = vi.fn(
+      async (
+        _prompt: string,
+        _instruction: string,
+        _options?: { signal?: AbortSignal },
+      ) => {
+        controller.abort();
+        return "invalid JSON";
+      },
+    );
+    const svc = new CampaignGeneratorService({
+      aiPolicy: { isEnabled: true, isAvailable: true },
+      aiGateway: { complete },
+    });
+
+    const events = await collect(
+      svc.generateDraftStream(run("tome", { useAI: true }), controller.signal),
+    );
+
+    expect(complete).toHaveBeenCalledTimes(1);
+    expect(complete.mock.calls[0]?.[2]?.signal).toBe(controller.signal);
+    expect(events.some((event) => event.type === "draft")).toBe(false);
+  });
+
+  it("stops forwarding streamed editorial events and suppresses the draft after cancellation", async () => {
+    const controller = new AbortController();
+    const first = JSON.stringify({
+      title: "First Pass Tome",
+      summary: "An initial manuscript.",
+      content: [
+        "### Physical Description & Format",
+        "A manuscript in a leather binding.",
+        "### Provenance & Transmission",
+        "Written by an apprentice.",
+        "### Contents & Revelations",
+        "The clay vessel must cure in dry air.",
+        "### Risks & Costs of Study",
+        "Water breaks the containment.",
+        "### Adventure Hooks",
+        "1. Retrieve the broken clay vessel.",
+      ].join("\n\n"),
+      lore: [
+        "### At the Table Reference",
+        "A recoverable ritual.",
+        "### Ground Truth for the GM",
+        "- **What the Book Claims**: Wash the vessel.",
+        "- **The Deception / Flaw**: A copyist altered the rite.",
+        "- **The Objective Truth**: Let the clay cure in dry air.",
+        "- **Actionable Clue**: The dry clay stain.",
+        "### Connected Entities",
+        "- **Author / Compiler**: The apprentice.",
+        "### Quick Checks & Mechanics",
+        "- **The Failure Condition**: Water destroys the ward.",
+      ].join("\n\n"),
+      labels: ["tome", "item"],
+      connections: [],
+    });
+    const complete = vi.fn(async () => first);
+    let continueEditorial: (() => void) | undefined;
+    const editorialReady = new Promise<void>((resolve) => {
+      continueEditorial = resolve;
+    });
+    let receivedSignal: AbortSignal | undefined;
+    const completeStream = vi.fn(async function* (
+      _message: string,
+      _instruction: string,
+      options?: { signal?: AbortSignal },
+    ) {
+      receivedSignal = options?.signal;
+      yield { type: "started" as const };
+      yield { type: "delta" as const, text: '{"title":"Edited' };
+      await editorialReady;
+      yield { type: "field" as const, key: "title", value: "Too Late" };
+      yield { type: "complete" as const, text: "{}" };
+    });
+    const svc = new CampaignGeneratorService({
+      aiPolicy: { isEnabled: true, isAvailable: true },
+      aiGateway: { complete, completeStream },
+    });
+
+    const events: Array<{ type: string; [k: string]: unknown }> = [];
+    const consuming = (async () => {
+      for await (const event of svc.generateDraftStream(
+        run("tome", { useAI: true }),
+        controller.signal,
+      )) {
+        events.push(event);
+        if (event.type === "delta") {
+          controller.abort();
+          continueEditorial?.();
+        }
+      }
+    })();
+    await consuming;
+
+    expect(complete).toHaveBeenCalledTimes(1);
+    expect(completeStream).toHaveBeenCalledTimes(1);
+    expect(receivedSignal).toBe(controller.signal);
+    expect(events.filter((event) => event.type === "delta")).toHaveLength(1);
+    expect(events.some((event) => event.type === "field")).toBe(false);
+    expect(events.some((event) => event.type === "draft")).toBe(false);
+  });
 
   it("turns structured holiday completion payloads into a final campaign draft", async () => {
     const json = JSON.stringify({

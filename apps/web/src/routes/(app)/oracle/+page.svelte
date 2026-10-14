@@ -3,6 +3,14 @@
   import { oracle } from "$lib/stores/oracle.svelte";
   import { onMount } from "svelte";
   import { notificationStore } from "$lib/stores/ui/notification.svelte";
+  import { KeyboardInset } from "$lib/services/help-assistant/keyboard-inset.svelte";
+  import { layoutUIStore } from "$lib/stores/ui/layout-ui.svelte";
+
+  const keyboard = new KeyboardInset();
+  $effect(() => {
+    if (!layoutUIStore.isMobile) return;
+    return keyboard.start();
+  });
 
   onMount(() => {
     oracle.init();
@@ -18,7 +26,11 @@
 </svelte:head>
 
 <div
-  class="fixed top-0 left-0 w-full h-[100dvh] bg-theme-bg flex flex-col overflow-hidden"
+  class="fixed inset-x-0 top-0 bottom-0 bg-theme-bg flex flex-col overflow-hidden"
+  style:bottom={layoutUIStore.isMobile && keyboard.keyboardOpen
+    ? `${keyboard.inset}px`
+    : undefined}
+  data-testid="standalone-oracle-container"
 >
   <!-- Standalone Header -->
   <div

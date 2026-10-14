@@ -270,6 +270,13 @@
           icon: "icon-[lucide--gem]",
         },
         {
+          href: "/generators/tome",
+          label: "Tome & Forbidden Book Generator",
+          summary:
+            "Generate grimoires, occult field logs, and heretical treatises with binding details, readable excerpts, research hazards, and hooks.",
+          icon: "icon-[lucide--book-marked]",
+        },
+        {
           href: "/generators/tavern",
           label: "Tavern Generator",
           summary:

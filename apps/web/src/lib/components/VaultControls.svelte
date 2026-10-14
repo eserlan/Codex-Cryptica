@@ -13,6 +13,7 @@
   import { onlineStatus } from "$lib/stores/online.svelte";
   import VaultActionsMenu from "./layout/VaultActionsMenu.svelte";
   import { entityTemplateService } from "$lib/services/EntityTemplateService.svelte";
+  import { entityTemplateStore } from "$lib/stores/entity-templates/entity-template-store.svelte";
   import { proposerStore } from "$lib/stores/proposer.svelte";
   import { tick } from "svelte";
   import { guidedModeStore } from "$lib/stores/ui/guided-mode.svelte";
@@ -29,6 +30,16 @@
   let createError = $state<string | null>(null);
   let useTemplate = $state(true);
   let draftContent = $state("");
+  let selectedTemplateId = $state<string | null>(null);
+
+  const availableTemplates = $derived(
+    entityTemplateStore.loaded ? entityTemplateStore.templatesFor(newType) : [],
+  );
+
+  $effect(() => {
+    const effectiveDefault = entityTemplateStore.effectiveDefaultFor(newType);
+    selectedTemplateId = effectiveDefault ?? availableTemplates[0]?.id ?? null;
+  });
 
   let prefillStartDate = $state<{
     year: number;
@@ -134,6 +145,7 @@
           newType,
           themeStore.worldThemeId,
           customTemplatesDirHandle,
+          { templateId: selectedTemplateId },
         );
         resolvedContent = entityTemplateService.extractSummary(resolvedLore);
       }
@@ -522,6 +534,25 @@
           <option value={cat.id}>{cat.label}</option>
         {/each}
       </select>
+
+      {#if useTemplate && availableTemplates.length > 1}
+        <select
+          bind:value={selectedTemplateId}
+          aria-label="Entity Template"
+          data-testid="new-entity-template-select"
+          class="px-2 py-1.5 text-xs bg-chrome-bg border border-chrome-border text-chrome-text rounded focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-chrome-text focus:border-chrome-accent font-sans {isVertical
+            ? 'py-3 text-sm'
+            : ''}"
+        >
+          {#each availableTemplates as t}
+            <option value={t.id}>
+              {t.name}{t.id === entityTemplateStore.effectiveDefaultFor(newType)
+                ? " (Default)"
+                : ""}
+            </option>
+          {/each}
+        </select>
+      {/if}
 
       {#if prefillStartDate}
         <div

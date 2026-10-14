@@ -53,6 +53,7 @@ export const GENERATOR_SLUGS = [
   "heist",
   "holiday",
   "personality",
+  "tome",
   "random",
 ] as const;
 

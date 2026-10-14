@@ -8,6 +8,8 @@ export interface HighlightRect {
 }
 
 export interface HighlightState {
+  /** New for every `show`, so a repeat of the same target still reads as new. */
+  id: number;
   target: ControlId;
   label: string;
   rect: HighlightRect;
@@ -40,6 +42,7 @@ export class HelpHighlightService {
   private readonly doc?: Document;
   private readonly win?: Window;
   private readonly timeoutMs: number;
+  private seq = 0;
   private element: Element | null = null;
   private detach: (() => void) | null = null;
   private timer: ReturnType<typeof setTimeout> | null = null;
@@ -105,6 +108,7 @@ export class HelpHighlightService {
     this.element = el;
     const r = el.getBoundingClientRect();
     this.current = {
+      id: ++this.seq,
       target,
       label,
       rect: { top: r.top, left: r.left, width: r.width, height: r.height },

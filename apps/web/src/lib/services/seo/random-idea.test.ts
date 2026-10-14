@@ -33,6 +33,7 @@ describe("randomIdeaCategories", () => {
       "quest",
       "secret-society",
       "social-hub",
+      "tome",
       "villain",
     ]);
   });
@@ -67,6 +68,7 @@ describe("randomIdeaCategories", () => {
       generateEncounter: vi.fn().mockResolvedValue("encounter-result"),
       generateOrigin: vi.fn().mockResolvedValue("origin-result"),
       generateHoliday: vi.fn().mockResolvedValue("holiday-result"),
+      generateTome: vi.fn().mockResolvedValue("tome-result"),
     } as unknown as DefaultGeneratorEngine;
     const theme = "Cyberpunk / Corporate";
 
@@ -149,6 +151,10 @@ describe("randomIdeaCategories", () => {
     expect(engine.generateHoliday).toHaveBeenCalledWith({
       useAI: true,
       genre: theme,
+    });
+    expect(engine.generateTome).toHaveBeenCalledWith({
+      useAI: true,
+      theme,
     });
   });
 

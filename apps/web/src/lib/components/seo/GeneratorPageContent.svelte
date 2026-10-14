@@ -48,6 +48,7 @@
     constellationConfig,
     alienRaceConfig,
     creatureConfig,
+    tomeConfig,
     themeIdToLabel,
     themeToQuestGenre,
   } from "$lib/services/seo/generator-config";
@@ -208,6 +209,17 @@
     powerTier: artifactConfig.powerTiers[0],
     currentStatus: artifactConfig.currentStatuses[0],
     curseCost: artifactConfig.curseCosts[0],
+    campaignContext: "",
+  });
+
+  let tome = $state({
+    theme: factionConfig.themes[0],
+    tomeType: tomeConfig.tomeTypes[0],
+    format: tomeConfig.formats[0],
+    rarity: tomeConfig.rarities[0],
+    custodian: tomeConfig.custodians[0],
+    hazard: tomeConfig.primaryHazards[0],
+    language: tomeConfig.languages[0],
     campaignContext: "",
   });
 
@@ -755,6 +767,7 @@
       minorMagicItem,
       artifact,
       creature,
+      tome,
       themeToQuestGenre,
       mapSocialHubGenre: (genre) =>
         SOCIAL_HUB_GENRE_TO_THEME[genre] ?? "Classic Fantasy",
@@ -921,6 +934,7 @@
     constellation,
     alienRace,
     creature,
+    tome,
     getActiveTheme: () => activeTheme,
     getPlotTwistPremise: () => plotTwist.premise,
     getHandoffQuestPremise: () => handoffState.questPremise,
@@ -1027,6 +1041,7 @@
       bind:constellation
       bind:alienRace
       bind:creature
+      bind:tome
       onPersonalityGenreChange={handlePersonalityGenreChange}
       onRumourGenreChange={handleRumourGenreChange}
       onPuzzleGenreChange={handlePuzzleGenreChange}

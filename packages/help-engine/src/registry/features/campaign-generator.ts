@@ -23,7 +23,7 @@ export const campaignGenerator: FeatureEntry = {
       actionIds: ["generators.open-workflow"],
     },
   ],
-  helpIds: ["in-app-generators", "generate-related"],
+  helpIds: ["in-app-generators", "tome-generator", "generate-related"],
   related: ["session-hub"],
   actions: [
     {

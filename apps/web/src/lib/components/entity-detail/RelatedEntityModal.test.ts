@@ -54,6 +54,15 @@ vi.mock("$lib/stores/vault.svelte", () => ({
         lore: "Source lore",
         connections: [],
       },
+      "faction-id": {
+        id: "faction-id",
+        title: "Shadow Syndicate",
+        type: "faction",
+        content: "A shadowy syndicate",
+        lore: "Operates in the shadows",
+        member_template: "syndicate-operative",
+        connections: [],
+      },
     },
     inboundConnections: {},
     createEntity: vi.fn().mockResolvedValue("new-entity-id"),
@@ -69,6 +78,40 @@ vi.mock("$lib/stores/categories.svelte", () => ({
       { id: "item", label: "Item" },
     ],
   },
+}));
+
+const mockEntityTemplateStore = vi.hoisted(() => ({
+  loaded: true,
+  templatesFor: vi.fn((_type: string) => [
+    {
+      id: "tmpl-char-default",
+      name: "Default Character",
+      entityType: "character",
+      outline: "Default Character Outline",
+    },
+    {
+      id: "tmpl-char-operative",
+      name: "Syndicate Operative",
+      entityType: "character",
+      outline: "Operative Outline",
+    },
+  ]),
+  effectiveDefaultFor: vi.fn(() => "tmpl-char-default"),
+  contextualTemplateFor: vi.fn((_type: string, parentEntity?: any) => {
+    if (parentEntity?.member_template === "syndicate-operative") {
+      return {
+        id: "tmpl-char-operative",
+        name: "Syndicate Operative",
+        entityType: "character",
+        outline: "Operative Outline",
+      };
+    }
+    return undefined;
+  }),
+}));
+
+vi.mock("$lib/stores/entity-templates/entity-template-store.svelte", () => ({
+  entityTemplateStore: mockEntityTemplateStore,
 }));
 
 vi.mock("$lib/stores/oracle.svelte", () => ({
@@ -362,5 +405,70 @@ describe("RelatedEntityModal", () => {
     await waitFor(() => {
       expect(vault.addConnection).toHaveBeenCalled();
     });
+  });
+
+  it("renders the template / archetype select when multiple templates exist for target type", () => {
+    render(RelatedEntityModal, {
+      isOpen: true,
+      sourceEntityId: "source-id",
+      onClose: vi.fn(),
+    });
+
+    const templateSelect = screen.getByTestId(
+      "related-entity-template-select",
+    ) as HTMLSelectElement;
+    expect(templateSelect).toBeDefined();
+    expect(templateSelect.value).toBe("tmpl-char-default");
+  });
+
+  it("pre-selects contextual template if sourceEntity defines member_template", () => {
+    render(RelatedEntityModal, {
+      isOpen: true,
+      sourceEntityId: "faction-id",
+      onClose: vi.fn(),
+    });
+
+    const templateSelect = screen.getByTestId(
+      "related-entity-template-select",
+    ) as HTMLSelectElement;
+    expect(templateSelect).toBeDefined();
+    expect(templateSelect.value).toBe("tmpl-char-operative");
+  });
+
+  it("passes selected templateId and parentEntity to entityTemplateService.resolveTemplate when generating", async () => {
+    const { entityTemplateService } =
+      await import("$lib/services/EntityTemplateService.svelte");
+
+    render(RelatedEntityModal, {
+      isOpen: true,
+      sourceEntityId: "faction-id",
+      onClose: vi.fn(),
+    });
+
+    const templateSelect = screen.getByTestId(
+      "related-entity-template-select",
+    ) as HTMLSelectElement;
+    expect(templateSelect.value).toBe("tmpl-char-operative");
+
+    // Change to default template
+    await fireEvent.change(templateSelect, {
+      target: { value: "tmpl-char-default" },
+    });
+    expect(templateSelect.value).toBe("tmpl-char-default");
+
+    await fireEvent.click(screen.getByText("Generate"));
+
+    expect(entityTemplateService.resolveTemplate).toHaveBeenCalledWith(
+      "character",
+      undefined,
+      undefined,
+      {
+        templateId: "tmpl-char-default",
+        parentEntity: expect.objectContaining({
+          id: "faction-id",
+          title: "Shadow Syndicate",
+        }),
+      },
+    );
   });
 });

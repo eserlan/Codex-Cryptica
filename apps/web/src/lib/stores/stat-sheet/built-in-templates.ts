@@ -1,4 +1,9 @@
-import { SHOP_MERCHANT_TEMPLATE } from "@codex/stat-sheet-engine";
+import {
+  SHOP_MERCHANT_TEMPLATE,
+  TOV_CHARACTER_TEMPLATE,
+  TOV_NPC_TEMPLATE,
+  TOV_MONSTER_TEMPLATE,
+} from "@codex/stat-sheet-engine";
 import {
   DEFAULT_ITEM_TABLE_COLUMNS,
   type StatSheetTemplate,
@@ -351,6 +356,9 @@ export const BUILT_IN_STAT_SHEET_TEMPLATES: StatSheetTemplate[] = [
       },
     ],
   },
+  TOV_CHARACTER_TEMPLATE,
+  TOV_NPC_TEMPLATE,
+  TOV_MONSTER_TEMPLATE,
   {
     id: "builtin-pathfinder-character",
     name: "Pathfinder Character",

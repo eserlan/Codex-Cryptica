@@ -56,6 +56,11 @@ const bundle = buildBundle({
       "## Generate\nGenerate characters, factions and locations. A faction generator makes a guild with a leader.",
     ),
     article(
+      "tome-generator",
+      "Tome & Forbidden Book Generator",
+      "## Create a tome\nChoose a setting, format, custodian and reading hazard. Review the draft's provenance, clues and risks before saving. Local mode works without AI.",
+    ),
+    article(
       "generate-related",
       "Generate Related",
       "## Related\nGenerate entries related to the one you are viewing.",
@@ -151,6 +156,11 @@ const bundle = buildBundle({
       "## oracle-guide\nAbout oracle-guide.",
     ),
     article(
+      "mention-entities",
+      "mention-entities",
+      "## mention-entities\nAbout mention-entities.",
+    ),
+    article(
       "chat-commands",
       "chat-commands",
       "## chat-commands\nAbout chat-commands.",
@@ -166,6 +176,7 @@ const bundle = buildBundle({
       "entity-table",
       "## entity-table\nAbout entity-table.",
     ),
+    article("vault-audit", "vault-audit", "## vault-audit\nAbout vault-audit."),
     article("dice-roller", "dice-roller", "## dice-roller\nAbout dice-roller."),
     article(
       "adventure-mode",

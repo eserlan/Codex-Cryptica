@@ -7,6 +7,7 @@
   import type { HelpAssistantView } from "$lib/services/help-assistant/cif-popout-protocol";
   import HelpActionOffer from "./HelpActionOffer.svelte";
   import HelpAssistantHeader from "./HelpAssistantHeader.svelte";
+  import { cifMood, DELIGHT_MS } from "./cif-mood";
   import HelpAssistantComposer from "./HelpAssistantComposer.svelte";
   import HelpAssistantMessage from "./HelpAssistantMessage.svelte";
   import HelpQuickPrompts from "./HelpQuickPrompts.svelte";
@@ -32,6 +33,25 @@
   } = $props();
 
   const docked = $derived(variant === "docked");
+  // Beam briefly when an answer lands, then settle. It is a pose change, not
+  // movement, so reduced motion keeps it.
+  let delighted = $state(false);
+  $effect(() => {
+    if (assistant.status !== "answered") {
+      delighted = false;
+      return;
+    }
+    delighted = true;
+    const timer = setTimeout(() => (delighted = false), DELIGHT_MS);
+    return () => clearTimeout(timer);
+  });
+  const mood = $derived(
+    cifMood({
+      status: assistant.status,
+      messageCount: assistant.messages.length,
+      delighted,
+    }),
+  );
   const panelClass = $derived(
     docked
       ? "fixed bottom-[calc(7.25rem_+_env(safe-area-inset-bottom,0px))] left-3 z-[95] flex max-h-[min(36rem,calc(100dvh_-_11rem_-_env(safe-area-inset-bottom,0px)))] w-[min(24rem,calc(100vw-1.5rem))] flex-col overflow-hidden rounded-lg border border-chrome-border bg-chrome-surface shadow-xl md:bottom-16 md:left-[4.5rem] md:max-h-[min(36rem,calc(100dvh-7rem))]"
@@ -115,6 +135,7 @@
       event.currentTarget.setAttribute("aria-hidden", "true")}
   >
     <HelpAssistantHeader
+      {mood}
       canStartOver={assistant.messages.length > 0}
       onStartOver={() => assistant.reset()}
       {onPopOut}

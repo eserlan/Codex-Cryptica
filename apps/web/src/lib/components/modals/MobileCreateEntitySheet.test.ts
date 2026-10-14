@@ -58,6 +58,27 @@ vi.mock("$lib/stores/proposer.svelte", () => ({
   },
 }));
 
+const mockEntityTemplateStore = vi.hoisted(() => ({
+  loaded: true,
+  templatesFor: vi.fn((type: string) => [
+    {
+      id: `tmpl-${type}-default`,
+      name: `Default ${type}`,
+      entityType: type,
+    },
+    {
+      id: `tmpl-${type}-archetype`,
+      name: `Special ${type}`,
+      entityType: type,
+    },
+  ]),
+  effectiveDefaultFor: vi.fn((type: string) => `tmpl-${type}-default`),
+}));
+
+vi.mock("$lib/stores/entity-templates/entity-template-store.svelte", () => ({
+  entityTemplateStore: mockEntityTemplateStore,
+}));
+
 describe("MobileCreateEntitySheet", () => {
   beforeEach(() => {
     if (!Element.prototype.animate) {
@@ -132,5 +153,39 @@ describe("MobileCreateEntitySheet", () => {
         .querySelector(".icon-\\[lucide--wand-2\\]")
         ?.getAttribute("aria-hidden"),
     ).toBe("true");
+  });
+
+  it("renders template archetype selector when multiple templates exist for selected category", () => {
+    render(MobileCreateEntitySheet);
+
+    const templateSelect = screen.getByTestId(
+      "mobile-create-entity-template",
+    ) as HTMLSelectElement;
+    expect(templateSelect).toBeTruthy();
+    expect(templateSelect.value).toBe("tmpl-character-default");
+  });
+
+  it("passes selected templateId to entityTemplateService.resolveTemplate upon creating entity", async () => {
+    const { entityTemplateService } =
+      await import("$lib/services/EntityTemplateService.svelte");
+    render(MobileCreateEntitySheet);
+
+    const titleInput = screen.getByTestId("mobile-create-entity-title");
+    await fireEvent.input(titleInput, { target: { value: "Solstice Gala" } });
+
+    const templateSelect = screen.getByTestId("mobile-create-entity-template");
+    await fireEvent.change(templateSelect, {
+      target: { value: "tmpl-character-archetype" },
+    });
+
+    const createBtn = screen.getByTestId("mobile-create-entity-submit");
+    await fireEvent.click(createBtn);
+
+    expect(entityTemplateService.resolveTemplate).toHaveBeenCalledWith(
+      "character",
+      "workspace",
+      null,
+      { templateId: "tmpl-character-archetype" },
+    );
   });
 });

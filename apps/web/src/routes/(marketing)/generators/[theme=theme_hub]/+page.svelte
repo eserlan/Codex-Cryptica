@@ -183,6 +183,13 @@
       icon: "icon-[lucide--gem]",
     },
     {
+      slug: "tome",
+      label: "Tome & Forbidden Book Generator",
+      summary:
+        "Generate sinister grimoires, occult field logs, and heretical treatises with binding details, readable excerpts, research hazards, and hooks.",
+      icon: "icon-[lucide--book-marked]",
+    },
+    {
       slug: "constellation",
       label: "Constellation Generator",
       summary:

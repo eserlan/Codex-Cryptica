@@ -1869,4 +1869,66 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
       { href: "/generators/npc", label: "RPG NPC Generator" },
     ],
   },
+  tome: {
+    pageTitle:
+      "Tome & Forbidden Book Generator | Grimoires, Occult Treatises & Alien Codices | Codex Cryptica",
+    metaDescription:
+      "Generate forbidden tomes, cursed grimoires, occult field journals, and alien data-codices with physical descriptions, excerpted passages, research hazards, and campaign hooks. Works without login.",
+    introTitle: "Tome & Forbidden Book Generator",
+    eyebrow: "Forbidden Tome Generator",
+    introText:
+      "Create sinister grimoires, heretical treatises, and esoteric manuscripts with binding details, readable excerpts, investigation risks, and adventure hooks. Works without login, then saves directly to your local Codex vault.",
+    canonicalPath: "/generators/tome",
+    labels: ["fantasy", "horror", "investigation"],
+    ogImage: "https://assets.codexcryptica.com/screenshots/generator-tome.jpg",
+    ogImageAlt:
+      "Codex Cryptica forbidden tome generator showing a grimoire draft with binding details, significant excerpt, and research hazard",
+    keywords: [
+      "tome generator",
+      "forbidden book generator",
+      "grimoire generator",
+      "call of cthulhu tomes",
+      "occult book generator",
+      "rpg spellbook generator",
+      "cursed manuscript generator",
+    ],
+    faqs: [
+      {
+        question: "What does the Tome Generator create?",
+        answer:
+          "It produces a complete RPG book entry — title, author, binding materials and physical condition, a significant readable excerpt or marginal gloss, revelations or mechanical boons, reading hazards and investigation risks, current custodian and provenance, and table-ready campaign hooks.",
+      },
+      {
+        question:
+          "Can I use this for Call of Cthulhu and investigative horror games?",
+        answer:
+          "Yes. The generator is system-neutral and designed for Call of Cthulhu, Delta Green, Vaesen, Kult, D&D, OSR, and sci-fi games like Mothership or Lancer. It generates authentic period or genre tone, investigative clues, and narrative hazards rather than hardcoded dice math.",
+      },
+      {
+        question: "Does it support genres outside fantasy and gothic horror?",
+        answer:
+          "Yes. In addition to fantasy grimoires and cosmic horror texts, it generates cyberpunk datapad archives, sci-fi precursor telemetry slates, post-apocalyptic bunker diaries, steampunk mechanist folios, and modern conspiracy intelligence files across 13 distinct world themes.",
+      },
+      {
+        question: "Does the forbidden book generator require an account?",
+        answer:
+          "No. You can configure, generate, and copy tome notes without signing in. Selecting 'Save to Codex' stores the draft in your browser's local storage so it imports into your Codex Cryptica campaign vault as a connected Item entity.",
+      },
+    ],
+    relatedLinks: [
+      {
+        href: "/generators/artifact-generator",
+        label: "Artifact & Relic Generator",
+      },
+      { href: "/generators/secret-society", label: "Secret Society Generator" },
+      {
+        href: "/for/call-of-cthulhu",
+        label: "Call of Cthulhu Campaign Workspace",
+      },
+      {
+        href: "/generators/news-sheet-generator",
+        label: "News Sheet Generator",
+      },
+    ],
+  },
 };
