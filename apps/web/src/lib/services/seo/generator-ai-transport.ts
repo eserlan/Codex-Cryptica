@@ -28,7 +28,7 @@ export function toSeoOutput(o: PublicGeneratorOutput): GeneratorOutput {
 type StreamingModel = {
   generateContentStream?(
     request: unknown,
-    requestOptions?: { signal?: AbortSignal },
+    signal?: AbortSignal,
   ): AsyncGenerator<
     | { type: "delta"; text: string }
     | { type: "complete"; text: string }
@@ -44,7 +44,7 @@ async function streamModelPreview(
   signal?: AbortSignal,
 ): Promise<string> {
   let text = "";
-  for await (const event of model.generateContentStream!(request, { signal })) {
+  for await (const event of model.generateContentStream!(request, signal)) {
     if (event.type === "delta") {
       text += event.text;
       onPreview(text);
