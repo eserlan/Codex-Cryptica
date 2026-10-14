@@ -963,7 +963,6 @@ export function auditTomeConsistency(
   };
 }
 
-
 /**
  * Two-pass tome AI pipeline: create a full draft, then perform an independent
  * editorial repair against the same locked generator facts.
@@ -982,15 +981,17 @@ export async function generateTomeTwoPass(
   function candidate(text: string): PublicGeneratorOutput | null {
     try {
       const raw = parseFencedJson<Record<string, unknown>>(text);
+      const requiredText = raw && [
+        raw.title,
+        raw.summary,
+        raw.content,
+        raw.lore,
+      ];
       if (
-        !raw ||
-        typeof raw.title !== "string" ||
-        typeof raw.summary !== "string" ||
-        typeof raw.content !== "string" ||
-        typeof raw.lore !== "string" ||
-        !raw.title.trim() ||
-        !raw.content.trim() ||
-        !raw.lore.trim()
+        !requiredText ||
+        !requiredText.every(
+          (value) => typeof value === "string" && value.trim().length > 0,
+        )
       ) {
         return null;
       }
@@ -1015,9 +1016,12 @@ export async function generateTomeTwoPass(
     "",
     "LOCKED CANONICAL FACTS (do not alter these, their meaning, or the requested genre):",
     JSON.stringify(lockedFacts, null, 2),
-    "GENRE:", resolved.genre,
-    "PHYSICAL FORMAT:", resolved.format,
-    "COMPOSITION ERA:", resolved.era,
+    "GENRE:",
+    resolved.genre,
+    "PHYSICAL FORMAT:",
+    resolved.format,
+    "COMPOSITION ERA:",
+    resolved.era,
     "",
     "INDEPENDENT CHECKLIST:",
     "1. Check every object, material, person, and action against the central procedure. A blade must not appear in a clay-vessel rite without an established role.",

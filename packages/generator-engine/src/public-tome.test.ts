@@ -685,12 +685,17 @@ ${duplicatedParagraph}
         seededRng(8),
       );
       const calls: { instruction: string; message: string }[] = [];
-      const out = await generateTomeTwoPass(prompt, async (instruction, message) => {
-        calls.push({ instruction, message });
-        return calls.length === 1
-          ? response(content.replace("river-clay vessel", "soul-forged blade"))
-          : response(content);
-      });
+      const out = await generateTomeTwoPass(
+        prompt,
+        async (instruction, message) => {
+          calls.push({ instruction, message });
+          return calls.length === 1
+            ? response(
+                content.replace("river-clay vessel", "soul-forged blade"),
+              )
+            : response(content);
+        },
+      );
 
       expect(calls).toHaveLength(2);
       expect(calls[1].message).toContain("FIRST-PASS DRAFT JSON");

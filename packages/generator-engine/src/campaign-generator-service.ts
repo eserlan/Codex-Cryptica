@@ -307,6 +307,10 @@ export interface CampaignGeneratorServiceDeps {
 /** Max AI generation attempts when the model keeps returning a banned name. */
 const MAX_AI_ATTEMPTS = 3;
 
+function isGenericStreamable(generatorId: string): boolean {
+  return !["dungeon", "language", "tome"].includes(generatorId);
+}
+
 /** User-readable error raised when a save is blocked or invalid. */
 export class DraftSaveError extends Error {
   constructor(message: string) {
@@ -601,6 +605,245 @@ export class CampaignGeneratorService {
     return nameSuggestion ? { ...request, nameSuggestion } : request;
   }
 
+  private async generateTomeWithAI(
+    generator: ReturnType<typeof getGenerator>,
+    request: GeneratorRunRequest,
+    bannedNames: Set<string>,
+  ): Promise<GeneratedDraft | null> {
+    const gateway = this.aiGateway;
+    if (!gateway) return null;
+    try {
+      const prompt = buildCampaignTomePrompt(request);
+      const reviewed = await generateTomeTwoPass(
+        prompt,
+        async (instruction, message) =>
+          completeText(await gateway.complete(message, instruction)),
+      );
+      if (!reviewed || isTitleBanned(reviewed.title, bannedNames)) return null;
+
+      this.onPromptMetrics?.(
+        promptMetrics({
+          request,
+          fullPrompt: prompt.userMessage,
+          sentPrompt: prompt.userMessage,
+          usedInteraction: false,
+          replayed: false,
+        }),
+      );
+      return generator.mapOutputToDraft(
+        { ...reviewed, summary: reviewed.summary ?? "" },
+        request,
+      );
+    } catch {
+      // An invalid first or second pass falls back to local generation.
+      return null;
+    }
+  }
+
+  private async generateAIDraft(
+    generator: ReturnType<typeof getGenerator>,
+    request: GeneratorRunRequest,
+    bannedNames: Set<string>,
+  ): Promise<GeneratedDraft | null> {
+    const gateway = this.aiGateway;
+    if (!gateway) return null;
+
+    switch (request.generatorId) {
+      case "tome":
+        return this.generateTomeWithAI(generator, request, bannedNames);
+      case "heist":
+        try {
+          const output = await generateCampaignHeist(request, gateway);
+          return generator.mapOutputToDraft(
+            { ...output, summary: output.summary ?? "" },
+            request,
+          );
+        } catch {
+          return null;
+        }
+      case "dungeon":
+        return this.generateDungeonWithAI(generator, request);
+      case "language":
+        return this.generateLanguageWithAI(generator, request, bannedNames);
+      case "council-vote":
+        return generateCouncilVoteWithAI(gateway, generator, request);
+      default:
+        return this.generateGenericWithAI(generator, request, bannedNames);
+    }
+  }
+
+  private async generateAIDraftIfAvailable(
+    generator: ReturnType<typeof getGenerator>,
+    request: GeneratorRunRequest,
+    bannedNames: Set<string>,
+  ): Promise<GeneratedDraft | null> {
+    const canUseAI =
+      request.useAI &&
+      this.aiPolicy.isEnabled &&
+      this.aiPolicy.isAvailable &&
+      !!this.aiGateway;
+    request.useAI = canUseAI;
+    return canUseAI
+      ? this.generateAIDraft(generator, request, bannedNames)
+      : null;
+  }
+
+  private generateLocalDraft(
+    generator: ReturnType<typeof getGenerator>,
+    request: GeneratorRunRequest,
+    bannedNames: Set<string>,
+  ): GeneratedDraft {
+    let output: GeneratorOutput;
+    try {
+      output = generator.generate(request);
+    } catch (error) {
+      if (request.generatorId === "language") {
+        throw new LanguageGenerationError(
+          "The local language generator could not produce a valid profile. Please try again.",
+        );
+      }
+      throw error;
+    }
+    if (request.generatorId === "language") {
+      assertValidLanguageFallback(output, bannedNames);
+      return generator.mapOutputToDraft(output, request);
+    }
+    for (
+      let attempt = 0;
+      attempt < 5 && isTitleBanned(output.title, bannedNames);
+      attempt++
+    ) {
+      output = generator.generate(request);
+    }
+    return generator.mapOutputToDraft(output, request);
+  }
+
+  private async generateGenericWithAI(
+    generator: ReturnType<typeof getGenerator>,
+    request: GeneratorRunRequest,
+    bannedNames: Set<string>,
+  ): Promise<GeneratedDraft | null> {
+    const gateway = this.aiGateway;
+    if (!gateway) return null;
+    const { fullPrompt, interaction } = buildGenericGeneratorPrompt(
+      generator,
+      await this.withNameSuggestion(request),
+    );
+    return this.retryGenericAttempts(
+      gateway,
+      generator,
+      request,
+      bannedNames,
+      fullPrompt,
+      interaction,
+    );
+  }
+
+  private async retryGenericAttempts(
+    gateway: NonNullable<CampaignGeneratorService["aiGateway"]>,
+    generator: ReturnType<typeof getGenerator>,
+    request: GeneratorRunRequest,
+    bannedNames: Set<string>,
+    fullPrompt: string,
+    interaction: ReturnType<typeof buildGenericGeneratorPrompt>["interaction"],
+  ): Promise<GeneratedDraft | null> {
+    for (let attempt = 0; attempt < MAX_AI_ATTEMPTS; attempt++) {
+      const result = await this.runGenericAttempt(
+        gateway,
+        generator,
+        request,
+        bannedNames,
+        fullPrompt,
+        interaction,
+      );
+      if (result.kind === "draft") return result.draft;
+      if (result.kind === "stop") return null;
+    }
+    return null;
+  }
+
+  private async runGenericAttempt(
+    gateway: NonNullable<CampaignGeneratorService["aiGateway"]>,
+    generator: ReturnType<typeof getGenerator>,
+    request: GeneratorRunRequest,
+    bannedNames: Set<string>,
+    fullPrompt: string,
+    interaction: ReturnType<typeof buildGenericGeneratorPrompt>["interaction"],
+  ): Promise<
+    | { kind: "draft"; draft: GeneratedDraft }
+    | { kind: "retry" }
+    | { kind: "stop" }
+  > {
+    try {
+      const result = await gateway.complete(fullPrompt, SYSTEM_INSTRUCTION, {
+        interaction,
+      });
+      const output = parseGenericGeneratorOutput(
+        completeText(result),
+        request.generatorId,
+      );
+      if (!output) return { kind: "stop" };
+      if (isTitleBanned(output.title, bannedNames)) return { kind: "retry" };
+      this.recordGenericMetrics(result, request, fullPrompt, interaction);
+      return {
+        kind: "draft",
+        draft: generator.mapOutputToDraft(output, request),
+      };
+    } catch {
+      return { kind: "stop" };
+    }
+  }
+
+  private recordGenericMetrics(
+    result: Awaited<
+      ReturnType<NonNullable<CampaignGeneratorService["aiGateway"]>["complete"]>
+    >,
+    request: GeneratorRunRequest,
+    fullPrompt: string,
+    interaction: ReturnType<typeof buildGenericGeneratorPrompt>["interaction"],
+  ): void {
+    const interactionResult = this.getGenericInteractionResult(result);
+    if (interactionResult) this.onInteractionResult?.(interactionResult);
+    this.onPromptMetrics?.(
+      promptMetrics({
+        request,
+        fullPrompt,
+        sentPrompt: this.getGenericSentPrompt(result, fullPrompt, interaction),
+        usedInteraction: !!interactionResult,
+        replayed: this.isGenericReplay(result),
+      }),
+    );
+  }
+
+  private getGenericInteractionResult(
+    result: Awaited<
+      ReturnType<NonNullable<CampaignGeneratorService["aiGateway"]>["complete"]>
+    >,
+  ) {
+    if (typeof result === "string" || !result.usedInteraction) return undefined;
+    return result;
+  }
+
+  private isGenericReplay(
+    result: Awaited<
+      ReturnType<NonNullable<CampaignGeneratorService["aiGateway"]>["complete"]>
+    >,
+  ): boolean {
+    return typeof result !== "string" && !!result.replayed;
+  }
+
+  private getGenericSentPrompt(
+    result: Awaited<
+      ReturnType<NonNullable<CampaignGeneratorService["aiGateway"]>["complete"]>
+    >,
+    fullPrompt: string,
+    interaction: ReturnType<typeof buildGenericGeneratorPrompt>["interaction"],
+  ): string {
+    return this.isGenericReplay(result)
+      ? (interaction?.replayPrompt ?? fullPrompt)
+      : (interaction?.input ?? fullPrompt);
+  }
+
   /**
    * Produce a transient draft. When `useAI` is true and both AI policy and
    * gateway are available, calls the AI gateway and parses JSON output.
@@ -619,184 +862,26 @@ export class CampaignGeneratorService {
       options: { ...themeDefaults, ...request.options },
     };
 
-    const canUseAI =
-      request.useAI &&
-      this.aiPolicy.isEnabled &&
-      this.aiPolicy.isAvailable &&
-      !!this.aiGateway;
-
-    // Propagate the resolved AI flag so the merged request reflects reality.
-    mergedRequest.useAI = canUseAI;
-
     const bannedNames = new Set([
       ...(mergedRequest.vaultContext?.bannedNames ?? []),
       ...(mergedRequest.vaultContext?.existingTitles ?? []),
     ]);
 
-    // Tomes need an independent second editorial turn, not just a prompt
-    // telling the first model to proofread itself.
-    if (canUseAI && this.aiGateway && mergedRequest.generatorId === "tome") {
-      try {
-        const prompt = buildCampaignTomePrompt(mergedRequest);
-        const gateway = this.aiGateway;
-        const reviewed = await generateTomeTwoPass(
-          prompt,
-          async (instruction, message) =>
-            completeText(await gateway.complete(message, instruction)),
-        );
-        if (reviewed && !isTitleBanned(reviewed.title, bannedNames)) {
-          this.onPromptMetrics?.(
-            promptMetrics({
-              request: mergedRequest,
-              fullPrompt: prompt.userMessage,
-              sentPrompt: prompt.userMessage,
-              usedInteraction: false,
-              replayed: false,
-            }),
-          );
-          return generator.mapOutputToDraft(
-            { ...reviewed, summary: reviewed.summary ?? "" },
-            mergedRequest,
-          );
-        }
-      } catch {
-        // An invalid first or second pass falls back to local generation.
-      }
-    }
-
-    if (canUseAI && this.aiGateway && mergedRequest.generatorId === "heist") {
-      try {
-        const output = await generateCampaignHeist(
-          mergedRequest,
-          this.aiGateway,
-        );
-        return generator.mapOutputToDraft(
-          { ...output, summary: output.summary ?? "" },
-          mergedRequest,
-        );
-      } catch {
-        // Initial generation failed; use the local heist below.
-      }
-    }
-
-    if (canUseAI && this.aiGateway && mergedRequest.generatorId === "dungeon") {
-      const dungeonDraft = await this.generateDungeonWithAI(
-        generator,
-        mergedRequest,
-      );
-      if (dungeonDraft) return dungeonDraft;
-    }
-
-    if (
-      canUseAI &&
-      this.aiGateway &&
-      mergedRequest.generatorId === "language"
-    ) {
-      const languageDraft = await this.generateLanguageWithAI(
-        generator,
-        mergedRequest,
-        bannedNames,
-      );
-      if (languageDraft) return languageDraft;
-    }
-
-    if (
-      canUseAI &&
-      this.aiGateway &&
-      mergedRequest.generatorId === "council-vote"
-    ) {
-      const councilVoteDraft = await generateCouncilVoteWithAI(
-        this.aiGateway,
-        generator,
-        mergedRequest,
-      );
-      if (councilVoteDraft) return councilVoteDraft;
-    }
-
-    if (
-      canUseAI &&
-      this.aiGateway &&
-      mergedRequest.generatorId !== "dungeon" &&
-      mergedRequest.generatorId !== "language" &&
-      mergedRequest.generatorId !== "heist" &&
-      mergedRequest.generatorId !== "tome" &&
-      mergedRequest.generatorId !== "council-vote"
-    ) {
-      const { fullPrompt, interaction } = buildGenericGeneratorPrompt(
-        generator,
-        await this.withNameSuggestion(mergedRequest),
-      );
-      // Retry a few times if the model returns a banned name (including
-      // derivatives like "Vane-Smithe"); fall through to local generation if it
-      // keeps doing so.
-      for (let attempt = 0; attempt < MAX_AI_ATTEMPTS; attempt++) {
-        try {
-          const result = await this.aiGateway.complete(
-            fullPrompt,
-            SYSTEM_INSTRUCTION,
-            {
-              interaction,
-            },
-          );
-          const raw = completeText(result);
-          const output = parseGenericGeneratorOutput(
-            raw,
-            mergedRequest.generatorId,
-          );
-          if (output) {
-            if (isTitleBanned(output.title, bannedNames)) continue;
-            if (typeof result !== "string" && result.usedInteraction) {
-              this.onInteractionResult?.(result);
-            }
-            this.onPromptMetrics?.(
-              promptMetrics({
-                request: mergedRequest,
-                fullPrompt,
-                sentPrompt:
-                  typeof result !== "string" && result.replayed
-                    ? (interaction?.replayPrompt ?? fullPrompt)
-                    : (interaction?.input ?? fullPrompt),
-                usedInteraction:
-                  typeof result !== "string" && result.usedInteraction,
-                replayed: typeof result !== "string" && !!result.replayed,
-              }),
-            );
-            return generator.mapOutputToDraft(output, mergedRequest);
-          }
-          break; // Valid JSON but wrong shape — fall through to local.
-        } catch {
-          break; // Network/parse failure — fall through to local.
-        }
-      }
-    }
-
-    let output: GeneratorOutput;
-    try {
-      output = generator.generate(mergedRequest);
-    } catch (error) {
-      if (mergedRequest.generatorId === "language") {
-        throw new LanguageGenerationError(
-          "The local language generator could not produce a valid profile. Please try again.",
-        );
-      }
-      throw error;
-    }
-    if (mergedRequest.generatorId === "language") {
-      assertValidLanguageFallback(output, bannedNames);
-      return generator.mapOutputToDraft(output, mergedRequest);
-    }
-    // Retry up to 5× if the generated title collides with a banned name.
-    for (let i = 0; i < 5 && isTitleBanned(output.title, bannedNames); i++) {
-      output = generator.generate(mergedRequest);
-    }
-    return generator.mapOutputToDraft(output, mergedRequest);
+    const aiDraft = await this.generateAIDraftIfAvailable(
+      generator,
+      mergedRequest,
+      bannedNames,
+    );
+    return (
+      aiDraft ?? this.generateLocalDraft(generator, mergedRequest, bannedNames)
+    );
   }
 
   /**
    * Streaming counterpart to `generateDraft` (#2423), for the *generic*
-   * single-call generator branch only (every generator except dungeon,
-   * language, and council-vote, which use multi-pass repair loops or a chat
-   * session that this v1 doesn't stream). Yields `GenerationEvent`s
+   * single-call generator branch only (excluding dungeon, language, and tome,
+   * which use multi-pass repair loops, plus council-vote's chat session).
+   * Yields `GenerationEvent`s
    * (`started`/`delta`/`field`/`complete`/`error`) as they arrive so the UI
    * can render progressively, then exactly one final `{ type: "draft" }`
    * event carrying the fully validated `GeneratedDraft` — mirroring
@@ -870,10 +955,9 @@ export class CampaignGeneratorService {
     }
 
     // Multi-pass tomes must not stream an unreviewed draft as final output.
-    const isStreamableGenericGenerator =
-      request.generatorId !== "dungeon" &&
-      request.generatorId !== "language" &&
-      request.generatorId !== "tome";
+    const isStreamableGenericGenerator = isGenericStreamable(
+      request.generatorId,
+    );
 
     if (!this.aiGateway?.completeStream || !isStreamableGenericGenerator) {
       yield { type: "started" };

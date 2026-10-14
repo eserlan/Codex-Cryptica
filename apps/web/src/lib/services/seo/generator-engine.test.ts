@@ -678,7 +678,6 @@ describe("DefaultGeneratorEngine", () => {
       expect(res.content).toBeDefined();
     });
 
-
     it("returns the corrected second-pass tome rather than the first AI draft", async () => {
       const fullContent = [
         "### Physical Description & Format",
@@ -723,7 +722,10 @@ describe("DefaultGeneratorEngine", () => {
         .fn()
         .mockResolvedValueOnce({
           response: {
-            text: () => response(fullContent.replace("vessel rests", "soul-forged blade rests")),
+            text: () =>
+              response(
+                fullContent.replace("vessel rests", "soul-forged blade rests"),
+              ),
           },
         })
         .mockResolvedValueOnce({
