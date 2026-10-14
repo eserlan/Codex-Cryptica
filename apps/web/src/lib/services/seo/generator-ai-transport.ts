@@ -96,6 +96,7 @@ export class GeneratorAITransport {
     systemInstruction: string,
     userMessage: string,
     generationConfig?: typeof LANGUAGE_GENERATION_CONFIG,
+    emitPreview = true,
   ): Promise<string> {
     const model = await this.clientManager.getModel(
       "",
@@ -118,7 +119,7 @@ export class GeneratorAITransport {
         | { type: "started" }
       >;
     };
-    if (this.streamPreview && streamingModel.generateContentStream) {
+    if (emitPreview && this.streamPreview && streamingModel.generateContentStream) {
       let text = "";
       for await (const event of streamingModel.generateContentStream(request)) {
         if (event.type === "delta") {
