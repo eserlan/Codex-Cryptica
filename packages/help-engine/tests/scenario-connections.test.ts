@@ -176,6 +176,7 @@ const bundle = buildBundle({
       "entity-table",
       "## entity-table\nAbout entity-table.",
     ),
+    article("vault-audit", "vault-audit", "## vault-audit\nAbout vault-audit."),
     article("dice-roller", "dice-roller", "## dice-roller\nAbout dice-roller."),
     article(
       "adventure-mode",

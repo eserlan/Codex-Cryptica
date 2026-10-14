@@ -52,6 +52,7 @@ export const KNOWN_HELP_IDS = [
   "themes",
   "categories-and-labels",
   "entity-table",
+  "vault-audit",
   "dice-roller",
   "adventure-mode",
   "entity-explorer",
