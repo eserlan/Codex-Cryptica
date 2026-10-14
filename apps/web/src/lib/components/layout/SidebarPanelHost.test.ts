@@ -74,15 +74,25 @@ describe("SidebarPanelHost", () => {
     await waitFor(() =>
       expect(screen.getByTestId("oracle-sidebar-panel")).toBeTruthy(),
     );
-    expect(sidebar.style.bottom).toBe("");
+    expect(sidebar.style.height).toBe("");
 
+    // Pinned to exactly the visible part, including when the visual viewport
+    // has been panned down inside the page.
     viewport.height = fullHeight - 320;
+    viewport.offsetTop = 40;
     viewport.dispatchEvent(new Event("resize"));
-    await waitFor(() => expect(sidebar.style.bottom).toBe("320px"));
+    await waitFor(() =>
+      expect(sidebar.style.height).toBe(`${fullHeight - 320}px`),
+    );
+    expect(sidebar.style.top).toBe("40px");
+    expect(sidebar.style.bottom).toBe("auto");
 
     viewport.height = fullHeight;
+    viewport.offsetTop = 0;
     viewport.dispatchEvent(new Event("resize"));
-    await waitFor(() => expect(sidebar.style.bottom).toBe(""));
+    await waitFor(() => expect(sidebar.style.height).toBe(""));
+    expect(sidebar.style.top).toBe("");
+    expect(sidebar.style.bottom).toBe("");
   });
 
   it("renders the Oracle sidebar panel when the Oracle tool is open", async () => {
