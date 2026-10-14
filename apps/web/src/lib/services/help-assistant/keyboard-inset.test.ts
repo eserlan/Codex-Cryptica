@@ -108,4 +108,32 @@ describe("KeyboardInset", () => {
     expect(tracker.keyboardOpen).toBe(false);
     expect(() => new KeyboardInset(null).start()()).not.toThrow();
   });
+
+  describe("visibleStyle", () => {
+    it("pins to the visible part while the keyboard is up", () => {
+      const { vv, tracker } = setup(800, 800);
+      tracker.start();
+      expect(tracker.visibleStyle).toBeUndefined();
+      vv.set(480, 30);
+      expect(tracker.visibleStyle).toBe(
+        "top: 30px; height: 480px; bottom: auto;",
+      );
+    });
+
+    it("is undefined for browser chrome moving, not a keyboard", () => {
+      const { vv, tracker } = setup(800, 800);
+      tracker.start();
+      vv.set(800 - (KEYBOARD_THRESHOLD_PX - 20));
+      expect(tracker.visibleStyle).toBeUndefined();
+    });
+
+    it("lets go when tracking stops", () => {
+      const { vv, tracker } = setup(800, 800);
+      const stop = tracker.start();
+      vv.set(480, 30);
+      stop();
+      expect(tracker.visibleStyle).toBeUndefined();
+      expect(tracker.offsetTop).toBe(0);
+    });
+  });
 });
