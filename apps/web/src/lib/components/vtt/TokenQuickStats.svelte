@@ -5,14 +5,29 @@
     computeAdjustedCounterValue,
     rollStatSheetDiceField,
   } from "$lib/utils/stat-sheet-field-actions";
+  import TovLuckControl from "../stats/TovLuckControl.svelte";
+  import { isTovLuckField } from "@codex/stat-sheet-engine";
 
   let { entity } = $props<{ entity: Entity }>();
 
   const readOnly = $derived(vault.isGuest);
   const fields = $derived(entity.statSheet?.fields ?? []);
+  // ToV Luck is always shown so the token and the sheet never diverge.
   const favorited = $derived(
-    fields.filter((f: StatSheetField) => f.favorite && f.type !== "heading"),
+    fields.filter(
+      (f: StatSheetField) =>
+        (f.favorite && f.type !== "heading") ||
+        isTovLuckField(entity.statSheet?.templateId, f),
+    ),
   );
+
+  function setCounterValue(field: StatSheetField, value: number) {
+    persistFields(
+      fields.map((f: StatSheetField) =>
+        f.id === field.id ? { ...f, value } : f,
+      ),
+    );
+  }
 
   function persistFields(nextFields: StatSheetField[]) {
     if (readOnly) return;
@@ -49,7 +64,14 @@
     data-testid="token-quick-stats"
   >
     {#each favorited as field (field.id)}
-      {#if field.type === "counter"}
+      {#if isTovLuckField(entity.statSheet?.templateId, field)}
+        <TovLuckControl
+          {field}
+          {readOnly}
+          onChange={(value) => setCounterValue(field, value)}
+          testIdPrefix="token-tov-luck"
+        />
+      {:else if field.type === "counter"}
         <div
           class="flex items-center justify-between gap-2 text-xs"
           data-testid="token-quick-stats-counter"
