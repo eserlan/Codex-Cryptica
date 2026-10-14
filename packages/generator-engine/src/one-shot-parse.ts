@@ -181,6 +181,8 @@ export function parseOneShotAdventure(
   const rawScenes = list(data.scenes);
   if (rawScenes.length < 3)
     throw new Error("One-shot reply has too few scenes.");
+  if (rawScenes.length > 6)
+    throw new Error("One-shot reply has too many scenes.");
 
   const { scenes, sceneIds } = parseScenes(rawScenes);
   const npcs = list(data.npcs).map(parseNpc);

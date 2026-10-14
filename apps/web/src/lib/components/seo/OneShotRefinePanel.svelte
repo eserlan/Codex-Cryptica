@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { onDestroy } from "svelte";
   import { oneShotToOutput, renderGmSheet } from "generator-engine";
   import type { OneShotRegenTarget } from "generator-engine";
   import { generatorEngine } from "$lib/services/seo/generator-engine";
@@ -18,6 +19,17 @@
   let busyId = $state<string | null>(null);
   let warnings = $state<string[]>([]);
   let notice = $state<string | null>(null);
+  let requestToken = 0;
+  let requestController: AbortController | null = null;
+
+  onDestroy(() => {
+    requestController?.abort();
+    requestToken += 1;
+  });
+
+  function isCurrentRequest(token: number, startedFrom: typeof adventure) {
+    return token === requestToken && output.oneShot === startedFrom;
+  }
 
   async function regenerate(target: OneShotRegenTarget) {
     if (!adventure || busyId) return;
@@ -25,23 +37,31 @@
     warnings = [];
     notice = null;
     const startedFrom = adventure;
+    const token = ++requestToken;
+    const controller = new AbortController();
+    requestController = controller;
     try {
       const result = await generatorEngine.regenerateOneShotPart(
         adventure,
         target,
-        { useAI },
+        { useAI, signal: controller.signal },
       );
       // A new generation arrived while we waited; don't overwrite it.
-      if (output.oneShot !== startedFrom) return;
+      if (!isCurrentRequest(token, startedFrom)) return;
       warnings = result.warnings;
       if (result.adventure !== startedFrom) {
         onReplace(oneShotToOutput(result.adventure) as GeneratorOutput);
         notice = `Rewrote ${target.kind === "scene" ? "the scene" : "the NPC"}. Everything else is unchanged.`;
       }
     } catch {
-      notice = "That didn't work. Nothing was changed.";
+      if (token === requestToken) {
+        notice = "That didn't work. Nothing was changed.";
+      }
     } finally {
-      busyId = null;
+      if (token === requestToken) {
+        busyId = null;
+        requestController = null;
+      }
     }
   }
 

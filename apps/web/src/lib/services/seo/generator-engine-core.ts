@@ -470,7 +470,11 @@ export class GeneratorEngineCore extends GeneratorEngineBase {
   async regenerateOneShotPart(
     adventure: OneShotAdventure,
     target: OneShotRegenTarget,
-    options: { useAI?: boolean; instruction?: string } = {},
+    options: {
+      useAI?: boolean;
+      instruction?: string;
+      signal?: AbortSignal;
+    } = {},
   ): Promise<OneShotRegenResult> {
     const local = () => regenerateOneShotLocal(adventure, target);
     if (!options.useAI) return local();
@@ -480,7 +484,13 @@ export class GeneratorEngineCore extends GeneratorEngineBase {
         target,
         options.instruction,
       );
-      const text = await this.runModel(systemInstruction, userMessage);
+      const text = await this.runModel(
+        systemInstruction,
+        userMessage,
+        undefined,
+        true,
+        options.signal,
+      );
       return applyOneShotRegenResponse(adventure, target, text);
     } catch {
       return local();

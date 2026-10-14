@@ -49,6 +49,35 @@ describe("OneShotRefinePanel", () => {
     spy.mockRestore();
   });
 
+  it("drops a pending result when the panel is destroyed", async () => {
+    const output = generateOneShotLocal({ durationHours: 3 });
+    let finish: (r: unknown) => void = () => {};
+    const spy = vi
+      .spyOn(generatorEngine, "regenerateOneShotPart")
+      .mockReturnValue(new Promise((resolve) => (finish = resolve)) as never);
+    const onReplace = vi.fn();
+    const { unmount } = render(OneShotRefinePanel, {
+      props: { output: output as never, onReplace, useAI: true },
+    });
+    await fireEvent.click(
+      screen.getByRole("button", {
+        name: `Regenerate scene ${output.oneShot!.scenes[1].title}`,
+      }),
+    );
+
+    const signal = spy.mock.calls[0]?.[2]?.signal;
+    expect(signal).toBeInstanceOf(AbortSignal);
+    unmount();
+    expect(signal?.aborted).toBe(true);
+    finish({
+      adventure: structuredClone(output.oneShot),
+      warnings: [],
+    });
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(onReplace).not.toHaveBeenCalled();
+    spy.mockRestore();
+  });
+
   it("renders nothing without a structured one-shot", () => {
     const { queryByTestId } = render(OneShotRefinePanel, {
       props: {

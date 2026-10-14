@@ -245,4 +245,39 @@ describe("AI prompt and parse", () => {
       parseOneShotResponse(JSON.stringify({ scenes: [] }), resolved),
     ).toThrow(/too few scenes/);
   });
+
+  it("rejects missing or optional-only vital clues", () => {
+    const resolved = resolveOneShot({}, seeded(1));
+    const base = adventure({ durationHours: 6 });
+    expect(() =>
+      parseOneShotResponse(JSON.stringify({ ...base, clues: [] }), resolved),
+    ).toThrow(/exactly three vital clues/);
+
+    const optional = base.scenes.filter((scene) => !scene.essential);
+    expect(optional.length).toBeGreaterThanOrEqual(2);
+    const clues = structuredClone(base.clues);
+    clues[0].routes = optional.slice(0, 2).map((scene) => ({
+      sceneId: scene.id,
+      method: "Search",
+    }));
+    expect(() =>
+      parseOneShotResponse(JSON.stringify({ ...base, clues }), resolved),
+    ).toThrow(/only found in skippable scenes/);
+  });
+
+  it("rejects loops and replies with more than six scenes", () => {
+    const resolved = resolveOneShot({}, seeded(1));
+    const base = adventure({ durationHours: 6 });
+    const looped = structuredClone(base);
+    looped.scenes[1].next = [looped.scenes[1].id];
+    expect(() =>
+      parseOneShotResponse(JSON.stringify(looped), resolved),
+    ).toThrow(/scene paths contain a loop/);
+
+    const oversized = structuredClone(base);
+    oversized.scenes.push(structuredClone(oversized.scenes[1]));
+    expect(() =>
+      parseOneShotResponse(JSON.stringify(oversized), resolved),
+    ).toThrow(/too many scenes/);
+  });
 });

@@ -63,10 +63,6 @@ const error = (message: string): OneShotIssue => ({
   severity: "error",
   message,
 });
-const warning = (message: string): OneShotIssue => ({
-  severity: "warning",
-  message,
-});
 
 const checkBudget: Check = (adventure) => {
   const issues: OneShotIssue[] = [];
@@ -127,33 +123,89 @@ const checkScenes: Check = (adventure) => {
     npcs: new Set(adventure.npcs.map((n) => n.id)),
     clues: new Set(adventure.clues.map((c) => c.id)),
   };
-  return adventure.scenes.flatMap((scene) => checkScene(scene, ids));
+  const issues = adventure.scenes.flatMap((scene) => checkScene(scene, ids));
+  const climax = adventure.scenes.find((scene) => scene.kind === "climax");
+  if (!climax) return issues;
+
+  // A path that can loop forever is not a route to the climax. Require the
+  // playable graph to be acyclic and every scene to have a path to the finale.
+  const visiting = new Set<string>();
+  const visited = new Set<string>();
+  const hasCycle = (id: string): boolean => {
+    if (visiting.has(id)) return true;
+    if (visited.has(id)) return false;
+    visiting.add(id);
+    const scene = adventure.scenes.find((item) => item.id === id);
+    const cyclic = scene?.next.some(hasCycle) ?? false;
+    visiting.delete(id);
+    visited.add(id);
+    return cyclic;
+  };
+  if (adventure.scenes.some((scene) => hasCycle(scene.id))) {
+    issues.push(error("The scene paths contain a loop."));
+  }
+
+  const reachesClimax = new Set([climax.id]);
+  let changed = true;
+  while (changed) {
+    changed = false;
+    for (const scene of adventure.scenes) {
+      if (
+        !reachesClimax.has(scene.id) &&
+        scene.next.some((id) => reachesClimax.has(id))
+      ) {
+        reachesClimax.add(scene.id);
+        changed = true;
+      }
+    }
+  }
+  for (const scene of adventure.scenes) {
+    if (!reachesClimax.has(scene.id)) {
+      issues.push(error(`"${scene.title}" has no route to the climax.`));
+    }
+  }
+  return issues;
 };
 
-const checkClues: Check = (adventure) =>
-  adventure.clues
-    .filter((c) => c.essential)
-    .flatMap((clue) => {
-      const routeScenes = clue.routes
-        .map((r) => adventure.scenes.find((s) => s.id === r.sceneId))
-        .filter((s): s is OneShotScene => !!s);
-      return [
-        ...(new Set(routeScenes.map((s) => s.id)).size < 2
-          ? [
-              error(
-                `The essential clue "${clue.text}" has fewer than two routes.`,
-              ),
-            ]
-          : []),
-        ...(routeScenes.some((s) => s.essential)
-          ? []
-          : [
-              warning(
-                `The essential clue "${clue.text}" is only found in skippable scenes.`,
-              ),
-            ]),
-      ];
-    });
+const checkClues: Check = (adventure) => {
+  const vitalClues = adventure.clues.filter((clue) => clue.essential);
+  const issues: OneShotIssue[] = [];
+  if (vitalClues.length !== 3) {
+    issues.push(error("The adventure needs exactly three vital clues."));
+  }
+  if (
+    new Set(vitalClues.map((clue) => clue.text.trim().toLocaleLowerCase()))
+      .size !== vitalClues.length
+  ) {
+    issues.push(error("The vital clues must be distinct."));
+  }
+  return [
+    ...issues,
+    ...vitalClues
+      .filter((c) => c.essential)
+      .flatMap((clue) => {
+        const routeScenes = clue.routes
+          .map((r) => adventure.scenes.find((s) => s.id === r.sceneId))
+          .filter((s): s is OneShotScene => !!s);
+        return [
+          ...(new Set(routeScenes.map((s) => s.id)).size < 2
+            ? [
+                error(
+                  `The essential clue "${clue.text}" has fewer than two routes.`,
+                ),
+              ]
+            : []),
+          ...(routeScenes.some((s) => s.essential)
+            ? []
+            : [
+                error(
+                  `The essential clue "${clue.text}" is only found in skippable scenes.`,
+                ),
+              ]),
+        ];
+      }),
+  ];
+};
 
 /**
  * Check the promises the builder makes: the time adds up, an opening and
