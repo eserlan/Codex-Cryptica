@@ -52,3 +52,8 @@
 
 **Learning:** Constructing a Map to deduplicate entities using `new Map([...entityByNode.values()].map((e) => [e.id, e]))` allocates multiple unnecessary intermediate arrays (the spread values and the mapped tuple array) before the Map is even instantiated, significantly increasing garbage collection pressure.
 **Action:** Use an imperative `for...of` loop to iterate over values and set them directly into a newly instantiated Map to eliminate the intermediate array allocations.
+
+## 2024-06-25 - Replace intermediate array spreads/filters/maps with imperative loops when diffing sets
+
+**Learning:** When identifying differences between two sets of data (like party joins and leaves in `SoloSession`), using chained array methods (e.g., `[...before].filter(...).map(...)`) or `next.partyIds.filter(...).map(...)` allocates multiple intermediate arrays for the spread elements, the filtered elements, and the mapped elements. For hot paths or large collections, this increases garbage collection overhead.
+**Action:** Replace `[...set].filter(...).map(...)` with an imperative `for...of` loop over the set or array, manually checking the condition and pushing the mapped value directly into a newly created array.

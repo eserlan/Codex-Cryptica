@@ -159,11 +159,15 @@ vi.mock("$lib/config", () => ({
 vi.mock("$lib/content/changelog/releases.json", () => ({
   default: [],
 }));
-vi.mock("schema", () => ({
-  THEMES: {},
-  isEntityVisible: vi.fn(),
-  DEFAULT_ITEM_TABLE_COLUMNS: [],
-}));
+vi.mock("schema", async (importOriginal) => {
+  const actual = await importOriginal();
+  return {
+    ...(actual as any),
+    THEMES: {},
+    isEntityVisible: vi.fn(),
+    DEFAULT_ITEM_TABLE_COLUMNS: [],
+  };
+});
 vi.mock("$lib/app/init/app-init", () => ({
   bootSystem: vi.fn(() => true),
   initializeGlobalListeners: vi.fn(() => () => {}),
