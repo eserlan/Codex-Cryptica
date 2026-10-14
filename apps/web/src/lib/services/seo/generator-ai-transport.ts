@@ -96,6 +96,8 @@ export class GeneratorAITransport {
     systemInstruction: string,
     userMessage: string,
     generationConfig?: typeof LANGUAGE_GENERATION_CONFIG,
+    /** Exclude an internal draft from the public preview stream. */
+    previewEnabled = true,
   ): Promise<string> {
     const model = await this.clientManager.getModel(
       "",
@@ -118,7 +120,7 @@ export class GeneratorAITransport {
         | { type: "started" }
       >;
     };
-    if (this.streamPreview && streamingModel.generateContentStream) {
+    if (previewEnabled && this.streamPreview && streamingModel.generateContentStream) {
       let text = "";
       for await (const event of streamingModel.generateContentStream(request)) {
         if (event.type === "delta") {
