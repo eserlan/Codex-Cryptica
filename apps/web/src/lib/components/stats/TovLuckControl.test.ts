@@ -65,3 +65,22 @@ describe("TovLuckControl", () => {
     expect(screen.getByText(/Source: BFRD/)).toBeTruthy();
   });
 });
+
+describe("TovLuckControl without a stored cap", () => {
+  it("shows and enforces the BFRD default cap", () => {
+    const field: StatSheetField = {
+      id: "luck",
+      label: "Luck Points",
+      type: "counter",
+      value: 5,
+    };
+    render(TovLuckControl, { field, onChange: vi.fn() });
+    expect(screen.getByTestId("tov-luck-value").textContent).toMatch(
+      /5\s*\/\s*5/,
+    );
+    expect(screen.getByLabelText("Gain 1 Luck Points")).toHaveProperty(
+      "disabled",
+      true,
+    );
+  });
+});

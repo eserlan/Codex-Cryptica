@@ -1,6 +1,10 @@
 <script lang="ts">
   import type { StatSheetField } from "schema";
-  import { adjustTovLuck, TOV_LUCK_REFERENCE } from "@codex/stat-sheet-engine";
+  import {
+    adjustTovLuck,
+    TOV_LUCK_FIXTURE,
+    TOV_LUCK_REFERENCE,
+  } from "@codex/stat-sheet-engine";
 
   let {
     field,
@@ -15,11 +19,12 @@
   }>();
 
   const current = $derived(typeof field.value === "number" ? field.value : 0);
+  const max = $derived(field.max ?? TOV_LUCK_FIXTURE.defaultMax);
   let notice = $state("");
 
   function change(delta: 1 | -1) {
     if (readOnly) return;
-    const result = adjustTovLuck(current, delta, field.max);
+    const result = adjustTovLuck(current, delta, max);
     notice = result.reason ?? "";
     if (result.value !== current) onChange(result.value);
   }
@@ -48,17 +53,13 @@
         data-testid="{testIdPrefix}-value"
         aria-live="polite"
       >
-        {current}{#if field.max !== undefined}<span
-            class="font-normal text-theme-muted"
-          >
-            / {field.max}</span
-          >{/if}
+        {current}<span class="font-normal text-theme-muted"> / {max}</span>
       </span>
       <button
         type="button"
         class="flex h-8 min-w-8 items-center justify-center gap-1 rounded border border-theme-border px-1.5 text-xs text-theme-muted hover:border-theme-primary hover:text-theme-primary disabled:opacity-40"
         onclick={() => change(1)}
-        disabled={readOnly || (field.max !== undefined && current >= field.max)}
+        disabled={readOnly || current >= max}
         aria-label={`Gain 1 ${field.label}`}
         data-testid="{testIdPrefix}-gain"
       >
