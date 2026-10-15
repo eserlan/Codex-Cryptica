@@ -446,6 +446,35 @@ describe("saveDraft", () => {
     );
   });
 
+  it("persists statSheet and systemId when saving a draft with mechanics", async () => {
+    const vault = gateway();
+    const svc = new CampaignGeneratorService({ vault });
+    const mockStatSheet = {
+      templateId: "builtin-tov-npc",
+      fields: [
+        { id: "hp", label: "Hit Points", type: "counter" as const, value: 20 },
+      ],
+    };
+    await svc.saveDraft({
+      draft: draft({
+        sourceGeneratorId: "npc",
+        entityType: "character",
+        systemId: "tales-of-the-valiant",
+        statSheet: mockStatSheet,
+      }),
+      createRelationship: false,
+    });
+
+    expect(vault.createEntity).toHaveBeenCalledWith(
+      "character",
+      "Kaeldar",
+      expect.objectContaining({
+        systemId: "tales-of-the-valiant",
+        statSheet: mockStatSheet,
+      }),
+    );
+  });
+
   it("stores a dungeon summary as content and combines its document with GM lore", async () => {
     const vault = gateway();
     const svc = new CampaignGeneratorService({ vault });

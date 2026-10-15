@@ -756,3 +756,29 @@ export {
   assessLanguageOutput,
   type LanguageOutputAssessment,
 } from "./language-output-assessment";
+
+export { parseTovMechanics } from "./tov-mechanics-parser";
+
+export {
+  buildTovPromptInstructions,
+  type TovPromptKind,
+} from "./tov-mechanics-prompt";
+
+export {
+  TovAbilityScoresSchema,
+  TovQuickNpcMechanicsSchema,
+  TovCharacterAttackSchema,
+  TovCharacterMechanicsSchema,
+  TovCreatureActionSchema,
+  TovCreatureMechanicsSchema,
+  TovMagicItemMechanicsSchema,
+  GeneratorMechanicsBundleSchema,
+  type GeneratorMechanicsBundle,
+  type TovAbilityScores,
+  type TovQuickNpcMechanics,
+  type TovCharacterMechanics,
+  type TovCharacterAttack,
+  type TovCreatureAction,
+  type TovCreatureMechanics,
+  type TovMagicItemMechanics,
+} from "./tov-mechanics-schema";

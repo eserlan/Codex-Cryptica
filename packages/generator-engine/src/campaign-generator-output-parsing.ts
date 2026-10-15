@@ -2,6 +2,7 @@ import { parseConnections } from "./campaign-connections";
 import { normalizeHolidayGenericOutput } from "./public-holiday";
 import type { StarSystemBody } from "./public-star-system";
 import type { GeneratorOutput } from "./campaign-generator-types";
+import { parseTovMechanics } from "./tov-mechanics-parser";
 
 /**
  * Parses and validates a generic (non-dungeon/language/council-vote)
@@ -76,5 +77,10 @@ export function parseGenericGeneratorOutput(
       : undefined,
     starType: typeof parsed.starType === "string" ? parsed.starType : undefined,
     observances,
+    mechanics: parseTovMechanics(parsed),
+    systemId:
+      typeof parsed.systemId === "string"
+        ? parsed.systemId
+        : parseTovMechanics(parsed)?.systemId,
   };
 }
