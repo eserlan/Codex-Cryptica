@@ -1,3 +1,4 @@
+import { factionConfig } from "generator-engine";
 import { oneShotConfig } from "$lib/services/seo/generator-config";
 import { describe, expect, it } from "vitest";
 import {
@@ -139,7 +140,10 @@ describe("SOCIAL_HUB_GENRE_TO_THEME", () => {
 describe("mapOneShotGenreToTheme", () => {
   it("maps every one-shot genre to a theme and leaves custom genres alone", () => {
     for (const genre of oneShotConfig.genres) {
-      expect(mapOneShotGenreToTheme(genre)).toBeTruthy();
+      expect(mapOneShotGenreToTheme(genre)).toBe(genre);
+    }
+    for (const theme of factionConfig.themes) {
+      expect(oneShotConfig.genres).toContain(theme);
     }
     expect(mapOneShotGenreToTheme("Dark Fantasy")).toBe(
       "Vampire / Gothic Noir",

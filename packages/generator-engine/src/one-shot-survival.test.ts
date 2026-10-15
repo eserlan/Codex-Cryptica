@@ -1,8 +1,13 @@
 import { describe, expect, it } from "vitest";
+import { factionConfig } from "./public-faction-constants";
 import { parseResources } from "./one-shot-resources";
 import { parseDecisions, parseSchedule } from "./one-shot-state";
 import { renderGmSheet, renderOneShotMarkdown } from "./one-shot-render";
-import { checkPlayability, generateOneShotLocal } from "./public-one-shot";
+import {
+  checkPlayability,
+  generateOneShotLocal,
+  oneShotConfig,
+} from "./public-one-shot";
 import type { OneShotAdventure } from "./one-shot-types";
 
 function seeded(seed = 7) {
@@ -169,5 +174,16 @@ describe("readable names", () => {
     a.scenes[1].situation = "npc-3 waits by the door.";
     expect(renderOneShotMarkdown(a)).toContain(`${name} waits by the door.`);
     expect(renderOneShotMarkdown(a)).not.toMatch(/\bnpc-3\b/);
+  });
+});
+
+describe("every theme is a one-shot genre", () => {
+  it("builds an adventure for each canonical theme", () => {
+    for (const genre of oneShotConfig.genres) {
+      const a = generateOneShotLocal({ genre }, seeded()).oneShot!;
+      expect(a.genre).toBe(genre);
+      expect(a.scenes.length).toBeGreaterThan(2);
+    }
+    expect(oneShotConfig.genres).toEqual(factionConfig.themes);
   });
 });

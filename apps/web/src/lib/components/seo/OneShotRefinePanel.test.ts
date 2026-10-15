@@ -185,12 +185,12 @@ describe("OneShotFormFields", () => {
   it("Surprise Me leaves the genre alone", async () => {
     const onSurprise = vi.fn();
     render(OneShotFormFields, {
-      props: { genre: "Horror", onSurprise } as never,
+      props: { genre: "Cosmic Horror", onSurprise } as never,
     });
     await fireEvent.click(screen.getByRole("button", { name: /surprise me/i }));
     expect(onSurprise).toHaveBeenCalled();
     expect((screen.getByLabelText("Genre") as HTMLSelectElement).value).toBe(
-      "Horror",
+      "Cosmic Horror",
     );
   });
 });

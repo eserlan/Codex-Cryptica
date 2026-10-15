@@ -71,6 +71,7 @@ import {
   mysteryTheories,
 } from "./one-shot-local-state";
 import { localResources } from "./one-shot-resources";
+import { factionConfig } from "./public-faction-constants";
 import { normaliseState, scheduleSentence } from "./one-shot-state";
 import { renderGmSheet, renderOneShotMarkdown } from "./one-shot-render";
 import { checkPlayability } from "./one-shot-playability";
@@ -87,16 +88,8 @@ import {
 } from "./one-shot-parse";
 
 export const oneShotConfig = {
-  genres: [
-    "Classic Fantasy",
-    "Dark Fantasy",
-    "Sci-Fi / Space Opera",
-    "Horror",
-    "Cyberpunk",
-    "Modern Mystery",
-    "Western / Frontier",
-    "Post-Apocalyptic",
-  ],
+  // The same themes every other generator and the page skin use.
+  genres: [...factionConfig.themes],
   systems: [
     "System-neutral",
     "Tales of the Valiant",
