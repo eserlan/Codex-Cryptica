@@ -37,7 +37,7 @@ function mergeNpc(keep: OneShotNpc, extra: OneShotNpc): OneShotNpc {
 
 /**
  * NPCs that share an id or a name become one. The antagonist's id wins, then
- * the first one listed; scene references and the antagonist id are remapped.
+ * the first one listed; NPC references and the antagonist id are remapped.
  */
 function dedupeNpcs(adventure: OneShotAdventure) {
   const groups = new Map<string, OneShotNpc[]>();
@@ -84,6 +84,7 @@ function dedupeThreads(threads: OneShotThread[]): OneShotThread[] {
   for (const thread of threads) {
     const twin = kept.find(
       (k) =>
+        (!!k.about && k.about === thread.about && k.kind === thread.kind) ||
         normalise(k.setup) === normalise(thread.setup) ||
         textOverlap(k.setup, thread.setup) >= 0.75,
     );
@@ -99,11 +100,15 @@ function dedupeThreads(threads: OneShotThread[]): OneShotThread[] {
 
 export function dedupeOneShot(adventure: OneShotAdventure): OneShotAdventure {
   const { npcs, remap } = dedupeNpcs(adventure);
-  const threads = adventure.threads && dedupeThreads(adventure.threads);
+  const to = (id: string) => remap.get(id) ?? id;
+  const remappedThreads = adventure.threads?.map((thread) => ({
+    ...thread,
+    about: thread.about ? to(thread.about) : undefined,
+  }));
+  const threads = remappedThreads && dedupeThreads(remappedThreads);
   const npcsChanged = npcs.length !== adventure.npcs.length;
   const threadsChanged = threads?.length !== adventure.threads?.length;
   if (!npcsChanged && !threadsChanged) return adventure;
-  const to = (id: string) => remap.get(id) ?? id;
   return {
     ...adventure,
     npcs,
@@ -111,6 +116,11 @@ export function dedupeOneShot(adventure: OneShotAdventure): OneShotAdventure {
     scenes: adventure.scenes.map((s) => ({
       ...s,
       npcIds: [...new Set(s.npcIds.map(to))],
+      whereabouts: s.whereabouts?.map((whereabout) =>
+        whereabout.kind === "npc"
+          ? { ...whereabout, who: to(whereabout.who) }
+          : whereabout,
+      ),
     })),
     threads,
   };

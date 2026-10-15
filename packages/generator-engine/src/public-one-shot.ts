@@ -25,22 +25,31 @@ import {
   ONE_SHOT_STRUCTURES,
   type OneShotAdventure,
   type OneShotChallenge,
+  type OneShotClockMoment,
   type OneShotClue,
   type OneShotGeneratorOptions,
   type OneShotNpc,
   type OneShotScene,
   type OneShotSceneKind,
+  type OneShotThread,
   type ResolvedOneShot,
 } from "./one-shot-types";
 export type { ResolvedOneShot };
 import {
+  CLOCK_DATA_RULE,
   CLOCK_RULE,
   COMMITMENT_RULE,
   CONTINUITY_RULE,
+  DECISIONS_RULE,
   EMPHASIS_HINT,
   ENDINGS_RULE,
   PACING_RULE,
   REQUIREMENT_RULE,
+  ROUTES_RULE,
+  THEORIES_RULE,
+  RESOURCE_RULE,
+  THREAD_DATA_RULE,
+  WHEREABOUTS_RULE,
 } from "./one-shot-rules";
 import {
   ONE_SHOT_KITS,
@@ -55,6 +64,14 @@ import {
   normaliseTimeBudget,
   validateOneShot,
 } from "./one-shot-validate";
+import {
+  addRoutes,
+  addWhereabouts,
+  localDecisions,
+  mysteryTheories,
+} from "./one-shot-local-state";
+import { localResources } from "./one-shot-resources";
+import { normaliseState, scheduleSentence } from "./one-shot-state";
 import { renderGmSheet, renderOneShotMarkdown } from "./one-shot-render";
 import { checkPlayability } from "./one-shot-playability";
 import { antagonistOf } from "./one-shot-integrity";
@@ -628,6 +645,14 @@ export function buildOneShotAdventure(
     scene.skip = `Skip it entirely. Anything the party would have learned here is also found in ${[...new Set(elsewhere)].join(" or ") || "an essential scene"}.`;
   }
 
+  const names = { villain: villainName, item };
+  addRoutes(scenes, names);
+  addWhereabouts(scenes, names);
+  const theories =
+    resolved.emphasis === "Investigation / mystery"
+      ? mysteryTheories(clues, names)
+      : undefined;
+
   const optional = scenes.filter((s) => !s.essential);
   const runningLate = [
     ...(optional.length
@@ -703,8 +728,13 @@ export function buildOneShotAdventure(
   ].slice(0, Math.max(0, scheduled - 1));
   const clock = {
     name: f(`${villainName}'s Plan`),
-    advances:
-      "At the end of each essential scene after the opening, and when the party reaches the climax, whatever the party does. Failing a challenge or resting also advances it; forcing a risky shortcut adds a complication instead.",
+    advances: "",
+    schedule: [
+      "scene-end-after-opening",
+      "finale-start",
+    ] as OneShotClockMoment[],
+    pushes:
+      "Failing a challenge or resting also advances it; forcing a risky shortcut adds a complication instead.",
     ticks: [
       {
         trigger: "First step",
@@ -735,8 +765,10 @@ export function buildOneShotAdventure(
       `${villainName}'s plan completes. Until this step, everything can still be undone.`,
     ),
   };
-  const threads = [
+  clock.advances = scheduleSentence(clock);
+  const threads: OneShotThread[] = [
     {
+      kind: "history" as const,
       setup: briefingHook,
       payoff: f(
         `${item} is recovered, bargained away or lost in the finale, and ${patronName} reacts to which.`,
@@ -744,6 +776,8 @@ export function buildOneShotAdventure(
       sceneIds: [climax.id],
     },
     {
+      about: "npc-3",
+      kind: "promise" as const,
       setup: f(
         `${witnessName} saw something that points toward ${villainName}.`,
       ),
@@ -820,10 +854,15 @@ export function buildOneShotAdventure(
     clues,
     antagonistId: "npc-2",
     threads,
+    decisions: localDecisions(villainName),
+    resources:
+      resolved.emphasis === "Survival" ? localResources(scenes) : undefined,
+    theories,
     endings: [
       {
         id: "end-1",
         title: "The Truth Out",
+        requires: { stopped: true, clean: true },
         condition:
           "The party gathers the vital clues and defeats or exposes the antagonist.",
         consequence: f(
@@ -833,6 +872,7 @@ export function buildOneShotAdventure(
       {
         id: "end-2",
         title: "A Costly Bargain",
+        requires: { stopped: true, clean: false },
         condition:
           "The party takes a deal with the antagonist or loses the key evidence.",
         consequence: f(
@@ -842,6 +882,7 @@ export function buildOneShotAdventure(
       {
         id: "end-3",
         title: "Too Late",
+        requires: { stopped: false },
         condition: "Time runs out before the party reaches the climax.",
         consequence: f(
           `${villainName} finishes the plan, and the next adventure begins with the fallout.`,
@@ -853,7 +894,7 @@ export function buildOneShotAdventure(
     epilogueHook: f(`Someone else has been asking about ${item}.`),
     timeBudget: { bufferMinutes: buffer, runningLate },
   };
-  return adventure;
+  return normaliseState(adventure);
 }
 
 function titleCase(text: string) {
@@ -930,8 +971,9 @@ Rules:
 - Fights and hazards get "opposition": who or what opposes the party, how they fight and one thing that changes mid-scene.
 - Deliver the emphasis (${resolved.emphasis}) as play, not just theme: ${EMPHASIS_HINT[resolved.emphasis] ?? "match the challenges to it"}.
 - "solution" is how the finale is resolved: every component with its real content (actual names, words, passages, objects, order) and the earlier scenes where it is found, the steps, at least one other way through, and what each kind of mistake costs.
-- "clock" is the threat's countdown, with what each tick triggers and how the party can slow it. ${CLOCK_RULE}
+- "clock" is the threat's countdown, with what each tick triggers and how the party can slow it. ${CLOCK_RULE} ${CLOCK_DATA_RULE}
 - "antagonistId" names the NPC driving the threat. Give them "backstory" (why they do this), "tactics" (how they act or fight when opposed) and "stopIf" (what would persuade them to stop), and put them in the climax.
+- ${RESOURCE_RULE}
 - "threads" lists every promise the hook, briefing and opening make (a person in danger, a rule an object follows, a restriction on an NPC, a piece of history) with its payoff and the later scene where it happens. An NPC's "limits" (what they cannot or will not do) must hold in every scene.
 - Optional scenes take at most a fifth of the time, so the essential scenes alone fill the session.
 - State each fact once, where the GM needs it; do not repeat clue text or answers across scenes.
@@ -939,6 +981,11 @@ Rules:
 - ${ENDINGS_RULE}
 - ${COMMITMENT_RULE}
 - ${CONTINUITY_RULE}
+- ${WHEREABOUTS_RULE}
+- ${ROUTES_RULE}
+- ${THEORIES_RULE} Only for an investigation or mystery.
+- ${THREAD_DATA_RULE}
+- ${DECISIONS_RULE}
 - ${REQUIREMENT_RULE}
 - ${PACING_RULE}
 - NPCs get motivations, what they know, how they react and a roleplay cue — no biographies. An NPC's motivation must explain what they do in the scenes. If an NPC appears in several scenes, that scene's situation says why they are there; NPCs met in the opening return or pay off later.
@@ -949,14 +996,17 @@ Return JSON with exactly this shape:
   "title": "...",
   "briefing": { "premise": "", "hook": "", "objective": "", "secret": "", "trigger": "", "stakes": "", "prep": "", "questions": [{ "question": "", "answer": "" }] },
   "opening": { "situation": "", "readAloud": "optional", "firstDecision": "", "involvement": ["", ""] },
-  "scenes": [{ "id": "scene-1", "title": "", "kind": "opening", "essential": true, "minutes": 30, "purpose": "", "situation": "", "location": "", "npcIds": ["npc-1"], "approaches": [""], "challenge": { "type": "social", "description": "", "success": "", "otherApproaches": [""], "opposition": "fights and hazards", "failForward": "" }, "outcomes": [""], "next": ["scene-2"], "shorten": "", "skip": "" }],
+  "scenes": [{ "id": "scene-1", "title": "", "kind": "opening", "essential": true, "minutes": 30, "purpose": "", "situation": "", "location": "", "npcIds": ["npc-1"], "approaches": [""], "challenge": { "type": "social", "description": "", "success": "", "otherApproaches": [""], "opposition": "fights and hazards", "failForward": "" }, "outcomes": [""], "next": ["scene-2"], "whereabouts": [{ "who": "npc-1", "kind": "npc", "state": "free", "where": "", "how": "" }], "routes": [{ "to": "scene-2", "risk": "", "find": "" }], "shorten": "", "skip": "" }],
   "antagonistId": "npc-2",
   "npcs": [{ "id": "npc-1", "name": "", "role": "", "motivation": "", "knows": "", "reaction": "", "cues": "", "limits": "", "backstory": "antagonist", "tactics": "antagonist", "stopIf": "antagonist" }],
-  "threads": [{ "setup": "", "payoff": "", "sceneIds": ["scene-3"] }],
-  "clues": [{ "id": "clue-1", "label": "", "text": "", "essential": true, "routes": [{ "sceneId": "scene-1", "method": "" }, { "sceneId": "scene-2", "method": "" }] }],
-  "endings": [{ "id": "end-1", "title": "", "condition": "", "consequence": "" }],
+  "resources": [{ "id": "food", "name": "", "start": 5, "unit": "", "spends": [{ "sceneId": "scene-1", "what": "", "amount": 1 }], "whenEmpty": "" }],
+  "threads": [{ "about": "npc-3", "kind": "rescue", "setup": "", "payoff": "", "sceneIds": ["scene-3"] }],
+  "clues": [{ "id": "clue-1", "label": "", "text": "", "essential": true, "routes": [{ "sceneId": "scene-1", "method": "" }, { "sceneId": "scene-2", "method": "" }], "supports": ["theory-2"], "contradicts": ["theory-1"] }],
+  "theories": [{ "id": "theory-1", "name": "", "summary": "", "isTrue": false, "obvious": true }],
+  "decisions": [{ "id": "stopped", "question": "" }],
+  "endings": [{ "id": "end-1", "title": "", "condition": "", "consequence": "", "requires": { "stopped": true } }],
   "solution": { "summary": "", "requirements": [{ "kind": "clue", "what": "", "detail": "", "sceneIds": ["scene-2"] }], "steps": [""], "alternatives": [""], "mistakes": [""] },
-  "clock": { "name": "", "advances": "", "ticks": [{ "trigger": "", "effect": "" }], "slow": "", "deadline": "" },
+  "clock": { "name": "", "advances": "", "schedule": ["scene-end-after-opening", "finale-start"], "startsAt": 1, "pushes": "", "ticks": [{ "trigger": "", "effect": "" }], "slow": "", "deadline": "" },
   "epilogueHook": "",
   "runningLate": ["steps to finish on time, most painless first"]
 }

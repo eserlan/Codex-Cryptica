@@ -16,6 +16,14 @@ import type {
 import { simulateClock } from "./one-shot-clock";
 import { checkNpcContinuity } from "./one-shot-continuity";
 import { textOverlap } from "./one-shot-dedupe";
+import { checkResources } from "./one-shot-resources";
+import {
+  checkEndingCoverage,
+  checkMystery,
+  checkRouteTradeoffs,
+  checkThreadSubjects,
+  checkWhereabouts,
+} from "./one-shot-state-checks";
 
 type GapCheck = (adventure: OneShotAdventure) => OneShotGap[];
 
@@ -334,7 +342,13 @@ const checkEndings: GapCheck = (adventure) => {
 export const INTEGRITY_CHECKS: GapCheck[] = [
   checkAntagonist,
   checkNpcContinuity,
+  checkWhereabouts,
   checkThreads,
+  checkThreadSubjects,
+  checkMystery,
+  checkEndingCoverage,
+  checkResources,
+  checkRouteTradeoffs,
   checkLateCommitments,
   checkClockConsistency,
   checkClockSchedule,

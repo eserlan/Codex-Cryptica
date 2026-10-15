@@ -6,6 +6,7 @@
  * fiction ("each sunset") cannot be counted and are left alone.
  */
 
+import { scheduledAdvances } from "./one-shot-state";
 import type { OneShotAdventure } from "./one-shot-types";
 
 const PER_SCENE =
@@ -73,7 +74,17 @@ function alsoFollowsTime(advances: string): boolean {
 export function simulateClock(
   adventure: OneShotAdventure,
 ): ClockSchedule | undefined {
-  const advances = adventure.clock?.advances ?? "";
+  const { clock } = adventure;
+  if (clock?.schedule?.length) {
+    const { before, during } = scheduledAdvances(adventure.scenes, clock);
+    return {
+      beforeFinale: before.length,
+      inFinale: during.length,
+      steps: [...before, ...during],
+      alsoTimed: clock.schedule.includes("timed"),
+    };
+  }
+  const advances = clock?.advances ?? "";
   const counted = [PER_SCENE, AT_START, AT_FINALE, IN_FINALE].some((re) =>
     re.test(advances),
   );

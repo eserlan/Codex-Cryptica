@@ -10,6 +10,7 @@
  * templates for that part only, and reported so the GM can regenerate it.
  */
 
+import { localDecisions } from "./one-shot-local-state";
 import { parseFencedJson } from "./llm-response-utils";
 import { parseOneShotAdventure, rec } from "./one-shot-parse";
 import { checkPlayability } from "./one-shot-playability";
@@ -192,16 +193,28 @@ const FALLBACK_ENDINGS = (villain: string) => [
   {
     id: "end-1",
     title: "Stopped in Time",
+    requires: { stopped: true, clean: true },
     condition: `The party uses what it learned to stop ${villain} before the clock runs out.`,
     consequence: "The threat ends and the party is owed a debt.",
   },
   {
     id: "end-2",
     title: "A Costly Bargain",
+    requires: { stopped: true, clean: false },
     condition: `The party makes a deal with ${villain} or loses the key evidence.`,
     consequence: `${villain} keeps part of what they wanted.`,
   },
 ];
+
+/** The finale's endings and the decisions behind them, or template ones. */
+function finaleParts(finale: Json | null, villain: string) {
+  return list(finale?.endings).length
+    ? { endings: finale?.endings, decisions: finale?.decisions }
+    : {
+        endings: FALLBACK_ENDINGS(villain),
+        decisions: localDecisions(villain),
+      };
+}
 
 interface Drafts {
   core: Json;
@@ -227,12 +240,12 @@ function assemble(drafts: Drafts): Json {
     antagonistId: "npc-2",
     clues: structure.clues,
     threads: structure.threads,
+    resources: structure.resources,
+    theories: structure.theories,
+    ...finaleParts(finale, villain),
     clock: structure.clock,
     runningLate: structure.runningLate,
     solution: finale?.solution,
-    endings: list(finale?.endings).length
-      ? finale?.endings
-      : FALLBACK_ENDINGS(villain),
     epilogueHook: finale?.epilogueHook,
   };
 }

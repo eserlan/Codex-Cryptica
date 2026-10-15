@@ -54,6 +54,68 @@ describe("de-duplication", () => {
     expect(new Set(d.scenes[1].npcIds).size).toBe(d.scenes[1].npcIds.length);
   });
 
+  it("remaps NPC whereabouts and rescue subjects but preserves object names", () => {
+    const a = local({ durationHours: 4 });
+    const villain = a.npcs.find((n) => n.id === a.antagonistId)!;
+    const duplicateId = "npc-9";
+    a.npcs.push({ ...villain, id: duplicateId, name: ` ${villain.name}.` });
+    a.scenes[1].whereabouts = [
+      { who: duplicateId, kind: "npc", state: "trapped" },
+      { who: "Lantern", kind: "object", state: "here" },
+    ];
+    a.threads = [
+      {
+        about: duplicateId,
+        kind: "rescue",
+        setup: "The villain is trapped beneath the cart.",
+        payoff: "The villain is freed.",
+        sceneIds: [a.scenes[1].id],
+      },
+    ];
+
+    const d = dedupeOneShot(a);
+
+    expect(d.scenes[1].whereabouts).toEqual([
+      { who: villain.id, kind: "npc", state: "trapped" },
+      { who: "Lantern", kind: "object", state: "here" },
+    ]);
+    expect(d.threads![0].about).toBe(villain.id);
+    expect(messages(d)).not.toContainEqual(
+      expect.stringMatching(
+        /does not say who is to be rescued|no scene shows them trapped/,
+      ),
+    );
+  });
+
+  it("merges same-kind threads after their NPC subjects are deduplicated", () => {
+    const a = local({ durationHours: 4 });
+    const villain = a.npcs.find((n) => n.id === a.antagonistId)!;
+    const duplicateId = "npc-9";
+    a.npcs.push({ ...villain, id: duplicateId, name: ` ${villain.name}.` });
+    a.threads = [
+      {
+        about: villain.id,
+        kind: "rescue",
+        setup: "The prisoner is hidden beneath the ruined observatory.",
+        payoff: "The prisoner escapes through the western tunnel.",
+        sceneIds: [a.scenes[0].id],
+      },
+      {
+        about: duplicateId,
+        kind: "rescue",
+        setup: "A courier has been locked in the flooded bell tower.",
+        payoff: "The courier is carried safely to the market square.",
+        sceneIds: [a.scenes[1].id],
+      },
+    ];
+
+    const d = dedupeOneShot(a);
+
+    expect(d.threads).toHaveLength(1);
+    expect(d.threads![0].about).toBe(villain.id);
+    expect(d.threads![0].sceneIds).toEqual([a.scenes[0].id, a.scenes[1].id]);
+  });
+
   it("merges NPC names that differ only by punctuation", () => {
     const a = local({ durationHours: 4 });
     const villain = a.npcs.find((n) => n.id === a.antagonistId)!;
@@ -115,6 +177,7 @@ describe("de-duplication", () => {
 describe("clock schedule", () => {
   it("flags a clock that only moves on the party's risks", () => {
     const a = local();
+    a.clock!.schedule = undefined;
     a.clock!.advances = "Each time the party forces a route or uses violence.";
     expect(messages(a)).toContainEqual(
       expect.stringMatching(/cautious play stops it/),
@@ -122,10 +185,11 @@ describe("clock schedule", () => {
   });
 
   it.each([
-    "The clock advances at each sunset, and whenever the party forces a route.",
+    "At each sunset, and whenever the party forces a route.",
     "At the end of every essential scene; failures add a tick.",
   ])("accepts a scheduled clock: %s", (advances) => {
     const a = local();
+    a.clock!.schedule = undefined;
     a.clock!.advances = advances;
     expect(messages(a).filter((m) => /cautious play/.test(m))).toEqual([]);
   });
@@ -144,6 +208,8 @@ describe("clock schedule", () => {
   const allEssential = (advances: string, ticks: number) => {
     const a = local({ durationHours: 4 });
     a.scenes.forEach((s) => (s.essential = true));
+    a.clock!.schedule = undefined;
+    a.clock!.startsAt = undefined;
     a.clock!.advances = advances;
     a.clock!.ticks = Array.from({ length: ticks }, (_, i) => ({
       trigger: `Tick ${i + 1}`,
@@ -205,7 +271,6 @@ describe("clock schedule", () => {
       "At the end of each essential scene; the party has six hours before the deadline.",
       8,
     );
-
     expect(simulateClock(a)!.alsoTimed).toBe(false);
     expect(messages(a)).toContainEqual(
       expect.stringMatching(
@@ -219,7 +284,6 @@ describe("clock schedule", () => {
       "At the end of each essential scene; every hour, the guards change shifts.",
       8,
     );
-
     expect(simulateClock(a)!.alsoTimed).toBe(false);
     expect(messages(a)).toContainEqual(
       expect.stringMatching(
@@ -233,7 +297,6 @@ describe("clock schedule", () => {
       "At the end of each scene the clock advances, every hour the guards change shifts.",
       8,
     );
-
     expect(simulateClock(a)!.alsoTimed).toBe(false);
     expect(messages(a)).toContainEqual(
       expect.stringMatching(
@@ -280,7 +343,6 @@ describe("NPC continuity", () => {
     const a = withWitness(
       "Tovin remains trapped in the cellar, while the party was dragged here by floodwaters.",
     );
-
     expect(messages(a)).toContainEqual(
       `Tovin Marr is present and free in "${a.scenes[0].title}" but trapped in "${a.scenes[1].title}". Say in that scene how it happened, or make them two different people.`,
     );
@@ -290,7 +352,6 @@ describe("NPC continuity", () => {
     const a = withWitness(
       "Tovin remains trapped in the cellar. The party was dragged here by floodwaters.",
     );
-
     expect(messages(a)).toContainEqual(
       `Tovin Marr is present and free in "${a.scenes[0].title}" but trapped in "${a.scenes[1].title}". Say in that scene how it happened, or make them two different people.`,
     );
@@ -300,7 +361,6 @@ describe("NPC continuity", () => {
     const a = withWitness(
       "Tovin remains trapped because the party was dragged here by floodwaters.",
     );
-
     expect(messages(a)).toContainEqual(
       `Tovin Marr is present and free in "${a.scenes[0].title}" but trapped in "${a.scenes[1].title}". Say in that scene how it happened, or make them two different people.`,
     );
