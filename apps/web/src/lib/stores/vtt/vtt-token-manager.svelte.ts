@@ -42,12 +42,16 @@ const NOTE_SIZE_MULTIPLIER = 1.5;
 /** A collapsed note still has to be big enough to click on a fine grid. */
 const MIN_COLLAPSED_NOTE_SIZE = 16;
 
+function isHexShaped(shape: string | undefined) {
+  return shape === "hex" || shape === "hex-pointy" || shape === "hex-flat";
+}
+
 function roundTokenCoordinate(value: number) {
   const factor = 10 ** TOKEN_COORD_PRECISION;
   return Math.round(value * factor) / factor;
 }
 
-function findBoundedHexTilePosition(
+function findBoundedHexPosition(
   targetCentre: Point,
   config: HexGridConfig,
   bounds: { width: number; height: number },
@@ -413,7 +417,7 @@ export class VTTTokenManager {
     if (mapStore.activeMap) {
       // Clamping the box directly moves it off-grid. Near an image edge, pick
       // the closest neighbouring whole cell that fits inside the map instead.
-      bounded = findBoundedHexTilePosition(
+      bounded = findBoundedHexPosition(
         targetCentre,
         config,
         mapStore.activeMap.dimensions,
@@ -456,6 +460,40 @@ export class VTTTokenManager {
     return `${q},${r}`;
   }
 
+  /**
+   * Snaps a creature token on a hex grid. A token's x/y is its top-left
+   * corner, so the snap works on its centre: the centre goes to the middle of
+   * the hex it is over, and each side rounds to a whole number of hexes
+   * (one hex is sqrt(3)R across the flats), so the smallest token fills a
+   * cell instead of being a fraction of one. A hex-shaped token keeps its own
+   * bounding box, which is not square.
+   */
+  private snapTokenToHexCell(
+    point: Point,
+    size: { width: number; height: number },
+    config: HexGridConfig,
+    keepSize: boolean,
+  ): { x: number; y: number; width: number; height: number } {
+    const cell = SQRT_3 * config.size;
+    const whole = (side: number) =>
+      Math.max(cell, Math.round(side / cell) * cell);
+    const width = keepSize ? size.width : whole(size.width);
+    const height = keepSize ? size.height : whole(size.height);
+    const centre = hexToPoint(
+      pointToHex(
+        { x: point.x + size.width / 2, y: point.y + size.height / 2 },
+        config,
+      ),
+      config,
+    );
+    return {
+      x: centre.x - width / 2,
+      y: centre.y - height / 2,
+      width,
+      height,
+    };
+  }
+
   clampAndSnapPosition(
     point: Point,
     tokenSize: { width: number; height: number },
@@ -463,7 +501,10 @@ export class VTTTokenManager {
     // and a note is an annotation rather than something standing in a cell.
     // Snapping it would also floor it at one full cell, which a collapsed
     // note is deliberately smaller than.
-    { snapToTheGrid = true }: { snapToTheGrid?: boolean } = {},
+    {
+      snapToTheGrid = true,
+      hexShaped = false,
+    }: { snapToTheGrid?: boolean; hexShaped?: boolean } = {},
   ) {
     const mapStore = this.deps.getMapStore();
     const activeMap = mapStore.activeMap;
@@ -480,7 +521,15 @@ export class VTTTokenManager {
     let targetWidth = tokenSize.width;
     let targetHeight = tokenSize.height;
 
-    if (mapStore.showGrid && snapToTheGrid) {
+    const hexConfig = snapToTheGrid ? this.hexGridConfig() : null;
+    if (hexConfig) {
+      ({
+        x: targetX,
+        y: targetY,
+        width: targetWidth,
+        height: targetHeight,
+      } = this.snapTokenToHexCell(point, tokenSize, hexConfig, hexShaped));
+    } else if (mapStore.showGrid && snapToTheGrid) {
       const gridSize = mapStore.gridSize;
       const offsetX = mapStore.gridOffsetX;
       const offsetY = mapStore.gridOffsetY;
@@ -500,11 +549,22 @@ export class VTTTokenManager {
     }
 
     // Always clamp to map bounds to prevent invisible placements
-    const clamped = clampPointToBounds(
-      { x: targetX, y: targetY },
-      activeMap.dimensions,
-      { width: targetWidth, height: targetHeight },
-    );
+    const clamped = hexConfig
+      ? findBoundedHexPosition(
+          {
+            x: targetX + targetWidth / 2,
+            y: targetY + targetHeight / 2,
+          },
+          hexConfig,
+          activeMap.dimensions,
+          targetWidth,
+          targetHeight,
+          { x: targetX, y: targetY },
+        )
+      : clampPointToBounds({ x: targetX, y: targetY }, activeMap.dimensions, {
+          width: targetWidth,
+          height: targetHeight,
+        });
 
     return {
       x: clamped.x,
@@ -546,7 +606,10 @@ export class VTTTokenManager {
       this.clampAndSnapPosition(
         { x: token.x, y: token.y },
         { width: token.width, height: token.height },
-        { snapToTheGrid: token.kind !== "note" },
+        {
+          snapToTheGrid: token.kind !== "note",
+          hexShaped: isHexShaped(token.baseShape),
+        },
       );
     const positioned = {
       ...token,
@@ -638,7 +701,10 @@ export class VTTTokenManager {
               width: updates.width ?? current.width,
               height: updates.height ?? current.height,
             },
-            { snapToTheGrid: current.kind !== "note" },
+            {
+              snapToTheGrid: current.kind !== "note",
+              hexShaped: isHexShaped(current.baseShape),
+            },
           ))
         : {
             x: current.x,
