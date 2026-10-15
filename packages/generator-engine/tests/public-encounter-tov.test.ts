@@ -25,6 +25,7 @@ describe("Tales of the Valiant Encounter Generation (US1 & US2)", () => {
     expect(partySizeOpt).toBeDefined();
     expect(partySizeOpt?.control).toBe("number");
     expect(partySizeOpt?.defaultValue).toBe(4);
+    expect(partySizeOpt).toMatchObject({ min: 1, max: 8, step: 1 });
     expect(partySizeOpt?.visibleWhen).toEqual({
       optionId: "gameSystem",
       values: ["tales-of-the-valiant"],
@@ -36,6 +37,7 @@ describe("Tales of the Valiant Encounter Generation (US1 & US2)", () => {
     expect(partyLevelOpt).toBeDefined();
     expect(partyLevelOpt?.control).toBe("number");
     expect(partyLevelOpt?.defaultValue).toBe(3);
+    expect(partyLevelOpt).toMatchObject({ min: 1, max: 20, step: 1 });
     expect(partyLevelOpt?.visibleWhen).toEqual({
       optionId: "gameSystem",
       values: ["tales-of-the-valiant"],
@@ -79,6 +81,45 @@ describe("Tales of the Valiant Encounter Generation (US1 & US2)", () => {
     expect(prompt).toContain("recommendedCrRange");
     expect(prompt).toContain("suggestedCreatures");
     expect(prompt).toContain("doomNotes");
+  });
+
+  it.each([
+    { partySize: 9, partyLevel: 3 },
+    { partySize: 4, partyLevel: 21 },
+    { partySize: 2.5, partyLevel: 3 },
+    { partySize: 4, partyLevel: 3.5 },
+    { partySize: 0, partyLevel: -1 },
+  ])("falls back to defaults for invalid ToV party values: %o", (party) => {
+    const prompt = encounterGen.buildPrompt({
+      generatorId: "encounter",
+      options: {
+        gameSystem: "tales-of-the-valiant",
+        ...party,
+      },
+      useAI: true,
+      themeId: "fantasy",
+    });
+
+    expect(prompt).toContain("Party Profile: 4 characters at Level 3.");
+  });
+
+  it.each([
+    { partySize: 1, partyLevel: 1 },
+    { partySize: 8, partyLevel: 20 },
+  ])("accepts ToV party values at the bounds: %o", (party) => {
+    const prompt = encounterGen.buildPrompt({
+      generatorId: "encounter",
+      options: {
+        gameSystem: "tales-of-the-valiant",
+        ...party,
+      },
+      useAI: true,
+      themeId: "fantasy",
+    });
+
+    expect(prompt).toContain(
+      `Party Profile: ${party.partySize} characters at Level ${party.partyLevel}.`,
+    );
   });
 
   it("parses valid TovEncounterMechanics block correctly", () => {

@@ -239,13 +239,17 @@ function optionString(
   return typeof value === "string" && value.length > 0 ? value : fallback;
 }
 
-function optionNumber(
+function optionBoundedInteger(
   request: GeneratorRunRequest,
   key: string,
   fallback: number,
+  min: number,
+  max: number,
 ): number {
-  const val = Number(request.options[key]);
-  return Number.isFinite(val) && val > 0 ? val : fallback;
+  const value = Number(request.options[key]);
+  return Number.isInteger(value) && value >= min && value <= max
+    ? value
+    : fallback;
 }
 
 function dungeonOptions(request: GeneratorRunRequest): DungeonGeneratorOptions {
@@ -1158,8 +1162,8 @@ function encounterOptions(
     tone: optionString(request, "tone", ""),
     context: optionString(request, "context", ""),
     gameSystem: optionString(request, "gameSystem", "system-neutral"),
-    partySize: optionNumber(request, "partySize", 4),
-    partyLevel: optionNumber(request, "partyLevel", 3),
+    partySize: optionBoundedInteger(request, "partySize", 4, 1, 8),
+    partyLevel: optionBoundedInteger(request, "partyLevel", 3, 1, 20),
   };
 }
 
@@ -2782,6 +2786,9 @@ const REGISTRY: Record<GeneratorId, CampaignGeneratorDefinition> = {
         description: "Number of active player characters (1–8).",
         control: "number",
         defaultValue: 4,
+        min: 1,
+        max: 8,
+        step: 1,
         visibleWhen: {
           optionId: "gameSystem",
           values: ["tales-of-the-valiant"],
@@ -2793,6 +2800,9 @@ const REGISTRY: Record<GeneratorId, CampaignGeneratorDefinition> = {
         description: "Average character level (1–20).",
         control: "number",
         defaultValue: 3,
+        min: 1,
+        max: 20,
+        step: 1,
         visibleWhen: {
           optionId: "gameSystem",
           values: ["tales-of-the-valiant"],

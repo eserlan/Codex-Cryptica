@@ -656,8 +656,19 @@ describe("GeneratorConfigForm", { timeout: 20000 }, () => {
     ) as HTMLSelectElement;
     expect(gameSystemSelect.value).toBe("tales-of-the-valiant");
 
-    expect(screen.getByLabelText(/Party Size/i)).toBeTruthy();
-    expect(screen.getByLabelText(/Average Party Level/i)).toBeTruthy();
+    const partySizeInput = screen.getByLabelText(
+      /Party Size/i,
+    ) as HTMLInputElement;
+    expect(partySizeInput.min).toBe("1");
+    expect(partySizeInput.max).toBe("8");
+    expect(partySizeInput.step).toBe("1");
+
+    const partyLevelInput = screen.getByLabelText(
+      /Average Party Level/i,
+    ) as HTMLInputElement;
+    expect(partyLevelInput.min).toBe("1");
+    expect(partyLevelInput.max).toBe("20");
+    expect(partyLevelInput.step).toBe("1");
 
     await fireEvent.click(screen.getByRole("button", { name: "Generate" }));
 

@@ -87,6 +87,9 @@ export interface GeneratorOptionDefinition {
   description?: string;
   control: "radio" | "select" | "checkbox" | "text" | "textarea" | "number";
   choices?: Array<{ value: string; label: string }>;
+  min?: number;
+  max?: number;
+  step?: number;
   required?: boolean;
   defaultValue?: unknown;
   visibleWhen?: {
