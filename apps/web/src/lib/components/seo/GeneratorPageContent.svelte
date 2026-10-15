@@ -1,5 +1,6 @@
 <script lang="ts">
-  import { onMount, untrack } from "svelte";
+  import type { OneShotProgressStep } from "generator-engine";
+  import { onDestroy, onMount, untrack } from "svelte";
   import { browser } from "$app/environment";
   import { page } from "$app/state";
   import { hubContext } from "$lib/stores/hub-context.svelte";
@@ -66,6 +67,7 @@
   import {
     createGenerate,
     createGeneratorHandlers,
+    createOneShotRunControl,
   } from "./generator-page-generation";
   import {
     initializeHandoffState,
@@ -908,6 +910,11 @@
     }
   }
 
+  /** Live steps while a one-shot is generated in stages. */
+  let oneShotProgress = $state<OneShotProgressStep[] | null>(null);
+  const oneShotRuns = createOneShotRunControl();
+  onDestroy(oneShotRuns.dispose);
+
   const GENERATE_HANDLERS = createGeneratorHandlers({
     npc,
     settlement,
@@ -956,6 +963,8 @@
     getPlotTwistPremise: () => plotTwist.premise,
     getHandoffQuestPremise: () => handoffState.questPremise,
     getSessionEntities: () => sessionHubStore.entities,
+    onOneShotProgress: (steps) => (oneShotProgress = steps),
+    oneShotRuns,
   });
 
   const generate = createGenerate({
@@ -997,6 +1006,9 @@
     "language-generator",
   ].includes(slug)}
   {generate}
+  progressSteps={slug === "one-shot-adventure-generator"
+    ? oneShotProgress
+    : null}
   {initialDraft}
   initialDraftIsUserGenerated={Boolean(remixDraft)}
   {backHref}

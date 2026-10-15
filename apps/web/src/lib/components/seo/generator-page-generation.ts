@@ -2,6 +2,7 @@ import {
   collectSessionNames,
   collectSessionTraits,
   extractPartialJsonStringFields,
+  type OneShotProgressStep,
 } from "generator-engine";
 import { generatorEngine } from "$lib/services/seo/generator-engine";
 import { resolvePlotTwistPremiseForGeneration } from "$lib/services/seo/generator-handoffs";
@@ -82,7 +83,33 @@ export interface GenerationContext {
   getPlotTwistPremise: () => string;
   getHandoffQuestPremise: () => string;
   getSessionEntities: () => unknown[];
+  /** Receives each step of a staged one-shot generation; null resets it. */
+  onOneShotProgress?: (steps: OneShotProgressStep[] | null) => void;
+  /** Cancels a staged one-shot when a new one starts or the page goes away. */
+  oneShotRuns?: OneShotRunControl;
   engine?: typeof generatorEngine;
+}
+
+export interface OneShotRunControl {
+  /** Cancel any run in flight and return the signal for a new one. */
+  start: () => AbortSignal;
+  /** Cancel the run in flight, e.g. when the page is destroyed. */
+  dispose: () => void;
+}
+
+export function createOneShotRunControl(): OneShotRunControl {
+  let controller: AbortController | null = null;
+  return {
+    start() {
+      controller?.abort();
+      controller = new AbortController();
+      return controller.signal;
+    },
+    dispose() {
+      controller?.abort();
+      controller = null;
+    },
+  };
 }
 
 export type GeneratorHandler = (useAI: boolean) => Promise<GeneratorOutput>;
@@ -270,13 +297,17 @@ export function createGeneratorHandlers(
       } as never),
     "origin-generator": (useAI) =>
       engine.generateOrigin({ ...(ctx.origin as object), useAI } as never),
-    "one-shot-adventure-generator": (useAI) =>
-      engine.generateOneShot({
+    "one-shot-adventure-generator": (useAI) => {
+      ctx.onOneShotProgress?.(null);
+      return engine.generateOneShot({
         ...(ctx.oneShot as object),
         durationHours: Number(ctx.oneShot.durationHours),
         partySize: Number(ctx.oneShot.partySize),
         useAI,
-      } as never),
+        onProgress: ctx.onOneShotProgress,
+        signal: ctx.oneShotRuns?.start(),
+      } as never);
+    },
     "villain-scheme-generator": (useAI) =>
       engine.generateVillainScheme({
         ...(ctx.villainScheme as object),

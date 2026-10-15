@@ -552,6 +552,75 @@ describe("GeneratorOutputCard", () => {
       ).toBeNull();
     });
 
+    it("names the parts written from templates", () => {
+      renderNotice({
+        kind: "one-shot",
+        aiPartialFallback: ["Act II: The Mill", "Supporting characters"],
+      });
+      expect(
+        screen.getByText("Some parts were written from templates"),
+      ).toBeTruthy();
+      expect(
+        screen.getByText(/Act II: The Mill, Supporting characters/),
+      ).toBeTruthy();
+    });
+
+    it("shows template parts and a skipped review together", () => {
+      renderNotice({
+        kind: "one-shot",
+        aiPartialFallback: ["Finale and endings"],
+        aiReviewSkipped: true,
+      });
+      expect(
+        screen.getByText("Some parts were written from templates"),
+      ).toBeTruthy();
+      expect(
+        screen.getByText("Generated, but the AI review didn't finish"),
+      ).toBeTruthy();
+    });
+
+    it("shows each generation step while busy instead of flavour text", () => {
+      renderNotice(
+        {},
+        {
+          isBusy: true,
+          generatedSingular: "One-Shot",
+          progressSteps: [
+            {
+              id: "core",
+              label: "Premise, villain and stakes",
+              status: "done",
+            },
+            {
+              id: "scenes",
+              label: "Writing the scenes",
+              status: "active",
+              detail: "2 of 5",
+            },
+            {
+              id: "npcs",
+              label: "Supporting characters",
+              status: "fallback",
+            },
+            { id: "review", label: "Checking it runs", status: "pending" },
+          ],
+        },
+      );
+      expect(screen.getByText("Building your one-shot")).toBeTruthy();
+      const list = screen.getByTestId("generation-progress");
+      expect(list.textContent).toContain("Premise, villain and stakes");
+      expect(list.textContent).toContain("2 of 5");
+      expect(list.textContent).toContain("used a template");
+      expect(
+        list.querySelector('[aria-current="step"]')?.textContent,
+      ).toContain("Writing the scenes");
+    });
+
+    it("keeps the rotating messages when there are no steps", () => {
+      renderNotice({}, { isBusy: true });
+      expect(screen.queryByTestId("generation-progress")).toBeNull();
+    });
+
     it("stays until dismissed, then goes away", async () => {
       const props = renderNotice({ aiFallback: true, kind: "one-shot" });
       expect(screen.getByTestId("ai-fallback-notice")).toBeTruthy();

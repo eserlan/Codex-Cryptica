@@ -78,6 +78,8 @@ export interface PublicGeneratorOutput {
   aiFallback?: boolean;
   /** The AI draft is complete but its editorial review didn't finish. */
   aiReviewSkipped?: boolean;
+  /** Parts written from templates because their AI step didn't finish. */
+  aiPartialFallback?: string[];
   languageProfile?: LanguageProfileV1;
   languageProfileVersion?: 1;
   /** Structured major-body list for star systems, driving the mechanical side-view diagram. */

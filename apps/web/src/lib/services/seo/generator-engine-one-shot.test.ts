@@ -15,13 +15,86 @@ function modelReplying(text: string) {
   };
 }
 
-/** A model whose replies come from `replies` in order; `null` throws. */
-function modelInSequence(replies: (string | null)[]) {
-  const calls: string[] = [];
-  let i = 0;
-  const next = (prompt: string) => {
-    calls.push(prompt);
-    const text = replies[Math.min(i++, replies.length - 1)];
+type Stage = "core" | "structure" | "finale" | "scene" | "npcs" | "review";
+
+function stageOf(prompt: string): Stage {
+  if (prompt.includes("Plan the core")) return "core";
+  if (prompt.includes("Plan the scenes")) return "structure";
+  if (prompt.includes("Work out how this one-shot")) return "finale";
+  if (prompt.includes("Write one scene")) return "scene";
+  if (prompt.includes("Give the supporting NPCs")) return "npcs";
+  return "review";
+}
+
+const stagedOptions = {
+  durationHours: 3,
+  genre: "Horror",
+  emphasis: "Investigation / mystery",
+};
+
+/** Stage replies cut from a coherent local adventure. */
+function stageReplies(): Record<Stage, (prompt: string) => string> {
+  const a = generateOneShotLocal(stagedOptions).oneShot!;
+  const [patron, antagonist, ...supporting] = a.npcs;
+  return {
+    core: () =>
+      JSON.stringify({
+        title: "The Drowned Choir",
+        briefing: a.briefing,
+        antagonist,
+        patron,
+      }),
+    structure: () =>
+      JSON.stringify({
+        scenes: a.scenes.map(({ id, title, kind, essential, minutes }) => ({
+          id,
+          title,
+          kind,
+          essential,
+          minutes,
+          location: "",
+          npcIds: a.scenes.find((s) => s.id === id)!.npcIds,
+          next: a.scenes.find((s) => s.id === id)!.next,
+        })),
+        npcs: supporting.map(({ id, name, role }) => ({ id, name, role })),
+        clues: a.clues,
+        clock: a.clock,
+        threads: a.threads,
+      }),
+    finale: () => JSON.stringify({ solution: a.solution, endings: a.endings }),
+    scene: (prompt) => {
+      const s = a.scenes.find((x) =>
+        prompt.includes(`The scene to write: {\\"id\\":\\"${x.id}\\"`),
+      )!;
+      return JSON.stringify({
+        situation: `AI: ${s.situation}`,
+        approaches: s.approaches,
+        challenge: s.challenge,
+        outcomes: s.outcomes,
+      });
+    },
+    npcs: () =>
+      JSON.stringify({
+        npcs: supporting.map((n) => ({ ...n, motivation: n.motivation })),
+      }),
+    review: () => "{}",
+  };
+}
+
+/**
+ * A model that answers each stage of staged one-shot generation. `override`
+ * replaces a stage's reply; returning null makes that stage's calls throw.
+ */
+function stagedModel(
+  override: Partial<Record<Stage, (prompt: string) => string | null>> = {},
+) {
+  const replies = stageReplies();
+  const calls: { stage: Stage; request: any }[] = [];
+  const answer = (request: any) => {
+    const prompt = JSON.stringify(request);
+    const stage = stageOf(prompt);
+    calls.push({ stage, request });
+    const text = (override[stage] ?? replies[stage])(prompt);
     if (text === null) throw new Error("model down");
     return text;
   };
@@ -29,164 +102,99 @@ function modelInSequence(replies: (string | null)[]) {
     calls,
     client: {
       getModel: vi.fn().mockResolvedValue({
-        generateContent: async (prompt: unknown) => {
-          const text = next(JSON.stringify(prompt));
+        generateContent: async (request: unknown) => {
+          const text = answer(request);
           return { response: { text: () => text } };
-        },
-        generateContentStream: async function* (prompt: unknown) {
-          const text = next(JSON.stringify(prompt));
-          yield { type: "delta", text };
-          yield { type: "complete", text };
         },
       }),
     },
   };
 }
 
-/** A valid one-shot with no finale solution or clock, as a model might send. */
-function gappyReply() {
-  const a = structuredClone(
-    generateOneShotLocal({ durationHours: 3 }).oneShot!,
-  );
-  delete a.solution;
-  delete a.clock;
-  return JSON.stringify(a);
-}
-
-describe("DefaultGeneratorEngine one-shot reliability", () => {
-  const options = {
-    durationHours: 3,
-    genre: "Horror",
-    emphasis: "Investigation / mystery",
-  };
-
-  it("asks for room: a long output cap and JSON mode, on both calls", async () => {
-    const draft = JSON.stringify(generateOneShotLocal(options).oneShot);
-    const requests: unknown[] = [];
-    const client = {
-      getModel: vi.fn().mockResolvedValue({
-        generateContent: async (request: unknown) => {
-          requests.push(request);
-          return {
-            response: { text: () => (requests.length === 1 ? draft : "{}") },
-          };
-        },
-      }),
-    };
+describe("DefaultGeneratorEngine staged one-shot", () => {
+  it("generates in stages, each with a long output cap and JSON mode", async () => {
+    const { client, calls } = stagedModel();
     const e = new DefaultGeneratorEngine(client as never);
-    await e.generateOneShot({ ...options, useAI: true });
-    expect(requests).toHaveLength(2);
-    for (const request of requests) {
-      expect((request as any).generationConfig).toMatchObject({
+    const out = await e.generateOneShot({ ...stagedOptions, useAI: true });
+    expect(out.aiFallback).toBeUndefined();
+    expect(out.title).toBe("The Drowned Choir");
+    expect(
+      out.oneShot!.scenes.every((sc) => sc.situation.startsWith("AI: ")),
+    ).toBe(true);
+    expect(calls.map((c) => c.stage).slice(0, 3)).toEqual([
+      "core",
+      "structure",
+      "finale",
+    ]);
+    expect(calls.at(-1)!.stage).toBe("review");
+    for (const { request } of calls) {
+      expect(request.generationConfig).toMatchObject({
         maxOutputTokens: 16384,
         responseMimeType: "application/json",
       });
     }
   });
 
-  it("keeps the draft and flags it when the review call fails", async () => {
-    const draft = JSON.stringify(generateOneShotLocal(options).oneShot);
-    const { client } = modelInSequence([draft, null]);
-    const e = new DefaultGeneratorEngine(client as never);
-    const out = await e.generateOneShot({ ...options, useAI: true });
-    expect(out.aiFallback).toBeUndefined();
-    expect(out.aiReviewSkipped).toBe(true);
-    expect(out.oneShot).toBeDefined();
+  it("forwards each step's progress to the page", async () => {
+    const onProgress = vi.fn();
+    const e = new DefaultGeneratorEngine(stagedModel().client as never);
+    await e.generateOneShot({ ...stagedOptions, useAI: true, onProgress });
+    const first = onProgress.mock.calls[0][0];
+    expect(first[0]).toMatchObject({ id: "core", status: "active" });
+    const last = onProgress.mock.calls.at(-1)![0];
+    expect(last.every((s: { status: string }) => s.status === "done")).toBe(
+      true,
+    );
   });
 
-  it("flags unreadable review replies, but not empty objects", async () => {
-    const draft = JSON.stringify(generateOneShotLocal(options).oneShot);
-    const unreadable = new DefaultGeneratorEngine(
-      modelInSequence([draft, "I could not review this."]).client as never,
-    );
-    expect(
-      (await unreadable.generateOneShot({ ...options, useAI: true }))
-        .aiReviewSkipped,
-    ).toBe(true);
-    for (const unreadableJson of ["null", "[]"]) {
-      const unreadableJsonEngine = new DefaultGeneratorEngine(
-        modelInSequence([draft, unreadableJson]).client as never,
-      );
-      expect(
-        (
-          await unreadableJsonEngine.generateOneShot({
-            ...options,
-            useAI: true,
-          })
-        ).aiReviewSkipped,
-      ).toBe(true);
-    }
-    const empty = new DefaultGeneratorEngine(
-      modelInSequence([draft, "{}"]).client as never,
-    );
-    expect(
-      (await empty.generateOneShot({ ...options, useAI: true }))
-        .aiReviewSkipped,
-    ).toBeUndefined();
-  });
-
-  it("does not flag a reviewed adventure", async () => {
-    const draft = JSON.stringify(generateOneShotLocal(options).oneShot);
-    const review = JSON.stringify({
-      briefing: { trigger: "A bell rang at dawn." },
-    });
+  it("names parts written from templates when their step fails", async () => {
     const e = new DefaultGeneratorEngine(
-      modelInSequence([draft, review]).client as never,
+      stagedModel({ npcs: () => null }).client as never,
     );
-    const out = await e.generateOneShot({ ...options, useAI: true });
+    const out = await e.generateOneShot({ ...stagedOptions, useAI: true });
+    expect(out.aiFallback).toBeUndefined();
+    expect(out.aiPartialFallback).toEqual(["Supporting characters"]);
+  });
+
+  it("flags the review as skipped when it fails or can't be read", async () => {
+    const replies = [() => null, () => "I could not review this."];
+    for (const review of [...replies, () => "null", () => "[]"]) {
+      const e = new DefaultGeneratorEngine(
+        stagedModel({ review }).client as never,
+      );
+      const out = await e.generateOneShot({ ...stagedOptions, useAI: true });
+      expect(out.aiReviewSkipped).toBe(true);
+      expect(out.title).toBe("The Drowned Choir");
+    }
+  });
+
+  it("treats an empty review as reviewed", async () => {
+    const e = new DefaultGeneratorEngine(
+      stagedModel({ review: () => "{}" }).client as never,
+    );
+    const out = await e.generateOneShot({ ...stagedOptions, useAI: true });
+    expect(out.aiReviewSkipped).toBeUndefined();
+  });
+
+  it("uses the review's changes", async () => {
+    const e = new DefaultGeneratorEngine(
+      stagedModel({
+        review: () =>
+          JSON.stringify({ briefing: { trigger: "A bell rang at dawn." } }),
+      }).client as never,
+    );
+    const out = await e.generateOneShot({ ...stagedOptions, useAI: true });
     expect(out.aiReviewSkipped).toBeUndefined();
     expect(out.oneShot?.briefing.trigger).toBe("A bell rang at dawn.");
   });
-});
 
-describe("DefaultGeneratorEngine one-shot playability", () => {
-  it("asks the model to fill the gaps it left, then uses the repair", async () => {
-    const { client, calls } = modelInSequence([
-      gappyReply(),
-      JSON.stringify({
-        clock: {
-          name: "The Tolls",
-          advances: "Every failed challenge.",
-          ticks: [
-            { trigger: "1", effect: "A warning." },
-            { trigger: "2", effect: "A death." },
-            { trigger: "3", effect: "The end." },
-          ],
-          slow: "Muffle the bell.",
-        },
-      }),
-    ]);
+  it("falls back to a whole local adventure when the core can't be written", async () => {
+    const { client, calls } = stagedModel({ core: () => null });
     const e = new DefaultGeneratorEngine(client as never);
-    const out = await e.generateOneShot({ durationHours: 3, useAI: true });
-    expect(calls).toHaveLength(2);
-    expect(calls[1]).toContain("Give the threat a countdown");
-    expect(out.oneShot?.clock?.name).toBe("The Tolls");
-    expect(out.lore).toContain("## The Tolls");
-  });
-
-  it("keeps the first draft and lists its gaps when the repair fails", async () => {
-    const { client, calls } = modelInSequence([gappyReply(), null]);
-    const e = new DefaultGeneratorEngine(client as never);
-    const out = await e.generateOneShot({ durationHours: 3, useAI: true });
-    expect(calls).toHaveLength(2);
-    expect(out.oneShot?.clock).toBeUndefined();
-    expect(out.content).toContain("## Before You Run It");
-  });
-
-  it("always reviews, and keeps the draft when the review changes nothing", async () => {
-    const options = {
-      durationHours: 3,
-      genre: "Horror",
-      emphasis: "Investigation / mystery",
-    };
-    const draft = generateOneShotLocal(options).oneShot!;
-    const { client, calls } = modelInSequence([JSON.stringify(draft), "{}"]);
-    const e = new DefaultGeneratorEngine(client as never);
-    const out = await e.generateOneShot({ ...options, useAI: true });
-    expect(calls).toHaveLength(2);
-    expect(calls[1]).toContain("Commitments");
-    expect(calls[1]).not.toContain("automatic check found");
-    expect(out.oneShot?.title).toBe(draft.title);
+    const out = await e.generateOneShot({ ...stagedOptions, useAI: true });
+    expect(out.aiFallback).toBe(true);
+    expect(calls.map((c) => c.stage)).toEqual(["core", "core"]);
+    expect(out.oneShot?.scenes.length).toBeGreaterThanOrEqual(3);
   });
 });
 

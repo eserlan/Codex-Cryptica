@@ -310,6 +310,14 @@ export {
   type OneShotRegenTarget,
   type OneShotRegenResult,
 } from "./public-one-shot";
+export {
+  runOneShotStages,
+  type OneShotProgressStep,
+  type OneShotStepStatus,
+  type OneShotStageDeps,
+  type OneShotStagedResult,
+} from "./one-shot-staged";
+export type { StagePrompt } from "./one-shot-stage-prompts";
 export type {
   OneShotAdventure,
   OneShotGeneratorOptions,
