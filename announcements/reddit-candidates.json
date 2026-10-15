@@ -1,5 +1,5 @@
 {
-  "updated_at": 1791998494,
+  "updated_at": 1792071745,
   "candidates": [
     {
       "id": "reddit-38159898218-social-scenes-kept-ending-on-one-persuas",
@@ -30,6 +30,16 @@
       "source_id": "38605236753",
       "status": "approved",
       "created_at": 1791998494
+    },
+    {
+      "id": "reddit-38743453215-my-one-shots-kept-falling-apart-in-act-t",
+      "title": "My one-shots kept falling apart in act two, so I built a staged builder that checks itself",
+      "body": "Running a one-shot for a single night is tight. I would get a strong opening and a decent finale, then realise at the table that the middle had no pressure, the villain had nothing to do, and a scene contradicted something from page one.\n\nI built a One-Shot Adventure Builder that generates in stages with live progress. You see each part fill in instead of staring at a spinner, and it runs narrative integrity and antagonist clock checks as it goes.\n\nIt lives with the other generators at https://codexcryptica.com/generators\n\nWhat it gives you:\n- staged generation with live progress per part so you can spot problems early\n- narrative integrity scan that flags contradictions across parts\n- antagonist clock check so the opposition keeps moving whether the party engages or not\n- playability review that catches spots likely to stall in play\n- one-click repair for flagged issues and quick revise to rework a single part without starting over\n\nIt still needs your voice. It hands you the structure and the safety checks, not the jokes and table-specific tone. That part is still yours.\n\nWhen your one-shots break, is it usually pacing, the villain going quiet, or a setup that turns out to be unusable at the table?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/announcements/release-38743453215-0.png)",
+      "url": "https://codexcryptica.com/generators/one-shot-adventure-generator",
+      "image_url": "https://assets.codexcryptica.com/announcements/release-38743453215-0.png",
+      "source_id": "38743453215",
+      "status": "approved",
+      "created_at": 1792071745
     }
   ]
 }
