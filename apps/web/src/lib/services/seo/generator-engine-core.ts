@@ -470,10 +470,11 @@ export class GeneratorEngineCore extends GeneratorEngineBase {
   }
 
   /**
-   * GM playability review: when the adventure leaves facts, solutions or
-   * motivations for the GM to invent, ask the model to fill exactly those
-   * gaps. A failed repair keeps the unrepaired adventure, which lists the
-   * remaining gaps for the GM.
+   * Editorial and GM review: the model reads the whole adventure back,
+   * checks it holds together across scenes (threads, antagonist, clock,
+   * emphasis), fills the gaps the playability check found and tightens
+   * repeated prose. Always runs on the AI path. A failed review keeps the
+   * first draft, which lists any remaining gaps for the GM.
    */
   private async repairOneShot(
     output: GeneratorOutput,
@@ -481,7 +482,6 @@ export class GeneratorEngineCore extends GeneratorEngineBase {
     const adventure = output.oneShot;
     if (!adventure) return output;
     const gaps = checkPlayability(adventure);
-    if (!gaps.length) return output;
     try {
       const { systemInstruction, userMessage } = buildOneShotRepairPrompt(
         adventure,

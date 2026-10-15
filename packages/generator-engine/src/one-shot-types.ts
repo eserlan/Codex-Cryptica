@@ -36,6 +36,14 @@ export interface OneShotNpc {
   knows: string;
   reaction: string;
   cues: string;
+  /** Why they are doing this. Required for the antagonist. */
+  backstory?: string;
+  /** How they act or fight when opposed. Required for the antagonist. */
+  tactics?: string;
+  /** What would persuade them to stop. Required for the antagonist. */
+  stopIf?: string;
+  /** What they cannot or will not do; later scenes must respect it. */
+  limits?: string;
 }
 
 export interface OneShotChallenge {
@@ -45,6 +53,8 @@ export interface OneShotChallenge {
   success?: string;
   /** How force, deception, magic or an unexpected plan plays out. */
   otherApproaches?: string[];
+  /** Fights and hazards: who or what opposes, their tactics, what changes mid-scene. */
+  opposition?: string;
   /** What happens when the party fails — the adventure keeps moving. */
   failForward: string;
 }
@@ -106,6 +116,15 @@ export interface OneShotClock {
   ticks: { trigger: string; effect: string }[];
   /** How the party can slow or stop it. */
   slow: string;
+  /** What happens when the last tick lands: the only point of no return. */
+  deadline?: string;
+}
+
+/** A promise the adventure makes (a person in danger, a rule, a history) and where it pays off. */
+export interface OneShotThread {
+  setup: string;
+  payoff: string;
+  sceneIds: string[];
 }
 
 /** Something the finale needs, with its real content and where to find it. */
@@ -161,6 +180,9 @@ export interface OneShotAdventure {
   npcs: OneShotNpc[];
   clues: OneShotClue[];
   endings: OneShotEnding[];
+  /** Id of the NPC driving the threat. */
+  antagonistId?: string;
+  threads?: OneShotThread[];
   solution?: OneShotSolution;
   clock?: OneShotClock;
   epilogueHook?: string;

@@ -11,6 +11,8 @@ import type {
   OneShotScene,
 } from "./one-shot-types";
 
+import { INTEGRITY_CHECKS } from "./one-shot-integrity";
+
 type GapCheck = (adventure: OneShotAdventure) => OneShotGap[];
 
 /**
@@ -192,5 +194,6 @@ export function checkPlayability(adventure: OneShotAdventure): OneShotGap[] {
     checkScenes,
     checkClueTiming,
     checkDroppedNpcs,
+    ...INTEGRITY_CHECKS,
   ].flatMap((check) => check(adventure));
 }

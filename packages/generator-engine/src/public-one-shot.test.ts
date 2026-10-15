@@ -90,7 +90,7 @@ describe("one-shot local generation", () => {
     expect(a.content).toBe(renderOneShotMarkdown(a.oneShot!));
     expect(a.lore).toBe(renderGmSheet(a.oneShot!));
     expect(a.content).toContain("## Time Budget");
-    expect(a.lore).toContain("Running late");
+    expect(a.lore).toContain("## Running Late");
   });
 });
 
