@@ -18,7 +18,8 @@
     "@codex/oracle-engine": "workspace:*",
     "@codex/runtime": "workspace:*",
     "@codex/stat-sheet-engine": "workspace:*",
-    "schema": "workspace:*"
+    "schema": "workspace:*",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@vitest/coverage-v8": "^5.0.0",

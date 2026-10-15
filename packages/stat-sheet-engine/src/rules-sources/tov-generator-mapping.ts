@@ -339,7 +339,7 @@ function mapCharacter(data: TovCharacterData): StatSheet {
         return {
           ...f,
           formula: formatRollFormula(saveMod),
-          modifierSource: `${key}_score`,
+          modifierSource: undefined,
         };
       }
     }
@@ -355,7 +355,7 @@ function mapCharacter(data: TovCharacterData): StatSheet {
       return {
         ...f,
         formula: formatRollFormula(skillMod),
-        modifierSource: `${attrKey}_score`,
+        modifierSource: undefined,
       };
     }
 
@@ -497,7 +497,7 @@ function mapCreature(data: TovCreatureData): StatSheet {
         return {
           ...f,
           formula: formatRollFormula(saveMod),
-          modifierSource: `${key}_score`,
+          modifierSource: undefined,
         };
       }
     }
@@ -513,7 +513,7 @@ function mapCreature(data: TovCreatureData): StatSheet {
       return {
         ...f,
         formula: formatRollFormula(skillMod),
-        modifierSource: `${attrKey}_score`,
+        modifierSource: undefined,
       };
     }
 

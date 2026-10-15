@@ -16,6 +16,7 @@ export interface GeneratorSavePayload {
   lore: string;
   labels: string[];
   status: GeneratorOutput["status"];
+  systemId?: string;
   mapImageDataUrl?: string;
   metadata?: Record<string, unknown>;
 }
@@ -49,9 +50,17 @@ export function formatTovMagicItemMarkdown(
     parts.push(`- **Saving Throw DC:** ${item.savingThrowDc}`);
   }
   if (item.rulesText) {
-    parts.push(`\n${item.rulesText}`);
+    parts.push(`\n${stripMarkdownImages(item.rulesText)}`);
   }
   return parts.join("\n");
+}
+
+/** Keep untrusted rules text from persisting Markdown or HTML image requests. */
+function stripMarkdownImages(text: string): string {
+  return text
+    .replace(/!\[([^\]]*)\]\([^)]*\)/g, "$1")
+    .replace(/!\[([^\]]*)\]\[[^\]]*\]/g, "$1")
+    .replace(/<img\b[^>]*>/gi, "");
 }
 
 /** Build the vault payload while keeping adventure-specific layout rules out of the page. */
@@ -79,7 +88,6 @@ export function buildGeneratorSavePayload(
     lore = lore ? `${lore}\n\n${statsMarkdown}` : statsMarkdown;
     metadata = {
       tovMechanics: data.mechanics.data,
-      systemId: data.systemId ?? "tales-of-the-valiant",
     };
   }
 
@@ -91,6 +99,7 @@ export function buildGeneratorSavePayload(
     lore,
     labels: data.labels,
     status: data.status,
+    systemId: data.systemId ?? data.mechanics?.systemId,
     ...(mapImageDataUrl ? { mapImageDataUrl } : {}),
     ...(metadata ? { metadata } : {}),
   };

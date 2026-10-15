@@ -108,7 +108,7 @@ describe("generator save payloads", () => {
           rechargeRate: "recharges 1d3 at dusk",
           savingThrowDc: 15,
           rulesText:
-            "As a bonus action, teleport up to 30 feet to an unoccupied space in dim light or darkness.",
+            'As a bonus action, teleport up to 30 feet. ![map](https://tracker.example/pixel.png) <img src="https://tracker.example/raw.png">',
           isHomebrew: false,
         },
       },
@@ -130,9 +130,11 @@ describe("generator save payloads", () => {
     expect(payload.lore).toContain("- **Charges:** 3 (recharges 1d3 at dusk)");
     expect(payload.lore).toContain("- **Saving Throw DC:** 15");
     expect(payload.lore).toContain("teleport up to 30 feet");
+    expect(payload.lore).not.toContain("tracker.example");
+    expect(payload.lore).not.toContain("![map]");
+    expect(payload.systemId).toBe("tales-of-the-valiant");
     expect(payload.metadata).toEqual({
       tovMechanics: tovMagicItem.mechanics?.data,
-      systemId: "tales-of-the-valiant",
     });
   });
 });

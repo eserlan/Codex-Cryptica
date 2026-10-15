@@ -1,5 +1,6 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import type { StatSheetField } from "schema";
+import { mapTovMechanicsToStatSheet } from "@codex/stat-sheet-engine";
 
 const { addResult, notify, sendResolvedRollMessage, mapSessionState } =
   vi.hoisted(() => ({
@@ -178,6 +179,44 @@ describe("applyDerivedModifiers", () => {
     ];
 
     expect(applyDerivedModifiers(fields)).toEqual(fields);
+  });
+
+  it("preserves generated proficiency through later sheet edits", () => {
+    const sheet = mapTovMechanicsToStatSheet({
+      kind: "tov-character",
+      data: {
+        lineage: "Elf",
+        heritage: "Sylvan",
+        background: "Wanderer",
+        className: "Rogue",
+        level: 3,
+        proficiencyBonus: 2,
+        ac: 14,
+        hp: 24,
+        hitDice: "3d8+6",
+        speed: "35 ft.",
+        abilityScores: {
+          str: 10,
+          dex: 14,
+          con: 14,
+          int: 12,
+          wis: 12,
+          cha: 8,
+        },
+        saveProficiencies: ["dex"],
+        skillProficiencies: ["Stealth"],
+      },
+    });
+    expect(sheet).not.toBeNull();
+
+    const editedFields = [...sheet!.fields];
+    editedFields.find((field) => field.id === "level")!.value = 4;
+    const updated = Object.fromEntries(
+      applyDerivedModifiers(editedFields).map((field) => [field.id, field]),
+    );
+
+    expect(updated.dex_save?.formula).toBe("1d20+4");
+    expect(updated.stealth?.formula).toBe("1d20+4");
   });
 });
 

@@ -34,11 +34,12 @@
         "typescript-eslint": "^8.59.4",
         "vite": "^8.0.14",
         "wrangler": "^4.126.0",
+        "zod": "^4.4.3",
       },
     },
     "apps/web": {
       "name": "web",
-      "version": "0.35.17",
+      "version": "0.35.18",
       "dependencies": {
         "@capacitor/app": "^8.1.1",
         "@capacitor/core": "^8.5.0",
@@ -393,6 +394,7 @@
         "@codex/runtime": "workspace:*",
         "@codex/stat-sheet-engine": "workspace:*",
         "schema": "workspace:*",
+        "zod": "^4.4.3",
       },
       "devDependencies": {
         "@vitest/coverage-v8": "^5.0.0",
