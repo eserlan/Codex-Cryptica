@@ -115,6 +115,8 @@ export interface OneShotScene {
   skip?: string;
   /** Where each NPC and important object is as this scene begins. */
   whereabouts?: OneShotWhereabout[];
+  /** Where each NPC and important object is as this scene ends. */
+  exit?: OneShotWhereabout[];
   /** What each route in "next" risks and finds. */
   routes?: OneShotRoute[];
 }
@@ -220,6 +222,8 @@ export interface OneShotClock {
   slow: string;
   /** What happens when the last tick lands: the only point of no return. */
   deadline?: string;
+  /** What the fiction counts, if anything ("bell rings"); one per tick. */
+  counts?: string;
 }
 
 /** A promise the adventure makes (a person in danger, a rule, a history) and where it pays off. */
@@ -298,6 +302,8 @@ export interface OneShotAdventure {
     prep: string;
     /** The obvious questions players will ask, answered. */
     questions?: OneShotQuestion[];
+    /** How an unusual place works (air, light, movement, speech). */
+    environment?: string;
   };
   opening: {
     situation: string;

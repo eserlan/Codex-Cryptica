@@ -205,7 +205,7 @@ describe("runOneShotStages", () => {
     const snapshots: OneShotProgressStep[][] = [];
     const result = await runOneShotStages(
       { ...options, durationHours: 4, structure: "Three-act" },
-      { call, concurrency: 1, onProgress: (s) => snapshots.push(s) },
+      { call, onProgress: (s) => snapshots.push(s) },
       "",
       seeded(),
     );
@@ -228,7 +228,7 @@ describe("runOneShotStages", () => {
     const { call } = fakeModel(a, { scene: 6 });
     const result = await runOneShotStages(
       { ...options, durationHours: 4, structure },
-      { call, concurrency: 1 },
+      { call },
       "",
       seeded(),
     );
@@ -278,7 +278,6 @@ describe("runOneShotStages", () => {
             scene.challenge.type = reuse.type;
             return JSON.stringify(scene);
           },
-          concurrency: 1,
         },
         "",
         seeded(19),
@@ -370,6 +369,32 @@ describe("runOneShotStages", () => {
     expect(result.adventure.title).toBe("The Drowned Choir");
   });
 
+  it("checks again after the review and repairs what is still wrong", async () => {
+    const a = local();
+    a.briefing.premise = `${a.briefing.premise} The ruins lie underwater.`;
+    const { call, calls } = fakeModel(a);
+    const result = await runOneShotStages(
+      { ...options, durationHours: 4 },
+      { call },
+      "",
+      seeded(),
+    );
+    expect(calls.filter((c) => c === "review")).toHaveLength(2);
+    // An empty second reply fixes nothing, so the first result stands.
+    expect(result.reviewSkipped).toBe(false);
+  });
+
+  it("stops after one review when nothing is left to fix", async () => {
+    const { call, calls } = fakeModel(local());
+    await runOneShotStages(
+      { ...options, durationHours: 4 },
+      { call },
+      "",
+      seeded(),
+    );
+    expect(calls.filter((c) => c === "review")).toHaveLength(1);
+  });
+
   it("rejects null and array review replies but accepts an empty object", () => {
     expect(isReadableRepair("{}")).toBe(true);
     expect(isReadableRepair("null")).toBe(false);
@@ -385,7 +410,6 @@ describe("runOneShotStages", () => {
         { ...options, durationHours: 4 },
         {
           signal: controller.signal,
-          concurrency: 1,
           call: async (prompt, signal) => {
             if (stageOf(prompt) === "scene") {
               sceneCalls.push(prompt.userMessage);
@@ -402,29 +426,38 @@ describe("runOneShotStages", () => {
     expect(sceneCalls).toHaveLength(1);
   });
 
-  it("never runs more scene calls at once than allowed", async () => {
+  it("writes scenes one at a time, each starting from the last exit", async () => {
     const a = local();
     const { call } = fakeModel(a);
     let inFlight = 0;
     let peak = 0;
+    const scenePrompts: string[] = [];
     await runOneShotStages(
       { ...options, durationHours: 4 },
       {
-        concurrency: 2,
         call: async (p) => {
-          inFlight += 1;
-          peak = Math.max(peak, inFlight);
+          const isScene = stageOf(p) === "scene";
+          if (isScene) {
+            scenePrompts.push(p.userMessage);
+            inFlight += 1;
+            peak = Math.max(peak, inFlight);
+          }
           await new Promise((r) => setTimeout(r, 1));
           try {
             return await call(p);
           } finally {
-            inFlight -= 1;
+            if (isScene) inFlight -= 1;
           }
         },
       },
       "",
       seeded(),
     );
-    expect(peak).toBe(2);
+    expect(peak).toBe(1);
+    expect(scenePrompts[0]).not.toContain(
+      "What the earlier scenes established",
+    );
+    expect(scenePrompts[1]).toContain("What the earlier scenes established");
+    expect(scenePrompts[1]).toContain(a.scenes[0].title);
   });
 });

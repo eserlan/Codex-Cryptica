@@ -101,6 +101,7 @@ function parseScene(raw: unknown, i: number, count: number): OneShotScene {
     shorten: str(r.shorten, "Run it as a single decisive beat, then move on."),
     skip: undefined,
     whereabouts: parseWhereabouts(r.whereabouts),
+    exit: parseWhereabouts(r.exit),
     routes: parseRoutes(r.routes),
   };
 }
@@ -244,6 +245,7 @@ function parseBriefing(raw: unknown): OneShotAdventure["briefing"] {
     stakes: str(b.stakes),
     prep: str(b.prep),
     questions: parseQuestions(b.questions),
+    environment: str(b.environment) || undefined,
   };
 }
 
@@ -315,6 +317,7 @@ export function parseClock(raw: unknown): OneShotClock | undefined {
     ticks,
     slow: str(c.slow),
     deadline: str(c.deadline) || undefined,
+    counts: str(c.counts) || undefined,
   };
 }
 

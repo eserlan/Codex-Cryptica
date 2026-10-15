@@ -173,17 +173,26 @@ export function parseRoutes(raw: unknown): OneShotRoute[] | undefined {
   return found.length ? found : undefined;
 }
 
+/** Known NPCs and objects only, and the last entry for each. */
+function known(
+  entries: OneShotWhereabout[] | undefined,
+  npcIds: Set<string>,
+): OneShotWhereabout[] {
+  const seen = new Set<string>();
+  return (entries ?? [])
+    .filter((w) => w.kind === "object" || npcIds.has(w.who))
+    .reverse()
+    .filter((w) => !seen.has(w.who) && !!seen.add(w.who))
+    .reverse();
+}
+
 /** Whereabouts of unknown NPCs, repeats and routes not in `next` are dropped. */
 function normaliseScene(
   scene: OneShotScene,
   npcIds: Set<string>,
 ): OneShotScene {
-  const seen = new Set<string>();
-  const whereabouts = (scene.whereabouts ?? [])
-    .filter((w) => w.kind === "object" || npcIds.has(w.who))
-    .reverse()
-    .filter((w) => !seen.has(w.who) && !!seen.add(w.who))
-    .reverse();
+  const whereabouts = known(scene.whereabouts, npcIds);
+  const exit = known(scene.exit, npcIds);
   const routes = (scene.routes ?? []).filter(
     (r, i, all) =>
       scene.next.includes(r.to) && all.findIndex((o) => o.to === r.to) === i,
@@ -191,6 +200,7 @@ function normaliseScene(
   return {
     ...scene,
     whereabouts: whereabouts.length ? whereabouts : undefined,
+    exit: exit.length ? exit : undefined,
     routes: routes.length ? routes : undefined,
   };
 }
@@ -228,6 +238,8 @@ export function whereaboutsTimeline(
       name: names.get(w.who) ?? w.who,
       carried: !stated.has(w.who),
     }));
+    // What the scene leaves behind is where the next one picks up.
+    for (const w of scene.exit ?? []) current.set(w.who, w);
     return { scene, entries };
   });
 }
@@ -338,6 +350,9 @@ export function normaliseState(adventure: OneShotAdventure): OneShotAdventure {
     ...adventure,
     scenes: adventure.scenes.map((s) => normaliseScene(s, npcIds)),
     endings: normaliseEndings(adventure.endings, adventure.decisions),
+    // Supplies are a Survival mechanic; elsewhere they are bookkeeping.
+    resources:
+      adventure.emphasis === "Survival" ? adventure.resources : undefined,
     clock: adventure.clock && normaliseClock(adventure.clock, adventure.scenes),
   };
 }

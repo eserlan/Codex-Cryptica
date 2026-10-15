@@ -38,40 +38,64 @@ function change(prev: OneShotWhereabout, next: OneShotWhereabout): string {
     : `goes from ${prev.state} to ${next.state}`;
 }
 
-export const checkWhereabouts: GapCheck = (adventure) => {
+type Gap = (who: string, message: string) => OneShotGap;
+
+/** Changes against the last known state that the scene never explains. */
+function unexplainedChanges(
+  scene: OneShotAdventure["scenes"][number],
+  current: Map<string, OneShotWhereabout>,
+  gap: Gap,
+): OneShotGap[] {
   const gaps: OneShotGap[] = [];
-  const current = new Map<string, OneShotWhereabout>();
-  const names = new Map(adventure.npcs.map((n) => [n.id, n.name]));
-  for (const scene of adventure.scenes) {
-    const stated = new Map((scene.whereabouts ?? []).map((w) => [w.who, w]));
-    const gap = (who: string, message: string): OneShotGap => ({
-      area: "npc",
-      id: names.has(who) ? who : undefined,
-      message: `${names.get(who) ?? who} ${message}`,
-    });
-    for (const w of stated.values()) {
-      const prev = current.get(w.who);
-      if (prev && needsReason(prev, w) && !w.how) {
-        gaps.push(
-          gap(
-            w.who,
-            `${change(prev, w)} in "${scene.title}" with no explanation. Say how it happened.`,
-          ),
-        );
-      }
-      current.set(w.who, w);
+  for (const w of scene.whereabouts ?? []) {
+    const prev = current.get(w.who);
+    if (prev && needsReason(prev, w) && !w.how) {
+      gaps.push(
+        gap(
+          w.who,
+          `${change(prev, w)} in "${scene.title}" with no explanation. Say how it happened.`,
+        ),
+      );
     }
-    for (const id of scene.npcIds) {
-      const held = current.get(id);
-      if (held && isConfined(held.state) && !stated.has(id)) {
-        gaps.push(
+    current.set(w.who, w);
+  }
+  return gaps;
+}
+
+/** NPCs present in a scene while still held from an earlier one. */
+function stillHeld(
+  scene: OneShotAdventure["scenes"][number],
+  current: Map<string, OneShotWhereabout>,
+  gap: Gap,
+): OneShotGap[] {
+  const stated = new Set((scene.whereabouts ?? []).map((w) => w.who));
+  return scene.npcIds.flatMap((id) => {
+    const held = current.get(id);
+    return held && isConfined(held.state) && !stated.has(id)
+      ? [
           gap(
             id,
             `is in "${scene.title}" but is still ${held.state} from an earlier scene. Say how they got free, or leave them out.`,
           ),
-        );
-      }
-    }
+        ]
+      : [];
+  });
+}
+
+export const checkWhereabouts: GapCheck = (adventure) => {
+  const gaps: OneShotGap[] = [];
+  const current = new Map<string, OneShotWhereabout>();
+  const names = new Map(adventure.npcs.map((n) => [n.id, n.name]));
+  const gap: Gap = (who, message) => ({
+    area: "npc",
+    id: names.has(who) ? who : undefined,
+    message: `${names.get(who) ?? who} ${message}`,
+  });
+  for (const scene of adventure.scenes) {
+    gaps.push(...unexplainedChanges(scene, current, gap));
+    gaps.push(...stillHeld(scene, current, gap));
+    // The next scene starts where this one left everyone.
+    for (const w of scene.exit ?? []) current.set(w.who, w);
   }
   return gaps;
 };
