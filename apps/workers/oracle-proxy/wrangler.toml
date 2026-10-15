@@ -152,12 +152,16 @@ namespace_id = "1360"
 # native windows, not one long sliding window. Burst kills tight loops; the
 # per-minute cap bounds sustained volume. Tune the limits freely; the periods
 # are fixed by the platform.
+#
+# Raised from 5/10s and 20/60s: a staged one-shot adventure makes ~10 calls,
+# several in parallel, and a user who retries straight away must not be cut
+# off mid-generation.
 [[ratelimits]]
 name = "LLM_BURST_RATE_LIMITER"
 namespace_id = "1353"
 
   [ratelimits.simple]
-  limit = 5
+  limit = 10
   period = 10
 
 [[ratelimits]]
@@ -165,7 +169,7 @@ name = "LLM_GENERATION_RATE_LIMITER"
 namespace_id = "1354"
 
   [ratelimits.simple]
-  limit = 20
+  limit = 40
   period = 60
 
 # CC Cloud Backup (spec 162). Enable creates a backup and is once-per-vault in
