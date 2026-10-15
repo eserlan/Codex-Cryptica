@@ -46,6 +46,7 @@ export const GENERATOR_SLUGS_WITH_THEME = new Set([
   "holiday",
   "personality",
   "tome",
+  "one-shot-adventure-generator",
 ]);
 
 export function shouldSyncGeneratorTheme(s: string) {
@@ -235,4 +236,19 @@ export function mapAlienRaceGenreToTheme(genre: string): string {
   if (genre === "Post-Apocalyptic") return "Post-Apocalyptic";
   // Hard Sci-Fi and Space Opera both skin as the general sci-fi theme.
   return "Sci-Fi / Space Opera";
+}
+
+/** The visual theme for a one-shot genre; a custom genre keeps the current one. */
+export function mapOneShotGenreToTheme(genre: string): string | null {
+  const themeByGenre: Record<string, string> = {
+    "Classic Fantasy": "Classic Fantasy",
+    "Dark Fantasy": "Vampire / Gothic Noir",
+    "Sci-Fi / Space Opera": "Sci-Fi / Space Opera",
+    Horror: "Cosmic Horror",
+    Cyberpunk: "Cyberpunk / Corporate",
+    "Modern Mystery": "Modern Conspiracy",
+    "Western / Frontier": "Western / Frontier",
+    "Post-Apocalyptic": "Post-Apocalyptic",
+  };
+  return themeByGenre[genre] ?? null;
 }

@@ -1,3 +1,4 @@
+import { oneShotConfig } from "$lib/services/seo/generator-config";
 import { describe, expect, it } from "vitest";
 import {
   mapHubGenreToShipGenre,
@@ -5,6 +6,7 @@ import {
   mapStarSystemGenreToTheme,
   mapAlienRaceGenreToTheme,
   mapWorldGenreToTheme,
+  mapOneShotGenreToTheme,
   resolveHubGeneratorGenre,
   shouldSyncGeneratorTheme,
   SOCIAL_HUB_GENRE_TO_THEME,
@@ -131,5 +133,18 @@ describe("SOCIAL_HUB_GENRE_TO_THEME", () => {
     expect(SOCIAL_HUB_GENRE_TO_THEME["Superhero"]).toBe(
       "Superhero / Comic Book",
     );
+  });
+});
+
+describe("mapOneShotGenreToTheme", () => {
+  it("maps every one-shot genre to a theme and leaves custom genres alone", () => {
+    for (const genre of oneShotConfig.genres) {
+      expect(mapOneShotGenreToTheme(genre)).toBeTruthy();
+    }
+    expect(mapOneShotGenreToTheme("Dark Fantasy")).toBe(
+      "Vampire / Gothic Noir",
+    );
+    expect(mapOneShotGenreToTheme("Homebrew")).toBeNull();
+    expect(shouldSyncGeneratorTheme("one-shot-adventure-generator")).toBe(true);
   });
 });

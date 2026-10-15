@@ -66,4 +66,20 @@ describe("syncGeneratorTheme", () => {
     expect(state.setActiveTheme).toHaveBeenCalledWith("Mapped World");
     expect(state.world.genre).toBe("Classic Fantasy");
   });
+
+  it("skins the page from the one-shot genre", () => {
+    const state = context("one-shot-adventure-generator");
+    state.oneShot = { genre: "Dark Fantasy" };
+    state.mapOneShotGenre = (g) => (g === "Dark Fantasy" ? "Gothic" : null);
+    syncGeneratorTheme(state);
+    expect(state.setActiveTheme).toHaveBeenCalledWith("Gothic");
+  });
+
+  it("keeps the theme for a custom one-shot genre", () => {
+    const state = context("one-shot-adventure-generator");
+    state.oneShot = { genre: "My own genre" };
+    state.mapOneShotGenre = () => null;
+    syncGeneratorTheme(state);
+    expect(state.setActiveTheme).not.toHaveBeenCalled();
+  });
 });
