@@ -21,12 +21,15 @@ type GapCheck = (adventure: OneShotAdventure) => OneShotGap[];
 const VAGUE =
   /\bthe (?:(?:correct|right|proper|true|secret|missing|hidden|stolen|sacred|royal|old|two|three|four|five)\s+){1,3}(?:names?|words?|passages?|answers?|order|sequence|phrase|verses?|symbols?|runes?)\b/i;
 
+const CONCRETE_VALUE_AFTER_COLON =
+  /^\s*:\s*(?:"[^"\n]+"|'[^'\n]+'|`[^`\n]+`|[^.!?\n]+,\s*[^.!?\n]+\s+(?:and|or)\s+[^.!?\n]+(?:[.!?]|$))/i;
+
 export function isVague(text: string | undefined): boolean {
   if (!text?.trim()) return true;
   const match = VAGUE.exec(text);
   if (!match) return false;
   const followingText = text.slice(match.index + match[0].length);
-  return !/^\s*:\s*\S/.test(followingText);
+  return !CONCRETE_VALUE_AFTER_COLON.test(followingText);
 }
 
 const checkBriefing: GapCheck = ({ briefing }) => [
