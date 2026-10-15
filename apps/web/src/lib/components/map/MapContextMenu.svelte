@@ -505,14 +505,20 @@
                         token.baseShape === "hex" ||
                         token.baseShape === "hex-pointy" ||
                         token.baseShape === "hex-flat";
+                      const shapeOrientation =
+                        token.baseShape === "hex-flat"
+                          ? "flat"
+                          : token.baseShape === "hex-pointy"
+                            ? "pointy"
+                            : orientation;
                       const across = scale * Math.sqrt(3) * gridSize;
                       const width = hexShaped
-                        ? orientation === "pointy"
+                        ? shapeOrientation === "pointy"
                           ? across
                           : scale * 2 * gridSize
                         : across;
                       const height = hexShaped
-                        ? orientation === "pointy"
+                        ? shapeOrientation === "pointy"
                           ? scale * 2 * gridSize
                           : across
                         : across;

@@ -26,7 +26,7 @@ const token = vi.hoisted(() => ({
   width: 50,
   height: 50,
   rotation: 0,
-  baseShape: "circle" as "circle" | "hex",
+  baseShape: "circle" as "circle" | "hex" | "hex-pointy" | "hex-flat",
   facingIndicator: true,
   visibleTo: "all" as const,
   statusEffects: [] as string[],
@@ -132,6 +132,18 @@ describe("MapContextMenu appearance controls", () => {
     {
       gridType: "hex-flat",
       baseShape: "hex",
+      width: 200,
+      height: 100 * Math.sqrt(3),
+    },
+    {
+      gridType: "hex-flat",
+      baseShape: "hex-pointy",
+      width: 100 * Math.sqrt(3),
+      height: 200,
+    },
+    {
+      gridType: "hex-pointy",
+      baseShape: "hex-flat",
       width: 200,
       height: 100 * Math.sqrt(3),
     },
