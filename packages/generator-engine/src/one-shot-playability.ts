@@ -23,7 +23,10 @@ const VAGUE =
 
 export function isVague(text: string | undefined): boolean {
   if (!text?.trim()) return true;
-  return VAGUE.test(text) && !/["“”'‘’:]/.test(text);
+  const match = VAGUE.exec(text);
+  if (!match) return false;
+  const followingText = text.slice(match.index + match[0].length);
+  return !/^\s*:\s*\S/.test(followingText);
 }
 
 const checkBriefing: GapCheck = ({ briefing }) => [
@@ -48,7 +51,11 @@ const checkBriefing: GapCheck = ({ briefing }) => [
 ];
 
 const earlySceneIds = (adventure: OneShotAdventure) =>
-  new Set(adventure.scenes.filter((s) => s.kind !== "climax").map((s) => s.id));
+  new Set(
+    adventure.scenes
+      .filter((s) => s.essential && s.kind !== "climax")
+      .map((s) => s.id),
+  );
 
 const checkSolution: GapCheck = (adventure) => {
   const { solution } = adventure;
@@ -102,7 +109,7 @@ const checkSolution: GapCheck = (adventure) => {
 };
 
 const checkClock: GapCheck = ({ clock }) =>
-  clock && clock.ticks.length >= 3 && clock.advances.trim()
+  clock && clock.ticks.length >= 3 && clock.advances.trim() && clock.slow.trim()
     ? []
     : [
         {

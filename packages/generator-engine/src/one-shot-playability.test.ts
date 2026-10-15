@@ -60,6 +60,24 @@ describe("checkPlayability", () => {
     );
   });
 
+  it("flags a finale component found only in an optional scene", () => {
+    const a = local();
+    const optionalEarly = a.scenes.find(
+      (scene) => !scene.essential && scene.kind !== "climax",
+    );
+    expect(optionalEarly).toBeDefined();
+    a.solution!.requirements[0].sceneIds = [optionalEarly!.id];
+    expect(checkPlayability(a).map((g) => g.message)).toContainEqual(
+      expect.stringMatching(/can't be found before the finale/),
+    );
+  });
+
+  it("flags a clock with no way to slow the threat", () => {
+    const a = local();
+    a.clock!.slow = "  ";
+    expect(checkPlayability(a).map((g) => g.area)).toContain("clock");
+  });
+
   it("flags a finale component only found in the finale", () => {
     const a = local();
     a.solution!.requirements[0].sceneIds = [a.scenes.at(-1)!.id];
@@ -83,6 +101,16 @@ describe("checkPlayability", () => {
     expect(isVague("The true names")).toBe(true);
     expect(isVague('The true names: "Ysolde", "Maren" and "Aud"')).toBe(false);
     expect(isVague("")).toBe(true);
+  });
+
+  it("does not treat an apostrophe in a contraction as a stated fact", () => {
+    const text = "The correct passages can't be read by mortals";
+    expect(isVague(text)).toBe(true);
+    const a = local();
+    a.solution!.requirements[0].detail = text;
+    expect(checkPlayability(a).map((g) => g.message)).toContainEqual(
+      expect.stringMatching(/mentioned but never given/),
+    );
   });
 });
 
