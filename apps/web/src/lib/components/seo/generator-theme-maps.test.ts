@@ -148,6 +148,9 @@ describe("mapOneShotGenreToTheme", () => {
     expect(mapOneShotGenreToTheme("Dark Fantasy")).toBe(
       "Vampire / Gothic Noir",
     );
+    expect(mapOneShotGenreToTheme("Horror")).toBe("Cosmic Horror");
+    expect(mapOneShotGenreToTheme("Cyberpunk")).toBe("Cyberpunk / Corporate");
+    expect(mapOneShotGenreToTheme("Modern Mystery")).toBe("Modern Conspiracy");
     expect(mapOneShotGenreToTheme("Homebrew")).toBeNull();
     expect(shouldSyncGeneratorTheme("one-shot-adventure-generator")).toBe(true);
   });
