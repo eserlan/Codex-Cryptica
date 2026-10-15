@@ -228,6 +228,7 @@ export function whereaboutsTimeline(
 // ── Endings and decisions ────────────────────────────────────────────────
 
 export function parseDecisions(raw: unknown): OneShotDecision[] | undefined {
+  const ids = new Set<string>();
   const found = list(raw)
     .map((d, i) => {
       const r = rec(d);
@@ -236,7 +237,11 @@ export function parseDecisions(raw: unknown): OneShotDecision[] | undefined {
         question: str(r.question),
       };
     })
-    .filter((d) => d.question)
+    .filter((d) => {
+      if (!d.question || ids.has(d.id)) return false;
+      ids.add(d.id);
+      return true;
+    })
     .slice(0, 4);
   return found.length ? found : undefined;
 }
@@ -270,6 +275,7 @@ function normaliseEndings(
 // ── Theories and clues ───────────────────────────────────────────────────
 
 export function parseTheories(raw: unknown): OneShotTheory[] | undefined {
+  const ids = new Set<string>();
   const found = list(raw)
     .map((t, i) => {
       const r = rec(t);
@@ -282,7 +288,11 @@ export function parseTheories(raw: unknown): OneShotTheory[] | undefined {
         obvious: r.obvious === true ? true : undefined,
       };
     })
-    .filter((t) => t.name);
+    .filter((t) => {
+      if (!t.name || ids.has(t.id)) return false;
+      ids.add(t.id);
+      return true;
+    });
   return found.length ? found : undefined;
 }
 

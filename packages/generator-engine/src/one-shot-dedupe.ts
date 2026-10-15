@@ -37,7 +37,7 @@ function mergeNpc(keep: OneShotNpc, extra: OneShotNpc): OneShotNpc {
 
 /**
  * NPCs that share an id or a name become one. The antagonist's id wins, then
- * the first one listed; scene references and the antagonist id are remapped.
+ * the first one listed; NPC references and the antagonist id are remapped.
  */
 function dedupeNpcs(adventure: OneShotAdventure) {
   const groups = new Map<string, OneShotNpc[]>();
@@ -105,6 +105,10 @@ export function dedupeOneShot(adventure: OneShotAdventure): OneShotAdventure {
   const threadsChanged = threads?.length !== adventure.threads?.length;
   if (!npcsChanged && !threadsChanged) return adventure;
   const to = (id: string) => remap.get(id) ?? id;
+  const remappedThreads = threads?.map((thread) => ({
+    ...thread,
+    about: thread.about ? to(thread.about) : undefined,
+  }));
   return {
     ...adventure,
     npcs,
@@ -112,7 +116,12 @@ export function dedupeOneShot(adventure: OneShotAdventure): OneShotAdventure {
     scenes: adventure.scenes.map((s) => ({
       ...s,
       npcIds: [...new Set(s.npcIds.map(to))],
+      whereabouts: s.whereabouts?.map((whereabout) =>
+        whereabout.kind === "npc"
+          ? { ...whereabout, who: to(whereabout.who) }
+          : whereabout,
+      ),
     })),
-    threads,
+    threads: remappedThreads,
   };
 }

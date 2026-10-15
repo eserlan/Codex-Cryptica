@@ -4,6 +4,9 @@ import { simulateClock } from "./one-shot-clock";
 import {
   normaliseClock,
   normaliseState,
+  parseDecisions,
+  parseTheories,
+  parseVerdicts,
   scheduleSentence,
   whereaboutsTimeline,
 } from "./one-shot-state";
@@ -199,6 +202,19 @@ describe("who is where", () => {
 });
 
 describe("endings as decisions", () => {
+  it("drops duplicate decision IDs so each question has its own key", () => {
+    expect(
+      parseDecisions([
+        { id: "choice", question: "Save the witness?" },
+        { id: "choice", question: "Keep the evidence?" },
+        { id: "other", question: "Expose the culprit?" },
+      ]),
+    ).toEqual([
+      { id: "choice", question: "Save the witness?" },
+      { id: "other", question: "Expose the culprit?" },
+    ]);
+  });
+
   it("covers every combination of the local decisions exactly once", () => {
     const a = local();
     expect(a.decisions!.map((d) => d.id)).toEqual(["stopped", "clean"]);
@@ -269,6 +285,26 @@ describe("endings as decisions", () => {
 });
 
 describe("theories and clues", () => {
+  it("drops duplicate theory IDs so clue verdicts select one theory", () => {
+    const theories = parseTheories([
+      { id: "suspect", name: "The steward", isTrue: false },
+      { id: "suspect", name: "The magistrate", isTrue: true },
+    ]);
+
+    expect(theories).toEqual([
+      {
+        id: "suspect",
+        name: "The steward",
+        summary: "",
+        isTrue: false,
+        obvious: undefined,
+      },
+    ]);
+    expect(parseVerdicts(["suspect", "unknown"], theories)).toEqual([
+      "suspect",
+    ]);
+  });
+
   const mystery = () => local({ emphasis: "Investigation / mystery" });
 
   it("gives a local investigation an obvious wrong theory that clues overturn", () => {

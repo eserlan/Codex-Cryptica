@@ -54,6 +54,39 @@ describe("de-duplication", () => {
     expect(new Set(d.scenes[1].npcIds).size).toBe(d.scenes[1].npcIds.length);
   });
 
+  it("remaps NPC whereabouts and rescue subjects but preserves object names", () => {
+    const a = local({ durationHours: 4 });
+    const villain = a.npcs.find((n) => n.id === a.antagonistId)!;
+    const duplicateId = "npc-9";
+    a.npcs.push({ ...villain, id: duplicateId, name: ` ${villain.name}.` });
+    a.scenes[1].whereabouts = [
+      { who: duplicateId, kind: "npc", state: "trapped" },
+      { who: "Lantern", kind: "object", state: "here" },
+    ];
+    a.threads = [
+      {
+        about: duplicateId,
+        kind: "rescue",
+        setup: "The villain is trapped beneath the cart.",
+        payoff: "The villain is freed.",
+        sceneIds: [a.scenes[1].id],
+      },
+    ];
+
+    const d = dedupeOneShot(a);
+
+    expect(d.scenes[1].whereabouts).toEqual([
+      { who: villain.id, kind: "npc", state: "trapped" },
+      { who: "Lantern", kind: "object", state: "here" },
+    ]);
+    expect(d.threads![0].about).toBe(villain.id);
+    expect(messages(d)).not.toContainEqual(
+      expect.stringMatching(
+        /does not say who is to be rescued|no scene shows them trapped/,
+      ),
+    );
+  });
+
   it("merges NPC names that differ only by punctuation", () => {
     const a = local({ durationHours: 4 });
     const villain = a.npcs.find((n) => n.id === a.antagonistId)!;
