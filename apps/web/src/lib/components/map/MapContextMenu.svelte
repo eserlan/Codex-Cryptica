@@ -474,7 +474,7 @@
             role="menu"
             aria-label="Resize options"
           >
-            {#each [1, 2, 3, 4] as scale (scale)}
+            {#each [0.25, 0.5, 1, 2, 3, 4] as scale (scale)}
               <button
                 class="w-full text-left px-4 py-2 text-xs hover:bg-theme-primary/20 hover:text-theme-primary transition-colors font-mono"
                 role="menuitem"

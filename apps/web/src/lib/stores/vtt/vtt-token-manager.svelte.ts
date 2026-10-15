@@ -46,6 +46,22 @@ function isHexShaped(shape: string | undefined) {
   return shape === "hex" || shape === "hex-pointy" || shape === "hex-flat";
 }
 
+/** Supported token sizes below one grid cell: quarter and half. */
+const FRACTIONAL_CELLS = [0.25, 0.5] as const;
+const FRACTION_TOLERANCE = 0.02;
+
+/**
+ * A side measured in grid cells. Beyond one cell it rounds to whole cells.
+ * Below one it stays at a half or quarter cell only if it already is one, so a
+ * stray in-between size still becomes a whole cell rather than a fraction.
+ */
+function sideInCells(cells: number): number {
+  const fraction = FRACTIONAL_CELLS.find(
+    (f) => Math.abs(cells - f) <= FRACTION_TOLERANCE,
+  );
+  return fraction ?? Math.max(1, Math.round(cells));
+}
+
 function roundTokenCoordinate(value: number) {
   const factor = 10 ** TOKEN_COORD_PRECISION;
   return Math.round(value * factor) / factor;
@@ -475,8 +491,7 @@ export class VTTTokenManager {
     keepSize: boolean,
   ): { x: number; y: number; width: number; height: number } {
     const cell = SQRT_3 * config.size;
-    const whole = (side: number) =>
-      Math.max(cell, Math.round(side / cell) * cell);
+    const whole = (side: number) => sideInCells(side / cell) * cell;
     const width = keepSize ? size.width : whole(size.width);
     const height = keepSize ? size.height : whole(size.height);
     const centre = hexToPoint(
@@ -541,10 +556,10 @@ export class VTTTokenManager {
 
       // Snap size to nearest grid cell multiple
       targetWidth = gridSize
-        ? Math.max(gridSize, Math.round(tokenSize.width / gridSize) * gridSize)
+        ? sideInCells(tokenSize.width / gridSize) * gridSize
         : tokenSize.width;
       targetHeight = gridSize
-        ? Math.max(gridSize, Math.round(tokenSize.height / gridSize) * gridSize)
+        ? sideInCells(tokenSize.height / gridSize) * gridSize
         : tokenSize.height;
     }
 
