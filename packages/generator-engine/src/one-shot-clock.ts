@@ -52,11 +52,19 @@ export interface ClockSchedule {
 
 const RECURRING_TIME =
   /\b(?:every|each|per)\s+(?:(?:one|two|three|four|five|six|\d+)\s+)?(?:hours?|nights?|days?|dawns?|dusks?|sunsets?|sunrises?|watches|tides?|moons?|bells?|chimes?)\b|\b(?:at|on)\s+(?:the\s+)?(?:dawn|dusk|sunset|sunrise|nightfall|midnight|noon)\b/i;
+const CLOCK_MOVEMENT = /\b(?:clock|it)\s+(?:advances?|ticks?|moves?)\b/i;
 const EXPLICIT_TIME_ADVANCE =
   /\b(?:clock|it)\s+(?:advances?|ticks?|moves?)\b.{0,40}\b(?:after|in)\s+(?:(?:one|two|three|four|five|six|\d+)\s+)?(?:hours?|nights?|days?)\b|\b(?:after|in)\s+(?:(?:one|two|three|four|five|six|\d+)\s+)?(?:hours?|nights?|days?)\b.{0,40}\b(?:clock|it)\s+(?:advances?|ticks?|moves?)\b/i;
 
 function alsoFollowsTime(advances: string): boolean {
-  return RECURRING_TIME.test(advances) || EXPLICIT_TIME_ADVANCE.test(advances);
+  if (EXPLICIT_TIME_ADVANCE.test(advances)) return true;
+  return advances.split(/[;.!?]|\bwhile\b|\bwhereas\b/i).some((clause) => {
+    const trigger = RECURRING_TIME.exec(clause);
+    const movement = CLOCK_MOVEMENT.exec(clause);
+    return (
+      !!trigger && !!movement && Math.abs(trigger.index - movement.index) <= 40
+    );
+  });
 }
 
 /**

@@ -122,7 +122,7 @@ describe("clock schedule", () => {
   });
 
   it.each([
-    "At each sunset, and whenever the party forces a route.",
+    "The clock advances at each sunset, and whenever the party forces a route.",
     "At the end of every essential scene; failures add a tick.",
   ])("accepts a scheduled clock: %s", (advances) => {
     const a = local();
@@ -196,13 +196,27 @@ describe("clock schedule", () => {
       ),
     );
     a.clock!.advances =
-      "At each sunset, and when the party reaches the finale.";
+      "The clock advances at each sunset, and when the party reaches the finale.";
     expect(messages(a).filter((m) => /clock/i.test(m))).toEqual([]);
   });
 
   it("does not treat a deadline duration as a time-triggered clock advance", () => {
     const a = allEssential(
       "At the end of each essential scene; the party has six hours before the deadline.",
+      8,
+    );
+
+    expect(simulateClock(a)!.alsoTimed).toBe(false);
+    expect(messages(a)).toContainEqual(
+      expect.stringMatching(
+        /schedule only advances the clock \d+ times .*8 ticks, so the pressure never builds/,
+      ),
+    );
+  });
+
+  it("does not treat an unrelated recurring event as a clock advance", () => {
+    const a = allEssential(
+      "At the end of each essential scene; every hour, the guards change shifts.",
       8,
     );
 
@@ -246,6 +260,16 @@ describe("NPC continuity", () => {
       expect(messages(a).filter((m) => /Tovin/.test(m))).toEqual([]);
     },
   );
+
+  it("does not let another character's explanation excuse Tovin's confinement", () => {
+    const a = withWitness(
+      "Tovin remains trapped in the cellar, while the party was dragged here by floodwaters.",
+    );
+
+    expect(messages(a)).toContainEqual(
+      `Tovin Marr is present and free in "${a.scenes[0].title}" but trapped in "${a.scenes[1].title}". Say in that scene how it happened, or make them two different people.`,
+    );
+  });
 
   it("does not let an unrelated explanation sentence excuse a confinement transition", () => {
     const a = withWitness(
