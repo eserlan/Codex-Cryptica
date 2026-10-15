@@ -735,3 +735,8 @@ export {
   type Lexicon,
   type Trait,
 } from "./smart";
+
+export {
+  assessLanguageOutput,
+  type LanguageOutputAssessment,
+} from "./language-output-assessment";
