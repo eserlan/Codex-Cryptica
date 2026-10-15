@@ -19,8 +19,12 @@ const slug = (text: string) =>
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-|-$/g, "");
 
-const boxes = (raw: unknown) =>
-  Math.max(0, Math.min(9, Math.round(Number(raw))));
+const boxes = (raw: unknown) => {
+  const count = Number(raw);
+  return Number.isFinite(count)
+    ? Math.max(0, Math.min(9, Math.round(count)))
+    : 0;
+};
 
 export function parseResources(
   raw: unknown,

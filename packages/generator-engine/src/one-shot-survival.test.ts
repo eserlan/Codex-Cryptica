@@ -71,6 +71,19 @@ describe("survival resources", () => {
     expect(parsed).toHaveLength(1);
     expect(parsed![0].spends).toHaveLength(1);
   });
+
+  it("drops resources with non-numeric or missing starting counts", () => {
+    const parsed = parseResources(
+      [
+        { name: "Bad", start: "many" },
+        { name: "Infinite", start: "Infinity" },
+        { name: "Missing" },
+        { name: "Food", start: 4 },
+      ],
+      () => true,
+    );
+    expect(parsed?.map((resource) => resource.name)).toEqual(["Food"]);
+  });
 });
 
 describe("clock schedule duplicates", () => {
