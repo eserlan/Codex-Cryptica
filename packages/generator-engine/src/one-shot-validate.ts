@@ -29,6 +29,48 @@ export function allocateMinutes(
   return minutes;
 }
 
+/** Optional scenes may take at most this share of scene time. */
+export const OPTIONAL_SHARE = 0.2;
+
+/**
+ * Allocate minutes as allocateMinutes does, but cap optional scenes at
+ * OPTIONAL_SHARE of the time so skipping them still leaves a session that
+ * fills the slot. Freed time goes back to essential scenes by weight.
+ */
+export function allocateWithCore(
+  weights: number[],
+  essential: boolean[],
+  available: number,
+  climaxIndex = weights.length - 1,
+): number[] {
+  const minutes = allocateMinutes(weights, available, climaxIndex);
+  const optional = minutes.filter((_, i) => !essential[i]);
+  const optionalTotal = optional.reduce((a, b) => a + b, 0);
+  const cap = Math.floor((available * OPTIONAL_SHARE) / STEP) * STEP;
+  if (optionalTotal <= cap || !essential.some(Boolean)) return minutes;
+  const capped = minutes.map((m, i) =>
+    essential[i]
+      ? m
+      : Math.max(STEP, Math.floor((m * cap) / optionalTotal / STEP) * STEP),
+  );
+  const essentialIdx = minutes.map((_, i) => i).filter((i) => essential[i]);
+  const core = allocateMinutes(
+    essentialIdx.map((i) => weights[i]),
+    available -
+      capped.filter((_, i) => !essential[i]).reduce((a, b) => a + b, 0),
+    Math.max(0, essentialIdx.indexOf(climaxIndex)),
+  );
+  essentialIdx.forEach((i, k) => (capped[i] = core[k]));
+  return capped;
+}
+
+/** Scene minutes when every optional scene is skipped. */
+export function coreMinutes(adventure: OneShotAdventure): number {
+  return adventure.scenes
+    .filter((s) => s.essential)
+    .reduce((sum, s) => sum + s.minutes, 0);
+}
+
 export function plannedMinutes(adventure: OneShotAdventure): number {
   return adventure.scenes.reduce((sum, s) => sum + s.minutes, 0);
 }
@@ -46,8 +88,9 @@ export function normaliseTimeBudget(
     0,
     adventure.scenes.findIndex((s) => s.kind === "climax"),
   );
-  const minutes = allocateMinutes(
+  const minutes = allocateWithCore(
     adventure.scenes.map((s) => Math.max(s.minutes, STEP)),
+    adventure.scenes.map((s) => s.essential),
     available,
     climaxIndex,
   );

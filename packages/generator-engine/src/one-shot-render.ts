@@ -1,9 +1,20 @@
+/**
+ * Two views of one adventure. The adventure view is for reading through the
+ * scenario: situations, clues, people and the finale's shape. The GM running
+ * view is for the table: how to adjudicate each scene, the finale procedure,
+ * the clock, open threads and timing. Each fact is stated once, in the view
+ * where the GM needs it.
+ */
+
 import type {
   OneShotAdventure,
   OneShotClue,
+  OneShotNpc,
   OneShotScene,
 } from "./one-shot-types";
 import { checkPlayability } from "./one-shot-playability";
+import { antagonistOf } from "./one-shot-integrity";
+import { coreMinutes } from "./one-shot-validate";
 
 function hours(minutes: number): string {
   const h = minutes / 60;
@@ -13,6 +24,9 @@ function hours(minutes: number): string {
 function bullets(items: string[]): string {
   return items.map((i) => `- ${i}`).join("\n");
 }
+
+const lines = (...parts: (string | false | undefined)[]) =>
+  parts.filter(Boolean).join("\n");
 
 function names(adventure: OneShotAdventure, ids: string[]): string {
   return (
@@ -33,6 +47,12 @@ function sceneTitles(adventure: OneShotAdventure, ids: string[]): string {
 }
 
 const clueName = (c: OneShotClue) => c.label ?? c.text;
+const sceneTag = (s: OneShotScene) =>
+  `${s.minutes} min, ${s.essential ? "essential" : "optional"}`;
+
+// ---------------------------------------------------------------------------
+// Adventure view
+// ---------------------------------------------------------------------------
 
 /** The opening material sits inside scene 1, so its time is counted there. */
 function openingBlock(adventure: OneShotAdventure, scene: OneShotScene) {
@@ -44,25 +64,11 @@ function openingBlock(adventure: OneShotAdventure, scene: OneShotScene) {
     opening.readAloud ? `> ${opening.readAloud}` : "",
     `**First decision:** ${opening.firstDecision}`,
     opening.involvement.length
-      ? `**Ways to get involved**\n${bullets(opening.involvement)}`
+      ? `**Ways in:** ${opening.involvement.join(" ")}`
       : "",
   ]
     .filter(Boolean)
     .join("\n\n");
-}
-
-function challengeBlock(scene: OneShotScene) {
-  const { challenge } = scene;
-  return [
-    `**Challenge (${challenge.type}):** ${challenge.description}`,
-    challenge.success ? `**What counts as success:** ${challenge.success}` : "",
-    challenge.otherApproaches?.length
-      ? `**Other approaches**\n${bullets(challenge.otherApproaches)}`
-      : "",
-    `**If the party fails:** ${challenge.failForward}`,
-  ]
-    .filter(Boolean)
-    .join("\n");
 }
 
 function sceneBlock(
@@ -77,56 +83,56 @@ function sceneBlock(
       const route = c.routes.find((r) => r.sceneId === scene.id);
       return `${c.label ? `**${c.label}:** ` : ""}${c.text}${route ? ` _(${route.method})_` : ""}`;
     });
-  const opening =
-    scene.kind === "opening" ? `${openingBlock(adventure, scene)}\n\n` : "";
-  return `### ${n}. ${scene.title} (${scene.minutes} min, ${scene.essential ? "essential" : "optional"})
-
-**Purpose:** ${scene.purpose}
-**Location:** ${scene.location}
-**Key NPCs:** ${names(adventure, scene.npcIds)}
-
-${scene.situation}
-
-${opening}**Likely approaches**
-${bullets(scene.approaches)}
-
-**Clues**
-${clues.length ? bullets(clues) : "- None here"}
-
-${challengeBlock(scene)}
-
-**Likely outcomes**
-${bullets(scene.outcomes)}
-
-**Leads to:** ${sceneTitles(adventure, scene.next)}
-**Running short:** ${scene.shorten}${!scene.essential && scene.skip ? `\n**Skip:** ${scene.skip}` : ""}`;
+  return [
+    `### ${n}. ${scene.title} (${sceneTag(scene)})`,
+    `_${scene.location} · ${names(adventure, scene.npcIds)}_`,
+    scene.situation,
+    scene.kind === "opening" ? openingBlock(adventure, scene) : "",
+    scene.approaches.length
+      ? `**Approaches:** ${scene.approaches.join("; ")}.`
+      : "",
+    clues.length ? `**Clues**\n${bullets(clues)}` : "",
+    `**Challenge (${scene.challenge.type}):** ${scene.challenge.description}`,
+    scene.kind === "climax"
+      ? ""
+      : `**Leads to:** ${sceneTitles(adventure, scene.next)}`,
+  ]
+    .filter(Boolean)
+    .join("\n\n");
 }
 
-function questionsBlock(adventure: OneShotAdventure) {
-  const questions = adventure.briefing.questions ?? [];
-  if (!questions.length) return "";
-  return `\n## Questions Players Will Ask\n${questions.map((q) => `- **${q.question}** ${q.answer}`).join("\n")}\n`;
+function npcBlock(npc: OneShotNpc, isAntagonist: boolean) {
+  return lines(
+    `### ${npc.name} — ${npc.role}${isAntagonist ? " (antagonist)" : ""}`,
+    npc.backstory && `- **Why:** ${npc.backstory}`,
+    `- **Goal:** ${npc.motivation}`,
+    `- **Knows:** ${npc.knows}`,
+    `- **Reacts:** ${npc.reaction}`,
+    npc.tactics && `- **When opposed:** ${npc.tactics}`,
+    npc.stopIf && `- **Would stop if:** ${npc.stopIf}`,
+    npc.limits && `- **Cannot:** ${npc.limits}`,
+    `- **Roleplay:** ${npc.cues}`,
+  );
 }
 
-function solutionBlock(adventure: OneShotAdventure) {
+function npcsBlock(adventure: OneShotAdventure) {
+  const villain = antagonistOf(adventure);
+  const ordered = villain
+    ? [villain, ...adventure.npcs.filter((n) => n !== villain)]
+    : adventure.npcs;
+  return ordered.map((n) => npcBlock(n, n === villain)).join("\n\n");
+}
+
+function finaleOverview(adventure: OneShotAdventure) {
   const { solution } = adventure;
   if (!solution) return "";
-  const where = (ids: string[]) => sceneTitles(adventure, ids);
-  return `\n## How the Finale Works
-${solution.summary ? `${solution.summary}\n\n` : ""}**What it needs**
-${bullets(solution.requirements.map((r) => `**${r.what}:** ${r.detail} _(found in: ${where(r.sceneIds)})_`))}
-
-**Steps**
-${solution.steps.map((step, i) => `${i + 1}. ${step}`).join("\n")}${solution.alternatives.length ? `\n\n**Other ways through**\n${bullets(solution.alternatives)}` : ""}${solution.mistakes.length ? `\n\n**If they get it wrong**\n${bullets(solution.mistakes)}` : ""}
-`;
-}
-
-function clockBlock(adventure: OneShotAdventure) {
-  const { clock } = adventure;
-  if (!clock) return "";
-  return `\n## ${clock.name}
-**Advances when:** ${clock.advances}
-${clock.ticks.map((t, i) => `${i + 1}. ${t.trigger ? `_${t.trigger}:_ ` : ""}${t.effect}`).join("\n")}${clock.slow ? `\n\n**Slowing it:** ${clock.slow}` : ""}
+  return `\n## The Finale
+${lines(
+  solution.summary,
+  solution.requirements.length > 0 &&
+    `\n**It turns on:** ${solution.requirements.map((r) => `${r.what} (${sceneTitles(adventure, r.sceneIds)})`).join("; ")}.`,
+)}
+_The full procedure is in the GM cheat sheet._
 `;
 }
 
@@ -137,58 +143,40 @@ function gapsBlock(adventure: OneShotAdventure) {
   return `\n## Before You Run It\nThese parts still need a decision from you:\n${bullets(gaps.map((g) => g.message))}\n`;
 }
 
-/** The whole adventure as Markdown, in play order. */
+/** The adventure view: for reading through the scenario. */
 export function renderOneShotMarkdown(adventure: OneShotAdventure): string {
   const { briefing } = adventure;
   const scenes = adventure.scenes
     .map((s, i) => sceneBlock(adventure, s, i + 1))
     .join("\n\n");
-  const npcs = adventure.npcs
-    .map(
-      (n) =>
-        `### ${n.name} — ${n.role}
-- **Wants:** ${n.motivation}
-- **Knows:** ${n.knows}
-- **Reacts:** ${n.reaction}
-- **Roleplay cues:** ${n.cues}`,
-    )
-    .join("\n\n");
   const endings = adventure.endings
     .map((e) => `- **${e.title}** — ${e.condition} ${e.consequence}`)
     .join("\n");
+  const core = coreMinutes(adventure);
+  const optional = adventure.scenes.filter((s) => !s.essential);
 
   return `# ${adventure.title}
 
 _${adventure.genre} · ${adventure.system} · ${hours(adventure.durationMinutes)} · ${adventure.partySize} players${adventure.partyLevel ? ` · ${adventure.partyLevel}` : ""} · ${adventure.emphasis}_
 
 ## GM Briefing
-**Premise:** ${briefing.premise}
-**Hook:** ${briefing.hook}
-**Player objective:** ${briefing.objective}
-**Central truth:** ${briefing.secret}${briefing.trigger ? `\n**Why now:** ${briefing.trigger}` : ""}
-**Stakes:** ${briefing.stakes}
-**Prep needed:** ${briefing.prep}
-${gapsBlock(adventure)}${questionsBlock(adventure)}
+${lines(
+  `**Premise:** ${briefing.premise}`,
+  `**Hook:** ${briefing.hook}`,
+  `**Player objective:** ${briefing.objective}`,
+  `**Central truth:** ${briefing.secret}`,
+  briefing.trigger && `**Why now:** ${briefing.trigger}`,
+  `**Stakes:** ${briefing.stakes}`,
+  `**Prep needed:** ${briefing.prep}`,
+)}
+${gapsBlock(adventure)}
 ## Scenes
 _The opening is part of scene 1 and counted in its time._
 
 ${scenes}
-${solutionBlock(adventure)}${clockBlock(adventure)}
+${finaleOverview(adventure)}
 ## NPCs
-${npcs}
-
-## Clues
-${adventure.clues
-  .map(
-    (c) =>
-      `- **${clueName(c)}**${c.essential ? " (vital)" : ""} — found via: ${c.routes
-        .map(
-          (r) =>
-            `${r.method} in "${adventure.scenes.find((s) => s.id === r.sceneId)?.title ?? "?"}"`,
-        )
-        .join("; ")}`,
-  )
-  .join("\n")}
+${npcsBlock(adventure)}
 
 ## Endings
 ${endings}${adventure.epilogueHook ? `\n\n**Epilogue hook:** ${adventure.epilogueHook}` : ""}
@@ -196,48 +184,115 @@ ${endings}${adventure.epilogueHook ? `\n\n**Epilogue hook:** ${adventure.epilogu
 ## Time Budget
 ${adventure.scenes.map((s) => `- ${s.title}: ${s.minutes} min (${s.essential ? "essential" : "optional"})`).join("\n")}
 - Buffer: ${adventure.timeBudget.bufferMinutes} min
-- **Total: ${adventure.durationMinutes} min**
+- **Total: ${adventure.durationMinutes} min**${optional.length ? `\n- Essential scenes alone: ${core} min plus buffer` : ""}
 
 _Times are planning guidance, not a promise about how your table will pace._
 `;
 }
 
+// ---------------------------------------------------------------------------
+// GM running view
+// ---------------------------------------------------------------------------
+
+function runScene(scene: OneShotScene, n: number) {
+  const { challenge } = scene;
+  return lines(
+    `**${n}. ${scene.title}** (${sceneTag(scene)})`,
+    challenge.success && `- Success: ${challenge.success}`,
+    challenge.opposition && `- Opposition: ${challenge.opposition}`,
+    !!challenge.otherApproaches?.length &&
+      `- Other approaches: ${challenge.otherApproaches.join(" ")}`,
+    `- If they fail: ${challenge.failForward}`,
+    `- Short on time: ${scene.shorten}`,
+    !scene.essential && scene.skip && `- Skip: ${scene.skip}`,
+  );
+}
+
+function sheetAntagonist(adventure: OneShotAdventure) {
+  const villain = antagonistOf(adventure);
+  if (!villain) return "";
+  return `\n## ${villain.name}\n${lines(
+    `- Goal: ${villain.motivation}`,
+    villain.tactics && `- When opposed: ${villain.tactics}`,
+    villain.stopIf && `- Would stop if: ${villain.stopIf}`,
+  )}\n`;
+}
+
 function sheetSolution(adventure: OneShotAdventure) {
   const { solution } = adventure;
   if (!solution) return "";
-  return `\n## Finale\n${solution.steps.map((step, i) => `${i + 1}. ${step}`).join("\n")}\n`;
+  const needs = solution.requirements.map(
+    (r) =>
+      `**${r.what}:** ${r.detail} _(${sceneTitles(adventure, r.sceneIds)})_`,
+  );
+  return `\n## How the Finale Works
+${lines(
+  needs.length > 0 && `**Needs**\n${bullets(needs)}`,
+  `\n**Steps**\n${solution.steps.map((step, i) => `${i + 1}. ${step}`).join("\n")}`,
+  solution.alternatives.length > 0 &&
+    `\n**Other ways through**\n${bullets(solution.alternatives)}`,
+  solution.mistakes.length > 0 &&
+    `\n**If they get it wrong**\n${bullets(solution.mistakes)}`,
+)}
+_Players succeed by showing the right intent; they never have to recite exact words._
+`;
 }
 
 function sheetClock(adventure: OneShotAdventure) {
   const { clock } = adventure;
   if (!clock) return "";
-  return `\n## ${clock.name}\n${clock.ticks.map((t, i) => `${i + 1}. ${t.effect}`).join("\n")}\n`;
+  return `\n## ${clock.name}
+${lines(
+  `**Advances when:** ${clock.advances}`,
+  clock.ticks
+    .map(
+      (t, i) => `${i + 1}. ${t.trigger ? `_${t.trigger}:_ ` : ""}${t.effect}`,
+    )
+    .join("\n"),
+  clock.deadline && `**Point of no return:** ${clock.deadline}`,
+  clock.slow && `**Slowing it:** ${clock.slow}`,
+)}
+`;
 }
 
-/** The one-page GM cheat sheet. */
+function sheetThreads(adventure: OneShotAdventure) {
+  const threads = adventure.threads ?? [];
+  if (!threads.length) return "";
+  return `\n## Threads to Pay Off\n${bullets(threads.map((t) => `${t.setup} → ${t.payoff} _(${sceneTitles(adventure, t.sceneIds)})_`))}\n`;
+}
+
+function sheetQuestions(adventure: OneShotAdventure) {
+  const questions = adventure.briefing.questions ?? [];
+  if (!questions.length) return "";
+  return `\n## Questions Players Will Ask\n${bullets(questions.map((q) => `**${q.question}** ${q.answer}`))}\n`;
+}
+
+/** The GM running view: everything needed to adjudicate at the table. */
 export function renderGmSheet(adventure: OneShotAdventure): string {
   const vital = adventure.clues.filter((c) => c.essential);
   const optional = adventure.scenes.filter((s) => !s.essential);
   return `# ${adventure.title} — GM Cheat Sheet
 
-**Truth:** ${adventure.briefing.secret}${adventure.briefing.trigger ? `\n**Why now:** ${adventure.briefing.trigger}` : ""}
-**Stakes:** ${adventure.briefing.stakes}
-**Session:** ${hours(adventure.durationMinutes)}, ${adventure.timeBudget.bufferMinutes} min buffer
+${lines(
+  `**Truth:** ${adventure.briefing.secret}`,
+  adventure.briefing.trigger && `**Why now:** ${adventure.briefing.trigger}`,
+  `**Stakes:** ${adventure.briefing.stakes}`,
+  `**Session:** ${hours(adventure.durationMinutes)}, ${adventure.timeBudget.bufferMinutes} min buffer${optional.length ? `; essential scenes alone run ${coreMinutes(adventure)} min` : ""}`,
+)}
 
 ## Timeline
 ${adventure.scenes.map((s, i) => `${i + 1}. ${s.title} — ${s.minutes} min${s.essential ? "" : " (optional)"} → ${sceneTitles(adventure, s.next)}`).join("\n")}
 
-## Key NPCs
-${adventure.npcs.map((n) => `- **${n.name}** (${n.role}): ${n.motivation}`).join("\n")}
-
-## Vital clues
+## Running Each Scene
+${adventure.scenes.map((s, i) => runScene(s, i + 1)).join("\n\n")}
+${sheetAntagonist(adventure)}
+## Vital Clues
 ${vital.map((c) => `- ${clueName(c)} — ${c.routes.map((r) => adventure.scenes.find((s) => s.id === r.sceneId)?.title).join(" / ")}`).join("\n")}
-
-${sheetSolution(adventure)}${sheetClock(adventure)}
+${sheetSolution(adventure)}${sheetClock(adventure)}${sheetThreads(adventure)}${sheetQuestions(adventure)}
 ## Endings
 ${adventure.endings.map((e) => `- **${e.title}:** ${e.condition}`).join("\n")}
 
-## Running late
+## Running Late
 ${bullets(adventure.timeBudget.runningLate)}
 ${optional.length ? `\n**Safe to cut:** ${optional.map((s) => `${s.title} (${s.minutes} min)`).join(", ")}` : ""}
 `;
