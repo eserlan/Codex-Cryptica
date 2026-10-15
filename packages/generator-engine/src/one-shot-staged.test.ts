@@ -4,6 +4,7 @@ import { isReadableRepair } from "./one-shot-repair";
 import type { StagePrompt } from "./one-shot-stage-prompts";
 import { generateOneShotLocal } from "./public-one-shot";
 import { checkPlayability } from "./one-shot-playability";
+import { checkWhereabouts } from "./one-shot-state-checks";
 import type { OneShotAdventure } from "./one-shot-types";
 
 function seeded(seed = 7) {
@@ -201,6 +202,51 @@ describe("runOneShotStages", () => {
       [opening.id, left.id],
       [opening.id, right.id],
     ]);
+  });
+
+  it("propagates history and state when a predecessor is listed later", async () => {
+    const a = generateOneShotLocal(
+      { ...options, durationHours: 4, structure: "Five-room adventure" },
+      seeded(),
+    ).oneShot!;
+    const [opening, branch, merge, climax] = a.scenes;
+    opening.next = [branch.id];
+    branch.next = [merge.id];
+    merge.next = [climax.id];
+    climax.next = [];
+    a.scenes = [opening, merge, branch, climax];
+
+    const prompts: StagePrompt[] = [];
+    const run = fakeModel(a);
+    await runOneShotStages(
+      { ...options, durationHours: 4, structure: "Five-room adventure" },
+      {
+        call: (p) => {
+          prompts.push(p);
+          return run.call(p);
+        },
+      },
+      "",
+      seeded(),
+    );
+
+    const mergePrompt = prompts.find(
+      (p) =>
+        stageOf(p) === "scene" &&
+        p.userMessage.includes(`The scene to write: {"id":"${merge.id}"`),
+    )!;
+    expect(mergePrompt.userMessage).toContain(branch.title);
+
+    const captive = a.npcs[0];
+    branch.npcIds = [...new Set([...branch.npcIds, captive.id])];
+    branch.exit = [
+      { who: captive.id, kind: "npc", state: "captive", where: "the cellar" },
+    ];
+    merge.npcIds = [...new Set([...merge.npcIds, captive.id])];
+    merge.whereabouts = undefined;
+    expect(checkWhereabouts(a).map((gap) => gap.message)).toContainEqual(
+      expect.stringContaining("still captive from an earlier scene"),
+    );
   });
 
   it("reports progress through every step in order", async () => {
@@ -412,20 +458,63 @@ describe("runOneShotStages", () => {
     expect(result.adventure.title).toBe("The Drowned Choir");
   });
 
-  it("checks again after the review and repairs what is still wrong", async () => {
+  it("accepts a second review that reduces the remaining gaps", async () => {
     const a = local();
     a.briefing.premise = `${a.briefing.premise} The ruins lie underwater.`;
     a.briefing.environment = undefined;
-    const { call, calls } = fakeModel(a);
+    const { call } = fakeModel(a);
+    let reviews = 0;
     const result = await runOneShotStages(
       { ...options, durationHours: 4 },
-      { call },
+      {
+        call: async (prompt) => {
+          if (stageOf(prompt) !== "review") return call(prompt);
+          reviews += 1;
+          return reviews === 1
+            ? JSON.stringify({ briefing: { prep: "First review prep." } })
+            : JSON.stringify({
+                briefing: {
+                  environment:
+                    "The party uses sealed lamps and moves between air pockets.",
+                },
+              });
+        },
+      },
       "",
       seeded(),
     );
-    expect(calls.filter((c) => c === "review")).toHaveLength(2);
-    // An empty second reply fixes nothing, so the first result stands.
+    expect(reviews).toBe(2);
     expect(result.reviewSkipped).toBe(false);
+    expect(result.adventure.briefing.prep).toBe("First review prep.");
+    expect(result.adventure.briefing.environment).toContain("sealed lamps");
+  });
+
+  it("discards a second review that does not reduce the remaining gaps", async () => {
+    const a = local();
+    a.briefing.premise = `${a.briefing.premise} The ruins lie underwater.`;
+    a.briefing.environment = undefined;
+    const { call } = fakeModel(a);
+    let reviews = 0;
+    const result = await runOneShotStages(
+      { ...options, durationHours: 4 },
+      {
+        call: async (prompt) => {
+          if (stageOf(prompt) !== "review") return call(prompt);
+          reviews += 1;
+          return JSON.stringify({
+            briefing: {
+              prep:
+                reviews === 1 ? "First review prep." : "Rejected second prep.",
+            },
+          });
+        },
+      },
+      "",
+      seeded(),
+    );
+    expect(reviews).toBe(2);
+    expect(result.adventure.briefing.prep).toBe("First review prep.");
+    expect(result.adventure.briefing.environment).toBeUndefined();
   });
 
   it("stops after one review when nothing is left to fix", async () => {

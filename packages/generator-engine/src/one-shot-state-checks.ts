@@ -6,7 +6,7 @@
  */
 
 import { textOverlap } from "./one-shot-dedupe";
-import { isConfined, whereaboutsTimeline } from "./one-shot-state";
+import { isConfined, sceneOrder, whereaboutsTimeline } from "./one-shot-state";
 import type {
   OneShotAdventure,
   OneShotDecision,
@@ -39,6 +39,64 @@ function change(prev: OneShotWhereabout, next: OneShotWhereabout): string {
 }
 
 type Gap = (who: string, message: string) => OneShotGap;
+
+type RouteState = Map<string, OneShotWhereabout>;
+
+function checkSceneRoute(
+  scene: OneShotAdventure["scenes"][number],
+  state: RouteState,
+  gap: Gap,
+): { gaps: OneShotGap[]; state: RouteState } {
+  const current = new Map(state);
+  const gaps = [
+    ...unexplainedChanges(scene, current, gap),
+    ...stillHeld(scene, current, gap),
+  ];
+  for (const whereabouts of scene.exit ?? []) {
+    current.set(whereabouts.who, whereabouts);
+  }
+  return { gaps, state: current };
+}
+
+function routeRoots(
+  scenes: OneShotAdventure["scenes"],
+  sceneIndex: Map<string, number>,
+): number[] {
+  const hasPredecessor = new Set(
+    scenes.flatMap((scene) =>
+      scene.next
+        .map((id) => sceneIndex.get(id))
+        .filter((index): index is number => index !== undefined),
+    ),
+  );
+  return scenes.flatMap((_, index) =>
+    hasPredecessor.has(index) ? [] : [index],
+  );
+}
+
+function addRouteState(
+  incoming: Map<string, RouteState>[],
+  index: number,
+  state: RouteState,
+): void {
+  const key = JSON.stringify(
+    [...state.entries()].sort(([a], [b]) => a.localeCompare(b)),
+  );
+  incoming[index].set(key, state);
+}
+
+function propagateRouteStates(
+  scene: OneShotAdventure["scenes"][number],
+  sceneIndex: Map<string, number>,
+  incoming: Map<string, RouteState>[],
+  states: RouteState[],
+): void {
+  for (const nextId of scene.next) {
+    const nextIndex = sceneIndex.get(nextId);
+    if (nextIndex === undefined) continue;
+    for (const state of states) addRouteState(incoming, nextIndex, state);
+  }
+}
 
 /** Changes against the last known state that the scene never explains. */
 function unexplainedChanges(
@@ -94,36 +152,28 @@ export const checkWhereabouts: GapCheck = (adventure) => {
   // Keep separate state snapshots for each reachable route. A shared scene
   // must agree with every way the party can arrive there.
   const sceneIndex = new Map(adventure.scenes.map((scene, i) => [scene.id, i]));
-  const incoming = adventure.scenes.map(
-    () => new Map<string, Map<string, OneShotWhereabout>>(),
-  );
-  const addIncoming = (
-    index: number,
-    state: Map<string, OneShotWhereabout>,
-  ) => {
-    const key = JSON.stringify(
-      [...state.entries()].sort(([a], [b]) => a.localeCompare(b)),
-    );
-    incoming[index].set(key, state);
-  };
-  if (adventure.scenes.length) addIncoming(0, new Map());
+  const incoming = adventure.scenes.map(() => new Map<string, RouteState>());
+  for (const root of routeRoots(adventure.scenes, sceneIndex)) {
+    addRouteState(incoming, root, new Map());
+  }
 
-  adventure.scenes.forEach((scene, i) => {
+  const order = sceneOrder(
+    adventure.scenes,
+    (scene) => scene.id,
+    (scene) => scene.next,
+  );
+  for (const i of order) {
+    const scene = adventure.scenes[i];
     const states = incoming[i].size ? [...incoming[i].values()] : [new Map()];
-    for (const state of states) {
-      const current = new Map(state);
-      gaps.push(...unexplainedChanges(scene, current, gap));
-      gaps.push(...stillHeld(scene, current, gap));
-      // An omitted exit carries the state established at the scene itself.
-      for (const w of scene.exit ?? []) current.set(w.who, w);
-      for (const nextId of scene.next) {
-        const nextIndex = sceneIndex.get(nextId);
-        if (nextIndex !== undefined && nextIndex > i) {
-          addIncoming(nextIndex, new Map(current));
-        }
-      }
-    }
-  });
+    const checked = states.map((state) => checkSceneRoute(scene, state, gap));
+    gaps.push(...checked.flatMap((route) => route.gaps));
+    propagateRouteStates(
+      scene,
+      sceneIndex,
+      incoming,
+      checked.map((route) => route.state),
+    );
+  }
 
   const seen = new Set<string>();
   return gaps.filter((item) => {

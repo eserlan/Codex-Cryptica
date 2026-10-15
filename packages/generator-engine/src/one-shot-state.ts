@@ -39,6 +39,43 @@ const slug = (text: string) =>
 const CONFINED: readonly OneShotState[] = ["trapped", "captive", "missing"];
 export const isConfined = (state: OneShotState) => CONFINED.includes(state);
 
+/** Stable topological order for scenes, retaining source order where possible. */
+export function sceneOrder<T>(
+  scenes: T[],
+  idOf: (scene: T) => string,
+  nextOf: (scene: T) => string[],
+): number[] {
+  const indexes = new Map(scenes.map((scene, index) => [idOf(scene), index]));
+  const indegree = scenes.map(() => 0);
+  const edges = scenes.map((scene) =>
+    nextOf(scene).flatMap((id) => {
+      const index = indexes.get(id);
+      return index === undefined ? [] : [index];
+    }),
+  );
+  for (const next of edges) {
+    for (const index of next) indegree[index] += 1;
+  }
+
+  const ready = indegree.flatMap((count, index) =>
+    count === 0 ? [index] : [],
+  );
+  const ordered: number[] = [];
+  while (ready.length) {
+    const index = ready.shift()!;
+    ordered.push(index);
+    for (const next of edges[index]) {
+      indegree[next] -= 1;
+      if (indegree[next] === 0) ready.push(next);
+    }
+  }
+  // Keep malformed cyclic plans processable; their cycle is handled elsewhere.
+  for (let index = 0; index < scenes.length; index += 1) {
+    if (!ordered.includes(index)) ordered.push(index);
+  }
+  return ordered;
+}
+
 // ── Clock ────────────────────────────────────────────────────────────────
 
 export function parseSchedule(raw: unknown): OneShotClockMoment[] | undefined {

@@ -14,6 +14,7 @@ import { localDecisions } from "./one-shot-local-state";
 import { parseFencedJson } from "./llm-response-utils";
 import { parseOneShotAdventure, rec } from "./one-shot-parse";
 import { checkPlayability } from "./one-shot-playability";
+import { sceneOrder } from "./one-shot-state";
 import {
   applyOneShotRepair,
   buildOneShotRepairPrompt,
@@ -340,23 +341,38 @@ async function writeParts(
   // Keep one history per route so alternatives do not overwrite one another
   // before they converge on a shared scene.
   const writeScenes = async () => {
-    const drafts: (Json | null)[] = [];
+    const drafts: (Json | null)[] = briefs.map(() => null);
     const histories = briefs.map(() => [] as unknown[][]);
     const briefIndex = new Map(
       briefs.map((brief, i) => [String(brief.scene.id), i]),
     );
-    if (briefs.length) histories[0].push([]);
-    for (const [i, brief] of briefs.entries()) {
+    const hasPredecessor = new Set(
+      briefs.flatMap((brief) =>
+        list(brief.scene.next)
+          .map((id) => briefIndex.get(String(id)))
+          .filter((index): index is number => index !== undefined),
+      ),
+    );
+    briefs.forEach((_, i) => {
+      if (!hasPredecessor.has(i)) histories[i].push([]);
+    });
+    const order = sceneOrder(
+      briefs,
+      (brief) => String(brief.scene.id),
+      (brief) => list(brief.scene.next).map(String),
+    );
+    for (const i of order) {
+      const brief = briefs[i];
       throwIfAborted(deps.signal);
       const draft = await ask(
         deps,
         scenePrompt(resolved, context, brief, histories[i]),
       );
-      drafts.push(draft);
+      drafts[i] = draft;
       const record = sceneRecord(brief, draft);
       for (const nextId of list(brief.scene.next).map(String)) {
         const nextIndex = briefIndex.get(nextId);
-        if (nextIndex !== undefined && nextIndex > i) {
+        if (nextIndex !== undefined) {
           histories[nextIndex].push(
             ...histories[i].map((route) => [...route, record]),
           );
