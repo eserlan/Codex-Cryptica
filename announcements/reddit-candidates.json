@@ -1,5 +1,5 @@
 {
-  "updated_at": 1792071745,
+  "updated_at": 1792075135,
   "candidates": [
     {
       "id": "reddit-38159898218-social-scenes-kept-ending-on-one-persuas",
@@ -32,14 +32,14 @@
       "created_at": 1791998494
     },
     {
-      "id": "reddit-38743453215-my-one-shots-kept-falling-apart-in-act-t",
-      "title": "My one-shots kept falling apart in act two, so I built a staged builder that checks itself",
-      "body": "Running a one-shot for a single night is tight. I would get a strong opening and a decent finale, then realise at the table that the middle had no pressure, the villain had nothing to do, and a scene contradicted something from page one.\n\nI built a One-Shot Adventure Builder that generates in stages with live progress. You see each part fill in instead of staring at a spinner, and it runs narrative integrity and antagonist clock checks as it goes.\n\nIt lives with the other generators at https://codexcryptica.com/generators\n\nWhat it gives you:\n- staged generation with live progress per part so you can spot problems early\n- narrative integrity scan that flags contradictions across parts\n- antagonist clock check so the opposition keeps moving whether the party engages or not\n- playability review that catches spots likely to stall in play\n- one-click repair for flagged issues and quick revise to rework a single part without starting over\n\nIt still needs your voice. It hands you the structure and the safety checks, not the jokes and table-specific tone. That part is still yours.\n\nWhen your one-shots break, is it usually pacing, the villain going quiet, or a setup that turns out to be unusable at the table?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/announcements/release-38743453215-0.png)",
-      "url": "https://codexcryptica.com/generators/one-shot-adventure-generator",
-      "image_url": "https://assets.codexcryptica.com/announcements/release-38743453215-0.png",
+      "id": "reddit-38743453215-my-tov-table-kept-forgetting-luck-becaus",
+      "title": "My ToV table kept forgetting Luck because it lived in another panel",
+      "body": "Tales of the Valiant Luck is one of those resources everyone means to use and then forgets because the tracker is tucked away somewhere else. In Codex Cryptica it was the same, you had to open a different panel mid combat to spend it.\n\nI made Luck directly interactive where you already play. You can spend and track it on the stat sheet and from the VTT token quick stats without opening another panel.\n\nYou can try it from any character that uses ToV Luck: https://codexcryptica.com\n\nWhat changed:\n- Luck control on the stat sheet header with current and max visible\n- spend and restore with inline buttons, no modal popover\n- same control mirrored in the token quick stats during VTT play\n- host and player views stay in sync as Luck changes\n- no extra sidebar to open in the middle of a roll or a turn\n\nTradeoff I kept: it does not auto spend on rolls. You still decide when to call it, so it stays a player choice rather than automation you have to undo.\n\nDo you let players spend Luck after they see the die, or do you ask them to commit before the roll at your table?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/screenshots/feature-run.jpg)",
+      "url": "",
+      "image_url": "https://assets.codexcryptica.com/screenshots/feature-run.jpg",
       "source_id": "38743453215",
       "status": "approved",
-      "created_at": 1792071745
+      "created_at": 1792075135
     }
   ]
 }
