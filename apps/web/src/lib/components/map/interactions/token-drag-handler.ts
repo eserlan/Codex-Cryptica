@@ -140,8 +140,10 @@ export class TokenDragHandler {
         ) {
           const orientation: HexOrientation =
             gridConfig.type === "hex-flat" ? "flat" : "pointy";
-          snapped = snapPointToHexCenter(
-            { x: token.x, y: token.y },
+          // x/y is the token's top-left corner, so snap its centre to the
+          // hex centre and work back to a corner, whatever its size.
+          const centre = snapPointToHexCenter(
+            { x: token.x + token.width / 2, y: token.y + token.height / 2 },
             {
               orientation,
               size: gridConfig.size,
@@ -149,6 +151,10 @@ export class TokenDragHandler {
               offsetY: gridConfig.offsetY,
             },
           );
+          snapped = {
+            x: centre.x - token.width / 2,
+            y: centre.y - token.height / 2,
+          };
         } else {
           snapped = {
             x:

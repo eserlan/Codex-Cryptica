@@ -2,10 +2,12 @@
 
 import { fireEvent, render, screen } from "@testing-library/svelte";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { snapPointToHexCenter } from "map-engine";
 
 const mapStoreMock = vi.hoisted(() => ({
   isGMMode: true,
   gridSize: 50,
+  gridType: "square" as "square" | "hex-pointy" | "hex-flat",
   gridOffsetX: 0,
   gridOffsetY: 0,
   formatHex: vi.fn((_hex) => `B03`),
@@ -24,7 +26,7 @@ const token = vi.hoisted(() => ({
   width: 50,
   height: 50,
   rotation: 0,
-  baseShape: "circle" as const,
+  baseShape: "circle" as "circle" | "hex" | "hex-pointy" | "hex-flat",
   facingIndicator: true,
   visibleTo: "all" as const,
   statusEffects: [] as string[],
@@ -79,8 +81,16 @@ describe("MapContextMenu appearance controls", () => {
       })),
     });
     mapStoreMock.isGMMode = true;
+    mapStoreMock.gridType = "square";
+    mapStoreMock.gridSize = 50;
+    mapStoreMock.gridOffsetX = 0;
+    mapStoreMock.gridOffsetY = 0;
     sessionModeStoreMock.isGuestMode = false;
     token.baseShape = "circle";
+    token.x = 0;
+    token.y = 0;
+    token.width = 50;
+    token.height = 50;
     token.facingIndicator = true;
     (token as any).entityId = null;
     (token as any).imageUrl = null;
@@ -99,6 +109,98 @@ describe("MapContextMenu appearance controls", () => {
       },
     });
   }
+
+  it.each([
+    {
+      gridType: "hex-pointy",
+      baseShape: "circle",
+      width: 100 * Math.sqrt(3),
+      height: 100 * Math.sqrt(3),
+    },
+    {
+      gridType: "hex-flat",
+      baseShape: "circle",
+      width: 100 * Math.sqrt(3),
+      height: 100 * Math.sqrt(3),
+    },
+    {
+      gridType: "hex-pointy",
+      baseShape: "hex",
+      width: 100 * Math.sqrt(3),
+      height: 200,
+    },
+    {
+      gridType: "hex-flat",
+      baseShape: "hex",
+      width: 200,
+      height: 100 * Math.sqrt(3),
+    },
+    {
+      gridType: "hex-flat",
+      baseShape: "hex-pointy",
+      width: 100 * Math.sqrt(3),
+      height: 200,
+    },
+    {
+      gridType: "hex-pointy",
+      baseShape: "hex-flat",
+      width: 200,
+      height: 100 * Math.sqrt(3),
+    },
+  ] as const)(
+    "resizes a $baseShape token on a $gridType grid around its snapped centre",
+    async ({ gridType, baseShape, width, height }) => {
+      mapStoreMock.gridType = gridType;
+      token.baseShape = baseShape;
+      token.x = 7;
+      token.y = 11;
+      token.width = 41;
+      token.height = 37;
+      const originalCentre = {
+        x: token.x + token.width / 2,
+        y: token.y + token.height / 2,
+      };
+      const snappedCentre = snapPointToHexCenter(originalCentre, {
+        orientation: gridType === "hex-flat" ? "flat" : "pointy",
+        size: mapStoreMock.gridSize,
+        offsetX: mapStoreMock.gridOffsetX,
+        offsetY: mapStoreMock.gridOffsetY,
+      });
+
+      renderMenu();
+      await fireEvent.click(screen.getByRole("menuitem", { name: "Resize" }));
+      await fireEvent.click(screen.getByRole("menuitem", { name: "1x1" }));
+
+      expect(mapSessionMock.updateToken).toHaveBeenCalledOnce();
+      const [oneByOneTokenId, oneByOneUpdate] =
+        mapSessionMock.updateToken.mock.calls[0];
+      expect(oneByOneTokenId).toBe("token-1");
+      expect(oneByOneUpdate.width).toBeCloseTo(width / 2);
+      expect(oneByOneUpdate.height).toBeCloseTo(height / 2);
+      expect(oneByOneUpdate.x + oneByOneUpdate.width / 2).toBeCloseTo(
+        snappedCentre.x,
+      );
+      expect(oneByOneUpdate.y + oneByOneUpdate.height / 2).toBeCloseTo(
+        snappedCentre.y,
+      );
+
+      await fireEvent.click(screen.getByRole("menuitem", { name: "Resize" }));
+      await fireEvent.click(screen.getByRole("menuitem", { name: "2x2" }));
+
+      expect(mapSessionMock.updateToken).toHaveBeenCalledTimes(2);
+      const [twoByTwoTokenId, twoByTwoUpdate] =
+        mapSessionMock.updateToken.mock.calls[1];
+      expect(twoByTwoTokenId).toBe("token-1");
+      expect(twoByTwoUpdate.width).toBeCloseTo(width);
+      expect(twoByTwoUpdate.height).toBeCloseTo(height);
+      expect(twoByTwoUpdate.x + twoByTwoUpdate.width / 2).toBeCloseTo(
+        snappedCentre.x,
+      );
+      expect(twoByTwoUpdate.y + twoByTwoUpdate.height / 2).toBeCloseTo(
+        snappedCentre.y,
+      );
+    },
+  );
 
   it("lets the host toggle facing and choose a square base", async () => {
     renderMenu();

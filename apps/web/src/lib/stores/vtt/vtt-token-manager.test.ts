@@ -21,6 +21,173 @@ function createManager(overrides: Partial<any> = {}) {
   return { manager, addTokenToInitiativeState };
 }
 
+function hexManager(
+  gridType: "hex-pointy" | "hex-flat",
+  extra: Record<string, unknown> = {},
+) {
+  return createManager({
+    getMapStore: () => ({
+      activeMap: { dimensions: { width: 4000, height: 4000 } },
+      showGrid: true,
+      gridType,
+      gridSize: 100,
+      gridOffsetX: 0,
+      gridOffsetY: 0,
+      ...extra,
+    }),
+  }).manager;
+}
+
+describe("VTTTokenManager hex grid snapping", () => {
+  const cell = Math.sqrt(3) * 100;
+
+  it.each(["hex-pointy", "hex-flat"] as const)(
+    "centres a creature token on a hex centre on a %s grid",
+    (gridType) => {
+      const manager = hexManager(gridType);
+      const orientation = gridType === "hex-flat" ? "flat" : "pointy";
+      const config = {
+        orientation,
+        size: 100,
+        offsetX: 0,
+        offsetY: 0,
+      } as const;
+      const token = manager.addToken(
+        { name: "Mara Vell", x: 237, y: 411, width: 100, height: 100 },
+        true,
+      );
+      const centre = {
+        x: token.x + token.width / 2,
+        y: token.y + token.height / 2,
+      };
+      const hexCentre = hexToPoint(pointToHex(centre, config), config);
+      expect(centre.x).toBeCloseTo(hexCentre.x, 1);
+      expect(centre.y).toBeCloseTo(hexCentre.y, 1);
+    },
+  );
+
+  it("makes the smallest token fill a hex rather than a fraction of one", () => {
+    const manager = hexManager("hex-pointy");
+    const token = manager.addToken(
+      { name: "Tiny", x: 0, y: 0, width: 10, height: 10 },
+      true,
+    );
+    expect(token.width).toBeCloseTo(cell, 1);
+    expect(token.height).toBeCloseTo(cell, 1);
+  });
+
+  it("keeps a snapped token centred on the nearest fitting hex at the map edge", () => {
+    const manager = hexManager("hex-pointy");
+    const position = manager.clampAndSnapPosition(
+      { x: -cell / 2, y: 1900 - cell / 2 },
+      { width: cell, height: cell },
+    );
+    const centre = {
+      x: position.x + position.width / 2,
+      y: position.y + position.height / 2,
+    };
+    const config = {
+      orientation: "pointy" as const,
+      size: 100,
+      offsetX: 0,
+      offsetY: 0,
+    };
+    const hexCentre = hexToPoint(pointToHex(centre, config), config);
+
+    expect(centre.x).toBeCloseTo(hexCentre.x, 1);
+    expect(centre.y).toBeCloseTo(hexCentre.y, 1);
+    expect(centre.y).toBe(1800);
+    expect(position.y).toBeGreaterThanOrEqual(-2000);
+    expect(position.y + position.height).toBeLessThanOrEqual(2000);
+  });
+
+  it("rounds larger tokens to whole hexes and keeps them square", () => {
+    const manager = hexManager("hex-flat");
+    const token = manager.addToken(
+      { name: "Ogre", x: 0, y: 0, width: 2.2 * cell, height: 1.8 * cell },
+      true,
+    );
+    expect(token.width).toBeCloseTo(2 * cell, 1);
+    expect(token.height).toBeCloseTo(2 * cell, 1);
+  });
+
+  it("keeps a hex-shaped token's own bounding box", () => {
+    const manager = hexManager("hex-pointy");
+    const token = manager.addToken(
+      {
+        name: "Hex marker",
+        x: 0,
+        y: 0,
+        width: cell,
+        height: 200,
+        baseShape: "hex-pointy",
+      },
+      true,
+    );
+    expect(token.width).toBeCloseTo(cell, 1);
+    expect(token.height).toBeCloseTo(200, 1);
+  });
+
+  it("keeps a token on its hex when it is moved or resized", () => {
+    const manager = hexManager("hex-pointy");
+    const token = manager.addToken(
+      { name: "Scout", x: 300, y: 300, width: 100, height: 100 },
+      true,
+    );
+    const config = {
+      orientation: "pointy" as const,
+      size: 100,
+      offsetX: 0,
+      offsetY: 0,
+    };
+    const hexBefore = pointToHex(
+      { x: token.x + token.width / 2, y: token.y + token.height / 2 },
+      config,
+    );
+    // Resize around the centre, as the context-menu resize does.
+    const size = 2 * cell;
+    const resized = manager.updateToken(
+      token.id,
+      {
+        x: token.x + token.width / 2 - size / 2,
+        y: token.y + token.height / 2 - size / 2,
+        width: size,
+        height: size,
+      },
+      true,
+    )!;
+    const centre = {
+      x: resized.x + resized.width / 2,
+      y: resized.y + resized.height / 2,
+    };
+    expect(pointToHex(centre, config)).toEqual(hexBefore);
+    const hexCentre = hexToPoint(hexBefore, config);
+    expect(centre.x).toBeCloseTo(hexCentre.x, 1);
+  });
+
+  it("leaves notes and a hidden grid alone", () => {
+    const note = hexManager("hex-pointy").addToken(
+      { name: "Note", x: 37, y: 41, kind: "note", width: 20, height: 20 },
+      true,
+    );
+    expect(note.width).toBe(20);
+    const hidden = hexManager("hex-pointy", { showGrid: false }).addToken(
+      { name: "Free", x: 37, y: 41, width: 20, height: 20 },
+      true,
+    );
+    expect(hidden).toMatchObject({ x: 37, y: 41, width: 20 });
+  });
+
+  it("still snaps to the square grid on square maps", () => {
+    const manager = hexManager("hex-pointy", { gridType: "square" });
+    const token = manager.addToken(
+      { name: "Square", x: 130, y: 20, width: 90, height: 90 },
+      true,
+    );
+    expect(token).toMatchObject({ x: 100, y: 0, width: 100, height: 100 });
+  });
+});
+
 describe("VTTTokenManager.addToken", () => {
   it("registers a regular token with the initiative tracker", () => {
     const { manager, addTokenToInitiativeState } = createManager();
