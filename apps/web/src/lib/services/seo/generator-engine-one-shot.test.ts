@@ -94,7 +94,7 @@ describe("DefaultGeneratorEngine one-shot reliability", () => {
     expect(out.oneShot).toBeDefined();
   });
 
-  it("flags a review reply that can't be read, but not an empty one", async () => {
+  it("flags unreadable review replies, but not empty objects", async () => {
     const draft = JSON.stringify(generateOneShotLocal(options).oneShot);
     const unreadable = new DefaultGeneratorEngine(
       modelInSequence([draft, "I could not review this."]).client as never,
@@ -103,6 +103,19 @@ describe("DefaultGeneratorEngine one-shot reliability", () => {
       (await unreadable.generateOneShot({ ...options, useAI: true }))
         .aiReviewSkipped,
     ).toBe(true);
+    for (const unreadableJson of ["null", "[]"]) {
+      const unreadableJsonEngine = new DefaultGeneratorEngine(
+        modelInSequence([draft, unreadableJson]).client as never,
+      );
+      expect(
+        (
+          await unreadableJsonEngine.generateOneShot({
+            ...options,
+            useAI: true,
+          })
+        ).aiReviewSkipped,
+      ).toBe(true);
+    }
     const empty = new DefaultGeneratorEngine(
       modelInSequence([draft, "{}"]).client as never,
     );
