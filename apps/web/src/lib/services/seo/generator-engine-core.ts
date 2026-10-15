@@ -38,6 +38,7 @@ import {
   checkPlayability,
   buildOneShotRepairPrompt,
   applyOneShotRepair,
+  isReadableRepair,
   oneShotToOutput,
   type OneShotAdventure,
   type OneShotGeneratorOptions,
@@ -85,6 +86,7 @@ import {
 
 import { generateName as _generateName } from "./generator-helpers";
 import type { GeneratorOutput } from "./generator-helpers";
+import { ONE_SHOT_GENERATION_CONFIG } from "./generator-ai-transport";
 
 import { GeneratorEngineBase } from "./generator-engine-base";
 
@@ -460,7 +462,11 @@ export class GeneratorEngineCore extends GeneratorEngineBase {
           "one-shot",
           summarizeResolvedInputs(resolved),
         );
-        const text = await this.runModel(systemInstruction, userMessage);
+        const text = await this.runModel(
+          systemInstruction,
+          userMessage,
+          ONE_SHOT_GENERATION_CONFIG,
+        );
         return this.repairOneShot(
           parseOneShotResponse(text, resolved) as GeneratorOutput,
         );
@@ -473,8 +479,9 @@ export class GeneratorEngineCore extends GeneratorEngineBase {
    * Editorial and GM review: the model reads the whole adventure back,
    * checks it holds together across scenes (threads, antagonist, clock,
    * emphasis), fills the gaps the playability check found and tightens
-   * repeated prose. Always runs on the AI path. A failed review keeps the
-   * first draft, which lists any remaining gaps for the GM.
+   * repeated prose. Always runs on the AI path. A review that fails or
+   * can't be read keeps the first draft, which lists any remaining gaps for
+   * the GM, and is flagged so the page can say the review didn't finish.
    */
   private async repairOneShot(
     output: GeneratorOutput,
@@ -487,13 +494,18 @@ export class GeneratorEngineCore extends GeneratorEngineBase {
         adventure,
         gaps,
       );
-      const text = await this.runModel(systemInstruction, userMessage);
+      const text = await this.runModel(
+        systemInstruction,
+        userMessage,
+        ONE_SHOT_GENERATION_CONFIG,
+      );
+      if (!isReadableRepair(text)) return { ...output, aiReviewSkipped: true };
       const repaired = applyOneShotRepair(adventure, text);
       return repaired === adventure
         ? output
         : (oneShotToOutput(repaired) as GeneratorOutput);
     } catch {
-      return output;
+      return { ...output, aiReviewSkipped: true };
     }
   }
 

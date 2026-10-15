@@ -303,6 +303,7 @@ export {
   checkPlayability,
   buildOneShotRepairPrompt,
   applyOneShotRepair,
+  isReadableRepair,
   normaliseTimeBudget,
   type OneShotPrompt,
   type ResolvedOneShot,

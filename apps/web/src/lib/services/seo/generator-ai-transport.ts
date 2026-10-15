@@ -18,6 +18,24 @@ export const LANGUAGE_GENERATION_CONFIG: Readonly<{
 };
 
 /**
+ * A one-shot adventure is a long structured document. Without a config the
+ * proxy applies the fallback model's default cap (4096 tokens), which cuts a
+ * full adventure off mid-JSON and forces the local draft, so one-shot calls
+ * ask for room explicitly.
+ */
+export const ONE_SHOT_GENERATION_CONFIG: Readonly<{
+  temperature: number;
+  topP: number;
+  maxOutputTokens: number;
+  responseMimeType: string;
+}> = {
+  temperature: 0.7,
+  topP: 0.9,
+  maxOutputTokens: 16384,
+  responseMimeType: "application/json",
+};
+
+/**
  * Bridge the package's {@link PublicGeneratorOutput} (whose `type` is a plain
  * string) onto the SEO {@link GeneratorOutput} union the public pages expect.
  */

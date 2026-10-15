@@ -18,7 +18,8 @@ import {
 } from "../schema-validation";
 import { readSseData } from "../sse";
 
-const PROVIDER_TIMEOUT_MS = 60_000;
+/** See the matching constant in gemini-adaptor.ts. */
+const PROVIDER_TIMEOUT_MS = 120_000;
 const OPENAI_CHAT_COMPLETIONS_URL =
   "https://api.openai.com/v1/chat/completions";
 const OPENAI_RESPONSES_URL = "https://api.openai.com/v1/responses";
@@ -53,7 +54,7 @@ interface OpenAiEnv {
 /**
  * Translates an `LlmRequest` into an OpenAI-compatible `chat/completions`
  * call and normalizes the response into `LlmResponse`. Enforces the
- * 15-second provider-call timeout itself (FR-005) — the resolver never
+ * provider-call timeout itself (FR-005) — the resolver never
  * calls `fetch`/a provider directly.
  */
 /**

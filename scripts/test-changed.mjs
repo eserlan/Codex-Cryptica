@@ -78,21 +78,21 @@ export function findCoLocatedTests(filePath, root = process.cwd()) {
   return tests;
 }
 
-export function groupTestsByWorkspace(testFiles) {
+export function groupTestsByWorkspace(testFiles, root = process.cwd()) {
   const groups = new Map();
 
   for (const file of testFiles) {
     const normalized = file.replace(/\\/g, "/");
     let workspace = "root";
 
-    if (normalized.startsWith("apps/web/")) {
-      workspace = "apps/web";
-    } else if (normalized.startsWith("packages/")) {
-      const parts = normalized.split("/");
-      workspace = `${parts[0]}/${parts[1]}`;
-    } else if (normalized.startsWith("apps/")) {
-      const parts = normalized.split("/");
-      workspace = `${parts[0]}/${parts[1]}`;
+    const parts = normalized.split("/");
+    if (parts[0] === "apps" || parts[0] === "packages") {
+      for (let length = 2; length < parts.length; length += 1) {
+        const candidate = parts.slice(0, length).join("/");
+        if (existsSync(resolve(root, candidate, "package.json"))) {
+          workspace = candidate;
+        }
+      }
     }
 
     if (!groups.has(workspace)) {
