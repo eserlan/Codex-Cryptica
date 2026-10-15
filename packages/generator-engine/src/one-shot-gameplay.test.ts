@@ -9,7 +9,13 @@ import {
   parseOneShotResponse,
   resolveOneShot,
 } from "./public-one-shot";
-import { finalePrompt, structurePrompt } from "./one-shot-stage-prompts";
+import { simulateClock } from "./one-shot-clock";
+import { renderGmSheet } from "./one-shot-render";
+import {
+  finalePrompt,
+  scenePrompt,
+  structurePrompt,
+} from "./one-shot-stage-prompts";
 import type { OneShotAdventure } from "./one-shot-types";
 
 function seeded(seed = 7) {
@@ -124,30 +130,184 @@ describe("clock schedule", () => {
     expect(messages(a).filter((m) => /cautious play/.test(m))).toEqual([]);
   });
 
-  it("lets cautious play reach every local fallback clock tick", () => {
-    const a = local();
-    const scheduledAdvances =
-      a.scenes.filter((scene) => scene.essential && scene.kind !== "opening")
-        .length + 2;
+  it("brings a cautious party to the local finale with ticks to spare", () => {
+    for (const durationHours of [2, 4, 6]) {
+      const a = local({ durationHours });
+      const schedule = simulateClock(a)!;
+      expect(schedule.inFinale).toBe(0);
+      expect(a.clock!.ticks.length - schedule.beforeFinale).toBe(2);
+      expect(messages(a).filter((m) => /clock/i.test(m))).toEqual([]);
+    }
+  });
 
-    expect(a.clock!.ticks).toHaveLength(scheduledAdvances);
-    expect(a.clock!.advances).toMatch(
-      /end of each essential scene after the opening, when the party reaches the climax, and halfway through the climax/i,
+  /** Every scene essential: opening, middles, climax. */
+  const allEssential = (advances: string, ticks: number) => {
+    const a = local({ durationHours: 4 });
+    a.scenes.forEach((s) => (s.essential = true));
+    a.clock!.advances = advances;
+    a.clock!.ticks = Array.from({ length: ticks }, (_, i) => ({
+      trigger: `Tick ${i + 1}`,
+      effect: "Worse.",
+    }));
+    return a;
+  };
+  const beforeClimax = (a: OneShotAdventure) =>
+    a.scenes.filter((s) => s.kind !== "climax").length;
+
+  it("flags a deadline that lands as the party reaches the finale", () => {
+    const probe = local({ durationHours: 4 });
+    const ticks = beforeClimax(probe) + 1;
+    const a = allEssential(
+      "When the adventure begins, and as each essential scene concludes.",
+      ticks,
     );
-    expect(messages(a).filter((m) => /schedule only advances/.test(m))).toEqual(
-      [],
+    expect(simulateClock(a)!.beforeFinale).toBe(ticks);
+    expect(messages(a)).toContainEqual(
+      expect.stringMatching(
+        new RegExp(
+          `last tick before the finale even starts: it advances ${ticks} times on schedule \\(the start of the adventure, the end of "`,
+        ),
+      ),
     );
   });
 
-  it("flags a scheduled route that cannot reach the final tick", () => {
-    const a = local();
-    a.clock!.ticks.push({ trigger: "Extra", effect: "The plan goes further." });
+  it("flags a deadline that lands halfway through the finale, counting a late start", () => {
+    const probe = local({ durationHours: 4 });
+    const ticks = beforeClimax(probe) + 2;
+    const a = allEssential(
+      "The bell already rang, so it starts on tick 2. It advances at the end of each essential scene, and halfway through the finale.",
+      ticks,
+    );
+    const schedule = simulateClock(a)!;
+    expect(schedule.steps[0]).toBe("already ticked when play begins");
+    expect(schedule.inFinale).toBe(1);
+    expect(messages(a)).toContainEqual(
+      expect.stringMatching(/before the party can finish the finale/),
+    );
+    a.clock!.ticks.push({ trigger: "Spare", effect: "Worse." });
+    expect(messages(a).filter((m) => /last tick/.test(m))).toEqual([]);
+  });
 
+  it("flags a counted schedule that leaves the clock mostly unused, unless time also drives it", () => {
+    const a = allEssential("When the party reaches the finale.", 6);
     expect(messages(a)).toContainEqual(
       expect.stringMatching(
-        /schedule only advances the clock 4 times.*5 ticks/,
+        /schedule only advances the clock 1 time .*6 ticks, so the pressure never builds/,
       ),
     );
+    a.clock!.advances =
+      "At each sunset, and when the party reaches the finale.";
+    expect(messages(a).filter((m) => /clock/i.test(m))).toEqual([]);
+  });
+});
+
+describe("NPC continuity", () => {
+  const withWitness = (later: string) => {
+    const a = local({ durationHours: 4 });
+    const witness = a.npcs.find((n) => n.id === "npc-3")!;
+    witness.name = "Tovin Marr";
+    a.scenes[0].npcIds = [...new Set([...a.scenes[0].npcIds, witness.id])];
+    a.scenes[1].situation = later;
+    return a;
+  };
+
+  it("flags someone free in the opening and trapped in the next scene", () => {
+    const a = withWitness(
+      "Frost coats the granary. Tovin lies pinned beneath the grain cart, calling for help.",
+    );
+    expect(messages(a)).toContainEqual(
+      `Tovin Marr is present and free in "${a.scenes[0].title}" but pinned in "${a.scenes[1].title}". Say in that scene how it happened, or make them two different people.`,
+    );
+  });
+
+  it.each([
+    "Tovin followed the party here and was dragged under the cart; now Tovin is trapped.",
+    "If the party never freed him, Tovin is still trapped.",
+    "Tovin says the drivers are missing and points to the cart.",
+    "A stranger lies pinned beneath the cart.",
+  ])(
+    "accepts a scene that explains it or says nothing about him: %s",
+    (later) => {
+      const a = withWitness(later);
+      expect(messages(a).filter((m) => /Tovin/.test(m))).toEqual([]);
+    },
+  );
+});
+
+describe("finale requirement kinds", () => {
+  const climaxOnly = (kind?: "clue" | "action" | "outcome", ids?: string[]) => {
+    const a = local({ durationHours: 4 });
+    a.solution!.requirements = [
+      {
+        ...(kind ? { kind } : {}),
+        what: "Ysabet's consent",
+        detail: "Ysabet agrees to let one wagon pass.",
+        sceneIds: ids ?? [a.scenes.at(-1)!.id],
+      },
+    ];
+    return a;
+  };
+
+  it("expects a clue before the finale, and says how to mark an action or outcome", () => {
+    for (const kind of [undefined, "clue"] as const) {
+      expect(messages(climaxOnly(kind))).toContainEqual(
+        expect.stringMatching(
+          /"Ysabet's consent" can't be found before the finale\..*mark it "action".*mark it "outcome"/,
+        ),
+      );
+    }
+  });
+
+  it("lets an action happen in the finale and an outcome need no scene", () => {
+    const solutionGaps = (a: OneShotAdventure) =>
+      messages(a).filter((m) => /Ysabet's consent/.test(m));
+    expect(solutionGaps(climaxOnly("action"))).toEqual([]);
+    expect(solutionGaps(climaxOnly("outcome", []))).toEqual([]);
+    expect(solutionGaps(climaxOnly("action", []))).toEqual([
+      `"Ysabet's consent": say in which scene the party does it.`,
+    ]);
+  });
+
+  it("reads the kind from a reply, ignores unknown kinds and shows it on the GM sheet", () => {
+    const base = local({ durationHours: 3 });
+    const climax = base.scenes.at(-1)!.id;
+    const fixed = applyOneShotRepair(
+      base,
+      JSON.stringify({
+        solution: {
+          ...base.solution,
+          requirements: [
+            {
+              kind: "Outcome",
+              what: "Public restoration",
+              detail: "The reeve restores her name.",
+              sceneIds: [],
+            },
+            {
+              kind: "action",
+              what: "Ysabet's consent",
+              detail: "She agrees.",
+              sceneIds: [climax],
+            },
+            {
+              kind: "guess",
+              what: "The ledger",
+              detail: "Aldren's erased entry.",
+              sceneIds: [base.scenes[1].id],
+            },
+          ],
+        },
+      }),
+    );
+    expect(fixed.solution!.requirements.map((r) => r.kind)).toEqual([
+      "outcome",
+      "action",
+      undefined,
+    ]);
+    const sheet = renderGmSheet(fixed);
+    expect(sheet).toContain("_(a result of the finale)_");
+    expect(sheet).toContain(`_(done in ${base.scenes.at(-1)!.title})_`);
+    expect(sheet).toContain(`_(found in ${base.scenes[1].title})_`);
   });
 });
 
@@ -271,7 +431,62 @@ describe("commitments and endings", () => {
   });
 });
 
+describe("ending consequences", () => {
+  it("flags two endings reached differently but ending the same way", () => {
+    const a = local();
+    a.endings = [
+      {
+        id: "end-1",
+        title: "The Crown Restored",
+        condition: "Ysabet consents and the reeve reads her name aloud.",
+        consequence: "The haunting ends and the road to the hill opens again.",
+      },
+      {
+        id: "end-2",
+        title: "A Crown Left Beneath the Hill",
+        condition: "Ysabet allows one passage but the town keeps its silence.",
+        consequence: "The haunting ends and the road to the hill opens again.",
+      },
+    ];
+    expect(messages(a)).toContainEqual(
+      expect.stringMatching(
+        /"The Crown Restored" and "A Crown Left Beneath the Hill" end almost the same way/,
+      ),
+    );
+    a.endings[1].consequence =
+      "One wagon passes each harvest; any other crossing wakes the procession.";
+    expect(messages(a).filter((m) => /end almost/.test(m))).toEqual([]);
+  });
+});
+
 describe("prompts carry the gameplay rules", () => {
+  it("asks the plan for whereabouts and every scene writer to follow them", () => {
+    const resolved = resolveOneShot({}, seeded(1));
+    const plan = structurePrompt(resolved, {}).userMessage;
+    expect(plan).toContain('"whereabouts"');
+    expect(plan).toContain("in one place at a time");
+    const scene = scenePrompt(
+      resolved,
+      { core: {}, structure: {}, finale: {} },
+      { scene: {}, clues: [], threads: [], npcs: [], isOpening: false },
+    ).userMessage;
+    expect(scene).toContain('follows the plan\'s "whereabouts"');
+    expect(scene).toContain("in one place at a time");
+  });
+
+  it("asks every finale writer for requirement kinds", () => {
+    const finale = finalePrompt({}, {}).userMessage;
+    const single = buildOneShotPrompt({}).userMessage;
+    const review = buildOneShotRepairPrompt(local(), []).userMessage;
+    for (const text of [finale, single, review]) {
+      expect(text).toContain('"kind": "clue"');
+      expect(text).toContain('"outcome" for a result of the finale');
+    }
+    for (const text of [single, review]) {
+      expect(text).toContain("in one place at a time");
+    }
+  });
+
   const resolved = resolveOneShot({ emphasis: "Exploration" }, seeded(1));
 
   it("asks the plan for a scheduled clock, real routes and in-play rescues", () => {

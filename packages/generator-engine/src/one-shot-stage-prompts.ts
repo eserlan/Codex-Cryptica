@@ -11,9 +11,11 @@ import type { ResolvedOneShot } from "./one-shot-types";
 import {
   CLOCK_RULE,
   COMMITMENT_RULE,
+  CONTINUITY_RULE,
   EMPHASIS_HINT,
   ENDINGS_RULE,
   PACING_RULE,
+  REQUIREMENT_RULE,
 } from "./one-shot-rules";
 import { describeOneShotOptions, sceneCountFor } from "./public-one-shot";
 
@@ -80,11 +82,12 @@ Rules:
 - "threads": every promise the hook and briefing make, with its payoff and the later scene where it happens.
 - Plan for the emphasis (${resolved.emphasis}) as play, not just theme: ${EMPHASIS_HINT[resolved.emphasis] ?? "match the scenes to it"}.
 - ${COMMITMENT_RULE}
+- "whereabouts" on each scene: where each NPC in its "npcIds" is and in what state (free, trapped, hostile, hiding), and how they got there if that changed since their last scene. ${CONTINUITY_RULE}
 - ${PACING_RULE}
 
 Return JSON shaped like:
 {
-  "scenes": [{ "id": "scene-1", "title": "", "kind": "opening", "essential": true, "minutes": 30, "purpose": "", "location": "", "npcIds": ["npc-1"], "challengeType": "social", "next": ["scene-2"] }],
+  "scenes": [{ "id": "scene-1", "title": "", "kind": "opening", "essential": true, "minutes": 30, "purpose": "", "location": "", "npcIds": ["npc-1"], "whereabouts": "npc-1: at the inn's hearth, free", "challengeType": "social", "next": ["scene-2"] }],
   "npcs": [{ "id": "npc-3", "name": "", "role": "" }],
   "clues": [{ "id": "clue-1", "label": "", "text": "", "essential": true, "routes": [{ "sceneId": "scene-1", "method": "" }, { "sceneId": "scene-2", "method": "" }] }],
   "clock": { "name": "", "advances": "", "ticks": [{ "trigger": "", "effect": "" }], "slow": "", "deadline": "" },
@@ -100,13 +103,14 @@ export function finalePrompt(core: unknown, structure: unknown): StagePrompt {
 Core: ${JSON.stringify(core)}
 Plan: ${JSON.stringify(structure)}
 
-The solution names everything the finale needs with its real content and the earlier essential scenes where each is found, the steps the party takes, at least one other way through, and what each kind of mistake costs.
+The solution names everything the finale needs with its real content and the scenes where each is found or done (clues in earlier essential scenes), the steps the party takes, at least one other way through, and what each kind of mistake costs.
+${REQUIREMENT_RULE}
 ${ENDINGS_RULE}
 ${STYLE}
 
 Return JSON shaped like:
 {
-  "solution": { "summary": "", "requirements": [{ "what": "", "detail": "", "sceneIds": ["scene-2"] }], "steps": [""], "alternatives": [""], "mistakes": [""] },
+  "solution": { "summary": "", "requirements": [{ "kind": "clue", "what": "", "detail": "", "sceneIds": ["scene-2"] }], "steps": [""], "alternatives": [""], "mistakes": [""] },
   "endings": [{ "id": "end-1", "title": "", "condition": "", "consequence": "" }],
   "epilogueHook": ""
 }
@@ -147,6 +151,7 @@ Rules:
 - Fights and hazards get "opposition": who or what opposes the party, how they fight and one thing that changes mid-scene.
 - Deliver the emphasis (${resolved.emphasis}): ${EMPHASIS_HINT[resolved.emphasis] ?? "match the challenge to it"}. Only an optional scene gets "skip".
 - If "next" lists more than one scene, the situation describes each route out: what it risks and what it finds.
+- Where each NPC is, and their state, follows the plan's "whereabouts" for this scene and agrees with every earlier scene. ${CONTINUITY_RULE}
 ${STYLE}
 
 Return JSON shaped like:
