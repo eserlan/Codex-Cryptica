@@ -1,5 +1,5 @@
 {
-  "updated_at": 1792075135,
+  "updated_at": 1792076725,
   "candidates": [
     {
       "id": "reddit-38159898218-social-scenes-kept-ending-on-one-persuas",
@@ -32,14 +32,14 @@
       "created_at": 1791998494
     },
     {
-      "id": "reddit-38743453215-my-tov-table-kept-forgetting-luck-becaus",
-      "title": "My ToV table kept forgetting Luck because it lived in another panel",
-      "body": "Tales of the Valiant Luck is one of those resources everyone means to use and then forgets because the tracker is tucked away somewhere else. In Codex Cryptica it was the same, you had to open a different panel mid combat to spend it.\n\nI made Luck directly interactive where you already play. You can spend and track it on the stat sheet and from the VTT token quick stats without opening another panel.\n\nYou can try it from any character that uses ToV Luck: https://codexcryptica.com\n\nWhat changed:\n- Luck control on the stat sheet header with current and max visible\n- spend and restore with inline buttons, no modal popover\n- same control mirrored in the token quick stats during VTT play\n- host and player views stay in sync as Luck changes\n- no extra sidebar to open in the middle of a roll or a turn\n\nTradeoff I kept: it does not auto spend on rolls. You still decide when to call it, so it stays a player choice rather than automation you have to undo.\n\nDo you let players spend Luck after they see the die, or do you ask them to commit before the roll at your table?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/screenshots/feature-run.jpg)",
-      "url": "",
-      "image_url": "https://assets.codexcryptica.com/screenshots/feature-run.jpg",
+      "id": "reddit-38743453215-three-new-gm-guides-modern-cities-stealt",
+      "title": "Three new GM guides: modern cities, stealth missions, and NPCs when you do not act",
+      "body": "Three spots where I see GMs get stuck: a modern city that feels like a map with coffee shops, a stealth scene that ends on one bad roll, and an NPC conversation where everyone waits for you to do a voice.\n\nI wrote three new Answer guides that stay concrete and table ready instead of abstract advice.\n\nStart with the city guide here: https://codexcryptica.com/answers/how-do-i-portray-a-believable-modern-city-in-an-urban-rpg\n\nThe other two:\n- https://codexcryptica.com/answers/how-do-i-run-a-stealth-mission-in-a-tabletop-rpg\n- https://codexcryptica.com/answers/how-do-i-roleplay-npcs-if-im-not-good-at-acting\n\nWhat each one covers:\n- modern city: districts by function, everyday texture you can drop in, and faction pressure that turns a neighbourhood into a situation\n- stealth mission: layered approaches, separate sight and noise tracks, and failing forward instead of instant alarm on one check\n- NPCs without acting: mannerism and want over voices, small repeatable tells, and scene frames that make an NPC memorable without prep\n\nI kept each guide to moves you can use next session, not theory. If you use them, tell me what feels missing after you try it.\n\nWhich of the three is the sticking point at your table right now, and what workaround do you use instead?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/announcements/release-38743453215-1.png)",
+      "url": "https://codexcryptica.com/answers/how-do-i-portray-a-believable-modern-city-in-an-urban-rpg",
+      "image_url": "https://assets.codexcryptica.com/announcements/release-38743453215-1.png",
       "source_id": "38743453215",
       "status": "approved",
-      "created_at": 1792075135
+      "created_at": 1792076725
     }
   ]
 }
