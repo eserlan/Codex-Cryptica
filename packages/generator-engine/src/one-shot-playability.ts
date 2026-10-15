@@ -22,7 +22,7 @@ const VAGUE =
   /\bthe (?:(?:correct|right|proper|true|secret|missing|hidden|stolen|sacred|royal|old|two|three|four|five)\s+){1,3}(?:names?|words?|passages?|answers?|order|sequence|phrase|verses?|symbols?|runes?)\b/i;
 
 const CONCRETE_VALUE_AFTER_COLON =
-  /^\s*:\s*(?:"[^"\n]+"|'[^'\n]+'|`[^`\n]+`|[^.!?\n]+,\s*[^.!?\n]+\s+(?:and|or)\s+[^.!?\n]+(?:[.!?]|$))/i;
+  /^\s*:\s*(?:"[^"\n]+"|'[^'\n]+'|`[^`\n]+`|[A-Z][\w'-]*(?:\s+[A-Z][\w'-]*)*(?:\s*,\s*[A-Z][\w'-]*(?:\s+[A-Z][\w'-]*)*)*\s+(?:and|or)\s+[A-Z][\w'-]*(?:\s+[A-Z][\w'-]*)*(?:[.!?]|$))/;
 
 export function isVague(text: string | undefined): boolean {
   if (!text?.trim()) return true;

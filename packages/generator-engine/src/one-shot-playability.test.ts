@@ -105,13 +105,17 @@ describe("checkPlayability", () => {
   });
 
   it("does not treat descriptive prose after a colon as the missing fact", () => {
-    const text = "The correct passages: they can't be read by mortals";
-    expect(isVague(text)).toBe(true);
-    const a = local();
-    a.solution!.requirements[0].detail = text;
-    expect(checkPlayability(a).map((g) => g.message)).toContainEqual(
-      expect.stringMatching(/mentioned but never given/),
-    );
+    for (const text of [
+      "The correct passages: they can't be read by mortals",
+      "The correct passages: they are hidden, hard to read and guarded by spirits",
+    ]) {
+      expect(isVague(text)).toBe(true);
+      const a = local();
+      a.solution!.requirements[0].detail = text;
+      expect(checkPlayability(a).map((g) => g.message)).toContainEqual(
+        expect.stringMatching(/mentioned but never given/),
+      );
+    }
   });
 
   it("does not treat an apostrophe in a contraction as a stated fact", () => {
