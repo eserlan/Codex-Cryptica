@@ -111,6 +111,67 @@ describe("VTTTokenManager hex grid snapping", () => {
     expect(token.height).toBeCloseTo(2 * cell, 1);
   });
 
+  it.each([0.25, 0.5])(
+    "keeps a %s-hex token at that size, centred on its hex",
+    (fraction) => {
+      const manager = hexManager("hex-pointy");
+      const token = manager.addToken(
+        {
+          name: "Pip",
+          x: 237,
+          y: 411,
+          width: fraction * cell,
+          height: fraction * cell,
+        },
+        true,
+      );
+      expect(token.width).toBeCloseTo(fraction * cell, 1);
+      expect(token.height).toBeCloseTo(fraction * cell, 1);
+      const config = {
+        orientation: "pointy",
+        size: 100,
+        offsetX: 0,
+        offsetY: 0,
+      } as const;
+      const centre = {
+        x: token.x + token.width / 2,
+        y: token.y + token.height / 2,
+      };
+      const hexCentre = hexToPoint(pointToHex(centre, config), config);
+      expect(centre.x).toBeCloseTo(hexCentre.x, 1);
+      expect(centre.y).toBeCloseTo(hexCentre.y, 1);
+    },
+  );
+
+  it("still turns a size between a half and a whole hex into a whole hex", () => {
+    const manager = hexManager("hex-flat");
+    for (const fraction of [0.3, 0.6, 0.75]) {
+      const token = manager.addToken(
+        {
+          name: "Between",
+          x: 0,
+          y: 0,
+          width: fraction * cell,
+          height: fraction * cell,
+        },
+        true,
+      );
+      expect(token.width).toBeCloseTo(cell, 1);
+    }
+  });
+
+  it("keeps a half-hex token its size when it is moved", () => {
+    const manager = hexManager("hex-pointy");
+    const token = manager.addToken(
+      { name: "Pip", x: 0, y: 0, width: cell / 2, height: cell / 2 },
+      true,
+    );
+    manager.updateToken(token.id, { x: 640, y: 320 });
+    const moved = manager.tokens[token.id];
+    expect(moved.width).toBeCloseTo(cell / 2, 1);
+    expect(moved.height).toBeCloseTo(cell / 2, 1);
+  });
+
   it("keeps a hex-shaped token's own bounding box", () => {
     const manager = hexManager("hex-pointy");
     const token = manager.addToken(
