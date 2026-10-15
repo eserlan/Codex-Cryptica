@@ -16,6 +16,7 @@ import type {
 import { simulateClock } from "./one-shot-clock";
 import { checkNpcContinuity } from "./one-shot-continuity";
 import { textOverlap } from "./one-shot-dedupe";
+import { checkResources } from "./one-shot-resources";
 import {
   checkEndingCoverage,
   checkMystery,
@@ -346,6 +347,7 @@ export const INTEGRITY_CHECKS: GapCheck[] = [
   checkThreadSubjects,
   checkMystery,
   checkEndingCoverage,
+  checkResources,
   checkRouteTradeoffs,
   checkLateCommitments,
   checkClockConsistency,

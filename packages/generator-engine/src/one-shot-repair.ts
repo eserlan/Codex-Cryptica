@@ -21,6 +21,7 @@ import {
   strs,
 } from "./one-shot-parse";
 import { dedupeOneShot } from "./one-shot-dedupe";
+import { parseResources } from "./one-shot-resources";
 import {
   normaliseState,
   parseDecisions,
@@ -42,6 +43,7 @@ import {
   REQUIREMENT_RULE,
   ROUTES_RULE,
   THEORIES_RULE,
+  RESOURCE_RULE,
   THREAD_DATA_RULE,
   WHEREABOUTS_RULE,
 } from "./one-shot-rules";
@@ -84,7 +86,7 @@ Check, and fix in place:
 9. Pacing: ${PACING_RULE} Remove any act or part timings from the briefing.
 10. Continuity: follow every named NPC and important object through the scenes in order. ${CONTINUITY_RULE} Fix a contradiction in the scene text, not by renaming.
 11. Finale requirements: ${REQUIREMENT_RULE}
-12. Who is where: ${WHEREABOUTS_RULE} ${ROUTES_RULE} ${THREAD_DATA_RULE}
+12. Who is where: ${WHEREABOUTS_RULE} ${ROUTES_RULE} ${THREAD_DATA_RULE} ${RESOURCE_RULE}
 13. Decisions and theories: ${DECISIONS_RULE} ${THEORIES_RULE} Theories only for an investigation or mystery.
 
 Rules:
@@ -100,6 +102,7 @@ Return only JSON shaped like:
   "decisions": [{ "id": "stopped", "question": "" }],
   "theories": [{ "id": "theory-1", "name": "", "summary": "", "isTrue": false, "obvious": true }],
   "endings": [{ "id": "end-1", "condition": "", "consequence": "", "requires": { "stopped": true } }],
+  "resources": [{ "id": "food", "name": "", "start": 5, "unit": "", "spends": [{ "sceneId": "scene-1", "what": "", "amount": 1 }], "whenEmpty": "" }],
   "threads": [{ "about": "npc-3", "kind": "rescue", "setup": "", "payoff": "", "sceneIds": ["scene-3"] }],
   "solution": { "summary": "", "requirements": [{ "kind": "clue", "what": "", "detail": "", "sceneIds": ["scene-2"] }], "steps": [""], "alternatives": [""], "mistakes": [""] },
   "clock": { "name": "", "advances": "", "schedule": ["scene-end-after-opening", "finale-start"], "startsAt": 1, "pushes": "", "ticks": [{ "trigger": "", "effect": "" }], "slow": "", "deadline": "" },
@@ -287,6 +290,9 @@ function mergeRepair(
       : adventure.antagonistId,
     threads: mergedThreads,
     decisions: parseDecisions(data.decisions) ?? adventure.decisions,
+    resources:
+      parseResources(data.resources, (id) => !!inScenes(id)) ??
+      adventure.resources,
     theories,
     solution: parseSolution(data.solution, inScenes) ?? adventure.solution,
     clock: parseClock(data.clock) ?? adventure.clock,
