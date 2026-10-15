@@ -203,6 +203,45 @@ describe("clock schedule", () => {
       "At each sunset, and when the party reaches the finale.";
     expect(messages(a).filter((m) => /clock/i.test(m))).toEqual([]);
   });
+
+  it("does not treat a deadline duration as a time-triggered clock advance", () => {
+    const a = allEssential(
+      "At the end of each essential scene; the party has six hours before the deadline.",
+      8,
+    );
+    expect(simulateClock(a)!.alsoTimed).toBe(false);
+    expect(messages(a)).toContainEqual(
+      expect.stringMatching(
+        /schedule only advances the clock \d+ times .*8 ticks, so the pressure never builds/,
+      ),
+    );
+  });
+
+  it("does not treat an unrelated recurring event as a clock advance", () => {
+    const a = allEssential(
+      "At the end of each essential scene; every hour, the guards change shifts.",
+      8,
+    );
+    expect(simulateClock(a)!.alsoTimed).toBe(false);
+    expect(messages(a)).toContainEqual(
+      expect.stringMatching(
+        /schedule only advances the clock \d+ times .*8 ticks, so the pressure never builds/,
+      ),
+    );
+  });
+
+  it("does not treat a comma-separated recurring event as a clock advance", () => {
+    const a = allEssential(
+      "At the end of each scene the clock advances, every hour the guards change shifts.",
+      8,
+    );
+    expect(simulateClock(a)!.alsoTimed).toBe(false);
+    expect(messages(a)).toContainEqual(
+      expect.stringMatching(
+        /schedule only advances the clock \d+ times .*8 ticks, so the pressure never builds/,
+      ),
+    );
+  });
 });
 
 describe("NPC continuity", () => {
@@ -226,6 +265,7 @@ describe("NPC continuity", () => {
 
   it.each([
     "Tovin followed the party here and was dragged under the cart; now Tovin is trapped.",
+    "Tovin remains trapped because he was captured by the guards.",
     "If the party never freed him, Tovin is still trapped.",
     "Tovin says the drivers are missing and points to the cart.",
     "A stranger lies pinned beneath the cart.",
@@ -236,6 +276,33 @@ describe("NPC continuity", () => {
       expect(messages(a).filter((m) => /Tovin/.test(m))).toEqual([]);
     },
   );
+
+  it("does not let another character's explanation excuse Tovin's confinement", () => {
+    const a = withWitness(
+      "Tovin remains trapped in the cellar, while the party was dragged here by floodwaters.",
+    );
+    expect(messages(a)).toContainEqual(
+      `Tovin Marr is present and free in "${a.scenes[0].title}" but trapped in "${a.scenes[1].title}". Say in that scene how it happened, or make them two different people.`,
+    );
+  });
+
+  it("does not let an unrelated explanation sentence excuse a confinement transition", () => {
+    const a = withWitness(
+      "Tovin remains trapped in the cellar. The party was dragged here by floodwaters.",
+    );
+    expect(messages(a)).toContainEqual(
+      `Tovin Marr is present and free in "${a.scenes[0].title}" but trapped in "${a.scenes[1].title}". Say in that scene how it happened, or make them two different people.`,
+    );
+  });
+
+  it("does not let a cause about another character excuse confinement", () => {
+    const a = withWitness(
+      "Tovin remains trapped because the party was dragged here by floodwaters.",
+    );
+    expect(messages(a)).toContainEqual(
+      `Tovin Marr is present and free in "${a.scenes[0].title}" but trapped in "${a.scenes[1].title}". Say in that scene how it happened, or make them two different people.`,
+    );
+  });
 });
 
 describe("finale requirement kinds", () => {

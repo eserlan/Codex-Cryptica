@@ -36,7 +36,7 @@ const slug = (text: string) =>
     .replace(/^-|-$/g, "");
 
 /** States where a person or object cannot act or be found until freed. */
-export const CONFINED: readonly OneShotState[] = [
+const CONFINED: readonly OneShotState[] = [
   "trapped",
   "captive",
   "missing",
@@ -171,7 +171,7 @@ export function parseRoutes(raw: unknown): OneShotRoute[] | undefined {
 }
 
 /** Whereabouts of unknown NPCs, repeats and routes not in `next` are dropped. */
-export function normaliseScene(
+function normaliseScene(
   scene: OneShotScene,
   npcIds: Set<string>,
 ): OneShotScene {
@@ -255,7 +255,7 @@ export function parseRequires(
 }
 
 /** Endings may only name decisions that exist. */
-export function normaliseEndings(
+function normaliseEndings(
   endings: OneShotEnding[],
   decisions: OneShotDecision[] | undefined,
 ): OneShotEnding[] {
