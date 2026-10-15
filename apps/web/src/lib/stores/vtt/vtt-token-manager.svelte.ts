@@ -46,14 +46,14 @@ function isHexShaped(shape: string | undefined) {
   return shape === "hex" || shape === "hex-pointy" || shape === "hex-flat";
 }
 
-/** Token sizes below one hex: half and quarter. */
+/** Supported token sizes below one grid cell: quarter and half. */
 const FRACTIONAL_CELLS = [0.25, 0.5] as const;
 const FRACTION_TOLERANCE = 0.02;
 
 /**
- * A side measured in hexes. Beyond one hex it rounds to whole hexes. Below
- * one it stays at a half or quarter hex only if it already is one, so a
- * stray in-between size still becomes a whole hex rather than a fraction.
+ * A side measured in grid cells. Beyond one cell it rounds to whole cells.
+ * Below one it stays at a half or quarter cell only if it already is one, so a
+ * stray in-between size still becomes a whole cell rather than a fraction.
  */
 function sideInCells(cells: number): number {
   const fraction = FRACTIONAL_CELLS.find(
@@ -556,10 +556,10 @@ export class VTTTokenManager {
 
       // Snap size to nearest grid cell multiple
       targetWidth = gridSize
-        ? Math.max(gridSize, Math.round(tokenSize.width / gridSize) * gridSize)
+        ? sideInCells(tokenSize.width / gridSize) * gridSize
         : tokenSize.width;
       targetHeight = gridSize
-        ? Math.max(gridSize, Math.round(tokenSize.height / gridSize) * gridSize)
+        ? sideInCells(tokenSize.height / gridSize) * gridSize
         : tokenSize.height;
     }
 

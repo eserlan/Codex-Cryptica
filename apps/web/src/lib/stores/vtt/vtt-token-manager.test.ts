@@ -247,6 +247,27 @@ describe("VTTTokenManager hex grid snapping", () => {
     );
     expect(token).toMatchObject({ x: 100, y: 0, width: 100, height: 100 });
   });
+
+  it.each([0.25, 0.5])(
+    "resizes a square-grid token to %s of a cell",
+    (fraction) => {
+      const manager = hexManager("hex-pointy", { gridType: "square" });
+      const token = manager.addToken(
+        { name: "Square", x: 100, y: 100, width: 100, height: 100 },
+        true,
+      );
+
+      const resized = manager.updateToken(token.id, {
+        width: fraction * 100,
+        height: fraction * 100,
+      });
+
+      expect(resized).toMatchObject({
+        width: fraction * 100,
+        height: fraction * 100,
+      });
+    },
+  );
 });
 
 describe("VTTTokenManager.addToken", () => {

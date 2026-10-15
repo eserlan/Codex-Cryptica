@@ -159,6 +159,30 @@ describe("MapContextMenu appearance controls", () => {
   );
 
   it.each([
+    ["0.25x0.25", 0.25],
+    ["0.5x0.5", 0.5],
+  ])("resizes a square-grid token to %s of a cell", async (name, fraction) => {
+    mapStoreMock.gridType = "square";
+    token.x = 100;
+    token.y = 150;
+    token.width = 50;
+    token.height = 50;
+    renderMenu();
+
+    await fireEvent.click(screen.getByRole("menuitem", { name: "Resize" }));
+    await fireEvent.click(screen.getByRole("menuitem", { name }));
+
+    expect(mapSessionMock.updateToken).toHaveBeenCalledOnce();
+    const [, update] = mapSessionMock.updateToken.mock.calls[0];
+    expect(update).toMatchObject({
+      x: 100,
+      y: 150,
+      width: fraction * mapStoreMock.gridSize,
+      height: fraction * mapStoreMock.gridSize,
+    });
+  });
+
+  it.each([
     {
       gridType: "hex-pointy",
       baseShape: "circle",
