@@ -102,10 +102,12 @@ describe("generator save payloads", () => {
           rarity: "Rare",
           category: "Ring",
           attunement: true,
-          attunementRequirement: "by a rogue or shadow caster",
+          attunementRequirement:
+            "by a rogue or shadow caster ![pixel](https://tracker.example/attunement.png)",
           activationAction: "Bonus Action",
           charges: 3,
-          rechargeRate: "recharges 1d3 at dusk",
+          rechargeRate:
+            "recharges 1d3 at dusk ![pixel](https://tracker.example/recharge.png)",
           savingThrowDc: 15,
           rulesText:
             'As a bonus action, teleport up to 30 feet. ![map](https://tracker.example/pixel.png) <img src="https://tracker.example/raw.png">',
@@ -124,10 +126,12 @@ describe("generator save payloads", () => {
     );
     expect(payload.lore).toContain("- **Rarity & Category:** Rare Ring");
     expect(payload.lore).toContain(
-      "- **Attunement:** Requires attunement (by a rogue or shadow caster)",
+      "- **Attunement:** Requires attunement (by a rogue or shadow caster pixel)",
     );
     expect(payload.lore).toContain("- **Activation:** Bonus Action");
-    expect(payload.lore).toContain("- **Charges:** 3 (recharges 1d3 at dusk)");
+    expect(payload.lore).toContain(
+      "- **Charges:** 3 (recharges 1d3 at dusk pixel)",
+    );
     expect(payload.lore).toContain("- **Saving Throw DC:** 15");
     expect(payload.lore).toContain("teleport up to 30 feet");
     expect(payload.lore).not.toContain("tracker.example");

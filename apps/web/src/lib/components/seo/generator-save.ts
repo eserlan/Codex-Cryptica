@@ -36,12 +36,12 @@ function formatTovMagicItemMarkdown(item: TovMagicItemMechanics): string {
   const parts: string[] = ["### Game Statistics (Tales of the Valiant)"];
   parts.push(`- **Rarity & Category:** ${item.rarity} ${item.category}`);
   parts.push(
-    `- **Attunement:** ${item.attunement ? (item.attunementRequirement ? `Requires attunement (${item.attunementRequirement})` : "Requires attunement") : "No"}`,
+    `- **Attunement:** ${item.attunement ? (item.attunementRequirement ? `Requires attunement (${stripMarkdownImages(item.attunementRequirement)})` : "Requires attunement") : "No"}`,
   );
   parts.push(`- **Activation:** ${item.activationAction}`);
   if (item.charges) {
     parts.push(
-      `- **Charges:** ${item.charges} ${item.rechargeRate ? `(${item.rechargeRate})` : ""}`.trim(),
+      `- **Charges:** ${item.charges} ${item.rechargeRate ? `(${stripMarkdownImages(item.rechargeRate)})` : ""}`.trim(),
     );
   }
   if (item.savingThrowDc) {
