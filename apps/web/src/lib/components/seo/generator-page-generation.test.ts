@@ -5,6 +5,7 @@ import {
   buildPreviewOutput,
   createGeneratorHandlers,
   createGenerate,
+  createOneShotRunControl,
 } from "./generator-page-generation";
 import type { ValidSlug } from "./generator-page-meta";
 
@@ -345,6 +346,51 @@ describe("generator-page-generation", () => {
           onProgress: onOneShotProgress,
         }),
       );
+    });
+
+    it("gives each one-shot run its own signal and cancels it when the page goes away", async () => {
+      const engine = makeFakeEngine();
+      const requested: string[] = [];
+      let release!: () => void;
+      const firstStageDone = new Promise<void>((r) => (release = r));
+      // Mimics the staged runner: one stage, then a later stage only if the
+      // run wasn't cancelled in between.
+      engine.generateOneShot = vi.fn(async ({ signal }) => {
+        requested.push("core");
+        await firstStageDone;
+        if (!signal.aborted) requested.push("structure");
+        return { title: "x" };
+      });
+      const oneShotRuns = createOneShotRunControl();
+      const handlers = createGeneratorHandlers(
+        makeCtx({
+          engine,
+          oneShotRuns,
+          oneShot: { durationHours: "4", partySize: "5" },
+        }),
+      );
+
+      const run = handlers["one-shot-adventure-generator"](true);
+      const { signal } = engine.generateOneShot.mock.calls[0][0];
+      expect(signal.aborted).toBe(false);
+
+      oneShotRuns.dispose();
+      release();
+      await run;
+
+      expect(signal.aborted).toBe(true);
+      expect(requested).toEqual(["core"]);
+    });
+
+    it("cancels the previous one-shot run when a new one starts", () => {
+      const runs = createOneShotRunControl();
+      const first = runs.start();
+      const second = runs.start();
+      expect(first.aborted).toBe(true);
+      expect(second.aborted).toBe(false);
+      runs.dispose();
+      expect(second.aborted).toBe(true);
+      expect(() => runs.dispose()).not.toThrow();
     });
 
     it("maps the tome form hazard to the engine's primaryHazard option", async () => {

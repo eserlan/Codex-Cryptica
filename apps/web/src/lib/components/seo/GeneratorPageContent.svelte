@@ -67,6 +67,7 @@
   import {
     createGenerate,
     createGeneratorHandlers,
+    createOneShotRunControl,
   } from "./generator-page-generation";
   import {
     initializeHandoffState,
@@ -911,8 +912,8 @@
 
   /** Live steps while a one-shot is generated in stages. */
   let oneShotProgress = $state<OneShotProgressStep[] | null>(null);
-  let oneShotAbortController: AbortController | null = null;
-  onDestroy(() => oneShotAbortController?.abort());
+  const oneShotRuns = createOneShotRunControl();
+  onDestroy(oneShotRuns.dispose);
 
   const GENERATE_HANDLERS = createGeneratorHandlers({
     npc,
@@ -962,14 +963,8 @@
     getPlotTwistPremise: () => plotTwist.premise,
     getHandoffQuestPremise: () => handoffState.questPremise,
     getSessionEntities: () => sessionHubStore.entities,
-    onOneShotProgress: (steps) => {
-      oneShotProgress = steps;
-      if (steps === null) {
-        oneShotAbortController?.abort();
-        oneShotAbortController = new AbortController();
-      }
-    },
-    getOneShotSignal: () => oneShotAbortController?.signal,
+    onOneShotProgress: (steps) => (oneShotProgress = steps),
+    oneShotRuns,
   });
 
   const generate = createGenerate({

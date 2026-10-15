@@ -85,8 +85,31 @@ export interface GenerationContext {
   getSessionEntities: () => unknown[];
   /** Receives each step of a staged one-shot generation; null resets it. */
   onOneShotProgress?: (steps: OneShotProgressStep[] | null) => void;
-  getOneShotSignal?: () => AbortSignal | undefined;
+  /** Cancels a staged one-shot when a new one starts or the page goes away. */
+  oneShotRuns?: OneShotRunControl;
   engine?: typeof generatorEngine;
+}
+
+export interface OneShotRunControl {
+  /** Cancel any run in flight and return the signal for a new one. */
+  start: () => AbortSignal;
+  /** Cancel the run in flight, e.g. when the page is destroyed. */
+  dispose: () => void;
+}
+
+export function createOneShotRunControl(): OneShotRunControl {
+  let controller: AbortController | null = null;
+  return {
+    start() {
+      controller?.abort();
+      controller = new AbortController();
+      return controller.signal;
+    },
+    dispose() {
+      controller?.abort();
+      controller = null;
+    },
+  };
 }
 
 export type GeneratorHandler = (useAI: boolean) => Promise<GeneratorOutput>;
@@ -282,7 +305,7 @@ export function createGeneratorHandlers(
         partySize: Number(ctx.oneShot.partySize),
         useAI,
         onProgress: ctx.onOneShotProgress,
-        signal: ctx.getOneShotSignal?.(),
+        signal: ctx.oneShotRuns?.start(),
       } as never);
     },
     "villain-scheme-generator": (useAI) =>
