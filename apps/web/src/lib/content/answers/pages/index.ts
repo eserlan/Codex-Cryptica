@@ -32,6 +32,7 @@ import { howDoIOrganiseADndCampaign } from "./how-do-i-organise-a-dnd-campaign";
 import { howDoIOrganiseGmNotesForInPersonPlay } from "./how-do-i-organise-gm-notes-for-in-person-play";
 import { howDoIPaceAnRpgOneShot } from "./how-do-i-pace-an-rpg-one-shot";
 import { howDoIPlanStoryArcsForAnRpgCampaign } from "./how-do-i-plan-story-arcs-for-an-rpg-campaign";
+import { howDoIPortrayABelievableModernCityInAnUrbanRpg } from "./how-do-i-portray-a-believable-modern-city-in-an-urban-rpg";
 import { howDoIPrepareADndSession } from "./how-do-i-prepare-a-dnd-session";
 import { howDoIPrepareAnRpgSessionStepByStep } from "./how-do-i-prepare-an-rpg-session-step-by-step";
 import { howDoIReadADndCharacterSheetAsABeginner } from "./how-do-i-read-a-dnd-character-sheet-as-a-beginner";
@@ -200,6 +201,7 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     howDoIOrganiseGmNotesForInPersonPlay,
     howDoIPaceAnRpgOneShot,
     howDoIPlanStoryArcsForAnRpgCampaign,
+    howDoIPortrayABelievableModernCityInAnUrbanRpg,
     howDoIPrepareADndSession,
     howDoIPrepareAnRpgSessionStepByStep,
     howDoIReadADndCharacterSheetAsABeginner,

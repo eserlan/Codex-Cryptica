@@ -161,6 +161,7 @@ export const howDoYouCreateAFantasyCityThatFeelsAlive: AnswerConfigInput = {
     "how-do-i-run-a-campaign-where-the-players-own-a-business",
     "how-do-i-create-interesting-islands-and-ports-for-a-pirate-campaign",
     "how-do-i-make-sea-travel-interesting-in-a-ttrpg",
+    "how-do-i-portray-a-believable-modern-city-in-an-urban-rpg",
   ],
   labels: ["fantasy", "rumour"],
   discovery: {

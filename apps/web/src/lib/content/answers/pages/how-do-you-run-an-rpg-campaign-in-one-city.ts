@@ -149,6 +149,7 @@ export const howDoYouRunAnRpgCampaignInOneCity: AnswerConfigInput = {
     "how-do-you-prepare-a-sandbox-rpg-campaign",
     "how-many-npcs-does-an-rpg-town-need",
     "how-do-i-run-exploration-in-a-huge-ruined-city",
+    "how-do-i-portray-a-believable-modern-city-in-an-urban-rpg",
   ],
   discovery: {
     id: "answer-single-city-campaign",

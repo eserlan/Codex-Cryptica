@@ -176,6 +176,7 @@ export const howDoYouOrganiseNpcRelationships: AnswerConfigInput = {
     "how-do-i-organise-a-dnd-campaign",
     "how-do-i-start-a-dnd-campaign",
     "how-do-i-make-roleplay-more-engaging",
+    "how-do-i-portray-a-believable-modern-city-in-an-urban-rpg",
   ],
   discovery: {
     id: "answer-npc-relationships",

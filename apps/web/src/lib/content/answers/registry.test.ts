@@ -53,6 +53,28 @@ const mockRegistry: Record<string, AnswerConfig> = {
 };
 
 describe("answer registry", () => {
+  it("keeps an actionable checklist in the modern-city answer", () => {
+    const answer =
+      answers["how-do-i-portray-a-believable-modern-city-in-an-urban-rpg"];
+    const checklist = answer.sections.find(
+      (section) => section.kind === "checklist",
+    );
+
+    expect(checklist?.kind).toBe("checklist");
+    if (checklist?.kind !== "checklist") return;
+
+    expect(checklist.heading).toBe(
+      "Start with one block and let play expand it",
+    );
+    expect(checklist.items.length).toBeGreaterThanOrEqual(5);
+    expect(checklist.items).toContain(
+      "Choose one neighbourhood and name the block, bus stop, shop, and doorway the coterie will actually use.",
+    );
+    expect(checklist.items).toContain(
+      "After the session, note what the players touched, any change caused by their actions or an established routine, and one question to research before next time.",
+    );
+  });
+
   it("keeps an actionable practice checklist in the NPC roleplay answer", () => {
     const answer = answers["how-do-i-roleplay-npcs-if-im-not-good-at-acting"];
 
