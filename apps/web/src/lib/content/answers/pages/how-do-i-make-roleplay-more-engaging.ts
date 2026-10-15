@@ -242,6 +242,7 @@ export const howDoIMakeRoleplayMoreEngaging: AnswerConfigInput = {
     "how-do-you-make-npcs-memorable-without-lots-of-prep",
     "how-do-i-give-specialist-characters-spotlight",
     "how-do-you-organise-npc-relationships",
+    "how-do-i-roleplay-npcs-if-im-not-good-at-acting",
   ],
   discovery: {
     id: "answer-make-roleplay-more-engaging",

@@ -18,6 +18,24 @@ export const LANGUAGE_GENERATION_CONFIG: Readonly<{
 };
 
 /**
+ * A one-shot adventure is a long structured document. Without a config the
+ * proxy applies the fallback model's default cap (4096 tokens), which cuts a
+ * full adventure off mid-JSON and forces the local draft, so one-shot calls
+ * ask for room explicitly.
+ */
+export const ONE_SHOT_GENERATION_CONFIG: Readonly<{
+  temperature: number;
+  topP: number;
+  maxOutputTokens: number;
+  responseMimeType: string;
+}> = {
+  temperature: 0.7,
+  topP: 0.9,
+  maxOutputTokens: 16384,
+  responseMimeType: "application/json",
+};
+
+/**
  * Bridge the package's {@link PublicGeneratorOutput} (whose `type` is a plain
  * string) onto the SEO {@link GeneratorOutput} union the public pages expect.
  */
@@ -28,6 +46,7 @@ export function toSeoOutput(o: PublicGeneratorOutput): GeneratorOutput {
 type StreamingModel = {
   generateContentStream?(
     request: unknown,
+    signal?: AbortSignal,
   ): AsyncGenerator<
     | { type: "delta"; text: string }
     | { type: "complete"; text: string }
@@ -40,9 +59,10 @@ async function streamModelPreview(
   model: StreamingModel,
   request: unknown,
   onPreview: (text: string) => void,
+  signal?: AbortSignal,
 ): Promise<string> {
   let text = "";
-  for await (const event of model.generateContentStream!(request)) {
+  for await (const event of model.generateContentStream!(request, signal)) {
     if (event.type === "delta") {
       text += event.text;
       onPreview(text);
@@ -100,6 +120,14 @@ export class GeneratorAITransport {
       try {
         return toSeoOutput(await aiAttempt());
       } catch (err) {
+        if (
+          err &&
+          typeof err === "object" &&
+          "name" in err &&
+          err.name === "AbortError"
+        ) {
+          throw err;
+        }
         // Distinguish routine, user-facing failure classes (offline, rate
         // limits, quota, safety) from a genuine AI-pipeline defect (e.g. an
         // unparseable response). Both fall back to local tables, but an
@@ -132,12 +160,19 @@ export class GeneratorAITransport {
     userMessage: string,
     generationConfig?: typeof LANGUAGE_GENERATION_CONFIG,
     emitPreview = true,
+    signal?: AbortSignal,
   ): Promise<string> {
     const model = await this.clientManager.getModel(
       "",
       GENERATOR_MODEL_ID,
       systemInstruction,
     );
+    if (signal?.aborted) {
+      throw (
+        signal.reason ??
+        new DOMException("The operation was aborted", "AbortError")
+      );
+    }
     const request = generationConfig
       ? {
           contents: [{ role: "user", parts: [{ text: userMessage }] }],
@@ -150,9 +185,14 @@ export class GeneratorAITransport {
       this.streamPreview &&
       streamingModel.generateContentStream
     ) {
-      return streamModelPreview(streamingModel, request, this.streamPreview);
+      return streamModelPreview(
+        streamingModel,
+        request,
+        this.streamPreview,
+        signal,
+      );
     }
-    const response = await model.generateContent(request);
+    const response = await model.generateContent(request, { signal });
     return response.response.text().trim();
   }
 

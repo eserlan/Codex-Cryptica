@@ -357,15 +357,55 @@ describe("callOpenAi", () => {
     vi.useFakeTimers();
     const resultPromise = callOpenAi(request, model, env, realFetcher);
     if (typeof (vi as any).advanceTimersByTimeAsync === "function") {
-      await (vi as any).advanceTimersByTimeAsync(60_001);
+      await (vi as any).advanceTimersByTimeAsync(120_001);
     } else {
-      vi.advanceTimersByTime(60_001);
+      vi.advanceTimersByTime(120_001);
     }
     const result = await resultPromise;
     vi.useRealTimers();
 
     expect(result.ok).toBe(false);
     if (!result.ok) expect(result.reason).toBe("timeout");
+  });
+
+  it("allows a successful request to run past the former 60-second timeout", async () => {
+    let signal: AbortSignal | undefined;
+    const fetcher = ((_url: string, init: RequestInit) => {
+      signal = init.signal as AbortSignal;
+      return new Promise<Response>((resolve, reject) => {
+        signal?.addEventListener("abort", () => {
+          const err = new Error("The operation was aborted");
+          err.name = "AbortError";
+          reject(err);
+        });
+        setTimeout(
+          () =>
+            resolve(
+              new Response(
+                JSON.stringify({ choices: [{ message: { content: "hi" } }] }),
+                { status: 200 },
+              ),
+            ),
+          90_000,
+        );
+      });
+    }) as typeof fetch;
+
+    vi.useFakeTimers();
+    try {
+      const resultPromise = callOpenAi(request, model, env, fetcher);
+      if (typeof (vi as any).advanceTimersByTimeAsync === "function") {
+        await (vi as any).advanceTimersByTimeAsync(90_000);
+      } else {
+        vi.advanceTimersByTime(90_000);
+      }
+      const result = await resultPromise;
+
+      expect(result.ok).toBe(true);
+      expect(signal?.aborted).toBe(false);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it("still classifies the abort as a timeout when it rejects with a non-Error (e.g. DOMException-like) abort reason", async () => {
@@ -380,9 +420,9 @@ describe("callOpenAi", () => {
     vi.useFakeTimers();
     const resultPromise = callOpenAi(request, model, env, realFetcher);
     if (typeof (vi as any).advanceTimersByTimeAsync === "function") {
-      await (vi as any).advanceTimersByTimeAsync(60_001);
+      await (vi as any).advanceTimersByTimeAsync(120_001);
     } else {
-      vi.advanceTimersByTime(60_001);
+      vi.advanceTimersByTime(120_001);
     }
     const result = await resultPromise;
     vi.useRealTimers();

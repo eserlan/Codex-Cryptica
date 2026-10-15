@@ -467,6 +467,10 @@ export interface GeneratorOutput {
    * local tables, so the layout can show a friendly notice (#1494).
    */
   aiFallback?: boolean;
+  /** The AI draft is complete but its editorial review didn't finish. */
+  aiReviewSkipped?: boolean;
+  /** Parts written from templates because their AI step didn't finish. */
+  aiPartialFallback?: string[];
   /** Structured major-body list for star systems, driving the mechanical side-view diagram. */
   bodies?: StarSystemBody[];
   /** Primary star's spectral class/type (e.g. "G", "M", "Neutron Star"), for star systems. */
@@ -489,6 +493,8 @@ export interface GeneratorOutput {
   conflictDomain?: string;
   /** Optional connections or relationships to other entities. */
   connections?: SuggestedConnection[];
+  /** Structured one-shot adventure, so single scenes can be regenerated. */
+  oneShot?: import("generator-engine").OneShotAdventure;
 }
 
 /**

@@ -97,6 +97,23 @@ describe("useGeneratorSession", () => {
     expect(ctx.generate).toHaveBeenCalledWith({ useAI: false });
   });
 
+  it("forces AI for a retry when AI is off, while still respecting offline status", async () => {
+    const ctx = setup();
+    cleanup = ctx.cleanup;
+    ctx.session.useAI = false;
+
+    await ctx.session.handleGenerate({ forceAI: true });
+
+    expect(ctx.generate).toHaveBeenCalledWith({ useAI: true });
+
+    ctx.generate.mockClear();
+    const online = vi.spyOn(navigator, "onLine", "get").mockReturnValue(false);
+    await ctx.session.handleGenerate({ forceAI: true });
+    online.mockRestore();
+
+    expect(ctx.generate).toHaveBeenCalledWith({ useAI: false });
+  });
+
   it("reports a failure without marking the run as successful", async () => {
     const ctx = setup({
       generate: vi.fn().mockRejectedValue(new Error("boom")),
@@ -176,5 +193,16 @@ describe("useGeneratorSession", () => {
     expect(ctx.session.currentEntityId).toBe("e9");
     expect(ctx.session.userGenerationSucceeded).toBe(true);
     expect(ctx.session.isExampleDraft).toBe(false);
+  });
+
+  it("swaps in an edited result without touching the saved entity", () => {
+    const ctx = setup();
+    cleanup = ctx.cleanup;
+
+    ctx.session.applyRefinedOutput({ ...output, title: "Refined" }, "e9");
+    ctx.session.replaceOutput({ ...output, title: "Edited scene" });
+
+    expect(ctx.session.generatedData?.title).toBe("Edited scene");
+    expect(ctx.session.currentEntityId).toBe("e9");
   });
 });

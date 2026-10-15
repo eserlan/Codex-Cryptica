@@ -32,9 +32,11 @@ import { howDoIOrganiseADndCampaign } from "./how-do-i-organise-a-dnd-campaign";
 import { howDoIOrganiseGmNotesForInPersonPlay } from "./how-do-i-organise-gm-notes-for-in-person-play";
 import { howDoIPaceAnRpgOneShot } from "./how-do-i-pace-an-rpg-one-shot";
 import { howDoIPlanStoryArcsForAnRpgCampaign } from "./how-do-i-plan-story-arcs-for-an-rpg-campaign";
+import { howDoIPortrayABelievableModernCityInAnUrbanRpg } from "./how-do-i-portray-a-believable-modern-city-in-an-urban-rpg";
 import { howDoIPrepareADndSession } from "./how-do-i-prepare-a-dnd-session";
 import { howDoIPrepareAnRpgSessionStepByStep } from "./how-do-i-prepare-an-rpg-session-step-by-step";
 import { howDoIReadADndCharacterSheetAsABeginner } from "./how-do-i-read-a-dnd-character-sheet-as-a-beginner";
+import { howDoIRoleplayNpcsIfImNotGoodAtActing } from "./how-do-i-roleplay-npcs-if-im-not-good-at-acting";
 import { howDoIRunABardOrFaceWithoutSideliningTheParty } from "./how-do-i-run-a-bard-or-face-without-sidelining-the-party";
 import { howDoIRunACampaignWhereThePlayersOwnABusiness } from "./how-do-i-run-a-campaign-where-the-players-own-a-business";
 import { howDoIRunADiplomatNobleOrCourtierInAnRpg } from "./how-do-i-run-a-diplomat-noble-or-courtier-in-an-rpg";
@@ -42,6 +44,7 @@ import { howDoIRunAJournalistOrMediaCharacterInAnRpg } from "./how-do-i-run-a-jo
 import { howDoIRunALargeBattleWhenThePlayerCharactersArePartOfAnArmy } from "./how-do-i-run-a-large-battle-when-the-player-characters-are-part-of-an-army";
 import { howDoIRunAPirateCampaignFocusedOnExploration } from "./how-do-i-run-a-pirate-campaign-focused-on-exploration";
 import { howDoIRunARogueOrScoutWithoutSplittingTheParty } from "./how-do-i-run-a-rogue-or-scout-without-splitting-the-party";
+import { howDoIRunAStealthMissionInATabletopRpg } from "./how-do-i-run-a-stealth-mission-in-a-tabletop-rpg";
 import { howDoIRunASuccessfulSessionZero } from "./how-do-i-run-a-successful-session-0";
 import { howDoIRunAnInvestigatorWithoutSideliningTheParty } from "./how-do-i-run-an-investigator-without-sidelining-the-party";
 import { howDoIRunCharacterRolesInAPoliticalIntrigueRpg } from "./how-do-i-run-character-roles-in-a-political-intrigue-rpg";
@@ -198,9 +201,11 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     howDoIOrganiseGmNotesForInPersonPlay,
     howDoIPaceAnRpgOneShot,
     howDoIPlanStoryArcsForAnRpgCampaign,
+    howDoIPortrayABelievableModernCityInAnUrbanRpg,
     howDoIPrepareADndSession,
     howDoIPrepareAnRpgSessionStepByStep,
     howDoIReadADndCharacterSheetAsABeginner,
+    howDoIRoleplayNpcsIfImNotGoodAtActing,
     howDoIRunABardOrFaceWithoutSideliningTheParty,
     howDoIRunACampaignWhereThePlayersOwnABusiness,
     howDoIRunADiplomatNobleOrCourtierInAnRpg,
@@ -208,6 +213,7 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     howDoIRunALargeBattleWhenThePlayerCharactersArePartOfAnArmy,
     howDoIRunAPirateCampaignFocusedOnExploration,
     howDoIRunARogueOrScoutWithoutSplittingTheParty,
+    howDoIRunAStealthMissionInATabletopRpg,
     howDoIRunASuccessfulSessionZero,
     howDoIRunAnInvestigatorWithoutSideliningTheParty,
     howDoIRunCharacterRolesInAPoliticalIntrigueRpg,

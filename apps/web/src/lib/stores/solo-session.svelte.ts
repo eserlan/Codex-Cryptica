@@ -377,8 +377,20 @@ export class SoloSessionStore {
     const before = new Set(known(session.partyIds));
     const after = new Set(next.partyIds);
     const label = (id: string) => names.get(id) ?? id;
-    const joined = next.partyIds.filter((id) => !before.has(id)).map(label);
-    const left = [...before].filter((id) => !after.has(id)).map(label);
+
+    // ⚡ Bolt Optimization: Replace chained array spreads/filters/maps with imperative loops
+    const joined: string[] = [];
+    for (const id of next.partyIds) {
+      if (!before.has(id)) {
+        joined.push(label(id));
+      }
+    }
+    const left: string[] = [];
+    for (const id of before) {
+      if (!after.has(id)) {
+        left.push(label(id));
+      }
+    }
 
     this.write(next);
     if (this.journalRunning && (joined.length || left.length)) {

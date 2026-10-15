@@ -159,6 +159,7 @@ export const howDoYouRunASceneWithMultipleNpcs: AnswerConfigInput = {
     "how-do-i-make-interviewing-npcs-interesting-in-an-investigation",
     "how-do-i-handle-players-asking-an-npc-to-tell-us-everything-you-know",
     "how-do-i-make-roleplay-more-engaging",
+    "how-do-i-roleplay-npcs-if-im-not-good-at-acting",
   ],
   discovery: {
     id: "answer-run-scene-multiple-npcs",

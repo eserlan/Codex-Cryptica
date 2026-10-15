@@ -25,6 +25,7 @@ import type {
   SuggestedConnection,
 } from "./campaign-generator-types";
 import type { LanguageProfileV1 } from "schema";
+import type { OneShotAdventure } from "./one-shot-types";
 import type { StarSystemBody } from "./public-star-system";
 import type {
   ConstellationPattern,
@@ -75,6 +76,10 @@ export interface PublicGeneratorOutput {
    * (#1494). Absent on ordinary AI or explicitly-local results.
    */
   aiFallback?: boolean;
+  /** The AI draft is complete but its editorial review didn't finish. */
+  aiReviewSkipped?: boolean;
+  /** Parts written from templates because their AI step didn't finish. */
+  aiPartialFallback?: string[];
   languageProfile?: LanguageProfileV1;
   languageProfileVersion?: 1;
   /** Structured major-body list for star systems, driving the mechanical side-view diagram. */
@@ -110,6 +115,8 @@ export interface PublicGeneratorOutput {
    * Optional connections or relationships to other entities.
    */
   connections?: SuggestedConnection[];
+  /** Structured one-shot adventure, kept so single scenes can be regenerated. */
+  oneShot?: OneShotAdventure;
   /** Structured canonical facts for tomes; prose is derived from these. */
   tomeFacts?: TomeCanonicalFacts;
 }

@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { hexToPoint } from "map-engine";
 import type { Token } from "../../../../types/vtt";
 import { TokenDragHandler } from "./token-drag-handler";
 
@@ -195,9 +196,95 @@ describe("TokenDragHandler", () => {
     expect(moveToken).toHaveBeenCalled();
     const lastCall = (moveToken as any).mock.calls.at(-1);
     expect(lastCall[0]).toBe("token-a");
-    // Center of hex containing (30, 40) is (0, 0)
-    expect(lastCall[1]).toBeCloseTo(0);
-    expect(lastCall[2]).toBeCloseTo(0);
+    // x/y is the top-left corner: the 50x50 token's centre (30, 30) is in the
+    // hex centred on (0, 0), so the corner lands half a token up and left.
+    expect(lastCall[1]).toBeCloseTo(-25);
+    expect(lastCall[2]).toBeCloseTo(-25);
+  });
+
+  it.each([
+    { name: "small", size: 20 },
+    { name: "default", size: 50 },
+    { name: "large", size: 150 },
+  ])(
+    "centres a $name token on the hex it was dropped in, not on its corner",
+    ({ size }) => {
+      const config = {
+        orientation: "pointy" as const,
+        size: 100,
+        offsetX: 0,
+        offsetY: 0,
+      };
+      // Drop the token's centre a little off the middle of hex (1, 0).
+      const target = hexToPoint({ q: 1, r: 0 }, config);
+      const dropped = {
+        x: target.x + 20 - size / 2,
+        y: target.y - 15 - size / 2,
+      };
+      handler = new TokenDragHandler({
+        getTokens: () => [
+          { ...tokens[0], ...dropped, width: size, height: size },
+        ],
+        project: (p: any) => p,
+        unproject: (p: any) => p,
+        isHostMode: () => true,
+        getPeerId: () => "peer-a",
+        canMoveToken,
+        moveToken,
+        requestTokenMove,
+        sendTokenMoveRequest,
+        confirmTokenMove,
+        setDraggingTokenId,
+        getGridConfig: () => ({
+          enabled: true,
+          type: "hex-pointy",
+          size: 100,
+          offsetX: 0,
+          offsetY: 0,
+        }),
+      } as any);
+
+      handler.begin({ x: dropped.x + 1, y: dropped.y + 1 });
+      handler.move({ x: dropped.x + 21, y: dropped.y + 11 });
+      handler.end();
+
+      const [, x, y] = (moveToken as any).mock.calls.at(-1);
+      expect(x + size / 2).toBeCloseTo(target.x);
+      expect(y + size / 2).toBeCloseTo(target.y);
+    },
+  );
+
+  it("snaps a guest's drag to the hex centre too", () => {
+    isHost = false;
+    handler = new TokenDragHandler({
+      getTokens: () => [{ ...tokens[0], x: 5, y: 5, width: 40, height: 40 }],
+      project: (p: any) => p,
+      unproject: (p: any) => p,
+      isHostMode: () => false,
+      getPeerId: () => "peer-a",
+      canMoveToken,
+      moveToken,
+      requestTokenMove,
+      sendTokenMoveRequest,
+      confirmTokenMove,
+      setDraggingTokenId,
+      getGridConfig: () => ({
+        enabled: true,
+        type: "hex-flat",
+        size: 50,
+        offsetX: 0,
+        offsetY: 0,
+      }),
+    } as any);
+
+    handler.begin({ x: 6, y: 6 });
+    handler.move({ x: 16, y: 16 });
+    handler.end();
+
+    const call = (sendTokenMoveRequest as any).mock.calls.at(-1);
+    expect(call[1] + 20).toBeCloseTo(0);
+    expect(call[2] + 20).toBeCloseTo(0);
+    expect(moveToken).not.toHaveBeenCalled();
   });
 
   it("does not snap token when grid is disabled", () => {

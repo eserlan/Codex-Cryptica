@@ -337,6 +337,7 @@ export const howDoIMakeInterviewingNpcsInterestingInAnInvestigation: AnswerConfi
       "how-do-i-handle-divination-magic-without-letting-one-character-solve-every-mystery",
       "how-do-i-improvise-npcs-in-dnd",
       "how-do-i-make-roleplay-more-engaging",
+      "how-do-i-roleplay-npcs-if-im-not-good-at-acting",
     ],
     discovery: {
       id: "answer-interviewing-npcs-investigation",

@@ -171,6 +171,12 @@ export const GENERATORS = [
     description:
       "Create a culturally grounded holiday, memorial, festival, or coherent calendar of observances.",
   },
+  {
+    id: "tome",
+    label: "Tome & Forbidden Book",
+    description:
+      "Generate grimoires, occult treatises, heretical chronicles, research logs, and dangerous manuscripts with physical provenance, hazardous study costs, and adventure hooks.",
+  },
 ] as const;
 
 export type GeneratorId = (typeof GENERATORS)[number]["id"];

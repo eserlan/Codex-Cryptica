@@ -3,6 +3,7 @@ import { slugMeta, type ValidSlug } from "./generator-page-meta";
 
 const allExpectedSlugs: ValidSlug[] = [
   "npc",
+  "one-shot-adventure-generator",
   "settlement",
   "magic-item",
   "minor-magic-item",

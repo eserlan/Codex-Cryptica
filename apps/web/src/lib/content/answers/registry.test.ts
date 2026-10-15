@@ -53,6 +53,43 @@ const mockRegistry: Record<string, AnswerConfig> = {
 };
 
 describe("answer registry", () => {
+  it("keeps an actionable checklist in the modern-city answer", () => {
+    const answer =
+      answers["how-do-i-portray-a-believable-modern-city-in-an-urban-rpg"];
+    const checklist = answer.sections.find(
+      (section) => section.kind === "checklist",
+    );
+
+    expect(checklist?.kind).toBe("checklist");
+    if (checklist?.kind !== "checklist") return;
+
+    expect(checklist.heading).toBe(
+      "Start with one block and let play expand it",
+    );
+    expect(checklist.items.length).toBeGreaterThanOrEqual(5);
+    expect(checklist.items).toContain(
+      "Choose one neighbourhood and name the block, bus stop, shop, and doorway the coterie will actually use.",
+    );
+    expect(checklist.items).toContain(
+      "After the session, note what the players touched, any change caused by their actions or an established routine, and one question to research before next time.",
+    );
+  });
+
+  it("keeps an actionable practice checklist in the NPC roleplay answer", () => {
+    const answer = answers["how-do-i-roleplay-npcs-if-im-not-good-at-acting"];
+
+    expect(answer.sections).toContainEqual(
+      expect.objectContaining({
+        kind: "checklist",
+        heading: "A small, optional exercise for next session",
+        items: expect.arrayContaining([
+          "Write the NPC's name and role.",
+          "Note what they want in this scene and their starting attitude toward the party.",
+        ]),
+      }),
+    );
+  });
+
   it("registers story arc planning as its own workflow intent", () => {
     const answer = answers["how-do-i-plan-story-arcs-for-an-rpg-campaign"];
     const entry = getDiscoveryEntries().find(
@@ -1196,6 +1233,40 @@ describe("published answers", () => {
       with: "answer-run-factions-sandbox",
       reason: expect.any(String),
     });
+  });
+
+  it("records the stealth mission overlap in both discovery entries", () => {
+    const stealth = answers["how-do-i-run-a-stealth-mission-in-a-tabletop-rpg"];
+    const relatedSlugs = [
+      [
+        "how-do-you-run-a-heist-in-a-tabletop-rpg",
+        "answer-run-heist-in-tabletop-rpg",
+      ],
+      [
+        "how-do-i-run-spies-and-infiltrators-in-an-rpg",
+        "answer-run-spies-infiltrators-rpg",
+      ],
+      [
+        "how-do-i-run-a-rogue-or-scout-without-splitting-the-party",
+        "answer-run-rogue-scout-without-splitting-party",
+      ],
+    ] as const;
+
+    for (const [slug, intentId] of relatedSlugs) {
+      const related = answers[slug];
+      const stealthAcknowledgement =
+        stealth.discovery?.acknowledgedOverlap?.find(
+          (entry) => entry.with === intentId,
+        );
+      const relatedAcknowledgement =
+        related.discovery?.acknowledgedOverlap?.find(
+          (entry) =>
+            entry.with === "answer-run-stealth-mission-in-tabletop-rpg",
+        );
+
+      expect(stealthAcknowledgement?.reason).toBeTruthy();
+      expect(relatedAcknowledgement?.reason).toBeTruthy();
+    }
   });
 
   it("publishes the short-session answer around one playable unit", () => {

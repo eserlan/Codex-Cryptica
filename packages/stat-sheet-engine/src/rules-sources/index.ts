@@ -5,3 +5,4 @@ export * from "./fixtures/tov-hero.fixture";
 export * from "./fixtures/tov-creature.fixture";
 export * from "./fixtures/tov-luck.fixture";
 export * from "./tov-templates";
+export * from "./tov-luck";

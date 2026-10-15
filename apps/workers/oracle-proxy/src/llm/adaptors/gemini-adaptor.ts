@@ -12,7 +12,7 @@
  * - `callGemini`: the new provider-neutral adaptor used by `resolver.ts`
  *   for the operation-typed request pipeline (FR-005). Translates the
  *   common `LlmRequest` into a Gemini `generateContent` call and normalizes
- *   the response into `LlmResponse`, enforcing a 15-second call timeout.
+ *   the response into `LlmResponse`, enforcing the provider call timeout.
  */
 
 import type {
@@ -29,7 +29,12 @@ import {
 } from "../schema-validation";
 import { readSseData } from "../sse";
 
-const PROVIDER_TIMEOUT_MS = 60_000;
+/**
+ * Longest a buffered (non-streaming) provider call may take. A long structured
+ * generation, such as a full one-shot adventure, can legitimately run past a
+ * minute; streaming calls are not bound by this.
+ */
+const PROVIDER_TIMEOUT_MS = 120_000;
 
 interface GeminiEnv {
   GEMINI_API_KEY: string;
@@ -231,7 +236,7 @@ export async function forwardInteractionToGemini(
 /**
  * New provider-neutral adaptor: translates an `LlmRequest` into a Gemini
  * `generateContent` call and normalizes the response into `LlmResponse`.
- * Enforces the 15-second provider-call timeout itself (FR-005) — the
+ * Enforces the provider-call timeout itself (FR-005) — the
  * resolver never calls `fetch`/a provider directly.
  */
 export async function callGemini(

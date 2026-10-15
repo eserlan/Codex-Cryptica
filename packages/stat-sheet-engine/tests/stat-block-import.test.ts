@@ -1036,6 +1036,21 @@ Broadsword. 3d6<=14. 2d+1 cut damage.
       expect(fieldMap.get("notes")?.value).toContain("Streetwise");
     });
 
+    it("keeps an imported Luck cap instead of a guessed constant", () => {
+      const result = importStatBlock(
+        {
+          name: "Lucky Rogue",
+          category: "npc",
+          hp: 9,
+          luck: { value: 2, max: 7 },
+        },
+        { systemHint: "tales-of-the-valiant", category: "npc" },
+      );
+      const luck = result.fields.find((f) => f.id === "luck");
+      expect(luck?.value).toBe(2);
+      expect(luck?.max).toBe(7);
+    });
+
     it("allows manual target template override when user specifies a different template", () => {
       const result = importStatBlock(TOV_HERO_LEVEL_1_FIXTURE, {
         targetTemplateId: "builtin-dnd-character",

@@ -318,6 +318,7 @@ export const howDoIRunPoliticalIntrigueAndFactionPlay: AnswerConfigInput = {
     "how-does-magic-affect-politics-and-government",
     "how-do-i-make-a-campaign-threat-feel-urgent-without-railroading",
     "how-do-i-run-a-bard-or-face-without-sidelining-the-party",
+    "how-do-i-portray-a-believable-modern-city-in-an-urban-rpg",
   ],
   discovery: {
     id: "answer-run-political-intrigue",

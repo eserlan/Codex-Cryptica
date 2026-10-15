@@ -3,8 +3,10 @@
   import type { GeneratorOutput } from "$lib/services/seo/generator-engine";
   import { renderGeneratorMarkdown } from "$lib/components/seo/markdown-renderers";
   import type { MarkdownSectionForCopy } from "$lib/components/seo/markdown-sections";
-  import type { SessionEntity } from "generator-engine";
+  import type { OneShotProgressStep, SessionEntity } from "generator-engine";
   import SessionHubWidget from "./SessionHubWidget.svelte";
+  import GeneratorAiNotice, { hasAiNotice } from "./GeneratorAiNotice.svelte";
+  import GenerationProgressList from "./GenerationProgressList.svelte";
   import {
     isFactionDraft,
     isFactionRosterDraft,
@@ -46,6 +48,8 @@
     copiedSectionId,
     contextTrimmed,
     onDismissAiFallback,
+    onRetryAi,
+    progressSteps = null,
     onSaveToCodex,
     onRefine,
     onCopyMarkdown,
@@ -79,6 +83,10 @@
     copiedSectionId: string | null;
     contextTrimmed: boolean;
     onDismissAiFallback: () => void;
+    /** Run the same generation again with AI, from a fallback notice. */
+    onRetryAi?: () => void;
+    /** Live steps for a staged generation, shown while busy. */
+    progressSteps?: OneShotProgressStep[] | null;
     onSaveToCodex: () => void;
     onRefine?: (data: GeneratorOutput) => void;
     onCopyMarkdown: () => void;
@@ -125,28 +133,14 @@
   });
 </script>
 
-{#if generatedData?.aiFallback && !aiFallbackDismissed}
-  <div
-    transition:fade={{ duration: 150 }}
-    class="mb-4 p-3 border border-theme-warning/40 bg-theme-warning/10 rounded-xl flex items-start gap-2.5"
-    role="status"
-    aria-live="polite"
-  >
-    <span
-      class="icon-[lucide--info] w-4 h-4 text-theme-warning shrink-0 mt-0.5"
-      aria-hidden="true"
-    ></span>
-    <p class="text-xs text-theme-text/80 leading-snug flex-grow">
-      AI generation was unavailable, so Codex created a local draft instead.
-    </p>
-    <button
-      type="button"
-      onclick={onDismissAiFallback}
-      class="text-theme-muted hover:text-theme-text transition-colors shrink-0"
-      aria-label="Dismiss notice"
-    >
-      <span aria-hidden="true" class="icon-[lucide--x] w-3.5 h-3.5"></span>
-    </button>
+{#if !aiFallbackDismissed && hasAiNotice(generatedData)}
+  <div transition:fade={{ duration: 150 }}>
+    <GeneratorAiNotice
+      data={generatedData!}
+      {isBusy}
+      onDismiss={onDismissAiFallback}
+      onRetry={onRetryAi}
+    />
   </div>
 {/if}
 <div
@@ -168,11 +162,20 @@
         class="icon-[lucide--loader-2] animate-spin w-10 h-10 text-theme-primary"
         aria-hidden="true"
       ></span>
-      <p
-        class="font-header font-bold uppercase tracking-widest text-xs text-theme-primary animate-pulse transition-all duration-300 text-center px-6 max-w-md"
-      >
-        {activeMessages[loadingIndex] ?? `Forging ${generatedSingular}...`}
-      </p>
+      {#if progressSteps?.length}
+        <p
+          class="font-header font-bold uppercase tracking-widest text-xs text-theme-primary text-center px-6"
+        >
+          Building your {generatedSingular.toLowerCase()}
+        </p>
+        <GenerationProgressList steps={progressSteps} />
+      {:else}
+        <p
+          class="font-header font-bold uppercase tracking-widest text-xs text-theme-primary animate-pulse transition-all duration-300 text-center px-6 max-w-md"
+        >
+          {activeMessages[loadingIndex] ?? `Forging ${generatedSingular}...`}
+        </p>
+      {/if}
     </div>
   {/if}
   {#if generatedData}

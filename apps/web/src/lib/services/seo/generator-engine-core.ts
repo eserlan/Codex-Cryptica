@@ -29,6 +29,17 @@ import {
   buildComicBookEventPrompt,
   parseComicBookEventResponse,
   generateComicBookEventLocal,
+  generateOneShotLocal,
+  regenerateOneShotLocal,
+  buildOneShotRegenPrompt,
+  applyOneShotRegenResponse,
+  oneShotToOutput,
+  runOneShotStages,
+  type OneShotProgressStep,
+  type OneShotAdventure,
+  type OneShotGeneratorOptions,
+  type OneShotRegenResult,
+  type OneShotRegenTarget,
   buildVillainSchemePrompt,
   parseVillainSchemeResponse,
   generateVillainSchemeLocal,
@@ -71,6 +82,7 @@ import {
 
 import { generateName as _generateName } from "./generator-helpers";
 import type { GeneratorOutput } from "./generator-helpers";
+import { ONE_SHOT_GENERATION_CONFIG } from "./generator-ai-transport";
 
 import { GeneratorEngineBase } from "./generator-engine-base";
 
@@ -428,6 +440,100 @@ export class GeneratorEngineCore extends GeneratorEngineBase {
       },
       () => generateComicBookEventLocal(eventOptions),
     );
+  }
+
+  /**
+   * One-shots are generated in stages (core, plan, finale, scenes and cast,
+   * review) so each call stays short and each part is written knowing the
+   * earlier ones. `onProgress` reports each step for the page to show. Only
+   * a failed core or plan falls back to the local generator; a later part
+   * that fails is written from templates and named in `aiPartialFallback`.
+   */
+  async generateOneShot(
+    options: OneShotGeneratorOptions & {
+      useAI?: boolean;
+      onProgress?: (steps: OneShotProgressStep[]) => void;
+      signal?: AbortSignal;
+    } = {},
+  ): Promise<GeneratorOutput> {
+    const { useAI, onProgress, signal, ...oneShotOptions } = options;
+    const recentInputs = generationInputHistoryStore.recent("one-shot");
+    return this.runWithAIFallback(
+      useAI,
+      async () => {
+        const result = await runOneShotStages(
+          oneShotOptions,
+          {
+            call: ({ systemInstruction, userMessage }) =>
+              this.runModel(
+                systemInstruction,
+                userMessage,
+                ONE_SHOT_GENERATION_CONFIG,
+                true,
+                signal,
+              ),
+            signal,
+            onProgress,
+          },
+          getSessionContext() + formatRecentInputsNote(recentInputs),
+        );
+        generationInputHistoryStore.record(
+          "one-shot",
+          summarizeResolvedInputs(result.resolved),
+        );
+        return {
+          ...oneShotToOutput(result.adventure),
+          ...(result.reviewSkipped ? { aiReviewSkipped: true } : {}),
+          ...(result.fallbackParts.length
+            ? { aiPartialFallback: result.fallbackParts }
+            : {}),
+        };
+      },
+      () => generateOneShotLocal(oneShotOptions),
+    );
+  }
+
+  /**
+   * Regenerate one scene or NPC of a one-shot, leaving the rest alone. Falls
+   * back to the local re-roll when AI is off, unavailable or replies badly.
+   */
+  async regenerateOneShotPart(
+    adventure: OneShotAdventure,
+    target: OneShotRegenTarget,
+    options: {
+      useAI?: boolean;
+      instruction?: string;
+      signal?: AbortSignal;
+    } = {},
+  ): Promise<OneShotRegenResult> {
+    const local = () => regenerateOneShotLocal(adventure, target);
+    if (!options.useAI) return local();
+    try {
+      const { systemInstruction, userMessage } = buildOneShotRegenPrompt(
+        adventure,
+        target,
+        options.instruction,
+      );
+      const text = await this.runModel(
+        systemInstruction,
+        userMessage,
+        undefined,
+        true,
+        options.signal,
+      );
+      return applyOneShotRegenResponse(adventure, target, text);
+    } catch {
+      // A random re-roll would silently ignore what the GM asked for.
+      if (options.instruction?.trim()) {
+        return {
+          adventure,
+          warnings: [
+            "Couldn't reach the AI, so your change wasn't applied. Nothing was changed.",
+          ],
+        };
+      }
+      return local();
+    }
   }
 
   async generateVillainScheme(

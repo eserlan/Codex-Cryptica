@@ -286,6 +286,51 @@ export {
   type QuestPrompt,
 } from "./public-quest";
 export {
+  oneShotConfig,
+  resolveOneShot,
+  sceneCountFor,
+  buildOneShotAdventure,
+  buildOneShotPrompt,
+  parseOneShotResponse,
+  generateOneShotLocal,
+  oneShotToOutput,
+  regenerateOneShotLocal,
+  buildOneShotRegenPrompt,
+  applyOneShotRegenResponse,
+  renderOneShotMarkdown,
+  renderGmSheet,
+  validateOneShot,
+  checkPlayability,
+  buildOneShotRepairPrompt,
+  applyOneShotRepair,
+  isReadableRepair,
+  normaliseTimeBudget,
+  type OneShotPrompt,
+  type ResolvedOneShot,
+  type OneShotRegenTarget,
+  type OneShotRegenResult,
+} from "./public-one-shot";
+export {
+  runOneShotStages,
+  type OneShotProgressStep,
+  type OneShotStepStatus,
+  type OneShotStageDeps,
+  type OneShotStagedResult,
+} from "./one-shot-staged";
+export type { StagePrompt } from "./one-shot-stage-prompts";
+export type {
+  OneShotAdventure,
+  OneShotGeneratorOptions,
+  OneShotScene,
+  OneShotNpc,
+  OneShotClue,
+  OneShotIssue,
+  OneShotGap,
+  OneShotSolution,
+  OneShotClock,
+  OneShotThread,
+} from "./one-shot-types";
+export {
   buildRumourPrompt,
   parseRumourResponse,
   generateRumourLocal,
@@ -706,3 +751,8 @@ export {
   type Lexicon,
   type Trait,
 } from "./smart";
+
+export {
+  assessLanguageOutput,
+  type LanguageOutputAssessment,
+} from "./language-output-assessment";

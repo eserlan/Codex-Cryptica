@@ -343,9 +343,9 @@ describe("callGemini (new provider-neutral adaptor)", () => {
     vi.useFakeTimers();
     const resultPromise = callGemini(request, model, env, realFetcher);
     if (typeof (vi as any).advanceTimersByTimeAsync === "function") {
-      await (vi as any).advanceTimersByTimeAsync(60_001);
+      await (vi as any).advanceTimersByTimeAsync(120_001);
     } else {
-      vi.advanceTimersByTime(60_001);
+      vi.advanceTimersByTime(120_001);
     }
     const result = await resultPromise;
     vi.useRealTimers();
@@ -354,6 +354,29 @@ describe("callGemini (new provider-neutral adaptor)", () => {
     if (!result.ok) {
       expect(result.reason).toBe("timeout");
     }
+  });
+
+  it("lets a long generation run past a minute before timing out", async () => {
+    let aborted = false;
+    const slowFetcher = (async (_url: any, init: any) => {
+      init.signal.addEventListener("abort", () => (aborted = true));
+      await new Promise((resolve) => setTimeout(resolve, 90_000));
+      return new Response(
+        JSON.stringify({
+          candidates: [{ content: { parts: [{ text: "done" }] } }],
+        }),
+        { status: 200 },
+      );
+    }) as unknown as typeof fetch;
+
+    vi.useFakeTimers();
+    const resultPromise = callGemini(request, model, env, slowFetcher);
+    await vi.advanceTimersByTimeAsync(90_001);
+    const result = await resultPromise;
+    vi.useRealTimers();
+
+    expect(aborted).toBe(false);
+    expect(result.ok).toBe(true);
   });
 
   it("still classifies the abort as a timeout when it rejects with a non-Error (e.g. DOMException-like) abort reason", async () => {
@@ -371,9 +394,9 @@ describe("callGemini (new provider-neutral adaptor)", () => {
     vi.useFakeTimers();
     const resultPromise = callGemini(request, model, env, realFetcher);
     if (typeof (vi as any).advanceTimersByTimeAsync === "function") {
-      await (vi as any).advanceTimersByTimeAsync(60_001);
+      await (vi as any).advanceTimersByTimeAsync(120_001);
     } else {
-      vi.advanceTimersByTime(60_001);
+      vi.advanceTimersByTime(120_001);
     }
     const result = await resultPromise;
     vi.useRealTimers();

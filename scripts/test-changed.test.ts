@@ -40,6 +40,14 @@ describe("test-changed", () => {
     expect(groups.get("root")).toEqual(["scripts/baz.test.ts"]);
   });
 
+  test("groups nested app tests by their package root", () => {
+    const file =
+      "apps/workers/oracle-proxy/src/llm/adaptors/gemini-adaptor.test.ts";
+    const groups = groupTestsByWorkspace([file]);
+
+    expect(groups.get("apps/workers/oracle-proxy")).toEqual([file]);
+  });
+
   test("excludes Playwright specs from unit-test targets", () => {
     expect(isUnitTestFile("apps/web/tests/bulk-labels.spec.ts")).toBe(false);
     expect(isUnitTestFile("apps/web\\tests\\bulk-labels.spec.ts")).toBe(false);
@@ -67,6 +75,17 @@ describe("test-changed", () => {
         "--",
         "src/example.test.ts",
       ],
+    });
+  });
+
+  test("runs root-level tests with Bun's root test command", () => {
+    expect(
+      getWorkspaceTestInvocation("root", "", [
+        "scripts/sync-help-generators.test.ts",
+      ]),
+    ).toEqual({
+      cwd: ".",
+      args: ["test", "scripts/sync-help-generators.test.ts"],
     });
   });
 });

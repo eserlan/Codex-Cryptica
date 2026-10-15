@@ -1,11 +1,13 @@
 <script lang="ts">
-  import { onMount, untrack } from "svelte";
+  import type { OneShotProgressStep } from "generator-engine";
+  import { onDestroy, onMount, untrack } from "svelte";
   import { browser } from "$app/environment";
   import { page } from "$app/state";
   import { hubContext } from "$lib/stores/hub-context.svelte";
   import { sessionHubStore } from "$lib/stores/session-hub.svelte";
   import { UI_STORAGE_KEYS, UIPersistence } from "$lib/stores/ui/persistence";
   import SEOGeneratorLayout from "./SEOGeneratorLayout.svelte";
+  import OneShotRefinePanel from "./OneShotRefinePanel.svelte";
   import GeneratorPageFormFields from "./GeneratorPageFormFields.svelte";
   import {
     npcConfig,
@@ -43,6 +45,7 @@
     comicBookEventConfig,
     originConfig,
     villainSchemeConfig,
+    oneShotConfig,
     worldConfig,
     starSystemConfig,
     constellationConfig,
@@ -64,6 +67,7 @@
   import {
     createGenerate,
     createGeneratorHandlers,
+    createOneShotRunControl,
   } from "./generator-page-generation";
   import {
     initializeHandoffState,
@@ -583,6 +587,20 @@
     campaignContext: "",
   });
 
+  let oneShot = $state({
+    genre: oneShotConfig.genres[0],
+    system: oneShotConfig.systems[0],
+    durationHours: "3",
+    partySize: "4",
+    partyLevel: "",
+    emphasis: oneShotConfig.emphases[0],
+    structure: oneShotConfig.structures[1],
+    tone: "",
+    premise: "",
+    boundaries: "",
+    campaignContext: "",
+  });
+
   let villainScheme = $state({
     powerScale: villainSchemeConfig.powerScales[0],
     tone: villainSchemeConfig.tones[0],
@@ -892,6 +910,11 @@
     }
   }
 
+  /** Live steps while a one-shot is generated in stages. */
+  let oneShotProgress = $state<OneShotProgressStep[] | null>(null);
+  const oneShotRuns = createOneShotRunControl();
+  onDestroy(oneShotRuns.dispose);
+
   const GENERATE_HANDLERS = createGeneratorHandlers({
     npc,
     settlement,
@@ -929,6 +952,7 @@
     comicBookEvent,
     origin,
     villainScheme,
+    oneShot,
     world,
     starSystem,
     constellation,
@@ -939,6 +963,8 @@
     getPlotTwistPremise: () => plotTwist.premise,
     getHandoffQuestPremise: () => handoffState.questPremise,
     getSessionEntities: () => sessionHubStore.entities,
+    onOneShotProgress: (steps) => (oneShotProgress = steps),
+    oneShotRuns,
   });
 
   const generate = createGenerate({
@@ -980,6 +1006,9 @@
     "language-generator",
   ].includes(slug)}
   {generate}
+  progressSteps={slug === "one-shot-adventure-generator"
+    ? oneShotProgress
+    : null}
   {initialDraft}
   initialDraftIsUserGenerated={Boolean(remixDraft)}
   {backHref}
@@ -994,6 +1023,11 @@
     : undefined}
   autoGenerateExplicit={slug === "faction-roster"}
 >
+  {#snippet outputExtras(output, replaceOutput, useAI)}
+    {#if slug === "one-shot-adventure-generator"}
+      <OneShotRefinePanel {output} {useAI} onReplace={replaceOutput} />
+    {/if}
+  {/snippet}
   {#snippet formFields(trigger)}
     <GeneratorPageFormFields
       {slug}
@@ -1036,6 +1070,7 @@
       bind:comicBookEvent
       bind:origin
       bind:villainScheme
+      bind:oneShot
       bind:world
       bind:starSystem
       bind:constellation

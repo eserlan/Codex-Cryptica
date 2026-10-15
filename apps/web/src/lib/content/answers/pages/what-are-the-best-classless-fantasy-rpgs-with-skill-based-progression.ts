@@ -155,6 +155,7 @@ export const whatAreTheBestClasslessFantasyRpgsWithSkillBasedProgression: Answer
       "what-ttrpg-should-i-use-for-a-fantasy-dungeon-crawl",
       "what-rpg-should-i-use-for-tactical-combat",
       "how-do-you-handle-character-death-in-a-tabletop-rpg",
+      "what-rpg-system-is-good-for-solo-play",
     ],
     discovery: {
       id: "answer-classless-fantasy-skill-progression",
