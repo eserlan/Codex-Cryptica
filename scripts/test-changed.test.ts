@@ -69,4 +69,15 @@ describe("test-changed", () => {
       ],
     });
   });
+
+  test("runs root-level tests with Bun's root test command", () => {
+    expect(
+      getWorkspaceTestInvocation("root", "", [
+        "scripts/sync-help-generators.test.ts",
+      ]),
+    ).toEqual({
+      cwd: ".",
+      args: ["test", "scripts/sync-help-generators.test.ts"],
+    });
+  });
 });
