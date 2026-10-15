@@ -200,7 +200,7 @@ describe("clock schedule", () => {
       ),
     );
     a.clock!.advances =
-      "At each sunset, and when the party reaches the finale.";
+      "The clock advances at each sunset, and when the party reaches the finale.";
     expect(messages(a).filter((m) => /clock/i.test(m))).toEqual([]);
   });
 

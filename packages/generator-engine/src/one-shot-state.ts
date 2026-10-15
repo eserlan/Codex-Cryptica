@@ -36,11 +36,7 @@ const slug = (text: string) =>
     .replace(/^-|-$/g, "");
 
 /** States where a person or object cannot act or be found until freed. */
-const CONFINED: readonly OneShotState[] = [
-  "trapped",
-  "captive",
-  "missing",
-];
+const CONFINED: readonly OneShotState[] = ["trapped", "captive", "missing"];
 export const isConfined = (state: OneShotState) => CONFINED.includes(state);
 
 // ── Clock ────────────────────────────────────────────────────────────────
