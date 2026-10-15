@@ -4,6 +4,7 @@ import { isReadableRepair } from "./one-shot-repair";
 import type { StagePrompt } from "./one-shot-stage-prompts";
 import { generateOneShotLocal } from "./public-one-shot";
 import { checkPlayability } from "./one-shot-playability";
+import { checkWhereabouts } from "./one-shot-state-checks";
 import type { OneShotAdventure } from "./one-shot-types";
 
 function seeded(seed = 7) {
@@ -160,6 +161,119 @@ describe("runOneShotStages", () => {
     expect(checkPlayability(out)).toEqual([]);
   });
 
+  it("gives a shared scene separate histories for its reachable routes", async () => {
+    const a = generateOneShotLocal(
+      { ...options, durationHours: 4, structure: "Five-room adventure" },
+      seeded(),
+    ).oneShot!;
+    const [opening, left, right, shared] = a.scenes;
+    opening.next = [left.id, right.id];
+    left.next = [shared.id];
+    right.next = [shared.id];
+    shared.next = [];
+    const prompts: StagePrompt[] = [];
+    const run = fakeModel(a);
+
+    await runOneShotStages(
+      { ...options, durationHours: 4, structure: "Five-room adventure" },
+      {
+        call: (p) => {
+          prompts.push(p);
+          return run.call(p);
+        },
+      },
+      "",
+      seeded(),
+    );
+
+    const sharedPrompt = prompts.find(
+      (p) =>
+        stageOf(p) === "scene" &&
+        p.userMessage.includes(`The scene to write: {"id":"${shared.id}"`),
+    )!;
+    const historyText = sharedPrompt.userMessage
+      .split("Earlier scenes on each route")[1]
+      .split("\nRules:")[0];
+    const histories = JSON.parse(
+      historyText.slice(historyText.indexOf(":") + 1).trim(),
+    ) as { id: string }[][];
+    expect(histories).toHaveLength(2);
+    expect(histories.map((route) => route.map((scene) => scene.id))).toEqual([
+      [opening.id, left.id],
+      [opening.id, right.id],
+    ]);
+  });
+
+  it("propagates history and state when a predecessor is listed later", async () => {
+    const a = generateOneShotLocal(
+      { ...options, durationHours: 4, structure: "Five-room adventure" },
+      seeded(),
+    ).oneShot!;
+    const [opening, branch, merge, climax] = a.scenes;
+    opening.next = [branch.id];
+    branch.next = [merge.id];
+    merge.next = [climax.id];
+    climax.next = [];
+    a.scenes = [opening, merge, branch, climax];
+    const captive = a.npcs[0];
+    branch.npcIds = [...new Set([...branch.npcIds, captive.id])];
+    branch.exit = [
+      { who: captive.id, kind: "npc", state: "captive", where: "the cellar" },
+    ];
+    merge.npcIds = [...new Set([...merge.npcIds, captive.id])];
+    merge.whereabouts = undefined;
+
+    const prompts: StagePrompt[] = [];
+    const run = fakeModel(a);
+    await runOneShotStages(
+      { ...options, durationHours: 4, structure: "Five-room adventure" },
+      {
+        call: (p) => {
+          prompts.push(p);
+          return run.call(p).then((reply) => {
+            if (
+              stageOf(p) !== "scene" ||
+              !p.userMessage.includes(
+                `The scene to write: {"id":"${branch.id}"`,
+              )
+            ) {
+              return reply;
+            }
+            return JSON.stringify({ ...JSON.parse(reply), exit: branch.exit });
+          });
+        },
+      },
+      "",
+      seeded(),
+    );
+
+    const mergePrompt = prompts.find(
+      (p) =>
+        stageOf(p) === "scene" &&
+        p.userMessage.includes(`The scene to write: {"id":"${merge.id}"`),
+    )!;
+    const historyText = mergePrompt.userMessage
+      .split("Earlier scenes on each route")[1]
+      .split("\nRules:")[0];
+    const histories = JSON.parse(
+      historyText.slice(historyText.indexOf(":") + 1).trim(),
+    ) as { id: string; title: string; exit: unknown }[][];
+    expect(histories.map((route) => route.map((scene) => scene.id))).toEqual([
+      [opening.id, branch.id],
+    ]);
+    expect(histories[0][1]).toEqual(
+      expect.objectContaining({
+        id: branch.id,
+        title: branch.title,
+        exit: branch.exit,
+      }),
+    );
+
+    expect(checkWhereabouts(a).map((gap) => gap.message)).toContainEqual(
+      expect.stringContaining("still captive from an earlier scene"),
+    );
+  });
+
   it("reports progress through every step in order", async () => {
     const a = local();
     const snapshots: OneShotProgressStep[][] = [];
@@ -205,7 +319,7 @@ describe("runOneShotStages", () => {
     const snapshots: OneShotProgressStep[][] = [];
     const result = await runOneShotStages(
       { ...options, durationHours: 4, structure: "Three-act" },
-      { call, concurrency: 1, onProgress: (s) => snapshots.push(s) },
+      { call, onProgress: (s) => snapshots.push(s) },
       "",
       seeded(),
     );
@@ -228,7 +342,7 @@ describe("runOneShotStages", () => {
     const { call } = fakeModel(a, { scene: 6 });
     const result = await runOneShotStages(
       { ...options, durationHours: 4, structure },
-      { call, concurrency: 1 },
+      { call },
       "",
       seeded(),
     );
@@ -278,7 +392,6 @@ describe("runOneShotStages", () => {
             scene.challenge.type = reuse.type;
             return JSON.stringify(scene);
           },
-          concurrency: 1,
         },
         "",
         seeded(19),
@@ -370,6 +483,76 @@ describe("runOneShotStages", () => {
     expect(result.adventure.title).toBe("The Drowned Choir");
   });
 
+  it("accepts a second review that reduces the remaining gaps", async () => {
+    const a = local();
+    a.briefing.premise = `${a.briefing.premise} The ruins lie underwater.`;
+    a.briefing.environment = undefined;
+    const { call } = fakeModel(a);
+    let reviews = 0;
+    const result = await runOneShotStages(
+      { ...options, durationHours: 4 },
+      {
+        call: async (prompt) => {
+          if (stageOf(prompt) !== "review") return call(prompt);
+          reviews += 1;
+          return reviews === 1
+            ? JSON.stringify({ briefing: { prep: "First review prep." } })
+            : JSON.stringify({
+                briefing: {
+                  environment:
+                    "The party uses sealed lamps and moves between air pockets.",
+                },
+              });
+        },
+      },
+      "",
+      seeded(),
+    );
+    expect(reviews).toBe(2);
+    expect(result.reviewSkipped).toBe(false);
+    expect(result.adventure.briefing.prep).toBe("First review prep.");
+    expect(result.adventure.briefing.environment).toContain("sealed lamps");
+  });
+
+  it("discards a second review that does not reduce the remaining gaps", async () => {
+    const a = local();
+    a.briefing.premise = `${a.briefing.premise} The ruins lie underwater.`;
+    a.briefing.environment = undefined;
+    const { call } = fakeModel(a);
+    let reviews = 0;
+    const result = await runOneShotStages(
+      { ...options, durationHours: 4 },
+      {
+        call: async (prompt) => {
+          if (stageOf(prompt) !== "review") return call(prompt);
+          reviews += 1;
+          return JSON.stringify({
+            briefing: {
+              prep:
+                reviews === 1 ? "First review prep." : "Rejected second prep.",
+            },
+          });
+        },
+      },
+      "",
+      seeded(),
+    );
+    expect(reviews).toBe(2);
+    expect(result.adventure.briefing.prep).toBe("First review prep.");
+    expect(result.adventure.briefing.environment).toBeUndefined();
+  });
+
+  it("stops after one review when nothing is left to fix", async () => {
+    const { call, calls } = fakeModel(local());
+    await runOneShotStages(
+      { ...options, durationHours: 4 },
+      { call },
+      "",
+      seeded(),
+    );
+    expect(calls.filter((c) => c === "review")).toHaveLength(1);
+  });
+
   it("rejects null and array review replies but accepts an empty object", () => {
     expect(isReadableRepair("{}")).toBe(true);
     expect(isReadableRepair("null")).toBe(false);
@@ -385,7 +568,6 @@ describe("runOneShotStages", () => {
         { ...options, durationHours: 4 },
         {
           signal: controller.signal,
-          concurrency: 1,
           call: async (prompt, signal) => {
             if (stageOf(prompt) === "scene") {
               sceneCalls.push(prompt.userMessage);
@@ -402,29 +584,36 @@ describe("runOneShotStages", () => {
     expect(sceneCalls).toHaveLength(1);
   });
 
-  it("never runs more scene calls at once than allowed", async () => {
+  it("writes scenes one at a time with their reachable route history", async () => {
     const a = local();
     const { call } = fakeModel(a);
     let inFlight = 0;
     let peak = 0;
+    const scenePrompts: string[] = [];
     await runOneShotStages(
       { ...options, durationHours: 4 },
       {
-        concurrency: 2,
         call: async (p) => {
-          inFlight += 1;
-          peak = Math.max(peak, inFlight);
+          const isScene = stageOf(p) === "scene";
+          if (isScene) {
+            scenePrompts.push(p.userMessage);
+            inFlight += 1;
+            peak = Math.max(peak, inFlight);
+          }
           await new Promise((r) => setTimeout(r, 1));
           try {
             return await call(p);
           } finally {
-            inFlight -= 1;
+            if (isScene) inFlight -= 1;
           }
         },
       },
       "",
       seeded(),
     );
-    expect(peak).toBe(2);
+    expect(peak).toBe(1);
+    expect(scenePrompts[0]).not.toContain("Earlier scenes on each route");
+    expect(scenePrompts[1]).toContain("Earlier scenes on each route");
+    expect(scenePrompts[1]).toContain(a.scenes[0].title);
   });
 });

@@ -43,7 +43,51 @@ export const PACING_RULE =
  * count and compare them. The text around them is still the model's to write.
  */
 export const CLOCK_DATA_RULE =
-  '"schedule" lists, in order, the moments the clock advances whatever the party does, from: "start", "scene-end" (the end of every essential scene before the finale), "scene-end-after-opening", "finale-start", "finale-middle", "timed" (a fixed moment in the story, such as each sunset). Do not write the count of ticks in prose; "ticks" has at least two more entries than the schedule advances before the finale. Set "startsAt" (2–6) only if the threat began before play. "pushes" says what else moves it on (failures, rests) or complicates things (shortcuts). "advances" is written from the schedule and may be left empty.';
+  '"schedule" lists, in order, the moments the clock advances whatever the party does, from: "start", "scene-end" (the end of every essential scene before the finale), "scene-end-after-opening", "finale-start", "finale-middle", "timed" (a fixed moment in the story, such as each sunset). Do not write the count of ticks in prose; "ticks" has at least two more entries than the schedule advances before the finale. Set "startsAt" (2–6) only if the threat began before play. "pushes" says what else moves it on (failures, rests) or complicates things (shortcuts). "advances" is written from the schedule and may be left empty. If the story counts something toward the deadline (bell rings, seals broken, nights), set "counts" to it ("bell rings"): each tick is one of them, the last tick is the deadline, and every number the briefing, finale and ticks give for it matches.';
+
+/** Where everyone stands as a scene ends, so the next scene starts there. */
+export const EXIT_RULE =
+  '"exit" says where each NPC and important object in the scene is as it ends, on the path the party most likely takes (same shape as "whereabouts"). If the party may choose differently (leave someone behind, take an object), "how" says what changes. The next scene starts from this exit, so never let a later scene contradict it.';
+
+/** How an unusual place works, so the GM never invents basic rules. */
+export const ENVIRONMENT_RULE =
+  '"environment": if the adventure goes somewhere that does not work like an ordinary place (underwater, airless, flooded, inside a dream), how it works there: air, light, movement and speech, and what it costs. Leave it empty for an ordinary place.';
+
+/** What each theme must deliver as play, not only as scenery. */
+const GENRE_PLAY: Record<string, string> = {
+  fantasy:
+    "a quest-like goal, a place of old magic or ruin, and a moment where courage or a bargain with something uncanny matters",
+  darkfantasy:
+    "a hard bargain or a cost that marks the characters, and an enemy whose cruelty has a reason",
+  horror:
+    "dread that builds, something the party should not look at directly, and a scene where running is the right choice",
+  cyberpunk:
+    "a corporation or system with leverage over the party, a scene of infiltration or hacking, and a deal that costs something",
+  scifi:
+    "technology that matters to the problem, a ship, station or alien place, and a scene where the environment itself is the danger",
+  modern:
+    "ordinary people and places hiding the truth, a cover-up the party can expose, and a scene of research, surveillance or pursuit",
+  frontier:
+    "travel through open, dangerous country, a community that needs defending, and a showdown",
+  wasteland:
+    "scarce supplies worth fighting over, a settlement's fragile order, and travel through ruins",
+};
+
+const PIRATE_PLAY =
+  "at least one scene aboard a ship or on the water: a chase, a boarding, a storm, contested command or treasure worth the risk";
+const SUPERHERO_PLAY =
+  "powers that matter to the problem, a public scene where bystanders are at risk, and a villain with a plan the heroes can foil";
+const STEAMPUNK_PLAY =
+  "machines, inventions or airships that matter to the problem, and a scene of sabotage, invention or a chase";
+
+/** The genre in play: Pirate means ships, not only a coastline. */
+export function genreHint(genre: string, seedKey: string): string {
+  const g = genre.toLowerCase();
+  if (/pirate/.test(g)) return PIRATE_PLAY;
+  if (/superhero|comic/.test(g)) return SUPERHERO_PLAY;
+  if (/steampunk/.test(g)) return STEAMPUNK_PLAY;
+  return GENRE_PLAY[seedKey] ?? GENRE_PLAY.fantasy;
+}
 
 export const WHEREABOUTS_RULE =
   '"whereabouts" on each scene says where each NPC and important object is as it begins: "who" is an NPC id or an object\'s name, "kind" is "npc" or "object", "state" is one of free, hiding, hostile, here, trapped, captive, missing, and "where" is the place. Whenever someone goes between free and trapped, captive or missing, or an object changes place, "how" says how, in that scene. A scene never lists someone as trapped or missing unless an earlier scene or its own "how" explains it.';
@@ -61,4 +105,10 @@ export const THREAD_DATA_RULE =
   'Each thread has "kind" ("rescue", "rule", "history", "promise" or "protect") and "about" (the NPC id, or the object\'s name, it concerns). A rescue is about an NPC who is trapped, captive or missing in a scene. "protect" is for people who are safe but depend on the outcome (sick children, a village that needs the cure): no scene has to show them in danger.';
 
 export const RESOURCE_RULE =
-  '"resources" (Survival, 2–4): each has "id", "name" (food, light, warmth), "start" (boxes the party has, 2–9), "unit" (what one box stands for), "spends" (each with "sceneId", "what" and "amount" in boxes) and "whenEmpty". Resources are spent in at least two scenes, so a choice in scene 1 changes what is possible in scene 3, and the boxes a careful party must spend before the finale stay below the start. Never leave the GM to invent how much the party has.';
+  '"resources" (2–4): pick the supplies that actually run short in this place and in a few hours of play, such as light, air, ammunition, a ship\'s hull or a ward\'s strength; food only for days of travel. Each has "id", "name", "start" (boxes the party has, 2–9), "unit" (what one box stands for), "spends" (each with "sceneId", "what" and "amount" in boxes) and "whenEmpty". Resources are spent in at least two scenes, so a choice in scene 1 changes what is possible in scene 3, and the boxes a careful party must spend before the finale stay below the start. Never leave the GM to invent how much the party has.';
+
+/** The supplies rule for Survival one-shots only; other emphases get none. */
+export const resourceRuleFor = (emphasis: string) =>
+  emphasis === "Survival"
+    ? RESOURCE_RULE
+    : 'Leave "resources" out: supplies are tracked only in Survival one-shots.';

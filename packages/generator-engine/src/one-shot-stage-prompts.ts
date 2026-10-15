@@ -20,11 +20,18 @@ import {
   REQUIREMENT_RULE,
   ROUTES_RULE,
   THEORIES_RULE,
-  RESOURCE_RULE,
+  ENVIRONMENT_RULE,
+  EXIT_RULE,
+  genreHint,
+  resourceRuleFor,
   THREAD_DATA_RULE,
   WHEREABOUTS_RULE,
 } from "./one-shot-rules";
 import { describeOneShotOptions, sceneCountFor } from "./public-one-shot";
+import { seedKeyForGenre } from "./one-shot-seeds";
+
+const genrePlay = (r: ResolvedOneShot) =>
+  `Deliver the genre (${r.genre}) as play, not only scenery: ${genreHint(r.genre, seedKeyForGenre(r.genre))}.`;
 
 export interface StagePrompt {
   systemInstruction: string;
@@ -55,13 +62,15 @@ export function corePrompt(
   return prompt(`Plan the core of a single-session RPG one-shot.
 ${describeOneShotOptions(resolved)}
 
-Decide the premise, the hidden truth, what set it off now, the stakes, the antagonist driving the threat and the patron who brings the party in. Answer 3–5 questions players will obviously ask (why now, why us, why doesn't the patron handle it, why would the antagonist do this).
+Decide the premise, the hidden truth, what set it off now, the stakes, the antagonist driving the threat and the patron who brings the party in. Answer 3–5 questions players will obviously ask (why now, why us, why doesn't the patron handle it, why would the antagonist do this). If the truth involves a count (three rings, seven seals), it is the same count the whole adventure uses.
+${genrePlay(resolved)}
+${ENVIRONMENT_RULE}
 ${STYLE}
 
 Return JSON shaped like:
 {
   "title": "",
-  "briefing": { "premise": "", "hook": "", "objective": "", "secret": "", "trigger": "", "stakes": "", "prep": "", "questions": [{ "question": "", "answer": "" }] },
+  "briefing": { "premise": "", "hook": "", "objective": "", "secret": "", "trigger": "", "stakes": "", "prep": "", "environment": "", "questions": [{ "question": "", "answer": "" }] },
   "antagonist": { "name": "", "role": "", "motivation": "", "knows": "", "reaction": "", "cues": "", "backstory": "why they do this", "tactics": "how they act or fight when opposed", "stopIf": "what would persuade them to stop", "limits": "what they cannot or will not do" },
   "patron": { "name": "", "role": "", "motivation": "", "knows": "", "reaction": "", "cues": "" }
 }
@@ -87,7 +96,8 @@ Rules:
 - Exactly 3 vital clues, each with a short "label" and the actual fact as "text", discoverable in at least two scenes, one of them an essential scene before the climax.
 - "clock": ${CLOCK_RULE} ${CLOCK_DATA_RULE}
 - "threads": every promise the hook and briefing make, with its payoff and the later scene where it happens. ${THREAD_DATA_RULE}
-- ${RESOURCE_RULE}
+- ${resourceRuleFor(resolved.emphasis)}
+- ${genrePlay(resolved)}
 - Plan for the emphasis (${resolved.emphasis}) as play, not just theme: ${EMPHASIS_HINT[resolved.emphasis] ?? "match the scenes to it"}.
 - ${COMMITMENT_RULE}
 - ${WHEREABOUTS_RULE} ${CONTINUITY_RULE}
@@ -100,9 +110,8 @@ Return JSON shaped like:
   "scenes": [{ "id": "scene-1", "title": "", "kind": "opening", "essential": true, "minutes": 30, "purpose": "", "location": "", "npcIds": ["npc-1"], "whereabouts": [{ "who": "npc-1", "kind": "npc", "state": "free", "where": "", "how": "" }], "challengeType": "social", "next": ["scene-2"], "routes": [{ "to": "scene-2", "risk": "", "find": "" }] }],
   "npcs": [{ "id": "npc-3", "name": "", "role": "" }],
   "clues": [{ "id": "clue-1", "label": "", "text": "", "essential": true, "routes": [{ "sceneId": "scene-1", "method": "" }, { "sceneId": "scene-2", "method": "" }], "supports": ["theory-2"], "contradicts": ["theory-1"] }],
-  "clock": { "name": "", "advances": "", "schedule": ["scene-end-after-opening", "finale-start"], "startsAt": 1, "pushes": "", "ticks": [{ "trigger": "", "effect": "" }], "slow": "", "deadline": "" },
-  "resources": [{ "id": "food", "name": "", "start": 5, "unit": "", "spends": [{ "sceneId": "scene-1", "what": "", "amount": 1 }], "whenEmpty": "" }],
-  "threads": [{ "about": "npc-3", "kind": "rescue", "setup": "", "payoff": "", "sceneIds": ["scene-3"] }],
+  "clock": { "name": "", "advances": "", "schedule": ["scene-end-after-opening", "finale-start"], "startsAt": 1, "pushes": "", "ticks": [{ "trigger": "", "effect": "" }], "slow": "", "deadline": "", "counts": "" },
+${resolved.emphasis === "Survival" ? `  "resources": [{ "id": "light", "name": "", "start": 5, "unit": "", "spends": [{ "sceneId": "scene-1", "what": "", "amount": 1 }], "whenEmpty": "" }],\n` : ""}  "threads": [{ "about": "npc-3", "kind": "rescue", "setup": "", "payoff": "", "sceneIds": ["scene-3"] }],
   "theories": [{ "id": "theory-1", "name": "", "summary": "", "isTrue": false, "obvious": true }],
   "runningLate": ["steps to finish on time, most painless first"]
 }
@@ -144,7 +153,12 @@ export function scenePrompt(
   resolved: ResolvedOneShot,
   context: { core: unknown; structure: unknown; finale: unknown },
   brief: SceneBrief,
+  earlierRoutes: unknown[][] = [],
 ): StagePrompt {
+  const establishedRoutes = earlierRoutes.filter((route) => route.length);
+  const before = establishedRoutes.length
+    ? `\nEarlier scenes on each route that can reach this scene. Each list is one route; do not combine facts from different routes. This scene starts from the exit at the end of its applicable route: ${JSON.stringify(establishedRoutes)}\n`
+    : "";
   const opening = brief.isOpening
     ? `,
   "opening": { "readAloud": "", "firstDecision": "", "involvement": ["ways the characters get involved"] }`
@@ -158,7 +172,7 @@ The scene to write: ${JSON.stringify(brief.scene)}
 Clues it must offer (with how they are found): ${JSON.stringify(brief.clues)}
 Threads it carries: ${JSON.stringify(brief.threads)}
 NPCs present: ${JSON.stringify(brief.npcs)}
-
+${before}
 Rules:
 - Keep its title, location, NPCs and place in the plan. If an NPC appears in several scenes, say why they are here; respect every NPC's limits.
 - The challenge says what the party must actually achieve ("success"), how force, lies, magic or an unexpected plan play out ("otherApproaches") and what happens on failure ("failForward"; failure never stops the adventure).
@@ -166,6 +180,7 @@ Rules:
 - Deliver the emphasis (${resolved.emphasis}): ${EMPHASIS_HINT[resolved.emphasis] ?? "match the challenge to it"}. Only an optional scene gets "skip".
 - If "next" lists more than one scene, the situation describes each route out: what it risks and what it finds.
 - Where each NPC is, and their state, follows the plan's "whereabouts" for this scene and agrees with every earlier scene. ${CONTINUITY_RULE}
+- ${EXIT_RULE}
 ${STYLE}
 
 Return JSON shaped like:
@@ -175,6 +190,7 @@ Return JSON shaped like:
   "challenge": { "type": "social", "description": "", "success": "", "otherApproaches": [""], "opposition": "", "failForward": "" },
   "outcomes": [""],
   "shorten": "how to run it in half the time",
+  "exit": [{ "who": "npc-1", "kind": "npc", "state": "free", "where": "", "how": "" }],
   "skip": ""${opening}
 }
 ${JSON_ONLY}`);

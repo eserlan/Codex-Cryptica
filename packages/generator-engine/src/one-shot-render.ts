@@ -192,6 +192,7 @@ ${lines(
   briefing.trigger && `**Why now:** ${briefing.trigger}`,
   `**Stakes:** ${briefing.stakes}`,
   `**Prep needed:** ${briefing.prep}`,
+  briefing.environment && `**How this place works:** ${briefing.environment}`,
 )}
 ${gapsBlock(adventure)}
 ## Scenes
@@ -307,6 +308,8 @@ function gmSheetView(adventure: OneShotAdventure): string {
 ${lines(
   `**Truth:** ${adventure.briefing.secret}`,
   adventure.briefing.trigger && `**Why now:** ${adventure.briefing.trigger}`,
+  adventure.briefing.environment &&
+    `**The place:** ${adventure.briefing.environment}`,
   `**Stakes:** ${adventure.briefing.stakes}`,
   `**Session:** ${hours(adventure.durationMinutes)}, ${adventure.timeBudget.bufferMinutes} min buffer${optional.length ? `; essential scenes alone run ${coreMinutes(adventure)} min` : ""}`,
 )}
