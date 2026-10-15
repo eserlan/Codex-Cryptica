@@ -153,10 +153,11 @@ export function scenePrompt(
   resolved: ResolvedOneShot,
   context: { core: unknown; structure: unknown; finale: unknown },
   brief: SceneBrief,
-  earlier: unknown[] = [],
+  earlierRoutes: unknown[][] = [],
 ): StagePrompt {
-  const before = earlier.length
-    ? `\nWhat the earlier scenes established (outcomes, and where everyone was as each ended). This scene starts from the last exit: ${JSON.stringify(earlier)}\n`
+  const establishedRoutes = earlierRoutes.filter((route) => route.length);
+  const before = establishedRoutes.length
+    ? `\nEarlier scenes on each route that can reach this scene. Each list is one route; do not combine facts from different routes. This scene starts from the exit at the end of its applicable route: ${JSON.stringify(establishedRoutes)}\n`
     : "";
   const opening = brief.isOpening
     ? `,

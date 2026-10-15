@@ -78,6 +78,7 @@ import { factionConfig } from "./public-faction-constants";
 import { normaliseState, scheduleSentence } from "./one-shot-state";
 import { renderGmSheet, renderOneShotMarkdown } from "./one-shot-render";
 import { checkPlayability } from "./one-shot-playability";
+import { needsEnvironmentRules } from "./one-shot-mechanics";
 import { antagonistOf } from "./one-shot-integrity";
 import {
   applyOneShotRepair,
@@ -837,6 +838,14 @@ export function buildOneShotAdventure(
       trigger,
       stakes: stake,
       prep,
+      environment: needsEnvironmentRules(
+        [
+          premise,
+          ...scenes.map((scene) => `${scene.location} ${scene.situation}`),
+        ].join(" "),
+      )
+        ? "Air is available only above the waterline; submerged passages are dark, sounds carry, and movement is slower."
+        : undefined,
       questions,
     },
     opening: {

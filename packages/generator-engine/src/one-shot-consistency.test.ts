@@ -73,6 +73,36 @@ describe("scene exits", () => {
     ];
     expect(messages(a).some((m) => /the chart moves/.test(m))).toBe(true);
   });
+
+  it("checks a shared scene against each reachable branch", () => {
+    const a = local({ durationHours: 4, structure: "Five-room adventure" });
+    const [opening, captiveRoute, freeRoute, shared] = a.scenes;
+    const guide = a.npcs[2];
+    for (const scene of a.scenes) {
+      scene.whereabouts = undefined;
+      scene.exit = undefined;
+    }
+    opening.next = [captiveRoute.id, freeRoute.id];
+    captiveRoute.next = [shared.id];
+    freeRoute.next = [shared.id];
+    shared.next = [];
+    captiveRoute.exit = [
+      { who: guide.id, kind: "npc", state: "captive", where: "the harbour" },
+    ];
+    freeRoute.exit = [
+      { who: guide.id, kind: "npc", state: "free", where: "with the party" },
+    ];
+    shared.npcIds = [guide.id];
+    shared.whereabouts = [
+      { who: guide.id, kind: "npc", state: "free", where: "the gallery" },
+    ];
+
+    expect(
+      messages(a).some(
+        (m) => m.includes(guide.name) && /captive to free/.test(m),
+      ),
+    ).toBe(true);
+  });
 });
 
 describe("one count for the clock", () => {
@@ -104,6 +134,12 @@ describe("one count for the clock", () => {
     a.briefing.secret = "Six rings open the gate; the first ring has sounded.";
     expect(messages(a).some((m) => /counts bell rings/.test(m))).toBe(false);
   });
+
+  it("does not treat regex metacharacters in counts as a pattern", () => {
+    const a = bell(local());
+    a.clock!.counts = "square [";
+    expect(() => messages(a)).not.toThrow();
+  });
 });
 
 describe("how the place works", () => {
@@ -114,6 +150,13 @@ describe("how the place works", () => {
     a.briefing.environment = "Air pockets fill the chapel and upper streets.";
     expect(messages(a).some((m) => /how the place works/i.test(m))).toBe(false);
     expect(renderOneShotMarkdown(a)).toContain("**How this place works:**");
+  });
+
+  it("asks for rules when a scene is flooded", () => {
+    const a = local();
+    a.briefing.environment = undefined;
+    a.scenes[1].location = "The flooded archive";
+    expect(messages(a).some((m) => /somewhere flooded/.test(m))).toBe(true);
   });
 });
 

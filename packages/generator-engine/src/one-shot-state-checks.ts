@@ -84,20 +84,54 @@ function stillHeld(
 
 export const checkWhereabouts: GapCheck = (adventure) => {
   const gaps: OneShotGap[] = [];
-  const current = new Map<string, OneShotWhereabout>();
   const names = new Map(adventure.npcs.map((n) => [n.id, n.name]));
   const gap: Gap = (who, message) => ({
     area: "npc",
     id: names.has(who) ? who : undefined,
     message: `${names.get(who) ?? who} ${message}`,
   });
-  for (const scene of adventure.scenes) {
-    gaps.push(...unexplainedChanges(scene, current, gap));
-    gaps.push(...stillHeld(scene, current, gap));
-    // The next scene starts where this one left everyone.
-    for (const w of scene.exit ?? []) current.set(w.who, w);
-  }
-  return gaps;
+
+  // Keep separate state snapshots for each reachable route. A shared scene
+  // must agree with every way the party can arrive there.
+  const sceneIndex = new Map(adventure.scenes.map((scene, i) => [scene.id, i]));
+  const incoming = adventure.scenes.map(
+    () => new Map<string, Map<string, OneShotWhereabout>>(),
+  );
+  const addIncoming = (
+    index: number,
+    state: Map<string, OneShotWhereabout>,
+  ) => {
+    const key = JSON.stringify(
+      [...state.entries()].sort(([a], [b]) => a.localeCompare(b)),
+    );
+    incoming[index].set(key, state);
+  };
+  if (adventure.scenes.length) addIncoming(0, new Map());
+
+  adventure.scenes.forEach((scene, i) => {
+    const states = incoming[i].size ? [...incoming[i].values()] : [new Map()];
+    for (const state of states) {
+      const current = new Map(state);
+      gaps.push(...unexplainedChanges(scene, current, gap));
+      gaps.push(...stillHeld(scene, current, gap));
+      // An omitted exit carries the state established at the scene itself.
+      for (const w of scene.exit ?? []) current.set(w.who, w);
+      for (const nextId of scene.next) {
+        const nextIndex = sceneIndex.get(nextId);
+        if (nextIndex !== undefined && nextIndex > i) {
+          addIncoming(nextIndex, new Map(current));
+        }
+      }
+    }
+  });
+
+  const seen = new Set<string>();
+  return gaps.filter((item) => {
+    const key = `${item.area}:${item.id ?? ""}:${item.message}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
 };
 
 // ── Endings ──────────────────────────────────────────────────────────────

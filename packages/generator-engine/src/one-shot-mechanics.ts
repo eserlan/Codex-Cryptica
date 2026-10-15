@@ -47,6 +47,9 @@ function countedNoun(counts: string): string {
   return last.replace(/(?:es|s)$/, "") || last;
 }
 
+const escapeRegExp = (value: string) =>
+  value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
 const numberOf = (word: string) => {
   const w = word.toLowerCase();
   if (/^\d+$/.test(w)) return Number(w);
@@ -60,7 +63,7 @@ function mentions(
   words: string[],
 ): { word: string; n: number }[] {
   const re = new RegExp(
-    `\\b(${words.join("|")}|\\d+(?:st|nd|rd|th)?)\\s+(?:[a-z-]+\\s+)?${noun}(?:e?s)?\\b`,
+    `\\b(${words.join("|")}|\\d+(?:st|nd|rd|th)?)\\s+(?:[a-z-]+\\s+)?${escapeRegExp(noun)}(?:e?s)?\\b`,
     "gi",
   );
   return [...text.matchAll(re)].map((m) => {
@@ -108,7 +111,9 @@ export const checkClockCount: GapCheck = ({ clock, briefing, solution }) => {
 };
 
 const UNUSUAL_PLACE =
-  /\b(?:underwater|under the (?:sea|water|waves)|beneath the (?:sea|water|waves|lake)|submerged|airless|vacuum|zero[- ]g|in orbit|lava|molten|frozen solid|inside (?:a|the) (?:dream|painting|mirror))\b/i;
+  /\b(?:underwater|under the (?:sea|water|waves)|beneath the (?:sea|water|waves|lake)|submerged|flooded|airless|vacuum|zero[- ]g|in orbit|lava|molten|frozen solid|inside (?:a|the) (?:dream|painting|mirror))\b/i;
+
+export const needsEnvironmentRules = (text: string) => UNUSUAL_PLACE.test(text);
 
 /** A place that doesn't work normally needs its rules stated. */
 export const checkEnvironment: GapCheck = (adventure) => {

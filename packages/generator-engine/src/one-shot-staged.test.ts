@@ -160,6 +160,49 @@ describe("runOneShotStages", () => {
     expect(checkPlayability(out)).toEqual([]);
   });
 
+  it("gives a shared scene separate histories for its reachable routes", async () => {
+    const a = generateOneShotLocal(
+      { ...options, durationHours: 4, structure: "Five-room adventure" },
+      seeded(),
+    ).oneShot!;
+    const [opening, left, right, shared] = a.scenes;
+    opening.next = [left.id, right.id];
+    left.next = [shared.id];
+    right.next = [shared.id];
+    shared.next = [];
+    const prompts: StagePrompt[] = [];
+    const run = fakeModel(a);
+
+    await runOneShotStages(
+      { ...options, durationHours: 4, structure: "Five-room adventure" },
+      {
+        call: (p) => {
+          prompts.push(p);
+          return run.call(p);
+        },
+      },
+      "",
+      seeded(),
+    );
+
+    const sharedPrompt = prompts.find(
+      (p) =>
+        stageOf(p) === "scene" &&
+        p.userMessage.includes(`The scene to write: {"id":"${shared.id}"`),
+    )!;
+    const historyText = sharedPrompt.userMessage
+      .split("Earlier scenes on each route")[1]
+      .split("\nRules:")[0];
+    const histories = JSON.parse(
+      historyText.slice(historyText.indexOf(":") + 1).trim(),
+    ) as { id: string }[][];
+    expect(histories).toHaveLength(2);
+    expect(histories.map((route) => route.map((scene) => scene.id))).toEqual([
+      [opening.id, left.id],
+      [opening.id, right.id],
+    ]);
+  });
+
   it("reports progress through every step in order", async () => {
     const a = local();
     const snapshots: OneShotProgressStep[][] = [];
@@ -372,6 +415,7 @@ describe("runOneShotStages", () => {
   it("checks again after the review and repairs what is still wrong", async () => {
     const a = local();
     a.briefing.premise = `${a.briefing.premise} The ruins lie underwater.`;
+    a.briefing.environment = undefined;
     const { call, calls } = fakeModel(a);
     const result = await runOneShotStages(
       { ...options, durationHours: 4 },
@@ -426,7 +470,7 @@ describe("runOneShotStages", () => {
     expect(sceneCalls).toHaveLength(1);
   });
 
-  it("writes scenes one at a time, each starting from the last exit", async () => {
+  it("writes scenes one at a time with their reachable route history", async () => {
     const a = local();
     const { call } = fakeModel(a);
     let inFlight = 0;
@@ -454,10 +498,8 @@ describe("runOneShotStages", () => {
       seeded(),
     );
     expect(peak).toBe(1);
-    expect(scenePrompts[0]).not.toContain(
-      "What the earlier scenes established",
-    );
-    expect(scenePrompts[1]).toContain("What the earlier scenes established");
+    expect(scenePrompts[0]).not.toContain("Earlier scenes on each route");
+    expect(scenePrompts[1]).toContain("Earlier scenes on each route");
     expect(scenePrompts[1]).toContain(a.scenes[0].title);
   });
 });

@@ -337,19 +337,31 @@ async function writeParts(
   let written = 0;
   progress.set("scenes", "active", `0 of ${briefs.length}`);
   if (supporting.length) progress.set("npcs", "active");
-  // Scenes are written in order, each starting from where the last one left
-  // everyone, so no two writers invent different fates for the same NPC.
-  // The supporting cast is written alongside.
+  // Keep one history per route so alternatives do not overwrite one another
+  // before they converge on a shared scene.
   const writeScenes = async () => {
     const drafts: (Json | null)[] = [];
-    for (const brief of briefs) {
+    const histories = briefs.map(() => [] as unknown[][]);
+    const briefIndex = new Map(
+      briefs.map((brief, i) => [String(brief.scene.id), i]),
+    );
+    if (briefs.length) histories[0].push([]);
+    for (const [i, brief] of briefs.entries()) {
       throwIfAborted(deps.signal);
-      const earlier = drafts.map((d, i) => sceneRecord(briefs[i], d));
       const draft = await ask(
         deps,
-        scenePrompt(resolved, context, brief, earlier),
+        scenePrompt(resolved, context, brief, histories[i]),
       );
       drafts.push(draft);
+      const record = sceneRecord(brief, draft);
+      for (const nextId of list(brief.scene.next).map(String)) {
+        const nextIndex = briefIndex.get(nextId);
+        if (nextIndex !== undefined && nextIndex > i) {
+          histories[nextIndex].push(
+            ...histories[i].map((route) => [...route, record]),
+          );
+        }
+      }
       written += 1;
       progress.set("scenes", "active", `${written} of ${briefs.length}`);
     }
