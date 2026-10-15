@@ -78,7 +78,7 @@ function confinement(
       if (state) {
         const npcName = new RegExp(`\\b(?:${words.join("|")})\\b`, "i");
         const explained = sentence
-          .split(/[,;:]|\b(?:while|whereas)\b/i)
+          .split(/[,;:]|\b(?:because|while|whereas)\b/i)
           .some((clause) => npcName.test(clause) && EXPLAINED.test(clause));
         return { state, explained };
       }
