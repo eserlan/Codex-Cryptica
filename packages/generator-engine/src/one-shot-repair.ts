@@ -43,7 +43,9 @@ import {
   REQUIREMENT_RULE,
   ROUTES_RULE,
   THEORIES_RULE,
-  RESOURCE_RULE,
+  ENVIRONMENT_RULE,
+  EXIT_RULE,
+  resourceRuleFor,
   THREAD_DATA_RULE,
   WHEREABOUTS_RULE,
 } from "./one-shot-rules";
@@ -86,7 +88,8 @@ Check, and fix in place:
 9. Pacing: ${PACING_RULE} Remove any act or part timings from the briefing.
 10. Continuity: follow every named NPC and important object through the scenes in order. ${CONTINUITY_RULE} Fix a contradiction in the scene text, not by renaming.
 11. Finale requirements: ${REQUIREMENT_RULE}
-12. Who is where: ${WHEREABOUTS_RULE} ${ROUTES_RULE} ${THREAD_DATA_RULE} ${RESOURCE_RULE}
+12. Who is where: ${WHEREABOUTS_RULE} ${ROUTES_RULE} ${THREAD_DATA_RULE} ${EXIT_RULE} ${resourceRuleFor(adventure.emphasis)}
+14. Rules of the place: ${ENVIRONMENT_RULE}
 13. Decisions and theories: ${DECISIONS_RULE} ${THEORIES_RULE} Theories only for an investigation or mystery.
 
 Rules:
@@ -98,15 +101,14 @@ Rules:
 Return only JSON shaped like:
 {
   "antagonistId": "npc-2",
-  "briefing": { "trigger": "", "prep": "", "questions": [{ "question": "", "answer": "" }] },
+  "briefing": { "trigger": "", "prep": "", "environment": "", "questions": [{ "question": "", "answer": "" }] },
   "decisions": [{ "id": "stopped", "question": "" }],
   "theories": [{ "id": "theory-1", "name": "", "summary": "", "isTrue": false, "obvious": true }],
   "endings": [{ "id": "end-1", "condition": "", "consequence": "", "requires": { "stopped": true } }],
-  "resources": [{ "id": "food", "name": "", "start": 5, "unit": "", "spends": [{ "sceneId": "scene-1", "what": "", "amount": 1 }], "whenEmpty": "" }],
-  "threads": [{ "about": "npc-3", "kind": "rescue", "setup": "", "payoff": "", "sceneIds": ["scene-3"] }],
+${adventure.emphasis === "Survival" ? `  "resources": [{ "id": "light", "name": "", "start": 5, "unit": "", "spends": [{ "sceneId": "scene-1", "what": "", "amount": 1 }], "whenEmpty": "" }],\n` : ""}  "threads": [{ "about": "npc-3", "kind": "rescue", "setup": "", "payoff": "", "sceneIds": ["scene-3"] }],
   "solution": { "summary": "", "requirements": [{ "kind": "clue", "what": "", "detail": "", "sceneIds": ["scene-2"] }], "steps": [""], "alternatives": [""], "mistakes": [""] },
-  "clock": { "name": "", "advances": "", "schedule": ["scene-end-after-opening", "finale-start"], "startsAt": 1, "pushes": "", "ticks": [{ "trigger": "", "effect": "" }], "slow": "", "deadline": "" },
-  "scenes": [{ "id": "scene-2", "situation": "", "approaches": [""], "addNpcIds": ["npc-4"], "addNext": ["scene-4"], "whereabouts": [{ "who": "npc-1", "kind": "npc", "state": "free", "where": "", "how": "" }], "routes": [{ "to": "scene-4", "risk": "", "find": "" }], "challenge": { "type": "combat", "description": "", "success": "", "otherApproaches": [""], "opposition": "", "failForward": "" } }],
+  "clock": { "name": "", "advances": "", "schedule": ["scene-end-after-opening", "finale-start"], "startsAt": 1, "pushes": "", "ticks": [{ "trigger": "", "effect": "" }], "slow": "", "deadline": "", "counts": "" },
+  "scenes": [{ "id": "scene-2", "situation": "", "approaches": [""], "addNpcIds": ["npc-4"], "addNext": ["scene-4"], "whereabouts": [{ "who": "npc-1", "kind": "npc", "state": "free", "where": "", "how": "" }], "exit": [{ "who": "npc-1", "kind": "npc", "state": "free", "where": "", "how": "" }], "routes": [{ "to": "scene-4", "risk": "", "find": "" }], "challenge": { "type": "combat", "description": "", "success": "", "otherApproaches": [""], "opposition": "", "failForward": "" } }],
   "npcs": [{ "id": "npc-1", "name": "only for a new NPC", "role": "only for a new NPC", "motivation": "", "knows": "", "reaction": "", "cues": "", "backstory": "", "tactics": "", "stopIf": "", "limits": "" }],
   "clues": [{ "id": "clue-1", "text": "", "addRoutes": [{ "sceneId": "scene-2", "method": "" }], "supports": ["theory-2"], "contradicts": ["theory-1"] }]
 }
@@ -123,6 +125,7 @@ function repairBriefing(
   return {
     ...briefing,
     trigger: str(b.trigger, briefing.trigger ?? "") || undefined,
+    environment: str(b.environment, briefing.environment ?? "") || undefined,
     prep: str(b.prep, briefing.prep),
     questions: questions.length ? questions : briefing.questions,
   };
@@ -163,6 +166,7 @@ function repairScene(
     next: [...scene.next, ...addedLinks(scene, r.addNext, order)],
     challenge: parseChallenge(r.challenge, scene.challenge),
     whereabouts: parseWhereabouts(r.whereabouts) ?? scene.whereabouts,
+    exit: parseWhereabouts(r.exit) ?? scene.exit,
     routes: parseRoutes(r.routes) ?? scene.routes,
   };
 }
