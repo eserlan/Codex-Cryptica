@@ -48,7 +48,8 @@ export interface OneShotProgressStep {
 
 export interface OneShotStageDeps {
   /** Run one prompt and return the model's text. */
-  call: (prompt: StagePrompt) => Promise<string>;
+  call: (prompt: StagePrompt, signal?: AbortSignal) => Promise<string>;
+  signal?: AbortSignal;
   onProgress?: (steps: OneShotProgressStep[]) => void;
   /** How many scene/NPC calls may run at once. */
   concurrency?: number;
@@ -100,27 +101,39 @@ async function ask(
   prompt: StagePrompt,
 ): Promise<Json | null> {
   for (let attempt = 0; attempt < 2; attempt++) {
+    throwIfAborted(deps.signal);
     try {
-      const data = parseFencedJson(await deps.call(prompt));
+      const data = parseFencedJson(await deps.call(prompt, deps.signal));
+      throwIfAborted(deps.signal);
       if (data && typeof data === "object" && !Array.isArray(data)) {
         return data as Json;
       }
     } catch {
+      throwIfAborted(deps.signal);
       // try again, then give up
     }
   }
   return null;
 }
 
+function throwIfAborted(signal?: AbortSignal): void {
+  if (!signal?.aborted) return;
+  throw (
+    signal.reason ?? new DOMException("The operation was aborted", "AbortError")
+  );
+}
+
 /** Run tasks with at most `limit` in flight, keeping result order. */
 async function pool<T>(
   tasks: (() => Promise<T>)[],
   limit: number,
+  signal?: AbortSignal,
 ): Promise<T[]> {
   const results: T[] = new Array(tasks.length);
   let next = 0;
   const worker = async () => {
     while (next < tasks.length) {
+      throwIfAborted(signal);
       const i = next++;
       results[i] = await tasks[i]();
     }
@@ -260,15 +273,26 @@ async function review(
   deps: OneShotStageDeps,
   adventure: OneShotAdventure,
 ): Promise<{ adventure: OneShotAdventure; skipped: boolean }> {
-  try {
-    const text = await deps.call(
-      buildOneShotRepairPrompt(adventure, checkPlayability(adventure)),
-    );
-    if (!isReadableRepair(text)) return { adventure, skipped: true };
-    return { adventure: applyOneShotRepair(adventure, text), skipped: false };
-  } catch {
-    return { adventure, skipped: true };
+  const prompt = buildOneShotRepairPrompt(
+    adventure,
+    checkPlayability(adventure),
+  );
+  for (let attempt = 0; attempt < 2; attempt++) {
+    throwIfAborted(deps.signal);
+    try {
+      const text = await deps.call(prompt, deps.signal);
+      throwIfAborted(deps.signal);
+      if (isReadableRepair(text)) {
+        return {
+          adventure: applyOneShotRepair(adventure, text),
+          skipped: false,
+        };
+      }
+    } catch {
+      throwIfAborted(deps.signal);
+    }
   }
+  return { adventure, skipped: true };
 }
 
 async function required(
@@ -277,6 +301,7 @@ async function required(
   id: "core" | "structure",
   prompt: StagePrompt,
 ): Promise<Json> {
+  throwIfAborted(deps.signal);
   progress.set(id, "active");
   const data = await ask(deps, prompt);
   if (!data) {
@@ -309,6 +334,7 @@ async function writeParts(
   const [profiles, ...scenes] = await pool<Json | null>(
     [npcTask, ...sceneTasks],
     deps.concurrency ?? 3,
+    deps.signal,
   );
   const failedScenes = scenes.filter((s) => !s).length;
   progress.set(
@@ -333,6 +359,7 @@ export async function runOneShotStages(
   sessionContext = "",
   rng: Rng = defaultRng,
 ): Promise<OneShotStagedResult> {
+  throwIfAborted(deps.signal);
   const progress = new Progress(deps.onProgress);
   const resolved = resolveOneShot(options, rng);
   const core = await required(

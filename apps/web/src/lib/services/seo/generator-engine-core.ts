@@ -453,9 +453,10 @@ export class GeneratorEngineCore extends GeneratorEngineBase {
     options: OneShotGeneratorOptions & {
       useAI?: boolean;
       onProgress?: (steps: OneShotProgressStep[]) => void;
+      signal?: AbortSignal;
     } = {},
   ): Promise<GeneratorOutput> {
-    const { useAI, onProgress, ...oneShotOptions } = options;
+    const { useAI, onProgress, signal, ...oneShotOptions } = options;
     const recentInputs = generationInputHistoryStore.recent("one-shot");
     return this.runWithAIFallback(
       useAI,
@@ -468,7 +469,10 @@ export class GeneratorEngineCore extends GeneratorEngineBase {
                 systemInstruction,
                 userMessage,
                 ONE_SHOT_GENERATION_CONFIG,
+                true,
+                signal,
               ),
+            signal,
             onProgress,
           },
           getSessionContext() + formatRecentInputsNote(recentInputs),

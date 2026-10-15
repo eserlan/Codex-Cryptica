@@ -120,6 +120,14 @@ export class GeneratorAITransport {
       try {
         return toSeoOutput(await aiAttempt());
       } catch (err) {
+        if (
+          err &&
+          typeof err === "object" &&
+          "name" in err &&
+          err.name === "AbortError"
+        ) {
+          throw err;
+        }
         // Distinguish routine, user-facing failure classes (offline, rate
         // limits, quota, safety) from a genuine AI-pipeline defect (e.g. an
         // unparseable response). Both fall back to local tables, but an
@@ -159,6 +167,12 @@ export class GeneratorAITransport {
       GENERATOR_MODEL_ID,
       systemInstruction,
     );
+    if (signal?.aborted) {
+      throw (
+        signal.reason ??
+        new DOMException("The operation was aborted", "AbortError")
+      );
+    }
     const request = generationConfig
       ? {
           contents: [{ role: "user", parts: [{ text: userMessage }] }],

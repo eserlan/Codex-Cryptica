@@ -62,6 +62,26 @@ describe("GeneratorAITransport", () => {
       expect(generateContent).toHaveBeenCalledWith("user", { signal });
     });
 
+    it("does not start a model request when the signal aborts during setup", async () => {
+      const controller = new AbortController();
+      const generateContent = vi.fn();
+      clientManager.getModel.mockImplementation(async () => {
+        controller.abort();
+        return { generateContent };
+      });
+
+      await expect(
+        transport.runModel(
+          "system",
+          "user",
+          undefined,
+          true,
+          controller.signal,
+        ),
+      ).rejects.toMatchObject({ name: "AbortError" });
+      expect(generateContent).not.toHaveBeenCalled();
+    });
+
     it("can keep the first pass silent while streaming the editorial pass", async () => {
       const generateContent = vi.fn().mockResolvedValue({
         response: { text: () => '{"title":"first"}' },
@@ -158,6 +178,20 @@ describe("GeneratorAITransport", () => {
 
       warnSpy.mockRestore();
       errorSpy.mockRestore();
+    });
+
+    it("propagates cancellation without generating a local fallback", async () => {
+      const local = vi.fn(
+        () => ({ type: "npc", title: "Local Result" }) as any,
+      );
+      const aiAttempt = async () => {
+        throw new DOMException("The operation was aborted", "AbortError");
+      };
+
+      await expect(
+        transport.runWithAIFallback(true, aiAttempt, local),
+      ).rejects.toMatchObject({ name: "AbortError" });
+      expect(local).not.toHaveBeenCalled();
     });
 
     it("skips the AI attempt entirely when useAI is false", async () => {

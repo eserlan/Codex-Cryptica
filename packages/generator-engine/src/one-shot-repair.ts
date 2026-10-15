@@ -223,7 +223,8 @@ function mergeRepair(
 /** Whether a review reply is JSON an editor could act on, even if empty. */
 export function isReadableRepair(text: string): boolean {
   try {
-    return typeof parseFencedJson(text) === "object";
+    const value: unknown = parseFencedJson(text);
+    return value !== null && typeof value === "object" && !Array.isArray(value);
   } catch {
     return false;
   }

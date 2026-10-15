@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { runOneShotStages, type OneShotProgressStep } from "./one-shot-staged";
+import { isReadableRepair } from "./one-shot-repair";
 import type { StagePrompt } from "./one-shot-stage-prompts";
 import { generateOneShotLocal } from "./public-one-shot";
 import { checkPlayability } from "./one-shot-playability";
@@ -254,17 +255,56 @@ describe("runOneShotStages", () => {
     expect(snapshots.at(-1)![0].status).toBe("fallback");
   });
 
-  it("marks the review skipped when it fails, keeping the draft", async () => {
+  it("retries a failed review once before marking it skipped", async () => {
     const a = local();
     const { call } = fakeModel(a, { review: 1 });
+    let reviewCalls = 0;
     const result = await runOneShotStages(
       { ...options, durationHours: 4 },
-      { call },
+      {
+        call: (prompt) => {
+          if (stageOf(prompt) === "review") reviewCalls += 1;
+          return call(prompt);
+        },
+      },
       "",
       seeded(),
     );
-    expect(result.reviewSkipped).toBe(true);
+    expect(reviewCalls).toBe(2);
+    expect(result.reviewSkipped).toBe(false);
     expect(result.adventure.title).toBe("The Drowned Choir");
+  });
+
+  it("rejects null and array review replies but accepts an empty object", () => {
+    expect(isReadableRepair("{}")).toBe(true);
+    expect(isReadableRepair("null")).toBe(false);
+    expect(isReadableRepair("[]")).toBe(false);
+  });
+
+  it("stops queued scene calls when the generation is aborted", async () => {
+    const a = local();
+    const controller = new AbortController();
+    const sceneCalls: string[] = [];
+    await expect(
+      runOneShotStages(
+        { ...options, durationHours: 4 },
+        {
+          signal: controller.signal,
+          concurrency: 1,
+          call: async (prompt, signal) => {
+            if (stageOf(prompt) === "scene") {
+              sceneCalls.push(prompt.userMessage);
+              controller.abort();
+              throw signal?.reason;
+            }
+            return fakeModel(a).call(prompt);
+          },
+        },
+        "",
+        seeded(),
+      ),
+    ).rejects.toMatchObject({ name: "AbortError" });
+    expect(sceneCalls).toHaveLength(1);
   });
 
   it("never runs more scene calls at once than allowed", async () => {

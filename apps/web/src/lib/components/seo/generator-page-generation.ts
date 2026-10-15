@@ -85,6 +85,7 @@ export interface GenerationContext {
   getSessionEntities: () => unknown[];
   /** Receives each step of a staged one-shot generation; null resets it. */
   onOneShotProgress?: (steps: OneShotProgressStep[] | null) => void;
+  getOneShotSignal?: () => AbortSignal | undefined;
   engine?: typeof generatorEngine;
 }
 
@@ -281,6 +282,7 @@ export function createGeneratorHandlers(
         partySize: Number(ctx.oneShot.partySize),
         useAI,
         onProgress: ctx.onOneShotProgress,
+        signal: ctx.getOneShotSignal?.(),
       } as never);
     },
     "villain-scheme-generator": (useAI) =>

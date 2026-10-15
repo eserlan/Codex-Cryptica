@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { OneShotProgressStep } from "generator-engine";
-  import { onMount, untrack } from "svelte";
+  import { onDestroy, onMount, untrack } from "svelte";
   import { browser } from "$app/environment";
   import { page } from "$app/state";
   import { hubContext } from "$lib/stores/hub-context.svelte";
@@ -911,6 +911,8 @@
 
   /** Live steps while a one-shot is generated in stages. */
   let oneShotProgress = $state<OneShotProgressStep[] | null>(null);
+  let oneShotAbortController: AbortController | null = null;
+  onDestroy(() => oneShotAbortController?.abort());
 
   const GENERATE_HANDLERS = createGeneratorHandlers({
     npc,
@@ -960,7 +962,14 @@
     getPlotTwistPremise: () => plotTwist.premise,
     getHandoffQuestPremise: () => handoffState.questPremise,
     getSessionEntities: () => sessionHubStore.entities,
-    onOneShotProgress: (steps) => (oneShotProgress = steps),
+    onOneShotProgress: (steps) => {
+      oneShotProgress = steps;
+      if (steps === null) {
+        oneShotAbortController?.abort();
+        oneShotAbortController = new AbortController();
+      }
+    },
+    getOneShotSignal: () => oneShotAbortController?.signal,
   });
 
   const generate = createGenerate({
