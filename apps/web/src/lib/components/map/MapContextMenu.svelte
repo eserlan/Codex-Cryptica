@@ -488,8 +488,12 @@
                     ) {
                       const orientation =
                         mapStore.gridType === "hex-flat" ? "flat" : "pointy";
+                      // Resize around the token's centre: x/y is its corner.
                       const snapped = snapPointToHexCenter(
-                        { x: token.x, y: token.y },
+                        {
+                          x: token.x + token.width / 2,
+                          y: token.y + token.height / 2,
+                        },
                         {
                           orientation,
                           size: gridSize,
@@ -497,18 +501,25 @@
                           offsetY: mapStore.gridOffsetY,
                         },
                       );
-                      const width =
-                        orientation === "pointy"
-                          ? scale * Math.sqrt(3) * gridSize
-                          : scale * 2 * gridSize;
-                      const height =
-                        orientation === "pointy"
+                      const hexShaped =
+                        token.baseShape === "hex" ||
+                        token.baseShape === "hex-pointy" ||
+                        token.baseShape === "hex-flat";
+                      const across = scale * Math.sqrt(3) * gridSize;
+                      const width = hexShaped
+                        ? orientation === "pointy"
+                          ? across
+                          : scale * 2 * gridSize
+                        : across;
+                      const height = hexShaped
+                        ? orientation === "pointy"
                           ? scale * 2 * gridSize
-                          : scale * Math.sqrt(3) * gridSize;
+                          : across
+                        : across;
 
                       mapSession.updateToken(tokenId, {
-                        x: snapped.x,
-                        y: snapped.y,
+                        x: snapped.x - width / 2,
+                        y: snapped.y - height / 2,
                         width,
                         height,
                       });
