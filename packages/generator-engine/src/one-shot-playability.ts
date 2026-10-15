@@ -8,6 +8,7 @@
 import type {
   OneShotAdventure,
   OneShotGap,
+  OneShotRequirement,
   OneShotScene,
 } from "./one-shot-types";
 
@@ -62,6 +63,36 @@ const earlySceneIds = (adventure: OneShotAdventure) =>
       .map((s) => s.id),
   );
 
+/**
+ * Only information has to be found before the finale. Something the party
+ * does or wins can happen in the finale itself, and an outcome of the finale
+ * is not found anywhere.
+ */
+function requirementTiming(
+  adventure: OneShotAdventure,
+  r: OneShotRequirement,
+): OneShotGap[] {
+  const kind = r.kind ?? "clue";
+  if (kind === "outcome") return [];
+  if (kind === "action") {
+    return r.sceneIds.length
+      ? []
+      : [
+          {
+            area: "solution",
+            message: `"${r.what}": say in which scene the party does it.`,
+          },
+        ];
+  }
+  if (r.sceneIds.some((id) => earlySceneIds(adventure).has(id))) return [];
+  return [
+    {
+      area: "solution",
+      message: `"${r.what}" can't be found before the finale. If it is information, put it in an earlier essential scene; if the party does or wins it in the finale, mark it "action"; if it results from the finale, mark it "outcome".`,
+    },
+  ];
+}
+
 const checkSolution: GapCheck = (adventure) => {
   const { solution } = adventure;
   if (!solution?.requirements.length || !solution.steps.length) {
@@ -73,7 +104,6 @@ const checkSolution: GapCheck = (adventure) => {
       },
     ];
   }
-  const early = earlySceneIds(adventure);
   return [
     ...solution.requirements.flatMap((r) => [
       ...(isVague(r.detail)
@@ -84,14 +114,7 @@ const checkSolution: GapCheck = (adventure) => {
             },
           ]
         : []),
-      ...(r.sceneIds.some((id) => early.has(id))
-        ? []
-        : [
-            {
-              area: "solution" as const,
-              message: `"${r.what}" can't be found before the finale.`,
-            },
-          ]),
+      ...requirementTiming(adventure, r),
     ]),
     ...(solution.alternatives.length
       ? []

@@ -10,6 +10,7 @@ import type {
   OneShotAdventure,
   OneShotClue,
   OneShotNpc,
+  OneShotRequirement,
   OneShotScene,
 } from "./one-shot-types";
 import { checkPlayability } from "./one-shot-playability";
@@ -221,9 +222,12 @@ function sheetAntagonist(adventure: OneShotAdventure) {
 function sheetSolution(adventure: OneShotAdventure) {
   const { solution } = adventure;
   if (!solution) return "";
+  const where = (r: OneShotRequirement) =>
+    r.kind === "outcome"
+      ? "a result of the finale"
+      : `${r.kind === "action" ? "done in" : "found in"} ${sceneTitles(adventure, r.sceneIds)}`;
   const needs = solution.requirements.map(
-    (r) =>
-      `**${r.what}:** ${r.detail} _(${sceneTitles(adventure, r.sceneIds)})_`,
+    (r) => `**${r.what}:** ${r.detail} _(${where(r)})_`,
   );
   return `\n## How the Finale Works
 ${lines(

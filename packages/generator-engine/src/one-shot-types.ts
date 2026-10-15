@@ -127,8 +127,23 @@ export interface OneShotThread {
   sceneIds: string[];
 }
 
+export const ONE_SHOT_REQUIREMENT_KINDS = [
+  "clue",
+  "action",
+  "outcome",
+] as const;
+/**
+ * "clue": information learned before the finale. "action": something the
+ * party does or wins, possibly in the finale. "outcome": a result of the
+ * finale, not something to find.
+ */
+export type OneShotRequirementKind =
+  (typeof ONE_SHOT_REQUIREMENT_KINDS)[number];
+
 /** Something the finale needs, with its real content and where to find it. */
 export interface OneShotRequirement {
+  /** Absent on older adventures; treated as "clue". */
+  kind?: OneShotRequirementKind;
   what: string;
   /** The actual names, words or objects, not a reference to them. */
   detail: string;

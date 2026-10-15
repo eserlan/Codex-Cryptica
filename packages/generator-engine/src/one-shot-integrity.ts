@@ -13,6 +13,8 @@ import type {
   OneShotNpc,
 } from "./one-shot-types";
 
+import { simulateClock } from "./one-shot-clock";
+import { checkNpcContinuity } from "./one-shot-continuity";
 import { textOverlap } from "./one-shot-dedupe";
 
 type GapCheck = (adventure: OneShotAdventure) => OneShotGap[];
@@ -187,39 +189,46 @@ const checkOpposition: GapCheck = (adventure) =>
 const SCHEDULED =
   /\b(each|every|end of|after|at|by)\b[^.;]*?\b(scenes?|hours?|nights?|days?|dawns?|dusks?|sunsets?|sunrises?|nightfall|midnight|noon|watch(es)?|milestones?|acts?|tides?|rounds?|turns?|bells?|chimes?|moons?)\b/i;
 
-const checkClockSchedule: GapCheck = (adventure) => {
-  const { clock } = adventure;
-  if (!clock) return [];
-  const essentialSceneSchedule =
-    /\bend of each essential scene after the opening\b/i.test(clock.advances);
-  const climaxArrivalSchedule = /\bwhen the party reaches the climax\b/i.test(
-    clock.advances,
-  );
-  const climaxMidpointSchedule = /\bhalfway through the climax\b/i.test(
-    clock.advances,
-  );
-  if (
-    essentialSceneSchedule &&
-    climaxArrivalSchedule &&
-    climaxMidpointSchedule
-  ) {
-    const climaxEvents = adventure.scenes.some(
-      (scene) => scene.kind === "climax",
-    )
-      ? 2
-      : 0;
-    const scheduledAdvances =
-      adventure.scenes.filter(
-        (scene) => scene.essential && scene.kind !== "opening",
-      ).length + climaxEvents;
-    if (scheduledAdvances >= clock.ticks.length) return [];
+/**
+ * A counted schedule must leave the finale playable: a cautious party reaches
+ * it and can finish it with a tick to spare. Leaving more than two ticks
+ * unused means the pressure never builds.
+ */
+function scheduleGaps(adventure: OneShotAdventure): OneShotGap[] | undefined {
+  const ticks = adventure.clock!.ticks.length;
+  const schedule = simulateClock(adventure);
+  if (!schedule) return undefined;
+  const total = schedule.beforeFinale + schedule.inFinale;
+  const route = schedule.steps.join(", ");
+  const times = `${total} time${total === 1 ? "" : "s"}`;
+  if (total >= ticks) {
+    const when =
+      schedule.beforeFinale >= ticks
+        ? "before the finale even starts"
+        : "before the party can finish the finale";
     return [
       {
         area: "clock",
-        message: `The schedule only advances the clock ${scheduledAdvances} times on a cautious route, but it has ${clock.ticks.length} ticks. Add scheduled moments or reduce the clock to match.`,
+        message: `On a cautious route the clock reaches its last tick ${when}: it advances ${times} on schedule (${route}) and has ${ticks} ticks. Let the finale start with at least one tick to spare, so only failure or delay sets off the deadline: add ticks or take scheduled moments out.`,
       },
     ];
   }
+  if (!schedule.alsoTimed && ticks - total > 2) {
+    return [
+      {
+        area: "clock",
+        message: `The schedule only advances the clock ${times} on a cautious route (${route || "never"}), but it has ${ticks} ticks, so the pressure never builds. Add scheduled moments or reduce the clock to match.`,
+      },
+    ];
+  }
+  return [];
+}
+
+const checkClockSchedule: GapCheck = (adventure) => {
+  const { clock } = adventure;
+  if (!clock) return [];
+  const counted = scheduleGaps(adventure);
+  if (counted) return counted;
   if (SCHEDULED.test(clock.advances)) return [];
   return [
     {
@@ -302,10 +311,19 @@ const checkEndings: GapCheck = (adventure) => {
   const endings = adventure.endings.filter((e) => e.condition.trim());
   for (let i = 0; i < endings.length; i++) {
     for (let j = i + 1; j < endings.length; j++) {
-      if (textOverlap(endings[i].condition, endings[j].condition) >= 0.6) {
+      const [a, b] = [endings[i], endings[j]];
+      if (textOverlap(a.condition, b.condition) >= 0.6) {
         gaps.push({
           area: "solution",
-          message: `"${endings[i].title}" and "${endings[j].title}" are reached in almost the same way. Say exactly what the party does differently to reach each.`,
+          message: `"${a.title}" and "${b.title}" are reached in almost the same way. Say exactly what the party does differently to reach each.`,
+        });
+      } else if (
+        a.consequence.trim() &&
+        textOverlap(a.consequence, b.consequence) >= 0.6
+      ) {
+        gaps.push({
+          area: "solution",
+          message: `"${a.title}" and "${b.title}" end almost the same way. Say what each one changes afterwards, and for a partial ending what was won and what remains.`,
         });
       }
     }
@@ -315,6 +333,7 @@ const checkEndings: GapCheck = (adventure) => {
 
 export const INTEGRITY_CHECKS: GapCheck[] = [
   checkAntagonist,
+  checkNpcContinuity,
   checkThreads,
   checkLateCommitments,
   checkClockConsistency,

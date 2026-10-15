@@ -24,9 +24,11 @@ import { dedupeOneShot } from "./one-shot-dedupe";
 import {
   CLOCK_RULE,
   COMMITMENT_RULE,
+  CONTINUITY_RULE,
   EMPHASIS_HINT,
   ENDINGS_RULE,
   PACING_RULE,
+  REQUIREMENT_RULE,
 } from "./one-shot-rules";
 import { validateOneShot } from "./one-shot-validate";
 import type {
@@ -64,11 +66,13 @@ Check, and fix in place:
 7. Endings: ${ENDINGS_RULE}
 8. Causes and rescues: ${COMMITMENT_RULE}
 9. Pacing: ${PACING_RULE} Remove any act or part timings from the briefing.
+10. Continuity: follow every named NPC and important object through the scenes in order. ${CONTINUITY_RULE} Fix a contradiction in the scene text, not by renaming.
+11. Finale requirements: ${REQUIREMENT_RULE}
 
 Rules:
 - Keep the premise, title, scene ids, titles, minutes, essential flags, NPC names and roles unchanged. Links may only be added, with "addNext".
 - State facts outright: real names, words, objects and their order.
-- Vital facts must be found in an essential scene before the finale.
+- Vital facts, and every "clue" requirement, must be found in an essential scene before the finale.
 - Only include the parts you change. Return {} if nothing needs changing.
 
 Return only JSON shaped like:
@@ -77,7 +81,7 @@ Return only JSON shaped like:
   "briefing": { "trigger": "", "prep": "", "questions": [{ "question": "", "answer": "" }] },
   "endings": [{ "id": "end-1", "condition": "", "consequence": "" }],
   "threads": [{ "setup": "", "payoff": "", "sceneIds": ["scene-3"] }],
-  "solution": { "summary": "", "requirements": [{ "what": "", "detail": "", "sceneIds": ["scene-2"] }], "steps": [""], "alternatives": [""], "mistakes": [""] },
+  "solution": { "summary": "", "requirements": [{ "kind": "clue", "what": "", "detail": "", "sceneIds": ["scene-2"] }], "steps": [""], "alternatives": [""], "mistakes": [""] },
   "clock": { "name": "", "advances": "", "ticks": [{ "trigger": "", "effect": "" }], "slow": "", "deadline": "" },
   "scenes": [{ "id": "scene-2", "situation": "", "approaches": [""], "addNpcIds": ["npc-4"], "addNext": ["scene-4"], "challenge": { "type": "combat", "description": "", "success": "", "otherApproaches": [""], "opposition": "", "failForward": "" } }],
   "npcs": [{ "id": "npc-1", "name": "only for a new NPC", "role": "only for a new NPC", "motivation": "", "knows": "", "reaction": "", "cues": "", "backstory": "", "tactics": "", "stopIf": "", "limits": "" }],

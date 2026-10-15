@@ -7,6 +7,7 @@
 import { dedupeOneShot } from "./one-shot-dedupe";
 import { parseFencedJson } from "./llm-response-utils";
 import { normaliseTimeBudget, validateOneShot } from "./one-shot-validate";
+import { ONE_SHOT_REQUIREMENT_KINDS } from "./one-shot-types";
 import type {
   OneShotAdventure,
   OneShotChallenge,
@@ -239,7 +240,11 @@ export function parseSolution(
   const requirements = list(s.requirements)
     .map((r) => {
       const req = rec(r);
+      const kind = ONE_SHOT_REQUIREMENT_KINDS.find(
+        (k) => k === str(req.kind).toLowerCase(),
+      );
       return {
+        ...(kind ? { kind } : {}),
         what: str(req.what),
         detail: str(req.detail),
         sceneIds: strs(req.sceneIds)

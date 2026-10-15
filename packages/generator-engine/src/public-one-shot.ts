@@ -36,9 +36,11 @@ export type { ResolvedOneShot };
 import {
   CLOCK_RULE,
   COMMITMENT_RULE,
+  CONTINUITY_RULE,
   EMPHASIS_HINT,
   ENDINGS_RULE,
   PACING_RULE,
+  REQUIREMENT_RULE,
 } from "./one-shot-rules";
 import {
   ONE_SHOT_KITS,
@@ -661,6 +663,7 @@ export function buildOneShotAdventure(
       `${villainName} is stopped at ${climax.location} by putting the three vital clues to use.`,
     ),
     requirements: clues.map((c) => ({
+      kind: "clue" as const,
       what: c.label!,
       detail: c.text,
       sceneIds: c.routes.map((r) => r.sceneId),
@@ -688,10 +691,20 @@ export function buildOneShotAdventure(
       "Using the weakness without the evidence: it works, but the party is blamed for what happened.",
     ],
   };
+  // A cautious party reaches the finale two ticks short of the deadline, so
+  // only failures, rests or a wrong accusation set it off.
+  const scheduled =
+    scenes.filter((s) => s.essential && s.kind === "middle").length + 1;
+  const escalations = [
+    `${villainName} moves ${item}; the next scene starts with the trail colder.`,
+    `${villainName}'s people close the easiest way forward; the next scene starts with an extra guard or hazard.`,
+    `${villainName} silences a witness; one clue now needs a second approach.`,
+    `${villainName} gathers what the plan still needs; the finale gains one more defender.`,
+  ].slice(0, Math.max(0, scheduled - 1));
   const clock = {
     name: f(`${villainName}'s Plan`),
     advances:
-      "At the end of each essential scene after the opening, when the party reaches the climax, and halfway through the climax, whatever the party does. Failing a challenge or resting also advances it; forcing a risky shortcut adds a complication instead.",
+      "At the end of each essential scene after the opening, and when the party reaches the climax, whatever the party does. Failing a challenge or resting also advances it; forcing a risky shortcut adds a complication instead.",
     ticks: [
       {
         trigger: "First step",
@@ -699,14 +712,12 @@ export function buildOneShotAdventure(
           `${villainName} learns the party is involved and sends a warning.`,
         ),
       },
+      ...escalations.map((effect, i) => ({
+        trigger: `Step ${i + 2}`,
+        effect: f(effect),
+      })),
       {
-        trigger: "Second step",
-        effect: f(
-          `${villainName} moves ${item}; the next scene starts with the trail colder.`,
-        ),
-      },
-      {
-        trigger: "Third step",
+        trigger: "One step left",
         effect: f(
           `The plan is nearly done; ${villainName} is ready for the finale.`,
         ),
@@ -927,6 +938,8 @@ Rules:
 - "briefing.trigger" is the concrete event that set this off now. "briefing.questions" answers 3–5 questions players will obviously ask (why now, why us, why doesn't the patron handle it, why would the antagonist do this).
 - ${ENDINGS_RULE}
 - ${COMMITMENT_RULE}
+- ${CONTINUITY_RULE}
+- ${REQUIREMENT_RULE}
 - ${PACING_RULE}
 - NPCs get motivations, what they know, how they react and a roleplay cue — no biographies. An NPC's motivation must explain what they do in the scenes. If an NPC appears in several scenes, that scene's situation says why they are there; NPCs met in the opening return or pay off later.
 - "next" lists the scene ids a scene can lead to (branching allowed); scene ids are "scene-1".."scene-${count}", NPC ids "npc-1"..., clue ids "clue-1"...
@@ -942,7 +955,7 @@ Return JSON with exactly this shape:
   "threads": [{ "setup": "", "payoff": "", "sceneIds": ["scene-3"] }],
   "clues": [{ "id": "clue-1", "label": "", "text": "", "essential": true, "routes": [{ "sceneId": "scene-1", "method": "" }, { "sceneId": "scene-2", "method": "" }] }],
   "endings": [{ "id": "end-1", "title": "", "condition": "", "consequence": "" }],
-  "solution": { "summary": "", "requirements": [{ "what": "", "detail": "", "sceneIds": ["scene-2"] }], "steps": [""], "alternatives": [""], "mistakes": [""] },
+  "solution": { "summary": "", "requirements": [{ "kind": "clue", "what": "", "detail": "", "sceneIds": ["scene-2"] }], "steps": [""], "alternatives": [""], "mistakes": [""] },
   "clock": { "name": "", "advances": "", "ticks": [{ "trigger": "", "effect": "" }], "slow": "", "deadline": "" },
   "epilogueHook": "",
   "runningLate": ["steps to finish on time, most painless first"]
