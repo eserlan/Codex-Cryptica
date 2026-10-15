@@ -100,15 +100,15 @@ function dedupeThreads(threads: OneShotThread[]): OneShotThread[] {
 
 export function dedupeOneShot(adventure: OneShotAdventure): OneShotAdventure {
   const { npcs, remap } = dedupeNpcs(adventure);
-  const threads = adventure.threads && dedupeThreads(adventure.threads);
-  const npcsChanged = npcs.length !== adventure.npcs.length;
-  const threadsChanged = threads?.length !== adventure.threads?.length;
-  if (!npcsChanged && !threadsChanged) return adventure;
   const to = (id: string) => remap.get(id) ?? id;
-  const remappedThreads = threads?.map((thread) => ({
+  const remappedThreads = adventure.threads?.map((thread) => ({
     ...thread,
     about: thread.about ? to(thread.about) : undefined,
   }));
+  const threads = remappedThreads && dedupeThreads(remappedThreads);
+  const npcsChanged = npcs.length !== adventure.npcs.length;
+  const threadsChanged = threads?.length !== adventure.threads?.length;
+  if (!npcsChanged && !threadsChanged) return adventure;
   return {
     ...adventure,
     npcs,
@@ -122,6 +122,6 @@ export function dedupeOneShot(adventure: OneShotAdventure): OneShotAdventure {
           : whereabout,
       ),
     })),
-    threads: remappedThreads,
+    threads,
   };
 }

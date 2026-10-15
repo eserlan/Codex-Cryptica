@@ -87,6 +87,35 @@ describe("de-duplication", () => {
     );
   });
 
+  it("merges same-kind threads after their NPC subjects are deduplicated", () => {
+    const a = local({ durationHours: 4 });
+    const villain = a.npcs.find((n) => n.id === a.antagonistId)!;
+    const duplicateId = "npc-9";
+    a.npcs.push({ ...villain, id: duplicateId, name: ` ${villain.name}.` });
+    a.threads = [
+      {
+        about: villain.id,
+        kind: "rescue",
+        setup: "The prisoner is hidden beneath the ruined observatory.",
+        payoff: "The prisoner escapes through the western tunnel.",
+        sceneIds: [a.scenes[0].id],
+      },
+      {
+        about: duplicateId,
+        kind: "rescue",
+        setup: "A courier has been locked in the flooded bell tower.",
+        payoff: "The courier is carried safely to the market square.",
+        sceneIds: [a.scenes[1].id],
+      },
+    ];
+
+    const d = dedupeOneShot(a);
+
+    expect(d.threads).toHaveLength(1);
+    expect(d.threads![0].about).toBe(villain.id);
+    expect(d.threads![0].sceneIds).toEqual([a.scenes[0].id, a.scenes[1].id]);
+  });
+
   it("merges NPC names that differ only by punctuation", () => {
     const a = local({ durationHours: 4 });
     const villain = a.npcs.find((n) => n.id === a.antagonistId)!;
