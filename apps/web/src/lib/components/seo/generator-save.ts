@@ -32,9 +32,7 @@ export interface HubSaveDraft {
   references?: string[];
 }
 
-export function formatTovMagicItemMarkdown(
-  item: TovMagicItemMechanics,
-): string {
+function formatTovMagicItemMarkdown(item: TovMagicItemMechanics): string {
   const parts: string[] = ["### Game Statistics (Tales of the Valiant)"];
   parts.push(`- **Rarity & Category:** ${item.rarity} ${item.category}`);
   parts.push(

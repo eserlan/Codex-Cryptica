@@ -14,8 +14,8 @@ describe("Tales of the Valiant Creature Generation (US2)", () => {
       (o) => o.id === "gameSystem",
     );
     expect(gameSystemOpt).toBeDefined();
-    expect(gameSystemOpt?.control).toBe("select");
-    expect(gameSystemOpt?.choices).toEqual(
+    expect(gameSystemOpt!.control).toBe("select");
+    expect(gameSystemOpt!.choices).toEqual(
       expect.arrayContaining([
         { value: "system-neutral", label: "System Neutral" },
         { value: "tales-of-the-valiant", label: "Tales of the Valiant" },
@@ -135,31 +135,31 @@ describe("Tales of the Valiant Creature Generation (US2)", () => {
     expect(draft.systemId).toBe("tales-of-the-valiant");
     expect(draft.mechanics).toBeDefined();
     expect(draft.statSheet).toBeDefined();
-    expect(draft.statSheet?.templateId).toBe("builtin-tov-monster");
+    expect(draft.statSheet!.templateId).toBe("builtin-tov-monster");
 
     const fields = Object.fromEntries(
       draft.statSheet!.fields.map((f) => [f.id, f]),
     );
-    expect(fields.size?.value).toBe("Large");
-    expect(fields.creature_type?.value).toBe("Dragon");
-    expect(fields.cr?.value).toBe("4");
-    expect(fields.proficiency_bonus?.value).toBe(2);
-    expect(fields.doom?.value).toBe(2);
-    expect(fields.ac?.value).toBe(15);
-    expect(fields.hp?.value).toBe(68);
+    expect(getField(fields, "size").value).toBe("Large");
+    expect(getField(fields, "creature_type").value).toBe("Dragon");
+    expect(getField(fields, "cr").value).toBe("4");
+    expect(getField(fields, "proficiency_bonus").value).toBe(2);
+    expect(getField(fields, "doom").value).toBe(2);
+    expect(getField(fields, "ac").value).toBe(15);
+    expect(getField(fields, "hp").value).toBe(68);
 
     // Math check: STR 17 (+3), DEX 14 (+2), CON 16 (+3)
-    expect(fields.str_score?.value).toBe(17);
-    expect(fields.dex_save?.formula).toBe("1d20+4"); // DEX 2 + PB 2
-    expect(fields.con_save?.formula).toBe("1d20+5"); // CON 3 + PB 2
-    expect(fields.str_save?.formula).toBe("1d20+3"); // STR 3, non-proficient
+    expect(getField(fields, "str_score").value).toBe(17);
+    expect(getField(fields, "dex_save").formula).toBe("1d20+4"); // DEX 2 + PB 2
+    expect(getField(fields, "con_save").formula).toBe("1d20+5"); // CON 3 + PB 2
+    expect(getField(fields, "str_save").formula).toBe("1d20+3"); // STR 3, non-proficient
 
     // Actions & Reactions
-    expect(fields.actions?.rows?.length).toBe(2);
-    expect(fields.actions?.rows?.[0]?.name).toBe("Bite");
-    expect(fields.actions?.rows?.[0]?.attack).toBe("1d20+5");
-    expect(fields.actions?.rows?.[0]?.damage).toBe("1d10+3");
-    expect(fields.reactions?.rows?.length).toBe(1);
+    expect(getField(fields, "actions").rows!.length).toBe(2);
+    expect(getField(fields, "actions").rows![0].name).toBe("Bite");
+    expect(getField(fields, "actions").rows![0].attack).toBe("1d20+5");
+    expect(getField(fields, "actions").rows![0].damage).toBe("1d10+3");
+    expect(getField(fields, "reactions").rows!.length).toBe(1);
   });
 
   it("leaves statSheet undefined when creature is system neutral", () => {
@@ -183,3 +183,8 @@ describe("Tales of the Valiant Creature Generation (US2)", () => {
     expect(draft.statSheet).toBeUndefined();
   });
 });
+
+function getField<T>(fields: Record<string, T>, id: string): T {
+  if (!(id in fields)) throw new Error(`Expected mapped field ${id}`);
+  return fields[id]!;
+}

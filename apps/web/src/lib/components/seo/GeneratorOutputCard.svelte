@@ -134,6 +134,7 @@
   });
 </script>
 
+<!-- fallow-ignore-next-line complexity -->
 {#if !aiFallbackDismissed && hasAiNotice(generatedData)}
   <div transition:fade={{ duration: 150 }}>
     <GeneratorAiNotice
@@ -207,228 +208,244 @@
           </p>
         {/if}
         <div class="flex flex-wrap items-center justify-between gap-2 mt-3">
-          <div class="flex flex-wrap gap-1.5">
-            {#each (generatedData.labels ?? []).filter((l) => !HIDDEN_TAGS.has(l)) as label (label)}
-              <span
-                class="rounded-full border border-theme-border/60 bg-theme-surface/20 px-2 py-0.5 text-nano uppercase tracking-wider font-mono font-bold text-theme-text/55"
-              >
-                {label}
-              </span>
-            {/each}
-          </div>
-          <div
-            class="flex flex-wrap items-center overflow-hidden rounded-lg border border-theme-primary/25 bg-theme-bg/35 shadow-sm"
-            aria-label="Draft actions"
-          >
-            {#if variant !== "names"}
-              <button
-                type="button"
-                onclick={onSaveToCodex}
-                class="px-4 py-2 bg-theme-primary text-theme-bg font-bold uppercase font-header tracking-wider text-micro hover:brightness-110 transition-all"
-                id="save-to-codex-btn"
-                title="Import this draft into your local Codex Cryptica vault"
-              >
-                Save to Codex
-              </button>
-            {/if}
-            {#if onRefine && generatedData}
-              <button
-                type="button"
-                onclick={() => onRefine(generatedData!)}
-                class="border-l border-theme-primary/25 bg-theme-primary/10 px-4 py-2 text-micro font-bold uppercase font-header tracking-wider text-theme-primary transition-all hover:bg-theme-primary/20 flex items-center gap-1.5"
-                id="refine-draft-btn"
-                title="Refine this draft with an instruction"
-              >
+          {#snippet generatedLabels()}
+            <div class="flex flex-wrap gap-1.5">
+              {#each (generatedData.labels ?? []).filter((l) => !HIDDEN_TAGS.has(l)) as label (label)}
                 <span
-                  class="icon-[lucide--wand-sparkles] h-3.5 w-3.5"
-                  aria-hidden="true"
-                ></span>
-                Refine
-              </button>
-            {/if}
-            {#if ((generatedData?.kind as string) === "dungeon" || generatedData?.labels?.includes("dungeon")) && onBuildDelveCanvas}
-              <button
-                type="button"
-                onclick={() => onBuildDelveCanvas(generatedData!)}
-                class="px-4 py-2 border-l border-theme-primary/25 bg-theme-primary/10 text-theme-primary font-bold uppercase font-header tracking-wider text-micro hover:bg-theme-primary/20 transition-all flex items-center gap-1.5"
-                id="build-delve-canvas-btn"
-                title="Build and open an interactive Delve Canvas for this dungeon"
-              >
-                <span class="icon-[lucide--map] w-3.5 h-3.5" aria-hidden="true"
-                ></span>
-                Build Delve Canvas
-              </button>
-            {/if}
-            {#if ((generatedData?.kind as string) === "adventure" || (generatedData?.kind as string) === "event" || generatedData?.labels?.includes("adventure")) && onBuildAdventureCanvas}
-              <button
-                type="button"
-                onclick={() => onBuildAdventureCanvas(generatedData!)}
-                class="px-4 py-2 border-l border-theme-primary/25 bg-theme-primary/10 text-theme-primary font-bold uppercase font-header tracking-wider text-micro hover:bg-theme-primary/20 transition-all flex items-center gap-1.5"
-                id="build-adventure-canvas-btn"
-                title="Build and open an interactive Adventure Canvas for this scenario"
-              >
-                <span class="icon-[lucide--map] w-3.5 h-3.5" aria-hidden="true"
-                ></span>
-                Open Adventure Canvas
-              </button>
-            {/if}
-            {#if onGeneratePlotTwist}
-              <button
-                type="button"
-                onclick={() => onGeneratePlotTwist(generatedData!)}
-                class="border-l border-theme-primary/25 bg-theme-primary/10 px-4 py-2 text-micro font-bold uppercase tracking-wider text-theme-primary transition-all hover:bg-theme-primary/20"
-                id="generate-plot-twist-btn"
-                title="Generate a Plot Twist from this draft"
-              >
-                <span
-                  aria-hidden="true"
-                  class="icon-[lucide--shuffle] mr-1.5 inline-block h-3.5 w-3.5 align-[-0.15em]"
-                ></span>
-                Generate Plot Twist
-              </button>
-            {/if}
-            {#if onGenerateRoster && isFactionDraft(generatedData?.labels)}
-              <button
-                type="button"
-                onclick={() => onGenerateRoster(generatedData!)}
-                class="border-l border-theme-primary/25 bg-theme-primary/10 px-4 py-2 text-micro font-bold uppercase tracking-wider text-theme-primary transition-all hover:bg-theme-primary/20 flex items-center gap-1.5"
-                id="generate-roster-btn"
-                title="Generate notable members of this faction"
-              >
-                <span
-                  class="icon-[lucide--users-round] w-3.5 h-3.5"
-                  aria-hidden="true"
-                ></span>
-                Generate Roster
-              </button>
-            {/if}
-            {#if onSendToMonsterLabs && isMonsterLabsHandoffEligibleType(generatedData?.type)}
-              {@const isItem = isMonsterLabsItemEligibleType(
-                generatedData?.type,
-              )}
-              <button
-                type="button"
-                onclick={() => onSendToMonsterLabs(generatedData!)}
-                disabled={isSendingToMonsterLabs}
-                aria-busy={isSendingToMonsterLabs}
-                class="px-4 py-2 border-l border-theme-primary/25 bg-theme-primary/10 text-theme-primary font-bold uppercase font-header tracking-wider text-micro hover:bg-theme-primary/20 transition-all flex items-center gap-1.5 disabled:opacity-50"
-                id="send-to-monsterlabs-btn"
-                title="Create a D&D {isItem
-                  ? 'magic item'
-                  : 'monster'} from this draft in MonsterLabs (opens in a new tab)"
-              >
-                <span
-                  class="{isSendingToMonsterLabs
-                    ? 'icon-[lucide--loader-2] animate-spin'
-                    : 'icon-[lucide--external-link]'} w-3.5 h-3.5"
-                  aria-hidden="true"
-                ></span>
-                {isSendingToMonsterLabs
-                  ? "Sending…"
-                  : `Create D&D ${isItem ? "Magic Item" : "Monster"}`}
-              </button>
-            {/if}
-            <button
-              type="button"
-              onclick={onCopyMarkdown}
-              class="px-4 py-2 border-l border-theme-primary/25 bg-theme-surface/35 text-theme-text/85 font-bold uppercase font-header tracking-wider text-micro hover:bg-theme-surface/70 hover:text-theme-primary transition-all flex items-center gap-1.5"
-              id="copy-markdown-btn"
-              title="Copy this draft as markdown to your clipboard"
+                  class="rounded-full border border-theme-border/60 bg-theme-surface/20 px-2 py-0.5 text-nano uppercase tracking-wider font-mono font-bold text-theme-text/55"
+                >
+                  {label}
+                </span>
+              {/each}
+            </div>
+          {/snippet}
+          {@render generatedLabels()}
+          {#snippet draftActions()}
+            <div
+              class="flex flex-wrap items-center overflow-hidden rounded-lg border border-theme-primary/25 bg-theme-bg/35 shadow-sm"
+              aria-label="Draft actions"
             >
-              <span class="icon-[lucide--copy] w-3.5 h-3.5" aria-hidden="true"
-              ></span>
-              {copied ? "Copied!" : "Copy"}
-            </button>
-            {#if onPrepareShare}
-              <ShareButton
-                url="https://codexcryptica.com/generators"
-                title={generatedData.title}
-                subjectLabel="this result"
-                prepareShare={onPrepareShare}
-                {onShareClicked}
-                {onShareCompleted}
-                onLinkCopied={onShareLinkCopied}
-              />
-            {/if}
-          </div>
+              {#if variant !== "names"}
+                <button
+                  type="button"
+                  onclick={onSaveToCodex}
+                  class="px-4 py-2 bg-theme-primary text-theme-bg font-bold uppercase font-header tracking-wider text-micro hover:brightness-110 transition-all"
+                  id="save-to-codex-btn"
+                  title="Import this draft into your local Codex Cryptica vault"
+                >
+                  Save to Codex
+                </button>
+              {/if}
+              {#if onRefine && generatedData}
+                <button
+                  type="button"
+                  onclick={() => onRefine(generatedData!)}
+                  class="border-l border-theme-primary/25 bg-theme-primary/10 px-4 py-2 text-micro font-bold uppercase font-header tracking-wider text-theme-primary transition-all hover:bg-theme-primary/20 flex items-center gap-1.5"
+                  id="refine-draft-btn"
+                  title="Refine this draft with an instruction"
+                >
+                  <span
+                    class="icon-[lucide--wand-sparkles] h-3.5 w-3.5"
+                    aria-hidden="true"
+                  ></span>
+                  Refine
+                </button>
+              {/if}
+              {#if ((generatedData?.kind as string) === "dungeon" || generatedData?.labels?.includes("dungeon")) && onBuildDelveCanvas}
+                <button
+                  type="button"
+                  onclick={() => onBuildDelveCanvas(generatedData!)}
+                  class="px-4 py-2 border-l border-theme-primary/25 bg-theme-primary/10 text-theme-primary font-bold uppercase font-header tracking-wider text-micro hover:bg-theme-primary/20 transition-all flex items-center gap-1.5"
+                  id="build-delve-canvas-btn"
+                  title="Build and open an interactive Delve Canvas for this dungeon"
+                >
+                  <span
+                    class="icon-[lucide--map] w-3.5 h-3.5"
+                    aria-hidden="true"
+                  ></span>
+                  Build Delve Canvas
+                </button>
+              {/if}
+              {#if ((generatedData?.kind as string) === "adventure" || (generatedData?.kind as string) === "event" || generatedData?.labels?.includes("adventure")) && onBuildAdventureCanvas}
+                <button
+                  type="button"
+                  onclick={() => onBuildAdventureCanvas(generatedData!)}
+                  class="px-4 py-2 border-l border-theme-primary/25 bg-theme-primary/10 text-theme-primary font-bold uppercase font-header tracking-wider text-micro hover:bg-theme-primary/20 transition-all flex items-center gap-1.5"
+                  id="build-adventure-canvas-btn"
+                  title="Build and open an interactive Adventure Canvas for this scenario"
+                >
+                  <span
+                    class="icon-[lucide--map] w-3.5 h-3.5"
+                    aria-hidden="true"
+                  ></span>
+                  Open Adventure Canvas
+                </button>
+              {/if}
+              {#if onGeneratePlotTwist}
+                <button
+                  type="button"
+                  onclick={() => onGeneratePlotTwist(generatedData!)}
+                  class="border-l border-theme-primary/25 bg-theme-primary/10 px-4 py-2 text-micro font-bold uppercase tracking-wider text-theme-primary transition-all hover:bg-theme-primary/20"
+                  id="generate-plot-twist-btn"
+                  title="Generate a Plot Twist from this draft"
+                >
+                  <span
+                    aria-hidden="true"
+                    class="icon-[lucide--shuffle] mr-1.5 inline-block h-3.5 w-3.5 align-[-0.15em]"
+                  ></span>
+                  Generate Plot Twist
+                </button>
+              {/if}
+              {#if onGenerateRoster && isFactionDraft(generatedData?.labels)}
+                <button
+                  type="button"
+                  onclick={() => onGenerateRoster(generatedData!)}
+                  class="border-l border-theme-primary/25 bg-theme-primary/10 px-4 py-2 text-micro font-bold uppercase tracking-wider text-theme-primary transition-all hover:bg-theme-primary/20 flex items-center gap-1.5"
+                  id="generate-roster-btn"
+                  title="Generate notable members of this faction"
+                >
+                  <span
+                    class="icon-[lucide--users-round] w-3.5 h-3.5"
+                    aria-hidden="true"
+                  ></span>
+                  Generate Roster
+                </button>
+              {/if}
+              {#if onSendToMonsterLabs && isMonsterLabsHandoffEligibleType(generatedData?.type)}
+                {@const isItem = isMonsterLabsItemEligibleType(
+                  generatedData?.type,
+                )}
+                <button
+                  type="button"
+                  onclick={() => onSendToMonsterLabs(generatedData!)}
+                  disabled={isSendingToMonsterLabs}
+                  aria-busy={isSendingToMonsterLabs}
+                  class="px-4 py-2 border-l border-theme-primary/25 bg-theme-primary/10 text-theme-primary font-bold uppercase font-header tracking-wider text-micro hover:bg-theme-primary/20 transition-all flex items-center gap-1.5 disabled:opacity-50"
+                  id="send-to-monsterlabs-btn"
+                  title="Create a D&D {isItem
+                    ? 'magic item'
+                    : 'monster'} from this draft in MonsterLabs (opens in a new tab)"
+                >
+                  <span
+                    class="{isSendingToMonsterLabs
+                      ? 'icon-[lucide--loader-2] animate-spin'
+                      : 'icon-[lucide--external-link]'} w-3.5 h-3.5"
+                    aria-hidden="true"
+                  ></span>
+                  {isSendingToMonsterLabs
+                    ? "Sending…"
+                    : `Create D&D ${isItem ? "Magic Item" : "Monster"}`}
+                </button>
+              {/if}
+              <button
+                type="button"
+                onclick={onCopyMarkdown}
+                class="px-4 py-2 border-l border-theme-primary/25 bg-theme-surface/35 text-theme-text/85 font-bold uppercase font-header tracking-wider text-micro hover:bg-theme-surface/70 hover:text-theme-primary transition-all flex items-center gap-1.5"
+                id="copy-markdown-btn"
+                title="Copy this draft as markdown to your clipboard"
+              >
+                <span class="icon-[lucide--copy] w-3.5 h-3.5" aria-hidden="true"
+                ></span>
+                {copied ? "Copied!" : "Copy"}
+              </button>
+              {#if onPrepareShare}
+                <ShareButton
+                  url="https://codexcryptica.com/generators"
+                  title={generatedData.title}
+                  subjectLabel="this result"
+                  prepareShare={onPrepareShare}
+                  {onShareClicked}
+                  {onShareCompleted}
+                  onLinkCopied={onShareLinkCopied}
+                />
+              {/if}
+            </div>
+          {/snippet}
+          {@render draftActions()}
         </div>
       </div>
 
-      {#if generatedData.mechanics}
-        <div class="mb-6">
-          <GeneratorMechanicsPreview mechanics={generatedData.mechanics} />
-        </div>
-      {/if}
+      {#snippet mechanicsPreview()}
+        {#if generatedData.mechanics}
+          <div class="mb-6">
+            <GeneratorMechanicsPreview mechanics={generatedData.mechanics} />
+          </div>
+        {/if}
+      {/snippet}
+      {@render mechanicsPreview()}
 
-      <div
-        role="none"
-        class="seo-md break-words text-lg leading-relaxed text-theme-text/90 flex-grow [&_pre]:overflow-x-auto [&_pre]:max-w-full {variant ===
-        'names'
-          ? 'md:columns-2 md:gap-x-8 [&_div]:break-inside-avoid [&_div]:mb-4'
-          : 'space-y-4'}"
-        data-theme={worldTheme}
-        onclick={onContainerClick}
-        onkeydown={onContainerKeydown}
-      >
-        {#if variant === "names"}
-          {@html renderGeneratorMarkdown(documentContent, variant)}
-        {:else}
-          {#each documentSections as section (section.id)}
-            <article
-              class="group/section rounded-xl border border-transparent transition-colors hover:border-theme-border/35 hover:bg-theme-surface/10"
-            >
-              {#if section.heading}
-                <div
-                  class="mb-2 flex items-center justify-between gap-3 border-b border-theme-border/35 pb-2"
-                >
-                  <h3
-                    class="font-header text-base md:text-lg font-bold text-[color:color-mix(in_srgb,var(--color-primary)_65%,var(--color-text))]"
+      {#snippet generatedDocument()}
+        <div
+          role="none"
+          class="seo-md break-words text-lg leading-relaxed text-theme-text/90 flex-grow [&_pre]:overflow-x-auto [&_pre]:max-w-full {variant ===
+          'names'
+            ? 'md:columns-2 md:gap-x-8 [&_div]:break-inside-avoid [&_div]:mb-4'
+            : 'space-y-4'}"
+          data-theme={worldTheme}
+          onclick={onContainerClick}
+          onkeydown={onContainerKeydown}
+        >
+          {#if variant === "names"}
+            {@html renderGeneratorMarkdown(documentContent, variant)}
+          {:else}
+            {#each documentSections as section (section.id)}
+              <article
+                class="group/section rounded-xl border border-transparent transition-colors hover:border-theme-border/35 hover:bg-theme-surface/10"
+              >
+                {#if section.heading}
+                  <div
+                    class="mb-2 flex items-center justify-between gap-3 border-b border-theme-border/35 pb-2"
                   >
-                    {section.heading}
-                  </h3>
-                  <div class="flex items-center gap-1.5">
-                    {#if onOpenMemberAsCharacter && isFactionRosterDraft(generatedData?.labels)}
+                    <h3
+                      class="font-header text-base md:text-lg font-bold text-[color:color-mix(in_srgb,var(--color-primary)_65%,var(--color-text))]"
+                    >
+                      {section.heading}
+                    </h3>
+                    <div class="flex items-center gap-1.5">
+                      {#if onOpenMemberAsCharacter && isFactionRosterDraft(generatedData?.labels)}
+                        <button
+                          type="button"
+                          onclick={() =>
+                            onOpenMemberAsCharacter(section, generatedData!)}
+                          class="inline-flex items-center gap-1.5 rounded-full border border-theme-primary/50 bg-theme-primary/10 px-2.5 py-1 text-nano font-bold uppercase tracking-wider text-theme-primary opacity-100 transition-all hover:bg-theme-primary/20 md:opacity-0 md:group-hover/section:opacity-100 md:focus-visible:opacity-100"
+                          aria-label="Open {section.heading} as a Character"
+                          title="Continue this member in the NPC generator"
+                        >
+                          <span
+                            class="icon-[lucide--user-round-plus] h-3.5 w-3.5"
+                            aria-hidden="true"
+                          ></span>
+                          Open as Character
+                        </button>
+                      {/if}
                       <button
                         type="button"
                         onclick={() =>
-                          onOpenMemberAsCharacter(section, generatedData!)}
-                        class="inline-flex items-center gap-1.5 rounded-full border border-theme-primary/50 bg-theme-primary/10 px-2.5 py-1 text-nano font-bold uppercase tracking-wider text-theme-primary opacity-100 transition-all hover:bg-theme-primary/20 md:opacity-0 md:group-hover/section:opacity-100 md:focus-visible:opacity-100"
-                        aria-label="Open {section.heading} as a Character"
-                        title="Continue this member in the NPC generator"
+                          onCopySection(section.id, section.markdown)}
+                        class="inline-flex items-center gap-1.5 rounded-full border border-theme-border/60 bg-theme-surface/45 px-2.5 py-1 text-nano font-bold uppercase tracking-wider text-theme-text/65 opacity-100 transition-all hover:border-theme-primary/60 hover:text-theme-primary md:opacity-0 md:group-hover/section:opacity-100 md:focus-visible:opacity-100"
+                        aria-label="Copy {section.heading} as Markdown"
+                        title="Copy this section as Markdown"
                       >
                         <span
-                          class="icon-[lucide--user-round-plus] h-3.5 w-3.5"
+                          class={copiedSectionId === section.id
+                            ? "icon-[lucide--check] h-3.5 w-3.5"
+                            : "icon-[lucide--copy] h-3.5 w-3.5"}
                           aria-hidden="true"
                         ></span>
-                        Open as Character
+                        {copiedSectionId === section.id ? "Copied" : "Copy MD"}
                       </button>
-                    {/if}
-                    <button
-                      type="button"
-                      onclick={() =>
-                        onCopySection(section.id, section.markdown)}
-                      class="inline-flex items-center gap-1.5 rounded-full border border-theme-border/60 bg-theme-surface/45 px-2.5 py-1 text-nano font-bold uppercase tracking-wider text-theme-text/65 opacity-100 transition-all hover:border-theme-primary/60 hover:text-theme-primary md:opacity-0 md:group-hover/section:opacity-100 md:focus-visible:opacity-100"
-                      aria-label="Copy {section.heading} as Markdown"
-                      title="Copy this section as Markdown"
-                    >
-                      <span
-                        class={copiedSectionId === section.id
-                          ? "icon-[lucide--check] h-3.5 w-3.5"
-                          : "icon-[lucide--copy] h-3.5 w-3.5"}
-                        aria-hidden="true"
-                      ></span>
-                      {copiedSectionId === section.id ? "Copied" : "Copy MD"}
-                    </button>
+                    </div>
                   </div>
+                {/if}
+                <div>
+                  {@html renderGeneratorMarkdown(section.body, variant)}
                 </div>
-              {/if}
-              <div>
-                {@html renderGeneratorMarkdown(section.body, variant)}
-              </div>
-            </article>
-          {/each}
-        {/if}
-      </div>
+              </article>
+            {/each}
+          {/if}
+        </div>
+      {/snippet}
+      {@render generatedDocument()}
     </div>
   {:else}
     <div

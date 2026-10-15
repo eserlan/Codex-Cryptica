@@ -68,8 +68,7 @@ specs/3948-tov-generator-mechanics/
 ├── research.md          # Architectural decisions & research findings
 ├── data-model.md        # Entities, schemas & field transformation mappings
 ├── quickstart.md        # Step-by-step developer & verification guide
-├── contracts/           # Wire and prompt schemas
-│   ├── generator-mechanics.contract.ts
+├── contracts/           # Prompt contract
 │   └── tov-generator-prompt.contract.md
 ├── checklists/
 │   └── requirements.md  # Spec quality validation checklist

@@ -264,80 +264,103 @@ function dungeonOptions(request: GeneratorRunRequest): DungeonGeneratorOptions {
 function mapOutputToDraft(
   generatorId: GeneratorId,
 ): CampaignGeneratorDefinition["mapOutputToDraft"] {
-  return (
-    output: GeneratorOutput,
-    request: GeneratorRunRequest,
-  ): GeneratedDraft => {
-    const availableIds = request.vaultContext?.categoryLabels?.map((c) => c.id);
-    const contextProvenance: Array<{ id: string; title: string }> = [];
-    const seenIds = new Set<string>();
-    if (request.vaultContext?.sourceEntity) {
-      seenIds.add(request.vaultContext.sourceEntity.id);
-      contextProvenance.push({
-        id: request.vaultContext.sourceEntity.id,
-        title: request.vaultContext.sourceEntity.title,
-      });
-    }
-    if (request.vaultContext?.neighbors?.length) {
-      for (const n of request.vaultContext.neighbors) {
-        if (!seenIds.has(n.id)) {
-          seenIds.add(n.id);
-          contextProvenance.push({ id: n.id, title: n.title });
-        }
-      }
-    }
+  return (output, request) =>
+    mapGeneratedOutputToDraft(generatorId, output, request);
+}
 
-    const mechanics = output.mechanics;
-    const systemId =
-      output.systemId ??
-      (mechanics && "systemId" in mechanics
-        ? (mechanics.systemId as string)
-        : undefined) ??
-      (request.options?.gameSystem &&
-      request.options.gameSystem !== "system-neutral"
-        ? (request.options.gameSystem as string)
-        : undefined);
-    const statSheet = mechanics
+function mapGeneratedOutputToDraft(
+  generatorId: GeneratorId,
+  output: GeneratorOutput,
+  request: GeneratorRunRequest,
+): GeneratedDraft {
+  const context = request.vaultContext;
+  const mechanics = output.mechanics;
+
+  return {
+    title: output.title,
+    entityType: resolveEntityType(
+      generatorId,
+      context?.categoryLabels?.map((c) => c.id),
+    ),
+    summary: output.summary,
+    lore: output.lore,
+    content: output.content,
+    labels: [...output.labels],
+    sourceGeneratorId: generatorId,
+    sourceEntityId: request.sourceEntityId,
+    relationshipLabel: request.relationshipLabel,
+    ...optionalOutputFields(output),
+    ...optionalContextFields(context),
+    contextProvenance: collectContextProvenance(context),
+    mechanics,
+    systemId: resolveMechanicsSystemId(output, request),
+    statSheet: mechanics
       ? (mapTovMechanicsToStatSheet(mechanics) ?? undefined)
-      : undefined;
-
-    return {
-      title: output.title,
-      entityType: resolveEntityType(generatorId, availableIds),
-      summary: output.summary,
-      lore: output.lore,
-      content: output.content,
-      labels: [...output.labels],
-      sourceGeneratorId: generatorId,
-      sourceEntityId: request.sourceEntityId,
-      relationshipLabel: request.relationshipLabel,
-      connections: output.connections ? [...output.connections] : undefined,
-      templateOutline: request.vaultContext?.templateOutline,
-      templateApplied: Boolean(
-        request.vaultContext?.applyTemplate &&
-        request.vaultContext?.templateOutline,
-      ),
-      unmappedDetails: output.unmappedDetails,
-      languageProfile: output.languageProfile,
-      languageProfileVersion: output.languageProfileVersion,
-      primaryLanguageId: request.vaultContext?.selectedLanguage?.id,
-      primaryLanguageTitle: request.vaultContext?.selectedLanguage?.title,
-      bodies: output.bodies ? [...output.bodies] : undefined,
-      starType: output.starType,
-      observances: output.observances ? [...output.observances] : undefined,
-      pattern: output.pattern,
-      interpretations: output.interpretations
-        ? [...output.interpretations]
-        : undefined,
-      nightSky: output.nightSky,
-      contextProvenance: contextProvenance.length
-        ? contextProvenance
-        : undefined,
-      mechanics,
-      systemId,
-      statSheet,
-    };
+      : undefined,
   };
+}
+
+function optionalOutputFields(output: GeneratorOutput) {
+  return {
+    connections: copyIfPresent(output.connections),
+    unmappedDetails: output.unmappedDetails,
+    languageProfile: output.languageProfile,
+    languageProfileVersion: output.languageProfileVersion,
+    bodies: copyIfPresent(output.bodies),
+    starType: output.starType,
+    observances: copyIfPresent(output.observances),
+    pattern: output.pattern,
+    interpretations: copyIfPresent(output.interpretations),
+    nightSky: output.nightSky,
+  };
+}
+
+function optionalContextFields(context: GeneratorRunRequest["vaultContext"]) {
+  const language = context?.selectedLanguage;
+  return {
+    templateOutline: context?.templateOutline,
+    templateApplied: Boolean(
+      context?.applyTemplate && context?.templateOutline,
+    ),
+    primaryLanguageId: language?.id,
+    primaryLanguageTitle: language?.title,
+  };
+}
+
+function copyIfPresent<T>(values: T[] | undefined): T[] | undefined {
+  return values ? [...values] : undefined;
+}
+
+function collectContextProvenance(
+  context: GeneratorRunRequest["vaultContext"],
+): Array<{ id: string; title: string }> | undefined {
+  if (!context) return undefined;
+  const provenance: Array<{ id: string; title: string }> = [];
+  const seenIds = new Set<string>();
+  const source = context.sourceEntity;
+  if (source) {
+    seenIds.add(source.id);
+    provenance.push({ id: source.id, title: source.title });
+  }
+  for (const neighbor of context.neighbors ?? []) {
+    if (seenIds.has(neighbor.id)) continue;
+    seenIds.add(neighbor.id);
+    provenance.push({ id: neighbor.id, title: neighbor.title });
+  }
+  return provenance.length ? provenance : undefined;
+}
+
+function resolveMechanicsSystemId(
+  output: GeneratorOutput,
+  request: GeneratorRunRequest,
+): string | undefined {
+  const mechanics = output.mechanics;
+  if (output.systemId) return output.systemId;
+  if (mechanics && "systemId" in mechanics) return mechanics.systemId as string;
+  const requestedSystem = request.options?.gameSystem;
+  return requestedSystem && requestedSystem !== "system-neutral"
+    ? (requestedSystem as string)
+    : undefined;
 }
 
 // ---------------------------------------------------------------------------

@@ -331,31 +331,43 @@
   $effect(() => {
     if (generatorId) selectedId = generatorId;
   });
+
+  function getNextOptionValues(
+    id: GeneratorId,
+    previousValues: Record<string, unknown>,
+  ): Record<string, unknown> {
+    const definition = getGenerator(id);
+    const nextValues: Record<string, unknown> = {};
+    for (const option of definition.options) {
+      const existingValue = previousValues[option.id];
+      if (typeof existingValue !== "undefined") {
+        nextValues[option.id] = existingValue;
+        continue;
+      }
+      nextValues[option.id] = defaultOptionValue(option, definition.defaults);
+    }
+    return nextValues;
+  }
+
+  function defaultOptionValue(
+    option: { id: string; defaultValue?: unknown },
+    defaults: Record<string, unknown>,
+  ): unknown {
+    if (option.id !== "gameSystem") {
+      return defaults[option.id] ?? option.defaultValue ?? "";
+    }
+    const isTovVault =
+      systemProfileStore.vaultSystemId === "tales-of-the-valiant" ||
+      systemProfileStore.isTalesOfTheValiant;
+    return isTovVault
+      ? "tales-of-the-valiant"
+      : (defaults[option.id] ?? "system-neutral");
+  }
+
   $effect(() => {
     if (lastOptionsGeneratorId === selectedId) return;
     lastOptionsGeneratorId = selectedId;
-    const definition = getGenerator(selectedId);
-    const previousValues = optionValues;
-    // ⚡ Bolt Optimization: Replace Object.fromEntries(array.map(...)) with an imperative loop
-    // to prevent intermediate array allocations and reduce GC overhead.
-    const nextValues: Record<string, unknown> = {};
-    for (const option of definition.options) {
-      if (typeof previousValues[option.id] !== "undefined") {
-        nextValues[option.id] = previousValues[option.id];
-      } else if (option.id === "gameSystem") {
-        // Vault profile inheritance: default to ToV if vault profile is ToV and AI is available
-        const isTovVault =
-          systemProfileStore.vaultSystemId === "tales-of-the-valiant" ||
-          systemProfileStore.isTalesOfTheValiant;
-        nextValues[option.id] = isTovVault
-          ? "tales-of-the-valiant"
-          : (definition.defaults[option.id] ?? "system-neutral");
-      } else {
-        nextValues[option.id] =
-          definition.defaults[option.id] ?? option.defaultValue ?? "";
-      }
-    }
-    optionValues = nextValues;
+    optionValues = getNextOptionValues(selectedId, optionValues);
   });
   $effect(() => {
     if (selectedId !== "dungeon") return;
@@ -489,6 +501,7 @@
   }
 </script>
 
+<!-- fallow-ignore-next-line complexity -->
 <form onsubmit={handleSubmit} class="flex flex-col gap-4">
   <!-- Generator Search & Filter -->
   <div class="relative">
@@ -523,7 +536,7 @@
     </div>
   </div>
 
-  {#if favoriteGenerators.length > 0}
+  {#snippet favouriteGeneratorsList()}
     <fieldset class="flex flex-col gap-2">
       <legend
         class="mb-1 flex items-center gap-1.5 text-micro font-bold uppercase tracking-wider text-chrome-muted"
@@ -611,260 +624,270 @@
         </div>
       {/each}
     </fieldset>
+  {/snippet}
+  {#if favoriteGenerators.length > 0}
+    {@render favouriteGeneratorsList()}
   {:else if !searchQuery}
     <p class="text-xs text-chrome-muted/70 italic">
       Star generators you use often to keep them at the top.
     </p>
   {/if}
 
-  <div class="flex flex-col gap-3">
-    <div class="flex items-center justify-between">
-      <span
-        class="text-micro font-bold uppercase tracking-wider text-chrome-muted"
-      >
-        All Generators
-      </span>
-    </div>
-    {#if filteredGenerators.length === 0}
-      <p
-        class="rounded-lg border border-chrome-border/60 bg-chrome-bg/20 px-3 py-4 text-center text-xs text-chrome-muted"
-      >
-        No generators match "{searchQuery}".
-      </p>
-    {:else}
-      {#each generatorGroups as group (group.id)}
-        {@const isCollapsed = isGroupCollapsed(group.id)}
-        <div
-          class="rounded-lg border border-chrome-border/70 bg-chrome-bg/20 overflow-hidden"
+  {#snippet allGeneratorsList()}
+    <div class="flex flex-col gap-3">
+      <div class="flex items-center justify-between">
+        <span
+          class="text-micro font-bold uppercase tracking-wider text-chrome-muted"
         >
-          <button
-            type="button"
-            onclick={() => toggleGroupCollapsed(group.id)}
-            class="flex w-full items-center justify-between px-3 py-2 text-left transition hover:bg-chrome-bg/40 focus:outline-none focus:ring-1 focus:ring-chrome-accent"
-            aria-expanded={!isCollapsed}
+          All Generators
+        </span>
+      </div>
+      <!-- fallow-ignore-next-line complexity -->
+      {#if filteredGenerators.length === 0}
+        <p
+          class="rounded-lg border border-chrome-border/60 bg-chrome-bg/20 px-3 py-4 text-center text-xs text-chrome-muted"
+        >
+          No generators match "{searchQuery}".
+        </p>
+      {:else}
+        {#each generatorGroups as group (group.id)}
+          {@const isCollapsed = isGroupCollapsed(group.id)}
+          <div
+            class="rounded-lg border border-chrome-border/70 bg-chrome-bg/20 overflow-hidden"
           >
-            <span class="flex items-center gap-2">
-              <span
-                aria-hidden="true"
-                class={[
-                  "h-3.5 w-3.5 text-chrome-muted transition-transform duration-150",
-                  isCollapsed
-                    ? "icon-[lucide--chevron-right]"
-                    : "icon-[lucide--chevron-down]",
-                ]}
-              ></span>
-              <span
-                class="text-xs font-semibold uppercase tracking-wider text-chrome-text"
-              >
-                {group.label}
-              </span>
-            </span>
-            <span
-              class="rounded-full bg-chrome-bg/60 px-2 py-0.5 text-micro font-medium text-chrome-muted"
+            <button
+              type="button"
+              onclick={() => toggleGroupCollapsed(group.id)}
+              class="flex w-full items-center justify-between px-3 py-2 text-left transition hover:bg-chrome-bg/40 focus:outline-none focus:ring-1 focus:ring-chrome-accent"
+              aria-expanded={!isCollapsed}
             >
-              {group.generators.length}
-            </span>
-          </button>
-
-          {#if !isCollapsed}
-            <div
-              class="flex flex-col gap-2 border-t border-chrome-border/50 p-2.5"
-            >
-              {#each group.generators as gen (gen.id)}
-                {@const entityTypeLabel = resolveEntityTypeLabel(gen)}
-                {@const isFav = favoritesStore.isFavorite(gen.id)}
-                <div
+              <span class="flex items-center gap-2">
+                <span
+                  aria-hidden="true"
                   class={[
-                    "group relative flex items-start rounded-lg border transition-colors",
-                    selectedId === gen.id
-                      ? "border-chrome-accent/60 bg-chrome-accent/10"
-                      : "border-chrome-border bg-chrome-bg/30 hover:border-chrome-accent/35 hover:bg-chrome-bg/60",
+                    "h-3.5 w-3.5 text-chrome-muted transition-transform duration-150",
+                    isCollapsed
+                      ? "icon-[lucide--chevron-right]"
+                      : "icon-[lucide--chevron-down]",
                   ]}
+                ></span>
+                <span
+                  class="text-xs font-semibold uppercase tracking-wider text-chrome-text"
                 >
-                  <label
-                    class="flex flex-1 cursor-pointer items-start gap-3 px-3 py-2.5"
+                  {group.label}
+                </span>
+              </span>
+              <span
+                class="rounded-full bg-chrome-bg/60 px-2 py-0.5 text-micro font-medium text-chrome-muted"
+              >
+                {group.generators.length}
+              </span>
+            </button>
+
+            {#if !isCollapsed}
+              <div
+                class="flex flex-col gap-2 border-t border-chrome-border/50 p-2.5"
+              >
+                {#each group.generators as gen (gen.id)}
+                  {@const entityTypeLabel = resolveEntityTypeLabel(gen)}
+                  {@const isFav = favoritesStore.isFavorite(gen.id)}
+                  <div
+                    class={[
+                      "group relative flex items-start rounded-lg border transition-colors",
+                      selectedId === gen.id
+                        ? "border-chrome-accent/60 bg-chrome-accent/10"
+                        : "border-chrome-border bg-chrome-bg/30 hover:border-chrome-accent/35 hover:bg-chrome-bg/60",
+                    ]}
                   >
-                    <input
-                      type="radio"
-                      name="generator"
-                      value={gen.id}
-                      bind:group={selectedId}
-                      {disabled}
-                      aria-labelledby="generator-label-{gen.id}"
-                      aria-describedby={selectedId === gen.id
-                        ? `generator-description-${gen.id}`
-                        : undefined}
-                      class="mt-1 accent-chrome-accent"
-                    />
-                    <span class="min-w-0 flex-1 pr-6">
-                      <span
-                        id="generator-label-{gen.id}"
-                        class="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5"
-                      >
-                        <span class="text-sm font-semibold text-chrome-text">
-                          {gen.label}
-                        </span>
+                    <label
+                      class="flex flex-1 cursor-pointer items-start gap-3 px-3 py-2.5"
+                    >
+                      <input
+                        type="radio"
+                        name="generator"
+                        value={gen.id}
+                        bind:group={selectedId}
+                        {disabled}
+                        aria-labelledby="generator-label-{gen.id}"
+                        aria-describedby={selectedId === gen.id
+                          ? `generator-description-${gen.id}`
+                          : undefined}
+                        class="mt-1 accent-chrome-accent"
+                      />
+                      <span class="min-w-0 flex-1 pr-6">
                         <span
-                          class="text-micro uppercase tracking-wider text-chrome-muted"
+                          id="generator-label-{gen.id}"
+                          class="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5"
                         >
-                          Creates {entityTypeLabel}
+                          <span class="text-sm font-semibold text-chrome-text">
+                            {gen.label}
+                          </span>
+                          <span
+                            class="text-micro uppercase tracking-wider text-chrome-muted"
+                          >
+                            Creates {entityTypeLabel}
+                          </span>
                         </span>
+                        {#if selectedId === gen.id}
+                          <span
+                            id="generator-description-{gen.id}"
+                            class="mt-1 block text-xs leading-relaxed text-chrome-muted"
+                          >
+                            {gen.description}
+                          </span>
+                        {/if}
                       </span>
-                      {#if selectedId === gen.id}
-                        <span
-                          id="generator-description-{gen.id}"
-                          class="mt-1 block text-xs leading-relaxed text-chrome-muted"
-                        >
-                          {gen.description}
-                        </span>
-                      {/if}
-                    </span>
-                  </label>
-                  <button
-                    type="button"
-                    onclick={(e) => {
-                      e.stopPropagation();
-                      favoritesStore.toggleFavorite(gen.id);
-                    }}
-                    class="absolute right-2.5 top-2.5 flex h-6 w-6 items-center justify-center rounded text-chrome-muted transition hover:text-amber-400 focus:outline-none focus:ring-1 focus:ring-chrome-accent"
-                    aria-label={isFav
-                      ? `Remove ${gen.label} from favourites`
-                      : `Add ${gen.label} to favourites`}
-                    aria-pressed={isFav}
-                    {disabled}
-                    title={isFav
-                      ? "Remove from favourites"
-                      : "Add to favourites"}
-                  >
-                    <span
-                      aria-hidden="true"
-                      class={[
-                        "h-4 w-4 transition-transform group-hover:scale-110",
-                        isFav
-                          ? "icon-[lucide--star] fill-amber-400 text-amber-400"
-                          : "icon-[lucide--star] text-chrome-muted hover:text-amber-400",
-                      ]}
-                    ></span>
-                  </button>
-                </div>
-              {/each}
+                    </label>
+                    <button
+                      type="button"
+                      onclick={(e) => {
+                        e.stopPropagation();
+                        favoritesStore.toggleFavorite(gen.id);
+                      }}
+                      class="absolute right-2.5 top-2.5 flex h-6 w-6 items-center justify-center rounded text-chrome-muted transition hover:text-amber-400 focus:outline-none focus:ring-1 focus:ring-chrome-accent"
+                      aria-label={isFav
+                        ? `Remove ${gen.label} from favourites`
+                        : `Add ${gen.label} to favourites`}
+                      aria-pressed={isFav}
+                      {disabled}
+                      title={isFav
+                        ? "Remove from favourites"
+                        : "Add to favourites"}
+                    >
+                      <span
+                        aria-hidden="true"
+                        class={[
+                          "h-4 w-4 transition-transform group-hover:scale-110",
+                          isFav
+                            ? "icon-[lucide--star] fill-amber-400 text-amber-400"
+                            : "icon-[lucide--star] text-chrome-muted hover:text-amber-400",
+                        ]}
+                      ></span>
+                    </button>
+                  </div>
+                {/each}
+              </div>
+            {/if}
+          </div>
+        {/each}
+      {/if}
+    </div>
+  {/snippet}
+  {@render allGeneratorsList()}
+
+  {#snippet generatorOptions()}
+    {#if visibleOptions.length > 0}
+      <fieldset class="flex flex-col gap-3">
+        <legend
+          class="mb-1 text-micro font-bold uppercase tracking-wider text-chrome-muted"
+        >
+          Generator options
+        </legend>
+        {#each visibleOptions as option (option.id)}
+          {@const inputId = `generator-option-${option.id}`}
+          {#if option.control === "select" && option.choices}
+            <SelectWithCustomOption
+              id={inputId}
+              name={option.id}
+              label={option.label}
+              value={stringValue(option.id)}
+              onvaluechange={(nextValue) =>
+                updateOptionValue(option.id, nextValue)}
+              choices={choicesForOption(option)}
+              {disabled}
+              className="flex flex-col gap-1.5"
+              labelClass="text-micro font-bold uppercase tracking-wider text-chrome-muted"
+              inputClass="w-full rounded border border-chrome-border bg-chrome-bg/50 px-3 py-2 text-sm leading-relaxed text-chrome-text outline-none transition focus:border-chrome-accent focus:ring-1 focus:ring-chrome-accent disabled:opacity-50"
+              customPlaceholder={`Enter a custom ${option.label.toLowerCase()}`}
+            />
+          {:else if option.control === "checkbox"}
+            <label class="flex cursor-pointer items-center gap-2">
+              <input
+                id={inputId}
+                type="checkbox"
+                checked={Boolean(optionValues[option.id])}
+                onchange={(event) =>
+                  updateOptionValue(
+                    option.id,
+                    (event.currentTarget as HTMLInputElement).checked,
+                  )}
+                {disabled}
+                class="accent-chrome-accent"
+              />
+              <span class="text-sm text-chrome-text">{option.label}</span>
+            </label>
+          {:else if option.control === "textarea"}
+            <div class="flex flex-col gap-1">
+              <label
+                for={inputId}
+                class="text-micro font-bold uppercase tracking-wider text-chrome-muted"
+              >
+                {option.label}
+              </label>
+              <textarea
+                id={inputId}
+                rows={3}
+                value={stringValue(option.id)}
+                oninput={(event) =>
+                  updateOptionValue(
+                    option.id,
+                    (event.currentTarget as HTMLTextAreaElement).value,
+                  )}
+                {disabled}
+                class="w-full resize-y rounded border border-chrome-border bg-chrome-bg/50 px-3 py-2 text-sm leading-relaxed text-chrome-text outline-none transition focus:border-chrome-accent focus:ring-1 focus:ring-chrome-accent disabled:opacity-50"
+              ></textarea>
+            </div>
+          {:else if option.control === "number"}
+            <div class="flex flex-col gap-1">
+              <label
+                for={inputId}
+                class="text-micro font-bold uppercase tracking-wider text-chrome-muted"
+              >
+                {option.label}
+              </label>
+              <input
+                id={inputId}
+                type="number"
+                value={numberValue(option.id)}
+                oninput={(event) => {
+                  const rawValue = (event.currentTarget as HTMLInputElement)
+                    .value;
+                  updateOptionValue(
+                    option.id,
+                    rawValue === "" ? "" : Number(rawValue),
+                  );
+                }}
+                {disabled}
+                class="w-full rounded border border-chrome-border bg-chrome-bg/50 px-3 py-2 text-sm leading-relaxed text-chrome-text outline-none transition focus:border-chrome-accent focus:ring-1 focus:ring-chrome-accent disabled:opacity-50"
+              />
+            </div>
+          {:else}
+            <div class="flex flex-col gap-1">
+              <label
+                for={inputId}
+                class="text-micro font-bold uppercase tracking-wider text-chrome-muted"
+              >
+                {option.label}
+              </label>
+              <input
+                id={inputId}
+                type="text"
+                value={stringValue(option.id)}
+                oninput={(event) =>
+                  updateOptionValue(
+                    option.id,
+                    (event.currentTarget as HTMLInputElement).value,
+                  )}
+                {disabled}
+                class="w-full rounded border border-chrome-border bg-chrome-bg/50 px-3 py-2 text-sm leading-relaxed text-chrome-text outline-none transition focus:border-chrome-accent focus:ring-1 focus:ring-chrome-accent disabled:opacity-50"
+              />
             </div>
           {/if}
-        </div>
-      {/each}
+        {/each}
+      </fieldset>
     {/if}
-  </div>
-
-  {#if visibleOptions.length > 0}
-    <fieldset class="flex flex-col gap-3">
-      <legend
-        class="mb-1 text-micro font-bold uppercase tracking-wider text-chrome-muted"
-      >
-        Generator options
-      </legend>
-      {#each visibleOptions as option (option.id)}
-        {@const inputId = `generator-option-${option.id}`}
-        {#if option.control === "select" && option.choices}
-          <SelectWithCustomOption
-            id={inputId}
-            name={option.id}
-            label={option.label}
-            value={stringValue(option.id)}
-            onvaluechange={(nextValue) =>
-              updateOptionValue(option.id, nextValue)}
-            choices={choicesForOption(option)}
-            {disabled}
-            className="flex flex-col gap-1.5"
-            labelClass="text-micro font-bold uppercase tracking-wider text-chrome-muted"
-            inputClass="w-full rounded border border-chrome-border bg-chrome-bg/50 px-3 py-2 text-sm leading-relaxed text-chrome-text outline-none transition focus:border-chrome-accent focus:ring-1 focus:ring-chrome-accent disabled:opacity-50"
-            customPlaceholder={`Enter a custom ${option.label.toLowerCase()}`}
-          />
-        {:else if option.control === "checkbox"}
-          <label class="flex cursor-pointer items-center gap-2">
-            <input
-              id={inputId}
-              type="checkbox"
-              checked={Boolean(optionValues[option.id])}
-              onchange={(event) =>
-                updateOptionValue(
-                  option.id,
-                  (event.currentTarget as HTMLInputElement).checked,
-                )}
-              {disabled}
-              class="accent-chrome-accent"
-            />
-            <span class="text-sm text-chrome-text">{option.label}</span>
-          </label>
-        {:else if option.control === "textarea"}
-          <div class="flex flex-col gap-1">
-            <label
-              for={inputId}
-              class="text-micro font-bold uppercase tracking-wider text-chrome-muted"
-            >
-              {option.label}
-            </label>
-            <textarea
-              id={inputId}
-              rows={3}
-              value={stringValue(option.id)}
-              oninput={(event) =>
-                updateOptionValue(
-                  option.id,
-                  (event.currentTarget as HTMLTextAreaElement).value,
-                )}
-              {disabled}
-              class="w-full resize-y rounded border border-chrome-border bg-chrome-bg/50 px-3 py-2 text-sm leading-relaxed text-chrome-text outline-none transition focus:border-chrome-accent focus:ring-1 focus:ring-chrome-accent disabled:opacity-50"
-            ></textarea>
-          </div>
-        {:else if option.control === "number"}
-          <div class="flex flex-col gap-1">
-            <label
-              for={inputId}
-              class="text-micro font-bold uppercase tracking-wider text-chrome-muted"
-            >
-              {option.label}
-            </label>
-            <input
-              id={inputId}
-              type="number"
-              value={numberValue(option.id)}
-              oninput={(event) => {
-                const rawValue = (event.currentTarget as HTMLInputElement)
-                  .value;
-                updateOptionValue(
-                  option.id,
-                  rawValue === "" ? "" : Number(rawValue),
-                );
-              }}
-              {disabled}
-              class="w-full rounded border border-chrome-border bg-chrome-bg/50 px-3 py-2 text-sm leading-relaxed text-chrome-text outline-none transition focus:border-chrome-accent focus:ring-1 focus:ring-chrome-accent disabled:opacity-50"
-            />
-          </div>
-        {:else}
-          <div class="flex flex-col gap-1">
-            <label
-              for={inputId}
-              class="text-micro font-bold uppercase tracking-wider text-chrome-muted"
-            >
-              {option.label}
-            </label>
-            <input
-              id={inputId}
-              type="text"
-              value={stringValue(option.id)}
-              oninput={(event) =>
-                updateOptionValue(
-                  option.id,
-                  (event.currentTarget as HTMLInputElement).value,
-                )}
-              {disabled}
-              class="w-full rounded border border-chrome-border bg-chrome-bg/50 px-3 py-2 text-sm leading-relaxed text-chrome-text outline-none transition focus:border-chrome-accent focus:ring-1 focus:ring-chrome-accent disabled:opacity-50"
-            />
-          </div>
-        {/if}
-      {/each}
-    </fieldset>
-  {/if}
+  {/snippet}
+  {@render generatorOptions()}
 
   {#if supportsPrimaryLanguage && languages.length}
     <div class="flex flex-col gap-1.5">

@@ -41,19 +41,19 @@ describe("mapTovMechanicsToStatSheet", () => {
 
     const sheet = mapTovMechanicsToStatSheet(bundle);
     expect(sheet).not.toBeNull();
-    expect(sheet?.templateId).toBe(TOV_NPC_TEMPLATE_ID);
+    expect(sheet!.templateId).toBe(TOV_NPC_TEMPLATE_ID);
 
     const fieldsById = Object.fromEntries(sheet!.fields.map((f) => [f.id, f]));
 
-    expect(fieldsById.hp?.value).toBe(35);
-    expect(fieldsById.hp?.max).toBe(100);
-    expect(fieldsById.ac?.value).toBe(15);
-    expect(fieldsById.luck?.value).toBe(2);
-    expect(fieldsById.atk?.formula).toBe("1d20+4");
-    expect(fieldsById.damage?.formula).toBe("1d6+2");
-    expect(typeof fieldsById.notes?.value).toBe("string");
-    expect(fieldsById.notes?.value).toContain("CR 2");
-    expect(fieldsById.notes?.value).toContain("Shortsword");
+    expect(getField(fieldsById, "hp").value).toBe(35);
+    expect(getField(fieldsById, "hp").max).toBe(100);
+    expect(getField(fieldsById, "ac").value).toBe(15);
+    expect(getField(fieldsById, "luck").value).toBe(2);
+    expect(getField(fieldsById, "atk").formula).toBe("1d20+4");
+    expect(getField(fieldsById, "damage").formula).toBe("1d6+2");
+    expect(typeof getField(fieldsById, "notes").value).toBe("string");
+    expect(getField(fieldsById, "notes").value).toContain("CR 2");
+    expect(getField(fieldsById, "notes").value).toContain("Shortsword");
   });
 
   it("maps TovCharacterMechanics to builtin-tov-character stat sheet", () => {
@@ -99,35 +99,37 @@ describe("mapTovMechanicsToStatSheet", () => {
 
     const sheet = mapTovMechanicsToStatSheet(bundle);
     expect(sheet).not.toBeNull();
-    expect(sheet?.templateId).toBe(TOV_CHARACTER_TEMPLATE_ID);
+    expect(sheet!.templateId).toBe(TOV_CHARACTER_TEMPLATE_ID);
 
     const fieldsById = Object.fromEntries(sheet!.fields.map((f) => [f.id, f]));
 
-    expect(fieldsById.lineage?.value).toBe("Elf");
-    expect(fieldsById.heritage?.value).toBe("Sylvan");
-    expect(fieldsById.background?.value).toBe("Wanderer");
-    expect(fieldsById.class?.value).toBe("Rogue (Thief)");
-    expect(fieldsById.level?.value).toBe(3);
-    expect(fieldsById.proficiency_bonus?.value).toBe(2);
+    expect(getField(fieldsById, "lineage").value).toBe("Elf");
+    expect(getField(fieldsById, "heritage").value).toBe("Sylvan");
+    expect(getField(fieldsById, "background").value).toBe("Wanderer");
+    expect(getField(fieldsById, "class").value).toBe("Rogue (Thief)");
+    expect(getField(fieldsById, "level").value).toBe(3);
+    expect(getField(fieldsById, "proficiency_bonus").value).toBe(2);
 
-    expect(fieldsById.hp?.value).toBe(24);
-    expect(fieldsById.ac?.value).toBe(14);
-    expect(fieldsById.luck?.value).toBe(3);
+    expect(getField(fieldsById, "hp").value).toBe(24);
+    expect(getField(fieldsById, "ac").value).toBe(14);
+    expect(getField(fieldsById, "luck").value).toBe(3);
 
-    expect(fieldsById.dex_score?.value).toBe(16);
-    expect(fieldsById.dex?.formula).toBe("1d20+3");
-    expect(fieldsById.dex_save?.formula).toBe("1d20+5"); // 3 (dex) + 2 (PB)
-    expect(fieldsById.str_save?.formula).toBe("1d20+0"); // 0 (str), not proficient
-    expect(fieldsById.cha_save?.formula).toBe("1d20-1"); // -1 (cha), not proficient
+    expect(getField(fieldsById, "dex_score").value).toBe(16);
+    expect(getField(fieldsById, "dex").formula).toBe("1d20+3");
+    expect(getField(fieldsById, "dex_save").formula).toBe("1d20+5"); // 3 (dex) + 2 (PB)
+    expect(getField(fieldsById, "str_save").formula).toBe("1d20+0"); // 0 (str), not proficient
+    expect(getField(fieldsById, "cha_save").formula).toBe("1d20-1"); // -1 (cha), not proficient
 
-    expect(fieldsById.attacks?.rows?.length).toBe(1);
-    expect(fieldsById.attacks?.rows?.[0]?.name).toBe("Rapier");
-    expect(fieldsById.attacks?.rows?.[0]?.attack).toBe("1d20+5");
-    expect(fieldsById.attacks?.rows?.[0]?.damage).toBe("1d8+3");
+    expect(getField(fieldsById, "attacks").rows!.length).toBe(1);
+    expect(getField(fieldsById, "attacks").rows![0].name).toBe("Rapier");
+    expect(getField(fieldsById, "attacks").rows![0].attack).toBe("1d20+5");
+    expect(getField(fieldsById, "attacks").rows![0].damage).toBe("1d8+3");
 
-    expect(fieldsById.talents?.value).toContain("Combat Casting");
-    expect(fieldsById.features?.value).toContain("Sneak Attack");
-    expect(fieldsById.lineage_traits?.value).toContain("Fey Ancestry");
+    expect(getField(fieldsById, "talents").value).toContain("Combat Casting");
+    expect(getField(fieldsById, "features").value).toContain("Sneak Attack");
+    expect(getField(fieldsById, "lineage_traits").value).toContain(
+      "Fey Ancestry",
+    );
   });
 
   it("maps TovCreatureMechanics to builtin-tov-monster stat sheet", () => {
@@ -201,46 +203,46 @@ describe("mapTovMechanicsToStatSheet", () => {
 
     const sheet = mapTovMechanicsToStatSheet(bundle);
     expect(sheet).not.toBeNull();
-    expect(sheet?.templateId).toBe(TOV_MONSTER_TEMPLATE_ID);
+    expect(sheet!.templateId).toBe(TOV_MONSTER_TEMPLATE_ID);
 
     const fieldsById = Object.fromEntries(sheet!.fields.map((f) => [f.id, f]));
 
-    expect(fieldsById.size?.value).toBe("Large");
-    expect(fieldsById.creature_type?.value).toBe("Monstrosity");
-    expect(fieldsById.subtype?.value).toBe("Titan");
-    expect(fieldsById.cr?.value).toBe("5");
-    expect(fieldsById.proficiency_bonus?.value).toBe(3);
-    expect(fieldsById.doom?.value).toBe(1);
+    expect(getField(fieldsById, "size").value).toBe("Large");
+    expect(getField(fieldsById, "creature_type").value).toBe("Monstrosity");
+    expect(getField(fieldsById, "subtype").value).toBe("Titan");
+    expect(getField(fieldsById, "cr").value).toBe("5");
+    expect(getField(fieldsById, "proficiency_bonus").value).toBe(3);
+    expect(getField(fieldsById, "doom").value).toBe(1);
 
-    expect(fieldsById.ac?.value).toBe(15);
-    expect(fieldsById.ac_details?.value).toBe("natural armor");
-    expect(fieldsById.hp?.value).toBe(85);
-    expect(fieldsById.hp?.max).toBe(200);
+    expect(getField(fieldsById, "ac").value).toBe(15);
+    expect(getField(fieldsById, "ac_details").value).toBe("natural armor");
+    expect(getField(fieldsById, "hp").value).toBe(85);
+    expect(getField(fieldsById, "hp").max).toBe(200);
 
     // Ability scores & saves
-    expect(fieldsById.str_score?.value).toBe(18);
-    expect(fieldsById.str_save?.formula).toBe("1d20+7"); // 4 (str) + 3 (PB)
-    expect(fieldsById.dex_save?.formula).toBe("1d20+1"); // 1 (dex), not proficient
+    expect(getField(fieldsById, "str_score").value).toBe(18);
+    expect(getField(fieldsById, "str_save").formula).toBe("1d20+7"); // 4 (str) + 3 (PB)
+    expect(getField(fieldsById, "dex_save").formula).toBe("1d20+1"); // 1 (dex), not proficient
 
     // Defences
-    expect(fieldsById.damage_resistances?.value).toBe("cold, fire");
-    expect(fieldsById.damage_immunities?.value).toBe("poison");
-    expect(fieldsById.condition_immunities?.value).toBe("poisoned");
-    expect(fieldsById.senses?.value).toBe(
+    expect(getField(fieldsById, "damage_resistances").value).toBe("cold, fire");
+    expect(getField(fieldsById, "damage_immunities").value).toBe("poison");
+    expect(getField(fieldsById, "condition_immunities").value).toBe("poisoned");
+    expect(getField(fieldsById, "senses").value).toBe(
       "darkvision 60 ft., passive Perception 14",
     );
-    expect(fieldsById.languages?.value).toBe("Giant");
+    expect(getField(fieldsById, "languages").value).toBe("Giant");
 
     // Traits & Actions
-    expect(fieldsById.traits?.value).toContain("Blood Frenzy");
-    expect(fieldsById.actions?.rows?.length).toBe(1);
-    expect(fieldsById.actions?.rows?.[0]?.name).toBe("Slam");
-    expect(fieldsById.actions?.rows?.[0]?.attack).toBe("1d20+7");
-    expect(fieldsById.actions?.rows?.[0]?.damage).toBe("2d8+4");
+    expect(getField(fieldsById, "traits").value).toContain("Blood Frenzy");
+    expect(getField(fieldsById, "actions").rows!.length).toBe(1);
+    expect(getField(fieldsById, "actions").rows![0].name).toBe("Slam");
+    expect(getField(fieldsById, "actions").rows![0].attack).toBe("1d20+7");
+    expect(getField(fieldsById, "actions").rows![0].damage).toBe("2d8+4");
 
-    expect(fieldsById.bonus_actions?.rows?.length).toBe(1);
-    expect(fieldsById.reactions?.rows?.length).toBe(1);
-    expect(fieldsById.legendary_actions?.rows?.length).toBe(1);
+    expect(getField(fieldsById, "bonus_actions").rows!.length).toBe(1);
+    expect(getField(fieldsById, "reactions").rows!.length).toBe(1);
+    expect(getField(fieldsById, "legendary_actions").rows!.length).toBe(1);
   });
 
   it("returns null for unsupported bundle kinds", () => {
@@ -255,3 +257,8 @@ describe("mapTovMechanicsToStatSheet", () => {
     expect(mapTovMechanicsToStatSheet(unknownBundle)).toBeNull();
   });
 });
+
+function getField<T>(fields: Record<string, T>, id: string): T {
+  if (!(id in fields)) throw new Error(`Expected mapped field ${id}`);
+  return fields[id]!;
+}

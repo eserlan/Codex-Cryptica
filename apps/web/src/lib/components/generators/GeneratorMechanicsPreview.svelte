@@ -1,6 +1,15 @@
 <script lang="ts">
   import type { GeneratorMechanicsBundle } from "generator-engine";
 
+  type QuickNpcData = Extract<
+    GeneratorMechanicsBundle,
+    { kind: "tov-quick-npc" }
+  >["data"];
+  type CreatureData = Extract<
+    GeneratorMechanicsBundle,
+    { kind: "tov-creature" }
+  >["data"];
+
   interface Props {
     mechanics: GeneratorMechanicsBundle;
   }
@@ -84,8 +93,7 @@
     {/if}
   </div>
 
-  {#if mechanics.kind === "tov-quick-npc"}
-    {@const data = mechanics.data}
+  {#snippet quickNpcPreview(data: QuickNpcData)}
     <!-- Combat Vitals -->
     <div class="grid grid-cols-2 sm:grid-cols-5 gap-2 text-center">
       <div class="rounded border border-chrome-border/40 bg-chrome-bg/60 p-1.5">
@@ -187,94 +195,111 @@
         {/if}
       </div>
     {/if}
-  {:else if mechanics.kind === "tov-character"}
-    {@const data = mechanics.data}
-    <div class="flex flex-wrap items-center gap-2 text-xs">
-      <span class="rounded bg-chrome-bg/60 px-2 py-1">
-        <strong>Lineage:</strong>
-        {data.lineage}
-      </span>
-      <span class="rounded bg-chrome-bg/60 px-2 py-1">
-        <strong>Heritage:</strong>
-        {data.heritage}
-      </span>
-      <span class="rounded bg-chrome-bg/60 px-2 py-1">
-        <strong>Class:</strong>
-        {data.className}
-        {data.subclass ? `(${data.subclass})` : ""} Lvl {data.level}
-      </span>
-      <span class="rounded bg-chrome-bg/60 px-2 py-1">
-        <strong>PB:</strong> +{data.proficiencyBonus}
-      </span>
-      <span class="rounded bg-chrome-bg/60 px-2 py-1">
-        <strong>Luck:</strong>
-        {data.luck ?? 0}
-      </span>
-    </div>
+  {/snippet}
+  {#if mechanics.kind === "tov-quick-npc"}
+    {@render quickNpcPreview(mechanics.data)}
+  {/if}
 
-    <div class="grid grid-cols-4 gap-2 text-center">
-      <div class="rounded border border-chrome-border/40 bg-chrome-bg/60 p-1.5">
-        <span
-          class="block text-micro font-bold uppercase tracking-wider text-chrome-muted"
-          >AC</span
-        >
-        <span class="text-sm font-bold text-chrome-text">{data.ac}</span>
+  {#snippet characterPreview()}
+    {#if mechanics.kind === "tov-character"}
+      {@const data = mechanics.data}
+      <div class="flex flex-wrap items-center gap-2 text-xs">
+        <span class="rounded bg-chrome-bg/60 px-2 py-1">
+          <strong>Lineage:</strong>
+          {data.lineage}
+        </span>
+        <span class="rounded bg-chrome-bg/60 px-2 py-1">
+          <strong>Heritage:</strong>
+          {data.heritage}
+        </span>
+        <span class="rounded bg-chrome-bg/60 px-2 py-1">
+          <strong>Class:</strong>
+          {data.className}
+          {data.subclass ? `(${data.subclass})` : ""} Lvl {data.level}
+        </span>
+        <span class="rounded bg-chrome-bg/60 px-2 py-1">
+          <strong>PB:</strong> +{data.proficiencyBonus}
+        </span>
+        <span class="rounded bg-chrome-bg/60 px-2 py-1">
+          <strong>Luck:</strong>
+          {data.luck ?? 0}
+        </span>
       </div>
-      <div class="rounded border border-chrome-border/40 bg-chrome-bg/60 p-1.5">
-        <span
-          class="block text-micro font-bold uppercase tracking-wider text-chrome-muted"
-          >HP</span
-        >
-        <span class="text-sm font-bold text-chrome-text">{data.hp}</span>
-        <span class="text-micro text-chrome-muted">({data.hitDice})</span>
-      </div>
-      <div class="rounded border border-chrome-border/40 bg-chrome-bg/60 p-1.5">
-        <span
-          class="block text-micro font-bold uppercase tracking-wider text-chrome-muted"
-          >Speed</span
-        >
-        <span class="text-sm font-bold text-chrome-text">{data.speed}</span>
-      </div>
-      <div class="rounded border border-chrome-border/40 bg-chrome-bg/60 p-1.5">
-        <span
-          class="block text-micro font-bold uppercase tracking-wider text-chrome-muted"
-          >Background</span
-        >
-        <span class="text-xs font-bold text-chrome-text truncate"
-          >{data.background}</span
-        >
-      </div>
-    </div>
 
-    <!-- Attacks -->
-    {#if data.attacks?.length}
-      <div class="flex flex-col gap-1.5">
-        <span
-          class="text-micro font-bold uppercase tracking-wider text-chrome-muted"
-          >Attacks & Weapons</span
+      <div class="grid grid-cols-4 gap-2 text-center">
+        <div
+          class="rounded border border-chrome-border/40 bg-chrome-bg/60 p-1.5"
         >
-        <div class="flex flex-col gap-1">
-          {#each data.attacks as atk}
-            <div
-              class="flex items-center justify-between rounded border border-chrome-border/30 bg-chrome-bg/30 px-2.5 py-1.5"
-            >
-              <span class="font-bold text-chrome-text">{atk.name}</span>
-              <div class="flex items-center gap-2">
-                <span
-                  class="rounded bg-chrome-accent/10 px-2 py-0.5 font-mono text-chrome-accent"
-                  >{atk.attackFormula}</span
-                >
-                <span class="font-mono text-chrome-text"
-                  >{atk.damageFormula} {atk.type ?? ""}</span
-                >
-              </div>
-            </div>
-          {/each}
+          <span
+            class="block text-micro font-bold uppercase tracking-wider text-chrome-muted"
+            >AC</span
+          >
+          <span class="text-sm font-bold text-chrome-text">{data.ac}</span>
+        </div>
+        <div
+          class="rounded border border-chrome-border/40 bg-chrome-bg/60 p-1.5"
+        >
+          <span
+            class="block text-micro font-bold uppercase tracking-wider text-chrome-muted"
+            >HP</span
+          >
+          <span class="text-sm font-bold text-chrome-text">{data.hp}</span>
+          <span class="text-micro text-chrome-muted">({data.hitDice})</span>
+        </div>
+        <div
+          class="rounded border border-chrome-border/40 bg-chrome-bg/60 p-1.5"
+        >
+          <span
+            class="block text-micro font-bold uppercase tracking-wider text-chrome-muted"
+            >Speed</span
+          >
+          <span class="text-sm font-bold text-chrome-text">{data.speed}</span>
+        </div>
+        <div
+          class="rounded border border-chrome-border/40 bg-chrome-bg/60 p-1.5"
+        >
+          <span
+            class="block text-micro font-bold uppercase tracking-wider text-chrome-muted"
+            >Background</span
+          >
+          <span class="text-xs font-bold text-chrome-text truncate"
+            >{data.background}</span
+          >
         </div>
       </div>
+
+      <!-- Attacks -->
+      {#if data.attacks?.length}
+        <div class="flex flex-col gap-1.5">
+          <span
+            class="text-micro font-bold uppercase tracking-wider text-chrome-muted"
+            >Attacks & Weapons</span
+          >
+          <div class="flex flex-col gap-1">
+            {#each data.attacks as atk}
+              <div
+                class="flex items-center justify-between rounded border border-chrome-border/30 bg-chrome-bg/30 px-2.5 py-1.5"
+              >
+                <span class="font-bold text-chrome-text">{atk.name}</span>
+                <div class="flex items-center gap-2">
+                  <span
+                    class="rounded bg-chrome-accent/10 px-2 py-0.5 font-mono text-chrome-accent"
+                    >{atk.attackFormula}</span
+                  >
+                  <span class="font-mono text-chrome-text"
+                    >{atk.damageFormula} {atk.type ?? ""}</span
+                  >
+                </div>
+              </div>
+            {/each}
+          </div>
+        </div>
+      {/if}
     {/if}
-  {:else if mechanics.kind === "tov-creature"}
-    {@const data = mechanics.data}
+  {/snippet}
+  {@render characterPreview()}
+
+  {#snippet creaturePreview(data: CreatureData)}
     <!-- Creature Vitals & Identity -->
     <div class="grid grid-cols-2 sm:grid-cols-6 gap-2 text-center">
       <div class="rounded border border-chrome-border/40 bg-chrome-bg/60 p-1.5">
@@ -375,61 +400,69 @@
         </div>
       </div>
     {/if}
-  {:else if mechanics.kind === "tov-magic-item"}
-    {@const data = mechanics.data}
-    <div class="flex flex-wrap items-center gap-2 text-xs">
-      <span
-        class="rounded border border-chrome-border/40 bg-chrome-bg/60 px-2 py-1"
-      >
-        <strong>Rarity:</strong>
-        {data.rarity}
-      </span>
-      <span
-        class="rounded border border-chrome-border/40 bg-chrome-bg/60 px-2 py-1"
-      >
-        <strong>Category:</strong>
-        {data.category}
-      </span>
-      <span
-        class="rounded border border-chrome-border/40 bg-chrome-bg/60 px-2 py-1"
-      >
-        <strong>Attunement:</strong>
-        {data.attunement
-          ? data.attunementRequirement
-            ? `Yes (${data.attunementRequirement})`
-            : "Yes"
-          : "No"}
-      </span>
-      <span
-        class="rounded border border-chrome-border/40 bg-chrome-bg/60 px-2 py-1"
-      >
-        <strong>Activation:</strong>
-        {data.activationAction}
-      </span>
-      {#if data.charges}
-        <span
-          class="rounded border border-chrome-border/40 bg-chrome-bg/60 px-2 py-1"
-        >
-          <strong>Charges:</strong>
-          {data.charges}
-          {data.rechargeRate ? `(${data.rechargeRate})` : ""}
-        </span>
-      {/if}
-      {#if data.savingThrowDc}
-        <span
-          class="rounded border border-chrome-border/40 bg-chrome-bg/60 px-2 py-1"
-        >
-          <strong>Save DC:</strong>
-          {data.savingThrowDc}
-        </span>
-      {/if}
-    </div>
-    {#if data.rulesText}
-      <div
-        class="rounded border border-chrome-border/40 bg-chrome-bg/30 p-2 text-xs leading-relaxed text-chrome-text"
-      >
-        {data.rulesText}
-      </div>
-    {/if}
+  {/snippet}
+  {#if mechanics.kind === "tov-creature"}
+    {@render creaturePreview(mechanics.data)}
   {/if}
+
+  {#snippet magicItemPreview()}
+    {#if mechanics.kind === "tov-magic-item"}
+      {@const data = mechanics.data}
+      <div class="flex flex-wrap items-center gap-2 text-xs">
+        <span
+          class="rounded border border-chrome-border/40 bg-chrome-bg/60 px-2 py-1"
+        >
+          <strong>Rarity:</strong>
+          {data.rarity}
+        </span>
+        <span
+          class="rounded border border-chrome-border/40 bg-chrome-bg/60 px-2 py-1"
+        >
+          <strong>Category:</strong>
+          {data.category}
+        </span>
+        <span
+          class="rounded border border-chrome-border/40 bg-chrome-bg/60 px-2 py-1"
+        >
+          <strong>Attunement:</strong>
+          {data.attunement
+            ? data.attunementRequirement
+              ? `Yes (${data.attunementRequirement})`
+              : "Yes"
+            : "No"}
+        </span>
+        <span
+          class="rounded border border-chrome-border/40 bg-chrome-bg/60 px-2 py-1"
+        >
+          <strong>Activation:</strong>
+          {data.activationAction}
+        </span>
+        {#if data.charges}
+          <span
+            class="rounded border border-chrome-border/40 bg-chrome-bg/60 px-2 py-1"
+          >
+            <strong>Charges:</strong>
+            {data.charges}
+            {data.rechargeRate ? `(${data.rechargeRate})` : ""}
+          </span>
+        {/if}
+        {#if data.savingThrowDc}
+          <span
+            class="rounded border border-chrome-border/40 bg-chrome-bg/60 px-2 py-1"
+          >
+            <strong>Save DC:</strong>
+            {data.savingThrowDc}
+          </span>
+        {/if}
+      </div>
+      {#if data.rulesText}
+        <div
+          class="rounded border border-chrome-border/40 bg-chrome-bg/30 p-2 text-xs leading-relaxed text-chrome-text"
+        >
+          {data.rulesText}
+        </div>
+      {/if}
+    {/if}
+  {/snippet}
+  {@render magicItemPreview()}
 </div>

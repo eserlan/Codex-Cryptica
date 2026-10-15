@@ -189,30 +189,7 @@ export function mapTovMechanicsToStatSheet(
 }
 
 function mapQuickNpc(data: TovQuickNpcData): StatSheet {
-  const summaryLines: string[] = [];
-  if (data.cr) summaryLines.push(`**CR ${data.cr}**`);
-  if (data.speed) summaryLines.push(`**Speed**: ${data.speed}`);
-  if (data.attackName) {
-    summaryLines.push(
-      `**Primary Attack**: ${data.attackName} (${data.attackFormula}, ${data.damageFormula} ${data.damageType ?? ""})`.trim(),
-    );
-  }
-  if (data.abilityScores) {
-    const scores = data.abilityScores;
-    summaryLines.push(
-      `**Abilities**: STR ${scores.str} (${formatModifier(abilityModifier(scores.str))}), DEX ${scores.dex} (${formatModifier(abilityModifier(scores.dex))}), CON ${scores.con} (${formatModifier(abilityModifier(scores.con))}), INT ${scores.int} (${formatModifier(abilityModifier(scores.int))}), WIS ${scores.wis} (${formatModifier(abilityModifier(scores.wis))}), CHA ${scores.cha} (${formatModifier(abilityModifier(scores.cha))})`,
-    );
-  }
-  if (data.keySaves?.length) {
-    summaryLines.push(`**Key Saves**: ${data.keySaves.join(", ")}`);
-  }
-  if (data.keySkills?.length) {
-    summaryLines.push(`**Key Skills**: ${data.keySkills.join(", ")}`);
-  }
-  if (data.notes) {
-    summaryLines.push(`\n${data.notes}`);
-  }
-
+  const summaryLines = quickNpcSummary(data);
   const fields: StatSheetField[] = TOV_NPC_TEMPLATE.fields.map((f) => {
     switch (f.id) {
       case "hp":
@@ -237,130 +214,98 @@ function mapQuickNpc(data: TovQuickNpcData): StatSheet {
     }
   });
 
-  return {
-    templateId: TOV_NPC_TEMPLATE_ID,
-    fields,
-  };
+  return { templateId: TOV_NPC_TEMPLATE_ID, fields };
+}
+
+function quickNpcSummary(data: TovQuickNpcData): string[] {
+  const summaryLines: string[] = [];
+  addSummaryLine(summaryLines, data.cr, (cr) => `**CR ${cr}**`);
+  addSummaryLine(summaryLines, data.speed, (speed) => `**Speed**: ${speed}`);
+  addSummaryLine(summaryLines, data.attackName, (name) =>
+    `**Primary Attack**: ${name} (${data.attackFormula}, ${data.damageFormula} ${data.damageType ?? ""})`.trim(),
+  );
+  addSummaryLine(summaryLines, data.abilityScores, formatAbilityScores);
+  addSummaryLine(
+    summaryLines,
+    data.keySaves?.join(", "),
+    (saves) => `**Key Saves**: ${saves}`,
+  );
+  addSummaryLine(
+    summaryLines,
+    data.keySkills?.join(", "),
+    (skills) => `**Key Skills**: ${skills}`,
+  );
+  addSummaryLine(summaryLines, data.notes, (notes) => `\n${notes}`);
+
+  return summaryLines;
+}
+
+function addSummaryLine<T>(
+  lines: string[],
+  value: T | undefined,
+  format: (value: T) => string,
+): void {
+  if (value) lines.push(format(value));
+}
+
+function formatAbilityScores(scores: TovAbilityScoresData): string {
+  return `**Abilities**: STR ${scores.str} (${formatModifier(abilityModifier(scores.str))}), DEX ${scores.dex} (${formatModifier(abilityModifier(scores.dex))}), CON ${scores.con} (${formatModifier(abilityModifier(scores.con))}), INT ${scores.int} (${formatModifier(abilityModifier(scores.int))}), WIS ${scores.wis} (${formatModifier(abilityModifier(scores.wis))}), CHA ${scores.cha} (${formatModifier(abilityModifier(scores.cha))})`;
 }
 
 function mapCharacter(data: TovCharacterData): StatSheet {
-  const scores = data.abilityScores;
-  const pb = data.proficiencyBonus;
-  const saveProfs = new Set(
-    (data.saveProficiencies ?? []).map((s) => s.toLowerCase()),
-  );
-  const skillProfs = new Set(
-    (data.skillProficiencies ?? []).map((s) =>
-      s.toLowerCase().replace(/[\s-]+/g, "_"),
-    ),
+  const values: Record<string, Partial<StatSheetField>> = {
+    lineage: { value: data.lineage },
+    heritage: { value: data.heritage },
+    background: { value: data.background },
+    class: {
+      value: data.subclass
+        ? `${data.className} (${data.subclass})`
+        : data.className,
+    },
+    level: { value: data.level },
+    proficiency_bonus: { value: data.proficiencyBonus },
+    ac: { value: data.ac },
+    speed: { value: data.speed },
+    hit_dice: { value: data.hitDice },
+    luck: { value: data.luck ?? 0 },
+    attacks: {
+      rows: (data.attacks ?? []).map((attack) => ({
+        name: attack.name,
+        attack: attack.attackFormula,
+        damage: attack.damageFormula,
+        type: attack.type ?? "",
+        description: attack.description ?? "",
+      })),
+    },
+    talents: { value: (data.talents ?? []).join("\n\n") },
+    features: { value: (data.features ?? []).join("\n\n") },
+    lineage_traits: { value: (data.lineageTraits ?? []).join("\n\n") },
+  };
+  const proficiency = getProficiencySets(
+    data.saveProficiencies,
+    data.skillProficiencies,
   );
 
-  const fields: StatSheetField[] = TOV_CHARACTER_TEMPLATE.fields.map((f) => {
-    switch (f.id) {
-      case "lineage":
-        return { ...f, value: data.lineage };
-      case "heritage":
-        return { ...f, value: data.heritage };
-      case "background":
-        return { ...f, value: data.background };
-      case "class":
+  const fields: StatSheetField[] = TOV_CHARACTER_TEMPLATE.fields.map(
+    (field) => {
+      if (field.id === "hp") {
         return {
-          ...f,
-          value: data.subclass
-            ? `${data.className} (${data.subclass})`
-            : data.className,
-        };
-      case "level":
-        return { ...f, value: data.level };
-      case "proficiency_bonus":
-        return { ...f, value: pb };
-      case "hp":
-        return {
-          ...f,
+          ...field,
           value: data.hp,
           min: 0,
-          max: Math.max(f.max ?? 100, data.hp),
-        };
-      case "ac":
-        return { ...f, value: data.ac };
-      case "speed":
-        return { ...f, value: data.speed };
-      case "hit_dice":
-        return { ...f, value: data.hitDice };
-      case "luck":
-        return { ...f, value: data.luck ?? 0 };
-      case "attacks":
-        return {
-          ...f,
-          rows: (data.attacks ?? []).map((atk) => ({
-            name: atk.name,
-            attack: atk.attackFormula,
-            damage: atk.damageFormula,
-            type: atk.type ?? "",
-            description: atk.description ?? "",
-          })),
-        };
-      case "talents":
-        return { ...f, value: (data.talents ?? []).join("\n\n") };
-      case "features":
-        return { ...f, value: (data.features ?? []).join("\n\n") };
-      case "lineage_traits":
-        return { ...f, value: (data.lineageTraits ?? []).join("\n\n") };
-      default:
-        break;
-    }
-
-    // Ability scores: str_score, dex_score, etc.
-    if (f.id.endsWith("_score")) {
-      const key = f.id.replace("_score", "") as keyof TovAbilityScoresData;
-      if (scores[key] !== undefined) {
-        return { ...f, value: scores[key] };
-      }
-    }
-
-    // Ability checks: str, dex, etc.
-    if (ABILITY_KEYS.includes(f.id as keyof TovAbilityScoresData)) {
-      const key = f.id as keyof TovAbilityScoresData;
-      const mod = abilityModifier(scores[key]);
-      return {
-        ...f,
-        formula: formatRollFormula(mod),
-        modifierSource: `${key}_score`,
-      };
-    }
-
-    // Saving throws: str_save, dex_save, etc.
-    if (f.id.endsWith("_save")) {
-      const key = f.id.replace("_save", "") as keyof TovAbilityScoresData;
-      if (scores[key] !== undefined) {
-        const mod = abilityModifier(scores[key]);
-        const isProf = saveProfs.has(key);
-        const saveMod = mod + (isProf ? pb : 0);
-        return {
-          ...f,
-          formula: formatRollFormula(saveMod),
-          modifierSource: undefined,
+          max: Math.max(field.max ?? 100, data.hp),
         };
       }
-    }
-
-    // Skills
-    if (SKILL_ABILITY_MAP[f.id]) {
-      const attrKey = SKILL_ABILITY_MAP[f.id];
-      const mod = abilityModifier(scores[attrKey]);
-      const isProf =
-        skillProfs.has(f.id) ||
-        skillProfs.has(f.label.toLowerCase().replace(/[\s-]+/g, "_"));
-      const skillMod = mod + (isProf ? pb : 0);
-      return {
-        ...f,
-        formula: formatRollFormula(skillMod),
-        modifierSource: undefined,
-      };
-    }
-
-    return { ...f };
-  });
+      if (values[field.id]) return { ...field, ...values[field.id] };
+      return mapRollField(
+        field,
+        data.abilityScores,
+        data.proficiencyBonus,
+        proficiency,
+        true,
+      );
+    },
+  );
 
   return {
     templateId: TOV_CHARACTER_TEMPLATE_ID,
@@ -369,159 +314,214 @@ function mapCharacter(data: TovCharacterData): StatSheet {
 }
 
 function mapCreature(data: TovCreatureData): StatSheet {
-  const scores = data.abilityScores;
-  const pb = data.proficiencyBonus;
-  const saveProfs = new Set(
-    (data.saveProficiencies ?? []).map((s) => s.toLowerCase()),
-  );
-  const skillProfs = new Set(
-    (data.skillProficiencies ?? []).map((s) =>
-      s.toLowerCase().replace(/[\s-]+/g, "_"),
-    ),
+  const values = creatureFieldValues(data);
+  const proficiency = getProficiencySets(
+    data.saveProficiencies,
+    data.skillProficiencies,
   );
 
-  const fields: StatSheetField[] = TOV_MONSTER_TEMPLATE.fields.map((f) => {
-    switch (f.id) {
-      case "size":
-        return { ...f, value: data.size };
-      case "creature_type":
-        return { ...f, value: data.creatureType };
-      case "subtype":
-        return { ...f, value: data.subtype ?? "" };
-      case "alignment":
-        return { ...f, value: data.alignment ?? "unaligned" };
-      case "cr":
-        return { ...f, value: data.cr };
-      case "proficiency_bonus":
-        return { ...f, value: pb };
-      case "doom":
-        return { ...f, value: data.doom ?? 0 };
-      case "ac":
-        return { ...f, value: data.ac };
-      case "ac_details":
-        return { ...f, value: data.acDetails ?? "" };
-      case "hp":
-        return {
-          ...f,
-          value: data.hp,
-          min: 0,
-          max: Math.max(f.max ?? 200, data.hp),
-        };
-      case "hit_dice":
-        return { ...f, value: data.hitDice };
-      case "speed":
-        return { ...f, value: data.speed };
-      case "damage_vulnerabilities":
-        return {
-          ...f,
-          value: (data.damageVulnerabilities ?? []).join(", "),
-        };
-      case "damage_resistances":
-        return { ...f, value: (data.damageResistances ?? []).join(", ") };
-      case "damage_immunities":
-        return { ...f, value: (data.damageImmunities ?? []).join(", ") };
-      case "condition_immunities":
-        return {
-          ...f,
-          value: (data.conditionImmunities ?? []).join(", "),
-        };
-      case "senses":
-        return { ...f, value: data.senses ?? "" };
-      case "languages":
-        return { ...f, value: data.languages ?? "—" };
-      case "traits":
-        return {
-          ...f,
-          value: (data.traits ?? [])
-            .map((t) => `**${t.name}**. ${t.description}`)
-            .join("\n\n"),
-        };
-      case "actions":
-        return {
-          ...f,
-          rows: (data.actions ?? []).map((a) => ({
-            name: a.name,
-            attack: a.attackFormula ?? "—",
-            damage: a.damageFormula ?? "—",
-            description: a.description,
-          })),
-        };
-      case "bonus_actions":
-        return {
-          ...f,
-          rows: (data.bonusActions ?? []).map((a) => ({
-            name: a.name,
-            attack: a.attackFormula ?? "—",
-            damage: a.damageFormula ?? "—",
-            description: a.description,
-          })),
-        };
-      case "reactions":
-        return {
-          ...f,
-          rows: (data.reactions ?? []).map((a) => ({
-            name: a.name,
-            attack: a.attackFormula ?? "—",
-            damage: a.damageFormula ?? "—",
-            description: a.description,
-          })),
-        };
-      case "legendary_actions":
-        return {
-          ...f,
-          rows: (data.legendaryActions ?? []).map((la) => ({
-            name: la.name,
-            cost: la.cost ?? 1,
-            description: la.description,
-          })),
-        };
-      default:
-        break;
-    }
-
-    // Ability scores: str_score, dex_score, etc.
-    if (f.id.endsWith("_score")) {
-      const key = f.id.replace("_score", "") as keyof TovAbilityScoresData;
-      if (scores[key] !== undefined) {
-        return { ...f, value: scores[key] };
-      }
-    }
-
-    // Saving throws: str_save, dex_save, etc.
-    if (f.id.endsWith("_save")) {
-      const key = f.id.replace("_save", "") as keyof TovAbilityScoresData;
-      if (scores[key] !== undefined) {
-        const mod = abilityModifier(scores[key]);
-        const isProf = saveProfs.has(key);
-        const saveMod = mod + (isProf ? pb : 0);
-        return {
-          ...f,
-          formula: formatRollFormula(saveMod),
-          modifierSource: undefined,
-        };
-      }
-    }
-
-    // Skills on creature sheet
-    if (SKILL_ABILITY_MAP[f.id]) {
-      const attrKey = SKILL_ABILITY_MAP[f.id];
-      const mod = abilityModifier(scores[attrKey]);
-      const isProf =
-        skillProfs.has(f.id) ||
-        skillProfs.has(f.label.toLowerCase().replace(/[\s-]+/g, "_"));
-      const skillMod = mod + (isProf ? pb : 0);
-      return {
-        ...f,
-        formula: formatRollFormula(skillMod),
-        modifierSource: undefined,
-      };
-    }
-
-    return { ...f };
-  });
+  const fields = TOV_MONSTER_TEMPLATE.fields.map((field) =>
+    mapCreatureField(field, data, values, proficiency),
+  );
 
   return {
     templateId: TOV_MONSTER_TEMPLATE_ID,
     fields,
   };
+}
+
+function creatureFieldValues(
+  data: TovCreatureData,
+): Record<string, Partial<StatSheetField>> {
+  return {
+    ...creatureIdentityFields(data),
+    ...creatureDefenseFields(data),
+    ...creatureActionFields(data),
+  };
+}
+
+function creatureIdentityFields(
+  data: TovCreatureData,
+): Record<string, Partial<StatSheetField>> {
+  return {
+    size: { value: data.size },
+    creature_type: { value: data.creatureType },
+    subtype: { value: data.subtype ?? "" },
+    alignment: { value: data.alignment ?? "unaligned" },
+    cr: { value: data.cr },
+    proficiency_bonus: { value: data.proficiencyBonus },
+    doom: { value: data.doom ?? 0 },
+    ac: { value: data.ac },
+    ac_details: { value: data.acDetails ?? "" },
+    hit_dice: { value: data.hitDice },
+    speed: { value: data.speed },
+  };
+}
+
+function creatureDefenseFields(
+  data: TovCreatureData,
+): Record<string, Partial<StatSheetField>> {
+  return {
+    damage_vulnerabilities: {
+      value: (data.damageVulnerabilities ?? []).join(", "),
+    },
+    damage_resistances: { value: (data.damageResistances ?? []).join(", ") },
+    damage_immunities: { value: (data.damageImmunities ?? []).join(", ") },
+    condition_immunities: {
+      value: (data.conditionImmunities ?? []).join(", "),
+    },
+    senses: { value: data.senses ?? "" },
+    languages: { value: data.languages ?? "—" },
+    traits: {
+      value: (data.traits ?? [])
+        .map((trait) => `**${trait.name}**. ${trait.description}`)
+        .join("\n\n"),
+    },
+  };
+}
+
+function creatureActionFields(
+  data: TovCreatureData,
+): Record<string, Partial<StatSheetField>> {
+  return {
+    actions: { rows: mapActionRows(data.actions) },
+    bonus_actions: { rows: mapActionRows(data.bonusActions) },
+    reactions: { rows: mapActionRows(data.reactions) },
+    legendary_actions: {
+      rows: (data.legendaryActions ?? []).map((action) => ({
+        name: action.name,
+        cost: action.cost ?? 1,
+        description: action.description,
+      })),
+    },
+  };
+}
+
+function mapCreatureField(
+  field: StatSheetField,
+  data: TovCreatureData,
+  values: Record<string, Partial<StatSheetField>>,
+  proficiency: ProficiencySets,
+): StatSheetField {
+  if (field.id === "hp") {
+    return {
+      ...field,
+      value: data.hp,
+      min: 0,
+      max: Math.max(field.max ?? 200, data.hp),
+    };
+  }
+  const value = values[field.id];
+  if (value) return { ...field, ...value };
+  return mapRollField(
+    field,
+    data.abilityScores,
+    data.proficiencyBonus,
+    proficiency,
+    false,
+  );
+}
+
+interface ProficiencySets {
+  saves: Set<string>;
+  skills: Set<string>;
+}
+
+function getProficiencySets(
+  saves: string[] | undefined,
+  skills: string[] | undefined,
+): ProficiencySets {
+  return {
+    saves: new Set((saves ?? []).map((save) => save.toLowerCase())),
+    skills: new Set(
+      (skills ?? []).map((skill) =>
+        skill.toLowerCase().replace(/[\s-]+/g, "_"),
+      ),
+    ),
+  };
+}
+
+function mapRollField(
+  field: StatSheetField,
+  scores: TovAbilityScoresData,
+  proficiencyBonus: number,
+  proficiency: ProficiencySets,
+  includeAbilityChecks: boolean,
+): StatSheetField {
+  return (
+    mapAbilityScoreField(field, scores) ??
+    mapAbilityCheckField(field, scores, includeAbilityChecks) ??
+    mapSavingThrowField(field, scores, proficiencyBonus, proficiency) ??
+    mapSkillField(field, scores, proficiencyBonus, proficiency) ?? { ...field }
+  );
+}
+
+function mapAbilityScoreField(
+  field: StatSheetField,
+  scores: TovAbilityScoresData,
+): StatSheetField | undefined {
+  if (!field.id.endsWith("_score")) return undefined;
+  const key = field.id.replace("_score", "") as keyof TovAbilityScoresData;
+  return key in scores ? { ...field, value: scores[key] } : undefined;
+}
+
+function mapAbilityCheckField(
+  field: StatSheetField,
+  scores: TovAbilityScoresData,
+  enabled: boolean,
+): StatSheetField | undefined {
+  const key = field.id as keyof TovAbilityScoresData;
+  if (!enabled || !ABILITY_KEYS.includes(key)) return undefined;
+  return {
+    ...field,
+    formula: formatRollFormula(abilityModifier(scores[key])),
+    modifierSource: `${key}_score`,
+  };
+}
+
+function mapSavingThrowField(
+  field: StatSheetField,
+  scores: TovAbilityScoresData,
+  proficiencyBonus: number,
+  proficiency: ProficiencySets,
+): StatSheetField | undefined {
+  if (!field.id.endsWith("_save")) return undefined;
+  const key = field.id.replace("_save", "") as keyof TovAbilityScoresData;
+  if (!(key in scores)) return undefined;
+  const bonus = proficiency.saves.has(key) ? proficiencyBonus : 0;
+  return {
+    ...field,
+    formula: formatRollFormula(abilityModifier(scores[key]) + bonus),
+    modifierSource: undefined,
+  };
+}
+
+function mapSkillField(
+  field: StatSheetField,
+  scores: TovAbilityScoresData,
+  proficiencyBonus: number,
+  proficiency: ProficiencySets,
+): StatSheetField | undefined {
+  const ability = SKILL_ABILITY_MAP[field.id];
+  if (!ability) return undefined;
+  const label = field.label.toLowerCase().replace(/[\s-]+/g, "_");
+  const proficient =
+    proficiency.skills.has(field.id) || proficiency.skills.has(label);
+  const bonus = proficient ? proficiencyBonus : 0;
+  return {
+    ...field,
+    formula: formatRollFormula(abilityModifier(scores[ability]) + bonus),
+    modifierSource: undefined,
+  };
+}
+
+type TovActionData = NonNullable<TovCreatureData["actions"]>[number];
+
+function mapActionRows(actions: TovActionData[] | undefined) {
+  return (actions ?? []).map((action) => ({
+    name: action.name,
+    attack: action.attackFormula ?? "—",
+    damage: action.damageFormula ?? "—",
+    description: action.description,
+  }));
 }
