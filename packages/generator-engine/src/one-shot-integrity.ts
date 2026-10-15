@@ -189,7 +189,38 @@ const SCHEDULED =
 
 const checkClockSchedule: GapCheck = (adventure) => {
   const { clock } = adventure;
-  if (!clock || SCHEDULED.test(clock.advances)) return [];
+  if (!clock) return [];
+  const essentialSceneSchedule =
+    /\bend of each essential scene after the opening\b/i.test(clock.advances);
+  const climaxArrivalSchedule = /\bwhen the party reaches the climax\b/i.test(
+    clock.advances,
+  );
+  const climaxMidpointSchedule = /\bhalfway through the climax\b/i.test(
+    clock.advances,
+  );
+  if (
+    essentialSceneSchedule &&
+    climaxArrivalSchedule &&
+    climaxMidpointSchedule
+  ) {
+    const climaxEvents = adventure.scenes.some(
+      (scene) => scene.kind === "climax",
+    )
+      ? 2
+      : 0;
+    const scheduledAdvances =
+      adventure.scenes.filter(
+        (scene) => scene.essential && scene.kind !== "opening",
+      ).length + climaxEvents;
+    if (scheduledAdvances >= clock.ticks.length) return [];
+    return [
+      {
+        area: "clock",
+        message: `The schedule only advances the clock ${scheduledAdvances} times on a cautious route, but it has ${clock.ticks.length} ticks. Add scheduled moments or reduce the clock to match.`,
+      },
+    ];
+  }
+  if (SCHEDULED.test(clock.advances)) return [];
   return [
     {
       area: "clock",

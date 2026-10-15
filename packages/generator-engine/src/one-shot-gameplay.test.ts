@@ -48,6 +48,18 @@ describe("de-duplication", () => {
     expect(new Set(d.scenes[1].npcIds).size).toBe(d.scenes[1].npcIds.length);
   });
 
+  it("merges NPC names that differ only by punctuation", () => {
+    const a = local({ durationHours: 4 });
+    const villain = a.npcs.find((n) => n.id === a.antagonistId)!;
+    villain.name = "D'Arcy";
+    a.npcs.push({ ...villain, id: "npc-9", name: "Darcy" });
+
+    const d = dedupeOneShot(a);
+
+    expect(d.npcs.find((n) => n.id === villain.id)?.name).toBe("D'Arcy");
+    expect(d.npcs).toHaveLength(a.npcs.length - 1);
+  });
+
   it("merges commitments that say the same thing, keeping every payoff scene", () => {
     const a = local({ durationHours: 4 });
     const [first] = a.threads!;
@@ -110,6 +122,32 @@ describe("clock schedule", () => {
     const a = local();
     a.clock!.advances = advances;
     expect(messages(a).filter((m) => /cautious play/.test(m))).toEqual([]);
+  });
+
+  it("lets cautious play reach every local fallback clock tick", () => {
+    const a = local();
+    const scheduledAdvances =
+      a.scenes.filter((scene) => scene.essential && scene.kind !== "opening")
+        .length + 2;
+
+    expect(a.clock!.ticks).toHaveLength(scheduledAdvances);
+    expect(a.clock!.advances).toMatch(
+      /end of each essential scene after the opening, when the party reaches the climax, and halfway through the climax/i,
+    );
+    expect(messages(a).filter((m) => /schedule only advances/.test(m))).toEqual(
+      [],
+    );
+  });
+
+  it("flags a scheduled route that cannot reach the final tick", () => {
+    const a = local();
+    a.clock!.ticks.push({ trigger: "Extra", effect: "The plan goes further." });
+
+    expect(messages(a)).toContainEqual(
+      expect.stringMatching(
+        /schedule only advances the clock 4 times.*5 ticks/,
+      ),
+    );
   });
 });
 

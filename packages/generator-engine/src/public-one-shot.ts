@@ -691,7 +691,7 @@ export function buildOneShotAdventure(
   const clock = {
     name: f(`${villainName}'s Plan`),
     advances:
-      "At the end of each essential scene after the opening, whatever the party does. Failing a challenge or resting also advances it; forcing a risky shortcut adds a complication instead.",
+      "At the end of each essential scene after the opening, when the party reaches the climax, and halfway through the climax, whatever the party does. Failing a challenge or resting also advances it; forcing a risky shortcut adds a complication instead.",
     ticks: [
       {
         trigger: "First step",
@@ -708,7 +708,7 @@ export function buildOneShotAdventure(
       {
         trigger: "Third step",
         effect: f(
-          `The plan is nearly done; the finale starts with ${villainName} already prepared.`,
+          `The plan is nearly done; ${villainName} is ready for the finale.`,
         ),
       },
       {
