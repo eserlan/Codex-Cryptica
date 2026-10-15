@@ -13,6 +13,8 @@ import type {
   OneShotNpc,
 } from "./one-shot-types";
 
+import { textOverlap } from "./one-shot-dedupe";
+
 type GapCheck = (adventure: OneShotAdventure) => OneShotGap[];
 
 export function antagonistOf(
@@ -178,10 +180,148 @@ const checkOpposition: GapCheck = (adventure) =>
       message: `"${s.title}": say who or what opposes the party, how they fight and what changes mid-scene.`,
     }));
 
+/**
+ * A clock that only moves when the party takes risks lets cautious players
+ * explore forever. It needs something that advances it on a schedule.
+ */
+const SCHEDULED =
+  /\b(each|every|end of|after|at|by)\b[^.;]*?\b(scenes?|hours?|nights?|days?|dawns?|dusks?|sunsets?|sunrises?|nightfall|midnight|noon|watch(es)?|milestones?|acts?|tides?|rounds?|turns?|bells?|chimes?|moons?)\b/i;
+
+const checkClockSchedule: GapCheck = (adventure) => {
+  const { clock } = adventure;
+  if (!clock) return [];
+  const essentialSceneSchedule =
+    /\bend of each essential scene after the opening\b/i.test(clock.advances);
+  const climaxArrivalSchedule = /\bwhen the party reaches the climax\b/i.test(
+    clock.advances,
+  );
+  const climaxMidpointSchedule = /\bhalfway through the climax\b/i.test(
+    clock.advances,
+  );
+  if (
+    essentialSceneSchedule &&
+    climaxArrivalSchedule &&
+    climaxMidpointSchedule
+  ) {
+    const climaxEvents = adventure.scenes.some(
+      (scene) => scene.kind === "climax",
+    )
+      ? 2
+      : 0;
+    const scheduledAdvances =
+      adventure.scenes.filter(
+        (scene) => scene.essential && scene.kind !== "opening",
+      ).length + climaxEvents;
+    if (scheduledAdvances >= clock.ticks.length) return [];
+    return [
+      {
+        area: "clock",
+        message: `The schedule only advances the clock ${scheduledAdvances} times on a cautious route, but it has ${clock.ticks.length} ticks. Add scheduled moments or reduce the clock to match.`,
+      },
+    ];
+  }
+  if (SCHEDULED.test(clock.advances)) return [];
+  return [
+    {
+      area: "clock",
+      message:
+        "The clock only moves when the party takes risks, so cautious play stops it. Add a schedule that advances it regardless (the end of each essential scene, or fixed moments such as each sunset), and keep risky choices as an extra push.",
+    },
+  ];
+};
+
+/** Act timings in prose must agree with the scene budget. */
+const ACT_MINUTES =
+  /\b(?:act|part)\s+(?:one|two|three|four|five|i{1,3}|iv|v|[1-5])\b[^.;\n]*?\b(\d{1,3})\s*(?:minutes|mins?)\b/gi;
+
+const checkPacing: GapCheck = (adventure) => {
+  const b = adventure.briefing;
+  const prose = [b.premise, b.prep, b.hook, b.objective, b.stakes].join("\n");
+  const acts = [...prose.matchAll(ACT_MINUTES)].map((m) => Number(m[1]));
+  if (acts.length < 2) return [];
+  const stated = acts.reduce((a, n) => a + n, 0);
+  const scenes = adventure.scenes.reduce((a, s) => a + s.minutes, 0);
+  if (stated === scenes) return [];
+  return [
+    {
+      area: "briefing",
+      message: `The briefing's act timings add up to ${stated} minutes, but the scenes add up to ${scenes}. Take times from the scene budget only, or remove the act timings.`,
+    },
+  ];
+};
+
+/**
+ * An Exploration one-shot needs a choice of route and somewhere optional to
+ * go, or it is a corridor with scenery.
+ */
+const checkExplorationRoutes: GapCheck = (adventure) => {
+  if (adventure.emphasis !== "Exploration" || adventure.scenes.length < 4) {
+    return [];
+  }
+  const branches = adventure.scenes.some(
+    (s) => s.kind !== "climax" && new Set(s.next).size >= 2,
+  );
+  const optional = adventure.scenes.some((s) => !s.essential);
+  return [
+    ...(branches
+      ? []
+      : [
+          {
+            area: "scene" as const,
+            message:
+              "This is an Exploration one-shot, but every scene leads straight to the next. Give at least one scene two routes onward with different risks and finds.",
+          },
+        ]),
+    ...(optional
+      ? []
+      : [
+          {
+            area: "scene" as const,
+            message:
+              "This is an Exploration one-shot with no optional location. Add one that holds a reward, a shortcut or useful information.",
+          },
+        ]),
+  ];
+};
+
+/** A rescue or promise the party cannot resolve during play. */
+const AFTER_PLAY =
+  /\b(after the (adventure|session|one-shot|game)|next session|in a (sequel|later adventure)|post-game|epilogue only)\b/i;
+
+const checkLateCommitments: GapCheck = (adventure) =>
+  (adventure.threads ?? [])
+    .filter((t) => AFTER_PLAY.test(t.payoff))
+    .map((t) => ({
+      area: "briefing" as const,
+      message: `"${t.setup}" only pays off after the adventure. Give the party a chance to resolve it during play, at a cost.`,
+    }));
+
+/** Two endings reached the same way leave the GM to decide between them. */
+const checkEndings: GapCheck = (adventure) => {
+  const gaps: OneShotGap[] = [];
+  const endings = adventure.endings.filter((e) => e.condition.trim());
+  for (let i = 0; i < endings.length; i++) {
+    for (let j = i + 1; j < endings.length; j++) {
+      if (textOverlap(endings[i].condition, endings[j].condition) >= 0.6) {
+        gaps.push({
+          area: "solution",
+          message: `"${endings[i].title}" and "${endings[j].title}" are reached in almost the same way. Say exactly what the party does differently to reach each.`,
+        });
+      }
+    }
+  }
+  return gaps;
+};
+
 export const INTEGRITY_CHECKS: GapCheck[] = [
   checkAntagonist,
   checkThreads,
+  checkLateCommitments,
   checkClockConsistency,
+  checkClockSchedule,
   checkEmphasis,
   checkOpposition,
+  checkExplorationRoutes,
+  checkEndings,
+  checkPacing,
 ];

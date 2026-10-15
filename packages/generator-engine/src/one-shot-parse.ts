@@ -4,6 +4,7 @@
  * and the time budget is rebuilt, so only the writing is taken on trust.
  */
 
+import { dedupeOneShot } from "./one-shot-dedupe";
 import { parseFencedJson } from "./llm-response-utils";
 import { normaliseTimeBudget, validateOneShot } from "./one-shot-validate";
 import type {
@@ -323,38 +324,40 @@ export function parseOneShotAdventure(
 
   const opening = rec(data.opening);
   const runningLate = strs(data.runningLate);
-  const adventure = normaliseTimeBudget({
-    version: 1,
-    title: str(data.title, "Untitled One-Shot"),
-    genre: resolved.genre,
-    system: resolved.system,
-    emphasis: resolved.emphasis,
-    structure: resolved.structure,
-    tone: resolved.tone,
-    durationMinutes: resolved.durationMinutes,
-    partySize: resolved.partySize,
-    partyLevel: resolved.partyLevel,
-    briefing: parseBriefing(data.briefing),
-    opening: {
-      situation: str(opening.situation, scenes[0].situation),
-      readAloud: str(opening.readAloud) || undefined,
-      firstDecision: str(opening.firstDecision),
-      involvement: strs(opening.involvement),
-    },
-    scenes,
-    npcs,
-    clues,
-    endings: list(data.endings).map(parseEnding),
-    antagonistId: findAntagonist(data.antagonistId, npcs),
-    threads: parseThreads(data.threads, (id) => sceneIds.get(id)),
-    solution: parseSolution(data.solution, (id) => sceneIds.get(id)),
-    clock: parseClock(data.clock),
-    epilogueHook: str(data.epilogueHook) || undefined,
-    timeBudget: {
-      bufferMinutes: 0,
-      runningLate: runningLate.length ? runningLate : DEFAULT_RUNNING_LATE,
-    },
-  });
+  const adventure = dedupeOneShot(
+    normaliseTimeBudget({
+      version: 1,
+      title: str(data.title, "Untitled One-Shot"),
+      genre: resolved.genre,
+      system: resolved.system,
+      emphasis: resolved.emphasis,
+      structure: resolved.structure,
+      tone: resolved.tone,
+      durationMinutes: resolved.durationMinutes,
+      partySize: resolved.partySize,
+      partyLevel: resolved.partyLevel,
+      briefing: parseBriefing(data.briefing),
+      opening: {
+        situation: str(opening.situation, scenes[0].situation),
+        readAloud: str(opening.readAloud) || undefined,
+        firstDecision: str(opening.firstDecision),
+        involvement: strs(opening.involvement),
+      },
+      scenes,
+      npcs,
+      clues,
+      endings: list(data.endings).map(parseEnding),
+      antagonistId: findAntagonist(data.antagonistId, npcs),
+      threads: parseThreads(data.threads, (id) => sceneIds.get(id)),
+      solution: parseSolution(data.solution, (id) => sceneIds.get(id)),
+      clock: parseClock(data.clock),
+      epilogueHook: str(data.epilogueHook) || undefined,
+      timeBudget: {
+        bufferMinutes: 0,
+        runningLate: runningLate.length ? runningLate : DEFAULT_RUNNING_LATE,
+      },
+    }),
+  );
   const errors = validateOneShot(adventure).filter(
     (i) => i.severity === "error",
   );
