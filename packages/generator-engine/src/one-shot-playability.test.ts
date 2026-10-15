@@ -131,17 +131,38 @@ describe("checkPlayability", () => {
 });
 
 describe("rendering", () => {
-  it("counts the opening inside scene 1 and lists the finale and clock", () => {
+  const count = (text: string, part: string) => text.split(part).length - 1;
+
+  it("keeps the adventure view for reading and counts the opening in scene 1", () => {
     const a = local();
     const md = renderOneShotMarkdown(a);
     expect(md).not.toContain("## Opening");
     expect(md).toContain("counted in its time");
     expect(md).toContain("**First decision:**");
-    expect(md).toContain("## How the Finale Works");
-    expect(md).toContain(`## ${a.clock!.name}`);
-    expect(md).toContain("## Questions Players Will Ask");
-    expect(md).toContain("**What counts as success:**");
+    expect(md).toContain("## The Finale");
+    expect(md).toContain("(antagonist)");
+    expect(md).not.toContain("Success:");
     expect(md).not.toContain("## Before You Run It");
+  });
+
+  it("puts adjudication, the finale procedure, clock and threads in the GM view", () => {
+    const a = local();
+    const sheet = renderGmSheet(a);
+    expect(sheet).toContain("## Running Each Scene");
+    expect(sheet).toContain("- Success:");
+    expect(sheet).toContain("## How the Finale Works");
+    expect(sheet).toContain(`## ${a.clock!.name}`);
+    expect(sheet).toContain("**Point of no return:**");
+    expect(sheet).toContain("## Threads to Pay Off");
+    expect(sheet).toContain("## Questions Players Will Ask");
+    expect(sheet).toContain("never have to recite exact words");
+  });
+
+  it("shows how long the session runs on essential scenes alone", () => {
+    const a = local({ durationHours: 4 });
+    expect(a.scenes.some((s) => !s.essential)).toBe(true);
+    expect(renderOneShotMarkdown(a)).toContain("Essential scenes alone");
+    expect(renderGmSheet(a)).toContain("essential scenes alone run");
   });
 
   it("lists unresolved gaps for the GM", () => {
@@ -152,21 +173,27 @@ describe("rendering", () => {
     const a = local({ durationHours: 4 });
     a.scenes.at(-1)!.skip = "Optional scenes only";
     expect(renderOneShotMarkdown(a)).not.toContain("Optional scenes only");
+    expect(renderGmSheet(a)).not.toContain("Optional scenes only");
   });
 
-  it("does not double up 'wants' in the cheat sheet", () => {
+  it("does not double up 'wants' for the antagonist", () => {
     const a = local();
-    a.npcs[0].motivation = "He wants the bell silenced.";
+    const villain = a.npcs.find((n) => n.id === a.antagonistId)!;
+    villain.motivation = "He wants the bell silenced.";
     const sheet = renderGmSheet(a);
     expect(sheet).toContain("He wants the bell silenced.");
-    expect(sheet).not.toMatch(/wants he wants/i);
+    expect(sheet).not.toMatch(/wants:? he wants/i);
   });
 
-  it("uses short clue labels in the clue list and cheat sheet", () => {
+  it("states each clue's full text at most once per view", () => {
     const a = local();
+    const md = renderOneShotMarkdown(a);
     const sheet = renderGmSheet(a);
-    expect(sheet).toContain(a.clues[0].label);
-    expect(sheet).not.toContain(a.clues[1].text);
+    for (const clue of a.clues) {
+      expect(sheet).toContain(clue.label);
+      expect(count(sheet, clue.text)).toBeLessThanOrEqual(1);
+      expect(count(md, clue.text)).toBeLessThanOrEqual(clue.routes.length);
+    }
   });
 });
 

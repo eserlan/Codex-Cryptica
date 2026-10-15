@@ -319,6 +319,7 @@ export type {
   OneShotGap,
   OneShotSolution,
   OneShotClock,
+  OneShotThread,
 } from "./one-shot-types";
 export {
   buildRumourPrompt,

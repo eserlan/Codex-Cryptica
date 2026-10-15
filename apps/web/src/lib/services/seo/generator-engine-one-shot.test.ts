@@ -75,7 +75,7 @@ describe("DefaultGeneratorEngine one-shot playability", () => {
     expect(calls).toHaveLength(2);
     expect(calls[1]).toContain("Give the threat a countdown");
     expect(out.oneShot?.clock?.name).toBe("The Tolls");
-    expect(out.content).toContain("## The Tolls");
+    expect(out.lore).toContain("## The Tolls");
   });
 
   it("keeps the first draft and lists its gaps when the repair fails", async () => {
@@ -87,14 +87,20 @@ describe("DefaultGeneratorEngine one-shot playability", () => {
     expect(out.content).toContain("## Before You Run It");
   });
 
-  it("skips the repair call when nothing is missing", async () => {
-    const full = JSON.stringify(
-      generateOneShotLocal({ durationHours: 3 }).oneShot,
-    );
-    const { client, calls } = modelInSequence([full]);
+  it("always reviews, and keeps the draft when the review changes nothing", async () => {
+    const options = {
+      durationHours: 3,
+      genre: "Horror",
+      emphasis: "Investigation / mystery",
+    };
+    const draft = generateOneShotLocal(options).oneShot!;
+    const { client, calls } = modelInSequence([JSON.stringify(draft), "{}"]);
     const e = new DefaultGeneratorEngine(client as never);
-    await e.generateOneShot({ durationHours: 3, useAI: true });
-    expect(calls).toHaveLength(1);
+    const out = await e.generateOneShot({ ...options, useAI: true });
+    expect(calls).toHaveLength(2);
+    expect(calls[1]).toContain("Commitments");
+    expect(calls[1]).not.toContain("automatic check found");
+    expect(out.oneShot?.title).toBe(draft.title);
   });
 });
 

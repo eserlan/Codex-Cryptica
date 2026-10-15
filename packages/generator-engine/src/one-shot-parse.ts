@@ -12,6 +12,7 @@ import type {
   OneShotClock,
   OneShotQuestion,
   OneShotSolution,
+  OneShotThread,
   OneShotClue,
   OneShotEnding,
   OneShotNpc,
@@ -61,6 +62,7 @@ export function parseChallenge(
     description: str(c.description, fallback?.description ?? ""),
     success: str(c.success, fallback?.success ?? "") || undefined,
     otherApproaches: other.length ? other : fallback?.otherApproaches,
+    opposition: str(c.opposition, fallback?.opposition ?? "") || undefined,
     failForward: str(
       c.failForward,
       fallback?.failForward ?? DEFAULT_FAIL_FORWARD,
@@ -101,7 +103,23 @@ function skipNote(raw: unknown, scene: OneShotScene): string | undefined {
   return skip;
 }
 
-function parseNpc(raw: unknown, i: number): OneShotNpc {
+const NPC_DETAIL = ["backstory", "tactics", "stopIf", "limits"] as const;
+
+/** Merge the optional NPC detail fields, keeping `fallback` where `raw` has none. */
+export function npcDetail(
+  raw: unknown,
+  fallback: Partial<OneShotNpc> = {},
+): Partial<OneShotNpc> {
+  const n = rec(raw);
+  const out: Partial<OneShotNpc> = {};
+  for (const key of NPC_DETAIL) {
+    const value = str(n[key], fallback[key] ?? "");
+    if (value) out[key] = value;
+  }
+  return out;
+}
+
+export function parseNpc(raw: unknown, i: number): OneShotNpc {
   const n = rec(raw);
   return {
     id: str(n.id, `npc-${i + 1}`),
@@ -111,7 +129,17 @@ function parseNpc(raw: unknown, i: number): OneShotNpc {
     knows: str(n.knows),
     reaction: str(n.reaction),
     cues: str(n.cues),
+    ...npcDetail(n),
   };
+}
+
+const ANTAGONIST_ROLE = /villain|antagonist|cultist|tyrant|mastermind/i;
+
+/** The model's antagonistId if it names a real NPC, else a role-based guess. */
+function findAntagonist(raw: unknown, npcs: OneShotNpc[]): string | undefined {
+  const id = str(raw);
+  if (npcs.some((n) => n.id === id)) return id;
+  return npcs.find((n) => ANTAGONIST_ROLE.test(n.role))?.id;
 }
 
 function parseClue(
@@ -230,6 +258,24 @@ export function parseSolution(
   };
 }
 
+export function parseThreads(
+  raw: unknown,
+  sceneIds: (id: string) => string | undefined,
+): OneShotThread[] {
+  return list(raw)
+    .map((t) => {
+      const thread = rec(t);
+      return {
+        setup: str(thread.setup),
+        payoff: str(thread.payoff),
+        sceneIds: strs(thread.sceneIds)
+          .map(sceneIds)
+          .filter((id): id is string => !!id),
+      };
+    })
+    .filter((t) => t.setup);
+}
+
 export function parseClock(raw: unknown): OneShotClock | undefined {
   const c = rec(raw);
   const ticks = list(c.ticks)
@@ -241,6 +287,7 @@ export function parseClock(raw: unknown): OneShotClock | undefined {
     advances: str(c.advances),
     ticks,
     slow: str(c.slow),
+    deadline: str(c.deadline) || undefined,
   };
 }
 
@@ -298,6 +345,8 @@ export function parseOneShotAdventure(
     npcs,
     clues,
     endings: list(data.endings).map(parseEnding),
+    antagonistId: findAntagonist(data.antagonistId, npcs),
+    threads: parseThreads(data.threads, (id) => sceneIds.get(id)),
     solution: parseSolution(data.solution, (id) => sceneIds.get(id)),
     clock: parseClock(data.clock),
     epilogueHook: str(data.epilogueHook) || undefined,
@@ -337,6 +386,7 @@ export function mergeNpcReply(npc: OneShotNpc, raw: unknown): OneShotNpc {
   const d = rec(raw);
   return {
     ...npc,
+    ...npcDetail(d, npc),
     motivation: str(d.motivation, npc.motivation),
     knows: str(d.knows, npc.knows),
     reaction: str(d.reaction, npc.reaction),
