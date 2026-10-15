@@ -141,4 +141,71 @@ describe("generator save payloads", () => {
       tovMechanics: tovMagicItem.mechanics?.data,
     });
   });
+
+  it("appends sanitized Tales of the Valiant encounter mechanics and metadata on save", () => {
+    const tovEncounter: GeneratorOutput = {
+      ...baseOutput,
+      type: "event",
+      kind: "encounter",
+      systemId: "tales-of-the-valiant",
+      mechanics: {
+        systemId: "tales-of-the-valiant",
+        kind: "tov-encounter",
+        isHomebrew: false,
+        data: {
+          qualitativeDifficulty: "Dangerous for 4 Level 3 characters",
+          recommendedCrRange: "CR 1–2 minions with a CR 4 commander",
+          suggestedCreatures: [
+            {
+              name: "Shadow Hound",
+              cr: "1",
+              count: 3,
+              role: "Skirmisher",
+              isHomebrew: false,
+            },
+            {
+              name: "Gloom Caller",
+              cr: "4",
+              count: 1,
+              role: "Controller / Boss",
+              isHomebrew: true,
+            },
+          ],
+          tacticalAdvice: "The caller blinds foes while hounds attack flanks.",
+          doomNotes: "Spend 2 Doom to summon a Shadow Minion.",
+          isHomebrew: false,
+        },
+      },
+    };
+
+    const payload = buildGeneratorSavePayload(tovEncounter, {
+      content: "### What the Players See\nGloom gathers in the corridor.",
+      lore: "### Situation & Stakes\nThe pack hunts here.",
+    });
+
+    expect(payload.lore).toContain(
+      "### Game Mechanics & Challenge Guidance (Tales of the Valiant)",
+    );
+    expect(payload.lore).toContain(
+      "- **Challenge Assessment:** Dangerous for 4 Level 3 characters",
+    );
+    expect(payload.lore).toContain(
+      "- **Recommended CR Distribution:** CR 1–2 minions with a CR 4 commander",
+    );
+    expect(payload.lore).toContain("- **Suggested Participants:**");
+    expect(payload.lore).toContain("  - 3x Shadow Hound (CR 1, Skirmisher)");
+    expect(payload.lore).toContain(
+      "  - 1x Gloom Caller (CR 4, Controller / Boss) *(Homebrew)*",
+    );
+    expect(payload.lore).toContain(
+      "- **Tactical Guidance:** The caller blinds foes while hounds attack flanks.",
+    );
+    expect(payload.lore).toContain(
+      "- **Doom Guidance:** Spend 2 Doom to summon a Shadow Minion.",
+    );
+    expect(payload.systemId).toBe("tales-of-the-valiant");
+    expect(payload.metadata).toEqual({
+      tovMechanics: tovEncounter.mechanics?.data,
+    });
+  });
 });

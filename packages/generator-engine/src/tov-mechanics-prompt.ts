@@ -1,13 +1,69 @@
 import { TOV_SYSTEM_ID } from "schema";
 
 export type TovPromptKind =
-  "npc-quick" | "npc-leveled" | "creature" | "magic-item";
+  "npc-quick" | "npc-leveled" | "creature" | "magic-item" | "encounter";
+
+export interface TovEncounterPromptOptions {
+  partySize?: number;
+  partyLevel?: number;
+}
+
+/**
+ * Builds the mandatory Tales of the Valiant (BFRD) encounter guidance prompt instructions
+ * when generating encounters under gameSystem === "tales-of-the-valiant".
+ */
+export function buildTovEncounterPromptInstructions(
+  options: TovEncounterPromptOptions = {},
+): string {
+  const partySize = options.partySize ?? 4;
+  const partyLevel = options.partyLevel ?? 3;
+
+  return `GAME SYSTEM RULES LAYER: Tales of the Valiant (BFRD)
+Party Profile: ${partySize} characters at Level ${partyLevel}.
+You MUST generate an accompanying mechanical rules block under the \`mechanics\` key in your JSON response.
+Rules constraints:
+1. All rules content MUST strictly follow the Black Flag Reference Document (BFRD) / Tales of the Valiant standards under CC BY 4.0.
+2. Provide qualitative GM-facing challenge guidance tailored to the party (${partySize} characters at Level ${partyLevel}). Use BFRD challenge tiers (Trivial, Moderate, Dangerous, Deadly).
+3. DO NOT invent rigid proprietary mathematical XP budget formulas. Provide qualitative action economy and Challenge Rating (CR) distribution advice instead.
+4. Under \`suggestedCreatures\`, recommend valid BFRD-aligned adversaries and NPCs (e.g. built-in ToV monsters/NPCs) with their individual CR, suggested count, tactical role, and whether they are standard BFRD or homebrew.
+5. If a boss or high-threat creature is recommended that uses Doom points, describe appropriate Doom expenditure in \`doomNotes\`. Doom points are scoped strictly to individual creatures/abilities, NOT a universal GM pool.
+6. If you introduce custom actions or creatures not from core BFRD baselines, mark them with \`isHomebrew: true\`.
+
+Under \`mechanics\`, provide an Encounter Guidance block:
+"mechanics": {
+  "systemId": "${TOV_SYSTEM_ID}",
+  "kind": "tov-encounter",
+  "isHomebrew": false,
+  "data": {
+    "qualitativeDifficulty": "string (e.g. 'Moderate challenge for 4 Level 3 characters')",
+    "recommendedCrRange": "string (e.g. 'CR 1/2 to CR 2 minions with a single CR 4 leader')",
+    "suggestedCreatures": [
+      {
+        "name": "string",
+        "cr": "string",
+        "count": number,
+        "role": "string",
+        "isHomebrew": false
+      }
+    ],
+    "tacticalAdvice": "string GM tactical notes",
+    "doomNotes": "string (optional Doom usage notes for boss creatures)",
+    "isHomebrew": false
+  }
+}`;
+}
 
 /**
  * Builds the mandatory Tales of the Valiant (BFRD) rules layer prompt instructions
  * to be appended to generator prompts when gameSystem === "tales-of-the-valiant".
  */
-export function buildTovPromptInstructions(kind: TovPromptKind): string {
+export function buildTovPromptInstructions(
+  kind: TovPromptKind,
+  encounterOptions?: TovEncounterPromptOptions,
+): string {
+  if (kind === "encounter") {
+    return buildTovEncounterPromptInstructions(encounterOptions);
+  }
   const commonHeader = `GAME SYSTEM RULES LAYER: Tales of the Valiant (BFRD)
 You MUST generate an accompanying mechanical rules block under the \`mechanics\` key in your JSON response.
 Rules constraints:

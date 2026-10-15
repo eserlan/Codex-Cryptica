@@ -848,6 +848,9 @@
               <input
                 id={inputId}
                 type="number"
+                min={option.min}
+                max={option.max}
+                step={option.step}
                 value={numberValue(option.id)}
                 oninput={(event) => {
                   const rawValue = (event.currentTarget as HTMLInputElement)
