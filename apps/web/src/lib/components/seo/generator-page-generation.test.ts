@@ -322,6 +322,31 @@ describe("generator-page-generation", () => {
       );
     });
 
+    it("passes one-shot progress through and resets it at the start", async () => {
+      const engine = makeFakeEngine();
+      engine.generateOneShot = vi.fn().mockResolvedValue({ title: "x" });
+      const onOneShotProgress = vi.fn();
+      const handlers = createGeneratorHandlers(
+        makeCtx({
+          engine,
+          onOneShotProgress,
+          oneShot: { durationHours: "4", partySize: "5" },
+        }),
+      );
+
+      await handlers["one-shot-adventure-generator"](true);
+
+      expect(onOneShotProgress).toHaveBeenCalledWith(null);
+      expect(engine.generateOneShot).toHaveBeenCalledWith(
+        expect.objectContaining({
+          useAI: true,
+          durationHours: 4,
+          partySize: 5,
+          onProgress: onOneShotProgress,
+        }),
+      );
+    });
+
     it("maps the tome form hazard to the engine's primaryHazard option", async () => {
       const engine = makeFakeEngine();
       const handlers = createGeneratorHandlers(makeCtx({ engine }));

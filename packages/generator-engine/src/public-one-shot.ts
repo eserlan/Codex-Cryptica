@@ -731,7 +731,19 @@ export function generateOneShotLocal(
 // AI prompt + parse
 // ---------------------------------------------------------------------------
 
-const EMPHASIS_HINT: Record<string, string> = {
+/** The resolved options as a prompt block, shared by every one-shot prompt. */
+export function describeOneShotOptions(resolved: ResolvedOneShot): string {
+  return `Options:
+- Genre: ${resolved.genre}
+- System: ${resolved.system}${resolved.system === "System-neutral" ? " (no stat blocks, DCs or rules text)" : " (do NOT invent stat blocks, DCs or rules; leave mechanics to the GM)"}
+- Session length: ${resolved.durationMinutes} minutes
+- Players: ${resolved.partySize}${resolved.partyLevel ? `, ${resolved.partyLevel}` : ""}
+- Emphasis: ${resolved.emphasis}
+- Structure: ${resolved.structure}
+${resolved.tone ? `- Tone: ${resolved.tone}\n` : ""}${resolved.premise ? `- Starting premise (keep it): ${resolved.premise}\n` : ""}${resolved.boundaries ? `- Content boundaries (never violate): ${resolved.boundaries}\n` : ""}${formatCampaignContextBlock(resolved.campaignContext)}`;
+}
+
+export const EMPHASIS_HINT: Record<string, string> = {
   Action:
     "at least half the scenes after the opening are combat or hazard, with enemy tactics, battlefield hazards and shifting conditions",
   "Investigation / mystery":
@@ -756,14 +768,7 @@ export function buildOneShotPrompt(
   const count = sceneCountFor(resolved.structure, resolved.durationMinutes);
   const buffer = bufferFor(resolved.durationMinutes);
   const userMessage = `Generate a run-ready, single-session RPG one-shot adventure as JSON.
-Options:
-- Genre: ${resolved.genre}
-- System: ${resolved.system}${resolved.system === "System-neutral" ? " (no stat blocks, DCs or rules text)" : " (do NOT invent stat blocks, DCs or rules; leave mechanics to the GM)"}
-- Session length: ${resolved.durationMinutes} minutes
-- Players: ${resolved.partySize}${resolved.partyLevel ? `, ${resolved.partyLevel}` : ""}
-- Emphasis: ${resolved.emphasis}
-- Structure: ${resolved.structure}
-${resolved.tone ? `- Tone: ${resolved.tone}\n` : ""}${resolved.premise ? `- Starting premise (keep it): ${resolved.premise}\n` : ""}${resolved.boundaries ? `- Content boundaries (never violate): ${resolved.boundaries}\n` : ""}${formatCampaignContextBlock(resolved.campaignContext)}
+${describeOneShotOptions(resolved)}
 
 Rules:
 - Exactly ${count} scenes. The first has kind "opening", the last "climax", the rest "middle".

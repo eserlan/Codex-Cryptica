@@ -2,6 +2,7 @@
   import type { Snippet } from "svelte";
   import { browser } from "$app/environment";
   import type { GeneratorOutput } from "$lib/services/seo/generator-engine";
+  import type { OneShotProgressStep } from "generator-engine";
   import type { MarkdownSectionForCopy } from "$lib/components/seo/markdown-sections";
   import { splitMarkdownForCopy } from "$lib/components/seo/markdown-sections";
   import { getGeneratorDocumentLayout } from "$lib/components/seo/generator-document-layout";
@@ -56,6 +57,7 @@
     generate,
     formFields,
     outputExtras = undefined,
+    progressSteps = null,
     worldTheme = "workspace",
     initialDraft = null,
     variant = "default",
@@ -104,6 +106,8 @@
     outputExtras?: Snippet<
       [GeneratorOutput, (output: GeneratorOutput) => void, boolean]
     >;
+    /** Live steps of a staged generation, shown in the output card. */
+    progressSteps?: OneShotProgressStep[] | null;
     worldTheme?: string;
     initialDraft?: GeneratorOutput | null;
     variant?: "default" | "names";
@@ -344,6 +348,7 @@
         contextTrimmed={contextSelection.trimmed}
         onDismissAiFallback={session.dismissAiFallback}
         onRetryAi={() => void session.handleGenerate()}
+        {progressSteps}
         onSaveToCodex={save.handleSaveToCodex}
         onRefine={when(canFollowUp, refinement.openForCurrentOutput)}
         onCopyMarkdown={clipboard.handleCopyMarkdown}

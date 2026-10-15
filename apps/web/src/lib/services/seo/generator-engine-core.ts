@@ -29,17 +29,13 @@ import {
   buildComicBookEventPrompt,
   parseComicBookEventResponse,
   generateComicBookEventLocal,
-  buildOneShotPrompt,
-  parseOneShotResponse,
   generateOneShotLocal,
   regenerateOneShotLocal,
   buildOneShotRegenPrompt,
   applyOneShotRegenResponse,
-  checkPlayability,
-  buildOneShotRepairPrompt,
-  applyOneShotRepair,
-  isReadableRepair,
   oneShotToOutput,
+  runOneShotStages,
+  type OneShotProgressStep,
   type OneShotAdventure,
   type OneShotGeneratorOptions,
   type OneShotRegenResult,
@@ -446,67 +442,51 @@ export class GeneratorEngineCore extends GeneratorEngineBase {
     );
   }
 
+  /**
+   * One-shots are generated in stages (core, plan, finale, scenes and cast,
+   * review) so each call stays short and each part is written knowing the
+   * earlier ones. `onProgress` reports each step for the page to show. Only
+   * a failed core or plan falls back to the local generator; a later part
+   * that fails is written from templates and named in `aiPartialFallback`.
+   */
   async generateOneShot(
-    options: OneShotGeneratorOptions & { useAI?: boolean } = {},
+    options: OneShotGeneratorOptions & {
+      useAI?: boolean;
+      onProgress?: (steps: OneShotProgressStep[]) => void;
+    } = {},
   ): Promise<GeneratorOutput> {
-    const { useAI, ...oneShotOptions } = options;
+    const { useAI, onProgress, ...oneShotOptions } = options;
     const recentInputs = generationInputHistoryStore.recent("one-shot");
     return this.runWithAIFallback(
       useAI,
       async () => {
-        const { systemInstruction, userMessage, resolved } = buildOneShotPrompt(
+        const result = await runOneShotStages(
           oneShotOptions,
+          {
+            call: ({ systemInstruction, userMessage }) =>
+              this.runModel(
+                systemInstruction,
+                userMessage,
+                ONE_SHOT_GENERATION_CONFIG,
+              ),
+            onProgress,
+          },
           getSessionContext() + formatRecentInputsNote(recentInputs),
         );
         generationInputHistoryStore.record(
           "one-shot",
-          summarizeResolvedInputs(resolved),
+          summarizeResolvedInputs(result.resolved),
         );
-        const text = await this.runModel(
-          systemInstruction,
-          userMessage,
-          ONE_SHOT_GENERATION_CONFIG,
-        );
-        return this.repairOneShot(
-          parseOneShotResponse(text, resolved) as GeneratorOutput,
-        );
+        return {
+          ...oneShotToOutput(result.adventure),
+          ...(result.reviewSkipped ? { aiReviewSkipped: true } : {}),
+          ...(result.fallbackParts.length
+            ? { aiPartialFallback: result.fallbackParts }
+            : {}),
+        };
       },
       () => generateOneShotLocal(oneShotOptions),
     );
-  }
-
-  /**
-   * Editorial and GM review: the model reads the whole adventure back,
-   * checks it holds together across scenes (threads, antagonist, clock,
-   * emphasis), fills the gaps the playability check found and tightens
-   * repeated prose. Always runs on the AI path. A review that fails or
-   * can't be read keeps the first draft, which lists any remaining gaps for
-   * the GM, and is flagged so the page can say the review didn't finish.
-   */
-  private async repairOneShot(
-    output: GeneratorOutput,
-  ): Promise<GeneratorOutput> {
-    const adventure = output.oneShot;
-    if (!adventure) return output;
-    const gaps = checkPlayability(adventure);
-    try {
-      const { systemInstruction, userMessage } = buildOneShotRepairPrompt(
-        adventure,
-        gaps,
-      );
-      const text = await this.runModel(
-        systemInstruction,
-        userMessage,
-        ONE_SHOT_GENERATION_CONFIG,
-      );
-      if (!isReadableRepair(text)) return { ...output, aiReviewSkipped: true };
-      const repaired = applyOneShotRepair(adventure, text);
-      return repaired === adventure
-        ? output
-        : (oneShotToOutput(repaired) as GeneratorOutput);
-    } catch {
-      return { ...output, aiReviewSkipped: true };
-    }
   }
 
   /**

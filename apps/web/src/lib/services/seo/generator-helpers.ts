@@ -469,6 +469,8 @@ export interface GeneratorOutput {
   aiFallback?: boolean;
   /** The AI draft is complete but its editorial review didn't finish. */
   aiReviewSkipped?: boolean;
+  /** Parts written from templates because their AI step didn't finish. */
+  aiPartialFallback?: string[];
   /** Structured major-body list for star systems, driving the mechanical side-view diagram. */
   bodies?: StarSystemBody[];
   /** Primary star's spectral class/type (e.g. "G", "M", "Neutron Star"), for star systems. */
