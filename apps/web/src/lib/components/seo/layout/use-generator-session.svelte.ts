@@ -153,13 +153,15 @@ export function useGeneratorSession(inputs: GeneratorSessionInputs) {
   }
 
   /** AI only when the user opted in *and* we are online, read at click time. */
-  function shouldUseAI() {
+  function shouldUseAI(forceAI = false) {
     // Read the live status at click time so a generation triggered before
     // status settles still routes correctly (#1494).
-    return useAI && (browser ? navigator.onLine : onlineStatus.current);
+    return (
+      (forceAI || useAI) && (browser ? navigator.onLine : onlineStatus.current)
+    );
   }
 
-  async function handleGenerate() {
+  async function handleGenerate(options: { forceAI?: boolean } = {}) {
     if (isGenerating) return;
     userGenerated = true;
     userGenerationSucceeded = false;
@@ -172,7 +174,7 @@ export function useGeneratorSession(inputs: GeneratorSessionInputs) {
     // silent handleGenerateOnMount() seed draft (that path never sets
     // userGenerated / calls handleGenerate at all).
     trackEvent("generator_started", { generator_type: generatorType });
-    const useAINow = shouldUseAI();
+    const useAINow = shouldUseAI(options.forceAI);
     try {
       const onPreview = (preview: GeneratorOutput) => {
         generatedData = preview;

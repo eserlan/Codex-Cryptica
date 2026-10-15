@@ -157,7 +157,8 @@ describe("DefaultGeneratorEngine staged one-shot", () => {
   });
 
   it("flags the review as skipped when it fails or can't be read", async () => {
-    for (const review of [() => null, () => "I could not review this."]) {
+    const replies = [() => null, () => "I could not review this."];
+    for (const review of [...replies, () => "null", () => "[]"]) {
       const e = new DefaultGeneratorEngine(
         stagedModel({ review }).client as never,
       );
@@ -165,6 +166,14 @@ describe("DefaultGeneratorEngine staged one-shot", () => {
       expect(out.aiReviewSkipped).toBe(true);
       expect(out.title).toBe("The Drowned Choir");
     }
+  });
+
+  it("treats an empty review as reviewed", async () => {
+    const e = new DefaultGeneratorEngine(
+      stagedModel({ review: () => "{}" }).client as never,
+    );
+    const out = await e.generateOneShot({ ...stagedOptions, useAI: true });
+    expect(out.aiReviewSkipped).toBeUndefined();
   });
 
   it("uses the review's changes", async () => {

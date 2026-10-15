@@ -347,7 +347,7 @@
         copiedSectionId={clipboard.copiedSectionId}
         contextTrimmed={contextSelection.trimmed}
         onDismissAiFallback={session.dismissAiFallback}
-        onRetryAi={() => void session.handleGenerate()}
+        onRetryAi={() => void session.handleGenerate({ forceAI: true })}
         {progressSteps}
         onSaveToCodex={save.handleSaveToCodex}
         onRefine={when(canFollowUp, refinement.openForCurrentOutput)}
