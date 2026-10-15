@@ -76,6 +76,31 @@ describe("VTTTokenManager hex grid snapping", () => {
     expect(token.height).toBeCloseTo(cell, 1);
   });
 
+  it("keeps a snapped token centred on the nearest fitting hex at the map edge", () => {
+    const manager = hexManager("hex-pointy");
+    const position = manager.clampAndSnapPosition(
+      { x: -cell / 2, y: 1900 - cell / 2 },
+      { width: cell, height: cell },
+    );
+    const centre = {
+      x: position.x + position.width / 2,
+      y: position.y + position.height / 2,
+    };
+    const config = {
+      orientation: "pointy" as const,
+      size: 100,
+      offsetX: 0,
+      offsetY: 0,
+    };
+    const hexCentre = hexToPoint(pointToHex(centre, config), config);
+
+    expect(centre.x).toBeCloseTo(hexCentre.x, 1);
+    expect(centre.y).toBeCloseTo(hexCentre.y, 1);
+    expect(centre.y).toBe(1800);
+    expect(position.y).toBeGreaterThanOrEqual(-2000);
+    expect(position.y + position.height).toBeLessThanOrEqual(2000);
+  });
+
   it("rounds larger tokens to whole hexes and keeps them square", () => {
     const manager = hexManager("hex-flat");
     const token = manager.addToken(

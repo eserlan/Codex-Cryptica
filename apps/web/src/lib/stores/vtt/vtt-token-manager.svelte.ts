@@ -51,7 +51,7 @@ function roundTokenCoordinate(value: number) {
   return Math.round(value * factor) / factor;
 }
 
-function findBoundedHexTilePosition(
+function findBoundedHexPosition(
   targetCentre: Point,
   config: HexGridConfig,
   bounds: { width: number; height: number },
@@ -417,7 +417,7 @@ export class VTTTokenManager {
     if (mapStore.activeMap) {
       // Clamping the box directly moves it off-grid. Near an image edge, pick
       // the closest neighbouring whole cell that fits inside the map instead.
-      bounded = findBoundedHexTilePosition(
+      bounded = findBoundedHexPosition(
         targetCentre,
         config,
         mapStore.activeMap.dimensions,
@@ -549,11 +549,22 @@ export class VTTTokenManager {
     }
 
     // Always clamp to map bounds to prevent invisible placements
-    const clamped = clampPointToBounds(
-      { x: targetX, y: targetY },
-      activeMap.dimensions,
-      { width: targetWidth, height: targetHeight },
-    );
+    const clamped = hexConfig
+      ? findBoundedHexPosition(
+          {
+            x: targetX + targetWidth / 2,
+            y: targetY + targetHeight / 2,
+          },
+          hexConfig,
+          activeMap.dimensions,
+          targetWidth,
+          targetHeight,
+          { x: targetX, y: targetY },
+        )
+      : clampPointToBounds({ x: targetX, y: targetY }, activeMap.dimensions, {
+          width: targetWidth,
+          height: targetHeight,
+        });
 
     return {
       x: clamped.x,

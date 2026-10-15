@@ -157,15 +157,36 @@ describe("MapContextMenu appearance controls", () => {
 
       renderMenu();
       await fireEvent.click(screen.getByRole("menuitem", { name: "Resize" }));
-      await fireEvent.click(screen.getByRole("menuitem", { name: "2x2" }));
+      await fireEvent.click(screen.getByRole("menuitem", { name: "1x1" }));
 
       expect(mapSessionMock.updateToken).toHaveBeenCalledOnce();
-      const [updatedTokenId, update] = mapSessionMock.updateToken.mock.calls[0];
-      expect(updatedTokenId).toBe("token-1");
-      expect(update.width).toBeCloseTo(width);
-      expect(update.height).toBeCloseTo(height);
-      expect(update.x + update.width / 2).toBeCloseTo(snappedCentre.x);
-      expect(update.y + update.height / 2).toBeCloseTo(snappedCentre.y);
+      const [oneByOneTokenId, oneByOneUpdate] =
+        mapSessionMock.updateToken.mock.calls[0];
+      expect(oneByOneTokenId).toBe("token-1");
+      expect(oneByOneUpdate.width).toBeCloseTo(width / 2);
+      expect(oneByOneUpdate.height).toBeCloseTo(height / 2);
+      expect(oneByOneUpdate.x + oneByOneUpdate.width / 2).toBeCloseTo(
+        snappedCentre.x,
+      );
+      expect(oneByOneUpdate.y + oneByOneUpdate.height / 2).toBeCloseTo(
+        snappedCentre.y,
+      );
+
+      await fireEvent.click(screen.getByRole("menuitem", { name: "Resize" }));
+      await fireEvent.click(screen.getByRole("menuitem", { name: "2x2" }));
+
+      expect(mapSessionMock.updateToken).toHaveBeenCalledTimes(2);
+      const [twoByTwoTokenId, twoByTwoUpdate] =
+        mapSessionMock.updateToken.mock.calls[1];
+      expect(twoByTwoTokenId).toBe("token-1");
+      expect(twoByTwoUpdate.width).toBeCloseTo(width);
+      expect(twoByTwoUpdate.height).toBeCloseTo(height);
+      expect(twoByTwoUpdate.x + twoByTwoUpdate.width / 2).toBeCloseTo(
+        snappedCentre.x,
+      );
+      expect(twoByTwoUpdate.y + twoByTwoUpdate.height / 2).toBeCloseTo(
+        snappedCentre.y,
+      );
     },
   );
 
