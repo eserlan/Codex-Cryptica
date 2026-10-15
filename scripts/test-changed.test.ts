@@ -40,12 +40,12 @@ describe("test-changed", () => {
     expect(groups.get("root")).toEqual(["scripts/baz.test.ts"]);
   });
 
-  test("groups nested worker tests by their package workspace", () => {
-    const files = [
-      "apps/workers/oracle-proxy/src/llm/adaptors/gemini-adaptor.test.ts",
-    ];
-    const groups = groupTestsByWorkspace(files);
-    expect(groups.get("apps/workers/oracle-proxy")).toEqual(files);
+  test("groups nested app tests by their package root", () => {
+    const file =
+      "apps/workers/oracle-proxy/src/llm/adaptors/gemini-adaptor.test.ts";
+    const groups = groupTestsByWorkspace([file]);
+
+    expect(groups.get("apps/workers/oracle-proxy")).toEqual([file]);
   });
 
   test("excludes Playwright specs from unit-test targets", () => {

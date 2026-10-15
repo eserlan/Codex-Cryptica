@@ -83,16 +83,15 @@ export function groupTestsByWorkspace(testFiles, root = process.cwd()) {
 
   for (const file of testFiles) {
     const normalized = file.replace(/\\/g, "/");
-    const parts = normalized.split("/");
     let workspace = "root";
 
-    // Workspace packages can be nested below apps/<name> (for example,
-    // apps/workers/oracle-proxy), so resolve the nearest package manifest.
-    for (let length = parts.length - 1; length > 0; length -= 1) {
-      const candidate = parts.slice(0, length).join("/");
-      if (existsSync(resolve(root, candidate, "package.json"))) {
-        workspace = candidate;
-        break;
+    const parts = normalized.split("/");
+    if (parts[0] === "apps" || parts[0] === "packages") {
+      for (let length = 2; length < parts.length; length += 1) {
+        const candidate = parts.slice(0, length).join("/");
+        if (existsSync(resolve(root, candidate, "package.json"))) {
+          workspace = candidate;
+        }
       }
     }
 
