@@ -75,7 +75,7 @@ function confinement(
     if (CONDITIONAL.test(sentence)) continue;
     for (const pattern of patterns) {
       const state = pattern.exec(sentence)?.[1];
-      if (state) return { state, explained: EXPLAINED.test(text) };
+      if (state) return { state, explained: EXPLAINED.test(sentence) };
     }
   }
   return undefined;

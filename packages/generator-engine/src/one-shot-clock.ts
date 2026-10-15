@@ -50,8 +50,14 @@ export interface ClockSchedule {
   alsoTimed: boolean;
 }
 
-const TIMED =
-  /\b(?:hours?|nights?|days?|dawns?|dusks?|sunsets?|sunrises?|nightfall|midnight|noon|watch(?:es)?|tides?|moons?|bells?|chimes?)\b/i;
+const RECURRING_TIME =
+  /\b(?:every|each|per)\s+(?:(?:one|two|three|four|five|six|\d+)\s+)?(?:hours?|nights?|days?|dawns?|dusks?|sunsets?|sunrises?|watches|tides?|moons?|bells?|chimes?)\b|\b(?:at|on)\s+(?:the\s+)?(?:dawn|dusk|sunset|sunrise|nightfall|midnight|noon)\b/i;
+const EXPLICIT_TIME_ADVANCE =
+  /\b(?:clock|it)\s+(?:advances?|ticks?|moves?)\b.{0,40}\b(?:after|in)\s+(?:(?:one|two|three|four|five|six|\d+)\s+)?(?:hours?|nights?|days?)\b|\b(?:after|in)\s+(?:(?:one|two|three|four|five|six|\d+)\s+)?(?:hours?|nights?|days?)\b.{0,40}\b(?:clock|it)\s+(?:advances?|ticks?|moves?)\b/i;
+
+function alsoFollowsTime(advances: string): boolean {
+  return RECURRING_TIME.test(advances) || EXPLICIT_TIME_ADVANCE.test(advances);
+}
 
 /**
  * Count the scheduled advances on the shortest cautious route: the essential
@@ -76,7 +82,7 @@ export function simulateClock(
     beforeFinale: before.length,
     inFinale: during.length,
     steps: [...before, ...during],
-    alsoTimed: TIMED.test(advances),
+    alsoTimed: alsoFollowsTime(advances),
   };
 }
 
