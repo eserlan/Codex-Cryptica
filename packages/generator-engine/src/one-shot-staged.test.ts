@@ -215,6 +215,13 @@ describe("runOneShotStages", () => {
     merge.next = [climax.id];
     climax.next = [];
     a.scenes = [opening, merge, branch, climax];
+    const captive = a.npcs[0];
+    branch.npcIds = [...new Set([...branch.npcIds, captive.id])];
+    branch.exit = [
+      { who: captive.id, kind: "npc", state: "captive", where: "the cellar" },
+    ];
+    merge.npcIds = [...new Set([...merge.npcIds, captive.id])];
+    merge.whereabouts = undefined;
 
     const prompts: StagePrompt[] = [];
     const run = fakeModel(a);
@@ -223,7 +230,17 @@ describe("runOneShotStages", () => {
       {
         call: (p) => {
           prompts.push(p);
-          return run.call(p);
+          return run.call(p).then((reply) => {
+            if (
+              stageOf(p) !== "scene" ||
+              !p.userMessage.includes(
+                `The scene to write: {"id":"${branch.id}"`,
+              )
+            ) {
+              return reply;
+            }
+            return JSON.stringify({ ...JSON.parse(reply), exit: branch.exit });
+          });
         },
       },
       "",
@@ -235,15 +252,23 @@ describe("runOneShotStages", () => {
         stageOf(p) === "scene" &&
         p.userMessage.includes(`The scene to write: {"id":"${merge.id}"`),
     )!;
-    expect(mergePrompt.userMessage).toContain(branch.title);
+    const historyText = mergePrompt.userMessage
+      .split("Earlier scenes on each route")[1]
+      .split("\nRules:")[0];
+    const histories = JSON.parse(
+      historyText.slice(historyText.indexOf(":") + 1).trim(),
+    ) as { id: string; title: string; exit: unknown }[][];
+    expect(histories.map((route) => route.map((scene) => scene.id))).toEqual([
+      [opening.id, branch.id],
+    ]);
+    expect(histories[0][1]).toEqual(
+      expect.objectContaining({
+        id: branch.id,
+        title: branch.title,
+        exit: branch.exit,
+      }),
+    );
 
-    const captive = a.npcs[0];
-    branch.npcIds = [...new Set([...branch.npcIds, captive.id])];
-    branch.exit = [
-      { who: captive.id, kind: "npc", state: "captive", where: "the cellar" },
-    ];
-    merge.npcIds = [...new Set([...merge.npcIds, captive.id])];
-    merge.whereabouts = undefined;
     expect(checkWhereabouts(a).map((gap) => gap.message)).toContainEqual(
       expect.stringContaining("still captive from an earlier scene"),
     );
