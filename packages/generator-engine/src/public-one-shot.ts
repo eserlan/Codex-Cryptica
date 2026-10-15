@@ -46,6 +46,11 @@ import {
   validateOneShot,
 } from "./one-shot-validate";
 import { renderGmSheet, renderOneShotMarkdown } from "./one-shot-render";
+import { checkPlayability } from "./one-shot-playability";
+import {
+  applyOneShotRepair,
+  buildOneShotRepairPrompt,
+} from "./one-shot-repair";
 import {
   mergeNpcReply,
   mergeSceneReply,
@@ -159,6 +164,54 @@ function fill(
     .replaceAll("{place}", ctx.place);
 }
 
+/** How to adjudicate each kind of challenge when the kit text is generic. */
+const ADJUDICATION: Record<
+  OneShotChallenge["type"],
+  { success: string; other: string[] }
+> = {
+  combat: {
+    success:
+      "The party wins when the opposition breaks, flees or is pinned down. Most foes give up when half of them are down or their leader falls.",
+    other: [
+      "Talking: an offer of safe passage ends the fight if the party has already shown it can win.",
+      "Stealth or tricks: getting past without a fight counts as success, but leaves the enemy behind them.",
+    ],
+  },
+  social: {
+    success:
+      "The party succeeds when it offers something the NPC wants, shows proof they already know, or names the NPC's fear out loud.",
+    other: [
+      "Lies: they work once; if caught, the NPC shuts down and the lead has to come from elsewhere.",
+      "Threats or force: the NPC talks, but tells the antagonist afterwards.",
+      "Magic or tech that compels: the NPC answers truthfully, and is terrified of the party from then on.",
+    ],
+  },
+  exploration: {
+    success:
+      "The party succeeds when it commits to a route and deals with what is on it; careful searching or a clever shortcut both count.",
+    other: [
+      "Force: smashing through works, but makes noise and costs time.",
+      "Magic, tech or a guide: skips the danger, at the price of a favour or a resource.",
+    ],
+  },
+  puzzle: {
+    success:
+      "The party succeeds when it explains the answer in its own words; it does not need the exact phrasing.",
+    other: [
+      "Brute force: breaking the mechanism opens the way, but destroys whatever it protected.",
+      "Asking for help: an NPC who appears in this scene can give a hint in exchange for a favour.",
+    ],
+  },
+  hazard: {
+    success:
+      "The party succeeds when everyone is through or out of danger; a good plan means only one person has to risk it.",
+    other: [
+      "Waiting it out: the hazard passes, but the clock advances.",
+      "Magic or gear: protects one person fully, or everyone partly.",
+    ],
+  },
+};
+
 interface FlavourCtx {
   seed: OneShotSeed;
   emphasis: string;
@@ -189,6 +242,10 @@ function sceneFlavour(
       ? {
           type: kit.challenges.climax.type,
           description: f(kit.challenges.climax.text),
+          success: f(
+            "The party wins by doing the steps in How the Finale Works, or by any other way through listed there.",
+          ),
+          otherApproaches: ADJUDICATION[kit.challenges.climax.type].other,
           failForward: f(
             "The party does not lose; {villain} gets part of what they want, and the party chooses which loss to accept before the ending.",
           ),
@@ -198,6 +255,8 @@ function sceneFlavour(
           return {
             type: c.type,
             description: f(c.text),
+            success: ADJUDICATION[c.type].success,
+            otherApproaches: ADJUDICATION[c.type].other,
             failForward: f(
               "The party still gets the lead, but it costs them: time, a favour, or {villain} learns they are coming.",
             ),
@@ -355,6 +414,11 @@ export function buildOneShotAdventure(
     `The truth: ${truth}`,
     `A way to stop ${villainName}: ${weakness}.`,
   ];
+  const clueLabels = [
+    "Who is behind it",
+    "What really happened",
+    `How to stop ${villainName}`,
+  ];
   const nonClimax = scenes.filter((s) => s.kind !== "climax");
   const essentialNonClimax = nonClimax.filter((s) => s.essential);
   const clues: OneShotClue[] = clueTexts.map((text, k) => {
@@ -362,6 +426,7 @@ export function buildOneShotAdventure(
     const b = nonClimax[(nonClimax.indexOf(a) + 1) % nonClimax.length];
     return {
       id: `clue-${k + 1}`,
+      label: clueLabels[k],
       text,
       essential: true,
       routes: [
@@ -420,6 +485,91 @@ export function buildOneShotAdventure(
     .filter(Boolean)
     .join(" ");
 
+  const climax = scenes[scenes.length - 1];
+  const solution = {
+    summary: f(
+      `${villainName} is stopped at ${climax.location} by putting the three vital clues to use.`,
+    ),
+    requirements: clues.map((c) => ({
+      what: c.label!,
+      detail: c.text,
+      sceneIds: c.routes.map((r) => r.sceneId),
+    })),
+    steps: [
+      f(`Reach ${climax.location} before the clock runs out.`),
+      f(
+        `Show ${villainName} the evidence, or show it to whoever they need on their side.`,
+      ),
+      `Use the weakness: ${weakness}.`,
+      f(`Decide what happens to ${item}.`),
+    ],
+    alternatives: [
+      f(
+        `Bargain: ${villainName} stands down if they get part of what they want. This leads to A Costly Bargain.`,
+      ),
+      f(
+        `Expose them: bringing ${patronName} or the witness to testify works without the weakness, but takes longer.`,
+      ),
+    ],
+    mistakes: [
+      f(
+        `Wrong accusation: ${villainName} gets a free move and the clock advances one step.`,
+      ),
+      "Using the weakness without the evidence: it works, but the party is blamed for what happened.",
+    ],
+  };
+  const clock = {
+    name: f(`${villainName}'s Plan`),
+    advances:
+      "Each time the party fails a challenge, rests, or the GM uses the running-late path.",
+    ticks: [
+      {
+        trigger: "First step",
+        effect: f(
+          `${villainName} learns the party is involved and sends a warning.`,
+        ),
+      },
+      {
+        trigger: "Second step",
+        effect: f(
+          `${villainName} moves ${item}; the next scene starts with the trail colder.`,
+        ),
+      },
+      {
+        trigger: "Third step",
+        effect: f(
+          `The plan is nearly done; the finale starts with ${villainName} already prepared.`,
+        ),
+      },
+      {
+        trigger: "Last step",
+        effect:
+          "The plan completes. Go to the Too Late ending, or run the finale as a last stand.",
+      },
+    ],
+    slow: f(
+      `Turning ${villainName}'s allies, or getting ahead of them in a scene, takes one step back.`,
+    ),
+  };
+  const trigger = f(
+    `${villainName} found out where ${item} was kept and moved on it three days ago.`,
+  );
+  const questions = [
+    { question: "Why now?", answer: trigger },
+    {
+      question: "Why us?",
+      answer: f(
+        `${patronName} can't be seen acting openly, and the party has no ties to ${villainName}.`,
+      ),
+    },
+    {
+      question: f(`Why doesn't ${patronName} deal with it?`),
+      answer: f(
+        `${patronName} has something to hide about ${item} and would rather strangers did the digging.`,
+      ),
+    },
+  ];
+
   const premise =
     resolved.premise ??
     f(
@@ -442,8 +592,10 @@ export function buildOneShotAdventure(
       hook: f(pickFrom(seed.hooks, rng)),
       objective: f(`Recover ${item} and stop ${villainName}.`),
       secret: truth,
+      trigger,
       stakes: stake,
       prep,
+      questions,
     },
     opening: {
       situation: scenes[0].situation,
@@ -482,6 +634,8 @@ export function buildOneShotAdventure(
         ),
       },
     ],
+    solution,
+    clock,
     epilogueHook: f(`Someone else has been asking about ${item}.`),
     timeBudget: { bufferMinutes: buffer, runningLate },
   };
@@ -550,25 +704,32 @@ ${resolved.tone ? `- Tone: ${resolved.tone}\n` : ""}${resolved.premise ? `- Star
 Rules:
 - Exactly ${count} scenes. The first has kind "opening", the last "climax", the rest "middle".
 - Scene "minutes" are multiples of 5 and, with a ${buffer}-minute buffer, must add up to ${resolved.durationMinutes}. Give the climax the largest share.
-- Mark each scene essential or optional. Optional scenes need a "skip" instruction that does not lose any vital clue.
-- Every vital clue (3 of them) must be discoverable in at least two different scenes, one of them essential. Never gate completion behind one check.
-- Every scene needs a challenge with a "failForward" outcome. Failure must never stop the adventure.
-- At least two endings. NPCs get motivations, what they know, how they react and a roleplay cue — no biographies.
+- Mark each scene essential or optional. Only optional scenes get a "skip" instruction (leave it "" on essential scenes); skipping must not lose any vital clue.
+- Every vital clue (3 of them) must be discoverable in at least two different scenes, one of them an essential scene BEFORE the climax. Optional scenes add depth or an advantage, never the only early source. Never gate completion behind one check.
+- A clue's "label" is a 2–5 word name; its "text" is the actual fact, stated outright.
+- Every scene needs a challenge with "success" (what the party must actually do or say, including any answer, name or passage), "otherApproaches" (how force, lies, magic or an unexpected plan play out) and "failForward". Failure must never stop the adventure.
+- "solution" is how the finale is resolved: every component with its real content (actual names, words, passages, objects, order) and the earlier scenes where it is found, the steps, at least one other way through, and what each kind of mistake costs.
+- "clock" is the threat's countdown: what advances it, 3–6 ticks with what each triggers, and how the party can slow it.
+- "briefing.trigger" is the concrete event that set this off now. "briefing.questions" answers 3–5 questions players will obviously ask (why now, why us, why doesn't the patron handle it, why would the antagonist do this).
+- At least two endings, each reached by a player decision. NPCs get motivations, what they know, how they react and a roleplay cue — no biographies. An NPC's motivation must explain what they do in the scenes. If an NPC appears in several scenes, that scene's situation says why they are there; NPCs met in the opening return or pay off later.
 - "next" lists the scene ids a scene can lead to (branching allowed); scene ids are "scene-1".."scene-${count}", NPC ids "npc-1"..., clue ids "clue-1"...
 
 Return JSON with exactly this shape:
 {
   "title": "...",
-  "briefing": { "premise": "", "hook": "", "objective": "", "secret": "", "stakes": "", "prep": "" },
+  "briefing": { "premise": "", "hook": "", "objective": "", "secret": "", "trigger": "", "stakes": "", "prep": "", "questions": [{ "question": "", "answer": "" }] },
   "opening": { "situation": "", "readAloud": "optional", "firstDecision": "", "involvement": ["", ""] },
-  "scenes": [{ "id": "scene-1", "title": "", "kind": "opening", "essential": true, "minutes": 30, "purpose": "", "situation": "", "location": "", "npcIds": ["npc-1"], "approaches": [""], "challenge": { "type": "social", "description": "", "failForward": "" }, "outcomes": [""], "next": ["scene-2"], "shorten": "", "skip": "optional scenes only" }],
+  "scenes": [{ "id": "scene-1", "title": "", "kind": "opening", "essential": true, "minutes": 30, "purpose": "", "situation": "", "location": "", "npcIds": ["npc-1"], "approaches": [""], "challenge": { "type": "social", "description": "", "success": "", "otherApproaches": [""], "failForward": "" }, "outcomes": [""], "next": ["scene-2"], "shorten": "", "skip": "" }],
   "npcs": [{ "id": "npc-1", "name": "", "role": "", "motivation": "", "knows": "", "reaction": "", "cues": "" }],
-  "clues": [{ "id": "clue-1", "text": "", "essential": true, "routes": [{ "sceneId": "scene-1", "method": "" }, { "sceneId": "scene-2", "method": "" }] }],
+  "clues": [{ "id": "clue-1", "label": "", "text": "", "essential": true, "routes": [{ "sceneId": "scene-1", "method": "" }, { "sceneId": "scene-2", "method": "" }] }],
   "endings": [{ "id": "end-1", "title": "", "condition": "", "consequence": "" }],
+  "solution": { "summary": "", "requirements": [{ "what": "", "detail": "", "sceneIds": ["scene-2"] }], "steps": [""], "alternatives": [""], "mistakes": [""] },
+  "clock": { "name": "", "advances": "", "ticks": [{ "trigger": "", "effect": "" }], "slow": "" },
   "epilogueHook": "",
   "runningLate": ["steps to finish on time, most painless first"]
 }
 Before returning, run a consistency pass: scene minutes plus buffer equal the session length; every clue route points to a real scene that can plausibly reveal it; every npcId exists; the climax is reachable from every path; and no ending depends on a single roll.
+Then walk through running it as the GM, scene by scene. At every decision, check the adventure tells you what you need to adjudicate it; if a fact, answer, solution or motivation would have to be invented at the table, write it in.
 ${sessionContext}
 Return only the JSON object. Do not include markdown code block formatting like \`\`\`json.`;
   return {
@@ -689,7 +850,7 @@ export function buildOneShotRegenPrompt(
 ): { systemInstruction: string; userMessage: string } {
   const locked =
     target.kind === "scene"
-      ? "Keep the scene's id, title, location, minutes, essential flag, NPCs, clue connections and links unchanged. Every clue listed for this scene must still be discoverable here. Only rewrite situation, approaches, challenge and outcomes."
+      ? "Keep the scene's id, title, location, minutes, essential flag, NPCs, clue connections and links unchanged. Every clue listed for this scene must still be discoverable here. Only rewrite situation, approaches, challenge and outcomes. State facts outright: the challenge's success says what the party must actually do or say, and otherApproaches covers force, lies and magic."
       : "Keep the NPC's id, name and role unchanged. Only rewrite motivation, knows, reaction and cues, and stay consistent with the scenes the NPC appears in.";
   const item =
     target.kind === "scene"
@@ -697,7 +858,7 @@ export function buildOneShotRegenPrompt(
       : adventure.npcs.find((n) => n.id === target.id);
   const shape =
     target.kind === "scene"
-      ? `{ "situation": "", "approaches": [""], "challenge": { "type": "social", "description": "", "failForward": "" }, "outcomes": [""] }`
+      ? `{ "situation": "", "approaches": [""], "challenge": { "type": "social", "description": "", "success": "", "otherApproaches": [""], "failForward": "" }, "outcomes": [""] }`
       : `{ "motivation": "", "knows": "", "reaction": "", "cues": "" }`;
   return {
     systemInstruction:
@@ -707,7 +868,7 @@ Core truth: ${adventure.briefing.secret}
 Antagonist: ${adventure.npcs[1]?.name ?? "unknown"}
 Current ${target.kind}: ${JSON.stringify(item)}
 ${locked}
-${instruction ? `GM request: ${instruction}\n` : ""}Return only JSON shaped like: ${shape}`,
+${instruction.trim() ? `GM request (follow it within the rules above): ${instruction.trim().slice(0, 500)}\n` : ""}Return only JSON shaped like: ${shape}`,
   };
 }
 
@@ -761,4 +922,7 @@ export {
   renderOneShotMarkdown,
   validateOneShot,
   normaliseTimeBudget,
+  checkPlayability,
+  buildOneShotRepairPrompt,
+  applyOneShotRepair,
 };

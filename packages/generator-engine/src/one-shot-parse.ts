@@ -9,6 +9,9 @@ import { normaliseTimeBudget, validateOneShot } from "./one-shot-validate";
 import type {
   OneShotAdventure,
   OneShotChallenge,
+  OneShotClock,
+  OneShotQuestion,
+  OneShotSolution,
   OneShotClue,
   OneShotEnding,
   OneShotNpc,
@@ -47,9 +50,26 @@ export function challengeType(
 const DEFAULT_FAIL_FORWARD =
   "The party still moves on, but pays a cost: time, a favour, or the antagonist is warned.";
 
+export function parseChallenge(
+  raw: unknown,
+  fallback?: OneShotChallenge,
+): OneShotChallenge {
+  const c = rec(raw);
+  const other = strs(c.otherApproaches);
+  return {
+    type: challengeType(c.type, fallback?.type ?? "exploration"),
+    description: str(c.description, fallback?.description ?? ""),
+    success: str(c.success, fallback?.success ?? "") || undefined,
+    otherApproaches: other.length ? other : fallback?.otherApproaches,
+    failForward: str(
+      c.failForward,
+      fallback?.failForward ?? DEFAULT_FAIL_FORWARD,
+    ),
+  };
+}
+
 function parseScene(raw: unknown, i: number, count: number): OneShotScene {
   const r = rec(raw);
-  const c = rec(r.challenge);
   const kind: OneShotSceneKind =
     i === 0 ? "opening" : i === count - 1 ? "climax" : "middle";
   return {
@@ -64,16 +84,21 @@ function parseScene(raw: unknown, i: number, count: number): OneShotScene {
     npcIds: strs(r.npcIds),
     approaches: strs(r.approaches),
     clueIds: [],
-    challenge: {
-      type: challengeType(c.type, "exploration"),
-      description: str(c.description),
-      failForward: str(c.failForward, DEFAULT_FAIL_FORWARD),
-    },
+    challenge: parseChallenge(r.challenge),
     outcomes: strs(r.outcomes),
     next: strs(r.next),
     shorten: str(r.shorten, "Run it as a single decisive beat, then move on."),
-    skip: str(r.skip) || undefined,
+    skip: undefined,
   };
+}
+
+/** A skip note only belongs on an optional scene, and never as schema filler. */
+function skipNote(raw: unknown, scene: OneShotScene): string | undefined {
+  const skip = str(rec(raw).skip);
+  if (scene.essential || !skip || /^optional scenes? only\.?$/i.test(skip)) {
+    return undefined;
+  }
+  return skip;
 }
 
 function parseNpc(raw: unknown, i: number): OneShotNpc {
@@ -104,6 +129,7 @@ function parseClue(
   });
   return {
     id: str(c.id, `clue-${i + 1}`),
+    label: str(c.label) || undefined,
     text: str(c.text, `Clue ${i + 1}`),
     essential: c.essential !== false,
     routes: routes.filter((r) => r.sceneId),
@@ -129,6 +155,7 @@ function parseScenes(rawScenes: unknown[]) {
   });
   const scenes = rawScenes.map((raw, i) => {
     const scene = parseScene(raw, i, rawScenes.length);
+    scene.skip = skipNote(raw, scene);
     scene.next = scene.next
       .map((id) => sceneIds.get(id))
       .filter((id): id is string => !!id);
@@ -151,6 +178,15 @@ function attachClues(scenes: OneShotScene[], clues: OneShotClue[]) {
   }
 }
 
+export function parseQuestions(raw: unknown): OneShotQuestion[] {
+  return list(raw)
+    .map((q) => ({
+      question: str(rec(q).question),
+      answer: str(rec(q).answer),
+    }))
+    .filter((q) => q.question && q.answer);
+}
+
 function parseBriefing(raw: unknown): OneShotAdventure["briefing"] {
   const b = rec(raw);
   return {
@@ -158,8 +194,53 @@ function parseBriefing(raw: unknown): OneShotAdventure["briefing"] {
     hook: str(b.hook),
     objective: str(b.objective),
     secret: str(b.secret),
+    trigger: str(b.trigger) || undefined,
     stakes: str(b.stakes),
     prep: str(b.prep),
+    questions: parseQuestions(b.questions),
+  };
+}
+
+/** Scene references are remapped to `scene-N`; unknown ones are dropped. */
+export function parseSolution(
+  raw: unknown,
+  sceneIds: (id: string) => string | undefined,
+): OneShotSolution | undefined {
+  const s = rec(raw);
+  const requirements = list(s.requirements)
+    .map((r) => {
+      const req = rec(r);
+      return {
+        what: str(req.what),
+        detail: str(req.detail),
+        sceneIds: strs(req.sceneIds)
+          .map(sceneIds)
+          .filter((id): id is string => !!id),
+      };
+    })
+    .filter((r) => r.what);
+  const steps = strs(s.steps);
+  if (!requirements.length && !steps.length) return undefined;
+  return {
+    summary: str(s.summary),
+    requirements,
+    steps,
+    alternatives: strs(s.alternatives),
+    mistakes: strs(s.mistakes),
+  };
+}
+
+export function parseClock(raw: unknown): OneShotClock | undefined {
+  const c = rec(raw);
+  const ticks = list(c.ticks)
+    .map((t) => ({ trigger: str(rec(t).trigger), effect: str(rec(t).effect) }))
+    .filter((t) => t.effect);
+  if (!ticks.length) return undefined;
+  return {
+    name: str(c.name, "The clock"),
+    advances: str(c.advances),
+    ticks,
+    slow: str(c.slow),
   };
 }
 
@@ -217,6 +298,8 @@ export function parseOneShotAdventure(
     npcs,
     clues,
     endings: list(data.endings).map(parseEnding),
+    solution: parseSolution(data.solution, (id) => sceneIds.get(id)),
+    clock: parseClock(data.clock),
     epilogueHook: str(data.epilogueHook) || undefined,
     timeBudget: {
       bufferMinutes: 0,
@@ -238,18 +321,13 @@ export function mergeSceneReply(
   raw: unknown,
 ): OneShotScene {
   const d = rec(raw);
-  const c = rec(d.challenge);
   const approaches = strs(d.approaches);
   const outcomes = strs(d.outcomes);
   return {
     ...scene,
     situation: str(d.situation, scene.situation),
     approaches: approaches.length ? approaches : scene.approaches,
-    challenge: {
-      type: challengeType(c.type, scene.challenge.type),
-      description: str(c.description, scene.challenge.description),
-      failForward: str(c.failForward, scene.challenge.failForward),
-    },
+    challenge: parseChallenge(d.challenge, scene.challenge),
     outcomes: outcomes.length ? outcomes : scene.outcomes,
   };
 }

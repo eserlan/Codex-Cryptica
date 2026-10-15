@@ -15,6 +15,103 @@ function modelReplying(text: string) {
   };
 }
 
+/** A model whose replies come from `replies` in order; `null` throws. */
+function modelInSequence(replies: (string | null)[]) {
+  const calls: string[] = [];
+  let i = 0;
+  const next = (prompt: string) => {
+    calls.push(prompt);
+    const text = replies[Math.min(i++, replies.length - 1)];
+    if (text === null) throw new Error("model down");
+    return text;
+  };
+  return {
+    calls,
+    client: {
+      getModel: vi.fn().mockResolvedValue({
+        generateContent: async (prompt: unknown) => {
+          const text = next(JSON.stringify(prompt));
+          return { response: { text: () => text } };
+        },
+        generateContentStream: async function* (prompt: unknown) {
+          const text = next(JSON.stringify(prompt));
+          yield { type: "delta", text };
+          yield { type: "complete", text };
+        },
+      }),
+    },
+  };
+}
+
+/** A valid one-shot with no finale solution or clock, as a model might send. */
+function gappyReply() {
+  const a = structuredClone(
+    generateOneShotLocal({ durationHours: 3 }).oneShot!,
+  );
+  delete a.solution;
+  delete a.clock;
+  return JSON.stringify(a);
+}
+
+describe("DefaultGeneratorEngine one-shot playability", () => {
+  it("asks the model to fill the gaps it left, then uses the repair", async () => {
+    const { client, calls } = modelInSequence([
+      gappyReply(),
+      JSON.stringify({
+        clock: {
+          name: "The Tolls",
+          advances: "Every failed challenge.",
+          ticks: [
+            { trigger: "1", effect: "A warning." },
+            { trigger: "2", effect: "A death." },
+            { trigger: "3", effect: "The end." },
+          ],
+          slow: "Muffle the bell.",
+        },
+      }),
+    ]);
+    const e = new DefaultGeneratorEngine(client as never);
+    const out = await e.generateOneShot({ durationHours: 3, useAI: true });
+    expect(calls).toHaveLength(2);
+    expect(calls[1]).toContain("Give the threat a countdown");
+    expect(out.oneShot?.clock?.name).toBe("The Tolls");
+    expect(out.content).toContain("## The Tolls");
+  });
+
+  it("keeps the first draft and lists its gaps when the repair fails", async () => {
+    const { client, calls } = modelInSequence([gappyReply(), null]);
+    const e = new DefaultGeneratorEngine(client as never);
+    const out = await e.generateOneShot({ durationHours: 3, useAI: true });
+    expect(calls).toHaveLength(2);
+    expect(out.oneShot?.clock).toBeUndefined();
+    expect(out.content).toContain("## Before You Run It");
+  });
+
+  it("skips the repair call when nothing is missing", async () => {
+    const full = JSON.stringify(
+      generateOneShotLocal({ durationHours: 3 }).oneShot,
+    );
+    const { client, calls } = modelInSequence([full]);
+    const e = new DefaultGeneratorEngine(client as never);
+    await e.generateOneShot({ durationHours: 3, useAI: true });
+    expect(calls).toHaveLength(1);
+  });
+});
+
+describe("DefaultGeneratorEngine one-shot revise", () => {
+  it("leaves the part alone when a revise request can't reach the AI", async () => {
+    const original = generateOneShotLocal({}).oneShot!;
+    const e = new DefaultGeneratorEngine(modelReplying("nope") as never);
+    const result = await e.regenerateOneShotPart(
+      original,
+      { kind: "scene", id: "scene-2" },
+      { useAI: true, instruction: "make it a chase" },
+    );
+    expect(result.adventure).toBe(original);
+    expect(result.warnings[0]).toMatch(/wasn't applied/);
+  });
+});
+
 describe("DefaultGeneratorEngine one-shot", () => {
   let engine: DefaultGeneratorEngine;
 

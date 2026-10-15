@@ -41,6 +41,10 @@ export interface OneShotNpc {
 export interface OneShotChallenge {
   type: "combat" | "social" | "exploration" | "puzzle" | "hazard";
   description: string;
+  /** What the party must actually do or say to succeed, answer included. */
+  success?: string;
+  /** How force, deception, magic or an unexpected plan plays out. */
+  otherApproaches?: string[];
   /** What happens when the party fails — the adventure keeps moving. */
   failForward: string;
 }
@@ -74,6 +78,9 @@ export interface OneShotClueRoute {
 
 export interface OneShotClue {
   id: string;
+  /** Short name used in the clue list and cheat sheet. */
+  label?: string;
+  /** The actual fact the party learns. */
   text: string;
   essential: boolean;
   routes: OneShotClueRoute[];
@@ -84,6 +91,39 @@ export interface OneShotEnding {
   title: string;
   condition: string;
   consequence: string;
+}
+
+export interface OneShotQuestion {
+  question: string;
+  answer: string;
+}
+
+export interface OneShotClock {
+  name: string;
+  /** What moves the clock on. */
+  advances: string;
+  /** In order: what each step triggers. */
+  ticks: { trigger: string; effect: string }[];
+  /** How the party can slow or stop it. */
+  slow: string;
+}
+
+/** Something the finale needs, with its real content and where to find it. */
+export interface OneShotRequirement {
+  what: string;
+  /** The actual names, words or objects, not a reference to them. */
+  detail: string;
+  sceneIds: string[];
+}
+
+/** How the finale is actually resolved, so the GM can adjudicate it. */
+export interface OneShotSolution {
+  summary: string;
+  requirements: OneShotRequirement[];
+  steps: string[];
+  alternatives: string[];
+  /** What each kind of mistake costs. */
+  mistakes: string[];
 }
 
 export interface OneShotAdventure {
@@ -104,8 +144,12 @@ export interface OneShotAdventure {
     hook: string;
     objective: string;
     secret: string;
+    /** The concrete event that set this off now. */
+    trigger?: string;
     stakes: string;
     prep: string;
+    /** The obvious questions players will ask, answered. */
+    questions?: OneShotQuestion[];
   };
   opening: {
     situation: string;
@@ -117,6 +161,8 @@ export interface OneShotAdventure {
   npcs: OneShotNpc[];
   clues: OneShotClue[];
   endings: OneShotEnding[];
+  solution?: OneShotSolution;
+  clock?: OneShotClock;
   epilogueHook?: string;
   timeBudget: {
     bufferMinutes: number;
@@ -141,6 +187,13 @@ export interface OneShotGeneratorOptions {
 
 export interface OneShotIssue {
   severity: "error" | "warning";
+  message: string;
+}
+
+/** Something a GM would have to invent at the table to run the adventure. */
+export interface OneShotGap {
+  area: "briefing" | "solution" | "clock" | "scene" | "npc" | "clue";
+  id?: string;
   message: string;
 }
 

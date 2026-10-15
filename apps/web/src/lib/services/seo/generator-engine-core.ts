@@ -35,6 +35,10 @@ import {
   regenerateOneShotLocal,
   buildOneShotRegenPrompt,
   applyOneShotRegenResponse,
+  checkPlayability,
+  buildOneShotRepairPrompt,
+  applyOneShotRepair,
+  oneShotToOutput,
   type OneShotAdventure,
   type OneShotGeneratorOptions,
   type OneShotRegenResult,
@@ -457,10 +461,40 @@ export class GeneratorEngineCore extends GeneratorEngineBase {
           summarizeResolvedInputs(resolved),
         );
         const text = await this.runModel(systemInstruction, userMessage);
-        return parseOneShotResponse(text, resolved);
+        return this.repairOneShot(
+          parseOneShotResponse(text, resolved) as GeneratorOutput,
+        );
       },
       () => generateOneShotLocal(oneShotOptions),
     );
+  }
+
+  /**
+   * GM playability review: when the adventure leaves facts, solutions or
+   * motivations for the GM to invent, ask the model to fill exactly those
+   * gaps. A failed repair keeps the unrepaired adventure, which lists the
+   * remaining gaps for the GM.
+   */
+  private async repairOneShot(
+    output: GeneratorOutput,
+  ): Promise<GeneratorOutput> {
+    const adventure = output.oneShot;
+    if (!adventure) return output;
+    const gaps = checkPlayability(adventure);
+    if (!gaps.length) return output;
+    try {
+      const { systemInstruction, userMessage } = buildOneShotRepairPrompt(
+        adventure,
+        gaps,
+      );
+      const text = await this.runModel(systemInstruction, userMessage);
+      const repaired = applyOneShotRepair(adventure, text);
+      return repaired === adventure
+        ? output
+        : (oneShotToOutput(repaired) as GeneratorOutput);
+    } catch {
+      return output;
+    }
   }
 
   /**
@@ -493,6 +527,15 @@ export class GeneratorEngineCore extends GeneratorEngineBase {
       );
       return applyOneShotRegenResponse(adventure, target, text);
     } catch {
+      // A random re-roll would silently ignore what the GM asked for.
+      if (options.instruction?.trim()) {
+        return {
+          adventure,
+          warnings: [
+            "Couldn't reach the AI, so your change wasn't applied. Nothing was changed.",
+          ],
+        };
+      }
       return local();
     }
   }
