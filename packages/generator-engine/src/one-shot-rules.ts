@@ -37,3 +37,25 @@ export const REQUIREMENT_RULE =
 
 export const PACING_RULE =
   'Never restate time in prose (no "Act I: 40 minutes"); scene "minutes" are the only time budget.';
+
+/**
+ * The facts the checks rely on are given as data, not only prose, so code can
+ * count and compare them. The text around them is still the model's to write.
+ */
+export const CLOCK_DATA_RULE =
+  '"schedule" lists, in order, the moments the clock advances whatever the party does, from: "start", "scene-end" (the end of every essential scene before the finale), "scene-end-after-opening", "finale-start", "finale-middle", "timed" (a fixed moment in the story, such as each sunset). Do not write the count of ticks in prose; "ticks" has at least two more entries than the schedule advances before the finale. Set "startsAt" (2–6) only if the threat began before play. "pushes" says what else moves it on (failures, rests) or complicates things (shortcuts). "advances" is written from the schedule and may be left empty.';
+
+export const WHEREABOUTS_RULE =
+  '"whereabouts" on each scene says where each NPC and important object is as it begins: "who" is an NPC id or an object\'s name, "kind" is "npc" or "object", "state" is one of free, hiding, hostile, here, trapped, captive, missing, and "where" is the place. Whenever someone goes between free and trapped, captive or missing, or an object changes place, "how" says how, in that scene. A scene never lists someone as trapped or missing unless an earlier scene or its own "how" explains it.';
+
+export const ROUTES_RULE =
+  '"routes" on a scene with more than one scene in "next" says what each way onward risks ("risk") and what it finds ("find"), and the routes differ.';
+
+export const THEORIES_RULE =
+  '"theories" (mysteries): 2–3 explanations the players might hold, each with "id", "name", "summary" and "isTrue" (exactly one is true); mark the one they will reach for first "obvious": true. Each clue lists the theory ids it "supports" and "contradicts". At least one clue contradicts the obvious theory, at least two support the true one, and every theory is backed or ruled out by something.';
+
+export const DECISIONS_RULE =
+  '"decisions" are 2–4 yes-or-no choices the party makes, each with "id" and "question". Each ending has "requires": an object of decision id to true or false. Every combination of answers must lead to exactly one ending, so the endings between them cover all of them; an ending with no "requires" is the result for anything else.';
+
+export const THREAD_DATA_RULE =
+  'Each thread has "kind" ("rescue", "rule", "history" or "promise") and "about" (the NPC id, or the object\'s name, it concerns). A rescue is about an NPC who is trapped, captive or missing in a scene.';

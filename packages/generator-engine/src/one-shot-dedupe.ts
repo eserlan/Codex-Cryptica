@@ -84,6 +84,7 @@ function dedupeThreads(threads: OneShotThread[]): OneShotThread[] {
   for (const thread of threads) {
     const twin = kept.find(
       (k) =>
+        (!!k.about && k.about === thread.about && k.kind === thread.kind) ||
         normalise(k.setup) === normalise(thread.setup) ||
         textOverlap(k.setup, thread.setup) >= 0.75,
     );

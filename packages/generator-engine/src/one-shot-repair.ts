@@ -22,18 +22,34 @@ import {
 } from "./one-shot-parse";
 import { dedupeOneShot } from "./one-shot-dedupe";
 import {
+  normaliseState,
+  parseDecisions,
+  parseRequires,
+  parseRoutes,
+  parseTheories,
+  parseVerdicts,
+  parseWhereabouts,
+} from "./one-shot-state";
+import {
+  CLOCK_DATA_RULE,
   CLOCK_RULE,
   COMMITMENT_RULE,
   CONTINUITY_RULE,
+  DECISIONS_RULE,
   EMPHASIS_HINT,
   ENDINGS_RULE,
   PACING_RULE,
   REQUIREMENT_RULE,
+  ROUTES_RULE,
+  THEORIES_RULE,
+  THREAD_DATA_RULE,
+  WHEREABOUTS_RULE,
 } from "./one-shot-rules";
 import { validateOneShot } from "./one-shot-validate";
 import type {
   OneShotAdventure,
   OneShotClue,
+  OneShotTheory,
   OneShotGap,
   OneShotNpc,
   OneShotScene,
@@ -59,7 +75,7 @@ ${found}
 Check, and fix in place:
 1. Commitments: list every consequential fact or promise the hook, briefing and opening make (a person in danger, a rule an object follows, a restriction on an NPC, a piece of history) in "threads", with how and in which later scene it pays off. Later scenes must respect every restriction and agree with every history. If a scene contradicts one, rewrite the scene.
 2. Antagonist: the NPC driving the threat has a full profile (backstory: why they are doing this; tactics: how they act or fight when opposed; stopIf: what would persuade them to stop) and is in the finale. Set "antagonistId". If they are missing from the NPCs, add them.
-3. Clock: ${CLOCK_RULE} The clock agrees with the stakes and the finale.
+3. Clock: ${CLOCK_RULE} ${CLOCK_DATA_RULE} The clock agrees with the stakes and the finale.
 4. Emphasis (${adventure.emphasis}): the scenes deliver it as play, not just theme: ${EMPHASIS_HINT[adventure.emphasis] ?? "match the scenes to it"}. Action means real opposition: enemies with tactics, battlefield hazards and conditions that change mid-scene, in "opposition". To add a route between scenes, use "addNext".
 5. Intent over passwords: no challenge or finale step may require reciting exact words. Clever reasoning, or clearly expressing the right intent, succeeds.
 6. Compression: state each fact once, where the GM needs it. Rewrite scene situations as tight adventure prose. Do not repeat clue text, solutions or answers across scenes.
@@ -68,6 +84,8 @@ Check, and fix in place:
 9. Pacing: ${PACING_RULE} Remove any act or part timings from the briefing.
 10. Continuity: follow every named NPC and important object through the scenes in order. ${CONTINUITY_RULE} Fix a contradiction in the scene text, not by renaming.
 11. Finale requirements: ${REQUIREMENT_RULE}
+12. Who is where: ${WHEREABOUTS_RULE} ${ROUTES_RULE} ${THREAD_DATA_RULE}
+13. Decisions and theories: ${DECISIONS_RULE} ${THEORIES_RULE} Theories only for an investigation or mystery.
 
 Rules:
 - Keep the premise, title, scene ids, titles, minutes, essential flags, NPC names and roles unchanged. Links may only be added, with "addNext".
@@ -79,13 +97,15 @@ Return only JSON shaped like:
 {
   "antagonistId": "npc-2",
   "briefing": { "trigger": "", "prep": "", "questions": [{ "question": "", "answer": "" }] },
-  "endings": [{ "id": "end-1", "condition": "", "consequence": "" }],
-  "threads": [{ "setup": "", "payoff": "", "sceneIds": ["scene-3"] }],
+  "decisions": [{ "id": "stopped", "question": "" }],
+  "theories": [{ "id": "theory-1", "name": "", "summary": "", "isTrue": false, "obvious": true }],
+  "endings": [{ "id": "end-1", "condition": "", "consequence": "", "requires": { "stopped": true } }],
+  "threads": [{ "about": "npc-3", "kind": "rescue", "setup": "", "payoff": "", "sceneIds": ["scene-3"] }],
   "solution": { "summary": "", "requirements": [{ "kind": "clue", "what": "", "detail": "", "sceneIds": ["scene-2"] }], "steps": [""], "alternatives": [""], "mistakes": [""] },
-  "clock": { "name": "", "advances": "", "ticks": [{ "trigger": "", "effect": "" }], "slow": "", "deadline": "" },
-  "scenes": [{ "id": "scene-2", "situation": "", "approaches": [""], "addNpcIds": ["npc-4"], "addNext": ["scene-4"], "challenge": { "type": "combat", "description": "", "success": "", "otherApproaches": [""], "opposition": "", "failForward": "" } }],
+  "clock": { "name": "", "advances": "", "schedule": ["scene-end-after-opening", "finale-start"], "startsAt": 1, "pushes": "", "ticks": [{ "trigger": "", "effect": "" }], "slow": "", "deadline": "" },
+  "scenes": [{ "id": "scene-2", "situation": "", "approaches": [""], "addNpcIds": ["npc-4"], "addNext": ["scene-4"], "whereabouts": [{ "who": "npc-1", "kind": "npc", "state": "free", "where": "", "how": "" }], "routes": [{ "to": "scene-4", "risk": "", "find": "" }], "challenge": { "type": "combat", "description": "", "success": "", "otherApproaches": [""], "opposition": "", "failForward": "" } }],
   "npcs": [{ "id": "npc-1", "name": "only for a new NPC", "role": "only for a new NPC", "motivation": "", "knows": "", "reaction": "", "cues": "", "backstory": "", "tactics": "", "stopIf": "", "limits": "" }],
-  "clues": [{ "id": "clue-1", "text": "", "addRoutes": [{ "sceneId": "scene-2", "method": "" }] }]
+  "clues": [{ "id": "clue-1", "text": "", "addRoutes": [{ "sceneId": "scene-2", "method": "" }], "supports": ["theory-2"], "contradicts": ["theory-1"] }]
 }
 Do not include markdown code block formatting like \`\`\`json.`,
   };
@@ -139,6 +159,8 @@ function repairScene(
     npcIds: [...scene.npcIds, ...added],
     next: [...scene.next, ...addedLinks(scene, r.addNext, order)],
     challenge: parseChallenge(r.challenge, scene.challenge),
+    whereabouts: parseWhereabouts(r.whereabouts) ?? scene.whereabouts,
+    routes: parseRoutes(r.routes) ?? scene.routes,
   };
 }
 
@@ -173,6 +195,7 @@ function repairClue(
   clue: OneShotClue,
   raw: unknown,
   sceneIds: Set<string>,
+  theories: OneShotTheory[] | undefined,
 ): OneShotClue {
   const r = rec(raw);
   const added = list(r.addRoutes)
@@ -189,6 +212,8 @@ function repairClue(
     ...clue,
     text: str(r.text, clue.text),
     routes: [...clue.routes, ...added],
+    supports: parseVerdicts(r.supports, theories) ?? clue.supports,
+    contradicts: parseVerdicts(r.contradicts, theories) ?? clue.contradicts,
   };
 }
 
@@ -204,6 +229,7 @@ function repairEndings(
       ...e,
       condition: str(r.condition, e.condition),
       consequence: str(r.consequence, e.consequence),
+      requires: parseRequires(r.requires) ?? e.requires,
     };
   });
 }
@@ -236,8 +262,9 @@ function mergeRepair(
   const npcIds = new Set(npcs.map((n) => n.id));
   const scenes = byId(data.scenes);
   const clues = byId(data.clues);
+  const theories = parseTheories(data.theories) ?? adventure.theories;
   const repairedClues = adventure.clues.map((c) =>
-    clues.has(c.id) ? repairClue(c, clues.get(c.id), sceneIds) : c,
+    clues.has(c.id) ? repairClue(c, clues.get(c.id), sceneIds, theories) : c,
   );
   const threads = parseThreads(data.threads, inScenes);
   const reviewedSetups = new Set(
@@ -259,6 +286,8 @@ function mergeRepair(
       ? antagonistId
       : adventure.antagonistId,
     threads: mergedThreads,
+    decisions: parseDecisions(data.decisions) ?? adventure.decisions,
+    theories,
     solution: parseSolution(data.solution, inScenes) ?? adventure.solution,
     clock: parseClock(data.clock) ?? adventure.clock,
     endings: repairEndings(adventure.endings, data.endings),
@@ -298,7 +327,7 @@ export function applyOneShotRepair(
     return adventure;
   }
   if (!Object.keys(data).length) return adventure;
-  const repaired = dedupeOneShot(mergeRepair(adventure, data));
+  const repaired = dedupeOneShot(normaliseState(mergeRepair(adventure, data)));
   const errors = (a: OneShotAdventure) =>
     validateOneShot(a).filter((i) => i.severity === "error").length;
   return errors(repaired) > errors(adventure) ? adventure : repaired;

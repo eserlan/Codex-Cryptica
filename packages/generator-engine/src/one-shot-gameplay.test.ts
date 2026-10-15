@@ -115,6 +115,7 @@ describe("de-duplication", () => {
 describe("clock schedule", () => {
   it("flags a clock that only moves on the party's risks", () => {
     const a = local();
+    a.clock!.schedule = undefined;
     a.clock!.advances = "Each time the party forces a route or uses violence.";
     expect(messages(a)).toContainEqual(
       expect.stringMatching(/cautious play stops it/),
@@ -126,6 +127,7 @@ describe("clock schedule", () => {
     "At the end of every essential scene; failures add a tick.",
   ])("accepts a scheduled clock: %s", (advances) => {
     const a = local();
+    a.clock!.schedule = undefined;
     a.clock!.advances = advances;
     expect(messages(a).filter((m) => /cautious play/.test(m))).toEqual([]);
   });
@@ -144,6 +146,8 @@ describe("clock schedule", () => {
   const allEssential = (advances: string, ticks: number) => {
     const a = local({ durationHours: 4 });
     a.scenes.forEach((s) => (s.essential = true));
+    a.clock!.schedule = undefined;
+    a.clock!.startsAt = undefined;
     a.clock!.advances = advances;
     a.clock!.ticks = Array.from({ length: ticks }, (_, i) => ({
       trigger: `Tick ${i + 1}`,

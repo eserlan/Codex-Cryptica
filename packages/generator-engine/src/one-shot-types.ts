@@ -46,6 +46,40 @@ export interface OneShotNpc {
   limits?: string;
 }
 
+/**
+ * Where a person or object is at a scene. "free" through "here" mean they can
+ * act or be found; "trapped", "captive" and "missing" mean they cannot until
+ * someone frees or finds them.
+ */
+export const ONE_SHOT_STATES = [
+  "free",
+  "hiding",
+  "hostile",
+  "here",
+  "trapped",
+  "captive",
+  "missing",
+] as const;
+export type OneShotState = (typeof ONE_SHOT_STATES)[number];
+
+export interface OneShotWhereabout {
+  /** An NPC id, or the name of an important object (a cart, a relic). */
+  who: string;
+  kind: "npc" | "object";
+  state: OneShotState;
+  where?: string;
+  /** How they came to be in this state, whenever it changed. */
+  how?: string;
+}
+
+/** One way out of a scene, with what it costs and what it offers. */
+export interface OneShotRoute {
+  /** A scene id from "next". */
+  to: string;
+  risk: string;
+  find: string;
+}
+
 export interface OneShotChallenge {
   type: "combat" | "social" | "exploration" | "puzzle" | "hazard";
   description: string;
@@ -79,6 +113,10 @@ export interface OneShotScene {
   shorten: string;
   /** How to skip this scene without losing an essential clue. Optional scenes only. */
   skip?: string;
+  /** Where each NPC and important object is as this scene begins. */
+  whereabouts?: OneShotWhereabout[];
+  /** What each route in "next" risks and finds. */
+  routes?: OneShotRoute[];
 }
 
 export interface OneShotClueRoute {
@@ -94,6 +132,25 @@ export interface OneShotClue {
   text: string;
   essential: boolean;
   routes: OneShotClueRoute[];
+  /** Ids of the theories this clue supports or rules out. */
+  supports?: string[];
+  contradicts?: string[];
+}
+
+/** A competing explanation of what happened. Exactly one is true. */
+export interface OneShotTheory {
+  id: string;
+  name: string;
+  summary: string;
+  isTrue: boolean;
+  /** The explanation the players will reach for first. */
+  obvious?: boolean;
+}
+
+/** A yes-or-no choice the party makes that decides which ending happens. */
+export interface OneShotDecision {
+  id: string;
+  question: string;
 }
 
 export interface OneShotEnding {
@@ -101,6 +158,8 @@ export interface OneShotEnding {
   title: string;
   condition: string;
   consequence: string;
+  /** Decision id to the answer that leads here. Empty means any other result. */
+  requires?: Record<string, boolean>;
 }
 
 export interface OneShotQuestion {
@@ -108,10 +167,31 @@ export interface OneShotQuestion {
   answer: string;
 }
 
+/** When the clock moves whatever the party does. */
+export const ONE_SHOT_CLOCK_MOMENTS = [
+  "start",
+  "scene-end",
+  "scene-end-after-opening",
+  "finale-start",
+  "finale-middle",
+  "timed",
+] as const;
+export type OneShotClockMoment = (typeof ONE_SHOT_CLOCK_MOMENTS)[number];
+
 export interface OneShotClock {
   name: string;
-  /** What moves the clock on. */
+  /** What moves the clock on. Written from `schedule` when there is one. */
   advances: string;
+  /**
+   * The scheduled advances, in order. "scene-end" means the end of every
+   * essential scene before the finale, "timed" a moment in the fiction (each
+   * sunset) that cannot be counted.
+   */
+  schedule?: OneShotClockMoment[];
+  /** The tick the clock starts on (1 unless the threat began before play). */
+  startsAt?: number;
+  /** What else moves it on or complicates things: failures, rests, shortcuts. */
+  pushes?: string;
   /** In order: what each step triggers. */
   ticks: { trigger: string; effect: string }[];
   /** How the party can slow or stop it. */
@@ -121,7 +201,18 @@ export interface OneShotClock {
 }
 
 /** A promise the adventure makes (a person in danger, a rule, a history) and where it pays off. */
+export const ONE_SHOT_THREAD_KINDS = [
+  "rescue",
+  "rule",
+  "history",
+  "promise",
+] as const;
+export type OneShotThreadKind = (typeof ONE_SHOT_THREAD_KINDS)[number];
+
 export interface OneShotThread {
+  /** What the promise is about: an NPC id, or an object's name. */
+  about?: string;
+  kind?: OneShotThreadKind;
   setup: string;
   payoff: string;
   sceneIds: string[];
@@ -198,6 +289,10 @@ export interface OneShotAdventure {
   /** Id of the NPC driving the threat. */
   antagonistId?: string;
   threads?: OneShotThread[];
+  /** The yes-or-no choices that decide the ending (2–4). */
+  decisions?: OneShotDecision[];
+  /** Competing explanations, for mysteries. */
+  theories?: OneShotTheory[];
   solution?: OneShotSolution;
   clock?: OneShotClock;
   epilogueHook?: string;
