@@ -20,6 +20,7 @@ import {
   REQUIREMENT_RULE,
   ROUTES_RULE,
   THEORIES_RULE,
+  RESOURCE_RULE,
   THREAD_DATA_RULE,
   WHEREABOUTS_RULE,
 } from "./one-shot-rules";
@@ -86,6 +87,7 @@ Rules:
 - Exactly 3 vital clues, each with a short "label" and the actual fact as "text", discoverable in at least two scenes, one of them an essential scene before the climax.
 - "clock": ${CLOCK_RULE} ${CLOCK_DATA_RULE}
 - "threads": every promise the hook and briefing make, with its payoff and the later scene where it happens. ${THREAD_DATA_RULE}
+- ${RESOURCE_RULE}
 - Plan for the emphasis (${resolved.emphasis}) as play, not just theme: ${EMPHASIS_HINT[resolved.emphasis] ?? "match the scenes to it"}.
 - ${COMMITMENT_RULE}
 - ${WHEREABOUTS_RULE} ${CONTINUITY_RULE}
@@ -99,6 +101,7 @@ Return JSON shaped like:
   "npcs": [{ "id": "npc-3", "name": "", "role": "" }],
   "clues": [{ "id": "clue-1", "label": "", "text": "", "essential": true, "routes": [{ "sceneId": "scene-1", "method": "" }, { "sceneId": "scene-2", "method": "" }], "supports": ["theory-2"], "contradicts": ["theory-1"] }],
   "clock": { "name": "", "advances": "", "schedule": ["scene-end-after-opening", "finale-start"], "startsAt": 1, "pushes": "", "ticks": [{ "trigger": "", "effect": "" }], "slow": "", "deadline": "" },
+  "resources": [{ "id": "food", "name": "", "start": 5, "unit": "", "spends": [{ "sceneId": "scene-1", "what": "", "amount": 1 }], "whenEmpty": "" }],
   "threads": [{ "about": "npc-3", "kind": "rescue", "setup": "", "payoff": "", "sceneIds": ["scene-3"] }],
   "theories": [{ "id": "theory-1", "name": "", "summary": "", "isTrue": false, "obvious": true }],
   "runningLate": ["steps to finish on time, most painless first"]

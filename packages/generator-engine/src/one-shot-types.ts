@@ -151,6 +151,28 @@ export interface OneShotTheory {
 export interface OneShotDecision {
   id: string;
   question: string;
+  /** Only asked when these earlier decisions were answered this way. */
+  when?: Record<string, boolean>;
+}
+
+/** What the party spends of a resource in a scene. */
+export interface OneShotSpend {
+  sceneId: string;
+  what: string;
+  amount: number;
+}
+
+/** A scarce supply (food, light, warmth) counted in boxes the party can spend. */
+export interface OneShotResource {
+  id: string;
+  name: string;
+  /** Boxes the party has when play begins. */
+  start: number;
+  /** What a single box stands for ("a day's food", "an hour of light"). */
+  unit?: string;
+  spends: OneShotSpend[];
+  /** What happens when the last box is gone. */
+  whenEmpty: string;
 }
 
 export interface OneShotEnding {
@@ -206,6 +228,7 @@ export const ONE_SHOT_THREAD_KINDS = [
   "rule",
   "history",
   "promise",
+  "protect",
 ] as const;
 export type OneShotThreadKind = (typeof ONE_SHOT_THREAD_KINDS)[number];
 
@@ -291,6 +314,7 @@ export interface OneShotAdventure {
   threads?: OneShotThread[];
   /** The yes-or-no choices that decide the ending (2–4). */
   decisions?: OneShotDecision[];
+  resources?: OneShotResource[];
   /** Competing explanations, for mysteries. */
   theories?: OneShotTheory[];
   solution?: OneShotSolution;

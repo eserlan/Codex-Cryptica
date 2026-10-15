@@ -47,6 +47,7 @@ import {
   REQUIREMENT_RULE,
   ROUTES_RULE,
   THEORIES_RULE,
+  RESOURCE_RULE,
   THREAD_DATA_RULE,
   WHEREABOUTS_RULE,
 } from "./one-shot-rules";
@@ -69,6 +70,7 @@ import {
   localDecisions,
   mysteryTheories,
 } from "./one-shot-local-state";
+import { localResources } from "./one-shot-resources";
 import { normaliseState, scheduleSentence } from "./one-shot-state";
 import { renderGmSheet, renderOneShotMarkdown } from "./one-shot-render";
 import { checkPlayability } from "./one-shot-playability";
@@ -853,6 +855,8 @@ export function buildOneShotAdventure(
     antagonistId: "npc-2",
     threads,
     decisions: localDecisions(villainName),
+    resources:
+      resolved.emphasis === "Survival" ? localResources(scenes) : undefined,
     theories,
     endings: [
       {
@@ -969,6 +973,7 @@ Rules:
 - "solution" is how the finale is resolved: every component with its real content (actual names, words, passages, objects, order) and the earlier scenes where it is found, the steps, at least one other way through, and what each kind of mistake costs.
 - "clock" is the threat's countdown, with what each tick triggers and how the party can slow it. ${CLOCK_RULE} ${CLOCK_DATA_RULE}
 - "antagonistId" names the NPC driving the threat. Give them "backstory" (why they do this), "tactics" (how they act or fight when opposed) and "stopIf" (what would persuade them to stop), and put them in the climax.
+- ${RESOURCE_RULE}
 - "threads" lists every promise the hook, briefing and opening make (a person in danger, a rule an object follows, a restriction on an NPC, a piece of history) with its payoff and the later scene where it happens. An NPC's "limits" (what they cannot or will not do) must hold in every scene.
 - Optional scenes take at most a fifth of the time, so the essential scenes alone fill the session.
 - State each fact once, where the GM needs it; do not repeat clue text or answers across scenes.
@@ -994,6 +999,7 @@ Return JSON with exactly this shape:
   "scenes": [{ "id": "scene-1", "title": "", "kind": "opening", "essential": true, "minutes": 30, "purpose": "", "situation": "", "location": "", "npcIds": ["npc-1"], "approaches": [""], "challenge": { "type": "social", "description": "", "success": "", "otherApproaches": [""], "opposition": "fights and hazards", "failForward": "" }, "outcomes": [""], "next": ["scene-2"], "whereabouts": [{ "who": "npc-1", "kind": "npc", "state": "free", "where": "", "how": "" }], "routes": [{ "to": "scene-2", "risk": "", "find": "" }], "shorten": "", "skip": "" }],
   "antagonistId": "npc-2",
   "npcs": [{ "id": "npc-1", "name": "", "role": "", "motivation": "", "knows": "", "reaction": "", "cues": "", "limits": "", "backstory": "antagonist", "tactics": "antagonist", "stopIf": "antagonist" }],
+  "resources": [{ "id": "food", "name": "", "start": 5, "unit": "", "spends": [{ "sceneId": "scene-1", "what": "", "amount": 1 }], "whenEmpty": "" }],
   "threads": [{ "about": "npc-3", "kind": "rescue", "setup": "", "payoff": "", "sceneIds": ["scene-3"] }],
   "clues": [{ "id": "clue-1", "label": "", "text": "", "essential": true, "routes": [{ "sceneId": "scene-1", "method": "" }, { "sceneId": "scene-2", "method": "" }], "supports": ["theory-2"], "contradicts": ["theory-1"] }],
   "theories": [{ "id": "theory-1", "name": "", "summary": "", "isTrue": false, "obvious": true }],

@@ -45,7 +45,14 @@ export function parseSchedule(raw: unknown): OneShotClockMoment[] | undefined {
   const moments = list(raw)
     .map((m) => oneOf(ONE_SHOT_CLOCK_MOMENTS, m))
     .filter((m): m is OneShotClockMoment => !!m);
-  return moments.length ? moments : undefined;
+  // Each moment counts once; only fixed story moments may repeat.
+  const once = moments.filter(
+    (m, i) => m === "timed" || moments.indexOf(m) === i,
+  );
+  const unique = once.some((m) => m === "scene-end")
+    ? once.filter((m) => m !== "scene-end-after-opening")
+    : once;
+  return unique.length ? unique : undefined;
 }
 
 export function parseStartsAt(raw: unknown): number | undefined {
@@ -235,6 +242,7 @@ export function parseDecisions(raw: unknown): OneShotDecision[] | undefined {
       return {
         id: str(r.id, `decision-${i + 1}`),
         question: str(r.question),
+        when: parseRequires(r.when),
       };
     })
     .filter((d) => {
@@ -243,7 +251,16 @@ export function parseDecisions(raw: unknown): OneShotDecision[] | undefined {
       return true;
     })
     .slice(0, 4);
-  return found.length ? found : undefined;
+  // A decision can only depend on one asked earlier.
+  const earlier = new Set<string>();
+  const ordered = found.map((d) => {
+    const when = Object.fromEntries(
+      Object.entries(d.when ?? {}).filter(([id]) => earlier.has(id)),
+    );
+    earlier.add(d.id);
+    return { ...d, when: Object.keys(when).length ? when : undefined };
+  });
+  return ordered.length ? ordered : undefined;
 }
 
 export function parseRequires(

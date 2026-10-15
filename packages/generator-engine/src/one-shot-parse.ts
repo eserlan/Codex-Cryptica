@@ -6,6 +6,7 @@
 
 import { dedupeOneShot } from "./one-shot-dedupe";
 import { list, rec, str, strs } from "./one-shot-json";
+import { parseResources } from "./one-shot-resources";
 import {
   normaliseState,
   parseDecisions,
@@ -379,6 +380,7 @@ export function parseOneShotAdventure(
         antagonistId: findAntagonist(data.antagonistId, npcs),
         threads: parseThreads(data.threads, (id) => sceneIds.get(id)),
         decisions: parseDecisions(data.decisions),
+        resources: parseResources(data.resources, (id) => sceneIds.has(id)),
         theories,
         solution: parseSolution(data.solution, (id) => sceneIds.get(id)),
         clock: parseClock(data.clock),

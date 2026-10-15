@@ -240,6 +240,7 @@ function assemble(drafts: Drafts): Json {
     antagonistId: "npc-2",
     clues: structure.clues,
     threads: structure.threads,
+    resources: structure.resources,
     theories: structure.theories,
     ...finaleParts(finale, villain),
     clock: structure.clock,

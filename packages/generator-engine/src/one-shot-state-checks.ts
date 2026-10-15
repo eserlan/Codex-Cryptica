@@ -9,6 +9,7 @@ import { textOverlap } from "./one-shot-dedupe";
 import { isConfined, whereaboutsTimeline } from "./one-shot-state";
 import type {
   OneShotAdventure,
+  OneShotDecision,
   OneShotEnding,
   OneShotGap,
   OneShotWhereabout,
@@ -77,13 +78,18 @@ export const checkWhereabouts: GapCheck = (adventure) => {
 
 // ── Endings ──────────────────────────────────────────────────────────────
 
-function combinations(ids: string[]): Record<string, boolean>[] {
-  return ids.reduce<Record<string, boolean>[]>(
-    (all, id) =>
-      all.flatMap((c) => [
-        { ...c, [id]: true },
-        { ...c, [id]: false },
-      ]),
+/** Every way the party can answer, skipping decisions that are never asked. */
+function combinations(decisions: OneShotDecision[]): Record<string, boolean>[] {
+  return decisions.reduce<Record<string, boolean>[]>(
+    (all, d) =>
+      all.flatMap((c) =>
+        Object.entries(d.when ?? {}).every(([id, v]) => c[id] === v)
+          ? [
+              { ...c, [d.id]: true },
+              { ...c, [d.id]: false },
+            ]
+          : [c],
+      ),
     [{}],
   );
 }
@@ -115,7 +121,7 @@ export const checkEndingCoverage: GapCheck = (adventure) => {
       `${fallbacks.map((e) => `"${e.title}"`).join(" and ")} depend on no decision, so either could be the result.`,
     );
   }
-  for (const combo of combinations(decisions.map((d) => d.id))) {
+  for (const combo of combinations(decisions)) {
     const hits = specific.filter((e) => matches(e, combo));
     if (hits.length > 1) {
       problems.push(
