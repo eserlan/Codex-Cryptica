@@ -249,9 +249,8 @@ function sceneDecks(
     (challenge) =>
       !excluding.some(
         (scene) =>
-          scene.challenge.type === challenge.type &&
           fill(challenge.text, { ...ctx, place: scene.location }) ===
-            scene.challenge.description,
+          scene.challenge.description,
       ),
   );
   const complications = ctx.seed.complications.filter(

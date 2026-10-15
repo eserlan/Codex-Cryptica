@@ -242,6 +242,70 @@ describe("runOneShotStages", () => {
     );
   });
 
+  it("avoids a template challenge used by a successful AI scene of another type", async () => {
+    const structure = "Five-room adventure";
+    const a = generateOneShotLocal(
+      { ...options, durationHours: 4, structure },
+      seeded(),
+    ).oneShot!;
+
+    const runWithSceneFailure = async (reuse?: {
+      description: string;
+      type: string;
+    }) => {
+      const { call } = fakeModel(a);
+      let sceneCalls = 0;
+      return runOneShotStages(
+        { ...options, durationHours: 4, structure },
+        {
+          call: async (prompt) => {
+            if (stageOf(prompt) === "scene") {
+              sceneCalls += 1;
+              if (sceneCalls === 3 || sceneCalls === 4)
+                throw new Error("timeout");
+            }
+            const response = await call(prompt);
+            if (sceneCalls !== 2 || !reuse) return response;
+
+            const scene = JSON.parse(response) as {
+              challenge: { type: string; description: string };
+            };
+            scene.challenge.description = reuse.description;
+            scene.challenge.type = reuse.type;
+            return JSON.stringify(scene);
+          },
+          concurrency: 1,
+        },
+        "",
+        seeded(19),
+      );
+    };
+
+    const templateFallback = await runWithSceneFailure();
+    const middle = templateFallback.adventure.scenes.filter(
+      (scene) => scene.kind === "middle",
+    );
+    const repeatedTemplateDescription =
+      middle[1].challenge.description.replaceAll(
+        middle[1].location,
+        middle[0].location,
+      );
+    const repeatedTemplateType = middle[1].challenge.type;
+    const differentType =
+      repeatedTemplateType === "social" ? "combat" : "social";
+    const mixed = await runWithSceneFailure({
+      description: repeatedTemplateDescription,
+      type: differentType,
+    });
+    const mixedMiddle = mixed.adventure.scenes.filter(
+      (scene) => scene.kind === "middle",
+    );
+    expect(mixedMiddle[0].challenge.type).toBe(differentType);
+    expect(
+      new Set(mixedMiddle.map((scene) => scene.challenge.description)).size,
+    ).toBe(mixedMiddle.length);
+  });
+
   it("keeps going without a finale and says so", async () => {
     const a = local();
     const { call } = fakeModel(a, { finale: 2 });
