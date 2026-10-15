@@ -55,6 +55,31 @@ const CONDITIONAL = /\b(?:if|unless|should)\b/i;
 const sentences = (text: string) =>
   text.split(/(?<=[.!?])\s+/).filter((s) => s.trim());
 
+function explainsConfinement(
+  sentence: string,
+  words: string[],
+  patterns: RegExp[],
+): boolean {
+  const npcName = new RegExp(`\\b(?:${words.join("|")})\\b`, "i");
+  const clauses = sentence.split(/[,;:]|\b(?:because|while|whereas)\b/i);
+  if (
+    clauses.some((clause) => npcName.test(clause) && EXPLAINED.test(clause))
+  ) {
+    return true;
+  }
+
+  const becauseIndex = sentence.search(/\bbecause\b/i);
+  if (becauseIndex < 0) return false;
+  const cause = sentence.slice(becauseIndex + "because".length);
+  const precedingClause = sentence.slice(0, becauseIndex);
+  return (
+    npcName.test(precedingClause) &&
+    patterns.some((statePattern) => statePattern.test(precedingClause)) &&
+    /^\s*(?:he|she|they)\b/i.test(cause) &&
+    EXPLAINED.test(cause)
+  );
+}
+
 function sceneText(scene: OneShotScene): string {
   return [
     scene.situation,
@@ -76,11 +101,10 @@ function confinement(
     for (const pattern of patterns) {
       const state = pattern.exec(sentence)?.[1];
       if (state) {
-        const npcName = new RegExp(`\\b(?:${words.join("|")})\\b`, "i");
-        const explained = sentence
-          .split(/[,;:]|\b(?:because|while|whereas)\b/i)
-          .some((clause) => npcName.test(clause) && EXPLAINED.test(clause));
-        return { state, explained };
+        return {
+          state,
+          explained: explainsConfinement(sentence, words, patterns),
+        };
       }
     }
   }

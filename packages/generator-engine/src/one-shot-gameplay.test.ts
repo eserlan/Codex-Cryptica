@@ -264,6 +264,7 @@ describe("NPC continuity", () => {
 
   it.each([
     "Tovin followed the party here and was dragged under the cart; now Tovin is trapped.",
+    "Tovin remains trapped because he was captured by the guards.",
     "If the party never freed him, Tovin is still trapped.",
     "Tovin says the drivers are missing and points to the cart.",
     "A stranger lies pinned beneath the cart.",
