@@ -3,6 +3,7 @@
   import { oneShotToOutput, renderGmSheet } from "generator-engine";
   import type { OneShotRegenTarget } from "generator-engine";
   import { generatorEngine } from "$lib/services/seo/generator-engine";
+  import OneShotPartRow from "./OneShotPartRow.svelte";
   import type { GeneratorOutput } from "$lib/services/seo/generator-engine";
 
   let {
@@ -31,37 +32,38 @@
     return token === requestToken && output.oneShot === startedFrom;
   }
 
-  async function regenerate(target: OneShotRegenTarget) {
+  function settle(token: number) {
+    if (token !== requestToken) return;
+    busyId = null;
+    requestController = null;
+  }
+
+  async function regenerate(target: OneShotRegenTarget, instruction = "") {
     if (!adventure || busyId) return;
     busyId = target.id;
     warnings = [];
     notice = null;
     const startedFrom = adventure;
     const token = ++requestToken;
-    const controller = new AbortController();
-    requestController = controller;
+    requestController = new AbortController();
     try {
       const result = await generatorEngine.regenerateOneShotPart(
         adventure,
         target,
-        { useAI, signal: controller.signal },
+        { useAI, instruction, signal: requestController.signal },
       );
       // A new generation arrived while we waited; don't overwrite it.
       if (!isCurrentRequest(token, startedFrom)) return;
       warnings = result.warnings;
-      if (result.adventure !== startedFrom) {
-        onReplace(oneShotToOutput(result.adventure) as GeneratorOutput);
-        notice = `Rewrote ${target.kind === "scene" ? "the scene" : "the NPC"}. Everything else is unchanged.`;
-      }
+      if (result.adventure === startedFrom) return;
+      onReplace(oneShotToOutput(result.adventure) as GeneratorOutput);
+      const part = target.kind === "scene" ? "the scene" : "the NPC";
+      notice = `${instruction ? "Revised" : "Rewrote"} ${part}. Everything else is unchanged.`;
     } catch {
-      if (token === requestToken) {
+      if (token === requestToken)
         notice = "That didn't work. Nothing was changed.";
-      }
     } finally {
-      if (token === requestToken) {
-        busyId = null;
-        requestController = null;
-      }
+      settle(token);
     }
   }
 
@@ -78,23 +80,6 @@
   const buttonClass =
     "flex items-center gap-1.5 px-2.5 py-1 bg-theme-surface/60 border border-theme-border/60 rounded-lg text-micro font-bold uppercase tracking-wider text-theme-text hover:bg-theme-primary hover:text-theme-bg hover:border-theme-primary transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed";
 </script>
-
-{#snippet regenButton(target: OneShotRegenTarget, label: string)}
-  <button
-    type="button"
-    class={buttonClass}
-    disabled={busyId !== null}
-    aria-label={label}
-    onclick={() => regenerate(target)}
-  >
-    <span
-      class="icon-[lucide--refresh-cw] h-3.5 w-3.5"
-      class:animate-spin={busyId === target.id}
-      aria-hidden="true"
-    ></span>
-    Regenerate
-  </button>
-{/snippet}
 
 {#if adventure}
   <section
@@ -118,40 +103,35 @@
       </button>
     </div>
     <p class="mt-1 text-micro text-theme-muted leading-relaxed">
-      Rewrite a single scene or NPC. The core truth, clues, times and links stay
-      as they are.
+      Rewrite a single scene or NPC{useAI ? ", or tell it what to change" : ""}.
+      The core truth, clues, times and links stay as they are.
     </p>
 
     <ul class="mt-3 flex flex-col gap-1.5">
       {#each adventure.scenes as scene (scene.id)}
-        <li class="flex items-center justify-between gap-2 text-xs">
-          <span class="text-theme-text">
-            {scene.title}
-            <span class="text-theme-muted"
-              >· {scene.minutes} min · {scene.essential
-                ? "essential"
-                : "optional"}</span
-            >
-          </span>
-          {@render regenButton(
-            { kind: "scene", id: scene.id },
-            `Regenerate scene ${scene.title}`,
-          )}
-        </li>
+        <OneShotPartRow
+          target={{ kind: "scene", id: scene.id }}
+          label={`scene ${scene.title}`}
+          meta={`${scene.minutes} min · ${scene.essential ? "essential" : "optional"}`}
+          {busyId}
+          {useAI}
+          {buttonClass}
+          onRun={regenerate}
+        />
       {/each}
     </ul>
 
     <ul class="mt-3 flex flex-col gap-1.5 border-t border-theme-border/40 pt-3">
       {#each adventure.npcs as npc (npc.id)}
-        <li class="flex items-center justify-between gap-2 text-xs">
-          <span class="text-theme-text"
-            >{npc.name} <span class="text-theme-muted">· {npc.role}</span></span
-          >
-          {@render regenButton(
-            { kind: "npc", id: npc.id },
-            `Regenerate NPC ${npc.name}`,
-          )}
-        </li>
+        <OneShotPartRow
+          target={{ kind: "npc", id: npc.id }}
+          label={`NPC ${npc.name}`}
+          meta={npc.role}
+          {busyId}
+          {useAI}
+          {buttonClass}
+          onRun={regenerate}
+        />
       {/each}
     </ul>
 

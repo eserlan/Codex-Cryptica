@@ -300,6 +300,9 @@ export {
   renderOneShotMarkdown,
   renderGmSheet,
   validateOneShot,
+  checkPlayability,
+  buildOneShotRepairPrompt,
+  applyOneShotRepair,
   normaliseTimeBudget,
   type OneShotPrompt,
   type ResolvedOneShot,
@@ -313,6 +316,9 @@ export type {
   OneShotNpc,
   OneShotClue,
   OneShotIssue,
+  OneShotGap,
+  OneShotSolution,
+  OneShotClock,
 } from "./one-shot-types";
 export {
   buildRumourPrompt,
