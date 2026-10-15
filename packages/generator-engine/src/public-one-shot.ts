@@ -239,17 +239,38 @@ interface SceneDecks {
   complications: string[];
 }
 
-function sceneDecks(ctx: FlavourCtx, rng: Rng): SceneDecks {
+function sceneDecks(
+  ctx: FlavourCtx,
+  rng: Rng,
+  excluding: OneShotScene[] = [],
+): SceneDecks {
   const kit = ONE_SHOT_KITS[ctx.emphasis] ?? ONE_SHOT_KITS.Action;
+  const middle = kit.challenges.middle.filter(
+    (challenge) =>
+      !excluding.some(
+        (scene) =>
+          scene.challenge.type === challenge.type &&
+          fill(challenge.text, { ...ctx, place: scene.location }) ===
+            scene.challenge.description,
+      ),
+  );
+  const complications = ctx.seed.complications.filter(
+    (complication) =>
+      !excluding.some(
+        (scene) =>
+          fill(complication, { ...ctx, place: scene.location }) ===
+          scene.situation,
+      ),
+  );
   return {
     middle: pickRandomItems(
-      kit.challenges.middle,
-      kit.challenges.middle.length,
+      middle.length ? middle : kit.challenges.middle,
+      middle.length || kit.challenges.middle.length,
       rng,
     ),
     complications: pickRandomItems(
-      ctx.seed.complications,
-      ctx.seed.complications.length,
+      complications.length ? complications : ctx.seed.complications,
+      complications.length || ctx.seed.complications.length,
       rng,
     ),
   };
@@ -1001,7 +1022,24 @@ export function regenerateOneShotLocal(
     if (index < 0)
       return { adventure, warnings: ["That scene no longer exists."] };
     const scene = adventure.scenes[index];
-    const fresh = sceneFlavour(ctx, scene.kind, index, scene.location, rng);
+    const decks =
+      scene.kind === "middle"
+        ? sceneDecks(
+            ctx,
+            rng,
+            adventure.scenes.filter(
+              (other) => other.kind === "middle" && other.id !== scene.id,
+            ),
+          )
+        : undefined;
+    const fresh = sceneFlavour(
+      ctx,
+      scene.kind,
+      index,
+      scene.location,
+      rng,
+      decks,
+    );
     const next = {
       ...adventure,
       scenes: adventure.scenes.map((s) =>

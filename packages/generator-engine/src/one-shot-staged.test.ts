@@ -215,6 +215,33 @@ describe("runOneShotStages", () => {
     });
   });
 
+  it("keeps template-filled middle scenes distinct after multiple failures", async () => {
+    const structure = "Five-room adventure";
+    const a = generateOneShotLocal(
+      { ...options, durationHours: 4, structure },
+      seeded(),
+    ).oneShot!;
+    const { call } = fakeModel(a, { scene: 6 });
+    const result = await runOneShotStages(
+      { ...options, durationHours: 4, structure },
+      { call, concurrency: 1 },
+      "",
+      seeded(),
+    );
+    const middle = result.adventure.scenes.filter(
+      (scene) => scene.kind === "middle",
+    );
+
+    expect(result.fallbackParts).toHaveLength(3);
+    expect(middle.length).toBeGreaterThan(1);
+    expect(
+      new Set(middle.map((scene) => scene.challenge.description)).size,
+    ).toBe(middle.length);
+    expect(new Set(middle.map((scene) => scene.situation)).size).toBe(
+      middle.length,
+    );
+  });
+
   it("keeps going without a finale and says so", async () => {
     const a = local();
     const { call } = fakeModel(a, { finale: 2 });
