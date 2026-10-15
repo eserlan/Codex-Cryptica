@@ -110,6 +110,78 @@ describe("MapContextMenu appearance controls", () => {
     });
   }
 
+  it("offers half and quarter sizes alongside the whole ones", async () => {
+    mapStoreMock.gridType = "hex-pointy";
+    renderMenu();
+    await fireEvent.click(screen.getByRole("menuitem", { name: "Resize" }));
+    const labels = screen
+      .getAllByRole("menuitem")
+      .map((item) => item.textContent?.trim())
+      .filter((text) => /^\d(\.\d+)?x\d/.test(text ?? ""));
+    expect(labels).toEqual([
+      "0.25x0.25",
+      "0.5x0.5",
+      "1x1",
+      "2x2",
+      "3x3",
+      "4x4",
+    ]);
+  });
+
+  it.each([
+    ["0.25x0.25", 0.25],
+    ["0.5x0.5", 0.5],
+  ])(
+    "resizes a token to %s of a hex around its snapped centre",
+    async (name, fraction) => {
+      mapStoreMock.gridType = "hex-pointy";
+      token.baseShape = "circle";
+      const originalCentre = {
+        x: token.x + token.width / 2,
+        y: token.y + token.height / 2,
+      };
+      const snappedCentre = snapPointToHexCenter(originalCentre, {
+        orientation: "pointy",
+        size: mapStoreMock.gridSize,
+        offsetX: mapStoreMock.gridOffsetX,
+        offsetY: mapStoreMock.gridOffsetY,
+      });
+      renderMenu();
+      await fireEvent.click(screen.getByRole("menuitem", { name: "Resize" }));
+      await fireEvent.click(screen.getByRole("menuitem", { name }));
+      const [, update] = mapSessionMock.updateToken.mock.calls[0];
+      const side = fraction * Math.sqrt(3) * mapStoreMock.gridSize;
+      expect(update.width).toBeCloseTo(side);
+      expect(update.height).toBeCloseTo(side);
+      expect(update.x + update.width / 2).toBeCloseTo(snappedCentre.x);
+      expect(update.y + update.height / 2).toBeCloseTo(snappedCentre.y);
+    },
+  );
+
+  it.each([
+    ["0.25x0.25", 0.25],
+    ["0.5x0.5", 0.5],
+  ])("resizes a square-grid token to %s of a cell", async (name, fraction) => {
+    mapStoreMock.gridType = "square";
+    token.x = 100;
+    token.y = 150;
+    token.width = 50;
+    token.height = 50;
+    renderMenu();
+
+    await fireEvent.click(screen.getByRole("menuitem", { name: "Resize" }));
+    await fireEvent.click(screen.getByRole("menuitem", { name }));
+
+    expect(mapSessionMock.updateToken).toHaveBeenCalledOnce();
+    const [, update] = mapSessionMock.updateToken.mock.calls[0];
+    expect(update).toMatchObject({
+      x: 100,
+      y: 150,
+      width: fraction * mapStoreMock.gridSize,
+      height: fraction * mapStoreMock.gridSize,
+    });
+  });
+
   it.each([
     {
       gridType: "hex-pointy",
