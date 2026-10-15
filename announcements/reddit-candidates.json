@@ -1,16 +1,6 @@
 {
-  "updated_at": 1792076725,
+  "updated_at": 1792085905,
   "candidates": [
-    {
-      "id": "reddit-38159898218-social-scenes-kept-ending-on-one-persuas",
-      "title": "Social scenes kept ending on one Persuasion check",
-      "body": "At my table a lot of conversations ended the same way. Someone rolled well, the NPC said yes, and we moved on with nothing anyone wanted to talk about after. The scene was short, but that was not the problem. There was simply nothing to decide.\n\nI built a small framework that tries to fix that by giving social scenes a real question to answer instead of more minutes to fill. Prep an important NPC with four lines: what they want, why they cannot just agree, what they know or can trade, and one boundary they will not cross. Frame the encounter so terms and trade-offs matter, then let dice adjust the offer rather than skipping the conversation.\n\nFull writeup here: https://codexcryptica.com/answers/how-do-i-make-roleplay-more-engaging\n\nIt covers:\n- a four-line situation note you can keep on an index card (wants, resistance, knows and can trade, will not cross)\n- how to frame a question where resources, relationships or access actually change\n- letting a strong check reduce a cost or add a guide instead of overriding a boundary, and not requiring a speech to earn a roll\n- a worked Lord Halden negotiation showing the same request before and after, with collateral, grain wagons and rival attention on the line\n- a short prep checklist for when to add weight and when to cut once the decision is made\n\nIt still takes a minute of prep per NPC who matters, and I am not sure I have the line right yet between a useful bit of tension and overcomplicating a simple gatehouse request. I am keeping the note to the handful of NPCs whose choices affect the party, not every shopkeeper.\n\nWhat is the last social scene at your table that came down to one check, and what trade-off would have made it worth arguing over?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/announcements/release-38159898218-0.png)",
-      "url": "https://codexcryptica.com/answers/how-do-i-make-roleplay-more-engaging",
-      "image_url": "https://assets.codexcryptica.com/announcements/release-38159898218-0.png",
-      "source_id": "38159898218",
-      "status": "approved",
-      "created_at": 1791740157
-    },
     {
       "id": "reddit-38391363178-five-new-answer-guides-from-first-dm-ner",
       "title": "Five new Answer guides \u2014 from first DM nerves to squad combat",
