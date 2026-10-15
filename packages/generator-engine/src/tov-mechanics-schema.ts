@@ -168,6 +168,24 @@ export const TovMagicItemMechanicsSchema = z.object({
   isHomebrew: z.boolean().default(false),
 });
 
+export const TovEncounterCreatureSuggestionSchema = z.object({
+  name: z.string().min(1),
+  cr: z.string().min(1),
+  count: z.coerce.number().int().min(1).default(1),
+  role: z.string().min(1).default("Adversary"),
+  templateId: z.string().optional(),
+  isHomebrew: z.boolean().default(false),
+});
+
+export const TovEncounterMechanicsSchema = z.object({
+  qualitativeDifficulty: z.string().min(1),
+  recommendedCrRange: z.string().min(1),
+  suggestedCreatures: z.array(TovEncounterCreatureSuggestionSchema).default([]),
+  tacticalAdvice: z.string().min(1).default(""),
+  doomNotes: z.string().optional(),
+  isHomebrew: z.boolean().default(false),
+});
+
 export const GeneratorMechanicsBundleSchema = z.discriminatedUnion("kind", [
   z.object({
     systemId: z.literal(TOV_SYSTEM_ID),
@@ -197,6 +215,13 @@ export const GeneratorMechanicsBundleSchema = z.discriminatedUnion("kind", [
     homebrewNotice: z.string().optional(),
     data: TovMagicItemMechanicsSchema,
   }),
+  z.object({
+    systemId: z.literal(TOV_SYSTEM_ID),
+    kind: z.literal("tov-encounter"),
+    isHomebrew: z.boolean().default(false),
+    homebrewNotice: z.string().optional(),
+    data: TovEncounterMechanicsSchema,
+  }),
 ]);
 
 export type GeneratorMechanicsBundle = z.infer<
@@ -209,3 +234,7 @@ export type TovCharacterAttack = z.infer<typeof TovCharacterAttackSchema>;
 export type TovCreatureAction = z.infer<typeof TovCreatureActionSchema>;
 export type TovCreatureMechanics = z.infer<typeof TovCreatureMechanicsSchema>;
 export type TovMagicItemMechanics = z.infer<typeof TovMagicItemMechanicsSchema>;
+export type TovEncounterCreatureSuggestion = z.infer<
+  typeof TovEncounterCreatureSuggestionSchema
+>;
+export type TovEncounterMechanics = z.infer<typeof TovEncounterMechanicsSchema>;

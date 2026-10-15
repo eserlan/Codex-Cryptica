@@ -6,18 +6,20 @@
     rollStatSheetDiceField,
   } from "$lib/utils/stat-sheet-field-actions";
   import TovLuckControl from "../stats/TovLuckControl.svelte";
-  import { isTovLuckField } from "@codex/stat-sheet-engine";
+  import TovDoomControl from "../stats/TovDoomControl.svelte";
+  import { isTovLuckField, isTovDoomField } from "@codex/stat-sheet-engine";
 
   let { entity } = $props<{ entity: Entity }>();
 
   const readOnly = $derived(vault.isGuest);
   const fields = $derived(entity.statSheet?.fields ?? []);
-  // ToV Luck is always shown so the token and the sheet never diverge.
+  // ToV Luck and Doom are always shown so the token and the sheet never diverge.
   const favorited = $derived(
     fields.filter(
       (f: StatSheetField) =>
         (f.favorite && f.type !== "heading") ||
-        isTovLuckField(entity.statSheet?.templateId, f),
+        isTovLuckField(entity.statSheet?.templateId, f) ||
+        isTovDoomField(entity.statSheet?.templateId, f),
     ),
   );
 
@@ -54,6 +56,7 @@
   }
 </script>
 
+<!-- fallow-ignore-next-line complexity -->
 {#if favorited.length > 0}
   <!-- svelte-ignore a11y_click_events_have_key_events -->
   <!-- svelte-ignore a11y_no_static_element_interactions -->
@@ -70,6 +73,13 @@
           {readOnly}
           onChange={(value) => setCounterValue(field, value)}
           testIdPrefix="token-tov-luck"
+        />
+      {:else if isTovDoomField(entity.statSheet?.templateId, field)}
+        <TovDoomControl
+          {field}
+          {readOnly}
+          onChange={(value) => setCounterValue(field, value)}
+          testIdPrefix="token-tov-doom"
         />
       {:else if field.type === "counter"}
         <div

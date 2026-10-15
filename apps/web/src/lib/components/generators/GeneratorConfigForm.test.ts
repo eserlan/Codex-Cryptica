@@ -636,4 +636,42 @@ describe("GeneratorConfigForm", { timeout: 20000 }, () => {
 
     systemProfileStore.vaultSystemId = null;
   });
+
+  it("inherits ToV and displays party size and level inputs for encounter generator", async () => {
+    const { systemProfileStore } =
+      await import("$lib/stores/system-profile.svelte");
+    systemProfileStore.vaultSystemId = "tales-of-the-valiant";
+
+    const onsubmit = vi.fn();
+    render(GeneratorConfigForm, {
+      props: {
+        generatorId: "encounter",
+        onsubmit,
+        aiPolicy: { isEnabled: true, isAvailable: true },
+      },
+    });
+
+    const gameSystemSelect = screen.getByLabelText(
+      "Game System",
+    ) as HTMLSelectElement;
+    expect(gameSystemSelect.value).toBe("tales-of-the-valiant");
+
+    expect(screen.getByLabelText(/Party Size/i)).toBeTruthy();
+    expect(screen.getByLabelText(/Average Party Level/i)).toBeTruthy();
+
+    await fireEvent.click(screen.getByRole("button", { name: "Generate" }));
+
+    expect(onsubmit).toHaveBeenCalledWith(
+      expect.objectContaining({
+        generatorId: "encounter",
+        options: expect.objectContaining({
+          gameSystem: "tales-of-the-valiant",
+          partySize: 4,
+          partyLevel: 3,
+        }),
+      }),
+    );
+
+    systemProfileStore.vaultSystemId = null;
+  });
 });

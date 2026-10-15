@@ -24,7 +24,10 @@
         (mechanics.data.isHomebrew ||
           mechanics.data.traits?.some((t) => t.isHomebrew) ||
           mechanics.data.actions?.some((a) => a.isHomebrew))) ||
-      (mechanics.kind === "tov-magic-item" && mechanics.data.isHomebrew),
+      (mechanics.kind === "tov-magic-item" && mechanics.data.isHomebrew) ||
+      (mechanics.kind === "tov-encounter" &&
+        (mechanics.data.isHomebrew ||
+          mechanics.data.suggestedCreatures?.some((c) => c.isHomebrew))),
   );
 
   function formatMod(mod: number): string {
@@ -77,6 +80,12 @@
           class="rounded bg-chrome-bg/80 px-2 py-0.5 text-micro font-medium text-chrome-muted"
         >
           Magic Item
+        </span>
+      {:else if mechanics.kind === "tov-encounter"}
+        <span
+          class="rounded bg-chrome-bg/80 px-2 py-0.5 text-micro font-medium text-chrome-muted"
+        >
+          Encounter Guidance
         </span>
       {/if}
     </div>
@@ -465,4 +474,95 @@
     {/if}
   {/snippet}
   {@render magicItemPreview()}
+
+  {#snippet encounterPreview()}
+    {#if mechanics.kind === "tov-encounter"}
+      {@const data = mechanics.data}
+      <div class="flex flex-col gap-2.5">
+        <div class="flex flex-wrap items-center gap-2 text-xs">
+          <span
+            class="rounded border border-chrome-border/40 bg-chrome-bg/60 px-2 py-1"
+          >
+            <strong>Difficulty:</strong>
+            {data.qualitativeDifficulty}
+          </span>
+          <span
+            class="rounded border border-chrome-border/40 bg-chrome-bg/60 px-2 py-1"
+          >
+            <strong>Recommended CR:</strong>
+            {data.recommendedCrRange}
+          </span>
+        </div>
+
+        {#if data.suggestedCreatures?.length}
+          <div class="flex flex-col gap-1">
+            <span
+              class="text-micro font-bold uppercase tracking-wider text-chrome-muted"
+            >
+              Suggested Adversaries & Participants
+            </span>
+            <div class="flex flex-col gap-1">
+              {#each data.suggestedCreatures as creature, idx (creature.name + idx)}
+                <div
+                  class="flex items-center justify-between rounded border border-chrome-border/30 bg-chrome-bg/30 px-2.5 py-1.5 text-xs"
+                >
+                  <div class="flex items-center gap-2">
+                    <span class="font-medium text-chrome-text">
+                      {creature.count}x {creature.name}
+                    </span>
+                    <span
+                      class="rounded bg-chrome-bg/80 px-1.5 py-0.5 text-micro font-bold text-chrome-accent"
+                    >
+                      CR {creature.cr}
+                    </span>
+                    <span class="text-micro text-chrome-muted">
+                      ({creature.role})
+                    </span>
+                  </div>
+                  {#if creature.isHomebrew}
+                    <span
+                      class="rounded bg-amber-500/10 px-1.5 py-0.5 text-micro font-semibold text-amber-300"
+                    >
+                      Homebrew
+                    </span>
+                  {/if}
+                </div>
+              {/each}
+            </div>
+          </div>
+        {/if}
+
+        {#if data.tacticalAdvice}
+          <div class="flex flex-col gap-1">
+            <span
+              class="text-micro font-bold uppercase tracking-wider text-chrome-muted"
+            >
+              Tactical & Pacing Guidance
+            </span>
+            <div
+              class="rounded border border-chrome-border/40 bg-chrome-bg/30 p-2 text-xs leading-relaxed text-chrome-text"
+            >
+              {data.tacticalAdvice}
+            </div>
+          </div>
+        {/if}
+
+        {#if data.doomNotes}
+          <div class="flex flex-col gap-1">
+            <span
+              class="text-micro font-bold uppercase tracking-wider text-amber-400"
+            >
+              Doom Actions & Usage (Boss / High Threat)
+            </span>
+            <div
+              class="rounded border border-amber-500/30 bg-amber-500/10 p-2 text-xs leading-relaxed text-amber-200"
+            >
+              {data.doomNotes}
+            </div>
+          </div>
+        {/if}
+      </div>
+    {/if}
+  {/snippet}
+  {@render encounterPreview()}
 </div>

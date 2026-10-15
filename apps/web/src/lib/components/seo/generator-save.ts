@@ -1,7 +1,10 @@
 import type { GeneratorOutput } from "$lib/services/seo/generator-engine";
 import type { ProvenanceRecord, SessionEntity } from "generator-engine";
 
-import type { TovMagicItemMechanics } from "generator-engine";
+import type {
+  TovMagicItemMechanics,
+  TovEncounterMechanics,
+} from "generator-engine";
 
 export interface GeneratorSaveLayout {
   content: string;
@@ -53,6 +56,38 @@ function formatTovMagicItemMarkdown(item: TovMagicItemMechanics): string {
   return parts.join("\n");
 }
 
+function formatTovEncounterMarkdown(encounter: TovEncounterMechanics): string {
+  const parts: string[] = [
+    "### Game Mechanics & Challenge Guidance (Tales of the Valiant)",
+  ];
+  parts.push(
+    `- **Challenge Assessment:** ${stripMarkdownImages(encounter.qualitativeDifficulty)}`,
+  );
+  parts.push(
+    `- **Recommended CR Distribution:** ${stripMarkdownImages(encounter.recommendedCrRange)}`,
+  );
+  if (encounter.suggestedCreatures?.length) {
+    parts.push("- **Suggested Participants:**");
+    for (const c of encounter.suggestedCreatures) {
+      const homebrewTag = c.isHomebrew ? " *(Homebrew)*" : "";
+      parts.push(
+        `  - ${c.count}x ${stripMarkdownImages(c.name)} (CR ${c.cr}, ${stripMarkdownImages(c.role)})${homebrewTag}`,
+      );
+    }
+  }
+  if (encounter.tacticalAdvice) {
+    parts.push(
+      `- **Tactical Guidance:** ${stripMarkdownImages(encounter.tacticalAdvice)}`,
+    );
+  }
+  if (encounter.doomNotes) {
+    parts.push(
+      `- **Doom Guidance:** ${stripMarkdownImages(encounter.doomNotes)}`,
+    );
+  }
+  return parts.join("\n");
+}
+
 /** Keep untrusted rules text from persisting Markdown or HTML image requests. */
 function stripMarkdownImages(text: string): string {
   return text
@@ -62,6 +97,31 @@ function stripMarkdownImages(text: string): string {
 }
 
 /** Build the vault payload while keeping adventure-specific layout rules out of the page. */
+function resolveMechanicsSaveExtension(
+  mechanics: GeneratorOutput["mechanics"],
+): {
+  markdown?: string;
+  metadata?: Record<string, unknown>;
+} {
+  if (!mechanics) return {};
+
+  if (mechanics.kind === "tov-magic-item") {
+    return {
+      markdown: formatTovMagicItemMarkdown(mechanics.data),
+      metadata: { tovMechanics: mechanics.data },
+    };
+  }
+
+  if (mechanics.kind === "tov-encounter") {
+    return {
+      markdown: formatTovEncounterMarkdown(mechanics.data),
+      metadata: { tovMechanics: mechanics.data },
+    };
+  }
+
+  return {};
+}
+
 export function buildGeneratorSavePayload(
   data: GeneratorOutput,
   layout: GeneratorSaveLayout,
@@ -80,13 +140,9 @@ export function buildGeneratorSavePayload(
     ? [data.content, data.lore].filter(Boolean).join("\n\n")
     : layout.lore;
 
-  let metadata: Record<string, unknown> | undefined = undefined;
-  if (data.mechanics && data.mechanics.kind === "tov-magic-item") {
-    const statsMarkdown = formatTovMagicItemMarkdown(data.mechanics.data);
-    lore = lore ? `${lore}\n\n${statsMarkdown}` : statsMarkdown;
-    metadata = {
-      tovMechanics: data.mechanics.data,
-    };
+  const { markdown, metadata } = resolveMechanicsSaveExtension(data.mechanics);
+  if (markdown) {
+    lore = lore ? `${lore}\n\n${markdown}` : markdown;
   }
 
   return {

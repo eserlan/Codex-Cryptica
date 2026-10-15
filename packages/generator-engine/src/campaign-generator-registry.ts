@@ -239,6 +239,15 @@ function optionString(
   return typeof value === "string" && value.length > 0 ? value : fallback;
 }
 
+function optionNumber(
+  request: GeneratorRunRequest,
+  key: string,
+  fallback: number,
+): number {
+  const val = Number(request.options[key]);
+  return Number.isFinite(val) && val > 0 ? val : fallback;
+}
+
 function dungeonOptions(request: GeneratorRunRequest): DungeonGeneratorOptions {
   return {
     themeId: request.themeId || optionString(request, "themeId", "fantasy"),
@@ -1148,6 +1157,9 @@ function encounterOptions(
     threat: optionString(request, "threat", ""),
     tone: optionString(request, "tone", ""),
     context: optionString(request, "context", ""),
+    gameSystem: optionString(request, "gameSystem", "system-neutral"),
+    partySize: optionNumber(request, "partySize", 4),
+    partyLevel: optionNumber(request, "partyLevel", 3),
   };
 }
 
@@ -2755,6 +2767,37 @@ const REGISTRY: Record<GeneratorId, CampaignGeneratorDefinition> = {
           "Optional: describe an existing situation, location, or NPC to anchor the encounter.",
         control: "textarea",
       },
+      {
+        id: "gameSystem",
+        label: "Game System",
+        control: "select",
+        choices: [
+          { value: "system-neutral", label: "System Neutral" },
+          { value: "tales-of-the-valiant", label: "Tales of the Valiant" },
+        ],
+      },
+      {
+        id: "partySize",
+        label: "Party Size",
+        description: "Number of active player characters (1–8).",
+        control: "number",
+        defaultValue: 4,
+        visibleWhen: {
+          optionId: "gameSystem",
+          values: ["tales-of-the-valiant"],
+        },
+      },
+      {
+        id: "partyLevel",
+        label: "Average Party Level",
+        description: "Average character level (1–20).",
+        control: "number",
+        defaultValue: 3,
+        visibleWhen: {
+          optionId: "gameSystem",
+          values: ["tales-of-the-valiant"],
+        },
+      },
     ],
     defaults: {
       encounterType: "Random",
@@ -2762,6 +2805,9 @@ const REGISTRY: Record<GeneratorId, CampaignGeneratorDefinition> = {
       threat: "Moderate",
       tone: "",
       context: "",
+      gameSystem: "system-neutral",
+      partySize: 4,
+      partyLevel: 3,
     },
     generate: generateEncounter,
     mapOutputToDraft: mapOutputToDraft("encounter"),

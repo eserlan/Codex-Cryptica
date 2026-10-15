@@ -122,7 +122,8 @@ export type TovGeneratorBundle =
   | { kind: "tov-quick-npc"; data: TovQuickNpcData; [key: string]: unknown }
   | { kind: "tov-character"; data: TovCharacterData; [key: string]: unknown }
   | { kind: "tov-creature"; data: TovCreatureData; [key: string]: unknown }
-  | { kind: "tov-magic-item"; [key: string]: unknown };
+  | { kind: "tov-magic-item"; [key: string]: unknown }
+  | { kind: "tov-encounter"; [key: string]: unknown };
 
 function abilityModifier(score: number): number {
   return Math.floor((score - 10) / 2);

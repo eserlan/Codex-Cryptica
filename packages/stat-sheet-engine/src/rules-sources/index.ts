@@ -7,3 +7,4 @@ export * from "./fixtures/tov-luck.fixture";
 export * from "./tov-templates";
 export * from "./tov-luck";
 export * from "./tov-generator-mapping";
+export * from "./tov-doom";
