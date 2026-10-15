@@ -93,6 +93,22 @@ describe("narrative commitments", () => {
       expect.stringMatching(/daughter is trapped below.*never paid off/),
     );
   });
+
+  it("keeps original commitments omitted by a partial review", () => {
+    const a = local();
+    const [reviewed, omitted] = a.threads!;
+    const fixed = applyOneShotRepair(
+      a,
+      JSON.stringify({
+        threads: [{ ...reviewed, payoff: "The danger is resolved." }],
+      }),
+    );
+    expect(fixed.threads).toContainEqual(omitted);
+    expect(fixed.threads).toContainEqual({
+      ...reviewed,
+      payoff: "The danger is resolved.",
+    });
+  });
 });
 
 describe("clock consistency", () => {
@@ -110,6 +126,15 @@ describe("clock consistency", () => {
     a.clock!.name = "The Bell's Notes";
     a.briefing.stakes = `${a.clock!.ticks.length} bell notes begin the march.`;
     expect(messages(a).filter((m) => /clock has/.test(m))).toEqual([]);
+  });
+
+  it("flags an eleven-count that disagrees with the clock", () => {
+    const a = local();
+    a.clock!.name = "Bell Notes";
+    a.briefing.stakes = "Eleven bell notes begin the march on Dunmere.";
+    expect(messages(a)).toContainEqual(
+      expect.stringMatching(/Eleven bell notes.*clock has 4 steps/),
+    );
   });
 
   it("flags a clock without a point of no return", () => {

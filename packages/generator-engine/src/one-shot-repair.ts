@@ -188,6 +188,17 @@ function mergeRepair(
     clues.has(c.id) ? repairClue(c, clues.get(c.id), sceneIds) : c,
   );
   const threads = parseThreads(data.threads, inScenes);
+  const reviewedSetups = new Set(
+    threads.map((thread) => thread.setup.trim().toLowerCase()),
+  );
+  const mergedThreads = threads.length
+    ? [
+        ...threads,
+        ...(adventure.threads ?? []).filter(
+          (thread) => !reviewedSetups.has(thread.setup.trim().toLowerCase()),
+        ),
+      ]
+    : adventure.threads;
   const antagonistId = str(data.antagonistId);
   return {
     ...adventure,
@@ -195,7 +206,7 @@ function mergeRepair(
     antagonistId: npcIds.has(antagonistId)
       ? antagonistId
       : adventure.antagonistId,
-    threads: threads.length ? threads : adventure.threads,
+    threads: mergedThreads,
     solution: parseSolution(data.solution, inScenes) ?? adventure.solution,
     clock: parseClock(data.clock) ?? adventure.clock,
     scenes: adventure.scenes.map((s) =>

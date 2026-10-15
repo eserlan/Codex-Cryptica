@@ -75,6 +75,7 @@ const checkThreads: GapCheck = (adventure) => {
 };
 
 const NUMBER_WORDS: Record<string, number> = {
+  one: 1,
   two: 2,
   three: 3,
   four: 4,
@@ -84,11 +85,18 @@ const NUMBER_WORDS: Record<string, number> = {
   eight: 8,
   nine: 9,
   ten: 10,
+  eleven: 11,
   twelve: 12,
   thirteen: 13,
+  fourteen: 14,
+  fifteen: 15,
+  sixteen: 16,
+  seventeen: 17,
+  eighteen: 18,
+  nineteen: 19,
 };
 const COUNTED =
-  /\b(two|three|four|five|six|seven|eight|nine|ten|twelve|thirteen|\d{1,2})\s+(?:[a-z]+\s+)?(notes|tolls|strikes|chimes|rings|bells|hours|nights|days|stages|seals|steps|signs|candles|chants|marks)\b/gi;
+  /\b(one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|\d{1,2})\s+(?:[a-z]+\s+)?(notes|tolls|strikes|chimes|rings|bells|hours|nights|days|stages|seals|steps|signs|candles|chants|marks)\b/gi;
 
 /**
  * "Three bell notes" in the stakes and a five-step clock contradict each
