@@ -37,6 +37,7 @@ import {
   ONE_SHOT_KITS,
   ONE_SHOT_SEEDS,
   seedKeyForGenre,
+  type OneShotKit,
   type OneShotSeed,
 } from "./one-shot-seeds";
 import {
@@ -232,15 +233,62 @@ interface FlavourCtx {
   item: string;
 }
 
+/** Per-adventure draws, so middle scenes and complications don't repeat. */
+interface SceneDecks {
+  middle: OneShotKit["challenges"]["middle"];
+  complications: string[];
+}
+
+function sceneDecks(
+  ctx: FlavourCtx,
+  rng: Rng,
+  excluding: OneShotScene[] = [],
+): SceneDecks {
+  const kit = ONE_SHOT_KITS[ctx.emphasis] ?? ONE_SHOT_KITS.Action;
+  const middle = kit.challenges.middle.filter(
+    (challenge) =>
+      !excluding.some(
+        (scene) =>
+          fill(challenge.text, { ...ctx, place: scene.location }) ===
+          scene.challenge.description,
+      ),
+  );
+  const complications = ctx.seed.complications.filter(
+    (complication) =>
+      !excluding.some(
+        (scene) =>
+          fill(complication, { ...ctx, place: scene.location }) ===
+          scene.situation,
+      ),
+  );
+  return {
+    middle: pickRandomItems(
+      middle.length ? middle : kit.challenges.middle,
+      middle.length || kit.challenges.middle.length,
+      rng,
+    ),
+    complications: pickRandomItems(
+      complications.length ? complications : ctx.seed.complications,
+      complications.length || ctx.seed.complications.length,
+      rng,
+    ),
+  };
+}
+
 function sceneFlavour(
   ctx: FlavourCtx,
   kind: OneShotSceneKind,
   index: number,
   place: string,
   rng: Rng,
+  decks?: SceneDecks,
 ) {
   const f = (t: string) => fill(t, { ...ctx, place });
   const kit = ONE_SHOT_KITS[ctx.emphasis] ?? ONE_SHOT_KITS.Action;
+  const fromDeck = <T>(deck: T[] | undefined, pool: T[]) =>
+    deck?.length
+      ? deck[(index - 1 + deck.length) % deck.length]
+      : pickFrom(pool, rng);
   const situation =
     kind === "opening"
       ? f(pickFrom(ctx.seed.hooks, rng))
@@ -248,17 +296,18 @@ function sceneFlavour(
         ? f(
             `The party reaches {place}, where {villain} is ${pickFrom(ctx.seed.climaxes, rng)}.`,
           )
-        : f(pickFrom(ctx.seed.complications, rng));
+        : f(fromDeck(decks?.complications, ctx.seed.complications));
+  const finale = pickFrom(kit.challenges.climax, rng);
   const challenge: OneShotChallenge =
     kind === "climax"
       ? {
-          type: kit.challenges.climax.type,
-          description: f(kit.challenges.climax.text),
+          type: finale.type,
+          description: f(finale.text),
           success: f(
             "The party wins by doing the steps in How the Finale Works, or by any other way through listed there.",
           ),
-          otherApproaches: ADJUDICATION[kit.challenges.climax.type].other,
-          opposition: OPPOSITION[kit.challenges.climax.type]
+          otherApproaches: ADJUDICATION[finale.type].other,
+          opposition: OPPOSITION[finale.type]
             ? f(CLIMAX_OPPOSITION)
             : undefined,
           failForward: f(
@@ -266,7 +315,7 @@ function sceneFlavour(
           ),
         }
       : (() => {
-          const c = pickFrom(kit.challenges.middle, rng);
+          const c = fromDeck(decks?.middle, kit.challenges.middle);
           return {
             type: c.type,
             description: f(c.text),
@@ -282,7 +331,7 @@ function sceneFlavour(
   return {
     situation,
     purpose: kind === "climax" ? "Resolve the central conflict" : purpose,
-    approaches: kit.approaches.map(f),
+    approaches: pickRandomItems(kit.approaches, 3, rng).map(f),
     challenge,
     outcomes: [
       "Clean success: the party gets what it came for and the story moves on.",
@@ -292,55 +341,139 @@ function sceneFlavour(
   };
 }
 
+/**
+ * NPC text pools. The villain's backstory and terms for stopping come as a
+ * pair so they agree; regenerating a villain keeps them and only re-rolls
+ * motivation, knowledge, reaction and cues, so those stay general.
+ */
+const NPC_CUES = [
+  "Speaks quietly and leans in when lying.",
+  "Fidgets with something small and loses their train of thought when pressed.",
+  "Never answers the first question directly.",
+  "Laughs a half-second too late.",
+  "Uses the party's names a little too often.",
+  "Keeps checking the door, the window or the time.",
+  "Over-explains, then goes silent all at once.",
+  "Always has something in their hands: a cup, a coin, a pipe.",
+  "Answers questions with questions.",
+  "Is unfailingly polite, right up until they are not.",
+];
+
+const NPC_POOLS = {
+  patron: {
+    motivation: [
+      "Wants {item} dealt with, quietly, and wants to stay out of it.",
+      "Needs {item} back before anyone learns it was ever lost.",
+      "Wants {villain} stopped, and would like to be the one seen doing it.",
+      "Owes a debt that {item} would pay, and is running out of time.",
+    ],
+    knows: [
+      "Knows who benefits, but is not telling all of it.",
+      "Knows where {item} was last seen, and why they were there too.",
+      "Knows {villain} by another name, from years ago.",
+    ],
+    reaction: [
+      "Pushes to move fast; gets defensive if asked about their own role.",
+      "Grateful and generous, until the party starts asking about the past.",
+      "Haggles over every coin, then pays more than agreed if the job is done well.",
+    ],
+  },
+  villain: {
+    motivation: [
+      "Needs {item} to finish what they started, and believes they are in the right.",
+      "Wants {item} because it gives them a power no one can take away again.",
+      "Sees {item} as the price of keeping their people safe, whatever it costs others.",
+      "Wants {item} so that {patron} finally loses something that matters.",
+    ],
+    knows: [
+      "Knows what the party has learned within a scene or two of them learning it.",
+      "Knows the party's patron is lying to them, and will say so at the worst moment.",
+      "Knows the place better than anyone, including every way out.",
+    ],
+    reaction: [
+      "Offers a deal first, threats second. Respects a party that is willing to negotiate.",
+      "Courteous and patient, and never forgets a slight.",
+      "Tests the party with a small cruelty to see what they will put up with.",
+    ],
+    tactics: [
+      "Never fights alone. Sends others first, watches how the party fights, then strikes at whoever seems to lead them. Withdraws rather than dies.",
+      "Fights from a prepared position, with traps and an escape route already set. Takes hostages if the fight turns.",
+      "Strikes hard and early at the most dangerous-looking enemy, then talks while the others are still recovering.",
+      "Avoids open battle. Turns the party's allies, cuts their supplies and lets the place do the fighting.",
+    ],
+    arcs: [
+      {
+        backstory:
+          "Lost something years ago that {item} could restore, and no one would help them get it back.",
+        stopIf:
+          "Shown proof that {item} cannot give back what they lost, or offered a real way to get it without the plan.",
+      },
+      {
+        backstory:
+          "Was cast out by the very people {item} protects, and has been planning this since.",
+        stopIf:
+          "Offered a public apology and a place among those who cast them out.",
+      },
+      {
+        backstory:
+          "Was promised {item} as payment long ago, by {patron}, and never received it.",
+        stopIf:
+          "Given what {patron} owes them, or shown that {patron} never meant to pay anyone.",
+      },
+      {
+        backstory:
+          "Believes a disaster is coming that only {item} can stop, and may be right.",
+        stopIf:
+          "Shown that the party can stop the disaster another way, and will.",
+      },
+    ],
+  },
+  witness: {
+    motivation: [
+      "Wants to stay safe and be believed.",
+      "Wants a way out of town and will trade what they know for it.",
+      "Wants revenge on {villain}, but is too scared to act alone.",
+      "Wants the party to protect someone they love.",
+    ],
+    knows: [
+      "Saw something that points toward {villain}, though they do not understand what.",
+      "Overheard {villain} and {patron} arguing about {item}.",
+      "Knows a way into the place that nobody else remembers.",
+    ],
+    reaction: [
+      "Opens up when treated kindly, or when shown the party already knows.",
+      "Clams up around authority; talks freely to anyone who seems an outsider.",
+      "Lies to protect themselves, then tells the truth if the party catches the lie gently.",
+    ],
+  },
+};
+
 function npcFlavour(
   role: string,
   kind: "patron" | "villain" | "witness",
   ctx: FlavourCtx,
   rng: Rng,
 ) {
-  const cues = [
-    "Speaks quietly and leans in when lying.",
-    "Fidgets with something small and loses their train of thought when pressed.",
-    "Never answers the first question directly.",
-    "Laughs a half-second too late.",
-  ];
   const f = (t: string) => fill(t, { ...ctx, place: "the scene" });
-  const data = {
-    patron: {
-      motivation: f(
-        "Wants {item} dealt with, quietly, and wants to stay out of it.",
-      ),
-      knows: f("Knows who benefits, but is not telling all of it."),
-      reaction:
-        "Pushes to move fast; gets defensive if asked about their own role.",
-    },
-    villain: {
-      motivation: f(
-        "Needs {item} to finish what they started, and believes they are in the right.",
-      ),
-      knows: f(
-        "Knows what the party has learned within a scene or two of them learning it.",
-      ),
-      reaction:
-        "Offers a deal first, threats second. Respects a party that is willing to negotiate.",
-      backstory: f(
-        "Lost something years ago that {item} could restore, and no one would help them get it back.",
-      ),
-      tactics:
-        "Never fights alone. Sends others first, watches how the party fights, then strikes at whoever seems to lead them. Withdraws rather than dies.",
-      stopIf: f(
-        "Shown proof that {item} cannot give back what they lost, or offered a real way to get it without the plan.",
-      ),
-    },
-    witness: {
-      motivation: "Wants to stay safe and be believed.",
-      knows: f(
-        "Saw something that points toward {villain}, though they do not understand what.",
-      ),
-      reaction:
-        "Opens up when treated kindly, or when shown the party already knows.",
-    },
-  }[kind];
+  const pool = NPC_POOLS[kind];
+  const base = {
+    motivation: f(pickFrom(pool.motivation, rng)),
+    knows: f(pickFrom(pool.knows, rng)),
+    reaction: f(pickFrom(pool.reaction, rng)),
+  };
+  const cues = NPC_CUES;
+  const data =
+    kind === "villain"
+      ? (() => {
+          const arc = pickFrom(NPC_POOLS.villain.arcs, rng);
+          return {
+            ...base,
+            backstory: f(arc.backstory),
+            tactics: pickFrom(NPC_POOLS.villain.tactics, rng),
+            stopIf: f(arc.stopIf),
+          };
+        })()
+      : base;
   return { role, ...data, cues: pickFrom(cues, rng) };
 }
 
@@ -406,10 +539,11 @@ export function buildOneShotAdventure(
     resolved.durationMinutes - buffer,
   );
 
+  const decks = sceneDecks(ctx, rng);
   const scenes: OneShotScene[] = places.map((place, i) => {
     const kind: OneShotSceneKind =
       i === 0 ? "opening" : i === count - 1 ? "climax" : "middle";
-    const flavour = sceneFlavour(ctx, kind, i, place, rng);
+    const flavour = sceneFlavour(ctx, kind, i, place, rng, decks);
     const next: string[] = [];
     if (i + 1 < count) next.push(`scene-${i + 2}`);
     if (i + 2 < count && !essential[i + 1]) next.push(`scene-${i + 3}`);
@@ -604,7 +738,15 @@ export function buildOneShotAdventure(
     },
   ];
   const trigger = f(
-    `${villainName} found out where ${item} was kept and moved on it three days ago.`,
+    pickFrom(
+      [
+        "{villain} found out where {item} was kept and moved on it three days ago.",
+        "{item} was moved from its usual keeping for the first time in years, and {villain} was waiting.",
+        "{patron} talked too freely in the wrong company, and {villain} heard.",
+        "Whatever kept {villain} away has just died, failed or been paid off.",
+      ],
+      rng,
+    ),
   );
   const questions = [
     { question: "Why now?", answer: trigger },
@@ -699,7 +841,7 @@ export function buildOneShotAdventure(
 function titleCase(text: string) {
   return text
     .replace(/^(a|an|the)\s+/i, "")
-    .replace(/\b\w/g, (c) => c.toUpperCase());
+    .replace(/(^|[\s-])(\w)/g, (_, gap, c) => gap + c.toUpperCase());
 }
 
 export function oneShotToOutput(
@@ -879,7 +1021,24 @@ export function regenerateOneShotLocal(
     if (index < 0)
       return { adventure, warnings: ["That scene no longer exists."] };
     const scene = adventure.scenes[index];
-    const fresh = sceneFlavour(ctx, scene.kind, index, scene.location, rng);
+    const decks =
+      scene.kind === "middle"
+        ? sceneDecks(
+            ctx,
+            rng,
+            adventure.scenes.filter(
+              (other) => other.kind === "middle" && other.id !== scene.id,
+            ),
+          )
+        : undefined;
+    const fresh = sceneFlavour(
+      ctx,
+      scene.kind,
+      index,
+      scene.location,
+      rng,
+      decks,
+    );
     const next = {
       ...adventure,
       scenes: adventure.scenes.map((s) =>
