@@ -14,7 +14,7 @@ import type {
 import { generateTomeTwoPass } from "./public-tome";
 import type { TomePrompt } from "./public-tome";
 import type { PublicGeneratorOutput } from "./public-generator-adapters";
-import type { LanguageGenerationResultV1 } from "schema";
+import type { LanguageGenerationResultV1, StatSheet } from "schema";
 
 export function completeText(
   result: string | AIGeneratorCompleteResult,
@@ -327,6 +327,8 @@ export interface GeneratorVaultGateway {
       languageProfile?: LanguageGenerationResultV1["profile"];
       languageProfileVersion?: 1;
       start_date?: { year: number; month: number; day: number };
+      statSheet?: StatSheet;
+      systemId?: string;
     },
   ): Promise<string>;
   /** Creates a relationship from source to target. */

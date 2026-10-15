@@ -64,6 +64,7 @@ describe("SeoImportService", () => {
       lore: "Strength: 18",
       labels: ["custom-label"],
       discoverySource: "kanka:character:101",
+      systemId: "tales-of-the-valiant",
       metadata: { kankaEntityId: 101 },
     };
     localStorage.setItem("__codex_pending_import", JSON.stringify(draft));
@@ -80,6 +81,7 @@ describe("SeoImportService", () => {
         labels: ["custom-label"],
         status: "active",
         discoverySource: "kanka:character:101",
+        systemId: "tales-of-the-valiant",
         metadata: { kankaEntityId: 101 },
       },
     );

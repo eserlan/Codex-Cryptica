@@ -20,6 +20,7 @@ export const FEATURE_HELP_ARTICLES = {
   COMMUNITY_STAT_SHEET_TEMPLATES: "stat-sheets",
   SHARING_ENTITY_TEMPLATES: "sharing-templates",
   HEXCRAWL_MAPS: "hexcrawl-maps",
+  TOV_GENERATORS: "tales-of-the-valiant-generators",
 } as const;
 
 export interface FeatureHint {

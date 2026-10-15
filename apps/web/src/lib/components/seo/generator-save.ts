@@ -1,6 +1,8 @@
 import type { GeneratorOutput } from "$lib/services/seo/generator-engine";
 import type { ProvenanceRecord, SessionEntity } from "generator-engine";
 
+import type { TovMagicItemMechanics } from "generator-engine";
+
 export interface GeneratorSaveLayout {
   content: string;
   lore: string;
@@ -14,7 +16,9 @@ export interface GeneratorSavePayload {
   lore: string;
   labels: string[];
   status: GeneratorOutput["status"];
+  systemId?: string;
   mapImageDataUrl?: string;
+  metadata?: Record<string, unknown>;
 }
 
 export interface HubSaveDraft {
@@ -26,6 +30,35 @@ export interface HubSaveDraft {
   labels: string[];
   status: SessionEntity["status"];
   references?: string[];
+}
+
+function formatTovMagicItemMarkdown(item: TovMagicItemMechanics): string {
+  const parts: string[] = ["### Game Statistics (Tales of the Valiant)"];
+  parts.push(`- **Rarity & Category:** ${item.rarity} ${item.category}`);
+  parts.push(
+    `- **Attunement:** ${item.attunement ? (item.attunementRequirement ? `Requires attunement (${stripMarkdownImages(item.attunementRequirement)})` : "Requires attunement") : "No"}`,
+  );
+  parts.push(`- **Activation:** ${item.activationAction}`);
+  if (item.charges) {
+    parts.push(
+      `- **Charges:** ${item.charges} ${item.rechargeRate ? `(${stripMarkdownImages(item.rechargeRate)})` : ""}`.trim(),
+    );
+  }
+  if (item.savingThrowDc) {
+    parts.push(`- **Saving Throw DC:** ${item.savingThrowDc}`);
+  }
+  if (item.rulesText) {
+    parts.push(`\n${stripMarkdownImages(item.rulesText)}`);
+  }
+  return parts.join("\n");
+}
+
+/** Keep untrusted rules text from persisting Markdown or HTML image requests. */
+function stripMarkdownImages(text: string): string {
+  return text
+    .replace(/!\[([^\]]*)\]\([^)]*\)/g, "$1")
+    .replace(/!\[([^\]]*)\]\[[^\]]*\]/g, "$1")
+    .replace(/<img\b[^>]*>/gi, "");
 }
 
 /** Build the vault payload while keeping adventure-specific layout rules out of the page. */
@@ -43,9 +76,18 @@ export function buildGeneratorSavePayload(
     : data.summary
       ? `*${data.summary}*\n\n${layout.content}`
       : layout.content;
-  const lore = isAdventure
+  let lore = isAdventure
     ? [data.content, data.lore].filter(Boolean).join("\n\n")
     : layout.lore;
+
+  let metadata: Record<string, unknown> | undefined = undefined;
+  if (data.mechanics && data.mechanics.kind === "tov-magic-item") {
+    const statsMarkdown = formatTovMagicItemMarkdown(data.mechanics.data);
+    lore = lore ? `${lore}\n\n${statsMarkdown}` : statsMarkdown;
+    metadata = {
+      tovMechanics: data.mechanics.data,
+    };
+  }
 
   return {
     type: isAdventure ? "note" : data.type,
@@ -55,7 +97,9 @@ export function buildGeneratorSavePayload(
     lore,
     labels: data.labels,
     status: data.status,
+    systemId: data.systemId ?? data.mechanics?.systemId,
     ...(mapImageDataUrl ? { mapImageDataUrl } : {}),
+    ...(metadata ? { metadata } : {}),
   };
 }
 
