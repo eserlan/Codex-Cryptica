@@ -36,6 +36,8 @@ export interface GeneratorThemeSyncContext {
   artifact: ThemeState;
   creature: ThemeState;
   tome?: ThemeState;
+  oneShot?: ThemeState;
+  mapOneShotGenre?: (genre: string) => string | null;
   themeToQuestGenre: Record<string, string | undefined>;
   mapSocialHubGenre: (genre: string) => string;
   mapWorldGenre: (genre: string) => string;
@@ -77,6 +79,8 @@ export function syncGeneratorTheme({
   artifact,
   creature,
   tome,
+  oneShot,
+  mapOneShotGenre,
   themeToQuestGenre,
   mapSocialHubGenre,
   mapWorldGenre,
@@ -124,4 +128,9 @@ export function syncGeneratorTheme({
   else if (slug === "creature") creature.genre = activeTheme;
   else if (slug === "personality") personality.genre = activeTheme;
   else if (slug === "tome" && tome) tome.theme = activeTheme;
+  else if (slug === "one-shot-adventure-generator" && oneShot) {
+    // Genre drives the skin: the one-shot genre list has no 1:1 theme labels.
+    const theme = mapOneShotGenre?.(oneShot.genre ?? "");
+    if (theme) setActiveTheme(theme);
+  }
 }

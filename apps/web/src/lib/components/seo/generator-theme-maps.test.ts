@@ -1,3 +1,5 @@
+import { factionConfig } from "generator-engine";
+import { oneShotConfig } from "$lib/services/seo/generator-config";
 import { describe, expect, it } from "vitest";
 import {
   mapHubGenreToShipGenre,
@@ -5,6 +7,7 @@ import {
   mapStarSystemGenreToTheme,
   mapAlienRaceGenreToTheme,
   mapWorldGenreToTheme,
+  mapOneShotGenreToTheme,
   resolveHubGeneratorGenre,
   shouldSyncGeneratorTheme,
   SOCIAL_HUB_GENRE_TO_THEME,
@@ -131,5 +134,24 @@ describe("SOCIAL_HUB_GENRE_TO_THEME", () => {
     expect(SOCIAL_HUB_GENRE_TO_THEME["Superhero"]).toBe(
       "Superhero / Comic Book",
     );
+  });
+});
+
+describe("mapOneShotGenreToTheme", () => {
+  it("maps every one-shot genre to a theme and leaves custom genres alone", () => {
+    for (const genre of oneShotConfig.genres) {
+      expect(mapOneShotGenreToTheme(genre)).toBe(genre);
+    }
+    for (const theme of factionConfig.themes) {
+      expect(oneShotConfig.genres).toContain(theme);
+    }
+    expect(mapOneShotGenreToTheme("Dark Fantasy")).toBe(
+      "Vampire / Gothic Noir",
+    );
+    expect(mapOneShotGenreToTheme("Horror")).toBe("Cosmic Horror");
+    expect(mapOneShotGenreToTheme("Cyberpunk")).toBe("Cyberpunk / Corporate");
+    expect(mapOneShotGenreToTheme("Modern Mystery")).toBe("Modern Conspiracy");
+    expect(mapOneShotGenreToTheme("Homebrew")).toBeNull();
+    expect(shouldSyncGeneratorTheme("one-shot-adventure-generator")).toBe(true);
   });
 });

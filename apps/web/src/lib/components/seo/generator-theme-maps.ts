@@ -1,3 +1,4 @@
+import { factionConfig } from "generator-engine";
 // Pure lookup tables and functions for reconciling a hub genre/theme (from
 // the URL or localStorage) with the per-generator theme/genre state used
 // across the SEO generator pages.
@@ -46,6 +47,7 @@ export const GENERATOR_SLUGS_WITH_THEME = new Set([
   "holiday",
   "personality",
   "tome",
+  "one-shot-adventure-generator",
 ]);
 
 export function shouldSyncGeneratorTheme(s: string) {
@@ -235,4 +237,21 @@ export function mapAlienRaceGenreToTheme(genre: string): string {
   if (genre === "Post-Apocalyptic") return "Post-Apocalyptic";
   // Hard Sci-Fi and Space Opera both skin as the general sci-fi theme.
   return "Sci-Fi / Space Opera";
+}
+
+/** Genres the one-shot page used before it shared the canonical theme list. */
+const LEGACY_ONE_SHOT_GENRES: Record<string, string> = {
+  "Dark Fantasy": "Vampire / Gothic Noir",
+  Horror: "Cosmic Horror",
+  Cyberpunk: "Cyberpunk / Corporate",
+  "Modern Mystery": "Modern Conspiracy",
+};
+
+/**
+ * The visual theme for a one-shot genre. One-shot genres are the canonical
+ * themes, so they are their own skin; a custom genre keeps the current one.
+ */
+export function mapOneShotGenreToTheme(genre: string): string | null {
+  if (factionConfig.themes.includes(genre)) return genre;
+  return LEGACY_ONE_SHOT_GENRES[genre] ?? null;
 }
