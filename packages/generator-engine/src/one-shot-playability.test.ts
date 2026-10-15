@@ -108,6 +108,7 @@ describe("checkPlayability", () => {
     for (const text of [
       "The correct passages: they can't be read by mortals",
       "The correct passages: they are hidden, hard to read and guarded by spirits",
+      "The correct passages: Hidden, Hard to Read and Guarded by Spirits",
     ]) {
       expect(isVague(text)).toBe(true);
       const a = local();
