@@ -34,6 +34,13 @@ import {
 } from "./one-shot-types";
 export type { ResolvedOneShot };
 import {
+  CLOCK_RULE,
+  COMMITMENT_RULE,
+  EMPHASIS_HINT,
+  ENDINGS_RULE,
+  PACING_RULE,
+} from "./one-shot-rules";
+import {
   ONE_SHOT_KITS,
   ONE_SHOT_SEEDS,
   seedKeyForGenre,
@@ -664,7 +671,7 @@ export function buildOneShotAdventure(
   const clock = {
     name: f(`${villainName}'s Plan`),
     advances:
-      "Each time the party fails a challenge, rests, or the GM uses the running-late path. Nothing else moves it.",
+      "At the end of each essential scene after the opening, whatever the party does. Failing a challenge or resting also advances it; forcing a risky shortcut adds a complication instead.",
     ticks: [
       {
         trigger: "First step",
@@ -865,15 +872,7 @@ export function describeOneShotOptions(resolved: ResolvedOneShot): string {
 ${resolved.tone ? `- Tone: ${resolved.tone}\n` : ""}${resolved.premise ? `- Starting premise (keep it): ${resolved.premise}\n` : ""}${resolved.boundaries ? `- Content boundaries (never violate): ${resolved.boundaries}\n` : ""}${formatCampaignContextBlock(resolved.campaignContext)}`;
 }
 
-export const EMPHASIS_HINT: Record<string, string> = {
-  Action:
-    "at least half the scenes after the opening are combat or hazard, with enemy tactics, battlefield hazards and shifting conditions",
-  "Investigation / mystery":
-    "most scenes turn on clues and deductions the players can make",
-  Intrigue: "most scenes are social, with leverage and possible compromises",
-  Survival: "most scenes are hazards and hard choices about resources",
-  Exploration: "most scenes are about routes, discoveries and the place itself",
-};
+export { EMPHASIS_HINT } from "./one-shot-rules";
 
 export interface OneShotPrompt {
   systemInstruction: string;
@@ -900,15 +899,18 @@ Rules:
 - A clue's "label" is a 2–5 word name; its "text" is the actual fact, stated outright.
 - Every scene needs a challenge with "success" (what the party must actually achieve, including any answer, name or passage), "otherApproaches" (how force, lies, magic or an unexpected plan play out) and "failForward". Failure must never stop the adventure. Never require reciting exact words: clever reasoning, or clearly expressing the right intent, succeeds.
 - Fights and hazards get "opposition": who or what opposes the party, how they fight and one thing that changes mid-scene.
-- Deliver the emphasis (${resolved.emphasis}) in the challenge types: ${EMPHASIS_HINT[resolved.emphasis] ?? "match the challenges to it"}.
+- Deliver the emphasis (${resolved.emphasis}) as play, not just theme: ${EMPHASIS_HINT[resolved.emphasis] ?? "match the challenges to it"}.
 - "solution" is how the finale is resolved: every component with its real content (actual names, words, passages, objects, order) and the earlier scenes where it is found, the steps, at least one other way through, and what each kind of mistake costs.
-- "clock" is the threat's countdown: ONE rule that advances it, 3–6 ticks with what each triggers, how the party can slow it, and "deadline" (what happens at the last tick). Only the last tick is irreversible. If the fiction counts something (bell notes, nights, seals), that count IS the ticks and the numbers match.
+- "clock" is the threat's countdown, with what each tick triggers and how the party can slow it. ${CLOCK_RULE}
 - "antagonistId" names the NPC driving the threat. Give them "backstory" (why they do this), "tactics" (how they act or fight when opposed) and "stopIf" (what would persuade them to stop), and put them in the climax.
 - "threads" lists every promise the hook, briefing and opening make (a person in danger, a rule an object follows, a restriction on an NPC, a piece of history) with its payoff and the later scene where it happens. An NPC's "limits" (what they cannot or will not do) must hold in every scene.
 - Optional scenes take at most a fifth of the time, so the essential scenes alone fill the session.
 - State each fact once, where the GM needs it; do not repeat clue text or answers across scenes.
 - "briefing.trigger" is the concrete event that set this off now. "briefing.questions" answers 3–5 questions players will obviously ask (why now, why us, why doesn't the patron handle it, why would the antagonist do this).
-- At least two endings, each reached by a player decision. NPCs get motivations, what they know, how they react and a roleplay cue — no biographies. An NPC's motivation must explain what they do in the scenes. If an NPC appears in several scenes, that scene's situation says why they are there; NPCs met in the opening return or pay off later.
+- ${ENDINGS_RULE}
+- ${COMMITMENT_RULE}
+- ${PACING_RULE}
+- NPCs get motivations, what they know, how they react and a roleplay cue — no biographies. An NPC's motivation must explain what they do in the scenes. If an NPC appears in several scenes, that scene's situation says why they are there; NPCs met in the opening return or pay off later.
 - "next" lists the scene ids a scene can lead to (branching allowed); scene ids are "scene-1".."scene-${count}", NPC ids "npc-1"..., clue ids "clue-1"...
 
 Return JSON with exactly this shape:
